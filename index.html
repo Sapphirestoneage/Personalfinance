@@ -1,0 +1,514 @@
+import { useState, useMemo } from "react";
+
+// ---------- 2026 IRS limits (editable in Assumptions) ----------
+const DEFAULT_LIMITS = {
+  k401: 24500,
+  k401Catchup: 8000,
+  ira: 7500,
+  iraCatchup: 1100,
+  hsaSelf: 4400,
+  hsaFamily: 8750,
+};
+
+const START = { m: 6, y: 2026 }; // July 2026
+const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+const fmt = (n) => "$" + Math.round(Math.abs(n)).toLocaleString("en-US");
+const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
+
+const monthLabel = (m) => {
+  if (m === null) return "Blocked";
+  if (m <= 0) return "Now";
+  const total = START.m + m;
+  const y = START.y + Math.floor(total / 12);
+  const mo = total % 12;
+  return `${MONTH_NAMES[mo]} '${String(y).slice(2)} · ${m} mo`;
+};
+
+// ---------- 9-facet sapphire, one facet per FOO step ----------
+function GemCrown({ litCount }) {
+  const cx = 60, cy = 60, rOuter = 54, rInner = 21;
+  const facets = [];
+  for (let i = 0; i < 9; i++) {
+    const a1 = ((i * 40 - 90) * Math.PI) / 180;
+    const a2 = (((i + 1) * 40 - 90) * Math.PI) / 180;
+    facets.push({
+      d: `M${cx + rOuter * Math.cos(a1)},${cy + rOuter * Math.sin(a1)} L${cx + rOuter * Math.cos(a2)},${cy + rOuter * Math.sin(a2)} L${cx + rInner * Math.cos(a2)},${cy + rInner * Math.sin(a2)} L${cx + rInner * Math.cos(a1)},${cy + rInner * Math.sin(a1)} Z`,
+      i,
+    });
+  }
+  return (
+    <svg viewBox="0 0 120 120" className="w-24 h-24" aria-label={`${litCount} of 9 steps complete`}>
+      {facets.map((f) => (
+        <path key={f.i} d={f.d}
+          fill={f.i < litCount ? "#2E6FE8" : "#16305E"}
+          stroke="#0A1E44" strokeWidth="1.5"
+          style={{ transition: "fill 500ms ease" }}
+          opacity={f.i < litCount ? 1 : 0.55} />
+      ))}
+      <circle cx={cx} cy={cy} r={rInner} fill={litCount === 9 ? "#7FB0FF" : "#0F2650"} stroke="#0A1E44" strokeWidth="1.5" style={{ transition: "fill 500ms ease" }} />
+      <text x={cx} y={cy + 5} textAnchor="middle" fontSize="15" fontWeight="600" fill={litCount === 9 ? "#0A1E44" : "#7FB0FF"}>{litCount}/9</text>
+    </svg>
+  );
+}
+
+function Bar({ pct }) {
+  return (
+    <div className="h-1.5 w-full rounded-full bg-blue-950/60 overflow-hidden">
+      <div className="h-full rounded-full bg-blue-500" style={{ width: `${clamp(pct, 0, 100)}%`, transition: "width 600ms ease" }} />
+    </div>
+  );
+}
+
+function Field({ label, value, onChange, prefix, suffix, step = 1, min = 0 }) {
+  return (
+    <label className="block">
+      {label && <span className="text-[11px] uppercase tracking-wider text-blue-300/80">{label}</span>}
+      <div className="mt-1 flex items-center rounded-lg bg-blue-950/50 border border-blue-800/60 focus-within:border-blue-400 px-3">
+        {prefix && <span className="text-blue-400 text-sm mr-1">{prefix}</span>}
+        <input type="number" inputMode="decimal"
+          className="w-full bg-transparent py-2 text-blue-50 text-sm outline-none"
+          value={value} min={min} step={step}
+          onChange={(e) => onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))} />
+        {suffix && <span className="text-blue-400 text-sm ml-1">{suffix}</span>}
+      </div>
+    </label>
+  );
+}
+
+function Toggle({ label, on, onChange }) {
+  return (
+    <button onClick={() => onChange(!on)}
+      className="flex items-center justify-between w-full rounded-lg bg-blue-950/50 border border-blue-800/60 px-3 py-2.5">
+      <span className="text-sm text-blue-100 text-left">{label}</span>
+      <span className={`relative inline-block w-9 h-5 rounded-full transition-colors shrink-0 ml-3 ${on ? "bg-blue-500" : "bg-blue-900"}`}>
+        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${on ? "translate-x-4" : "translate-x-0.5"}`} style={{ left: 0 }} />
+      </span>
+    </button>
+  );
+}
+
+function PeriodSwitch({ period, onChange }) {
+  return (
+    <div className="inline-flex rounded-full border border-blue-800/60 bg-blue-950/50 p-0.5 text-xs">
+      {["monthly", "yearly"].map((p) => (
+        <button key={p} onClick={() => onChange(p)}
+          className={`px-3 py-1 rounded-full capitalize transition-colors ${period === p ? "bg-blue-500 text-blue-950 font-medium" : "text-blue-300"}`}>
+          {p}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const EXPENSE_CATS = ["Housing", "Transportation", "Food", "Insurance", "Debt minimums", "Everything else"];
+
+export default function MoneyGuyFoo() {
+  // ---- income & expenses (the gap engine) ----
+  const [incomePeriod, setIncomePeriod] = useState("yearly");
+  const [incomeVal, setIncomeVal] = useState(85000);
+  const [expPeriod, setExpPeriod] = useState("monthly");
+  const [useBreakdown, setUseBreakdown] = useState(false);
+  const [expTotal, setExpTotal] = useState(4200);
+  const [expCats, setExpCats] = useState({ Housing: 1600, Transportation: 500, Food: 700, Insurance: 400, "Debt minimums": 300, "Everything else": 700 });
+
+  // ---- windfall ----
+  const [windfallAmt, setWindfallAmt] = useState(10000);
+  const [windfallOn, setWindfallOn] = useState(false);
+  const [showWindfall, setShowWindfall] = useState(false);
+
+  // ---- profile ----
+  const [age, setAge] = useState(30);
+  const [cashOnHand, setCashOnHand] = useState(1500);
+  const [deductibleTarget, setDeductibleTarget] = useState(3000);
+  const [contribPct, setContribPct] = useState(4);
+  const [matchCapPct, setMatchCapPct] = useState(6);
+  const [efBalance, setEfBalance] = useState(6800);
+  const [efMonths, setEfMonths] = useState(3);
+  const [hdhp, setHdhp] = useState(false);
+  const [hsaFamilyPlan, setHsaFamilyPlan] = useState(false);
+  const [rothCur, setRothCur] = useState(3000);
+  const [hsaCur, setHsaCur] = useState(0);
+  const [prepaidTarget, setPrepaidTarget] = useState(20000);
+  const [prepaidBal, setPrepaidBal] = useState(0);
+  const [growthOn, setGrowthOn] = useState(false);
+  const [growthRate, setGrowthRate] = useState(7);
+  const [limits, setLimits] = useState(DEFAULT_LIMITS);
+
+  const [debts, setDebts] = useState([
+    { id: 1, name: "Visa card", balance: 2400, apr: 22.9, min: 120 },
+    { id: 2, name: "Student loan", balance: 14500, apr: 4.5, min: 180 },
+  ]);
+  const addDebt = () => setDebts((d) => [...d, { id: Date.now(), name: "New debt", balance: 0, apr: 0, min: 0 }]);
+  const setDebt = (id, key, val) => setDebts((d) => d.map((x) => (x.id === id ? { ...x, [key]: val } : x)));
+  const rmDebt = (id) => setDebts((d) => d.filter((x) => x.id !== id));
+
+  const [showInputs, setShowInputs] = useState(true);
+  const [showAssumptions, setShowAssumptions] = useState(false);
+  const [openStep, setOpenStep] = useState(null);
+
+  // ---- derived income / expense / gap ----
+  const mIncome = incomePeriod === "yearly" ? incomeVal / 12 : incomeVal;
+  const catSum = Object.values(expCats).reduce((s, v) => s + (v || 0), 0);
+  const rawExp = useBreakdown ? catSum : expTotal;
+  const mExpenses = expPeriod === "yearly" ? rawExp / 12 : rawExp;
+  const gap = mIncome - mExpenses;
+
+  // ---- windfall allocation + waterfall simulation ----
+  const sim = useMemo(() => {
+    const aIncome = mIncome * 12;
+    const iraLimit = limits.ira + (age >= 50 ? limits.iraCatchup : 0);
+    const k401Limit = limits.k401 + (age >= 50 ? limits.k401Catchup : 0);
+    const hsaLimit = hsaFamilyPlan ? limits.hsaFamily : limits.hsaSelf;
+    const g = growthOn ? growthRate / 100 / 12 : 0;
+
+    // ---- windfall allocation: pours through FOO order at month 0 ----
+    const allocate = (amount, st) => {
+      let rem = amount;
+      const rows = [];
+      const s = { ...st, debts: st.debts.map((d) => ({ ...d })) };
+      const take = (need) => { const a = Math.min(rem, Math.max(0, need)); rem -= a; return a; };
+
+      const a1 = take(deductibleTarget - s.cash);
+      if (a1 > 0) { s.cash += a1; rows.push({ label: "Step 1 · Deductible cash", amt: a1 }); }
+
+      for (const d of s.debts.filter((d) => d.apr > 6 && d.balance > 0).sort((a, b) => b.apr - a.apr)) {
+        const p = take(d.balance);
+        if (p > 0) { d.balance -= p; rows.push({ label: `Step 3 · Pay off ${d.name}`, amt: p }); }
+        if (rem <= 0) break;
+      }
+
+      const a4 = take(efMonths * mExpenses - s.ef);
+      if (a4 > 0) { s.ef += a4; rows.push({ label: "Step 4 · Emergency reserves", amt: a4 }); }
+
+      const a5 = take(iraLimit - s.rothCur);
+      if (a5 > 0) { s.rothCur += a5; rows.push({ label: "Step 5 · Fill Roth IRA (this year)", amt: a5 }); }
+      if (hdhp) {
+        const a5b = take(hsaLimit - s.hsaCur);
+        if (a5b > 0) { s.hsaCur += a5b; rows.push({ label: "Step 5 · Fill HSA (this year)", amt: a5b }); }
+      }
+
+      const a8 = take(prepaidTarget - s.prepaid);
+      if (a8 > 0) { s.prepaid += a8; rows.push({ label: "Step 8 · Prepaid future expenses", amt: a8 }); }
+
+      for (const d of s.debts.filter((d) => d.apr <= 6 && d.balance > 0).sort((a, b) => b.apr - a.apr)) {
+        const p = take(d.balance);
+        if (p > 0) { d.balance -= p; rows.push({ label: `Step 9 · Pay down ${d.name}`, amt: p }); }
+        if (rem <= 0) break;
+      }
+
+      if (rem > 0) rows.push({ label: "Step 7 · Taxable brokerage (the rest)", amt: rem });
+      return { state: s, rows };
+    };
+
+    // ---- month-by-month waterfall ----
+    const runSim = (init) => {
+      const s2need = Math.max(0, ((matchCapPct - contribPct) / 100) * mIncome);
+      const s5need = Math.max(0, iraLimit - init.rothCur + (hdhp ? Math.max(0, hsaLimit - init.hsaCur) : 0)) / 12;
+      const employeeAfterMatch = (Math.max(contribPct, matchCapPct) / 100) * aIncome;
+      const s6need = Math.max(0, k401Limit - employeeAfterMatch) / 12;
+      const flowsAt25 = employeeAfterMatch / 12 + (iraLimit + (hdhp ? hsaLimit : 0)) / 12 + Math.max(0, k401Limit - employeeAfterMatch) / 12;
+      const s7need = Math.max(0, 0.25 * mIncome - flowsAt25);
+
+      const done = Array(9).fill(null);
+      let cash = init.cash, ef = init.ef, prepaid = init.prepaid;
+      let dbts = init.debts.map((d) => ({ ...d }));
+      let committed = 0, step = 0;
+
+      const advance = (m) => {
+        while (step < 9) {
+          const av = gap - committed;
+          let ok = false;
+          if (step === 0 && cash >= deductibleTarget) ok = true;
+          else if (step === 1) { if (s2need <= 0) ok = true; else if (av >= s2need) { committed += s2need; ok = true; } }
+          else if (step === 2 && !dbts.some((d) => d.apr > 6 && d.balance > 0.5)) ok = true;
+          else if (step === 3 && ef >= efMonths * mExpenses) ok = true;
+          else if (step === 4) { if (s5need <= 0) ok = true; else if (av >= s5need) { committed += s5need; ok = true; } }
+          else if (step === 5) { if (s6need <= 0) ok = true; else if (av >= s6need) { committed += s6need; ok = true; } }
+          else if (step === 6) { if (s7need <= 0) ok = true; else if (av >= s7need) { committed += s7need; ok = true; } }
+          else if (step === 7 && prepaid >= prepaidTarget) ok = true;
+          else if (step === 8 && !dbts.some((d) => d.apr <= 6 && d.balance > 0.5)) ok = true;
+          if (!ok) return;
+          done[step] = m; step++;
+        }
+      };
+
+      advance(0);
+
+      if (gap > 0) {
+        for (let m = 1; m <= 600 && step < 9; m++) {
+          dbts.forEach((d) => { if (d.balance > 0) d.balance = Math.max(0, d.balance * (1 + d.apr / 1200) - d.min); });
+          if (g > 0) prepaid *= 1 + g;
+          const avail = gap - committed;
+          if (avail <= 0) break;
+          if (step === 0) cash += avail;
+          else if (step === 2) { let pool = avail; for (const d of dbts.filter((x) => x.apr > 6 && x.balance > 0).sort((a, b) => b.apr - a.apr)) { const pay = Math.min(pool, d.balance); d.balance -= pay; pool -= pay; if (pool <= 0) break; } }
+          else if (step === 3) ef += avail;
+          else if (step === 7) prepaid += avail;
+          else if (step === 8) { let pool = avail; for (const d of dbts.filter((x) => x.apr <= 6 && x.balance > 0).sort((a, b) => b.apr - a.apr)) { const pay = Math.min(pool, d.balance); d.balance -= pay; pool -= pay; if (pool <= 0) break; } }
+          advance(m);
+        }
+      }
+      return done;
+    };
+
+    const baseState = { cash: cashOnHand, ef: efBalance, prepaid: prepaidBal, rothCur, hsaCur, debts };
+    const baseline = runSim(baseState);
+    let windRows = [], windDone = baseline;
+    if (windfallOn && windfallAmt > 0) {
+      const alloc = allocate(windfallAmt, baseState);
+      windRows = alloc.rows;
+      windDone = runSim(alloc.state);
+    }
+    return { baseline, windDone, windRows };
+  }, [mIncome, mExpenses, gap, age, cashOnHand, deductibleTarget, contribPct, matchCapPct, efBalance, efMonths, hdhp, hsaFamilyPlan, rothCur, hsaCur, prepaidTarget, prepaidBal, growthOn, growthRate, limits, debts, windfallOn, windfallAmt]);
+
+  const active = windfallOn ? sim.windDone : sim.baseline;
+  const completedNow = active.filter((d) => d === 0).length;
+  const ci = active.findIndex((d) => d !== 0);
+  const curIdx = ci === -1 ? 8 : ci;
+
+  const highDebts = debts.filter((d) => d.apr > 6 && d.balance > 0);
+  const lowDebts = debts.filter((d) => d.apr <= 6 && d.balance > 0);
+  const iraLimit = limits.ira + (age >= 50 ? limits.iraCatchup : 0);
+  const hsaLimit = hsaFamilyPlan ? limits.hsaFamily : limits.hsaSelf;
+  const s2gapMo = Math.max(0, ((matchCapPct - contribPct) / 100) * mIncome);
+
+  const steps = [
+    { n: 1, title: "Deductibles covered", sub: cashOnHand >= deductibleTarget ? `${fmt(cashOnHand)} on hand covers your ${fmt(deductibleTarget)} deductible.` : `${fmt(deductibleTarget - cashOnHand)} short of your highest deductible.`, pct: clamp((cashOnHand / Math.max(1, deductibleTarget)) * 100, 0, 100), why: "Before anything else, hold enough cash to cover your largest insurance deductible — health, auto, or home. It's the smallest wall between you and new debt.", act: cashOnHand < deductibleTarget ? `Stack cash to ${fmt(deductibleTarget)} first — the gap fills this in the waterfall.` : "Covered. Keep this cash untouched." },
+    { n: 2, title: "Employer match", sub: s2gapMo <= 0 ? `Full match captured at ${contribPct}%.` : `Raise contribution ${(matchCapPct - contribPct).toFixed(1)}% — costs ${fmt(s2gapMo)}/mo of your gap, returns free money.`, pct: matchCapPct === 0 ? 100 : clamp((contribPct / matchCapPct) * 100, 0, 100), why: "A match is an instant 50–100% return. The Money Guy calls it free money for a reason — nothing else compounds a raise like this.", act: s2gapMo > 0 ? `Set payroll deferral to ${matchCapPct}%.` : "Keep it flowing every paycheck." },
+    { n: 3, title: "High-interest debt", sub: highDebts.length === 0 ? "No high-interest debt. Clear." : `${fmt(highDebts.reduce((s, d) => s + d.balance, 0))} above 6% APR — highest ${Math.max(...highDebts.map((d) => d.apr)).toFixed(1)}%.`, pct: highDebts.length === 0 ? 100 : 0, why: "Credit cards and anything punitive gets destroyed before you invest further. Paying 23% APR off is a guaranteed 23% return.", act: highDebts.length ? "The waterfall attacks the highest APR first (avalanche)." : "Stay clear." },
+    { n: 4, title: "Emergency reserves", sub: efBalance >= efMonths * mExpenses ? `${(mExpenses > 0 ? efBalance / mExpenses : 0).toFixed(1)} months held — target met.` : `${(mExpenses > 0 ? efBalance / mExpenses : 0).toFixed(1)} of ${efMonths} months. ${fmt(efMonths * mExpenses - efBalance)} to go.`, pct: clamp((efBalance / Math.max(1, efMonths * mExpenses)) * 100, 0, 100), why: "Three to six months of expenses turns a job loss or a blown transmission into an inconvenience instead of a crisis.", act: "High-yield savings, automated, boring on purpose." },
+    { n: 5, title: "Roth IRA & HSA", sub: rothCur >= iraLimit && (!hdhp || hsaCur >= hsaLimit) ? "Both maxed for the year." : `Roth ${fmt(rothCur)} of ${fmt(iraLimit)}${hdhp ? ` · HSA ${fmt(hsaCur)} of ${fmt(hsaLimit)}` : ""}.`, pct: clamp(((rothCur + (hdhp ? hsaCur : 0)) / Math.max(1, iraLimit + (hdhp ? hsaLimit : 0))) * 100, 0, 100), why: "Tax-free growth forever (Roth) and the triple-tax-advantaged HSA. The Money Guy fills these before returning to the 401k.", act: hdhp ? "Automate both monthly — HSA via payroll for the FICA break." : "Automate the Roth monthly. Not HSA-eligible without an HDHP." },
+    { n: 6, title: "Max-out retirement", sub: "Fill remaining 401k/403b space to the employee limit.", pct: clamp(((Math.max(contribPct, matchCapPct) / 100) * mIncome * 12 / Math.max(1, limits.k401 + (age >= 50 ? limits.k401Catchup : 0))) * 100, 0, 100), why: "Now go back and fill every remaining tax-advantaged dollar: 401k, 403b, 457. Shelter beats taxable.", act: "Raise deferral until the IRS limit — the waterfall shows when your gap can carry it." },
+    { n: 7, title: "Hyperaccumulation", sub: "Reach a 25% of gross income savings rate; overflow goes to taxable brokerage.", pct: clamp(((mIncome > 0 ? (Math.max(contribPct, matchCapPct) / 100) : 0) / 0.25) * 100, 0, 100), why: "The Money Guy's north star: 25% of gross income saved. Past tax shelters, this spills into a taxable brokerage — your army of dollar bills.", act: "Automate the difference into low-cost index funds." },
+    { n: 8, title: "Prepaid future expenses", sub: prepaidBal >= prepaidTarget ? "Future goals funded." : `${fmt(prepaidBal)} of ${fmt(prepaidTarget)} toward 529s, weddings, next car.`, pct: clamp((prepaidBal / Math.max(1, prepaidTarget)) * 100, 0, 100), why: "Only after your own retirement is secured do you prepay the future: college, cars, a wedding. Oxygen mask on yourself first.", act: "529s for college gain state tax perks in most states." },
+    { n: 9, title: "Low-interest debt prepayment", sub: lowDebts.length === 0 ? "No low-interest debt remains. Fully cut." : `${fmt(lowDebts.reduce((s, d) => s + d.balance, 0))} at ≤6% APR — mortgage-tier debt, last on purpose.`, pct: lowDebts.length === 0 ? 100 : 0, why: "Math says low-rate debt can wait — but a paid-off house is peace the spreadsheet can't price. The final facet.", act: "Extra principal payments until free." },
+  ];
+
+  const windTotal = sim.windRows.reduce((s, r) => s + r.amt, 0);
+
+  return (
+    <div className="min-h-screen text-blue-50" style={{ background: "linear-gradient(180deg,#081833 0%,#0B2249 45%,#081833 100%)" }}>
+      <div className="max-w-md mx-auto px-4 pb-16">
+
+        {/* header */}
+        <header className="pt-8 pb-5 text-center">
+          <div className="flex justify-center mb-3"><GemCrown litCount={completedNow} /></div>
+          <h1 className="font-serif text-3xl tracking-tight">Financial Order of Operations</h1>
+          <p className="text-blue-300/80 text-sm mt-1">Nine facets, Money Guy sequence. Your gap cuts them in order.</p>
+        </header>
+
+        {/* THE GAP ENGINE */}
+        <section className="rounded-2xl border border-blue-500/40 bg-blue-600/15 p-4 mb-4">
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <span className="text-[11px] uppercase tracking-wider text-blue-300/80 block mb-1">Income</span>
+              <PeriodSwitch period={incomePeriod} onChange={setIncomePeriod} />
+              <div className="mt-2"><Field value={incomeVal} onChange={setIncomeVal} prefix="$" suffix={incomePeriod === "yearly" ? "/yr" : "/mo"} step={incomePeriod === "yearly" ? 1000 : 100} /></div>
+            </div>
+            <div>
+              <span className="text-[11px] uppercase tracking-wider text-blue-300/80 block mb-1">Expenses</span>
+              <PeriodSwitch period={expPeriod} onChange={setExpPeriod} />
+              <div className="mt-2">
+                {!useBreakdown && <Field value={expTotal} onChange={setExpTotal} prefix="$" suffix={expPeriod === "yearly" ? "/yr" : "/mo"} step={100} />}
+                {useBreakdown && (
+                  <div className="rounded-lg bg-blue-950/50 border border-blue-800/60 px-3 py-2 text-sm text-blue-50 mt-1">
+                    {fmt(catSum)}<span className="text-blue-400 text-xs"> {expPeriod === "yearly" ? "/yr" : "/mo"}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          <button onClick={() => setUseBreakdown((v) => !v)} className="text-xs text-blue-300 underline underline-offset-2 mb-2">
+            {useBreakdown ? "Use a single total instead" : "Break expenses into categories"}
+          </button>
+          {useBreakdown && (
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              {EXPENSE_CATS.map((c) => (
+                <Field key={c} label={c} value={expCats[c]} onChange={(v) => setExpCats({ ...expCats, [c]: v })} prefix="$" step={50} />
+              ))}
+            </div>
+          )}
+          <div className="rounded-xl bg-blue-950/60 border border-blue-700/50 p-3 text-center">
+            <p className="text-[11px] uppercase tracking-wider text-blue-400">Your gap — fuels the waterfall</p>
+            <p className={`font-serif text-3xl mt-1 ${gap > 0 ? "text-blue-200" : "text-red-300"}`}>
+              {gap >= 0 ? "+" : "−"}{fmt(gap)}<span className="text-base text-blue-400">/mo</span>
+            </p>
+            <p className="text-xs text-blue-400 mt-1">{fmt(mIncome)}/mo in · {fmt(mExpenses)}/mo out{gap <= 0 && " — a negative gap blocks every step."}</p>
+          </div>
+        </section>
+
+        {/* WINDFALL */}
+        <section className={`rounded-2xl border p-4 mb-5 transition-colors ${windfallOn ? "border-amber-400/60 bg-amber-500/10" : "border-blue-800/60 bg-blue-900/30"}`}>
+          <button className="w-full flex items-center justify-between" onClick={() => setShowWindfall((v) => !v)}>
+            <span className="flex items-center gap-2">
+              <span className={`w-6 h-6 rotate-45 rounded-[4px] flex items-center justify-center ${windfallOn ? "bg-amber-400" : "bg-blue-800"}`}>
+                <span className="-rotate-45 text-xs">{windfallOn ? "★" : "＋"}</span>
+              </span>
+              <span className="text-sm font-medium text-blue-50">Windfall{windfallOn ? ` — ${fmt(windfallAmt)} applied` : ""}</span>
+            </span>
+            <span className="text-blue-400 text-sm">{showWindfall ? "Hide" : "Open"}</span>
+          </button>
+
+          {showWindfall && (
+            <div className="mt-3 space-y-3">
+              <p className="text-xs text-blue-300 leading-relaxed">Bonus, inheritance, tax refund, home sale — drop a lump sum in and it pours through the FOO in strict order, at month zero. Every step's date recalculates.</p>
+              <div className="flex gap-2 items-end">
+                <div className="flex-1"><Field label="Amount" value={windfallAmt} onChange={setWindfallAmt} prefix="$" step={500} /></div>
+                <button onClick={() => setWindfallOn((v) => !v)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${windfallOn ? "bg-amber-400 text-blue-950" : "bg-blue-500 text-blue-950"}`}>
+                  {windfallOn ? "Remove" : "Apply"}
+                </button>
+              </div>
+
+              {windfallOn && sim.windRows.length > 0 && (
+                <div className="rounded-xl bg-blue-950/50 border border-blue-800/60 p-3">
+                  <p className="text-[11px] uppercase tracking-wider text-amber-300/90 mb-2">Where it goes — FOO order</p>
+                  <div className="space-y-1.5">
+                    {sim.windRows.map((r, i) => (
+                      <div key={i} className="flex items-center justify-between text-xs">
+                        <span className="text-blue-200">{r.label}</span>
+                        <span className="text-blue-50 font-medium">{fmt(r.amt)}</span>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between text-xs pt-1.5 border-t border-blue-800/60">
+                      <span className="text-blue-400">Total allocated</span>
+                      <span className="text-amber-300 font-medium">{fmt(windTotal)}</span>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-blue-500 mt-2 leading-relaxed">Note: 401k can't take lump sums directly — front-load it by raising payroll deferral and living off the windfall instead. Steps 2, 6, and 7 are monthly commitments your gap must carry, so lump sums skip past them.</p>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* current step callout */}
+        <section className="rounded-2xl border border-blue-800/60 bg-blue-900/30 p-4 mb-5">
+          <p className="text-[11px] uppercase tracking-wider text-blue-300">You are here — step {curIdx + 1}</p>
+          <h2 className="font-serif text-lg mt-1">{steps[curIdx].title}</h2>
+          <p className="text-sm text-blue-200 mt-1.5 leading-relaxed">{steps[curIdx].sub}</p>
+          <p className="text-sm text-blue-100 mt-2 leading-relaxed"><span className="text-blue-400">Next move:</span> {steps[curIdx].act}</p>
+        </section>
+
+        {/* the nine steps with waterfall timeline */}
+        <section className="space-y-2.5 mb-5">
+          {steps.map((s, i) => {
+            const d = active[i];
+            const base = sim.baseline[i];
+            const isDone = d === 0;
+            const isCurrent = i === curIdx && !isDone;
+            const isLocked = i > curIdx;
+            const open = openStep === i;
+            const delta = windfallOn && base !== null && d !== null && base - d > 0 ? base - d : windfallOn && base === null && d !== null ? "unblocked" : null;
+            return (
+              <div key={s.n} className={`rounded-xl border transition-colors ${isCurrent ? "border-blue-400/70 bg-blue-600/15" : isDone ? "border-blue-700/50 bg-blue-900/25" : "border-blue-800/40 bg-blue-950/30"}`}>
+                <button className="w-full flex items-start gap-3 p-3.5 text-left" onClick={() => setOpenStep(open ? null : i)}>
+                  <span className={`mt-0.5 w-7 h-7 shrink-0 flex items-center justify-center text-xs font-semibold rotate-45 rounded-[4px] ${isDone ? "bg-blue-500 text-blue-950" : isCurrent ? "bg-blue-300 text-blue-950" : "bg-blue-900/70 text-blue-500"}`}>
+                    <span className="-rotate-45">{isDone ? "✓" : s.n}</span>
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className="flex items-center justify-between gap-2 flex-wrap">
+                      <span className={`text-sm font-medium ${isLocked ? "text-blue-500" : "text-blue-50"}`}>{s.title}</span>
+                      <span className="flex items-center gap-1.5">
+                        {delta && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 whitespace-nowrap">{delta === "unblocked" ? "unblocked ★" : `−${delta} mo ★`}</span>}
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${isDone ? "bg-blue-500/20 text-blue-300" : d === null ? (gap <= 0 ? "bg-red-500/20 text-red-300" : "bg-blue-900/60 text-blue-500") : "bg-amber-500/20 text-amber-300"}`}>
+                          {isDone ? "Now" : d === null ? (gap <= 0 ? "Blocked" : ">50 yr") : monthLabel(d)}
+                        </span>
+                      </span>
+                    </span>
+                    <span className={`block text-xs mt-1 leading-relaxed ${isLocked ? "text-blue-600" : "text-blue-300"}`}>{s.sub}</span>
+                    {!isDone && <span className="block mt-2"><Bar pct={s.pct} /></span>}
+                  </span>
+                  <span className="text-blue-500 text-xs mt-1">{open ? "−" : "+"}</span>
+                </button>
+                {open && (
+                  <div className="px-3.5 pb-3.5 pl-[3.75rem] space-y-2">
+                    <p className="text-xs text-blue-200 leading-relaxed"><span className="text-blue-400 uppercase text-[10px] tracking-wider block mb-0.5">Why this order</span>{s.why}</p>
+                    <p className="text-xs text-blue-200 leading-relaxed"><span className="text-blue-400 uppercase text-[10px] tracking-wider block mb-0.5">Do this</span>{s.act}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </section>
+
+        {/* your numbers */}
+        <section className="rounded-2xl border border-blue-800/60 bg-blue-900/30 mb-5 overflow-hidden">
+          <button className="w-full flex items-center justify-between px-4 py-3" onClick={() => setShowInputs((v) => !v)}>
+            <span className="text-sm font-medium text-blue-100">Your numbers</span>
+            <span className="text-blue-400 text-sm">{showInputs ? "Hide" : "Edit"}</span>
+          </button>
+          {showInputs && (
+            <div className="px-4 pb-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Age" value={age} onChange={setAge} min={16} />
+                <Field label="Cash on hand" value={cashOnHand} onChange={setCashOnHand} prefix="$" step={100} />
+                <Field label="Highest deductible" value={deductibleTarget} onChange={setDeductibleTarget} prefix="$" step={250} />
+                <Field label="Emergency fund" value={efBalance} onChange={setEfBalance} prefix="$" step={100} />
+                <Field label="EF target (months)" value={efMonths} onChange={(v) => setEfMonths(clamp(v, 3, 6))} min={3} />
+                <Field label="401k contribution" value={contribPct} onChange={setContribPct} suffix="%" step={0.5} />
+                <Field label="Match cap" value={matchCapPct} onChange={setMatchCapPct} suffix="%" step={0.5} />
+                <Field label="Roth IRA this year" value={rothCur} onChange={setRothCur} prefix="$" step={100} />
+                <Field label="Future expenses goal" value={prepaidTarget} onChange={setPrepaidTarget} prefix="$" step={500} />
+                <Field label="Saved toward it" value={prepaidBal} onChange={setPrepaidBal} prefix="$" step={500} />
+                {hdhp && <Field label="HSA this year" value={hsaCur} onChange={setHsaCur} prefix="$" step={100} />}
+              </div>
+              <Toggle label="On a high-deductible health plan (HSA eligible)" on={hdhp} onChange={setHdhp} />
+              {hdhp && <Toggle label="Family HDHP coverage" on={hsaFamilyPlan} onChange={setHsaFamilyPlan} />}
+              <Toggle label={`Apply ${growthRate}% annual growth to invested buckets`} on={growthOn} onChange={setGrowthOn} />
+              {growthOn && <Field label="Growth rate" value={growthRate} onChange={setGrowthRate} suffix="%/yr" step={0.5} />}
+
+              <div className="pt-1">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] uppercase tracking-wider text-blue-300/80">Debts <em className="not-italic lowercase text-blue-500">(minimums assumed inside your expenses)</em></span>
+                  <button onClick={addDebt} className="text-xs text-blue-300 border border-blue-700 rounded-full px-2.5 py-0.5">+ Add</button>
+                </div>
+                {debts.length === 0 && <p className="text-xs text-blue-400">No debts — steps 3 and 9 read from this list.</p>}
+                <div className="space-y-2">
+                  {debts.map((d) => (
+                    <div key={d.id} className="rounded-lg bg-blue-950/50 border border-blue-800/60 p-2.5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <input className="flex-1 bg-transparent text-sm text-blue-50 outline-none border-b border-blue-800/60 focus:border-blue-400 pb-0.5" value={d.name} onChange={(e) => setDebt(d.id, "name", e.target.value)} />
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${d.apr > 6 ? "bg-red-500/20 text-red-300" : "bg-blue-800/50 text-blue-300"}`}>{d.apr > 6 ? "Step 3" : "Step 9"}</span>
+                        <button onClick={() => rmDebt(d.id)} className="text-blue-500 text-xs">✕</button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <Field label="Balance" value={d.balance} onChange={(v) => setDebt(d.id, "balance", v)} prefix="$" step={100} />
+                        <Field label="APR" value={d.apr} onChange={(v) => setDebt(d.id, "apr", v)} suffix="%" step={0.1} />
+                        <Field label="Min /mo" value={d.min} onChange={(v) => setDebt(d.id, "min", v)} prefix="$" step={10} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* assumptions */}
+        <section className="rounded-2xl border border-blue-800/60 bg-blue-900/30 overflow-hidden">
+          <button className="w-full flex items-center justify-between px-4 py-3" onClick={() => setShowAssumptions((v) => !v)}>
+            <span className="text-sm font-medium text-blue-100">2026 IRS limits</span>
+            <span className="text-blue-400 text-sm">{showAssumptions ? "Hide" : "Edit"}</span>
+          </button>
+          {showAssumptions && (
+            <div className="px-4 pb-4 grid grid-cols-2 gap-3">
+              <Field label="401k limit" value={limits.k401} onChange={(v) => setLimits({ ...limits, k401: v })} prefix="$" step={500} />
+              <Field label="401k catch-up (50+)" value={limits.k401Catchup} onChange={(v) => setLimits({ ...limits, k401Catchup: v })} prefix="$" step={500} />
+              <Field label="IRA limit" value={limits.ira} onChange={(v) => setLimits({ ...limits, ira: v })} prefix="$" step={500} />
+              <Field label="IRA catch-up (50+)" value={limits.iraCatchup} onChange={(v) => setLimits({ ...limits, iraCatchup: v })} prefix="$" step={100} />
+              <Field label="HSA — self" value={limits.hsaSelf} onChange={(v) => setLimits({ ...limits, hsaSelf: v })} prefix="$" step={50} />
+              <Field label="HSA — family" value={limits.hsaFamily} onChange={(v) => setLimits({ ...limits, hsaFamily: v })} prefix="$" step={50} />
+            </div>
+          )}
+        </section>
+
+        <p className="text-[11px] text-blue-500 leading-relaxed mt-6 text-center">
+          Inspired by The Money Guy Show's Financial Order of Operations. Educational tool, not financial advice — verify IRS limits and consult a professional for your situation.
+        </p>
+      </div>
+    </div>
+  );
+}
