@@ -280,6 +280,111 @@ Honest state of each table as shipped:
 
 ---
 
+## D-010 — the FOO app's input layer rewritten; why two FOO implementations exist
+**2026-09-03 · SPEC.md §5.1, §8**
+
+The relocated app (D-007) shipped with roughly twenty-five pre-filled state
+defaults — `useState(85000)` for income, `useState(4200)` for expenses, two
+example debts, and so on — and a `Field` component whose `onChange` turned an
+empty box into `0`. Same violation as a pre-filled `value=` attribute, in a
+different shape, plus the exact `|| 0` pattern §5 rule 3 names.
+
+§5.1 calls converting this "a small, isolated change". It is not: the app is a
+month-by-month waterfall simulation whose ~100-line loop and nine step cards
+all read those values directly. Rather than half-convert it, the input layer
+was rewritten:
+
+- Every **raw** input starts `null` and renders an empty box with a
+  format-only placeholder. `Field` is a text input, not a number spinner, so
+  an empty string stays empty and a stray scroll cannot change a balance.
+- **Assumption-class** values keep defaults, which is correct per §3 — an
+  emergency-fund target of 3 months, 7% growth on prepaid savings, and the
+  IRS limits, which now load from `data/irs_limits_2026.json` rather than
+  being hardcoded. All are visible and editable in one panel.
+- Gating is per-field rather than all-or-nothing. The gap engine needs income
+  and expenses before it shows a figure. The month-by-month timeline needs its
+  full input set and names precisely which are missing. Each of the nine step
+  cards declares what it needs and says "add X to see this" instead of
+  deriving a number from nothing. Because the simulation only runs once every
+  value it reads is present, nothing inside the loop had to change — the
+  proven maths is untouched.
+- The room seeds itself from the household on load, so a visitor who filled
+  in the Financial Snapshot first opens this room with **their** numbers, not
+  a stranger's. Verified: income, expenses, age, cash, match cap and both
+  itemised debts carry across, with the gap computing correctly from them.
+
+**Why `engines/foo.js` and this room both exist**, given §8's one-formula rule.
+They answer different questions. `engines/foo.js` is a sequential boolean
+gate: *which step are you standing on right now*, from the ten Tier 0 inputs.
+This room simulates *when each step lands*, month by month, given a monthly
+surplus — including a windfall poured through the ladder in strict order at
+month zero. Neither can be expressed as a parameterisation of the other, and
+they share their thresholds through `data/foo_rules.json` rather than
+duplicating them. If a third caller ever needs the projection, the simulation
+comes out of this room into `engines/` first.
+
+**What this room does not do yet.** It calls `registerRoom()` and reads the
+household, but writes nothing back. Its step-by-step inputs — highest
+deductible, Roth/HSA contributed so far, prepaid goal and balance — have no
+home in the schema until the Cash Flow and Goal Costing engines land. They are
+deliberately not bolted onto the household in an ad hoc shape; that is exactly
+the retrofit §3 warns against.
+
+---
+
+## D-011 — no CDN dependencies; React and the type are self-hosted
+**2026-09-03**
+
+The rooms pulled React, ReactDOM and Babel-standalone from cdnjs, and both
+typefaces from Google Fonts. Four third-party requests to read your own
+numbers, a page that renders unstyled or blank on a flaky network, and — in a
+sandboxed browser — type that could not be verified at all.
+
+`vendor/` now carries the React 18.2.0 UMD builds and the latin
+variable-weight cuts of Fraunces (37KB) and Space Grotesk (22KB), both SIL
+OFL with licences included. `shared/fonts.css` declares the faces locally;
+because CSS `url()` resolves against the stylesheet rather than the document,
+one file serves both the root Map and the `rooms/` pages.
+
+Babel-standalone is gone: `rooms/foo-ladder.jsx` is precompiled to a committed
+`rooms/foo-ladder.js`, with the JSX kept beside it so the generated file is
+never the only copy. Regenerate with
+
+```sh
+npx @babel/cli --presets @babel/preset-react rooms/foo-ladder.jsx -o rooms/foo-ladder.js
+```
+
+That is an authoring step, not a build the site depends on. The committed
+`.js` is what runs, and the repo stays a no-build static site.
+
+---
+
+## D-012 — what the verification pass actually caught
+**2026-09-03 · SPEC.md §14**
+
+Recorded because "it served with a 200 and didn't crash" would have missed
+all three. `node test/run.js` runs 145 checks; a Chromium pass at 390px drives
+all three pages.
+
+1. **An unknown FOO step was reported as a placement.** On an empty form the
+   ladder read "Step 0", telling a visitor who had entered nothing that they
+   were stuck on the first rung. Only an `unmet` step is a placement now; an
+   unjudgeable one says what it needs. Caught by reading the empty state in a
+   browser, not by any unit check.
+2. **`capturingFullMatch` was lost on every page reload.** `createHousehold`
+   did not carry the field, so it was dropped when the stored blob was
+   rehydrated — silently resetting the ladder from "Step 2" to "unknown" and
+   losing the employer-match flag. Caught by comparing a screenshot against
+   what the same page had shown a moment earlier. It is now a declared raw
+   field, and a test round-trips the entire demo household through the spine.
+3. **A missing favicon** was 404ing on every page load.
+
+Still not covered by any automated check, and worth a human eye: how the
+rooms read on a real phone rather than an emulated viewport, and whether the
+copy lands.
+
+---
+
 ## Still open
 
 - **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the
@@ -292,4 +397,11 @@ Honest state of each table as shipped:
   no part of the §13 tool specification. If it is to be rebuilt it needs a
   spec.
 - **Reference-table refresh** — see D-009 for what each table's numbers are
-  actually worth today.
+  actually worth today. The effective-tax-rate bands and the SCF percentile
+  breakpoints are the two that most need a primary-source pass before any
+  output is shown to a real user.
+- **`foo-ladder` writes nothing back to the household** — see D-010. It needs
+  the Cash Flow and Goal Costing engines before its step inputs have a home
+  in the schema.
+- **Whether `index.html` should be the Map or the FOO calculator** — the swap
+  in D-007 changes what loads at the site root. Reversible in one commit.

@@ -3,385 +3,62 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Financial Order of Operations</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>tailwind.config={theme:{extend:{fontFamily:{serif:['Georgia','serif']}}}}</script>
+<title>FOO Ladder · SPARKS</title>
+<meta name="description" content="Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11.
+
+  1. READS   household.people[0].dob (age), incomeSources[].grossAnnualIncome-
+             Cents and .employerMatch, assets[] cash, debts[],
+             expenses.monthlyEssential.
+  2. WRITES  Nothing yet, beyond registerRoom(). This room seeds itself from
+             the household, but its step-by-step inputs (deductible target,
+             Roth/HSA contributed so far, prepaid goals) have no home in the
+             schema until the Cash Flow and Goal Costing engines land.
+             Tracked in DECISIONS.md D-010.
+  3. CALLS   Its own month-by-month waterfall simulation — the only thing in
+             the app that answers "when does each step land". engines/foo.js
+             answers a different question ("which step are you on now") and
+             is not a duplicate of it; D-010 records why both exist.
+  4. EMPTY   Every numeric input ships blank. The gap engine needs income and
+             expenses before it shows a figure; the timeline needs its full
+             input set and says which are missing; each step card
+             independently reports what it still needs.
+  5. CONFIG  data/irs_limits_2026.json for contribution limits.
+
+  React and ReactDOM are vendored in vendor/ rather than pulled from a CDN,
+  and the JSX is precompiled to foo-ladder.js, so this room has no runtime
+  network dependency and no in-browser Babel transform.
+-->
+<script src="../vendor/react.production.min.js"></script>
+<script src="../vendor/react-dom.production.min.js"></script>
+<style>
+  .page { min-height: 100vh; }
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--space-4) var(--space-7); }
+  .back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); padding-top: var(--space-5); }
+  .back:hover { text-decoration: underline; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+  @media (max-width: 380px) { .grid2 { grid-template-columns: 1fr; } }
+  .card { border-radius: var(--radius-lg); border: 1px solid var(--color-border); background: var(--color-surface); margin-bottom: var(--space-3); overflow: hidden; }
+  .card-active { border-color: var(--color-border-active); background: var(--color-surface-active); }
+  .needs { font-size: var(--text-sm); color: var(--color-text-faint); }
+  .row-btn { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: none; border: none; cursor: pointer; text-align: left; font-family: var(--font-body); color: var(--color-text); font-size: var(--text-base); }
+  .link-btn { background: none; border: none; color: var(--color-text-muted); font-size: var(--text-xs); cursor: pointer; text-decoration: underline; padding: var(--space-2) 0; font-family: var(--font-body); }
+  .actions { display: flex; gap: var(--space-2); margin-bottom: var(--space-4); }
+</style>
 </head>
-<body>
+<body class="slaf">
 <div id="root"></div>
-<script type="text/babel">
-const{useState,useMemo}=React;
-const DEFAULT_LIMITS={k401:24500,k401Catchup:8000,ira:7500,iraCatchup:1100,hsaSelf:4400,hsaFamily:8750};
-const START={m:6,y:2026};
-const MONTH_NAMES=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const fmt=(n)=>"$"+Math.round(Math.abs(n)).toLocaleString("en-US");
-const clamp=(n,lo,hi)=>Math.min(hi,Math.max(lo,n));
-const monthLabel=(m)=>{if(m===null)return"Blocked";if(m<=0)return"Now";const total=START.m+m;const y=START.y+Math.floor(total/12);const mo=total%12;return`${MONTH_NAMES[mo]} '${String(y).slice(2)} · ${m} mo`;};
 
-function GemCrown({litCount}){
-  const cx=60,cy=60,rOuter=54,rInner=21;
-  const facets=[];
-  for(let i=0;i<9;i++){
-    const a1=((i*40-90)*Math.PI)/180;
-    const a2=(((i+1)*40-90)*Math.PI)/180;
-    facets.push({d:`M${cx+rOuter*Math.cos(a1)},${cy+rOuter*Math.sin(a1)} L${cx+rOuter*Math.cos(a2)},${cy+rOuter*Math.sin(a2)} L${cx+rInner*Math.cos(a2)},${cy+rInner*Math.sin(a2)} L${cx+rInner*Math.cos(a1)},${cy+rInner*Math.sin(a1)} Z`,i});
-  }
-  return(<svg viewBox="0 0 120 120" style={{width:96,height:96}}>
-    {facets.map(f=><path key={f.i} d={f.d} fill={f.i<litCount?"#2E6FE8":"#16305E"} stroke="#0A1E44" strokeWidth="1.5" style={{transition:"fill 500ms ease"}} opacity={f.i<litCount?1:0.55}/>)}
-    <circle cx={cx} cy={cy} r={rInner} fill={litCount===9?"#7FB0FF":"#0F2650"} stroke="#0A1E44" strokeWidth="1.5" style={{transition:"fill 500ms ease"}}/>
-    <text x={cx} y={cy+5} textAnchor="middle" fontSize="15" fontWeight="600" fill={litCount===9?"#0A1E44":"#7FB0FF"}>{litCount}/9</text>
-  </svg>);
-}
-
-function Bar({pct}){return(<div style={{height:6,width:"100%",borderRadius:3,background:"rgba(30,58,138,0.4)",overflow:"hidden"}}><div style={{height:"100%",borderRadius:3,background:"#3b82f6",width:`${clamp(pct,0,100)}%`,transition:"width 600ms ease"}}/></div>);}
-
-function Field({label,value,onChange,prefix,suffix,step=1,min=0}){
-  return(<label style={{display:"block"}}>
-    {label&&<span style={{fontSize:11,textTransform:"uppercase",letterSpacing:"0.08em",color:"rgba(147,197,253,0.8)"}}>{label}</span>}
-    <div style={{marginTop:4,display:"flex",alignItems:"center",borderRadius:8,background:"rgba(15,38,80,0.5)",border:"1px solid rgba(30,64,175,0.6)",padding:"0 12px"}}>
-      {prefix&&<span style={{color:"#60a5fa",fontSize:14,marginRight:4}}>{prefix}</span>}
-      <input type="number" inputMode="decimal" style={{width:"100%",background:"transparent",padding:"8px 0",color:"#eff6ff",fontSize:14,outline:"none",border:"none"}} value={value} min={min} step={step} onChange={e=>onChange(e.target.value===""?0:parseFloat(e.target.value))}/>
-      {suffix&&<span style={{color:"#60a5fa",fontSize:14,marginLeft:4}}>{suffix}</span>}
-    </div>
-  </label>);
-}
-
-function Toggle({label,on,onChange}){
-  return(<button onClick={()=>onChange(!on)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",borderRadius:8,background:"rgba(15,38,80,0.5)",border:"1px solid rgba(30,64,175,0.6)",padding:"10px 12px",cursor:"pointer"}}>
-    <span style={{fontSize:14,color:"#eff6ff",textAlign:"left"}}>{label}</span>
-    <div style={{position:"relative",display:"inline-block",width:36,height:20,borderRadius:10,background:on?"#3b82f6":"#1e3a8a",transition:"background 200ms",flexShrink:0,marginLeft:12}}>
-      <div style={{position:"absolute",top:2,left:on?18:2,width:16,height:16,borderRadius:"50%",background:"white",transition:"left 200ms"}}/>
-    </div>
-  </button>);
-}
-
-function PeriodSwitch({period,onChange}){
-  return(<div style={{display:"inline-flex",borderRadius:20,border:"1px solid rgba(30,64,175,0.6)",background:"rgba(15,38,80,0.5)",padding:2,fontSize:12}}>
-    {["monthly","yearly"].map(p=><button key={p} onClick={()=>onChange(p)} style={{padding:"4px 12px",borderRadius:16,border:"none",cursor:"pointer",background:period===p?"#3b82f6":"transparent",color:period===p?"#172554":"#93c5fd",fontWeight:period===p?500:400,textTransform:"capitalize",transition:"all 200ms"}}>{p}</button>)}
-  </div>);
-}
-
-const EXPENSE_CATS=["Housing","Transportation","Food","Insurance","Debt minimums","Everything else"];
-const S={
-  page:{minHeight:"100vh",color:"#eff6ff",background:"linear-gradient(180deg,#081833 0%,#0B2249 45%,#081833 100%)",fontFamily:"system-ui,sans-serif"},
-  wrap:{maxWidth:480,margin:"0 auto",padding:"0 16px 80px"},
-  card:{borderRadius:16,border:"1px solid rgba(30,64,175,0.4)",background:"rgba(15,38,80,0.3)",marginBottom:10,overflow:"hidden"},
-  cardActive:{borderRadius:16,border:"1px solid rgba(96,165,250,0.7)",background:"rgba(37,99,235,0.15)",marginBottom:10},
-  cardDone:{borderRadius:16,border:"1px solid rgba(30,64,175,0.5)",background:"rgba(15,38,80,0.25)",marginBottom:10},
-  sectionLabel:{fontSize:11,textTransform:"uppercase",letterSpacing:"0.08em",color:"rgba(147,197,253,0.8)",display:"block",marginBottom:4},
-  grid2:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12},
-};
-
-function App(){
-  const[incomePeriod,setIncomePeriod]=useState("yearly");
-  const[incomeVal,setIncomeVal]=useState(85000);
-  const[expPeriod,setExpPeriod]=useState("monthly");
-  const[useBreakdown,setUseBreakdown]=useState(false);
-  const[expTotal,setExpTotal]=useState(4200);
-  const[expCats,setExpCats]=useState({Housing:1600,Transportation:500,Food:700,Insurance:400,"Debt minimums":300,"Everything else":700});
-  const[windfallAmt,setWindfallAmt]=useState(10000);
-  const[windfallOn,setWindfallOn]=useState(false);
-  const[showWindfall,setShowWindfall]=useState(false);
-  const[age,setAge]=useState(30);
-  const[cashOnHand,setCashOnHand]=useState(1500);
-  const[deductibleTarget,setDeductibleTarget]=useState(3000);
-  const[contribPct,setContribPct]=useState(4);
-  const[matchCapPct,setMatchCapPct]=useState(6);
-  const[efBalance,setEfBalance]=useState(6800);
-  const[efMonths,setEfMonths]=useState(3);
-  const[hdhp,setHdhp]=useState(false);
-  const[hsaFamilyPlan,setHsaFamilyPlan]=useState(false);
-  const[rothCur,setRothCur]=useState(3000);
-  const[hsaCur,setHsaCur]=useState(0);
-  const[prepaidTarget,setPrepaidTarget]=useState(20000);
-  const[prepaidBal,setPrepaidBal]=useState(0);
-  const[growthOn,setGrowthOn]=useState(false);
-  const[growthRate,setGrowthRate]=useState(7);
-  const[limits,setLimits]=useState(DEFAULT_LIMITS);
-  const[debts,setDebts]=useState([{id:1,name:"Visa card",balance:2400,apr:22.9,min:120},{id:2,name:"Student loan",balance:14500,apr:4.5,min:180}]);
-  const addDebt=()=>setDebts(d=>[...d,{id:Date.now(),name:"New debt",balance:0,apr:0,min:0}]);
-  const setDebt=(id,key,val)=>setDebts(d=>d.map(x=>x.id===id?{...x,[key]:val}:x));
-  const rmDebt=(id)=>setDebts(d=>d.filter(x=>x.id!==id));
-  const[showInputs,setShowInputs]=useState(true);
-  const[showAssumptions,setShowAssumptions]=useState(false);
-  const[openStep,setOpenStep]=useState(null);
-
-  const mIncome=incomePeriod==="yearly"?incomeVal/12:incomeVal;
-  const catSum=Object.values(expCats).reduce((s,v)=>s+(v||0),0);
-  const rawExp=useBreakdown?catSum:expTotal;
-  const mExpenses=expPeriod==="yearly"?rawExp/12:rawExp;
-  const gap=mIncome-mExpenses;
-
-  const sim=useMemo(()=>{
-    const aIncome=mIncome*12;
-    const iraLimit=limits.ira+(age>=50?limits.iraCatchup:0);
-    const k401Limit=limits.k401+(age>=50?limits.k401Catchup:0);
-    const hsaLimit=hsaFamilyPlan?limits.hsaFamily:limits.hsaSelf;
-    const g=growthOn?growthRate/100/12:0;
-
-    const allocate=(amount,st)=>{
-      let rem=amount;const rows=[];
-      const s={...st,debts:st.debts.map(d=>({...d}))};
-      const take=(need)=>{const a=Math.min(rem,Math.max(0,need));rem-=a;return a;};
-      const a1=take(deductibleTarget-s.cash);if(a1>0){s.cash+=a1;rows.push({label:"Step 1 · Deductible cash",amt:a1});}
-      for(const d of s.debts.filter(d=>d.apr>6&&d.balance>0).sort((a,b)=>b.apr-a.apr)){const p=take(d.balance);if(p>0){d.balance-=p;rows.push({label:`Step 3 · Pay off ${d.name}`,amt:p});}if(rem<=0)break;}
-      const a4=take(efMonths*mExpenses-s.ef);if(a4>0){s.ef+=a4;rows.push({label:"Step 4 · Emergency reserves",amt:a4});}
-      const a5=take(iraLimit-s.rothCur);if(a5>0){s.rothCur+=a5;rows.push({label:"Step 5 · Fill Roth IRA",amt:a5});}
-      if(hdhp){const a5b=take(hsaLimit-s.hsaCur);if(a5b>0){s.hsaCur+=a5b;rows.push({label:"Step 5 · Fill HSA",amt:a5b});}}
-      const a8=take(prepaidTarget-s.prepaid);if(a8>0){s.prepaid+=a8;rows.push({label:"Step 8 · Prepaid future expenses",amt:a8});}
-      for(const d of s.debts.filter(d=>d.apr<=6&&d.balance>0).sort((a,b)=>b.apr-a.apr)){const p=take(d.balance);if(p>0){d.balance-=p;rows.push({label:`Step 9 · Pay down ${d.name}`,amt:p});}if(rem<=0)break;}
-      if(rem>0)rows.push({label:"Step 7 · Taxable brokerage (the rest)",amt:rem});
-      return{state:s,rows};
-    };
-
-    const runSim=(init)=>{
-      const s2need=Math.max(0,((matchCapPct-contribPct)/100)*mIncome);
-      const s5need=Math.max(0,iraLimit-init.rothCur+(hdhp?Math.max(0,hsaLimit-init.hsaCur):0))/12;
-      const employeeAfterMatch=(Math.max(contribPct,matchCapPct)/100)*aIncome;
-      const s6need=Math.max(0,k401Limit-employeeAfterMatch)/12;
-      const flowsAt25=employeeAfterMatch/12+(iraLimit+(hdhp?hsaLimit:0))/12+Math.max(0,k401Limit-employeeAfterMatch)/12;
-      const s7need=Math.max(0,0.25*mIncome-flowsAt25);
-      const done=Array(9).fill(null);
-      let cash=init.cash,ef=init.ef,prepaid=init.prepaid;
-      let dbts=init.debts.map(d=>({...d}));
-      let committed=0,step=0;
-      const advance=(m)=>{
-        while(step<9){
-          const av=gap-committed;let ok=false;
-          if(step===0&&cash>=deductibleTarget)ok=true;
-          else if(step===1){if(s2need<=0)ok=true;else if(av>=s2need){committed+=s2need;ok=true;}}
-          else if(step===2&&!dbts.some(d=>d.apr>6&&d.balance>0.5))ok=true;
-          else if(step===3&&ef>=efMonths*mExpenses)ok=true;
-          else if(step===4){if(s5need<=0)ok=true;else if(av>=s5need){committed+=s5need;ok=true;}}
-          else if(step===5){if(s6need<=0)ok=true;else if(av>=s6need){committed+=s6need;ok=true;}}
-          else if(step===6){if(s7need<=0)ok=true;else if(av>=s7need){committed+=s7need;ok=true;}}
-          else if(step===7&&prepaid>=prepaidTarget)ok=true;
-          else if(step===8&&!dbts.some(d=>d.apr<=6&&d.balance>0.5))ok=true;
-          if(!ok)return;done[step]=m;step++;
-        }
-      };
-      advance(0);
-      if(gap>0){for(let m=1;m<=600&&step<9;m++){
-        dbts.forEach(d=>{if(d.balance>0)d.balance=Math.max(0,d.balance*(1+d.apr/1200)-d.min);});
-        if(g>0)prepaid*=1+g;
-        const avail=gap-committed;if(avail<=0)break;
-        if(step===0)cash+=avail;
-        else if(step===2){let pool=avail;for(const d of dbts.filter(x=>x.apr>6&&x.balance>0).sort((a,b)=>b.apr-a.apr)){const pay=Math.min(pool,d.balance);d.balance-=pay;pool-=pay;if(pool<=0)break;}}
-        else if(step===3)ef+=avail;
-        else if(step===7)prepaid+=avail;
-        else if(step===8){let pool=avail;for(const d of dbts.filter(x=>x.apr<=6&&x.balance>0).sort((a,b)=>b.apr-a.apr)){const pay=Math.min(pool,d.balance);d.balance-=pay;pool-=pay;if(pool<=0)break;}}
-        advance(m);
-      }}
-      return done;
-    };
-
-    const baseState={cash:cashOnHand,ef:efBalance,prepaid:prepaidBal,rothCur,hsaCur,debts};
-    const baseline=runSim(baseState);
-    let windRows=[],windDone=baseline;
-    if(windfallOn&&windfallAmt>0){const alloc=allocate(windfallAmt,baseState);windRows=alloc.rows;windDone=runSim(alloc.state);}
-    return{baseline,windDone,windRows};
-  },[mIncome,mExpenses,gap,age,cashOnHand,deductibleTarget,contribPct,matchCapPct,efBalance,efMonths,hdhp,hsaFamilyPlan,rothCur,hsaCur,prepaidTarget,prepaidBal,growthOn,growthRate,limits,debts,windfallOn,windfallAmt]);
-
-  const active=windfallOn?sim.windDone:sim.baseline;
-  const completedNow=active.filter(d=>d===0).length;
-  const ci=active.findIndex(d=>d!==0);
-  const curIdx=ci===-1?8:ci;
-  const highDebts=debts.filter(d=>d.apr>6&&d.balance>0);
-  const lowDebts=debts.filter(d=>d.apr<=6&&d.balance>0);
-  const iraLimit=limits.ira+(age>=50?limits.iraCatchup:0);
-  const hsaLimit=hsaFamilyPlan?limits.hsaFamily:limits.hsaSelf;
-  const s2gapMo=Math.max(0,((matchCapPct-contribPct)/100)*mIncome);
-  const windTotal=sim.windRows.reduce((s,r)=>s+r.amt,0);
-
-  const steps=[
-    {n:1,title:"Deductibles covered",sub:cashOnHand>=deductibleTarget?`${fmt(cashOnHand)} on hand covers your ${fmt(deductibleTarget)} deductible.`:`${fmt(deductibleTarget-cashOnHand)} short of your highest deductible.`,pct:clamp((cashOnHand/Math.max(1,deductibleTarget))*100,0,100),why:"Before anything else, hold enough cash to cover your largest insurance deductible — health, auto, or home. It's the smallest wall between you and new debt.",act:cashOnHand<deductibleTarget?`Stack cash to ${fmt(deductibleTarget)} first.`:"Covered. Keep this cash untouched."},
-    {n:2,title:"Employer match",sub:s2gapMo<=0?`Full match captured at ${contribPct}%.`:`Raise contribution ${(matchCapPct-contribPct).toFixed(1)}% — costs ${fmt(s2gapMo)}/mo, returns free money.`,pct:matchCapPct===0?100:clamp((contribPct/matchCapPct)*100,0,100),why:"A match is an instant 50-100% return. Nothing else compounds a raise like this.",act:s2gapMo>0?`Set payroll deferral to ${matchCapPct}%.`:"Keep it flowing every paycheck."},
-    {n:3,title:"High-interest debt",sub:highDebts.length===0?"No high-interest debt. Clear.":`${fmt(highDebts.reduce((s,d)=>s+d.balance,0))} above 6% APR — highest ${Math.max(...highDebts.map(d=>d.apr)).toFixed(1)}%.`,pct:highDebts.length===0?100:0,why:"Paying 23% APR off is a guaranteed 23% return. Destroy this before investing further.",act:highDebts.length?"Waterfall attacks highest APR first (avalanche).":"Stay clear."},
-    {n:4,title:"Emergency reserves",sub:efBalance>=efMonths*mExpenses?`${(mExpenses>0?efBalance/mExpenses:0).toFixed(1)} months held — target met.`:`${(mExpenses>0?efBalance/mExpenses:0).toFixed(1)} of ${efMonths} months. ${fmt(efMonths*mExpenses-efBalance)} to go.`,pct:clamp((efBalance/Math.max(1,efMonths*mExpenses))*100,0,100),why:"3-6 months of expenses turns a job loss into an inconvenience instead of a crisis.",act:"High-yield savings, automated, boring on purpose."},
-    {n:5,title:"Roth IRA & HSA",sub:rothCur>=iraLimit&&(!hdhp||hsaCur>=hsaLimit)?"Both maxed for the year.":`Roth ${fmt(rothCur)} of ${fmt(iraLimit)}${hdhp?` · HSA ${fmt(hsaCur)} of ${fmt(hsaLimit)}`:""}`,pct:clamp(((rothCur+(hdhp?hsaCur:0))/Math.max(1,iraLimit+(hdhp?hsaLimit:0)))*100,0,100),why:"Tax-free growth forever (Roth) and the triple-tax-advantaged HSA. Fill these before returning to 401k.",act:hdhp?"Automate both — HSA via payroll for the FICA break.":"Automate the Roth monthly."},
-    {n:6,title:"Max-out retirement",sub:"Fill remaining 401k/403b space to the employee limit.",pct:clamp(((Math.max(contribPct,matchCapPct)/100)*mIncome*12/Math.max(1,limits.k401+(age>=50?limits.k401Catchup:0)))*100,0,100),why:"Fill every remaining tax-advantaged dollar: 401k, 403b, 457. Shelter beats taxable.",act:"Raise deferral until the IRS limit."},
-    {n:7,title:"Hyperaccumulation",sub:"Reach 25% of gross income savings rate; overflow to taxable brokerage.",pct:clamp(((mIncome>0?(Math.max(contribPct,matchCapPct)/100):0)/0.25)*100,0,100),why:"The Money Guy north star: 25% of gross saved. Past tax shelters this spills into taxable brokerage — your army of dollar bills.",act:"Automate into low-cost index funds."},
-    {n:8,title:"Prepaid future expenses",sub:prepaidBal>=prepaidTarget?"Future goals funded.":`${fmt(prepaidBal)} of ${fmt(prepaidTarget)} toward 529s, weddings, next car.`,pct:clamp((prepaidBal/Math.max(1,prepaidTarget))*100,0,100),why:"Only after your retirement is secured do you prepay the future. Oxygen mask on yourself first.",act:"529s gain state tax perks in most states."},
-    {n:9,title:"Low-interest debt prepayment",sub:lowDebts.length===0?"No low-interest debt remains.":`${fmt(lowDebts.reduce((s,d)=>s+d.balance,0))} at 6% or below — mortgage-tier debt, last on purpose.`,pct:lowDebts.length===0?100:0,why:"Math says low-rate debt can wait — but a paid-off house is peace the spreadsheet can't price.",act:"Extra principal payments until free."},
-  ];
-
-  return(
-    <div style={S.page}>
-      <div style={S.wrap}>
-        <header style={{paddingTop:32,paddingBottom:20,textAlign:"center"}}>
-          <div style={{display:"flex",justifyContent:"center",marginBottom:12}}><GemCrown litCount={completedNow}/></div>
-          <h1 style={{fontFamily:"Georgia,serif",fontSize:28,fontWeight:400,letterSpacing:"-0.5px",margin:0}}>Financial Order of Operations</h1>
-          <p style={{color:"rgba(147,197,253,0.8)",fontSize:14,marginTop:4}}>Nine steps, in the exact order you need.</p>
-        </header>
-
-        {/* GAP ENGINE */}
-        <div style={{borderRadius:16,border:"1px solid rgba(96,165,250,0.4)",background:"rgba(37,99,235,0.15)",padding:16,marginBottom:16}}>
-          <div style={S.grid2}>
-            <div>
-              <span style={S.sectionLabel}>Income</span>
-              <PeriodSwitch period={incomePeriod} onChange={setIncomePeriod}/>
-              <div style={{marginTop:8}}><Field value={incomeVal} onChange={setIncomeVal} prefix="$" suffix={incomePeriod==="yearly"?"/yr":"/mo"} step={incomePeriod==="yearly"?1000:100}/></div>
-            </div>
-            <div>
-              <span style={S.sectionLabel}>Expenses</span>
-              <PeriodSwitch period={expPeriod} onChange={setExpPeriod}/>
-              <div style={{marginTop:8}}>
-                {!useBreakdown&&<Field value={expTotal} onChange={setExpTotal} prefix="$" suffix={expPeriod==="yearly"?"/yr":"/mo"} step={100}/>}
-                {useBreakdown&&<div style={{borderRadius:8,background:"rgba(15,38,80,0.5)",border:"1px solid rgba(30,64,175,0.6)",padding:"8px 12px",fontSize:14,color:"#eff6ff"}}>{fmt(catSum)}<span style={{color:"#60a5fa",fontSize:12}}> {expPeriod==="yearly"?"/yr":"/mo"}</span></div>}
-              </div>
-            </div>
-          </div>
-          <button onClick={()=>setUseBreakdown(v=>!v)} style={{background:"none",border:"none",color:"#93c5fd",fontSize:12,cursor:"pointer",textDecoration:"underline",padding:"8px 0"}}>{useBreakdown?"Use a single total instead":"Break expenses into categories"}</button>
-          {useBreakdown&&<div style={S.grid2}>{EXPENSE_CATS.map(c=><Field key={c} label={c} value={expCats[c]} onChange={v=>setExpCats({...expCats,[c]:v})} prefix="$" step={50}/>)}</div>}
-          <div style={{borderRadius:12,background:"rgba(8,24,51,0.6)",border:"1px solid rgba(30,64,175,0.5)",padding:12,textAlign:"center",marginTop:12}}>
-            <p style={{fontSize:11,textTransform:"uppercase",letterSpacing:"0.08em",color:"#60a5fa",margin:0}}>Your gap — fuels the waterfall</p>
-            <p style={{fontFamily:"Georgia,serif",fontSize:32,margin:"4px 0",color:gap>0?"#bfdbfe":"#fca5a5"}}>{gap>=0?"+":"−"}{fmt(gap)}<span style={{fontSize:16,color:"#60a5fa"}}>/mo</span></p>
-            <p style={{fontSize:12,color:"#60a5fa",margin:0}}>{fmt(mIncome)}/mo in · {fmt(mExpenses)}/mo out{gap<=0&&" — negative gap blocks every step."}</p>
-          </div>
-        </div>
-
-        {/* WINDFALL */}
-        <div style={{borderRadius:16,border:windfallOn?"1px solid rgba(251,191,36,0.6)":"1px solid rgba(30,64,175,0.4)",background:windfallOn?"rgba(245,158,11,0.1)":"rgba(15,38,80,0.3)",padding:16,marginBottom:16}}>
-          <button onClick={()=>setShowWindfall(v=>!v)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",background:"none",border:"none",cursor:"pointer",padding:0}}>
-            <span style={{display:"flex",alignItems:"center",gap:8}}>
-              <span style={{width:24,height:24,transform:"rotate(45deg)",borderRadius:4,background:windfallOn?"#fbbf24":"#1e3a8a",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                <span style={{transform:"rotate(-45deg)",fontSize:12,color:windfallOn?"#1e3a8a":"#93c5fd"}}>{windfallOn?"★":"+"}</span>
-              </span>
-              <span style={{fontSize:14,fontWeight:500,color:"#eff6ff"}}>Windfall{windfallOn?` — ${fmt(windfallAmt)} applied`:""}</span>
-            </span>
-            <span style={{color:"#60a5fa",fontSize:14}}>{showWindfall?"Hide":"Open"}</span>
-          </button>
-          {showWindfall&&<div style={{marginTop:12}}>
-            <p style={{fontSize:12,color:"#93c5fd",lineHeight:1.6,marginBottom:12}}>Bonus, inheritance, tax refund — drop a lump sum in and it pours through the FOO in strict order at month zero. Every step's date recalculates.</p>
-            <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
-              <div style={{flex:1}}><Field label="Amount" value={windfallAmt} onChange={setWindfallAmt} prefix="$" step={500}/></div>
-              <button onClick={()=>setWindfallOn(v=>!v)} style={{padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",fontWeight:500,fontSize:14,background:windfallOn?"#fbbf24":"#3b82f6",color:"#172554"}}>{windfallOn?"Remove":"Apply"}</button>
-            </div>
-            {windfallOn&&sim.windRows.length>0&&<div style={{borderRadius:12,background:"rgba(8,24,51,0.5)",border:"1px solid rgba(30,64,175,0.6)",padding:12,marginTop:12}}>
-              <p style={{fontSize:11,textTransform:"uppercase",letterSpacing:"0.08em",color:"rgba(251,191,36,0.9)",marginBottom:8}}>Where it goes — FOO order</p>
-              {sim.windRows.map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:6}}><span style={{color:"#bfdbfe"}}>{r.label}</span><span style={{color:"#eff6ff",fontWeight:500}}>{fmt(r.amt)}</span></div>)}
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:12,borderTop:"1px solid rgba(30,64,175,0.6)",paddingTop:6,marginTop:6}}><span style={{color:"#60a5fa"}}>Total allocated</span><span style={{color:"#fbbf24",fontWeight:500}}>{fmt(windTotal)}</span></div>
-              <p style={{fontSize:10,color:"rgba(96,165,250,0.6)",marginTop:8,lineHeight:1.5}}>Note: 401k cannot take lump sums directly — front-load by raising payroll deferral and living off the windfall instead.</p>
-            </div>}
-          </div>}
-        </div>
-
-        {/* CURRENT STEP */}
-        <div style={{borderRadius:16,border:"1px solid rgba(30,64,175,0.6)",background:"rgba(15,38,80,0.3)",padding:16,marginBottom:16}}>
-          <p style={{fontSize:11,textTransform:"uppercase",letterSpacing:"0.08em",color:"#93c5fd",margin:"0 0 4px"}}>You are here — step {curIdx+1}</p>
-          <h2 style={{fontFamily:"Georgia,serif",fontSize:20,fontWeight:400,margin:"0 0 8px"}}>{steps[curIdx].title}</h2>
-          <p style={{fontSize:14,color:"#bfdbfe",lineHeight:1.6,margin:"0 0 8px"}}>{steps[curIdx].sub}</p>
-          <p style={{fontSize:14,color:"#eff6ff",lineHeight:1.6,margin:0}}><span style={{color:"#60a5fa"}}>Next move: </span>{steps[curIdx].act}</p>
-        </div>
-
-        {/* NINE STEPS */}
-        {steps.map((s,i)=>{
-          const d=active[i];const base=sim.baseline[i];
-          const isDone=d===0;const isCurrent=i===curIdx&&!isDone;const isLocked=i>curIdx;
-          const open=openStep===i;
-          const delta=windfallOn&&base!==null&&d!==null&&base-d>0?base-d:windfallOn&&base===null&&d!==null?"unblocked":null;
-          const cardStyle=isCurrent?S.cardActive:isDone?S.cardDone:S.card;
-          return(<div key={s.n} style={cardStyle}>
-            <button onClick={()=>setOpenStep(open?null:i)} style={{width:"100%",display:"flex",alignItems:"flex-start",gap:12,padding:14,background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
-              <span style={{marginTop:2,width:28,height:28,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:600,transform:"rotate(45deg)",borderRadius:4,background:isDone?"#3b82f6":isCurrent?"#bfdbfe":"rgba(30,58,138,0.7)",color:isDone||isCurrent?"#172554":"#3b82f6"}}>
-                <span style={{transform:"rotate(-45deg)"}}>{isDone?"✓":s.n}</span>
-              </span>
-              <span style={{flex:1,minWidth:0}}>
-                <span style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
-                  <span style={{fontSize:14,fontWeight:500,color:isLocked?"#3b82f6":"#eff6ff"}}>{s.title}</span>
-                  <span style={{display:"flex",alignItems:"center",gap:6}}>
-                    {delta&&<span style={{fontSize:10,padding:"2px 6px",borderRadius:20,background:"rgba(251,191,36,0.2)",color:"#fcd34d",whiteSpace:"nowrap"}}>{delta==="unblocked"?"unblocked ★":`−${delta} mo ★`}</span>}
-                    <span style={{fontSize:10,padding:"2px 8px",borderRadius:20,whiteSpace:"nowrap",background:isDone?"rgba(59,130,246,0.2)":d===null?(gap<=0?"rgba(239,68,68,0.2)":"rgba(30,58,138,0.6)"):"rgba(245,158,11,0.2)",color:isDone?"#93c5fd":d===null?(gap<=0?"#fca5a5":"#3b82f6"):"#fcd34d"}}>
-                      {isDone?"Now":d===null?(gap<=0?"Blocked":">50 yr"):monthLabel(d)}
-                    </span>
-                  </span>
-                </span>
-                <span style={{display:"block",fontSize:12,marginTop:4,lineHeight:1.5,color:isLocked?"rgba(59,130,246,0.5)":"#93c5fd"}}>{s.sub}</span>
-                {!isDone&&<span style={{display:"block",marginTop:8}}><Bar pct={s.pct}/></span>}
-              </span>
-              <span style={{color:"#3b82f6",fontSize:12,marginTop:4}}>{open?"−":"+"}</span>
-            </button>
-            {open&&<div style={{padding:"0 14px 14px",paddingLeft:54}}>
-              <p style={{fontSize:12,color:"#bfdbfe",lineHeight:1.6,marginBottom:8}}><span style={{fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",color:"#60a5fa",display:"block",marginBottom:2}}>Why this order</span>{s.why}</p>
-              <p style={{fontSize:12,color:"#bfdbfe",lineHeight:1.6,margin:0}}><span style={{fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",color:"#60a5fa",display:"block",marginBottom:2}}>Do this</span>{s.act}</p>
-            </div>}
-          </div>);
-        })}
-
-        {/* YOUR NUMBERS */}
-        <div style={S.card}>
-          <button onClick={()=>setShowInputs(v=>!v)} style={{width:"100%",display:"flex",justifyContent:"space-between",padding:"12px 16px",background:"none",border:"none",cursor:"pointer"}}>
-            <span style={{fontSize:14,fontWeight:500,color:"#eff6ff"}}>Your numbers</span>
-            <span style={{color:"#60a5fa",fontSize:14}}>{showInputs?"Hide":"Edit"}</span>
-          </button>
-          {showInputs&&<div style={{padding:"0 16px 16px"}}>
-            <div style={{...S.grid2,gap:12,marginBottom:12}}>
-              <Field label="Age" value={age} onChange={setAge} min={16}/>
-              <Field label="Cash on hand" value={cashOnHand} onChange={setCashOnHand} prefix="$" step={100}/>
-              <Field label="Highest deductible" value={deductibleTarget} onChange={setDeductibleTarget} prefix="$" step={250}/>
-              <Field label="Emergency fund" value={efBalance} onChange={setEfBalance} prefix="$" step={100}/>
-              <Field label="EF target (months)" value={efMonths} onChange={v=>setEfMonths(clamp(v,3,6))} min={3}/>
-              <Field label="401k contribution" value={contribPct} onChange={setContribPct} suffix="%" step={0.5}/>
-              <Field label="Match cap" value={matchCapPct} onChange={setMatchCapPct} suffix="%" step={0.5}/>
-              <Field label="Roth IRA this year" value={rothCur} onChange={setRothCur} prefix="$" step={100}/>
-              <Field label="Future expenses goal" value={prepaidTarget} onChange={setPrepaidTarget} prefix="$" step={500}/>
-              <Field label="Saved toward it" value={prepaidBal} onChange={setPrepaidBal} prefix="$" step={500}/>
-              {hdhp&&<Field label="HSA this year" value={hsaCur} onChange={setHsaCur} prefix="$" step={100}/>}
-            </div>
-            <div style={{display:"flex",flexDirection:"column",gap:8}}>
-              <Toggle label="On a high-deductible health plan (HSA eligible)" on={hdhp} onChange={setHdhp}/>
-              {hdhp&&<Toggle label="Family HDHP coverage" on={hsaFamilyPlan} onChange={setHsaFamilyPlan}/>}
-              <Toggle label={`Apply ${growthRate}% annual growth to invested buckets`} on={growthOn} onChange={setGrowthOn}/>
-              {growthOn&&<Field label="Growth rate" value={growthRate} onChange={setGrowthRate} suffix="%/yr" step={0.5}/>}
-            </div>
-            <div style={{marginTop:12}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                <span style={{fontSize:11,textTransform:"uppercase",letterSpacing:"0.08em",color:"rgba(147,197,253,0.8)"}}>Debts (minimums inside your expenses)</span>
-                <button onClick={addDebt} style={{fontSize:12,color:"#93c5fd",border:"1px solid rgba(30,64,175,0.6)",borderRadius:20,padding:"2px 10px",background:"none",cursor:"pointer"}}>+ Add</button>
-              </div>
-              {debts.length===0&&<p style={{fontSize:12,color:"#3b82f6"}}>No debts — steps 3 and 9 read from this list.</p>}
-              {debts.map(d=><div key={d.id} style={{borderRadius:8,background:"rgba(8,24,51,0.5)",border:"1px solid rgba(30,64,175,0.6)",padding:10,marginBottom:8}}>
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                  <input style={{flex:1,background:"transparent",fontSize:14,color:"#eff6ff",outline:"none",border:"none",borderBottom:"1px solid rgba(30,64,175,0.6)",paddingBottom:2}} value={d.name} onChange={e=>setDebt(d.id,"name",e.target.value)}/>
-                  <span style={{fontSize:10,padding:"2px 8px",borderRadius:20,background:d.apr>6?"rgba(239,68,68,0.2)":"rgba(30,58,138,0.5)",color:d.apr>6?"#fca5a5":"#93c5fd"}}>{d.apr>6?"Step 3":"Step 9"}</span>
-                  <button onClick={()=>rmDebt(d.id)} style={{color:"#3b82f6",background:"none",border:"none",cursor:"pointer",fontSize:12}}>✕</button>
-                </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-                  <Field label="Balance" value={d.balance} onChange={v=>setDebt(d.id,"balance",v)} prefix="$" step={100}/>
-                  <Field label="APR" value={d.apr} onChange={v=>setDebt(d.id,"apr",v)} suffix="%" step={0.1}/>
-                  <Field label="Min /mo" value={d.min} onChange={v=>setDebt(d.id,"min",v)} prefix="$" step={10}/>
-                </div>
-              </div>)}
-            </div>
-          </div>}
-        </div>
-
-        {/* IRS LIMITS */}
-        <div style={S.card}>
-          <button onClick={()=>setShowAssumptions(v=>!v)} style={{width:"100%",display:"flex",justifyContent:"space-between",padding:"12px 16px",background:"none",border:"none",cursor:"pointer"}}>
-            <span style={{fontSize:14,fontWeight:500,color:"#eff6ff"}}>2026 IRS limits</span>
-            <span style={{color:"#60a5fa",fontSize:14}}>{showAssumptions?"Hide":"Edit"}</span>
-          </button>
-          {showAssumptions&&<div style={{padding:"0 16px 16px",...S.grid2,gap:12}}>
-            <Field label="401k limit" value={limits.k401} onChange={v=>setLimits({...limits,k401:v})} prefix="$" step={500}/>
-            <Field label="401k catch-up 50+" value={limits.k401Catchup} onChange={v=>setLimits({...limits,k401Catchup:v})} prefix="$" step={500}/>
-            <Field label="IRA limit" value={limits.ira} onChange={v=>setLimits({...limits,ira:v})} prefix="$" step={500}/>
-            <Field label="IRA catch-up 50+" value={limits.iraCatchup} onChange={v=>setLimits({...limits,iraCatchup:v})} prefix="$" step={100}/>
-            <Field label="HSA self" value={limits.hsaSelf} onChange={v=>setLimits({...limits,hsaSelf:v})} prefix="$" step={50}/>
-            <Field label="HSA family" value={limits.hsaFamily} onChange={v=>setLimits({...limits,hsaFamily:v})} prefix="$" step={50}/>
-          </div>}
-        </div>
-
-        <p style={{fontSize:11,color:"rgba(96,165,250,0.5)",textAlign:"center",marginTop:24,lineHeight:1.6}}>Inspired by The Money Guy Show's Financial Order of Operations. Educational tool, not financial advice.</p>
-      </div>
-    </div>
-  );
-}
-
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
-</script>
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/demo-persona.js"></script>
+<script src="foo-ladder.js"></script>
 </body>
 </html>
