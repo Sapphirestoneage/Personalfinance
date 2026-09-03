@@ -1,0 +1,4 @@
+/* Type for the navy-sapphire system. One import so a room includes one line.
+   Fraunces = display/headline. Space Grotesk = body/UI.
+   Both have real fallbacks so a blocked font request degrades, not breaks. */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap');

@@ -1,0 +1,54 @@
+{
+  "id": "effective_tax_rates",
+  "version": "2026.1",
+  "asOf": "2026-01-01",
+  "taxYear": 2026,
+  "precision": "approximate",
+  "source": "Blended estimate of federal income tax plus the employee half of FICA (7.65%), by gross income band.",
+  "note": "MVP placeholder per SPEC.md Section 10. This is a flat effective-rate LOOKUP, not a tax engine: it does not model deductions, credits, state income tax, or marginal brackets. Calculator code must read this file rather than inlining rates, so a real engine can replace it without touching any calculator.",
+  "unit": "decimal fraction of gross income",
+  "brackets": {
+    "single": [
+      { "upToGrossIncome": 15000,  "effectiveRate": 0.08 },
+      { "upToGrossIncome": 30000,  "effectiveRate": 0.12 },
+      { "upToGrossIncome": 50000,  "effectiveRate": 0.16 },
+      { "upToGrossIncome": 75000,  "effectiveRate": 0.19 },
+      { "upToGrossIncome": 100000, "effectiveRate": 0.21 },
+      { "upToGrossIncome": 150000, "effectiveRate": 0.24 },
+      { "upToGrossIncome": 200000, "effectiveRate": 0.27 },
+      { "upToGrossIncome": 300000, "effectiveRate": 0.30 },
+      { "upToGrossIncome": 500000, "effectiveRate": 0.33 },
+      { "upToGrossIncome": null,   "effectiveRate": 0.37 }
+    ],
+    "married_joint": [
+      { "upToGrossIncome": 30000,  "effectiveRate": 0.08 },
+      { "upToGrossIncome": 60000,  "effectiveRate": 0.11 },
+      { "upToGrossIncome": 90000,  "effectiveRate": 0.14 },
+      { "upToGrossIncome": 130000, "effectiveRate": 0.17 },
+      { "upToGrossIncome": 200000, "effectiveRate": 0.20 },
+      { "upToGrossIncome": 300000, "effectiveRate": 0.24 },
+      { "upToGrossIncome": 500000, "effectiveRate": 0.28 },
+      { "upToGrossIncome": null,   "effectiveRate": 0.33 }
+    ],
+    "married_separate": [
+      { "upToGrossIncome": 15000,  "effectiveRate": 0.08 },
+      { "upToGrossIncome": 30000,  "effectiveRate": 0.12 },
+      { "upToGrossIncome": 50000,  "effectiveRate": 0.16 },
+      { "upToGrossIncome": 75000,  "effectiveRate": 0.20 },
+      { "upToGrossIncome": 100000, "effectiveRate": 0.22 },
+      { "upToGrossIncome": 150000, "effectiveRate": 0.25 },
+      { "upToGrossIncome": 200000, "effectiveRate": 0.28 },
+      { "upToGrossIncome": null,   "effectiveRate": 0.34 }
+    ],
+    "head_of_household": [
+      { "upToGrossIncome": 20000,  "effectiveRate": 0.08 },
+      { "upToGrossIncome": 40000,  "effectiveRate": 0.11 },
+      { "upToGrossIncome": 65000,  "effectiveRate": 0.15 },
+      { "upToGrossIncome": 90000,  "effectiveRate": 0.18 },
+      { "upToGrossIncome": 130000, "effectiveRate": 0.21 },
+      { "upToGrossIncome": 200000, "effectiveRate": 0.25 },
+      { "upToGrossIncome": 350000, "effectiveRate": 0.29 },
+      { "upToGrossIncome": null,   "effectiveRate": 0.34 }
+    ]
+  }
+}

@@ -1,0 +1,316 @@
+/* ==========================================================================
+   SPARKS / SLAF — navy-sapphire design system
+   --------------------------------------------------------------------------
+   The single source of truth for colour and type across every room.
+   Rooms must reference these custom properties. Never hardcode a hex value
+   in a room file — see SPEC.md Section 0.5 and DECISIONS.md entry D-002.
+
+   Type: Fraunces (display), Space Grotesk (body/UI).
+   Both are loaded by shared/fonts.css so a room includes one line, not two.
+   ========================================================================== */
+
+:root {
+  /* ---- Core navy scale ------------------------------------------------ */
+  --navy-950: #050F22;
+  --navy-900: #081833;
+  --navy-850: #0A1E44;
+  --navy-800: #0B2249;
+  --navy-750: #0F2650;
+  --navy-700: #16305E;
+  --navy-600: #1E3A8A;
+
+  /* ---- Sapphire scale ------------------------------------------------- */
+  --sapphire-600: #1D4ED8;
+  --sapphire-500: #2E6FE8;
+  --sapphire-400: #3B82F6;
+  --sapphire-300: #60A5FA;
+  --sapphire-200: #7FB0FF;
+  --sapphire-100: #93C5FD;
+  --sapphire-050: #EFF6FF;
+
+  /* ---- Semantic surfaces ---------------------------------------------- */
+  --color-bg: var(--navy-900);
+  --color-bg-gradient: linear-gradient(180deg, #081833 0%, #0B2249 45%, #081833 100%);
+  --color-surface: rgba(15, 38, 80, 0.30);
+  --color-surface-raised: rgba(15, 38, 80, 0.55);
+  --color-surface-active: rgba(37, 99, 235, 0.15);
+  --color-border: rgba(30, 64, 175, 0.40);
+  --color-border-strong: rgba(30, 64, 175, 0.60);
+  --color-border-active: rgba(96, 165, 250, 0.70);
+
+  /* ---- Semantic text --------------------------------------------------- */
+  --color-text: var(--sapphire-050);
+  --color-text-muted: var(--sapphire-100);
+  --color-text-subtle: rgba(147, 197, 253, 0.80);
+  --color-text-faint: rgba(96, 165, 250, 0.50);
+
+  /* ---- Interactive ----------------------------------------------------- */
+  --color-accent: var(--sapphire-500);
+  --color-accent-hover: var(--sapphire-400);
+  --color-accent-contrast: #051025;
+  --color-focus-ring: var(--sapphire-200);
+
+  /* ---- Status ---------------------------------------------------------- */
+  /* Status hues sit outside the brand scale on purpose: they must read as
+     signal, not decoration. Kept deliberately desaturated so they don't
+     fight the navy ground. */
+  --color-positive: #4CC38A;
+  --color-caution: #E8B84B;
+  --color-critical: #E5484D;
+  --color-neutral: var(--sapphire-100);
+
+  /* ---- Typography ------------------------------------------------------ */
+  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+  --font-body: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
+
+  --text-xs: 0.6875rem;   /* 11px — eyebrow / meta */
+  --text-sm: 0.8125rem;   /* 13px — secondary */
+  --text-base: 0.875rem;  /* 14px — body / UI default */
+  --text-md: 1rem;        /* 16px */
+  --text-lg: 1.25rem;     /* 20px */
+  --text-xl: 1.625rem;    /* 26px */
+  --text-2xl: 2.25rem;    /* 36px — hero figure */
+
+  --leading-tight: 1.15;
+  --leading-normal: 1.5;
+  --leading-loose: 1.65;
+  --tracking-eyebrow: 0.08em;
+
+  /* ---- Space / shape --------------------------------------------------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgba(5, 15, 34, 0.4);
+  --shadow-raised: 0 8px 24px rgba(5, 15, 34, 0.45);
+
+  --measure: 480px;   /* canonical room column width */
+}
+
+/* ==========================================================================
+   Base element styling shared by every room
+   ========================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body.slaf {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-bg);
+  background-image: var(--color-bg-gradient);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+.slaf-wrap {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 var(--space-4) var(--space-7);
+}
+
+h1, h2, h3, .slaf-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  margin: 0;
+}
+
+h1 { font-size: var(--text-xl); }
+h2 { font-size: var(--text-lg); }
+h3 { font-size: var(--text-md); }
+
+.slaf-eyebrow {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-text-subtle);
+}
+
+.slaf-card {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+  box-shadow: var(--shadow-card);
+}
+
+.slaf-card--active {
+  border-color: var(--color-border-active);
+  background: var(--color-surface-active);
+}
+
+/* ---- Inputs -------------------------------------------------------------
+   Inputs ship EMPTY with a format-only placeholder. Never a pre-filled
+   value attribute. See SPEC.md Section 5 rule 1 and Section 5.1.          */
+
+.slaf-field { display: block; margin-bottom: var(--space-3); }
+
+.slaf-field > .slaf-label {
+  display: block;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-text-subtle);
+  margin-bottom: var(--space-1);
+}
+
+.slaf-input-shell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-strong);
+  padding: 0 var(--space-3);
+  transition: border-color 150ms ease;
+}
+
+.slaf-input-shell:focus-within { border-color: var(--color-border-active); }
+
+.slaf-input-shell > .slaf-affix {
+  color: var(--color-accent-hover);
+  font-size: var(--text-base);
+  flex-shrink: 0;
+}
+
+.slaf-input-shell > input,
+.slaf-input-shell > select {
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: var(--space-2) 0;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-variant-numeric: tabular-nums;
+}
+
+.slaf-input-shell > select { color: var(--color-text); }
+.slaf-input-shell > select option { background: var(--navy-800); color: var(--color-text); }
+
+.slaf-input-shell > input::placeholder { color: var(--color-text-faint); }
+
+/* Hide number spinners — they invite scroll-wheel edits on a money field. */
+.slaf-input-shell > input[type="number"]::-webkit-outer-spin-button,
+.slaf-input-shell > input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none; margin: 0;
+}
+.slaf-input-shell > input[type="number"] { -moz-appearance: textfield; }
+
+.slaf-hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+  margin-top: var(--space-1);
+}
+
+/* ---- Buttons ------------------------------------------------------------ */
+
+.slaf-btn {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.slaf-btn:hover { border-color: var(--color-border-active); }
+
+.slaf-btn--primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-weight: 600;
+}
+
+.slaf-btn--primary:hover { background: var(--color-accent-hover); }
+
+.slaf-btn--quiet {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-accent-hover);
+  padding-left: 0;
+  padding-right: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---- Output values ------------------------------------------------------
+   An incomplete output renders an em dash plus a reason. It never renders
+   $0, 0%, NaN, or a stale figure. See SPEC.md Section 5 rule 2.           */
+
+.slaf-figure {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--leading-tight);
+}
+
+.slaf-figure--incomplete { color: var(--color-text-faint); }
+.slaf-figure--negative { color: var(--color-critical); }
+
+.slaf-reason {
+  font-size: var(--text-sm);
+  color: var(--color-text-faint);
+  margin-top: var(--space-1);
+}
+
+.slaf-flag {
+  border-left: 3px solid var(--color-caution);
+  background: rgba(232, 184, 75, 0.08);
+  padding: var(--space-2) var(--space-3);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-2);
+}
+
+.slaf-flag--critical {
+  border-left-color: var(--color-critical);
+  background: rgba(229, 72, 77, 0.08);
+}
+
+/* ---- Progress ----------------------------------------------------------- */
+
+.slaf-bar {
+  height: 6px;
+  width: 100%;
+  border-radius: var(--radius-pill);
+  background: rgba(30, 58, 138, 0.4);
+  overflow: hidden;
+}
+
+.slaf-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  transition: width 600ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

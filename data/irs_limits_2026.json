@@ -1,0 +1,18 @@
+{
+  "id": "irs_limits",
+  "version": "2026.1",
+  "asOf": "2026-01-01",
+  "taxYear": 2026,
+  "source": "Contribution limits as carried by the existing FOO room; re-verify against IRS Notice for the plan year before relying on them.",
+  "precision": "unverified-against-primary-source",
+  "note": "IRS-defined and changes annually. Year-tagged per SPEC.md Section 7. Never inline these in a calculator.",
+  "unit": "US dollars per year",
+  "limits": {
+    "elective401k": 24500,
+    "elective401kCatchup50Plus": 8000,
+    "ira": 7500,
+    "iraCatchup50Plus": 1100,
+    "hsaSelfOnly": 4400,
+    "hsaFamily": 8750
+  }
+}
