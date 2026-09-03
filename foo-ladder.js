@@ -1,6 +1,6 @@
 /* GENERATED FILE — do not edit.
- * Source: rooms/foo-ladder.jsx. Regenerate with:
- *   npx @babel/cli --presets @babel/preset-react rooms/foo-ladder.jsx -o rooms/foo-ladder.js
+ * Source: foo-ladder.jsx. Regenerate with:
+ *   npx @babel/cli --presets @babel/preset-react foo-ladder.jsx -o foo-ladder.js
  * The JSX is kept alongside so this file is never the only copy.
  */
 const {
@@ -333,7 +333,7 @@ function App() {
     Spine.registerRoom(ROOM_ID);
     seedFrom(Spine.getProfile());
     setSeeded(true);
-    Reference.load(['irsLimits'], '../data/').then(t => {
+    Reference.load(['irsLimits']).then(t => {
       const L = t.irsLimits.limits;
       setLimits({
         k401: L.elective401k,
@@ -705,7 +705,7 @@ function App() {
     className: "wrap"
   }, /*#__PURE__*/React.createElement("a", {
     className: "back",
-    href: "../index.html"
+    href: "map.html"
   }, "\u2190 All rooms"), /*#__PURE__*/React.createElement("header", {
     style: {
       paddingTop: 16,

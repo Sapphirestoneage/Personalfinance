@@ -35,14 +35,26 @@
 
   var cache = {};
 
+  /* Where this file itself was loaded from. data/ sits beside shared/, so
+     resolving '../data/' against this URL gives the right path from ANY page,
+     at any depth, without the room having to know how deep it is. */
+  var SELF_URL = (typeof document !== 'undefined' && document.currentScript)
+    ? document.currentScript.src : null;
+
+  function defaultBase() {
+    if (!SELF_URL || typeof URL === 'undefined') return 'data/';
+    return new URL('../data/', SELF_URL).href;
+  }
+
   /**
    * Load the named tables (default: all). Browser only — resolves with
    * { effectiveTaxRates, retirementMilestones, … }.
-   * `basePath` is the path from the calling page to data/, e.g. '../data/'.
+   * `basePath` is optional; omit it and the path is derived from where
+   * shared/reference.js itself was served from.
    */
   function load(names, basePath) {
     var wanted = names && names.length ? names : Object.keys(TABLE_FILES);
-    var base = basePath === undefined ? 'data/' : basePath;
+    var base = basePath === undefined ? defaultBase() : basePath;
     return Promise.all(wanted.map(function (name) {
       if (cache[name]) return Promise.resolve([name, cache[name]]);
       var file = TABLE_FILES[name];

@@ -204,8 +204,8 @@ thing that calls it. Nothing else may compute an age inline.
 
 ---
 
-## D-007 — the existing FOO app becomes a room; index.html becomes the Map
-**2026-09-03 · SPEC.md §12.6, §12.7**
+## D-007 — the FOO calculator stays at the site root; the Map is a subpage
+**2026-09-03 · SPEC.md §12.6, §12.7 · superseded once, see the amendment below**
 
 §12.6 and §12.7 describe `index.html` as the Map shell carrying the tag
 filter and the visited-rooms progress bar. The `index.html` on `main` was
@@ -216,10 +216,29 @@ the registry; `index.html` becomes the Map shell the spec describes. Nothing
 is deleted. `Inheritance FOO` — the unbundled JSX source of the same app —
 is left untouched at the repo root.
 
-**This changes what loads at the site root.** If the repo is published via
-GitHub Pages, visitors who bookmarked the calculator will land on the Map and
-need one click to reach it. Flagged rather than assumed; say the word and
-the two can swap back.
+**Amended the same day, at Eli's direction.** The swap was made and then
+reversed: moving the Map to the site root would have changed what an existing
+visitor lands on, and that was not worth the spec's tidiness.
+
+Final layout:
+
+- `index.html` — the FOO calculator, at the root, where it has always been.
+  Its precompiled script and JSX sit beside it as `foo-ladder.js` /
+  `foo-ladder.jsx`.
+- `map.html` — the Map shell, a subpage, carrying the tag filter and the
+  visited-rooms progress bar §12.6/§12.7 describe.
+- `rooms/` — every other room.
+
+Registry `href` values are relative to `map.html`, which lives at the root, so
+`index.html` and `rooms/financial-snapshot.html` both resolve correctly from
+it. `Inheritance FOO` — the app's original unbundled JSX — is left untouched
+at the repo root.
+
+One thing this move surfaced: rooms were passing a hand-written `'../data/'`
+to `Reference.load()`, which breaks the moment a room changes depth.
+`shared/reference.js` now resolves `data/` against its own script URL, so no
+room knows or cares how deep it sits. Same principle that lets one
+`shared/fonts.css` serve every page.
 
 `foo-ladder` declares no `subsections` in the registry. It is a single-view
 React app with no stable section anchors, and inventing ids for it would mean
@@ -403,5 +422,5 @@ copy lands.
 - **`foo-ladder` writes nothing back to the household** — see D-010. It needs
   the Cash Flow and Goal Costing engines before its step inputs have a home
   in the schema.
-- **Whether `index.html` should be the Map or the FOO calculator** — the swap
-  in D-007 changes what loads at the site root. Reversible in one commit.
+- ~~Whether `index.html` should be the Map or the FOO calculator~~ —
+  resolved: the calculator keeps the root, the Map is `map.html`. See D-007.

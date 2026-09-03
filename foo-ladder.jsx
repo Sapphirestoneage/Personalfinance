@@ -198,7 +198,7 @@ function App() {
     Spine.registerRoom(ROOM_ID);
     seedFrom(Spine.getProfile());
     setSeeded(true);
-    Reference.load(['irsLimits'], '../data/').then(t => {
+    Reference.load(['irsLimits']).then(t => {
       const L = t.irsLimits.limits;
       setLimits({
         k401: L.elective401k, k401Catchup: L.elective401kCatchup50Plus,
@@ -430,7 +430,7 @@ function App() {
   return (
     <div className="page">
       <div className="wrap">
-        <a className="back" href="../index.html">← All rooms</a>
+        <a className="back" href="map.html">← All rooms</a>
 
         <header style={{ paddingTop: 16, paddingBottom: 20, textAlign: "center" }}>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>

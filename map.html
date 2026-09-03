@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SPARKS · Money rooms</title>
+<meta name="description" content="Small, sharp money tools that share one set of numbers. Start anywhere."/>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<style>
+  .hero { max-width: var(--measure); margin: 0 auto; padding: var(--space-7) var(--space-4) var(--space-5); text-align: center; }
+  .hero h1 { font-size: var(--text-2xl); }
+  .hero p { color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+
+  .progress { max-width: var(--measure); margin: 0 auto var(--space-5); padding: 0 var(--space-4); }
+  .progress-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-2); }
+  .progress-count { font-family: var(--font-display); font-size: var(--text-md); font-variant-numeric: tabular-nums; }
+
+  .filters { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: center; margin-bottom: var(--space-5); }
+  .filter {
+    font-family: var(--font-body); font-size: var(--text-sm);
+    border-radius: var(--radius-pill); border: 1px solid var(--color-border-strong);
+    background: var(--color-surface-raised); color: var(--color-text-muted);
+    padding: var(--space-1) var(--space-4); cursor: pointer; text-transform: capitalize;
+    transition: all 150ms ease;
+  }
+  .filter:hover { border-color: var(--color-border-active); color: var(--color-text); }
+  .filter[aria-pressed="true"] {
+    background: var(--color-accent); border-color: var(--color-accent);
+    color: var(--color-accent-contrast); font-weight: 600;
+  }
+
+  .room {
+    display: block; text-decoration: none; color: inherit;
+    border-radius: var(--radius-lg); border: 1px solid var(--color-border);
+    background: var(--color-surface); padding: var(--space-4);
+    margin-bottom: var(--space-3); transition: border-color 150ms ease, background 150ms ease;
+  }
+  .room:hover { border-color: var(--color-border-active); background: var(--color-surface-active); }
+  .room-top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+  .room h2 { font-size: var(--text-lg); }
+  .room p { color: var(--color-text-muted); font-size: var(--text-sm); margin: var(--space-2) 0 var(--space-3); }
+  .room-tags { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+  .tag {
+    font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow);
+    color: var(--color-text-subtle); border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill); padding: 2px var(--space-2);
+  }
+  .visited { font-size: var(--text-xs); color: var(--color-positive); white-space: nowrap; }
+  .empty { text-align: center; color: var(--color-text-faint); padding: var(--space-6) 0; }
+  .foot { text-align: center; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-6); line-height: var(--leading-loose); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="hero">
+  <h1>Money rooms</h1>
+  <p>Small, sharp tools that share one set of numbers. Fill something in once; it follows you into the next room.</p>
+</header>
+
+<section class="progress" aria-label="Progress">
+  <div class="progress-head">
+    <span class="slaf-eyebrow">Rooms visited</span>
+    <span class="progress-count" id="progress-count">—</span>
+  </div>
+  <div class="slaf-bar"><span id="progress-bar" style="width:0"></span></div>
+</section>
+
+<main class="slaf-wrap">
+  <div class="filters" id="filters" role="group" aria-label="Filter rooms by topic"></div>
+  <div id="room-list"></div>
+  <p class="foot">
+    Educational tools, not financial advice. Everything you type stays in this browser —
+    nothing is sent anywhere.
+  </p>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/registry.js"></script>
+<script src="shared/spine-v2.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Registry = SLAF.Registry, Spine = SLAF.Spine;
+
+  /* SPEC.md §12.6 — the picker stays as the existing tag filter. */
+  var activeTag = 'all';
+
+  function el(id) { return document.getElementById(id); }
+
+  function renderFilters() {
+    var wrap = el('filters');
+    wrap.innerHTML = '';
+    ['all'].concat(Registry.FILTER_TAGS).forEach(function (tag) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'filter';
+      btn.textContent = tag;
+      btn.setAttribute('aria-pressed', String(tag === activeTag));
+      btn.addEventListener('click', function () {
+        activeTag = tag;
+        renderFilters();
+        renderRooms();
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  function renderRooms() {
+    var visited = Spine.getVisitedRooms();
+    var rooms = Registry.byTag(activeTag);
+    var list = el('room-list');
+    list.innerHTML = '';
+
+    if (!rooms.length) {
+      list.innerHTML = '<p class="empty">No rooms tagged “' + activeTag + '” yet.</p>';
+      return;
+    }
+
+    rooms.forEach(function (room) {
+      var seen = visited.indexOf(room.id) !== -1;
+      var a = document.createElement('a');
+      a.className = 'room';
+      a.href = room.href;
+      a.innerHTML =
+        '<div class="room-top"><h2>' + room.title + '</h2>'
+        + (seen ? '<span class="visited">✓ visited</span>' : '') + '</div>'
+        + '<p>' + room.blurb + '</p>'
+        + '<div class="room-tags">'
+        + room.tags.map(function (t) { return '<span class="tag">' + t + '</span>'; }).join('')
+        + '</div>';
+      list.appendChild(a);
+    });
+  }
+
+  /* SPEC.md §12.7 — a plain visited-rooms progress bar off getVisitedRooms().
+     No XP, no streaks, no score. "N of {total in registry}". */
+  function renderProgress() {
+    var total = Registry.total();
+    /* Count only ids the registry still knows about, so a renamed or removed
+       room can't push the bar past 100%. */
+    var known = Registry.all().map(function (r) { return r.id; });
+    var seen = Spine.getVisitedRooms().filter(function (id) { return known.indexOf(id) !== -1; });
+    el('progress-count').textContent = seen.length + ' of ' + total;
+    el('progress-bar').style.width = (total === 0 ? 0 : (seen.length / total) * 100) + '%';
+  }
+
+  function renderAll() { renderProgress(); renderRooms(); }
+
+  renderFilters();
+  renderAll();
+  Spine.onChange(renderAll);
+  /* Returning from a room via the back button should show it as visited. */
+  window.addEventListener('pageshow', renderAll);
+})();
+</script>
+</body>
+</html>

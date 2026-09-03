@@ -83,7 +83,7 @@
 <body class="slaf">
 
 <header class="room-head">
-  <a class="room-back" href="../index.html">← All rooms</a>
+  <a class="room-back" href="../map.html">← All rooms</a>
   <h1>Financial Snapshot</h1>
   <p class="room-lede">Ten numbers in. Nine out — including the one that says which step you're actually standing on.</p>
 </header>
@@ -862,7 +862,7 @@
   Spine.onChange(render);
   render();
 
-  Reference.load(null, '../data/').then(function (tables) {
+  Reference.load().then(function (tables) {
     TABLES = tables;
     render();
     jumpToHash();

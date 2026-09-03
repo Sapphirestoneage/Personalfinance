@@ -44,11 +44,13 @@
       id: 'foo-ladder',
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
-      href: 'rooms/foo-ladder.html',
+      href: 'index.html',
       tier: 0,
       tags: ['cashflow', 'debt'],
-      /* This room is a single-view React app with no stable section anchors
-         yet. Declaring none is deliberate — see DECISIONS.md D-007. */
+      /* The FOO calculator sits at the repo root (index.html), so this href
+         is relative to map.html, which also lives at the root. A single-view
+         React app with no stable section anchors yet; declaring none is
+         deliberate — see DECISIONS.md D-007. */
       subsections: []
     }
   ];
