@@ -13,35 +13,91 @@
     "dtiComfortCeiling": 0.36,
     "dtiHousingGuideline": 0.28,
     "savingsRateBenchmarkFloor": 0.15,
-    "savingsRateBenchmarkLow": 0.10
+    "savingsRateBenchmarkLow": 0.1,
+    "revolvingShareCeiling": 0.3
   },
   "ladder": [
-    { "step": 0, "key": "cover_basics",        "label": "Cover basic living expenses + enrol in employer benefits" },
-    { "step": 1, "key": "starter_ef",          "label": "Starter emergency fund (~$1,000 or 1 month of expenses)" },
-    { "step": 2, "key": "employer_match",      "label": "Capture the full employer 401(k) match" },
-    { "step": 3, "key": "high_interest_debt",  "label": "Pay off high-interest debt (above ~7–8%)" },
-    { "step": 4, "key": "full_ef",             "label": "Build the full emergency fund (3–6 months)" },
-    { "step": 5, "key": "max_hsa",             "label": "Max the HSA if eligible" },
-    { "step": 6, "key": "max_roth_ira",        "label": "Max a Roth IRA (or backdoor Roth)" },
-    { "step": 7, "key": "max_tax_advantaged",  "label": "Max remaining tax-advantaged space (401k, etc.)" },
-    { "step": 8, "key": "hyper_accumulation",  "label": "Hyper-accumulation / taxable brokerage" },
-    { "step": 9, "key": "prepay_low_interest", "label": "Prepay low-interest debt or fund other goals" }
+    {
+      "step": 0,
+      "key": "cover_basics",
+      "label": "Cover basic living expenses + enrol in employer benefits"
+    },
+    {
+      "step": 1,
+      "key": "starter_ef",
+      "label": "Starter emergency fund (~$1,000 or 1 month of expenses)"
+    },
+    {
+      "step": 2,
+      "key": "employer_match",
+      "label": "Capture the full employer 401(k) match"
+    },
+    {
+      "step": 3,
+      "key": "high_interest_debt",
+      "label": "Pay off high-interest debt (above ~7–8%)"
+    },
+    {
+      "step": 4,
+      "key": "full_ef",
+      "label": "Build the full emergency fund (3–6 months)"
+    },
+    {
+      "step": 5,
+      "key": "max_hsa",
+      "label": "Max the HSA if eligible"
+    },
+    {
+      "step": 6,
+      "key": "max_roth_ira",
+      "label": "Max a Roth IRA (or backdoor Roth)"
+    },
+    {
+      "step": 7,
+      "key": "max_tax_advantaged",
+      "label": "Max remaining tax-advantaged space (401k, etc.)"
+    },
+    {
+      "step": 8,
+      "key": "hyper_accumulation",
+      "label": "Hyper-accumulation / taxable brokerage"
+    },
+    {
+      "step": 9,
+      "key": "prepay_low_interest",
+      "label": "Prepay low-interest debt or fund other goals"
+    }
   ],
   "outOfBoundsFlags": [
-    { "key": "ef_alongside_high_interest_debt", "severity": "critical",
+    {
+      "key": "ef_alongside_high_interest_debt",
+      "severity": "critical",
       "label": "Emergency fund sitting alongside high-interest debt",
-      "guidance": "Cash earning near nothing while a balance compounds above 7.5% is a losing trade. Keep the starter fund; send the rest at the debt." },
-    { "key": "match_left_on_table", "severity": "critical",
+      "guidance": "Cash earning near nothing while a balance compounds above 7.5% is a losing trade. Keep the starter fund; send the rest at the debt."
+    },
+    {
+      "key": "match_left_on_table",
+      "severity": "critical",
       "label": "Not capturing the full employer match",
-      "guidance": "This is the only guaranteed return in the whole ladder. Contributing up to the cap comes before almost everything else." },
-    { "key": "dti_above_ceiling", "severity": "warning",
+      "guidance": "This is the only guaranteed return in the whole ladder. Contributing up to the cap comes before almost everything else."
+    },
+    {
+      "key": "dti_above_ceiling",
+      "severity": "warning",
       "label": "Debt-to-income above 36%",
-      "guidance": "Above the range most lenders treat as comfortable. It does not mean anything is wrong today — it does narrow your options." },
-    { "key": "savings_rate_below_benchmark", "severity": "warning",
+      "guidance": "Above the range most lenders treat as comfortable. It does not mean anything is wrong today — it does narrow your options."
+    },
+    {
+      "key": "savings_rate_below_benchmark",
+      "severity": "warning",
       "label": "Savings rate below the 10–15% benchmark",
-      "guidance": "Below the range typically used as a floor. Worth checking against your expenses before treating it as a fact." },
-    { "key": "high_utilisation_vs_debt_load", "severity": "warning",
+      "guidance": "Below the range typically used as a floor. Worth checking against your expenses before treating it as a fact."
+    },
+    {
+      "key": "high_utilisation_vs_debt_load",
+      "severity": "warning",
       "label": "High revolving balance relative to total debt",
-      "guidance": "A large share of your debt is revolving credit, which usually carries the highest rate and the most volatile minimum payment." }
+      "guidance": "A large share of your debt is revolving credit, which usually carries the highest rate and the most volatile minimum payment."
+    }
   ]
 }
