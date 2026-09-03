@@ -36,7 +36,8 @@
     debtRules: 'debt_rules.json',
     fireVariants: 'fire_variants.json',
     seTax: 'se_tax_2026.json',
-    goalTemplates: 'goal_templates.json'
+    goalTemplates: 'goal_templates.json',
+    liquidityBenchmarks: 'liquidity_benchmarks.json'
   };
 
   var cache = {};
@@ -206,6 +207,38 @@
     return outOfRange('below_chart', 'Could not place this value on the chart.', meta);
   }
 
+  /* ---- Liquidity band ---------------------------------------------------
+     Which conventional coverage band a number of months of expenses falls
+     in. Context for a self-reported SWAN Number, never a verdict on it —
+     see data/liquidity_benchmarks.json. SPEC.md §13, Tier 1.5.          */
+
+  function lookupLiquidityBand(table, months) {
+    if (!table) return Money.incomplete('Liquidity benchmark table is not loaded.', ['liquidityBenchmarks']);
+    if (!Money.isEntered(months)) {
+      return Money.incomplete('Needs a number of months to place.', ['months']);
+    }
+    if (months < 0) {
+      return outOfRange('below_chart', 'A negative number of months has no band.',
+        { referenceVersion: table.version, referenceId: table.id });
+    }
+    var bands = table.bands;
+    for (var i = 0; i < bands.length; i++) {
+      var b = bands[i];
+      if (b.maxMonths === null || months <= b.maxMonths) {
+        return Money.ok(b.id, {
+          referenceVersion: table.version,
+          referenceId: table.id,
+          band: b,
+          label: b.label,
+          blurb: b.blurb
+        });
+      }
+    }
+    /* Unreachable while the last band has maxMonths === null. */
+    return outOfRange('above_chart', 'Beyond the last band.',
+      { referenceVersion: table.version, referenceId: table.id });
+  }
+
   /** Collect the version stamp of every table used, for a snapshot. */
   function versionsOf(tables) {
     var out = {};
@@ -221,6 +254,7 @@
     lookupEffectiveTaxRate: lookupEffectiveTaxRate,
     lookupRetirementMultiple: lookupRetirementMultiple,
     lookupNetWorthPercentile: lookupNetWorthPercentile,
+    lookupLiquidityBand: lookupLiquidityBand,
     versionsOf: versionsOf,
     _cache: cache
   };

@@ -39,6 +39,15 @@ const TARGETS = [
   ['/', '.grid2'],
   ['/rooms/cash-flow.html', '.cat-row']
 ];
+
+/* Cells that sit side by side as CARDS rather than as labelled controls.
+   Nothing in the list above can catch these: they hold no .slaf-input-shell,
+   so the control-alignment pass skips them entirely, and a short card beside
+   a tall one is exactly the unevenness this file exists to prevent. */
+const EQUAL_HEIGHT = [
+  ['/rooms/sleep-at-night.html', '.pair'],
+  ['/rooms/sleep-at-night.html', '.basis']
+];
 (async () => {
   if (!chromium) {
     console.log('SKIPPED — playwright is not installed.\n'
@@ -109,6 +118,32 @@ const TARGETS = [
         const ok = r.spread === 0 && r.bottomSpread === 0;
         if (!ok) bad++;
         console.log((ok ? '  ✓' : '  ✗') + ` ${width}px ${page} ${sel}[row ${i}]  top-spread=${r.spread}px bottom-spread=${r.bottomSpread}px labelHeights=${JSON.stringify(r.labels)}`);
+      });
+    }
+    for (const [page, sel] of EQUAL_HEIGHT) {
+      await p.goto(BASE + page, { waitUntil: 'networkidle' });
+      await p.waitForTimeout(600);
+      const rows = await p.evaluate((sel) => {
+        const out = [];
+        document.querySelectorAll(sel).forEach(grid => {
+          const byRow = {};
+          Array.from(grid.children).forEach(c => {
+            const t = Math.round(c.getBoundingClientRect().top);
+            (byRow[t] = byRow[t] || []).push(c);
+          });
+          Object.keys(byRow).forEach(t => {
+            const group = byRow[t];
+            if (group.length < 2) return;
+            const heights = group.map(c => Math.round(c.getBoundingClientRect().height));
+            out.push({ heights, spread: Math.max(...heights) - Math.min(...heights) });
+          });
+        });
+        return out;
+      }, sel);
+      rows.forEach((r, i) => {
+        const ok = r.spread === 0;
+        if (!ok) bad++;
+        console.log((ok ? '  ✓' : '  ✗') + ` ${width}px ${page} ${sel}[row ${i}]  height-spread=${r.spread}px heights=${JSON.stringify(r.heights)}`);
       });
     }
     await ctx.close();

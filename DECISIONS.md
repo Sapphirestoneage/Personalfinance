@@ -1020,6 +1020,77 @@ worse than asking.
 
 ---
 
+## D-028 — The SWAN Number is stored, never derived, and never graded
+
+**SPEC.md §13 Tier 1.5 asks for a "feeling-based liquid-savings benchmark…
+stored as a standalone user-set target, separate from computed Emergency Fund
+Coverage — display both side by side."** The whole value of the tool is in the
+word *separate*, so the separation is enforced in three places rather than
+just described:
+
+- `household.swan` is its own block, written only through
+  `Spine.setSwanTarget()`. No calculation writes it.
+- `engines/swan.js` reads Emergency Fund Coverage from `engines/tier0.js`
+  and passes the Result through untouched. It does not recompute it, and a
+  test asserts the two are the same object's value and that they differ for
+  the demo persona — a room that quietly made them agree would have lost the
+  point.
+- `shared/ownership.js` gives the field one owner, `sleep-at-night`. The
+  Financial Snapshot shows it beside Emergency Fund Coverage as a read-only
+  link, so there is no second place to type it.
+
+**Two ways to name it, and switching does not convert.** A person can say "I
+need $15,000" or "I need six months". Only the one they said is stored;
+`basis` records which, and the other stays null. The mirror figure is derived
+on read, so a months-based target moves when spending moves instead of going
+stale, and an amount-based one is never silently re-expressed. Switching the
+toggle deliberately clears the old figure: $15,000 and "6 months" are two
+different sentences, and converting one into the other puts words in
+someone's mouth.
+
+**A months-based target with no expenses entered has no dollar value.** It
+reports incomplete and says which input it wants — it does not fall back to
+$0. Conversely a target of *zero* is an affirmative answer: `isSet` is true,
+the comparison reports "already there", and only the coverage *ratio* refuses,
+because dividing by a zero target is the one thing that genuinely cannot be
+answered.
+
+**Bands are context, not a verdict.** `data/liquidity_benchmarks.json` holds
+the conventional 1/3/6/12-month milestones and the five bands around them.
+The room prints which band a number falls in and what that band usually
+means, and nothing anywhere tells a person their own number is wrong. The
+"Zombie Apocalypse Theory of Savings" copy (§13 Tier 2, explicitly content
+rather than code) is attached to the Emergency Fund Coverage output in the
+Snapshot, where it belongs, pointing at this room.
+
+**"What's left over each month" became one function.** The gap-closing
+estimate needed a monthly surplus, and there were two candidates already in
+the codebase: `CashFlow.netCashFlow()` (take-home minus every category
+entered) and Tier 0's own `annualSavingsCents` (take-home minus the monthly
+expenses figure). Rather than pick one and hardcode it, they are now behind
+`CashFlow.monthlySurplusCents()`, which prefers the categorised basis, falls
+back to Tier 0's, and always reports which it used — `basis: 'categorised'`
+or `'monthlyTotal'`. The room prints the caveat when it is on the fallback,
+because measuring against essential expenses only runs optimistic. Adding a
+third caller does not mean a third definition.
+
+**Room order.** Inserted at 6, after Net Worth and before FIRE: it needs cash
+and expenses, both of which are answered by then, and it reads better as the
+question you ask before the one about never working again. Everything from
+FIRE down shifted by one.
+
+**Compatibility note.** `household.swan` is new in schema version 2 and is
+back-filled by `createSwanTarget()` for any household stored before this
+existed, so a saved blob from an earlier session loads with
+`{basis: null, targetCents: null, targetMonths: null, note: null, setAt: null}`
+and every SWAN output reads "not named yet". Nothing else in the stored shape
+changed, no existing room reads or writes differently, and a future room
+wanting this number must call `Swan.targetCents()` rather than reaching for
+`household.swan.targetCents` directly — the latter is null half the time by
+design.
+
+---
+
 ## Still open
 
 - **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the

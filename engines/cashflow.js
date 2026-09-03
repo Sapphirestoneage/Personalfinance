@@ -249,6 +249,44 @@
     });
   }
 
+  /**
+   * What is actually free each month — the one place anything asks that.
+   *
+   * Two bases, in preference order, because a person who has only answered
+   * intake has no categories yet and would otherwise see an em dash where
+   * the useful number goes:
+   *
+   *   'categorised'  — take-home minus every category actually entered.
+   *                    Sharper, and the one to use once a month is tracked.
+   *   'monthlyTotal' — Tier 0's own annual savings figure over twelve.
+   *                    Same arithmetic Tier 0 already does for the savings
+   *                    rate, not a second definition of "left over", but it
+   *                    measures against ESSENTIAL expenses only and so runs
+   *                    optimistic wherever discretionary spending has not
+   *                    been entered.
+   *
+   * The basis is always reported back, because the two are not interchangeable
+   * and a caller showing the number should be able to say which it is.
+   */
+  function monthlySurplusCents(household, catalog, tables) {
+    var categorised = netCashFlow(household, catalog, tables);
+    if (Money.isOk(categorised)) {
+      return Money.ok(categorised.value, {
+        basis: 'categorised',
+        netMonthlyIncomeCents: categorised.netMonthlyIncomeCents,
+        spendMonthlyCents: categorised.spendMonthlyCents
+      });
+    }
+    var rate = Tier0.savingsRate(household, tables).excludingMatch;
+    if (!Money.isOk(rate)) return rate;
+    return Money.ok(Math.round(rate.annualSavingsCents / MONTHS_PER_YEAR), {
+      basis: 'monthlyTotal',
+      annualSavingsCents: rate.annualSavingsCents,
+      expenseSource: rate.expenseSource,
+      note: 'measured against essential expenses only'
+    });
+  }
+
   /* ---- Budget templates -------------------------------------------------
      Template logic is configuration (SPEC.md §13). This function knows how
      to compare against a split; it does not know what any split IS.       */
@@ -329,6 +367,7 @@
     summarise: summarise,
     netMonthlyIncomeCents: netMonthlyIncomeCents,
     netCashFlow: netCashFlow,
+    monthlySurplusCents: monthlySurplusCents,
     templateById: templateById,
     compareToTemplate: compareToTemplate,
     trackedEssentialCents: trackedEssentialCents

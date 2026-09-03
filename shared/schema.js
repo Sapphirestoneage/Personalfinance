@@ -92,6 +92,11 @@
     'goals[].monthlyContributionCents':          { class: 'raw',        unit: 'cents',   period: 'monthly' },
     'goals[].lineItems[].amountCents':           { class: 'raw',        unit: 'cents' },
     'computed.goalRequiredMonthlyCents':         { class: 'computed',   unit: 'cents',   period: 'monthly' },
+    'swan.basis':                                { class: 'raw',        unit: 'enum',    values: ['amount', 'months'], note: 'which of the two below the person actually named' },
+    'swan.targetCents':                          { class: 'raw',        unit: 'cents',   note: 'SWAN Number as a flat cash figure. SPEC.md §13 Tier 1.5' },
+    'swan.targetMonths':                         { class: 'raw',        unit: 'months',  note: 'SWAN Number expressed as months of expenses' },
+    'swan.note':                                 { class: 'raw',        unit: 'text',    note: 'why that number — the feeling the figure stands for' },
+    'computed.swanTargetCents':                  { class: 'computed',   unit: 'cents',   note: 'the resolved target, whichever basis was used' },
     'assumptions.expectedReturnRate':            { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.expectedReturnRate },
     'assumptions.swrRate':                       { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.swrRate },
 
@@ -268,6 +273,31 @@
     };
   }
 
+  /**
+   * The SWAN Number — SPEC.md §13, Tier 1.5. A self-reported "sleep well at
+   * night" liquid-savings target, stored STANDALONE and never conflated with
+   * computed Emergency Fund Coverage: one is a feeling, the other is
+   * arithmetic, and the room shows both side by side.
+   *
+   * Two ways to name it, one authoritative at a time:
+   *   basis 'amount' — a flat cash figure, in targetCents
+   *   basis 'months' — a multiple of monthly expenses, in targetMonths
+   * Whichever the person used is the one stored in `basis`; the other stays
+   * null rather than being back-filled, so re-reading it never silently
+   * pins a figure that was derived from an expense number that has since
+   * changed.
+   */
+  function createSwanTarget(fields) {
+    var f = fields || {};
+    return {
+      basis: f.basis === undefined ? null : f.basis,        // 'amount' | 'months' | null
+      targetCents: f.targetCents === undefined ? null : f.targetCents,
+      targetMonths: f.targetMonths === undefined ? null : f.targetMonths,
+      note: f.note === undefined ? null : f.note,
+      setAt: f.setAt === undefined ? null : f.setAt         // ISO timestamp
+    };
+  }
+
   function createHousehold(fields) {
     var f = fields || {};
     return {
@@ -293,6 +323,10 @@
            code path when import lands. See createExpenseEntry(). */
         entries: (f.expenses && (f.expenses.entries || f.expenses.categories)) || []
       },
+      /* The SWAN Number — a standalone self-reported target, owned by the
+         Sleep At Night room. Never derived from, and never written by, the
+         Emergency Fund Coverage calculation. SPEC.md §13 Tier 1.5. */
+      swan: createSwanTarget(f.swan),
       /* Goals — SPEC.md §9 item 6. Owned by the Goals room. */
       goals: (f.goals || []).map(createGoal),
       assumptions: Object.assign({}, ASSUMPTION_DEFAULTS, f.assumptions || {}),
@@ -556,6 +590,7 @@
     createExpenseEntry: createExpenseEntry,
     createGoal: createGoal,
     createGoalLineItem: createGoalLineItem,
+    createSwanTarget: createSwanTarget,
     resolveAssumptions: resolveAssumptions,
     personById: personById,
     primaryPerson: primaryPerson,

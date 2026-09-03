@@ -142,6 +142,15 @@
     <div class="slaf-figure" data-figure>—</div>
     <p class="slaf-reason" data-reason></p>
     <div data-detail></div>
+    <!-- SPEC.md §13 Tier 2, "Zombie Apocalypse Theory of Savings": content,
+         not code — contextual copy attached to this Tier 0 output. Paired
+         with the SWAN Number, which is the same idea made personal. -->
+    <p class="slaf-hint" style="margin-top:var(--space-3)">
+      This is arithmetic, not comfort. The months a spreadsheet says you have
+      and the months you <em>feel</em> you have are different numbers, and the
+      second one is the one that wakes you up. Name it next door.
+    </p>
+    <div id="ef-swan" style="margin-top:var(--space-3)"></div>
   </section>
 
   <section class="slaf-card" id="out-dti">
@@ -212,6 +221,7 @@
 <script src="../shared/ownership.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/foo.js"></script>
+<script src="../engines/swan.js"></script>
 <script>
 (function () {
   'use strict';
@@ -487,6 +497,7 @@
       excludingMatch: all.savingsRateExcludingMatch,
       includingMatch: all.savingsRateIncludingMatch
     });
+    el('ef-swan').innerHTML = Ownership.chip('swanTarget', h, ROOM_ID);
     setCard('out-emergency-fund', all.emergencyFundMonths,
       function (v) { return Money.formatMonths(v); },
       Money.isOk(all.emergencyFundMonths)

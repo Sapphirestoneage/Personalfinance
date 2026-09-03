@@ -376,6 +376,41 @@
     return false;
   }
 
+  /**
+   * Set (or clear) the SWAN Number. SPEC.md §13 Tier 1.5.
+   * Passing a basis clears the other basis's figure, so there is never a
+   * stale second target sitting behind the one on screen. Passing null
+   * clears the target entirely; the note survives on its own.
+   */
+  function setSwanTarget(fields) {
+    var h = load();
+    var f = fields || {};
+    var next = Schema.createSwanTarget(h.swan);
+
+    if (Object.prototype.hasOwnProperty.call(f, 'note')) next.note = f.note;
+
+    if (f.basis === 'amount') {
+      next.basis = 'amount';
+      next.targetCents = f.targetCents === undefined ? next.targetCents : f.targetCents;
+      next.targetMonths = null;
+      next.setAt = new Date().toISOString();
+    } else if (f.basis === 'months') {
+      next.basis = 'months';
+      next.targetMonths = f.targetMonths === undefined ? next.targetMonths : f.targetMonths;
+      next.targetCents = null;
+      next.setAt = new Date().toISOString();
+    } else if (f.basis === null) {
+      next.basis = null;
+      next.targetCents = null;
+      next.targetMonths = null;
+      next.setAt = null;
+    }
+
+    h.swan = next;
+    save(); notify();
+    return getProfile().swan;
+  }
+
   /** A persisted user override of an Assumption-class field. A "what if"
    *  a room is only previewing must NOT come through here — pass it as a
    *  local override to the calculator instead. SPEC.md §12.2. */
@@ -465,6 +500,7 @@
     upsertExpenseEntry: upsertExpenseEntry,
     removeExpenseEntry: removeExpenseEntry,
     setAssumptionOverride: setAssumptionOverride,
+    setSwanTarget: setSwanTarget,
     listSnapshots: listSnapshots,
     appendSnapshot: appendSnapshot,
     reset: reset,

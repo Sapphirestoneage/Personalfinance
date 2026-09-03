@@ -155,6 +155,22 @@
     /* Cash Flow owns spending. The estimate can be seeded during intake, but
        once a month is categorised the tracked figure is what everything uses
        — and that is only editable where the categories live. */
+    /* The SWAN Number lives in exactly one room, like every other shared
+       figure. It is a self-report, so nothing else may write it — and the
+       Snapshot, which shows computed Emergency Fund Coverage beside it,
+       links here rather than offering a second place to type it. */
+    swanTarget: {
+      label: 'Your sleep-at-night number', owner: 'sleep-at-night', anchor: 'number',
+      read: function (h) {
+        var Swan = (typeof module === 'object' && module.exports)
+          ? require('../engines/swan.js')
+          : (typeof self !== 'undefined' && self.SLAF && self.SLAF.Swan);
+        if (!Swan) return Money.incomplete('Not set yet.', ['swanTarget']);
+        return Swan.targetCents(h);
+      },
+      format: money
+    },
+
     monthlyExpenses: {
       label: 'Monthly expenses', owner: 'cash-flow', anchor: 'spending',
       read: function (h) { return Schema.monthlyExpensesCents(h); },

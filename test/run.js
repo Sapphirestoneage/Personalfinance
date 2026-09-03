@@ -38,6 +38,7 @@ const QuickMath = require(path.join(ROOT, 'engines/quickmath.js'));
 const SelfEmployed = require(path.join(ROOT, 'engines/selfemployed.js'));
 const Goals = require(path.join(ROOT, 'engines/goals.js'));
 const Accounts = require(path.join(ROOT, 'engines/accounts.js'));
+const Swan = require(path.join(ROOT, 'engines/swan.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -51,6 +52,7 @@ const TABLES = {
   fireVariants: require(path.join(ROOT, 'data/fire_variants.json')),
   seTax: require(path.join(ROOT, 'data/se_tax_2026.json')),
   goalTemplates: require(path.join(ROOT, 'data/goal_templates.json')),
+  liquidityBenchmarks: require(path.join(ROOT, 'data/liquidity_benchmarks.json')),
   irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json'))
 };
 
@@ -1573,6 +1575,160 @@ section('Accounts');
    10. Field ownership. Every shared number is editable in exactly one room,
    and is a working link everywhere else.
    ========================================================================== */
+
+/* ==========================================================================
+   SWAN Number — the self-report, and the line between it and the maths.
+   SPEC.md §13 Tier 1.5. Robin: $9,500 cash, $3,150/mo expenses.
+   ========================================================================== */
+
+section('SWAN Number');
+
+(function () {
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const LIQ = TABLES.liquidityBenchmarks;
+  const base = Demo.build();
+
+  /* -- Nothing named: incomplete everywhere, and never a zero ------------- */
+  checkTrue('with no number named, isSet is false', Swan.isSet(base) === false);
+  const unset = Swan.targetCents(base);
+  check('an unnamed target is incomplete', unset.status, 'incomplete');
+  check('an unnamed target has no value', unset.value, null);
+  check('comparing against an unnamed target is incomplete',
+    Swan.compare(base).status, 'incomplete');
+  check('milestones still work without a target', Swan.milestones(base, LIQ).status, 'ok');
+
+  /* -- Months basis: 6 x 3,150 = 18,900 ---------------------------------- */
+  const months6 = Demo.build();
+  months6.swan = { basis: 'months', targetCents: null, targetMonths: 6, note: null, setAt: null };
+  checkTrue('a months target counts as set', Swan.isSet(months6) === true);
+  check('6 months of $3,150 is $18,900', Swan.targetCents(months6).value, 1890000);
+  check('and reads back as 6 months', Swan.targetMonths(months6).value, 6);
+  check('the basis is carried through', Swan.targetCents(months6).basis, 'months');
+
+  /* -- Amount basis: $20,000 / 3,150 = 6.349206... months ----------------- */
+  const amount20k = Demo.build();
+  amount20k.swan = { basis: 'amount', targetCents: 2000000, targetMonths: null, note: null, setAt: null };
+  check('an amount target is itself', Swan.targetCents(amount20k).value, 2000000);
+  check('$20,000 against $3,150 a month is 6.349 months',
+    Swan.targetMonths(amount20k).value, 20000 / 3150, 1e-9);
+
+  /* -- A months target with no expenses has no dollar figure -------------- */
+  const noExpenses = Schema.createHousehold({
+    assets: [Schema.createAsset({ category: 'cash', valueCents: 950000, liquid: true })],
+    swan: { basis: 'months', targetMonths: 6 }
+  });
+  const dangling = Swan.targetCents(noExpenses);
+  check('a months target with no expenses is incomplete', dangling.status, 'incomplete');
+  check('and it is not silently zero', dangling.value, null);
+  checkTrue('and it names monthly expenses as what is missing',
+    dangling.missing.includes('monthlyExpenses'));
+
+  /* -- An affirmative zero is an answer, not a blank ---------------------- */
+  const zero = Demo.build();
+  zero.swan = { basis: 'amount', targetCents: 0, targetMonths: null, note: null, setAt: null };
+  checkTrue('a target of zero counts as set', Swan.isSet(zero) === true);
+  check('a target of zero is ok, not incomplete', Swan.targetCents(zero).status, 'ok');
+  check('and its value is 0, not null', Swan.targetCents(zero).value, 0);
+  const zeroCmp = Swan.compare(zero);
+  check('cash against a zero target still reports', zeroCmp.status, 'ok');
+  check('a zero target is met', zeroCmp.metTarget, true);
+  check('and the ratio refuses to divide by it', zeroCmp.coverageRatio.status, 'incomplete');
+
+  /* -- The comparison: 9,500 vs 18,900 ----------------------------------- */
+  const cmp = Swan.compare(months6);
+  check('coverage of the target is 9,500 / 18,900', cmp.value, 950000 / 1890000, 1e-12);
+  check('cash on hand is read, not typed', cmp.cashCents, 950000);
+  check('the gap is 18,900 − 9,500 = 9,400', cmp.gapCents, 940000);
+  check('the target is not met', cmp.metTarget, false);
+
+  /* The two halves of the side-by-side must NOT be the same number: the
+     computed months come from Tier 0 and know nothing about the target. */
+  check('computed coverage rides along untouched',
+    cmp.computedMonths.value, Tier0.emergencyFundMonths(months6).value);
+  check('computed coverage is 9,500 / 3,150', cmp.computedMonths.value, 9500 / 3150, 1e-12);
+  checkTrue('the self-report and the computation are different numbers',
+    Math.abs(cmp.computedMonths.value - 6) > 1);
+
+  /* -- Past the target: the gap goes negative, nothing clamps ------------- */
+  const rich = Demo.build();
+  rich.swan = { basis: 'amount', targetCents: 500000, targetMonths: null, note: null, setAt: null };
+  const over = Swan.compare(rich);
+  check('past the target, metTarget is true', over.metTarget, true);
+  check('and the gap is signed, not clamped', over.gapCents, 500000 - 950000);
+  checkTrue('and coverage reads above 1', over.value > 1);
+
+  /* -- Time to close the gap: 9,400 / 500 = 18.8 months ------------------- */
+  check('the gap closes in 18.8 months at $500/mo',
+    Swan.timeToTarget(940000, 50000).value, 18.8, 1e-9);
+  check('a gap already closed takes no time', Swan.timeToTarget(-100, 50000).value, 0);
+  checkTrue('and says so', Swan.timeToTarget(-100, 50000).alreadyThere === true);
+  check('with nothing spare, it does not divide by zero',
+    Swan.timeToTarget(940000, 0).status, 'incomplete');
+  check('and neither does a negative monthly',
+    Swan.timeToTarget(940000, -1000).status, 'incomplete');
+  check('with no monthly figure entered, it is incomplete not infinite',
+    Swan.timeToTarget(940000, null).status, 'incomplete');
+
+  /* -- Bands: context, and boundary-inclusive at the top of each band ----- */
+  check('6 months lands in the usual full fund',
+    Reference.lookupLiquidityBand(LIQ, 6).value, 'conventional_full');
+  check('just over 6 months is deliberately deeper',
+    Reference.lookupLiquidityBand(LIQ, 6.01).value, 'extended');
+  check('3 months is the usual floor', Reference.lookupLiquidityBand(LIQ, 3).value, 'conventional_floor');
+  check('1 month is a starter cushion', Reference.lookupLiquidityBand(LIQ, 1).value, 'starter');
+  check('two years is past every band', Reference.lookupLiquidityBand(LIQ, 24).value, 'deep');
+  check('a negative number of months has no band',
+    Reference.lookupLiquidityBand(LIQ, -1).status, 'below_chart');
+  check('the last band is open-ended so nothing falls off the end',
+    LIQ.bands[LIQ.bands.length - 1].maxMonths, null);
+  check('Robin at 6 months is placed by the band lookup',
+    Swan.band(months6, LIQ).value, 'conventional_full');
+
+  /* -- Milestones: months x expenses, and what the cash already clears ---- */
+  const miles = Swan.milestones(months6, LIQ);
+  check('there are four milestones', miles.value.length, 4);
+  check('3 months of $3,150 is $9,450', miles.value[1].cents, 945000);
+  check('$9,500 of cash clears the 3-month mark', miles.value[1].reachedByCash, true);
+  check('but not the 6-month mark', miles.value[2].reachedByCash, false);
+  check('which the stated number does clear', miles.value[2].reachedByTarget, true);
+  check('12 months is beyond the stated number too', miles.value[3].reachedByTarget, false);
+
+  /* -- The engine never writes. A self-report is only ever written by its
+        owning room, through the spine. ------------------------------------ */
+  const before = JSON.stringify(months6);
+  Swan.compare(months6); Swan.milestones(months6, LIQ); Swan.band(months6, LIQ);
+  check('reading the SWAN outputs mutates nothing', JSON.stringify(months6), before);
+
+  /* -- "What's left over" is one function, not a second definition -------
+        Robin has no categorised month, so the surplus falls back to Tier 0's
+        own annual savings figure: 72,000 − 37,800 expenses − tax, over 12.  */
+  const surplus = CashFlow.monthlySurplusCents(base, TABLES.expenseCategories, TABLES);
+  const tier0Saving = Tier0.savingsRate(base, TABLES).excludingMatch;
+  check('with no categories, the surplus falls back to the monthly total',
+    surplus.basis, 'monthlyTotal');
+  check('and it is Tier 0\'s own savings figure over twelve',
+    surplus.value, Math.round(tier0Saving.annualSavingsCents / 12));
+  check('which for Robin is $1,710 a month', surplus.value, 171000);
+
+  /* Once a month IS categorised, the sharper basis takes over. */
+  const tracked = Demo.build();
+  tracked.expenses.entries = Demo.buildSpending();
+  const sharper = CashFlow.monthlySurplusCents(tracked, TABLES.expenseCategories, TABLES);
+  check('with categories entered, the categorised basis is used', sharper.basis, 'categorised');
+  check('and it agrees with netCashFlow',
+    sharper.value, CashFlow.netCashFlow(tracked, TABLES.expenseCategories, TABLES).value);
+  checkTrue('the two bases differ, which is why the basis is reported',
+    sharper.value !== surplus.value);
+
+  /* -- Ownership: exactly one room may edit it --------------------------- */
+  check('the SWAN target is owned by Sleep At Night',
+    Ownership.field('swanTarget').owner, 'sleep-at-night');
+  check('and Sleep At Night owns nothing else',
+    Ownership.ownedBy('sleep-at-night').join(','), 'swanTarget');
+  const chip = Ownership.describe('swanTarget', months6, 'financial-snapshot');
+  check('elsewhere it renders as a read-only $18,900', chip.display, '$18,900');
+  check('and it is not editable there', chip.isOwnHere, false);
+})();
 
 section('Ownership');
 

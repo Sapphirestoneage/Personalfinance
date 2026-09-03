@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Sleep At Night · SPARKS</title>
+<meta name="description" content="The amount of cash that stops the 3am arithmetic — your number, beside the one the maths produces."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11, §13 Tier 1.5.
+
+  1. READS   cash & savings (Start Here), monthly expenses (Cash Flow),
+             and computed Emergency Fund Coverage from engines/tier0.js.
+  2. WRITES  household.swan — and nothing else. It is the only room that
+             may, per shared/ownership.js.
+  3. CALLS   engines/swan.js. Emergency Fund Coverage is NOT recalculated
+             here; it is read from engines/tier0.js so there is one of it.
+  4. EMPTY   With no number named, every output says so. A months-based
+             number with no expenses entered has no dollar figure and says
+             that instead of showing $0.
+  5. CONFIG  data/liquidity_benchmarks.json — the conventional 3/6/12-month
+             bands, as context only.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .basis { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-bottom: var(--space-3); }
+  .basis button { text-align: center; font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; transition: all 150ms ease; }
+  .basis button:hover { border-color: var(--color-border-active); }
+  .basis button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; margin-top: var(--space-3); }
+  @media (max-width: 380px) { .pair { grid-template-columns: 1fr; } }
+  .pair > div { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; }
+  .pair .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  .pair .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); }
+  .pair .big.is-incomplete { font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text-faint); }
+  .pair .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: auto; padding-top: var(--space-2); }
+
+  .verdict { font-family: var(--font-display); font-size: var(--text-xl); margin-top: var(--space-3); }
+  .verdict.is-incomplete { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-base); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+
+  .track { position: relative; height: 12px; border-radius: var(--radius-pill); background: rgba(30,58,138,.4); overflow: hidden; margin-top: var(--space-3); }
+  .track > .fill { height: 100%; background: var(--color-accent); }
+  .track-ends { display: flex; justify-content: space-between; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1); }
+
+  ul.miles { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); }
+  ul.miles li { display: grid; grid-template-columns: 1fr auto auto; gap: var(--space-2); align-items: baseline; padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+  ul.miles li:last-child { border-bottom: none; }
+  ul.miles .amt { font-variant-numeric: tabular-nums; }
+  ul.miles .mark { font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+  ul.miles .mark.hit { color: var(--color-accent-hover); }
+
+  .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
+  .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  .out-detail dt { color: var(--color-text-faint); }
+  .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Sleep At Night</h1>
+  <p class="room-lede">The amount of cash that stops the 3am arithmetic — your number, beside the one the maths produces.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="number">
+    <span class="slaf-eyebrow">Your number</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">What amount would let you stop thinking about it?</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      Not what a rule says. What <em>you</em> would need sitting in cash to
+      stop doing the arithmetic at 3am. There is no wrong answer here — this
+      is a feeling, stored as a number, and nothing else in SPARKS overwrites
+      it.
+    </p>
+
+    <div class="basis" role="group" aria-label="How to name your number">
+      <button type="button" data-basis="amount" aria-pressed="false">A cash amount</button>
+      <button type="button" data-basis="months" aria-pressed="false">Months of expenses</button>
+    </div>
+
+    <label class="slaf-field" id="field-amount" hidden><span class="slaf-label">The amount</span>
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-amount" placeholder="e.g. 15000" aria-label="Your sleep-at-night amount"/></span></label>
+
+    <label class="slaf-field" id="field-months" hidden><span class="slaf-label">Months of cover</span>
+      <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-months" placeholder="e.g. 6" aria-label="Months of cover"/><span class="slaf-affix">months</span></span></label>
+
+    <label class="slaf-field" id="field-note" hidden><span class="slaf-label">Why that number <span style="color:var(--color-text-faint)">(optional)</span></span>
+      <span class="slaf-input-shell"><input type="text" id="in-note" maxlength="140" placeholder="e.g. six months without a paycheque" aria-label="Why that number"/></span></label>
+
+    <div class="slaf-field-row" style="margin-top:var(--space-3)">
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear" hidden>Clear my number</button>
+    </div>
+
+    <div class="flag" id="band-note" hidden></div>
+  </section>
+
+  <section class="slaf-card" id="out-compare">
+    <span class="slaf-eyebrow">Yours vs. the maths</span>
+    <h2 style="margin:var(--space-2) 0 0">Two different questions</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      The left one is what you said you need. The right one is what your cash
+      currently covers, at your current spending. They are allowed to
+      disagree — that gap is the useful part.
+    </p>
+    <div class="pair">
+      <div>
+        <span class="cap">Your number</span>
+        <span class="big" id="c-target">—</span>
+        <span class="sub" id="c-target-sub"></span>
+      </div>
+      <div>
+        <span class="cap">Cash on hand covers</span>
+        <span class="big" id="c-computed">—</span>
+        <span class="sub" id="c-computed-sub"></span>
+      </div>
+    </div>
+    <div class="track" id="c-track" hidden><span class="fill" id="c-fill" style="width:0"></span></div>
+    <div class="track-ends" id="c-ends" hidden><span id="c-end-left"></span><span id="c-end-right"></span></div>
+    <p class="why" id="c-why"></p>
+  </section>
+
+  <section class="slaf-card" id="out-gap">
+    <span class="slaf-eyebrow">Getting there</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">What closing the gap takes</h2>
+    <div class="verdict" id="g-verdict">—</div>
+    <p class="why" id="g-why"></p>
+    <div class="out-detail" id="g-detail"></div>
+  </section>
+
+  <section class="slaf-card" id="milestones">
+    <span class="slaf-eyebrow">The usual milestones</span>
+    <h2 style="margin:var(--space-2) 0 0">Where the rules of thumb sit</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Context, not a grade. If your number is above or below all of these,
+      that is information about your life, not a mistake in your maths.
+    </p>
+    <ul class="miles" id="m-list"></ul>
+    <p class="why" id="m-why"></p>
+  </section>
+
+  <section class="slaf-card" id="reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. The bands come from
+    <code>data/liquidity_benchmarks.json</code> and are rules of thumb, not
+    rules. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/swan.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership,
+      CashFlow = SLAF.CashFlow, Swan = SLAF.Swan;
+
+  var ROOM_ID = 'sleep-at-night';
+  var TABLES = null;
+
+  function el(id) { return document.getElementById(id); }
+
+  /* ---- Writing the number ---------------------------------------------- */
+
+  function currentBasis() {
+    var s = Spine.getProfile().swan || {};
+    return s.basis || null;
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('.basis button'), function (b) {
+    b.addEventListener('click', function () {
+      var basis = b.getAttribute('data-basis');
+      /* Switching basis does NOT carry the old figure across — a $15,000
+         answer and a "6 months" answer are two different sentences, and
+         converting one into the other would put words in someone's mouth. */
+      if (basis !== currentBasis()) Spine.setSwanTarget({ basis: basis });
+      render();
+      var focus = el(basis === 'amount' ? 'in-amount' : 'in-months');
+      if (focus) focus.focus();
+    });
+  });
+
+  function bindMoney(id, write) {
+    var node = el(id);
+    node.addEventListener('focus', function () {
+      var v = node.getAttribute('data-raw');
+      node.value = v === null || v === '' ? '' : String(Number(v) / 100);
+      node.select();
+    });
+    node.addEventListener('blur', function () {
+      write(Money.parseMoney(node.value.trim()));
+    });
+    node.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); node.blur(); }
+    });
+  }
+
+  bindMoney('in-amount', function (cents) {
+    Spine.setSwanTarget({ basis: 'amount', targetCents: cents });
+    render();
+  });
+
+  (function () {
+    var node = el('in-months');
+    node.addEventListener('blur', function () {
+      var raw = node.value.trim();
+      var n = raw === '' ? null : Number(raw.replace(/[^0-9.]/g, ''));
+      Spine.setSwanTarget({
+        basis: 'months',
+        targetMonths: (n === null || !Number.isFinite(n)) ? null : n
+      });
+      render();
+    });
+    node.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); node.blur(); }
+    });
+  })();
+
+  el('in-note').addEventListener('blur', function () {
+    var text = el('in-note').value.trim();
+    Spine.setSwanTarget({ note: text === '' ? null : text });
+  });
+
+  el('btn-clear').addEventListener('click', function () {
+    Spine.setSwanTarget({ basis: null, note: null });
+    render();
+  });
+
+  /* ---- Rendering -------------------------------------------------------- */
+
+  function dl(rows) {
+    return '<dl>' + rows.map(function (r) {
+      return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+    }).join('') + '</dl>';
+  }
+
+  function renderInputs(h) {
+    var s = h.swan || {};
+    Array.prototype.forEach.call(document.querySelectorAll('.basis button'), function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-basis') === s.basis));
+    });
+    el('field-amount').hidden = s.basis !== 'amount';
+    el('field-months').hidden = s.basis !== 'months';
+    el('field-note').hidden = !s.basis;
+    el('btn-clear').hidden = !s.basis;
+
+    var amount = el('in-amount');
+    if (document.activeElement !== amount) {
+      amount.setAttribute('data-raw', Money.isEntered(s.targetCents) ? String(s.targetCents) : '');
+      amount.value = Money.isEntered(s.targetCents) ? Money.formatCents(s.targetCents) : '';
+    }
+    var months = el('in-months');
+    if (document.activeElement !== months) {
+      months.value = Money.isEntered(s.targetMonths) ? String(s.targetMonths) : '';
+    }
+    var note = el('in-note');
+    if (document.activeElement !== note) note.value = s.note || '';
+  }
+
+  function renderBand(h) {
+    var node = el('band-note');
+    var b = Swan.band(h, TABLES.liquidityBenchmarks);
+    if (b.status !== 'ok') { node.hidden = true; return; }
+    var months = Swan.targetMonths(h);
+    node.hidden = false;
+    node.innerHTML = '<strong>' + b.label + '</strong> — ' + b.blurb
+      + (Money.isOk(months)
+        ? ' Yours works out at about ' + Money.formatMonths(months.value) + ' of cover.'
+        : '');
+  }
+
+  function renderCompare(h) {
+    var c = Swan.compare(h);
+    var target = Swan.targetCents(h);
+    var months = Swan.targetMonths(h);
+    var computed = SLAF.Tier0.emergencyFundMonths(h);
+
+    var tNode = el('c-target');
+    if (Money.isOk(target)) {
+      tNode.className = 'big';
+      tNode.textContent = Money.formatCents(target.value);
+      el('c-target-sub').textContent = Money.isOk(months)
+        ? 'about ' + Money.formatMonths(months.value) + ' of spending'
+        : 'add your monthly expenses to see that in months';
+    } else {
+      tNode.className = 'big is-incomplete';
+      tNode.textContent = Money.EM_DASH;
+      el('c-target-sub').textContent = target.reason || '';
+    }
+
+    var cNode = el('c-computed');
+    if (Money.isOk(computed)) {
+      cNode.className = 'big';
+      cNode.textContent = Money.formatMonths(computed.value);
+      el('c-computed-sub').textContent = Money.formatCents(computed.cashCents)
+        + ' ÷ ' + Money.formatCents(computed.monthlyExpensesCents) + ' a month';
+    } else {
+      cNode.className = 'big is-incomplete';
+      cNode.textContent = Money.EM_DASH;
+      el('c-computed-sub').textContent = computed.reason || '';
+    }
+
+    var track = el('c-track'), ends = el('c-ends');
+    if (!Money.isOk(c) || !Money.isEntered(c.value)) {
+      track.hidden = true; ends.hidden = true;
+      /* A target of zero is an answer, not a blank — there is just no
+         percentage of it to fill a bar with. */
+      el('c-why').textContent = !Money.isOk(c) ? (c.reason || '')
+        : c.targetCents === 0
+          ? 'You’ve said zero, and that is a real answer — there is nothing here '
+            + 'to work towards. Your ' + Money.formatCents(c.cashCents)
+            + ' in cash is doing something else.'
+          : '';
+      return;
+    }
+    track.hidden = false; ends.hidden = false;
+    el('c-fill').style.width = Math.max(0, Math.min(100, c.value * 100)) + '%';
+    el('c-end-left').textContent = Money.formatCents(c.cashCents) + ' in cash';
+    el('c-end-right').textContent = Money.formatCents(c.targetCents) + ' — your number';
+    el('c-why').textContent = c.metTarget
+      ? 'You are at your number, with ' + Money.formatCents(-c.gapCents) + ' beyond it. '
+        + 'Anything past this point is a different decision — it is no longer buying you sleep.'
+      : 'You are ' + Money.formatRate(c.value, { decimals: 0 }) + ' of the way there. '
+        + Money.formatCents(c.gapCents) + ' still to go.';
+  }
+
+  function renderGap(h) {
+    var c = Swan.compare(h);
+    var verdict = el('g-verdict');
+    if (!Money.isOk(c)) {
+      verdict.className = 'verdict is-incomplete';
+      verdict.textContent = c.reason || Money.EM_DASH;
+      el('g-why').textContent = '';
+      el('g-detail').innerHTML = '';
+      return;
+    }
+    if (c.metTarget) {
+      verdict.className = 'verdict';
+      verdict.textContent = 'You’re already there.';
+      el('g-why').textContent = 'Nothing more needs to go into cash for this. '
+        + 'The next dollar is free to do something else.';
+      el('g-detail').innerHTML = dl([
+        ['Your number', Money.formatCents(c.targetCents)],
+        ['Cash on hand', Money.formatCents(c.cashCents)],
+        ['Past it by', Money.formatCents(-c.gapCents)]
+      ]);
+      return;
+    }
+
+    /* What's left over each month — one shared function, in Cash Flow,
+       which also tells us which basis it managed to use. Not typed again
+       here, and not recomputed here either. */
+    var flow = CashFlow.monthlySurplusCents(h, TABLES.expenseCategories, TABLES);
+    var saving = Money.isOk(flow) ? flow.value : null;
+    var t = Swan.timeToTarget(c.gapCents, saving);
+
+    verdict.className = Money.isOk(t) ? 'verdict' : 'verdict is-incomplete';
+    verdict.textContent = Money.isOk(t)
+      ? Money.formatMonths(t.value) + ' at what you have left over'
+      : (t.reason || Money.EM_DASH);
+
+    el('g-why').textContent = Money.isOk(t)
+      ? 'At ' + Money.formatCents(saving) + ' a month left after tax and spending, '
+        + 'and assuming none of it goes anywhere else.'
+        + (flow.basis === 'monthlyTotal'
+          ? ' That is measured against your essential expenses only — categorise a '
+            + 'month in Cash Flow and this gets sharper, and probably smaller.'
+          : '')
+      : 'This needs what’s left over each month, which comes from Cash Flow.';
+
+    el('g-detail').innerHTML = dl([
+      ['Your number', Money.formatCents(c.targetCents)],
+      ['Cash on hand', Money.formatCents(c.cashCents)],
+      ['Still to go', Money.formatCents(c.gapCents)],
+      ['Left over each month', Money.isOk(flow) ? Money.formatCents(flow.value) : Money.EM_DASH]
+    ]);
+  }
+
+  function renderMilestones(h) {
+    var m = Swan.milestones(h, TABLES.liquidityBenchmarks);
+    if (!Money.isOk(m)) {
+      el('m-list').innerHTML = '';
+      el('m-why').textContent = m.reason || '';
+      return;
+    }
+    el('m-why').textContent = '';
+    el('m-list').innerHTML = m.value.map(function (row) {
+      return '<li><span>' + row.label + ' of expenses</span>'
+        + '<span class="amt">' + Money.formatCents(row.cents) + '</span>'
+        + '<span class="mark' + (row.reachedByCash ? ' hit' : '') + '">'
+        + (row.reachedByCash ? 'cash covers it'
+           : row.reachedByTarget === true ? 'inside your number' : '')
+        + '</span></li>';
+    }).join('');
+  }
+
+  function renderNow() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    renderInputs(h);
+    renderBand(h);
+    renderCompare(h);
+    renderGap(h);
+    renderMilestones(h);
+    el('reading-list').innerHTML = ['cashSavings', 'monthlyExpenses']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+
+  /* Coalesced so a re-render triggered from inside a blur handler never
+     rips the focused node out from under the browser. */
+  var queued = false;
+  function render() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () { queued = false; renderNow(); }, 0);
+  }
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    renderNow();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

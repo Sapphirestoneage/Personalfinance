@@ -110,8 +110,24 @@
       ]
     },
     {
-      id: 'fire',
+      id: 'sleep-at-night',
       order: 6,
+      title: 'Sleep At Night',
+      blurb: 'The amount of cash that stops the 3am arithmetic \u2014 your number, beside the one the maths produces.',
+      href: 'rooms/sleep-at-night.html',
+      tier: 1,
+      tags: ['cashflow'],
+      subsections: [
+        { id: 'number',        label: 'Your number' },
+        { id: 'out-compare',   label: 'Yours vs. the maths' },
+        { id: 'out-gap',       label: 'Getting there' },
+        { id: 'milestones',    label: 'The usual milestones' },
+        { id: 'reading',       label: 'Reading from elsewhere' }
+      ]
+    },
+    {
+      id: 'fire',
+      order: 7,
       title: 'FIRE Number',
       blurb: 'What you\u2019d need before work became optional \u2014 lean, standard, chubby, fat, coast or barista, from one formula.',
       href: 'rooms/fire.html',
@@ -126,7 +142,7 @@
     },
     {
       id: 'real-hourly-wage',
-      order: 7,
+      order: 8,
       title: 'Real Hourly Wage',
       blurb: 'What the job actually pays, once you count every hour it takes and everything it costs you to do it.',
       href: 'rooms/real-hourly-wage.html',
@@ -142,7 +158,7 @@
     },
     {
       id: 'quick-math',
-      order: 8,
+      order: 9,
       title: 'Quick Math',
       blurb: 'Four small answers: is switching savings accounts worth it, what that thing costs per use, whether you can afford the car, and the rule of five.',
       href: 'rooms/quick-math.html',
@@ -159,7 +175,7 @@
     },
     {
       id: 'self-employed',
-      order: 9,
+      order: 10,
       title: 'Going Self-Employed',
       blurb: 'What a contract rate has to be to match a salary, where the 15.3% actually lands, and what to send in each quarter.',
       href: 'rooms/self-employed.html',
@@ -174,7 +190,7 @@
     },
     {
       id: 'accounts',
-      order: 10,
+      order: 11,
       title: 'Where It Goes',
       blurb: 'Roth, Traditional or taxable \u2014 and how much a Solo 401(k) actually lets you put away.',
       href: 'rooms/accounts.html',
@@ -188,7 +204,7 @@
     },
     {
       id: 'goals',
-      order: 11,
+      order: 12,
       title: 'Goals',
       blurb: 'A wedding, a deposit, a big trip. What it costs, what it needs a month, and whether that actually fits alongside everything else.',
       href: 'rooms/goals.html',
@@ -201,7 +217,7 @@
     },
     {
       id: 'foo-ladder',
-      order: 12,
+      order: 13,
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
       href: 'index.html',
