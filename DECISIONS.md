@@ -546,6 +546,36 @@ the quick-win threshold and the month ceiling are all in
 
 ---
 
+## D-016 — the Debt Payoff room shows what a choice costs
+**2026-09-03 · SPEC.md §13**
+
+The room is the first place the itemised debt array §3 insists on is actually
+*entered* — the Financial Snapshot stores one lump-sum debt record, and this
+is where that becomes real per-debt lines with their own rate, minimum, type
+and emotional tag.
+
+Two presentation decisions worth recording, because both came out of looking
+at the rendered page rather than the numbers:
+
+- **A non-cheapest ordering states its price.** Selecting Convenience on the
+  example household costs $1,321 more in interest than Avalanche, and the
+  plan says so — followed by the honest caveat that a plan you stick to beats
+  a cheaper one you abandon. Presenting the Convenience Method without its
+  cost would be dishonest; presenting the cost without that caveat would
+  quietly argue against a method the spec deliberately includes.
+- **When every ordering ties, the room says so.** With the example
+  household's two debts, the highest-rate debt is also the smallest, so all
+  four strategies produce an identical result. Four identical figures read as
+  a broken comparison; a line saying the order does not matter here reads as
+  an answer.
+
+A debt still missing a rate or a minimum names what it needs on its own row
+rather than being silently dropped from the plan or counted as zero. A debt
+with no balance entered yet is simply not part of the plan — that is a
+half-filled row, not an error.
+
+---
+
 ## Still open
 
 - **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the

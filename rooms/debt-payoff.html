@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Debt Payoff · SPARKS</title>
+<meta name="description" content="Every debt, in the order you'll clear them — and what a different order would cost or save."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11.
+
+  1. READS   household.debts[] (balance, rate, minPayment, type,
+             emotionalTag, ownerIds).
+  2. WRITES  household.debts[] — raw inputs only, itemised. This is the room
+             that turns the Financial Snapshot's single lump-sum debt record
+             into real per-debt entries, which is what the Debt Calculator
+             needs (SPEC.md §9 item 2).
+  3. CALLS   engines/debt.js for every figure — simulate(),
+             compareStrategies(), minimumPaymentCents(). No amortisation is
+             written in this file.
+  4. EMPTY   No debts: the plan says so. A debt missing a rate or a minimum
+             names itself rather than being silently dropped or zeroed.
+  5. CONFIG  data/debt_rules.json — strategies, minimum-payment conventions,
+             the emotional-priority ranking, the month ceiling.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+
+  .debt { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-3); }
+  .debt-top { display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-3); }
+  .debt-name { flex: 1; min-width: 0; background: transparent; border: none; border-bottom: 1px solid var(--color-border-strong); color: var(--color-text); font-family: var(--font-body); font-size: var(--text-base); padding: 2px 0; outline: none; }
+  .debt-name:focus { border-bottom-color: var(--color-border-active); }
+  .debt-remove { background: none; border: none; color: var(--color-accent); cursor: pointer; font-size: var(--text-md); padding: 0 var(--space-1); }
+  .debt-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-2); }
+  .debt-meta { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-2); }
+  .debt-warn { font-size: var(--text-xs); color: var(--color-caution); margin: var(--space-2) 0 0; }
+
+  .strategies { display: grid; gap: var(--space-2); }
+  .strategy { text-align: left; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; font-family: var(--font-body); color: var(--color-text); }
+  .strategy[aria-pressed="true"] { border-color: var(--color-border-active); background: var(--color-surface-active); }
+  .strategy-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+  .strategy-name { font-weight: 600; }
+  .strategy-figure { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .strategy-blurb { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  .badge { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-positive); border: 1px solid var(--color-positive); border-radius: var(--radius-pill); padding: 1px var(--space-2); margin-left: var(--space-2); }
+
+  ol.timeline { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ol.timeline li { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  ol.timeline li:first-child { border-top: none; }
+  .tl-when { color: var(--color-text-subtle); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
+  .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  .out-detail dt { color: var(--color-text-faint); }
+  .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Debt Payoff</h1>
+  <p class="room-lede">Every debt, in the order you'll clear them — and what a different order would cost or save.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="debts">
+    <span class="slaf-eyebrow">What you owe</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">One line per debt</h2>
+    <div id="debt-list"></div>
+    <button type="button" class="slaf-btn" id="btn-add" style="width:100%">+ Add a debt</button>
+    <div class="actions">
+      <button type="button" class="slaf-btn" id="btn-demo">Try with example numbers</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Clear</button>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="extra">
+    <span class="slaf-eyebrow">Beyond the minimums</span>
+    <label class="slaf-field" style="margin-top:var(--space-3)">
+      <span class="slaf-label">Extra you can put at debt each month</span>
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+        <input type="text" inputmode="decimal" id="f-extra" placeholder="e.g. 200"/></span>
+      <span class="slaf-hint">Leave it blank to see what the minimums alone do.</span>
+    </label>
+  </section>
+
+  <section class="slaf-card" id="out-plan">
+    <span class="slaf-eyebrow">Debt-free in</span>
+    <div class="slaf-figure" data-figure>—</div>
+    <p class="slaf-reason" data-reason></p>
+    <div data-detail></div>
+  </section>
+
+  <section class="slaf-card" id="out-strategies">
+    <span class="slaf-eyebrow">Which order</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      Same money every month — only the order changes. Total interest shown.
+    </p>
+    <div class="strategies" id="strategy-list"></div>
+  </section>
+
+  <section class="slaf-card" id="out-timeline">
+    <span class="slaf-eyebrow">The order they fall</span>
+    <ol class="timeline" id="timeline"></ol>
+    <p class="slaf-reason" id="timeline-reason"></p>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Interest accrues monthly at the
+    rate you enter; a real statement may compound daily and add fees. Your
+    numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/demo-persona.js"></script>
+<script src="../engines/debt.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Demo = SLAF.DemoPersona, Debt = SLAF.Debt;
+
+  var ROOM_ID = 'debt-payoff';
+  var RULES = null;
+  var strategyId = 'avalanche';
+  var extraCents = null;
+
+  function el(id) { return document.getElementById(id); }
+
+  /* ---------- inputs ----------------------------------------------------- */
+
+  var DEBT_TYPES = [
+    ['credit_card', 'Credit card'], ['student_loan', 'Student loan'],
+    ['auto', 'Car loan'], ['mortgage', 'Mortgage'], ['personal', 'Personal loan'],
+    ['medical', 'Medical'], ['other', 'Other']
+  ];
+
+  function debtsOf(h) { return (h.debts || []).slice(); }
+
+  function renderDebts(h) {
+    var list = el('debt-list');
+    var focusedId = document.activeElement && document.activeElement.getAttribute
+      ? document.activeElement.getAttribute('data-debt') : null;
+    var focusedField = document.activeElement && document.activeElement.getAttribute
+      ? document.activeElement.getAttribute('data-field') : null;
+
+    var debts = debtsOf(h);
+    if (!debts.length) {
+      list.innerHTML = '<p class="slaf-reason">No debts yet. Add one, or load the example.</p>';
+      return;
+    }
+
+    var tags = (RULES.emotionalPriority.tags || []);
+    list.innerHTML = debts.map(function (d) {
+      var missing = [];
+      if (!Money.isEntered(d.rate)) missing.push('an interest rate');
+      if (!Money.isEntered(d.minPaymentCents)) {
+        var derived = Debt.minimumPaymentCents(d, RULES);
+        if (!Money.isOk(derived)) missing.push('a minimum payment');
+      }
+      return '<div class="debt">'
+        + '<div class="debt-top">'
+        + '<input class="debt-name" data-debt="' + d.id + '" data-field="label" '
+        + 'value="' + (d.label || '').replace(/"/g, '&quot;') + '" placeholder="Name this debt" aria-label="Debt name"/>'
+        + '<button type="button" class="debt-remove" data-remove="' + d.id + '" aria-label="Remove">✕</button>'
+        + '</div>'
+        + '<div class="debt-grid">'
+        + field(d, 'balanceCents', 'Balance', '$', null, 'e.g. 3200')
+        + field(d, 'rate', 'Rate', null, '%', 'e.g. 22.9')
+        + field(d, 'minPaymentCents', 'Min /mo', '$', null, 'e.g. 95')
+        + '</div>'
+        + '<div class="debt-meta">'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Type</span>'
+        + '<span class="slaf-input-shell"><select data-debt="' + d.id + '" data-field="type">'
+        + DEBT_TYPES.map(function (t) {
+            return '<option value="' + t[0] + '"' + (d.type === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
+          }).join('')
+        + '</select></span></label>'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Feels like</span>'
+        + '<span class="slaf-input-shell"><select data-debt="' + d.id + '" data-field="emotionalTag">'
+        + '<option value="">No particular weight</option>'
+        + tags.map(function (t) {
+            return '<option value="' + t.id + '"' + (d.emotionalTag === t.id ? ' selected' : '') + '>' + t.label + '</option>';
+          }).join('')
+        + '</select></span></label>'
+        + '</div>'
+        + (missing.length
+            ? '<p class="debt-warn">Needs ' + missing.join(' and ') + ' before it can be planned.</p>'
+            : '')
+        + '</div>';
+    }).join('');
+
+    if (focusedId && focusedField) {
+      var again = list.querySelector('[data-debt="' + focusedId + '"][data-field="' + focusedField + '"]');
+      if (again) { again.focus(); if (again.select) again.select(); }
+    }
+  }
+
+  function field(debt, key, label, prefix, suffix, placeholder) {
+    var raw = debt[key];
+    var shown = '';
+    if (Money.isEntered(raw)) {
+      shown = key === 'rate' ? Money.formatRate(raw, { decimals: 2 }).replace(/\.?0+%$/, '%')
+                             : Money.formatCents(raw);
+    }
+    return '<label class="slaf-field" style="margin:0"><span class="slaf-label">' + label + '</span>'
+      + '<span class="slaf-input-shell">'
+      + (prefix ? '<span class="slaf-affix">' + prefix + '</span>' : '')
+      + '<input type="text" inputmode="decimal" data-debt="' + debt.id + '" data-field="' + key + '" '
+      + 'value="' + shown + '" placeholder="' + placeholder + '" aria-label="' + label + '"/>'
+      + (suffix ? '<span class="slaf-affix">' + suffix + '</span>' : '')
+      + '</span></label>';
+  }
+
+  function editableValue(key, raw) {
+    if (!Money.isEntered(raw)) return '';
+    if (key === 'rate') return String(Math.round(raw * 10000) / 100);
+    return String(raw / 100);
+  }
+
+  el('debt-list').addEventListener('focusin', function (evt) {
+    var node = evt.target;
+    var id = node.getAttribute && node.getAttribute('data-debt');
+    var key = node.getAttribute && node.getAttribute('data-field');
+    if (!id || !key || key === 'label' || node.tagName === 'SELECT') return;
+    var debt = findDebt(Spine.getProfile(), id);
+    if (!debt) return;
+    node.value = editableValue(key, debt[key]);
+    node.select();
+  });
+
+  el('debt-list').addEventListener('focusout', function (evt) {
+    var node = evt.target;
+    var id = node.getAttribute && node.getAttribute('data-debt');
+    var key = node.getAttribute && node.getAttribute('data-field');
+    if (!id || !key || node.tagName === 'SELECT') return;
+    writeField(id, key, node.value);
+  });
+
+  el('debt-list').addEventListener('change', function (evt) {
+    var node = evt.target;
+    if (node.tagName !== 'SELECT') return;
+    writeField(node.getAttribute('data-debt'), node.getAttribute('data-field'), node.value);
+  });
+
+  el('debt-list').addEventListener('click', function (evt) {
+    var btn = evt.target.closest('[data-remove]');
+    if (!btn) return;
+    Spine.removeById('debts', btn.getAttribute('data-remove'));
+    render();
+  });
+
+  el('debt-list').addEventListener('keydown', function (evt) {
+    if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') {
+      evt.preventDefault(); evt.target.blur();
+    }
+  });
+
+  function findDebt(h, id) {
+    var list = h.debts || [];
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) return list[i]; }
+    return null;
+  }
+
+  function writeField(id, key, rawValue) {
+    var debt = findDebt(Spine.getProfile(), id);
+    if (!debt) return;
+    var patch = { id: id };
+    if (key === 'label') patch.label = rawValue === '' ? null : rawValue;
+    else if (key === 'type') patch.type = rawValue;
+    else if (key === 'emotionalTag') patch.emotionalTag = rawValue === '' ? null : rawValue;
+    else if (key === 'rate') patch.rate = Money.parseRatePercent(rawValue);
+    else patch[key] = Money.parseMoney(rawValue);
+    Spine.upsertDebt(patch);
+    render();
+  }
+
+  el('btn-add').addEventListener('click', function () {
+    var person = Spine.ensurePrimaryPerson('You');
+    Spine.upsertDebt(Schema.createDebt({ label: null, type: 'credit_card', ownerIds: [person.id] }));
+    render();
+    var inputs = el('debt-list').querySelectorAll('.debt-name');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  });
+
+  el('f-extra').addEventListener('focus', function () {
+    el('f-extra').value = Money.isEntered(extraCents) ? String(extraCents / 100) : '';
+    el('f-extra').select();
+  });
+  el('f-extra').addEventListener('blur', function () {
+    extraCents = Money.parseMoney(el('f-extra').value);
+    el('f-extra').value = Money.isEntered(extraCents) ? Money.formatCents(extraCents) : '';
+    render();
+  });
+  el('f-extra').addEventListener('keydown', function (evt) {
+    if (evt.key === 'Enter') { evt.preventDefault(); el('f-extra').blur(); }
+  });
+
+  /* ---------- outputs ---------------------------------------------------- */
+
+  function setCard(sectionId, result, formatter, detailHtml) {
+    var section = el(sectionId);
+    var figure = section.querySelector('[data-figure]');
+    var reason = section.querySelector('[data-reason]');
+    var detail = section.querySelector('[data-detail]');
+    var isOk = Money.isOk(result);
+    if (figure) {
+      figure.textContent = isOk ? formatter(result.value) : Money.EM_DASH;
+      figure.classList.toggle('slaf-figure--incomplete', !isOk);
+    }
+    if (reason) { reason.textContent = isOk ? '' : (result.reason || ''); reason.hidden = isOk; }
+    if (detail) { detail.innerHTML = isOk && detailHtml ? detailHtml : ''; detail.className = 'out-detail'; }
+  }
+
+  function dl(rows) {
+    return '<dl>' + rows.map(function (r) {
+      return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+    }).join('') + '</dl>';
+  }
+
+  function monthsLabel(months) {
+    if (months < 12) return months + (months === 1 ? ' month' : ' months');
+    var y = Math.floor(months / 12), m = months % 12;
+    return y + (y === 1 ? ' yr' : ' yrs') + (m ? ' ' + m + ' mo' : '');
+  }
+
+  function renderPlan(h) {
+    var plan = Debt.simulate(h, RULES, { strategyId: strategyId, extraMonthlyCents: extraCents });
+    var detail = '';
+    if (Money.isOk(plan)) {
+      var baseline = Debt.simulate(h, RULES, { strategyId: strategyId, extraMonthlyCents: 0 });
+      var rows = [
+        ['Interest you’ll pay', Money.formatCents(plan.totalInterestCents)],
+        ['Total you’ll pay', Money.formatCents(plan.totalPaidCents)],
+        ['Per month', Money.formatCents(plan.monthlyBudgetCents)]
+      ];
+      if (Money.isOk(baseline) && Money.isEntered(extraCents) && extraCents > 0) {
+        rows.push(['Saved vs. minimums only',
+          Money.formatCents(baseline.totalInterestCents - plan.totalInterestCents)]);
+        rows.push(['Sooner by', monthsLabel(baseline.value - plan.value)]);
+      }
+      detail = dl(rows);
+
+      /* If this ordering isn't the cheapest, say what choosing it costs.
+         That is the honest way to present the Convenience Method: it is a
+         real option, and it has a price. */
+      var cmp = Debt.compareStrategies(h, RULES, { extraMonthlyCents: extraCents });
+      if (Money.isOk(cmp) && cmp.cheapestStrategyId !== strategyId
+          && cmp.results[cmp.cheapestStrategyId] && Money.isOk(cmp.results[cmp.cheapestStrategyId])) {
+        var cheapest = cmp.results[cmp.cheapestStrategyId];
+        var premium = plan.totalInterestCents - cheapest.totalInterestCents;
+        if (premium > 0) {
+          detail += '<p class="slaf-reason">Ordering it this way costs '
+            + Money.formatCents(premium) + ' more than '
+            + cheapest.strategy.label + '. That can still be the right call — '
+            + 'a plan you stick to beats a cheaper one you abandon.</p>';
+        }
+      }
+    }
+    setCard('out-plan', plan, monthsLabel, detail);
+    return plan;
+  }
+
+  function renderStrategies(h) {
+    var wrap = el('strategy-list');
+    var previousNote = el('tie-note');
+    if (previousNote) previousNote.remove();
+    var cmp = Debt.compareStrategies(h, RULES, { extraMonthlyCents: extraCents });
+
+    wrap.innerHTML = RULES.strategies.map(function (s) {
+      var r = cmp.results ? cmp.results[s.id] : null;
+      var ok = r && Money.isOk(r);
+      var badge = '';
+      if (ok && cmp.cheapestStrategyId === s.id) badge = '<span class="badge">cheapest</span>';
+      else if (ok && cmp.firstWinStrategyId === s.id && cmp.firstWinStrategyId !== cmp.cheapestStrategyId) {
+        badge = '<span class="badge" style="color:var(--sapphire-200);border-color:var(--sapphire-200)">first win soonest</span>';
+      }
+      return '<button type="button" class="strategy" data-strategy="' + s.id + '" '
+        + 'aria-pressed="' + (s.id === strategyId) + '">'
+        + '<span class="strategy-head"><span class="strategy-name">' + s.label + badge + '</span>'
+        + '<span class="strategy-figure">' + (ok ? Money.formatCents(r.totalInterestCents) : Money.EM_DASH) + '</span></span>'
+        + '<p class="strategy-blurb">' + s.blurb + '</p>'
+        + (ok ? '<p class="strategy-blurb" style="color:var(--color-text-faint)">'
+                + monthsLabel(r.value) + ' · first debt gone in '
+                + monthsLabel(r.payoffs[0].month) + '</p>' : '')
+        + '</button>';
+    }).join('');
+
+    /* With some sets of debts every ordering lands in the same place —
+       usually because the highest-rate debt is also the smallest. Say so,
+       rather than showing four identical figures and looking broken. */
+    var totals = RULES.strategies
+      .map(function (s) { return cmp.results && cmp.results[s.id]; })
+      .filter(function (r) { return r && Money.isOk(r); })
+      .map(function (r) { return r.totalInterestCents; });
+    if (totals.length > 1 && totals.every(function (t) { return t === totals[0]; })) {
+      wrap.insertAdjacentHTML('beforebegin',
+        '<p class="slaf-reason" id="tie-note">With these debts every order works out the same — '
+        + 'the one costing you most is also the one you\u2019d clear first. Pick whichever you like.</p>');
+    }
+  }
+
+  el('strategy-list').addEventListener('click', function (evt) {
+    var btn = evt.target.closest('[data-strategy]');
+    if (!btn) return;
+    strategyId = btn.getAttribute('data-strategy');
+    render();
+  });
+
+  function renderTimeline(plan) {
+    var list = el('timeline'), reason = el('timeline-reason');
+    if (!Money.isOk(plan)) {
+      list.innerHTML = '';
+      reason.textContent = plan.reason || '';
+      reason.hidden = false;
+      return;
+    }
+    reason.hidden = true;
+    list.innerHTML = plan.payoffs.map(function (p) {
+      return '<li><span>' + (p.label || 'Debt') + '</span>'
+        + '<span class="tl-when">' + monthsLabel(p.month) + ' · '
+        + Money.formatCents(p.interestPaidCents) + ' interest</span></li>';
+    }).join('');
+  }
+
+  function render() {
+    if (!RULES) return;
+    var h = Spine.getProfile();
+    renderDebts(h);
+    var plan = renderPlan(h);
+    renderStrategies(h);
+    renderTimeline(plan);
+  }
+
+  /* ---------- actions ---------------------------------------------------- */
+
+  el('btn-demo').addEventListener('click', function () {
+    var h = Spine.getProfile();
+    if ((h.debts || []).length
+        && !window.confirm('This replaces the debts you’ve entered with the example. Continue?')) return;
+    var demo = Demo.build();
+    Spine.updateProfile({ debts: demo.debts });
+    if (!Schema.primaryPerson(Spine.getProfile())) Spine.updateProfile({ people: demo.people });
+    extraCents = 20000;
+    el('f-extra').value = Money.formatCents(extraCents);
+    render();
+    el('out-plan').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  el('btn-clear').addEventListener('click', function () {
+    if (!window.confirm('Remove every debt you’ve entered?')) return;
+    Spine.updateProfile({ debts: [] });
+    extraCents = null;
+    el('f-extra').value = '';
+    render();
+  });
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var target = document.getElementById(location.hash.slice(1));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  /* ---------- boot ------------------------------------------------------- */
+
+  Spine.registerRoom(ROOM_ID);
+
+  Reference.load(['debtRules']).then(function (tables) {
+    RULES = tables.debtRules;
+    render();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load data/debt_rules.json (' + err.message
+      + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+  });
+})();
+</script>
+</body>
+</html>

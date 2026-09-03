@@ -56,6 +56,21 @@
       ]
     },
     {
+      id: 'debt-payoff',
+      title: 'Debt Payoff',
+      blurb: 'Every debt, in the order you\u2019ll clear them — and what avalanche, snowball, or just getting the worst one gone would each cost.',
+      href: 'rooms/debt-payoff.html',
+      tier: 1,
+      tags: ['debt'],
+      subsections: [
+        { id: 'debts',           label: 'What you owe' },
+        { id: 'extra',           label: 'Beyond the minimums' },
+        { id: 'out-plan',        label: 'Debt-free in' },
+        { id: 'out-strategies',  label: 'Which order' },
+        { id: 'out-timeline',    label: 'The order they fall' }
+      ]
+    },
+    {
       id: 'foo-ladder',
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
