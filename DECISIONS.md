@@ -494,6 +494,58 @@ affix already carries the unit, so what was actually ambiguous was the period
 
 ---
 
+## D-015 — Debt Calculator: one engine, four orderings, no second builds
+**2026-09-03 · SPEC.md §9 item 5, §10, §13**
+
+`engines/debt.js` is the engine §9 item 5 asks for, and it is deliberately
+the *only* payoff simulation in the codebase. §13 asks whether the Credit
+Card calc is a specialised view or a filtered display of the general
+calculator: it is a filtered display. `creditCardsOnly()` returns a household
+containing just the revolving debts and hands it to the same `simulate()`.
+Verified — the filtered run gives the identical answer to running that card
+alone. The Convenience Method is likewise one of the four orderings, not a
+separate tool, and a single-loan payoff question is a one-debt run through
+the same loop.
+
+**Month-by-month, not closed form**, per §10 — and not by preference. Every
+strategy keeps the household's monthly outlay constant: all the minimums plus
+the extra. When a debt clears, its minimum rolls onto the next target the
+following month. No closed-form formula expresses that, which is exactly why
+the spec insists on a simulation.
+
+**Verifying a loop against itself proves nothing**, so the test checks the
+single-debt case against the analytic solution
+`n = −ln(1 − rB/P) / ln(1+r)` — a different method, not a second copy. Robin's
+$3,200 card at 22.9% paying the $95 minimum: the closed form says 55 months
+and the simulation says 55. The multi-debt cases are then checked against
+invariants rather than fitted numbers — avalanche must never cost more
+interest than any other ordering, snowball must clear its first account no
+later than avalanche.
+
+**Ordering is recomputed every month**, because the hybrid strategy's "small
+enough to finish quickly" test depends on the balance as it stands now, not
+as it stood at the start.
+
+**Minimum payments** are derived only where they honestly can be (§13: issuer
+formulas vary, don't hardcode one). A minimum the user read off a statement
+always wins. Otherwise a revolving balance derives 2% or a $25 floor,
+whichever is greater, capped at the balance itself — a common convention,
+marked as derived, and stated as such in `data/debt_rules.json`. An instalment
+loan's payment depends on its original term, which this build does not ask
+for, so it is **requested rather than invented**.
+
+**A payment that cannot outrun the interest is reported, not looped.** The
+simulation detects a balance that grows faster than it shrinks and returns an
+incomplete result saying so, and the 600-month ceiling returns "still not
+clear at this payment" rather than silently truncating and reporting a wrong
+month count.
+
+Strategies, the emotional-priority ranking used by the Convenience Method,
+the quick-win threshold and the month ceiling are all in
+`data/debt_rules.json`, so adding a strategy is a data edit.
+
+---
+
 ## Still open
 
 - **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the

@@ -29,6 +29,7 @@ const Demo = require(path.join(ROOT, 'shared/demo-persona.js'));
 const Tier0 = require(path.join(ROOT, 'engines/tier0.js'));
 const Foo = require(path.join(ROOT, 'engines/foo.js'));
 const CashFlow = require(path.join(ROOT, 'engines/cashflow.js'));
+const Debt = require(path.join(ROOT, 'engines/debt.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -37,7 +38,8 @@ const TABLES = {
   irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json')),
   fooRules: require(path.join(ROOT, 'data/foo_rules.json')),
   expenseCategories: require(path.join(ROOT, 'data/expense_categories.json')),
-  budgetTemplates: require(path.join(ROOT, 'data/budget_templates.json'))
+  budgetTemplates: require(path.join(ROOT, 'data/budget_templates.json')),
+  debtRules: require(path.join(ROOT, 'data/debt_rules.json'))
 };
 
 /* ---- Tiny harness ------------------------------------------------------ */
@@ -549,7 +551,190 @@ const SPEND = Demo.VALUES.monthlySpending;
 })();
 
 /* ==========================================================================
-   9. Every reference table is reachable through the loader.
+   9. Debt Calculator. SPEC.md §9 item 5, §10, §13.
+   ========================================================================== */
+
+section('Debt Calculator');
+
+const RULES = TABLES.debtRules;
+
+/* -- The amortisation loop, checked against the closed form --------------
+      For ONE debt at a fixed payment with no extra, the months to payoff have
+      an analytic answer:  n = -ln(1 - rB/P) / ln(1+r).
+      That is a genuinely independent check on the simulation — a different
+      method, not a second copy of the same loop. Robin's card: $3,200 at
+      22.9%, paying the $95 minimum.                                       */
+(function () {
+  const B = 320000, annual = 0.229, P = 9500;
+  const r = annual / 12;
+  const closedForm = Math.ceil(-Math.log(1 - (r * B) / P) / Math.log(1 + r));
+
+  const hh = Schema.createHousehold({
+    people: [Schema.createPerson({ id: 'P', role: 'adult' })],
+    debts: [Schema.createDebt({
+      id: 'card', label: 'Credit card', balanceCents: B, rate: annual,
+      minPaymentCents: P, type: 'credit_card', ownerIds: ['P']
+    })]
+  });
+
+  const sim = Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 0 });
+  check('single-debt payoff matches the closed form', sim.value, closedForm);
+  check('and that is 55 months', sim.value, 55);
+  checkTrue('total paid exceeds the balance by the interest charged',
+    sim.totalPaidCents === B + sim.totalInterestCents,
+    `paid ${sim.totalPaidCents} vs balance ${B} + interest ${sim.totalInterestCents}`);
+  /* Closed-form total interest ≈ n·P − B, within a month's rounding. */
+  const approxInterest = closedForm * P - B;
+  checkTrue('total interest is within a month of the closed-form figure',
+    Math.abs(sim.totalInterestCents - approxInterest) < P,
+    `sim ${sim.totalInterestCents} vs approx ${approxInterest}`);
+  check('the payoff is recorded against the debt', sim.payoffs[0].debtId, 'card');
+  check('payoff month matches the total', sim.payoffs[0].month, sim.value);
+
+  /* Paying more must finish sooner and cost less. */
+  const faster = Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 10000 });
+  checkTrue('an extra $100/mo finishes sooner', faster.value < sim.value,
+    `${faster.value} vs ${sim.value}`);
+  checkTrue('and costs less interest', faster.totalInterestCents < sim.totalInterestCents);
+})();
+
+/* -- Strategy ordering ---------------------------------------------------- */
+
+function threeDebtHousehold() {
+  return Schema.createHousehold({
+    people: [Schema.createPerson({ id: 'P', role: 'adult' })],
+    debts: [
+      Schema.createDebt({ id: 'loan',  label: 'Student loan', balanceCents: 1840000, rate: 0.055, minPaymentCents: 21000, type: 'student_loan', ownerIds: ['P'] }),
+      Schema.createDebt({ id: 'card',  label: 'Credit card',  balanceCents: 320000,  rate: 0.229, minPaymentCents: 9500,  type: 'credit_card',  ownerIds: ['P'] }),
+      Schema.createDebt({ id: 'small', label: 'Personal loan', balanceCents: 90000,  rate: 0.06,  minPaymentCents: 3000,  type: 'personal',     ownerIds: ['P'] })
+    ]
+  });
+}
+
+(function () {
+  const hh = threeDebtHousehold();
+  const prepared = Debt.prepare(hh, RULES);
+  check('all three debts are simulatable', prepared.value.length, 3);
+
+  const order = id => Debt.orderDebts(prepared.value, Debt.strategyById(RULES, id), RULES)
+    .map(d => d.id);
+
+  check('avalanche targets the highest rate', order('avalanche').join(','), 'card,small,loan');
+  check('snowball targets the smallest balance', order('snowball').join(','), 'small,card,loan');
+  /* Hybrid clears anything under $1,000 first, then reverts to avalanche. */
+  check('hybrid takes the quick win, then the highest rate',
+    order('hybrid').join(','), 'small,card,loan');
+
+  /* Convenience follows the emotional tag, not the maths. */
+  const tagged = threeDebtHousehold();
+  tagged.debts.find(d => d.id === 'loan').emotionalTag = 'family';
+  const taggedPrepared = Debt.prepare(tagged, RULES);
+  check('convenience puts the tagged debt first',
+    Debt.orderDebts(taggedPrepared.value, Debt.strategyById(RULES, 'convenience'), RULES)
+      .map(d => d.id).join(','), 'loan,card,small');
+  check('an untagged debt ranks zero', Debt.emotionalPriority({ emotionalTag: null }, RULES), 0);
+  check('a family debt outranks the rest', Debt.emotionalPriority({ emotionalTag: 'family' }, RULES), 3);
+})();
+
+/* -- The trade-off between strategies -------------------------------------
+      Avalanche must never cost more interest than any other ordering: that
+      is what avalanche IS. Snowball must clear its first account no later
+      than avalanche. Both are invariants, not fitted numbers.            */
+(function () {
+  const hh = threeDebtHousehold();
+  const cmp = Debt.compareStrategies(hh, RULES, { extraMonthlyCents: 20000 });
+  check('avalanche is the cheapest ordering', cmp.cheapestStrategyId, 'avalanche');
+
+  const av = cmp.results.avalanche, sb = cmp.results.snowball;
+  checkTrue('avalanche costs no more interest than snowball',
+    av.totalInterestCents <= sb.totalInterestCents,
+    `avalanche ${av.totalInterestCents} vs snowball ${sb.totalInterestCents}`);
+  checkTrue('snowball clears its first debt no later than avalanche',
+    sb.payoffs[0].month <= av.payoffs[0].month,
+    `snowball ${sb.payoffs[0].month} vs avalanche ${av.payoffs[0].month}`);
+  checkTrue('the spread between best and worst is reported',
+    cmp.spreadCents >= 0);
+  checkTrue('every strategy clears the debt eventually',
+    Object.keys(cmp.results).every(k => Money.isOk(cmp.results[k])));
+
+  /* The freed-up minimum must roll onward — that is the snowball effect, and
+     it is why this cannot be a closed form. Every strategy pays the same
+     total each month. */
+  const expectedBudget = 21000 + 9500 + 3000 + 20000;
+  check('the monthly budget stays constant', av.monthlyBudgetCents, expectedBudget);
+})();
+
+/* -- Minimum payments: derived where possible, asked for where not -------- */
+(function () {
+  /* 2% of $3,200 is $64, above the $25 floor. */
+  const card = Schema.createDebt({ balanceCents: 320000, rate: 0.229, type: 'credit_card' });
+  const derived = Debt.minimumPaymentCents(card, RULES);
+  check('a card minimum is derived at 2% of the balance', derived.value, 6400);
+  check('and is marked as derived', derived.derived, true);
+
+  /* On a small balance the floor wins. */
+  const tiny = Schema.createDebt({ balanceCents: 50000, rate: 0.2, type: 'credit_card' });
+  check('the floor applies on a small balance', Debt.minimumPaymentCents(tiny, RULES).value, 2500);
+
+  /* Never more than is actually owed. */
+  const nearlyClear = Schema.createDebt({ balanceCents: 1000, rate: 0.2, type: 'credit_card' });
+  check('a minimum never exceeds the balance',
+    Debt.minimumPaymentCents(nearlyClear, RULES).value, 1000);
+
+  /* A statement minimum the user entered always wins over a derived one. */
+  const stated = Schema.createDebt({ balanceCents: 320000, rate: 0.229, minPaymentCents: 9500, type: 'credit_card' });
+  const used = Debt.minimumPaymentCents(stated, RULES);
+  check('an entered minimum wins', used.value, 9500);
+  check('and is not marked derived', used.derived, false);
+
+  /* An instalment loan's payment depends on its original term, which we do
+     not ask for — so it is requested, not invented. */
+  const loan = Schema.createDebt({ balanceCents: 1840000, rate: 0.055, type: 'student_loan' });
+  const notDerivable = Debt.minimumPaymentCents(loan, RULES);
+  check('an instalment minimum is not invented', notDerivable.status, 'incomplete');
+  checkTrue('and the reason says why', /term/.test(notDerivable.reason));
+})();
+
+/* -- Credit Card calc is a filtered view, not a second build. SPEC.md §13 -- */
+(function () {
+  const hh = threeDebtHousehold();
+  const cards = Debt.creditCardsOnly(hh);
+  check('filtering leaves only revolving debt', cards.debts.length, 1);
+  check('and it is the card', cards.debts[0].id, 'card');
+  checkTrue('the original household is untouched', hh.debts.length === 3);
+  const sim = Debt.simulate(cards, RULES, { strategyId: 'avalanche', extraMonthlyCents: 0 });
+  checkTrue('the filtered view runs through the same engine', Money.isOk(sim));
+  check('and gives the same answer as the card alone', sim.value, 55);
+})();
+
+/* -- Incomplete and impossible states ------------------------------------- */
+(function () {
+  check('no debts yields an incomplete plan',
+    Debt.simulate(Schema.createHousehold(), RULES, {}).status, 'incomplete');
+
+  /* A debt missing its rate cannot be simulated, and the reason names it. */
+  const noRate = Schema.createHousehold({
+    people: [Schema.createPerson({ id: 'P', role: 'adult' })],
+    debts: [Schema.createDebt({ id: 'x', label: 'Mystery loan', balanceCents: 100000, rate: null, minPaymentCents: 5000, type: 'personal', ownerIds: ['P'] })]
+  });
+  const r = Debt.simulate(noRate, RULES, {});
+  check('a rateless debt blocks the simulation', r.status, 'incomplete');
+  checkTrue('and the reason names the debt', /Mystery loan/.test(r.reason), r.reason);
+
+  /* A payment that cannot outrun the interest must be reported, not looped. */
+  const underwater = Schema.createHousehold({
+    people: [Schema.createPerson({ id: 'P', role: 'adult' })],
+    debts: [Schema.createDebt({ id: 'y', label: 'Runaway card', balanceCents: 1000000, rate: 0.30, minPaymentCents: 1000, type: 'credit_card', ownerIds: ['P'] })]
+  });
+  const never = Debt.simulate(underwater, RULES, { strategyId: 'avalanche', extraMonthlyCents: 0 });
+  check('a payment below the interest is reported, not looped forever', never.status, 'incomplete');
+  check('and no month count is invented', never.value, null);
+  checkTrue('and it says the interest is outrunning the payment',
+    /outruns|not clear/.test(never.reason), never.reason);
+})();
+
+/* ==========================================================================
+   10. Every reference table is reachable through the loader.
    A table added to data/ but never registered in shared/reference.js loads
    as undefined in the browser and takes the room down with it — which is
    exactly what happened once. Both directions are checked.
@@ -582,7 +767,7 @@ section('Reference tables');
 })();
 
 /* ==========================================================================
-   10. Registry deep links resolve to real elements.
+   11. Registry deep links resolve to real elements.
    ========================================================================== */
 
 section('Registry and rooms');

@@ -32,7 +32,8 @@
     irsLimits: 'irs_limits_2026.json',
     fooRules: 'foo_rules.json',
     expenseCategories: 'expense_categories.json',
-    budgetTemplates: 'budget_templates.json'
+    budgetTemplates: 'budget_templates.json',
+    debtRules: 'debt_rules.json'
   };
 
   var cache = {};
