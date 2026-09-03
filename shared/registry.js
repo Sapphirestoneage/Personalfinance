@@ -141,8 +141,23 @@
       ]
     },
     {
-      id: 'foo-ladder',
+      id: 'self-employed',
       order: 8,
+      title: 'Going Self-Employed',
+      blurb: 'What a contract rate has to be to match a salary, where the 15.3% actually lands, and what to send in each quarter.',
+      href: 'rooms/self-employed.html',
+      tier: 1,
+      tags: ['income'],
+      subsections: [
+        { id: 'compare',   label: 'Salary vs. contract' },
+        { id: 'setax',     label: 'Self-employment tax' },
+        { id: 'quarterly', label: 'Quarterly estimates' },
+        { id: 'reading',   label: 'Reading from elsewhere' }
+      ]
+    },
+    {
+      id: 'foo-ladder',
+      order: 9,
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
       href: 'index.html',

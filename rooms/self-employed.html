@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Going Self-Employed · SPARKS</title>
+<meta name="description" content="What a contract rate has to be to match a salary, and what to send the IRS each quarter."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11.
+
+  1. READS   filingStatus and grossAnnualIncome (owned by Start Here), used
+             as the default salary to compare against.
+  2. WRITES  Nothing. Every figure here describes a decision being weighed,
+             not the household as it stands.
+  3. CALLS   engines/selfemployed.js. Income tax comes from the same
+             effective-rate lookup Tier 0 uses; SE tax is computed in named
+             steps and shown as working, because §13 flags it as a common
+             source of off-by-a-factor errors.
+  4. EMPTY   Each of the two tools independently states what it needs. The
+             quarterly figure works with no prior year at all — it just falls
+             back to the current-year target and says so.
+  5. CONFIG  data/se_tax_2026.json (rates, wage base, safe-harbour shares,
+             due dates), data/effective_tax_rates_2026.json.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
+  @media (max-width: 380px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .versus { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
+  .versus > div { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); }
+  .versus .winner { border-color: var(--color-border-active); background: var(--color-surface-active); }
+  .versus .lbl { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); display: block; }
+  .versus .val { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
+  .versus ul { list-style: none; margin: var(--space-2) 0 0; padding: 0; font-size: var(--text-xs); color: var(--color-text-faint); }
+  .versus li { display: flex; justify-content: space-between; gap: var(--space-2); padding: 2px 0; font-variant-numeric: tabular-nums; }
+
+  .headline { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-3); }
+  .headline.is-incomplete { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-base); }
+
+  .working { margin-top: var(--space-3); font-size: var(--text-sm); }
+  .working dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  .working dt { color: var(--color-text-faint); }
+  .working dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  .working .step { color: var(--color-text-muted); }
+
+  .quarters { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-2); margin-top: var(--space-3); }
+  .quarter { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2); text-align: center; }
+  .quarter .when { font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); display: block; }
+  .quarter .amt { font-family: var(--font-display); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+
+  .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-2) var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Going Self-Employed</h1>
+  <p class="room-lede">What a contract rate has to be to match a salary — and what to send in each quarter once it is.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="compare">
+    <span class="slaf-eyebrow">Salary vs. contract</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Which actually pays more?</h2>
+    <div class="grid-2">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Salary on offer</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="w-salary" placeholder="e.g. 72000" aria-label="W2 salary"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Benefits it comes with</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="w-benefits" placeholder="e.g. 8000" aria-label="Value of W2 benefits"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Contract income</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="c-income" placeholder="e.g. 85000" aria-label="Contract income"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Business expenses</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="c-expenses" placeholder="e.g. 5000" aria-label="Business expenses"/></span></label>
+    </div>
+    <p class="slaf-hint" style="margin-top:var(--space-3)">
+      Benefits means what you'd have to buy yourself: health cover, the
+      employer's retirement match, paid leave.
+    </p>
+
+    <div class="headline" id="verdict">—</div>
+    <div class="versus" id="versus" hidden>
+      <div id="side-w2"><span class="lbl">Salary, take-home</span><span class="val" id="w2-net">—</span><ul id="w2-lines"></ul></div>
+      <div id="side-c"><span class="lbl">Contract, take-home</span><span class="val" id="c-net">—</span><ul id="c-lines"></ul></div>
+    </div>
+    <div class="flag" id="equivalent" hidden></div>
+  </section>
+
+  <section class="slaf-card" id="setax">
+    <span class="slaf-eyebrow">Self-employment tax</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Where the 15.3% actually lands</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      It isn't 15.3% of what you make — it's 15.3% of 92.35% of it, and half
+      comes back as a deduction. Both are easy to get wrong, so here is the
+      working.
+    </p>
+    <div class="working" id="se-working"><p class="slaf-reason">Enter a contract income above.</p></div>
+  </section>
+
+  <section class="slaf-card" id="quarterly">
+    <span class="slaf-eyebrow">Quarterly estimates</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">What to send in, and when</h2>
+    <div class="grid-2">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Profit you expect</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="q-profit" placeholder="e.g. 80000" aria-label="Expected net profit"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Tax withheld elsewhere</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="q-withheld" placeholder="e.g. 0" aria-label="Tax already withheld"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Last year's tax bill</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="q-prior" placeholder="e.g. 9000" aria-label="Prior year tax liability"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Last year's income</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="q-prior-agi" placeholder="e.g. 72000" aria-label="Prior year AGI"/></span></label>
+    </div>
+    <div class="headline" id="q-amount">—</div>
+    <div class="quarters" id="q-schedule" hidden></div>
+    <div class="working" id="q-working"></div>
+    <div class="flag" id="q-harbor" hidden></div>
+  </section>
+
+  <section class="slaf-card" id="reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice, and definitely not a tax return.
+    Income tax is estimated from a flat effective-rate table with no
+    deductions or credits, and the Social Security wage base in
+    <code>data/se_tax_2026.json</code> is unverified for 2026 — check it
+    before relying on any figure above it. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
+      Reference = SLAF.Reference, SE = SLAF.SelfEmployed, Schema = SLAF.Schema;
+
+  var ROOM_ID = 'self-employed';
+  var TABLES = null;
+  var v = {};
+
+  function el(id) { return document.getElementById(id); }
+
+  function bind(id) {
+    var node = el(id);
+    node.addEventListener('focus', function () {
+      node.value = Money.isEntered(v[id]) ? String(v[id] / 100) : '';
+      node.select();
+    });
+    node.addEventListener('blur', function () {
+      v[id] = node.value.trim() === '' ? null : Money.parseMoney(node.value);
+      node.value = Money.isEntered(v[id]) ? Money.formatCents(v[id]) : '';
+      render();
+    });
+    node.addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter') { evt.preventDefault(); node.blur(); }
+    });
+  }
+  ['w-salary', 'w-benefits', 'c-income', 'c-expenses',
+   'q-profit', 'q-withheld', 'q-prior', 'q-prior-agi'].forEach(bind);
+
+  function dl(rows) {
+    return '<dl>' + rows.map(function (r) {
+      return '<dt' + (r[2] ? ' class="step"' : '') + '>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+    }).join('') + '</dl>';
+  }
+  function lines(rows) {
+    return rows.map(function (r) {
+      return '<li><span>' + r[0] + '</span><span>' + r[1] + '</span></li>';
+    }).join('');
+  }
+
+  function renderCompare(h) {
+    var r = SE.compareW2vs1099(h, TABLES, {
+      w2SalaryCents: v['w-salary'], w2BenefitsValueCents: v['w-benefits'],
+      contractIncomeCents: v['c-income'], businessExpensesCents: v['c-expenses']
+    });
+    var verdict = el('verdict');
+    if (!Money.isOk(r)) {
+      verdict.textContent = r.reason || Money.EM_DASH;
+      verdict.className = 'headline is-incomplete';
+      el('versus').hidden = true;
+      el('equivalent').hidden = true;
+      return;
+    }
+    verdict.className = 'headline';
+    verdict.textContent = r.contractIsBetter
+      ? 'Contract wins by ' + Money.formatCents(Math.abs(r.differenceCents)) + '/yr'
+      : 'Salary wins by ' + Money.formatCents(Math.abs(r.differenceCents)) + '/yr';
+
+    el('versus').hidden = false;
+    el('side-w2').className = r.contractIsBetter ? '' : 'winner';
+    el('side-c').className = r.contractIsBetter ? 'winner' : '';
+    el('w2-net').textContent = Money.formatCents(r.w2.netCents);
+    el('c-net').textContent = Money.formatCents(r.contract.netCents);
+    el('w2-lines').innerHTML = lines([
+      ['Gross', Money.formatCents(r.w2.grossCents)],
+      ['FICA', '−' + Money.formatCents(r.w2.ficaCents)],
+      ['Income tax', '−' + Money.formatCents(r.w2.incomeTaxCents)],
+      ['Benefits', '+' + Money.formatCents(r.w2.benefitsCents)]
+    ]);
+    el('c-lines').innerHTML = lines([
+      ['Gross', Money.formatCents(r.contract.grossCents)],
+      ['Expenses', '−' + Money.formatCents(r.contract.businessExpensesCents)],
+      ['SE tax', '−' + Money.formatCents(r.contract.seTaxCents)],
+      ['Income tax', '−' + Money.formatCents(r.contract.incomeTaxCents)]
+    ]);
+
+    if (Money.isEntered(r.equivalentContractCents)) {
+      el('equivalent').hidden = false;
+      el('equivalent').innerHTML = '<strong>To match that salary you’d need to bill about '
+        + Money.formatCents(r.equivalentContractCents) + '.</strong> '
+        + (r.extraNeededCents > 0
+            ? 'That is ' + Money.formatCents(r.extraNeededCents) + ' more than the salary — the gap is the employer’s half of FICA, the benefits, and the tax you now pay yourself.'
+            : 'You are already above it.');
+    } else {
+      el('equivalent').hidden = true;
+    }
+
+    renderSeWorking(r.contract.se);
+  }
+
+  function renderSeWorking(se) {
+    if (!se || !Money.isOk(se)) {
+      el('se-working').innerHTML = '<p class="slaf-reason">Enter a contract income above.</p>';
+      return;
+    }
+    var rows = [
+      ['Net profit', Money.formatCents(se.netProfitCents)],
+      ['× 92.35% = net earnings', Money.formatCents(se.netEarningsCents), true],
+      ['Social Security at 12.4%', Money.formatCents(se.socialSecurityCents), true],
+      ['Medicare at 2.9%', Money.formatCents(se.medicareCents), true]
+    ];
+    if (se.additionalMedicareCents > 0) {
+      rows.push(['Additional Medicare at 0.9%', Money.formatCents(se.additionalMedicareCents), true]);
+    }
+    rows.push(['Self-employment tax', Money.formatCents(se.value)]);
+    rows.push(['Half of it, deductible', '−' + Money.formatCents(se.deductibleHalfCents), true]);
+    el('se-working').innerHTML = dl(rows)
+      + '<p class="slaf-reason">That works out to '
+      + Money.formatRate(se.effectiveRateOnProfit, { decimals: 2 })
+      + ' of your profit — not 15.3%, because only 92.35% of it is taxed.'
+      + (se.socialSecurityCappedAt
+          ? ' Social Security stopped at the ' + Money.formatCents(se.socialSecurityCappedAt) + ' wage base.'
+          : '')
+      + '</p>';
+  }
+
+  function renderQuarterly(h) {
+    var r = SE.quarterlyEstimated(h, TABLES, {
+      expectedNetProfitCents: v['q-profit'],
+      taxAlreadyWithheldCents: v['q-withheld'],
+      priorYearLiabilityCents: v['q-prior'],
+      priorYearAgiCents: v['q-prior-agi']
+    });
+    var amount = el('q-amount');
+    if (!Money.isOk(r)) {
+      amount.textContent = r.reason || Money.EM_DASH;
+      amount.className = 'headline is-incomplete';
+      el('q-schedule').hidden = true;
+      el('q-working').innerHTML = '';
+      el('q-harbor').hidden = true;
+      return;
+    }
+    amount.className = 'headline';
+    amount.textContent = Money.formatCents(r.perQuarterCents) + ' a quarter';
+
+    el('q-schedule').hidden = false;
+    el('q-schedule').innerHTML = r.dueDates.map(function (d) {
+      return '<div class="quarter"><span class="when">' + d + '</span>'
+        + '<span class="amt">' + Money.formatCents(r.perQuarterCents) + '</span></div>';
+    }).join('');
+
+    var rows = [
+      ['SE tax on the profit', Money.formatCents(r.seTaxCents)],
+      ['Income tax on it', Money.formatCents(r.incomeTaxCents)],
+      ['This year’s bill', Money.formatCents(r.thisYearLiabilityCents)],
+      ['90% of it', Money.formatCents(r.currentYearTargetCents), true]
+    ];
+    if (Money.isEntered(r.priorYearTargetCents)) {
+      rows.push([Money.formatRate(r.priorYearShare, { decimals: 0 }) + ' of last year’s',
+        Money.formatCents(r.priorYearTargetCents), true]);
+    }
+    rows.push(['You must cover', Money.formatCents(r.requiredAnnualCents)]);
+    if (r.withheldElsewhereCents > 0) {
+      rows.push(['Already withheld', '−' + Money.formatCents(r.withheldElsewhereCents), true]);
+    }
+    el('q-working').innerHTML = dl(rows);
+
+    el('q-harbor').hidden = false;
+    el('q-harbor').innerHTML = r.basedOn === 'prior-year safe harbour'
+      ? '<strong>The safe harbour is doing the work here.</strong> Paying '
+        + Money.formatRate(r.priorYearShare, { decimals: 0 })
+        + ' of last year’s bill avoids a penalty even if you end up owing far more — and last year’s bill is a number you already know.'
+        + (r.priorYearIsHighIncome ? ' Last year’s income was above the threshold, so the share is 110% rather than 100%.' : '')
+      : Money.isEntered(r.priorYearTargetCents)
+        ? '<strong>Your current-year estimate is the lower target.</strong> Last year’s bill was big enough that 90% of this year is the cheaper way to stay safe.'
+        : '<strong>Add last year’s tax bill above.</strong> If it was small, the safe harbour lets you pay far less this year without a penalty — most calculators skip this.';
+  }
+
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    el('reading-list').innerHTML = ['filingStatus', 'grossAnnualIncome']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+    renderCompare(h);
+    renderQuarterly(h);
+  }
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    /* Default the salary side to what they already told us they earn. */
+    var gross = Schema.grossAnnualIncomeCents(Spine.getProfile());
+    if (Money.isOk(gross) && !Money.isEntered(v['w-salary'])) {
+      v['w-salary'] = gross.value;
+      el('w-salary').value = Money.formatCents(gross.value);
+    }
+    render();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

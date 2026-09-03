@@ -1,0 +1,34 @@
+{
+  "id": "se_tax",
+  "version": "2026.1",
+  "asOf": "2026-01-01",
+  "taxYear": 2026,
+  "precision": "rates are statutory and stable; the socialSecurityWageBase is UNVERIFIED for 2026 and is the single figure to check before relying on any output above it",
+  "source": "Self-employment tax mechanics: IRC 1401/1402. The 92.35% adjustment, the 15.3% combined rate and the deductible employer-equivalent half are long-standing statute. The wage base is indexed annually and must be re-checked.",
+  "note": "SPEC.md Section 13 flags SE tax as a common source of off-by-a-factor errors, so every step is named here rather than folded into one multiplication: net earnings are 92.35% of net profit; Social Security applies to those earnings up to the wage base; Medicare applies with no cap; an additional Medicare levy applies above a filing-status threshold; and half the combined Social Security and Medicare tax is deductible against income tax.",
+  "netEarningsFactor": 0.9235,
+  "socialSecurityRate": 0.124,
+  "socialSecurityWageBase": 184500,
+  "medicareRate": 0.029,
+  "additionalMedicare": {
+    "rate": 0.009,
+    "note": "Not deductible, and applies to the earnings above the threshold only.",
+    "thresholds": {
+      "single": 200000,
+      "married_joint": 250000,
+      "married_separate": 125000,
+      "head_of_household": 200000
+    }
+  },
+  "employeeFicaRate": 0.0765,
+  "employeeFicaNote": "What a W2 employee pays. The employer pays the matching half, which is the core of the W2-vs-1099 comparison.",
+  "safeHarbor": {
+    "note": "Estimated payments avoid an underpayment penalty if they cover the lesser of 90% of this year's liability or 100% of last year's — 110% when last year's AGI exceeded the high-income threshold.",
+    "currentYearShare": 0.90,
+    "priorYearShare": 1.00,
+    "priorYearShareHighIncome": 1.10,
+    "highIncomeAgiThreshold": 150000,
+    "highIncomeAgiThresholdMarriedSeparate": 75000
+  },
+  "quarterlyDueDates": ["April 15", "June 15", "September 15", "January 15"]
+}

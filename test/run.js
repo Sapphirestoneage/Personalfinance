@@ -35,6 +35,7 @@ const Fire = require(path.join(ROOT, 'engines/fire.js'));
 const Projection = require(path.join(ROOT, 'engines/projection.js'));
 const Hourly = require(path.join(ROOT, 'engines/hourly.js'));
 const QuickMath = require(path.join(ROOT, 'engines/quickmath.js'));
+const SelfEmployed = require(path.join(ROOT, 'engines/selfemployed.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -45,7 +46,8 @@ const TABLES = {
   expenseCategories: require(path.join(ROOT, 'data/expense_categories.json')),
   budgetTemplates: require(path.join(ROOT, 'data/budget_templates.json')),
   debtRules: require(path.join(ROOT, 'data/debt_rules.json')),
-  fireVariants: require(path.join(ROOT, 'data/fire_variants.json'))
+  fireVariants: require(path.join(ROOT, 'data/fire_variants.json')),
+  seTax: require(path.join(ROOT, 'data/se_tax_2026.json'))
 };
 
 /* ---- Tiny harness ------------------------------------------------------ */
@@ -1073,6 +1075,155 @@ section('Quick math');
   check('without a price it is incomplete', QuickMath.ruleOfFive(h, null).status, 'incomplete');
   check('without cash it is incomplete',
     QuickMath.ruleOfFive(Schema.createHousehold(), 100000).status, 'incomplete');
+})();
+
+/* ==========================================================================
+   9e. Self-employment. SPEC.md §13 — "a common source of off-by-a-factor
+   errors", and "most DIY calculators skip the safe harbor".
+   ========================================================================== */
+
+section('Self-employment');
+
+/* The textbook worked example, $100,000 of net profit, single filer:
+     net earnings      100,000 × 0.9235 = 92,350.00
+     social security    92,350 × 0.124  = 11,451.40
+     medicare           92,350 × 0.029  =  2,678.15
+     SE tax                              = 14,129.55
+     deductible half                     =  7,064.78                        */
+(function () {
+  const T = TABLES.seTax;
+  const r = SelfEmployed.selfEmploymentTax(10000000, 'single', T);
+
+  check('net earnings are 92.35% of profit', r.netEarningsCents, 9235000);
+  check('social security', r.socialSecurityCents, 1145140);
+  check('medicare', r.medicareCents, 267815);
+  check('total SE tax', r.value, 1412955);
+  check('the deductible employer-equivalent half', r.deductibleHalfCents, 706478);
+  check('no additional medicare at this level', r.additionalMedicareCents, 0);
+
+  /* The classic off-by-a-factor: 15.3% of PROFIT rather than of net earnings
+     would be $15,300. It must not be that. */
+  checkTrue('the rate is applied to net earnings, not to profit',
+    r.value !== Math.round(10000000 * 0.153),
+    `got ${r.value}, the wrong answer would be ${Math.round(10000000 * 0.153)}`);
+  check('the effective rate on profit is 15.3% × 0.9235',
+    r.effectiveRateOnProfit, 0.153 * 0.9235, 1e-6);
+  /* And the deductible half is half of the ORDINARY tax, not of the total. */
+  check('the deductible half is half the ordinary tax',
+    r.deductibleHalfCents, Math.round((r.socialSecurityCents + r.medicareCents) / 2));
+
+  /* Above the wage base, social security stops and Medicare does not.
+       net earnings 250,000 × 0.9235 = 230,875
+       SS  184,500 × 0.124           =  22,878.00   (capped)
+       Med 230,875 × 0.029           =   6,695.38
+       add (230,875 − 200,000) × .009 =    277.88                          */
+  const big = SelfEmployed.selfEmploymentTax(25000000, 'single', T);
+  check('social security is capped at the wage base',
+    big.socialSecurityCents, Math.round(T.socialSecurityWageBase * 100 * T.socialSecurityRate));
+  check('medicare is not capped', big.medicareCents, Math.round(23087500 * 0.029));
+  check('additional medicare applies above the threshold',
+    big.additionalMedicareCents, Math.round((23087500 - 20000000) * 0.009));
+  checkTrue('and the cap is reported', big.socialSecurityCappedAt !== null);
+  /* Additional Medicare is NOT deductible. */
+  check('the deductible half excludes the additional medicare',
+    big.deductibleHalfCents, Math.round((big.socialSecurityCents + big.medicareCents) / 2));
+
+  /* A married-joint filer has a higher additional-Medicare threshold, so the
+     same earnings attract less of it. */
+  const joint = SelfEmployed.selfEmploymentTax(25000000, 'married_joint', T);
+  checkTrue('a higher threshold means less additional medicare',
+    joint.additionalMedicareCents < big.additionalMedicareCents);
+
+  /* Edge cases. */
+  check('a loss owes no SE tax', SelfEmployed.selfEmploymentTax(-500000, 'single', T).value, 0);
+  check('zero profit owes no SE tax', SelfEmployed.selfEmploymentTax(0, 'single', T).value, 0);
+  check('no profit entered is incomplete',
+    SelfEmployed.selfEmploymentTax(null, 'single', T).status, 'incomplete');
+})();
+
+/* -- W2 vs 1099 ----------------------------------------------------------- */
+(function () {
+  const h = Demo.build();
+  const cmp = SelfEmployed.compareW2vs1099(h, TABLES, {
+    w2SalaryCents: 7200000, w2BenefitsValueCents: 800000,
+    contractIncomeCents: 8500000, businessExpensesCents: 500000
+  });
+  check('the comparison completes', cmp.status, 'ok');
+  check('W2 benefits count toward the W2 side',
+    cmp.w2.netCents, 7200000 - cmp.w2.ficaCents - cmp.w2.incomeTaxCents + 800000);
+  check('business expenses come off before SE tax',
+    cmp.contract.netProfitCents, 8500000 - 500000);
+  check('the SE tax is the same engine as above',
+    cmp.contract.seTaxCents,
+    SelfEmployed.selfEmploymentTax(8000000, 'single', TABLES.seTax).value);
+  check('the deduction reduces what income tax is charged on',
+    cmp.contract.taxableAfterDeductionCents,
+    8000000 - cmp.contract.seDeductibleHalfCents);
+  checkTrue('an equivalent contract rate is offered', Money.isEntered(cmp.equivalentContractCents));
+  checkTrue('and it is above the salary it has to match',
+    cmp.equivalentContractCents > 7200000,
+    `equivalent ${cmp.equivalentContractCents} vs salary 7200000`);
+
+  /* Both sides missing means no comparison, not a zero. */
+  check('without both figures it is incomplete',
+    SelfEmployed.compareW2vs1099(h, TABLES, { w2SalaryCents: 7200000 }).status, 'incomplete');
+  const noStatus = Demo.build();
+  noStatus.filingStatus = null;
+  check('without a filing status it is incomplete',
+    SelfEmployed.compareW2vs1099(noStatus, TABLES,
+      { w2SalaryCents: 7200000, contractIncomeCents: 8500000 }).status, 'incomplete');
+})();
+
+/* -- Quarterly estimates and the safe harbour ----------------------------- */
+(function () {
+  const h = Demo.build();
+  const base = { expectedNetProfitCents: 10000000 };
+
+  /* With no prior year, the target is 90% of this year's liability. */
+  const currentOnly = SelfEmployed.quarterlyEstimated(h, TABLES, base);
+  check('without a prior year it uses the current-year share',
+    currentOnly.basedOn, 'current-year-only');
+  check('which is 90% of this year', currentOnly.requiredAnnualCents,
+    Math.round(currentOnly.thisYearLiabilityCents * 0.9));
+  check('split four ways', currentOnly.perQuarterCents,
+    Math.round(currentOnly.requiredAnnualCents / 4));
+
+  /* A small prior year is the safe harbour — the whole point of the rule. */
+  const withHarbor = SelfEmployed.quarterlyEstimated(h, TABLES,
+    Object.assign({ priorYearLiabilityCents: 500000, priorYearAgiCents: 6000000 }, base));
+  check('a smaller prior year becomes the safe harbour',
+    withHarbor.basedOn, 'prior-year safe harbour');
+  check('at 100% of it', withHarbor.requiredAnnualCents, 500000);
+  checkTrue('which is far less than the current-year target',
+    withHarbor.requiredAnnualCents < currentOnly.requiredAnnualCents);
+
+  /* Above the AGI threshold the prior-year share rises to 110%. */
+  const highIncome = SelfEmployed.quarterlyEstimated(h, TABLES,
+    Object.assign({ priorYearLiabilityCents: 500000, priorYearAgiCents: 20000000 }, base));
+  check('a high prior-year AGI raises the share', highIncome.priorYearShare, 1.1);
+  check('and the target with it', highIncome.requiredAnnualCents, Math.round(500000 * 1.1));
+  check('and it is flagged', highIncome.priorYearIsHighIncome, true);
+
+  /* A big prior year does NOT become the harbour — the rule takes the lesser. */
+  const bigPrior = SelfEmployed.quarterlyEstimated(h, TABLES,
+    Object.assign({ priorYearLiabilityCents: 50000000, priorYearAgiCents: 6000000 }, base));
+  check('a larger prior year is not used', bigPrior.basedOn, 'current-year estimate');
+  check('the lesser of the two wins', bigPrior.requiredAnnualCents,
+    Math.min(bigPrior.currentYearTargetCents, bigPrior.priorYearTargetCents));
+
+  /* Tax withheld from a day job reduces what is left to pay in quarters. */
+  const withW2 = SelfEmployed.quarterlyEstimated(h, TABLES,
+    Object.assign({ taxAlreadyWithheldCents: 300000 }, base));
+  check('withholding elsewhere reduces the quarterly payment',
+    withW2.payableAcrossQuartersCents, currentOnly.requiredAnnualCents - 300000);
+  /* And it can wipe them out entirely rather than going negative. */
+  const covered = SelfEmployed.quarterlyEstimated(h, TABLES,
+    Object.assign({ taxAlreadyWithheldCents: 99999999 }, base));
+  check('over-withholding leaves nothing to pay, not a negative', covered.perQuarterCents, 0);
+
+  check('four due dates are named', currentOnly.dueDates.length, 4);
+  check('without expected profit it is incomplete',
+    SelfEmployed.quarterlyEstimated(h, TABLES, {}).status, 'incomplete');
 })();
 
 /* ==========================================================================

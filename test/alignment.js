@@ -29,6 +29,11 @@ const TARGETS = [
   ['/rooms/start.html#q-match', '.q-pair'],
   ['/rooms/debt-payoff.html', '.debt-grid'],
   ['/rooms/debt-payoff.html', '.debt-meta'],
+  ['/rooms/fire.html', '.params'],
+  ['/rooms/real-hourly-wage.html', '.grid-2'],
+  ['/rooms/quick-math.html', '.grid-2'],
+  ['/rooms/quick-math.html', '.grid-3'],
+  ['/rooms/self-employed.html', '.grid-2'],
   ['/', '.grid2'],
   ['/rooms/cash-flow.html', '.cat-row']
 ];

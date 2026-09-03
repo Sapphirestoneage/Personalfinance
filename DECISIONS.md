@@ -834,6 +834,47 @@ which is the arithmetic a reader would do themselves.
 
 ---
 
+## D-023 — self-employment tax, computed in visible steps
+**2026-09-03 · SPEC.md §13**
+
+§13 flags this area twice and both warnings shaped the code.
+
+**"A common source of off-by-a-factor errors."** So the tax is computed in
+named steps rather than one multiplication, and every step is reported back
+and shown in the room:
+
+1. net earnings = net profit × 92.35%
+2. Social Security = those earnings up to the wage base × 12.4%
+3. Medicare = all of them × 2.9%, no cap
+4. additional Medicare above a filing-status threshold, at 0.9%
+5. half of (2 + 3) — **not** of (2 + 3 + 4) — is deductible
+
+Checked against the textbook $100,000 example: $92,350 of net earnings,
+$11,451.40 Social Security, $2,678.15 Medicare, $14,129.55 total, $7,064.78
+deductible. A test also asserts the answer is **not** 15.3% of profit
+($15,300), which is the specific error the spec is warning about, and that
+the effective rate on profit is exactly 15.3% × 0.9235 = 14.13%.
+
+**"Most DIY calculators skip the safe harbor."** The required annual payment
+is the *lesser* of 90% of this year's liability and 100% of last year's —
+110% when last year's AGI was above the threshold. That is the whole value of
+the rule: last year's bill is a number you already know, so a good year does
+not have to mean guessing. The room says which of the two is binding and why.
+
+**One honest gap.** `socialSecurityWageBase` in
+`data/se_tax_2026.json` is **unverified for 2026**. The rates and the 92.35%
+adjustment are long-standing statute; the wage base is indexed annually. It
+is flagged in the file, in the room's footer, and here. Everything below the
+base is unaffected.
+
+**The output that actually matters** is the equivalent contract rate: what
+you would have to bill to be no worse off than a salary. On the example, a
+$72,000 salary with $8,000 of benefits needs about $93,551 of contract income
+— $8,551 more than the headline, which is the employer's half of FICA, the
+benefits, and the tax you now remit yourself.
+
+---
+
 ## Still open
 
 - **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the
