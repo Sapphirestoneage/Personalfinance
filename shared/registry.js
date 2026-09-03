@@ -94,8 +94,23 @@
       ]
     },
     {
-      id: 'foo-ladder',
+      id: 'fire',
       order: 5,
+      title: 'FIRE Number',
+      blurb: 'What you\u2019d need before work became optional \u2014 lean, standard, chubby, fat, coast or barista, from one formula.',
+      href: 'rooms/fire.html',
+      tier: 1,
+      tags: ['income', 'cashflow'],
+      subsections: [
+        { id: 'reading',    label: 'What this reads' },
+        { id: 'out-target', label: 'Your number' },
+        { id: 'variants',   label: 'Six ways to ask it' },
+        { id: 'params',     label: 'Try different assumptions' }
+      ]
+    },
+    {
+      id: 'foo-ladder',
+      order: 6,
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
       href: 'index.html',

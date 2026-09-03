@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FIRE Number · SPARKS</title>
+<meta name="description" content="What you'd need to stop working — lean, standard, chubby, fat, coast or barista."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11.
+
+  1. READS   expenses.monthlyEssential (via Cash Flow's tracked figure when
+             there is one), investments, dob, income, filingStatus.
+  2. WRITES  Nothing. It owns no field. The variant parameters below — coast
+             target age, part-time income, and the withdrawal rate — are
+             LOCAL previews for this view only, never written to the stored
+             assumptions (SPEC.md §12.2, §6).
+  3. CALLS   engines/fire.js — one calculateFIRE() parameterised by variant,
+             per §8. Projection comes from engines/projection.js, the same
+             loop Tier 0 uses. No formula is written in this file.
+  4. EMPTY   No expenses: every variant says so. Barista without a part-time
+             figure, and Coast without a date of birth, each name what they
+             need rather than guessing.
+  5. CONFIG  data/fire_variants.json (the flavours and their expense
+             factors), data/effective_tax_rates_2026.json (for the savings
+             rate that drives the projection).
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .variants { display: grid; gap: var(--space-2); }
+  .variant { text-align: left; font-family: var(--font-body); color: var(--color-text); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; transition: all 150ms ease; }
+  .variant:hover { border-color: var(--color-border-active); }
+  .variant[aria-pressed="true"] { border-color: var(--color-border-active); background: var(--color-surface-active); }
+  .variant-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+  .variant-name { font-weight: 600; }
+  .variant-figure { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .variant-figure.is-incomplete { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-sm); }
+  .variant-blurb { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  .variant-eta { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+
+  .params { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
+  @media (max-width: 380px) { .params { grid-template-columns: 1fr; } }
+
+  .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
+  .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  .out-detail dt { color: var(--color-text-faint); }
+  .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  .preview-note { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-2); }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>FIRE Number</h1>
+  <p class="room-lede">What you'd need before work became optional — and the six different answers to that question.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="reading">
+    <span class="slaf-eyebrow">What this is reading</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <section class="slaf-card" id="out-target">
+    <span class="slaf-eyebrow" id="target-label">Your number</span>
+    <div class="slaf-figure" data-figure>—</div>
+    <p class="slaf-reason" data-reason></p>
+    <div class="slaf-bar" style="margin-top:var(--space-3)"><span id="progress-bar" style="width:0"></span></div>
+    <div data-detail></div>
+  </section>
+
+  <section class="slaf-card" id="variants">
+    <span class="slaf-eyebrow">Six ways to ask it</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      Same formula throughout — expenses divided by your withdrawal rate. Only
+      the assumption about expenses changes.
+    </p>
+    <div class="variants" id="variant-list"></div>
+  </section>
+
+  <section class="slaf-card" id="params">
+    <span class="slaf-eyebrow">Try different assumptions</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      These change what you see here and nothing else — your stored settings
+      are left alone.
+    </p>
+    <div class="params">
+      <label class="slaf-field" style="margin:0">
+        <span class="slaf-label">Withdrawal rate</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="p-swr" placeholder="4"/><span class="slaf-affix">%</span></span>
+      </label>
+      <label class="slaf-field" style="margin:0">
+        <span class="slaf-label">Expected return</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="p-return" placeholder="7"/><span class="slaf-affix">%</span></span>
+      </label>
+      <label class="slaf-field" style="margin:0">
+        <span class="slaf-label">Coast: arrive by age</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="p-coast-age" placeholder="65"/></span>
+      </label>
+      <label class="slaf-field" style="margin:0">
+        <span class="slaf-label">Barista: part-time pay</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="p-barista" placeholder="e.g. 20000"/></span>
+      </label>
+    </div>
+    <p class="preview-note" id="preview-note"></p>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. A withdrawal rate is a planning
+    assumption, not a promise — the 4% figure comes from historical US market
+    data over 30-year retirements and says nothing certain about yours. Your
+    numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/fire.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership, Fire = SLAF.Fire;
+
+  var ROOM_ID = 'fire';
+  var TABLES = null;
+  var variantId = 'standard';
+
+  /* Local previews. Deliberately NOT persisted: SPEC.md §12.2 says a tool
+     that lets you test a more conservative SWR does it as a local,
+     non-persistent override for that view, not a change to the stored
+     default. Reloading the page returns you to your real assumptions. */
+  var preview = { swrRate: null, expectedReturnRate: null, coastTargetAge: null, baristaAnnualIncomeCents: null };
+
+  function el(id) { return document.getElementById(id); }
+
+  function optsFor(id) {
+    var localOverrides = {};
+    if (Money.isEntered(preview.swrRate)) localOverrides.swrRate = preview.swrRate;
+    if (Money.isEntered(preview.expectedReturnRate)) localOverrides.expectedReturnRate = preview.expectedReturnRate;
+    return {
+      variantId: id,
+      localOverrides: localOverrides,
+      coastTargetAge: preview.coastTargetAge,
+      baristaAnnualIncomeCents: preview.baristaAnnualIncomeCents
+    };
+  }
+
+  function dl(rows) {
+    return '<dl>' + rows.map(function (r) {
+      return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+    }).join('') + '</dl>';
+  }
+
+  function yearsLabel(result) {
+    if (!Money.isOk(result)) return result.reason || '';
+    if (result.value === 0) return 'You’re already there.';
+    return 'About ' + result.value + ' year' + (result.value === 1 ? '' : 's') + ' away at your current savings rate.';
+  }
+
+  function renderReading(h) {
+    el('reading-list').innerHTML =
+      ['monthlyExpenses', 'investments', 'dob'].map(function (fieldId) {
+        return Ownership.chip(fieldId, h, ROOM_ID);
+      }).join('');
+  }
+
+  function renderVariants(h) {
+    var all = Fire.allVariants(h, TABLES, optsFor(null));
+    el('variant-list').innerHTML = TABLES.fireVariants.variants.map(function (v) {
+      var entry = all[v.id];
+      var t = entry.target, prog = entry.progress;
+      var ok = Money.isOk(t);
+      var eta = '';
+      if (ok && Money.isOk(prog) && Money.isOk(prog.yearsAway)) {
+        eta = Money.formatRate(Math.min(1, prog.value), { decimals: 0 }) + ' of the way · '
+          + (prog.yearsAway.value === 0 ? 'already there' : prog.yearsAway.value + ' yrs away');
+      } else if (!ok) {
+        eta = t.reason || '';
+      }
+      return '<button type="button" class="variant" data-variant="' + v.id + '" '
+        + 'aria-pressed="' + (v.id === variantId) + '">'
+        + '<span class="variant-head"><span class="variant-name">' + v.label + '</span>'
+        + '<span class="variant-figure' + (ok ? '' : ' is-incomplete') + '">'
+        + (ok ? Money.formatCents(t.value) : Money.EM_DASH) + '</span></span>'
+        + '<p class="variant-blurb">' + v.blurb + '</p>'
+        + (eta ? '<p class="variant-eta">' + eta + '</p>' : '')
+        + '</button>';
+    }).join('');
+  }
+
+  function renderTarget(h) {
+    var section = el('out-target');
+    var figure = section.querySelector('[data-figure]');
+    var reason = section.querySelector('[data-reason]');
+    var detail = section.querySelector('[data-detail]');
+
+    var variant = Fire.variantById(TABLES.fireVariants, variantId);
+    el('target-label').textContent = variant ? variant.label : 'Your number';
+
+    var target = Fire.calculateFIRE(h, TABLES, optsFor(variantId));
+    var prog = Fire.progressToward(h, TABLES, optsFor(variantId));
+    var ok = Money.isOk(target);
+
+    figure.textContent = ok ? Money.formatCents(target.value) : Money.EM_DASH;
+    figure.classList.toggle('slaf-figure--incomplete', !ok);
+    reason.textContent = ok ? '' : (target.reason || '');
+    reason.hidden = ok;
+
+    el('progress-bar').style.width =
+      (Money.isOk(prog) ? Math.min(100, Math.max(0, prog.value * 100)) : 0) + '%';
+
+    if (!ok) { detail.innerHTML = ''; return; }
+
+    var rows = [
+      ['Expenses it covers', Money.formatCents(target.annualExpensesCents) + '/yr'],
+      ['At a withdrawal rate of', Money.formatRate(target.swrRate, { decimals: 1 })]
+    ];
+    if (target.variant.mode === 'coast') {
+      rows.push(['Grows into', Money.formatCents(target.fullTargetCents)]);
+      rows.push(['Over', target.yearsOfGrowth + ' years, to age ' + target.coastTargetAge]);
+    }
+    if (Money.isEntered(target.baristaAnnualIncomeCents)) {
+      rows.push(['Part-time pay covers', Money.formatCents(target.baristaAnnualIncomeCents) + '/yr']);
+    }
+    if (Money.isOk(prog)) {
+      rows.push(['You have', Money.formatCents(prog.investmentsCents)]);
+    }
+    detail.className = 'out-detail';
+    detail.innerHTML = dl(rows)
+      + '<p class="slaf-reason">' + (Money.isOk(prog) ? yearsLabel(prog.yearsAway) : prog.reason || '') + '</p>'
+      + (target.variant.mode === 'coast'
+          ? '<p class="slaf-reason">Coast doesn’t mean stop working — it means stop <em>saving</em>. You still cover your own costs until then.</p>'
+          : '')
+      + (target.expenseSource === 'estimated'
+          ? '<p class="slaf-reason">Based on your estimated spending. Track a month in Cash Flow and this sharpens up.</p>'
+          : '');
+  }
+
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    renderReading(h);
+    renderVariants(h);
+    renderTarget(h);
+
+    var touched = Object.keys(preview).filter(function (k) { return Money.isEntered(preview[k]); });
+    el('preview-note').textContent = touched.length
+      ? 'Previewing ' + touched.length + ' changed assumption' + (touched.length === 1 ? '' : 's')
+        + '. Reload to go back to your stored settings.'
+      : '';
+  }
+
+  el('variant-list').addEventListener('click', function (evt) {
+    var btn = evt.target.closest('[data-variant]');
+    if (!btn) return;
+    variantId = btn.getAttribute('data-variant');
+    render();
+    el('out-target').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  [['p-swr', 'swrRate', 'rate'], ['p-return', 'expectedReturnRate', 'rate'],
+   ['p-coast-age', 'coastTargetAge', 'number'], ['p-barista', 'baristaAnnualIncomeCents', 'money']]
+  .forEach(function (spec) {
+    var node = el(spec[0]);
+    node.addEventListener('blur', function () {
+      var raw = node.value.trim();
+      if (raw === '') { preview[spec[1]] = null; render(); return; }
+      preview[spec[1]] = spec[2] === 'rate' ? Money.parseRatePercent(raw)
+        : spec[2] === 'money' ? Money.parseMoney(raw)
+        : (Number.isFinite(Number(raw)) ? Number(raw) : null);
+      render();
+    });
+    node.addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter') { evt.preventDefault(); node.blur(); }
+    });
+  });
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var target = document.getElementById(location.hash.slice(1));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    render();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message
+      + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+  });
+})();
+</script>
+</body>
+</html>

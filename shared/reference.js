@@ -33,7 +33,8 @@
     fooRules: 'foo_rules.json',
     expenseCategories: 'expense_categories.json',
     budgetTemplates: 'budget_templates.json',
-    debtRules: 'debt_rules.json'
+    debtRules: 'debt_rules.json',
+    fireVariants: 'fire_variants.json'
   };
 
   var cache = {};

@@ -18,19 +18,21 @@
     deps = {
       Money: require('../shared/money.js'),
       Schema: require('../shared/schema.js'),
-      Reference: require('../shared/reference.js')
+      Reference: require('../shared/reference.js'),
+      Projection: require('./projection.js')
     };
   } else {
     deps = {
       Money: root.SLAF && root.SLAF.Money,
       Schema: root.SLAF && root.SLAF.Schema,
-      Reference: root.SLAF && root.SLAF.Reference
+      Reference: root.SLAF && root.SLAF.Reference,
+      Projection: root.SLAF && root.SLAF.Projection
     };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Reference);
+  var api = factory(deps.Money, deps.Schema, deps.Reference, deps.Projection);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Tier0 = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Reference) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Reference, Projection) {
   'use strict';
 
   var MONTHS_PER_YEAR = 12;
@@ -296,38 +298,22 @@
     }
 
     var assumptions = Schema.resolveAssumptions(household, localOverrides);
-    var r = assumptions.expectedReturnRate;
-    var annualContribution = basis.annualSavingsCents;
 
-    if (investments.value >= target.value) {
-      return Money.ok(0, { alreadyThere: true, expectedReturnRate: r });
-    }
-    if (annualContribution <= 0 && r <= 0) {
-      return Money.incomplete(
-        'At this savings rate and return assumption, the balance never reaches the target.',
-        ['savingsRate']);
-    }
-
-    var balance = investments.value;
-    var MAX_YEARS = 100;
-    for (var year = 1; year <= MAX_YEARS; year++) {
-      balance = balance * (1 + r) + annualContribution;
-      if (balance >= target.value) {
-        return Money.ok(year, {
-          expectedReturnRate: r,
-          annualContributionCents: annualContribution,
-          contributionBasis: basis.variant,
-          projectedBalanceCents: Math.round(balance)
-        });
-      }
-      if (balance <= 0) {
-        return Money.incomplete(
-          'At this savings rate and return assumption, the balance never reaches the target.',
-          ['savingsRate']);
-      }
-    }
-    return Money.incomplete('More than ' + MAX_YEARS + ' years at these assumptions.',
-      ['savingsRate']);
+    /* One projection loop for the whole app — engines/projection.js. */
+    var projected = Projection.yearsToTargetCents({
+      startCents: investments.value,
+      targetCents: target.value,
+      annualRate: assumptions.expectedReturnRate,
+      annualContributionCents: basis.annualSavingsCents
+    });
+    if (!Money.isOk(projected)) return projected;
+    return Money.ok(projected.value, {
+      expectedReturnRate: projected.annualRate,
+      annualContributionCents: projected.annualContributionCents,
+      contributionBasis: basis.variant,
+      alreadyThere: projected.alreadyThere === true,
+      projectedBalanceCents: projected.projectedBalanceCents
+    });
   }
 
   /* --------------------------------------------- 7. Net worth percentile

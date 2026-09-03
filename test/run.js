@@ -31,6 +31,8 @@ const Foo = require(path.join(ROOT, 'engines/foo.js'));
 const CashFlow = require(path.join(ROOT, 'engines/cashflow.js'));
 const Debt = require(path.join(ROOT, 'engines/debt.js'));
 const Ownership = require(path.join(ROOT, 'shared/ownership.js'));
+const Fire = require(path.join(ROOT, 'engines/fire.js'));
+const Projection = require(path.join(ROOT, 'engines/projection.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -40,7 +42,8 @@ const TABLES = {
   fooRules: require(path.join(ROOT, 'data/foo_rules.json')),
   expenseCategories: require(path.join(ROOT, 'data/expense_categories.json')),
   budgetTemplates: require(path.join(ROOT, 'data/budget_templates.json')),
-  debtRules: require(path.join(ROOT, 'data/debt_rules.json'))
+  debtRules: require(path.join(ROOT, 'data/debt_rules.json')),
+  fireVariants: require(path.join(ROOT, 'data/fire_variants.json'))
 };
 
 /* ---- Tiny harness ------------------------------------------------------ */
@@ -763,6 +766,122 @@ function threeDebtHousehold() {
   check('and no month count is invented', never.value, null);
   checkTrue('and it says the interest is outrunning the payment',
     /outruns|not clear/.test(never.reason), never.reason);
+})();
+
+/* ==========================================================================
+   9b. FIRE variants — ONE formula, parameterised. SPEC.md §8, §13.
+   ========================================================================== */
+
+section('FIRE variants');
+
+/* Robin: $3,150/mo -> $37,800/yr, 4% SWR, 7% return, age 32, $48,000 invested.
+     standard  37,800      / 0.04 =   945,000
+     lean      37,800×0.70 / 0.04 =   661,500
+     chubby    37,800×1.25 / 0.04 = 1,181,250
+     fat       37,800×1.50 / 0.04 = 1,417,500                                */
+(function () {
+  const h = Demo.build();
+  const target = id => Fire.calculateFIRE(h, TABLES, { variantId: id });
+
+  check('standard FIRE', target('standard').value, 94500000);
+  check('lean FIRE', target('lean').value, 66150000);
+  check('chubby FIRE', target('chubby').value, 118125000);
+  check('fat FIRE', target('fat').value, 141750000);
+
+  /* The one formula must agree with Tier 0's, or there are two of them. */
+  check('standard matches the Tier 0 FIRE number',
+    target('standard').value, Tier0.fireNumber(h).value);
+
+  /* Ordering is the point of the flavours. */
+  const order = ['lean', 'standard', 'chubby', 'fat'].map(id => target(id).value);
+  checkTrue('lean < standard < chubby < fat',
+    order.every((v, i) => i === 0 || v > order[i - 1]), JSON.stringify(order));
+
+  /* Coast, checked by round trip rather than by repeating the formula:
+     grow the coast number for 33 years at 7% with NO contributions and it
+     must land on the full number. */
+  const coast = target('coast');
+  check('coast is complete', coast.status, 'ok');
+  check('coast counts 33 years of growth to 65', coast.yearsOfGrowth, 33);
+  check('coast names the full target it grows into', coast.fullTargetCents, 94500000);
+  const grown = Projection.futureValueCents({
+    startCents: coast.value, annualContributionCents: 0,
+    annualRate: 0.07, years: coast.yearsOfGrowth
+  });
+  checkTrue('coasting from that number lands on the full number',
+    Math.abs(grown.value - 94500000) <= 100,
+    `grew to ${grown.value}, wanted 94500000`);
+  checkTrue('and it is far smaller than the full number', coast.value < 94500000 / 5);
+
+  /* A different coast age changes the answer in the right direction. */
+  checkTrue('coasting to a later age needs less today',
+    Fire.calculateFIRE(h, TABLES, { variantId: 'coast', coastTargetAge: 70 }).value < coast.value);
+
+  /* Barista: part-time income shrinks what the pot must cover.
+     (37,800 - 20,000) / 0.04 = 445,000                                    */
+  const barista = Fire.calculateFIRE(h, TABLES,
+    { variantId: 'barista', baristaAnnualIncomeCents: 2000000 });
+  check('barista FIRE with $20k part-time', barista.value, 44500000);
+  checkTrue('barista is smaller than standard', barista.value < 94500000);
+
+  /* Earning more than you spend means the pot needs nothing. */
+  const covered = Fire.calculateFIRE(h, TABLES,
+    { variantId: 'barista', baristaAnnualIncomeCents: 5000000 });
+  check('part-time income above expenses needs no pot', covered.value, 0);
+  check('and says so', covered.coversEverything, true);
+
+  /* Missing inputs stay incomplete rather than guessing. */
+  check('barista without a part-time income is incomplete',
+    Fire.calculateFIRE(h, TABLES, { variantId: 'barista' }).status, 'incomplete');
+  const noDob = Demo.build();
+  noDob.people[0].dob = null;
+  check('coast without a date of birth is incomplete',
+    Fire.calculateFIRE(noDob, TABLES, { variantId: 'coast' }).status, 'incomplete');
+  check('no expenses means no FIRE number at all',
+    Fire.calculateFIRE(Schema.createHousehold(), TABLES, { variantId: 'standard' }).status,
+    'incomplete');
+
+  /* A previewed SWR must not touch what is stored. */
+  const conservative = Fire.calculateFIRE(h, TABLES,
+    { variantId: 'standard', localOverrides: { swrRate: 0.035 } });
+  check('a 3.5% SWR preview', conservative.value, Math.round(3780000 / 0.035));
+  check('the stored SWR is untouched', Schema.resolveAssumptions(h).swrRate, 0.04);
+
+  /* Progress and the projection agree with Tier 0's. */
+  const prog = Fire.progressToward(h, TABLES, { variantId: 'standard' });
+  check('progress toward standard', prog.value, 48000 / 945000, 1e-12);
+  check('years away matches Tier 0', prog.yearsAway.value, Tier0.fireProgress(h, TABLES).timeToFire.value);
+  check('and that is still 19', prog.yearsAway.value, 19);
+
+  /* Lean is nearer than standard. */
+  const leanProg = Fire.progressToward(h, TABLES, { variantId: 'lean' });
+  checkTrue('lean FIRE arrives sooner than standard',
+    leanProg.yearsAway.value < prog.yearsAway.value,
+    `lean ${leanProg.yearsAway.value} vs standard ${prog.yearsAway.value}`);
+
+  /* allVariants: one incomplete flavour must not break the others. */
+  const all = Fire.allVariants(h, TABLES, {});
+  check('every variant is reported', Object.keys(all).length, TABLES.fireVariants.variants.length);
+  check('barista is incomplete without its input', all.barista.target.status, 'incomplete');
+  check('while standard is still fine', all.standard.target.status, 'ok');
+})();
+
+/* Projection primitives, checked against closed forms. */
+(function () {
+  /* $10,000 at 7% for 10 years, no contributions = 10,000 × 1.07^10 */
+  const fv = Projection.futureValueCents({ startCents: 1000000, annualContributionCents: 0,
+    annualRate: 0.07, years: 10 });
+  check('future value matches the closed form',
+    fv.value, Math.round(1000000 * Math.pow(1.07, 10)));
+  /* Present value is its exact inverse. */
+  const pv = Projection.presentValueNeededCents({ targetCents: fv.value, annualRate: 0.07, years: 10 });
+  checkTrue('present value inverts future value', Math.abs(pv.value - 1000000) <= 1,
+    `got ${pv.value}`);
+  check('already past the target is zero years',
+    Projection.yearsToTargetCents({ startCents: 500, targetCents: 100, annualRate: 0.07 }).value, 0);
+  check('no contribution and no growth never arrives',
+    Projection.yearsToTargetCents({ startCents: 100, targetCents: 500, annualRate: 0,
+      annualContributionCents: 0 }).status, 'incomplete');
 })();
 
 /* ==========================================================================

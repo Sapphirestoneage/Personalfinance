@@ -1,0 +1,56 @@
+{
+  "id": "fire_variants",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "The commonly used FIRE flavours. Expense factors are conventions, not published figures.",
+  "precision": "approximate",
+  "note": "SPEC.md Section 13 — five flavours of expenses x 25, each changing the expense assumption or adding a twist. Section 8 requires ONE parameterised calculateFIRE() rather than five calculators, so this file holds the parameters and engines/fire.js holds the single formula. The expenseFactor values are Assumption-class: a user override is a local preview, never a write.",
+  "defaults": {
+    "coastTargetAge": 65,
+    "note": "Coast asks what you would need TODAY to reach the standard number by this age with no further contributions."
+  },
+  "variants": [
+    {
+      "id": "standard",
+      "label": "FIRE",
+      "blurb": "Your expenses, covered forever at your withdrawal rate.",
+      "mode": "expenses",
+      "expenseFactor": 1.0
+    },
+    {
+      "id": "lean",
+      "label": "Lean FIRE",
+      "blurb": "The same freedom on a deliberately smaller life — roughly 70% of what you spend now.",
+      "mode": "expenses",
+      "expenseFactor": 0.7
+    },
+    {
+      "id": "chubby",
+      "label": "Chubby FIRE",
+      "blurb": "Comfortable rather than frugal — about 25% more than you spend now.",
+      "mode": "expenses",
+      "expenseFactor": 1.25
+    },
+    {
+      "id": "fat",
+      "label": "Fat FIRE",
+      "blurb": "No belt-tightening at all — around 50% above today's spending.",
+      "mode": "expenses",
+      "expenseFactor": 1.5
+    },
+    {
+      "id": "coast",
+      "label": "Coast FIRE",
+      "blurb": "The point where you can stop contributing entirely and still land on the full number by your target age. You still cover your own costs until then.",
+      "mode": "coast",
+      "expenseFactor": 1.0
+    },
+    {
+      "id": "barista",
+      "label": "Barista FIRE",
+      "blurb": "Part-time work covers some of the bill, so the pot only has to cover the rest.",
+      "mode": "barista",
+      "expenseFactor": 1.0
+    }
+  ]
+}

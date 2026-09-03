@@ -717,6 +717,43 @@ that is staying true.
 
 ---
 
+## D-020 — FIRE variants: one formula, and one projection loop
+**2026-09-03 · SPEC.md §8, §13**
+
+§8 names this one explicitly: "`calculateFIRE()` parameterized by variant
+instead of five copies". `engines/fire.js` holds exactly one formula —
+annual expenses × factor ÷ withdrawal rate — and the six flavours differ only
+in what they feed it:
+
+- **lean / standard / chubby / fat** change `expenseFactor` (0.7 / 1.0 / 1.25
+  / 1.5, all in `data/fire_variants.json`, so a new flavour is a data edit).
+- **coast** discounts the standard target back to today, answering "what would
+  I need now to stop contributing and still arrive by my target age?"
+- **barista** subtracts part-time income from the expenses the pot must cover.
+
+Two things worth recording:
+
+**A shared projection.** Tier 0 had a compounding loop inline for
+time-to-FIRE, and every variant needed the same thing. Rather than grow a
+second copy, it is extracted to `engines/projection.js` and Tier 0 now
+delegates to it — verified by the 19-years-to-FI assertion still passing
+unchanged after the refactor. It stays a year-by-year loop rather than a
+closed form because it has to remain correct at a zero or negative
+contribution.
+
+**Coast is verified by round trip, not by repeating the formula.** Asserting
+`945,000 / 1.07^33` against an engine that computes `945,000 / 1.07^33`
+proves nothing. The test instead grows the coast number forward 33 years at
+7% with no contributions and checks it lands on the full number — a different
+operation, and the one that actually defines what Coast means.
+
+The room owns no field. Its withdrawal rate, expected return, coast age and
+part-time income are **local previews**, per §12.2: verified that a 3% SWR
+preview shows $1,260,000, leaves the stored 4% untouched, and is gone after a
+reload.
+
+---
+
 ## Still open
 
 - **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the
