@@ -984,6 +984,42 @@ linearly with the amount.
 
 ---
 
+## D-027 — Roth vs Traditional on equal pre-tax cost, and the Solo 401k 20%
+**2026-09-03 · SPEC.md §13 Tier 2**
+
+**The comparison is done on equal PRE-TAX cost**, which is the only honest
+way. Putting $7,000 into a Roth and $7,000 into a Traditional is not the same
+decision — the Roth one costs more take-home. Given the same pre-tax dollars,
+the whole question collapses to one line:
+
+> Traditional beats Roth exactly when your rate in retirement is lower than
+> your rate today. When the rates match they are mathematically identical.
+
+The room says that out loud rather than burying it, because §13 asks for the
+tax-rate assumption to be surfaced prominently and it is genuinely the entire
+answer. A test pins the identity at equal rates, and pins that a zero
+capital-gains rate makes the taxable account exactly equal to the Roth —
+which proves the only difference being modelled is that tax.
+
+**The Solo 401k employer share is 20%, not 25%.** The 25% figure applies to a
+corporation contributing on W2 wages. A sole proprietor's base is net
+earnings *after* the employer contribution itself, and 25/(1+0.25) resolves
+to 20%. Getting this wrong overstates the contribution by a quarter, so the
+rate lives in `data/irs_limits_2026.json` where it is stated rather than
+buried, the room prints the correction next to the answer, and a test asserts
+the result is specifically *not* 25% of profit.
+
+On $100,000 of profit: SE tax $14,129.55, half of it deducted, employer base
+$92,935.22, employer contribution $18,587.04, plus the $24,500 elective
+deferral — $43,087 in total, or 43.1% of profit. Above roughly $250,000 the
+annual-additions cap binds and the room says so.
+
+**Capital gains is an input with a 15% default, not a bracket table.** The
+0/15/20 thresholds are indexed annually and inventing 2026 ones would be
+worse than asking.
+
+---
+
 ## Still open
 
 - **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the

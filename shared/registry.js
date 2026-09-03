@@ -173,8 +173,22 @@
       ]
     },
     {
-      id: 'goals',
+      id: 'accounts',
       order: 10,
+      title: 'Where It Goes',
+      blurb: 'Roth, Traditional or taxable \u2014 and how much a Solo 401(k) actually lets you put away.',
+      href: 'rooms/accounts.html',
+      tier: 2,
+      tags: ['income'],
+      subsections: [
+        { id: 'compare', label: 'Roth vs. Traditional vs. taxable' },
+        { id: 'solo',    label: 'Solo 401(k)' },
+        { id: 'reading', label: 'Reading from elsewhere' }
+      ]
+    },
+    {
+      id: 'goals',
+      order: 11,
       title: 'Goals',
       blurb: 'A wedding, a deposit, a big trip. What it costs, what it needs a month, and whether that actually fits alongside everything else.',
       href: 'rooms/goals.html',
@@ -187,7 +201,7 @@
     },
     {
       id: 'foo-ladder',
-      order: 11,
+      order: 12,
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
       href: 'index.html',

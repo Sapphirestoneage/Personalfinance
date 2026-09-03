@@ -58,6 +58,7 @@ engines/            Shared calculation engines — one function per concept
   quickmath.js        HYSA switch, cost per use, 20/3/8, rule of five, $30k/$90k
   selfemployed.js     SE tax in visible steps, W2 vs 1099, quarterly + safe harbour
   goals.js            the shared Goal Costing Engine — wedding, deposit, trip
+  accounts.js         Roth vs Traditional vs taxable, Solo 401k limits
 data/               Versioned reference tables (JSON, never inlined in code)
 test/run.js         Re-derives every formula outside the browser
 SPEC.md             The full Tier 0–2 build spec. The authority.

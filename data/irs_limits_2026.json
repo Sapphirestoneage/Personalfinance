@@ -5,7 +5,7 @@
   "taxYear": 2026,
   "source": "Contribution limits as carried by the existing FOO room; re-verify against IRS Notice for the plan year before relying on them.",
   "precision": "unverified-against-primary-source",
-  "note": "IRS-defined and changes annually. Year-tagged per SPEC.md Section 7. Never inline these in a calculator.",
+  "note": "IRS-defined and changes annually. Year-tagged per SPEC.md Section 7. Never inline these in a calculator. annualAdditions is the overall cap on employee deferral plus employer contribution to one plan. soloEmployerShareSoleProprietor is 20%, NOT 25%: the 25% figure applies to a corporation's W2 wages, whereas a sole proprietor's base is net earnings AFTER the employer contribution itself, and 25/(1+25) resolves to 20%. Getting that wrong is the classic Solo 401k error.",
   "unit": "US dollars per year",
   "limits": {
     "elective401k": 24500,
@@ -13,6 +13,8 @@
     "ira": 7500,
     "iraCatchup50Plus": 1100,
     "hsaSelfOnly": 4400,
-    "hsaFamily": 8750
+    "hsaFamily": 8750,
+    "annualAdditions": 70000,
+    "soloEmployerShareSoleProprietor": 0.2
   }
 }

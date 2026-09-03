@@ -34,6 +34,8 @@ const TARGETS = [
   ['/rooms/quick-math.html', '.grid-2'],
   ['/rooms/quick-math.html', '.grid-3'],
   ['/rooms/self-employed.html', '.grid-2'],
+  ['/rooms/accounts.html', '.grid-2'],
+  ['/rooms/net-worth.html', '.asset-grid'],
   ['/', '.grid2'],
   ['/rooms/cash-flow.html', '.cat-row']
 ];

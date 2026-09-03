@@ -37,6 +37,7 @@ const Hourly = require(path.join(ROOT, 'engines/hourly.js'));
 const QuickMath = require(path.join(ROOT, 'engines/quickmath.js'));
 const SelfEmployed = require(path.join(ROOT, 'engines/selfemployed.js'));
 const Goals = require(path.join(ROOT, 'engines/goals.js'));
+const Accounts = require(path.join(ROOT, 'engines/accounts.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -49,7 +50,8 @@ const TABLES = {
   debtRules: require(path.join(ROOT, 'data/debt_rules.json')),
   fireVariants: require(path.join(ROOT, 'data/fire_variants.json')),
   seTax: require(path.join(ROOT, 'data/se_tax_2026.json')),
-  goalTemplates: require(path.join(ROOT, 'data/goal_templates.json'))
+  goalTemplates: require(path.join(ROOT, 'data/goal_templates.json')),
+  irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json'))
 };
 
 /* ---- Tiny harness ------------------------------------------------------ */
@@ -1458,6 +1460,113 @@ function weddingHousehold() {
     Goals.fromTemplate(TABLES.goalTemplates, 'nope'), null);
   check('the custom template starts empty',
     Goals.fromTemplate(TABLES.goalTemplates, 'custom').lineItems.length, 0);
+})();
+
+/* ==========================================================================
+   9g. Where the money goes. SPEC.md §13 Tier 2.
+   ========================================================================== */
+
+section('Accounts');
+
+/* Roth vs Traditional, on EQUAL PRE-TAX COST, reduces to one comparison:
+   Traditional wins exactly when your future rate is lower than today's, and
+   they are mathematically identical when the rates match. Everything else is
+   arithmetic around that. */
+(function () {
+  const base = { pretaxCents: 700000, annualReturn: 0.07, years: 30 };
+
+  const equal = Accounts.compareAccounts(
+    Object.assign({ currentTaxRate: 0.24, futureTaxRate: 0.24 }, base));
+  check('at equal rates Traditional and Roth are identical',
+    equal.byKey.traditional.afterTaxCents, equal.byKey.roth.afterTaxCents);
+  check('and the engine flags that rather than picking a winner', equal.ratesEqual, true);
+  check('so the margin is nothing', equal.marginOverNextCents, 0);
+
+  const lower = Accounts.compareAccounts(
+    Object.assign({ currentTaxRate: 0.24, futureTaxRate: 0.22 }, base));
+  check('a lower future rate favours Traditional', lower.bestKey, 'traditional');
+  check('and that is reported as the reason', lower.futureRateLower, true);
+
+  const higher = Accounts.compareAccounts(
+    Object.assign({ currentTaxRate: 0.22, futureTaxRate: 0.24 }, base));
+  check('a higher future rate favours Roth', higher.bestKey, 'roth');
+
+  /* Brokerage puts in the same money as the Roth but pays tax on the growth,
+     so it can never beat the Roth while capital gains are taxed at all. */
+  ['traditional', 'roth'].forEach(function () {});
+  checkTrue('a taxable brokerage never beats the Roth at the same money in',
+    lower.byKey.brokerage.afterTaxCents < lower.byKey.roth.afterTaxCents);
+  check('because the same amount went in',
+    lower.byKey.brokerage.goesInCents, lower.byKey.roth.goesInCents);
+  checkTrue('and only the growth was taxed',
+    lower.byKey.brokerage.taxedLaterCents > 0 && lower.byKey.roth.taxedLaterCents === 0);
+
+  /* Traditional puts MORE in, because nothing was taken out first. */
+  check('Traditional invests the whole pre-tax amount',
+    lower.byKey.traditional.goesInCents, 700000);
+  check('Roth invests what is left after tax',
+    lower.byKey.roth.goesInCents, Math.round(700000 * (1 - 0.24)));
+
+  /* A zero capital-gains rate makes brokerage and Roth identical, which is a
+     good check that the only difference modelled is that tax. */
+  const noCapGains = Accounts.compareAccounts(
+    Object.assign({ currentTaxRate: 0.24, futureTaxRate: 0.24, capitalGainsRate: 0 }, base));
+  check('with no capital-gains tax, brokerage equals Roth',
+    noCapGains.byKey.brokerage.afterTaxCents, noCapGains.byKey.roth.afterTaxCents);
+
+  /* Zero years means no growth and the comparison is purely about tax. */
+  const now = Accounts.compareAccounts(
+    Object.assign({}, base, { years: 0, currentTaxRate: 0.24, futureTaxRate: 0.10 }));
+  check('with no time to grow, Traditional keeps 90% of the pre-tax amount',
+    now.byKey.traditional.afterTaxCents, Math.round(700000 * 0.9));
+
+  check('missing a rate is incomplete',
+    Accounts.compareAccounts(Object.assign({ currentTaxRate: 0.24 }, base)).status, 'incomplete');
+})();
+
+/* Solo 401k. The classic error is 25% of profit; a sole proprietor's employer
+   share is 20% of profit AFTER half the SE tax. */
+(function () {
+  const limits = TABLES.irsLimits, seT = TABLES.seTax;
+  const r = Accounts.solo401k({ netProfitCents: 10000000, age: 40,
+    filingStatus: 'single', limits: limits, seTaxTable: seT });
+
+  check('employee deferral is the elective limit',
+    r.employeeCents, Math.round(limits.limits.elective401k * 100));
+  /* $100,000 − $7,064.78 half-SE-tax = $92,935.22 base. */
+  check('the employer base is profit less half the SE tax', r.employerBaseCents, 10000000 - 706478);
+  check('the employer share is 20%, not 25%', r.employerShare, 0.20);
+  check('so the employer contribution is', r.employerCents, Math.round((10000000 - 706478) * 0.2));
+  checkTrue('which is NOT 25% of profit',
+    r.employerCents !== Math.round(10000000 * 0.25),
+    `got ${r.employerCents}, the wrong answer would be ${Math.round(10000000 * 0.25)}`);
+  check('total is the two halves', r.totalCents, r.employeeCents + r.employerCents);
+  check('not yet over fifty', r.overFifty, false);
+
+  /* At 50 the catch-up lifts the elective limit and sits outside the cap. */
+  const older = Accounts.solo401k({ netProfitCents: 10000000, age: 55,
+    filingStatus: 'single', limits: limits, seTaxTable: seT });
+  check('the catch-up raises the elective limit', older.employeeCents,
+    Math.round((limits.limits.elective401k + limits.limits.elective401kCatchup50Plus) * 100));
+  check('and is flagged', older.overFifty, true);
+  checkTrue('so more goes in overall', older.totalCents > r.totalCents);
+
+  /* A very large profit runs into the annual-additions cap. */
+  const big = Accounts.solo401k({ netProfitCents: 50000000, age: 40,
+    filingStatus: 'single', limits: limits, seTaxTable: seT });
+  check('a big profit hits the annual-additions cap', big.hitCap, true);
+  check('and is held to it', big.totalCents, Math.round(limits.limits.annualAdditions * 100));
+
+  /* Planning to defer less leaves the employer half untouched. */
+  const partial = Accounts.solo401k({ netProfitCents: 10000000, age: 40,
+    plannedEmployeeCents: 500000, filingStatus: 'single', limits: limits, seTaxTable: seT });
+  check('a smaller deferral is respected', partial.employeeCents, 500000);
+  check('and the employer half is unchanged', partial.employerCents, r.employerCents);
+
+  check('no profit means no room', Accounts.solo401k({ netProfitCents: 0,
+    limits: limits, seTaxTable: seT }).value, 0);
+  check('no profit entered is incomplete',
+    Accounts.solo401k({ limits: limits, seTaxTable: seT }).status, 'incomplete');
 })();
 
 /* ==========================================================================

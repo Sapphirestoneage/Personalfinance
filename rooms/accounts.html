@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Where It Goes · SPARKS</title>
+<meta name="description" content="Roth, Traditional or taxable — and how much a Solo 401k actually lets you put away."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11, §13 Tier 2.
+
+  1. READS   filingStatus and age, for the Solo 401k catch-up and SE tax.
+  2. WRITES  Nothing. Both tools describe a decision being weighed.
+  3. CALLS   engines/accounts.js, which uses engines/selfemployed.js for SE
+             tax — still one tax calculation in the codebase.
+  4. EMPTY   Each tool independently states what it needs.
+  5. CONFIG  data/irs_limits_2026.json (elective limit, catch-up, annual
+             additions, the 20% sole-proprietor share),
+             data/se_tax_2026.json.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
+  @media (max-width: 380px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .verdict { font-family: var(--font-display); font-size: var(--text-xl); margin-top: var(--space-3); }
+  .verdict.is-incomplete { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-base); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+
+  ol.ranked { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ol.ranked li { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-2); }
+  ol.ranked li.best { border-color: var(--color-border-active); background: var(--color-surface-active); }
+  ol.ranked .head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+  ol.ranked .nm { font-weight: 600; }
+  ol.ranked .amt { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  ol.ranked .flow { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1); }
+
+  .bars { margin-top: var(--space-3); }
+  .bar-row { display: grid; grid-template-columns: 88px 1fr; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2); font-size: var(--text-xs); }
+  .bar-track { height: 10px; border-radius: var(--radius-pill); background: rgba(30,58,138,.4); overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--color-accent); }
+
+  .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
+  .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  .out-detail dt { color: var(--color-text-faint); }
+  .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Where It Goes</h1>
+  <p class="room-lede">Roth, Traditional or taxable — and how much a Solo 401k actually lets you put away.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="compare">
+    <span class="slaf-eyebrow">Roth vs. Traditional vs. taxable</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Which account wins?</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      Compared on the same <em>pre-tax</em> cost, which is the only fair way —
+      $7,000 into a Roth costs you more take-home than $7,000 into a
+      Traditional, so comparing equal deposits compares two different
+      decisions.
+    </p>
+    <div class="grid-2">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Pre-tax amount</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="a-amount" placeholder="e.g. 7000" aria-label="Pre-tax amount"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Years until you use it</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="a-years" placeholder="e.g. 30" aria-label="Years"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Your tax rate now</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="a-now" placeholder="e.g. 24" aria-label="Current tax rate"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Rate in retirement</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="a-later" placeholder="e.g. 22" aria-label="Future tax rate"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Expected return</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="a-return" placeholder="7" aria-label="Expected return"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Capital gains rate</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="a-cg" placeholder="15" aria-label="Capital gains rate"/><span class="slaf-affix">%</span></span></label>
+    </div>
+    <div class="verdict" id="a-verdict">—</div>
+    <p class="why" id="a-why"></p>
+    <ol class="ranked" id="a-ranked"></ol>
+  </section>
+
+  <section class="slaf-card" id="solo">
+    <span class="slaf-eyebrow">Solo 401(k)</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">How much can you actually put away?</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      Self-employed, you're both the employee and the employer, so you get to
+      contribute twice.
+    </p>
+    <div class="grid-2">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Self-employment profit</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="s-profit" placeholder="e.g. 100000" aria-label="Net profit"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Deferring, as employee</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="s-employee" placeholder="the max" aria-label="Planned employee deferral"/></span></label>
+    </div>
+    <div class="verdict" id="s-verdict">—</div>
+    <div class="bars" id="s-bars"></div>
+    <div class="out-detail" id="s-detail"></div>
+    <div class="flag" id="s-note" hidden></div>
+  </section>
+
+  <section class="slaf-card" id="reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. The whole Roth-vs-Traditional
+    question hinges on a tax rate in the future that nobody knows — try it
+    both ways. Contribution limits come from
+    <code>data/irs_limits_2026.json</code> and the annual-additions figure is
+    unverified for 2026. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/accounts.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership, Accounts = SLAF.Accounts;
+
+  var ROOM_ID = 'accounts';
+  var TABLES = null;
+  var v = {};
+
+  function el(id) { return document.getElementById(id); }
+
+  function bind(id, kind) {
+    var node = el(id);
+    node.addEventListener('focus', function () {
+      var raw = v[id];
+      node.value = !Money.isEntered(raw) ? ''
+        : kind === 'money' ? String(raw / 100)
+        : kind === 'rate' ? String(Math.round(raw * 10000) / 100)
+        : String(raw);
+      node.select();
+    });
+    node.addEventListener('blur', function () {
+      var raw = node.value.trim();
+      v[id] = raw === '' ? null
+        : kind === 'money' ? Money.parseMoney(raw)
+        : kind === 'rate' ? Money.parseRatePercent(raw)
+        : (Number.isFinite(Number(raw)) ? Number(raw) : null);
+      node.value = !Money.isEntered(v[id]) ? ''
+        : kind === 'money' ? Money.formatCents(v[id])
+        : kind === 'rate' ? Money.formatRate(v[id], { decimals: 2 }).replace(/\.?0+%$/, '%')
+        : String(v[id]);
+      render();
+    });
+    node.addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter') { evt.preventDefault(); node.blur(); }
+    });
+  }
+  [['a-amount', 'money'], ['a-years', 'number'], ['a-now', 'rate'], ['a-later', 'rate'],
+   ['a-return', 'rate'], ['a-cg', 'rate'],
+   ['s-profit', 'money'], ['s-employee', 'money']].forEach(function (x) { bind(x[0], x[1]); });
+
+  function dl(rows) {
+    return '<dl>' + rows.map(function (r) {
+      return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+    }).join('') + '</dl>';
+  }
+
+  function renderCompare(h) {
+    var assumptions = Schema.resolveAssumptions(h);
+    var r = Accounts.compareAccounts({
+      pretaxCents: v['a-amount'],
+      currentTaxRate: v['a-now'],
+      futureTaxRate: v['a-later'],
+      annualReturn: Money.isEntered(v['a-return']) ? v['a-return'] : assumptions.expectedReturnRate,
+      years: v['a-years'],
+      capitalGainsRate: v['a-cg']
+    });
+    var verdict = el('a-verdict');
+    if (!Money.isOk(r)) {
+      verdict.textContent = r.reason || Money.EM_DASH;
+      verdict.className = 'verdict is-incomplete';
+      el('a-why').textContent = '';
+      el('a-ranked').innerHTML = '';
+      return;
+    }
+    verdict.className = 'verdict';
+    var best = r.byKey[r.bestKey];
+    verdict.textContent = r.ratesEqual
+      ? 'Roth and Traditional tie'
+      : best.label + ' wins by ' + Money.formatCents(r.marginOverNextCents);
+
+    el('a-why').textContent = r.ratesEqual
+      ? 'When your rate today and your rate in retirement are the same, the two are mathematically identical — the tax comes out of the same money either way. Pick on flexibility, not arithmetic.'
+      : r.futureRateLower
+        ? 'Your rate in retirement is lower than today, so deferring the tax wins. That is the whole of it.'
+        : 'Your rate in retirement is higher than today, so paying the tax now wins. That is the whole of it.';
+
+    el('a-ranked').innerHTML = r.options.map(function (o, i) {
+      return '<li class="' + (i === 0 && !r.ratesEqual ? 'best' : '') + '">'
+        + '<span class="head"><span class="nm">' + o.label + '</span>'
+        + '<span class="amt">' + Money.formatCents(o.afterTaxCents) + '</span></span>'
+        + '<span class="flow">' + Money.formatCents(o.goesInCents) + ' goes in'
+        + (o.taxedNowCents > 0 ? ' · ' + Money.formatCents(o.taxedNowCents) + ' taxed now' : '')
+        + (o.taxedLaterCents > 0 ? ' · ' + Money.formatCents(o.taxedLaterCents) + ' taxed later' : '')
+        + (o.taxedNowCents === 0 && o.taxedLaterCents === 0 ? ' · never taxed again' : '')
+        + '</span></li>';
+    }).join('');
+  }
+
+  function renderSolo(h) {
+    var age = Schema.primaryAge(h);
+    var r = Accounts.solo401k({
+      netProfitCents: v['s-profit'],
+      plannedEmployeeCents: v['s-employee'],
+      age: age,
+      filingStatus: h.filingStatus,
+      limits: TABLES.irsLimits,
+      seTaxTable: TABLES.seTax
+    });
+    var verdict = el('s-verdict');
+    if (!Money.isOk(r)) {
+      verdict.textContent = r.reason || Money.EM_DASH;
+      verdict.className = 'verdict is-incomplete';
+      el('s-bars').innerHTML = ''; el('s-detail').innerHTML = '';
+      el('s-note').hidden = true;
+      return;
+    }
+    verdict.className = 'verdict';
+    verdict.textContent = Money.formatCents(r.totalCents) + ' a year';
+
+    var max = Math.max(r.employeeCents, r.employerCents, 1);
+    el('s-bars').innerHTML = [
+      ['As employee', r.employeeCents], ['As employer', r.employerCents]
+    ].map(function (row) {
+      return '<div class="bar-row"><span>' + row[0] + '</span>'
+        + '<span class="bar-track"><span class="bar-fill" style="width:'
+        + (row[1] / max * 100) + '%"></span></span></div>'
+        + '<div class="bar-row"><span></span><span style="color:var(--color-text-muted)">'
+        + Money.formatCents(row[1]) + '</span></div>';
+    }).join('');
+
+    el('s-detail').innerHTML = dl([
+      ['Self-employment tax', Money.formatCents(r.seTaxCents)],
+      ['Half of it, deducted', '−' + Money.formatCents(r.seDeductibleHalfCents)],
+      ['Employer contributes ' + Money.formatRate(r.employerShare, { decimals: 0 }) + ' of',
+        Money.formatCents(r.employerBaseCents)],
+      ['Share of your profit', Money.formatRate(r.shareOfProfit, { decimals: 1 })]
+    ]);
+
+    el('s-note').hidden = false;
+    el('s-note').innerHTML = r.hitCap
+      ? '<strong>You’ve hit the overall cap.</strong> Employee and employer together are limited to '
+        + Money.formatCents(r.annualAdditionsCapCents)
+        + (r.catchUpCents ? ' plus the ' + Money.formatCents(r.catchUpCents) + ' catch-up' : '') + '.'
+      : '<strong>The employer half is 20% of profit after half your self-employment tax</strong> — '
+        + 'not 25% of profit. That is the single most common way this gets over-stated.'
+        + (r.overFifty ? ' Your catch-up contribution is included.' : '');
+  }
+
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    el('reading-list').innerHTML = ['filingStatus', 'age']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+    renderCompare(h);
+    renderSolo(h);
+  }
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    render();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>
