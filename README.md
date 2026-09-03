@@ -22,7 +22,9 @@ Serving over HTTP matters: rooms `fetch()` their reference tables out of
 
 ```
 index.html          Map shell — room directory, tag filter, visited progress
+favicon.svg         Sapphire mark
 rooms/              One HTML file per room
+vendor/             Self-hosted React UMD + the two typefaces (no CDN)
 shared/             The spine everything depends on
   theme.css           navy-sapphire design tokens (colour + type)
   fonts.css           Fraunces + Space Grotesk
@@ -41,6 +43,24 @@ SPEC.md             The full Tier 0–2 build spec. The authority.
 DECISIONS.md        Running log of what was decided and why.
 CLAUDE.md           Working agreement for anyone (human or agent) editing this.
 ```
+
+## No runtime dependencies
+
+Nothing loads from a CDN. React and ReactDOM are vendored in `vendor/`, and
+Fraunces and Space Grotesk are self-hosted from `vendor/fonts/` — so a room
+renders identically offline and makes no third-party request on a visitor's
+behalf. Verified: a browser pass on all three pages issues zero external
+requests.
+
+The one room that uses React (`rooms/foo-ladder.html`) ships precompiled.
+Its source is `rooms/foo-ladder.jsx`; regenerate `rooms/foo-ladder.js` with:
+
+```sh
+npx @babel/cli --presets @babel/preset-react rooms/foo-ladder.jsx -o rooms/foo-ladder.js
+```
+
+That is a one-off authoring step, not a build the site depends on — the
+committed `.js` is what runs.
 
 ## Verify
 

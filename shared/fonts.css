@@ -1,4 +1,33 @@
-/* Type for the navy-sapphire system. One import so a room includes one line.
+/* ==========================================================================
+   Type for the navy-sapphire system.
    Fraunces = display/headline. Space Grotesk = body/UI.
-   Both have real fallbacks so a blocked font request degrades, not breaks. */
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap');
+
+   Both are self-hosted from vendor/fonts/ rather than pulled from Google
+   Fonts, so a room has no runtime network dependency, renders identically
+   offline, and makes no third-party request on a visitor's behalf. Each is
+   the latin variable-weight cut — 37KB and 22KB respectively.
+
+   Licensed under the SIL Open Font License 1.1; see vendor/fonts/OFL.txt.
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../vendor/fonts/fraunces-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191,
+    U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300 700;
+  src: url('../vendor/fonts/space-grotesk-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191,
+    U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
