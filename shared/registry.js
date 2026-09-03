@@ -90,12 +90,28 @@
         { id: 'extra',           label: 'Beyond the minimums' },
         { id: 'out-plan',        label: 'Debt-free in' },
         { id: 'out-strategies',  label: 'Which order' },
+        { id: 'out-rewards',     label: 'Rewards vs. carrying' },
         { id: 'out-timeline',    label: 'The order they fall' }
       ]
     },
     {
-      id: 'fire',
+      id: 'net-worth',
       order: 5,
+      title: 'Net Worth',
+      blurb: 'Everything you own, everything you owe, and the one number underneath. The place to add a house or a car.',
+      href: 'rooms/net-worth.html',
+      tier: 1,
+      tags: ['debt'],
+      subsections: [
+        { id: 'out-net-worth',  label: 'Net worth' },
+        { id: 'assets',         label: 'What you own' },
+        { id: 'from-elsewhere', label: 'Counted, but owned elsewhere' },
+        { id: 'ledger',         label: 'The whole ledger' }
+      ]
+    },
+    {
+      id: 'fire',
+      order: 6,
       title: 'FIRE Number',
       blurb: 'What you\u2019d need before work became optional \u2014 lean, standard, chubby, fat, coast or barista, from one formula.',
       href: 'rooms/fire.html',
@@ -110,7 +126,7 @@
     },
     {
       id: 'real-hourly-wage',
-      order: 6,
+      order: 7,
       title: 'Real Hourly Wage',
       blurb: 'What the job actually pays, once you count every hour it takes and everything it costs you to do it.',
       href: 'rooms/real-hourly-wage.html',
@@ -126,7 +142,7 @@
     },
     {
       id: 'quick-math',
-      order: 7,
+      order: 8,
       title: 'Quick Math',
       blurb: 'Four small answers: is switching savings accounts worth it, what that thing costs per use, whether you can afford the car, and the rule of five.',
       href: 'rooms/quick-math.html',
@@ -142,7 +158,7 @@
     },
     {
       id: 'self-employed',
-      order: 8,
+      order: 9,
       title: 'Going Self-Employed',
       blurb: 'What a contract rate has to be to match a salary, where the 15.3% actually lands, and what to send in each quarter.',
       href: 'rooms/self-employed.html',
@@ -157,7 +173,7 @@
     },
     {
       id: 'foo-ladder',
-      order: 9,
+      order: 10,
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
       href: 'index.html',

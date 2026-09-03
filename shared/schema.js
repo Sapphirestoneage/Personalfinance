@@ -374,6 +374,17 @@
     return sumAssetsByCategory(household, null);
   }
 
+  /* The asset categories Start Here asks about, and everything else. The
+     split matters because they have different owners under
+     shared/ownership.js — Start Here owns the first two, the Net Worth room
+     owns the rest. */
+  var INTAKE_ASSET_CATEGORIES = ['cash', 'investment', 'retirement'];
+  var ITEMISED_ASSET_CATEGORIES = ['real_estate', 'vehicle', 'other'];
+
+  function otherAssetsCents(household) {
+    return sumAssetsByCategory(household, ITEMISED_ASSET_CATEGORIES);
+  }
+
   /** Cash only — Emergency Fund Coverage and Liquidity use cash, not cash +
    *  investments. SPEC.md §13, Tier 0 input spec. */
   function cashCents(household) {
@@ -517,6 +528,9 @@
     aggregatableDebts: aggregatableDebts,
     allIncomeSources: allIncomeSources,
     totalAssetsCents: totalAssetsCents,
+    otherAssetsCents: otherAssetsCents,
+    INTAKE_ASSET_CATEGORIES: INTAKE_ASSET_CATEGORIES,
+    ITEMISED_ASSET_CATEGORIES: ITEMISED_ASSET_CATEGORIES,
     cashCents: cashCents,
     investmentsCents: investmentsCents,
     totalDebtCents: totalDebtCents,

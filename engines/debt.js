@@ -315,6 +315,39 @@
     return filtered;
   }
 
+  /**
+   * Rewards against the cost of carrying a balance. SPEC.md §13 lists this as
+   * optional for the Credit Card calc; it is the single most useful thing
+   * that view can say, because a 2% rewards rate against a 22.9% APR is not
+   * a close call and people genuinely believe otherwise.
+   */
+  function rewardsVsCarrying(opts) {
+    var o = opts || {};
+    var missing = Money.missingFrom({
+      balanceCents: o.balanceCents, rate: o.rate,
+      monthlySpendCents: o.monthlySpendCents, rewardsRate: o.rewardsRate
+    });
+    if (missing.length) {
+      return Money.incomplete('Add what you spend on the card and what it pays back.', missing);
+    }
+    var annualRewards = Math.round(o.monthlySpendCents * 12 * o.rewardsRate);
+    /* Interest on a balance carried all year, compounding monthly. */
+    var monthlyRate = o.rate / 12;
+    var annualInterest = Math.round(o.balanceCents * (Math.pow(1 + monthlyRate, 12) - 1));
+    var net = annualRewards - annualInterest;
+    return Money.ok(net, {
+      annualRewardsCents: annualRewards,
+      annualInterestCents: annualInterest,
+      netCents: net,
+      aheadOnRewards: net > 0,
+      /* The balance at which the rewards stop covering the interest. */
+      breakEvenBalanceCents: annualInterest > 0
+        ? Math.round(annualRewards / (Math.pow(1 + monthlyRate, 12) - 1)) : null,
+      rewardsRate: o.rewardsRate,
+      rate: o.rate
+    });
+  }
+
   /** What the current minimums alone would cost — the do-nothing baseline. */
   function minimumsOnly(household, rules) {
     return simulate(household, rules, { strategyId: 'avalanche', extraMonthlyCents: 0 });
@@ -330,6 +363,7 @@
     simulate: simulate,
     compareStrategies: compareStrategies,
     creditCardsOnly: creditCardsOnly,
+    rewardsVsCarrying: rewardsVsCarrying,
     minimumsOnly: minimumsOnly
   };
 });

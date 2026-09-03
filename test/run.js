@@ -734,6 +734,33 @@ function threeDebtHousehold() {
   checkTrue('and the reason says why', /term/.test(notDerivable.reason));
 })();
 
+/* -- Rewards against carrying a balance ---------------------------------
+      $1,200/mo of spend at 2% is $288 a year. A $3,200 balance at 22.9%
+      compounding monthly costs (1 + .229/12)^12 − 1 = 25.45% -> $814.      */
+(function () {
+  const r = Debt.rewardsVsCarrying({
+    balanceCents: 320000, rate: 0.229, monthlySpendCents: 120000, rewardsRate: 0.02
+  });
+  check('annual rewards', r.annualRewardsCents, Math.round(120000 * 12 * 0.02));
+  check('annual interest compounds monthly',
+    r.annualInterestCents, Math.round(320000 * (Math.pow(1 + 0.229 / 12, 12) - 1)));
+  checkTrue('2% rewards do not beat a 22.9% carried balance', !r.aheadOnRewards);
+  check('the net is the difference', r.netCents, r.annualRewardsCents - r.annualInterestCents);
+  /* Below the break-even balance the rewards DO win — that is the number
+     worth showing, since it names when the card is worth using. */
+  const small = Debt.rewardsVsCarrying({
+    balanceCents: Math.round(r.breakEvenBalanceCents / 2), rate: 0.229,
+    monthlySpendCents: 120000, rewardsRate: 0.02
+  });
+  checkTrue('below the break-even balance the rewards win', small.aheadOnRewards);
+  /* Carrying nothing at all is the case rewards are actually designed for. */
+  const cleared = Debt.rewardsVsCarrying({
+    balanceCents: 0, rate: 0.229, monthlySpendCents: 120000, rewardsRate: 0.02 });
+  check('a cleared balance keeps every penny of rewards', cleared.netCents, 28800);
+  check('missing inputs stay incomplete',
+    Debt.rewardsVsCarrying({ balanceCents: 320000, rate: 0.229 }).status, 'incomplete');
+})();
+
 /* -- Credit Card calc is a filtered view, not a second build. SPEC.md §13 -- */
 (function () {
   const hh = threeDebtHousehold();

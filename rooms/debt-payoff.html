@@ -33,6 +33,13 @@
   section[id] { scroll-margin-top: var(--space-4); }
   .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
 
+  .scope { display: inline-flex; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); overflow: hidden; }
+  .scope button { font-family: var(--font-body); font-size: var(--text-xs); border: none; background: transparent; color: var(--color-text-muted); padding: var(--space-1) var(--space-3); cursor: pointer; white-space: nowrap; }
+  .scope button[aria-pressed="true"] { background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+
+  .rewards { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-top: var(--space-3); font-size: var(--text-sm); }
+  .rewards.is-bad { border-left-color: var(--color-critical); background: rgba(229,72,77,.08); }
+
   .debt { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-3); }
   .debt-top { display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-3); }
   .debt-name { flex: 1; min-width: 0; background: transparent; border: none; border-bottom: 1px solid var(--color-border-strong); color: var(--color-text); font-family: var(--font-body); font-size: var(--text-base); padding: 2px 0; outline: none; }
@@ -79,7 +86,13 @@
   <div class="notice" id="load-notice" hidden></div>
 
   <section class="slaf-card" id="debts">
-    <span class="slaf-eyebrow">What you owe</span>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3)">
+      <span class="slaf-eyebrow">What you owe</span>
+      <div class="scope" id="scope" role="group" aria-label="Which debts to plan">
+        <button type="button" data-scope="all" aria-pressed="true">All debts</button>
+        <button type="button" data-scope="cards" aria-pressed="false">Cards only</button>
+      </div>
+    </div>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">One line per debt</h2>
     <div id="debt-list"></div>
     <button type="button" class="slaf-btn" id="btn-add" style="width:100%">+ Add a debt</button>
@@ -114,6 +127,20 @@
     <div class="strategies" id="strategy-list"></div>
   </section>
 
+  <section class="slaf-card" id="out-rewards" hidden>
+    <span class="slaf-eyebrow">Rewards vs. carrying a balance</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      Cashback only counts if the balance is cleared. Here's the arithmetic.
+    </p>
+    <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);align-items:stretch">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Card spending a month</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="r-spend" placeholder="e.g. 1200" aria-label="Monthly card spending"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Rewards rate</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="r-rate" placeholder="e.g. 2" aria-label="Rewards rate"/><span class="slaf-affix">%</span></span></label>
+    </div>
+    <div id="rewards-body"></div>
+  </section>
+
   <section class="slaf-card" id="out-timeline">
     <span class="slaf-eyebrow">The order they fall</span>
     <ol class="timeline" id="timeline"></ol>
@@ -144,6 +171,15 @@
   var RULES = null;
   var strategyId = 'avalanche';
   var extraCents = null;
+  /* SPEC.md §13: the Credit Card calc is a FILTERED VIEW of this calculator,
+     not a separate build. Switching scope hands a filtered household to the
+     same simulate(). */
+  var scope = 'all';
+  var rewardsSpendCents = null;
+  var rewardsRate = null;
+
+  /** The household the plan is computed against, per the current scope. */
+  function scoped(h) { return scope === 'cards' ? Debt.creditCardsOnly(h) : h; }
 
   function el(id) { return document.getElementById(id); }
 
@@ -345,6 +381,7 @@
   }
 
   function renderPlan(h) {
+    h = scoped(h);
     var plan = Debt.simulate(h, RULES, { strategyId: strategyId, extraMonthlyCents: extraCents });
     var detail = '';
     if (Money.isOk(plan)) {
@@ -382,6 +419,7 @@
   }
 
   function renderStrategies(h) {
+    h = scoped(h);
     var wrap = el('strategy-list');
     var previousNote = el('tie-note');
     if (previousNote) previousNote.remove();
@@ -450,7 +488,84 @@
     var plan = renderPlan(h);
     renderStrategies(h);
     renderTimeline(plan);
+    renderRewards(h);
   }
+
+  /* ---------- the credit-card view ---------------------------------------- */
+
+  el('scope').addEventListener('click', function (evt) {
+    var btn = evt.target.closest('[data-scope]');
+    if (!btn) return;
+    scope = btn.getAttribute('data-scope');
+    Array.prototype.forEach.call(el('scope').querySelectorAll('[data-scope]'), function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-scope') === scope));
+    });
+    render();
+  });
+
+  function renderRewards(h) {
+    el('out-rewards').hidden = scope !== 'cards';
+    if (scope !== 'cards') return;
+
+    var cards = Debt.creditCardsOnly(h).debts.filter(function (d) {
+      return Money.isEntered(d.balanceCents) && d.balanceCents > 0 && Money.isEntered(d.rate);
+    });
+    if (!cards.length) {
+      el('rewards-body').innerHTML = '<p class="slaf-reason">Add a credit card with a balance and a rate.</p>';
+      return;
+    }
+    /* Weight the rate by balance — carrying $3,000 at 22.9% and $200 at 15%
+       is not an average of 19%. */
+    var totalBalance = cards.reduce(function (s2, d) { return s2 + d.balanceCents; }, 0);
+    var weightedRate = cards.reduce(function (s2, d) {
+      return s2 + d.rate * (d.balanceCents / totalBalance);
+    }, 0);
+
+    var r = Debt.rewardsVsCarrying({
+      balanceCents: totalBalance, rate: weightedRate,
+      monthlySpendCents: rewardsSpendCents, rewardsRate: rewardsRate
+    });
+    if (!Money.isOk(r)) {
+      el('rewards-body').innerHTML = '<p class="slaf-reason">' + (r.reason || '') + '</p>';
+      return;
+    }
+    el('rewards-body').innerHTML =
+      '<div class="rewards' + (r.aheadOnRewards ? '' : ' is-bad') + '">'
+      + '<strong>' + (r.aheadOnRewards
+          ? 'Ahead by ' + Money.formatCents(r.netCents) + ' a year.'
+          : 'Down ' + Money.formatCents(Math.abs(r.netCents)) + ' a year.') + '</strong><br/>'
+      + Money.formatCents(r.annualRewardsCents) + ' of rewards against '
+      + Money.formatCents(r.annualInterestCents) + ' of interest on '
+      + Money.formatCents(totalBalance) + ' at ' + Money.formatRate(weightedRate, { decimals: 1 })
+      + '.' + (Money.isEntered(r.breakEvenBalanceCents)
+          ? ' The rewards stop covering the interest above a balance of '
+            + Money.formatCents(r.breakEvenBalanceCents) + '.'
+          : '')
+      + '</div>';
+  }
+
+  [['r-spend', 'money'], ['r-rate', 'rate']].forEach(function (spec) {
+    var node = el(spec[0]);
+    node.addEventListener('focus', function () {
+      var cur = spec[0] === 'r-spend' ? rewardsSpendCents : rewardsRate;
+      node.value = !Money.isEntered(cur) ? ''
+        : spec[1] === 'money' ? String(cur / 100) : String(Math.round(cur * 10000) / 100);
+      node.select();
+    });
+    node.addEventListener('blur', function () {
+      var raw = node.value.trim();
+      var parsed = raw === '' ? null
+        : spec[1] === 'money' ? Money.parseMoney(raw) : Money.parseRatePercent(raw);
+      if (spec[0] === 'r-spend') rewardsSpendCents = parsed; else rewardsRate = parsed;
+      node.value = !Money.isEntered(parsed) ? ''
+        : spec[1] === 'money' ? Money.formatCents(parsed)
+        : Money.formatRate(parsed, { decimals: 2 }).replace(/\.?0+%$/, '%');
+      render();
+    });
+    node.addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter') { evt.preventDefault(); node.blur(); }
+    });
+  });
 
   /* ---------- actions ---------------------------------------------------- */
 

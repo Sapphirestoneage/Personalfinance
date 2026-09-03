@@ -875,6 +875,38 @@ benefits, and the tax you now remit yourself.
 
 ---
 
+## D-024 — the Credit Card calc is a view, and Net Worth gets the rest of the assets
+**2026-09-03 · SPEC.md §13, §9 item 5**
+
+**Credit Card calc.** §13 asks whether it is "a specialized view or filtered
+display of the general Debt Calculator". Filtered display, and now reachable:
+a scope switch in the Debt Payoff room hands `Debt.creditCardsOnly(h)` to the
+same `simulate()`. On the example household, planning all debts gives 7 years
+9 months and cards only gives 4 years 7 months, from one engine.
+
+The optional extra §13 mentions — rewards against the cost of carrying a
+balance — is the most useful thing that view can say, because people believe
+otherwise. $1,200/mo of spend at 2% earns $288 a year; a $3,200 balance at
+22.9% compounding monthly costs $815. **Down $527 a year**, and the room names
+the balance above which the rewards stop covering the interest ($1,131). The
+rate is weighted by balance across cards, because carrying $3,000 at 22.9%
+and $200 at 15% is not an average of 19%.
+
+**Net Worth.** Until now there was nowhere to enter a house or a car — assets
+were only the cash and investment figures Start Here asks for. The Net Worth
+room owns the remaining categories (`real_estate`, `vehicle`, `other`) as
+itemised records, and shows cash, investments and total debt as borrowed
+chips linking to their owners. That keeps D-017's one-owner rule intact while
+splitting assets by who asks for them: `Schema.INTAKE_ASSET_CATEGORIES` vs
+`ITEMISED_ASSET_CATEGORIES` makes the split explicit rather than implied.
+
+A negative net worth is shown plainly and in the critical colour, with the
+line "that is a stage, not a verdict" and a ledger that reconciles item by
+item — §6 requires it never be hidden, and hiding it would also be the wrong
+thing to do to someone.
+
+---
+
 ## Still open
 
 - **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the

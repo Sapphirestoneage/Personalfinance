@@ -133,6 +133,25 @@
       format: function (v) { return money(v) + '/mo'; }
     },
 
+    /* The Net Worth room owns everything you own that Start Here doesn't
+       ask about — a house, a car, anything else. */
+    otherAssets: {
+      label: 'Property & other assets', owner: 'net-worth', anchor: 'assets',
+      read: function (h) { return Schema.otherAssetsCents(h); },
+      format: money
+    },
+    netWorth: {
+      label: 'Net worth', owner: 'net-worth', anchor: 'out-net-worth',
+      read: function (h) {
+        var a = Schema.totalAssetsCents(h), d = Schema.totalDebtCents(h);
+        if (!Money.isOk(a) || !Money.isOk(d)) {
+          return Money.incomplete('Not enough entered yet.', ['assets', 'debts']);
+        }
+        return Money.ok(a.value - d.value);
+      },
+      format: money
+    },
+
     /* Cash Flow owns spending. The estimate can be seeded during intake, but
        once a month is categorised the tracked figure is what everything uses
        — and that is only editable where the categories live. */
