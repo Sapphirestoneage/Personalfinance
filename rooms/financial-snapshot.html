@@ -76,6 +76,11 @@
   /* Deep-linked sections shouldn't land flush against the viewport edge. */
   section[id] { scroll-margin-top: var(--space-4); }
 
+  .handoff-cold { display: block; text-decoration: none; color: inherit; border: 1px solid var(--color-border-active); background: var(--color-surface-active); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-4); }
+  .handoff-cold strong { display: block; font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-2) 0 var(--space-1); }
+  .handoff-cold span:last-child { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .handoff-cold:hover { border-color: var(--color-focus-ring); }
+
   .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
   [hidden] { display: none !important; }
 </style>
@@ -92,105 +97,21 @@
 
   <div class="notice" id="load-notice" hidden></div>
 
+  <a class="handoff-cold" id="cold-start" href="start.html" hidden>
+    <span class="slaf-eyebrow">Nothing entered yet</span>
+    <strong>Start Here — nine questions</strong>
+    <span>Answer them once and every number on this page fills itself in.</span>
+  </a>
+
   <!-- ================= INPUTS ================= -->
   <section class="slaf-card" id="inputs">
     <span class="slaf-eyebrow">Your numbers</span>
-    <h2 style="margin:var(--space-2) 0 var(--space-4)">What we need</h2>
-
-    <div class="grid-2">
-      <label class="slaf-field">
-        <span class="slaf-label">Date of birth</span>
-        <span class="slaf-input-shell"><input type="date" id="f-dob" data-field="dob"/></span>
-      </label>
-      <label class="slaf-field">
-        <span class="slaf-label">State</span>
-        <span class="slaf-input-shell"><input type="text" id="f-state" data-field="state" maxlength="2" placeholder="e.g. NC" autocomplete="off" spellcheck="false"/></span>
-      </label>
-    </div>
-
-    <label class="slaf-field">
-      <span class="slaf-label">Gross annual income</span>
-      <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="f-income" data-field="income" placeholder="e.g. 72000"/></span>
-      <span class="slaf-hint">Before tax, before deductions. All earners in the household.</span>
-    </label>
-
-    <label class="slaf-field">
-      <span class="slaf-label">Filing status</span>
-      <span class="slaf-input-shell">
-        <select id="f-filing" data-field="filingStatus">
-          <option value="">Choose one…</option>
-          <option value="single">Single</option>
-          <option value="married_joint">Married, filing jointly</option>
-          <option value="married_separate">Married, filing separately</option>
-          <option value="head_of_household">Head of household</option>
-        </select>
-      </span>
-    </label>
-
-    <div class="grid-2">
-      <label class="slaf-field">
-        <span class="slaf-label">Cash &amp; savings</span>
-        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="f-cash" data-field="cash" placeholder="e.g. 9500"/></span>
-      </label>
-      <label class="slaf-field">
-        <span class="slaf-label">Investments + retirement</span>
-        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="f-investments" data-field="investments" placeholder="e.g. 48000"/></span>
-      </label>
-    </div>
-    <p class="slaf-hint" style="margin-top:calc(var(--space-3) * -1); margin-bottom:var(--space-3)">Kept apart on purpose — your runway is measured on cash alone.</p>
-
-    <div class="grid-2">
-      <label class="slaf-field">
-        <span class="slaf-label">Total debt balance</span>
-        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="f-debt-balance" data-field="debtBalance" placeholder="e.g. 21600"/></span>
-      </label>
-      <label class="slaf-field">
-        <span class="slaf-label">Average interest rate</span>
-        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="f-debt-rate" data-field="debtRate" placeholder="e.g. 8"/><span class="slaf-affix">%</span></span>
-      </label>
-    </div>
-    <p class="slaf-hint" style="margin-top:calc(var(--space-3) * -1); margin-bottom:var(--space-3)">Enter 0 if you have none. A weighted average is fine here — the debt tools will ask for each loan separately.</p>
-
-    <div class="grid-2">
-      <label class="slaf-field">
-        <span class="slaf-label">Monthly debt payments</span>
-        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="f-debt-payments" data-field="debtPayments" placeholder="e.g. 305"/></span>
-      </label>
-      <label class="slaf-field">
-        <span class="slaf-label">Monthly expenses</span>
-        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="f-expenses" data-field="expenses" placeholder="e.g. 3150"/></span>
-      </label>
-    </div>
-    <p class="slaf-hint" style="margin-top:calc(var(--space-3) * -1); margin-bottom:var(--space-3)">Minimums only on the left. Everything you actually spend in a month on the right.</p>
-
-    <div class="grid-2">
-      <label class="slaf-field">
-        <span class="slaf-label">Employer match</span>
-        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="f-match-percent" data-field="matchPercent" placeholder="e.g. 50"/><span class="slaf-affix">%</span></span>
-      </label>
-      <label class="slaf-field">
-        <span class="slaf-label">…up to this much of pay</span>
-        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="f-match-cap" data-field="matchCap" placeholder="e.g. 6"/><span class="slaf-affix">%</span></span>
-      </label>
-    </div>
-    <p class="slaf-hint" style="margin-top:calc(var(--space-3) * -1); margin-bottom:var(--space-3)">“50% of the first 6%” is 50 on the left, 6 on the right. Enter 0 and 0 if there's no match.</p>
-
-    <label class="slaf-field" id="capturing-field" hidden>
-      <span class="slaf-label">Are you contributing enough to get all of it?</span>
-      <span class="slaf-input-shell">
-        <select id="f-capturing" data-field="capturingFullMatch">
-          <option value="">Not sure / haven't checked</option>
-          <option value="yes">Yes, I get the full match</option>
-          <option value="no">No, I'm leaving some of it</option>
-        </select>
-      </span>
-      <span class="slaf-hint">The ladder can't judge step 2 without this — an unanswered question isn't scored as a failure.</span>
-    </label>
-
-    <div class="actions">
-      <button type="button" class="slaf-btn" id="btn-demo">Try with example numbers</button>
-      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Clear everything</button>
-    </div>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">What this is reading</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-4)">
+      Nothing is edited here. Each figure is owned by one room — tap it to go
+      to the question that produces it.
+    </p>
+    <div id="inputs-list"></div>
   </section>
 
   <!-- ================= OUTPUTS ================= -->
@@ -288,7 +209,7 @@
 <script src="../shared/registry.js"></script>
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
-<script src="../shared/demo-persona.js"></script>
+<script src="../shared/ownership.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/foo.js"></script>
 <script>
@@ -296,7 +217,7 @@
   'use strict';
 
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
-      Reference = SLAF.Reference, Demo = SLAF.DemoPersona,
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership,
       Tier0 = SLAF.Tier0, Foo = SLAF.Foo;
 
   var ROOM_ID = 'financial-snapshot';
@@ -310,235 +231,35 @@
   var DEBT_ID = 'tier0_debt_lump';
   var INCOME_ID = 'tier0_income_primary';
 
-  /* ---------- reading the household ------------------------------------ */
+  /* ---------- the borrowed numbers ---------------------------------------
+     This room owns NOTHING. Every figure below belongs to another room and
+     renders as a link back to the question that produces it — see
+     shared/ownership.js. That is what stopped the same number being
+     typeable in three separate places.                                   */
 
-  function primary(h) { return Schema.primaryPerson(h); }
+  var SHOWS = [
+    'grossAnnualIncome', 'filingStatus', 'monthlyExpenses',
+    'cashSavings', 'investments', 'totalDebt', 'monthlyDebtPayments',
+    'dob', 'state', 'employerMatch', 'capturingFullMatch'
+  ];
 
-  function incomeSource(h) {
-    var p = primary(h);
-    if (!p) return null;
-    for (var i = 0; i < p.incomeSources.length; i++) {
-      if (p.incomeSources[i].id === INCOME_ID) return p.incomeSources[i];
+  function renderInputs(h) {
+    el('inputs-list').innerHTML = SHOWS.map(function (fieldId) {
+      return Ownership.chip(fieldId, h, ROOM_ID);
+    }).join('');
+  }
+
+  /** Has anything been entered anywhere yet? Decides the cold-start prompt. */
+  function householdHasData(h) {
+    for (var i = 0; i < SHOWS.length; i++) {
+      var d = Ownership.describe(SHOWS[i], h, ROOM_ID);
+      if (d && d.isSet) return true;
     }
-    return p.incomeSources[0] || null;
+    return false;
   }
-
-  function findById(list, id) {
-    for (var i = 0; i < (list || []).length; i++) { if (list[i].id === id) return list[i]; }
-    return null;
-  }
-
-  /* ---------- writing raw inputs ---------------------------------------- */
-
-  function ensurePerson() { return Spine.ensurePrimaryPerson('You'); }
-
-  function writeAsset(id, category, liquid, cents) {
-    var person = ensurePerson();
-    Spine.upsertAsset({
-      id: id,
-      label: category === 'cash' ? 'Cash & savings' : 'Investments + retirement',
-      category: category, valueCents: cents, liquid: liquid, ownerIds: [person.id]
-    });
-  }
-
-  function writeDebtPart(part, value) {
-    var person = ensurePerson();
-    var existing = findById(Spine.getProfile().debts, DEBT_ID) || {};
-    var record = {
-      id: DEBT_ID,
-      label: 'All debt (entered as a total)',
-      balanceCents: existing.balanceCents === undefined ? null : existing.balanceCents,
-      rate: existing.rate === undefined ? null : existing.rate,
-      minPaymentCents: existing.minPaymentCents === undefined ? null : existing.minPaymentCents,
-      type: 'other',
-      ownerIds: [person.id]
-    };
-    record[part] = value;
-    Spine.upsertDebt(record);
-  }
-
-  function writeIncomePart(part, value) {
-    var person = ensurePerson();
-    var existing = incomeSource(Spine.getProfile()) || {};
-    var match = Object.assign({ matchPercent: null, matchCapPercentOfSalary: null },
-      existing.employerMatch || {});
-    var record = {
-      id: INCOME_ID,
-      source: 'Household income',
-      grossAnnualIncomeCents: existing.grossAnnualIncomeCents === undefined ? null : existing.grossAnnualIncomeCents,
-      frequency: 'annual',
-      type: 'w2',
-      employerMatch: match
-    };
-    if (part === 'matchPercent' || part === 'matchCapPercentOfSalary') record.employerMatch[part] = value;
-    else record[part] = value;
-    Spine.upsertIncomeSource(person.id, record);
-  }
-
-  /* ---------- field table -----------------------------------------------
-     One entry per input: how to read it out of the household, how to write
-     it back, and how to parse and format the text.                       */
-
-  var FIELDS = {
-    dob: {
-      el: 'f-dob', kind: 'raw',
-      read: function (h) { var p = primary(h); return p && p.dob ? p.dob : ''; },
-      write: function (v) {
-        var person = ensurePerson();
-        Spine.upsertPerson({ id: person.id, dob: v === '' ? null : v });
-      }
-    },
-    state: {
-      el: 'f-state', kind: 'raw',
-      read: function (h) { return h.state || ''; },
-      write: function (v) {
-        var clean = String(v || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
-        SLAF.Spine.updateProfile({ state: clean === '' ? null : clean });
-        return clean;
-      }
-    },
-    filingStatus: {
-      el: 'f-filing', kind: 'raw',
-      read: function (h) { return h.filingStatus || ''; },
-      write: function (v) { Spine.updateProfile({ filingStatus: v === '' ? null : v }); }
-    },
-    income: {
-      el: 'f-income', kind: 'money',
-      read: function (h) { var s = incomeSource(h); return s ? s.grossAnnualIncomeCents : null; },
-      write: function (cents) { writeIncomePart('grossAnnualIncomeCents', cents); }
-    },
-    cash: {
-      el: 'f-cash', kind: 'money',
-      read: function (h) { var a = findById(h.assets, CASH_ID); return a ? a.valueCents : null; },
-      write: function (cents) { writeAsset(CASH_ID, 'cash', true, cents); }
-    },
-    investments: {
-      el: 'f-investments', kind: 'money',
-      read: function (h) { var a = findById(h.assets, INVEST_ID); return a ? a.valueCents : null; },
-      write: function (cents) { writeAsset(INVEST_ID, 'investment', false, cents); }
-    },
-    debtBalance: {
-      el: 'f-debt-balance', kind: 'money',
-      read: function (h) { var d = findById(h.debts, DEBT_ID); return d ? d.balanceCents : null; },
-      write: function (cents) { writeDebtPart('balanceCents', cents); }
-    },
-    debtRate: {
-      el: 'f-debt-rate', kind: 'percent',
-      read: function (h) { var d = findById(h.debts, DEBT_ID); return d ? d.rate : null; },
-      write: function (rate) { writeDebtPart('rate', rate); }
-    },
-    debtPayments: {
-      el: 'f-debt-payments', kind: 'money',
-      read: function (h) { var d = findById(h.debts, DEBT_ID); return d ? d.minPaymentCents : null; },
-      write: function (cents) { writeDebtPart('minPaymentCents', cents); }
-    },
-    expenses: {
-      el: 'f-expenses', kind: 'money',
-      read: function (h) { return h.expenses.monthlyEssential.estimatedValueCents; },
-      write: function (cents) { Spine.setMonthlyExpenses(cents, 'estimated'); }
-    },
-    matchPercent: {
-      el: 'f-match-percent', kind: 'percent',
-      read: function (h) { var s = incomeSource(h); return s ? s.employerMatch.matchPercent : null; },
-      write: function (rate) { writeIncomePart('matchPercent', rate); }
-    },
-    matchCap: {
-      el: 'f-match-cap', kind: 'percent',
-      read: function (h) { var s = incomeSource(h); return s ? s.employerMatch.matchCapPercentOfSalary : null; },
-      write: function (rate) { writeIncomePart('matchCapPercentOfSalary', rate); }
-    },
-    capturingFullMatch: {
-      el: 'f-capturing', kind: 'raw',
-      read: function (h) {
-        if (h.capturingFullMatch === true) return 'yes';
-        if (h.capturingFullMatch === false) return 'no';
-        return '';
-      },
-      write: function (v) {
-        Spine.updateProfile({ capturingFullMatch: v === 'yes' ? true : (v === 'no' ? false : null) });
-      }
-    }
-  };
-
-  /* ---------- input wiring ----------------------------------------------
-     Currency and percent format on BLUR, never on keystroke (SPEC.md §5.5).
-     An empty box stays empty — it is never backfilled with a zero.      */
 
   function el(id) { return document.getElementById(id); }
 
-  function displayValue(field, stored) {
-    if (!Money.isEntered(stored)) return '';
-    if (field.kind === 'money') return Money.formatCents(stored);
-    if (field.kind === 'percent') return Money.formatRate(stored, { decimals: 2 }).replace(/\.?0+%$/, '%');
-    return stored;
-  }
-
-  function editValue(field, stored) {
-    if (!Money.isEntered(stored)) return '';
-    if (field.kind === 'money') return String(stored / 100);
-    if (field.kind === 'percent') return String(Math.round(stored * 10000) / 100);
-    return stored;
-  }
-
-  var suspendRender = false;
-
-  function wireField(name) {
-    var field = FIELDS[name];
-    var node = el(field.el);
-    if (!node) return;
-
-    if (field.kind === 'raw') {
-      node.addEventListener('change', function () {
-        suspendRender = true;
-        var written = field.write(node.value);
-        if (typeof written === 'string') node.value = written;
-        suspendRender = false;
-        render();
-      });
-      return;
-    }
-
-    /* Show the bare number while editing so a caret never lands mid-symbol. */
-    node.addEventListener('focus', function () {
-      var stored = field.read(Spine.getProfile());
-      node.value = editValue(field, stored);
-      node.select();
-    });
-
-    node.addEventListener('blur', function () {
-      var parsed = field.kind === 'money'
-        ? Money.parseMoney(node.value)
-        : Money.parseRatePercent(node.value);
-      suspendRender = true;
-      field.write(parsed);
-      suspendRender = false;
-      node.value = displayValue(field, parsed);
-      render();
-    });
-
-    /* Enter commits, so a phone keyboard's "done" behaves like tabbing out. */
-    node.addEventListener('keydown', function (evt) {
-      if (evt.key === 'Enter') { evt.preventDefault(); node.blur(); }
-    });
-  }
-
-  function paintInputs(h) {
-    Object.keys(FIELDS).forEach(function (name) {
-      var field = FIELDS[name];
-      var node = el(field.el);
-      if (!node || node === document.activeElement) return;
-      var stored = field.read(h);
-      node.value = field.kind === 'raw' ? (stored || '') : displayValue(field, stored);
-    });
-
-    /* The capturing-the-match question only makes sense once a match exists. */
-    var src = incomeSource(h);
-    var hasMatch = src && Money.isEntered(src.employerMatch.matchPercent)
-      && Money.isEntered(src.employerMatch.matchCapPercentOfSalary)
-      && src.employerMatch.matchPercent > 0
-      && src.employerMatch.matchCapPercentOfSalary > 0;
-    el('capturing-field').hidden = !hasMatch;
-  }
 
   /* ---------- output rendering ------------------------------------------
      One helper for every card, so the "em dash plus a reason, never a fake
@@ -754,9 +475,9 @@
   /* ---------- the render pass ------------------------------------------- */
 
   function render() {
-    if (suspendRender) return;
     var h = Spine.getProfile();
-    paintInputs(h);
+    renderInputs(h);
+    el('cold-start').hidden = householdHasData(h);
     if (!TABLES) return;
 
     var all = Tier0.computeAll(h, TABLES);
@@ -792,40 +513,10 @@
     renderFlags(all.foo ? all.foo.flags : []);
   }
 
-  /* ---------- actions ---------------------------------------------------- */
-
-  function householdHasData(h) {
-    if (h.people.some(function (p) {
-      return p.dob || p.incomeSources.some(function (s) { return Money.isEntered(s.grossAnnualIncomeCents); });
-    })) return true;
-    if (h.assets.some(function (a) { return Money.isEntered(a.valueCents); })) return true;
-    if (h.debts.some(function (d) { return Money.isEntered(d.balanceCents); })) return true;
-    return Money.isEntered(h.expenses.monthlyEssential.estimatedValueCents);
-  }
-
-  el('btn-demo').addEventListener('click', function () {
-    if (householdHasData(Spine.getProfile())
-        && !window.confirm('This replaces what you’ve entered with the example household. Continue?')) {
-      return;
-    }
-    var demo = Demo.build();
-    Spine.reset();
-    Spine.updateProfile({
-      people: demo.people, filingStatus: demo.filingStatus, state: demo.state,
-      assets: demo.assets, debts: demo.debts, expenses: demo.expenses,
-      capturingFullMatch: demo.capturingFullMatch
-    });
-    Spine.registerRoom(ROOM_ID);
-    render();
-    el('out-net-worth').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
-
-  el('btn-clear').addEventListener('click', function () {
-    if (!window.confirm('Clear every number you’ve entered?')) return;
-    Spine.reset();
-    Spine.registerRoom(ROOM_ID);
-    render();
-  });
+  /* ---------- actions ----------------------------------------------------
+     There is no "try the example" button here any more. Loading example data
+     would mean writing fields this room does not own, which is precisely
+     what the ownership rule forbids. Start Here does it instead.        */
 
   el('btn-snapshot').addEventListener('click', function () {
     var h = Spine.getProfile();
@@ -846,6 +537,7 @@
     el('snapshot-note').textContent = count + ' snapshot' + (count === 1 ? '' : 's') + ' saved in this browser.';
   });
 
+
   /* ---------- deep links ------------------------------------------------- */
 
   function jumpToHash() {
@@ -857,7 +549,6 @@
 
   /* ---------- boot ------------------------------------------------------- */
 
-  Object.keys(FIELDS).forEach(wireField);
   Spine.registerRoom(ROOM_ID);
   Spine.onChange(render);
   render();

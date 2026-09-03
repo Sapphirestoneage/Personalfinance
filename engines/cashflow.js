@@ -41,6 +41,12 @@
 
   var MONTHS_PER_YEAR = 12;
 
+  /* Household fields a category may be derived from. Keyed by the name a
+     category's `derivedFrom` uses in data/expense_categories.json. */
+  var DERIVED = {
+    monthlyDebtPayments: function (household) { return Schema.monthlyDebtPaymentsCents(household); }
+  };
+
   /* ---- Category catalogue lookups -------------------------------------- */
 
   function categoryById(catalog, id) {
@@ -151,18 +157,40 @@
 
     var categories = [], essentialCents = 0, spendCents = 0, savingsCents = 0;
 
+    function addRow(cat, monthlyCents, extra) {
+      var row = {
+        categoryId: cat.id, label: cat.label, bucket: cat.bucket,
+        essential: !!cat.essential, monthlyCents: monthlyCents
+      };
+      if (extra) { for (var k in extra) { if (Object.prototype.hasOwnProperty.call(extra, k)) row[k] = extra[k]; } }
+      categories.push(row);
+      byBucket[cat.bucket] = (byBucket[cat.bucket] || 0) + monthlyCents;
+      if (cat.essential) essentialCents += monthlyCents;
+      if (cat.bucket === 'savings') savingsCents += monthlyCents;
+      else spendCents += monthlyCents;
+    }
+
     Object.keys(byCategory).forEach(function (id) {
       var cat = categoryById(catalog, id);
+      /* A derived category is handled below, from the household. Any entry
+         someone managed to leave here is deliberately ignored rather than
+         added — otherwise the figure would be counted twice. */
+      if (cat.derivedFrom) return;
       var n = normaliseToMonthly(byCategory[id]);
-      categories.push({
-        categoryId: id, label: cat.label, bucket: cat.bucket,
-        essential: !!cat.essential, monthlyCents: n.monthlyCents,
-        entryCount: n.counted, monthsCovered: n.monthsCovered
-      });
-      byBucket[cat.bucket] = (byBucket[cat.bucket] || 0) + n.monthlyCents;
-      if (cat.essential) essentialCents += n.monthlyCents;
-      if (cat.bucket === 'savings') savingsCents += n.monthlyCents;
-      else spendCents += n.monthlyCents;
+      addRow(cat, n.monthlyCents, { entryCount: n.counted, monthsCovered: n.monthsCovered });
+    });
+
+    /* Derived categories: the value comes from the household field named in
+       the catalogue, never from a typed entry. This is what keeps debt
+       minimums a single number owned by the Debt Payoff room instead of a
+       third editable copy. */
+    (catalog.categories || []).forEach(function (cat) {
+      if (!cat.derivedFrom) return;
+      var source = DERIVED[cat.derivedFrom];
+      if (!source) return;
+      var value = source(household);
+      if (!Money.isOk(value)) return;
+      addRow(cat, value.value, { derived: true, derivedFrom: cat.derivedFrom, ownedBy: cat.ownedBy || null });
     });
 
     categories.sort(function (a, b) { return b.monthlyCents - a.monthlyCents; });

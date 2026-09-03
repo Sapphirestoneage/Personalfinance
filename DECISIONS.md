@@ -576,6 +576,109 @@ half-filled row, not an error.
 
 ---
 
+## D-017 — one owner per shared number; everywhere else it's a link
+**2026-09-03 · Eli's design direction · supersedes part of D-003**
+
+Eli spotted this from the outside: *"I want there to be almost a priority and
+a non-editable, because it is on another screen — so the number should be a
+link to the other page."* The example given was debt minimums, and it was
+exactly right.
+
+**What was wrong.** The same figure was editable in three places. Monthly
+debt payments could be typed as a lump sum in the Financial Snapshot,
+itemised per-debt in Debt Payoff, and typed a third time as a "Debt minimums"
+spending category in Cash Flow. Income was editable in the Snapshot and again
+in the FOO Ladder. Cash was editable in the Snapshot and seeded into two
+separate FOO fields. `CLAUDE.md` forbids a room holding "its own private copy
+of a number that already exists in the household model" — these were not
+private copies of a household number, they were *rival* copies, and the only
+reason they had not visibly diverged is that nobody had edited one yet.
+
+**The rule now.**
+
+> A shared field is EDITABLE in exactly one room — its owner. Everywhere else
+> it renders read-only, showing the current value and linking to the room
+> that owns it.
+
+`shared/ownership.js` is the single place the map lives. Each field declares
+its owner and the anchor to land on, so a link always arrives at the specific
+question rather than the top of some page.
+
+| Field | Owner |
+|---|---|
+| dob, age, state, filingStatus, grossAnnualIncome, cashSavings, investments, employerMatch, capturingFullMatch | **Start Here** |
+| totalDebt, monthlyDebtPayments (and every per-debt figure) | **Debt Payoff** |
+| monthlyExpenses, every spending category | **Cash Flow** |
+
+**Consequences, all of them deliberate:**
+
+- **The Financial Snapshot takes no input at all** — it has zero `<input>` and
+  zero `<select>` elements, enforced by a test. It is the dashboard: eleven
+  borrowed figures at the top, each a link to its source, then the nine
+  outputs. Its "try the example" button is gone, because loading example data
+  would have meant writing fields it does not own.
+- **Debt minimums in Cash Flow is a *derived* category.** It carries
+  `derivedFrom: "monthlyDebtPayments"` in `data/expense_categories.json`, so
+  the engine computes it from the itemised debts and *ignores* any typed
+  entry for it rather than adding one — otherwise the figure would be counted
+  twice. It renders as a link to Debt Payoff.
+- **The FOO Ladder no longer holds seeded copies.** Income, expenses, cash,
+  age and the match cap were `useState` values seeded once from the household
+  — which is the same drift problem in slow motion, since nothing refreshed
+  them. They are now derived on every render from a live household that
+  subscribes to `Spine.onChange`. Its debts are read-only summaries linking
+  to Debt Payoff. Its own genuinely-local inputs (highest deductible, Roth
+  contributed so far, prepaid goal) stay editable, because nothing else in
+  the app holds them.
+
+Verified live: changing one debt's minimum to $400 in Debt Payoff immediately
+moves Cash Flow's derived category to $495 and the Snapshot's chip to $495/mo,
+with no reload. And an audit of every input on every page shows each shared
+number is typeable in exactly one room.
+
+---
+
+## D-018 — a guided intake, and the rooms as an ordered path
+**2026-09-03 · Eli's design direction**
+
+*"Ask me the questions and have that be the default, so I don't have to edit
+them constantly."*
+
+**`rooms/start.html`** asks nine questions one at a time, in plain English,
+and writes each answer straight into the household. It is the owner of every
+field it asks about, so those answers are the single source everywhere else.
+
+Ordered by what each answer unlocks rather than by what is convenient to
+ask: income first (it feeds savings rate, DTI, the retirement benchmark and
+take-home pay), then filing status, then expenses, cash, investments, and
+only then the demographic questions. The employer-match follow-up
+("are you actually capturing it?") appears only once a real match has been
+entered — D-008's three-state answer, asked conversationally.
+
+Behaviour worth recording:
+
+- **Skip leaves a field unset, never zero.** The empty-is-not-zero rule holds
+  through the wizard: skipping the cash question stores no cash record at all.
+- **It resumes.** A returning visitor with everything answered lands on the
+  review screen, not back at question one; a half-finished one resumes at the
+  first unanswered question.
+- **Every question is deep-linkable**, which is what makes the ownership
+  chips work. A `hashchange` listener re-routes for same-page navigation —
+  without it, a chip followed while already on Start Here would silently do
+  nothing, because a hash-only change is a same-document navigation that
+  never re-runs boot.
+- **It hands off** to whichever room is genuinely next on the path, rather
+  than to a hardcoded one.
+
+**The path.** Every room now declares an `order`: Start Here → Debt Payoff →
+Cash Flow → Financial Snapshot → FOO Ladder. The Snapshot sits after the
+rooms that feed it, which is now enforced by a test. The Map renders that as
+a numbered sequence with a "next" flag on the first unvisited room, so there
+is always an obvious next move. §12.6's tag filter is untouched and sits on
+top of the ordering.
+
+---
+
 ## Still open
 
 - **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the

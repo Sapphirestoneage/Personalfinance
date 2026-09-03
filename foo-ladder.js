@@ -13,7 +13,8 @@ const {
   Schema,
   Spine,
   Reference,
-  DemoPersona
+  DemoPersona,
+  Ownership
 } = SLAF;
 const ROOM_ID = 'foo-ladder';
 
@@ -40,7 +41,6 @@ const START = {
   y: 2026
 };
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const EXPENSE_CATS = ["Housing", "Transportation", "Food", "Insurance", "Debt minimums", "Everything else"];
 const fmt = n => "$" + Math.round(Math.abs(n)).toLocaleString("en-US");
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 const entered = v => Money.isEntered(v);
@@ -164,6 +164,41 @@ function Field({
     className: "slaf-affix"
   }, suffix)));
 }
+
+/* ---------- Borrowed ---------------------------------------------------
+   A figure this room reads but does not own. It renders as a link to the
+   room that does — the same rule the Snapshot follows. Before this, income,
+   expenses, cash and the match cap were all editable here AND elsewhere,
+   which meant editing them here silently diverged from the household.  */
+function Borrowed({
+  fieldId,
+  label
+}) {
+  const [household, setHousehold] = useState(() => Spine.getProfile());
+  useEffect(() => Spine.onChange(setHousehold), []);
+  const d = Ownership.describe(fieldId, household, ROOM_ID);
+  if (!d) return null;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "slaf-field",
+    style: {
+      marginBottom: 0
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "slaf-label"
+  }, label || d.label), /*#__PURE__*/React.createElement("a", {
+    className: "slaf-owned" + (d.isSet ? "" : " slaf-owned--empty"),
+    href: d.href,
+    style: {
+      marginBottom: 0
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "slaf-owned-label"
+  }, d.isSet ? "\u00a0" : "not set"), /*#__PURE__*/React.createElement("span", {
+    className: "slaf-owned-value"
+  }, d.display), /*#__PURE__*/React.createElement("span", {
+    className: "slaf-owned-from"
+  }, d.ownerTitle + " →")));
+}
 function Toggle({
   label,
   on,
@@ -207,61 +242,40 @@ function Toggle({
     }
   })));
 }
-function PeriodSwitch({
-  period,
-  onChange
-}) {
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "inline-flex",
-      borderRadius: var_pill(),
-      border: "1px solid var(--color-border-strong)",
-      background: "var(--color-surface-raised)",
-      padding: 2,
-      fontSize: "var(--text-xs)"
-    }
-  }, ["monthly", "yearly"].map(p => /*#__PURE__*/React.createElement("button", {
-    key: p,
-    onClick: () => onChange(p),
-    style: {
-      padding: "4px 12px",
-      borderRadius: 16,
-      border: "none",
-      cursor: "pointer",
-      background: period === p ? "var(--color-accent)" : "transparent",
-      color: period === p ? "var(--color-accent-contrast)" : "var(--color-text-muted)",
-      fontWeight: period === p ? 600 : 400,
-      textTransform: "capitalize",
-      fontFamily: "var(--font-body)"
-    }
-  }, p)));
-}
-function var_pill() {
-  return "999px";
-}
 
 /* ======================================================================= */
 
 function App() {
-  /* --- Raw inputs. Every one starts empty. SPEC.md §5.1. --------------- */
-  const [incomePeriod, setIncomePeriod] = useState("yearly");
-  const [incomeVal, setIncomeVal] = useState(null);
-  const [expPeriod, setExpPeriod] = useState("monthly");
-  const [useBreakdown, setUseBreakdown] = useState(false);
-  const [expTotal, setExpTotal] = useState(null);
-  const [expCats, setExpCats] = useState({});
-  const [age, setAge] = useState(null);
+  /* --- Borrowed from the household. NOT state: derived live on every
+         render and re-derived whenever the spine changes, so this room can
+         never hold a stale copy of a number another room owns.          */
+  const [household, setHousehold] = useState(() => Spine.getProfile());
+  useEffect(() => Spine.onChange(setHousehold), []);
+  const asDollars = result => Money.isOk(result) ? result.value / 100 : null;
+  const incomeVal = asDollars(Schema.grossAnnualIncomeCents(household)); // annual
+  const expTotal = asDollars(Schema.monthlyExpensesCents(household)); // monthly
+  const efBalance = asDollars(Schema.cashCents(household));
+  const age = Schema.primaryAge(household);
+  const primarySource = Schema.allIncomeSources(household)[0];
+  const matchCapPct = primarySource && entered(primarySource.employerMatch.matchCapPercentOfSalary) ? primarySource.employerMatch.matchCapPercentOfSalary * 100 : null;
+  const debts = Schema.aggregatableDebts(household).filter(d => entered(d.balanceCents) && d.balanceCents > 0).map((d, i) => ({
+    id: d.id || 'h' + i,
+    name: d.label || 'Debt',
+    balance: d.balanceCents / 100,
+    apr: entered(d.rate) ? Math.round(d.rate * 10000) / 100 : null,
+    min: entered(d.minPaymentCents) ? d.minPaymentCents / 100 : null
+  }));
+
+  /* --- This room's OWN inputs. Nothing else in the app holds these, so
+         they are editable here and start empty. SPEC.md §5.1.          */
   const [cashOnHand, setCashOnHand] = useState(null);
   const [deductibleTarget, setDeductibleTarget] = useState(null);
   const [contribPct, setContribPct] = useState(null);
-  const [matchCapPct, setMatchCapPct] = useState(null);
-  const [efBalance, setEfBalance] = useState(null);
   const [rothCur, setRothCur] = useState(null);
   const [hsaCur, setHsaCur] = useState(null);
   const [prepaidTarget, setPrepaidTarget] = useState(null);
   const [prepaidBal, setPrepaidBal] = useState(null);
   const [windfallAmt, setWindfallAmt] = useState(null);
-  const [debts, setDebts] = useState([]);
 
   /* --- Assumption-class. Defaults are legitimate here, and visible. ---- */
   const [efMonths, setEfMonths] = useState(ASSUMPTIONS.efMonths);
@@ -277,62 +291,8 @@ function App() {
   const [showInputs, setShowInputs] = useState(true);
   const [showAssumptions, setShowAssumptions] = useState(false);
   const [openStep, setOpenStep] = useState(null);
-  const [seeded, setSeeded] = useState(false);
-  const addDebt = () => setDebts(d => [...d, {
-    id: Date.now(),
-    name: "New debt",
-    balance: null,
-    apr: null,
-    min: null
-  }]);
-  const setDebt = (id, key, val) => setDebts(d => d.map(x => x.id === id ? {
-    ...x,
-    [key]: val
-  } : x));
-  const rmDebt = id => setDebts(d => d.filter(x => x.id !== id));
-
-  /* --- Seed from the shared household ---------------------------------
-     If the visitor already filled in the Financial Snapshot, this room
-     opens with THEIR numbers rather than a stranger's. That is the whole
-     point of the spine. Nothing is invented — a field the household has no
-     value for stays empty.                                             */
-  function seedFrom(h) {
-    const income = Schema.grossAnnualIncomeCents(h);
-    if (Money.isOk(income)) {
-      setIncomeVal(income.value / 100);
-      setIncomePeriod("yearly");
-    }
-    const exp = Schema.monthlyExpensesCents(h);
-    if (Money.isOk(exp)) {
-      setExpTotal(exp.value / 100);
-      setExpPeriod("monthly");
-      setUseBreakdown(false);
-    }
-    const cash = Schema.cashCents(h);
-    if (Money.isOk(cash)) {
-      setEfBalance(cash.value / 100);
-    }
-    const a = Schema.primaryAge(h);
-    if (entered(a)) setAge(a);
-    const src = Schema.allIncomeSources(h)[0];
-    if (src && entered(src.employerMatch.matchCapPercentOfSalary)) {
-      setMatchCapPct(src.employerMatch.matchCapPercentOfSalary * 100);
-    }
-    const itemised = Schema.aggregatableDebts(h).filter(d => entered(d.balanceCents) && d.balanceCents > 0);
-    if (itemised.length) {
-      setDebts(itemised.map((d, i) => ({
-        id: 'h' + i,
-        name: d.label || 'Debt',
-        balance: d.balanceCents / 100,
-        apr: entered(d.rate) ? Math.round(d.rate * 10000) / 100 : null,
-        min: entered(d.minPaymentCents) ? d.minPaymentCents / 100 : null
-      })));
-    }
-  }
   useEffect(() => {
     Spine.registerRoom(ROOM_ID);
-    seedFrom(Spine.getProfile());
-    setSeeded(true);
     Reference.load(['irsLimits']).then(t => {
       const L = t.irsLimits.limits;
       setLimits({
@@ -346,8 +306,9 @@ function App() {
     }).catch(() => {/* the fallback limits above already render */});
   }, []);
   function loadExample() {
-    const h = DemoPersona.build();
-    seedFrom(h);
+    /* Only this room's own inputs. The household figures belong to Start
+       Here and Debt Payoff — loading them from here would be writing fields
+       this room does not own. */
     setDeductibleTarget(3000);
     setCashOnHand(1500);
     setContribPct(3);
@@ -357,17 +318,12 @@ function App() {
     setPrepaidBal(0);
   }
   function clearAll() {
-    [setIncomeVal, setExpTotal, setAge, setCashOnHand, setDeductibleTarget, setContribPct, setMatchCapPct, setEfBalance, setRothCur, setHsaCur, setPrepaidTarget, setPrepaidBal, setWindfallAmt].forEach(fn => fn(null));
-    setExpCats({});
-    setDebts([]);
+    [setCashOnHand, setDeductibleTarget, setContribPct, setRothCur, setHsaCur, setPrepaidTarget, setPrepaidBal, setWindfallAmt].forEach(fn => fn(null));
   }
 
   /* --- The gap engine --------------------------------------------------- */
-  const catEntries = Object.values(expCats).filter(entered);
-  const catSum = catEntries.length ? catEntries.reduce((s, v) => s + v, 0) : null;
-  const rawExp = useBreakdown ? catSum : expTotal;
-  const mIncome = entered(incomeVal) ? incomePeriod === "yearly" ? incomeVal / 12 : incomeVal : null;
-  const mExpenses = entered(rawExp) ? expPeriod === "yearly" ? rawExp / 12 : rawExp : null;
+  const mIncome = entered(incomeVal) ? incomeVal / 12 : null;
+  const mExpenses = entered(expTotal) ? expTotal : null;
   const gapReady = entered(mIncome) && entered(mExpenses);
   const gap = gapReady ? mIncome - mExpenses : null;
 
@@ -746,60 +702,13 @@ function App() {
     }
   }, /*#__PURE__*/React.createElement("div", {
     className: "grid2"
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
-    style: label
-  }, "Income"), /*#__PURE__*/React.createElement(PeriodSwitch, {
-    period: incomePeriod,
-    onChange: setIncomePeriod
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 8
-    }
-  }, /*#__PURE__*/React.createElement(Field, {
-    value: incomeVal,
-    onChange: setIncomeVal,
-    prefix: "$",
-    suffix: incomePeriod === "yearly" ? "/yr" : "/mo",
-    placeholder: incomePeriod === "yearly" ? "e.g. 72000" : "e.g. 6000"
-  }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
-    style: label
-  }, "Expenses"), /*#__PURE__*/React.createElement(PeriodSwitch, {
-    period: expPeriod,
-    onChange: setExpPeriod
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 8
-    }
-  }, !useBreakdown && /*#__PURE__*/React.createElement(Field, {
-    value: expTotal,
-    onChange: setExpTotal,
-    prefix: "$",
-    suffix: expPeriod === "yearly" ? "/yr" : "/mo",
-    placeholder: expPeriod === "yearly" ? "e.g. 37800" : "e.g. 3150"
-  }), useBreakdown && /*#__PURE__*/React.createElement("div", {
-    className: "slaf-input-shell"
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      padding: "8px 0"
-    }
-  }, entered(catSum) ? fmt(catSum) : "—"), /*#__PURE__*/React.createElement("span", {
-    className: "slaf-affix"
-  }, expPeriod === "yearly" ? "/yr" : "/mo"))))), /*#__PURE__*/React.createElement("button", {
-    className: "link-btn",
-    onClick: () => setUseBreakdown(v => !v)
-  }, useBreakdown ? "Use a single total instead" : "Break expenses into categories"), useBreakdown && /*#__PURE__*/React.createElement("div", {
-    className: "grid2"
-  }, EXPENSE_CATS.map(c => /*#__PURE__*/React.createElement(Field, {
-    key: c,
-    label: c,
-    value: expCats[c],
-    placeholder: "e.g. 500",
-    onChange: v => setExpCats({
-      ...expCats,
-      [c]: v
-    }),
-    prefix: "$"
-  }))), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(Borrowed, {
+    fieldId: "grossAnnualIncome",
+    label: "Income"
+  }), /*#__PURE__*/React.createElement(Borrowed, {
+    fieldId: "monthlyExpenses",
+    label: "Expenses"
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       borderRadius: "var(--radius-md)",
       background: "rgba(8,24,51,0.6)",
@@ -947,11 +856,9 @@ function App() {
     style: {
       marginBottom: "var(--space-3)"
     }
-  }, /*#__PURE__*/React.createElement(Field, {
-    label: "Age",
-    value: age,
-    onChange: setAge,
-    placeholder: "e.g. 32"
+  }, /*#__PURE__*/React.createElement(Borrowed, {
+    fieldId: "age",
+    label: "Age"
   }), /*#__PURE__*/React.createElement(Field, {
     label: "Cash on hand",
     value: cashOnHand,
@@ -964,24 +871,18 @@ function App() {
     onChange: setDeductibleTarget,
     prefix: "$",
     placeholder: "e.g. 3000"
-  }), /*#__PURE__*/React.createElement(Field, {
-    label: "Emergency fund",
-    value: efBalance,
-    onChange: setEfBalance,
-    prefix: "$",
-    placeholder: "e.g. 6800"
+  }), /*#__PURE__*/React.createElement(Borrowed, {
+    fieldId: "cashSavings",
+    label: "Emergency fund"
   }), /*#__PURE__*/React.createElement(Field, {
     label: "You contribute",
     value: contribPct,
     onChange: setContribPct,
     suffix: "%",
     placeholder: "e.g. 4"
-  }), /*#__PURE__*/React.createElement(Field, {
-    label: "Match capped at",
-    value: matchCapPct,
-    onChange: setMatchCapPct,
-    suffix: "%",
-    placeholder: "e.g. 6"
+  }), /*#__PURE__*/React.createElement(Borrowed, {
+    fieldId: "employerMatch",
+    label: "Employer match"
   }), /*#__PURE__*/React.createElement(Field, {
     label: "Roth so far this yr",
     value: rothCur,
@@ -1026,12 +927,22 @@ function App() {
     onChange: setGrowthOn
   })), /*#__PURE__*/React.createElement("span", {
     style: label
-  }, "Debts"), debts.length === 0 && /*#__PURE__*/React.createElement("p", {
+  }, "Debts"), /*#__PURE__*/React.createElement("p", {
     className: "needs",
     style: {
       marginTop: 0
     }
-  }, "No debts added."), debts.map(d => /*#__PURE__*/React.createElement("div", {
+  }, "Read from your itemised debts. ", /*#__PURE__*/React.createElement("a", {
+    href: Ownership.linkTo('debt-payoff', 'debts'),
+    style: {
+      color: "var(--color-accent-hover)"
+    }
+  }, "Edit them in Debt Payoff \u2192")), debts.length === 0 && /*#__PURE__*/React.createElement("p", {
+    className: "needs",
+    style: {
+      marginTop: 0
+    }
+  }, "No debts entered yet."), debts.map(d => /*#__PURE__*/React.createElement("div", {
     key: d.id,
     style: {
       borderRadius: "var(--radius-sm)",
@@ -1046,21 +957,12 @@ function App() {
       alignItems: "center",
       marginBottom: "var(--space-2)"
     }
-  }, /*#__PURE__*/React.createElement("input", {
-    value: d.name,
-    onChange: e => setDebt(d.id, "name", e.target.value),
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       flex: 1,
-      background: "transparent",
-      fontSize: "var(--text-base)",
-      color: "var(--color-text)",
-      outline: "none",
-      border: "none",
-      borderBottom: "1px solid var(--color-border-strong)",
-      paddingBottom: 2,
-      fontFamily: "var(--font-body)"
+      fontSize: "var(--text-base)"
     }
-  }), entered(d.apr) && /*#__PURE__*/React.createElement("span", {
+  }, d.name), entered(d.apr) && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: "var(--text-xs)",
       padding: "2px 8px",
@@ -1068,45 +970,15 @@ function App() {
       background: d.apr > 6 ? "rgba(229,72,77,0.2)" : "rgba(30,58,138,0.5)",
       color: d.apr > 6 ? "var(--color-critical)" : "var(--color-text-muted)"
     }
-  }, d.apr > 6 ? "Step 3" : "Step 9"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => rmDebt(d.id),
+  }, d.apr > 6 ? "Step 3" : "Step 9")), /*#__PURE__*/React.createElement("div", {
     style: {
-      color: "var(--color-accent)",
-      background: "none",
-      border: "none",
-      cursor: "pointer"
+      display: "flex",
+      gap: "var(--space-4)",
+      fontSize: "var(--text-sm)",
+      color: "var(--color-text-muted)",
+      fontVariantNumeric: "tabular-nums"
     }
-  }, "\u2715")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr 1fr",
-      gap: "var(--space-2)"
-    }
-  }, /*#__PURE__*/React.createElement(Field, {
-    label: "Balance",
-    value: d.balance,
-    onChange: v => setDebt(d.id, "balance", v),
-    prefix: "$",
-    placeholder: "0"
-  }), /*#__PURE__*/React.createElement(Field, {
-    label: "APR",
-    value: d.apr,
-    onChange: v => setDebt(d.id, "apr", v),
-    suffix: "%",
-    placeholder: "0"
-  }), /*#__PURE__*/React.createElement(Field, {
-    label: "Min /mo",
-    value: d.min,
-    onChange: v => setDebt(d.id, "min", v),
-    prefix: "$",
-    placeholder: "0"
-  })))), /*#__PURE__*/React.createElement("button", {
-    className: "slaf-btn",
-    onClick: addDebt,
-    style: {
-      width: "100%"
-    }
-  }, "+ Add a debt"))), !simReady && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", null, entered(d.balance) ? fmt(d.balance) : "—"), /*#__PURE__*/React.createElement("span", null, entered(d.apr) ? d.apr + "%" : "—"), /*#__PURE__*/React.createElement("span", null, entered(d.min) ? fmt(d.min) + "/mo" : "—", " min")))))), !simReady && /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       padding: "var(--space-4)"

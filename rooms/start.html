@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Start Here · SPARKS</title>
+<meta name="description" content="Nine questions, one at a time. Answer once and every other room opens already filled in."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11.
+
+  1. READS   The whole household, so a returning visitor sees their own
+             answers rather than blanks.
+  2. WRITES  It OWNS these raw fields (shared/ownership.js): person dob,
+             household state and filingStatus, the primary income source's
+             grossAnnualIncomeCents and employerMatch, the cash and
+             investment assets, expenses.monthlyEssential.estimatedValue-
+             Cents, and capturingFullMatch. Nowhere else may edit them.
+             It does NOT write debts (Debt Payoff owns those) or spending
+             categories (Cash Flow owns those) — it hands off instead.
+  3. CALLS   Nothing computational. It is an input surface; every figure it
+             shows back comes from shared/ownership.js.
+  4. EMPTY   Every question starts blank with a format-only placeholder.
+             Skip leaves a field unset — never zero. An unanswered question
+             is a real, visible state on the review screen.
+  5. CONFIG  None. Deliberately: this room must work before anything loads.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-3); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+
+  .rail { max-width: var(--measure); margin: 0 auto var(--space-4); padding: 0 var(--space-4); }
+  .rail-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-2); }
+  .dots { display: flex; gap: 6px; }
+  .dots i { display: block; width: 100%; height: 4px; border-radius: 2px; background: rgba(30,58,138,.5); flex: 1; transition: background 250ms ease; }
+  .dots i.done { background: var(--color-accent); }
+  .dots i.here { background: var(--sapphire-200); }
+
+  .q { display: none; }
+  .q.is-active { display: block; }
+  .q-text { font-family: var(--font-display); font-size: var(--text-xl); line-height: var(--leading-tight); margin: 0 0 var(--space-2); }
+  .q-help { color: var(--color-text-muted); font-size: var(--text-base); margin: 0 0 var(--space-4); }
+  .q-unlocks { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-3) 0 0; }
+  .q-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+  @media (max-width: 380px) { .q-pair { grid-template-columns: 1fr; } }
+
+  .nav { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-5); }
+  .nav .spacer { flex: 1; }
+
+  .choices { display: grid; gap: var(--space-2); }
+  .choice { text-align: left; font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; transition: all 150ms ease; }
+  .choice:hover { border-color: var(--color-border-active); }
+  .choice[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+
+  .review-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  .review-row:first-child { border-top: none; }
+  .review-q { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .review-a { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .review-a.unset { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-sm); }
+  .review-edit { background: none; border: none; color: var(--color-accent-hover); font-family: var(--font-body); font-size: var(--text-xs); cursor: pointer; padding: 0; text-decoration: underline; }
+
+  .handoff { border: 1px solid var(--color-border-active); background: var(--color-surface-active); border-radius: var(--radius-lg); padding: var(--space-4); margin-top: var(--space-4); }
+  .handoff h3 { margin: 0 0 var(--space-2); }
+  .handoff p { color: var(--color-text-muted); font-size: var(--text-sm); margin: 0 0 var(--space-4); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Start Here</h1>
+</header>
+
+<div class="rail">
+  <div class="rail-head">
+    <span class="slaf-eyebrow" id="rail-label">Question 1</span>
+    <span class="slaf-eyebrow" id="rail-count"></span>
+  </div>
+  <div class="dots" id="dots"></div>
+</div>
+
+<main class="slaf-wrap">
+
+  <!-- ============ QUESTIONS, in priority order ============ -->
+  <section class="slaf-card q" id="q-income" data-q>
+    <p class="q-text">What do you earn before tax?</p>
+    <p class="q-help">Everyone in the household who brings money in, added together, per year.</p>
+    <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+      <input type="text" inputmode="decimal" data-write="income" placeholder="e.g. 72000" aria-label="Gross annual income"/></span>
+    <p class="q-unlocks">Feeds your savings rate, debt-to-income, retirement benchmark and take-home pay.</p>
+  </section>
+
+  <section class="slaf-card q" id="q-filing" data-q>
+    <p class="q-text">How do you file your taxes?</p>
+    <p class="q-help">This is how we estimate what actually lands in your account.</p>
+    <div class="choices" data-choices="filingStatus">
+      <button type="button" class="choice" data-value="single">Single</button>
+      <button type="button" class="choice" data-value="married_joint">Married, filing jointly</button>
+      <button type="button" class="choice" data-value="married_separate">Married, filing separately</button>
+      <button type="button" class="choice" data-value="head_of_household">Head of household</button>
+    </div>
+    <p class="q-unlocks">Without it we can't turn your gross into take-home.</p>
+  </section>
+
+  <section class="slaf-card q" id="q-expenses" data-q>
+    <p class="q-text">Roughly what do you spend in a month?</p>
+    <p class="q-help">A guess is fine — genuinely. You'll get the real figure later from Cash Flow, and we keep both so you can see how far off the guess was.</p>
+    <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+      <input type="text" inputmode="decimal" data-write="expenses" placeholder="e.g. 3150" aria-label="Monthly expenses"/></span>
+    <p class="q-unlocks">Feeds your emergency-fund runway and your FIRE number.</p>
+  </section>
+
+  <section class="slaf-card q" id="q-cash" data-q>
+    <p class="q-text">How much cash do you have?</p>
+    <p class="q-help">Chequing and savings — money you could spend this week. Not investments.</p>
+    <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+      <input type="text" inputmode="decimal" data-write="cash" placeholder="e.g. 9500" aria-label="Cash and savings"/></span>
+    <p class="q-unlocks">Runway is measured on cash alone, which is why it's asked separately.</p>
+  </section>
+
+  <section class="slaf-card q" id="q-investments" data-q>
+    <p class="q-text">And how much is invested?</p>
+    <p class="q-help">Retirement accounts and brokerage together. Skip if there's nothing yet.</p>
+    <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+      <input type="text" inputmode="decimal" data-write="investments" placeholder="e.g. 48000" aria-label="Investments and retirement"/></span>
+    <p class="q-unlocks">Feeds net worth, FIRE progress and the retirement benchmark.</p>
+  </section>
+
+  <section class="slaf-card q" id="q-dob" data-q>
+    <p class="q-text">When were you born?</p>
+    <p class="q-help">Only used to compare you against people your own age.</p>
+    <span class="slaf-input-shell"><input type="date" data-write="dob" aria-label="Date of birth"/></span>
+    <p class="q-unlocks">Feeds the net-worth percentile and the age-based savings milestones.</p>
+  </section>
+
+  <section class="slaf-card q" id="q-state" data-q>
+    <p class="q-text">Which state are you in?</p>
+    <p class="q-help">Two letters. Used later for cost-of-living and state-specific rules.</p>
+    <span class="slaf-input-shell"><input type="text" maxlength="2" data-write="state" placeholder="e.g. NC" autocomplete="off" spellcheck="false" aria-label="State"/></span>
+    <p class="q-unlocks">Nothing in Tier 0 needs it yet — it's here so later rooms don't have to ask again.</p>
+  </section>
+
+  <section class="slaf-card q" id="q-match" data-q>
+    <p class="q-text">Does your employer match retirement contributions?</p>
+    <p class="q-help">"50% of the first 6%" is 50 on the left and 6 on the right. Enter 0 and 0 if there's no match.</p>
+    <div class="q-pair">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">They match</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" data-write="matchPercent" placeholder="e.g. 50" aria-label="Match percentage"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">…of the first</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" data-write="matchCap" placeholder="e.g. 6" aria-label="Match cap as a percentage of salary"/><span class="slaf-affix">%</span></span></label>
+    </div>
+    <p class="q-unlocks">This is the only guaranteed return in the whole ladder.</p>
+  </section>
+
+  <section class="slaf-card q" id="q-capturing" data-q>
+    <p class="q-text">Are you contributing enough to get all of it?</p>
+    <p class="q-help">If you're not sure, say so — an unanswered question is never scored as a failure.</p>
+    <div class="choices" data-choices="capturingFullMatch">
+      <button type="button" class="choice" data-value="yes">Yes, I get the full match</button>
+      <button type="button" class="choice" data-value="no">No, I'm leaving some of it</button>
+      <button type="button" class="choice" data-value="">Not sure — haven't checked</button>
+    </div>
+    <p class="q-unlocks">Step 2 of the ladder can't be judged without this.</p>
+  </section>
+
+  <div class="nav" id="nav">
+    <button type="button" class="slaf-btn" id="btn-back">← Back</button>
+    <div class="spacer"></div>
+    <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-skip">Skip</button>
+    <button type="button" class="slaf-btn slaf-btn--primary" id="btn-next">Next →</button>
+  </div>
+
+  <!-- ============ REVIEW ============ -->
+  <section class="slaf-card" id="review" hidden>
+    <span class="slaf-eyebrow">Your answers</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">That's everything we needed</h2>
+    <div id="review-body"></div>
+    <div class="nav" style="margin-top:var(--space-4)">
+      <button type="button" class="slaf-btn" id="btn-restart">Go through it again</button>
+      <div class="spacer"></div>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-demo">Use example numbers</button>
+    </div>
+  </section>
+
+  <section class="handoff" id="handoff" hidden>
+    <span class="slaf-eyebrow">Next on the path</span>
+    <h3 id="handoff-title">Debt Payoff</h3>
+    <p id="handoff-why">Now list what you owe — one line per debt. That's the only place debt figures are edited, and everywhere else will link back to it.</p>
+    <a class="slaf-btn slaf-btn--primary" id="handoff-link" href="debt-payoff.html" style="text-decoration:none;display:inline-block">Go to Debt Payoff →</a>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Everything stays in this browser —
+    nothing is sent anywhere.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/demo-persona.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Registry = SLAF.Registry, Ownership = SLAF.Ownership, Demo = SLAF.DemoPersona;
+
+  var ROOM_ID = 'start';
+  var INCOME_ID = 'tier0_income_primary';
+  var CASH_ID = 'tier0_cash';
+  var INVEST_ID = 'tier0_investments';
+
+  function el(id) { return document.getElementById(id); }
+
+  /* ---------- canonical writes -------------------------------------------
+     This room owns these fields, so these are the ONLY writes to them in the
+     codebase. Records are found by category or role rather than by an id
+     this room minted, so a household seeded elsewhere (the example, an
+     earlier version) is edited rather than duplicated.                    */
+
+  function assetByCategory(h, categories) {
+    var list = h.assets || [];
+    for (var i = 0; i < list.length; i++) {
+      if (categories.indexOf(list[i].category) !== -1) return list[i];
+    }
+    return null;
+  }
+
+  function incomeSourceOf(h) {
+    var p = Schema.primaryPerson(h);
+    return p && p.incomeSources.length ? p.incomeSources[0] : null;
+  }
+
+  function writeAsset(categories, canonicalCategory, liquid, label, cents) {
+    var person = Spine.ensurePrimaryPerson('You');
+    var h = Spine.getProfile();
+    var existing = assetByCategory(h, categories);
+    Spine.upsertAsset({
+      id: existing ? existing.id : (canonicalCategory === 'cash' ? CASH_ID : INVEST_ID),
+      label: existing && existing.label ? existing.label : label,
+      category: existing ? existing.category : canonicalCategory,
+      valueCents: cents,
+      liquid: liquid,
+      ownerIds: existing && existing.ownerIds.length ? existing.ownerIds : [person.id]
+    });
+  }
+
+  function writeIncome(part, value) {
+    var person = Spine.ensurePrimaryPerson('You');
+    var existing = incomeSourceOf(Spine.getProfile()) || {};
+    var match = Object.assign({ matchPercent: null, matchCapPercentOfSalary: null },
+      existing.employerMatch || {});
+    var record = {
+      id: existing.id || INCOME_ID,
+      source: existing.source || 'Household income',
+      grossAnnualIncomeCents: existing.grossAnnualIncomeCents === undefined ? null : existing.grossAnnualIncomeCents,
+      frequency: 'annual',
+      type: existing.type || 'w2',
+      employerMatch: match
+    };
+    if (part === 'matchPercent' || part === 'matchCapPercentOfSalary') record.employerMatch[part] = value;
+    else record[part] = value;
+    Spine.upsertIncomeSource(person.id, record);
+  }
+
+  /* ---------- the questions ---------------------------------------------- */
+
+  var QUESTIONS = [
+    { id: 'q-income', field: 'grossAnnualIncome', kind: 'money',
+      read: function (h) { var s = incomeSourceOf(h); return s ? s.grossAnnualIncomeCents : null; },
+      write: function (cents) { writeIncome('grossAnnualIncomeCents', cents); } },
+
+    { id: 'q-filing', field: 'filingStatus', kind: 'choice',
+      read: function (h) { return h.filingStatus || ''; },
+      write: function (v) { Spine.updateProfile({ filingStatus: v === '' ? null : v }); } },
+
+    { id: 'q-expenses', field: 'monthlyExpenses', kind: 'money',
+      read: function (h) { return h.expenses.monthlyEssential.estimatedValueCents; },
+      write: function (cents) { Spine.setMonthlyExpenses(cents, 'estimated'); } },
+
+    { id: 'q-cash', field: 'cashSavings', kind: 'money',
+      read: function (h) { var a = assetByCategory(h, ['cash']); return a ? a.valueCents : null; },
+      write: function (cents) { writeAsset(['cash'], 'cash', true, 'Cash & savings', cents); } },
+
+    { id: 'q-investments', field: 'investments', kind: 'money',
+      read: function (h) { var a = assetByCategory(h, ['investment', 'retirement']); return a ? a.valueCents : null; },
+      write: function (cents) { writeAsset(['investment', 'retirement'], 'investment', false, 'Investments + retirement', cents); } },
+
+    { id: 'q-dob', field: 'dob', kind: 'date',
+      read: function (h) { var p = Schema.primaryPerson(h); return p && p.dob ? p.dob : ''; },
+      write: function (v) {
+        var person = Spine.ensurePrimaryPerson('You');
+        Spine.upsertPerson({ id: person.id, dob: v === '' ? null : v });
+      } },
+
+    { id: 'q-state', field: 'state', kind: 'text',
+      read: function (h) { return h.state || ''; },
+      write: function (v) {
+        var clean = String(v || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
+        Spine.updateProfile({ state: clean === '' ? null : clean });
+      } },
+
+    { id: 'q-match', field: 'employerMatch', kind: 'pair',
+      read: function (h) {
+        var s = incomeSourceOf(h);
+        return s ? [s.employerMatch.matchPercent, s.employerMatch.matchCapPercentOfSalary] : [null, null];
+      },
+      write: function (pair) {
+        writeIncome('matchPercent', pair[0]);
+        writeIncome('matchCapPercentOfSalary', pair[1]);
+      } },
+
+    { id: 'q-capturing', field: 'capturingFullMatch', kind: 'choice',
+      /* Only worth asking once a real match exists. */
+      applies: function (h) {
+        var s = incomeSourceOf(h);
+        return !!(s && Money.isEntered(s.employerMatch.matchPercent)
+          && Money.isEntered(s.employerMatch.matchCapPercentOfSalary)
+          && s.employerMatch.matchPercent > 0 && s.employerMatch.matchCapPercentOfSalary > 0);
+      },
+      read: function (h) {
+        if (h.capturingFullMatch === true) return 'yes';
+        if (h.capturingFullMatch === false) return 'no';
+        return '';
+      },
+      write: function (v) {
+        Spine.updateProfile({ capturingFullMatch: v === 'yes' ? true : (v === 'no' ? false : null) });
+      } }
+  ];
+
+  var index = 0;
+  var reviewing = false;
+
+  function liveQuestions() {
+    var h = Spine.getProfile();
+    return QUESTIONS.filter(function (q) { return !q.applies || q.applies(h); });
+  }
+
+  /* ---------- reading and writing the visible question -------------------- */
+
+  function inputsOf(q) { return el(q.id).querySelectorAll('[data-write]'); }
+
+  function paint(q) {
+    var h = Spine.getProfile();
+    var stored = q.read(h);
+    if (q.kind === 'choice') {
+      var buttons = el(q.id).querySelectorAll('.choice');
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].setAttribute('aria-pressed', String(buttons[i].getAttribute('data-value') === stored));
+      }
+      return;
+    }
+    var nodes = inputsOf(q);
+    if (q.kind === 'pair') {
+      nodes[0].value = Money.isEntered(stored[0]) ? String(Math.round(stored[0] * 10000) / 100) : '';
+      nodes[1].value = Money.isEntered(stored[1]) ? String(Math.round(stored[1] * 10000) / 100) : '';
+      return;
+    }
+    if (q.kind === 'money') {
+      nodes[0].value = Money.isEntered(stored) ? Money.formatCents(stored) : '';
+      return;
+    }
+    nodes[0].value = stored || '';
+  }
+
+  function commit(q) {
+    if (q.kind === 'choice') return;                /* choices write on click */
+    var nodes = inputsOf(q);
+    if (q.kind === 'pair') {
+      q.write([Money.parseRatePercent(nodes[0].value), Money.parseRatePercent(nodes[1].value)]);
+      return;
+    }
+    if (q.kind === 'money') { q.write(Money.parseMoney(nodes[0].value)); return; }
+    q.write(nodes[0].value);
+  }
+
+  /* ---------- navigation --------------------------------------------------- */
+
+  function show() {
+    var list = liveQuestions();
+    if (index >= list.length) { showReview(); return; }
+    reviewing = false;
+    index = Math.max(0, Math.min(index, list.length - 1));
+    var q = list[index];
+
+    QUESTIONS.forEach(function (other) {
+      el(other.id).classList.toggle('is-active', other.id === q.id);
+    });
+    el('review').hidden = true;
+    el('handoff').hidden = true;
+    el('nav').hidden = false;
+
+    paint(q);
+    el('rail-label').textContent = 'Question ' + (index + 1);
+    el('rail-count').textContent = (index + 1) + ' of ' + list.length;
+    el('dots').innerHTML = list.map(function (_, i) {
+      return '<i class="' + (i < index ? 'done' : i === index ? 'here' : '') + '"></i>';
+    }).join('');
+    el('btn-back').disabled = index === 0;
+    el('btn-next').textContent = index === list.length - 1 ? 'Finish →' : 'Next →';
+
+    var first = el(q.id).querySelector('input, .choice');
+    if (first && first.tagName === 'INPUT') { first.focus(); first.select && first.select(); }
+    if (history.replaceState) history.replaceState(null, '', '#' + q.id);
+  }
+
+  function step(delta, save) {
+    var list = liveQuestions();
+    if (save && list[index]) commit(list[index]);
+    index += delta;
+    /* Answering the match question can add or remove the one after it. */
+    show();
+  }
+
+  el('btn-next').addEventListener('click', function () { step(1, true); });
+  el('btn-back').addEventListener('click', function () { step(-1, true); });
+  el('btn-skip').addEventListener('click', function () { step(1, false); });
+
+  document.addEventListener('keydown', function (evt) {
+    if (evt.key !== 'Enter' || reviewing) return;
+    if (evt.target.tagName === 'INPUT') { evt.preventDefault(); step(1, true); }
+  });
+
+  /* Choices write immediately and move on — one tap, no confirm step. */
+  QUESTIONS.forEach(function (q) {
+    if (q.kind !== 'choice') return;
+    el(q.id).addEventListener('click', function (evt) {
+      var btn = evt.target.closest('.choice');
+      if (!btn) return;
+      q.write(btn.getAttribute('data-value'));
+      paint(q);
+      setTimeout(function () { step(1, false); }, 140);
+    });
+  });
+
+  /* ---------- review ------------------------------------------------------- */
+
+  function showReview() {
+    reviewing = true;
+    QUESTIONS.forEach(function (q) { el(q.id).classList.remove('is-active'); });
+    el('nav').hidden = true;
+    el('review').hidden = false;
+    el('handoff').hidden = false;
+
+    var h = Spine.getProfile();
+    var list = liveQuestions();
+    el('rail-label').textContent = 'All answered';
+    el('rail-count').textContent = '';
+    el('dots').innerHTML = list.map(function () { return '<i class="done"></i>'; }).join('');
+
+    el('review-body').innerHTML = list.map(function (q, i) {
+      var d = Ownership.describe(q.field, h, ROOM_ID);
+      var label = d ? d.label : q.field;
+      var value = d && d.isSet ? d.display : 'Not answered';
+      return '<div class="review-row">'
+        + '<span class="review-q">' + label + '</span>'
+        + '<span style="display:flex;align-items:baseline;gap:var(--space-3)">'
+        + '<span class="review-a' + (d && d.isSet ? '' : ' unset') + '">' + value + '</span>'
+        + '<button type="button" class="review-edit" data-goto="' + i + '">edit</button>'
+        + '</span></div>';
+    }).join('');
+
+    /* Point the hand-off at whichever room actually comes next. */
+    var next = Registry.nextAfter(ROOM_ID, Spine.getVisitedRooms());
+    if (next) {
+      el('handoff-title').textContent = next.title;
+      el('handoff-link').textContent = 'Go to ' + next.title + ' →';
+      el('handoff-link').href = Ownership.linkTo(next.id);
+      if (next.id !== 'debt-payoff') el('handoff-why').textContent = next.blurb;
+    }
+    if (history.replaceState) history.replaceState(null, '', '#review');
+  }
+
+  el('review-body').addEventListener('click', function (evt) {
+    var btn = evt.target.closest('[data-goto]');
+    if (!btn) return;
+    index = parseInt(btn.getAttribute('data-goto'), 10);
+    show();
+  });
+
+  el('btn-restart').addEventListener('click', function () { index = 0; show(); });
+
+  el('btn-demo').addEventListener('click', function () {
+    if (!window.confirm('Fill every answer with the example household? This replaces what you’ve entered.')) return;
+    var demo = Demo.build();
+    Spine.updateProfile({
+      people: demo.people, filingStatus: demo.filingStatus, state: demo.state,
+      assets: demo.assets, expenses: demo.expenses,
+      capturingFullMatch: demo.capturingFullMatch
+    });
+    showReview();
+  });
+
+  /* ---------- boot ---------------------------------------------------------
+     A deep link lands on its question; otherwise a returning visitor who has
+     already answered everything goes straight to the review rather than being
+     walked through it again.                                              */
+
+  Spine.registerRoom(ROOM_ID);
+
+  function route() {
+    var hash = (location.hash || '').slice(1);
+    var list = liveQuestions();
+    if (hash === 'review') { showReview(); return; }
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === hash) { index = i; show(); return; }
+    }
+    var h = Spine.getProfile();
+    var answered = list.filter(function (q) {
+      var d = Ownership.describe(q.field, h, ROOM_ID);
+      return d && d.isSet;
+    }).length;
+    if (answered === list.length && answered > 0) { showReview(); return; }
+    /* Otherwise resume at the first unanswered question. */
+    for (var j = 0; j < list.length; j++) {
+      var dd = Ownership.describe(list[j].field, h, ROOM_ID);
+      if (!dd || !dd.isSet) { index = j; break; }
+    }
+    show();
+  }
+
+  /* Every ownership chip elsewhere links to a question here by hash. Landing
+     from another page reloads and routes on boot — but a link followed while
+     already on this page is a same-document navigation, which fires only
+     hashchange. Without this the chip would appear to do nothing. */
+  window.addEventListener('hashchange', route);
+
+  route();
+})();
+</script>
+</body>
+</html>

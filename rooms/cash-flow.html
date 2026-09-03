@@ -43,6 +43,8 @@
 
   .cat-row { display: grid; grid-template-columns: 1fr 108px 28px; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2); }
   .cat-label { font-size: var(--text-sm); color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cat-derived { display: flex; justify-content: flex-end; align-items: center; font-size: var(--text-sm); }
+  .cat-derived .slaf-owned-from { font-size: 10px; }
 
   .split { display: flex; height: 12px; border-radius: var(--radius-pill); overflow: hidden; background: rgba(30,58,138,.4); margin: var(--space-3) 0 var(--space-2); }
   .split > i { display: block; height: 100%; transition: width 400ms ease; }
@@ -83,7 +85,8 @@
     <h2 style="margin:var(--space-2) 0 var(--space-3)">What goes out</h2>
     <p class="bucket-note">
       Leave anything blank that doesn't apply. Blank means "not entered" — it
-      won't be counted as zero.
+      won't be counted as zero. Debt minimums aren't typed here: they're added
+      up from your actual debts, so tap the figure to change them.
     </p>
     <div id="buckets"></div>
     <div class="actions">
@@ -139,6 +142,7 @@
 <script src="../shared/registry.js"></script>
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
 <script src="../shared/demo-persona.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/cashflow.js"></script>
@@ -146,7 +150,8 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
-      Reference = SLAF.Reference, Demo = SLAF.DemoPersona, CashFlow = SLAF.CashFlow;
+      Reference = SLAF.Reference, Demo = SLAF.DemoPersona, CashFlow = SLAF.CashFlow,
+      Ownership = SLAF.Ownership;
 
   var ROOM_ID = 'cash-flow';
   var TABLES = null;
@@ -195,11 +200,16 @@
       cats.forEach(function (cat) {
         var row = document.createElement('div');
         row.className = 'cat-row';
+        /* A derived category is not typed in here. It shows the figure and
+           links to the room that owns it — see shared/ownership.js. */
+        var valueCell = cat.derivedFrom
+          ? '<span class="cat-derived" data-derived="' + cat.derivedFrom + '"></span>'
+          : '<span class="slaf-input-shell"><span class="slaf-affix">$</span>'
+            + '<input type="text" inputmode="decimal" data-cat="' + cat.id
+            + '" placeholder="/mo" aria-label="' + cat.label + ' per month"/></span>';
         row.innerHTML =
           '<span class="cat-label" title="' + cat.label + '">' + cat.label + '</span>'
-          + '<span class="slaf-input-shell"><span class="slaf-affix">$</span>'
-          + '<input type="text" inputmode="decimal" data-cat="' + cat.id
-          + '" placeholder="/mo" aria-label="' + cat.label + ' per month"/></span>'
+          + valueCell
           + '<span style="text-align:center;color:var(--color-text-faint);font-size:var(--text-xs)">'
           + (cat.essential ? '●' : '') + '</span>';
         section.appendChild(row);
@@ -243,6 +253,10 @@
   }
 
   function paintInputs(h) {
+    var derived = document.querySelectorAll('[data-derived]');
+    for (var d = 0; d < derived.length; d++) {
+      derived[d].innerHTML = Ownership.inlineChip(derived[d].getAttribute('data-derived'), h, ROOM_ID);
+    }
     var inputs = document.querySelectorAll('input[data-cat]');
     for (var i = 0; i < inputs.length; i++) {
       var input = inputs[i];

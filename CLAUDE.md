@@ -28,6 +28,9 @@ from the filesystem. Public repo.
   incomplete state, not a number. See `SPEC.md` §5.
 - **Money is integer cents internally**, formatted to dollars only at
   display time. See `SPEC.md` §6.
+- **One owner per shared number.** A field is editable in exactly one room;
+  everywhere else it renders read-only and links to its owner. The map is
+  `shared/ownership.js`. See `DECISIONS.md` D-017.
 - **One formula, one function.** Parameterize variants; never copy-paste a
   calculation with small edits. See `SPEC.md` §8.
 - **Reference data lives in `data/`, not inline in calculator code**,
@@ -41,7 +44,8 @@ from the filesystem. Public repo.
 - A decision in `SPEC.md` §12 is still marked `[PENDING]` and you've reached
   the tool that depends on it.
 - The change would make a room hold its own private copy of a number that
-  already exists in the household model.
+  already exists in the household model, or would let a second room edit a
+  field it does not own (`shared/ownership.js`).
 
 ## Compatibility note requirement
 

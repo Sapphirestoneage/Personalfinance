@@ -20,9 +20,30 @@
 
   var ROOMS = [
     {
+      id: 'start',
+      order: 1,
+      title: 'Start Here',
+      blurb: 'Nine questions, one at a time, in plain English. Answer once and every other room opens already filled in.',
+      href: 'rooms/start.html',
+      tier: 0,
+      tags: ['income', 'cashflow', 'debt'],
+      subsections: [
+        { id: 'q-dob',         label: 'Date of birth' },
+        { id: 'q-state',       label: 'State' },
+        { id: 'q-filing',      label: 'Filing status' },
+        { id: 'q-income',      label: 'Gross annual income' },
+        { id: 'q-expenses',    label: 'Monthly expenses' },
+        { id: 'q-cash',        label: 'Cash & savings' },
+        { id: 'q-investments', label: 'Investments' },
+        { id: 'q-match',       label: 'Employer match' },
+        { id: 'q-capturing',   label: 'Capturing the match' }
+      ]
+    },
+    {
       id: 'financial-snapshot',
+      order: 4,
       title: 'Financial Snapshot',
-      blurb: 'Ten inputs in, nine numbers out — net worth, savings rate, runway, FIRE number, and where you actually sit on the ladder.',
+      blurb: 'The payoff: nine numbers read off everything you\u2019ve entered. Net worth, savings rate, runway, FIRE number, and which rung you\u2019re on.',
       href: 'rooms/financial-snapshot.html',
       tier: 0,
       tags: ['income', 'cashflow', 'debt'],
@@ -42,6 +63,7 @@
     },
     {
       id: 'cash-flow',
+      order: 3,
       title: 'Cash Flow',
       blurb: 'Where the money actually goes, by category — measured against a budget, and against what you thought you spent.',
       href: 'rooms/cash-flow.html',
@@ -57,6 +79,7 @@
     },
     {
       id: 'debt-payoff',
+      order: 2,
       title: 'Debt Payoff',
       blurb: 'Every debt, in the order you\u2019ll clear them — and what avalanche, snowball, or just getting the worst one gone would each cost.',
       href: 'rooms/debt-payoff.html',
@@ -72,6 +95,7 @@
     },
     {
       id: 'foo-ladder',
+      order: 5,
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
       href: 'index.html',
@@ -85,7 +109,28 @@
     }
   ];
 
-  function all() { return ROOMS.slice(); }
+  /* The path, in the order a person should walk it (SPEC.md §12.6 keeps the
+     tag filter; this adds the sequence the filter sits on top of). */
+  function inOrder() {
+    return ROOMS.slice().sort(function (a, b) { return (a.order || 99) - (b.order || 99); });
+  }
+
+  function all() { return inOrder(); }
+
+  /** The next room after this one that hasn't been visited yet. */
+  function nextAfter(roomId, visitedIds) {
+    var path = inOrder();
+    var seen = visitedIds || [];
+    var from = 0;
+    /* A null roomId asks for the first unvisited room anywhere on the path. */
+    if (roomId) {
+      for (var i = 0; i < path.length; i++) { if (path[i].id === roomId) { from = i + 1; break; } }
+    }
+    for (var j = from; j < path.length; j++) {
+      if (seen.indexOf(path[j].id) === -1) return path[j];
+    }
+    return path[from] || null;
+  }
 
   function byId(id) {
     for (var i = 0; i < ROOMS.length; i++) { if (ROOMS[i].id === id) return ROOMS[i]; }
@@ -94,7 +139,7 @@
 
   function byTag(tag) {
     if (!tag || tag === 'all') return all();
-    return ROOMS.filter(function (r) { return r.tags.indexOf(tag) !== -1; });
+    return inOrder().filter(function (r) { return r.tags.indexOf(tag) !== -1; });
   }
 
   function total() { return ROOMS.length; }
@@ -103,6 +148,8 @@
     FILTER_TAGS: FILTER_TAGS,
     ROOMS: ROOMS,
     all: all,
+    inOrder: inOrder,
+    nextAfter: nextAfter,
     byId: byId,
     byTag: byTag,
     total: total

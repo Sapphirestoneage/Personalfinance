@@ -30,6 +30,7 @@ const Tier0 = require(path.join(ROOT, 'engines/tier0.js'));
 const Foo = require(path.join(ROOT, 'engines/foo.js'));
 const CashFlow = require(path.join(ROOT, 'engines/cashflow.js'));
 const Debt = require(path.join(ROOT, 'engines/debt.js'));
+const Ownership = require(path.join(ROOT, 'shared/ownership.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -444,7 +445,33 @@ const SPEND = Demo.VALUES.monthlySpending;
   check('savings tracked separately', sum.savingsMonthlyCents, 70000);
   check('essential subset', sum.essentialMonthlyCents, 280500);
   check('categories sorted biggest first', sum.categories[0].categoryId, 'housing');
-  check('category count', sum.categories.length, SPEND.length);
+  /* Ten typed categories plus one derived (debt minimums). */
+  check('category count', sum.categories.length, SPEND.length + 1);
+  const dm = sum.categories.find(c => c.categoryId === 'debt_minimums');
+  check('debt minimums is derived, not typed', dm.derived, true);
+  check('and comes from the itemised debts', dm.monthlyCents, 30500);
+  check('and names the room that owns it', dm.ownedBy, 'debt-payoff');
+  checkTrue('nothing types debt minimums into the example spending',
+    !SPEND.some(r => r.categoryId === 'debt_minimums'));
+
+  /* A stray typed entry for a derived category must be IGNORED, not added —
+     otherwise the figure is counted twice. */
+  const doubled = householdWithSpending();
+  doubled.expenses.entries.push(Schema.createExpenseEntry({
+    id: 'stray', categoryId: 'debt_minimums', amountCents: 99900, period: 'monthly', source: 'manual'
+  }));
+  const dsum = CashFlow.summarise(doubled, TABLES.expenseCategories);
+  check('a typed entry cannot override a derived category', dsum.byBucket.needs, 280500);
+  check('and cannot add a duplicate row',
+    dsum.categories.filter(c => c.categoryId === 'debt_minimums').length, 1);
+
+  /* With no debts, the derived row simply is not there. */
+  const noDebts = householdWithSpending();
+  noDebts.debts = [];
+  const nsum = CashFlow.summarise(noDebts, TABLES.expenseCategories);
+  checkTrue('no debts means no debt-minimums row',
+    !nsum.categories.some(c => c.categoryId === 'debt_minimums'));
+  check('and needs drops by exactly that amount', nsum.byBucket.needs, 280500 - 30500);
 
   /* net income = (72,000 - 13,680)/12 = 4,860; spend 3,200 -> 1,660 left */
   const flow = CashFlow.netCashFlow(hh, TABLES.expenseCategories, TABLES);
@@ -546,8 +573,13 @@ const SPEND = Demo.VALUES.monthlySpending;
     Schema.createExpenseEntry({ categoryId: 'groceries', amountCents: null })
   ];
   const psum = CashFlow.summarise(partial, TABLES.expenseCategories);
-  check('an unfilled entry is skipped, not zeroed', psum.spendMonthlyCents, 150000);
-  check('and does not appear as a category', psum.categories.length, 1);
+  /* $1,500 housing, plus the $305 derived from this household's debts.
+     The blank groceries entry contributes nothing and gets no row. */
+  check('an unfilled entry is skipped, not zeroed', psum.spendMonthlyCents, 150000 + 30500);
+  check('and does not appear as a category', psum.categories.length, 2);
+  checkTrue('the only rows are the filled one and the derived one',
+    psum.categories.map(c => c.categoryId).sort().join(',') === 'debt_minimums,housing',
+    psum.categories.map(c => c.categoryId).join(','));
 })();
 
 /* ==========================================================================
@@ -734,7 +766,113 @@ function threeDebtHousehold() {
 })();
 
 /* ==========================================================================
-   10. Every reference table is reachable through the loader.
+   10. Field ownership. Every shared number is editable in exactly one room,
+   and is a working link everywhere else.
+   ========================================================================== */
+
+section('Ownership');
+
+(function () {
+  const roomIds = Registry.all().map(r => r.id);
+  const fieldIds = Object.keys(Ownership.FIELDS);
+  checkTrue('there are shared fields to own', fieldIds.length > 0);
+
+  fieldIds.forEach(function (fieldId) {
+    const f = Ownership.FIELDS[fieldId];
+    checkTrue(`${fieldId} is owned by a real room`, roomIds.includes(f.owner), `owner "${f.owner}"`);
+
+    /* The chip's link has to land somewhere. Every anchor must exist as a
+       real element id in the owning room's HTML — the same guarantee the
+       registry's deep links get. */
+    const room = Registry.byId(f.owner);
+    const html = fs.readFileSync(path.join(ROOT, room.href), 'utf8');
+    checkTrue(`${fieldId} → #${f.anchor} exists in ${room.href}`,
+      new RegExp(`id=["']${f.anchor}["']`).test(html));
+  });
+
+  /* Reading a field must never throw on an empty household, and must report
+     "not set" rather than inventing a zero. */
+  const empty = Schema.createHousehold();
+  fieldIds.forEach(function (fieldId) {
+    const d = Ownership.describe(fieldId, empty, null);
+    checkTrue(`${fieldId} describes cleanly when unset`, d !== null && d.isSet === false);
+    check(`${fieldId} shows an em dash when unset`, d.display, '—');
+    checkTrue(`${fieldId} still offers a link when unset`, typeof d.href === 'string' && d.href.length > 1);
+  });
+
+  /* And must read back correctly once the example household is in place. */
+  const filled = Demo.build();
+  filled.expenses.entries = Demo.buildSpending();
+  const expect = {
+    grossAnnualIncome: '$72,000', filingStatus: 'Single', cashSavings: '$9,500',
+    investments: '$48,000', totalDebt: '$21,600', monthlyDebtPayments: '$305/mo',
+    state: 'NC', employerMatch: '$2,160/yr', capturingFullMatch: 'No', age: '32'
+  };
+  Object.keys(expect).forEach(function (fieldId) {
+    check(`${fieldId} reads back as ${expect[fieldId]}`,
+      Ownership.describe(fieldId, filled, null).display, expect[fieldId]);
+  });
+
+  /* THE rule: a room that does not own a field must not contain an input
+     bound to it. This is the check that would have caught debt minimums
+     being typeable in Cash Flow while also living in Debt Payoff. */
+  const OWNED_INPUT_MARKERS = {
+    'cash-flow': [/data-cat="debt_minimums"/],
+    'financial-snapshot': [/data-field="/, /data-write="/, /input[^>]*id="f-/],
+    'start': [/data-cat=/, /data-debt=/]
+  };
+  Object.keys(OWNED_INPUT_MARKERS).forEach(function (roomId) {
+    const room = Registry.byId(roomId);
+    const html = fs.readFileSync(path.join(ROOT, room.href), 'utf8');
+    OWNED_INPUT_MARKERS[roomId].forEach(function (re) {
+      checkTrue(`${roomId} has no input matching ${re}`, !re.test(html),
+        'a room is taking input for a field it does not own');
+    });
+  });
+
+  /* The Financial Snapshot must take no input at all — it is a dashboard. */
+  const snapHtml = fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8');
+  const snapInputs = (snapHtml.match(/<input|<select/g) || []).length;
+  check('the Financial Snapshot has no input elements', snapInputs, 0);
+
+  /* Debt minimums specifically: derived, owned by Debt Payoff, uneditable
+     in Cash Flow. This is the case that started all of it. */
+  const dmCat = TABLES.expenseCategories.categories.filter(c => c.id === 'debt_minimums')[0];
+  check('debt minimums is a derived category', dmCat.derivedFrom, 'monthlyDebtPayments');
+  check('and names Debt Payoff as its owner', dmCat.ownedBy, 'debt-payoff');
+  check('and monthlyDebtPayments is owned there too',
+    Ownership.FIELDS.monthlyDebtPayments.owner, 'debt-payoff');
+})();
+
+/* ==========================================================================
+   11. The path has a well-formed order.
+   ========================================================================== */
+
+section('Room order');
+
+(function () {
+  const path_ = Registry.inOrder();
+  check('every room is on the path', path_.length, Registry.all().length);
+  const orders = path_.map(r => r.order);
+  checkTrue('every room declares an order', orders.every(o => typeof o === 'number'));
+  check('orders are unique', new Set(orders).size, orders.length);
+  checkTrue('orders are ascending', orders.every((o, i) => i === 0 || o > orders[i - 1]));
+  check('Start Here comes first', path_[0].id, 'start');
+  check('the Snapshot comes after the rooms that feed it',
+    path_.findIndex(r => r.id === 'financial-snapshot') >
+    Math.max(path_.findIndex(r => r.id === 'debt-payoff'), path_.findIndex(r => r.id === 'cash-flow')),
+    true);
+
+  check('with nothing visited, the next room is the first',
+    Registry.nextAfter(null, []).id, 'start');
+  check('with Start done, the next is Debt Payoff',
+    Registry.nextAfter(null, ['start']).id, 'debt-payoff');
+  check('skipping ahead still points at the earliest unvisited',
+    Registry.nextAfter(null, ['start', 'cash-flow']).id, 'debt-payoff');
+})();
+
+/* ==========================================================================
+   12. Every reference table is reachable through the loader.
    A table added to data/ but never registered in shared/reference.js loads
    as undefined in the browser and takes the room down with it — which is
    exactly what happened once. Both directions are checked.
@@ -767,7 +905,7 @@ section('Reference tables');
 })();
 
 /* ==========================================================================
-   11. Registry deep links resolve to real elements.
+   13. Registry deep links resolve to real elements.
    ========================================================================== */
 
 section('Registry and rooms');

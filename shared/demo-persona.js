@@ -53,14 +53,16 @@
     /* What Robin actually spends, by category — the Cash Flow room's example.
        Deliberately NOT equal to the $3,150 estimate above: the essential
        categories here total $2,805, so the demo shows a real −$345 divergence
-       between what Robin guessed and what Robin spends (SPEC.md §12.3). */
+       between what Robin guessed and what Robin spends (SPEC.md §12.3).
+       Debt minimums are deliberately absent: that category is derived from
+       the itemised debts below ($210 + $95 = $305) and is not typed in
+       anywhere. See DECISIONS.md D-017. */
     monthlySpending: [
       { categoryId: 'housing',           amount: 1500 },
       { categoryId: 'groceries',         amount: 450 },
       { categoryId: 'utilities',         amount: 180 },
       { categoryId: 'transportation',    amount: 220 },
       { categoryId: 'insurance',         amount: 150 },
-      { categoryId: 'debt_minimums',     amount: 305 },
       { categoryId: 'dining_out',        amount: 260 },
       { categoryId: 'subscriptions',     amount: 45 },
       { categoryId: 'entertainment',     amount: 90 },

@@ -38,7 +38,11 @@
     margin-bottom: var(--space-3); transition: border-color 150ms ease, background 150ms ease;
   }
   .room:hover { border-color: var(--color-border-active); background: var(--color-surface-active); }
-  .room-top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+  .room-top { display: flex; align-items: center; gap: var(--space-3); }
+  .room-top h2 { flex: 1; }
+  .room--next { border-color: var(--color-border-active); background: var(--color-surface-active); }
+  .next-flag { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-accent-hover); }
+  .path-note { font-size: var(--text-sm); color: var(--color-text-muted); text-align: center; margin: 0 0 var(--space-4); }
   .room h2 { font-size: var(--text-lg); }
   .room p { color: var(--color-text-muted); font-size: var(--text-sm); margin: var(--space-2) 0 var(--space-3); }
   .room-tags { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
@@ -68,6 +72,7 @@
 </section>
 
 <main class="slaf-wrap">
+  <p class="path-note">They're meant to be walked in order — but every room stands on its own.</p>
   <div class="filters" id="filters" role="group" aria-label="Filter rooms by topic"></div>
   <div id="room-list"></div>
   <p class="foot">
@@ -80,6 +85,7 @@
 <script src="shared/schema.js"></script>
 <script src="shared/registry.js"></script>
 <script src="shared/spine-v2.js"></script>
+<script src="shared/ownership.js"></script>
 <script>
 (function () {
   'use strict';
@@ -119,14 +125,22 @@
       return;
     }
 
+    /* The rooms are a path, not a menu: each carries its step number, and the
+       first unvisited one is flagged so there is always an obvious next move. */
+    var next = Registry.nextAfter(null, visited);
     rooms.forEach(function (room) {
       var seen = visited.indexOf(room.id) !== -1;
+      var isNext = next && next.id === room.id;
       var a = document.createElement('a');
-      a.className = 'room';
+      a.className = 'room' + (isNext ? ' room--next' : '');
       a.href = room.href;
       a.innerHTML =
-        '<div class="room-top"><h2>' + room.title + '</h2>'
-        + (seen ? '<span class="visited">✓ visited</span>' : '') + '</div>'
+        '<div class="room-top">'
+        + '<span class="slaf-step ' + (seen ? 'slaf-step--done' : isNext ? 'slaf-step--next' : '') + '">'
+        + (seen ? '✓' : room.order) + '</span>'
+        + '<h2>' + room.title + '</h2>'
+        + (isNext ? '<span class="next-flag">next</span>'
+                  : seen ? '<span class="visited">visited</span>' : '') + '</div>'
         + '<p>' + room.blurb + '</p>'
         + '<div class="room-tags">'
         + room.tags.map(function (t) { return '<span class="tag">' + t + '</span>'; }).join('')
