@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Real Hourly Wage · SPARKS</title>
+<meta name="description" content="What your job actually pays, once you count every hour it takes and everything it costs you to do it."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11.
+
+  1. READS   The person's income (owned by Start Here) and filingStatus, for
+             the tax estimate.
+  2. WRITES  It OWNS person.work — contracted hours, unpaid overtime,
+             commute, prep, decompression, work costs and weeks per year.
+             Nothing else edits those. It does not touch income.
+  3. CALLS   engines/hourly.js. Tax comes from engines/tier0.js's effective-
+             rate lookup, never a second calculation.
+  4. EMPTY   Without paid hours or income it says which. Each unpaid-hours
+             field is optional: working from home means no commute, which is
+             a zero, not a missing answer.
+  5. CONFIG  data/effective_tax_rates_2026.json.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
+  @media (max-width: 380px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-2); }
+  .compare > div { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); }
+  .compare .lbl { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); display: block; }
+  .compare .val { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; }
+  .compare .real { border-color: var(--color-border-active); background: var(--color-surface-active); }
+
+  .hours-bar { display: flex; height: 14px; border-radius: var(--radius-pill); overflow: hidden; background: rgba(30,58,138,.4); margin: var(--space-3) 0 var(--space-2); }
+  .hours-bar > i { display: block; height: 100%; }
+  .hours-key { display: flex; flex-wrap: wrap; gap: var(--space-3); font-size: var(--text-xs); color: var(--color-text-subtle); }
+  .hours-key span::before { content: '●'; margin-right: 5px; }
+
+  .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
+  .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  .out-detail dt { color: var(--color-text-faint); }
+  .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  .price-row { display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); align-items: end; }
+  .price-answer { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; white-space: nowrap; padding-bottom: var(--space-2); }
+
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Real Hourly Wage</h1>
+  <p class="room-lede">What the job actually pays, once you count every hour it takes and everything it costs you to do it.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="reading">
+    <span class="slaf-eyebrow">What this is reading</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <section class="slaf-card" id="out-rate">
+    <span class="slaf-eyebrow">Your real rate</span>
+    <div class="compare">
+      <div><span class="lbl">On paper</span><span class="val" id="nominal">—</span></div>
+      <div class="real"><span class="lbl">Actually</span><span class="val" id="real">—</span></div>
+    </div>
+    <p class="slaf-reason" data-reason></p>
+    <div data-detail></div>
+  </section>
+
+  <section class="slaf-card" id="hours">
+    <span class="slaf-eyebrow">Where the week goes</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">The hours the job takes</h2>
+    <div class="grid-2">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Paid hours a week</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" data-work="contractedHoursPerWeek" placeholder="e.g. 40" aria-label="Paid hours a week"/><span class="slaf-affix">h</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Unpaid overtime</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" data-work="unpaidOvertimeHoursPerWeek" placeholder="e.g. 3" aria-label="Unpaid overtime hours a week"/><span class="slaf-affix">h</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Commuting</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" data-work="commuteHoursPerWeek" placeholder="e.g. 5" aria-label="Commuting hours a week"/><span class="slaf-affix">h</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Getting ready</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" data-work="prepHoursPerWeek" placeholder="e.g. 2.5" aria-label="Getting ready hours a week"/><span class="slaf-affix">h</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Decompressing</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" data-work="decompressHoursPerWeek" placeholder="e.g. 2.5" aria-label="Decompressing hours a week"/><span class="slaf-affix">h</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Weeks worked a year</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" data-work="weeksPerYear" placeholder="48" aria-label="Weeks worked per year"/></span></label>
+    </div>
+    <p class="slaf-hint" style="margin-top:var(--space-3)">
+      Leave anything blank that doesn't apply — working from home means no
+      commute, and blank is treated as none rather than as unanswered.
+    </p>
+
+    <label class="slaf-field" style="margin-top:var(--space-4)">
+      <span class="slaf-label">Monthly costs that only exist because you have this job</span>
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+        <input type="text" inputmode="decimal" data-work="workCostsMonthlyCents" placeholder="e.g. 400" aria-label="Monthly work-related costs"/></span>
+      <span class="slaf-hint">Petrol, parking, transit passes, work clothes, lunches you wouldn't otherwise buy, childcare you only need while working.</span>
+    </label>
+
+    <div class="actions">
+      <button type="button" class="slaf-btn" id="btn-demo">Try with example numbers</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Clear</button>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="out-hours">
+    <span class="slaf-eyebrow">Paid vs. given</span>
+    <div class="slaf-figure" data-figure>—</div>
+    <p class="slaf-reason" data-reason></p>
+    <div class="hours-bar" id="hours-bar"></div>
+    <div class="hours-key" id="hours-key"></div>
+  </section>
+
+  <section class="slaf-card" id="out-price">
+    <span class="slaf-eyebrow">Priced in life</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      Anything you're thinking of buying — how many hours of your actual life
+      is it?
+    </p>
+    <div class="price-row">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">It costs</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+          <input type="text" inputmode="decimal" id="f-price" placeholder="e.g. 1200" aria-label="Price"/></span></label>
+      <span class="price-answer" id="price-answer">—</span>
+    </div>
+    <p class="slaf-reason" id="price-note"></p>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Tax is estimated from a flat
+    effective-rate table, not a return. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/demo-persona.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/hourly.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership,
+      Demo = SLAF.DemoPersona, Hourly = SLAF.Hourly;
+
+  var ROOM_ID = 'real-hourly-wage';
+  var TABLES = null;
+  var priceCents = null;
+
+  function el(id) { return document.getElementById(id); }
+
+  var HOUR_COLOURS = {
+    paid: 'var(--color-accent)',
+    unpaidOvertimeHoursPerWeek: 'var(--color-caution)',
+    commuteHoursPerWeek: 'var(--sapphire-200)',
+    prepHoursPerWeek: 'var(--sapphire-100)',
+    decompressHoursPerWeek: 'var(--navy-600)'
+  };
+
+  /* ---------- writes: this room owns person.work --------------------------- */
+
+  function writeWork(key, value) {
+    var person = Spine.ensurePrimaryPerson('You');
+    var current = Schema.workProfile(Schema.personById(Spine.getProfile(), person.id));
+    var next = Object.assign({}, current);
+    next[key] = value;
+    Spine.upsertPerson({ id: person.id, work: next });
+  }
+
+  function readWork() {
+    return Schema.workProfile(Schema.primaryPerson(Spine.getProfile()));
+  }
+
+  function displayFor(key, raw) {
+    if (!Money.isEntered(raw)) return '';
+    if (key === 'workCostsMonthlyCents') return Money.formatCents(raw);
+    return String(raw);
+  }
+
+  function editFor(key, raw) {
+    if (!Money.isEntered(raw)) return '';
+    if (key === 'workCostsMonthlyCents') return String(raw / 100);
+    return String(raw);
+  }
+
+  document.querySelectorAll('[data-work]').forEach(function (node) {
+    var key = node.getAttribute('data-work');
+    node.addEventListener('focus', function () {
+      node.value = editFor(key, readWork()[key]);
+      node.select();
+    });
+    node.addEventListener('blur', function () {
+      var raw = node.value.trim();
+      var value;
+      if (raw === '') value = null;
+      else if (key === 'workCostsMonthlyCents') value = Money.parseMoney(raw);
+      else value = Number.isFinite(Number(raw)) ? Number(raw) : null;
+      writeWork(key, value);
+      node.value = displayFor(key, value);
+      render();
+    });
+    node.addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter') { evt.preventDefault(); node.blur(); }
+    });
+  });
+
+  function paintInputs() {
+    var work = readWork();
+    document.querySelectorAll('[data-work]').forEach(function (node) {
+      if (node === document.activeElement) return;
+      var key = node.getAttribute('data-work');
+      node.value = displayFor(key, work[key]);
+    });
+  }
+
+  /* ---------- outputs ------------------------------------------------------ */
+
+  function dl(rows) {
+    return '<dl>' + rows.map(function (r) {
+      return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+    }).join('') + '</dl>';
+  }
+
+  function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
+
+  function renderRate(wage) {
+    var section = el('out-rate');
+    var reason = section.querySelector('[data-reason]');
+    var detail = section.querySelector('[data-detail]');
+    var ok = Money.isOk(wage);
+
+    el('nominal').textContent = ok ? perHour(wage.nominalHourlyCents) : Money.EM_DASH;
+    el('real').textContent = ok ? perHour(wage.realHourlyCents) : Money.EM_DASH;
+    reason.textContent = ok ? '' : (wage.reason || '');
+    reason.hidden = ok;
+
+    if (!ok) { detail.innerHTML = ''; return; }
+    detail.className = 'out-detail';
+    detail.innerHTML = dl([
+      ['Gross pay', Money.formatCents(wage.grossAnnualIncomeCents) + '/yr'],
+      ['Estimated tax', '−' + Money.formatCents(wage.estimatedTaxCents || 0) + '/yr'],
+      ['Costs of working', '−' + Money.formatCents(wage.annualWorkCostsCents) + '/yr'],
+      ['What you keep', Money.formatCents(wage.keptAnnualCents) + '/yr'],
+      ['Hours it takes', wage.annualTotalHours.toLocaleString('en-US') + '/yr']
+    ]) + '<p class="slaf-reason">You keep '
+      + Money.formatRate(wage.retained, { decimals: 0 })
+      + ' of your headline rate — every hour costs you '
+      + perHour(wage.lostPerHourCents) + ' of the difference.'
+      + (wage.taxKnown ? '' : ' Tax isn’t included yet: ' + (wage.taxReason || ''))
+      + '</p>';
+  }
+
+  function renderHours(wage) {
+    var section = el('out-hours');
+    var figure = section.querySelector('[data-figure]');
+    var reason = section.querySelector('[data-reason]');
+    var ok = Money.isOk(wage);
+
+    figure.textContent = ok ? (wage.totalHoursPerWeek + ' hours a week') : Money.EM_DASH;
+    figure.classList.toggle('slaf-figure--incomplete', !ok);
+    reason.textContent = ok
+      ? wage.paidHoursPerWeek + ' of them paid, ' + wage.unpaidHoursPerWeek + ' given away.'
+      : 'Add your paid hours to see this.';
+    reason.hidden = false;
+
+    if (!ok) { el('hours-bar').innerHTML = ''; el('hours-key').innerHTML = ''; return; }
+
+    var segments = [{ key: 'paid', label: 'Paid', hours: wage.paidHoursPerWeek }]
+      .concat(wage.unpaidParts);
+    el('hours-bar').innerHTML = segments.map(function (seg) {
+      return '<i style="width:' + (seg.hours / wage.totalHoursPerWeek * 100) + '%;background:'
+        + (HOUR_COLOURS[seg.key] || 'var(--navy-700)') + '"></i>';
+    }).join('');
+    el('hours-key').innerHTML = segments.map(function (seg) {
+      return '<span style="color:' + (HOUR_COLOURS[seg.key] || 'var(--navy-600)') + '">'
+        + seg.label + ' ' + seg.hours + 'h</span>';
+    }).join('');
+  }
+
+  function renderPrice(h) {
+    var answer = el('price-answer'), note = el('price-note');
+    if (!Money.isEntered(priceCents)) {
+      answer.textContent = Money.EM_DASH;
+      note.textContent = '';
+      return;
+    }
+    var result = Hourly.hoursToAfford(h, TABLES, priceCents, {});
+    if (!Money.isOk(result)) {
+      answer.textContent = Money.EM_DASH;
+      note.textContent = result.reason || '';
+      return;
+    }
+    var hrs = Math.round(result.value * 10) / 10;
+    answer.textContent = hrs + ' h';
+    var days = Math.round(result.value / 8 * 10) / 10;
+    note.textContent = 'That is ' + hrs + ' hours of your life — about ' + days
+      + ' working days. At the rate on your payslip it would look like '
+      + (Math.round(result.nominalHours * 10) / 10) + ' hours.';
+  }
+
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    paintInputs();
+    el('reading-list').innerHTML = ['grossAnnualIncome', 'filingStatus']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+    var wage = Hourly.realHourlyWage(h, TABLES, {});
+    renderRate(wage);
+    renderHours(wage);
+    renderPrice(h);
+  }
+
+  el('f-price').addEventListener('blur', function () {
+    priceCents = Money.parseMoney(el('f-price').value);
+    el('f-price').value = Money.isEntered(priceCents) ? Money.formatCents(priceCents) : '';
+    render();
+  });
+  el('f-price').addEventListener('focus', function () {
+    el('f-price').value = Money.isEntered(priceCents) ? String(priceCents / 100) : '';
+    el('f-price').select();
+  });
+  el('f-price').addEventListener('keydown', function (evt) {
+    if (evt.key === 'Enter') { evt.preventDefault(); el('f-price').blur(); }
+  });
+
+  el('btn-demo').addEventListener('click', function () {
+    var demo = Demo.build();
+    var h = Spine.getProfile();
+    if (!Money.isOk(Schema.grossAnnualIncomeCents(h))) {
+      Spine.updateProfile({ people: demo.people, filingStatus: demo.filingStatus, state: demo.state });
+    } else {
+      var person = Spine.ensurePrimaryPerson('You');
+      Spine.upsertPerson({ id: person.id, work: demo.people[0].work });
+    }
+    render();
+    el('out-rate').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  el('btn-clear').addEventListener('click', function () {
+    if (!window.confirm('Clear the hours and costs you’ve entered?')) return;
+    var person = Spine.ensurePrimaryPerson('You');
+    Spine.upsertPerson({ id: person.id, work: Schema.createWorkProfile({}) });
+    render();
+  });
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var target = document.getElementById(location.hash.slice(1));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    render();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

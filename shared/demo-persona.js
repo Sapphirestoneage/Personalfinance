@@ -50,6 +50,20 @@
 
     monthlyEssentialExpenses: 3150,
 
+    /* What the job actually takes, beyond the paycheque. 40 paid hours plus
+       13 unpaid ones a week, and $400/mo of costs that only exist because
+       Robin has a job. Feeds the Real Hourly Wage room. */
+    work: {
+      contractedHoursPerWeek: 40,
+      unpaidOvertimeHoursPerWeek: 3,
+      commuteHoursPerWeek: 5,
+      prepHoursPerWeek: 2.5,
+      decompressHoursPerWeek: 2.5,
+      workCosts: 400,
+      weeksPerYear: 48
+    },
+
+
     /* What Robin actually spends, by category — the Cash Flow room's example.
        Deliberately NOT equal to the $3,150 estimate above: the essential
        categories here total $2,805, so the demo shows a real −$345 divergence
@@ -81,7 +95,10 @@
       id: 'demo_person_robin',
       label: VALUES.label,
       role: 'adult',
-      dob: VALUES.dob
+      dob: VALUES.dob,
+      work: Object.assign({}, VALUES.work, {
+        workCostsMonthlyCents: Money.toCents(VALUES.work.workCosts)
+      })
     });
 
     person.incomeSources.push(Schema.createIncomeSource({

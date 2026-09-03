@@ -33,6 +33,7 @@ const Debt = require(path.join(ROOT, 'engines/debt.js'));
 const Ownership = require(path.join(ROOT, 'shared/ownership.js'));
 const Fire = require(path.join(ROOT, 'engines/fire.js'));
 const Projection = require(path.join(ROOT, 'engines/projection.js'));
+const Hourly = require(path.join(ROOT, 'engines/hourly.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -882,6 +883,73 @@ section('FIRE variants');
   check('no contribution and no growth never arrives',
     Projection.yearsToTargetCents({ startCents: 100, targetCents: 500, annualRate: 0,
       annualContributionCents: 0 }).status, 'incomplete');
+})();
+
+/* ==========================================================================
+   9c. Real Hourly Wage. SPEC.md §9 item 7, §13.
+   ========================================================================== */
+
+section('Real Hourly Wage');
+
+/* Robin: $72,000 over 40 paid hours × 48 weeks, plus 13 unpaid hours a week
+   (3 overtime, 5 commuting, 2.5 getting ready, 2.5 decompressing) and $400/mo
+   of costs that exist only because there is a job.
+
+     nominal = 72,000 / (40 × 48)                       = $37.50/h
+     kept    = 72,000 − 13,680 tax − 4,800 costs        = $53,520
+     real    = 53,520 / (53 × 48 = 2,544 hours)         = $21.04/h          */
+(function () {
+  const h = Demo.build();
+  const w = Hourly.realHourlyWage(h, TABLES, {});
+
+  check('nominal hourly rate', w.nominalHourlyCents, 3750);
+  check('paid hours a week', w.paidHoursPerWeek, 40);
+  check('unpaid hours a week', w.unpaidHoursPerWeek, 13);
+  check('total hours a week', w.totalHoursPerWeek, 53);
+  check('annual paid hours', w.annualPaidHours, 1920);
+  check('annual total hours', w.annualTotalHours, 2544);
+  check('annual work costs', w.annualWorkCostsCents, 480000);
+  check('what actually stays', w.keptAnnualCents, 7200000 - 1368000 - 480000);
+  check('real hourly rate', w.realHourlyCents, 2104);
+  check('share of the headline rate retained', w.retained, 2104 / 3750, 1e-12);
+  check('lost per hour', w.lostPerHourCents, 3750 - 2104);
+  checkTrue('the real rate is well below the nominal one', w.realHourlyCents < w.nominalHourlyCents);
+
+  /* Life energy: what a $1,000 thing costs in hours of your life. */
+  const cost = Hourly.hoursToAfford(h, TABLES, 100000, {});
+  check('hours to afford $1,000', cost.value, 100000 / 2104, 1e-9);
+  checkTrue('and that is more hours than the headline rate suggests',
+    cost.value > cost.nominalHours, `${cost.value} vs ${cost.nominalHours}`);
+
+  /* Working from home means no commute — that is a zero, not a gap. */
+  const remote = Demo.build();
+  remote.people[0].work.commuteHoursPerWeek = null;
+  const rw = Hourly.realHourlyWage(remote, TABLES, {});
+  check('no commute entered still computes', rw.status, 'ok');
+  check('and drops it from the hours', rw.totalHoursPerWeek, 48);
+  checkTrue('which raises the real rate', rw.realHourlyCents > w.realHourlyCents);
+
+  /* A preview must not need storing. */
+  const previewed = Hourly.realHourlyWage(h, TABLES, { work: { commuteHoursPerWeek: 0 } });
+  check('a previewed work profile changes the answer', previewed.totalHoursPerWeek, 48);
+  check('and leaves the stored profile alone',
+    Schema.workProfile(h.people[0]).commuteHoursPerWeek, 5);
+
+  /* Incomplete states name what they need. */
+  const noHours = Demo.build();
+  noHours.people[0].work.contractedHoursPerWeek = null;
+  check('without paid hours it cannot compute',
+    Hourly.realHourlyWage(noHours, TABLES, {}).status, 'incomplete');
+  const zeroHours = Demo.build();
+  zeroHours.people[0].work.contractedHoursPerWeek = 0;
+  check('zero paid hours is rejected, not divided by',
+    Hourly.realHourlyWage(zeroHours, TABLES, {}).status, 'incomplete');
+  const noIncome = Demo.build();
+  noIncome.people[0].incomeSources = [];
+  check('without income it cannot compute',
+    Hourly.realHourlyWage(noIncome, TABLES, {}).status, 'incomplete');
+  check('an empty household cannot compute',
+    Hourly.realHourlyWage(Schema.createHousehold(), TABLES, {}).status, 'incomplete');
 })();
 
 /* ==========================================================================

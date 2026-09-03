@@ -109,8 +109,24 @@
       ]
     },
     {
-      id: 'foo-ladder',
+      id: 'real-hourly-wage',
       order: 6,
+      title: 'Real Hourly Wage',
+      blurb: 'What the job actually pays, once you count every hour it takes and everything it costs you to do it.',
+      href: 'rooms/real-hourly-wage.html',
+      tier: 1,
+      tags: ['income'],
+      subsections: [
+        { id: 'reading',   label: 'What this reads' },
+        { id: 'out-rate',  label: 'Your real rate' },
+        { id: 'hours',     label: 'The hours it takes' },
+        { id: 'out-hours', label: 'Paid vs. given' },
+        { id: 'out-price', label: 'Priced in life' }
+      ]
+    },
+    {
+      id: 'foo-ladder',
+      order: 7,
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
       href: 'index.html',

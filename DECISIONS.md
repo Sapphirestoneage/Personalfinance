@@ -754,6 +754,44 @@ reload.
 
 ---
 
+## D-021 — Real Hourly Wage, and where a work profile lives
+**2026-09-03 · SPEC.md §9 item 7, §13**
+
+Built before Prospective Worth and Side Hustle because §9 says to: both
+consume it, and building them first would mean deriving a rate twice.
+
+**Where the inputs live.** Contracted hours, unpaid overtime, commute, prep,
+decompression, weeks worked and work-related costs are now
+`person.work` in the schema, not room-local state. They are facts about a
+person, and three tools will read them. Putting them on the person also means
+this room owns them under D-017's rule, so nothing else can edit them.
+`Schema.workProfile()` fills the block in for anyone stored before it existed,
+so no migration is needed.
+
+**Two rates, one formula.** The nominal rate counts only paid hours and only
+gross pay. The real rate counts every hour the job takes and only the money
+that survives tax and the costs of working. Tax comes from the same
+effective-rate lookup Tier 0 uses — there is still exactly one tax
+calculation in this app.
+
+**Blank means none, not unanswered, for the unpaid hours only.** Working from
+home genuinely means no commute, so an empty commute field contributes zero
+rather than blocking the calculation. Contracted hours are the exception: they
+are the denominator of the nominal rate, so missing or zero is incomplete
+rather than divided by. This is a deliberate, local departure from the
+blanket empty-is-not-zero reading, and it is confined to the four optional
+unpaid-hour fields.
+
+Verified against the example: $37.50/h on paper, $21.04/h actually — 56% of
+the headline rate retained, $16.46 of every hour lost to tax, work costs and
+unpaid time. A $1,200 purchase costs 57 hours of life against the 32 hours
+the payslip implies. Deleting the commute moves the rate to $23.23/h.
+
+`hoursToAfford()` is the life-energy half, and is the function Side Hustle
+and Prospective Worth should call rather than re-deriving a rate.
+
+---
+
 ## Still open
 
 - **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the

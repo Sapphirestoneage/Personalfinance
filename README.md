@@ -54,6 +54,7 @@ engines/            Shared calculation engines — one function per concept
   debt.js             payoff simulation, four orderings, credit-card view
   fire.js             one calculateFIRE(), six variants
   projection.js       compound growth with contributions — the only such loop
+  hourly.js           real hourly wage, and prices in hours of life
 data/               Versioned reference tables (JSON, never inlined in code)
 test/run.js         Re-derives every formula outside the browser
 SPEC.md             The full Tier 0–2 build spec. The authority.

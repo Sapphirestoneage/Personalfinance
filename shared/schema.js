@@ -41,6 +41,8 @@
      them off the household so one setting is globally tunable.
      ====================================================================== */
 
+  var WORK_DEFAULTS = { weeksPerYear: 48 };
+
   var ASSUMPTION_DEFAULTS = {
     expectedReturnRate: 0.07,   // nominal annual, decimal fraction
     swrRate: 0.04              // safe withdrawal rate, decimal fraction
@@ -59,6 +61,14 @@
     'household.capturingFullMatch':              { class: 'raw',        unit: 'bool',    note: 'null = not answered; needed by FOO step 2. DECISIONS.md D-008' },
     'person.dob':                                { class: 'raw',        unit: 'iso-date' },
     'person.role':                               { class: 'raw',        unit: 'enum',    values: ['adult', 'child', 'dependent', 'other'] },
+    'person.work.contractedHoursPerWeek':        { class: 'raw',        unit: 'hours',   period: 'weekly' },
+    'person.work.unpaidOvertimeHoursPerWeek':    { class: 'raw',        unit: 'hours',   period: 'weekly' },
+    'person.work.commuteHoursPerWeek':           { class: 'raw',        unit: 'hours',   period: 'weekly' },
+    'person.work.prepHoursPerWeek':              { class: 'raw',        unit: 'hours',   period: 'weekly' },
+    'person.work.decompressHoursPerWeek':        { class: 'raw',        unit: 'hours',   period: 'weekly' },
+    'person.work.workCostsMonthlyCents':         { class: 'raw',        unit: 'cents',   period: 'monthly' },
+    'person.work.weeksPerYear':                  { class: 'assumption', unit: 'weeks',   default: WORK_DEFAULTS.weeksPerYear },
+    'computed.realHourlyWageCents':              { class: 'computed',   unit: 'cents',   note: 'per hour of life the job actually costs' },
     'incomeSource.grossAnnualIncomeCents':       { class: 'raw',        unit: 'cents',   period: 'annual' },
     'incomeSource.type':                         { class: 'raw',        unit: 'enum',    values: ['w2', '1099'] },
     'incomeSource.employerMatch.matchPercent':          { class: 'raw', unit: 'rate',    note: '0.5 === employer matches 50 cents on the dollar' },
@@ -130,6 +140,27 @@
     };
   }
 
+  /**
+   * What a job actually costs in time and money, beyond the paycheque.
+   * Lives on the person because it is a fact about them, not about a room —
+   * SPEC.md §9 item 7 makes the Real Hourly Wage engine a prerequisite for
+   * the Side Hustle and Prospective Worth calcs, and all three read this.
+   * Hours are per week; costs are monthly cents.
+   */
+  function createWorkProfile(fields) {
+    var f = fields || {};
+    return {
+      contractedHoursPerWeek: f.contractedHoursPerWeek === undefined ? null : f.contractedHoursPerWeek,
+      unpaidOvertimeHoursPerWeek: f.unpaidOvertimeHoursPerWeek === undefined ? null : f.unpaidOvertimeHoursPerWeek,
+      commuteHoursPerWeek: f.commuteHoursPerWeek === undefined ? null : f.commuteHoursPerWeek,
+      prepHoursPerWeek: f.prepHoursPerWeek === undefined ? null : f.prepHoursPerWeek,
+      decompressHoursPerWeek: f.decompressHoursPerWeek === undefined ? null : f.decompressHoursPerWeek,
+      workCostsMonthlyCents: f.workCostsMonthlyCents === undefined ? null : f.workCostsMonthlyCents,
+      /* Assumption-class: weeks actually worked after leave. */
+      weeksPerYear: f.weeksPerYear === undefined ? WORK_DEFAULTS.weeksPerYear : f.weeksPerYear
+    };
+  }
+
   function createPerson(fields) {
     var f = fields || {};
     return {
@@ -137,7 +168,8 @@
       label: f.label || null,
       role: f.role || 'adult',
       dob: f.dob === undefined ? null : f.dob,     // ISO 'YYYY-MM-DD'
-      incomeSources: f.incomeSources || []
+      incomeSources: f.incomeSources || [],
+      work: createWorkProfile(f.work)
     };
   }
 
@@ -262,6 +294,12 @@
        default. An unowned item (empty ownerIds) still counts — Tier 0 lump
        sums are entered before people are named.
      ====================================================================== */
+
+  /** The work profile of a person, filled in for anything stored before this
+   *  block existed. Never returns undefined. */
+  function workProfile(person) {
+    return createWorkProfile((person && person.work) || {});
+  }
 
   function personById(household, personId) {
     var people = (household && household.people) || [];
@@ -461,6 +499,8 @@
     newId: newId,
     createHousehold: createHousehold,
     createPerson: createPerson,
+    createWorkProfile: createWorkProfile,
+    WORK_DEFAULTS: WORK_DEFAULTS,
     createAsset: createAsset,
     createDebt: createDebt,
     createIncomeSource: createIncomeSource,
@@ -469,6 +509,7 @@
     resolveAssumptions: resolveAssumptions,
     personById: personById,
     primaryPerson: primaryPerson,
+    workProfile: workProfile,
     adults: adults,
     isAggregatable: isAggregatable,
     ownedBy: ownedBy,
