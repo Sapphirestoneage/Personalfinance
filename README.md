@@ -83,6 +83,18 @@ committed `.js` is what runs.
 node test/run.js
 ```
 
+There is also a layout check that needs a real browser, because only a
+browser knows how tall a wrapped label is:
+
+```sh
+python3 -m http.server 8765 &
+node test/alignment.js
+```
+
+It asserts that every row of side-by-side controls shares a top and bottom
+edge at 320, 360, 390 and 414px. It skips cleanly if Playwright isn't
+installed — the site itself has no dependencies and no build step.
+
 This re-derives every Tier 0 formula against the demo persona from
 independently written expectations, checks the unit and null-vs-zero rules,
 and confirms every deep-link anchor declared in `shared/registry.js` actually

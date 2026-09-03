@@ -1,0 +1,112 @@
+#!/usr/bin/env node
+/* ==========================================================================
+   test/alignment.js — side-by-side controls must line up.
+   --------------------------------------------------------------------------
+   A layout check the unit run cannot do, because it needs a real browser to
+   know how tall a wrapped label is.
+
+   The failure it guards against: in a two-column grid the row is as tall as
+   its tallest cell, so a label that wraps to two lines pushes its own input
+   down while its neighbour's stays put. Spotted on a phone, not in any unit
+   test. Fixed by bottom-aligning .slaf-field and building every control to
+   one --control-height token; this stops it coming back.
+
+   Needs a server on :8765 —  python3 -m http.server 8765
+   Run:  node test/alignment.js
+   ========================================================================== */
+
+/* Playwright is NOT a dependency of this repo — the site has no build step
+   and no package.json, and it stays that way. When the driver isn't around,
+   say how to get it and exit cleanly rather than failing a run that was
+   never going to work. */
+let chromium = null;
+try { chromium = require('playwright').chromium; } catch (e) { /* handled below */ }
+
+const BASE = process.env.SLAF_BASE || 'http://127.0.0.1:8765';
+const EXECUTABLE = process.env.SLAF_CHROMIUM || '/opt/pw-browsers/chromium';
+
+const TARGETS = [
+  ['/rooms/start.html#q-match', '.q-pair'],
+  ['/rooms/debt-payoff.html', '.debt-grid'],
+  ['/rooms/debt-payoff.html', '.debt-meta'],
+  ['/', '.grid2'],
+  ['/rooms/cash-flow.html', '.cat-row']
+];
+(async () => {
+  if (!chromium) {
+    console.log('SKIPPED — playwright is not installed.\n'
+      + '  npm install playwright   (Chromium already lives at /opt/pw-browsers/chromium\n'
+      + '  in the dev container; elsewhere: npx playwright install chromium)');
+    return;
+  }
+  let b;
+  try {
+    b = await chromium.launch(require('fs').existsSync(EXECUTABLE)
+      ? { executablePath: EXECUTABLE } : {});
+  } catch (e) {
+    console.log('SKIPPED — could not launch Chromium: ' + e.message);
+    process.exit(0);
+  }
+  try {
+    await (await b.newPage()).goto(BASE, { timeout: 4000 });
+  } catch (e) {
+    console.log('SKIPPED — nothing serving at ' + BASE + '.\n  Start one with: python3 -m http.server 8765');
+    await b.close();
+    process.exit(0);
+  }
+  let bad = 0;
+  for (const width of [320, 360, 390, 414]) {
+    const ctx = await b.newContext({ viewport: { width, height: 900 } });
+    const p = await ctx.newPage();
+    p.on('dialog', d => d.accept());
+    await p.goto(BASE + '/rooms/start.html', { waitUntil: 'networkidle' });
+    await p.waitForTimeout(300);
+    await p.evaluate(() => { const d = SLAF.DemoPersona.build();
+      SLAF.Spine.updateProfile({ people: d.people, filingStatus: d.filingStatus, state: d.state,
+        assets: d.assets, debts: d.debts, expenses: d.expenses, capturingFullMatch: d.capturingFullMatch });
+      SLAF.Spine.updateProfile({ expenses: { entries: SLAF.DemoPersona.buildSpending() } }); });
+
+    for (const [page, sel] of TARGETS) {
+      await p.goto(BASE + page, { waitUntil: 'networkidle' });
+      await p.waitForTimeout(page === '/' ? 900 : 600);
+      const rows = await p.evaluate((sel) => {
+        const out = [];
+        document.querySelectorAll(sel).forEach(grid => {
+          /* Group the grid's cells into visual rows by their own top edge,
+             then check that the interactive box in each cell of a row starts
+             at the same y. Cells alone on a row are trivially aligned. */
+          const cells = Array.from(grid.children);
+          const byRow = {};
+          cells.forEach(c => {
+            const t = Math.round(c.getBoundingClientRect().top);
+            (byRow[t] = byRow[t] || []).push(c);
+          });
+          Object.keys(byRow).forEach(t => {
+            const group = byRow[t];
+            if (group.length < 2) return;
+            const boxes = group.map(c => c.querySelector('.slaf-input-shell, .slaf-owned, .slaf-owned-inline'))
+                               .filter(Boolean);
+            if (boxes.length < 2) return;
+            const tops = boxes.map(n => Math.round(n.getBoundingClientRect().top));
+            const bottoms = boxes.map(n => Math.round(n.getBoundingClientRect().bottom));
+            out.push({
+              tops, spread: Math.max(...tops) - Math.min(...tops),
+              bottomSpread: Math.max(...bottoms) - Math.min(...bottoms),
+              labels: group.map(c => { const l = c.querySelector('.slaf-label'); return l ? Math.round(l.getBoundingClientRect().height) : 0; })
+            });
+          });
+        });
+        return out;
+      }, sel);
+      rows.forEach((r, i) => {
+        const ok = r.spread === 0 && r.bottomSpread === 0;
+        if (!ok) bad++;
+        console.log((ok ? '  ✓' : '  ✗') + ` ${width}px ${page} ${sel}[row ${i}]  top-spread=${r.spread}px bottom-spread=${r.bottomSpread}px labelHeights=${JSON.stringify(r.labels)}`);
+      });
+    }
+    await ctx.close();
+  }
+  await b.close();
+  console.log(bad ? `\n✗ ${bad} misaligned row(s)` : '\n✓ every multi-cell row is aligned at every width');
+  process.exit(bad ? 1 : 0);
+})();

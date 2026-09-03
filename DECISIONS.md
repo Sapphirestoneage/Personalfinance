@@ -679,6 +679,44 @@ top of the ordering.
 
 ---
 
+## D-019 — side-by-side controls line up, at every width
+**2026-09-03 · Eli, from a phone screenshot**
+
+*"I also see the cells are not always even."* Correct, and the screenshot made
+the cause obvious: "MONTHLY DEBT PAYMENTS" wrapped to two lines while
+"MONTHLY EXPENSES" beside it stayed on one, so the two input boxes started at
+different heights. Same for "CASH & SAVINGS" against "INVESTMENTS +
+RETIREMENT", and "EMPLOYER MATCH" against "…UP TO THIS MUCH OF PAY".
+
+**Cause.** In a two-column grid the row is as tall as its tallest cell, and
+content flows from the top of each cell. A label that wraps therefore pushes
+its own input down while its neighbour's stays put. It only shows up at
+widths where one label wraps and the other doesn't, which is why no earlier
+pass caught it — the 390px checks happened to land on widths where the labels
+didn't wrap.
+
+**Fix, at the source rather than per room.** `.slaf-field` is now a flex
+column with `justify-content: flex-end`, so its contents sit at the BOTTOM of
+whatever cell height the row imposes. Inputs therefore always align; only the
+labels sit at different heights, which is the right reading order anyway.
+Outside a grid the container is content-height, so nothing else changes.
+
+**And a shared height token.** A borrowed-value chip standing in a row of
+inputs has to match an input's metrics exactly or the row breaks again.
+Rather than hand-tuning pixels, `--control-height` is now the single value
+both `.slaf-input-shell` and `.slaf-owned--field` are built from. The chip's
+"from Start Here →" also gets `white-space: nowrap`, because it wrapping was
+what made the chip taller than the input beside it.
+
+**`test/alignment.js`** now measures this in a real browser at 320, 360, 390
+and 414px: it groups each grid's cells into visual rows and asserts every
+control in a row shares a top and bottom edge. Before the fix it reported
+spreads of 17–51px; now every row is 0. It skips cleanly when Playwright
+isn't installed, because the repo has no build step and no `package.json` and
+that is staying true.
+
+---
+
 ## Still open
 
 - **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the

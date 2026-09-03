@@ -186,14 +186,9 @@ function Borrowed({
   }, /*#__PURE__*/React.createElement("span", {
     className: "slaf-label"
   }, label || d.label), /*#__PURE__*/React.createElement("a", {
-    className: "slaf-owned" + (d.isSet ? "" : " slaf-owned--empty"),
-    href: d.href,
-    style: {
-      marginBottom: 0
-    }
+    className: "slaf-owned slaf-owned--field" + (d.isSet ? "" : " slaf-owned--empty"),
+    href: d.href
   }, /*#__PURE__*/React.createElement("span", {
-    className: "slaf-owned-label"
-  }, d.isSet ? "\u00a0" : "not set"), /*#__PURE__*/React.createElement("span", {
     className: "slaf-owned-value"
   }, d.display), /*#__PURE__*/React.createElement("span", {
     className: "slaf-owned-from"

@@ -104,9 +104,8 @@ function Borrowed({ fieldId, label }) {
   return (
     <div className="slaf-field" style={{ marginBottom: 0 }}>
       <span className="slaf-label">{label || d.label}</span>
-      <a className={"slaf-owned" + (d.isSet ? "" : " slaf-owned--empty")} href={d.href}
-         style={{ marginBottom: 0 }}>
-        <span className="slaf-owned-label">{d.isSet ? "\u00a0" : "not set"}</span>
+      <a className={"slaf-owned slaf-owned--field" + (d.isSet ? "" : " slaf-owned--empty")}
+         href={d.href}>
         <span className="slaf-owned-value">{d.display}</span>
         <span className="slaf-owned-from">{d.ownerTitle + " →"}</span>
       </a>

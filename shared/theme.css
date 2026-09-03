@@ -94,6 +94,10 @@
   --shadow-raised: 0 8px 24px rgba(5, 15, 34, 0.45);
 
   --measure: 480px;   /* canonical room column width */
+
+  /* Every interactive control in a field row is exactly this tall, so an
+     input and a borrowed-value chip can sit side by side and line up. */
+  --control-height: 39px;
 }
 
 /* ==========================================================================
@@ -156,7 +160,19 @@ h3 { font-size: var(--text-md); }
    Inputs ship EMPTY with a format-only placeholder. Never a pre-filled
    value attribute. See SPEC.md Section 5 rule 1 and Section 5.1.          */
 
-.slaf-field { display: block; margin-bottom: var(--space-3); }
+/* A labelled field. Laid out as a column that pushes its contents to the
+   BOTTOM, which is what keeps side-by-side inputs aligned: in a two-column
+   grid the row is as tall as its tallest cell, so a label that wraps to two
+   lines used to shove its own input down while its neighbour's stayed put.
+   Bottom-aligning means the boxes always line up and only the labels sit at
+   different heights, which is the correct reading order anyway.
+   Outside a grid the container is content-height, so this changes nothing. */
+.slaf-field {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  margin-bottom: var(--space-3);
+}
 
 .slaf-field > .slaf-label {
   display: block;
@@ -170,6 +186,7 @@ h3 { font-size: var(--text-md); }
 .slaf-input-shell {
   display: flex;
   align-items: center;
+  min-height: var(--control-height);
   gap: var(--space-1);
   border-radius: var(--radius-sm);
   background: var(--color-surface-raised);
@@ -216,6 +233,14 @@ h3 { font-size: var(--text-md); }
   font-size: var(--text-xs);
   color: var(--color-text-faint);
   margin-top: var(--space-1);
+}
+
+/* A row of fields. Cells stretch to the row height so .slaf-field's
+   bottom-alignment can do its job. */
+.slaf-field-row {
+  display: grid;
+  gap: var(--space-3);
+  align-items: stretch;
 }
 
 /* ---- Buttons ------------------------------------------------------------ */
@@ -341,6 +366,42 @@ h3 { font-size: var(--text-md); }
 
 .slaf-owned--empty { border-left-color: var(--color-text-faint); }
 .slaf-owned--empty .slaf-owned-value { color: var(--color-text-faint); }
+
+/* Field-sized form: a borrowed value standing IN a row of inputs, so it has
+   to match an input shell's metrics exactly or the row stops lining up. */
+.slaf-owned--field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+  margin-bottom: 0;
+  min-height: var(--control-height);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--color-surface-raised);
+  overflow: hidden;
+}
+
+.slaf-owned--field .slaf-owned-label { display: none; }
+
+.slaf-owned--field .slaf-owned-value {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.5;
+}
+
+.slaf-owned--field .slaf-owned-from {
+  font-size: 10px;
+  text-align: right;
+  white-space: nowrap;          /* wrapping here made the chip taller than
+                                   the input beside it */
+}
+
+.slaf-owned--field .slaf-owned-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* Compact form, for sitting on a row rather than in a list. */
 .slaf-owned-inline {
