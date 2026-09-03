@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Financial Snapshot · SPARKS</title>
+<meta name="description" content="Ten inputs in, nine numbers out. Net worth, savings rate, runway, FIRE number, and where you actually sit on the ladder."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — the five questions from SPEC.md §11, answered before building.
+
+  1. READS   Everything in the household: people[].dob, filingStatus, state,
+             incomeSources[].grossAnnualIncomeCents and .employerMatch,
+             assets[] (cash + investment categories), debts[]
+             (balance / rate / minPayment), expenses.monthlyEssential,
+             assumptions, capturingFullMatch.
+  2. WRITES  Raw inputs only, never a computed field. Each Tier 0 lump sum is
+             stored as a single record inside the itemised array it belongs
+             to — one cash asset, one investment asset, one debt — so the
+             Debt Calculator can later replace that one record with many
+             without a schema change (SPEC.md §9 item 2).
+  3. CALLS   engines/tier0.js and engines/foo.js. No calculation is written
+             in this file; if a number is needed here, it comes from an
+             engine.
+  4. EMPTY   Every input ships blank with a format-only placeholder. Every
+             output shows an em dash plus the reason it can't compute yet.
+             Nothing shows $0, 0%, NaN, or a figure from last session.
+  5. CONFIG  data/effective_tax_rates_2026.json, retirement_milestones.json,
+             net_worth_percentiles_scf_2022.json, foo_rules.json,
+             irs_limits_2026.json — loaded through shared/reference.js.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; font-size: var(--text-base); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+  @media (max-width: 380px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+
+  .out-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+  .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); color: var(--color-text-muted); }
+  .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  .out-detail dt { color: var(--color-text-faint); }
+  .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  .stack-bar { display: flex; height: 10px; border-radius: var(--radius-pill); overflow: hidden; background: rgba(30,58,138,.4); margin-top: var(--space-3); }
+  .stack-bar > i { display: block; height: 100%; }
+  .stack-key { display: flex; gap: var(--space-4); margin-top: var(--space-2); font-size: var(--text-xs); color: var(--color-text-subtle); }
+  .stack-key span::before { content: '●'; margin-right: 6px; }
+
+  .ladder { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  .ladder li { display: flex; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  .ladder li:first-child { border-top: none; }
+  .ladder .mark { flex-shrink: 0; width: 1.4em; text-align: center; font-weight: 600; }
+  .ladder .met .mark { color: var(--color-positive); }
+  .ladder .unmet .mark { color: var(--color-caution); }
+  .ladder .unknown .mark { color: var(--color-text-faint); }
+  .ladder .unmet { color: var(--color-text); }
+  .ladder .met, .ladder .unknown { color: var(--color-text-subtle); }
+  .ladder .why { display: block; color: var(--color-text-faint); font-size: var(--text-xs); margin-top: 2px; }
+
+  .variant-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  .variant-row:first-of-type { border-top: none; }
+  .variant-label { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .variant-value { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
+  .variant-value.is-incomplete { color: var(--color-text-faint); font-size: var(--text-md); }
+
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+
+  /* Deep-linked sections shouldn't land flush against the viewport edge. */
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../index.html">← All rooms</a>
+  <h1>Financial Snapshot</h1>
+  <p class="room-lede">Ten numbers in. Nine out — including the one that says which step you're actually standing on.</p>
+</header>
+
+<main class="slaf-wrap">
+
+  <div class="notice" id="load-notice" hidden></div>
+
+  <!-- ================= INPUTS ================= -->
+  <section class="slaf-card" id="inputs">
+    <span class="slaf-eyebrow">Your numbers</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-4)">What we need</h2>
+
+    <div class="grid-2">
+      <label class="slaf-field">
+        <span class="slaf-label">Date of birth</span>
+        <span class="slaf-input-shell"><input type="date" id="f-dob" data-field="dob"/></span>
+      </label>
+      <label class="slaf-field">
+        <span class="slaf-label">State</span>
+        <span class="slaf-input-shell"><input type="text" id="f-state" data-field="state" maxlength="2" placeholder="e.g. NC" autocomplete="off" spellcheck="false"/></span>
+      </label>
+    </div>
+
+    <label class="slaf-field">
+      <span class="slaf-label">Gross annual income</span>
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="f-income" data-field="income" placeholder="e.g. 72000"/></span>
+      <span class="slaf-hint">Before tax, before deductions. All earners in the household.</span>
+    </label>
+
+    <label class="slaf-field">
+      <span class="slaf-label">Filing status</span>
+      <span class="slaf-input-shell">
+        <select id="f-filing" data-field="filingStatus">
+          <option value="">Choose one…</option>
+          <option value="single">Single</option>
+          <option value="married_joint">Married, filing jointly</option>
+          <option value="married_separate">Married, filing separately</option>
+          <option value="head_of_household">Head of household</option>
+        </select>
+      </span>
+    </label>
+
+    <div class="grid-2">
+      <label class="slaf-field">
+        <span class="slaf-label">Cash &amp; savings</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="f-cash" data-field="cash" placeholder="e.g. 9500"/></span>
+      </label>
+      <label class="slaf-field">
+        <span class="slaf-label">Investments + retirement</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="f-investments" data-field="investments" placeholder="e.g. 48000"/></span>
+      </label>
+    </div>
+    <p class="slaf-hint" style="margin-top:calc(var(--space-3) * -1); margin-bottom:var(--space-3)">Kept apart on purpose — your runway is measured on cash alone.</p>
+
+    <div class="grid-2">
+      <label class="slaf-field">
+        <span class="slaf-label">Total debt balance</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="f-debt-balance" data-field="debtBalance" placeholder="e.g. 21600"/></span>
+      </label>
+      <label class="slaf-field">
+        <span class="slaf-label">Average interest rate</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="f-debt-rate" data-field="debtRate" placeholder="e.g. 8"/><span class="slaf-affix">%</span></span>
+      </label>
+    </div>
+    <p class="slaf-hint" style="margin-top:calc(var(--space-3) * -1); margin-bottom:var(--space-3)">Enter 0 if you have none. A weighted average is fine here — the debt tools will ask for each loan separately.</p>
+
+    <div class="grid-2">
+      <label class="slaf-field">
+        <span class="slaf-label">Monthly debt payments</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="f-debt-payments" data-field="debtPayments" placeholder="e.g. 305"/></span>
+      </label>
+      <label class="slaf-field">
+        <span class="slaf-label">Monthly expenses</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="f-expenses" data-field="expenses" placeholder="e.g. 3150"/></span>
+      </label>
+    </div>
+    <p class="slaf-hint" style="margin-top:calc(var(--space-3) * -1); margin-bottom:var(--space-3)">Minimums only on the left. Everything you actually spend in a month on the right.</p>
+
+    <div class="grid-2">
+      <label class="slaf-field">
+        <span class="slaf-label">Employer match</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="f-match-percent" data-field="matchPercent" placeholder="e.g. 50"/><span class="slaf-affix">%</span></span>
+      </label>
+      <label class="slaf-field">
+        <span class="slaf-label">…up to this much of pay</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="f-match-cap" data-field="matchCap" placeholder="e.g. 6"/><span class="slaf-affix">%</span></span>
+      </label>
+    </div>
+    <p class="slaf-hint" style="margin-top:calc(var(--space-3) * -1); margin-bottom:var(--space-3)">“50% of the first 6%” is 50 on the left, 6 on the right. Enter 0 and 0 if there's no match.</p>
+
+    <label class="slaf-field" id="capturing-field" hidden>
+      <span class="slaf-label">Are you contributing enough to get all of it?</span>
+      <span class="slaf-input-shell">
+        <select id="f-capturing" data-field="capturingFullMatch">
+          <option value="">Not sure / haven't checked</option>
+          <option value="yes">Yes, I get the full match</option>
+          <option value="no">No, I'm leaving some of it</option>
+        </select>
+      </span>
+      <span class="slaf-hint">The ladder can't judge step 2 without this — an unanswered question isn't scored as a failure.</span>
+    </label>
+
+    <div class="actions">
+      <button type="button" class="slaf-btn" id="btn-demo">Try with example numbers</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Clear everything</button>
+    </div>
+  </section>
+
+  <!-- ================= OUTPUTS ================= -->
+
+  <section class="slaf-card" id="out-net-worth">
+    <div class="out-head"><span class="slaf-eyebrow">Net worth</span></div>
+    <div class="slaf-figure" data-figure>—</div>
+    <p class="slaf-reason" data-reason></p>
+    <div data-detail></div>
+  </section>
+
+  <section class="slaf-card" id="out-savings-rate">
+    <div class="out-head"><span class="slaf-eyebrow">Savings rate</span></div>
+    <div class="variant-row">
+      <span class="variant-label">Excluding employer match</span>
+      <span class="variant-value" id="sr-excluding">—</span>
+    </div>
+    <div class="variant-row">
+      <span class="variant-label">Including employer match</span>
+      <span class="variant-value" id="sr-including">—</span>
+    </div>
+    <p class="slaf-reason" data-reason></p>
+    <div data-detail></div>
+  </section>
+
+  <section class="slaf-card" id="out-emergency-fund">
+    <div class="out-head"><span class="slaf-eyebrow">Emergency fund coverage</span></div>
+    <div class="slaf-figure" data-figure>—</div>
+    <p class="slaf-reason" data-reason></p>
+    <div data-detail></div>
+  </section>
+
+  <section class="slaf-card" id="out-dti">
+    <div class="out-head"><span class="slaf-eyebrow">Debt-to-income</span></div>
+    <div class="slaf-figure" data-figure>—</div>
+    <p class="slaf-reason" data-reason></p>
+    <div data-detail></div>
+  </section>
+
+  <section class="slaf-card" id="out-fire">
+    <div class="out-head"><span class="slaf-eyebrow">FIRE number</span></div>
+    <div class="slaf-figure" data-figure>—</div>
+    <p class="slaf-reason" data-reason></p>
+    <div data-detail></div>
+  </section>
+
+  <section class="slaf-card" id="out-fire-progress">
+    <div class="out-head"><span class="slaf-eyebrow">FIRE progress</span></div>
+    <div class="slaf-figure" data-figure>—</div>
+    <div class="slaf-bar" style="margin-top:var(--space-3)"><span id="fire-bar" style="width:0"></span></div>
+    <p class="slaf-reason" data-reason></p>
+    <div data-detail></div>
+  </section>
+
+  <section class="slaf-card" id="out-percentile">
+    <div class="out-head"><span class="slaf-eyebrow">Net worth percentile</span></div>
+    <div class="slaf-figure" data-figure>—</div>
+    <p class="slaf-reason" data-reason></p>
+    <div data-detail></div>
+  </section>
+
+  <section class="slaf-card" id="out-retirement">
+    <div class="out-head"><span class="slaf-eyebrow">Retirement benchmark</span></div>
+    <div class="slaf-figure" data-figure>—</div>
+    <p class="slaf-reason" data-reason></p>
+    <div data-detail></div>
+  </section>
+
+  <section class="slaf-card" id="out-foo">
+    <div class="out-head"><span class="slaf-eyebrow">Where you are on the ladder</span></div>
+    <div class="slaf-figure" data-figure>—</div>
+    <p class="slaf-reason" data-reason></p>
+    <ol class="ladder" id="ladder-list"></ol>
+  </section>
+
+  <section class="slaf-card" id="out-flags">
+    <div class="out-head"><span class="slaf-eyebrow">Out of bounds</span></div>
+    <div id="flags-body"><p class="slaf-reason">Nothing to flag yet.</p></div>
+  </section>
+
+  <div class="actions">
+    <button type="button" class="slaf-btn slaf-btn--primary" id="btn-snapshot">Save a snapshot</button>
+    <span class="slaf-hint" id="snapshot-note" style="align-self:center"></span>
+  </div>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Tax rates, percentile bands and
+    contribution limits are approximations — see <code>data/</code> for what
+    each one is actually worth. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/demo-persona.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/foo.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Demo = SLAF.DemoPersona,
+      Tier0 = SLAF.Tier0, Foo = SLAF.Foo;
+
+  var ROOM_ID = 'financial-snapshot';
+  var TABLES = null;
+
+  /* Stable ids for the single records this room keeps inside the itemised
+     arrays. Using fixed ids means editing a field updates that record
+     rather than appending a duplicate. */
+  var CASH_ID = 'tier0_cash';
+  var INVEST_ID = 'tier0_investments';
+  var DEBT_ID = 'tier0_debt_lump';
+  var INCOME_ID = 'tier0_income_primary';
+
+  /* ---------- reading the household ------------------------------------ */
+
+  function primary(h) { return Schema.primaryPerson(h); }
+
+  function incomeSource(h) {
+    var p = primary(h);
+    if (!p) return null;
+    for (var i = 0; i < p.incomeSources.length; i++) {
+      if (p.incomeSources[i].id === INCOME_ID) return p.incomeSources[i];
+    }
+    return p.incomeSources[0] || null;
+  }
+
+  function findById(list, id) {
+    for (var i = 0; i < (list || []).length; i++) { if (list[i].id === id) return list[i]; }
+    return null;
+  }
+
+  /* ---------- writing raw inputs ---------------------------------------- */
+
+  function ensurePerson() { return Spine.ensurePrimaryPerson('You'); }
+
+  function writeAsset(id, category, liquid, cents) {
+    var person = ensurePerson();
+    Spine.upsertAsset({
+      id: id,
+      label: category === 'cash' ? 'Cash & savings' : 'Investments + retirement',
+      category: category, valueCents: cents, liquid: liquid, ownerIds: [person.id]
+    });
+  }
+
+  function writeDebtPart(part, value) {
+    var person = ensurePerson();
+    var existing = findById(Spine.getProfile().debts, DEBT_ID) || {};
+    var record = {
+      id: DEBT_ID,
+      label: 'All debt (entered as a total)',
+      balanceCents: existing.balanceCents === undefined ? null : existing.balanceCents,
+      rate: existing.rate === undefined ? null : existing.rate,
+      minPaymentCents: existing.minPaymentCents === undefined ? null : existing.minPaymentCents,
+      type: 'other',
+      ownerIds: [person.id]
+    };
+    record[part] = value;
+    Spine.upsertDebt(record);
+  }
+
+  function writeIncomePart(part, value) {
+    var person = ensurePerson();
+    var existing = incomeSource(Spine.getProfile()) || {};
+    var match = Object.assign({ matchPercent: null, matchCapPercentOfSalary: null },
+      existing.employerMatch || {});
+    var record = {
+      id: INCOME_ID,
+      source: 'Household income',
+      grossAnnualIncomeCents: existing.grossAnnualIncomeCents === undefined ? null : existing.grossAnnualIncomeCents,
+      frequency: 'annual',
+      type: 'w2',
+      employerMatch: match
+    };
+    if (part === 'matchPercent' || part === 'matchCapPercentOfSalary') record.employerMatch[part] = value;
+    else record[part] = value;
+    Spine.upsertIncomeSource(person.id, record);
+  }
+
+  /* ---------- field table -----------------------------------------------
+     One entry per input: how to read it out of the household, how to write
+     it back, and how to parse and format the text.                       */
+
+  var FIELDS = {
+    dob: {
+      el: 'f-dob', kind: 'raw',
+      read: function (h) { var p = primary(h); return p && p.dob ? p.dob : ''; },
+      write: function (v) {
+        var person = ensurePerson();
+        Spine.upsertPerson({ id: person.id, dob: v === '' ? null : v });
+      }
+    },
+    state: {
+      el: 'f-state', kind: 'raw',
+      read: function (h) { return h.state || ''; },
+      write: function (v) {
+        var clean = String(v || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
+        SLAF.Spine.updateProfile({ state: clean === '' ? null : clean });
+        return clean;
+      }
+    },
+    filingStatus: {
+      el: 'f-filing', kind: 'raw',
+      read: function (h) { return h.filingStatus || ''; },
+      write: function (v) { Spine.updateProfile({ filingStatus: v === '' ? null : v }); }
+    },
+    income: {
+      el: 'f-income', kind: 'money',
+      read: function (h) { var s = incomeSource(h); return s ? s.grossAnnualIncomeCents : null; },
+      write: function (cents) { writeIncomePart('grossAnnualIncomeCents', cents); }
+    },
+    cash: {
+      el: 'f-cash', kind: 'money',
+      read: function (h) { var a = findById(h.assets, CASH_ID); return a ? a.valueCents : null; },
+      write: function (cents) { writeAsset(CASH_ID, 'cash', true, cents); }
+    },
+    investments: {
+      el: 'f-investments', kind: 'money',
+      read: function (h) { var a = findById(h.assets, INVEST_ID); return a ? a.valueCents : null; },
+      write: function (cents) { writeAsset(INVEST_ID, 'investment', false, cents); }
+    },
+    debtBalance: {
+      el: 'f-debt-balance', kind: 'money',
+      read: function (h) { var d = findById(h.debts, DEBT_ID); return d ? d.balanceCents : null; },
+      write: function (cents) { writeDebtPart('balanceCents', cents); }
+    },
+    debtRate: {
+      el: 'f-debt-rate', kind: 'percent',
+      read: function (h) { var d = findById(h.debts, DEBT_ID); return d ? d.rate : null; },
+      write: function (rate) { writeDebtPart('rate', rate); }
+    },
+    debtPayments: {
+      el: 'f-debt-payments', kind: 'money',
+      read: function (h) { var d = findById(h.debts, DEBT_ID); return d ? d.minPaymentCents : null; },
+      write: function (cents) { writeDebtPart('minPaymentCents', cents); }
+    },
+    expenses: {
+      el: 'f-expenses', kind: 'money',
+      read: function (h) { return h.expenses.monthlyEssential.estimatedValueCents; },
+      write: function (cents) { Spine.setMonthlyExpenses(cents, 'estimated'); }
+    },
+    matchPercent: {
+      el: 'f-match-percent', kind: 'percent',
+      read: function (h) { var s = incomeSource(h); return s ? s.employerMatch.matchPercent : null; },
+      write: function (rate) { writeIncomePart('matchPercent', rate); }
+    },
+    matchCap: {
+      el: 'f-match-cap', kind: 'percent',
+      read: function (h) { var s = incomeSource(h); return s ? s.employerMatch.matchCapPercentOfSalary : null; },
+      write: function (rate) { writeIncomePart('matchCapPercentOfSalary', rate); }
+    },
+    capturingFullMatch: {
+      el: 'f-capturing', kind: 'raw',
+      read: function (h) {
+        if (h.capturingFullMatch === true) return 'yes';
+        if (h.capturingFullMatch === false) return 'no';
+        return '';
+      },
+      write: function (v) {
+        Spine.updateProfile({ capturingFullMatch: v === 'yes' ? true : (v === 'no' ? false : null) });
+      }
+    }
+  };
+
+  /* ---------- input wiring ----------------------------------------------
+     Currency and percent format on BLUR, never on keystroke (SPEC.md §5.5).
+     An empty box stays empty — it is never backfilled with a zero.      */
+
+  function el(id) { return document.getElementById(id); }
+
+  function displayValue(field, stored) {
+    if (!Money.isEntered(stored)) return '';
+    if (field.kind === 'money') return Money.formatCents(stored);
+    if (field.kind === 'percent') return Money.formatRate(stored, { decimals: 2 }).replace(/\.?0+%$/, '%');
+    return stored;
+  }
+
+  function editValue(field, stored) {
+    if (!Money.isEntered(stored)) return '';
+    if (field.kind === 'money') return String(stored / 100);
+    if (field.kind === 'percent') return String(Math.round(stored * 10000) / 100);
+    return stored;
+  }
+
+  var suspendRender = false;
+
+  function wireField(name) {
+    var field = FIELDS[name];
+    var node = el(field.el);
+    if (!node) return;
+
+    if (field.kind === 'raw') {
+      node.addEventListener('change', function () {
+        suspendRender = true;
+        var written = field.write(node.value);
+        if (typeof written === 'string') node.value = written;
+        suspendRender = false;
+        render();
+      });
+      return;
+    }
+
+    /* Show the bare number while editing so a caret never lands mid-symbol. */
+    node.addEventListener('focus', function () {
+      var stored = field.read(Spine.getProfile());
+      node.value = editValue(field, stored);
+      node.select();
+    });
+
+    node.addEventListener('blur', function () {
+      var parsed = field.kind === 'money'
+        ? Money.parseMoney(node.value)
+        : Money.parseRatePercent(node.value);
+      suspendRender = true;
+      field.write(parsed);
+      suspendRender = false;
+      node.value = displayValue(field, parsed);
+      render();
+    });
+
+    /* Enter commits, so a phone keyboard's "done" behaves like tabbing out. */
+    node.addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter') { evt.preventDefault(); node.blur(); }
+    });
+  }
+
+  function paintInputs(h) {
+    Object.keys(FIELDS).forEach(function (name) {
+      var field = FIELDS[name];
+      var node = el(field.el);
+      if (!node || node === document.activeElement) return;
+      var stored = field.read(h);
+      node.value = field.kind === 'raw' ? (stored || '') : displayValue(field, stored);
+    });
+
+    /* The capturing-the-match question only makes sense once a match exists. */
+    var src = incomeSource(h);
+    var hasMatch = src && Money.isEntered(src.employerMatch.matchPercent)
+      && Money.isEntered(src.employerMatch.matchCapPercentOfSalary)
+      && src.employerMatch.matchPercent > 0
+      && src.employerMatch.matchCapPercentOfSalary > 0;
+    el('capturing-field').hidden = !hasMatch;
+  }
+
+  /* ---------- output rendering ------------------------------------------
+     One helper for every card, so the "em dash plus a reason, never a fake
+     zero" rule is implemented exactly once.                              */
+
+  function setCard(sectionId, result, formatter, detailHtml) {
+    var section = el(sectionId);
+    var figure = section.querySelector('[data-figure]');
+    var reason = section.querySelector('[data-reason]');
+    var detail = section.querySelector('[data-detail]');
+
+    if (figure) {
+      var isOk = Money.isOk(result);
+      figure.textContent = isOk ? formatter(result.value) : Money.EM_DASH;
+      figure.classList.toggle('slaf-figure--incomplete', !isOk);
+      figure.classList.toggle('slaf-figure--negative', isOk && result.value < 0);
+    }
+    if (reason) {
+      reason.textContent = Money.isOk(result) ? '' : (result.reason || '');
+      reason.hidden = Money.isOk(result);
+    }
+    if (detail) {
+      detail.innerHTML = Money.isOk(result) && detailHtml ? detailHtml : '';
+      detail.className = 'out-detail';
+    }
+  }
+
+  function dl(rows) {
+    return '<dl>' + rows.map(function (r) {
+      return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+    }).join('') + '</dl>';
+  }
+
+  function renderNetWorth(r) {
+    var detail = '';
+    if (Money.isOk(r)) {
+      var assets = r.totalAssetsCents, debt = r.totalDebtCents;
+      var scale = Math.max(assets, debt, 1);
+      detail = '<div class="stack-bar">'
+        + '<i style="width:' + (assets / scale * 100) + '%;background:var(--color-accent)"></i>'
+        + '</div>'
+        + '<div class="stack-bar" style="margin-top:var(--space-1)">'
+        + '<i style="width:' + (debt / scale * 100) + '%;background:var(--color-critical)"></i>'
+        + '</div>'
+        + '<div class="stack-key">'
+        + '<span style="color:var(--sapphire-300)">Assets ' + Money.formatCents(assets) + '</span>'
+        + '<span style="color:var(--color-critical)">Debt ' + Money.formatCents(debt) + '</span>'
+        + '</div>';
+    }
+    setCard('out-net-worth', r, function (v) { return Money.formatCents(v); }, detail);
+  }
+
+  function renderSavingsRate(rates) {
+    var section = el('out-savings-rate');
+    var reason = section.querySelector('[data-reason]');
+    var detail = section.querySelector('[data-detail]');
+
+    [['sr-excluding', rates.excludingMatch], ['sr-including', rates.includingMatch]]
+      .forEach(function (pair) {
+        var node = el(pair[0]), res = pair[1];
+        var isOk = Money.isOk(res);
+        node.textContent = isOk ? Money.formatRate(res.value, { decimals: 1 }) : Money.EM_DASH;
+        node.classList.toggle('is-incomplete', !isOk);
+        node.title = isOk ? '' : (res.reason || '');
+      });
+
+    var primaryResult = rates.excludingMatch;
+    reason.textContent = Money.isOk(primaryResult) ? '' : (primaryResult.reason || '');
+    reason.hidden = Money.isOk(primaryResult);
+
+    if (Money.isOk(primaryResult)) {
+      detail.className = 'out-detail';
+      detail.innerHTML = dl([
+        ['Gross income', Money.formatCents(primaryResult.grossAnnualIncomeCents)],
+        ['Expenses (12 mo)', Money.formatCents(primaryResult.annualExpensesCents)],
+        ['Estimated tax at ' + Money.formatRate(primaryResult.effectiveRate),
+          Money.formatCents(primaryResult.estimatedTaxCents)],
+        ['Left over', Money.formatCents(primaryResult.annualSavingsCents)]
+      ]) + '<p class="slaf-reason">Tax is an estimate from a flat effective-rate table '
+        + '(' + primaryResult.referenceVersion + '), not a return.</p>';
+    } else {
+      detail.innerHTML = '';
+    }
+  }
+
+  function renderFireProgress(r) {
+    var detail = '';
+    if (Money.isOk(r)) {
+      var eta = r.timeToFire;
+      var etaText = Money.isOk(eta)
+        ? (eta.value === 0 ? 'You’re already there.' : 'About ' + eta.value + ' year' + (eta.value === 1 ? '' : 's') + ' at these assumptions.')
+        : (eta.reason || '');
+      detail = dl([
+        ['Invested', Money.formatCents(r.investmentsCents)],
+        ['Target', Money.formatCents(r.fireNumberCents)]
+      ]) + '<p class="slaf-reason">' + etaText
+        + (Money.isOk(eta) && eta.value > 0
+            ? ' Assumes ' + Money.formatRate(eta.expectedReturnRate) + ' returns and '
+              + Money.formatCents(eta.annualContributionCents) + '/yr invested'
+              + (eta.contributionBasis === 'includingMatch' ? ', employer match included.' : '.')
+            : '')
+        + '</p>';
+    }
+    el('fire-bar').style.width = (Money.isOk(r) ? Math.min(100, Math.max(0, r.value * 100)) : 0) + '%';
+    setCard('out-fire-progress', r, function (v) {
+      return Money.formatRate(v, { decimals: 1 });
+    }, detail);
+  }
+
+  function renderPercentile(r) {
+    var section = el('out-percentile');
+    var figure = section.querySelector('[data-figure]');
+    var reason = section.querySelector('[data-reason]');
+    var detail = section.querySelector('[data-detail]');
+
+    if (Money.isOk(r)) {
+      figure.textContent = Math.round(r.value) + 'th';
+      figure.classList.remove('slaf-figure--incomplete');
+      reason.hidden = true;
+      detail.innerHTML = '<p class="slaf-reason">Against households in the '
+        + r.bandLabel + ' age band (SCF ' + r.referenceVersion + ').</p>';
+    } else if (r.status === 'below_chart' || r.status === 'above_chart') {
+      /* Never an extrapolated percentile — say where it sits instead. */
+      figure.textContent = r.status === 'below_chart' ? 'Below chart' : 'Above chart';
+      figure.classList.add('slaf-figure--incomplete');
+      figure.style.fontSize = 'var(--text-lg)';
+      reason.hidden = false;
+      reason.textContent = r.reason;
+      detail.innerHTML = '';
+    } else {
+      figure.textContent = Money.EM_DASH;
+      figure.classList.add('slaf-figure--incomplete');
+      reason.hidden = false;
+      reason.textContent = r.reason || '';
+      detail.innerHTML = '';
+    }
+  }
+
+  function renderRetirement(r) {
+    var detail = '';
+    if (Money.isOk(r)) {
+      if (r.targetMultiple === null) {
+        detail = '<p class="slaf-reason">' + (r.targetReason || '') + '</p>';
+      } else {
+        detail = dl([
+          ['Target at ' + r.age, Money.formatMultiple(r.targetMultiple)],
+          [r.onTrack ? 'Ahead by' : 'Short by',
+            Money.formatCents(Math.abs(r.shortfallCents))]
+        ]);
+      }
+    }
+    setCard('out-retirement', r, function (v) { return Money.formatMultiple(v); }, detail);
+  }
+
+  function renderFoo(foo) {
+    var section = el('out-foo');
+    var figure = section.querySelector('[data-figure]');
+    var reason = section.querySelector('[data-reason]');
+    var list = el('ladder-list');
+    list.innerHTML = '';
+
+    if (!foo || !foo.steps.length) {
+      figure.textContent = Money.EM_DASH;
+      figure.classList.add('slaf-figure--incomplete');
+      reason.hidden = false;
+      reason.textContent = 'Fill in your numbers above to place yourself on the ladder.';
+      return;
+    }
+
+    var stopped = foo.stoppedAt;
+    if (foo.placement) {
+      figure.textContent = 'Step ' + foo.placement.step;
+      figure.classList.remove('slaf-figure--incomplete');
+      reason.hidden = false;
+      reason.textContent = foo.placement.label;
+    } else {
+      figure.textContent = Money.EM_DASH;
+      figure.classList.add('slaf-figure--incomplete');
+      reason.hidden = false;
+      reason.textContent = stopped && stopped.detail
+        ? stopped.detail
+        : 'One more input and we can place you.';
+    }
+
+    var ladder = TABLES.fooRules.ladder;
+    foo.steps.forEach(function (step) {
+      var entry = null;
+      for (var i = 0; i < ladder.length; i++) { if (ladder[i].key === step.key) { entry = ladder[i]; break; } }
+      var li = document.createElement('li');
+      li.className = step.status;
+      var mark = step.status === 'met' ? '✓' : (step.status === 'unmet' ? '→' : '?');
+      var label = entry ? entry.label : step.key;
+      li.innerHTML = '<span class="mark">' + mark + '</span><span>' + label
+        + (step.status === 'unknown' && step.detail
+            ? '<span class="why">' + step.detail + '</span>' : '')
+        + '</span>';
+      list.appendChild(li);
+    });
+  }
+
+  function renderFlags(flags) {
+    var body = el('flags-body');
+    if (!flags || !flags.length) {
+      body.innerHTML = '<p class="slaf-reason">Nothing flagged. Either everything’s in order, or there isn’t enough entered yet to tell.</p>';
+      return;
+    }
+    body.innerHTML = flags.map(function (f) {
+      return '<div class="slaf-flag' + (f.severity === 'critical' ? ' slaf-flag--critical' : '') + '">'
+        + '<strong>' + f.label + '</strong><br/>' + f.guidance + '</div>';
+    }).join('');
+  }
+
+  /* ---------- the render pass ------------------------------------------- */
+
+  function render() {
+    if (suspendRender) return;
+    var h = Spine.getProfile();
+    paintInputs(h);
+    if (!TABLES) return;
+
+    var all = Tier0.computeAll(h, TABLES);
+
+    renderNetWorth(all.netWorth);
+    renderSavingsRate({
+      excludingMatch: all.savingsRateExcludingMatch,
+      includingMatch: all.savingsRateIncludingMatch
+    });
+    setCard('out-emergency-fund', all.emergencyFundMonths,
+      function (v) { return Money.formatMonths(v); },
+      Money.isOk(all.emergencyFundMonths)
+        ? dl([['Cash', Money.formatCents(all.emergencyFundMonths.cashCents)],
+              ['Monthly expenses', Money.formatCents(all.emergencyFundMonths.monthlyExpensesCents)]])
+        : '');
+    setCard('out-dti', all.debtToIncome,
+      function (v) { return Money.formatRate(v, { decimals: 1 }); },
+      Money.isOk(all.debtToIncome)
+        ? dl([['Monthly payments', Money.formatCents(all.debtToIncome.monthlyDebtPaymentsCents)],
+              ['Monthly gross income', Money.formatCents(all.debtToIncome.monthlyGrossIncomeCents)]])
+          + '<p class="slaf-reason">Lenders generally treat 36% as the top of the comfortable range.</p>'
+        : '');
+    setCard('out-fire', all.fireNumber,
+      function (v) { return Money.formatCents(v); },
+      Money.isOk(all.fireNumber)
+        ? '<p class="slaf-reason">' + Money.formatCents(all.fireNumber.annualExpensesCents)
+          + ' a year at a ' + Money.formatRate(all.fireNumber.swrRate) + ' withdrawal rate.</p>'
+        : '');
+    renderFireProgress(all.fireProgress);
+    renderPercentile(all.netWorthPercentile);
+    renderRetirement(all.retirementBenchmark);
+    renderFoo(all.foo);
+    renderFlags(all.foo ? all.foo.flags : []);
+  }
+
+  /* ---------- actions ---------------------------------------------------- */
+
+  function householdHasData(h) {
+    if (h.people.some(function (p) {
+      return p.dob || p.incomeSources.some(function (s) { return Money.isEntered(s.grossAnnualIncomeCents); });
+    })) return true;
+    if (h.assets.some(function (a) { return Money.isEntered(a.valueCents); })) return true;
+    if (h.debts.some(function (d) { return Money.isEntered(d.balanceCents); })) return true;
+    return Money.isEntered(h.expenses.monthlyEssential.estimatedValueCents);
+  }
+
+  el('btn-demo').addEventListener('click', function () {
+    if (householdHasData(Spine.getProfile())
+        && !window.confirm('This replaces what you’ve entered with the example household. Continue?')) {
+      return;
+    }
+    var demo = Demo.build();
+    Spine.reset();
+    Spine.updateProfile({
+      people: demo.people, filingStatus: demo.filingStatus, state: demo.state,
+      assets: demo.assets, debts: demo.debts, expenses: demo.expenses,
+      capturingFullMatch: demo.capturingFullMatch
+    });
+    Spine.registerRoom(ROOM_ID);
+    render();
+    el('out-net-worth').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  el('btn-clear').addEventListener('click', function () {
+    if (!window.confirm('Clear every number you’ve entered?')) return;
+    Spine.reset();
+    Spine.registerRoom(ROOM_ID);
+    render();
+  });
+
+  el('btn-snapshot').addEventListener('click', function () {
+    var h = Spine.getProfile();
+    var outputs = Tier0.computeAll(h, TABLES);
+    /* Freeze the assumptions AND the reference-table versions used right
+       now, so this snapshot never silently recomputes later. SPEC.md §6. */
+    Spine.appendSnapshot({
+      rawInputs: {
+        people: h.people, assets: h.assets, debts: h.debts,
+        expenses: h.expenses, filingStatus: h.filingStatus, state: h.state,
+        capturingFullMatch: h.capturingFullMatch
+      },
+      assumptionsUsed: Schema.resolveAssumptions(h),
+      referenceVersions: Reference.versionsOf(TABLES),
+      computedOutputs: outputs
+    });
+    var count = Spine.listSnapshots().length;
+    el('snapshot-note').textContent = count + ' snapshot' + (count === 1 ? '' : 's') + ' saved in this browser.';
+  });
+
+  /* ---------- deep links ------------------------------------------------- */
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var target = document.getElementById(location.hash.slice(1));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  /* ---------- boot ------------------------------------------------------- */
+
+  Object.keys(FIELDS).forEach(wireField);
+  Spine.registerRoom(ROOM_ID);
+  Spine.onChange(render);
+  render();
+
+  Reference.load(null, '../data/').then(function (tables) {
+    TABLES = tables;
+    render();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message
+      + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+  });
+})();
+</script>
+</body>
+</html>

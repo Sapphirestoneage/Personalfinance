@@ -197,6 +197,20 @@ section('Empty state — nothing computes, nothing shows a fake zero');
     checkTrue(`${key} explains itself`, typeof r.reason === 'string' && r.reason.length > 0);
   });
   checkTrue('empty household yields no FOO flags', all.foo.flags.length === 0);
+
+  /* An unjudgeable step is not a placement. Reporting one would tell someone
+     staring at a blank form that they are stuck on step 0. */
+  check('empty household has no FOO placement', all.foo.placement, null);
+  check('empty household stops on an unknown step', all.foo.stoppedAt.status, 'unknown');
+  checkTrue('the unknown step says what it needs',
+    typeof all.foo.stoppedAt.detail === 'string' && all.foo.stoppedAt.detail.length > 0);
+
+  /* But a genuinely unmet step still IS a placement. */
+  const stuck = Demo.build();
+  stuck.assets.find(a => a.category === 'cash').valueCents = 5000; // $50 cash
+  const stuckFoo = Foo.evaluate(stuck, TABLES);
+  check('an unmet step is reported as the placement', stuckFoo.placement.key, 'starter_ef');
+  check('placement carries its step number', stuckFoo.placement.step, 1);
 })();
 
 (function () {
@@ -358,6 +372,27 @@ section('Spine');
   const copy = Spine.getProfile();
   copy.people.push(Schema.createPerson({ label: 'ghost' }));
   check('getProfile returns a defensive copy', Spine.getProfile().people.length, 0);
+
+  /* Raw fields must survive a save/load round trip. capturingFullMatch was
+     silently dropped once because createHousehold didn't carry it, which
+     reset the FOO placement to "unknown" on every page reload. */
+  Spine.reset();
+  const demo = Demo.build();
+  Spine.updateProfile({
+    people: demo.people, filingStatus: demo.filingStatus, state: demo.state,
+    assets: demo.assets, debts: demo.debts, expenses: demo.expenses,
+    capturingFullMatch: demo.capturingFullMatch
+  });
+  const reloaded = Schema.createHousehold(JSON.parse(JSON.stringify(Spine.getProfile())));
+  check('capturingFullMatch survives a round trip', reloaded.capturingFullMatch, false);
+  check('filing status survives a round trip', reloaded.filingStatus, 'single');
+  check('debts survive a round trip', reloaded.debts.length, 2);
+  check('income survives a round trip',
+    Schema.grossAnnualIncomeCents(reloaded).value, 7200000);
+  const reFoo = Foo.evaluate(reloaded, TABLES);
+  check('FOO placement survives a round trip', reFoo.placement.step, 2);
+  check('both flags survive a round trip', reFoo.flags.length, 2);
+  Spine.reset();
 
   /* Legacy flat blobs migrate into the household shape. */
   const migrated = Spine._migrateLegacy({

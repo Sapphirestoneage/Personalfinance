@@ -56,6 +56,7 @@
   var FIELDS = {
     'household.filingStatus':                    { class: 'raw',        unit: 'enum',    values: ['single', 'married_joint', 'married_separate', 'head_of_household'] },
     'household.state':                           { class: 'raw',        unit: 'usps',    note: '2-letter state code' },
+    'household.capturingFullMatch':              { class: 'raw',        unit: 'bool',    note: 'null = not answered; needed by FOO step 2. DECISIONS.md D-008' },
     'person.dob':                                { class: 'raw',        unit: 'iso-date' },
     'person.role':                               { class: 'raw',        unit: 'enum',    values: ['adult', 'child', 'dependent', 'other'] },
     'incomeSource.grossAnnualIncomeCents':       { class: 'raw',        unit: 'cents',   period: 'annual' },
@@ -180,6 +181,11 @@
       people: f.people || [],
       filingStatus: f.filingStatus === undefined ? null : f.filingStatus,
       state: f.state === undefined ? null : f.state,
+      /* Raw, and nullable in three states: true / false / not answered.
+         Needed by FOO step 2, which Tier 0's ten inputs cannot otherwise
+         judge. See DECISIONS.md D-008. Listed here rather than only being
+         attached ad hoc, so it survives a save/load round trip. */
+      capturingFullMatch: f.capturingFullMatch === undefined ? null : f.capturingFullMatch,
       assets: f.assets || [],
       debts: f.debts || [],
       expenses: {

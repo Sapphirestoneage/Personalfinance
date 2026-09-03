@@ -107,10 +107,10 @@
           trackedValueCents: null
         }
       },
+      capturingFullMatch: VALUES.capturingFullMatch,
       meta: { isDemo: true }
     });
 
-    household.capturingFullMatch = VALUES.capturingFullMatch;
     return household;
   }
 

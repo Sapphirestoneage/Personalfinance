@@ -293,8 +293,10 @@
     var last = steps[steps.length - 1];
 
     var placement = null;
-    if (last && last.status !== 'met') {
-      /* The ladder entry whose key matches the stopping step. */
+    /* Only an UNMET step is a placement. A step we couldn't judge is not
+       "where you are" — reporting it as one would tell someone with an
+       empty form that they're stuck on step 0. */
+    if (last && last.status === 'unmet') {
       for (var i = 0; i < rules.ladder.length; i++) {
         if (rules.ladder[i].key === last.key) { placement = rules.ladder[i]; break; }
       }
