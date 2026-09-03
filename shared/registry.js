@@ -125,8 +125,24 @@
       ]
     },
     {
-      id: 'foo-ladder',
+      id: 'quick-math',
       order: 7,
+      title: 'Quick Math',
+      blurb: 'Four small answers: is switching savings accounts worth it, what that thing costs per use, whether you can afford the car, and the rule of five.',
+      href: 'rooms/quick-math.html',
+      tier: 1,
+      tags: ['cashflow'],
+      subsections: [
+        { id: 'hysa',    label: 'Switching savings accounts' },
+        { id: 'peruse',  label: 'Cost per use' },
+        { id: 'car',     label: 'The 20/3/8 rule' },
+        { id: 'five',    label: 'The rule of five' },
+        { id: 'reading', label: 'Reading from elsewhere' }
+      ]
+    },
+    {
+      id: 'foo-ladder',
+      order: 8,
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
       href: 'index.html',

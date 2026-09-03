@@ -109,8 +109,61 @@
       ['annualContributionCents']);
   }
 
+  /* ---- Level-payment loans ----------------------------------------------
+     A fixed payment over a fixed term with no extra payments HAS a closed
+     form, and using it here is correct — unlike the payoff simulation in
+     engines/debt.js, where a freed-up minimum rolls onto the next debt and
+     no closed form exists. Both live in the codebase on purpose; this is the
+     simple case and that is the general one.                              */
+
+  /** The level monthly payment that clears `principalCents` over `months`. */
+  function levelPaymentCents(opts) {
+    var o = opts || {};
+    var missing = Money.missingFrom({
+      principalCents: o.principalCents, annualRate: o.annualRate, months: o.months
+    });
+    if (missing.length) {
+      return Money.incomplete('Need an amount, a rate and a term.', missing);
+    }
+    if (o.months <= 0) return Money.incomplete('A term needs to be at least a month.', ['months']);
+    if (o.principalCents <= 0) return Money.ok(0, { interestFreeCents: 0 });
+
+    var r = o.annualRate / 12;
+    /* At 0% it is simply the amount split evenly. */
+    var exact = r === 0
+      ? o.principalCents / o.months
+      : (o.principalCents * r) / (1 - Math.pow(1 + r, -o.months));
+    /* Totals come from the payment you actually make, not the unrounded one.
+       A cent of rounding times 36 months is a real difference, and the
+       figure has to reconcile with the payment shown beside it. */
+    var payment = Math.round(exact);
+    return Money.ok(payment, {
+      totalPaidCents: payment * o.months,
+      totalInterestCents: payment * o.months - o.principalCents
+    });
+  }
+
+  /** The most you could borrow at `paymentCents` a month over `months`. */
+  function principalForPaymentCents(opts) {
+    var o = opts || {};
+    var missing = Money.missingFrom({
+      paymentCents: o.paymentCents, annualRate: o.annualRate, months: o.months
+    });
+    if (missing.length) {
+      return Money.incomplete('Need a payment, a rate and a term.', missing);
+    }
+    if (o.months <= 0) return Money.incomplete('A term needs to be at least a month.', ['months']);
+    var r = o.annualRate / 12;
+    var principal = r === 0
+      ? o.paymentCents * o.months
+      : o.paymentCents * (1 - Math.pow(1 + r, -o.months)) / r;
+    return Money.ok(Math.round(principal));
+  }
+
   return {
     DEFAULT_MAX_YEARS: DEFAULT_MAX_YEARS,
+    levelPaymentCents: levelPaymentCents,
+    principalForPaymentCents: principalForPaymentCents,
     futureValueCents: futureValueCents,
     presentValueNeededCents: presentValueNeededCents,
     yearsToTargetCents: yearsToTargetCents

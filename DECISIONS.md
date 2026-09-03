@@ -792,6 +792,48 @@ and Prospective Worth should call rather than re-deriving a rate.
 
 ---
 
+## D-022 — the one-line calculators share a room, and one is not built
+**2026-09-03 · SPEC.md §13**
+
+§13 asks, of the Rule of Five / $30k–$90k / 20-3-8 group, whether they should
+be "standalone mini-calculators vs. inline annotations". Answer: neither
+extreme. A page holding a single division is not a tool, and burying these
+inline hides them. They share `rooms/quick-math.html` — four small answers,
+each independently complete or incomplete.
+
+**Built:** HYSA Switch, cost-per-use (§13's Girl Math / Lifetime Value),
+the 20/3/8 car rule, and the Rule of Five.
+
+**Not built: the "$30k–$90k Rule".** I could not establish what it actually
+states, and a threshold people would plan a car purchase around is not
+something to infer from a name. It is the one item in this batch left out on
+purpose — `CLAUDE.md` says stop and ask rather than guess, and this is that
+case. **Eli: what is the rule?**
+
+Three things worth recording about the implementations:
+
+- **The HYSA answer nets the friction, not just the spread.** The spread
+  alone is one multiplication and slightly dishonest: money in transit earns
+  the old rate's worth of nothing, and a transfer fee is real. The room shows
+  the year-one figure after both, the break-even in days, and the ongoing
+  annual gain separately, because those are three different questions.
+- **20/3/8 reports each leg separately**, because failing one is a very
+  different situation from failing all three, and each failure states its own
+  remedy in the units you would act in — "$3,000 more would do it",
+  "60 months is 24 too many", "$535/mo is $55 over the cap".
+- **Both heuristics print their own rule** next to the answer. They are rules
+  of thumb, not laws, and a reader deserves to see the standard they are
+  being measured against so they can disagree with it deliberately.
+
+**A rounding bug this batch surfaced.** `levelPaymentCents` computed the
+total interest from the *unrounded* payment while displaying the rounded one,
+so a loan's payment and its total did not reconcile — off by 5 cents on a
+$20,000 car loan, and more on a mortgage. Totals now derive from the payment
+you actually make. Caught by a test asserting `payment × months − principal`,
+which is the arithmetic a reader would do themselves.
+
+---
+
 ## Still open
 
 - **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the
@@ -803,6 +845,9 @@ and Prospective Worth should call rather than re-deriving a rate.
 - **`student-loan-decision`** appears in §0, §1 and §5.1 as shipped, but in
   no part of the §13 tool specification. If it is to be rebuilt it needs a
   spec.
+- **What is the "$30k–$90k Rule"?** Named in `SPEC.md` §13 but never defined
+  there, and not inferable from the name. Everything else in that group is
+  built; this one is blocked on Eli. See D-022.
 - **Reference-table refresh** — see D-009 for what each table's numbers are
   actually worth today. The effective-tax-rate bands and the SCF percentile
   breakpoints are the two that most need a primary-source pass before any

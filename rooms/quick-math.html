@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Quick Math · SPARKS</title>
+<meta name="description" content="Four small answers: is switching savings accounts worth it, what does that thing cost per use, can you afford the car, and the rule of five."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11.
+
+  1. READS   grossAnnualIncome and cashSavings (both owned by Start Here).
+  2. WRITES  Nothing. Every input here is about a specific one-off decision —
+             a price, a rate you were offered — and belongs to the question
+             being asked, not to the household.
+  3. CALLS   engines/quickmath.js, which uses engines/projection.js for the
+             loan payment. No formula is written in this file.
+  4. EMPTY   Each of the four answers independently says what it still needs.
+             One being blank never blocks the others.
+  5. CONFIG  None. These are heuristics, and the two that carry a stated rule
+             (20/3/8 and the Rule of Five) print it next to the answer.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-2); align-items: stretch; }
+  @media (max-width: 380px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  .answer { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-3); }
+  .answer.is-incomplete { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-base); }
+  .answer.good { color: var(--color-positive); }
+  .answer.bad { color: var(--color-caution); }
+
+  .out-detail { margin-top: var(--space-2); font-size: var(--text-sm); }
+  .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  .out-detail dt { color: var(--color-text-faint); }
+  .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  ul.legs { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ul.legs li { display: flex; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  ul.legs li:first-child { border-top: none; }
+  ul.legs .mark { width: 1.4em; flex-shrink: 0; text-align: center; font-weight: 600; }
+  ul.legs .pass .mark { color: var(--color-positive); }
+  ul.legs .fail .mark { color: var(--color-caution); }
+  ul.legs .why { display: block; color: var(--color-text-faint); font-size: var(--text-xs); margin-top: 2px; }
+
+  .rule-statement { font-size: var(--text-sm); color: var(--color-text-muted); font-style: italic; margin: var(--space-2) 0 0; }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Quick Math</h1>
+  <p class="room-lede">Four small answers that don't need a whole room each.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="hysa">
+    <span class="slaf-eyebrow">Switching savings accounts</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Is it worth moving?</h2>
+    <div class="grid-3">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Balance</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="h-balance" placeholder="e.g. 9500" aria-label="Balance"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Rate now</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="h-old" placeholder="e.g. 0.5" aria-label="Current rate"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">New rate</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="h-new" placeholder="e.g. 4.5" aria-label="New rate"/><span class="slaf-affix">%</span></span></label>
+    </div>
+    <div class="grid-2" style="margin-top:var(--space-2)">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Days in transit</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="h-days" placeholder="e.g. 5" aria-label="Days in transit"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Any fee to move</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="h-fee" placeholder="e.g. 0" aria-label="Fee to move"/></span></label>
+    </div>
+    <div class="answer" id="hysa-answer">—</div>
+    <div class="out-detail" id="hysa-detail"></div>
+  </section>
+
+  <section class="slaf-card" id="peruse">
+    <span class="slaf-eyebrow">Cost per use</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">What does it really cost?</h2>
+    <div class="grid-3">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">It costs</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="u-price" placeholder="e.g. 1200" aria-label="Price"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Times used</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="u-uses" placeholder="e.g. 200" aria-label="Number of uses"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Over</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="u-months" placeholder="e.g. 24" aria-label="Months owned"/><span class="slaf-affix">mo</span></span></label>
+    </div>
+    <div class="answer" id="use-answer">—</div>
+    <div class="out-detail" id="use-detail"></div>
+  </section>
+
+  <section class="slaf-card" id="car">
+    <span class="slaf-eyebrow">The 20/3/8 rule</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Can you afford the car?</h2>
+    <div class="grid-2">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Car price</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="c-price" placeholder="e.g. 22000" aria-label="Car price"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Money down</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="c-down" placeholder="e.g. 4400" aria-label="Down payment"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Loan length</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="c-term" placeholder="36" aria-label="Loan term in months"/><span class="slaf-affix">mo</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Interest rate</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="c-rate" placeholder="e.g. 6" aria-label="Loan interest rate"/><span class="slaf-affix">%</span></span></label>
+    </div>
+    <div class="answer" id="car-answer">—</div>
+    <ul class="legs" id="car-legs"></ul>
+    <div class="out-detail" id="car-detail"></div>
+    <p class="rule-statement">20% down, paid off in 3 years, payment under 8% of gross pay.</p>
+  </section>
+
+  <section class="slaf-card" id="five">
+    <span class="slaf-eyebrow">The rule of five</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Could you buy five?</h2>
+    <label class="slaf-field"><span class="slaf-label">The thing costs</span>
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="f-price" placeholder="e.g. 2000" aria-label="Price"/></span></label>
+    <div class="answer" id="five-answer">—</div>
+    <div class="out-detail" id="five-detail"></div>
+    <p class="rule-statement" id="five-rule"></p>
+  </section>
+
+  <section class="slaf-card" id="reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. The 20/3/8 and rule-of-five
+    guidelines are rules of thumb, not laws — they're printed above so you can
+    disagree with them on purpose. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/quickmath.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
+      Q = SLAF.QuickMath;
+
+  var ROOM_ID = 'quick-math';
+  function el(id) { return document.getElementById(id); }
+
+  /* Every field here belongs to the one-off question being asked, so it is
+     room state rather than household data — nothing is written to the spine. */
+  var v = {};
+
+  function bind(id, kind) {
+    var node = el(id);
+    node.addEventListener('focus', function () {
+      var raw = v[id];
+      node.value = !Money.isEntered(raw) ? ''
+        : kind === 'money' ? String(raw / 100)
+        : kind === 'rate' ? String(Math.round(raw * 10000) / 100)
+        : String(raw);
+      node.select();
+    });
+    node.addEventListener('blur', function () {
+      var raw = node.value.trim();
+      v[id] = raw === '' ? null
+        : kind === 'money' ? Money.parseMoney(raw)
+        : kind === 'rate' ? Money.parseRatePercent(raw)
+        : (Number.isFinite(Number(raw)) ? Number(raw) : null);
+      node.value = !Money.isEntered(v[id]) ? ''
+        : kind === 'money' ? Money.formatCents(v[id])
+        : kind === 'rate' ? Money.formatRate(v[id], { decimals: 2 }).replace(/\.?0+%$/, '%')
+        : String(v[id]);
+      render();
+    });
+    node.addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter') { evt.preventDefault(); node.blur(); }
+    });
+  }
+
+  [['h-balance', 'money'], ['h-old', 'rate'], ['h-new', 'rate'], ['h-days', 'number'], ['h-fee', 'money'],
+   ['u-price', 'money'], ['u-uses', 'number'], ['u-months', 'number'],
+   ['c-price', 'money'], ['c-down', 'money'], ['c-term', 'number'], ['c-rate', 'rate'],
+   ['f-price', 'money']].forEach(function (spec) { bind(spec[0], spec[1]); });
+
+  function dl(rows) {
+    return '<dl>' + rows.map(function (r) {
+      return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+    }).join('') + '</dl>';
+  }
+
+  function setAnswer(id, result, text, tone) {
+    var node = el(id);
+    var ok = Money.isOk(result);
+    node.textContent = ok ? text : (result.reason || Money.EM_DASH);
+    node.className = 'answer' + (ok ? (tone ? ' ' + tone : '') : ' is-incomplete');
+    return ok;
+  }
+
+  function renderHysa() {
+    var r = Q.hysaSwitch({
+      balanceCents: v['h-balance'], currentApy: v['h-old'], newApy: v['h-new'],
+      daysInTransit: v['h-days'], frictionCostCents: v['h-fee']
+    });
+    var ok = setAnswer('hysa-answer', r,
+      Money.isOk(r) ? (r.firstYearNetCents >= 0 ? '+' : '−')
+        + Money.formatCents(Math.abs(r.firstYearNetCents)) + ' in year one' : '',
+      Money.isOk(r) && r.worthIt ? 'good' : 'bad');
+    if (!ok) { el('hysa-detail').innerHTML = ''; return; }
+    var rows = [
+      ['Extra interest a year', Money.formatCents(r.annualGainCents)],
+      ['Lost while it moves', '−' + Money.formatCents(r.transitCostCents)]
+    ];
+    if (r.frictionCostCents > 0) rows.push(['Fee to move', '−' + Money.formatCents(r.frictionCostCents)]);
+    if (Money.isOk(r.breakEvenDays)) {
+      rows.push(['Pays for itself in', (Math.round(r.breakEvenDays.value * 10) / 10) + ' days']);
+    }
+    rows.push(['Every year after', Money.formatCents(r.ongoingAnnualCents)]);
+    el('hysa-detail').innerHTML = dl(rows);
+  }
+
+  function renderPerUse() {
+    var r = Q.costPerUse({ priceCents: v['u-price'], uses: v['u-uses'], overMonths: v['u-months'] });
+    var ok = setAnswer('use-answer', r, Money.isOk(r) ? Money.formatCents(r.value, { decimals: 2 }) + ' a use' : '');
+    if (!ok) { el('use-detail').innerHTML = ''; return; }
+    var rows = [];
+    if (Money.isEntered(r.perMonthCents)) {
+      rows.push(['Per month you own it', Money.formatCents(r.perMonthCents)]);
+    }
+    var toTen = Q.usesToReach(r.priceCents, 1000);
+    if (Money.isOk(toTen)) rows.push(['Uses to get under $10 each', toTen.value]);
+    el('use-detail').innerHTML = rows.length ? dl(rows) : '';
+  }
+
+  function renderCar(h) {
+    var r = Q.carRule2038(h, {
+      carPriceCents: v['c-price'], downPaymentCents: v['c-down'],
+      termMonths: v['c-term'], loanRate: v['c-rate']
+    });
+    if (!Money.isOk(r)) {
+      setAnswer('car-answer', r, '');
+      el('car-legs').innerHTML = ''; el('car-detail').innerHTML = '';
+      return;
+    }
+    if (!r.priceEntered) {
+      el('car-answer').textContent = 'Up to ' + Money.formatCents(r.maxAffordablePriceCents);
+      el('car-answer').className = 'answer';
+      el('car-legs').innerHTML = '';
+      el('car-detail').innerHTML = dl([
+        ['Most you should pay a month', Money.formatCents(r.paymentCapCents)],
+        ['On gross pay of', Money.formatCents(r.monthlyGrossCents) + '/mo']
+      ]) + '<p class="slaf-reason">Enter a car above to check a specific one.</p>';
+      return;
+    }
+    el('car-answer').textContent = r.passesAll ? 'Passes all three'
+      : r.value + ' of 3 — ' + (3 - r.value) + ' to fix';
+    el('car-answer').className = 'answer ' + (r.passesAll ? 'good' : 'bad');
+
+    el('car-legs').innerHTML = r.checks.map(function (c) {
+      var why = '';
+      if (!c.pass && c.key === 'down') why = 'That is ' + Money.formatRate(c.actual, { decimals: 0 })
+        + ' down. ' + Money.formatCents(c.shortfallCents) + ' more would do it.';
+      if (!c.pass && c.key === 'term') why = c.actual + ' months is ' + (c.actual - c.target) + ' too many.';
+      if (!c.pass && c.key === 'payment') why = Money.formatCents(c.actual) + '/mo is '
+        + Money.formatCents(c.overByCents) + ' over the ' + Money.formatCents(c.target) + ' cap.';
+      return '<li class="' + (c.pass ? 'pass' : 'fail') + '">'
+        + '<span class="mark">' + (c.pass ? '✓' : '→') + '</span>'
+        + '<span>' + c.label + (why ? '<span class="why">' + why + '</span>' : '') + '</span></li>';
+    }).join('');
+
+    el('car-detail').innerHTML = dl([
+      ['Borrowing', Money.formatCents(r.loanCents)],
+      ['Monthly payment', Money.formatCents(r.monthlyPaymentCents)],
+      ['Interest over the term', Money.formatCents(r.totalInterestCents)],
+      ['The rule would allow', 'up to ' + Money.formatCents(r.maxAffordablePriceCents)]
+    ]);
+  }
+
+  function renderFive(h) {
+    var r = Q.ruleOfFive(h, v['f-price']);
+    var ok = setAnswer('five-answer', r,
+      Money.isOk(r) ? (r.passes ? 'Yes — you could buy ' + r.howManyYouCouldBuy
+                                : 'No — you could buy ' + r.howManyYouCouldBuy) : '',
+      Money.isOk(r) && r.passes ? 'good' : 'bad');
+    el('five-rule').textContent = Money.isOk(r) ? r.rule.statement : Q.RULE_OF_FIVE.statement;
+    if (!ok) { el('five-detail').innerHTML = ''; return; }
+    var rows = [
+      ['Your cash', Money.formatCents(r.cashCents)],
+      ['Five of them', Money.formatCents(r.neededCents)]
+    ];
+    if (!r.passes) rows.push(['Short by', Money.formatCents(r.shortfallCents)]);
+    el('five-detail').innerHTML = dl(rows);
+  }
+
+  function render() {
+    var h = Spine.getProfile();
+    el('reading-list').innerHTML = ['grossAnnualIncome', 'cashSavings']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+    renderHysa();
+    renderPerUse();
+    renderCar(h);
+    renderFive(h);
+  }
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  Spine.onChange(render);
+  render();
+  jumpToHash();
+})();
+</script>
+</body>
+</html>

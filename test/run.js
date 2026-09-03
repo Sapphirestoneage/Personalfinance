@@ -34,6 +34,7 @@ const Ownership = require(path.join(ROOT, 'shared/ownership.js'));
 const Fire = require(path.join(ROOT, 'engines/fire.js'));
 const Projection = require(path.join(ROOT, 'engines/projection.js'));
 const Hourly = require(path.join(ROOT, 'engines/hourly.js'));
+const QuickMath = require(path.join(ROOT, 'engines/quickmath.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -950,6 +951,128 @@ section('Real Hourly Wage');
     Hourly.realHourlyWage(noIncome, TABLES, {}).status, 'incomplete');
   check('an empty household cannot compute',
     Hourly.realHourlyWage(Schema.createHousehold(), TABLES, {}).status, 'incomplete');
+})();
+
+/* ==========================================================================
+   9d. The one-line calculators. SPEC.md §13.
+   ========================================================================== */
+
+section('Quick math');
+
+/* -- Loan primitives, checked against the standard annuity formula -------- */
+(function () {
+  /* $20,000 over 36 months at 6% is $608.44 by the closed form. */
+  const pay = Projection.levelPaymentCents({ principalCents: 2000000, annualRate: 0.06, months: 36 });
+  check('level payment on $20k / 36mo / 6%', pay.value, 60844);
+  check('total interest over the term', pay.totalInterestCents, 60844 * 36 - 2000000);
+  /* The inverse must round-trip, within the payment's own rounding. */
+  const back = Projection.principalForPaymentCents({ paymentCents: pay.value, annualRate: 0.06, months: 36 });
+  checkTrue('principal-for-payment inverts payment-for-principal',
+    Math.abs(back.value - 2000000) <= 100, `got ${back.value}`);
+  /* At 0% it is simply the amount split evenly — a case the formula divides
+     by zero on if it isn't special-cased. */
+  check('a 0% loan is an even split',
+    Projection.levelPaymentCents({ principalCents: 120000, annualRate: 0, months: 12 }).value, 10000);
+  check('a zero-month term is refused, not divided by',
+    Projection.levelPaymentCents({ principalCents: 120000, annualRate: 0.06, months: 0 }).status, 'incomplete');
+})();
+
+/* -- HYSA switch ---------------------------------------------------------
+     $10,000 from 0.5% to 4.5% = $400 a year. Five days in transit at the old
+     rate costs 10,000 × 0.005 × 5/365 = $0.68, so year one nets $399.32.   */
+(function () {
+  const s = QuickMath.hysaSwitch({ balanceCents: 1000000, currentApy: 0.005, newApy: 0.045, daysInTransit: 5 });
+  check('annual gain from the spread', s.annualGainCents, 40000);
+  check('cost of the days in transit', s.transitCostCents, 68);
+  check('first-year net', s.firstYearNetCents, 39932);
+  check('and it is worth doing', s.worthIt, true);
+  checkTrue('break-even is well under a day', s.breakEvenDays.value < 1);
+
+  /* A one-off fee pushes break-even out but does not change the ongoing gain. */
+  const withFee = QuickMath.hysaSwitch({ balanceCents: 1000000, currentApy: 0.005, newApy: 0.045,
+    daysInTransit: 5, frictionCostCents: 5000 });
+  check('a $50 fee comes off year one', withFee.firstYearNetCents, 39932 - 5000);
+  check('but the ongoing gain is untouched', withFee.ongoingAnnualCents, 40000);
+  checkTrue('and break-even moves out', withFee.breakEvenDays.value > s.breakEvenDays.value);
+
+  /* Switching to a worse rate is reported as such, not as a negative gain to
+     be paid back over some number of days. */
+  const worse = QuickMath.hysaSwitch({ balanceCents: 1000000, currentApy: 0.045, newApy: 0.005 });
+  check('a worse rate is not worth it', worse.worthIt, false);
+  check('and has no break-even', worse.breakEvenDays.status, 'incomplete');
+
+  check('a missing rate is incomplete',
+    QuickMath.hysaSwitch({ balanceCents: 1000000, currentApy: 0.005 }).status, 'incomplete');
+})();
+
+/* -- Cost per use --------------------------------------------------------- */
+(function () {
+  check('$1,200 over 200 uses', QuickMath.costPerUse({ priceCents: 120000, uses: 200 }).value, 600);
+  check('and per month over two years',
+    QuickMath.costPerUse({ priceCents: 120000, uses: 200, overMonths: 24 }).perMonthCents, 5000);
+  check('zero uses is refused, not divided by',
+    QuickMath.costPerUse({ priceCents: 120000, uses: 0 }).status, 'incomplete');
+  check('no uses entered is incomplete',
+    QuickMath.costPerUse({ priceCents: 120000 }).status, 'incomplete');
+  /* To get a $1,200 coat under $10 a wear you need 120 wears. */
+  check('uses needed to reach $10 each', QuickMath.usesToReach(120000, 1000).value, 120);
+  check('and it rounds up, since a part-use is not a use',
+    QuickMath.usesToReach(120000, 700).value, Math.ceil(120000 / 700));
+})();
+
+/* -- 20/3/8 car rule ------------------------------------------------------ */
+(function () {
+  const h = Demo.build();
+  /* Robin grosses $6,000/mo, so the 8% cap is $480. */
+  const headroom = QuickMath.carRule2038(h, {});
+  check('payment cap is 8% of gross monthly', headroom.paymentCapCents, 48000);
+  check('nothing priced yet, so no checks run', headroom.checks.length, 0);
+  /* The max price must be exactly consistent with the cap: borrowing 80% of
+     it over 36 months should cost the cap. */
+  const impliedLoan = Math.round(headroom.maxAffordablePriceCents * 0.8);
+  const impliedPayment = Projection.levelPaymentCents({
+    principalCents: impliedLoan, annualRate: 0.06, months: 36 });
+  checkTrue('the max affordable price is consistent with the payment cap',
+    Math.abs(impliedPayment.value - 48000) <= 50,
+    `implied payment ${impliedPayment.value} vs cap 48000`);
+
+  /* A $30,000 car with $3,000 down over 60 months fails all three legs. */
+  const bad = QuickMath.carRule2038(h, { carPriceCents: 3000000, downPaymentCents: 300000,
+    termMonths: 60, loanRate: 0.07 });
+  check('it passes none of the three', bad.value, 0);
+  check('passesAll is false', bad.passesAll, false);
+  const leg = k => bad.checks.find(c => c.key === k);
+  check('10% down fails the 20% leg', leg('down').pass, false);
+  check('and reports the shortfall', leg('down').shortfallCents, 3000000 * 0.2 - 300000);
+  check('60 months fails the 3-year leg', leg('term').pass, false);
+  check('and the payment is over the cap', leg('payment').pass, false);
+  checkTrue('by a stated amount', leg('payment').overByCents > 0);
+
+  /* A car that obeys the rule passes all three. */
+  const good = QuickMath.carRule2038(h, { carPriceCents: 1500000, downPaymentCents: 300000,
+    termMonths: 36, loanRate: 0.06 });
+  check('a $15,000 car with $3,000 down over 36 months passes all three', good.value, 3);
+  check('passesAll is true', good.passesAll, true);
+
+  check('without income the rule cannot be checked',
+    QuickMath.carRule2038(Schema.createHousehold(), { carPriceCents: 1500000 }).status, 'incomplete');
+})();
+
+/* -- Rule of Five --------------------------------------------------------- */
+(function () {
+  const h = Demo.build();   /* $9,500 cash */
+  const near = QuickMath.ruleOfFive(h, 200000);   /* a $2,000 thing */
+  check('$9,500 against a $2,000 thing', near.howManyYouCouldBuy, 4);
+  check('four is not five', near.passes, false);
+  check('and the shortfall is stated', near.shortfallCents, 200000 * 5 - 950000);
+
+  const fine = QuickMath.ruleOfFive(h, 100000);   /* a $1,000 thing */
+  check('$9,500 against a $1,000 thing passes', fine.passes, true);
+  check('the rule is carried with the result so it can be shown',
+    fine.rule.multiple, 5);
+  check('without a price it is incomplete', QuickMath.ruleOfFive(h, null).status, 'incomplete');
+  check('without cash it is incomplete',
+    QuickMath.ruleOfFive(Schema.createHousehold(), 100000).status, 'incomplete');
 })();
 
 /* ==========================================================================

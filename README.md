@@ -55,6 +55,7 @@ engines/            Shared calculation engines — one function per concept
   fire.js             one calculateFIRE(), six variants
   projection.js       compound growth with contributions — the only such loop
   hourly.js           real hourly wage, and prices in hours of life
+  quickmath.js        HYSA switch, cost per use, 20/3/8, rule of five
 data/               Versioned reference tables (JSON, never inlined in code)
 test/run.js         Re-derives every formula outside the browser
 SPEC.md             The full Tier 0–2 build spec. The authority.
