@@ -907,6 +907,48 @@ thing to do to someone.
 
 ---
 
+## D-025 — the Goal Costing Engine, and one bug it exposed
+**2026-09-03 · SPEC.md §9 item 6, §13**
+
+§9 item 6 puts this engine before Wedding, Dream or any other goal
+calculator, and §13 explains why: the Wedding calc is "structurally identical
+to Dream Calculator — one Goal Costing Engine both call into", and the Travel
+calc is "the entry-level tier of the full Vacation/Travel Calculator engine,
+not a separate codebase". So Wedding, Home deposit, A big trip, Sabbatical
+and A car are **templates in one room**, not five rooms.
+
+A goal is a dated target made of line items, funded monthly. Everything
+follows: total, remaining, required monthly, and the arrival date at the
+contribution you are actually making.
+
+Three decisions worth recording:
+
+- **Templates carry line-item labels and no amounts.** Costs are wildly
+  regional and putting an invented "typical wedding venue: $8,000" in front
+  of someone planning a real wedding is worse than useless. The value of a
+  template is the reminder that the marriage licence, the survey fee and the
+  travel insurance exist at all. A test asserts every template's items are
+  bare strings.
+- **The required figure is checked against Cash Flow's actual surplus**,
+  rather than asking for a spare-money figure a second time. On the example
+  household a wedding needs $881/mo, which is 53% of the $1,660 spare.
+- **Goals are planned together as well as separately**, because two goals
+  that each fit the surplus can easily fail to fit it together — and that is
+  precisely what a per-goal view hides. Adding a $15,000 car to the wedding
+  takes the requirement to $2,131/mo, which is $471 more than exists. A test
+  pins that both fit alone.
+
+**A real bug this surfaced.** Re-rendering a container's `innerHTML` from
+inside a `blur`/`focusout` handler destroys the node the browser is still
+transitioning away from, and throws `NotFoundError`. It hit whenever you
+tabbed from one goal line item straight into the next. Three rooms shared the
+pattern — Goals, Net Worth and Debt Payoff all replace a container holding the
+focused input — and all three now coalesce renders onto the next task instead.
+That also collapses a double render each of them was doing, since a write
+triggered both an explicit `render()` and the spine's `onChange`.
+
+---
+
 ## Still open
 
 - **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the

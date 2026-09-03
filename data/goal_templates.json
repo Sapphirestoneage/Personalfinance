@@ -1,0 +1,39 @@
+{
+  "id": "goal_templates",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "Checklists of what a goal is actually made of.",
+  "note": "SPEC.md Section 13 asks the Dream Calculator to become the shared Goal Costing Engine 'with a template library', and makes the Wedding calc structurally identical to it. These templates carry LINE-ITEM LABELS ONLY and no amounts. Costs are wildly regional and inventing them would put a fake number in front of someone planning a real thing; the value here is the reminder that the marriage licence, the survey fee and the travel insurance exist at all.",
+  "templates": [
+    {
+      "id": "wedding", "label": "Wedding",
+      "blurb": "The costs that turn up whether you planned for them or not.",
+      "lineItems": ["Venue", "Catering and drinks", "Photography", "Attire", "Rings", "Flowers and styling", "Music", "Invitations", "Licence and legal", "Transport", "Rehearsal dinner", "Contingency"]
+    },
+    {
+      "id": "home_deposit", "label": "Home deposit",
+      "blurb": "The deposit is the famous number. The rest is what catches people out.",
+      "lineItems": ["Deposit", "Legal fees", "Survey", "Mortgage arrangement fee", "Moving costs", "Immediate repairs", "Essential furniture", "Contingency"]
+    },
+    {
+      "id": "travel", "label": "A big trip",
+      "blurb": "Entry-level version of the full travel planner.",
+      "lineItems": ["Flights", "Accommodation", "Food", "Local transport", "Activities", "Travel insurance", "Visas and vaccinations", "Spending money"]
+    },
+    {
+      "id": "sabbatical", "label": "Sabbatical",
+      "blurb": "Time off costs what you spend plus what you stop earning.",
+      "lineItems": ["Living costs while away", "Health cover", "Travel", "Income you'll forgo", "Buffer for coming back"]
+    },
+    {
+      "id": "car", "label": "A car",
+      "blurb": "Price on the windscreen, plus what it takes to drive it away.",
+      "lineItems": ["Purchase price", "Tax and registration", "Insurance change", "Immediate maintenance", "Contingency"]
+    },
+    {
+      "id": "custom", "label": "Something else",
+      "blurb": "Name your own line items.",
+      "lineItems": []
+    }
+  ]
+}

@@ -172,8 +172,21 @@
       ]
     },
     {
-      id: 'foo-ladder',
+      id: 'goals',
       order: 10,
+      title: 'Goals',
+      blurb: 'A wedding, a deposit, a big trip. What it costs, what it needs a month, and whether that actually fits alongside everything else.',
+      href: 'rooms/goals.html',
+      tier: 2,
+      tags: ['cashflow'],
+      subsections: [
+        { id: 'out-together', label: 'All of it together' },
+        { id: 'add',          label: 'Start something' }
+      ]
+    },
+    {
+      id: 'foo-ladder',
+      order: 11,
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
       href: 'index.html',

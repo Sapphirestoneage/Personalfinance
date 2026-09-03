@@ -36,6 +36,7 @@ const Projection = require(path.join(ROOT, 'engines/projection.js'));
 const Hourly = require(path.join(ROOT, 'engines/hourly.js'));
 const QuickMath = require(path.join(ROOT, 'engines/quickmath.js'));
 const SelfEmployed = require(path.join(ROOT, 'engines/selfemployed.js'));
+const Goals = require(path.join(ROOT, 'engines/goals.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -47,7 +48,8 @@ const TABLES = {
   budgetTemplates: require(path.join(ROOT, 'data/budget_templates.json')),
   debtRules: require(path.join(ROOT, 'data/debt_rules.json')),
   fireVariants: require(path.join(ROOT, 'data/fire_variants.json')),
-  seTax: require(path.join(ROOT, 'data/se_tax_2026.json'))
+  seTax: require(path.join(ROOT, 'data/se_tax_2026.json')),
+  goalTemplates: require(path.join(ROOT, 'data/goal_templates.json'))
 };
 
 /* ---- Tiny harness ------------------------------------------------------ */
@@ -1251,6 +1253,124 @@ section('Self-employment');
   check('four due dates are named', currentOnly.dueDates.length, 4);
   check('without expected profit it is incomplete',
     SelfEmployed.quarterlyEstimated(h, TABLES, {}).status, 'incomplete');
+})();
+
+/* ==========================================================================
+   9f. Goal Costing Engine. SPEC.md §9 item 6, §13.
+   ========================================================================== */
+
+section('Goals');
+
+/* A wedding: $8,000 venue + $12,000 catering + $3,500 photography = $23,500,
+   $5,000 already saved, wanted by 2028-06-15 (21 months from 2026-09-03).
+     remaining 18,500 / 21 = $880.96 a month
+   At $400 a month it takes ceil(18,500/400) = 47 months — 26 months late.  */
+function weddingHousehold() {
+  const w = Goals.fromTemplate(TABLES.goalTemplates, 'wedding');
+  w.id = 'g_wedding';
+  w.lineItems[0].amountCents = 800000;
+  w.lineItems[1].amountCents = 1200000;
+  w.lineItems[2].amountCents = 350000;
+  w.savedCents = 500000;
+  w.targetDate = '2028-06-15';
+  w.monthlyContributionCents = 40000;
+  const h = Demo.build();
+  h.expenses.entries = Demo.buildSpending();
+  h.goals = [w];
+  return { h, w };
+}
+
+(function () {
+  const { h, w } = weddingHousehold();
+  const p = Goals.plan(h, w, TABLES, { asOf: '2026-09-03' });
+
+  check('a template brings its checklist', w.lineItems.length, 12);
+  check('itemised total', p.totalCents, 2350000);
+  check('and it knows it was itemised', p.basis, 'itemised');
+  check('blank line items are counted, not summed', p.itemsBlank, 9);
+  check('remaining after what is saved', p.remainingCents, 1850000);
+  check('months until the date', p.monthsUntil.value, 21);
+  check('required monthly rounds UP, so the goal is actually met',
+    p.requiredMonthlyCents, Math.ceil(1850000 / 21));
+  check('not on track at the current contribution', p.onTrack, false);
+  check('short by', p.shortfallPerMonthCents, Math.ceil(1850000 / 21) - 40000);
+  check('at the current pace it takes', p.monthsAtCurrentContribution, Math.ceil(1850000 / 40000));
+  check('which is late', p.arrivesLate, true);
+  check('by how many months', p.monthsLate, Math.ceil(1850000 / 40000) - 21);
+
+  /* It reads Cash Flow's surplus rather than asking for one again. */
+  check('the required figure is checked against the actual surplus',
+    p.affordability.surplusCents, 166000);
+  check('and it fits', p.affordability.fitsInSurplus, true);
+  check('taking this share of it', p.affordability.shareOfSurplus,
+    Math.ceil(1850000 / 21) / 166000, 1e-9);
+
+  /* A lump figure works when there are no itemised amounts. */
+  const lump = Schema.createGoal({ name: 'Trip', lumpTargetCents: 500000,
+    targetDate: '2027-09-03', savedCents: 0 });
+  const lp = Goals.plan(h, lump, TABLES, { asOf: '2026-09-03' });
+  check('a lump target is used when nothing is itemised', lp.basis, 'lump');
+  check('over twelve months', lp.monthsUntil.value, 12);
+  check('required monthly', lp.requiredMonthlyCents, Math.ceil(500000 / 12));
+
+  /* Itemised amounts win over a lump figure if both somehow exist. */
+  const both = Schema.createGoal({ lumpTargetCents: 999999, targetDate: '2027-09-03',
+    lineItems: [Schema.createGoalLineItem({ label: 'One', amountCents: 100000 })] });
+  check('itemised beats a stale lump figure',
+    Goals.plan(h, both, TABLES, { asOf: '2026-09-03' }).totalCents, 100000);
+
+  /* Already funded is a real, finished state. */
+  const done = Schema.createGoal({ lumpTargetCents: 100000, savedCents: 150000,
+    targetDate: '2027-09-03' });
+  const dp = Goals.plan(h, done, TABLES, { asOf: '2026-09-03' });
+  check('an over-funded goal needs nothing a month', dp.value, 0);
+  check('and says so', dp.alreadyThere, true);
+  check('remaining never goes negative', dp.remainingCents, 0);
+
+  /* Incomplete states. */
+  check('no cost entered is incomplete',
+    Goals.plan(h, Schema.createGoal({ targetDate: '2027-09-03' }), TABLES, {}).status, 'incomplete');
+  check('no date is incomplete',
+    Goals.plan(h, Schema.createGoal({ lumpTargetCents: 100000 }), TABLES, {}).status, 'incomplete');
+  check('a date in the past is incomplete',
+    Goals.plan(h, Schema.createGoal({ lumpTargetCents: 100000, targetDate: '2020-01-01' }),
+      TABLES, { asOf: '2026-09-03' }).status, 'incomplete');
+})();
+
+/* Two goals that each fit the surplus can fail to fit it together — which is
+   exactly what a per-goal view hides. */
+(function () {
+  const { h } = weddingHousehold();
+  h.goals.push(Schema.createGoal({
+    id: 'g_car', name: 'Car', lumpTargetCents: 1500000,
+    targetDate: '2027-09-03', savedCents: 0, monthlyContributionCents: 0
+  }));
+  const all = Goals.planAll(h, TABLES, { asOf: '2026-09-03' });
+  check('both goals are planned', all.goalsCounted, 2);
+  check('the combined monthly requirement is the sum',
+    all.value, Math.ceil(1850000 / 21) + Math.ceil(1500000 / 12));
+  check('together they do NOT fit the surplus', all.affordability.fitsInSurplus, false);
+  checkTrue('and the monthly gap is stated', all.affordability.shortPerMonthCents > 0);
+  /* Each on its own does fit — which is the trap. */
+  checkTrue('yet each one alone would have fitted',
+    Money.isOk(all.plans[0]) && all.plans[0].affordability.fitsInSurplus &&
+    Money.isOk(all.plans[1]) && all.plans[1].affordability.fitsInSurplus);
+
+  check('no goals at all is incomplete',
+    Goals.planAll(Schema.createHousehold(), TABLES, {}).status, 'incomplete');
+})();
+
+/* The template library carries labels and no amounts, on purpose. */
+(function () {
+  TABLES.goalTemplates.templates.forEach(function (t) {
+    checkTrue(`template "${t.id}" carries only labels, never amounts`,
+      t.lineItems.every(li => typeof li === 'string'));
+  });
+  check('a wedding template exists', !!Goals.templateById(TABLES.goalTemplates, 'wedding'), true);
+  check('an unknown template builds nothing',
+    Goals.fromTemplate(TABLES.goalTemplates, 'nope'), null);
+  check('the custom template starts empty',
+    Goals.fromTemplate(TABLES.goalTemplates, 'custom').lineItems.length, 0);
 })();
 
 /* ==========================================================================

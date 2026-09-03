@@ -35,7 +35,8 @@
     budgetTemplates: 'budget_templates.json',
     debtRules: 'debt_rules.json',
     fireVariants: 'fire_variants.json',
-    seTax: 'se_tax_2026.json'
+    seTax: 'se_tax_2026.json',
+    goalTemplates: 'goal_templates.json'
   };
 
   var cache = {};

@@ -307,7 +307,7 @@
     }).join('');
   }
 
-  function render() {
+  function renderNow() {
     var h = Spine.getProfile();
     renderAssets(h);
     el('reading-list').innerHTML = ['cashSavings', 'investments', 'totalDebt']
@@ -330,6 +330,19 @@
     renderLedger(h, nw);
   }
 
+
+  /* Re-rendering a container's innerHTML from inside a blur handler destroys
+     the very node the browser is still transitioning away from, which throws
+     NotFoundError. Coalescing renders onto the next task fixes that, and also
+     collapses the double render you get when a write triggers both an
+     explicit call and the spine's onChange. */
+  var renderQueued = false;
+  function render() {
+    if (renderQueued) return;
+    renderQueued = true;
+    setTimeout(function () { renderQueued = false; renderNow(); }, 0);
+  }
+
   function jumpToHash() {
     if (!location.hash) return;
     var t = document.getElementById(location.hash.slice(1));
@@ -339,7 +352,7 @@
 
   Spine.registerRoom(ROOM_ID);
   Spine.onChange(render);
-  render();
+  renderNow();
   jumpToHash();
 })();
 </script>

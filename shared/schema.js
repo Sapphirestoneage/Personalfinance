@@ -87,6 +87,11 @@
     'expenses.entries[].amountCents':            { class: 'raw',        unit: 'cents' },
     'expenses.entries[].period':                 { class: 'raw',        unit: 'enum',    values: ['monthly', 'once'] },
     'expenses.entries[].source':                 { class: 'raw',        unit: 'enum',    values: ['manual', 'imported'], note: 'SPEC.md §12.5' },
+    'goals[].targetDate':                        { class: 'raw',        unit: 'iso-date' },
+    'goals[].savedCents':                        { class: 'raw',        unit: 'cents' },
+    'goals[].monthlyContributionCents':          { class: 'raw',        unit: 'cents',   period: 'monthly' },
+    'goals[].lineItems[].amountCents':           { class: 'raw',        unit: 'cents' },
+    'computed.goalRequiredMonthlyCents':         { class: 'computed',   unit: 'cents',   period: 'monthly' },
     'assumptions.expectedReturnRate':            { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.expectedReturnRate },
     'assumptions.swrRate':                       { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.swrRate },
 
@@ -233,6 +238,36 @@
     };
   }
 
+  /**
+   * A thing you are saving for. SPEC.md §9 item 6 puts the Goal Costing
+   * Engine before Wedding, Dream and any other goal calculator, because they
+   * are the same shape: a dated target, made of line items, funded monthly.
+   * Building them separately would mean building this three times.
+   */
+  function createGoal(fields) {
+    var f = fields || {};
+    return {
+      id: f.id || newId('goal'),
+      name: f.name === undefined ? null : f.name,
+      templateId: f.templateId === undefined ? null : f.templateId,
+      targetDate: f.targetDate === undefined ? null : f.targetDate,   // ISO 'YYYY-MM-DD'
+      savedCents: f.savedCents === undefined ? null : f.savedCents,
+      monthlyContributionCents: f.monthlyContributionCents === undefined ? null : f.monthlyContributionCents,
+      /* Either itemise it or name one lump figure — never both silently. */
+      lineItems: f.lineItems || [],
+      lumpTargetCents: f.lumpTargetCents === undefined ? null : f.lumpTargetCents
+    };
+  }
+
+  function createGoalLineItem(fields) {
+    var f = fields || {};
+    return {
+      id: f.id || newId('gli'),
+      label: f.label === undefined ? null : f.label,
+      amountCents: f.amountCents === undefined ? null : f.amountCents
+    };
+  }
+
   function createHousehold(fields) {
     var f = fields || {};
     return {
@@ -258,6 +293,8 @@
            code path when import lands. See createExpenseEntry(). */
         entries: (f.expenses && (f.expenses.entries || f.expenses.categories)) || []
       },
+      /* Goals — SPEC.md §9 item 6. Owned by the Goals room. */
+      goals: (f.goals || []).map(createGoal),
       assumptions: Object.assign({}, ASSUMPTION_DEFAULTS, f.assumptions || {}),
       /* User overrides persist SEPARATELY from the defaults so "reset to
          default" is always possible — SPEC.md §3, assumption class. */
@@ -517,6 +554,8 @@
     createIncomeSource: createIncomeSource,
     createEstimatedTrackedPair: createEstimatedTrackedPair,
     createExpenseEntry: createExpenseEntry,
+    createGoal: createGoal,
+    createGoalLineItem: createGoalLineItem,
     resolveAssumptions: resolveAssumptions,
     personById: personById,
     primaryPerson: primaryPerson,

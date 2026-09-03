@@ -240,6 +240,7 @@
         if (p.expenses && p.expenses.entries) next.expenses.entries = p.expenses.entries;
         return;
       }
+      if (key === 'goals') { next.goals = p.goals; return; }
       if (key === 'assumptions' || key === 'assumptionOverrides' || key === 'meta') {
         next[key] = Object.assign({}, next[key], p[key]);
         return;
@@ -333,6 +334,25 @@
     }
     save(); notify();
     return JSON.parse(JSON.stringify(pair));
+  }
+
+  /* ---- Goals ------------------------------------------------------------ */
+
+  function upsertGoal(goal) {
+    var h = load();
+    h.goals = h.goals || [];
+    var result = upsertIn(h.goals, goal);
+    save(); notify();
+    return result;
+  }
+
+  function removeGoal(id) {
+    var h = load();
+    var list = h.goals || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) { list.splice(i, 1); save(); notify(); return true; }
+    }
+    return false;
   }
 
   /* ---- Expense entries -------------------------------------------------
@@ -440,6 +460,8 @@
     upsertDebt: upsertDebt,
     removeById: removeById,
     setMonthlyExpenses: setMonthlyExpenses,
+    upsertGoal: upsertGoal,
+    removeGoal: removeGoal,
     upsertExpenseEntry: upsertExpenseEntry,
     removeExpenseEntry: removeExpenseEntry,
     setAssumptionOverride: setAssumptionOverride,

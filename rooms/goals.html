@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Goals · SPARKS</title>
+<meta name="description" content="A wedding, a deposit, a big trip — what it costs, what it needs a month, and whether that actually fits."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11, §9 item 6, §13.
+
+  1. READS   Cash Flow's net surplus, to say whether the required monthly
+             figure actually fits.
+  2. WRITES  It OWNS household.goals[] — name, template, target date, line
+             items, amount saved and monthly contribution.
+  3. CALLS   engines/goals.js, which is the shared Goal Costing Engine §9
+             item 6 requires before any goal calculator. Wedding, Dream and
+             Travel are templates here, not separate rooms.
+  4. EMPTY   No goals: an invitation, not a zero. A goal missing a cost or a
+             date says which. Blank line items are counted and reported, not
+             summed as zero.
+  5. CONFIG  data/goal_templates.json — line-item labels only, no amounts.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .picker { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
+  .pick { text-align: left; font-family: var(--font-body); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; }
+  .pick:hover { border-color: var(--color-border-active); }
+  .pick strong { display: block; }
+  .pick span { font-size: var(--text-sm); color: var(--color-text-muted); }
+
+  .goal { border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-3); }
+  .goal.is-open { border-color: var(--color-border-active); background: var(--color-surface-active); }
+  .goal-top { display: flex; gap: var(--space-2); align-items: center; }
+  .goal-name { flex: 1; min-width: 0; background: transparent; border: none; border-bottom: 1px solid transparent; color: var(--color-text); font-family: var(--font-display); font-size: var(--text-lg); padding: 2px 0; outline: none; }
+  .goal-name:focus { border-bottom-color: var(--color-border-active); }
+  .goal-remove { background: none; border: none; color: var(--color-accent); cursor: pointer; }
+
+  .goal-figure { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); }
+  .goal-figure.is-incomplete { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-base); }
+  .goal-note { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  .goal-note.warn { color: var(--color-caution); }
+  .goal-note.good { color: var(--color-positive); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; margin-top: var(--space-3); }
+  @media (max-width: 380px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .items { margin-top: var(--space-3); }
+  .item { display: grid; grid-template-columns: 1fr 110px 24px; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2); }
+  .item input.lbl { background: transparent; border: none; border-bottom: 1px solid var(--color-border); color: var(--color-text-muted); font-family: var(--font-body); font-size: var(--text-sm); padding: 2px 0; outline: none; min-width: 0; }
+  .item input.lbl:focus { border-bottom-color: var(--color-border-active); }
+  .item button { background: none; border: none; color: var(--color-accent); cursor: pointer; font-size: var(--text-sm); }
+
+  .toggle { background: none; border: none; color: var(--color-accent-hover); font-family: var(--font-body); font-size: var(--text-sm); cursor: pointer; padding: var(--space-2) 0 0; text-decoration: underline; }
+
+  .together { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); }
+  .together.is-bad { border-left-color: var(--color-caution); background: rgba(232,184,75,.08); }
+
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Goals</h1>
+  <p class="room-lede">A wedding, a deposit, a big trip. What it costs, what it needs a month, and whether that actually fits.</p>
+</header>
+
+<main class="slaf-wrap">
+
+  <section class="slaf-card" id="out-together">
+    <span class="slaf-eyebrow">All of it together</span>
+    <div class="slaf-figure" data-figure>—</div>
+    <p class="slaf-reason" data-reason></p>
+    <div id="together-body" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <section id="goal-list"></section>
+
+  <section class="slaf-card" id="add">
+    <span class="slaf-eyebrow">Start something</span>
+    <h2 style="margin:var(--space-2) 0 0">What are you saving for?</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Each one brings a checklist of the costs that turn up whether you
+      planned for them or not. The amounts are yours — we don't guess at
+      prices.
+    </p>
+    <div class="picker" id="picker"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. The templates list what to budget
+    for, never what things cost — that's far too regional to guess at. Your
+    numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/goals.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Goals = SLAF.Goals;
+
+  var ROOM_ID = 'goals';
+  var TABLES = null;
+  var openGoalId = null;
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/"/g, '&quot;'); }
+
+  function monthsLabel(n) {
+    if (n < 12) return n + (n === 1 ? ' month' : ' months');
+    var y = Math.floor(n / 12), m = n % 12;
+    return y + (y === 1 ? ' yr' : ' yrs') + (m ? ' ' + m + ' mo' : '');
+  }
+
+  /* ---------- rendering ---------------------------------------------------- */
+
+  function renderPicker() {
+    el('picker').innerHTML = TABLES.goalTemplates.templates.map(function (t) {
+      return '<button type="button" class="pick" data-template="' + t.id + '">'
+        + '<strong>' + t.label + '</strong><span>' + t.blurb + '</span></button>';
+    }).join('');
+  }
+
+  function goalCard(h, goal) {
+    var p = Goals.plan(h, goal, TABLES, {});
+    var open = openGoalId === goal.id;
+    var out = ['<div class="goal' + (open ? ' is-open' : '') + '" data-goal="' + goal.id + '">'];
+
+    out.push('<div class="goal-top">'
+      + '<input class="goal-name" data-goal="' + goal.id + '" data-field="name" '
+      + 'value="' + esc(goal.name) + '" placeholder="Name it" aria-label="Goal name"/>'
+      + '<button type="button" class="goal-remove" data-remove="' + goal.id + '" aria-label="Remove">✕</button>'
+      + '</div>');
+
+    if (Money.isOk(p)) {
+      if (p.alreadyThere) {
+        out.push('<div class="goal-figure">Funded</div>');
+        out.push('<p class="goal-note good">' + Money.formatCents(p.savedCents)
+          + ' saved against ' + Money.formatCents(p.totalCents) + '. Nothing more needed.</p>');
+      } else {
+        out.push('<div class="goal-figure">' + Money.formatCents(p.requiredMonthlyCents) + ' a month</div>');
+        out.push('<p class="goal-note">' + Money.formatCents(p.remainingCents) + ' to find over '
+          + monthsLabel(p.monthsUntil.value) + '.</p>');
+        if (Money.isEntered(p.contributingMonthlyCents)) {
+          out.push(p.onTrack
+            ? '<p class="goal-note good">On track at ' + Money.formatCents(p.contributingMonthlyCents) + ' a month.</p>'
+            : '<p class="goal-note warn">At ' + Money.formatCents(p.contributingMonthlyCents)
+              + ' a month it lands in ' + monthsLabel(p.monthsAtCurrentContribution)
+              + (p.arrivesLate ? ' — ' + monthsLabel(p.monthsLate) + ' late' : '')
+              + '. ' + Money.formatCents(p.shortfallPerMonthCents) + ' a month short.</p>');
+        }
+        if (p.affordability) {
+          out.push(p.affordability.fitsInSurplus
+            ? '<p class="goal-note">That is ' + Money.formatRate(p.affordability.shareOfSurplus, { decimals: 0 })
+              + ' of the ' + Money.formatCents(p.affordability.surplusCents) + ' you have spare each month.</p>'
+            : '<p class="goal-note warn">That is more than the '
+              + Money.formatCents(p.affordability.surplusCents)
+              + ' you have spare — ' + Money.formatCents(p.affordability.shortPerMonthCents) + ' more.</p>');
+        }
+        if (p.itemsBlank > 0) {
+          out.push('<p class="goal-note">' + p.itemsBlank + ' item'
+            + (p.itemsBlank === 1 ? '' : 's') + ' on the checklist still blank.</p>');
+        }
+      }
+    } else {
+      out.push('<div class="goal-figure is-incomplete">' + (p.reason || '—') + '</div>');
+    }
+
+    out.push('<button type="button" class="toggle" data-toggle="' + goal.id + '">'
+      + (open ? 'Hide the detail' : 'Open it up') + '</button>');
+
+    if (open) {
+      out.push('<div class="grid-2">'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Wanted by</span>'
+        + '<span class="slaf-input-shell"><input type="date" data-goal="' + goal.id
+        + '" data-field="targetDate" value="' + esc(goal.targetDate) + '" aria-label="Target date"/></span></label>'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Already saved</span>'
+        + '<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-goal="'
+        + goal.id + '" data-field="savedCents" value="'
+        + (Money.isEntered(goal.savedCents) ? Money.formatCents(goal.savedCents) : '')
+        + '" placeholder="e.g. 5000" aria-label="Already saved"/></span></label>'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Putting away a month</span>'
+        + '<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-goal="'
+        + goal.id + '" data-field="monthlyContributionCents" value="'
+        + (Money.isEntered(goal.monthlyContributionCents) ? Money.formatCents(goal.monthlyContributionCents) : '')
+        + '" placeholder="e.g. 400" aria-label="Monthly contribution"/></span></label>'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Or one total</span>'
+        + '<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-goal="'
+        + goal.id + '" data-field="lumpTargetCents" value="'
+        + (Money.isEntered(goal.lumpTargetCents) ? Money.formatCents(goal.lumpTargetCents) : '')
+        + '" placeholder="if not itemised" aria-label="Lump target"/></span></label>'
+        + '</div>');
+
+      out.push('<div class="items">');
+      out.push('<span class="slaf-label">What it\'s made of</span>');
+      (goal.lineItems || []).forEach(function (li) {
+        out.push('<div class="item">'
+          + '<input class="lbl" data-goal="' + goal.id + '" data-item="' + li.id
+          + '" data-field="label" value="' + esc(li.label) + '" placeholder="Name it" aria-label="Item"/>'
+          + '<span class="slaf-input-shell"><span class="slaf-affix">$</span>'
+          + '<input type="text" inputmode="decimal" data-goal="' + goal.id + '" data-item="' + li.id
+          + '" data-field="amountCents" value="'
+          + (Money.isEntered(li.amountCents) ? Money.formatCents(li.amountCents) : '')
+          + '" placeholder="—" aria-label="Amount"/></span>'
+          + '<button type="button" data-remove-item="' + li.id + '" data-goal="' + goal.id
+          + '" aria-label="Remove item">✕</button>'
+          + '</div>');
+      });
+      out.push('</div>');
+      out.push('<button type="button" class="slaf-btn" data-add-item="' + goal.id
+        + '" style="width:100%">+ Add a line</button>');
+    }
+
+    out.push('</div>');
+    return out.join('');
+  }
+
+  function renderTogether(h) {
+    var section = el('out-together');
+    var figure = section.querySelector('[data-figure]');
+    var reason = section.querySelector('[data-reason]');
+    var all = Goals.planAll(h, TABLES, {});
+    if (!Money.isOk(all)) {
+      figure.textContent = Money.EM_DASH;
+      figure.classList.add('slaf-figure--incomplete');
+      reason.textContent = all.reason || '';
+      reason.hidden = false;
+      el('together-body').innerHTML = '';
+      return;
+    }
+    figure.classList.remove('slaf-figure--incomplete');
+    figure.textContent = Money.formatCents(all.value) + ' a month';
+    reason.hidden = true;
+    reason.textContent = '';
+
+    var body = '<p class="goal-note">Across ' + all.goalsCounted + ' goal'
+      + (all.goalsCounted === 1 ? '' : 's') + '.</p>';
+    if (all.affordability) {
+      body += '<div class="together' + (all.affordability.fitsInSurplus ? '' : ' is-bad') + '">'
+        + (all.affordability.fitsInSurplus
+            ? '<strong>That fits.</strong> You have ' + Money.formatCents(all.affordability.surplusCents)
+              + ' spare each month after everything else.'
+            : '<strong>That does not fit yet.</strong> You have '
+              + Money.formatCents(all.affordability.surplusCents) + ' spare each month, so you are '
+              + Money.formatCents(all.affordability.shortPerMonthCents)
+              + ' short. Push a date out, trim a line, or find the difference in Cash Flow.')
+        + '</div>';
+    }
+    el('together-body').innerHTML = body;
+  }
+
+  function renderNow() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    var goals = h.goals || [];
+    el('goal-list').innerHTML = goals.length
+      ? goals.map(function (g) { return goalCard(h, g); }).join('')
+      : '';
+    renderTogether(h);
+  }
+
+  /* ---------- writes ------------------------------------------------------- */
+
+  function findGoal(h, id) {
+    var list = h.goals || [];
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) return list[i]; }
+    return null;
+  }
+
+  function writeGoal(id, field, raw) {
+    var goal = findGoal(Spine.getProfile(), id);
+    if (!goal) return;
+    var patch = { id: id };
+    if (field === 'name') patch.name = raw === '' ? null : raw;
+    else if (field === 'targetDate') patch.targetDate = raw === '' ? null : raw;
+    else patch[field] = Money.parseMoney(raw);
+    Spine.upsertGoal(patch);
+    render();
+  }
+
+  function writeItem(goalId, itemId, field, raw) {
+    var goal = findGoal(Spine.getProfile(), goalId);
+    if (!goal) return;
+    var items = (goal.lineItems || []).map(function (li) {
+      if (li.id !== itemId) return li;
+      var copy = Object.assign({}, li);
+      if (field === 'label') copy.label = raw === '' ? null : raw;
+      else copy.amountCents = Money.parseMoney(raw);
+      return copy;
+    });
+    Spine.upsertGoal({ id: goalId, lineItems: items });
+    render();
+  }
+
+  document.addEventListener('click', function (evt) {
+    var pick = evt.target.closest('[data-template]');
+    if (pick) {
+      var goal = Goals.fromTemplate(TABLES.goalTemplates, pick.getAttribute('data-template'));
+      if (goal) { Spine.upsertGoal(goal); openGoalId = goal.id; render();
+        el('goal-list').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      return;
+    }
+    var toggle = evt.target.closest('[data-toggle]');
+    if (toggle) {
+      var id = toggle.getAttribute('data-toggle');
+      openGoalId = openGoalId === id ? null : id;
+      render();
+      return;
+    }
+    var rm = evt.target.closest('[data-remove]');
+    if (rm) {
+      if (!window.confirm('Remove this goal?')) return;
+      Spine.removeGoal(rm.getAttribute('data-remove'));
+      render();
+      return;
+    }
+    var addItem = evt.target.closest('[data-add-item]');
+    if (addItem) {
+      var gid = addItem.getAttribute('data-add-item');
+      var g = findGoal(Spine.getProfile(), gid);
+      if (!g) return;
+      Spine.upsertGoal({ id: gid,
+        lineItems: (g.lineItems || []).concat([Schema.createGoalLineItem({})]) });
+      render();
+      return;
+    }
+    var rmItem = evt.target.closest('[data-remove-item]');
+    if (rmItem) {
+      var gid2 = rmItem.getAttribute('data-goal');
+      var iid = rmItem.getAttribute('data-remove-item');
+      var g2 = findGoal(Spine.getProfile(), gid2);
+      if (!g2) return;
+      Spine.upsertGoal({ id: gid2,
+        lineItems: (g2.lineItems || []).filter(function (li) { return li.id !== iid; }) });
+      render();
+    }
+  });
+
+  document.addEventListener('focusin', function (evt) {
+    var node = evt.target;
+    var field = node.getAttribute && node.getAttribute('data-field');
+    if (!field || !/Cents$/.test(field)) return;
+    var h = Spine.getProfile();
+    var gid = node.getAttribute('data-goal');
+    var iid = node.getAttribute('data-item');
+    var goal = findGoal(h, gid);
+    if (!goal) return;
+    var raw = iid
+      ? (goal.lineItems.filter(function (li) { return li.id === iid; })[0] || {}).amountCents
+      : goal[field];
+    node.value = Money.isEntered(raw) ? String(raw / 100) : '';
+    node.select();
+  });
+
+  document.addEventListener('focusout', function (evt) {
+    var node = evt.target;
+    var field = node.getAttribute && node.getAttribute('data-field');
+    var gid = node.getAttribute && node.getAttribute('data-goal');
+    if (!field || !gid) return;
+    var iid = node.getAttribute('data-item');
+    if (iid) writeItem(gid, iid, field, node.value);
+    else writeGoal(gid, field, node.value);
+  });
+
+  document.addEventListener('change', function (evt) {
+    var node = evt.target;
+    if (node.type === 'date' && node.getAttribute('data-field') === 'targetDate') {
+      writeGoal(node.getAttribute('data-goal'), 'targetDate', node.value);
+    }
+  });
+
+  document.addEventListener('keydown', function (evt) {
+    if (evt.key === 'Enter' && evt.target.tagName === 'INPUT' && evt.target.type !== 'date') {
+      evt.preventDefault(); evt.target.blur();
+    }
+  });
+
+
+  /* Re-rendering a container's innerHTML from inside a blur handler destroys
+     the very node the browser is still transitioning away from, which throws
+     NotFoundError. Coalescing renders onto the next task fixes that, and also
+     collapses the double render you get when a write triggers both an
+     explicit call and the spine's onChange. */
+  var renderQueued = false;
+  function render() {
+    if (renderQueued) return;
+    renderQueued = true;
+    setTimeout(function () { renderQueued = false; renderNow(); }, 0);
+  }
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    renderPicker();
+    renderNow();
+    jumpToHash();
+  });
+})();
+</script>
+</body>
+</html>

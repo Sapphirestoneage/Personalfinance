@@ -481,7 +481,7 @@
     }).join('');
   }
 
-  function render() {
+  function renderNow() {
     if (!RULES) return;
     var h = Spine.getProfile();
     renderDebts(h);
@@ -590,6 +590,19 @@
     render();
   });
 
+
+  /* Re-rendering a container's innerHTML from inside a blur handler destroys
+     the very node the browser is still transitioning away from, which throws
+     NotFoundError. Coalescing renders onto the next task fixes that, and also
+     collapses the double render you get when a write triggers both an
+     explicit call and the spine's onChange. */
+  var renderQueued = false;
+  function render() {
+    if (renderQueued) return;
+    renderQueued = true;
+    setTimeout(function () { renderQueued = false; renderNow(); }, 0);
+  }
+
   function jumpToHash() {
     if (!location.hash) return;
     var target = document.getElementById(location.hash.slice(1));
@@ -603,7 +616,7 @@
 
   Reference.load(['debtRules']).then(function (tables) {
     RULES = tables.debtRules;
-    render();
+    renderNow();
     jumpToHash();
   }).catch(function (err) {
     var notice = el('load-notice');
