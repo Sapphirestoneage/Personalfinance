@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Savings Rate · SPARKS</title>
+<meta name="description" content="The share of your income that stays yours — both ways of counting it, and what one more point of it is worth."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11, §12.1, §13 (Savings Rate calc).
+
+  1. READS   gross income, monthly expenses, filing status, employer match,
+             investments. All owned elsewhere; none editable here.
+  2. WRITES  Nothing. Every figure on this page is Computed (SPEC.md §3),
+             and the what-if is local — never written back (§12.2).
+  3. CALLS   engines/tier0.js for both rate variants, the FIRE number and
+             the projection; engines/foo.js for the benchmark flag. No
+             formula is re-implemented here.
+  4. EMPTY   Each variant states independently what it is missing. An
+             unanswered employer match makes the including-match variant
+             incomplete rather than silently equal to the other one.
+  5. CONFIG  data/effective_tax_rates_2026.json, data/foo_rules.json
+             (the benchmark floor).
+
+  §12.1 is RESOLVED as "build both", and says every surface must be explicit
+  about which variant it shows. This one shows BOTH, always, side by side —
+  it is the room about the number, so hiding either would be perverse.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; margin-top: var(--space-3); }
+  @media (max-width: 400px) { .pair { grid-template-columns: 1fr; } }
+  .pair > div { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; }
+  .pair > div.lead { border-color: var(--color-border-active); background: var(--color-surface-active); }
+  .pair .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  .pair .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); }
+  .pair .big.is-incomplete { font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text-faint); }
+  .pair .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: auto; padding-top: var(--space-2); }
+
+  .stack { display: flex; height: 26px; border-radius: var(--radius-sm); overflow: hidden; margin-top: var(--space-3); background: rgba(30,58,138,.4); }
+  .stack > span { height: 100%; }
+  .seg-tax { background: var(--color-text-faint); }
+  .seg-spend { background: rgba(46,111,232,.45); }
+  .seg-save { background: var(--color-accent); }
+  .key { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-2); font-size: var(--text-xs); color: var(--color-text-muted); }
+  .key span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: baseline; }
+  .key .k-tax::before { background: var(--color-text-faint); }
+  .key .k-spend::before { background: rgba(46,111,232,.45); }
+  .key .k-save::before { background: var(--color-accent); }
+
+  .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
+  .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  .out-detail dt { color: var(--color-text-faint); }
+  .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  table.whatif { width: 100%; border-collapse: collapse; margin-top: var(--space-3); font-size: var(--text-sm); }
+  table.whatif th { text-align: left; font-weight: 600; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-faint); padding-bottom: var(--space-2); }
+  table.whatif th:not(:first-child), table.whatif td:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+  table.whatif td { padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  table.whatif tr.now td { color: var(--color-text-muted); }
+  table.whatif .gain { color: var(--color-accent-hover); }
+
+  .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  .flag--warn { border-left-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Savings Rate</h1>
+  <p class="room-lede">The share of your income that stays yours — both ways of counting it, and what one more point of it is worth.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="out-rate">
+    <span class="slaf-eyebrow">Your rate</span>
+    <h2 style="margin:var(--space-2) 0 0">Two honest answers</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Whether employer match dollars count as <em>you</em> saving is a real
+      disagreement, so SPARKS computes it both ways and never quietly picks
+      one. The left figure is the conservative read and is what the rest of
+      the app uses when it has to choose.
+    </p>
+    <div class="pair">
+      <div class="lead">
+        <span class="cap">Your money only</span>
+        <span class="big" id="r-ex">—</span>
+        <span class="sub" id="r-ex-sub"></span>
+      </div>
+      <div>
+        <span class="cap">Including the match</span>
+        <span class="big" id="r-in">—</span>
+        <span class="sub" id="r-in-sub"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="breakdown">
+    <span class="slaf-eyebrow">Where it comes from</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">A year of gross pay</h2>
+    <div class="stack" id="b-stack"></div>
+    <div class="key">
+      <span class="k-tax">Tax</span><span class="k-spend">Spending</span><span class="k-save">Saved</span>
+    </div>
+    <div class="out-detail" id="b-detail"></div>
+    <p class="why" id="b-why"></p>
+  </section>
+
+  <section class="slaf-card" id="out-benchmark">
+    <span class="slaf-eyebrow">Against the benchmark</span>
+    <h2 style="margin:var(--space-2) 0 0">How it reads</h2>
+    <div class="flag" id="bench-note" hidden></div>
+    <p class="why" id="bench-why"></p>
+  </section>
+
+  <section class="slaf-card" id="what-if">
+    <span class="slaf-eyebrow">What one more point is worth</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Spend less, and it counts twice</h2>
+    <p class="slaf-hint" style="margin:0">
+      Cutting spending raises what you put away <em>and</em> lowers the
+      number you are aiming at, because the target is built from what a year
+      of your life costs. That is why a point of savings rate moves the date
+      so much more than a point of return does. Nothing here is saved — it
+      is a look, not a change.
+    </p>
+    <div id="wi-body"></div>
+    <p class="why" id="wi-why"></p>
+  </section>
+
+  <section class="slaf-card" id="reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Tax is a flat effective-rate
+    lookup from <code>data/effective_tax_rates_2026.json</code>, not a real
+    return. Projections assume a steady return every year, which no real
+    market has ever done. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/foo.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership,
+      Tier0 = SLAF.Tier0, Foo = SLAF.Foo;
+
+  var ROOM_ID = 'savings-rate';
+  var TABLES = null;
+  var MONTHS = 12;
+
+  /* SPEC.md §12.1: each surface decides which variant it leads with and says
+     so. This room leads with excluding-match — the conservative read, and
+     the one engines/foo.js already uses for the benchmark flag — but shows
+     both at the same size because this is the room about the number. */
+  var LEAD_VARIANT = 'excludingMatch';
+
+  function el(id) { return document.getElementById(id); }
+
+  function years(n) {
+    var r = Math.round(n * 10) / 10;
+    return r + (r === 1 ? ' year' : ' years');
+  }
+
+  function dl(rows) {
+    return '<dl>' + rows.map(function (r) {
+      return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+    }).join('') + '</dl>';
+  }
+
+  function setRate(nodeId, subId, result, sub) {
+    var node = el(nodeId);
+    if (Money.isOk(result)) {
+      node.className = 'big';
+      node.textContent = Money.formatRate(result.value, { decimals: 1 });
+      el(subId).textContent = sub(result);
+    } else {
+      node.className = 'big is-incomplete';
+      node.textContent = Money.EM_DASH;
+      el(subId).textContent = result.reason || '';
+    }
+  }
+
+  function renderRates(rates) {
+    setRate('r-ex', 'r-ex-sub', rates.excludingMatch, function (r) {
+      return Money.formatCents(r.annualSavingsCents) + ' a year, out of '
+        + Money.formatCents(r.grossAnnualIncomeCents) + ' gross';
+    });
+    setRate('r-in', 'r-in-sub', rates.includingMatch, function (r) {
+      return Money.formatCents(r.annualSavingsCents) + ' a year, including '
+        + Money.formatCents(r.employerMatchCents) + ' from your employer';
+    });
+  }
+
+  function renderBreakdown(rates) {
+    var r = rates[LEAD_VARIANT];
+    if (!Money.isOk(r)) {
+      el('b-stack').innerHTML = '';
+      el('b-detail').innerHTML = '';
+      el('b-why').textContent = r.reason || '';
+      return;
+    }
+    var gross = r.grossAnnualIncomeCents;
+    var saved = r.annualSavingsCents;
+    /* Saved can be negative — spending more than you take home is a real
+       result, and a bar cannot show it, so the stack shows what is spent
+       and the detail states the shortfall. */
+    var parts = [
+      ['seg-tax', r.estimatedTaxCents],
+      ['seg-spend', r.annualExpensesCents],
+      ['seg-save', Math.max(0, saved)]
+    ];
+    var shown = parts.reduce(function (s, p) { return s + p[1]; }, 0);
+    el('b-stack').innerHTML = parts.map(function (p) {
+      return '<span class="' + p[0] + '" style="width:' + (shown === 0 ? 0 : p[1] / shown * 100) + '%"></span>';
+    }).join('');
+
+    el('b-detail').innerHTML = dl([
+      ['Gross pay', Money.formatCents(gross)],
+      ['Estimated tax at ' + Money.formatRate(r.effectiveRate, { decimals: 1 }),
+        '−' + Money.formatCents(r.estimatedTaxCents)],
+      ['Spending, ' + Money.formatCents(Math.round(r.annualExpensesCents / MONTHS)) + ' a month',
+        '−' + Money.formatCents(r.annualExpensesCents)],
+      ['What stays yours', Money.formatCents(saved)]
+    ]);
+
+    el('b-why').textContent = saved < 0
+      ? 'That is a shortfall, not a rate — you are spending '
+        + Money.formatCents(-saved) + ' a year more than you take home. '
+        + 'Everything below this line is arithmetic about a gap.'
+      : 'Expenses are the ' + (r.expenseSource === 'tracked'
+          ? 'tracked figure from a categorised month'
+          : 'estimate you entered')
+        + ', times twelve. Tax is a flat effective-rate lookup, not a return.';
+  }
+
+  function renderBenchmark(h, rates) {
+    var t = TABLES.fooRules.thresholds;
+    var flags = Foo.evaluate(h, TABLES).flags || [];
+    var hit = flags.filter(function (f) { return f.key === 'savings_rate_below_benchmark'; })[0];
+    var r = rates.excludingMatch;
+    var note = el('bench-note');
+
+    if (!Money.isOk(r)) {
+      note.hidden = true;
+      el('bench-why').textContent = r.reason || '';
+      return;
+    }
+    note.hidden = false;
+    if (hit) {
+      note.className = 'flag flag--warn';
+      note.innerHTML = '<strong>' + hit.label + '</strong> — ' + hit.guidance;
+    } else {
+      note.className = 'flag';
+      note.innerHTML = '<strong>At or above the benchmark.</strong> '
+        + Money.formatRate(r.value, { decimals: 1 }) + ' clears the '
+        + Money.formatRate(t.savingsRateBenchmarkFloor, { decimals: 0 })
+        + ' figure most guidance names as the floor.';
+    }
+    el('bench-why').textContent = 'The benchmark is '
+      + Money.formatRate(t.savingsRateBenchmarkLow, { decimals: 0 }) + '–'
+      + Money.formatRate(t.savingsRateBenchmarkFloor, { decimals: 0 })
+      + ', from data/foo_rules.json, and it is measured on your money only — '
+      + 'employer match dollars are excluded, which is the harder test.';
+  }
+
+  /* ---- What one more point is worth --------------------------------------
+     Each row is the SAME household with spending moved, run through the SAME
+     engines. No hypothetical has its own formula, and none of it is stored.
+     SPEC.md §8, §12.2. */
+
+  function renderWhatIf(h, rates) {
+    var base = rates[LEAD_VARIANT];
+    var gross = Money.isOk(base) ? base.grossAnnualIncomeCents : null;
+    var baseYears = Tier0.yearsToFire(h, TABLES);
+
+    if (!Money.isOk(base) || !Money.isEntered(gross) || gross <= 0) {
+      el('wi-body').innerHTML = '';
+      el('wi-why').textContent = Money.isOk(base)
+        ? 'This needs a gross income above zero.'
+        : (base.reason || '');
+      return;
+    }
+    /* A projection that never reaches the target is exactly the case where
+       the rest of this table is worth seeing, so it is not a reason to stop
+       rendering — only a reason for that one row to read —. */
+    var rows = [{ points: 0, label: 'Now', rate: base.value, household: h,
+                  fire: Tier0.fireNumber(h), years: baseYears }];
+
+    [1, 5, 10].forEach(function (points) {
+      var deltaCents = -Math.round(gross * (points / 100) / MONTHS);
+      var what = Schema.withMonthlyExpensesDeltaCents(h, deltaCents);
+      var wr = Tier0.savingsRate(what, TABLES)[LEAD_VARIANT];
+      rows.push({
+        points: points,
+        label: '+' + points + ' point' + (points === 1 ? '' : 's'),
+        monthlyCutCents: -deltaCents,
+        rate: Money.isOk(wr) ? wr.value : null,
+        household: what,
+        fire: Tier0.fireNumber(what),
+        years: Tier0.yearsToFire(what, TABLES)
+      });
+    });
+
+    el('wi-body').innerHTML = '<table class="whatif">'
+      + '<thead><tr><th>Spending</th><th>Rate</th><th>Target</th><th>Work-optional in</th></tr></thead>'
+      + '<tbody>' + rows.map(function (row) {
+        var saved = Money.isOk(row.years) && Money.isOk(baseYears)
+          ? baseYears.value - row.years.value : null;
+        return '<tr class="' + (row.points === 0 ? 'now' : '') + '">'
+          + '<td>' + row.label
+          + (row.monthlyCutCents
+            ? '<br><span style="font-size:var(--text-xs);color:var(--color-text-faint)">−'
+              + Money.formatCents(row.monthlyCutCents) + '/mo</span>'
+            : '') + '</td>'
+          + '<td>' + (Money.isEntered(row.rate) ? Money.formatRate(row.rate, { decimals: 1 }) : Money.EM_DASH) + '</td>'
+          + '<td>' + (Money.isOk(row.fire) ? Money.formatCents(row.fire.value) : Money.EM_DASH) + '</td>'
+          + '<td>' + (Money.isOk(row.years)
+            ? years(row.years.value)
+              + (saved && saved > 0.05
+                ? '<br><span class="gain">' + years(saved) + ' sooner</span>'
+                : '')
+            : Money.EM_DASH) + '</td></tr>';
+      }).join('') + '</tbody></table>';
+
+    var ten = rows[rows.length - 1];
+    var baseFire = Tier0.fireNumber(h);
+    if (!Money.isOk(baseYears)) {
+      el('wi-why').textContent = baseYears.reason
+        + ' Cutting spending is what changes that: it raises what goes in and '
+        + 'lowers the target at the same time, which is what the rows above show.';
+      return;
+    }
+    el('wi-why').textContent = Money.isOk(ten.years) && Money.isOk(baseFire) && Money.isOk(ten.fire)
+      ? 'Ten points here is ' + Money.formatCents(ten.monthlyCutCents)
+        + ' a month. It moves the date by '
+        + years(baseYears.value - ten.years.value)
+        + ', and it lowers the target by '
+        + Money.formatCents(baseFire.value - ten.fire.value)
+        + ' — both from the same cut. Contributions assume the '
+        + (baseYears.contributionBasis === 'includingMatch'
+          ? 'including-match figure, since those dollars really do land in the account'
+          : 'your-money-only figure')
+        + ', growing at ' + Money.formatRate(baseYears.expectedReturnRate, { decimals: 0 }) + ' a year.'
+      : '';
+  }
+
+  function renderNow() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    var rates = Tier0.savingsRate(h, TABLES);
+    renderRates(rates);
+    renderBreakdown(rates);
+    renderBenchmark(h, rates);
+    renderWhatIf(h, rates);
+    el('reading-list').innerHTML =
+      ['grossAnnualIncome', 'monthlyExpenses', 'filingStatus', 'employerMatch', 'investments']
+        .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+
+  var queued = false;
+  function render() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () { queued = false; renderNow(); }, 0);
+  }
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    renderNow();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

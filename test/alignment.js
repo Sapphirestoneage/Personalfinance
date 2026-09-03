@@ -45,6 +45,7 @@ const TARGETS = [
    so the control-alignment pass skips them entirely, and a short card beside
    a tall one is exactly the unevenness this file exists to prevent. */
 const EQUAL_HEIGHT = [
+  ['/rooms/savings-rate.html', '.pair'],
   ['/rooms/sleep-at-night.html', '.pair'],
   ['/rooms/values.html', '.two'],
   ['/rooms/sleep-at-night.html', '.basis']

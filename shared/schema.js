@@ -368,6 +368,33 @@
     };
   }
 
+  /**
+   * A copy of the household with monthly spending moved by `deltaCents`
+   * (negative spends less). Used for "what if I saved more" — the point is
+   * that the SAME engines then run against it, so a hypothetical is never a
+   * second copy of a formula with the number changed. SPEC.md §8, §12.2:
+   * a what-if is local and is never written back.
+   *
+   * The delta lands on whichever figure `monthlyExpensesCents()` would
+   * actually read — tracked if a month has been categorised, the estimate
+   * otherwise — so the hypothetical answers the same question the real one
+   * does. Spending cannot go below zero.
+   */
+  function withMonthlyExpensesDeltaCents(household, deltaCents) {
+    var copy = JSON.parse(JSON.stringify(household || {}));
+    copy.expenses = copy.expenses || {};
+    var pair = copy.expenses.monthlyEssential = createEstimatedTrackedPair(
+      copy.expenses.monthlyEssential || {});
+    if (!Money.isEntered(deltaCents)) return copy;
+
+    var key = Money.isEntered(pair.trackedValueCents) ? 'trackedValueCents'
+      : Money.isEntered(pair.estimatedValueCents) ? 'estimatedValueCents'
+      : null;
+    if (!key) return copy;                       // nothing entered to move
+    pair[key] = Math.max(0, pair[key] + deltaCents);
+    return copy;
+  }
+
   /* ======================================================================
      Resolved assumptions: default, overridden by the user's stored override.
      A room testing a "what if" value passes it as a LOCAL override to the
@@ -620,6 +647,7 @@
     createSwanTarget: createSwanTarget,
     createValuesProfile: createValuesProfile,
     resolveAssumptions: resolveAssumptions,
+    withMonthlyExpensesDeltaCents: withMonthlyExpensesDeltaCents,
     personById: personById,
     primaryPerson: primaryPerson,
     workProfile: workProfile,

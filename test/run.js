@@ -1583,6 +1583,92 @@ section('Accounts');
    SPEC.md §13 Tier 1.5. Robin: $9,500 cash, $3,150/mo expenses.
    ========================================================================== */
 
+/* ==========================================================================
+   Savings Rate room — both variants, and the what-if that counts twice.
+   SPEC.md §12.1, §13. Robin: $72,000 gross, $3,150/mo, $2,160 match.
+   ========================================================================== */
+
+section('Savings Rate');
+
+(function () {
+  const h = Demo.build();
+  const rates = Tier0.savingsRate(h, TABLES);
+
+  /* Both variants, always. SPEC.md §12.1 is RESOLVED as "build both". */
+  check('the excluding-match variant labels itself',
+    rates.excludingMatch.variant, 'excludingMatch');
+  check('and so does the including-match one',
+    rates.includingMatch.variant, 'includingMatch');
+  checkTrue('the two are different numbers',
+    rates.excludingMatch.value !== rates.includingMatch.value);
+  check('including-match is higher by exactly the match over gross',
+    rates.includingMatch.value - rates.excludingMatch.value,
+    216000 / 7200000, 1e-12);
+
+  /* -- The what-if household: same engines, moved spending ---------------
+        1 point of $72,000 is $720 a year, which is $60 a month.          */
+  const onePoint = Schema.withMonthlyExpensesDeltaCents(h, -6000);
+  check('cutting $60/mo lands on the expense figure',
+    Schema.monthlyExpensesCents(onePoint).value, 315000 - 6000);
+  check('and leaves the original household alone',
+    Schema.monthlyExpensesCents(h).value, 315000);
+  check('a point of spending is a point of savings rate',
+    Tier0.savingsRate(onePoint, TABLES).excludingMatch.value - rates.excludingMatch.value,
+    0.01, 1e-12);
+
+  /* The double effect: the same cut also lowers the target, because the
+     target is built from a year of spending at a 4% withdrawal rate. */
+  check('the FIRE target falls by the annual cut over the SWR',
+    Tier0.fireNumber(h).value - Tier0.fireNumber(onePoint).value,
+    Math.round(72000 / 0.04), 1e-6);
+  check('which for ten points is $180,000',
+    Tier0.fireNumber(h).value - Tier0.fireNumber(Schema.withMonthlyExpensesDeltaCents(h, -60000)).value,
+    18000000);
+
+  /* -- Spending cannot go negative, and nothing entered stays nothing ---- */
+  check('an absurd cut floors spending at zero',
+    Schema.monthlyExpensesCents(Schema.withMonthlyExpensesDeltaCents(h, -99999999)).value, 0);
+  const blank = Schema.createHousehold({});
+  check('with no expenses entered, a delta does not invent one',
+    Schema.monthlyExpensesCents(Schema.withMonthlyExpensesDeltaCents(blank, -6000)).status,
+    'incomplete');
+
+  /* The delta lands on whichever figure monthlyExpensesCents actually reads,
+     so the hypothetical answers the same question the real one does. */
+  const tracked = Demo.build();
+  tracked.expenses.monthlyEssential.trackedValueCents = 300000;
+  const trackedCut = Schema.withMonthlyExpensesDeltaCents(tracked, -6000);
+  check('with a tracked month, the delta moves the tracked figure',
+    trackedCut.expenses.monthlyEssential.trackedValueCents, 294000);
+  check('and leaves the estimate where it was',
+    trackedCut.expenses.monthlyEssential.estimatedValueCents,
+    tracked.expenses.monthlyEssential.estimatedValueCents);
+
+  /* -- Cutting spending always brings the date closer, never further ----- */
+  const baseYears = Tier0.yearsToFire(h, TABLES);
+  const tenYears = Tier0.yearsToFire(Schema.withMonthlyExpensesDeltaCents(h, -60000), TABLES);
+  checkTrue('ten points brings work-optional closer',
+    Money.isOk(baseYears) && Money.isOk(tenYears) && tenYears.value < baseYears.value);
+
+  /* -- Overspending is a real result, not an error ----------------------- */
+  const overspending = Schema.withMonthlyExpensesDeltaCents(h, 385000);
+  const negative = Tier0.savingsRate(overspending, TABLES).excludingMatch;
+  check('spending more than you take home gives a negative rate', negative.status, 'ok');
+  checkTrue('and the rate really is below zero', negative.value < 0);
+  check('and the projection says the target is never reached, not zero years',
+    Tier0.yearsToFire(overspending, TABLES).status, 'incomplete');
+
+  /* -- The benchmark flag reads the conservative variant ----------------- */
+  const flags = Foo.evaluate(overspending, TABLES).flags;
+  const flagged = flags.filter(f => f.key === 'savings_rate_below_benchmark')[0];
+  checkTrue('a negative rate trips the benchmark flag', !!flagged);
+  check('and the flag says which variant it judged', flagged.detail.variant, 'excludingMatch');
+  check('the floor it used is the one in data/foo_rules.json',
+    flagged.detail.floor, TABLES.fooRules.thresholds.savingsRateBenchmarkFloor);
+  checkTrue('Robin at 28.5% is not flagged',
+    !Foo.evaluate(h, TABLES).flags.some(f => f.key === 'savings_rate_below_benchmark'));
+})();
+
 section('SWAN Number');
 
 (function () {

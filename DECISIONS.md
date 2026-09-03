@@ -1165,8 +1165,74 @@ the stored `null` that means "serves nothing I named".
 
 ---
 
+## D-030 — Savings Rate gets its own room, and a what-if that reuses the engines
+
+**SPEC.md §12.1 is RESOLVED as "build both", and adds that every surface
+must be explicit about which variant it shows.** The Snapshot already showed
+both, but as two of nine cards. This room shows them at the same size, side
+by side, each labelled in plain words — "your money only" and "including the
+match" — and states in its own source comment that it leads with the
+excluding-match figure because that is the conservative read and the one
+`engines/foo.js` already uses for the benchmark flag. Nothing new is
+computed: both variants come from the same `Tier0.savingsRate()` the
+Snapshot calls.
+
+**The what-if creates a household, not a formula.** "What is one more point
+worth" needs a savings rate, a FIRE target and a projection at a *hypothetical*
+spending level. Rather than write parameterised copies of three calculations,
+`Schema.withMonthlyExpensesDeltaCents()` returns a deep copy of the household
+with spending moved, and the existing `savingsRate()`, `fireNumber()` and
+`yearsToFire()` run against it unchanged. A hypothetical is a different
+input, not a different formula — SPEC.md §8 — and it is never written back,
+per §12.2.
+
+The delta lands on whichever figure `monthlyExpensesCents()` would actually
+read: the tracked month if one has been categorised, the estimate otherwise.
+Adjusting the wrong one would answer a different question from the one the
+page is showing. Spending floors at zero, and a household with no expenses
+entered does not acquire one from a delta.
+
+**The double effect is the point of the section.** A point of savings rate
+raises what goes in *and* lowers the target, because the FIRE number is built
+from a year of spending. For Robin, ten points is $600 a month: the target
+falls $180,000 and work-optional arrives five years sooner, both from the
+same cut. That coupling is why a point of savings rate moves the date so
+much further than a point of assumed return, and the room says so.
+
+**Overspending is a result, not an error.** A negative savings rate renders
+as a negative rate with the shortfall stated in dollars, the stacked bar
+shows the spend without inventing a saved segment, and the projection reads
+"never reaches the target" rather than a number. The what-if table still
+renders — that is exactly the case where seeing what a cut does is worth
+something.
+
+**Room order.** Inserted at 6, after Net Worth: what you have, then how fast
+it grows, then how much cash lets you sleep, then when you can stop.
+Everything from Sleep At Night down shifted by one.
+
+**Two things in §13's Savings Rate entry are deliberately NOT built.** Both
+fail CLAUDE.md's five-question test, so they are questions rather than
+guesses — see "Still open".
+
+---
+
 ## Still open
 
+- **Two-Income Household Toggle** (SPEC.md §13, under Savings Rate calc:
+  "must multiply/adjust this"). The household model already supports a
+  second earner — `people[]` each with `incomeSources[]`, and every
+  aggregate counts items exactly once. What is missing is a decision about
+  **who owns a second person's income**. Today `grossAnnualIncome` is owned
+  by Start Here, which asks nine questions about one person. Either intake
+  grows a "is there a second earner?" branch, or a new Household room owns
+  people and their incomes and Start Here links to it. Building the toggle
+  before that decision would mean a second editable copy of income, which
+  `shared/ownership.js` exists to prevent.
+- **Soft Saving Balance Calculator** (SPEC.md §13: "this formula split into
+  3 buckets"). Which three buckets is not specified anywhere in the spec,
+  and the answer changes the tool completely — future/near/now is a
+  different instrument from needs/wants/savings, which is different again
+  from retirement/goals/spending. Needs naming before it can be built.
 - **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the
   spec): tunable by age cohort, or one fixed formula for v1? Not yet
   blocking; the score is built last by §9.
