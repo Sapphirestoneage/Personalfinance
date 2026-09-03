@@ -153,6 +153,7 @@
         { id: 'peruse',  label: 'Cost per use' },
         { id: 'car',     label: 'The 20/3/8 rule' },
         { id: 'five',    label: 'The rule of five' },
+        { id: 'habit',   label: 'The $30k / $90k rule' },
         { id: 'reading', label: 'Reading from elsewhere' }
       ]
     },

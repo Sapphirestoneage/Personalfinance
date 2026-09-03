@@ -51,6 +51,12 @@
   ul.legs .fail .mark { color: var(--color-caution); }
   ul.legs .why { display: block; color: var(--color-text-faint); font-size: var(--text-xs); margin-top: 2px; }
 
+  .two-ends { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
+  .two-ends > div { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); }
+  .two-ends .lbl { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); display: block; }
+  .two-ends .val { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; display: block; margin-top: 2px; }
+  .two-ends .sub { font-size: var(--text-xs); color: var(--color-text-faint); display: block; margin-top: 2px; }
+
   .rule-statement { font-size: var(--text-sm); color: var(--color-text-muted); font-style: italic; margin: var(--space-2) 0 0; }
   .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
   .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
@@ -133,6 +139,30 @@
     <p class="rule-statement" id="five-rule"></p>
   </section>
 
+  <section class="slaf-card" id="habit">
+    <span class="slaf-eyebrow">The $30k / $90k rule</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">What does a habit really cost?</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      Any recurring spend gets counted twice: your retirement pot has to be
+      bigger to fund it forever, <em>and</em> that money never got to compound.
+      Same dollars, both ends.
+    </p>
+    <div class="grid-2">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">It costs, a month</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="b-amount" placeholder="e.g. 100" aria-label="Monthly amount"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Over how long</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="b-years" placeholder="to age 65" aria-label="Years"/><span class="slaf-affix">yrs</span></span></label>
+    </div>
+    <div class="two-ends" id="habit-ends" hidden>
+      <div><span class="lbl">Bigger pot needed</span><span class="val" id="habit-fire">—</span>
+        <span class="sub">to fund it forever</span></div>
+      <div><span class="lbl">Or invested instead</span><span class="val" id="habit-invested">—</span>
+        <span class="sub" id="habit-invested-sub"></span></div>
+    </div>
+    <div class="answer" id="habit-answer">—</div>
+    <div class="out-detail" id="habit-detail"></div>
+  </section>
+
   <section class="slaf-card" id="reading">
     <span class="slaf-eyebrow">Reading from elsewhere</span>
     <div id="reading-list" style="margin-top:var(--space-3)"></div>
@@ -160,6 +190,7 @@
       Q = SLAF.QuickMath;
 
   var ROOM_ID = 'quick-math';
+  var TABLES = null;
   function el(id) { return document.getElementById(id); }
 
   /* Every field here belongs to the one-off question being asked, so it is
@@ -196,7 +227,8 @@
   [['h-balance', 'money'], ['h-old', 'rate'], ['h-new', 'rate'], ['h-days', 'number'], ['h-fee', 'money'],
    ['u-price', 'money'], ['u-uses', 'number'], ['u-months', 'number'],
    ['c-price', 'money'], ['c-down', 'money'], ['c-term', 'number'], ['c-rate', 'rate'],
-   ['f-price', 'money']].forEach(function (spec) { bind(spec[0], spec[1]); });
+   ['f-price', 'money'],
+   ['b-amount', 'money'], ['b-years', 'number']].forEach(function (spec) { bind(spec[0], spec[1]); });
 
   function dl(rows) {
     return '<dl>' + rows.map(function (r) {
@@ -307,6 +339,38 @@
     el('five-detail').innerHTML = dl(rows);
   }
 
+  function renderHabit(h) {
+    var r = Q.recurringHabit(h, TABLES, {
+      monthlyAmountCents: v['b-amount'], years: v['b-years']
+    });
+    var ends = el('habit-ends');
+    if (!Money.isOk(r)) {
+      ends.hidden = true;
+      setAnswer('habit-answer', r, '');
+      el('habit-detail').innerHTML = '';
+      return;
+    }
+    ends.hidden = false;
+    el('habit-fire').textContent = Money.formatCents(r.fireNumberAdditionCents);
+    el('habit-invested').textContent = Money.formatCents(r.investedInsteadCents);
+    el('habit-invested-sub').textContent = 'over ' + Math.round(r.years) + ' years';
+
+    el('habit-answer').className = 'answer bad';
+    el('habit-answer').textContent = Money.formatCents(r.totalSwingCents) + ' either way';
+
+    el('habit-detail').innerHTML = dl([
+      ['A year of it', Money.formatCents(r.annualCostCents)],
+      ['At a ' + Money.formatRate(r.swrRate, { decimals: 1 }) + ' withdrawal rate',
+        Money.formatCents(r.fireNumberAdditionCents) + ' more needed'],
+      ['You\u2019d have paid in', Money.formatCents(r.contributedCents)],
+      ['Growth on top', Money.formatCents(r.growthCents)]
+    ]) + '<p class="slaf-reason">The pot figure is exact — it falls straight out of the '
+      + 'withdrawal rate and doesn\u2019t depend on returns at all. The invested figure '
+      + 'assumes ' + Money.formatRate(r.expectedReturnRate, { decimals: 0 })
+      + ' a year over ' + Math.round(r.years) + ' years ('
+      + r.horizonBasis + '), so it moves if either does.</p>';
+  }
+
   function render() {
     var h = Spine.getProfile();
     el('reading-list').innerHTML = ['grossAnnualIncome', 'cashSavings']
@@ -315,6 +379,7 @@
     renderPerUse();
     renderCar(h);
     renderFive(h);
+    renderHabit(h);
   }
 
   function jumpToHash() {

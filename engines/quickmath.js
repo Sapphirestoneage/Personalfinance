@@ -179,6 +179,84 @@
     });
   }
 
+  /* ---- The $30k–$90k rule -------------------------------------------------
+     Named in SPEC.md §13 and defined by Eli (DECISIONS.md D-022, now closed):
+
+       $100 a month is $1,200 a year of SPENDING. At a 4% withdrawal rate
+       your pot has to be $1,200 / 0.04 = $30,000 bigger to fund it forever.
+       Invest that same $100 a month instead and it compounds to about
+       $90,000.
+
+     The same $100, counted from both ends: what the habit adds to the
+     mountain, and what it would have been if it had gone the other way.
+
+     The $30,000 half is exact and independent of any return assumption —
+     it falls straight out of the withdrawal rate. The $90,000 half does NOT:
+     it is roughly 26 years at 7%, or 30 years at 5.5%. So the headline pair
+     is the illustration, and this computes both from the household's own
+     assumptions and horizon instead of asserting the round numbers.       */
+
+  function recurringHabit(household, tables, opts) {
+    var o = opts || {};
+    if (!Money.isEntered(o.monthlyAmountCents)) {
+      return Money.incomplete('Add what it costs a month.', ['monthlyAmount']);
+    }
+    var assumptions = Schema.resolveAssumptions(household, o.localOverrides);
+    var annualCost = o.monthlyAmountCents * 12;
+
+    /* Side one: what it adds to the number you have to reach. */
+    var addition = Money.safeDivide(annualCost, assumptions.swrRate, {
+      denominatorName: 'swrRate',
+      zeroReason: 'A withdrawal rate of zero has no finite figure.'
+    });
+    if (!Money.isOk(addition)) return addition;
+    var additionCents = Math.round(addition.value);
+
+    /* Side two: what it would have become instead. The horizon defaults to
+       the years between now and a normal retirement age, because that is the
+       span the comparison is actually about — but it is stated, not hidden. */
+    var years = o.years;
+    var horizonBasis = 'given';
+    if (!Money.isEntered(years)) {
+      var age = Schema.primaryAge(household);
+      if (Money.isEntered(age)) {
+        years = Math.max(1, DEFAULT_RETIREMENT_AGE - age);
+        horizonBasis = 'to age ' + DEFAULT_RETIREMENT_AGE;
+      } else {
+        years = DEFAULT_HABIT_YEARS;
+        horizonBasis = 'default ' + DEFAULT_HABIT_YEARS + ' years';
+      }
+    }
+    var invested = Projection.futureValueMonthlyCents({
+      monthlyContributionCents: o.monthlyAmountCents,
+      annualRate: assumptions.expectedReturnRate,
+      months: Math.round(years * 12)
+    });
+    if (!Money.isOk(invested)) return invested;
+
+    return Money.ok(additionCents, {
+      monthlyAmountCents: o.monthlyAmountCents,
+      annualCostCents: annualCost,
+      swrRate: assumptions.swrRate,
+      expectedReturnRate: assumptions.expectedReturnRate,
+      /* What the habit adds to the mountain. */
+      fireNumberAdditionCents: additionCents,
+      /* What the same money would have become. */
+      investedInsteadCents: invested.value,
+      contributedCents: invested.contributedCents,
+      growthCents: invested.growthCents,
+      years: years,
+      horizonBasis: horizonBasis,
+      /* How many times bigger the road-not-taken is than the extra mountain. */
+      ratio: additionCents > 0 ? invested.value / additionCents : null,
+      /* And the two sides added together — the full swing of one decision. */
+      totalSwingCents: additionCents + invested.value
+    });
+  }
+
+  var DEFAULT_RETIREMENT_AGE = 65;
+  var DEFAULT_HABIT_YEARS = 25;
+
   /* ---- Rule of Five ------------------------------------------------------
      Stated in the UI wherever it is shown, because it is a heuristic rather
      than a formula and the reader deserves to see the rule they are being
@@ -215,6 +293,9 @@
     CAR_RULE: CAR_RULE,
     RULE_OF_FIVE: RULE_OF_FIVE,
     hysaSwitch: hysaSwitch,
+    recurringHabit: recurringHabit,
+    DEFAULT_RETIREMENT_AGE: DEFAULT_RETIREMENT_AGE,
+    DEFAULT_HABIT_YEARS: DEFAULT_HABIT_YEARS,
     costPerUse: costPerUse,
     usesToReach: usesToReach,
     carRule2038: carRule2038,

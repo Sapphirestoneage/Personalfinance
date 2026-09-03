@@ -109,6 +109,35 @@
       ['annualContributionCents']);
   }
 
+  /**
+   * Balance after `months` of MONTHLY compounding with a contribution added
+   * at the end of each month. The annual version above is right for a yearly
+   * savings figure; this is right for a habit — a subscription, a coffee, a
+   * payment — which is monthly by nature and compounds monthly too.
+   */
+  function futureValueMonthlyCents(opts) {
+    var o = opts || {};
+    var missing = Money.missingFrom({
+      monthlyContributionCents: o.monthlyContributionCents,
+      annualRate: o.annualRate, months: o.months
+    });
+    if (missing.length) {
+      return Money.incomplete('Need an amount, a rate and a number of months.', missing);
+    }
+    if (o.months <= 0) return Money.incomplete('Need at least a month.', ['months']);
+    var start = Money.isEntered(o.startCents) ? o.startCents : 0;
+    var r = o.annualRate / 12;
+    var grown = r === 0
+      ? start + o.monthlyContributionCents * o.months
+      : start * Math.pow(1 + r, o.months)
+        + o.monthlyContributionCents * ((Math.pow(1 + r, o.months) - 1) / r);
+    return Money.ok(Math.round(grown), {
+      contributedCents: o.monthlyContributionCents * o.months,
+      growthCents: Math.round(grown) - start - o.monthlyContributionCents * o.months,
+      months: o.months, annualRate: o.annualRate
+    });
+  }
+
   /* ---- Level-payment loans ----------------------------------------------
      A fixed payment over a fixed term with no extra payments HAS a closed
      form, and using it here is correct — unlike the payoff simulation in
@@ -165,6 +194,7 @@
     levelPaymentCents: levelPaymentCents,
     principalForPaymentCents: principalForPaymentCents,
     futureValueCents: futureValueCents,
+    futureValueMonthlyCents: futureValueMonthlyCents,
     presentValueNeededCents: presentValueNeededCents,
     yearsToTargetCents: yearsToTargetCents
   };

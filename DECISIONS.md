@@ -804,11 +804,9 @@ each independently complete or incomplete.
 **Built:** HYSA Switch, cost-per-use (§13's Girl Math / Lifetime Value),
 the 20/3/8 car rule, and the Rule of Five.
 
-**Not built: the "$30k–$90k Rule".** I could not establish what it actually
-states, and a threshold people would plan a car purchase around is not
-something to infer from a name. It is the one item in this batch left out on
-purpose — `CLAUDE.md` says stop and ask rather than guess, and this is that
-case. **Eli: what is the rule?**
+**~~Not built: the "$30k–$90k Rule".~~ RESOLVED — see D-026.** I had guessed
+it was a car-buying threshold, which is why I could not make it work. It is
+not: it is a rule about recurring spending, and Eli defined it. Now built.
 
 Three things worth recording about the implementations:
 
@@ -949,6 +947,43 @@ triggered both an explicit `render()` and the spine's `onChange`.
 
 ---
 
+## D-026 — the $30k–$90k rule, defined and built
+**2026-09-03 · SPEC.md §13 · closes the open question in D-022**
+
+Eli's definition, which is not what the name suggests:
+
+> $100 a month is $1,200 a year of **spending**. Under the 4% rule your
+> retirement pot has to be $1,200 / 0.04 = **$30,000** bigger to fund that
+> forever — Eli's `100 × 12 × 25`. Invest the same $100 a month instead and
+> it compounds to roughly **$90,000**.
+
+The same hundred dollars counted from both ends: what the habit adds to the
+mountain you have to climb, and what it would have become had it gone the
+other way. That is a far better idea than the car-buying threshold I had
+assumed it was, which is exactly why guessing would have produced something
+useless.
+
+**One half is exact, the other is not, and the room says so.** The $30,000
+falls straight out of the withdrawal rate and is completely independent of
+any return assumption. The $90,000 is horizon-dependent: it is about **26.3
+years at 7%**, or 30 years at 5.5%. Asserting the round pair for everyone
+would be wrong for almost everyone, so `recurringHabit()` computes both from
+the household's own SWR, expected return and horizon — defaulting the horizon
+to the years between the person's actual age and 65, and naming which basis
+it used.
+
+Verified: at 26.3 years the engine reproduces the canonical pairing exactly —
+$30,000 and $90,580. For the example household (Robin, 32, so 33 years to 65)
+the same $100/mo is $30,000 against **$154,406**, of which $114,806 is growth
+rather than contributions. A $15/mo subscription is $4,500 and $13,587.
+
+Tests pin the parts that must not move: the pot half is unchanged when the
+return assumption changes, the invested half is not; a 3% withdrawal rate
+raises the pot half and leaves the other alone; and both halves scale
+linearly with the amount.
+
+---
+
 ## Still open
 
 - **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the
@@ -960,9 +995,6 @@ triggered both an explicit `render()` and the spine's `onChange`.
 - **`student-loan-decision`** appears in §0, §1 and §5.1 as shipped, but in
   no part of the §13 tool specification. If it is to be rebuilt it needs a
   spec.
-- **What is the "$30k–$90k Rule"?** Named in `SPEC.md` §13 but never defined
-  there, and not inferable from the name. Everything else in that group is
-  built; this one is blocked on Eli. See D-022.
 - **Reference-table refresh** — see D-009 for what each table's numbers are
   actually worth today. The effective-tax-rate bands and the SCF percentile
   breakpoints are the two that most need a primary-source pass before any

@@ -1051,6 +1051,93 @@ section('Quick math');
     QuickMath.usesToReach(120000, 700).value, Math.ceil(120000 / 700));
 })();
 
+/* -- The $30k–$90k rule ---------------------------------------------------
+      $100/mo is $1,200/yr of spending. At a 4% withdrawal rate the pot has to
+      be $1,200 / 0.04 = $30,000 bigger to fund it forever — which is exactly
+      Eli's 100 × 12 × 25. Invested instead at 7% it reaches ~$90,000 after
+      about 26 years. The first half is exact; the second depends entirely on
+      the horizon, which is why the engine computes it rather than asserting
+      the round number.                                                     */
+(function () {
+  const h = Demo.build();   /* Robin is 32, so the default horizon is to 65 */
+
+  const r = QuickMath.recurringHabit(h, {}, { monthlyAmountCents: 10000 });
+  check('the $30k half is exact', r.fireNumberAdditionCents, 3000000);
+  check('and equals monthly × 12 × 25 at a 4% rate',
+    r.fireNumberAdditionCents, 10000 * 12 * 25);
+  check('the horizon defaults to retirement age', r.years, 65 - 32);
+  check('and says so', r.horizonBasis, 'to age 65');
+
+  /* The canonical pairing, at the horizon that actually produces it. */
+  const canonical = QuickMath.recurringHabit(h, {}, { monthlyAmountCents: 10000, years: 26.3 });
+  check('the $30k half is unchanged by horizon', canonical.fireNumberAdditionCents, 3000000);
+  checkTrue('and the other half lands on about $90,000',
+    Math.abs(canonical.investedInsteadCents - 9000000) < 100000,
+    `got ${canonical.investedInsteadCents}`);
+
+  /* The first half must NOT move with the return assumption; the second must. */
+  const slowGrowth = QuickMath.recurringHabit(h, {}, {
+    monthlyAmountCents: 10000, years: 26.3, localOverrides: { expectedReturnRate: 0.04 } });
+  check('the FIRE-number half ignores the return rate',
+    slowGrowth.fireNumberAdditionCents, canonical.fireNumberAdditionCents);
+  checkTrue('the invested half does not',
+    slowGrowth.investedInsteadCents < canonical.investedInsteadCents);
+
+  /* A more conservative withdrawal rate makes the habit cost MORE to fund. */
+  const conservative = QuickMath.recurringHabit(h, {}, {
+    monthlyAmountCents: 10000, localOverrides: { swrRate: 0.03 } });
+  check('a 3% withdrawal rate needs a bigger pot',
+    conservative.fireNumberAdditionCents, Math.round(120000 / 0.03));
+  checkTrue('which is more than at 4%',
+    conservative.fireNumberAdditionCents > r.fireNumberAdditionCents);
+
+  /* Scale is linear on the first half, and on the second. */
+  const doubled = QuickMath.recurringHabit(h, {}, { monthlyAmountCents: 20000 });
+  check('doubling the habit doubles the mountain',
+    doubled.fireNumberAdditionCents, r.fireNumberAdditionCents * 2);
+  checkTrue('and roughly doubles the road not taken',
+    Math.abs(doubled.investedInsteadCents - r.investedInsteadCents * 2) <= 2);
+
+  /* Growth is reported apart from contributions, since that IS the point. */
+  check('contributions are the plain sum', r.contributedCents, 10000 * 12 * (65 - 32));
+  check('and growth is the rest', r.growthCents, r.investedInsteadCents - r.contributedCents);
+  checkTrue('growth outweighs contributions over 33 years',
+    r.growthCents > r.contributedCents);
+
+  /* Without a date of birth it falls back to a stated default, not silence. */
+  const noDob = Demo.build();
+  noDob.people[0].dob = null;
+  const fallback = QuickMath.recurringHabit(noDob, {}, { monthlyAmountCents: 10000 });
+  check('no age falls back to a default horizon', fallback.years, QuickMath.DEFAULT_HABIT_YEARS);
+  checkTrue('and names it', /default/.test(fallback.horizonBasis));
+
+  check('no amount is incomplete',
+    QuickMath.recurringHabit(h, {}, {}).status, 'incomplete');
+})();
+
+/* -- Monthly compounding, against the closed form ------------------------- */
+(function () {
+  /* $100/mo at 7% for 26.3 years, monthly compounding. */
+  const months = Math.round(26.3 * 12), r = 0.07 / 12;
+  const closed = 10000 * ((Math.pow(1 + r, months) - 1) / r);
+  const fv = Projection.futureValueMonthlyCents({
+    monthlyContributionCents: 10000, annualRate: 0.07, months: months });
+  check('monthly future value matches the closed form', fv.value, Math.round(closed));
+  /* At 0% it is just the sum of the payments — the case the formula divides
+     by zero on. */
+  check('a 0% return is the plain sum',
+    Projection.futureValueMonthlyCents({
+      monthlyContributionCents: 10000, annualRate: 0, months: 120 }).value, 1200000);
+  /* A starting balance compounds too. */
+  const withStart = Projection.futureValueMonthlyCents({
+    startCents: 1000000, monthlyContributionCents: 0, annualRate: 0.07, months: 120 });
+  check('a starting balance compounds on its own',
+    withStart.value, Math.round(1000000 * Math.pow(1 + r, 120)));
+  check('zero months is refused',
+    Projection.futureValueMonthlyCents({
+      monthlyContributionCents: 10000, annualRate: 0.07, months: 0 }).status, 'incomplete');
+})();
+
 /* -- 20/3/8 car rule ------------------------------------------------------ */
 (function () {
   const h = Demo.build();
