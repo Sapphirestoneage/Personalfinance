@@ -41,6 +41,21 @@
       ]
     },
     {
+      id: 'cash-flow',
+      title: 'Cash Flow',
+      blurb: 'Where the money actually goes, by category — measured against a budget, and against what you thought you spent.',
+      href: 'rooms/cash-flow.html',
+      tier: 1,
+      tags: ['cashflow', 'income'],
+      subsections: [
+        { id: 'spending',        label: 'A typical month' },
+        { id: 'out-summary',     label: 'Monthly spending' },
+        { id: 'out-net-flow',    label: 'What’s left' },
+        { id: 'out-template',    label: 'Against a budget' },
+        { id: 'out-divergence',  label: 'Guess vs. reality' }
+      ]
+    },
+    {
       id: 'foo-ladder',
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',

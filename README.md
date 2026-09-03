@@ -37,6 +37,7 @@ shared/             The spine everything depends on
 engines/            Shared calculation engines — one function per concept
   tier0.js            the nine Tier 0 outputs
   foo.js              Financial Order of Operations ladder + flags
+  cashflow.js         categorised spending, budget templates, divergence
 data/               Versioned reference tables (JSON, never inlined in code)
 test/run.js         Re-derives every formula outside the browser
 SPEC.md             The full Tier 0–2 build spec. The authority.

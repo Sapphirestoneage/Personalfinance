@@ -460,6 +460,40 @@ zero.
 
 ---
 
+## D-014 — what the Cash Flow room's browser pass caught
+**2026-09-03 · SPEC.md §14**
+
+Three defects, none of which `node test/run.js` could have found, because all
+three lived in the wiring between correct pieces.
+
+1. **Two reference tables were added to `data/` but never registered in
+   `shared/reference.js`'s `TABLE_FILES`.** The unit tests `require()` the
+   JSON directly, so they passed; the browser loads through the loader, so
+   `TABLES.expenseCategories` came back `undefined` and took the room's whole
+   input panel down. `test/run.js` now checks both directions — every JSON in
+   `data/` is registered, every registered entry exists on disk — and that
+   each carries the `version` / `asOf` / `source` stamp §6 requires.
+
+2. **The room looked entries up by an id it had minted itself** (`cf_housing`),
+   so the example household's entries — written with their own ids — were
+   invisible in the inputs and could not be cleared. Lookup is now keyed on
+   the category, which is the real natural key for "the manual monthly total
+   for this category"; the minted id is only used when creating a record that
+   does not exist yet. This is the general hazard of a room assuming it is the
+   only writer of a shared array, and it will recur with a future importer.
+
+3. **A favourable divergence was rendered in red.** `setCard()` colours any
+   negative figure as a loss, which is right for net worth and wrong here:
+   spending *less* than you estimated is good news. The divergence card now
+   colours by direction rather than by sign.
+
+Also changed on the same pass: category inputs had `placeholder="—"`, which
+is not a format hint. §5 rule 1 asks a placeholder to show format. The dollar
+affix already carries the unit, so what was actually ambiguous was the period
+— the placeholder is now `/mo`.
+
+---
+
 ## Still open
 
 - **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the

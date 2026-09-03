@@ -549,7 +549,40 @@ const SPEND = Demo.VALUES.monthlySpending;
 })();
 
 /* ==========================================================================
-   9. Registry deep links resolve to real elements.
+   9. Every reference table is reachable through the loader.
+   A table added to data/ but never registered in shared/reference.js loads
+   as undefined in the browser and takes the room down with it — which is
+   exactly what happened once. Both directions are checked.
+   ========================================================================== */
+
+section('Reference tables');
+
+(function () {
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const onDisk = fs.readdirSync(path.join(ROOT, 'data')).filter(f => f.endsWith('.json'));
+  const registered = Object.values(Reference.TABLE_FILES);
+
+  onDisk.forEach(function (file) {
+    checkTrue(`data/${file} is registered in reference.js TABLE_FILES`,
+      registered.includes(file),
+      'add it to TABLE_FILES or it cannot be loaded by a room');
+  });
+  Object.keys(Reference.TABLE_FILES).forEach(function (name) {
+    const file = Reference.TABLE_FILES[name];
+    checkTrue(`TABLE_FILES.${name} -> data/${file} exists`,
+      fs.existsSync(path.join(ROOT, 'data', file)));
+  });
+  /* Every table carries the version/as-of stamp SPEC.md §6 requires. */
+  onDisk.forEach(function (file) {
+    const t = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', file), 'utf8'));
+    checkTrue(`data/${file} declares a version`, typeof t.version === 'string' && t.version.length > 0);
+    checkTrue(`data/${file} declares an asOf date`, typeof t.asOf === 'string' && t.asOf.length > 0);
+    checkTrue(`data/${file} names its source`, typeof t.source === 'string' && t.source.length > 0);
+  });
+})();
+
+/* ==========================================================================
+   10. Registry deep links resolve to real elements.
    ========================================================================== */
 
 section('Registry and rooms');
