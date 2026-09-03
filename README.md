@@ -8,7 +8,20 @@ HTML file that includes a handful of shared JavaScript modules and the shared
 stylesheet. Open the Map, pick a room, type your numbers; the numbers follow
 you into the next room.
 
-## Run it
+## Live
+
+Published with GitHub Pages from `main`:
+**https://sapphirestoneage.github.io/Personalfinance/**
+
+That root URL is the FOO calculator; the room directory is at
+`/Personalfinance/map.html`. Pages serves this repo from a subpath, so every
+path in the site is relative — never introduce a root-absolute `/shared/...`
+or it will break there while still working locally.
+
+`.nojekyll` is present so Pages serves the tree verbatim instead of running
+it through Jekyll.
+
+## Run it locally
 
 ```sh
 python3 -m http.server 8000
