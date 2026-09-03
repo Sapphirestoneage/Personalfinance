@@ -39,6 +39,7 @@ const SelfEmployed = require(path.join(ROOT, 'engines/selfemployed.js'));
 const Goals = require(path.join(ROOT, 'engines/goals.js'));
 const Accounts = require(path.join(ROOT, 'engines/accounts.js'));
 const Swan = require(path.join(ROOT, 'engines/swan.js'));
+const ValuesEngine = require(path.join(ROOT, 'engines/values.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -53,6 +54,7 @@ const TABLES = {
   seTax: require(path.join(ROOT, 'data/se_tax_2026.json')),
   goalTemplates: require(path.join(ROOT, 'data/goal_templates.json')),
   liquidityBenchmarks: require(path.join(ROOT, 'data/liquidity_benchmarks.json')),
+  values: require(path.join(ROOT, 'data/values.json')),
   irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json'))
 };
 
@@ -1728,6 +1730,173 @@ section('SWAN Number');
   const chip = Ownership.describe('swanTarget', months6, 'financial-snapshot');
   check('elsewhere it renders as a read-only $18,900', chip.display, '$18,900');
   check('and it is not editable there', chip.isOwnHere, false);
+})();
+
+/* ==========================================================================
+   Values vs. Spending Audit — two ordered lists, and deliberately no score.
+   SPEC.md §13 Tier 2. Robin's categorised month totals $3,900.
+   ========================================================================== */
+
+section('Values vs. Spending');
+
+(function () {
+  const VT = TABLES.values;
+  const CAT = TABLES.expenseCategories;
+
+  /* -- The catalogue's mapping has to be disjoint and complete ------------
+        A category under two values double-counts the money; a category
+        under none silently vanishes from the audit unless it is on the
+        deliberately-unmapped list.                                        */
+  const seen = {};
+  let duplicated = [];
+  VT.values.forEach(v => (v.defaultCategoryIds || []).forEach(cid => {
+    if (seen[cid]) duplicated.push(cid);
+    seen[cid] = v.id;
+  }));
+  check('no category is claimed by two values', duplicated.join(','), '');
+  CAT.categories.forEach(c => {
+    checkTrue(`category "${c.id}" is mapped or deliberately unmapped`,
+      !!seen[c.id] || (VT.unmappedCategoryIds || []).includes(c.id),
+      'add it to a value in data/values.json or to unmappedCategoryIds');
+  });
+  Object.keys(seen).forEach(cid => {
+    checkTrue(`values.json maps "${cid}", which exists in expense_categories.json`,
+      CAT.categories.some(c => c.id === cid));
+  });
+  check('the flattened default map agrees with the file',
+    JSON.stringify(ValuesEngine.defaultMap(VT)), JSON.stringify(seen));
+
+  /* -- Stating values: order is position, and five is five --------------- */
+  const h = Demo.build();
+  h.expenses.entries = Demo.buildSpending();
+  h.valuesProfile = { stated: ['freedom', 'health', 'connection'], assignments: {} };
+
+  const stated = ValuesEngine.statedValues(h, VT);
+  check('three named values come back', stated.length, 3);
+  check('the first named is rank 1', stated[0].rank, 1);
+  check('and it is the one named first', stated[0].id, 'freedom');
+
+  const messy = Demo.build();
+  messy.valuesProfile = {
+    stated: ['freedom', 'freedom', 'not_a_real_value', 'health', 'connection',
+             'security', 'experience', 'ease'],
+    assignments: {}
+  };
+  const cleaned = ValuesEngine.statedValues(messy, VT);
+  check('duplicates and unknown ids are dropped, and five is the cap', cleaned.length, 5);
+  check('ranks are contiguous from 1',
+    cleaned.map(v => v.rank).join(','), '1,2,3,4,5');
+  check('the surviving order is the order named',
+    cleaned.map(v => v.id).join(','), 'freedom,health,connection,security,experience');
+
+  /* -- Assignment precedence --------------------------------------------- */
+  check('with nothing said, the catalogue default applies',
+    ValuesEngine.assignmentFor(h, VT, 'groceries').valueId, 'health');
+  check('and it says it was a default',
+    ValuesEngine.assignmentFor(h, VT, 'groceries').source, 'default');
+
+  const reassigned = JSON.parse(JSON.stringify(h));
+  reassigned.valuesProfile.assignments = { groceries: 'connection', dining_out: null };
+  check('a stated assignment beats the default',
+    ValuesEngine.assignmentFor(reassigned, VT, 'groceries').valueId, 'connection');
+  check('and it says so', ValuesEngine.assignmentFor(reassigned, VT, 'groceries').source, 'stated');
+  check('an explicit null means none of them',
+    ValuesEngine.assignmentFor(reassigned, VT, 'dining_out').source, 'none');
+  check('and carries no value', ValuesEngine.assignmentFor(reassigned, VT, 'dining_out').valueId, null);
+  check('a category the catalogue never claimed reads as unmapped',
+    ValuesEngine.assignmentFor(h, VT, 'other').source, 'unmapped');
+
+  /* -- No categorised month: incomplete, never a table of zeroes ---------- */
+  const noMonth = Demo.build();
+  noMonth.valuesProfile = { stated: ['freedom'], assignments: {} };
+  const blank = ValuesEngine.audit(noMonth, VT, CAT);
+  check('without a categorised month the audit is incomplete', blank.status, 'incomplete');
+  check('and it names what is missing', blank.missing.join(','), 'expenseEntries');
+
+  /* -- The audit itself ---------------------------------------------------
+        Robin's month, by value, on the default mapping:
+          Home & comfort   1,500 housing + 180 utilities        = 1,680
+          Security         305 minimums + 300 savings + 150 ins = 755
+          Health           450 groceries                        = 450
+          Freedom          400 retirement                       = 400
+          Connection       260 dining out                       = 260
+          Getting around   220 transport                        = 220
+          Experiences      90 entertainment                     = 90
+          Ease             45 subscriptions                     = 45
+                                                          total = 3,900   */
+  const a = ValuesEngine.audit(h, VT, CAT);
+  check('the audit reports the whole categorised month', a.value, 390000);
+  check('home and comfort is the biggest single value', a.bySpend[0].id, 'home');
+  check('and it is $1,680', a.bySpend[0].monthlyCents, 168000);
+  check('security is second at $755', a.bySpend[1].monthlyCents, 75500);
+  check('spend ranks are contiguous from 1',
+    a.bySpend.map(r => r.spendRank).join(','),
+    a.bySpend.map((_, i) => i + 1).join(','));
+
+  check('the stated list keeps the order it was named in',
+    a.byStated.map(r => r.id).join(','), 'freedom,health,connection');
+  check('freedom is $400 of the month', a.byStated[0].monthlyCents, 40000);
+  check('which is 400/3,900 of it', a.byStated[0].shareOfSpend, 40000 / 390000, 1e-12);
+  check('freedom ranks 4th by spend despite being named first',
+    a.byStated[0].spendRank, 4);
+
+  /* Every dollar lands exactly once: named values plus everything else. */
+  const claimed = a.byStated.reduce((s, r) => s + r.monthlyCents, 0);
+  check('named values plus unclaimed accounts for the whole month',
+    claimed + a.unclaimedCents, a.value);
+  check('unclaimed is $2,790 — everything not serving the three named',
+    a.unclaimedCents, 279000);
+  check('which is 72% of the month', Math.round(a.unclaimedShare * 100), 72);
+
+  /* Housing serves a real value — just not one on this list. Saying so is
+     the difference between a useful reading and an accusation. */
+  const housing = a.unclaimedCategories.find(c => c.categoryId === 'housing');
+  checkTrue('housing counts as unclaimed here', !!housing);
+  check('and it still names the value it serves', housing.servesValueId, 'home');
+  check('unclaimed categories are listed biggest first',
+    a.unclaimedCategories[0].categoryId, 'housing');
+
+  /* -- A named value with nothing behind it still gets a row ------------- */
+  const unfunded = JSON.parse(JSON.stringify(h));
+  unfunded.valuesProfile.stated = ['family', 'freedom'];
+  const ua = ValuesEngine.audit(unfunded, VT, CAT);
+  check('a named value with no spending still appears', ua.byStated[0].id, 'family');
+  check('at zero, not missing', ua.byStated[0].monthlyCents, 0);
+  check('and its share is a real zero', ua.byStated[0].shareOfSpend, 0);
+
+  /* -- Reassigning moves the money, and only that money ------------------ */
+  const moved = ValuesEngine.audit(reassigned, VT, CAT);
+  check('groceries moved off health', moved.rows.find(r => r.id === 'health').monthlyCents, 0);
+  check('and onto connection — 260 dining out is gone, 450 groceries arrived',
+    moved.rows.find(r => r.id === 'connection').monthlyCents, 45000);
+  check('dining out, set to none, is unclaimed',
+    moved.unclaimedCategories.some(c => c.categoryId === 'dining_out'), true);
+  check('the month still totals the same', moved.value, 390000);
+
+  /* -- No score. SPEC.md §13 says the gap is not a scalar. --------------- */
+  ['score', 'alignment', 'alignmentScore', 'grade', 'correlation', 'rating']
+    .forEach(function (key) {
+      checkTrue(`the audit result carries no "${key}"`,
+        !Object.prototype.hasOwnProperty.call(a, key),
+        'SPEC.md §13 Tier 2: the gap is a comparison view, not a scalar');
+    });
+
+  /* -- The engine reads; the room writes --------------------------------- */
+  const before = JSON.stringify(h);
+  ValuesEngine.audit(h, VT, CAT);
+  ValuesEngine.assignableCategories(h, VT, CAT);
+  ValuesEngine.statedValues(h, VT);
+  check('reading the audit mutates nothing', JSON.stringify(h), before);
+
+  /* -- The assignment list is only categories with money in them --------- */
+  const assignable = ValuesEngine.assignableCategories(h, VT, CAT);
+  check('the assignable list matches the categorised categories',
+    assignable.value.length,
+    CashFlow.summarise(h, CAT).categories.length);
+  checkTrue('every assignable row carries an amount',
+    assignable.value.every(r => Money.isEntered(r.monthlyCents)));
+  check('without a categorised month there is nothing to assign',
+    ValuesEngine.assignableCategories(noMonth, VT, CAT).status, 'incomplete');
 })();
 
 section('Ownership');

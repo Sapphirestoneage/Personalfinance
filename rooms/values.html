@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>What Matters · SPARKS</title>
+<meta name="description" content="The five things you say matter most, next to where the money actually went."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11, §13 Tier 2 (Values vs. Spending Audit).
+
+  1. READS   the categorised month from Cash Flow, via engines/cashflow.js.
+             Nothing about spending is entered here.
+  2. WRITES  household.valuesProfile — the ordered five, and which value
+             each spending category serves. Nothing else.
+  3. CALLS   engines/values.js, which calls CashFlow.summarise(). The
+             category roll-up is not reimplemented here.
+  4. EMPTY   With no month categorised, the comparison says so and links to
+             Cash Flow. With no values named, the spending list stays hidden
+             — there is nothing to assign them to yet.
+  5. CONFIG  data/values.json (the vocabulary and its default mapping),
+             data/expense_categories.json (the categories themselves).
+
+  NO SCORE. SPEC.md §13 calls the gap "inherently qualitative/visual —
+  design as a comparison view, not a scalar", and that is meant literally.
+  Two ordered lists and the money behind them. Nothing here grades anyone.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .picks { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
+  .pick { display: grid; grid-template-columns: 28px 1fr; gap: var(--space-3); align-items: start; text-align: left; font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; transition: all 150ms ease; }
+  .pick:hover { border-color: var(--color-border-active); }
+  .pick[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-surface-active); }
+  .pick .rank { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--color-border-strong); font-size: var(--text-xs); color: var(--color-text-faint); font-variant-numeric: tabular-nums; }
+  .pick[aria-pressed="true"] .rank { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+  .pick .nm { font-weight: 600; }
+  .pick .bl { display: block; font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
+  .pick[disabled] { opacity: .45; cursor: default; }
+
+  .assign { margin-top: var(--space-3); }
+  .assign-row { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2) var(--space-3); align-items: center; padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border); }
+  .assign-row:last-child { border-bottom: none; }
+  .assign-row .cat { font-size: var(--text-sm); }
+  .assign-row .amt { font-size: var(--text-sm); font-variant-numeric: tabular-nums; color: var(--color-text-muted); }
+  .assign-row .sel { grid-column: 1 / -1; }
+  .assign-row .sel .slaf-input-shell { margin: 0; }
+  .assign-row .src { font-size: var(--text-xs); color: var(--color-text-faint); }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); align-items: stretch; }
+  @media (max-width: 400px) { .two { grid-template-columns: 1fr; } }
+  .two > div { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); }
+  .two .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); display: block; margin-bottom: var(--space-2); }
+  ol.list { list-style: none; margin: 0; padding: 0; counter-reset: n; }
+  ol.list li { display: grid; grid-template-columns: 20px 1fr; gap: var(--space-2); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); font-size: var(--text-sm); }
+  ol.list li:last-child { border-bottom: none; }
+  ol.list .n { color: var(--color-text-faint); font-variant-numeric: tabular-nums; }
+  ol.list .amt { display: block; font-size: var(--text-xs); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+  ol.list li.moved .n { color: var(--color-accent-hover); }
+  ol.list li.absent .amt { color: var(--color-critical); }
+
+  .bars { margin-top: var(--space-4); }
+  .bar-row { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: baseline; font-size: var(--text-sm); margin-top: var(--space-3); }
+  .bar-track { grid-column: 1 / -1; height: 10px; border-radius: var(--radius-pill); background: rgba(30,58,138,.4); overflow: hidden; }
+  .bar-fill { display: block; height: 100%; background: var(--color-accent); }
+  .bar-fill.unclaimed { background: var(--color-text-faint); }
+  .bar-row .said { font-size: var(--text-xs); color: var(--color-text-faint); }
+
+  .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .empty { color: var(--color-text-faint); font-size: var(--text-sm); margin-top: var(--space-3); }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>What Matters</h1>
+  <p class="room-lede">The five things you say matter most, next to where the money actually went.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="stated">
+    <span class="slaf-eyebrow">What matters to you</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Pick five, in order</h2>
+    <p class="slaf-hint" style="margin:0">
+      Tap them in the order they matter — the first one you tap is your
+      first. Tap again to take one back. Nothing here is graded, and there
+      is no right list.
+    </p>
+    <div class="picks" id="pick-list"></div>
+    <div class="slaf-field-row" style="margin-top:var(--space-3)">
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-reset" hidden>Start the list again</button>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="spending" hidden>
+    <span class="slaf-eyebrow">What the money serves</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Which of these does each go to?</h2>
+    <p class="slaf-hint" style="margin:0">
+      These are already filled in with a sensible guess. Change any of them —
+      whether groceries are about health or about home is a question about
+      your life, not a fact, and your answer is the one that counts.
+    </p>
+    <div class="assign" id="assign-list"></div>
+    <p class="empty" id="assign-empty" hidden></p>
+  </section>
+
+  <section class="slaf-card" id="out-compare">
+    <span class="slaf-eyebrow">The two lists</span>
+    <h2 style="margin:var(--space-2) 0 0">What you said, and what the money said</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Left is your order. Right is the same values ranked by what a month
+      actually costs. They rarely match exactly, and a mismatch is not a
+      failing — some things that matter enormously are cheap.
+    </p>
+    <div class="two" id="two-cols" hidden>
+      <div><span class="cap">You said</span><ol class="list" id="col-said"></ol></div>
+      <div><span class="cap">The money said</span><ol class="list" id="col-spent"></ol></div>
+    </div>
+    <div class="bars" id="bars"></div>
+    <p class="why" id="compare-why"></p>
+  </section>
+
+  <section class="slaf-card" id="out-unclaimed">
+    <span class="slaf-eyebrow">Serving nothing you named</span>
+    <h2 style="margin:var(--space-2) 0 0">The rest of it</h2>
+    <div class="flag" id="unclaimed-note" hidden></div>
+    <ol class="list" id="unclaimed-list" style="margin-top:var(--space-3)"></ol>
+  </section>
+
+  <section class="slaf-card" id="reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. The vocabulary and its starting
+    mapping come from <code>data/values.json</code> — a plain list, not a
+    psychological instrument. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/values.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference,
+      Ownership = SLAF.Ownership, Values = SLAF.Values;
+
+  var ROOM_ID = 'values';
+  var TABLES = null;
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  /* ---- Picking the five ------------------------------------------------- */
+
+  function togglePick(id) {
+    var stated = (Spine.getProfile().valuesProfile || {}).stated || [];
+    var at = stated.indexOf(id);
+    if (at !== -1) {
+      /* Taking one back re-ranks everything below it, which is what the
+         person means — not a hole where number three used to be. */
+      stated = stated.slice(0, at).concat(stated.slice(at + 1));
+    } else {
+      if (stated.length >= Values.TOP_N) return;
+      stated = stated.concat([id]);
+    }
+    Spine.setStatedValues(stated);
+    render();
+  }
+
+  el('btn-reset').addEventListener('click', function () {
+    Spine.setStatedValues([]);
+    render();
+  });
+
+  function renderPicks(h) {
+    var stated = (h.valuesProfile || {}).stated || [];
+    var full = stated.length >= Values.TOP_N;
+    el('pick-list').innerHTML = TABLES.values.values.map(function (v) {
+      var rank = stated.indexOf(v.id) + 1;
+      var on = rank > 0;
+      return '<button type="button" class="pick" data-value="' + esc(v.id) + '" '
+        + 'aria-pressed="' + on + '"' + (!on && full ? ' disabled' : '') + '>'
+        + '<span class="rank">' + (on ? rank : '') + '</span>'
+        + '<span><span class="nm">' + esc(v.label) + '</span>'
+        + '<span class="bl">' + esc(v.blurb) + '</span></span></button>';
+    }).join('');
+    el('btn-reset').hidden = stated.length === 0;
+  }
+
+  el('pick-list').addEventListener('click', function (evt) {
+    var btn = evt.target.closest ? evt.target.closest('.pick') : null;
+    if (!btn || btn.disabled) return;
+    togglePick(btn.getAttribute('data-value'));
+  });
+
+  /* ---- Assigning spending ----------------------------------------------- */
+
+  function renderAssignments(h) {
+    var stated = Values.statedValues(h, TABLES.values);
+    el('spending').hidden = stated.length === 0;
+    if (stated.length === 0) return;
+
+    var rows = Values.assignableCategories(h, TABLES.values, TABLES.expenseCategories);
+    if (!Money.isOk(rows)) {
+      el('assign-list').innerHTML = '';
+      el('assign-empty').hidden = false;
+      el('assign-empty').innerHTML = esc(rows.reason) + ' <a href="'
+        + Ownership.linkTo('cash-flow', 'spending') + '">Categorise a month →</a>';
+      return;
+    }
+    el('assign-empty').hidden = true;
+
+    var options = stated.map(function (s) {
+      return { id: s.id, label: s.rank + '. ' + s.label };
+    });
+
+    function serves(id) {
+      var v = Values.valueById(TABLES.values, id);
+      return v ? v.label : id;
+    }
+
+    el('assign-list').innerHTML = rows.value.map(function (row) {
+      /* A category assigned to a value the person has since dropped is shown
+         as unassigned rather than silently kept on a value that is no longer
+         on the list. */
+      var live = options.some(function (o) { return o.id === row.valueId; });
+      var opts = '<option value=""' + (live ? '' : ' selected') + '>'
+        + esc(TABLES.values.unassignedLabel) + '</option>'
+        + options.map(function (o) {
+          return '<option value="' + esc(o.id) + '"'
+            + (live && o.id === row.valueId ? ' selected' : '') + '>' + esc(o.label) + '</option>';
+        }).join('');
+      return '<div class="assign-row">'
+        + '<span class="cat">' + esc(row.label)
+        + '<span class="src">' + (row.source === 'none' ? 'you said none of them'
+            : live && row.source === 'stated' ? 'your answer'
+            : live ? 'our guess'
+            : row.valueId ? 'serves ' + esc(serves(row.valueId)) + ', not on your list'
+            : 'nothing yet') + '</span></span>'
+        + '<span class="amt">' + Money.formatCents(row.monthlyCents) + '/mo</span>'
+        + '<span class="sel"><span class="slaf-input-shell">'
+        + '<select data-category="' + esc(row.categoryId) + '" aria-label="What ' + esc(row.label) + ' serves">'
+        + opts + '</select></span></span>'
+        + '</div>';
+    }).join('');
+  }
+
+  el('assign-list').addEventListener('change', function (evt) {
+    var sel = evt.target;
+    if (!sel || sel.tagName !== 'SELECT') return;
+    Spine.assignCategoryToValue(sel.getAttribute('data-category'), sel.value || null);
+    render();
+  });
+
+  /* ---- The comparison --------------------------------------------------- */
+
+  function renderCompare(h) {
+    var a = Values.audit(h, TABLES.values, TABLES.expenseCategories);
+    var stated = Values.statedValues(h, TABLES.values);
+
+    if (!Money.isOk(a) || stated.length === 0) {
+      el('two-cols').hidden = true;
+      el('bars').innerHTML = '';
+      el('compare-why').innerHTML = stated.length === 0
+        ? 'Name what matters above and this fills in.'
+        : esc(a.reason) + ' <a href="' + Ownership.linkTo('cash-flow', 'spending')
+          + '">Categorise a month →</a>';
+      el('unclaimed-note').hidden = true;
+      el('unclaimed-list').innerHTML = '';
+      return;
+    }
+    el('compare-why').textContent = '';
+    el('two-cols').hidden = false;
+
+    var spendRankOf = {};
+    a.bySpend.forEach(function (r) { spendRankOf[r.id] = r.spendRank; });
+
+    el('col-said').innerHTML = a.byStated.map(function (r) {
+      var moved = spendRankOf[r.id] !== r.statedRank;
+      return '<li class="' + (moved ? 'moved ' : '') + (r.monthlyCents === 0 ? 'absent' : '') + '">'
+        + '<span class="n">' + r.statedRank + '</span>'
+        + '<span>' + esc(r.label)
+        + '<span class="amt">' + (r.monthlyCents === 0
+            ? 'nothing goes here'
+            : Money.formatCents(r.monthlyCents) + '/mo · ' + Money.formatRate(r.shareOfSpend, { decimals: 0 }))
+        + '</span></span></li>';
+    }).join('');
+
+    el('col-spent').innerHTML = a.bySpend.slice(0, 8).map(function (r) {
+      return '<li class="' + (r.statedRank ? '' : 'moved') + '">'
+        + '<span class="n">' + r.spendRank + '</span>'
+        + '<span>' + esc(r.label)
+        + '<span class="amt">' + Money.formatCents(r.monthlyCents) + '/mo'
+        + (r.statedRank ? ' · you said #' + r.statedRank : ' · not on your list')
+        + '</span></span></li>';
+    }).join('');
+
+    var max = Math.max.apply(null, a.byStated.map(function (r) { return r.monthlyCents; })
+      .concat([a.unclaimedCents, 1]));
+    el('bars').innerHTML = a.byStated.map(function (r) {
+      return '<div class="bar-row"><span>' + esc(r.label) + '</span>'
+        + '<span class="said">you said #' + r.statedRank + '</span>'
+        + '<span class="bar-track"><span class="bar-fill" style="width:'
+        + (r.monthlyCents / max * 100) + '%"></span></span></div>';
+    }).join('')
+      + (a.unclaimedCents > 0
+        ? '<div class="bar-row"><span>' + esc(TABLES.values.unassignedLabel) + '</span>'
+          + '<span class="said">—</span>'
+          + '<span class="bar-track"><span class="bar-fill unclaimed" style="width:'
+          + (a.unclaimedCents / max * 100) + '%"></span></span></div>'
+        : '');
+
+    renderUnclaimed(a);
+  }
+
+  function renderUnclaimed(a) {
+    var note = el('unclaimed-note');
+    note.hidden = false;
+    if (a.unclaimedCents === 0) {
+      note.innerHTML = '<strong>Every dollar is serving something on your list.</strong> '
+        + 'That is rare enough to be worth a second look — if literally everything '
+        + 'maps to a top-five value, the list may be doing less work than it could.';
+      el('unclaimed-list').innerHTML = '';
+      return;
+    }
+    note.innerHTML = '<strong>' + Money.formatCents(a.unclaimedCents) + ' a month — '
+      + Money.formatRate(a.unclaimedShare, { decimals: 0 })
+      + ' of everything — serves nothing on your list.</strong> '
+      + 'Some of that is unavoidable and some of it matters more than the list admits. '
+      + 'Housing usually lands here, and rarely because it does not matter.';
+    el('unclaimed-list').innerHTML = a.unclaimedCategories.map(function (c, i) {
+      return '<li><span class="n">' + (i + 1) + '</span>'
+        + '<span>' + esc(c.label)
+        + '<span class="amt">' + Money.formatCents(c.monthlyCents) + '/mo'
+        + (c.source === 'none' ? ' · you said none of them'
+           : c.servesLabel ? ' · serves ' + esc(c.servesLabel) + ', which you did not name'
+           : ' · not claimed by anything') + '</span></span></li>';
+    }).join('');
+  }
+
+  /* ---- Render ----------------------------------------------------------- */
+
+  function renderNow() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    renderPicks(h);
+    renderAssignments(h);
+    renderCompare(h);
+    el('reading-list').innerHTML = ['monthlyExpenses']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+
+  var queued = false;
+  function render() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () { queued = false; renderNow(); }, 0);
+  }
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    renderNow();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

@@ -46,6 +46,7 @@ const TARGETS = [
    a tall one is exactly the unevenness this file exists to prevent. */
 const EQUAL_HEIGHT = [
   ['/rooms/sleep-at-night.html', '.pair'],
+  ['/rooms/values.html', '.two'],
   ['/rooms/sleep-at-night.html', '.basis']
 ];
 (async () => {
@@ -80,7 +81,10 @@ const EQUAL_HEIGHT = [
     await p.evaluate(() => { const d = SLAF.DemoPersona.build();
       SLAF.Spine.updateProfile({ people: d.people, filingStatus: d.filingStatus, state: d.state,
         assets: d.assets, debts: d.debts, expenses: d.expenses, capturingFullMatch: d.capturingFullMatch });
-      SLAF.Spine.updateProfile({ expenses: { entries: SLAF.DemoPersona.buildSpending() } }); });
+      SLAF.Spine.updateProfile({ expenses: { entries: SLAF.DemoPersona.buildSpending() } });
+      /* The What Matters comparison only renders once values are named. */
+      SLAF.Spine.updateProfile({ valuesProfile:
+        { stated: ['freedom', 'health', 'connection', 'security', 'experience'], assignments: {} } }); });
 
     for (const [page, sel] of TARGETS) {
       await p.goto(BASE + page, { waitUntil: 'networkidle' });
@@ -141,6 +145,13 @@ const EQUAL_HEIGHT = [
         return out;
       }, sel);
       rows.forEach((r, i) => {
+        /* A row of zero-height cells means the section never rendered — a
+           pass here would be vacuous, so say so instead of claiming one. */
+        if (r.heights.every(h => h === 0)) {
+          bad++;
+          console.log(`  ✗ ${width}px ${page} ${sel}[row ${i}]  nothing rendered — check the seeding in this file`);
+          return;
+        }
         const ok = r.spread === 0;
         if (!ok) bad++;
         console.log((ok ? '  ✓' : '  ✗') + ` ${width}px ${page} ${sel}[row ${i}]  height-spread=${r.spread}px heights=${JSON.stringify(r.heights)}`);

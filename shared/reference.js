@@ -37,7 +37,8 @@
     fireVariants: 'fire_variants.json',
     seTax: 'se_tax_2026.json',
     goalTemplates: 'goal_templates.json',
-    liquidityBenchmarks: 'liquidity_benchmarks.json'
+    liquidityBenchmarks: 'liquidity_benchmarks.json',
+    values: 'values.json'
   };
 
   var cache = {};

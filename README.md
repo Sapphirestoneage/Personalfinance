@@ -60,6 +60,7 @@ engines/            Shared calculation engines — one function per concept
   goals.js            the shared Goal Costing Engine — wedding, deposit, trip
   accounts.js         Roth vs Traditional vs taxable, Solo 401k limits
   swan.js             the self-reported sleep-at-night target, beside the maths
+  values.js           stated values against a categorised month — no score
 data/               Versioned reference tables (JSON, never inlined in code)
 test/run.js         Re-derives every formula outside the browser
 test/alignment.js   Browser layout check — side-by-side cells must line up

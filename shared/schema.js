@@ -97,6 +97,8 @@
     'swan.targetMonths':                         { class: 'raw',        unit: 'months',  note: 'SWAN Number expressed as months of expenses' },
     'swan.note':                                 { class: 'raw',        unit: 'text',    note: 'why that number — the feeling the figure stands for' },
     'computed.swanTargetCents':                  { class: 'computed',   unit: 'cents',   note: 'the resolved target, whichever basis was used' },
+    'valuesProfile.stated[]':                    { class: 'raw',        unit: 'enum',    note: 'value ids from data/values.json, in the order named — index 0 is the top one' },
+    'valuesProfile.assignments':                 { class: 'raw',        unit: 'map',     note: 'expenseCategoryId -> value id, or null for deliberately unclaimed' },
     'assumptions.expectedReturnRate':            { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.expectedReturnRate },
     'assumptions.swrRate':                       { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.swrRate },
 
@@ -298,6 +300,28 @@
     };
   }
 
+  /**
+   * What someone says matters, and which of their spending they say serves
+   * it. SPEC.md §13, Tier 2 — Values vs. Spending Audit.
+   *
+   * `stated` is an ORDERED list of value ids: index 0 is what they put
+   * first. Rank is position, not a stored number, so there is no way for the
+   * two to disagree.
+   *
+   * `assignments` maps an expense category id to ONE value id — at most one,
+   * because a category counted under two values would double-count the
+   * money and the shares would stop adding up. An explicit null means "this
+   * serves nothing I named", which is a real answer and different from a
+   * category nobody has looked at yet (absent from the map entirely).
+   */
+  function createValuesProfile(fields) {
+    var f = fields || {};
+    return {
+      stated: f.stated || [],
+      assignments: f.assignments || {}
+    };
+  }
+
   function createHousehold(fields) {
     var f = fields || {};
     return {
@@ -323,6 +347,9 @@
            code path when import lands. See createExpenseEntry(). */
         entries: (f.expenses && (f.expenses.entries || f.expenses.categories)) || []
       },
+      /* Stated values and what spending serves them. Owned by the What
+         Matters room. SPEC.md §13 Tier 2. */
+      valuesProfile: createValuesProfile(f.valuesProfile),
       /* The SWAN Number — a standalone self-reported target, owned by the
          Sleep At Night room. Never derived from, and never written by, the
          Emergency Fund Coverage calculation. SPEC.md §13 Tier 1.5. */
@@ -591,6 +618,7 @@
     createGoal: createGoal,
     createGoalLineItem: createGoalLineItem,
     createSwanTarget: createSwanTarget,
+    createValuesProfile: createValuesProfile,
     resolveAssumptions: resolveAssumptions,
     personById: personById,
     primaryPerson: primaryPerson,

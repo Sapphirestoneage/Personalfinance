@@ -411,6 +411,35 @@
     return getProfile().swan;
   }
 
+  /**
+   * The stated values, in the order they were named. Replaces the list
+   * wholesale — a ranking is one answer, not a set of independent ones.
+   * SPEC.md §13 Tier 2.
+   */
+  function setStatedValues(ids) {
+    var h = load();
+    h.valuesProfile = Schema.createValuesProfile(h.valuesProfile);
+    h.valuesProfile.stated = (ids || []).slice();
+    save(); notify();
+    return getProfile().valuesProfile;
+  }
+
+  /**
+   * Say which value one spending category serves. `valueId` of null is an
+   * explicit "nothing I named" — stored, and distinct from a category that
+   * has never been looked at. Passing undefined removes the assignment and
+   * puts the category back to unlooked-at.
+   */
+  function assignCategoryToValue(categoryId, valueId) {
+    if (!categoryId) return getProfile().valuesProfile;
+    var h = load();
+    h.valuesProfile = Schema.createValuesProfile(h.valuesProfile);
+    if (valueId === undefined) delete h.valuesProfile.assignments[categoryId];
+    else h.valuesProfile.assignments[categoryId] = valueId;
+    save(); notify();
+    return getProfile().valuesProfile;
+  }
+
   /** A persisted user override of an Assumption-class field. A "what if"
    *  a room is only previewing must NOT come through here — pass it as a
    *  local override to the calculator instead. SPEC.md §12.2. */
@@ -501,6 +530,8 @@
     removeExpenseEntry: removeExpenseEntry,
     setAssumptionOverride: setAssumptionOverride,
     setSwanTarget: setSwanTarget,
+    setStatedValues: setStatedValues,
+    assignCategoryToValue: assignCategoryToValue,
     listSnapshots: listSnapshots,
     appendSnapshot: appendSnapshot,
     reset: reset,

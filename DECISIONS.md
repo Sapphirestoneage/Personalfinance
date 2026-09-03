@@ -1091,6 +1091,80 @@ design.
 
 ---
 
+## D-029 — The Values audit has no score, and the mapping is the user's
+
+**SPEC.md §13 Tier 2: "stated top-5 values vs. actual last-month spending.
+The 'gap' output is inherently qualitative/visual — design as a comparison
+view, not a scalar."** Taken literally. `engines/values.js` produces no
+alignment percentage, no rank correlation, no grade, and a test asserts that
+the result object carries no `score`, `alignment`, `grade`, `correlation` or
+`rating` key. A single number here would be false precision stacked on a
+self-report, and it would invite optimising the number rather than the life.
+What comes back is two ordered lists — what you said, and what the money
+said — plus the dollars behind each.
+
+**One value per spending category, and the default mapping is a starting
+point rather than a claim.** `data/values.json` maps each expense category
+to at most one value, which is what makes the shares add up; a category
+under two values would double-count the money. But whether groceries serve
+Health or Home is a question about someone's life, not a fact, so the room
+seeds every category from the default and stores whatever the person changes
+it to. `assignmentFor()` reports which authority it used — `stated`,
+`default`, `none` or `unmapped` — and the room prints that next to each row,
+so a guess is never mistaken for an answer. A test asserts the default map
+is disjoint and that every category in `expense_categories.json` is either
+mapped or on the file's explicit `unmappedCategoryIds` list.
+
+**"Unclaimed" means "serves nothing on YOUR list", not "unmapped".** The
+first version counted only categories with no value at all, which made
+Robin's audit report that every dollar was claimed while 72% of the month was
+going to values she had not named. Money serving a real value that did not
+make the top five is exactly what the tool exists to surface, so it counts as
+unclaimed — and each row still says which value it serves, because the number
+and the reason have to arrive together. Housing lands here for almost
+everyone, and rarely because it does not matter; the room says so rather than
+letting the reader supply their own accusation.
+
+**A named value with nothing behind it still gets a row, at zero.** That is
+the other half of the finding, and dropping it would have made the comparison
+one-sided.
+
+**Rank is position, not a stored number.** `valuesProfile.stated` is an
+ordered array; the rank is the index. There is no way for a stored rank and
+a stored order to disagree, and taking a value back closes the gap rather
+than leaving a hole where number three was.
+
+**Five is the cap, and the vocabulary is closed for now.** `statedValues()`
+de-duplicates, drops unknown ids and stops at five, so a corrupted or
+hand-edited blob cannot produce a six-item top five. Custom user-written
+values are not supported yet: they would need their own category mapping to
+mean anything here, and a text field with no mapping would produce a value
+that always reads zero. Left out deliberately rather than half-built.
+
+**Not in `shared/ownership.js`.** That map is for figures used by more than
+one room. Nothing outside What Matters reads or writes `valuesProfile` yet,
+so an entry would be premature — but it is written only through
+`Spine.setStatedValues()` and `Spine.assignCategoryToValue()`, and the first
+room that wants to read it should go through `engines/values.js` rather than
+the stored shape.
+
+**Room order.** Inserted at 12, after Where It Goes and before Goals: it
+needs a categorised month from Cash Flow, and it reads well immediately
+before the room about what you are saving for. Goals and the FOO Ladder
+shifted by one.
+
+**Compatibility note.** `household.valuesProfile` is new and is back-filled
+by `createValuesProfile()` to `{stated: [], assignments: {}}` for any
+household stored before it existed, so an older saved blob loads with the
+room in its empty state and nothing else in the stored shape changed. No
+existing room reads or writes differently. A future room wanting these
+values must call `Values.statedValues()` and `Values.audit()` rather than
+reading `household.valuesProfile.assignments` directly — the map is sparse
+by design, and an absent key means "not looked at", which is not the same as
+the stored `null` that means "serves nothing I named".
+
+---
+
 ## Still open
 
 - **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the
