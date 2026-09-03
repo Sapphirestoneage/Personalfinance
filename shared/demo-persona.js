@@ -48,7 +48,25 @@
       { label: 'Credit card',  balance: 3200,  rate: 0.229, minPayment: 95,  type: 'credit_card' }
     ],
 
-    monthlyEssentialExpenses: 3150
+    monthlyEssentialExpenses: 3150,
+
+    /* What Robin actually spends, by category — the Cash Flow room's example.
+       Deliberately NOT equal to the $3,150 estimate above: the essential
+       categories here total $2,805, so the demo shows a real −$345 divergence
+       between what Robin guessed and what Robin spends (SPEC.md §12.3). */
+    monthlySpending: [
+      { categoryId: 'housing',           amount: 1500 },
+      { categoryId: 'groceries',         amount: 450 },
+      { categoryId: 'utilities',         amount: 180 },
+      { categoryId: 'transportation',    amount: 220 },
+      { categoryId: 'insurance',         amount: 150 },
+      { categoryId: 'debt_minimums',     amount: 305 },
+      { categoryId: 'dining_out',        amount: 260 },
+      { categoryId: 'subscriptions',     amount: 45 },
+      { categoryId: 'entertainment',     amount: 90 },
+      { categoryId: 'emergency_savings', amount: 300 },
+      { categoryId: 'retirement',        amount: 400 }
+    ]
   };
 
   /* Convenience roll-ups for rooms whose Tier 0 form takes lump sums. */
@@ -105,7 +123,12 @@
         monthlyEssential: {
           estimatedValueCents: Money.toCents(VALUES.monthlyEssentialExpenses),
           trackedValueCents: null
-        }
+        },
+        /* Left empty here on purpose. The categorised breakdown is the Cash
+           Flow room's example, loaded by buildSpending() when that room asks
+           for it — so every other room's demo still opens on the estimate,
+           which is the state a first-time visitor is actually in. */
+        entries: []
       },
       capturingFullMatch: VALUES.capturingFullMatch,
       meta: { isDemo: true }
@@ -114,5 +137,18 @@
     return household;
   }
 
-  return { VALUES: VALUES, build: build };
+  /** The categorised month of spending, as expense entries. */
+  function buildSpending() {
+    return VALUES.monthlySpending.map(function (row, i) {
+      return Schema.createExpenseEntry({
+        id: 'demo_spend_' + i,
+        categoryId: row.categoryId,
+        amountCents: Money.toCents(row.amount),
+        period: 'monthly',
+        source: 'manual'
+      });
+    });
+  }
+
+  return { VALUES: VALUES, build: build, buildSpending: buildSpending };
 });

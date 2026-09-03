@@ -73,6 +73,10 @@
     'expenses.monthlyEssential.estimatedValueCents': { class: 'raw',    unit: 'cents',   period: 'monthly', source: 'estimated' },
     'expenses.monthlyEssential.trackedValueCents':   { class: 'raw',    unit: 'cents',   period: 'monthly', source: 'tracked' },
     'expenses.monthlyEssential.divergenceCents':     { class: 'computed', unit: 'cents', period: 'monthly', note: 'tracked − estimated; SPEC.md §12.3' },
+    'expenses.entries[].categoryId':             { class: 'raw',        unit: 'enum',    note: 'an id from data/expense_categories.json' },
+    'expenses.entries[].amountCents':            { class: 'raw',        unit: 'cents' },
+    'expenses.entries[].period':                 { class: 'raw',        unit: 'enum',    values: ['monthly', 'once'] },
+    'expenses.entries[].source':                 { class: 'raw',        unit: 'enum',    values: ['manual', 'imported'], note: 'SPEC.md §12.5' },
     'assumptions.expectedReturnRate':            { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.expectedReturnRate },
     'assumptions.swrRate':                       { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.swrRate },
 
@@ -174,6 +178,29 @@
     };
   }
 
+  /**
+   * One expense record. Two shapes, one store:
+   *   manual monthly total  { categoryId, amountCents, period: 'monthly',
+   *                           source: 'manual' }
+   *   imported transaction  { categoryId, amountCents, period: 'once',
+   *                           date, descriptor, source: 'imported' }
+   * The roll-up in engines/cashflow.js normalises both to a monthly figure,
+   * so adding import later changes no aggregation code — SPEC.md §12.5.
+   */
+  function createExpenseEntry(fields) {
+    var f = fields || {};
+    return {
+      id: f.id || newId('e'),
+      categoryId: f.categoryId || null,
+      amountCents: f.amountCents === undefined ? null : f.amountCents,
+      period: f.period || 'monthly',            // 'monthly' | 'once'
+      date: f.date === undefined ? null : f.date,        // ISO, dated entries only
+      descriptor: f.descriptor === undefined ? null : f.descriptor,
+      source: f.source || 'manual',             // 'manual' | 'imported'
+      categorizedBy: f.categorizedBy === undefined ? null : f.categorizedBy
+    };
+  }
+
   function createHousehold(fields) {
     var f = fields || {};
     return {
@@ -192,10 +219,12 @@
         monthlyEssential: createEstimatedTrackedPair(
           (f.expenses && f.expenses.monthlyEssential) || {}
         ),
-        /* Cash Flow calc (Tier 1) fills this. Shaped for imported
-           transactions from day one — SPEC.md §12.5. Each entry:
-           { id, category, amountCents, period, source: 'manual'|'imported' } */
-        categories: (f.expenses && f.expenses.categories) || []
+        /* Cash Flow calc (Tier 1) fills this. ONE store, transaction-shaped
+           from day one — SPEC.md §12.5. A hand-typed monthly total and an
+           imported transaction are the same record with different fields
+           filled in, so the categoriser and the roll-up never need a second
+           code path when import lands. See createExpenseEntry(). */
+        entries: (f.expenses && (f.expenses.entries || f.expenses.categories)) || []
       },
       assumptions: Object.assign({}, ASSUMPTION_DEFAULTS, f.assumptions || {}),
       /* User overrides persist SEPARATELY from the defaults so "reset to
@@ -436,6 +465,7 @@
     createDebt: createDebt,
     createIncomeSource: createIncomeSource,
     createEstimatedTrackedPair: createEstimatedTrackedPair,
+    createExpenseEntry: createExpenseEntry,
     resolveAssumptions: resolveAssumptions,
     personById: personById,
     primaryPerson: primaryPerson,

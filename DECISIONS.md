@@ -404,6 +404,62 @@ copy lands.
 
 ---
 
+## D-013 — Cash Flow: one transaction-shaped store, not two code paths
+**2026-09-03 · SPEC.md §9 item 4, §12.5, §12.3, §13**
+
+§12.5 is resolved as "manual entry now, architect for bank-linked import".
+The cheap reading of that is a manual store plus a hook for a future
+importer; that ends in two aggregation paths and a rewrite. Instead there is
+**one** store, `household.expenses.entries[]`, and every record in it is
+transaction-shaped:
+
+```
+{ id, categoryId, amountCents, period: 'monthly'|'once',
+  date, descriptor, source: 'manual'|'imported', categorizedBy }
+```
+
+A hand-typed monthly total is a record with `period: 'monthly'`. An imported
+transaction is a record with `period: 'once'` and a date. `normaliseToMonthly()`
+reduces both to a monthly figure, so the roll-up, the bucketing and the
+template comparison keep working unchanged the day an importer starts writing
+records. `categorise()` already operates on a transaction's descriptor rather
+than a typed total, and is written but unused by manual entry — it exists now
+so the import path plugs into a categoriser that was never retrofitted.
+
+Three judgement calls inside it:
+
+- **Dated records are divided by the number of DISTINCT months they span**,
+  not by a fixed 30 days and not by the record count. Three months of imported
+  transactions produce a monthly average, not a quarterly total. An undated
+  one-off counts as a single month rather than being silently annualised.
+- **`categorise()` returns null rather than falling back to "other"** on an
+  unrecognised descriptor. An uncategorised transaction is a real state worth
+  surfacing; burying it in a catch-all is how a budget quietly stops matching
+  reality.
+- **Savings is not an expense.** `spendMonthlyCents` counts needs and wants;
+  the savings bucket is reported separately. Money moved to savings has not
+  left. This matters because it is the difference between a net-cash-flow
+  figure that means something and one that punishes you for saving.
+
+**Buckets and templates are config**, in `data/expense_categories.json` and
+`data/budget_templates.json`. The engine knows how to compare against a split;
+it does not know what any split is, so DRAFTT or any other framework is a data
+edit. The percentage templates use `basis: "net"` — the classic 50/30/20 is
+defined against take-home pay — and the engine derives net from gross through
+the same effective-tax lookup Tier 0 uses rather than asking for a second
+income figure or writing a second tax calculation.
+
+**Feeding §12.3.** `trackedEssentialCents()` returns what the tracked figure
+should be, restricted to the *essential* categories so it is comparable with
+what the estimate was actually asked for. Writing it stays the room's job,
+through `Spine.setMonthlyExpenses(cents, 'tracked')`, which preserves the
+estimate permanently. The demo persona's spending is deliberately set so the
+essential categories total $2,805 against a $3,150 estimate — a real −$345
+divergence, so the feature demonstrates itself rather than showing a clean
+zero.
+
+---
+
 ## Still open
 
 - **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the

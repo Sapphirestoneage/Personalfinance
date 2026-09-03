@@ -1,0 +1,38 @@
+{
+  "id": "budget_templates",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "Budget frameworks as configuration data.",
+  "note": "SPEC.md Section 13 — template logic is data, not code, so DRAFTT and any other framework can be added without touching the engine. Targets are decimal fractions of the template's `basis` income, keyed by the bucket ids in expense_categories.json. The classic 50/30/20 is defined against take-home pay, so `basis` is \"net\" and the engine derives it from gross using the effective-tax lookup rather than asking for a second income figure. A template with `targets: null` is a method rather than a split and is compared differently.",
+  "templates": [
+    {
+      "id": "50_30_20",
+      "label": "50 / 30 / 20",
+      "blurb": "Half to needs, a third to wants, a fifth to savings and extra debt.",
+      "basis": "net",
+      "targets": {
+        "needs": 0.5,
+        "wants": 0.3,
+        "savings": 0.2
+      }
+    },
+    {
+      "id": "60_20_20",
+      "label": "60 / 20 / 20",
+      "blurb": "A higher-cost-of-living variant that concedes more to needs.",
+      "basis": "net",
+      "targets": {
+        "needs": 0.6,
+        "wants": 0.2,
+        "savings": 0.2
+      }
+    },
+    {
+      "id": "zero_based",
+      "label": "Zero-based",
+      "blurb": "Every dollar gets a job. There is no target split — the test is whether income minus everything assigned lands on zero.",
+      "basis": "net",
+      "targets": null
+    }
+  ]
+}

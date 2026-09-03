@@ -237,7 +237,7 @@
       if (key === 'expenses') {
         next.expenses.monthlyEssential = Object.assign({}, next.expenses.monthlyEssential,
           (p.expenses && p.expenses.monthlyEssential) || {});
-        if (p.expenses && p.expenses.categories) next.expenses.categories = p.expenses.categories;
+        if (p.expenses && p.expenses.entries) next.expenses.entries = p.expenses.entries;
         return;
       }
       if (key === 'assumptions' || key === 'assumptionOverrides' || key === 'meta') {
@@ -335,6 +335,27 @@
     return JSON.parse(JSON.stringify(pair));
   }
 
+  /* ---- Expense entries -------------------------------------------------
+     The Cash Flow store. Same helpers serve a hand-typed monthly total and
+     an imported transaction, because they are the same record shape.     */
+
+  function upsertExpenseEntry(entry) {
+    var h = load();
+    h.expenses.entries = h.expenses.entries || [];
+    var result = upsertIn(h.expenses.entries, entry);
+    save(); notify();
+    return result;
+  }
+
+  function removeExpenseEntry(id) {
+    var h = load();
+    var list = h.expenses.entries || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) { list.splice(i, 1); save(); notify(); return true; }
+    }
+    return false;
+  }
+
   /** A persisted user override of an Assumption-class field. A "what if"
    *  a room is only previewing must NOT come through here — pass it as a
    *  local override to the calculator instead. SPEC.md §12.2. */
@@ -419,6 +440,8 @@
     upsertDebt: upsertDebt,
     removeById: removeById,
     setMonthlyExpenses: setMonthlyExpenses,
+    upsertExpenseEntry: upsertExpenseEntry,
+    removeExpenseEntry: removeExpenseEntry,
     setAssumptionOverride: setAssumptionOverride,
     listSnapshots: listSnapshots,
     appendSnapshot: appendSnapshot,

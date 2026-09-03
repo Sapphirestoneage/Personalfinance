@@ -1,0 +1,34 @@
+{
+  "id": "expense_categories",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "Category list and needs/wants/savings bucketing for the Cash Flow calc.",
+  "note": "Config, not code (SPEC.md Section 7). Adding a category is a data edit. `bucket` drives budget-template comparison; `essential` marks the categories that roll up into the tracked figure compared against the user's monthly-essential estimate. `keywords` exist for the future bank-import categoriser (SPEC.md Section 12.5) and are unused by manual entry.",
+  "buckets": [
+    { "id": "needs",   "label": "Needs",   "note": "Keeps the lights on. Hard to cut quickly." },
+    { "id": "wants",   "label": "Wants",   "note": "Real spending, but discretionary." },
+    { "id": "savings", "label": "Savings & extra debt", "note": "Money that stays yours, or kills a balance faster." }
+  ],
+  "categories": [
+    { "id": "housing",           "label": "Housing",              "bucket": "needs",   "essential": true,  "keywords": ["rent", "mortgage", "hoa"] },
+    { "id": "utilities",         "label": "Utilities",            "bucket": "needs",   "essential": true,  "keywords": ["electric", "gas", "water", "internet"] },
+    { "id": "groceries",         "label": "Groceries",            "bucket": "needs",   "essential": true,  "keywords": ["grocery", "supermarket", "market"] },
+    { "id": "transportation",    "label": "Transportation",       "bucket": "needs",   "essential": true,  "keywords": ["fuel", "transit", "parking", "auto"] },
+    { "id": "insurance",         "label": "Insurance",            "bucket": "needs",   "essential": true,  "keywords": ["insurance", "premium"] },
+    { "id": "healthcare",        "label": "Healthcare",           "bucket": "needs",   "essential": true,  "keywords": ["pharmacy", "clinic", "dental", "medical"] },
+    { "id": "childcare",         "label": "Childcare",            "bucket": "needs",   "essential": true,  "keywords": ["daycare", "childcare", "preschool"] },
+    { "id": "debt_minimums",     "label": "Debt minimums",        "bucket": "needs",   "essential": true,  "keywords": ["loan payment", "card payment"] },
+    { "id": "dining_out",        "label": "Eating out",           "bucket": "wants",   "essential": false, "keywords": ["restaurant", "cafe", "coffee", "delivery"] },
+    { "id": "entertainment",     "label": "Entertainment",        "bucket": "wants",   "essential": false, "keywords": ["cinema", "concert", "games"] },
+    { "id": "subscriptions",     "label": "Subscriptions",        "bucket": "wants",   "essential": false, "keywords": ["subscription", "streaming"] },
+    { "id": "shopping",          "label": "Shopping",             "bucket": "wants",   "essential": false, "keywords": ["clothing", "amazon", "retail"] },
+    { "id": "travel",            "label": "Travel",               "bucket": "wants",   "essential": false, "keywords": ["airline", "hotel", "airbnb"] },
+    { "id": "personal_care",     "label": "Personal care",        "bucket": "wants",   "essential": false, "keywords": ["salon", "gym", "spa"] },
+    { "id": "gifts",             "label": "Gifts & giving",       "bucket": "wants",   "essential": false, "keywords": ["donation", "charity", "gift"] },
+    { "id": "other",             "label": "Everything else",      "bucket": "wants",   "essential": false, "keywords": [] },
+    { "id": "retirement",        "label": "Retirement contributions", "bucket": "savings", "essential": false, "keywords": ["401k", "ira"] },
+    { "id": "investments",       "label": "Investments",          "bucket": "savings", "essential": false, "keywords": ["brokerage", "vanguard", "fidelity"] },
+    { "id": "emergency_savings", "label": "Savings",              "bucket": "savings", "essential": false, "keywords": ["transfer to savings"] },
+    { "id": "extra_debt_payment","label": "Extra debt payments",  "bucket": "savings", "essential": false, "keywords": ["extra payment", "principal"] }
+  ]
+}

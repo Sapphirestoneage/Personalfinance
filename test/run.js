@@ -28,13 +28,16 @@ const Registry = require(path.join(ROOT, 'shared/registry.js'));
 const Demo = require(path.join(ROOT, 'shared/demo-persona.js'));
 const Tier0 = require(path.join(ROOT, 'engines/tier0.js'));
 const Foo = require(path.join(ROOT, 'engines/foo.js'));
+const CashFlow = require(path.join(ROOT, 'engines/cashflow.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
   retirementMilestones: require(path.join(ROOT, 'data/retirement_milestones.json')),
   netWorthPercentiles: require(path.join(ROOT, 'data/net_worth_percentiles_scf_2022.json')),
   irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json')),
-  fooRules: require(path.join(ROOT, 'data/foo_rules.json'))
+  fooRules: require(path.join(ROOT, 'data/foo_rules.json')),
+  expenseCategories: require(path.join(ROOT, 'data/expense_categories.json')),
+  budgetTemplates: require(path.join(ROOT, 'data/budget_templates.json'))
 };
 
 /* ---- Tiny harness ------------------------------------------------------ */
@@ -410,7 +413,143 @@ section('Spine');
 })();
 
 /* ==========================================================================
-   8. Registry deep links resolve to real elements.
+   8. Cash Flow calc. SPEC.md §9 item 4, §12.5, §12.3, §13.
+   ========================================================================== */
+
+section('Cash Flow');
+
+/* A month of categorised spending for the demo persona.
+     needs   1500 + 450 + 180 + 220 + 150 + 305 = 2,805
+     wants    260 +  45 +  90                   =   395
+     savings  300 + 400                         =   700
+   Robin's net take-home is (72,000 - 13,680) / 12 = $4,860/mo. */
+function householdWithSpending() {
+  const hh = Demo.build();
+  hh.expenses.entries = Demo.buildSpending();
+  return hh;
+}
+const SPEND = Demo.VALUES.monthlySpending;
+
+(function () {
+  const hh = householdWithSpending();
+  const sum = CashFlow.summarise(hh, TABLES.expenseCategories);
+  check('summarise status', sum.status, 'ok');
+  check('needs bucket', sum.byBucket.needs, 280500);
+  check('wants bucket', sum.byBucket.wants, 39500);
+  check('savings bucket', sum.byBucket.savings, 70000);
+  /* Savings is a destination, not an expense — it must not be in spend. */
+  check('monthly spend excludes savings', sum.spendMonthlyCents, 320000);
+  check('savings tracked separately', sum.savingsMonthlyCents, 70000);
+  check('essential subset', sum.essentialMonthlyCents, 280500);
+  check('categories sorted biggest first', sum.categories[0].categoryId, 'housing');
+  check('category count', sum.categories.length, SPEND.length);
+
+  /* net income = (72,000 - 13,680)/12 = 4,860; spend 3,200 -> 1,660 left */
+  const flow = CashFlow.netCashFlow(hh, TABLES.expenseCategories, TABLES);
+  check('net monthly income cents', flow.netMonthlyIncomeCents, 486000);
+  check('net cash flow cents', flow.value, 166000);
+  /* zero-based test: 1,660 left minus 700 assigned to savings = 960 loose */
+  check('unassigned cents', flow.unassignedCents, 96000);
+
+  /* 50/30/20 against $4,860 take-home:
+       needs   target 2,430  actual 2,805  -> +375 over
+       wants   target 1,458  actual   395  -> -1,063 under
+       savings target   972  actual   700  ->   -272 under            */
+  const cmp = CashFlow.compareToTemplate(hh, TABLES.expenseCategories,
+    TABLES.budgetTemplates, '50_30_20', TABLES);
+  check('template basis is take-home pay', cmp.basisMonthlyCents, 486000);
+  const row = id => cmp.rows.find(r => r.bucketId === id);
+  check('needs target cents', row('needs').targetCents, 243000);
+  check('needs variance cents', row('needs').varianceCents, 37500);
+  check('wants variance cents', row('wants').varianceCents, -106300);
+  check('savings variance cents', row('savings').varianceCents, -27200);
+  check('total absolute variance', cmp.value, 37500 + 106300 + 27200);
+
+  const zero = CashFlow.compareToTemplate(hh, TABLES.expenseCategories,
+    TABLES.budgetTemplates, 'zero_based', TABLES);
+  check('zero-based is a method, not a split', zero.method, 'zero_based');
+  check('zero-based is not balanced here', zero.balanced, false);
+  check('zero-based reports what is loose', zero.unassignedCents, 96000);
+})();
+
+/* -- Imported transactions normalise to a monthly figure ----------------
+      SPEC.md §12.5: the same store, the same roll-up, no second code path. */
+(function () {
+  const dated = [
+    Schema.createExpenseEntry({ categoryId: 'dining_out', amountCents: 5000, period: 'once', date: '2026-07-05', source: 'imported' }),
+    Schema.createExpenseEntry({ categoryId: 'dining_out', amountCents: 3000, period: 'once', date: '2026-07-20', source: 'imported' }),
+    Schema.createExpenseEntry({ categoryId: 'dining_out', amountCents: 4000, period: 'once', date: '2026-08-10', source: 'imported' })
+  ];
+  /* $120 across two distinct months is $60/mo, not $120 and not $40. */
+  const n = CashFlow.normaliseToMonthly(dated);
+  check('dated entries span two months', n.monthsCovered, 2);
+  check('dated entries average per month', n.monthlyCents, 6000);
+
+  const mixed = normaliseMixed();
+  function normaliseMixed() {
+    return CashFlow.normaliseToMonthly(dated.concat([
+      Schema.createExpenseEntry({ categoryId: 'dining_out', amountCents: 10000, period: 'monthly', source: 'manual' })
+    ]));
+  }
+  check('a manual total and imported transactions coexist', mixed.monthlyCents, 16000);
+
+  /* Undated one-offs count as one month rather than being annualised. */
+  const undated = CashFlow.normaliseToMonthly([
+    Schema.createExpenseEntry({ categoryId: 'travel', amountCents: 90000, period: 'once', source: 'manual' })
+  ]);
+  check('an undated one-off counts as a single month', undated.monthlyCents, 90000);
+
+  /* The categoriser reads a transaction, not a typed total. */
+  const hit = CashFlow.categorise({ descriptor: 'STARBUCKS COFFEE #4471' }, TABLES.expenseCategories);
+  check('descriptor matched to a category', hit.categoryId, 'dining_out');
+  check('categorisation records how it was decided', hit.categorizedBy, 'rule');
+  check('an unrecognised descriptor is left uncategorised, not dumped in "other"',
+    CashFlow.categorise({ descriptor: 'QGXZ VENDOR 88' }, TABLES.expenseCategories), null);
+  check('a record with no descriptor is left alone',
+    CashFlow.categorise({ amountCents: 100 }, TABLES.expenseCategories), null);
+})();
+
+/* -- Tracked never overwrites estimated. SPEC.md §12.3 ------------------- */
+(function () {
+  const hh = householdWithSpending();
+  const tracked = CashFlow.trackedEssentialCents(hh, TABLES.expenseCategories);
+  check('tracked essential figure', tracked.value, 280500);
+
+  const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
+  Spine.reset();
+  Spine.setMonthlyExpenses(315000, 'estimated');   // Robin guessed $3,150
+  Spine.setMonthlyExpenses(tracked.value, 'tracked'); // reality was $2,805
+  const after = Spine.getProfile();
+  check('the original estimate survives being tracked over',
+    after.expenses.monthlyEssential.estimatedValueCents, 315000);
+  check('the tracked figure is stored', after.expenses.monthlyEssential.trackedValueCents, 280500);
+  check('tracked becomes the current figure', Schema.monthlyExpensesCents(after).source, 'tracked');
+  /* divergence = tracked - estimated = 2,805 - 3,150 = -$345 */
+  check('divergence cents', Schema.expenseDivergenceCents(after).value, -34500);
+  Spine.reset();
+})();
+
+/* -- Empty and partial states ------------------------------------------- */
+(function () {
+  const bare = Schema.createHousehold();
+  const sum = CashFlow.summarise(bare, TABLES.expenseCategories);
+  checkTrue('no entries yields an incomplete summary, not zeroes',
+    sum.status === 'incomplete' && sum.value === null);
+  checkTrue('and says what is missing', sum.reason.length > 0);
+
+  /* An entry with no amount must not be counted as zero. */
+  const partial = Demo.build();
+  partial.expenses.entries = [
+    Schema.createExpenseEntry({ categoryId: 'housing', amountCents: 150000 }),
+    Schema.createExpenseEntry({ categoryId: 'groceries', amountCents: null })
+  ];
+  const psum = CashFlow.summarise(partial, TABLES.expenseCategories);
+  check('an unfilled entry is skipped, not zeroed', psum.spendMonthlyCents, 150000);
+  check('and does not appear as a category', psum.categories.length, 1);
+})();
+
+/* ==========================================================================
+   9. Registry deep links resolve to real elements.
    ========================================================================== */
 
 section('Registry and rooms');
