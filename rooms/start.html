@@ -44,6 +44,7 @@
   .q-text { font-family: var(--font-display); font-size: var(--text-xl); line-height: var(--leading-tight); margin: 0 0 var(--space-2); }
   .q-help { color: var(--color-text-muted); font-size: var(--text-base); margin: 0 0 var(--space-4); }
   .q-unlocks { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-3) 0 0; }
+  .q-warn { font-size: var(--text-sm); color: var(--color-caution); margin: var(--space-2) 0 0; }
   .q-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
   @media (max-width: 380px) { .q-pair { grid-template-columns: 1fr; } }
 
@@ -135,6 +136,7 @@
     <p class="q-text">When were you born?</p>
     <p class="q-help">Only used to compare you against people your own age.</p>
     <span class="slaf-input-shell"><input type="date" data-write="dob" aria-label="Date of birth"/></span>
+    <p class="q-warn" id="dob-warn" hidden></p>
     <p class="q-unlocks">Feeds the net-worth percentile and the age-based savings milestones.</p>
   </section>
 
@@ -368,7 +370,32 @@
       return;
     }
     nodes[0].value = stored || '';
+
+    if (q.field === 'dob') paintDobWarning(stored);
   }
+
+  /* A date that cannot be true is not the same as a date not given, and the
+     difference has to be visible HERE — everywhere else it reads as an
+     unanswered question, which is what a typo used to look like. Runs off
+     the field's own value on change, not off the stored profile, because
+     the point is to catch it before it is committed. See Schema.checkDob().
+     Touches text only; it never rebuilds a control. */
+  function paintDobWarning(value) {
+    var warn = el('dob-warn');
+    if (!warn) return;
+    var verdict = Schema.checkDob(value || null);
+    var say = value && !Money.isOk(verdict) ? verdict.reason : '';
+    warn.hidden = !say;
+    warn.textContent = say;
+  }
+
+  (function () {
+    var node = document.querySelector('input[data-write="dob"]');
+    if (!node) return;
+    ['change', 'input', 'blur'].forEach(function (evt) {
+      node.addEventListener(evt, function () { paintDobWarning(node.value); });
+    });
+  })();
 
   function commit(q) {
     if (q.kind === 'choice') return;                /* choices write on click */

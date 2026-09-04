@@ -1968,6 +1968,62 @@ section('Ratings');
    household, and the next write overwrote the user's real data with it.
    ========================================================================== */
 
+/* ==========================================================================
+   Date of birth. A typo must not read as silence, and must never reach a
+   lookup table as a real age.
+   ========================================================================== */
+
+section('Date of birth');
+
+(function () {
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const AS_OF = '2026-09-04';
+
+  check('a normal date gives an age', Schema.ageFromDob('1994-04-12', AS_OF), 32);
+  check('and checkDob agrees', Schema.checkDob('1994-04-12', AS_OF).value, 32);
+
+  /* -- A date in the future ---------------------------------------------- */
+  check('a future date has no age', Schema.ageFromDob('2090-01-01', AS_OF), null);
+  const future = Schema.checkDob('2090-01-01', AS_OF);
+  check('and is incomplete', future.status, 'incomplete');
+  checkTrue('with a reason that says why', /future/.test(future.reason));
+  checkTrue('which differs from the unanswered reason',
+    future.reason !== Schema.checkDob(null, AS_OF).reason);
+
+  /* -- A mistyped year the other way ------------------------------------
+        This is the dangerous one: it used to produce an age of 151, and
+        the percentile table and retirement milestones took it seriously. */
+  check('an implausible age does not reach a lookup', Schema.ageFromDob('1875-01-01', AS_OF), null);
+  const old = Schema.checkDob('1875-01-01', AS_OF);
+  check('and it is reported', old.status, 'incomplete');
+  checkTrue('with the computed age quoted back', /151/.test(old.reason));
+  check('the plausibility ceiling is stated once', Schema.MAX_PLAUSIBLE_AGE, 120);
+  check('exactly at the ceiling is still accepted',
+    Schema.ageFromDob('1906-09-04', AS_OF), 120);
+  check('one year past it is not', Schema.ageFromDob('1905-09-04', AS_OF), null);
+
+  /* -- Unreadable and unanswered stay distinct --------------------------- */
+  check('garbage has no age', Schema.ageFromDob('not-a-date', AS_OF), null);
+  checkTrue('and says it cannot be read',
+    /read/.test(Schema.checkDob('not-a-date', AS_OF).reason));
+  checkTrue('while nothing entered says it is unanswered',
+    /answered/i.test(Schema.checkDob(null, AS_OF).reason));
+  check('an unanswered date is missing dob, not something else',
+    Schema.checkDob(null, AS_OF).missing.join(','), 'dob');
+
+  /* -- Nothing downstream sees a bad age --------------------------------- */
+  const typo = Schema.createHousehold({
+    people: [Schema.createPerson({ role: 'adult', dob: '1875-01-01' })]
+  });
+  check('the household reports no age for a typo', Schema.primaryAge(typo, AS_OF), null);
+  check('so the percentile lookup is incomplete, not confidently wrong',
+    Reference.lookupNetWorthPercentile(TABLES.netWorthPercentiles, 50000,
+      Schema.primaryAge(typo, AS_OF)).status, 'incomplete');
+  check('and so is the retirement benchmark',
+    Reference.lookupRetirementMultiple(TABLES.retirementMilestones,
+      Schema.primaryAge(typo, AS_OF)).status, 'incomplete');
+})();
+
 section('Storage and migration');
 
 (function () {

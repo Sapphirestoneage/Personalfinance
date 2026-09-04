@@ -636,7 +636,12 @@
      assumption A-004 in DECISIONS.md.
      ====================================================================== */
 
-  function ageFromDob(dob, asOf) {
+  /* The oldest age this app will treat as real. Above it, a date is far more
+     likely to be a mistyped year than a supercentenarian, and every
+     age-keyed reference table stops long before here anyway. */
+  var MAX_PLAUSIBLE_AGE = 120;
+
+  function rawAgeFromDob(dob, asOf) {
     if (!dob) return null;
     var birth = new Date(dob + 'T00:00:00Z');
     if (isNaN(birth.getTime())) return null;
@@ -645,6 +650,48 @@
     var m = now.getUTCMonth() - birth.getUTCMonth();
     if (m < 0 || (m === 0 && now.getUTCDate() < birth.getUTCDate())) age--;
     return age >= 0 ? age : null;
+  }
+
+  /**
+   * Age, or null if the date is missing, unreadable or implausible. Callers
+   * that need to explain WHY it is null ask checkDob() instead — this one
+   * exists so no lookup table is ever handed an age of 151.
+   */
+  function ageFromDob(dob, asOf) {
+    var age = rawAgeFromDob(dob, asOf);
+    if (age === null || age > MAX_PLAUSIBLE_AGE) return null;
+    return age;
+  }
+
+  /**
+   * Is this date of birth usable? Returns a Result rather than a bare
+   * boolean, because "not answered" and "answered with something
+   * impossible" are different states and the room needs to say which.
+   *
+   * Without this, a typo read as silence: a future date came back as null
+   * from ageFromDob() and every age-based output went blank with no reason,
+   * looking exactly like an unanswered question. And a year typo the other
+   * way was worse — 1875 produced an age of 151, which the percentile table
+   * and the retirement milestones accepted as a real number and answered
+   * confidently.
+   */
+  function checkDob(dob, asOf) {
+    if (!dob) return Money.incomplete('Not answered yet.', ['dob']);
+    var birth = new Date(dob + 'T00:00:00Z');
+    if (isNaN(birth.getTime())) {
+      return Money.incomplete('That date isn’t one we can read.', ['dob']);
+    }
+    var now = asOf ? new Date(asOf + 'T00:00:00Z') : new Date();
+    if (birth.getTime() > now.getTime()) {
+      return Money.incomplete('That date is in the future.', ['dob']);
+    }
+    var age = rawAgeFromDob(dob, asOf);
+    if (age === null) return Money.incomplete('That date isn’t one we can read.', ['dob']);
+    if (age > MAX_PLAUSIBLE_AGE) {
+      return Money.incomplete(
+        'That works out to ' + age + ' years old — worth checking the year.', ['dob']);
+    }
+    return Money.ok(age);
   }
 
   /** Age of the primary adult — the person Tier 0 benchmarks against. */
@@ -702,7 +749,9 @@
     employerMatchCents: employerMatchCents,
     monthlyExpensesCents: monthlyExpensesCents,
     expenseDivergenceCents: expenseDivergenceCents,
+    MAX_PLAUSIBLE_AGE: MAX_PLAUSIBLE_AGE,
     ageFromDob: ageFromDob,
+    checkDob: checkDob,
     primaryAge: primaryAge
   };
 });

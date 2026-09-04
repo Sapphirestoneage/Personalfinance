@@ -1460,6 +1460,75 @@ used to be one full rebuild per edit into one per interaction.
 
 ---
 
+## D-035 — Two codebases, one spec: what actually diverges
+
+A parallel Vue 3 / TypeScript build of SPARKS is under way, and its artefacts
+keep arriving here: `persistence/userDataStore.ts`, a scaffolding folder
+(anonymous user id, validation, error boundary, SQLite schema, rate limiter,
+logger, disclaimers), and a Master Variable Registry for Tiers 0-4.
+
+None of it can land in this repo as code. This one is static HTML and vanilla
+JS with no build step and zero dependencies — a `CLAUDE.md` non-negotiable —
+and `shared/spine-v2.js` already owns persistence, so a second store for the
+same numbers is what the ownership guardrail exists to prevent. `INTEROP.md`
+holds the full reconciliation; the parts that changed code here are below.
+
+**Money is where the two builds genuinely disagree.** `SPEC.md` §6 locks
+integer cents. The TS build uses floating-point dollars and so does its
+target schema (`gross_annual_income REAL`). Ten ten-cent deposits come to
+`0.9999999999999999` in floats; a year of `balance × 1.0229 − 95` lands on
+`2903.892578189377` instead of `$2,903.89`. That is a defect in either
+framework, and `REAL` is the wrong column type for money in any database.
+Rates already agree — both sides store decimal fractions — so this is the
+only unit that needs settling.
+
+**Their validation caught a real gap on this side.** It bounds a date of
+birth: not in the future, not implying an age over 120. This repo had neither,
+and the second was the dangerous one. `ageFromDob('1875-01-01')` returned
+**151**, and the percentile table and the retirement milestone table both
+accepted it and answered confidently. A mistyped year produced a wrong answer
+rather than no answer.
+
+Fixed, and the fix is shaped by this repo's own contract rather than copied:
+
+- `Schema.ageFromDob()` now returns null above `MAX_PLAUSIBLE_AGE` (120), so
+  no lookup table can ever be handed an impossible age. Above that, a date is
+  far likelier to be a mistyped year than a supercentenarian, and every
+  age-keyed table stops long before there anyway.
+- `Schema.checkDob()` returns a Result, not a boolean, because "not answered"
+  and "answered with something impossible" are different states. A future
+  date used to come back as null from `ageFromDob()` and every age-based
+  output went blank with no reason — indistinguishable from an unanswered
+  question. Now it says which.
+- Start Here shows the reason under the date field, on the field's own change
+  rather than on navigation, because the point is to catch it before it is
+  committed. Text only; it rebuilds no control, per D-034.
+
+**Their migration module has the bug its own header warns against.**
+`migrateIfNeeded()` says "never silently read old-shaped data as if it matches
+the new interface", then `break`s on a missing migration and returns
+`payload as T` — old shape, cast to the new interface, with a `console.warn`
+nobody will see. This repo had the same class of bug and worse (D-034's
+sibling, fixed in `a9062af`: it destroyed data outright). The pattern that
+fixes it is in `shared/spine-v2.js`.
+
+**Three things in their registry are better than what is here**, and only one
+was worth acting on now. `fulfillment_rating` is specified "per expense
+category, timestamped"; `ratings.joy[categoryId]` stores the number without a
+timestamp, which is enough for the Fulfillment Curve but not for the Category
+Tracker's trend charts. Deliberately not changed: bumping the schema version
+to support an unbuilt feature is churn. When the Tracker is built the shape
+becomes `{value, at}` and `MIGRATIONS[3]` back-fills `at: null` — "rated, but
+we do not know when", which is honest rather than a fabricated date.
+
+**Two questions for the owner**, recorded rather than guessed:
+"derive `age` server-side, never client-side" (there is no server here — is
+that a real requirement or inherited from the Vue build's backend?), and
+whether `financial_confidence_score` and the Tier 4 Satisfaction calc are one
+tool, as the registry itself suggests.
+
+---
+
 ## Still open
 
 - ~~**Two-Income Household Toggle** and **Soft Saving Balance
