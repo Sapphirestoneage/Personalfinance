@@ -2814,6 +2814,49 @@ whether there is a deadline worth showing.
 
 ---
 
+## D-054 — A back and a next in every room, at the top
+
+D-050 gave every room a footer strip with "← previous" and "next unfinished
+→". It was the right content in the wrong place: at the foot of a page you
+have to scroll past a radar chart and four cards to reach. Moving on cost a
+scroll, so in practice you went back to the map every time — which is not a
+path, it is a hub with spokes.
+
+**Decision: the lone "← All rooms" link at the top of every room becomes a
+three-way nav** — previous room, the map, next room. Every room already had
+that one link in the same shape, so this needed no per-room markup: the
+mount finds `.room-back` (or the ladder's `.back`) and replaces it.
+
+### Two navs, on purpose, doing different jobs
+
+The top nav is **plain path order**. The bottom strip keeps the smart
+**"next unfinished"**. That looks like duplication and is not: a control
+that sits in the same place but leads somewhere different every time you
+glance at it is not something you can navigate by. Predictable movement
+belongs at the top, where it is always in reach; guidance belongs at the
+bottom, next to the reasons for it.
+
+### Neither end is a dead end
+
+The first room has no previous and the last has no next, so both resolve to
+the map rather than wrapping to the far end of the path — wrapping would
+send someone from The Score to Start Here with an arrow implying they are
+adjacent. At those ends the middle link is dropped, since it would offer the
+same destination twice.
+
+`test/run.js` walks every room in the registry and asserts each one has both
+a prev and a next href, that the map appears exactly once, and that room
+links climb out with `../` while the front page's do not.
+
+### Also noted
+
+**Dungeons & Dividends is a separate project** sharing this repository, being
+built in parallel. Its PR merged into `main` mid-session. Merging it rather
+than force-pushing over it was correct and is now written down, so a future
+session does not "clean up" work it did not recognise.
+
+---
+
 ## Still open
 
 - **The last `unavailable()` ratio: life insurance needs multiple.** Credit
