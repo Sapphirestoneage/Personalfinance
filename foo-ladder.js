@@ -89,7 +89,7 @@
     household: Spine.getProfile(),
     /* This room's OWN inputs — nothing else in the app holds these, so they
        are editable here and start empty. SPEC.md §5.1. */
-    cashOnHand: null, deductibleTarget: null, contribPct: null,
+    deductibleTarget: null, contribPct: null,
     rothCur: null, hsaCur: null, prepaidTarget: null, prepaidBal: null,
     windfallAmt: null,
     /* Assumption-class. Defaults are legitimate here, and visible. */
@@ -145,7 +145,7 @@
   function simulate(d) {
     var needs = [
       ['income', entered(d.mIncome)], ['monthly expenses', entered(d.mExpenses)],
-      ['your age', entered(d.age)], ['cash on hand', entered(state.cashOnHand)],
+      ['your age', entered(d.age)],
       ['your deductible', entered(state.deductibleTarget)],
       ['your contribution %', entered(state.contribPct)],
       ['your match cap %', entered(d.matchCapPct)],
@@ -258,7 +258,11 @@
     }
 
     var baseState = {
-      cash: state.cashOnHand, ef: d.efBalance, prepaid: state.prepaidBal,
+      /* Steps 1 and 4 test the SAME real balance against two different
+         targets — a deductible first, then months of expenses. They used to
+         be two inputs, which let them contradict each other and made you
+         type your savings twice. DECISIONS.md D-049. */
+      cash: d.efBalance, ef: d.efBalance, prepaid: state.prepaidBal,
       rothCur: state.rothCur, hsaCur: entered(state.hsaCur) ? state.hsaCur : 0,
       debts: liveDebts
     };
@@ -284,15 +288,16 @@
     var st = state;
 
     return [
-      { n: 1, title: 'Deductibles covered', needs: [entered(st.cashOnHand), entered(st.deductibleTarget)],
-        missing: 'your cash on hand and your highest deductible',
-        why: "Before anything else, hold enough cash to cover your largest insurance deductible — health, auto, or home. It's the smallest wall between you and new debt.",
+      { n: 1, title: 'Deductibles covered', needs: [entered(d.efBalance), entered(st.deductibleTarget)],
+        missing: 'your cash & savings and your highest deductible',
+        why: "Before anything else, hold enough cash to cover your largest insurance deductible — health, auto, or home. It's the smallest wall between you and new debt. This is the same balance step 4 measures against months of expenses; it just has to clear a much lower bar first.",
         build: function () { return {
-          sub: st.cashOnHand >= st.deductibleTarget
-            ? fmt(st.cashOnHand) + ' on hand covers your ' + fmt(st.deductibleTarget) + ' deductible.'
-            : fmt(st.deductibleTarget - st.cashOnHand) + ' short of your highest deductible.',
-          pct: clamp((st.cashOnHand / Math.max(1, st.deductibleTarget)) * 100, 0, 100),
-          act: st.cashOnHand < st.deductibleTarget ? 'Stack cash to ' + fmt(st.deductibleTarget) + ' first.' : 'Covered. Keep this cash untouched.' }; } },
+          sub: d.efBalance >= st.deductibleTarget
+            ? fmt(d.efBalance) + ' in cash & savings covers your ' + fmt(st.deductibleTarget) + ' deductible.'
+            : fmt(st.deductibleTarget - d.efBalance) + ' short of your highest deductible, out of '
+              + fmt(d.efBalance) + ' in cash & savings.',
+          pct: clamp((d.efBalance / Math.max(1, st.deductibleTarget)) * 100, 0, 100),
+          act: d.efBalance < st.deductibleTarget ? 'Stack cash to ' + fmt(st.deductibleTarget) + ' first.' : 'Covered. Keep this cash untouched.' }; } },
 
       { n: 2, title: 'Employer match', needs: [entered(s2gapMo), entered(d.matchCapPct)],
         missing: 'your income, contribution % and match cap %',
@@ -317,7 +322,7 @@
         why: '3-6 months of expenses turns a job loss into an inconvenience instead of a crisis.',
         build: function () { return {
           sub: d.efBalance >= st.efMonths * d.mExpenses
-            ? (d.mExpenses > 0 ? d.efBalance / d.mExpenses : 0).toFixed(1) + ' months held — target met.'
+            ? (d.mExpenses > 0 ? d.efBalance / d.mExpenses : 0).toFixed(1) + ' months held in cash & savings — target met.'
             : (d.mExpenses > 0 ? d.efBalance / d.mExpenses : 0).toFixed(1) + ' of ' + st.efMonths + ' months. '
               + fmt(st.efMonths * d.mExpenses - d.efBalance) + ' to go.',
           pct: clamp((d.efBalance / Math.max(1, st.efMonths * d.mExpenses)) * 100, 0, 100),
@@ -560,11 +565,9 @@
     var inputsBody = h('div', { style: { padding: '0 var(--space-4) var(--space-4)' } }, [
       h('div', { class: 'grid2', style: { marginBottom: 'var(--space-3)' } }, [
         borrowed('age', 'Age'),
-        field({ label: 'Cash on hand', prefix: '$', placeholder: 'e.g. 1500',
-          read: function () { return state.cashOnHand; }, onChange: function (v) { state.cashOnHand = v; } }),
+        borrowed('cashSavings', 'Cash & savings'),
         field({ label: 'Highest deductible', prefix: '$', placeholder: 'e.g. 3000',
           read: function () { return state.deductibleTarget; }, onChange: function (v) { state.deductibleTarget = v; } }),
-        borrowed('cashSavings', 'Emergency fund'),
         field({ label: 'You contribute', suffix: '%', placeholder: 'e.g. 4',
           read: function () { return state.contribPct; }, onChange: function (v) { state.contribPct = v; } }),
         borrowed('employerMatch', 'Employer match'),
@@ -829,7 +832,6 @@
        Here and Debt Payoff — loading them from here would be writing fields
        this room does not own. */
     state.deductibleTarget = 3000;
-    state.cashOnHand = 1500;
     state.contribPct = 3;
     state.rothCur = 0;
     state.hsaCur = 0;
@@ -839,7 +841,7 @@
   }
 
   function clearAll() {
-    ['cashOnHand', 'deductibleTarget', 'contribPct', 'rothCur', 'hsaCur',
+    ['deductibleTarget', 'contribPct', 'rothCur', 'hsaCur',
      'prepaidTarget', 'prepaidBal', 'windfallAmt'].forEach(function (k) { state[k] = null; });
     paint();
   }

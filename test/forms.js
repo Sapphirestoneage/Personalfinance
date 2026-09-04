@@ -113,7 +113,6 @@ const CASES = [
     container: '.wrap',
     seed: 'demo',
     fields: [
-      { sel: 'input[aria-label="Cash on hand"]', type: '1500' },
       { sel: 'input[aria-label="Highest deductible"]', type: '3000' },
       { sel: 'input[aria-label="You contribute"]', type: '4' },
       { sel: 'input[aria-label="Roth so far this yr"]', type: '0' }
@@ -123,18 +122,24 @@ const CASES = [
          inputs — which is also the check that a re-render did not wipe them. */
       const v = await page.evaluate(() => {
         const g = l => (document.querySelector(`input[aria-label="${l}"]`) || {}).value;
-        return { cash: g('Cash on hand'), ded: g('Highest deductible'),
+        return { ded: g('Highest deductible'),
                  pct: g('You contribute'), roth: g('Roth so far this yr') };
       });
+      /* Step 1 measures the SAME cash & savings balance step 4 does — there
+         is no separate "cash on hand" input any more, because two boxes for
+         one pot of money let them contradict each other. D-049. */
       const step1 = await page.evaluate(() =>
-        document.body.innerText.includes('$1,500 short of your highest deductible.')
-        || document.body.innerText.includes('on hand covers your'));
+        document.body.innerText.includes('in cash & savings covers your')
+        || document.body.innerText.includes('in cash & savings.'));
+      const oneCashRow = await page.evaluate(() =>
+        Array.from(document.querySelectorAll('.slaf-label'))
+          .filter(l => /cash/i.test(l.textContent)).length);
       return [
-        ['cash on hand was kept', v.cash, '1500'],
         ['the deductible was kept', v.ded, '3000'],
         ['the contribution % was kept', v.pct, '4'],
         ['a typed zero survives as zero, not blank', v.roth, '0'],
-        ['and step 1 recalculated from what was typed', step1, true]
+        ['step 1 reads the shared cash balance', step1, true],
+        ['and there is exactly one cash field on the page', oneCashRow, 1]
       ];
     }
   },

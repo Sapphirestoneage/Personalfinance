@@ -2459,6 +2459,60 @@ only one of them survives the next change.
 
 ---
 
+## D-049 — One pot of money, two thresholds — not two inputs
+
+Reported from the live site: *"this is messing with the FOO. I put this
+because it's how much cash I have on hand and then it's showing this."*
+$2,000 was typed into Start Here's cash question, and the FOO ladder showed
+**Cash on hand: empty** beside **Emergency fund: $2,000**.
+
+Both labels described the same real money. The ladder had:
+
+- a page-local **"Cash on hand"** input, feeding step 1 (cover your
+  deductible), and
+- a borrowed **"Emergency fund"** row reading `cashSavings` from Start Here,
+  feeding step 4 (three to six months of expenses).
+
+So one balance appeared twice under two names, one of which had to be typed
+again, and the two could disagree — $500 "cash on hand" beside a $2,000
+"emergency fund" is incoherent, because the emergency fund *is* cash.
+
+**Decision: there is one balance, and it is tested against two targets.**
+Step 1 and step 4 both read `cashSavings` from Start Here. The duplicate
+input is gone.
+
+That is also what the Financial Order of Operations actually says. Step 1 is
+not a separate pile of money — it is the first, much lower bar the same
+savings have to clear before the 3–6 month bar comes into view. The copy now
+says so on both cards rather than leaving the reader to work out why their
+savings are being measured twice.
+
+### Why this was safe to collapse
+
+The simulation keeps `cash` and `ef` as separate accumulators, so the
+obvious worry is double-counting the same $2,000. It does not happen:
+`allocate()` tops each up toward *its own* target independently and never
+sums the two. Starting both from the same real balance is therefore two
+threshold tests on one pot — which is the truth — and no money is invented.
+
+Verified end to end on a $2,000 household: step 1 reads "$1,000 short of
+your highest deductible, out of $2,000 in cash & savings", step 4 reads
+"0.6 of 3 months", and the panel shows a single "Cash & savings · $2,000 ·
+Start Here →" row.
+
+### The general lesson, which is worth more than the fix
+
+Two controls for one quantity is not a labelling problem that better wording
+solves. It is a model problem: whichever one the user edits, the other is
+now wrong, and no copy can rescue that. D-017's one-owner rule already says
+a field is editable in exactly one room — this was the same rule broken
+*within* a room, between a borrowed value and a local one.
+
+`test/forms.js` now asserts the front page has exactly **one** field whose
+label mentions cash, so a second one cannot quietly reappear.
+
+---
+
 ## Still open
 
 - **The last `unavailable()` ratio: life insurance needs multiple.** Credit
