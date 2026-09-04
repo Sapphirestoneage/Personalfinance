@@ -28,6 +28,19 @@ Twenty-five rooms are live. Against this document's own tiers:
 | **2** — a few decisions | 23 | **14** | Side Hustle · Solo 401(k) · Roth vs Traditional vs Brokerage · Wedding · Dream Calculator · Convenience Method · Zombie Apocalypse framing · Values vs Spending Audit · Career ROI · Skills Calculator · Leave-Job · Unemployment · Start-Business · Travel |
 | **3 and up** | ~280 | **1** | Regret calc (Tier 4) — not a build of its own: it is `Worth.regrets()`, the same records filtered to low ratings. Everything else is out of `SPEC.md` scope |
 
+**Build tranches from `BRIEF.md`** (the work order layered on top of the tiers):
+
+| Tranche | Status | What landed |
+|---|---|---|
+| **T1** — Dashboard as home + the clock | **shipped** | Four §1.1 bugs fixed (take-home gap, ladder footer/timeline, stable intake count, map digits) · `meta.confirmedAt` per field + `Spine.confirm` + snapshots read back (D-056) · `data/staleness.json`, ages on every chip, the Refresh page (D-057) · six-instrument first screen with deltas and one next action · `index.html` as router, ladder in `rooms/`, map as drawer (D-058) · export / import / share link (D-059) |
+| **T2** — Ask less, prepopulate more | next | Suggested state (D-A), intake changes, explore-room seeding, tables promoted to defaults, Cash Flow opens full |
+| **T3** — The 10x Statement | — | Balance-sheet rebuild, tax character, liquidity/confidence, future income, two people |
+| **T4** — New numbers | — | Benchmarks, new ratios, dashboard instruments T3 unlocks |
+| **T5** — The Rerank | — | New room |
+| **T6** — Life events + Triple D | — | One engine, one room, templates as data |
+| **T7** — Skill Stacker | — | New room, reads the `dnd/` catalogue |
+| **T8** — FI-losophy rooms | — | Designed Week, Enough, Unlearning, Time Buckets, Dreamline, time-denominated display |
+
 Wedding and Dream Calculator are one Goal Costing Engine with two templates,
 per `SPEC.md` §8. Credit Card calc is a filtered view of the Debt Calculator,
 not a separate build. Convenience Method is one of four payoff orderings.

@@ -94,6 +94,11 @@
   .age-line button { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; }
   .age-line button:hover { border-color: var(--color-border-active); color: var(--color-text); }
 
+  .data-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+  .data-note { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  .data-note.is-error { color: var(--color-critical); }
+  .share-out { width: 100%; margin-top: var(--space-3); font-family: var(--font-mono, monospace); font-size: var(--text-xs); color: var(--color-text-muted); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2); resize: vertical; box-sizing: border-box; }
+
   /* The landing, shown until the panel has what it needs. */
   .landing h2 { font-family: var(--font-display); font-size: var(--text-2xl, 2rem); line-height: 1.15; margin: var(--space-2) 0 var(--space-3); }
   .landing p { color: var(--color-text-muted); margin: 0 0 var(--space-4); }
@@ -171,7 +176,18 @@
       <button type="button" class="slaf-btn" id="btn-example">See it with example numbers</button>
     </div>
     <p class="resume" id="resume" hidden></p>
-    <p class="privacy">Educational tool, not financial advice. Your figures are stored only in this browser — there is no account and no server.</p>
+    <p class="privacy">Educational tool, not financial advice. Your figures are stored only in this browser — there is no account and no server.
+      Have a saved file or a share link? <a href="#your-data">Load it below.</a></p>
+  </section>
+
+  <section class="slaf-card" id="share-offer" hidden>
+    <span class="slaf-eyebrow">A shared household</span>
+    <h2 style="margin:var(--space-2) 0 0">This link carries a household</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)" id="share-offer-say"></p>
+    <div class="data-actions">
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-share-load">Load it (replaces yours)</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-share-dismiss">Keep mine</button>
+    </div>
   </section>
 
   <section class="slaf-card dash" id="panel">
@@ -244,6 +260,24 @@
   <section class="slaf-card dash" id="reading">
     <span class="slaf-eyebrow">Reading from elsewhere</span>
     <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <section class="slaf-card" id="your-data" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Your data</span>
+    <h2 style="margin:var(--space-2) 0 0">It lives in this browser. Take it with you.</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      There is no account and no server. A file or a link is the only way this
+      household leaves here — and a share link keeps everything after the
+      <code>#</code>, which a browser never sends to any site.
+    </p>
+    <div class="data-actions">
+      <button type="button" class="slaf-btn" id="btn-export">Download a file</button>
+      <button type="button" class="slaf-btn" id="btn-share">Copy a share link</button>
+      <label class="slaf-btn slaf-btn--quiet" for="file-import" style="cursor:pointer">Load a file…</label>
+      <input type="file" id="file-import" accept="application/json,.json" hidden/>
+    </div>
+    <p class="data-note" id="data-note" hidden></p>
+    <textarea id="share-out" class="share-out" rows="3" readonly hidden aria-label="Share link"></textarea>
   </section>
 
   <p class="disclaimer">
@@ -550,6 +584,82 @@
     }
     return false;
   }
+
+  /* ---- Your data: export, import, share. D-059. ------------------------------ */
+
+  function note(text, isError) {
+    var n = el('data-note');
+    n.hidden = !text;
+    n.textContent = text || '';
+    n.className = 'data-note' + (isError ? ' is-error' : '');
+  }
+
+  el('btn-export').addEventListener('click', function () {
+    var blob = new Blob([Spine.exportJSON()], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = Spine.exportFilename();
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    note('Downloaded ' + Spine.exportFilename() + '. Keep it somewhere you would keep a bank statement.');
+  });
+
+  el('btn-share').addEventListener('click', function () {
+    Spine.shareFragment().then(function (frag) {
+      var link = location.origin + location.pathname.replace(/[^/]*$/, '') + frag;
+      var out = el('share-out');
+      out.hidden = false; out.value = link;
+      var copied = navigator.clipboard && navigator.clipboard.writeText
+        ? navigator.clipboard.writeText(link).then(function () { return true; }, function () { return false; })
+        : Promise.resolve(false);
+      copied.then(function (yes) {
+        note((yes ? 'Copied. ' : '') + 'Everything after the # stays on the device that opens it — '
+          + (link.length) + ' characters, nothing sent anywhere.');
+      });
+    }).catch(function (err) { note(err.message, true); });
+  });
+
+  el('file-import').addEventListener('change', function () {
+    var file = el('file-import').files && el('file-import').files[0];
+    if (!file) return;
+    file.text().then(function (text) {
+      var check = Spine.inspectImport(text);
+      if (!check.ok) { note(check.reason, true); return; }
+      var who = (Schema.primaryPerson(check.household) || {}).label || 'a household';
+      if (!window.confirm('Load ' + who + ' from ' + file.name + '? This replaces everything entered in this browser.')) return;
+      var r = Spine.importJSON(text);
+      note(r.ok ? 'Loaded. ' + check.snapshots.length + ' snapshot' + (check.snapshots.length === 1 ? '' : 's') + ' came with it.' : r.reason, !r.ok);
+      el('file-import').value = '';
+    });
+  });
+
+  /* A share link on arrival: offer, never load. */
+  (function offerShared() {
+    var code = Spine.codeFromFragment(location.hash);
+    if (!code) return;
+    Spine.fromShareCode(code).then(function (obj) {
+      var who = (Schema.primaryPerson(obj.household) || {}).label || 'a household';
+      el('share-offer').hidden = false;
+      el('share-offer-say').textContent = who + (obj.exportedAt ? ', saved ' + shortDate(obj.exportedAt) : '')
+        + '. Loading it replaces whatever is in this browser now; keeping yours leaves the link unused.';
+      el('btn-share-load').addEventListener('click', function () {
+        if (!window.confirm('Replace the household in this browser with ' + who + '?')) return;
+        var r = Spine.importJSON(JSON.stringify(obj));
+        if (!r.ok) { note(r.reason, true); return; }
+        el('share-offer').hidden = true;
+        if (history.replaceState) history.replaceState(null, '', location.pathname);
+      });
+      el('btn-share-dismiss').addEventListener('click', function () {
+        el('share-offer').hidden = true;
+        if (history.replaceState) history.replaceState(null, '', location.pathname);
+      });
+    }).catch(function (err) {
+      el('share-offer').hidden = false;
+      el('share-offer-say').textContent = 'The link could not be read: ' + err.message;
+      el('btn-share-load').hidden = true;
+      el('btn-share-dismiss').addEventListener('click', function () { el('share-offer').hidden = true; });
+    });
+  })();
 
   el('btn-example').addEventListener('click', function () {
     if (!window.confirm('Fill every answer with the example household, Robin Sparks? This replaces anything you have entered.')) return;

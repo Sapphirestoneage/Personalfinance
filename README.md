@@ -113,6 +113,7 @@ data/               Versioned reference tables (JSON, never inlined in code)
 test/run.js         Re-derives every formula outside the browser
 test/alignment.js   Browser layout check — side-by-side cells must line up
 test/forms.js       Mobile browser check — typing must survive, keyboard must stay
+test/export.js      Export → import round trip, share-link round trip, size ceiling
 SPEC.md             The full Tier 0–2 build spec. The authority.
 ROADMAP.md          The master idea index, tiers 0–24, + what's actually built
 DECISIONS.md        Running log of what was decided and why.
@@ -139,7 +140,12 @@ the building code read almost exactly like the JSX it replaced.
 
 ```sh
 node test/run.js
+node test/export.js
 ```
+
+The second checks that a household leaves and comes back unchanged — as a
+downloaded file and as a share link — and that a full household with a
+snapshot fits in a URL fragment under 8 KB. See `DECISIONS.md` D-059.
 
 There is also a layout check that needs a real browser, because only a
 browser knows how tall a wrapped label is:

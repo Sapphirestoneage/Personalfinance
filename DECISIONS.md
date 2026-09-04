@@ -3230,6 +3230,48 @@ Registry `href` for `dashboard` is `index.html` and for `foo-ladder` is
 
 ---
 
+## D-059 — The household can leave the browser, by hand only
+
+*(BRIEF.md §1.6.)* Everything lives in one browser's `localStorage`. That is
+the privacy story and it is also a trap: a new phone, a cleared cache or a
+partner's laptop and the household is gone or duplicated. There was no way
+to carry it.
+
+**Decision: three hand-carried paths, no server.**
+
+- **A file.** `Spine.exportJSON()` writes `{ format: 'slaf-export',
+  exportVersion, schemaVersion, exportedAt, household, snapshots }` and
+  `Spine.exportFilename()` names it `slaf-household-YYYY-MM-DD.json`.
+  `Spine.inspectImport(text)` checks a payload without touching storage;
+  `Spine.importJSON(text)` replaces the household **and** the snapshots. A
+  bare household (the stored shape itself) is accepted too. A file from a
+  **newer** schema is refused with the two version numbers — migrations
+  only run forward, and guessing at a shape this build has never seen is
+  how a blob gets quarantined. Older ones migrate on the reload that
+  follows, through the same path a stored blob takes.
+- **A share link.** `Spine.toShareCode()` is the export, deflated with
+  `CompressionStream('deflate-raw')` and base64url'd, prefixed `z`; where
+  the platform lacks the stream it is plain JSON prefixed `j`, and either
+  kind reads on either platform. It travels in the URL **fragment**
+  (`#h=…`), which a browser never sends to a server. The demo household
+  with a snapshot is about 2.8 KB of fragment; the ceiling the brief set
+  is 8 KB and `test/export.js` holds it there.
+- **Arrival.** `index.html` reads `#h=` on load and **offers** — "this link
+  carries Robin Sparks, saved Sep 4; loading it replaces yours" — behind a
+  confirm. It never loads on its own, and dismissing strips the fragment.
+
+The Dashboard's "Your data" card carries all three, and the landing links
+to it. Export always includes the snapshots so that "since last time"
+survives a move.
+
+### Compatibility note
+
+Stored shape: nothing. The export envelope is versioned separately
+(`exportVersion: 1`) so it can grow without a schema bump. `test/export.js`
+is a new suite: export → import deep-equal, share-code round trip, size.
+
+---
+
 ## D-046 — HP is measured in weeks, which is what makes §3A stop contradicting itself
 
 The Dungeons & Dividends rulebook defines Hit Points twice in the same

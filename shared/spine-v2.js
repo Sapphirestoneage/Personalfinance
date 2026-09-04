@@ -808,6 +808,164 @@
     };
   }
 
+  /* ---- Export / import / share ---------------------------------------------
+     Nothing leaves the browser unless the person carries it out by hand: a
+     file they download, or a link whose fragment (#h=…) never reaches a
+     server. BRIEF §1.6, DECISIONS.md D-059.                              */
+
+  var EXPORT_FORMAT = 'slaf-export';
+  var EXPORT_VERSION = 1;
+
+  /** The whole state as one JSON string: household + snapshots. */
+  function exportObject() {
+    return {
+      format: EXPORT_FORMAT,
+      exportVersion: EXPORT_VERSION,
+      schemaVersion: Schema.SCHEMA_VERSION,
+      exportedAt: new Date().toISOString(),
+      household: getProfile(),
+      snapshots: listSnapshots()
+    };
+  }
+  function exportJSON() { return JSON.stringify(exportObject(), null, 2); }
+
+  function exportFilename(now) {
+    var d = now ? new Date(now) : new Date();
+    var iso = isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+    return 'slaf-household-' + iso.slice(0, 10) + '.json';
+  }
+
+  /**
+   * Check a payload without touching storage. Returns
+   *   { ok, reason, household, snapshots, schemaVersion, exportedAt }
+   * A payload from a NEWER schema is refused: the migrations only run
+   * forward, and guessing at a shape this build has never seen is how a
+   * blob gets quarantined.
+   */
+  function inspectImport(text) {
+    var parsed;
+    try { parsed = typeof text === 'string' ? JSON.parse(text) : text; }
+    catch (e) { return { ok: false, reason: 'That is not a JSON file.' }; }
+    if (!parsed || typeof parsed !== 'object') return { ok: false, reason: 'That is not a household export.' };
+    /* A bare household (the shape this app stores) is accepted too. */
+    var household = parsed.format === EXPORT_FORMAT ? parsed.household : parsed;
+    var snapshots = parsed.format === EXPORT_FORMAT ? (parsed.snapshots || []) : [];
+    if (!household || typeof household !== 'object' || !('schemaVersion' in household)) {
+      return { ok: false, reason: 'That file has no household in it.' };
+    }
+    if (household.schemaVersion > Schema.SCHEMA_VERSION) {
+      return { ok: false, reason: 'That file was saved by a newer version of this app (schema '
+        + household.schemaVersion + '; this one reads up to ' + Schema.SCHEMA_VERSION + ').' };
+    }
+    if (!Array.isArray(snapshots)) return { ok: false, reason: 'The snapshots in that file are not a list.' };
+    return {
+      ok: true, reason: null, household: household, snapshots: snapshots,
+      schemaVersion: household.schemaVersion,
+      exportedAt: parsed.exportedAt || null
+    };
+  }
+
+  /**
+   * importJSON(text) — REPLACES the stored household and snapshots. The
+   * caller shows the confirm; this does the write. Older schemas migrate
+   * on the reload that follows, through the same path a stored blob takes.
+   */
+  function importJSON(text) {
+    var check = inspectImport(text);
+    if (!check.ok) return check;
+    writeRaw(STORAGE_KEY, JSON.stringify(check.household));
+    writeRaw(SNAPSHOT_KEY, JSON.stringify(check.snapshots));
+    cache = null;
+    lastReadings = null;
+    load();
+    notify();
+    return { ok: true, reason: null, household: getProfile(), snapshots: listSnapshots() };
+  }
+
+  /* ---- Share code: the export, deflated and base64url'd into a fragment.
+     'z' prefix = deflate-raw (CompressionStream), 'j' = plain JSON, so a
+     browser without CompressionStream can still read a code it did not
+     make. Both directions are async because the streams are.             */
+
+  function bytesToBase64url(bytes) {
+    var bin = '';
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    var b64 = (typeof btoa === 'function') ? btoa(bin) : Buffer.from(bin, 'binary').toString('base64');
+    return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function base64urlToBytes(str) {
+    var b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    var bin = (typeof atob === 'function') ? atob(b64) : Buffer.from(b64, 'base64').toString('binary');
+    var out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  function utf8Encode(str) { return new TextEncoder().encode(str); }
+  function utf8Decode(bytes) { return new TextDecoder().decode(bytes); }
+
+  function pipeThrough(bytes, stream) {
+    var writer = stream.writable.getWriter();
+    writer.write(bytes); writer.close();
+    var reader = stream.readable.getReader();
+    var chunks = [], total = 0;
+    return (function pump() {
+      return reader.read().then(function (r) {
+        if (r.done) {
+          var out = new Uint8Array(total), off = 0;
+          chunks.forEach(function (c) { out.set(c, off); off += c.length; });
+          return out;
+        }
+        chunks.push(r.value); total += r.value.length;
+        return pump();
+      });
+    })();
+  }
+
+  function hasCompression() {
+    return typeof CompressionStream === 'function' && typeof DecompressionStream === 'function';
+  }
+
+  /** Promise<string>. Small: the export without pretty-printing, deflated. */
+  function toShareCode(obj) {
+    var json = JSON.stringify(obj || exportObject());
+    var bytes = utf8Encode(json);
+    if (!hasCompression()) return Promise.resolve('j' + bytesToBase64url(bytes));
+    return pipeThrough(bytes, new CompressionStream('deflate-raw')).then(function (z) {
+      return 'z' + bytesToBase64url(z);
+    });
+  }
+
+  /** Promise<object> — the export object the code carries, or a rejection. */
+  function fromShareCode(code) {
+    var c = String(code || '').trim();
+    if (!c) return Promise.reject(new Error('Empty share code.'));
+    var kind = c.charAt(0), body = c.slice(1);
+    var bytes;
+    try { bytes = base64urlToBytes(body); }
+    catch (e) { return Promise.reject(new Error('That share code is not readable.')); }
+    var text = kind === 'z'
+      ? (hasCompression()
+          ? pipeThrough(bytes, new DecompressionStream('deflate-raw')).then(utf8Decode)
+          : Promise.reject(new Error('This browser cannot open a compressed share code.')))
+      : kind === 'j' ? Promise.resolve(utf8Decode(bytes))
+      : Promise.reject(new Error('That share code is not one this app made.'));
+    return text.then(function (json) {
+      var check = inspectImport(json);
+      if (!check.ok) throw new Error(check.reason);
+      return JSON.parse(json);
+    });
+  }
+
+  /** The fragment for a URL: '#h=' + code. */
+  function shareFragment(obj) {
+    return toShareCode(obj).then(function (code) { return '#h=' + code; });
+  }
+  function codeFromFragment(hash) {
+    var m = /(?:^|[#&])h=([^&]+)/.exec(String(hash || ''));
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+
   /* ---- Reset ------------------------------------------------------------ */
 
   function reset() {
@@ -854,6 +1012,15 @@
     registerFieldReaders: registerFieldReaders,
     confirm: confirm,
     confirmedAt: confirmedAt,
+    exportObject: exportObject,
+    exportJSON: exportJSON,
+    exportFilename: exportFilename,
+    inspectImport: inspectImport,
+    importJSON: importJSON,
+    toShareCode: toShareCode,
+    fromShareCode: fromShareCode,
+    shareFragment: shareFragment,
+    codeFromFragment: codeFromFragment,
     reset: reset,
     _migrateLegacy: migrateLegacy
   };
