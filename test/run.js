@@ -2788,6 +2788,119 @@ section('Ratios');
   check('computing every ratio mutates nothing', JSON.stringify(h), before);
 })();
 
+section('Credit utilisation');
+
+(function () {
+  function withCards(cards) {
+    const h = Demo.build();
+    h.debts = cards.map(c => Schema.createDebt(Object.assign({ type: 'credit_card' }, c)));
+    return h;
+  }
+  function util(h) {
+    return RatiosEngine.all(h, TABLES).rows.filter(r => r.id === 'creditUtilization')[0];
+  }
+
+  /* -- No limit, no number. This was the whole reason it was unavailable -- */
+  {
+    const row = util(withCards([{ label: 'Card', balanceCents: 320000 }]));
+    check('a card with no limit gives no utilisation', row.result.status, 'incomplete');
+    checkTrue('and it is flagged as unavailable rather than merely missing',
+      row.result.unavailable);
+    checkTrue('with a reason that says where to add it',
+      /Debt Payoff/.test(row.result.reason));
+    check('and names the field', row.result.missing.join(','), 'creditLimitTotal');
+
+    /* A limit of zero is not a limit. Dividing by it would be an infinity
+       and treating it as absent is the only sane reading. */
+    check('a zero limit is not a limit',
+      util(withCards([{ balanceCents: 100, creditLimitCents: 0 }])).result.status, 'incomplete');
+  }
+
+  /* -- One card ------------------------------------------------------------ */
+  {
+    const row = util(withCards([{ balanceCents: 320000, creditLimitCents: 1000000 }]));
+    check('balance over limit', row.value, 0.32, 1e-12);
+    check('counted one card', row.result.cardsCounted, 1);
+    check('and none left out', row.result.cardsWithoutLimit, 0);
+    check('32% is inside the 30% ceiling? no — it is over', row.verdict.zone, 'out');
+    check('10% is the comfortable end',
+      util(withCards([{ balanceCents: 90000, creditLimitCents: 1000000 }])).verdict.zone, 'good');
+    check('and 25% is in between',
+      util(withCards([{ balanceCents: 250000, creditLimitCents: 1000000 }])).verdict.zone, 'watch');
+  }
+
+  /* -- Several cards, and the trap this ratio usually falls into ---------- */
+  {
+    /* A card with a balance but NO limit must be left out of BOTH sides.
+       Counting its balance against the other cards' limits is the single
+       easiest way to make this number lie, and it lies upward. */
+    const mixed = withCards([
+      { label: 'Known', balanceCents: 200000, creditLimitCents: 1000000 },
+      { label: 'Unknown', balanceCents: 800000 }
+    ]);
+    const row = util(mixed);
+    check('only the card with a known limit is counted', row.value, 0.2, 1e-12);
+    check('the balance used is that card’s alone', row.result.balanceCents, 200000);
+    check('and the room can say how many were left out', row.result.cardsWithoutLimit, 1);
+    check('one counted', row.result.cardsCounted, 1);
+
+    /* Two known cards aggregate on both sides. */
+    const both = withCards([
+      { balanceCents: 200000, creditLimitCents: 1000000 },
+      { balanceCents: 100000, creditLimitCents: 500000 }
+    ]);
+    check('two known cards sum on both sides', util(both).value, 300000 / 1500000, 1e-12);
+    check('and both are counted', util(both).result.cardsCounted, 2);
+
+    /* Non-revolving debt has no limit and must never enter the sum. */
+    const withMortgage = withCards([{ balanceCents: 200000, creditLimitCents: 1000000 }]);
+    withMortgage.debts.push(Schema.createDebt({
+      type: 'mortgage', balanceCents: 25000000, creditLimitCents: 99999999 }));
+    check('a mortgage never enters credit utilisation', util(withMortgage).value, 0.2, 1e-12);
+  }
+
+  /* -- It reaches the score, and the score notices ------------------------ */
+  {
+    const table = TABLES.healthScore;
+    const debtPillar = table.pillars.filter(p => p.id === 'debt')[0];
+    checkTrue('the debt pillar counts credit utilisation',
+      debtPillar.ratios.indexOf('creditUtilization') !== -1);
+
+    const clean = Demo.build();
+    clean.expenses.entries = Demo.buildSpending();
+    clean.debts = clean.debts.map(d => Schema.createDebt(
+      d.type === 'credit_card' ? Object.assign({}, d, { creditLimitCents: 5000000 }) : d));
+    const maxed = Demo.build();
+    maxed.expenses.entries = Demo.buildSpending();
+    maxed.debts = maxed.debts.map(d => Schema.createDebt(
+      d.type === 'credit_card' ? Object.assign({}, d, { creditLimitCents: 350000 }) : d));
+
+    const a = HealthEngine.score(clean, TABLES);
+    const b = HealthEngine.score(maxed, TABLES);
+    checkTrue('both score', Money.isOk(a) && Money.isOk(b));
+    const aDebt = a.pillars.filter(p => p.id === 'debt')[0];
+    const bDebt = b.pillars.filter(p => p.id === 'debt')[0];
+    checkTrue('a nearly-maxed card scores the debt pillar lower', bDebt.score < aDebt.score);
+    checkTrue('and drags the whole score with it', b.value < a.value);
+  }
+
+  /* -- Stored households written before this field ------------------------ */
+  {
+    /* The compatibility promise: an old debt loads with a null limit, and
+       null keeps the ratio unavailable rather than reading as a zero limit
+       or an unlimited one. No migration, because absent already means the
+       right thing. */
+    const old = Schema.createDebt({ label: 'Card', balanceCents: 320000, type: 'credit_card' });
+    check('a debt created without the field has it as null', old.creditLimitCents, null);
+    checkTrue('and round-trips through JSON unchanged',
+      Schema.createDebt(JSON.parse(JSON.stringify(old))).creditLimitCents === null);
+    check('so the ratio stays unavailable, not zero',
+      util(withCards([{ balanceCents: 320000 }])).result.unavailable, true);
+    check('the field dictionary knows about it',
+      Schema.FIELDS['debt.creditLimitCents'].unit, 'cents');
+  }
+})();
+
 section('Return on Hassle');
 
 (function () {

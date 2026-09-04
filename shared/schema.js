@@ -80,6 +80,7 @@
     'debt.rate':                                 { class: 'raw',        unit: 'rate',    period: 'annual' },
     'debt.minPaymentCents':                      { class: 'raw',        unit: 'cents',   period: 'monthly' },
     'debt.type':                                 { class: 'raw',        unit: 'enum',    values: ['credit_card', 'student_loan', 'auto', 'mortgage', 'personal', 'medical', 'other'] },
+    'debt.creditLimitCents':                     { class: 'raw',        unit: 'cents',   note: 'revolving debt only \u2014 the limit the balance is a share of. Owned by Debt Payoff. DECISIONS.md D-045' },
     'expenses.monthlyEssential.estimatedValueCents': { class: 'raw',    unit: 'cents',   period: 'monthly', source: 'estimated' },
     'expenses.monthlyEssential.trackedValueCents':   { class: 'raw',    unit: 'cents',   period: 'monthly', source: 'tracked' },
     'expenses.monthlyEssential.divergenceCents':     { class: 'computed', unit: 'cents', period: 'monthly', note: 'tracked − estimated; SPEC.md §12.3' },
@@ -211,6 +212,11 @@
       rate: f.rate === undefined ? null : f.rate,
       minPaymentCents: f.minPaymentCents === undefined ? null : f.minPaymentCents,
       type: f.type || 'other',
+      /* Only meaningful on revolving debt — a mortgage has no limit to be a
+         share of. Absent means "not entered", never "no limit", which is
+         why credit utilisation stays unavailable rather than assuming one.
+         DECISIONS.md D-045. */
+      creditLimitCents: f.creditLimitCents === undefined ? null : f.creditLimitCents,
       emotionalTag: f.emotionalTag === undefined ? null : f.emotionalTag,
       ownerIds: f.ownerIds || []
     };

@@ -48,9 +48,16 @@ reconciliation against the repo was worth.
 
 Two more rooms sit outside that table because their ideas live further down
 this document: **Every Ratio** builds thirty of the Tier 19 ratios from the
-household that already exists, and **The Dashboard** is the Tier 20 radar
-over them. Neither adds a number the other rooms did not already own — see
-`DECISIONS.md` for what the radar deliberately is not (a score).
+household that already exists, and **The Dashboard** is the Tier 20 panel
+over them — all seven gauges, including a Weather panel that names the three
+risks it cannot see (D-044). Neither adds a number the other rooms did not
+already own; the radar is deliberately not a score, and The Score is where
+adding them up happens, with its weighting on the page (D-043).
+
+One ratio moved from "cannot compute" to computed along the way: **credit
+utilisation** now works, because Debt Payoff asks for the limit on a card
+(D-045). It counts only cards whose limit you have given, on both sides of
+the division — the thing this ratio is usually got wrong.
 
 ### Not built in Tier 1 (8)
 

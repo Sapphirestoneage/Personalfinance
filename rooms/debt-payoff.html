@@ -48,6 +48,8 @@
   .debt-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-2); align-items: stretch; }
   .debt-meta { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); align-items: stretch; margin-top: var(--space-2); }
   .debt-warn { font-size: var(--text-xs); color: var(--color-caution); margin: var(--space-2) 0 0; }
+  .debt-limit { margin-top: var(--space-2); }
+  .debt-hint { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
 
   .strategies { display: grid; gap: var(--space-2); }
   .strategy { text-align: left; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; font-family: var(--font-body); color: var(--color-text); }
@@ -240,6 +242,18 @@
           }).join('')
         + '</select></span></label>'
         + '</div>'
+        /* The limit only means something on revolving debt — a mortgage has
+           no limit for the balance to be a share of — so the field appears
+           only for cards, and only there. Leaving it blank keeps credit
+           utilisation unavailable rather than assuming a limit.
+           DECISIONS.md D-045. */
+        + (d.type === 'credit_card'
+            ? '<div class="debt-limit">'
+              + field(d, 'creditLimitCents', 'Credit limit', '$', null, 'e.g. 10000')
+              + '<p class="debt-hint">Optional, and only used for credit utilisation — '
+              + 'balance against limit, where 30% is the usual ceiling. Blank means the '
+              + 'ratio stays unavailable rather than guessed.</p></div>'
+            : '')
         + (missing.length
             ? '<p class="debt-warn">Needs ' + missing.join(' and ') + ' before it can be planned.</p>'
             : '')

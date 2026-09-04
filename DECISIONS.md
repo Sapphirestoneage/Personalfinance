@@ -2131,6 +2131,86 @@ one did, within a few commits.
 
 ---
 
+## D-045 — Credit utilisation, and the trap it usually falls into
+
+`engines/ratios.js` shipped with exactly two ratios returned by
+`unavailable()` — a status that means "this app deliberately cannot compute
+this, and here is what it would need". Credit utilisation was one:
+
+> This needs your total credit limit, which nothing here asks for yet.
+
+That was the right call at the time and the wrong permanent state: the limit
+is one number a person knows, it unlocks a ratio that appears on the radar,
+in the Engine Load panel and in the debt pillar of The Score, and the
+alternative — guessing a limit — would produce a number people act on.
+
+**Decision: ask for it, on the debt that has one.** `debt.creditLimitCents`,
+owned by the Debt Payoff room, shown only on `type: 'credit_card'` rows.
+A mortgage has no limit for its balance to be a share of, so the field does
+not appear there at all.
+
+### The trap, and how this avoids it
+
+The obvious implementation sums every card balance and divides by every
+known limit. It is wrong, and it is wrong in the direction that alarms
+people: a card whose balance you entered but whose limit you did not adds to
+the numerator while contributing nothing to the denominator, and the ratio
+comes out too high.
+
+So **only cards with a known limit count, on both sides of the division**,
+and the result carries `cardsCounted` and `cardsWithoutLimit` so a room can
+say what was left out. A test constructs exactly that case — a $2,000
+balance on a card with a $10,000 limit beside an $8,000 balance on a card
+with no limit — and asserts the answer is 20%, not 100%.
+
+Two smaller rules fall out of the same reasoning. A limit of **zero** is not
+a limit; it is treated as absent rather than as a division by zero. And a
+`creditLimitCents` typed onto a non-revolving debt never enters the sum,
+because the field is only meaningful on revolving debt.
+
+### The band
+
+`data/ratio_benchmarks.json` gains `creditUtilization` at `good: 0.10`,
+`warn: 0.30`, direction lower — the 30% ceiling and the 10% "excellent"
+figure the credit bureaus repeat. The file already cited both in its own
+`source` note before the ratio could compute; the band's own note says
+plainly that these are conventions about how scoring models are *believed*
+to behave, not published thresholds. Table version bumped to 1.1.
+`data/health_score.json` is at 1.1 too, with credit utilisation added to the
+debt pillar.
+
+### Compatibility note
+
+**What changed in the stored shape.** `Schema.createDebt()` now returns a
+`creditLimitCents` key. It defaults to `null` and `null` means *not
+entered* — never "no limit" and never "a limit of zero".
+
+**No migration, and none is needed.** A household stored before this change
+has debts without the key; `createDebt()` fills it with `null` on read,
+which is the same state as a card whose limit you have not typed. The ratio
+stays `unavailable()` exactly as it did before, with the same reason. The
+schema version is unchanged, so nothing is quarantined and nothing is
+rewritten. A test loads a debt built without the field, round-trips it
+through JSON, and asserts the ratio is still unavailable rather than reading
+as zero.
+
+**Rooms updated to match.** Debt Payoff (`rooms/debt-payoff.html`) renders
+and writes the field — through the existing `writeField()` path, which
+already sends any unknown `*Cents` key through `Money.parseMoney`, so no new
+write path was introduced. Every other room reads the ratio through
+`engines/ratios.js` and needed no change: Every Ratio, The Dashboard and The
+Score all picked it up on the next render.
+
+**What a future room needs to know before calling `getProfile()`.**
+`debt.creditLimitCents` is `raw` class, integer cents, and meaningful only
+when `debt.type === 'credit_card'`. Do not sum it across all debts. Do not
+read `null` as unlimited. If you need utilisation, call the ratio rather
+than dividing yourself — `Ratios.byId('creditUtilization')` already handles
+the mixed-limits case above, and a second implementation would get it wrong
+the way the first draft of this one nearly did.
+
+---
+
 ## Still open
 
 - ~~**Two-Income Household Toggle** and **Soft Saving Balance

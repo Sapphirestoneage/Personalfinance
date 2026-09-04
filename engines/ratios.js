@@ -100,6 +100,27 @@
     c.autoPayment = debtSum(function (d) { return d.type === 'auto'; }, 'minPaymentCents');
     c.revolvingBalance = debtSum(function (d) { return d.type === 'credit_card'; }, 'balanceCents');
 
+    /* Credit utilisation counts only the cards whose limit is known, on BOTH
+       sides of the division. A card with a balance and no limit entered
+       would otherwise inflate the numerator against a denominator it never
+       contributed to — the single easiest way to make this ratio lie. How
+       many were left out comes back with the answer. DECISIONS.md D-045. */
+    var limit = 0, limitedBalance = 0, limitedCards = 0, unlimitedCards = 0;
+    c.debts.forEach(function (d) {
+      if (d.type !== 'credit_card') return;
+      if (Money.isEntered(d.creditLimitCents) && d.creditLimitCents > 0) {
+        limit += d.creditLimitCents;
+        if (Money.isEntered(d.balanceCents)) limitedBalance += d.balanceCents;
+        limitedCards++;
+      } else {
+        unlimitedCards++;
+      }
+    });
+    c.revolvingLimit = limitedCards ? limit : null;
+    c.limitedRevolvingBalance = limitedCards ? limitedBalance : null;
+    c.limitedCardCount = limitedCards;
+    c.unlimitedCardCount = unlimitedCards;
+
     /* Categorised spending, when a month exists. Several ratios need the
        split and say so rather than guessing at it. */
     var summary = CashFlow.summarise(household, c.tables.expenseCategories);
@@ -164,11 +185,24 @@
 
     { id: 'creditUtilization', label: 'Credit utilisation', tier: 18,
       formula: 'card balances ÷ total credit limit',
-      unit: 'rate', needs: 'your total credit limits',
-      note: 'Not computed: nothing in this app asks for your credit limits, and guessing one would produce a number people act on.',
-      compute: function () {
-        return unavailable('This needs your total credit limit, which nothing here asks for yet.',
-          ['creditLimitTotal']);
+      unit: 'rate', needs: 'a credit limit on at least one card',
+      note: 'Only the cards you have given a limit for are counted, on both sides — mixing a card with a known limit into the balance while leaving its limit out would overstate the figure. Add the limit in Debt Payoff.',
+      compute: function (c) {
+        if (c.revolvingLimit === null) {
+          return unavailable(
+            'This needs the credit limit on at least one card. Add it in Debt Payoff — '
+              + 'guessing a limit would produce a number people act on.',
+            ['creditLimitTotal']);
+        }
+        var r = over(c.limitedRevolvingBalance, c.revolvingLimit,
+          { denominatorName: 'creditLimitTotal' });
+        if (!Money.isOk(r)) return r;
+        return Money.ok(r.value, {
+          cardsCounted: c.limitedCardCount,
+          cardsWithoutLimit: c.unlimitedCardCount,
+          limitCents: c.revolvingLimit,
+          balanceCents: c.limitedRevolvingBalance
+        });
       } },
 
     { id: 'netWorthToIncome', label: 'Net worth to income', tier: 18,
