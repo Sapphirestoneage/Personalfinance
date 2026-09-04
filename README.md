@@ -93,8 +93,20 @@ That is not over-engineering; it is what makes carrying your data across a
 **copy rather than a translation**. Nothing has to be mapped, re-rounded or
 re-entered, and the two tools cannot disagree about a number because they run
 the same engines over the same shape. "Take it with you" at the bottom of the
-sheet gives you that object as readable JSON — not an encoded blob, so you can
-see exactly what you would be handing over before you hand it over.
+sheet downloads it as readable JSON — not an encoded blob, so you can see
+exactly what you would be handing over before you hand it over.
+
+**[`FORMAT.md`](FORMAT.md) is the contract**, if you are writing something that
+reads these files. The one rule worth reading even if you read nothing else:
+the file is a **partial** household and must be **merged, not applied**. A full
+household also carries goals, ratings and a values profile that this tool
+cannot produce — so they are absent from the export rather than present-and-
+empty, and an importer that replaced a household wholesale would wipe work
+someone did in SPARKS. `contains` names exactly which keys are present so you
+never have to infer intent from a missing field.
+
+`shared/export.js` also exports `validate()` — the same checks an importer
+should run, shipped here so both sides agree on what "valid" means.
 
 `test/parity.js` is the check that keeps this claim true: it builds a character
 here and asserts it produces the same Level, Debt Burden, class and HP as the
@@ -108,6 +120,7 @@ sheet.html      Tier 2 — the full character sheet
 bestiary.html   Monsters, Hazards, the Revenue Guild, Status Effects, Feat Trees
 shared/
   store.js        persistence — the ONE file written for this product
+  export.js       the character export, and its validator
   money.js        integer cents, safe divide, the Result type      \\
   schema.js       the household data model                          |  vendored
   reference.js    the data/ loader                                  |  verbatim
@@ -119,8 +132,10 @@ data/
   dnd_rules.json      the rulebook, transcribed
   dnd_classes.json    seven classes, 1-20, with subclasses and feats
   dnd_scoring.json    every threshold, and the quiz
+FORMAT.md       the export contract, for anyone writing an importer
 test/run.js     the schema and the calibration promise
 test/parity.js  same numbers as the main suite
+test/export.js  the export contract, asserted
 ```
 
 **The vendored files are byte-identical copies**, deliberately keeping their
@@ -140,7 +155,7 @@ python3 -m http.server 8000
 then open <http://localhost:8000>.
 
 ```
-node test/run.js && node test/parity.js
+node test/run.js && node test/parity.js && node test/export.js
 ```
 
 ## This is a game, not advice
