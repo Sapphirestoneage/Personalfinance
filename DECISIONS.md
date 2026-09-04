@@ -2920,6 +2920,122 @@ session does not "clean up" work it did not recognise.
 
 ---
 
+## D-055 — "Are you working?" is asked first, and it removes questions
+
+Start Here asked everybody the same nine questions, and two of them were
+*"does your employer match retirement contributions?"* and *"are you
+contributing enough to get all of it?"*.
+
+If you are self-employed, retired, or between jobs, neither question has a
+true answer. Leaving them blank was the only honest thing to do, and blank
+was punished: `shared/progress.js` counts a room's `needs` and reports what
+is unfilled, so the room said **"1 thing left"** forever, the map's
+completion pill never turned green, and the FOO ladder's step 2 sat at
+*"add your income, contribution % and match cap %"* for someone with no
+employer to ask.
+
+That is the app telling a person they are incomplete for a fact about their
+life.
+
+**Decision: ask about the working situation first, and let the answer take
+questions off the list.**
+
+### The field
+
+`person.employmentStatus` — one of five ids, or `null`:
+
+| id | label | earning | hasEmployer |
+|---|---|---|---|
+| `employed` | Working for an employer | yes | yes |
+| `selfEmployed` | Self-employed or freelance | yes | **no** |
+| `both` | Both — a job and my own work | yes | yes |
+| `notWorking` | Not working right now | no | no |
+| `retired` | Retired | no | no |
+
+The table lives in `shared/schema.js` as `EMPLOYMENT_STATUSES`, and it is
+the only place these labels exist — `shared/ownership.js` and
+`rooms/start.html` both read it rather than restating it.
+
+`hasEmployer: false` means exactly one thing: **the employer-match pair is
+not applicable.** It does not mean "no retirement plan" — a self-employed
+person has a solo 401(k) with no match, and a retiree may be drawing from
+one. `engines/accounts.js` is untouched by this.
+
+### Why this is not derivable from the income sources
+
+It looks like it should be. It is not:
+
+- **No rate entered** means the income question was skipped.
+- **`frequency: 'none'`** (D-048) means "I am not earning" — a deliberate
+  zero, and a fact about *pay*, not about whether there is an employer.
+- Neither says whether a **company exists that could match you**, which is
+  the only thing the two match questions depend on.
+
+A freelancer earning $80k and an employee earning $80k are indistinguishable
+in the income sources and want different questions. So this is stored, not
+inferred.
+
+### Not applicable is not missing
+
+`Ownership.describe()` gained two fields:
+
+    applies              — false when the field has stopped being a question
+    notApplicableBecause — the sentence to show instead
+
+A field with no `applies()` always applies, so nothing else in the map
+changed. `Progress.forRoom()` drops a non-applying field from **both** sides
+of the fraction — it leaves the denominator, not just the numerator, which
+is the whole point: a retiree can now reach 100% on Start Here. The dropped
+fields come back as `row.notApplicable`, and the footer strip says them out
+loud ("Not asked: Employer match. You said there is no employer."), because
+a room claiming it "has everything it needs" while two visible boxes sit
+empty would read as a bug.
+
+The FOO ladder does the same thing one level down: a step can now declare
+`na`, and step 2 reads *"No employer to match you — this step is already
+behind you"* rather than asking forever.
+
+### Two deliberate refusals to guess
+
+- **Unanswered counts as "could have a match."** Every household saved
+  before this field existed has `employmentStatus: null`, and quietly
+  deciding they have no employer would hide a question they may already have
+  answered. `null` is not an answer, and this is the one place that matters.
+- **A match already entered keeps its question**, whatever the status now
+  says. Answering "not working" must never hide a figure someone typed.
+  `Schema.couldHaveEmployerMatch()` checks the stored match before it
+  returns false.
+
+And a third, in the income question: saying "not working" **writes nothing**.
+It changes the help text under the box — *"Benefits, severance or anything
+still landing goes here; if nothing is, pick 'not earning right now' rather
+than typing 0"* — and leaves the field alone. `null` and `0` stay distinct
+(CLAUDE.md, `SPEC.md` §4–5); the pay basis `none` is still the only way to
+say zero, and it stays the person's own tap.
+
+### Compatibility note
+
+**Stored shape:** `person.employmentStatus` is **added**, defaulting to
+`null`. Nothing is renamed, moved or removed. `Schema.createPerson()` sets
+it; `Spine.upsertPerson({ id, employmentStatus })` writes it; existing blobs
+read back with `null` and behave exactly as before, because `null` means
+"still ask about the match".
+
+**Rooms updated:** `rooms/start.html` (new first question `#q-employment`,
+`applies` gates on `#q-match` and `#q-capturing`, the income help note),
+`foo-ladder.js` (step 2's `na`, the borrowed-chip "n/a", and a match cap of
+`0` rather than `null` for a no-employer household so steps 6 and 7 are not
+blocked on a number that is never coming). `shared/demo-persona.js` sets
+`employed`, so the example household is unchanged in every other respect.
+
+**Before calling `getProfile()`:** if you are about to ask about anything
+that presumes an employer, call `Schema.couldHaveEmployerMatch(household)`
+first, and if you are adding a shared field that can stop being a question,
+give it an `applies(household)` in `shared/ownership.js` rather than
+special-casing it in your room — that is the one place `Progress` reads.
+
+---
+
 ## D-046 — HP is measured in weeks, which is what makes §3A stop contradicting itself
 
 The Dungeons & Dividends rulebook defines Hit Points twice in the same

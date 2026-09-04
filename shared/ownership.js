@@ -49,6 +49,12 @@
     head_of_household: 'Head of household'
   };
 
+  var EMPLOYMENT_LABELS = (function () {
+    var out = {};
+    (Schema.EMPLOYMENT_STATUSES || []).forEach(function (row) { out[row.id] = row.short; });
+    return out;
+  })();
+
   function money(v) { return Money.formatCents(v); }
 
   /* ---- The ownership map -------------------------------------------------
@@ -105,10 +111,22 @@
       read: function (h) { return Schema.investmentsCents(h); },
       format: money
     },
+    employmentStatus: {
+      label: 'Working situation', owner: 'start', anchor: 'q-employment',
+      read: function (h) {
+        var p = Schema.primaryPerson(h);
+        var v = p && p.employmentStatus;
+        return v ? Money.ok(v) : Money.incomplete('Not answered yet.', ['employmentStatus']);
+      },
+      format: function (v) { return EMPLOYMENT_LABELS[v] || v; }
+    },
     employerMatch: {
       label: 'Employer match', owner: 'start', anchor: 'q-match',
       read: function (h) { return Schema.employerMatchCents(h); },
-      format: function (v) { return money(v) + '/yr'; }
+      format: function (v) { return money(v) + '/yr'; },
+      /* No employer, no match to ask about. See applies() below. */
+      applies: function (h) { return Schema.couldHaveEmployerMatch(h); },
+      notApplicableBecause: 'You said there is no employer.'
     },
     capturingFullMatch: {
       label: 'Capturing the full match', owner: 'start', anchor: 'q-capturing',
@@ -117,7 +135,9 @@
         if (h.capturingFullMatch === false) return Money.ok(false);
         return Money.incomplete('Not answered yet.', ['capturingFullMatch']);
       },
-      format: function (v) { return v ? 'Yes' : 'No'; }
+      format: function (v) { return v ? 'Yes' : 'No'; },
+      applies: function (h) { return Schema.couldHaveEmployerMatch(h); },
+      notApplicableBecause: 'You said there is no employer.'
     },
 
     /* Where It Goes owns your retirement setup. These were asked by the FOO
@@ -270,7 +290,14 @@
       result: result,
       isSet: isSet,
       display: isSet ? f.format(result.value) : Money.EM_DASH,
-      isOwnHere: currentRoomId === f.owner
+      isOwnHere: currentRoomId === f.owner,
+      /* Some fields stop being questions once you have answered another one.
+         An employer match is not missing when there is no employer — it is
+         not applicable, which is a different thing and must never be counted
+         as an outstanding task. Fields with no applies() always apply.
+         DECISIONS.md D-055. */
+      applies: f.applies ? !!f.applies(household || {}) : true,
+      notApplicableBecause: f.notApplicableBecause || null
     };
   }
 

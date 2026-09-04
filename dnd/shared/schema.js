@@ -75,6 +75,7 @@
     'person.work.workCostsMonthlyCents':         { class: 'raw',        unit: 'cents',   period: 'monthly' },
     'person.work.weeksPerYear':                  { class: 'assumption', unit: 'weeks',   default: WORK_DEFAULTS.weeksPerYear },
     'computed.realHourlyWageCents':              { class: 'computed',   unit: 'cents',   note: 'per hour of life the job actually costs' },
+    'person.employmentStatus':                   { class: 'raw',        unit: 'enum',    values: ['employed', 'selfEmployed', 'both', 'notWorking', 'retired'], note: 'null means not asked. Decides whether an employer match is even a question \u2014 see EMPLOYMENT_STATUSES and DECISIONS.md D-055' },
     'incomeSource.grossAnnualIncomeCents':       { class: 'raw',        unit: 'cents',   period: 'annual', note: 'THE annual figure every room reads. Derived from rateCents x frequency when those are set \u2014 see engines/income.js and DECISIONS.md D-047' },
     'incomeSource.frequency':                    { class: 'raw',        unit: 'enum',    values: ['annual', 'monthly', 'semimonthly', 'fortnightly', 'weekly', 'hourly'], note: 'how the person is actually paid; semimonthly is 24 a year and fortnightly is 26 \u2014 they are not the same' },
     'incomeSource.rateCents':                    { class: 'raw',        unit: 'cents',   note: 'pay at `frequency`. Null means the annual figure was entered directly' },
@@ -215,6 +216,76 @@
     };
   }
 
+  /**
+   * Are you working, and for whom?
+   *
+   * This exists because the app was asking everybody about their employer
+   * match. If you are between jobs, self-employed, or retired, there is no
+   * employer, so that question has no true answer \u2014 and worse, leaving it
+   * blank left the room permanently reading "1 thing left".
+   *
+   *   earning    \u2014 is money expected to be coming in from work
+   *   hasEmployer\u2014 is there a company that could match contributions
+   *
+   * `hasEmployer: false` does not mean "no retirement plan". A self-employed
+   * person has a solo 401(k) with no match; a retiree may be drawing from
+   * one. It means exactly one thing: the employer-match pair of questions is
+   * not applicable, and is therefore not counted as missing.
+   * DECISIONS.md D-055.
+   */
+  var EMPLOYMENT_STATUSES = [
+    { id: 'employed',     label: 'Working for an employer',
+      short: 'Employed',      earning: true,  hasEmployer: true },
+    { id: 'selfEmployed', label: 'Self-employed or freelance',
+      short: 'Self-employed', earning: true,  hasEmployer: false },
+    { id: 'both',         label: 'Both \u2014 a job and my own work',
+      short: 'Both',          earning: true,  hasEmployer: true },
+    { id: 'notWorking',   label: 'Not working right now',
+      short: 'Not working',   earning: false, hasEmployer: false },
+    { id: 'retired',      label: 'Retired',
+      short: 'Retired',       earning: false, hasEmployer: false }
+  ];
+
+  function employmentStatus(id) {
+    for (var i = 0; i < EMPLOYMENT_STATUSES.length; i++) {
+      if (EMPLOYMENT_STATUSES[i].id === id) return EMPLOYMENT_STATUSES[i];
+    }
+    return null;
+  }
+
+  /**
+   * householdEmployment(h) \u2014 the primary person's status, as a row.
+   * Returns null when it has not been answered. A caller that treats null
+   * as "no employer" is wrong: unanswered is not an answer, and the whole
+   * point of this field is that the two are different.
+   */
+  function householdEmployment(household) {
+    var p = primaryPerson(household || {});
+    return p ? employmentStatus(p.employmentStatus) : null;
+  }
+
+  /**
+   * Could this household have an employer match at all?
+   *
+   * UNANSWERED COUNTS AS YES, deliberately \u2014 every household saved before
+   * this field existed has no status, and silently deciding they have no
+   * employer would hide a question they have already answered. So does an
+   * already-entered match, whatever the status now says: a figure someone
+   * typed is never hidden by a later answer to a different question.
+   */
+  function couldHaveEmployerMatch(household) {
+    var row = householdEmployment(household);
+    if (!row) return true;
+    if (row.hasEmployer) return true;
+    var p = primaryPerson(household || {});
+    var sources = (p && p.incomeSources) || [];
+    for (var i = 0; i < sources.length; i++) {
+      var m = sources[i].employerMatch || {};
+      if (Money.isEntered(m.matchPercent) || Money.isEntered(m.matchCapPercentOfSalary)) return true;
+    }
+    return false;
+  }
+
   function createPerson(fields) {
     var f = fields || {};
     return {
@@ -222,6 +293,14 @@
       label: f.label || null,
       role: f.role || 'adult',
       dob: f.dob === undefined ? null : f.dob,     // ISO 'YYYY-MM-DD'
+      /* Whether there is a job at all, and what kind. This is not derivable
+         from the income sources: "no rate entered" means the question was
+         skipped, "not earning" is a pay basis, and neither of them tells you
+         whether there is an EMPLOYER — which is the only thing that makes an
+         employer match a real question. null means not asked yet, and that
+         is deliberately different from every answer below.
+         See EMPLOYMENT_STATUSES and DECISIONS.md D-055. */
+      employmentStatus: f.employmentStatus === undefined ? null : f.employmentStatus,
       incomeSources: f.incomeSources || [],
       work: createWorkProfile(f.work)
     };
@@ -861,6 +940,10 @@
     newId: newId,
     createHousehold: createHousehold,
     createPerson: createPerson,
+    EMPLOYMENT_STATUSES: EMPLOYMENT_STATUSES,
+    employmentStatus: employmentStatus,
+    householdEmployment: householdEmployment,
+    couldHaveEmployerMatch: couldHaveEmployerMatch,
     createWorkProfile: createWorkProfile,
     WORK_DEFAULTS: WORK_DEFAULTS,
     createAsset: createAsset,

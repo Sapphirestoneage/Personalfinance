@@ -22,10 +22,10 @@
     {
       id: 'start',
       kind: 'core',
-      needs: ['dob', 'state', 'filingStatus', 'grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'employerMatch', 'capturingFullMatch'],
+      needs: ['employmentStatus', 'dob', 'state', 'filingStatus', 'grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'employerMatch', 'capturingFullMatch'],
       order: 1,
       title: 'Start Here',
-      blurb: 'Nine questions, one at a time, in plain English. Answer once and every other room opens already filled in.',
+      blurb: 'A short set of questions, one at a time, in plain English. Answer once and every other room opens already filled in.',
       href: 'rooms/start.html',
       tier: 0,
       tags: ['income', 'cashflow', 'debt'],

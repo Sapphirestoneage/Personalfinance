@@ -65,11 +65,19 @@
     var room = Registry.byId(roomId);
     if (!room) return null;
     var needs = room.needs || [];
-    var missing = [], filled = [];
+    var missing = [], filled = [], notApplicable = [];
 
     needs.forEach(function (fieldId) {
       var d = Ownership.describe(fieldId, household, roomId);
       if (!d) return;                       /* unknown field id: not a gate */
+      /* A field that has stopped being a question is not outstanding work.
+         Someone who told us they have no employer must not be chased for
+         an employer match forever. It leaves the denominator too, so the
+         room can actually reach 100%. DECISIONS.md D-055. */
+      if (!d.applies) {
+        notApplicable.push({ fieldId: fieldId, label: d.label, because: d.notApplicableBecause });
+        return;
+      }
       var entry = {
         fieldId: fieldId,
         label: d.label,
@@ -92,6 +100,7 @@
       filledCount: filled.length,
       filled: filled,
       missing: missing,
+      notApplicable: notApplicable,
       complete: missing.length === 0,
       standalone: total === 0,
       share: total === 0 ? 1 : filled.length / total
@@ -223,6 +232,15 @@
     } else {
       out.push('<p class="slaf-progress-head"><strong>This room stands on its own.</strong> '
         + 'It works from the numbers you type here, so there is nothing to fill in first.</p>');
+    }
+
+    /* Questions that stopped applying are said out loud once, so a room that
+       reads "everything it needs" is not quietly ignoring two boxes you can
+       see are empty. DECISIONS.md D-055. */
+    if (row.notApplicable && row.notApplicable.length) {
+      out.push('<p class="slaf-progress-note">Not asked: '
+        + row.notApplicable.map(function (f) { return escapeHtml(f.label); }).join(', ')
+        + '. ' + escapeHtml(row.notApplicable[0].because || '') + '</p>');
     }
 
     out.push('<div class="slaf-progress-nav">');

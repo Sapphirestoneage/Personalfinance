@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Start Here · SPARKS</title>
-<meta name="description" content="Nine questions, one at a time. Answer once and every other room opens already filled in."/>
+<meta name="description" content="A few short questions, one at a time. Answer once and every other room opens already filled in."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
@@ -125,6 +125,13 @@
 <main class="slaf-wrap">
 
   <!-- ============ QUESTIONS, in priority order ============ -->
+  <section class="slaf-card q" id="q-employment" data-q>
+    <p class="q-text">Are you working right now?</p>
+    <p class="q-help">This decides what we bother asking you. There is no wrong answer here, and no question below depends on you saying yes.</p>
+    <div class="choices" data-choices="employmentStatus"></div>
+    <p class="q-unlocks">If there is no employer, the two employer-match questions stop being asked — and stop counting as unfinished.</p>
+  </section>
+
   <section class="slaf-card q" id="q-income" data-q>
     <p class="q-text">What do you earn before tax?</p>
     <p class="q-help">However you're actually paid — by the hour, the week, the month. We'll turn it into a year. Not working right now is an answer too; pick it on the right.</p>
@@ -139,6 +146,7 @@
       <span class="slaf-input-shell">
         <input type="text" inputmode="decimal" data-pay="hours" placeholder="e.g. 40" aria-label="Hours a week"/></span>
     </label>
+    <p class="q-warn" id="income-employment-note" hidden></p>
     <p class="pay-out" id="pay-out"></p>
 
     <button type="button" class="pay-more" id="btn-jobs" aria-expanded="false">
@@ -302,9 +310,18 @@
     return null;
   }
 
+  /* A source written by writeJob() carries only the fields that job edit
+     touched, so employerMatch can genuinely be absent. Every reader here
+     wants the whole shape, so normalise once rather than guarding at each
+     of the six call sites — one of which was missing its guard and threw. */
   function incomeSourceOf(h) {
     var p = Schema.primaryPerson(h);
-    return p && p.incomeSources.length ? p.incomeSources[0] : null;
+    var raw = p && p.incomeSources.length ? p.incomeSources[0] : null;
+    if (!raw) return null;
+    if (raw.employerMatch) return raw;
+    return Object.assign({}, raw, {
+      employerMatch: { matchPercent: null, matchCapPercentOfSalary: null }
+    });
   }
 
   function writeAsset(categories, canonicalCategory, liquid, label, cents) {
@@ -663,7 +680,50 @@
 
   /* ---------- the questions ---------------------------------------------- */
 
+  /* The working-situation choices are built ONCE, at load, from
+     Schema.EMPLOYMENT_STATUSES so the labels live in exactly one place. The
+     room is guarded, but this needs no guard: it runs before anything is on
+     screen and never runs again. */
+  (function () {
+    var box = document.querySelector('[data-choices="employmentStatus"]');
+    if (!box) return;
+    box.innerHTML = (Schema.EMPLOYMENT_STATUSES || []).map(function (row) {
+      return '<button type="button" class="choice" data-value="' + row.id + '">'
+        + row.label + '</button>';
+    }).join('');
+  })();
+
+  /* The income question changes its tone once you have said you are not
+     working — but it never changes its answer. Saying "not working" is not
+     the same as typing zero into the box, and this writes nothing.
+     Text only; no control is touched. DECISIONS.md D-055. */
+  function paintEmploymentNote() {
+    var note = el('income-employment-note');
+    if (!note) return;
+    var row = Schema.householdEmployment(Spine.getProfile());
+    if (!row || row.earning) { note.hidden = true; note.textContent = ''; return; }
+    note.hidden = false;
+    note.textContent = row.id === 'retired'
+      ? 'You said you\u2019re retired. Pension, annuity or drawdown income goes here \u2014 '
+        + 'if nothing is coming in, pick \u201cnot earning right now\u201d on the right rather than typing 0.'
+      : 'You said you\u2019re not working. Benefits, severance or anything still landing goes here \u2014 '
+        + 'if nothing is, pick \u201cnot earning right now\u201d on the right rather than typing 0.';
+  }
+
   var QUESTIONS = [
+    /* Asked first because it decides which of the later questions are real
+       questions at all. DECISIONS.md D-055. */
+    { id: 'q-employment', field: 'employmentStatus', kind: 'choice',
+      read: function (h) {
+        var p = Schema.primaryPerson(h);
+        return (p && p.employmentStatus) || '';
+      },
+      write: function (v) {
+        var person = Spine.ensurePrimaryPerson('You');
+        Spine.upsertPerson({ id: person.id, employmentStatus: v === '' ? null : v });
+        paintEmploymentNote();
+      } },
+
     /* The box holds what you are PAID at your chosen frequency. When that
        frequency is 'a year' the two are the same number, which is why a
        household saved before this reads back unchanged. */
@@ -721,6 +781,11 @@
       } },
 
     { id: 'q-match', field: 'employerMatch', kind: 'pair',
+      /* Not asked when there is no employer to ask about. Schema decides,
+         so the map, the room strips and this flow all agree — and an
+         already-entered match keeps its question whatever the status now
+         says. DECISIONS.md D-055. */
+      applies: function (h) { return Schema.couldHaveEmployerMatch(h); },
       read: function (h) {
         var s = incomeSourceOf(h);
         return s ? [s.employerMatch.matchPercent, s.employerMatch.matchCapPercentOfSalary] : [null, null];
@@ -733,6 +798,7 @@
     { id: 'q-capturing', field: 'capturingFullMatch', kind: 'choice',
       /* Only worth asking once a real match exists. */
       applies: function (h) {
+        if (!Schema.couldHaveEmployerMatch(h)) return false;
         var s = incomeSourceOf(h);
         return !!(s && Money.isEntered(s.employerMatch.matchPercent)
           && Money.isEntered(s.employerMatch.matchCapPercentOfSalary)
@@ -807,7 +873,7 @@
     settle(nodes[0]);
 
     if (q.field === 'dob') paintDobWarning(stored);
-    if (q.field === 'grossAnnualIncome') { paintPay(); paintJobs(); paintBasisChoice(); }
+    if (q.field === 'grossAnnualIncome') { paintPay(); paintJobs(); paintBasisChoice(); paintEmploymentNote(); }
   }
 
   /* A date that cannot be true is not the same as a date not given, and the
@@ -968,6 +1034,10 @@
       if (!btn) return;
       q.write(btn.getAttribute('data-value'));
       paint(q);
+      /* On the all-at-once page a tap must not throw you back into the
+         one-at-a-time flow. Answering "not working" there can remove the
+         match questions from the page, so it redraws rather than steps. */
+      if (reviewing) { setTimeout(showReview, 140); return; }
       setTimeout(function () { step(1, false); }, 140);
     });
   });

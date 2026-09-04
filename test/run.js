@@ -4408,6 +4408,122 @@ section('Not earning');
   }
 })();
 
+section('Whether there is an employer at all');
+
+(function () {
+  function withStatus(status, match) {
+    const h = Schema.createHousehold({});
+    h.people.push(Schema.createPerson({
+      id: 'P', label: 'You', role: 'adult', dob: '1994-04-12', employmentStatus: status
+    }));
+    h.people[0].incomeSources.push(Schema.createIncomeSource(Object.assign({
+      personId: 'P', grossAnnualIncomeCents: 7200000
+    }, match ? { employerMatch: match } : {})));
+    h.assets.push(Schema.createAsset({ category: 'cash', valueCents: 500000, liquid: true }));
+    return h;
+  }
+
+  /* -- The enum itself ---------------------------------------------------- */
+  {
+    const ids = Schema.EMPLOYMENT_STATUSES.map(r => r.id);
+    check('there are five working situations', ids.length, 5);
+    check('each one is listed once', new Set(ids).size, ids.length);
+    Schema.EMPLOYMENT_STATUSES.forEach(function (row) {
+      checkTrue(`${row.id} says whether money is coming in`, typeof row.earning === 'boolean');
+      checkTrue(`${row.id} says whether there is an employer`, typeof row.hasEmployer === 'boolean');
+      checkTrue(`${row.id} has a label and a short label`, !!row.label && !!row.short);
+      /* You cannot have an employer without earning. The reverse is fine —
+         that is what self-employment is. */
+      checkTrue(`${row.id} does not claim an employer while not earning`,
+        !(row.hasEmployer && !row.earning));
+    });
+    check('an unknown id is null, not a guess', Schema.employmentStatus('freelancing'), null);
+  }
+
+  /* -- Who could have a match --------------------------------------------- */
+  {
+    checkTrue('an employee could have a match',
+      Schema.couldHaveEmployerMatch(withStatus('employed')));
+    checkTrue('so could someone doing both',
+      Schema.couldHaveEmployerMatch(withStatus('both')));
+    checkTrue('the self-employed could not',
+      !Schema.couldHaveEmployerMatch(withStatus('selfEmployed')));
+    checkTrue('nor could someone not working',
+      !Schema.couldHaveEmployerMatch(withStatus('notWorking')));
+    checkTrue('nor a retiree',
+      !Schema.couldHaveEmployerMatch(withStatus('retired')));
+
+    /* Unanswered is not an answer. Every household saved before this field
+       existed has no status, and deciding for them that they have no
+       employer would silently hide a question they may have answered. */
+    checkTrue('an unanswered status still gets asked',
+      Schema.couldHaveEmployerMatch(withStatus(null)));
+    checkTrue('and so does a household with no people at all',
+      Schema.couldHaveEmployerMatch(Schema.createHousehold({})));
+
+    /* A figure someone typed is never hidden by a later answer to a
+       different question. */
+    const typedThenQuit = withStatus('notWorking',
+      { matchPercent: 0.5, matchCapPercentOfSalary: 0.06 });
+    checkTrue('a match already entered keeps its question',
+      Schema.couldHaveEmployerMatch(typedThenQuit));
+  }
+
+  /* -- What that does to "what is left to do" ------------------------------ */
+  {
+    const employed = Progress.forRoom('start', withStatus('employed'));
+    const retired  = Progress.forRoom('start', withStatus('retired'));
+
+    checkTrue('an employee is asked about the match',
+      employed.missing.concat(employed.filled).some(f => f.fieldId === 'employerMatch'));
+    checkTrue('a retiree is not',
+      !retired.missing.concat(retired.filled).some(f => f.fieldId === 'employerMatch'));
+    checkTrue('and it is recorded as not applicable rather than dropped',
+      retired.notApplicable.some(f => f.fieldId === 'employerMatch'));
+    checkTrue('with a reason a person can read',
+      retired.notApplicable.every(f => typeof f.because === 'string' && f.because.length > 0));
+
+    /* The bug this exists to kill: the room could never reach 100% because
+       two questions with no true answer sat in the denominator forever. */
+    check('the retiree has two fewer things to answer',
+      employed.total - retired.total, 2);
+    checkTrue('and the denominator shrank, not just the numerator',
+      retired.total < employed.total);
+
+    /* Same household, everything else filled: the retiree finishes. */
+    const done = withStatus('retired');
+    done.state = 'NC';
+    done.filingStatus = 'single';
+    done.expenses.monthlyEssential.estimatedValueCents = 315000;
+    done.assets.push(Schema.createAsset({ category: 'investment', valueCents: 4800000 }));
+    const row = Progress.forRoom('start', done);
+    check('a retiree who answers everything else is finished', row.missing.length, 0);
+    checkTrue('and reads as complete', row.complete);
+    check('at a full share', row.share, 1);
+  }
+
+  /* -- describe() is the single place that decides ------------------------- */
+  {
+    const d = Ownership.describe('employerMatch', withStatus('selfEmployed'), 'start');
+    checkTrue('describe says the field does not apply', d.applies === false);
+    checkTrue('and still knows who would own it', d.ownerId === 'start');
+    const plain = Ownership.describe('cashSavings', withStatus('selfEmployed'), 'start');
+    checkTrue('a field with no applies() always applies', plain.applies === true);
+    check('and carries no reason to explain', plain.notApplicableBecause, null);
+  }
+
+  /* -- The status is itself an owned field --------------------------------- */
+  {
+    const e = Ownership.describe('employmentStatus', withStatus('notWorking'), 'map');
+    checkTrue('the status reads back as set', e.isSet);
+    check('shown by its short label', e.display, 'Not working');
+    check('owned by Start Here', e.ownerId, 'start');
+    checkTrue('linking to its own question', /#q-employment$/.test(e.href));
+    const blank = Ownership.describe('employmentStatus', Schema.createHousehold({}), 'map');
+    checkTrue('and unanswered is unanswered, not "not working"', !blank.isSet);
+  }
+})();
+
 section('What is finished');
 
 (function () {

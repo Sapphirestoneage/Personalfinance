@@ -33,6 +33,7 @@
     state: 'NC',
     filingStatus: 'single',
 
+    employmentStatus: 'employed',           // a W-2 job, so the match questions apply
     grossAnnualIncome: 72000,
     incomeType: 'w2',
     employerMatchPercent: 0.5,              // matches 50 cents on the dollar
@@ -96,6 +97,7 @@
       label: VALUES.label,
       role: 'adult',
       dob: VALUES.dob,
+      employmentStatus: VALUES.employmentStatus,
       work: Object.assign({}, VALUES.work, {
         workCostsMonthlyCents: Money.toCents(VALUES.work.workCosts)
       })

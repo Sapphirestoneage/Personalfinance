@@ -134,6 +134,14 @@
     var primary = Schema.allIncomeSources(h0)[0];
     d.matchCapPct = primary && entered(primary.employerMatch.matchCapPercentOfSalary)
       ? primary.employerMatch.matchCapPercentOfSalary * 100 : null;
+    /* No employer means no match cap, and that is a real zero rather than a
+       blank: the person answered "self-employed" / "not working" / "retired"
+       in Start Here, and step 2 is not a thing they can do. Steps 6 and 7
+       take the larger of your own contribution and the cap, so a zero there
+       is exactly right — without it they would wait forever on a number
+       that is never coming. DECISIONS.md D-055. */
+    d.hasEmployer = Schema.couldHaveEmployerMatch(h0);
+    if (!d.hasEmployer && !entered(d.matchCapPct)) d.matchCapPct = 0;
     d.debts = Schema.aggregatableDebts(h0)
       .filter(function (x) { return entered(x.balanceCents) && x.balanceCents > 0; })
       .map(function (x, i) {
@@ -317,6 +325,8 @@
           act: d.efBalance < st.deductibleTarget ? 'Stack cash to ' + fmt(st.deductibleTarget) + ' first.' : 'Covered. Keep this cash untouched.' }; } },
 
       { n: 2, title: 'Employer match', needs: [entered(s2gapMo), entered(d.matchCapPct)],
+        na: !d.hasEmployer,
+        naSub: 'No employer to match you — this step is already behind you.',
         missing: 'your income, contribution % and match cap %',
         why: 'A match is an instant 50-100% return. Nothing else compounds a raise like this.',
         build: function () { return {
@@ -710,8 +720,10 @@
       b.labelEl.textContent = b.label || info.label;
       b.link.setAttribute('href', info.href);
       b.link.className = 'slaf-owned slaf-owned--field' + (info.isSet ? '' : ' slaf-owned--empty');
-      b.value.textContent = info.display;
-      b.from.textContent = info.ownerTitle + ' →';
+      b.value.textContent = info.applies ? info.display : 'n/a';
+      b.from.textContent = info.applies
+        ? info.ownerTitle + ' →'
+        : (info.notApplicableBecause || 'Not applicable.');
     });
 
     /* every field: value only, and never while it is focused */
@@ -816,14 +828,19 @@
     /* the nine steps */
     steps.forEach(function (s, i) {
       var node = ui.steps[i];
-      var ready = s.needs.every(Boolean);
+      /* A step that cannot apply to you is not a step you are failing.
+         It says why, rather than asking forever for a number that has no
+         true value. DECISIONS.md D-055. */
+      var na = s.na === true;
+      var ready = !na && s.needs.every(Boolean);
       var built = ready ? s.build() : null;
       var landed = active ? active[i] : null;
       node.card.className = 'card' + (sim.ready && i === curIdx ? ' card-active' : '');
       node.title.textContent = s.title;
-      node.sub.textContent = ready ? built.sub : 'Add ' + s.missing + ' to see this.';
+      node.sub.textContent = na ? s.naSub
+        : ready ? built.sub : 'Add ' + s.missing + ' to see this.';
       node.sub.style.color = ready ? 'var(--color-text-muted)' : 'var(--color-text-faint)';
-      node.when.textContent = sim.ready ? monthLabel(landed) : '—';
+      node.when.textContent = (na || !sim.ready) ? '—' : monthLabel(landed);
       node.barWrap.hidden = !ready;
       if (ready) node.fill.style.width = clamp(built.pct, 0, 100) + '%';
       node.detail.hidden = state.openStep !== i;

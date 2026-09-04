@@ -501,6 +501,7 @@ h3 { font-size: var(--text-md); }
 .slaf-progress-list li:first-child { border-top: none; }
 .slaf-progress-list a { color: var(--color-accent-hover); text-decoration: underline; }
 .slaf-progress-where { font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+.slaf-progress-note { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-3) 0 0; }
 .slaf-progress-nav { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); margin-top: var(--space-4); }
 .slaf-progress-btn { display: inline-block; font-size: var(--text-sm); color: var(--color-accent-hover); text-decoration: none; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); }
 .slaf-progress-btn:hover { border-color: var(--color-border-active); }
