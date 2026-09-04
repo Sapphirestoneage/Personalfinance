@@ -4615,7 +4615,11 @@ section('What is finished');
        would move for reasons unrelated to effort. */
     const everyNeed = [];
     Registry.ROOMS.forEach(r => (r.needs || []).forEach(n => everyNeed.push(n)));
-    const distinct = new Set(everyNeed).size;
+    /* ...and over fields that APPLY to this household. A field that has
+       stopped being a question (an HSA with no high-deductible plan) is not
+       something left to do. D-055. */
+    const distinct = Array.from(new Set(everyNeed))
+      .filter(f => Ownership.describe(f, h, 'map').applies).length;
     check('the total is distinct fields, not room-by-room mentions',
       o.fieldsTotal, distinct);
     checkTrue('which is far fewer than the mentions', everyNeed.length > distinct);
@@ -4637,6 +4641,12 @@ section('What is finished');
     const empty = Progress.overall(Schema.createHousehold({}));
     check('an empty household has answered nothing', empty.fieldsFilled, 0);
     check('but still knows how much there is', empty.fieldsTotal, distinct);
+    /* And the demo is the one household that answers everything a room can
+       read — if a new need is added and the persona is not extended to
+       match, this is where it shows. */
+    const demoDistinct = Array.from(new Set(everyNeed))
+      .filter(f => Ownership.describe(f, Demo.build(), 'map').applies).length;
+    check('the demo answers every applicable field', done.fieldsFilled, demoDistinct);
   }
 
   /* -- Where to go next --------------------------------------------------- */
@@ -4811,6 +4821,61 @@ section('Facts answered once');
     /* It must still own the things that ARE local to it. */
     checkTrue('but it still owns its own prepaid figures',
       foo.indexOf("field({ label: 'Prepaid goal'") !== -1);
+  }
+
+  /* -- The waterfall pours take-home, not gross ---------------------------- */
+  {
+    const h = Demo.build();
+    const th = Tier0.takeHomeMonthlyCents(h, TABLES);
+    /* $72,000 at the table's 19% effective rate for a single filer is
+       $13,680 of tax; ($72,000 − $13,680) / 12 = $4,860 a month. */
+    check('demo take-home is $4,860 a month', th.value, 486000);
+    check('at the table rate', th.effectiveRate, 0.19);
+    check('so the gap is $1,710, not the pre-tax $2,850', th.value - 315000, 171000);
+    const noFiling = Demo.build(); noFiling.filingStatus = null;
+    check('no filing status, no take-home', Tier0.takeHomeMonthlyCents(noFiling, TABLES).status, 'incomplete');
+    const foo = fs.readFileSync(path.join(ROOT, 'foo-ladder.js'), 'utf8');
+    checkTrue('the ladder reads take-home from Tier0', foo.indexOf('Tier0.takeHomeMonthlyCents') !== -1);
+    checkTrue('and no longer subtracts expenses from gross',
+      foo.indexOf('d.mIncome - d.mExpenses') === -1, 'BRIEF §1.1 item 1');
+    checkTrue('and loads the tax table it needs', foo.indexOf("'effectiveTaxRates'") !== -1);
+    const idx = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+    checkTrue('index.html loads tier0 before the ladder',
+      idx.indexOf('engines/tier0.js') !== -1 && idx.indexOf('engines/tier0.js') < idx.indexOf('foo-ladder.js'));
+  }
+
+  /* -- The footer and the timeline read the same list ---------------------- */
+  {
+    const needs = Registry.byId('foo-ladder').needs;
+    ['filingStatus', 'highestDeductible', 'contributionPercent', 'rothContributed', 'hsaContributed']
+      .forEach(f => checkTrue(`the ladder declares it needs ${f}`, needs.indexOf(f) !== -1, 'BRIEF §1.1 item 2'));
+    const row = Progress.forRoom('foo-ladder', Demo.build());
+    checkTrue('the demo persona completes the ladder', row.complete);
+    checkTrue('with the HSA marked not applicable rather than missing',
+      row.notApplicable.some(f => f.fieldId === 'hsaContributed'));
+    const hdhp = Demo.build(); hdhp.retirement.onHdhp = true;
+    checkTrue('on a high-deductible plan the HSA becomes a real need',
+      !Progress.forRoom('foo-ladder', hdhp).complete);
+  }
+
+  /* -- The intake's count only shrinks ------------------------------------- */
+  {
+    const fresh = Schema.createHousehold({});
+    checkTrue('with nothing answered the capturing question counts', Schema.capturingQuestionApplies(fresh));
+    const h = Demo.build();
+    checkTrue('with a real match it counts', Schema.capturingQuestionApplies(h));
+    h.people[0].incomeSources[0].employerMatch = { matchPercent: 0, matchCapPercentOfSalary: 0 };
+    checkTrue('with no match it stops', !Schema.capturingQuestionApplies(h));
+    /* A typed match keeps its question whatever the status says (D-055),
+       so the no-employer case has to be one where nothing was typed. */
+    const se = Demo.build(); se.people[0].employmentStatus = 'selfEmployed';
+    se.people[0].incomeSources[0].employerMatch = { matchPercent: null, matchCapPercentOfSalary: null };
+    checkTrue('with no employer it stops', !Schema.capturingQuestionApplies(se));
+    checkTrue('and the ownership map uses the same rule',
+      !Ownership.describe('capturingFullMatch', se, 'start').applies
+      && Ownership.describe('capturingFullMatch', fresh, 'start').applies);
+    const startNeeds = Progress.forRoom('start', fresh);
+    check('so Start Here counts ten questions from the first screen', startNeeds.total, 10);
   }
 
   /* -- Rooms that hold facts are not "explore" rooms --------------------- */

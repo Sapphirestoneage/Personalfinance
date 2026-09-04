@@ -44,6 +44,16 @@
     cashSavings: 9500,
     investmentsAndRetirement: 48000,
 
+    /* Retirement setup and the deductible — the facts the FOO ladder's
+       timeline reads. 4% into the plan against a 6% match cap is exactly
+       why capturingFullMatch is false above: the demo leaves match on the
+       table, and the ladder should say so. Not on a high-deductible plan,
+       so the HSA question does not apply. */
+    contributionPercent: 4,                 // whole percent of salary
+    rothContributedThisYear: 1500,
+    onHdhp: false,
+    highestDeductible: 2500,
+
     debts: [
       { label: 'Student loan', balance: 18400, rate: 0.055, minPayment: 210, type: 'student_loan' },
       { label: 'Credit card',  balance: 3200,  rate: 0.229, minPayment: 95,  type: 'credit_card' }
@@ -152,6 +162,14 @@
         entries: []
       },
       capturingFullMatch: VALUES.capturingFullMatch,
+      retirement: Schema.createRetirement({
+        contributionPercent: VALUES.contributionPercent,
+        rothContributedCents: Money.toCents(VALUES.rothContributedThisYear),
+        onHdhp: VALUES.onHdhp
+      }),
+      insurance: Schema.createInsurance({
+        highestDeductibleCents: Money.toCents(VALUES.highestDeductible)
+      }),
       meta: { isDemo: true }
     });
 

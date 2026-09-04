@@ -469,7 +469,12 @@
     {
       id: 'foo-ladder',
       kind: 'read',
-      needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'employerMatch', 'dob'],
+      /* Every shared figure the month-by-month timeline reads, so the
+         footer and the timeline cannot disagree about what is missing.
+         The two prepaid figures stay local to the page and optional.
+         BRIEF §1.1 item 2. */
+      needs: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses', 'cashSavings', 'employerMatch', 'dob',
+              'highestDeductible', 'contributionPercent', 'rothContributed', 'hsaContributed'],
       order: 21,
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',

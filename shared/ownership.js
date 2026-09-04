@@ -136,8 +136,8 @@
         return Money.incomplete('Not answered yet.', ['capturingFullMatch']);
       },
       format: function (v) { return v ? 'Yes' : 'No'; },
-      applies: function (h) { return Schema.couldHaveEmployerMatch(h); },
-      notApplicableBecause: 'You said there is no employer.'
+      applies: function (h) { return Schema.capturingQuestionApplies(h); },
+      notApplicableBecause: 'There is no match to capture.'
     },
 
     /* Where It Goes owns your retirement setup. These were asked by the FOO
@@ -168,7 +168,11 @@
         return Money.isEntered(v) ? Money.ok(v)
           : Money.incomplete('Not answered yet.', ['hsaContributedCents']);
       },
-      format: money
+      format: money,
+      /* Only a question on a high-deductible plan — there is no HSA to
+         contribute to otherwise, so it must not count as unfinished. */
+      applies: function (h) { return !!((h.retirement || {}).onHdhp); },
+      notApplicableBecause: 'No HSA without a high-deductible plan.'
     },
     marginalRate: {
       label: 'Marginal tax rate', owner: 'accounts', anchor: 'setup',
