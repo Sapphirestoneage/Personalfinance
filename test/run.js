@@ -46,6 +46,7 @@ const Fulfillment = require(path.join(ROOT, 'engines/fulfillment.js'));
 const HassleEngine = require(path.join(ROOT, 'engines/hassle.js'));
 const SideHustle = require(path.join(ROOT, 'engines/sidehustle.js'));
 const RatiosEngine = require(path.join(ROOT, 'engines/ratios.js'));
+const Credential = require(path.join(ROOT, 'engines/credential.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -2477,6 +2478,128 @@ section('Side Hustle');
    Every Ratio — Tiers 18 and 19. Robin: $72,000 gross, $3,150/mo essential,
    $9,500 cash, $48,000 invested, $21,600 debt, $305/mo minimums.
    ========================================================================== */
+
+/* ==========================================================================
+   Credential ROI — one engine for Career ROI and the Skills calc.
+   SPEC.md §13 Tier 2 names them as sharing one, so there is one.
+   ========================================================================== */
+
+section('Worth Learning');
+
+(function () {
+  /* A $40,000 bootcamp, six months out at $5,000/mo, an $18,000 raise taxed
+     at 22%, paying over 25 years, discounted at 3%. */
+  const base = {
+    costCents: 4000000, monthsOut: 6, forgoneMonthlyCents: 500000,
+    annualDeltaCents: 1800000, marginalRate: 0.22, yearsOfBenefit: 25, discountRate: 0.03
+  };
+  const r = Credential.credentialROI(base);
+
+  check('the time out is part of the price', r.forgoneCents, 6 * 500000);
+  check('so the whole price is fee plus time', r.totalCostCents, 4000000 + 3000000);
+  check('the raise is taxed', r.netAnnualDeltaCents, Math.round(1800000 * 0.78));
+  check('and the tax is reported', r.taxOnDeltaCents, 1800000 - r.netAnnualDeltaCents);
+  check('you keep 78% of the headline raise', r.keptShare, 0.78, 1e-9);
+  check('payback is the price over the monthly after-tax raise',
+    r.value, 7000000 / (r.netAnnualDeltaCents / 12), 1e-9);
+  check('which is five years', Math.round(r.value / 12), 5);
+
+  /* Present value, re-derived here with an independent loop. */
+  let pv = 0;
+  for (let y = 1; y <= 25; y++) pv += r.netAnnualDeltaCents / Math.pow(1.03, y);
+  check('present value discounts each year back to today', r.presentValueCents, Math.round(pv), 1);
+  check('NPV is that less the whole price', r.netPresentValueCents, r.presentValueCents - r.totalCostCents);
+  checkTrue('and this one is worth it', r.worthIt === true);
+  check('the return multiple is PV over price',
+    r.returnMultiple, r.presentValueCents / r.totalCostCents, 1e-12);
+
+  /* A zero discount rate must need no special case. */
+  const undiscounted = Credential.credentialROI(Object.assign({}, base, { discountRate: 0 }));
+  check('with no discounting the value is just the raise times the years',
+    undiscounted.presentValueCents, undiscounted.netAnnualDeltaCents * 25);
+  checkTrue('and discounting always lowers it',
+    r.presentValueCents < undiscounted.presentValueCents);
+
+  /* -- Empty is not zero, especially for time ----------------------------- */
+  const noTimeCost = Credential.credentialROI(
+    Object.assign({}, base, { forgoneMonthlyCents: null }));
+  check('months out with no cost of time is refused', noTimeCost.status, 'incomplete');
+  check('and names exactly what is missing',
+    noTimeCost.missing.join(','), 'forgoneMonthlyCents');
+  checkTrue('and says the number of months back',
+    /6 months/.test(noTimeCost.reason));
+  const freeTime = Credential.credentialROI(
+    Object.assign({}, base, { forgoneMonthlyCents: 0 }));
+  check('but a typed zero means it really is free', freeTime.totalCostCents, 4000000);
+  const noTime = Credential.credentialROI(
+    Object.assign({}, base, { monthsOut: 0, forgoneMonthlyCents: null }));
+  check('no months out needs no cost of time at all', noTime.status, 'ok');
+
+  /* -- Refusals ------------------------------------------------------------ */
+  ['costCents', 'annualDeltaCents', 'yearsOfBenefit', 'marginalRate'].forEach(function (k) {
+    const o = Object.assign({}, base); o[k] = null;
+    check(`without ${k} there is no answer`, Credential.credentialROI(o).status, 'incomplete');
+  });
+  check('zero years of benefit is refused',
+    Credential.credentialROI(Object.assign({}, base, { yearsOfBenefit: 0 })).status, 'incomplete');
+  check('a 150% marginal rate is refused',
+    Credential.credentialROI(Object.assign({}, base, { marginalRate: 1.5 })).status, 'incomplete');
+  check('a negative discount rate is refused',
+    Credential.credentialROI(Object.assign({}, base, { discountRate: -0.1 })).status, 'incomplete');
+  check('negative months out is refused',
+    Credential.credentialROI(Object.assign({}, base, { monthsOut: -1 })).status, 'incomplete');
+  check('a fee of zero is a real answer, not a missing one',
+    Credential.credentialROI(Object.assign({}, base, { costCents: 0 })).status, 'ok');
+
+  /* -- The honest failure cases ------------------------------------------- */
+  const noRaise = Credential.credentialROI(Object.assign({}, base, { annualDeltaCents: 0 }));
+  checkTrue('a raise of zero never pays back', noRaise.neverPaysBack === true);
+  check('and has no break-even to quote', noRaise.breakEvenAnnualDeltaCents, null);
+
+  const weak = Credential.credentialROI(Object.assign({}, base,
+    { annualDeltaCents: 300000, yearsOfBenefit: 10 }));
+  checkTrue('a weak raise over a short horizon is not worth it', weak.worthIt === false);
+  checkTrue('and payback runs past the horizon', weak.paybackBeyondHorizon === true);
+  checkTrue('so a break-even raise is quoted instead',
+    weak.breakEvenAnnualDeltaCents > weak.annualDeltaCents);
+
+  /* Feed the break-even raise back in and it should land on break-even. */
+  const atBreakEven = Credential.credentialROI(Object.assign({}, base,
+    { annualDeltaCents: weak.breakEvenAnnualDeltaCents, yearsOfBenefit: 10 }));
+  check('at the break-even raise, present value matches the price — within a '
+    + 'few cents, the break-even figure being rounded to a whole cent itself',
+    atBreakEven.presentValueCents, atBreakEven.totalCostCents, 10);
+
+  /* -- Fractional years ---------------------------------------------------- */
+  const half = Credential.credentialROI(Object.assign({}, base, { yearsOfBenefit: 2.5 }));
+  const two = Credential.credentialROI(Object.assign({}, base, { yearsOfBenefit: 2 }));
+  const three = Credential.credentialROI(Object.assign({}, base, { yearsOfBenefit: 3 }));
+  checkTrue('two and a half years sits between two and three',
+    half.presentValueCents > two.presentValueCents
+    && half.presentValueCents < three.presentValueCents);
+
+  /* -- One engine, two presets -------------------------------------------- */
+  check('there are exactly two pathways', Object.keys(Credential.PRESETS).length, 2);
+  checkTrue('and they differ only in wording and horizon',
+    Credential.PRESETS.career.defaultYears !== Credential.PRESETS.skill.defaultYears);
+  const asSkill = Credential.credentialROI(Object.assign({}, base,
+    { yearsOfBenefit: Credential.PRESETS.skill.defaultYears }));
+  const asCareer = Credential.credentialROI(Object.assign({}, base,
+    { yearsOfBenefit: Credential.PRESETS.career.defaultYears }));
+  checkTrue('the same numbers over a shorter horizon are worth less',
+    asSkill.presentValueCents < asCareer.presentValueCents);
+
+  /* -- Priced in hours ----------------------------------------------------- */
+  const h = Demo.build();
+  const wage = Hourly.realHourlyWage(h, TABLES);
+  const hours = Credential.costInHours(r, wage.value);
+  check('the hour price divides the price this engine already worked out',
+    hours.value, r.totalCostCents / wage.value, 1e-9);
+  check('an incomplete result stays incomplete in hours',
+    Credential.costInHours(noRaise, wage.value).status, 'ok');
+  check('a zero wage cannot price anything in hours',
+    Credential.costInHours(r, 0).status, 'incomplete');
+})();
 
 section('Ratios');
 

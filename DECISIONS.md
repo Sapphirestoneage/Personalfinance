@@ -1695,6 +1695,48 @@ regeneration step in the README, and the asterisk on "no build step".
 
 ---
 
+## D-039 — One credential-ROI engine, one room, two presets
+
+**SPEC.md §13 Tier 2 names Career ROI and the Skills Calculator as sharing
+one engine** — "could share one 'credential ROI' engine with different preset
+data per pathway" — and separately marks the Skills calc as "shares ROI math
+with Career ROI calc, narrower scope". `engines/credential.js` is that engine.
+A four-year degree and a weekend course are the same arithmetic at different
+magnitudes: a cost, some time you are not earning, a raise afterwards, and a
+number of years it pays over.
+
+**Two presets, one room, not two rooms.** The presets differ in wording and
+in the default horizon — twenty-five years for a career move, five for a
+skill — and in nothing else. The arithmetic never branches on which is
+selected. Two rooms would have been the same page twice with different
+labels, which is the duplication §8 exists to stop.
+
+**Three things this gets right that a back-of-envelope version misses:**
+
+- **The time is the bigger half, usually.** Six months out at $5,000 a month
+  is $30,000 on top of a $40,000 fee. Months out with no stated cost of time
+  is *refused*, not read as free — you say it costs nothing by typing 0, per
+  the empty-≠-zero rule.
+- **The raise is taxed.** An $18,000 raise at a 22% marginal rate is $14,040.
+  The rate is an input rather than a bracket lookup, the same call as D-027.
+- **Money later is worth less.** The spec says to discount the future income
+  delta to present value, so it is discounted — year by year in a loop rather
+  than by the annuity formula, so a zero discount rate needs no special case
+  and the working is inspectable. A test re-derives the present value with an
+  independent loop.
+
+**When the answer is "no", it says what would change it.** The useful output
+for a bad move is not "not worth it" but the raise at which it *would* break
+even — the number to test against the market before deciding. A test feeds
+that figure back in and asserts the present value lands on the price.
+
+**What it deliberately does not model,** stated on the page rather than
+buried: a raise you would have got anyway, a qualification that opens a door
+money cannot price, and the chance the raise simply does not arrive. Those
+are real and this is arithmetic.
+
+---
+
 ## Still open
 
 - ~~**Two-Income Household Toggle** and **Soft Saving Balance

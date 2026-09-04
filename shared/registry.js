@@ -256,7 +256,7 @@
     },
     {
       id: 'accounts',
-      order: 16,
+      order: 17,
       title: 'Where It Goes',
       blurb: 'Roth, Traditional or taxable \u2014 and how much a Solo 401(k) actually lets you put away.',
       href: 'rooms/accounts.html',
@@ -270,7 +270,7 @@
     },
     {
       id: 'values',
-      order: 18,
+      order: 19,
       title: 'What Matters',
       blurb: 'The five things you say matter most, next to where the money actually went. No score \u2014 just the two lists, side by side.',
       href: 'rooms/values.html',
@@ -302,8 +302,24 @@
       ]
     },
     {
+      id: 'credential',
+      order: 16,
+      title: 'Worth Learning',
+      blurb: 'A degree, a bootcamp or a weekend course \u2014 what it costs including the time, what the raise is worth after tax, and when it pays back.',
+      href: 'rooms/credential.html',
+      tier: 2,
+      tags: ['income'],
+      subsections: [
+        { id: 'what',        label: 'What you are weighing' },
+        { id: 'out-payback', label: 'When it pays back' },
+        { id: 'out-value',   label: 'What it is worth today' },
+        { id: 'out-hours',   label: 'Priced in hours' },
+        { id: 'reading',     label: 'Reading from elsewhere' }
+      ]
+    },
+    {
       id: 'fulfillment',
-      order: 17,
+      order: 18,
       title: 'Enough',
       blurb: 'What each thing costs a month, against what it is actually worth to you \u2014 and the four places that lands.',
       href: 'rooms/fulfillment.html',
@@ -319,7 +335,7 @@
     },
     {
       id: 'goals',
-      order: 19,
+      order: 20,
       title: 'Goals',
       blurb: 'A wedding, a deposit, a big trip. What it costs, what it needs a month, and whether that actually fits alongside everything else.',
       href: 'rooms/goals.html',
@@ -332,7 +348,7 @@
     },
     {
       id: 'foo-ladder',
-      order: 20,
+      order: 21,
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
       href: 'index.html',

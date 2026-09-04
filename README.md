@@ -102,6 +102,7 @@ engines/            Shared calculation engines — one function per concept
   hassle.js           what a money-saving chore pays per hour of your life
   sidehustle.js       side income after marginal tax, SE tax, costs and hours
   ratios.js           thirty ratios in one registry, plus the radar projection
+  credential.js       one ROI engine for a career move and a single skill
 data/               Versioned reference tables (JSON, never inlined in code)
 test/run.js         Re-derives every formula outside the browser
 test/alignment.js   Browser layout check — side-by-side cells must line up
