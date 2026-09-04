@@ -1824,6 +1824,85 @@ attribute and read back `null`, so nothing else changed.
 
 ---
 
+## D-041 — The Windfall answers a different question than it was asked
+
+`SPEC.md` §13 lists **Lump Sum vs. DCA** in Tier 1 and, unusually, tells you
+why it is hard: "showing the 'usually loses but reduces regret risk' nuance
+properly needs a Monte Carlo simulation, not a single deterministic
+projection."
+
+That is right, and it rules out the obvious build. A single projection at a
+7% expected return has exactly one answer — invest it all now — and it has
+to, because money in the market for longer at a positive assumed rate ends
+up ahead. The "comparison" would be a restatement of the assumption with a
+verdict stapled to it, and the verdict would be about the one thing the
+person is not asking: the average case. What they want to know is what
+happens if they are unlucky, and a point estimate cannot say.
+
+A Monte Carlo could. A Monte Carlo needs a mean, a volatility, and a
+defensible source for both. This repo does not have them, and D-036 is the
+rule about not inventing that kind of number.
+
+**Decision: invert the question.** Instead of asserting an outcome, solve
+for the threshold — *how far would the market have to fall, over the months
+you spread it in, for spreading to have been the better call?* Deterministic,
+needs no distribution, and strictly more informative than a point estimate:
+it names the exact scenario in which the cautious choice wins and leaves the
+odds of that scenario to the person, who is allowed to have a view.
+
+### The identity that fell out of it
+
+The break-even return **is the cash rate**, exactly.
+
+Money waiting to be invested is not idle; it is earning whatever the account
+it is waiting in pays. So spreading a lump sum is a blend of the market and
+a savings account, and a blend beats the pure thing exactly when the thing
+it is blended with does better. Not usually, not on average — exactly. Over
+six months at 4% cash, "the market does worse than 2.0% in total" is the
+whole condition.
+
+Most calculators of this kind miss it because they model the un-invested
+money as earning nothing, which quietly rigs every row in favour of the lump
+sum. This one asks for the cash rate on the page, and says why it matters
+more than it looks.
+
+**The engine solves for the threshold by bisection rather than returning the
+cash rate.** The identity holds for *this* timing convention — buy at the
+start of each month, everything else in cash. Change the convention and it
+may not. A solver keeps telling the truth; an asserted identity would
+quietly stop. `test/run.js` checks that the solver and the identity agree
+across five window/rate combinations, and that is what makes the sentence
+safe to print in the room.
+
+### What the room shows instead of a verdict
+
+- **The threshold**, as the headline.
+- **The price of the caution** at the assumed return — the gap in dollars,
+  as a share of the money, and per month of the window — framed as the cost
+  of insurance, not as a reason.
+- **Five "suppose it did this" rows**, labelled on the page as carrying no
+  odds. They exist for the shape: spreading loses a little in every good
+  year and saves a lot in the bad ones.
+- **Average exposure**, `(N+1)/2N`, which is the entire mechanism. Over six
+  months, 42% of the money is out of the market on average. That is why the
+  lines separate, and it is one line of arithmetic rather than a mystery.
+
+### Two modelling choices worth knowing
+
+**The slice is a fixed share of the original.** You transfer $X a month, not
+"a sixth of whatever the account holds now" — so the interest the waiting
+cash earns stays put and goes in with the final purchase, which sweeps the
+account. That is what a standing order actually does. A test re-derives the
+whole path in closed form against it.
+
+**Nothing here is written to the household.** A windfall you are thinking
+about is not a fact about your finances, and storing it would make every
+other room believe you have the money. Every input on the page is local, the
+same preview pattern the FIRE room uses (`SPEC.md` §12.2). The page says so
+in its own disclaimer.
+
+---
+
 ## Still open
 
 - ~~**Two-Income Household Toggle** and **Soft Saving Balance

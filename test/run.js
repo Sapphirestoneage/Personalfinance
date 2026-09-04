@@ -48,6 +48,7 @@ const SideHustle = require(path.join(ROOT, 'engines/sidehustle.js'));
 const RatiosEngine = require(path.join(ROOT, 'engines/ratios.js'));
 const Credential = require(path.join(ROOT, 'engines/credential.js'));
 const WorthEngine = require(path.join(ROOT, 'engines/worth.js'));
+const WindfallEngine = require(path.join(ROOT, 'engines/windfall.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -2061,7 +2062,7 @@ section('Room script tags');
     Values: 'engines/values.js', Fulfillment: 'engines/fulfillment.js',
     Hassle: 'engines/hassle.js', SideHustle: 'engines/sidehustle.js',
     Ratios: 'engines/ratios.js', Credential: 'engines/credential.js',
-    Worth: 'engines/worth.js'
+    Worth: 'engines/worth.js', Windfall: 'engines/windfall.js'
   };
   const FILE_TO_GLOBAL = {};
   Object.keys(GLOBAL_TO_FILE).forEach(g => { FILE_TO_GLOBAL[GLOBAL_TO_FILE[g]] = g; });
@@ -3404,6 +3405,138 @@ section('Worth It');
     check('a control with no slot reads back null, not undefined', plain.slot, null);
     checkTrue('and the slotless markup carries no slot attribute',
       !/data-rating-slot/.test(Rating.controlHtml({ scope: 'joy', itemId: 'housing' })));
+  }
+})();
+
+section('The Windfall');
+
+(function () {
+  const W = WindfallEngine;
+  const base = { amountCents: 2500000, months: 6, annualRate: 0.07, cashAnnualRate: 0.04 };
+
+  /* -- The simulation itself ---------------------------------------------- */
+  {
+    const r = W.compare(base);
+    check('all of it is invested by the end of the window', r.path.length, 6);
+    check('and nothing is left waiting', r.path[5].waitingCents, 0);
+    check('the lump sum grows at the assumed rate for the whole window',
+      r.lumpCents, Math.round(2500000 * Math.pow(1 + 0.07 / 12, 6)));
+
+    /* Spread, re-derived in closed form rather than by re-running the
+       engine's loop. You buy a FIXED slice of the original each month — the
+       interest the waiting cash earns stays in the account and goes in with
+       the final purchase, which is what actually happens when you set up a
+       monthly transfer for a round number. */
+    const rm = 0.07 / 12, cm = 0.04 / 12, slice = 2500000 / 6;
+    let fixedSlices = 0;
+    for (let k = 1; k <= 5; k++) fixedSlices += slice * Math.pow(1 + rm, 6 - k + 1);
+    let drawnDown = 0;
+    for (let j = 1; j <= 5; j++) drawnDown += Math.pow(1 + cm, j);
+    const lastBuy = 2500000 * Math.pow(1 + cm, 5) - slice * drawnDown;
+    check('and the spread path matches a closed-form re-derivation',
+      r.spreadCents, Math.round(fixedSlices + lastBuy * (1 + rm)), 1);
+    checkTrue('the final purchase sweeps the account, interest included',
+      lastBuy > slice);
+    check('the gap is one minus the other', r.gapCents, r.lumpCents - r.spreadCents);
+    check('and as a share of the money', r.gapShare, r.gapCents / 2500000, 1e-6);
+  }
+
+  /* -- The identity the room prints out loud ------------------------------ */
+  {
+    /* The break-even IS the cash rate. The engine solves for it rather than
+       asserting it, so this check is what makes the claim safe to print. */
+    [[6, 0.04], [12, 0.04], [24, 0.0], [3, 0.055], [18, 0.02]].forEach(function (pair) {
+      const months = pair[0], cash = pair[1];
+      const solved = W.breakEvenAnnualRate(2500000, months, cash);
+      check(`break-even over ${months} months at ${cash * 100}% cash is the cash rate`,
+        solved, cash, 1e-6);
+    });
+
+    /* Which is to say: at exactly the cash rate the two are level. */
+    const level = W.compare(Object.assign({}, base, { annualRate: 0.04 }));
+    check('at the cash rate the two strategies end level', level.gapCents, 0, 1);
+
+    const below = W.compare(Object.assign({}, base, { annualRate: 0.01 }));
+    checkTrue('below it, spreading is ahead', below.gapCents < 0);
+    const above = W.compare(Object.assign({}, base, { annualRate: 0.10 }));
+    checkTrue('above it, the lump sum is ahead', above.gapCents > 0);
+
+    /* The same threshold said as a total over the window. */
+    check('the total-drop figure is the annual threshold compounded over the window',
+      below.breakEvenTotalDrop, Math.pow(1 + 0.04 / 12, 6) - 1, 1e-12);
+  }
+
+  /* -- Degenerate and refused cases --------------------------------------- */
+  {
+    const one = W.compare(Object.assign({}, base, { months: 1 }));
+    check('spreading over one month is the lump sum', one.gapCents, 0);
+    checkTrue('and the result says so rather than implying they differ', one.degenerate);
+    check('so there is no break-even to report', one.breakEvenAnnualRate, null);
+
+    check('half a month is not a window',
+      W.compare(Object.assign({}, base, { months: 0.5 })).status, 'incomplete');
+    check('nor is a fractional one',
+      W.compare(Object.assign({}, base, { months: 6.5 })).missing.join(','), 'months');
+    check('nothing to invest is refused, not answered as zero',
+      W.compare(Object.assign({}, base, { amountCents: 0 })).status, 'incomplete');
+    check('and a missing amount names itself',
+      W.compare(Object.assign({}, base, { amountCents: null })).missing.join(','), 'amountCents');
+    check('a missing return assumption is named too',
+      W.compare(Object.assign({}, base, { annualRate: null })).missing.join(','), 'annualRate');
+  }
+
+  /* -- Cash left out is not the same as cash earning nothing -------------- */
+  {
+    const noCash = W.compare(Object.assign({}, base, { cashAnnualRate: null }));
+    check('an unstated cash rate defaults to zero and says so',
+      noCash.cashAnnualRate, 0);
+    checkTrue('which makes waiting cost more than it does at 4%',
+      noCash.gapCents > W.compare(base).gapCents);
+    check('and moves the break-even with it', noCash.breakEvenAnnualRate, 0, 1e-6);
+
+    /* Zero rates everywhere: no growth, no penalty, no difference. */
+    const flat = W.compare({ amountCents: 2500000, months: 12, annualRate: 0, cashAnnualRate: 0 });
+    check('with nothing growing anywhere the two are identical', flat.gapCents, 0);
+    check('and the money is still all there', flat.spreadCents, 2500000);
+  }
+
+  /* -- Exposure, which is the reason for the gap -------------------------- */
+  {
+    const r = W.compare(base);
+    check('average exposure over the window', r.averageExposure, 7 / 12, 1e-12);
+    check('so on average this much is waiting',
+      r.averageWaitingCents, Math.round(2500000 * 5 / 12));
+    const longer = W.compare(Object.assign({}, base, { months: 24 }));
+    checkTrue('a longer window leaves more out of the market',
+      longer.averageWaitingCents > r.averageWaitingCents);
+    checkTrue('and costs more at the assumed return', longer.gapCents > r.gapCents);
+  }
+
+  /* -- Scenarios are illustrations, not forecasts ------------------------- */
+  {
+    const s = W.scenarios(base);
+    check('one row per rate', s.value.length, W.SCENARIO_RATES.length);
+    const bad = s.value[0], good = s.value[s.value.length - 1];
+    check('the worst row is the worst rate', bad.annualRate, -0.30);
+    checkTrue('in which spreading is ahead', bad.spreadAhead);
+    checkTrue('and in the best row it is not', !good.spreadAhead);
+    checkTrue('spreading saves more in the bad year than it costs in the good one',
+      Math.abs(bad.gapCents) > Math.abs(good.gapCents));
+    check('scenarios need an amount too',
+      W.scenarios({ months: 6 }).status, 'incomplete');
+  }
+
+  /* -- Every window at once ------------------------------------------------ */
+  {
+    const rows = W.acrossWindows(base);
+    check('one row per preset window', rows.length, W.WINDOWS.length);
+    checkTrue('all of them computed', rows.every(r => Money.isOk(r.result)));
+    checkTrue('and the cost rises with the window',
+      rows[0].result.gapCents < rows[rows.length - 1].result.gapCents);
+    rows.forEach(function (row) {
+      check(`the ${row.months}-month window has the same break-even`,
+        row.result.breakEvenAnnualRate, 0.04, 1e-6);
+    });
   }
 })();
 

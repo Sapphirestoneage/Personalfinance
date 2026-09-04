@@ -163,6 +163,32 @@ const CASES = [
     }
   },
   {
+    /* The Windfall stores nothing — every input is page-local. So the check
+       is that what you typed is still in the box after the page has
+       recomputed around it, which is the failure the guard exists for. */
+    room: '/rooms/windfall.html',
+    container: '#the-money',
+    seed: 'demo',
+    fields: [
+      { sel: 'input[data-in="amount"]', type: '25000' },
+      { sel: 'input[data-in="cashRate"]', type: '4' },
+      { sel: 'input[data-in="returnRate"]', type: '6.5', clearFirst: true }
+    ],
+    expect: async (page) => {
+      const v = await page.evaluate(() => {
+        const g = k => (document.querySelector(`input[data-in="${k}"]`) || {}).value;
+        return { amount: g('amount'), cash: g('cashRate'), ret: g('returnRate'),
+                 when: (document.querySelector('#out-when [data-figure]') || {}).textContent };
+      });
+      return [
+        ['the amount was kept and formatted', v.amount, '$25,000'],
+        ['the cash rate was kept', v.cash, '4'],
+        ['the return assumption was kept', v.ret, '6.5'],
+        ['and the threshold followed the cash rate', v.when, 'Below 4.0% a year']
+      ];
+    }
+  },
+  {
     room: '/rooms/cash-flow.html',
     container: '#buckets',
     seed: 'demo',

@@ -363,6 +363,22 @@
       ]
     },
     {
+      id: 'windfall',
+      order: 23,
+      title: 'The Windfall',
+      blurb: 'A bonus, an inheritance, a sale \u2014 all at once or spread out, and the exact condition under which spreading it wins.',
+      href: 'rooms/windfall.html',
+      tier: 1,
+      tags: ['income'],
+      subsections: [
+        { id: 'the-money',      label: 'The decision' },
+        { id: 'out-when',       label: 'When spreading it wins' },
+        { id: 'out-cost',       label: 'What the caution costs' },
+        { id: 'out-scenarios',  label: 'Suppose it did this instead' },
+        { id: 'out-windows',    label: 'How long you take' }
+      ]
+    },
+    {
       id: 'foo-ladder',
       order: 21,
       title: 'FOO Ladder',

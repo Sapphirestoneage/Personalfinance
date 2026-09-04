@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>The Windfall · SPARKS</title>
+<meta name="description" content="A lump sum, all at once or spread out — and the exact condition under which spreading it wins."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11, §13 Tier 1 (Lump Sum vs. DCA).
+
+  1. READS   assumptions.expectedReturnRate from the household, as the
+             default return. Nothing else. The windfall itself is a
+             one-off decision input, not a shared household number, so it
+             is NOT written to the model — see the note below.
+  2. WRITES  nothing. Every input here is local to this page, the same
+             preview pattern the FIRE room uses (SPEC.md §12.2): a "what
+             if" is not a fact about your household.
+  3. CALLS   engines/windfall.js.
+  4. EMPTY   No amount → the page says what to type. No return assumption
+             can be missing: it falls back to the household's, which has a
+             stated default.
+  5. CONFIG  None, and deliberately none. See below.
+
+  WHY THERE IS NO VERDICT HERE. SPEC.md §13 says showing this properly
+  "needs a Monte Carlo simulation, not a single deterministic projection" —
+  and a Monte Carlo needs return distribution parameters this repo does not
+  have and will not invent (D-036). So the page answers the inverted
+  question instead: the exact condition under which spreading wins. That is
+  deterministic, needs no distribution, and is more useful than a point
+  estimate. The page says so out loud rather than implying more confidence
+  than it has.
+
+  LIVE-FORM: built once. Every control on this page is written in the HTML
+  below and never replaced — the script only ever reads and writes .value on
+  nodes that already exist. See DECISIONS.md D-034.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+  @media (max-width: 460px) { .grid2 { grid-template-columns: 1fr; } }
+  .actions { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-3); }
+
+  table.grid { width: 100%; border-collapse: collapse; font-size: var(--text-sm); margin-top: var(--space-3); }
+  table.grid th { text-align: right; font-weight: 500; font-size: var(--text-xs); color: var(--color-text-faint); padding: 0 0 var(--space-2); }
+  table.grid th:first-child { text-align: left; }
+  table.grid td { padding: var(--space-2) 0; border-top: 1px solid var(--color-border); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  table.grid td + td, table.grid th + th { padding-left: var(--space-3); }
+  table.grid td:first-child { text-align: left; }
+  table.grid tr.is-spread td { color: var(--color-positive); }
+  table.grid tr.is-here td { background: var(--color-surface-active); }
+  .table-scroll { overflow-x: auto; }
+
+  .plot { width: 100%; height: auto; display: block; margin-top: var(--space-3); }
+  .plot .axis { stroke: var(--color-border-strong); stroke-width: 1; }
+  .plot .lump { stroke: var(--color-accent); stroke-width: 1.4; fill: none; }
+  .plot .spread { stroke: var(--color-text-muted); stroke-width: 1.4; fill: none; stroke-dasharray: 4 2; }
+  .plot .cap { fill: var(--color-text-faint); font-size: 7px; font-family: var(--font-body); }
+  .key { display: flex; gap: var(--space-4); flex-wrap: wrap; font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-2); }
+  .key span::before { content: ''; display: inline-block; width: 14px; height: 0; border-top: 2px solid currentColor; vertical-align: middle; margin-right: 6px; }
+  .key .k-lump { color: var(--color-accent); }
+  .key .k-spread { color: var(--color-text-muted); }
+
+  .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>The Windfall</h1>
+  <p class="room-lede">
+    A bonus, an inheritance, a sale. Put it in all at once, or feed it in
+    over a few months? There is a clean answer to when spreading it wins,
+    and it is not the one most calculators give.
+  </p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="the-money">
+    <span class="slaf-eyebrow">What you have, and how long you'd take</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">The decision</h2>
+    <div class="grid2">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">The amount</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+        <input type="text" inputmode="decimal" data-in="amount" placeholder="e.g. 25000" aria-label="The amount"/></span>
+      </label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Spread over</span>
+        <span class="slaf-input-shell">
+        <select data-in="months" aria-label="Spread over">
+          <option value="3">3 months</option>
+          <option value="6" selected>6 months</option>
+          <option value="12">a year</option>
+          <option value="24">two years</option>
+        </select></span>
+      </label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">What the market does</span>
+        <span class="slaf-input-shell">
+        <input type="text" inputmode="decimal" data-in="returnRate" aria-label="Expected annual return"/>
+        <span class="slaf-affix">% a year</span></span>
+        <span class="slaf-hint">Your household assumption, only for this page.</span>
+      </label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">What the waiting cash earns</span>
+        <span class="slaf-input-shell">
+        <input type="text" inputmode="decimal" data-in="cashRate" placeholder="e.g. 4" aria-label="Cash rate on the waiting money"/>
+        <span class="slaf-affix">% a year</span></span>
+        <span class="slaf-hint">The money not yet invested isn’t under a mattress. This matters more than it looks.</span>
+      </label>
+    </div>
+    <div class="actions">
+      <button type="button" class="slaf-btn" id="btn-demo">Try with example numbers</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Clear</button>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="out-when">
+    <span class="slaf-eyebrow">When spreading it wins</span>
+    <div class="slaf-figure" data-figure>—</div>
+    <p class="slaf-reason" data-reason></p>
+    <div class="flag" id="when-note" hidden></div>
+  </section>
+
+  <section class="slaf-card" id="out-cost">
+    <span class="slaf-eyebrow">What the caution costs</span>
+    <h2 style="margin:var(--space-2) 0 0">If the market does what you assumed</h2>
+    <div class="slaf-figure" data-figure>—</div>
+    <p class="slaf-reason" data-reason></p>
+    <div id="path-body" hidden>
+      <svg class="plot" id="path" viewBox="0 0 200 110" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="path-desc"></svg>
+      <div class="key"><span class="k-lump">all at once</span><span class="k-spread">spread out</span></div>
+      <p id="path-desc" class="why"></p>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="out-scenarios">
+    <span class="slaf-eyebrow">Suppose it did this instead</span>
+    <h2 style="margin:var(--space-2) 0 0">The same decision, five different years</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      These are not forecasts and they carry no odds — working out how
+      likely each one is would take return data this app does not have and
+      will not make up. They are here for the shape: spreading loses a
+      little in every good year and saves a lot in the bad ones.
+    </p>
+    <div class="table-scroll"><table class="grid" id="scenarios"><tbody></tbody></table></div>
+  </section>
+
+  <section class="slaf-card" id="out-windows">
+    <span class="slaf-eyebrow">How long you take</span>
+    <h2 style="margin:var(--space-2) 0 0">The same money, spread over four different windows</h2>
+    <div class="table-scroll"><table class="grid" id="windows"><tbody></tbody></table></div>
+    <p class="why" id="windows-why"></p>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Nothing here forecasts a market
+    or knows what yours will do. Your numbers stay in this browser — and
+    this page stores none of them.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/liveform.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../engines/windfall.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Windfall = SLAF.Windfall;
+
+  var ROOM_ID = 'windfall';
+
+  /* Page-local, never stored. A windfall you are thinking about is not a
+     fact about your household, and writing it to the shared model would
+     make every other room believe you have it. SPEC.md §12.2. */
+  var state = { amountCents: null, months: 6, returnRate: null, cashRate: null };
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function setFigure(sectionId, text, why) {
+    var f = el(sectionId).querySelector('[data-figure]');
+    var r = el(sectionId).querySelector('[data-reason]');
+    f.textContent = text === null ? Money.EM_DASH : text;
+    f.classList.toggle('slaf-figure--incomplete', text === null);
+    r.textContent = why || '';
+    r.hidden = !why;
+  }
+
+  function assumedReturn() {
+    if (Money.isEntered(state.returnRate)) return state.returnRate;
+    return Schema.resolveAssumptions(Spine.getProfile()).expectedReturnRate;
+  }
+  function opts() {
+    return {
+      amountCents: state.amountCents,
+      months: state.months,
+      annualRate: assumedReturn(),
+      cashAnnualRate: Money.isEntered(state.cashRate) ? state.cashRate : 0
+    };
+  }
+
+  /* ---- Inputs. Built once in the HTML above; only .value is written. ---- */
+
+  function displayFor(key) {
+    if (key === 'amount') return Money.isEntered(state.amountCents)
+      ? Money.formatCents(state.amountCents) : '';
+    if (key === 'months') return String(state.months);
+    if (key === 'returnRate') return Money.formatRate(assumedReturn(), { decimals: 1 })
+      .replace('%', '');
+    if (key === 'cashRate') return Money.isEntered(state.cashRate)
+      ? String(Math.round(state.cashRate * 1000) / 10) : '';
+    return '';
+  }
+
+  function editFor(key) {
+    if (key === 'amount') return Money.isEntered(state.amountCents)
+      ? String(state.amountCents / 100) : '';
+    return displayFor(key);
+  }
+
+  function readInto(key, raw) {
+    var text = String(raw).trim();
+    if (key === 'amount') { state.amountCents = Money.parseMoney(text); return; }
+    if (key === 'months') { state.months = Number(text) || 6; return; }
+    if (key === 'returnRate') { state.returnRate = Money.parseRatePercent(text); return; }
+    if (key === 'cashRate') { state.cashRate = Money.parseRatePercent(text); }
+  }
+
+  document.querySelectorAll('[data-in]').forEach(function (node) {
+    var key = node.getAttribute('data-in');
+    if (node.tagName === 'SELECT') {
+      node.addEventListener('change', function () { readInto(key, node.value); render(); });
+      return;
+    }
+    node.addEventListener('focus', function () { node.value = editFor(key); node.select(); });
+    node.addEventListener('blur', function () {
+      readInto(key, node.value);
+      node.value = displayFor(key);
+      render();
+    });
+    node.addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter') { evt.preventDefault(); node.blur(); }
+    });
+  });
+
+  function paintInputs() {
+    document.querySelectorAll('[data-in]').forEach(function (node) {
+      if (node === document.activeElement) return;
+      var key = node.getAttribute('data-in');
+      if (node.tagName === 'SELECT') node.value = String(state.months);
+      else node.value = displayFor(key);
+    });
+  }
+
+  el('btn-demo').addEventListener('click', function () {
+    state.amountCents = 2500000;   /* invented, like every demo figure here */
+    state.months = 6;
+    state.cashRate = 0.04;
+    state.returnRate = null;
+    paintInputs();
+    render();
+  });
+  el('btn-clear').addEventListener('click', function () {
+    state = { amountCents: null, months: 6, returnRate: null, cashRate: null };
+    paintInputs();
+    render();
+  });
+
+  /* ---- The one that matters -------------------------------------------- */
+
+  function renderWhen(r) {
+    if (!Money.isOk(r)) {
+      setFigure('out-when', null, r.reason);
+      el('when-note').hidden = true;
+      return;
+    }
+    if (r.degenerate) {
+      setFigure('out-when', 'Never',
+        'Spreading a lump sum over one month is investing it now. Pick a longer window.');
+      el('when-note').hidden = true;
+      return;
+    }
+    if (r.breakEvenAnnualRate === null) {
+      setFigure('out-when', null,
+        'With these numbers there is no return at which spreading comes out ahead.');
+      el('when-note').hidden = true;
+      return;
+    }
+    setFigure('out-when',
+      'Below ' + Money.formatRate(r.breakEvenAnnualRate, { decimals: 1 }) + ' a year',
+      'If the market returns less than that over the next '
+        + r.months + ' months, feeding the money in beats putting it all in today. '
+        + 'Above it, the lump sum wins.');
+
+    var note = el('when-note');
+    note.hidden = false;
+    note.innerHTML = '<strong>That threshold is your cash rate, exactly.</strong> '
+      + 'Money waiting to be invested is not sitting still — it is earning '
+      + Money.formatRate(r.cashAnnualRate, { decimals: 1 })
+      + ' in the account it is waiting in. So spreading a lump sum is just a blend of '
+      + 'the market and your savings account, and a blend beats the pure thing exactly '
+      + 'when the thing you blended in does better. Not usually, not on average: exactly. '
+      + 'Over ' + r.months + ' months that means the market would have to come in under '
+      + Money.formatRate(r.breakEvenTotalDrop, { decimals: 1 }) + ' in total.';
+  }
+
+  /* ---- What it costs, and the path -------------------------------------- */
+
+  function renderCost(r) {
+    if (!Money.isOk(r) || r.degenerate) {
+      setFigure('out-cost', null, Money.isOk(r) ? '' : r.reason);
+      el('path-body').hidden = true;
+      return;
+    }
+    var ahead = r.gapCents >= 0;
+    setFigure('out-cost',
+      Money.formatCents(Math.abs(r.gapCents)),
+      (ahead ? 'What waiting costs you' : 'What waiting gains you')
+        + ', if the market returns exactly the ' + Money.formatRate(r.annualRate, { decimals: 1 })
+        + ' you assumed — ' + Money.formatRate(Math.abs(r.gapShare), { decimals: 2 })
+        + ' of the money, or about ' + Money.formatCents(Math.abs(r.gapPerMonthCents))
+        + ' a month of the window.');
+
+    el('path-body').hidden = false;
+    renderPath(r);
+  }
+
+  var PAD_L = 30, PAD_R = 6, PAD_T = 8, PAD_B = 16, W = 200, H = 110;
+
+  function renderPath(r) {
+    var all = r.path.map(function (p) { return Math.max(p.lumpCents, p.spreadCents); })
+      .concat(r.path.map(function (p) { return Math.min(p.lumpCents, p.spreadCents); }));
+    var top = Math.max.apply(null, all), bottom = Math.min.apply(null, all.concat([r.amountCents]));
+    var span = top - bottom || 1;
+    function x(m) { return PAD_L + ((m - 1) / Math.max(1, r.months - 1)) * (W - PAD_L - PAD_R); }
+    function y(c) { return H - PAD_B - ((c - bottom) / span) * (H - PAD_T - PAD_B); }
+
+    function line(key) {
+      return r.path.map(function (p, i) {
+        return (i === 0 ? 'M' : 'L') + x(p.month).toFixed(2) + ' ' + y(p[key]).toFixed(2);
+      }).join(' ');
+    }
+
+    var parts = [];
+    parts.push('<line class="axis" x1="' + PAD_L + '" y1="' + PAD_T + '" x2="' + PAD_L + '" y2="' + (H - PAD_B) + '"/>');
+    parts.push('<line class="axis" x1="' + PAD_L + '" y1="' + (H - PAD_B) + '" x2="' + (W - PAD_R) + '" y2="' + (H - PAD_B) + '"/>');
+    parts.push('<path class="spread" d="' + line('spreadCents') + '"/>');
+    parts.push('<path class="lump" d="' + line('lumpCents') + '"/>');
+    parts.push('<text class="cap" text-anchor="end" x="' + (PAD_L - 3) + '" y="' + (PAD_T + 3) + '">'
+      + Money.formatCents(top) + '</text>');
+    parts.push('<text class="cap" text-anchor="end" x="' + (PAD_L - 3) + '" y="' + (H - PAD_B) + '">'
+      + Money.formatCents(bottom) + '</text>');
+    parts.push('<text class="cap" x="' + PAD_L + '" y="' + (H - 4) + '">month 1</text>');
+    parts.push('<text class="cap" text-anchor="end" x="' + (W - PAD_R) + '" y="' + (H - 4) + '">month '
+      + r.months + '</text>');
+    el('path').innerHTML = parts.join('');
+
+    el('path-desc').textContent = 'Both lines end the window with every dollar invested; only the '
+      + 'route differs. On average across the ' + r.months + ' months, spreading leaves '
+      + Money.formatCents(r.averageWaitingCents) + ' out of the market — '
+      + Math.round((1 - r.averageExposure) * 100) + '% of the money — which is the whole of why '
+      + 'the two lines separate.';
+  }
+
+  /* ---- Scenarios and windows -------------------------------------------- */
+
+  function renderScenarios() {
+    var s = Windfall.scenarios(opts());
+    var body = el('scenarios').querySelector('tbody');
+    if (!Money.isOk(s)) { body.innerHTML = ''; return; }
+    body.innerHTML = '<tr><th>If the market did</th><th>All at once</th><th>Spread out</th><th>Difference</th></tr>'
+      + s.value.map(function (row) {
+        return '<tr class="' + (row.spreadAhead ? 'is-spread' : '') + '">'
+          + '<td>' + Money.formatRate(row.annualRate, { decimals: 0 }) + ' a year</td>'
+          + '<td>' + Money.formatCents(row.lumpCents) + '</td>'
+          + '<td>' + Money.formatCents(row.spreadCents) + '</td>'
+          + '<td>' + (row.gapCents >= 0 ? '+' : '−')
+          + Money.formatCents(Math.abs(row.gapCents)) + '</td></tr>';
+      }).join('');
+  }
+
+  function renderWindows() {
+    var rows = Windfall.acrossWindows(opts());
+    var body = el('windows').querySelector('tbody');
+    if (!rows.some(function (row) { return Money.isOk(row.result); })) {
+      body.innerHTML = '';
+      el('windows-why').textContent = '';
+      return;
+    }
+    body.innerHTML = '<tr><th>Window</th><th>Spread out</th><th>Costs you</th>'
+      + '<th>Out of the market<br/>on average</th></tr>'
+      + rows.map(function (row) {
+        var r = row.result;
+        if (!Money.isOk(r)) return '';
+        return '<tr class="' + (row.months === state.months ? 'is-here' : '') + '">'
+          + '<td>' + esc(row.label) + '</td>'
+          + '<td>' + Money.formatCents(r.spreadCents) + '</td>'
+          + '<td>' + Money.formatCents(r.gapCents) + '</td>'
+          + '<td>' + Money.formatCents(r.averageWaitingCents) + '</td></tr>';
+      }).join('');
+    el('windows-why').textContent = 'The longer the window, the more of the money sits out '
+      + 'of the market and the more the caution costs — at the assumed return. The threshold '
+      + 'in the first card does not move: it is your cash rate whatever window you pick.';
+  }
+
+  /* ---- Render ----------------------------------------------------------- */
+
+  function renderNow() {
+    paintInputs();
+    var r = Windfall.compare(opts());
+    renderWhen(r);
+    renderCost(r);
+    renderScenarios();
+    renderWindows();
+  }
+
+  var queued = false;
+  function render() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () { queued = false; renderNow(); }, 0);
+  }
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  Spine.onChange(render);
+
+  Reference.load().then(function () {
+    renderNow();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

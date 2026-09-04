@@ -18,12 +18,12 @@ lives here, separately, and is kept honest against `shared/registry.js`.
 
 ## What is actually built, as of the last commit
 
-Twenty-two rooms are live. Against this document's own tiers:
+Twenty-three rooms are live. Against this document's own tiers:
 
 | Tier | In this doc | Shipped | What's shipped |
 |---|---|---|---|
 | **0** — MVP snapshot | 10 inputs, 9 outputs, FOO ladder, 5 flags | **all of it** | Start Here, Financial Snapshot, FOO Ladder |
-| **1** — fully modular | 29 | **19** | Net Worth · Savings Rate · FIRE variants · Debt Calculator · Credit Card view · HYSA Switch · Cash Flow · Budget templates · Return on Hassle · Girl Math (cost per use) · Snapshot/save-state · Rule of Five · $30k/$90k · 20/3/8 · Real Hourly Wage · W2 vs 1099 · Quarterly Estimated Tax · Retroactive Worth · Prospective Worth |
+| **1** — fully modular | 29 | **20** | Net Worth · Savings Rate · FIRE variants · Debt Calculator · Credit Card view · HYSA Switch · Cash Flow · Budget templates · Return on Hassle · Girl Math (cost per use) · Snapshot/save-state · Rule of Five · $30k/$90k · 20/3/8 · Real Hourly Wage · W2 vs 1099 · Quarterly Estimated Tax · Retroactive Worth · Prospective Worth · Lump Sum vs DCA |
 | **1.5** — one self-report | 3 | **2** | SWAN Number · Fulfillment Curve |
 | **2** — a few decisions | 23 | **10** | Side Hustle · Solo 401(k) · Roth vs Traditional vs Brokerage · Wedding · Dream Calculator · Convenience Method · Zombie Apocalypse framing · Values vs Spending Audit · Career ROI · Skills Calculator |
 | **3 and up** | ~280 | **1** | Regret calc (Tier 4) — not a build of its own: it is `Worth.regrets()`, the same records filtered to low ratings. Everything else is out of `SPEC.md` scope |
@@ -42,11 +42,10 @@ household that already exists, and **The Dashboard** is the Tier 20 radar
 over them. Neither adds a number the other rooms did not already own — see
 `DECISIONS.md` for what the radar deliberately is not (a score).
 
-### Not built in Tier 1 (10)
+### Not built in Tier 1 (9)
 
-Bank Bonus · Rent/Buy · Warranty · Lump Sum vs DCA · Car Depreciation · W4 ·
-DRAFTT template · FAT FIRE template · HCOL/MCOL/LCOL standalone ·
-Mutant Expenses Identifier
+Bank Bonus · Rent/Buy · Warranty · Car Depreciation · W4 · DRAFTT template ·
+FAT FIRE template · HCOL/MCOL/LCOL standalone · Mutant Expenses Identifier
 
 Six of those are blocked on **maintained external datasets**, not on effort:
 live bank offers, vehicle depreciation curves, warranty failure rates, COL
