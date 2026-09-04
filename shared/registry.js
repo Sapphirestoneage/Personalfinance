@@ -507,6 +507,28 @@
      what is required from what is optional, which is most of why a suite
      this size feels like homework. See DECISIONS.md D-051.
 
+  /* A utility page: reached from the dashboard's staleness line and from
+     the room-to-room nav, never listed on the map's groups — it asks for
+     nothing new, it re-asks the three figures that move. It writes those
+     through the owner's own write path (Ownership.write), so it is not a
+     second editor of a second copy. DECISIONS.md D-057. */
+  ROOMS.push({
+    id: 'refresh',
+    kind: 'core',
+    utility: true,
+    needs: ['cashSavings', 'investments', 'totalDebt'],
+    order: 26,
+    title: 'Refresh',
+    blurb: 'The three figures that move — cash, investments, what you owe — re-checked in under a minute, and a snapshot taken so the dashboard can say what changed.',
+    href: 'rooms/refresh.html',
+    tier: 0,
+    tags: ['cashflow', 'debt'],
+    subsections: [
+      { id: 'fields', label: 'The three that move' },
+      { id: 'done',   label: 'Snapshot' }
+    ]
+  });
+
   /* `needs` lists the shared fields a room reads before it can show its main
      output — the ids in shared/ownership.js, which know who owns each one and
      which question to land on. shared/progress.js turns that into "what is

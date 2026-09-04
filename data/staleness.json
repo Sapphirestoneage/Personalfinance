@@ -1,0 +1,33 @@
+{
+  "id": "staleness",
+  "version": "1.0",
+  "asOf": "2026-09-01",
+  "source": "How fast each figure actually moves. Balances change every pay cycle and every purchase; income and spending change on the order of a job change or a lease renewal; a date of birth never does.",
+  "confidence": "convention",
+  "confidenceNote": "These are review intervals, not measurements. Past the interval a figure is shown in amber and offered for a quick re-confirm; it is never silently distrusted, discounted or zeroed.",
+  "note": "staleAfterDays is per ownership field id (shared/ownership.js). null means the figure does not go stale. `volatile` is the short list the Refresh page walks — the ones worth re-checking monthly, in the order they are asked.",
+  "volatile": ["cashSavings", "investments", "totalDebt"],
+  "staleAfterDays": {
+    "cashSavings": 30,
+    "investments": 30,
+    "totalDebt": 30,
+    "monthlyDebtPayments": 30,
+    "grossAnnualIncome": 180,
+    "employerMatch": 180,
+    "monthlyExpenses": 90,
+    "contributionPercent": 180,
+    "rothContributed": 90,
+    "hsaContributed": 90,
+    "highestDeductible": 365,
+    "swanTarget": 365,
+    "filingStatus": 365,
+    "state": 365,
+    "employmentStatus": 180,
+    "marginalRate": 365,
+    "dob": null,
+    "age": null,
+    "otherAssets": 90,
+    "netWorth": 30,
+    "capturingFullMatch": 180
+  }
+}

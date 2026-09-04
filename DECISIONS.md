@@ -3107,6 +3107,83 @@ nothing when it returns `null`.
 
 ---
 
+## D-057 — Age is shown, and the three figures that move get a page of their own
+
+*(BRIEF.md §1.4.)* D-056 put a clock on every owned field. This is what the
+clock is for.
+
+### The review intervals are data
+
+`data/staleness.json` carries `staleAfterDays` per ownership field id (cash,
+investments and debts at 30; spending at 90; income at 180; a date of birth
+`null`, because it never goes stale) and the short `volatile` list. They are
+review intervals, `confidence: convention` — past the interval a figure turns
+amber and is offered for a re-confirm; it is **never** discounted, zeroed or
+hidden for being old. Stale is a prompt to look, not a verdict.
+
+`shared/staleness.js` reads the stamps back: `describe(h, fieldId)` gives
+`{ days, perField, stale, label }`. Three states, never collapsed: a stamped
+field has a real age; an unstamped one (every household saved before D-056)
+falls back to the household's last save with `perField: false` and the label
+says so ("last saved 12 days ago (this figure not dated)"); a field with no
+value has nothing to date. `stale` is `null` unless both an age and an
+interval exist, so nothing ever colours on a guess.
+
+Every `Ownership.chip()` now ends with "updated N days ago", amber past the
+interval. `Ownership.describe()` carries the same under `age`.
+
+### The Refresh page, and why it is not a second editor
+
+`rooms/refresh.html` walks the volatile list: cash, investments, each debt
+balance. Every box opens **holding the current figure in entered style** —
+not settled-grey, because the whole point is to look at it. Enter on an
+unchanged figure calls `Spine.confirm()` (the clock moves, the value does
+not); a different figure writes; an empty box writes nothing. Then one
+snapshot, then home.
+
+This looked like a violation of D-017 — cash and investments are owned by
+Start Here, debts by Debt Payoff, and here is a third page with boxes for
+them. The rule's purpose is that there is never a second **copy** to drift.
+So the resolution is structural, not an exemption:
+
+- `Ownership.FIELDS.cashSavings.write()` / `.investments.write()` are the
+  one function that writes those records. `rooms/start.html` was changed to
+  call `Ownership.write()` too; its own `writeAsset` is gone. The Refresh
+  page and Start Here are two places to press the same button.
+- Debt balances go through `Spine.upsertDebt({ id, balanceCents })`, the
+  same call Debt Payoff makes on the same record.
+
+The registry marks the page `utility: true`. It never appears in the map's
+groups (a chore should not look like a room); it is reached from the
+dashboard's staleness line and from the room-to-room nav. It sits last on
+the path so it never interrupts a first walk.
+
+### One list of instruments
+
+`shared/instruments.js` is the list of the six dashboard figures — net
+worth, savings rate, runway, debt-to-income, FI year, FOO step — each a call
+into the engine that owns it. A snapshot freezes exactly that list
+(`Instruments.snapshot()`), and the dashboard reads deltas against it
+(`Instruments.deltas()`), so the two can never disagree about what "since
+last time" covers. The FI year is `Tier0.yearsToFire` projected onto a
+calendar; the coast age lands with T3.6.
+
+### Compatibility note
+
+**Stored shape:** nothing new. Snapshot `computedOutputs` now carry the
+instrument ids above (older records carry Tier0's `computeAll` keys, and
+`snapshotDelta` returns `null` for an id a record lacks).
+
+**Rooms updated:** `rooms/start.html` (writes cash and investments through
+`Ownership.write`), `rooms/refresh.html` (new), `map.html` (skips utility
+rooms). `shared/registry.js` gained the `utility` flag.
+
+**Before writing a volatile field from anywhere new:** call
+`Ownership.write(fieldId, value)` if the field declares a write path; if it
+does not, the room that owns it is the only place it may be written.
+
+---
+
 ## D-046 — HP is measured in weeks, which is what makes §3A stop contradicting itself
 
 The Dungeons & Dividends rulebook defines Hit Points twice in the same

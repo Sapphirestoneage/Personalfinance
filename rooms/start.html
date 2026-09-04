@@ -291,8 +291,6 @@
 
   var ROOM_ID = 'start';
   var INCOME_ID = 'tier0_income_primary';
-  var CASH_ID = 'tier0_cash';
-  var INVEST_ID = 'tier0_investments';
 
   function el(id) { return document.getElementById(id); }
 
@@ -321,20 +319,6 @@
     if (raw.employerMatch) return raw;
     return Object.assign({}, raw, {
       employerMatch: { matchPercent: null, matchCapPercentOfSalary: null }
-    });
-  }
-
-  function writeAsset(categories, canonicalCategory, liquid, label, cents) {
-    var person = Spine.ensurePrimaryPerson('You');
-    var h = Spine.getProfile();
-    var existing = assetByCategory(h, categories);
-    Spine.upsertAsset({
-      id: existing ? existing.id : (canonicalCategory === 'cash' ? CASH_ID : INVEST_ID),
-      label: existing && existing.label ? existing.label : label,
-      category: existing ? existing.category : canonicalCategory,
-      valueCents: cents,
-      liquid: liquid,
-      ownerIds: existing && existing.ownerIds.length ? existing.ownerIds : [person.id]
     });
   }
 
@@ -758,13 +742,16 @@
       read: function (h) { return h.expenses.monthlyEssential.estimatedValueCents; },
       write: function (cents) { Spine.setMonthlyExpenses(cents, 'estimated'); } },
 
+    /* Cash and investments write through Ownership.write(): the Refresh
+       page sets the same two records, and one function writing them is
+       what keeps that from being a second copy. DECISIONS.md D-057. */
     { id: 'q-cash', field: 'cashSavings', kind: 'money',
       read: function (h) { var a = assetByCategory(h, ['cash']); return a ? a.valueCents : null; },
-      write: function (cents) { writeAsset(['cash'], 'cash', true, 'Cash & savings', cents); } },
+      write: function (cents) { Ownership.write('cashSavings', cents); } },
 
     { id: 'q-investments', field: 'investments', kind: 'money',
       read: function (h) { var a = assetByCategory(h, ['investment', 'retirement']); return a ? a.valueCents : null; },
-      write: function (cents) { writeAsset(['investment', 'retirement'], 'investment', false, 'Investments + retirement', cents); } },
+      write: function (cents) { Ownership.write('investments', cents); } },
 
     { id: 'q-dob', field: 'dob', kind: 'date',
       read: function (h) { var p = Schema.primaryPerson(h); return p && p.dob ? p.dob : ''; },

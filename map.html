@@ -152,7 +152,9 @@
         blurb: 'Not homework, and never required. These test a hypothetical without touching your real figures; nothing you type here is kept.' }
     ];
     var byKind = { core: [], read: [], 'about-you': [], explore: [] };
-    rooms.forEach(function (r) { (byKind[r.kind] || byKind.explore).push(r); });
+    /* Utility pages (Refresh) are reached from the dashboard, not chosen
+       from a list; listing them here would make a chore look like a room. */
+    rooms.forEach(function (r) { if (!r.utility) (byKind[r.kind] || byKind.explore).push(r); });
 
     GROUPS.forEach(function (g) {
       if (!byKind[g.kind].length) return;

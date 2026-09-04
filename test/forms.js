@@ -64,6 +64,31 @@ const CASES = [
     }
   },
   {
+    /* The Refresh page: every box opens holding the current figure, and
+       typing over it must replace it, not append to it — a phone selects
+       nothing on tap, so the case types with clearFirst. */
+    room: '/rooms/refresh.html',
+    container: '#fields',
+    seed: 'demo',
+    fields: [
+      { sel: 'input[data-field="cashSavings"]', type: '9800', clearFirst: true },
+      { sel: 'input[data-field="investments"]', type: '50000', clearFirst: true },
+      { sel: 'input[data-field="debtBalance"]', type: '18000', clearFirst: true }
+    ],
+    expect: async (page) => {
+      const h = await page.evaluate(() => JSON.parse(localStorage.getItem('slaf.household.v2')) || {});
+      const cash = h.assets.filter(a => a.category === 'cash')[0];
+      const inv = h.assets.filter(a => a.category === 'investment')[0];
+      return [
+        ['cash was rewritten in place', cash.valueCents, 980000],
+        ['and there is still exactly one cash record', h.assets.filter(a => a.category === 'cash').length, 1],
+        ['investments were rewritten', inv.valueCents, 5000000],
+        ['the first debt balance was rewritten', h.debts[0].balanceCents, 1800000],
+        ['and cash got a fresh stamp', typeof h.meta.confirmedAt.cashSavings, 'string']
+      ];
+    }
+  },
+  {
     room: '/rooms/net-worth.html',
     container: '#asset-list',
     seed: 'demo',

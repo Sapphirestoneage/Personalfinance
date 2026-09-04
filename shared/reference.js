@@ -41,7 +41,8 @@
     values: 'values.json',
     hassleDefaults: 'hassle_defaults.json',
     ratioBenchmarks: 'ratio_benchmarks.json',
-    healthScore: 'health_score.json'
+    healthScore: 'health_score.json',
+    staleness: 'staleness.json'
   };
 
   var cache = {};

@@ -59,6 +59,47 @@
 
   function money(v) { return Money.formatCents(v); }
 
+  /* Resolved at call time rather than at load, so a page that never loads
+     staleness.js still gets a chip (without an age), and script order does
+     not matter. */
+  function stalenessModule() {
+    if (typeof module === 'object' && module.exports) {
+      try { return require('./staleness.js'); } catch (e) { return null; }
+    }
+    var g = (typeof self !== 'undefined') ? self : null;
+    return g && g.SLAF && g.SLAF.Staleness ? g.SLAF.Staleness : null;
+  }
+
+  /* ---- The one write path for a Tier 0 asset ------------------------------
+     Start Here and the Refresh page both set cash and investments. They are
+     the SAME record either way — this is the single function that writes
+     it, so there is no second copy to drift. DECISIONS.md D-057. */
+  var CASH_ID = 'tier0_cash';
+  var INVEST_ID = 'tier0_investments';
+
+  function assetByCategory(h, categories) {
+    var list = (h && h.assets) || [];
+    for (var i = 0; i < list.length; i++) {
+      if (categories.indexOf(list[i].category) !== -1) return list[i];
+    }
+    return null;
+  }
+
+  function writeAsset(categories, canonicalCategory, liquid, label, cents) {
+    if (!Spine) throw new Error('Ownership.write needs the spine');
+    var person = Spine.ensurePrimaryPerson('You');
+    var h = Spine.getProfile();
+    var existing = assetByCategory(h, categories);
+    return Spine.upsertAsset({
+      id: existing ? existing.id : (canonicalCategory === 'cash' ? CASH_ID : INVEST_ID),
+      label: existing && existing.label ? existing.label : label,
+      category: existing ? existing.category : canonicalCategory,
+      valueCents: cents,
+      liquid: liquid,
+      ownerIds: existing && existing.ownerIds && existing.ownerIds.length ? existing.ownerIds : [person.id]
+    });
+  }
+
   /* ---- The ownership map -------------------------------------------------
      owner   — the room id that may EDIT this field
      anchor  — the section in that room to land on
@@ -106,12 +147,16 @@
     cashSavings: {
       label: 'Cash & savings', owner: 'start', anchor: 'q-cash',
       read: function (h) { return Schema.cashCents(h); },
-      format: money
+      format: money,
+      write: function (cents) { return writeAsset(['cash'], 'cash', true, 'Cash & savings', cents); }
     },
     investments: {
       label: 'Investments + retirement', owner: 'start', anchor: 'q-investments',
       read: function (h) { return Schema.investmentsCents(h); },
-      format: money
+      format: money,
+      write: function (cents) {
+        return writeAsset(['investment', 'retirement'], 'investment', false, 'Investments + retirement', cents);
+      }
     },
     employmentStatus: {
       label: 'Working situation', owner: 'start', anchor: 'q-employment',
@@ -303,8 +348,33 @@
          as an outstanding task. Fields with no applies() always apply.
          DECISIONS.md D-055. */
       applies: f.applies ? !!f.applies(household || {}) : true,
-      notApplicableBecause: f.notApplicableBecause || null
+      notApplicableBecause: f.notApplicableBecause || null,
+      /* How old the figure is. null-safe: without staleness.js loaded the
+         age is still computed from the stamp, just never judged. D-057. */
+      age: isSet ? ageOf(household, fieldId) : null
     };
+  }
+
+  function ageOf(household, fieldId) {
+    var St = stalenessModule();
+    if (!St) return null;
+    return St.describe(household || {}, fieldId);
+  }
+
+  /**
+   * write(fieldId, value) — set a field through its owner's own write path.
+   * Only fields that declare one; everything else is written by its room.
+   */
+  function write(fieldId, value) {
+    var f = field(fieldId);
+    if (!f || typeof f.write !== 'function') {
+      throw new Error('No shared write path for ' + fieldId + ' — write it in its owner room');
+    }
+    return f.write(value);
+  }
+
+  function writable() {
+    return Object.keys(FIELDS).filter(function (k) { return typeof FIELDS[k].write === 'function'; });
   }
 
   function escapeHtml(s) {
@@ -322,10 +392,15 @@
     var d = describe(fieldId, household, currentRoomId);
     if (!d) return '';
     if (d.isSet) {
-      return '<a class="slaf-owned" href="' + d.href + '">'
+      var age = d.age && d.age.label
+        ? ' · <span class="slaf-owned-age' + (d.age.stale === true ? ' is-stale' : '') + '">'
+          + escapeHtml(d.age.label) + '</span>'
+        : '';
+      return '<a class="slaf-owned' + (d.age && d.age.stale === true ? ' slaf-owned--stale' : '')
+        + '" href="' + d.href + '">'
         + '<span class="slaf-owned-label">' + escapeHtml(d.label) + '</span>'
         + '<span class="slaf-owned-value">' + escapeHtml(d.display) + '</span>'
-        + '<span class="slaf-owned-from">from ' + escapeHtml(d.ownerTitle) + ' →</span>'
+        + '<span class="slaf-owned-from">from ' + escapeHtml(d.ownerTitle) + ' →' + age + '</span>'
         + '</a>';
     }
     return '<a class="slaf-owned slaf-owned--empty" href="' + d.href + '">'
@@ -374,6 +449,8 @@
     FIELDS: FIELDS,
     FILING_LABELS: FILING_LABELS,
     readings: readings,
+    write: write,
+    writable: writable,
     field: field,
     linkTo: linkTo,
     describe: describe,

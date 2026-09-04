@@ -35,6 +35,9 @@ const Ownership = require(path.join(ROOT, 'shared/ownership.js'));
    sections re-require the spine under a fake localStorage and drop it from
    the module cache, so this handle is the only way back to the original. */
 const SpineMain = require(path.join(ROOT, 'shared/spine-v2.js'));
+/* Same reason: instruments.js binds to the spine instance it is required
+   against, so it is required here while that is still the original. */
+const InstrumentsMain = require(path.join(ROOT, 'shared/instruments.js'));
 const Fire = require(path.join(ROOT, 'engines/fire.js'));
 const Projection = require(path.join(ROOT, 'engines/projection.js'));
 const Hourly = require(path.join(ROOT, 'engines/hourly.js'));
@@ -4635,6 +4638,154 @@ section('The clock');
   }
 })();
 
+section('Age, and the three that move');
+
+(function () {
+  const Spine = SpineMain;
+  const Staleness = require(path.join(ROOT, 'shared/staleness.js'));
+  const Instruments = InstrumentsMain;
+  const table = require(path.join(ROOT, 'data/staleness.json'));
+  const DAY = 86400000;
+
+  /* -- The table ----------------------------------------------------------- */
+  {
+    ['asOf', 'confidence', 'source', 'confidenceNote', 'version'].forEach(k =>
+      checkTrue(`staleness.json carries ${k}`, !!table[k]));
+    check('it is a convention, not a finding', table.confidence, 'convention');
+    Object.keys(table.staleAfterDays).forEach(f =>
+      checkTrue(`staleness names a real field: ${f}`, !!Ownership.FIELDS[f]));
+    table.volatile.forEach(f =>
+      checkTrue(`volatile field ${f} has an interval`, typeof table.staleAfterDays[f] === 'number'));
+    check('a date of birth never goes stale', table.staleAfterDays.dob, null);
+    checkTrue('cash goes stale within a pay cycle or two', table.staleAfterDays.cashSavings <= 31);
+  }
+
+  /* -- Three states, never collapsed ---------------------------------------- */
+  {
+    Staleness.use(null);
+    const now = Date.parse('2026-09-04T12:00:00Z');
+    const h = Schema.createHousehold({ meta: { updatedAt: '2026-08-25T12:00:00Z' } });
+    h.meta.confirmedAt = { cashSavings: '2026-09-01T12:00:00Z' };
+
+    const known = Staleness.describe(h, 'cashSavings', now);
+    check('a stamped field has a real age', known.days, 3);
+    checkTrue('and says it is per-field', known.perField);
+    check('read as "updated 3 days ago"', known.label, 'updated 3 days ago');
+    check('with no table there is no verdict', known.stale, null);
+
+    const unknown = Staleness.describe(h, 'investments', now);
+    check('an unstamped field falls back to the last save', unknown.days, 10);
+    checkTrue('and says it is not per-field', !unknown.perField);
+    checkTrue('with a label that admits it', /not dated/.test(unknown.label));
+
+    const nothing = Staleness.describe(Schema.createHousehold({}), 'cashSavings', now);
+    check('nothing saved, nothing to date', nothing.days, null);
+    check('and an empty label', nothing.label, '');
+
+    Staleness.use(table);
+    check('with the table, 3 days is fresh', Staleness.describe(h, 'cashSavings', now).stale, false);
+    h.meta.confirmedAt.cashSavings = '2026-07-01T12:00:00Z';
+    check('and 65 days is stale', Staleness.describe(h, 'cashSavings', now).stale, true);
+    check('while a date of birth never is', Staleness.describe(
+      Object.assign({}, h, { meta: { confirmedAt: { dob: '2020-01-01T00:00:00Z' } } }), 'dob', now).stale, false);
+    check('the fallback age also gets a verdict', Staleness.describe(h, 'investments', now).stale, false);
+
+    ['today', 'yesterday', '30 days ago', 'about a month ago', '3 months ago', 'over a year ago', '2 years ago']
+      .forEach(function (want, i) {
+        const days = [0, 1, 30, 45, 90, 400, 800][i];
+        check(`${days} days reads as "${want}"`, Staleness.label(days, true), 'updated ' + want);
+      });
+
+    const sum = Staleness.summary(h, now);
+    check('the summary walks the volatile list', sum.rows.length, table.volatile.length);
+    checkTrue('and names the oldest', sum.oldest && sum.oldest.fieldId === 'cashSavings');
+    checkTrue('and knows something is stale', sum.anyStale);
+  }
+
+  /* -- Ownership shows the age --------------------------------------------- */
+  {
+    Staleness.use(table);
+    Spine.reset();
+    Spine.upsertAsset(Schema.createAsset({ id: 'c', category: 'cash', valueCents: 950000, liquid: true }));
+    const d = Ownership.describe('cashSavings', Spine.getProfile(), 'dashboard');
+    checkTrue('describe carries an age', !!d.age && d.age.days === 0);
+    checkTrue('and the chip prints it', /updated today/.test(Ownership.chip('cashSavings', Spine.getProfile(), 'dashboard')));
+    const old = Spine.getProfile(); old.meta.confirmedAt.cashSavings = '2020-01-01T00:00:00Z';
+    checkTrue('a stale figure is marked in the chip', /is-stale/.test(Ownership.chip('cashSavings', old, 'dashboard')));
+    checkTrue('an unset field has no age', Ownership.describe('investments', Spine.getProfile(), 'dashboard').age === null);
+  }
+
+  /* -- One write path for the figures that move ---------------------------- */
+  {
+    Spine.reset();
+    check('cash and investments declare a shared write path',
+      Ownership.writable().sort().join(','), 'cashSavings,investments');
+    Ownership.write('cashSavings', 980000);
+    check('writing cash creates the Tier 0 cash record', Schema.cashCents(Spine.getProfile()).value, 980000);
+    Ownership.write('cashSavings', 990000);
+    check('writing again updates it in place', Schema.cashCents(Spine.getProfile()).value, 990000);
+    check('and there is exactly one cash asset', Spine.getProfile().assets.filter(a => a.category === 'cash').length, 1);
+    checkTrue('it is liquid', Spine.getProfile().assets[0].liquid === true);
+    let threw = false;
+    try { Ownership.write('dob', '1990-01-01'); } catch (e) { threw = true; }
+    checkTrue('a field with no shared path refuses rather than guessing', threw);
+    const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
+    checkTrue('Start Here writes cash through the same path', start.indexOf("Ownership.write('cashSavings'") !== -1);
+    checkTrue('and no longer has its own asset writer', start.indexOf('function writeAsset') === -1);
+    const refresh = fs.readFileSync(path.join(ROOT, 'rooms/refresh.html'), 'utf8');
+    checkTrue('Refresh writes through it too', refresh.indexOf('Ownership.write(') !== -1);
+    checkTrue('and never calls upsertAsset itself', refresh.indexOf('upsertAsset') === -1);
+  }
+
+  /* -- The instrument list is the snapshot list ---------------------------- */
+  {
+    const h = Demo.build();
+    const now = Date.parse('2026-09-04T12:00:00Z');
+    const c = Instruments.compute(h, TABLES, now);
+    check('six instruments', c.rows.length, 6);
+    check('in panel order', c.rows.map(r => r.cap).join(' '), 'Altitude Thrust Fuel Load Distance Heading');
+    checkTrue('every one computes for the demo', c.rows.every(r => r.ok));
+    /* Net worth: 9,500 + 48,000 − 18,400 − 3,200 = 35,900. */
+    check('altitude is the demo net worth', c.byId.netWorth.result.value, 3590000);
+    check('formatted as dollars', Instruments.format(c.byId.netWorth), '$35,900');
+    check('fuel is cash over spending: 9,500 / 3,150', Math.round(c.byId.emergencyFundMonths.result.value * 100) / 100, 3.02);
+    check('heading is the FOO step the engine places you on', c.byId.fooStep.result.value, Tier0.computeAll(h, TABLES).foo.placement.step);
+    checkTrue('distance is a calendar year, not a count of years', c.byId.fiEtaYear.result.value > 2026);
+    check('which is now plus years-to-FI', c.byId.fiEtaYear.result.value,
+      new Date(now + Tier0.yearsToFire(h, TABLES).value * 365.25 * DAY).getFullYear());
+
+    const out = Instruments.outputs(h, TABLES, now);
+    c.rows.forEach(r => checkTrue(`a snapshot would carry ${r.id}`, r.id in out));
+    checkTrue('plus the including-match savings rate', 'savingsRateIncludingMatch' in out);
+
+    Spine.reset();
+    Spine.updateProfile({ people: h.people, assets: h.assets, debts: h.debts, expenses: h.expenses,
+      filingStatus: h.filingStatus, state: h.state, capturingFullMatch: h.capturingFullMatch,
+      retirement: h.retirement, insurance: h.insurance });
+    const rec = Instruments.snapshot(Spine.getProfile(), TABLES);
+    check('a taken snapshot freezes net worth', rec.computedOutputs.netWorth.value, 3590000);
+    check('and the frozen fields', rec.fields.cashSavings, 950000);
+    Ownership.write('cashSavings', 1250000);
+    const d = Instruments.deltas(Spine.getProfile(), TABLES, now);
+    check('net worth moved by the cash change', d.netWorth.delta, 300000);
+    check('formatted with a sign', Instruments.formatDelta(c.byId.netWorth, d.netWorth), '+$3,000');
+    check('runway moved too', Math.round(d.emergencyFundMonths.delta * 100) / 100, Math.round((1250000 - 950000) / 315000 * 100) / 100);
+    check('nothing to say when nothing moved', Instruments.formatDelta(c.byId.fooStep, { delta: 0 }), '');
+  }
+
+  /* -- The Refresh page is a utility, not a room on the map ---------------- */
+  {
+    const r = Registry.byId('refresh');
+    checkTrue('Refresh is registered', !!r);
+    checkTrue('as a utility', r.utility === true);
+    check('walking the volatile list', r.needs.slice().sort().join(','), table.volatile.slice().sort().join(','));
+    checkTrue('and last on the path so it never interrupts a first walk',
+      Registry.inOrder()[Registry.inOrder().length - 1].id === 'refresh');
+    const map = fs.readFileSync(path.join(ROOT, 'map.html'), 'utf8');
+    checkTrue('the map skips utility rooms', map.indexOf('!r.utility') !== -1);
+  }
+})();
+
 section('What is finished');
 
 (function () {
@@ -4671,7 +4822,9 @@ section('What is finished');
      short on-ramp and goes back to being a wall of twenty-five rooms —
      which is the thing D-051 exists to prevent, so it should fail loudly. */
   {
-    const core = Registry.ROOMS.filter(r => r.kind === 'core');
+    /* Utility pages (Refresh, D-057) are gathering pages that never sit on
+       the map, so they are not part of the four-room on-ramp. */
+    const core = Registry.ROOMS.filter(r => r.kind === 'core' && !r.utility);
     checkTrue('the core stays four rooms or fewer', core.length <= 4,
       `core is now ${core.map(r => r.title).join(', ')} — if this is deliberate, `
         + 'update the check and D-051 together');

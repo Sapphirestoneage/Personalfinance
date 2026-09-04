@@ -389,6 +389,9 @@ h3 { font-size: var(--text-md); }
 }
 
 .slaf-owned:hover .slaf-owned-from { color: var(--color-accent-hover); }
+.slaf-owned-age { color: var(--color-text-faint); }
+.slaf-owned-age.is-stale { color: var(--color-caution); }
+.slaf-owned--stale { border-left-color: var(--color-caution); }
 
 .slaf-owned--empty { border-left-color: var(--color-text-faint); }
 .slaf-owned--empty .slaf-owned-value { color: var(--color-text-faint); }

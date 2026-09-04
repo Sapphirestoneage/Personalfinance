@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Refresh · SPARKS</title>
+<meta name="description" content="The three figures that move — cash, investments, what you owe — re-checked in under a minute."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. BRIEF §1.4 "Refresh the three that move".
+
+  1. READS   cash & savings, investments (Start Here) and every itemised
+             debt balance (Debt Payoff), each with the date it was last
+             confirmed (meta.confirmedAt, D-056).
+  2. WRITES  Those same records — through Ownership.write() for the two
+             assets, which is the identical function Start Here calls, and
+             Spine.upsertDebt() for balances, which is what Debt Payoff
+             calls. It is a second place to edit the SAME record, never a
+             second copy. A figure submitted unchanged is re-confirmed
+             (Spine.confirm) rather than re-written. Then one snapshot
+             carrying every dashboard instrument (shared/instruments.js).
+             DECISIONS.md D-057.
+  3. CALLS   shared/staleness.js for ages; shared/instruments.js for the
+             snapshot. No formula lives here.
+  4. EMPTY   A figure never entered shows an empty box with its placeholder;
+             Enter on an empty box skips it and writes nothing. No debts
+             means no debt rows and says so.
+  5. CONFIG  data/staleness.json — the review intervals and the list of
+             volatile fields this page walks.
+
+  LIVE-FORM: built once. The two asset boxes are in the HTML; the debt rows
+  are built one time at load from the household and only ever have their
+  .value written after that. Nothing is rebuilt while a finger is on it.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+
+  .row { display: grid; grid-template-columns: 1fr; gap: var(--space-1); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  .row:first-child { border-top: none; padding-top: 0; }
+  .row .top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+  .row .nm { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .row .age { font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+  .row .age.is-stale { color: var(--color-caution); }
+  .row .age.is-fresh { color: var(--color-positive); }
+  .row .where { font-size: var(--text-xs); color: var(--color-text-faint); }
+  .row .where a { color: var(--color-accent-hover); }
+  .actions { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); margin-top: var(--space-4); }
+  .empty { font-size: var(--text-sm); color: var(--color-text-faint); }
+  .done-note { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Refresh</h1>
+  <p class="room-lede">The three figures that move. Each box already holds the last number you gave — press Enter to say it still holds, or type the new one.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="fields">
+    <span class="slaf-eyebrow">The three that move</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Still true?</h2>
+
+    <div class="row" id="row-cash">
+      <div class="top"><span class="nm">Cash &amp; savings</span><span class="age" id="age-cash"></span></div>
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+        <input type="text" inputmode="decimal" data-field="cashSavings" placeholder="e.g. 9500" aria-label="Cash and savings"/></span>
+      <span class="where">Owned by <a href="start.html#q-cash">Start Here</a> — this box writes the same record.</span>
+    </div>
+
+    <div class="row" id="row-invest">
+      <div class="top"><span class="nm">Investments + retirement</span><span class="age" id="age-invest"></span></div>
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+        <input type="text" inputmode="decimal" data-field="investments" placeholder="e.g. 48000" aria-label="Investments and retirement"/></span>
+      <span class="where">Owned by <a href="start.html#q-investments">Start Here</a>.</span>
+    </div>
+
+    <div id="debt-rows"></div>
+    <p class="empty" id="debt-empty" hidden>No debts listed. If there are any, <a href="debt-payoff.html#debts">add them in Debt Payoff</a>.</p>
+  </section>
+
+  <section class="slaf-card" id="done" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Snapshot</span>
+    <h2 style="margin:var(--space-2) 0 0">Then freeze today's numbers</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      One snapshot carrying every dashboard instrument, so the next time you
+      open it the panel can say what moved since today — not just what it is.
+    </p>
+    <div class="actions">
+      <span class="done-note" id="done-note" style="margin:0"></span>
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-done">Save &amp; snapshot →</button>
+    </div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Everything stays in this browser —
+    nothing is sent anywhere.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/staleness.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/ratios.js"></script>
+<script src="../shared/instruments.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference,
+      Ownership = SLAF.Ownership, Staleness = SLAF.Staleness, Instruments = SLAF.Instruments;
+
+  var ROOM_ID = 'refresh';
+  var TABLES = null;
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  /* ---- Rows: two fixed, N debts built ONCE ------------------------------- */
+
+  var h0 = Spine.getProfile();
+  var debts = Schema.aggregatableDebts(h0);
+
+  (function buildDebtRows() {
+    var host = el('debt-rows');
+    el('debt-empty').hidden = debts.length > 0;
+    debts.forEach(function (d, i) {
+      var row = document.createElement('div');
+      row.className = 'row';
+      row.id = 'row-debt-' + i;
+      row.innerHTML = '<div class="top"><span class="nm">' + esc(d.label || 'Debt') + ' balance</span>'
+        + '<span class="age" id="age-debt-' + i + '"></span></div>'
+        + '<span class="slaf-input-shell"><span class="slaf-affix">$</span>'
+        + '<input type="text" inputmode="decimal" data-field="debtBalance" data-debt="' + esc(d.id)
+        + '" placeholder="e.g. 3200" aria-label="' + esc(d.label || 'Debt') + ' balance"/></span>'
+        + '<span class="where">Owned by <a href="debt-payoff.html#debts">Debt Payoff</a>.</span>';
+      host.appendChild(row);
+    });
+  })();
+
+  function inputs() { return Array.prototype.slice.call(document.querySelectorAll('input[data-field]')); }
+
+  /* ---- Paint: values only, never while focused ---------------------------- */
+
+  function currentCents(node) {
+    var h = Spine.getProfile();
+    var f = node.getAttribute('data-field');
+    if (f === 'debtBalance') {
+      var d = Schema.aggregatableDebts(h).filter(function (x) { return x.id === node.getAttribute('data-debt'); })[0];
+      return d && Money.isEntered(d.balanceCents) ? d.balanceCents : null;
+    }
+    var r = Ownership.field(f).read(h);
+    return Money.isOk(r) ? r.value : null;
+  }
+
+  function paintAges() {
+    var h = Spine.getProfile();
+    function put(id, fieldId) {
+      var node = el(id); if (!node) return;
+      var a = Staleness.describe(h, fieldId);
+      node.textContent = a.label;
+      node.className = 'age' + (a.stale === true ? ' is-stale' : a.days === 0 && a.perField ? ' is-fresh' : '');
+    }
+    put('age-cash', 'cashSavings');
+    put('age-invest', 'investments');
+    debts.forEach(function (d, i) { put('age-debt-' + i, 'totalDebt'); });
+  }
+
+  function paint() {
+    inputs().forEach(function (node) {
+      if (node === document.activeElement) return;
+      var c = currentCents(node);
+      node.value = Money.isEntered(c) ? Money.formatCents(c) : '';
+    });
+    paintAges();
+  }
+
+  /* ---- Commit: changed → write; unchanged → confirm; empty → skip -------- */
+
+  function commit(node) {
+    var raw = String(node.value || '').trim();
+    if (raw === '') return;                             /* nothing said, nothing written */
+    var cents = Money.parseMoney(raw);
+    if (!Money.isEntered(cents)) return;
+    var f = node.getAttribute('data-field');
+    var before = currentCents(node);
+    if (f === 'debtBalance') {
+      if (cents !== before) Spine.upsertDebt({ id: node.getAttribute('data-debt'), balanceCents: cents });
+      else Spine.confirm('totalDebt');
+    } else if (cents !== before) {
+      Ownership.write(f, cents);
+    } else {
+      Spine.confirm(f);
+    }
+    node.value = Money.formatCents(cents);
+  }
+
+  document.addEventListener('focusout', function (evt) {
+    var node = evt.target;
+    if (node && node.getAttribute && node.getAttribute('data-field')) { commit(node); paintAges(); }
+  });
+
+  /* Enter commits and moves to the next box; on the last box it finishes. */
+  document.addEventListener('keydown', function (evt) {
+    if (evt.key !== 'Enter') return;
+    var node = evt.target;
+    if (!node || !node.getAttribute || !node.getAttribute('data-field')) return;
+    evt.preventDefault();
+    commit(node); paintAges();
+    var all = inputs();
+    var i = all.indexOf(node);
+    if (i >= 0 && i < all.length - 1) all[i + 1].focus();
+    else el('btn-done').focus();
+  });
+
+  /* ---- Finish: snapshot, then home ----------------------------------------- */
+
+  el('btn-done').addEventListener('click', function () {
+    inputs().forEach(commit);
+    if (!TABLES) { el('done-note').textContent = 'Reference tables are still loading — one moment.'; return; }
+    Instruments.snapshot(Spine.getProfile(), TABLES);
+    var n = Spine.listSnapshots().length;
+    el('done-note').textContent = 'Saved. Snapshot ' + n + ' taken.';
+    window.location.href = '../index.html';
+  });
+
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(paint);
+
+  Reference.load().then(function (t) {
+    TABLES = t;
+    Staleness.use(t.staleness);
+    paint();
+    var first = inputs()[0];
+    if (first && !location.hash) first.focus();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+    paint();
+  });
+})();
+</script>
+</body>
+</html>
