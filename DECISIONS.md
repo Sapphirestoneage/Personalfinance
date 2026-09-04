@@ -3272,6 +3272,62 @@ is a new suite: export → import deep-equal, share-code round trip, size.
 
 ---
 
+## D-060 — A suggested value is shown, never stored
+
+*(BRIEF.md §0.3 D-A and §2.1. Partially supersedes SPEC.md §5 "inputs ship
+empty" — an input may ship showing a proposal.)*
+
+The brief asked for a third input state between empty and entered:
+`suggested`, sourced from a reference table or a derived figure, rendered
+distinctly, counted as unanswered until confirmed. It proposed storing it as
+`{ value, state: 'suggested' | 'entered', source }` on every scalar owned
+field, with a migration wrapping existing bare values.
+
+**Decision: the state exists; the stored shape does not change.** A
+suggestion lives only in a DOM node's display. `shared/suggest.js` paints it
+(muted, dashed underline, a "Use this" chip naming the source) and reports
+it; the room that owns the field does the write when the person taps the
+chip or types. The household never holds a suggested value at all.
+
+Why not the stored shape the brief described:
+
+- Every reader in the app — `Schema.cashCents()`, every engine, every
+  ownership `read` — takes bare numbers. Wrapping them means every one of
+  those unwraps and checks `state`, and the one that forgets feeds a guess
+  into a formula. The brief's own test ("no room writes a suggested value
+  into a formula without confirmation") is a test that the discipline held.
+  Not storing the value makes the discipline unnecessary: an engine cannot
+  read what is not there.
+- The only thing storing buys is remembering that a suggestion was shown.
+  Every suggestion here is deterministic — a table row or a derivation from
+  fields the household already holds — so it costs nothing to show it again.
+- Empty ≠ zero (CLAUDE.md, SPEC.md §4–5) stays exactly as strict, with no new
+  third value in storage to reason about. `Progress` needs no change: a
+  suggested field reads as `null`, which is unanswered.
+
+### The mechanics that make "never in a formula" true by construction
+
+`Suggest.show(node, { value, display, source, onUse })` writes the display
+into the box and marks it `data-suggested`. **Focusing the box clears it**,
+so a blur handler that reads `node.value` gets `''` — precisely what an
+empty box gives — and leaving it blank re-shows the proposal rather than an
+empty field. `Suggest.entered(node)` is the read a room should use where it
+reads a box outside a blur. "Use this" calls the room's `onUse(value)`,
+which writes through the room's ordinary path, then the state is entered
+like any other. `show()` refuses to paint over a box that already holds an
+entered value: a suggestion never overwrites an answer.
+
+Nothing is rebuilt: `show()` writes `.value` and classes on a node in the
+page and adds one chip beside it, once. D-034 holds.
+
+### Compatibility note
+
+Stored shape: **nothing changes.** No migration. Rooms opt in one box at a
+time by calling `Suggest.show()`; a room that never does is unaffected.
+`test/run.js` asserts `shared/suggest.js` never references the spine.
+
+---
+
 ## D-046 — HP is measured in weeks, which is what makes §3A stop contradicting itself
 
 The Dungeons & Dividends rulebook defines Hit Points twice in the same

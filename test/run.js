@@ -4821,6 +4821,28 @@ section('Age, and the three that move');
   }
 })();
 
+section('Suggested, not stored');
+
+(function () {
+  const src = fs.readFileSync(path.join(ROOT, 'shared/suggest.js'), 'utf8');
+  const Suggest = require(path.join(ROOT, 'shared/suggest.js'));
+  ['show', 'clear', 'isSuggested', 'entered', 'all'].forEach(fn =>
+    checkTrue(`Suggest exposes ${fn}()`, typeof Suggest[fn] === 'function'));
+  /* The whole guarantee: this file cannot write to the household. */
+  checkTrue('suggest.js never touches the spine', !/Spine\.|localStorage|updateProfile|upsert/.test(src));
+  checkTrue('and never requires it', !/require\(/.test(src));
+  checkTrue('focus clears the shown value so a blur reads empty', /addEventListener\('focus'[\s\S]{0,400}node\.value = ''/.test(src));
+  checkTrue('show() refuses to paint over an entered value', /if \(!isSuggested\(node\) && String\(node\.value/.test(src));
+  const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('the suggested style is in the shared theme', theme.indexOf('.slaf-input--suggested') !== -1);
+  checkTrue('with a dashed shell', /is-suggested \{ border-style: dashed/.test(theme));
+  /* No engine or schema reader can see a suggestion because none is stored:
+     the ownership readings of a household are the same before and after a
+     suggestion would be shown — there is no API to store one. */
+  checkTrue('there is no way to store a suggestion', !/state: 'suggested'|state:"suggested"/.test(
+    fs.readFileSync(path.join(ROOT, 'shared/schema.js'), 'utf8') + fs.readFileSync(path.join(ROOT, 'shared/spine-v2.js'), 'utf8')));
+})();
+
 section('What is finished');
 
 (function () {
