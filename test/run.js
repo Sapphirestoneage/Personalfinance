@@ -1962,6 +1962,119 @@ section('Ratings');
    real mobile browser; this is the scheduling rule on its own.
    ========================================================================== */
 
+/* ==========================================================================
+   Storage safety. Bumping the schema version used to be a data-loss event:
+   a stored blob whose version did not match exactly fell through to a fresh
+   household, and the next write overwrote the user's real data with it.
+   ========================================================================== */
+
+section('Storage and migration');
+
+(function () {
+  const spinePath = path.join(ROOT, 'shared/spine-v2.js');
+
+  /* A tiny localStorage, so the spine can be loaded fresh per scenario. */
+  function withStorage(seed) {
+    const store = Object.assign({}, seed || {});
+    global.localStorage = {
+      getItem: (k) => (k in store ? store[k] : null),
+      setItem: (k, v) => { store[k] = String(v); },
+      removeItem: (k) => { delete store[k]; }
+    };
+    delete require.cache[require.resolve(spinePath)];
+    return { store, Spine: require(spinePath) };
+  }
+
+  function realHousehold() {
+    const h = Schema.createHousehold({});
+    h.people.push(Schema.createPerson({ label: 'You', role: 'adult' }));
+    h.assets.push(Schema.createAsset({ category: 'cash', valueCents: 950000, liquid: true }));
+    h.debts.push(Schema.createDebt({ label: 'Card', balanceCents: 320000, type: 'credit_card' }));
+    return h;
+  }
+
+  const KEY = 'slaf.household.v2';
+  const QUARANTINE = 'slaf.household.unreadable';
+  const saved = JSON.stringify(realHousehold());
+
+  /* -- A matching version loads normally --------------------------------- */
+  {
+    const { Spine } = withStorage({ [KEY]: saved });
+    check('a current-version blob loads', Spine.getProfile().assets.length, 1);
+    check('and reports itself as readable', Spine.storageState().status, 'ok');
+    checkTrue('and writable', Spine.storageState().writable);
+  }
+
+  /* -- A version we cannot bring forward is NOT overwritten -------------- */
+  {
+    const ahead = JSON.parse(saved);
+    ahead.schemaVersion = 99;                      /* saved by a newer build */
+    const { store, Spine } = withStorage({ [KEY]: JSON.stringify(ahead) });
+
+    Spine.registerRoom('start');                   /* any write at all */
+    Spine.updateProfile({ state: 'NC' });
+
+    const still = JSON.parse(store[KEY]);
+    check('a blob from a newer build keeps its assets', still.assets.length, 1);
+    check('and its debts', still.debts.length, 1);
+    check('and its version', still.schemaVersion, 99);
+    check('the session says why it is read-only', Spine.storageState().status, 'ahead');
+    checkTrue('and that it is read-only', !Spine.storageState().writable);
+    checkTrue('and a copy was put aside', typeof store[QUARANTINE] === 'string');
+    check('the copy records what was found',
+      JSON.parse(store[QUARANTINE]).storedVersion, 99);
+    /* The session still works — it just does not persist. */
+    check('the session itself is usable', Spine.getProfile().state, 'NC');
+  }
+
+  /* -- An older version with no migration step is also preserved --------- */
+  {
+    const old = JSON.parse(saved);
+    old.schemaVersion = 1;
+    const { store, Spine } = withStorage({ [KEY]: JSON.stringify(old) });
+    Spine.registerRoom('start');
+    check('an unmigratable old blob keeps its assets',
+      JSON.parse(store[KEY]).assets.length, 1);
+    check('and says a migration step is missing', Spine.storageState().status, 'no-migration');
+    checkTrue('and is held read-only', !Spine.storageState().writable);
+  }
+
+  /* -- A corrupt blob is kept, not thrown away --------------------------- */
+  {
+    const { store, Spine } = withStorage({ [KEY]: '{"schemaVersion":2,"assets":[' });
+    Spine.registerRoom('start');
+    check('a truncated blob is left where it is',
+      store[KEY], '{"schemaVersion":2,"assets":[');
+    check('and reported as corrupt', Spine.storageState().status, 'corrupt');
+    checkTrue('and copied aside', typeof store[QUARANTINE] === 'string');
+  }
+
+  /* -- Nothing stored is the ordinary case ------------------------------- */
+  {
+    const { Spine } = withStorage({});
+    check('an empty browser starts fresh', Spine.storageState().status, 'fresh');
+    checkTrue('and can write', Spine.storageState().writable);
+  }
+
+  /* -- The rule that keeps this fixed ------------------------------------
+        Every version from 2 up to the current one needs a migration entry.
+        Bumping SCHEMA_VERSION without one is what used to destroy data, so
+        the build fails here instead of in someone's browser.             */
+  {
+    const { Spine } = withStorage({});
+    for (let v = 2; v <= Schema.SCHEMA_VERSION; v++) {
+      if (v === 2) continue;                       /* 2 is the floor shape */
+      checkTrue(`a migration exists for schema v${v}`,
+        typeof Spine._MIGRATIONS[v] === 'function',
+        `add MIGRATIONS[${v}] in shared/spine-v2.js before bumping SCHEMA_VERSION`);
+    }
+    check('the migration registry has no entries for versions that do not exist',
+      Object.keys(Spine._MIGRATIONS).filter(v => Number(v) > Schema.SCHEMA_VERSION).length, 0);
+  }
+
+  delete global.localStorage;
+})();
+
 section('Live forms');
 
 (function () {

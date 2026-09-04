@@ -41,6 +41,7 @@
 
   var STORAGE_KEY = 'slaf.household.v2';
   var SNAPSHOT_KEY = 'slaf.snapshots.v1';
+  var QUARANTINE_KEY = 'slaf.household.unreadable';
   var LEGACY_KEYS = ['slaf.profile', 'slaf.profile.v1', 'sparks.profile'];
 
   /* ---- Storage adapter --------------------------------------------------
@@ -134,6 +135,87 @@
     return null;
   }
 
+  /* ---- Schema migration -------------------------------------------------
+     Keyed by the version being migrated TO. To bump Schema.SCHEMA_VERSION
+     from N to N+1, add an entry `N+1` here that takes the old shape and
+     returns the new one. Migrations chain: a blob at v2 with a target of v4
+     runs 3 then 4.
+
+     test/run.js fails the build if SCHEMA_VERSION is bumped without a
+     matching entry, because the alternative is what this code used to do:
+     a stored blob whose version did not match exactly fell through to a
+     FRESH household, and the next write overwrote the user's real data with
+     it. Silently. Bumping the version was a data-loss event.
+
+     Nothing is ever discarded now. A blob that cannot be brought forward is
+     copied to QUARANTINE_KEY and left where it is, the session runs in
+     memory, and storageState() says why so a room can tell the person
+     rather than pretending they are new here.                            */
+
+  var MIGRATIONS = {
+    /* 3: function (old) { return Object.assign({}, old, { … }); }, */
+  };
+
+  var storage = { status: 'fresh', storedVersion: null, targetVersion: null, writable: true };
+
+  /**
+   * Bring a parsed blob up to the current schema version, or refuse.
+   * Returns { ok: true, household } or { ok: false, reason, storedVersion }.
+   */
+  function migrateStored(parsed) {
+    var target = Schema.SCHEMA_VERSION;
+    var version = parsed.schemaVersion;
+
+    if (typeof version !== 'number') {
+      return { ok: false, reason: 'unversioned', storedVersion: null };
+    }
+    if (version === target) {
+      return { ok: true, household: Schema.createHousehold(parsed), migrated: false };
+    }
+    if (version > target) {
+      /* Saved by a newer build than this one. Reading it would mean guessing
+         at fields this code has never heard of, and writing would destroy
+         them. Neither is acceptable. */
+      return { ok: false, reason: 'ahead', storedVersion: version };
+    }
+
+    var working = parsed;
+    while (version < target) {
+      var next = version + 1;
+      var step = MIGRATIONS[next];
+      if (typeof step !== 'function') {
+        return { ok: false, reason: 'no-migration', storedVersion: parsed.schemaVersion,
+                 stuckAt: version };
+      }
+      working = step(working);
+      version = next;
+    }
+    working.schemaVersion = target;
+    return { ok: true, household: Schema.createHousehold(working), migrated: true };
+  }
+
+  /** Copy a blob we cannot read somewhere it will survive, and say so. */
+  function quarantine(raw, reason, storedVersion) {
+    var existing = readRaw(QUARANTINE_KEY);
+    if (!existing) {
+      writeRaw(QUARANTINE_KEY, JSON.stringify({
+        quarantinedAt: new Date().toISOString(),
+        reason: reason,
+        storedVersion: storedVersion,
+        readerVersion: Schema.SCHEMA_VERSION,
+        blob: raw
+      }));
+    }
+    storage = {
+      status: reason,
+      storedVersion: storedVersion,
+      targetVersion: Schema.SCHEMA_VERSION,
+      /* The original key is left exactly as it is. Writing over it is the
+         one thing that would make this unrecoverable. */
+      writable: false
+    };
+  }
+
   /* ---- Load / save ------------------------------------------------------ */
 
   var cache = null;
@@ -142,28 +224,77 @@
     if (cache) return cache;
     var raw = readRaw(STORAGE_KEY);
     if (raw) {
-      try {
-        var parsed = JSON.parse(raw);
-        if (parsed && parsed.schemaVersion === Schema.SCHEMA_VERSION) {
-          cache = Schema.createHousehold(parsed);
+      var parsed = null;
+      try { parsed = JSON.parse(raw); } catch (e) { parsed = null; }
+
+      if (parsed && typeof parsed === 'object') {
+        var result = migrateStored(parsed);
+        if (result.ok) {
+          cache = result.household;
+          storage = { status: result.migrated ? 'migrated' : 'ok',
+                      storedVersion: parsed.schemaVersion,
+                      targetVersion: Schema.SCHEMA_VERSION, writable: true };
+          if (result.migrated) save();
           return cache;
         }
-      } catch (e) { /* corrupt blob — fall through to a fresh household */ }
+        quarantine(raw, result.reason, result.storedVersion);
+        cache = Schema.createHousehold({ meta: { createdAt: new Date().toISOString() } });
+        return cache;
+      }
+
+      /* Unparseable. Keep it — a truncated blob is sometimes recoverable by
+         hand, and it is never ours to throw away. */
+      quarantine(raw, 'corrupt', null);
+      cache = Schema.createHousehold({ meta: { createdAt: new Date().toISOString() } });
+      return cache;
     }
+
     var migrated = loadLegacy();
     if (migrated) {
       cache = migrated;
+      storage = { status: 'legacy', storedVersion: null,
+                  targetVersion: Schema.SCHEMA_VERSION, writable: true };
       save();
       return cache;
     }
     cache = Schema.createHousehold({ meta: { createdAt: new Date().toISOString() } });
+    storage = { status: 'fresh', storedVersion: null,
+                targetVersion: Schema.SCHEMA_VERSION, writable: true };
     return cache;
   }
 
   function save() {
     if (!cache) return;
     cache.meta.updatedAt = new Date().toISOString();
+    if (!storage.writable) {
+      /* Something we could not read is sitting in that key. The session
+         still works — it just does not persist, which is the correct cost
+         of not destroying whatever is already there. */
+      memoryStore[STORAGE_KEY] = JSON.stringify(cache);
+      return;
+    }
     writeRaw(STORAGE_KEY, JSON.stringify(cache));
+  }
+
+  /**
+   * What happened when this session's data was loaded:
+   *   ok / fresh / migrated / legacy  — normal, and writable
+   *   ahead        — saved by a newer build; left untouched
+   *   no-migration — a version bump shipped without a migration step
+   *   corrupt      — unparseable blob, kept aside
+   *   unversioned  — an object with no schemaVersion at all
+   * Everything but the first four is read-only for the session, and the
+   * original blob is preserved under the quarantine key.
+   */
+  function storageState() {
+    load();
+    return {
+      status: storage.status,
+      storedVersion: storage.storedVersion,
+      targetVersion: storage.targetVersion,
+      writable: storage.writable,
+      quarantineKey: storage.writable ? null : QUARANTINE_KEY
+    };
   }
 
   /* ---- Change notification ---------------------------------------------- */
@@ -547,6 +678,8 @@
     removeExpenseEntry: removeExpenseEntry,
     setAssumptionOverride: setAssumptionOverride,
     setSwanTarget: setSwanTarget,
+    storageState: storageState,
+    _MIGRATIONS: MIGRATIONS,
     setRating: setRating,
     setStatedValues: setStatedValues,
     assignCategoryToValue: assignCategoryToValue,
