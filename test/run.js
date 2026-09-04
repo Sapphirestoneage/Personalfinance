@@ -2994,7 +2994,7 @@ section('Reference tables');
      says how much its numbers are worth. The confidence field is not
      decoration: a data layer that hands back a plausible number with no way
      to know it was invented is how a believable wrong answer ships, which
-     is the whole argument in INTEROP.md. */
+     is the whole argument in DECISIONS.md D-036. */
   onDisk.forEach(function (file) {
     const t = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', file), 'utf8'));
     checkTrue(`data/${file} declares a version`, typeof t.version === 'string' && t.version.length > 0);

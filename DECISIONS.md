@@ -1582,6 +1582,62 @@ Two guards, because the fix alone would not stop the next one:
 
 ---
 
+## D-037 — This repo is the build. The Vue/TS effort stops.
+
+Two codebases were being built against one spec: this one (static HTML,
+vanilla JS, no build step) and a Vue 3 / TypeScript project that had grown a
+persistence module, a scaffolding folder, a variable registry and a data
+layer. The owner settled it with a criterion rather than a preference:
+**whatever is simplest for someone they show the code to, so that person can
+make adjustments** — and don't duplicate effort.
+
+On that criterion this repo wins outright, and not narrowly. There is nothing
+to install, nothing to compile, nothing generated. Someone handed this repo
+opens a file and edits it, and `node test/run.js` tells them whether they
+broke anything. The Vue build needs Node, a package manager, a lockfile, a
+bundler and a framework understood before the first edit — and every one of
+those is a thing that can rot between being shown the code and opening it.
+
+So `INTEROP.md` is retired and folded in here. A standing "these two must
+stay in sync" document describes a situation that is ending, and keeping it
+would be the duplicated effort the decision exists to stop. It is in the git
+history if the detail is ever wanted. What mattered from it:
+
+**Already acted on, before the decision.** The float-vs-cents divergence is
+moot now (this repo was always integer cents). The date-of-birth bounds their
+validation suggested are built and tested (D-035). The provenance criticism
+their placeholder data layer prompted is built as a `confidence` field on
+every table (D-036), and chasing it found the Financial Snapshot shipping
+broken.
+
+**Worth salvaging before that repo is archived** — all framework-independent
+content, none of it code:
+
+- `SECURITY.md`'s pre-production checklist
+- `content/disclaimers.ts` — with its own honest note that the wording has
+  not been through legal review
+- the *rules* in `tier0Validation.ts`, not the implementation
+- the Master Variable Registry, as the counterpart to `shared/schema.js`'s
+  field dictionary — the `Cents` suffix and the transaction-shaped expense
+  entry are the two places to reconcile it, per `ROADMAP.md`
+
+**Two of its design instincts are better than the average of that file** and
+are worth carrying into anything built here. `getJobLossRiskMultiplier` was
+deliberately a pass-through, with a comment arguing *against* an automated
+"risk by state or identity" dataset and taking the number from the person
+instead — that generalises: where data is contested, sensitive or cannot be
+maintained honestly, ask rather than fabricate. And its migration module's
+header rule — never silently read old-shaped data as if it matches the new
+interface — was right, even though the function under it did exactly that.
+Checking that rule against this repo is what found the silent data wipe.
+
+**What changes here as a result:** the README leads with how to change
+things, not with an architecture tour, and the root now carries five
+documents rather than six. Nothing about the code changed — it already met
+the criterion. That is the point.
+
+---
+
 ## Still open
 
 - ~~**Two-Income Household Toggle** and **Soft Saving Balance

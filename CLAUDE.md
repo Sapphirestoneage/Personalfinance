@@ -8,8 +8,9 @@ idea universe, not the build plan: its ✅ means "the idea is locked", not
 "this exists". `SPEC.md` scopes what this repo actually builds, and the
 build-status table at the top of `ROADMAP.md` says what is shipped.
 
-Then read `README.md` (what this project is) and `DECISIONS.md` (what has
-already been decided and why). `SPEC.md` is the authority on the data model,
+Then read `README.md` (what this project is, and how to change it) and
+`DECISIONS.md` (what has already been decided and why). This repo is the
+build — a parallel Vue/TypeScript effort was stopped, see D-037. `SPEC.md` is the authority on the data model,
 naming, units, design rules, and build order. `DECISIONS.md` is the running
 log; when the two disagree, `SPEC.md` wins unless a `DECISIONS.md` entry
 explicitly supersedes it and says so.

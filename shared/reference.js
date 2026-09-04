@@ -252,7 +252,7 @@
      This exists because the alternative is what a placeholder data layer
      does by default: return a plausible number with no way for anything
      downstream to know it was invented. A believable wrong answer is worse
-     than a missing one — see INTEROP.md.                                 */
+     than a missing one — see DECISIONS.md D-036.                                 */
 
   var CONFIDENCE_LEVELS = ['sourced', 'convention', 'unverified'];
 

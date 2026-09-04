@@ -31,6 +31,39 @@ python3 -m http.server 8000
 Serving over HTTP matters: rooms `fetch()` their reference tables out of
 `data/`, and `file://` blocks that.
 
+## Changing things
+
+Nothing here is compiled, bundled, or generated. Every change below is a
+plain text edit to one file, and `node test/run.js` grades it.
+
+| To change… | Edit | Notes |
+|---|---|---|
+| a number, rate, threshold, limit | `data/*.json` | No code. Change `highInterestDebtRate` from 0.075 to 0.30 and a different out-of-bounds flag fires — the tests catch it the same second |
+| what a room says | that room's `.html` | Copy is written inline, next to the thing it describes |
+| colours, type, spacing | `shared/theme.css` | Design tokens at the top; every room inherits them |
+| room order, titles, the map | `shared/registry.js` | One entry per room — `order` is the path a person walks |
+| a calculation | `engines/*.js` | One function per concept. If you find yourself copying one, it wants a parameter instead |
+| the questions in the intake | `rooms/start.html` | One array near the bottom drives the whole flow |
+
+**Adding a room** is two files, and you don't have to remember the rules —
+add an entry to `shared/registry.js`, run the tests, and they tell you what's
+missing, one step at a time:
+
+```
+$ node test/run.js
+  1. room file missing: rooms/scratch-demo.html
+```
+
+Fix that, run again, and it asks for the next thing: a deep-link anchor that
+exists, a filter tag, a `registerRoom()` call, the shared stylesheet, and
+every module its scripts depend on. Copy the shape of an existing room —
+`rooms/sleep-at-night.html` is a good small one to start from.
+
+**The four rules that will bite you** are in `CLAUDE.md`, enforced by tests,
+and worth reading before shared code: empty is not zero, no `|| 0` in a
+formula, money is integer cents, and never rebuild a form while someone is
+typing in it.
+
 ## Layout
 
 ```
@@ -72,7 +105,6 @@ test/alignment.js   Browser layout check — side-by-side cells must line up
 test/forms.js       Mobile browser check — typing must survive, keyboard must stay
 SPEC.md             The full Tier 0–2 build spec. The authority.
 ROADMAP.md          The master idea index, tiers 0–24, + what's actually built
-INTEROP.md          Where the parallel Vue/TS build and this one disagree
 DECISIONS.md        Running log of what was decided and why.
 CLAUDE.md           Working agreement for anyone (human or agent) editing this.
 ```
