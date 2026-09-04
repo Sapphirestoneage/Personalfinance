@@ -67,9 +67,9 @@ typing in it.
 ## Layout
 
 ```
-index.html          The FOO ladder — the front page
-foo-ladder.js       Its logic: build() once, paint() on every change
-map.html            Room directory, tag filter, visited progress
+index.html          The front door: the Dashboard once it has what it needs, the intake landing until then (D-058)
+foo-ladder.js       The FOO ladder's logic (shell at rooms/foo-ladder.html): build() once, paint() on every change
+map.html            Room directory: next-unfinished first, then the groups, tag filter
 favicon.svg         Sapphire mark
 rooms/              One HTML file per room
 vendor/fonts/       Self-hosted typefaces (no CDN, no other vendored code)

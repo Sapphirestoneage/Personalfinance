@@ -134,7 +134,7 @@ const CASES = [
     /* The front page. It is the most input-heavy page in the repo and it is
        hand-built vanilla — the exact place the keyboard bug would come back
        if the build-once rule slipped. */
-    room: '/',
+    room: '/rooms/foo-ladder.html',
     container: '.wrap',
     seed: 'demo',
     prepare: async (page) => {

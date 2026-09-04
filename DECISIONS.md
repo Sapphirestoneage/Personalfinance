@@ -3184,6 +3184,52 @@ does not, the room that owns it is the only place it may be written.
 
 ---
 
+## D-058 — The Dashboard is the front door; the FOO ladder is a room
+
+*(BRIEF.md §1.2. Supersedes D-007's amendment.)* D-007 kept the FOO
+calculator at the site root because moving it would change what an existing
+visitor landed on. That was the right call for a calculator with no memory.
+The suite now has one — a household, a clock (D-056), snapshots that read
+back — and what a returning visitor should land on is **their panel**, not
+a calculator that re-derives one step of it.
+
+**Decision: `index.html` is a router.** When `Progress.forRoom('dashboard')`
+is complete it renders the Dashboard (the same page that was
+`rooms/dashboard.html`; that file is now a redirect so old links hold).
+Until then it renders the intake landing: one sentence, **Start Here →**,
+and **See it with example numbers** above the fold. The example button is
+still an explicit action behind a confirm; demo data never loads by itself.
+A visitor part-way through sees how many answers are in and a link to the
+next unanswered question rather than the landing copy again.
+
+A household with no debts is not blocked. "No debts entered" is still
+incomplete, not zero (empty ≠ zero), so the router treats `totalDebt` as the
+one need that does not gate the panel: with the other four figures in, the
+dashboard renders and the Load instrument says what it is waiting for. T2's
+`meta.hasDebt` ("any debt? yes/no") is what makes that answer explicit; until
+it lands the router is deliberately lenient on that one field only.
+
+The FOO ladder moves to `rooms/foo-ladder.html`. Its script stays at the
+repo root as `foo-ladder.js` (the test suite reads it there); only the shell
+moved. `Progress` no longer special-cases `'foo-ladder'` as the root page:
+a room is at the root when its registry `href` is not under `rooms/`, which
+is now exactly the dashboard.
+
+`map.html` becomes the "All rooms" drawer: the next-unfinished room as one
+card first, then the four groups. The "rooms visited N of 25" bar is gone —
+visiting is not progress, answering is — and the "answers given" bar stays.
+
+### Compatibility note
+
+Stored shape: nothing. `rooms/dashboard.html` links redirect, hash included.
+Registry `href` for `dashboard` is `index.html` and for `foo-ladder` is
+`rooms/foo-ladder.html`; anything that hard-coded either path should read
+`Ownership.linkTo()` instead. Rooms updated: `map.html`, `index.html`,
+`rooms/dashboard.html`, `rooms/foo-ladder.html`; `test/forms.js` and
+`test/alignment.js` retargeted.
+
+---
+
 ## D-046 — HP is measured in weeks, which is what makes §3A stop contradicting itself
 
 The Dungeons & Dividends rulebook defines Hit Points twice in the same

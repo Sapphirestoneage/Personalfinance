@@ -547,7 +547,7 @@
     var root = document.getElementById('root');
     var wrap = h('div', { class: 'wrap' });
 
-    wrap.appendChild(h('a', { class: 'back', href: 'map.html', text: '← All rooms' }));
+    wrap.appendChild(h('a', { class: 'back', href: '../map.html', text: '← All rooms' }));
 
     wrap.appendChild(h('header', { style: { paddingTop: '16px', paddingBottom: '20px', textAlign: 'center' } }, [
       h('div', { style: { display: 'flex', justifyContent: 'center', marginBottom: '12px' } }, gemCrown()),

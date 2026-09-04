@@ -39,7 +39,7 @@ const TARGETS = [
   ['/rooms/side-hustle.html', '.grid-2'],
   ['/rooms/credential.html', '.grid-2'],
   ['/rooms/net-worth.html', '.asset-grid'],
-  ['/', '.grid2'],
+  ['/rooms/foo-ladder.html', '.grid2'],
   ['/rooms/cash-flow.html', '.cat-row']
 ];
 
@@ -49,7 +49,7 @@ const TARGETS = [
    a tall one is exactly the unevenness this file exists to prevent. */
 const EQUAL_HEIGHT = [
   ['/rooms/savings-rate.html', '.pair'],
-  ['/rooms/dashboard.html', '.instruments'],
+  ['/', '.instruments'],
   ['/rooms/hassle.html', '.rates'],
   ['/rooms/sleep-at-night.html', '.pair'],
   ['/rooms/values.html', '.two'],

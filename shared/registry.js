@@ -270,7 +270,9 @@
       order: 15,
       title: 'The Dashboard',
       blurb: 'Every threshold ratio as one shape, plus altitude, fuel, engine load, thrust, weather and the flight plan \u2014 the whole panel at a glance.',
-      href: 'rooms/dashboard.html',
+      /* The front door since D-058: index.html renders the dashboard once
+         it has what it needs, and the intake landing until then. */
+      href: 'index.html',
       tier: 1,
       tags: ['income', 'cashflow', 'debt'],
       subsections: [
@@ -476,10 +478,10 @@
       order: 21,
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
-      href: 'index.html',
+      href: 'rooms/foo-ladder.html',
       tier: 0,
       tags: ['cashflow', 'debt'],
-      /* The FOO calculator sits at the repo root (index.html), so this href
+      /* The FOO calculator sat at the repo root until D-058, so this href
          is relative to map.html, which also lives at the root. A
          single-view app with no stable section anchors yet; declaring none
          is deliberate — see DECISIONS.md D-007. */

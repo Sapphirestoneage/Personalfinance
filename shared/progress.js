@@ -194,11 +194,17 @@
      One component so the wording, the ordering and the links cannot drift
      between twenty-four rooms.                                           */
 
+  /* A page whose registry href is not under rooms/ sits at the site root
+     (the dashboard, since D-058) and links without the ../ prefix. */
+  function atRoot(roomId) {
+    var room = Registry.byId(roomId);
+    return !!(room && room.href && room.href.indexOf('rooms/') !== 0);
+  }
+
   function href(path, roomId) {
     /* Rooms live in rooms/; the FOO ladder is at the root. Registry hrefs
        are written relative to the root, so a room has to climb out. */
-    var inRoomsDir = roomId !== 'foo-ladder';
-    return (inRoomsDir ? '../' : '') + path;
+    return (atRoot(roomId) ? '' : '../') + path;
   }
 
   /**
@@ -276,8 +282,7 @@
    */
   function headerNavHtml(roomId) {
     var nb = neighbours(roomId);
-    var atRoot = roomId === 'foo-ladder';
-    var mapHref = (atRoot ? '' : '../') + 'map.html';
+    var mapHref = (atRoot(roomId) ? '' : '../') + 'map.html';
 
     function link(room, dir) {
       if (!room) {

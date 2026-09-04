@@ -4775,8 +4775,19 @@ section('Age, and the three that move');
 
   /* -- The dashboard's first screen is built from the instrument list ------ */
   {
-    const dash = fs.readFileSync(path.join(ROOT, 'rooms/dashboard.html'), 'utf8');
-    checkTrue('the dashboard loads the instrument list', dash.indexOf('shared/instruments.js') !== -1);
+    /* The dashboard is index.html since D-058; rooms/dashboard.html is a
+       redirect that must carry the hash across. */
+    const dash = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+    const stub = fs.readFileSync(path.join(ROOT, 'rooms/dashboard.html'), 'utf8');
+    checkTrue('rooms/dashboard.html redirects to the front page', /url=\.\.\/index\.html/.test(stub));
+    checkTrue('and carries the hash', stub.indexOf('location.hash') !== -1);
+    checkTrue('the front page is a router', dash.indexOf('function route(') !== -1);
+    checkTrue('with an explicit example-numbers action behind a confirm',
+      dash.indexOf('id="btn-example"') !== -1 && dash.indexOf('window.confirm(') !== -1);
+    checkTrue('that never runs on load', !/DemoPersona\.build\(\)[\s\S]{0,200}addEventListener|load[\s\S]{0,40}DemoPersona\.build/.test(dash));
+    check('the registry points the dashboard at the root', Registry.byId('dashboard').href, 'index.html');
+    check('and the ladder at rooms/', Registry.byId('foo-ladder').href, 'rooms/foo-ladder.html');
+    checkTrue('the front page loads the instrument list', dash.indexOf('shared/instruments.js') !== -1);
     checkTrue('and the staleness reader', dash.indexOf('shared/staleness.js') !== -1);
     checkTrue('and hands it the table', dash.indexOf('Staleness.use(') !== -1);
     checkTrue('it renders the grid from Instruments.compute', dash.indexOf('Instruments.compute(') !== -1);
@@ -4990,7 +5001,9 @@ section('What is finished');
     checkTrue('a room links to its neighbour through ../',
       /\.\.\/rooms\//.test(Progress.headerNavHtml('fire')));
     checkTrue('the front page does not',
-      !/\.\.\//.test(Progress.headerNavHtml('foo-ladder')));
+      !/\.\.\//.test(Progress.headerNavHtml('dashboard')));
+    checkTrue('and the ladder, now in rooms/, does',
+      /\.\.\//.test(Progress.headerNavHtml('foo-ladder')));
 
     check('an unknown room renders no nav rather than a broken one',
       /href/.test(Progress.headerNavHtml('nope')), true);
@@ -5008,7 +5021,7 @@ section('What is finished');
     /* From a room, links climb out of rooms/; from the root they must not. */
     checkTrue('links from a room are relative to rooms/',
       /\.\.\/rooms\/start\.html/.test(strip), strip.slice(0, 400));
-    const fromRoot = Progress.stripHtml('foo-ladder', h);
+    const fromRoot = Progress.stripHtml('dashboard', h);
     checkTrue('links from the front page are not',
       !/\.\.\//.test(fromRoot), fromRoot.slice(0, 400));
 
@@ -5127,8 +5140,8 @@ section('Facts answered once');
     checkTrue('and no longer subtracts expenses from gross',
       foo.indexOf('d.mIncome - d.mExpenses') === -1, 'BRIEF §1.1 item 1');
     checkTrue('and loads the tax table it needs', foo.indexOf("'effectiveTaxRates'") !== -1);
-    const idx = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-    checkTrue('index.html loads tier0 before the ladder',
+    const idx = fs.readFileSync(path.join(ROOT, 'rooms/foo-ladder.html'), 'utf8');
+    checkTrue('the ladder page loads tier0 before the ladder script',
       idx.indexOf('engines/tier0.js') !== -1 && idx.indexOf('engines/tier0.js') < idx.indexOf('foo-ladder.js'));
   }
 
