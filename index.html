@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dungeons &amp; Dividends</title>
+<meta name="description" content="A personal-finance RPG character sheet. Answer eighteen questions, get your class. Everything runs in your browser — nothing you type ever leaves your machine."/>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<!--
+  TIER 1 — the hook. Costs nothing but eighteen answers and asks for no money
+  at all, which is the entire point: this is the page you can send to someone
+  who has never thought about a savings rate in their life.
+
+  What it can honestly produce with no dollars: three of the six ability
+  scores (INT, WIS, CHA — the ones with no dollar behind them), the nine
+  sub-stats under them, and a class LEANING. Not a Level, not HP, not AC, and
+  not a real class assignment — all four of those need money, and the page
+  says so rather than fabricating them. sheet.html is where those arrive.
+
+  LIVE-FORM: built once. Every question is constructed during boot and only
+  ever read afterwards; steps advance by toggling [hidden], never by
+  rebuilding a container.
+-->
+<style>
+  body { margin: 0; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-7); }
+  .hero { text-align: center; padding: var(--space-7) 0 var(--space-5); }
+  .hero h1 { font-family: var(--font-display); font-size: var(--text-2xl); margin: 0 0 var(--space-3); line-height: var(--leading-tight); }
+  .hero p { color: var(--color-text-muted); line-height: var(--leading-normal); margin: 0 auto var(--space-4); max-width: 46ch; }
+  .eyebrow { font-size: var(--text-xs); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; color: var(--color-accent-hover); margin-bottom: var(--space-3); }
+  .btn { font-family: var(--font-body); font-size: var(--text-base); background: var(--color-accent); color: var(--color-accent-contrast); border: 0; border-radius: var(--radius-sm); padding: 0 var(--space-5); height: var(--control-height); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+  .btn.ghost { background: transparent; color: var(--color-accent-hover); border: 1px solid var(--color-border-strong); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .privacy { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-4); }
+  .progress { height: 4px; background: var(--color-surface-active); border-radius: var(--radius-pill); overflow: hidden; margin-bottom: var(--space-4); }
+  .progress > span { display: block; height: 100%; background: var(--color-accent); transition: width 200ms ease; }
+  .step-meta { display: flex; justify-content: space-between; font-size: var(--text-xs); color: var(--color-text-faint); margin-bottom: var(--space-2); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); }
+  .qcard { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-4); }
+  .q-text { font-size: var(--text-lg); line-height: var(--leading-normal); margin: 0 0 var(--space-4); font-family: var(--font-display); }
+  .opts { display: grid; gap: var(--space-2); }
+  .opt { display: grid; grid-template-columns: 22px 1fr; gap: var(--space-3); align-items: start; font-size: var(--text-base); padding: var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); cursor: pointer; line-height: var(--leading-normal); background: var(--color-surface); }
+  .opt:hover { border-color: var(--color-border-active); }
+  .opt input { margin-top: 3px; }
+  .nav { display: flex; justify-content: space-between; gap: var(--space-2); margin-top: var(--space-4); }
+  .result h2 { font-family: var(--font-display); font-size: var(--text-xl); margin: 0 0 var(--space-1); }
+  .verdict { text-align: center; border: 1px solid var(--color-accent); border-radius: var(--radius-lg); padding: var(--space-5) var(--space-4); background: var(--color-surface-raised); margin-bottom: var(--space-4); }
+  .verdict .lead-in { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .verdict .cls { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 var(--space-1); }
+  .verdict .lever { color: var(--color-text-muted); font-size: var(--text-sm); }
+  .verdict .motto { font-size: var(--text-sm); color: var(--color-text-muted); font-style: italic; margin-top: var(--space-3); line-height: var(--leading-normal); }
+  .statrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-bottom: var(--space-4); }
+  .statcard { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-3); text-align: center; background: var(--color-surface-raised); }
+  .statcard .abbr { font-size: var(--text-xs); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; color: var(--color-text-subtle); }
+  .statcard .score { font-family: var(--font-display); font-size: var(--text-xl); margin: var(--space-1) 0 0; }
+  .statcard .mod { font-size: var(--text-sm); color: var(--color-accent-hover); }
+  .spec { display: grid; gap: var(--space-1); margin-bottom: var(--space-4); }
+  .specrow { display: grid; grid-template-columns: 150px 1fr 44px; gap: var(--space-2); align-items: center; font-size: var(--text-sm); }
+  .specbar { height: 10px; border-radius: var(--radius-pill); background: var(--color-surface-active); overflow: hidden; }
+  .specbar > span { display: block; height: 100%; background: var(--color-accent); }
+  .specrow .p { text-align: right; font-variant-numeric: tabular-nums; color: var(--color-text-muted); }
+  .locked { border: 1px dashed var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-4); text-align: center; background: var(--color-surface); }
+  .locked h3 { margin: 0 0 var(--space-2); font-family: var(--font-display); }
+  .locked p { color: var(--color-text-muted); font-size: var(--text-sm); line-height: var(--leading-normal); margin: 0 0 var(--space-3); }
+  .lockgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-bottom: var(--space-3); }
+  .lockcell { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2); }
+  .lockcell .k { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); }
+  .lockcell .v { font-family: var(--font-display); font-size: var(--text-lg); color: var(--color-text-faint); }
+  .foot { margin-top: var(--space-6); text-align: center; font-size: var(--text-sm); }
+  .foot a { color: var(--color-accent-hover); }
+  .notice { padding: var(--space-3); border-radius: var(--radius-sm); margin: var(--space-3) 0; font-size: var(--text-sm); border: 1px solid var(--color-critical); color: var(--color-critical); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="load-notice" class="notice" hidden></div>
+
+  <section id="hero" class="hero">
+    <div class="eyebrow">Dungeons &amp; Dividends</div>
+    <h1>Every build has a weakness. Most people never see their own.</h1>
+    <p>Eighteen questions. No dollar amounts, no sign-up. You get three of your
+       six ability scores and the class you lean toward — the same way you'd
+       know what a Level 20 Fighter with no Constitution looks like before you
+       ever got there.</p>
+    <button type="button" class="btn" id="btn-start">Roll your character</button>
+    <p class="privacy">Runs entirely in your browser. Nothing you type is sent anywhere,
+       because there is nowhere for it to go — this is a static page with no server behind it.</p>
+  </section>
+
+  <section id="quiz" hidden>
+    <div class="step-meta"><span id="step-stat"></span><span id="step-count"></span></div>
+    <div class="progress"><span id="progress-bar" style="width:0%"></span></div>
+    <div id="questions"></div>
+    <div class="nav">
+      <button type="button" class="btn ghost" id="btn-back">Back</button>
+      <button type="button" class="btn" id="btn-next" disabled>Next</button>
+    </div>
+  </section>
+
+  <section id="result" class="result" hidden>
+    <div class="verdict">
+      <div class="lead-in">You lean toward</div>
+      <div class="cls" id="r-class"></div>
+      <div class="lever" id="r-lever"></div>
+      <div class="motto" id="r-motto"></div>
+    </div>
+
+    <h2>Three of your six</h2>
+    <p style="color:var(--color-text-muted);font-size:var(--text-sm);line-height:var(--leading-normal)">
+      Strength, Dexterity and Constitution are earning power, resilience and savings —
+      they need real numbers, so they're blank until you add them.</p>
+    <div class="statrow" id="r-stats"></div>
+
+    <h2>Your nine, ranked</h2>
+    <p style="color:var(--color-text-muted);font-size:var(--text-sm);line-height:var(--leading-normal)">
+      Every score as a percentage of the scale. A low one is exactly as visible as a high one —
+      that's deliberate.</p>
+    <div class="spec" id="r-spectrum"></div>
+
+    <div class="locked">
+      <h3>The other half needs five numbers and one tick-box</h3>
+      <div class="lockgrid">
+        <div class="lockcell"><div class="k">Level</div><div class="v">?</div></div>
+        <div class="lockcell"><div class="k">Hit Points</div><div class="v">?</div></div>
+        <div class="lockcell"><div class="k">Armour</div><div class="v">?</div></div>
+      </div>
+      <p>Your Level is how far you are through <em>your own</em> number, not a dollar target.
+         HP is how many weeks you could go with no income. AC is what stops a hit landing at all.
+         Five numbers plus how you file — that last one only to estimate tax — and they all
+         resolve. Your class may well change too, because a class here is a lever you actually
+         pull, not a temperament.</p>
+      <a class="btn" href="sheet.html">Build the full sheet →</a>
+    </div>
+
+    <div class="nav">
+      <button type="button" class="btn ghost" id="btn-redo">Start over</button>
+      <button type="button" class="btn ghost" id="btn-copy">Copy my result</button>
+    </div>
+
+    <p class="foot"><a href="bestiary.html">The Bestiary — what you're up against →</a></p>
+  </section>
+
+</div>
+
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/store.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/tier0.js"></script>
+<script src="engines/character.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Char = SLAF.Character, Store = DND.Store;
+  var TABLES = null, STEPS = [], at = 0;
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  /* ---- Built once. Every question exists from boot; steps only toggle. -- */
+  function buildQuestions() {
+    var rules = TABLES.dndRules, quiz = TABLES.dndScoring.quiz;
+    rules.subStats.filter(function (s) { return s.kind === 'declared'; })
+      .forEach(function (sub) {
+        (quiz[sub.id] || []).forEach(function (q, qi) {
+          STEPS.push({ subId: sub.id, subName: sub.name, stat: sub.stat, qi: qi, q: q });
+        });
+      });
+    el('questions').innerHTML = STEPS.map(function (st, i) {
+      return '<div class="qcard" data-step="' + i + '"' + (i === 0 ? '' : ' hidden') + '>'
+        + '<p class="q-text">' + esc(st.q.q) + '</p><div class="opts">'
+        + st.q.options.map(function (opt, oi) {
+            var id = 'q-' + st.subId + '-' + st.qi + '-' + oi;
+            return '<label class="opt" for="' + id + '">'
+              + '<input type="radio" name="q-' + esc(st.subId) + '-' + st.qi + '" id="' + id
+              + '" value="' + oi + '"/><span>' + esc(opt.label) + '</span></label>';
+          }).join('')
+        + '</div></div>';
+    }).join('');
+  }
+
+  function answerFor(i) {
+    var st = STEPS[i];
+    var picked = document.querySelector('input[name="q-' + st.subId + '-' + st.qi + '"]:checked');
+    return picked ? Number(picked.value) : null;
+  }
+
+  function showStep(i) {
+    at = Math.max(0, Math.min(STEPS.length - 1, i));
+    var cards = el('questions').children;
+    for (var k = 0; k < cards.length; k++) cards[k].hidden = (k !== at);
+    var st = STEPS[at];
+    el('step-stat').textContent = st.subName;
+    el('step-count').textContent = (at + 1) + ' of ' + STEPS.length;
+    el('progress-bar').style.width = ((at) / STEPS.length * 100) + '%';
+    el('btn-back').disabled = at === 0;
+    el('btn-next').disabled = answerFor(at) === null;
+    el('btn-next').textContent = at === STEPS.length - 1 ? 'See my result' : 'Next';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* Persist as we go, so a closed tab does not lose the run. */
+  function persist() {
+    var quiz = {};
+    STEPS.forEach(function (st, i) {
+      quiz[st.subId] = quiz[st.subId] || {};
+      quiz[st.subId][st.qi] = answerFor(i);
+    });
+    Store.patchProfile({ quiz: quiz });
+  }
+
+  function hydrate() {
+    var quiz = Store.profile().quiz || {};
+    STEPS.forEach(function (st) {
+      var v = (quiz[st.subId] || {})[st.qi];
+      if (!Money.isEntered(v)) return;
+      var node = document.getElementById('q-' + st.subId + '-' + st.qi + '-' + v);
+      if (node) node.checked = true;
+    });
+  }
+
+  function firstUnanswered() {
+    for (var i = 0; i < STEPS.length; i++) if (answerFor(i) === null) return i;
+    return STEPS.length - 1;
+  }
+
+  /* ---- The result ------------------------------------------------------- */
+
+  function renderResult() {
+    var h = Store.household();
+    var subScores = Char.allSubStats(h, TABLES);
+    var stats = Char.mainStats(subScores, TABLES);
+    var leaning = Char.suggestClassFromStats(subScores, TABLES);
+
+    if (Money.isOk(leaning)) {
+      var cls = Char.classById(TABLES, leaning.value);
+      el('r-class').textContent = cls.name;
+      el('r-lever').textContent = cls.lever;
+      el('r-motto').textContent = cls.mentor ? '“' + cls.mentor.motto + '”' : '';
+    }
+
+    el('r-stats').innerHTML = ['INT', 'WIS', 'CHA'].map(function (id) {
+      var r = stats[id];
+      var def = TABLES.dndRules.stats.filter(function (x) { return x.id === id; })[0];
+      var ok = Money.isOk(r);
+      return '<div class="statcard"><div class="abbr">' + esc(id) + '</div>'
+        + '<div class="score">' + (ok ? r.value : Money.EM_DASH) + '</div>'
+        + '<div class="mod">' + (ok ? esc(Char.formatModifier(Char.modifier(r.value))) : '') + '</div>'
+        + '<div class="abbr" style="margin-top:6px">' + esc(def.finance) + '</div></div>';
+    }).join('');
+
+    var declared = {};
+    Char.declaredIds(TABLES.dndRules).forEach(function (id) { declared[id] = subScores[id]; });
+    el('r-spectrum').innerHTML = Char.spectrum(declared, TABLES)
+      .filter(function (r) { return r.ok; })
+      .map(function (r) {
+        return '<div class="specrow"><span>' + esc(r.name) + '</span>'
+          + '<span class="specbar"><span style="width:' + r.percent + '%"></span></span>'
+          + '<span class="p">' + Math.round(r.percent) + '%</span></div>';
+      }).join('');
+  }
+
+  function shareText() {
+    var h = Store.household();
+    var subScores = Char.allSubStats(h, TABLES);
+    var stats = Char.mainStats(subScores, TABLES);
+    var leaning = Char.suggestClassFromStats(subScores, TABLES);
+    var cls = Money.isOk(leaning) ? Char.classById(TABLES, leaning.value) : null;
+    var line = ['Dungeons & Dividends — I lean ' + (cls ? cls.name : '?')];
+    ['INT', 'WIS', 'CHA'].forEach(function (id) {
+      var r = stats[id];
+      if (Money.isOk(r)) line.push(id + ' ' + r.value + ' (' + Char.formatModifier(Char.modifier(r.value)) + ')');
+    });
+    return line.join(' · ');
+  }
+
+  function finish() {
+    persist();
+    el('quiz').hidden = true;
+    el('result').hidden = false;
+    renderResult();
+    window.scrollTo({ top: 0 });
+  }
+
+  function start() {
+    el('hero').hidden = true;
+    el('result').hidden = true;
+    el('quiz').hidden = false;
+    showStep(firstUnanswered());
+  }
+
+  function wire() {
+    el('btn-start').addEventListener('click', start);
+    el('questions').addEventListener('change', function () {
+      persist();
+      el('btn-next').disabled = answerFor(at) === null;
+    });
+    el('btn-next').addEventListener('click', function () {
+      if (answerFor(at) === null) return;
+      if (at === STEPS.length - 1) finish(); else showStep(at + 1);
+    });
+    el('btn-back').addEventListener('click', function () { showStep(at - 1); });
+    el('btn-redo').addEventListener('click', function () {
+      if (!window.confirm('Clear your answers and start over?')) return;
+      Store.reset();
+      location.reload();
+    });
+    el('btn-copy').addEventListener('click', function () {
+      var text = shareText();
+      var btn = el('btn-copy');
+      function done() { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy my result'; }, 1600); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { window.prompt('Copy this:', text); });
+      } else { window.prompt('Copy this:', text); }
+    });
+  }
+
+  SLAF.Reference.load().then(function (tables) {
+    TABLES = tables;
+    buildQuestions();
+    hydrate();
+    wire();
+    /* Someone coming back to a finished sheet should land on the result. */
+    if (Store.quizComplete(TABLES)) {
+      el('hero').hidden = true;
+      finish();
+    }
+  }).catch(function (err) {
+    var n = el('load-notice');
+    n.hidden = false;
+    n.textContent = 'Couldn’t load the game data (' + err.message + '). If you opened this file directly, '
+      + 'it needs to be served over http — try the published link instead.';
+  });
+})();
+</script>
+</body>
+</html>

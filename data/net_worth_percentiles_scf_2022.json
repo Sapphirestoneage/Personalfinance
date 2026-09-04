@@ -1,0 +1,175 @@
+{
+  "id": "net_worth_percentiles",
+  "version": "scf-2022",
+  "asOf": "2022-01-01",
+  "source": "Federal Reserve Survey of Consumer Finances, 2022 wave (published 2023).",
+  "confidence": "sourced",
+  "confidenceNote": "Federal Reserve Survey of Consumer Finances, 2022 wave. Refresh when the next wave publishes.",
+  "precision": "medians are as published; the p10/p25/p75/p90 breakpoints are approximations for banding and should be refreshed against the published distribution before this is presented as authoritative.",
+  "note": "Age-banded. A negative net worth is reported as 'below chart' — never extrapolated into a fake percentile (SPEC.md Section 6). Refresh when the next SCF wave publishes.",
+  "unit": "US dollars of household net worth",
+  "bands": [
+    {
+      "minAge": 0,
+      "maxAge": 34,
+      "label": "under 35",
+      "breakpoints": [
+        {
+          "percentile": 10,
+          "netWorth": 0
+        },
+        {
+          "percentile": 25,
+          "netWorth": 3500
+        },
+        {
+          "percentile": 50,
+          "netWorth": 39000
+        },
+        {
+          "percentile": 75,
+          "netWorth": 140000
+        },
+        {
+          "percentile": 90,
+          "netWorth": 350000
+        }
+      ]
+    },
+    {
+      "minAge": 35,
+      "maxAge": 44,
+      "label": "35–44",
+      "breakpoints": [
+        {
+          "percentile": 10,
+          "netWorth": 1000
+        },
+        {
+          "percentile": 25,
+          "netWorth": 20000
+        },
+        {
+          "percentile": 50,
+          "netWorth": 135600
+        },
+        {
+          "percentile": 75,
+          "netWorth": 400000
+        },
+        {
+          "percentile": 90,
+          "netWorth": 900000
+        }
+      ]
+    },
+    {
+      "minAge": 45,
+      "maxAge": 54,
+      "label": "45–54",
+      "breakpoints": [
+        {
+          "percentile": 10,
+          "netWorth": 2000
+        },
+        {
+          "percentile": 25,
+          "netWorth": 45000
+        },
+        {
+          "percentile": 50,
+          "netWorth": 247200
+        },
+        {
+          "percentile": 75,
+          "netWorth": 730000
+        },
+        {
+          "percentile": 90,
+          "netWorth": 1600000
+        }
+      ]
+    },
+    {
+      "minAge": 55,
+      "maxAge": 64,
+      "label": "55–64",
+      "breakpoints": [
+        {
+          "percentile": 10,
+          "netWorth": 3000
+        },
+        {
+          "percentile": 25,
+          "netWorth": 70000
+        },
+        {
+          "percentile": 50,
+          "netWorth": 364500
+        },
+        {
+          "percentile": 75,
+          "netWorth": 1050000
+        },
+        {
+          "percentile": 90,
+          "netWorth": 2300000
+        }
+      ]
+    },
+    {
+      "minAge": 65,
+      "maxAge": 74,
+      "label": "65–74",
+      "breakpoints": [
+        {
+          "percentile": 10,
+          "netWorth": 8000
+        },
+        {
+          "percentile": 25,
+          "netWorth": 120000
+        },
+        {
+          "percentile": 50,
+          "netWorth": 409900
+        },
+        {
+          "percentile": 75,
+          "netWorth": 1200000
+        },
+        {
+          "percentile": 90,
+          "netWorth": 2600000
+        }
+      ]
+    },
+    {
+      "minAge": 75,
+      "maxAge": 200,
+      "label": "75+",
+      "breakpoints": [
+        {
+          "percentile": 10,
+          "netWorth": 10000
+        },
+        {
+          "percentile": 25,
+          "netWorth": 130000
+        },
+        {
+          "percentile": 50,
+          "netWorth": 335600
+        },
+        {
+          "percentile": 75,
+          "netWorth": 950000
+        },
+        {
+          "percentile": 90,
+          "netWorth": 2100000
+        }
+      ]
+    }
+  ]
+}
