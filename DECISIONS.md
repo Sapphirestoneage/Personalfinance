@@ -2798,3 +2798,244 @@ value, whether it is set, and a link to the question. Do not read
   in the schema.
 - ~~Whether `index.html` should be the Map or the FOO calculator~~ —
   resolved: the calculator keeps the root, the Map is `map.html`. See D-007.
+
+---
+
+## D-046 — HP is measured in weeks, which is what makes §3A stop contradicting itself
+
+The Dungeons & Dividends rulebook defines Hit Points twice in the same
+section, and the two definitions do not agree.
+
+First, in prose:
+
+> **HP = Liquidity Runway.** Not net worth. Not Level. HP is how many months
+> of expenses your liquid and near-liquid assets can cover.
+
+Then, immediately after, as mechanics:
+
+> Max HP at Level 1 = Hit Die max + CON modifier. Each level after: + (Hit
+> Die average, rounded up) + CON modifier.
+
+Those produce different quantities. A Level 20 Anchor with CON +3 has
+`12 + 3 + 19 × (7 + 3) = 205` by the die formula. Nobody has 205 *months* —
+seventeen years — of liquid runway, so read in months the two halves of §3A
+describe different characters, and §10's encounter maths (a $3,000 car repair
+as "2d6-ish") lands nowhere sensible against either.
+
+**Decision: 1 HP = one week of expenses covered by liquid assets.** The owner
+chose the unit; it is the choice that makes both halves of §3A true at once.
+
+- **Max HP** is the die formula, unchanged, and now reads as a *capacity* —
+  205 weeks is 3.9 years, which is exactly right for someone at Level 20.
+  A Level 1 d6 class gets 6 weeks. Both are believable.
+- **Current HP** is measured: liquid assets ÷ one week of expenses, capped at
+  Max HP. Same unit, so the bar on the sheet means something.
+- **Monster and Hazard damage** is denominated in weeks too. The $3,000 repair
+  is ~3 weeks for a median household, which is genuinely trivial at 26 HP and
+  genuinely fatal at 2 — the distinction §10 is built to make.
+
+The alternative readings were both worse. Months made every damage figure in
+the Monster Manual need rescaling before §10 could work at all. Reporting the
+die pool and the runway as two unrelated numbers would have meant monster
+damage could never be applied to runway, which guts the encounter mechanic
+before it is written.
+
+`engines/character.js` holds this — in the sibling repo, not here (D-049):
+`maxHp()` returns `{ weeks, reducedByDebt }`, `currentHp()` returns a measured
+Result. `WEEKS_PER_YEAR = 52`.
+
+### What a later room needs to know
+
+**Max HP is withheld, not defaulted, when CON is unscored.** A Hit Die plus an
+assumed +0 is a fabricated character, so `sheet().maxHp` is `null` until CON
+has all three of its sub-stats. Current HP still computes from balances alone,
+because that needs no stat at all. Any room that renders HP must handle
+`maxHp === null` with `currentHp` present — that is the normal state for
+someone who has filled in their money but not yet answered the quiz.
+
+---
+
+## D-047 — The eighteen scoring formulas, and why "average" means the median American
+
+The rulebook's own §13 lists what it had not settled:
+
+> Exact sub-stat scoring formulas (real dollars/inputs → 8–20 scores) — this
+> is the one piece the Claude Code build prompt still needs before the
+> character sheet can actually compute anything.
+
+So there was nothing to transcribe. These were agreed with the owner on
+2026-09-04 and they live in `data/dnd_scoring.json`, deliberately apart from
+the transcribed rulebook in `data/dnd_rules.json`, so a recalibration never
+edits a rule and a rule change never silently moves a threshold.
+
+### The calibration: a US-population-median household scores 10
+
+§2 reads 10–11 as "Neutral / average", and the owner chose the population the
+word "average" refers to. So median personal earnings (~$60k) score 10, the
+median personal saving rate (~6% of gross) scores 10, the median household's
+reserve (~1 month) scores 10, and so on. A median American comes out with +0
+modifiers across the board, which is what a +0 modifier is supposed to mean.
+Most people who actually build a sheet land 13–16, and that reads as earned
+rather than flattering.
+
+The two rejected alternatives are worth recording. Anchoring to the *FIRE
+community's* median would discriminate better among the real audience but
+score an ordinary person 8s nearly everywhere, which reads as punishment
+rather than diagnosis. Anchoring to best practice would make "average" mean
+"adequate", which contradicts §2's own wording.
+
+Every rung is a `{v, s}` ladder with linear interpolation between rungs and
+**flattening, never extrapolation, at both ends** — a $10m income reads 20,
+not 47. `data/dnd_scoring.json` carries the median anchor for each ladder as
+prose next to the numbers, so the claim can be argued with directly.
+
+**These are rounded conventions, not fitted distributions.** The medians come
+from widely published figures; the rungs above and below them are an agreed
+shape. The file says so in its own `confidenceNote` rather than implying more
+precision than exists.
+
+### Nine compute, nine are generated
+
+Only nine of the eighteen have a dollar figure behind them. All of INT, WIS
+and CHA — literacy, judgment, negotiation, network — have none. Rather than
+invent a dollar proxy for "Threat Detection", the room offers the same choice
+a real table offers for ability scores, which is what the owner asked for:
+
+| Method | What it is |
+|---|---|
+| **Feats of Strength** | Earn them. INT gets real right/wrong questions; WIS and CHA ask for evidence of what you have *done* ("have you negotiated in the last 3 years?"), never a self-rating |
+| **Point Buy** | 45 points across the nine, on 5e's own cost curve extended to 20 |
+| **Standard Array** | Nine fixed values, assigned where you want |
+| **Roll** | 4d6 drop lowest, floored at 8 — so it cannot reach 19 or 20, the same ceiling rolling has in 5e |
+| **Homebrew** | Type the nine. Nothing is checked |
+
+Feats of Strength is the default because §12A claims the Spectrum is "the
+format most resistant to flattering distortion", and nine self-rated sliders
+would make that claim false.
+
+Two questions per sub-stat, each worth 0–6 points, summed onto a base of 8.
+That lands exactly on 8–20 with no rescaling — and a test asserts, for all
+nine, that the best answers reach 20 and the worst floor at 8. That test
+immediately caught a real fault: `personability` conflated "No" with "it
+doesn't apply to me" in one 1-point option, so it could never score 8. Those
+are different answers and are now different options.
+
+### What a later room needs to know
+
+- **`household.dndProfile` is new**, and `updateProfile()` replaces it
+  wholesale rather than deep-merging. Read it, merge in JS, write it back —
+  `patchProfile()` in the room does exactly this. Overwriting it with a
+  partial object silently discards the other seventeen answers.
+- **Nothing in it duplicates an owned field.** It holds only what no other
+  room owns: a three-years-ago income, a mobility checklist, insurance flags,
+  the nine declared scores. Income, expenses, cash, investments, assets and
+  debts are read through `Schema`/`Tier0` and rendered as `Ownership.chip()`
+  links back to their owning rooms.
+- **The high-interest line is borrowed, not redefined.** Debt Burden 2 keys
+  off `data/foo_rules.json`'s `thresholds.highInterestDebtRate` (0.075), so
+  this room and the FOO room cannot drift apart about what "high" means. A
+  test asserts they are the same number.
+- **Level is `Tier0.fireProgress` read against §7's band table.** It is not a
+  second FIRE calculation, and a test asserts the two agree.
+
+---
+
+## D-048 — Seven classes, not ten
+
+§4 of the rulebook gives seven levers and §8A–8G give seven complete Level
+1–20 tables. But §7, describing the Epic Boon layer, says:
+
+> the post-FI Epic Boon layer … that each of the ten classes' Level 19
+> feature points toward
+
+Ten is a leftover. The same section of the rulebook explains why: Insurance/
+Risk Management, Tax Strategy, and Estate & Legacy were "tried as classes and
+correctly called out as not valid ones" and became the three Feat Trees in
+§8H. Seven levers plus three former classes is ten.
+
+**Decision: seven.** §4 and the §8A–8G tables are explicit and complete; §7's
+count is prose in a sentence about something else. `data/dnd_classes.json`
+carries seven, records the discrepancy in its own `note`, and a test asserts
+the count and every Hit Die against §3A's table — because Hit Dice are what
+Max HP is built from, so a silent transcription slip there would quietly
+change every character's runway.
+
+The three Feat Trees are carried in `data/dnd_rules.json` under `featTrees`
+and render in the Bestiary, so nothing from the rejected three is lost — it
+just is not a class.
+
+---
+
+## D-049 — The character sheet is a sibling, not a room
+
+D-046 through D-048 were written while building the Dungeons & Dividends
+character sheet as two rooms in this suite — `rooms/character-sheet.html` and
+`rooms/dnd-reference.html`, registered in `shared/registry.js`, on the Map,
+with their own engine and three reference tables in `data/`.
+
+**That was the wrong shape, and the owner said so.** It is now its own
+product: [dungeons-and-dividends](https://github.com/Sapphirestoneage/dungeons-and-dividends).
+
+### Why it could not stay a room
+
+A room in this suite assumes the household already exists. Every one of them
+opens already filled in because Start Here ran first, and `shared/ownership.js`
+guarantees each shared number is typed once, in one place. That assumption is
+exactly what the character sheet needed to break: it is meant to be handed to
+someone who has never opened SPARKS, has no household, and is not going to
+build one before they will look at anything. As a room it could only ever be
+the *last* thing someone saw. As its own front door it can be the first.
+
+The intended audience is also just different. The people this is for arrive
+because a friend sent them a link about a game, not because they were looking
+for a personal-finance tool — and a suite whose entry point is nine questions
+about income is the wrong container for that.
+
+### What the split actually cost, and what it did not
+
+It did **not** fork the maths, which was the thing worth protecting. The
+sibling vendors `shared/money.js`, `shared/schema.js`, `shared/reference.js`,
+`engines/tier0.js` and `engines/projection.js` from this repo **byte-identical**,
+keeping their original namespace so a diff against this source is exact. One
+file diverges: the table list in `reference.js`, trimmed to the tables that
+product ships, because `load()` with no arguments fetches everything named
+there and would otherwise 404 on boot. It is commented as such in both places.
+
+More importantly, it stores **a real household in this repo's shape** — the
+same `people` / `assets` / `debts` / `expenses` objects `shared/schema.js`
+defines — rather than a private bag of fields. That is what makes carrying a
+character into SPARKS a copy rather than a translation: nothing to map, nothing
+to re-round, and the two tools cannot disagree about a number because they run
+the same code over the same shape. Its `test/parity.js` asserts precisely that,
+by building a character there and checking it produces the same Level, Debt
+Burden, class and HP this suite produces for the same person.
+
+The cost is real and worth naming: **five files are now duplicated across two
+repos.** A fix to `tier0.js` here does not reach the sibling until someone
+copies it. That is a maintenance debt, accepted deliberately — the alternative
+was either a shared package (a build step, which this repo does not have and
+does not want) or keeping the tool trapped behind an intake its audience will
+never complete.
+
+### What is left in this repo
+
+Nothing but the record. No room, no registry entry, no engine, no `data/dnd_*`
+tables, no tests. `ROADMAP.md` keeps one line under Tier 5 saying the idea was
+built and where it went, and D-046 through D-048 stay exactly as written —
+they document mechanics that are still true, and this log is the answer to
+"where did that come from", which is the one thing this repo should still be
+able to answer.
+
+### What a later room needs to know
+
+**`household.dndProfile` may arrive here.** A household exported from the
+sibling carries a `dndProfile` key that nothing in this suite reads.
+`Spine.updateProfile()` passes unknown keys through untouched, so it survives
+round-trips and costs nothing — but do not assume every household has one, and
+do not repurpose the key.
+
+**There is no import path yet.** The sibling hands you the household object as
+readable JSON; this suite has no way to accept it beyond editing localStorage
+by hand. Closing that gap wants a general "restore a saved household" affordance
+— worth having on its own merits, and deliberately not a D&D feature — and it
+has not been built.
