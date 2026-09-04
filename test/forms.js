@@ -252,6 +252,37 @@ const CASES = [
     }
   },
   {
+    /* The pay-basis row and the job list live in the same card as a live
+       text input, and the list is rebuilt whenever a rate changes — exactly
+       the shape that eats a tap if it is not guarded. */
+    room: '/rooms/start.html',
+    container: '#q-income',
+    seed: 'empty',
+    prepare: async (page) => {
+      await page.evaluate(() => { location.hash = '#q-income'; });
+      await page.waitForTimeout(300);
+      await page.selectOption('[data-pay="basis"]', 'hourly');
+      await page.waitForTimeout(300);
+    },
+    fields: [
+      { sel: '#q-income input[data-write="income"]', type: '26' },
+      { sel: '#q-income input[data-pay="hours"]', type: '40' }
+    ],
+    expect: async (page) => {
+      const src = await page.evaluate(() =>
+        JSON.parse(localStorage.getItem('slaf.household.v2')).people[0].incomeSources[0]);
+      const out = await page.evaluate(() => document.getElementById('pay-out').innerText);
+      return [
+        ['the hourly rate was kept, in cents', src.rateCents, 2600],
+        ['the hours were kept', src.hoursPerWeek, 40],
+        ['the basis was kept', src.frequency, 'hourly'],
+        /* 26 x 40 x 48 paid weeks */
+        ['and it became a year', src.grossAnnualIncomeCents, 4992000],
+        ['which the page states', out.indexOf('$49,920') !== -1, true]
+      ];
+    }
+  },
+  {
     room: '/rooms/cash-flow.html',
     container: '#buckets',
     seed: 'demo',

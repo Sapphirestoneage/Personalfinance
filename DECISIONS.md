@@ -2289,6 +2289,104 @@ times the prose was correct and the check was too broad.
 
 ---
 
+## D-047 — Ask how people are actually paid, and let a year have two jobs in it
+
+Start Here's first question asked for gross income "per year". Almost nobody
+knows that figure to the dollar. They know *"$26 an hour"*, or *"about two
+grand a fortnight"* — and the arithmetic between the two is exactly the work
+this app exists to do. Worse, it is the arithmetic people get wrong.
+
+`shared/schema.js` has carried `incomeSource.frequency` since the model was
+written, commented *"stored annual; converted at the edge"*. Nothing ever
+did the converting. `engines/income.js` is that edge.
+
+### Six ways to be paid, and one of them is a trap
+
+`annual`, `monthly`, `semimonthly`, `fortnightly`, `weekly`, `hourly`.
+
+**Twice a month and every two weeks are separate rows on purpose.** Twice a
+month is 24 payslips; every two weeks is 26. The same figure on the payslip
+is 8% apart over a year, and conflating them is the single most common error
+in this conversion. A test asserts the two differ and that the gap is
+exactly two payslips.
+
+**Hourly is the only basis that cannot be exact**, because it needs hours a
+week and weeks a year. It refuses without hours rather than assuming 40, and
+the weeks figure comes from the *same* work profile `engines/hourly.js`
+reads — two rooms disagreeing about how many weeks a person is paid for
+would be worse than either being wrong. The result carries
+`assumesWeeks: true` and the room prints the assumption rather than hiding
+it.
+
+### A year can have two jobs in it, and then there are two right answers
+
+Five months at $60,000 and seven at $80,000 is **$71,667 earned** — and also
+**$80,000 a year on your current job**. Both are true, and they are for
+different questions:
+
+- **Earned** is right for savings rate and debt-to-income. It is the money
+  that actually passed through your hands.
+- **The run rate** is right for projecting forward.
+
+A calculator that quietly picks one is answering a question it was not
+asked. The engine computes both, the room shows both **only when they
+differ**, and `household.incomeBasis` records the choice. Earned is the
+default, because the Tier 0 outputs are about what happened.
+
+**Months are never corrected in either direction.** Two jobs at once total
+more than twelve months — a real life, and clamping it would delete income
+the person had. A gap totals fewer — also real. Both are detected and
+reported (`overlapping`, `hasGap`, `gapMonths`); neither is fixed.
+
+### Why no other room changed
+
+`grossAnnualIncomeCents` remains THE annual figure, on every source. With
+several jobs, each source stores **its own contribution** under the chosen
+basis, and `Schema.grossAnnualIncomeCents()` sums across sources exactly as
+it always has. Verified end to end: two jobs, and the schema's total comes
+back 7,166,667 with nothing else touched.
+
+### Compatibility note
+
+**What changed in the stored shape.** `Schema.createIncomeSource()` now
+returns four more keys: `rateCents`, `hoursPerWeek`, `monthsWorked`,
+`ongoing`. `Schema.createHousehold()` returns `incomeBasis`.
+
+**No migration, and none is needed.** A source stored before this has no
+`rateCents`; `annualise()` falls back to the `grossAnnualIncomeCents`
+already there and returns `fromStoredAnnual: true`, so an old household
+reports precisely the figure it always did. `monthsWorked: null` reads as
+the whole year. `ongoing` defaults to true. `incomeBasis` defaults to
+`'earned'`. The schema version is unchanged; nothing is quarantined or
+rewritten. Tests load a legacy source and assert all of that.
+
+**Rooms updated.** Only Start Here, which owns the field. Every other room
+reads `grossAnnualIncomeCents` and needed no change.
+
+**What a future room needs to know before calling `getProfile()`.**
+
+- `grossAnnualIncomeCents` is still the number to read. Do not read
+  `rateCents` and re-derive a year — call `Income.annualise()` or
+  `Income.summarise()`, which handle the 24-vs-26 trap and the hourly
+  assumption.
+- With several sources, each holds a *contribution*, not a salary. Summing
+  them is correct; reading one and calling it "their income" is not.
+- `monthsWorked` may make the sources total more or fewer than twelve
+  months. Do not assume twelve.
+- `incomeBasis` says which question the stored annual figures answer. If you
+  are projecting forward and it says `'earned'`, the run rate from
+  `Income.summarise()` is the figure you actually want.
+
+### Room note
+
+Start Here is now a **guarded** room, not a built-once one. The nine fixed
+questions never change shape, but the job list is variable-length and
+genuinely has to be rebuilt, so it goes through `SLAF.LiveForm.guard()`.
+`test/run.js` refuses to let a room claim both patterns, which caught the
+stale declaration immediately.
+
+---
+
 ## Still open
 
 - **The last `unavailable()` ratio: life insurance needs multiple.** Credit

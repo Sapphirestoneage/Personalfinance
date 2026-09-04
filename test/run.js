@@ -51,6 +51,7 @@ const WorthEngine = require(path.join(ROOT, 'engines/worth.js'));
 const WindfallEngine = require(path.join(ROOT, 'engines/windfall.js'));
 const RunwayEngine = require(path.join(ROOT, 'engines/runway.js'));
 const HealthEngine = require(path.join(ROOT, 'engines/health.js'));
+const IncomeEngine = require(path.join(ROOT, 'engines/income.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -2066,7 +2067,8 @@ section('Room script tags');
     Hassle: 'engines/hassle.js', SideHustle: 'engines/sidehustle.js',
     Ratios: 'engines/ratios.js', Credential: 'engines/credential.js',
     Worth: 'engines/worth.js', Windfall: 'engines/windfall.js',
-    Runway: 'engines/runway.js', Health: 'engines/health.js'
+    Runway: 'engines/runway.js', Health: 'engines/health.js',
+    Income: 'engines/income.js'
   };
   const FILE_TO_GLOBAL = {};
   Object.keys(GLOBAL_TO_FILE).forEach(g => { FILE_TO_GLOBAL[GLOBAL_TO_FILE[g]] = g; });
@@ -4053,6 +4055,165 @@ section('Financial Health Score');
     /* Closing every gap must land exactly on 100. */
     const total = s.headroom.reduce((a, r) => a + r.pointsAvailable, 0);
     check('closing every gap would reach 100', s.value + total, 100, 0.51);
+  }
+})();
+
+section('How you are paid');
+
+(function () {
+  const I = IncomeEngine;
+  const work = { weeksPerYear: 48 };
+
+  /* -- Every basis is exact arithmetic, and two of them are not the same -- */
+  {
+    check('a year is itself', I.annualise({ frequency: 'annual', rateCents: 7200000 }, work).value, 7200000);
+    check('a month is twelve', I.annualise({ frequency: 'monthly', rateCents: 420000 }, work).value, 5040000);
+    check('a week is fifty-two', I.annualise({ frequency: 'weekly', rateCents: 100000 }, work).value, 5200000);
+
+    /* The one people get wrong. Twice a month is 24 payslips; every two
+       weeks is 26. Same figure on the payslip, 8% apart over a year. */
+    const semi = I.annualise({ frequency: 'semimonthly', rateCents: 200000 }, work).value;
+    const fort = I.annualise({ frequency: 'fortnightly', rateCents: 200000 }, work).value;
+    check('twice a month is 24 payslips', semi, 4800000);
+    check('every two weeks is 26', fort, 5200000);
+    checkTrue('so they are not the same number', semi !== fort);
+    check('and the gap is two payslips', fort - semi, 200000 * 2);
+
+    /* Every basis in the table must have a period, or be the hourly one
+       that honestly cannot. */
+    I.BASES.forEach(function (b) {
+      checkTrue(`${b.id} either has a period or declares it needs hours`,
+        Money.isEntered(b.periods) || b.needsHours === true);
+    });
+  }
+
+  /* -- Hourly, which is the only one that rests on an assumption --------- */
+  {
+    const r = I.annualise({ frequency: 'hourly', rateCents: 2600, hoursPerWeek: 40 }, work);
+    check('rate x hours x weeks', r.value, 2600 * 40 * 48);
+    checkTrue('and it says it leaned on the weeks assumption', r.assumesWeeks);
+    check('the weeks it used come back with it', r.weeksPerYear, 48);
+
+    check('no hours, no yearly figure',
+      I.annualise({ frequency: 'hourly', rateCents: 2600 }, work).status, 'incomplete');
+    check('and it names the field',
+      I.annualise({ frequency: 'hourly', rateCents: 2600 }, work).missing.join(','), 'hoursPerWeek');
+    check('zero hours is refused rather than answered as zero',
+      I.annualise({ frequency: 'hourly', rateCents: 2600, hoursPerWeek: 0 }, work).status, 'incomplete');
+
+    /* It must use the SAME weeks figure engines/hourly.js uses, not its own. */
+    check('with no work profile it falls back to the shared default',
+      I.annualise({ frequency: 'hourly', rateCents: 2600, hoursPerWeek: 40 }, null).weeksPerYear,
+      Schema.WORK_DEFAULTS.weeksPerYear);
+    check('a different weeks figure changes the answer',
+      I.annualise({ frequency: 'hourly', rateCents: 2600, hoursPerWeek: 40 }, { weeksPerYear: 52 }).value,
+      2600 * 40 * 52);
+
+    /* No basis at all is not zero. */
+    checkTrue('nothing entered is incomplete, not zero',
+      I.annualise({}, work).status === 'incomplete');
+    check('a negative rate is refused',
+      I.annualise({ frequency: 'annual', rateCents: -1 }, work).status, 'incomplete');
+    check('but a rate of zero is a real answer',
+      I.annualise({ frequency: 'annual', rateCents: 0 }, work).value, 0);
+  }
+
+  /* -- Households saved before any of this existed ------------------------ */
+  {
+    const legacy = Schema.createIncomeSource({ grossAnnualIncomeCents: 7200000 });
+    check('a stored annual figure with no rate still annualises',
+      I.annualise(legacy, work).value, 7200000);
+    checkTrue('and says it came from the stored figure',
+      I.annualise(legacy, work).fromStoredAnnual);
+    check('the new fields default to not-entered', legacy.rateCents, null);
+    check('months default to not-entered', legacy.monthsWorked, null);
+    check('which the engine reads as the whole year', I.monthsOf(legacy), 12);
+    check('and ongoing defaults to true', legacy.ongoing, true);
+    check('a legacy household summarises to what it always said',
+      I.summarise([legacy], work).value, 7200000);
+  }
+
+  /* -- Two jobs, and the two honest answers ------------------------------- */
+  {
+    const sources = [
+      { id: 'a', source: 'Old job', frequency: 'annual', rateCents: 6000000, monthsWorked: 5, ongoing: false },
+      { id: 'b', source: 'New job', frequency: 'annual', rateCents: 8000000, monthsWorked: 7, ongoing: true }
+    ];
+    const s = I.summarise(sources, work);
+    check('earned blends the stints by length', s.earnedCents,
+      Math.round(6000000 * 5 / 12) + Math.round(8000000 * 7 / 12));
+    check('which is not the same as either salary', s.earnedCents, 7166667);
+    check('the run rate is the job you still hold', s.runRateCents, 8000000);
+    checkTrue('and the two differ, so a room must ask', s.differ);
+    check('the months add up to a year here', s.monthsCovered, 12);
+    checkTrue('no overlap', !s.overlapping);
+    checkTrue('no gap', !s.hasGap);
+
+    check('choosing earned gives earned',
+      I.chosenAnnualCents(s, 'earned').value, s.earnedCents);
+    check('choosing the run rate gives the run rate',
+      I.chosenAnnualCents(s, 'runRate').value, s.runRateCents);
+    check('an unknown preference falls back to earned rather than throwing',
+      I.chosenAnnualCents(s, 'nonsense').value, s.earnedCents);
+
+    /* One job all year: the two answers agree, and the room says nothing. */
+    const single = I.summarise([{ id: 'x', frequency: 'annual', rateCents: 7200000 }], work);
+    check('one job all year earns its salary', single.earnedCents, 7200000);
+    check('and its run rate is the same', single.runRateCents, 7200000);
+    checkTrue('so there is nothing to choose between', !single.differ);
+  }
+
+  /* -- Months are never corrected, in either direction -------------------- */
+  {
+    /* Two jobs at once. Fourteen months of work in a twelve-month year is a
+       real life, and clamping it would delete income the person had. */
+    const both = I.summarise([
+      { id: 'a', frequency: 'annual', rateCents: 6000000, monthsWorked: 12, ongoing: true },
+      { id: 'b', frequency: 'annual', rateCents: 1200000, monthsWorked: 6, ongoing: true }
+    ], work);
+    check('two jobs at once total more than twelve months', both.monthsCovered, 18);
+    checkTrue('and that is reported as overlap, not an error', both.overlapping);
+    check('both contribute', both.earnedCents, 6000000 + 600000);
+
+    /* A gap. Six months worked, six months not. */
+    const gap = I.summarise([
+      { id: 'a', frequency: 'annual', rateCents: 6000000, monthsWorked: 6, ongoing: true }
+    ], work);
+    check('half a year worked is half the salary', gap.earnedCents, 3000000);
+    checkTrue('and the gap is named', gap.hasGap);
+    check('with its length', gap.gapMonths, 6);
+    checkTrue('but the run rate is still the full salary', gap.runRateCents === 6000000);
+
+    check('months beyond twelve on ONE stint are clamped to a year',
+      I.monthsOf({ monthsWorked: 40 }), 12);
+    check('and negative months to nothing', I.monthsOf({ monthsWorked: -3 }), 0);
+  }
+
+  /* -- A job whose rate is missing does not silently vanish --------------- */
+  {
+    const mixed = I.summarise([
+      { id: 'a', frequency: 'annual', rateCents: 6000000, monthsWorked: 12, ongoing: true },
+      { id: 'b', frequency: 'hourly', rateCents: 2600, monthsWorked: 6, ongoing: true }
+    ], work);
+    check('the incomplete one is counted as incomplete', mixed.incompleteCount, 1);
+    check('the complete one still counts', mixed.countedCount, 1);
+    check('and the total is only what could be worked out', mixed.earnedCents, 6000000);
+    checkTrue('the row says what it needs',
+      mixed.rows[1].missing.join(',') === 'hoursPerWeek');
+
+    check('every source incomplete means no figure at all',
+      I.summarise([{ id: 'a', frequency: 'hourly', rateCents: 2600 }], work).status, 'incomplete');
+    check('and no sources at all is incomplete too',
+      I.summarise([], work).status, 'incomplete');
+  }
+
+  /* -- The whole thing, off a real household ------------------------------ */
+  {
+    const h = Demo.build();
+    const s = I.forHousehold(h);
+    checkTrue('the demo persona summarises', Money.isOk(s));
+    check('to the same figure the schema reports',
+      s.earnedCents, Schema.grossAnnualIncomeCents(h).value);
   }
 })();
 

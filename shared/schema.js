@@ -69,7 +69,13 @@
     'person.work.workCostsMonthlyCents':         { class: 'raw',        unit: 'cents',   period: 'monthly' },
     'person.work.weeksPerYear':                  { class: 'assumption', unit: 'weeks',   default: WORK_DEFAULTS.weeksPerYear },
     'computed.realHourlyWageCents':              { class: 'computed',   unit: 'cents',   note: 'per hour of life the job actually costs' },
-    'incomeSource.grossAnnualIncomeCents':       { class: 'raw',        unit: 'cents',   period: 'annual' },
+    'incomeSource.grossAnnualIncomeCents':       { class: 'raw',        unit: 'cents',   period: 'annual', note: 'THE annual figure every room reads. Derived from rateCents x frequency when those are set \u2014 see engines/income.js and DECISIONS.md D-047' },
+    'incomeSource.frequency':                    { class: 'raw',        unit: 'enum',    values: ['annual', 'monthly', 'semimonthly', 'fortnightly', 'weekly', 'hourly'], note: 'how the person is actually paid; semimonthly is 24 a year and fortnightly is 26 \u2014 they are not the same' },
+    'incomeSource.rateCents':                    { class: 'raw',        unit: 'cents',   note: 'pay at `frequency`. Null means the annual figure was entered directly' },
+    'incomeSource.hoursPerWeek':                 { class: 'raw',        unit: 'hours',   period: 'weekly', note: 'hourly pay only' },
+    'incomeSource.monthsWorked':                 { class: 'raw',        unit: 'months',  note: 'how much of the last 12 months this job covered; absent means all of it' },
+    'incomeSource.ongoing':                      { class: 'raw',        unit: 'bool',    note: 'still the job \u2014 drives the run-rate figure beside the earned one' },
+    'household.incomeBasis':                     { class: 'raw',        unit: 'enum',    values: ['earned', 'runRate'], note: 'which of the two annual figures feeds the model. DECISIONS.md D-047' },
     'incomeSource.type':                         { class: 'raw',        unit: 'enum',    values: ['w2', '1099'] },
     'incomeSource.employerMatch.matchPercent':          { class: 'raw', unit: 'rate',    note: '0.5 === employer matches 50 cents on the dollar' },
     'incomeSource.employerMatch.matchCapPercentOfSalary': { class: 'raw', unit: 'rate',  note: '0.06 === capped at the first 6% of salary' },
@@ -149,7 +155,22 @@
       personId: f.personId || null,
       source: f.source || null,                    // free text, e.g. "Day job"
       grossAnnualIncomeCents: f.grossAnnualIncomeCents === undefined ? null : f.grossAnnualIncomeCents,
-      frequency: f.frequency || 'annual',          // stored annual; converted at the edge
+      /* How this person is ACTUALLY paid. engines/income.js turns the pair
+         of (frequency, rateCents) into the annual figure above — which
+         stays the canonical stored number, so every other room is
+         unaffected. A source with no rateCents falls back to whatever
+         grossAnnualIncomeCents already says, which is how every household
+         saved before this keeps working. DECISIONS.md D-047. */
+      frequency: f.frequency || 'annual',
+      rateCents: f.rateCents === undefined ? null : f.rateCents,
+      /* Hourly only. There is no honest hourly-to-yearly figure without it. */
+      hoursPerWeek: f.hoursPerWeek === undefined ? null : f.hoursPerWeek,
+      /* How much of the last twelve months this job covered. Absent means
+         all of it. Across several jobs these may total more than twelve
+         (two at once) or fewer (a gap); neither is corrected. */
+      monthsWorked: f.monthsWorked === undefined ? null : f.monthsWorked,
+      /* Is this still the job? Drives the run-rate figure. */
+      ongoing: f.ongoing === undefined ? true : !!f.ongoing,
       type: f.type || 'w2',
       employerMatch: f.employerMatch || {
         matchPercent: null,                        // 0.5 === 50 cents on the dollar
@@ -415,6 +436,10 @@
            code path when import lands. See createExpenseEntry(). */
         entries: (f.expenses && (f.expenses.entries || f.expenses.categories)) || []
       },
+      /* Which annual income figure feeds everything else: what was actually
+         earned across the year, or the current job annualised. They differ
+         only when a job changed mid-year. DECISIONS.md D-047. */
+      incomeBasis: f.incomeBasis === 'runRate' ? 'runRate' : 'earned',
       /* Things predicted before and rated after. SPEC.md §13 Tier 1. */
       worthChecks: (f.worthChecks || []).map(createWorthCheck),
       /* Every 1-10 rating in the app. See createRatings(). */

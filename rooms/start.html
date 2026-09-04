@@ -60,6 +60,26 @@
   .q-unlocks { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-3) 0 0; }
   .q-warn { font-size: var(--text-sm); color: var(--color-caution); margin: var(--space-2) 0 0; }
   .q-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
+  .pay-row { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: stretch; }
+  /* With the job list open, the single box would be a second view of the
+     same record — two boxes showing one number is a question about which
+     one wins. The list is the single place to edit it. */
+  .is-multi .pay-row, .is-multi .pay-hours { display: none; }
+  .pay-hours { margin: var(--space-3) 0 0; }
+  /* Reserves its line whether or not it says anything, so nothing below it
+     moves when the figure appears. D-046 learned this the hard way. */
+  .pay-out { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; min-height: 1.4em; }
+  .pay-out strong { color: var(--color-text); font-family: var(--font-display); font-variant-numeric: tabular-nums; }
+  .pay-more { background: none; border: none; padding: 0; margin: var(--space-3) 0 0; color: var(--color-accent-hover); font-family: var(--font-body); font-size: var(--text-sm); text-decoration: underline; cursor: pointer; }
+  .job { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); margin-top: var(--space-3); }
+  .job .job-top { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: center; }
+  .job .job-top input { width: 100%; font: inherit; font-weight: 600; padding: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); }
+  .job .job-top button { background: none; border: none; color: var(--color-text-faint); font-size: var(--text-sm); cursor: pointer; padding: var(--space-2); }
+  .job .job-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-2); }
+  @media (max-width: 420px) { .job .job-grid { grid-template-columns: 1fr; } }
+  .job .job-sub { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; }
+  .pay-basis { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  .pay-basis .choices { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
   @media (max-width: 380px) { .q-pair { grid-template-columns: 1fr; } }
 
   .nav { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-5); }
@@ -103,9 +123,35 @@
   <!-- ============ QUESTIONS, in priority order ============ -->
   <section class="slaf-card q" id="q-income" data-q>
     <p class="q-text">What do you earn before tax?</p>
-    <p class="q-help">Everyone in the household who brings money in, added together, per year.</p>
-    <span class="slaf-input-shell"><span class="slaf-affix">$</span>
-      <input type="text" inputmode="decimal" data-write="income" placeholder="e.g. 72000" aria-label="Gross annual income"/></span>
+    <p class="q-help">However you're actually paid — by the hour, the week, the month. We'll turn it into a year.</p>
+    <div class="pay-row">
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+        <input type="text" inputmode="decimal" data-write="income" placeholder="e.g. 26" aria-label="What you are paid"/></span>
+      <span class="slaf-input-shell">
+        <select data-pay="basis" aria-label="How often you are paid"></select></span>
+    </div>
+    <label class="slaf-field pay-hours" id="pay-hours" hidden>
+      <span class="slaf-label">Hours a week</span>
+      <span class="slaf-input-shell">
+        <input type="text" inputmode="decimal" data-pay="hours" placeholder="e.g. 40" aria-label="Hours a week"/></span>
+    </label>
+    <p class="pay-out" id="pay-out"></p>
+
+    <button type="button" class="pay-more" id="btn-jobs" aria-expanded="false">
+      Changed jobs this year, or have more than one?</button>
+
+    <div id="jobs" hidden>
+      <p class="q-help" style="margin:var(--space-3) 0 0">
+        One line per job, and how many months of the last year each one covered.
+        They don't have to add up to twelve — two at once is more than twelve,
+        a gap is fewer, and neither gets corrected.
+      </p>
+      <div id="job-list"></div>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-add-job"
+        style="margin-top:var(--space-3)">+ Add a job</button>
+      <div class="pay-basis" id="basis-choice" hidden></div>
+    </div>
+
     <p class="q-unlocks">Feeds your savings rate, debt-to-income, retirement benchmark and take-home pay.</p>
   </section>
 
@@ -221,11 +267,14 @@
 <script src="../shared/spine-v2.js"></script>
 <script src="../shared/ownership.js"></script>
 <script src="../shared/demo-persona.js"></script>
+<script src="../shared/liveform.js"></script>
+<script src="../engines/income.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
-      Registry = SLAF.Registry, Ownership = SLAF.Ownership, Demo = SLAF.DemoPersona;
+      Registry = SLAF.Registry, Ownership = SLAF.Ownership, Demo = SLAF.DemoPersona,
+      Income = SLAF.Income;
 
   var ROOM_ID = 'start';
   var INCOME_ID = 'tier0_income_primary';
@@ -285,12 +334,341 @@
     Spine.upsertIncomeSource(person.id, record);
   }
 
+  /* ---------- how you are actually paid -----------------------------------
+     SPEC.md's income question asked for a year. Almost nobody knows theirs
+     to the dollar — they know "$26 an hour" — so the box now takes whatever
+     unit you are paid in and engines/income.js turns it into the year.
+
+     Every source's grossAnnualIncomeCents still holds an ANNUAL figure, so
+     no other room changes. With several jobs each source holds its own
+     CONTRIBUTION, and Schema.grossAnnualIncomeCents() sums them, which is
+     what it already did. DECISIONS.md D-047.                              */
+
+  function primarySources() {
+    var p = Schema.primaryPerson(Spine.getProfile());
+    return (p && p.incomeSources) ? p.incomeSources : [];
+  }
+
+  function workOf() {
+    var p = Schema.primaryPerson(Spine.getProfile());
+    return p ? Schema.workProfile(p) : null;
+  }
+
+  /* Recompute every source's annual figure from its rate, and store it.
+     This is the one place the derived number is written. */
+  function recomputeIncome() {
+    var h = Spine.getProfile();
+    var person = Schema.primaryPerson(h);
+    if (!person) return null;
+    var summary = Income.summarise(person.incomeSources, Schema.workProfile(person));
+    if (!Money.isOk(summary)) return summary;
+
+    var basis = h.incomeBasis === 'runRate' ? 'runRate' : 'earned';
+    summary.rows.forEach(function (row) {
+      if (!row.ok || row.rateCents === null) return;   /* typed-in annual: leave it */
+      var annual = basis === 'runRate'
+        ? (row.ongoing ? row.annualisedCents : 0)
+        : row.contributedCents;
+      Spine.upsertIncomeSource(person.id, { id: row.id, grossAnnualIncomeCents: annual });
+    });
+    return summary;
+  }
+
+  function writeJob(id, patch) {
+    var person = Spine.ensurePrimaryPerson('You');
+    Spine.upsertIncomeSource(person.id, Object.assign({ id: id }, patch));
+    recomputeIncome();
+  }
+
+  /* -- the basis select on the main question -- */
+  (function () {
+    var sel = document.querySelector('[data-pay="basis"]');
+    if (!sel) return;
+    sel.innerHTML = Income.BASES.map(function (b) {
+      return '<option value="' + b.id + '">' + b.label + '</option>';
+    }).join('');
+  })();
+
+  function firstSource() { return primarySources()[0] || null; }
+
+  function paintPay() {
+    var src = firstSource() || {};
+    var sel = document.querySelector('[data-pay="basis"]');
+    var hoursWrap = el('pay-hours');
+    var hoursNode = document.querySelector('[data-pay="hours"]');
+    var basisId = src.frequency || 'annual';
+    if (sel && sel !== document.activeElement) sel.value = basisId;
+
+    var basis = Income.basisById(basisId) || Income.basisById('annual');
+    if (hoursWrap) hoursWrap.hidden = !basis.needsHours;
+    if (hoursNode && hoursNode !== document.activeElement) {
+      hoursNode.value = Money.isEntered(src.hoursPerWeek) ? String(src.hoursPerWeek) : '';
+    }
+
+    var out = el('pay-out');
+    if (!out) return;
+    var summary = Income.summarise(primarySources(), workOf());
+    if (!Money.isOk(summary)) { out.innerHTML = ''; return; }
+
+    var jobsOpen = !el('jobs').hidden;
+    var parts = [];
+    if (basisId !== 'annual' || summary.sourceCount > 1 || jobsOpen) {
+      parts.push('That\u2019s <strong>' + Money.formatCents(summary.earnedCents)
+        + '</strong> a year' + (summary.sourceCount > 1 ? ' across ' + summary.sourceCount + ' jobs' : '') + '.');
+    }
+    if (summary.assumesWeeks) {
+      var w = (workOf() && Money.isEntered(workOf().weeksPerYear))
+        ? workOf().weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear;
+      parts.push('Assumes ' + w + ' paid weeks a year \u2014 change it in Real Hourly Wage.');
+    }
+    if (summary.differ && !jobsOpen) {
+      parts.push('Your current job alone would be '
+        + Money.formatCents(summary.runRateCents) + '.');
+    }
+    out.innerHTML = parts.join(' ');
+  }
+
+  document.addEventListener('change', function (evt) {
+    var node = evt.target;
+    if (!node.getAttribute || node.getAttribute('data-pay') !== 'basis') return;
+    var src = firstSource();
+    writeJob(src ? src.id : INCOME_ID, { frequency: node.value });
+    paintPay();
+    paintJobs.force ? paintJobs.force() : null;
+  });
+
+  document.addEventListener('focusout', function (evt) {
+    var node = evt.target;
+    if (!node.getAttribute || node.getAttribute('data-pay') !== 'hours') return;
+    var raw = String(node.value).trim();
+    var n = raw === '' ? null : Number(raw);
+    var src = firstSource();
+    writeJob(src ? src.id : INCOME_ID,
+      { hoursPerWeek: (n === null || isNaN(n) || n <= 0) ? null : n });
+    paintPay();
+  });
+
+  /* ---------- more than one job -------------------------------------------
+     A variable-length list, so it IS rebuilt — which means it has to be
+     guarded, or a rebuild lands mid-tap and closes the keyboard. D-034. */
+
+  var jobsForm = SLAF.LiveForm.guard(el('job-list'), function () {
+    var sources = primarySources();
+    el('job-list').innerHTML = sources.map(jobCard).join('');
+  });
+  function paintJobs() { jobsForm.request(); }
+  paintJobs.force = function () { jobsForm.force(); };
+
+  function esc(t) {
+    return String(t === null || t === undefined ? '' : t)
+      .replace(/[&<>"]/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+      });
+  }
+
+  function jobCard(src) {
+    var basisId = src.frequency || 'annual';
+    var basis = Income.basisById(basisId) || Income.basisById('annual');
+    var months = Money.isEntered(src.monthsWorked) ? src.monthsWorked : 12;
+    var one = Income.annualise(src, workOf());
+    return '<div class="job">'
+      + '<div class="job-top">'
+      + '<input data-job="' + esc(src.id) + '" data-jf="source" value="' + esc(src.source || '')
+      + '" placeholder="Name this job" aria-label="Job name"/>'
+      + '<button type="button" data-job-remove="' + esc(src.id) + '" aria-label="Remove this job">\u2715</button>'
+      + '</div>'
+      + '<div class="job-grid">'
+      + '<span class="slaf-input-shell"><span class="slaf-affix">$</span>'
+      + '<input type="text" inputmode="decimal" data-job="' + esc(src.id) + '" data-jf="rateCents" value="'
+      + (Money.isEntered(src.rateCents) ? Money.formatCents(src.rateCents) : '')
+      + '" placeholder="e.g. 26" aria-label="Pay"/></span>'
+      + '<span class="slaf-input-shell"><select data-job="' + esc(src.id) + '" data-jf="frequency" aria-label="How often">'
+      + Income.BASES.map(function (b) {
+          return '<option value="' + b.id + '"' + (b.id === basisId ? ' selected' : '') + '>' + b.label + '</option>';
+        }).join('')
+      + '</select></span>'
+      + (basis.needsHours
+          ? '<span class="slaf-input-shell"><input type="text" inputmode="decimal" data-job="' + esc(src.id)
+            + '" data-jf="hoursPerWeek" value="' + (Money.isEntered(src.hoursPerWeek) ? src.hoursPerWeek : '')
+            + '" placeholder="hours a week" aria-label="Hours a week"/></span>'
+          : '')
+      + '<span class="slaf-input-shell"><select data-job="' + esc(src.id) + '" data-jf="monthsWorked" aria-label="Months worked">'
+      + [1,2,3,4,5,6,7,8,9,10,11,12].map(function (m) {
+          return '<option value="' + m + '"' + (m === months ? ' selected' : '') + '>'
+            + m + (m === 1 ? ' month' : ' months') + '</option>';
+        }).join('')
+      + '</select></span>'
+      + '<span class="slaf-input-shell"><select data-job="' + esc(src.id) + '" data-jf="ongoing" aria-label="Still this job">'
+      + '<option value="yes"' + (src.ongoing !== false ? ' selected' : '') + '>Still here</option>'
+      + '<option value="no"' + (src.ongoing === false ? ' selected' : '') + '>Ended</option>'
+      + '</select></span>'
+      + '</div>'
+      + '<p class="job-sub">' + (Money.isOk(one)
+          ? Money.formatCents(one.value) + ' a year at that rate \u2014 '
+            + Money.formatCents(Math.round(one.value * months / 12)) + ' over ' + months
+            + (months === 1 ? ' month' : ' months')
+          : esc(one.reason)) + '</p>'
+      + '</div>';
+  }
+
+  el('btn-jobs').addEventListener('click', function () {
+    var panel = el('jobs');
+    var open = panel.hidden;
+    panel.hidden = !open;
+    el('q-income').classList.toggle('is-multi', open);
+    this.setAttribute('aria-expanded', String(open));
+    this.textContent = open
+      ? 'Just the one job \u2014 hide this'
+      : 'Changed jobs this year, or have more than one?';
+    if (open) {
+      /* Make sure the answer already given is in the list rather than
+         appearing to vanish when the panel opens. */
+      if (!primarySources().length) {
+        Spine.ensurePrimaryPerson('You');
+        writeJob(INCOME_ID, { source: 'Main job', frequency: 'annual' });
+      }
+      jobsForm.force();
+      paintBasisChoice();
+    }
+  });
+
+  el('btn-add-job').addEventListener('click', function () {
+    var person = Spine.ensurePrimaryPerson('You');
+    Spine.upsertIncomeSource(person.id, Schema.createIncomeSource({
+      source: null, frequency: 'annual', monthsWorked: null, ongoing: true
+    }));
+    jobsForm.force();
+    paintBasisChoice();
+    paintPay();
+  });
+
+  el('job-list').addEventListener('click', function (evt) {
+    var btn = evt.target.closest && evt.target.closest('[data-job-remove]');
+    if (!btn) return;
+    if (!window.confirm('Remove this job?')) return;
+    var person = Schema.primaryPerson(Spine.getProfile());
+    if (person) {
+      person.incomeSources = person.incomeSources.filter(function (s) {
+        return s.id !== btn.getAttribute('data-job-remove');
+      });
+      Spine.updateProfile({});
+      Spine.upsertPerson({ id: person.id, incomeSources: person.incomeSources });
+    }
+    recomputeIncome();
+    jobsForm.force();
+    paintBasisChoice();
+    paintPay();
+  });
+
+  function readJobField(field, raw) {
+    if (field === 'source') return raw === '' ? null : raw;
+    if (field === 'rateCents') return Money.parseMoney(raw);
+    if (field === 'hoursPerWeek') {
+      var n = raw === '' ? null : Number(raw);
+      return (n === null || isNaN(n) || n <= 0) ? null : n;
+    }
+    if (field === 'monthsWorked') return Number(raw) || 12;
+    if (field === 'ongoing') return raw === 'yes';
+    if (field === 'frequency') return raw;
+    return raw;
+  }
+
+  function onJobEdit(node) {
+    var id = node.getAttribute('data-job');
+    var field = node.getAttribute('data-jf');
+    if (!id || !field) return;
+    var patch = {};
+    patch[field] = readJobField(field, String(node.value).trim());
+    writeJob(id, patch);
+    paintPay();
+    paintBasisChoice();
+    /* Every field changes the line under the card ("$60,000 a year at that
+       rate — $25,000 over 5 months"), so every field asks for a redraw. The
+       guard holds it until the form is idle, so this never lands mid-tap. */
+    jobsForm.request();
+  }
+
+  el('job-list').addEventListener('change', function (evt) {
+    if (evt.target.tagName === 'SELECT') onJobEdit(evt.target);
+  });
+  el('job-list').addEventListener('focusout', function (evt) {
+    if (evt.target.tagName === 'INPUT') {
+      onJobEdit(evt.target);
+      if (evt.target.getAttribute('data-jf') === 'rateCents') {
+        var cents = Money.parseMoney(evt.target.value);
+        evt.target.value = Money.isEntered(cents) ? Money.formatCents(cents) : '';
+      }
+    }
+  });
+
+  /* Earned across the year, or the current job annualised. They are
+     different questions and both are right; the person picks. */
+  function paintBasisChoice() {
+    var box = el('basis-choice');
+    if (!box) return;
+    var summary = Income.summarise(primarySources(), workOf());
+    if (!Money.isOk(summary) || !summary.differ) { box.hidden = true; return; }
+    var h = Spine.getProfile();
+    var basis = h.incomeBasis === 'runRate' ? 'runRate' : 'earned';
+    box.hidden = false;
+    box.innerHTML = '<strong>Two honest answers, and they are different numbers.</strong> '
+      + 'Which should the rest of the app use?'
+      + (summary.overlapping
+          ? ' (Your months add up to ' + summary.monthsCovered + ', so some of it overlapped.)'
+          : summary.hasGap
+            ? ' (Your months add up to ' + summary.monthsCovered + ', leaving a '
+              + summary.gapMonths + '-month gap.)'
+            : '')
+      + '<div class="choices">'
+      + '<button type="button" class="choice" data-basis="earned" aria-pressed="'
+      + (basis === 'earned') + '">What you earned \u2014 '
+      + Money.formatCents(summary.earnedCents) + '</button>'
+      + '<button type="button" class="choice" data-basis="runRate" aria-pressed="'
+      + (basis === 'runRate') + '">What you\u2019re on now \u2014 '
+      + Money.formatCents(summary.runRateCents) + '</button>'
+      + '</div>'
+      + '<p class="job-sub">Earned is right for savings rate and debt-to-income \u2014 '
+      + 'it is the money that actually passed through. The run rate is right for '
+      + 'projecting forward.</p>';
+  }
+
+  el('basis-choice').addEventListener('click', function (evt) {
+    var btn = evt.target.closest && evt.target.closest('[data-basis]');
+    if (!btn) return;
+    Spine.updateProfile({ incomeBasis: btn.getAttribute('data-basis') });
+    recomputeIncome();
+    paintBasisChoice();
+    paintPay();
+  });
+
   /* ---------- the questions ---------------------------------------------- */
 
   var QUESTIONS = [
+    /* The box holds what you are PAID at your chosen frequency. When that
+       frequency is 'a year' the two are the same number, which is why a
+       household saved before this reads back unchanged. */
     { id: 'q-income', field: 'grossAnnualIncome', kind: 'money',
-      read: function (h) { var s = incomeSourceOf(h); return s ? s.grossAnnualIncomeCents : null; },
-      write: function (cents) { writeIncome('grossAnnualIncomeCents', cents); } },
+      read: function (h) {
+        var s = incomeSourceOf(h);
+        if (!s) return null;
+        return Money.isEntered(s.rateCents) ? s.rateCents : s.grossAnnualIncomeCents;
+      },
+      write: function (cents) {
+        var src = firstSource();
+        var id = src ? src.id : INCOME_ID;
+        var freq = (src && src.frequency) || 'annual';
+        Spine.ensurePrimaryPerson('You');
+        writeJob(id, {
+          source: (src && src.source) || 'Household income',
+          frequency: freq,
+          rateCents: cents,
+          /* An annual rate IS the annual figure. Writing both keeps every
+             other room reading a real number even before recompute runs. */
+          grossAnnualIncomeCents: (freq === 'annual' && Money.isEntered(cents))
+            ? cents : (src ? src.grossAnnualIncomeCents : null)
+        });
+        paintPay();
+      } },
 
     { id: 'q-filing', field: 'filingStatus', kind: 'choice',
       read: function (h) { return h.filingStatus || ''; },
@@ -409,6 +787,7 @@
     settle(nodes[0]);
 
     if (q.field === 'dob') paintDobWarning(stored);
+    if (q.field === 'grossAnnualIncome') { paintPay(); paintJobs(); paintBasisChoice(); }
   }
 
   /* A date that cannot be true is not the same as a date not given, and the
@@ -436,7 +815,13 @@
 
   /* The "this is saved, tap to change it" line. Created once per question at
      load and only ever toggled after that — no control is ever rebuilt.
-     LIVE-FORM: built once. */
+
+     The room as a whole is GUARDED, not built-once: the nine fixed
+     questions never change shape, but the job list under the income
+     question is variable-length and genuinely has to be rebuilt, so it goes
+     through SLAF.LiveForm.guard() like every other list in the app. One
+     room cannot claim both patterns — test/run.js enforces that — and the
+     guard is the honest description of what this one does. */
   (function () {
     QUESTIONS.forEach(function (q) {
       var card = el(q.id);
