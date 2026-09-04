@@ -23,9 +23,9 @@ Twenty-four rooms are live. Against this document's own tiers:
 | Tier | In this doc | Shipped | What's shipped |
 |---|---|---|---|
 | **0** — MVP snapshot | 10 inputs, 9 outputs, FOO ladder, 5 flags | **all of it** | Start Here, Financial Snapshot, FOO Ladder |
-| **1** — fully modular | 29 | **20** | Net Worth · Savings Rate · FIRE variants · Debt Calculator · Credit Card view · HYSA Switch · Cash Flow · Budget templates · Return on Hassle · Girl Math (cost per use) · Snapshot/save-state · Rule of Five · $30k/$90k · 20/3/8 · Real Hourly Wage · W2 vs 1099 · Quarterly Estimated Tax · Retroactive Worth · Prospective Worth · Lump Sum vs DCA |
+| **1** — fully modular | 29 | **21** | Net Worth · Savings Rate · FIRE variants · Debt Calculator · Credit Card view · HYSA Switch · Cash Flow · Budget templates · Return on Hassle · Girl Math (cost per use) · Snapshot/save-state · Rule of Five · $30k/$90k · 20/3/8 · Real Hourly Wage · W2 vs 1099 · Quarterly Estimated Tax · Retroactive Worth · Prospective Worth · Lump Sum vs DCA · FAT FIRE template |
 | **1.5** — one self-report | 3 | **2** | SWAN Number · Fulfillment Curve |
-| **2** — a few decisions | 23 | **13** | Side Hustle · Solo 401(k) · Roth vs Traditional vs Brokerage · Wedding · Dream Calculator · Convenience Method · Zombie Apocalypse framing · Values vs Spending Audit · Career ROI · Skills Calculator · Leave-Job · Unemployment · Start-Business |
+| **2** — a few decisions | 23 | **14** | Side Hustle · Solo 401(k) · Roth vs Traditional vs Brokerage · Wedding · Dream Calculator · Convenience Method · Zombie Apocalypse framing · Values vs Spending Audit · Career ROI · Skills Calculator · Leave-Job · Unemployment · Start-Business · Travel |
 | **3 and up** | ~280 | **1** | Regret calc (Tier 4) — not a build of its own: it is `Worth.regrets()`, the same records filtered to low ratings. Everything else is out of `SPEC.md` scope |
 
 Wedding and Dream Calculator are one Goal Costing Engine with two templates,
@@ -38,16 +38,24 @@ Unemployment and Start-Business are one runway engine with three presets
 (D-042) — the spec itself says they share math. Seven listed "tools", three
 builds, which is the pattern rather than an exception.
 
+Two more listed tools turned out to be **configuration, not code**, exactly
+as `SPEC.md` intended: the **FAT FIRE template** is a row in
+`data/fire_variants.json` and the **Travel calc** is a row in
+`data/goal_templates.json`. Both were already shipped and were miscounted as
+unbuilt here until this pass. That is the configuration-data pattern working
+— and a reminder that this document's counts are only worth what the last
+reconciliation against the repo was worth.
+
 Two more rooms sit outside that table because their ideas live further down
 this document: **Every Ratio** builds thirty of the Tier 19 ratios from the
 household that already exists, and **The Dashboard** is the Tier 20 radar
 over them. Neither adds a number the other rooms did not already own — see
 `DECISIONS.md` for what the radar deliberately is not (a score).
 
-### Not built in Tier 1 (9)
+### Not built in Tier 1 (8)
 
 Bank Bonus · Rent/Buy · Warranty · Car Depreciation · W4 · DRAFTT template ·
-FAT FIRE template · HCOL/MCOL/LCOL standalone · Mutant Expenses Identifier
+HCOL/MCOL/LCOL standalone · Mutant Expenses Identifier
 
 Six of those are blocked on **maintained external datasets**, not on effort:
 live bank offers, vehicle depreciation curves, warranty failure rates, COL
@@ -62,11 +70,38 @@ tool shipped so far.
 `SPEC.md` §9 item 8 puts it last because it aggregates everything else, and
 §12.4 leaves its weighting `[PENDING]`. See "Still open" in `DECISIONS.md`.
 
-### Not built in Tier 2 (10)
+### Not built in Tier 2 (9)
 
-Kids · Travel · House Hack · Whole Life Insurance · Prenup/Estate ·
-Personal Inflation · HCOL/MCOL/LCOL modifier · Second Mouse Framework ·
-Trust Framework · Advice Translator
+Kids · House Hack · Whole Life Insurance · Prenup/Estate · Personal
+Inflation · HCOL/MCOL/LCOL modifier · Second Mouse Framework · Trust
+Framework · Advice Translator
+
+Each is blocked on something specific, and none of them on effort:
+
+- **House Hack** — `SPEC.md` says to build it "as an extension of the Tier 17
+  ownership-cost engine … **not standalone**". That engine does not exist and
+  Tier 17 is outside this repo's scope. Building it standalone would be
+  building it against the instruction.
+- **Kids** — regional childcare cost data, plus a tuition-inflation
+  assumption.
+- **Whole Life Insurance** — the spec says accurate modelling "needs actual
+  policy illustration data". Cash value is back-loaded and non-linear; a
+  straight-line guess would be wrong in the direction that flatters the
+  policy.
+- **Personal Inflation** — a maintained BLS category-level inflation
+  dataset, weighted against 12+ months of tracked spend.
+- **HCOL/MCOL/LCOL modifier** — a COL index, which is the same dataset
+  problem as its Tier 1 standalone twin.
+- **Prenup/Estate, Second Mouse, Trust Framework, Advice Translator** — the
+  spec itself classes these as document-generation or framework work rather
+  than calculations. Nothing to compute.
+
+And **DRAFTT** (Tier 1) is blocked on something smaller and more annoying:
+nobody has written down which categories and weights the template actually
+uses. It is a configuration row like FAT FIRE, and the moment someone
+supplies the split it is a five-minute change. Guessing at it would put a
+made-up budget framework in `data/` under someone else's name, which is
+exactly what D-036 exists to stop.
 
 ## Discrepancies found reconciling this document against the repo
 
