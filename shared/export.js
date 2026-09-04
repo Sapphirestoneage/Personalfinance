@@ -105,6 +105,13 @@
     if (Money.isOk(sheet.armorClass)) out.armorClass = sheet.armorClass.value;
     if (Money.isOk(sheet.debtBurden)) out.debtBurden = sheet.debtBurden.value;
 
+    var profile = household && household.dndProfile;
+    if (profile && profile.alignment && tables.dndAlignments) {
+      var al = tables.dndAlignments.alignments.filter(function (x) {
+        return x.id === profile.alignment; })[0];
+      if (al) { out.alignmentId = al.id; out.alignmentName = al.name; }
+    }
+
     var stats = {};
     Character.STAT_IDS.forEach(function (id) {
       if (Money.isOk(sheet.stats[id])) stats[id] = sheet.stats[id].value;

@@ -1,0 +1,134 @@
+{
+  "id": "dnd_alignments",
+  "version": "1.0",
+  "asOf": "2026-09-04",
+  "source": "Written for this product, 2026-09-04. REPLACES rulebook Section 6 rather than implementing it: Section 6 defers Alignment to a separate set of nine avatar archetypes that does not exist in this repo, and the owner has said to ignore it. The classic 3x3 grid already yields nine, so this fills the same slot without a dependency.",
+  "confidence": "convention",
+  "confidenceNote": "Satire, not measurement. Alignment is SELF-DECLARED — nothing computes it and nothing should. Deriving 'evil' from somebody's real balance sheet would be both unfunny and wrong, and a disposition you pick is truer to what alignment has always been in the source material.",
+  "note": "Two axes. Order axis (Lawful/Neutral/Chaotic): how much you actually follow a system. Ethics axis (Good/Neutral/Evil): whose upside you optimise for. Nine cells, one per D&D alignment. Each alignment carries its own axisLabel because composing the two axis words gives 'Neutral Neutral' for the centre cell, which is not what anyone calls it.",
+  "axes": {
+    "order": {
+      "label": "How much you follow a system",
+      "values": [
+        {
+          "id": "lawful",
+          "label": "Lawful",
+          "blurb": "There is a plan and the plan is followed."
+        },
+        {
+          "id": "neutral",
+          "label": "Neutral",
+          "blurb": "There is a plan. It is followed most Tuesdays."
+        },
+        {
+          "id": "chaotic",
+          "label": "Chaotic",
+          "blurb": "There is a vibe and the vibe is followed."
+        }
+      ]
+    },
+    "ethics": {
+      "label": "Whose upside you optimise for",
+      "values": [
+        {
+          "id": "good",
+          "label": "Good",
+          "blurb": "Everyone's, ideally at once."
+        },
+        {
+          "id": "neutral",
+          "label": "Neutral",
+          "blurb": "Yours, and you'd hold the door for someone."
+        },
+        {
+          "id": "evil",
+          "label": "Evil",
+          "blurb": "Yours. Exclusively. With documentation."
+        }
+      ]
+    }
+  },
+  "alignments": [
+    {
+      "id": "lawful_good",
+      "order": "lawful",
+      "ethics": "good",
+      "name": "The Hearthkeeper",
+      "axisLabel": "Lawful Good",
+      "emoji": "🧱",
+      "blurb": "The 4% rule is scripture and they will explain it to you at a wedding. Automated contributions, a sixty-tab spreadsheet, and a genuine, slightly alarming desire for you to open a Roth IRA too. Their fire is small, steady, and has never once gone out. They own a fire extinguisher. They have checked its expiry date. They have checked yours."
+    },
+    {
+      "id": "neutral_good",
+      "order": "neutral",
+      "ethics": "good",
+      "name": "The Torchbearer",
+      "axisLabel": "Neutral Good",
+      "emoji": "🔦",
+      "blurb": "Read four blogs, made a plan, follows most of it. Sends you the calculator link unprompted and then does not bring it up again, which is the rarest trait in the entire movement. Believes in financial independence and also that you should go on the trip. Carries the flame for other people more reliably than for themselves."
+    },
+    {
+      "id": "chaotic_good",
+      "order": "chaotic",
+      "ethics": "good",
+      "name": "The Wildfire",
+      "axisLabel": "Chaotic Good",
+      "emoji": "🌪️",
+      "blurb": "Savings rate swings between 4% and 60% depending on the month and the vibe. Will spontaneously cover a friend's medical bill and then eat rice for nine days about it. No budget, enormous heart, genuinely could not tell you their net worth within forty thousand dollars. Burns bright, burns wide, somehow keeps everyone warm."
+    },
+    {
+      "id": "lawful_neutral",
+      "order": "lawful",
+      "ethics": "neutral",
+      "name": "The Furnace Inspector",
+      "axisLabel": "Lawful Neutral",
+      "emoji": "🔩",
+      "blurb": "The plan is the plan. Rebalances on the same calendar day every year and has never once experienced an emotion about the market, in either direction. Would follow the Financial Order of Operations into a burning building because step six says so and the building is step seven. Not unkind. Just sincerely puzzled that you have feelings about a percentage."
+    },
+    {
+      "id": "true_neutral",
+      "order": "neutral",
+      "ethics": "neutral",
+      "name": "The Pilot Light",
+      "axisLabel": "True Neutral",
+      "emoji": "💡",
+      "blurb": "Contributing to the 401(k) because HR set it up in 2019. Has not logged in since. Not optimising, not failing, simply on. Will retire perfectly adequately and be mildly surprised about it. Statistically the lowest-drama build in the entire game and quietly beats about half the people reading this."
+    },
+    {
+      "id": "chaotic_neutral",
+      "order": "chaotic",
+      "ethics": "neutral",
+      "name": "The Ember Gambler",
+      "axisLabel": "Chaotic Neutral",
+      "emoji": "🎲",
+      "blurb": "Sixty percent index funds, forty percent conviction. Owns a Roth IRA and three coins you have not heard of and cannot pronounce. Rebalances by feel, at 2am, having just had an idea. Might be Coast FI, might be down seventy percent, opens the app to find out. The position-sizing rule exists. They are aware it exists."
+    },
+    {
+      "id": "lawful_evil",
+      "order": "lawful",
+      "ethics": "evil",
+      "name": "The Fee Structure",
+      "axisLabel": "Lawful Evil",
+      "emoji": "📜",
+      "blurb": "Reads the fine print. Yours. Has an LLC that owns an LLC for reasons that are fully legal and take eleven minutes to explain. Every arrangement is documented, compliant, and somehow lands in their favour. Will send you a beautifully formatted invoice for the dinner you were fairly sure was a gift. Their fire is contained, permitted, and comprehensively insured."
+    },
+    {
+      "id": "neutral_evil",
+      "order": "neutral",
+      "ethics": "evil",
+      "name": "The Ash Harvester",
+      "axisLabel": "Neutral Evil",
+      "emoji": "🦅",
+      "blurb": "Buys the house at the estate sale. Not malicious, which is the unsettling part — simply cannot look at a distressed seller and register anything except a spread. Optimises tax with the open enthusiasm most people reserve for a hobby. Does not gloat. Somehow this makes it worse."
+    },
+    {
+      "id": "chaotic_evil",
+      "order": "chaotic",
+      "ethics": "evil",
+      "name": "The Arsonist",
+      "axisLabel": "Chaotic Evil",
+      "emoji": "🔥",
+      "blurb": "Recruited you to a downline. Sold you a course about selling courses. Currently explaining a guaranteed twelve percent no-risk opportunity to their aunt, who trusts them. Genuinely believes every word, which makes it worse rather than better. This is the only alignment that appears in somebody else's Monster Manual."
+    }
+  ]
+}

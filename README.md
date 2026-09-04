@@ -42,8 +42,9 @@ hospital bill. That is the whole point of splitting them.
 ## Two tiers
 
 **Tier 1 — the quiz.** No money at all. Eighteen questions gets you three of
-your six ability scores, the nine sub-stats beneath them, and the class you
-lean toward. Shareable, and honest about being partial.
+your six ability scores, the nine sub-stats beneath them, the class you lean
+toward, and your alignment on a 3×3 grid from Hearthkeeper to Arsonist.
+Shareable, and honest about being partial.
 
 **Tier 2 — the sheet.** Five numbers (plus how you file, which is only used to
 estimate tax) and the rest resolves: all six scores, Level, HP, AC, Debt
@@ -132,6 +133,7 @@ data/
   dnd_rules.json      the rulebook, transcribed
   dnd_classes.json    seven classes, 1-20, with subclasses and feats
   dnd_scoring.json    every threshold, and the quiz
+  dnd_alignments.json the 3x3 alignment grid — picked, never computed
 FORMAT.md       the export contract, for anyone writing an importer
 test/run.js     the schema and the calibration promise
 test/parity.js  same numbers as the main suite

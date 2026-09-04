@@ -60,6 +60,17 @@
   .specbar { height: 10px; border-radius: var(--radius-pill); background: var(--color-surface-active); overflow: hidden; }
   .specbar > span { display: block; height: 100%; background: var(--color-accent); }
   .specrow .p { text-align: right; font-variant-numeric: tabular-nums; color: var(--color-text-muted); }
+  .align-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-1); margin-bottom: var(--space-3); }
+  .align-cell { border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface); padding: var(--space-2); cursor: pointer; text-align: center; font-family: var(--font-body); color: var(--color-text); line-height: var(--leading-tight); }
+  .align-cell:hover { border-color: var(--color-border-active); }
+  .align-cell[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-surface-active); }
+  .align-cell .em { font-size: var(--text-lg); display: block; }
+  .align-cell .nm { font-size: var(--text-xs); display: block; margin-top: 2px; }
+  .align-cell .ax { font-size: 10px; color: var(--color-text-faint); display: block; margin-top: 3px; text-transform: uppercase; letter-spacing: .04em; }
+  .align-detail { border: 1px solid var(--color-accent); border-radius: var(--radius-md); padding: var(--space-4); background: var(--color-surface-raised); margin-bottom: var(--space-4); }
+  .align-detail h3 { font-family: var(--font-display); margin: 0 0 var(--space-1); font-size: var(--text-lg); }
+  .align-detail .ax { font-size: var(--text-xs); color: var(--color-text-faint); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); margin-bottom: var(--space-2); }
+  .align-detail p { margin: 0; color: var(--color-text-muted); font-size: var(--text-sm); line-height: var(--leading-normal); }
   .locked { border: 1px dashed var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-4); text-align: center; background: var(--color-surface); }
   .locked h3 { margin: 0 0 var(--space-2); font-family: var(--font-display); }
   .locked p { color: var(--color-text-muted); font-size: var(--text-sm); line-height: var(--leading-normal); margin: 0 0 var(--space-3); }
@@ -118,6 +129,13 @@
       Every score as a percentage of the scale. A low one is exactly as visible as a high one —
       that's deliberate.</p>
     <div class="spec" id="r-spectrum"></div>
+
+    <h2>Your alignment</h2>
+    <p style="color:var(--color-text-muted);font-size:var(--text-sm);line-height:var(--leading-normal)">
+      Disposition, not skill — so you pick it, nothing measures it.
+      Down: how much you follow a system. Across: whose upside you're optimising for.</p>
+    <div class="align-grid" id="align-grid"></div>
+    <div id="align-detail" class="align-detail" hidden></div>
 
     <div class="locked">
       <h3>The other half needs five numbers and one tick-box</h3>
@@ -231,6 +249,49 @@
     return STEPS.length - 1;
   }
 
+  /* ---- Alignment: picked, never computed -------------------------------
+     Built once from the table, then only aria-pressed flips. Nothing here
+     derives an alignment from anyone's balance sheet, on purpose. */
+
+  function buildAlignment() {
+    var table = TABLES.dndAlignments;
+    var order = table.axes.order.values, ethics = table.axes.ethics.values;
+    var byCell = {};
+    table.alignments.forEach(function (a) { byCell[a.order + '/' + a.ethics] = a; });
+    var cells = [];
+    order.forEach(function (o) {
+      ethics.forEach(function (e) {
+        var a = byCell[o.id + '/' + e.id];
+        if (!a) return;
+        cells.push('<button type="button" class="align-cell" data-align="' + esc(a.id) + '" aria-pressed="false">'
+          + '<span class="em">' + a.emoji + '</span>'
+          + '<span class="nm">' + esc(a.name) + '</span>'
+          + '<span class="ax">' + esc(a.axisLabel) + '</span></button>');
+      });
+    });
+    el('align-grid').innerHTML = cells.join('');
+    el('align-grid').addEventListener('click', function (ev) {
+      var btn = ev.target.closest('.align-cell');
+      if (!btn) return;
+      Store.patchProfile({ alignment: btn.getAttribute('data-align') });
+      showAlignment();
+    });
+  }
+
+  function showAlignment() {
+    var picked = Store.profile().alignment || null;
+    var cells = el('align-grid').children;
+    for (var i = 0; i < cells.length; i++) {
+      cells[i].setAttribute('aria-pressed', String(cells[i].getAttribute('data-align') === picked));
+    }
+    var a = TABLES.dndAlignments.alignments.filter(function (x) { return x.id === picked; })[0];
+    var box = el('align-detail');
+    box.hidden = !a;
+    if (!a) return;
+    box.innerHTML = '<div class="ax">' + esc(a.axisLabel) + '</div>'
+      + '<h3>' + a.emoji + ' ' + esc(a.name) + '</h3><p>' + esc(a.blurb) + '</p>';
+  }
+
   /* ---- The result ------------------------------------------------------- */
 
   function renderResult() {
@@ -273,7 +334,10 @@
     var stats = Char.mainStats(subScores, TABLES);
     var leaning = Char.suggestClassFromStats(subScores, TABLES);
     var cls = Money.isOk(leaning) ? Char.classById(TABLES, leaning.value) : null;
+    var al = TABLES.dndAlignments.alignments.filter(function (x) {
+      return x.id === Store.profile().alignment; })[0];
     var line = ['Dungeons & Dividends — I lean ' + (cls ? cls.name : '?')];
+    if (al) line.push(al.emoji + ' ' + al.name);
     ['INT', 'WIS', 'CHA'].forEach(function (id) {
       var r = stats[id];
       if (Money.isOk(r)) line.push(id + ' ' + r.value + ' (' + Char.formatModifier(Char.modifier(r.value)) + ')');
@@ -286,6 +350,7 @@
     el('quiz').hidden = true;
     el('result').hidden = false;
     renderResult();
+    showAlignment();
     window.scrollTo({ top: 0 });
   }
 
@@ -325,6 +390,7 @@
   SLAF.Reference.load().then(function (tables) {
     TABLES = tables;
     buildQuestions();
+    buildAlignment();
     hydrate();
     wire();
     /* Someone coming back to a finished sheet should land on the result. */

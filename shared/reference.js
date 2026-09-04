@@ -38,7 +38,8 @@
     liquidityBenchmarks: 'liquidity_benchmarks.json',
     dndRules: 'dnd_rules.json',
     dndClasses: 'dnd_classes.json',
-    dndScoring: 'dnd_scoring.json'
+    dndScoring: 'dnd_scoring.json',
+    dndAlignments: 'dnd_alignments.json'
   };
 
   var cache = {};

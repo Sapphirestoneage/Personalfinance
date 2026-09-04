@@ -454,6 +454,21 @@
         }).join('') + '</ul>';
   }
 
+  /* Alignment is chosen on the quiz page, where it costs nothing to answer.
+     Here it is displayed only — no second place to set it. */
+  function renderAlignment() {
+    var table = TABLES.dndAlignments;
+    var picked = Store.profile().alignment;
+    var a = table.alignments.filter(function (x) { return x.id === picked; })[0];
+    if (!a) {
+      return '<h3>Alignment</h3><p class="note">Not chosen yet — '
+        + '<a href="index.html#result">pick one on the quiz page</a>. It needs no numbers.</p>';
+    }
+    return '<h3>Alignment</h3><div class="burden" style="border-left-color:var(--color-accent)">'
+      + '<b>' + a.emoji + ' ' + esc(a.name) + '</b> — ' + esc(a.axisLabel)
+      + '<br/>' + esc(a.blurb) + '</div>';
+  }
+
   function renderProjection(s) {
     if (!Money.isOk(s.nextLevel)) return '';
     if (s.nextLevel.atCap) return '<p class="note">Level 20 — 100% of your own number. No rung above this one.</p>';
@@ -481,7 +496,8 @@
       + '<h3>Sub-stats</h3>' + renderSubStats(s)
       + '<h3>Class</h3>' + renderClass(s)
       + renderFeats(s)
-      + renderProjection(s);
+      + renderProjection(s)
+      + renderAlignment();
 
     var ov = el('class-override');
     if (ov) ov.addEventListener('change', function () {
