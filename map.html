@@ -188,8 +188,12 @@
       a.href = room.href;
       a.innerHTML =
         '<div class="room-top">'
+        /* No digit. Cards are grouped by kind, so path order read as
+           1, 2, 3, 5 / 4, 6, 8 — a sequence that looked broken. The tick
+           for a visited room stays; the path order lives in the header
+           nav of every room, where it is walked rather than read. */
         + '<span class="slaf-step ' + (seen ? 'slaf-step--done' : isNext ? 'slaf-step--next' : '') + '">'
-        + (seen ? '✓' : room.order) + '</span>'
+        + (seen ? '✓' : isNext ? '→' : '·') + '</span>'
         + '<h2>' + room.title + '</h2>'
         + (isNext ? '<span class="next-flag">next</span>'
                   : seen ? '<span class="visited">visited</span>' : '') + '</div>'
