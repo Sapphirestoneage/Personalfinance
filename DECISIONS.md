@@ -1281,6 +1281,62 @@ as a rating.
 
 ---
 
+## D-032 — Return on Hassle: the weighting is a convention, and it says so
+
+**SPEC.md §13 Tier 1 asks for "dollars saved vs. time/effort" with a
+"defaultable hassle-score-by-activity-type" table.** The table is
+`data/hassle_defaults.json`: ten common money-saving chores with a typical
+hour count and a starting 1-10 hassle score. Those numbers are plausible
+starting points, not measurements, and the file says so in its own `source`
+field rather than implying a study nobody ran.
+
+**The hassle weight is invented, so it is stated rather than buried.** To let
+a 1-10 feeling enter the arithmetic at all, something has to turn it into a
+number of hours. The convention is linear: weight = 1 + (score − 1) / 9, so a
+10-out-of-10 hour counts as two hours and a 1-out-of-10 hour counts as one.
+There is no research behind that slope. It lives in the data file with a note
+saying exactly that, the room prints the convention wherever it uses it, and
+the **plain unweighted rate is always shown beside the adjusted one** so
+nobody has to take the convention on trust. An unrated chore gets a weight of
+1 — unrated means no adjustment, never an assumed penalty. A score outside
+1-10 is treated as unrated rather than clamped.
+
+**Both rate cards read on the same basis.** The first version showed the
+per-occurrence rate beside the annualised adjusted rate, so a $30-a-month
+saving off one afternoon's work read "$15/hr plain, $125/hr adjusted" — which
+made the hassle adjustment look like it had *raised* the rate. Both cards now
+use the annual basis whenever the saving repeats, and the per-occurrence
+figure moved into the detail where it belongs.
+
+**Whether the HOURS repeat is asked, not assumed.** Cancelling a subscription
+is one hour against twelve months of saving; doing your own taxes is the
+hours every single year. Those are wildly different propositions with
+identical headline savings, and the answer changes the rate by a factor of
+twelve. It is a question in the room and a flag on the engine.
+
+**The real hourly wage is read, never recomputed.** `versusWage()` calls
+`engines/hourly.js` — SPEC.md §8, and there is one real-hourly-wage
+calculation in this codebase. The break-even figure is checked by feeding it
+back in: at the break-even saving, the adjusted rate equals the wage.
+
+**"Beats your wage" is not "do it".** An hour of a chore is not an hour you
+could have sold, and most people cannot take on another paid hour at will.
+The room says that where the verdict appears, because the arithmetic is
+otherwise very easy to over-read.
+
+**The chore on screen is not household data.** You are weighing a decision,
+not recording a fact, so the saving, hours and repeat setting are local to
+the page. The one thing that persists is the hassle SCORE of a named
+activity, because how much you hate re-shopping insurance is a fact about
+you — it is stored in the shared ratings store under the `hassle` scope. A
+custom chore has no id to hang a score on, so its rating stays local, which
+is the honest consequence rather than a bug.
+
+**Room order.** Inserted at 10, straight after Real Hourly Wage, whose
+output it consumes. Everything below shifted by one.
+
+---
+
 ## Still open
 
 - ~~**Two-Income Household Toggle** and **Soft Saving Balance

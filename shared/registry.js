@@ -173,8 +173,24 @@
       ]
     },
     {
-      id: 'quick-math',
+      id: 'hassle',
       order: 10,
+      title: 'Worth the Hassle',
+      blurb: 'What a money-saving chore actually pays per hour \u2014 against what an hour of your life already earns, and how much you hate doing it.',
+      href: 'rooms/hassle.html',
+      tier: 1,
+      tags: ['income', 'cashflow'],
+      subsections: [
+        { id: 'chore',     label: 'The chore' },
+        { id: 'out-rate',  label: 'What it pays an hour' },
+        { id: 'out-wage',  label: 'Against an hour of your life' },
+        { id: 'presets',   label: 'Common ones' },
+        { id: 'reading',   label: 'Reading from elsewhere' }
+      ]
+    },
+    {
+      id: 'quick-math',
+      order: 11,
       title: 'Quick Math',
       blurb: 'Four small answers: is switching savings accounts worth it, what that thing costs per use, whether you can afford the car, and the rule of five.',
       href: 'rooms/quick-math.html',
@@ -191,7 +207,7 @@
     },
     {
       id: 'self-employed',
-      order: 11,
+      order: 12,
       title: 'Going Self-Employed',
       blurb: 'What a contract rate has to be to match a salary, where the 15.3% actually lands, and what to send in each quarter.',
       href: 'rooms/self-employed.html',
@@ -206,7 +222,7 @@
     },
     {
       id: 'accounts',
-      order: 12,
+      order: 13,
       title: 'Where It Goes',
       blurb: 'Roth, Traditional or taxable \u2014 and how much a Solo 401(k) actually lets you put away.',
       href: 'rooms/accounts.html',
@@ -220,7 +236,7 @@
     },
     {
       id: 'values',
-      order: 14,
+      order: 15,
       title: 'What Matters',
       blurb: 'The five things you say matter most, next to where the money actually went. No score \u2014 just the two lists, side by side.',
       href: 'rooms/values.html',
@@ -236,7 +252,7 @@
     },
     {
       id: 'fulfillment',
-      order: 13,
+      order: 14,
       title: 'Enough',
       blurb: 'What each thing costs a month, against what it is actually worth to you \u2014 and the four places that lands.',
       href: 'rooms/fulfillment.html',
@@ -252,7 +268,7 @@
     },
     {
       id: 'goals',
-      order: 15,
+      order: 16,
       title: 'Goals',
       blurb: 'A wedding, a deposit, a big trip. What it costs, what it needs a month, and whether that actually fits alongside everything else.',
       href: 'rooms/goals.html',
@@ -265,7 +281,7 @@
     },
     {
       id: 'foo-ladder',
-      order: 16,
+      order: 17,
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
       href: 'index.html',

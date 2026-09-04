@@ -1,0 +1,86 @@
+{
+  "id": "hassle_defaults",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "Starting values for the Return on Hassle calculator: a short list of common money-saving chores with a typical time cost and a default 1-10 hassle rating. These are STARTING POINTS chosen for plausibility, not measurements — no study is being cited, and every one of them is meant to be overwritten by the person using it.",
+  "note": "SPEC.md Section 13, Tier 1: 'Defaultable hassle-score-by-activity-type is a small reference table worth building early.' This is that table. Hours are per instance of doing the thing, start to finish, including the waiting-on-hold parts.",
+  "weighting": {
+    "id": "linear_1_to_2",
+    "label": "A ten-out-of-ten chore counts as double time",
+    "note": "A CONVENTION, not a finding. Hassle weight = 1 + (score - 1) / 9, so a 1-out-of-10 hour counts as one hour and a 10-out-of-10 hour counts as two. There is no research behind the slope; it exists so that 'how much do I hate this' can enter the arithmetic at all instead of sitting beside it doing nothing. The room states the convention wherever it uses it, and the plain unweighted rate is always shown next to it.",
+    "minWeight": 1,
+    "maxWeight": 2
+  },
+  "activities": [
+    {
+      "id": "bank_bonus",
+      "label": "Opening an account for a bonus",
+      "hours": 2,
+      "hassle": 5,
+      "note": "Application, funding transfer, direct-deposit setup, then remembering to close it."
+    },
+    {
+      "id": "switch_savings",
+      "label": "Moving cash to a better savings rate",
+      "hours": 1.5,
+      "hassle": 4,
+      "note": "One-off. The Quick Math room works out whether the rate difference is worth it."
+    },
+    {
+      "id": "insurance_shop",
+      "label": "Re-shopping an insurance policy",
+      "hours": 3,
+      "hassle": 6,
+      "note": "Quotes, comparison, then the cancellation call."
+    },
+    {
+      "id": "bill_negotiate",
+      "label": "Negotiating a bill down",
+      "hours": 1,
+      "hassle": 8,
+      "note": "Short, and unpleasant enough that most people never do it twice."
+    },
+    {
+      "id": "subscription_audit",
+      "label": "Auditing and cancelling subscriptions",
+      "hours": 1,
+      "hassle": 3,
+      "note": "The saving repeats every month, which is what makes it unusual."
+    },
+    {
+      "id": "refinance",
+      "label": "Refinancing a loan",
+      "hours": 8,
+      "hassle": 7,
+      "note": "Paperwork, an appraisal, and weeks of waiting."
+    },
+    {
+      "id": "credit_card_churn",
+      "label": "Signing up for a card bonus",
+      "hours": 3,
+      "hassle": 5,
+      "note": "Application, hitting the minimum spend, tracking the deadline."
+    },
+    {
+      "id": "tax_prep_self",
+      "label": "Doing your own taxes instead of paying someone",
+      "hours": 6,
+      "hassle": 7,
+      "note": "Every year, and the hassle does not go down much with practice."
+    },
+    {
+      "id": "resale",
+      "label": "Selling something second-hand",
+      "hours": 2,
+      "hassle": 6,
+      "note": "Photos, listing, messages, and the meeting."
+    },
+    {
+      "id": "diy_repair",
+      "label": "Fixing it yourself instead of paying a trade",
+      "hours": 4,
+      "hassle": 5,
+      "note": "Highly variable, and the failure mode is paying the trade anyway."
+    }
+  ]
+}

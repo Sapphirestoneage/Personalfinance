@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Worth the Hassle · SPARKS</title>
+<meta name="description" content="What a money-saving chore actually pays per hour — against what an hour of your life already earns."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11, §13 Tier 1 (Return on Hassle calc).
+
+  1. READS   the work profile and income, through engines/hourly.js, for
+             the real hourly wage this is measured against.
+  2. WRITES  household.ratings.hassle — a hassle score per activity in the
+             reference table, through Spine.setRating() only. The chore
+             being priced right now is local; nothing else persists.
+  3. CALLS   engines/hassle.js, which calls engines/hourly.js. There is one
+             real-hourly-wage calculation in this codebase and this is not
+             a second one.
+  4. EMPTY   The rate works with just a saving and an hour count. The
+             comparison against your wage says what the Real Hourly Wage
+             room still needs, and links there.
+  5. CONFIG  data/hassle_defaults.json — the activity list, the default
+             hassle scores, and the weighting convention.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
+  @media (max-width: 380px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .repeat { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-3); }
+  .repeat button { text-align: center; font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; transition: all 150ms ease; }
+  .repeat button:hover { border-color: var(--color-border-active); }
+  .repeat button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+
+  .verdict { font-family: var(--font-display); font-size: var(--text-xl); margin-top: var(--space-3); }
+  .verdict.is-incomplete { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-base); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+
+  .rates { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); align-items: stretch; }
+  @media (max-width: 400px) { .rates { grid-template-columns: 1fr; } }
+  .rates > div { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; }
+  .rates .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  .rates .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); }
+  .rates .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: auto; padding-top: var(--space-2); }
+
+  .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
+  .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  .out-detail dt { color: var(--color-text-faint); }
+  .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  ul.presets { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ul.presets li { border-bottom: 1px solid var(--color-border); padding: var(--space-3) 0; }
+  ul.presets li:last-child { border-bottom: none; }
+  ul.presets .head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+  ul.presets .nm { font-size: var(--text-sm); font-weight: 600; text-align: left; background: none; border: none; color: var(--color-accent-hover); font-family: var(--font-body); padding: 0; cursor: pointer; }
+  ul.presets .nm:hover { text-decoration: underline; }
+  ul.presets .hrs { font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  ul.presets .nt { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
+  ul.presets .ctl { display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); align-items: center; margin-top: var(--space-2); }
+
+  .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Worth the Hassle</h1>
+  <p class="room-lede">What a money-saving chore actually pays per hour — against what an hour of your life already earns, and how much you hate doing it.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="chore">
+    <span class="slaf-eyebrow">The chore</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)" id="chore-title">Price one</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      Pick one from the list further down to fill this in, or just describe
+      your own. Hours means start to finish, including the waiting-on-hold
+      parts.
+    </p>
+    <div class="grid-2">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">What it saves</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-saving" placeholder="e.g. 200" aria-label="What it saves"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Hours it takes</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-hours" placeholder="e.g. 2" aria-label="Hours it takes"/><span class="slaf-affix">hrs</span></span></label>
+    </div>
+
+    <div class="repeat" role="group" aria-label="How often the saving lands">
+      <button type="button" data-repeat="once" aria-pressed="true">Once</button>
+      <button type="button" data-repeat="monthly" aria-pressed="false">Every month</button>
+    </div>
+    <p class="slaf-hint" style="margin-top:var(--space-2)" id="repeat-hint"></p>
+
+    <label class="slaf-field" style="margin-top:var(--space-3)" id="field-hours-repeat" hidden>
+      <span class="slaf-label">Do the hours come back too?</span>
+      <span class="slaf-input-shell">
+        <select id="in-hours-repeat" aria-label="Do the hours repeat">
+          <option value="no">No — one afternoon, then it just keeps saving</option>
+          <option value="yes">Yes — I have to do it again every month</option>
+        </select>
+      </span>
+    </label>
+
+    <label class="slaf-field" style="margin-top:var(--space-3)"><span class="slaf-label">How much do you hate doing it?</span>
+      <span id="hassle-slot"></span></label>
+    <div id="hassle-dots" style="margin-top:var(--space-2)"></div>
+  </section>
+
+  <section class="slaf-card" id="out-rate">
+    <span class="slaf-eyebrow">What it pays an hour</span>
+    <h2 style="margin:var(--space-2) 0 0">Two rates, one of them adjusted</h2>
+    <div class="rates">
+      <div>
+        <span class="cap">Plain</span>
+        <span class="big" id="r-plain">—</span>
+        <span class="sub" id="r-plain-sub"></span>
+      </div>
+      <div>
+        <span class="cap">Adjusted for how you feel about it</span>
+        <span class="big" id="r-adj">—</span>
+        <span class="sub" id="r-adj-sub"></span>
+      </div>
+    </div>
+    <div class="out-detail" id="rate-detail"></div>
+    <p class="why" id="rate-why"></p>
+  </section>
+
+  <section class="slaf-card" id="out-wage">
+    <span class="slaf-eyebrow">Against an hour of your life</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Is it worth your time?</h2>
+    <div class="verdict" id="w-verdict">—</div>
+    <p class="why" id="w-why"></p>
+    <div class="out-detail" id="w-detail"></div>
+  </section>
+
+  <section class="slaf-card" id="presets">
+    <span class="slaf-eyebrow">Common ones</span>
+    <h2 style="margin:var(--space-2) 0 0">Starting points</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Tap a name to load its hours into the calculator above. The hassle
+      scores are only a starting guess — change any of them and yours is
+      what gets used from then on.
+    </p>
+    <ul class="presets" id="preset-list"></ul>
+  </section>
+
+  <section class="slaf-card" id="reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. The hassle weighting is a stated
+    convention, not a finding — see the note in
+    <code>data/hassle_defaults.json</code> — and the plain rate is always
+    shown beside it. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/rating.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../engines/hassle.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference,
+      Ownership = SLAF.Ownership, Rating = SLAF.Rating, Hassle = SLAF.Hassle;
+
+  var ROOM_ID = 'hassle';
+  var TABLES = null;
+
+  /* The chore on screen is a local scratchpad, not household data — you are
+     weighing a decision, not recording a fact. Only the hassle SCORE of a
+     named activity persists, because that is a fact about you. */
+  var chore = {
+    activityId: null, label: null,
+    savingCents: null, hours: null,
+    repeat: 'once', hoursRepeat: false, hassle: null
+  };
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function dl(rows) {
+    return '<dl>' + rows.map(function (r) {
+      return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+    }).join('') + '</dl>';
+  }
+  function perHour(cents) { return Money.formatCents(cents) + '/hr'; }
+
+  /* ---- Inputs ----------------------------------------------------------- */
+
+  function bind(id, kind, key) {
+    var node = el(id);
+    node.addEventListener('focus', function () {
+      var raw = chore[key];
+      node.value = !Money.isEntered(raw) ? ''
+        : kind === 'money' ? String(raw / 100) : String(raw);
+      node.select();
+    });
+    node.addEventListener('blur', function () {
+      var raw = node.value.trim();
+      chore[key] = raw === '' ? null
+        : kind === 'money' ? Money.parseMoney(raw)
+        : (Number.isFinite(Number(raw)) ? Number(raw) : null);
+      node.value = !Money.isEntered(chore[key]) ? ''
+        : kind === 'money' ? Money.formatCents(chore[key]) : String(chore[key]);
+      render();
+    });
+    node.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); node.blur(); }
+    });
+  }
+  bind('in-saving', 'money', 'savingCents');
+  bind('in-hours', 'number', 'hours');
+
+  Array.prototype.forEach.call(document.querySelectorAll('.repeat button'), function (b) {
+    b.addEventListener('click', function () {
+      chore.repeat = b.getAttribute('data-repeat');
+      if (chore.repeat === 'once') chore.hoursRepeat = false;
+      render();
+    });
+  });
+
+  el('in-hours-repeat').addEventListener('change', function () {
+    chore.hoursRepeat = el('in-hours-repeat').value === 'yes';
+    render();
+  });
+
+  /* One change handler for every rating on the page — the one in the chore
+     card and the one on each preset row. */
+  document.addEventListener('change', function (evt) {
+    var read = Rating.readTarget(evt.target);
+    if (!read) return;
+    chore.hassle = read.value;
+    /* A named activity's score is a fact about you and persists. A custom
+       chore has no id to hang it on, so it stays local. */
+    if (read.itemId && read.itemId !== 'custom') {
+      Spine.setRating(read.scope, read.itemId, read.value);
+    }
+    render();
+  });
+
+  el('preset-list').addEventListener('click', function (evt) {
+    var btn = evt.target.closest ? evt.target.closest('.nm') : null;
+    if (!btn) return;
+    var id = btn.getAttribute('data-preset');
+    var a = Hassle.activityById(TABLES.hassleDefaults, id);
+    if (!a) return;
+    var h = Spine.getProfile();
+    var stored = Rating.get(h, Hassle.SCOPE, id);
+    chore.activityId = id;
+    chore.label = a.label;
+    chore.hours = a.hours;
+    chore.hassle = stored === null ? a.hassle : stored;
+    render();
+    el('chore').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  /* ---- Rendering -------------------------------------------------------- */
+
+  function renderInputs() {
+    el('chore-title').textContent = chore.label ? chore.label : 'Price one';
+
+    var saving = el('in-saving');
+    if (document.activeElement !== saving) {
+      saving.value = Money.isEntered(chore.savingCents) ? Money.formatCents(chore.savingCents) : '';
+    }
+    var hours = el('in-hours');
+    if (document.activeElement !== hours) {
+      hours.value = Money.isEntered(chore.hours) ? String(chore.hours) : '';
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll('.repeat button'), function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-repeat') === chore.repeat));
+    });
+    el('field-hours-repeat').hidden = chore.repeat !== 'monthly';
+    el('in-hours-repeat').value = chore.hoursRepeat ? 'yes' : 'no';
+    el('repeat-hint').textContent = chore.repeat === 'monthly'
+      ? 'A saving that lands every month is a different proposition from a one-off, '
+        + 'even when the work is identical.'
+      : 'One saving, one time.';
+
+    el('hassle-slot').innerHTML = Rating.controlHtml({
+      scope: Hassle.SCOPE,
+      itemId: chore.activityId || 'custom',
+      value: chore.hassle,
+      label: chore.label || 'this chore'
+    });
+    el('hassle-dots').innerHTML = Rating.dotsHtml(chore.hassle);
+  }
+
+  function opts() {
+    return {
+      savingCents: chore.savingCents,
+      hours: chore.hours,
+      repeatsPerYear: chore.repeat === 'monthly' ? 12 : 1,
+      hoursRepeat: chore.hoursRepeat,
+      hassleScore: chore.hassle
+    };
+  }
+
+  function renderRate() {
+    var r = Hassle.returnOnHassle(opts(), TABLES.hassleDefaults);
+    var plain = el('r-plain'), adj = el('r-adj');
+    if (!Money.isOk(r)) {
+      plain.className = 'big'; plain.textContent = Money.EM_DASH;
+      adj.className = 'big'; adj.textContent = Money.EM_DASH;
+      el('r-plain-sub').textContent = r.reason || '';
+      el('r-adj-sub').textContent = '';
+      el('rate-detail').innerHTML = '';
+      el('rate-why').textContent = '';
+      return r;
+    }
+    /* Both cards read on the SAME basis. When a saving repeats, that basis
+       is the year: showing a per-occurrence rate beside an annualised
+       adjusted one put two different questions side by side and made the
+       adjustment look like it had raised the rate. */
+    plain.textContent = perHour(r.annualPerHourCents);
+    el('r-plain-sub').textContent = r.repeatsPerYear > 1
+      ? Money.formatCents(r.annualSavingCents) + ' a year for '
+        + r.annualHours + (r.annualHours === 1 ? ' hour' : ' hours')
+      : Money.formatCents(r.savingCents) + ' for '
+        + r.hours + (r.hours === 1 ? ' hour' : ' hours');
+
+    adj.textContent = perHour(r.adjustedPerHourCents);
+    el('r-adj-sub').textContent = r.hassleRated
+      ? 'rated ' + r.hassleScore + '/10, so an hour of it counts as '
+        + (Math.round(r.hassleWeight * 100) / 100) + ' hours'
+      : 'not rated yet — unrated means no adjustment, not a penalty';
+
+    var rows = [
+      ['Saved', Money.formatCents(r.savingCents) + (r.repeatsPerYear > 1 ? ' a month' : '')],
+      ['Hours', r.hours + (r.hoursRepeat && r.repeatsPerYear > 1 ? ' a month' : '')]
+    ];
+    if (r.repeatsPerYear > 1) {
+      rows.push(['Over a year', Money.formatCents(r.annualSavingCents) + ' for '
+        + r.annualHours + (r.annualHours === 1 ? ' hour' : ' hours')]);
+      rows.push(['Each time you do it', perHour(r.value)]);
+    }
+    el('rate-detail').innerHTML = dl(rows);
+
+    el('rate-why').textContent = r.repeatsPerYear > 1 && !r.hoursRepeat
+      ? 'The hours happen once and the saving keeps landing, so the rate above is the '
+        + 'annual one. Per occurrence it looks like ' + perHour(r.value)
+        + ', which is the wrong way to read a saving that repeats.'
+      : r.hassleRated
+        ? 'The adjustment is a stated convention: a 10-out-of-10 hour counts as two. '
+          + 'It is there so how you feel about the job can enter the arithmetic — '
+          + 'the plain rate beside it is what the money actually did.'
+        : 'Rate how much you hate it to see the adjusted figure move.';
+    return r;
+  }
+
+  function renderWage(h) {
+    var v = Hassle.versusWage(h, TABLES, opts());
+    var verdict = el('w-verdict');
+    if (!Money.isOk(v)) {
+      verdict.className = 'verdict is-incomplete';
+      verdict.textContent = v.reason || Money.EM_DASH;
+      el('w-why').innerHTML = v.missing && v.missing.length
+        ? '<a href="' + Ownership.linkTo('real-hourly-wage', 'hours') + '">Fill in Real Hourly Wage →</a>'
+        : '';
+      el('w-detail').innerHTML = '';
+      return;
+    }
+    verdict.className = 'verdict';
+    var r = v.hassle;
+    verdict.textContent = v.beatsWage
+      ? 'Yes — it pays ' + Money.formatCents(v.differenceCents) + '/hr more than working'
+      : 'It pays ' + Money.formatCents(-v.differenceCents) + '/hr less than working';
+
+    el('w-why').textContent = v.beatsWage
+      ? 'Against ' + perHour(v.realHourlyCents) + ', which is what an hour of your life '
+        + 'actually earns after the costs and unpaid hours the job already takes.'
+      : 'That does not settle it — an hour of a chore is not an hour you could have '
+        + 'sold, and most people cannot take on another hour of work at will. It does '
+        + 'mean the money is not the reason to do it.';
+
+    el('w-detail').innerHTML = dl([
+      ['This chore, adjusted', perHour(r.adjustedPerHourCents)],
+      ['An hour of your life', perHour(v.realHourlyCents)],
+      ['It would need to save', Money.formatCents(v.breakEvenSavingCents) + ' to match']
+    ]);
+  }
+
+  function renderPresets(h) {
+    var p = Hassle.presets(h, TABLES.hassleDefaults);
+    if (!Money.isOk(p)) { el('preset-list').innerHTML = ''; return; }
+    el('preset-list').innerHTML = p.value.map(function (a) {
+      return '<li><div class="head">'
+        + '<button type="button" class="nm" data-preset="' + esc(a.id) + '">' + esc(a.label) + '</button>'
+        + '<span class="hrs">' + a.hours + (a.hours === 1 ? ' hr' : ' hrs') + '</span></div>'
+        + '<div class="nt">' + esc(a.note) + '</div>'
+        + '<div class="ctl">'
+        + Rating.controlHtml({ scope: Hassle.SCOPE, itemId: a.id, value: a.rated ? a.hassle : null, label: a.label })
+        + Rating.dotsHtml(a.rated ? a.hassle : null)
+        + '</div></li>';
+    }).join('');
+  }
+
+  function renderNow() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    renderInputs();
+    renderRate();
+    renderWage(h);
+    renderPresets(h);
+
+    var wage = SLAF.Hourly.realHourlyWage(h, TABLES);
+    el('reading-list').innerHTML =
+      '<a class="slaf-owned' + (Money.isOk(wage) ? '' : ' slaf-owned--empty') + '" href="'
+      + Ownership.linkTo('real-hourly-wage', 'out-rate') + '">'
+      + '<span class="slaf-owned-label">Real hourly wage</span>'
+      + '<span class="slaf-owned-value">'
+      + (Money.isOk(wage) ? perHour(wage.value) : Money.EM_DASH) + '</span>'
+      + '<span class="slaf-owned-from">'
+      + (Money.isOk(wage) ? 'from Real Hourly Wage →' : 'work it out in Real Hourly Wage →')
+      + '</span></a>'
+      + ['grossAnnualIncome'].map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+
+  var queued = false;
+  function render() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () { queued = false; renderNow(); }, 0);
+  }
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    renderNow();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

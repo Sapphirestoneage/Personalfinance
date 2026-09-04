@@ -42,6 +42,7 @@ const Swan = require(path.join(ROOT, 'engines/swan.js'));
 const ValuesEngine = require(path.join(ROOT, 'engines/values.js'));
 const Rating = require(path.join(ROOT, 'shared/rating.js'));
 const Fulfillment = require(path.join(ROOT, 'engines/fulfillment.js'));
+const HassleEngine = require(path.join(ROOT, 'engines/hassle.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -57,6 +58,7 @@ const TABLES = {
   goalTemplates: require(path.join(ROOT, 'data/goal_templates.json')),
   liquidityBenchmarks: require(path.join(ROOT, 'data/liquidity_benchmarks.json')),
   values: require(path.join(ROOT, 'data/values.json')),
+  hassleDefaults: require(path.join(ROOT, 'data/hassle_defaults.json')),
   irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json'))
 };
 
@@ -1943,6 +1945,125 @@ section('Ratings');
    Fulfillment Curve — spend against a 1-10 joy rating. SPEC.md §13 Tier 1.5.
    Robin's categorised month, spending only (savings excluded).
    ========================================================================== */
+
+/* ==========================================================================
+   Return on Hassle — dollars saved against time and effort. SPEC.md §13.
+   ========================================================================== */
+
+section('Return on Hassle');
+
+(function () {
+  const HD = TABLES.hassleDefaults;
+
+  /* -- The weighting convention ------------------------------------------ */
+  check('a 1-out-of-10 hour counts as one hour', HassleEngine.weightFor(HD, 1).weight, 1);
+  check('a 10-out-of-10 hour counts as two', HassleEngine.weightFor(HD, 10).weight, 2);
+  check('and 5 sits linearly between them',
+    HassleEngine.weightFor(HD, 5).weight, 1 + 4 / 9, 1e-12);
+  check('an unrated chore is not adjusted at all',
+    HassleEngine.weightFor(HD, null).weight, 1);
+  checkTrue('and says it was unrated', HassleEngine.weightFor(HD, null).rated === false);
+  check('a value off the scale is treated as unrated, not clamped',
+    HassleEngine.weightFor(HD, 99).weight, 1);
+  check('the convention is named in the data file, not the code',
+    HassleEngine.weightFor(HD, 5).convention, HD.weighting.id);
+
+  /* -- A one-off: $200 for 2 hours = $100/hr ----------------------------- */
+  const once = HassleEngine.returnOnHassle(
+    { savingCents: 20000, hours: 2, hassleScore: 5 }, HD);
+  check('$200 for two hours is $100 an hour', once.value, 10000);
+  check('with no repeat, the annual rate is the same', once.annualPerHourCents, 10000);
+  check('and the adjusted rate divides by the weight',
+    once.adjustedPerHourCents, Math.round(10000 / (1 + 4 / 9)));
+  check('which is $69.23 an hour', once.adjustedPerHourCents, 6923);
+
+  const unrated = HassleEngine.returnOnHassle({ savingCents: 20000, hours: 2 }, HD);
+  check('unrated, the adjusted rate equals the plain one',
+    unrated.adjustedPerHourCents, unrated.value);
+
+  /* -- A repeating saving off one afternoon's work ----------------------- */
+  const subs = HassleEngine.returnOnHassle(
+    { savingCents: 3000, hours: 1, repeatsPerYear: 12, hoursRepeat: false, hassleScore: 3 }, HD);
+  check('per occurrence it looks like $30 an hour', subs.value, 3000);
+  check('but a year of it is $360', subs.annualSavingCents, 36000);
+  check('for the same single hour', subs.annualHours, 1);
+  check('so the rate that matters is $360 an hour', subs.annualPerHourCents, 36000);
+  check('and the adjusted rate is built from the annual one, not the occurrence',
+    subs.adjustedPerHourCents, Math.round(36000 / (1 + 2 / 9)));
+
+  /* When the hours recur too, the annual rate collapses back to the
+     per-occurrence one — which is the whole point of asking. */
+  const taxes = HassleEngine.returnOnHassle(
+    { savingCents: 3000, hours: 1, repeatsPerYear: 12, hoursRepeat: true }, HD);
+  check('when the hours repeat, the year costs twelve of them', taxes.annualHours, 12);
+  check('and the annual rate is the same as the occurrence rate',
+    taxes.annualPerHourCents, taxes.value);
+  checkTrue('which is far below the one-afternoon version',
+    taxes.annualPerHourCents < subs.annualPerHourCents);
+
+  /* -- Nothing is assumed, and nothing divides by zero ------------------- */
+  check('with no saving entered there is no rate',
+    HassleEngine.returnOnHassle({ hours: 2 }, HD).status, 'incomplete');
+  check('with no hours entered there is no rate',
+    HassleEngine.returnOnHassle({ savingCents: 20000 }, HD).status, 'incomplete');
+  check('zero hours is refused rather than divided by',
+    HassleEngine.returnOnHassle({ savingCents: 20000, hours: 0 }, HD).status, 'incomplete');
+  check('negative hours too',
+    HassleEngine.returnOnHassle({ savingCents: 20000, hours: -1 }, HD).status, 'incomplete');
+  check('a saving of zero is a real answer, not a missing one',
+    HassleEngine.returnOnHassle({ savingCents: 0, hours: 2 }, HD).value, 0);
+  check('zero repeats is refused',
+    HassleEngine.returnOnHassle({ savingCents: 100, hours: 1, repeatsPerYear: 0 }, HD).status,
+    'incomplete');
+
+  /* -- Against the real hourly wage, which is computed in ONE place ------ */
+  const h = Demo.build();
+  const wage = Hourly.realHourlyWage(h, TABLES);
+  const v = HassleEngine.versusWage(h, TABLES, { savingCents: 20000, hours: 2, hassleScore: 5 });
+  check('the comparison uses engines/hourly.js, not a second wage figure',
+    v.realHourlyCents, wage.value);
+  check('$69/hr beats Robin\'s real hourly wage', v.beatsWage, true);
+  check('by the difference between the two',
+    v.differenceCents, once.adjustedPerHourCents - wage.value);
+  check('the ratio is the adjusted rate over the wage',
+    v.value, once.adjustedPerHourCents / wage.value, 1e-12);
+
+  /* Break-even: the saving at which the adjusted rate exactly matches the
+     wage. Feed it back in and the two rates should meet. */
+  const be = v.breakEvenSavingCents;
+  const atBreakEven = HassleEngine.returnOnHassle(
+    { savingCents: be, hours: 2, hassleScore: 5 }, HD);
+  check('at the break-even saving the adjusted rate matches the wage',
+    atBreakEven.adjustedPerHourCents, wage.value, 1);
+
+  const noWage = HassleEngine.versusWage(Schema.createHousehold({}), TABLES,
+    { savingCents: 20000, hours: 2 });
+  check('with no work profile the comparison is incomplete', noWage.status, 'incomplete');
+  check('while the rate on its own still works',
+    HassleEngine.returnOnHassle({ savingCents: 20000, hours: 2 }, HD).status, 'ok');
+
+  /* -- The reference table ----------------------------------------------- */
+  const presets = HassleEngine.presets(h, HD);
+  check('every activity in the table comes back', presets.value.length, HD.activities.length);
+  checkTrue('each carries a default hassle score on the scale',
+    presets.value.every(a => Rating.isValid(a.defaultHassle)));
+  checkTrue('each carries hours above zero', presets.value.every(a => a.hours > 0));
+  checkTrue('none is marked as rated by the person yet',
+    presets.value.every(a => a.rated === false));
+
+  const rated = Schema.createHousehold({ ratings: { hassle: { bill_negotiate: 2 } } });
+  const after = HassleEngine.presets(rated, HD).value.find(a => a.id === 'bill_negotiate');
+  check('a stored rating overrides the table default', after.hassle, 2);
+  checkTrue('and is marked as the person\'s own', after.rated === true);
+  check('while the table default is still reported', after.defaultHassle,
+    HD.activities.find(a => a.id === 'bill_negotiate').hassle);
+
+  check('an unknown activity id returns nothing',
+    HassleEngine.activityById(HD, 'not_a_chore'), null);
+  check('the ratings scope is its own', HassleEngine.SCOPE, 'hassle');
+  checkTrue('and the scale is anchored for it',
+    Rating.anchors('hassle').low !== Rating.anchors('joy').low);
+})();
 
 section('Fulfillment Curve');
 

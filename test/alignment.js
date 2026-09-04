@@ -35,6 +35,7 @@ const TARGETS = [
   ['/rooms/quick-math.html', '.grid-3'],
   ['/rooms/self-employed.html', '.grid-2'],
   ['/rooms/accounts.html', '.grid-2'],
+  ['/rooms/hassle.html', '.grid-2'],
   ['/rooms/net-worth.html', '.asset-grid'],
   ['/', '.grid2'],
   ['/rooms/cash-flow.html', '.cat-row']
@@ -46,6 +47,7 @@ const TARGETS = [
    a tall one is exactly the unevenness this file exists to prevent. */
 const EQUAL_HEIGHT = [
   ['/rooms/savings-rate.html', '.pair'],
+  ['/rooms/hassle.html', '.rates'],
   ['/rooms/sleep-at-night.html', '.pair'],
   ['/rooms/values.html', '.two'],
   ['/rooms/fulfillment.html', '.quads'],

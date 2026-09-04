@@ -38,7 +38,8 @@
     seTax: 'se_tax_2026.json',
     goalTemplates: 'goal_templates.json',
     liquidityBenchmarks: 'liquidity_benchmarks.json',
-    values: 'values.json'
+    values: 'values.json',
+    hassleDefaults: 'hassle_defaults.json'
   };
 
   var cache = {};
