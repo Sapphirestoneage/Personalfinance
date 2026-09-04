@@ -100,6 +100,8 @@
     'debt.minPaymentCents':                      { class: 'raw',        unit: 'cents',   period: 'monthly' },
     'debt.type':                                 { class: 'raw',        unit: 'enum',    values: ['credit_card', 'student_loan', 'auto', 'mortgage', 'personal', 'medical', 'other'] },
     'debt.creditLimitCents':                     { class: 'raw',        unit: 'cents',   note: 'revolving debt only \u2014 the limit the balance is a share of. Owned by Debt Payoff. DECISIONS.md D-045' },
+    'debt.promoEndsOn':                          { class: 'raw',        unit: 'iso-date', note: 'when a 0%/promotional rate ends. Null means the rate is not promotional' },
+    'debt.postPromoRate':                        { class: 'raw',        unit: 'rate',    period: 'annual', note: 'the rate the balance reverts to when the promo ends' },
     'expenses.monthlyEssential.estimatedValueCents': { class: 'raw',    unit: 'cents',   period: 'monthly', source: 'estimated' },
     'expenses.monthlyEssential.trackedValueCents':   { class: 'raw',    unit: 'cents',   period: 'monthly', source: 'tracked' },
     'expenses.monthlyEssential.divergenceCents':     { class: 'computed', unit: 'cents', period: 'monthly', note: 'tracked − estimated; SPEC.md §12.3' },
@@ -251,6 +253,13 @@
          why credit utilisation stays unavailable rather than assuming one.
          DECISIONS.md D-045. */
       creditLimitCents: f.creditLimitCents === undefined ? null : f.creditLimitCents,
+      /* A 0% promotional period, and the rate the balance reverts to when it
+         ends. `rate` above is the rate you are paying TODAY; these two say
+         when that stops being true. Without them a 0% card looks free
+         forever, which is the single most expensive thing this app could
+         get wrong about a card. DECISIONS.md D-053. */
+      promoEndsOn: f.promoEndsOn === undefined ? null : f.promoEndsOn,
+      postPromoRate: f.postPromoRate === undefined ? null : f.postPromoRate,
       emotionalTag: f.emotionalTag === undefined ? null : f.emotionalTag,
       ownerIds: f.ownerIds || []
     };
@@ -803,6 +812,35 @@
     return Money.ok(age);
   }
 
+  /**
+   * Whole months from now until an ISO date. Positive only — a date that has
+   * passed is not "minus three months", it is a date that has passed, and
+   * every caller has something different to say about that.
+   *
+   * Lives here rather than in a calculator because two of them need it
+   * (a goal's target date, and a 0% promo's end date) and two copies of
+   * calendar arithmetic is exactly how they drift apart. SPEC.md §8.
+   */
+  function monthsUntil(isoDate, asOf, opts) {
+    var o = opts || {};
+    var field = o.field || 'date';
+    if (!isoDate) return Money.incomplete(o.missingReason || 'Add a date.', [field]);
+    var target = new Date(isoDate + 'T00:00:00Z');
+    if (isNaN(target.getTime())) {
+      return Money.incomplete('That date can’t be read.', [field]);
+    }
+    var now = asOf ? new Date(asOf + 'T00:00:00Z') : new Date();
+    var months = (target.getUTCFullYear() - now.getUTCFullYear()) * 12
+      + (target.getUTCMonth() - now.getUTCMonth());
+    /* Part of the current month still counts if the day hasn't passed. */
+    if (target.getUTCDate() < now.getUTCDate()) months -= 1;
+    if (months <= 0) {
+      return Money.incomplete(o.passedReason || 'That date has passed, or is this month.',
+        [field]);
+    }
+    return Money.ok(months);
+  }
+
   /** Age of the primary adult — the person Tier 0 benchmarks against. */
   function primaryAge(household, asOf) {
     var a = adults(household);
@@ -863,6 +901,7 @@
     expenseDivergenceCents: expenseDivergenceCents,
     MAX_PLAUSIBLE_AGE: MAX_PLAUSIBLE_AGE,
     ageFromDob: ageFromDob,
+    monthsUntil: monthsUntil,
     checkDob: checkDob,
     primaryAge: primaryAge
   };
