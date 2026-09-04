@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Every Ratio · SPARKS</title>
+<meta name="description" content="Thirty ratios people actually quote, computed from what you have already entered."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11, §13 Tiers 18 and 19.
+
+  1. READS   everything already entered. Nothing new is asked for here.
+  2. WRITES  nothing. Every figure on this page is Computed (SPEC.md §3).
+  3. CALLS   engines/ratios.js, which calls engines/tier0.js and
+             engines/cashflow.js for the ratios they already own. No formula
+             is re-implemented here.
+  4. EMPTY   Each ratio says what it needs. Two say the app cannot answer
+             them at all, and why.
+  5. CONFIG  data/ratio_benchmarks.json — the threshold bands, and a null
+             band where no convention worth quoting exists.
+
+  LIVE-FORM: built once. There are no inputs on this page at all.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .tally { font-family: var(--font-display); font-size: var(--text-xl); margin-top: var(--space-3); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+
+  ul.ratios { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ul.ratios li { padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border); }
+  ul.ratios li:last-child { border-bottom: none; }
+  .r-head { display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); align-items: baseline; }
+  .r-name { font-size: var(--text-sm); font-weight: 600; }
+  .r-val { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .r-val.is-good  { color: var(--color-positive); }
+  .r-val.is-watch { color: var(--color-caution); }
+  .r-val.is-out   { color: var(--color-critical); }
+  .r-val.is-none  { color: var(--color-text); }
+  .r-val.is-blank { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-base); }
+  .r-formula { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 2px; }
+  .r-note { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
+  .r-band { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1); }
+
+  .zonebar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: var(--space-3); border-radius: var(--radius-pill); overflow: hidden; }
+  .zonebar span { height: 10px; }
+  .z-good { background: var(--color-positive); }
+  .z-watch { background: var(--color-caution); }
+  .z-out { background: var(--color-critical); }
+  .zonekey { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-2); font-size: var(--text-xs); color: var(--color-text-muted); }
+  .zonekey span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
+  .zonekey .k-good::before { background: var(--color-positive); }
+  .zonekey .k-watch::before { background: var(--color-caution); }
+  .zonekey .k-out::before { background: var(--color-critical); }
+
+  .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Every Ratio</h1>
+  <p class="room-lede">Thirty ratios people actually quote, computed from what you have already entered — with the two this app refuses to guess at named as such.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="summary">
+    <span class="slaf-eyebrow">How many are answerable</span>
+    <div class="tally" id="tally">—</div>
+    <p class="why" id="tally-why"></p>
+    <div class="zonebar" id="zonebar" hidden></div>
+    <div class="zonekey" id="zonekey" hidden>
+      <span class="k-good">Comfortable</span><span class="k-watch">Worth a look</span><span class="k-out">Outside the usual range</span>
+    </div>
+    <div class="flag">
+      <strong>A band is a prompt, not a verdict.</strong> These thresholds are lending
+      conventions and rules of thumb — the 28/36 mortgage rules, the 3-6 month
+      emergency fund. Several of them are wrong for particular lives by design, and
+      a ratio with no convention worth quoting is shown with no colour at all
+      rather than being given a made-up one.
+    </div>
+  </section>
+
+  <section class="slaf-card" id="out-lending">
+    <span class="slaf-eyebrow">What a lender looks at</span>
+    <h2 style="margin:var(--space-2) 0 0">Ratios with a threshold behind them</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      These four have real numbers attached because underwriters use them. That
+      makes them the most quotable and the most over-read.
+    </p>
+    <ul class="ratios" id="list-lending"></ul>
+  </section>
+
+  <section class="slaf-card" id="out-safety">
+    <span class="slaf-eyebrow">How much cushion</span>
+    <h2 style="margin:var(--space-2) 0 0">Time, not money</h2>
+    <ul class="ratios" id="list-safety"></ul>
+  </section>
+
+  <section class="slaf-card" id="out-wealth">
+    <span class="slaf-eyebrow">What you own</span>
+    <h2 style="margin:var(--space-2) 0 0">Shape of the balance sheet</h2>
+    <ul class="ratios" id="list-wealth"></ul>
+  </section>
+
+  <section class="slaf-card" id="out-blocked">
+    <span class="slaf-eyebrow">What this cannot answer</span>
+    <h2 style="margin:var(--space-2) 0 0">Two ratios, deliberately blank</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Both are computable in principle and neither is computed here, because
+      doing it would mean standing in a number nobody entered. A believable
+      wrong answer is worse than a missing one.
+    </p>
+    <ul class="ratios" id="list-blocked"></ul>
+  </section>
+
+  <section class="slaf-card" id="reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Nothing is typed on this page. Every figure comes from a room that owns it.
+    </p>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Thresholds come from
+    <code>data/ratio_benchmarks.json</code> and are conventions, not findings.
+    Your numbers stay in this browser.
+  </p>
+  <p class="disclaimer" id="provenance"></p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/ratios.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference,
+      Ownership = SLAF.Ownership, Ratios = SLAF.Ratios;
+
+  var ROOM_ID = 'ratios';
+  var TABLES = null;
+
+  /* Which list each ratio belongs in. A ratio not named here still computes
+     — it just lands in the balance-sheet list, which is the catch-all. */
+  var LENDING = ['debtToIncome', 'housingRatio', 'backEndRatio', 'carPaymentToIncome'];
+  var SAFETY = ['emergencyFundMonths', 'runwayMonths', 'liquidityRatio', 'currentRatio',
+                'burnRateCents', 'personalCashFlowRatio', 'savingsRate', 'fiRatio',
+                'safeWithdrawalRate', 'ruleOf72'];
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  function show(row) {
+    if (!row.ok) return Money.EM_DASH;
+    switch (row.unit) {
+      case 'rate':     return Money.formatRate(row.value, { decimals: 1 });
+      case 'months':   return Money.formatMonths(row.value);
+      case 'multiple': return Money.formatMultiple(row.value);
+      case 'cents':    return Money.formatCents(row.value) + '/mo';
+      case 'years':    return (Math.round(row.value * 10) / 10) + ' years';
+      default:         return String(row.value);
+    }
+  }
+
+  /* The band, said in the same unit as the figure above it. */
+  function bandText(row) {
+    var b = row.verdict.band;
+    if (!b || b.good === null) return b && b.note ? b.note : '';
+    function u(v) {
+      return row.unit === 'rate' ? Money.formatRate(v, { decimals: 0 })
+        : row.unit === 'months' ? v + ' months'
+        : row.unit === 'multiple' ? v + 'x' : String(v);
+    }
+    var aim = b.direction === 'lower' ? 'Comfortable at or below ' + u(b.good)
+      : 'Comfortable at or above ' + u(b.good);
+    return aim + '. ' + (b.note || '');
+  }
+
+  function renderList(nodeId, rows) {
+    el(nodeId).innerHTML = rows.map(function (r) {
+      var zone = r.ok ? r.verdict.zone : 'blank';
+      return '<li><div class="r-head">'
+        + '<span class="r-name">' + esc(r.label) + '</span>'
+        + '<span class="r-val is-' + zone + '">' + esc(show(r)) + '</span>'
+        + '</div>'
+        + '<div class="r-formula">' + esc(r.formula) + '</div>'
+        + (!r.ok ? '<div class="r-note">' + esc(r.result.reason || '') + '</div>' : '')
+        + (r.note ? '<div class="r-note">' + esc(r.note) + '</div>' : '')
+        + (r.ok && bandText(r) ? '<div class="r-band">' + esc(bandText(r)) + '</div>' : '')
+        + '</li>';
+    }).join('');
+  }
+
+  function renderNow() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    var a = Ratios.all(h, TABLES);
+    var rows = a.rows;
+
+    el('tally').textContent = a.value + ' of ' + a.total + ' answerable';
+    var scored = rows.filter(function (r) { return r.ok && r.verdict.zone !== 'none'; });
+    var counts = { good: 0, watch: 0, out: 0 };
+    scored.forEach(function (r) { counts[r.verdict.zone]++; });
+
+    el('tally-why').textContent = a.value === 0
+      ? 'Nothing is entered yet. Start Here fills most of this page in one pass.'
+      : scored.length === 0
+        ? 'None of what computed has a threshold worth quoting against it.'
+        : counts.good + ' comfortable, ' + counts.watch + ' worth a look, '
+          + counts.out + ' outside the usual range — of the ' + scored.length
+          + ' that have a band at all. The other ' + (a.value - scored.length)
+          + ' computed but carry no convention.';
+
+    var total = scored.length;
+    el('zonebar').hidden = total === 0;
+    el('zonekey').hidden = total === 0;
+    if (total > 0) {
+      el('zonebar').style.gridTemplateColumns =
+        [counts.good, counts.watch, counts.out].map(function (n) {
+          return Math.max(n, 0) + 'fr';
+        }).join(' ');
+      el('zonebar').innerHTML = ['good', 'watch', 'out'].map(function (z) {
+        return counts[z] > 0 ? '<span class="z-' + z + '"></span>' : '';
+      }).join('');
+    }
+
+    function pick(ids) {
+      return ids.map(function (id) {
+        return rows.filter(function (r) { return r.id === id; })[0];
+      }).filter(Boolean);
+    }
+    var blocked = rows.filter(function (r) { return r.unavailable; });
+    var lending = pick(LENDING);
+    var safety = pick(SAFETY);
+    var taken = {};
+    lending.concat(safety, blocked).forEach(function (r) { taken[r.id] = true; });
+    var wealth = rows.filter(function (r) { return !taken[r.id]; });
+
+    renderList('list-lending', lending);
+    renderList('list-safety', safety);
+    renderList('list-wealth', wealth);
+    renderList('list-blocked', blocked);
+
+    el('reading-list').innerHTML =
+      ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt', 'monthlyDebtPayments']
+        .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+
+    el('provenance').innerHTML = Reference.provenance(TABLES,
+      ['ratioBenchmarks', 'effectiveTaxRates', 'retirementMilestones'])
+      .map(function (p) {
+        return '<strong>' + p.id + '</strong> v' + p.version + ' — ' + p.label + '. ' + p.note;
+      }).join('<br/>');
+  }
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  Spine.onChange(renderNow);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    renderNow();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

@@ -237,8 +237,26 @@
       ]
     },
     {
+      id: 'dashboard',
+      order: 15,
+      title: 'The Dashboard',
+      blurb: 'Every threshold ratio as one shape, plus altitude, fuel, engine load and thrust \u2014 the whole panel at a glance.',
+      href: 'rooms/dashboard.html',
+      tier: 1,
+      tags: ['income', 'cashflow', 'debt'],
+      subsections: [
+        { id: 'out-radar',    label: 'All of it at once' },
+        { id: 'out-altitude', label: 'Altitude' },
+        { id: 'out-fuel',     label: 'Fuel' },
+        { id: 'out-load',     label: 'Engine load' },
+        { id: 'out-thrust',   label: 'Thrust' },
+        { id: 'out-plan',     label: 'Flight plan' },
+        { id: 'reading',      label: 'Reading from elsewhere' }
+      ]
+    },
+    {
       id: 'accounts',
-      order: 14,
+      order: 16,
       title: 'Where It Goes',
       blurb: 'Roth, Traditional or taxable \u2014 and how much a Solo 401(k) actually lets you put away.',
       href: 'rooms/accounts.html',
@@ -252,7 +270,7 @@
     },
     {
       id: 'values',
-      order: 16,
+      order: 18,
       title: 'What Matters',
       blurb: 'The five things you say matter most, next to where the money actually went. No score \u2014 just the two lists, side by side.',
       href: 'rooms/values.html',
@@ -267,8 +285,25 @@
       ]
     },
     {
+      id: 'ratios',
+      order: 14,
+      title: 'Every Ratio',
+      blurb: 'Thirty ratios people actually quote, computed from what you have already entered \u2014 with the two this app refuses to guess at named as such.',
+      href: 'rooms/ratios.html',
+      tier: 1,
+      tags: ['income', 'cashflow', 'debt'],
+      subsections: [
+        { id: 'summary',     label: 'How many are answerable' },
+        { id: 'out-lending', label: 'What a lender looks at' },
+        { id: 'out-safety',  label: 'How much cushion' },
+        { id: 'out-wealth',  label: 'What you own' },
+        { id: 'out-blocked', label: 'What this cannot answer' },
+        { id: 'reading',     label: 'Reading from elsewhere' }
+      ]
+    },
+    {
       id: 'fulfillment',
-      order: 15,
+      order: 17,
       title: 'Enough',
       blurb: 'What each thing costs a month, against what it is actually worth to you \u2014 and the four places that lands.',
       href: 'rooms/fulfillment.html',
@@ -284,7 +319,7 @@
     },
     {
       id: 'goals',
-      order: 17,
+      order: 19,
       title: 'Goals',
       blurb: 'A wedding, a deposit, a big trip. What it costs, what it needs a month, and whether that actually fits alongside everything else.',
       href: 'rooms/goals.html',
@@ -297,7 +332,7 @@
     },
     {
       id: 'foo-ladder',
-      order: 18,
+      order: 20,
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
       href: 'index.html',

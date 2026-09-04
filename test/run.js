@@ -45,6 +45,7 @@ const LiveForm = require(path.join(ROOT, 'shared/liveform.js'));
 const Fulfillment = require(path.join(ROOT, 'engines/fulfillment.js'));
 const HassleEngine = require(path.join(ROOT, 'engines/hassle.js'));
 const SideHustle = require(path.join(ROOT, 'engines/sidehustle.js'));
+const RatiosEngine = require(path.join(ROOT, 'engines/ratios.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -61,6 +62,7 @@ const TABLES = {
   liquidityBenchmarks: require(path.join(ROOT, 'data/liquidity_benchmarks.json')),
   values: require(path.join(ROOT, 'data/values.json')),
   hassleDefaults: require(path.join(ROOT, 'data/hassle_defaults.json')),
+  ratioBenchmarks: require(path.join(ROOT, 'data/ratio_benchmarks.json')),
   irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json'))
 };
 
@@ -2469,6 +2471,143 @@ section('Side Hustle');
     annualHours: 200, marginalRate: 0.22
   });
   check('without a work profile the comparison is incomplete', noWork.status, 'incomplete');
+})();
+
+/* ==========================================================================
+   Every Ratio — Tiers 18 and 19. Robin: $72,000 gross, $3,150/mo essential,
+   $9,500 cash, $48,000 invested, $21,600 debt, $305/mo minimums.
+   ========================================================================== */
+
+section('Ratios');
+
+(function () {
+  const h = Demo.build();
+  h.expenses.entries = Demo.buildSpending();
+  const a = RatiosEngine.all(h, TABLES);
+  const by = {};
+  a.rows.forEach(r => { by[r.id] = r; });
+
+  check('every registry entry produced a row', a.rows.length, RatiosEngine.RATIOS.length);
+  check('ids are unique',
+    new Set(RatiosEngine.RATIOS.map(r => r.id)).size, RatiosEngine.RATIOS.length);
+  checkTrue('every ratio states its formula in words',
+    RatiosEngine.RATIOS.every(r => typeof r.formula === 'string' && r.formula.length > 5));
+  checkTrue('every ratio declares a unit',
+    RatiosEngine.RATIOS.every(r => ['rate', 'months', 'multiple', 'cents', 'years'].includes(r.unit)));
+
+  /* -- Hand-derived values ------------------------------------------------ */
+  check('DTI is $305 over $6,000 a month', by.debtToIncome.value, 305 / 6000, 1e-12);
+  check('housing ratio is (1,500 + 180) over 6,000', by.housingRatio.value, 1680 / 6000, 1e-12);
+  check('back-end adds the other debt payments', by.backEndRatio.value, (1680 + 305) / 6000, 1e-12);
+  check('solvency is 35,900 over 57,500', by.solvencyRatio.value, 35900 / 57500, 1e-12);
+  check('debt to asset is 21,600 over 57,500', by.debtToAsset.value, 21600 / 57500, 1e-12);
+  check('cash drag is 9,500 over 57,500', by.cashDrag.value, 9500 / 57500, 1e-12);
+  check('liquid to illiquid is 9,500 over 48,000', by.liquidToIlliquid.value, 9500 / 48000, 1e-12);
+  check('revolving share is 3,200 over 21,600', by.revolvingShare.value, 3200 / 21600, 1e-12);
+  check('current ratio is 9,500 over a year of minimums',
+    by.currentRatio.value, 9500 / (305 * 12), 1e-12);
+  check('payoff velocity is a year of minimums over the balance',
+    by.debtPayoffVelocity.value, (305 * 12) / 21600, 1e-12);
+  check('the FI ratio is investments at 4% over annual spending',
+    by.fiRatio.value, (48000 * 0.04) / (3150 * 12), 1e-12);
+  check('net worth to income is 35,900 over 72,000',
+    by.netWorthToIncome.value, 35900 / 72000, 1e-12);
+  check('rule of 72 at a 7% return is 10.3 years', by.ruleOf72.value, 72 / 7, 1e-12);
+  check('burn rate is the monthly expense figure, in cents',
+    by.burnRateCents.value, 315000);
+
+  /* -- Ratios Tier 0 already owns are CALLED, not re-derived -------------- */
+  check('DTI matches engines/tier0.js exactly',
+    by.debtToIncome.value, Tier0.debtToIncome(h).value);
+  check('savings rate matches Tier 0 exactly',
+    by.savingsRate.value, Tier0.savingsRate(h, TABLES).excludingMatch.value);
+  check('emergency fund cover matches Tier 0 exactly',
+    by.emergencyFundMonths.value, Tier0.emergencyFundMonths(h).value);
+  check('runway is the same arithmetic under a different name',
+    by.runwayMonths.value, by.emergencyFundMonths.value);
+  check('the retirement multiple matches Tier 0 exactly',
+    by.retirementMultiple.value, Tier0.retirementBenchmark(h, TABLES).value);
+
+  /* -- The two this app refuses to guess ---------------------------------- */
+  check('credit utilisation is reported unavailable', by.creditUtilization.unavailable, true);
+  check('and names what it would need',
+    by.creditUtilization.result.missing.join(','), 'creditLimitTotal');
+  check('life insurance multiple is reported unavailable', by.lifeInsuranceMultiple.unavailable, true);
+  check('exactly two ratios are unavailable', a.unavailableCount, 2);
+  checkTrue('an unavailable ratio never carries a value',
+    a.rows.filter(r => r.unavailable).every(r => r.value === null));
+
+  /* -- Nothing computes from a household with nothing in it --------------- */
+  const empty = RatiosEngine.all(Schema.createHousehold({}), TABLES);
+  const computed = empty.rows.filter(r => r.ok);
+  check('an empty household computes only the assumption-class ones',
+    computed.map(r => r.id).sort().join(','), 'ruleOf72,safeWithdrawalRate');
+  checkTrue('and nothing else invents a zero',
+    empty.rows.filter(r => !r.ok).every(r => r.value === null));
+
+  /* -- Verdicts ------------------------------------------------------------ */
+  const lower = { direction: 'lower', good: 0.28, warn: 0.36 };
+  check('at the comfortable edge is comfortable',
+    RatiosEngine.verdict('x', 0.28, { bands: { x: lower } }).zone, 'good');
+  check('between the edges is worth a look',
+    RatiosEngine.verdict('x', 0.30, { bands: { x: lower } }).zone, 'watch');
+  check('past the far edge is out',
+    RatiosEngine.verdict('x', 0.40, { bands: { x: lower } }).zone, 'out');
+  const higher = { direction: 'higher', good: 0.15, warn: 0.10 };
+  check('a higher-is-better ratio reads the other way',
+    RatiosEngine.verdict('x', 0.20, { bands: { x: higher } }).zone, 'good');
+  check('and its watch band is below good',
+    RatiosEngine.verdict('x', 0.12, { bands: { x: higher } }).zone, 'watch');
+  check('a ratio with no band gets no verdict',
+    RatiosEngine.verdict('netWorthToIncome', 3, TABLES.ratioBenchmarks).zone, 'none');
+  check('and a ratio with no value gets none either',
+    RatiosEngine.verdict('debtToIncome', null, TABLES.ratioBenchmarks).zone, 'none');
+
+  /* -- The radar projection ------------------------------------------------
+        A view, never a score: it maps each ratio onto one axis and nothing
+        sums them. The edges have to land exactly or the picture lies.    */
+  check('at the comfortable edge the position is 1', RatiosEngine.position(0.28, lower), 1);
+  check('at the far edge it is a half', RatiosEngine.position(0.36, lower), 0.5);
+  check('halfway between reads halfway', RatiosEngine.position(0.32, lower), 0.75, 1e-12);
+  check('twice the far edge decays to a quarter', RatiosEngine.position(0.72, lower), 0.25, 1e-12);
+  check('higher-is-better hits 1 at good', RatiosEngine.position(0.15, higher), 1);
+  check('and a half at warn', RatiosEngine.position(0.10, higher), 0.5);
+  check('and zero at zero', RatiosEngine.position(0, higher), 0);
+  check('comfortably past good is capped, so one great ratio cannot dominate',
+    RatiosEngine.position(0, lower), RatiosEngine.RADAR_CEILING);
+  check('a ratio with no band has no position',
+    RatiosEngine.position(3, { direction: 'higher', good: null, warn: null }), null);
+
+  const radar = RatiosEngine.radar(h, TABLES);
+  check('the radar plots every banded ratio that computed', radar.value, 14);
+  checkTrue('and only ones with a band',
+    radar.points.every(p => p.band && p.band.good !== null));
+  checkTrue('every plotted point has a position inside the ceiling',
+    radar.points.every(p => p.position >= 0 && p.position <= radar.ceiling));
+  check('the comfortable ring sits at 1 by construction', radar.goodRing, 1);
+
+  const thin = RatiosEngine.radar(Schema.createHousehold({}), TABLES);
+  check('a radar with fewer than three axes is not drawn', thin.status, 'incomplete');
+  checkTrue('and says why', /three axes/.test(thin.reason));
+
+  /* -- Bands are config, not code ----------------------------------------- */
+  const bandIds = Object.keys(TABLES.ratioBenchmarks.bands);
+  bandIds.forEach(function (id) {
+    checkTrue(`band "${id}" names a ratio that exists`, !!RatiosEngine.byId(id));
+  });
+  checkTrue('every band declares a direction',
+    bandIds.every(id => ['lower', 'higher'].includes(TABLES.ratioBenchmarks.bands[id].direction)));
+  checkTrue('a band either has both edges or neither',
+    bandIds.every(id => {
+      const b = TABLES.ratioBenchmarks.bands[id];
+      return (b.good === null) === (b.warn === null);
+    }));
+
+  /* -- Reading mutates nothing -------------------------------------------- */
+  const before = JSON.stringify(h);
+  RatiosEngine.all(h, TABLES);
+  RatiosEngine.radar(h, TABLES);
+  check('computing every ratio mutates nothing', JSON.stringify(h), before);
 })();
 
 section('Return on Hassle');

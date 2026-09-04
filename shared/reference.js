@@ -39,7 +39,8 @@
     goalTemplates: 'goal_templates.json',
     liquidityBenchmarks: 'liquidity_benchmarks.json',
     values: 'values.json',
-    hassleDefaults: 'hassle_defaults.json'
+    hassleDefaults: 'hassle_defaults.json',
+    ratioBenchmarks: 'ratio_benchmarks.json'
   };
 
   var cache = {};
