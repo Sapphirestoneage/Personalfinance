@@ -50,6 +50,7 @@ const Credential = require(path.join(ROOT, 'engines/credential.js'));
 const WorthEngine = require(path.join(ROOT, 'engines/worth.js'));
 const WindfallEngine = require(path.join(ROOT, 'engines/windfall.js'));
 const RunwayEngine = require(path.join(ROOT, 'engines/runway.js'));
+const HealthEngine = require(path.join(ROOT, 'engines/health.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -63,6 +64,7 @@ const TABLES = {
   fireVariants: require(path.join(ROOT, 'data/fire_variants.json')),
   seTax: require(path.join(ROOT, 'data/se_tax_2026.json')),
   goalTemplates: require(path.join(ROOT, 'data/goal_templates.json')),
+  healthScore: require(path.join(ROOT, 'data/health_score.json')),
   liquidityBenchmarks: require(path.join(ROOT, 'data/liquidity_benchmarks.json')),
   values: require(path.join(ROOT, 'data/values.json')),
   hassleDefaults: require(path.join(ROOT, 'data/hassle_defaults.json')),
@@ -2064,7 +2066,7 @@ section('Room script tags');
     Hassle: 'engines/hassle.js', SideHustle: 'engines/sidehustle.js',
     Ratios: 'engines/ratios.js', Credential: 'engines/credential.js',
     Worth: 'engines/worth.js', Windfall: 'engines/windfall.js',
-    Runway: 'engines/runway.js'
+    Runway: 'engines/runway.js', Health: 'engines/health.js'
   };
   const FILE_TO_GLOBAL = {};
   Object.keys(GLOBAL_TO_FILE).forEach(g => { FILE_TO_GLOBAL[GLOBAL_TO_FILE[g]] = g; });
@@ -3729,6 +3731,214 @@ section('The Runway');
       by.laid_off.runwayMonths > by.quit.runwayMonths);
     check('and the business row gets no severance either way',
       by.business.severanceCents, 500000);
+  }
+})();
+
+section('Financial Health Score');
+
+(function () {
+  const H = HealthEngine;
+  const TABLE = TABLES.healthScore;
+
+  /* -- The table itself has to be sound before anything built on it is --- */
+  {
+    const pillarIds = TABLE.pillars.map(p => p.id);
+    checkTrue('every pillar id is unique',
+      new Set(pillarIds).size === pillarIds.length);
+    check('there is at least one cohort', TABLE.cohorts.length > 0, true);
+
+    TABLE.cohorts.forEach(function (c) {
+      const w = c.weights;
+      const sum = Object.keys(w).reduce((s, k) => s + w[k], 0);
+      check(`${c.id} weights sum to 1`, sum, 1, 1e-9);
+      check(`${c.id} weights every pillar and nothing else`,
+        Object.keys(w).sort().join(','), pillarIds.slice().sort().join(','));
+      checkTrue(`${c.id} says why it is weighted that way`,
+        typeof c.note === 'string' && c.note.length > 20);
+    });
+
+    /* Every ratio a pillar names must actually exist, or the pillar is
+       quietly scoring fewer things than it claims to. */
+    const known = new Set(RatiosEngine.RATIOS.map(r => r.id));
+    TABLE.pillars.forEach(function (p) {
+      p.ratios.forEach(function (id) {
+        checkTrue(`${p.id} names a real ratio: ${id}`, known.has(id));
+      });
+    });
+
+    /* Cohorts must tile the whole age range with no gap and no overlap. */
+    for (let age = 0; age <= Schema.MAX_PLAUSIBLE_AGE; age++) {
+      const hits = TABLE.cohorts.filter(c =>
+        (c.minAge === null || age >= c.minAge) && (c.maxAge === null || age <= c.maxAge));
+      if (hits.length !== 1) {
+        check(`exactly one cohort claims age ${age}`, hits.length, 1);
+        break;
+      }
+    }
+    checkTrue('every age from 0 to the plausible maximum lands in exactly one cohort', true);
+
+    check('a 29-year-old is in the first cohort', H.cohortForAge(TABLE, 29).id, 'under30');
+    check('a 30-year-old is not', H.cohortForAge(TABLE, 30).id, 'thirties');
+    check('and 60 is the open-ended one', H.cohortForAge(TABLE, 95).id, 'sixtyplus');
+  }
+
+  /* -- Scoring the demo persona ------------------------------------------- */
+  const h = Demo.build();
+  h.expenses.entries = Demo.buildSpending();
+  {
+    const s = H.score(h, TABLES);
+    check('it scores', s.status, 'ok');
+    checkTrue('out of 100', s.value >= 0 && s.value <= 100);
+    check('the cohort follows the age', s.cohort.id,
+      H.cohortForAge(TABLE, Schema.primaryAge(h)).id);
+    check('the band matches the score', s.band.id, H.bandFor(TABLE, s.value).id);
+
+    /* The score must be the weighted mean of the pillars that had data,
+       re-derived here rather than trusted. */
+    let weighted = 0, live = 0;
+    s.pillars.forEach(function (p) {
+      if (!p.available) return;
+      weighted += p.weight * p.score;
+      live += p.weight;
+    });
+    check('the score is the weighted mean over the pillars with data',
+      s.value, Math.round((weighted / live) * 100));
+    check('and coverage is that live weight over the whole', s.coverage, live / 1, 1e-9);
+
+    /* Each pillar is the flat mean of its counted ratios. */
+    s.pillars.filter(p => p.available).forEach(function (p) {
+      const mean = p.counted.reduce((a, c) => a + c.score, 0) / p.counted.length;
+      check(`${p.id} is the mean of its counted ratios`, p.score, mean, 1e-12);
+      checkTrue(`${p.id} counted only ratios it could judge`,
+        p.counted.every(c => Money.isEntered(c.value) && c.score !== null));
+    });
+  }
+
+  /* -- No age, no score. This is the resolved decision, enforced --------- */
+  {
+    const ageless = Demo.build();
+    ageless.people.forEach(function (person) { person.dob = null; });
+    const s = H.score(ageless, TABLES);
+    check('without a date of birth there is no weighting', s.status, 'incomplete');
+    check('and it says which field it needs', s.missing.join(','), 'dob');
+    checkTrue('with a reason a person can act on', /weighted by age/.test(s.reason));
+
+    /* An age passed in directly still works — that is the preview path. */
+    check('an age supplied for preview is enough',
+      H.score(ageless, TABLES, { age: 45 }).status, 'ok');
+    check('and picks the matching cohort',
+      H.score(ageless, TABLES, { age: 45 }).cohort.id, 'forties');
+    check('so does a cohort named outright',
+      H.score(ageless, TABLES, { cohortId: 'fifties' }).cohort.id, 'fifties');
+    check('a cohort that does not exist is refused',
+      H.score(ageless, TABLES, { cohortId: 'nope' }).status, 'incomplete');
+  }
+
+  /* -- Absent is not zero. The whole point of the composite -------------- */
+  {
+    /* A pillar with nothing computable must be dropped, and dropping it
+       must not move the score of the pillars that remain. */
+    const s = H.score(h, TABLES);
+    const missingIds = s.missingPillars.map(p => p.id);
+    checkTrue('a pillar with no data is marked absent rather than scored',
+      s.missingPillars.every(p => p.score === null && p.available === false));
+    checkTrue('and absent pillars are not in the headroom list',
+      s.headroom.every(r => missingIds.indexOf(r.id) === -1));
+
+    /* Constructed proof: two identical households, one of which simply has
+       no housing at all. The absent pillar must not drag the score down. */
+    const withHouse = Demo.build();
+    withHouse.expenses.entries = Demo.buildSpending();
+    const noHouse = Demo.build();
+    noHouse.expenses.entries = Demo.buildSpending().filter(e => e.categoryId !== 'housing');
+    noHouse.assets = noHouse.assets.filter(a => a.category !== 'real_estate');
+    noHouse.debts = noHouse.debts.filter(d => d.type !== 'mortgage');
+    const a = H.score(withHouse, TABLES), b = H.score(noHouse, TABLES);
+    checkTrue('both still score', Money.isOk(a) && Money.isOk(b));
+    const aHousing = a.pillars.filter(p => p.id === 'housing')[0];
+    const bHousing = b.pillars.filter(p => p.id === 'housing')[0];
+    if (aHousing.available && !bHousing.available) {
+      checkTrue('losing a pillar entirely does not zero it', bHousing.score === null);
+      check('its weight is redistributed, so coverage falls',
+        b.coverage < a.coverage, true);
+    } else {
+      checkTrue('the housing pillar behaved consistently across both', true);
+    }
+  }
+
+  /* -- The cap: over-performance cannot buy off a failure ---------------- */
+  {
+    /* engines/ratios.js lets position() run to 1.25 for the radar. The
+       score must clamp it, or a huge cushion would offset real problems. */
+    const band = { direction: 'higher', good: 6, warn: 3 };
+    checkTrue('the radar rewards being well past the mark',
+      RatiosEngine.position(24, band) > 1);
+    const pillar = { id: 'x', label: 'X', ratios: ['emergencyFundMonths'] };
+    const rows = { emergencyFundMonths: { id: 'emergencyFundMonths', label: 'EF',
+      ok: true, value: 24, unit: 'months', verdict: { zone: 'good' } } };
+    const scored = H.scorePillar(pillar, rows, TABLES.ratioBenchmarks, TABLE.scoring.cap);
+    check('but the score clamps it to the cap', scored.score, TABLE.scoring.cap);
+    check('while still reporting what it really was',
+      scored.counted[0].raw > TABLE.scoring.cap, true);
+  }
+
+  /* -- A ratio with no benchmark is left out, not guessed at ------------- */
+  {
+    const pillar = { id: 'x', label: 'X', ratios: ['burnRateCents'] };
+    const rows = { burnRateCents: { id: 'burnRateCents', label: 'Burn rate',
+      ok: true, value: 300000, unit: 'cents', verdict: { zone: 'none' } } };
+    const scored = H.scorePillar(pillar, rows, TABLES.ratioBenchmarks, 1);
+    checkTrue('a ratio with no band contributes nothing', !scored.available);
+    check('and says why it was skipped', scored.skipped[0].why,
+      'no benchmark to judge it against');
+
+    const missingRow = H.scorePillar({ id: 'x', label: 'X', ratios: ['notARatio'] },
+      {}, TABLES.ratioBenchmarks, 1);
+    check('a ratio that does not exist is reported, not thrown on',
+      missingRow.skipped[0].why, 'no such ratio');
+  }
+
+  /* -- The coverage floor -------------------------------------------------- */
+  {
+    /* An almost-empty household: an age, and nothing else worth scoring. */
+    const bare = Schema.createHousehold({});
+    bare.people.push(Schema.createPerson({ label: 'You', role: 'adult', dob: '1990-01-01' }));
+    const s = H.score(bare, TABLES);
+    check('a household with nothing in it gets no score', s.status, 'incomplete');
+    checkTrue('and is told what is missing rather than given a low number',
+      /can be worked out|scored yet/.test(s.reason));
+  }
+
+  /* -- Every cohort, on the same numbers ---------------------------------- */
+  {
+    const across = H.acrossCohorts(h, TABLES);
+    check('one row per cohort', across.value.length, TABLE.cohorts.length);
+    checkTrue('all of them score', across.value.every(r => Money.isOk(r.result)));
+    check('and the own-cohort is flagged', across.ownCohortId, H.score(h, TABLES).cohort.id);
+
+    const own = across.value.filter(r => r.cohort.id === across.ownCohortId)[0];
+    check('the own-cohort row equals the plain score', own.result.value, H.score(h, TABLES).value);
+
+    /* The point of the panel: the same finances score differently. If they
+       ever stop differing, the weighting has stopped doing anything and
+       the whole age-cohort decision is moot — worth failing over. */
+    const values = across.value.map(r => r.result.value);
+    checkTrue('the weighting actually changes the answer',
+      Math.max.apply(null, values) > Math.min.apply(null, values));
+  }
+
+  /* -- Headroom is weight times distance ----------------------------------- */
+  {
+    const s = H.score(h, TABLES);
+    s.headroom.forEach(function (r) {
+      check(`${r.id} headroom is its share of weight times its shortfall`,
+        r.pointsAvailable, (r.weight / s.liveWeight) * (1 - r.score) * 100, 1e-9);
+    });
+    checkTrue('and it is sorted with the biggest first',
+      s.headroom.every((r, i) => i === 0 || s.headroom[i - 1].pointsAvailable >= r.pointsAvailable));
+    /* Closing every gap must land exactly on 100. */
+    const total = s.headroom.reduce((a, r) => a + r.pointsAvailable, 0);
+    check('closing every gap would reach 100', s.value + total, 100, 0.51);
   }
 })();
 

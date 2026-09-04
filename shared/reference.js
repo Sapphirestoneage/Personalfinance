@@ -40,7 +40,8 @@
     liquidityBenchmarks: 'liquidity_benchmarks.json',
     values: 'values.json',
     hassleDefaults: 'hassle_defaults.json',
-    ratioBenchmarks: 'ratio_benchmarks.json'
+    ratioBenchmarks: 'ratio_benchmarks.json',
+    healthScore: 'health_score.json'
   };
 
   var cache = {};

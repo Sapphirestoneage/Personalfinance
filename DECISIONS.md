@@ -1993,6 +1993,97 @@ attribute. It now scans only the page's own `<style>` blocks, for a
 
 ---
 
+## D-043 — The Financial Health Score, and why the weighting is on the page
+
+`SPEC.md` §12.4 was the last `[PENDING]` decision in the spec: *Financial
+Health Score weighting — tunable by age cohort, or one fixed formula for
+v1?* §9 puts the score last because it aggregates everything, and CLAUDE.md
+says to stop and ask rather than guess when a §12 decision is still pending
+and you have reached the tool that needs it. Asked, and answered:
+
+**Decision: tunable by age cohort.** §12.4 is now marked RESOLVED in the
+spec.
+
+### The shape
+
+Six pillars — cushion, debt load, saving, retirement, housing, how it's held
+— each a small group of ratios that `engines/ratios.js` already computes.
+Five cohorts, by decade, each with its own weights over those six pillars.
+All of it — pillars, cohorts, weights, score bands, the cap, the coverage
+floor — lives in `data/health_score.json`. Retuning a decade or adding a
+cohort is an edit to that file and **no code change**, which is the same
+configuration-data pattern `SPEC.md` prescribes for budget templates and
+FIRE variants, and the thing that makes this adjustable by whoever is shown
+the code.
+
+Nothing is re-derived. `engines/ratios.js` already owns the one mapping from
+"a ratio and its benchmark band" to a 0-1 position — 1.0 at the good
+threshold, 0.5 at the warn threshold. The score is a weighted mean of those.
+No second scale, no second set of thresholds, no ratio computed twice (§8).
+
+### Three rules that keep a composite honest
+
+**A pillar with nothing computable is ABSENT, not zero.** Someone who has
+not entered a mortgage does not have a failing housing score; they have no
+housing score. Its weight is redistributed across the pillars that do have
+data. Scoring silence as failure is the composite version of the `|| 0` this
+repo forbids everywhere else, and it is the single most common way a health
+score lies. There is a constructed test: two identical households, one with
+no housing at all, and the absent pillar must not drag the score down.
+
+**Over-performance is capped at 1.0.** `Ratios.position()` runs to 1.25 so
+that The Dashboard's radar can show being well clear of a threshold — that
+is worth *seeing*. It is not worth extra credit: letting a twenty-month
+emergency fund score 1.25 would let a cushion buy off a debt problem, and a
+score you can game by over-doing one easy thing is not measuring health. A
+test asserts the radar rewards it and the score clamps it.
+
+**Below half the total weight, the score is refused.** A number built from a
+third of the picture reads exactly like a number built from all of it. That
+is the entire danger of scores, and a floor is cheaper than a caveat nobody
+reads.
+
+And a fourth, which follows from the decision itself: **no date of birth, no
+score.** The resolved answer was to weight *by age*; without an age there is
+no weighting to apply, so the room refuses and links to Start Here rather
+than quietly falling back to some middle cohort.
+
+### The weights are the most invented numbers in this repository
+
+They are a considered opinion about emphasis by decade — debt and the saving
+habit carry the under-30s because that is what compounds; retirement is
+barely weighted before 30 because the retirement-multiple benchmarks start
+around 1× salary *at* 30 and scoring a 24-year-old against them would mark
+them down for being 24; retirement dominates the 50s because there is less
+time left to fix it than anything else here. Two sensible people would write
+them differently. `data/health_score.json` carries `confidence: "convention"`
+and a `confidenceNote` saying exactly that, per D-036.
+
+So the room does something a score page usually will not: **it shows the
+same household scored under every cohort.** For the demo persona the
+identical finances score 85 under the under-30 weights and 60 under the 60+
+weights — a 25-point spread that is entirely the weighting and not the
+person. Printing that gap is the price of asking anyone to take the number
+seriously. The page also lists every ratio behind every pillar with its own
+0-100, names which pillars had nothing to measure, and shows the "points
+still on the table" per pillar (weight × distance from benchmark), which is
+the only genuinely actionable thing a composite produces.
+
+A test asserts the cohorts actually disagree. If the weighting ever stops
+changing the answer, the whole age-cohort decision has become decorative and
+that should fail loudly.
+
+### Table invariants, enforced
+
+`test/run.js` checks that every cohort's weights sum to 1, that they name
+exactly the pillars that exist and nothing else, that every ratio a pillar
+names is a real ratio in the registry, that every age from 0 to
+`MAX_PLAUSIBLE_AGE` falls in exactly one cohort (no gap, no overlap), and
+that each cohort explains itself. Those are the failure modes of a
+config-driven score, and none of them would show up as a crash.
+
+---
+
 ## Still open
 
 - ~~**Two-Income Household Toggle** and **Soft Saving Balance
@@ -2001,9 +2092,11 @@ attribute. It now scans only the page's own `<style>` blocks, for a
   direction: not relevant.** Neither is built and neither is a blocker.
   The Savings Rate room stands as it is. If either comes back, the
   questions above are still the ones to answer first.
-- **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the
-  spec): tunable by age cohort, or one fixed formula for v1? Not yet
-  blocking; the score is built last by §9.
+- ~~**SPEC.md §12.4 — Financial Health Score weighting**~~ — **RESOLVED:
+  tunable by age cohort.** Built, and the weights live in
+  `data/health_score.json` so a decade can be retuned without touching code.
+  See D-043. This was the last `[PENDING]` decision in the spec; §12 now has
+  none.
 - **The three Tranche 1 rooms** (`real-hourly-wage`, `money-calendar`,
   `student-loan-decision`) do not exist in this repo. Whether to build them,
   and to what spec, is open. See D-001.

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>The Score · SPARKS</title>
+<meta name="description" content="One number for the whole picture, weighted for your age — and every part of how it was made."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11, §9 item 8, §13 Tier 1.5 (Financial Health Score).
+  §12.4 is now RESOLVED as tunable by age cohort; see DECISIONS.md D-043.
+
+  1. READS   every ratio, through engines/ratios.js, and the date of birth,
+             for the cohort. Nothing is entered here at all.
+  2. WRITES  nothing.
+  3. CALLS   engines/health.js, which calls engines/ratios.js. No ratio,
+             band or scale is re-derived here.
+  4. EMPTY   No date of birth → refuses, because the resolved decision was
+             to weight BY AGE and there is no weighting without one. Under
+             half the weight computable → refuses and says what is missing.
+  5. CONFIG  data/health_score.json — pillars, cohorts, weights, bands, the
+             cap and the coverage floor. Retuning a decade is an edit to
+             that file and no code change.
+
+  THE HONEST PART, and it is on the page rather than in a comment: these
+  weights are the most invented numbers in the repository. So the page shows
+  the same household scored under EVERY age group, lists every ratio behind
+  every pillar, and says which pillars had no data at all. A score whose
+  weighting is hidden invites more trust than it has earned.
+
+  LIVE-FORM: built once. There are no inputs on this page.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .big { font-family: var(--font-display); font-size: 4rem; line-height: 1; font-variant-numeric: tabular-nums; }
+  .big .of { font-size: var(--text-lg); color: var(--color-text-faint); }
+  .band { font-size: var(--text-sm); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); margin-top: var(--space-2); }
+  .band.is-strong { color: var(--color-positive); }
+  .band.is-strained { color: var(--color-critical); }
+
+  ul.bars { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ul.bars li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  ul.bars li:first-child { border-top: none; }
+  ul.bars .top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+  ul.bars .nm { font-size: var(--text-sm); font-weight: 600; }
+  ul.bars .wt { font-size: var(--text-xs); color: var(--color-text-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  ul.bars .track { position: relative; height: 8px; border-radius: var(--radius-pill); background: var(--color-surface-active); margin-top: var(--space-2); overflow: hidden; }
+  ul.bars .fill { position: absolute; inset: 0 auto 0 0; border-radius: var(--radius-pill); background: var(--color-accent); }
+  ul.bars .fill.is-good { background: var(--color-positive); }
+  ul.bars .fill.is-bad { background: var(--color-critical); }
+  ul.bars .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-2); }
+  ul.bars li.is-absent .track { opacity: .35; }
+  ul.bars .parts { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1); }
+
+  ol.headroom { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); counter-reset: h; }
+  ol.headroom li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  ol.headroom li:first-child { border-top: none; }
+  ol.headroom .pts { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  ol.headroom .meta { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-muted); }
+
+  table.grid { width: 100%; border-collapse: collapse; font-size: var(--text-sm); margin-top: var(--space-3); }
+  table.grid th { text-align: right; font-weight: 500; font-size: var(--text-xs); color: var(--color-text-faint); padding: 0 0 var(--space-2); }
+  table.grid th:first-child { text-align: left; }
+  table.grid td { padding: var(--space-2) 0; border-top: 1px solid var(--color-border); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  table.grid td:first-child { text-align: left; white-space: normal; }
+  table.grid td + td, table.grid th + th { padding-left: var(--space-3); }
+  table.grid tr.is-here td { background: var(--color-surface-active); }
+  .table-scroll { overflow-x: auto; }
+
+  .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .empty { color: var(--color-text-faint); font-size: var(--text-sm); margin-top: var(--space-3); }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>The Score</h1>
+  <p class="room-lede">
+    One number for the whole picture, weighted for the decade you’re in —
+    and every part of how it was arrived at, because a score you can’t take
+    apart is just a number someone else chose.
+  </p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="out-score">
+    <span class="slaf-eyebrow">Everything, at once</span>
+    <div class="big" id="score-figure">—</div>
+    <div class="band" id="score-band" hidden></div>
+    <p class="slaf-reason" id="score-reason"></p>
+    <div class="flag" id="score-note" hidden></div>
+  </section>
+
+  <section class="slaf-card" id="out-pillars">
+    <span class="slaf-eyebrow">What it’s made of</span>
+    <h2 style="margin:var(--space-2) 0 0">Six pillars, weighted for your age</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Each bar is how close that pillar is to where convention says it
+      should be. The percentage beside it is how much of the score it
+      carries at your age — and a pillar with nothing to measure is left
+      out entirely rather than counted as a zero.
+    </p>
+    <ul class="bars" id="pillars"></ul>
+  </section>
+
+  <section class="slaf-card" id="out-headroom">
+    <span class="slaf-eyebrow">Where the points are</span>
+    <h2 style="margin:var(--space-2) 0 0">What would move it most</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Points still on the table, pillar by pillar: how much the score would
+      rise if that pillar were all the way to its benchmark. It is weight
+      times distance, so a heavily weighted pillar that is nearly there can
+      be worth less than a light one that is nowhere near.
+    </p>
+    <ol class="headroom" id="headroom"></ol>
+  </section>
+
+  <section class="slaf-card" id="out-cohorts">
+    <span class="slaf-eyebrow">How much the weighting matters</span>
+    <h2 style="margin:var(--space-2) 0 0">The same numbers, scored at every age</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Nothing about your finances changes down this table — only the
+      weights do. The spread is the size of the judgement built into the
+      score, shown rather than hidden.
+    </p>
+    <div class="table-scroll"><table class="grid" id="cohorts"><tbody></tbody></table></div>
+    <p class="why" id="cohorts-why"></p>
+  </section>
+
+  <section class="slaf-card" id="out-missing">
+    <span class="slaf-eyebrow">What isn’t in it</span>
+    <h2 style="margin:var(--space-2) 0 0">The parts with nothing to measure</h2>
+    <div id="missing-body"></div>
+  </section>
+
+  <section class="slaf-card" id="reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. The weights behind this score are
+    a considered opinion about what matters at each stage of life, not a
+    finding — two sensible people would write them differently, which is why
+    the table above shows what the difference would do. Your numbers stay in
+    this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/liveform.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/ratios.js"></script>
+<script src="../engines/health.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference,
+      Ownership = SLAF.Ownership, Health = SLAF.Health;
+
+  var ROOM_ID = 'health';
+  var TABLES = null;
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function pct(x) { return Math.round(x * 100) + '%'; }
+
+  function toneOf(score) {
+    return score >= 0.85 ? ' is-good' : score < 0.5 ? ' is-bad' : '';
+  }
+
+  function renderScore(s) {
+    var fig = el('score-figure'), band = el('score-band'), reason = el('score-reason');
+    if (!Money.isOk(s)) {
+      fig.textContent = Money.EM_DASH;
+      fig.classList.add('slaf-figure--incomplete');
+      band.hidden = true;
+      reason.innerHTML = esc(s.reason)
+        + (s.missing.indexOf('dob') !== -1
+          ? ' <a href="' + Ownership.linkTo('start', 'q-dob') + '">Add your date of birth →</a>'
+          : '');
+      el('score-note').hidden = true;
+      return;
+    }
+    fig.classList.remove('slaf-figure--incomplete');
+    fig.innerHTML = s.value + '<span class="of"> / 100</span>';
+    band.hidden = false;
+    band.className = 'band is-' + s.band.id;
+    band.textContent = s.band.label;
+    reason.textContent = s.band.blurb + ' Weighted for ' + s.cohort.label.toLowerCase()
+      + (Money.isEntered(s.age) ? ' — you’re ' + s.age + '.' : '.')
+      + ' Built from ' + s.ratiosCounted + ' ratios across '
+      + s.availablePillars.length + ' of ' + s.pillars.length + ' pillars.';
+
+    var note = el('score-note');
+    note.hidden = false;
+    note.innerHTML = '<strong>' + esc(s.cohort.label) + ':</strong> ' + esc(s.cohort.note);
+  }
+
+  function renderPillars(s) {
+    if (!Money.isOk(s)) { el('pillars').innerHTML = ''; return; }
+    el('pillars').innerHTML = s.pillars.map(function (p) {
+      var width = p.available ? Math.max(2, Math.round(p.score * 100)) : 0;
+      return '<li class="' + (p.available ? '' : 'is-absent') + '">'
+        + '<div class="top"><span class="nm">' + esc(p.label) + '</span>'
+        + '<span class="wt">' + (p.available ? Math.round(p.score * 100) + ' / 100 · ' : '')
+        + pct(p.weight) + ' of the score</span></div>'
+        + '<div class="track"><div class="fill' + (p.available ? toneOf(p.score) : '')
+        + '" style="width:' + width + '%"></div></div>'
+        + '<div class="sub">' + esc(p.blurb) + '</div>'
+        + (p.available
+            ? '<div class="parts">' + p.counted.map(function (c) {
+                return esc(c.label) + ' ' + Math.round(c.score * 100);
+              }).join(' · ') + '</div>'
+            : '<div class="parts">Nothing here can be worked out yet, so it is left out of '
+              + 'the score rather than counted as a zero.</div>')
+        + '</li>';
+    }).join('');
+  }
+
+  function renderHeadroom(s) {
+    if (!Money.isOk(s)) { el('headroom').innerHTML = ''; return; }
+    var rows = s.headroom.filter(function (r) { return r.pointsAvailable >= 0.05; });
+    if (!rows.length) {
+      el('headroom').innerHTML = '<li><span>Every pillar that can be measured is at or past '
+        + 'its benchmark.</span><span class="pts">—</span></li>';
+      return;
+    }
+    el('headroom').innerHTML = rows.map(function (r) {
+      return '<li><span>' + esc(r.label) + '</span>'
+        + '<span class="pts">+' + (Math.round(r.pointsAvailable * 10) / 10) + '</span>'
+        + '<span class="meta">' + (r.weakest
+            ? 'Furthest from its mark: ' + esc(r.weakest.label)
+              + ' at ' + Math.round(r.weakest.score * 100) + ' of 100.'
+            : '') + '</span></li>';
+    }).join('');
+  }
+
+  function renderCohorts(s) {
+    var across = Health.acrossCohorts(Spine.getProfile(), TABLES);
+    var body = el('cohorts').querySelector('tbody');
+    if (!Money.isOk(across)) { body.innerHTML = ''; el('cohorts-why').textContent = ''; return; }
+
+    var scores = [];
+    body.innerHTML = '<tr><th>Scored as</th><th>Score</th><th>Heaviest pillar</th></tr>'
+      + across.value.map(function (row) {
+        var r = row.result;
+        var ok = Money.isOk(r);
+        if (ok) scores.push(r.value);
+        var heaviest = Object.keys(row.cohort.weights).reduce(function (best, id) {
+          return (best === null || row.cohort.weights[id] > row.cohort.weights[best]) ? id : best;
+        }, null);
+        var label = heaviest;
+        (TABLES.healthScore.pillars || []).forEach(function (p) {
+          if (p.id === heaviest) label = p.label;
+        });
+        return '<tr class="' + (row.cohort.id === across.ownCohortId ? 'is-here' : '') + '">'
+          + '<td>' + esc(row.cohort.label) + '</td>'
+          + '<td>' + (ok ? r.value : Money.EM_DASH) + '</td>'
+          + '<td>' + esc(label) + ' ' + pct(row.cohort.weights[heaviest]) + '</td></tr>';
+      }).join('');
+
+    if (scores.length > 1) {
+      var lo = Math.min.apply(null, scores), hi = Math.max.apply(null, scores);
+      el('cohorts-why').textContent = 'The same finances score between ' + lo + ' and ' + hi
+        + ' depending only on which decade’s weights are applied — a spread of ' + (hi - lo)
+        + ' points. That gap is the weighting, not you. It is the reason this page shows the '
+        + 'pillars above rather than only the number.';
+    } else {
+      el('cohorts-why').textContent = '';
+    }
+  }
+
+  function renderMissing(s) {
+    var body = el('missing-body');
+    if (!Money.isOk(s)) { body.innerHTML = ''; return; }
+    if (!s.missingPillars.length) {
+      body.innerHTML = '<p class="why">Every pillar had something to measure. The score covers '
+        + pct(s.coverage) + ' of its own weight.</p>';
+      return;
+    }
+    body.innerHTML = '<p class="why">These had nothing that could be worked out, so their '
+      + 'weight was spread across the rest. The score covers ' + pct(s.coverage)
+      + ' of its own weight; it needs at least ' + pct(s.minCoverage) + ' to show at all.</p>'
+      + '<ul class="bars">' + s.missingPillars.map(function (p) {
+        var whys = p.skipped.filter(function (k) { return k.label; }).slice(0, 3);
+        return '<li class="is-absent"><div class="top"><span class="nm">' + esc(p.label)
+          + '</span><span class="wt">' + pct(p.weight) + ' redistributed</span></div>'
+          + '<div class="parts">' + (whys.length
+              ? whys.map(function (k) { return esc(k.label) + ' — ' + esc(k.why); }).join('<br/>')
+              : 'Nothing in this pillar could be computed.') + '</div></li>';
+      }).join('') + '</ul>';
+  }
+
+  function renderNow() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    var s = Health.score(h, TABLES);
+    renderScore(s);
+    renderPillars(s);
+    renderHeadroom(s);
+    renderCohorts(s);
+    renderMissing(s);
+    el('reading-list').innerHTML = ['dob', 'grossAnnualIncome', 'monthlyExpenses']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+
+  var queued = false;
+  function render() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () { queued = false; renderNow(); }, 0);
+  }
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    renderNow();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

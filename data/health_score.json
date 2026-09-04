@@ -1,0 +1,66 @@
+{
+  "id": "health_score",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "The pillar grouping follows the standard shape of a personal-finance review — cushion, debt, saving, retirement, housing, and how the money is held. The weights within each age cohort are a judgement about what matters most at that stage of life. No published source sets them, and none is claimed.",
+  "confidence": "convention",
+  "confidenceNote": "These weights are the most invented numbers in this repository. They are a considered opinion about emphasis by decade, not a finding, and two sensible people would write them differently. The room shows the same household scored under every cohort so the effect of the weighting is visible rather than hidden, and every pillar's underlying ratios are listed so the score can be taken apart.",
+  "note": "SPEC.md §12.4, resolved as tunable by age cohort — see DECISIONS.md D-043. The score is a weighted average of positions against data/ratio_benchmarks.json, computed by engines/health.js. Each pillar's score is the plain mean of whichever of its ratios could be computed AND have a band; a pillar with nothing computable is ABSENT, not zero, and its weight is redistributed across the pillars that do have data. Weights within each cohort sum to 1 and test/run.js enforces that. Adding a cohort or retuning a decade is an edit to this file and no code change at all.",
+
+  "scoring": {
+    "cap": 1.0,
+    "minCoverage": 0.5,
+    "capNote": "A ratio past its benchmark scores 1.0 and no more. engines/ratios.js lets position() run to 1.25 for the radar, because being well past a threshold is worth seeing there. It is not worth extra credit here: letting a very large emergency fund earn 1.25 would let a cushion buy off a debt problem, and a score that can be gamed by over-doing one easy thing is not measuring health.",
+    "minCoverageNote": "Below half the total weight, the score is refused. A number built from a third of the picture reads exactly like a number built from all of it, which is the whole danger of scores."
+  },
+
+  "bands": [
+    { "id": "strong",  "min": 85, "label": "Strong",
+      "blurb": "Most of what this looks at is where convention says it should be." },
+    { "id": "solid",   "min": 70, "label": "Solid",
+      "blurb": "The shape is right, with a soft spot or two worth naming." },
+    { "id": "mixed",   "min": 50, "label": "Mixed",
+      "blurb": "Some parts are in good order and some are not, and the difference is where the work is." },
+    { "id": "strained", "min": 0, "label": "Strained",
+      "blurb": "Several things are outside their usual range at once. That is usually one cause, not several." }
+  ],
+
+  "pillars": [
+    { "id": "liquidity", "label": "Cushion",
+      "blurb": "What you could reach tomorrow if you had to.",
+      "ratios": ["emergencyFundMonths", "liquidityRatio", "currentRatio", "runwayMonths"] },
+    { "id": "debt", "label": "Debt load",
+      "blurb": "How much of your income is already promised to someone else.",
+      "ratios": ["debtToIncome", "backEndRatio", "revolvingShare", "debtToAsset", "carPaymentToIncome"] },
+    { "id": "saving", "label": "Saving",
+      "blurb": "How much of what comes in stays.",
+      "ratios": ["savingsRate", "personalCashFlowRatio", "discretionaryIncomeRatio"] },
+    { "id": "retirement", "label": "Retirement",
+      "blurb": "How far along the long arc you are for your age.",
+      "ratios": ["retirementMultiple", "fiRatio", "netWorthToIncome"] },
+    { "id": "housing", "label": "Housing",
+      "blurb": "What the roof costs and how much of it is yours.",
+      "ratios": ["housingRatio", "loanToValue", "homeEquityRatio", "realEstateConcentration"] },
+    { "id": "structure", "label": "How it's held",
+      "blurb": "Whether the money you have is working or sitting.",
+      "ratios": ["investmentToNetWorth", "cashDrag", "liquidToIlliquid", "solvencyRatio"] }
+  ],
+
+  "cohorts": [
+    { "id": "under30", "label": "Under 30", "minAge": null, "maxAge": 29,
+      "weights": { "liquidity": 0.25, "debt": 0.30, "saving": 0.25, "retirement": 0.05, "housing": 0.05, "structure": 0.10 },
+      "note": "Debt and the saving habit carry most of the weight, because at this age they are what compounds. Retirement is barely weighted at all — the retirement multiple benchmarks start around 1x salary at 30, so scoring someone at 24 against them would mark them down for being 24." },
+    { "id": "thirties", "label": "30s", "minAge": 30, "maxAge": 39,
+      "weights": { "liquidity": 0.20, "debt": 0.25, "saving": 0.22, "retirement": 0.15, "housing": 0.10, "structure": 0.08 },
+      "note": "Retirement starts counting for real and housing appears. Debt still leads, because this is the decade it either peaks or turns." },
+    { "id": "forties", "label": "40s", "minAge": 40, "maxAge": 49,
+      "weights": { "liquidity": 0.18, "debt": 0.20, "saving": 0.20, "retirement": 0.22, "housing": 0.12, "structure": 0.08 },
+      "note": "The most evenly balanced decade: everything matters at once, which is what makes it the hardest one." },
+    { "id": "fifties", "label": "50s", "minAge": 50, "maxAge": 59,
+      "weights": { "liquidity": 0.16, "debt": 0.15, "saving": 0.18, "retirement": 0.30, "housing": 0.12, "structure": 0.09 },
+      "note": "Retirement progress becomes the dominant question, because there is less time left to fix it than there is to fix anything else here." },
+    { "id": "sixtyplus", "label": "60 and over", "minAge": 60, "maxAge": null,
+      "weights": { "liquidity": 0.20, "debt": 0.12, "saving": 0.10, "retirement": 0.35, "housing": 0.10, "structure": 0.13 },
+      "note": "Savings rate stops being the point when the accumulation phase is ending, and how the money is held starts to be. The cushion matters again — a bad year now cannot be earned back the way it could at 30." }
+  ]
+}

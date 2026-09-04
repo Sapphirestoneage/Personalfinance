@@ -396,6 +396,23 @@
       ]
     },
     {
+      id: 'health',
+      order: 25,
+      title: 'The Score',
+      blurb: 'One number for the whole picture, weighted for the decade you\u2019re in \u2014 and every part of how it was arrived at.',
+      href: 'rooms/health.html',
+      tier: 1,
+      tags: ['income', 'cashflow', 'debt'],
+      subsections: [
+        { id: 'out-score',    label: 'Everything, at once' },
+        { id: 'out-pillars',  label: 'What it is made of' },
+        { id: 'out-headroom', label: 'Where the points are' },
+        { id: 'out-cohorts',  label: 'How much the weighting matters' },
+        { id: 'out-missing',  label: 'What is not in it' },
+        { id: 'reading',      label: 'Reading from elsewhere' }
+      ]
+    },
+    {
       id: 'foo-ladder',
       order: 21,
       title: 'FOO Ladder',

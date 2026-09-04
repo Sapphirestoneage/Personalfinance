@@ -406,9 +406,19 @@ relevant tool, stop and ask instead of picking a default.
    "current" number for a field with both should default to `trackedValue`
    once it exists, but `estimatedValue` stays queryable indefinitely for the
    comparison.
-4. **Financial Health Score weighting** — tunable by age cohort, or one fixed
-   formula for v1? (Build this last regardless — see Section 9.)
-   `[PENDING]`
+4. **Financial Health Score weighting — RESOLVED: tunable by age cohort.**
+   Six pillars (cushion, debt load, saving, retirement, housing, how it's
+   held), weighted differently per decade, with the pillars, cohorts,
+   weights, score bands, the over-performance cap and the coverage floor all
+   living in `data/health_score.json`. Retuning a decade or adding a cohort
+   is an edit to that file and no code change — the same configuration-data
+   pattern as budget templates and FIRE variants. The score is a weighted
+   mean of `engines/ratios.js` positions; no ratio, band or scale is
+   re-derived. A pillar with nothing computable is ABSENT, not zero, and its
+   weight is redistributed; below half the total weight the score is refused
+   outright. Because these weights are the most invented numbers in the
+   repo, the room shows the same household scored under every cohort. See
+   `DECISIONS.md` D-043.
 5. **Manual entry only for v1, or bank-linked import architected in from the
    start? RESOLVED: manual entry now, but architect for bank-linked import.**
    Cash Flow calc's schema (Tier 1) must be built to support a future

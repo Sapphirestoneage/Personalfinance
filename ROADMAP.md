@@ -18,13 +18,13 @@ lives here, separately, and is kept honest against `shared/registry.js`.
 
 ## What is actually built, as of the last commit
 
-Twenty-four rooms are live. Against this document's own tiers:
+Twenty-five rooms are live. Against this document's own tiers:
 
 | Tier | In this doc | Shipped | What's shipped |
 |---|---|---|---|
 | **0** — MVP snapshot | 10 inputs, 9 outputs, FOO ladder, 5 flags | **all of it** | Start Here, Financial Snapshot, FOO Ladder |
 | **1** — fully modular | 29 | **21** | Net Worth · Savings Rate · FIRE variants · Debt Calculator · Credit Card view · HYSA Switch · Cash Flow · Budget templates · Return on Hassle · Girl Math (cost per use) · Snapshot/save-state · Rule of Five · $30k/$90k · 20/3/8 · Real Hourly Wage · W2 vs 1099 · Quarterly Estimated Tax · Retroactive Worth · Prospective Worth · Lump Sum vs DCA · FAT FIRE template |
-| **1.5** — one self-report | 3 | **2** | SWAN Number · Fulfillment Curve |
+| **1.5** — one self-report | 3 | **3** | SWAN Number · Fulfillment Curve · Financial Health Score |
 | **2** — a few decisions | 23 | **14** | Side Hustle · Solo 401(k) · Roth vs Traditional vs Brokerage · Wedding · Dream Calculator · Convenience Method · Zombie Apocalypse framing · Values vs Spending Audit · Career ROI · Skills Calculator · Leave-Job · Unemployment · Start-Business · Travel |
 | **3 and up** | ~280 | **1** | Regret calc (Tier 4) — not a build of its own: it is `Worth.regrets()`, the same records filtered to low ratings. Everything else is out of `SPEC.md` scope |
 
@@ -64,11 +64,13 @@ indices, IRS W-4 worksheet logic, and 12+ months of tracked spending history.
 cheap to write and expensive to keep true, which is the opposite of every
 tool shipped so far.
 
-### Not built in Tier 1.5 (1)
+### Tier 1.5 is complete
 
-**Financial Health Score** — genuinely blocked, and deliberately so:
-`SPEC.md` §9 item 8 puts it last because it aggregates everything else, and
-§12.4 leaves its weighting `[PENDING]`. See "Still open" in `DECISIONS.md`.
+The **Financial Health Score** was the last thing standing, and it was
+blocked on a decision rather than on work: `SPEC.md` §12.4 left its
+weighting `[PENDING]` with an instruction not to guess. That decision is now
+resolved as **tunable by age cohort** (D-043), the weights live in
+`data/health_score.json`, and §12 has no pending decisions left at all.
 
 ### Not built in Tier 2 (9)
 
