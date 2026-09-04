@@ -443,6 +443,22 @@
         { id: 'spectrum',   label: 'The Spectrum' },
         { id: 'provenance', label: 'Where these numbers come from' }
       ]
+    },
+    {
+      id: 'dnd-reference',
+      order: 27,
+      title: 'The Bestiary',
+      blurb: 'The Monster Manual, Hazards, the Revenue Guild, Status Effects and the three Feat Trees behind the Character Sheet. Reference only \u2014 it reads none of your numbers.',
+      href: 'rooms/dnd-reference.html',
+      tier: 5,
+      tags: ['debt'],
+      subsections: [
+        { id: 'monsters',   label: 'Monster Manual' },
+        { id: 'hazards',    label: 'Hazards' },
+        { id: 'guild',      label: 'The Revenue Guild' },
+        { id: 'statuses',   label: 'Status Effects' },
+        { id: 'feat-trees', label: 'Feat Trees' }
+      ]
     }
   ];
 
