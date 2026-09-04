@@ -229,6 +229,26 @@ h3 { font-size: var(--text-md); }
 }
 .slaf-input-shell > input[type="number"] { -moz-appearance: textfield; }
 
+/* The one 1-10 rating control — shared/rating.js. Every rating in SPARKS
+   renders through these two classes, so a second scale cannot appear. */
+.slaf-rating { min-width: 0; }
+.slaf-rating > select { font-variant-numeric: normal; }
+
+.slaf-dots {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.slaf-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-border-strong);
+}
+
+.slaf-dot.is-on { background: var(--color-accent); }
+
 .slaf-hint {
   font-size: var(--text-xs);
   color: var(--color-text-faint);

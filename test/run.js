@@ -40,6 +40,7 @@ const Goals = require(path.join(ROOT, 'engines/goals.js'));
 const Accounts = require(path.join(ROOT, 'engines/accounts.js'));
 const Swan = require(path.join(ROOT, 'engines/swan.js'));
 const ValuesEngine = require(path.join(ROOT, 'engines/values.js'));
+const Rating = require(path.join(ROOT, 'shared/rating.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -1822,6 +1823,120 @@ section('SWAN Number');
    Values vs. Spending Audit — two ordered lists, and deliberately no score.
    SPEC.md §13 Tier 2. Robin's categorised month totals $3,900.
    ========================================================================== */
+
+/* ==========================================================================
+   The one 1-10 rating control. SPEC.md §13 Tier 1.5: "build one reusable
+   rating component, not four."
+   ========================================================================== */
+
+section('Ratings');
+
+(function () {
+  /* -- The scale has no zero, and only takes whole numbers -------------- */
+  check('the scale runs 1 to 10', Rating.MIN + '-' + Rating.MAX, '1-10');
+  checkTrue('1 is valid', Rating.isValid(1));
+  checkTrue('10 is valid', Rating.isValid(10));
+  checkTrue('0 is NOT a rating', !Rating.isValid(0));
+  checkTrue('11 is not a rating', !Rating.isValid(11));
+  checkTrue('3.5 is not a rating', !Rating.isValid(3.5));
+  checkTrue('null is not a rating', !Rating.isValid(null));
+
+  check('an empty control reads as not rated', Rating.parse(''), null);
+  check('a zero typed into it is not a rating', Rating.parse('0'), null);
+  check('and "7" is', Rating.parse('7'), 7);
+
+  /* -- Reading, and the line between "not rated" and "rated low" -------- */
+  const h = Schema.createHousehold({ ratings: { joy: { dining_out: 8, housing: 1 } } });
+  check('a stored rating reads back', Rating.get(h, 'joy', 'dining_out'), 8);
+  check('a rating of 1 reads back as 1, not as missing', Rating.get(h, 'joy', 'housing'), 1);
+  checkTrue('and it counts as rated', Rating.isRated(h, 'joy', 'housing'));
+  check('an unrated item is null', Rating.get(h, 'joy', 'travel'), null);
+  checkTrue('and does not count as rated', !Rating.isRated(h, 'joy', 'travel'));
+  check('an unknown scope is empty, not an error',
+    JSON.stringify(Rating.scopeOf(h, 'hassle')), '{}');
+
+  /* A rating written outside the scale never survives the round trip. */
+  const dirty = Schema.createHousehold({ ratings: { joy: { a: 0, b: 99, c: 'x', d: 6 } } });
+  check('a zero does not survive into a reading', Rating.get(dirty, 'joy', 'a'), null);
+  check('nor does an out-of-range number', Rating.get(dirty, 'joy', 'b'), null);
+  check('nor does a string', Rating.get(dirty, 'joy', 'c'), null);
+  check('a real rating does', Rating.get(dirty, 'joy', 'd'), 6);
+
+  /* -- Coverage ---------------------------------------------------------- */
+  const cov = Rating.coverage(h, 'joy', ['dining_out', 'housing', 'travel']);
+  check('two of three are rated', cov.ratedCount, 2);
+  check('and the third is named', cov.missing.join(','), 'travel');
+  check('coverage share is 2/3', cov.share, 2 / 3, 1e-12);
+  check('coverage of nothing has no share', Rating.coverage(h, 'joy', []).share, null);
+
+  /* -- Weighted average: unrated is skipped, never counted as zero ------- */
+  const wa = Rating.weightedAverage(h, 'joy', [
+    { id: 'dining_out', weight: 100 },   /* 8 */
+    { id: 'housing', weight: 300 },      /* 1 */
+    { id: 'travel', weight: 500 }        /* unrated — must not drag it down */
+  ]);
+  check('the weighted average is (8x100 + 1x300) / 400', wa.value, (800 + 300) / 400, 1e-12);
+  check('two ratings went into it', wa.ratedCount, 2);
+  check('and one was skipped, not zeroed', wa.skippedCount, 1);
+
+  /* Had the unrated item counted as zero the answer would be 1.22, so this
+     is the check that the skip is real and not a rounding coincidence. */
+  checkTrue('an unrated item counting as zero would give a different answer',
+    Math.abs(wa.value - (800 + 300 + 0) / 900) > 1);
+
+  check('with nothing rated, there is no average',
+    Rating.weightedAverage(h, 'joy', [{ id: 'travel', weight: 100 }]).status, 'incomplete');
+
+  const zeroWeight = Rating.weightedAverage(h, 'joy', [
+    { id: 'dining_out', weight: 0 }, { id: 'housing', weight: 0 }
+  ]);
+  check('with no weight at all it falls back to a plain average', zeroWeight.value, 4.5);
+  checkTrue('and says that it did', zeroWeight.unweighted === true);
+
+  /* -- The control markup ------------------------------------------------ */
+  const markup = Rating.controlHtml({ scope: 'joy', itemId: 'dining_out', value: 8, label: 'Eating out' });
+  checkTrue('the control carries its scope', markup.includes('data-rating-scope="joy"'));
+  checkTrue('and its item', markup.includes('data-rating-item="dining_out"'));
+  checkTrue('the current value is selected', markup.includes('<option value="8" selected>'));
+  checkTrue('there is a not-rated option', markup.includes('<option value="">'));
+  checkTrue('there is no zero option', !markup.includes('<option value="0"'));
+  check('there are ten numbered options plus the blank',
+    (markup.match(/<option /g) || []).length, 11);
+  checkTrue('the ends are anchored in words',
+    markup.includes(Rating.anchors('joy').low) && markup.includes(Rating.anchors('joy').high));
+  checkTrue('an unrated control selects the blank',
+    Rating.controlHtml({ scope: 'joy', itemId: 'x' }).includes('<option value="" selected>'));
+  checkTrue('the accessible name says what is being rated',
+    markup.includes('aria-label="Joy for Eating out"'));
+
+  /* Every scope gets its own wording, from one place. */
+  checkTrue('the hassle scope is anchored differently from joy',
+    Rating.anchors('hassle').low !== Rating.anchors('joy').low);
+
+  /* -- Reading an event target ------------------------------------------- */
+  const fakeNode = {
+    value: '7',
+    getAttribute: function (k) {
+      return { 'data-rating-scope': 'joy', 'data-rating-item': 'dining_out' }[k] || null;
+    }
+  };
+  const read = Rating.readTarget(fakeNode);
+  check('a change on the control reports its scope', read.scope, 'joy');
+  check('its item', read.itemId, 'dining_out');
+  check('and its parsed value', read.value, 7);
+  check('a node that is not a rating control reports nothing',
+    Rating.readTarget({ value: '7', getAttribute: function () { return null; } }), null);
+
+  /* -- The dot readout --------------------------------------------------- */
+  check('three of ten dots are lit at a rating of 3',
+    (Rating.dotsHtml(3).match(/is-on/g) || []).length, 3);
+  check('ten dots are always drawn',
+    (Rating.dotsHtml(3).match(/slaf-dot/g) || []).length, 10 + 1);  /* + .slaf-dots */
+  check('an unrated item lights none',
+    (Rating.dotsHtml(null).match(/is-on/g) || []).length, 0);
+  checkTrue('and says so to a screen reader',
+    Rating.dotsHtml(null).includes('aria-label="not rated"'));
+})();
 
 section('Values vs. Spending');
 

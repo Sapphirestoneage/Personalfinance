@@ -99,6 +99,7 @@
     'computed.swanTargetCents':                  { class: 'computed',   unit: 'cents',   note: 'the resolved target, whichever basis was used' },
     'valuesProfile.stated[]':                    { class: 'raw',        unit: 'enum',    note: 'value ids from data/values.json, in the order named — index 0 is the top one' },
     'valuesProfile.assignments':                 { class: 'raw',        unit: 'map',     note: 'expenseCategoryId -> value id, or null for deliberately unclaimed' },
+    'ratings.<scope>.<itemId>':                  { class: 'raw',        unit: 'rating',  note: 'integer 1-10, or absent for not rated. One store for every 1-10 rating in the app — SPEC.md §13 Tier 1.5' },
     'assumptions.expectedReturnRate':            { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.expectedReturnRate },
     'assumptions.swrRate':                       { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.swrRate },
 
@@ -322,6 +323,35 @@
     };
   }
 
+  /**
+   * Every 1-10 rating in the app, in one store, keyed by scope then item.
+   *
+   *   ratings = { joy: { dining_out: 8, housing: 4 }, hassle: { … } }
+   *
+   * SPEC.md §13 Tier 1.5 is explicit that the 1-10 mechanism is shared
+   * infrastructure across the Fulfillment Curve, the Category Tracker, the
+   * Dating Cost calc and Retroactive Worth — "build one reusable rating
+   * component, not four". One store is the data half of that; the control
+   * in shared/rating.js is the other half.
+   *
+   * An absent key means NOT RATED. There is no zero on this scale, so a
+   * missing rating can never be confused with a low one.
+   */
+  function createRatings(fields) {
+    var out = {};
+    var src = fields || {};
+    Object.keys(src).forEach(function (scope) {
+      var items = src[scope] || {};
+      var kept = {};
+      Object.keys(items).forEach(function (itemId) {
+        var v = items[itemId];
+        if (typeof v === 'number' && Number.isFinite(v)) kept[itemId] = v;
+      });
+      out[scope] = kept;
+    });
+    return out;
+  }
+
   function createHousehold(fields) {
     var f = fields || {};
     return {
@@ -347,6 +377,8 @@
            code path when import lands. See createExpenseEntry(). */
         entries: (f.expenses && (f.expenses.entries || f.expenses.categories)) || []
       },
+      /* Every 1-10 rating in the app. See createRatings(). */
+      ratings: createRatings(f.ratings),
       /* Stated values and what spending serves them. Owned by the What
          Matters room. SPEC.md §13 Tier 2. */
       valuesProfile: createValuesProfile(f.valuesProfile),
@@ -646,6 +678,7 @@
     createGoalLineItem: createGoalLineItem,
     createSwanTarget: createSwanTarget,
     createValuesProfile: createValuesProfile,
+    createRatings: createRatings,
     resolveAssumptions: resolveAssumptions,
     withMonthlyExpensesDeltaCents: withMonthlyExpensesDeltaCents,
     personById: personById,

@@ -1218,21 +1218,12 @@ guesses — see "Still open".
 
 ## Still open
 
-- **Two-Income Household Toggle** (SPEC.md §13, under Savings Rate calc:
-  "must multiply/adjust this"). The household model already supports a
-  second earner — `people[]` each with `incomeSources[]`, and every
-  aggregate counts items exactly once. What is missing is a decision about
-  **who owns a second person's income**. Today `grossAnnualIncome` is owned
-  by Start Here, which asks nine questions about one person. Either intake
-  grows a "is there a second earner?" branch, or a new Household room owns
-  people and their incomes and Start Here links to it. Building the toggle
-  before that decision would mean a second editable copy of income, which
-  `shared/ownership.js` exists to prevent.
-- **Soft Saving Balance Calculator** (SPEC.md §13: "this formula split into
-  3 buckets"). Which three buckets is not specified anywhere in the spec,
-  and the answer changes the tool completely — future/near/now is a
-  different instrument from needs/wants/savings, which is different again
-  from retirement/goals/spending. Needs naming before it can be built.
+- ~~**Two-Income Household Toggle** and **Soft Saving Balance
+  Calculator**~~ — both raised as open questions with D-030 (who owns a
+  second earner's income; which three buckets). **Dropped at the owner's
+  direction: not relevant.** Neither is built and neither is a blocker.
+  The Savings Rate room stands as it is. If either comes back, the
+  questions above are still the ones to answer first.
 - **SPEC.md §12.4 — Financial Health Score weighting** (`[PENDING]` in the
   spec): tunable by age cohort, or one fixed formula for v1? Not yet
   blocking; the score is built last by §9.

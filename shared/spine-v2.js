@@ -440,6 +440,23 @@
     return getProfile().valuesProfile;
   }
 
+  /**
+   * One 1-10 rating, in the single ratings store. A null value REMOVES the
+   * rating rather than storing a zero — there is no zero on this scale, and
+   * "not rated" has to stay distinct from "rated low". See
+   * shared/rating.js, which owns the scale itself.
+   */
+  function setRating(scope, itemId, value) {
+    if (!scope || !itemId) return getProfile().ratings;
+    var h = load();
+    h.ratings = Schema.createRatings(h.ratings);
+    h.ratings[scope] = h.ratings[scope] || {};
+    if (value === null || value === undefined) delete h.ratings[scope][itemId];
+    else h.ratings[scope][itemId] = value;
+    save(); notify();
+    return getProfile().ratings;
+  }
+
   /** A persisted user override of an Assumption-class field. A "what if"
    *  a room is only previewing must NOT come through here — pass it as a
    *  local override to the calculator instead. SPEC.md §12.2. */
@@ -530,6 +547,7 @@
     removeExpenseEntry: removeExpenseEntry,
     setAssumptionOverride: setAssumptionOverride,
     setSwanTarget: setSwanTarget,
+    setRating: setRating,
     setStatedValues: setStatedValues,
     assignCategoryToValue: assignCategoryToValue,
     listSnapshots: listSnapshots,
