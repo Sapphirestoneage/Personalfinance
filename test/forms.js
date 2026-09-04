@@ -106,6 +106,39 @@ const CASES = [
     }
   },
   {
+    /* The front page. It is the most input-heavy page in the repo and it is
+       hand-built vanilla — the exact place the keyboard bug would come back
+       if the build-once rule slipped. */
+    room: '/',
+    container: '.wrap',
+    seed: 'demo',
+    fields: [
+      { sel: 'input[aria-label="Cash on hand"]', type: '1500' },
+      { sel: 'input[aria-label="Highest deductible"]', type: '3000' },
+      { sel: 'input[aria-label="You contribute"]', type: '4' },
+      { sel: 'input[aria-label="Roth so far this yr"]', type: '0' }
+    ],
+    expect: async (page) => {
+      /* These are page-local, not household data, so read them back off the
+         inputs — which is also the check that a re-render did not wipe them. */
+      const v = await page.evaluate(() => {
+        const g = l => (document.querySelector(`input[aria-label="${l}"]`) || {}).value;
+        return { cash: g('Cash on hand'), ded: g('Highest deductible'),
+                 pct: g('You contribute'), roth: g('Roth so far this yr') };
+      });
+      const step1 = await page.evaluate(() =>
+        document.body.innerText.includes('$1,500 short of your highest deductible.')
+        || document.body.innerText.includes('on hand covers your'));
+      return [
+        ['cash on hand was kept', v.cash, '1500'],
+        ['the deductible was kept', v.ded, '3000'],
+        ['the contribution % was kept', v.pct, '4'],
+        ['a typed zero survives as zero, not blank', v.roth, '0'],
+        ['and step 1 recalculated from what was typed', step1, true]
+      ];
+    }
+  },
+  {
     room: '/rooms/cash-flow.html',
     container: '#buckets',
     seed: 'demo',

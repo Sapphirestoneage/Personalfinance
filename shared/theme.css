@@ -229,6 +229,12 @@ h3 { font-size: var(--text-md); }
 }
 .slaf-input-shell > input[type="number"] { -moz-appearance: textfield; }
 
+/* `hidden` must actually hide. A bare [hidden] is display:none in the UA
+   sheet, which loses to any class that sets display — .slaf-field is flex,
+   .slaf-btn is flex — so a hidden field stayed on screen. Every room had
+   worked around it with its own copy of this rule; it belongs here once. */
+[hidden] { display: none !important; }
+
 /* The one 1-10 rating control — shared/rating.js. Every rating in SPARKS
    renders through these two classes, so a second scale cannot appear. */
 .slaf-rating { min-width: 0; }

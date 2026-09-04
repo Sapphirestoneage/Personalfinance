@@ -1638,6 +1638,63 @@ the criterion. That is the point.
 
 ---
 
+## D-038 — The front page is plain JavaScript now
+
+The FOO ladder was the site's front page and the only React in the repo: 629
+lines of JSX compiled by babel into 1,142 lines of `foo-ladder.js`, plus 224K
+of vendored React. Under D-037's criterion — whatever is simplest for someone
+shown this code to change — it was the single worst thing in the repo. Every
+other page is edit-and-refresh. The first thing anyone sees was the one thing
+that needed Node, npm and a toolchain before a single word could be changed.
+
+It is now hand-written vanilla JavaScript, and React is gone from `vendor/`.
+
+**The architecture is two functions, and the split between them is the whole
+design.** `build()` runs once and creates every node. `paint()` runs on every
+change and only ever writes text, values, classes and hidden flags onto nodes
+`build()` already made. `paint()` never creates or destroys an input — which
+is not a style preference but D-034's rule: replacing an input's DOM node
+mid-tap closes the soft keyboard on a phone and it does not come back. React's
+reconciliation was quietly protecting the old version from that; a naive port
+using `innerHTML` would have reintroduced it. The file carries the
+`LIVE-FORM: built once` marker and the front page is now covered by
+`test/forms.js`, which taps through it on a mobile browser.
+
+**`h()` is twelve lines and does the work JSX was doing.** It takes a tag, a
+props object and children, so `build()` reads almost exactly like the JSX it
+replaced — same shape, same nesting — with no compile step. That was the point
+of the port: not to avoid React, but to avoid the toolchain between a person
+and the file.
+
+**Verified by comparison, not by assertion.** The React page was captured
+first — full-page screenshots and visible text at three states (demo loaded,
+example numbers, a step opened). The port produces **byte-identical visible
+text** in all three, and the screenshots match. The simulation, the
+allocation waterfall and all nine step definitions were carried over line for
+line; the only behavioural difference is one bug fixed on the way.
+
+**That bug: `hidden` did not hide.** A bare `[hidden]` is `display: none` in
+the user-agent sheet, which loses to any class that sets `display` — and
+`.slaf-field` is flex, `.slaf-btn` is flex. The HSA field and the family-plan
+toggle stayed on screen with the plan switched off. Every one of the
+seventeen rooms had independently worked around this with its own copy of
+`[hidden] { display: none !important; }` in its `<style>` block; the front
+page never had one, so the bug was invisible until something at the root
+needed to hide a field. The rule now lives in `shared/theme.css` once, the
+seventeen copies are gone, and a test fails any page that redeclares it.
+
+**Two test rules were only scanning `rooms/`.** The front page lives at the
+root and loads its scripts without a `../` prefix, so it escaped both the
+script-tag dependency check and the live-form declaration check — the two
+guards added in D-036 and D-034. Both now cover it.
+
+**What went away:** `foo-ladder.jsx`, `vendor/react.production.min.js`,
+`vendor/react-dom.production.min.js`, `vendor/react.LICENSE`, the babel
+regeneration step in the README, and the asterisk on "no build step".
+`vendor/` is now fonts and nothing else, 224K lighter.
+
+---
+
 ## Still open
 
 - ~~**Two-Income Household Toggle** and **Soft Saving Balance

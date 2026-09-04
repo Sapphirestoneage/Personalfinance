@@ -2089,10 +2089,19 @@ section('Room script tags');
     return need;
   }
 
-  fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => f.endsWith('.html')).forEach(function (file) {
-    const html = fs.readFileSync(path.join(ROOT, 'rooms', file), 'utf8');
-    const loaded = (html.match(/<script src="\.\.\/([^"]+)"><\/script>/g) || [])
-      .map(t => t.replace(/.*\.\.\//, '').replace(/"><\/script>/, ''));
+  /* The front page lives at the root, not in rooms/, and loads its scripts
+     without the ../ prefix. It escaped this check until the FOO ladder was
+     ported and became the most script-heavy page in the repo. */
+  const pages = fs.readdirSync(path.join(ROOT, 'rooms'))
+    .filter(f => f.endsWith('.html')).map(f => ['rooms/' + f, '../'])
+    .concat([['index.html', '']]);
+
+  pages.forEach(function (entry) {
+    const file = entry[0], prefix = entry[1];
+    const html = fs.readFileSync(path.join(ROOT, file), 'utf8');
+    const re = new RegExp('<script src="' + prefix.replace(/\./g, '\\.') + '([^"]+)"><\\/script>', 'g');
+    const loaded = (html.match(re) || [])
+      .map(t => t.replace(/<script src="/, '').replace(/"><\/script>/, '').replace(prefix, ''));
     const loadedSet = new Set(loaded);
 
     /* Everything the room's own inline script reaches for, plus everything
@@ -2105,10 +2114,28 @@ section('Room script tags');
     const required = closure(direct.concat(usedInline.filter(f => loadedSet.has(f))));
     const missing = Array.from(required).filter(f => !loadedSet.has(f));
 
-    checkTrue(`rooms/${file} loads everything its modules need`,
+    checkTrue(`${file} loads everything its modules need`,
       missing.length === 0,
       missing.length ? `missing: ${missing.join(', ')}` : '');
   });
+})();
+
+/* [hidden] must actually hide: a bare [hidden] is display:none in the UA
+   sheet, which loses to any class that sets display — .slaf-field is flex,
+   .slaf-btn is flex. Every page had its own copy of the override; it lives
+   in theme.css once now, and no page should redeclare it. */
+(function () {
+  const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('theme.css makes [hidden] win over display',
+    /\[hidden\]\s*\{[^}]*display:\s*none\s*!important/.test(theme));
+
+  fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => f.endsWith('.html'))
+    .map(f => path.join('rooms', f)).concat(['index.html']).forEach(function (file) {
+      const html = fs.readFileSync(path.join(ROOT, file), 'utf8');
+      checkTrue(`${file} does not redeclare the [hidden] override`,
+        !/\[hidden\]/.test(html),
+        'it is in shared/theme.css — a second copy is one more place to drift');
+    });
 })();
 
 section('Storage and migration');
@@ -2275,8 +2302,11 @@ section('Live forms');
    back in a room nobody has written yet. */
 (function () {
   const roomsDir = path.join(ROOT, 'rooms');
-  fs.readdirSync(roomsDir).filter(f => f.endsWith('.html')).forEach(function (file) {
-    const html = fs.readFileSync(path.join(roomsDir, file), 'utf8');
+  const htmlPages = fs.readdirSync(roomsDir).filter(f => f.endsWith('.html'))
+    .map(f => path.join('rooms', f)).concat(['index.html']);
+
+  htmlPages.forEach(function (file) {
+    const html = fs.readFileSync(path.join(ROOT, file), 'utf8');
 
     /* Does this room build a focusable control from a string? */
     const buildsControls = /innerHTML[\s\S]{0,4000}?(<input|<select|controlHtml)/.test(html)

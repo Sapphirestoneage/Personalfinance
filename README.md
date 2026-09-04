@@ -67,10 +67,12 @@ typing in it.
 ## Layout
 
 ```
-index.html          Map shell — room directory, tag filter, visited progress
+index.html          The FOO ladder — the front page
+foo-ladder.js       Its logic: build() once, paint() on every change
+map.html            Room directory, tag filter, visited progress
 favicon.svg         Sapphire mark
 rooms/              One HTML file per room
-vendor/             Self-hosted React UMD + the two typefaces (no CDN)
+vendor/fonts/       Self-hosted typefaces (no CDN, no other vendored code)
 shared/             The spine everything depends on
   theme.css           navy-sapphire design tokens (colour + type)
   fonts.css           Fraunces + Space Grotesk
@@ -109,23 +111,21 @@ DECISIONS.md        Running log of what was decided and why.
 CLAUDE.md           Working agreement for anyone (human or agent) editing this.
 ```
 
-## No runtime dependencies
+## No dependencies, and no build step anywhere
 
-Nothing loads from a CDN. React and ReactDOM are vendored in `vendor/`, and
-Fraunces and Space Grotesk are self-hosted from `vendor/fonts/` — so a room
-renders identically offline and makes no third-party request on a visitor's
-behalf. Verified: a browser pass on all three pages issues zero external
-requests.
+Nothing loads from a CDN, and nothing is compiled. Fraunces and Space Grotesk
+are self-hosted from `vendor/fonts/`, so every page renders identically
+offline and makes no third-party request on a visitor's behalf. Verified: a
+browser pass over every page issues zero external requests.
 
-The one room that uses React (`rooms/foo-ladder.html`) ships precompiled.
-Its source is `rooms/foo-ladder.jsx`; regenerate `rooms/foo-ladder.js` with:
+The front page used to be the exception — it was React compiled from a `.jsx`
+by babel, which made the first thing anyone sees the one thing they could not
+change without installing a toolchain. It is now plain JavaScript in
+`foo-ladder.js`, and React is gone from `vendor/`. See `DECISIONS.md` D-038.
 
-```sh
-npx @babel/cli --presets @babel/preset-react rooms/foo-ladder.jsx -o rooms/foo-ladder.js
-```
-
-That is a one-off authoring step, not a build the site depends on — the
-committed `.js` is what runs.
+That file is worth reading if you want to add a page of your own: it is two
+functions, `build()` and `paint()`, and a twelve-line `h()` helper that makes
+the building code read almost exactly like the JSX it replaced.
 
 ## Verify
 
