@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Side Hustle · SPARKS</title>
+<meta name="description" content="What the second job actually pays after tax, costs and the hours it eats."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11, §13 Tier 2 (Side Hustle calc).
+
+  1. READS   gross income (for the SE tax caps and the comparison), filing
+             status, and the work profile via engines/hourly.js.
+  2. WRITES  Nothing. A hustle you are weighing up is not a fact about your
+             household yet.
+  3. CALLS   engines/sidehustle.js, which calls engines/selfemployed.js for
+             SE tax and engines/hourly.js for the real hourly wage. Neither
+             is re-implemented here.
+  4. EMPTY   Every output states what it still needs. Expenses left blank
+             are NOT read as zero — "it costs nothing" is a claim you make
+             by typing 0.
+  5. CONFIG  data/se_tax_2026.json.
+
+  The marginal rate is an INPUT, not a bracket lookup — the same call as
+  capital gains in DECISIONS.md D-027. Inventing 2026 brackets would be
+  worse than asking, and the effective rate the app already knows is the
+  wrong number for this: side income stacks on top of a salary.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
+  @media (max-width: 380px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .kind { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin: var(--space-3) 0; }
+  .kind button { text-align: center; font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; transition: all 150ms ease; }
+  .kind button:hover { border-color: var(--color-border-active); }
+  .kind button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+
+  .verdict { font-family: var(--font-display); font-size: var(--text-xl); margin-top: var(--space-3); }
+  .verdict.is-incomplete { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-base); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+
+  .waterfall { margin-top: var(--space-3); }
+  .wf-row { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: baseline; font-size: var(--text-sm); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+  .wf-row:last-child { border-bottom: none; }
+  .wf-row .v { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .wf-row.total { font-weight: 600; }
+  .wf-row.out .v { color: var(--color-critical); }
+  .wf-bar { grid-column: 1 / -1; height: 8px; border-radius: var(--radius-pill); background: rgba(30,58,138,.4); overflow: hidden; margin-top: var(--space-1); }
+  .wf-bar > span { display: block; height: 100%; background: var(--color-accent); }
+
+  .weekbar { display: flex; height: 26px; border-radius: var(--radius-sm); overflow: hidden; margin-top: var(--space-3); background: rgba(30,58,138,.4); }
+  .weekbar > span { height: 100%; }
+  .seg-job { background: rgba(46,111,232,.5); }
+  .seg-side { background: var(--color-accent); }
+  .seg-rest { background: var(--color-text-faint); }
+  .key { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-2); font-size: var(--text-xs); color: var(--color-text-muted); }
+  .key span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
+  .key .k-job::before { background: rgba(46,111,232,.5); }
+  .key .k-side::before { background: var(--color-accent); }
+  .key .k-rest::before { background: var(--color-text-faint); }
+
+  .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
+  .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  .out-detail dt { color: var(--color-text-faint); }
+  .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Side Hustle</h1>
+  <p class="room-lede">What the second job actually pays after tax, costs and the hours it eats — and what a week looks like with it in.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="hustle">
+    <span class="slaf-eyebrow">The hustle</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Per month, as it actually runs</h2>
+    <div class="grid-2">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">What it brings in</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-revenue" placeholder="e.g. 1000" aria-label="Monthly revenue"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">What it costs to run</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-expenses" placeholder="0 if nothing" aria-label="Monthly expenses"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Hours a month</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-hours" placeholder="e.g. 16" aria-label="Hours a month"/><span class="slaf-affix">hrs</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Your marginal tax rate</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-marginal" placeholder="e.g. 22" aria-label="Marginal tax rate"/><span class="slaf-affix">%</span></span></label>
+    </div>
+
+    <div class="kind" role="group" aria-label="How the income is taxed">
+      <button type="button" data-kind="1099" aria-pressed="true">Self-employed / 1099</button>
+      <button type="button" data-kind="w2" aria-pressed="false">A second W2 job</button>
+    </div>
+    <p class="slaf-hint" style="margin:0" id="kind-hint"></p>
+
+    <div class="flag" id="marginal-note"></div>
+  </section>
+
+  <section class="slaf-card" id="out-net">
+    <span class="slaf-eyebrow">What you keep</span>
+    <h2 style="margin:var(--space-2) 0 0">Where the money goes</h2>
+    <div class="verdict" id="n-verdict">—</div>
+    <p class="why" id="n-why"></p>
+    <div class="waterfall" id="n-waterfall"></div>
+  </section>
+
+  <section class="slaf-card" id="out-vs-job">
+    <span class="slaf-eyebrow">Against the day job</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Is the second hour better than the first?</h2>
+    <div class="verdict" id="v-verdict">—</div>
+    <p class="why" id="v-why"></p>
+    <div class="out-detail" id="v-detail"></div>
+  </section>
+
+  <section class="slaf-card" id="out-week">
+    <span class="slaf-eyebrow">What a week becomes</span>
+    <h2 style="margin:var(--space-2) 0 0">The hours, honestly</h2>
+    <div id="week-body" hidden>
+      <div class="weekbar" id="week-bar"></div>
+      <div class="key">
+        <span class="k-job">The job, all in</span><span class="k-side">The hustle</span><span class="k-rest">Everything else</span>
+      </div>
+      <div class="out-detail" id="week-detail"></div>
+    </div>
+    <p class="why" id="week-why"></p>
+  </section>
+
+  <section class="slaf-card" id="reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Self-employment tax comes from
+    <code>data/se_tax_2026.json</code>; the marginal rate is yours to supply
+    because 2026 brackets are not in this repo. Nothing here models
+    deductions, credits, or what a business loss does to the rest of a
+    return. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../engines/sidehustle.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership,
+      Tier0 = SLAF.Tier0, SideHustle = SLAF.SideHustle;
+
+  var ROOM_ID = 'side-hustle';
+  var MONTHS = 12;
+  var TABLES = null;
+
+  /* Local. A hustle you are weighing up is not a fact about your household. */
+  var v = { revenue: null, expenses: null, hours: null, marginal: null, kind: '1099' };
+
+  function el(id) { return document.getElementById(id); }
+  function dl(rows) {
+    return '<dl>' + rows.map(function (r) {
+      return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+    }).join('') + '</dl>';
+  }
+  function hrs(n) {
+    var r = Math.round(n * 10) / 10;
+    return r + (r === 1 ? ' hour' : ' hours');
+  }
+
+  function bind(id, kind, key) {
+    var node = el(id);
+    node.addEventListener('focus', function () {
+      var raw = v[key];
+      node.value = !Money.isEntered(raw) ? ''
+        : kind === 'money' ? String(raw / 100)
+        : kind === 'rate' ? String(Math.round(raw * 10000) / 100)
+        : String(raw);
+      node.select();
+    });
+    node.addEventListener('blur', function () {
+      var raw = node.value.trim();
+      v[key] = raw === '' ? null
+        : kind === 'money' ? Money.parseMoney(raw)
+        : kind === 'rate' ? Money.parseRatePercent(raw)
+        : (Number.isFinite(Number(raw)) ? Number(raw) : null);
+      node.value = !Money.isEntered(v[key]) ? ''
+        : kind === 'money' ? Money.formatCents(v[key])
+        : kind === 'rate' ? Money.formatRate(v[key], { decimals: 2 }).replace(/\.?0+%$/, '%')
+        : String(v[key]);
+      render();
+    });
+    node.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); node.blur(); }
+    });
+  }
+  bind('in-revenue', 'money', 'revenue');
+  bind('in-expenses', 'money', 'expenses');
+  bind('in-hours', 'number', 'hours');
+  bind('in-marginal', 'rate', 'marginal');
+
+  Array.prototype.forEach.call(document.querySelectorAll('.kind button'), function (b) {
+    b.addEventListener('click', function () {
+      v.kind = b.getAttribute('data-kind');
+      render();
+    });
+  });
+
+  function opts() {
+    return {
+      annualRevenueCents: Money.isEntered(v.revenue) ? v.revenue * MONTHS : null,
+      annualExpensesCents: Money.isEntered(v.expenses) ? v.expenses * MONTHS : null,
+      annualHours: Money.isEntered(v.hours) ? v.hours * MONTHS : null,
+      marginalRate: v.marginal,
+      selfEmployment: v.kind === '1099'
+    };
+  }
+
+  function renderInputs(h) {
+    Array.prototype.forEach.call(document.querySelectorAll('.kind button'), function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-kind') === v.kind));
+    });
+    el('kind-hint').textContent = v.kind === '1099'
+      ? 'You pay both halves of Social Security and Medicare on this — the 15.3% '
+        + 'that an employer would otherwise split with you.'
+      : 'A second W2 job withholds payroll tax the ordinary way, so only income '
+        + 'tax is applied here.';
+
+    /* The effective rate the app already knows is the WRONG number for this,
+       so it is shown as a floor with the reason, not offered as a default. */
+    var tax = Tier0.estimatedAnnualTaxCents(h, TABLES);
+    el('marginal-note').innerHTML = Money.isOk(tax)
+      ? '<strong>Marginal, not effective.</strong> The first dollar of side income is '
+        + 'taxed at the rate on your <em>last</em> dollar of salary. Your estimated '
+        + 'effective rate is ' + Money.formatRate(tax.effectiveRate, { decimals: 1 })
+        + ' — your marginal rate is higher than that, and adding your state rate is '
+        + 'usually right too.'
+      : '<strong>Marginal, not effective.</strong> The first dollar of side income is '
+        + 'taxed at the rate on your <em>last</em> dollar of salary — your top bracket, '
+        + 'plus your state rate if you have one. Not your average rate.';
+  }
+
+  function renderNet() {
+    var r = SideHustle.sideHustle(Object.assign({}, opts(), {
+      filingStatus: Spine.getProfile().filingStatus,
+      priorWagesCents: (function () {
+        var g = Schema.grossAnnualIncomeCents(Spine.getProfile());
+        return Money.isOk(g) ? g.value : null;
+      })()
+    }), TABLES);
+
+    var verdict = el('n-verdict');
+    if (!Money.isOk(r)) {
+      verdict.className = 'verdict is-incomplete';
+      verdict.textContent = r.reason || Money.EM_DASH;
+      el('n-why').textContent = '';
+      el('n-waterfall').innerHTML = '';
+      return r;
+    }
+    verdict.className = 'verdict';
+    verdict.textContent = !r.atALoss ? Money.formatCents(r.value) + ' an hour, kept'
+      : r.profitCents === 0 ? 'It breaks even'
+      : Money.formatCents(-r.value) + ' an hour, out of pocket';
+
+    if (r.atALoss) {
+      el('n-why').textContent = r.reasonNoTax;
+      el('n-waterfall').innerHTML = dl([
+        ['Brings in', Money.formatCents(Math.round(r.annualRevenueCents / MONTHS))],
+        ['Costs', '−' + Money.formatCents(Math.round(r.annualExpensesCents / MONTHS))],
+        ['Leaves', Money.formatCents(Math.round(r.profitCents / MONTHS))]
+      ]);
+      return r;
+    }
+
+    el('n-why').textContent = 'You keep '
+      + Money.formatRate(r.keptShare, { decimals: 0 }) + ' of what comes in. '
+      + 'Tax takes ' + Money.formatRate(r.taxShareOfProfit, { decimals: 0 })
+      + ' of the profit'
+      + (r.selfEmployment
+        ? ', and most of the surprise is the self-employment half rather than income tax.'
+        : '.');
+
+    function row(label, cents, cls) {
+      return '<div class="wf-row ' + (cls || '') + '"><span>' + label + '</span>'
+        + '<span class="v">' + (cls === 'out' ? '−' : '') + Money.formatCents(Math.abs(cents)) + '</span></div>';
+    }
+    var monthly = function (c) { return Math.round(c / MONTHS); };
+    el('n-waterfall').innerHTML =
+      row('Brings in', monthly(r.annualRevenueCents))
+      + row('Running costs', monthly(r.annualExpensesCents), 'out')
+      + row('Profit', monthly(r.profitCents), 'total')
+      + (r.selfEmployment ? row('Self-employment tax', monthly(r.seTaxCents), 'out') : '')
+      + row('Income tax at ' + Money.formatRate(r.marginalRate, { decimals: 0 }),
+          monthly(r.incomeTaxCents), 'out')
+      + row('Yours', monthly(r.netCents), 'total')
+      + '<div class="wf-bar"><span style="width:'
+      + (r.annualRevenueCents === 0 ? 0 : Math.max(0, r.netCents / r.annualRevenueCents) * 100)
+      + '%"></span></div>';
+    return r;
+  }
+
+  function renderVsJob(h) {
+    var res = SideHustle.versusJob(h, TABLES, opts());
+    var verdict = el('v-verdict');
+    if (!Money.isOk(res)) {
+      verdict.className = 'verdict is-incomplete';
+      verdict.textContent = res.reason || Money.EM_DASH;
+      el('v-why').innerHTML = (res.missing || []).length
+        ? '<a href="' + Ownership.linkTo('real-hourly-wage', 'hours') + '">Fill in Real Hourly Wage →</a>'
+        : '';
+      el('v-detail').innerHTML = '';
+      el('week-body').hidden = true;
+      el('week-why').textContent = 'This needs the Real Hourly Wage room filled in.';
+      return;
+    }
+    verdict.className = 'verdict';
+    verdict.textContent = res.beatsJob
+      ? Money.formatCents(res.value) + ' an hour better than the day job'
+      : Money.formatCents(-res.value) + ' an hour worse than the day job';
+
+    el('v-why').textContent = res.beatsJob
+      ? 'Compared against what an hour of your life already earns — after tax, work '
+        + 'costs and the unpaid hours the job takes. The hustle clears it.'
+      : 'Compared against what an hour of your life already earns. That is not the '
+        + 'whole story — a side hustle can build something a salary never will — but '
+        + 'on the money alone, these hours pay less than the ones you already work.';
+
+    el('v-detail').innerHTML = dl([
+      ['The hustle, kept', Money.formatCents(res.hustle.value) + '/hr'],
+      ['Before tax and costs', Money.formatCents(res.hustle.grossPerHourCents) + '/hr'],
+      ['An hour of your life', Money.formatCents(res.realHourlyCents) + '/hr']
+    ]);
+
+    renderWeek(res);
+  }
+
+  function renderWeek(res) {
+    var job = res.jobWeeklyHours, side = res.addedWeeklyHours;
+    if (!Money.isEntered(job) || !Money.isEntered(side)) {
+      el('week-body').hidden = true;
+      el('week-why').textContent = '';
+      return;
+    }
+    el('week-body').hidden = false;
+    var week = 168;
+    var rest = Math.max(0, week - job - side);
+    el('week-bar').innerHTML =
+      '<span class="seg-job" style="width:' + (job / week * 100) + '%"></span>'
+      + '<span class="seg-side" style="width:' + (side / week * 100) + '%"></span>'
+      + '<span class="seg-rest" style="width:' + (rest / week * 100) + '%"></span>';
+
+    el('week-detail').innerHTML = dl([
+      ['The job, all in', hrs(job) + ' a week'],
+      ['The hustle', hrs(side) + ' a week'],
+      ['Together', hrs(res.combinedWeeklyHours) + ' a week'],
+      ['Left for everything else', hrs(rest) + ' a week']
+    ]);
+
+    el('week-why').textContent = 'The job figure already counts commute, prep and '
+      + 'decompression, so this is the whole of it. The hustle hours are on top of '
+      + 'that, not inside it.';
+  }
+
+  function renderNow() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    renderInputs(h);
+    renderNet();
+    renderVsJob(h);
+    el('reading-list').innerHTML = ['grossAnnualIncome', 'filingStatus']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+
+  var queued = false;
+  function render() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () { queued = false; renderNow(); }, 0);
+  }
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    renderNow();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

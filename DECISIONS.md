@@ -1337,6 +1337,57 @@ output it consumes. Everything below shifted by one.
 
 ---
 
+## D-033 — Side Hustle: marginal rate as an input, and SE tax that stacks
+
+**SPEC.md §13 Tier 2 spells out the two things this tool gets wrong
+everywhere else**, and both are handled explicitly rather than assumed.
+
+**"Use marginal (not effective) tax rate, since side income stacks on primary
+income."** The first dollar of side income is taxed at the rate on the *last*
+dollar of salary. The app already knows an effective rate, and using it here
+would understate the tax — so the effective rate is shown in the room as a
+floor, labelled as the wrong number for this, and the marginal rate is asked
+for. It is an **input, not a bracket lookup**: the same call as capital gains
+in D-027, because inventing 2026 brackets would be worse than asking. A rate
+outside 0-100% is refused rather than clamped.
+
+**Self-employment tax now stacks, and that meant parameterising the existing
+function rather than writing a second one.** `SelfEmployed.selfEmploymentTax()`
+gained an optional `opts.priorWagesCents`: wages already earned elsewhere eat
+into the Social Security wage base, and the additional Medicare threshold is
+measured on combined earnings. Treating a side hustle as if it were someone's
+only income overstates the tax for a high earner — on $200,000 of salary the
+wage base is gone, so $10,000 of side profit owes no Social Security at all
+and the SE tax falls from $1,413 to $351. Left out, the parameter is zero and
+every existing caller behaves exactly as before, which a test asserts: the
+W2-vs-1099 comparison weighs *alternatives*, not a stack, so zero is right
+there.
+
+**"Shares the Real Hourly Wage engine."** `versusJob()` calls
+`engines/hourly.js`. There is one real-hourly-wage calculation in this
+codebase and this is not a second one. It also reads the salary off the
+household itself, so a caller cannot forget to stack it.
+
+**A loss is a loss.** Revenue under costs reports a negative profit, no tax,
+and a negative hourly rate — never floored at zero. What a business loss does
+to the rest of a tax return is genuinely beyond what this repo can model, and
+the room says so instead of guessing.
+
+**Expenses left blank are not zero.** "It costs me nothing to run" is a claim,
+and you make it by typing 0. Blank is incomplete, per the empty-≠-zero rule.
+
+**The hours are additional, and the room shows the week.** The real hourly
+wage already counts commute, prep and decompression, so the hustle's hours go
+on top of a figure that is already bigger than the contract. For Robin, 16
+hours a month on top of a 53-hour week makes it 57. That bar is the honest
+part of the tool — the money question is easy to answer and easy to
+over-read, and "it pays better than your job" is not the same as "do it".
+
+**Room order.** Inserted at 13, after Going Self-Employed whose SE tax engine
+it shares. Everything below shifted by one.
+
+---
+
 ## Still open
 
 - ~~**Two-Income Household Toggle** and **Soft Saving Balance

@@ -47,11 +47,19 @@
   /* ---- Self-employment tax ----------------------------------------------- */
 
   /**
-   * selfEmploymentTax(netProfitCents, filingStatus, table)
+   * selfEmploymentTax(netProfitCents, filingStatus, table, opts)
    * Returns a Result whose value is the total SE tax in cents, with every
    * intermediate step in the meta so a room can show the working.
+   *
+   * opts.priorWagesCents — W2 wages that have ALREADY used up part of the
+   * Social Security wage base and already count toward the additional
+   * Medicare threshold. Side income stacks on a salary rather than
+   * replacing it, so a side hustle passes the salary here and the caps land
+   * in the right place. Left out, it is zero and the profit is treated as
+   * the person's only earnings, which is what a W2-vs-1099 comparison
+   * wants. One function, parameterised — SPEC.md §8.
    */
-  function selfEmploymentTax(netProfitCents, filingStatus, table) {
+  function selfEmploymentTax(netProfitCents, filingStatus, table, opts) {
     if (!table) return Money.incomplete('Self-employment tax table is not loaded.', ['seTax']);
     if (!Money.isEntered(netProfitCents)) {
       return Money.incomplete('Add your self-employment profit to see this.', ['netProfit']);
@@ -69,9 +77,12 @@
           the single most common error in the whole calculation. */
     var netEarnings = Math.round(netProfitCents * table.netEarningsFactor);
 
-    /* 2. Social Security stops at the wage base. */
+    /* 2. Social Security stops at the wage base — and wages earned
+          elsewhere have already eaten into it. */
+    var prior = (opts && Money.isEntered(opts.priorWagesCents)) ? Math.max(0, opts.priorWagesCents) : 0;
     var wageBaseCents = Math.round(table.socialSecurityWageBase * 100);
-    var ssBase = Math.min(netEarnings, wageBaseCents);
+    var remainingBase = Math.max(0, wageBaseCents - prior);
+    var ssBase = Math.min(netEarnings, remainingBase);
     var socialSecurity = Math.round(ssBase * table.socialSecurityRate);
 
     /* 3. Medicare has no cap. */
@@ -82,8 +93,10 @@
     var threshold = addl.thresholds[filingStatus];
     var additionalMedicare = 0;
     if (Money.isEntered(threshold)) {
-      var over = netEarnings - Math.round(threshold * 100);
-      if (over > 0) additionalMedicare = Math.round(over * addl.rate);
+      /* The threshold applies to combined earnings, so wages elsewhere push
+         the side income further over it. */
+      var over = (netEarnings + prior) - Math.round(threshold * 100);
+      if (over > 0) additionalMedicare = Math.round(Math.min(over, netEarnings) * addl.rate);
     }
 
     /* 5. Half of the ordinary SE tax — not the additional Medicare — is
@@ -96,7 +109,9 @@
       netEarningsCents: netEarnings,
       netEarningsFactor: table.netEarningsFactor,
       socialSecurityCents: socialSecurity,
-      socialSecurityCappedAt: ssBase === wageBaseCents ? wageBaseCents : null,
+      socialSecurityCappedAt: (remainingBase > 0 && ssBase === remainingBase) ? remainingBase : null,
+      priorWagesCents: prior,
+      remainingWageBaseCents: remainingBase,
       medicareCents: medicare,
       additionalMedicareCents: additionalMedicare,
       additionalMedicareThresholdCents: Money.isEntered(threshold) ? Math.round(threshold * 100) : null,

@@ -221,8 +221,24 @@
       ]
     },
     {
-      id: 'accounts',
+      id: 'side-hustle',
       order: 13,
+      title: 'Side Hustle',
+      blurb: 'What the second job actually pays after tax, costs and the hours it eats \u2014 and what a week looks like with it in.',
+      href: 'rooms/side-hustle.html',
+      tier: 2,
+      tags: ['income'],
+      subsections: [
+        { id: 'hustle',      label: 'The hustle' },
+        { id: 'out-net',     label: 'What you keep' },
+        { id: 'out-vs-job',  label: 'Against the day job' },
+        { id: 'out-week',    label: 'What a week becomes' },
+        { id: 'reading',     label: 'Reading from elsewhere' }
+      ]
+    },
+    {
+      id: 'accounts',
+      order: 14,
       title: 'Where It Goes',
       blurb: 'Roth, Traditional or taxable \u2014 and how much a Solo 401(k) actually lets you put away.',
       href: 'rooms/accounts.html',
@@ -236,7 +252,7 @@
     },
     {
       id: 'values',
-      order: 15,
+      order: 16,
       title: 'What Matters',
       blurb: 'The five things you say matter most, next to where the money actually went. No score \u2014 just the two lists, side by side.',
       href: 'rooms/values.html',
@@ -252,7 +268,7 @@
     },
     {
       id: 'fulfillment',
-      order: 14,
+      order: 15,
       title: 'Enough',
       blurb: 'What each thing costs a month, against what it is actually worth to you \u2014 and the four places that lands.',
       href: 'rooms/fulfillment.html',
@@ -268,7 +284,7 @@
     },
     {
       id: 'goals',
-      order: 16,
+      order: 17,
       title: 'Goals',
       blurb: 'A wedding, a deposit, a big trip. What it costs, what it needs a month, and whether that actually fits alongside everything else.',
       href: 'rooms/goals.html',
@@ -281,7 +297,7 @@
     },
     {
       id: 'foo-ladder',
-      order: 17,
+      order: 18,
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
       href: 'index.html',

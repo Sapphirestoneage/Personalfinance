@@ -36,6 +36,7 @@ const TARGETS = [
   ['/rooms/self-employed.html', '.grid-2'],
   ['/rooms/accounts.html', '.grid-2'],
   ['/rooms/hassle.html', '.grid-2'],
+  ['/rooms/side-hustle.html', '.grid-2'],
   ['/rooms/net-worth.html', '.asset-grid'],
   ['/', '.grid2'],
   ['/rooms/cash-flow.html', '.cat-row']

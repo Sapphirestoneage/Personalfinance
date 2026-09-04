@@ -64,6 +64,7 @@ engines/            Shared calculation engines — one function per concept
   values.js           stated values against a categorised month — no score
   fulfillment.js      spend against a 1-10 joy rating, and the four corners
   hassle.js           what a money-saving chore pays per hour of your life
+  sidehustle.js       side income after marginal tax, SE tax, costs and hours
 data/               Versioned reference tables (JSON, never inlined in code)
 test/run.js         Re-derives every formula outside the browser
 test/alignment.js   Browser layout check — side-by-side cells must line up

@@ -43,6 +43,7 @@ const ValuesEngine = require(path.join(ROOT, 'engines/values.js'));
 const Rating = require(path.join(ROOT, 'shared/rating.js'));
 const Fulfillment = require(path.join(ROOT, 'engines/fulfillment.js'));
 const HassleEngine = require(path.join(ROOT, 'engines/hassle.js'));
+const SideHustle = require(path.join(ROOT, 'engines/sidehustle.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -1949,6 +1950,150 @@ section('Ratings');
 /* ==========================================================================
    Return on Hassle — dollars saved against time and effort. SPEC.md §13.
    ========================================================================== */
+
+/* ==========================================================================
+   Side Hustle — marginal rate, stacked SE tax, and the hours it adds.
+   SPEC.md §13 Tier 2.
+   ========================================================================== */
+
+section('Side Hustle');
+
+(function () {
+  const SE = TABLES.seTax;
+
+  /* -- SE tax stacks on a salary. The wage base is already partly used. --- */
+  const standalone = SelfEmployed.selfEmploymentTax(1000000, 'single', SE);
+  const stacked = SelfEmployed.selfEmploymentTax(1000000, 'single', SE,
+    { priorWagesCents: 7200000 });
+  check('below the wage base, a salary changes nothing about the SE tax',
+    stacked.value, standalone.value);
+  check('and the remaining base is the wage base less the salary',
+    stacked.remainingWageBaseCents, Math.round(SE.socialSecurityWageBase * 100) - 7200000);
+
+  const overBase = SelfEmployed.selfEmploymentTax(1000000, 'single', SE,
+    { priorWagesCents: 20000000 });
+  check('a salary past the wage base leaves no Social Security to pay',
+    overBase.socialSecurityCents, 0);
+  checkTrue('but Medicare, which has no cap, is unchanged',
+    overBase.medicareCents === standalone.medicareCents);
+  checkTrue('and the total is far lower than the standalone figure',
+    overBase.value < standalone.value / 2);
+  check('the additional Medicare levy is measured on combined earnings',
+    overBase.additionalMedicareCents,
+    Math.round(Math.round(1000000 * SE.netEarningsFactor) * SE.additionalMedicare.rate));
+  check('with no prior wages the old behaviour is exactly preserved',
+    JSON.stringify(SelfEmployed.selfEmploymentTax(1000000, 'single', SE, {}).value),
+    JSON.stringify(standalone.value));
+
+  /* -- The hustle itself. $12,000 in, $2,000 out, 200 hours, 22% -------- */
+  const r = SideHustle.sideHustle({
+    annualRevenueCents: 1200000, annualExpensesCents: 200000, annualHours: 200,
+    marginalRate: 0.22, filingStatus: 'single', priorWagesCents: 7200000
+  }, TABLES);
+
+  check('profit is revenue less costs', r.profitCents, 1000000);
+  check('SE tax is the stacked figure, not a fresh calculation',
+    r.seTaxCents, stacked.value);
+  check('half of it comes off before income tax',
+    r.taxableCents, 1000000 - stacked.deductibleHalfCents);
+  check('income tax is the marginal rate on what is left',
+    r.incomeTaxCents, Math.round((1000000 - stacked.deductibleHalfCents) * 0.22));
+  check('net is profit less both taxes',
+    r.netCents, 1000000 - stacked.value - r.incomeTaxCents);
+  check('and the headline is net over hours', r.value, Math.round(r.netCents / 200));
+  check('which is $32.71 an hour', r.value, 3271);
+  check('the kept share is net over revenue', r.keptShare, r.netCents / 1200000, 1e-12);
+  check('gross per hour is the number people quote', r.grossPerHourCents, 6000);
+
+  /* Using the EFFECTIVE rate instead would understate the tax — the whole
+     reason SPEC.md §13 specifies marginal. */
+  const atEffective = SideHustle.sideHustle({
+    annualRevenueCents: 1200000, annualExpensesCents: 200000, annualHours: 200,
+    marginalRate: 0.19, filingStatus: 'single', priorWagesCents: 7200000
+  }, TABLES);
+  checkTrue('a lower rate keeps more, so the choice of rate is not cosmetic',
+    atEffective.netCents > r.netCents);
+  check('three points of rate is worth $279 a year here — within a cent of '
+    + 'three points of the taxable figure, the difference being rounding',
+    atEffective.netCents - r.netCents,
+    Math.round((1000000 - stacked.deductibleHalfCents) * 0.03), 1);
+
+  /* -- A second W2 job pays no SE tax ------------------------------------ */
+  const w2 = SideHustle.sideHustle({
+    annualRevenueCents: 1200000, annualExpensesCents: 200000, annualHours: 200,
+    marginalRate: 0.22, selfEmployment: false
+  }, TABLES);
+  check('a W2 side job has no self-employment tax', w2.seTaxCents, 0);
+  check('so income tax applies to the whole profit',
+    w2.incomeTaxCents, Math.round(1000000 * 0.22));
+  checkTrue('and it keeps more than the 1099 version of the same work',
+    w2.netCents > r.netCents);
+
+  /* -- A loss is a loss ---------------------------------------------------- */
+  const loss = SideHustle.sideHustle({
+    annualRevenueCents: 100000, annualExpensesCents: 300000, annualHours: 100,
+    marginalRate: 0.22
+  }, TABLES);
+  check('a loss is reported, not floored at zero', loss.profitCents, -200000);
+  check('with no tax on it', loss.totalTaxCents, 0);
+  check('and a negative hourly rate', loss.value, -2000);
+  checkTrue('flagged as a loss', loss.atALoss === true);
+
+  const evens = SideHustle.sideHustle({
+    annualRevenueCents: 100000, annualExpensesCents: 100000, annualHours: 100,
+    marginalRate: 0.22
+  }, TABLES);
+  check('breaking even is also flagged', evens.atALoss, true);
+  check('at exactly zero an hour', evens.value, 0);
+
+  /* -- Nothing is assumed -------------------------------------------------- */
+  check('expenses left blank are not read as zero',
+    SideHustle.sideHustle({ annualRevenueCents: 100000, annualHours: 100, marginalRate: 0.22 },
+      TABLES).status, 'incomplete');
+  check('but a typed zero is a real answer',
+    SideHustle.sideHustle({ annualRevenueCents: 100000, annualExpensesCents: 0,
+      annualHours: 100, marginalRate: 0.22 }, TABLES).profitCents, 100000);
+  check('no marginal rate, no answer',
+    SideHustle.sideHustle({ annualRevenueCents: 100000, annualExpensesCents: 0,
+      annualHours: 100 }, TABLES).status, 'incomplete');
+  check('zero hours is refused rather than divided by',
+    SideHustle.sideHustle({ annualRevenueCents: 100000, annualExpensesCents: 0,
+      annualHours: 0, marginalRate: 0.22 }, TABLES).status, 'incomplete');
+  check('a rate of 150% is refused',
+    SideHustle.sideHustle({ annualRevenueCents: 100000, annualExpensesCents: 0,
+      annualHours: 10, marginalRate: 1.5 }, TABLES).status, 'incomplete');
+  check('a negative rate too',
+    SideHustle.sideHustle({ annualRevenueCents: 100000, annualExpensesCents: 0,
+      annualHours: 10, marginalRate: -0.1 }, TABLES).status, 'incomplete');
+
+  /* -- Against the day job, through the one wage engine ------------------- */
+  const h = Demo.build();
+  const wage = Hourly.realHourlyWage(h, TABLES);
+  const v = SideHustle.versusJob(h, TABLES, {
+    annualRevenueCents: 1200000, annualExpensesCents: 200000,
+    annualHours: 200, marginalRate: 0.22
+  });
+  check('the comparison reads the same wage engine', v.realHourlyCents, wage.value);
+  check('it stacks the salary automatically', v.hustle.priorWagesCents,
+    Schema.grossAnnualIncomeCents(h).value);
+  check('so it agrees with the manual call', v.hustle.netCents, r.netCents);
+  check('the gap is the difference between the two rates',
+    v.value, r.value - wage.value);
+  checkTrue('and Robin\'s hustle clears her day job', v.beatsJob === true);
+
+  /* The hours are additional, not a slice of the ones already counted. */
+  check('the job week comes from the wage engine', v.jobWeeklyHours, wage.totalHoursPerWeek);
+  check('the hustle adds its own hours on top',
+    v.combinedWeeklyHours, wage.totalHoursPerWeek + 200 / wage.weeksPerYear, 1e-12);
+  checkTrue('which is a longer week than the job alone',
+    v.combinedWeeklyHours > v.jobWeeklyHours);
+
+  const noWork = SideHustle.versusJob(Schema.createHousehold({}), TABLES, {
+    annualRevenueCents: 1200000, annualExpensesCents: 200000,
+    annualHours: 200, marginalRate: 0.22
+  });
+  check('without a work profile the comparison is incomplete', noWork.status, 'incomplete');
+})();
 
 section('Return on Hassle');
 
