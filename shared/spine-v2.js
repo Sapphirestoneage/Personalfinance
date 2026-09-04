@@ -222,6 +222,14 @@
 
   function load() {
     if (cache) return cache;
+    loadUncached();
+    /* First reading of every owned field, so the first save() has
+       something to compare against. See registerFieldReaders(). */
+    if (lastReadings === null) lastReadings = readings();
+    return cache;
+  }
+
+  function loadUncached() {
     var raw = readRaw(STORAGE_KEY);
     if (raw) {
       var parsed = null;
@@ -263,9 +271,68 @@
     return cache;
   }
 
+  /* ---- The clock ----------------------------------------------------------
+     Every owned field carries the moment its value was last set or
+     re-confirmed, in meta.confirmedAt[fieldId]. The spine cannot know what
+     the fields ARE — that map lives in shared/ownership.js, which loads
+     after this file — so ownership registers a reader here, and save()
+     diffs the readings before and after each write. A room never stamps
+     anything itself; it just writes, as before. DECISIONS.md D-056.      */
+
+  var fieldReaders = null;     /* fn(household) -> { fieldId: value | null } */
+  var lastReadings = null;     /* readings as of the last load or save */
+
+  function registerFieldReaders(fn) {
+    fieldReaders = typeof fn === 'function' ? fn : null;
+    /* Registered after the first load: prime from the current state so the
+       next save compares against something real rather than stamping
+       every field at once. */
+    if (cache && fieldReaders) lastReadings = readings();
+  }
+
+  function readings() {
+    if (!fieldReaders || !cache) return {};
+    try { return fieldReaders(cache) || {}; } catch (e) { return {}; }
+  }
+
+  function same(a, b) {
+    return JSON.stringify(a === undefined ? null : a) === JSON.stringify(b === undefined ? null : b);
+  }
+
+  function stampChanged(now) {
+    if (!cache) return;
+    cache.meta.confirmedAt = cache.meta.confirmedAt || {};
+    var current = readings();
+    if (lastReadings !== null) {
+      Object.keys(current).forEach(function (id) {
+        if (!same(current[id], lastReadings[id])) cache.meta.confirmedAt[id] = now;
+      });
+    }
+    lastReadings = current;
+  }
+
+  /** "Yes, still $9,500" — re-stamp a field without changing its value. */
+  function confirm(fieldId) {
+    var h = load();
+    h.meta.confirmedAt = h.meta.confirmedAt || {};
+    h.meta.confirmedAt[fieldId] = new Date().toISOString();
+    save(); notify();
+    return h.meta.confirmedAt[fieldId];
+  }
+
+  /** ISO timestamp of the last set/confirm, or null when never stamped —
+   *  which every household saved before D-056 is, for every field. */
+  function confirmedAt(fieldId) {
+    var h = load();
+    var m = h.meta.confirmedAt || {};
+    return m[fieldId] || null;
+  }
+
   function save() {
     if (!cache) return;
-    cache.meta.updatedAt = new Date().toISOString();
+    var now = new Date().toISOString();
+    cache.meta.updatedAt = now;
+    stampChanged(now);
     if (!storage.writable) {
       /* Something we could not read is sitting in that key. The session
          still works — it just does not persist, which is the correct cost
@@ -689,6 +756,9 @@
       id: Schema.newId('snap'),
       timestamp: new Date().toISOString(),
       rawInputs: (entry && entry.rawInputs) || null,
+      /* Every owned field's value at this moment, by field id, so a later
+         delta never has to re-derive an old input from an old shape. */
+      fields: (entry && entry.fields) || (function () { load(); return readings(); })(),
       assumptionsUsed: (entry && entry.assumptionsUsed) || null,
       referenceVersions: (entry && entry.referenceVersions) || null,
       computedOutputs: (entry && entry.computedOutputs) || null
@@ -698,11 +768,52 @@
     return record;
   }
 
+  /* Snapshots are READ BACK now, not just written. Two reads:
+       latestSnapshot()            the most recent record, or null
+       snapshotDelta(id, current)  how `id` has moved since it
+     `id` may be a field id (compared against `fields`) or a computed-output
+     id (compared against `computedOutputs`). A stored output may be a bare
+     number or a {status, value} Result — both are read. DECISIONS.md D-056. */
+
+  function latestSnapshot() {
+    var all = listSnapshots();
+    return all.length ? all[all.length - 1] : null;
+  }
+
+  function storedValue(bucket, id) {
+    if (!bucket || !Object.prototype.hasOwnProperty.call(bucket, id)) return undefined;
+    var v = bucket[id];
+    if (v && typeof v === 'object' && 'status' in v) return v.status === 'ok' ? v.value : null;
+    return v;
+  }
+
+  function snapshotDelta(id, currentValue) {
+    var snap = latestSnapshot();
+    if (!snap) return null;
+    var before = storedValue(snap.computedOutputs, id);
+    if (before === undefined) before = storedValue(snap.fields, id);
+    if (before === undefined) return null;                 /* never recorded */
+    var after = (currentValue && typeof currentValue === 'object' && 'status' in currentValue)
+      ? (currentValue.status === 'ok' ? currentValue.value : null)
+      : (currentValue === undefined ? null : currentValue);
+    var numeric = typeof before === 'number' && typeof after === 'number';
+    return {
+      id: id,
+      since: snap.timestamp,
+      snapshotId: snap.id,
+      before: before,
+      after: after,
+      delta: numeric ? after - before : null,
+      changed: !same(before, after)
+    };
+  }
+
   /* ---- Reset ------------------------------------------------------------ */
 
   function reset() {
     removeRaw(STORAGE_KEY);
     cache = null;
+    lastReadings = null;
     load();
     notify();
     return getProfile();
@@ -738,6 +849,11 @@
     assignCategoryToValue: assignCategoryToValue,
     listSnapshots: listSnapshots,
     appendSnapshot: appendSnapshot,
+    latestSnapshot: latestSnapshot,
+    snapshotDelta: snapshotDelta,
+    registerFieldReaders: registerFieldReaders,
+    confirm: confirm,
+    confirmedAt: confirmedAt,
     reset: reset,
     _migrateLegacy: migrateLegacy
   };

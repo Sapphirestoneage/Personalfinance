@@ -611,7 +611,11 @@
       meta: Object.assign({
         visitedRooms: [],
         createdAt: null,
-        updatedAt: null
+        updatedAt: null,
+        /* { fieldId: ISO } — when each owned field was last set or
+           re-confirmed. Absent for every field until it is next written,
+           which is what "unknown" looks like. DECISIONS.md D-056. */
+        confirmedAt: {}
       }, f.meta || {})
     };
   }

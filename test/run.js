@@ -31,6 +31,10 @@ const Foo = require(path.join(ROOT, 'engines/foo.js'));
 const CashFlow = require(path.join(ROOT, 'engines/cashflow.js'));
 const Debt = require(path.join(ROOT, 'engines/debt.js'));
 const Ownership = require(path.join(ROOT, 'shared/ownership.js'));
+/* The spine instance ownership.js registered its field reader with. Later
+   sections re-require the spine under a fake localStorage and drop it from
+   the module cache, so this handle is the only way back to the original. */
+const SpineMain = require(path.join(ROOT, 'shared/spine-v2.js'));
 const Fire = require(path.join(ROOT, 'engines/fire.js'));
 const Projection = require(path.join(ROOT, 'engines/projection.js'));
 const Hourly = require(path.join(ROOT, 'engines/hourly.js'));
@@ -4521,6 +4525,113 @@ section('Whether there is an employer at all');
     checkTrue('linking to its own question', /#q-employment$/.test(e.href));
     const blank = Ownership.describe('employmentStatus', Schema.createHousehold({}), 'map');
     checkTrue('and unanswered is unanswered, not "not working"', !blank.isSet);
+  }
+})();
+
+section('The clock');
+
+(function () {
+  /* The same module instance ownership.js registered its reader with. */
+  const Spine = SpineMain;
+  function tick() { var t = Date.now(); while (Date.now() - t < 3) { /* spin */ } }
+
+  /* -- A write stamps the field it changed, and only that field ---------- */
+  {
+    Spine.reset();
+    check('a fresh household has no stamps', Object.keys(Spine.getProfile().meta.confirmedAt).length, 0);
+    check('an unstamped field reads null, not a date', Spine.confirmedAt('state'), null);
+
+    Spine.updateProfile({ state: 'NC' });
+    const first = Spine.confirmedAt('state');
+    checkTrue('writing a value stamps it', /^\d{4}-\d{2}-\d{2}T/.test(first || ''));
+    check('and leaves untouched fields unstamped', Spine.confirmedAt('filingStatus'), null);
+
+    tick();
+    Spine.updateProfile({ state: 'NC' });
+    check('re-saving the same value does not move the clock', Spine.confirmedAt('state'), first);
+
+    tick();
+    Spine.updateProfile({ state: 'VA' });
+    checkTrue('a different value does', Spine.confirmedAt('state') > first);
+  }
+
+  /* -- The spine stamps; rooms never do ---------------------------------- */
+  {
+    Spine.reset();
+    Spine.ensurePrimaryPerson('You');
+    const p = Spine.getProfile().people[0];
+    Spine.upsertAsset(Schema.createAsset({ id: 'c', category: 'cash', valueCents: 950000, liquid: true }));
+    checkTrue('an asset written through upsertAsset stamps cashSavings', !!Spine.confirmedAt('cashSavings'));
+    check('but not investments', Spine.confirmedAt('investments'), null);
+    Spine.upsertPerson({ id: p.id, dob: '1994-04-12' });
+    checkTrue('a person write stamps dob', !!Spine.confirmedAt('dob'));
+    checkTrue('and age, which is read from it', !!Spine.confirmedAt('age'));
+  }
+
+  /* -- confirm(): yes, still that ---------------------------------------- */
+  {
+    Spine.reset();
+    Spine.upsertAsset(Schema.createAsset({ id: 'c', category: 'cash', valueCents: 950000, liquid: true }));
+    const before = Spine.confirmedAt('cashSavings');
+    tick();
+    const stamped = Spine.confirm('cashSavings');
+    checkTrue('confirm re-stamps without a value change', stamped > before);
+    check('and returns the stamp it wrote', Spine.confirmedAt('cashSavings'), stamped);
+    check('and the value is untouched', Schema.cashCents(Spine.getProfile()).value, 950000);
+  }
+
+  /* -- Snapshots are read back ------------------------------------------- */
+  {
+    Spine.reset();
+    Spine._clearSnapshots && Spine._clearSnapshots();
+    check('no snapshot, no latest', Spine.latestSnapshot(), null);
+    check('no snapshot, no delta', Spine.snapshotDelta('netWorth', Money.ok(100)), null);
+
+    Spine.updateProfile({ state: 'NC' });
+    Spine.upsertAsset(Schema.createAsset({ id: 'c', category: 'cash', valueCents: 950000, liquid: true }));
+    const snap = Spine.appendSnapshot({ computedOutputs: { netWorth: Money.ok(950000), months: 3 } });
+    check('a snapshot freezes every owned field by id', snap.fields.cashSavings, 950000);
+    check('including ones read as strings', snap.fields.state, 'NC');
+    check('and null for the unset', snap.fields.investments, null);
+    check('latestSnapshot is that one', Spine.latestSnapshot().id, snap.id);
+
+    const d = Spine.snapshotDelta('netWorth', Money.ok(1200000));
+    check('a Result output reads through to its value', d.before, 950000);
+    check('and the delta is after minus before', d.delta, 250000);
+    check('dated to the snapshot', d.since, snap.timestamp);
+    check('a bare-number output reads too', Spine.snapshotDelta('months', 4).delta, 1);
+    const f = Spine.snapshotDelta('cashSavings', Money.ok(950000));
+    check('a field id compares against the frozen fields', f.before, 950000);
+    checkTrue('and unchanged is unchanged', !f.changed && f.delta === 0);
+    const sd = Spine.snapshotDelta('state', 'VA');
+    checkTrue('a non-numeric change is reported without a delta', sd.changed && sd.delta === null);
+    check('an id the snapshot never recorded is null, not zero', Spine.snapshotDelta('nope', 5), null);
+    const inc = Spine.snapshotDelta('netWorth', Money.incomplete('x', []));
+    check('an incomplete current value reads as null after', inc.after, null);
+    check('with no numeric delta', inc.delta, null);
+  }
+
+  /* -- Every page loads the spine before the ownership map ---------------- */
+  {
+    /* ownership.js hands its field reader to the spine at load. If the spine
+       is not there yet, nothing registers and nothing ever gets stamped —
+       silently. So the order is asserted for every page that loads both. */
+    const pages = fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f))
+      .map(f => 'rooms/' + f).concat(['index.html', 'map.html']);
+    pages.forEach(function (page) {
+      const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
+      const spine = html.search(/<script src="[^"]*spine-v2\.js"/);
+      const own = html.search(/<script src="[^"]*ownership\.js"/);
+      if (own === -1) return;
+      checkTrue(`${page} loads the spine before the ownership map`, spine !== -1 && spine < own);
+    });
+  }
+
+  /* -- Compatibility: older shapes -------------------------------------- */
+  {
+    const old = Schema.createHousehold({ meta: { updatedAt: '2026-01-01T00:00:00Z' } });
+    check('a household built without stamps gets an empty map', JSON.stringify(old.meta.confirmedAt), '{}');
+    check('and keeps its other meta', old.meta.updatedAt, '2026-01-01T00:00:00Z');
   }
 })();
 

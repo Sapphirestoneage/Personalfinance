@@ -27,19 +27,21 @@
     deps = {
       Money: require('./money.js'),
       Schema: require('./schema.js'),
-      Registry: require('./registry.js')
+      Registry: require('./registry.js'),
+      Spine: require('./spine-v2.js')
     };
   } else {
     deps = {
       Money: root.SLAF && root.SLAF.Money,
       Schema: root.SLAF && root.SLAF.Schema,
-      Registry: root.SLAF && root.SLAF.Registry
+      Registry: root.SLAF && root.SLAF.Registry,
+      Spine: root.SLAF && root.SLAF.Spine
     };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Registry);
+  var api = factory(deps.Money, deps.Schema, deps.Registry, deps.Spine);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Ownership = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Registry) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Registry, Spine) {
   'use strict';
 
   var FILING_LABELS = {
@@ -344,6 +346,26 @@
   }
 
   /** Which fields a given room owns — used by the intake to know its scope. */
+  /**
+   * readings(h) — every owned field's current value, by id; null when not
+   * set. This is what the spine diffs on each save to stamp confirmedAt,
+   * and what a snapshot freezes as `fields`. The spine cannot depend on
+   * this file (it loads first), so this file hands the reader to it.
+   * DECISIONS.md D-056.
+   */
+  function readings(household) {
+    var out = {};
+    Object.keys(FIELDS).forEach(function (id) {
+      var r;
+      try { r = FIELDS[id].read(household || {}); } catch (e) { r = null; }
+      out[id] = r && Money.isOk(r) ? r.value : null;
+    });
+    return out;
+  }
+  if (Spine && typeof Spine.registerFieldReaders === 'function') {
+    Spine.registerFieldReaders(readings);
+  }
+
   function ownedBy(roomId) {
     return Object.keys(FIELDS).filter(function (k) { return FIELDS[k].owner === roomId; });
   }
@@ -351,6 +373,7 @@
   return {
     FIELDS: FIELDS,
     FILING_LABELS: FILING_LABELS,
+    readings: readings,
     field: field,
     linkTo: linkTo,
     describe: describe,

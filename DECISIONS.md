@@ -3036,6 +3036,77 @@ special-casing it in your room — that is the one place `Progress` reads.
 
 ---
 
+## D-056 — Time exists: every owned field knows when it was last confirmed, and snapshots are read back
+
+*(BRIEF.md §0.3 D-D.)* Nothing in the household said **when** a number was
+true. A cash balance typed in March rendered in September exactly as it did
+the day it was entered, and a runway computed from it looked just as
+confident. The snapshots the Financial Snapshot room could save were
+write-only: nothing ever read one back, so there was no "since last time".
+
+**Decision: two additions to the stored shape, both read by the UI.**
+
+### `meta.confirmedAt` — the clock
+
+`household.meta.confirmedAt` is `{ [fieldId]: ISO }`, keyed by the ids in
+`shared/ownership.js`. It is stamped **by the spine, not by rooms**: on every
+`save()`, the spine reads every owned field before and after the write and
+stamps the ones whose value changed. A room writes exactly as it always did.
+`Spine.confirm(fieldId)` re-stamps without changing the value — the "yes,
+still $9,500" tap.
+
+The spine cannot know what the owned fields are (the map loads after it), so
+`shared/ownership.js` hands it a reader — `Spine.registerFieldReaders(fn)` —
+at load. `Ownership.readings(h)` is that reader and is public, so a snapshot
+can freeze the same set.
+
+Stamping is by **value**, not by write: re-saving the same figure does not
+move the clock, and typing a different figure into the same box does.
+Diffing on `JSON.stringify` of the read value is deliberate — it is the
+cheapest thing that is also correct for cents, rates, dates and booleans.
+
+### Snapshots are read
+
+`Spine.appendSnapshot()` now also freezes `fields` — every owned field's
+value by id — beside the `rawInputs` and `computedOutputs` a caller passes.
+Two new reads:
+
+- `Spine.latestSnapshot()` — the most recent record or `null`.
+- `Spine.snapshotDelta(id, current)` — `{ since, before, after, delta,
+  changed }` for a computed-output id **or** a field id. A stored output may
+  be a bare number or a `{ status, value }` Result; both read. `delta` is
+  numeric only when both sides are numbers; otherwise `null` with `changed`
+  still honest.
+
+Every output the dashboard shows is what a snapshot should carry, so that a
+delta never has to recompute an old input against a newer reference table.
+The dashboard's own snapshot call (T1.4) passes its instrument values as
+`computedOutputs` for exactly this reason.
+
+### Compatibility note
+
+**Stored shape:** `meta.confirmedAt` is **added**, defaulting to `{}`. Every
+household saved before this has no stamps at all; `Spine.confirmedAt(id)`
+returns `null` for them, and the display rule is "last updated N days ago,
+unknown per field" from `meta.updatedAt` until the field is next written.
+Snapshot records gain `fields`; older records lack it, and `snapshotDelta()`
+falls back to `computedOutputs` and then returns `null` rather than
+guessing. No schema-version bump: nothing is renamed, moved or removed, and
+a v2 blob without these keys is a valid v2 blob.
+
+**Rooms updated:** none had to change to get stamps — that is the point. The
+Financial Snapshot room's existing snapshot button now freezes `fields` for
+free. `shared/ownership.js` gained a dependency on `shared/spine-v2.js`
+(the spine never depends back on it).
+
+**Before calling `getProfile()` / `updateProfile()`:** a room that wants to
+show age reads `Spine.confirmedAt(fieldId)` (or `shared/staleness.js` once
+it lands, D-057) and never writes `meta.confirmedAt` itself; a room that
+wants a delta calls `Spine.snapshotDelta(id, currentResult)` and shows
+nothing when it returns `null`.
+
+---
+
 ## D-046 — HP is measured in weeks, which is what makes §3A stop contradicting itself
 
 The Dungeons & Dividends rulebook defines Hit Points twice in the same
