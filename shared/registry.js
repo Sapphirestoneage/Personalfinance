@@ -220,7 +220,7 @@
     },
     {
       id: 'values',
-      order: 13,
+      order: 14,
       title: 'What Matters',
       blurb: 'The five things you say matter most, next to where the money actually went. No score \u2014 just the two lists, side by side.',
       href: 'rooms/values.html',
@@ -235,8 +235,24 @@
       ]
     },
     {
+      id: 'fulfillment',
+      order: 13,
+      title: 'Enough',
+      blurb: 'What each thing costs a month, against what it is actually worth to you \u2014 and the four places that lands.',
+      href: 'rooms/fulfillment.html',
+      tier: 1,
+      tags: ['cashflow'],
+      subsections: [
+        { id: 'rate',        label: 'Rate what you spend on' },
+        { id: 'out-curve',   label: 'Where it all falls' },
+        { id: 'out-quadrants', label: 'The four corners' },
+        { id: 'out-ranked',  label: 'Joy per dollar' },
+        { id: 'reading',     label: 'Reading from elsewhere' }
+      ]
+    },
+    {
       id: 'goals',
-      order: 14,
+      order: 15,
       title: 'Goals',
       blurb: 'A wedding, a deposit, a big trip. What it costs, what it needs a month, and whether that actually fits alongside everything else.',
       href: 'rooms/goals.html',
@@ -249,7 +265,7 @@
     },
     {
       id: 'foo-ladder',
-      order: 15,
+      order: 16,
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
       href: 'index.html',

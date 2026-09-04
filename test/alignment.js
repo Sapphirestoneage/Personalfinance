@@ -48,6 +48,7 @@ const EQUAL_HEIGHT = [
   ['/rooms/savings-rate.html', '.pair'],
   ['/rooms/sleep-at-night.html', '.pair'],
   ['/rooms/values.html', '.two'],
+  ['/rooms/fulfillment.html', '.quads'],
   ['/rooms/sleep-at-night.html', '.basis']
 ];
 (async () => {
@@ -85,7 +86,10 @@ const EQUAL_HEIGHT = [
       SLAF.Spine.updateProfile({ expenses: { entries: SLAF.DemoPersona.buildSpending() } });
       /* The What Matters comparison only renders once values are named. */
       SLAF.Spine.updateProfile({ valuesProfile:
-        { stated: ['freedom', 'health', 'connection', 'security', 'experience'], assignments: {} } }); });
+        { stated: ['freedom', 'health', 'connection', 'security', 'experience'], assignments: {} } });
+      /* The Fulfillment quadrants only render once four categories are rated. */
+      SLAF.Spine.updateProfile({ ratings: { joy: { housing: 6, groceries: 7,
+        dining_out: 9, entertainment: 8, subscriptions: 3, transportation: 4 } } }); });
 
     for (const [page, sel] of TARGETS) {
       await p.goto(BASE + page, { waitUntil: 'networkidle' });

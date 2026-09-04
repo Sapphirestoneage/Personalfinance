@@ -1216,6 +1216,71 @@ guesses — see "Still open".
 
 ---
 
+## D-031 — One rating control, and a Fulfillment Curve that splits on the median
+
+**SPEC.md §13 Tier 1.5 names the shared piece before the tool that uses it:**
+"the 1-10 rating mechanism is shared infrastructure with Category Tracker
+Engine, Dating Cost Calculator, and Retroactive Worth calc — build one
+reusable rating component, not four." `shared/rating.js` was built first, so
+there is nothing to retrofit when the other three arrive. It owns the scale,
+the storage shape (`household.ratings[scope][itemId]`), the end anchors per
+scope, the control markup and the dot readout. A room that wants a rating
+calls it; a room cannot quietly grow its own.
+
+**No zero on the scale.** A 0-10 scale collapses "not rated" into "rated it
+nothing", and those are different facts. Ratings are integers 1-10, an absent
+key means not rated, and a rating of 1 survives every round trip as a 1. Where
+ratings are averaged, unrated items are SKIPPED and the skip count comes back
+with the answer — a test asserts that counting them as zero would give a
+materially different number, so the skip cannot pass by coincidence.
+
+**The Fulfillment Curve splits on the MEDIAN, not the mean.** The quadrants
+need a "high spend" line. Robin's eight rated categories average $361.88 a
+month but their median is $200, because one $1,500 housing line drags the
+mean. On a mean split only two of eight categories could ever be high-spend
+and two corners would sit empty; on the median split, half fall either side
+by construction. The joy line is 5.5 — a property of the 1-10 scale, not a
+judgement. Both thresholds come back with the result and the room prints
+them, because a reading built on a hidden cut-off is not a reading.
+
+**Savings and extra debt payments are excluded.** This tool asks what a
+purchase gives you, and money you keep is not a purchase — rating your own
+retirement contribution for joy is a category error, and including it would
+drag the spend median right for nothing. Note that the Values audit
+deliberately does the opposite and counts savings: "what does this serve" is
+a different question from "what does this buy you", and saving serves
+Security and Freedom for real. The two rooms disagreeing here is intentional,
+and each says why.
+
+**Four ratings before there is a picture.** Below that the median moves every
+time one is added, so the room says how many are still needed rather than
+drawing quadrants out of noise.
+
+**Joy per $100, not per dollar, and no ratio for a free category.** Per
+dollar the numbers are unreadable; per $100 a month they are comparable. A
+category costing zero gets `null` rather than infinity, and drops out of the
+ranking instead of topping it forever.
+
+**No score.** Same reason as D-029: a single figure would be false precision
+on top of a self-report, and a test asserts the result carries no
+score-shaped key.
+
+**Room order.** Inserted at 13, beside What Matters — the two rooms ask the
+same question from different directions, one about stated values and one
+about felt return. Goals and the FOO Ladder shifted by one.
+
+**Compatibility note.** `household.ratings` is new, back-filled by
+`Schema.createRatings()` to `{}` for any household stored before it existed,
+and it discards anything that is not a finite number on the way in. Nothing
+else in the stored shape changed and no existing room reads or writes
+differently. A future room adding a rating picks a new scope name and calls
+`Spine.setRating()`; it must not add a second store, and it must read through
+`Rating.get()` — reaching into `household.ratings` directly would skip the
+validation that keeps a 0 or an out-of-range value from ever being treated
+as a rating.
+
+---
+
 ## Still open
 
 - ~~**Two-Income Household Toggle** and **Soft Saving Balance

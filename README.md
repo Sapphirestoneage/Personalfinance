@@ -46,6 +46,7 @@ shared/             The spine everything depends on
   spine-v2.js         localStorage persistence, getProfile/updateProfile/…
   registry.js         which rooms exist, their tags and deep-link anchors
   reference.js        loader + pure lookups for data/
+  rating.js           THE 1-10 rating control — scale, storage and markup
   demo-persona.js     the one demo household used by every "try an example"
 engines/            Shared calculation engines — one function per concept
   tier0.js            the nine Tier 0 outputs
@@ -61,6 +62,7 @@ engines/            Shared calculation engines — one function per concept
   accounts.js         Roth vs Traditional vs taxable, Solo 401k limits
   swan.js             the self-reported sleep-at-night target, beside the maths
   values.js           stated values against a categorised month — no score
+  fulfillment.js      spend against a 1-10 joy rating, and the four corners
 data/               Versioned reference tables (JSON, never inlined in code)
 test/run.js         Re-derives every formula outside the browser
 test/alignment.js   Browser layout check — side-by-side cells must line up

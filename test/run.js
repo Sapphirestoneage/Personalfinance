@@ -41,6 +41,7 @@ const Accounts = require(path.join(ROOT, 'engines/accounts.js'));
 const Swan = require(path.join(ROOT, 'engines/swan.js'));
 const ValuesEngine = require(path.join(ROOT, 'engines/values.js'));
 const Rating = require(path.join(ROOT, 'shared/rating.js'));
+const Fulfillment = require(path.join(ROOT, 'engines/fulfillment.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -1936,6 +1937,158 @@ section('Ratings');
     (Rating.dotsHtml(null).match(/is-on/g) || []).length, 0);
   checkTrue('and says so to a screen reader',
     Rating.dotsHtml(null).includes('aria-label="not rated"'));
+})();
+
+/* ==========================================================================
+   Fulfillment Curve — spend against a 1-10 joy rating. SPEC.md §13 Tier 1.5.
+   Robin's categorised month, spending only (savings excluded).
+   ========================================================================== */
+
+section('Fulfillment Curve');
+
+(function () {
+  const CAT = TABLES.expenseCategories;
+  const JOY = {
+    housing: 6, groceries: 7, dining_out: 9, entertainment: 8,
+    subscriptions: 3, transportation: 4, utilities: 5, insurance: 2
+  };
+  const h = Demo.build();
+  h.expenses.entries = Demo.buildSpending();
+
+  /* -- Prerequisites, in order ------------------------------------------- */
+  const noMonth = Demo.build();
+  check('without a categorised month there are no rows',
+    Fulfillment.rows(noMonth, CAT).status, 'incomplete');
+  check('and the curve says the same', Fulfillment.curve(noMonth, CAT).status, 'incomplete');
+
+  const none = Fulfillment.curve(h, CAT);
+  check('with a month but no ratings, the curve is incomplete', none.status, 'incomplete');
+  checkTrue('and it counts what is still needed', none.reason.includes('0 so far'));
+
+  const three = JSON.parse(JSON.stringify(h));
+  three.ratings = { joy: { housing: 6, groceries: 7, dining_out: 9 } };
+  check('three ratings is still not enough', Fulfillment.curve(three, CAT).status, 'incomplete');
+  checkTrue('and it says how many there are',
+    Fulfillment.curve(three, CAT).reason.includes('3 so far'));
+  check('four is the threshold', Fulfillment.MIN_RATED, 4);
+
+  /* -- Savings are excluded, deliberately -------------------------------- */
+  const allRows = Fulfillment.rows(h, CAT);
+  const summary = CashFlow.summarise(h, CAT);
+  const savingsRows = summary.categories.filter(c => c.bucket === 'savings');
+  checkTrue('the demo month has savings categories to exclude', savingsRows.length > 0);
+  check('none of them appear in the rating list',
+    allRows.value.filter(r => r.bucket === 'savings').length, 0);
+  check('and the count excluded is reported', allRows.excludedCount, savingsRows.length);
+  check('as are the dollars', allRows.excludedSavingsCents, summary.savingsMonthlyCents);
+  check('what remains is the spending total', allRows.totalMonthlyCents, summary.spendMonthlyCents);
+
+  /* -- The median, and why it is not the mean ----------------------------- */
+  check('an odd-length median is the middle value', Fulfillment.median([1, 5, 100]), 5);
+  check('an even-length one splits the two middles', Fulfillment.median([1, 5, 7, 100]), 6);
+  check('an empty list has no median', Fulfillment.median([]), null);
+
+  const rated = JSON.parse(JSON.stringify(h));
+  rated.ratings = { joy: JOY };
+  const c = Fulfillment.curve(rated, CAT);
+  check('eight categories are plotted', c.value, 8);
+
+  /* Spends are 1500, 450, 305(unrated), 260, 220, 180, 150, 90, 45.
+     Of the RATED eight: 45, 90, 150, 180, 220, 260, 450, 1500 -> (180+220)/2 */
+  check('the split is the median of the rated spends', c.spendLineCents, 20000);
+  /* The mean of the same eight is $361.88 — nearly twice the median, pulled
+     up by one $1,500 category. On a mean split, housing alone would define
+     "high spend" and three of the four corners would be near-empty. */
+  const mean = c.plotted.reduce((s, p) => s + p.monthlyCents, 0) / c.plotted.length;
+  check('the mean of the same spends is $361.88', mean, 36187.5);
+  checkTrue('so a mean split would sit well right of the median one',
+    mean > c.spendLineCents * 1.5);
+  check('a mean split would call only two of the eight high spend',
+    c.plotted.filter(p => p.monthlyCents > mean).length, 2);
+  check('where the median split puts half of them on each side',
+    c.plotted.filter(p => p.monthlyCents > c.spendLineCents).length, 4);
+  check('the joy line is the midpoint of the scale', c.joyLine, 5.5);
+  check('which is (1 + 10) / 2', c.joyLine, (Rating.MIN + Rating.MAX) / 2);
+
+  /* -- Quadrants ---------------------------------------------------------- */
+  const where = {};
+  c.plotted.forEach(p => { where[p.categoryId] = p.quadrantId; });
+  check('housing: dear and liked, so worth it', where.housing, 'worth_it');
+  check('transportation: dear and not liked, the expensive habit', where.transportation, 'expensive');
+  check('entertainment: cheap and loved, cheap joy', where.entertainment, 'cheap_joy');
+  check('subscriptions: cheap and unloved, small and forgettable', where.subscriptions, 'small_meh');
+
+  /* Boundaries. Utilities is $180, under the $200 line, rated 5 — below the
+     5.5 midpoint. Both comparisons are strict, so a category sitting exactly
+     on the spend line counts as the cheap side. */
+  check('utilities sits on the cheap, unloved side', where.utilities, 'small_meh');
+  const onLine = JSON.parse(JSON.stringify(rated));
+  onLine.ratings.joy.transportation = 6;
+  const c2 = Fulfillment.curve(onLine, CAT);
+  check('nudging transportation above the midpoint moves it to worth it',
+    c2.plotted.find(p => p.categoryId === 'transportation').quadrantId, 'worth_it');
+  check('and the expensive-habit corner empties',
+    c2.byQuadrant.expensive.rows.length, 0);
+  check('an empty corner is still a corner, at zero',
+    c2.byQuadrant.expensive.monthlyCents, 0);
+
+  /* Every plotted category lands in exactly one corner, and the corners
+     account for every plotted dollar. */
+  const inCorners = Object.keys(c.byQuadrant)
+    .reduce((s, k) => s + c.byQuadrant[k].rows.length, 0);
+  check('every plotted category is in exactly one corner', inCorners, c.plotted.length);
+  const cornerCents = Object.keys(c.byQuadrant)
+    .reduce((s, k) => s + c.byQuadrant[k].monthlyCents, 0);
+  check('and the corners hold all the plotted money', cornerCents, c.ratedMonthlyCents);
+
+  /* -- Joy per $100 ------------------------------------------------------- */
+  const ent = c.plotted.find(p => p.categoryId === 'entertainment');
+  check('entertainment: 8 over $90 is 8.89 per $100', ent.joyPerHundred, 8 / 0.9, 1e-9);
+  check('the best return per dollar is entertainment', c.cheapestJoy.categoryId, 'entertainment');
+  check('and the worst is the mortgage-sized one', c.dearestJoy.categoryId, 'housing');
+  check('the ranking is every plotted category', c.ranked.length, c.plotted.length);
+  checkTrue('and it descends',
+    c.ranked.every((p, i) => i === 0 || p.joyPerHundred <= c.ranked[i - 1].joyPerHundred));
+
+  /* A free category has no ratio at all rather than an infinite one. */
+  const withFree = JSON.parse(JSON.stringify(rated));
+  withFree.expenses.entries.push(Schema.createExpenseEntry({
+    categoryId: 'personal_care', amountCents: 0, period: 'monthly'
+  }));
+  withFree.ratings.joy.personal_care = 9;
+  const c3 = Fulfillment.curve(withFree, CAT);
+  const free = c3.plotted.find(p => p.categoryId === 'personal_care');
+  check('a category costing nothing is still plotted', free.joy, 9);
+  check('but has no joy-per-dollar', free.joyPerHundred, null);
+  check('and is left out of the ranking',
+    c3.ranked.filter(p => p.categoryId === 'personal_care').length, 0);
+
+  /* -- Unrated is never assumed ------------------------------------------ */
+  check('the unrated category is listed', c.unrated.length, 1);
+  check('and it is the one nobody rated', c.unrated[0].categoryId, 'debt_minimums');
+  check('its money is counted separately', c.unratedMonthlyCents, 30500);
+  check('and kept out of the plotted total', c.ratedMonthlyCents + c.unratedMonthlyCents,
+    allRows.totalMonthlyCents);
+  checkTrue('nothing unrated reached the plot',
+    c.plotted.every(p => p.categoryId !== 'debt_minimums'));
+
+  /* Un-rating one takes it straight back out. */
+  const fewer = JSON.parse(JSON.stringify(rated));
+  delete fewer.ratings.joy.insurance;
+  const c4 = Fulfillment.curve(fewer, CAT);
+  check('un-rating a category removes it from the plot', c4.value, 7);
+  check('and puts it back on the unrated list',
+    c4.unrated.filter(u => u.categoryId === 'insurance').length, 1);
+
+  /* -- No score, and no writing ------------------------------------------ */
+  ['score', 'alignment', 'grade', 'rating', 'index'].forEach(function (key) {
+    checkTrue(`the curve carries no "${key}"`,
+      !Object.prototype.hasOwnProperty.call(c, key));
+  });
+  const before = JSON.stringify(rated);
+  Fulfillment.curve(rated, CAT);
+  Fulfillment.rows(rated, CAT);
+  check('reading the curve mutates nothing', JSON.stringify(rated), before);
 })();
 
 section('Values vs. Spending');

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Enough · SPARKS</title>
+<meta name="description" content="What each thing costs a month, against what it is actually worth to you."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11, §13 Tier 1.5 (Fulfillment Curve).
+
+  1. READS   the categorised month from Cash Flow, via engines/cashflow.js.
+             Nothing about spending is entered here.
+  2. WRITES  household.ratings.joy — through Spine.setRating() only.
+  3. CALLS   engines/fulfillment.js, which calls CashFlow.summarise() and
+             shared/rating.js. The rating control is the shared one; this
+             room does not have its own.
+  4. EMPTY   No categorised month → says so and links to Cash Flow. Fewer
+             than four ratings → says how many are left rather than drawing
+             a picture out of two points.
+  5. CONFIG  data/expense_categories.json. The quadrant thresholds are not
+             config: the joy line is a property of the 1-10 scale, and the
+             spend line is the median of this person's own spending.
+
+  NO SCORE, for the same reason as What Matters — a single figure would be
+  false precision on top of a self-report.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .rate-row { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2) var(--space-3); align-items: center; padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border); }
+  .rate-row:last-child { border-bottom: none; }
+  .rate-row .cat { font-size: var(--text-sm); }
+  .rate-row .amt { font-size: var(--text-sm); font-variant-numeric: tabular-nums; color: var(--color-text-muted); }
+  .rate-row .ctl { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); align-items: center; }
+
+  .plot { width: 100%; height: auto; display: block; margin-top: var(--space-3); overflow: visible; }
+  .plot .axis { stroke: var(--color-border-strong); stroke-width: 1; }
+  .plot .split { stroke: var(--color-border-active); stroke-width: 1; stroke-dasharray: 3 3; }
+  .plot .qlabel { fill: var(--color-text-faint); font-size: 7px; font-family: var(--font-body); opacity: .75; }
+  .plot .dot { fill: var(--color-accent); }
+  .plot .dot-label { fill: var(--color-text-muted); font-size: 7px; font-family: var(--font-body); }
+  .plot .axis-label { fill: var(--color-text-faint); font-size: 7px; font-family: var(--font-body); }
+
+  .quads { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); align-items: stretch; }
+  @media (max-width: 400px) { .quads { grid-template-columns: 1fr; } }
+  .quads > div { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); }
+  .quads > div.is-headline { border-color: var(--color-border-active); background: var(--color-surface-active); }
+  .quads .qh { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); }
+  .quads .qn { font-weight: 600; font-size: var(--text-sm); }
+  .quads .qa { font-family: var(--font-display); font-variant-numeric: tabular-nums; font-size: var(--text-sm); white-space: nowrap; }
+  .quads .qb { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
+  .quads ul { list-style: none; margin: var(--space-2) 0 0; padding: 0; font-size: var(--text-xs); color: var(--color-text-muted); }
+  .quads li { display: flex; justify-content: space-between; gap: var(--space-2); padding: 2px 0; }
+  .quads li span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  ol.ranked { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); }
+  ol.ranked li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+  ol.ranked li:last-child { border-bottom: none; }
+  ol.ranked .meta { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-faint); display: flex; gap: var(--space-3); align-items: center; }
+  ol.ranked .rate { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .empty { color: var(--color-text-faint); font-size: var(--text-sm); margin-top: var(--space-3); }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Enough</h1>
+  <p class="room-lede">What each thing costs a month, against what it is actually worth to you — and the four places that lands.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="rate">
+    <span class="slaf-eyebrow">Rate what you spend on</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">How much does each one actually give you?</h2>
+    <p class="slaf-hint" style="margin:0">
+      One to ten, where one is <em>barely notice it</em> and ten is
+      <em>would not give it up</em>. Answer for the last month, not the
+      version of yourself you are planning to become. Leave anything blank
+      that you would rather not call.
+    </p>
+    <div id="rate-list" style="margin-top:var(--space-3)"></div>
+    <p class="empty" id="rate-empty" hidden></p>
+  </section>
+
+  <section class="slaf-card" id="out-curve">
+    <span class="slaf-eyebrow">Where it all falls</span>
+    <h2 style="margin:var(--space-2) 0 0">Cost across, worth up</h2>
+    <div id="curve-body" hidden>
+      <svg class="plot" id="plot" viewBox="0 0 200 150" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="plot-desc"></svg>
+      <p id="plot-desc" class="why"></p>
+    </div>
+    <p class="why" id="curve-why"></p>
+  </section>
+
+  <section class="slaf-card" id="out-quadrants">
+    <span class="slaf-eyebrow">The four corners</span>
+    <h2 style="margin:var(--space-2) 0 0">What each corner is telling you</h2>
+    <div class="quads" id="quad-list"></div>
+    <div class="flag" id="quad-note" hidden></div>
+  </section>
+
+  <section class="slaf-card" id="out-ranked">
+    <span class="slaf-eyebrow">Joy per dollar</span>
+    <h2 style="margin:var(--space-2) 0 0">The same money, ranked by what it returns</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Rating divided by what it costs, per $100 a month. It is not a verdict
+      — a mortgage will always sit at the bottom of a list like this, and
+      that is arithmetic, not a mistake.
+    </p>
+    <ol class="ranked" id="ranked-list"></ol>
+  </section>
+
+  <section class="slaf-card" id="reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Savings and extra debt payments
+    are left out on purpose — this asks what a purchase gives you, and money
+    you keep is not a purchase. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/rating.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/fulfillment.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference,
+      Ownership = SLAF.Ownership, Rating = SLAF.Rating, Fulfillment = SLAF.Fulfillment;
+
+  var ROOM_ID = 'fulfillment';
+  var TABLES = null;
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  /* ---- Rating rows ------------------------------------------------------ */
+
+  function renderRows(h) {
+    var r = Fulfillment.rows(h, TABLES.expenseCategories);
+    if (!Money.isOk(r)) {
+      el('rate-list').innerHTML = '';
+      el('rate-empty').hidden = false;
+      el('rate-empty').innerHTML = esc(r.reason) + ' <a href="'
+        + Ownership.linkTo('cash-flow', 'spending') + '">Categorise a month →</a>';
+      return;
+    }
+    el('rate-empty').hidden = true;
+    el('rate-list').innerHTML = r.value
+      .slice().sort(function (a, b) { return b.monthlyCents - a.monthlyCents; })
+      .map(function (row) {
+        return '<div class="rate-row">'
+          + '<span class="cat">' + esc(row.label) + '</span>'
+          + '<span class="amt">' + Money.formatCents(row.monthlyCents) + '/mo</span>'
+          + '<span class="ctl">'
+          + Rating.controlHtml({ scope: Fulfillment.SCOPE, itemId: row.categoryId,
+                                 value: row.joy, label: row.label })
+          + Rating.dotsHtml(row.joy)
+          + '</span></div>';
+      }).join('');
+  }
+
+  el('rate-list').addEventListener('change', function (evt) {
+    var read = Rating.readTarget(evt.target);
+    if (!read) return;
+    Spine.setRating(read.scope, read.itemId, read.value);
+    render();
+  });
+
+  /* ---- The plot ----------------------------------------------------------
+     Hand-drawn SVG rather than a charting library — nothing here loads from
+     a CDN, and eight points do not need one. Coordinates are in the
+     viewBox's own units so the whole thing scales with the card. */
+
+  var PAD_L = 26, PAD_R = 8, PAD_T = 10, PAD_B = 20, W = 200, H = 150;
+
+  function renderPlot(c) {
+    var maxSpend = Math.max.apply(null, c.plotted.map(function (p) { return p.monthlyCents; }).concat([1]));
+    function x(cents) { return PAD_L + (cents / maxSpend) * (W - PAD_L - PAD_R); }
+    function y(joy) { return H - PAD_B - ((joy - 1) / 9) * (H - PAD_T - PAD_B); }
+
+    var parts = [];
+    /* Quadrant splits first, so the dots sit on top of them. */
+    parts.push('<line class="split" x1="' + x(c.spendLineCents) + '" y1="' + PAD_T
+      + '" x2="' + x(c.spendLineCents) + '" y2="' + (H - PAD_B) + '"/>');
+    parts.push('<line class="split" x1="' + PAD_L + '" y1="' + y(c.joyLine)
+      + '" x2="' + (W - PAD_R) + '" y2="' + y(c.joyLine) + '"/>');
+
+    /* Corner labels are dropped when their half is too narrow to hold them
+       — a label lying across the split line is worse than no label. */
+    var splitX = x(c.spendLineCents);
+    var leftRoom = splitX - PAD_L, rightRoom = (W - PAD_R) - splitX;
+    if (leftRoom > 34) {
+      parts.push('<text class="qlabel" x="' + (PAD_L + 2) + '" y="' + (PAD_T + 7) + '">cheap joy</text>');
+      parts.push('<text class="qlabel" x="' + (PAD_L + 2) + '" y="' + (H - PAD_B - 3) + '">small</text>');
+    }
+    if (rightRoom > 46) {
+      parts.push('<text class="qlabel" text-anchor="end" x="' + (W - PAD_R - 2) + '" y="' + (PAD_T + 7) + '">worth it</text>');
+      parts.push('<text class="qlabel" text-anchor="end" x="' + (W - PAD_R - 2) + '" y="' + (H - PAD_B - 3) + '">expensive habit</text>');
+    }
+
+    parts.push('<line class="axis" x1="' + PAD_L + '" y1="' + PAD_T + '" x2="' + PAD_L + '" y2="' + (H - PAD_B) + '"/>');
+    parts.push('<line class="axis" x1="' + PAD_L + '" y1="' + (H - PAD_B) + '" x2="' + (W - PAD_R) + '" y2="' + (H - PAD_B) + '"/>');
+    parts.push('<text class="axis-label" text-anchor="end" x="' + (PAD_L - 3) + '" y="' + (y(10) + 2) + '">10</text>');
+    parts.push('<text class="axis-label" text-anchor="end" x="' + (PAD_L - 3) + '" y="' + (y(1) + 2) + '">1</text>');
+    parts.push('<text class="axis-label" x="' + PAD_L + '" y="' + (H - PAD_B + 10) + '">$0</text>');
+    parts.push('<text class="axis-label" text-anchor="end" x="' + (W - PAD_R) + '" y="' + (H - PAD_B + 10) + '">'
+      + Money.formatCents(maxSpend) + '/mo</text>');
+
+    c.plotted.forEach(function (p) {
+      var px = x(p.monthlyCents), py = y(p.joy);
+      parts.push('<circle class="dot" cx="' + px + '" cy="' + py + '" r="2.6"/>');
+      /* Labels flip to the left near the right edge so nothing runs off. */
+      var flip = px > W - 60;
+      parts.push('<text class="dot-label"' + (flip ? ' text-anchor="end"' : '')
+        + ' x="' + (px + (flip ? -4 : 4)) + '" y="' + (py + 2.5) + '">' + esc(p.label) + '</text>');
+    });
+
+    el('plot').innerHTML = parts.join('');
+    el('plot-desc').textContent = 'Each dot is one category: what it costs a month along the '
+      + 'bottom, what it gives you up the side. The vertical line is the middle of your own spending — '
+      + Money.formatCents(c.spendLineCents) + ' a month — and the horizontal one is the middle '
+      + 'of the scale. Half your categories sit either side of the vertical line by construction.';
+  }
+
+  /* ---- Quadrants and ranking -------------------------------------------- */
+
+  var ORDER = ['expensive', 'cheap_joy', 'worth_it', 'small_meh'];
+
+  function renderQuadrants(c) {
+    el('quad-list').innerHTML = ORDER.map(function (id) {
+      var q = c.byQuadrant[id];
+      return '<div class="' + (id === 'expensive' && q.rows.length ? 'is-headline' : '') + '">'
+        + '<div class="qh"><span class="qn">' + esc(q.label) + '</span>'
+        + '<span class="qa">' + Money.formatCents(q.monthlyCents) + '/mo</span></div>'
+        + '<div class="qb">' + esc(q.blurb) + '</div>'
+        + (q.rows.length
+          ? '<ul>' + q.rows.map(function (r) {
+              return '<li><span>' + esc(r.label) + '</span><span>'
+                + Money.formatCents(r.monthlyCents) + ' · ' + r.joy + '/10</span></li>';
+            }).join('') + '</ul>'
+          : '<ul><li><span>nothing here</span><span></span></li></ul>')
+        + '</div>';
+    }).join('');
+
+    var expensive = c.byQuadrant.expensive;
+    var note = el('quad-note');
+    note.hidden = false;
+    note.innerHTML = expensive.rows.length
+      ? '<strong>' + Money.formatCents(expensive.monthlyCents)
+        + ' a month is going to things you rated below the middle.</strong> '
+        + 'It is the corner where cutting costs you least, because you have already '
+        + 'said it is not doing much for you — everything else that costs this much, '
+        + 'you rated as worth it.'
+      : '<strong>Nothing landed in the expensive-habit corner.</strong> '
+        + 'Everything you spend real money on, you rated above the middle. '
+        + 'Either the spending is well aimed, or the ratings are being kind — '
+        + 'the honest test is whether you would pay it again today.';
+  }
+
+  function renderRanked(c) {
+    el('ranked-list').innerHTML = c.ranked.map(function (p, i) {
+      return '<li><span>' + (i + 1) + '. ' + esc(p.label) + '</span>'
+        + '<span class="rate">' + (Math.round(p.joyPerHundred * 10) / 10) + ' per $100</span>'
+        + '<span class="meta">' + Rating.dotsHtml(p.joy) + '<span>'
+        + Money.formatCents(p.monthlyCents) + '/mo · ' + esc(p.quadrantLabel)
+        + '</span></span></li>';
+    }).join('');
+  }
+
+  /* ---- Render ----------------------------------------------------------- */
+
+  function renderNow() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    renderRows(h);
+
+    var c = Fulfillment.curve(h, TABLES.expenseCategories);
+    if (!Money.isOk(c)) {
+      el('curve-body').hidden = true;
+      el('curve-why').innerHTML = esc(c.reason)
+        + (c.missing.indexOf('expenseEntries') !== -1
+          ? ' <a href="' + Ownership.linkTo('cash-flow', 'spending') + '">Categorise a month →</a>'
+          : '');
+      el('quad-list').innerHTML = '';
+      el('quad-note').hidden = true;
+      el('ranked-list').innerHTML = '';
+    } else {
+      el('curve-body').hidden = false;
+      el('curve-why').textContent = c.unrated.length
+        ? c.unrated.length + ' still unrated, worth '
+          + Money.formatCents(c.unratedMonthlyCents) + ' a month — they are left off the plot '
+          + 'rather than guessed at.'
+        : '';
+      renderPlot(c);
+      renderQuadrants(c);
+      renderRanked(c);
+    }
+
+    el('reading-list').innerHTML = ['monthlyExpenses']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+
+  var queued = false;
+  function render() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () { queued = false; renderNow(); }, 0);
+  }
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    renderNow();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>
