@@ -69,7 +69,20 @@ live bank offers, vehicle depreciation curves, warranty failure rates, COL
 indices, IRS W-4 worksheet logic, and 12+ months of tracked spending history.
 `SPEC.md` §10 already flags each as a data-maintenance dependency. They are
 cheap to write and expensive to keep true, which is the opposite of every
-tool shipped so far.
+tool shipped so far. Note that the Warranty calc's dataset is explicitly
+*not* substitutable with a user input — the spec says the failure-probability
+table is "a maintained reference dataset, not user-entered", which closes the
+obvious workaround.
+
+The seventh, **Rent/Buy**, is blocked structurally rather than on data, and
+it is worth stating because the fix is different: `SPEC.md` says it is
+"superseded/refined by the full True Cost of Homeownership build (Tier 17)"
+and "should be a thin wrapper calling into that engine once it exists, **not
+a parallel calculation path**". Same position as House Hack in Tier 2. What
+unblocks it is building the Tier 17 ownership-cost engine, not finding a
+dataset — and Tier 17 is outside this repo's scope.
+
+The eighth is **DRAFTT**, below.
 
 ### Tier 1.5 is complete
 
@@ -101,9 +114,23 @@ Each is blocked on something specific, and none of them on effort:
   dataset, weighted against 12+ months of tracked spend.
 - **HCOL/MCOL/LCOL modifier** — a COL index, which is the same dataset
   problem as its Tier 1 standalone twin.
-- **Prenup/Estate, Second Mouse, Trust Framework, Advice Translator** — the
-  spec itself classes these as document-generation or framework work rather
-  than calculations. Nothing to compute.
+- **Prenup/Estate** — the spec calls it "a document-generation problem, not
+  a calculation problem". The inputs are the Net Worth inventory, re-presented.
+- **Second Mouse Framework** — "not a calculator; contextual guidance text
+  attached to Bank Bonus calc and Sports Arb calc". Both of those are
+  unbuilt or out of scope, so there is nothing for the text to attach to.
+- **Advice Translator** — the spec flags it as "plausibly needs an
+  LLM-backed classification step, not pure rules logic", and §10 puts
+  free-text/LLM-backed tools on a separate build track, out of scope for
+  Tier 0–2 unless explicitly requested.
+- **Trust Framework** — the odd one out, and the only unbuilt Tier 2 item
+  that is **not blocked by anything**. The spec describes it as a "static
+  3-question vetting checklist", which is shippable as it stands. It is not
+  built because it is *content*, not calculation: the three questions are
+  someone's editorial voice, and this repo's disclaimer says "educational
+  tool, not financial advice" — a how-to-vet-an-advisor checklist is the
+  closest this suite would come to actual advice. That is the owner's call
+  to make, not a gap to fill quietly.
 
 And **DRAFTT** (Tier 1) is blocked on something smaller and more annoying:
 nobody has written down which categories and weights the template actually
