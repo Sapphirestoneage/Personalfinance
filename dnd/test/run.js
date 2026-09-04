@@ -218,6 +218,64 @@ section('Dungeons & Dividends — level, HP and AC');
   check('the spectrum ranks highest first', spec[0].id, 'incomePower');
 })();
 
+section('Dungeons & Dividends — the sheet furniture');
+
+(function () {
+  const cls = TABLES.dndClasses.classes.filter(c => c.id === 'earner')[0];
+  const stats = { STR: Money.ok(14), DEX: Money.ok(12), CON: Money.ok(15),
+                  INT: Money.ok(10), WIS: Money.ok(13), CHA: Money.ok(16) };
+
+  /* Six saves, and exactly the class's two carry proficiency (§3). */
+  const saves = Character.savingThrows(stats, cls, 2, TABLES);
+  check('six saving throws', saves.length, 6);
+  check('exactly two are proficient', saves.filter(s => s.proficient).length, 2);
+  const by = {};
+  saves.forEach(s => { by[s.stat] = s; });
+  /* STR 14 -> +2, plus proficiency 2 -> +4. */
+  check('a proficient save adds the proficiency bonus', by.STR.modifier, 4);
+  /* DEX 12 -> +1, no proficiency. */
+  check('a non-proficient save does not', by.DEX.modifier, 1);
+  check('and the proficient ones are the class\'s',
+    JSON.stringify(saves.filter(s => s.proficient).map(s => s.stat)),
+    JSON.stringify(cls.saves));
+
+  /* An unscored stat produces an unscored save, never a +0. */
+  const partial = Character.savingThrows({ STR: Money.ok(14) }, cls, 2, TABLES);
+  check('an unscored stat gives an unscored save', partial.filter(s => s.ok).length, 1);
+
+  /* The skills block IS the eighteen sub-stats — that is §2A's whole design. */
+  const skills = Character.skillList(Character.allSubStats({}, TABLES), cls, TABLES);
+  check('eighteen skills, one per sub-stat', skills.length, 18);
+  check('none score on an empty character', skills.filter(s => s.ok).length, 0);
+  check('the class\'s primary stats are marked',
+    skills.filter(s => s.primary).length,
+    TABLES.dndRules.subStats.filter(m => cls.primary.indexOf(m.stat) !== -1).length);
+
+  /* Hit dice read the way a sheet writes them. */
+  check('hit dice', Character.hitDiceLabel(cls, 3), '3d8');
+  check('hit dice at 20', Character.hitDiceLabel(cls, 20), '20d8');
+  check('no class, no hit dice', Character.hitDiceLabel(null, 3), null);
+
+  /* Passive scores are 10 + modifier, exactly as passive Perception is. */
+  const subs = { threatDetection: Money.ok(16), scenarioForesight: Money.ok(8) };
+  const ps = Character.passives(subs, TABLES);
+  const pby = {};
+  ps.forEach(p => { pby[p.id] = p; });
+  check('passive from a 16 is 13', pby.threatDetection.value, 13);
+  check('passive from an 8 is 9', pby.scenarioForesight.value, 9);
+  check('an unscored sub-stat has no passive', pby.instrumentLiteracy.ok, false);
+
+  /* Defences are read off earned feature text, never invented. */
+  const none = Character.defenses([{ feature: 'Automate', detail: 'sets up contributions' }], []);
+  check('a feature with no resistance wording yields nothing', none.length, 0);
+  const some = Character.defenses(
+    [{ feature: 'Seven-Figure Threshold', detail: 'resistance to Lifestyle-Inflation Imp damage' }], []);
+  check('a resistance is picked up', some.length, 1);
+  check('and typed correctly', some[0].kind, 'Resistance');
+  const imm = Character.defenses([{ feature: 'Total Market Immunity', detail: 'immune to picking wrong' }], []);
+  check('an immunity outranks a resistance', imm[0].kind, 'Immunity');
+})();
+
 section('Dungeons & Dividends — empty is never zero');
 
 (function () {
