@@ -21,6 +21,7 @@
   var ROOMS = [
     {
       id: 'start',
+      kind: 'core',
       needs: ['dob', 'state', 'filingStatus', 'grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'employerMatch', 'capturingFullMatch'],
       order: 1,
       title: 'Start Here',
@@ -42,6 +43,7 @@
     },
     {
       id: 'financial-snapshot',
+      kind: 'read',
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt', 'dob', 'filingStatus'],
       order: 4,
       title: 'Financial Snapshot',
@@ -65,6 +67,7 @@
     },
     {
       id: 'cash-flow',
+      kind: 'core',
       needs: ['monthlyExpenses'],
       order: 3,
       title: 'Cash Flow',
@@ -82,6 +85,7 @@
     },
     {
       id: 'debt-payoff',
+      kind: 'core',
       needs: ['totalDebt', 'monthlyDebtPayments'],
       order: 2,
       title: 'Debt Payoff',
@@ -100,6 +104,7 @@
     },
     {
       id: 'net-worth',
+      kind: 'core',
       needs: ['cashSavings', 'investments', 'totalDebt'],
       order: 5,
       title: 'Net Worth',
@@ -116,6 +121,7 @@
     },
     {
       id: 'savings-rate',
+      kind: 'read',
       needs: ['grossAnnualIncome', 'monthlyExpenses'],
       order: 6,
       title: 'Savings Rate',
@@ -133,6 +139,7 @@
     },
     {
       id: 'sleep-at-night',
+      kind: 'about-you',
       needs: ['monthlyExpenses', 'cashSavings'],
       order: 7,
       title: 'Sleep At Night',
@@ -150,6 +157,7 @@
     },
     {
       id: 'fire',
+      kind: 'read',
       needs: ['monthlyExpenses', 'investments', 'dob'],
       order: 8,
       title: 'FIRE Number',
@@ -166,6 +174,7 @@
     },
     {
       id: 'real-hourly-wage',
+      kind: 'about-you',
       needs: ['grossAnnualIncome'],
       order: 9,
       title: 'Real Hourly Wage',
@@ -183,6 +192,7 @@
     },
     {
       id: 'hassle',
+      kind: 'about-you',
       needs: ['grossAnnualIncome'],
       order: 10,
       title: 'Worth the Hassle',
@@ -200,6 +210,7 @@
     },
     {
       id: 'quick-math',
+      kind: 'explore',
       needs: [],
       order: 11,
       title: 'Quick Math',
@@ -218,6 +229,7 @@
     },
     {
       id: 'self-employed',
+      kind: 'explore',
       needs: ['grossAnnualIncome', 'filingStatus', 'state'],
       order: 12,
       title: 'Going Self-Employed',
@@ -234,6 +246,7 @@
     },
     {
       id: 'side-hustle',
+      kind: 'explore',
       needs: ['grossAnnualIncome', 'filingStatus'],
       order: 13,
       title: 'Side Hustle',
@@ -251,6 +264,7 @@
     },
     {
       id: 'dashboard',
+      kind: 'read',
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
       order: 15,
       title: 'The Dashboard',
@@ -271,6 +285,7 @@
     },
     {
       id: 'accounts',
+      kind: 'explore',
       needs: ['grossAnnualIncome', 'filingStatus'],
       order: 17,
       title: 'Where It Goes',
@@ -286,6 +301,7 @@
     },
     {
       id: 'values',
+      kind: 'about-you',
       needs: ['monthlyExpenses'],
       order: 19,
       title: 'What Matters',
@@ -303,6 +319,7 @@
     },
     {
       id: 'ratios',
+      kind: 'read',
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
       order: 14,
       title: 'Every Ratio',
@@ -321,6 +338,7 @@
     },
     {
       id: 'credential',
+      kind: 'explore',
       needs: ['grossAnnualIncome'],
       order: 16,
       title: 'Worth Learning',
@@ -338,6 +356,7 @@
     },
     {
       id: 'fulfillment',
+      kind: 'about-you',
       needs: ['monthlyExpenses'],
       order: 18,
       title: 'Enough',
@@ -355,6 +374,7 @@
     },
     {
       id: 'goals',
+      kind: 'about-you',
       needs: ['monthlyExpenses'],
       order: 20,
       title: 'Goals',
@@ -369,6 +389,7 @@
     },
     {
       id: 'worth',
+      kind: 'about-you',
       needs: ['grossAnnualIncome'],
       order: 22,
       title: 'Worth It',
@@ -386,6 +407,7 @@
     },
     {
       id: 'windfall',
+      kind: 'explore',
       needs: [],
       order: 23,
       title: 'The Windfall',
@@ -403,6 +425,7 @@
     },
     {
       id: 'runway',
+      kind: 'explore',
       needs: ['cashSavings', 'monthlyExpenses'],
       order: 24,
       title: 'The Runway',
@@ -421,6 +444,7 @@
     },
     {
       id: 'health',
+      kind: 'read',
       needs: ['dob', 'grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments'],
       order: 25,
       title: 'The Score',
@@ -439,6 +463,7 @@
     },
     {
       id: 'foo-ladder',
+      kind: 'read',
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'employerMatch', 'dob'],
       order: 21,
       title: 'FOO Ladder',
@@ -453,6 +478,24 @@
       subsections: []
     }
   ];
+
+  /* `kind` is the honest answer to "what is this room FOR?" — and the three
+     answers are genuinely different jobs, which the map had been hiding by
+     presenting all twenty-five as one numbered path:
+
+       core       the four rooms everything else is built from
+       read       it tells you what it already knows — no input at all
+       about-you  optional self-reports: what you WANT, not what you have
+       explore    a what-if, kept out of your real figures
+
+     `core` is deliberately only four rooms. An earlier pass put eleven in
+     one bucket labelled "the ones that matter", including four rating
+     exercises — which is precisely the overwhelm this split exists to
+     undo. If everything matters, nothing does.
+
+     A person who does not know which kind they are looking at cannot tell
+     what is required from what is optional, which is most of why a suite
+     this size feels like homework. See DECISIONS.md D-051.
 
   /* `needs` lists the shared fields a room reads before it can show its main
      output — the ids in shared/ownership.js, which know who owns each one and

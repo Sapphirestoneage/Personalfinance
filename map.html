@@ -52,6 +52,11 @@
     border-radius: var(--radius-pill); padding: 2px var(--space-2);
   }
   .visited { font-size: var(--text-xs); color: var(--color-positive); white-space: nowrap; }
+  .group-head { margin: var(--space-5) 0 var(--space-3); }
+  .group-head:first-child { margin-top: var(--space-2); }
+  .group-top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+  .group-head h2 { margin: 0; font-size: var(--text-lg); }
+  .group-head p { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); }
   .empty { text-align: center; color: var(--color-text-faint); padding: var(--space-6) 0; }
   .foot { text-align: center; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-6); line-height: var(--leading-loose); }
 </style>
@@ -132,10 +137,50 @@
       return;
     }
 
-    /* The rooms are a path, not a menu: each carries its step number, and the
-       first unvisited one is flagged so there is always an obvious next move. */
+    /* Grouped by what a room is FOR, because "tell it something", "read what
+       it knows" and "try a what-if" are three different jobs and a flat list
+       of twenty-five made all of them look equally required. D-051. */
     var next = Registry.nextAfter(null, visited);
-    rooms.forEach(function (room) {
+    var GROUPS = [
+      { kind: 'core', title: 'Start with these four',
+        blurb: 'Everything else in here is built out of these. Four rooms, and each answer is only ever given once — nothing later will ask you for it again.' },
+      { kind: 'read', title: 'What it all means',
+        blurb: 'Nothing to fill in. These read what you have already entered and tell you what it adds up to, filling themselves in as the four above get answered.' },
+      { kind: 'about-you', title: 'When you want to go deeper',
+        blurb: 'Optional. These ask what you want rather than what you have — a target, a rating, a goal — and they unlock the more personal readings.' },
+      { kind: 'explore', title: 'What if',
+        blurb: 'Not homework, and never required. These test a hypothetical without touching your real figures; nothing you type here is kept.' }
+    ];
+    var byKind = { core: [], read: [], 'about-you': [], explore: [] };
+    rooms.forEach(function (r) { (byKind[r.kind] || byKind.explore).push(r); });
+
+    GROUPS.forEach(function (g) {
+      if (!byKind[g.kind].length) return;
+      var head = document.createElement('div');
+      head.className = 'group-head';
+      var left = byKind[g.kind].filter(function (r) {
+        var p = Progress.forRoom(r.id, Spine.getProfile());
+        return p && !p.complete && !p.standalone;
+      }).length;
+      /* The wording has to match the job. A reading room has nothing to fill
+         in, so counting its unmet needs as "still to fill in" would ask the
+         reader for something that is not theirs to give — the answer is in a
+         gathering room, and this group just waits for it. */
+      var total = byKind[g.kind].length;
+      var label = g.kind === 'explore' ? 'always optional'
+        : g.kind === 'about-you' ? (left === 0 ? 'all set' : 'whenever you like')
+        : g.kind === 'read'
+          ? (left === 0 ? 'all ready' : (total - left) + ' of ' + total + ' ready')
+          : (left === 0 ? 'all set' : left + ' of ' + total + ' still to fill in');
+      head.innerHTML = '<div class="group-top"><h2>' + g.title + '</h2>'
+        + '<span class="slaf-done-pill' + (left === 0 ? ' is-done' : '') + '">'
+        + label + '</span></div>'
+        + '<p>' + g.blurb + '</p>';
+      list.appendChild(head);
+      byKind[g.kind].forEach(renderCard);
+    });
+
+    function renderCard(room) {
       var seen = visited.indexOf(room.id) !== -1;
       var isNext = next && next.id === room.id;
       var a = document.createElement('a');
@@ -154,7 +199,7 @@
         + room.tags.map(function (t) { return '<span class="tag">' + t + '</span>'; }).join('')
         + '</div>';
       list.appendChild(a);
-    });
+    }
   }
 
   /* Whether a room has the figures it reads, which is a different question

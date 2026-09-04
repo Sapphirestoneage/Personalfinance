@@ -2588,6 +2588,80 @@ Score and the Fulfillment Curve.
 
 ---
 
+## D-051 — Four rooms matter. The other twenty-one were pretending to.
+
+A UX audit, prompted by "it feels a tad overwhelming and some of it feels
+like it is extra compared to the main point of getting all the info down".
+The complaint was right, and the evidence was worse than the feeling.
+
+### What the audit measured
+
+**127 local inputs across the app. Eleven stored fields.** Roughly nine out
+of ten things a person types are read once, used for one figure on one
+screen, and thrown away — they never join the household, never prefill
+anything, never come back.
+
+Some of that is deliberate and correct: a what-if is not a fact, which is
+why The Windfall and The Runway keep nothing (D-041, D-042). But much of it
+is not a scenario at all. **Facts about you are asked repeatedly and
+discarded**: your 401(k) contribution percentage and your Roth and HSA
+balances are asked by both Where It Goes and the FOO ladder; your marginal
+rate by both Worth Learning and Side Hustle; your insurance deductible by
+the FOO ladder alone. Four separate places ask you for something they could
+have remembered.
+
+**And all twenty-five rooms were presented as one numbered path.** Gathering,
+reading and speculating were interleaved by accident of build order: Debt
+Payoff at 2, the Snapshot that pays it off at 4, Goals at 20, The Score at
+25. Nothing on the map distinguished "you must answer this" from "this
+reads itself" from "this is a toy". A person cannot tell what is required
+from what is optional, and the safe assumption — that all of it is required
+— is exactly the overwhelm reported.
+
+### The fix, and the mistake inside the first attempt
+
+Each room now declares a `kind`, and the map groups by it:
+
+- **core** (4) — Start Here, Cash Flow, Debt Payoff, Net Worth. Everything
+  else is built from these.
+- **read** (7) — no input at all; they fill themselves in as the four get
+  answered.
+- **about-you** (7) — optional self-reports: a target, a rating, a goal.
+  What you *want*, not what you have.
+- **explore** (7) — what-ifs. Never required, and nothing typed is kept.
+
+The first pass put eleven rooms in one bucket labelled *"these are the ones
+that matter"* — including four rating exercises. That is the same failure in
+new clothes: **if everything matters, nothing does.** The split into `core`
+and `about-you` is the actual fix, and `test/run.js` now fails if the core
+grows past four rooms, so the on-ramp cannot quietly become a wall again.
+
+Two more structural rules are enforced rather than trusted: a **read** room
+must need at least one field (a reading that reads nothing is showing you
+nothing), and an **explore** room must own no field anybody waits on
+(optional by definition cannot also be a gate).
+
+### The copy had to be corrected twice, which is the useful part
+
+The reading group's pill first said *"7 still to fill in"* — directly under a
+blurb saying *"nothing to fill in"*. Counting a reading room's unmet needs
+against the reader asks them for something that is not theirs to give; the
+answer lives in a gathering room. It now says "0 of 7 ready".
+
+And the What-if blurb first promised *"each one opens with your real numbers
+already in it"*. That is the right design and it is **not built yet**, so
+shipping the sentence would have been a lie on the front page. It now
+describes what is true today. The prepopulation it described is the next
+piece of work, not a claim.
+
+### What this deliberately did not do
+
+No room was deleted, hidden behind a gate, or locked. Everything is still
+one tap from the map. The change is entirely one of *stated intent* — the
+suite is the same size, it just stops implying that all of it is homework.
+
+---
+
 ## Still open
 
 - **The last `unavailable()` ratio: life insurance needs multiple.** Credit

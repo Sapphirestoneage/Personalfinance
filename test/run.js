@@ -4413,7 +4413,11 @@ section('What is finished');
 (function () {
   /* -- The declarations have to be real ---------------------------------- */
   {
+    var KINDS = ['core', 'read', 'about-you', 'explore'];
     Registry.ROOMS.forEach(function (room) {
+      checkTrue(`${room.id} says what kind of room it is`,
+        KINDS.indexOf(room.kind) !== -1,
+        `kind must be one of ${KINDS.join(' / ')} — see DECISIONS.md D-051`);
       checkTrue(`${room.id} declares what it needs`, Array.isArray(room.needs),
         'add a needs: [] to its registry entry — empty means it stands alone');
       (room.needs || []).forEach(function (fieldId) {
@@ -4434,6 +4438,31 @@ section('What is finished');
     h.people[0].incomeSources.push(
       Schema.createIncomeSource({ grossAnnualIncomeCents: 7200000 }));
     return h;
+  }
+
+  /* The core is deliberately small. If it grows, the map stops being a
+     short on-ramp and goes back to being a wall of twenty-five rooms —
+     which is the thing D-051 exists to prevent, so it should fail loudly. */
+  {
+    const core = Registry.ROOMS.filter(r => r.kind === 'core');
+    checkTrue('the core stays four rooms or fewer', core.length <= 4,
+      `core is now ${core.map(r => r.title).join(', ')} — if this is deliberate, `
+        + 'update the check and D-051 together');
+    checkTrue('every read room asks for nothing of its own',
+      Registry.ROOMS.filter(r => r.kind === 'read').length > 0);
+    /* A "read" room that needs nothing would be showing you nothing. */
+    Registry.ROOMS.filter(r => r.kind === 'read').forEach(function (r) {
+      checkTrue(`${r.id} is a reading, so it must read something`,
+        (r.needs || []).length > 0);
+    });
+    /* An "explore" room must never be a gate: it is optional by definition,
+       so it cannot be the thing standing between you and a reading. */
+    Registry.ROOMS.filter(r => r.kind === 'explore').forEach(function (r) {
+      checkTrue(`${r.id} is optional, so it owns no field others wait on`,
+        Object.keys(Ownership.FIELDS).every(function (f) {
+          return Ownership.FIELDS[f].owner !== r.id;
+        }));
+    });
   }
 
   /* -- One room -------------------------------------------------------- */
