@@ -1,0 +1,64 @@
+{
+  "id": "liquidity_benchmarks",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "Conventional emergency-fund coverage bands as they appear in mainstream personal-finance guidance (CFPB, FINRA, and the Financial Order of Operations' 3-6 month rung). Rules of thumb, not law — kept in data/ so the bands can be edited without touching the engine.",
+  "confidence": "convention",
+  "confidenceNote": "Coverage bands are rules of thumb from mainstream guidance, not law.",
+  "note": "SPEC.md Section 13, Tier 1.5 SWAN Number. These bands exist ONLY to give a self-reported number some context. The SWAN Number is deliberately feeling-based: a band is never a verdict, and the room must not tell someone their own number is wrong. Bands are expressed in months of monthly expenses and are checked lowest-to-highest, so the first band whose maxMonths the value falls at or under wins; the last band has no maxMonths and catches everything above.",
+  "bands": [
+    {
+      "id": "starter",
+      "minMonths": 0,
+      "maxMonths": 1,
+      "label": "A starter cushion",
+      "blurb": "About a month of expenses — enough to absorb a surprise bill without reaching for a card."
+    },
+    {
+      "id": "conventional_floor",
+      "minMonths": 1,
+      "maxMonths": 3,
+      "label": "The usual floor",
+      "blurb": "Three months is where most guidance starts, and where the Financial Order of Operations puts its first full emergency-fund rung."
+    },
+    {
+      "id": "conventional_full",
+      "minMonths": 3,
+      "maxMonths": 6,
+      "label": "The usual full fund",
+      "blurb": "Three to six months is the range named most often, and the top of it suits a single income or variable pay."
+    },
+    {
+      "id": "extended",
+      "minMonths": 6,
+      "maxMonths": 12,
+      "label": "Deliberately deeper",
+      "blurb": "More than most guidance calls for. Common with self-employment, commission pay, a specialised job market, or anyone supporting other people."
+    },
+    {
+      "id": "deep",
+      "minMonths": 12,
+      "maxMonths": null,
+      "label": "A year or more",
+      "blurb": "Well past what any rule of thumb asks for. That is allowed — cash you hold for peace of mind is buying something the return on it does not measure."
+    }
+  ],
+  "milestones": [
+    {
+      "months": 1,
+      "label": "1 month"
+    },
+    {
+      "months": 3,
+      "label": "3 months"
+    },
+    {
+      "months": 6,
+      "label": "6 months"
+    },
+    {
+      "months": 12,
+      "label": "12 months"
+    }
+  ]
+}
