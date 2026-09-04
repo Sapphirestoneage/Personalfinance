@@ -253,7 +253,11 @@
 
     el('nominal').textContent = ok ? perHour(wage.nominalHourlyCents) : Money.EM_DASH;
     el('real').textContent = ok ? perHour(wage.realHourlyCents) : Money.EM_DASH;
-    reason.textContent = ok ? '' : (wage.reason || '');
+    /* When the reason is "you are not earning", the useful next step is a
+       different room, not a different number. Offer it. */
+    reason.innerHTML = ok ? '' : ((wage.reason || '')
+      + (/not earning/.test(wage.reason || '')
+          ? ' <a href="' + Ownership.linkTo('runway') + '">The Runway \u2192</a>' : ''));
     reason.hidden = ok;
 
     if (!ok) { detail.innerHTML = ''; return; }
@@ -269,7 +273,22 @@
       + ' of your headline rate — every hour costs you '
       + perHour(wage.lostPerHourCents) + ' of the difference.'
       + (wage.taxKnown ? '' : ' Tax isn’t included yet: ' + (wage.taxReason || ''))
-      + '</p>';
+      + '</p>'
+      /* Two results that are arithmetically right and easy to misread. */
+      + (wage.costsMoreThanItPays
+          ? '<p class="slaf-reason"><strong>This job costs more than it pays.</strong> '
+            + 'Once tax and the costs of working come out, an hour of it leaves you '
+            + perHour(Math.abs(wage.realHourlyCents)) + ' worse off. That is a real '
+            + 'result rather than a slip — check the monthly costs figure, and if it is '
+            + 'right, it is the finding.</p>'
+          : '')
+      + (wage.implausibleHours
+          ? '<p class="slaf-reason"><strong>' + wage.paidHoursPerWeek + ' paid hour'
+            + (wage.paidHoursPerWeek === 1 ? '' : 's') + ' a week makes this rate look '
+            + 'enormous.</strong> The arithmetic is right — a whole salary spread over a '
+            + 'handful of hours is a big number per hour — but it is not comparable to a '
+            + 'normal hourly rate. Check the paid-hours figure if that was not deliberate.</p>'
+          : '');
   }
 
   function renderHours(wage) {

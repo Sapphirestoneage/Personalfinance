@@ -103,6 +103,19 @@
     });
     if (counted === 0) return Money.incomplete('Add your income to see this.', ['grossAnnualIncome']);
 
+    /* Not earning. This is a real answer, not a missing one, so it must not
+       be met with "add your income" — and a real hourly wage is not a
+       concept that applies to it. There is no rate to divide, and dividing
+       work costs by hours would produce a negative "wage" that reads as a
+       finding when it is really just an absence. DECISIONS.md D-048. */
+    if (gross === 0) {
+      return Money.incomplete(
+        'You have said you are not earning, so there is no hourly rate to work out. '
+          + 'What your time is worth is a different question when nothing is coming in — '
+          + 'how long the money lasts is the one to ask.',
+        ['grossAnnualIncome']);
+    }
+
     var nominalPerHour = Money.safeDivide(gross, hours.paidHoursPerWeek * weeks, {
       denominatorName: 'contractedHoursPerWeek'
     });
@@ -127,6 +140,15 @@
     return Money.ok(real, {
       nominalHourlyCents: nominal,
       realHourlyCents: real,
+      /* A job can cost more than it pays once tax and the costs of working
+         come out. That is a real and important finding, but a bare minus
+         sign is easy to misread as a bug, so it is flagged rather than left
+         for the reader to notice. */
+      costsMoreThanItPays: real < 0,
+      /* Paid hours so low that the headline rate stops meaning anything —
+         one paid hour a week makes any salary look like a fortune an hour.
+         The arithmetic is right; the flag lets a room say so. */
+      implausibleHours: hours.paidHoursPerWeek < 5,
       /* What share of the headline rate survives. */
       retained: nominal === 0 ? null : real / nominal,
       lostPerHourCents: nominal - real,

@@ -4217,6 +4217,195 @@ section('How you are paid');
   }
 })();
 
+section('Not earning');
+
+(function () {
+  const I = IncomeEngine;
+  const work = { weeksPerYear: 48 };
+
+  /* -- "Not earning" is an answer, and a different one from silence ------- */
+  {
+    const none = I.annualise({ frequency: 'none' }, work);
+    check('not earning annualises to zero', none.value, 0);
+    checkTrue('and says that is what it is', none.notEarning);
+    check('it does not ask for a rate it has no use for', none.status, 'ok');
+
+    const blank = I.annualise({}, work);
+    check('whereas saying nothing is incomplete', blank.status, 'incomplete');
+    checkTrue('which is the whole distinction', none.status !== blank.status);
+
+    const s = I.summarise([{ id: 'a', frequency: 'none' }], work);
+    check('a not-earning household earns zero', s.earnedCents, 0);
+    check('and its run rate is zero, not unknown', s.runRateCents, 0);
+    checkTrue('flagged as earning nothing now', s.earningNothingNow);
+    checkTrue('and as not earning at all', s.notEarningAtAll);
+  }
+
+  /* -- A job that ended: earned something, earning nothing now ----------- */
+  {
+    const s = I.summarise([
+      { id: 'a', frequency: 'annual', rateCents: 6000000, monthsWorked: 5, ongoing: false }
+    ], work);
+    check('five months of a salary is five twelfths', s.earnedCents, 2500000);
+    /* The bug this replaced: an all-ended household reported the run rate as
+       null, i.e. "we cannot say". It is not unknown. It is zero, and that is
+       the most important fact about the year. */
+    check('the run rate is zero, not unknown', s.runRateCents, 0);
+    checkTrue('and it is not the same as the earned figure', s.differ);
+    checkTrue('nothing is coming in now', s.earningNothingNow);
+    checkTrue('but this is not a "never earned" household', !s.notEarningAtAll);
+    check('choosing the run rate gives zero',
+      I.chosenAnnualCents(s, 'runRate').value, 0);
+  }
+
+  /* -- Zero income must not be met with "add your income" ----------------- */
+  {
+    function household(income) {
+      const h = Schema.createHousehold({});
+      h.people.push(Schema.createPerson({ label: 'You', role: 'adult', dob: '1990-01-01' }));
+      h.filingStatus = 'single';
+      if (income !== null) {
+        h.people[0].incomeSources.push(
+          Schema.createIncomeSource({ grossAnnualIncomeCents: income }));
+      }
+      h.expenses.monthlyEssential.estimatedValueCents = 200000;
+      h.assets.push(Schema.createAsset({ category: 'cash', valueCents: 500000, liquid: true }));
+      h.assets.push(Schema.createAsset({ category: 'investment', valueCents: 4800000 }));
+      h.debts.push(Schema.createDebt({ type: 'credit_card', balanceCents: 300000,
+        rate: 0.229, minPaymentCents: 9500 }));
+      return h;
+    }
+    const zero = RatiosEngine.all(household(0), TABLES).rows;
+    const blank = RatiosEngine.all(household(null), TABLES).rows;
+    function reason(rows, id) {
+      const r = rows.filter(x => x.id === id)[0];
+      return r.ok ? null : r.result.reason;
+    }
+
+    ['savingsRate', 'debtToIncome', 'netWorthToIncome', 'retirementMultiple'].forEach(function (id) {
+      const z = reason(zero, id), b = reason(blank, id);
+      checkTrue(`${id} refuses on a zero income`, z !== null);
+      checkTrue(`${id} says the income is zero rather than asking for it`,
+        /zero/.test(z), `got: ${z}`);
+      checkTrue(`${id} says something different when it was never answered`, z !== b);
+      checkTrue(`${id} does ask for it when it is genuinely missing`,
+        /Add/.test(b), `got: ${b}`);
+    });
+
+    /* Things that do not divide by income still work perfectly well. */
+    const ef = zero.filter(r => r.id === 'emergencyFundMonths')[0];
+    checkTrue('emergency fund coverage is unaffected by having no income', ef.ok);
+  }
+
+  /* -- Real Hourly Wage on a household that is not earning ---------------- */
+  {
+    const h = Demo.build();
+    h.people[0].incomeSources[0].grossAnnualIncomeCents = 0;
+    const w = Hourly.realHourlyWage(h, TABLES);
+    check('there is no hourly rate without earnings', w.status, 'incomplete');
+    checkTrue('and it does not tell them to add income they already answered',
+      !/Add your income/.test(w.reason), `got: ${w.reason}`);
+    checkTrue('it says why the question does not apply',
+      /not earning/.test(w.reason));
+
+    /* Missing income still asks, because there it is the right thing to do. */
+    const bare = Demo.build();
+    bare.people[0].incomeSources = [];
+    checkTrue('a household that never said still gets asked',
+      /Add your income/.test(Hourly.realHourlyWage(bare, TABLES).reason));
+  }
+
+  /* -- Two hourly results that are right and easy to misread -------------- */
+  {
+    const few = Demo.build();
+    few.people[0].work = { contractedHoursPerWeek: 1, weeksPerYear: 48 };
+    const r = Hourly.realHourlyWage(few, TABLES);
+    checkTrue('one paid hour a week still computes', Money.isOk(r));
+    checkTrue('but it is flagged as not comparable to a normal rate', r.implausibleHours);
+    check('five hours is the edge of that flag',
+      Hourly.realHourlyWage(Object.assign(Demo.build(), {
+        people: [Object.assign({}, Demo.build().people[0],
+          { work: { contractedHoursPerWeek: 5, weeksPerYear: 48 } })]
+      }), TABLES).implausibleHours, false);
+
+    const costly = Demo.build();
+    costly.people[0].work = { contractedHoursPerWeek: 40, weeksPerYear: 48,
+      workCostsMonthlyCents: 900000 };
+    const c = Hourly.realHourlyWage(costly, TABLES);
+    checkTrue('a job can cost more than it pays', c.realHourlyCents < 0);
+    checkTrue('and that is flagged rather than left as a minus sign',
+      c.costsMoreThanItPays);
+    checkTrue('a normal job is not flagged',
+      !Hourly.realHourlyWage(Demo.build(), TABLES).costsMoreThanItPays);
+  }
+
+  /* -- Nothing anywhere produces a NaN or an Infinity --------------------- */
+  {
+    /* The failure this whole section exists to prevent: a division that
+       quietly yields Infinity and gets formatted as a dollar figure. */
+    function scan(label, value, out, seen) {
+      if (value === null || value === undefined) return;
+      if (typeof value === 'number') {
+        if (!Number.isFinite(value)) out.push(`${label} = ${value}`);
+        return;
+      }
+      if (typeof value !== 'object' || seen.has(value)) return;
+      seen.add(value);
+      Object.keys(value).forEach(function (k) {
+        if (k === 'household' || k === 'tables') return;
+        scan(`${label}.${k}`, value[k], out, seen);
+      });
+    }
+    function bare(mut) {
+      const h = Schema.createHousehold({});
+      h.people.push(Schema.createPerson({ label: 'You', role: 'adult', dob: '1990-01-01' }));
+      h.filingStatus = 'single';
+      mut(h);
+      return h;
+    }
+    const cases = {
+      'no income at all': bare(h => {
+        h.people[0].incomeSources.push(Schema.createIncomeSource({ grossAnnualIncomeCents: 0 }));
+        h.expenses.monthlyEssential.estimatedValueCents = 200000;
+        h.assets.push(Schema.createAsset({ category: 'cash', valueCents: 500000, liquid: true }));
+      }),
+      'no expenses': bare(h => {
+        h.people[0].incomeSources.push(Schema.createIncomeSource({ grossAnnualIncomeCents: 7200000 }));
+        h.expenses.monthlyEssential.estimatedValueCents = 0;
+      }),
+      'everything zero': bare(h => {
+        h.people[0].incomeSources.push(Schema.createIncomeSource({ grossAnnualIncomeCents: 0 }));
+        h.expenses.monthlyEssential.estimatedValueCents = 0;
+      }),
+      'debt exceeds everything': bare(h => {
+        h.people[0].incomeSources.push(Schema.createIncomeSource({ grossAnnualIncomeCents: 5000000 }));
+        h.expenses.monthlyEssential.estimatedValueCents = 300000;
+        h.assets.push(Schema.createAsset({ category: 'cash', valueCents: 100000, liquid: true }));
+        h.debts.push(Schema.createDebt({ type: 'student_loan', balanceCents: 9000000,
+          rate: 0.06, minPaymentCents: 60000 }));
+      }),
+      'empty household': Schema.createHousehold({})
+    };
+    Object.keys(cases).forEach(function (name) {
+      const h = cases[name];
+      const found = [];
+      [['Ratios.all', () => RatiosEngine.all(h, TABLES)],
+       ['Foo.evaluate', () => Foo.evaluate(h, TABLES)],
+       ['Health.score', () => HealthEngine.score(h, TABLES)],
+       ['Income.forHousehold', () => IncomeEngine.forHousehold(h)],
+       ['Hourly.realHourlyWage', () => Hourly.realHourlyWage(h, TABLES)],
+       ['CashFlow.netCashFlow', () => CashFlow.netCashFlow(h, TABLES.expenseCategories, TABLES)]
+      ].forEach(function (probe) {
+        let out;
+        try { out = probe[1](); }
+        catch (e) { found.push(`${probe[0]} threw: ${e.message}`); return; }
+        scan(probe[0], out, found, new WeakSet());
+      });
+      checkTrue(`${name}: no NaN or Infinity anywhere`, found.length === 0, found.join('; '));
+    });
+  }
+})();
+
 section('Ownership');
 
 (function () {

@@ -65,6 +65,10 @@
      same record — two boxes showing one number is a question about which
      one wins. The list is the single place to edit it. */
   .is-multi .pay-row, .is-multi .pay-hours { display: none; }
+  /* Not earning has no figure to type. Asking for one anyway invites a 0
+     that means something different from the answer already given. */
+  .is-nopay .pay-row .slaf-input-shell:first-child { display: none; }
+  .is-nopay .pay-row { grid-template-columns: 1fr; }
   .pay-hours { margin: var(--space-3) 0 0; }
   /* Reserves its line whether or not it says anything, so nothing below it
      moves when the figure appears. D-046 learned this the hard way. */
@@ -123,7 +127,7 @@
   <!-- ============ QUESTIONS, in priority order ============ -->
   <section class="slaf-card q" id="q-income" data-q>
     <p class="q-text">What do you earn before tax?</p>
-    <p class="q-help">However you're actually paid — by the hour, the week, the month. We'll turn it into a year.</p>
+    <p class="q-help">However you're actually paid — by the hour, the week, the month. We'll turn it into a year. Not working right now is an answer too; pick it on the right.</p>
     <div class="pay-row">
       <span class="slaf-input-shell"><span class="slaf-affix">$</span>
         <input type="text" inputmode="decimal" data-write="income" placeholder="e.g. 26" aria-label="What you are paid"/></span>
@@ -365,7 +369,10 @@
 
     var basis = h.incomeBasis === 'runRate' ? 'runRate' : 'earned';
     summary.rows.forEach(function (row) {
-      if (!row.ok || row.rateCents === null) return;   /* typed-in annual: leave it */
+      /* A row with no rate is an annual figure typed straight in — leave it
+         alone. "Not earning" has no rate either, but its annual figure is a
+         deliberate zero and must be written. */
+      if (!row.ok || (row.rateCents === null && !row.notEarning)) return;
       var annual = basis === 'runRate'
         ? (row.ongoing ? row.annualisedCents : 0)
         : row.contributedCents;
@@ -400,6 +407,7 @@
     if (sel && sel !== document.activeElement) sel.value = basisId;
 
     var basis = Income.basisById(basisId) || Income.basisById('annual');
+    el('q-income').classList.toggle('is-nopay', basis.noPay === true);
     if (hoursWrap) hoursWrap.hidden = !basis.needsHours;
     if (hoursNode && hoursNode !== document.activeElement) {
       hoursNode.value = Money.isEntered(src.hoursPerWeek) ? String(src.hoursPerWeek) : '';
@@ -412,9 +420,20 @@
 
     var jobsOpen = !el('jobs').hidden;
     var parts = [];
-    if (basisId !== 'annual' || summary.sourceCount > 1 || jobsOpen) {
+    if (summary.notEarningAtAll) {
+      /* Not an error and not a blank. It is an answer, and the app can say
+         something useful to it rather than a row of dashes. */
+      parts.push('Noted \u2014 <strong>nothing coming in</strong>. That is an answer, not a '
+        + 'blank: anything that divides by income will say so rather than asking you again. '
+        + '<a href="' + Ownership.linkTo('runway') + '">How long your money lasts \u2192</a>');
+    } else if (basisId !== 'annual' || summary.sourceCount > 1 || jobsOpen) {
       parts.push('That\u2019s <strong>' + Money.formatCents(summary.earnedCents)
         + '</strong> a year' + (summary.sourceCount > 1 ? ' across ' + summary.sourceCount + ' jobs' : '') + '.');
+    }
+    if (!summary.notEarningAtAll && summary.earningNothingNow && summary.earnedCents > 0) {
+      parts.push('Every job on the list has ended, so <strong>nothing is coming in now</strong> '
+        + 'even though you earned ' + Money.formatCents(summary.earnedCents) + ' across the year. '
+        + '<a href="' + Ownership.linkTo('runway') + '">How long that lasts \u2192</a>');
     }
     if (summary.assumesWeeks) {
       var w = (workOf() && Money.isEntered(workOf().weeksPerYear))

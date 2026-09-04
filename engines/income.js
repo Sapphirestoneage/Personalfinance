@@ -72,7 +72,15 @@
     { id: 'weekly',      label: 'a week',      short: 'wk',  periods: 52 },
     { id: 'hourly',      label: 'an hour',     short: 'hr',  periods: null,
       needsHours: true,
-      note: 'Needs your hours a week — there is no honest hourly-to-yearly number without them.' }
+      note: 'Needs your hours a week — there is no honest hourly-to-yearly number without them.' },
+    /* Not earning. This is a real answer and it is NOT the same as leaving
+       the question blank: blank means "I have not told you", this means
+       "the number is zero". Everything downstream depends on knowing which
+       — a savings rate cannot be computed from either, but only one of them
+       should be met with "add your income". DECISIONS.md D-048. */
+    { id: 'none',        label: 'not earning right now', short: '—', periods: 0,
+      noPay: true,
+      note: 'A deliberate zero. Different from skipping the question.' }
   ];
 
   function basisById(id) {
@@ -95,6 +103,11 @@
   function annualise(source, work) {
     var s = source || {};
     var basis = basisById(s.frequency) || basisById('annual');
+
+    /* Not earning needs no rate, and must not ask for one. */
+    if (basis.noPay) {
+      return Money.ok(0, { basis: basis, rateCents: null, notEarning: true, assumesWeeks: false });
+    }
 
     if (!Money.isEntered(s.rateCents)) {
       /* No rate entered. An annual figure typed straight in is still a
@@ -186,6 +199,7 @@
           ? Math.round(full.value * months / MONTHS_PER_YEAR) : null,
         assumesWeeks: Money.isOk(full) ? full.assumesWeeks === true : false
       };
+      row.notEarning = Money.isOk(full) && full.notEarning === true;
       rows.push(row);
       if (!row.ok) return;
       counted++;
@@ -208,13 +222,25 @@
     var overlap = monthsCovered > MONTHS_PER_YEAR;
     var gap = monthsCovered < MONTHS_PER_YEAR;
 
+    /* Every job ended, and none is ongoing. The run rate is not UNKNOWN
+       here — it is zero. Someone who stopped working in August earns
+       nothing now, and reporting that as "we cannot say" would hide the
+       single most important fact about their year. Only a household with
+       nothing computable at all has an unknown run rate, and that case has
+       already returned above. */
+    var notEarning = rows.every(function (r) { return !r.ok || r.notEarning; });
+
     return Money.ok(earned, {
       rows: rows,
       earnedCents: earned,
-      runRateCents: ongoingCounted ? runRate : null,
+      runRateCents: runRate,
+      /* True when nothing is coming in now: every stint has ended, or every
+         one of them is a deliberate "not earning". */
+      earningNothingNow: ongoingCounted === 0 || runRate === 0,
+      notEarningAtAll: notEarning,
       /* They differ only when a stint is part-year or has ended. When they
          agree there is nothing to choose between and the room says nothing. */
-      differ: ongoingCounted > 0 && runRate !== earned,
+      differ: runRate !== earned,
       sourceCount: rows.length,
       countedCount: counted,
       incompleteCount: rows.length - counted,
@@ -237,7 +263,7 @@
    */
   function chosenAnnualCents(summary, basisPreference) {
     if (!Money.isOk(summary)) return summary;
-    if (basisPreference === 'runRate' && Money.isEntered(summary.runRateCents)) {
+    if (basisPreference === 'runRate' && Money.isEntered(summary.runRateCents)) {  /* zero is entered */
       return Money.ok(summary.runRateCents, { used: 'runRate' });
     }
     return Money.ok(summary.earnedCents, { used: 'earned' });

@@ -2387,6 +2387,78 @@ stale declaration immediately.
 
 ---
 
+## D-048 — Not earning is an answer
+
+The income question had two states: a number, or silence. Real life has a
+third, and it is common — *nothing is coming in right now*. Typing `0` got
+close but was easy to mistake for a skip, and skipping was met with "add
+your income" forever after.
+
+**Decision: "not earning right now" is a pay basis**, alongside hourly,
+weekly and the rest (`frequency: 'none'`). That falls out of D-047's model
+rather than bolting a flag onto it: it annualises to a deliberate zero, the
+amount box disappears because there is no figure to state, and everything
+downstream reads a real `0` instead of a `null`.
+
+### The distinction has to survive all the way to the copy
+
+`null` and `0` are already kept apart in the model — that is the oldest rule
+in this repo. The failure mode is subtler: both end up as an em dash on
+screen, and the *reason* beside the dash is where the distinction leaks.
+Telling someone who answered "nothing" to "add your income" is the
+empty-vs-zero rule breaking at the last inch.
+
+So a zero income now says so, in every ratio that divides by it:
+
+- savings rate, debt-to-income, retirement multiple — already had a
+  zero-specific reason
+- **net-worth-to-income did not**, and said "add the missing inputs" to
+  someone who had supplied them. Fixed.
+
+A test asserts, for each of those four, that the zero reason mentions zero,
+that the missing reason asks for the input, and **that the two are not the
+same string**. That last assertion is the one that catches this class of bug
+coming back.
+
+### Run rate: zero is not "unknown"
+
+D-047 reported the run rate as `null` when no job was ongoing. That is wrong
+in a way that matters: someone whose last job ended in August is not a
+household whose current income *cannot be determined* — it is zero, and that
+is the single most important fact about their year. `runRateCents` is now
+`0` in that case, with `earningNothingNow` to say it out loud, and the room
+offers The Runway, which is the tool that actually answers their question.
+
+### Real Hourly Wage does not apply, and says so
+
+With no earnings there is no rate to divide. Worse, work costs divided by
+hours would produce a *negative* "real hourly wage" that reads like a
+finding when it is really an absence. The engine now refuses on a zero
+income with a reason that does not ask for income already given, and the
+room links to The Runway instead.
+
+Two more results there are arithmetically right and easy to misread, so both
+are flagged rather than left for the reader to notice:
+
+- **`costsMoreThanItPays`** — once tax and the costs of working come out, a
+  job can leave you worse off per hour. A bare minus sign looks like a bug;
+  it is a finding.
+- **`implausibleHours`** — one paid hour a week makes any salary look like a
+  fortune per hour. The arithmetic is correct and the number is useless, so
+  the room says which.
+
+### The sweep that should have existed from the start
+
+A household with nothing in it, or zeroes everywhere, or debts larger than
+everything owned, is run through every engine and the whole result tree is
+walked for `NaN` and `Infinity`. Five such households, six engines each.
+
+They all passed on the first run — `Money.safeDivide` has been doing its job
+since Tier 0 — but "it passes" and "it is checked" are different states, and
+only one of them survives the next change.
+
+---
+
 ## Still open
 
 - **The last `unavailable()` ratio: life insurance needs multiple.** Credit

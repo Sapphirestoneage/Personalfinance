@@ -208,7 +208,16 @@
     { id: 'netWorthToIncome', label: 'Net worth to income', tier: 18,
       formula: 'net worth ÷ gross annual income',
       unit: 'multiple', needs: 'your balances and your income',
-      compute: function (c) { return over(c.netWorth, c.grossAnnual, { denominatorName: 'grossAnnualIncome' }); } },
+      compute: function (c) {
+        return over(c.netWorth, c.grossAnnual, {
+          denominatorName: 'grossAnnualIncome',
+          /* Someone who answered "nothing" has answered. Telling them to
+             add the input they just gave is the empty-vs-zero rule leaking
+             out through the copy. DECISIONS.md D-048. */
+          zeroReason: 'A gross income of zero can’t produce a net-worth multiple — '
+            + 'your net worth is what it is, there is just nothing to divide it by.'
+        });
+      } },
 
     { id: 'liquidityRatio', label: 'Liquidity ratio', tier: 18,
       formula: 'liquid assets ÷ monthly expenses',
