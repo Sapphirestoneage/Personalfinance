@@ -3,6 +3,8 @@
   "version": "1.0",
   "asOf": "2026-01-01",
   "source": "Financial Order of Operations ladder as specified in SPEC.md Section 13. Framework popularised by The Money Guy Show.",
+  "confidence": "convention",
+  "confidenceNote": "Thresholds follow the published Financial Order of Operations; the exact cut-offs are conventions.",
   "note": "Thresholds live here, not in engine code, so tuning the ladder is a data edit. Evaluation is a sequential boolean gate: the first unmet step is the user's placement.",
   "thresholds": {
     "highInterestDebtRate": 0.075,

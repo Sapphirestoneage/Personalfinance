@@ -267,3 +267,90 @@ validation *rules* — bounds, not the implementation. This repo currently
 validates at parse time (`parseMoney`, `parseRatePercent`) and through the
 Result contract, but has no equivalent of "date of birth cannot be in the
 future" or "age over 120 looks like a typo". Those are cheap and worth adding.
+
+---
+
+## 9. `external-data/index.ts` — every stub returns a plausible number
+
+The module's premise is right, and matches this repo: calculators call the
+data layer, never inline the values, so swapping in a real source changes no
+calculator code. That is exactly `shared/reference.js` plus `data/*.json`.
+
+The problem is what the stubs return. **Every one of them returns a number.**
+Not null, not an error, not "unavailable" — a believable figure that flows
+into a calculator and out to a user with nothing marking it as invented:
+
+| Stub | Returns | What the user is told |
+|---|---|---|
+| `getNetWorthPercentile` | `{percentile: 50}` | everyone is exactly median |
+| `getCostOfLivingIndex` | `{index: 100}` | everywhere costs the national average |
+| `getEffectiveTaxRate` | `0.22` | one rate for every income, filing status and state |
+| `getSafetyIndexScore` | `{score: 50}` | a fabricated middling score to a queer traveller asking if a place is safe |
+| `getFailureProbability` | `0.10` | the number that decides whether a warranty is worth buying |
+| `getBenefitCliffThresholds` | one fake program | the file's own comment calls this "the highest-stakes placeholder" |
+
+`getUnemploymentBenefit` is the clearest case: `priorWages * 0.02` weekly. On
+a $60,000 salary that is **$1,200 a week**, roughly double the highest state
+cap in the country. Someone modelling a job exit on that number is modelling
+a fantasy, and nothing on screen would tell them.
+
+This is the failure mode this repo's Result contract exists to prevent
+(`SPEC.md` §5, §6): a missing input produces an *incomplete state with a
+reason*, never a number. A believable wrong answer is worse than a missing
+one, because a missing one cannot be acted on.
+
+**The fix is small.** Have every placeholder return the unavailable shape
+rather than a value:
+
+```ts
+type Unavailable = { status: "unavailable"; reason: string; source: string };
+export function getNetWorthPercentile(...): PercentileResult | Unavailable {
+  return { status: "unavailable", reason: "No percentile data loaded yet.",
+           source: "Fed Survey of Consumer Finances" };
+}
+```
+
+A calculator then physically cannot render a fabricated percentile, and the
+room says "we don't have this yet" — which is true, and which someone can
+act on.
+
+**`getIrsLimits(year)` ignores its own `year` argument** and returns 2024
+figures. The signature promises year-tagged data and delivers a constant.
+Against `data/irs_limits_2026.json`: 401(k) elective 23,000 vs **24,500**,
+IRA 7,000 vs **7,500**, HSA 4,150/8,300 vs **4,400/8,750**. Anything built on
+that stub is wrong by real money today, not "later when it's wired up".
+`getStandardDeductionThreshold` ("2024-ish") and `getGiftTaxExclusion`
+(2024's 18,000 / 13.61M) have the same problem, and
+`getCurrentMortgageRate()` returns a hardcoded 6.5% for a number that moves
+daily.
+
+**Two things in that file are right and worth keeping.**
+`getMinimumPaymentFormula` — 2% of balance or $25, whichever is greater —
+matches `data/debt_rules.json` exactly, so the two builds already agree
+there. And `getJobLossRiskMultiplier` is the best decision in the file: a
+deliberate pass-through, with a comment arguing *against* building an
+automated "risk by state or identity" dataset and taking the number from the
+person instead. That is the right instinct, and it generalises — where data
+is contested, sensitive, or cannot be maintained honestly, ask rather than
+fabricate. The rest of the file would be safer built that way.
+
+## 10. What this repo changed as a result
+
+Our tables were honest about provenance, but only in prose, and rooms
+surfaced it inconsistently — some said "unverified for 2026", most said
+nothing. Nothing enforced it. So every table in `data/` now carries a
+machine-readable `confidence` and a `confidenceNote`:
+
+- **`sourced`** — traceable to a named primary source, quoted as published
+  (SCF percentiles, SE-tax mechanics)
+- **`convention`** — a rule of thumb or stated convention, not a measurement
+  (budget splits, FIRE variants, hassle weights, retirement multiples)
+- **`unverified`** — believed current, not checked against the source
+  (effective tax bands, 2026 IRS limits)
+
+`test/run.js` fails any table without one, an untagged table reads as
+`unverified` rather than trustworthy by default, and
+`Reference.provenance()` returns them weakest-first so a room leads with the
+figure a reader should trust least. Where It Goes and the Financial Snapshot
+now print it, generated from the tables rather than hand-written prose that
+goes stale the moment a table is refreshed.

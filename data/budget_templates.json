@@ -3,6 +3,8 @@
   "version": "1.0",
   "asOf": "2026-01-01",
   "source": "Budget frameworks as configuration data.",
+  "confidence": "convention",
+  "confidenceNote": "Percentage splits are popular budgeting conventions, not findings.",
   "note": "SPEC.md Section 13 — template logic is data, not code, so DRAFTT and any other framework can be added without touching the engine. Targets are decimal fractions of the template's `basis` income, keyed by the bucket ids in expense_categories.json. The classic 50/30/20 is defined against take-home pay, so `basis` is \"net\" and the engine derives it from gross using the effective-tax lookup rather than asking for a second income figure. A template with `targets: null` is a method rather than a split and is compared differently.",
   "templates": [
     {

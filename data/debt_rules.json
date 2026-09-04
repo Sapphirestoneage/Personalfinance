@@ -3,13 +3,17 @@
   "version": "1.0",
   "asOf": "2026-01-01",
   "source": "Payoff-ordering strategies and minimum-payment conventions for the Debt Calculator.",
+  "confidence": "convention",
+  "confidenceNote": "Minimum-payment formulas vary by issuer; 2% or $25 is a common convention, not a universal rule.",
   "note": "SPEC.md Section 13 — minimum payment formulas vary by issuer (typically 1-3% of balance, or a flat floor, whichever is greater) and must not be hardcoded to one formula. A user-entered statement minimum always wins over anything derived here. Strategy definitions live in this file so adding one is a data edit, not an engine change.",
   "minimumPayment": {
     "note": "Used only when the user has not entered their actual statement minimum. Revolving accounts can be derived; instalment loans cannot, because the payment depends on the original term, which we do not ask for.",
     "rules": [
       {
         "id": "revolving_percent_or_floor",
-        "appliesToTypes": ["credit_card"],
+        "appliesToTypes": [
+          "credit_card"
+        ],
         "method": "percent_of_balance_or_floor",
         "percentOfBalance": 0.02,
         "floorDollars": 25,
@@ -17,7 +21,14 @@
       },
       {
         "id": "instalment_not_derivable",
-        "appliesToTypes": ["student_loan", "auto", "mortgage", "personal", "medical", "other"],
+        "appliesToTypes": [
+          "student_loan",
+          "auto",
+          "mortgage",
+          "personal",
+          "medical",
+          "other"
+        ],
         "method": "not_derivable",
         "note": "Depends on the original term and amortisation schedule. Ask the user rather than inventing one."
       }
@@ -58,10 +69,26 @@
   "emotionalPriority": {
     "note": "Ranking for the convenience method. A debt with no tag sits at 0.",
     "tags": [
-      { "id": "family",      "label": "Owed to family or a friend", "priority": 3 },
-      { "id": "shameful",    "label": "One I'd rather not think about", "priority": 2 },
-      { "id": "entangled",   "label": "Tied to someone I'd rather not be tied to", "priority": 2 },
-      { "id": "annoying",    "label": "Just irritating", "priority": 1 }
+      {
+        "id": "family",
+        "label": "Owed to family or a friend",
+        "priority": 3
+      },
+      {
+        "id": "shameful",
+        "label": "One I'd rather not think about",
+        "priority": 2
+      },
+      {
+        "id": "entangled",
+        "label": "Tied to someone I'd rather not be tied to",
+        "priority": 2
+      },
+      {
+        "id": "annoying",
+        "label": "Just irritating",
+        "priority": 1
+      }
     ]
   },
   "limits": {

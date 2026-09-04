@@ -241,6 +241,55 @@
       { referenceVersion: table.version, referenceId: table.id });
   }
 
+  /* ---- Provenance --------------------------------------------------------
+     Every table says how much its numbers are worth, in a field rather than
+     in prose, so a room can print it and a test can require it:
+
+       'sourced'    traceable to a named primary source, quoted as published
+       'convention' a rule of thumb or a stated convention, not a measurement
+       'unverified' believed current, not checked against the primary source
+
+     This exists because the alternative is what a placeholder data layer
+     does by default: return a plausible number with no way for anything
+     downstream to know it was invented. A believable wrong answer is worse
+     than a missing one — see INTEROP.md.                                 */
+
+  var CONFIDENCE_LEVELS = ['sourced', 'convention', 'unverified'];
+
+  var CONFIDENCE_LABELS = {
+    sourced:    'from a named source',
+    convention: 'a stated convention, not a measurement',
+    unverified: 'not re-checked against the source'
+  };
+
+  /** One table's provenance, ready to render. */
+  function provenanceOf(table) {
+    if (!table) return null;
+    return {
+      id: table.id || null,
+      version: table.version || null,
+      asOf: table.asOf || null,
+      confidence: table.confidence || 'unverified',
+      label: CONFIDENCE_LABELS[table.confidence] || CONFIDENCE_LABELS.unverified,
+      note: table.confidenceNote || null,
+      source: table.source || null
+    };
+  }
+
+  /**
+   * The provenance of the named tables, weakest first, so a room can lead
+   * with the figure a reader should trust least. Pass the loaded tables and
+   * the names the room actually used — not everything it happened to load.
+   */
+  function provenance(tables, names) {
+    var rank = { unverified: 0, convention: 1, sourced: 2 };
+    return (names || []).map(function (n) {
+      return provenanceOf(tables && tables[n]);
+    }).filter(Boolean).sort(function (a, b) {
+      return rank[a.confidence] - rank[b.confidence];
+    });
+  }
+
   /** Collect the version stamp of every table used, for a snapshot. */
   function versionsOf(tables) {
     var out = {};
@@ -257,6 +306,10 @@
     lookupRetirementMultiple: lookupRetirementMultiple,
     lookupNetWorthPercentile: lookupNetWorthPercentile,
     lookupLiquidityBand: lookupLiquidityBand,
+    CONFIDENCE_LEVELS: CONFIDENCE_LEVELS,
+    CONFIDENCE_LABELS: CONFIDENCE_LABELS,
+    provenanceOf: provenanceOf,
+    provenance: provenance,
     versionsOf: versionsOf,
     _cache: cache
   };

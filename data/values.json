@@ -3,6 +3,8 @@
   "version": "1.0",
   "asOf": "2026-01-01",
   "source": "A general-purpose values vocabulary for the Values vs. Spending Audit, with a DEFAULT mapping onto the categories in data/expense_categories.json. The vocabulary is deliberately small and plain; it is not drawn from any particular psychological instrument and does not claim to be one.",
+  "confidence": "convention",
+  "confidenceNote": "A plain values vocabulary with a default mapping; not drawn from any psychological instrument.",
   "note": "SPEC.md Section 13, Tier 2. The default mapping below is a starting point, not a claim — whether groceries serve Health or Home is a question about a person's life, not a fact, so the room lets them reassign every category and stores their answer. Each category appears under AT MOST ONE value: shares have to add up, and a category counted under two values would double-count the money. test/run.js asserts that disjointness and that every category in expense_categories.json is either mapped here or deliberately left out.",
   "unassignedLabel": "Not claimed by anything you named",
   "values": [
@@ -10,57 +12,87 @@
       "id": "security",
       "label": "Security & stability",
       "blurb": "Not lying awake about money. Cover, cushions, and balances going down.",
-      "defaultCategoryIds": ["insurance", "emergency_savings", "debt_minimums", "extra_debt_payment"]
+      "defaultCategoryIds": [
+        "insurance",
+        "emergency_savings",
+        "debt_minimums",
+        "extra_debt_payment"
+      ]
     },
     {
       "id": "home",
       "label": "Home & comfort",
       "blurb": "A place that feels like yours, and warm.",
-      "defaultCategoryIds": ["housing", "utilities"]
+      "defaultCategoryIds": [
+        "housing",
+        "utilities"
+      ]
     },
     {
       "id": "health",
       "label": "Health & how you feel",
       "blurb": "Eating well, staying well, looking after the body you live in.",
-      "defaultCategoryIds": ["healthcare", "groceries", "personal_care"]
+      "defaultCategoryIds": [
+        "healthcare",
+        "groceries",
+        "personal_care"
+      ]
     },
     {
       "id": "freedom",
       "label": "Freedom & future options",
       "blurb": "Money that buys choices later — including the choice to stop.",
-      "defaultCategoryIds": ["retirement", "investments"]
+      "defaultCategoryIds": [
+        "retirement",
+        "investments"
+      ]
     },
     {
       "id": "connection",
       "label": "People & connection",
       "blurb": "Time with the people you like, and giving to the ones you love.",
-      "defaultCategoryIds": ["dining_out", "gifts"]
+      "defaultCategoryIds": [
+        "dining_out",
+        "gifts"
+      ]
     },
     {
       "id": "experience",
       "label": "Experiences & adventure",
       "blurb": "Going places, seeing things, having stories afterwards.",
-      "defaultCategoryIds": ["travel", "entertainment"]
+      "defaultCategoryIds": [
+        "travel",
+        "entertainment"
+      ]
     },
     {
       "id": "independence",
       "label": "Getting around on your own terms",
       "blurb": "Being able to go where you need to go, when you need to go.",
-      "defaultCategoryIds": ["transportation"]
+      "defaultCategoryIds": [
+        "transportation"
+      ]
     },
     {
       "id": "family",
       "label": "Caring for family",
       "blurb": "The people who depend on you, and what that costs.",
-      "defaultCategoryIds": ["childcare"]
+      "defaultCategoryIds": [
+        "childcare"
+      ]
     },
     {
       "id": "ease",
       "label": "Ease & good things",
       "blurb": "Convenience, nice objects, the small stuff that makes a week easier.",
-      "defaultCategoryIds": ["shopping", "subscriptions"]
+      "defaultCategoryIds": [
+        "shopping",
+        "subscriptions"
+      ]
     }
   ],
-  "unmappedCategoryIds": ["other"],
+  "unmappedCategoryIds": [
+    "other"
+  ],
   "unmappedNote": "\"Everything else\" is deliberately unmapped. Money that lands there has not been claimed by anything, which is itself worth seeing."
 }

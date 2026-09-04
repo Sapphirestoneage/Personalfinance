@@ -2024,6 +2024,93 @@ section('Date of birth');
       Schema.primaryAge(typo, AS_OF)).status, 'incomplete');
 })();
 
+/* ==========================================================================
+   Script tags. A room that loads an engine must load what that engine needs.
+
+   The Financial Snapshot shipped without engines/projection.js, which
+   engines/tier0.js needs for FIRE progress. computeAll() threw on every
+   render, the room's own .catch() turned it into "couldn't load the
+   reference tables — serve this over HTTP", and the page quietly showed
+   em dashes for everything. The browser sweep called the page clean,
+   because a swallowed error is not a console error.
+
+   This walks the dependency graph the modules already declare — each one
+   names its browser globals as `root.SLAF && root.SLAF.X` — and fails a
+   room that loads a module without its dependencies.
+   ========================================================================== */
+
+section('Room script tags');
+
+(function () {
+  const GLOBAL_TO_FILE = {
+    Money: 'shared/money.js', Schema: 'shared/schema.js',
+    Registry: 'shared/registry.js', Reference: 'shared/reference.js',
+    Spine: 'shared/spine-v2.js', Ownership: 'shared/ownership.js',
+    Rating: 'shared/rating.js', LiveForm: 'shared/liveform.js',
+    DemoPersona: 'shared/demo-persona.js',
+    Tier0: 'engines/tier0.js', Foo: 'engines/foo.js',
+    CashFlow: 'engines/cashflow.js', Debt: 'engines/debt.js',
+    Fire: 'engines/fire.js', Projection: 'engines/projection.js',
+    Hourly: 'engines/hourly.js', QuickMath: 'engines/quickmath.js',
+    SelfEmployed: 'engines/selfemployed.js', Goals: 'engines/goals.js',
+    Accounts: 'engines/accounts.js', Swan: 'engines/swan.js',
+    Values: 'engines/values.js', Fulfillment: 'engines/fulfillment.js',
+    Hassle: 'engines/hassle.js', SideHustle: 'engines/sidehustle.js'
+  };
+  const FILE_TO_GLOBAL = {};
+  Object.keys(GLOBAL_TO_FILE).forEach(g => { FILE_TO_GLOBAL[GLOBAL_TO_FILE[g]] = g; });
+
+  /* What each module asks the browser for. `Tier` is how the minifier-free
+     source reads `SLAF.Tier0` when split on a dot, so normalise it. */
+  const deps = {};
+  Object.keys(FILE_TO_GLOBAL).forEach(function (file) {
+    const src = fs.readFileSync(path.join(ROOT, file), 'utf8');
+    const found = new Set();
+    (src.match(/root\.SLAF && root\.SLAF\.[A-Za-z0-9]+/g) || []).forEach(function (m) {
+      let g = m.split('.').pop();
+      if (g === 'Tier') g = 'Tier0';
+      if (GLOBAL_TO_FILE[g]) found.add(g);
+    });
+    deps[file] = Array.from(found);
+  });
+
+  function closure(files) {
+    const need = new Set();
+    const stack = files.slice();
+    while (stack.length) {
+      const f = stack.pop();
+      (deps[f] || []).forEach(function (g) {
+        const dep = GLOBAL_TO_FILE[g];
+        if (!dep || dep === f || need.has(dep)) return;
+        need.add(dep);
+        stack.push(dep);
+      });
+    }
+    return need;
+  }
+
+  fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => f.endsWith('.html')).forEach(function (file) {
+    const html = fs.readFileSync(path.join(ROOT, 'rooms', file), 'utf8');
+    const loaded = (html.match(/<script src="\.\.\/([^"]+)"><\/script>/g) || [])
+      .map(t => t.replace(/.*\.\.\//, '').replace(/"><\/script>/, ''));
+    const loadedSet = new Set(loaded);
+
+    /* Everything the room's own inline script reaches for, plus everything
+       those modules reach for, transitively. */
+    const direct = loaded.filter(f => FILE_TO_GLOBAL[f]);
+    const usedInline = Object.keys(GLOBAL_TO_FILE).filter(function (g) {
+      return new RegExp('SLAF\\.' + g + '\\b').test(html) || new RegExp('\\b' + g + '\\.').test(html);
+    }).map(g => GLOBAL_TO_FILE[g]).filter(Boolean);
+
+    const required = closure(direct.concat(usedInline.filter(f => loadedSet.has(f))));
+    const missing = Array.from(required).filter(f => !loadedSet.has(f));
+
+    checkTrue(`rooms/${file} loads everything its modules need`,
+      missing.length === 0,
+      missing.length ? `missing: ${missing.join(', ')}` : '');
+  });
+})();
+
 section('Storage and migration');
 
 (function () {
@@ -2903,13 +2990,45 @@ section('Reference tables');
     checkTrue(`TABLE_FILES.${name} -> data/${file} exists`,
       fs.existsSync(path.join(ROOT, 'data', file)));
   });
-  /* Every table carries the version/as-of stamp SPEC.md §6 requires. */
+  /* Every table carries the version/as-of stamp SPEC.md §6 requires, and
+     says how much its numbers are worth. The confidence field is not
+     decoration: a data layer that hands back a plausible number with no way
+     to know it was invented is how a believable wrong answer ships, which
+     is the whole argument in INTEROP.md. */
   onDisk.forEach(function (file) {
     const t = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', file), 'utf8'));
     checkTrue(`data/${file} declares a version`, typeof t.version === 'string' && t.version.length > 0);
     checkTrue(`data/${file} declares an asOf date`, typeof t.asOf === 'string' && t.asOf.length > 0);
     checkTrue(`data/${file} names its source`, typeof t.source === 'string' && t.source.length > 0);
+    checkTrue(`data/${file} declares how much its numbers are worth`,
+      Reference.CONFIDENCE_LEVELS.indexOf(t.confidence) !== -1,
+      `confidence must be one of ${Reference.CONFIDENCE_LEVELS.join(' / ')}`);
+    checkTrue(`data/${file} says why it carries that confidence`,
+      typeof t.confidenceNote === 'string' && t.confidenceNote.length > 0);
   });
+
+  /* Provenance reads back, and the weakest figure sorts first so a room
+     leads with the number a reader should trust least. */
+  (function () {
+    const tables = {};
+    onDisk.forEach(function (file) {
+      const name = Object.keys(Reference.TABLE_FILES)
+        .filter(k => Reference.TABLE_FILES[k] === file)[0];
+      if (name) tables[name] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', file), 'utf8'));
+    });
+    const ordered = Reference.provenance(tables, ['seTax', 'fooRules', 'irsLimits']);
+    check('provenance comes back weakest first',
+      ordered.map(p => p.confidence).join(','), 'unverified,convention,sourced');
+    check('and carries the table id', ordered[0].id, 'irs_limits');
+    checkTrue('and a label a room can print', ordered.every(p => p.label && p.label.length));
+    check('an absent table yields nothing rather than a fake entry',
+      Reference.provenance(tables, ['notATable']).length, 0);
+    check('a missing table has no provenance', Reference.provenanceOf(null), null);
+    /* A table with no confidence field is treated as the weakest, never as
+       trustworthy by default. */
+    check('an untagged table defaults to unverified',
+      Reference.provenanceOf({ id: 'x' }).confidence, 'unverified');
+  })();
 })();
 
 /* ==========================================================================

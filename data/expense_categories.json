@@ -3,6 +3,8 @@
   "version": "1.0",
   "asOf": "2026-01-01",
   "source": "Category list and needs/wants/savings bucketing for the Cash Flow calc.",
+  "confidence": "convention",
+  "confidenceNote": "A category vocabulary, not a dataset. Nothing here is a measured figure.",
   "note": "Config, not code (SPEC.md Section 7). Adding a category is a data edit. `bucket` drives budget-template comparison; `essential` marks the categories that roll up into the tracked figure compared against the user's monthly-essential estimate. `keywords` exist for the future bank-import categoriser (SPEC.md Section 12.5) and are unused by manual entry. A category carrying `derivedFrom` is not typed in at all: its value is computed from the household field named there, and the room that owns that field is the only place it can be changed. Debt minimums are the case in point — they are the sum of the itemised debts, so typing them here would be a third editable copy of a number that already exists twice.",
   "buckets": [
     {

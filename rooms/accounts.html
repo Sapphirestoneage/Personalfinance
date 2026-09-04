@@ -125,9 +125,10 @@
   <p class="disclaimer">
     Educational tool, not financial advice. The whole Roth-vs-Traditional
     question hinges on a tax rate in the future that nobody knows — try it
-    both ways. Contribution limits come from
-    <code>data/irs_limits_2026.json</code> and the annual-additions figure is
-    unverified for 2026. Your numbers stay in this browser.
+    both ways. Your numbers stay in this browser.
+  </p>
+  <p class="disclaimer" id="provenance"></p>
+  <p class="disclaimer" style="display:none">
   </p>
 </main>
 
@@ -279,8 +280,20 @@
         + (r.overFifty ? ' Your catch-up contribution is included.' : '');
   }
 
+  /* Say where the numbers came from and how much they are worth, from the
+     tables themselves rather than a hand-written sentence that goes stale
+     the moment a table is refreshed. See shared/reference.js. */
+  function renderProvenance() {
+    el('provenance').innerHTML = Reference.provenance(TABLES, ['irsLimits', 'seTax'])
+      .map(function (p) {
+        return '<strong>' + p.id + '</strong> v' + p.version + ' (' + p.asOf + ') — '
+          + p.label + '. ' + p.note;
+      }).join('<br/>');
+  }
+
   function render() {
     if (!TABLES) return;
+    renderProvenance();
     var h = Spine.getProfile();
     el('reading-list').innerHTML = ['filingStatus', 'age']
       .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');

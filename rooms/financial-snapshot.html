@@ -211,6 +211,7 @@
     contribution limits are approximations — see <code>data/</code> for what
     each one is actually worth. Your numbers stay in this browser.
   </p>
+  <p class="disclaimer" id="provenance"></p>
 </main>
 
 <script src="../shared/money.js"></script>
@@ -219,6 +220,7 @@
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
 <script src="../shared/ownership.js"></script>
+<script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/foo.js"></script>
 <script src="../engines/swan.js"></script>
@@ -497,6 +499,13 @@
       excludingMatch: all.savingsRateExcludingMatch,
       includingMatch: all.savingsRateIncludingMatch
     });
+    el('provenance').innerHTML = Reference.provenance(TABLES,
+      ['netWorthPercentiles', 'retirementMilestones', 'effectiveTaxRates'])
+      .map(function (p) {
+        return '<strong>' + p.id + '</strong> v' + p.version + ' (' + p.asOf + ') — '
+          + p.label + '. ' + p.note;
+      }).join('<br/>');
+
     el('ef-swan').innerHTML = Ownership.chip('swanTarget', h, ROOM_ID);
     setCard('out-emergency-fund', all.emergencyFundMonths,
       function (v) { return Money.formatMonths(v); },

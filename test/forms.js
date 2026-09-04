@@ -280,6 +280,14 @@ async function tagFields(page, container) {
       check(name, actual, expected);
     }
     check('no page errors', errs.join('; '), '');
+    /* A room that catches its own boot error and turns it into a notice
+       shows no console error at all — which is how a page that rendered
+       nothing but em dashes passed a clean sweep. Check the notice too. */
+    check('no error notice on the page',
+      await page.evaluate(() => {
+        const n = document.getElementById('load-notice');
+        return n && !n.hidden ? n.textContent.trim() : '';
+      }), '');
     } catch (err) {
       /* A detached-element timeout IS the bug: the node the tap was headed
          for stopped existing. Report it as a failure rather than crashing. */

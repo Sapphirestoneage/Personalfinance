@@ -3,6 +3,8 @@
   "version": "1.0",
   "asOf": "2026-01-01",
   "source": "Starting values for the Return on Hassle calculator: a short list of common money-saving chores with a typical time cost and a default 1-10 hassle rating. These are STARTING POINTS chosen for plausibility, not measurements — no study is being cited, and every one of them is meant to be overwritten by the person using it.",
+  "confidence": "convention",
+  "confidenceNote": "Hours and hassle scores are plausible starting points, and the weighting slope is a stated convention with no research behind it.",
   "note": "SPEC.md Section 13, Tier 1: 'Defaultable hassle-score-by-activity-type is a small reference table worth building early.' This is that table. Hours are per instance of doing the thing, start to finish, including the waiting-on-hold parts.",
   "weighting": {
     "id": "linear_1_to_2",

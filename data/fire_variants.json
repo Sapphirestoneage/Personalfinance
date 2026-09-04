@@ -3,6 +3,8 @@
   "version": "1.0",
   "asOf": "2026-01-01",
   "source": "The commonly used FIRE flavours. Expense factors are conventions, not published figures.",
+  "confidence": "convention",
+  "confidenceNote": "Variant multipliers are community conventions, not findings.",
   "precision": "approximate",
   "note": "SPEC.md Section 13 — five flavours of expenses x 25, each changing the expense assumption or adding a twist. Section 8 requires ONE parameterised calculateFIRE() rather than five calculators, so this file holds the parameters and engines/fire.js holds the single formula. The expenseFactor values are Assumption-class: a user override is a local preview, never a write.",
   "defaults": {

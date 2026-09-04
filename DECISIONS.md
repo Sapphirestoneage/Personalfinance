@@ -1529,6 +1529,59 @@ tool, as the registry itself suggests.
 
 ---
 
+## D-036 — Confidence as a field, and the Snapshot bug that hid behind a notice
+
+The parallel build's `external-data/index.ts` returns a plausible number from
+every placeholder — percentile 50 for everyone, one tax rate for every
+income, a fabricated safety score, `priorWages * 0.02` for an unemployment
+benefit (about $1,200 a week on a $60,000 salary, roughly double the highest
+state cap). See `INTEROP.md` §9. A believable wrong answer is worse than a
+missing one, and it is exactly what the Result contract exists to stop.
+
+Checking that criticism against this repo found the honest version of the
+same weakness. Our tables *are* candid about what their numbers are worth —
+but only in prose, in a `source` or `note` field, and the rooms surfaced it
+unevenly: Where It Goes said the annual-additions figure was unverified, most
+rooms said nothing at all, and nothing enforced any of it.
+
+**So provenance is a field now.** Every table in `data/` carries
+`confidence` — `sourced`, `convention` or `unverified` — plus a
+`confidenceNote` saying why. `test/run.js` fails a table without one. An
+untagged table reads as `unverified` rather than trustworthy by default.
+`Reference.provenance()` sorts weakest-first so a room leads with the figure
+a reader should trust least, and Where It Goes and the Financial Snapshot
+generate their provenance line from the tables instead of a hand-written
+sentence that goes stale the moment a table is refreshed.
+
+Two of fourteen tables are `unverified`: the effective-tax bands and the 2026
+IRS limits. Both were already flagged in `DECISIONS.md` as needing a
+primary-source pass; now the app says so on the page.
+
+**And wiring that in surfaced a live bug that had been shipping.** The
+Financial Snapshot never loaded `engines/projection.js`, which
+`engines/tier0.js` needs for FIRE progress. `computeAll()` threw on every
+render, the room's own `.catch()` turned it into "couldn't load the reference
+tables — serve this over HTTP", and the page showed em dashes for all nine
+outputs. Ten rooms had the same missing script tag; nine worked by luck
+because they never call the function that needs it.
+
+I had walked past it. The page sweep reported `financial-snapshot` clean with
+`emdashes=15`, and I read that as copy and moved on — a swallowed error is
+not a console error, and the em-dash count was the tell. After the fix the
+same page reports 6.
+
+Two guards, because the fix alone would not stop the next one:
+
+- `test/run.js` now walks the dependency graph the modules already declare —
+  each names its browser globals as `root.SLAF && root.SLAF.X` — and fails
+  any room that loads a module without loading what that module needs. It
+  caught all ten rooms immediately.
+- `test/forms.js` and the page sweep now fail a page whose `#load-notice` is
+  visible, so a room that catches its own boot error and renders a friendly
+  message can no longer pass as clean.
+
+---
+
 ## Still open
 
 - ~~**Two-Income Household Toggle** and **Soft Saving Balance
