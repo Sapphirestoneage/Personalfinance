@@ -14,28 +14,28 @@
     {
       "id": "featsOfStrength",
       "name": "Feats of Strength",
-      "blurb": "Earn each score. Knowledge questions have right answers; judgment and charisma questions ask for evidence of what you have actually done, not how you rate yourself.",
+      "blurb": "Eighteen quick questions about what you'd actually do. No maths, nothing to revise, and no answer that makes you look daft — the honest one always scores.",
       "default": true
     },
     {
       "id": "pointBuy",
       "name": "Point Buy",
-      "blurb": "Spend a fixed pool across the nine. Costs escalate at the top exactly as they do in 5e, so a 20 is expensive on purpose."
+      "blurb": "Spend a pool of 45 points across the nine, however you like. Going high costs more each step, exactly as it does in 5e, so a 20 has to be paid for somewhere."
     },
     {
       "id": "standardArray",
       "name": "Standard Array",
-      "blurb": "A fixed spread, assigned where you want it. Fastest honest option when you don't want to answer eighteen questions tonight."
+      "blurb": "Nine fixed numbers, and you decide who gets what. The quickest honest route when you don't fancy answering questions tonight."
     },
     {
       "id": "roll",
       "name": "Roll",
-      "blurb": "4d6, drop the lowest, floored at 8. Rolling cannot reach 19 or 20 — the same ceiling rolling has in 5e."
+      "blurb": "4d6, drop the lowest, nine times. You get what you get — and like at a table, rolling can't reach 19 or 20."
     },
     {
       "id": "homebrew",
       "name": "Homebrew",
-      "blurb": "Type the nine numbers directly. Nothing is checked. For rebuilding a sheet you already trust, or for testing."
+      "blurb": "Type the nine numbers yourself. Nothing is checked. For when you already know your character, or you just want to poke at it."
     }
   ],
   "pointBuy": {
@@ -480,221 +480,47 @@
     }
   },
   "quiz": {
-    "taxLiteracy": [
+    "negotiation": [
       {
-        "q": "You're in the 22% federal bracket and get a $1,000 raise. What do you owe in federal income tax on that $1,000?",
+        "order": 1,
+        "q": "A job offer lands. The number is fine. Not great — fine. What actually happens next?",
         "options": [
           {
-            "label": "$220 — only the new dollars are taxed at 22%",
+            "label": "I counter. I've already looked up what this role pays elsewhere.",
             "points": 6
           },
           {
-            "label": "It depends on my deductions; I'd have to work it out",
-            "points": 3
-          },
-          {
-            "label": "$220, and my whole income now gets taxed at 22%",
-            "points": 1
-          },
-          {
-            "label": "I don't know",
-            "points": 0
-          }
-        ]
-      },
-      {
-        "q": "Which of these lowers your taxable income in the year you contribute?",
-        "options": [
-          {
-            "label": "Traditional 401(k)",
-            "points": 6
-          },
-          {
-            "label": "Both traditional and Roth, equally",
-            "points": 2
-          },
-          {
-            "label": "Roth IRA",
-            "points": 1
-          },
-          {
-            "label": "I don't know",
-            "points": 0
-          }
-        ]
-      }
-    ],
-    "marketLiteracy": [
-      {
-        "q": "US stocks fell roughly 50% peak-to-trough in 2007-09. About how long until the index regained its prior peak?",
-        "options": [
-          {
-            "label": "About 4-5 years",
-            "points": 6
-          },
-          {
-            "label": "About 10 years or more",
-            "points": 3
-          },
-          {
-            "label": "About a year",
-            "points": 1
-          },
-          {
-            "label": "I don't know",
-            "points": 0
-          }
-        ]
-      },
-      {
-        "q": "Over the last century, the US stock market's average annual return BEFORE inflation is closest to:",
-        "options": [
-          {
-            "label": "About 10%",
-            "points": 6
-          },
-          {
-            "label": "About 5%",
-            "points": 3
-          },
-          {
-            "label": "About 20%",
-            "points": 1
-          },
-          {
-            "label": "I don't know",
-            "points": 0
-          }
-        ]
-      }
-    ],
-    "instrumentLiteracy": [
-      {
-        "q": "A fund charges a 0.75% expense ratio. On $100,000 invested, what does that cost you per year?",
-        "options": [
-          {
-            "label": "$750",
-            "points": 6
-          },
-          {
-            "label": "$75",
-            "points": 2
-          },
-          {
-            "label": "Nothing directly — it comes out of the fund's profits",
-            "points": 1
-          },
-          {
-            "label": "I don't know",
-            "points": 0
-          }
-        ]
-      },
-      {
-        "q": "The main difference between term and whole life insurance is:",
-        "options": [
-          {
-            "label": "Term covers a set period and builds no cash value; whole life is permanent and does",
-            "points": 6
-          },
-          {
-            "label": "Term is always the more expensive of the two",
-            "points": 1
-          },
-          {
-            "label": "They're the same product priced differently",
-            "points": 1
-          },
-          {
-            "label": "I don't know",
-            "points": 0
-          }
-        ]
-      }
-    ],
-    "scenarioForesight": [
-      {
-        "q": "In the last 12 months, have you actually written out what happens to your finances if your income stopped tomorrow?",
-        "options": [
-          {
-            "label": "Yes — written down, with real numbers and dates",
-            "points": 6
-          },
-          {
-            "label": "I've thought it through carefully but never written it",
+            "label": "I counter, with a number I mostly made up on the spot.",
             "points": 4
           },
           {
-            "label": "Vaguely",
+            "label": "I ask if there's any wiggle room and take whatever comes back.",
             "points": 2
           },
           {
-            "label": "No",
+            "label": "I accept. Asking feels like pushing my luck.",
             "points": 0
           }
         ]
       },
       {
-        "q": "Before your last purchase larger than one month's expenses, what did you actually compare?",
+        "order": 10,
+        "q": "In the last three years, have you asked anyone for more money — a raise, a rate, a refund, a fee waived?",
         "options": [
           {
-            "label": "At least two real alternatives and the option of not buying at all",
+            "label": "More than once, and it worked at least one of those times.",
             "points": 6
           },
           {
-            "label": "Alternatives, but I'd already decided",
+            "label": "Once.",
+            "points": 4
+          },
+          {
+            "label": "I asked, got a no, and haven't tried since.",
             "points": 3
           },
           {
-            "label": "Just the price",
-            "points": 1
-          },
-          {
-            "label": "Nothing, or I haven't made one",
-            "points": 0
-          }
-        ]
-      }
-    ],
-    "selfAwareness": [
-      {
-        "q": "Can you name the specific situation that most reliably leads you to spend money you didn't plan to?",
-        "options": [
-          {
-            "label": "Yes — I can name the exact trigger, and I've built a guard against it",
-            "points": 6
-          },
-          {
-            "label": "Yes, I can name it, but I haven't done anything about it",
-            "points": 4
-          },
-          {
-            "label": "Roughly — a general sense",
-            "points": 2
-          },
-          {
-            "label": "No",
-            "points": 0
-          }
-        ]
-      },
-      {
-        "q": "In the last 6 months, how many unplanned purchases over $100 did you regret within a week?",
-        "options": [
-          {
-            "label": "None",
-            "points": 6
-          },
-          {
-            "label": "One",
-            "points": 4
-          },
-          {
-            "label": "Two or three",
-            "points": 2
-          },
-          {
-            "label": "Four or more",
+            "label": "Not once.",
             "points": 0
           }
         ]
@@ -702,131 +528,230 @@
     ],
     "threatDetection": [
       {
-        "q": "Someone credible-seeming offers a guaranteed 12% annual return with no risk. Your read?",
+        "order": 2,
+        "q": "Someone you like and trust says they can get you a guaranteed 12% a year, no risk. Gut reaction?",
         "options": [
           {
-            "label": "'Guaranteed' plus well above market is the tell — I walk",
+            "label": "“Guaranteed” and “no risk” at that number is the tell. I'm out.",
             "points": 6
           },
           {
-            "label": "I'd ask hard questions, but might put a small amount in",
-            "points": 3
+            "label": "I'd want it in writing, and I'd probably still pass.",
+            "points": 4
           },
           {
-            "label": "I'm not sure how I'd judge it",
+            "label": "I'd put a small amount in just to see.",
             "points": 1
           },
           {
-            "label": "Sounds worth a look",
+            "label": "Honestly? I'd be interested.",
             "points": 0
           }
         ]
       },
       {
-        "q": "Have you ever declined a financial product specifically because of how the person selling it was paid?",
+        "order": 11,
+        "q": "The last person who recommended you a financial product — do you know how they got paid for it?",
         "options": [
           {
-            "label": "Yes — and I ask how someone is paid before I decide",
+            "label": "Yes. I ask, because it changes what someone recommends.",
             "points": 6
           },
           {
-            "label": "Yes, once it became obvious",
+            "label": "I worked it out eventually.",
             "points": 4
           },
           {
-            "label": "It's never occurred to me to ask",
-            "points": 1
-          },
-          {
-            "label": "No",
+            "label": "No — it genuinely hadn't occurred to me.",
             "points": 0
-          }
-        ]
-      }
-    ],
-    "negotiation": [
-      {
-        "q": "In the last 3 years, have you asked for and received a raise, a higher rate, or a fee waiver?",
-        "options": [
-          {
-            "label": "Yes, more than once",
-            "points": 6
           },
           {
-            "label": "Yes, once",
-            "points": 4
-          },
-          {
-            "label": "I asked and was turned down",
-            "points": 3
-          },
-          {
-            "label": "I haven't asked",
-            "points": 0
-          }
-        ]
-      },
-      {
-        "q": "When you get a first offer on something significant — a salary, a rate, a price — what do you usually do?",
-        "options": [
-          {
-            "label": "Counter, with a number I researched first",
-            "points": 6
-          },
-          {
-            "label": "Counter, off instinct",
-            "points": 4
-          },
-          {
-            "label": "Ask whether there's any flexibility",
-            "points": 2
-          },
-          {
-            "label": "Accept it",
-            "points": 0
+            "label": "Nobody's ever recommended me one.",
+            "points": 2,
+            "neutral": true
           }
         ]
       }
     ],
     "network": [
       {
-        "q": "How many people could you contact this week who could plausibly connect you to paid work?",
+        "order": 3,
+        "q": "You need paid work inside a month. Who can you actually call?",
         "options": [
           {
-            "label": "More than ten",
+            "label": "More than ten people who could plausibly connect me to something.",
             "points": 6
           },
           {
-            "label": "Four to ten",
+            "label": "A handful — four or five names come to mind straight away.",
             "points": 4
           },
           {
-            "label": "One to three",
+            "label": "One or two.",
             "points": 2
           },
           {
-            "label": "None",
+            "label": "I'd be starting from job boards.",
             "points": 0
           }
         ]
       },
       {
-        "q": "In the last 2 years, has paid work or a financial opportunity reached you through someone you know rather than a public application?",
+        "order": 12,
+        "q": "Think about your last few good things — work, a flat, a deal. How did they reach you?",
         "options": [
           {
-            "label": "Yes, more than once",
+            "label": "Through people I know, more than once.",
             "points": 6
           },
           {
-            "label": "Yes, once",
+            "label": "One of them came through someone I know.",
             "points": 4
           },
           {
-            "label": "No, but I think it could",
+            "label": "All through public applications — but I could ask around if I had to.",
             "points": 2
           },
           {
-            "label": "No",
+            "label": "All public applications, and asking around isn't really my thing.",
+            "points": 0
+          }
+        ]
+      }
+    ],
+    "selfAwareness": [
+      {
+        "order": 4,
+        "q": "There's a specific situation that reliably makes you spend money you didn't plan to. Can you name it right now?",
+        "options": [
+          {
+            "label": "Yes — and I've actually built something in to stop it.",
+            "points": 6
+          },
+          {
+            "label": "Yes, instantly. I just haven't done anything about it.",
+            "points": 4
+          },
+          {
+            "label": "Sort of. It's more a mood than a moment.",
+            "points": 2
+          },
+          {
+            "label": "No — it feels random from the inside.",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "order": 13,
+        "q": "Last time you spent more than you meant to, what happened afterwards?",
+        "options": [
+          {
+            "label": "I worked out why and changed something about the setup.",
+            "points": 6
+          },
+          {
+            "label": "I clocked the pattern and moved on.",
+            "points": 4
+          },
+          {
+            "label": "I felt rubbish about it for a bit.",
+            "points": 2
+          },
+          {
+            "label": "I try not to look at it too closely.",
+            "points": 0
+          }
+        ]
+      }
+    ],
+    "scenarioForesight": [
+      {
+        "order": 5,
+        "q": "Your income stops tomorrow. How precisely do you know what happens next?",
+        "options": [
+          {
+            "label": "Precisely. It's written down, with dates and numbers.",
+            "points": 6
+          },
+          {
+            "label": "I've thought it through properly — just never wrote it down.",
+            "points": 4
+          },
+          {
+            "label": "Roughly. I know it would be bad.",
+            "points": 2
+          },
+          {
+            "label": "I genuinely don't know, and I'd rather not find out.",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "order": 14,
+        "q": "Before your last purchase bigger than a month's rent, what did you actually compare?",
+        "options": [
+          {
+            "label": "Two real alternatives, and the option of not buying at all.",
+            "points": 6
+          },
+          {
+            "label": "A couple of options — though I'd basically already decided.",
+            "points": 3
+          },
+          {
+            "label": "Only whether I could afford it.",
+            "points": 1
+          },
+          {
+            "label": "Nothing. I wanted it.",
+            "points": 0
+          }
+        ]
+      }
+    ],
+    "marketLiteracy": [
+      {
+        "order": 6,
+        "q": "The market falls 30% over six weeks. Your money is in it. What do you actually do?",
+        "options": [
+          {
+            "label": "Nothing — or buy more. I decided this in advance, on a calm day.",
+            "points": 6
+          },
+          {
+            "label": "Nothing, but I check the app far more than is good for me.",
+            "points": 4
+          },
+          {
+            "label": "Move some to cash until it settles down.",
+            "points": 1
+          },
+          {
+            "label": "Sell. I can always get back in later.",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "order": 15,
+        "q": "A friend says they're waiting for things to calm down before they start investing. You think:",
+        "options": [
+          {
+            "label": "Waiting has a cost too — that's time out of the market.",
+            "points": 6
+          },
+          {
+            "label": "Fair enough, but they should pick a date to start regardless.",
+            "points": 4
+          },
+          {
+            "label": "Sensible. Why buy into a mess.",
+            "points": 1
+          },
+          {
+            "label": "I'd have no idea what to tell them.",
             "points": 0
           }
         ]
@@ -834,60 +759,154 @@
     ],
     "personability": [
       {
-        "q": "The people who share your finances — partner, family, business partners — are:",
+        "order": 7,
+        "q": "The people you share money with — partner, family, whoever. Where are they?",
         "options": [
           {
-            "label": "Actively aligned; we set the plan together",
+            "label": "We set the plan together and we both actually follow it.",
             "points": 6
           },
           {
-            "label": "Supportive, but not really involved",
+            "label": "Supportive, but it's basically my job.",
             "points": 4
           },
           {
-            "label": "I don't share finances with anyone",
-            "points": 3,
-            "neutral": true
-          },
-          {
-            "label": "Neutral or unaware",
+            "label": "We avoid the topic.",
             "points": 2
           },
           {
-            "label": "Actively pulling the other way",
+            "label": "We're pulling in opposite directions.",
             "points": 0
+          },
+          {
+            "label": "I don't share money with anyone.",
+            "points": 3,
+            "neutral": true
           }
         ]
       },
       {
-        "q": "In the last year, have you changed someone's financial behaviour in your household by persuading them rather than pressuring them?",
+        "order": 16,
+        "q": "Last time you wanted someone in your household to change something about money, how did it go?",
         "options": [
           {
-            "label": "Yes, and it stuck",
+            "label": "I made the case, they came round, and it stuck.",
             "points": 6
           },
           {
-            "label": "Yes, briefly",
+            "label": "It worked for a while.",
             "points": 4
           },
           {
-            "label": "I tried and it didn't land",
-            "points": 2
-          },
-          {
-            "label": "No",
+            "label": "It turned into a row and nothing changed.",
             "points": 0
           },
           {
-            "label": "It doesn't apply — I don't share finances with anyone",
+            "label": "I didn't bring it up.",
+            "points": 1
+          },
+          {
+            "label": "Doesn't apply to me.",
             "points": 2,
             "neutral": true
           }
         ]
       }
+    ],
+    "instrumentLiteracy": [
+      {
+        "order": 8,
+        "q": "Two funds hold basically the same companies. What do you look at first?",
+        "options": [
+          {
+            "label": "The ongoing fee — on identical holdings it's the bit I control.",
+            "points": 6
+          },
+          {
+            "label": "How each one did over the last five years.",
+            "points": 3
+          },
+          {
+            "label": "Whichever one my provider puts in front of me.",
+            "points": 1
+          },
+          {
+            "label": "I wouldn't know where to start comparing them.",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "order": 17,
+        "q": "You're offered life cover that “builds a cash value you can borrow against”. Your response?",
+        "options": [
+          {
+            "label": "I'd compare it against plain term cover, and ask who gets paid for selling it.",
+            "points": 6
+          },
+          {
+            "label": "I'd get someone I trust to look at it with me.",
+            "points": 4
+          },
+          {
+            "label": "Sounds good — insurance and savings in one.",
+            "points": 1
+          },
+          {
+            "label": "If the person seemed to know their stuff, I'd probably say yes.",
+            "points": 0
+          }
+        ]
+      }
+    ],
+    "taxLiteracy": [
+      {
+        "order": 9,
+        "q": "A raise pushes you into a higher tax bracket. What happens to your take-home pay?",
+        "options": [
+          {
+            "label": "It goes up — only the money above the line is taxed at the higher rate.",
+            "points": 6
+          },
+          {
+            "label": "It goes up, but I'd want to check by how much.",
+            "points": 4
+          },
+          {
+            "label": "It could actually go down — that's the worry.",
+            "points": 1
+          },
+          {
+            "label": "I've never really understood how brackets work.",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "order": 18,
+        "q": "Money going into a workplace pension or 401(k) before tax — what's the actual benefit?",
+        "options": [
+          {
+            "label": "I don't pay income tax on it this year; it's taxed when I take it out.",
+            "points": 6
+          },
+          {
+            "label": "It grows without being taxed along the way.",
+            "points": 4
+          },
+          {
+            "label": "There's a benefit, but I couldn't tell you what it is.",
+            "points": 1
+          },
+          {
+            "label": "No idea — I just left whatever the default was.",
+            "points": 0
+          }
+        ]
+      }
     ]
   },
-  "quizNote": "Two questions per declared sub-stat, each worth 0-6 points. Score = 8 + the two point values, which lands exactly on the 8-20 scale with no rescaling. An unanswered question leaves the sub-stat INCOMPLETE rather than scoring it low.",
+  "quizNote": "Two questions per declared sub-stat, each worth 0-6 points, summed onto a base of 8 — which lands exactly on the 8-20 scale with no rescaling. Every question is BEHAVIOURAL: it asks what you did or would do, not whether you can recall a definition. There is no arithmetic and nothing to revise for, because a quiz that makes someone feel stupid is a quiz they close. The zero-point option is always a real thing real people do, phrased so that picking it costs no dignity. `order` drives display sequence: the two questions for a sub-stat sit far apart, and the driest topics (tax, instruments) come last, once someone is already invested in the run.",
   "hp": {
     "unitWeeks": true,
     "note": "1 HP = one week of expenses covered by liquid assets. Agreed with the owner 2026-09-04 to resolve the two incompatible HP definitions in rulebook §3A. See DECISIONS.md D-046.",

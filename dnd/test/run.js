@@ -95,6 +95,54 @@ section('Dungeons & Dividends — the schema holds');
   });
 })();
 
+section('Dungeons & Dividends — the questions');
+
+(function () {
+  const S = TABLES.dndScoring;
+  const declared = Character.declaredIds(TABLES.dndRules);
+  const all = [];
+  declared.forEach(id => (S.quiz[id] || []).forEach((q, i) => all.push({ id, i, q })));
+
+  /* Display order lives in the data, and the UI sorts by it. A duplicate or a
+     gap would silently reshuffle the run, so pin it: 1..18, each used once. */
+  const orders = all.map(x => x.q.order).sort((a, b) => a - b);
+  check('every question declares an order', all.filter(x => typeof x.q.order === 'number').length, 18);
+  check('orders are exactly 1..18 with no repeats',
+    JSON.stringify(orders), JSON.stringify(Array.from({ length: 18 }, (_, i) => i + 1)));
+
+  /* The two questions on one topic must not sit next to each other — asking
+     the same thing twice in a row reads as a drill rather than a quiz. */
+  declared.forEach(function (id) {
+    const pair = (S.quiz[id] || []).map(q => q.order).sort((a, b) => a - b);
+    checkTrue(`${id}'s two questions are spread apart`, pair[1] - pair[0] > 1,
+      'consecutive questions on one sub-stat feel like an interrogation');
+  });
+
+  /* The driest topics land last, once someone is already committed. */
+  const firstOf = id => Math.min.apply(null, (S.quiz[id] || []).map(q => q.order));
+  checkTrue('tax is not the opening question', firstOf('taxLiteracy') > 5,
+    'opening on tax is how you lose someone in the first ten seconds');
+  checkTrue('the run opens on something behavioural',
+    firstOf('negotiation') === 1 || firstOf('threatDetection') === 1 || firstOf('network') === 1);
+
+  /* No option may be a dead end: every question needs a real top and bottom,
+     or the 8-20 scale silently narrows. */
+  all.forEach(function (x) {
+    const pts = x.q.options.map(o => o.points);
+    check(`${x.id}[${x.i}] can reach 6`, Math.max.apply(null, pts), 6);
+    check(`${x.id}[${x.i}] can reach 0`, Math.min.apply(null, pts), 0);
+    checkTrue(`${x.id}[${x.i}] offers a real choice`, x.q.options.length >= 4);
+  });
+
+  /* Behavioural, not a memory test: no question may ask the reader to compute.
+     These are the shapes the old knowledge questions had. */
+  const arithmetic = /\bhow much\b|\bwhat does that cost\b|\bper year on \$|\bcalculate\b|\b0\.\d+%.*\$\d/i;
+  all.forEach(function (x) {
+    checkTrue(`${x.id}[${x.i}] asks no arithmetic`, !arithmetic.test(x.q.q),
+      'a question with sums in it is a test, and people close tests');
+  });
+})();
+
 section('Dungeons & Dividends — the calibration promise');
 
 (function () {
