@@ -247,6 +247,58 @@
   }
 
   /**
+   * The compact nav that sits where "← All rooms" used to: previous room,
+   * the map, next room. Plain PATH ORDER, deliberately — the bottom strip
+   * offers the smart "next unfinished", and a top control that jumped
+   * somewhere different every time you looked at it would stop being a
+   * place you can navigate by. Predictable up here, guidance down there.
+   *
+   * Both ends resolve to the map rather than dead-ending or wrapping, so
+   * every room really does have a back and a next. DECISIONS.md D-054.
+   */
+  function headerNavHtml(roomId) {
+    var nb = neighbours(roomId);
+    var atRoot = roomId === 'foo-ladder';
+    var mapHref = (atRoot ? '' : '../') + 'map.html';
+
+    function link(room, dir) {
+      if (!room) {
+        return '<a class="slaf-hop slaf-hop--' + dir + '" href="' + mapHref + '">'
+          + (dir === 'prev' ? '← All rooms' : 'All rooms →') + '</a>';
+      }
+      var label = escapeHtml(room.title);
+      return '<a class="slaf-hop slaf-hop--' + dir + '" href="'
+        + escapeHtml(href(room.href, roomId)) + '">'
+        + (dir === 'prev' ? '← ' + label : label + ' →') + '</a>';
+    }
+
+    /* At either end of the path the end-cap already points at the map, so
+       the middle link would be the same destination twice. */
+    var atEdge = !nb.prev || !nb.next;
+    return '<nav class="slaf-hops" aria-label="Move between rooms">'
+      + link(nb.prev, 'prev')
+      + (atEdge ? '' : '<a class="slaf-hop slaf-hop--map" href="' + mapHref + '">All rooms</a>')
+      + link(nb.next, 'next')
+      + '</nav>';
+  }
+
+  /**
+   * mountHeader(roomId) — upgrade the room's single "← All rooms" link into
+   * that three-way nav, in place. Every room already has one, so this needs
+   * no per-room markup.
+   */
+  function mountHeader(roomId) {
+    if (typeof document === 'undefined') return null;
+    var back = document.querySelector('.room-back, .back');
+    if (!back) return null;
+    var nav = document.createElement('div');
+    nav.className = 'slaf-hops-host';
+    nav.innerHTML = headerNavHtml(roomId);
+    back.parentNode.replaceChild(nav, back);
+    return nav;
+  }
+
+  /**
    * mount(roomId) — put the strip at the end of the page and keep it live.
    *
    * Creates its container once and only ever rewrites that container's
@@ -281,11 +333,16 @@
     }
     paint();
     Spine.onChange(paint);
+    /* The header nav is static for a room — path order does not change with
+       the household — so it is built once and never repainted. */
+    mountHeader(roomId);
     return { repaint: paint, el: box };
   }
 
   return {
     mount: mount,
+    mountHeader: mountHeader,
+    headerNavHtml: headerNavHtml,
     forRoom: forRoom,
     all: all,
     overall: overall,

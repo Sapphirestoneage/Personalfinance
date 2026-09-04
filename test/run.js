@@ -4547,6 +4547,41 @@ section('What is finished');
     check('and an unknown room reports no position', Progress.neighbours('nope').index, -1);
   }
 
+  /* -- Room-to-room nav: never a dead end -------------------------------- */
+  {
+    const path = Registry.inOrder();
+    path.forEach(function (room) {
+      const nav = Progress.headerNavHtml(room.id);
+      const prev = /slaf-hop--prev[^>]*href="([^"]+)"/.exec(nav);
+      const next = /slaf-hop--next[^>]*href="([^"]+)"/.exec(nav);
+      checkTrue(`${room.id} offers a way back`, !!prev);
+      checkTrue(`${room.id} offers a way on`, !!next);
+      /* Both ends resolve to the map rather than wrapping to the far end of
+         the path, which would send you somewhere unrelated. */
+      checkTrue(`${room.id}'s links both point somewhere real`,
+        !!prev && !!next && prev[1].length > 0 && next[1].length > 0);
+    });
+
+    const first = Progress.headerNavHtml(path[0].id);
+    checkTrue('the first room falls back to the map', /map\.html/.test(first));
+    const last = Progress.headerNavHtml(path[path.length - 1].id);
+    checkTrue('so does the last', /map\.html/.test(last));
+    /* At the ends the middle link would be the same destination twice. */
+    check('the first room shows the map once', (first.match(/map\.html/g) || []).length, 1);
+    check('the last room shows the map once', (last.match(/map\.html/g) || []).length, 1);
+    check('a room in the middle shows it once too',
+      (Progress.headerNavHtml('fire').match(/map\.html/g) || []).length, 1);
+
+    /* Rooms climb out of rooms/; the front page must not. */
+    checkTrue('a room links to its neighbour through ../',
+      /\.\.\/rooms\//.test(Progress.headerNavHtml('fire')));
+    checkTrue('the front page does not',
+      !/\.\.\//.test(Progress.headerNavHtml('foo-ladder')));
+
+    check('an unknown room renders no nav rather than a broken one',
+      /href/.test(Progress.headerNavHtml('nope')), true);
+  }
+
   /* -- The strip itself ---------------------------------------------------- */
   {
     const h = partial();
