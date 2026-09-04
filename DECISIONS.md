@@ -2213,6 +2213,37 @@ the way the first draft of this one nearly did.
 
 ## Still open
 
+- **The last `unavailable()` ratio: life insurance needs multiple.** Credit
+  utilisation was closed by D-045 the obvious way — ask for the one number
+  and count carefully. Life cover looks like the same job and is not, for
+  two reasons worth writing down before someone "fixes" it:
+
+  1. **There is no room that owns it.** Cover is not an asset, not a debt,
+    not a cash cushion and not a goal. Bolting `person.lifeCoverCents` onto
+    Sleep At Night or Net Worth would put an editable field in a room whose
+    own spec (§11) does not cover it, which is how the one-owner rule
+    (D-017) starts to rot. It wants a Protection room, and `SPEC.md` §13
+    puts the only protection tool it names — Whole Life Insurance — in
+    Tier 2 blocked on policy illustration data.
+  2. **The convention is conditional in a way the band system is not.**
+    "Ten times income" assumes somebody depends on that income. For a
+    single person with no dependents the right cover is often zero, and a
+    ratio that marked them underinsured would be a confident wrong verdict
+    — the exact failure this repo spends most of its effort avoiding.
+    Bands in `data/ratio_benchmarks.json` are static per ratio; expressing
+    "only if someone depends on you" needs something the band shape does
+    not have.
+
+  So it stays `unavailable()` with its reason, The Dashboard's Weather panel
+  names it as one of three blanks (D-044), and this is the note saying that
+  is a decision rather than an oversight.
+
+- **A seventh pillar for The Score.** If life cover ever does get an owner,
+  protection would deserve a pillar — and adding one means re-deciding all
+  five cohorts' weights, since each set sums to 1. That is a question for
+  whoever owns the spec, not a change to make quietly while adding a field.
+
+
 - ~~**Two-Income Household Toggle** and **Soft Saving Balance
   Calculator**~~ — both raised as open questions with D-030 (who owns a
   second earner's income; which three buckets). **Dropped at the owner's
