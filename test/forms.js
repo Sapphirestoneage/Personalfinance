@@ -112,18 +112,33 @@ const CASES = [
     room: '/',
     container: '.wrap',
     seed: 'demo',
+    prepare: async (page) => {
+      /* The deductible is a stored fact now, owned by Sleep At Night. Give
+         the household one so step 1 has both halves. D-052. */
+      await page.evaluate(() => {
+        const h = JSON.parse(localStorage.getItem('slaf.household.v2'));
+        h.insurance = { highestDeductibleCents: 300000 };
+        localStorage.setItem('slaf.household.v2', JSON.stringify(h));
+      });
+      await page.reload({ waitUntil: 'networkidle' });
+      await page.waitForTimeout(500);
+    },
+    /* The ladder used to collect the deductible, contribution %, Roth and
+       HSA itself and forget them all. Those are facts, owned by Where It
+       Goes and Sleep At Night now, so what is left here is genuinely local
+       to the plan. D-052. */
     fields: [
-      { sel: 'input[aria-label="Highest deductible"]', type: '3000' },
-      { sel: 'input[aria-label="You contribute"]', type: '4' },
-      { sel: 'input[aria-label="Roth so far this yr"]', type: '0' }
+      { sel: 'input[aria-label="Prepaid goal"]', type: '20000' },
+      { sel: 'input[aria-label="Saved toward it"]', type: '0' }
     ],
     expect: async (page) => {
       /* These are page-local, not household data, so read them back off the
          inputs — which is also the check that a re-render did not wipe them. */
       const v = await page.evaluate(() => {
         const g = l => (document.querySelector(`input[aria-label="${l}"]`) || {}).value;
-        return { ded: g('Highest deductible'),
-                 pct: g('You contribute'), roth: g('Roth so far this yr') };
+        return { goal: g('Prepaid goal'), saved: g('Saved toward it'),
+                 borrowedDeductible: Array.from(document.querySelectorAll('.slaf-label'))
+                   .some(l => l.textContent === 'Highest deductible') };
       });
       /* Step 1 measures the SAME cash & savings balance step 4 does — there
          is no separate "cash on hand" input any more, because two boxes for
@@ -135,11 +150,11 @@ const CASES = [
         Array.from(document.querySelectorAll('.slaf-label'))
           .filter(l => /cash/i.test(l.textContent)).length);
       return [
-        ['the deductible was kept', v.ded, '3000'],
-        ['the contribution % was kept', v.pct, '4'],
-        ['a typed zero survives as zero, not blank', v.roth, '0'],
+        ['the prepaid goal was kept', v.goal, '20000'],
+        ['a typed zero survives as zero, not blank', v.saved, '0'],
+        ['the deductible is borrowed, not asked for again', v.borrowedDeductible, true],
         ['step 1 reads the shared cash balance', step1, true],
-        ['and there is exactly one cash field on the page', oneCashRow, 1]
+        ['and there is exactly one cash row on the page', oneCashRow, 1]
       ];
     }
   },

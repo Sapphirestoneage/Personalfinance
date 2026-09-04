@@ -105,9 +105,26 @@
   /* ---- Derived reads from the household ---------------------------------
      Never copied into state: re-derived on every paint, so this room can
      never hold a stale copy of a number another room owns.              */
+  function asDollars(r) { return Money.isOk(r) ? r.value / 100 : null; }
+  function centsToDollars(c) { return (c === null || c === undefined) ? null : c / 100; }
+
   function derive() {
     var h0 = state.household;
-    function asDollars(r) { return Money.isOk(r) ? r.value / 100 : null; }
+
+    /* Four figures this page used to ask for itself, forget on every
+       reload, and — for two of them — have Where It Goes ask all over
+       again. They are facts, so they live in the household now, and this
+       page reads them. Assigning into `state` rather than threading a new
+       object through keeps every downstream reference working while the
+       household stays the single source. DECISIONS.md D-052. */
+    var ret = h0.retirement || {};
+    state.contribPct = ret.contributionPercent;
+    state.rothCur = centsToDollars(ret.rothContributedCents);
+    state.hsaCur = centsToDollars(ret.hsaContributedCents);
+    state.hdhp = ret.onHdhp === true;
+    state.hsaFamilyPlan = ret.hsaFamilyPlan === true;
+    state.deductibleTarget = centsToDollars((h0.insurance || {}).highestDeductibleCents);
+
     var d = {
       incomeVal: asDollars(Schema.grossAnnualIncomeCents(h0)),
       expTotal: asDollars(Schema.monthlyExpensesCents(h0)),
@@ -555,10 +572,10 @@
     wrap.appendChild(ui.windCard);
 
     /* --- your situation --- */
-    ui.hsaField = field({ label: 'HSA so far this yr', prefix: '$', placeholder: 'e.g. 0',
-      read: function () { return state.hsaCur; }, onChange: function (v) { state.hsaCur = v; } });
-    ui.familyToggle = toggle('Family HSA coverage',
-      function () { return state.hsaFamilyPlan; }, function (v) { state.hsaFamilyPlan = v; });
+    /* HSA balance and both eligibility toggles are facts about you, answered
+       in Where It Goes. This page reads them like every other borrowed
+       figure rather than asking a second time. D-052. */
+    ui.hsaField = borrowed('hsaContributed', 'HSA so far this yr');
     ui.debtList = h('div', {});
     ui.noDebts = h('p', { class: 'needs', style: { marginTop: '0' }, text: 'No debts entered yet.' });
 
@@ -566,13 +583,10 @@
       h('div', { class: 'grid2', style: { marginBottom: 'var(--space-3)' } }, [
         borrowed('age', 'Age'),
         borrowed('cashSavings', 'Cash & savings'),
-        field({ label: 'Highest deductible', prefix: '$', placeholder: 'e.g. 3000',
-          read: function () { return state.deductibleTarget; }, onChange: function (v) { state.deductibleTarget = v; } }),
-        field({ label: 'You contribute', suffix: '%', placeholder: 'e.g. 4',
-          read: function () { return state.contribPct; }, onChange: function (v) { state.contribPct = v; } }),
+        borrowed('highestDeductible', 'Highest deductible'),
+        borrowed('contributionPercent', 'You contribute'),
         borrowed('employerMatch', 'Employer match'),
-        field({ label: 'Roth so far this yr', prefix: '$', placeholder: 'e.g. 3000',
-          read: function () { return state.rothCur; }, onChange: function (v) { state.rothCur = v; } }),
+        borrowed('rothContributed', 'Roth so far this yr'),
         field({ label: 'Prepaid goal', prefix: '$', placeholder: 'e.g. 20000',
           read: function () { return state.prepaidTarget; }, onChange: function (v) { state.prepaidTarget = v; } }),
         field({ label: 'Saved toward it', prefix: '$', placeholder: 'e.g. 0',
@@ -580,9 +594,6 @@
         ui.hsaField
       ]),
       h('div', { style: { display: 'grid', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' } }, [
-        toggle("I'm on a high-deductible health plan (HSA eligible)",
-          function () { return state.hdhp; }, function (v) { state.hdhp = v; }),
-        ui.familyToggle,
         toggle('Grow prepaid savings while they sit',
           function () { return state.growthOn; }, function (v) { state.growthOn = v; })
       ]),
@@ -766,10 +777,11 @@
       ]));
     }
 
-    /* HSA-only controls appear and disappear by HIDING, never by being
-       destroyed and rebuilt — see the note at the top of this file. */
+    /* HSA-only rows appear and disappear by HIDING, never by being destroyed
+       and rebuilt — see the note at the top of this file. The eligibility
+       toggles moved to Where It Goes with the rest of the retirement facts,
+       so only the borrowed balance is hidden here. */
     ui.hsaField.hidden = !state.hdhp;
-    ui.familyToggle.hidden = !state.hdhp;
 
     /* debts (display only — safe to rebuild) */
     ui.noDebts.hidden = d.debts.length !== 0;
@@ -831,18 +843,16 @@
     /* Only this room's own inputs. The household figures belong to Start
        Here and Debt Payoff — loading them from here would be writing fields
        this room does not own. */
-    state.deductibleTarget = 3000;
-    state.contribPct = 3;
-    state.rothCur = 0;
-    state.hsaCur = 0;
     state.prepaidTarget = 20000;
     state.prepaidBal = 0;
     paint();
   }
 
   function clearAll() {
-    ['deductibleTarget', 'contribPct', 'rothCur', 'hsaCur',
-     'prepaidTarget', 'prepaidBal', 'windfallAmt'].forEach(function (k) { state[k] = null; });
+    /* Only the figures this page still owns. The retirement and insurance
+       facts belong to Where It Goes and Sleep At Night now, and clearing
+       them from here would delete an answer given somewhere else. */
+    ['prepaidTarget', 'prepaidBal', 'windfallAmt'].forEach(function (k) { state[k] = null; });
     paint();
   }
 

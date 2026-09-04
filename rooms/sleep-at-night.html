@@ -111,6 +111,22 @@
     <div class="flag" id="band-note" hidden></div>
   </section>
 
+  <section class="slaf-card" id="deductible">
+    <span class="slaf-eyebrow">Your highest deductible</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">The first thing this cushion has to cover</h2>
+    <p class="slaf-hint" style="margin:0">
+      Before a cushion is months of expenses, it is one insurance excess —
+      health, car or home, whichever is largest. The FOO ladder's very first
+      step is exactly this, and it reads the number from here rather than
+      asking you for it again.
+    </p>
+    <label class="slaf-field" style="margin:var(--space-3) 0 0"><span class="slaf-label">Largest single deductible</span>
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+      <input type="text" inputmode="decimal" data-deductible placeholder="e.g. 3000" aria-label="Highest deductible"/></span>
+    </label>
+    <p class="why" id="deductible-read"></p>
+  </section>
+
   <section class="slaf-card" id="out-compare">
     <span class="slaf-eyebrow">Yours vs. the maths</span>
     <h2 style="margin:var(--space-2) 0 0">Two different questions</h2>
@@ -452,6 +468,40 @@
     if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   window.addEventListener('hashchange', jumpToHash);
+
+  /* The deductible. A fact, owned here, read by the FOO ladder's first step.
+     LIVE-FORM: one control, in the HTML above, never rebuilt. */
+  (function () {
+    var node = document.querySelector('[data-deductible]');
+    if (!node) return;
+    function paintDeductible() {
+      if (node !== document.activeElement) {
+        var v = (Spine.getProfile().insurance || {}).highestDeductibleCents;
+        node.value = Money.isEntered(v) ? Money.formatCents(v) : '';
+      }
+      var read = el('deductible-read');
+      if (!read) return;
+      var cash = Schema.cashCents(Spine.getProfile());
+      var ded = (Spine.getProfile().insurance || {}).highestDeductibleCents;
+      if (!Money.isEntered(ded) || !Money.isOk(cash)) { read.textContent = ''; return; }
+      read.textContent = cash.value >= ded
+        ? 'Covered — your ' + Money.formatCents(cash.value) + ' in cash clears it.'
+        : Money.formatCents(ded - cash.value) + ' short: you hold '
+          + Money.formatCents(cash.value) + ' against a ' + Money.formatCents(ded)
+          + ' excess.';
+    }
+    node.addEventListener('blur', function () {
+      var h = Spine.getProfile();
+      Spine.updateProfile({ insurance: Object.assign({}, h.insurance || {},
+        { highestDeductibleCents: Money.parseMoney(node.value) }) });
+      paintDeductible();
+    });
+    node.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); node.blur(); }
+    });
+    Spine.onChange(paintDeductible);
+    paintDeductible();
+  })();
 
   Spine.registerRoom(ROOM_ID);
 

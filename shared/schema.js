@@ -45,7 +45,13 @@
 
   var ASSUMPTION_DEFAULTS = {
     expectedReturnRate: 0.07,   // nominal annual, decimal fraction
-    swrRate: 0.04              // safe withdrawal rate, decimal fraction
+    swrRate: 0.04,             // safe withdrawal rate, decimal fraction
+    /* Deliberately NULL. A marginal rate depends on bracket, state and
+       filing status, and this app has an EFFECTIVE-rate table, not a
+       marginal one — deriving one from the other would be a fabricated
+       number people act on (D-036). It is asked for once, in Where It Goes,
+       and every room that needs it reads that answer. DECISIONS.md D-052. */
+    marginalRate: null
   };
 
   /* ======================================================================
@@ -76,6 +82,13 @@
     'incomeSource.monthsWorked':                 { class: 'raw',        unit: 'months',  note: 'how much of the last 12 months this job covered; absent means all of it' },
     'incomeSource.ongoing':                      { class: 'raw',        unit: 'bool',    note: 'still the job \u2014 drives the run-rate figure beside the earned one' },
     'household.incomeBasis':                     { class: 'raw',        unit: 'enum',    values: ['earned', 'runRate'], note: 'which of the two annual figures feeds the model. DECISIONS.md D-047' },
+    'retirement.contributionPercent':            { class: 'raw',        unit: 'percent', note: 'what you put into the workplace plan, as a % of salary. Owned by Where It Goes' },
+    'retirement.rothContributedCents':           { class: 'raw',        unit: 'cents',   period: 'annual', note: 'into a Roth IRA so far this year' },
+    'retirement.hsaContributedCents':            { class: 'raw',        unit: 'cents',   period: 'annual', note: 'into an HSA so far this year' },
+    'retirement.onHdhp':                         { class: 'raw',        unit: 'bool',    note: 'high-deductible plan, so HSA-eligible' },
+    'retirement.hsaFamilyPlan':                  { class: 'raw',        unit: 'bool',    note: 'family HSA coverage, which changes the limit' },
+    'insurance.highestDeductibleCents':          { class: 'raw',        unit: 'cents',   note: 'the largest single deductible a cash cushion has to cover. Owned by Sleep At Night' },
+    'assumptions.marginalRate':                  { class: 'assumption', unit: 'rate',    default: null, note: 'NO default \u2014 asked once, never derived from the effective-rate table' },
     'incomeSource.type':                         { class: 'raw',        unit: 'enum',    values: ['w2', '1099'] },
     'incomeSource.employerMatch.matchPercent':          { class: 'raw', unit: 'rate',    note: '0.5 === employer matches 50 cents on the dollar' },
     'incomeSource.employerMatch.matchCapPercentOfSalary': { class: 'raw', unit: 'rate',  note: '0.06 === capped at the first 6% of salary' },
@@ -411,6 +424,29 @@
     };
   }
 
+  /* Every field here is null-when-unanswered, never zero. A contribution of
+     0% is a real answer ("I contribute nothing") and must stay separable
+     from "I have not said". */
+  function createRetirement(fields) {
+    var f = fields || {};
+    return {
+      contributionPercent: f.contributionPercent === undefined ? null : f.contributionPercent,
+      rothContributedCents: f.rothContributedCents === undefined ? null : f.rothContributedCents,
+      hsaContributedCents: f.hsaContributedCents === undefined ? null : f.hsaContributedCents,
+      /* Eligibility facts, not amounts: they change which limit applies. */
+      onHdhp: f.onHdhp === undefined ? null : !!f.onHdhp,
+      hsaFamilyPlan: f.hsaFamilyPlan === undefined ? null : !!f.hsaFamilyPlan
+    };
+  }
+
+  function createInsurance(fields) {
+    var f = fields || {};
+    return {
+      highestDeductibleCents: f.highestDeductibleCents === undefined
+        ? null : f.highestDeductibleCents
+    };
+  }
+
   function createHousehold(fields) {
     var f = fields || {};
     return {
@@ -440,6 +476,14 @@
          earned across the year, or the current job annualised. They differ
          only when a job changed mid-year. DECISIONS.md D-047. */
       incomeBasis: f.incomeBasis === 'runRate' ? 'runRate' : 'earned',
+      /* Facts about your retirement setup. These used to be typed into the
+         FOO ladder and into Where It Goes separately, and kept by neither —
+         so the same question was asked twice and forgotten twice.
+         Owned by Where It Goes. DECISIONS.md D-052. */
+      retirement: createRetirement(f.retirement),
+      /* Your largest insurance deductible: the first thing a cash cushion
+         has to cover, which is why Sleep At Night owns it. */
+      insurance: createInsurance(f.insurance),
       /* Things predicted before and rated after. SPEC.md §13 Tier 1. */
       worthChecks: (f.worthChecks || []).map(createWorthCheck),
       /* Every 1-10 rating in the app. See createRatings(). */
@@ -792,6 +836,8 @@
     createValuesProfile: createValuesProfile,
     createRatings: createRatings,
     createWorthCheck: createWorthCheck,
+    createRetirement: createRetirement,
+    createInsurance: createInsurance,
     resolveAssumptions: resolveAssumptions,
     withMonthlyExpensesDeltaCents: withMonthlyExpensesDeltaCents,
     personById: personById,

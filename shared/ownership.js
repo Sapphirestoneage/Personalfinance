@@ -120,6 +120,58 @@
       format: function (v) { return v ? 'Yes' : 'No'; }
     },
 
+    /* Where It Goes owns your retirement setup. These were asked by the FOO
+       ladder AND by Where It Goes, and kept by neither — the same question
+       twice, forgotten twice. DECISIONS.md D-052. */
+    contributionPercent: {
+      label: 'Workplace contribution', owner: 'accounts', anchor: 'setup',
+      read: function (h) {
+        var v = (h.retirement || {}).contributionPercent;
+        return Money.isEntered(v) ? Money.ok(v)
+          : Money.incomplete('Not answered yet.', ['contributionPercent']);
+      },
+      format: function (v) { return v + '% of salary'; }
+    },
+    rothContributed: {
+      label: 'Roth so far this year', owner: 'accounts', anchor: 'setup',
+      read: function (h) {
+        var v = (h.retirement || {}).rothContributedCents;
+        return Money.isEntered(v) ? Money.ok(v)
+          : Money.incomplete('Not answered yet.', ['rothContributedCents']);
+      },
+      format: money
+    },
+    hsaContributed: {
+      label: 'HSA so far this year', owner: 'accounts', anchor: 'setup',
+      read: function (h) {
+        var v = (h.retirement || {}).hsaContributedCents;
+        return Money.isEntered(v) ? Money.ok(v)
+          : Money.incomplete('Not answered yet.', ['hsaContributedCents']);
+      },
+      format: money
+    },
+    marginalRate: {
+      label: 'Marginal tax rate', owner: 'accounts', anchor: 'setup',
+      read: function (h) {
+        var a = Schema.resolveAssumptions(h);
+        return Money.isEntered(a.marginalRate) ? Money.ok(a.marginalRate)
+          : Money.incomplete('Not answered yet.', ['marginalRate']);
+      },
+      format: function (v) { return Money.formatRate(v, { decimals: 0 }); }
+    },
+
+    /* Sleep At Night owns the deductible: it is the first thing a cash
+       cushion has to cover, which is that room's whole subject. */
+    highestDeductible: {
+      label: 'Highest deductible', owner: 'sleep-at-night', anchor: 'deductible',
+      read: function (h) {
+        var v = (h.insurance || {}).highestDeductibleCents;
+        return Money.isEntered(v) ? Money.ok(v)
+          : Money.incomplete('Not answered yet.', ['highestDeductibleCents']);
+      },
+      format: money
+    },
+
     /* Debt Payoff owns every debt figure. The Financial Snapshot used to take
        a lump sum for both of these; it now shows them and links here. */
     totalDebt: {

@@ -149,6 +149,7 @@
       tags: ['cashflow'],
       subsections: [
         { id: 'number',        label: 'Your number' },
+        { id: 'deductible',    label: 'Your highest deductible' },
         { id: 'out-compare',   label: 'Yours vs. the maths' },
         { id: 'out-gap',       label: 'Getting there' },
         { id: 'milestones',    label: 'The usual milestones' },
@@ -285,7 +286,10 @@
     },
     {
       id: 'accounts',
-      kind: 'explore',
+      /* Not a what-if: it holds facts about your retirement setup that other
+         rooms read. An explore room owns nothing anybody waits on, and this
+         one owns four things. DECISIONS.md D-052. */
+      kind: 'about-you',
       needs: ['grossAnnualIncome', 'filingStatus'],
       order: 17,
       title: 'Where It Goes',
@@ -294,6 +298,7 @@
       tier: 2,
       tags: ['income'],
       subsections: [
+        { id: 'setup',   label: 'Your retirement setup' },
         { id: 'compare', label: 'Roth vs. Traditional vs. taxable' },
         { id: 'solo',    label: 'Solo 401(k)' },
         { id: 'reading', label: 'Reading from elsewhere' }

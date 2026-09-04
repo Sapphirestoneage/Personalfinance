@@ -100,7 +100,8 @@
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Hours a month</span>
         <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-hours" placeholder="e.g. 16" aria-label="Hours a month"/><span class="slaf-affix">hrs</span></span></label>
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Your marginal tax rate</span>
-        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-marginal" placeholder="e.g. 22" aria-label="Marginal tax rate"/><span class="slaf-affix">%</span></span></label>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-marginal" placeholder="e.g. 22" aria-label="Marginal tax rate"/><span class="slaf-affix">%</span></span>
+        <span class="slaf-hint" id="marginal-shared"></span></label>
     </div>
 
     <div class="kind" role="group" aria-label="How the income is taxed">
@@ -408,6 +409,48 @@
     if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   window.addEventListener('hashchange', jumpToHash);
+
+
+  /* The marginal rate is a FACT about you, and it was being asked for here
+     and in the other room and kept by neither. It is stored once now
+     (Where It Goes owns it); this room prefills from it and writes back, so
+     answering it in either place answers it in both. D-052. */
+  function syncMarginal() {
+    var node = document.getElementById('in-marginal');
+    var note = document.getElementById('marginal-shared');
+    if (!node) return;
+    var stored = Schema.resolveAssumptions(Spine.getProfile()).marginalRate;
+    /* Seed the room's own STATE, not just the box. This room repaints its
+       inputs from `v` on every render, so writing only to the DOM would be
+       erased by the next paint — which is exactly what happened first. */
+    if (!Money.isEntered(v.marginal) && Money.isEntered(stored)) {
+      v.marginal = stored;
+      if (node !== document.activeElement) {
+        node.value = String(Math.round(stored * 1000) / 10);
+      }
+      render();
+    }
+    if (note) {
+      note.innerHTML = Money.isEntered(stored)
+        ? 'Your saved rate, from <a href="' + Ownership.linkTo('accounts', 'setup')
+          + '">Where It Goes</a>. Changing it here changes it there too.'
+        : 'Answered once and shared: whatever you type here is remembered for '
+          + 'every other room that needs it.';
+    }
+  }
+
+  (function () {
+    var node = document.getElementById('in-marginal');
+    if (!node) return;
+    node.addEventListener('blur', function () {
+      var rate = Money.parseRatePercent(node.value);
+      var stored = Schema.resolveAssumptions(Spine.getProfile()).marginalRate;
+      if (rate !== stored) Spine.setAssumptionOverride('marginalRate', rate);
+      syncMarginal();
+    });
+    Spine.onChange(syncMarginal);
+    syncMarginal();
+  })();
 
   Spine.registerRoom(ROOM_ID);
 

@@ -53,6 +53,11 @@
   .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
 
   .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
+  @media (max-width: 460px) { .setup-grid { grid-template-columns: 1fr; } }
+  .setup-toggles { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
+  .setup-toggle { display: flex; align-items: flex-start; gap: var(--space-3); font-size: var(--text-sm); color: var(--color-text-muted); }
+  .setup-toggle input { margin-top: 3px; }
   .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
   .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
@@ -69,7 +74,43 @@
 <main class="slaf-wrap">
   <div class="notice" id="load-notice" hidden></div>
 
-  <section class="slaf-card" id="compare">
+  
+  <section class="slaf-card" id="setup">
+    <span class="slaf-eyebrow">Your retirement setup</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Answered once, read everywhere</h2>
+    <p class="slaf-hint" style="margin:0">
+      The FOO ladder used to ask you for all of this separately and keep none
+      of it. Now it lives here, and every room that needs it reads this.
+    </p>
+    <div class="setup-grid">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">You contribute</span>
+        <span class="slaf-input-shell">
+        <input type="text" inputmode="decimal" data-setup="contributionPercent" placeholder="e.g. 4" aria-label="Workplace contribution percent"/>
+        <span class="slaf-affix">% of salary</span></span>
+      </label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Your marginal tax rate</span>
+        <span class="slaf-input-shell">
+        <input type="text" inputmode="decimal" data-setup="marginalRate" placeholder="e.g. 22" aria-label="Marginal tax rate"/>
+        <span class="slaf-affix">%</span></span>
+        <span class="slaf-hint">The rate on your next dollar. Nothing here guesses it — an effective rate is a different number.</span>
+      </label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Roth so far this year</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+        <input type="text" inputmode="decimal" data-setup="rothContributedCents" placeholder="e.g. 3000" aria-label="Roth contributed so far"/></span>
+      </label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">HSA so far this year</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+        <input type="text" inputmode="decimal" data-setup="hsaContributedCents" placeholder="e.g. 0" aria-label="HSA contributed so far"/></span>
+      </label>
+    </div>
+    <div class="setup-toggles">
+      <label class="setup-toggle"><input type="checkbox" data-setup="onHdhp" aria-label="On a high-deductible health plan"/>
+        <span>I'm on a high-deductible health plan (so an HSA is open to me)</span></label>
+      <label class="setup-toggle"><input type="checkbox" data-setup="hsaFamilyPlan" aria-label="Family HSA coverage"/>
+        <span>Family HSA coverage rather than self-only</span></label>
+    </div>
+  </section>
+<section class="slaf-card" id="compare">
     <span class="slaf-eyebrow">Roth vs. Traditional vs. taxable</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">Which account wins?</h2>
     <p class="slaf-hint" style="margin:0 0 var(--space-3)">
@@ -292,6 +333,7 @@
   }
 
   function render() {
+    paintSetup();
     if (!TABLES) return;
     renderProvenance();
     var h = Spine.getProfile();
@@ -307,6 +349,63 @@
     if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   window.addEventListener('hashchange', jumpToHash);
+
+  /* ---- Your retirement setup ---------------------------------------------
+     Facts, not a what-if, so these WRITE to the household. Everything else
+     in this room previews locally; these five are the exception, and the
+     reason this room stopped being an "explore" room. D-052.
+     LIVE-FORM: these controls are in the HTML above and only ever have
+     their .value set — never rebuilt. */
+
+  var SETUP_MONEY = ['rothContributedCents', 'hsaContributedCents'];
+
+  function readSetup(key) {
+    var h = Spine.getProfile();
+    if (key === 'marginalRate') return Schema.resolveAssumptions(h).marginalRate;
+    return (h.retirement || {})[key];
+  }
+
+  function paintSetup() {
+    document.querySelectorAll('[data-setup]').forEach(function (node) {
+      if (node === document.activeElement) return;
+      var key = node.getAttribute('data-setup');
+      var v = readSetup(key);
+      if (node.type === 'checkbox') { node.checked = v === true; return; }
+      if (SETUP_MONEY.indexOf(key) !== -1) {
+        node.value = Money.isEntered(v) ? Money.formatCents(v) : '';
+      } else if (key === 'marginalRate') {
+        node.value = Money.isEntered(v) ? String(Math.round(v * 1000) / 10) : '';
+      } else {
+        node.value = Money.isEntered(v) ? String(v) : '';
+      }
+    });
+  }
+
+  function writeSetup(key, node) {
+    if (key === 'marginalRate') {
+      Spine.setAssumptionOverride('marginalRate', Money.parseRatePercent(node.value));
+      return;
+    }
+    var h = Spine.getProfile();
+    var next = Object.assign({}, h.retirement || {});
+    if (node.type === 'checkbox') next[key] = node.checked;
+    else if (SETUP_MONEY.indexOf(key) !== -1) next[key] = Money.parseMoney(node.value);
+    else {
+      var raw = String(node.value).trim();
+      var n = raw === '' ? null : Number(raw);
+      next[key] = (n === null || isNaN(n) || n < 0) ? null : n;
+    }
+    Spine.updateProfile({ retirement: next });
+  }
+
+  document.querySelectorAll('[data-setup]').forEach(function (node) {
+    var key = node.getAttribute('data-setup');
+    var evt = node.type === 'checkbox' ? 'change' : 'blur';
+    node.addEventListener(evt, function () { writeSetup(key, node); paintSetup(); });
+    node.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); node.blur(); }
+    });
+  });
 
   Spine.registerRoom(ROOM_ID);
 

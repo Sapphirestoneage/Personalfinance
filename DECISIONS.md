@@ -2662,6 +2662,82 @@ suite is the same size, it just stops implying that all of it is homework.
 
 ---
 
+## D-052 — Facts get answered once. What-ifs get thrown away.
+
+The audit behind D-051 found the app asks for **127 things and keeps 11**.
+Some of that discarding is correct — a what-if is not a fact, which is why
+The Windfall and The Runway keep nothing (D-041, D-042). The rest was just
+forgetting, and in four cases it was forgetting the *same* answer twice.
+
+**Decision: a value is either a fact about you or a hypothesis, and the two
+get opposite treatment.** Facts are stored once, owned by one room, and read
+everywhere. Hypotheses stay local and are never written.
+
+### The five that moved
+
+| Fact | Was asked in | Now owned by |
+|---|---|---|
+| Workplace contribution % | FOO ladder **and** Where It Goes | Where It Goes |
+| Roth contributed so far | FOO ladder **and** Where It Goes | Where It Goes |
+| HSA so far, HDHP, family cover | FOO ladder | Where It Goes |
+| Marginal tax rate | Worth Learning **and** Side Hustle | Where It Goes |
+| Highest deductible | FOO ladder | Sleep At Night |
+
+The deductible goes to **Sleep At Night** rather than to the ladder that
+uses it, because that room's whole subject is what a cushion has to cover,
+and an insurance excess is the first thing it covers. The FOO ladder's step
+1 now reads it, the way it already read cash, age and the employer match.
+
+The FOO ladder lost four local inputs and two toggles. It had been asking
+for all of them and forgetting every one on reload.
+
+### The marginal rate has no default, deliberately
+
+It would be easy to derive one from `data/effective_tax_rates_2026.json`.
+It would also be wrong: an effective rate and a marginal rate are different
+quantities, and the gap between them is exactly what the rooms using it are
+trying to reason about. So `ASSUMPTION_DEFAULTS.marginalRate` is `null` —
+asked once, never invented (D-036). Both rooms that need it prefill from the
+stored answer, write back when you change it, and say where it came from.
+
+### The bug in the first version of that prefill
+
+Setting `node.value` was not enough. Both rooms repaint their inputs from a
+local `v` state on every render, so the prefill was erased milliseconds
+later. The fix seeds the room's **state**, not the DOM — which is the same
+lesson as D-046 from the other direction: in a room that repaints from
+state, the state is the only thing that is real.
+
+### Compatibility note
+
+**What changed in the stored shape.** `household.retirement`
+(`contributionPercent`, `rothContributedCents`, `hsaContributedCents`,
+`onHdhp`, `hsaFamilyPlan`) and `household.insurance`
+(`highestDeductibleCents`) are new branches. `assumptions.marginalRate` is a
+new Assumption-class field defaulting to `null`.
+
+**No migration.** `createHousehold()` fills both branches from
+`f.retirement || {}` and `f.insurance || {}`, so a household stored before
+this loads with every field `null` — which is "not answered", exactly what
+it was. Nothing is quarantined, the schema version is unchanged, and a test
+round-trips a legacy blob to prove it.
+
+**Every field is null-when-unanswered, never zero.** Contributing 0% and not
+having said are different, and a test asserts a stored `0` survives as `0`.
+
+**Rooms updated.** Where It Goes gained the setup card and became
+`kind: 'about-you'` — it holds facts other rooms wait on, and D-051's rule
+is that an `explore` room owns nothing. Sleep At Night gained the
+deductible. The FOO ladder, Worth Learning and Side Hustle now read instead
+of asking.
+
+**What a future room needs to know.** Read these through
+`Ownership.describe()` like any other shared number — that gives you the
+value, whether it is set, and a link to the question. Do not read
+`retirement.contributionPercent` and treat `null` as zero.
+
+---
+
 ## Still open
 
 - **The last `unavailable()` ratio: life insurance needs multiple.** Credit

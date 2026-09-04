@@ -1828,7 +1828,7 @@ section('SWAN Number');
   check('the SWAN target is owned by Sleep At Night',
     Ownership.field('swanTarget').owner, 'sleep-at-night');
   check('and Sleep At Night owns nothing else',
-    Ownership.ownedBy('sleep-at-night').join(','), 'swanTarget');
+    Ownership.ownedBy('sleep-at-night').sort().join(','), 'highestDeductible,swanTarget');
   const chip = Ownership.describe('swanTarget', months6, 'financial-snapshot');
   check('elsewhere it renders as a read-only $18,900', chip.display, '$18,900');
   check('and it is not editable there', chip.isOwnHere, false);
@@ -4568,6 +4568,111 @@ section('What is finished');
     checkTrue('a standalone room says that instead',
       /stands on its own/.test(Progress.stripHtml('quick-math', h)));
     check('an unknown room renders nothing', Progress.stripHtml('nope', h), '');
+  }
+})();
+
+section('Facts answered once');
+
+(function () {
+  /* -- The model keeps them, and keeps blank separate from zero --------- */
+  {
+    const fresh = Schema.createHousehold({});
+    check('a fresh household has no contribution answer',
+      fresh.retirement.contributionPercent, null);
+    check('nor a Roth balance', fresh.retirement.rothContributedCents, null);
+    check('nor an HSA balance', fresh.retirement.hsaContributedCents, null);
+    check('nor a deductible', fresh.insurance.highestDeductibleCents, null);
+    check('HDHP eligibility is unanswered, not false', fresh.retirement.onHdhp, null);
+
+    /* Contributing nothing is a real answer and must survive as zero. */
+    const zero = Schema.createHousehold({ retirement: { contributionPercent: 0 } });
+    check('a contribution of zero is kept as zero', zero.retirement.contributionPercent, 0);
+    checkTrue('and is not read as unanswered',
+      zero.retirement.contributionPercent !== null);
+
+    /* A household stored before any of this loads with the branches empty
+       rather than absent, so no room has to null-check them. */
+    const legacy = Schema.createHousehold(JSON.parse(JSON.stringify({ people: [], assets: [] })));
+    checkTrue('a legacy household gains the branches', !!legacy.retirement && !!legacy.insurance);
+    check('with nothing invented in them', legacy.insurance.highestDeductibleCents, null);
+  }
+
+  /* -- The marginal rate has NO default, on purpose ---------------------- */
+  {
+    const h = Schema.createHousehold({});
+    check('there is no default marginal rate',
+      Schema.resolveAssumptions(h).marginalRate, null);
+    /* Deriving one from the effective-rate table would be a fabricated
+       number people act on — the effective rate is a different quantity. */
+    h.assumptionOverrides = { marginalRate: 0.24 };
+    check('once answered it resolves', Schema.resolveAssumptions(h).marginalRate, 0.24);
+    check('and a local preview still wins',
+      Schema.resolveAssumptions(h, { marginalRate: 0.32 }).marginalRate, 0.32);
+  }
+
+  /* -- Every new fact is owned by exactly one room ----------------------- */
+  {
+    const OWNED = {
+      contributionPercent: 'accounts', rothContributed: 'accounts',
+      hsaContributed: 'accounts', marginalRate: 'accounts',
+      highestDeductible: 'sleep-at-night'
+    };
+    const h = Schema.createHousehold({});
+    h.retirement = { contributionPercent: 4, rothContributedCents: 300000,
+      hsaContributedCents: 0, onHdhp: true, hsaFamilyPlan: false };
+    h.insurance = { highestDeductibleCents: 300000 };
+    h.assumptionOverrides = { marginalRate: 0.22 };
+
+    Object.keys(OWNED).forEach(function (fieldId) {
+      const f = Ownership.field(fieldId);
+      checkTrue(`${fieldId} is a known field`, !!f);
+      check(`${fieldId} is owned by one room`, f.owner, OWNED[fieldId]);
+      const d = Ownership.describe(fieldId, h, 'somewhere-else');
+      checkTrue(`${fieldId} reads back once answered`, d.isSet, `got ${d.display}`);
+      checkTrue(`${fieldId} links to its owner`, d.href.indexOf(OWNED[fieldId]) !== -1);
+    });
+
+    /* An HSA balance of zero is answered, not missing — the commonest way
+       this class of field gets read wrong. */
+    checkTrue('an HSA balance of zero still reads as answered',
+      Ownership.describe('hsaContributed', h, 'x').isSet);
+
+    const blank = Schema.createHousehold({});
+    Object.keys(OWNED).forEach(function (fieldId) {
+      checkTrue(`${fieldId} is unset on a fresh household`,
+        !Ownership.describe(fieldId, blank, 'x').isSet);
+    });
+  }
+
+  /* -- The FOO ladder no longer asks for what it can read ---------------- */
+  {
+    const foo = fs.readFileSync(path.join(ROOT, 'foo-ladder.js'), 'utf8');
+    [['Highest deductible', 'highestDeductible'],
+     ['You contribute', 'contributionPercent'],
+     ['Roth so far this yr', 'rothContributed'],
+     ['HSA so far this yr', 'hsaContributed']].forEach(function (pair) {
+      checkTrue(`the ladder borrows ${pair[0]} rather than asking for it`,
+        foo.indexOf("borrowed('" + pair[1] + "'") !== -1,
+        'it should read the stored fact, not collect it again');
+      checkTrue(`and has no local input for ${pair[0]}`,
+        foo.indexOf("field({ label: '" + pair[0] + "'") === -1);
+    });
+    /* It must still own the things that ARE local to it. */
+    checkTrue('but it still owns its own prepaid figures',
+      foo.indexOf("field({ label: 'Prepaid goal'") !== -1);
+  }
+
+  /* -- Rooms that hold facts are not "explore" rooms --------------------- */
+  {
+    const accounts = Registry.byId('accounts');
+    check('Where It Goes holds facts, so it is not a what-if room',
+      accounts.kind, 'about-you');
+    /* The rule from D-051, re-checked here because this change is exactly
+       the kind that breaks it: an optional room cannot own a field others
+       wait on. */
+    Registry.ROOMS.filter(r => r.kind === 'explore').forEach(function (r) {
+      check(`${r.id} owns nothing`, Ownership.ownedBy(r.id).length, 0);
+    });
   }
 })();
 
