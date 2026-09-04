@@ -49,6 +49,7 @@ const RatiosEngine = require(path.join(ROOT, 'engines/ratios.js'));
 const Credential = require(path.join(ROOT, 'engines/credential.js'));
 const WorthEngine = require(path.join(ROOT, 'engines/worth.js'));
 const WindfallEngine = require(path.join(ROOT, 'engines/windfall.js'));
+const RunwayEngine = require(path.join(ROOT, 'engines/runway.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -2062,7 +2063,8 @@ section('Room script tags');
     Values: 'engines/values.js', Fulfillment: 'engines/fulfillment.js',
     Hassle: 'engines/hassle.js', SideHustle: 'engines/sidehustle.js',
     Ratios: 'engines/ratios.js', Credential: 'engines/credential.js',
-    Worth: 'engines/worth.js', Windfall: 'engines/windfall.js'
+    Worth: 'engines/worth.js', Windfall: 'engines/windfall.js',
+    Runway: 'engines/runway.js'
   };
   const FILE_TO_GLOBAL = {};
   Object.keys(GLOBAL_TO_FILE).forEach(g => { FILE_TO_GLOBAL[GLOBAL_TO_FILE[g]] = g; });
@@ -2139,8 +2141,12 @@ section('Room script tags');
   fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => f.endsWith('.html'))
     .map(f => path.join('rooms', f)).concat(['index.html']).forEach(function (file) {
       const html = fs.readFileSync(path.join(ROOT, file), 'utf8');
+      /* Only the page's own CSS counts. A room is free to MENTION [hidden]
+         in a comment explaining that it toggles the attribute — that is
+         documentation, not a second declaration. */
+      const css = (html.match(/<style[^>]*>[\s\S]*?<\/style>/gi) || []).join('\n');
       checkTrue(`${file} does not redeclare the [hidden] override`,
-        !/\[hidden\]/.test(html),
+        !/\[hidden\][^{}]*\{/.test(css),
         'it is in shared/theme.css — a second copy is one more place to drift');
     });
 })();
@@ -3537,6 +3543,192 @@ section('The Windfall');
       check(`the ${row.months}-month window has the same break-even`,
         row.result.breakEvenAnnualRate, 0.04, 1e-6);
     });
+  }
+})();
+
+section('The Runway');
+
+(function () {
+  const R = RunwayEngine;
+  const h = Demo.build();
+
+  /* The demo persona: $9,500 cash, $3,150 a month out. */
+  const cash = Schema.cashCents(h).value;
+  const spend = Schema.monthlyExpensesCents(h).value;
+
+  /* -- The plain case ------------------------------------------------------ */
+  {
+    const r = R.project(h, TABLES, { preset: 'quit' });
+    check('the cushion comes from the household', r.cushionCents, cash);
+    check('and the spending does too', r.monthlyExpensesCents, spend);
+    check('runway is whole months you finish above zero', r.value, Math.floor(cash / spend));
+    check('and it runs out the month after', r.ranOutInMonth, r.runwayMonths + 1);
+    checkTrue('which is not sustainable', !r.sustainable);
+    check('the lasting gap is the whole outflow when nothing comes in',
+      r.steadyMonthlyBurnCents, spend);
+    check('the balance after month one is the cushion less one month',
+      r.rows[0].balanceCents, cash - spend);
+  }
+
+  /* -- Every lever moves it the right way --------------------------------- */
+  {
+    const base = R.project(h, TABLES, { preset: 'quit' }).runwayMonths;
+    /* Runway is whole months, so a small cut can be real without buying a
+       month — and reporting a fractional month you cannot spend would be
+       worse. A big enough cut does move it. */
+    const smallCut = R.project(h, TABLES, { preset: 'quit', expenseCutCents: 50000 });
+    check('a small cut does not invent a month it has not bought',
+      smallCut.runwayMonths, base);
+    checkTrue('but it does leave more in the pot at the same point',
+      smallCut.rows[base - 1].balanceCents
+        > R.project(h, TABLES, { preset: 'quit' }).rows[base - 1].balanceCents);
+    const cut = R.project(h, TABLES, { preset: 'quit', expenseCutCents: 150000 }).runwayMonths;
+    checkTrue('and a bigger cut buys months', cut > base);
+    const extra = R.project(h, TABLES,
+      { preset: 'quit', extraMonthlyCostCents: 50000 }).runwayMonths;
+    checkTrue('paying for health cover shortens it', extra < base);
+    const payout = R.project(h, TABLES, { preset: 'quit', severanceCents: 500000 });
+    checkTrue('a payout lengthens it', payout.runwayMonths > base);
+    check('and lands before month one', payout.startingCents, cash + 500000);
+
+    /* Income that does not stop is the lever that can end the question. */
+    const covered = R.project(h, TABLES,
+      { preset: 'quit', otherMonthlyIncomeCents: spend + 1 });
+    checkTrue('income above the outflow means it never runs out', covered.sustainable);
+    check('and the value is the horizon, meaning at least that',
+      covered.value, R.HORIZON_MONTHS);
+    check('with nothing having run out', covered.ranOutInMonth, null);
+  }
+
+  /* -- The benefit cliff --------------------------------------------------- */
+  {
+    const r = R.project(h, TABLES, {
+      preset: 'laid_off', severanceCents: 800000,
+      benefitMonthlyCents: 180000, benefitMonths: 6, extraMonthlyCostCents: 65000
+    });
+    check('the benefit is paid in month 6', r.rows[5].benefitCents, 180000);
+    check('and not in month 7', r.rows[6].benefitCents, 0);
+    check('the cliff is named', r.benefitEndsAfterMonth, 6);
+    checkTrue('the balance falls faster after it',
+      (r.rows[6].balanceCents - r.rows[7].balanceCents)
+        > (r.rows[3].balanceCents - r.rows[4].balanceCents));
+
+    /* A benefit is a temporary inflow, so it must not flatter the lasting
+       gap — that number is what is left once everything temporary ends. */
+    check('the lasting gap ignores the benefit',
+      r.steadyMonthlyBurnCents, spend + 65000);
+
+    /* Quitting is the same numbers without the benefit. */
+    const quit = R.project(h, TABLES, {
+      preset: 'quit', severanceCents: 800000,
+      benefitMonthlyCents: 180000, benefitMonths: 6, extraMonthlyCostCents: 65000
+    });
+    check('a benefit typed into the quitting scenario is ignored',
+      quit.benefitMonthlyCents, 0);
+    checkTrue('so quitting is shorter than being laid off on the same figures',
+      quit.runwayMonths < r.runwayMonths);
+  }
+
+  /* -- The ramp is a shape, and the shapes differ ------------------------- */
+  {
+    check('a linear ramp is a straight fraction', R.rampShare('linear', 6, 12), 0.5, 1e-12);
+    check('a hockey ramp is that cubed', R.rampShare('hockey', 6, 12), 0.125, 1e-12);
+    check('both reach the target at the end', R.rampShare('hockey', 12, 12), 1, 1e-12);
+    check('and stay there past it', R.rampShare('linear', 30, 12), 1, 1e-12);
+    check('no ramp is no revenue', R.rampShare('none', 6, 12), 0);
+    check('and neither is a ramp over no months', R.rampShare('linear', 6, 0), 0);
+
+    const linear = R.project(h, TABLES, { preset: 'business',
+      rampShape: 'linear', rampTargetMonthlyCents: 500000, rampMonths: 18 });
+    const hockey = R.project(h, TABLES, { preset: 'business',
+      rampShape: 'hockey', rampTargetMonthlyCents: 500000, rampMonths: 18 });
+    checkTrue('the straight line pays earlier than the hockey stick',
+      linear.rows[5].revenueCents > hockey.rows[5].revenueCents);
+    checkTrue('so it lasts at least as long', linear.runwayMonths >= hockey.runwayMonths);
+    check('break-even is the first month the money in covers the money out',
+      linear.rows[linear.breakEvenMonth - 1].inflowCents >= linear.rows[0].outflowCents, true);
+    checkTrue('and the month before it does not',
+      linear.rows[linear.breakEvenMonth - 2].inflowCents < linear.rows[0].outflowCents);
+
+    /* A ramp typed into the wrong scenario must not leak into it. */
+    const quit = R.project(h, TABLES, { preset: 'quit',
+      rampShape: 'linear', rampTargetMonthlyCents: 500000, rampMonths: 18 });
+    check('a ramp in the quitting scenario is ignored', quit.rows[11].revenueCents, 0);
+  }
+
+  /* -- What it refuses ------------------------------------------------------ */
+  {
+    const bare = Schema.createHousehold({});
+    check('with no cash there is no runway', R.project(bare, TABLES, {}).status, 'incomplete');
+    check('and it names what is missing',
+      R.project(bare, TABLES, {}).missing.join(','), 'cash');
+    check('with cash but no spending it still refuses',
+      R.project(bare, TABLES, { cushionCents: 100000 }).missing.join(','), 'monthlyExpenses');
+    check('cutting more than you spend is refused, not clamped',
+      R.project(h, TABLES, { preset: 'quit', expenseCutCents: spend + 1 }).status, 'incomplete');
+    check('cutting exactly everything is allowed',
+      R.project(h, TABLES, { preset: 'quit', expenseCutCents: spend }).sustainable, true);
+    check('a negative cushion is refused',
+      R.project(h, TABLES, { cushionCents: -1 }).status, 'incomplete');
+    check('a cushion of zero is a real answer, not a missing one',
+      R.project(h, TABLES, { cushionCents: 0 }).runwayMonths, 0);
+  }
+
+  /* -- What would get you there -------------------------------------------- */
+  {
+    const opts = { preset: 'quit' };
+    const base = R.project(h, TABLES, opts).runwayMonths;
+    const fix = R.toReach(h, TABLES, opts, 12);
+    check('it says how short you are', fix.monthsShort, 12 - base);
+
+    /* The two levers are checked by REACHING for them, not by trusting the
+       search: adding exactly that much must get there, and a cent less
+       must not. */
+    check('the extra cushion is enough',
+      R.project(h, TABLES, Object.assign({}, opts,
+        { cushionCents: cash + fix.extraCushionCents })).runwayMonths >= 12, true);
+    check('and is the smallest amount that is',
+      R.project(h, TABLES, Object.assign({}, opts,
+        { cushionCents: cash + fix.extraCushionCents - 1 })).runwayMonths >= 12, false);
+    check('the deeper cut is enough',
+      R.project(h, TABLES, Object.assign({}, opts,
+        { expenseCutCents: fix.deeperMonthlyCutCents })).runwayMonths >= 12, true);
+    check('and is the smallest cut that is',
+      R.project(h, TABLES, Object.assign({}, opts,
+        { expenseCutCents: fix.deeperMonthlyCutCents - 1 })).runwayMonths >= 12, false);
+
+    /* A target already met is not a problem to solve. */
+    const met = R.toReach(h, TABLES, { preset: 'quit', otherMonthlyIncomeCents: spend }, 12);
+    checkTrue('a target already reached says so', met.alreadyThere);
+
+    /* Cutting has a ceiling, and the ceiling is not always the budget: a
+       cost you cannot cut — health cover you now pay for — is a floor under
+       the burn that no amount of trimming gets below. */
+    const withCobra = { preset: 'quit', extraMonthlyCostCents: 65000 };
+    const far = R.toReach(h, TABLES, withCobra, 48);
+    checkTrue('a target no cut can reach is reported as unreachable that way',
+      far.deeperMonthlyCutCents === null && far.cutCanReachIt === false);
+    checkTrue('though the cushion could still get there', far.extraCushionCents !== null);
+    /* Without that floor, cutting deeply enough does get there — which is
+       why the two are reported separately rather than as one verdict. */
+    checkTrue('with nothing uncuttable, a deep enough cut does reach it',
+      R.toReach(h, TABLES, { preset: 'quit' }, 48).cutCanReachIt);
+    check('a target of zero months is not a question',
+      R.toReach(h, TABLES, opts, 0).status, 'incomplete');
+  }
+
+  /* -- All three at once ---------------------------------------------------- */
+  {
+    const rows = R.acrossPresets(h, TABLES, { severanceCents: 500000,
+      benefitMonthlyCents: 180000, benefitMonths: 6 });
+    check('one row per situation', rows.length, 3);
+    checkTrue('all of them computed', rows.every(r => Money.isOk(r.result)));
+    const by = {};
+    rows.forEach(r => { by[r.preset.id] = r.result; });
+    checkTrue('being laid off outlasts quitting on the same numbers',
+      by.laid_off.runwayMonths > by.quit.runwayMonths);
+    check('and the business row gets no severance either way',
+      by.business.severanceCents, 500000);
   }
 })();
 

@@ -379,6 +379,23 @@
       ]
     },
     {
+      id: 'runway',
+      order: 24,
+      title: 'The Runway',
+      blurb: 'The income stops and the bills don\u2019t \u2014 quitting, laid off, or starting something. How many months that is, and what would buy you more of them.',
+      href: 'rooms/runway.html',
+      tier: 2,
+      tags: ['income', 'cashflow'],
+      subsections: [
+        { id: 'the-plan',    label: 'The situation' },
+        { id: 'out-runway',  label: 'How long the money lasts' },
+        { id: 'out-path',    label: 'The drawdown' },
+        { id: 'out-fix',     label: 'What would buy you more' },
+        { id: 'out-compare', label: 'The same money, three exits' },
+        { id: 'reading',     label: 'Reading from elsewhere' }
+      ]
+    },
+    {
       id: 'foo-ladder',
       order: 21,
       title: 'FOO Ladder',

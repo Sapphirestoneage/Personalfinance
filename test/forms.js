@@ -189,6 +189,33 @@ const CASES = [
     }
   },
   {
+    /* The Runway. Its two borrowed figures arrive prefilled from the
+       household, so this also checks that typing over a prefilled field
+       survives — the case where a repaint would put the old value back. */
+    room: '/rooms/runway.html',
+    container: '#the-plan',
+    seed: 'demo',
+    fields: [
+      { sel: 'input[data-in="cushion"]', type: '20000', clearFirst: true },
+      { sel: 'input[data-in="cut"]', type: '300' },
+      { sel: 'input[data-in="severance"]', type: '8000' }
+    ],
+    expect: async (page) => {
+      const v = await page.evaluate(() => {
+        const g = k => (document.querySelector(`input[data-in="${k}"]`) || {}).value;
+        return { cushion: g('cushion'), cut: g('cut'), sev: g('severance'),
+                 runway: (document.querySelector('#out-runway [data-figure]') || {}).textContent };
+      });
+      return [
+        ['the cushion override was kept', v.cushion, '$20,000'],
+        ['the cut was kept', v.cut, '$300'],
+        ['the payout was kept', v.sev, '$8,000'],
+        /* $28,000 against $3,150 − $300 = $2,850 a month is 9 whole months. */
+        ['and the runway followed from them', v.runway, '9 months']
+      ];
+    }
+  },
+  {
     room: '/rooms/cash-flow.html',
     container: '#buckets',
     seed: 'demo',
@@ -259,6 +286,22 @@ const SELECT_CASES = [
       const c = JSON.parse(localStorage.getItem('slaf.household.v2')).worthChecks[0];
       return { predicted: c.predictedRating, actual: c.actualRating };
     }
+  },
+  {
+    /* Switching scenario toggles whole field groups. If that were done by
+       rebuilding the card instead of toggling [hidden], the very next tap
+       would land on a node that no longer exists. */
+    room: '/rooms/runway.html',
+    container: '#the-plan',
+    seed: 'demo',
+    picks: [
+      ['select[data-in="preset"]', 'business'],
+      ['select[data-in="rampShape"]', 'hockey']
+    ],
+    read: () => ({
+      preset: document.querySelector('select[data-in="preset"]').value,
+      rampShape: document.querySelector('select[data-in="rampShape"]').value
+    })
   },
   {
     room: '/rooms/hassle.html',

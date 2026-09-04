@@ -1903,6 +1903,96 @@ in its own disclaimer.
 
 ---
 
+## D-042 — One runway, three exits, and the two numbers it will not invent
+
+`SPEC.md` §13 Tier 2 lists three tools that are the same arithmetic:
+
+- **Leave-Job calc** — "runway/risk of quitting: severance, COBRA,
+  unemployment eligibility, emergency fund drawdown timeline. **Shares math
+  with Unemployment calc and Emergency Fund Coverage.**"
+- **Unemployment calc** — "benefit amount/duration by state; runway until
+  benefits deplete."
+- **Start-Business calc** — "runway/breakeven for launching a business.
+  Needs a revenue-ramp curve (linear vs. hockey-stick) as a togglable
+  model."
+
+One pile of money, an outflow every month, some inflow for a while, and the
+month it reaches zero. The spec says they share math; §8 forbids writing it
+three times. So: `engines/runway.js`, three presets, one room — the same
+shape as the credential engine (D-039).
+
+### The two numbers it refuses to make up
+
+**The unemployment benefit.** Set per state, by formula, from your own
+earnings history, with a weekly cap. §10 already flags a 50-state table as a
+maintenance dependency, and D-036 is the rule about not inventing that class
+of number. So the benefit is a plain input and the room says, in the field's
+own hint, that your state sets it and you should look yours up.
+
+**What health cover costs once the employer stops paying.** Employer- and
+plan-specific. Same treatment.
+
+Refusing those is not a hole in the tool. A runway built on a benefit figure
+the app guessed at is *worse* than one where you had to go and find the real
+number, because you would trust it.
+
+### The modelling choices, stated rather than buried
+
+- **Whole months.** A runway of "3.4 months" is not a thing you can spend, so
+  the answer is the number of months you finish above zero. A small cut can
+  therefore be real without buying a month — a test asserts exactly that,
+  and asserts the balance at the same point is higher, so the granularity is
+  documented rather than looking like a bug.
+- **No interest on the cushion.** Over the months a runway covers it is
+  small, and leaving it out errs short. For a safety calculation that is the
+  right direction to be wrong in. Said on the page, not just here.
+- **The ramp is a shape you pick, not a forecast.** Linear is `m / months`;
+  "slow then steep" is that fraction cubed — a third of the way through the
+  ramp you are at 4% of target, not 33%. The cube is chosen because it is
+  the plainest curve that is flat early and steep late, and the room says it
+  is a choice. Nothing here knows what anyone's revenue will do.
+- **Severance is not gated by preset.** Money you start with is money you
+  start with, whether it is a redundancy payment or savings you set aside to
+  launch something. The benefit and the ramp *are* gated, and a figure typed
+  into the wrong scenario is ignored rather than silently applied — there
+  are tests for both directions.
+- **The lasting gap** is the outflow once every temporary inflow has ended.
+  It is the number the room tells you to attack, because the total cushion
+  is a consequence of it. A benefit that runs out must not flatter it.
+
+### What would buy you more months
+
+Two levers — a bigger cushion, or a deeper monthly cut — each solved by
+searching rather than by formula, because the month-by-month path has a
+benefit cliff and a ramp in it and no closed form survives either. Both
+searches are monotone, so a bisection over cents is exact and cheap. The
+tests verify the answers by *reaching* for them: adding exactly that much
+must get there, and one cent less must not.
+
+Cutting has a ceiling, and the ceiling is not always the budget: an
+uncuttable cost — health cover you now pay for yourself — is a floor under
+the burn that no amount of trimming gets below. When cutting cannot reach
+the target, the room says so instead of printing a cut nobody could live on.
+That is why the two levers are reported separately rather than as one
+verdict.
+
+### Nothing is written to the household
+
+A job you might leave is not a fact about your finances. Cash and monthly
+expenses arrive prefilled from the household and can be typed over here as a
+preview only — the same pattern as the FIRE room's assumption preview
+(`SPEC.md` §12.2) — and the ownership chips at the bottom still point at
+Start Here and Cash Flow as the places those numbers actually live.
+
+### Test-suite note
+
+The `[hidden]` redeclaration check (D-036) was matching any occurrence of
+the string, including a room *comment* explaining that it toggles the
+attribute. It now scans only the page's own `<style>` blocks, for a
+`[hidden] … {` rule. Documentation is not a second declaration.
+
+---
+
 ## Still open
 
 - ~~**Two-Income Household Toggle** and **Soft Saving Balance

@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>The Runway · SPARKS</title>
+<meta name="description" content="How long the money lasts when the income stops — quitting, laid off, or starting something."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11, §13 Tier 2 (Leave-Job, Unemployment,
+  Start-Business — three tools, one engine, per §8).
+
+  1. READS   cash and monthly expenses from the household. Both can be
+             previewed differently here; neither is written back.
+  2. WRITES  nothing. Every input is page-local — a job you might leave is
+             not a fact about your household. Same pattern as FIRE's
+             assumption preview (SPEC.md §12.2).
+  3. CALLS   engines/runway.js.
+  4. EMPTY   No cash or no expenses → says which and links to its owner.
+  5. CONFIG  None. The two figures that WOULD need reference tables — the
+             state unemployment benefit and what health cover costs once
+             the employer stops paying — are typed in, with the page saying
+             plainly that it will not guess at them. SPEC.md §10 flags both
+             as maintenance dependencies; D-036 is the rule about not
+             fabricating them.
+
+  LIVE-FORM: built once. Every control is in the HTML below and is never
+  replaced — switching scenario only toggles [hidden] on field groups that
+  already exist, and the script only ever writes .value. See D-034.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+  @media (max-width: 460px) { .grid2 { grid-template-columns: 1fr; } }
+  .group { margin-top: var(--space-3); }
+  .group > .slaf-label { display: block; margin-bottom: var(--space-2); }
+  .actions { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-3); }
+
+  .scenario-note { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border-radius: var(--radius-sm); padding: var(--space-3); margin-top: var(--space-3); }
+
+  .plot { width: 100%; height: auto; display: block; margin-top: var(--space-3); }
+  .plot .axis { stroke: var(--color-border-strong); stroke-width: 1; }
+  .plot .zero { stroke: var(--color-critical); stroke-width: .8; stroke-dasharray: 3 2; }
+  .plot .band { fill: rgba(46,111,232,.14); }
+  .plot .curve { stroke: var(--color-accent); stroke-width: 1.6; fill: none; }
+  .plot .mark { stroke: var(--color-border-active); stroke-width: .8; stroke-dasharray: 2 2; }
+  .plot .cap { fill: var(--color-text-faint); font-size: 6.5px; font-family: var(--font-body); }
+
+  ul.milestones { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); }
+  ul.milestones li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  ul.milestones li .w { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--color-text-muted); }
+
+  table.grid { width: 100%; border-collapse: collapse; font-size: var(--text-sm); margin-top: var(--space-3); }
+  table.grid th { text-align: right; font-weight: 500; font-size: var(--text-xs); color: var(--color-text-faint); padding: 0 0 var(--space-2); }
+  table.grid th:first-child { text-align: left; }
+  table.grid td { padding: var(--space-2) 0; border-top: 1px solid var(--color-border); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  table.grid td:first-child { text-align: left; white-space: normal; }
+  table.grid td + td, table.grid th + th { padding-left: var(--space-3); }
+  table.grid tr.is-here td { background: var(--color-surface-active); }
+  .table-scroll { overflow-x: auto; }
+
+  .levers { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
+  @media (max-width: 460px) { .levers { grid-template-columns: 1fr; } }
+  .levers > div { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); }
+  .levers .lv { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
+  .levers .lb { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
+
+  .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  .flag.is-bad { border-left-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>The Runway</h1>
+  <p class="room-lede">
+    The income stops. The bills don’t. How many months is that, and what
+    would buy you more of them?
+  </p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="the-plan">
+    <span class="slaf-eyebrow">What’s happening</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">The situation</h2>
+
+    <label class="slaf-field" style="margin:0"><span class="slaf-label">Which is it</span>
+      <span class="slaf-input-shell">
+      <select data-in="preset" aria-label="Which situation">
+        <option value="quit">Quitting</option>
+        <option value="laid_off">Laid off</option>
+        <option value="business">Starting something</option>
+      </select></span>
+    </label>
+    <p class="scenario-note" id="scenario-note"></p>
+
+    <div class="group">
+      <span class="slaf-label">The basics</span>
+      <div class="grid2">
+        <label class="slaf-field" style="margin:0"><span class="slaf-label" id="cushion-label">What you can spend</span>
+          <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+          <input type="text" inputmode="decimal" data-in="cushion" aria-label="Cushion"/></span>
+          <span class="slaf-hint">Your cash, from Start Here. Change it here to try a different number — it won’t be saved.</span>
+        </label>
+        <label class="slaf-field" style="margin:0"><span class="slaf-label">Spending a month</span>
+          <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+          <input type="text" inputmode="decimal" data-in="expenses" aria-label="Monthly spending"/></span>
+          <span class="slaf-hint">Also from Start Here, and also only previewed here.</span>
+        </label>
+        <label class="slaf-field" style="margin:0"><span class="slaf-label">You’d cut, a month</span>
+          <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+          <input type="text" inputmode="decimal" data-in="cut" placeholder="e.g. 300" aria-label="Monthly cut"/></span>
+        </label>
+        <label class="slaf-field" style="margin:0"><span class="slaf-label">Still coming in, a month</span>
+          <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+          <input type="text" inputmode="decimal" data-in="other" placeholder="e.g. 2000" aria-label="Other monthly income"/></span>
+          <span class="slaf-hint">A partner’s income, rent, anything that doesn’t stop.</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="group">
+      <span class="slaf-label">One-offs and new costs</span>
+      <div class="grid2">
+        <label class="slaf-field" style="margin:0"><span class="slaf-label">Severance, payout or seed money</span>
+          <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+          <input type="text" inputmode="decimal" data-in="severance" placeholder="e.g. 8000" aria-label="Severance"/></span>
+        </label>
+        <label class="slaf-field" style="margin:0"><span class="slaf-label">Health cover, a month</span>
+          <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+          <input type="text" inputmode="decimal" data-in="extra" placeholder="e.g. 650" aria-label="Monthly health cover cost"/></span>
+          <span class="slaf-hint">What health cover costs once the employer stops paying — the same whichever way the job ends. Look up your actual quote; this app won’t guess it.</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="group" data-group="benefit" hidden>
+      <span class="slaf-label">Unemployment</span>
+      <div class="grid2">
+        <label class="slaf-field" style="margin:0"><span class="slaf-label">Benefit, a month</span>
+          <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+          <input type="text" inputmode="decimal" data-in="benefitMonthly" placeholder="e.g. 1800" aria-label="Monthly unemployment benefit"/></span>
+          <span class="slaf-hint">Your state sets this from your own earnings, with a weekly cap. Look yours up.</span>
+        </label>
+        <label class="slaf-field" style="margin:0"><span class="slaf-label">For how many months</span>
+          <span class="slaf-input-shell">
+          <input type="text" inputmode="numeric" data-in="benefitMonths" placeholder="e.g. 6" aria-label="Months of benefit"/></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="group" data-group="ramp" hidden>
+      <span class="slaf-label">The revenue</span>
+      <div class="grid2">
+        <label class="slaf-field" style="margin:0"><span class="slaf-label">How it builds</span>
+          <span class="slaf-input-shell">
+          <select data-in="rampShape" aria-label="Revenue shape">
+            <option value="linear">Straight line</option>
+            <option value="hockey">Slow then steep</option>
+            <option value="none">No revenue</option>
+          </select></span>
+        </label>
+        <label class="slaf-field" style="margin:0"><span class="slaf-label">Getting to, a month</span>
+          <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+          <input type="text" inputmode="decimal" data-in="rampTarget" placeholder="e.g. 5000" aria-label="Target monthly revenue"/></span>
+        </label>
+        <label class="slaf-field" style="margin:0"><span class="slaf-label">Over how many months</span>
+          <span class="slaf-input-shell">
+          <input type="text" inputmode="numeric" data-in="rampMonths" placeholder="e.g. 18" aria-label="Months to reach the target"/></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="slaf-btn" id="btn-demo">Try with example numbers</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Clear</button>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="out-runway">
+    <span class="slaf-eyebrow">How long the money lasts</span>
+    <div class="slaf-figure" data-figure>—</div>
+    <p class="slaf-reason" data-reason></p>
+    <div class="flag" id="runway-note" hidden></div>
+  </section>
+
+  <section class="slaf-card" id="out-path">
+    <span class="slaf-eyebrow">The drawdown</span>
+    <h2 style="margin:var(--space-2) 0 0">What the balance does, month by month</h2>
+    <div id="path-body" hidden>
+      <svg class="plot" id="path" viewBox="0 0 200 110" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="path-desc"></svg>
+      <p id="path-desc" class="why"></p>
+      <ul class="milestones" id="milestones"></ul>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="out-fix">
+    <span class="slaf-eyebrow">What would buy you more</span>
+    <h2 style="margin:var(--space-2) 0 0">To reach
+      <select data-in="target" aria-label="Runway target" style="font:inherit;background:transparent;color:inherit;border:none;border-bottom:1px solid var(--color-border-active)">
+        <option value="6">six months</option>
+        <option value="12" selected>a year</option>
+        <option value="18">eighteen months</option>
+        <option value="24">two years</option>
+      </select>
+    </h2>
+    <div class="levers" id="levers"></div>
+    <p class="why" id="fix-why"></p>
+  </section>
+
+  <section class="slaf-card" id="out-compare">
+    <span class="slaf-eyebrow">The same money, three exits</span>
+    <h2 style="margin:var(--space-2) 0 0">Quitting, laid off, or building something</h2>
+    <div class="table-scroll"><table class="grid" id="compare"><tbody></tbody></table></div>
+    <p class="why">
+      Every row uses the numbers you typed above. The differences are only
+      what each situation adds: a payout, a benefit that ends, or revenue
+      that arrives.
+    </p>
+  </section>
+
+  <section class="slaf-card" id="reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Interest on the cushion is left
+    out on purpose — over a few months it is small, and a safety calculation
+    should err short. Your numbers stay in this browser, and this page saves
+    none of them.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/liveform.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../engines/runway.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership, Runway = SLAF.Runway;
+
+  var ROOM_ID = 'runway';
+  var TABLES = null;
+
+  /* Page-local, never stored. A job you might leave is not a fact about
+     your household. SPEC.md §12.2. */
+  var state = {
+    preset: 'quit', cushion: null, expenses: null, cut: null, other: null,
+    severance: null, extra: null, benefitMonthly: null, benefitMonths: null,
+    rampShape: 'linear', rampTarget: null, rampMonths: null, target: 12
+  };
+
+  var MONEY_KEYS = ['cushion', 'expenses', 'cut', 'other', 'severance', 'extra',
+                    'benefitMonthly', 'rampTarget'];
+  var COUNT_KEYS = ['benefitMonths', 'rampMonths'];
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function setFigure(sectionId, text, why) {
+    var f = el(sectionId).querySelector('[data-figure]');
+    var r = el(sectionId).querySelector('[data-reason]');
+    f.textContent = text === null ? Money.EM_DASH : text;
+    f.classList.toggle('slaf-figure--incomplete', text === null);
+    r.textContent = why || '';
+    r.hidden = !why;
+  }
+  function months(n) { return n + (n === 1 ? ' month' : ' months'); }
+
+  function opts() {
+    return {
+      preset: state.preset,
+      cushionCents: state.cushion,
+      monthlyExpensesCents: state.expenses,
+      expenseCutCents: state.cut,
+      otherMonthlyIncomeCents: state.other,
+      severanceCents: state.severance,
+      extraMonthlyCostCents: state.extra,
+      benefitMonthlyCents: state.benefitMonthly,
+      benefitMonths: state.benefitMonths,
+      rampShape: state.rampShape,
+      rampTargetMonthlyCents: state.rampTarget,
+      rampMonths: state.rampMonths
+    };
+  }
+
+  /* ---- Inputs. Built once above; only .value and [hidden] change. ------- */
+
+  function displayFor(key) {
+    if (key === 'preset') return state.preset;
+    if (key === 'rampShape') return state.rampShape;
+    if (key === 'target') return String(state.target);
+    if (COUNT_KEYS.indexOf(key) !== -1) {
+      return Money.isEntered(state[key]) ? String(state[key]) : '';
+    }
+    return Money.isEntered(state[key]) ? Money.formatCents(state[key]) : '';
+  }
+  function editFor(key) {
+    if (MONEY_KEYS.indexOf(key) !== -1) {
+      return Money.isEntered(state[key]) ? String(state[key] / 100) : '';
+    }
+    return displayFor(key);
+  }
+  function readInto(key, raw) {
+    var text = String(raw).trim();
+    if (key === 'preset') { state.preset = text; return; }
+    if (key === 'rampShape') { state.rampShape = text; return; }
+    if (key === 'target') { state.target = Number(text) || 12; return; }
+    if (COUNT_KEYS.indexOf(key) !== -1) {
+      var n = text === '' ? null : Math.round(Number(text));
+      state[key] = (n === null || isNaN(n) || n < 0) ? null : n;
+      return;
+    }
+    state[key] = Money.parseMoney(text);
+  }
+
+  document.querySelectorAll('[data-in]').forEach(function (node) {
+    var key = node.getAttribute('data-in');
+    if (node.tagName === 'SELECT') {
+      node.addEventListener('change', function () { readInto(key, node.value); render(); });
+      return;
+    }
+    node.addEventListener('focus', function () { node.value = editFor(key); node.select(); });
+    node.addEventListener('blur', function () {
+      readInto(key, node.value);
+      node.value = displayFor(key);
+      render();
+    });
+    node.addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter') { evt.preventDefault(); node.blur(); }
+    });
+  });
+
+  /* Switching scenario hides field groups; it never rebuilds them. */
+  function paintInputs() {
+    var preset = Runway.PRESETS[state.preset] || Runway.PRESETS.quit;
+    document.querySelectorAll('[data-in]').forEach(function (node) {
+      if (node === document.activeElement) return;
+      node.value = displayFor(node.getAttribute('data-in'));
+    });
+    el('scenario-note').textContent = preset.blurb + ' ' + preset.note;
+    el('cushion-label').textContent = preset.cushionLabel;
+    document.querySelector('[data-group="benefit"]').hidden = !preset.benefit;
+    document.querySelector('[data-group="ramp"]').hidden = !preset.ramp;
+  }
+
+  el('btn-demo').addEventListener('click', function () {
+    state.preset = 'laid_off';
+    state.cut = 30000; state.other = 0;
+    state.severance = 800000; state.extra = 65000;
+    state.benefitMonthly = 180000; state.benefitMonths = 6;
+    state.rampShape = 'linear'; state.rampTarget = 500000; state.rampMonths = 18;
+    paintInputs();
+    render();
+  });
+  el('btn-clear').addEventListener('click', function () {
+    Object.keys(state).forEach(function (k) {
+      if (k === 'preset') state[k] = 'quit';
+      else if (k === 'rampShape') state[k] = 'linear';
+      else if (k === 'target') state[k] = 12;
+      else state[k] = null;
+    });
+    paintInputs();
+    render();
+  });
+
+  /* ---- The headline ------------------------------------------------------ */
+
+  function renderRunway(r) {
+    if (!Money.isOk(r)) {
+      setFigure('out-runway', null, r.reason);
+      el('runway-note').hidden = true;
+      return;
+    }
+    if (r.sustainable) {
+      setFigure('out-runway', 'It doesn’t run out',
+        'What comes in covers what goes out, so the cushion is never the thing that '
+          + 'ends this. Checked to ' + months(r.horizonMonths) + '.');
+    } else {
+      setFigure('out-runway', months(r.runwayMonths),
+        Money.formatCents(r.startingCents) + ' to start with, going out at '
+          + Money.formatCents(r.monthlyOutflowCents) + ' a month. The balance passes zero '
+          + 'during month ' + r.ranOutInMonth + '.');
+    }
+
+    var note = el('runway-note');
+    note.hidden = false;
+    note.className = 'flag' + (!r.sustainable && r.runwayMonths < 3 ? ' is-bad' : '');
+    if (r.sustainable) {
+      note.innerHTML = '<strong>This is not a runway, it is a living.</strong> '
+        + Money.formatCents(r.steadyInflowCents) + ' a month coming in against '
+        + Money.formatCents(r.monthlyOutflowCents) + ' going out. The cushion is a buffer '
+        + 'against a bad month, not the thing paying the bills.';
+    } else if (r.steadyMonthlyBurnCents <= 0) {
+      note.innerHTML = '<strong>The gap closes before the money does not quite.</strong> '
+        + 'Once everything settles you are covered — but the cushion runs out in '
+        + months(r.runwayMonths) + ' and that happens first. This is a timing problem, '
+        + 'not an income problem.';
+    } else {
+      note.innerHTML = '<strong>The lasting gap is '
+        + Money.formatCents(r.steadyMonthlyBurnCents) + ' a month.</strong> '
+        + 'That is what is left once anything temporary — a payout, a benefit, a ramp — '
+        + 'has finished. Every month of runway you want costs that much, so this is the '
+        + 'number to attack rather than the total.';
+    }
+  }
+
+  /* ---- The drawdown ------------------------------------------------------ */
+
+  var PAD_L = 32, PAD_R = 6, PAD_T = 8, PAD_B = 16, W = 200, H = 110;
+
+  function renderPath(r) {
+    /* Chart only as far as the story goes: a few months past zero, or the
+       whole horizon when it never runs out. Sixty flat months of nothing
+       happening would squash the part that matters. */
+    var last = r.sustainable ? r.horizonMonths
+      : Math.min(r.horizonMonths, Math.max(r.ranOutInMonth + 2, 6));
+    var rows = r.rows.slice(0, last);
+    var top = Math.max.apply(null, rows.map(function (p) { return p.balanceCents; })
+      .concat([r.startingCents]));
+    var bottom = Math.min.apply(null, rows.map(function (p) { return p.balanceCents; }).concat([0]));
+    var span = (top - bottom) || 1;
+
+    function x(m) { return PAD_L + ((m - 1) / Math.max(1, last - 1)) * (W - PAD_L - PAD_R); }
+    function y(c) { return H - PAD_B - ((c - bottom) / span) * (H - PAD_T - PAD_B); }
+
+    var parts = [];
+    var zeroY = y(0);
+    /* The band under the curve, clipped at zero, so "how much is left"
+       reads as an area rather than a line you have to trace. */
+    var area = rows.map(function (p, i) {
+      return (i === 0 ? 'M' : 'L') + x(p.month).toFixed(2) + ' '
+        + y(Math.max(0, p.balanceCents)).toFixed(2);
+    }).join(' ') + ' L' + x(rows[rows.length - 1].month).toFixed(2) + ' ' + zeroY.toFixed(2)
+      + ' L' + x(1).toFixed(2) + ' ' + zeroY.toFixed(2) + ' Z';
+    parts.push('<path class="band" d="' + area + '"/>');
+
+    parts.push('<line class="zero" x1="' + PAD_L + '" y1="' + zeroY + '" x2="' + (W - PAD_R) + '" y2="' + zeroY + '"/>');
+    parts.push('<path class="curve" d="' + rows.map(function (p, i) {
+      return (i === 0 ? 'M' : 'L') + x(p.month).toFixed(2) + ' ' + y(p.balanceCents).toFixed(2);
+    }).join(' ') + '"/>');
+
+    if (r.benefitEndsAfterMonth && r.benefitEndsAfterMonth <= last) {
+      parts.push('<line class="mark" x1="' + x(r.benefitEndsAfterMonth) + '" y1="' + PAD_T
+        + '" x2="' + x(r.benefitEndsAfterMonth) + '" y2="' + (H - PAD_B) + '"/>');
+      parts.push('<text class="cap" text-anchor="middle" x="' + x(r.benefitEndsAfterMonth)
+        + '" y="' + (PAD_T - 1) + '">benefit ends</text>');
+    }
+    parts.push('<line class="axis" x1="' + PAD_L + '" y1="' + PAD_T + '" x2="' + PAD_L + '" y2="' + (H - PAD_B) + '"/>');
+    parts.push('<text class="cap" text-anchor="end" x="' + (PAD_L - 3) + '" y="' + (y(top) + 2) + '">'
+      + Money.formatCents(top) + '</text>');
+    parts.push('<text class="cap" text-anchor="end" x="' + (PAD_L - 3) + '" y="' + (zeroY + 2) + '">$0</text>');
+    parts.push('<text class="cap" x="' + PAD_L + '" y="' + (H - 4) + '">month 1</text>');
+    parts.push('<text class="cap" text-anchor="end" x="' + (W - PAD_R) + '" y="' + (H - 4) + '">month '
+      + last + '</text>');
+    el('path').innerHTML = parts.join('');
+
+    el('path-desc').textContent = r.sustainable
+      ? 'The balance holds or grows: nothing here ends it.'
+      : 'The shaded part is what is left. It hits zero during month ' + r.ranOutInMonth + '.';
+
+    var items = [];
+    items.push(['Starting with', Money.formatCents(r.startingCents)]);
+    if (r.severanceCents > 0) {
+      items.push(['Of which severance', Money.formatCents(r.severanceCents)]);
+    }
+    items.push(['Going out, a month', Money.formatCents(r.monthlyOutflowCents)]);
+    if (r.benefitEndsAfterMonth) {
+      items.push(['Benefit stops after', months(r.benefitEndsAfterMonth)]);
+    }
+    if (r.breakEvenMonth) {
+      items.push(['Money in covers money out from', 'month ' + r.breakEvenMonth]);
+    } else if (r.preset.ramp) {
+      items.push(['Money in never covers money out', 'not within ' + months(r.horizonMonths)]);
+    }
+    items.push([r.sustainable ? 'Still going at' : 'Out of money during',
+      r.sustainable ? 'month ' + r.horizonMonths : 'month ' + r.ranOutInMonth]);
+
+    el('milestones').innerHTML = items.map(function (row) {
+      return '<li><span>' + esc(row[0]) + '</span><span class="w">' + esc(row[1]) + '</span></li>';
+    }).join('');
+  }
+
+  /* ---- The two levers ---------------------------------------------------- */
+
+  function renderFix(r) {
+    var box = el('levers');
+    if (!Money.isOk(r)) { box.innerHTML = ''; el('fix-why').textContent = ''; return; }
+
+    var fix = Runway.toReach(Spine.getProfile(), TABLES, opts(), state.target);
+    if (!Money.isOk(fix)) { box.innerHTML = ''; el('fix-why').textContent = fix.reason; return; }
+
+    if (fix.alreadyThere) {
+      box.innerHTML = '';
+      el('fix-why').textContent = 'You are already past ' + months(state.target)
+        + ' — the runway above is ' + months(fix.runwayMonths) + '. Aim higher to see '
+        + 'what the next stretch would take.';
+      return;
+    }
+
+    box.innerHTML = '<div><div class="lv">'
+      + (fix.extraCushionCents === null ? Money.EM_DASH
+          : '+' + Money.formatCents(fix.extraCushionCents))
+      + '</div><div class="lb">more in the cushion before you go</div></div>'
+      + '<div><div class="lv">'
+      + (fix.deeperMonthlyCutCents === null ? 'Not possible'
+          : '−' + Money.formatCents(fix.deeperMonthlyCutCents) + '/mo')
+      + '</div><div class="lb">' + (fix.deeperMonthlyCutCents === null
+          ? 'cutting alone cannot get you there'
+          : 'cut from the monthly spend instead') + '</div></div>';
+
+    el('fix-why').textContent = 'You are ' + months(fix.monthsShort) + ' short of '
+      + months(state.target) + '. Either lever gets you there on its own; a bit of each '
+      + 'gets you there sooner. The cut is worth more per dollar than the cushion is, '
+      + 'because it keeps working every month.';
+  }
+
+  /* ---- Three exits ------------------------------------------------------- */
+
+  function renderCompare() {
+    var rows = Runway.acrossPresets(Spine.getProfile(), TABLES, opts());
+    var body = el('compare').querySelector('tbody');
+    if (!rows.some(function (row) { return Money.isOk(row.result); })) {
+      body.innerHTML = '';
+      return;
+    }
+    body.innerHTML = '<tr><th>Situation</th><th>Runway</th><th>Out a month</th><th>Lasting gap</th></tr>'
+      + rows.map(function (row) {
+        var r = row.result;
+        if (!Money.isOk(r)) return '';
+        return '<tr class="' + (row.preset.id === state.preset ? 'is-here' : '') + '">'
+          + '<td>' + esc(row.preset.label) + '</td>'
+          + '<td>' + (r.sustainable ? 'doesn’t run out' : months(r.runwayMonths)) + '</td>'
+          + '<td>' + Money.formatCents(r.monthlyOutflowCents) + '</td>'
+          + '<td>' + (r.steadyMonthlyBurnCents > 0
+              ? Money.formatCents(r.steadyMonthlyBurnCents) : 'none') + '</td></tr>';
+      }).join('');
+  }
+
+  /* ---- Render ------------------------------------------------------------ */
+
+  function renderNow() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+
+    /* The two borrowed figures default from the household the first time
+       they are needed, so the page opens filled in rather than blank. */
+    if (!Money.isEntered(state.cushion)) {
+      var cash = Schema.cashCents(h);
+      if (Money.isOk(cash)) state.cushion = cash.value;
+    }
+    if (!Money.isEntered(state.expenses)) {
+      var exp = Schema.monthlyExpensesCents(h);
+      if (Money.isOk(exp)) state.expenses = exp.value;
+    }
+
+    paintInputs();
+    var r = Runway.project(h, TABLES, opts());
+    renderRunway(r);
+
+    el('path-body').hidden = !Money.isOk(r);
+    if (Money.isOk(r)) renderPath(r);
+    renderFix(r);
+    renderCompare();
+
+    el('reading-list').innerHTML = ['cashSavings', 'monthlyExpenses']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+
+  var queued = false;
+  function render() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () { queued = false; renderNow(); }, 0);
+  }
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    renderNow();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>
