@@ -1,0 +1,935 @@
+{
+  "id": "dnd_scoring",
+  "version": "1.0",
+  "asOf": "2026-09-04",
+  "source": "Agreed with the repo owner, 2026-09-04. The Dungeons & Dividends rulebook (§13 item 3) explicitly leaves sub-stat scoring unspecified: 'Exact sub-stat scoring formulas (real dollars/inputs -> 8-20 scores) — this is the one piece the Claude Code build prompt still needs.' These are that missing piece.",
+  "confidence": "convention",
+  "confidenceNote": "Calibration target: a US-population-median household scores 10 on every computed sub-stat, per the rulebook's own reading of 10-11 as 'neutral / average'. Median anchors are set from widely-published public figures (Census/BLS median earnings, BEA personal saving rate, SCF transaction-account balances) but are ROUNDED CONVENTIONS, not fitted distributions. Every other rung is an agreed shape, not a measurement. Edit this file to recalibrate; the engine reads it and holds no thresholds of its own.",
+  "note": "Ladders interpolate linearly between rungs and clamp to 8-20. A sub-stat whose input was never entered is INCOMPLETE, never 8 and never 0 — see CLAUDE.md 'Empty != zero'.",
+  "scale": {
+    "min": 8,
+    "max": 20
+  },
+  "methods": [
+    {
+      "id": "featsOfStrength",
+      "name": "Feats of Strength",
+      "blurb": "Earn each score. Knowledge questions have right answers; judgment and charisma questions ask for evidence of what you have actually done, not how you rate yourself.",
+      "default": true
+    },
+    {
+      "id": "pointBuy",
+      "name": "Point Buy",
+      "blurb": "Spend a fixed pool across the nine. Costs escalate at the top exactly as they do in 5e, so a 20 is expensive on purpose."
+    },
+    {
+      "id": "standardArray",
+      "name": "Standard Array",
+      "blurb": "A fixed spread, assigned where you want it. Fastest honest option when you don't want to answer eighteen questions tonight."
+    },
+    {
+      "id": "roll",
+      "name": "Roll",
+      "blurb": "4d6, drop the lowest, floored at 8. Rolling cannot reach 19 or 20 — the same ceiling rolling has in 5e."
+    },
+    {
+      "id": "homebrew",
+      "name": "Homebrew",
+      "blurb": "Type the nine numbers directly. Nothing is checked. For rebuilding a sheet you already trust, or for testing."
+    }
+  ],
+  "pointBuy": {
+    "pool": 45,
+    "min": 8,
+    "max": 20,
+    "costs": {
+      "8": 0,
+      "9": 1,
+      "10": 2,
+      "11": 3,
+      "12": 4,
+      "13": 5,
+      "14": 7,
+      "15": 9,
+      "16": 12,
+      "17": 15,
+      "18": 19,
+      "19": 23,
+      "20": 28
+    },
+    "note": "8-15 costs are 5e's own table. 16-20 continue the same accelerating curve, since this system allows scores above 15 where 5e point buy does not. A 45-point pool buys all nine at 13, or a sharply peaked spread."
+  },
+  "standardArray": {
+    "values": [
+      15,
+      14,
+      13,
+      12,
+      11,
+      10,
+      10,
+      9,
+      8
+    ],
+    "note": "Nine values averaging 11.3 — deliberately just above the population-median 10, since anyone building a sheet is already more engaged than average."
+  },
+  "roll": {
+    "dice": 4,
+    "sides": 6,
+    "drop": "lowest",
+    "floor": 8,
+    "note": "Range 8-18."
+  },
+  "anchors": {
+    "incomePower": {
+      "input": "grossAnnualIncomeCents",
+      "unit": "dollars/year",
+      "medianAnchor": "US median personal earnings for full-time year-round workers, ~$62k. Rounded to $60k = 10.",
+      "ladder": [
+        {
+          "v": 15000,
+          "s": 8
+        },
+        {
+          "v": 30000,
+          "s": 9
+        },
+        {
+          "v": 60000,
+          "s": 10
+        },
+        {
+          "v": 85000,
+          "s": 12
+        },
+        {
+          "v": 120000,
+          "s": 14
+        },
+        {
+          "v": 175000,
+          "s": 16
+        },
+        {
+          "v": 250000,
+          "s": 18
+        },
+        {
+          "v": 400000,
+          "s": 20
+        }
+      ]
+    },
+    "incomeTrajectory": {
+      "input": "incomeCagr3yr",
+      "unit": "annual growth rate",
+      "medianAnchor": "Median US nominal wage growth has run near 4%/yr recently and ~3%/yr long-run. 3% = 10, i.e. keeping pace is average.",
+      "ladder": [
+        {
+          "v": -0.05,
+          "s": 8
+        },
+        {
+          "v": 0.0,
+          "s": 9
+        },
+        {
+          "v": 0.03,
+          "s": 10
+        },
+        {
+          "v": 0.06,
+          "s": 12
+        },
+        {
+          "v": 0.1,
+          "s": 14
+        },
+        {
+          "v": 0.15,
+          "s": 16
+        },
+        {
+          "v": 0.22,
+          "s": 18
+        },
+        {
+          "v": 0.3,
+          "s": 20
+        }
+      ]
+    },
+    "hustleCapacity": {
+      "input": "sideIncomeRatio",
+      "unit": "side income as a share of primary income",
+      "medianAnchor": "Roughly a third of US adults report some side income, mostly small. Zero side income with no deployable skill = 8; zero but with a named, ready skill = 10.",
+      "ladder": [
+        {
+          "v": 0.0,
+          "s": 8
+        },
+        {
+          "v": 0.02,
+          "s": 10
+        },
+        {
+          "v": 0.05,
+          "s": 12
+        },
+        {
+          "v": 0.1,
+          "s": 14
+        },
+        {
+          "v": 0.2,
+          "s": 16
+        },
+        {
+          "v": 0.35,
+          "s": 18
+        },
+        {
+          "v": 0.5,
+          "s": 20
+        }
+      ],
+      "readinessBonus": {
+        "ready": 2,
+        "identified": 1,
+        "none": 0,
+        "note": "Added to the ladder result, then clamped. 'Ready' means a marketable skill named AND a stated willingness to deploy it inside a month."
+      }
+    },
+    "liquidityAgility": {
+      "input": "liquidShareOfAssets",
+      "unit": "share of total assets reachable in a week without penalty",
+      "medianAnchor": "Median US household holds very little outside home equity and retirement accounts; a ~10% penalty-free-liquid share is typical. 0.10 = 10.",
+      "ladder": [
+        {
+          "v": 0.0,
+          "s": 8
+        },
+        {
+          "v": 0.05,
+          "s": 9
+        },
+        {
+          "v": 0.1,
+          "s": 10
+        },
+        {
+          "v": 0.2,
+          "s": 12
+        },
+        {
+          "v": 0.35,
+          "s": 14
+        },
+        {
+          "v": 0.5,
+          "s": 16
+        },
+        {
+          "v": 0.7,
+          "s": 18
+        },
+        {
+          "v": 0.9,
+          "s": 20
+        }
+      ]
+    },
+    "structuralMobility": {
+      "input": "checklist",
+      "unit": "checklist points",
+      "medianAnchor": "Base 8 plus up to 12 checklist points. A median owner with modest equity, on-site work and a location tie lands near 10.",
+      "checklist": [
+        {
+          "id": "housing",
+          "question": "Your housing right now",
+          "options": [
+            {
+              "label": "I rent",
+              "points": 3
+            },
+            {
+              "label": "I own with 20%+ equity",
+              "points": 2
+            },
+            {
+              "label": "I own with less than 20% equity",
+              "points": 1
+            },
+            {
+              "label": "I owe more than the place is worth",
+              "points": 0,
+              "status": "Underwater / Negative Equity"
+            }
+          ]
+        },
+        {
+          "id": "remote",
+          "question": "Where your income can be earned from",
+          "options": [
+            {
+              "label": "Fully remote — location is irrelevant to my pay",
+              "points": 3
+            },
+            {
+              "label": "Hybrid — I could stretch the radius",
+              "points": 1
+            },
+            {
+              "label": "Must be on-site",
+              "points": 0
+            }
+          ]
+        },
+        {
+          "id": "willing",
+          "question": "Willingness to relocate for money",
+          "options": [
+            {
+              "label": "Yes, and I have before",
+              "points": 3
+            },
+            {
+              "label": "Yes, if the case were strong",
+              "points": 2
+            },
+            {
+              "label": "Reluctantly",
+              "points": 1
+            },
+            {
+              "label": "No",
+              "points": 0
+            }
+          ]
+        },
+        {
+          "id": "ties",
+          "question": "What ties you to where you live",
+          "options": [
+            {
+              "label": "Nothing that couldn't move with me",
+              "points": 3
+            },
+            {
+              "label": "Soft ties — community, preference",
+              "points": 2
+            },
+            {
+              "label": "School year, custody, or care obligations",
+              "points": 1
+            },
+            {
+              "label": "A tie I would not break at any price",
+              "points": 0
+            }
+          ]
+        }
+      ]
+    },
+    "obligationFlex": {
+      "input": "fixedCostShare",
+      "unit": "fixed costs as a share of total spending",
+      "medianAnchor": "Housing, insurance and required debt service run roughly 60-65% of spending for a typical US household. 0.65 = 10. LOWER is better, so this ladder descends.",
+      "ladder": [
+        {
+          "v": 0.85,
+          "s": 8
+        },
+        {
+          "v": 0.65,
+          "s": 10
+        },
+        {
+          "v": 0.55,
+          "s": 12
+        },
+        {
+          "v": 0.45,
+          "s": 14
+        },
+        {
+          "v": 0.35,
+          "s": 16
+        },
+        {
+          "v": 0.25,
+          "s": 18
+        },
+        {
+          "v": 0.15,
+          "s": 20
+        }
+      ],
+      "descending": true
+    },
+    "savingsRate": {
+      "input": "savingsRate",
+      "unit": "share of gross income saved",
+      "medianAnchor": "The US personal saving rate has run roughly 4-5% of disposable income. 6% of gross = 10.",
+      "ladder": [
+        {
+          "v": 0.0,
+          "s": 8
+        },
+        {
+          "v": 0.03,
+          "s": 9
+        },
+        {
+          "v": 0.06,
+          "s": 10
+        },
+        {
+          "v": 0.12,
+          "s": 12
+        },
+        {
+          "v": 0.2,
+          "s": 14
+        },
+        {
+          "v": 0.3,
+          "s": 16
+        },
+        {
+          "v": 0.45,
+          "s": 18
+        },
+        {
+          "v": 0.6,
+          "s": 20
+        }
+      ]
+    },
+    "consistency": {
+      "input": "yearsSustained",
+      "unit": "years sustaining the current savings rate",
+      "medianAnchor": "One full year at a rate = 10. The rulebook defines this sub-stat as a track record 'through disruption, not just in a good year', so an untested record is capped.",
+      "ladder": [
+        {
+          "v": 0,
+          "s": 8
+        },
+        {
+          "v": 1,
+          "s": 10
+        },
+        {
+          "v": 2,
+          "s": 12
+        },
+        {
+          "v": 4,
+          "s": 14
+        },
+        {
+          "v": 7,
+          "s": 16
+        },
+        {
+          "v": 10,
+          "s": 18
+        },
+        {
+          "v": 15,
+          "s": 20
+        }
+      ],
+      "untestedCap": 15,
+      "untestedNote": "Without a disruption survived (job loss, medical event, income drop of 20%+) the score is capped at 15 no matter the years, because the rulebook measures this THROUGH disruption."
+    },
+    "reserveDepth": {
+      "input": "emergencyFundMonths",
+      "unit": "months of expenses in reserve",
+      "medianAnchor": "Median US household transaction-account balance covers on the order of 1-1.5 months of spending. 1 month = 10. Rungs above that follow data/liquidity_benchmarks.json bands (3 = the usual floor, 6 = the usual full fund, 12 = deep).",
+      "ladder": [
+        {
+          "v": 0,
+          "s": 8
+        },
+        {
+          "v": 0.5,
+          "s": 9
+        },
+        {
+          "v": 1,
+          "s": 10
+        },
+        {
+          "v": 3,
+          "s": 13
+        },
+        {
+          "v": 6,
+          "s": 16
+        },
+        {
+          "v": 9,
+          "s": 18
+        },
+        {
+          "v": 12,
+          "s": 20
+        }
+      ]
+    }
+  },
+  "quiz": {
+    "taxLiteracy": [
+      {
+        "q": "You're in the 22% federal bracket and get a $1,000 raise. What do you owe in federal income tax on that $1,000?",
+        "options": [
+          {
+            "label": "$220 — only the new dollars are taxed at 22%",
+            "points": 6
+          },
+          {
+            "label": "It depends on my deductions; I'd have to work it out",
+            "points": 3
+          },
+          {
+            "label": "$220, and my whole income now gets taxed at 22%",
+            "points": 1
+          },
+          {
+            "label": "I don't know",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "q": "Which of these lowers your taxable income in the year you contribute?",
+        "options": [
+          {
+            "label": "Traditional 401(k)",
+            "points": 6
+          },
+          {
+            "label": "Both traditional and Roth, equally",
+            "points": 2
+          },
+          {
+            "label": "Roth IRA",
+            "points": 1
+          },
+          {
+            "label": "I don't know",
+            "points": 0
+          }
+        ]
+      }
+    ],
+    "marketLiteracy": [
+      {
+        "q": "US stocks fell roughly 50% peak-to-trough in 2007-09. About how long until the index regained its prior peak?",
+        "options": [
+          {
+            "label": "About 4-5 years",
+            "points": 6
+          },
+          {
+            "label": "About 10 years or more",
+            "points": 3
+          },
+          {
+            "label": "About a year",
+            "points": 1
+          },
+          {
+            "label": "I don't know",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "q": "Over the last century, the US stock market's average annual return BEFORE inflation is closest to:",
+        "options": [
+          {
+            "label": "About 10%",
+            "points": 6
+          },
+          {
+            "label": "About 5%",
+            "points": 3
+          },
+          {
+            "label": "About 20%",
+            "points": 1
+          },
+          {
+            "label": "I don't know",
+            "points": 0
+          }
+        ]
+      }
+    ],
+    "instrumentLiteracy": [
+      {
+        "q": "A fund charges a 0.75% expense ratio. On $100,000 invested, what does that cost you per year?",
+        "options": [
+          {
+            "label": "$750",
+            "points": 6
+          },
+          {
+            "label": "$75",
+            "points": 2
+          },
+          {
+            "label": "Nothing directly — it comes out of the fund's profits",
+            "points": 1
+          },
+          {
+            "label": "I don't know",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "q": "The main difference between term and whole life insurance is:",
+        "options": [
+          {
+            "label": "Term covers a set period and builds no cash value; whole life is permanent and does",
+            "points": 6
+          },
+          {
+            "label": "Term is always the more expensive of the two",
+            "points": 1
+          },
+          {
+            "label": "They're the same product priced differently",
+            "points": 1
+          },
+          {
+            "label": "I don't know",
+            "points": 0
+          }
+        ]
+      }
+    ],
+    "scenarioForesight": [
+      {
+        "q": "In the last 12 months, have you actually written out what happens to your finances if your income stopped tomorrow?",
+        "options": [
+          {
+            "label": "Yes — written down, with real numbers and dates",
+            "points": 6
+          },
+          {
+            "label": "I've thought it through carefully but never written it",
+            "points": 4
+          },
+          {
+            "label": "Vaguely",
+            "points": 2
+          },
+          {
+            "label": "No",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "q": "Before your last purchase larger than one month's expenses, what did you actually compare?",
+        "options": [
+          {
+            "label": "At least two real alternatives and the option of not buying at all",
+            "points": 6
+          },
+          {
+            "label": "Alternatives, but I'd already decided",
+            "points": 3
+          },
+          {
+            "label": "Just the price",
+            "points": 1
+          },
+          {
+            "label": "Nothing, or I haven't made one",
+            "points": 0
+          }
+        ]
+      }
+    ],
+    "selfAwareness": [
+      {
+        "q": "Can you name the specific situation that most reliably leads you to spend money you didn't plan to?",
+        "options": [
+          {
+            "label": "Yes — I can name the exact trigger, and I've built a guard against it",
+            "points": 6
+          },
+          {
+            "label": "Yes, I can name it, but I haven't done anything about it",
+            "points": 4
+          },
+          {
+            "label": "Roughly — a general sense",
+            "points": 2
+          },
+          {
+            "label": "No",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "q": "In the last 6 months, how many unplanned purchases over $100 did you regret within a week?",
+        "options": [
+          {
+            "label": "None",
+            "points": 6
+          },
+          {
+            "label": "One",
+            "points": 4
+          },
+          {
+            "label": "Two or three",
+            "points": 2
+          },
+          {
+            "label": "Four or more",
+            "points": 0
+          }
+        ]
+      }
+    ],
+    "threatDetection": [
+      {
+        "q": "Someone credible-seeming offers a guaranteed 12% annual return with no risk. Your read?",
+        "options": [
+          {
+            "label": "'Guaranteed' plus well above market is the tell — I walk",
+            "points": 6
+          },
+          {
+            "label": "I'd ask hard questions, but might put a small amount in",
+            "points": 3
+          },
+          {
+            "label": "I'm not sure how I'd judge it",
+            "points": 1
+          },
+          {
+            "label": "Sounds worth a look",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "q": "Have you ever declined a financial product specifically because of how the person selling it was paid?",
+        "options": [
+          {
+            "label": "Yes — and I ask how someone is paid before I decide",
+            "points": 6
+          },
+          {
+            "label": "Yes, once it became obvious",
+            "points": 4
+          },
+          {
+            "label": "It's never occurred to me to ask",
+            "points": 1
+          },
+          {
+            "label": "No",
+            "points": 0
+          }
+        ]
+      }
+    ],
+    "negotiation": [
+      {
+        "q": "In the last 3 years, have you asked for and received a raise, a higher rate, or a fee waiver?",
+        "options": [
+          {
+            "label": "Yes, more than once",
+            "points": 6
+          },
+          {
+            "label": "Yes, once",
+            "points": 4
+          },
+          {
+            "label": "I asked and was turned down",
+            "points": 3
+          },
+          {
+            "label": "I haven't asked",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "q": "When you get a first offer on something significant — a salary, a rate, a price — what do you usually do?",
+        "options": [
+          {
+            "label": "Counter, with a number I researched first",
+            "points": 6
+          },
+          {
+            "label": "Counter, off instinct",
+            "points": 4
+          },
+          {
+            "label": "Ask whether there's any flexibility",
+            "points": 2
+          },
+          {
+            "label": "Accept it",
+            "points": 0
+          }
+        ]
+      }
+    ],
+    "network": [
+      {
+        "q": "How many people could you contact this week who could plausibly connect you to paid work?",
+        "options": [
+          {
+            "label": "More than ten",
+            "points": 6
+          },
+          {
+            "label": "Four to ten",
+            "points": 4
+          },
+          {
+            "label": "One to three",
+            "points": 2
+          },
+          {
+            "label": "None",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "q": "In the last 2 years, has paid work or a financial opportunity reached you through someone you know rather than a public application?",
+        "options": [
+          {
+            "label": "Yes, more than once",
+            "points": 6
+          },
+          {
+            "label": "Yes, once",
+            "points": 4
+          },
+          {
+            "label": "No, but I think it could",
+            "points": 2
+          },
+          {
+            "label": "No",
+            "points": 0
+          }
+        ]
+      }
+    ],
+    "personability": [
+      {
+        "q": "The people who share your finances — partner, family, business partners — are:",
+        "options": [
+          {
+            "label": "Actively aligned; we set the plan together",
+            "points": 6
+          },
+          {
+            "label": "Supportive, but not really involved",
+            "points": 4
+          },
+          {
+            "label": "I don't share finances with anyone",
+            "points": 3,
+            "neutral": true
+          },
+          {
+            "label": "Neutral or unaware",
+            "points": 2
+          },
+          {
+            "label": "Actively pulling the other way",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "q": "In the last year, have you changed someone's financial behaviour in your household by persuading them rather than pressuring them?",
+        "options": [
+          {
+            "label": "Yes, and it stuck",
+            "points": 6
+          },
+          {
+            "label": "Yes, briefly",
+            "points": 4
+          },
+          {
+            "label": "I tried and it didn't land",
+            "points": 2
+          },
+          {
+            "label": "No",
+            "points": 0
+          },
+          {
+            "label": "It doesn't apply — I don't share finances with anyone",
+            "points": 2,
+            "neutral": true
+          }
+        ]
+      }
+    ]
+  },
+  "quizNote": "Two questions per declared sub-stat, each worth 0-6 points. Score = 8 + the two point values, which lands exactly on the 8-20 scale with no rescaling. An unanswered question leaves the sub-stat INCOMPLETE rather than scoring it low.",
+  "hp": {
+    "unitWeeks": true,
+    "note": "1 HP = one week of expenses covered by liquid assets. Agreed with the owner 2026-09-04 to resolve the two incompatible HP definitions in rulebook §3A. See DECISIONS.md D-046.",
+    "minGainPerLevel": 1,
+    "debtBurdenMaxHpPenalty": {
+      "level": 2,
+      "factor": 0.75
+    }
+  },
+  "classAssignment": {
+    "note": "The rulebook names seven levers (§4) but gives no assignment rule. Agreed approach: rank levers by the dollars actually moving through each, break ties on the class's two primary stats. The Keeper is scored on spending restraint rather than a pool, since expense reduction owns no asset.",
+    "levers": [
+      {
+        "classId": "earner",
+        "measure": "Employment income (gross annual income less side income)"
+      },
+      {
+        "classId": "builder",
+        "measure": "Self-employment / business income, annualised"
+      },
+      {
+        "classId": "compounder",
+        "measure": "Invested balances in public markets"
+      },
+      {
+        "classId": "landholder",
+        "measure": "Real property equity"
+      },
+      {
+        "classId": "anchor",
+        "measure": "Cash and cash-equivalent reserves"
+      },
+      {
+        "classId": "speculator",
+        "measure": "Speculative holdings (crypto, collectibles, private credit)"
+      },
+      {
+        "classId": "keeper",
+        "measure": "Spending restraint — how far below a same-income benchmark the household actually spends"
+      }
+    ],
+    "keeperBenchmarkShare": 0.75,
+    "keeperNote": "The Keeper's 'pool' is the annual dollars NOT spent relative to a benchmark of 75% of gross income going out the door. Someone earning $100k and spending $50k is credited $25k of Keeper activity. This makes an aggressively frugal household able to out-rank a mid-sized portfolio, which is the whole point of the lever."
+  }
+}

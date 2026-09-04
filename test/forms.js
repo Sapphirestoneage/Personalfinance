@@ -42,6 +42,33 @@ const EXECUTABLE = process.env.SLAF_CHROMIUM || '/opt/pw-browsers/chromium';
    walk the fields in order, tapping each one and typing into it. */
 const CASES = [
   {
+    /* The Character Sheet is the densest typed form in the suite: four money
+       fields sitting above eighteen quiz radios, all built once at boot. If
+       anything ever starts rebuilding #intake between keystrokes, this is
+       where it shows up first. */
+    room: '/rooms/character-sheet.html',
+    container: '#intake',
+    seed: 'demo',
+    fields: [
+      { sel: '#f-income3', type: '58000' },
+      { sel: '#f-side', type: '2400' },
+      { sel: '#f-business', type: '0' },
+      { sel: '#f-speculative', type: '1500' },
+      { sel: '#f-years', type: '3' }
+    ],
+    expect: async (page) => {
+      const d = await page.evaluate(() =>
+        (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).dndProfile || {});
+      return [
+        ['income three years ago was kept', d.incomeThreeYearsAgoCents, 5800000],
+        ['side income was kept', d.sideIncomeAnnualCents, 240000],
+        ['a typed zero stays zero, not blank', d.businessIncomeAnnualCents, 0],
+        ['speculative holdings were kept', d.speculativeCents, 150000],
+        ['years sustained was kept', d.yearsSustained, 3]
+      ];
+    }
+  },
+  {
     room: '/rooms/debt-payoff.html',
     container: '#debt-list',
     seed: 'empty',
