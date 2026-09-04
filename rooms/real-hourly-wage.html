@@ -154,6 +154,7 @@
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
 <script src="../shared/ownership.js"></script>
+<script src="../shared/progress.js"></script>
 <script src="../shared/demo-persona.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
@@ -392,6 +393,8 @@
   window.addEventListener('hashchange', jumpToHash);
 
   Spine.registerRoom(ROOM_ID);
+
+  SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(render);
 
   Reference.load().then(function (tables) {

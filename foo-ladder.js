@@ -852,6 +852,8 @@
   paint();
 
   Spine.registerRoom(ROOM_ID);
+
+  SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(function (h0) { state.household = h0; paint(); });
 
   Reference.load(['irsLimits']).then(function (t) {

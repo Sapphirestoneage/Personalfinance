@@ -2513,6 +2513,81 @@ label mentions cash, so a second one cannot quietly reappear.
 
 ---
 
+## D-050 — What is finished, and where to go and finish it
+
+Every room was already honest about a missing input: an em dash and a reason
+beside it. What none of them could do was answer the question a person
+actually has — *what do I still have to fill in, and where is it?*
+
+That question was answerable all along, because two things already existed
+and had never been put together:
+
+- `shared/ownership.js` knows, for every shared number, which room **owns**
+  it, which **section** to land on, and how to read it. That is a deep link
+  to an exact question.
+- `shared/registry.js` knows every room and the order to walk them.
+
+**Decision: each room declares what it needs, and everything else is
+derived.** `needs: ['grossAnnualIncome', 'monthlyExpenses', …]` in the
+registry entry; `shared/progress.js` turns that into completeness, a missing
+list, and navigation. `test/run.js` checks every id is a real ownership
+field, that none is listed twice, and that every room declares the array at
+all — so a new room cannot quietly opt out.
+
+### Three decisions inside it that are easy to get wrong
+
+**Count distinct fields, not room-by-room mentions.** Fourteen rooms need
+your monthly expenses. That is *one* thing to do. A bar counting it fourteen
+times would lurch for reasons unrelated to any effort you made. The overall
+figure is over distinct fields; a test asserts the two numbers differ and
+that the smaller one is used.
+
+**A room that reads nothing shared is not "incomplete".** Quick Math and The
+Windfall work entirely from what you type into them. They are `standalone`,
+not behind, and the strip says "this room stands on its own" rather than
+implying a chore.
+
+**Name what one answer unlocks.** The map does not say "9 things left"; it
+says *"the one that opens the most is Monthly expenses, in Cash Flow — 14
+rooms are waiting on it."* Nine outstanding items is a chore. One answer
+that opens fourteen rooms is a reason.
+
+### The strip, and why it is one component
+
+Every room and the FOO ladder render the same footer: what is still needed
+(each item a link straight to the question that sets it), then **← previous
+room** and **next unfinished →**. It is one function in
+`shared/progress.js`, not twenty-five copies, so the wording, the ordering
+and the link-building cannot drift.
+
+It repaints on every household change and holds no inputs of its own, so it
+sits outside the live-form rule (D-034) entirely — there is nothing under a
+finger to destroy.
+
+Two shapes had to be handled rather than assumed. Rooms live in `rooms/` and
+their links climb out with `../`; the FOO ladder is at the root and must
+not. Rooms use `<main>`; the FOO ladder builds into `#root > .wrap`. Both
+are covered, and a test asserts a link from the front page carries no `../`.
+
+### The bug this feature had, caught by the page sweep
+
+The first version reached for the UMD wrapper's `root` from inside the
+factory, which does not close over it — every room threw *"root is not
+defined"* on load. The sweep caught it immediately because a page error is
+exactly what it looks for. The mount now resolves the global the way the
+wrapper itself does.
+
+### What this deliberately is not
+
+No score, no percentage-complete badge on a room card, no streak. The pills
+say "has everything it needs", "3 to fill in", or "works on its own" —
+states, not grades. Skipping remains free everywhere, and a blank stays a
+blank: nothing here nags, and nothing counts an unanswered question as a
+failure. That is the same position `SPEC.md` takes on the Financial Health
+Score and the Fulfillment Curve.
+
+---
+
 ## Still open
 
 - **The last `unavailable()` ratio: life insurance needs multiple.** Credit

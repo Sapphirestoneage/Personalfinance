@@ -489,3 +489,25 @@ h3 { font-size: var(--text-md); }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---- Progress strip (shared/progress.js) ---------------------------------
+   What a room still needs, and where to go next. Appears at the foot of
+   every room, built from one component so the wording cannot drift.       */
+.slaf-progress { border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-4); margin-top: var(--space-5); background: var(--color-surface); }
+.slaf-progress-head { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0; }
+.slaf-progress-head strong { color: var(--color-text); }
+.slaf-progress-list { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+.slaf-progress-list li { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+.slaf-progress-list li:first-child { border-top: none; }
+.slaf-progress-list a { color: var(--color-accent-hover); text-decoration: underline; }
+.slaf-progress-where { font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+.slaf-progress-nav { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); margin-top: var(--space-4); }
+.slaf-progress-btn { display: inline-block; font-size: var(--text-sm); color: var(--color-accent-hover); text-decoration: none; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); }
+.slaf-progress-btn:hover { border-color: var(--color-border-active); }
+.slaf-progress-btn.is-next { background: var(--color-surface-active); border-color: var(--color-border-active); }
+
+/* Completion, on the map */
+.slaf-done-pill { font-size: var(--text-xs); border-radius: var(--radius-pill); padding: 1px var(--space-2); border: 1px solid var(--color-border); color: var(--color-text-faint); white-space: nowrap; }
+.slaf-done-pill.is-done { color: var(--color-positive); border-color: var(--color-positive); }
+.slaf-done-bar { height: 6px; border-radius: var(--radius-pill); background: rgba(0,0,0,.22); box-shadow: inset 0 0 0 1px var(--color-border); overflow: hidden; }
+.slaf-done-bar > span { display: block; height: 100%; background: var(--color-accent); border-radius: var(--radius-pill); }

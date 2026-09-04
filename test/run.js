@@ -52,6 +52,7 @@ const WindfallEngine = require(path.join(ROOT, 'engines/windfall.js'));
 const RunwayEngine = require(path.join(ROOT, 'engines/runway.js'));
 const HealthEngine = require(path.join(ROOT, 'engines/health.js'));
 const IncomeEngine = require(path.join(ROOT, 'engines/income.js'));
+const Progress = require(path.join(ROOT, 'shared/progress.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -2056,6 +2057,7 @@ section('Room script tags');
     Registry: 'shared/registry.js', Reference: 'shared/reference.js',
     Spine: 'shared/spine-v2.js', Ownership: 'shared/ownership.js',
     Rating: 'shared/rating.js', LiveForm: 'shared/liveform.js',
+    Progress: 'shared/progress.js',
     DemoPersona: 'shared/demo-persona.js',
     Tier0: 'engines/tier0.js', Foo: 'engines/foo.js',
     CashFlow: 'engines/cashflow.js', Debt: 'engines/debt.js',
@@ -4403,6 +4405,140 @@ section('Not earning');
       });
       checkTrue(`${name}: no NaN or Infinity anywhere`, found.length === 0, found.join('; '));
     });
+  }
+})();
+
+section('What is finished');
+
+(function () {
+  /* -- The declarations have to be real ---------------------------------- */
+  {
+    Registry.ROOMS.forEach(function (room) {
+      checkTrue(`${room.id} declares what it needs`, Array.isArray(room.needs),
+        'add a needs: [] to its registry entry — empty means it stands alone');
+      (room.needs || []).forEach(function (fieldId) {
+        checkTrue(`${room.id} needs a field that exists: ${fieldId}`,
+          !!Ownership.FIELDS[fieldId],
+          'ids come from shared/ownership.js, which knows who owns each one');
+      });
+      /* A room must not list the same need twice — it would double-count
+         against its own completion. */
+      const ids = room.needs || [];
+      check(`${room.id} lists each need once`, new Set(ids).size, ids.length);
+    });
+  }
+
+  function partial() {
+    const h = Schema.createHousehold({});
+    h.people.push(Schema.createPerson({ label: 'You', role: 'adult', dob: '1994-04-12' }));
+    h.people[0].incomeSources.push(
+      Schema.createIncomeSource({ grossAnnualIncomeCents: 7200000 }));
+    return h;
+  }
+
+  /* -- One room -------------------------------------------------------- */
+  {
+    const h = partial();
+    const fire = Progress.forRoom('fire', h);
+    check('FIRE needs three figures', fire.total, 3);
+    check('one of them is answered', fire.filledCount, 1);
+    check('so two are missing', fire.missing.length, 2);
+    checkTrue('and it is not complete', !fire.complete);
+    checkTrue('every missing entry carries a link', fire.missing.every(m => !!m.href));
+    checkTrue('and names the room that owns it', fire.missing.every(m => !!m.ownerTitle));
+
+    const full = Progress.forRoom('fire', Demo.build());
+    checkTrue('the demo persona completes it', full.complete);
+    check('with nothing missing', full.missing.length, 0);
+    check('and a full share', full.share, 1);
+
+    /* A room that reads nothing shared is not "incomplete" — it is never
+       blocked, which is a different state and says so. */
+    const solo = Progress.forRoom('quick-math', h);
+    checkTrue('a standalone room is flagged as standalone', solo.standalone);
+    checkTrue('and counts as complete rather than as behind', solo.complete);
+    check('unknown room ids return nothing', Progress.forRoom('no-such-room', h), null);
+  }
+
+  /* -- The whole suite, counted honestly ---------------------------------- */
+  {
+    const h = partial();
+    const o = Progress.overall(h);
+
+    /* Counted over DISTINCT fields. Fourteen rooms need monthly expenses;
+       that is one thing to do, not fourteen, and a bar that said otherwise
+       would move for reasons unrelated to effort. */
+    const everyNeed = [];
+    Registry.ROOMS.forEach(r => (r.needs || []).forEach(n => everyNeed.push(n)));
+    const distinct = new Set(everyNeed).size;
+    check('the total is distinct fields, not room-by-room mentions',
+      o.fieldsTotal, distinct);
+    checkTrue('which is far fewer than the mentions', everyNeed.length > distinct);
+
+    check('income and date of birth are answered', o.fieldsFilled, 2);
+    check('so the rest are outstanding', o.missing.length, distinct - 2);
+    checkTrue('and each outstanding item links somewhere',
+      o.missing.every(m => !!m.href && !!m.label));
+
+    /* The motivating number: how many rooms one answer unlocks. */
+    const expenses = o.missing.filter(m => m.fieldId === 'monthlyExpenses')[0];
+    checkTrue('monthly expenses is outstanding', !!expenses);
+    checkTrue('and it is named as unblocking many rooms', expenses.blocks.length > 5);
+
+    const done = Progress.overall(Demo.build());
+    check('a full household has nothing outstanding', done.missing.length, 0);
+    check('and a share of one', done.share, 1);
+
+    const empty = Progress.overall(Schema.createHousehold({}));
+    check('an empty household has answered nothing', empty.fieldsFilled, 0);
+    check('but still knows how much there is', empty.fieldsTotal, distinct);
+  }
+
+  /* -- Where to go next --------------------------------------------------- */
+  {
+    const h = partial();
+    const next = Progress.nextUnfinished(h, 'fire');
+    checkTrue('there is a next unfinished room', !!next);
+    checkTrue('and it is not the room you are standing in', next.roomId !== 'fire');
+    checkTrue('and it is genuinely unfinished', !next.complete);
+
+    /* It must wrap rather than dead-end at the last room on the path. */
+    const path = Registry.inOrder();
+    const last = path[path.length - 1];
+    const fromLast = Progress.nextUnfinished(h, last.id);
+    checkTrue('the last room still offers somewhere to go', !!fromLast);
+
+    check('a finished household has nowhere left to send you',
+      Progress.nextUnfinished(Demo.build(), 'fire'), null);
+
+    const nb = Progress.neighbours(path[0].id);
+    check('the first room has no previous', nb.prev, null);
+    checkTrue('but it has a next', !!nb.next);
+    check('the last room has no next', Progress.neighbours(last.id).next, null);
+    check('and an unknown room reports no position', Progress.neighbours('nope').index, -1);
+  }
+
+  /* -- The strip itself ---------------------------------------------------- */
+  {
+    const h = partial();
+    const strip = Progress.stripHtml('fire', h);
+    checkTrue('the strip says how many are left', /2 things left/.test(strip));
+    checkTrue('it links to the owning room', /start\.html#q-investments/.test(strip));
+    checkTrue('it offers a way back', /← /.test(strip));
+    checkTrue('and a way forward', /Next unfinished/.test(strip));
+
+    /* From a room, links climb out of rooms/; from the root they must not. */
+    checkTrue('links from a room are relative to rooms/',
+      /\.\.\/rooms\/start\.html/.test(strip), strip.slice(0, 400));
+    const fromRoot = Progress.stripHtml('foo-ladder', h);
+    checkTrue('links from the front page are not',
+      !/\.\.\//.test(fromRoot), fromRoot.slice(0, 400));
+
+    const complete = Progress.stripHtml('fire', Demo.build());
+    checkTrue('a finished room says so', /everything it needs/.test(complete));
+    checkTrue('a standalone room says that instead',
+      /stands on its own/.test(Progress.stripHtml('quick-math', h)));
+    check('an unknown room renders nothing', Progress.stripHtml('nope', h), '');
   }
 })();
 

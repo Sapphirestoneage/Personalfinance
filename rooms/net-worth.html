@@ -109,6 +109,7 @@
 <script src="../shared/spine-v2.js"></script>
 <script src="../shared/liveform.js"></script>
 <script src="../shared/ownership.js"></script>
+<script src="../shared/progress.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script>
@@ -370,6 +371,8 @@
   window.addEventListener('hashchange', jumpToHash);
 
   Spine.registerRoom(ROOM_ID);
+
+  SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(render);
   renderNow();
   jumpToHash();

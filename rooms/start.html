@@ -270,6 +270,7 @@
 <script src="../shared/registry.js"></script>
 <script src="../shared/spine-v2.js"></script>
 <script src="../shared/ownership.js"></script>
+<script src="../shared/progress.js"></script>
 <script src="../shared/demo-persona.js"></script>
 <script src="../shared/liveform.js"></script>
 <script src="../engines/income.js"></script>
@@ -1051,6 +1052,8 @@
      walked through it again.                                              */
 
   Spine.registerRoom(ROOM_ID);
+
+  SLAF.Progress.mount(ROOM_ID);
 
   function route() {
     var hash = (location.hash || '').slice(1);

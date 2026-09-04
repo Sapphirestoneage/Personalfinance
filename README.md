@@ -83,6 +83,7 @@ shared/             The spine everything depends on
   reference.js        loader + pure lookups for data/
   rating.js           THE 1-10 rating control — scale, storage and markup
   liveform.js         never rebuild a form under the user's finger
+  progress.js         what each room still needs, and where to go fill it
   demo-persona.js     the one demo household used by every "try an example"
 engines/            Shared calculation engines — one function per concept
   tier0.js            the nine Tier 0 outputs

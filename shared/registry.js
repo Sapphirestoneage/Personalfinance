@@ -21,6 +21,7 @@
   var ROOMS = [
     {
       id: 'start',
+      needs: ['dob', 'state', 'filingStatus', 'grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'employerMatch', 'capturingFullMatch'],
       order: 1,
       title: 'Start Here',
       blurb: 'Nine questions, one at a time, in plain English. Answer once and every other room opens already filled in.',
@@ -41,6 +42,7 @@
     },
     {
       id: 'financial-snapshot',
+      needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt', 'dob', 'filingStatus'],
       order: 4,
       title: 'Financial Snapshot',
       blurb: 'The payoff: nine numbers read off everything you\u2019ve entered. Net worth, savings rate, runway, FIRE number, and which rung you\u2019re on.',
@@ -63,6 +65,7 @@
     },
     {
       id: 'cash-flow',
+      needs: ['monthlyExpenses'],
       order: 3,
       title: 'Cash Flow',
       blurb: 'Where the money actually goes, by category — measured against a budget, and against what you thought you spent.',
@@ -79,6 +82,7 @@
     },
     {
       id: 'debt-payoff',
+      needs: ['totalDebt', 'monthlyDebtPayments'],
       order: 2,
       title: 'Debt Payoff',
       blurb: 'Every debt, in the order you\u2019ll clear them — and what avalanche, snowball, or just getting the worst one gone would each cost.',
@@ -96,6 +100,7 @@
     },
     {
       id: 'net-worth',
+      needs: ['cashSavings', 'investments', 'totalDebt'],
       order: 5,
       title: 'Net Worth',
       blurb: 'Everything you own, everything you owe, and the one number underneath. The place to add a house or a car.',
@@ -111,6 +116,7 @@
     },
     {
       id: 'savings-rate',
+      needs: ['grossAnnualIncome', 'monthlyExpenses'],
       order: 6,
       title: 'Savings Rate',
       blurb: 'The share of your income that stays yours \u2014 both ways of counting it, and what one more point of it is worth.',
@@ -127,6 +133,7 @@
     },
     {
       id: 'sleep-at-night',
+      needs: ['monthlyExpenses', 'cashSavings'],
       order: 7,
       title: 'Sleep At Night',
       blurb: 'The amount of cash that stops the 3am arithmetic \u2014 your number, beside the one the maths produces.',
@@ -143,6 +150,7 @@
     },
     {
       id: 'fire',
+      needs: ['monthlyExpenses', 'investments', 'dob'],
       order: 8,
       title: 'FIRE Number',
       blurb: 'What you\u2019d need before work became optional \u2014 lean, standard, chubby, fat, coast or barista, from one formula.',
@@ -158,6 +166,7 @@
     },
     {
       id: 'real-hourly-wage',
+      needs: ['grossAnnualIncome'],
       order: 9,
       title: 'Real Hourly Wage',
       blurb: 'What the job actually pays, once you count every hour it takes and everything it costs you to do it.',
@@ -174,6 +183,7 @@
     },
     {
       id: 'hassle',
+      needs: ['grossAnnualIncome'],
       order: 10,
       title: 'Worth the Hassle',
       blurb: 'What a money-saving chore actually pays per hour \u2014 against what an hour of your life already earns, and how much you hate doing it.',
@@ -190,6 +200,7 @@
     },
     {
       id: 'quick-math',
+      needs: [],
       order: 11,
       title: 'Quick Math',
       blurb: 'Four small answers: is switching savings accounts worth it, what that thing costs per use, whether you can afford the car, and the rule of five.',
@@ -207,6 +218,7 @@
     },
     {
       id: 'self-employed',
+      needs: ['grossAnnualIncome', 'filingStatus', 'state'],
       order: 12,
       title: 'Going Self-Employed',
       blurb: 'What a contract rate has to be to match a salary, where the 15.3% actually lands, and what to send in each quarter.',
@@ -222,6 +234,7 @@
     },
     {
       id: 'side-hustle',
+      needs: ['grossAnnualIncome', 'filingStatus'],
       order: 13,
       title: 'Side Hustle',
       blurb: 'What the second job actually pays after tax, costs and the hours it eats \u2014 and what a week looks like with it in.',
@@ -238,6 +251,7 @@
     },
     {
       id: 'dashboard',
+      needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
       order: 15,
       title: 'The Dashboard',
       blurb: 'Every threshold ratio as one shape, plus altitude, fuel, engine load, thrust, weather and the flight plan \u2014 the whole panel at a glance.',
@@ -257,6 +271,7 @@
     },
     {
       id: 'accounts',
+      needs: ['grossAnnualIncome', 'filingStatus'],
       order: 17,
       title: 'Where It Goes',
       blurb: 'Roth, Traditional or taxable \u2014 and how much a Solo 401(k) actually lets you put away.',
@@ -271,6 +286,7 @@
     },
     {
       id: 'values',
+      needs: ['monthlyExpenses'],
       order: 19,
       title: 'What Matters',
       blurb: 'The five things you say matter most, next to where the money actually went. No score \u2014 just the two lists, side by side.',
@@ -287,6 +303,7 @@
     },
     {
       id: 'ratios',
+      needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
       order: 14,
       title: 'Every Ratio',
       blurb: 'Thirty ratios people actually quote, computed from what you have already entered \u2014 with the two this app refuses to guess at named as such.',
@@ -304,6 +321,7 @@
     },
     {
       id: 'credential',
+      needs: ['grossAnnualIncome'],
       order: 16,
       title: 'Worth Learning',
       blurb: 'A degree, a bootcamp or a weekend course \u2014 what it costs including the time, what the raise is worth after tax, and when it pays back.',
@@ -320,6 +338,7 @@
     },
     {
       id: 'fulfillment',
+      needs: ['monthlyExpenses'],
       order: 18,
       title: 'Enough',
       blurb: 'What each thing costs a month, against what it is actually worth to you \u2014 and the four places that lands.',
@@ -336,6 +355,7 @@
     },
     {
       id: 'goals',
+      needs: ['monthlyExpenses'],
       order: 20,
       title: 'Goals',
       blurb: 'A wedding, a deposit, a big trip. What it costs, what it needs a month, and whether that actually fits alongside everything else.',
@@ -349,6 +369,7 @@
     },
     {
       id: 'worth',
+      needs: ['grossAnnualIncome'],
       order: 22,
       title: 'Worth It',
       blurb: 'What you thought something would be worth before you bought it, against what it turned out to be worth \u2014 and what that gap says about your own guesses.',
@@ -365,6 +386,7 @@
     },
     {
       id: 'windfall',
+      needs: [],
       order: 23,
       title: 'The Windfall',
       blurb: 'A bonus, an inheritance, a sale \u2014 all at once or spread out, and the exact condition under which spreading it wins.',
@@ -381,6 +403,7 @@
     },
     {
       id: 'runway',
+      needs: ['cashSavings', 'monthlyExpenses'],
       order: 24,
       title: 'The Runway',
       blurb: 'The income stops and the bills don\u2019t \u2014 quitting, laid off, or starting something. How many months that is, and what would buy you more of them.',
@@ -398,6 +421,7 @@
     },
     {
       id: 'health',
+      needs: ['dob', 'grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments'],
       order: 25,
       title: 'The Score',
       blurb: 'One number for the whole picture, weighted for the decade you\u2019re in \u2014 and every part of how it was arrived at.',
@@ -415,6 +439,7 @@
     },
     {
       id: 'foo-ladder',
+      needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'employerMatch', 'dob'],
       order: 21,
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
@@ -428,6 +453,12 @@
       subsections: []
     }
   ];
+
+  /* `needs` lists the shared fields a room reads before it can show its main
+     output — the ids in shared/ownership.js, which know who owns each one and
+     which question to land on. shared/progress.js turns that into "what is
+     left, and where", and test/run.js checks every id is real. An empty list
+     means the room stands on its own. See DECISIONS.md D-050. */
 
   /* The path, in the order a person should walk it (SPEC.md §12.6 keeps the
      tag filter; this adds the sequence the filter sits on top of). */

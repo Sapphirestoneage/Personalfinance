@@ -69,6 +69,12 @@
     <span class="progress-count" id="progress-count">—</span>
   </div>
   <div class="slaf-bar"><span id="progress-bar" style="width:0"></span></div>
+  <div class="progress-head" style="margin-top:var(--space-3)">
+    <span class="slaf-eyebrow">Answers given</span>
+    <span class="progress-count" id="answers-count">—</span>
+  </div>
+  <div class="slaf-done-bar"><span id="answers-bar" style="width:0"></span></div>
+  <p class="path-note" id="answers-next" style="margin-top:var(--space-3)"></p>
 </section>
 
 <main class="slaf-wrap">
@@ -86,10 +92,11 @@
 <script src="shared/registry.js"></script>
 <script src="shared/spine-v2.js"></script>
 <script src="shared/ownership.js"></script>
+<script src="shared/progress.js"></script>
 <script>
 (function () {
   'use strict';
-  var Registry = SLAF.Registry, Spine = SLAF.Spine;
+  var Progress = SLAF.Progress, Registry = SLAF.Registry, Spine = SLAF.Spine;
 
   /* SPEC.md §12.6 — the picker stays as the existing tag filter. */
   var activeTag = 'all';
@@ -141,12 +148,29 @@
         + '<h2>' + room.title + '</h2>'
         + (isNext ? '<span class="next-flag">next</span>'
                   : seen ? '<span class="visited">visited</span>' : '') + '</div>'
+        + donePill(room.id)
         + '<p>' + room.blurb + '</p>'
         + '<div class="room-tags">'
         + room.tags.map(function (t) { return '<span class="tag">' + t + '</span>'; }).join('')
         + '</div>';
       list.appendChild(a);
     });
+  }
+
+  /* Whether a room has the figures it reads, which is a different question
+     from whether you have been in it. shared/progress.js owns the answer. */
+  function donePill(roomId) {
+    var row = Progress.forRoom(roomId, Spine.getProfile());
+    if (!row || row.standalone) {
+      return '<div style="margin-top:var(--space-2)">'
+        + '<span class="slaf-done-pill">works on its own</span></div>';
+    }
+    if (row.complete) {
+      return '<div style="margin-top:var(--space-2)">'
+        + '<span class="slaf-done-pill is-done">has everything it needs</span></div>';
+    }
+    return '<div style="margin-top:var(--space-2)">'
+      + '<span class="slaf-done-pill">' + row.missing.length + ' to fill in</span></div>';
   }
 
   /* SPEC.md §12.7 — a plain visited-rooms progress bar off getVisitedRooms().
@@ -159,6 +183,26 @@
     var seen = Spine.getVisitedRooms().filter(function (id) { return known.indexOf(id) !== -1; });
     el('progress-count').textContent = seen.length + ' of ' + total;
     el('progress-bar').style.width = (total === 0 ? 0 : (seen.length / total) * 100) + '%';
+
+    /* The second bar is the one that actually gates anything: distinct
+       shared figures answered, counted once each however many rooms read
+       them. See DECISIONS.md D-050. */
+    var o = Progress.overall(Spine.getProfile());
+    el('answers-count').textContent = o.fieldsFilled + ' of ' + o.fieldsTotal;
+    el('answers-bar').style.width = Math.round(o.share * 100) + '%';
+
+    var note = el('answers-next');
+    if (!o.missing.length) {
+      note.textContent = 'Every figure the rooms share is filled in.';
+      return;
+    }
+    /* Name the one that unlocks the most, because "9 things left" is a
+       chore and "this one opens 14 rooms" is a reason. */
+    var best = o.missing.slice().sort(function (a, b) { return b.blocks.length - a.blocks.length; })[0];
+    note.innerHTML = o.missing.length + ' still to answer. The one that opens the most is '
+      + '<a href="' + best.href + '">' + best.label + '</a>, in ' + best.ownerTitle
+      + ' — ' + best.blocks.length + ' room' + (best.blocks.length === 1 ? '' : 's')
+      + ' are waiting on it.';
   }
 
   function renderAll() { renderProgress(); renderRooms(); }
