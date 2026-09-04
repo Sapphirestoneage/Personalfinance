@@ -2738,6 +2738,82 @@ value, whether it is set, and a link to the question. Do not read
 
 ---
 
+## D-053 — A 0% card is a card with a deadline
+
+Reported from the live site with a screenshot: a card at **0%** with $910 on
+it and a $40 minimum. The payoff plan treated that 0% as permanent, which
+made it the cheapest-looking debt on the page and therefore the last one the
+avalanche would ever touch.
+
+It is the opposite. A promotional rate that expires while a balance survives
+it is the most expensive thing on the page, and the app was silently
+recommending you ignore it.
+
+**Decision: a debt carries `promoEndsOn` and `postPromoRate`,** and `rate`
+means *the rate you are paying today*. The simulation asks each debt what it
+charges **in that month** rather than assuming today's rate forever.
+
+### What the room now says
+
+For that exact card, at $40 a month:
+
+> 5 months left. At $40/mo you will still owe **$710** when the rate jumps to
+> **24.99%** — clearing it in time takes **$182/mo**.
+
+That last figure is the only number that matters about a 0% card and no
+payoff table shows it. At 0% it is exact — balance over months left. Above
+0% it is the level payment, from `engines/projection.js`, because a promo is
+not always zero.
+
+### Three states, none of them guessed
+
+- **No end date** — no promo. Today's rate is the rate, as before.
+- **An end date but no go-to rate** — the promo is real but unmodellable
+  past its end. The engine keeps using the stated rate and the room says
+  plainly that it is planning as though 0% lasts forever until you supply
+  the rate it reverts to. Inventing a go-to rate would invent the number
+  that decides the answer (D-036).
+- **Already expired** — the go-to rate applies from month one, and the room
+  says so rather than showing a stale 0%.
+
+### The bug that made the first version useless
+
+`prepare()` normalises each debt into a fresh object for the simulation, and
+it dropped the two new fields. Everything looked right — `promoStatus` and
+`clearBeforePromoEnds` both worked, the room displayed correctly — while the
+actual payoff plan still charged 0% for sixty months.
+
+The test that caught it is the one worth keeping: simulate the same card
+**with** and **without** a promo, and assert the promo version accrues real
+interest while a genuinely permanent 0% accrues none. Testing the display
+would have passed.
+
+### One date formula, not two
+
+`monthsUntil` existed in `engines/goals.js` for a goal's target date. A
+promo end date needs precisely the same sum, so it moved to
+`shared/schema.js` and Goals now delegates to it, keeping its own wording
+for the missing-date case. Two copies of calendar arithmetic is exactly how
+two rooms come to disagree about what month it is (§8).
+
+### Compatibility note
+
+**What changed.** `Schema.createDebt()` returns two more keys,
+`promoEndsOn` (ISO date or null) and `postPromoRate` (decimal or null).
+
+**No migration.** Both default to `null`, and `null` `promoEndsOn` means "not
+promotional", which is what every stored debt already was. `promoStatus()`
+returns `null` for such a debt and the simulation behaves exactly as before
+— a test asserts a debt with no promo charges its stated rate in every
+month.
+
+**What a future room needs to know.** Do not read `debt.rate` and call it
+the cost of that debt. It is the rate *today*. Use `Debt.rateInMonth(debt,
+month)` inside any simulation, and `Debt.promoStatus(debt)` to decide
+whether there is a deadline worth showing.
+
+---
+
 ## Still open
 
 - **The last `unavailable()` ratio: life insurance needs multiple.** Credit

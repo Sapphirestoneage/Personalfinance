@@ -50,6 +50,9 @@
   .debt-warn { font-size: var(--text-xs); color: var(--color-caution); margin: var(--space-2) 0 0; }
   .debt-limit { margin-top: var(--space-2); }
   .debt-hint { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+  .debt-promo { font-size: var(--text-xs); margin: var(--space-2) 0 0; }
+  .debt-promo.is-warn { color: var(--color-caution); }
+  .debt-promo.is-good { color: var(--color-positive); }
 
   .strategies { display: grid; gap: var(--space-2); }
   .strategy { text-align: left; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; font-family: var(--font-body); color: var(--color-text); }
@@ -164,6 +167,7 @@
 <script src="../shared/progress.js"></script>
 <script src="../shared/liveform.js"></script>
 <script src="../shared/demo-persona.js"></script>
+<script src="../engines/projection.js"></script>
 <script src="../engines/debt.js"></script>
 <script>
 (function () {
@@ -254,7 +258,17 @@
               + field(d, 'creditLimitCents', 'Credit limit', '$', null, 'e.g. 10000')
               + '<p class="debt-hint">Optional, and only used for credit utilisation — '
               + 'balance against limit, where 30% is the usual ceiling. Blank means the '
-              + 'ratio stays unavailable rather than guessed.</p></div>'
+              + 'ratio stays unavailable rather than guessed.</p>'
+              /* A 0% card is a card with a deadline. Without these two the
+                 payoff plan treats today's rate as permanent. D-053. */
+              + '<div class="debt-grid" style="margin-top:var(--space-3)">'
+              + '<label class="slaf-field" style="margin:0"><span class="slaf-label">0% / promo ends</span>'
+              + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id
+              + '" data-field="promoEndsOn" value="' + (d.promoEndsOn || '')
+              + '" aria-label="Promotional rate end date"/></span></label>'
+              + field(d, 'postPromoRate', 'Then the rate becomes', null, '%', 'e.g. 24.99')
+              + '</div>'
+              + '<p class="debt-promo" data-promo="' + d.id + '"></p></div>'
             : '')
         + (missing.length
             ? '<p class="debt-warn">Needs ' + missing.join(' and ') + ' before it can be planned.</p>'
@@ -262,18 +276,66 @@
         + '</div>';
     }).join('');
 
+    paintPromos();
+
     if (focusedId && focusedField) {
       var again = list.querySelector('[data-debt="' + focusedId + '"][data-field="' + focusedField + '"]');
       if (again) { again.focus(); if (again.select) again.select(); }
     }
   }
 
+  /* The only number that matters about a 0% card: whether you clear it
+     before the rate jumps, and what it takes if you will not. Text only —
+     it never touches a control. D-053. */
+  function paintPromos() {
+    var debts = Spine.getProfile().debts || [];
+    debts.forEach(function (d) {
+      var node = document.querySelector('[data-promo="' + d.id + '"]');
+      if (!node) return;
+      var status = Debt.promoStatus(d);
+      if (!status) { node.textContent = ''; node.className = 'debt-promo'; return; }
+      if (status.expired) {
+        node.className = 'debt-promo is-warn';
+        node.textContent = 'That promotional rate has already ended'
+          + (status.knowsAfter
+              ? ' — this is being planned at ' + Money.formatRate(status.postRate, { decimals: 2 }) + '.'
+              : '. Add the rate it reverted to so the plan is honest.');
+        return;
+      }
+      if (!status.knowsAfter) {
+        node.className = 'debt-promo is-warn';
+        node.textContent = status.monthsLeft + ' month'
+          + (status.monthsLeft === 1 ? '' : 's') + ' of the promo left. Add the rate it '
+          + 'reverts to — without it this is planned as though 0% lasts forever.';
+        return;
+      }
+      var plan = Debt.clearBeforePromoEnds(d);
+      if (!Money.isOk(plan)) { node.textContent = plan.reason; node.className = 'debt-promo'; return; }
+      if (plan.alreadyClear) {
+        node.className = 'debt-promo is-good';
+        node.textContent = 'Nothing owed — the promo end date does not matter.';
+        return;
+      }
+      node.className = 'debt-promo ' + (plan.clearsInTime ? 'is-good' : 'is-warn');
+      node.textContent = plan.clearsInTime
+        ? 'Clears with ' + status.monthsLeft + ' month'
+          + (status.monthsLeft === 1 ? '' : 's') + ' to spare, before the rate goes to '
+          + Money.formatRate(status.postRate, { decimals: 2 }) + '.'
+        : status.monthsLeft + ' month' + (status.monthsLeft === 1 ? '' : 's')
+          + ' left. At ' + Money.formatCents(plan.payingCents) + '/mo you will still owe '
+          + Money.formatCents(plan.leftWhenPromoEndsCents) + ' when the rate jumps to '
+          + Money.formatRate(status.postRate, { decimals: 2 }) + ' — clearing it in time takes '
+          + Money.formatCents(plan.value) + '/mo.';
+    });
+  }
+
   function field(debt, key, label, prefix, suffix, placeholder) {
     var raw = debt[key];
     var shown = '';
     if (Money.isEntered(raw)) {
-      shown = key === 'rate' ? Money.formatRate(raw, { decimals: 2 }).replace(/\.?0+%$/, '%')
-                             : Money.formatCents(raw);
+      shown = (key === 'rate' || key === 'postPromoRate')
+        ? Money.formatRate(raw, { decimals: 2 }).replace(/\.?0+%$/, '%')
+        : Money.formatCents(raw);
     }
     return '<label class="slaf-field" style="margin:0"><span class="slaf-label">' + label + '</span>'
       + '<span class="slaf-input-shell">'
@@ -286,7 +348,7 @@
 
   function editableValue(key, raw) {
     if (!Money.isEntered(raw)) return '';
-    if (key === 'rate') return String(Math.round(raw * 10000) / 100);
+    if (key === 'rate' || key === 'postPromoRate') return String(Math.round(raw * 10000) / 100);
     return String(raw / 100);
   }
 
@@ -294,7 +356,8 @@
     var node = evt.target;
     var id = node.getAttribute && node.getAttribute('data-debt');
     var key = node.getAttribute && node.getAttribute('data-field');
-    if (!id || !key || key === 'label' || node.tagName === 'SELECT') return;
+    if (!id || !key || key === 'label' || key === 'promoEndsOn'
+        || node.tagName === 'SELECT') return;
     var debt = findDebt(Spine.getProfile(), id);
     if (!debt) return;
     node.value = editableValue(key, debt[key]);
@@ -307,6 +370,7 @@
     var key = node.getAttribute && node.getAttribute('data-field');
     if (!id || !key || node.tagName === 'SELECT') return;
     writeField(id, key, node.value);
+    if (key === 'promoEndsOn') return;
     /* Tidy the value on THIS node rather than waiting for a rebuild to do
        it — the rebuild is now deferred until the user leaves the form, and
        setting one node's value replaces nothing. */
@@ -314,7 +378,7 @@
       var debt = findDebt(Spine.getProfile(), id);
       if (debt) {
         node.value = !Money.isEntered(debt[key]) ? ''
-          : key === 'rate'
+          : (key === 'rate' || key === 'postPromoRate')
             ? Money.formatRate(debt[key], { decimals: 2 }).replace(/\.?0+%$/, '%')
             : Money.formatCents(debt[key]);
       }
@@ -354,7 +418,10 @@
     if (key === 'label') patch.label = rawValue === '' ? null : rawValue;
     else if (key === 'type') patch.type = rawValue;
     else if (key === 'emotionalTag') patch.emotionalTag = rawValue === '' ? null : rawValue;
-    else if (key === 'rate') patch.rate = Money.parseRatePercent(rawValue);
+    else if (key === 'promoEndsOn') patch.promoEndsOn = rawValue === '' ? null : rawValue;
+    else if (key === 'rate' || key === 'postPromoRate') {
+      patch[key] = Money.parseRatePercent(rawValue);
+    }
     else patch[key] = Money.parseMoney(rawValue);
     Spine.upsertDebt(patch);
     render();
