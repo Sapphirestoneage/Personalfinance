@@ -18,14 +18,16 @@
 (function (root, factory) {
   var deps;
   if (typeof module === 'object' && module.exports) {
-    deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js') };
+    deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'),
+             Projection: require('./projection.js') };
   } else {
-    deps = { Money: root.SLAF && root.SLAF.Money, Schema: root.SLAF && root.SLAF.Schema };
+    deps = { Money: root.SLAF && root.SLAF.Money, Schema: root.SLAF && root.SLAF.Schema,
+             Projection: root.SLAF && root.SLAF.Projection };
   }
-  var api = factory(deps.Money, deps.Schema);
+  var api = factory(deps.Money, deps.Schema, deps.Projection);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Debt = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Projection) {
   'use strict';
 
   /* ---- Minimum payments -------------------------------------------------
@@ -77,6 +79,90 @@
     var list = (rules && rules.strategies) || [];
     for (var i = 0; i < list.length; i++) { if (list[i].id === id) return list[i]; }
     return null;
+  }
+
+  /* ---- Promotional rates -------------------------------------------------
+     A 0% card is not a free card; it is a card with a deadline. Treating the
+     current rate as permanent makes the cheapest-looking debt on the page
+     the one that quietly becomes the most expensive. DECISIONS.md D-053.  */
+
+  /**
+   * Where a debt stands in its promotional period.
+   * Returns null when there is no promo — the common case, and not a state
+   * worth a Result object.
+   */
+  function promoStatus(debt, asOf) {
+    if (!debt || !debt.promoEndsOn) return null;
+    var left = Schema.monthsUntil(debt.promoEndsOn, asOf, {
+      field: 'promoEndsOn',
+      missingReason: 'Add the date the promotional rate ends.',
+      passedReason: 'That promotional rate has already ended.'
+    });
+    return {
+      endsOn: debt.promoEndsOn,
+      monthsLeft: Money.isOk(left) ? left.value : 0,
+      expired: !Money.isOk(left),
+      reason: Money.isOk(left) ? null : left.reason,
+      promoRate: Money.isEntered(debt.rate) ? debt.rate : null,
+      /* Without a stated go-to rate the promo cannot be modelled past its
+         end date, and guessing one would invent the very number that
+         decides the answer. */
+      postRate: Money.isEntered(debt.postPromoRate) ? debt.postPromoRate : null,
+      knowsAfter: Money.isEntered(debt.postPromoRate)
+    };
+  }
+
+  /**
+   * The annual rate this debt actually charges in a given month of the
+   * simulation, counting from now. Month 1 is the first month simulated.
+   */
+  function rateInMonth(debt, month, asOf) {
+    var promo = promoStatus(debt, asOf);
+    if (!promo) return debt.rate;
+    if (promo.expired) {
+      /* The promo is over. The go-to rate applies from the first month —
+         and if nobody said what it is, the stated rate is all there is. */
+      return promo.knowsAfter ? promo.postRate : debt.rate;
+    }
+    if (month <= promo.monthsLeft) return debt.rate;
+    return promo.knowsAfter ? promo.postRate : debt.rate;
+  }
+
+  /**
+   * What it takes to clear the balance before the promo ends — the only
+   * number that matters about a 0% card, and the one no payoff table shows.
+   *
+   * At 0% this is exact: balance over months. At a non-zero promo rate it is
+   * the level payment over the remaining months, which engines/projection.js
+   * already knows how to work out.
+   */
+  function clearBeforePromoEnds(debt, asOf) {
+    var promo = promoStatus(debt, asOf);
+    if (!promo) return Money.incomplete('This debt has no promotional period.', ['promoEndsOn']);
+    if (promo.expired) return Money.incomplete(promo.reason, ['promoEndsOn']);
+    if (!Money.isEntered(debt.balanceCents)) {
+      return Money.incomplete('Add the balance to see this.', ['balanceCents']);
+    }
+    if (debt.balanceCents <= 0) return Money.ok(0, { alreadyClear: true, promo: promo });
+
+    var rate = Money.isEntered(debt.rate) ? debt.rate : 0;
+    var needed = rate === 0
+      ? Math.ceil(debt.balanceCents / promo.monthsLeft)
+      : Math.ceil(Projection.levelPaymentCents({
+          principalCents: debt.balanceCents, annualRate: rate, months: promo.monthsLeft
+        }).value);
+
+    var paying = Money.isEntered(debt.minPaymentCents) ? debt.minPaymentCents : null;
+    return Money.ok(needed, {
+      promo: promo,
+      monthsLeft: promo.monthsLeft,
+      payingCents: paying,
+      shortfallCents: Money.isEntered(paying) ? Math.max(0, needed - paying) : null,
+      /* At the current minimum, what is still owed when the rate jumps. */
+      leftWhenPromoEndsCents: Money.isEntered(paying)
+        ? Math.max(0, debt.balanceCents - paying * promo.monthsLeft) : null,
+      clearsInTime: Money.isEntered(paying) ? paying >= needed : null
+    });
   }
 
   /**
@@ -142,6 +228,11 @@
       prepared.push({
         id: d.id, label: d.label || 'Debt', type: d.type,
         balanceCents: d.balanceCents, rate: d.rate,
+        /* Carried through, because the simulation asks each month what rate
+           this debt charges and a promo that got dropped here would make a
+           0% card look free for the whole plan. D-053. */
+        promoEndsOn: d.promoEndsOn || null,
+        postPromoRate: Money.isEntered(d.postPromoRate) ? d.postPromoRate : null,
         minPaymentCents: min.value, minimumDerived: min.derived,
         emotionalTag: d.emotionalTag
       });
@@ -192,7 +283,10 @@
       /* 1. Interest. */
       var interestThisMonth = 0;
       live.forEach(function (d) {
-        var interest = Math.round(d.balanceCents * (d.rate / 12));
+        /* Not d.rate: a promotional rate expires partway through the plan,
+           and using today's rate for all sixty months is how a 0% card gets
+           ranked as harmless. D-053. */
+        var interest = Math.round(d.balanceCents * (rateInMonth(d, month, o.asOf) / 12));
         d.balanceCents += interest;
         interestThisMonth += interest;
         perDebtInterest[d.id] += interest;
@@ -354,6 +448,9 @@
   }
 
   return {
+    promoStatus: promoStatus,
+    rateInMonth: rateInMonth,
+    clearBeforePromoEnds: clearBeforePromoEnds,
     minimumRuleFor: minimumRuleFor,
     minimumPaymentCents: minimumPaymentCents,
     emotionalPriority: emotionalPriority,

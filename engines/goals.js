@@ -69,19 +69,13 @@
 
   /* ---- Months between now and the target date ---------------------------- */
 
+  /* The calendar arithmetic lives in shared/schema.js, because a 0% promo's
+     end date needs exactly the same sum and two copies would drift. §8. */
   function monthsUntil(isoDate, asOf) {
-    if (!isoDate) return Money.incomplete('Add a date you want it by.', ['targetDate']);
-    var target = new Date(isoDate + 'T00:00:00Z');
-    if (isNaN(target.getTime())) return Money.incomplete('That date can’t be read.', ['targetDate']);
-    var now = asOf ? new Date(asOf + 'T00:00:00Z') : new Date();
-    var months = (target.getUTCFullYear() - now.getUTCFullYear()) * 12
-      + (target.getUTCMonth() - now.getUTCMonth());
-    /* Part of the current month still counts if the day hasn't passed. */
-    if (target.getUTCDate() >= now.getUTCDate()) months += 0; else months -= 1;
-    if (months <= 0) {
-      return Money.incomplete('That date has passed, or is this month.', ['targetDate']);
-    }
-    return Money.ok(months);
+    return Schema.monthsUntil(isoDate, asOf, {
+      field: 'targetDate',
+      missingReason: 'Add a date you want it by.'
+    });
   }
 
   /* ---- The plan ----------------------------------------------------------- */

@@ -4676,6 +4676,111 @@ section('Facts answered once');
   }
 })();
 
+section('Promotional rates');
+
+(function () {
+  const NOW = '2026-09-04';
+  function card(over) {
+    return Schema.createDebt(Object.assign({
+      label: 'Card', balanceCents: 91000, rate: 0, minPaymentCents: 4000,
+      type: 'credit_card', promoEndsOn: '2027-03-01', postPromoRate: 0.2499
+    }, over || {}));
+  }
+
+  /* -- Where the promo stands -------------------------------------------- */
+  {
+    const s = Debt.promoStatus(card(), NOW);
+    check('months left counts whole months', s.monthsLeft, 5);
+    checkTrue('it has not expired', !s.expired);
+    check('and it knows the rate it reverts to', s.postRate, 0.2499);
+
+    check('no end date means no promo', Debt.promoStatus(card({ promoEndsOn: null }), NOW), null);
+    const past = Debt.promoStatus(card({ promoEndsOn: '2026-01-01' }), NOW);
+    checkTrue('a date gone by is expired, not negative months', past.expired);
+    check('and months left is zero, never below', past.monthsLeft, 0);
+  }
+
+  /* -- The rate the simulation actually charges --------------------------- */
+  {
+    const c = card();
+    check('inside the promo, the promo rate applies', Debt.rateInMonth(c, 5, NOW), 0);
+    check('the month after, the go-to rate does', Debt.rateInMonth(c, 6, NOW), 0.2499);
+    check('and it stays there', Debt.rateInMonth(c, 40, NOW), 0.2499);
+
+    /* Nobody said what it reverts to: the stated rate is all there is, and
+       the room says so rather than the engine inventing one. */
+    const unknown = card({ postPromoRate: null });
+    check('with no go-to rate the stated rate is used', Debt.rateInMonth(unknown, 40, NOW), 0);
+    checkTrue('and the status says it does not know', !Debt.promoStatus(unknown, NOW).knowsAfter);
+
+    /* An expired promo charges the go-to rate from month one. */
+    check('an expired promo charges the go-to rate immediately',
+      Debt.rateInMonth(card({ promoEndsOn: '2026-01-01' }), 1, NOW), 0.2499);
+  }
+
+  /* -- What it takes to clear it in time ---------------------------------- */
+  {
+    const p = Debt.clearBeforePromoEnds(card(), NOW);
+    /* At 0% this is exact: $910 over five months. */
+    check('clearing in time is balance over months left', p.value, Math.ceil(91000 / 5));
+    check('which is $182 a month', p.value, 18200);
+    check('against the $40 actually being paid', p.payingCents, 4000);
+    checkTrue('so it will not clear', p.clearsInTime === false);
+    check('leaving this owed when the rate jumps', p.leftWhenPromoEndsCents, 91000 - 4000 * 5);
+    check('and this much short each month', p.shortfallCents, 18200 - 4000);
+
+    const enough = Debt.clearBeforePromoEnds(card({ minPaymentCents: 20000 }), NOW);
+    checkTrue('paying more than the requirement clears it', enough.clearsInTime);
+    check('with nothing left at the end', enough.leftWhenPromoEndsCents, 0);
+
+    check('a cleared balance needs nothing',
+      Debt.clearBeforePromoEnds(card({ balanceCents: 0 }), NOW).alreadyClear, true);
+    check('no promo, no answer',
+      Debt.clearBeforePromoEnds(card({ promoEndsOn: null }), NOW).status, 'incomplete');
+
+    /* A non-zero promo rate uses the level-payment formula, not division. */
+    const lowRate = card({ rate: 0.0499 });
+    const need = Debt.clearBeforePromoEnds(lowRate, NOW);
+    checkTrue('a promo above 0% needs more than the plain division',
+      need.value > Math.ceil(91000 / 5));
+  }
+
+  /* -- The payoff plan itself charges the jump ---------------------------- */
+  {
+    /* The whole point: a 0% card that outlives its promo must cost real
+       interest in the plan, or it gets ranked as harmless forever. */
+    function household(debt) {
+      const h = Schema.createHousehold({});
+      h.people.push(Schema.createPerson({ label: 'You', role: 'adult' }));
+      h.debts.push(debt);
+      return h;
+    }
+    const opts = { strategyId: 'avalanche', monthlyBudgetCents: 5000, asOf: NOW };
+    const a = Debt.simulate(household(card()), TABLES.debtRules, opts);
+    const b = Debt.simulate(household(card({ promoEndsOn: null, postPromoRate: null })),
+      TABLES.debtRules, opts);
+    checkTrue('both plans complete', Money.isOk(a) && Money.isOk(b));
+    checkTrue('the promo card costs real interest once the rate jumps',
+      a.totalInterestCents > 0);
+    check('while a genuinely permanent 0% costs none', b.totalInterestCents, 0);
+    checkTrue('so it takes longer to clear too', a.value >= b.value);
+  }
+
+  /* -- The date maths is shared, not duplicated --------------------------- */
+  {
+    /* Goals and Debt both need "how many months until this date". Two
+       copies is how they drift, so there is one, in Schema. §8. */
+    check('a date six months out is six months',
+      Schema.monthsUntil('2027-03-04', NOW).value, 6);
+    check('a date that has passed is refused, not negative',
+      Schema.monthsUntil('2026-01-01', NOW).status, 'incomplete');
+    check('an unreadable date is refused', Schema.monthsUntil('not-a-date', NOW).status,
+      'incomplete');
+    check('and Goals still gets its own wording',
+      Goals.monthsUntil(null, NOW).missing.join(','), 'targetDate');
+  }
+})();
+
 section('Ownership');
 
 (function () {
