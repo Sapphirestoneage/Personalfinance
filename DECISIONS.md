@@ -3212,3 +3212,41 @@ repository means both tools are served from the same origin, so a future
 importer *could* read the other's `localStorage` directly rather than passing
 a file around — but the file remains the supported path, because it is the
 one that keeps working if the folder ever does move out.
+
+---
+
+## D-051 — The D&D tool's licence posture, and what "parody" actually constrains
+
+The Dungeons & Dividends audit (BRIEF.md §T9) requires an SRD 5.1 CC-BY-4.0
+attribution and a non-affiliation line **in the first commit**, and sets the
+parody rule: riff on names, never reproduce a stat block, artwork, or a
+Wizards-owned creature or setting name.
+
+**What is actually borrowed is mechanics**, and mechanics only: the 8–20
+ability scale and its modifier formula, the proficiency bonus, saving throws,
+hit dice, death saves, the alignment grid, 5e's point-buy cost curve, and
+4d6-drop-lowest. Game mechanics are not themselves copyrightable, but the SRD
+is offered under CC BY 4.0 and attributing it is both the cheap option and the
+honest one, so `dnd/README.md` and `bestiary.html` carry the full notice and
+every page carries a short non-affiliation line.
+
+An audit of the existing content found it already clean. Every monster and
+hazard is either invented here (Lifestyle-Inflation Imp, Commission
+Churn-Wraith, Timeshare Charm-Caster) or a public-domain figure pressed into
+service — imp, wraith, basilisk, elemental, dragon, behemoth, familiar. No
+stat block is reproduced; the damage expressions are dice notation, which is
+not a stat block.
+
+**The tests are the enforcement, not the intention.** `dnd/test/run.js` now
+asserts the attribution and disclaimer are present on every surface, that the
+title carries no D&D word mark, and that a tripwire list of Wizards-owned
+creature and setting names (Tarrasque, Beholder, Mind Flayer, Waterdeep,
+Forgotten Realms and a dozen more) appears nowhere in the data or the pages.
+Note that the rulebook's own §12 FAQ discusses a Tarrasque; that reference was
+never transcribed into `data/`, and the test now makes sure it never is.
+
+### What a later change needs to know
+
+Adding a monster means adding an original or public-domain name. If a new
+entry trips the tripwire the build fails, and the fix is to rename it — not to
+edit the list.
