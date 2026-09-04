@@ -95,6 +95,54 @@ section('Dungeons & Dividends — the schema holds');
   });
 })();
 
+section('Dungeons & Dividends — the questions');
+
+(function () {
+  const S = TABLES.dndScoring;
+  const declared = Character.declaredIds(TABLES.dndRules);
+  const all = [];
+  declared.forEach(id => (S.quiz[id] || []).forEach((q, i) => all.push({ id, i, q })));
+
+  /* Display order lives in the data, and the UI sorts by it. A duplicate or a
+     gap would silently reshuffle the run, so pin it: 1..18, each used once. */
+  const orders = all.map(x => x.q.order).sort((a, b) => a - b);
+  check('every question declares an order', all.filter(x => typeof x.q.order === 'number').length, 18);
+  check('orders are exactly 1..18 with no repeats',
+    JSON.stringify(orders), JSON.stringify(Array.from({ length: 18 }, (_, i) => i + 1)));
+
+  /* The two questions on one topic must not sit next to each other — asking
+     the same thing twice in a row reads as a drill rather than a quiz. */
+  declared.forEach(function (id) {
+    const pair = (S.quiz[id] || []).map(q => q.order).sort((a, b) => a - b);
+    checkTrue(`${id}'s two questions are spread apart`, pair[1] - pair[0] > 1,
+      'consecutive questions on one sub-stat feel like an interrogation');
+  });
+
+  /* The driest topics land last, once someone is already committed. */
+  const firstOf = id => Math.min.apply(null, (S.quiz[id] || []).map(q => q.order));
+  checkTrue('tax is not the opening question', firstOf('taxLiteracy') > 5,
+    'opening on tax is how you lose someone in the first ten seconds');
+  checkTrue('the run opens on something behavioural',
+    firstOf('negotiation') === 1 || firstOf('threatDetection') === 1 || firstOf('network') === 1);
+
+  /* No option may be a dead end: every question needs a real top and bottom,
+     or the 8-20 scale silently narrows. */
+  all.forEach(function (x) {
+    const pts = x.q.options.map(o => o.points);
+    check(`${x.id}[${x.i}] can reach 6`, Math.max.apply(null, pts), 6);
+    check(`${x.id}[${x.i}] can reach 0`, Math.min.apply(null, pts), 0);
+    checkTrue(`${x.id}[${x.i}] offers a real choice`, x.q.options.length >= 4);
+  });
+
+  /* Behavioural, not a memory test: no question may ask the reader to compute.
+     These are the shapes the old knowledge questions had. */
+  const arithmetic = /\bhow much\b|\bwhat does that cost\b|\bper year on \$|\bcalculate\b|\b0\.\d+%.*\$\d/i;
+  all.forEach(function (x) {
+    checkTrue(`${x.id}[${x.i}] asks no arithmetic`, !arithmetic.test(x.q.q),
+      'a question with sums in it is a test, and people close tests');
+  });
+})();
+
 section('Dungeons & Dividends — the calibration promise');
 
 (function () {
@@ -168,6 +216,129 @@ section('Dungeons & Dividends — level, HP and AC');
   check('score 8 is 0%', by.savingsRate.percent, 0);
   check('score 14 is 50%', by.reserveDepth.percent, 50);
   check('the spectrum ranks highest first', spec[0].id, 'incomePower');
+})();
+
+section('Dungeons & Dividends — the two skins');
+
+(function () {
+  /* skin.js talks to localStorage, so give it one. */
+  const realSelf = global.self;
+  const store = {};
+  global.self = {
+    localStorage: {
+      getItem: k => (k in store ? store[k] : null),
+      setItem: (k, v) => { store[k] = String(v); },
+      removeItem: k => { delete store[k]; }
+    },
+    document: { body: { attrs: {}, setAttribute(k, v) { this.attrs[k] = v; } } }
+  };
+  delete require.cache[require.resolve(path.join(ROOT, 'shared/skin.js'))];
+  const Skin = require(path.join(ROOT, 'shared/skin.js'));
+
+  check('two skins offered', Skin.SKINS.length, 2);
+  check('navy is the default', Skin.get(), 'navy');
+  check('init paints the default', Skin.init(), 'navy');
+  check('and stamps the body', global.self.document.body.attrs['data-skin'], 'navy');
+
+  check('parchment can be chosen', Skin.set('parchment'), 'parchment');
+  check('it persists', Skin.get(), 'parchment');
+  check('and repaints the body', global.self.document.body.attrs['data-skin'], 'parchment');
+  check('nonsense falls back rather than throwing', Skin.set('lasagne'), 'navy');
+
+  /* A skin is a preference about a browser, not a fact about someone's money.
+     It must never ride along in a character export. */
+  checkTrue('the skin key is separate from the character key',
+    Skin.KEY !== 'dnd.character.v1');
+  const Export = require(path.join(ROOT, 'shared/export.js'));
+  checkTrue('and skin is not an exportable field',
+    Export.OWNED_KEYS.indexOf('skin') === -1 && Export.OWNED_KEYS.indexOf('dndSkin') === -1);
+
+  if (realSelf === undefined) delete global.self; else global.self = realSelf;
+})();
+
+(function () {
+  /* Every page must load both halves and give the control somewhere to go,
+     or the toggle silently does nothing on that page. */
+  ['index.html', 'sheet.html', 'bestiary.html'].forEach(function (page) {
+    const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
+    checkTrue(`${page} loads skin.css`, /shared\/skin\.css/.test(html));
+    checkTrue(`${page} loads skin.js`, /shared\/skin\.js/.test(html));
+    checkTrue(`${page} has somewhere to mount the control`, /id="skin-bar"/.test(html));
+    checkTrue(`${page} mounts it`, /Skin\.mount\(/.test(html));
+    /* Applied before the page paints, so it cannot flash the wrong skin. */
+    checkTrue(`${page} applies the skin up front`, /Skin\.init\(\)/.test(html));
+  });
+
+  /* Printing must not depend on remembering to switch first. */
+  const css = fs.readFileSync(path.join(ROOT, 'shared/skin.css'), 'utf8');
+  checkTrue('there is a print block', /@media print/.test(css));
+  checkTrue('print forces a white page', /@media print[\s\S]*background:\s*#FFFFFF/i.test(css));
+  checkTrue('print hides the toggle', /@media print[\s\S]*\.skin-bar[\s\S]*display:\s*none/i.test(css));
+  /* Guard the mangled-hex class of typo that nearly shipped here. */
+  const hexes = css.match(/#[0-9A-Fa-f]{3,8}\b/g) || [];
+  hexes.forEach(function (h) {
+    checkTrue(`${h} is a valid hex colour`, /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(h));
+  });
+  checkTrue('no stray non-hex slipped into a colour value',
+    !/--color-[a-z-]+:\s*#[0-9A-Fa-f]*[g-zG-Z][^;]*;/.test(css));
+})();
+
+section('Dungeons & Dividends — the sheet furniture');
+
+(function () {
+  const cls = TABLES.dndClasses.classes.filter(c => c.id === 'earner')[0];
+  const stats = { STR: Money.ok(14), DEX: Money.ok(12), CON: Money.ok(15),
+                  INT: Money.ok(10), WIS: Money.ok(13), CHA: Money.ok(16) };
+
+  /* Six saves, and exactly the class's two carry proficiency (§3). */
+  const saves = Character.savingThrows(stats, cls, 2, TABLES);
+  check('six saving throws', saves.length, 6);
+  check('exactly two are proficient', saves.filter(s => s.proficient).length, 2);
+  const by = {};
+  saves.forEach(s => { by[s.stat] = s; });
+  /* STR 14 -> +2, plus proficiency 2 -> +4. */
+  check('a proficient save adds the proficiency bonus', by.STR.modifier, 4);
+  /* DEX 12 -> +1, no proficiency. */
+  check('a non-proficient save does not', by.DEX.modifier, 1);
+  check('and the proficient ones are the class\'s',
+    JSON.stringify(saves.filter(s => s.proficient).map(s => s.stat)),
+    JSON.stringify(cls.saves));
+
+  /* An unscored stat produces an unscored save, never a +0. */
+  const partial = Character.savingThrows({ STR: Money.ok(14) }, cls, 2, TABLES);
+  check('an unscored stat gives an unscored save', partial.filter(s => s.ok).length, 1);
+
+  /* The skills block IS the eighteen sub-stats — that is §2A's whole design. */
+  const skills = Character.skillList(Character.allSubStats({}, TABLES), cls, TABLES);
+  check('eighteen skills, one per sub-stat', skills.length, 18);
+  check('none score on an empty character', skills.filter(s => s.ok).length, 0);
+  check('the class\'s primary stats are marked',
+    skills.filter(s => s.primary).length,
+    TABLES.dndRules.subStats.filter(m => cls.primary.indexOf(m.stat) !== -1).length);
+
+  /* Hit dice read the way a sheet writes them. */
+  check('hit dice', Character.hitDiceLabel(cls, 3), '3d8');
+  check('hit dice at 20', Character.hitDiceLabel(cls, 20), '20d8');
+  check('no class, no hit dice', Character.hitDiceLabel(null, 3), null);
+
+  /* Passive scores are 10 + modifier, exactly as passive Perception is. */
+  const subs = { threatDetection: Money.ok(16), scenarioForesight: Money.ok(8) };
+  const ps = Character.passives(subs, TABLES);
+  const pby = {};
+  ps.forEach(p => { pby[p.id] = p; });
+  check('passive from a 16 is 13', pby.threatDetection.value, 13);
+  check('passive from an 8 is 9', pby.scenarioForesight.value, 9);
+  check('an unscored sub-stat has no passive', pby.instrumentLiteracy.ok, false);
+
+  /* Defences are read off earned feature text, never invented. */
+  const none = Character.defenses([{ feature: 'Automate', detail: 'sets up contributions' }], []);
+  check('a feature with no resistance wording yields nothing', none.length, 0);
+  const some = Character.defenses(
+    [{ feature: 'Seven-Figure Threshold', detail: 'resistance to Lifestyle-Inflation Imp damage' }], []);
+  check('a resistance is picked up', some.length, 1);
+  check('and typed correctly', some[0].kind, 'Resistance');
+  const imm = Character.defenses([{ feature: 'Total Market Immunity', detail: 'immune to picking wrong' }], []);
+  check('an immunity outranks a resistance', imm[0].kind, 'Immunity');
 })();
 
 section('Dungeons & Dividends — empty is never zero');

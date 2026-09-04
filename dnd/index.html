@@ -4,27 +4,42 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Dungeons &amp; Dividends</title>
-<meta name="description" content="A personal-finance RPG character sheet. Answer eighteen questions, get your class. Everything runs in your browser — nothing you type ever leaves your machine."/>
+<meta name="description" content="A personal-finance RPG character sheet. Build a character five different ways — answer questions, spend points, roll dice, or just type your numbers. Everything runs in your browser."/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="shared/fonts.css"/>
 <link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="shared/skin.css"/>
 <!--
-  TIER 1 — the hook. Costs nothing but eighteen answers and asks for no money
-  at all, which is the entire point: this is the page you can send to someone
-  who has never thought about a savings rate in their life.
+  TIER 1 — the hook. Asks for no money at all, which is the entire point: this
+  is the page you send to someone who has never thought about a savings rate.
 
-  What it can honestly produce with no dollars: three of the six ability
-  scores (INT, WIS, CHA — the ones with no dollar behind them), the nine
-  sub-stats under them, and a class LEANING. Not a Level, not HP, not AC, and
-  not a real class assignment — all four of those need money, and the page
-  says so rather than fabricating them. sheet.html is where those arrive.
+  FIVE WAYS IN, and the chooser comes FIRST. The quiz used to be the only path,
+  which quietly assumed everyone wants to be asked eighteen questions before
+  they see anything. Plenty of people would rather build a character the way
+  they build one at a table — spend points, roll, take the standard array, or
+  just type the numbers they already believe. All five land on the same 8-20
+  scale, so nothing downstream knows or cares which was used.
 
-  LIVE-FORM: built once. Every question is constructed during boot and only
-  ever read afterwards; steps advance by toggling [hidden], never by
-  rebuilding a container.
+  THE QUESTIONS ARE BEHAVIOURAL. Not one asks whether you can recall a
+  definition, and there is no arithmetic anywhere, because a quiz that makes
+  someone feel stupid is a quiz they close. Every zero-point option is a real
+  thing real people do, phrased so picking it costs no dignity. Display order
+  lives in the data (`order` on each question): the two questions for a given
+  sub-stat sit far apart, and the driest topics come last, once someone is
+  already committed to the run.
+
+  What this page can honestly produce with no dollars: three of the six ability
+  scores (INT, WIS, CHA), the nine sub-stats under them, a class LEANING and an
+  alignment. Not Level, HP, AC or a real class assignment — those need money,
+  and the page says so rather than fabricating them. sheet.html is where they
+  arrive.
+
+  LIVE-FORM: built once. Every question and every builder control is
+  constructed during boot and only ever read or have its .value written.
+  Panels and steps move by toggling [hidden]; nothing rebuilds a container
+  that holds a live input.
 -->
 <style>
-  body { margin: 0; }
   .wrap { max-width: 640px; margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-7); }
   .hero { text-align: center; padding: var(--space-7) 0 var(--space-5); }
   .hero h1 { font-family: var(--font-display); font-size: var(--text-2xl); margin: 0 0 var(--space-3); line-height: var(--leading-tight); }
@@ -34,6 +49,21 @@
   .btn.ghost { background: transparent; color: var(--color-accent-hover); border: 1px solid var(--color-border-strong); }
   .btn:disabled { opacity: .45; cursor: not-allowed; }
   .privacy { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-4); }
+  h2 { font-family: var(--font-display); font-size: var(--text-xl); margin: 0 0 var(--space-2); }
+  .note { color: var(--color-text-muted); font-size: var(--text-sm); line-height: var(--leading-normal); margin: 0 0 var(--space-3); }
+
+  /* ---- the chooser ---- */
+  .methods { display: grid; gap: var(--space-2); margin-bottom: var(--space-4); }
+  .method { display: grid; grid-template-columns: 34px 1fr; gap: var(--space-3); align-items: start; text-align: left; font-family: var(--font-body); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; }
+  .method:hover { border-color: var(--color-border-active); }
+  .method .ic { font-size: var(--text-xl); line-height: 1; }
+  /* Both must be block, or the name runs straight into the blurb — which is
+     exactly how this shipped the first time. */
+  .method .nm { display: block; font-size: var(--text-base); font-weight: 600; }
+  .method .tag { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--color-accent-hover); margin-left: var(--space-2); }
+  .method .bl { display: block; font-size: var(--text-sm); color: var(--color-text-muted); line-height: var(--leading-normal); margin-top: var(--space-1); }
+
+  /* ---- the quiz ---- */
   .progress { height: 4px; background: var(--color-surface-active); border-radius: var(--radius-pill); overflow: hidden; margin-bottom: var(--space-4); }
   .progress > span { display: block; height: 100%; background: var(--color-accent); transition: width 200ms ease; }
   .step-meta { display: flex; justify-content: space-between; font-size: var(--text-xs); color: var(--color-text-faint); margin-bottom: var(--space-2); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); }
@@ -44,7 +74,20 @@
   .opt:hover { border-color: var(--color-border-active); }
   .opt input { margin-top: 3px; }
   .nav { display: flex; justify-content: space-between; gap: var(--space-2); margin-top: var(--space-4); }
-  .result h2 { font-family: var(--font-display); font-size: var(--text-xl); margin: 0 0 var(--space-1); }
+
+  /* ---- the builders ---- */
+  .assign { display: grid; grid-template-columns: 1fr 128px; gap: var(--space-2); align-items: center; padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); font-size: var(--text-sm); }
+  .assign:last-child { border-bottom: 0; }
+  .assign .sub { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
+  select, input[type=number] { height: var(--control-height); font-family: var(--font-body); font-size: var(--text-base); background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: 0 var(--space-2); width: 100%; box-sizing: border-box; }
+  select:focus, input:focus { outline: 2px solid var(--color-focus-ring); outline-offset: 1px; }
+  .pool { font-size: var(--text-base); padding: var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); margin-bottom: var(--space-3); }
+  .pool.over { border-color: var(--color-critical); color: var(--color-critical); }
+  .pool b { font-family: var(--font-display); font-size: var(--text-lg); }
+  .rolled { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: var(--space-2) 0 var(--space-3); }
+  .die { border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: var(--space-1) var(--space-3); font-family: var(--font-display); font-size: var(--text-lg); background: var(--color-surface-raised); }
+
+  /* ---- result ---- */
   .verdict { text-align: center; border: 1px solid var(--color-accent); border-radius: var(--radius-lg); padding: var(--space-5) var(--space-4); background: var(--color-surface-raised); margin-bottom: var(--space-4); }
   .verdict .lead-in { font-size: var(--text-sm); color: var(--color-text-muted); }
   .verdict .cls { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 var(--space-1); }
@@ -83,21 +126,33 @@
   .notice { padding: var(--space-3); border-radius: var(--radius-sm); margin: var(--space-3) 0; font-size: var(--text-sm); border: 1px solid var(--color-critical); color: var(--color-critical); }
 </style>
 </head>
-<body>
+<body class="slaf">
+<script src="shared/skin.js"></script>
+<script>DND.Skin.init();</script>
 <div class="wrap">
+
+  <div class="skin-bar" id="skin-bar"></div>
 
   <div id="load-notice" class="notice" hidden></div>
 
   <section id="hero" class="hero">
     <div class="eyebrow">Dungeons &amp; Dividends</div>
     <h1>Every build has a weakness. Most people never see their own.</h1>
-    <p>Eighteen questions. No dollar amounts, no sign-up. You get three of your
-       six ability scores and the class you lean toward — the same way you'd
-       know what a Level 20 Fighter with no Constitution looks like before you
-       ever got there.</p>
-    <button type="button" class="btn" id="btn-start">Roll your character</button>
+    <p>A character sheet for your actual money. No dollar amounts to start, no
+       sign-up, nothing to revise for — build it however you like, the same way
+       you'd roll one up at a table.</p>
+    <button type="button" class="btn" id="btn-start">Build your character</button>
     <p class="privacy">Runs entirely in your browser. Nothing you type is sent anywhere,
        because there is nowhere for it to go — this is a static page with no server behind it.</p>
+  </section>
+
+  <section id="choose" hidden>
+    <h2>How do you want to build?</h2>
+    <p class="note">Three of your six ability scores — knowing the rules, judgment,
+       and dealing with people — have no dollar figure behind them, so you get to decide
+       where they come from. Every route lands on the same scale.</p>
+    <div class="methods" id="method-list"></div>
+    <p class="note" style="color:var(--color-text-faint)">You can switch at any time. Nothing is lost.</p>
   </section>
 
   <section id="quiz" hidden>
@@ -108,9 +163,25 @@
       <button type="button" class="btn ghost" id="btn-back">Back</button>
       <button type="button" class="btn" id="btn-next" disabled>Next</button>
     </div>
+    <p class="foot"><a href="#" id="quiz-switch">Rather not answer questions? Build it another way →</a></p>
   </section>
 
-  <section id="result" class="result" hidden>
+  <section id="builder" hidden>
+    <h2 id="builder-title"></h2>
+    <p class="note" id="builder-blurb"></p>
+    <div id="builder-pool" class="pool" hidden></div>
+    <div id="builder-roll" hidden>
+      <div class="rolled" id="rolled-dice"></div>
+      <button type="button" class="btn" id="btn-roll">Roll 4d6, drop the lowest</button>
+    </div>
+    <div id="builder-rows"></div>
+    <div class="nav">
+      <button type="button" class="btn ghost" id="btn-builder-back">Change method</button>
+      <button type="button" class="btn" id="btn-builder-done">See my character</button>
+    </div>
+  </section>
+
+  <section id="result" hidden>
     <div class="verdict">
       <div class="lead-in">You lean toward</div>
       <div class="cls" id="r-class"></div>
@@ -119,21 +190,18 @@
     </div>
 
     <h2>Three of your six</h2>
-    <p style="color:var(--color-text-muted);font-size:var(--text-sm);line-height:var(--leading-normal)">
-      Strength, Dexterity and Constitution are earning power, resilience and savings —
-      they need real numbers, so they're blank until you add them.</p>
+    <p class="note">Strength, Dexterity and Constitution are earning power, resilience and
+       savings — they need real numbers, so they're blank until you add them.</p>
     <div class="statrow" id="r-stats"></div>
 
     <h2>Your nine, ranked</h2>
-    <p style="color:var(--color-text-muted);font-size:var(--text-sm);line-height:var(--leading-normal)">
-      Every score as a percentage of the scale. A low one is exactly as visible as a high one —
-      that's deliberate.</p>
+    <p class="note">Every score as a percentage of the scale. A low one is exactly as
+       visible as a high one — that's deliberate.</p>
     <div class="spec" id="r-spectrum"></div>
 
     <h2>Your alignment</h2>
-    <p style="color:var(--color-text-muted);font-size:var(--text-sm);line-height:var(--leading-normal)">
-      Disposition, not skill — so you pick it, nothing measures it.
-      Down: how much you follow a system. Across: whose upside you're optimising for.</p>
+    <p class="note">Disposition, not skill — so you pick it, nothing measures it.
+       Down: how much you follow a system. Across: whose upside you're optimising for.</p>
     <div class="align-grid" id="align-grid"></div>
     <div id="align-detail" class="align-detail" hidden></div>
 
@@ -146,14 +214,13 @@
       </div>
       <p>Your Level is how far you are through <em>your own</em> number, not a dollar target.
          HP is how many weeks you could go with no income. AC is what stops a hit landing at all.
-         Five numbers plus how you file — that last one only to estimate tax — and they all
-         resolve. Your class may well change too, because a class here is a lever you actually
-         pull, not a temperament.</p>
+         Your class may well change too, because a class here is a lever you actually pull,
+         not a temperament.</p>
       <a class="btn" href="sheet.html">Build the full sheet →</a>
     </div>
 
     <div class="nav">
-      <button type="button" class="btn ghost" id="btn-redo">Start over</button>
+      <button type="button" class="btn ghost" id="btn-redo">Build again</button>
       <button type="button" class="btn ghost" id="btn-copy">Copy my result</button>
     </div>
 
@@ -173,7 +240,15 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Char = SLAF.Character, Store = DND.Store;
-  var TABLES = null, STEPS = [], at = 0;
+  var TABLES = null, STEPS = [], at = 0, SUBS = [];
+
+  var METHOD_UI = {
+    featsOfStrength: { icon: '🎯', tag: 'Recommended' },
+    pointBuy:        { icon: '🪙', tag: '' },
+    standardArray:   { icon: '📐', tag: 'Fastest' },
+    roll:            { icon: '🎲', tag: '' },
+    homebrew:        { icon: '✍️', tag: '' }
+  };
 
   function el(id) { return document.getElementById(id); }
   function esc(s) {
@@ -181,16 +256,48 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
     });
   }
+  function show(id) {
+    ['hero', 'choose', 'quiz', 'builder', 'result'].forEach(function (s) {
+      el(s).hidden = (s !== id);
+    });
+    window.scrollTo({ top: 0 });
+  }
 
-  /* ---- Built once. Every question exists from boot; steps only toggle. -- */
+  /* ==== BUILD ONCE ====================================================== */
+
+  function buildMethods() {
+    el('method-list').innerHTML = TABLES.dndScoring.methods.map(function (m) {
+      var ui = METHOD_UI[m.id] || { icon: '•', tag: '' };
+      return '<button type="button" class="method" data-method="' + esc(m.id) + '">'
+        + '<span class="ic">' + ui.icon + '</span><span>'
+        + '<span class="nm">' + esc(m.name)
+        + (ui.tag ? '<span class="tag">' + esc(ui.tag) + '</span>' : '') + '</span>'
+        + '<span class="bl">' + esc(m.blurb) + '</span></span></button>';
+    }).join('');
+    el('method-list').addEventListener('click', function (e) {
+      var btn = e.target.closest('.method');
+      if (!btn) return;
+      var id = btn.getAttribute('data-method');
+      Store.patchProfile({ declaredMethod: id });
+      openMethod(id);
+    });
+  }
+
+  /* Questions in the order the DATA asks for, not the order the sub-stats
+     happen to be declared in — so the two questions on a topic sit far apart
+     and the driest ones land last. */
   function buildQuestions() {
     var rules = TABLES.dndRules, quiz = TABLES.dndScoring.quiz;
+    STEPS = [];
     rules.subStats.filter(function (s) { return s.kind === 'declared'; })
       .forEach(function (sub) {
         (quiz[sub.id] || []).forEach(function (q, qi) {
-          STEPS.push({ subId: sub.id, subName: sub.name, stat: sub.stat, qi: qi, q: q });
+          STEPS.push({ subId: sub.id, subName: sub.name, qi: qi, q: q,
+                       order: Money.isEntered(q.order) ? q.order : 999 });
         });
       });
+    STEPS.sort(function (a, b) { return a.order - b.order; });
+
     el('questions').innerHTML = STEPS.map(function (st, i) {
       return '<div class="qcard" data-step="' + i + '"' + (i === 0 ? '' : ' hidden') + '>'
         + '<p class="q-text">' + esc(st.q.q) + '</p><div class="opts">'
@@ -204,63 +311,12 @@
     }).join('');
   }
 
-  function answerFor(i) {
-    var st = STEPS[i];
-    var picked = document.querySelector('input[name="q-' + st.subId + '-' + st.qi + '"]:checked');
-    return picked ? Number(picked.value) : null;
-  }
-
-  function showStep(i) {
-    at = Math.max(0, Math.min(STEPS.length - 1, i));
-    var cards = el('questions').children;
-    for (var k = 0; k < cards.length; k++) cards[k].hidden = (k !== at);
-    var st = STEPS[at];
-    el('step-stat').textContent = st.subName;
-    el('step-count').textContent = (at + 1) + ' of ' + STEPS.length;
-    el('progress-bar').style.width = ((at) / STEPS.length * 100) + '%';
-    el('btn-back').disabled = at === 0;
-    el('btn-next').disabled = answerFor(at) === null;
-    el('btn-next').textContent = at === STEPS.length - 1 ? 'See my result' : 'Next';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  /* Persist as we go, so a closed tab does not lose the run. */
-  function persist() {
-    var quiz = {};
-    STEPS.forEach(function (st, i) {
-      quiz[st.subId] = quiz[st.subId] || {};
-      quiz[st.subId][st.qi] = answerFor(i);
-    });
-    Store.patchProfile({ quiz: quiz });
-  }
-
-  function hydrate() {
-    var quiz = Store.profile().quiz || {};
-    STEPS.forEach(function (st) {
-      var v = (quiz[st.subId] || {})[st.qi];
-      if (!Money.isEntered(v)) return;
-      var node = document.getElementById('q-' + st.subId + '-' + st.qi + '-' + v);
-      if (node) node.checked = true;
-    });
-  }
-
-  function firstUnanswered() {
-    for (var i = 0; i < STEPS.length; i++) if (answerFor(i) === null) return i;
-    return STEPS.length - 1;
-  }
-
-  /* ---- Alignment: picked, never computed -------------------------------
-     Built once from the table, then only aria-pressed flips. Nothing here
-     derives an alignment from anyone's balance sheet, on purpose. */
-
   function buildAlignment() {
-    var table = TABLES.dndAlignments;
-    var order = table.axes.order.values, ethics = table.axes.ethics.values;
-    var byCell = {};
+    var table = TABLES.dndAlignments, byCell = {};
     table.alignments.forEach(function (a) { byCell[a.order + '/' + a.ethics] = a; });
     var cells = [];
-    order.forEach(function (o) {
-      ethics.forEach(function (e) {
+    table.axes.order.values.forEach(function (o) {
+      table.axes.ethics.values.forEach(function (e) {
         var a = byCell[o.id + '/' + e.id];
         if (!a) return;
         cells.push('<button type="button" class="align-cell" data-align="' + esc(a.id) + '" aria-pressed="false">'
@@ -278,6 +334,178 @@
     });
   }
 
+  /* ==== THE BUILDERS ====================================================
+     One row per declared sub-stat. What sits in the right-hand cell depends
+     on the method, but the rows themselves are built once and reused. */
+
+  function buildRows() {
+    el('builder-rows').innerHTML = SUBS.map(function (s) {
+      return '<div class="assign"><span>' + esc(s.name)
+        + '<span class="sub">' + esc(s.stat) + '</span></span>'
+        + '<span id="cell-' + esc(s.id) + '"></span></div>';
+    }).join('');
+  }
+
+  function costTable() { return TABLES.dndScoring.pointBuy.costs; }
+
+  function fillCells(method) {
+    var costs = costTable();
+    SUBS.forEach(function (s) {
+      var cell = el('cell-' + s.id);
+      if (method === 'pointBuy') {
+        cell.innerHTML = '<select id="v-' + esc(s.id) + '">'
+          + Object.keys(costs).map(Number).sort(function (a, b) { return a - b; })
+              .map(function (v) { return '<option value="' + v + '">' + v + ' · ' + costs[v] + 'p</option>'; })
+              .join('') + '</select>';
+      } else if (method === 'homebrew') {
+        cell.innerHTML = '<input type="number" min="8" max="20" step="1" id="v-'
+          + esc(s.id) + '" placeholder="8–20"/>';
+      } else {
+        var pool = poolFor(method);
+        cell.innerHTML = '<select id="v-' + esc(s.id) + '"><option value="">—</option>'
+          + pool.map(function (v, i) { return '<option value="' + i + '">' + v + '</option>'; }).join('')
+          + '</select>';
+      }
+    });
+  }
+
+  function poolFor(method) {
+    if (method === 'standardArray') return TABLES.dndScoring.standardArray.values;
+    if (method === 'roll') return Store.profile().rolledValues || [];
+    return [];
+  }
+
+  /** Assignment methods: picking a value already used elsewhere swaps them,
+      so the nine values stay a permutation and no state is ever invalid. */
+  function onAssignChange(changedId) {
+    var method = Store.profile().declaredMethod;
+    if (method !== 'standardArray' && method !== 'roll') return;
+    var chosen = el('v-' + changedId).value;
+    if (chosen === '') return;
+    SUBS.forEach(function (s) {
+      if (s.id === changedId) return;
+      var other = el('v-' + s.id);
+      if (other && other.value === chosen) other.value = '';
+    });
+  }
+
+  function readBuilder() {
+    var method = Store.profile().declaredMethod;
+    var scores = {};
+    SUBS.forEach(function (s) {
+      var node = el('v-' + s.id);
+      if (!node) { scores[s.id] = null; return; }
+      if (method === 'pointBuy') { scores[s.id] = Number(node.value); return; }
+      if (method === 'homebrew') {
+        var raw = String(node.value).trim();
+        if (raw === '') { scores[s.id] = null; return; }
+        var n = Number(raw);
+        scores[s.id] = Number.isFinite(n) ? Math.max(8, Math.min(20, Math.round(n))) : null;
+        return;
+      }
+      var pool = poolFor(method);
+      scores[s.id] = node.value === '' ? null : pool[Number(node.value)];
+    });
+    Store.patchProfile({ declaredScores: scores });
+    renderPool();
+  }
+
+  function renderPool() {
+    var method = Store.profile().declaredMethod;
+    var box = el('builder-pool');
+    if (method !== 'pointBuy') { box.hidden = true; return; }
+    var costs = costTable(), pool = TABLES.dndScoring.pointBuy.pool, spent = 0;
+    SUBS.forEach(function (s) {
+      var node = el('v-' + s.id);
+      if (node) spent += costs[node.value] || 0;
+    });
+    box.hidden = false;
+    box.className = 'pool' + (spent > pool ? ' over' : '');
+    box.innerHTML = spent > pool
+      ? '<b>' + (spent - pool) + '</b> points over budget — you have ' + pool + ' to spend.'
+      : '<b>' + (pool - spent) + '</b> of ' + pool + ' points left.';
+  }
+
+  function openMethod(id) {
+    if (id === 'featsOfStrength') { show('quiz'); showStep(firstUnanswered()); return; }
+    var def = TABLES.dndScoring.methods.filter(function (m) { return m.id === id; })[0];
+    el('builder-title').textContent = def ? def.name : 'Build';
+    el('builder-blurb').textContent = def ? def.blurb : '';
+    el('builder-roll').hidden = (id !== 'roll');
+    fillCells(id);
+    hydrateBuilder(id);
+    renderPool();
+    show('builder');
+  }
+
+  function hydrateBuilder(method) {
+    var scores = Store.profile().declaredScores || {};
+    var pool = poolFor(method);
+    SUBS.forEach(function (s) {
+      var node = el('v-' + s.id);
+      if (!node || !Money.isEntered(scores[s.id])) return;
+      if (method === 'pointBuy' || method === 'homebrew') { node.value = String(scores[s.id]); return; }
+      var idx = pool.indexOf(scores[s.id]);
+      if (idx !== -1) node.value = String(idx);
+    });
+    if (method === 'roll') renderDice();
+  }
+
+  function renderDice() {
+    var vals = Store.profile().rolledValues || [];
+    el('rolled-dice').innerHTML = vals.map(function (v) {
+      return '<span class="die">' + v + '</span>';
+    }).join('');
+    el('btn-roll').textContent = vals.length ? 'Roll again' : 'Roll 4d6, drop the lowest';
+  }
+
+  /* ==== THE QUIZ ======================================================== */
+
+  function answerFor(i) {
+    var st = STEPS[i];
+    var picked = document.querySelector('input[name="q-' + st.subId + '-' + st.qi + '"]:checked');
+    return picked ? Number(picked.value) : null;
+  }
+
+  function showStep(i) {
+    at = Math.max(0, Math.min(STEPS.length - 1, i));
+    var cards = el('questions').children;
+    for (var k = 0; k < cards.length; k++) cards[k].hidden = (k !== at);
+    el('step-stat').textContent = STEPS[at].subName;
+    el('step-count').textContent = (at + 1) + ' of ' + STEPS.length;
+    el('progress-bar').style.width = (at / STEPS.length * 100) + '%';
+    el('btn-back').disabled = at === 0;
+    el('btn-next').disabled = answerFor(at) === null;
+    el('btn-next').textContent = at === STEPS.length - 1 ? 'See my character' : 'Next';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function persistQuiz() {
+    var quiz = {};
+    STEPS.forEach(function (st, i) {
+      quiz[st.subId] = quiz[st.subId] || {};
+      quiz[st.subId][st.qi] = answerFor(i);
+    });
+    Store.patchProfile({ quiz: quiz });
+  }
+
+  function hydrateQuiz() {
+    var quiz = Store.profile().quiz || {};
+    STEPS.forEach(function (st) {
+      var v = (quiz[st.subId] || {})[st.qi];
+      if (!Money.isEntered(v)) return;
+      var node = document.getElementById('q-' + st.subId + '-' + st.qi + '-' + v);
+      if (node) node.checked = true;
+    });
+  }
+
+  function firstUnanswered() {
+    for (var i = 0; i < STEPS.length; i++) if (answerFor(i) === null) return i;
+    return STEPS.length - 1;
+  }
+
+  /* ==== RESULT ========================================================== */
+
   function showAlignment() {
     var picked = Store.profile().alignment || null;
     var cells = el('align-grid').children;
@@ -292,8 +520,6 @@
       + '<h3>' + a.emoji + ' ' + esc(a.name) + '</h3><p>' + esc(a.blurb) + '</p>';
   }
 
-  /* ---- The result ------------------------------------------------------- */
-
   function renderResult() {
     var h = Store.household();
     var subScores = Char.allSubStats(h, TABLES);
@@ -305,6 +531,10 @@
       el('r-class').textContent = cls.name;
       el('r-lever').textContent = cls.lever;
       el('r-motto').textContent = cls.mentor ? '“' + cls.mentor.motto + '”' : '';
+    } else {
+      el('r-class').textContent = Money.EM_DASH;
+      el('r-lever').textContent = leaning.reason || '';
+      el('r-motto').textContent = '';
     }
 
     el('r-stats').innerHTML = ['INT', 'WIS', 'CHA'].map(function (id) {
@@ -318,14 +548,16 @@
     }).join('');
 
     var declared = {};
-    Char.declaredIds(TABLES.dndRules).forEach(function (id) { declared[id] = subScores[id]; });
-    el('r-spectrum').innerHTML = Char.spectrum(declared, TABLES)
-      .filter(function (r) { return r.ok; })
-      .map(function (r) {
-        return '<div class="specrow"><span>' + esc(r.name) + '</span>'
-          + '<span class="specbar"><span style="width:' + r.percent + '%"></span></span>'
-          + '<span class="p">' + Math.round(r.percent) + '%</span></div>';
-      }).join('');
+    SUBS.forEach(function (s) { declared[s.id] = subScores[s.id]; });
+    var rows = Char.spectrum(declared, TABLES).filter(function (r) { return r.ok; });
+    el('r-spectrum').innerHTML = rows.length
+      ? rows.map(function (r) {
+          return '<div class="specrow"><span>' + esc(r.name) + '</span>'
+            + '<span class="specbar"><span style="width:' + r.percent + '%"></span></span>'
+            + '<span class="p">' + Math.round(r.percent) + '%</span></div>';
+        }).join('')
+      : '<p class="note">Nothing scored yet.</p>';
+    showAlignment();
   }
 
   function shareText() {
@@ -345,26 +577,15 @@
     return line.join(' · ');
   }
 
-  function finish() {
-    persist();
-    el('quiz').hidden = true;
-    el('result').hidden = false;
-    renderResult();
-    showAlignment();
-    window.scrollTo({ top: 0 });
-  }
+  function finish() { renderResult(); show('result'); }
 
-  function start() {
-    el('hero').hidden = true;
-    el('result').hidden = true;
-    el('quiz').hidden = false;
-    showStep(firstUnanswered());
-  }
+  /* ==== WIRING ========================================================== */
 
   function wire() {
-    el('btn-start').addEventListener('click', start);
+    el('btn-start').addEventListener('click', function () { show('choose'); });
+
     el('questions').addEventListener('change', function () {
-      persist();
+      persistQuiz();
       el('btn-next').disabled = answerFor(at) === null;
     });
     el('btn-next').addEventListener('click', function () {
@@ -372,14 +593,32 @@
       if (at === STEPS.length - 1) finish(); else showStep(at + 1);
     });
     el('btn-back').addEventListener('click', function () { showStep(at - 1); });
-    el('btn-redo').addEventListener('click', function () {
-      if (!window.confirm('Clear your answers and start over?')) return;
-      Store.reset();
-      location.reload();
+    el('quiz-switch').addEventListener('click', function (e) { e.preventDefault(); show('choose'); });
+
+    el('builder-rows').addEventListener('change', function (e) {
+      var id = e.target.id || '';
+      if (id.indexOf('v-') === 0) onAssignChange(id.slice(2));
+      readBuilder();
     });
+    el('btn-builder-back').addEventListener('click', function () { show('choose'); });
+    el('btn-builder-done').addEventListener('click', function () { readBuilder(); finish(); });
+
+    el('btn-roll').addEventListener('click', function () {
+      var spec = TABLES.dndScoring.roll;
+      var rolled = SUBS.map(function () {
+        var d = [];
+        for (var i = 0; i < spec.dice; i++) d.push(1 + Math.floor(Math.random() * spec.sides));
+        d.sort(function (a, b) { return a - b; });
+        return Math.max(spec.floor, d.slice(1).reduce(function (a, b) { return a + b; }, 0));
+      }).sort(function (a, b) { return b - a; });
+      Store.patchProfile({ rolledValues: rolled, declaredScores: {} });
+      fillCells('roll');
+      renderDice();
+    });
+
+    el('btn-redo').addEventListener('click', function () { show('choose'); });
     el('btn-copy').addEventListener('click', function () {
-      var text = shareText();
-      var btn = el('btn-copy');
+      var text = shareText(), btn = el('btn-copy');
       function done() { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy my result'; }, 1600); }
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(done, function () { window.prompt('Copy this:', text); });
@@ -389,20 +628,21 @@
 
   SLAF.Reference.load().then(function (tables) {
     TABLES = tables;
+    SUBS = tables.dndRules.subStats.filter(function (s) { return s.kind === 'declared'; });
+    DND.Skin.mount(document.getElementById('skin-bar'));
+    buildMethods();
     buildQuestions();
+    buildRows();
     buildAlignment();
-    hydrate();
+    hydrateQuiz();
     wire();
-    /* Someone coming back to a finished sheet should land on the result. */
-    if (Store.quizComplete(TABLES)) {
-      el('hero').hidden = true;
-      finish();
-    }
+    /* Someone returning to a finished character lands on it, not the pitch. */
+    if (Store.quizComplete(TABLES)) finish();
   }).catch(function (err) {
     var n = el('load-notice');
     n.hidden = false;
-    n.textContent = 'Couldn’t load the game data (' + err.message + '). If you opened this file directly, '
-      + 'it needs to be served over http — try the published link instead.';
+    n.textContent = 'Couldn’t load the game data (' + err.message + '). If you opened this file '
+      + 'directly it needs to be served over http — try the published link instead.';
   });
 })();
 </script>

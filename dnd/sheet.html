@@ -4,200 +4,249 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Your Character Sheet · Dungeons &amp; Dividends</title>
-<meta name="description" content="Add five numbers and the rest of the sheet resolves — Level, Hit Points, Armour Class, Debt Burden, class and feats."/>
+<meta name="description" content="A full character sheet for your money — ability scores, saving throws, eighteen skills, hit points, armour class and hit dice."/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="shared/fonts.css"/>
 <link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="shared/skin.css"/>
 <!--
-  TIER 2 — the full sheet. Five numbers on top of the quiz and everything
-  resolves: all six ability scores, Level, HP, AC, Debt Burden, class, feats.
+  TIER 2 — the full sheet, laid out the way a character sheet is laid out.
 
-  WHY THE NUMBERS GO WHERE THEY GO. shared/store.js writes these five into a
-  real household object — the exact shape the main SPARKS/SLAF suite uses —
-  rather than into a flat bag of its own. That is what makes "take this with
-  you" a copy rather than a translation, and it is why the vendored engines
-  in engines/ compute identical figures to the main suite without knowing
-  this product exists. See README, "Porting into SPARKS".
+  THE MAPPING. This follows the standard sheet furniture closely, because the
+  rulebook is built on it: §2A states outright that the eighteen sub-stats are
+  modelled on the fixed list of eighteen skills every class draws from. So the
+  skills block IS the eighteen sub-stats, and the rest lands where you'd
+  expect:
+
+    CLASS & LEVEL     the lever you pull, and % of your own FI number
+    SPECIES slot      Alignment. Species is excluded from this system on
+                      purpose (rulebook, opening note), so the slot carries
+                      the disposition instead
+    BACKGROUND slot   Subclass
+    EXPERIENCE POINTS % of your FI number — Level literally is that, §7
+    SAVING THROWS     §3, with the class's two proficiencies marked
+    SKILLS            the eighteen sub-stats, §2A
+    HIT POINTS        weeks of runway, D-046
+    HIT DICE          level d(class hit die)
+    ARMOUR CLASS      §3A, layered
+    SPEED slot        Structural Mobility — how fast you can actually move
+    PASSIVES          10 + modifier, for the three sub-stats that apply
+                      whether or not you thought to look
+
+  WHAT IS DELIBERATELY BLANK. Ability Save DC has no value: the rulebook's own
+  §13 lists the Debt Burden save DCs as still unspecified, so the box shows an
+  em dash and says why rather than inventing a number. Temp HP is blank because
+  nothing here asks about a windfall sitting in checking. Death saves only
+  light up at 0 HP. Blank boxes are the honest state, not an oversight.
+
+  DARK, NOT PARCHMENT. The layout follows the printable sheet; the palette
+  stays SPARKS navy so this looks like part of the same world. A light print
+  stylesheet would be a separate, additive change.
 
   LIVE-FORM: built once. Every control is constructed during boot and only
-  ever has its .value read or written; nothing rebuilds a container that
-  holds a live input. Only the output side is re-rendered.
+  ever has its .value read or written. Only the sheet body re-renders, and it
+  contains no focusable inputs.
 -->
 <style>
-  body { margin: 0; }
-  .wrap { max-width: 680px; margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-7); }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: var(--space-4) var(--space-3) var(--space-7); }
   .back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
-  h1 { font-family: var(--font-display); font-size: var(--text-2xl); margin: 0 0 var(--space-2); }
-  .lede { color: var(--color-text-muted); margin: 0 0 var(--space-5); line-height: var(--leading-normal); }
-  h2 { font-family: var(--font-display); font-size: var(--text-xl); margin: var(--space-6) 0 var(--space-2); }
-  h3 { font-size: var(--text-md); margin: var(--space-4) 0 var(--space-2); }
   .note { color: var(--color-text-muted); font-size: var(--text-sm); line-height: var(--leading-normal); margin: 0 0 var(--space-3); }
-  fieldset { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-4); margin: 0 0 var(--space-3); background: var(--color-surface-raised); }
-  legend { font-size: var(--text-sm); font-weight: 600; padding: 0 var(--space-2); }
-  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-3); }
+  .notice { padding: var(--space-3); border-radius: var(--radius-sm); margin: var(--space-3) 0; font-size: var(--text-sm); line-height: var(--leading-normal); }
+  .notice.is-error { border: 1px solid var(--color-critical); color: var(--color-critical); }
+  .notice.is-info { border: 1px solid var(--color-border-strong); color: var(--color-text-muted); }
+
+  /* ---- intake, tucked away once it's done ---- */
+  details.intake { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); margin-bottom: var(--space-4); }
+  details.intake > summary { cursor: pointer; padding: var(--space-3) var(--space-4); font-family: var(--font-display); font-size: var(--text-lg); list-style: none; }
+  details.intake > summary::-webkit-details-marker { display: none; }
+  details.intake > summary::after { content: ' ▾'; color: var(--color-accent-hover); }
+  details.intake[open] > summary::after { content: ' ▴'; }
+  .intake-body { padding: 0 var(--space-4) var(--space-4); }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--space-3); }
   .field { display: flex; flex-direction: column; justify-content: flex-end; }
   .field label { font-size: var(--text-sm); margin-bottom: var(--space-1); }
   .hint { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1); line-height: var(--leading-normal); }
   input[type=text], input[type=number], select { height: var(--control-height); font-family: var(--font-body); font-size: var(--text-base); background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: 0 var(--space-2); width: 100%; box-sizing: border-box; }
   input:focus, select:focus { outline: 2px solid var(--color-focus-ring); outline-offset: 1px; }
-  .vitals { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-2); }
-  .vital { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-3); text-align: center; background: var(--color-surface-raised); }
-  .vital .k { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); }
-  .vital .n { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-1) 0 0; }
-  .vital .sub { font-size: var(--text-xs); color: var(--color-text-muted); line-height: var(--leading-normal); }
-  .bar { height: 6px; border-radius: var(--radius-pill); background: var(--color-surface-active); overflow: hidden; margin-top: var(--space-2); }
-  .bar > span { display: block; height: 100%; background: var(--color-accent); }
-  .statgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-2); }
-  .statcard { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-3); background: var(--color-surface-raised); }
-  .statcard .abbr { font-size: var(--text-xs); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; color: var(--color-text-subtle); }
-  .statcard .score { font-family: var(--font-display); font-size: var(--text-2xl); line-height: 1; margin: var(--space-1) 0; }
-  .statcard .mod { font-size: var(--text-lg); color: var(--color-accent-hover); }
-  .statcard .miss { font-size: var(--text-xs); color: var(--color-text-faint); line-height: var(--leading-normal); }
-  .subrow { display: grid; grid-template-columns: 1fr 56px; gap: var(--space-2); font-size: var(--text-sm); padding: var(--space-1) 0; border-bottom: 1px solid var(--color-border); }
-  .subrow:last-child { border-bottom: 0; }
-  .subrow .v { text-align: right; font-variant-numeric: tabular-nums; }
-  .subrow .v.na { color: var(--color-text-faint); }
-  .burden { border-left: 3px solid var(--color-caution); padding: var(--space-3); background: var(--color-surface); font-size: var(--text-sm); line-height: var(--leading-normal); border-radius: var(--radius-sm); }
-  .burden.b45 { border-left-color: var(--color-critical); }
-  .featlist { list-style: none; padding: 0; margin: 0; }
-  .featlist li { font-size: var(--text-sm); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); line-height: var(--leading-normal); }
-  .featlist li:last-child { border-bottom: 0; }
-  .featlist .src { font-size: var(--text-xs); color: var(--color-text-faint); }
-  .featlist li.lock { color: var(--color-text-faint); }
-  .lvl-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
-  .lvl-table td { padding: var(--space-1) var(--space-2); border-bottom: 1px solid var(--color-border); vertical-align: top; }
-  .lvl-table td.l { width: 34px; color: var(--color-text-subtle); font-variant-numeric: tabular-nums; }
-  .spec { display: grid; gap: var(--space-1); }
-  .specrow { display: grid; grid-template-columns: 150px 1fr 44px; gap: var(--space-2); align-items: center; font-size: var(--text-sm); }
-  .specbar { height: 10px; border-radius: var(--radius-pill); background: var(--color-surface-active); overflow: hidden; }
-  .specbar > span { display: block; height: 100%; background: var(--color-accent); }
-  .specrow .p { text-align: right; font-variant-numeric: tabular-nums; color: var(--color-text-muted); }
-  .specrow.na .p { color: var(--color-text-faint); }
+  fieldset { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin: 0 0 var(--space-3); }
+  legend { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); padding: 0 var(--space-2); }
   .btn { font-family: var(--font-body); font-size: var(--text-sm); background: var(--color-accent); color: var(--color-accent-contrast); border: 0; border-radius: var(--radius-sm); padding: 0 var(--space-4); height: var(--control-height); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
   .btn.ghost { background: transparent; color: var(--color-accent-hover); border: 1px solid var(--color-border-strong); }
   .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
-  .notice { padding: var(--space-3); border-radius: var(--radius-sm); margin: var(--space-3) 0; font-size: var(--text-sm); line-height: var(--leading-normal); }
-  .notice.is-error { border: 1px solid var(--color-critical); color: var(--color-critical); }
-  .notice.is-info { border: 1px solid var(--color-border-strong); color: var(--color-text-muted); }
-  textarea { width: 100%; box-sizing: border-box; min-height: 90px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: var(--text-xs); background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: var(--space-2); }
+
+  /* ==== the sheet ==== */
+  .panel { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); }
+  .panel-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-subtle); text-align: center; margin-top: var(--space-2); }
+
+  .namebar { display: grid; grid-template-columns: 1fr; gap: var(--space-2); margin-bottom: var(--space-3); }
+  @media (min-width: 720px) { .namebar { grid-template-columns: 1fr 2fr; } }
+  .namebox { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); }
+  .namebox .big { font-family: var(--font-display); font-size: var(--text-xl); }
+  .idgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+  .idcell .v { font-size: var(--text-base); }
+  .idcell .k { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--color-text-subtle); margin-top: 2px; }
+
+  .sheet { display: grid; gap: var(--space-3); grid-template-columns: 1fr; }
+  @media (min-width: 760px)  { .sheet { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 1080px) { .sheet { grid-template-columns: 168px 1fr 1fr 1fr; align-items: start; } }
+
+  .abilities { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+  @media (min-width: 1080px) { .abilities { grid-template-columns: 1fr; } }
+  .ability { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); text-align: center; padding: var(--space-2) var(--space-1) var(--space-3); position: relative; }
+  .ability .nm { font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-subtle); }
+  .ability .sc { font-family: var(--font-display); font-size: var(--text-2xl); line-height: 1.1; }
+  .ability .md { display: inline-block; min-width: 40px; margin-top: var(--space-1); padding: 2px 0; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); background: var(--color-surface); font-size: var(--text-sm); color: var(--color-accent-hover); }
+  .ability.blank .sc { color: var(--color-text-faint); }
+
+  .rows { display: grid; }
+  .row { display: grid; grid-template-columns: 14px 44px 1fr auto; gap: var(--space-2); align-items: center; font-size: var(--text-sm); padding: 3px 0; border-bottom: 1px solid var(--color-border); }
+  .row:last-child { border-bottom: 0; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; border: 1px solid var(--color-border-active); }
+  .dot.on { background: var(--color-accent); border-color: var(--color-accent); }
+  .row .mod { font-variant-numeric: tabular-nums; text-align: right; color: var(--color-accent-hover); }
+  .row .mod.na { color: var(--color-text-faint); }
+  .row .ab { font-size: 9px; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-faint); }
+
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+  .big-num { font-family: var(--font-display); font-size: var(--text-2xl); text-align: center; line-height: 1.1; }
+  .big-num.na { color: var(--color-text-faint); }
+  .hp { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-2); text-align: center; }
+  .hp .k { font-size: 9px; text-transform: uppercase; letter-spacing: .07em; color: var(--color-text-subtle); }
+  .hp .v { font-family: var(--font-display); font-size: var(--text-xl); }
+  .hp .v.na { color: var(--color-text-faint); }
+  .bar { height: 6px; border-radius: var(--radius-pill); background: var(--color-surface-active); overflow: hidden; margin-top: var(--space-2); }
+  .bar > span { display: block; height: 100%; background: var(--color-accent); }
+  .saves-row { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); margin-top: var(--space-1); }
+  .pip { width: 13px; height: 13px; border-radius: 50%; border: 1px solid var(--color-border-active); display: inline-block; }
+  .pip.lit { background: var(--color-critical); border-color: var(--color-critical); }
+  .stack > * + * { margin-top: var(--space-3); }
+  .kv { font-size: var(--text-sm); line-height: var(--leading-normal); }
+  .kv b { color: var(--color-text); }
+  .kv .h { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--color-accent-hover); display: block; margin-top: var(--space-2); }
+  .muted { color: var(--color-text-muted); }
+  .faint { color: var(--color-text-faint); }
+  .burden { border-left: 3px solid var(--color-caution); padding: var(--space-2) var(--space-3); background: var(--color-surface); font-size: var(--text-sm); line-height: var(--leading-normal); border-radius: var(--radius-sm); }
+  .burden.b45 { border-left-color: var(--color-critical); }
+
+  .lower { display: grid; gap: var(--space-3); grid-template-columns: 1fr; margin-top: var(--space-3); }
+  @media (min-width: 900px) { .lower { grid-template-columns: 1fr 2fr; } }
+  table.attacks { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+  table.attacks th { font-size: 9px; text-transform: uppercase; letter-spacing: .07em; color: var(--color-text-subtle); text-align: left; padding: 0 var(--space-2) var(--space-1); font-weight: 400; }
+  table.attacks td { padding: var(--space-2); border-top: 1px solid var(--color-border); vertical-align: top; }
+  table.attacks tr td:first-child { font-weight: 600; }
+  table.attacks .amt { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--color-accent-hover); }
+  .feat { font-size: var(--text-sm); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); line-height: var(--leading-normal); }
+  .feat:last-child { border-bottom: 0; }
+  .feat .src { font-size: 10px; color: var(--color-text-faint); text-transform: uppercase; letter-spacing: .06em; }
+  .feat.lock { color: var(--color-text-faint); }
+  .lvl { display: grid; grid-template-columns: 26px 1fr; gap: var(--space-2); font-size: var(--text-sm); padding: var(--space-1) 0; border-bottom: 1px solid var(--color-border); line-height: var(--leading-normal); }
+  .lvl:last-child { border-bottom: 0; }
+  .lvl .l { color: var(--color-text-subtle); font-variant-numeric: tabular-nums; }
+  h2.sec { font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-5) 0 var(--space-2); }
+  textarea { width: 100%; box-sizing: border-box; min-height: 84px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: var(--text-xs); background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: var(--space-2); }
   .foot { margin-top: var(--space-6); text-align: center; font-size: var(--text-sm); }
   .foot a { color: var(--color-accent-hover); }
 </style>
 </head>
-<body>
+<body class="slaf">
+<script src="shared/skin.js"></script>
+<script>DND.Skin.init();</script>
 <div class="wrap">
-  <a class="back" href="index.html">← Back to the quiz</a>
-  <h1>Your character sheet</h1>
-  <p class="lede">Five numbers — plus how you file, which is only used to estimate tax — unlock
-     the other three ability scores, your Level, your Hit Points and your Armour Class.
-     Nothing is sent anywhere; it stays in this browser.</p>
+  <div class="skin-bar" id="skin-bar"></div>
+  <a class="back" href="index.html">← Back to character creation</a>
 
   <div id="load-notice" class="notice" hidden></div>
   <div id="quiz-notice" class="notice is-info" hidden></div>
 
-  <section id="money">
-    <h2>The five numbers</h2>
-    <p class="note">Round freely. Nothing here needs to be exact to be useful, and a blank
-       field stays blank rather than being treated as a zero.</p>
-    <fieldset><legend>Money</legend>
-      <div class="grid2">
-        <div class="field"><label for="f-income">Gross income, per year</label>
-          <input type="text" inputmode="decimal" id="f-income" placeholder="e.g. 72,000"/>
-          <div class="hint">Before tax, everything in.</div></div>
-        <div class="field"><label for="f-expenses">Spending, per month</label>
-          <input type="text" inputmode="decimal" id="f-expenses" placeholder="e.g. 3,150"/>
-          <div class="hint">What actually leaves. This sets your FI number, so your Level moves with it.</div></div>
-        <div class="field"><label for="f-cash">Cash &amp; savings</label>
-          <input type="text" inputmode="decimal" id="f-cash" placeholder="e.g. 9,500"/>
-          <div class="hint">Reachable this week without a penalty. This is your Hit Points.</div></div>
-        <div class="field"><label for="f-investments">Investments &amp; retirement</label>
-          <input type="text" inputmode="decimal" id="f-investments" placeholder="e.g. 48,000"/></div>
-        <div class="field"><label for="f-debt">Total debt</label>
-          <input type="text" inputmode="decimal" id="f-debt" placeholder="e.g. 21,600 (0 if none)"/></div>
-        <div class="field"><label for="f-filing">How you file taxes</label>
-          <select id="f-filing"><option value="">—</option>
-            <option value="single">Single</option>
-            <option value="married_joint">Married, filing jointly</option>
-            <option value="married_separate">Married, filing separately</option>
-            <option value="head_of_household">Head of household</option></select>
-          <div class="hint">Only used to estimate tax, which your savings rate subtracts.
-             Without it, Constitution and Hit Points stay blank.</div></div>
-        <div class="field"><label for="f-highint">Any of it above 7.5% interest?</label>
-          <select id="f-highint"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select>
-          <div class="hint">Sets your Debt Burden, which cuts Max HP.</div></div>
+  <details class="intake" id="intake" open>
+    <summary>Your numbers</summary>
+    <div class="intake-body">
+      <p class="note">Five figures plus how you file. Round freely — nothing here needs to be exact
+         to be useful, and a blank stays blank rather than being read as zero.</p>
+      <fieldset><legend>Money</legend>
+        <div class="grid2">
+          <div class="field"><label for="f-income">Gross income, per year</label>
+            <input type="text" inputmode="decimal" id="f-income" placeholder="e.g. 72,000"/></div>
+          <div class="field"><label for="f-expenses">Spending, per month</label>
+            <input type="text" inputmode="decimal" id="f-expenses" placeholder="e.g. 3,150"/>
+            <div class="hint">Sets your FI number, so your Level moves with it.</div></div>
+          <div class="field"><label for="f-cash">Cash &amp; savings</label>
+            <input type="text" inputmode="decimal" id="f-cash" placeholder="e.g. 9,500"/>
+            <div class="hint">This is your Hit Points.</div></div>
+          <div class="field"><label for="f-investments">Investments &amp; retirement</label>
+            <input type="text" inputmode="decimal" id="f-investments" placeholder="e.g. 48,000"/></div>
+          <div class="field"><label for="f-debt">Total debt</label>
+            <input type="text" inputmode="decimal" id="f-debt" placeholder="e.g. 21,600 (0 if none)"/></div>
+          <div class="field"><label for="f-highint">Any of it above 7.5% interest?</label>
+            <select id="f-highint"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select>
+            <div class="hint">Sets Debt Burden, which cuts Max HP.</div></div>
+          <div class="field"><label for="f-filing">How you file taxes</label>
+            <select id="f-filing"><option value="">—</option>
+              <option value="single">Single</option><option value="married_joint">Married, filing jointly</option>
+              <option value="married_separate">Married, filing separately</option>
+              <option value="head_of_household">Head of household</option></select>
+            <div class="hint">Only to estimate tax, which your savings rate subtracts. Without it,
+               Constitution and Hit Points stay blank.</div></div>
+        </div>
+      </fieldset>
+      <fieldset><legend>Optional — sharpens the sheet</legend>
+        <div class="grid2">
+          <div class="field"><label for="f-name">Character name</label>
+            <input type="text" id="f-name" placeholder="e.g. Stone"/></div>
+          <div class="field"><label for="f-player">Player name</label>
+            <input type="text" id="f-player" placeholder="you"/></div>
+          <div class="field"><label for="f-income3">Income three years ago</label>
+            <input type="text" inputmode="decimal" id="f-income3" placeholder="e.g. 58,000"/></div>
+          <div class="field"><label for="f-side">Side income, per year</label>
+            <input type="text" inputmode="decimal" id="f-side" placeholder="e.g. 2,400 (0 if none)"/></div>
+          <div class="field"><label for="f-readiness">A skill you could sell</label>
+            <select id="f-readiness"><option value="">—</option>
+              <option value="ready">Yes — earning within a month</option>
+              <option value="identified">Yes, but it'd take time</option>
+              <option value="none">Nothing right now</option></select></div>
+          <div class="field"><label for="f-fixed">Share of spending that's fixed</label>
+            <select id="f-fixed"><option value="">—</option>
+              <option value="0.85">Nearly all — 85%</option><option value="0.75">Most — 75%</option>
+              <option value="0.65">Two thirds — 65%</option><option value="0.55">Over half — 55%</option>
+              <option value="0.45">Under half — 45%</option><option value="0.35">A third — 35%</option>
+              <option value="0.25">A quarter — 25%</option><option value="0.15">Very little — 15%</option></select></div>
+          <div class="field"><label for="f-years">Years at your current savings rate</label>
+            <input type="number" min="0" max="60" step="1" id="f-years" placeholder="e.g. 3"/></div>
+          <div class="field"><label for="f-disruption">Held it through a disruption?</label>
+            <select id="f-disruption"><option value="">—</option>
+              <option value="yes">Yes — job loss, medical, big drop</option><option value="no">Not yet</option></select></div>
+          <div class="field"><label for="f-health">Health insurance</label>
+            <select id="f-health"><option value="">—</option><option value="0">None</option>
+              <option value="1">High-deductible</option><option value="2">Standard</option>
+              <option value="3">Low-deductible</option></select></div>
+          <div class="field"><label for="f-disability">Disability insurance</label>
+            <select id="f-disability"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+          <div class="field"><label for="f-umbrella">Umbrella liability policy</label>
+            <select id="f-umbrella"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+        </div>
+        <div id="mobility"></div>
+      </fieldset>
+      <div class="actions">
+        <button type="button" class="btn ghost" id="btn-demo">Fill with an example</button>
+        <button type="button" class="btn ghost" id="btn-clear">Clear everything</button>
       </div>
-    </fieldset>
-
-    <fieldset><legend>Optional — sharpens the sheet</legend>
-      <div class="grid2">
-        <div class="field"><label for="f-income3">Income three years ago</label>
-          <input type="text" inputmode="decimal" id="f-income3" placeholder="e.g. 58,000"/>
-          <div class="hint">Income Trajectory.</div></div>
-        <div class="field"><label for="f-side">Side income, per year</label>
-          <input type="text" inputmode="decimal" id="f-side" placeholder="e.g. 2,400 (0 if none)"/></div>
-        <div class="field"><label for="f-readiness">A skill you could sell</label>
-          <select id="f-readiness"><option value="">—</option>
-            <option value="ready">Yes — could be earning within a month</option>
-            <option value="identified">Yes, but it'd take time to stand up</option>
-            <option value="none">Nothing right now</option></select></div>
-        <div class="field"><label for="f-fixed">Share of spending that's fixed</label>
-          <select id="f-fixed"><option value="">—</option>
-            <option value="0.85">Nearly all — 85%</option><option value="0.75">Most — 75%</option>
-            <option value="0.65">Two thirds — 65%</option><option value="0.55">Over half — 55%</option>
-            <option value="0.45">Under half — 45%</option><option value="0.35">A third — 35%</option>
-            <option value="0.25">A quarter — 25%</option><option value="0.15">Very little — 15%</option></select>
-          <div class="hint">Rent, insurance, loan payments, contracts.</div></div>
-        <div class="field"><label for="f-years">Years at your current savings rate</label>
-          <input type="number" min="0" max="60" step="1" id="f-years" placeholder="e.g. 3"/></div>
-        <div class="field"><label for="f-disruption">Held it through a real disruption?</label>
-          <select id="f-disruption"><option value="">—</option>
-            <option value="yes">Yes — job loss, medical event, big income drop</option>
-            <option value="no">Not yet</option></select></div>
-        <div class="field"><label for="f-health">Health insurance</label>
-          <select id="f-health"><option value="">—</option><option value="0">None</option>
-            <option value="1">High-deductible</option><option value="2">Standard</option>
-            <option value="3">Low-deductible</option></select></div>
-        <div class="field"><label for="f-disability">Disability insurance</label>
-          <select id="f-disability"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
-        <div class="field"><label for="f-umbrella">Umbrella liability policy</label>
-          <select id="f-umbrella"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
-      </div>
-      <div id="mobility"></div>
-    </fieldset>
-    <div class="actions">
-      <button type="button" class="btn ghost" id="btn-demo">Fill with an example</button>
-      <button type="button" class="btn ghost" id="btn-clear">Clear everything</button>
     </div>
-  </section>
+  </details>
 
-  <section id="sheet">
-    <h2>The sheet</h2>
-    <div id="sheet-body"></div>
-  </section>
+  <div id="sheet-body"></div>
 
-  <section id="spectrum">
-    <h2>All eighteen, ranked</h2>
-    <div class="spec" id="spectrum-body"></div>
-  </section>
-
-  <section id="port">
-    <h2>Take it with you</h2>
-    <p class="note">Your sheet is stored in the same shape the full SPARKS suite uses, so it
-       carries across as a copy rather than being re-entered and re-rounded. Download the file
-       or copy the text — both are the same thing.</p>
-    <div id="export-summary" class="note"></div>
-    <div class="actions">
-      <button type="button" class="btn" id="btn-download">Download my character</button>
-      <button type="button" class="btn ghost" id="btn-export">Copy instead</button>
-      <button type="button" class="btn ghost" id="btn-toggle-json">Show the file</button>
-    </div>
-    <div id="export-detail" hidden>
-      <textarea id="export-box" readonly aria-label="Your character data"></textarea>
-      <p class="note" style="margin-top:var(--space-2)">Plain readable JSON, not an encoded
-         blob — you can see exactly what you would be handing over before you hand it over.
-         It carries only what this tool actually knows about you; nothing else.</p>
-    </div>
-  </section>
+  <h2 class="sec">Take it with you</h2>
+  <p class="note">Stored in the same shape the full SPARKS suite uses, so it carries across as a
+     copy rather than being retyped and re-rounded.</p>
+  <div id="export-summary" class="note"></div>
+  <div class="actions">
+    <button type="button" class="btn" id="btn-download">Download my character</button>
+    <button type="button" class="btn ghost" id="btn-export">Copy instead</button>
+    <button type="button" class="btn ghost" id="btn-toggle-json">Show the file</button>
+  </div>
+  <div id="export-detail" hidden>
+    <textarea id="export-box" readonly aria-label="Your character data"></textarea>
+  </div>
 
   <p class="foot"><a href="bestiary.html">The Bestiary — monsters, hazards and the tax authority →</a></p>
 </div>
@@ -216,6 +265,7 @@
   var Money = SLAF.Money, Char = SLAF.Character, Store = DND.Store, Schema = SLAF.Schema,
       Export = DND.Export;
   var TABLES = null, BUILT = false;
+  var DASH = Money.EM_DASH;
 
   function el(id) { return document.getElementById(id); }
   function esc(s) {
@@ -223,6 +273,7 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
     });
   }
+  function sign(n) { return (n >= 0 ? '+' : '') + n; }
   function readMoney(id) {
     var raw = el(id).value;
     if (String(raw).trim() === '') return null;
@@ -237,19 +288,22 @@
   }
   function readChoice(id) { var v = el(id).value; return v === '' ? null : v; }
   function readBool(id) { var v = readChoice(id); return v === null ? null : v === 'yes'; }
+  function readText(id) { var v = String(el(id).value).trim(); return v === '' ? null : v; }
 
-  /* ---- Built once ------------------------------------------------------- */
+  function panel(label, inner) {
+    return '<div class="panel">' + inner + '<div class="panel-label">' + esc(label) + '</div></div>';
+  }
+
+  /* ---- built once ---- */
   function buildMobility() {
     var checklist = TABLES.dndScoring.anchors.structuralMobility.checklist;
-    el('mobility').innerHTML = '<h3 style="margin-top:var(--space-4)">How easily could you move?</h3>'
-      + checklist.map(function (item) {
-        return '<div class="field" style="margin-bottom:var(--space-3)">'
-          + '<label for="mob-' + esc(item.id) + '">' + esc(item.question) + '</label>'
-          + '<select id="mob-' + esc(item.id) + '"><option value="">—</option>'
-          + item.options.map(function (o, i) {
-              return '<option value="' + i + '">' + esc(o.label) + '</option>';
-            }).join('') + '</select></div>';
-      }).join('');
+    el('mobility').innerHTML = checklist.map(function (item) {
+      return '<div class="field" style="margin-top:var(--space-3)">'
+        + '<label for="mob-' + esc(item.id) + '">' + esc(item.question) + '</label>'
+        + '<select id="mob-' + esc(item.id) + '"><option value="">—</option>'
+        + item.options.map(function (o, i) { return '<option value="' + i + '">' + esc(o.label) + '</option>'; }).join('')
+        + '</select></div>';
+    }).join('');
   }
 
   function collect() {
@@ -259,17 +313,17 @@
     Store.setMoney('investmentsCents', readMoney('f-investments'));
     Store.setDebt(readMoney('f-debt'), readBool('f-highint'));
     Store.setFilingStatus(readChoice('f-filing'));
-    var hi = TABLES.fooRules.thresholds.highInterestDebtRate;
-    if (readBool('f-highint') === true) Store.setDebtRate(hi);
+    if (readBool('f-highint') === true) Store.setDebtRate(TABLES.fooRules.thresholds.highInterestDebtRate);
 
     var mobility = {};
     TABLES.dndScoring.anchors.structuralMobility.checklist.forEach(function (item) {
       var v = readChoice('mob-' + item.id);
       mobility[item.id] = v === null ? null : Number(v);
     });
-    var fixed = readChoice('f-fixed');
-    var health = readChoice('f-health');
+    var fixed = readChoice('f-fixed'), health = readChoice('f-health');
     Store.patchProfile({
+      characterName: readText('f-name'),
+      playerName: readText('f-player'),
       incomeThreeYearsAgoCents: readMoney('f-income3'),
       sideIncomeAnnualCents: readMoney('f-side'),
       hustleReadiness: readChoice('f-readiness'),
@@ -286,21 +340,21 @@
 
   function hydrate() {
     var h = Store.household(), p = Store.profile();
-    function setMoneyField(id, result) {
-      if (Money.isOk(result)) el(id).value = Money.formatCents(result.value);
-    }
-    setMoneyField('f-income', Schema.grossAnnualIncomeCents(h));
-    setMoneyField('f-expenses', Schema.monthlyExpensesCents(h));
-    setMoneyField('f-cash', Schema.cashCents(h));
-    setMoneyField('f-investments', Schema.investmentsCents(h));
+    function m(id, r) { if (Money.isOk(r)) el(id).value = Money.formatCents(r.value); }
+    m('f-income', Schema.grossAnnualIncomeCents(h));
+    m('f-expenses', Schema.monthlyExpensesCents(h));
+    m('f-cash', Schema.cashCents(h));
+    m('f-investments', Schema.investmentsCents(h));
     var debt = Schema.totalDebtCents(h);
     if (Money.isOk(debt) && debt.value > 0) {
       el('f-debt').value = Money.formatCents(debt.value);
       var hi = TABLES.fooRules.thresholds.highInterestDebtRate;
       var any = (h.debts || []).some(function (d) { return Money.isEntered(d.rate) && d.rate >= hi; });
-      el('f-highint').value = (h.debts || []).length ? (any ? 'yes' : 'no') : '';
+      el('f-highint').value = any ? 'yes' : 'no';
     }
     if (h.filingStatus) el('f-filing').value = h.filingStatus;
+    if (p.characterName) el('f-name').value = p.characterName;
+    if (p.playerName) el('f-player').value = p.playerName;
     if (Money.isEntered(p.incomeThreeYearsAgoCents)) el('f-income3').value = Money.formatCents(p.incomeThreeYearsAgoCents);
     if (Money.isEntered(p.sideIncomeAnnualCents)) el('f-side').value = Money.formatCents(p.sideIncomeAnnualCents);
     if (p.hustleReadiness) el('f-readiness').value = p.hustleReadiness;
@@ -320,85 +374,200 @@
     });
   }
 
-  /* ---- Render (output only) --------------------------------------------- */
+  /* ================= the sheet ================= */
 
-  function renderVitals(s) {
-    var out = [];
-    out.push(Money.isOk(s.level)
-      ? '<div class="vital"><div class="k">Level</div><div class="n">' + s.level.value + '</div>'
-        + '<div class="sub">' + esc(Money.formatRate(s.level.pct, { decimals: 1 })) + ' of your FI number</div>'
-        + '<div class="bar"><span style="width:' + Math.min(100, s.level.pct * 100) + '%"></span></div></div>'
-      : '<div class="vital"><div class="k">Level</div><div class="n">' + Money.EM_DASH + '</div>'
-        + '<div class="sub">' + esc(s.level.reason) + '</div></div>');
-
-    if (s.maxHp) {
-      var cur = Money.isOk(s.currentHp) ? s.currentHp.value : null;
-      var pct = cur === null ? 0 : Math.min(100, (cur / s.maxHp.weeks) * 100);
-      out.push('<div class="vital"><div class="k">Hit Points</div>'
-        + '<div class="n">' + (cur === null ? Money.EM_DASH : cur) + ' / ' + s.maxHp.weeks + '</div>'
-        + '<div class="sub">weeks you could cover'
-        + (s.maxHp.reducedByDebt ? ' · max cut 25% by Debt Burden' : '') + '</div>'
-        + '<div class="bar"><span style="width:' + pct + '%"></span></div></div>');
-    } else {
-      out.push('<div class="vital"><div class="k">Hit Points</div><div class="n">' + Money.EM_DASH + '</div>'
-        + '<div class="sub">needs a class and a real CON — not guessed from a default</div></div>');
+  function nameBar(s) {
+    var p = Store.profile();
+    var lvlTxt = s.klass
+      ? esc(s.klass.name) + (Money.isOk(s.level) ? ' ' + s.level.value : '')
+      : DASH;
+    var al = TABLES.dndAlignments.alignments.filter(function (x) { return x.id === p.alignment; })[0];
+    var sub = null;
+    if (s.klass && s.subclassId) {
+      sub = s.klass.subclasses.filter(function (x) { return x.id === s.subclassId; })[0];
     }
-
-    out.push(Money.isOk(s.armorClass)
-      ? '<div class="vital"><div class="k">Armour Class</div><div class="n">' + s.armorClass.value + '</div>'
-        + '<div class="sub">' + esc(s.armorClass.layers.map(function (l) {
-            return l.id === 'base' ? l.label + ' ' + l.ac : l.label + ' ' + (l.ac >= 0 ? '+' : '') + l.ac;
-          }).join(' · ')) + '</div></div>'
-      : '<div class="vital"><div class="k">Armour Class</div><div class="n">' + Money.EM_DASH + '</div>'
-        + '<div class="sub">' + esc(s.armorClass.reason) + '</div></div>');
-
-    out.push('<div class="vital"><div class="k">Proficiency</div><div class="n">+' + s.proficiencyBonus + '</div>'
-      + '<div class="sub">compounding, independent of any stat</div></div>');
-    return '<div class="vitals">' + out.join('') + '</div>';
+    var xp = Money.isOk(s.level) ? Money.formatRate(s.level.pct, { decimals: 1 }) + ' of FI' : DASH;
+    return '<div class="namebar">'
+      + '<div class="namebox"><div class="big">' + esc(p.characterName || 'Unnamed') + '</div>'
+        + '<div class="idcell"><div class="k">Character name</div></div></div>'
+      + '<div class="namebox"><div class="idgrid">'
+        + '<div class="idcell"><div class="v">' + lvlTxt + '</div><div class="k">Class &amp; level</div></div>'
+        + '<div class="idcell"><div class="v">' + esc(p.playerName || DASH) + '</div><div class="k">Player</div></div>'
+        + '<div class="idcell"><div class="v">' + xp + '</div><div class="k">Experience</div></div>'
+        + '<div class="idcell"><div class="v">' + (al ? al.emoji + ' ' + esc(al.name) : DASH) + '</div><div class="k">Alignment</div></div>'
+        + '<div class="idcell"><div class="v">' + (sub ? esc(sub.name) : DASH) + '</div><div class="k">Subclass</div></div>'
+        + '<div class="idcell"><div class="v">' + (s.klass ? 'd' + s.klass.hitDie : DASH) + '</div><div class="k">Hit die</div></div>'
+      + '</div></div></div>';
   }
 
-  function renderStats(s) {
-    return '<div class="statgrid">' + Char.STAT_IDS.map(function (id) {
+  function abilities(s) {
+    return '<div class="abilities">' + Char.STAT_IDS.map(function (id) {
       var r = s.stats[id];
       var def = TABLES.dndRules.stats.filter(function (x) { return x.id === id; })[0];
       var ok = Money.isOk(r);
-      return '<div class="statcard"><div class="abbr">' + esc(id) + ' · ' + esc(def.finance) + '</div>'
-        + '<div class="score">' + (ok ? r.value : Money.EM_DASH) + '</div>'
-        + (ok ? '<div class="mod">' + esc(Char.formatModifier(Char.modifier(r.value))) + '</div>'
-              : '<div class="miss">' + esc(r.reason) + '</div>') + '</div>';
+      return '<div class="ability' + (ok ? '' : ' blank') + '" title="' + esc(def.finance) + '">'
+        + '<div class="nm">' + esc(def.name) + '</div>'
+        + '<div class="sc">' + (ok ? r.value : DASH) + '</div>'
+        + '<div class="md">' + (ok ? sign(Char.modifier(r.value)) : DASH) + '</div></div>';
     }).join('') + '</div>';
   }
 
-  function renderSubStats(s) {
-    return Char.STAT_IDS.map(function (statId) {
-      var members = TABLES.dndRules.subStats.filter(function (x) { return x.stat === statId; });
-      return '<h3>' + esc(statId) + '</h3><div>' + members.map(function (m) {
-        var r = s.subScores[m.id];
-        var ok = r && Money.isOk(r);
-        return '<div class="subrow"><span>' + esc(m.name) + '</span>'
-          + '<span class="v' + (ok ? '' : ' na') + '">' + (ok ? r.value : Money.EM_DASH) + '</span></div>';
-      }).join('') + '</div>';
-    }).join('');
+  function savesPanel(s) {
+    var rows = Char.savingThrows(s.stats, s.klass, s.proficiencyBonus, TABLES);
+    return panel('Saving throws', '<div class="rows">' + rows.map(function (r) {
+      return '<div class="row" title="' + esc(r.save) + '">'
+        + '<span class="dot' + (r.proficient ? ' on' : '') + '"></span>'
+        + '<span class="mod' + (r.ok ? '' : ' na') + '">' + (r.ok ? sign(r.modifier) : DASH) + '</span>'
+        + '<span>' + esc(r.name) + '</span><span class="ab">' + esc(r.stat) + '</span></div>';
+    }).join('') + '</div>');
   }
 
-  function renderClass(s) {
-    if (!s.klass) {
-      return '<p class="note">' + esc(Money.isOk(s.suggestedClass)
-        ? 'No class chosen yet.' : s.suggestedClass.reason) + '</p>';
+  function skillsPanel(s) {
+    var rows = Char.skillList(s.subScores, s.klass, TABLES);
+    return panel('Skills · the eighteen sub-stats', '<div class="rows">' + rows.map(function (r) {
+      return '<div class="row">'
+        + '<span class="dot' + (r.primary ? ' on' : '') + '"></span>'
+        + '<span class="mod' + (r.ok ? '' : ' na') + '">' + (r.ok ? sign(r.modifier) : DASH) + '</span>'
+        + '<span>' + esc(r.name) + '</span><span class="ab">' + esc(r.stat) + '</span></div>';
+    }).join('') + '</div>');
+  }
+
+  function combatPanel(s) {
+    var dexMod = Money.isOk(s.stats.DEX) ? Char.modifier(s.stats.DEX.value) : null;
+    var mob = s.subScores.structuralMobility;
+    var out = [];
+    out.push('<div class="duo">'
+      + panel('Initiative', '<div class="big-num' + (dexMod === null ? ' na' : '') + '">'
+          + (dexMod === null ? DASH : sign(dexMod)) + '</div>')
+      + panel('Armour class', '<div class="big-num' + (Money.isOk(s.armorClass) ? '' : ' na') + '">'
+          + (Money.isOk(s.armorClass) ? s.armorClass.value : DASH) + '</div>')
+      + '</div>');
+
+    var def = Char.defenses(s.featuresEarned, s.subclassFeatures);
+    out.push(panel('Defences', def.length
+      ? '<div class="kv">' + def.map(function (d) {
+          return '<div><b>' + esc(d.kind) + '</b> — ' + esc(d.text) + '</div>'; }).join('') + '</div>'
+      : '<div class="kv faint">Nothing yet. Resistances arrive with class features.</div>'));
+
+    out.push('<div class="duo">'
+      + panel('Proficiency bonus', '<div class="big-num">' + sign(s.proficiencyBonus) + '</div>')
+      + panel('Ability save DC', '<div class="big-num na">' + DASH + '</div>')
+      + '</div>');
+    out.push('<div class="kv faint" style="font-size:var(--text-xs)">Save DC is blank on purpose — '
+      + 'the rulebook lists the Debt Burden save DCs as still unset (§13), so there is no number to show.</div>');
+
+    out.push(panel('Speed · structural mobility', Money.isOk(mob)
+      ? '<div class="big-num">' + mob.value + '</div>'
+      : '<div class="big-num na">' + DASH + '</div>'));
+    return '<div class="stack">' + out.join('') + '</div>';
+  }
+
+  function vitalsPanel(s) {
+    var cur = Money.isOk(s.currentHp) ? s.currentHp.value : null;
+    var max = s.maxHp ? s.maxHp.weeks : null;
+    var pct = (cur === null || !max) ? 0 : Math.min(100, (cur / max) * 100);
+    var dead = cur === 0;
+
+    var hp = '<div class="hp">'
+      + '<div><div class="k">Max HP</div><div class="v' + (max ? '' : ' na') + '">' + (max || DASH) + '</div></div>'
+      + '<div><div class="k">Current</div><div class="v' + (cur === null ? ' na' : '') + '">' + (cur === null ? DASH : cur) + '</div></div>'
+      + '<div><div class="k">Temp</div><div class="v na">' + DASH + '</div></div>'
+      + '</div><div class="bar"><span style="width:' + pct + '%"></span></div>'
+      + '<div class="kv faint" style="font-size:var(--text-xs);text-align:center;margin-top:6px">weeks of runway'
+      + (s.maxHp && s.maxHp.reducedByDebt ? ' · max cut 25% by Debt Burden' : '') + '</div>';
+
+    var pips = function (lit) {
+      var out = '';
+      for (var i = 0; i < 3; i++) out += '<span class="pip' + (lit ? ' lit' : '') + '"></span>';
+      return out;
+    };
+    var deaths = '<div class="saves-row"><span style="min-width:64px">Successes</span>' + pips(false) + '</div>'
+      + '<div class="saves-row"><span style="min-width:64px">Failures</span>' + pips(dead) + '</div>'
+      + '<div class="kv faint" style="font-size:var(--text-xs);margin-top:6px">'
+      + (dead ? 'At 0 HP. Death saves are live.' : 'Only rolled at 0 HP.') + '</div>';
+
+    var prof = [];
+    if (Money.isOk(s.armorClass)) {
+      prof.push('<span class="h">Armour</span>' + s.armorClass.layers.map(function (l) {
+        return esc(l.label) + ' ' + (l.id === 'base' ? l.ac : sign(l.ac));
+      }).join('<br/>'));
     }
-    var c = s.klass;
-    var ranked = Money.isOk(s.suggestedClass) ? s.suggestedClass.ranked : [];
-    var html = '<h3>' + esc(c.name) + ' <span style="font-weight:400;color:var(--color-text-muted)">— '
-      + esc(c.lever) + '</span></h3>'
-      + '<p class="note">Hit Die d' + c.hitDie + ' · primary ' + esc(c.primary.join(', '))
-      + ' · save proficiency ' + esc(c.saves.join(', ')) + '.</p>';
-    if (ranked.length) {
-      html += '<p class="note">Ranked by the money actually moving through each lever: '
-        + esc(ranked.slice(0, 4).map(function (r) {
-            return r.name + ' ' + Money.formatCents(r.cents);
-          }).join(' · ')) + '</p>';
+    if (s.klass) prof.push('<span class="h">Saves</span>' + esc(s.klass.saves.join(', ')));
+    if (Money.isOk(s.debtBurden) && s.debtBurden.value >= 1) {
+      prof.push('<span class="h">Triage available</span>'
+        + TABLES.dndRules.triageTechniques.map(function (t) { return esc(t.name); }).join('<br/>'));
     }
-    html += '<div class="actions"><select id="class-override" style="max-width:280px">'
+    if (s.feats.open.length) {
+      prof.push('<span class="h">Feats open</span>' + s.feats.open.map(function (f) {
+        return esc(f.name); }).join('<br/>'));
+    }
+
+    return '<div class="stack">'
+      + panel('Hit points', hp)
+      + '<div class="duo">'
+        + panel('Hit dice', '<div class="big-num' + (s.klass && Money.isOk(s.level) ? '' : ' na') + '">'
+            + (Char.hitDiceLabel(s.klass, Money.isOk(s.level) ? s.level.value : null) || DASH) + '</div>')
+        + panel('Death saves', deaths)
+      + '</div>'
+      + panel('Proficiencies & training', '<div class="kv">' + (prof.join('') || '<span class="faint">Nothing yet.</span>') + '</div>')
+      + '</div>';
+  }
+
+  function lowerRow(s) {
+    var ps = Char.passives(s.subScores, TABLES);
+    var senses = panel('Senses', '<div class="rows">' + ps.map(function (p) {
+        return '<div class="row"><span></span><span class="mod' + (p.ok ? '' : ' na') + '">'
+          + (p.ok ? p.value : DASH) + '</span><span>' + esc(p.label) + '</span><span></span></div>';
+      }).join('') + '</div>'
+      + (Money.isOk(s.debtBurden) && s.debtBurden.value >= 1
+        ? '<div class="burden' + (s.debtBurden.value >= 4 ? ' b45' : '') + '" style="margin-top:var(--space-2)">'
+          + '<b>Debt Burden ' + s.debtBurden.value + '</b> — ' + esc(s.debtBurden.row.effect) + '</div>'
+        : ''));
+
+    var levers = Char.leverActivity(Store.household(), TABLES);
+    var rows = TABLES.dndClasses.classes.map(function (c) {
+      return { name: c.name, lever: c.lever, cents: levers[c.id] };
+    }).filter(function (r) { return Money.isEntered(r.cents) && r.cents > 0; })
+      .sort(function (a, b) { return b.cents - a.cents; });
+
+    var attacks = panel('Levers · what you can actually swing',
+      rows.length
+        ? '<table class="attacks"><thead><tr><th>Lever</th><th>Moving</th><th>What it does</th></tr></thead><tbody>'
+          + rows.map(function (r) {
+              return '<tr><td>' + esc(r.name) + '</td><td class="amt">' + esc(Money.formatCents(r.cents))
+                + '</td><td class="muted">' + esc(r.lever) + '</td></tr>';
+            }).join('') + '</tbody></table>'
+        : '<div class="kv faint">Add your numbers and the levers appear here, ranked by what is actually moving through each.</div>');
+
+    return '<div class="lower">' + senses + attacks + '</div>';
+  }
+
+  function featuresBlock(s) {
+    if (!s.klass) return '';
+    var feats = s.feats.open.map(function (f) {
+      return '<div class="feat"><b>' + esc(f.name) + '</b> <span class="src">' + esc(f.source) + '</span><br/>'
+        + esc(f.detail) + '</div>';
+    }).join('') + s.feats.locked.map(function (f) {
+      return '<div class="feat lock"><b>' + esc(f.name) + '</b> <span class="src">' + esc(f.source) + '</span><br/>'
+        + esc(f.why || f.detail) + '</div>';
+    }).join('');
+    return '<div class="lower">'
+      + panel('Class features earned', s.featuresEarned.map(function (f) {
+          return '<div class="lvl"><span class="l">' + f.level + '</span><span><b>' + esc(f.feature)
+            + '</b><br/><span class="muted">' + esc(f.detail) + '</span></span></div>';
+        }).join('')
+        + (s.subclassFeatures.length
+          ? '<div class="kv"><span class="h">Subclass</span></div>' + s.subclassFeatures.map(function (f) {
+              return '<div class="lvl"><span class="l">' + f.level + '</span><span>' + esc(f.feature) + '</span></div>';
+            }).join('')
+          : ''))
+      + panel('Feats', feats || '<div class="kv faint">None available yet.</div>')
+      + '</div>';
+  }
+
+  function pickers(s) {
+    if (!s.klass) return '';
+    var html = '<div class="actions"><select id="class-override" style="max-width:280px">'
       + '<option value="">Use the suggested class</option>'
       + TABLES.dndClasses.classes.map(function (k) {
           return '<option value="' + esc(k.id) + '"' + (Store.profile().classOverride === k.id ? ' selected' : '')
@@ -406,159 +575,80 @@
         }).join('') + '</select>';
     if (s.subclassAvailable) {
       html += '<select id="subclass-pick" style="max-width:280px"><option value="">Choose a subclass…</option>'
-        + c.subclasses.map(function (sub) {
+        + s.klass.subclasses.map(function (sub) {
             return '<option value="' + esc(sub.id) + '"' + (s.subclassId === sub.id ? ' selected' : '')
-              + '>' + esc(sub.name) + (sub.epithet ? ' — ' + esc(sub.epithet) : '') + '</option>';
+              + '>' + esc(sub.name) + '</option>';
           }).join('') + '</select>';
     }
-    html += '</div>';
-    if (!s.subclassAvailable) {
-      html += '<p class="note">Subclass unlocks at level ' + TABLES.dndClasses.cadence.subclassChosenAt + '.</p>';
-    }
-    html += '<h3>Features earned</h3><table class="lvl-table"><tbody>'
-      + s.featuresEarned.map(function (f) {
-          return '<tr><td class="l">' + f.level + '</td><td><b>' + esc(f.feature) + '</b><br/>'
-            + '<span class="note">' + esc(f.detail) + '</span></td></tr>';
-        }).join('') + '</tbody></table>';
-    if (s.subclassFeatures.length) {
-      html += '<h3>Subclass features</h3><table class="lvl-table"><tbody>'
-        + s.subclassFeatures.map(function (f) {
-            return '<tr><td class="l">' + f.level + '</td><td>' + esc(f.feature) + '</td></tr>';
-          }).join('') + '</tbody></table>';
-    }
-    if (c.mentor) html += '<p class="note"><b>' + esc(c.mentor.name) + '</b> — “' + esc(c.mentor.motto) + '”</p>';
-    return html;
-  }
-
-  function renderBurden(s) {
-    if (!Money.isOk(s.debtBurden)) return '<div class="notice is-info">' + esc(s.debtBurden.reason) + '</div>';
-    if (s.debtBurden.value === 0) return '<p class="note">Debt Burden 0 — nothing to triage.</p>';
-    var row = s.debtBurden.row;
-    return '<div class="burden' + (s.debtBurden.value >= 4 ? ' b45' : '') + '">'
-      + '<b>Debt Burden ' + s.debtBurden.value + ' — ' + esc(row.trigger) + '</b><br/>' + esc(row.effect)
-      + '<br/><span class="note">Triage: '
-      + esc(TABLES.dndRules.triageTechniques.map(function (t) { return t.name; }).join(' · '))
-      + '</span></div>';
-  }
-
-  function renderFeats(s) {
-    if (!s.feats.open.length && !s.feats.locked.length) return '';
-    return '<h3>Feats</h3><ul class="featlist">'
-      + s.feats.open.map(function (f) {
-          return '<li><b>' + esc(f.name) + '</b> <span class="src">' + esc(f.source) + '</span><br/>'
-            + esc(f.detail) + '</li>';
-        }).join('')
-      + s.feats.locked.map(function (f) {
-          return '<li class="lock"><b>' + esc(f.name) + '</b> <span class="src">' + esc(f.source)
-            + '</span><br/>' + esc(f.why || f.detail) + '</li>';
-        }).join('') + '</ul>';
-  }
-
-  /* Alignment is chosen on the quiz page, where it costs nothing to answer.
-     Here it is displayed only — no second place to set it. */
-  function renderAlignment() {
-    var table = TABLES.dndAlignments;
-    var picked = Store.profile().alignment;
-    var a = table.alignments.filter(function (x) { return x.id === picked; })[0];
-    if (!a) {
-      return '<h3>Alignment</h3><p class="note">Not chosen yet — '
-        + '<a href="index.html#result">pick one on the quiz page</a>. It needs no numbers.</p>';
-    }
-    return '<h3>Alignment</h3><div class="burden" style="border-left-color:var(--color-accent)">'
-      + '<b>' + a.emoji + ' ' + esc(a.name) + '</b> — ' + esc(a.axisLabel)
-      + '<br/>' + esc(a.blurb) + '</div>';
-  }
-
-  function renderProjection(s) {
-    if (!Money.isOk(s.nextLevel)) return '';
-    if (s.nextLevel.atCap) return '<p class="note">Level 20 — 100% of your own number. No rung above this one.</p>';
-    return '<h3>What moves you</h3><p class="note">Level ' + s.nextLevel.nextLevel + ' arrives at '
-      + esc(Money.formatRate(s.nextLevel.nextPct, { decimals: 0 })) + ' of your FI number ('
-      + esc(Money.formatCents(s.nextLevel.fireNumberCents)) + '). That is '
-      + esc(Money.formatCents(s.nextLevel.value)) + ' more invested.</p>';
+    return html + '</div>' + (s.subclassAvailable ? ''
+      : '<p class="note faint">Subclass unlocks at level ' + TABLES.dndClasses.cadence.subclassChosenAt + '.</p>');
   }
 
   function render() {
     if (!TABLES) return;
-    var h = Store.household();
-    var s = Char.sheet(h, TABLES);
+    var s = Char.sheet(Store.household(), TABLES);
     if (!s.ready) { el('sheet-body').innerHTML = '<div class="notice is-error">' + esc(s.reason) + '</div>'; return; }
 
-    el('quiz-notice').hidden = Store.quizComplete(TABLES);
-    if (!Store.quizComplete(TABLES)) {
-      el('quiz-notice').innerHTML = 'Intelligence, Wisdom and Charisma come from the eighteen questions, '
-        + 'which aren’t finished yet. <a href="index.html">Take the quiz →</a>';
+    var complete = Store.quizComplete(TABLES);
+    el('quiz-notice').hidden = complete;
+    if (!complete) {
+      el('quiz-notice').innerHTML = 'Intelligence, Wisdom and Charisma come from character creation, '
+        + 'which isn’t finished yet. <a href="index.html">Build them →</a>';
     }
 
-    el('sheet-body').innerHTML = renderVitals(s)
-      + '<h3>Ability scores</h3>' + renderStats(s)
-      + renderBurden(s)
-      + '<h3>Sub-stats</h3>' + renderSubStats(s)
-      + '<h3>Class</h3>' + renderClass(s)
-      + renderFeats(s)
-      + renderProjection(s)
-      + renderAlignment();
+    el('sheet-body').innerHTML = nameBar(s)
+      /* Exactly FOUR grid children for a four-column grid. Combat and vitals
+         share the last column; as five children the vitals wrapped back under
+         the ability scores at desktop width. */
+      + '<div class="sheet">' + abilities(s) + savesPanel(s) + skillsPanel(s)
+      + '<div class="stack">' + combatPanel(s) + vitalsPanel(s) + '</div></div>'
+      + lowerRow(s)
+      + '<h2 class="sec">Class</h2>' + pickers(s)
+      + featuresBlock(s);
 
     var ov = el('class-override');
     if (ov) ov.addEventListener('change', function () {
-      Store.patchProfile({ classOverride: ov.value || null, subclassId: null });
-      render();
+      Store.patchProfile({ classOverride: ov.value || null, subclassId: null }); render();
     });
     var sub = el('subclass-pick');
     if (sub) sub.addEventListener('change', function () {
-      Store.patchProfile({ subclassId: sub.value || null });
-      render();
+      Store.patchProfile({ subclassId: sub.value || null }); render();
     });
-
-    el('spectrum-body').innerHTML = s.spectrum.map(function (r) {
-      return '<div class="specrow' + (r.ok ? '' : ' na') + '"><span>' + esc(r.name) + '</span>'
-        + '<span class="specbar"><span style="width:' + (r.ok ? r.percent : 0) + '%"></span></span>'
-        + '<span class="p">' + (r.ok ? Math.round(r.percent) + '%' : Money.EM_DASH) + '</span></div>';
-    }).join('');
 
     var envelope = Export.build(Store.household(), TABLES);
     el('export-box').value = JSON.stringify(envelope, null, 2);
     el('export-summary').innerHTML = describeExport(envelope);
+    if (Money.isOk(s.level)) el('intake').open = false;
   }
 
-  /* Say in words what the file contains, so nobody has to read JSON to know
-     what they are about to hand over. */
   function describeExport(envelope) {
-    var LABELS = {
-      people: 'your income', filingStatus: 'how you file', assets: 'cash and investments',
-      debts: 'your debt', expenses: 'your monthly spending', dndProfile: 'your character'
-    };
+    var LABELS = { people: 'your income', filingStatus: 'how you file', assets: 'cash and investments',
+      debts: 'your debt', expenses: 'your monthly spending', dndProfile: 'your character' };
     var named = (envelope.contains || []).map(function (k) { return LABELS[k] || k; });
     if (!named.length) return 'Nothing to export yet — the file would be empty.';
     var last = named.pop();
     var list = named.length ? named.join(', ') + ' and ' + last : last;
-    var s = 'The file carries ' + esc(list) + '.';
+    var out = 'The file carries ' + esc(list) + '.';
     if (envelope.summary && envelope.summary.className) {
-      s += ' It opens as <b>' + esc(envelope.summary.className) + '</b>'
+      out += ' It opens as <b>' + esc(envelope.summary.className) + '</b>'
         + (Money.isEntered(envelope.summary.level) ? ', level ' + envelope.summary.level : '') + '.';
     }
-    return s;
+    return out;
   }
 
   function downloadExport() {
-    var text = el('export-box').value;
-    var blob = new Blob([text], { type: 'application/json' });
+    var blob = new Blob([el('export-box').value], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
-    a.href = url;
-    a.download = Export.filename();
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    /* Revoke on the next tick — revoking synchronously can cancel the
-       download in some browsers before it has actually started. */
+    a.href = url; a.download = Export.filename();
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 0);
   }
 
   function wire() {
     ['f-income', 'f-expenses', 'f-cash', 'f-investments', 'f-debt', 'f-highint', 'f-filing',
-     'f-income3', 'f-side', 'f-readiness', 'f-fixed', 'f-years', 'f-disruption',
-     'f-health', 'f-disability', 'f-umbrella'].forEach(function (id) {
+     'f-name', 'f-player', 'f-income3', 'f-side', 'f-readiness', 'f-fixed', 'f-years',
+     'f-disruption', 'f-health', 'f-disability', 'f-umbrella'].forEach(function (id) {
       var node = el(id);
       node.addEventListener('change', collect);
       if (node.tagName === 'INPUT') node.addEventListener('blur', collect);
@@ -573,18 +663,18 @@
     });
     el('btn-export').addEventListener('click', function () {
       var text = el('export-box').value, btn = el('btn-export');
-      function done() { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy my data'; }, 1600); }
+      function done() { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy instead'; }, 1600); }
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(done, function () { el('export-box').select(); });
-      } else { el('export-box').select(); }
+        navigator.clipboard.writeText(text).then(done, function () { el('export-detail').hidden = false; el('export-box').select(); });
+      } else { el('export-detail').hidden = false; el('export-box').select(); }
     });
 
     el('btn-demo').addEventListener('click', function () {
       if (!window.confirm('This replaces the numbers on this page with an example. Continue?')) return;
       el('f-income').value = '72,000'; el('f-expenses').value = '3,150';
       el('f-cash').value = '9,500'; el('f-investments').value = '48,000';
-      el('f-debt').value = '21,600'; el('f-highint').value = 'yes';
-      el('f-filing').value = 'single';
+      el('f-debt').value = '21,600'; el('f-highint').value = 'yes'; el('f-filing').value = 'single';
+      el('f-name').value = 'Stone'; el('f-player').value = 'you';
       el('f-income3').value = '58,000'; el('f-side').value = '2,400';
       el('f-readiness').value = 'identified'; el('f-fixed').value = '0.55';
       el('f-years').value = '2'; el('f-disruption').value = 'no';
@@ -594,26 +684,22 @@
       });
       collect();
     });
-
     el('btn-clear').addEventListener('click', function () {
-      if (!window.confirm('This clears your whole character, quiz answers included. Continue?')) return;
-      Store.reset();
-      location.reload();
+      if (!window.confirm('This clears your whole character, character creation included. Continue?')) return;
+      Store.reset(); location.reload();
     });
   }
 
   SLAF.Reference.load().then(function (tables) {
     TABLES = tables;
     if (BUILT) return;
+    DND.Skin.mount(document.getElementById('skin-bar'));
     buildMobility();
     BUILT = true;
-    hydrate();
-    wire();
-    render();
+    hydrate(); wire(); render();
   }).catch(function (err) {
     var n = el('load-notice');
-    n.hidden = false;
-    n.className = 'notice is-error';
+    n.hidden = false; n.className = 'notice is-error';
     n.textContent = 'Couldn’t load the game data (' + err.message + ').';
   });
 })();

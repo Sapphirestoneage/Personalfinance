@@ -1,0 +1,119 @@
+/* ==========================================================================
+   shared/skin.css — the parchment alternative, and printing.
+   --------------------------------------------------------------------------
+   Two looks for the same sheet:
+
+     navy       the SPARKS palette, inherited from shared/theme.css. Default.
+     parchment  the printable one — ink on paper, the way a character sheet
+                looks when it comes out of a printer.
+
+   This works as a TOKEN OVERRIDE and nothing else. Every panel, border and
+   label in this product is already written against `var(--color-…)`, so
+   redefining the tokens under one attribute repaints the whole thing without
+   a single component knowing there are two skins. Anything that needs a
+   per-skin rule of its own is a component that hardcoded a colour, and the
+   fix is to make it use a token rather than to add a rule here.
+
+   PRINTING ALWAYS USES PARCHMENT. Printing the navy skin means a page of
+   solid dark ink, so @media print applies the same overrides regardless of
+   what is selected on screen — you should never have to remember to switch
+   before hitting print.
+   ========================================================================== */
+
+body.slaf[data-skin="parchment"] {
+  --color-bg: #F5F2EA;
+  --color-bg-gradient: none;
+  --color-surface: #FFFFFF;
+  --color-surface-raised: #FCFAF5;
+  --color-surface-active: #EDE7D9;
+  --color-border: #DAD3C3;
+  --color-border-strong: #B9AF99;
+  --color-border-active: #8A7F66;
+  --color-text: #1B1A17;
+  --color-text-muted: #4A4640;
+  --color-text-subtle: #6E675B;
+  --color-text-faint: #9A9384;
+  /* The classic sheet's ink red, used the way the navy skin uses sapphire. */
+  --color-accent: #7A2E1E;
+  --color-accent-hover: #96412C;
+  --color-accent-contrast: #FFFFFF;
+  --color-focus-ring: #7A2E1E;
+  --color-positive: #2F6B45;
+  --color-caution: #8A6B1B;
+  --color-critical: #A32C2C;
+  --color-neutral: #4A4640;
+  --shadow-card: 0 1px 2px rgba(27, 26, 23, 0.12);
+  --shadow-raised: 0 6px 18px rgba(27, 26, 23, 0.12);
+  color: var(--color-text);
+  background: var(--color-bg);
+  background-image: none;
+}
+
+/* The one thing tokens cannot express: the ability-score block and panel
+   corners read as engraved on paper rather than glowing on glass. */
+body.slaf[data-skin="parchment"] .panel,
+body.slaf[data-skin="parchment"] .namebox,
+body.slaf[data-skin="parchment"] .ability {
+  box-shadow: var(--shadow-card);
+}
+
+/* ---- The skin control ---------------------------------------------------- */
+
+.skin-toggle {
+  display: inline-flex;
+  gap: 0;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: var(--color-surface);
+}
+.skin-toggle button {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 0;
+  padding: 6px var(--space-3);
+  cursor: pointer;
+}
+.skin-toggle button[aria-pressed="true"] {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+.skin-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+/* ---- Print --------------------------------------------------------------- */
+
+@media print {
+  body.slaf {
+    --color-bg: #FFFFFF;
+    --color-bg-gradient: none;
+    --color-surface: #FFFFFF;
+    --color-surface-raised: #FFFFFF;
+    --color-surface-active: #F0EDE4;
+    --color-border: #C9C2B2;
+    --color-border-strong: #8A8272;
+    --color-border-active: #6E675B;
+    --color-text: #000000;
+    --color-text-muted: #333333;
+    --color-text-subtle: #555555;
+    --color-text-faint: #777777;
+    --color-accent: #000000;
+    --color-accent-hover: #000000;
+    --color-accent-contrast: #FFFFFF;
+    background: #FFFFFF !important;
+    background-image: none !important;
+  }
+  /* Nothing interactive should print. */
+  .skin-bar, .actions, details.intake, #export-detail, .foot, .back { display: none !important; }
+  .panel, .namebox, .ability { box-shadow: none; break-inside: avoid; }
+  .sheet { break-inside: avoid; }
+}

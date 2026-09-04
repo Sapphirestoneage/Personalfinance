@@ -669,6 +669,86 @@
     return sub.features.filter(function (f) { return f.level <= lvl; });
   }
 
+  /* ---- Sheet furniture --------------------------------------------------
+     The pieces a classic character sheet shows that are presentation over
+     data we already hold. They live here rather than in the page so the
+     numbers stay in one place and can be tested.                         */
+
+  /**
+   * Six saving throws, two of them proficient.
+   * §3 gives every stat a save and each class proficiency in two of them;
+   * proficiency adds the proficiency bonus, exactly as at a table.
+   */
+  function savingThrows(stats, cls, profBonus, tables) {
+    var defs = tables.dndRules.stats;
+    return defs.map(function (d) {
+      var r = stats[d.id];
+      var proficient = !!(cls && cls.saves.indexOf(d.id) !== -1);
+      if (!r || !Money.isOk(r)) {
+        return { stat: d.id, name: d.name, save: d.save, proficient: proficient, ok: false };
+      }
+      var mod = modifier(r.value) + (proficient ? profBonus : 0);
+      return { stat: d.id, name: d.name, save: d.save, proficient: proficient, ok: true, modifier: mod };
+    });
+  }
+
+  /** The 18 sub-stats as a skill list: modifier, parent stat, and whether the
+   *  class's primary stats cover it (this system's nearest thing to training). */
+  function skillList(subScores, cls, tables) {
+    return tables.dndRules.subStats.map(function (m) {
+      var r = subScores[m.id];
+      var primary = !!(cls && cls.primary.indexOf(m.stat) !== -1);
+      if (!r || !Money.isOk(r)) {
+        return { id: m.id, name: m.name, stat: m.stat, primary: primary, ok: false };
+      }
+      return {
+        id: m.id, name: m.name, stat: m.stat, primary: primary, ok: true,
+        score: r.value, modifier: modifier(r.value)
+      };
+    });
+  }
+
+  /** Hit dice, written the way a sheet writes them: 3d8. */
+  function hitDiceLabel(cls, lvl) {
+    if (!cls || !Money.isEntered(lvl)) return null;
+    return lvl + 'd' + cls.hitDie;
+  }
+
+  /**
+   * A passive score — 10 + the modifier — for the three sub-stats that work
+   * the way passive Perception does: they apply whether or not you thought
+   * to look.
+   */
+  function passives(subScores, tables) {
+    var wanted = [
+      { id: 'threatDetection', label: 'Passive Threat Detection' },
+      { id: 'scenarioForesight', label: 'Passive Foresight' },
+      { id: 'instrumentLiteracy', label: 'Passive Instrument Sense' }
+    ];
+    return wanted.map(function (w) {
+      var r = subScores[w.id];
+      if (!r || !Money.isOk(r)) return { id: w.id, label: w.label, ok: false };
+      return { id: w.id, label: w.label, ok: true, value: 10 + modifier(r.value) };
+    });
+  }
+
+  /**
+   * Resistances and immunities the character has actually earned, read off the
+   * class and subclass features already unlocked. Nothing is invented: a
+   * feature counts only if it says so in its own text.
+   */
+  function defenses(featuresEarned, subFeatures) {
+    var out = [];
+    function scan(text, source) {
+      if (!text) return;
+      if (/\bimmun/i.test(text)) out.push({ kind: 'Immunity', text: source });
+      else if (/\bresistan/i.test(text)) out.push({ kind: 'Resistance', text: source });
+    }
+    (featuresEarned || []).forEach(function (f) { scan(f.feature + ' ' + f.detail, f.feature); });
+    (subFeatures || []).forEach(function (f) { scan(f.feature, f.feature.split(' — ')[0]); });
+    return out;
+  }
+
   /* ---- Result format 5: The Spectrum (§12A) ----------------------------- */
 
   function spectrum(subScores, tables) {
@@ -819,6 +899,11 @@
     classById: classById,
     featuresEarned: featuresEarned,
     subclassFeatures: subclassFeatures,
+    savingThrows: savingThrows,
+    skillList: skillList,
+    hitDiceLabel: hitDiceLabel,
+    passives: passives,
+    defenses: defenses,
     spectrum: spectrum,
     nextLevelTarget: nextLevelTarget,
     subStatNextRung: subStatNextRung,
