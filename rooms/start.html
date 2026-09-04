@@ -796,14 +796,10 @@
       } },
 
     { id: 'q-capturing', field: 'capturingFullMatch', kind: 'choice',
-      /* Only worth asking once a real match exists. */
-      applies: function (h) {
-        if (!Schema.couldHaveEmployerMatch(h)) return false;
-        var s = incomeSourceOf(h);
-        return !!(s && Money.isEntered(s.employerMatch.matchPercent)
-          && Money.isEntered(s.employerMatch.matchCapPercentOfSalary)
-          && s.employerMatch.matchPercent > 0 && s.employerMatch.matchCapPercentOfSalary > 0);
-      },
+      /* Live unless the match is known to be zero or there is no employer.
+         Schema decides, so the count here, the room strip and the map all
+         agree — and the count only ever shrinks. BRIEF §1.1 item 3. */
+      applies: function (h) { return Schema.capturingQuestionApplies(h); },
       read: function (h) {
         if (h.capturingFullMatch === true) return 'yes';
         if (h.capturingFullMatch === false) return 'no';

@@ -286,6 +286,25 @@
     return false;
   }
 
+  /**
+   * Is "are you contributing enough to get all of it?" a live question?
+   *
+   * Yes whenever a match COULD exist and is not known to be zero. It used
+   * to appear only once a non-zero match had been typed, which made the
+   * intake's count grow from 9 to 10 halfway through — "1 of 9" on the
+   * first screen, "all 10 answered" on the last. A count that only ever
+   * shrinks as you answer is one people can trust. BRIEF §1.1 item 3.
+   */
+  function capturingQuestionApplies(household) {
+    if (!couldHaveEmployerMatch(household)) return false;
+    var p = primaryPerson(household || {});
+    var s = p && p.incomeSources && p.incomeSources[0];
+    var m = (s && s.employerMatch) || {};
+    var entered = Money.isEntered(m.matchPercent) && Money.isEntered(m.matchCapPercentOfSalary);
+    if (entered && (m.matchPercent === 0 || m.matchCapPercentOfSalary === 0)) return false;
+    return true;
+  }
+
   function createPerson(fields) {
     var f = fields || {};
     return {
@@ -944,6 +963,7 @@
     employmentStatus: employmentStatus,
     householdEmployment: householdEmployment,
     couldHaveEmployerMatch: couldHaveEmployerMatch,
+    capturingQuestionApplies: capturingQuestionApplies,
     createWorkProfile: createWorkProfile,
     WORK_DEFAULTS: WORK_DEFAULTS,
     createAsset: createAsset,
