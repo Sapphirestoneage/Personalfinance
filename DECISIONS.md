@@ -2084,6 +2084,53 @@ config-driven score, and none of them would show up as a crash.
 
 ---
 
+## D-044 — Finishing the Tier 20 panel, including the parts that stay blank
+
+`ROADMAP.md` Tier 20 lays out a seven-panel "pilot's dashboard": Altitude,
+Fuel, Engine Load, Thrust, Navigation, Weather and Flight Plan. Five were
+built with The Dashboard (D-038's sibling commit); two were not.
+
+**Flight Plan** is now complete. It had the FOO ladder half — where you are
+on the nine steps — but not the goals half that Tier 20 asks for: "goal
+funding ratio, time-to-goal … progress bars per goal". Those are now bars
+under the ladder, one per goal, showing what is saved against what it costs
+and what `engines/goals.js` already works out about the date. A goal that
+arrives after the date you set turns its bar red, because a goal quietly
+slipping is precisely the failure this panel exists to catch. No new
+arithmetic: every figure comes from `Goals.plan()` and `Goals.goalTotalCents()`.
+
+**Weather** is built for the one risk of the four that this app can actually
+see, and says so about the other three.
+
+Tier 20 asks Weather for sequence-of-returns risk, longevity risk, the
+underinsurance gap and concentration risk. Concentration is computable from
+ratios already in the registry — real-estate concentration, liquid to
+illiquid, investment to net worth, cash drag — so that is what the panel
+shows. The other three are not:
+
+- **Sequence-of-returns risk** needs a return distribution to simulate
+  against. Same wall as the Monte Carlo in D-041.
+- **Longevity risk** needs mortality tables.
+- **The underinsurance gap** needs your actual life cover, which nothing in
+  this app asks for. `engines/ratios.js` has said so since it was written:
+  `lifeInsuranceMultiple` is one of only two ratios returned by
+  `unavailable()`, with that exact reason attached.
+
+Each would be "a made-up number wearing a gauge", and the panel says that
+sentence on the page. Drawing four gauges where three are invented is worse
+than drawing one, because the frame lends the invented ones the same
+authority as the real one. Naming the gap is the feature.
+
+**And a stale claim removed.** The Dashboard's radar carried a note saying
+the Financial Health Score's weighting "is still an open question in the
+spec". It was true when it was written and stopped being true with D-043.
+It now explains why the radar deliberately does not add its spokes together
+and links to The Score, which does — and which shows its weighting. A
+comment that describes the repo's own state is a comment that can rot; this
+one did, within a few commits.
+
+---
+
 ## Still open
 
 - ~~**Two-Income Household Toggle** and **Soft Saving Balance

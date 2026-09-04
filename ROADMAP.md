@@ -681,6 +681,12 @@ Everything below this line is the owner's document, kept as written.
 | Weather (Risk Exposure) | Sequence-of-returns risk, longevity risk, underinsurance gap, concentration risk | Gauge + risk-heat table |
 | Flight Plan (Goals) | Goal funding ratio, time-to-goal, FOO placement, next-step flag | Progress bars per goal + FOO ladder level-up visual |
 
+**Built:** all seven panels, in `rooms/dashboard.html`. Weather shows the one
+risk of its four that this app can see — concentration — and names the three
+it cannot (sequence-of-returns needs a return distribution, longevity needs
+mortality tables, underinsurance needs your actual cover, which nothing here
+asks for). See `DECISIONS.md` D-044.
+
 - [x] ✅ Radar/spider chart flagged as the single highest-value visualization — plots every threshold-based ratio (DTI, housing ratio, EF months, credit utilization, savings rate, insurance coverage) as one spoke each against its healthy-zone boundary, answering "am I in the green everywhere?" in one glance
 
 ---

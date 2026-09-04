@@ -58,6 +58,25 @@
   .panel .big.is-incomplete { font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text-faint); }
   .panel .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: auto; padding-top: var(--space-2); }
 
+  ul.heat { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ul.heat li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); align-items: baseline; }
+  ul.heat li:first-child { border-top: none; }
+  ul.heat .nm { font-size: var(--text-sm); }
+  ul.heat .v { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  ul.heat .v.is-good { color: var(--color-positive); }
+  ul.heat .v.is-out { color: var(--color-critical); }
+  ul.heat .meta { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-muted); }
+
+  ul.goals { list-style: none; margin: var(--space-4) 0 0; padding: 0; }
+  ul.goals li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  ul.goals .top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+  ul.goals .nm { font-size: var(--text-sm); font-weight: 600; }
+  ul.goals .pc { font-size: var(--text-xs); color: var(--color-text-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  ul.goals .track { position: relative; height: 8px; border-radius: var(--radius-pill); background: rgba(0,0,0,.22); box-shadow: inset 0 0 0 1px var(--color-border); margin-top: var(--space-2); overflow: hidden; }
+  ul.goals .fill { position: absolute; inset: 0 auto 0 0; border-radius: var(--radius-pill); background: var(--color-accent); }
+  ul.goals .fill.is-late { background: var(--color-critical); }
+  ul.goals .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-2); }
+
   .gauge { height: 10px; border-radius: var(--radius-pill); background: rgba(30,58,138,.4); overflow: hidden; margin-top: var(--space-2); position: relative; }
   .gauge > span { display: block; height: 100%; }
   .gauge .g-good { background: var(--color-positive); }
@@ -87,7 +106,7 @@
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
   <h1>The Dashboard</h1>
-  <p class="room-lede">Every threshold ratio as one shape, plus altitude, fuel, engine load and thrust — the whole panel at a glance.</p>
+  <p class="room-lede">Every threshold ratio as one shape, plus altitude, fuel, engine load, thrust, weather and the flight plan — the whole panel at a glance.</p>
 </header>
 
 <main class="slaf-wrap">
@@ -108,9 +127,12 @@
     <p class="why" id="radar-desc"></p>
     <div class="flag">
       <strong>This is a view, not a score.</strong> Each spoke stands on its own
-      band. Nothing here adds them together — that would be the Financial Health
-      Score, and how to weight it is still an open question in the spec. Picking
-      weights to make a tidier shape would be answering it by accident.
+      band, and nothing here adds them together. Adding them up is a different
+      question with a different answer — it needs weights, the weights depend on
+      your age, and every one of them is a judgement call. That lives in
+      <a href="health.html">The Score</a>, which shows its weighting rather than
+      hiding it. Picking weights here to make a tidier shape would be answering
+      that question by accident.
     </div>
   </section>
 
@@ -145,11 +167,25 @@
     </section>
   </div>
 
+  <section class="slaf-card" id="out-weather" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Weather · risk exposure</span>
+    <h2 style="margin:var(--space-2) 0 0">How much rides on one thing</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Concentration is the risk this app can actually see: how much of your
+      net worth sits in a single asset, and how much of it you could not
+      reach quickly. It is not the only risk you carry — see below.
+    </p>
+    <ul class="heat" id="weather-list"></ul>
+    <div class="flag" id="weather-blind"></div>
+  </section>
+
   <section class="slaf-card" id="out-plan" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">Flight plan</span>
     <h2 style="margin:var(--space-2) 0 0">Where you are on the ladder</h2>
     <div class="steps" id="foo-steps"></div>
     <p class="why" id="foo-why"></p>
+    <ul class="goals" id="goal-bars"></ul>
+    <p class="why" id="goals-why"></p>
   </section>
 
   <section class="slaf-card" id="reading">
@@ -174,13 +210,14 @@
 <script src="../engines/tier0.js"></script>
 <script src="../engines/foo.js"></script>
 <script src="../engines/cashflow.js"></script>
+<script src="../engines/goals.js"></script>
 <script src="../engines/ratios.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
       Reference = SLAF.Reference, Ownership = SLAF.Ownership,
-      Tier0 = SLAF.Tier0, Foo = SLAF.Foo, Ratios = SLAF.Ratios;
+      Tier0 = SLAF.Tier0, Foo = SLAF.Foo, Ratios = SLAF.Ratios, Goals = SLAF.Goals;
 
   var ROOM_ID = 'dashboard';
   var TABLES = null;
@@ -358,9 +395,115 @@
         + (foo.flags.length ? foo.flags.length + ' flag' + (foo.flags.length === 1 ? '' : 's')
             + ' worth reading in the Snapshot.' : 'No out-of-bounds flags.');
 
+    renderGoals(h);
+    renderWeather(all);
+
     el('reading-list').innerHTML =
       ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt']
         .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+
+  /* ---- Flight plan, second half: the goals -------------------------------
+     Tier 20 puts goal funding and time-to-goal in the same panel as the FOO
+     ladder, and it is the right pairing: the ladder says what to do next,
+     the bars say what you have already committed to. Both read engines that
+     already exist — engines/goals.js does every calculation here. */
+
+  function renderGoals(h) {
+    var goals = (h && h.goals) || [];
+    var list = el('goal-bars'), why = el('goals-why');
+    if (!goals.length) {
+      list.innerHTML = '';
+      why.innerHTML = 'No goals set yet. <a href="' + Ownership.linkTo('goals', 'add')
+        + '">Start one →</a>';
+      return;
+    }
+    var late = 0, planned = 0;
+    list.innerHTML = goals.map(function (goal) {
+      var p = Goals.plan(h, goal, TABLES, {});
+      var total = Goals.goalTotalCents(goal);
+      var saved = Money.isEntered(goal.savedCents) ? goal.savedCents : 0;
+      /* The funding ratio is what is already saved against what it costs.
+         It exists even when the plan does not — a goal with no date still
+         has a total and a balance. */
+      var share = (Money.isOk(total) && total.value > 0)
+        ? Math.min(1, saved / total.value) : null;
+
+      var sub, lateClass = '';
+      if (Money.isOk(p)) {
+        planned++;
+        if (p.alreadyThere) {
+          sub = 'Funded.';
+        } else if (p.arrivesLate) {
+          late++;
+          lateClass = ' is-late';
+          sub = Money.formatCents(p.requiredMonthlyCents) + ' a month to make the date; '
+            + 'at ' + Money.formatCents(p.contributingMonthlyCents)
+            + ' it lands ' + p.monthsLate + ' month' + (p.monthsLate === 1 ? '' : 's') + ' late.';
+        } else if (Money.isEntered(p.contributingMonthlyCents)) {
+          sub = 'On track — ' + Money.formatCents(p.requiredMonthlyCents)
+            + ' a month needed, ' + Money.formatCents(p.contributingMonthlyCents)
+            + ' going in, ' + Money.formatMonths(p.monthsUntil.value) + ' to go.';
+        } else {
+          sub = Money.formatCents(p.requiredMonthlyCents) + ' a month to make the date, '
+            + Money.formatMonths(p.monthsUntil.value) + ' to go. Nothing going in yet.';
+        }
+      } else {
+        sub = p.reason;
+      }
+
+      return '<li><div class="top"><span class="nm">' + esc(goal.name || 'Untitled goal')
+        + '</span><span class="pc">'
+        + (share === null ? Money.EM_DASH
+            : Money.formatCents(saved) + ' of ' + Money.formatCents(total.value)
+              + ' · ' + Math.round(share * 100) + '%')
+        + '</span></div>'
+        + '<div class="track"><div class="fill' + lateClass + '" style="width:'
+        + (share === null ? 0 : Math.max(1, Math.round(share * 100))) + '%"></div></div>'
+        + '<div class="sub">' + esc(sub) + '</div></li>';
+    }).join('');
+
+    why.textContent = late === 0
+      ? (planned ? 'Every goal with a date and a contribution arrives on time.' : '')
+      : late + ' of ' + goals.length + ' arrive' + (late === 1 ? 's' : '')
+        + ' after the date you set. The bar turns red rather than the goal quietly slipping.';
+  }
+
+  /* ---- Weather, and what it cannot see -----------------------------------
+     Tier 20 asks for sequence-of-returns risk, longevity risk, the
+     underinsurance gap and concentration risk. Exactly one of those four is
+     computable from what this app holds. Showing the one and naming the
+     three is the honest version of the panel; drawing four gauges where
+     three of them are invented would not be. */
+
+  var WEATHER = [
+    ['realEstateConcentration', 'How much of your net worth is one building.'],
+    ['liquidToIlliquid', 'How much you could reach quickly against how much you could not.'],
+    ['investmentToNetWorth', 'How much of what you own is actually invested.'],
+    ['cashDrag', 'How much is sitting in cash beyond what a cushion needs.']
+  ];
+
+  function renderWeather(all) {
+    var rows = WEATHER.map(function (spec) {
+      var row = all.rows.filter(function (r) { return r.id === spec[0]; })[0];
+      return row ? { row: row, blurb: spec[1] } : null;
+    }).filter(Boolean);
+
+    el('weather-list').innerHTML = rows.map(function (r) {
+      var zone = r.row.verdict.zone;
+      var cls = zone === 'good' ? ' is-good' : zone === 'out' ? ' is-out' : '';
+      return '<li><span class="nm">' + esc(r.row.label) + '</span>'
+        + '<span class="v' + cls + '">' + showRatio(r.row) + '</span>'
+        + '<span class="meta">' + esc(r.blurb)
+        + (r.row.ok ? '' : ' · ' + esc(r.row.result.reason)) + '</span></li>';
+    }).join('');
+
+    el('weather-blind').innerHTML = '<strong>Three risks this panel deliberately '
+      + 'leaves blank.</strong> Sequence-of-returns risk needs a return distribution to '
+      + 'simulate against; longevity risk needs mortality tables; the underinsurance gap '
+      + 'needs your actual cover, which nothing here asks for yet. Each of those would be '
+      + 'a made-up number wearing a gauge, so there is no gauge. What is above is the part '
+      + 'that can be worked out from what you have entered.';
   }
 
   function jumpToHash() {

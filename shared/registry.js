@@ -240,7 +240,7 @@
       id: 'dashboard',
       order: 15,
       title: 'The Dashboard',
-      blurb: 'Every threshold ratio as one shape, plus altitude, fuel, engine load and thrust \u2014 the whole panel at a glance.',
+      blurb: 'Every threshold ratio as one shape, plus altitude, fuel, engine load, thrust, weather and the flight plan \u2014 the whole panel at a glance.',
       href: 'rooms/dashboard.html',
       tier: 1,
       tags: ['income', 'cashflow', 'debt'],
@@ -250,6 +250,7 @@
         { id: 'out-fuel',     label: 'Fuel' },
         { id: 'out-load',     label: 'Engine load' },
         { id: 'out-thrust',   label: 'Thrust' },
+        { id: 'out-weather',  label: 'Weather' },
         { id: 'out-plan',     label: 'Flight plan' },
         { id: 'reading',      label: 'Reading from elsewhere' }
       ]
