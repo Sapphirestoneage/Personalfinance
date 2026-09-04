@@ -1835,7 +1835,7 @@ section('SWAN Number');
   check('the SWAN target is owned by Sleep At Night',
     Ownership.field('swanTarget').owner, 'sleep-at-night');
   check('and Sleep At Night owns nothing else',
-    Ownership.ownedBy('sleep-at-night').sort().join(','), 'highestDeductible,swanTarget');
+    Ownership.ownedBy('sleep-at-night').sort().join(','), 'swanTarget');
   const chip = Ownership.describe('swanTarget', months6, 'financial-snapshot');
   check('elsewhere it renders as a read-only $18,900', chip.display, '$18,900');
   check('and it is not editable there', chip.isOwnHere, false);
@@ -4492,8 +4492,8 @@ section('Whether there is an employer at all');
 
     /* The bug this exists to kill: the room could never reach 100% because
        two questions with no true answer sat in the denominator forever. */
-    check('the retiree has two fewer things to answer',
-      employed.total - retired.total, 2);
+    check('the retiree has three fewer things to answer',
+      employed.total - retired.total, 3);
     checkTrue('and the denominator shrank, not just the numerator',
       retired.total < employed.total);
 
@@ -4501,6 +4501,8 @@ section('Whether there is an employer at all');
     const done = withStatus('retired');
     done.state = 'NC';
     done.filingStatus = 'single';
+    done.meta.hasDebt = false;
+    done.insurance.highestDeductibleCents = 250000;
     done.expenses.monthlyEssential.estimatedValueCents = 315000;
     done.assets.push(Schema.createAsset({ category: 'investment', valueCents: 4800000 }));
     const row = Progress.forRoom('start', done);
@@ -4843,6 +4845,91 @@ section('Suggested, not stored');
     fs.readFileSync(path.join(ROOT, 'shared/schema.js'), 'utf8') + fs.readFileSync(path.join(ROOT, 'shared/spine-v2.js'), 'utf8')));
 })();
 
+section('Eleven cards');
+
+(function () {
+  /* -- "No debt" is an answer ------------------------------------------ */
+  {
+    const h = Demo.build();
+    checkTrue('the demo says it has debt', h.meta.hasDebt === true);
+    checkTrue('Debt Payoff is on its path', Registry.nextAfter('start', [], h).id === 'debt-payoff');
+    const none = Demo.build(); none.meta.hasDebt = false; none.debts = [];
+    check('with no debt the path skips Debt Payoff', Registry.nextAfter('start', [], none).id, 'cash-flow');
+    checkTrue('and total debt stops applying', !Ownership.describe('totalDebt', none, 'map').applies);
+    checkTrue('and so do the payments', !Ownership.describe('monthlyDebtPayments', none, 'map').applies);
+    checkTrue('so the dashboard is complete for a debt-free household', Progress.forRoom('dashboard', none).complete);
+    const unasked = Demo.build(); unasked.meta.hasDebt = null; unasked.debts = [];
+    checkTrue('unanswered still asks for debt figures', Ownership.describe('totalDebt', unasked, 'map').applies);
+    checkTrue('utility pages are never "next"', Registry.inOrder().every(r => !r.utility || Registry.nextAfter(r.id, [], h) === null || Registry.nextAfter(null, Registry.inOrder().filter(x => x.id !== r.id).map(x => x.id), h).id !== r.id));
+    check('hasDebt is owned by Start Here', Ownership.field('hasDebt').owner, 'start');
+  }
+
+  /* -- Capturing the match is derived ---------------------------------- */
+  {
+    const h = Demo.build();
+    const d = Schema.capturingFullMatchDerived(h);
+    checkTrue('4% against a 6% cap is not the full match', d.value === false && d.derived);
+    h.retirement.contributionPercent = 6;
+    checkTrue('6% against 6% is', Schema.capturingFullMatchDerived(h).value === true);
+    h.retirement.contributionPercent = 10;
+    checkTrue('and so is more', Schema.capturingFullMatchDerived(h).value === true);
+    h.retirement.contributionPercent = null;
+    h.capturingFullMatch = true;
+    const fb = Schema.capturingFullMatchDerived(h);
+    checkTrue('with no contribution the old stored answer is the fallback', fb.value === true && fb.derived === false);
+    h.capturingFullMatch = null;
+    check('and with neither it is incomplete', Schema.capturingFullMatchDerived(h).status, 'incomplete');
+    check('the ownership map reads the derivation', Ownership.describe('capturingFullMatch', Demo.build(), 'start').display, 'No');
+    const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
+    checkTrue('Start Here no longer asks it', start.indexOf('data-choices="capturingFullMatch"') === -1);
+  }
+
+  /* -- The stored shape ------------------------------------------------ */
+  {
+    check('a new asset has no tax character', Schema.createAsset({}).taxCharacter, null);
+    check('and keeps one it is given', Schema.createAsset({ taxCharacter: 'roth' }).taxCharacter, 'roth');
+    check('three characters are asked', Schema.TAX_CHARACTERS.map(t => t.id).join(','), 'pretax,roth,taxable');
+    check('a new household has not answered about debt', Schema.createHousehold({}).meta.hasDebt, null);
+    check('the demo answers every intake field', Progress.forRoom('start', Demo.build()).missing.length, 0);
+    ['contributionPercent', 'highestDeductible', 'hasDebt', 'dob', 'state', 'employerMatch'].forEach(f =>
+      check(`${f} is owned by Start Here`, Ownership.field(f).owner, 'start'));
+    check('Sleep At Night reads the deductible as a chip',
+      fs.readFileSync(path.join(ROOT, 'rooms/sleep-at-night.html'), 'utf8').indexOf("Ownership.chip('highestDeductible'") !== -1, true);
+    check('Where It Goes reads the contribution as a chip',
+      fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8').indexOf("Ownership.chip('contributionPercent'") !== -1, true);
+    checkTrue('and has no box for it',
+      fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8').indexOf('data-setup="contributionPercent"') === -1);
+  }
+
+  /* -- The two tables -------------------------------------------------- */
+  {
+    const states = require(path.join(ROOT, 'data/states.json'));
+    check('fifty states, DC and other', states.states.length, 52);
+    checkTrue('every code is two letters or OTHER', states.states.every(r => /^[A-Z]{2}$|^OTHER$/.test(r.code)));
+    checkTrue('NC is North Carolina', states.states.some(r => r.code === 'NC' && r.name === 'North Carolina'));
+    const md = require(path.join(ROOT, 'data/match_defaults.json'));
+    check('the suggested match is 50% of the first 6%', md.mostCommon.matchPercent + '/' + md.mostCommon.matchCapPercentOfSalary, '0.5/0.06');
+    check('marked as a convention', md.confidence, 'convention');
+    const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
+    checkTrue('Start Here shows it through Suggest, never writes it', /Suggest\.show\(n\.pct/.test(start));
+    checkTrue('with a "no match" button that writes zeros explicitly', start.indexOf("id=\"btn-no-match\"") !== -1 && /writeIncome\('matchPercent', 0\)/.test(start));
+    /* Eleven cards for one W-2 person with no debt: count the sections. */
+    const cards = (start.match(/<section class="slaf-card q" id="q-/g) || []).length;
+    check('twelve cards in the markup', cards, 12);
+    checkTrue('one of which is the second person, shown only when there are two', /id: 'q-partner'[\s\S]{0,120}applies: function \(h\) \{ return hasPartner\(h\)/.test(start));
+  }
+
+  /* -- The strip repaints after a tap, not during one ------------------- */
+  {
+    const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+    checkTrue('the footer strip defers its repaint', /setTimeout\([\s\S]{0,400}paint\(\)/.test(prog));
+    checkTrue('and holds its height across it', prog.indexOf('box.style.minHeight = held') !== -1);
+    const sug = fs.readFileSync(path.join(ROOT, 'shared/suggest.js'), 'utf8');
+    checkTrue('a suggestion chip keeps its space when off', sug.indexOf("'is-off'") !== -1 && sug.indexOf('chip.hidden = true') === -1);
+    checkTrue('and a focused box is never marked suggested', /node === document\.activeElement\) \{ chipFor\(node\); return; \}/.test(sug));
+  }
+})();
+
 section('What is finished');
 
 (function () {
@@ -5097,9 +5184,9 @@ section('Facts answered once');
   /* -- Every new fact is owned by exactly one room ----------------------- */
   {
     const OWNED = {
-      contributionPercent: 'accounts', rothContributed: 'accounts',
+      contributionPercent: 'start', rothContributed: 'accounts',
       hsaContributed: 'accounts', marginalRate: 'accounts',
-      highestDeductible: 'sleep-at-night'
+      highestDeductible: 'start'
     };
     const h = Schema.createHousehold({});
     h.retirement = { contributionPercent: 4, rothContributedCents: 300000,
@@ -5198,7 +5285,10 @@ section('Facts answered once');
       !Ownership.describe('capturingFullMatch', se, 'start').applies
       && Ownership.describe('capturingFullMatch', fresh, 'start').applies);
     const startNeeds = Progress.forRoom('start', fresh);
-    check('so Start Here counts ten questions from the first screen', startNeeds.total, 10);
+    /* Thirteen shared fields, eleven cards: the 401(k) card carries the
+       match, the contribution and the derived capture; born + state share
+       one card. D-061. */
+     check('so Start Here counts thirteen fields from the first screen', startNeeds.total, 13);
   }
 
   /* -- Rooms that hold facts are not "explore" rooms --------------------- */

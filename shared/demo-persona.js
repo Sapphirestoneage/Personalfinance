@@ -170,7 +170,9 @@
       insurance: Schema.createInsurance({
         highestDeductibleCents: Money.toCents(VALUES.highestDeductible)
       }),
-      meta: { isDemo: true }
+      /* Robin has two debts, and says so: hasDebt is the answer that keeps
+         Debt Payoff on the path. D-061. */
+      meta: { isDemo: true, hasDebt: true }
     });
 
     return household;

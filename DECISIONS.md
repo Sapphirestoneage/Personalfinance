@@ -3328,6 +3328,88 @@ time by calling `Suggest.show()`; a room that never does is unaffected.
 
 ---
 
+## D-061 — Eleven cards: the intake asks less, derives one answer, and takes "no debt" as an answer
+
+*(BRIEF.md §2.2; carries the brief's D-E "two people are first-class" as far
+as the intake goes.)* Start Here asked the same person about their date of
+birth in one card and their state in another, about the employer match in
+one card and whether they captured it in another, and never asked whether
+there was a second person or any debt at all — so a debt-free household was
+"incomplete" in every room that reads debt, forever.
+
+**Decision: eleven cards for one W-2 person with no debt, in three groups
+with a time on each.** *About you* (~1 min): just you or two; working; the
+other of you (only when two); born + state. *Money in and out* (~1 min):
+pay; filing; spending. *What you hold and owe* (~2 min): cash; investments;
+the 401(k) card; deductible; any debt. The rail says which group you are in.
+
+### What changed in the questions
+
+- **Just you, or two of you?** Two adds one card — a name, whether they are
+  working, born month/year — and a second pay row on the income card, with
+  the same basis list and the same annualising, written to their own income
+  source on their own person record. Household income is the sum, as
+  `Schema.grossAnnualIncomeCents` already did. "Just me" again removes the
+  second person (behind a confirm). No `partner` flag: `people[1]` is the
+  fact.
+- **Born month + year, and state, on one card.** The day was never used;
+  `dob` is stored as `YYYY-MM-01`. The state is picked from
+  `data/states.json`, not typed. A half-chosen date is never wiped between
+  the two picks.
+- **Investments in three boxes** — pre-tax, Roth, taxable — each an asset
+  record with a `taxCharacter`, or one total marked `'unknown'` behind an
+  "I only know the total" link. Switching to a total collapses the split;
+  typing a split removes a total, so nothing double-counts.
+- **The 401(k) card**: match % · of the first % · you put in %. The match
+  boxes open **suggesting** 50% of the first 6% from
+  `data/match_defaults.json` (Vanguard, How America Saves; a mode, not a
+  mean) and the contribution box suggests the cap once the cap is known —
+  shown, never stored, D-060. "There's no match" writes 0 and 0 explicitly;
+  nobody types zeros. **Whether you capture the full match is derived**
+  (`Schema.capturingFullMatchDerived`: contribution ≥ cap) and no longer
+  asked; the old stored yes/no is the fallback for households that answered
+  it before the contribution existed. The sentence under the boxes updates
+  as you type, not on blur.
+- **Highest deductible** and **what you contribute** move to Start Here.
+  Sleep At Night and Where It Goes render them as chips that link back.
+- **Any debt?** `meta.hasDebt`. "No" is an answer: `Registry.nextAfter()`
+  drops Debt Payoff from the path, and `totalDebt` /
+  `monthlyDebtPayments` stop applying (the D-055 mechanism), so every room
+  that reads debt reads complete instead of waiting.
+
+### Two things found on the way
+
+The strip at the foot of every room repainted synchronously on every write.
+When an item dropped off its list the document got shorter; with the page
+scrolled near the bottom the browser clamped the scroll and the Next button
+moved 40px between touch-end and click. The tap was lost. `Progress.mount`
+now repaints 400ms after a change, coalesced, and holds the strip's height
+across the repaint. A "Use this" chip that vanished on blur did the same in
+miniature; it keeps its space now (`visibility`, not `[hidden]`).
+
+### Compatibility note
+
+**Stored shape:** `meta.hasDebt` (null / true / false) and
+`asset.taxCharacter` (null, or one of the enum in `Schema.FIELDS`) are
+**added**; both default to null. `dob` may now be `YYYY-MM-01`. A second
+adult is `people[1]` with `role: 'adult'` — nothing new in the person
+record beyond D-055's `employmentStatus`. `household.capturingFullMatch`
+stays for compatibility and is read only when the derivation cannot run.
+
+**Rooms updated:** `rooms/start.html` (rebuilt), `rooms/sleep-at-night.html`
+and `rooms/accounts.html` (chips), `shared/registry.js` (`nextAfter` takes
+the household; Start Here's `needs` and anchors), `shared/ownership.js`
+(owners and anchors moved; `hasDebt`; `applies` on the debt figures and on
+`contributionPercent`), `shared/progress.js` (deferred strip), `foo-ladder.js`
+(no employer → contribution 0 like the cap). The demo persona answers
+`hasDebt: true`.
+
+**Before writing any of these from a new room:** the deductible, the
+contribution and `hasDebt` are Start Here's. Read them through
+`Ownership.describe()`; do not add a box.
+
+---
+
 ## D-046 — HP is measured in weeks, which is what makes §3A stop contradicting itself
 
 The Dungeons & Dividends rulebook defines Hit Points twice in the same

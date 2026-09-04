@@ -1,0 +1,14 @@
+{
+  "id": "match_defaults",
+  "version": "1.0",
+  "asOf": "2025-06-01",
+  "source": "Vanguard, How America Saves 2025: the single most common employer match formula among Vanguard-recordkept plans is 50% of the first 6% of pay. It is a mode, not a mean, and many plans use a different formula or none.",
+  "confidence": "convention",
+  "confidenceNote": "A suggestion shown in Start Here, never stored until the person taps 'use this' (D-060). It exists so someone who knows they have 'a match' but not the numbers sees the most common shape rather than two empty boxes.",
+  "note": "matchPercent is cents-on-the-dollar as a fraction (0.5 = 50 cents); matchCapPercentOfSalary is the share of salary matched (0.06 = the first 6%). The same units the household stores.",
+  "mostCommon": {
+    "matchPercent": 0.5,
+    "matchCapPercentOfSalary": 0.06,
+    "label": "50% of the first 6%"
+  }
+}

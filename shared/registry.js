@@ -22,7 +22,8 @@
     {
       id: 'start',
       kind: 'core',
-      needs: ['employmentStatus', 'dob', 'state', 'filingStatus', 'grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'employerMatch', 'capturingFullMatch'],
+      needs: ['employmentStatus', 'dob', 'state', 'filingStatus', 'grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments',
+              'employerMatch', 'contributionPercent', 'capturingFullMatch', 'highestDeductible', 'hasDebt'],
       order: 1,
       title: 'Start Here',
       blurb: 'A short set of questions, one at a time, in plain English. Answer once and every other room opens already filled in.',
@@ -30,15 +31,19 @@
       tier: 0,
       tags: ['income', 'cashflow', 'debt'],
       subsections: [
-        { id: 'q-dob',         label: 'Date of birth' },
-        { id: 'q-state',       label: 'State' },
+        { id: 'q-household',   label: 'Just you, or two' },
+        { id: 'q-employment',  label: 'Working situation' },
+        { id: 'q-partner',     label: 'The other of you' },
+        { id: 'q-about',       label: 'Born, and where' },
+        { id: 'q-income',      label: 'Income' },
         { id: 'q-filing',      label: 'Filing status' },
-        { id: 'q-income',      label: 'Gross annual income' },
-        { id: 'q-expenses',    label: 'Monthly expenses' },
-        { id: 'q-cash',        label: 'Cash & savings' },
+        { id: 'q-expenses',    label: 'Monthly spending' },
+        { id: 'q-cash',        label: 'Cash' },
         { id: 'q-investments', label: 'Investments' },
-        { id: 'q-match',       label: 'Employer match' },
-        { id: 'q-capturing',   label: 'Capturing the match' }
+        { id: 'q-plan',        label: 'Your 401(k)' },
+        { id: 'q-deductible',  label: 'Highest deductible' },
+        { id: 'q-debt',        label: 'Any debt' },
+        { id: 'review',        label: 'Your answers' }
       ]
     },
     {
@@ -543,9 +548,12 @@
 
   function all() { return inOrder(); }
 
-  /** The next room after this one that hasn't been visited yet. */
-  function nextAfter(roomId, visitedIds) {
-    var path = inOrder();
+  /** The next room after this one that hasn't been visited yet. Pass the
+   *  household and Debt Payoff is skipped for someone who answered "no
+   *  debt" (D-061) — there is nothing to list there. */
+  function nextAfter(roomId, visitedIds, household) {
+    var noDebt = !!(household && household.meta && household.meta.hasDebt === false);
+    var path = inOrder().filter(function (r) { return !(noDebt && r.id === 'debt-payoff') && !r.utility; });
     var seen = visitedIds || [];
     var from = 0;
     /* A null roomId asks for the first unvisited room anywhere on the path. */

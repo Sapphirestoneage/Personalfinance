@@ -143,6 +143,7 @@
        that is never coming. DECISIONS.md D-055. */
     d.hasEmployer = Schema.couldHaveEmployerMatch(h0);
     if (!d.hasEmployer && !entered(d.matchCapPct)) d.matchCapPct = 0;
+    if (!d.hasEmployer && !entered(state.contribPct)) state.contribPct = 0;
     d.debts = Schema.aggregatableDebts(h0)
       .filter(function (x) { return entered(x.balanceCents) && x.balanceCents > 0; })
       .map(function (x, i) {

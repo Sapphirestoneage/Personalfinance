@@ -40,7 +40,9 @@ const TARGETS = [
   ['/rooms/credential.html', '.grid-2'],
   ['/rooms/net-worth.html', '.asset-grid'],
   ['/rooms/foo-ladder.html', '.grid2'],
-  ['/rooms/cash-flow.html', '.cat-row']
+  ['/rooms/cash-flow.html', '.cat-row'],
+  ['/rooms/start.html', '.q-three'],
+  ['/rooms/start.html', '.q-about']
 ];
 
 /* Cells that sit side by side as CARDS rather than as labelled controls.

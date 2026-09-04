@@ -94,6 +94,8 @@
     'incomeSource.employerMatch.matchPercent':          { class: 'raw', unit: 'rate',    note: '0.5 === employer matches 50 cents on the dollar' },
     'incomeSource.employerMatch.matchCapPercentOfSalary': { class: 'raw', unit: 'rate',  note: '0.06 === capped at the first 6% of salary' },
     'asset.valueCents':                          { class: 'raw',        unit: 'cents' },
+    'asset.taxCharacter':                        { class: 'raw',        unit: 'enum',    values: ['pretax', 'roth', 'taxable', 'hsa', '529', 'daf', 'cash', 'property', 'business', 'other', 'unknown'], note: 'how the account is taxed. null means not asked; unknown means the person entered only a total. BRIEF §3.1, D-061' },
+    'meta.hasDebt':                              { class: 'raw',        unit: 'bool',    note: 'null not asked; false means "no debt" as an answer, which takes Debt Payoff off the path. D-061' },
     'asset.category':                            { class: 'raw',        unit: 'enum',    values: ['cash', 'investment', 'retirement', 'real_estate', 'vehicle', 'other'] },
     'asset.liquid':                              { class: 'raw',        unit: 'bool' },
     'debt.balanceCents':                         { class: 'raw',        unit: 'cents' },
@@ -305,6 +307,36 @@
     return true;
   }
 
+  /**
+   * capturingFullMatchDerived(h) — is the person contributing at least the
+   * match cap? A FACT that follows from two others (contributionPercent and
+   * the cap), so once both are known it is never asked. Returns a Result:
+   * ok(true/false) when both are known, incomplete otherwise. The stored
+   * household.capturingFullMatch answer is the fallback for a household
+   * that answered the old question before contributionPercent existed.
+   * D-061.
+   */
+  function capturingFullMatchDerived(household) {
+    var h = household || {};
+    var contribution = (h.retirement || {}).contributionPercent;
+    var p = primaryPerson(h);
+    var s = p && p.incomeSources && p.incomeSources[0];
+    var m = (s && s.employerMatch) || {};
+    if (Money.isEntered(contribution) && Money.isEntered(m.matchCapPercentOfSalary)) {
+      return Money.ok(contribution / 100 >= m.matchCapPercentOfSalary - 1e-9, {
+        derived: true, contributionPercent: contribution, matchCapPercentOfSalary: m.matchCapPercentOfSalary
+      });
+    }
+    if (h.capturingFullMatch === true) return Money.ok(true, { derived: false });
+    if (h.capturingFullMatch === false) return Money.ok(false, { derived: false });
+    return Money.incomplete('Add what you contribute to see this.', ['contributionPercent']);
+  }
+
+  function hasDebtAnswered(household) {
+    var m = (household && household.meta) || {};
+    return m.hasDebt === true || m.hasDebt === false;
+  }
+
   function createPerson(fields) {
     var f = fields || {};
     return {
@@ -333,9 +365,21 @@
       category: f.category || 'other',
       valueCents: f.valueCents === undefined ? null : f.valueCents,
       liquid: f.liquid === undefined ? false : f.liquid,
-      ownerIds: f.ownerIds || []
+      ownerIds: f.ownerIds || [],
+      /* How the money is taxed on the way out. Asked in three boxes by
+         Start Here (pre-tax / Roth / taxable); a lump typed as one total is
+         'unknown', which is an answer — null is "never asked". D-061. */
+      taxCharacter: f.taxCharacter === undefined ? null : f.taxCharacter
     };
   }
+
+  /* The three characters Start Here asks for. The fuller list in
+     FIELD_CLASSES is what the 10x Statement (T3) will use. */
+  var TAX_CHARACTERS = [
+    { id: 'pretax',  label: 'Pre-tax',  hint: '401(k), traditional IRA, 403(b)' },
+    { id: 'roth',    label: 'Roth',     hint: 'Roth IRA, Roth 401(k)' },
+    { id: 'taxable', label: 'Taxable',  hint: 'brokerage, anything with no tax wrapper' }
+  ];
 
   function createDebt(fields) {
     var f = fields || {};
@@ -615,7 +659,11 @@
         /* { fieldId: ISO } — when each owned field was last set or
            re-confirmed. Absent for every field until it is next written,
            which is what "unknown" looks like. DECISIONS.md D-056. */
-        confirmedAt: {}
+        confirmedAt: {},
+        /* "Any debt?" — null not asked, true yes, false a deliberate no that
+           takes Debt Payoff off the path and its figures off every room's
+           list of needs. D-061. */
+        hasDebt: null
       }, f.meta || {})
     };
   }
@@ -968,6 +1016,9 @@
     householdEmployment: householdEmployment,
     couldHaveEmployerMatch: couldHaveEmployerMatch,
     capturingQuestionApplies: capturingQuestionApplies,
+    capturingFullMatchDerived: capturingFullMatchDerived,
+    hasDebtAnswered: hasDebtAnswered,
+    TAX_CHARACTERS: TAX_CHARACTERS,
     createWorkProfile: createWorkProfile,
     WORK_DEFAULTS: WORK_DEFAULTS,
     createAsset: createAsset,

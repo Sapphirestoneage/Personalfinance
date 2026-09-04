@@ -328,6 +328,43 @@ const CASES = [
     }
   },
   {
+    /* The 401(k) card opens with the match boxes holding a SUGGESTION
+       (D-060) and a chip beside them. Tapping from a suggested box into
+       the next one, typing over the proposal, must land — and the chip
+       coming and going must not move anything under the finger. */
+    room: '/rooms/start.html',
+    container: '#q-plan',
+    seed: 'demo',
+    prepare: async (page) => {
+      /* Clear the demo's match so the suggestion shows. */
+      await page.evaluate(() => {
+        const h = JSON.parse(localStorage.getItem('slaf.household.v2'));
+        h.people[0].incomeSources[0].employerMatch = { matchPercent: null, matchCapPercentOfSalary: null };
+        h.retirement.contributionPercent = null;
+        localStorage.setItem('slaf.household.v2', JSON.stringify(h));
+        location.hash = '#q-plan';
+      });
+      await page.reload({ waitUntil: 'networkidle' });
+      await page.waitForTimeout(600);
+    },
+    fields: [
+      { sel: '#q-plan input[data-plan="matchPercent"]', type: '100' },
+      { sel: '#q-plan input[data-plan="matchCap"]', type: '4' },
+      { sel: '#q-plan input[data-plan="contributionPercent"]', type: '5' }
+    ],
+    expect: async (page) => {
+      const h = await page.evaluate(() => JSON.parse(localStorage.getItem('slaf.household.v2')));
+      const m = h.people[0].incomeSources[0].employerMatch;
+      const suggestedBefore = await page.evaluate(() => document.querySelectorAll('#q-plan [data-suggested]').length);
+      return [
+        ['the typed match replaced the suggestion', m.matchPercent, 1],
+        ['and the cap', Math.round(m.matchCapPercentOfSalary * 100), 4],
+        ['and the contribution was kept', h.retirement.contributionPercent, 5],
+        ['nothing is still only suggested', suggestedBefore, 0]
+      ];
+    }
+  },
+  {
     room: '/rooms/cash-flow.html',
     container: '#buckets',
     seed: 'demo',

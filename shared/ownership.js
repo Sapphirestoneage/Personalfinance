@@ -108,7 +108,7 @@
 
   var FIELDS = {
     dob: {
-      label: 'Date of birth', owner: 'start', anchor: 'q-dob',
+      label: 'Date of birth', owner: 'start', anchor: 'q-about',
       read: function (h) {
         var p = Schema.primaryPerson(h);
         return p && p.dob ? Money.ok(p.dob) : Money.incomplete('Not set yet.', ['dob']);
@@ -120,7 +120,7 @@
       }
     },
     age: {
-      label: 'Age', owner: 'start', anchor: 'q-dob',
+      label: 'Age', owner: 'start', anchor: 'q-about',
       read: function (h) {
         var a = Schema.primaryAge(h);
         return Money.isEntered(a) ? Money.ok(a) : Money.incomplete('Not set yet.', ['dob']);
@@ -128,7 +128,7 @@
       format: function (v) { return v + ''; }
     },
     state: {
-      label: 'State', owner: 'start', anchor: 'q-state',
+      label: 'State', owner: 'start', anchor: 'q-about',
       read: function (h) { return h.state ? Money.ok(h.state) : Money.incomplete('Not set yet.', ['state']); },
       format: function (v) { return v; }
     },
@@ -168,7 +168,7 @@
       format: function (v) { return EMPLOYMENT_LABELS[v] || v; }
     },
     employerMatch: {
-      label: 'Employer match', owner: 'start', anchor: 'q-match',
+      label: 'Employer match', owner: 'start', anchor: 'q-plan',
       read: function (h) { return Schema.employerMatchCents(h); },
       format: function (v) { return money(v) + '/yr'; },
       /* No employer, no match to ask about. See applies() below. */
@@ -176,28 +176,40 @@
       notApplicableBecause: 'You said there is no employer.'
     },
     capturingFullMatch: {
-      label: 'Capturing the full match', owner: 'start', anchor: 'q-capturing',
-      read: function (h) {
-        if (h.capturingFullMatch === true) return Money.ok(true);
-        if (h.capturingFullMatch === false) return Money.ok(false);
-        return Money.incomplete('Not answered yet.', ['capturingFullMatch']);
-      },
+      label: 'Capturing the full match', owner: 'start', anchor: 'q-plan',
+      /* Derived from what you contribute against the cap once both are
+         known; the stored yes/no is only the fallback. D-061. */
+      read: function (h) { return Schema.capturingFullMatchDerived(h); },
       format: function (v) { return v ? 'Yes' : 'No'; },
       applies: function (h) { return Schema.capturingQuestionApplies(h); },
       notApplicableBecause: 'There is no match to capture.'
+    },
+    hasDebt: {
+      label: 'Any debt', owner: 'start', anchor: 'q-debt',
+      read: function (h) {
+        var m = (h.meta || {});
+        if (m.hasDebt === true) return Money.ok(true);
+        if (m.hasDebt === false) return Money.ok(false);
+        return Money.incomplete('Not answered yet.', ['hasDebt']);
+      },
+      format: function (v) { return v ? 'Yes' : 'None'; }
     },
 
     /* Where It Goes owns your retirement setup. These were asked by the FOO
        ladder AND by Where It Goes, and kept by neither — the same question
        twice, forgotten twice. DECISIONS.md D-052. */
     contributionPercent: {
-      label: 'Workplace contribution', owner: 'accounts', anchor: 'setup',
+      label: 'Workplace contribution', owner: 'start', anchor: 'q-plan',
       read: function (h) {
         var v = (h.retirement || {}).contributionPercent;
         return Money.isEntered(v) ? Money.ok(v)
           : Money.incomplete('Not answered yet.', ['contributionPercent']);
       },
-      format: function (v) { return v + '% of salary'; }
+      format: function (v) { return v + '% of salary'; },
+      /* A workplace plan needs a workplace. The self-employed have a solo
+         401(k) with no match, which is a different question (T3). */
+      applies: function (h) { return Schema.couldHaveEmployerMatch(h); },
+      notApplicableBecause: 'You said there is no employer.'
     },
     rothContributed: {
       label: 'Roth so far this year', owner: 'accounts', anchor: 'setup',
@@ -234,7 +246,7 @@
     /* Sleep At Night owns the deductible: it is the first thing a cash
        cushion has to cover, which is that room's whole subject. */
     highestDeductible: {
-      label: 'Highest deductible', owner: 'sleep-at-night', anchor: 'deductible',
+      label: 'Highest deductible', owner: 'start', anchor: 'q-deductible',
       read: function (h) {
         var v = (h.insurance || {}).highestDeductibleCents;
         return Money.isEntered(v) ? Money.ok(v)
@@ -248,12 +260,18 @@
     totalDebt: {
       label: 'Total debt', owner: 'debt-payoff', anchor: 'debts',
       read: function (h) { return Schema.totalDebtCents(h); },
-      format: money
+      format: money,
+      /* "No debt" is an answer (D-061): the figure is not missing, there is
+         nothing to list, and no room should wait on it. */
+      applies: function (h) { return (h.meta || {}).hasDebt !== false; },
+      notApplicableBecause: 'You said there is no debt.'
     },
     monthlyDebtPayments: {
       label: 'Monthly debt payments', owner: 'debt-payoff', anchor: 'debts',
       read: function (h) { return Schema.monthlyDebtPaymentsCents(h); },
-      format: function (v) { return money(v) + '/mo'; }
+      format: function (v) { return money(v) + '/mo'; },
+      applies: function (h) { return (h.meta || {}).hasDebt !== false; },
+      notApplicableBecause: 'You said there is no debt.'
     },
 
     /* The Net Worth room owns everything you own that Start Here doesn't
