@@ -3158,3 +3158,57 @@ readable JSON; this suite has no way to accept it beyond editing localStorage
 by hand. Closing that gap wants a general "restore a saved household" affordance
 — worth having on its own merits, and deliberately not a D&D feature — and it
 has not been built.
+
+
+---
+
+## D-050 — The character sheet lives here after all, in a folder
+
+D-049 moved the Dungeons & Dividends sheet out of this repo and into its own.
+That was the right shape and the wrong cost: creating and configuring a second
+repository is GitHub work, and the owner is new to GitHub and does not write
+code. A correct architecture nobody can operate is not correct.
+
+**Decision: it lives in `dnd/`, as a folder in this repository.** Everything
+D-049 says about *what it is* still holds — it is not a room, it is not in
+`shared/registry.js`, it never appears on the Map, it has its own front door
+at `dnd/index.html` and its own browser storage under `dnd.character.v1`. It
+shares an address, and nothing else.
+
+### The folder is built to leave
+
+The point of D-049 was that this thing should be able to stand alone, and that
+is preserved literally: `dnd/` carries its own copy of `money.js`, `schema.js`,
+`reference.js`, `projection.js` and `tier0.js`, its own `theme.css`, fonts and
+favicon. Moving it into its own repository later is `git mv` and nothing else
+— no import to rewrite, no path to fix, no shared package to extract.
+
+That is a deliberate trade against the obvious alternative, which was to have
+`dnd/` load `../shared/money.js` and delete the duplicates. It would be tidier
+today and would make the split expensive later, which is the wrong way round
+for something the owner has said they may want to separate.
+
+### The hazard that buys, and what stops it
+
+Two copies of `tier0.js` in one repository is a real bug waiting to happen:
+someone fixes one, the other silently keeps the bug, and the two tools start
+disagreeing about a number while both look fine.
+
+So `test/run.js` now asserts every vendored copy is **byte-identical** to its
+original, with `shared/reference.js` as the one permitted divergence (its
+table list is trimmed to what `dnd/` ships, because `load()` with no arguments
+fetches everything it names). **That test caught real drift the first time it
+ran** — `schema.js` and `theme.css` had both moved on `main` after the folder
+was vendored. It is not a theoretical guard.
+
+The same section asserts that no `data/dnd_*.json` creeps back into the main
+suite, and that no registry entry points into `dnd/`.
+
+### What this does not change
+
+The export contract in `dnd/FORMAT.md` is untouched, and the importer it
+describes is still worth building on its own terms. Note that being in one
+repository means both tools are served from the same origin, so a future
+importer *could* read the other's `localStorage` directly rather than passing
+a file around — but the file remains the supported path, because it is the
+one that keeps working if the folder ever does move out.

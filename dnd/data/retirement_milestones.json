@@ -1,0 +1,33 @@
+{
+  "id": "retirement_milestones",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "Widely used age-based savings multiple guideline (Fidelity-style benchmarks).",
+  "confidence": "convention",
+  "confidenceNote": "Age-based savings multiples are a widely used industry guideline, not a measured benchmark.",
+  "note": "Multiples are of GROSS ANNUAL INCOME, not expenses. Between named ages, interpolate linearly. Below the first age, the target is the first milestone scaled toward zero — do not report a target for someone younger than minAge.",
+  "unit": "multiple of gross annual income",
+  "minAge": 25,
+  "milestones": [
+    {
+      "age": 30,
+      "multiple": 1
+    },
+    {
+      "age": 40,
+      "multiple": 3
+    },
+    {
+      "age": 50,
+      "multiple": 6
+    },
+    {
+      "age": 60,
+      "multiple": 8
+    },
+    {
+      "age": 67,
+      "multiple": 10
+    }
+  ]
+}

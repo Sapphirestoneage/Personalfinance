@@ -5008,6 +5008,58 @@ Registry.all().forEach(function (room) {
     html.includes('theme.css'));
 });
 
+
+/* ==========================================================================
+   The D&D folder vendors part of this suite. Keep the copies honest.
+   --------------------------------------------------------------------------
+   dnd/ is a separate product that happens to live in this repo. It carries
+   its OWN copy of the calculation core so it can be lifted out into its own
+   repository later without a single edit — see DECISIONS.md D-049.
+
+   The hazard that buys is obvious: someone fixes a bug in engines/tier0.js,
+   dnd/engines/tier0.js silently keeps the bug, and the two tools start
+   disagreeing about a number while both look fine. So the copies are asserted
+   byte-identical here. If this fails you have not broken anything yet — you
+   have edited one of a pair, and the fix is to copy it across.
+   ========================================================================== */
+section('The D&D folder\'s vendored copies');
+
+(function () {
+  const dnd = path.join(ROOT, 'dnd');
+  if (!fs.existsSync(dnd)) return;          /* folder removed: nothing to check */
+
+  /* Byte-identical, deliberately — including the SLAF namespace they register
+     under, so this comparison stays exact. */
+  ['shared/money.js', 'shared/schema.js', 'engines/projection.js', 'engines/tier0.js',
+   'shared/theme.css', 'shared/fonts.css', 'favicon.svg']
+    .forEach(function (rel) {
+      const here = fs.readFileSync(path.join(ROOT, rel));
+      const there = fs.readFileSync(path.join(dnd, rel));
+      checkTrue(`dnd/${rel} is identical to ${rel}`, here.equals(there),
+        `copy ${rel} into dnd/${rel} — they have drifted apart`);
+    });
+
+  /* reference.js is the ONE allowed divergence: load() with no arguments
+     fetches every table it names, and dnd/ ships a different set. */
+  const refHere = fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8');
+  const refThere = fs.readFileSync(path.join(dnd, 'shared/reference.js'), 'utf8');
+  checkTrue('dnd/shared/reference.js differs, as designed', refHere !== refThere);
+  checkTrue('and says why, in the file', /TRIMMED FROM THE SOURCE REPO/.test(refThere),
+    'the divergence must stay commented, or the next reader will "fix" it');
+
+  /* The D&D tables belong to that product and must not creep back in here. */
+  ['dnd_rules.json', 'dnd_classes.json', 'dnd_scoring.json', 'dnd_alignments.json']
+    .forEach(function (f) {
+      checkTrue(`data/${f} stays out of the main suite`,
+        !fs.existsSync(path.join(ROOT, 'data', f)));
+      checkTrue(`dnd/data/${f} exists`, fs.existsSync(path.join(dnd, 'data', f)));
+    });
+
+  /* And it is not a room: nothing in the registry may point into dnd/. */
+  checkTrue('no registry entry points into dnd/',
+    Registry.all().every(r => r.href.indexOf('dnd/') !== 0));
+})();
+
 /* ==========================================================================
    Report
    ========================================================================== */
