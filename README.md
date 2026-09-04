@@ -103,6 +103,10 @@ engines/            Shared calculation engines — one function per concept
   sidehustle.js       side income after marginal tax, SE tax, costs and hours
   ratios.js           thirty ratios in one registry, plus the radar projection
   credential.js       one ROI engine for a career move and a single skill
+  worth.js            predicted-before against rated-after, and the regret view
+  windfall.js         a lump sum all at once or spread — and when spreading wins
+  runway.js           how long the money lasts when the income stops
+  health.js           the health score: ratios, weighted by age cohort
 data/               Versioned reference tables (JSON, never inlined in code)
 test/run.js         Re-derives every formula outside the browser
 test/alignment.js   Browser layout check — side-by-side cells must line up
