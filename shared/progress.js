@@ -355,7 +355,28 @@
       box.innerHTML = stripHtml(roomId, Spine.getProfile());
     }
     paint();
-    Spine.onChange(paint);
+
+    /* A write during a tap (blur → save → change) used to repaint this
+       strip synchronously. When an item drops off the list the document
+       gets shorter; if the page is scrolled near the bottom the browser
+       clamps the scroll and everything above shifts under the finger — the
+       Next button moved 40px between touchend and click and the tap was
+       lost. So: repaint after the tap has finished, coalesced, and hold the
+       strip's height across the change so the document never shrinks
+       mid-gesture. Same family as D-034/D-046. */
+    var pending = null, release = null;
+    function repaintLater() {
+      if (pending) clearTimeout(pending);
+      pending = setTimeout(function () {
+        pending = null;
+        var held = box.offsetHeight;
+        if (held) box.style.minHeight = held + 'px';
+        paint();
+        if (release) clearTimeout(release);
+        release = setTimeout(function () { box.style.minHeight = ''; release = null; }, 600);
+      }, 400);
+    }
+    Spine.onChange(repaintLater);
     /* The header nav is static for a room — path order does not change with
        the household — so it is built once and never repainted. */
     mountHeader(roomId);

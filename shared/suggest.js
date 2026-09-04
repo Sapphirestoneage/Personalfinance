@@ -48,13 +48,14 @@
   function chipFor(node) {
     if (node._slafChip) return node._slafChip;
     var host = shellOf(node) || node;
+    /* Both keep their space when off (visibility, not [hidden]): a chip
+       that vanished on blur moved the Next button under a finger. Same
+       family of bug as D-046 — nothing under the user's finger may move. */
     var chip = document.createElement('button');
     chip.type = 'button';
-    chip.className = CLS_CHIP;
-    chip.hidden = true;
+    chip.className = CLS_CHIP + ' is-off';
     var src = document.createElement('span');
-    src.className = CLS_SRC;
-    src.hidden = true;
+    src.className = CLS_SRC + ' is-off';
     host.insertAdjacentElement('afterend', src);
     host.insertAdjacentElement('afterend', chip);
     chip.addEventListener('click', function () {
@@ -74,6 +75,9 @@
       if (isSuggested(node)) {
         node.value = '';
         node.classList.remove(CLS_INPUT);
+        /* From here on what is in the box is the person's, so it must read
+           as entered — otherwise a commit on the way out would drop it. */
+        node.removeAttribute('data-suggested');
         var shell = shellOf(node); if (shell) shell.classList.remove(CLS_SHELL);
       }
     });
@@ -87,18 +91,20 @@
   function paint(node) {
     var s = node._slafSuggest;
     if (!s) return;
-    if (node !== document.activeElement) {
-      node.value = s.display;
-      node.classList.add(CLS_INPUT);
-      var shell = shellOf(node); if (shell) shell.classList.add(CLS_SHELL);
-    }
+    /* A box the person is already in is theirs. Remember the proposal (blur
+       offers it if the box is left blank) but do not mark the box: marking
+       it would make whatever they type read as "only suggested". */
+    if (node === document.activeElement) { chipFor(node); return; }
+    node.value = s.display;
+    node.classList.add(CLS_INPUT);
+    var shell = shellOf(node); if (shell) shell.classList.add(CLS_SHELL);
     node.setAttribute('data-suggested', '1');
     node.setAttribute('data-suggest-source', s.source || '');
     var chip = chipFor(node);
-    chip.hidden = false;
+    chip.classList.remove('is-off');
     chip.textContent = s.useLabel || 'Use this';
     chip.setAttribute('title', s.source ? 'From: ' + s.source : 'Suggested');
-    node._slafSource.hidden = false;
+    node._slafSource.classList.remove('is-off');
     node._slafSource.innerHTML = 'Suggested' + (s.source ? ' — ' + escapeHtml(s.source) : '') + '. Tap to use, or type your own.';
   }
 
@@ -135,7 +141,7 @@
     node.removeAttribute('data-suggested');
     node.removeAttribute('data-suggest-source');
     var shell = shellOf(node); if (shell) shell.classList.remove(CLS_SHELL);
-    if (node._slafChip) { node._slafChip.hidden = true; node._slafSource.hidden = true; }
+    if (node._slafChip) { node._slafChip.classList.add('is-off'); node._slafSource.classList.add('is-off'); }
   }
 
   function isSuggested(node) {
