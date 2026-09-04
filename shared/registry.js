@@ -274,11 +274,9 @@
       tier: 1,
       tags: ['income', 'cashflow', 'debt'],
       subsections: [
+        { id: 'panel',        label: 'The panel' },
         { id: 'out-radar',    label: 'All of it at once' },
         { id: 'out-altitude', label: 'Altitude' },
-        { id: 'out-fuel',     label: 'Fuel' },
-        { id: 'out-load',     label: 'Engine load' },
-        { id: 'out-thrust',   label: 'Thrust' },
         { id: 'out-weather',  label: 'Weather' },
         { id: 'out-plan',     label: 'Flight plan' },
         { id: 'reading',      label: 'Reading from elsewhere' }

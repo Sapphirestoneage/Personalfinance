@@ -4773,6 +4773,30 @@ section('Age, and the three that move');
     check('nothing to say when nothing moved', Instruments.formatDelta(c.byId.fooStep, { delta: 0 }), '');
   }
 
+  /* -- The dashboard's first screen is built from the instrument list ------ */
+  {
+    const dash = fs.readFileSync(path.join(ROOT, 'rooms/dashboard.html'), 'utf8');
+    checkTrue('the dashboard loads the instrument list', dash.indexOf('shared/instruments.js') !== -1);
+    checkTrue('and the staleness reader', dash.indexOf('shared/staleness.js') !== -1);
+    checkTrue('and hands it the table', dash.indexOf('Staleness.use(') !== -1);
+    checkTrue('it renders the grid from Instruments.compute', dash.indexOf('Instruments.compute(') !== -1);
+    checkTrue('and deltas from Instruments.deltas', dash.indexOf('Instruments.deltas(') !== -1);
+    checkTrue('with one next action', dash.indexOf('id="next-action"') !== -1);
+    checkTrue('and a refresh link', dash.indexOf("Ownership.linkTo('refresh')") !== -1);
+    /* Caveats fold: every info toggle names a node that exists in the HTML,
+       so nothing is built at toggle time. */
+    const toggles = dash.match(/data-info="([^"]+)"/g) || [];
+    checkTrue('there are info toggles', toggles.length >= 2);
+    toggles.forEach(t => {
+      const id = t.match(/"([^"]+)"/)[1];
+      checkTrue(`toggle target #${id} is in the HTML`, dash.indexOf('id="' + id + '"') !== -1);
+    });
+    /* Every FOO flag the engine can fire has a sentence and a room. */
+    const rules = require(path.join(ROOT, 'data/foo_rules.json'));
+    rules.outOfBoundsFlags.forEach(f =>
+      checkTrue(`the next-action card can say ${f.key}`, dash.indexOf(f.key + ':') !== -1));
+  }
+
   /* -- The Refresh page is a utility, not a room on the map ---------------- */
   {
     const r = Registry.byId('refresh');

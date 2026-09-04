@@ -49,7 +49,7 @@ const TARGETS = [
    a tall one is exactly the unevenness this file exists to prevent. */
 const EQUAL_HEIGHT = [
   ['/rooms/savings-rate.html', '.pair'],
-  ['/rooms/dashboard.html', '.panels'],
+  ['/rooms/dashboard.html', '.instruments'],
   ['/rooms/hassle.html', '.rates'],
   ['/rooms/sleep-at-night.html', '.pair'],
   ['/rooms/values.html', '.two'],
