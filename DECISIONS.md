@@ -2255,9 +2255,10 @@ the way the first draft of this one nearly did.
   `data/health_score.json` so a decade can be retuned without touching code.
   See D-043. This was the last `[PENDING]` decision in the spec; §12 now has
   none.
-- **The three Tranche 1 rooms** (`real-hourly-wage`, `money-calendar`,
-  `student-loan-decision`) do not exist in this repo. Whether to build them,
-  and to what spec, is open. See D-001.
+- **Two of the three Tranche 1 rooms** (`money-calendar`,
+  `student-loan-decision`) do not exist in this repo. `real-hourly-wage` was
+  built and is live; this entry said otherwise until the §13 sweep caught
+  it. Whether to build the other two, and to what spec, is open. See D-001.
 - **`student-loan-decision`** appears in §0, §1 and §5.1 as shipped, but in
   no part of the §13 tool specification. If it is to be rebuilt it needs a
   spec.
