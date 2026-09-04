@@ -41,10 +41,7 @@
     values: 'values.json',
     hassleDefaults: 'hassle_defaults.json',
     ratioBenchmarks: 'ratio_benchmarks.json',
-    healthScore: 'health_score.json',
-    dndRules: 'dnd_rules.json',
-    dndClasses: 'dnd_classes.json',
-    dndScoring: 'dnd_scoring.json'
+    healthScore: 'health_score.json'
   };
 
   var cache = {};

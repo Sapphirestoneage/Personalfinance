@@ -107,7 +107,6 @@ engines/            Shared calculation engines — one function per concept
   windfall.js         a lump sum all at once or spread — and when spreading wins
   runway.js           how long the money lasts when the income stops
   health.js           the health score: ratios, weighted by age cohort
-  character.js        Dungeons & Dividends: 18 sub-stats, HP in weeks, class, level
 data/               Versioned reference tables (JSON, never inlined in code)
 test/run.js         Re-derives every formula outside the browser
 test/alignment.js   Browser layout check — side-by-side cells must line up

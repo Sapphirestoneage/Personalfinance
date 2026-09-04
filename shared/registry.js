@@ -426,39 +426,6 @@
          single-view app with no stable section anchors yet; declaring none
          is deliberate — see DECISIONS.md D-007. */
       subsections: []
-    },
-    {
-      id: 'character-sheet',
-      order: 26,
-      title: 'Character Sheet',
-      blurb: 'Dungeons & Dividends. Six stats, eighteen sub-stats, HP in weeks of runway, and a level that measures progress toward your own FI number rather than a fixed dollar amount.',
-      href: 'rooms/character-sheet.html',
-      tier: 5,
-      tags: ['income', 'cashflow', 'debt'],
-      subsections: [
-        { id: 'known',      label: 'What\u2019s already known' },
-        { id: 'intake',     label: 'What this room needs' },
-        { id: 'declared',   label: 'The other nine' },
-        { id: 'sheet',      label: 'The sheet' },
-        { id: 'spectrum',   label: 'The Spectrum' },
-        { id: 'provenance', label: 'Where these numbers come from' }
-      ]
-    },
-    {
-      id: 'dnd-reference',
-      order: 27,
-      title: 'The Bestiary',
-      blurb: 'The Monster Manual, Hazards, the Revenue Guild, Status Effects and the three Feat Trees behind the Character Sheet. Reference only \u2014 it reads none of your numbers.',
-      href: 'rooms/dnd-reference.html',
-      tier: 5,
-      tags: ['debt'],
-      subsections: [
-        { id: 'monsters',   label: 'Monster Manual' },
-        { id: 'hazards',    label: 'Hazards' },
-        { id: 'guild',      label: 'The Revenue Guild' },
-        { id: 'statuses',   label: 'Status Effects' },
-        { id: 'feat-trees', label: 'Feat Trees' }
-      ]
     }
   ];
 

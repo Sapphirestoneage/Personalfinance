@@ -2313,8 +2313,9 @@ die pool and the runway as two unrelated numbers would have meant monster
 damage could never be applied to runway, which guts the encounter mechanic
 before it is written.
 
-`engines/character.js` holds this: `maxHp()` returns `{ weeks, reducedByDebt }`,
-`currentHp()` returns a measured Result. `WEEKS_PER_YEAR = 52`.
+`engines/character.js` holds this — in the sibling repo, not here (D-049):
+`maxHp()` returns `{ weeks, reducedByDebt }`, `currentHp()` returns a measured
+Result. `WEEKS_PER_YEAR = 52`.
 
 ### What a later room needs to know
 
@@ -2435,3 +2436,79 @@ change every character's runway.
 The three Feat Trees are carried in `data/dnd_rules.json` under `featTrees`
 and render in the Bestiary, so nothing from the rejected three is lost — it
 just is not a class.
+
+---
+
+## D-049 — The character sheet is a sibling, not a room
+
+D-046 through D-048 were written while building the Dungeons & Dividends
+character sheet as two rooms in this suite — `rooms/character-sheet.html` and
+`rooms/dnd-reference.html`, registered in `shared/registry.js`, on the Map,
+with their own engine and three reference tables in `data/`.
+
+**That was the wrong shape, and the owner said so.** It is now its own
+product: [dungeons-and-dividends](https://github.com/Sapphirestoneage/dungeons-and-dividends).
+
+### Why it could not stay a room
+
+A room in this suite assumes the household already exists. Every one of them
+opens already filled in because Start Here ran first, and `shared/ownership.js`
+guarantees each shared number is typed once, in one place. That assumption is
+exactly what the character sheet needed to break: it is meant to be handed to
+someone who has never opened SPARKS, has no household, and is not going to
+build one before they will look at anything. As a room it could only ever be
+the *last* thing someone saw. As its own front door it can be the first.
+
+The intended audience is also just different. The people this is for arrive
+because a friend sent them a link about a game, not because they were looking
+for a personal-finance tool — and a suite whose entry point is nine questions
+about income is the wrong container for that.
+
+### What the split actually cost, and what it did not
+
+It did **not** fork the maths, which was the thing worth protecting. The
+sibling vendors `shared/money.js`, `shared/schema.js`, `shared/reference.js`,
+`engines/tier0.js` and `engines/projection.js` from this repo **byte-identical**,
+keeping their original namespace so a diff against this source is exact. One
+file diverges: the table list in `reference.js`, trimmed to the tables that
+product ships, because `load()` with no arguments fetches everything named
+there and would otherwise 404 on boot. It is commented as such in both places.
+
+More importantly, it stores **a real household in this repo's shape** — the
+same `people` / `assets` / `debts` / `expenses` objects `shared/schema.js`
+defines — rather than a private bag of fields. That is what makes carrying a
+character into SPARKS a copy rather than a translation: nothing to map, nothing
+to re-round, and the two tools cannot disagree about a number because they run
+the same code over the same shape. Its `test/parity.js` asserts precisely that,
+by building a character there and checking it produces the same Level, Debt
+Burden, class and HP this suite produces for the same person.
+
+The cost is real and worth naming: **five files are now duplicated across two
+repos.** A fix to `tier0.js` here does not reach the sibling until someone
+copies it. That is a maintenance debt, accepted deliberately — the alternative
+was either a shared package (a build step, which this repo does not have and
+does not want) or keeping the tool trapped behind an intake its audience will
+never complete.
+
+### What is left in this repo
+
+Nothing but the record. No room, no registry entry, no engine, no `data/dnd_*`
+tables, no tests. `ROADMAP.md` keeps one line under Tier 5 saying the idea was
+built and where it went, and D-046 through D-048 stay exactly as written —
+they document mechanics that are still true, and this log is the answer to
+"where did that come from", which is the one thing this repo should still be
+able to answer.
+
+### What a later room needs to know
+
+**`household.dndProfile` may arrive here.** A household exported from the
+sibling carries a `dndProfile` key that nothing in this suite reads.
+`Spine.updateProfile()` passes unknown keys through untouched, so it survives
+round-trips and costs nothing — but do not assume every household has one, and
+do not repurpose the key.
+
+**There is no import path yet.** The sibling hands you the household object as
+readable JSON; this suite has no way to accept it beyond editing localStorage
+by hand. Closing that gap wants a general "restore a saved household" affordance
+— worth having on its own merits, and deliberately not a D&D feature — and it
+has not been built.
