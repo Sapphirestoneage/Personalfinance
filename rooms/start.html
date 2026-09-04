@@ -41,6 +41,20 @@
 
   .q { display: none; }
   .q.is-active { display: block; }
+  /* Every question at once, once they are all answered. */
+  .q.is-active + .q.is-active { margin-top: var(--space-3); }
+
+  /* A saved answer looks saved. It used to look exactly like an empty box
+     with something in it, which is why tapping one felt like starting
+     over. DECISIONS.md D-046. */
+  input.is-settled { color: var(--color-text-muted); }
+  input.is-settled:focus { color: var(--color-text); }
+  /* The hint keeps its space whether or not it is showing. Toggling it with
+     [hidden] moved the Next button 24px down at the exact moment a blur
+     fired — i.e. mid-tap — so the tap landed somewhere else. Same family of
+     bug as D-034: nothing under the user's finger may move. */
+  .q-settled { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; visibility: hidden; }
+  .q-settled.is-on { visibility: visible; }
   .q-text { font-family: var(--font-display); font-size: var(--text-xl); line-height: var(--leading-tight); margin: 0 0 var(--space-2); }
   .q-help { color: var(--color-text-muted); font-size: var(--text-base); margin: 0 0 var(--space-4); }
   .q-unlocks { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-3) 0 0; }
@@ -179,7 +193,7 @@
   <!-- ============ REVIEW ============ -->
   <section class="slaf-card" id="review" hidden>
     <span class="slaf-eyebrow">Your answers</span>
-    <h2 style="margin:var(--space-2) 0 var(--space-3)">That's everything we needed</h2>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">That's everything — all of it, editable</h2>
     <div id="review-body"></div>
     <div class="nav" style="margin-top:var(--space-4)">
       <button type="button" class="slaf-btn" id="btn-restart">Go through it again</button>
@@ -348,6 +362,23 @@
 
   function inputsOf(q) { return el(q.id).querySelectorAll('[data-write]'); }
 
+  /* Writing .value into the node the user is typing in throws their caret to
+     the end and can undo the keystroke that triggered the repaint. Nothing
+     repaints a live field. */
+  function settable(node) { return node && node !== document.activeElement; }
+
+  /* Show a saved answer as saved: muted, with a line saying it can be
+     changed. Removed the moment the field is focused. */
+  function settle(node) {
+    if (!node || node.tagName !== 'INPUT') return;
+    var hasValue = String(node.value || '').trim() !== '';
+    node.classList.toggle('is-settled', hasValue && node !== document.activeElement);
+    /* Not on the all-at-once page: nine copies of the same sentence is
+       noise, and that page says it once at the bottom instead. */
+    var hint = node.closest('.q') && node.closest('.q').querySelector('.q-settled');
+    if (hint) hint.classList.toggle('is-on', hasValue && !reviewing);
+  }
+
   function paint(q) {
     var h = Spine.getProfile();
     var stored = q.read(h);
@@ -360,15 +391,22 @@
     }
     var nodes = inputsOf(q);
     if (q.kind === 'pair') {
-      nodes[0].value = Money.isEntered(stored[0]) ? String(Math.round(stored[0] * 10000) / 100) : '';
-      nodes[1].value = Money.isEntered(stored[1]) ? String(Math.round(stored[1] * 10000) / 100) : '';
+      if (settable(nodes[0])) nodes[0].value = Money.isEntered(stored[0]) ? String(Math.round(stored[0] * 10000) / 100) : '';
+      if (settable(nodes[1])) nodes[1].value = Money.isEntered(stored[1]) ? String(Math.round(stored[1] * 10000) / 100) : '';
+      settle(nodes[0]); settle(nodes[1]);
       return;
     }
     if (q.kind === 'money') {
-      nodes[0].value = Money.isEntered(stored) ? Money.formatCents(stored) : '';
+      /* The formatted value stays in the box. Money.parseMoney() strips the
+         $ and the commas on the way back out, so there is no swap between a
+         "display" string and an "edit" string — and therefore no moment
+         where the caret has to be repositioned and the answer looks lost. */
+      if (settable(nodes[0])) nodes[0].value = Money.isEntered(stored) ? Money.formatCents(stored) : '';
+      settle(nodes[0]);
       return;
     }
-    nodes[0].value = stored || '';
+    if (settable(nodes[0])) nodes[0].value = stored || '';
+    settle(nodes[0]);
 
     if (q.field === 'dob') paintDobWarning(stored);
   }
@@ -395,6 +433,58 @@
       node.addEventListener(evt, function () { paintDobWarning(node.value); });
     });
   })();
+
+  /* The "this is saved, tap to change it" line. Created once per question at
+     load and only ever toggled after that — no control is ever rebuilt.
+     LIVE-FORM: built once. */
+  (function () {
+    QUESTIONS.forEach(function (q) {
+      var card = el(q.id);
+      if (!card || q.kind === 'choice') return;
+      if (!card.querySelector('.slaf-input-shell')) return;
+      var hint = document.createElement('p');
+      hint.className = 'q-settled';
+      hint.textContent = 'Saved. Tap the box to change it — typing won’t wipe it.';
+      /* At the end of the card, above the "what this unlocks" line. On the
+         two-field match question anywhere else puts it between the boxes. */
+      var unlocks = card.querySelector('.q-unlocks');
+      if (unlocks) card.insertBefore(hint, unlocks); else card.appendChild(hint);
+    });
+  })();
+
+  function questionOfNode(node) {
+    var card = node && node.closest ? node.closest('.q') : null;
+    if (!card) return null;
+    for (var i = 0; i < QUESTIONS.length; i++) {
+      if (QUESTIONS[i].id === card.id) return QUESTIONS[i];
+    }
+    return null;
+  }
+
+  /* Focus brightens the field; blur saves it and settles it again. The blur
+     save is what makes the all-at-once page work — there is no Next button
+     on it to commit against. */
+  document.addEventListener('focusin', function (evt) {
+    var node = evt.target;
+    if (!node || !node.getAttribute || !node.getAttribute('data-write')) return;
+    node.classList.remove('is-settled');
+  });
+
+  document.addEventListener('focusout', function (evt) {
+    var node = evt.target;
+    if (!node || !node.getAttribute || !node.getAttribute('data-write')) return;
+    var q = questionOfNode(node);
+    if (q) {
+      commit(q);
+      /* Re-format this one node rather than repainting the card, so nothing
+         the user is now typing in gets touched. */
+      if (q.kind === 'money') {
+        var cents = Money.parseMoney(node.value);
+        node.value = Money.isEntered(cents) ? Money.formatCents(cents) : '';
+      }
+    }
+    settle(node);
+  });
 
   function commit(q) {
     if (q.kind === 'choice') return;                /* choices write on click */
@@ -432,8 +522,19 @@
     el('btn-back').disabled = index === 0;
     el('btn-next').textContent = index === list.length - 1 ? 'Finish →' : 'Next →';
 
+    /* Do NOT select the existing answer, and do not even focus a question
+       that already has one.
+
+       Selecting it meant the next keystroke replaced the whole figure. On a
+       phone, where the keyboard opens over the field and you cannot see the
+       selection highlight until it is too late, that reads as the app
+       throwing your answer away — which is exactly what a person reported.
+       An empty question still takes focus, because there the keyboard is
+       the helpful thing. See DECISIONS.md D-046. */
     var first = el(q.id).querySelector('input, .choice');
-    if (first && first.tagName === 'INPUT') { first.focus(); first.select && first.select(); }
+    if (first && first.tagName === 'INPUT' && String(first.value || '').trim() === '') {
+      first.focus();
+    }
     if (history.replaceState) history.replaceState(null, '', '#' + q.id);
   }
 
@@ -470,6 +571,8 @@
 
   function showReview() {
     reviewing = true;
+    /* Cards that are not live questions stay hidden; the live ones are all
+       switched on below. */
     QUESTIONS.forEach(function (q) { el(q.id).classList.remove('is-active'); });
     el('nav').hidden = true;
     el('review').hidden = false;
@@ -481,17 +584,31 @@
     el('rail-count').textContent = '';
     el('dots').innerHTML = list.map(function () { return '<i class="done"></i>'; }).join('');
 
-    el('review-body').innerHTML = list.map(function (q, i) {
+    /* Every question is on screen at once now, as the real controls rather
+       than a read-only echo of them. One input per field in the DOM, so
+       there is nothing to keep in sync and no second write path — paint()
+       and commit() are the same ones the one-at-a-time flow uses.
+       DECISIONS.md D-046. */
+    list.forEach(function (q) {
+      el(q.id).classList.add('is-active');
+      paint(q);
+    });
+
+    var unanswered = list.filter(function (q) {
       var d = Ownership.describe(q.field, h, ROOM_ID);
-      var label = d ? d.label : q.field;
-      var value = d && d.isSet ? d.display : 'Not answered';
-      return '<div class="review-row">'
-        + '<span class="review-q">' + label + '</span>'
-        + '<span style="display:flex;align-items:baseline;gap:var(--space-3)">'
-        + '<span class="review-a' + (d && d.isSet ? '' : ' unset') + '">' + value + '</span>'
-        + '<button type="button" class="review-edit" data-goto="' + i + '">edit</button>'
-        + '</span></div>';
-    }).join('');
+      return !(d && d.isSet);
+    });
+    el('review-body').innerHTML = '<p class="q-help" style="margin:0">'
+      + (unanswered.length === 0
+          ? 'All ' + list.length + ' answered, and every one of them is above — change '
+            + 'anything and it saves as you go.'
+          : unanswered.length + ' of ' + list.length + ' still blank ('
+            + unanswered.map(function (q) {
+                var d = Ownership.describe(q.field, h, ROOM_ID);
+                return (d ? d.label : q.field).toLowerCase();
+              }).join(', ') + '). Everything else is filled in above — you can '
+            + 'answer the rest there, or leave them; nothing here guesses at a blank.')
+      + '</p>';
 
     /* Point the hand-off at whichever room actually comes next. */
     var next = Registry.nextAfter(ROOM_ID, Spine.getVisitedRooms());

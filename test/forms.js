@@ -216,6 +216,42 @@ const CASES = [
     }
   },
   {
+    /* Start Here, landing on a question that ALREADY has an answer.
+       This is the bug a person reported as "it resets everything I enter":
+       the question auto-focused and select()'d the saved figure, so the
+       first keystroke replaced all of it. On a phone the keyboard covers
+       the field and you never see the selection before it is gone. */
+    room: '/rooms/start.html',
+    container: '#q-income',
+    seed: 'demo',
+    prepare: async (page) => {
+      /* Land on the income question with its answer already saved. */
+      await page.evaluate(() => { location.hash = '#q-income'; });
+      await page.waitForTimeout(400);
+    },
+    fields: [
+      { sel: '#q-income input[data-write="income"]', type: '1' }
+    ],
+    expect: async (page) => {
+      const v = await page.evaluate(() => {
+        const n = document.querySelector('#q-income input[data-write="income"]');
+        return { value: n.value, settled: n.classList.contains('is-settled') };
+      });
+      const stored = await page.evaluate(() =>
+        JSON.parse(localStorage.getItem('slaf.household.v2')).people[0]
+          .incomeSources[0].grossAnnualIncomeCents);
+      return [
+        /* $72,000 with a 1 typed into it, NOT a bare "1". The exact digits
+           depend on where the caret landed; what matters is that the saved
+           figure is still in there. */
+        ['the saved answer was not wiped by typing', v.value.replace(/[^0-9]/g, '').indexOf('72000') !== -1, true],
+        ['and the new keystroke landed too', v.value.replace(/[^0-9]/g, '').length > 5, true],
+        ['it saved on blur without a Next tap', stored > 0, true],
+        ['and the field settles again afterwards', v.settled, true]
+      ];
+    }
+  },
+  {
     room: '/rooms/cash-flow.html',
     container: '#buckets',
     seed: 'demo',

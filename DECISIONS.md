@@ -2211,6 +2211,84 @@ the way the first draft of this one nearly did.
 
 ---
 
+## D-046 — A saved answer is not a blank box with something in it
+
+A person reported that Start Here "resets everything I enter". It did not —
+nothing was ever lost from storage. What happened was worse in a way,
+because it was invisible: landing on a question that already had an answer
+ran `first.focus(); first.select()`, so the saved figure was **selected**,
+and the next keystroke replaced all of it.
+
+On a desktop, select-on-focus is a helpful convention: you can see the blue
+highlight and retype over it deliberately. On a phone the keyboard opens
+over the field, the highlight is behind it, and the first digit you press
+silently eats `$70,000`. The screenshot that came with the report showed
+exactly that — the value highlighted, one tap from gone.
+
+**Three changes, and the third is the one that matters.**
+
+1. **Never `select()` a saved answer.** The caret goes where the browser
+   puts it, which is where the finger landed. Typing now appends or inserts,
+   the way every other text field on the device behaves.
+2. **Do not focus an answered question at all.** An empty question still
+   takes focus, because there the keyboard appearing is the helpful thing.
+   An answered one does not — arriving at a question you have already done
+   should not open a keyboard over it.
+3. **Stop swapping the value between a display string and an edit string.**
+   The box keeps `$72,000` the whole time; `Money.parseMoney()` already
+   strips the `$` and the commas on the way back out. Every other room in
+   this repo swaps formatted-to-raw on focus and back on blur, and every one
+   of those swaps is a moment where the caret has to be repositioned by
+   hand. Removing the swap removes the entire class of bug rather than
+   fixing one instance of it.
+
+A saved answer now also *looks* saved — muted, with a line reading "Saved.
+Tap the box to change it — typing won't wipe it." — which is what the person
+asked for when they said it should be greyed out with a little warning.
+
+### The fix's own bug, caught before it shipped
+
+The first version toggled that hint with `[hidden]`. Showing it on blur made
+the card 24px taller, which moved the **Next** button down — at the exact
+moment a blur fires, which is the moment a tap on Next begins. Touch-start
+hit the button, touch-end landed 24px above it, and the tap did nothing.
+
+That is D-034's rule again in a new costume: *nothing under the user's
+finger may move.* The hint now reserves its space permanently and toggles
+`visibility`, so the layout is identical whether it shows or not. A measured
+assertion in the repro caught it — the button's `y` before and after a blur
+must be the same number.
+
+### All of them on one page, once they are all answered
+
+The review step used to be a read-only echo of the answers with an "edit"
+button that threw you back into the one-at-a-time flow. It now shows **every
+question card at once, as the real controls**.
+
+The important part is what it does *not* do: it does not build a second set
+of inputs. The question cards already exist in the DOM and are hidden with
+`display: none`; showing them all is a class toggle. So there is exactly one
+input per field on the page, `paint()` and `commit()` are the same functions
+the one-at-a-time flow uses, and there is no second write path to drift.
+Editing saves on blur, because there is no Next button to commit against.
+
+The per-field "Saved" hint is suppressed in that view — nine copies of one
+sentence is noise, and the page says it once at the bottom instead.
+
+### Test-suite notes
+
+`test/forms.js` gained the case that reproduces the report: land on an
+answered question, type one digit, and assert the saved figure is still in
+the box. Reverting the fix makes it fail, which is the only evidence that a
+regression test is worth having.
+
+The `[hidden]` redeclaration check (D-036, narrowed in D-042) was matching
+the word inside a CSS *comment* explaining this very bug. It now strips
+`/* … */` before scanning. Twice now that check has flagged prose; both
+times the prose was correct and the check was too broad.
+
+---
+
 ## Still open
 
 - **The last `unavailable()` ratio: life insurance needs multiple.** Credit

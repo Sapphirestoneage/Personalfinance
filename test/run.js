@@ -2146,7 +2146,8 @@ section('Room script tags');
       /* Only the page's own CSS counts. A room is free to MENTION [hidden]
          in a comment explaining that it toggles the attribute — that is
          documentation, not a second declaration. */
-      const css = (html.match(/<style[^>]*>[\s\S]*?<\/style>/gi) || []).join('\n');
+      const css = (html.match(/<style[^>]*>[\s\S]*?<\/style>/gi) || []).join('\n')
+        .replace(/\/\*[\s\S]*?\*\//g, '');   /* a comment is not a declaration */
       checkTrue(`${file} does not redeclare the [hidden] override`,
         !/\[hidden\][^{}]*\{/.test(css),
         'it is in shared/theme.css — a second copy is one more place to drift');
