@@ -54,6 +54,22 @@ risks it cannot see (D-044). Neither adds a number the other rooms did not
 already own; the radar is deliberately not a score, and The Score is where
 adding them up happens, with its weighting on the page (D-043).
 
+One Tier 5 idea has been built, and it is **not in this repo** — the **DND
+Character Sheet** shipped as its own product,
+[dungeons-and-dividends](https://github.com/Sapphirestoneage/dungeons-and-dividends).
+It is not a room, it is not in `shared/registry.js`, and it never appears on
+the Map; it is a separate tool with its own front door, built to be handed to
+someone who has never opened SPARKS. See `DECISIONS.md` D-046 through D-049 for
+the mechanics that were settled while building it — HP measured in weeks, the
+scoring calibration, and why the class count is seven and not ten.
+
+It does not fork the maths. Its calculation core is `shared/money.js`,
+`shared/schema.js`, `engines/tier0.js` and `engines/projection.js` from this
+repo, vendored byte-identical, and it stores a real household in this repo's
+own shape — so a character built there carries into SPARKS as a copy rather
+than a translation. The counts in this document therefore stay at
+twenty-five rooms: that build is a sibling, not a room.
+
 One ratio moved from "cannot compute" to computed along the way: **credit
 utilisation** now works, because Debt Payoff asks for the limit on a card
 (D-045). It counts only cards whose limit you have given, on both sides of
@@ -344,7 +360,7 @@ Everything below this line is the owner's document, kept as written.
 - [x] ✅ MBTI-for-Finance
 - [x] ✅ Astrology-for-Finance
 - [x] ✅ Financial Enneagram (solo version)
-- [x] ✅ DND Character Sheet
+- [x] ✅ DND Character Sheet — **BUILT, as a separate product**: [dungeons-and-dividends](https://github.com/Sapphirestoneage/dungeons-and-dividends). Not a room here. D-046/047/048/049
 - [x] ✅ Harry Potter House / Divergent Faction
 - [x] ✅ League of Legends / Smite Character System (individualized financial avatars)
 - [x] ✅ Maslow's Hierarchy applied to finance

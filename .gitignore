@@ -1,0 +1,7 @@
+# The suite itself has no dependencies and no build step — nothing here is
+# required to run it. This is only what `npm install playwright` leaves behind
+# when you run the browser tests (test/forms.js, test/alignment.js), which is
+# a local dev tool, not part of the app. See README, "No dependencies".
+node_modules/
+package.json
+package-lock.json
