@@ -5020,6 +5020,18 @@ section('The D&D folder\'s vendored copies');
       checkTrue(`dnd/data/${f} exists`, fs.existsSync(path.join(dnd, 'data', f)));
     });
 
+  /* Every page must opt into the shared theme. shared/theme.css scopes all of
+     its base styling to `body.slaf` — background, text colour, font — so a
+     page with a bare <body> renders as unstyled black-on-white while still
+     passing every content test. That is exactly how it shipped once: the
+     tests read the text, nobody looked at the page. */
+  ['index.html', 'sheet.html', 'bestiary.html'].forEach(function (page) {
+    const html = fs.readFileSync(path.join(dnd, page), 'utf8');
+    checkTrue(`dnd/${page} opts into the theme with <body class="slaf">`,
+      /<body class="slaf">/.test(html),
+      'a bare <body> gets none of theme.css and renders black-on-white');
+  });
+
   /* And it is not a room: nothing in the registry may point into dnd/. */
   checkTrue('no registry entry points into dnd/',
     Registry.all().every(r => r.href.indexOf('dnd/') !== 0));
