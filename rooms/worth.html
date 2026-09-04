@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Worth It · SPARKS</title>
+<meta name="description" content="What you thought a purchase would be worth, against what it turned out to be worth."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11, §13 Tier 1 (Prospective Worth + Retroactive
+  Worth, the before/after pair) and Tier 4 (Regret calculator).
+
+  1. READS   the real hourly wage, via engines/hourly.js, to price things in
+             hours. Nothing about income or work is entered here.
+  2. WRITES  household.worthChecks — through Spine.upsertWorthCheck() and
+             Spine.removeWorthCheck() only. The two timestamps are stamped
+             by the spine, not by this room, so "when did I predict this"
+             cannot be back-dated from here.
+  3. CALLS   engines/worth.js. The rating controls are the shared ones from
+             shared/rating.js, with the `slot` option, because one purchase
+             carries two ratings.
+  4. EMPTY   Nothing added → the page says what to add and offers examples.
+             Fewer than three before-and-afters → the calibration reading
+             says how many more are needed instead of drawing a conclusion.
+  5. CONFIG  None. There is no reference table here and there should not be:
+             every number on this page is either yours or arithmetic on
+             yours. What a thing "should" be worth is not a lookup.
+
+  NO SCORE. Ratings here are self-reports; averaging them into a purchase
+  quality index would be false precision — same reasoning as Enough and
+  What Matters.
+
+  LIVE-FORM: the list of things is a container of live inputs and is guarded
+  with shared/liveform.js (see `thingForm` below). Every readout lives in a
+  DIFFERENT container, so the numbers repaint freely while you type.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .thing { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); margin-top: var(--space-3); }
+  .thing .top { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: center; }
+  .thing .top input { width: 100%; font: inherit; font-weight: 600; padding: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); }
+  .thing .top button { background: none; border: none; color: var(--color-text-faint); font-size: var(--text-sm); cursor: pointer; padding: var(--space-2); }
+  .thing .top button:hover { color: var(--color-critical); }
+  .thing .grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
+  @media (max-width: 460px) { .thing .grid { grid-template-columns: 1fr; } }
+  .thing .when { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-2); }
+
+  .actions { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-3); }
+
+  table.reads { width: 100%; border-collapse: collapse; font-size: var(--text-sm); margin-top: var(--space-3); }
+  table.reads th { text-align: right; font-weight: 500; font-size: var(--text-xs); color: var(--color-text-faint); padding: 0 0 var(--space-2); }
+  table.reads th:first-child { text-align: left; }
+  table.reads td { padding: var(--space-2) 0; border-top: 1px solid var(--color-border); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  table.reads td:first-child { text-align: left; white-space: normal; }
+  table.reads td.gap-up { color: var(--color-positive, #2e7d32); }
+  table.reads td.gap-down { color: var(--color-critical); }
+  .table-scroll { overflow-x: auto; }
+
+  .slope { width: 100%; height: auto; display: block; margin-top: var(--space-3); }
+  .slope .axis { stroke: var(--color-border-strong); stroke-width: 1; }
+  .slope .mid { stroke: var(--color-border-active); stroke-width: 1; stroke-dasharray: 3 3; }
+  .slope .line { stroke: var(--color-accent); stroke-width: 1.4; fill: none; opacity: .85; }
+  .slope .line.is-down { stroke: var(--color-critical); }
+  .slope .node { fill: var(--color-accent); }
+  .slope .node.is-down { fill: var(--color-critical); }
+  .slope .cap { fill: var(--color-text-faint); font-size: 7px; font-family: var(--font-body); }
+  .slope .name { fill: var(--color-text-muted); font-size: 6.5px; font-family: var(--font-body); }
+  .slope .tick { stroke: var(--color-border-strong); stroke-width: .5; }
+
+  ul.regrets { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); }
+  ul.regrets li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+  ul.regrets li:last-child { border-bottom: none; }
+  ul.regrets .meta { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-faint); }
+  ul.regrets .amt { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .empty { color: var(--color-text-faint); font-size: var(--text-sm); margin-top: var(--space-3); }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Worth It</h1>
+  <p class="room-lede">
+    What you thought something would be worth before you bought it, against
+    what it turned out to be worth after. The gap between the two is the
+    only part that can teach you anything.
+  </p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="things">
+    <span class="slaf-eyebrow">The things</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">One line each</h2>
+    <p class="slaf-hint" style="margin:0">
+      Rate it <em>before</em> if you haven’t bought it yet, <em>after</em> if
+      you have, and both if you want the comparison. Leave anything blank you
+      can’t call yet — blank stays blank here, it never quietly becomes zero.
+    </p>
+    <div id="thing-list"></div>
+    <p class="empty" id="thing-empty" hidden>Nothing here yet. Add something you bought recently, or something you’re thinking about.</p>
+    <div class="actions">
+      <button type="button" class="slaf-btn" id="btn-add">+ Add something</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-demo">Try with example numbers</button>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="out-each">
+    <span class="slaf-eyebrow">What each one costs, per unit of worth</span>
+    <h2 style="margin:var(--space-2) 0 0">The arithmetic on each</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Cost per point is the whole price divided by the rating. It is what
+      stops “that was expensive” from being the end of the argument: a $400
+      thing you rated 8 costs less per point than a $40 thing you rated 2.
+    </p>
+    <div class="table-scroll"><table class="reads" id="reads"><tbody></tbody></table></div>
+    <p class="why" id="reads-why"></p>
+  </section>
+
+  <section class="slaf-card" id="out-gap">
+    <span class="slaf-eyebrow">Before against after</span>
+    <h2 style="margin:var(--space-2) 0 0">Where your predictions landed</h2>
+    <div id="slope-body" hidden>
+      <svg class="slope" id="slope" viewBox="0 0 200 140" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="slope-desc"></svg>
+      <p id="slope-desc" class="why"></p>
+    </div>
+    <div class="slaf-figure" data-figure>—</div>
+    <p class="slaf-reason" data-reason></p>
+    <div class="flag" id="gap-note" hidden></div>
+  </section>
+
+  <section class="slaf-card" id="out-regrets">
+    <span class="slaf-eyebrow">The ones you would take back</span>
+    <h2 style="margin:var(--space-2) 0 0">Rated three or under</h2>
+    <div class="slaf-figure" data-figure>—</div>
+    <p class="slaf-reason" data-reason></p>
+    <ul class="regrets" id="regret-list"></ul>
+    <p class="why" id="regret-why"></p>
+  </section>
+
+  <section class="slaf-card" id="reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Every rating here is your own
+    judgement about your own life; nothing on this page knows better than
+    you do what a thing was worth. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/liveform.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/rating.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../engines/worth.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership,
+      Rating = SLAF.Rating, Worth = SLAF.Worth;
+
+  var ROOM_ID = 'worth';
+  var TABLES = null;
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function figure(sectionId) { return el(sectionId).querySelector('[data-figure]'); }
+  function reason(sectionId) { return el(sectionId).querySelector('[data-reason]'); }
+
+  function setFigure(sectionId, text, why) {
+    var f = figure(sectionId), r = reason(sectionId);
+    if (text === null) {
+      f.textContent = Money.EM_DASH;
+      f.classList.add('slaf-figure--incomplete');
+      r.textContent = why || '';
+      r.hidden = !why;
+    } else {
+      f.textContent = text;
+      f.classList.remove('slaf-figure--incomplete');
+      r.textContent = why || '';
+      r.hidden = !why;
+    }
+  }
+
+  /* ---- The list of things (live inputs — never rebuilt under a finger) --- */
+
+  function thingCard(check) {
+    var name = check.label === null || check.label === undefined ? '' : check.label;
+    var when = [];
+    if (check.predictedAt) when.push('predicted ' + check.predictedAt.slice(0, 10));
+    if (check.ratedAt) when.push('rated ' + check.ratedAt.slice(0, 10));
+
+    return '<div class="thing">'
+      + '<div class="top">'
+      + '<input data-worth="' + esc(check.id) + '" data-field="label" value="' + esc(name)
+      + '" placeholder="What was it?" aria-label="What it was"/>'
+      + '<button type="button" data-remove="' + esc(check.id) + '" aria-label="Remove this">✕</button>'
+      + '</div>'
+      + '<div class="grid">'
+      + '<label class="slaf-field" style="margin:0"><span class="slaf-label">It cost</span>'
+      + '<span class="slaf-input-shell"><span class="slaf-affix">$</span>'
+      + '<input type="text" inputmode="decimal" data-worth="' + esc(check.id) + '" data-field="costCents" value="'
+      + (Money.isEntered(check.costCents) ? Money.formatCents(check.costCents) : '')
+      + '" placeholder="e.g. 450" aria-label="What it cost"/></span></label>'
+      + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Hours you got out of it</span>'
+      + '<span class="slaf-input-shell">'
+      + '<input type="text" inputmode="decimal" data-worth="' + esc(check.id) + '" data-field="hoursSpent" value="'
+      + (Money.isEntered(check.hoursSpent) ? String(check.hoursSpent) : '')
+      + '" placeholder="e.g. 300" aria-label="Hours of use"/></span>'
+      + '<span class="slaf-hint">Or hours you expect to, if it’s still ahead of you.</span></label>'
+      + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Before — what you thought</span>'
+      + Rating.controlHtml({ scope: Worth.SCOPE, itemId: check.id, slot: 'predicted',
+                             value: check.predictedRating, label: name || 'this',
+                             name: 'Predicted worth' })
+      + '</label>'
+      + '<label class="slaf-field" style="margin:0"><span class="slaf-label">After — what it was</span>'
+      + Rating.controlHtml({ scope: Worth.SCOPE, itemId: check.id, slot: 'actual',
+                             value: check.actualRating, label: name || 'this',
+                             name: 'Actual worth' })
+      + '</label>'
+      + '</div>'
+      + (when.length ? '<p class="when">' + esc(when.join(' · ')) + '</p>' : '')
+      + '</div>';
+  }
+
+  var thingForm = SLAF.LiveForm.guard(el('thing-list'), function () {
+    var checks = Spine.getProfile().worthChecks || [];
+    el('thing-list').innerHTML = checks.map(thingCard).join('');
+    el('thing-empty').hidden = checks.length > 0;
+  });
+
+  /* ---- Writes ----------------------------------------------------------- */
+
+  function write(id, field, raw) {
+    var patch = { id: id };
+    if (field === 'label') patch.label = raw === '' ? null : raw;
+    else if (field === 'costCents') patch.costCents = Money.parseMoney(raw);
+    else if (field === 'hoursSpent') {
+      var trimmed = String(raw).trim();
+      var n = trimmed === '' ? null : Number(trimmed);
+      patch.hoursSpent = (n === null || isNaN(n) || n < 0) ? null : n;
+    } else return;
+    Spine.upsertWorthCheck(patch);
+    render();
+  }
+
+  document.addEventListener('click', function (evt) {
+    var rm = evt.target.closest && evt.target.closest('[data-remove]');
+    if (rm) {
+      if (!window.confirm('Remove this?')) return;
+      Spine.removeWorthCheck(rm.getAttribute('data-remove'));
+      thingForm.force();
+      render();
+    }
+  });
+
+  el('btn-add').addEventListener('click', function () {
+    Spine.upsertWorthCheck(Schema.createWorthCheck({}));
+    thingForm.force();
+    render();
+    var inputs = el('thing-list').querySelectorAll('input[data-field="label"]');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  });
+
+  /* Demo values, only ever behind this button, and only ever invented ones.
+     CLAUDE.md: no real financial data in this repo, ever. */
+  el('btn-demo').addEventListener('click', function () {
+    [{ label: 'Espresso machine', costCents: 45000, hoursSpent: 300, predictedRating: 9, actualRating: 8 },
+     { label: 'Exercise bike',    costCents: 200000, hoursSpent: 20, predictedRating: 9, actualRating: 2 },
+     { label: 'A good knife',     costCents: 9000,  hoursSpent: 900, predictedRating: 6, actualRating: 9 },
+     { label: 'Second monitor',   costCents: 22000, hoursSpent: 1200, predictedRating: 7, actualRating: 8 },
+     { label: 'Standing desk',    costCents: 60000, hoursSpent: null, predictedRating: 7 }
+    ].forEach(function (d) { Spine.upsertWorthCheck(Schema.createWorthCheck(d)); });
+    thingForm.force();
+    render();
+  });
+
+  el('thing-list').addEventListener('change', function (evt) {
+    var read = Rating.readTarget(evt.target);
+    if (!read || read.scope !== Worth.SCOPE) return;
+    var patch = { id: read.itemId };
+    patch[read.slot === 'actual' ? 'actualRating' : 'predictedRating'] = read.value;
+    Spine.upsertWorthCheck(patch);
+    render();
+  });
+
+  document.addEventListener('focusin', function (evt) {
+    var node = evt.target;
+    var field = node.getAttribute && node.getAttribute('data-field');
+    if (field !== 'costCents') return;
+    var id = node.getAttribute('data-worth');
+    var check = (Spine.getProfile().worthChecks || []).filter(function (c) { return c.id === id; })[0];
+    if (!check) return;
+    node.value = Money.isEntered(check.costCents) ? String(check.costCents / 100) : '';
+    node.select();
+  });
+
+  document.addEventListener('focusout', function (evt) {
+    var node = evt.target;
+    var field = node.getAttribute && node.getAttribute('data-field');
+    var id = node.getAttribute && node.getAttribute('data-worth');
+    if (!field || !id) return;
+    write(id, field, node.value);
+    /* Tidy just this node. The list rebuild is deferred until focus leaves
+       the whole form — see shared/liveform.js. */
+    if (field === 'costCents') {
+      var cents = Money.parseMoney(node.value);
+      node.value = Money.isEntered(cents) ? Money.formatCents(cents) : '';
+    }
+  });
+
+  document.addEventListener('keydown', function (evt) {
+    if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') {
+      evt.preventDefault(); evt.target.blur();
+    }
+  });
+
+  /* ---- Readouts --------------------------------------------------------- */
+
+  function cell(value, formatter) {
+    return value === null || value === undefined ? Money.EM_DASH : formatter(value);
+  }
+
+  /* Cost per hour and cost per point are frequently small — a $90 knife used
+     for 900 hours costs ten cents an hour. Rounding that to whole dollars
+     prints "$0", which reads as free and is the opposite of the point being
+     made. Under ten dollars, show the cents. */
+  function fine(cents) {
+    return Money.formatCents(Math.round(cents), { decimals: Math.abs(cents) < 1000 ? 2 : 0 });
+  }
+
+  function renderReads(summary) {
+    var rows = summary.rows.filter(function (r) { return r.stage !== 'empty' || r.costCents !== null; });
+    var body = el('reads').querySelector('tbody');
+    if (!rows.length) {
+      body.innerHTML = '';
+      el('reads-why').textContent = 'Add something above to see this.';
+      return;
+    }
+    var head = '<tr><th>Thing</th><th>Cost</th><th>Per hour</th><th>Per point</th><th>Hours of your life</th></tr>';
+    body.innerHTML = head + rows.map(function (r) {
+      var res = r.result;
+      var ok = Money.isOk(res);
+      return '<tr>'
+        + '<td>' + esc(r.label || 'Untitled')
+        + (r.stage === 'awaiting' ? ' <span style="color:var(--color-text-faint)">· not lived yet</span>' : '')
+        + '</td>'
+        + '<td>' + cell(r.costCents, function (c) { return Money.formatCents(c); }) + '</td>'
+        + '<td>' + cell(ok ? res.costPerHourCents : null, fine) + '</td>'
+        + '<td>' + cell(ok ? res.value : null, fine) + '</td>'
+        + '<td>' + cell(ok && res.lifeHoursKnown ? res.lifeHours : null,
+            function (hrs) { return (Math.round(hrs * 10) / 10) + ' hrs'; }) + '</td>'
+        + '</tr>';
+    }).join('');
+
+    var noWage = rows.some(function (r) { return Money.isOk(r.result) && !r.result.lifeHoursKnown; });
+    el('reads-why').innerHTML = noWage
+      ? 'The last column is blank until this knows what an hour of your life '
+        + 'actually pays. <a href="' + Ownership.linkTo('real-hourly-wage', 'out-hours')
+        + '">Work out your real hourly wage →</a>'
+      : (summary.bestValue
+          ? esc(summary.bestValue.label || 'One of these') + ' is the best value on this list at '
+            + fine(summary.bestValue.result.costPerActualPointCents)
+            + ' a point; ' + esc(summary.worstValue.label || 'another') + ' is the worst at '
+            + fine(summary.worstValue.result.costPerActualPointCents) + '.'
+          : '');
+  }
+
+  /* The slope chart. Predicted on the left, actual on the right, one line
+     each — the picture of a habit rather than of any single purchase.
+
+     The right margin is wide because the labels live in it. Two things that
+     landed on the same rating would print their names on top of each other,
+     so labels are nudged apart vertically after the fact; the dot stays
+     where the rating actually is, only the text moves. */
+  var PAD_L = 26, PAD_R = 64, PAD_T = 14, PAD_B = 18, W = 200, H = 140;
+  var LABEL_MAX = 17;          /* characters that fit in the right margin */
+  var LABEL_GAP = 7.5;         /* minimum vertical space between two names */
+
+  function shorten(text) {
+    var t = String(text || '').trim();
+    if (!t) return 'Untitled';
+    return t.length <= LABEL_MAX ? t : t.slice(0, LABEL_MAX - 1) + '…';
+  }
+
+  /* Push overlapping labels apart, keeping them in rating order and inside
+     the plot. A greedy pass down then a correcting pass up — enough for the
+     handful of items this page ever holds. */
+  function spread(ys) {
+    var out = ys.slice();
+    for (var i = 1; i < out.length; i++) {
+      if (out[i] - out[i - 1] < LABEL_GAP) out[i] = out[i - 1] + LABEL_GAP;
+    }
+    var overflow = out[out.length - 1] - (H - PAD_B);
+    if (overflow > 0) {
+      for (var j = out.length - 1; j >= 0; j--) {
+        out[j] -= overflow;
+        if (j > 0 && out[j] - out[j - 1] >= LABEL_GAP) break;
+      }
+      if (out[0] < PAD_T) out[0] = PAD_T;
+    }
+    return out;
+  }
+
+  function renderSlope(pairs) {
+    function y(rating) { return H - PAD_B - ((rating - 1) / 9) * (H - PAD_T - PAD_B); }
+    var rightX = W - PAD_R;
+
+    /* Sorted by where they landed, so the labels read top to bottom in the
+       same order as the dots they belong to. */
+    var sorted = pairs.slice().sort(function (a, b) { return b.actual - a.actual; });
+    var labelYs = spread(sorted.map(function (p) { return y(p.actual); }));
+
+    var parts = [];
+    parts.push('<line class="axis" x1="' + PAD_L + '" y1="' + PAD_T + '" x2="' + PAD_L + '" y2="' + (H - PAD_B) + '"/>');
+    parts.push('<line class="axis" x1="' + rightX + '" y1="' + PAD_T + '" x2="' + rightX + '" y2="' + (H - PAD_B) + '"/>');
+    parts.push('<line class="mid" x1="' + PAD_L + '" y1="' + y(5.5) + '" x2="' + rightX + '" y2="' + y(5.5) + '"/>');
+    parts.push('<text class="cap" text-anchor="middle" x="' + PAD_L + '" y="' + (H - 4) + '">before</text>');
+    parts.push('<text class="cap" text-anchor="middle" x="' + rightX + '" y="' + (H - 4) + '">after</text>');
+    parts.push('<text class="cap" text-anchor="end" x="' + (PAD_L - 3) + '" y="' + (y(10) + 2) + '">10</text>');
+    parts.push('<text class="cap" text-anchor="end" x="' + (PAD_L - 3) + '" y="' + (y(1) + 2) + '">1</text>');
+
+    sorted.forEach(function (p, i) {
+      /* Red is reserved for a miss big enough to count as one. A thing that
+         came in a single point under what you expected is inside the band
+         the engine calls "about right", and colouring it as a failure would
+         contradict the verdict printed directly underneath. */
+      var cls = (p.actual - p.predicted) < -Worth.GAP_BAND ? ' is-down' : '';
+      parts.push('<line class="line' + cls + '" x1="' + PAD_L + '" y1="' + y(p.predicted)
+        + '" x2="' + rightX + '" y2="' + y(p.actual) + '"/>');
+      parts.push('<circle class="node' + cls + '" cx="' + PAD_L + '" cy="' + y(p.predicted) + '" r="2.2"/>');
+      parts.push('<circle class="node' + cls + '" cx="' + rightX + '" cy="' + y(p.actual) + '" r="2.2"/>');
+      /* A hair-line from the dot to its label, for the ones that got moved. */
+      if (Math.abs(labelYs[i] - y(p.actual)) > 1) {
+        parts.push('<line class="tick" x1="' + (rightX + 2.4) + '" y1="' + y(p.actual)
+          + '" x2="' + (rightX + 4.5) + '" y2="' + labelYs[i] + '"/>');
+      }
+      parts.push('<text class="name" x="' + (rightX + 5) + '" y="' + (labelYs[i] + 2.2) + '">'
+        + esc(shorten(p.label)) + '</text>');
+    });
+    el('slope').innerHTML = parts.join('');
+    el('slope-desc').textContent = 'One line per thing you rated twice: where you put it before on the '
+      + 'left, where it ended up on the right. Lines in red are the ones that came in more than '
+      + Worth.GAP_BAND + ' point below what you expected. The dashed line is the middle of the scale.';
+  }
+
+  function renderGap(h, summary) {
+    var cal = summary.calibration;
+    var pairs = summary.rows.filter(function (r) { return r.predicted !== null && r.actual !== null; });
+
+    if (pairs.length) { el('slope-body').hidden = false; renderSlope(pairs); }
+    else { el('slope-body').hidden = true; }
+
+    if (!Money.isOk(cal)) {
+      setFigure('out-gap', null, cal.reason);
+      el('gap-note').hidden = true;
+      return;
+    }
+    var mean = cal.value;
+    var rounded = Math.round(Math.abs(mean) * 10) / 10;
+    setFigure('out-gap',
+      (mean > 0 ? '+' : mean < 0 ? '−' : '') + rounded + (rounded === 1 ? ' point' : ' points'),
+      'The average distance between what you predicted and what it turned out to be, across '
+        + cal.pairCount + ' thing' + (cal.pairCount === 1 ? '' : 's') + ' you rated twice.');
+
+    var note = el('gap-note');
+    note.hidden = false;
+    if (mean < -Worth.GAP_BAND) {
+      note.innerHTML = '<strong>Things disappoint you, on average, by ' + rounded
+        + ' points.</strong> ' + cal.overestimatedCount + ' of ' + cal.pairCount
+        + ' came in meaningfully below what you expected'
+        + (cal.worstMiss ? ', worst of all ' + esc(cal.worstMiss.check.label || 'one of these')
+            + ' at ' + Math.abs(cal.worstMiss.gap) + ' points down' : '')
+        + '. The useful move is not to buy less — it is to knock '
+        + rounded + ' off your own guess before you decide.';
+    } else if (mean > Worth.GAP_BAND) {
+      note.innerHTML = '<strong>Things turn out better than you expect, by ' + rounded
+        + ' points.</strong> You may be talking yourself out of purchases that would have '
+        + 'been fine. Worth noticing before the next time you agonise over one.';
+    } else {
+      note.innerHTML = '<strong>Your predictions hold up.</strong> On average you land within '
+        + Worth.GAP_BAND + ' point of what you expected, across ' + cal.pairCount
+        + ' things. That is a genuinely useful thing to know about yourself — it means '
+        + 'the number you write down before buying can be trusted.';
+    }
+  }
+
+  function renderRegrets(summary) {
+    var r = summary.regrets;
+    if (!Money.isOk(r)) {
+      setFigure('out-regrets', null, r.reason);
+      el('regret-list').innerHTML = '';
+      el('regret-why').textContent = '';
+      return;
+    }
+    if (r.count === 0) {
+      setFigure('out-regrets', Money.formatCents(0),
+        'Nothing you have rated came in at ' + r.threshold + ' or under, across '
+          + r.ratedCount + ' rated thing' + (r.ratedCount === 1 ? '' : 's') + '.');
+      el('regret-list').innerHTML = '';
+      el('regret-why').textContent = '';
+      return;
+    }
+    setFigure('out-regrets', Money.formatCents(r.value),
+      r.count + ' of ' + r.ratedCount + ' rated things came in at ' + r.threshold
+        + ' or under' + (r.shareOfSpend !== null
+          ? ' — ' + Math.round(r.shareOfSpend * 100) + '% of what you have spent on the things you have rated'
+          : '') + '.');
+
+    el('regret-list').innerHTML = r.items.map(function (c) {
+      return '<li><span>' + esc(c.label || 'Untitled') + '</span>'
+        + '<span class="amt">' + (Money.isEntered(c.costCents)
+            ? Money.formatCents(c.costCents) : Money.EM_DASH) + '</span>'
+        + '<span class="meta">' + Rating.dotsHtml(c.actualRating)
+        + (Money.isEntered(c.predictedRating)
+            ? ' &nbsp;you expected ' + c.predictedRating + ', got ' + c.actualRating
+            : ' &nbsp;rated ' + c.actualRating + ', never predicted')
+        + '</span></li>';
+    }).join('');
+
+    el('regret-why').textContent = r.complete
+      ? 'This is money already spent. It is here to price the next decision, not to '
+        + 'relitigate these ones — the total is only useful as a scale.'
+      : 'Some of these have no price recorded, so the total is a floor rather than the '
+        + 'whole figure.';
+  }
+
+  /* ---- Render ----------------------------------------------------------- */
+
+  function renderNow() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    thingForm.request();
+    var summary = Worth.summarise(h, TABLES);
+    renderReads(summary);
+    renderGap(h, summary);
+    renderRegrets(summary);
+    el('reading-list').innerHTML = ['grossAnnualIncome']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+
+  var queued = false;
+  function render() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () { queued = false; renderNow(); }, 0);
+  }
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    renderNow();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

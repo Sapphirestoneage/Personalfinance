@@ -146,10 +146,17 @@
 
   /**
    * The select every rating in the app is entered through.
-   *   opts = { scope, itemId, value, label }
+   *   opts = { scope, itemId, value, label, slot, name }
    * `label` names the thing being rated, for the accessible name.
    * A change event on it carries the scope and item in data attributes —
    * read them with readTarget() rather than parsing them in the room.
+   *
+   * `slot` is for the one case where a single item carries MORE THAN ONE
+   * rating: the before/after pair in Worth It rates the same purchase twice
+   * (predicted, then actual). It comes back from readTarget() so the room
+   * knows which of the two changed. Without it, the pair would have had to
+   * fake two item ids and split them apart again with string surgery.
+   * `name` overrides the wording in the accessible name for that case.
    */
   function controlHtml(opts) {
     var o = opts || {};
@@ -163,21 +170,28 @@
     return '<span class="slaf-input-shell slaf-rating">'
       + '<select data-rating-scope="' + escapeHtml(o.scope) + '" '
       + 'data-rating-item="' + escapeHtml(o.itemId) + '" '
-      + 'aria-label="' + escapeHtml(a.label + ' for ' + (o.label || o.itemId)) + '">'
+      + (o.slot ? 'data-rating-slot="' + escapeHtml(o.slot) + '" ' : '')
+      + 'aria-label="' + escapeHtml((o.name || a.label) + ' for ' + (o.label || o.itemId)) + '">'
       + options.join('') + '</select></span>';
   }
 
   /**
-   * Pull { scope, itemId, value } off a change event's target, or null if
-   * the event did not come from a rating control. The room's whole handler
-   * is then three lines.
+   * Pull { scope, itemId, slot, value } off a change event's target, or null
+   * if the event did not come from a rating control. The room's whole
+   * handler is then three lines. `slot` is null unless the control declared
+   * one — see controlHtml().
    */
   function readTarget(node) {
     if (!node || !node.getAttribute) return null;
     var scope = node.getAttribute('data-rating-scope');
     var itemId = node.getAttribute('data-rating-item');
     if (!scope || !itemId) return null;
-    return { scope: scope, itemId: itemId, value: parse(node.value) };
+    return {
+      scope: scope,
+      itemId: itemId,
+      slot: node.getAttribute('data-rating-slot') || null,
+      value: parse(node.value)
+    };
   }
 
   /** Ten dots, filled to the rating. Read-only, and blank when not rated. */

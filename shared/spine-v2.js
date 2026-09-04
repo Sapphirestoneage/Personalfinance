@@ -588,6 +588,57 @@
     return getProfile().ratings;
   }
 
+  /**
+   * Add or update one before/after worth check. Timestamps are stamped here
+   * rather than taken from the caller, so "when did I predict this" cannot
+   * be back-dated by a room. SPEC.md §13 Tier 1.
+   */
+  function upsertWorthCheck(entry) {
+    var h = load();
+    h.worthChecks = (h.worthChecks || []).map(function (w) { return Schema.createWorthCheck(w); });
+
+    /* The two dates are the spine's, not the caller's. A room that could
+       write predictedAt could say it predicted something last year, which
+       is exactly the claim the before/after pair exists to substantiate.
+       Whatever a caller sends for them is dropped on the floor. */
+    var patch = Object.assign({}, entry);
+    delete patch.predictedAt;
+    delete patch.ratedAt;
+
+    var next = Schema.createWorthCheck(patch);
+    var found = false;
+    h.worthChecks = h.worthChecks.map(function (w) {
+      if (w.id !== next.id) return w;
+      found = true;
+      var merged = Object.assign({}, w, patch);
+      merged.predictedAt = w.predictedAt;
+      merged.ratedAt = w.ratedAt;
+      /* Stamped once, when the rating first appears — a later revision of
+         the same rating is a change of mind, not a new prediction. */
+      if (Money.isEntered(patch.predictedRating) && !Money.isEntered(w.predictedRating)) {
+        merged.predictedAt = new Date().toISOString();
+      }
+      if (Money.isEntered(patch.actualRating) && !Money.isEntered(w.actualRating)) {
+        merged.ratedAt = new Date().toISOString();
+      }
+      return Schema.createWorthCheck(merged);
+    });
+    if (!found) {
+      if (Money.isEntered(next.predictedRating)) next.predictedAt = new Date().toISOString();
+      if (Money.isEntered(next.actualRating)) next.ratedAt = new Date().toISOString();
+      h.worthChecks.push(next);
+    }
+    save(); notify();
+    return getProfile().worthChecks;
+  }
+
+  function removeWorthCheck(id) {
+    var h = load();
+    h.worthChecks = (h.worthChecks || []).filter(function (w) { return w.id !== id; });
+    save(); notify();
+    return getProfile().worthChecks;
+  }
+
   /** A persisted user override of an Assumption-class field. A "what if"
    *  a room is only previewing must NOT come through here — pass it as a
    *  local override to the calculator instead. SPEC.md §12.2. */
@@ -681,6 +732,8 @@
     storageState: storageState,
     _MIGRATIONS: MIGRATIONS,
     setRating: setRating,
+    upsertWorthCheck: upsertWorthCheck,
+    removeWorthCheck: removeWorthCheck,
     setStatedValues: setStatedValues,
     assignCategoryToValue: assignCategoryToValue,
     listSnapshots: listSnapshots,

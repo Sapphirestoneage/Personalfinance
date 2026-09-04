@@ -18,25 +18,35 @@ lives here, separately, and is kept honest against `shared/registry.js`.
 
 ## What is actually built, as of the last commit
 
-Eighteen rooms are live. Against this document's own tiers:
+Twenty-two rooms are live. Against this document's own tiers:
 
 | Tier | In this doc | Shipped | What's shipped |
 |---|---|---|---|
 | **0** — MVP snapshot | 10 inputs, 9 outputs, FOO ladder, 5 flags | **all of it** | Start Here, Financial Snapshot, FOO Ladder |
-| **1** — fully modular | 29 | **17** | Net Worth · Savings Rate · FIRE variants · Debt Calculator · Credit Card view · HYSA Switch · Cash Flow · Budget templates · Return on Hassle · Girl Math (cost per use) · Snapshot/save-state · Rule of Five · $30k/$90k · 20/3/8 · Real Hourly Wage · W2 vs 1099 · Quarterly Estimated Tax |
+| **1** — fully modular | 29 | **19** | Net Worth · Savings Rate · FIRE variants · Debt Calculator · Credit Card view · HYSA Switch · Cash Flow · Budget templates · Return on Hassle · Girl Math (cost per use) · Snapshot/save-state · Rule of Five · $30k/$90k · 20/3/8 · Real Hourly Wage · W2 vs 1099 · Quarterly Estimated Tax · Retroactive Worth · Prospective Worth |
 | **1.5** — one self-report | 3 | **2** | SWAN Number · Fulfillment Curve |
-| **2** — a few decisions | 23 | **8** | Side Hustle · Solo 401(k) · Roth vs Traditional vs Brokerage · Wedding · Dream Calculator · Convenience Method · Zombie Apocalypse framing · Values vs Spending Audit |
-| **3 and up** | ~280 | **0** | out of `SPEC.md` scope |
+| **2** — a few decisions | 23 | **10** | Side Hustle · Solo 401(k) · Roth vs Traditional vs Brokerage · Wedding · Dream Calculator · Convenience Method · Zombie Apocalypse framing · Values vs Spending Audit · Career ROI · Skills Calculator |
+| **3 and up** | ~280 | **1** | Regret calc (Tier 4) — not a build of its own: it is `Worth.regrets()`, the same records filtered to low ratings. Everything else is out of `SPEC.md` scope |
 
 Wedding and Dream Calculator are one Goal Costing Engine with two templates,
 per `SPEC.md` §8. Credit Card calc is a filtered view of the Debt Calculator,
 not a separate build. Convenience Method is one of four payoff orderings.
+Career ROI and Skills Calculator are one credential-ROI engine with two
+presets (D-039). Retroactive and Prospective Worth are one record with two
+ratings, and the Tier 4 Regret calc is a filter over it (D-040). Four listed
+"tools", three builds — which is the pattern, not an exception.
 
-### Not built in Tier 1 (12)
+Two more rooms sit outside that table because their ideas live further down
+this document: **Every Ratio** builds thirty of the Tier 19 ratios from the
+household that already exists, and **The Dashboard** is the Tier 20 radar
+over them. Neither adds a number the other rooms did not already own — see
+`DECISIONS.md` for what the radar deliberately is not (a score).
+
+### Not built in Tier 1 (10)
 
 Bank Bonus · Rent/Buy · Warranty · Lump Sum vs DCA · Car Depreciation · W4 ·
-DRAFTT template · FAT FIRE template · Retroactive Worth · Prospective Worth ·
-HCOL/MCOL/LCOL standalone · Mutant Expenses Identifier
+DRAFTT template · FAT FIRE template · HCOL/MCOL/LCOL standalone ·
+Mutant Expenses Identifier
 
 Six of those are blocked on **maintained external datasets**, not on effort:
 live bank offers, vehicle depreciation curves, warranty failure rates, COL
@@ -51,12 +61,12 @@ tool shipped so far.
 `SPEC.md` §9 item 8 puts it last because it aggregates everything else, and
 §12.4 leaves its weighting `[PENDING]`. See "Still open" in `DECISIONS.md`.
 
-### Not built in Tier 2 (15)
+### Not built in Tier 2 (13)
 
 Leave-Job · Start-Business · Kids · Travel · Unemployment · House Hack ·
-Whole Life Insurance · Prenup/Estate · Personal Inflation · Career ROI ·
-Skills Calculator · HCOL/MCOL/LCOL modifier · Second Mouse Framework ·
-Trust Framework · Advice Translator
+Whole Life Insurance · Prenup/Estate · Personal Inflation ·
+HCOL/MCOL/LCOL modifier · Second Mouse Framework · Trust Framework ·
+Advice Translator
 
 ## Discrepancies found reconciling this document against the repo
 

@@ -139,6 +139,30 @@ const CASES = [
     }
   },
   {
+    /* Worth It. Free-text, money, and a plain number in one card, plus two
+       rating selects in the same container — the densest live form in the
+       repo after the front page. */
+    room: '/rooms/worth.html',
+    container: '#thing-list',
+    seed: 'demo',
+    prepare: async (page) => { await page.tap('#btn-add'); },
+    fields: [
+      { sel: '#thing-list input[data-field="label"]', type: 'Exercise bike' },
+      { sel: '#thing-list input[data-field="costCents"]', type: '2000' },
+      { sel: '#thing-list input[data-field="hoursSpent"]', type: '20' }
+    ],
+    expect: async (page) => {
+      const w = await page.evaluate(() =>
+        (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).worthChecks[0]);
+      return [
+        ['the name was kept', w.label, 'Exercise bike'],
+        ['the price was kept, in cents', w.costCents, 200000],
+        ['the hours were kept', w.hoursSpent, 20],
+        ['and nothing invented a rating', w.actualRating, null]
+      ];
+    }
+  },
+  {
     room: '/rooms/cash-flow.html',
     container: '#buckets',
     seed: 'demo',
@@ -192,6 +216,23 @@ const SELECT_CASES = [
       ['#rate-list select[data-rating-item="dining_out"]', '9']
     ],
     read: () => JSON.parse(localStorage.getItem('slaf.household.v2')).ratings.joy
+  },
+  {
+    /* The same purchase carries TWO ratings, which is the only place in the
+       app where one item does. Tapping from the first straight to the
+       second is exactly the sequence a rebuild would eat. */
+    room: '/rooms/worth.html',
+    container: '#thing-list',
+    seed: 'demo',
+    prepare: async (page) => { await page.tap('#btn-add'); },
+    picks: [
+      ['#thing-list select[data-rating-slot="predicted"]', '9'],
+      ['#thing-list select[data-rating-slot="actual"]', '2']
+    ],
+    read: () => {
+      const c = JSON.parse(localStorage.getItem('slaf.household.v2')).worthChecks[0];
+      return { predicted: c.predictedRating, actual: c.actualRating };
+    }
   },
   {
     room: '/rooms/hassle.html',

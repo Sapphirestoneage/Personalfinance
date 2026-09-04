@@ -1737,6 +1737,93 @@ are real and this is arithmetic.
 
 ---
 
+## D-040 — Before and after are one record, not two
+
+SPEC.md §13 lists **Prospective Worth** and **Retroactive Worth** as separate
+Tier 1 tools, with the note that they are "designed as a before/after pair"
+and that "Prospective's prediction should be storable and later compared
+against Retroactive's actual outcome if wired together with a shared ID".
+
+**Decision: one room, one engine, and one stored record with two ratings on
+it** — `household.worthChecks[]`, each carrying `predictedRating` and
+`actualRating`. Not two records joined by a shared id.
+
+A shared id you have to maintain is a shared id that drifts. Two records
+means two rooms, two lists to keep in step, and a join that silently fails
+the first time somebody renames a thing in one place and not the other — and
+a failed join here does not error, it just quietly stops finding the
+prediction, which is the entire point of the pair. One record cannot come
+apart. `costPerPoint(check, which)` is the same function pointed at either
+rating, which is §8's one-formula-one-function applied to the tense.
+
+**Either rating may be absent, and both absences are real states.** A thing
+predicted and not yet lived is `stage: 'awaiting'`; a thing rated in
+hindsight that nobody predicted is `stage: 'rated'` with no prediction. The
+reading falls back from actual to predicted and says which basis it used, so
+a room never has to guess what number it is showing.
+
+**The spine owns the two timestamps.** `predictedAt` and `ratedAt` are
+stamped by `Spine.upsertWorthCheck()`, once, when the rating first appears,
+and anything a caller sends for those fields is discarded. A room that could
+write `predictedAt` could claim it predicted something last year, which is
+exactly the claim the pair exists to substantiate. Revising a rating is a
+change of mind, not a new prediction, so the date does not move. A test in
+`test/run.js` tries to back-date one and asserts it cannot.
+
+**The Regret calculator (Tier 4) is not a separate tool.** It is these
+records filtered to `actualRating <= 3` — `Worth.regrets()`. Deliberately 3
+and not 5: the Tier 4 idea is things you wish you had not bought, not things
+that were only fine. A regret with no price recorded still counts as a
+regret but does not join the total, and the result carries `complete: false`
+so the room can say the figure is a floor rather than printing a total that
+quietly leaves things out.
+
+**Calibration is the output the pair produces that no single purchase can.**
+The mean signed gap across every before-and-after, with a ±1 band around
+"about right" because one point on a ten-point self-report is inside the
+noise of the instrument. Under three pairs it refuses and says how many more
+are needed — the direction of your error across two purchases is one bad
+week, not a habit. There is still no score: `SPEC.md` §12.4's Financial
+Health Score weighting stays `[PENDING]` and nothing here averages ratings
+into a purchase-quality index.
+
+**Nothing here is a lookup, and there is no `data/` table for it.** Every
+number on the page is either yours or arithmetic on yours. What a thing
+"should" be worth is not reference data and inventing a benchmark for it
+would be exactly the fabrication D-036 exists to prevent.
+
+### Compatibility note
+
+`household.worthChecks` is **new**, added at the current schema version.
+`Schema.createHousehold()` fills it from `f.worthChecks || []`, so a stored
+household written before this change loads with an empty list and needs no
+migration — the field is additive and nothing reads it but the Worth It
+room and `engines/worth.js`.
+
+A future room calling `getProfile()` should know:
+
+- Each entry is `{ id, label, costCents, hoursSpent, predictedRating,
+  predictedAt, actualRating, ratedAt }`. Money is integer cents;
+  `hoursSpent` is a plain number of hours; both ratings are integers 1–10 or
+  `null`, never 0 (see `shared/rating.js`).
+- Write through `Spine.upsertWorthCheck()` / `Spine.removeWorthCheck()`,
+  never by assigning to the array. The upsert merges a partial patch by
+  `id`, so a room can write one field without reading the rest.
+- `predictedAt` / `ratedAt` are read-only from a room's point of view.
+  Sending them is not an error; they are simply dropped.
+
+### One more thing the shared rating control learned
+
+`Rating.controlHtml()` gained an optional `slot`, emitted as
+`data-rating-slot` and returned by `readTarget()`. It exists for the one
+case in the app where a single item carries two ratings. Without it the pair
+would have had to fake two item ids and split them apart again with string
+surgery, which is how the "one rating component, not four" rule (§13, Tier
+1.5) gets quietly broken. Controls that do not pass a `slot` emit no
+attribute and read back `null`, so nothing else changed.
+
+---
+
 ## Still open
 
 - ~~**Two-Income Household Toggle** and **Soft Saving Balance

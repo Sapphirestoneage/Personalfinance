@@ -100,6 +100,10 @@
     'valuesProfile.stated[]':                    { class: 'raw',        unit: 'enum',    note: 'value ids from data/values.json, in the order named — index 0 is the top one' },
     'valuesProfile.assignments':                 { class: 'raw',        unit: 'map',     note: 'expenseCategoryId -> value id, or null for deliberately unclaimed' },
     'ratings.<scope>.<itemId>':                  { class: 'raw',        unit: 'rating',  note: 'integer 1-10, or absent for not rated. One store for every 1-10 rating in the app — SPEC.md §13 Tier 1.5' },
+    'worthChecks[].costCents':                   { class: 'raw',        unit: 'cents' },
+    'worthChecks[].hoursSpent':                  { class: 'raw',        unit: 'hours' },
+    'worthChecks[].predictedRating':             { class: 'raw',        unit: 'rating',  note: 'what you thought it would be worth, 1-10, before' },
+    'worthChecks[].actualRating':                { class: 'raw',        unit: 'rating',  note: 'what it turned out to be worth, 1-10, after' },
     'assumptions.expectedReturnRate':            { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.expectedReturnRate },
     'assumptions.swrRate':                       { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.swrRate },
 
@@ -352,6 +356,34 @@
     return out;
   }
 
+  /**
+   * One thing you spent money on, predicted before and rated after.
+   *
+   * SPEC.md §13 Tier 1 asks for Prospective Worth and Retroactive Worth as a
+   * "before/after pair", with "Prospective's prediction storable and later
+   * compared against Retroactive's actual outcome if wired together with a
+   * shared ID". So they are ONE record with two ratings, not two records
+   * that have to be matched up afterwards — a shared id you have to maintain
+   * is a shared id that drifts.
+   *
+   * `predictedRating` is set before, `actualRating` after. Either may be
+   * absent: a thing predicted and not yet lived, or a thing rated in
+   * hindsight that nobody predicted. Both are real states.
+   */
+  function createWorthCheck(fields) {
+    var f = fields || {};
+    return {
+      id: f.id || newId('worth'),
+      label: f.label === undefined ? null : f.label,
+      costCents: f.costCents === undefined ? null : f.costCents,
+      hoursSpent: f.hoursSpent === undefined ? null : f.hoursSpent,
+      predictedRating: f.predictedRating === undefined ? null : f.predictedRating,
+      predictedAt: f.predictedAt === undefined ? null : f.predictedAt,
+      actualRating: f.actualRating === undefined ? null : f.actualRating,
+      ratedAt: f.ratedAt === undefined ? null : f.ratedAt
+    };
+  }
+
   function createHousehold(fields) {
     var f = fields || {};
     return {
@@ -377,6 +409,8 @@
            code path when import lands. See createExpenseEntry(). */
         entries: (f.expenses && (f.expenses.entries || f.expenses.categories)) || []
       },
+      /* Things predicted before and rated after. SPEC.md §13 Tier 1. */
+      worthChecks: (f.worthChecks || []).map(createWorthCheck),
       /* Every 1-10 rating in the app. See createRatings(). */
       ratings: createRatings(f.ratings),
       /* Stated values and what spending serves them. Owned by the What
@@ -726,6 +760,7 @@
     createSwanTarget: createSwanTarget,
     createValuesProfile: createValuesProfile,
     createRatings: createRatings,
+    createWorthCheck: createWorthCheck,
     resolveAssumptions: resolveAssumptions,
     withMonthlyExpensesDeltaCents: withMonthlyExpensesDeltaCents,
     personById: personById,

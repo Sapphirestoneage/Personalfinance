@@ -47,6 +47,7 @@ const HassleEngine = require(path.join(ROOT, 'engines/hassle.js'));
 const SideHustle = require(path.join(ROOT, 'engines/sidehustle.js'));
 const RatiosEngine = require(path.join(ROOT, 'engines/ratios.js'));
 const Credential = require(path.join(ROOT, 'engines/credential.js'));
+const WorthEngine = require(path.join(ROOT, 'engines/worth.js'));
 
 const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
@@ -2058,7 +2059,9 @@ section('Room script tags');
     SelfEmployed: 'engines/selfemployed.js', Goals: 'engines/goals.js',
     Accounts: 'engines/accounts.js', Swan: 'engines/swan.js',
     Values: 'engines/values.js', Fulfillment: 'engines/fulfillment.js',
-    Hassle: 'engines/hassle.js', SideHustle: 'engines/sidehustle.js'
+    Hassle: 'engines/hassle.js', SideHustle: 'engines/sidehustle.js',
+    Ratios: 'engines/ratios.js', Credential: 'engines/credential.js',
+    Worth: 'engines/worth.js'
   };
   const FILE_TO_GLOBAL = {};
   Object.keys(GLOBAL_TO_FILE).forEach(g => { FILE_TO_GLOBAL[GLOBAL_TO_FILE[g]] = g; });
@@ -2243,6 +2246,49 @@ section('Storage and migration');
     }
     check('the migration registry has no entries for versions that do not exist',
       Object.keys(Spine._MIGRATIONS).filter(v => Number(v) > Schema.SCHEMA_VERSION).length, 0);
+  }
+
+  /* -- Worth checks: the spine owns the timestamps ----------------------- */
+  {
+    const { Spine } = withStorage({});
+    check('a fresh household has no worth checks', Spine.getProfile().worthChecks.length, 0);
+
+    Spine.upsertWorthCheck({ id: 'w1', label: 'Bike', costCents: 200000 });
+    check('one can be added', Spine.getProfile().worthChecks.length, 1);
+    check('with nothing predicted, nothing is stamped',
+      Spine.getProfile().worthChecks[0].predictedAt, null);
+
+    Spine.upsertWorthCheck({ id: 'w1', predictedRating: 9 });
+    const stamped = Spine.getProfile().worthChecks[0];
+    checkTrue('predicting stamps when you predicted', typeof stamped.predictedAt === 'string');
+    check('and the earlier fields survive the patch', stamped.costCents, 200000);
+    check('and so does the label', stamped.label, 'Bike');
+
+    /* A room must not be able to move the date it predicted something —
+       that is the whole evidential value of the before/after pair. */
+    Spine.upsertWorthCheck({ id: 'w1', predictedRating: 4, predictedAt: '1999-01-01T00:00:00.000Z' });
+    check('changing the rating does not re-stamp the date',
+      Spine.getProfile().worthChecks[0].predictedAt, stamped.predictedAt);
+    check('and a room cannot back-date it',
+      Spine.getProfile().worthChecks[0].predictedAt, stamped.predictedAt);
+    check('though the rating itself does change',
+      Spine.getProfile().worthChecks[0].predictedRating, 4);
+
+    Spine.upsertWorthCheck({ id: 'w1', actualRating: 2 });
+    checkTrue('rating it afterwards stamps the second date',
+      typeof Spine.getProfile().worthChecks[0].ratedAt === 'string');
+
+    Spine.upsertWorthCheck({ id: 'w2', label: 'Knife', actualRating: 9 });
+    check('a second one does not disturb the first', Spine.getProfile().worthChecks.length, 2);
+    checkTrue('a thing rated only in hindsight is stamped on arrival',
+      typeof Spine.getProfile().worthChecks[1].ratedAt === 'string');
+    check('and has no prediction date', Spine.getProfile().worthChecks[1].predictedAt, null);
+
+    Spine.removeWorthCheck('w1');
+    check('one can be removed', Spine.getProfile().worthChecks.length, 1);
+    check('and it is the right one', Spine.getProfile().worthChecks[0].id, 'w2');
+    check('removing one that is not there is harmless',
+      (Spine.removeWorthCheck('nope'), Spine.getProfile().worthChecks.length), 1);
   }
 
   delete global.localStorage;
@@ -3155,6 +3201,210 @@ section('Values vs. Spending');
     assignable.value.every(r => Money.isEntered(r.monthlyCents)));
   check('without a categorised month there is nothing to assign',
     ValuesEngine.assignableCategories(noMonth, VT, CAT).status, 'incomplete');
+})();
+
+section('Worth It');
+
+(function () {
+  const W = WorthEngine;
+
+  function check1(fields) { return Schema.createWorthCheck(fields); }
+
+  /* -- Cost per hour, and what it refuses -------------------------------- */
+  {
+    const c = check1({ costCents: 45000, hoursSpent: 300 });
+    check('cost per hour is money over hours', W.costPerHour(c).value, 150);
+
+    const noHours = W.costPerHour(check1({ costCents: 45000 }));
+    check('no hours is incomplete, not infinity', noHours.status, 'incomplete');
+    check('and names the missing half', noHours.missing.join(','), 'hoursSpent');
+
+    const neither = W.costPerHour(check1({}));
+    check('both missing names both', neither.missing.join(','), 'costCents,hoursSpent');
+
+    const zeroHours = W.costPerHour(check1({ costCents: 45000, hoursSpent: 0 }));
+    check('zero hours of use has no cost per hour', zeroHours.status, 'incomplete');
+    checkTrue('and says that is the finding', /that is the finding/.test(zeroHours.reason));
+
+    /* Zero cost is a real answer — a gift used for 300 hours cost nothing an
+       hour, and that must not collapse into "not entered". */
+    check('a free thing costs zero an hour',
+      W.costPerHour(check1({ costCents: 0, hoursSpent: 300 })).value, 0);
+  }
+
+  /* -- Cost per point ----------------------------------------------------- */
+  {
+    const c = check1({ costCents: 40000, predictedRating: 8, actualRating: 2 });
+    check('per predicted point', W.costPerPoint(c, 'predictedRating').value, 5000);
+    check('per actual point', W.costPerPoint(c, 'actualRating').value, 20000);
+    check('an unrated one is incomplete',
+      W.costPerPoint(check1({ costCents: 100 }), 'actualRating').status, 'incomplete');
+    check('a rating outside 1-10 is not a rating',
+      W.costPerPoint(check1({ costCents: 100, actualRating: 0 }), 'actualRating').status,
+      'incomplete');
+    check('and neither is a fractional one',
+      W.costPerPoint(check1({ costCents: 100, actualRating: 7.5 }), 'actualRating').status,
+      'incomplete');
+  }
+
+  /* -- The gap, and the band around "about right" ------------------------- */
+  check('one point out is still about right', W.verdictFor(1).id, 'expected');
+  check('and one point the other way too', W.verdictFor(-1).id, 'expected');
+  check('two points up is better than you thought', W.verdictFor(2).id, 'better');
+  check('two points down is worse', W.verdictFor(-2).id, 'worse');
+  check('no gap at all has no verdict', W.verdictFor(null), null);
+
+  /* -- One thing, worked out ---------------------------------------------- */
+  {
+    const h = Demo.build();
+    const c = check1({ label: 'Exercise bike', costCents: 200000, hoursSpent: 20,
+                       predictedRating: 9, actualRating: 2 });
+    const r = W.evaluate(h, TABLES, c);
+    check('the reading is per ACTUAL point once it has been lived', r.basis, 'actual');
+    check('so the headline is cost over the actual rating', r.value, 100000);
+    check('the predicted one is still reported', r.costPerPredictedPointCents, 200000 / 9, 1e-9);
+    check('the gap is after minus before', r.gap, -7);
+    check('which reads as worse than you thought', r.verdict.id, 'worse');
+    check('and it counts as lived', r.stage, 'rated');
+
+    /* The price in hours must come from engines/hourly.js, not a second
+       wage calculation — SPEC.md §8. Re-derived here from that engine. */
+    const wage = Hourly.realHourlyWage(h, TABLES);
+    checkTrue('the life-hours price is known for the demo persona', r.lifeHoursKnown);
+    check('and is the price over the real hourly wage', r.lifeHours, 200000 / wage.value, 1e-9);
+    check('hours worked for it against hours got out of it',
+      r.hoursRatio, r.lifeHours / 20, 1e-12);
+
+    /* A household with no income cannot price anything in hours, and that is
+       reported rather than silently dropped. */
+    const bare = Schema.createHousehold({});
+    const noWage = W.evaluate(bare, TABLES, c);
+    checkTrue('with no income the hours price is unavailable', !noWage.lifeHoursKnown);
+    checkTrue('and says why', typeof noWage.lifeHoursReason === 'string');
+    check('but the rest of the reading still works', noWage.value, 100000);
+  }
+
+  /* -- Predicted but not yet lived ---------------------------------------- */
+  {
+    const h = Demo.build();
+    const r = W.evaluate(h, TABLES, check1({ costCents: 60000, predictedRating: 7 }));
+    check('a thing not yet lived reads off the prediction', r.basis, 'predicted');
+    check('with the value to match', r.value, 60000 / 7, 1e-9);
+    check('and is marked as waiting', r.stage, 'awaiting');
+
+    const unrated = W.evaluate(h, TABLES, check1({ costCents: 60000 }));
+    check('with no rating at all there is no reading', unrated.status, 'incomplete');
+    check('and both ratings are named', unrated.missing.join(','),
+      'predictedRating,actualRating');
+  }
+
+  /* -- Calibration: the one number a single purchase cannot give ---------- */
+  {
+    const h = Demo.build();
+    h.worthChecks = [
+      check1({ label: 'a', costCents: 45000, predictedRating: 9, actualRating: 8 }),
+      check1({ label: 'b', costCents: 200000, predictedRating: 9, actualRating: 2 })
+    ];
+    const short = W.calibration(h);
+    check('two before-and-afters is not a pattern', short.status, 'incomplete');
+    checkTrue('and it says how many more are needed', /Rate 1 more thing\b/.test(short.reason));
+
+    h.worthChecks.push(check1({ label: 'c', costCents: 9000, predictedRating: 6, actualRating: 9 }));
+    const cal = W.calibration(h);
+    check('three makes it readable', cal.status, 'ok');
+    check('the mean gap is the average of the three', cal.value, (-1 + -7 + 3) / 3, 1e-12);
+    check('one came in badly below', cal.overestimatedCount, 1);
+    check('one came in well above', cal.underestimatedCount, 1);
+    check('and one was inside the band', cal.onTargetCount, 1);
+    check('the worst miss is named', cal.worstMiss.check.label, 'b');
+    check('and the best surprise too', cal.bestSurprise.check.label, 'c');
+
+    /* An unrated or un-predicted entry is not a pair and must not shift it. */
+    h.worthChecks.push(check1({ label: 'd', costCents: 1000, predictedRating: 10 }));
+    check('a thing not yet lived is not a pair', W.calibration(h).pairCount, 3);
+    check('and does not move the mean', W.calibration(h).value, cal.value, 1e-12);
+  }
+
+  /* -- Regrets: the Tier 4 view, which is a filter, not a calculation ----- */
+  {
+    const h = Demo.build();
+    h.worthChecks = [
+      check1({ label: 'bike', costCents: 200000, predictedRating: 9, actualRating: 2 }),
+      check1({ label: 'gadget', costCents: 5000, actualRating: 3 }),
+      check1({ label: 'knife', costCents: 9000, actualRating: 9 }),
+      check1({ label: 'desk', costCents: 60000, predictedRating: 7 })
+    ];
+    const r = W.regrets(h);
+    check('only things rated low are regrets', r.count, 2);
+    check('and the total is what they cost', r.value, 205000);
+    check('the thing never rated is not a regret', r.items.every(i => i.label !== 'desk'), true);
+    check('worst first', r.items[0].label, 'bike');
+    check('the denominator is everything rated', r.ratedTotalCents, 214000);
+    check('so the share is of rated spend', r.shareOfSpend, 205000 / 214000, 1e-12);
+    checkTrue('and the total is complete', r.complete);
+
+    /* A regret with no price recorded makes the total a floor, and the
+       result has to say so rather than quietly leaving it out. */
+    h.worthChecks.push(check1({ label: 'unpriced', actualRating: 1 }));
+    const floor = W.regrets(h);
+    check('an unpriced regret still counts as one', floor.count, 3);
+    check('but not toward the total', floor.value, 205000);
+    checkTrue('and the total is flagged as a floor', !floor.complete);
+
+    const raised = W.regrets(h, { threshold: 8 });
+    check('the threshold is adjustable', raised.count, 3);
+    check('and reported back', raised.threshold, 8);
+
+    check('with nothing rated there is nothing to filter',
+      W.regrets(Schema.createHousehold({})).status, 'incomplete');
+  }
+
+  /* -- Everything at once -------------------------------------------------- */
+  {
+    const h = Demo.build();
+    h.worthChecks = [
+      check1({ label: 'knife', costCents: 9000, hoursSpent: 900, predictedRating: 6, actualRating: 9 }),
+      check1({ label: 'bike', costCents: 200000, hoursSpent: 20, predictedRating: 9, actualRating: 2 }),
+      check1({ label: 'desk', costCents: 60000, predictedRating: 7 })
+    ];
+    const s = W.summarise(h, TABLES);
+    check('every stored thing gets a row', s.rows.length, 3);
+    check('two have been lived', s.ratedCount, 2);
+    check('one is still ahead', s.awaitingCount, 1);
+    check('best value is the cheapest per point', s.bestValue.label, 'knife');
+    check('worst is the dearest', s.worstValue.label, 'bike');
+    checkTrue('a thing with no actual rating cannot be ranked on one',
+      s.rows.filter(r => r.label === 'desk')[0].stage === 'awaiting');
+    check('an empty household still summarises',
+      W.summarise(Schema.createHousehold({}), TABLES).rows.length, 0);
+  }
+
+  /* -- The shared rating control carries two ratings for one item --------- */
+  {
+    const html = Rating.controlHtml({ scope: 'worth', itemId: 'w1', slot: 'predicted',
+                                      value: 7, label: 'Bike', name: 'Predicted worth' });
+    checkTrue('the control declares its slot', /data-rating-slot="predicted"/.test(html));
+    checkTrue('and names itself for a screen reader',
+      /aria-label="Predicted worth for Bike"/.test(html));
+
+    const node = {
+      value: '7',
+      getAttribute: (k) => ({ 'data-rating-scope': 'worth', 'data-rating-item': 'w1',
+                              'data-rating-slot': 'actual' })[k] || null
+    };
+    const read = Rating.readTarget(node);
+    check('reading it back gives the slot', read.slot, 'actual');
+    check('and the item', read.itemId, 'w1');
+    check('and the value', read.value, 7);
+
+    const plain = Rating.readTarget({
+      value: '3',
+      getAttribute: (k) => ({ 'data-rating-scope': 'joy', 'data-rating-item': 'housing' })[k] || null
+    });
+    check('a control with no slot reads back null, not undefined', plain.slot, null);
+    checkTrue('and the slotless markup carries no slot attribute',
+      !/data-rating-slot/.test(Rating.controlHtml({ scope: 'joy', itemId: 'housing' })));
+  }
 })();
 
 section('Ownership');

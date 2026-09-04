@@ -347,6 +347,22 @@
       ]
     },
     {
+      id: 'worth',
+      order: 22,
+      title: 'Worth It',
+      blurb: 'What you thought something would be worth before you bought it, against what it turned out to be worth \u2014 and what that gap says about your own guesses.',
+      href: 'rooms/worth.html',
+      tier: 1,
+      tags: ['cashflow'],
+      subsections: [
+        { id: 'things',      label: 'The things' },
+        { id: 'out-each',    label: 'The arithmetic on each' },
+        { id: 'out-gap',     label: 'Before against after' },
+        { id: 'out-regrets', label: 'The ones you would take back' },
+        { id: 'reading',     label: 'Reading from elsewhere' }
+      ]
+    },
+    {
       id: 'foo-ladder',
       order: 21,
       title: 'FOO Ladder',
@@ -355,9 +371,9 @@
       tier: 0,
       tags: ['cashflow', 'debt'],
       /* The FOO calculator sits at the repo root (index.html), so this href
-         is relative to map.html, which also lives at the root. A single-view
-         React app with no stable section anchors yet; declaring none is
-         deliberate — see DECISIONS.md D-007. */
+         is relative to map.html, which also lives at the root. A
+         single-view app with no stable section anchors yet; declaring none
+         is deliberate — see DECISIONS.md D-007. */
       subsections: []
     }
   ];
