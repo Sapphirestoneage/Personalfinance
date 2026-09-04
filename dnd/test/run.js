@@ -218,6 +218,71 @@ section('Dungeons & Dividends — level, HP and AC');
   check('the spectrum ranks highest first', spec[0].id, 'incomePower');
 })();
 
+section('Dungeons & Dividends — the two skins');
+
+(function () {
+  /* skin.js talks to localStorage, so give it one. */
+  const realSelf = global.self;
+  const store = {};
+  global.self = {
+    localStorage: {
+      getItem: k => (k in store ? store[k] : null),
+      setItem: (k, v) => { store[k] = String(v); },
+      removeItem: k => { delete store[k]; }
+    },
+    document: { body: { attrs: {}, setAttribute(k, v) { this.attrs[k] = v; } } }
+  };
+  delete require.cache[require.resolve(path.join(ROOT, 'shared/skin.js'))];
+  const Skin = require(path.join(ROOT, 'shared/skin.js'));
+
+  check('two skins offered', Skin.SKINS.length, 2);
+  check('navy is the default', Skin.get(), 'navy');
+  check('init paints the default', Skin.init(), 'navy');
+  check('and stamps the body', global.self.document.body.attrs['data-skin'], 'navy');
+
+  check('parchment can be chosen', Skin.set('parchment'), 'parchment');
+  check('it persists', Skin.get(), 'parchment');
+  check('and repaints the body', global.self.document.body.attrs['data-skin'], 'parchment');
+  check('nonsense falls back rather than throwing', Skin.set('lasagne'), 'navy');
+
+  /* A skin is a preference about a browser, not a fact about someone's money.
+     It must never ride along in a character export. */
+  checkTrue('the skin key is separate from the character key',
+    Skin.KEY !== 'dnd.character.v1');
+  const Export = require(path.join(ROOT, 'shared/export.js'));
+  checkTrue('and skin is not an exportable field',
+    Export.OWNED_KEYS.indexOf('skin') === -1 && Export.OWNED_KEYS.indexOf('dndSkin') === -1);
+
+  if (realSelf === undefined) delete global.self; else global.self = realSelf;
+})();
+
+(function () {
+  /* Every page must load both halves and give the control somewhere to go,
+     or the toggle silently does nothing on that page. */
+  ['index.html', 'sheet.html', 'bestiary.html'].forEach(function (page) {
+    const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
+    checkTrue(`${page} loads skin.css`, /shared\/skin\.css/.test(html));
+    checkTrue(`${page} loads skin.js`, /shared\/skin\.js/.test(html));
+    checkTrue(`${page} has somewhere to mount the control`, /id="skin-bar"/.test(html));
+    checkTrue(`${page} mounts it`, /Skin\.mount\(/.test(html));
+    /* Applied before the page paints, so it cannot flash the wrong skin. */
+    checkTrue(`${page} applies the skin up front`, /Skin\.init\(\)/.test(html));
+  });
+
+  /* Printing must not depend on remembering to switch first. */
+  const css = fs.readFileSync(path.join(ROOT, 'shared/skin.css'), 'utf8');
+  checkTrue('there is a print block', /@media print/.test(css));
+  checkTrue('print forces a white page', /@media print[\s\S]*background:\s*#FFFFFF/i.test(css));
+  checkTrue('print hides the toggle', /@media print[\s\S]*\.skin-bar[\s\S]*display:\s*none/i.test(css));
+  /* Guard the mangled-hex class of typo that nearly shipped here. */
+  const hexes = css.match(/#[0-9A-Fa-f]{3,8}\b/g) || [];
+  hexes.forEach(function (h) {
+    checkTrue(`${h} is a valid hex colour`, /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(h));
+  });
+  checkTrue('no stray non-hex slipped into a colour value',
+    !/--color-[a-z-]+:\s*#[0-9A-Fa-f]*[g-zG-Z][^;]*;/.test(css));
+})();
+
 section('Dungeons & Dividends — the sheet furniture');
 
 (function () {

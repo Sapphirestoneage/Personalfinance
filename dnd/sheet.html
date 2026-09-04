@@ -8,6 +8,7 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="shared/fonts.css"/>
 <link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="shared/skin.css"/>
 <!--
   TIER 2 — the full sheet, laid out the way a character sheet is laid out.
 
@@ -148,7 +149,10 @@
 </style>
 </head>
 <body class="slaf">
+<script src="shared/skin.js"></script>
+<script>DND.Skin.init();</script>
 <div class="wrap">
+  <div class="skin-bar" id="skin-bar"></div>
   <a class="back" href="index.html">← Back to character creation</a>
 
   <div id="load-notice" class="notice" hidden></div>
@@ -689,6 +693,7 @@
   SLAF.Reference.load().then(function (tables) {
     TABLES = tables;
     if (BUILT) return;
+    DND.Skin.mount(document.getElementById('skin-bar'));
     buildMobility();
     BUILT = true;
     hydrate(); wire(); render();

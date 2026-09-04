@@ -8,6 +8,7 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="shared/fonts.css"/>
 <link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="shared/skin.css"/>
 <!--
   REFERENCE PAGE — rulebook sections 3B, 8H, 9, 9A, 9B.
 
@@ -63,7 +64,10 @@
 </style>
 </head>
 <body class="slaf">
+<script src="shared/skin.js"></script>
+<script>DND.Skin.init();</script>
 <header class="room-head">
+  <div class="skin-bar" id="skin-bar"></div>
   <a class="room-back" href="index.html">← Your character</a>
   <h1>The Bestiary</h1>
   <p class="room-lede">Everything in Dungeons &amp; Dividends that can happen <em>to</em> you, and the three feat trees that exist to stop it. Reference only — nothing here reads your numbers yet.</p>
@@ -190,6 +194,7 @@
   window.addEventListener('hashchange', jumpToHash);
 
   Reference.load().then(function (tables) {
+    DND.Skin.mount(document.getElementById('skin-bar'));
     render(tables.dndRules);
     jumpToHash();
   }).catch(function (err) {
