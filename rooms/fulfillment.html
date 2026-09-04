@@ -144,6 +144,7 @@
 <script src="../shared/registry.js"></script>
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
+<script src="../shared/liveform.js"></script>
 <script src="../shared/ownership.js"></script>
 <script src="../shared/rating.js"></script>
 <script src="../engines/tier0.js"></script>
@@ -301,10 +302,16 @@
 
   /* ---- Render ----------------------------------------------------------- */
 
+  /* The rating rows are live selects — never rebuilt under a finger.
+     See shared/liveform.js. */
+  var rateForm = SLAF.LiveForm.guard(el('rate-list'), function () {
+    renderRows(Spine.getProfile());
+  });
+
   function renderNow() {
     if (!TABLES) return;
     var h = Spine.getProfile();
-    renderRows(h);
+    rateForm.request();
 
     var c = Fulfillment.curve(h, TABLES.expenseCategories);
     if (!Money.isOk(c)) {

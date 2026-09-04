@@ -33,6 +33,14 @@ from the filesystem. Public repo.
   `shared/ownership.js`. See `DECISIONS.md` D-017.
 - **One formula, one function.** Parameterize variants; never copy-paste a
   calculation with small edits. See `SPEC.md` §8.
+- **Never rebuild a container of live inputs while someone is using it.**
+  A room either guards the container with `shared/liveform.js` and calls
+  `request()`, or builds its controls once and only writes their `.value` —
+  and says which, with the marker `LIVE-FORM: built once`. Replacing an
+  input's DOM node mid-tap closes the soft keyboard on a phone and it does
+  not come back, because a programmatic `.focus()` cannot reopen it. See
+  `DECISIONS.md` D-034; `test/run.js` enforces the declaration and
+  `test/forms.js` taps through every form on a mobile browser.
 - **Reference data lives in `data/`, not inline in calculator code**,
   versioned by year where relevant. See `SPEC.md` §7.
 - **Build in dependency order.** See `SPEC.md` §9.
@@ -63,4 +71,8 @@ first time.
   (`python3 -m http.server`), check for console errors, click through
   deep-link hashes, and re-derive the core math outside the browser against
   the demo persona. "Doesn't crash" is not verification.
+- **Test any room that takes typed input on a phone-shaped browser with
+  touch, not just a desktop window.** `node test/forms.js` does it. A
+  desktop click resolves too fast to show the bugs a real tap finds, and a
+  programmatic `.focus()` hides them completely.
 - Log every assumption in `DECISIONS.md`, matching the existing entry format.

@@ -41,6 +41,7 @@ const Accounts = require(path.join(ROOT, 'engines/accounts.js'));
 const Swan = require(path.join(ROOT, 'engines/swan.js'));
 const ValuesEngine = require(path.join(ROOT, 'engines/values.js'));
 const Rating = require(path.join(ROOT, 'shared/rating.js'));
+const LiveForm = require(path.join(ROOT, 'shared/liveform.js'));
 const Fulfillment = require(path.join(ROOT, 'engines/fulfillment.js'));
 const HassleEngine = require(path.join(ROOT, 'engines/hassle.js'));
 const SideHustle = require(path.join(ROOT, 'engines/sidehustle.js'));
@@ -1955,6 +1956,95 @@ section('Ratings');
    Side Hustle — marginal rate, stacked SE tax, and the hours it adds.
    SPEC.md §13 Tier 2.
    ========================================================================== */
+
+/* ==========================================================================
+   The live-form guard. The DOM half is checked in test/forms.js against a
+   real mobile browser; this is the scheduling rule on its own.
+   ========================================================================== */
+
+section('Live forms');
+
+(function () {
+  let busy = false;
+  let renders = 0;
+  const s = LiveForm.createScheduler({
+    isBusy: () => busy,
+    render: () => { renders++; }
+  });
+
+  check('an idle request renders straight away', (s.request(), renders), 1);
+  checkTrue('and leaves nothing owed', !s.isPending());
+
+  busy = true;
+  check('a request while the user is in the form does not render',
+    (s.request(), renders), 1);
+  checkTrue('but it is remembered', s.isPending());
+
+  check('a second request while busy still does not render',
+    (s.request(), renders), 1);
+  check('and a flush while busy does nothing either', (s.flush(), renders), 1);
+  checkTrue('the render is still owed', s.isPending());
+
+  busy = false;
+  check('flushing once the form is idle runs it exactly once',
+    (s.flush(), renders), 2);
+  checkTrue('and clears the debt', !s.isPending());
+  check('flushing again is a no-op', (s.flush(), renders), 2);
+
+  /* Several edits while busy collapse into ONE rebuild, which is the other
+     half of why this exists — the old code rebuilt on every keystroke-blur. */
+  busy = true;
+  s.request(); s.request(); s.request();
+  busy = false;
+  check('three deferred requests collapse into one render', (s.flush(), renders), 3);
+
+  /* force() is for a rebuild the user just asked for — adding a row, say,
+     where the rebuild IS the response to the gesture. */
+  busy = true;
+  check('force renders even while busy', (s.force(), renders), 4);
+  checkTrue('and clears anything owed', !s.isPending());
+
+  /* A guard with no container still behaves — a room that renames an id
+     should not silently stop rendering. */
+  const orphan = LiveForm.guard(null, () => { renders++; });
+  check('a guard with no container falls back to rendering',
+    (orphan.request(), renders), 5);
+
+  checkTrue('the settle window is a real number of milliseconds',
+    typeof LiveForm.SETTLE_MS === 'number' && LiveForm.SETTLE_MS > 0);
+})();
+
+/* Every room that builds form controls from markup must guard the container
+   it builds them into. This is the check that stops the phone bug coming
+   back in a room nobody has written yet. */
+(function () {
+  const roomsDir = path.join(ROOT, 'rooms');
+  fs.readdirSync(roomsDir).filter(f => f.endsWith('.html')).forEach(function (file) {
+    const html = fs.readFileSync(path.join(roomsDir, file), 'utf8');
+
+    /* Does this room build a focusable control from a string? */
+    const buildsControls = /innerHTML[\s\S]{0,4000}?(<input|<select|controlHtml)/.test(html)
+      || /(<input|<select)[^>]*'\s*\+/.test(html)
+      || /controlHtml\(/.test(html);
+    if (!buildsControls) return;
+
+    /* Two patterns are safe, and a room must visibly be using one of them:
+         1. it guards the container it rebuilds — shared/liveform.js, or
+         2. it builds its controls ONCE and only ever sets their .value,
+            which it declares with the marker below so the choice is a
+            decision rather than an accident.
+       Anything else destroys live inputs under the user's finger. */
+    const guarded = html.includes('liveform.js') && /LiveForm\.guard\(/.test(html);
+    const builtOnce = html.includes('LIVE-FORM: built once');
+    checkTrue(`${file} builds form controls safely (guarded, or built once)`,
+      guarded || builtOnce,
+      'guard the container with SLAF.LiveForm.guard(), or build the controls once '
+        + 'and mark the room "LIVE-FORM: built once" — see shared/liveform.js');
+    checkTrue(`${file} does not claim both patterns at once`,
+      !(guarded && builtOnce),
+      'pick one; claiming both means nobody knows which invariant holds');
+  });
+})();
 
 section('Side Hustle');
 

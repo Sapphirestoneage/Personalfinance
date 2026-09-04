@@ -47,6 +47,7 @@ shared/             The spine everything depends on
   registry.js         which rooms exist, their tags and deep-link anchors
   reference.js        loader + pure lookups for data/
   rating.js           THE 1-10 rating control — scale, storage and markup
+  liveform.js         never rebuild a form under the user's finger
   demo-persona.js     the one demo household used by every "try an example"
 engines/            Shared calculation engines — one function per concept
   tier0.js            the nine Tier 0 outputs
@@ -68,6 +69,7 @@ engines/            Shared calculation engines — one function per concept
 data/               Versioned reference tables (JSON, never inlined in code)
 test/run.js         Re-derives every formula outside the browser
 test/alignment.js   Browser layout check — side-by-side cells must line up
+test/forms.js       Mobile browser check — typing must survive, keyboard must stay
 SPEC.md             The full Tier 0–2 build spec. The authority.
 DECISIONS.md        Running log of what was decided and why.
 CLAUDE.md           Working agreement for anyone (human or agent) editing this.
@@ -108,6 +110,20 @@ node test/alignment.js
 It asserts that every row of side-by-side controls shares a top and bottom
 edge at 320, 360, 390 and 414px. It skips cleanly if Playwright isn't
 installed — the site itself has no dependencies and no build step.
+
+And a third that types on a phone, because a desktop click resolves too fast
+to find the bugs a real tap does:
+
+```sh
+python3 -m http.server 8765 &
+node test/forms.js
+```
+
+It taps from field to field in every room that takes input, on a mobile
+browser with touch, and asserts the control the tap was headed for is still
+the same DOM node afterwards. A replaced node means the soft keyboard closed
+and will not reopen — see `shared/liveform.js` for why. It skips cleanly
+without Playwright too.
 
 This re-derives every Tier 0 formula against the demo persona from
 independently written expectations, checks the unit and null-vs-zero rules,

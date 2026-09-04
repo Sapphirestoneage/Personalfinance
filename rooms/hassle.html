@@ -176,6 +176,7 @@
 <script src="../shared/registry.js"></script>
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
+<script src="../shared/liveform.js"></script>
 <script src="../shared/ownership.js"></script>
 <script src="../shared/rating.js"></script>
 <script src="../engines/tier0.js"></script>
@@ -277,6 +278,7 @@
     chore.label = a.label;
     chore.hours = a.hours;
     chore.hassle = stored === null ? a.hassle : stored;
+    choreRating.force();
     render();
     el('chore').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
@@ -305,14 +307,26 @@
         + 'even when the work is identical.'
       : 'One saving, one time.';
 
+    choreRating.request();
+    el('hassle-dots').innerHTML = Rating.dotsHtml(chore.hassle);
+  }
+
+  /* Two containers on this page are rebuilt from markup and hold live
+     controls: the chore's own rating select, and the rating on every preset
+     row. Both are guarded so neither is replaced under a finger — see
+     shared/liveform.js. */
+  var choreRating = SLAF.LiveForm.guard(el('hassle-slot'), function () {
     el('hassle-slot').innerHTML = Rating.controlHtml({
       scope: Hassle.SCOPE,
       itemId: chore.activityId || 'custom',
       value: chore.hassle,
       label: chore.label || 'this chore'
     });
-    el('hassle-dots').innerHTML = Rating.dotsHtml(chore.hassle);
-  }
+  });
+
+  var presetForm = SLAF.LiveForm.guard(el('preset-list'), function () {
+    renderPresets(Spine.getProfile());
+  });
 
   function opts() {
     return {
@@ -429,7 +443,7 @@
     renderInputs();
     renderRate();
     renderWage(h);
-    renderPresets(h);
+    presetForm.request();
 
     var wage = SLAF.Hourly.realHourlyWage(h, TABLES);
     el('reading-list').innerHTML =

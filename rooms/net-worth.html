@@ -108,6 +108,7 @@
 <script src="../shared/registry.js"></script>
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
+<script src="../shared/liveform.js"></script>
 <script src="../shared/ownership.js"></script>
 <script src="../engines/tier0.js"></script>
 <script>
@@ -203,6 +204,12 @@
     var field = node.getAttribute && node.getAttribute('data-field');
     if (!id || !field || node.tagName === 'SELECT') return;
     write(id, field, node.value);
+    /* Format this node in place. The list rebuild is deferred until the
+       user leaves the form (shared/liveform.js), so it cannot do it. */
+    if (field === 'valueCents') {
+      var a = findAsset(Spine.getProfile(), id);
+      if (a) node.value = Money.isEntered(a.valueCents) ? Money.formatCents(a.valueCents) : '';
+    }
   });
 
   el('asset-list').addEventListener('change', function (evt) {
@@ -214,6 +221,7 @@
     var btn = evt.target.closest('[data-remove]');
     if (!btn) return;
     Spine.removeById('assets', btn.getAttribute('data-remove'));
+    assetForm.force();
     render();
   });
 
@@ -239,6 +247,9 @@
     Spine.upsertAsset(Schema.createAsset({
       label: null, category: 'real_estate', valueCents: null, liquid: false, ownerIds: [person.id]
     }));
+    /* Forced: this rebuild is the answer to the tap, so the focus that
+       follows is part of the same gesture and the keyboard opens. */
+    assetForm.force();
     render();
     var names = el('asset-list').querySelectorAll('.asset-name');
     if (names.length) names[names.length - 1].focus();
@@ -247,6 +258,7 @@
   el('btn-clear').addEventListener('click', function () {
     if (!window.confirm('Remove everything you’ve added here? Cash and investments are not affected.')) return;
     ownedAssets(Spine.getProfile()).forEach(function (a) { Spine.removeById('assets', a.id); });
+    assetForm.force();
     render();
   });
 
@@ -307,9 +319,16 @@
     }).join('');
   }
 
+  /* The only container on this page holding live inputs. Guarded so it is
+     never rebuilt while someone is typing in it — see shared/liveform.js
+     for what that costs on a phone. */
+  var assetForm = SLAF.LiveForm.guard(el('asset-list'), function () {
+    renderAssets(Spine.getProfile());
+  });
+
   function renderNow() {
     var h = Spine.getProfile();
-    renderAssets(h);
+    assetForm.request();
     el('reading-list').innerHTML = ['cashSavings', 'investments', 'totalDebt']
       .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
 

@@ -183,6 +183,18 @@
 
   /* ---------- inputs ---------------------------------------------------- */
 
+  /* LIVE-FORM: built once.
+     Every input on this page is created here, exactly once at boot, and
+     from then on only its .value is written — see paintInputs(), which also
+     skips whatever is focused. Nothing rebuilds #buckets.
+
+     That is the invariant. Breaking it — re-running this on every edit —
+     destroys the input the user is typing in, and on a phone the soft
+     keyboard closes and does not come back, because a programmatic .focus()
+     cannot reopen it. If this ever does need to rebuild, guard the
+     container with shared/liveform.js instead. test/run.js checks that
+     every room declares one of those two patterns, and test/forms.js taps
+     through this page on a mobile browser to prove it holds. */
   function buildInputs() {
     var wrap = el('buckets');
     wrap.innerHTML = '';

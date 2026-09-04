@@ -109,6 +109,7 @@
 <script src="../shared/registry.js"></script>
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
+<script src="../shared/liveform.js"></script>
 <script src="../shared/ownership.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/cashflow.js"></script>
@@ -269,14 +270,21 @@
     el('together-body').innerHTML = body;
   }
 
-  function renderNow() {
-    if (!TABLES) return;
+  /* Every goal card is a form. Rebuilding the list while someone is typing
+     in one destroys the field they are in — and on a phone that closes the
+     keyboard for good. See shared/liveform.js. */
+  var goalForm = SLAF.LiveForm.guard(el('goal-list'), function () {
     var h = Spine.getProfile();
     var goals = h.goals || [];
     el('goal-list').innerHTML = goals.length
       ? goals.map(function (g) { return goalCard(h, g); }).join('')
       : '';
-    renderTogether(h);
+  });
+
+  function renderNow() {
+    if (!TABLES) return;
+    goalForm.request();
+    renderTogether(Spine.getProfile());
   }
 
   /* ---------- writes ------------------------------------------------------- */
@@ -316,7 +324,7 @@
     var pick = evt.target.closest('[data-template]');
     if (pick) {
       var goal = Goals.fromTemplate(TABLES.goalTemplates, pick.getAttribute('data-template'));
-      if (goal) { Spine.upsertGoal(goal); openGoalId = goal.id; render();
+      if (goal) { Spine.upsertGoal(goal); openGoalId = goal.id; goalForm.force(); render();
         el('goal-list').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
       return;
     }
@@ -324,6 +332,7 @@
     if (toggle) {
       var id = toggle.getAttribute('data-toggle');
       openGoalId = openGoalId === id ? null : id;
+      goalForm.force();
       render();
       return;
     }
@@ -331,6 +340,7 @@
     if (rm) {
       if (!window.confirm('Remove this goal?')) return;
       Spine.removeGoal(rm.getAttribute('data-remove'));
+      goalForm.force();
       render();
       return;
     }
@@ -341,6 +351,7 @@
       if (!g) return;
       Spine.upsertGoal({ id: gid,
         lineItems: (g.lineItems || []).concat([Schema.createGoalLineItem({})]) });
+      goalForm.force();
       render();
       return;
     }
@@ -352,6 +363,7 @@
       if (!g2) return;
       Spine.upsertGoal({ id: gid2,
         lineItems: (g2.lineItems || []).filter(function (li) { return li.id !== iid; }) });
+      goalForm.force();
       render();
     }
   });
@@ -380,6 +392,12 @@
     var iid = node.getAttribute('data-item');
     if (iid) writeItem(gid, iid, field, node.value);
     else writeGoal(gid, field, node.value);
+    /* Tidy this one node. The list rebuild that used to do it is deferred
+       until focus leaves the form — see shared/liveform.js. */
+    if (/Cents$/.test(field)) {
+      var cents = Money.parseMoney(node.value);
+      node.value = Money.isEntered(cents) ? Money.formatCents(cents) : '';
+    }
   });
 
   document.addEventListener('change', function (evt) {

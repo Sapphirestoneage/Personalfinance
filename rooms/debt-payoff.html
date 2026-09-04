@@ -159,6 +159,7 @@
 <script src="../shared/registry.js"></script>
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
+<script src="../shared/liveform.js"></script>
 <script src="../shared/demo-persona.js"></script>
 <script src="../engines/debt.js"></script>
 <script>
@@ -291,6 +292,18 @@
     var key = node.getAttribute && node.getAttribute('data-field');
     if (!id || !key || node.tagName === 'SELECT') return;
     writeField(id, key, node.value);
+    /* Tidy the value on THIS node rather than waiting for a rebuild to do
+       it — the rebuild is now deferred until the user leaves the form, and
+       setting one node's value replaces nothing. */
+    if (key !== 'label') {
+      var debt = findDebt(Spine.getProfile(), id);
+      if (debt) {
+        node.value = !Money.isEntered(debt[key]) ? ''
+          : key === 'rate'
+            ? Money.formatRate(debt[key], { decimals: 2 }).replace(/\.?0+%$/, '%')
+            : Money.formatCents(debt[key]);
+      }
+    }
   });
 
   el('debt-list').addEventListener('change', function (evt) {
@@ -303,6 +316,7 @@
     var btn = evt.target.closest('[data-remove]');
     if (!btn) return;
     Spine.removeById('debts', btn.getAttribute('data-remove'));
+    debtForm.force();
     render();
   });
 
@@ -334,6 +348,9 @@
   el('btn-add').addEventListener('click', function () {
     var person = Spine.ensurePrimaryPerson('You');
     Spine.upsertDebt(Schema.createDebt({ label: null, type: 'credit_card', ownerIds: [person.id] }));
+    /* Forced: the rebuild IS the answer to this tap, and the focus that
+       follows is part of the same gesture, so the keyboard opens properly. */
+    debtForm.force();
     render();
     var inputs = el('debt-list').querySelectorAll('.debt-name');
     if (inputs.length) inputs[inputs.length - 1].focus();
@@ -481,10 +498,18 @@
     }).join('');
   }
 
+  /* The list of debts is the one part of this page that holds live inputs,
+     so it is the one part that must not be rebuilt under a finger. The
+     outputs below it re-render on every change as before — they contain
+     nothing focusable. See shared/liveform.js. */
+  var debtForm = SLAF.LiveForm.guard(el('debt-list'), function () {
+    renderDebts(Spine.getProfile());
+  });
+
   function renderNow() {
     if (!RULES) return;
     var h = Spine.getProfile();
-    renderDebts(h);
+    debtForm.request();
     var plan = renderPlan(h);
     renderStrategies(h);
     renderTimeline(plan);
@@ -578,6 +603,7 @@
     if (!Schema.primaryPerson(Spine.getProfile())) Spine.updateProfile({ people: demo.people });
     extraCents = 20000;
     el('f-extra').value = Money.formatCents(extraCents);
+    debtForm.force();
     render();
     el('out-plan').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
@@ -587,6 +613,7 @@
     Spine.updateProfile({ debts: [] });
     extraCents = null;
     el('f-extra').value = '';
+    debtForm.force();
     render();
   });
 

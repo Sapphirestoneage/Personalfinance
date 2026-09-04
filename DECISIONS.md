@@ -1388,6 +1388,78 @@ it shares. Everything below shifted by one.
 
 ---
 
+## D-034 — Never rebuild a form under the user's finger
+
+**Reported from a phone: "when I type things don't enter or a keypad doesn't
+pop up."** Not reproducible on a desktop browser, and the code looked
+careful — every list even restored focus after re-rendering. Here is what was
+actually happening, in order:
+
+1. You tap the next field. The browser blurs the one you were in.
+2. The blur handler writes the value, which notifies the spine.
+3. The room re-renders, and the list is rebuilt with `innerHTML` — which
+   destroys and recreates **every node in it**, including the node your tap
+   was still resolving onto.
+4. The room notices focus was lost and calls `.focus()` on the fresh
+   replacement.
+
+Step 4 is where it breaks. **A programmatic `.focus()` does not raise the
+soft keyboard on Android or iOS** — only a real user gesture does. So the
+keyboard closes, the caret is somewhere invisible, and the next thing typed
+goes nowhere. On a desktop, step 4 works perfectly and the whole thing is
+invisible, which is why it survived every check up to now.
+
+**The fix is a rule, not a patch.** `shared/liveform.js` holds it:
+
+> A container of live inputs is never re-rendered while the user is working
+> inside it. Renders requested during that time are held and run once, after
+> focus has genuinely left and no tap is in flight.
+
+"Working inside it" is deliberately wider than "has focus". A tap on a phone
+spans three events — `pointerdown` on the new control, `focusout` on the old
+one, then the click that finally moves focus — and a rebuild anywhere in that
+window eats the tap. So the form also stays busy while a pointer is held,
+during IME composition, and for a 350ms settle after any sign of life in it.
+That last one matters for `<select>`: a change can arrive with focus already
+gone while the finger is still on the widget, which is a real failure the
+first version of this guard missed and the browser test caught.
+
+**Two safe patterns, and a room must visibly use one.** Either guard the
+container and call `request()`, or build the controls once and only ever
+write their `.value` — the pattern Cash Flow already used, which is why that
+room never broke. A room taking the second route says so with the marker
+`LIVE-FORM: built once`, so it is a decision rather than an accident.
+`test/run.js` fails any room that builds form controls from markup and
+declares neither, which is what stops this returning in a room nobody has
+written yet.
+
+**Rooms changed:** Debt Payoff, Net Worth, Goals, What Matters, Enough and
+Worth the Hassle now guard their lists. Cash Flow declares the built-once
+pattern. Start Here was already safe — its questions are static markup.
+
+**A rebuild the user asked for is still immediate.** Adding a row, removing
+one, loading the example: there the rebuild *is* the response to the
+gesture, and the focus that follows is part of the same gesture, so the
+keyboard opens properly. Those call `force()`.
+
+**Values are now tidied in place on blur.** Formatting `3200` into `$3,200`
+used to be a side effect of the rebuild. With the rebuild deferred, each
+room formats the single node the user just left, which replaces nothing.
+
+**`test/forms.js` is the regression test**, and it was checked against the
+bug rather than assumed to work: with the guard neutered it fails on twelve
+assertions and Playwright reports "element was detached from the DOM,
+retrying" sixty-one times, which is the bug in the words of the driver. It
+runs on a Pixel-shaped browser with touch, taps from field to field in every
+room that takes input, and asserts the control the tap reached is still the
+same DOM node. It skips cleanly without Playwright, like the alignment pass.
+
+**What this cost:** roughly nothing. A list now redraws a beat after you stop
+touching it rather than on every keystroke-blur — which also collapses what
+used to be one full rebuild per edit into one per interaction.
+
+---
+
 ## Still open
 
 - ~~**Two-Income Household Toggle** and **Soft Saving Balance

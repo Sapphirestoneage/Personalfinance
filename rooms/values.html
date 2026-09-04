@@ -158,6 +158,7 @@
 <script src="../shared/registry.js"></script>
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
+<script src="../shared/liveform.js"></script>
 <script src="../shared/ownership.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/cashflow.js"></script>
@@ -368,11 +369,20 @@
 
   /* ---- Render ----------------------------------------------------------- */
 
+  /* The assignment rows are live selects. Rebuilding them while one is
+     open — or while a finger is on its way to the next one — loses the tap
+     and, on a phone, the keyboard with it. See shared/liveform.js.
+     The pick list above is buttons, not fields, and has to redraw its rank
+     numbers the instant one is tapped, so it is not guarded. */
+  var assignForm = SLAF.LiveForm.guard(el('assign-list'), function () {
+    renderAssignments(Spine.getProfile());
+  });
+
   function renderNow() {
     if (!TABLES) return;
     var h = Spine.getProfile();
     renderPicks(h);
-    renderAssignments(h);
+    assignForm.request();
     renderCompare(h);
     el('reading-list').innerHTML = ['monthlyExpenses']
       .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
