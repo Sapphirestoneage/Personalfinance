@@ -71,6 +71,7 @@ test/run.js         Re-derives every formula outside the browser
 test/alignment.js   Browser layout check — side-by-side cells must line up
 test/forms.js       Mobile browser check — typing must survive, keyboard must stay
 SPEC.md             The full Tier 0–2 build spec. The authority.
+ROADMAP.md          The master idea index, tiers 0–24, + what's actually built
 DECISIONS.md        Running log of what was decided and why.
 CLAUDE.md           Working agreement for anyone (human or agent) editing this.
 ```

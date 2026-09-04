@@ -3,6 +3,10 @@
 ## Read first, every session
 
 See `SPEC.md` for the full Tier 0–2 build spec and locked decisions.
+`ROADMAP.md` is the master idea index — every tier, 0 through 24. It is the
+idea universe, not the build plan: its ✅ means "the idea is locked", not
+"this exists". `SPEC.md` scopes what this repo actually builds, and the
+build-status table at the top of `ROADMAP.md` says what is shipped.
 
 Then read `README.md` (what this project is) and `DECISIONS.md` (what has
 already been decided and why). `SPEC.md` is the authority on the data model,
