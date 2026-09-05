@@ -108,20 +108,25 @@
       ]
     },
     {
-      id: 'net-worth',
+      id: 'statement',
       kind: 'core',
       needs: ['cashSavings', 'investments', 'totalDebt'],
       order: 5,
-      title: 'Net Worth',
-      blurb: 'Everything you own, everything you owe, and the one number underneath. The place to add a house or a car.',
-      href: 'rooms/net-worth.html',
+      title: 'The Statement',
+      blurb: 'Everything you own in three portfolios, how sure you are of each, how fast you could reach it — and the one number underneath. The place to add a house or a car.',
+      href: 'rooms/statement.html',
       tier: 1,
       tags: ['debt'],
+      /* Replaces Net Worth (D-069); rooms/net-worth.html redirects here. */
       subsections: [
-        { id: 'out-net-worth',  label: 'Net worth' },
-        { id: 'assets',         label: 'What you own' },
-        { id: 'from-elsewhere', label: 'Counted, but owned elsewhere' },
-        { id: 'ledger',         label: 'The whole ledger' }
+        { id: 'portfolios', label: 'Three portfolios' },
+        { id: 'assets',     label: 'Rate what you own' },
+        { id: 'ladder',     label: 'The liquidity ladder' },
+        { id: 'bridge',     label: 'The bridge to 59½' },
+        { id: 'brackets',   label: 'Your bracket' },
+        { id: 'worst-year', label: 'The worst plausible year' },
+        { id: 'future',     label: 'Money that is coming' },
+        { id: 'reading',    label: 'Reading from elsewhere' }
       ]
     },
     {
@@ -155,6 +160,7 @@
       subsections: [
         { id: 'number',        label: 'Your number' },
         { id: 'deductible',    label: 'Your highest deductible' },
+        { id: 'coverage',      label: 'Coverage checkup' },
         { id: 'out-compare',   label: 'Yours vs. the maths' },
         { id: 'out-gap',       label: 'Getting there' },
         { id: 'milestones',    label: 'The usual milestones' },
@@ -175,6 +181,7 @@
         { id: 'reading',    label: 'What this reads' },
         { id: 'out-target', label: 'Your number' },
         { id: 'variants',   label: 'Six ways to ask it' },
+        { id: 'targets',    label: 'Your targets' },
         { id: 'params',     label: 'Try different assumptions' }
       ]
     },
@@ -297,16 +304,17 @@
       kind: 'about-you',
       needs: ['grossAnnualIncome', 'filingStatus'],
       order: 17,
-      title: 'Where It Goes',
-      blurb: 'Roth, Traditional or taxable \u2014 and how much a Solo 401(k) actually lets you put away.',
+      title: 'Where It Goes & how it\u2019s split',
+      blurb: 'Roth, Traditional or taxable, how much a Solo 401(k) actually lets you put away \u2014 and the mix you are aiming for.',
       href: 'rooms/accounts.html',
       tier: 2,
       tags: ['income'],
       subsections: [
         { id: 'setup',   label: 'Your retirement setup' },
         { id: 'compare', label: 'Roth vs. Traditional vs. taxable' },
-        { id: 'solo',    label: 'Solo 401(k)' },
-        { id: 'reading', label: 'Reading from elsewhere' }
+        { id: 'solo',       label: 'Solo 401(k)' },
+        { id: 'allocation', label: 'How it\u2019s split' },
+        { id: 'reading',    label: 'Reading from elsewhere' }
       ]
     },
     {

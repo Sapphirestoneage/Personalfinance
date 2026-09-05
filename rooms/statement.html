@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>The Statement · SPARKS</title>
+<meta name="description" content="Everything you own in three portfolios, how sure you are of each, how fast you could reach it, and the one number underneath — plus the bridge to 59½, your bracket, and a bad year priced."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. BRIEF §3.3 "The 10x Statement". DECISIONS.md D-069.
+  Replaces rooms/net-worth.html, which now redirects here.
+
+  1. READS   every asset and debt, cash and investments (Start Here), the
+             monthly spend, the deductible and out-of-pocket max (Sleep At
+             Night), income, date of birth, state and filing status.
+  2. WRITES  It OWNS the itemised assets (property, vehicle, other) — name,
+             value, type — exactly as Net Worth did; and for EVERY asset the
+             Statement's own facts: liquidity, confidence, cost basis,
+             hassle, monthly cash flow, an access-age override. Cash and
+             investment VALUES stay Start Here's and render as chips. It
+             also owns futureIncome[]. It writes no debt: Debt Payoff owns
+             those and every balance here links there.
+  3. CALLS   engines/statement.js for every derived figure, engines/tax.js
+             and Reference.marginalBracket for the bracket ladder. Nothing
+             is re-implemented here.
+  4. EMPTY   Each screen says what it is missing. An unrated asset is
+             excluded from the weighted total and the screen says how many.
+             No date of birth means the ladder cannot apply the age gate
+             and says so. Nothing is assumed silently.
+  5. CONFIG  data/access_rules.json, confidence_weights.json,
+             ui_benefits.json (unverified), federal_brackets_2026.json
+             (unverified), state_brackets_2026.json (unverified). Every
+             figure from an unverified table says so beside the number.
+
+  LIVE-FORM: guarded. #asset-list and #future-list are variable-length and
+  rebuilt through SLAF.LiveForm.guard(); every other control is written in
+  the HTML once and only has its .value set.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
+  @media (max-width: 420px) { .pair { grid-template-columns: 1fr; } }
+  .figure-cell { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; }
+  .figure-cell .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  .figure-cell .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); }
+  .figure-cell .big.is-incomplete { font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text-faint); }
+  .figure-cell .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: auto; padding-top: var(--space-2); }
+
+  .portfolio { border-top: 1px solid var(--color-border); padding: var(--space-3) 0; }
+  .portfolio:first-of-type { border-top: none; }
+  .portfolio .head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+  .portfolio .head h3 { margin: 0; font-size: var(--text-base); }
+  .portfolio .head .tot { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .portfolio .blurb { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+  .portfolio ul { list-style: none; margin: var(--space-2) 0 0; padding: 0; font-size: var(--text-sm); }
+  .portfolio li { display: flex; justify-content: space-between; gap: var(--space-3); padding: 2px 0; color: var(--color-text-muted); }
+  .portfolio li .amt { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .asset { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-2); }
+  .asset-top { display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2); }
+  .asset-name { flex: 1; min-width: 0; background: transparent; border: none; border-bottom: 1px solid var(--color-border-strong); color: var(--color-text); font-family: var(--font-body); font-size: var(--text-base); padding: 2px 0; outline: none; }
+  .asset-name:focus { border-bottom-color: var(--color-border-active); }
+  .asset-name[readonly] { border-bottom-style: dotted; color: var(--color-text-muted); }
+  .asset-remove { background: none; border: none; color: var(--color-accent); cursor: pointer; font-size: var(--text-md); padding: 0 var(--space-1); }
+  .asset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); align-items: stretch; }
+  .asset-grid .slaf-label { display: block; margin-bottom: var(--space-1); }
+  .asset-more { margin-top: var(--space-2); }
+  .asset-sub { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; min-height: 1.3em; }
+
+  .ladder { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  .ladder li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); align-items: baseline; }
+  .ladder li:first-child { border-top: none; }
+  .ladder .amt { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ladder .bar { grid-column: 1 / -1; height: 8px; border-radius: var(--radius-pill); background: rgba(0,0,0,.22); box-shadow: inset 0 0 0 1px var(--color-border); overflow: hidden; }
+  .ladder .bar > i { display: block; height: 100%; background: var(--color-accent); }
+  .ladder li.never .bar > i { background: var(--navy-600); }
+
+  .brackets { width: 100%; border-collapse: collapse; font-size: var(--text-sm); margin-top: var(--space-3); }
+  .brackets th, .brackets td { text-align: right; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-variant-numeric: tabular-nums; }
+  .brackets th:first-child, .brackets td:first-child { text-align: left; }
+  .brackets tr.here td { color: var(--color-text); font-weight: 600; }
+  .brackets tr.above td { color: var(--color-text-faint); }
+
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  .flag.is-warn { border-left-color: var(--color-caution); background: rgba(232,160,46,.08); }
+  .caveat { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; }
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+
+  /* The printed statement: three portfolios, the figures, the date. No
+     controls, no nav, no chips. */
+  .print-only { display: none; }
+  @media print {
+    body { background: #fff; color: #000; }
+    .room-head .room-back, .slaf-hops, .slaf-progress-host, .actions, #assets, #future, #reading, .disclaimer, .caveat, .flag, .slaf-btn { display: none !important; }
+    .print-only { display: block; }
+    .slaf-card { border: 1px solid #999; box-shadow: none; break-inside: avoid; }
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>The Statement</h1>
+  <p class="room-lede">Everything you own in three portfolios, how sure you are of each, how fast you could reach it — and the one number underneath.</p>
+  <p class="print-only" id="print-date"></p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="portfolios">
+    <span class="slaf-eyebrow">Three portfolios</span>
+    <div class="pair" style="margin-top:var(--space-3)">
+      <div class="figure-cell">
+        <span class="cap">Net worth</span>
+        <span class="big" id="nw-plain">—</span>
+        <span class="sub" id="nw-plain-sub"></span>
+      </div>
+      <div class="figure-cell">
+        <span class="cap">Confidence-weighted</span>
+        <span class="big" id="nw-weighted">—</span>
+        <span class="sub" id="nw-weighted-sub"></span>
+      </div>
+    </div>
+    <div id="portfolio-list" style="margin-top:var(--space-3)"></div>
+    <p class="why" id="portfolio-why"></p>
+  </section>
+
+  <section class="slaf-card" id="assets" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Rate what you own</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">How sure, and how fast</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      Every asset, with two questions the value alone cannot answer: how
+      sure are you it is worth that, and how fast could you reach it. A
+      house, a car, anything else with resale value is added here; cash and
+      investments come from Start Here and link back.
+    </p>
+    <div id="asset-list"></div>
+    <button type="button" class="slaf-btn" id="btn-add" style="width:100%">+ Add something you own</button>
+    <div class="actions">
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Remove everything added here</button>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="ladder" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The liquidity ladder</span>
+    <h2 style="margin:var(--space-2) 0 0">What you could reach, and when</h2>
+    <ul class="ladder" id="ladder-list"></ul>
+    <p class="why" id="ladder-why"></p>
+  </section>
+
+  <section class="slaf-card" id="bridge" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The bridge to 59½</span>
+    <h2 style="margin:var(--space-2) 0 0">If you stop before the accounts open</h2>
+    <div class="pair" style="margin-top:var(--space-3)">
+      <div class="figure-cell"><span class="cap">Years to bridge</span><span class="big" id="bridge-years">—</span><span class="sub" id="bridge-years-sub"></span></div>
+      <div class="figure-cell"><span class="cap">Short by</span><span class="big" id="bridge-short">—</span><span class="sub" id="bridge-short-sub"></span></div>
+    </div>
+    <p class="why" id="bridge-why"></p>
+  </section>
+
+  <section class="slaf-card" id="brackets" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Your bracket</span>
+    <h2 style="margin:var(--space-2) 0 0">What the next dollar pays</h2>
+    <table class="brackets" id="bracket-table"></table>
+    <p class="why" id="bracket-why"></p>
+    <p class="caveat" id="bracket-caveat"></p>
+  </section>
+
+  <section class="slaf-card" id="worst-year" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The worst plausible year</span>
+    <h2 style="margin:var(--space-2) 0 0">Everything going wrong at once, priced</h2>
+    <div class="pair" style="margin-top:var(--space-3)">
+      <div class="figure-cell"><span class="cap">It would cost</span><span class="big" id="worst-cost">—</span><span class="sub" id="worst-cost-sub"></span></div>
+      <div class="figure-cell"><span class="cap">After cash</span><span class="big" id="worst-short">—</span><span class="sub" id="worst-short-sub"></span></div>
+    </div>
+    <p class="why" id="worst-why"></p>
+    <p class="caveat" id="worst-caveat"></p>
+  </section>
+
+  <section class="slaf-card" id="future" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Money that is coming</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">A pension, Social Security, an annuity</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">Not net worth, not income yet. Listed so the bridge and the FI date can read it later; nothing here is counted anywhere else.</p>
+    <div id="future-list"></div>
+    <button type="button" class="slaf-btn" id="btn-add-future" style="width:100%">+ Add something that is coming</button>
+  </section>
+
+  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+    <div class="actions"><button type="button" class="slaf-btn slaf-btn--quiet" id="btn-print">Print this statement</button></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Weights, access ages and the
+    liquidity scale are conventions from <code>data/</code>; the bracket,
+    state and unemployment tables are unverified and say so. Your numbers
+    stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/liveform.js"></script>
+<script src="../shared/staleness.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../engines/statement.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference,
+      Ownership = SLAF.Ownership, Statement = SLAF.Statement, Tax = SLAF.Tax;
+
+  var ROOM_ID = 'statement';
+  var TABLES = null;
+  var OWNED = Schema.ITEMISED_ASSET_CATEGORIES;
+  var CATEGORIES = [['real_estate', 'Property'], ['vehicle', 'Vehicle'], ['other', 'Something else']];
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function fmt(c) { return Money.formatCents(c); }
+  function setFig(id, subId, ok, text, sub) {
+    var n = el(id); n.className = 'big' + (ok ? '' : ' is-incomplete'); n.textContent = text;
+    if (subId) el(subId).textContent = sub || '';
+  }
+  function findAsset(h, id) {
+    return (h.assets || []).filter(function (a) { return a.id === id; })[0] || null;
+  }
+  function findFuture(h, id) {
+    return (h.futureIncome || []).filter(function (f) { return f.id === id; })[0] || null;
+  }
+  /* The tax characters a person can pick for an investment they entered as
+     one line. Cash, property, business are set by category, not chosen. */
+  var KINDS = Schema.TAX_CHARACTERS.map(function (t) { return [t.id, t.label + ' \u2014 ' + t.hint]; })
+    .concat([['hsa', 'HSA'], ['529', '529 plan'], ['daf', 'Donor-advised fund']]);
+  function byCategoryLabel(a, rules) {
+    var rule = rules ? Schema.assetRule(Object.assign({}, a, { taxCharacter: null }), rules) : null;
+    var t = rule ? Schema.TAX_CHARACTERS.filter(function (k) { return k.id === rule.key; })[0] : null;
+    return t ? t.label : (rule ? rule.key : 'unrated');
+  }
+
+  function scaleOptions(scale, current, defaultValue, blankLabel) {
+    var out = '<option value=""' + (Money.isEntered(current) ? '' : ' selected') + '>'
+      + esc(blankLabel) + (Money.isEntered(defaultValue) ? ' (default: ' + esc((scale.filter(function (s) { return s.value === defaultValue; })[0] || {}).label || defaultValue) + ')' : '') + '</option>';
+    return out + scale.map(function (s) {
+      return '<option value="' + s.value + '"' + (current === s.value ? ' selected' : '') + '>' + s.value + ' · ' + esc(s.label) + '</option>';
+    }).join('');
+  }
+
+  /* ---- Assets: every one rated, the itemised ones fully editable ------------ */
+
+  function renderAssets(h) {
+    var list = el('asset-list');
+    var rules = TABLES && TABLES.accessRules;
+    var assets = Schema.aggregatableAssets(h);
+    if (!assets.length) { list.innerHTML = '<p class="slaf-reason">Nothing owned yet. Cash and investments are asked in Start Here.</p>'; return; }
+    var scaleL = rules ? rules.liquidityScale : [];
+    var scaleC = rules ? rules.confidenceScale : [];
+    list.innerHTML = assets.map(function (a) {
+      var mine = OWNED.indexOf(a.category) !== -1;
+      var rule = rules ? Schema.assetRule(a, rules) : null;
+      var access = rules ? Schema.assetAccessAge(a, rules) : null;
+      var name = a.label || (CATEGORIES.filter(function (c) { return c[0] === a.category; })[0] || ['', a.category])[1];
+      var valueCell = mine
+        ? '<label class="slaf-field" style="margin:0"><span class="slaf-label">What it\'s worth</span>'
+          + '<span class="slaf-input-shell"><span class="slaf-affix">$</span>'
+          + '<input type="text" inputmode="decimal" data-asset="' + a.id + '" data-field="valueCents" value="'
+          + (Money.isEntered(a.valueCents) ? fmt(a.valueCents) : '') + '" placeholder="e.g. 320000" aria-label="Value"/></span></label>'
+        : '<div class="slaf-field" style="margin:0"><span class="slaf-label">What it\'s worth</span>'
+          + '<a class="slaf-owned slaf-owned--field" href="' + Ownership.linkTo('start', a.category === 'cash' ? 'q-cash' : 'q-investments') + '">'
+          + '<span class="slaf-owned-value">' + (Money.isEntered(a.valueCents) ? fmt(a.valueCents) : Money.EM_DASH) + '</span>'
+          + '<span class="slaf-owned-from">Start Here →</span></a></div>';
+      var typeCell = mine
+        ? '<label class="slaf-field" style="margin:0"><span class="slaf-label">Type</span>'
+          + '<span class="slaf-input-shell"><select data-asset="' + a.id + '" data-field="category">'
+          + CATEGORIES.map(function (c) { return '<option value="' + c[0] + '"' + (a.category === c[0] ? ' selected' : '') + '>' + c[1] + '</option>'; }).join('')
+          + '</select></span></label>'
+        : a.category === 'cash'
+          ? '<div class="slaf-field" style="margin:0"><span class="slaf-label">Kind</span>'
+            + '<span class="slaf-input-shell"><input type="text" value="Cash" readonly aria-label="Kind"/></span></div>'
+          : '<div class="slaf-field" style="margin:0"><span class="slaf-label">Kind</span>'
+            + '<span class="slaf-input-shell"><select data-asset="' + a.id + '" data-field="taxCharacter" aria-label="Tax character">'
+            + '<option value=""' + (a.taxCharacter && a.taxCharacter !== 'unknown' ? '' : ' selected') + '>'
+            + (a.taxCharacter === 'unknown' ? 'One total, not split' : 'By category (' + esc(byCategoryLabel(a, rules)) + ')') + '</option>'
+            + KINDS.map(function (k) { return '<option value="' + k[0] + '"' + (a.taxCharacter === k[0] ? ' selected' : '') + '>' + esc(k[1]) + '</option>'; }).join('')
+            + '</select></span></div>';
+      return '<div class="asset" data-asset-card="' + a.id + '">'
+        + '<div class="asset-top">'
+        + '<input class="asset-name" data-asset="' + a.id + '" data-field="label" value="' + esc(a.label || '') + '" placeholder="' + esc(name) + '" aria-label="Name"' + (mine ? '' : ' readonly') + '/>'
+        + (mine ? '<button type="button" class="asset-remove" data-remove="' + a.id + '" aria-label="Remove">✕</button>' : '')
+        + '</div>'
+        + '<div class="asset-grid">' + valueCell + typeCell
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">How fast could you reach it</span>'
+        + '<span class="slaf-input-shell"><select data-asset="' + a.id + '" data-field="liquidity" aria-label="Liquidity">'
+        + scaleOptions(scaleL, a.liquidity, rule ? rule.liquidity : null, 'Not rated') + '</select></span></label>'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">How sure it is worth that</span>'
+        + '<span class="slaf-input-shell"><select data-asset="' + a.id + '" data-field="confidence" aria-label="Confidence">'
+        + scaleOptions(scaleC, a.confidence, null, 'Not rated') + '</select></span></label>'
+        + '</div>'
+        + '<details class="asset-more"><summary class="slaf-hint" style="cursor:pointer">More: cost basis, cash flow, hassle, access age</summary>'
+        + '<div class="asset-grid" style="margin-top:var(--space-2)">'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Cost basis' + (rule && rule.key === 'roth' ? ' (contributions)' : '') + '</span>'
+        + '<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-asset="' + a.id + '" data-field="costBasisCents" value="' + (Money.isEntered(a.costBasisCents) ? fmt(a.costBasisCents) : '') + '" placeholder="optional" aria-label="Cost basis"/></span></label>'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Cash it throws off, a month</span>'
+        + '<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-asset="' + a.id + '" data-field="cashFlowMonthlyCents" value="' + (Money.isEntered(a.cashFlowMonthlyCents) ? fmt(a.cashFlowMonthlyCents) : '') + '" placeholder="if any" aria-label="Monthly cash flow"/></span></label>'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Hassle to hold</span>'
+        + '<span class="slaf-input-shell"><select data-asset="' + a.id + '" data-field="hassle" aria-label="Hassle">'
+        + '<option value=""' + (Money.isEntered(a.hassle) ? '' : ' selected') + '>Not rated</option>'
+        + [[1, 'Easy'], [2, 'Moderate'], [3, 'Annoying']].map(function (o) { return '<option value="' + o[0] + '"' + (a.hassle === o[0] ? ' selected' : '') + '>' + o[0] + ' · ' + o[1] + '</option>'; }).join('')
+        + '</select></span></label>'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Reachable from age</span>'
+        + '<span class="slaf-input-shell"><input type="text" inputmode="decimal" data-asset="' + a.id + '" data-field="accessAgeOverride" value="' + (Money.isEntered(a.accessAgeOverride) ? a.accessAgeOverride : '') + '" placeholder="' + (Money.isEntered(access) ? 'rule: ' + access : 'no age gate') + '" aria-label="Access age override"/></span></label>'
+        + '</div></details>'
+        + '<p class="asset-sub">' + (rule ? 'Filed under ' + esc((rules.buckets.filter(function (b) { return b.id === rule.bucket; })[0] || {}).label || rule.bucket)
+          + (Money.isEntered(access) ? ' · reachable from ' + access : ' · no age gate') : '') + '</p>'
+        + '</div>';
+    }).join('');
+  }
+
+  var assetForm = SLAF.LiveForm.guard(el('asset-list'), function () { renderAssets(Spine.getProfile()); });
+
+  el('asset-list').addEventListener('focusin', function (evt) {
+    var node = evt.target;
+    var f = node.getAttribute && node.getAttribute('data-field');
+    if (f === 'valueCents' || f === 'costBasisCents' || f === 'cashFlowMonthlyCents') {
+      var a = findAsset(Spine.getProfile(), node.getAttribute('data-asset'));
+      node.value = a && Money.isEntered(a[f]) ? String(a[f] / 100) : '';
+      node.select();
+    }
+  });
+  el('asset-list').addEventListener('focusout', function (evt) {
+    var node = evt.target;
+    var id = node.getAttribute && node.getAttribute('data-asset');
+    var field = node.getAttribute && node.getAttribute('data-field');
+    if (!id || !field || node.tagName === 'SELECT' || node.readOnly) return;
+    writeAsset(id, field, node.value);
+    if (field === 'valueCents' || field === 'costBasisCents' || field === 'cashFlowMonthlyCents') {
+      var a = findAsset(Spine.getProfile(), id);
+      if (a) node.value = Money.isEntered(a[field]) ? fmt(a[field]) : '';
+    }
+  });
+  el('asset-list').addEventListener('change', function (evt) {
+    if (evt.target.tagName !== 'SELECT') return;
+    writeAsset(evt.target.getAttribute('data-asset'), evt.target.getAttribute('data-field'), evt.target.value);
+  });
+  el('asset-list').addEventListener('click', function (evt) {
+    var btn = evt.target.closest('[data-remove]');
+    if (!btn) return;
+    Spine.removeById('assets', btn.getAttribute('data-remove'));
+    assetForm.force(); render();
+  });
+  el('asset-list').addEventListener('keydown', function (evt) {
+    if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') { evt.preventDefault(); evt.target.blur(); }
+  });
+
+  function writeAsset(id, field, raw) {
+    var existing = findAsset(Spine.getProfile(), id);
+    if (!existing) return;
+    var mine = OWNED.indexOf(existing.category) !== -1;
+    var patch = { id: id };
+    var text = String(raw === null || raw === undefined ? '' : raw).trim();
+    if (field === 'label') { if (!mine) return; patch.label = text === '' ? null : text; }
+    else if (field === 'category') { if (!mine) return; patch.category = text; patch.liquid = false; }
+    else if (field === 'valueCents') { if (!mine) return; patch.valueCents = Money.parseMoney(text); }
+    else if (field === 'taxCharacter') { patch.taxCharacter = text === '' ? (existing.taxCharacter === 'unknown' ? 'unknown' : null) : text; }
+    else if (field === 'liquidity' || field === 'confidence' || field === 'hassle') {
+      var n = text === '' ? null : Number(text);
+      patch[field] = (n === null || isNaN(n)) ? null : n;
+      /* `liquid` follows the rating so every ratio that reads it agrees. */
+      if (field === 'liquidity' && patch.liquidity !== null) patch.liquid = patch.liquidity <= 2;
+    }
+    else if (field === 'costBasisCents' || field === 'cashFlowMonthlyCents') { patch[field] = Money.parseMoney(text); }
+    else if (field === 'accessAgeOverride') { var age = text === '' ? null : Number(text); patch.accessAgeOverride = (age === null || isNaN(age) || age < 0) ? null : age; }
+    else return;
+    Spine.upsertAsset(patch);
+    render();
+  }
+
+  el('btn-add').addEventListener('click', function () {
+    var person = Spine.ensurePrimaryPerson('You');
+    Spine.upsertAsset(Schema.createAsset({ label: null, category: 'real_estate', valueCents: null, liquid: false, ownerIds: [person.id] }));
+    assetForm.force(); render();
+    var names = el('asset-list').querySelectorAll('.asset-name:not([readonly])');
+    if (names.length) names[names.length - 1].focus();
+  });
+  el('btn-clear').addEventListener('click', function () {
+    if (!window.confirm('Remove everything added here? Cash and investments are not affected.')) return;
+    Schema.aggregatableAssets(Spine.getProfile()).filter(function (a) { return OWNED.indexOf(a.category) !== -1; })
+      .forEach(function (a) { Spine.removeById('assets', a.id); });
+    assetForm.force(); render();
+  });
+
+  /* ---- Future income: its own list ------------------------------------------- */
+
+  function renderFuture(h) {
+    var list = el('future-list');
+    var rows = h.futureIncome || [];
+    if (!rows.length) { list.innerHTML = '<p class="slaf-reason">Nothing listed. That is fine — most people under 55 have nothing here yet.</p>'; return; }
+    var scaleC = TABLES && TABLES.accessRules ? TABLES.accessRules.confidenceScale : [];
+    list.innerHTML = rows.map(function (f) {
+      return '<div class="asset" data-future-card="' + f.id + '">'
+        + '<div class="asset-top"><input class="asset-name" data-future="' + f.id + '" data-field="label" value="' + esc(f.label || '') + '" placeholder="e.g. State pension" aria-label="Name"/>'
+        + '<button type="button" class="asset-remove" data-remove-future="' + f.id + '" aria-label="Remove">✕</button></div>'
+        + '<div class="asset-grid">'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">A month</span><span class="slaf-input-shell"><span class="slaf-affix">$</span>'
+        + '<input type="text" inputmode="decimal" data-future="' + f.id + '" data-field="monthlyCents" value="' + (Money.isEntered(f.monthlyCents) ? fmt(f.monthlyCents) : '') + '" placeholder="e.g. 1200" aria-label="Monthly amount"/></span></label>'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">From age</span><span class="slaf-input-shell">'
+        + '<input type="text" inputmode="decimal" data-future="' + f.id + '" data-field="startsAtAge" value="' + (Money.isEntered(f.startsAtAge) ? f.startsAtAge : '') + '" placeholder="e.g. 67" aria-label="Starts at age"/></span></label>'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">How sure</span><span class="slaf-input-shell"><select data-future="' + f.id + '" data-field="confidence" aria-label="Confidence">'
+        + scaleOptions(scaleC, f.confidence, null, 'Not rated') + '</select></span></label>'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Rises with inflation?</span><span class="slaf-input-shell"><select data-future="' + f.id + '" data-field="inflationAdjusted" aria-label="Inflation adjusted">'
+        + '<option value=""' + (f.inflationAdjusted === null ? ' selected' : '') + '>Not sure</option><option value="yes"' + (f.inflationAdjusted === true ? ' selected' : '') + '>Yes</option><option value="no"' + (f.inflationAdjusted === false ? ' selected' : '') + '>No</option></select></span></label>'
+        + '</div></div>';
+    }).join('');
+  }
+  var futureForm = SLAF.LiveForm.guard(el('future-list'), function () { renderFuture(Spine.getProfile()); });
+
+  el('future-list').addEventListener('focusin', function (evt) {
+    var node = evt.target; var f = node.getAttribute && node.getAttribute('data-field');
+    if (f === 'monthlyCents') { var r = findFuture(Spine.getProfile(), node.getAttribute('data-future')); node.value = r && Money.isEntered(r.monthlyCents) ? String(r.monthlyCents / 100) : ''; node.select(); }
+  });
+  el('future-list').addEventListener('focusout', function (evt) {
+    var node = evt.target; var id = node.getAttribute && node.getAttribute('data-future'); var f = node.getAttribute && node.getAttribute('data-field');
+    if (!id || !f || node.tagName === 'SELECT') return;
+    writeFuture(id, f, node.value);
+    if (f === 'monthlyCents') { var r = findFuture(Spine.getProfile(), id); if (r) node.value = Money.isEntered(r.monthlyCents) ? fmt(r.monthlyCents) : ''; }
+  });
+  el('future-list').addEventListener('change', function (evt) {
+    if (evt.target.tagName !== 'SELECT') return;
+    writeFuture(evt.target.getAttribute('data-future'), evt.target.getAttribute('data-field'), evt.target.value);
+  });
+  el('future-list').addEventListener('click', function (evt) {
+    var btn = evt.target.closest('[data-remove-future]'); if (!btn) return;
+    Spine.removeById('futureIncome', btn.getAttribute('data-remove-future'));
+    futureForm.force(); render();
+  });
+  el('future-list').addEventListener('keydown', function (evt) {
+    if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') { evt.preventDefault(); evt.target.blur(); }
+  });
+  function writeFuture(id, field, raw) {
+    var text = String(raw === null || raw === undefined ? '' : raw).trim();
+    var patch = { id: id };
+    if (field === 'label') patch.label = text === '' ? null : text;
+    else if (field === 'monthlyCents') patch.monthlyCents = Money.parseMoney(text);
+    else if (field === 'startsAtAge') { var n = text === '' ? null : Number(text); patch.startsAtAge = (n === null || isNaN(n)) ? null : n; }
+    else if (field === 'confidence') { var c = text === '' ? null : Number(text); patch.confidence = (c === null || isNaN(c)) ? null : c; }
+    else if (field === 'inflationAdjusted') patch.inflationAdjusted = text === '' ? null : text === 'yes';
+    else return;
+    Spine.upsertFutureIncome(patch);
+    render();
+  }
+  el('btn-add-future').addEventListener('click', function () {
+    var person = Spine.ensurePrimaryPerson('You');
+    Spine.upsertFutureIncome(Schema.createFutureIncome({ ownerIds: [person.id] }));
+    futureForm.force(); render();
+    var names = el('future-list').querySelectorAll('.asset-name'); if (names.length) names[names.length - 1].focus();
+  });
+
+  /* ---- The screens ------------------------------------------------------------- */
+
+  function renderPortfolios(h, all) {
+    var p = all.portfolios, c = all.confidenceWeightedNetWorth;
+    if (Money.isOk(p) && Money.isEntered(p.plainNetWorthCents)) {
+      setFig('nw-plain', 'nw-plain-sub', true, fmt(p.plainNetWorthCents), fmt(p.totalAssetsCents) + ' owned · ' + fmt(p.totalDebtCents || 0) + ' owed');
+    } else {
+      setFig('nw-plain', 'nw-plain-sub', false, Money.isOk(p) ? 'Add your debts, or say there are none' : p.reason, '');
+    }
+    if (Money.isOk(c)) {
+      setFig('nw-weighted', 'nw-weighted-sub', true, fmt(c.value),
+        c.unratedCount ? c.unratedCount + ' unrated asset' + (c.unratedCount === 1 ? '' : 's') + ' (' + fmt(c.unratedAssetsCents) + ') left out' : 'every asset rated · ' + fmt(c.haircutCents) + ' of haircut');
+    } else {
+      setFig('nw-weighted', 'nw-weighted-sub', false, c.reason, '');
+    }
+    var list = el('portfolio-list');
+    if (!Money.isOk(p)) { list.innerHTML = ''; el('portfolio-why').textContent = p.reason; return; }
+    list.innerHTML = p.order.map(function (id) {
+      var b = p.buckets[id];
+      return '<div class="portfolio"><div class="head"><h3>' + esc(b.label) + '</h3><span class="tot">' + fmt(b.totalCents) + '</span></div>'
+        + '<p class="blurb">' + esc(b.blurb) + (b.cashFlowMonthlyCents ? ' Throws off ' + fmt(b.cashFlowMonthlyCents) + ' a month.' : '') + '</p>'
+        + (b.assets.length ? '<ul>' + b.assets.map(function (x) {
+            return '<li><span>' + esc(x.asset.label || x.rule.key) + (x.asset.taxCharacter ? '' : ' <em style="color:var(--color-text-faint)">(' + esc(x.rule.key) + ', by category)</em>') + '</span><span class="amt">' + fmt(x.asset.valueCents) + '</span></li>';
+          }).join('') + '</ul>' : '<p class="blurb">Nothing here.</p>')
+        + '</div>';
+    }).join('');
+    el('portfolio-why').textContent = 'Weights: guaranteed counts in full, 85%+ at 0.85, "don\'t count on it" at half, "probably zero" at nothing — a convention (data/confidence_weights.json), shown beside the plain figure, never instead of it.';
+  }
+
+  function renderLadder(h, all) {
+    var l = all.liquidityLadder;
+    var list = el('ladder-list');
+    if (!Money.isOk(l)) { list.innerHTML = ''; el('ladder-why').textContent = l.reason; return; }
+    var total = l.bands.today + l.bands.thisMonth + l.bands.thisYear + l.bands.never;
+    var rows = [['Today', l.bands.today, l.cumulative.today], ['Within a month', l.bands.thisMonth, l.cumulative.thisMonth], ['Within a year', l.bands.thisYear, l.cumulative.thisYear], ['Not without a penalty, a sale, or a birthday', l.bands.never, null]];
+    list.innerHTML = rows.map(function (r, i) {
+      return '<li' + (i === 3 ? ' class="never"' : '') + '><span>' + r[0] + (r[2] !== null ? ' <span style="color:var(--color-text-faint)">· ' + fmt(r[2]) + ' cumulative</span>' : '') + '</span><span class="amt">' + fmt(r[1]) + '</span>'
+        + '<span class="bar"><i style="width:' + (total ? r[1] / total * 100 : 0) + '%"></i></span></li>';
+    }).join('');
+    var why = [];
+    why.push(l.ageKnown ? 'At ' + l.age + ', ' + fmt(l.gatedCents) + ' sits behind an access age you have not reached.' : 'No date of birth, so the age gate could not be applied — everything is shown at its own liquidity.');
+    if (l.unratedCount) why.push(l.unratedCount + ' asset' + (l.unratedCount === 1 ? ' is' : 's are') + ' at the default liquidity for ' + (l.unratedCount === 1 ? 'its' : 'their') + ' kind; rate ' + (l.unratedCount === 1 ? 'it' : 'them') + ' above.');
+    if (l.unknownCents) why.push(fmt(l.unknownCents) + ' was entered as one total and is treated as pre-tax until you split it in Start Here.');
+    el('ladder-why').textContent = why.join(' ');
+  }
+
+  function renderBridge(h, all) {
+    var b = all.bridgeGap;
+    if (!Money.isOk(b)) { setFig('bridge-years', 'bridge-years-sub', false, b.reason, ''); setFig('bridge-short', 'bridge-short-sub', false, Money.EM_DASH, ''); el('bridge-why').textContent = ''; return; }
+    if (b.noBridgeNeeded) {
+      setFig('bridge-years', 'bridge-years-sub', true, 'None', b.alreadyThere ? 'already at your FI number' : 'FI lands at ' + b.fiAge + ', after 59½');
+      setFig('bridge-short', 'bridge-short-sub', true, '$0', 'nothing to bridge');
+      el('bridge-why').textContent = 'At the current pace the accounts open before you stop, so nothing has to be reachable early.';
+      return;
+    }
+    setFig('bridge-years', 'bridge-years-sub', true, b.gapYears + ' yrs', 'FI at ' + b.fiAge + ' at this pace; 59½ is ' + b.gapYears + ' years later');
+    setFig('bridge-short', 'bridge-short-sub', true, fmt(b.value), fmt(b.availableCents) + ' reachable of ' + fmt(b.needCents) + ' needed');
+    el('bridge-why').textContent = 'Those years cost ' + fmt(b.annualSpendCents) + ' each at today\'s spending. Reachable before 59½: taxable ' + fmt(b.parts.taxable)
+      + ', cash ' + fmt(b.parts.cash) + ', Roth contributions ' + fmt(b.parts.rothBasis) + ', HSA ' + fmt(b.parts.hsa) + ' — ' + b.coveredYears + ' years\' worth.'
+      + (b.parts.rothBasis === 0 ? ' A Roth\'s cost basis counts here once you enter it above.' : '');
+  }
+
+  function renderBrackets(h) {
+    var table = el('bracket-table'), why = el('bracket-why'), caveat = el('bracket-caveat');
+    if (!TABLES || !TABLES.federalBrackets) { table.innerHTML = ''; why.textContent = ''; return; }
+    var gross = Schema.grossAnnualIncomeCents(h);
+    var b = Reference.marginalBracket(TABLES.federalBrackets, Money.isOk(gross) ? gross.value / 100 : null, h.filingStatus);
+    if (!Money.isOk(b)) { table.innerHTML = ''; why.textContent = b.reason; caveat.textContent = ''; return; }
+    var ladder = TABLES.federalBrackets.brackets[h.filingStatus];
+    var taxable = b.taxableIncomeDollars;
+    var prev = 0;
+    table.innerHTML = '<tr><th>Bracket</th><th>Taxable income</th><th>Yours</th></tr>' + ladder.map(function (row) {
+      var top = row.upToTaxableIncome;
+      var here = taxable > prev && (top === null || taxable <= top);
+      var above = taxable <= prev;
+      var yours = above ? 0 : Math.min(taxable, top === null ? taxable : top) - prev;
+      var html = '<tr class="' + (here ? 'here' : above ? 'above' : '') + '"><td>' + Math.round(row.rate * 100) + '%</td><td>'
+        + Money.formatCents(prev * 100) + ' – ' + (top === null ? 'up' : Money.formatCents(top * 100)) + '</td><td>' + (yours > 0 ? Money.formatCents(yours * 100) : Money.EM_DASH) + '</td></tr>';
+      prev = top === null ? prev : top;
+      return html;
+    }).join('');
+    var est = Tax.estimate(h, TABLES, {});
+    why.textContent = 'On ' + Money.formatCents(gross.value) + ' gross, ' + Money.formatCents(taxable * 100) + ' is taxable after the '
+      + Money.formatCents(b.standardDeductionDollars * 100) + ' standard deduction. The next dollar pays ' + Math.round(b.value * 100) + '% federal'
+      + (Money.isOk(est) && est.stateIncluded ? ' plus ' + (Math.round(est.components.state.marginalRate * 1000) / 10) + '% ' + h.state : '')
+      + (b.roomBeforeNextBracketDollars !== null ? '; ' + Money.formatCents(b.roomBeforeNextBracketDollars * 100) + ' of room before ' + Math.round(b.nextRate * 100) + '%.' : '.')
+      + (Money.isOk(est) ? ' All in — federal ' + fmt(est.federalIncomeTaxCents) + ', payroll ' + fmt(est.ficaCents) + (est.stateIncluded ? ', state ' + fmt(est.stateCents) : '') + ' — about ' + Money.formatRate(est.effectiveRate, { decimals: 1 }) + ' of gross.' : '');
+    caveat.textContent = 'Federal only, an estimate, from a bracket table that is unverified (data/federal_brackets_2026.json); the state figure applies the state schedule to federal taxable income and ignores state deductions and credits. Not a return.';
+  }
+
+  function renderWorst(h, all) {
+    var w = all.worstPlausibleYear;
+    if (!Money.isOk(w)) { setFig('worst-cost', 'worst-cost-sub', false, w.reason, ''); setFig('worst-short', 'worst-short-sub', false, Money.EM_DASH, ''); el('worst-why').textContent = ''; el('worst-caveat').textContent = ''; return; }
+    setFig('worst-cost', 'worst-cost-sub', true, fmt(w.costCents), 'deductible ' + fmt(w.deductiblesCents) + (w.oopMaxKnown ? ' · out-of-pocket max ' + fmt(w.oopMaxCents) : '') + ' · ' + w.months + ' months of essentials ' + fmt(w.essentialsCents));
+    setFig('worst-short', 'worst-short-sub', true, w.covered ? 'Covered' : fmt(w.value) + ' short', (w.cashKnown ? fmt(w.cashCents) + ' in cash' : 'no cash entered') + ' against ' + fmt(w.netCents) + ' net of benefit');
+    el('worst-why').textContent = (w.benefitKnown
+      ? 'Unemployment in ' + h.state + ' would pay about ' + fmt(w.benefitWeeklyCents) + ' a week for ' + w.benefitWeeks + ' weeks — ' + fmt(w.benefitCents) + '.'
+      : 'No state unemployment benefit was counted' + (h.state ? '.' : ' — add your state in Start Here.'))
+      + (w.oopMaxKnown ? '' : ' Add your health plan\'s out-of-pocket maximum in Sleep At Night to price a bad health year too.')
+      + ' This replaces "3–6 months" as the cushion test once these inputs exist.';
+    el('worst-caveat').textContent = 'The benefit is an estimate from an unverified table of state maximums (data/ui_benefits.json); the real figure depends on your base-period wages.';
+  }
+
+  function renderNow() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    var all = Statement.all(h, TABLES);
+    assetForm.request();
+    futureForm.request();
+    renderPortfolios(h, all);
+    renderLadder(h, all);
+    renderBridge(h, all);
+    renderBrackets(h);
+    renderWorst(h, all);
+    el('reading-list').innerHTML = ['cashSavings', 'investments', 'totalDebt', 'monthlyExpenses', 'highestDeductible', 'dob']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+    el('print-date').textContent = 'Statement as of ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) + ' — signed by nobody.';
+  }
+
+  var renderQueued = false;
+  function render() {
+    if (renderQueued) return;
+    renderQueued = true;
+    setTimeout(function () { renderQueued = false; renderNow(); }, 0);
+  }
+
+  el('btn-print').addEventListener('click', function () { window.print(); });
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    SLAF.Staleness.use(tables.staleness);
+    renderNow();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

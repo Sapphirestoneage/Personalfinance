@@ -97,7 +97,27 @@
     'asset.taxCharacter':                        { class: 'raw',        unit: 'enum',    values: ['pretax', 'roth', 'taxable', 'hsa', '529', 'daf', 'cash', 'property', 'business', 'other', 'unknown'], note: 'how the account is taxed. null means not asked; unknown means the person entered only a total. BRIEF §3.1, D-061' },
     'meta.hasDebt':                              { class: 'raw',        unit: 'bool',    note: 'null not asked; false means "no debt" as an answer, which takes Debt Payoff off the path. D-061' },
     'asset.category':                            { class: 'raw',        unit: 'enum',    values: ['cash', 'investment', 'retirement', 'real_estate', 'vehicle', 'other'] },
-    'asset.liquid':                              { class: 'raw',        unit: 'bool' },
+    'asset.liquid':                              { class: 'raw',        unit: 'bool',    note: 'reachable this month. Kept for every reader that already uses it; written from `liquidity` when that is set (liquid === liquidity <= 2). D-066' },
+    'asset.liquidity':                           { class: 'raw',        unit: 'enum',    values: [1, 2, 3, 4], note: '1 today · 2 within 30 days · 3 within 12 months · 4 cannot/will not sell. null = not rated; the access_rules default is then PROPOSED, never stored. D-066' },
+    'asset.confidence':                          { class: 'raw',        unit: 'enum',    values: [1, 2, 3, 4], note: '1 guaranteed · 2 85%+ · 3 real but do not count on it · 4 probably zero. null = not rated and excluded from the weighted total. D-066' },
+    'asset.costBasisCents':                      { class: 'raw',        unit: 'cents',   note: 'optional; what was paid in. For Roth it is the part reachable before 59½' },
+    'asset.hassle':                              { class: 'raw',        unit: 'enum',    values: [1, 2, 3], note: '1 easy · 2 moderate · 3 annoying — for anything income-producing' },
+    'asset.cashFlowMonthlyCents':                { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'net monthly cash the asset throws off; null for one that does not' },
+    'asset.accessAgeOverride':                   { class: 'raw',        unit: 'years',   note: 'overrides the access age derived from access_rules (e.g. a rule-of-55 plan). null = derived' },
+    'futureIncome.monthlyCents':                 { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'a pension, Social Security, an annuity, an inheritance you would rather not count. Owned by the Statement' },
+    'futureIncome.confidence':                   { class: 'raw',        unit: 'enum',    values: [1, 2, 3, 4] },
+    'property.rentMonthlyCents':                 { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'gross rent. The value itself lives on the linked real_estate asset — one number, one owner' },
+    'property.vacancyRate':                      { class: 'assumption', unit: 'rate',    default: 0.08, note: 'PROPOSED at 8%, a landlord convention; overridable per property' },
+    'insurance.oopMaxCents':                     { class: 'raw',        unit: 'cents',   note: 'health out-of-pocket maximum. Owned by Sleep At Night' },
+    'insurance.termLifeCents':                   { class: 'raw',        unit: 'cents',   note: 'term life cover in force' },
+    'insurance.disabilityMonthlyCents':          { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'long-term disability benefit' },
+    'insurance.umbrella':                        { class: 'raw',        unit: 'bool',    note: 'an umbrella liability policy exists' },
+    'allocation.stocks':                         { class: 'raw',        unit: 'rate',    note: 'target share; stocks + bonds + cash = 1. Owned by Where It Goes' },
+    'allocation.rebalanceBand':                  { class: 'raw',        unit: 'rate',    note: 'how far a slice may drift before rebalancing, e.g. 0.05' },
+    'targets.retireAge':                         { class: 'raw',        unit: 'years',   note: 'the age you intend to stop. Owned by FIRE' },
+    'targets.coastAge':                          { class: 'raw',        unit: 'years',   note: 'the age the coast variant grows to. Owned by FIRE; replaces the unstored preview knob. D-066' },
+    'incomeSource.hassle':                       { class: 'raw',        unit: 'enum',    values: [1, 2, 3], note: 'Return on Hassle applied to the job itself' },
+    'scenario.diff':                             { class: 'raw',        unit: 'object',  note: 'a named, dated overlay consumed by the life-events engine (T6). Nothing reads it yet' },
     'debt.balanceCents':                         { class: 'raw',        unit: 'cents' },
     'debt.rate':                                 { class: 'raw',        unit: 'rate',    period: 'annual' },
     'debt.minPaymentCents':                      { class: 'raw',        unit: 'cents',   period: 'monthly' },
@@ -190,6 +210,9 @@
       /* Is this still the job? Drives the run-rate figure. */
       ongoing: f.ongoing === undefined ? true : !!f.ongoing,
       type: f.type || 'w2',
+      /* Return on Hassle applied to the job: 1 easy · 2 moderate · 3
+         annoying. null until rated. D-066. */
+      hassle: f.hassle === undefined ? null : f.hassle,
       employerMatch: f.employerMatch || {
         matchPercent: null,                        // 0.5 === 50 cents on the dollar
         matchCapPercentOfSalary: null              // 0.06 === up to first 6% of salary
@@ -369,7 +392,119 @@
       /* How the money is taxed on the way out. Asked in three boxes by
          Start Here (pre-tax / Roth / taxable); a lump typed as one total is
          'unknown', which is an answer — null is "never asked". D-061. */
-      taxCharacter: f.taxCharacter === undefined ? null : f.taxCharacter
+      taxCharacter: f.taxCharacter === undefined ? null : f.taxCharacter,
+      /* The 10x Statement's per-asset facts (D-066). Every one starts null:
+         liquidity and confidence are rated, not guessed — the access_rules
+         default is proposed in the box, never written. */
+      liquidity: f.liquidity === undefined ? null : f.liquidity,
+      confidence: f.confidence === undefined ? null : f.confidence,
+      costBasisCents: f.costBasisCents === undefined ? null : f.costBasisCents,
+      hassle: f.hassle === undefined ? null : f.hassle,
+      cashFlowMonthlyCents: f.cashFlowMonthlyCents === undefined ? null : f.cashFlowMonthlyCents,
+      accessAgeOverride: f.accessAgeOverride === undefined ? null : f.accessAgeOverride
+    };
+  }
+
+  /**
+   * assetRule(asset, rules) — the access_rules row for an asset: by its
+   * taxCharacter, else by its category. Always returns a row, so a caller
+   * never has to guess a bucket.
+   */
+  function assetRule(asset, rules) {
+    var a = asset || {};
+    var by = (rules && rules.byTaxCharacter) || {};
+    var key = a.taxCharacter && by[a.taxCharacter] ? a.taxCharacter
+      : (rules && rules.byCategory && rules.byCategory[a.category]) || 'other';
+    return Object.assign({ key: key }, by[key] || { bucket: 'nonFinancial', liquidity: 3, accessAge: null, basisAccessAge: null });
+  }
+
+  /** The age this asset can be reached without penalty; the person's
+   *  override wins over the rule. null = no age gate. */
+  function assetAccessAge(asset, rules) {
+    if (asset && Money.isEntered(asset.accessAgeOverride)) return asset.accessAgeOverride;
+    return assetRule(asset, rules).accessAge;
+  }
+
+  /** Effective liquidity 1-4: the rating if given, else the rule's default —
+   *  and says which. */
+  function assetLiquidity(asset, rules) {
+    if (asset && Money.isEntered(asset.liquidity)) return { value: asset.liquidity, rated: true };
+    return { value: assetRule(asset, rules).liquidity, rated: false };
+  }
+
+  function createFutureIncome(fields) {
+    var f = fields || {};
+    return {
+      id: f.id || newId('fi'),
+      label: f.label || null,
+      monthlyCents: f.monthlyCents === undefined ? null : f.monthlyCents,
+      startsOn: f.startsOn === undefined ? null : f.startsOn,     /* ISO date, or an age via startsAtAge */
+      startsAtAge: f.startsAtAge === undefined ? null : f.startsAtAge,
+      endsOn: f.endsOn === undefined ? null : f.endsOn,
+      confidence: f.confidence === undefined ? null : f.confidence,
+      inflationAdjusted: f.inflationAdjusted === undefined ? null : !!f.inflationAdjusted,
+      ownerIds: f.ownerIds || []
+    };
+  }
+
+  /* A rental. Its VALUE is the linked real_estate asset's (one number, one
+     owner); this record carries what the building does, not what it is. */
+  function createProperty(fields) {
+    var f = fields || {};
+    return {
+      id: f.id || newId('prop'),
+      assetId: f.assetId || null,
+      mortgageId: f.mortgageId || null,
+      rentMonthlyCents: f.rentMonthlyCents === undefined ? null : f.rentMonthlyCents,
+      pitiMonthlyCents: f.pitiMonthlyCents === undefined ? null : f.pitiMonthlyCents,
+      opexMonthlyCents: f.opexMonthlyCents === undefined ? null : f.opexMonthlyCents,
+      vacancyRate: f.vacancyRate === undefined ? null : f.vacancyRate,
+      hassle: f.hassle === undefined ? null : f.hassle,
+      prospects: f.prospects === undefined ? null : f.prospects
+    };
+  }
+
+  function createAllocation(fields) {
+    var f = fields || {};
+    return {
+      stocks: f.stocks === undefined ? null : f.stocks,
+      bonds: f.bonds === undefined ? null : f.bonds,
+      cash: f.cash === undefined ? null : f.cash,
+      rebalanceBand: f.rebalanceBand === undefined ? null : f.rebalanceBand
+    };
+  }
+
+  /** The target mix, checked: which slices are entered, what they add to,
+   *  and whether that is 100%. One function so the room, the ownership
+   *  chip and the tests agree on what "balanced" means. D-071. */
+  function allocationStatus(household) {
+    var a = (household && household.allocation) || {};
+    var slices = ['stocks', 'bonds', 'cash'];
+    var entered = slices.filter(function (k) { return Money.isEntered(a[k]); });
+    if (!entered.length) return Money.incomplete('No target mix yet.', ['allocation']);
+    var sum = entered.reduce(function (t, k) { return t + a[k]; }, 0);
+    return Money.ok(sum, {
+      complete: entered.length === slices.length,
+      missing: slices.filter(function (k) { return !Money.isEntered(a[k]); }),
+      balanced: entered.length === slices.length && Math.abs(sum - 1) < 1e-9
+    });
+  }
+
+  function createTargets(fields) {
+    var f = fields || {};
+    return {
+      retireAge: f.retireAge === undefined ? null : f.retireAge,
+      coastAge: f.coastAge === undefined ? null : f.coastAge
+    };
+  }
+
+  function createScenario(fields) {
+    var f = fields || {};
+    return {
+      id: f.id || newId('scn'),
+      name: f.name || null,
+      startsOn: f.startsOn === undefined ? null : f.startsOn,
+      diff: f.diff || {}
     };
   }
 
@@ -594,7 +729,13 @@
     var f = fields || {};
     return {
       highestDeductibleCents: f.highestDeductibleCents === undefined
-        ? null : f.highestDeductibleCents
+        ? null : f.highestDeductibleCents,
+      /* The Coverage Checkup (D-066): what a bad year can cost and what
+         stands behind you. All null until asked in Sleep At Night. */
+      oopMaxCents: f.oopMaxCents === undefined ? null : f.oopMaxCents,
+      termLifeCents: f.termLifeCents === undefined ? null : f.termLifeCents,
+      disabilityMonthlyCents: f.disabilityMonthlyCents === undefined ? null : f.disabilityMonthlyCents,
+      umbrella: f.umbrella === undefined ? null : f.umbrella
     };
   }
 
@@ -648,6 +789,19 @@
       swan: createSwanTarget(f.swan),
       /* Goals — SPEC.md §9 item 6. Owned by the Goals room. */
       goals: (f.goals || []).map(createGoal),
+      /* The 10x Statement's records (D-066). Money that is coming — a
+         pension, Social Security, an annuity — is not net worth and is not
+         income yet; it is its own list. */
+      futureIncome: (f.futureIncome || []).map(createFutureIncome),
+      /* What a rental does, linked to the asset that says what it is. */
+      property: (f.property || []).map(createProperty),
+      /* Target split, one screen, owned by Where It Goes. */
+      allocation: createAllocation(f.allocation),
+      /* When you mean to stop, and when the coast variant grows to. Owned
+         by FIRE; the unstored preview knob is gone. */
+      targets: createTargets(f.targets),
+      /* Named, dated diffs for the life-events engine (T6). */
+      scenarios: (f.scenarios || []).map(createScenario),
       assumptions: Object.assign({}, ASSUMPTION_DEFAULTS, f.assumptions || {}),
       /* User overrides persist SEPARATELY from the defaults so "reset to
          default" is always possible — SPEC.md §3, assumption class. */
@@ -1034,6 +1188,15 @@
     createWorthCheck: createWorthCheck,
     createRetirement: createRetirement,
     createInsurance: createInsurance,
+    createFutureIncome: createFutureIncome,
+    createProperty: createProperty,
+    createAllocation: createAllocation,
+    createTargets: createTargets,
+    allocationStatus: allocationStatus,
+    createScenario: createScenario,
+    assetRule: assetRule,
+    assetAccessAge: assetAccessAge,
+    assetLiquidity: assetLiquidity,
     resolveAssumptions: resolveAssumptions,
     withMonthlyExpensesDeltaCents: withMonthlyExpensesDeltaCents,
     personById: personById,

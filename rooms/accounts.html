@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Where It Goes · SPARKS</title>
+<title>Where It Goes &amp; how it’s split · SPARKS</title>
 <meta name="description" content="Roth, Traditional or taxable — and how much a Solo 401k actually lets you put away."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
@@ -67,7 +67,7 @@
 
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
-  <h1>Where It Goes</h1>
+  <h1>Where It Goes &amp; how it’s split</h1>
   <p class="room-lede">Roth, Traditional or taxable — and how much a Solo 401k actually lets you put away.</p>
 </header>
 
@@ -152,6 +152,27 @@
     <div class="bars" id="s-bars"></div>
     <div class="out-detail" id="s-detail"></div>
     <div class="flag" id="s-note" hidden></div>
+  </section>
+
+  <section class="slaf-card" id="allocation">
+    <span class="slaf-eyebrow">How it’s split</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">The mix you are aiming for</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      A target, not a reading of your accounts: stocks, bonds and cash
+      should add to 100. The band is how far a slice may drift before you
+      rebalance it back.
+    </p>
+    <div class="grid-2">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Stocks</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" data-alloc="stocks" placeholder="e.g. 70" aria-label="Target share in stocks"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Bonds</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" data-alloc="bonds" placeholder="e.g. 20" aria-label="Target share in bonds"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Cash</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" data-alloc="cash" placeholder="e.g. 10" aria-label="Target share in cash"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Rebalance band</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">±</span><input type="text" inputmode="decimal" data-alloc="rebalanceBand" placeholder="e.g. 5" aria-label="Rebalance band"/><span class="slaf-affix">%</span></span></label>
+    </div>
+    <p class="why" id="alloc-read"></p>
   </section>
 
   <section class="slaf-card" id="reading">
@@ -435,6 +456,55 @@
     }
     Spine.updateProfile({ retirement: next });
   }
+
+  /* ---- How it's split (D-071) --------------------------------------------
+     A stated target mix, stored in household.allocation and owned here.
+     LIVE-FORM: built once — four boxes in the HTML above, .value only. */
+
+  function paintAllocation() {
+    var h = Spine.getProfile();
+    var a = h.allocation || {};
+    document.querySelectorAll('[data-alloc]').forEach(function (node) {
+      if (node === document.activeElement) return;
+      var v = a[node.getAttribute('data-alloc')];
+      node.value = Money.isEntered(v) ? String(Math.round(v * 1000) / 10) : '';
+    });
+    var st = Schema.allocationStatus(h);
+    var read = el('alloc-read');
+    if (!Money.isOk(st)) { read.textContent = ''; return; }
+    var pct = function (r) { return Money.formatRate(r, { decimals: 0 }); };
+    var text;
+    if (!st.complete) {
+      text = pct(st.value) + ' placed; ' + st.missing.join(', ') + ' still to enter.';
+    } else if (!st.balanced) {
+      text = 'Adds to ' + pct(st.value) + ', not 100% \u2014 ' + (st.value > 1 ? pct(st.value - 1) + ' too much.' : pct(1 - st.value) + ' unplaced.');
+    } else {
+      text = pct(a.stocks) + ' stocks \u00b7 ' + pct(a.bonds) + ' bonds \u00b7 ' + pct(a.cash) + ' cash.';
+      if (Money.isEntered(a.rebalanceBand) && Money.isEntered(a.stocks)) {
+        text += ' With a \u00b1' + pct(a.rebalanceBand) + ' band, stocks are rebalanced outside '
+          + pct(Math.max(0, a.stocks - a.rebalanceBand)) + '\u2013' + pct(Math.min(1, a.stocks + a.rebalanceBand)) + '.';
+      }
+    }
+    read.textContent = text;
+  }
+
+  document.querySelectorAll('[data-alloc]').forEach(function (node) {
+    var key = node.getAttribute('data-alloc');
+    node.addEventListener('blur', function () {
+      var rate = Money.parseRatePercent(node.value);
+      var current = (Spine.getProfile().allocation || {})[key];
+      if ((current === undefined ? null : current) !== rate) {
+        var patch = {}; patch[key] = (Money.isEntered(rate) && rate >= 0 && rate <= 1) ? rate : null;
+        Spine.updateProfile({ allocation: patch });
+      }
+      paintAllocation();
+    });
+    node.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); node.blur(); }
+    });
+  });
+  Spine.onChange(paintAllocation);
+  paintAllocation();
 
   document.querySelectorAll('[data-setup]').forEach(function (node) {
     var key = node.getAttribute('data-setup');

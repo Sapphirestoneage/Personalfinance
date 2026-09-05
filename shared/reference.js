@@ -46,7 +46,12 @@
     states: 'states.json',
     matchDefaults: 'match_defaults.json',
     federalBrackets: 'federal_brackets_2026.json',
-    wealthMultiplier: 'wealth_multiplier.json'
+    wealthMultiplier: 'wealth_multiplier.json',
+    accessRules: 'access_rules.json',
+    confidenceWeights: 'confidence_weights.json',
+    uiBenefits: 'ui_benefits.json',
+    aca: 'aca_2026.json',
+    stateBrackets: 'state_brackets_2026.json'
   };
 
   var cache = {};
@@ -355,6 +360,9 @@
     lookupLiquidityBand: lookupLiquidityBand,
     CONFIDENCE_LEVELS: CONFIDENCE_LEVELS,
     marginalBracket: marginalBracket,
+    /* A table already loaded this session, or null — for a reader that
+       cannot wait on a promise (an ownership `read`). */
+    cached: function (name) { return cache[name] || null; },
     CONFIDENCE_LABELS: CONFIDENCE_LABELS,
     provenanceOf: provenanceOf,
     provenance: provenance,

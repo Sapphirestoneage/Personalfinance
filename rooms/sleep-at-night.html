@@ -47,6 +47,12 @@
   .verdict { font-family: var(--font-display); font-size: var(--text-xl); margin-top: var(--space-3); }
   .verdict.is-incomplete { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-base); }
   .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .cover-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; margin-top: var(--space-3); }
+  @media (max-width: 380px) { .cover-grid { grid-template-columns: 1fr; } }
+  .cover-read dl { display: grid; grid-template-columns: auto 1fr; gap: var(--space-1) var(--space-3); margin: var(--space-3) 0 0; }
+  .cover-read dt { color: var(--color-text-faint); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .06em; align-self: baseline; }
+  .cover-read dd { margin: 0; font-size: var(--text-sm); }
+  .cover-read a { color: var(--color-accent-hover); text-decoration: underline; }
 
   .track { position: relative; height: 12px; border-radius: var(--radius-pill); background: rgba(30,58,138,.4); overflow: hidden; margin-top: var(--space-3); }
   .track > .fill { height: 100%; background: var(--color-accent); }
@@ -123,6 +129,30 @@
     </p>
     <div id="deductible-chip" style="margin-top:var(--space-3)"></div>
     <p class="why" id="deductible-read"></p>
+  </section>
+
+  <section class="slaf-card" id="coverage">
+    <span class="slaf-eyebrow">Coverage checkup</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">What a bad year can cost, and what stands behind you</h2>
+    <p class="slaf-hint" style="margin:0">
+      Four facts about your cover, asked here once. The Statement's worst
+      plausible year reads the out-of-pocket maximum from this card. Leave
+      blank what you do not have — blank means "not entered", never zero,
+      and the read-out says so.
+    </p>
+    <div class="cover-grid">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Health out-of-pocket max</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="c-oop" placeholder="e.g. 8000" aria-label="Health out-of-pocket maximum"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Term life in force</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="c-life" placeholder="e.g. 500000" aria-label="Term life cover in force"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Disability benefit, a month</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="c-disability" placeholder="e.g. 3000" aria-label="Long-term disability benefit per month"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Umbrella liability policy?</span>
+        <span class="slaf-input-shell"><select id="c-umbrella" aria-label="Umbrella policy">
+          <option value="">Not sure</option><option value="yes">Yes</option><option value="no">No</option>
+        </select></span></label>
+    </div>
+    <div class="cover-read" id="coverage-read"></div>
   </section>
 
   <section class="slaf-card" id="out-compare">
@@ -270,6 +300,73 @@
     Spine.setSwanTarget({ basis: null, note: null });
     render();
   });
+
+  /* ---- The Coverage Checkup (D-071) -------------------------------------
+     LIVE-FORM: built once — the four controls are in the HTML above and
+     only ever have their .value set, never while one of them has focus. */
+
+  var COVER_MONEY = [['c-oop', 'oopMaxCents'], ['c-life', 'termLifeCents'], ['c-disability', 'disabilityMonthlyCents']];
+
+  COVER_MONEY.forEach(function (spec) {
+    bindMoney(spec[0], function (cents) {
+      var current = (Spine.getProfile().insurance || {})[spec[1]];
+      if ((current === undefined ? null : current) !== cents) {
+        var patch = {}; patch[spec[1]] = cents;
+        Spine.updateProfile({ insurance: patch });
+      }
+      render();
+    });
+  });
+
+  el('c-umbrella').addEventListener('change', function () {
+    var v = el('c-umbrella').value;
+    Spine.updateProfile({ insurance: { umbrella: v === '' ? null : v === 'yes' } });
+    render();
+  });
+
+  function paintCoverage(h) {
+    var ins = h.insurance || {};
+    COVER_MONEY.forEach(function (spec) {
+      var node = el(spec[0]);
+      if (document.activeElement === node) return;
+      var v = ins[spec[1]];
+      node.setAttribute('data-raw', Money.isEntered(v) ? String(v) : '');
+      node.value = Money.isEntered(v) ? Money.formatCents(v) : '';
+    });
+    var sel = el('c-umbrella');
+    if (document.activeElement !== sel) sel.value = ins.umbrella === true ? 'yes' : ins.umbrella === false ? 'no' : '';
+
+    var rows = [];
+    var cash = Schema.cashCents(h);
+    var monthly = Schema.monthlyExpensesCents(h);
+    if (Money.isEntered(ins.oopMaxCents)) {
+      rows.push(['A bad health year', Money.isOk(cash)
+        ? (cash.value >= ins.oopMaxCents
+            ? 'up to ' + Money.formatCents(ins.oopMaxCents) + ' out of pocket \u2014 your cash clears it.'
+            : 'up to ' + Money.formatCents(ins.oopMaxCents) + ' out of pocket \u2014 ' + Money.formatCents(ins.oopMaxCents - cash.value) + ' more than you hold in cash.')
+        : 'up to ' + Money.formatCents(ins.oopMaxCents) + ' out of pocket. Add your cash in Start Here to see whether it clears.']);
+    } else {
+      rows.push(['A bad health year', 'Not priced \u2014 no out-of-pocket maximum entered.']);
+    }
+    if (Money.isEntered(ins.termLifeCents)) {
+      rows.push(['If you died', Money.isOk(monthly) && monthly.value > 0
+        ? Money.formatCents(ins.termLifeCents) + ' of term life \u2014 ' + (Math.round(ins.termLifeCents / (monthly.value * 12) * 10) / 10) + ' years of your household\u2019s spending.'
+        : Money.formatCents(ins.termLifeCents) + ' of term life. Add monthly expenses to see how many years that is.']);
+    } else {
+      rows.push(['If you died', 'No term life entered.']);
+    }
+    if (Money.isEntered(ins.disabilityMonthlyCents)) {
+      rows.push(['If you could not work', Money.isOk(monthly) && monthly.value > 0
+        ? Money.formatCents(ins.disabilityMonthlyCents) + '/mo of disability benefit \u2014 ' + Money.formatRate(ins.disabilityMonthlyCents / monthly.value, { decimals: 0 }) + ' of what you spend.'
+        : Money.formatCents(ins.disabilityMonthlyCents) + '/mo of disability benefit.']);
+    } else {
+      rows.push(['If you could not work', 'No disability benefit entered.']);
+    }
+    rows.push(['If you were sued', ins.umbrella === true ? 'An umbrella policy stands behind you.'
+      : ins.umbrella === false ? 'No umbrella policy.' : 'Not answered.']);
+    el('coverage-read').innerHTML = dl(rows)
+      + '<p class="why">The Statement prices the worst plausible year \u2014 deductible, out-of-pocket maximum, six months of essentials, less the unemployment benefit \u2014 <a href="statement.html#worst-year">from these numbers \u2192</a></p>';
+  }
 
   /* ---- Rendering -------------------------------------------------------- */
 
@@ -443,6 +540,7 @@
     if (!TABLES) return;
     var h = Spine.getProfile();
     renderInputs(h);
+    paintCoverage(h);
     renderBand(h);
     renderCompare(h);
     renderGap(h);

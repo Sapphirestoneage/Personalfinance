@@ -439,7 +439,10 @@
         return;
       }
       if (key === 'goals') { next.goals = p.goals; return; }
-      if (key === 'assumptions' || key === 'assumptionOverrides' || key === 'meta') {
+      if (key === 'assumptions' || key === 'assumptionOverrides' || key === 'meta'
+          || key === 'targets' || key === 'allocation' || key === 'insurance' || key === 'retirement') {
+        /* Small fact objects merge, so a room writing one field cannot
+           wipe another room's. D-066. */
         next[key] = Object.assign({}, next[key], p[key]);
         return;
       }
@@ -487,6 +490,31 @@
     person.incomeSources = person.incomeSources || [];
     var record = Object.assign({}, source, { personId: personId });
     var result = upsertIn(person.incomeSources, record);
+    save(); notify();
+    return result;
+  }
+
+  /* The 10x Statement's lists (D-066): same shape as the others. */
+  function upsertFutureIncome(record) {
+    var h = load();
+    h.futureIncome = h.futureIncome || [];
+    var result = upsertIn(h.futureIncome, record);
+    save(); notify();
+    return result;
+  }
+
+  function upsertProperty(record) {
+    var h = load();
+    h.property = h.property || [];
+    var result = upsertIn(h.property, record);
+    save(); notify();
+    return result;
+  }
+
+  function upsertScenario(record) {
+    var h = load();
+    h.scenarios = h.scenarios || [];
+    var result = upsertIn(h.scenarios, record);
     save(); notify();
     return result;
   }
@@ -990,6 +1018,9 @@
     upsertIncomeSource: upsertIncomeSource,
     upsertAsset: upsertAsset,
     upsertDebt: upsertDebt,
+    upsertFutureIncome: upsertFutureIncome,
+    upsertProperty: upsertProperty,
+    upsertScenario: upsertScenario,
     removeById: removeById,
     setMonthlyExpenses: setMonthlyExpenses,
     upsertGoal: upsertGoal,

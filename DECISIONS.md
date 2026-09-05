@@ -3502,6 +3502,354 @@ is simply not proposed. Rooms updated: `rooms/cash-flow.html`.
 
 ---
 
+## D-066 — The 10x Statement's shape: what an asset is, how sure you are, when you can reach it
+
+*(BRIEF.md §3.1–3.2, §3.4–3.6. Carries the brief's D-E further: every list
+already has `ownerIds`, and `people[1]` is a first-class adult since D-061.)*
+
+A balance sheet that says only "what" is a list of numbers. The Statement
+(T3) asks three more things of every asset — how sure are you it is worth
+that, how fast could you reach it, and at what age — and files each one
+under one of three portfolios. This entry is the stored shape; the room and
+its engine follow.
+
+### The asset record grows, and every new field starts null
+
+`liquidity` (1 today · 2 within 30 days · 3 within 12 months · 4 can't or
+won't sell) and `confidence` (1 guaranteed · 2 85%+ · 3 real but don't count
+on it · 4 probably zero) are **rated, never guessed**: `null` means not
+rated, and the default from `data/access_rules.json` is proposed in the box
+(D-060), never written. `costBasisCents`, `hassle` (1–3, for anything that
+earns), `cashFlowMonthlyCents` and `accessAgeOverride` likewise start null.
+
+`liquid` stays. Every ratio that reads it keeps reading it; the Statement
+writes it from `liquidity` when that is rated (`liquid === liquidity <= 2`),
+so the two cannot disagree once a rating exists.
+
+`data/access_rules.json` is keyed by `taxCharacter` with a fallback by
+`category`: the portfolio bucket (liquid financial / illiquid financial /
+non-financial), the default liquidity, and the access age — 59½ for pre-tax
+and Roth earnings, 65 for a non-medical HSA, none for taxable, and Roth
+contributions reachable any time (`basisAccessAge: null`), which is what the
+bridge to 59½ counts. `Schema.assetRule`, `assetAccessAge` and
+`assetLiquidity` are the three readers; the override wins, then the rating,
+then the rule, and each says which it used.
+
+### New records
+
+- `futureIncome[]` — a pension, Social Security, an annuity, an inheritance
+  you would rather not count: `monthlyCents`, a start (`startsOn` or
+  `startsAtAge`), an end, a `confidence` 1–4, `inflationAdjusted`. Not net
+  worth and not income yet; its own list.
+- `property[]` — what a rental **does**, linked by `assetId` to the
+  `real_estate` asset that says what it **is**. The value is never stored
+  twice (D-017). Rent, PITI, operating costs, a vacancy rate (proposed at
+  8%, a landlord convention), hassle and prospects. Cap rate, cash-on-cash
+  and DSCR are derived, never stored.
+- `insurance` gains the Coverage Checkup: `oopMaxCents`, `termLifeCents`,
+  `disabilityMonthlyCents`, `umbrella`. Sleep At Night owns all of it.
+- `allocation` — `stocks`, `bonds`, `cash` as fractions and a
+  `rebalanceBand`. Where It Goes owns it.
+- `targets` — `retireAge` and `coastAge`, owned by FIRE. The coast age was
+  a preview knob that forgot itself on reload; it is a fact about you.
+- `scenarios[]` — named, dated diffs for the life-events engine (T6).
+  Nothing reads them yet.
+- `incomeSource.hassle` — Return on Hassle applied to the job.
+
+The spine merges the small fact objects (`targets`, `allocation`,
+`insurance`, `retirement`) on write, so a room setting one field cannot wipe
+another room's; the lists get `upsertFutureIncome`, `upsertProperty`,
+`upsertScenario` in the same shape as the others.
+
+### Four tables, three of them unverified
+
+`confidence_weights.json` (1.0 / 0.85 / 0.5 / 0 — a convention, after the
+BiggerPockets PFS) is the only one this entry would defend. `ui_benefits.json`
+(state maximum weekly benefit and duration), `aca_2026.json` (the poverty
+level, the applicable-percentage table, the 400% cliff) and
+`state_brackets_2026.json` (none / flat / graduated, single filer, 51
+jurisdictions) are all transcribed from memory and marked `unverified`;
+every figure that reaches a screen from them says so. The state schedule is
+applied to *federal* taxable income as a stand-in for state taxable income,
+a stated simplification.
+
+### Compatibility note
+
+**Stored shape:** additions only. Six new nullable asset fields; one on the
+income source; four on `insurance`; the `futureIncome`, `property`,
+`scenarios` lists; the `allocation` and `targets` objects. Everything
+defaults to null or `[]` and a v2 blob without them is a valid v2 blob. No
+schema-version bump. `liquid` is unchanged in meaning.
+
+**Rooms updated in this entry:** none — this is the shape. The rooms that
+own the new fields land in the commits that follow (the Statement, FIRE's
+targets, Sleep At Night's checkup, Where It Goes' allocation), each adding
+its ownership rows and anchors.
+
+---
+
+## D-067 — A tax engine in named steps; the effective-rate table stays as the fallback
+
+*(BRIEF.md §3.7.)* The app had one tax number: the effective-rate lookup in
+`data/effective_tax_rates_2026.json`, a blend of income tax and FICA by
+gross band. It was honest about being a blend (D-009, D-036). It could not
+say what the next dollar costs, what a deferral saves, or what a gain pays.
+
+**Decision: `engines/tax.js` computes federal tax in named steps, each its
+own function with its own Result**, so a room can show the working and a
+test can pin every line:
+
+- `ordinaryTax` — gross, less above-the-line deferrals, less the larger of
+  the standard and an itemised deduction, walked up the bracket ladder.
+- `capitalGainsTax` — long-term gains **stacked on top** of ordinary taxable
+  income and taxed at 0 / 15 / 20 by where the stack lands. Ten thousand of
+  gains on forty thousand of ordinary income pays $82.50; the same gains on
+  forty-five thousand pays $832.50. Stacking is the whole point.
+- `fica` — the employee's 6.2% to the wage base, 1.45% uncapped, and the
+  additional 0.9% over the threshold, from `se_tax_2026.json`.
+- self-employment tax — `engines/selfemployed.js`, reused; the deductible
+  half comes off ordinary income. Nothing is re-derived.
+- `stateTax` — none / flat / graduated from `state_brackets_2026.json`,
+  applied to **federal** taxable income as a stated stand-in.
+- `acaCliff` — where MAGI sits against 400% of the poverty level, with the
+  room before the cliff. Flags and distance only; it never prices a plan.
+- `estimate` — all of it, plus `notModelled`: credits, AMT, NIIT, QBI, state
+  deductions and local taxes. The number is an estimate and says so.
+
+On the demo persona ($72,000, single, NC): ordinary $7,010, FICA $5,508,
+state $2,375.75, total $14,893.75, an effective 20.7% against the lookup
+table's 19%. Every one of those was derived by hand in `test/run.js` before
+the engine produced it.
+
+**What stays.** Tier0's take-home and savings rate keep reading the
+effective-rate table. It is the fallback here when the lines a real
+computation needs are missing, and swapping every reader onto the new
+engine is a change with its own blast radius (every savings rate in the app
+moves ~2 points) that belongs to T4, deliberately.
+
+The brief's acceptance criterion — within $200 of the BiggerPockets PFS v9
+demo household — could not be run: that spreadsheet is not in this repo.
+The hand derivations above are the check that stands in its place.
+
+### Compatibility note
+
+Stored shape: nothing. `data/federal_brackets_2026.json` gains a
+`capitalGains` ladder (version 2026.1), same unverified status as the rest
+of the file. No room reads the engine yet; the Statement's bracket ladder
+is first.
+
+---
+
+## D-068 — Seven questions a balance sheet should answer, in one engine
+
+*(BRIEF.md §3.3, §3.5 — the numbers; the room is D-069.)* Net worth is one
+number. `engines/statement.js` answers the questions the number hides, each
+as its own Result, each re-derived by hand on the demo in `test/run.js`:
+
+- **Three portfolios**, not one list: liquid financial · illiquid financial ·
+  non-financial, filed by `access_rules.json`. The demo's uncharacterised
+  investment lump files as taxable — and says so — until the intake's three
+  boxes split it.
+- **Confidence-weighted net worth**: Σ value × weight for every *rated*
+  asset, less debts, beside the plain figure. An unrated asset is
+  **excluded** from the weighted total and counted, never assumed
+  guaranteed. Nothing rated, nothing weighted.
+- **The liquidity ladder**: today · this month · this year · never, by the
+  rated liquidity or the rule's default, with money behind an access age
+  you have not reached moved to "never" — except a Roth's contributions,
+  reachable at the Roth's own liquidity. No date of birth means the gate
+  cannot be applied and the Result says so rather than pretending.
+- **The bridge to 59½**: the FI date at the current pace (the standard
+  variant, `engines/fire.js`) against 59½, times annual spend, against what
+  is reachable before then — taxable, cash, Roth basis, HSA. The demo:
+  FI at 51, an 8.5-year gap, $321,300 needed, $57,500 reachable, $263,800
+  short. FI after 59½ needs no bridge.
+- **The worst plausible year**: highest deductible + out-of-pocket maximum
+  + six months of essentials − the state unemployment benefit (the cap or
+  half the weekly wage, whichever is lower, for the state's weeks up to 26),
+  against cash. The demo: $21,400 cost, $4,200 of NC benefit, $7,700 short
+  after cash. The benefit carries `ui_benefits.json`'s unverified status.
+- **Income concentration**: the largest source over the household total.
+- **A rental in ratios**: NOI from rent net of vacancy and operating costs,
+  cap rate on the linked asset's value, DSCR against PITI, cash-on-cash on
+  equity. Vacancy is proposed at 8% and the Result says when it assumed it.
+
+Nothing here re-implements a formula that exists: FI years come from
+`engines/fire.js` and `engines/projection.js`, totals from `Schema`.
+
+---
+
+## D-069 — Net Worth becomes The Statement, and every asset gets rated where it is listed
+
+*(BRIEF.md §3.2, §3.4, §3.6 — the room.)* `rooms/net-worth.html` was a list
+of what you own and one number. `rooms/statement.html` replaces it, keeps
+its place on the path (core, order 5) and its tags, and takes over what it
+owned: the itemised assets (`otherAssets`) and net worth itself. Cash and
+investments stay Start Here's; the Statement renders them as field-sized
+chips that link back, and lets you rate them without owning them.
+
+**What the room does, top to bottom.** Three portfolios with the plain net
+worth beside the confidence-weighted one · every aggregatable asset, one
+card each, with liquidity and confidence selects (blank = "Not rated", the
+rule's default named in the blank option, proposed never stored per D-060)
+and a `<details>` for cost basis, monthly cash flow, hassle and an access-age
+override · the liquidity ladder · the bridge to 59½ · your bracket, a table
+built from `federal_brackets_2026.json` with the estimate from
+`engines/tax.js` under it · the worst plausible year · money that is coming
+(`household.futureIncome`, one card each) · reading from elsewhere, and a
+print button with a print stylesheet.
+
+**Decisions made here:**
+
+- **`liquid` follows the rating.** Setting liquidity writes
+  `liquid = liquidity <= 2` in the same patch, so `engines/ratios.js` and
+  every other reader of `asset.liquid` agree with the ladder. Rating your
+  savings account "within 12 months" takes it out of the liquidity ratio,
+  which is what the rating means.
+- **Kind is by category unless you say otherwise.** An investment entered
+  as one line shows "By category (Taxable)" as its blank option, and the
+  portfolio label says "(taxable, by category)" until a character is
+  chosen. A cash account has no Kind select — it is cash. An intake total
+  marked `unknown` keeps that mark when the blank option is re-selected, so
+  Start Here's one-total mode still recognises it.
+- **No debt input.** Debts belong to Debt Payoff (D-017); the statement
+  reads `totalDebt` and links to it. `test/run.js` checks the room has no
+  balance field.
+- **Two new derived ownership rows**, both owned here and read-only
+  everywhere: `confidenceWeightedNetWorth` (anchor `portfolios`; `Ownership`
+  reaches the engine and the weights table via `require` in node and via
+  `Reference.cached('confidenceWeights')` in a browser — a table the room
+  loads at boot) and `futureIncome` (the sum of the entered monthly
+  amounts, anchor `future`).
+- **The old file is a redirect.** `rooms/net-worth.html` stays so every old
+  link keeps working: `#out-net-worth` and `#ledger` land on `#portfolios`,
+  `#from-elsewhere` on `#reading`, anything else is passed through. It is
+  not in the registry and has no inputs.
+
+**Compatibility note.** No stored shape changed in this entry (the fields
+were added in D-066). What changed is who writes: itemised assets and the
+ratings on any asset are written by `statement`, through
+`Spine.upsertAsset`, and `futureIncome` rows through
+`Spine.upsertFutureIncome`. A future room that wants to show an asset's
+liquidity, confidence, cost basis or access age reads it and links to
+`statement#assets`; it does not own a copy.
+
+**Verified.** `node test/run.js` (the room section: registry, redirect map,
+ownership rows, anchors, weighted figure = half the demo's rated cash less
+all its debt), a phone-browser walk against the demo (rate, add a property,
+add a pension; portfolios $35,900 → $355,900 with the condo; weighted
+−$16,850 with one asset at "don't count on it"; ladder $48,000 this month +
+$9,500 this year; bridge 8.5 yrs / $263,800 short; bracket 22% with $49,800
+of room; worst year $7,700 short; both old-hash redirects), `test/forms.js`
+on `#asset-list`, `test/alignment.js` on `.asset-grid` and `.pair`.
+
+---
+
+## D-070 — The ages you plan around are stored, and FIRE Number owns them
+
+*(BRIEF.md §3.6.)* `household.targets` (`retireAge`, `coastAge`, shape from
+D-066) was written by nobody. FIRE Number now has a "Your targets" card
+(anchor `targets`) with two boxes, stored on blur through
+`Spine.updateProfile({ targets })`, and two ownership rows, `retireAge`
+and `coastAge`, owned by `fire` and read-only everywhere else.
+
+**What changed in the room.**
+
+- **The coast age is no longer a preview knob.** SPEC §12.2 keeps the
+  withdrawal rate and expected return as local, unstored overrides — a
+  what-if. The age you coast to is not a what-if; it is a decision, and it
+  was being lost on every reload. The coast variant now reads
+  `targets.coastAge`, and the table's 65 only until an age is set, which
+  the card says.
+- **The stop age is compared to your pace.** With a stop age, a date of
+  birth and a finished progress Result, the number card adds a row: "You
+  want to stop at 55 — at this pace you get there at 51, 4 years early."
+  Not under coast, where "years away" means years to the coast number, not
+  to stopping.
+- **The variant buttons are built once and patched in place.** They were
+  rebuilt with `innerHTML` on every render, and a blur on a target box
+  renders — so a tap on "Coast" that also blurred a box landed on a button
+  that had just been replaced, and did nothing. Found by tapping through
+  on a phone-shaped browser; the same class of bug as D-034, on buttons
+  instead of inputs.
+
+**Not done here, deliberately.** The Statement's bridge still runs from the
+FI date at the current pace, not from the stop age; reading the stop age
+there is a T4 question (the bridge from a *chosen* date is a different
+number and wants its own row). The Refresh page keeps to the three that
+move; a target is not something that goes stale.
+
+**Compatibility note.** No stored shape changed. `targets.retireAge` and
+`targets.coastAge` are now written, by `fire` only, as plain years
+(`null` = undecided). `Spine.updateProfile` merges `targets` field-wise
+like `meta`, so a room that writes one leaves the other alone. A future
+room that plans around a date reads `Ownership.field('retireAge')` and
+links to `fire#targets`; it does not ask again.
+
+**Verified.** `node test/run.js` (owners, anchors, the knob gone, coast to
+60 needs more than coast to 65), a phone-browser walk (type 55 and 60,
+the row reads "at this pace you get there at 51, 4 years early", coast
+reads "Over 28 years, to age 60", both survive a reload), `test/forms.js`
+on `#targets`, `test/alignment.js` on `.params`.
+
+---
+
+## D-071 — The Coverage Checkup lives in Sleep At Night; the target mix lives in Where It Goes
+
+*(BRIEF.md §3.2.)* Two small fact cards, each in the room whose question
+it answers, each writing fields that D-066 added and nobody wrote.
+
+**Coverage checkup** (`rooms/sleep-at-night.html`, anchor `coverage`).
+Four facts about your cover: the health out-of-pocket maximum, term life
+in force, the long-term disability benefit a month, and whether an
+umbrella policy exists (Not sure / Yes / No — `null` / `true` / `false`;
+"no" is an answer). Under them a read-out in four sentences — a bad
+health year against your cash, term life as years of the household's
+spending, disability as a share of what you spend, the umbrella as it is
+— and a link to the Statement's worst plausible year, which reads the
+out-of-pocket maximum from this card and prices the year that much
+higher. Blank means not entered: the read-out says "not priced" rather
+than assuming zero. The deductible stays asked in Start Here (D-061);
+this card does not ask it again. Ownership rows `oopMax`, `termLife`,
+`disabilityMonthly`, `umbrella`, owned by `sleep-at-night`.
+
+**How it's split** (`rooms/accounts.html`, anchor `allocation`). The room
+is retitled "Where It Goes & how it's split". Stocks, bonds and cash as
+percentages, stored as shares of one, plus a rebalance band. It is a
+stated *target*, not a reading of the accounts — the assets do not carry
+an asset class, so nothing here claims to know your actual mix.
+`Schema.allocationStatus(h)` is the one function that says what the
+slices add to, which are missing, and whether they are balanced; the
+read-out uses it ("Adds to 105%, not 100% — 5% too much." · "70% stocks ·
+20% bonds · 10% cash. With a ±5% band, stocks are rebalanced outside
+65%–75%."). A share outside 0–100 is not stored. Ownership rows
+`allocationStocks`, `allocationBonds`, `allocationCash`, `rebalanceBand`,
+owned by `accounts`.
+
+**Both cards are static markup, `.value` only** (LIVE-FORM: built once),
+written on blur through `Spine.updateProfile`, whose field-wise merge of
+`insurance` and `allocation` (D-066) means a card writing one field
+leaves every other — the deductible included — alone. `test/forms.js`
+checks exactly that on a phone.
+
+**Compatibility note.** No stored shape changed. What changed is who
+writes: `insurance.oopMaxCents / termLifeCents / disabilityMonthlyCents /
+umbrella` by `sleep-at-night`, `allocation.*` by `accounts`. A room that
+wants any of them reads the ownership row and links to the card. The
+worst plausible year already read `oopMaxCents`; it now has somewhere
+the number can come from.
+
+**Verified.** `node test/run.js` (owners, anchors, the deductible left
+with Start Here, umbrella "no" as an answer, the mix at 70 / 70+20+15 /
+70+20+10 with a band, the worst year exactly $8,000 dearer with the
+maximum entered), a phone-browser walk (type all four, read "13.2 years
+of your household's spending" and "95% of what you spend", reload, the
+Statement's worst year at $29,400; enter 70/20/15 and read "5% too much",
+correct to 10 and read the band), `test/forms.js` on both cards,
+`test/alignment.js` on `.cover-grid` and `.grid-2`.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool. **The numbers D-046
@@ -3520,6 +3868,12 @@ D&D entry after D-052 is D-064. A new SPARKS entry goes immediately *above*
 this divider; a new D&D entry goes at the end of the file. Renumbering the
 seven duplicates properly is a documentation pass of its own and has not
 been done.
+
+Twice now two sessions have reached for the same next number and one has
+renumbered on merge: the SPARKS T3 entries moved past the D&D D-064/D-065 to
+become D-066–D-071, and the D&D T9 entries then moved past those to become
+D-072–D-078. **The rule that settles it: whichever side is still unpushed
+renumbers.** From D-064 on, every number in this file is unique.
 
 ---
 
@@ -4165,7 +4519,7 @@ the last three. It ranks only scored saves. If you call it, do not print its
 
 ---
 
-## D-066 — Fifteen more creatures, and a mark saying which are ours
+## D-072 — Fifteen more creatures, and a mark saying which are ours
 
 BRIEF §9.10. The bestiary had fourteen creatures from the rulebook. Three things
 were wrong with that as a set, and none of them was "too few".
@@ -4239,7 +4593,7 @@ parses; `"0"` is a legitimate value meaning no hit-point damage.
 
 ---
 
-## D-067 — Four tiers of play, and a function that refuses to place you
+## D-073 — Four tiers of play, and a function that refuses to place you
 
 BRIEF §9.4. The sheet could tell you your Level and the encounter room could
 tell you what hunts you, but nothing told you what part of the game you were in
@@ -4312,7 +4666,7 @@ if you add a tier, those are the checks that will tell you what you broke.
 
 ---
 
-## D-068 — Exhaustion is derived, statuses are declared, and both change the game
+## D-074 — Exhaustion is derived, statuses are declared, and both change the game
 
 BRIEF §9.7. Two different kinds of condition, and the whole entry is about why
 they are treated differently.
@@ -4406,7 +4760,7 @@ never having been asked.
 
 ---
 
-## D-069 — Rests and pace, in the only unit HP has
+## D-075 — Rests and pace, in the only unit HP has
 
 BRIEF §9.8, which the build-status table had marked as blocked on T7. It was not.
 T7's Skill Stacker would supply *skill* XP; the Experience this sheet already has
@@ -4495,7 +4849,7 @@ incomplete, which is more often than you would expect.
 
 ---
 
-## D-070 — The card is the product, so it is drawn rather than laid out
+## D-076 — The card is the product, so it is drawn rather than laid out
 
 BRIEF §9.2. This tool is a lead magnet, and what actually travels is not the
 page — it is the thing someone pastes into a group chat. `card.html` builds it.
@@ -4565,7 +4919,7 @@ theme-class checks — that is deliberate.
 
 ---
 
-## D-071 — The file says which of itself may be believed, and a character can come home
+## D-077 — The file says which of itself may be believed, and a character can come home
 
 BRIEF §9.5, which the build-status table had marked as blocked on T2's suggested
 state. It was blocked on the wrong thing. T2 gives SPARKS somewhere to *put* a
@@ -4651,7 +5005,7 @@ self-report.
 
 ---
 
-## D-072 — DM mode: the scenario is the URL, and it never touches your character
+## D-078 — DM mode: the scenario is the URL, and it never touches your character
 
 BRIEF §9.9, the last of T9. The encounter room answers *what does this do to
 me*. `dm.html` answers *what would this do to someone like this* — a different

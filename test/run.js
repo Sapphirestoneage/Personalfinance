@@ -1834,8 +1834,8 @@ section('SWAN Number');
   /* -- Ownership: exactly one room may edit it --------------------------- */
   check('the SWAN target is owned by Sleep At Night',
     Ownership.field('swanTarget').owner, 'sleep-at-night');
-  check('and Sleep At Night owns nothing else',
-    Ownership.ownedBy('sleep-at-night').sort().join(','), 'swanTarget');
+  check('and Sleep At Night owns only the number and the four coverage facts (D-071)',
+    Ownership.ownedBy('sleep-at-night').sort().join(','), 'disabilityMonthly,oopMax,swanTarget,termLife,umbrella');
   const chip = Ownership.describe('swanTarget', months6, 'financial-snapshot');
   check('elsewhere it renders as a read-only $18,900', chip.display, '$18,900');
   check('and it is not editable there', chip.isOwnHere, false);
@@ -5039,6 +5039,346 @@ section('A first month, proposed');
     fs.readFileSync(path.join(ROOT, 'engines/cashflow.js'), 'utf8').indexOf('suggest') === -1);
 })();
 
+section('The Statement: shape and tables');
+
+(function () {
+  const rules = require(path.join(ROOT, 'data/access_rules.json'));
+  const weights = require(path.join(ROOT, 'data/confidence_weights.json'));
+  const ui = require(path.join(ROOT, 'data/ui_benefits.json'));
+  const aca = require(path.join(ROOT, 'data/aca_2026.json'));
+  const st = require(path.join(ROOT, 'data/state_brackets_2026.json'));
+  const states = require(path.join(ROOT, 'data/states.json'));
+
+  /* -- New records start empty, never zero ------------------------------- */
+  {
+    const h = Schema.createHousehold({});
+    ['futureIncome', 'property', 'scenarios'].forEach(k => check(`${k} starts as an empty list`, JSON.stringify(h[k]), '[]'));
+    check('targets start unset', JSON.stringify(h.targets), '{"retireAge":null,"coastAge":null}');
+    checkTrue('allocation starts unset', Object.values(h.allocation).every(v => v === null));
+    const ins = h.insurance;
+    checkTrue('the coverage checkup starts unanswered', ins.oopMaxCents === null && ins.termLifeCents === null && ins.disabilityMonthlyCents === null && ins.umbrella === null);
+    const a = Schema.createAsset({});
+    ['liquidity', 'confidence', 'costBasisCents', 'hassle', 'cashFlowMonthlyCents', 'accessAgeOverride'].forEach(k =>
+      check(`asset.${k} starts null`, a[k], null));
+    check('an income source has no hassle rating until rated', Schema.createIncomeSource({}).hassle, null);
+    const old = Schema.createHousehold({ insurance: { highestDeductibleCents: 250000 } });
+    check('an older insurance record keeps its deductible', old.insurance.highestDeductibleCents, 250000);
+    check('and gains the new questions as unanswered', old.insurance.umbrella, null);
+    const fi = Schema.createFutureIncome({ label: 'Pension', monthlyCents: 120000, startsAtAge: 65 });
+    checkTrue('a future income has an id and its fields', /^fi_/.test(fi.id) && fi.monthlyCents === 120000 && fi.startsAtAge === 65 && fi.confidence === null);
+    const prop = Schema.createProperty({ assetId: 'a1', rentMonthlyCents: 180000 });
+    check('a property carries no value of its own — the asset does', prop.valueCents, undefined);
+    check('but links to it', prop.assetId, 'a1');
+  }
+
+  /* -- The spine merges the small fact objects ---------------------------- */
+  {
+    const Spine = SpineMain;
+    Spine.reset();
+    Spine.updateProfile({ targets: { retireAge: 60 } });
+    Spine.updateProfile({ targets: { coastAge: 65 } });
+    check('writing one target keeps the other', JSON.stringify(Spine.getProfile().targets), '{"retireAge":60,"coastAge":65}');
+    Spine.updateProfile({ insurance: { oopMaxCents: 800000 } });
+    Spine.updateProfile({ insurance: { highestDeductibleCents: 250000 } });
+    check('the coverage checkup and the deductible coexist', Spine.getProfile().insurance.oopMaxCents, 800000);
+    Spine.upsertFutureIncome(Schema.createFutureIncome({ id: 'p1', label: 'Pension', monthlyCents: 120000 }));
+    Spine.upsertFutureIncome({ id: 'p1', monthlyCents: 130000 });
+    check('a future income upserts in place', Spine.getProfile().futureIncome.length + ':' + Spine.getProfile().futureIncome[0].monthlyCents, '1:130000');
+    Spine.upsertProperty(Schema.createProperty({ id: 'r1', assetId: 'a1' }));
+    check('a property upserts', Spine.getProfile().property[0].assetId, 'a1');
+  }
+
+  /* -- access_rules covers every kind of asset ---------------------------- */
+  {
+    const chars = Schema.FIELDS['asset.taxCharacter'].values;
+    chars.forEach(c => checkTrue(`access rule for ${c}`, !!rules.byTaxCharacter[c]));
+    Schema.FIELDS['asset.category'].values.forEach(c => checkTrue(`category fallback for ${c}`, !!rules.byTaxCharacter[rules.byCategory[c]]));
+    Object.keys(rules.byTaxCharacter).forEach(c => {
+      const r = rules.byTaxCharacter[c];
+      checkTrue(`${c} files into a real bucket`, rules.buckets.some(b => b.id === r.bucket));
+      checkTrue(`${c} has a default liquidity 1-4`, r.liquidity >= 1 && r.liquidity <= 4);
+    });
+    check('pre-tax money waits for 59½', rules.byTaxCharacter.pretax.accessAge, 59.5);
+    check('Roth basis does not', rules.byTaxCharacter.roth.basisAccessAge, null);
+    check('but Roth earnings do', rules.byTaxCharacter.roth.accessAge, 59.5);
+    check('an HSA opens up at 65', rules.byTaxCharacter.hsa.accessAge, 65);
+    check('cash is reachable today', rules.byTaxCharacter.cash.liquidity, 1);
+    check('a house is not', rules.byTaxCharacter.property.liquidity, 4);
+    /* The helpers */
+    check('a retirement-category lump is treated as pre-tax', Schema.assetRule({ category: 'retirement' }, rules).key, 'pretax');
+    check('a characterised asset wins over its category', Schema.assetRule({ category: 'retirement', taxCharacter: 'roth' }, rules).key, 'roth');
+    check('an override wins over the rule', Schema.assetAccessAge({ taxCharacter: 'pretax', accessAgeOverride: 55 }, rules), 55);
+    check('no override, the rule', Schema.assetAccessAge({ taxCharacter: 'pretax' }, rules), 59.5);
+    check('a rated liquidity is used and marked rated', JSON.stringify(Schema.assetLiquidity({ liquidity: 2, category: 'real_estate' }, rules)), '{"value":2,"rated":true}');
+    check('an unrated one is the default and says so', JSON.stringify(Schema.assetLiquidity({ category: 'real_estate' }, rules)), '{"value":4,"rated":false}');
+  }
+
+  /* -- The other tables -------------------------------------------------- */
+  {
+    check('confidence weights: guaranteed counts in full', weights.weights['1'], 1);
+    check('and probably-zero counts nothing', weights.weights['4'], 0);
+    checkTrue('weights fall as confidence falls', [1, 2, 3, 4].every((k, i) => i === 0 || weights.weights[String(k)] <= weights.weights[String(k - 1)]));
+    const codes = states.states.map(r => r.code).filter(c => c !== 'OTHER');
+    codes.forEach(c => checkTrue(`UI benefits cover ${c}`, !!ui.states[c] && ui.states[c].maxWeeklyDollars > 0 && ui.states[c].weeks > 0));
+    codes.forEach(c => checkTrue(`state tax covers ${c}`, !!st.states[c] && ['none', 'flat', 'brackets'].includes(st.states[c].type)));
+    Object.keys(st.states).forEach(c => {
+      const row = st.states[c];
+      if (row.type === 'brackets') {
+        checkTrue(`${c} brackets climb`, row.single.every((b, i) => i === 0 || b.upTo === null || b.upTo > row.single[i - 1].upTo));
+        check(`${c} top bracket is open`, row.single[row.single.length - 1].upTo, null);
+      }
+      if (row.type === 'flat') checkTrue(`${c} flat rate is a rate`, row.rate > 0 && row.rate < 0.15);
+    });
+    checkTrue('Texas has no income tax', st.states.TX.type === 'none');
+    checkTrue('the ACA table admits it is unverified', aca.confidence === 'unverified' && ui.confidence === 'unverified' && st.confidence === 'unverified');
+    checkTrue('ACA applicable percentages climb with income', aca.applicablePercentage.every((r, i) => i === 0 || r.percent >= aca.applicablePercentage[i - 1].percent));
+    check('and end at the cliff', aca.applicablePercentage[aca.applicablePercentage.length - 1].upToFplMultiple, aca.cliffMultiple);
+  }
+})();
+
+section('The tax engine');
+
+(function () {
+  const Tax = require(path.join(ROOT, 'engines/tax.js'));
+  const T = {
+    federalBrackets: require(path.join(ROOT, 'data/federal_brackets_2026.json')),
+    seTax: require(path.join(ROOT, 'data/se_tax_2026.json')),
+    stateBrackets: require(path.join(ROOT, 'data/state_brackets_2026.json')),
+    aca: require(path.join(ROOT, 'data/aca_2026.json'))
+  };
+
+  /* -- Ordinary income, by hand ------------------------------------------- */
+  {
+    /* 72,000 single: taxable 72,000 − 16,100 = 55,900.
+       10% of 12,400 = 1,240; 12% of 38,000 = 4,560; 22% of 5,500 = 1,210. */
+    const o = Tax.ordinaryTax(T.federalBrackets, 7200000, 'single');
+    check('taxable income is gross minus the standard deduction', o.taxableIncomeCents, 5590000);
+    check('the ordinary tax is 7,010', o.value, 701000);
+    check('in three slices', o.slices.length, 3);
+    check('the marginal rate is 22%', o.marginalRate, 0.22);
+    check('the standard deduction was used', o.deductionKind, 'standard');
+    const itemised = Tax.ordinaryTax(T.federalBrackets, 7200000, 'single', { deductionCents: 2000000 });
+    check('a larger itemised deduction wins', itemised.deductionKind + ':' + itemised.taxableIncomeCents, 'itemised:5200000');
+    const deferred = Tax.ordinaryTax(T.federalBrackets, 7200000, 'single', { aboveTheLineCents: 500000 });
+    check('a 401(k) deferral comes off before the deduction', deferred.taxableIncomeCents, 5090000);
+    check('and saves 22 cents on the dollar at this bracket', 701000 - deferred.value, 110000);
+    check('below the deduction the tax is zero, not negative', Tax.ordinaryTax(T.federalBrackets, 1000000, 'single').value, 0);
+    check('no filing status, no tax', Tax.ordinaryTax(T.federalBrackets, 7200000, null).status, 'incomplete');
+    check('no income, no tax', Tax.ordinaryTax(T.federalBrackets, null, 'single').status, 'incomplete');
+    check('a million single lands in the top bracket', Tax.ordinaryTax(T.federalBrackets, 100000000, 'single').marginalRate, 0.37);
+  }
+
+  /* -- Gains stack on top ------------------------------------------------- */
+  {
+    /* 10,000 of gains on 40,000 of ordinary taxable: 9,450 fills the 0%
+       band (to 49,450), the remaining 550 is taxed at 15% = 82.50. */
+    const cg = Tax.capitalGainsTax(T.federalBrackets, 1000000, 4000000, 'single');
+    check('gains fill the 0% band first', cg.slices[0].dollars, 9450);
+    check('then 15%', cg.value, 8250);
+    check('the marginal gains rate is what the last dollar paid', cg.marginalRate, 0.15);
+    check('gains on nothing else are all in the 0% band', Tax.capitalGainsTax(T.federalBrackets, 1000000, 0, 'single').value, 0);
+    check('no gains, no tax', Tax.capitalGainsTax(T.federalBrackets, 0, 4000000, 'single').value, 0);
+    /* Stacking matters: the same 10,000 on 45,000 straddles the band. */
+    check('the same gains higher up pay more', Tax.capitalGainsTax(T.federalBrackets, 1000000, 4500000, 'single').value, 83250);
+  }
+
+  /* -- FICA ---------------------------------------------------------------- */
+  {
+    const f = Tax.fica(T.seTax, 7200000, 'single');
+    check('the employee pays 7.65% on 72,000', f.value, 550800);
+    check('6.2% of it Social Security', f.socialSecurityCents, 446400);
+    check('1.45% Medicare', f.medicareCents, 104400);
+    check('and no additional Medicare below the threshold', f.additionalMedicareCents, 0);
+    const big = Tax.fica(T.seTax, 30000000, 'single');
+    checkTrue('Social Security stops at the wage base', big.cappedAtWageBase && big.socialSecurityCents === Math.round(T.seTax.socialSecurityWageBase * 100 * 0.062));
+    check('additional Medicare on the excess over 200,000', big.additionalMedicareCents, 90000);
+  }
+
+  /* -- State ---------------------------------------------------------------- */
+  {
+    check('Texas: nothing', Tax.stateTax(T.stateBrackets, 'TX', 5590000, 'single').value, 0);
+    check('North Carolina: flat 4.25% on taxable', Tax.stateTax(T.stateBrackets, 'NC', 5590000, 'single').value, 237575);
+    const ca = Tax.stateTax(T.stateBrackets, 'CA', 5590000, 'single');
+    /* CA single on 55,900: 1% to 10,756 (107.56) + 2% to 25,499 (294.86)
+       + 4% to 40,245 (589.84) + 6% to 55,866 (937.26) + 8% on 34 (2.72). */
+    check('California walks its brackets', ca.value, Math.round((107.56 + 294.86 + 589.84 + 937.26 + 2.72) * 100));
+    check('and reports the marginal rate reached', ca.marginalRate, 0.08);
+    checkTrue('married joint doubles the single thresholds', Tax.stateTax(T.stateBrackets, 'CA', 5590000, 'married_joint').value < ca.value);
+    checkTrue('the state figure says it is an approximation', /federal taxable income/.test(ca.approximation));
+    check('no state, no figure', Tax.stateTax(T.stateBrackets, null, 5590000, 'single').status, 'incomplete');
+  }
+
+  /* -- The ACA cliff --------------------------------------------------------- */
+  {
+    const a = Tax.acaCliff(T.aca, 5000000, 1);
+    check('50,000 for one is about 3.2× the poverty level', Math.round(a.value * 100) / 100, Math.round(50000 / 15650 * 100) / 100);
+    checkTrue('under the cliff', !a.overCliff);
+    check('with room before it', a.roomBeforeCliffCents, Math.round((15650 * 4 - 50000) * 100));
+    checkTrue('an expected contribution is named', a.expectedContributionCents > 0);
+    const over = Tax.acaCliff(T.aca, 7000000, 1);
+    checkTrue('70,000 for one is over the cliff', over.overCliff && over.roomBeforeCliffCents === 0 && over.applicablePercentage === null);
+    checkTrue('a bigger household moves the cliff up', Tax.acaCliff(T.aca, 7000000, 3).overCliff === false);
+  }
+
+  /* -- The whole estimate on the demo -------------------------------------- */
+  {
+    const r = Tax.estimate(Demo.build(), T, {});
+    check('federal ordinary 7,010', r.federalOrdinaryCents, 701000);
+    check('FICA 5,508', r.ficaCents, 550800);
+    check('NC state 2,375.75', r.stateCents, 237575);
+    check('total 14,893.75', r.value, 1489375);
+    check('take-home is gross minus all of it', r.takeHomeAnnualCents, 7200000 - 1489375);
+    check('at an effective rate near the lookup table', Math.round(r.effectiveRate * 100), 21);
+    checkTrue('it says what it did not model', r.notModelled.length >= 5);
+    check('and how much to trust it', r.confidence, 'unverified');
+    const side = Tax.estimate(Demo.build(), T, { selfEmploymentCents: 1000000 });
+    checkTrue('side income adds SE tax', side.selfEmploymentTaxCents > 0);
+    checkTrue('and its deductible half comes off ordinary income', side.components.ordinary.aboveTheLineCents === side.components.selfEmployment.deductibleHalfCents);
+    const noState = Demo.build(); noState.state = null;
+    check('no state means no state tax and says so', Tax.estimate(noState, T, {}).stateIncluded, false);
+    const src = fs.readFileSync(path.join(ROOT, 'engines/tax.js'), 'utf8');
+    checkTrue('SE tax is reused, never re-derived', src.indexOf('SelfEmployed.selfEmploymentTax(') !== -1 && !/netEarningsFactor/.test(src));
+  }
+})();
+
+section('The Statement engine');
+
+(function () {
+  const St = require(path.join(ROOT, 'engines/statement.js'));
+  const T = Object.assign({}, TABLES, {
+    accessRules: require(path.join(ROOT, 'data/access_rules.json')),
+    confidenceWeights: require(path.join(ROOT, 'data/confidence_weights.json')),
+    uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json'))
+  });
+  function rich() {
+    const h = Demo.build();
+    h.assets = [
+      Schema.createAsset({ id: 'cash', category: 'cash', valueCents: 950000, liquid: true, taxCharacter: 'cash', confidence: 1 }),
+      Schema.createAsset({ id: 'k401', category: 'retirement', valueCents: 3000000, taxCharacter: 'pretax', confidence: 2 }),
+      Schema.createAsset({ id: 'roth', category: 'retirement', valueCents: 1200000, taxCharacter: 'roth', costBasisCents: 800000, confidence: 2 }),
+      Schema.createAsset({ id: 'brok', category: 'investment', valueCents: 600000, taxCharacter: 'taxable', confidence: 2 }),
+      Schema.createAsset({ id: 'house', category: 'real_estate', valueCents: 30000000, confidence: 3 }),
+      Schema.createAsset({ id: 'biz', category: 'other', valueCents: 5000000, taxCharacter: 'business', confidence: 4 })
+    ];
+    return h;
+  }
+
+  /* -- Three portfolios ------------------------------------------------- */
+  {
+    const p = St.portfolios(rich(), T.accessRules);
+    check('liquid financial is cash + brokerage', p.buckets.liquidFinancial.totalCents, 1550000);
+    check('illiquid financial is the retirement money', p.buckets.illiquidFinancial.totalCents, 4200000);
+    check('non-financial is the house and the business', p.buckets.nonFinancial.totalCents, 35000000);
+    check('the total is all of it', p.value, 40750000);
+    check('and the plain net worth nets the demo debts', p.plainNetWorthCents, 40750000 - 2160000);
+    check('the demo lump, uncharacterised, files as taxable', St.portfolios(Demo.build(), T.accessRules).buckets.liquidFinancial.totalCents, 5750000);
+    check('nothing owned, nothing filed', St.portfolios(Schema.createHousehold({}), T.accessRules).status, 'incomplete');
+  }
+
+  /* -- Confidence-weighted net worth ------------------------------------- */
+  {
+    /* 9,500×1 + 30,000×.85 + 12,000×.85 + 6,000×.85 + 300,000×.5 + 50,000×0
+       = 9,500 + 25,500 + 10,200 + 5,100 + 150,000 + 0 = 200,300; less 21,600. */
+    const c = St.confidenceWeightedNetWorth(rich(), T.confidenceWeights);
+    check('weighted assets by hand', c.weightedAssetsCents, 20030000);
+    check('less debts', c.value, 20030000 - 2160000);
+    check('against a plain figure of 385,900', c.plainNetWorthCents, 40750000 - 2160000);
+    check('the haircut is the difference', c.haircutCents, 40750000 - 20030000);
+    check('every asset was rated', c.unratedCount, 0);
+    const half = rich(); half.assets[4].confidence = null;
+    const c2 = St.confidenceWeightedNetWorth(half, T.confidenceWeights);
+    check('an unrated asset is excluded, not counted in full', c2.unratedAssetsCents, 30000000);
+    check('and counted', c2.unratedCount, 1);
+    check('nothing rated means nothing weighted', St.confidenceWeightedNetWorth(Demo.build(), T.confidenceWeights).status, 'incomplete');
+  }
+
+  /* -- The liquidity ladder, gated by age ---------------------------------- */
+  {
+    const l = St.liquidityLadder(rich(), T.accessRules, { age: 32 });
+    check('cash is reachable today', l.bands.today, 950000);
+    /* Brokerage (2) 6,000 + Roth basis 8,000 at the Roth's default 3 → 30 days: 6,000; this year: 8,000. */
+    check('the brokerage this month', l.bands.thisMonth, 600000);
+    check('the Roth basis this year', l.bands.thisYear, 800000);
+    /* Never: 401(k) 30,000 + Roth earnings 4,000 + house 300,000 + business 50,000. */
+    check('pre-59½ money, the house and the business are never', l.bands.never, 3000000 + 400000 + 30000000 + 5000000);
+    check('gated money is named', l.gatedCents, 3400000);
+    check('reachable within a year is the value', l.value, 950000 + 600000 + 800000);
+    const older = St.liquidityLadder(rich(), T.accessRules, { age: 60 });
+    check('at 60 the gate is open', older.gatedCents, 0);
+    check('and the 401(k) sits at its own liquidity', older.bands.thisYear, 3000000 + 1200000);
+    const noAge = rich(); noAge.people[0].dob = null;
+    const na = St.liquidityLadder(noAge, T.accessRules);
+    checkTrue('with no age the gate cannot be applied and it says so', na.ageKnown === false && na.gatedCents === 0);
+    checkTrue('a rated liquidity overrides the rule', St.liquidityLadder(Object.assign(rich(), { assets: [Schema.createAsset({ category: 'real_estate', valueCents: 100, liquidity: 1 })] }), T.accessRules, { age: 40 }).bands.today === 100);
+  }
+
+  /* -- The bridge to 59½ ------------------------------------------------------ */
+  {
+    const b = St.bridgeGap(Demo.build(), T);
+    /* Demo: age 32, 19 years to FI → 51; 8.5 years × 37,800 = 321,300 needed;
+       reachable before 59½: cash 9,500 + the uncharacterised lump as taxable 48,000. */
+    check('FI lands at 51', Math.round(b.fiAge), 51);
+    check('the gap is 8.5 years', b.gapYears, 8.5);
+    check('needing 321,300', b.needCents, 32130000);
+    check('with 57,500 reachable', b.availableCents, 5750000);
+    check('so 263,800 short', b.value, 26380000);
+    check('covered years is available over annual spend', b.coveredYears, 1.5);
+    const r = St.bridgeGap(rich(), T, { age: 32 });
+    check('the Roth basis and the brokerage count, the 401(k) does not', r.availableCents, 950000 + 600000 + 800000);
+    const old = St.bridgeGap(Demo.build(), T, { age: 58 });
+    checkTrue('FI after 59½ needs no bridge', old.noBridgeNeeded === true && old.value === 0);
+    const noDob = Demo.build(); noDob.people[0].dob = null;
+    check('no date of birth, no bridge', St.bridgeGap(noDob, T).status, 'incomplete');
+  }
+
+  /* -- The worst plausible year ------------------------------------------------ */
+  {
+    /* 2,500 deductible + 0 oop + 6 × 3,150 = 21,400; NC benefit min(350,
+       692) × 12 weeks = 4,200; net 17,200; cash 9,500 → 7,700 short. */
+    const w = St.worstPlausibleYear(Demo.build(), T);
+    check('the cost of a bad year', w.costCents, 2140000);
+    check('the benefit is the state cap times its weeks', w.benefitCents, 420000);
+    check('at 350 a week', w.benefitWeeklyCents, 35000);
+    check('for 12 weeks in NC', w.benefitWeeks, 12);
+    check('net of benefit', w.netCents, 1720000);
+    check('short after cash', w.value, 770000);
+    checkTrue('and it says the out-of-pocket max is unknown', w.oopMaxKnown === false);
+    checkTrue('and how much to trust the benefit', w.benefitConfidence === 'unverified');
+    const oop = Demo.build(); oop.insurance.oopMaxCents = 800000;
+    check('an out-of-pocket max adds to the cost', St.worstPlausibleYear(oop, T).costCents, 2940000);
+    const noState = Demo.build(); noState.state = null;
+    check('no state, no benefit assumed', St.worstPlausibleYear(noState, T).benefitCents, 0);
+    const wa = Demo.build(); wa.state = 'WA';
+    check('a generous state is capped by the wage, not the max', St.worstPlausibleYear(wa, T).benefitWeeklyCents, Math.round(7200000 / 52 * 0.5));
+    const noDed = Demo.build(); noDed.insurance.highestDeductibleCents = null;
+    check('no deductible, no figure', St.worstPlausibleYear(noDed, T).status, 'incomplete');
+  }
+
+  /* -- Concentration and a rental ---------------------------------------------- */
+  {
+    check('one job is total concentration', St.incomeConcentration(Demo.build()).value, 1);
+    const two = Demo.build();
+    two.people[0].incomeSources.push(Schema.createIncomeSource({ source: 'Side', grossAnnualIncomeCents: 1800000 }));
+    check('72k of 90k is 0.8', St.incomeConcentration(two).value, 0.8);
+    check('no income, no ratio', St.incomeConcentration(Schema.createHousehold({})).status, 'incomplete');
+
+    const h = rich();
+    h.debts.push(Schema.createDebt({ id: 'mtg', balanceCents: 20000000, type: 'mortgage' }));
+    const prop = Schema.createProperty({ assetId: 'house', mortgageId: 'mtg', rentMonthlyCents: 240000, pitiMonthlyCents: 150000, opexMonthlyCents: 40000 });
+    /* NOI = (2,400 × .92 − 400) × 12 = (2,208 − 400) × 12 = 21,696.
+       Cap = 21,696 / 300,000 = 7.23%. Debt service 18,000. DSCR 1.205.
+       Cash-on-cash = 3,696 / 100,000 equity = 3.7%. */
+    const m = St.propertyMetrics(h, prop);
+    check('NOI by hand', m.noiCents, 2169600);
+    check('cap rate', Math.round(m.capRate * 10000) / 10000, 0.0723);
+    check('DSCR', Math.round(m.dscr * 1000) / 1000, 1.205);
+    check('cash-on-cash on 100,000 of equity', Math.round(m.cashOnCash * 1000) / 1000, 0.037);
+    checkTrue('the vacancy was assumed and says so', m.vacancyAssumed && m.vacancyRate === 0.08);
+    check('monthly cash flow', m.cashFlowMonthlyCents, 30800);
+    check('a rental with no asset link is incomplete', St.propertyMetrics(h, Schema.createProperty({})).status, 'incomplete');
+  }
+})();
+
 section('What is finished');
 
 (function () {
@@ -5725,6 +6065,135 @@ Registry.all().forEach(function (room) {
    byte-identical here. If this fails you have not broken anything yet — you
    have edited one of a pair, and the fix is to copy it across.
    ========================================================================== */
+section('The Statement room');
+
+(function () {
+  /* D-069: The Statement replaces Net Worth as the owner of the itemised
+     assets and of net worth itself; the old file is a redirect. */
+  const stmt = Registry.byId('statement');
+  checkTrue('The Statement is registered', !!stmt);
+  check('as a core room', stmt.kind, 'core');
+  check('at the old Net Worth position', stmt.order, 5);
+  checkTrue('Net Worth is no longer a room', !Registry.byId('net-worth'));
+  const html = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
+  const stub = fs.readFileSync(path.join(ROOT, 'rooms/net-worth.html'), 'utf8');
+  checkTrue('the old Net Worth file redirects to it', /url=statement\.html/.test(stub));
+  ['#out-net-worth', '#ledger', '#from-elsewhere'].forEach(function (old) {
+    checkTrue(`old deep link ${old} is mapped`, stub.indexOf("'" + old + "'") !== -1);
+  });
+  checkTrue('the room declares its live-form policy', /LIVE-FORM: guarded/.test(html));
+  checkTrue('the room takes no debt input (Debt Payoff owns debts)', !/data-field="balanceCents"/.test(html));
+
+  check('itemised assets are owned by The Statement', Ownership.field('otherAssets').owner, 'statement');
+  check('net worth is owned by The Statement', Ownership.field('netWorth').owner, 'statement');
+  check('so is the weighted figure', Ownership.field('confidenceWeightedNetWorth').owner, 'statement');
+  check('and money that is coming', Ownership.field('futureIncome').owner, 'statement');
+  checkTrue('cash is still asked in Start Here', Ownership.field('cashSavings').owner === 'start');
+  ['otherAssets', 'netWorth', 'confidenceWeightedNetWorth', 'futureIncome'].forEach(function (f) {
+    const a = Ownership.field(f).anchor;
+    checkTrue(`${f} links to an anchor that exists`, new RegExp('id="' + a + '"').test(html));
+  });
+
+  const h = Demo.build();
+  const nothing = Ownership.field('confidenceWeightedNetWorth').read(h);
+  check('unrated everywhere: no weighted figure', nothing.status, 'incomplete');
+  h.assets[0].confidence = 3;
+  const some = Ownership.field('confidenceWeightedNetWorth').read(h);
+  check('one asset rated "do not count on it": half of it, less all the debt',
+    some.value, Math.round(h.assets[0].valueCents * 0.5) - Schema.totalDebtCents(h).value);
+  check('nothing coming: incomplete', Ownership.field('futureIncome').read(h).status, 'incomplete');
+  h.futureIncome = [Schema.createFutureIncome({ label: 'Pension', monthlyCents: 120000, startsAtAge: 67 }),
+                    Schema.createFutureIncome({ label: 'Maybe', monthlyCents: null })];
+  check('future income is the sum of the entered monthly amounts', Ownership.field('futureIncome').read(h).value, 120000);
+})();
+
+section('Targets, owned by FIRE');
+
+(function () {
+  /* D-070: the ages you plan around are stored, not previewed. */
+  check('the stop age is owned by FIRE', Ownership.field('retireAge').owner, 'fire');
+  check('the coast age is owned by FIRE', Ownership.field('coastAge').owner, 'fire');
+  const fire = fs.readFileSync(path.join(ROOT, 'rooms/fire.html'), 'utf8');
+  checkTrue('both link to an anchor that exists', /id="targets"/.test(fire)
+    && Ownership.field('retireAge').anchor === 'targets' && Ownership.field('coastAge').anchor === 'targets');
+  checkTrue('the unstored coast preview knob is gone', !/p-coast-age/.test(fire));
+  checkTrue('the room declares its live-form policy for the target boxes', /LIVE-FORM: built once/.test(fire));
+  checkTrue('FIRE lists the targets as a subsection',
+    Registry.byId('fire').subsections.some(function (s) { return s.id === 'targets'; }));
+
+  const h = Demo.build();
+  check('undecided: incomplete, not zero', Ownership.field('retireAge').read(h).status, 'incomplete');
+  check('and the coast age too', Ownership.field('coastAge').read(h).status, 'incomplete');
+  h.targets = Schema.createTargets({ retireAge: 55, coastAge: 60 });
+  check('a decided stop age reads back', Ownership.field('retireAge').read(h).value, 55);
+  check('formatted as an age', Ownership.field('retireAge').format(55), 'age 55');
+  const chip = Ownership.describe('coastAge', h, 'statement');
+  checkTrue('elsewhere it is read-only and links home', !chip.mine && /fire\.html#targets$/.test(chip.href));
+
+  /* The coast variant reads the stored age instead of a knob. */
+  const fireT = Object.assign({}, TABLES);
+  const stored = Fire.calculateFIRE(h, fireT, { variantId: 'coast', coastTargetAge: h.targets.coastAge });
+  const dflt = Fire.calculateFIRE(Demo.build(), fireT, { variantId: 'coast' });
+  checkTrue('coast to 60 needs more today than coast to 65', Money.isOk(stored) && Money.isOk(dflt) && stored.value > dflt.value);
+  check('and says which age it grew to', stored.coastTargetAge, 60);
+})();
+
+section('The Coverage Checkup, and how it is split');
+
+(function () {
+  /* D-071: four facts about cover, owned by Sleep At Night; a target mix,
+     owned by Where It Goes. Both stored, both read-only elsewhere. */
+  ['oopMax', 'termLife', 'disabilityMonthly', 'umbrella'].forEach(function (f) {
+    check(`${f} is owned by Sleep At Night`, Ownership.field(f).owner, 'sleep-at-night');
+    check(`${f} links to the coverage card`, Ownership.field(f).anchor, 'coverage');
+  });
+  ['allocationStocks', 'allocationBonds', 'allocationCash', 'rebalanceBand'].forEach(function (f) {
+    check(`${f} is owned by Where It Goes`, Ownership.field(f).owner, 'accounts');
+    check(`${f} links to the allocation card`, Ownership.field(f).anchor, 'allocation');
+  });
+  const san = fs.readFileSync(path.join(ROOT, 'rooms/sleep-at-night.html'), 'utf8');
+  const acc = fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8');
+  checkTrue('the coverage card exists', /id="coverage"/.test(san));
+  checkTrue('the allocation card exists', /id="allocation"/.test(acc));
+  checkTrue('the deductible is still asked in Start Here, not here', !/data-field="highestDeductible"|id="c-deductible"/.test(san)
+    && Ownership.field('highestDeductible').owner === 'start');
+  checkTrue('Where It Goes says so in its title', /how it.s split/.test(Registry.byId('accounts').title));
+  checkTrue('Sleep At Night lists the checkup', Registry.byId('sleep-at-night').subsections.some(s => s.id === 'coverage'));
+  checkTrue('Where It Goes lists the split', Registry.byId('accounts').subsections.some(s => s.id === 'allocation'));
+
+  const h = Demo.build();
+  check('nothing entered: not priced, not zero', Ownership.field('oopMax').read(h).status, 'incomplete');
+  check('umbrella unanswered is incomplete', Ownership.field('umbrella').read(h).status, 'incomplete');
+  h.insurance.umbrella = false;
+  check('"no" is an answer', Ownership.field('umbrella').read(h).status, 'ok');
+  check('formatted as No', Ownership.field('umbrella').format(false), 'No');
+  h.insurance.disabilityMonthlyCents = 300000;
+  check('a monthly benefit is formatted per month', Ownership.field('disabilityMonthly').format(300000), '$3,000/mo');
+  const elsewhere = Ownership.describe('oopMax', Object.assign(h, { insurance: Object.assign(h.insurance, { oopMaxCents: 800000 }) }), 'statement');
+  checkTrue('elsewhere it is a read-only chip linking home', !elsewhere.mine && /sleep-at-night\.html#coverage$/.test(elsewhere.href));
+
+  /* The mix, checked by one function. */
+  check('no mix: incomplete', Schema.allocationStatus(h).status, 'incomplete');
+  h.allocation = Schema.createAllocation({ stocks: 0.7 });
+  const part = Schema.allocationStatus(h);
+  check('one slice: 70% placed', part.value, 0.7, 1e-12);
+  checkTrue('and not complete', !part.complete && part.missing.join(',') === 'bonds,cash');
+  h.allocation = Schema.createAllocation({ stocks: 0.7, bonds: 0.2, cash: 0.15 });
+  const over = Schema.allocationStatus(h);
+  checkTrue('adds to 105%: complete but not balanced', over.complete && !over.balanced && Math.abs(over.value - 1.05) < 1e-12);
+  h.allocation = Schema.createAllocation({ stocks: 0.7, bonds: 0.2, cash: 0.1, rebalanceBand: 0.05 });
+  checkTrue('adds to 100%: balanced', Schema.allocationStatus(h).balanced);
+  check('a share reads as a percentage', Ownership.field('allocationStocks').format(0.7), '70%');
+  check('the band reads as ±', Ownership.field('rebalanceBand').format(0.05), '±5%');
+
+  /* The worst plausible year reads the out-of-pocket maximum from here. */
+  const St = require(path.join(ROOT, 'engines/statement.js'));
+  const T = Object.assign({}, TABLES, { uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')) });
+  const without = St.worstPlausibleYear(Demo.build(), T);
+  const withOop = St.worstPlausibleYear(h, T);
+  checkTrue('and the year costs exactly that much more', Money.isOk(without) && Money.isOk(withOop) && withOop.value - without.value === 800000);
+})();
+
 section('The D&D folder\'s vendored copies');
 
 (function () {

@@ -38,7 +38,8 @@ const TARGETS = [
   ['/rooms/hassle.html', '.grid-2'],
   ['/rooms/side-hustle.html', '.grid-2'],
   ['/rooms/credential.html', '.grid-2'],
-  ['/rooms/net-worth.html', '.asset-grid'],
+  ['/rooms/statement.html', '.asset-grid'],
+  ['/rooms/statement.html', '.pair'],
   ['/rooms/foo-ladder.html', '.grid2'],
   ['/rooms/cash-flow.html', '.cat-row'],
   ['/rooms/start.html', '.q-three'],
@@ -54,6 +55,7 @@ const EQUAL_HEIGHT = [
   ['/', '.instruments'],
   ['/rooms/hassle.html', '.rates'],
   ['/rooms/sleep-at-night.html', '.pair'],
+  ['/rooms/sleep-at-night.html', '.cover-grid'],
   ['/rooms/values.html', '.two'],
   ['/rooms/fulfillment.html', '.quads'],
   ['/rooms/sleep-at-night.html', '.basis']

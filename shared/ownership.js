@@ -106,6 +106,17 @@
      read    — pull the current value out of the household, as a Result
      format  — how to show it once read                                    */
 
+  function allocationRow(slice, label) {
+    return {
+      label: label, owner: 'accounts', anchor: 'allocation',
+      read: function (h) {
+        var v = (h.allocation || {})[slice];
+        return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not set.', ['allocation.' + slice]);
+      },
+      format: function (v) { return Money.formatRate(v, { decimals: 0 }); }
+    };
+  }
+
   var FIELDS = {
     dob: {
       label: 'Date of birth', owner: 'start', anchor: 'q-about',
@@ -255,6 +266,55 @@
       format: money
     },
 
+    /* The Coverage Checkup (D-071): four facts about your cover, asked in
+       Sleep At Night, read by the Statement's worst plausible year. */
+    oopMax: {
+      label: 'Out-of-pocket maximum', owner: 'sleep-at-night', anchor: 'coverage',
+      read: function (h) {
+        var v = (h.insurance || {}).oopMaxCents;
+        return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['oopMaxCents']);
+      },
+      format: money
+    },
+    termLife: {
+      label: 'Term life in force', owner: 'sleep-at-night', anchor: 'coverage',
+      read: function (h) {
+        var v = (h.insurance || {}).termLifeCents;
+        return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['termLifeCents']);
+      },
+      format: money
+    },
+    disabilityMonthly: {
+      label: 'Disability benefit', owner: 'sleep-at-night', anchor: 'coverage',
+      read: function (h) {
+        var v = (h.insurance || {}).disabilityMonthlyCents;
+        return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['disabilityMonthlyCents']);
+      },
+      format: function (v) { return money(v) + '/mo'; }
+    },
+    umbrella: {
+      label: 'Umbrella policy', owner: 'sleep-at-night', anchor: 'coverage',
+      read: function (h) {
+        var v = (h.insurance || {}).umbrella;
+        return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['umbrella']);
+      },
+      format: function (v) { return v ? 'Yes' : 'No'; }
+    },
+
+    /* The target mix (D-071): stated in Where It Goes, a target rather than
+       a reading of the accounts. Shares of one; formatted as percentages. */
+    allocationStocks: allocationRow('stocks', 'Target: stocks'),
+    allocationBonds: allocationRow('bonds', 'Target: bonds'),
+    allocationCash: allocationRow('cash', 'Target: cash'),
+    rebalanceBand: {
+      label: 'Rebalance band', owner: 'accounts', anchor: 'allocation',
+      read: function (h) {
+        var v = (h.allocation || {}).rebalanceBand;
+        return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not set.', ['rebalanceBand']);
+      },
+      format: function (v) { return '\u00b1' + Money.formatRate(v, { decimals: 0 }); }
+    },
+
     /* Debt Payoff owns every debt figure. The Financial Snapshot used to take
        a lump sum for both of these; it now shows them and links here. */
     totalDebt: {
@@ -277,12 +337,38 @@
     /* The Net Worth room owns everything you own that Start Here doesn't
        ask about — a house, a car, anything else. */
     otherAssets: {
-      label: 'Property & other assets', owner: 'net-worth', anchor: 'assets',
+      label: 'Property & other assets', owner: 'statement', anchor: 'assets',
       read: function (h) { return Schema.otherAssetsCents(h); },
       format: money
     },
+    /* The Statement's own facts (D-069). Confidence-weighted net worth is
+       derived — it lives here so the dashboard and the map can read it as
+       one figure with one owner. */
+    confidenceWeightedNetWorth: {
+      label: 'Confidence-weighted net worth', owner: 'statement', anchor: 'portfolios',
+      read: function (h) {
+        var St = (typeof module === 'object' && module.exports)
+          ? require('../engines/statement.js')
+          : (typeof self !== 'undefined' && self.SLAF && self.SLAF.Statement);
+        var weights = (typeof module === 'object' && module.exports)
+          ? require('../data/confidence_weights.json')
+          : (typeof self !== 'undefined' && self.SLAF && self.SLAF.Reference && self.SLAF.Reference.cached && self.SLAF.Reference.cached('confidenceWeights'));
+        if (!St || !weights) return Money.incomplete('Not rated yet.', ['confidence']);
+        return St.confidenceWeightedNetWorth(h, weights);
+      },
+      format: money
+    },
+    futureIncome: {
+      label: 'Money that is coming', owner: 'statement', anchor: 'future',
+      read: function (h) {
+        var rows = (h.futureIncome || []).filter(function (f) { return Money.isEntered(f.monthlyCents); });
+        if (!rows.length) return Money.incomplete('Nothing listed.', ['futureIncome']);
+        return Money.ok(rows.reduce(function (s, f) { return s + f.monthlyCents; }, 0), { count: rows.length });
+      },
+      format: function (v) { return money(v) + '/mo'; }
+    },
     netWorth: {
-      label: 'Net worth', owner: 'net-worth', anchor: 'out-net-worth',
+      label: 'Net worth', owner: 'statement', anchor: 'portfolios',
       read: function (h) {
         var a = Schema.totalAssetsCents(h), d = Schema.totalDebtCents(h);
         if (!Money.isOk(a) || !Money.isOk(d)) {
@@ -310,6 +396,25 @@
         return Swan.targetCents(h);
       },
       format: money
+    },
+
+    /* D-070: the ages you plan around, stored in household.targets and
+       written only by FIRE Number. */
+    retireAge: {
+      label: 'Stop working at', owner: 'fire', anchor: 'targets',
+      read: function (h) {
+        var v = h.targets && h.targets.retireAge;
+        return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not decided yet.', ['retireAge']);
+      },
+      format: function (v) { return 'age ' + v; }
+    },
+    coastAge: {
+      label: 'Coast: arrive by', owner: 'fire', anchor: 'targets',
+      read: function (h) {
+        var v = h.targets && h.targets.coastAge;
+        return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not decided yet.', ['coastAge']);
+      },
+      format: function (v) { return 'age ' + v; }
     },
 
     monthlyExpenses: {
