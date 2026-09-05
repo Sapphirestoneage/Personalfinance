@@ -193,6 +193,8 @@
     var bypassedBy = {};
     activeWarps.forEach(function (w) { if (w.active) w.bypasses.forEach(function (id) { bypassedBy[id] = w; }); });
 
+    var exTable = o.exercises || T.exercises;
+    var exercisesFor = function (id) { return ((exTable && exTable.exercises) || []).filter(function (e) { return (e.advances || []).indexOf(id) >= 0; }).map(function (e) { return e.id; }); };
     var yours = all.filter(function (s) { return applies(h, s); });
     var yoursById = {}; yours.forEach(function (s) { yoursById[s.id] = s; });
     var out = {};
@@ -223,7 +225,11 @@
           else if (step < s.gate.foo) reasons.push({ text: 'Locked. Opens at FOO step ' + s.gate.foo + '. You are on step ' + step + '.', href: 'foo-ladder.html', kind: 'ladder' });
         }
         (s.requires || []).forEach(function (req) { var r = thresholdReason(ev, req); if (r) reasons.push(r); });
-        var boostIds = s.boostedBy || [];
+        /* Boosts: the events the skill names, plus every completed exercise
+           that advances it — an exercise is attached to one skill and
+           completing it boosts that skill (never to done). */
+        var boostIds = (s.boostedBy || []).slice();
+        exercisesFor(s.id).forEach(function (exId) { if (boostIds.indexOf('exercise:' + exId) < 0) boostIds.push('exercise:' + exId); });
         var met = boostIds.filter(function (id) { return eventMet(h, ev, id); });
         var boost = { fraction: boostIds.length ? met.length / boostIds.length : 0, met: met, of: boostIds.length };
         var state = reasons.length ? 'locked' : 'open';
@@ -248,7 +254,6 @@
     var visibility = {};
     bs.forEach(function (b) { visibility[b.id] = b.order <= currentOrder ? 'full' : b.order === currentOrder + 1 ? 'dim' : 'fogged'; });
 
-    var exTable = o.exercises || T.exercises;
     var firstActionOf = function (id) {
       var list = (exTable && exTable.exercises) || [];
       var ex = list.filter(function (e) { return e.kind === 'micro' && (e.advances || []).indexOf(id) >= 0; })[0];

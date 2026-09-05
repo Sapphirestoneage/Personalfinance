@@ -52,7 +52,7 @@ module.exports = function (t) {
   const rb = ST.evaluate(hb, T);
   check('closing a month moves the ledger skill from locked to open, by boost', rb.byId['close-a-month'].state + '/' + rb.byId['close-a-month'].provenance, 'open/boost');
   checkTrue('… and it is still not done', rb.byId['close-a-month'].state !== 'done' && rb.counts.done === 0);
-  check('… the boost bar is partly filled', rb.byId['close-a-month'].boost.fraction, 1);
+  checkTrue('… the boost bar is partly filled: one of the two things that boost it', rb.byId['close-a-month'].boost.fraction > 0 && rb.byId['close-a-month'].boost.fraction < 1 && rb.byId['close-a-month'].boost.met.join(',') === 'monthClosed');
   const hl = employed();
   for (let i = 0; i < 30; i++) hl.expenses.entries.push(Schema.createExpenseEntry({ id: 'l' + i, categoryId: 'groceries', amountCents: 100, period: 'once', date: '2026-09-0' + ((i % 9) + 1), source: 'log' }));
   check('thirty dated expenses boost the tracking skill open', ST.evaluate(hl, T).byId['log-thirty'].state, 'open');
