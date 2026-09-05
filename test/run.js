@@ -6629,6 +6629,9 @@ section('Two decision sequences that cannot collide');
      this says why before anyone tries. */
   fs.readdirSync(path.join(__dirname, '..', 'dnd', 'shared'))
     .filter(f => f.endsWith('.js'))
+    /* Only the files that HAVE a SPARKS original are vendored. store.js,
+       export.js and skin.js are D&D-only and may cite DD- freely. */
+    .filter(f => fs.existsSync(path.join(__dirname, '..', 'shared', f)))
     .forEach(f => {
       const src = fs.readFileSync(path.join(__dirname, '..', 'dnd', 'shared', f), 'utf8');
       checkTrue(`dnd/shared/${f} carries no DD- reference`, !/\bDD-\d{3}\b/.test(src),

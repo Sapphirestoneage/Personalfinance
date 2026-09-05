@@ -94,6 +94,10 @@
   .verdict .lever { color: var(--color-text-muted); font-size: var(--text-sm); }
   .verdict .motto { font-size: var(--text-sm); color: var(--color-text-muted); font-style: italic; margin-top: var(--space-3); line-height: var(--leading-normal); }
   .statrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-bottom: var(--space-4); }
+  @media (min-width: 560px) { .statrow { grid-template-columns: repeat(6, 1fr); } }
+  .statcard.bought { border-style: dashed; }
+  .statcard .tag { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--color-accent-hover); margin-top: 4px; }
+  .statcard .blank .score { color: var(--color-text-faint); }
   .statcard { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-3); text-align: center; background: var(--color-surface-raised); }
   .statcard .abbr { font-size: var(--text-xs); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; color: var(--color-text-subtle); }
   .statcard .score { font-family: var(--font-display); font-size: var(--text-xl); margin: var(--space-1) 0 0; }
@@ -167,9 +171,11 @@
 
   <section id="choose" hidden>
     <h2>How do you want to build?</h2>
-    <p class="note">Three of your six ability scores — knowing the rules, judgment,
-       and dealing with people — have no dollar figure behind them, so you get to decide
-       where they come from. Every route lands on the same scale.</p>
+    <p class="note">Six ability scores, like any character sheet. Three of them — knowing the rules,
+       judgment, and dealing with people — have no dollar figure behind them, so they are always
+       yours to decide. The other three are earning power, resilience and savings: you can buy
+       those too, and they stand until your real numbers replace them. Every route lands on the
+       same scale.</p>
     <div class="methods" id="method-list"></div>
     <p class="note" style="color:var(--color-text-faint)">You can switch at any time. Nothing is lost.</p>
   </section>
@@ -208,9 +214,8 @@
       <div class="motto" id="r-motto"></div>
     </div>
 
-    <h2>Three of your six</h2>
-    <p class="note">Strength, Dexterity and Constitution are earning power, resilience and
-       savings — they need real numbers, so they're blank until you add them.</p>
+    <h2>Your six</h2>
+    <p class="note" id="r-stats-note"></p>
     <div class="statrow" id="r-stats"></div>
 
     <h2>Your nine, ranked</h2>
@@ -366,14 +371,20 @@
   }
 
   /* ==== THE BUILDERS ====================================================
-     One row per declared sub-stat. What sits in the right-hand cell depends
-     on the method, but the rows themselves are built once and reused. */
+     One row per ABILITY — six, like D&D Beyond — not one per sub-stat. You
+     buy Wisdom, not Threat Detection; the sub-stats under a bought ability all
+     take its score. What sits in the right-hand cell depends on the method,
+     but the rows themselves are built once and reused. DD-018. */
+
+  function abilities() { return TABLES.dndRules.stats; }
 
   function buildRows() {
-    el('builder-rows').innerHTML = SUBS.map(function (s) {
-      return '<div class="assign"><span>' + esc(s.name)
-        + '<span class="sub">' + esc(s.stat) + '</span></span>'
-        + '<span id="cell-' + esc(s.id) + '"></span></div>';
+    el('builder-rows').innerHTML = abilities().map(function (a) {
+      var measured = ['STR', 'DEX', 'CON'].indexOf(a.id) !== -1;
+      return '<div class="assign"><span>' + esc(a.name)
+        + '<span class="sub">' + esc(a.id) + ' · ' + esc(a.finance)
+        + (measured ? ' · replaced by your numbers once you add them' : '') + '</span></span>'
+        + '<span id="cell-' + esc(a.id) + '"></span></div>';
     }).join('');
   }
 
@@ -381,19 +392,19 @@
 
   function fillCells(method) {
     var costs = costTable();
-    SUBS.forEach(function (s) {
-      var cell = el('cell-' + s.id);
+    abilities().forEach(function (a) {
+      var cell = el('cell-' + a.id);
       if (method === 'pointBuy') {
-        cell.innerHTML = '<select id="v-' + esc(s.id) + '">'
-          + Object.keys(costs).map(Number).sort(function (a, b) { return a - b; })
+        cell.innerHTML = '<select id="v-' + esc(a.id) + '">'
+          + Object.keys(costs).map(Number).sort(function (x, y) { return x - y; })
               .map(function (v) { return '<option value="' + v + '">' + v + ' · ' + costs[v] + 'p</option>'; })
               .join('') + '</select>';
       } else if (method === 'homebrew') {
         cell.innerHTML = '<input type="number" min="8" max="20" step="1" id="v-'
-          + esc(s.id) + '" placeholder="8–20"/>';
+          + esc(a.id) + '" placeholder="8–20"/>';
       } else {
         var pool = poolFor(method);
-        cell.innerHTML = '<select id="v-' + esc(s.id) + '"><option value="">—</option>'
+        cell.innerHTML = '<select id="v-' + esc(a.id) + '"><option value="">—</option>'
           + pool.map(function (v, i) { return '<option value="' + i + '">' + v + '</option>'; }).join('')
           + '</select>';
       }
@@ -407,15 +418,15 @@
   }
 
   /** Assignment methods: picking a value already used elsewhere swaps them,
-      so the nine values stay a permutation and no state is ever invalid. */
+      so the six values stay a permutation and no state is ever invalid. */
   function onAssignChange(changedId) {
     var method = Store.profile().declaredMethod;
     if (method !== 'standardArray' && method !== 'roll') return;
     var chosen = el('v-' + changedId).value;
     if (chosen === '') return;
-    SUBS.forEach(function (s) {
-      if (s.id === changedId) return;
-      var other = el('v-' + s.id);
+    abilities().forEach(function (a) {
+      if (a.id === changedId) return;
+      var other = el('v-' + a.id);
       if (other && other.value === chosen) other.value = '';
     });
   }
@@ -423,19 +434,19 @@
   function readBuilder() {
     var method = Store.profile().declaredMethod;
     var scores = {};
-    SUBS.forEach(function (s) {
-      var node = el('v-' + s.id);
-      if (!node) { scores[s.id] = null; return; }
-      if (method === 'pointBuy') { scores[s.id] = Number(node.value); return; }
+    abilities().forEach(function (a) {
+      var node = el('v-' + a.id);
+      if (!node) { scores[a.id] = null; return; }
+      if (method === 'pointBuy') { scores[a.id] = Number(node.value); return; }
       if (method === 'homebrew') {
         var raw = String(node.value).trim();
-        if (raw === '') { scores[s.id] = null; return; }
+        if (raw === '') { scores[a.id] = null; return; }
         var n = Number(raw);
-        scores[s.id] = Number.isFinite(n) ? Math.max(8, Math.min(20, Math.round(n))) : null;
+        scores[a.id] = Number.isFinite(n) ? Math.max(8, Math.min(20, Math.round(n))) : null;
         return;
       }
       var pool = poolFor(method);
-      scores[s.id] = node.value === '' ? null : pool[Number(node.value)];
+      scores[a.id] = node.value === '' ? null : pool[Number(node.value)];
     });
     Store.patchProfile({ declaredScores: scores });
     renderPool();
@@ -446,8 +457,8 @@
     var box = el('builder-pool');
     if (method !== 'pointBuy') { box.hidden = true; return; }
     var costs = costTable(), pool = TABLES.dndScoring.pointBuy.pool, spent = 0;
-    SUBS.forEach(function (s) {
-      var node = el('v-' + s.id);
+    abilities().forEach(function (a) {
+      var node = el('v-' + a.id);
       if (node) spent += costs[node.value] || 0;
     });
     box.hidden = false;
@@ -472,11 +483,11 @@
   function hydrateBuilder(method) {
     var scores = Store.profile().declaredScores || {};
     var pool = poolFor(method);
-    SUBS.forEach(function (s) {
-      var node = el('v-' + s.id);
-      if (!node || !Money.isEntered(scores[s.id])) return;
-      if (method === 'pointBuy' || method === 'homebrew') { node.value = String(scores[s.id]); return; }
-      var idx = pool.indexOf(scores[s.id]);
+    abilities().forEach(function (a) {
+      var node = el('v-' + a.id);
+      if (!node || !Money.isEntered(scores[a.id])) return;
+      if (method === 'pointBuy' || method === 'homebrew') { node.value = String(scores[a.id]); return; }
+      var idx = pool.indexOf(scores[a.id]);
       if (idx !== -1) node.value = String(idx);
     });
     if (method === 'roll') renderDice();
@@ -600,10 +611,18 @@
       return;
     }
 
-    el('hunt-note').innerHTML = 'A save is how well you resist being moved. This page can score '
-      + esc(String(scored.length)) + ' of the 6 — the other '
-      + esc(String(blank.length)) + ' (' + blank.map(function (x) { return esc(x.stat); }).join(', ')
-      + ') need real numbers and are <b>blank, not bad</b>. '
+    var boughtSaves = scored.filter(function (x) { return stats[x.stat] && stats[x.stat].bought === true; });
+    el('hunt-note').innerHTML = 'A save is how well you resist being moved. '
+      + (blank.length
+          ? 'This page can score ' + esc(String(scored.length)) + ' of the 6 — the other '
+            + esc(String(blank.length)) + ' (' + blank.map(function (x) { return esc(x.stat); }).join(', ')
+            + ') need real numbers and are <b>blank, not bad</b>. '
+          : 'All six are scored')
+      + (boughtSaves.length
+          ? (blank.length ? '' : ', though ') + listJoin(boughtSaves.map(function (x) { return '<b>' + esc(x.stat) + '</b>'; }))
+            + (boughtSaves.length === 1 ? ' is' : ' are') + ' bought rather than measured, so '
+            + (boughtSaves.length === 1 ? 'that one' : 'those') + ' will move once your numbers are in. '
+          : (blank.length ? '' : '. '))
       + (p.weakest.length >= scored.length
           ? 'The ones scored are all level, so nothing stands out as your thin spot — which means everything below can reach you equally.'
           : 'Of the ones scored, you are thinnest on '
@@ -653,15 +672,34 @@
       el('r-motto').textContent = '';
     }
 
-    el('r-stats').innerHTML = ['INT', 'WIS', 'CHA'].map(function (id) {
+    /* All six, and honest about each. A bought Strength is a real score for
+       the game and gets a dashed border and a tag saying so; a blank one says
+       what it is waiting for. Nothing is shown as measured that was not. */
+    var boughtIds = [], blankIds = [];
+    el('r-stats').innerHTML = Char.STAT_IDS.map(function (id) {
       var r = stats[id];
       var def = TABLES.dndRules.stats.filter(function (x) { return x.id === id; })[0];
-      var ok = Money.isOk(r);
-      return '<div class="statcard"><div class="abbr">' + esc(id) + '</div>'
+      var ok = Money.isOk(r), bought = ok && r.bought === true;
+      if (bought) boughtIds.push(id);
+      if (!ok) blankIds.push(id);
+      return '<div class="statcard' + (bought ? ' bought' : '') + (ok ? '' : ' blank') + '">'
+        + '<div class="abbr">' + esc(id) + '</div>'
         + '<div class="score">' + (ok ? r.value : Money.EM_DASH) + '</div>'
         + '<div class="mod">' + (ok ? esc(Char.formatModifier(Char.modifier(r.value))) : '') + '</div>'
-        + '<div class="abbr" style="margin-top:6px">' + esc(def.finance) + '</div></div>';
+        + '<div class="abbr" style="margin-top:6px">' + esc(def.finance) + '</div>'
+        + (bought ? '<span class="tag">bought</span>' : (ok ? '' : '<span class="tag" style="color:var(--color-text-faint)">needs numbers</span>'))
+        + '</div>';
     }).join('');
+    el('r-stats-note').innerHTML = boughtIds.length
+      ? 'Intelligence, Wisdom and Charisma are always yours to set. '
+        + listJoin(boughtIds.map(function (x) { return '<b>' + esc(x) + '</b>'; }))
+        + (boughtIds.length === 1 ? ' is' : ' are') + ' <b>bought, not measured</b> — '
+        + (boughtIds.length === 1 ? 'it' : 'they') + ' stand until you add the numbers that '
+        + 'actually set ' + (boughtIds.length === 1 ? 'it' : 'them') + ', and then the numbers win.'
+      : blankIds.length
+        ? 'Strength, Dexterity and Constitution are earning power, resilience and savings — '
+          + 'they need real numbers, so they stay blank until you add them.'
+        : 'All six from your numbers.';
 
     var declared = {};
     SUBS.forEach(function (s) { declared[s.id] = subScores[s.id]; });
@@ -691,9 +729,10 @@
     var head = ['Dungeons & Dividends — I lean ' + (cls ? cls.name : '?')
       + (al ? ' · ' + al.emoji + ' ' + al.name : '')];
     var scores = [];
-    ['INT', 'WIS', 'CHA'].forEach(function (id) {
+    Char.STAT_IDS.forEach(function (id) {
       var r = stats[id];
-      if (Money.isOk(r)) scores.push(id + ' ' + r.value + ' (' + Char.formatModifier(Char.modifier(r.value)) + ')');
+      if (Money.isOk(r)) scores.push(id + ' ' + r.value + ' (' + Char.formatModifier(Char.modifier(r.value))
+        + (r.bought ? ', bought' : '') + ')');
     });
     if (scores.length) head.push(scores.join(' · '));
 
@@ -739,7 +778,7 @@
 
     el('btn-roll').addEventListener('click', function () {
       var spec = TABLES.dndScoring.roll;
-      var rolled = SUBS.map(function () {
+      var rolled = abilities().map(function () {
         var d = [];
         for (var i = 0; i < spec.dice; i++) d.push(1 + Math.floor(Math.random() * spec.sides));
         d.sort(function (a, b) { return a - b; });

@@ -266,13 +266,54 @@
       for (var i = 0; i < ids.length; i++) out[ids[i]] = quizScore(scoring, p, ids[i]);
       return out;
     }
-    /* Every other method stores nine numbers directly. */
+    /* Every other method sets ABILITIES, like D&D Beyond: six numbers keyed
+       STR..CHA, and each sub-stat takes its parent's score. Characters stored
+       before DD-018 hold nine numbers keyed by sub-stat instead; those are
+       still read, sub-stat key first, so nobody's saved build goes blank. */
     var given = p.declaredScores || {};
     for (var j = 0; j < ids.length; j++) {
       var id = ids[j];
-      out[id] = Money.isEntered(given[id])
-        ? Money.ok(clampScore(Math.round(given[id])), { method: method })
+      var def = rules.subStats.filter(function (m) { return m.id === id; })[0];
+      var v = Money.isEntered(given[id]) ? given[id]
+            : (def && Money.isEntered(given[def.stat]) ? given[def.stat] : null);
+      out[id] = Money.isEntered(v)
+        ? Money.ok(clampScore(Math.round(v)), { method: method })
         : Money.incomplete('Not assigned yet.', [id]);
+    }
+    return out;
+  }
+
+  /* Ability-level methods can also set STR, DEX and CON — which are normally
+     computed from money. A bought value fills one of those sub-stats ONLY
+     while the money that would compute it is absent, and every such Result
+     is marked bought:true so no page can show it as measured. DD-018. */
+  var ABILITY_METHODS = ['pointBuy', 'standardArray', 'roll', 'homebrew'];
+
+  function boughtFallback(household, computed, tables) {
+    var p = profileOf(household);
+    if (ABILITY_METHODS.indexOf(p.declaredMethod) === -1) return computed;
+    var given = p.declaredScores || {};
+    var rules = tables.dndRules;
+    var out = {};
+    Object.keys(computed).forEach(function (id) { out[id] = computed[id]; });
+
+    /* All-or-nothing PER ABILITY. Once any money reaches an ability, that
+       ability is on measured terms: its missing sub-stats stay missing and the
+       bought score no longer applies. Filling only the gaps would average one
+       measured number with two bought ones into a figure nobody could explain,
+       and a blend of fact and fiction is worse than either. */
+    for (var i = 0; i < STAT_IDS.length; i++) {
+      var statId = STAT_IDS[i];
+      var members = rules.subStats.filter(function (m) { return m.stat === statId && m.kind !== 'declared'; });
+      if (!members.length) continue;
+      var anyMeasured = members.some(function (m) { return Money.isOk(computed[m.id]); });
+      var v = given[statId];
+      if (anyMeasured || !Money.isEntered(v)) continue;
+      members.forEach(function (m) {
+        out[m.id] = Money.ok(clampScore(Math.round(v)), {
+          method: p.declaredMethod, bought: true, wouldNeed: computed[m.id].missing
+        });
+      });
     }
     return out;
   }
@@ -308,7 +349,7 @@
   /* ---- All 18, then the 6 ----------------------------------------------- */
 
   function allSubStats(household, tables) {
-    var computed = computedSubStats(household, tables);
+    var computed = boughtFallback(household, computedSubStats(household, tables), tables);
     var declared = declaredSubStats(household, tables);
     var out = {};
     for (var k in computed) if (Object.prototype.hasOwnProperty.call(computed, k)) out[k] = computed[k];
@@ -340,7 +381,9 @@
           have.length + ' of ' + members.length + ' sub-stats scored.', missing);
       } else {
         var score = Math.round(sum / members.length);
-        out[statId] = Money.ok(score, { modifier: modifier(score), average: sum / members.length });
+        var bought = members.every(function (m) { return subScores[m.id].bought === true; });
+        out[statId] = Money.ok(score, { modifier: modifier(score), average: sum / members.length,
+                                        bought: bought });
       }
     }
     return out;
@@ -1106,6 +1149,7 @@
     maxHp: maxHp,
     currentHp: currentHp,
     exhaustion: exhaustion,
+    ABILITY_METHODS: ABILITY_METHODS,
     shortRest: shortRest,
     longRest: longRest,
     levelPace: levelPace,

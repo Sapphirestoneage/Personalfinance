@@ -82,6 +82,8 @@
   .ability { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); text-align: center; padding: var(--space-2) var(--space-2) var(--space-3); }
   .ability .nm { font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-subtle); }
   .ability .sc { font-family: var(--font-display); font-size: var(--text-2xl); line-height: 1.1; }
+  .ability.is-bought { border-style: dashed; }
+  .ability .bought-tag { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--color-accent-hover); margin-top: var(--space-1); line-height: 1.3; }
   .ability .md { display: inline-block; min-width: 40px; margin-top: var(--space-1); padding: 2px 0; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); background: var(--color-surface); font-size: var(--text-sm); color: var(--color-accent-hover); }
   .rows { display: grid; }
   .row { display: grid; grid-template-columns: 14px 44px 1fr auto; gap: var(--space-2); align-items: center; font-size: var(--text-sm); padding: 3px 0; border-bottom: 1px solid var(--color-border); }
@@ -364,9 +366,10 @@
           + '<label for="f-disruption">Held it through a disruption?</label><select id="f-disruption"><option value="">—</option>'
             + '<option value="yes">Yes</option><option value="no">Not yet</option></select>');
       }
-      return '<div class="ability"><div class="nm">' + esc(def.name) + '</div>'
+      return '<div class="ability" id="abcard-' + id + '"><div class="nm">' + esc(def.name) + '</div>'
         + '<div class="sc" id="ab-' + id + '">' + DASH + '</div>'
         + '<div class="md" id="mod-' + id + '">' + DASH + '</div>'
+        + '<div class="bought-tag" id="bought-' + id + '" hidden>bought · until your numbers replace it</div>'
         + extra + '</div>';
     }).join('') + '</div>';
 
@@ -657,10 +660,28 @@
     txt('h-die', s.klass ? 'd' + s.klass.hitDie : DASH);
 
     /* abilities */
+    var boughtScores = Char.ABILITY_METHODS.indexOf(p.declaredMethod) !== -1
+      ? (p.declaredScores || {}) : {};
     Char.STAT_IDS.forEach(function (id) {
-      var r = s.stats[id], ok = Money.isOk(r);
+      var r = s.stats[id], ok = Money.isOk(r), bought = ok && r.bought === true;
       txt('ab-' + id, ok ? r.value : DASH);
       txt('mod-' + id, ok ? sign(Char.modifier(r.value)) : DASH);
+      /* A bought Strength is dashed and says so (DD-018). Once real money
+         reaches it the bought score stops applying, and a blank where a 15
+         used to be needs a sentence, or it reads as a bug. Writing .hidden,
+         textContent and a class — never innerHTML — this card holds live
+         inputs. */
+      var superseded = !ok && !bought && Money.isEntered(boughtScores[id])
+        && ['STR', 'DEX', 'CON'].indexOf(id) !== -1;
+      var tag = el('bought-' + id);
+      tag.hidden = !(bought || superseded);
+      tag.textContent = bought
+        ? 'bought · until your numbers replace it'
+        : superseded
+          ? 'your bought ' + boughtScores[id] + ' no longer applies — '
+            + (r.missing && r.missing.length ? 'finish the numbers that set this' : 'add the numbers that set this')
+          : '';
+      el('abcard-' + id).classList.toggle('is-bought', bought);
     });
 
     /* saves */

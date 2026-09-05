@@ -1486,6 +1486,113 @@ section('Dungeons & Dividends — the bestiary extension');
     !!R.blockers.scenarioForesight && declared.indexOf('scenarioForesight') !== -1);
 })();
 
+section('Dungeons & Dividends — six abilities, like D&D Beyond (DD-018)');
+
+(function () {
+  const S = TABLES.dndScoring, R = TABLES.dndRules;
+  const SIX = R.stats.map(function (st) { return st.id; });
+
+  /* D&D Beyond's point buy, exactly: 27 points, 8-15, 5e's cost table. */
+  check('27 points', S.pointBuy.pool, 27);
+  check('scores start at 8', S.pointBuy.min, 8);
+  check('and stop at 15', S.pointBuy.max, 15);
+  check('over the six abilities', S.pointBuy.over.join(','), SIX.join(','));
+  const FIVE_E = { 8: 0, 9: 1, 10: 2, 11: 3, 12: 4, 13: 5, 14: 7, 15: 9 };
+  Object.keys(FIVE_E).forEach(function (v) {
+    check(`a ${v} costs ${FIVE_E[v]}`, S.pointBuy.costs[v], FIVE_E[v]);
+  });
+  check('nothing above 15 is purchasable', Object.keys(S.pointBuy.costs).length, 8);
+  check('the standard array is 5e\'s', S.standardArray.values.join(','), '15,14,13,12,10,8');
+  check('six of them', S.standardArray.values.length, 6);
+  check('rolling makes six', S.roll.count, 6);
+  check('15/14/13/12/10/8 spends exactly the pool',
+    [15, 14, 13, 12, 10, 8].reduce(function (n, v) { return n + S.pointBuy.costs[v]; }, 0), S.pointBuy.pool);
+  S.methods.forEach(function (m) {
+    checkTrue(`the ${m.id} blurb no longer says nine`, !/\bnine\b/i.test(m.blurb));
+  });
+
+  /* A household with a bought character and no money at all. */
+  function bought(method, scores) {
+    const h = Schema.createHousehold();
+    h.dndProfile = { declaredMethod: method, declaredScores: scores };
+    return h;
+  }
+  const full = { STR: 15, DEX: 14, CON: 13, INT: 12, WIS: 10, CHA: 8 };
+  const stats = Character.mainStats(Character.allSubStats(bought('pointBuy', full), TABLES), TABLES);
+  SIX.forEach(function (id) {
+    check(`${id} scores from a bought ability`, Money.isOk(stats[id]) && stats[id].value, full[id]);
+  });
+  ['STR', 'DEX', 'CON'].forEach(function (id) {
+    checkTrue(`${id} is marked bought`, stats[id].bought === true);
+  });
+  ['INT', 'WIS', 'CHA'].forEach(function (id) {
+    checkTrue(`${id} is declared, not bought`, stats[id].bought !== true);
+  });
+
+  /* Each sub-stat under a bought ability takes that ability's score. */
+  const subs = Character.allSubStats(bought('standardArray', full), TABLES);
+  R.subStats.forEach(function (m) {
+    check(`${m.id} takes its parent ${m.stat}'s score`, subs[m.id].value, full[m.stat]);
+  });
+
+  /* The quiz never buys STR/DEX/CON — those stay blank on that path. */
+  const quiz = Character.mainStats(Character.allSubStats(
+    { dndProfile: { declaredMethod: 'featsOfStrength', quiz: {} } }, TABLES), TABLES);
+  ['STR', 'DEX', 'CON'].forEach(function (id) {
+    checkTrue(`the quiz path leaves ${id} blank`, !Money.isOk(quiz[id]));
+  });
+
+  /* ALL-OR-NOTHING per ability: once any money reaches an ability, the bought
+     score stops applying to it and its missing inputs stay missing. Filling
+     only the gaps would average one measured number with two bought ones. */
+  const h = bought('pointBuy', full);
+  const person = Schema.createPerson({ id: 'p1', role: 'adult' });
+  person.incomeSources = [Schema.createIncomeSource({
+    id: 'i1', personId: 'p1', grossAnnualIncomeCents: 7200000, type: 'w2' })];
+  h.people = [person];
+  const mixed = Character.mainStats(Character.allSubStats(h, TABLES), TABLES);
+  checkTrue('income alone puts STR on measured terms', !Money.isOk(mixed.STR));
+  checkTrue('and it is no longer marked bought', mixed.STR.bought !== true);
+  checkTrue('its reason names the sub-stats still missing', /of 3 sub-stats/.test(mixed.STR.reason));
+  check('CON, which no money reached, is still bought', mixed.CON.value, 13);
+  checkTrue('and still says so', mixed.CON.bought === true);
+  check('DEX likewise', mixed.DEX.value, 14);
+
+  /* The old nine-key shape still reads, so nobody's saved build goes blank. */
+  const legacy = bought('standardArray', {
+    taxLiteracy: 13, marketLiteracy: 12, instrumentLiteracy: 11,
+    scenarioForesight: 14, selfAwareness: 15, threatDetection: 10,
+    negotiation: 10, network: 9, personability: 8 });
+  const old = Character.mainStats(Character.allSubStats(legacy, TABLES), TABLES);
+  check('a pre-DD-018 build still scores INT', old.INT.value, 12);
+  checkTrue('and never invents STR from it', !Money.isOk(old.STR));
+  checkTrue('a legacy build counts as complete', (function () {
+    /* quizComplete reads the store; emulate its rule directly. */
+    const scores = legacy.dndProfile.declaredScores;
+    const declared = R.subStats.filter(function (x) { return x.kind === 'declared'; });
+    return declared.every(function (x) { return Money.isEntered(scores[x.id]); });
+  })());
+
+  /* -- the pages ---------------------------------------------------------- */
+  const idx = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  checkTrue('the builder rows come from the six abilities', /function abilities\(\) \{ return TABLES\.dndRules\.stats/.test(idx));
+  checkTrue('and no builder loop runs over SUBS any more',
+    !/SUBS\.forEach\(function \(s\) \{\s*var (cell|node) = el\('(cell|v)-'/.test(idx));
+  checkTrue('the result shows all six', /Char\.STAT_IDS\.map\(function \(id\) \{\s*var r = stats\[id\]/.test(idx));
+  checkTrue('and tags bought ones', /<span class="tag">bought<\/span>/.test(idx));
+  checkTrue('the share text marks bought scores', /', bought'/.test(idx));
+  const sheet = fs.readFileSync(path.join(ROOT, 'sheet.html'), 'utf8');
+  checkTrue('the sheet tags a bought ability', /bought · until your numbers replace it/.test(sheet));
+  checkTrue('and explains a superseded one', /no longer applies/.test(sheet));
+  checkTrue('writing textContent and hidden, never innerHTML, on the live ability card',
+    !/html\('abcard-|abcard-[^']*'\)\.innerHTML/.test(sheet));
+  const card = fs.readFileSync(path.join(ROOT, 'card.html'), 'utf8');
+  checkTrue('the card marks bought scores', /bought: s\.stats\[id\]\.bought === true/.test(card));
+  checkTrue('and explains the mark', /bought with points, not measured/.test(card));
+  checkTrue('FORMAT.md says never to import a bought STR/DEX/CON',
+    /Never import one of those\s+three/.test(fs.readFileSync(path.join(ROOT, 'FORMAT.md'), 'utf8')));
+})();
+
 section('Dungeons & Dividends — what hunts you on the money-free page');
 
 (function () {

@@ -5630,3 +5630,83 @@ and `dnd/encounter.html` / `dnd/dm.html` (pass the fields, link the page).
 Call `typeChart()`. If you add an attack type to `encounterRules.attackTypes` and
 no creature uses it, the §9.10 test that every declared type is reachable will
 fail — which is the intended outcome, not an inconvenience.
+
+---
+
+## DD-018 — Six abilities to buy, like D&D Beyond, and what a bought Strength is worth
+
+The repo owner, walking the live site with D&D Beyond open beside it: *"there are
+only 6 metrics available to buy points in."* Point buy here spread 45 points
+across the nine sub-stats. No table does that — you buy Wisdom, not Threat
+Detection — and the screen looked wrong to anyone who had used the thing it was
+modelled on. Standard array and roll had the same nine-slot shape.
+
+### What changed
+
+All four builder methods now set **six abilities**, D&D Beyond's way:
+
+    point buy       27 points, every score starts at 8, nothing above 15,
+                    5e's own cost table (8→0 … 15→9). 15/14/13/12/10/8 spends
+                    exactly the pool.
+    standard array  15, 14, 13, 12, 10, 8 — 5e's, assigned however you like
+    roll            4d6 drop the lowest, six times
+    homebrew        type six numbers
+
+Each bought ability sets all of its sub-stats to that score, so the nine
+declared sub-stats still exist underneath and the quiz still fills them
+individually. `declaredScores` for the builder methods is now keyed by ability
+(`STR`…`CHA`); a build saved before this holds nine sub-stat keys and **is still
+read**, sub-stat key first, so nobody's character went blank.
+
+### The decision that mattered: you can buy Strength
+
+Strength, Dexterity and Constitution are computed from money. The question was
+whether point buy should offer them at all. Two honest options: lock those three
+rows ("set by your numbers"), or let them be bought like D&D Beyond does and have
+money replace them later. **The owner chose the second**, and it is the right
+call for a lead magnet: the free page now shows a full six-score character, and a
+D&D player gets the screen they expect.
+
+What that costs is a Strength nobody measured, so the rules around it are strict:
+
+**A bought score is marked on every Result** (`bought: true`) and every page
+says so — a dashed border and "bought" on the free page, "bought · until your
+numbers replace it" on the sheet, `·b` and a legend line on the card, "(bought)"
+in every share text. `FORMAT.md` tells the SPARKS importer never to import a
+bought STR/DEX/CON as anything, not even a suggestion; they are game pieces.
+
+**It is all-or-nothing per ability.** A bought score fills an ability only while
+*none* of that ability's inputs exist. The first version filled just the gaps —
+type income, and STR became the average of one measured number and two bought
+ones, a figure nobody could explain. Now, the moment any money reaches an
+ability, that ability is on measured terms: the bought score stops applying, the
+missing sub-stats stay missing, and the sheet says *"your bought 15 no longer
+applies — finish the numbers that set this"* rather than showing a blank where a
+15 used to be. A blend of fact and fiction is worse than either.
+
+**The quiz path buys nothing.** Feats of Strength still scores only INT, WIS and
+CHA; STR/DEX/CON stay blank there, as DD-009 describes. That entry's "three of
+six" framing now applies to the quiz route only, and the free page's copy is
+conditional: it says what is blank, what is bought, and what is measured, whichever
+of those is true.
+
+### Compatibility note
+
+**Stored shape:** `dndProfile.declaredScores` changes shape for `pointBuy`,
+`standardArray`, `roll` and `homebrew` — six keys `STR`, `DEX`, `CON`, `INT`,
+`WIS`, `CHA` instead of nine sub-stat keys. `featsOfStrength` is unchanged.
+**Both shapes are read** (`declaredSubStats` tries the sub-stat key, then the
+parent ability). `rolledValues` now holds six numbers. `Store.quizComplete()`
+accepts either shape as complete.
+
+**Rooms updated:** `dnd/data/dnd_scoring.json` (pool, costs, array, roll count,
+blurbs), `dnd/engines/character.js` (`declaredSubStats`, `boughtFallback`,
+`mainStats` carries `bought`, `ABILITY_METHODS` exported), `dnd/shared/store.js`
+(`quizComplete`), `dnd/index.html` (six-row builders, six-card result, hunt copy,
+share text), `dnd/sheet.html` (bought/superseded tag), `dnd/card.html`
+(dashed box, `·b`, legend), `dnd/FORMAT.md`.
+
+**Before writing any of these from a new room:** check `r.bought` on any STAT
+Result before showing it as measured, and never write a bought STR/DEX/CON into
+anything money owns. If you add a builder method, add it to `ABILITY_METHODS` or
+its bought scores will be ignored for those three.
