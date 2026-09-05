@@ -5003,6 +5003,118 @@ out" is not yet true: this is the core under it; the input page is next.
 
 ---
 
+## D-095 — The one-pager: one gate, ten cards at most, every box a guess until it is yours
+
+*(The brief's step 2, the input page. And the direction that followed:
+"do not stop until you finish all items including the later section" —
+so from here the steps run without a review stop, and `LATER.md` is a
+build list, not a parking lot.)* `rooms/start.html` is rewritten as one
+page. The gate is the only question that is always asked; the cards
+that follow are the ones `Gate.fieldsFor` lists for that answer, in that
+order, and nothing else is on the page. A retiree's page has no 401(k)
+card; it is not hidden, it is not in the document. Every box opens
+already holding a guess from `Gate.guesses` (D-094), shown dashed with
+where it came from, and "See my dashboard" commits whatever was not
+typed over as a guess, flagged in `meta.guessed`, in one undo entry.
+
+**Built once, moved never.** All twelve cards any situation could show
+are built from `Gate.allCards()` on load and only ever have their
+`.value` set (`LIVE-FORM: built once`, D-034). The set on the page is
+reconciled only when the situation or a choice changes it — a gate tap,
+"two of us", "yes" to debt — never on a keystroke, so a box being typed
+in is never detached under the finger. Cards that stop applying are
+removed from the container and kept in memory; they come back with their
+controls intact when they apply again.
+
+**The gate change is one batch.** Tapping a situation writes the status
+and removes what no longer exists — the match and the contribution when
+there is no employer, the own-work source when there is no own work,
+the benefit facts when no longer between jobs, the pay source when
+between jobs — inside `Spine.batch('Situation: …')`. One undo brings
+back the status and every field that went with it; the walk-through
+confirms the 401(k) card returns with its 50%-of-6% and the 4%
+contribution.
+
+**The badge.** Every box carries a confidence badge: *guessed* (in
+`meta.guessed`), *you entered* (written in this room), or *from The
+Statement* — whichever room last changed it. For that the spine now
+stamps `meta.source[fieldId] = roomId` whenever a field's reading
+changes, using the room the page registered with `Spine.registerRoom`;
+`Ownership.describe` exposes it as `confidence` and `sourceId`, judged
+against the field's owner. A save from before this entry has no stamp
+and reads as entered. The stamp is not history: undo does not touch it.
+
+**Fine-tune, collapsed.** Below the cards, a drawer for what is real for
+some and noise for most: who depends on your income (a count, then their
+ages — `household.dependents` as a list, which the childcare and
+day-school branches read), a second job or other pay (its own income
+source, `intake_second_job`), and something big and one-off coming
+(`household.oneOffs[0]`). Who depends on you is therefore owned by the
+one-pager again, anchored at `q-fine-tune`; Sleep At Night reads it.
+It is not on Start Here's needs list — optional means not chased.
+
+**Paste numbers in.** A textarea takes lines like "salary 62,000",
+"checking $4,120", "401k 31k", or a two-column CSV; `Gate.parseImport`
+(pure, tested) turns each line that names a thing this page asks and
+carries an amount into a row — pay, spending, cash, investments, debt,
+deductible, severance, the weekly benefit — skipping a CSV header, a
+second line for the same thing, and anything it cannot place, which it
+lists rather than guesses. The page writes the rows as one batch,
+"Imported N numbers", so one undo takes the whole import back. A
+screenshot goes through the browser's `TextDetector` where it exists
+(Chrome on Android); elsewhere the button says to paste the text
+instead. No network, no upload.
+
+**Edge cases, each an answer.** Zero income: the pay basis "not earning
+right now" disables the box and writes a deliberate zero. Variable
+income: "a month on average — it varies" as a basis. No rent: a choice
+on the spending card that lowers the guess. No debt: the default,
+unless a student, where "most students carry a loan" pencils "yes".
+Two jobs: the second in the drawer; a job and own work: the mixed
+situation's own-work card. A partner's income: "two of us" adds the
+partner card and nothing else. A one-time windfall or expense: the
+drawer's one-off, with a direction and a month.
+
+**Speed.** Gate to dashboard on a phone-shaped browser: under three
+seconds for every one of the six situations (the walk taps the
+situation and "See my dashboard"), against the brief's sixty. Every
+situation lands on a dashboard with no console errors and no field,
+number or room that does not apply: a retiree's map has eight fewer
+rooms, someone between jobs sees the runway lead.
+
+**Compatibility note.** `meta.source` is new (`{ fieldId: roomId }`,
+empty on older saves). `dependents` is owned by `start` again (anchor
+`q-fine-tune`), not `sleep-at-night`; the Start Here needs list no
+longer includes it. The registry's Start Here subsections are the new
+card ids: `q-employment`, `q-about`, `q-income`, `q-own-work`,
+`q-unemployed`, `q-partner`, `q-expenses`, `q-cash`, `q-investments`,
+`q-plan`, `q-debt`, `q-fine-tune`, `q-import` — `q-household`,
+`q-filing`, `q-dependents` and `review` are gone, and `filingStatus`
+anchors at `q-about`. The one-pager writes income sources with fixed
+ids (`intake_income`, `intake_own_work`, `intake_second_job`,
+`intake_partner_income`) and the lump debt as `intake_debt`; a
+household from before keeps its own ids and the page reads the first
+non-own-work source as the pay source. A future room reading
+`meta.guessed` should expect the fine-tune fields never to be flagged:
+nothing there is guessed.
+
+**Verified.** `node test/run.js` (11,830): the parser line by line, the
+badge's three states and the stamp surviving undo, the drawer's
+ownership, ten cards at most for every situation with a partner, and
+the page's own contract (one batch for the gate, for the commit, for
+the import; removal not hiding; the badge on every box). `test/forms.js`
+on a phone: typing into a saved answer, hourly pay with hours, the
+401(k) card over its suggestions, the between-jobs boxes, the drawer's
+ages and second job, and a paste imported as one entry. The
+six-situation walk above, and by hand: the demo's badges all "you
+entered", cash changed in The Statement reading "from The Statement" on
+return, the gate change undone, "two of us" adding the eighth card, the
+deep link into the drawer opening it, "not earning" as a zero and "it
+varies" as a year. "One pager in" is now true; "one pager out" is the
+dashboard, next.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

@@ -1069,6 +1069,10 @@
            that were never typed over. Read as real numbers everywhere and
            shown as guesses everywhere, until replaced. D-094. */
         guessed: {},
+        /* { fieldId: roomId } — the room that last changed the field, so
+           the one-pager can show "from The Statement" beside a number it
+           did not enter itself. D-095. */
+        source: {},
         /* "I don't pay rent" — living with family, or a paid-off place;
            lowers the spending guess and nothing else. D-094. */
         noRent: null

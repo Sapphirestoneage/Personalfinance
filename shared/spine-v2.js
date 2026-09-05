@@ -300,14 +300,20 @@
     return JSON.stringify(a === undefined ? null : a) === JSON.stringify(b === undefined ? null : b);
   }
 
+  /* The room this page registered as (registerRoom): stamped on every
+     field it changes, so the one-pager can say "from The Statement" beside
+     a number it did not enter. D-095. */
+  var currentRoom = null;
   function stampChanged(now) {
     if (!cache) return;
     cache.meta.confirmedAt = cache.meta.confirmedAt || {};
+    cache.meta.source = cache.meta.source || {};
     var current = readings();
     if (lastReadings !== null) {
       Object.keys(current).forEach(function (id) {
         if (!same(current[id], lastReadings[id])) {
           cache.meta.confirmedAt[id] = now;
+          if (currentRoom) cache.meta.source[id] = currentRoom;
           /* A real number replaced a guess: it is no longer one. D-094. */
           if (cache.meta.guessed && cache.meta.guessed[id]) delete cache.meta.guessed[id];
         }
@@ -339,7 +345,7 @@
      entry for a batch). Undo applies the befores, redo the afters. The
      stacks live in meta so they survive a reload and go with a reset. */
   var HISTORY_CAP = 100;
-  var HISTORY_SKIP = { 'meta.updatedAt': true, 'meta.confirmedAt': true, 'meta.undoStack': true, 'meta.redoStack': true, 'meta.visitedRooms': true, 'meta.createdAt': true };
+  var HISTORY_SKIP = { 'meta.updatedAt': true, 'meta.confirmedAt': true, 'meta.source': true, 'meta.undoStack': true, 'meta.redoStack': true, 'meta.visitedRooms': true, 'meta.createdAt': true };
   var lastSaved = null;
   var applyingHistory = false;
   var batchDepth = 0, batchChanges = null, batchLabel = null;
@@ -916,6 +922,7 @@
 
   function registerRoom(roomId) {
     if (!roomId) return getVisitedRooms();
+    currentRoom = roomId;
     var h = load();
     h.meta.visitedRooms = h.meta.visitedRooms || [];
     if (h.meta.visitedRooms.indexOf(roomId) === -1) {

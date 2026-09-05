@@ -251,8 +251,56 @@
     return out;
   }
 
+  /* ---- Import: pasted text or a CSV, one line a number ----------------------
+     "Salary, 62,000" / "checking $4,120" / "401k: 31k" — each line that
+     names a thing the one-pager asks and carries an amount becomes a row.
+     Pure: the page decides what to write, and writes it as one batch so
+     one undo takes the whole import back. D-095. */
+  var IMPORT_KEYS = [
+    { key: 'pay',         words: ['salary', 'income', 'wage', 'wages', 'gross', 'pay', 'earn', 'earnings', 'paycheck', 'paycheque'] },
+    { key: 'spending',    words: ['spend', 'spending', 'expense', 'expenses', 'rent', 'bills', 'budget', 'outgoing', 'outgoings', 'costs'] },
+    { key: 'cash',        words: ['cash', 'savings', 'saving', 'checking', 'chequing', 'emergency', 'hysa', 'current account'] },
+    { key: 'investments', words: ['invest', 'invested', 'investments', '401', '403', 'ira', 'roth', 'brokerage', 'retirement', 'hsa', 'portfolio', 'index fund', 'pension pot', 'tsp'] },
+    { key: 'debtBalance', words: ['debt', 'loan', 'loans', 'credit card', 'card balance', 'owe', 'owed', 'balance owed', 'student loan'] },
+    { key: 'deductible',  words: ['deductible'] },
+    { key: 'severance',   words: ['severance'] },
+    { key: 'weekly',      words: ['unemployment', 'benefit', 'ui benefit'] }
+  ];
+  var MONTHLY_HINT = /\/\s*mo\b|\bmonth|\bmonthly\b|\bper mo\b|\bpm\b/i;
+  function amountIn(line) {
+    var m = /(-?)\$?\s?(\d[\d,]*(?:\.\d+)?)\s*(k)?\b/i.exec(line);
+    if (!m) return null;
+    var n = Number(m[2].replace(/,/g, ''));
+    if (isNaN(n)) return null;
+    if (m[3]) n = n * 1000;
+    return Math.round(n * 100) * (m[1] ? -1 : 1);
+  }
+  function parseImport(text) {
+    var rows = [], unmatched = [];
+    String(text || '').split(/\r?\n/).forEach(function (raw) {
+      var line = raw.trim();
+      if (!line) return;
+      var lower = line.toLowerCase();
+      /* A header row of a CSV names columns, not amounts. */
+      if (/^(label|name|item|category)\s*[,;\t]\s*(amount|value|balance)/.test(lower)) return;
+      var cents = amountIn(line.replace(/\b(401|403)\s*\(?k\)?\b/i, ''));
+      var hit = null;
+      for (var i = 0; i < IMPORT_KEYS.length && !hit; i++) {
+        for (var j = 0; j < IMPORT_KEYS[i].words.length; j++) {
+          if (lower.indexOf(IMPORT_KEYS[i].words[j]) !== -1) { hit = IMPORT_KEYS[i].key; break; }
+        }
+      }
+      if (!hit || cents === null) { unmatched.push(line); return; }
+      if (rows.some(function (r) { return r.key === hit; })) { unmatched.push(line); return; }
+      rows.push({ key: hit, cents: Math.abs(cents), basis: hit === 'pay' ? (MONTHLY_HINT.test(line) ? 'monthly' : 'annual') : null, line: line });
+    });
+    return { rows: rows, unmatched: unmatched };
+  }
+
   return {
     MAX_FIELDS: MAX_FIELDS,
+    IMPORT_KEYS: IMPORT_KEYS,
+    parseImport: parseImport,
     SITUATIONS: SITUATIONS,
     CARDS: CARDS,
     ORDER: ORDER,

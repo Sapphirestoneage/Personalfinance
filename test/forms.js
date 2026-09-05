@@ -286,13 +286,13 @@ const CASES = [
       });
       await page.goto(page.url().split('#')[0] + '#q-unemployed');
       await page.waitForTimeout(400);
-      await page.tap('[data-unemp-choices] [data-value="receiving"]');
+      await page.tap('[data-choices="benefitStatus"] [data-value="receiving"]');
       await page.waitForTimeout(400);
     },
     fields: [
-      { sel: '[data-unemp="weekly"]', type: '350' },
-      { sel: '[data-unemp="weeks"]', type: '20' },
-      { sel: '[data-unemp="severance"]', type: '4000' }
+      { sel: '[data-ctl="weekly"]', type: '350' },
+      { sel: '[data-ctl="weeks"]', type: '20' },
+      { sel: '[data-ctl="severance"]', type: '4000' }
     ],
     expect: async (page) => {
       const u = await page.evaluate(() => SLAF.Schema.unemploymentOf(SLAF.Spine.getProfile()));
@@ -301,6 +301,38 @@ const CASES = [
         ['the weekly benefit in cents', u.benefitWeeklyCents, 35000],
         ['the weeks left', u.benefitWeeksLeft, 20],
         ['the severance', u.severanceCents, 400000]
+      ];
+    }
+  },
+  {
+    /* The fine-tune drawer: "one person" opens the ages box; typing into
+       it lands as a list of ages. Then a paste, imported as one batch. */
+    room: '/rooms/start.html',
+    container: '#q-fine-tune',
+    seed: 'demo',
+    prepare: async (page) => {
+      await page.evaluate(() => { document.getElementById('q-fine-tune').open = true; });
+      await page.waitForTimeout(200);
+      await page.tap('[data-choices="dependents"] [data-value="2"]');
+      await page.waitForTimeout(300);
+    },
+    fields: [
+      { sel: '[data-ctl="ages"]', type: '4, 9' },
+      { sel: '[data-ctl="secondJob"]', type: '8000' }
+    ],
+    expect: async (page) => {
+      const before = await page.evaluate(() => SLAF.Spine.historySize().undo);
+      await page.evaluate(() => { document.getElementById('q-import').open = true; document.getElementById('import-text').value = 'checking 4,120\n401k 31k'; });
+      await page.tap('#btn-import');
+      await page.waitForTimeout(400);
+      const r = await page.evaluate(() => { const S = SLAF; const h = S.Spine.getProfile(); return { deps: JSON.stringify(h.dependents), second: S.Schema.primaryPerson(h).incomeSources.filter(s => s.id === 'intake_second_job').map(s => s.grossAnnualIncomeCents)[0], cash: S.Schema.cashCents(h).value, inv: S.Schema.investmentsCents(h).value, entries: S.Spine.historySize().undo, label: S.Spine.peekUndo().label }; });
+      return [
+        ['two dependents with the ages typed', r.deps, '[{"age":4},{"age":9}]'],
+        ['the second job is a source of its own', r.second, 800000],
+        ['the paste set cash', r.cash, 412000],
+        ['and investments', r.inv, 3100000],
+        ['as one undo entry', r.entries - before, 1],
+        ['that says so', r.label, 'Imported 2 numbers']
       ];
     }
   },
@@ -510,12 +542,12 @@ const CASES = [
       await page.waitForTimeout(400);
     },
     fields: [
-      { sel: '#q-income input[data-write="income"]', type: '1' }
+      { sel: '#q-income input[data-ctl="pay"]', type: '1' }
     ],
     expect: async (page) => {
       const v = await page.evaluate(() => {
-        const n = document.querySelector('#q-income input[data-write="income"]');
-        return { value: n.value, settled: n.classList.contains('is-settled') };
+        const n = document.querySelector('#q-income input[data-ctl="pay"]');
+        return { value: n.value, settled: !n.hasAttribute('data-suggested') };
       });
       const stored = await page.evaluate(() =>
         JSON.parse(localStorage.getItem('slaf.household.v2')).people[0]
@@ -539,19 +571,22 @@ const CASES = [
     container: '#q-income',
     seed: 'empty',
     prepare: async (page) => {
+      /* An empty spine has no situation, so no cards: pick one first. */
+      await page.tap('[data-situation="employed"]');
+      await page.waitForTimeout(400);
       await page.evaluate(() => { location.hash = '#q-income'; });
       await page.waitForTimeout(300);
-      await page.selectOption('[data-pay="basis"]', 'hourly');
+      await page.selectOption('[data-ctl="basis"]', 'hourly');
       await page.waitForTimeout(300);
     },
     fields: [
-      { sel: '#q-income input[data-write="income"]', type: '26' },
-      { sel: '#q-income input[data-pay="hours"]', type: '40' }
+      { sel: '#q-income input[data-ctl="pay"]', type: '26' },
+      { sel: '#q-income input[data-ctl="hours"]', type: '40' }
     ],
     expect: async (page) => {
       const src = await page.evaluate(() =>
         JSON.parse(localStorage.getItem('slaf.household.v2')).people[0].incomeSources[0]);
-      const out = await page.evaluate(() => document.getElementById('pay-out').innerText);
+      const out = await page.evaluate(() => document.querySelector('#q-income [data-note="pay"]').innerText);
       return [
         ['the hourly rate was kept, in cents', src.rateCents, 2600],
         ['the hours were kept', src.hoursPerWeek, 40],
@@ -583,9 +618,9 @@ const CASES = [
       await page.waitForTimeout(600);
     },
     fields: [
-      { sel: '#q-plan input[data-plan="matchPercent"]', type: '100' },
-      { sel: '#q-plan input[data-plan="matchCap"]', type: '4' },
-      { sel: '#q-plan input[data-plan="contributionPercent"]', type: '5' }
+      { sel: '#q-plan input[data-ctl="matchPercent"]', type: '100' },
+      { sel: '#q-plan input[data-ctl="matchCap"]', type: '4' },
+      { sel: '#q-plan input[data-ctl="contribution"]', type: '5' }
     ],
     expect: async (page) => {
       const h = await page.evaluate(() => JSON.parse(localStorage.getItem('slaf.household.v2')));

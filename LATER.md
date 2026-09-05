@@ -1,9 +1,10 @@
 # LATER.md — things that would be better, not built this pass
 
-The one-pager brief (D-094 onward) says: do not add rooms or features
+The one-pager brief (D-094 onward) said: do not add rooms or features
 outside it; if something would be substantially better, write it here.
-This is that list. Nothing on it is scheduled. Each line says what it is,
-why it is not now, and where the work already is, if anywhere.
+The direction after step 1 was to finish everything, this list included
+(D-095), so it is now a build list: each line says what it is, where the
+work already is, and — once built — the decision entry that landed it.
 
 ## Parked from T8 (the FI-losophy rooms, D-093 draft)
 

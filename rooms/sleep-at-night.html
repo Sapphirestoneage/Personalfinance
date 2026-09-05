@@ -349,7 +349,7 @@
     } else {
       rows.push(['A bad health year', 'Not priced \u2014 no out-of-pocket maximum entered.']);
     }
-    if (h.dependents === false) {
+    if (Array.isArray(h.dependents) && h.dependents.length === 0) {
       rows.push(['If you died', 'Nobody depends on your income, so term life is not a gap here' + (Money.isEntered(ins.termLifeCents) ? ' \u2014 the ' + Money.formatCents(ins.termLifeCents) + ' in force is a choice, not a need.' : '.')]);
     } else if (Money.isEntered(ins.termLifeCents)) {
       rows.push(['If you died', Money.isOk(monthly) && monthly.value > 0

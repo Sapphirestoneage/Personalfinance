@@ -144,7 +144,7 @@
       format: function (v) { return v; }
     },
     filingStatus: {
-      label: 'Filing status', owner: 'start', anchor: 'q-filing',
+      label: 'Filing status', owner: 'start', anchor: 'q-about',
       read: function (h) {
         return h.filingStatus ? Money.ok(h.filingStatus) : Money.incomplete('Not set yet.', ['filingStatus']);
       },
@@ -308,7 +308,7 @@
       notApplicableBecause: 'Nobody depends on your income.'
     },
     dependents: {
-      label: 'Anyone depending on your income', owner: 'sleep-at-night', anchor: 'coverage',
+      label: 'Anyone depending on your income', owner: 'start', anchor: 'q-fine-tune',
       read: function (h) {
         /* Stored as a list; a bare yes/no from before D-094 still reads. */
         var d = Schema.createDependents(h.dependents);
@@ -532,6 +532,12 @@
       /* Filled in by the one-pager as a guess and never typed over:
          shown as one everywhere, until it is. D-094. */
       guessed: !!(household && household.meta && household.meta.guessed && household.meta.guessed[fieldId]),
+      /* Where the figure came from: 'guess' (the one-pager filled it in),
+         'entered' (typed in its owner room), or 'room' with `sourceId`
+         naming the other room that wrote it. The badge on the one-pager.
+         Unknown provenance (a save from before D-095) reads as entered. */
+      confidence: confidenceOf(household, fieldId, f.owner),
+      sourceId: (household && household.meta && household.meta.source && household.meta.source[fieldId]) || null,
       /* Some fields stop being questions once you have answered another one.
          An employer match is not missing when there is no employer — it is
          not applicable, which is a different thing and must never be counted
@@ -543,6 +549,13 @@
          age is still computed from the stamp, just never judged. D-057. */
       age: isSet ? ageOf(household, fieldId) : null
     };
+  }
+
+  function confidenceOf(household, fieldId, ownerId) {
+    var m = (household && household.meta) || {};
+    if (m.guessed && m.guessed[fieldId]) return 'guess';
+    var src = m.source && m.source[fieldId];
+    return src && src !== ownerId ? 'room' : 'entered';
   }
 
   function ageOf(household, fieldId) {
