@@ -21,7 +21,9 @@
              calculation.
   4. EMPTY   No categories entered: the summary, the net-flow figure and the
              template comparison each say what they need. A category with no
-             amount is skipped, never counted as zero.
+             amount is skipped, never counted as zero. With take-home known,
+             every empty line is PROPOSED from the chosen split (D-063) —
+             shown dashed, never stored, never counted until tapped.
   5. CONFIG  data/expense_categories.json (categories and buckets),
              data/budget_templates.json (the splits),
              data/effective_tax_rates_2026.json (take-home).
@@ -88,6 +90,11 @@
       up from your actual debts, so tap the figure to change them.
     </p>
     <div id="buckets"></div>
+    <p class="slaf-hint" data-suggest-note style="margin:var(--space-3) 0 0"></p>
+    <div class="slaf-field-row" id="propose-row" hidden style="margin-top:var(--space-3)">
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-use-all">Use every proposed line</button>
+      <span class="slaf-hint" id="propose-note"></span>
+    </div>
     <div class="actions">
       <button type="button" class="slaf-btn" id="btn-demo">Try with example numbers</button>
       <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Clear</button>
@@ -142,6 +149,7 @@
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
 <script src="../shared/ownership.js"></script>
+<script src="../shared/suggest.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/demo-persona.js"></script>
 <script src="../engines/projection.js"></script>
@@ -243,7 +251,7 @@
       if (!input) return;
       var categoryId = input.getAttribute('data-cat');
       var existing = entryFor(Spine.getProfile(), categoryId);
-      var cents = Money.parseMoney(input.value);
+      var cents = Money.parseMoney(SLAF.Suggest.entered(input));
       if (Money.isEntered(cents)) {
         Spine.upsertExpenseEntry(Schema.createExpenseEntry({
           id: existing ? existing.id : newEntryId(categoryId),
@@ -275,10 +283,79 @@
       var input = inputs[i];
       if (input === document.activeElement) continue;
       var entry = entryFor(h, input.getAttribute('data-cat'));
-      input.value = entry && Money.isEntered(entry.amountCents)
-        ? Money.formatCents(entry.amountCents) : '';
+      if (entry && Money.isEntered(entry.amountCents)) {
+        SLAF.Suggest.clear(input);
+        input.value = Money.formatCents(entry.amountCents);
+      } else if (!SLAF.Suggest.isSuggested(input)) {
+        input.value = '';
+      }
     }
+    proposeMonth(h);
   }
+
+  /* ---------- a first month, proposed ---------------------------------------
+     With take-home known, every empty line is offered a figure: the chosen
+     template's bucket target spread across the bucket's categories by
+     typicalShareOfBucket (data/expense_categories.json — rough BLS CES
+     proportions, unverified, and the source line says so). Shown, never
+     stored (D-060): a line feeds the tracked figure only once it is tapped
+     or typed. "Use every proposed line" accepts them all at once. D-063. */
+  function writeLine(categoryId, cents) {
+    var existing = entryFor(Spine.getProfile(), categoryId);
+    Spine.upsertExpenseEntry(Schema.createExpenseEntry({
+      id: existing ? existing.id : newEntryId(categoryId),
+      categoryId: categoryId, amountCents: cents, period: 'monthly', source: 'manual'
+    }));
+  }
+
+  function proposals(h) {
+    var result = CashFlow.templateTargets(h, TABLES.budgetTemplates, templateId, TABLES);
+    if (!Money.isOk(result) || !result.rows.length) return { rows: [], basis: null, template: null };
+    var byBucket = {};
+    result.rows.forEach(function (r) { byBucket[r.bucketId] = r.targetCents; });
+    var rows = [];
+    TABLES.expenseCategories.categories.forEach(function (cat) {
+      if (cat.derivedFrom || !Money.isEntered(cat.typicalShareOfBucket)) return;
+      if (!Money.isEntered(byBucket[cat.bucket])) return;
+      var entry = entryFor(h, cat.id);
+      if (entry && Money.isEntered(entry.amountCents)) return;
+      rows.push({ id: cat.id, cents: Math.round(byBucket[cat.bucket] * cat.typicalShareOfBucket) });
+    });
+    return { rows: rows, basis: result.basisMonthlyCents, template: result.template };
+  }
+
+  function proposeMonth(h) {
+    var p = proposals(h);
+    var row = el('propose-row');
+    var shown = 0;
+    var source = p.template
+      ? 'the ' + p.template.label + ' split of your ' + Money.formatCents(p.basis) + '/mo take-home, spread by typical shares (BLS CES 2023, unverified)'
+      : '';
+    p.rows.forEach(function (r) {
+      var input = document.querySelector('input[data-cat="' + r.id + '"]');
+      if (!input || r.cents <= 0) return;
+      var ok = SLAF.Suggest.show(input, {
+        value: r.cents, display: Money.formatCents(r.cents), source: source,
+        onUse: function (c) { writeLine(r.id, c); render(); }
+      });
+      if (ok || SLAF.Suggest.isSuggested(input)) shown++;
+    });
+    /* Lines that are no longer proposed (a template change, a figure entered
+       elsewhere) must not keep a stale proposal. */
+    var live = {};
+    p.rows.forEach(function (r) { live[r.id] = true; });
+    Array.prototype.forEach.call(document.querySelectorAll('input[data-cat]'), function (input) {
+      if (SLAF.Suggest.isSuggested(input) && !live[input.getAttribute('data-cat')]) SLAF.Suggest.clear(input);
+    });
+    row.hidden = shown === 0;
+    el('propose-note').textContent = shown ? shown + ' line' + (shown === 1 ? '' : 's') + ' proposed. Tap "Use" on any, type your own, or take them all.' : '';
+  }
+
+  el('btn-use-all').addEventListener('click', function () {
+    var p = proposals(Spine.getProfile());
+    p.rows.forEach(function (r) { if (r.cents > 0) writeLine(r.id, r.cents); });
+    render();
+  });
 
   /* ---------- outputs --------------------------------------------------- */
 
@@ -489,6 +566,8 @@
   el('f-template').addEventListener('change', function (evt) {
     templateId = evt.target.value;
     renderTemplate(Spine.getProfile());
+    /* A different split proposes different lines. */
+    proposeMonth(Spine.getProfile());
   });
 
   function jumpToHash() {

@@ -3468,6 +3468,40 @@ Stored shape: nothing. Rooms updated: `rooms/runway.html`,
 
 ---
 
+## D-063 — Cash Flow opens with a whole month proposed
+
+*(BRIEF.md §2.5.)* A first visit to Cash Flow was nineteen empty boxes. The
+household already knew take-home and the person had already picked a split
+(50/30/20 by default), which together say what a month in that shape
+looks like — so the boxes now open **holding that month as proposals**.
+
+Each empty line shows the chosen template's bucket target spread across the
+bucket's categories by `typicalShareOfBucket`, a new field on every
+non-derived category in `data/expense_categories.json`. The shares are rough
+proportions in the shape of the BLS Consumer Expenditure Survey (2023),
+rounded and transcribed from memory, summing to one within each bucket;
+the file carries `typicalShareConfidence: unverified` and the source line
+under the boxes says "BLS CES 2023, unverified" every time. They are a
+starting shape, not a finding, and they are never shown as one.
+
+Every line is a suggestion (D-060): dashed, "Use", named source. Tapping a
+line writes that one entry through the room's ordinary path; typing over
+it does the same; **"Use every proposed line"** accepts them all at once.
+The tracked monthly figure (`monthlyEssential.trackedValueCents`) is still
+computed from entries and only entries — `engines/cashflow.js` does not
+know suggestions exist — so `Progress` keeps reporting the intake estimate
+until real lines are in, exactly as the brief's acceptance criterion asks.
+Changing the split re-proposes the empty lines; a line already entered is
+never touched. Debt minimums stay derived and are never proposed.
+
+### Compatibility note
+
+Stored shape: nothing. `data/expense_categories.json` gains
+`typicalShareOfBucket` per category (version 1.1); a category without one
+is simply not proposed. Rooms updated: `rooms/cash-flow.html`.
+
+---
+
 ## D-046 — HP is measured in weeks, which is what makes §3A stop contradicting itself
 
 The Dungeons & Dividends rulebook defines Hit Points twice in the same

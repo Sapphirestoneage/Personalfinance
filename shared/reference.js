@@ -45,7 +45,8 @@
     staleness: 'staleness.json',
     states: 'states.json',
     matchDefaults: 'match_defaults.json',
-    federalBrackets: 'federal_brackets_2026.json'
+    federalBrackets: 'federal_brackets_2026.json',
+    wealthMultiplier: 'wealth_multiplier.json'
   };
 
   var cache = {};

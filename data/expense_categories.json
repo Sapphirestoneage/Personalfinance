@@ -1,11 +1,11 @@
 {
   "id": "expense_categories",
-  "version": "1.0",
+  "version": "1.1",
   "asOf": "2026-01-01",
   "source": "Category list and needs/wants/savings bucketing for the Cash Flow calc.",
   "confidence": "convention",
   "confidenceNote": "A category vocabulary, not a dataset. Nothing here is a measured figure.",
-  "note": "Config, not code (SPEC.md Section 7). Adding a category is a data edit. `bucket` drives budget-template comparison; `essential` marks the categories that roll up into the tracked figure compared against the user's monthly-essential estimate. `keywords` exist for the future bank-import categoriser (SPEC.md Section 12.5) and are unused by manual entry. A category carrying `derivedFrom` is not typed in at all: its value is computed from the household field named there, and the room that owns that field is the only place it can be changed. Debt minimums are the case in point — they are the sum of the itemised debts, so typing them here would be a third editable copy of a number that already exists twice.",
+  "note": "Config, not code (SPEC.md Section 7). Adding a category is a data edit. `bucket` drives budget-template comparison; `essential` marks the categories that roll up into the tracked figure compared against the user's monthly-essential estimate. `keywords` exist for the future bank-import categoriser (SPEC.md Section 12.5) and are unused by manual entry. A category carrying `derivedFrom` is not typed in at all: its value is computed from the household field named there, and the room that owns that field is the only place it can be changed. Debt minimums are the case in point \u2014 they are the sum of the itemised debts, so typing them here would be a third editable copy of a number that already exists twice.",
   "buckets": [
     {
       "id": "needs",
@@ -33,7 +33,8 @@
         "rent",
         "mortgage",
         "hoa"
-      ]
+      ],
+      "typicalShareOfBucket": 0.45
     },
     {
       "id": "utilities",
@@ -45,7 +46,8 @@
         "gas",
         "water",
         "internet"
-      ]
+      ],
+      "typicalShareOfBucket": 0.1
     },
     {
       "id": "groceries",
@@ -56,7 +58,8 @@
         "grocery",
         "supermarket",
         "market"
-      ]
+      ],
+      "typicalShareOfBucket": 0.2
     },
     {
       "id": "transportation",
@@ -68,7 +71,8 @@
         "transit",
         "parking",
         "auto"
-      ]
+      ],
+      "typicalShareOfBucket": 0.13
     },
     {
       "id": "insurance",
@@ -78,7 +82,8 @@
       "keywords": [
         "insurance",
         "premium"
-      ]
+      ],
+      "typicalShareOfBucket": 0.07
     },
     {
       "id": "healthcare",
@@ -90,7 +95,8 @@
         "clinic",
         "dental",
         "medical"
-      ]
+      ],
+      "typicalShareOfBucket": 0.04
     },
     {
       "id": "childcare",
@@ -101,7 +107,8 @@
         "daycare",
         "childcare",
         "preschool"
-      ]
+      ],
+      "typicalShareOfBucket": 0.01
     },
     {
       "id": "debt_minimums",
@@ -125,7 +132,8 @@
         "cafe",
         "coffee",
         "delivery"
-      ]
+      ],
+      "typicalShareOfBucket": 0.25
     },
     {
       "id": "entertainment",
@@ -136,7 +144,8 @@
         "cinema",
         "concert",
         "games"
-      ]
+      ],
+      "typicalShareOfBucket": 0.12
     },
     {
       "id": "subscriptions",
@@ -146,7 +155,8 @@
       "keywords": [
         "subscription",
         "streaming"
-      ]
+      ],
+      "typicalShareOfBucket": 0.06
     },
     {
       "id": "shopping",
@@ -157,7 +167,8 @@
         "clothing",
         "amazon",
         "retail"
-      ]
+      ],
+      "typicalShareOfBucket": 0.22
     },
     {
       "id": "travel",
@@ -168,7 +179,8 @@
         "airline",
         "hotel",
         "airbnb"
-      ]
+      ],
+      "typicalShareOfBucket": 0.12
     },
     {
       "id": "personal_care",
@@ -179,7 +191,8 @@
         "salon",
         "gym",
         "spa"
-      ]
+      ],
+      "typicalShareOfBucket": 0.1
     },
     {
       "id": "gifts",
@@ -190,14 +203,16 @@
         "donation",
         "charity",
         "gift"
-      ]
+      ],
+      "typicalShareOfBucket": 0.08
     },
     {
       "id": "other",
       "label": "Everything else",
       "bucket": "wants",
       "essential": false,
-      "keywords": []
+      "keywords": [],
+      "typicalShareOfBucket": 0.05
     },
     {
       "id": "retirement",
@@ -207,7 +222,8 @@
       "keywords": [
         "401k",
         "ira"
-      ]
+      ],
+      "typicalShareOfBucket": 0.5
     },
     {
       "id": "investments",
@@ -218,7 +234,8 @@
         "brokerage",
         "vanguard",
         "fidelity"
-      ]
+      ],
+      "typicalShareOfBucket": 0.2
     },
     {
       "id": "emergency_savings",
@@ -227,7 +244,8 @@
       "essential": false,
       "keywords": [
         "transfer to savings"
-      ]
+      ],
+      "typicalShareOfBucket": 0.2
     },
     {
       "id": "extra_debt_payment",
@@ -237,7 +255,10 @@
       "keywords": [
         "extra payment",
         "principal"
-      ]
+      ],
+      "typicalShareOfBucket": 0.1
     }
-  ]
+  ],
+  "typicalShareNote": "typicalShareOfBucket is how a bucket's dollars are usually split across its categories \u2014 rough proportions in the shape of the BLS Consumer Expenditure Survey (2023), rounded and transcribed from memory, so they sum to 1 within each bucket and are NOT to be read as a measured figure. Confidence for these shares alone: unverified. Used only to PROPOSE a first month in Cash Flow (D-063): every line is a suggestion until the person taps it, and nothing derived reads a suggestion.",
+  "typicalShareConfidence": "unverified"
 }

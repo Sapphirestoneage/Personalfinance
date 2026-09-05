@@ -297,19 +297,47 @@
     return null;
   }
 
-  function compareToTemplate(household, catalog, templates, templateId, tables) {
+  /**
+   * templateTargets(household, templates, templateId, tables) — what each
+   * bucket of the split comes to in dollars against this household's basis
+   * income, with NO spending entered. The comparison below reads it; so
+   * does the Cash Flow room when it proposes a first month (D-063). One
+   * place turns a split into dollars.
+   * A method template (targets: null) has no bucket targets and says so.
+   */
+  function templateTargets(household, templates, templateId, tables) {
     var template = templateById(templates, templateId);
     if (!template) {
       return Money.incomplete('No budget template with id "' + templateId + '".', ['template']);
     }
-    var summary = summarise(household, catalog);
-    if (!Money.isOk(summary)) return summary;
-
     var basis = netMonthlyIncomeCents(household, tables);
     if (!Money.isOk(basis)) {
       return Money.incomplete('Add your income and filing status to compare against a budget.',
         basis.missing);
     }
+    var rows = template.targets ? Object.keys(template.targets).map(function (bucketId) {
+      return {
+        bucketId: bucketId,
+        targetRate: template.targets[bucketId],
+        targetCents: Math.round(basis.value * template.targets[bucketId])
+      };
+    }) : [];
+    return Money.ok(rows.length, {
+      template: template,
+      basisMonthlyCents: basis.value,
+      rows: rows,
+      method: template.targets ? 'split' : 'zero_based',
+      referenceVersion: templates.version
+    });
+  }
+
+  function compareToTemplate(household, catalog, templates, templateId, tables) {
+    var targets = templateTargets(household, templates, templateId, tables);
+    if (!Money.isOk(targets)) return targets;
+    var template = targets.template;
+    var summary = summarise(household, catalog);
+    if (!Money.isOk(summary)) return summary;
+    var basis = { value: targets.basisMonthlyCents };
 
     if (!template.targets) {
       /* A method, not a split. The test is whether every dollar is assigned. */
@@ -323,12 +351,13 @@
       });
     }
 
-    var rows = Object.keys(template.targets).map(function (bucketId) {
-      var targetCents = Math.round(basis.value * template.targets[bucketId]);
+    var rows = targets.rows.map(function (t) {
+      var bucketId = t.bucketId;
+      var targetCents = t.targetCents;
       var actualCents = summary.byBucket[bucketId] || 0;
       return {
         bucketId: bucketId,
-        targetRate: template.targets[bucketId],
+        targetRate: t.targetRate,
         targetCents: targetCents,
         actualCents: actualCents,
         varianceCents: actualCents - targetCents,
@@ -369,6 +398,7 @@
     netCashFlow: netCashFlow,
     monthlySurplusCents: monthlySurplusCents,
     templateById: templateById,
+    templateTargets: templateTargets,
     compareToTemplate: compareToTemplate,
     trackedEssentialCents: trackedEssentialCents
   };
