@@ -45,7 +45,9 @@ const TABLES = {
   /* CON runs through the savings rate, which subtracts estimated tax, which
      needs this table. Without it CON is incomplete and Max HP is null — which
      is the engine behaving correctly and a test harness behaving badly. */
-  effectiveTaxRates: table('effective_tax_rates_2026.json')
+  effectiveTaxRates: table('effective_tax_rates_2026.json'),
+  /* The campaign's scenario bank (DD-024). */
+  dndScenarios: table('dnd_scenarios.json')
 };
 
 let passed = 0;
@@ -1492,6 +1494,302 @@ section('Dungeons & Dividends — the bestiary extension');
   });
   checkTrue('scenarioForesight is a blocker and a declared sub-stat',
     !!R.blockers.scenarioForesight && declared.indexOf('scenarioForesight') !== -1);
+})();
+
+section('Dungeons & Dividends — the campaign (DD-024)');
+
+(function () {
+  const Camp = require(path.join(ROOT, 'engines/campaign.js'));
+  const Foo = require(path.join(ROOT, 'engines/foo.js'));
+  const Tier0 = require(path.join(ROOT, 'engines/tier0.js'));
+  const SCEN = TABLES.dndScenarios;
+  const R = SCEN.rules;
+
+  /* ---- the bank ---------------------------------------------------------- */
+  const LEVERS = TABLES.dndClasses.classes.map(function (c) { return c.id; });
+  const SUBS = TABLES.dndRules.subStats.map(function (m) { return m.id; });
+  const STEPS = TABLES.fooRules.ladder.map(function (l) { return l.step; });
+  const ids = {};
+  checkTrue('there are enough scenarios to fill a board without repeating',
+    SCEN.scenarios.length >= R.boardSize + R.roundsPerChapter);
+  SCEN.scenarios.forEach(function (sc) {
+    checkTrue(`${sc.id} is unique`, !ids[sc.id]); ids[sc.id] = 1;
+    checkTrue(`${sc.id} is on the ladder`, STEPS.indexOf(sc.fooStep) !== -1);
+    checkTrue(`${sc.id} names its tiers`, sc.tiers.length > 0 &&
+      sc.tiers.every(function (t) { return ['I','II','III','IV'].indexOf(t) !== -1; }));
+    checkTrue(`${sc.id} offers a real choice`, sc.options.length >= 2);
+    /* Copy: assert what the room actually needs, not an arbitrary length.
+       "The rumour" and "Do you?" are good copy a length floor would reject. */
+    ['title','setup','prompt'].forEach(function (k) {
+      checkTrue(`${sc.id} has a ${k}`,
+        typeof sc[k] === 'string' && sc[k].length > 0 && sc[k].trim() === sc[k]);
+    });
+    checkTrue(`${sc.id} sets the scene before it asks`, sc.setup.length > 20);
+    checkTrue(`${sc.id} asks a question`, /\?$/.test(sc.prompt));
+    const oids = {};
+    sc.options.forEach(function (o) {
+      checkTrue(`${sc.id}/${o.id} is unique`, !oids[o.id]); oids[o.id] = 1;
+      checkTrue(`${sc.id}/${o.id} has a label and an outcome`, !!o.label && !!o.outcome);
+      checkTrue(`${sc.id}/${o.id} serves a real step or nothing`,
+        o.serves === null || STEPS.indexOf(o.serves) !== -1);
+      checkTrue(`${sc.id}/${o.id} pulls a real lever or none`,
+        o.lever === null || LEVERS.indexOf(o.lever) !== -1);
+      Object.keys(o.subStats || {}).forEach(function (k) {
+        checkTrue(`${sc.id}/${o.id} trains a real sub-stat (${k})`, SUBS.indexOf(k) !== -1);
+      });
+      Object.keys(o.money || {}).forEach(function (f) {
+        checkTrue(`${sc.id}/${o.id} money field ${f} is one the engine writes`,
+          R.moneyFields.indexOf(f) !== -1);
+        Object.keys(o.money[f]).forEach(function (kind) {
+          checkTrue(`${sc.id}/${o.id} money kind ${kind} is known`, R.moneyKinds.indexOf(kind) !== -1);
+        });
+      });
+    });
+    /* A scenario where every option serves nothing teaches nothing. */
+    checkTrue(`${sc.id} has at least one option that advances something`,
+      sc.options.some(function (o) { return o.serves !== null; }));
+  });
+  /* THE REAL FLOOR, and it is neither of the two obvious guesses.
+     A board is six cards and a chapter is ten rounds, so by the last round the
+     player has already used nine — the board still needs six unseen ones
+     underneath them. That is boardSize + roundsPerChapter - 1 = 15 per tier,
+     not 6 and not 10. A walk through a real chapter is what caught this: an
+     eleven-card tier started repeating at round seven, because board() falls
+     back to reoffering seen cards the moment fewer than a board's worth are
+     left. Tier I is where a first-time reader lands and is the one that could
+     least afford it. */
+  const POOL_FLOOR = R.boardSize + R.roundsPerChapter - 1;
+  ['I','II','III','IV'].forEach(function (t) {
+    const pool = SCEN.scenarios.filter(function (sc) { return sc.tiers.indexOf(t) !== -1; }).length;
+    checkTrue(`tier ${t} can deal a whole chapter without reoffering a card (${pool}/${POOL_FLOOR})`,
+      pool >= POOL_FLOOR);
+  });
+
+  /* ---- a household the campaign can read --------------------------------- */
+  function household(opts) {
+    const o = opts || {};
+    const h = Schema.createHousehold(); h.filingStatus = 'single';
+    const p = Schema.createPerson({ id: 'dnd_person', role: 'adult' });
+    p.incomeSources = [Schema.createIncomeSource({ id: 'dnd_income', personId: 'dnd_person',
+      grossAnnualIncomeCents: 7200000, type: 'w2',
+      employerMatch: { matchPercent: 0.5, matchCapPercentOfSalary: 0.06 } })];
+    h.people = [p];
+    h.capturingFullMatch = o.capturing === undefined ? false : o.capturing;
+    h.assets = [Schema.createAsset({ id: 'dnd_asset_cash', category: 'cash', valueCents: o.cash === undefined ? 950000 : o.cash, liquid: true }),
+                Schema.createAsset({ id: 'dnd_asset_investments', category: 'investment', valueCents: 4800000, liquid: false })];
+    h.debts = o.debt === 0 ? [] : [Schema.createDebt({ id: 'dnd_debt_total', balanceCents: o.debt === undefined ? 2160000 : o.debt, rate: 0.22, type: 'credit_card' })];
+    h.expenses = { monthlyEssential: { estimatedValueCents: 315000, trackedValueCents: null, source: 'estimated' }, entries: [] };
+    h.dndProfile = { fixedCostShare: 0.55, yearsSustained: 4, disruptionSurvived: true, healthCoverage: 2,
+      automatedSaving: 'most', declaredMethod: 'standardArray',
+      declaredScores: { STR: 13, DEX: 12, CON: 14, INT: 12, WIS: 10, CHA: 8 } };
+    return h;
+  }
+
+  /* ---- placement, certain and not ---------------------------------------- */
+  const h = household();
+  const place = Camp.fooStepOf(h, TABLES);
+  checkTrue('the ladder places a character with a match answered', place && place.certain);
+  check('on step 2, the unclaimed match', place.step, 2);
+  check('and needs() says it is ready', Camp.needs(h, TABLES).ready, true);
+  const organised = household({ capturing: true, debt: 0, cash: 3000000 });
+  const front = Camp.fooStepOf(organised, TABLES);
+  checkTrue('an organised character gets a frontier, not silence', !!front);
+  checkTrue('and it is honestly marked uncertain', front.certain === false);
+  checkTrue('with the reason the ladder cannot see further', !!front.detail);
+  checkTrue('needs() reports the same character as not ready', !Camp.needs(organised, TABLES).ready);
+  /* An empty household is not placeless: the ladder honestly stops at its first
+     rung and names the two fields it needs. That is a step-0 frontier, and the
+     room must show it as uncertain rather than as a verdict. */
+  const blank = Schema.createHousehold();
+  const nothing = Camp.fooStepOf(blank, TABLES);
+  check('a household with nothing still stops at the bottom rung', nothing.step, 0);
+  check('and that is a frontier, not a verdict', nothing.certain, false);
+  checkTrue('and it names both things it is missing',
+    nothing.missing.indexOf('grossAnnualIncome') !== -1 &&
+    nothing.missing.indexOf('monthlyExpenses') !== -1);
+  checkTrue('and it says so in words', !!nothing.detail);
+
+  /* ---- money resolves three ways ----------------------------------------- */
+  check('cents is absolute', Camp.deltaCents({ cents: 12345 }, h), 12345);
+  check('months multiplies monthly expenses', Camp.deltaCents({ months: 2 }, h), 630000);
+  check('pctIncome multiplies gross annual', Camp.deltaCents({ pctIncome: 0.06 }, h), 432000);
+  check('and they add', Camp.deltaCents({ cents: 1000, months: 1 }, h), 316000);
+  check('an unreadable basis is null, never zero', Camp.deltaCents({ months: 1 }, blank), null);
+  checkTrue('so an unresolvable option is null too',
+    Camp.resolveMoney({ money: { cash: { months: 1 } } }, blank) === null);
+
+  /* ---- THE FORK. The campaign must never touch the real household. ------- */
+  const before = JSON.stringify(h);
+  const st = Camp.start(h, TABLES);
+  const b0 = Camp.board(st, TABLES);
+  const res = Camp.resolve(st, b0[0].id, b0[0].options[0].id, TABLES);
+  checkTrue('a round resolves', res.ok);
+  check('and the real household is byte-for-byte unchanged', JSON.stringify(h), before);
+  checkTrue('the fork is a different object', res.state.household !== h);
+  checkTrue('the state passed in is not mutated either', st.history.length === 0);
+
+  /* ---- the board --------------------------------------------------------- */
+  check('a board is the size the rules say', b0.length, R.boardSize);
+  check('and is the same board on reload — no rerolling for a better hand',
+    Camp.board(st, TABLES).map(function (x) { return x.id; }).join(','),
+    b0.map(function (x) { return x.id; }).join(','));
+  const tier = Camp.tierOf(st.household, TABLES);
+  checkTrue('every card is for this tier', b0.every(function (sc) { return sc.tiers.indexOf(tier) !== -1; }));
+  checkTrue('every card is fully resolvable against this household',
+    b0.every(function (sc) { return sc.options.every(function (o) { return Camp.resolveMoney(o, st.household) !== null; }); }));
+  const step0 = Camp.stepNumber(st.household, TABLES);
+  checkTrue('and the board leans toward the step you are on',
+    b0.filter(function (sc) { return Math.abs(sc.fooStep - step0) <= 2; }).length >= 3);
+  /* Round 2 must deal a fresh hand. Asserting that on ONE seed is a coin
+     flip dressed as a test — six cards from a pool of eleven can legitimately
+     come up the same twice. So assert the property across many seeds: the
+     deal must actually vary, and overwhelmingly. */
+  let differed = 0;
+  for (let seed = 1; seed <= 100; seed++) {
+    const a = Camp.board(Object.assign({}, st, { seed: seed, round: 0 }), TABLES)
+      .map(function (x) { return x.id; }).join(',');
+    const b = Camp.board(Object.assign({}, st, { seed: seed, round: 1 }), TABLES)
+      .map(function (x) { return x.id; }).join(',');
+    if (a !== b) differed++;
+  }
+  checkTrue(`a different round deals a different board (${differed}/100 seeds)`, differed >= 95);
+
+  /* ---- what you should have done ----------------------------------------
+     FOO is an ORDER, so the ranking is by order first and money only as a
+     tiebreak. This is the whole teaching mechanic. */
+  const fake = { id: 'x', options: [
+    { id: 'on',     serves: 3,    lever: null, subStats: {}, money: { cash: { cents: -1 } } },
+    { id: 'behind', serves: 1,    lever: null, subStats: {}, money: { cash: { cents: 1000000 } } },
+    { id: 'ahead',  serves: 8,    lever: null, subStats: {}, money: { cash: { cents: 1000000 } } },
+    { id: 'none',   serves: null, lever: null, subStats: {}, money: { cash: { cents: 5000000 } } }
+  ]};
+  check('the option on your step wins, even for a worse price',
+    Camp.bestOption(fake, 3, h).option.id, 'on');
+  check('an earlier step beats a later one', Camp.bestOption(
+    { id: 'y', options: [fake.options[1], fake.options[2]] }, 3, h).option.id, 'behind');
+  check('and a later step still beats serving nothing at all', Camp.bestOption(
+    { id: 'z', options: [fake.options[2], fake.options[3]] }, 3, h).option.id, 'ahead');
+  const tie = { id: 't', options: [
+    { id: 'poor', serves: 3, lever: null, subStats: {}, money: { cash: { cents: 100 } } },
+    { id: 'rich', serves: 3, lever: null, subStats: {}, money: { cash: { cents: 900000 } } }]};
+  check('money breaks a tie between equals', Camp.bestOption(tie, 3, h).option.id, 'rich');
+  checkTrue('and with no placement it says the ranking is not about order',
+    /cannot place you/.test(Camp.bestOption(fake, null, h).why));
+  checkTrue('a premature option is named as premature',
+    /premature/.test(Camp.bestOption({ id: 'p', options: [fake.options[2]] }, 3, h).why));
+
+  /* ---- a round records what it should ------------------------------------ */
+  const rec = res.record;
+  ['scenarioId','optionId','deltas','shouldHave','followedFoo','couldHave','fooBefore','fooAfter']
+    .forEach(function (k) { checkTrue(`the record carries ${k}`, rec[k] !== undefined); });
+  check('couldHave lists every option not taken', rec.couldHave.length, b0[0].options.length - 1);
+  checkTrue('and marks the one the ladder wanted, if it was not yours',
+    rec.followedFoo || rec.couldHave.some(function (c) { return c.wasBest; }));
+  check('the round advances', res.state.round, 1);
+  check('and the scenario is remembered as seen', res.state.seen.indexOf(b0[0].id) !== -1, true);
+
+  /* ---- ten rounds make a chapter ----------------------------------------- */
+  function play(strategy, rounds) {
+    let s = Camp.start(household(), TABLES);
+    for (let i = 0; i < rounds; i++) {
+      const board = Camp.board(s, TABLES);
+      if (!board.length) break;
+      const sc = board[0];
+      const ranked = Camp.bestOption(sc, Camp.stepNumber(s.household, TABLES), s.household).ranked;
+      const pick = strategy === 'best' ? ranked[0].option : ranked[ranked.length - 1].option;
+      const r = Camp.resolve(s, sc.id, pick.id, TABLES);
+      if (!r.ok) break;
+      s = r.state;
+      if (s.round >= R.roundsPerChapter && i < rounds - 1) s = Camp.nextChapter(s, TABLES);
+    }
+    return s;
+  }
+  const ten = play('best', R.roundsPerChapter);
+  check('ten rounds fill a chapter', ten.round, R.roundsPerChapter);
+  check('and every one is recorded', ten.history.length, R.roundsPerChapter);
+  const review = Camp.chapterReview(ten, TABLES);
+  check('the review covers the chapter', review.rounds, R.roundsPerChapter);
+  check('a player who always follows the ladder is marked as having done so',
+    review.followedFoo, R.roundsPerChapter);
+  check('and has nothing in the missed list', review.missedFoo.length, 0);
+  checkTrue('the review reports a net-worth movement', review.netWorthDelta !== null);
+
+  /* THE TEACHING INVARIANT. If ignoring the order paid as well as following
+     it, every word on the review screen would be decoration. */
+  const good = play('best', 20), bad = play('worst', 20);
+  const nwOf = function (s) { const n = Tier0.netWorth(s.household); return Money.isOk(n) ? n.value : null; };
+  checkTrue('following the ladder beats ignoring it, and by a lot',
+    nwOf(good) > nwOf(bad) * 1.25);
+  const goodStep = Camp.stepNumber(good.household, TABLES), badStep = Camp.stepNumber(bad.household, TABLES);
+  checkTrue('and it moves you up the ladder rather than sideways',
+    goodStep === null || badStep === null || goodStep >= badStep);
+  check('the careless player is honestly told they followed it never',
+    Camp.chapterReview(bad, TABLES).followedFoo, 0);
+
+  /* And the property the count is only a proxy for: actually play a chapter
+     and check no card is dealt twice. The count guard can be satisfied while
+     the pool is thinned by the resolvability filter; this one cannot. */
+  (function () {
+    const tiers = {};
+    ['I','II','III','IV'].forEach(function (t) { tiers[t] = 0; });
+    let s2 = Camp.start(household(), TABLES);
+    const dealt = [];
+    for (let i = 0; i < R.roundsPerChapter; i++) {
+      const b = Camp.board(s2, TABLES);
+      check(`round ${i + 1} deals a full board`, b.length, R.boardSize);
+      const t = Camp.tierOf(s2.household, TABLES);
+      if (t) tiers[t]++;
+      dealt.push(b[0].id);
+      const r = Camp.resolve(s2, b[0].id, b[0].options[0].id, TABLES);
+      if (!r.ok) break;
+      s2 = r.state;
+    }
+    check('a whole chapter never deals the same card twice',
+      dealt.length - new Set(dealt).size, 0);
+  })();
+
+  /* ---- stacking, which is the warning the review exists for -------------- */
+  const oneLever = [];
+  for (let i = 0; i < 10; i++) oneLever.push({ lever: 'compounder', subStats: { savingsRate: 3 } });
+  const warned = Camp.stacking(oneLever, TABLES);
+  checkTrue('ten choices on one lever raises a warning', warned.warnings.length > 0);
+  checkTrue('and names the lever', warned.warnings.some(function (w) { return w.kind === 'lever' && w.lever === 'compounder'; }));
+  checkTrue('and the sub-stat it all went into',
+    warned.warnings.some(function (w) { return w.kind === 'subStat' && w.subStat === 'savingsRate'; }));
+  check('and lists the levers never pulled', warned.untouchedLevers.length, LEVERS.length - 1);
+  const mixed = [{ lever: 'earner', subStats: { negotiation: 2 } }, { lever: 'keeper', subStats: { consistency: 2 } },
+                 { lever: 'anchor', subStats: { reserveDepth: 2 } }, { lever: 'compounder', subStats: { savingsRate: 2 } },
+                 { lever: 'builder', subStats: { hustleCapacity: 2 } }];
+  check('a spread chapter raises nothing', Camp.stacking(mixed, TABLES).warnings.length, 0);
+  checkTrue('and is reported as balanced', Camp.stacking(mixed, TABLES).balanced);
+  const justUnder = [];
+  for (let i = 0; i < R.stackWarnCount - 1; i++) justUnder.push({ lever: 'earner', subStats: {} });
+  checkTrue('one short of the threshold does not warn',
+    !Camp.stacking(justUnder, TABLES).warnings.some(function (w) { return w.kind === 'lever'; }));
+
+  /* ---- the next chapter -------------------------------------------------- */
+  const ch2 = Camp.nextChapter(ten, TABLES);
+  check('the chapter advances', ch2.chapter, 2);
+  check('the round resets', ch2.round, 0);
+  check('history is kept', ch2.history.length, R.roundsPerChapter);
+  checkTrue('and the new chapter opens from where the last one closed',
+    ch2.chapterOpening.netWorthCents === Camp.snapshot(ten.household, TABLES).netWorthCents);
+  check('a second chapter reviews only its own rounds',
+    Camp.chapterReview(ch2, TABLES).rounds, 0);
+
+  /* ---- the page ---------------------------------------------------------- */
+  const src = fs.readFileSync(path.join(ROOT, 'campaign.html'), 'utf8');
+  checkTrue('the campaign page exists', /<body class="slaf">/.test(src));
+  checkTrue('it declares LIVE-FORM', /LIVE-FORM: built once/.test(src));
+  checkTrue('it loads the campaign engine', /engines\/campaign\.js/.test(src));
+  checkTrue('and foo.js, which owns the ladder', /engines\/foo\.js/.test(src));
+  checkTrue('it says the sheet is not written to',
+    /Nothing that happens in it is written back to your sheet/.test(src));
+  checkTrue('it never calls the money writers on the real household',
+    !/Store\.setMoney|Store\.setDebt|Store\.setFilingStatus/.test(src));
+  checkTrue('the sheet links to it', /href="campaign\.html"/.test(fs.readFileSync(path.join(ROOT, 'sheet.html'), 'utf8')));
+  checkTrue('reference.js registers the scenario bank',
+    /dndScenarios/.test(fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8')));
 })();
 
 section('Dungeons & Dividends — ASIs and feats that do something (DD-023)');

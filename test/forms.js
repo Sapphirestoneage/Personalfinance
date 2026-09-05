@@ -35,6 +35,27 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const Demo = require(path.join(ROOT, 'shared/demo-persona.js'));
 
+/* A D&D character to seed /dnd/campaign.html with. Built through Schema so the
+   room reads it exactly as it reads one the sheet wrote — demo numbers only. */
+const Schema = require(path.join(ROOT, 'shared/schema.js'));
+const DND_CHARACTER = (() => {
+  const h = Schema.createHousehold();
+  h.filingStatus = 'single';
+  const p = Schema.createPerson({ id: 'dnd_person', role: 'adult' });
+  p.incomeSources = [Schema.createIncomeSource({
+    id: 'dnd_income', personId: 'dnd_person', grossAnnualIncomeCents: 7200000, type: 'w2' })];
+  h.people = [p];
+  h.assets = [
+    Schema.createAsset({ id: 'dnd_asset_cash', category: 'cash', valueCents: 950000, liquid: true }),
+    Schema.createAsset({ id: 'dnd_asset_investments', category: 'investment', valueCents: 4800000, liquid: false })
+  ];
+  h.debts = [Schema.createDebt({ id: 'dnd_debt_total', balanceCents: 2160000, rate: 0.22, type: 'credit_card' })];
+  h.expenses = { monthlyEssential: { estimatedValueCents: 315000, trackedValueCents: null, source: 'estimated' }, entries: [] };
+  h.dndProfile = { fixedCostShare: 0.55, yearsSustained: 4, disruptionSurvived: true,
+    healthCoverage: 2, automatedSaving: 'most' };
+  return h;
+})();
+
 const BASE = process.env.SLAF_BASE || 'http://127.0.0.1:8765';
 const EXECUTABLE = process.env.SLAF_CHROMIUM || '/opt/pw-browsers/chromium';
 
@@ -803,6 +824,32 @@ const SELECT_CASES = [
     })
   },
   {
+    /* The campaign's prologue. Its two selects are built once at boot and only
+       ever read (D-034) — every other view in the room is rebuilt freely, which
+       is safe precisely because none of them holds an input. If the prologue
+       ever starts being re-rendered alongside them, the tapped select comes
+       back untagged and this is where it shows. */
+    room: '/dnd/campaign.html',
+    container: '#pro-questions',
+    seed: 'empty',
+    prepare: async (page) => {
+      await page.evaluate((blob) => localStorage.setItem('dnd.character.v1', blob),
+        JSON.stringify(DND_CHARACTER));
+      await page.reload({ waitUntil: 'networkidle' });
+    },
+    picks: [
+      ['#q-match', 'half6'],
+      ['#q-capturing', 'no']
+    ],
+    read: () => ({
+      'q-match': document.querySelector('#q-match').value,
+      'q-capturing': document.querySelector('#q-capturing').value,
+      /* Answering both is what unlocks the button — a placement it can act on. */
+      canBegin: document.querySelector('#btn-begin').disabled === false
+    }),
+    also: (stored) => [['answering both unlocks the campaign', stored.canBegin, true]]
+  },
+  {
     room: '/rooms/hassle.html',
     container: '#preset-list',
     seed: 'demo',
@@ -979,9 +1026,14 @@ async function tagFields(page, container) {
     await page.waitForTimeout(400);
     const stored = await page.evaluate(c.read);
     for (const [sel, value] of c.picks) {
-      const key = sel.match(/"([^"]+)"/)[1];
+      /* The key is the quoted part of a [data-…="x"] selector, or the id when
+         the control is addressed by one. */
+      const m = sel.match(/"([^"]+)"/) || sel.match(/#([\w-]+)$/);
+      const key = m[1];
       check(`${key} kept its choice`, String(stored[key]), value);
     }
+    /* Anything else the room should be true of once the picks have landed. */
+    if (c.also) { for (const [name, actual, expected] of c.also(stored)) check(name, actual, expected); }
     check('no page errors', errs.join('; '), '');
     } catch (err) {
       failures.push(`${c.room} — ${String(err.message).split('\n')[0]}`);
