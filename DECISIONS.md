@@ -5089,3 +5089,94 @@ catalogue it appears here automatically, but if it is answered from the
 *household* rather than a sub-stat, add it to `dmProfileFor()` — otherwise a DM
 can tick "they have it" and nothing will happen. That is the one place this page
 has to know about specific blockers, and it is the one place to check.
+
+---
+
+## D-079 — Six types, derived from the bestiary, and a log field I said existed and did not
+
+T10. §9.3 gave every creature an `attackType` and nothing ever read them
+sideways. This does: not *what is this monster* but **what kind of thing works on
+me**. Twenty-nine creatures is too many to hold in your head. Six is not, and
+*"urgency works on me"* is a sentence you can still use in a shop.
+
+### The chart is counted, never written down
+
+Which saves a type comes at, what blocks it and how hard, its CR range, and which
+creatures belong to it are all **derived from the bestiary** by
+`Encounter.typeChart()`. Add a creature and the chart moves on its own. Write it
+by hand and it is wrong the first time somebody does — which, given §9.10 added
+fifteen creatures a day earlier, is not hypothetical.
+
+What it produces is genuinely informative rather than decorative:
+
+    Fear        6 creatures  CON/DEX/STR/WIS  CR 9–18   ← the expensive end
+    Flattery    4            CON/WIS          CR 0.1–7
+    Urgency     4            DEX/CHA/CON      CR 0.25–8
+    Complexity  6            INT/CON/STR/WIS  CR 0.25–6
+    Guilt       4            CHA              CR 3–12   ← almost purely CHA
+    Greed       5            WIS/CON/INT      CR 3–14
+
+A test asserts the saves named for a type are exactly the saves its creatures
+target, that every creature is counted once and only once, and that blockers are
+ordered strongest-effect first.
+
+### The one real design problem: creatures that target everything
+
+Guilt is a Charisma type in every respect except that one of its four creatures —
+the Divorce Dragon — targets **every save at once**. Pooling that in made Guilt
+report itself as a *Dexterity* problem for a character whose Dexterity happened to
+be their worst save, which is both wrong and actively misleading.
+
+So `typeDefence()` measures against the saves a type **characteristically** comes
+at, and reports what an all-targeting creature would find **separately**, in its
+own sentence. Both facts get said; neither drowns the other. This is the check
+worth keeping: it was verified by reintroducing the collapse deliberately and
+watching two assertions fail.
+
+### Unknown is not safe
+
+A type whose saves are all unscored comes back `known: false` and is shown as
+**Unmeasured**, held below the ranked ones. A character with Intelligence and
+Wisdom but no Dexterity or Charisma is not *resistant* to Urgency and Guilt —
+nobody has looked. The same rule as an unscored save not being a weakness and an
+unstated runway not being rested, applied a fourth time.
+
+Exhaustion (§9.7) is folded in, and the raw save and the effective one are both
+reported, so a row that moved says why.
+
+### A correction: D-064 described a log that did not exist
+
+D-064's compatibility note said the encounter log's shape was
+`{at, monster, attackType, tier, targetSave, dc, hitChance, damageWeeks,
+hpBefore, hpAfter, mode}`. **It was not.** `logEncounter` wrote
+`{on, monsterId, outcome, reason, damageWeeks, source}` and never carried
+`attackType` at all — so the field T10 was supposedly being set up for was
+missing, and the entry claiming otherwise had been sitting in this file for a
+day.
+
+`attackType` and `tier` are now genuinely stored, and both pages pass them.
+`typeHistory()` **back-fills** older rows by looking the creature up by name, so
+nothing logged before today is lost. A row naming a creature the bestiary no
+longer has is counted as *unknown* rather than dropped and the page says how
+many: it happened, and silently losing history is worse than an untidy total.
+
+The related misnomer stays: `monsterId` holds the creature's **name**, not an id.
+Renaming the field would orphan every stored record for no gain, so the name
+stays and readers join on it — noted in the code rather than fixed.
+
+### Compatibility note
+
+**Stored shape:** `encounters[]` gains `attackType` and `tier`, both nullable.
+**Older rows have neither and that is expected** — read them through
+`Encounter.typeHistory()`, which recovers the type from `monsterId`, rather than
+reading the field directly. `monsterId` is a creature **name**; join on it
+accordingly.
+
+**Rooms updated:** `dnd/engines/encounter.js` (`typeChart`, `typeDefence`,
+`typeHistory`), `dnd/shared/store.js` (two logged fields), `dnd/types.html` (new),
+and `dnd/encounter.html` / `dnd/dm.html` (pass the fields, link the page).
+
+**Before writing any of these from a new room:** do not write a type chart down.
+Call `typeChart()`. If you add an attack type to `encounterRules.attackTypes` and
+no creature uses it, the §9.10 test that every declared type is reachable will
+fail — which is the intended outcome, not an inconvenience.
