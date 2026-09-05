@@ -6895,6 +6895,31 @@ section('Life events: a debt sprint, on the demo');
   checkTrue('with a want flagged to cut, its cost is the proposal', r2.ctx.rerankCutTopMonthlyCents > 0 && r2.answers.extra === r2.ctx.rerankCutTopMonthlyCents);
 })();
 
+section('Life events: a big purchase, on the demo');
+
+(function () {
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const T = Object.assign({}, TABLES, {
+    commonCosts: require(path.join(ROOT, 'data/common_costs.json')),
+    tripleD: require(path.join(ROOT, 'data/triple_d.json')),
+    returnBands: require(path.join(ROOT, 'data/return_bands.json'))
+  });
+  const tpl = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/big-purchase.json'), 'utf8'));
+  const h = Demo.build();
+  const r = E.run(h, tpl, { startsOn: 0 }, { tables: T, d: 'default' });
+  const by = {}; r.lines.forEach(l => { by[l.id] = l; });
+  check('the real hourly wage from engines/hourly.js: $21.04', by.hourlyNow.value, 2104);
+  check('$2,500 is 119 hours of life', by.hoursOfLife.value, Math.round(250000 / 2104));
+  check('cost per use over 120 uses, from Quick Math\'s engine', by.perUse.value, Math.round(250000 / 120));
+  check('joy per $1,000: 7 over 2.5', by.joyPerThousand.value, 2.8);
+  check('cash after: 9,500 − 2,500', by.cashAfter.value, 700000);
+  check('which is under three months of spending: red', by.cashAfter.bad, true);
+  check('the purchase leaves in month 1', r.monthly[0].cashCents, 1097000 - 250000);
+  check('and nothing else changes: month 12 is the baseline less $2,500', r.monthly[11].cashCents, E.baseline(h, { tables: T }).monthly[11].cashCents - 250000);
+  check('the horizon is five years', r.horizonMonths, 60);
+  check('the template writes nothing: no expenses, no income', tpl.diff.income.length + tpl.diff.expenses.length + tpl.diff.assets.length, 0);
+})();
+
 section('The D&D folder\'s vendored copies');
 
 (function () {

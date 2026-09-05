@@ -4374,6 +4374,15 @@ minimums and with the amount kept up for the full course, and the
 interest saved between them. The sprint itself stops when you said;
 the full-course figure is labelled as such.
 
+**8 · A big purchase.** Cost, uses a year, years it lasts, the joy you
+predict, and buying in a month — the thirty-day wait built into the
+default. One-time cash out; otherwise the template changes nothing and
+writes nothing. Lines: the real hourly wage, hours of your life the
+price costs, cost per use through Quick Math's engine (`costPerUse`),
+joy per $1,000 on your own rating with no verdict attached, cash after
+against the cushion floor (red under it), and when the thirty days end.
+Five-year horizon.
+
 **Verified.** `node test/run.js`: for each, month 1 and month 12 of the
 default run on the demo by longhand — the child's first year at $3,150 +
 $1,200 + $1,000 + $250 a month with the $3,000 birth in month 1; a parent
