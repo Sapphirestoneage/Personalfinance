@@ -183,8 +183,42 @@ module.exports = function (t) {
   ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-standalone', 'load-notice'].forEach(function (id) { checkTrue('the page has the section #' + id, html.indexOf('id="' + id + '"') !== -1); });
   checkTrue('the page loads the engine after selfemployed.js', html.indexOf('engines/selfemployed.js') < html.indexOf('engines/variableincome.js') && html.indexOf('engines/variableincome.js') < html.indexOf('shared/room.js'));
   checkTrue('the page declares LIVE-FORM: built once', /LIVE-FORM: built once/.test(html));
-  checkTrue('one Charts.bars call, no other chart', (html.match(/Charts\.(bars|area|donut|stacked)\(/g) || []).every(function (m) { return m === 'Charts.bars('; }));
+  checkTrue('one Charts.bars call for the typed months, one Charts.area for the ledger’s (D-128)', (html.match(/Charts\.bars\(/g) || []).length === 1 && (html.match(/Charts\.area\(/g) || []).length === 1);
   checkTrue('writes go through upsertIncomeSource and Spine.set', /Spine\.upsertIncomeSource\(person\.id/.test(html) && /Spine\.set\('variableIncome\.bufferMonths'/.test(html));
   checkTrue('the room says what it does not do', /scope: 'This room does not forecast a season/.test(html));
   checkTrue('no silent || 0 in the engine', !/\|\|\s*0\b/.test(t.fs.readFileSync(t.path.join(t.ROOT, 'engines/variableincome.js'), 'utf8')));
+
+  /* -- A filtered view over the ledger, with a rolling average (D-128) --- */
+  (function () {
+    var Ledger = require(t.path.join(t.ROOT, 'engines/ledger.js'));
+    var h = build({ source: { variableLowCents: 350000, variableHighCents: 650000 } });
+    check('no variable entries: nothing observed', VI.fromEntries(h, { now: Date.parse('2026-09-20') }), null);
+    h.ledger.income = [
+      Schema.createIncomeEntry({ id: 'g1', kind: 'se', amountCents: 300000, frequency: 'once', receivedOn: '2026-07-10' }),
+      Schema.createIncomeEntry({ id: 'g2', kind: 'se', amountCents: 500000, frequency: 'once', receivedOn: '2026-08-10' }),
+      Schema.createIncomeEntry({ id: 'g3', kind: 'side', amountCents: 100000, frequency: 'monthly', receivedOn: '2026-07-01' }),
+      Schema.createIncomeEntry({ id: 'b', kind: 'bonus', amountCents: 200000, frequency: 'once', receivedOn: '2026-09-05' }),
+      Schema.createIncomeEntry({ id: 'w', kind: 'w2', amountCents: 999900, frequency: 'monthly', receivedOn: '2026-07-01' }),
+      Schema.createIncomeEntry({ id: 'old', kind: 'se', amountCents: 999900, frequency: 'once', receivedOn: '2026-06-10', active: false })
+    ];
+    var fe = VI.fromEntries(h, { now: Date.parse('2026-09-20') });
+    check('the view filters to 1099, side and bonus', fe.entries, 4);
+    check('months before the first landing are not there', fe.months[0].id + '/' + fe.count, '2026-07/3');
+    check('by hand: July 3,000 + 1,000; August 5,000 + 1,000; September 1,000 + 2,000', fe.months.map(function (m) { return m.cents; }).join(','), '400000,600000,300000');
+    check('W-2 pay and the archived gig are out of it', fe.months[1].cents, 600000);
+    check('low and high are observed', fe.lowCents + '/' + fe.highCents, '300000/600000');
+    check('the three-month rolling average at September', fe.averageCents, Math.round((400000 + 600000 + 300000) / 3));
+    check('the rolling average at July is July alone', fe.rolling[0].cents + '/' + fe.rolling[0].over, '400000/1');
+    h.variableIncome.windowMonths = 6;
+    check('the window is read from the household', VI.fromEntries(h, { now: Date.parse('2026-09-20') }).window, 6);
+    var p = VI.plan(h, T, { now: Date.parse('2026-09-20') });
+    checkTrue('the plan reads the observed months', Money.isOk(p) && p.observed === true && p.averageBasis === 'entries');
+    check('… low is the observed low, not the typed one', p.lowCents, 300000);
+    check('… and the average is the rolling one', p.averageMonthCents, Math.round((400000 + 600000 + 300000) / 3));
+    check('the typed figures still serve when asked', VI.plan(h, T, { entries: false }).lowCents, 350000);
+    var page = t.fs.readFileSync(t.path.join(t.ROOT, 'rooms/variable-income.html'), 'utf8');
+    checkTrue('the room offers the window and no add-income form', /ctl: 'windowMonths'/.test(page) && !/upsertIncomeEntry/.test(page) && !/btn-save/.test(page));
+    checkTrue('the chart is the months with the rolling average when observed', /rolling average/.test(page) && /p\.observed/.test(page));
+    check('the window is owned here', t.Ownership.field('variableWindow').owner, 'variable-income');
+  })();
 };

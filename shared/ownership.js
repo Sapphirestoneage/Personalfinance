@@ -509,6 +509,11 @@
       read: function (h) { var v = (h.variableIncome || {}).bufferMonths; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['bufferMonths']); },
       format: function (v) { return v + ' mo'; }
     },
+    variableWindow: {
+      label: 'Rolling window', owner: 'variable-income', anchor: 'inputs',
+      read: function (h) { var v = (h.variableIncome || {}).windowMonths; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Three months until chosen.', ['windowMonths']); },
+      format: function (v) { return v + ' months'; }
+    },
 
     /* ---- The third wave: the LATER.md rooms (D-101). ---- */
     enoughMonthly: {

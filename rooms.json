@@ -705,7 +705,8 @@
       "writes": [
         "incomeLow",
         "incomeHigh",
-        "bufferMonths"
+        "bufferMonths",
+        "variableWindow"
       ],
       "requires": [
         "variableIncome"

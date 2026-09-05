@@ -69,7 +69,7 @@ module.exports = function (t) {
   const fort = mk('w2', { amountCents: 250000, frequency: 'fortnightly', receivedOn: '2026-09-04' });
   check('fortnightly from Sep 4 lands twice in September', Ledger.occurrences(fort, '2026-09').map(o => o.date).join(','), '2026-09-04,2026-09-18');
   check('… and three times in October', Ledger.occurrences(fort, '2026-10').map(o => o.date).join(','), '2026-10-02,2026-10-16,2026-10-30');
-  check('… and twice in August, before the anchor', Ledger.occurrences(fort, '2026-08').map(o => o.date).join(','), '2026-08-07,2026-08-21');
+  check('… and never in August, before it was first received', Ledger.occurrences(fort, '2026-08').length, 0);
   check('weekly from a Friday: four Fridays in September 2026', Ledger.occurrences(mk('w2', { frequency: 'weekly', receivedOn: '2026-09-04' }), '2026-09').length, 4);
   check('monthly on the 31st lands on the 30th in September', Ledger.occurrences(mk('w2', { frequency: 'monthly', receivedOn: '2026-01-31' }), '2026-09')[0].date, '2026-09-30');
   check('annual lands in its month only', Ledger.occurrences(mk('bonus', { frequency: 'annual', receivedOn: '2025-12-15' }), '2026-12').length + '/' + Ledger.occurrences(mk('bonus', { frequency: 'annual', receivedOn: '2025-12-15' }), '2026-11').length, '1/0');

@@ -215,6 +215,10 @@
       if (Money.isEntered(avg)) out.push({ date: iso(p.y, p.m, 1), cents: avg, estimated: true });
       return out;
     }
+    /* A recurring entry lands from the month it was first received in; it
+       is not projected back over months before it existed. */
+    var anchorYm = anchor.getFullYear() + '-' + (anchor.getMonth() + 1 < 10 ? '0' : '') + (anchor.getMonth() + 1);
+    if (anchorYm > month) return out;
     if (entry.frequency === 'monthly') {
       var d = Math.min(anchor.getDate(), dim);
       out.push({ date: iso(p.y, p.m, d), cents: entry.amountCents });

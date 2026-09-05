@@ -15,9 +15,13 @@
              expenses (Cash Flow), cash & savings (Start Here); for the
              self-employed, the quarterly estimate from engines/selfemployed.js.
   2. WRITES  It OWNS the low and high month on the variable income source
-             (incomeSource.variableLowCents / variableHighCents) and
-             household.variableIncome.bufferMonths. Nothing else edits those.
-             It does not touch the income figure itself.
+             (incomeSource.variableLowCents / variableHighCents),
+             household.variableIncome.bufferMonths and .windowMonths. Nothing
+             else edits those. It does not touch the income figure itself,
+             and it adds no income: the ledger's variable entries (1099,
+             side income, bonuses — logged in Income) are read here as a
+             filtered view with a rolling average, and when they exist the
+             low, high and average are observed from them (D-128).
   3. CALLS   engines/variableincome.js. The tax set-aside is the Self-
              Employed room's quarterly ÷ 3, never a second calculation.
   4. EMPTY   Opened by deep link with an empty spine it renders with the
@@ -117,6 +121,8 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/selfemployed.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/ledger.js"></script>
 <script src="../engines/variableincome.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
@@ -153,14 +159,14 @@
   Room.mount({
     id: 'variable-income',
     tables: ['variableIncomeConventions', 'seTax', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
-    reads: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings'],
+    reads: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'ledgerIncome'],
     guessAs: 'selfEmployed',
 
     number: function (h, T) {
       var p = VI.plan(h, T);
       if (!Money.isOk(p)) return { label: 'The salary to pay yourself', value: null, reason: p.reason };
       var parts = [
-        'low <strong>' + Money.formatCents(p.lowCents) + '</strong>',
+        (p.observed ? 'from <strong>' + p.entries.entries + (p.entries.entries === 1 ? ' entry' : ' entries') + '</strong> over ' + p.entries.count + (p.entries.count === 1 ? ' month' : ' months') + ' in Income · ' : '') + 'low <strong>' + Money.formatCents(p.lowCents) + '</strong>',
         'average <strong>' + Money.formatCents(p.averageMonthCents) + '</strong>',
         'high <strong>' + (Money.isEntered(p.highCents) ? Money.formatCents(p.highCents) : 'not entered') + '</strong>'
       ];
@@ -182,9 +188,24 @@
       return { label: 'The salary to pay yourself', value: Money.formatCents(p.salaryCents) + ' a month', sub: sub, zone: p.zone, result: p };
     },
 
+    /* With variable entries in the ledger the chart is the months as they
+       landed with the rolling average over them; without, the five bars. */
     chart: function (h, T) {
       var p = VI.plan(h, T);
       if (!Money.isOk(p)) return Charts.bars({ rows: [], empty: 'Add a low month to draw the swing.' });
+      if (p.observed && p.entries && p.entries.count >= 2) {
+        var fe = p.entries;
+        return Charts.area({
+          title: 'Variable income by month, with the rolling average',
+          series: [
+            { label: 'A month', color: Charts.COLORS.series[1], fill: true, points: fe.months.map(function (m, i) { return [i, m.cents]; }) },
+            { label: fe.window + '-month average', color: Charts.COLORS.target, fill: false, points: fe.rolling.map(function (r, i) { return [i, r.cents]; }) }
+          ],
+          hLines: Money.isEntered(p.spendingCents) ? [{ y: p.spendingCents, label: 'spending', color: Charts.COLORS.spend }] : [],
+          x: { label: 'month', format: function (v) { var m = fe.months[Math.round(v)]; return m ? m.label.slice(0, 3) : ''; } },
+          y: { min: 0 }
+        });
+      }
       return Charts.bars({
         rows: [
           { label: 'Low month', value: p.lowCents, color: Charts.COLORS.series[3] },
@@ -205,6 +226,9 @@
         read: function (h) { return readSource(h, 'variableHighCents'); },
         write: function (v) { writeSource('variableHighCents', v); },
         propose: function (h, T) { var g = VI.propose(h, T); return Money.isEntered(g.highCents) ? { value: g.highCents, source: 'thirteen-tenths of your average (convention)' } : null; } },
+      { ctl: 'windowMonths', label: 'Smooth over', kind: 'select', options: [['', 'Three months'], ['3', 'Three months'], ['6', 'Six months'], ['12', 'Twelve months']], hint: 'The rolling average over the ledger’s variable months — 1099, side income, bonuses — logged in Income. Nothing is added here.',
+        read: function (h) { return h.variableIncome && Money.isEntered(h.variableIncome.windowMonths) ? h.variableIncome.windowMonths : null; },
+        write: function (v) { var n = Number(v); Spine.set('variableIncome.windowMonths', [3, 6, 12].indexOf(n) >= 0 ? n : null); } },
       { ctl: 'bufferMonths', label: 'Buffer, months of the gap', kind: 'number', placeholder: 'e.g. 3', affix: 'mo', hint: 'How many months of the low-to-average gap to hold. Three is the usual floor, six is full.',
         read: function (h) { return h.variableIncome && Money.isEntered(h.variableIncome.bufferMonths) ? h.variableIncome.bufferMonths : null; },
         write: function (v) { Spine.set('variableIncome.bufferMonths', v === null || v < 0 ? null : v); },

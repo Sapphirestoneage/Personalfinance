@@ -95,6 +95,7 @@
     'household.housing.priceCents':              { class: 'raw',        unit: 'cents',   note: 'a place being weighed: with rentMonthlyCents (what renting costs), downPct (0–1), rate (mortgage, decimal). Owned by Housing Decision. D-099' },
     'household.purchase.priceCents':             { class: 'raw',        unit: 'cents',   note: 'a big purchase: with monthsAway, financeRate (decimal, null = cash), label. Owned by Big Purchase. D-099' },
     'household.variableIncome.bufferMonths':     { class: 'raw',        unit: 'months',  note: 'months of the low-to-average gap held as a buffer. Owned by Variable Income. D-099' },
+    'household.variableIncome.windowMonths':     { class: 'raw',        unit: 'months',  values: [3, 6, 12], note: 'the rolling window the room averages the ledger\'s variable months over. Owned by Variable Income. D-128' },
     'household.enough.monthlyCents':             { class: 'raw',        unit: 'cents',   note: 'what you would live on by choice, a month; source curve|entered. Owned by Enough. D-101' },
     'household.designedWeek.blocks[].hours':     { class: 'raw',        unit: 'hours',   note: 'a block of the designed week; costCents a week; categoryId the expense line. Owned by Designed Week. D-101' },
     'household.timeBuckets[].decade':            { class: 'raw',        unit: 'age',     note: 'a decade (30 = your thirties) with experiences[] {label, costCents, year}. Owned by Time Buckets. D-101' },
@@ -770,7 +771,9 @@
   }
   function createVariableIncomePlan(fields) {
     var f = fields || {};
-    return { bufferMonths: Money.isEntered(f.bufferMonths) ? f.bufferMonths : null };
+    return { bufferMonths: Money.isEntered(f.bufferMonths) ? f.bufferMonths : null,
+      /* The rolling window the room smooths the ledger's months over: 3, 6 or 12. D-128. */
+      windowMonths: [3, 6, 12].indexOf(f.windowMonths) >= 0 ? f.windowMonths : null };
   }
   /* The third wave (D-101 scaffolding): the LATER.md rooms — the T8
      shapes (D-093 draft, now built), the loan decision, the calendar,
