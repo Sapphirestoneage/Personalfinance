@@ -191,6 +191,13 @@
     <ul class="logged" id="logged"></ul>
   </section>
 
+  <section class="slaf-card" id="flow" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Where it flows</span>
+    <h2 style="margin:var(--space-2) 0 0" id="flow-title">This month, from what is logged</h2>
+    <div id="flow-chart"></div>
+    <p class="slaf-hint" id="flow-why" style="margin:var(--space-2) 0 0"></p>
+  </section>
+
   <section class="slaf-card" id="out-summary">
     <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-3)">
       <span class="slaf-eyebrow">Monthly spending</span>
@@ -751,6 +758,7 @@
     renderDivergence(h);
     renderLog(h);
     renderManageLog(h);
+    renderFlow(h);
   }
 
   /* ---------- the expense log (D-128) ----------------------------------------
@@ -838,6 +846,67 @@
         + '<button type="button" class="lg-x" data-unlog="' + r.entryId + '" aria-label="Remove">✕</button></li>';
     }).join('') || '<li><span class="slaf-hint" style="grid-column:1/-1">Nothing logged this month yet.</span></li>';
   }
+  /* ---------- Where it flows: the Sankey (D-128) ------------------------------
+     Drawn from the spine on every render — the month's income entries netted
+     of tax, the log by bucket and by group — never from a saved dataset. With
+     nothing logged this month it draws the typical month instead: take-home
+     into the lines by group. */
+  function renderFlow(h) {
+    var m = Ledger.thisMonth();
+    var inc = Ledger.month(h, TABLES, m);
+    var log = CashFlow.logInMonth(h, TABLES.expenseCategories, m);
+    var C = Charts.COLORS, nodes = [], links = [];
+    var live = inc.count > 0 || log.count > 0;
+    var groupLabel = function (g) { var gr = CashFlow.groupById(TABLES.expenseCategories, g); return gr ? gr.label : g; };
+    var BUCKET_COLOR = { expenses: C.spend, savings: C.target, investments: C.contributed, debt: C.debt, income_costs: C.series[4] };
+    var BUCKET_LABEL = { expenses: 'Expenses', savings: 'Savings', investments: 'Investments', debt: 'Debt', income_costs: 'Costs of earning' };
+    nodes.push({ id: 'pool', label: 'Take-home', column: 1, color: C.contributed });
+    if (live) {
+      el('flow-title').textContent = Schema.monthLabel(m) + ', from what is logged';
+      inc.rows.forEach(function (r) {
+        var id = 'in_' + r.entry.id;
+        nodes.push({ id: id, label: r.entry.label || Schema.INCOME_KIND_RULES[r.entry.kind].label, column: 0, color: C.series[1] });
+        var net = Money.isEntered(r.takeHomeCents) ? r.takeHomeCents : r.grossCents;
+        links.push({ from: id, to: 'pool', value: net, color: C.series[1] });
+      });
+      var byBucket = {}, byGroup = {};
+      log.rows.forEach(function (r) {
+        byBucket[r.bucket] = (byBucket[r.bucket] || 0) + r.cents;
+        var key = r.bucket + '|' + r.group;
+        byGroup[key] = (byGroup[key] || 0) + r.cents;
+      });
+      Object.keys(byBucket).forEach(function (b) {
+        nodes.push({ id: 'b_' + b, label: BUCKET_LABEL[b] || b, column: 2, color: BUCKET_COLOR[b] || C.muted });
+        links.push({ from: 'pool', to: 'b_' + b, value: byBucket[b], color: BUCKET_COLOR[b] || C.muted });
+      });
+      Object.keys(byGroup).forEach(function (key) {
+        var b = key.split('|')[0], g = key.split('|')[1];
+        if (b === 'expenses' || b === 'income_costs') {
+          nodes.push({ id: 'g_' + key, label: groupLabel(g), column: 3, color: BUCKET_COLOR[b] });
+          links.push({ from: 'b_' + b, to: 'g_' + key, value: byGroup[key], color: BUCKET_COLOR[b] });
+        }
+      });
+      var out = Object.keys(byBucket).reduce(function (t, b) { return t + byBucket[b]; }, 0);
+      var left = inc.takeHomeCents - out;
+      el('flow-why').textContent = inc.count ? Money.formatCents(inc.takeHomeCents) + ' came in after tax; ' + Money.formatCents(out) + ' has been logged going out' + (left > 0 ? ', ' + Money.formatCents(left) + ' not yet logged anywhere.' : left < 0 ? ' — more than came in.' : '.') : 'Nothing logged as coming in this month yet; the outgoings are drawn against an empty pool.';
+    } else {
+      el('flow-title').textContent = 'A typical month, from the lines above';
+      var take = Tier0.takeHomeMonthlyCents(h, TABLES);
+      var sum = CashFlow.summarise(h, TABLES.expenseCategories);
+      if (Money.isOk(take)) { nodes.push({ id: 'in_pay', label: 'Pay, after tax', column: 0, color: C.series[1] }); links.push({ from: 'in_pay', to: 'pool', value: take.value, color: C.series[1] }); }
+      if (Money.isOk(sum)) {
+        var groups = {};
+        sum.categories.forEach(function (c) { var g = CashFlow.groupOf(TABLES.expenseCategories, c.categoryId); var gr = CashFlow.groupById(TABLES.expenseCategories, g); var b = gr ? gr.bucketOf : 'expenses'; groups[b + '|' + g] = (groups[b + '|' + g] || 0) + c.monthlyCents; });
+        var buckets = {};
+        Object.keys(groups).forEach(function (k) { var b = k.split('|')[0]; buckets[b] = (buckets[b] || 0) + groups[k]; });
+        Object.keys(buckets).forEach(function (b) { nodes.push({ id: 'b_' + b, label: BUCKET_LABEL[b] || b, column: 2, color: BUCKET_COLOR[b] || C.muted }); links.push({ from: 'pool', to: 'b_' + b, value: buckets[b], color: BUCKET_COLOR[b] || C.muted }); });
+        Object.keys(groups).forEach(function (k) { var b = k.split('|')[0], g = k.split('|')[1]; if (b !== 'expenses') return; nodes.push({ id: 'g_' + k, label: groupLabel(g), column: 3, color: C.spend }); links.push({ from: 'b_' + b, to: 'g_' + k, value: groups[k], color: C.spend }); });
+      }
+      el('flow-why').textContent = 'Log income in Income and what goes out in the log below, and this redraws from the actual month.';
+    }
+    el('flow-chart').innerHTML = Charts.sankey({ title: 'Where the money flows', nodes: nodes, links: links, empty: 'Add your income in Start Here, or log a month, and the flow appears.' });
+  }
+
   /* Manage the log: hide, set aside, restore (D-128). */
   var Manage = SLAF.Manage, Budget = SLAF.Budget;
   var manageOpen = false, manageState = 'active';

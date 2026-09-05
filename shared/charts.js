@@ -280,8 +280,61 @@
     return out;
   }
 
+  /* ---- 5. Sankey ------------------------------------------------------------------
+     Money as a flow: columns of nodes left to right, a band per link whose
+     height is its value. nodes: [{ id, label, column, color }];
+     links: [{ from, to, value }]. Node heights are the larger of what
+     flows in and what flows out, so a pool that is not fully spent still
+     shows its whole height; the unspent part is the gap. */
+  function sankey(opts) {
+    var o = opts || {};
+    var nodes = (o.nodes || []).slice(), links = (o.links || []).filter(function (l) { return num(l.value) && l.value > 0; });
+    if (!nodes.length || !links.length) return '<div class="slaf-chart is-empty"><p class="slaf-reason">' + esc(o.empty || 'Nothing flows yet.') + '</p></div>';
+    var format = o.format || money;
+    var W = o.width || 360, H = o.height || 240, PAD = 10, NW = 10, GAP = 6;
+    var byId = {};
+    nodes.forEach(function (n) { n.inV = 0; n.outV = 0; byId[n.id] = n; });
+    links.forEach(function (l) { if (byId[l.from]) byId[l.from].outV += l.value; if (byId[l.to]) byId[l.to].inV += l.value; });
+    nodes.forEach(function (n) { n.v = Math.max(n.inV, n.outV); });
+    var cols = {};
+    nodes.forEach(function (n) { (cols[n.column] = cols[n.column] || []).push(n); });
+    var colIds = Object.keys(cols).map(Number).sort(function (a, b) { return a - b; });
+    var colTotal = Math.max.apply(null, colIds.map(function (c) { return cols[c].reduce(function (t, n) { return t + n.v; }, 0) + GAP * (cols[c].length - 1); })) || 1;
+    var scale = (H - 2 * PAD) / colTotal;
+    var xs = function (c) { return colIds.length === 1 ? PAD : PAD + (W - 2 * PAD - NW) * (colIds.indexOf(c) / (colIds.length - 1)); };
+    colIds.forEach(function (c) {
+      var y = PAD, list = cols[c].filter(function (n) { return n.v > 0; });
+      var used = list.reduce(function (t, n) { return t + n.v * scale; }, 0) + GAP * (list.length - 1);
+      y = PAD + Math.max(0, (H - 2 * PAD - used) / 2);
+      list.forEach(function (n) { n.x = xs(c); n.y = y; n.h = Math.max(1.5, n.v * scale); n.outY = n.y; n.inY = n.y; y += n.h + GAP; });
+    });
+    var parts = ['<rect class="panel" x="0" y="0" width="' + W + '" height="' + H + '" rx="10"/>'];
+    links.forEach(function (l) {
+      var a = byId[l.from], b = byId[l.to];
+      if (!a || !b || !(a.v > 0) || !(b.v > 0)) return;
+      var h = l.value * scale;
+      var y0 = a.outY, y1 = b.inY;
+      a.outY += h; b.inY += h;
+      var x0 = a.x + NW, x1 = b.x, cx = (x0 + x1) / 2;
+      var d = 'M' + x0 + ',' + y0 + ' C' + cx + ',' + y0 + ' ' + cx + ',' + y1 + ' ' + x1 + ',' + y1
+        + ' L' + x1 + ',' + (y1 + h) + ' C' + cx + ',' + (y1 + h) + ' ' + cx + ',' + (y0 + h) + ' ' + x0 + ',' + (y0 + h) + ' Z';
+      parts.push('<path class="flow" d="' + d + '" fill="' + (l.color || b.color || a.color || COLORS.muted) + '"><title>' + esc(a.label + ' → ' + b.label + ': ' + format(l.value)) + '</title></path>');
+    });
+    nodes.forEach(function (n) {
+      if (!(n.v > 0)) return;
+      var last = n.column === colIds[colIds.length - 1];
+      parts.push('<rect class="node" x="' + n.x + '" y="' + n.y + '" width="' + NW + '" height="' + n.h + '" rx="2" fill="' + (n.color || COLORS.contributed) + '"><title>' + esc(n.label + ': ' + format(n.v)) + '</title></rect>');
+      var tx = last ? n.x - 4 : n.x + NW + 4, anchor = last ? 'end' : 'start';
+      var ty = n.y + Math.min(n.h / 2, 8) + 3;
+      parts.push('<text class="tick" x="' + tx + '" y="' + ty + '" text-anchor="' + anchor + '">' + esc(trim(n.label, 18)) + '</text>');
+      if (n.h > 22) parts.push('<text class="tick small" x="' + tx + '" y="' + (ty + 11) + '" text-anchor="' + anchor + '">' + esc(shortMoney(n.v)) + '</text>');
+    });
+    return '<div class="slaf-chart slaf-sankey"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.title || 'where the money flows') + '">' + parts.join('') + '</svg></div>';
+  }
+
   return {
     COLORS: COLORS,
+    sankey: sankey,
     shortMoney: shortMoney,
     percent: percent,
     niceStep: niceStep,

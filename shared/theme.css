@@ -702,3 +702,7 @@ a.slaf-explain-chip:hover { border-color: var(--color-accent); }
 .slaf-manage-act:hover { border-color: var(--color-accent); }
 .slaf-archive-prompt { margin-top: var(--space-3); border-left: 3px solid var(--color-caution); background: rgba(232,184,75,.08); padding: var(--space-2) var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; justify-content: space-between; }
 .slaf-archive-prompt span small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+.slaf-sankey .flow { opacity: .55; }
+.slaf-sankey .flow:hover { opacity: .85; }
+.slaf-sankey .node { stroke: var(--navy-950); stroke-width: .6; }
+.slaf-sankey .tick.small { fill: rgba(147, 197, 253, 0.6); font-size: 8.5px; }

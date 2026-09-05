@@ -134,6 +134,7 @@
         { id: 'glance',          label: 'At a glance' },
         { id: 'spending',        label: 'A typical month' },
         { id: 'log',             label: 'The expense log' },
+        { id: 'flow',            label: 'Where it flows' },
         { id: 'out-summary',     label: 'Monthly spending' },
         { id: 'out-net-flow',    label: 'What’s left' },
         { id: 'out-template',    label: 'Against a budget' },
