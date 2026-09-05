@@ -56,13 +56,17 @@ moved between them. `rooms/history.html`, D-122.
   with one comparison bar each; Rule of Five, Max IRA and Max 401(k)
   presets stacked into the estimate; Not applicable, and a Hypothetical
   view that never writes.
-- Still open after D-129: N/A buttons beside the situation-gate fields
-  in their own rooms (the map is read by `Ownership.describe` already;
-  only Budget offers the toggle); a Rule of Five preset that takes a
-  price of its own rather than Big Purchase's; presets for Savings
-  beyond the one rule.
-- Still open from `MONEY-MAP.md`: estimated / potential dates on a line
-  (`dateKind`), one-offs and the calendar's bills retired into log entries
-  (Q5), the calendar grid drawn from the log, entries moving balances
-  (Q8), a trailing-average "monthly expenses" once months close (Q10),
-  one rent field (Q11).
+- **What was pushed off, built (D-130)**: `dateKind` — a date that is
+  exact, estimated or potential, the last drawn but never counted; the
+  Money Calendar drawn from the ledger's landings and the log's dated
+  entries, its own bill inputs retired, Start Here's one-off a dated
+  entry (Q5); a month of spending as the closed months' average once
+  months close (Q10); one rent, Cash Flow's housing line, with Housing's
+  field the alternative (Q11); what the log moved since cash was
+  confirmed, set beside the balance and never applied (Q8); N/A beside
+  the workplace plan and the HSA in Where It Goes, and the chip that
+  says so everywhere; an emergency-fund preset for Savings.
+- Decided against, and why (D-130): a Rule of Five preset with a price
+  of its own — it would be the budget page's first input field; entries
+  moving asset balances — every logged coffee would write to an asset
+  another room owns.

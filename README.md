@@ -131,7 +131,7 @@ engines/            Shared calculation engines — one function per concept
   advice.js           the Advice Translator: a piece of advice restated for this household (D-096)
   ledger.js           the tax engine for dated income entries — W-2 withheld, 1099 owed with SE tax, unemployment owed without it, not taxable — and the month they add up to (D-128, D-129)
   budget.js           the reflected budget: estimated beside actual, the month closed (D-128); five cards with presets stacked in (D-129)
-  presets.js          Rule of Five, Max IRA, Max 401(k) — each read through the function that owns it, stacked into a bucket's estimate (D-129)
+  presets.js          Rule of Five, Emergency fund, Max IRA, Max 401(k) — each read through the function that owns it, stacked into a bucket's estimate (D-129, D-130)
   variance.js         closed months read back: one month, the trend, the pattern (D-128)
   betweenjobs.js, protection.js, decumulation.js, taxroom.js, estate.js, giving.js,
   careermove.js, partner.js, kids.js, housing.js, purchase.js, variableincome.js,

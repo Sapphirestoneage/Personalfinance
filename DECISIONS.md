@@ -6234,6 +6234,114 @@ or call `CashFlow.logInMonth`, which does. A future room offering a
 structural option should check `household.notApplicable[key]` first, or
 read the field through `Ownership.describe`, which does.
 
+## D-130 — What was pushed off, built: dates that are only estimated or potential, the calendar from the ledger, one month of spending, one rent, what the log moved, N/A in its owner room, an emergency-fund preset
+
+*(The open items LATER.md carried after D-128 and D-129 — the Money
+Map's Q5, Q8, Q10 and Q11, `dateKind`, and the three "still open after
+D-129" lines — each built and verified, one commit each.)*
+
+**How sure a date is.** Income entries and log entries carry
+`dateKind`: `exact` (it landed, or it is due), `estimated` (about then)
+or `potential` (may not happen at all); unknown reads as exact, the way
+every older row was meant. Every landing carries its kind. **Actual
+counts exact and estimated; a potential one is never counted** — the
+ledger's month and the log's month list it apart (`potentialRows`,
+`potentialCents`) so a calendar can draw it and the budget never does.
+Both forms ask "The date is" beside the date; the log lists a potential
+row greyed with "maybe" and an estimated one with "about".
+
+**The calendar is drawn from the ledger and the log (Q5).** When
+Income has entries landing in the window, *they* are the paydays, each
+on its day for the cash it brings net of what was withheld
+(`cashReceivedCents`), and the cadence is not needed; with no ledger the
+cadence and next-payday day still draw the month as before. Every dated
+entry in the expense log is drawn on its day as a bill, a recurring one
+each month, and what the log lists in the month comes off the spread;
+an estimated date is drawn and counted, a potential one drawn and never
+counted, a reimbursement comes back in on the day it came. The room's
+own bill and pay-later inputs are gone — bills are logged in Cash Flow,
+which is their one owner — and the bills and instalments saved on the
+calendar before this are still drawn, so no household loses a day it
+had. **Start Here's one-off is a dated entry now**: coming in, an income
+entry (`oneoff_in`, kind other, source onepager); going out, a log entry
+(`oneoff_out`, category other); the 1st of its month, date estimated.
+`Schema.oneOffEntry` reads it back for the one-pager and the dashboard,
+and still reads the legacy `oneOffs[0]` for a household saved before.
+
+**A month of spending is the closed months' average (Q10).**
+`Schema.monthlyExpensesCents` prefers the average of the last three
+closed months' expenses actual (source `closed`, naming the months) to
+the tracked figure and the estimate; a closed month with nothing logged
+does not count. Every room that reads "a month of spending" — Runway,
+Savings Rate, FIRE, the ratios, the calendar, the presets — gains the
+truer figure with no change of its own, and Runway and Savings Rate say
+where it came from. Three months is the trailing window because one
+closed month is a sample and twelve is a year of drift; it is a
+constant in the schema, `CLOSED_AVERAGE_MONTHS`, not a table entry, as
+it is arithmetic rather than reference data.
+
+**One rent (Q11).** `Schema.rentMonthlyCents` reads Cash Flow's housing
+line — the typical-month line, or failing that a recurring rent logged
+on its day — as what you pay; the Housing Decision room's own field is
+only *a place you would rent instead*, used when typed (the room's
+what-if) or when there is no line. `Housing.compare` and
+`Calendar.rentCents` both go through it and say which they used. In the
+ownership map `rentMonthly` is Cash Flow's; `rentAlternative` is
+Housing's — two fields because they are two numbers, the fact and the
+hypothesis, which is D-052's line.
+
+**What the log moved since cash was confirmed (Q8).**
+`Budget.cashMovedSince` adds up income actually received and takes off
+every logged outgoing from the day the cash figure was confirmed
+(`meta.confirmedAt.cashSavings`), potential dates never counted. The
+Statement sets it beside the cash balance as a hint and **applies
+nothing**: entries inform the balance, they never move it, so the
+person's confirmation stays the one fact and the Statement never
+disagrees with the bank statement it was typed from. The alternative —
+letting entries move balances — would make every logged coffee a write
+to an asset another room owns, and D-017's one-owner rule was the
+reason to stop.
+
+**Not applicable, in the owner room too.** `Ownership.naButton` renders
+the N/A toggle for a structural option; Where It Goes sets one beside
+the workplace-contribution chip ("No plan") and under the HSA toggles,
+through `Spine.setNotApplicable`. `Ownership.chip` shows a field marked
+N/A as "n/a — you marked this not applicable" everywhere instead of
+asking for it. The remaining situation gates (between jobs, a partner,
+dependents, debt) are answered by facts Start Here already asks, so they
+need no toggle.
+
+**An emergency-fund preset for Savings.** `engines/presets.js` gains
+`emergencyFund`: the gap between cash and N months of spending, spread
+over a horizon, both from `data/savings_presets.json` (three months
+over twelve, a stated convention). It stacks with Rule of Five. **The
+Rule of Five keeps reading Big Purchase's price** rather than taking one
+of its own: a price box on the budget page would be its first input
+field, and zero inputs there (D-129) is the rule that wins.
+
+### Compatibility note
+
+Stored shape: `ledger.income[]` and `expenses.entries[]` rows gain
+`dateKind` (`'exact'`); `household.calendar.bills[]` and `payLater[]`
+are no longer written by any room but are still read and drawn;
+`household.oneOffs[]` is no longer written by any room and is read only
+when neither `oneoff_in` nor `oneoff_out` exists; `retirement`,
+`budget`, `notApplicable` are as D-129 left them. A household saved
+before this reads through the constructors with the defaults; nothing
+migrates. Rooms updated: `rooms/income.html`, `rooms/cash-flow.html`
+(the date kind), `rooms/calendar.html` (drawn from the ledger and the
+log, two inputs), `rooms/start.html` and `index.html` (the one-off as an
+entry), `rooms/housing.html` (the alternative rent), `rooms/statement.html`
+(the cash-moved hint, loads the ledger and budget engines),
+`rooms/accounts.html` (N/A), `rooms/runway.html` and
+`rooms/savings-rate.html` (the source words). A future room reading
+occurrences must skip `potential` ones from any total (`Ledger.month`
+and `CashFlow.logInMonth` already do); one reading "the rent" must call
+`Schema.rentMonthlyCents`, never `housing.rentMonthlyCents` alone; one
+reading "a month of spending" gets the closed average for free through
+`Schema.monthlyExpensesCents` and should say so when it names its
+source (`.source === 'closed'`, `.months`).
+
 ---
 
 # The Dungeons & Dividends entries
