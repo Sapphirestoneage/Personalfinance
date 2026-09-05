@@ -892,6 +892,30 @@
     return h.budget.estimated[month] ? h.budget.estimated[month][bucket] : null;
   }
 
+  /** Stack a preset into, or take it out of, a month's bucket. D-129. */
+  function togglePreset(month, bucket, id, on, label) {
+    var h = load();
+    h.budget = Schema.createBudget(h.budget || {});
+    h.budget.presets[month] = h.budget.presets[month] || {};
+    var ids = (h.budget.presets[month][bucket] || []).slice();
+    var has = ids.indexOf(id) >= 0;
+    var want = on === undefined ? !has : !!on;
+    if (want && !has) ids.push(id); else if (!want && has) ids.splice(ids.indexOf(id), 1);
+    if (ids.length) h.budget.presets[month][bucket] = ids; else delete h.budget.presets[month][bucket];
+    if (!Object.keys(h.budget.presets[month]).length) delete h.budget.presets[month];
+    pendingLabel = label || ((want ? 'Added ' : 'Removed ') + id + ' preset, ' + Schema.monthLabel(month));
+    save(); notify();
+    return want;
+  }
+  /** The one-time answer: is there an employer 401(k)? D-129. */
+  function setHas401k(value) {
+    var h = load();
+    h.retirement = Schema.createRetirement(Object.assign({}, h.retirement || {}, { has401k: value === null || value === undefined ? null : !!value }));
+    pendingLabel = value === null || value === undefined ? 'Unanswered: an employer 401(k)' : (value ? 'Has an employer 401(k)' : 'No employer 401(k)');
+    save(); notify();
+    return h.retirement.has401k;
+  }
+
   function removeExpenseEntry(id) {
     var h = load();
     var list = h.expenses.entries || [];
@@ -1371,6 +1395,8 @@
     upsertExpenseEntry: upsertExpenseEntry,
     removeExpenseEntry: removeExpenseEntry,
     markReimbursed: markReimbursed,
+    togglePreset: togglePreset,
+    setHas401k: setHas401k,
     upsertIncomeEntry: upsertIncomeEntry,
     removeIncomeEntry: removeIncomeEntry,
     upsertIncomeCost: upsertIncomeCost,

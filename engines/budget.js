@@ -26,15 +26,15 @@
   var deps;
   if (typeof module === 'object' && module.exports) {
     deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'), Tier0: require('./tier0.js'),
-             CashFlow: require('./cashflow.js'), Ledger: require('./ledger.js') };
+             CashFlow: require('./cashflow.js'), Ledger: require('./ledger.js'), Presets: require('./presets.js') };
   } else {
     var S = root.SLAF || {};
-    deps = { Money: S.Money, Schema: S.Schema, Tier0: S.Tier0, CashFlow: S.CashFlow, Ledger: S.Ledger };
+    deps = { Money: S.Money, Schema: S.Schema, Tier0: S.Tier0, CashFlow: S.CashFlow, Ledger: S.Ledger, Presets: S.Presets };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.CashFlow, deps.Ledger);
+  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.CashFlow, deps.Ledger, deps.Presets);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Budget = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, CashFlow, Ledger) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, CashFlow, Ledger, Presets) {
   'use strict';
 
   var BUCKETS = Schema.BUDGET_BUCKETS;
@@ -96,14 +96,28 @@
     return out;
   }
 
-  /** The Estimated column for an open month, with where each figure came from. */
-  function estimated(h, T, catalog, ym) {
+  /**
+   * The Estimated column for an open month, with where each figure came
+   * from. Presets (D-129) stack: on a hand-set figure they add to it; with
+   * none set they ARE the estimate, in place of the last closed month's
+   * actual or the onboarding figure — those already hold what was put in,
+   * and stacking a limit on top would count it twice.
+   *   opts.presets  { notApplicable, hypothetical, now } for engines/presets.js
+   */
+  function estimated(h, T, catalog, ym, opts) {
     var set = (h.budget && h.budget.estimated && h.budget.estimated[ym]) || {};
     var last = lastClosedBefore(h, ym);
+    var stacked = Presets ? Presets.stacked(h, T, ym, (opts || {}).presets) : {};
     var base = null;
     var out = {};
     BUCKETS.forEach(function (b) {
-      if (Money.isEntered(set[b])) { out[b] = { cents: set[b], basis: 'set', from: 'set by hand for ' + Schema.monthLabel(ym) }; return; }
+      var p = stacked[b];
+      if (Money.isEntered(set[b])) {
+        out[b] = p ? { cents: set[b] + p.cents, basis: 'set+presets', from: 'set by hand plus ' + p.items.map(function (i) { return i.label; }).join(' + '), presets: p.items, setCents: set[b] }
+          : { cents: set[b], basis: 'set', from: 'set by hand for ' + Schema.monthLabel(ym) };
+        return;
+      }
+      if (p) { out[b] = { cents: p.cents, basis: 'presets', from: p.items.map(function (i) { return i.label; }).join(' + '), presets: p.items }; return; }
       if (last && Money.isEntered(last.actual[b])) { out[b] = { cents: last.actual[b], basis: 'lastClosed', from: last.label + '’s actual' }; return; }
       if (!base) base = onboarding(h, T, catalog);
       out[b] = { cents: base[b].cents, basis: 'onboarding', from: base[b].from, reason: base[b].reason };
@@ -137,7 +151,7 @@
    * columns are the record's, frozen, with actualRevised beside them when
    * a late entry moved it; for an open month they are read live.
    */
-  function month(h, T, catalog, ym, now) {
+  function month(h, T, catalog, ym, now, opts) {
     var m = ym || nextOpenMonth(h, now);
     var record = recordFor(h, m);
     var cur = Ledger.thisMonth(now);
@@ -149,12 +163,12 @@
             differenceCents: Money.isEntered(e) && Money.isEntered(a) ? a - e : null, lines: (record.lines && record.lines[b]) || [] };
         }), canClose: false, isCurrent: m === cur };
     }
-    var est = estimated(h, T, catalog, m);
+    var est = estimated(h, T, catalog, m, opts);
     var act = actual(h, T, catalog, m);
     return { month: m, label: Schema.monthLabel(m), status: 'open', record: null,
       rows: BUCKETS.map(function (b) {
         var e = est[b], a = act[b];
-        return { bucket: b, label: LABELS[b], estimatedCents: e.cents, estBasis: e.basis, estFrom: e.from, estReason: e.reason || null,
+        return { bucket: b, label: LABELS[b], estimatedCents: e.cents, estBasis: e.basis, estFrom: e.from, estReason: e.reason || null, estPresets: e.presets || [], setCents: e.setCents,
           actualCents: a.cents, actualCount: a.count || 0, differenceCents: Money.isEntered(e.cents) ? a.cents - e.cents : null, lines: a.lines || [] };
       }),
       incomeCostsCents: act.incomeCostsCents, deductibleCents: act.deductibleCents, incomeIncomplete: act.income.incomplete,

@@ -131,6 +131,7 @@
     'retirement.hsaContributedCents':            { class: 'raw',        unit: 'cents',   period: 'annual', note: 'into an HSA so far this year' },
     'retirement.onHdhp':                         { class: 'raw',        unit: 'bool',    note: 'high-deductible plan, so HSA-eligible' },
     'retirement.hsaFamilyPlan':                  { class: 'raw',        unit: 'bool',    note: 'family HSA coverage, which changes the limit' },
+    'retirement.has401k':                        { class: 'raw',        unit: 'bool',    note: 'does an employer 401(k) exist to contribute to. null = not asked; the Max 401(k) preset is absent, not disabled, unless true. Asked once, by Budget. D-129' },
     'insurance.highestDeductibleCents':          { class: 'raw',        unit: 'cents',   note: 'the largest single deductible a cash cushion has to cover. Owned by Sleep At Night' },
     'assumptions.marginalRate':                  { class: 'assumption', unit: 'rate',    default: null, note: 'NO default \u2014 asked once, never derived from the effective-rate table' },
     'incomeSource.type':                         { class: 'raw',        unit: 'enum',    values: ['w2', '1099'] },
@@ -194,6 +195,7 @@
     'household.ledger.income[].costs[].category': { class: 'raw',       unit: 'enum',    values: ['mileage', 'home_office', 'equipment', 'contractor_fees', 'licensing', 'platform_fees', 'other'], note: 'the costs of producing this income, on the entry itself; each with amountCents, date, deductible. D-128' },
     'household.ledger.months[].id':              { class: 'raw',        unit: 'id',      note: 'a MonthRecord, YYYY-MM: status closed, estimated and actual per bucket (income, expenses, savings, investments, debt), actualRevised for late entries, closedAt. Append-only; closing twice is refused. Owned by Budget. D-128' },
     'household.budget.estimated':                { class: 'raw',        unit: 'object',  note: 'YYYY-MM → bucket → cents: an open month\'s estimate set by hand (the Estimated-vs-Actual room\'s one write). Absent = last closed month\'s actual, else the onboarding figures. Owned by Budget. D-128' },
+    'household.budget.presets':                  { class: 'raw',        unit: 'object',  note: 'YYYY-MM → bucket → [preset id]: the Savings / Investments presets stacked into that month\'s Estimated (ruleOfFive, maxIra, max401k — engines/presets.js). They stack on a hand-set figure and replace the fallback ones. Owned by Budget. D-129' },
     'rerank.rows[].id':                          { class: 'raw',        unit: 'id',      note: 'a categoryId, or an expense entry id for a custom line. D-085' },
     'rerank.rows[].miss':                        { class: 'raw',        unit: 'enum',    values: ['yes', 'some', 'no'], note: 'would you miss it? null = not asked' },
     'rerank.rows[].who':                         { class: 'raw',        unit: 'enum',    values: ['me', 'both', 'show'], note: 'who is it really for: me, both of us, or for show' },
@@ -1109,8 +1111,22 @@
       BUDGET_BUCKETS.forEach(function (b) { if (Money.isEntered((f.estimated[ym] || {})[b])) row[b] = f.estimated[ym][b]; });
       if (Object.keys(row).length) est[ym] = row;
     });
-    return { estimated: est };
+    /* The presets stacked into a month's Estimated, by bucket (D-129). */
+    var presets = {};
+    Object.keys(f.presets || {}).forEach(function (ym) {
+      if (!/^\d{4}-\d{2}$/.test(ym)) return;
+      var row = {};
+      BUDGET_BUCKETS.forEach(function (b) {
+        var ids = (f.presets[ym] || {})[b];
+        if (!Array.isArray(ids)) return;
+        var keep = ids.filter(function (id, i) { return BUDGET_PRESETS.indexOf(id) >= 0 && ids.indexOf(id) === i; });
+        if (keep.length) row[b] = keep;
+      });
+      if (Object.keys(row).length) presets[ym] = row;
+    });
+    return { estimated: est, presets: presets };
   }
+  var BUDGET_PRESETS = ['ruleOfFive', 'maxIra', 'max401k'];
 
   /**
    * A thing you are saving for. SPEC.md §9 item 6 puts the Goal Costing
@@ -1257,7 +1273,9 @@
       hsaContributedCents: f.hsaContributedCents === undefined ? null : f.hsaContributedCents,
       /* Eligibility facts, not amounts: they change which limit applies. */
       onHdhp: f.onHdhp === undefined ? null : !!f.onHdhp,
-      hsaFamilyPlan: f.hsaFamilyPlan === undefined ? null : !!f.hsaFamilyPlan
+      hsaFamilyPlan: f.hsaFamilyPlan === undefined ? null : !!f.hsaFamilyPlan,
+      /* An employer 401(k) to contribute to? null = not asked (D-129). */
+      has401k: f.has401k === undefined || f.has401k === null ? null : !!f.has401k
     };
   }
 
@@ -1830,6 +1848,7 @@
     createKidsPlan: createKidsPlan,
     createHousingPlan: createHousingPlan,
     createPurchasePlan: createPurchasePlan,
+    BUDGET_PRESETS: BUDGET_PRESETS,
     createVariableIncomePlan: createVariableIncomePlan,
     SPLIT_MODES: SPLIT_MODES,
     createEnough: createEnough,

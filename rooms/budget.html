@@ -76,6 +76,18 @@
   .bucket-card .c-lines li span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
   .bucket-card .c-lines li.is-hint { color: var(--color-text-faint); font-size: var(--text-xs); }
   .bucket-card .c-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-top: var(--space-2); }
+  .presets { margin-top: var(--space-2); padding-top: var(--space-2); border-top: 1px dashed var(--color-border); }
+  .presets .p-cap { font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); margin: 0 0 var(--space-1); }
+  .preset { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: 4px 0; font-size: var(--text-sm); }
+  .preset .p-name { color: var(--color-text); }
+  .preset .p-name small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  .preset .p-amt { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--color-text-muted); }
+  .preset.is-off .p-amt { color: var(--color-text-faint); }
+  .preset .p-btn { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-accent-hover); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; }
+  .preset .p-btn[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+  .preset.is-unavailable .p-name, .preset.is-unavailable .p-amt { color: var(--color-text-faint); }
+  .preset a { color: var(--color-accent-hover); }
+  .ask { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--color-text-muted); padding: 4px 0; }
   .bucket-card .c-chev { display: inline-block; transition: transform .15s; color: var(--color-text-faint); font-size: var(--text-xs); margin-left: var(--space-1); }
   .bucket-card.is-open .c-chev { transform: rotate(90deg); }
   .pill { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-accent-hover); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; text-decoration: none; }
@@ -144,11 +156,13 @@
 <script src="../engines/selfemployed.js"></script>
 <script src="../engines/ledger.js"></script>
 <script src="../engines/cashflow.js"></script>
+<script src="../engines/quickmath.js"></script>
+<script src="../engines/presets.js"></script>
 <script src="../engines/budget.js"></script>
 <script>
 (function () {
   'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Budget = SLAF.Budget, Ledger = SLAF.Ledger;
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Budget = SLAF.Budget, Ledger = SLAF.Ledger, Presets = SLAF.Presets;
   var ROOM_ID = 'budget';
   var TABLES = null;
   var month = null;          /* the month shown */
@@ -231,6 +245,7 @@
             + (r.bucket === 'income' ? '<a class="pill is-quiet" href="income.html#log">Every entry →</a>' : '<a class="pill is-quiet" href="cash-flow.html#log">The log →</a>') + '</div>' : '')
         + '</div></article>';
     }).join('');
+    if (sheet.status === 'open') renderPresets(h, sheet);
     var why;
     if (sheet.status === 'closed') why = 'Frozen as it was closed. A late entry logged into this month shows as “revised” beside the actual and changes nothing else. Read it against other months in <a href="variance.html">Estimated vs Actual</a>.';
     else if (!Budget.closedMonths(h).length) why = 'With no month closed yet, each estimate comes from what Start Here and Cash Flow already hold. Close this month and next month’s estimates start from what actually happened.';
@@ -256,6 +271,36 @@
     }
     justAdded = null;
   }
+  /* ---- The presets (D-129): stacked into Savings and Investments --------
+     Nothing typed. Each is read through the function that owns it; the
+     button stacks it into this month's Estimated or takes it out. The Max
+     401(k) preset is absent until an employer 401(k) is indicated — asked
+     once, here, with two buttons. */
+  function presetOpts() { return { now: Date.now() }; }
+  function renderPresets(h, sheet) {
+    var all = Presets.available(h, TABLES, presetOpts());
+    var chosen = (h.budget && h.budget.presets && h.budget.presets[month]) || {};
+    ['savings', 'investments'].forEach(function (b) {
+      var box = el('extras-' + b);
+      if (!box) return;
+      var list = all.filter(function (p) { return p.bucket === b && !p.hidden; });
+      var html = list.map(function (p) {
+        var on = (chosen[b] || []).indexOf(p.id) >= 0;
+        if (!p.offered) {
+          return '<div class="preset is-unavailable"><span class="p-name">' + esc(p.label) + '<small>' + esc(p.reason || '') + (p.owner && p.owner.room !== 'budget' ? ' <a href="' + esc(p.owner.room) + '.html">' + esc(p.owner.label) + ' →</a>' : '') + '</small></span><span class="p-amt">—</span></div>';
+        }
+        return '<div class="preset' + (on ? '' : ' is-off') + '"><span class="p-name">' + esc(p.label) + '<small>' + esc(p.result.why || p.short) + '</small></span>'
+          + '<span class="p-amt">' + esc(money(p.monthlyCents)) + '/mo</span>'
+          + '<button type="button" class="p-btn" data-preset="' + p.id + '" data-bucket="' + b + '" aria-pressed="' + on + '">' + (on ? 'Stacked ✓' : 'Stack it') + '</button></div>';
+      });
+      if (b === 'investments' && Presets.ask401k(h)) {
+        html.push('<div class="ask"><span>Is there an employer 401(k) to contribute to?</span><button type="button" class="pill" data-has401k="yes">Yes</button><button type="button" class="pill is-quiet" data-has401k="no">No</button></div>');
+      }
+      var row = sheet.rows.filter(function (r) { return r.bucket === b; })[0];
+      var stackedNote = row && row.estPresets && row.estPresets.length ? '<p class="p-cap">Estimated = ' + (Money.isEntered(row.setCents) ? esc(money(row.setCents)) + ' set by hand + ' : '') + row.estPresets.map(function (i) { return esc(i.label) + ' ' + esc(money(i.cents)); }).join(' + ') + '</p>' : '';
+      box.innerHTML = html.length ? '<div class="presets"><p class="p-cap">Presets — stack into this month’s estimate</p>' + html.join('') + stackedNote + '</div>' : '';
+    });
+  }
   function renderMonths(h) {
     var all = Budget.closedMonths(h);
     el('months-hint').hidden = all.length > 0;
@@ -277,6 +322,10 @@
   el('rows').addEventListener('click', function (evt) {
     var t = evt.target.closest('[data-toggle]');
     if (t) { var which = t.getAttribute('data-toggle'); openBucket = openBucket === which ? null : which; render(); return; }
+    var pr = evt.target.closest('[data-preset]');
+    if (pr) { Spine.togglePreset(month, pr.getAttribute('data-bucket'), pr.getAttribute('data-preset')); return; }
+    var ask = evt.target.closest('[data-has401k]');
+    if (ask) { Spine.setHas401k(ask.getAttribute('data-has401k') === 'yes'); return; }
     var b = evt.target.closest('[data-add]');
     if (!b) return;
     var bucket = b.getAttribute('data-add');
@@ -337,7 +386,7 @@
   Spine.registerRoom(ROOM_ID);
   SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(render);
-  Reference.load(['effectiveTaxRates', 'seTax', 'expenseCategories', 'budgetTemplates']).then(function (tables) {
+  Reference.load(['effectiveTaxRates', 'seTax', 'expenseCategories', 'budgetTemplates', 'irsLimits']).then(function (tables) {
     TABLES = tables;
     render();
     if (!justAdded) jumpToHash();
