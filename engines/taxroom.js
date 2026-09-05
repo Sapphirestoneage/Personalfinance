@@ -62,7 +62,7 @@
        ledger read their sources exactly as before. */
     if (Ledger && Ledger.hasRecurring(h)) {
       var y = Ledger.annualByMethod(h);
-      return { wagesCents: y.wagesCents, selfEmploymentCents: y.selfEmploymentCents, counted: y.counted, status: status,
+      return { wagesCents: y.wagesCents, selfEmploymentCents: y.selfEmploymentCents, unemploymentCents: y.unemploymentCents, counted: y.counted, status: status,
         mixedWithoutOwnWork: false, fromLedger: true, untaxedCents: y.untaxedCents };
     }
     var wages = 0, se = 0, counted = 0;
@@ -72,7 +72,7 @@
       if (status === 'selfEmployed' || (status === 'both' && s.type === '1099')) se += s.grossAnnualIncomeCents;
       else wages += s.grossAnnualIncomeCents;
     });
-    return { wagesCents: wages, selfEmploymentCents: se, counted: counted, status: status,
+    return { wagesCents: wages, selfEmploymentCents: se, unemploymentCents: 0, counted: counted, status: status,
       mixedWithoutOwnWork: status === 'both' && se === 0 && counted > 0 };
   }
 
@@ -112,7 +112,7 @@
     var other = otherKnown ? Math.max(0, facts.otherPreTaxAnnualCents) : 0;
     var preTax = Math.min(gross.value, workplace + other);
 
-    var est = Tax.estimate(h, T, { wagesCents: split.wagesCents, selfEmploymentCents: split.selfEmploymentCents, deferralCents: preTax });
+    var est = Tax.estimate(h, T, { wagesCents: split.wagesCents, selfEmploymentCents: split.selfEmploymentCents, otherOrdinaryCents: split.unemploymentCents, deferralCents: preTax });
     if (!Money.isOk(est)) return est;
 
     var ord = est.components.ordinary;
@@ -146,6 +146,7 @@
       grossCents: g,
       wagesCents: split.wagesCents,
       selfEmploymentCents: split.selfEmploymentCents,
+      unemploymentCents: split.unemploymentCents,
       employment: split.status,
       mixedWithoutOwnWork: split.mixedWithoutOwnWork,
       workplacePercent: workplaceKnown ? pct : null,

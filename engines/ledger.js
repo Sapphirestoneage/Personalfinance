@@ -128,7 +128,15 @@
    *   value              netCents: gross − costs − tax
    *   grossCents, costsCents (deductible), allCostsCents, taxableCents,
    *   taxCents, takeHomeCents (gross − tax), effectiveRate (tax ÷ gross),
+   *   withheldCents (tax taken before the money arrived: w2 only),
+   *   owedCents (tax still to pay: se, unemployment),
+   *   cashReceivedCents (what actually landed: gross − withheld),
    *   method, pieces { seTaxCents, incomeTaxCents, rate, basis }
+   * The four methods (D-129) net the same gross four different ways:
+   *   w2            withheld at the blended rate; nothing owed later
+   *   se            SE tax on profit after costs + income tax, all owed
+   *   unemployment  income tax only, no payroll or SE tax, all owed
+   *   none          no tax
    */
   function netOf(entry, household, tables) {
     var T = tables || {};
@@ -141,9 +149,11 @@
     var method = entry.taxable === false ? 'none' : entry.taxMethod;
     var done = function (tax, taxable, pieces) {
       var t = Math.max(0, Math.round(tax));
+      var withheld = method === 'w2' ? t : 0;
       return Money.ok(gross - allCosts - t, {
         grossCents: gross, costsCents: costsCents, allCostsCents: allCosts, taxableCents: taxable,
         taxCents: t, takeHomeCents: gross - t, effectiveRate: gross > 0 ? t / gross : 0,
+        withheldCents: withheld, owedCents: t - withheld, cashReceivedCents: gross - withheld,
         method: method, pieces: pieces || {}
       });
     };
@@ -161,6 +171,13 @@
       /* Withholding at the year's blended rate: federal plus the employee
          half of FICA, which is what the table blends. */
       return done(gross * rate.value, gross, { rate: rate.value, basis: annual.basis, annualGrossCents: annual.cents, referenceVersion: rate.referenceVersion || T.effectiveTaxRates.version });
+    }
+    if (method === 'unemployment') {
+      /* Taxable as ordinary income, nothing withheld, and no payroll tax
+         of either kind: the blended rate less the employee FICA share. */
+      if (!T.seTax) return Money.incomplete('The self-employment tax table is not loaded.', ['seTax']);
+      var ordRate = Math.max(0, rate.value - (T.seTax.employeeFicaRate || 0));
+      return done(gross * ordRate, gross, { rate: rate.value, incomeRate: ordRate, basis: annual.basis, annualGrossCents: annual.cents, referenceVersion: rate.referenceVersion || T.effectiveTaxRates.version, why: 'Unemployment is taxed as income but carries no Social Security or Medicare tax, and nothing is withheld unless you asked for it.' });
     }
     /* se: profit after costs, SE tax on the annualised profit (the wage base
        already used by W-2 pay counted), scaled back; income tax on the
@@ -270,11 +287,12 @@
 
   /* ---- The year, by method — what the Tax room reads ------------------------
      Recurring entries annualised and split the way Tax.estimate wants them:
-     wages (w2), self-employment profit net of costs (se), and what is not
-     taxed. One-time entries in the last twelve months count once. */
+     wages (w2), self-employment profit net of costs (se), unemployment
+     (ordinary income with no payroll tax), and what is not taxed. One-time
+     entries in the last twelve months count once. */
   function annualByMethod(household, now) {
     var cutoff = new Date(now || Date.now()); cutoff.setFullYear(cutoff.getFullYear() - 1);
-    var out = { wagesCents: 0, selfEmploymentCents: 0, untaxedCents: 0, counted: 0 };
+    var out = { wagesCents: 0, selfEmploymentCents: 0, unemploymentCents: 0, untaxedCents: 0, counted: 0 };
     activeEntries(household).forEach(function (e) {
       var a;
       if (e.frequency === 'once') {
@@ -284,6 +302,7 @@
       if (!Money.isEntered(a)) return;
       out.counted++;
       if (e.taxable === false || e.taxMethod === 'none') out.untaxedCents += a;
+      else if (e.taxMethod === 'unemployment') out.unemploymentCents += a;
       else if (e.taxMethod === 'se') {
         var c = costs(e, household);
         var perYear = e.frequency === 'once' ? 1 : 1;

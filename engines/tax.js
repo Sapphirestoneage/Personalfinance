@@ -200,6 +200,8 @@
    * estimate(household, tables, opts)
    *   opts.wagesCents          W-2 wages (default: the household's gross)
    *   opts.selfEmploymentCents net profit from self-employment
+   *   opts.otherOrdinaryCents  ordinary income with no payroll tax on it
+   *                            (unemployment benefit, D-129)
    *   opts.capitalGainsCents   long-term gains / qualified dividends
    *   opts.deferralCents       pre-tax 401(k) / HSA / traditional IRA
    *   opts.deductionCents      itemised, if larger than the standard
@@ -213,8 +215,9 @@
     var wages = Money.isEntered(o.wagesCents) ? o.wagesCents : (Money.isOk(gross) ? gross.value : null);
     var se = Money.isEntered(o.selfEmploymentCents) ? o.selfEmploymentCents : 0;
     var gains = Money.isEntered(o.capitalGainsCents) ? o.capitalGainsCents : 0;
+    var other = Money.isEntered(o.otherOrdinaryCents) ? o.otherOrdinaryCents : 0;
     var fs = household && household.filingStatus;
-    if (!Money.isEntered(wages) && se === 0) {
+    if (!Money.isEntered(wages) && se === 0 && other === 0) {
       return Money.incomplete('Add your income to estimate tax.', ['grossAnnualIncome']);
     }
     if (!fs) return Money.incomplete('Choose a filing status to estimate tax.', ['filingStatus']);
@@ -224,7 +227,7 @@
     if (!Money.isOk(seTax)) return seTax;
 
     var above = (Money.isEntered(o.deferralCents) ? o.deferralCents : 0) + (seTax.deductibleHalfCents || 0);
-    var ordinaryGross = (wages || 0) + se;
+    var ordinaryGross = (wages || 0) + se + other;
     var ord = ordinaryTax(t.federalBrackets, ordinaryGross, fs, { deductionCents: o.deductionCents, aboveTheLineCents: above });
     if (!Money.isOk(ord)) return ord;
 
@@ -250,6 +253,7 @@
       federalIncomeTaxCents: federal,
       ficaCents: payroll.value,
       selfEmploymentTaxCents: seTax.value,
+      otherOrdinaryCents: other,
       stateCents: stateCents,
       stateIncluded: !!(st && Money.isOk(st)),
       taxableIncomeCents: ord.taxableIncomeCents,

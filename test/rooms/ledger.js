@@ -4,7 +4,7 @@ module.exports = function (t) {
   const Ledger = require(path.join(ROOT, 'engines/ledger.js'));
   const Reference = require(path.join(ROOT, 'shared/reference.js'));
   const TaxRoom = require(path.join(ROOT, 'engines/taxroom.js'));
-  section('The ledger engine (D-128): three methods, three answers');
+  section('The ledger engine (D-128, D-129): four methods, four answers');
 
   const T = { effectiveTaxRates: TABLES.effectiveTaxRates, seTax: TABLES.seTax };
   /* Robin's shape: $72,000 of W-2 pay, single. */
@@ -32,6 +32,17 @@ module.exports = function (t) {
   check('a gift pays nothing', gift.taxCents + '/' + gift.value, '0/200000');
   checkTrue('three genuinely different answers', w2.value !== se.value && se.value !== gift.value && w2.value !== gift.value);
   checkTrue('the SE answer is the lowest, the gift the highest', se.value < w2.value && w2.value < gift.value);
+  /* Unemployment (D-129): ordinary income tax at the rate less the FICA
+     share — no SE tax, unlike 1099; nothing withheld, unlike W-2. */
+  const ue = Ledger.netOf(mk('unemployment'), h, T);
+  const ueTax = Math.round(200000 * (rate - T.seTax.employeeFicaRate));
+  check('an unemployment $2,000 pays income tax only, at the rate less FICA', ue.taxCents + '/' + ue.method, ueTax + '/unemployment');
+  checkTrue('… less than 1099 (no SE tax) and less than W-2 (no payroll share)', ue.taxCents < se.taxCents && ue.taxCents < w2.taxCents && ue.taxCents > 0);
+  check('… none of it withheld: all of it is owed later', ue.withheldCents + '/' + ue.owedCents + '/' + ue.cashReceivedCents, '0/' + ueTax + '/200000');
+  check('W-2 tax is withheld, nothing owed, less cash lands', w2.withheldCents + '/' + w2.owedCents + '/' + w2.cashReceivedCents, w2.taxCents + '/0/' + (200000 - w2.taxCents));
+  check('1099 tax is all owed, all the cash lands', se.withheldCents + '/' + se.owedCents + '/' + se.cashReceivedCents, '0/' + se.taxCents + '/200000');
+  const four = [w2.value, se.value, ue.value, gift.value];
+  check('four genuinely different answers for the same $2,000', new Set(four).size, 4);
   check('untaxable other nets like a gift', Ledger.netOf(mk('other', { taxable: false }), h, T).taxCents, 0);
   check('a bonus withholds like wages', Ledger.netOf(mk('bonus'), h, T).taxCents, w2.taxCents);
 
@@ -94,6 +105,16 @@ module.exports = function (t) {
   check('the year by method: wages from the fortnightly cheque', y.wagesCents, 6500000);
   check('… self-employment net of the mileage', y.selfEmploymentCents, 180000);
   check('… the gifts untaxed, the archived entry ignored', y.untaxedCents + '/' + y.counted, '210000/4');
+  const h4 = hh(); h4.ledger.income = h3.ledger.income.concat([Schema.createIncomeEntry({ id: 'ue', kind: 'unemployment', amountCents: 50000, frequency: 'weekly', receivedOn: '2026-08-07' })]);
+  const y4 = Ledger.annualByMethod(h4, Date.parse('2026-09-20'));
+  check('… unemployment annualised on its own, not as wages', y4.unemploymentCents + '/' + y4.wagesCents, '2600000/6500000');
+  const Tax = require(path.join(ROOT, 'engines/tax.js'));
+  const asWages = Tax.estimate(h4, TABLES, { wagesCents: 6500000 + 2600000, selfEmploymentCents: 180000 });
+  const asOther = Tax.estimate(h4, TABLES, { wagesCents: 6500000, selfEmploymentCents: 180000, otherOrdinaryCents: 2600000 });
+  check('Tax.estimate taxes unemployment as ordinary income …', asOther.agiCents, asWages.agiCents);
+  checkTrue('… but with no payroll tax on it', asOther.ficaCents < asWages.ficaCents && asOther.value < asWages.value);
+  check('… and reports it', asOther.otherOrdinaryCents, 2600000);
+  check('the Tax room hands it through', TaxRoom.splitIncome(h4).unemploymentCents + '/' + TaxRoom.picture(h4, TABLES).unemploymentCents, '2600000/2600000');
   const split = TaxRoom.splitIncome(h3);
   check('the Tax room’s split comes from the ledger', split.fromLedger + '/' + split.wagesCents + '/' + split.selfEmploymentCents, 'true/6500000/180000');
   check('… and from the sources when there is no ledger', TaxRoom.splitIncome(hh()).fromLedger + '/' + TaxRoom.splitIncome(hh()).wagesCents, 'undefined/7200000');
