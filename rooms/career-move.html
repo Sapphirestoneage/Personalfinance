@@ -4,29 +4,33 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Career Move · SPARKS</title>
-<meta name="description" content="What your job actually pays, once you count every hour it takes and everything it costs you to do it."/>
+<meta name="description" content="An offer against the job you have: the real hourly wage of each, the take-home difference, and how far the FI date moves."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. THE TEMPLATE ROOM. DECISIONS.md D-097.
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-099 (the second wave).
 
-  1. READS   The person's income (owned by Start Here) and filingStatus, for
-             the tax estimate; a month's spending, for the lens.
-  2. WRITES  It OWNS person.work — paid hours, unpaid overtime, commute,
-             work costs, weeks a year, and (folded) prep and decompression.
-             Nothing else edits those. It does not touch income.
-  3. CALLS   engines/hourly.js. Tax comes from engines/tier0.js's effective-
-             rate lookup, never a second calculation.
+  1. READS   The person's income and filingStatus (Start Here), the current
+             job's work profile (Real Hourly Wage owns person.work), a
+             month's spending and the investments (for the FI move).
+  2. WRITES  It OWNS household.career.offer — what the offer pays a year,
+             its hours a week, its commute a week, its costs of working a
+             month, and the sign-on. Nothing else edits those; it edits
+             nothing else.
+  3. CALLS   engines/careermove.js, which prices both jobs with the SAME
+             function — engines/hourly.js realHourlyWage — and reads
+             take-home from engines/tier0.js and the FI move from
+             engines/projection.js the way the lens does.
   4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses and says so (Gate.fillGuesses). Each unpaid-
-             hours box is optional: blank is none, not unanswered.
-  5. CONFIG  data/effective_tax_rates_2026.json.
+             intake's guesses and says so (Gate.fillGuesses); with no offer
+             typed it says what it needs. The offer's commute and costs
+             left blank carry the current job's; a typed 0 is a zero.
+  5. CONFIG  data/effective_tax_rates_2026.json, via the engines above.
 
-  THE SHAPE (shared/room.js, frozen here): one number, one chart, the lens,
-  five inputs and two folded, the assumptions drawer with sources, why
-  this matters at your stage, one out-of-scope line to Get Help. The ids
-  below are the deep links.
+  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens, five
+  inputs, the assumptions drawer with sources, why this matters at your
+  stage, one out-of-scope line to Get Help. The ids below are the deep links.
 
   LIVE-FORM: built once — shared/room.js builds the inputs from the spec
   on load and only sets .value, never under focus.
@@ -57,26 +61,26 @@
 
   <section class="slaf-card" id="number">
     <div class="room-head-row">
-      <span class="slaf-eyebrow">Your real rate</span>
+      <span class="slaf-eyebrow">The real difference an hour</span>
       <div id="room-lens"></div>
     </div>
     <div class="room-number" id="room-number"></div>
   </section>
 
   <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Where the week goes</span>
+    <span class="slaf-eyebrow">Now against the offer</span>
     <div id="room-chart"></div>
   </section>
 
   <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The hours the job takes</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave anything blank that doesn't apply — working from home means no commute, and blank is none rather than unanswered.</p>
+    <span class="slaf-eyebrow">The offer</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave the commute or the costs blank to carry your current job's over; type 0 for none. Unpaid hours around the job carry over from Real Hourly Wage.</p>
     <div id="room-inputs"></div>
   </section>
 
   <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Priced in life</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
+    <span class="slaf-eyebrow">Through the lens</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life at today's rate, or months of FI bought or pushed.</p>
     <ul class="room-amounts" id="room-amounts"></ul>
   </section>
 
@@ -112,6 +116,7 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/hourly.js"></script>
+<script src="../engines/careermove.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
 <script src="../shared/room.js"></script>
@@ -119,111 +124,135 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Hourly = SLAF.Hourly, Charts = SLAF.Charts, Room = SLAF.Room;
+      CareerMove = SLAF.CareerMove, Charts = SLAF.Charts, Room = SLAF.Room;
 
-  /* ---- writes: this room owns person.work ------------------------------------ */
-  function writeWork(key, value) {
-    var person = Spine.ensurePrimaryPerson('You');
-    var current = Schema.workProfile(Schema.personById(Spine.getProfile(), person.id));
-    var next = Object.assign({}, current);
-    next[key] = value;
-    Spine.upsertPerson({ id: person.id, work: next });
-  }
-  function readWork(h) { return Schema.workProfile(Schema.primaryPerson(h)); }
-  function hoursInput(key, label, placeholder, hint) {
-    return { ctl: key, label: label, kind: 'number', placeholder: placeholder, affix: 'h', hint: hint,
-      read: function (h) { return readWork(h)[key]; }, write: function (v) { writeWork(key, v === null || v <= 0 ? null : v); } };
-  }
+  /* ---- writes: this room owns household.career.offer ------------------------ */
+  function offer(h) { return CareerMove.offerOf(h); }
+  function currentWork(h) { return Schema.workProfile(Schema.primaryPerson(h)); }
   function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
-
-  var HOUR_COLOURS = { paid: Charts.COLORS.series[0], unpaidOvertimeHoursPerWeek: Charts.COLORS.series[3], commuteHoursPerWeek: Charts.COLORS.series[1], prepHoursPerWeek: Charts.COLORS.series[2], decompressHoursPerWeek: Charts.COLORS.series[4] };
+  function signed(cents) { return (cents > 0 ? '+' : '') + perHour(cents); }
+  function rhwLink() { return Ownership.linkTo('real-hourly-wage', 'inputs'); }
 
   Room.mount({
-    id: 'career-move', /* STUB — being built (D-099) */
+    id: 'career-move',
     tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
-    reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'],
+    reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses', 'investments'],
 
     number: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return { label: 'Actually, an hour', value: null, reason: w.reason + (/not earning/.test(w.reason || '') ? '' : '') };
-      var sub = 'On paper <strong>' + perHour(w.nominalHourlyCents) + '</strong> · you keep <strong>' + Money.formatRate(w.retained, { decimals: 0 }) + '</strong> of it'
-        + ' · ' + Money.formatCents(w.keptAnnualCents) + ' kept over ' + w.annualTotalHours.toLocaleString('en-US') + ' hours a year';
-      if (w.costsMoreThanItPays) sub += '. <strong>This job costs more than it pays</strong> — check the monthly costs; if they are right, that is the finding';
-      if (w.implausibleHours) sub += '. ' + w.paidHoursPerWeek + ' paid hours a week makes this look enormous; the arithmetic is right, the comparison is not';
-      if (!w.taxKnown) sub += '. Tax is not in yet: ' + (w.taxReason || '');
-      return { label: 'Actually, an hour', value: perHour(w.realHourlyCents), sub: sub, zone: w.costsMoreThanItPays ? 'out' : (w.retained !== null && w.retained < 0.5 ? 'watch' : null), result: w };
+      var r = CareerMove.compare(h, T);
+      if (!Money.isOk(r)) {
+        /* The current job's hours are not in: the offer still has a rate. */
+        if (r.offer) {
+          return { label: 'The offer, really, an hour', value: perHour(r.offer.realHourlyCents), zone: null, result: r,
+            sub: 'On paper <strong>' + perHour(r.offer.nominalHourlyCents) + '</strong> · ' + Money.formatCents(r.offer.keptAnnualCents) + ' kept a year'
+              + '. Your current job’s paid hours are not in, so there is nothing to hold it against — <a href="' + rhwLink() + '">add them in Real Hourly Wage</a>.' };
+        }
+        return { label: 'The real difference an hour', value: null, reason: r.reason };
+      }
+      var bits = [perHour(r.now.realHourlyCents) + ' now', perHour(r.offer.realHourlyCents) + ' offered'];
+      var kept = r.keptDifferenceAnnualCents;
+      bits.push('<strong>' + Money.formatCents(Math.abs(kept)) + '</strong> a year ' + (kept >= 0 ? 'more' : 'less') + ' kept');
+      if (Money.isOk(r.fi) && r.fi.value !== null) {
+        var m = r.fi.value;
+        bits.push(m === 0 ? 'FI barely moves' : 'FI ' + Math.abs(m) + (Math.abs(m) === 1 ? ' month ' : ' months ') + (m > 0 ? 'sooner' : 'later'));
+      } else if (Money.isOk(r.fi) && r.fi.unreachableNow) {
+        bits.push('FI comes into reach with the offer');
+      } else if (Money.isOk(r.fi) && r.fi.unreachableOffer) {
+        bits.push('FI goes out of reach with the offer');
+      }
+      if (Money.isEntered(r.offer.signOnCents)) bits.push('sign-on ' + Money.formatCents(r.offer.signOnCents));
+      var sub = bits.join(' · ');
+      if (r.hoursDifferencePerWeek !== 0) sub += '. The offer takes ' + Math.abs(Math.round(r.hoursDifferencePerWeek * 10) / 10) + ' hours a week ' + (r.hoursDifferencePerWeek > 0 ? 'more' : 'fewer');
+      if (r.offer.costsMoreThanItPays) sub += '. <strong>The offer costs more than it pays</strong> — check its monthly costs';
+      if (!r.taxKnown) sub += '. Tax is not in yet: ' + (r.now.taxReason || r.offer.taxReason || '');
+      return { label: 'The real difference an hour', value: signed(r.value), sub: sub, zone: r.value > 0 ? 'good' : r.value < 0 ? 'out' : null, result: r };
     },
 
     chart: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return Charts.stacked({ rows: [], empty: 'Add your paid hours to see where the week goes.' });
-      var parts = [{ label: 'Paid', value: w.paidHoursPerWeek, color: HOUR_COLOURS.paid }].concat((w.unpaidParts || []).map(function (p) { return { label: p.label, value: p.hours, color: HOUR_COLOURS[p.key] }; }));
-      var gross = w.grossAnnualIncomeCents, tax = w.estimatedTaxCents || 0, costs = w.annualWorkCostsCents, kept = w.keptAnnualCents;
-      return Charts.stacked({
-        title: 'Hours a week, and where the pay goes',
+      var r = CareerMove.compare(h, T);
+      if (!Money.isOk(r) && !r.offer) return Charts.bars({ rows: [], empty: 'Add the offer to see it against the job you have.' });
+      var now = Money.isOk(r) ? r.now : null;
+      return Charts.bars({
+        title: 'An hour, really and on paper',
         rows: [
-          { label: 'Your week', note: w.totalHoursPerWeek + ' h, ' + w.paidHoursPerWeek + ' paid', parts: parts },
-          { label: 'A year of pay', note: 'per ' + Money.formatCents(gross), parts: [
-            { label: 'Kept', value: kept / gross * w.totalHoursPerWeek, color: Charts.COLORS.growth },
-            { label: 'Tax', value: tax / gross * w.totalHoursPerWeek, color: Charts.COLORS.debt },
-            { label: 'Costs of working', value: costs / gross * w.totalHoursPerWeek, color: Charts.COLORS.series[3] }
-          ] }
+          { label: 'Now, really', value: now ? now.realHourlyCents : null, color: Charts.COLORS.series[0], empty: 'hours not in', note: now ? now.totalHoursPerWeek + ' h a week' : '' },
+          { label: 'The offer, really', value: r.offer.realHourlyCents, color: Charts.COLORS.growth, note: r.offer.totalHoursPerWeek + ' h a week' },
+          { label: 'Now, on paper', value: now ? now.nominalHourlyCents : null, color: Charts.COLORS.series[1], empty: 'hours not in' },
+          { label: 'The offer, on paper', value: r.offer.nominalHourlyCents, color: Charts.COLORS.series[2] }
         ],
-        format: function (v) { return (Math.round(v * 10) / 10) + ' h'; }
+        format: perHour
       });
     },
 
     inputs: [
-      hoursInput('contractedHoursPerWeek', 'Paid hours a week', 'e.g. 40'),
-      hoursInput('unpaidOvertimeHoursPerWeek', 'Unpaid overtime', 'e.g. 3'),
-      hoursInput('commuteHoursPerWeek', 'Commuting', 'e.g. 5'),
-      { ctl: 'workCostsMonthlyCents', label: 'Costs of working, a month', kind: 'money', placeholder: 'e.g. 400', hint: 'Petrol, parking, transit, work clothes, lunches you would not otherwise buy, childcare only while working.',
-        read: function (h) { return readWork(h).workCostsMonthlyCents; }, write: function (v) { writeWork('workCostsMonthlyCents', v); } },
-      { ctl: 'weeksPerYear', label: 'Weeks worked a year', kind: 'number', placeholder: String(Schema.WORK_DEFAULTS.weeksPerYear),
-        read: function (h) { var w = readWork(h).weeksPerYear; return w === Schema.WORK_DEFAULTS.weeksPerYear ? null : w; }, write: function (v) { writeWork('weeksPerYear', v === null || v <= 0 ? Schema.WORK_DEFAULTS.weeksPerYear : v); } }
-    ],
-    moreLabel: 'The hours around the job',
-    more: [
-      hoursInput('prepHoursPerWeek', 'Getting ready', 'e.g. 2.5'),
-      hoursInput('decompressHoursPerWeek', 'Decompressing', 'e.g. 2.5')
+      { ctl: 'grossAnnualCents', label: 'The offer, a year', kind: 'money', placeholder: 'e.g. 80,000', hint: 'Base pay before tax. Bonuses and equity are not weighed here.',
+        read: function (h) { return offer(h).grossAnnualCents; }, write: function (v) { Spine.set('career.offer.grossAnnualCents', v); } },
+      { ctl: 'hoursPerWeek', label: 'Its hours a week', kind: 'number', placeholder: 'e.g. 40', affix: 'h',
+        read: function (h) { return offer(h).hoursPerWeek; }, write: function (v) { Spine.set('career.offer.hoursPerWeek', v === null || v <= 0 ? null : v); },
+        propose: function (h) {
+          var c = currentWork(h).contractedHoursPerWeek;
+          return Money.isEntered(c) && c > 0 ? { value: c, source: 'your current hours' } : { value: CareerMove.STANDARD_WEEK_HOURS, source: 'a standard week (convention)' };
+        } },
+      { ctl: 'commuteHoursPerWeek', label: 'Its commute a week', kind: 'number', placeholder: 'e.g. 5', affix: 'h', hint: '0 for working from home.',
+        read: function (h) { return offer(h).commuteHoursPerWeek; }, write: function (v) { Spine.set('career.offer.commuteHoursPerWeek', v === null ? null : Math.max(0, v)); },
+        propose: function (h) { var c = currentWork(h).commuteHoursPerWeek; return Money.isEntered(c) ? { value: c, source: 'your current commute' } : null; } },
+      { ctl: 'workCostsMonthlyCents', label: 'Its costs of working, a month', kind: 'money', placeholder: 'e.g. 100', hint: 'Petrol, parking, transit, clothes, lunches the job makes you buy.',
+        read: function (h) { return offer(h).workCostsMonthlyCents; }, write: function (v) { Spine.set('career.offer.workCostsMonthlyCents', v); },
+        propose: function (h) { var c = currentWork(h).workCostsMonthlyCents; return Money.isEntered(c) ? { value: c, source: 'your current costs of working' } : null; } },
+      { ctl: 'signOnCents', label: 'Sign-on', kind: 'money', placeholder: 'e.g. 5,000', hint: 'A one-off. Blank is none.',
+        read: function (h) { return offer(h).signOnCents; }, write: function (v) { Spine.set('career.offer.signOnCents', v); } }
     ],
 
     amounts: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      var spend = Schema.monthlyExpensesCents(h);
+      var r = CareerMove.compare(h, T);
       var rows = [];
-      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
-      if (Money.isOk(w)) {
-        rows.push({ label: 'A year of tax, estimated', cents: w.estimatedTaxCents || 0 });
-        if (w.annualWorkCostsCents > 0) rows.push({ label: 'A year of the costs of working', cents: w.annualWorkCostsCents });
-      }
-      rows.push({ label: 'A $1,200 thing you are eyeing', cents: 120000 });
+      if (Money.isOk(r)) rows.push({ label: 'A year of the difference in what you keep', cents: r.keptDifferenceAnnualCents });
+      var o = r.offer || null;
+      if (o && Money.isEntered(o.signOnCents)) rows.push({ label: 'The sign-on', cents: o.signOnCents, href: '#inputs' });
+      if (o && o.annualWorkCostsCents > 0) rows.push({ label: 'A year of the offer’s costs of working', cents: o.annualWorkCostsCents, href: '#inputs' });
       return rows;
     },
 
     assumptions: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
+      var r = CareerMove.compare(h, T);
       var tax = T.effectiveTaxRates;
-      var work = readWork(h);
-      return [
-        { label: 'Tax', value: Money.isOk(w) && w.taxKnown ? Money.formatRate(w.effectiveRate || (w.estimatedTaxCents / w.grossAnnualIncomeCents), { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')' },
-        { label: 'Weeks a year', value: String(Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear), source: Money.isEntered(work.weeksPerYear) && work.weeksPerYear !== Schema.WORK_DEFAULTS.weeksPerYear ? 'yours' : 'the default: 52 less four weeks of leave and holidays (convention)' },
-        { label: 'Unpaid hours', value: 'count as work', source: 'Your Money or Your Life: an hour the job takes is an hour it costs, paid or not (convention)' },
-        { label: 'Real return, for the lens', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' }
-      ];
+      var work = currentWork(h);
+      var taxSource = 'data/effective_tax_rates_2026.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')';
+      var o = r.offer || null, now = Money.isOk(r) ? r.now : null;
+      var src = r.sources || {};
+      var rows = [];
+      rows.push({ label: 'Tax, now', value: now && now.taxKnown ? Money.formatRate(now.effectiveRate, { decimals: 1 }) + ' effective' : 'not estimated yet', source: taxSource });
+      rows.push({ label: 'Tax, the offer', value: o && o.taxKnown ? Money.formatRate(o.effectiveRate, { decimals: 1 }) + ' effective' : 'not estimated yet', source: taxSource + '; the same lookup as Real Hourly Wage, on the offer’s pay' });
+      rows.push({ label: 'Spending', value: 'unchanged by the move', source: 'the FI move reads the same month of spending on both sides (convention)' });
+      rows.push({ label: 'The sign-on', value: o && Money.isEntered(o.signOnCents) ? Money.formatCents(o.signOnNetCents) + ' after tax, into investments' : 'none', source: 'a one-off at the offer’s effective rate, landing in investments in the first year (convention)' });
+      rows.push({ label: 'Employer match', value: 'left out of both sides', source: 'a match is a benefit, and benefits are out of this room’s scope; both sides are read on the same basis' });
+      rows.push({ label: 'The offer’s hours', value: o ? o.paidHoursPerWeek + ' h a week' : '—',
+        source: src.hours === 'offer' ? 'yours' : src.hours === 'current' ? 'your current job’s paid hours, until you type the offer’s' : 'a standard ' + CareerMove.STANDARD_WEEK_HOURS + '-hour week (convention), until you type the offer’s' });
+      rows.push({ label: 'The offer’s commute', value: o ? ((src.commute === 'none' ? 0 : (src.commute === 'offer' ? offer(h).commuteHoursPerWeek : work.commuteHoursPerWeek)) + ' h a week') : '—',
+        source: src.commute === 'offer' ? 'yours' : src.commute === 'current' ? 'carried over from your current job, until you type the offer’s' : 'none entered on either job' });
+      rows.push({ label: 'The offer’s costs of working', value: o ? Money.formatCents(o.workCostsMonthlyCents) + ' a month' : '—',
+        source: src.costs === 'offer' ? 'yours' : src.costs === 'current' ? 'carried over from your current job, until you type the offer’s' : 'none entered on either job' });
+      var carried = [];
+      if (Money.isEntered(work.unpaidOvertimeHoursPerWeek) && work.unpaidOvertimeHoursPerWeek > 0) carried.push(work.unpaidOvertimeHoursPerWeek + ' h unpaid overtime');
+      if (Money.isEntered(work.prepHoursPerWeek) && work.prepHoursPerWeek > 0) carried.push(work.prepHoursPerWeek + ' h getting ready');
+      if (Money.isEntered(work.decompressHoursPerWeek) && work.decompressHoursPerWeek > 0) carried.push(work.decompressHoursPerWeek + ' h decompressing');
+      rows.push({ label: 'Unpaid hours around the job', value: carried.length ? carried.join(', ') + ' a week' : 'none', source: 'carried over from your current job (Real Hourly Wage); the offer is assumed to take the same' });
+      rows.push({ label: 'Weeks a year', value: String(Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear), source: Money.isEntered(work.weeksPerYear) && work.weeksPerYear !== Schema.WORK_DEFAULTS.weeksPerYear ? 'yours, on both jobs' : 'the default: 52 less four weeks of leave and holidays (convention), on both jobs' });
+      rows.push({ label: 'Real return, for the FI move', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' });
+      return rows;
     },
 
     why: function (h, T, situation) {
       return {
-        employed: 'Employed, the headline rate is the one on the offer letter. This one is the rate that decides whether the next thing — a raise, a move, an hour of overtime — is worth it.',
-        selfEmployed: 'Self-employed, there is no headline rate, only this one: what is left after the tax you set aside and the hours the work really takes, including the ones nobody bills.',
-        mixed: 'With a job and your own work, each has a real rate. This reads the job; put the own-work hours in as a second job in Start Here to compare them.',
-        student: 'A part-time job at a student’s stage is priced against study hours, not against a career. If the real rate is low, the question is what the hours are taking from.',
+        employed: 'Employed, an offer arrives as a headline number against your headline number. Once the hours, the commute and the costs of each are in, the real rates can be a different story from the one on the letters.',
+        selfEmployed: 'Self-employed, an offer to go W-2 is not just a different number: the employer picks up half of the payroll tax, and the tax here is a flat estimate on each side. The Self-Employed room’s W-2 against 1099 comparison is the one that weighs that half properly.',
+        mixed: 'With a job and your own work, this reads the job the offer would replace and keeps your own work on both sides. If the offer would end the own work too, the difference is bigger than this shows.',
+        student: 'A first offer against a part-time job is priced the same way: what each really pays an hour, and how far the offer moves the date you are free of the job.',
         betweenJobs: '', retired: ''
-      }[situation] || 'Any job has a headline rate and a real one. The gap between them is what this room measures.';
+      }[situation] || 'An offer has a headline rate and a real one. This room puts the real one beside your job’s real one.';
     },
 
-    scope: 'This room does not model overtime pay, shift differentials, or a second job’s hours on their own. Tax is a flat estimate, not a return.'
+    scope: 'This room does not weigh benefits, equity, growth, or what the job is like; and the tax on each is a flat estimate.'
   });
 })();
 </script>
