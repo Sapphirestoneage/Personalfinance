@@ -3516,8 +3516,10 @@ files and therefore carry SPARKS numbers.
 
 **From here on the log is one sequence.** A new entry — for either side —
 takes the highest number in the whole file plus one, which is why the next
-D&D entry after D-052 is D-064. Renumbering the seven duplicates properly is
-a documentation pass of its own and has not been done.
+D&D entry after D-052 is D-064. A new SPARKS entry goes immediately *above*
+this divider; a new D&D entry goes at the end of the file. Renumbering the
+seven duplicates properly is a documentation pass of its own and has not
+been done.
 
 ---
 
