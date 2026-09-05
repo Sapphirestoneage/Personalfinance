@@ -213,7 +213,11 @@
     if (!tables || !tables.dndRules || !tables.dndScoring) return false;
     var p = profile();
     if (p.declaredMethod && p.declaredMethod !== 'featsOfStrength') {
+      /* Builder methods set six abilities (DD-018). A build saved before that
+         holds nine sub-stat keys instead and is complete on the old terms. */
       var scores = p.declaredScores || {};
+      var abilities = tables.dndRules.stats.map(function (st) { return st.id; });
+      if (abilities.every(function (id) { return Money.isEntered(scores[id]); })) return true;
       return tables.dndRules.subStats.filter(function (s) { return s.kind === 'declared'; })
         .every(function (s) { return Money.isEntered(scores[s.id]); });
     }

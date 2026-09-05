@@ -107,6 +107,17 @@ from `declaredMethod` and reported directly, so you never have to work it out:
 }
 ```
 
+**Shape of `declaredScores`:** for `featsOfStrength` it is nine numbers keyed by
+sub-stat id. For every other method it is **six numbers keyed by ability** —
+`STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA` — exactly as a D&D Beyond character
+sheet holds them. Files written before that change hold nine sub-stat keys for
+every method; both shapes are read.
+
+A bought `STR`, `DEX` or `CON` is a placeholder the tool itself only honours
+while the money that would compute it is absent. **Never import one of those
+three into a SPARKS household as anything** — they are not even suggestions,
+they are game pieces.
+
 Only `featsOfStrength` (the behavioural quiz) and `homebrew` (typed in as a
 self-assessment) produce `declared`. `roll`, `standardArray` and `pointBuy` all
 produce `generated`, and **an unrecognised method is reported as `generated`**,

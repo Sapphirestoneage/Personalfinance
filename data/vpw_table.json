@@ -5,7 +5,7 @@
   "source": "The Bogleheads Variable Percentage Withdrawal (VPW) table: the share of a portfolio to withdraw each year so that a real-return assumption depletes it by 100, rising with age; figures here are in the region of the published 60/40 and 40/60 columns.",
   "confidence": "unverified",
   "confidenceNote": "Recalled from the shape of the published table and rounded to a tenth of a point; interpolated between the ages listed. VPW is a method, not a guarantee: a bad decade shrinks every later withdrawal. The spend-curve decline after 70 is a separate planning convention, not part of VPW.",
-  "note": "percentages: annual withdrawal as a decimal fraction of the portfolio at the start of the year, by age, for two stock shares; the engine interpolates by age and picks the nearer column by stock share. spendDeclineAfterAge / spendDeclinePerYear: real spending falls this fraction a year past that age. planAge: the age the plan is run to. D-087.",
+  "note": "percentages: annual withdrawal as a decimal fraction of the portfolio at the start of the year, by age, for two stock shares; the engine interpolates by age and picks the nearer column by stock share. spendDeclineAfterAge / spendDeclinePerYear: real spending falls this fraction a year past that age. planAge: the age the plan is run to. D-088.",
   "columns": { "stocks60": 0.60, "stocks40": 0.40 },
   "percentages": {
     "40":  { "stocks60": 0.038, "stocks40": 0.034 },

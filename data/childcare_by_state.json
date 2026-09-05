@@ -5,7 +5,7 @@
   "source": "Child Care Aware of America, 'Price of Care 2023': annual price of centre-based infant care by state, in the region of $7,000 (Mississippi) to $25,000 (District of Columbia), with a national figure around $12,000\u201313,000.",
   "confidence": "unverified",
   "confidenceNote": "Recalled magnitudes rounded to the nearest $500, not copied from the report; infant centre care is the dearest kind, and home-based or older-child care costs less. A proposal for the kids template, changeable in the room.",
-  "note": "monthlyCents = annual \u00f7 12. `national` is the fallback when the state is not entered. D-087.",
+  "note": "monthlyCents = annual \u00f7 12. `national` is the fallback when the state is not entered. D-088.",
   "national": {
     "annualCents": 1250000,
     "monthlyCents": 104200

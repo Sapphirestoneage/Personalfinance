@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/events.js — one life event, three ways. BRIEF §6.1, D-086.
+   engines/events.js — one life event, three ways. BRIEF §6.1, D-087.
    --------------------------------------------------------------------------
      Events.answers(template, given, env)        every question answered:
                                                  what was given, else the

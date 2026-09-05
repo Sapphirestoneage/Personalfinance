@@ -5,7 +5,7 @@
   "source": "A hand-curated cost-of-living index for forty US cities, national average = 100, in the region of the C2ER / Numbeo composite indices for 2025 \u2014 housing weighted heavily, as those indices do.",
   "confidence": "unverified",
   "confidenceNote": "Recalled, rounded, and curated by hand; not copied from any one publisher. Use the ratio between two cities as a rough scale on a whole month of spending, and change the answer when you know better. Rent is the line that moves most and is not split out.",
-  "note": "index: national average 100. state: for the state-tax line. `from` defaults to the national average when the current city is not chosen. D-087.",
+  "note": "index: national average 100. state: for the state-tax line. `from` defaults to the national average when the current city is not chosen. D-088.",
   "national": 100,
   "cities": {
     "new_york": {

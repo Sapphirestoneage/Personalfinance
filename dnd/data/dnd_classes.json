@@ -5,7 +5,7 @@
   "source": "Dungeons & Dividends rulebook Draft v1, §4 and §8A–8G. Transcribed, not interpreted.",
   "confidence": "convention",
   "confidenceNote": "A house game system. The seven classes are levers that move an FI number, not asset categories and not advice.",
-  "note": "§7 of the rulebook says 'each of the ten classes' — a leftover from an earlier draft. §4 and the §8A–8G tables both give exactly seven. Seven is authoritative here; see DECISIONS.md D-048.",
+  "note": "§7 of the rulebook says 'each of the ten classes' — a leftover from an earlier draft. §4 and the §8A–8G tables both give exactly seven. Seven is authoritative here; see DECISIONS.md DD-003.",
 
   "cadence": {
     "subclassChosenAt": 3,

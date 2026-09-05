@@ -14,34 +14,34 @@
     {
       "id": "featsOfStrength",
       "name": "Feats of Strength",
-      "blurb": "Eighteen quick questions about what you'd actually do. No maths, nothing to revise, and no answer that makes you look daft — the honest one always scores.",
+      "blurb": "Eighteen quick questions about what you'd actually do. No maths, nothing to revise, and no answer that makes you look daft — the honest one always scores. Sets Intelligence, Wisdom and Charisma; the other three wait for your numbers.",
       "default": true
     },
     {
       "id": "pointBuy",
       "name": "Point Buy",
-      "blurb": "Spend a pool of 45 points across the nine, however you like. Going high costs more each step, exactly as it does in 5e, so a 20 has to be paid for somewhere."
+      "blurb": "Spend 27 points across your six abilities, exactly as D&D Beyond does. Everything starts at 8, nothing goes above 15, and going high costs more each step — so a 15 has to be paid for somewhere."
     },
     {
       "id": "standardArray",
       "name": "Standard Array",
-      "blurb": "Nine fixed numbers, and you decide who gets what. The quickest honest route when you don't fancy answering questions tonight."
+      "blurb": "Six fixed numbers — 15, 14, 13, 12, 10, 8 — and you decide which ability gets which. The quickest honest route when you don't fancy answering questions tonight."
     },
     {
       "id": "roll",
       "name": "Roll",
-      "blurb": "4d6, drop the lowest, nine times. You get what you get — and like at a table, rolling can't reach 19 or 20."
+      "blurb": "4d6, drop the lowest, six times. You get what you get — and like at a table, rolling can't reach 19 or 20."
     },
     {
       "id": "homebrew",
       "name": "Homebrew",
-      "blurb": "Type the nine numbers yourself. Nothing is checked. For when you already know your character, or you just want to poke at it."
+      "blurb": "Type the six numbers yourself. Nothing is checked. For when you already know your character, or you just want to poke at it."
     }
   ],
   "pointBuy": {
-    "pool": 45,
+    "pool": 27,
     "min": 8,
-    "max": 20,
+    "max": 15,
     "costs": {
       "8": 0,
       "9": 1,
@@ -50,14 +50,17 @@
       "12": 4,
       "13": 5,
       "14": 7,
-      "15": 9,
-      "16": 12,
-      "17": 15,
-      "18": 19,
-      "19": 23,
-      "20": 28
+      "15": 9
     },
-    "note": "8-15 costs are 5e's own table. 16-20 continue the same accelerating curve, since this system allows scores above 15 where 5e point buy does not. A 45-point pool buys all nine at 13, or a sharply peaked spread."
+    "over": [
+      "STR",
+      "DEX",
+      "CON",
+      "INT",
+      "WIS",
+      "CHA"
+    ],
+    "note": "D&D Beyond's point buy, exactly: 27 points over the six abilities, every score starts at 8, nothing above 15, and 5e's own cost table. An earlier version spread 45 points across the nine sub-stats, which no table does — you buy abilities, not skills. Each bought ability sets all of its sub-stats to that score."
   },
   "standardArray": {
     "values": [
@@ -65,20 +68,26 @@
       14,
       13,
       12,
-      11,
       10,
-      10,
-      9,
       8
     ],
-    "note": "Nine values averaging 11.3 — deliberately just above the population-median 10, since anyone building a sheet is already more engaged than average."
+    "over": [
+      "STR",
+      "DEX",
+      "CON",
+      "INT",
+      "WIS",
+      "CHA"
+    ],
+    "note": "5e's standard array, six values, assigned to the six abilities however you like."
   },
   "roll": {
     "dice": 4,
     "sides": 6,
     "drop": "lowest",
     "floor": 8,
-    "note": "Range 8-18."
+    "count": 6,
+    "note": "4d6 drop the lowest, six times, one per ability. Range 8-18."
   },
   "anchors": {
     "incomePower": {
@@ -909,7 +918,7 @@
   "quizNote": "Two questions per declared sub-stat, each worth 0-6 points, summed onto a base of 8 — which lands exactly on the 8-20 scale with no rescaling. Every question is BEHAVIOURAL: it asks what you did or would do, not whether you can recall a definition. There is no arithmetic and nothing to revise for, because a quiz that makes someone feel stupid is a quiz they close. The zero-point option is always a real thing real people do, phrased so that picking it costs no dignity. `order` drives display sequence: the two questions for a sub-stat sit far apart, and the driest topics (tax, instruments) come last, once someone is already invested in the run.",
   "hp": {
     "unitWeeks": true,
-    "note": "1 HP = one week of expenses covered by liquid assets. Agreed with the owner 2026-09-04 to resolve the two incompatible HP definitions in rulebook §3A. See DECISIONS.md D-046.",
+    "note": "1 HP = one week of expenses covered by liquid assets. Agreed with the owner 2026-09-04 to resolve the two incompatible HP definitions in rulebook §3A. See DECISIONS.md DD-001.",
     "minGainPerLevel": 1,
     "debtBurdenMaxHpPenalty": {
       "level": 2,
@@ -1006,5 +1015,6 @@
       "none": "I move it by hand"
     },
     "source": "Agreed with the repo owner 2026-09-04. Values are a convention, not a measurement."
-  }
+  },
+  "boughtNote": "BRIEF-adjacent, decided 2026-09-04 with the repo owner: point buy, standard array, roll and homebrew all set SIX abilities, like D&D Beyond. Strength, Dexterity and Constitution are normally computed from money; a bought value fills each of those ONLY while the money that would compute it is absent, and is marked bought:true on every Result so no page can show it as measured. The moment the money arrives, the computed value wins and the bought one is ignored. DD-018."
 }

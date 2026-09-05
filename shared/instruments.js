@@ -180,7 +180,7 @@
     }
   }
 
-  /* ---- 3D: every instrument three ways (BRIEF §6.4, D-088) ----------------
+  /* ---- 3D: every instrument three ways (BRIEF §6.4, D-089) ----------------
      The events engine on the EMPTY template — the Triple D bundles on the
      baseline, no event — read back per instrument at the horizon. Load
      and debt-to-income do not move with returns or income-after, and the

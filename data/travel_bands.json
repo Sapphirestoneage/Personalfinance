@@ -5,7 +5,7 @@
   "source": "Rule-of-thumb bands for what a month away costs ON TOP of the fixed costs that continue at home — slow travel abroad in low-cost regions around $800–1,200 a month, domestic travel around $1,500, a high-cost country around $2,500.",
   "confidence": "convention",
   "confidenceNote": "Bands, not prices. A person who sublets their home or ends a lease will see a very different number; the template shows the band it used and the answer can be changed.",
-  "note": "Extra monthly cents over the baseline month; 'home' adds nothing. Keyed by the sabbatical template's `where` answer. D-086.",
+  "note": "Extra monthly cents over the baseline month; 'home' adds nothing. Keyed by the sabbatical template's `where` answer. D-087.",
   "bands": {
     "home":          { "label": "At home",                  "monthlyCents": 0 },
     "domestic":      { "label": "Travelling in the US",      "monthlyCents": 150000 },

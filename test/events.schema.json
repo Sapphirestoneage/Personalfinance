@@ -1,5 +1,5 @@
 {
-  "$comment": "The shape every data/events/*.json must have. Checked by test/run.js with a small validator (no dependency). BRIEF \u00a76.3, D-086.",
+  "$comment": "The shape every data/events/*.json must have. Checked by test/run.js with a small validator (no dependency). BRIEF \u00a76.3, D-087.",
   "required": [
     "id",
     "title",

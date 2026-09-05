@@ -5,7 +5,7 @@
   "source": "USDA 'Expenditures on Children by Families' (2015 base, middle-income, two-child household), inflated to 2023 dollars in the region of $310,000 to age 17 by the Brookings Institution's 2022 update; spread across six three-year bands that rise with age as the USDA profile does. Private school tuition in the region of the NCES 2021 average of about $12,000 a year. A hospital birth's out-of-pocket cost around $3,000 with employer coverage (Peterson-KFF 2022). College saving figures are a planning convention, not a cost.",
   "confidence": "unverified",
   "confidenceNote": "Recalled magnitudes, rounded to figures a person could check; not copied from any table. The USDA profile excludes college; the bands here do too. Everything is per child, per month, in cents.",
-  "note": "bands: fromMonths is months after birth; each band lasts 36 months. college: what to put away a month from birth for a 'none', 'half' (half of an in-state public four years) or 'full' target — a convention. D-087.",
+  "note": "bands: fromMonths is months after birth; each band lasts 36 months. college: what to put away a month from birth for a 'none', 'half' (half of an in-state public four years) or 'full' target — a convention. D-088.",
   "bands": [
     { "id": "0-2",   "label": "0 to 2",   "fromMonths": 0,   "monthlyCents": 120000 },
     { "id": "3-5",   "label": "3 to 5",   "fromMonths": 36,  "monthlyCents": 130000 },

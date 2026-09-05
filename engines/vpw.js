@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/vpw.js — variable percentage withdrawal, year by year. D-087.
+   engines/vpw.js — variable percentage withdrawal, year by year. D-088.
    --------------------------------------------------------------------------
      percentageAt(table, age, stockShare)   the VPW share at an age
      plan(opts)                              the retirement, run to the plan

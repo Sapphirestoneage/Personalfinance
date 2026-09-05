@@ -6063,7 +6063,7 @@ Registry.all().forEach(function (room) {
    --------------------------------------------------------------------------
    dnd/ is a separate product that happens to live in this repo. It carries
    its OWN copy of the calculation core so it can be lifted out into its own
-   repository later without a single edit — see DECISIONS.md D-049.
+   repository later without a single edit — see DECISIONS.md DD-004.
 
    The hazard that buys is obvious: someone fixes a bug in engines/tier0.js,
    dnd/engines/tier0.js silently keeps the bug, and the two tools start
@@ -6558,7 +6558,7 @@ section('The Rerank');
 section('Life events: the template schema, and the engine on the demo');
 
 (function () {
-  /* D-086. A small validator for test/events.schema.json — enough of JSON
+  /* D-087. A small validator for test/events.schema.json — enough of JSON
      Schema (required, type, enum, pattern, min/max, items, $ref into
      definitions) to grade every template without a dependency. */
   const schema = JSON.parse(fs.readFileSync(path.join(ROOT, 'test/events.schema.json'), 'utf8'));
@@ -6667,7 +6667,7 @@ section('Life events: the template schema, and the engine on the demo');
 section('Life events: the kids, on the demo');
 
 (function () {
-  /* D-087. Each template's default run, month 1 and month 12, by hand. */
+  /* D-088. Each template's default run, month 1 and month 12, by hand. */
   const E = require(path.join(ROOT, 'engines/events.js'));
   const T = Object.assign({}, TABLES, {
     commonCosts: require(path.join(ROOT, 'data/common_costs.json')),
@@ -7049,7 +7049,7 @@ section('Life events: two households, one, on the demo');
 section('3D: the instruments three ways');
 
 (function () {
-  /* D-088: the events engine on the empty template, read back per instrument. */
+  /* D-089: the events engine on the empty template, read back per instrument. */
   const Reference = require(path.join(ROOT, 'shared/reference.js'));
   const T = {};
   Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) {} });
@@ -7072,6 +7072,90 @@ section('3D: the instruments three ways');
   const dash = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   checkTrue('the dashboard has the toggle and loads the events engine', /id="btn-3d"/.test(dash) && /engines\/events\.js/.test(dash));
   check('a blank household cannot fan out, and says what it needs', InstrumentsMain.threeD(Schema.createHousehold({}), T).status, 'incomplete');
+})();
+
+section('Two decision sequences that cannot collide');
+
+(function () {
+  /* The D&D entries restarted at D-046 and collided head-on with the SPARKS
+     entries of the same numbers, so "DECISIONS.md D-046" meant two different
+     decisions depending on who was referencing it. Worse, parallel sessions
+     kept reaching for the same next number — four renumber-on-merge events in
+     two days. The fix is two sequences: D- above the divider, DD- below. This
+     section is what keeps them apart. */
+  const text = fs.readFileSync(path.join(__dirname, '..', 'DECISIONS.md'), 'utf8');
+  const lines = text.split('\n');
+  const divider = lines.findIndex(l => /^# The Dungeons & Dividends entries/.test(l));
+  checkTrue('DECISIONS.md still has the divider', divider > 0);
+
+  const sparks = [], dnd = [];
+  lines.forEach((l, i) => {
+    const m = /^## (DD?)-(\d{3}) — /.exec(l);
+    if (!m) {
+      checkTrue(`line ${i + 1} is not a malformed entry heading`,
+        !/^## D/.test(l),
+        `"${l.slice(0, 60)}" looks like an entry heading but does not match `
+        + `"## D-" or "## DD-" followed by three digits, a space, an em dash and a title`);
+      return;
+    }
+    (i < divider ? sparks : dnd).push({ prefix: m[1], num: m[2], line: i + 1, title: l });
+  });
+
+  checkTrue('there are SPARKS entries', sparks.length > 20);
+  checkTrue('there are D&D entries', dnd.length > 10);
+
+  sparks.forEach(e => {
+    check(`line ${e.line}: an entry above the divider uses D-`, e.prefix, 'D');
+  });
+  dnd.forEach(e => {
+    check(`line ${e.line}: an entry below the divider uses DD-`, e.prefix, 'DD');
+  });
+
+  /* No number twice within a sequence. */
+  [['SPARKS', sparks], ['D&D', dnd]].forEach(([name, list]) => {
+    const seen = {};
+    list.forEach(e => {
+      checkTrue(`${name} ${e.prefix}-${e.num} appears once`, !seen[e.num],
+        `also at line ${seen[e.num]}`);
+      seen[e.num] = e.line;
+    });
+  });
+
+  /* Every DD- referenced anywhere must exist, or a comment points at nothing. */
+  const have = {};
+  dnd.forEach(e => { have['DD-' + e.num] = true; });
+  const files = [];
+  (function walk(dir) {
+    fs.readdirSync(dir, { withFileTypes: true }).forEach(d => {
+      if (d.name === 'node_modules' || d.name === '.git' || d.name === 'vendor') return;
+      const full = path.join(dir, d.name);
+      if (d.isDirectory()) walk(full);
+      else if (/\.(js|html|json|md)$/.test(d.name)) files.push(full);
+    });
+  })(path.join(__dirname, '..'));
+
+  files.forEach(f => {
+    const src = fs.readFileSync(f, 'utf8');
+    const rel = path.relative(path.join(__dirname, '..'), f);
+    (src.match(/\bDD-\d{3}\b/g) || []).forEach(ref => {
+      checkTrue(`${rel} references ${ref}, which exists`, !!have[ref]);
+    });
+  });
+
+  /* The vendored copies are byte-identical to the SPARKS originals, so their
+     D- references are SPARKS numbers. Renumbering them "helpfully" would break
+     the vendored-copy guard — which is exactly what that guard is for, but
+     this says why before anyone tries. */
+  fs.readdirSync(path.join(__dirname, '..', 'dnd', 'shared'))
+    .filter(f => f.endsWith('.js'))
+    /* Only the files that HAVE a SPARKS original are vendored. store.js,
+       export.js and skin.js are D&D-only and may cite DD- freely. */
+    .filter(f => fs.existsSync(path.join(__dirname, '..', 'shared', f)))
+    .forEach(f => {
+      const src = fs.readFileSync(path.join(__dirname, '..', 'dnd', 'shared', f), 'utf8');
+      checkTrue(`dnd/shared/${f} carries no DD- reference`, !/\bDD-\d{3}\b/.test(src),
+        'these are byte-identical vendored copies; their D- numbers are SPARKS numbers');
+    });
 })();
 
 section('The D&D folder\'s vendored copies');

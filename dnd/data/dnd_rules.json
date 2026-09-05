@@ -1543,7 +1543,7 @@
     "temporaryHp": "A windfall sitting in checking that hasn't been moved into real reserves. Absorbs the next hit first, doesn't stack with itself, and evaporates at your next Long Rest if not converted into permanent HP."
   },
   "encounterRules": {
-    "note": "BRIEF §9.3. The rulebook's own §13 leaves save DCs unset, so they are derived from CR here rather than invented per monster — one ladder, visible, arguable. Damage is expressed in HP, and HP is weeks (D-046), so every damage figure is already in weeks of runway.",
+    "note": "BRIEF §9.3. The rulebook's own §13 leaves save DCs unset, so they are derived from CR here rather than invented per monster — one ladder, visible, arguable. Damage is expressed in HP, and HP is weeks (DD-001), so every damage figure is already in weeks of runway.",
     "source": "The ladder follows the shape of a CR-to-save-DC progression: harder monster, harder save. The numbers are a convention chosen here, not a measurement and not agreed elsewhere — argue with them by editing this array.",
     "crToDc": [
       {

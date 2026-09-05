@@ -133,7 +133,8 @@
     var al = TABLES.dndAlignments.alignments.filter(function (x) { return x.id === p.alignment; })[0];
     var stats = Char.STAT_IDS.filter(function (id) { return Money.isOk(s.stats[id]); })
       .map(function (id) {
-        return { id: id, score: s.stats[id].value, mod: Char.modifier(s.stats[id].value) };
+        return { id: id, score: s.stats[id].value, mod: Char.modifier(s.stats[id].value),
+                 bought: s.stats[id].bought === true };
       });
 
     var pred = Enc.predators(s, TABLES);
@@ -217,13 +218,15 @@
     ctx.fillText(title, M, y);
     y += 26;
 
-    /* class · level · lever */
+    /* class · level · lever. When there is no name the class IS the title, so
+       the subtitle carries only the level rather than saying the class twice. */
     if (d.klass) {
       ctx.fillStyle = sk.dim;
       ctx.font = '34px ' + BODY;
-      var sub = d.klass + (d.level !== null ? ', level ' + d.level : '');
-      ctx.fillText(sub, M, y + 30);
-      y += 44;
+      var sub = d.name
+        ? d.klass + (d.level !== null ? ', level ' + d.level : '')
+        : (d.level !== null ? 'Level ' + d.level : '');
+      if (sub) { ctx.fillText(sub, M, y + 30); y += 44; }
       if (d.lever) {
         ctx.fillStyle = sk.accent;
         ctx.font = 'italic 30px ' + BODY;
@@ -240,6 +243,14 @@
         var x = M + i * (boxW + 16);
         ctx.fillStyle = sk.panel;
         ctx.fillRect(x, y, boxW, 150);
+        if (st.bought) {
+          /* Bought, not measured — the card must not claim a Strength nobody
+             measured, so a bought score is boxed differently and labelled. */
+          ctx.save();
+          ctx.setLineDash([6, 5]); ctx.strokeStyle = sk.accent; ctx.lineWidth = 2;
+          ctx.strokeRect(x + 1, y + 1, boxW - 2, 148);
+          ctx.restore();
+        }
         ctx.fillStyle = sk.dim;
         ctx.font = '600 22px ' + BODY;
         ctx.textAlign = 'center';
@@ -249,7 +260,7 @@
         ctx.fillText(String(st.score), x + boxW / 2, y + 100);
         ctx.fillStyle = sk.accent;
         ctx.font = '26px ' + BODY;
-        ctx.fillText((st.mod >= 0 ? '+' : '') + st.mod, x + boxW / 2, y + 132);
+        ctx.fillText((st.mod >= 0 ? '+' : '') + st.mod + (st.bought ? ' ·b' : ''), x + boxW / 2, y + 132);
       });
       ctx.textAlign = 'left';
       y += 190;
@@ -260,6 +271,11 @@
     if (d.hp !== null) vitals.push(['HIT POINTS', d.hp + (d.maxHp !== null ? ' / ' + d.maxHp : '') + ' wk']);
     if (d.ac !== null) vitals.push(['ARMOUR', String(d.ac)]);
     if (d.tier) vitals.push(['TIER', d.tier.id + ' · ' + d.tier.name]);
+    if (d.stats.some(function (st) { return st.bought; })) {
+      ctx.fillStyle = sk.dim; ctx.font = '22px ' + BODY;
+      ctx.fillText('·b = bought with points, not measured. Stands until real numbers replace it.', M, y);
+      y += 34;
+    }
     if (vitals.length) {
       vitals.forEach(function (v, i) {
         var x = M + i * ((W - M * 2) / vitals.length);
@@ -328,7 +344,7 @@
       + (d.alignment ? ' · ' + d.alignment.emoji + ' ' + d.alignment.name : '')];
     if (d.stats.length) {
       out.push(d.stats.map(function (s) {
-        return s.id + ' ' + s.score + ' (' + (s.mod >= 0 ? '+' : '') + s.mod + ')'; }).join(' · '));
+        return s.id + ' ' + s.score + ' (' + (s.mod >= 0 ? '+' : '') + s.mod + (s.bought ? ', bought' : '') + ')'; }).join(' · '));
     }
     if (d.hp !== null) out.push('HP ' + d.hp + (d.maxHp !== null ? '/' + d.maxHp : '') + ' weeks of runway.');
     if (d.hunted.length) out.push('Hunted by: ' + d.hunted.join(', ') + '.');

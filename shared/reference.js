@@ -93,7 +93,7 @@
   /**
    * The life-event templates: data/events/index.json names them, one file
    * each. Loaded on demand by the room that offers them, not by every page.
-   * Resolves with { index, byId, list }. D-086.
+   * Resolves with { index, byId, list }. D-087.
    */
   function loadEvents(basePath) {
     var base = basePath === undefined ? defaultBase() : basePath;
