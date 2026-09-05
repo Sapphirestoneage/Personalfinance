@@ -538,11 +538,26 @@
         return { label: x.asset.label || x.rule.key, value: x.asset.valueCents, color: Charts.COLORS.contributed };
       }));
     }, []);
-    var owed = Schema.aggregatableDebts(h).filter(function (d) { return Money.isEntered(d.balanceCents); }).map(function (d) {
-      return { label: d.label || 'Debt', value: -d.balanceCents, color: Charts.COLORS.debt, note: 'owed' };
+    /* What is owed, one bar a kind — every credit card in the one bar, a
+       colour each — so seven cards read as one debt with seven parts
+       rather than seven slivers. The bars share a scale with what is
+       owned, so the widths compare across the two. */
+    var KINDS = { credit_card: 'Credit cards', student_loan: 'Student loans', auto: 'Car loans', mortgage: 'Mortgage', personal: 'Personal loans', medical: 'Medical', other: 'Other debt' };
+    var byKind = {}, kindOrder = [];
+    Schema.aggregatableDebts(h).filter(function (d) { return Money.isEntered(d.balanceCents); }).forEach(function (d, i) {
+      var k = KINDS[d.type] ? d.type : 'other';
+      if (!byKind[k]) { byKind[k] = []; kindOrder.push(k); }
+      byKind[k].push({ label: d.label || 'Debt', value: d.balanceCents, color: Charts.COLORS.series[i % Charts.COLORS.series.length] });
     });
-    el('portfolio-bars').innerHTML = '<span class="slaf-label" style="display:block;margin-top:var(--space-3)">Owned against owed</span>'
-      + Charts.bars({ rows: owned.concat(owed) });
+    var owedRows = kindOrder.map(function (k) {
+      var parts = byKind[k];
+      return { label: KINDS[k], note: parts.length === 1 ? 'owed' : parts.length + ' of them, owed', parts: parts };
+    });
+    var scale = Math.max.apply(null, owned.map(function (r) { return r.value; }).concat(owedRows.map(function (r) { return r.parts.reduce(function (t, p) { return t + p.value; }, 0); })).concat([1]));
+    el('portfolio-bars').innerHTML = '<span class="slaf-label" style="display:block;margin-top:var(--space-3)">Owned</span>'
+      + Charts.bars({ rows: owned, max: scale })
+      + (owedRows.length ? '<span class="slaf-label" style="display:block;margin-top:var(--space-3)">Owed, by kind — one bar a kind, one colour a debt</span>'
+          + Charts.stacked({ rows: owedRows, max: scale }) : '');
   }
 
   function renderLadder(h, all) {

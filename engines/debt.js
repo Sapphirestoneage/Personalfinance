@@ -331,11 +331,16 @@
         }
       });
 
+      var balances = {};
+      debts.forEach(function (d) { balances[d.id] = Math.max(0, d.balanceCents); });
       schedule.push({
         month: month,
         interestCents: interestThisMonth,
         paidCents: paidThisMonth,
-        remainingCents: debts.reduce(function (s, d) { return s + Math.max(0, d.balanceCents); }, 0)
+        remainingCents: debts.reduce(function (s, d) { return s + Math.max(0, d.balanceCents); }, 0),
+        /* Each debt's own balance, so a chart can draw one line per debt
+           rather than one line for the lot. */
+        balances: balances
       });
     }
 
@@ -352,6 +357,8 @@
       totalInterestCents: totalInterest,
       totalPaidCents: totalPaid,
       startingBalanceCents: startingBalance,
+      startingBalances: ready.value.reduce(function (m, d) { m[d.id] = d.balanceCents; return m; }, {}),
+      debtLabels: ready.value.reduce(function (m, d) { m[d.id] = d.label; return m; }, {}),
       monthlyBudgetCents: monthlyBudget,
       extraMonthlyCents: extra,
       payoffs: payoffs.sort(function (a, b) { return a.month - b.month; }),

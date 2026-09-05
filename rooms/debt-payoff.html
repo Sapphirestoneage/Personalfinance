@@ -64,9 +64,11 @@
   .badge { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-positive); border: 1px solid var(--color-positive); border-radius: var(--radius-pill); padding: 1px var(--space-2); margin-left: var(--space-2); }
 
   ol.timeline { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
-  ol.timeline li { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  ol.timeline li { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); flex-wrap: wrap; }
+  ol.timeline li > span:first-child { flex: 1 1 140px; min-width: 0; }
+  ol.timeline li > .tl-when { flex: 0 1 auto; margin-left: auto; }
   ol.timeline li:first-child { border-top: none; }
-  .tl-when { color: var(--color-text-subtle); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tl-when { color: var(--color-text-subtle); font-variant-numeric: tabular-nums; text-align: right; }
 
   .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
   .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
@@ -599,6 +601,12 @@
     render();
   });
 
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
   function renderTimeline(plan, cmp) {
     var list = el('timeline'), reason = el('timeline-reason'), chart = el('timeline-chart');
     if (!Money.isOk(plan)) {
@@ -615,24 +623,50 @@
     var remaining = function (r) {
       return [[0, r.startingBalanceCents]].concat(r.schedule.map(function (m) { return [m.month, m.remainingCents]; }));
     };
+    /* One line per debt in its own colour, on top of the whole as a filled
+       area; a dot where each one reaches zero. The other orders stay as a
+       single dashed line each, so the picture is about the debts, not the
+       strategies — the bars above compare those. */
+    var ids = Object.keys(plan.startingBalances || {});
+    var colourOf = {};
+    ids.forEach(function (id, i) { colourOf[id] = Charts.COLORS.series[i % Charts.COLORS.series.length]; });
+    var perDebt = ids.map(function (id) {
+      var pts = [[0, plan.startingBalances[id]]];
+      for (var i = 0; i < plan.schedule.length; i++) {
+        var b = plan.schedule[i].balances ? plan.schedule[i].balances[id] : null;
+        if (!Money.isEntered(b)) break;
+        pts.push([plan.schedule[i].month, b]);
+        if (b === 0) break;
+      }
+      return { label: plan.debtLabels[id] || 'Debt', color: colourOf[id], points: pts, fill: false, width: 1.6 };
+    });
     var others = !Money.isOk(cmp) ? [] : RULES.strategies.filter(function (s) {
       var r = cmp.results[s.id];
       return s.id !== strategyId && r && Money.isOk(r);
     }).map(function (s) {
-      return { label: s.label, color: Charts.COLORS.muted, points: remaining(cmp.results[s.id]), fill: false, dash: true, width: 1.2 };
+      return { label: s.label + ' order, all debts', color: Charts.COLORS.muted, points: remaining(cmp.results[s.id]), fill: false, dash: true, width: 1 };
     });
+    var start = new Date();
+    var monthLabel = function (m) {
+      var d = new Date(start.getFullYear(), start.getMonth() + Math.round(m), 1);
+      return d.toLocaleDateString('en-US', { month: 'short' }) + ' ’' + String(d.getFullYear()).slice(2);
+    };
+    var longMonth = function (m) {
+      var d = new Date(start.getFullYear(), start.getMonth() + Math.round(m), 1);
+      return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    };
     chart.innerHTML = Charts.area({
-      title: 'Balance remaining, month by month',
-      series: [{ label: plan.strategy.label + ' — what is still owed', color: Charts.COLORS.debt, points: remaining(plan), fill: true }].concat(others),
-      /* The last debt falls on the plot's right edge, where a label would
-         run off it; the list below names that one. */
-      vLines: plan.payoffs.map(function (p) { return { x: p.month, label: p.month < plan.value ? (p.label || 'Debt') : '' }; }),
-      x: { label: 'months from now', format: function (m) { return String(Math.round(m)); } },
+      title: 'Balance remaining, month by month, one line per debt',
+      series: [{ label: 'All debts (' + plan.strategy.label.toLowerCase() + ' order)', color: Charts.COLORS.debt, points: remaining(plan), fill: true, width: 1 }]
+        .concat(perDebt).concat(others),
+      dots: plan.payoffs.map(function (p) { return { x: p.month, y: 0, color: colourOf[p.debtId] || Charts.COLORS.target }; }),
+      x: { label: 'paid off by', format: monthLabel },
       y: { min: 0 }
     });
     list.innerHTML = plan.payoffs.map(function (p) {
-      return '<li><span>' + (p.label || 'Debt') + '</span>'
-        + '<span class="tl-when">' + monthsLabel(p.month) + ' · '
+      return '<li><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle;background:' + (colourOf[p.debtId] || Charts.COLORS.target) + '"></i>' + esc(p.label || 'Debt')
+        + '<small style="display:block;color:var(--color-text-faint)">from ' + Money.formatCents(plan.startingBalances[p.debtId]) + '</small></span>'
+        + '<span class="tl-when">' + longMonth(p.month) + ' · ' + monthsLabel(p.month) + ' · '
         + Money.formatCents(p.interestPaidCents) + ' interest</span></li>';
     }).join('');
   }
