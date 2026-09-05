@@ -3468,6 +3468,40 @@ Stored shape: nothing. Rooms updated: `rooms/runway.html`,
 
 ---
 
+## D-063 — Cash Flow opens with a whole month proposed
+
+*(BRIEF.md §2.5.)* A first visit to Cash Flow was nineteen empty boxes. The
+household already knew take-home and the person had already picked a split
+(50/30/20 by default), which together say what a month in that shape
+looks like — so the boxes now open **holding that month as proposals**.
+
+Each empty line shows the chosen template's bucket target spread across the
+bucket's categories by `typicalShareOfBucket`, a new field on every
+non-derived category in `data/expense_categories.json`. The shares are rough
+proportions in the shape of the BLS Consumer Expenditure Survey (2023),
+rounded and transcribed from memory, summing to one within each bucket;
+the file carries `typicalShareConfidence: unverified` and the source line
+under the boxes says "BLS CES 2023, unverified" every time. They are a
+starting shape, not a finding, and they are never shown as one.
+
+Every line is a suggestion (D-060): dashed, "Use", named source. Tapping a
+line writes that one entry through the room's ordinary path; typing over
+it does the same; **"Use every proposed line"** accepts them all at once.
+The tracked monthly figure (`monthlyEssential.trackedValueCents`) is still
+computed from entries and only entries — `engines/cashflow.js` does not
+know suggestions exist — so `Progress` keeps reporting the intake estimate
+until real lines are in, exactly as the brief's acceptance criterion asks.
+Changing the split re-proposes the empty lines; a line already entered is
+never touched. Debt minimums stay derived and are never proposed.
+
+### Compatibility note
+
+Stored shape: nothing. `data/expense_categories.json` gains
+`typicalShareOfBucket` per category (version 1.1); a category without one
+is simply not proposed. Rooms updated: `rooms/cash-flow.html`.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool. **The numbers D-046
@@ -3482,7 +3516,7 @@ files and therefore carry SPARKS numbers.
 
 **From here on the log is one sequence.** A new entry — for either side —
 takes the highest number in the whole file plus one, which is why the next
-D&D entry after D-052 is D-063. Renumbering the seven duplicates properly is
+D&D entry after D-052 is D-064. Renumbering the seven duplicates properly is
 a documentation pass of its own and has not been done.
 
 ---
@@ -3888,7 +3922,7 @@ names the offending string.
 
 ---
 
-## D-063 — A monster's danger is a property of the meeting, not of the monster
+## D-064 — A monster's danger is a property of the meeting, not of the monster
 
 BRIEF.md §9.3 asks for an encounter engine: pick a creature from the bestiary,
 run it at the sheet, and get back what actually happens. The design question it

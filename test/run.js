@@ -4998,6 +4998,47 @@ section('Proposed, not taken');
   }
 })();
 
+section('A first month, proposed');
+
+(function () {
+  const cats = require(path.join(ROOT, 'data/expense_categories.json'));
+  cats.buckets.forEach(function (b) {
+    const total = cats.categories.filter(c => c.bucket === b.id && !c.derivedFrom)
+      .reduce((s, c) => s + (c.typicalShareOfBucket || 0), 0);
+    check(`${b.id}: typical shares sum to one`, Math.round(total * 1000) / 1000, 1);
+  });
+  checkTrue('a derived category carries no share', cats.categories.filter(c => c.derivedFrom).every(c => c.typicalShareOfBucket === undefined));
+  /* The split in dollars, with nothing entered: demo take-home is $4,860,
+     so 50/30/20 is 2,430 / 1,458 / 972. */
+  const CashFlow = require(path.join(ROOT, 'engines/cashflow.js'));
+  const t = CashFlow.templateTargets(Demo.build(), TABLES.budgetTemplates, '50_30_20', TABLES);
+  checkTrue('a template has dollar targets with nothing entered', Money.isOk(t));
+  check('needs is half of take-home', t.rows.filter(r => r.bucketId === 'needs')[0].targetCents, 243000);
+  check('savings a fifth', t.rows.filter(r => r.bucketId === 'savings')[0].targetCents, 97200);
+  check('a method template has no bucket targets', CashFlow.templateTargets(Demo.build(), TABLES.budgetTemplates, 'zero_based', TABLES).rows.length, 0);
+  const noIncome = Demo.build(); noIncome.people[0].incomeSources = [];
+  check('and no income means no targets', CashFlow.templateTargets(noIncome, TABLES.budgetTemplates, '50_30_20', TABLES).status, 'incomplete');
+  /* The comparison reads the same targets, so the two cannot disagree. */
+  const cmpDemo = Demo.build(); cmpDemo.expenses.entries = Demo.buildSpending();
+  const cmp = CashFlow.compareToTemplate(cmpDemo, TABLES.expenseCategories, TABLES.budgetTemplates, '50_30_20', TABLES);
+  check('the comparison uses the same needs target', cmp.rows.filter(r => r.bucketId === 'needs')[0].targetCents, 243000);
+  check('the shares say what they are worth', cats.typicalShareConfidence, 'unverified');
+  const cf = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
+  checkTrue('Cash Flow proposes through Suggest', cf.indexOf('SLAF.Suggest.show(') !== -1);
+  checkTrue('and reads a box through Suggest.entered on the way out', cf.indexOf('Suggest.entered(input)') !== -1);
+  checkTrue('and names the source as unverified', /BLS CES 2023, unverified/.test(cf));
+  checkTrue('with a way to take every line at once', cf.indexOf('id="btn-use-all"') !== -1);
+  checkTrue('a proposal is written only through writeLine, on a tap', /onUse: function \(c\) \{ writeLine\(r\.id, c\)/.test(cf));
+  const wm = require(path.join(ROOT, 'data/wealth_multiplier.json'));
+  checkTrue('the wealth-multiplier curve is parameters, not a table', typeof wm.startRate === 'number' && wm.brackets === undefined);
+  checkTrue('it starts at 10% at 20 and floors at 5.5%', wm.startRate === 0.10 && wm.startAge === 20 && wm.floorRate === 0.055);
+  /* 0.10 − 0.001 × 45 is 0.055 on paper and 0.055000000000000005 in
+     floating point; the curve clamps, so a hair over is the floor. */
+  checkTrue('the decay reaches the floor by 65', wm.startRate - wm.decayPerYear * (wm.endAge - wm.startAge) <= wm.floorRate + 1e-9);
+  checkTrue('and the tracked figure is still computed from entries only',
+    fs.readFileSync(path.join(ROOT, 'engines/cashflow.js'), 'utf8').indexOf('suggest') === -1);
+})();
+
 section('What is finished');
 
 (function () {

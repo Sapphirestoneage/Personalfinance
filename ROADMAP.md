@@ -33,14 +33,14 @@ Twenty-five rooms are live. Against this document's own tiers:
 | Tranche | Status | What landed |
 |---|---|---|
 | **T1** — Dashboard as home + the clock | **shipped** | Four §1.1 bugs fixed (take-home gap, ladder footer/timeline, stable intake count, map digits) · `meta.confirmedAt` per field + `Spine.confirm` + snapshots read back (D-056) · `data/staleness.json`, ages on every chip, the Refresh page (D-057) · six-instrument first screen with deltas and one next action · `index.html` as router, ladder in `rooms/`, map as drawer (D-058) · export / import / share link (D-059) |
-| **T2** — Ask less, prepopulate more | next | Suggested state (D-A), intake changes, explore-room seeding, tables promoted to defaults, Cash Flow opens full |
-| **T3** — The 10x Statement | — | Balance-sheet rebuild, tax character, liquidity/confidence, future income, two people |
+| **T2** — Ask less, prepopulate more | **shipped** | Suggested state, shown never stored (D-060) · eleven-card intake with two people, born+state, three-box investments, the 401(k) card with the match proposed and capture derived, deductible and contribution moved in, "no debt" as an answer (D-061) · explore rooms open with your numbers proposed; the federal bracket derived as a proposal (D-062) · Cash Flow opens with a whole month proposed (D-063) · `data/states.json`, `match_defaults.json`, `federal_brackets_2026.json` (unverified), `wealth_multiplier.json`. Two judgement calls: Worth the Hassle already lists the chores with hours and applies its default rating only on pick, and Goals' templates carry no amounts to propose — both left as they are rather than inventing a figure to show |
+| **T3** — The 10x Statement | next | Balance-sheet rebuild, tax character, liquidity/confidence, future income, two people |
 | **T4** — New numbers | — | Benchmarks, new ratios, dashboard instruments T3 unlocks |
 | **T5** — The Rerank | — | New room |
 | **T6** — Life events + Triple D | — | One engine, one room, templates as data |
 | **T7** — Skill Stacker | — | New room, reads the `dnd/` catalogue |
 | **T8** — FI-losophy rooms | — | Designed Week, Enough, Unlearning, Time Buckets, Dreamline, time-denominated display |
-| **T9** — Dungeons & Dividends (`dnd/`) | **in progress — 3 of 11** | 9.1 the sheet is the form (D-052, D&D block) · 9.3 the encounter engine: CR→DC ladder, three blocker states, natural-predator radar, encounter log (D-063) · 9.11 SRD attribution and the non-affiliation line. Remaining: 9.2 share card · 9.4 tiers of play · 9.5 personality import (needs T2's suggested state) · 9.6 Tier 1 result upgrade · 9.7 conditions & energy · 9.8 XP & rests (needs T7) · 9.9 DM mode · 9.10 bestiary expansion |
+| **T9** — Dungeons & Dividends (`dnd/`) | **in progress — 3 of 11** | 9.1 the sheet is the form (D-052, D&D block) · 9.3 the encounter engine: CR→DC ladder, three blocker states, natural-predator radar, encounter log (D-064) · 9.11 SRD attribution and the non-affiliation line. Remaining: 9.2 share card · 9.4 tiers of play · 9.5 personality import (needs T2's suggested state) · 9.6 Tier 1 result upgrade · 9.7 conditions & energy · 9.8 XP & rests (needs T7) · 9.9 DM mode · 9.10 bestiary expansion |
 | **T10** — Attack-type chart | blocked on T9 | Reads §9.3's `attackType` and the encounter log |
 
 Wedding and Dream Calculator are one Goal Costing Engine with two templates,

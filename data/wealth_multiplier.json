@@ -1,0 +1,15 @@
+{
+  "id": "wealth_multiplier",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "The Money Guy Show's 'wealth multiplier': what one dollar invested at a given age becomes by 65, assuming an annual return that starts at 10% at age 20 and falls 0.1 percentage points a year to a floor of 5.5% at 65 \u2014 the falling rate standing in for a portfolio that de-risks as retirement nears. Compounded monthly.",
+  "confidence": "convention",
+  "confidenceNote": "A planning convention, not a forecast. The return path is an assumption chosen by its authors; real returns do not decline on a schedule. Used for 'what a dollar at your age is worth at 65' and 'monthly to reach $1M' style benchmarks (BRIEF \u00a74.1) and for the Skill Stacker's ledger (\u00a77.3), never as an expected return in a projection \u2014 engines/projection.js keeps its own single rate.",
+  "note": "annualReturnAt(age) = max(floorRate, startRate - decayPerYear * (age - startAge)). Multiplier from age a to 65 is the product over each month m of (1 + annualReturnAt(ageAtMonth m) / 12). The engine that reads this computes the curve; nothing here is pre-tabulated so the parameters stay the single source.",
+  "startAge": 20,
+  "startRate": 0.1,
+  "decayPerYear": 0.001,
+  "floorRate": 0.055,
+  "endAge": 65,
+  "compoundingPerYear": 12
+}
