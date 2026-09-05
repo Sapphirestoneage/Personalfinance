@@ -1,9 +1,20 @@
 {
   "id": "giving_conventions",
-  "version": "0.1",
-  "asOf": "2026-09-01",
-  "source": "PLACEHOLDER \u2014 filled by the room that reads it (D-098).",
-  "confidence": "unverified",
-  "confidenceNote": "Not yet written.",
-  "note": "the shares of income people give, and what each is called"
+  "version": "1.0",
+  "asOf": "2026-09-05",
+  "source": "The shares of income people name when they talk about giving. The 2% row is the long-run US average share of income given to charity, rounded (Giving USA reports it near 2% of disposable income year after year); the 10% row is the tithe. Conventions, not benchmarks.",
+  "confidence": "convention",
+  "confidenceNote": "None of these is a financial rule. 2% is a rounded population average, not a target; the tithe is a religious convention. The deduction note is a statement of how the US federal deduction works, not a rate.",
+  "note": "the shares of income people give, and what each is called",
+  "shares": [
+    { "id": "start",   "pct": 0.01, "label": "1%",  "note": "a start" },
+    { "id": "average", "pct": 0.02, "label": "2%",  "note": "the US average share of income given (rounded)" },
+    { "id": "five",    "pct": 0.05, "label": "5%",  "note": "a deliberate share" },
+    { "id": "tithe",   "pct": 0.10, "label": "10%", "note": "the tithe (a religious convention, not a financial one)" }
+  ],
+  "proposeId": "average",
+  "deduction": {
+    "note": "Gifts to qualifying charities are deductible only when itemising. Most filers take the standard deduction, so a gift usually costs its face value. Not modelled here.",
+    "rates": null
+  }
 }

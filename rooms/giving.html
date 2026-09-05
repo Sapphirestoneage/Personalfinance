@@ -4,29 +4,33 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Giving · SPARKS</title>
-<meta name="description" content="What your job actually pays, once you count every hour it takes and everything it costs you to do it."/>
+<meta name="description" content="A share of income given, what it is in dollars and in months of FI, and where it sits against the conventions."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. THE TEMPLATE ROOM. DECISIONS.md D-097.
+  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md D-098.
 
-  1. READS   The person's income (owned by Start Here) and filingStatus, for
-             the tax estimate; a month's spending, for the lens.
-  2. WRITES  It OWNS person.work — paid hours, unpaid overtime, commute,
-             work costs, weeks a year, and (folded) prep and decompression.
+  1. READS   Gross annual income and a month's spending (owned by Start
+             Here), and — when Cash Flow has a categorised month — the
+             gifts line, through the ratios engine's giving rate.
+  2. WRITES  It OWNS household.giving: pctOfIncome (a share of gross) and
+             annualTargetCents (a year's target, which wins when typed).
              Nothing else edits those. It does not touch income.
-  3. CALLS   engines/hourly.js. Tax comes from engines/tier0.js's effective-
-             rate lookup, never a second calculation.
+  3. CALLS   engines/giving.js. The FI cost and the hours are the lens's
+             (shared/lens.js), never a second calculation; last month's
+             gifts are engines/ratios.js's givingRate read back.
   4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses and says so (Gate.fillGuesses). Each unpaid-
-             hours box is optional: blank is none, not unanswered.
-  5. CONFIG  data/effective_tax_rates_2026.json.
+             intake's guesses and says so (Gate.fillGuesses); the share box
+             proposes the average share until one is typed. Between jobs
+             there is no income to invent, so a typed target is the plan.
+  5. CONFIG  data/giving_conventions.json — the four shares and the
+             deduction note. Conventions, not benchmarks.
 
-  THE SHAPE (shared/room.js, frozen here): one number, one chart, the lens,
-  five inputs and two folded, the assumptions drawer with sources, why
-  this matters at your stage, one out-of-scope line to Get Help. The ids
-  below are the deep links.
+  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens,
+  two inputs, the assumptions drawer with sources, why this matters at
+  your stage, one out-of-scope line to Get Help. The ids below are the
+  deep links.
 
   LIVE-FORM: built once — shared/room.js builds the inputs from the spec
   on load and only sets .value, never under focus.
@@ -57,20 +61,20 @@
 
   <section class="slaf-card" id="number">
     <div class="room-head-row">
-      <span class="slaf-eyebrow">Your real rate</span>
+      <span class="slaf-eyebrow">Given, a year</span>
       <div id="room-lens"></div>
     </div>
     <div class="room-number" id="room-number"></div>
   </section>
 
   <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Where the week goes</span>
+    <span class="slaf-eyebrow">Three shares of income</span>
     <div id="room-chart"></div>
   </section>
 
   <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The hours the job takes</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave anything blank that doesn't apply — working from home means no commute, and blank is none rather than unanswered.</p>
+    <span class="slaf-eyebrow">How much</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">A share of gross income, or a year's figure in dollars. When both are in, the dollars win and the share is worked back from them.</p>
     <div id="room-inputs"></div>
   </section>
 
@@ -94,8 +98,9 @@
   </section>
 
   <p class="disclaimer">
-    Educational tool, not financial advice. Tax is estimated from a flat
-    effective-rate table, not a return. Your numbers stay in this browser.
+    Educational tool, not financial advice. The shares are conventions
+    people name, not targets; the tax deduction is not modelled. Your
+    numbers stay in this browser.
   </p>
 </main>
 
@@ -111,119 +116,141 @@
 <script src="../shared/gate.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../engines/statement.js"></script>
+<script src="../engines/benchmarks.js"></script>
+<script src="../engines/ratios.js"></script>
 <script src="../engines/hourly.js"></script>
 <script src="../shared/lens.js"></script>
+<script src="../engines/giving.js"></script>
 <script src="../shared/charts.js"></script>
 <script src="../shared/room.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Hourly = SLAF.Hourly, Charts = SLAF.Charts, Room = SLAF.Room;
+      Giving = SLAF.Giving, Charts = SLAF.Charts, Room = SLAF.Room;
 
-  /* ---- writes: this room owns person.work ------------------------------------ */
-  function writeWork(key, value) {
-    var person = Spine.ensurePrimaryPerson('You');
-    var current = Schema.workProfile(Schema.personById(Spine.getProfile(), person.id));
-    var next = Object.assign({}, current);
-    next[key] = value;
-    Spine.upsertPerson({ id: person.id, work: next });
-  }
-  function readWork(h) { return Schema.workProfile(Schema.primaryPerson(h)); }
-  function hoursInput(key, label, placeholder, hint) {
-    return { ctl: key, label: label, kind: 'number', placeholder: placeholder, affix: 'h', hint: hint,
-      read: function (h) { return readWork(h)[key]; }, write: function (v) { writeWork(key, v === null || v <= 0 ? null : v); } };
-  }
-  function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
+  /* ---- writes: this room owns household.giving ------------------------------- */
+  function readGiving(h) { return (h && h.giving) || {}; }
+  function writeGiving(key, value) { Spine.set('giving.' + key, value); }
 
-  var HOUR_COLOURS = { paid: Charts.COLORS.series[0], unpaidOvertimeHoursPerWeek: Charts.COLORS.series[3], commuteHoursPerWeek: Charts.COLORS.series[1], prepHoursPerWeek: Charts.COLORS.series[2], decompressHoursPerWeek: Charts.COLORS.series[4] };
+  function pct(rate) { return Money.formatRate(rate, { decimals: 1 }); }
+
+  /* The lens's own words for the FI cost, or its reason. */
+  function fiPhrase(pushed) {
+    if (!Money.isOk(pushed)) return pushed.reason || '';
+    if (pushed.value === 0) return 'FI unmoved';
+    return 'FI ' + Money.formatMonths(pushed.value) + ' later';
+  }
+  function hoursPhrase(hours) {
+    if (!Money.isOk(hours)) return '';
+    var n = Math.round(hours.value);
+    return n.toLocaleString('en-US') + (n === 1 ? ' hour' : ' hours') + ' of your life';
+  }
+  function lastMonthPhrase(h, T) {
+    var m = Giving.lastMonth(h, T);
+    if (!Money.isOk(m)) return '';
+    return 'last month you actually gave ' + Money.formatCents(m.giftsMonthlyCents) + ' (' + pct(m.rate) + ' of take-home)';
+  }
 
   Room.mount({
-    id: 'giving', /* STUB — being built (D-098) */
-    tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
-    reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'],
+    id: 'giving',
+    reads: ['grossAnnualIncome', 'monthlyExpenses'],
 
     number: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return { label: 'Actually, an hour', value: null, reason: w.reason + (/not earning/.test(w.reason || '') ? '' : '') };
-      var sub = 'On paper <strong>' + perHour(w.nominalHourlyCents) + '</strong> · you keep <strong>' + Money.formatRate(w.retained, { decimals: 0 }) + '</strong> of it'
-        + ' · ' + Money.formatCents(w.keptAnnualCents) + ' kept over ' + w.annualTotalHours.toLocaleString('en-US') + ' hours a year';
-      if (w.costsMoreThanItPays) sub += '. <strong>This job costs more than it pays</strong> — check the monthly costs; if they are right, that is the finding';
-      if (w.implausibleHours) sub += '. ' + w.paidHoursPerWeek + ' paid hours a week makes this look enormous; the arithmetic is right, the comparison is not';
-      if (!w.taxKnown) sub += '. Tax is not in yet: ' + (w.taxReason || '');
-      return { label: 'Actually, an hour', value: perHour(w.realHourlyCents), sub: sub, zone: w.costsMoreThanItPays ? 'out' : (w.retained !== null && w.retained < 0.5 ? 'watch' : null), result: w };
+      var p = Giving.plan(h, T);
+      if (!Money.isOk(p)) return { label: 'Given, a year', value: null, reason: p.reason, result: p };
+      var parts = [];
+      if (p.nothing) parts.push('nothing given');
+      else if (p.share !== null && p.grossCents !== null) parts.push('<strong>' + pct(p.share) + '</strong> of ' + Money.formatCents(p.grossCents) + (p.shareDerived ? ', from your target' : ''));
+      else if (p.mode === 'target') parts.push('a year’s target, no income to read it against');
+      if (!p.nothing) parts.push(Money.formatCents(p.monthlyCents) + ' a month');
+      parts.push(fiPhrase(p.pushed));
+      if (!p.nothing) parts.push(hoursPhrase(p.hours));
+      parts.push(lastMonthPhrase(h, T));
+      return { label: 'Given, a year', value: Money.formatCents(p.annualCents), sub: parts.filter(Boolean).join(' · '), zone: null, result: p };
     },
 
     chart: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return Charts.stacked({ rows: [], empty: 'Add your paid hours to see where the week goes.' });
-      var parts = [{ label: 'Paid', value: w.paidHoursPerWeek, color: HOUR_COLOURS.paid }].concat((w.unpaidParts || []).map(function (p) { return { label: p.label, value: p.hours, color: HOUR_COLOURS[p.key] }; }));
-      var gross = w.grossAnnualIncomeCents, tax = w.estimatedTaxCents || 0, costs = w.annualWorkCostsCents, kept = w.keptAnnualCents;
-      return Charts.stacked({
-        title: 'Hours a week, and where the pay goes',
-        rows: [
-          { label: 'Your week', note: w.totalHoursPerWeek + ' h, ' + w.paidHoursPerWeek + ' paid', parts: parts },
-          { label: 'A year of pay', note: 'per ' + Money.formatCents(gross), parts: [
-            { label: 'Kept', value: kept / gross * w.totalHoursPerWeek, color: Charts.COLORS.growth },
-            { label: 'Tax', value: tax / gross * w.totalHoursPerWeek, color: Charts.COLORS.debt },
-            { label: 'Costs of working', value: costs / gross * w.totalHoursPerWeek, color: Charts.COLORS.series[3] }
-          ] }
-        ],
-        format: function (v) { return (Math.round(v * 10) / 10) + ' h'; }
+      var p = Giving.plan(h, T);
+      var gross = Schema.grossAnnualIncomeCents(h);
+      var conv = Giving.conventions(Money.isOk(gross) ? gross.value : null, T);
+      if (!Money.isOk(conv)) return Charts.bars({ rows: [], empty: conv.reason });
+      var rows = conv.rows.map(function (c, i) {
+        return { label: c.label + ' of income', note: c.note, value: c.cents, color: Charts.COLORS.series[i % Charts.COLORS.series.length], empty: 'needs your income' };
       });
+      var yours = Money.isOk(p) ? p.annualCents : null;
+      rows.push({ label: 'Yours', note: Money.isOk(p) ? (p.share !== null ? pct(p.share) + (p.shareDerived ? ', from your target' : '') : 'a year’s target') : 'type a share or a target', value: yours, color: Charts.COLORS.target, empty: 'not entered yet' });
+      var max = Math.max.apply(null, rows.map(function (r) { return Money.isEntered(r.value) ? r.value : 0; }));
+      if (!Money.isOk(gross) && yours === null) return Charts.bars({ rows: [], empty: 'Add your income, or a year’s target, to see the shares in dollars.' });
+      return Charts.bars({ title: 'A year of giving, at each share of this income', rows: rows, max: max || undefined });
     },
 
     inputs: [
-      hoursInput('contractedHoursPerWeek', 'Paid hours a week', 'e.g. 40'),
-      hoursInput('unpaidOvertimeHoursPerWeek', 'Unpaid overtime', 'e.g. 3'),
-      hoursInput('commuteHoursPerWeek', 'Commuting', 'e.g. 5'),
-      { ctl: 'workCostsMonthlyCents', label: 'Costs of working, a month', kind: 'money', placeholder: 'e.g. 400', hint: 'Petrol, parking, transit, work clothes, lunches you would not otherwise buy, childcare only while working.',
-        read: function (h) { return readWork(h).workCostsMonthlyCents; }, write: function (v) { writeWork('workCostsMonthlyCents', v); } },
-      { ctl: 'weeksPerYear', label: 'Weeks worked a year', kind: 'number', placeholder: String(Schema.WORK_DEFAULTS.weeksPerYear),
-        read: function (h) { var w = readWork(h).weeksPerYear; return w === Schema.WORK_DEFAULTS.weeksPerYear ? null : w; }, write: function (v) { writeWork('weeksPerYear', v === null || v <= 0 ? Schema.WORK_DEFAULTS.weeksPerYear : v); } }
-    ],
-    moreLabel: 'The hours around the job',
-    more: [
-      hoursInput('prepHoursPerWeek', 'Getting ready', 'e.g. 2.5'),
-      hoursInput('decompressHoursPerWeek', 'Decompressing', 'e.g. 2.5')
+      { ctl: 'pctOfIncome', label: 'Share of income given', kind: 'pct', placeholder: 'e.g. 2', hint: 'Of gross income, before tax.',
+        read: function (h) { return readGiving(h).pctOfIncome; },
+        write: function (v) { writeGiving('pctOfIncome', v === null ? null : (v < 0 ? 0 : v)); },
+        propose: function (h, T) {
+          var g = readGiving(h);
+          if (Money.isEntered(g.annualTargetCents)) {
+            var p = Giving.plan(h, T);
+            return Money.isOk(p) && p.share !== null ? { value: Math.round(p.share * 1000) / 1000, source: 'worked back from your target' } : null;
+          }
+          var s = Giving.proposedShare(T);
+          return s ? { value: s.value, source: s.note.replace(/ \(rounded\)$/, '') + ' (convention)' } : null;
+        } },
+      { ctl: 'annualTargetCents', label: 'A year’s target', kind: 'money', placeholder: 'e.g. 1,200', hint: 'Dollars a year. When typed, this wins over the share.',
+        read: function (h) { return readGiving(h).annualTargetCents; },
+        write: function (v) { writeGiving('annualTargetCents', v === null ? null : (v < 0 ? 0 : v)); },
+        propose: function (h, T) {
+          var g = readGiving(h);
+          if (!Money.isEntered(g.pctOfIncome)) return null;
+          var p = Giving.plan(h, T);
+          return Money.isOk(p) ? { value: p.annualCents, source: pct(p.share) + ' of your income' } : null;
+        } }
     ],
 
     amounts: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      var spend = Schema.monthlyExpensesCents(h);
+      var p = Giving.plan(h, T);
+      var gross = Schema.grossAnnualIncomeCents(h);
       var rows = [];
-      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
-      if (Money.isOk(w)) {
-        rows.push({ label: 'A year of tax, estimated', cents: w.estimatedTaxCents || 0 });
-        if (w.annualWorkCostsCents > 0) rows.push({ label: 'A year of the costs of working', cents: w.annualWorkCostsCents });
+      if (Money.isOk(p)) {
+        rows.push({ label: 'A year given', cents: p.annualCents, href: '#inputs' });
+        rows.push({ label: 'A month given', cents: p.monthlyCents, href: '#inputs' });
       }
-      rows.push({ label: 'A $1,200 thing you are eyeing', cents: 120000 });
+      var tithe = Giving.convention(T, 'tithe');
+      if (tithe && Money.isOk(gross)) rows.push({ label: 'The tithe, a year — ' + tithe.label + ' of ' + Money.formatCents(gross.value), cents: Math.round(gross.value * tithe.pct), href: Ownership.linkTo('start', 'q-income') });
       return rows;
     },
 
     assumptions: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      var tax = T.effectiveTaxRates;
-      var work = readWork(h);
+      var t = T.givingConventions || {};
+      var conv = Giving.conventions(null, T);
+      var shares = Money.isOk(conv) ? conv.rows.map(function (c) { return c.label; }).join(', ') : '—';
+      var source = 'data/giving_conventions.json v' + t.version + ' — ' + (t.confidence || 'unverified');
       return [
-        { label: 'Tax', value: Money.isOk(w) && w.taxKnown ? Money.formatRate(w.effectiveRate || (w.estimatedTaxCents / w.grossAnnualIncomeCents), { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')' },
-        { label: 'Weeks a year', value: String(Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear), source: Money.isEntered(work.weeksPerYear) && work.weeksPerYear !== Schema.WORK_DEFAULTS.weeksPerYear ? 'yours' : 'the default: 52 less four weeks of leave and holidays (convention)' },
-        { label: 'Unpaid hours', value: 'count as work', source: 'Your Money or Your Life: an hour the job takes is an hour it costs, paid or not (convention)' },
-        { label: 'Real return, for the lens', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' }
+        { label: 'The conventions', value: shares + ' of gross', source: source + '. ' + (t.confidenceNote || '') },
+        { label: 'Out of', value: 'gross income, not take-home', source: 'This room reads a share of gross; Cash Flow’s giving rate reads gifts over take-home, so the two shares differ (convention)' },
+        { label: 'Real return, for the FI cost', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal, through the lens (D-094)' },
+        { label: 'The tax deduction', value: 'not modelled', source: (t.deduction && t.deduction.note) || 'Deductible only when itemising.' }
       ];
     },
 
     why: function (h, T, situation) {
       return {
-        employed: 'Employed, the headline rate is the one on the offer letter. This one is the rate that decides whether the next thing — a raise, a move, an hour of overtime — is worth it.',
-        selfEmployed: 'Self-employed, there is no headline rate, only this one: what is left after the tax you set aside and the hours the work really takes, including the ones nobody bills.',
-        mixed: 'With a job and your own work, each has a real rate. This reads the job; put the own-work hours in as a second job in Start Here to compare them.',
-        student: 'A part-time job at a student’s stage is priced against study hours, not against a career. If the real rate is low, the question is what the hours are taking from.',
-        betweenJobs: '', retired: ''
-      }[situation] || 'Any job has a headline rate and a real one. The gap between them is what this room measures.';
+        employed: 'Employed, giving is easiest to set as a share of a steady paycheque and then forget. This room prices that share in the two currencies a job hides: months of FI and hours of your life. Neither says stop — they say what it costs, so the number is chosen rather than drifted into.',
+        selfEmployed: 'Self-employed, the months are irregular, so a share of income is a better promise than a fixed sum: a thin month gives less, a fat one more, and the year lands where the share says. Set the share here; the dollar figure is the year’s expectation, not a monthly bill.',
+        mixed: 'With a job and your own work, the share applies to both incomes together. The job’s part is predictable; the own-work part rises and falls. A year’s target typed over the share turns it into one fixed promise if that is easier to keep.',
+        student: 'At a student’s stage, time may be the gift — hours given are not on this page, and a small share of a small income is still a share. The habit matters more than the dollars; the conventions here are for later.',
+        retired: 'Retired, giving comes out of income — the draw, the pension, Social Security — not out of the portfolio. A share of that income keeps it in step with what the money actually produces; the FI cost here reads as months of runway rather than months to a target.',
+        betweenJobs: 'Between jobs, a pause is not a failure. With no income there is no share to apply, so this room takes a year’s figure in dollars if you want to keep giving through it, and nothing if you do not. The habit picks back up with the paycheque.'
+      }[situation] || 'A share of income given, priced in dollars, months of FI and hours of your life, against the shares people name.';
     },
 
-    scope: 'This room does not model overtime pay, shift differentials, or a second job’s hours on their own. Tax is a flat estimate, not a return.'
+    scope: 'This room does not track individual gifts, model the tax deduction, or judge what counts.'
   });
 })();
 </script>
