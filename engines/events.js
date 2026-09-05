@@ -32,7 +32,10 @@
       Tier0: require('./tier0.js'),
       Projection: require('./projection.js'),
       Statement: require('./statement.js'),
-      Rerank: require('./rerank.js')
+      Rerank: require('./rerank.js'),
+      CashFlow: require('./cashflow.js'),
+      Hourly: require('./hourly.js'),
+      SelfEmployed: require('./selfemployed.js')
     };
   } else {
     deps = {
@@ -41,13 +44,16 @@
       Tier0: root.SLAF && root.SLAF.Tier0,
       Projection: root.SLAF && root.SLAF.Projection,
       Statement: root.SLAF && root.SLAF.Statement,
-      Rerank: root.SLAF && root.SLAF.Rerank
+      Rerank: root.SLAF && root.SLAF.Rerank,
+      CashFlow: root.SLAF && root.SLAF.CashFlow,
+      Hourly: root.SLAF && root.SLAF.Hourly,
+      SelfEmployed: root.SLAF && root.SLAF.SelfEmployed
     };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.Projection, deps.Statement, deps.Rerank);
+  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.Projection, deps.Statement, deps.Rerank, deps.CashFlow, deps.Hourly, deps.SelfEmployed);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Events = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, Projection, Statement, Rerank) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, Projection, Statement, Rerank, CashFlow, Hourly, SelfEmployed) {
   'use strict';
 
   var MONTHS = 12;
@@ -108,6 +114,8 @@
       case 'gte': v = all(args); return v && v[0] >= v[1];
       case 'lte': v = all(args); return v && v[0] <= v[1];
       case 'if': var cond = evaluate(args[0], env); if (cond === null) return null; return evaluate(cond ? args[1] : args[2], env);
+      case 'coalesce': { for (var ci = 0; ci < args.length; ci++) { var cv = evaluate(args[ci], env); if (cv !== null) return cv; } return null; }
+      case 'fn': return callFn(x.fn, x.args || {}, env);
       case 'table': {
         var table = env.tables && env.tables[x.table];
         if (!table) return null;
@@ -120,6 +128,50 @@
         }
         return node === undefined ? null : node;
       }
+      default: return null;
+    }
+  }
+
+  /* ---- 1b. Named engine calls --------------------------------------------------
+     A template may ask an engine that already exists for a figure it would
+     otherwise have to re-derive. Each call builds a household with the
+     stated figures swapped in and hands it to the real function, so the
+     formula stays where it lives. Anything not on this list is null. */
+  function withIncome(household, grossAnnualCents, work) {
+    var h = JSON.parse(JSON.stringify(household));
+    var person = Schema.primaryPerson(h);
+    if (!person) return null;
+    if (Money.isEntered(grossAnnualCents)) {
+      person.incomeSources = [Schema.createIncomeSource({ personId: person.id, grossAnnualIncomeCents: Math.round(grossAnnualCents) })];
+      h.people.forEach(function (p) { if (p.id !== person.id) p.incomeSources = []; });
+    }
+    if (work) person.work = Object.assign({}, Schema.workProfile(person), work);
+    return h;
+  }
+  function callFn(name, rawArgs, env) {
+    var args = {};
+    var missing = false;
+    Object.keys(rawArgs).forEach(function (k) { var v = evaluate(rawArgs[k], env); if (v === null) missing = true; args[k] = v; });
+    if (missing) return null;
+    var h = env.household, t = env.tables;
+    switch (name) {
+      case 'takeHomeMonthly': {
+        var clone = withIncome(h, args.grossAnnualCents);
+        return clone ? val(Tier0.takeHomeMonthlyCents(clone, t)) : null;
+      }
+      case 'realHourly': {
+        if (!Hourly) return null;
+        var work = {};
+        if (Money.isEntered(args.hoursPerWeek)) work.contractedHoursPerWeek = args.hoursPerWeek;
+        if (Money.isEntered(args.commuteHoursPerWeek)) work.commuteHoursPerWeek = args.commuteHoursPerWeek;
+        if (Money.isEntered(args.workCostsMonthlyCents)) work.workCostsMonthlyCents = args.workCostsMonthlyCents;
+        var hh = withIncome(h, args.grossAnnualCents, work);
+        return hh ? val(Hourly.realHourlyWage(hh, t)) : null;
+      }
+      case 'levelPayment':
+        return val(Projection.levelPaymentCents({ principalCents: args.principalCents, annualRate: args.annualRate, months: args.months }));
+      case 'seTax':
+        return SelfEmployed && t.seTax ? val(SelfEmployed.selfEmploymentTax(args.netProfitCents, h.filingStatus, t.seTax)) : null;
       default: return null;
     }
   }
@@ -153,7 +205,32 @@
       if (Money.isOk(r)) cut = r.flaggedMonthlyCents;
     }
     var swan = household.swan && Money.isEntered(household.swan.targetCents) ? household.swan.targetCents : null;
+    /* Whose income is whose, for events that take one earner out. */
+    var primary = Schema.primaryPerson(household);
+    var primaryGross = 0, allGross = 0;
+    Schema.allIncomeSources(household).forEach(function (src) {
+      if (!Money.isEntered(src.grossAnnualIncomeCents)) return;
+      allGross += src.grossAnnualIncomeCents;
+      if (primary && src.personId === primary.id) primaryGross += src.grossAnnualIncomeCents;
+    });
+    var work = primary ? Schema.workProfile(primary) : {};
+    var ins = household.insurance || {};
+    /* A tracked month, by category, for events that scale one line. */
+    var byCategory = null;
+    if (CashFlow && tables && tables.expenseCategories) {
+      var sum = CashFlow.summarise(household, tables.expenseCategories);
+      if (Money.isOk(sum)) { byCategory = {}; sum.categories.forEach(function (row) { byCategory[row.categoryId] = row.monthlyCents; }); }
+    }
     return {
+      primaryIncomeShare: allGross > 0 ? primaryGross / allGross : null,
+      partnerIncomeShare: allGross > 0 ? (allGross - primaryGross) / allGross : null,
+      hoursPerWeek: num(work.contractedHoursPerWeek),
+      commuteHoursPerWeek: num(work.commuteHoursPerWeek),
+      workCostsMonthlyCents: num(work.workCostsMonthlyCents),
+      termLifeCents: num(ins.termLifeCents),
+      oopMaxCents: num(ins.oopMaxCents),
+      monthlyDebtPaymentsCents: val(Schema.monthlyDebtPaymentsCents(household)),
+      categoryMonthly: byCategory,
       grossAnnualCents: val(gross),
       grossMonthlyCents: Money.isOk(gross) ? Math.round(gross.value / MONTHS) : null,
       takeHomeMonthlyCents: val(take),
@@ -184,7 +261,7 @@
     (template.questions || []).forEach(function (q) {
       var v = g[q.id];
       if (v === undefined || v === null || v === '') {
-        v = evaluate(q.default === undefined ? null : q.default, { answers: out, ctx: env.ctx, tables: env.tables });
+        v = evaluate(q.default === undefined ? null : q.default, { answers: out, ctx: env.ctx, tables: env.tables, household: env.household });
       }
       out[q.id] = v;
     });
@@ -212,7 +289,7 @@
     if (!Money.isEntered(ctx.investmentsCents)) missing.push('investments');
     if (missing.length) return Money.incomplete('Needs your income, spending, cash and investments to run a month.', missing);
 
-    var env = { ctx: ctx, tables: tables, answers: {} };
+    var env = { ctx: ctx, tables: tables, answers: {}, household: household };
     env.answers = answers(tpl, given, env);
     var bundle = bundleFor(tables, tpl, d);
     var rate = tables.returnBands.percentiles[bundle.returns];
@@ -231,9 +308,11 @@
         var months = evaluate(it.months === undefined ? null : it.months, env);
         var when = start + Math.round(evaluate(it.when === undefined ? 0 : it.when, env) || 0);
         return {
-          label: it.label || kind, categoryId: it.categoryId || null, target: it.target || 'cash',
+          label: it.label || kind, categoryId: it.categoryId || null, target: it.target || 'cash', source: it.source || 'cash',
           from: from, to: months === null ? H : from + Math.round(months), when: when,
           multiplier: evaluate(it.multiplier === undefined ? null : it.multiplier, env),
+          matchMultiplier: evaluate(it.matchMultiplier === undefined ? null : it.matchMultiplier, env),
+          contributionMultiplier: evaluate(it.contributionMultiplier === undefined ? null : it.contributionMultiplier, env),
           addCents: evaluate(it.addCents === undefined ? null : it.addCents, env),
           cents: evaluate(it.cents === undefined ? null : it.cents, env),
           unpriced: (it.multiplier !== undefined && evaluate(it.multiplier, env) === null)
@@ -246,6 +325,16 @@
     var flags = [];
     incomeItems.concat(expenseItems, oneTimes, assetMoves).forEach(function (it) {
       if (it.unpriced) flags.push({ key: 'unpriced', month: null, text: it.label + ' could not be priced from what is entered; it is left out.' });
+    });
+    expenseItems.forEach(function (it) {
+      if (it.categoryId && it.multiplier !== null && !(ctx.categoryMonthly && Money.isEntered(ctx.categoryMonthly[it.categoryId]))) {
+        flags.push({ key: 'unpriced', month: null, text: it.label + ' scales a tracked line (' + it.categoryId + ') and there is no tracked month; it is left out.' });
+      }
+    });
+    /* Named lines: figures the template wants shown beside the columns. */
+    var lines = (tpl.lines || []).map(function (ln) {
+      var v = evaluate(ln.value, env);
+      return { id: ln.id, label: ln.label, unit: ln.unit || 'dollars', value: v, note: ln.note || null };
     });
 
     /* The shock: the worst plausible year lands the month the event starts. */
@@ -260,24 +349,34 @@
     var cash = ctx.cashCents, inv = ctx.investmentsCents, other = ctx.otherAssetsCents, debt = ctx.totalDebtCents;
     var monthly = [], runwayMin = null, lostMatch = 0, firstNegative = null, lowRunway = null;
     for (var m = 0; m < H; m++) {
-      var mult = 1, adds = 0;
+      var mult = 1, adds = 0, matchMult = null, contribMult = null;
       incomeItems.forEach(function (it) {
         if (m < it.from || m >= it.to) return;
         if (it.multiplier !== null) mult *= it.multiplier;
         if (it.addCents !== null) adds += it.addCents;
+        if (it.matchMultiplier !== null) matchMult = (matchMult === null ? 1 : matchMult) * it.matchMultiplier;
+        if (it.contributionMultiplier !== null) contribMult = (contribMult === null ? 1 : contribMult) * it.contributionMultiplier;
       });
       if (m >= gapStart && m < gapEnd) mult = 0;
       if (m >= gapEnd && m >= start) mult *= bundle.incomeAfter;
       var employed = mult > 0;
-      var contribution = employed ? Math.round(ctx.contributionMonthlyCents * mult) : 0;
-      var match = employed ? Math.round(ctx.matchMonthlyCents * mult) : 0;
+      /* The plan follows the paycheque unless the template says otherwise. */
+      var contribution = employed ? Math.round(ctx.contributionMonthlyCents * (contribMult === null ? mult : contribMult)) : 0;
+      var match = employed ? Math.round(ctx.matchMonthlyCents * (matchMult === null ? mult : matchMult)) : 0;
       lostMatch += Math.max(0, ctx.matchMonthlyCents - match);
       var income = Math.round(ctx.takeHomeMonthlyCents * mult) + adds - contribution;
 
       var exp = ctx.monthlyExpensesCents, expMult = 1, expAdds = 0;
       expenseItems.forEach(function (it) {
         if (m < it.from || m >= it.to) return;
-        if (it.multiplier !== null) expMult *= it.multiplier;
+        if (it.multiplier !== null) {
+          /* A category multiplier scales that line of a tracked month;
+             without a tracked month it scales nothing and was flagged. */
+          if (it.categoryId) {
+            var base = ctx.categoryMonthly && Money.isEntered(ctx.categoryMonthly[it.categoryId]) ? ctx.categoryMonthly[it.categoryId] : null;
+            if (base !== null) expAdds += Math.round(base * (it.multiplier - 1));
+          } else expMult *= it.multiplier;
+        }
         if (it.addCents !== null) expAdds += it.addCents;
       });
       var expenses = Math.max(0, Math.round(exp * expMult) + expAdds);
@@ -286,7 +385,9 @@
       oneTimes.forEach(function (it) { if (it.when === m && it.cents !== null) cash -= it.cents; });
       assetMoves.forEach(function (it) {
         if (it.when !== m || it.cents === null) return;
-        cash -= it.cents;
+        /* source 'none': the target simply changes — a forfeited match, a
+           write-down — with no cash on the other side. */
+        if (it.source !== 'none') cash -= it.cents;
         if (it.target === 'investments') inv += it.cents; else other += it.cents;
       });
       if (m === start && shockCents) cash -= shockCents;
@@ -325,6 +426,7 @@
       cashAtEndCents: end.cashCents,
       runwayMinMonths: runwayMin === null ? null : Math.round(runwayMin * 10) / 10,
       lostMatchCents: lostMatch,
+      lines: lines,
       fiMonthsFromNow: fiMonths,
       flags: flags,
       ctx: ctx

@@ -1,0 +1,219 @@
+{
+  "id": "childcare_by_state",
+  "version": "1.0",
+  "asOf": "2023-12-31",
+  "source": "Child Care Aware of America, 'Price of Care 2023': annual price of centre-based infant care by state, in the region of $7,000 (Mississippi) to $25,000 (District of Columbia), with a national figure around $12,000\u201313,000.",
+  "confidence": "unverified",
+  "confidenceNote": "Recalled magnitudes rounded to the nearest $500, not copied from the report; infant centre care is the dearest kind, and home-based or older-child care costs less. A proposal for the kids template, changeable in the room.",
+  "note": "monthlyCents = annual \u00f7 12. `national` is the fallback when the state is not entered. D-087.",
+  "national": {
+    "annualCents": 1250000,
+    "monthlyCents": 104200
+  },
+  "states": {
+    "AL": {
+      "annualCents": 900000,
+      "monthlyCents": 75000
+    },
+    "AK": {
+      "annualCents": 1400000,
+      "monthlyCents": 116667
+    },
+    "AZ": {
+      "annualCents": 1300000,
+      "monthlyCents": 108333
+    },
+    "AR": {
+      "annualCents": 800000,
+      "monthlyCents": 66667
+    },
+    "CA": {
+      "annualCents": 1900000,
+      "monthlyCents": 158333
+    },
+    "CO": {
+      "annualCents": 1800000,
+      "monthlyCents": 150000
+    },
+    "CT": {
+      "annualCents": 1800000,
+      "monthlyCents": 150000
+    },
+    "DE": {
+      "annualCents": 1300000,
+      "monthlyCents": 108333
+    },
+    "DC": {
+      "annualCents": 2500000,
+      "monthlyCents": 208333
+    },
+    "FL": {
+      "annualCents": 1100000,
+      "monthlyCents": 91667
+    },
+    "GA": {
+      "annualCents": 1000000,
+      "monthlyCents": 83333
+    },
+    "HI": {
+      "annualCents": 1600000,
+      "monthlyCents": 133333
+    },
+    "ID": {
+      "annualCents": 950000,
+      "monthlyCents": 79167
+    },
+    "IL": {
+      "annualCents": 1500000,
+      "monthlyCents": 125000
+    },
+    "IN": {
+      "annualCents": 1100000,
+      "monthlyCents": 91667
+    },
+    "IA": {
+      "annualCents": 1150000,
+      "monthlyCents": 95833
+    },
+    "KS": {
+      "annualCents": 1200000,
+      "monthlyCents": 100000
+    },
+    "KY": {
+      "annualCents": 900000,
+      "monthlyCents": 75000
+    },
+    "LA": {
+      "annualCents": 850000,
+      "monthlyCents": 70833
+    },
+    "ME": {
+      "annualCents": 1250000,
+      "monthlyCents": 104167
+    },
+    "MD": {
+      "annualCents": 1700000,
+      "monthlyCents": 141667
+    },
+    "MA": {
+      "annualCents": 2200000,
+      "monthlyCents": 183333
+    },
+    "MI": {
+      "annualCents": 1200000,
+      "monthlyCents": 100000
+    },
+    "MN": {
+      "annualCents": 1800000,
+      "monthlyCents": 150000
+    },
+    "MS": {
+      "annualCents": 700000,
+      "monthlyCents": 58333
+    },
+    "MO": {
+      "annualCents": 1100000,
+      "monthlyCents": 91667
+    },
+    "MT": {
+      "annualCents": 1100000,
+      "monthlyCents": 91667
+    },
+    "NE": {
+      "annualCents": 1300000,
+      "monthlyCents": 108333
+    },
+    "NV": {
+      "annualCents": 1300000,
+      "monthlyCents": 108333
+    },
+    "NH": {
+      "annualCents": 1500000,
+      "monthlyCents": 125000
+    },
+    "NJ": {
+      "annualCents": 1600000,
+      "monthlyCents": 133333
+    },
+    "NM": {
+      "annualCents": 1100000,
+      "monthlyCents": 91667
+    },
+    "NY": {
+      "annualCents": 1900000,
+      "monthlyCents": 158333
+    },
+    "NC": {
+      "annualCents": 1200000,
+      "monthlyCents": 100000
+    },
+    "ND": {
+      "annualCents": 1100000,
+      "monthlyCents": 91667
+    },
+    "OH": {
+      "annualCents": 1150000,
+      "monthlyCents": 95833
+    },
+    "OK": {
+      "annualCents": 950000,
+      "monthlyCents": 79167
+    },
+    "OR": {
+      "annualCents": 1600000,
+      "monthlyCents": 133333
+    },
+    "PA": {
+      "annualCents": 1350000,
+      "monthlyCents": 112500
+    },
+    "RI": {
+      "annualCents": 1400000,
+      "monthlyCents": 116667
+    },
+    "SC": {
+      "annualCents": 900000,
+      "monthlyCents": 75000
+    },
+    "SD": {
+      "annualCents": 900000,
+      "monthlyCents": 75000
+    },
+    "TN": {
+      "annualCents": 950000,
+      "monthlyCents": 79167
+    },
+    "TX": {
+      "annualCents": 1100000,
+      "monthlyCents": 91667
+    },
+    "UT": {
+      "annualCents": 1150000,
+      "monthlyCents": 95833
+    },
+    "VT": {
+      "annualCents": 1400000,
+      "monthlyCents": 116667
+    },
+    "VA": {
+      "annualCents": 1600000,
+      "monthlyCents": 133333
+    },
+    "WA": {
+      "annualCents": 1900000,
+      "monthlyCents": 158333
+    },
+    "WV": {
+      "annualCents": 950000,
+      "monthlyCents": 79167
+    },
+    "WI": {
+      "annualCents": 1350000,
+      "monthlyCents": 112500
+    },
+    "WY": {
+      "annualCents": 1100000,
+      "monthlyCents": 91667
+    }
+  }
+}

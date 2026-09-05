@@ -4269,6 +4269,54 @@ question form; `test/alignment.js` on the question grid and the columns.
 
 ---
 
+## D-087 — The life-event templates, one by one
+
+*(BRIEF.md §6.3, items 2–10. A running entry: each template is its own
+commit and adds its block here. The engine and the first template are
+D-086.)* Two things every template shares, decided with the second one:
+
+- **A template may call an engine by name.** `{"fn": "takeHomeMonthly",
+  "args": {...}}`, `realHourly`, `levelPayment`, `seTax`: the engine
+  builds a household with the stated figures swapped in and hands it to
+  the real function, so a template never re-derives a tax, a wage or a
+  payment. `coalesce` picks the first non-null of a list — a state's
+  figure, else the national one — and a `source: 'none'` asset move is a
+  loss with no cash on the other side. Income items may scale the plan
+  contribution and the match separately from the paycheque.
+- **Lines.** A template may name figures to show beside the columns
+  (`lines: [{ id, label, unit, value }]`), evaluated from the default
+  run; they are how a template says something with no verdict attached.
+
+**2 · A child, or another.** Count, first birth in N years, childcare or
+a parent at home (and whose income stops), public or private school,
+saving for college or not, the state for childcare prices. Costs come
+from `data/child_cost.json` — six three-year bands rising with age, in
+the region of the USDA's $310,000 to seventeen, private school at about
+$12,000 a year, a birth at the out-of-pocket maximum when the Coverage
+Checkup has one and about $3,000 otherwise, and college saving as a
+convention (half or a full in-state degree) — and
+`data/childcare_by_state.json`, centre-based infant care for 51 states
+recalled from Child Care Aware 2023 with a national fallback. All
+unverified and marked so. A parent at home takes that person's share of
+income out for five years; with one income entered, "my partner's"
+stops nothing and the copy says so. The lines: term life at 11× income
+beside what is in force (unknown, not zero, until Sleep At Night has
+it), your age at the birth and when the child turns 18 — Die With Zero's
+time buckets stated as facts, with no verdict — and the cost to
+seventeen. The demo's cash runs out in month 37 with one child in NC
+childcare, which is the finding. Children born in one batch rather than
+staggered: an approximation, named here.
+
+**Verified.** `node test/run.js`: for each, month 1 and month 12 of the
+default run on the demo by longhand — the child's first year at $3,150 +
+$1,200 + $1,000 + $250 a month with the $3,000 birth in month 1; a parent
+at home stopping the one income; the national fallback for an unknown
+state; the offer's take-home from the tax table, no match for three
+months then 4% of $90,000, the $2,000 off investments, three months of
+the old match lost, and the same job offered again changing nothing.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool. **The numbers D-046

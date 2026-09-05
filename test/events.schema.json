@@ -103,6 +103,12 @@
     },
     "startsOn": {
       "$comment": "a number or an expression, usually \"@startsOn\""
+    },
+    "lines": {
+      "type": "array",
+      "items": {
+        "$ref": "line"
+      }
     }
   },
   "definitions": {
@@ -178,6 +184,46 @@
             "investments",
             "other"
           ]
+        },
+        "matchMultiplier": {},
+        "contributionMultiplier": {},
+        "source": {
+          "enum": [
+            "cash",
+            "none"
+          ]
+        }
+      }
+    },
+    "line": {
+      "required": [
+        "id",
+        "label",
+        "value"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "unit": {
+          "enum": [
+            "dollars",
+            "dollarsMonthly",
+            "months",
+            "years",
+            "percent",
+            "count",
+            "hourly",
+            "age",
+            "text"
+          ]
+        },
+        "value": {},
+        "note": {
+          "type": "string"
         }
       }
     }

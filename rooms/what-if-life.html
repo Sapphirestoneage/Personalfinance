@@ -109,6 +109,7 @@
     <div class="cols" id="cols"></div>
     <svg class="plot" id="plot" viewBox="0 0 200 110" role="img" aria-label="Cash over the horizon, three ways"></svg>
     <p class="why" id="plot-why"></p>
+    <div id="lines" style="margin-top:var(--space-3)"></div>
     <p class="why" id="three-why"></p>
   </section>
 
@@ -152,6 +153,8 @@
 <script src="../engines/cashflow.js"></script>
 <script src="../engines/statement.js"></script>
 <script src="../engines/rerank.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../engines/selfemployed.js"></script>
 <script src="../engines/events.js"></script>
 <script>
 (function () {
@@ -220,7 +223,7 @@
       var suffix = q.unit === 'percent' ? '<span class="slaf-affix">%</span>' : q.unit === 'months' ? '<span class="slaf-affix">mo</span>' : q.unit === 'years' ? '<span class="slaf-affix">yrs</span>' : q.unit === 'hours' ? '<span class="slaf-affix">h</span>' : '';
       var given = state.answers[q.id];
       return '<label class="slaf-field" style="margin:0"><span class="slaf-label">' + esc(q.ask) + '</span>'
-        + '<span class="slaf-input-shell">' + affix + '<input type="text" inputmode="decimal" data-q="' + esc(q.id) + '" data-unit="' + esc(q.unit || 'count') + '"'
+        + '<span class="slaf-input-shell">' + affix + '<input type="text" inputmode="' + (q.unit === 'text' ? 'text' : 'decimal') + '" data-q="' + esc(q.id) + '" data-unit="' + esc(q.unit || 'count') + '"'
         + (given !== undefined && given !== null ? ' value="' + esc(display(q, given)) + '"' : '') + ' aria-label="' + esc(q.ask) + '"/>' + suffix + '</span>'
         + (q.hint ? '<span class="slaf-hint">' + esc(q.hint) + '</span>' : '') + '</label>';
     }).join('');
@@ -243,6 +246,7 @@
   function parse(q, raw) {
     var text = String(raw).trim();
     if (text === '') return null;
+    if (q.unit === 'text') return text.toUpperCase().length <= 3 ? text.toUpperCase() : text;
     if (q.unit === 'dollars') return Money.parseMoney(text);
     if (q.unit === 'percent') return Money.parseRatePercent(text);
     var n = Number(text.replace(/[^0-9.\-]/g, ''));
@@ -305,9 +309,35 @@
         + '</div>';
     }).join('');
     renderPlot(all, order);
+    renderLines(all['default']);
     var protect = t.protect && t.protect.length ? 'Protect: ' + t.protect.join(' · ') + '. ' : '';
     el('three-why').textContent = protect + 'Baseline is the same engine on an empty event.';
     return all;
+  }
+
+  /* The template's own lines — figures beside the columns, from the
+     default run (they do not depend on the bundle). */
+  function lineText(l) {
+    if (l.value === null || l.value === undefined) return Money.EM_DASH;
+    switch (l.unit) {
+      case 'dollars': return fmt(l.value);
+      case 'dollarsMonthly': return fmt(l.value) + '/mo';
+      case 'hourly': return fmt(l.value) + '/hr';
+      case 'percent': return Money.formatRate(l.value, { decimals: 1 });
+      case 'months': return l.value + ' mo';
+      case 'years': return l.value + ' yrs';
+      case 'age': return 'age ' + l.value;
+      default: return String(l.value);
+    }
+  }
+  function renderLines(r) {
+    var host = el('lines');
+    if (!r || !r.lines || !r.lines.length) { host.innerHTML = ''; return; }
+    host.innerHTML = '<dl style="display:grid;grid-template-columns:1fr auto;gap:var(--space-1) var(--space-3);margin:0;font-size:var(--text-sm)">'
+      + r.lines.map(function (l) {
+        return '<dt style="color:var(--color-text-muted)">' + esc(l.label) + (l.note ? '<br/><small style="color:var(--color-text-faint)">' + esc(l.note) + '</small>' : '') + '</dt>'
+          + '<dd style="margin:0;text-align:right;font-variant-numeric:tabular-nums">' + lineText(l) + '</dd>';
+      }).join('') + '</dl>';
   }
 
   var PAD_L = 24, PAD_R = 6, PAD_T = 8, PAD_B = 14, W = 200, H = 110;

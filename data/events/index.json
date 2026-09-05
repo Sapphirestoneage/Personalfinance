@@ -2,9 +2,12 @@
   "id": "events",
   "version": "1.0",
   "asOf": "2026-01-01",
-  "source": "The list of life-event templates in data/events/, one file each, loaded by Reference.loadEvents(). BRIEF §6.3.",
+  "source": "The list of life-event templates in data/events/, one file each, loaded by Reference.loadEvents(). BRIEF \u00a76.3.",
   "confidence": "sourced",
   "confidenceNote": "An index, not a number. Each template carries its own sources and confidence.",
   "note": "Order is the order the room lists them in. A template not listed here is not offered.",
-  "events": ["sabbatical"]
+  "events": [
+    "sabbatical",
+    "kids"
+  ]
 }

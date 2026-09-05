@@ -6664,6 +6664,47 @@ section('Life events: the template schema, and the engine on the demo');
   checkTrue('the room is registered as an explore room', Registry.byId('what-if-life') && Registry.byId('what-if-life').kind === 'explore');
 })();
 
+section('Life events: the kids, on the demo');
+
+(function () {
+  /* D-087. Each template's default run, month 1 and month 12, by hand. */
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const T = Object.assign({}, TABLES, {
+    commonCosts: require(path.join(ROOT, 'data/common_costs.json')),
+    tripleD: require(path.join(ROOT, 'data/triple_d.json')),
+    returnBands: require(path.join(ROOT, 'data/return_bands.json')),
+    childCost: require(path.join(ROOT, 'data/child_cost.json')),
+    childcareByState: require(path.join(ROOT, 'data/childcare_by_state.json'))
+  });
+  const tpl = id => JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/' + id + '.json'), 'utf8'));
+  const take = 486000, contrib = 24000, match = 12000, spend = 315000, rate = 0.05 / 12;
+
+  /* Kids, born now (startsOn 0 so the year under test is the first year). */
+  const kids = E.run(Demo.build(), tpl('kids'), { startsOn: 0 }, { tables: T, d: 'default' });
+  const band0 = T.childCost.bands[0].monthlyCents, nc = T.childcareByState.states.NC.monthlyCents, college = T.childCost.college.half.monthlyCents;
+  check('the state defaulted from the household', kids.answers.state, 'NC');
+  check('childcare in NC, from the table', nc, 100000);
+  check('month 1 spending: 3,150 + ages 0–2 + NC childcare + half a degree', kids.monthly[0].expensesCents, spend + band0 + nc + college);
+  check('the birth, out of pocket, lands in month 1 at the table figure (no OOP max entered)', kids.monthly[0].cashCents, 950000 + (take - contrib) - (spend + band0 + nc + college) - 300000);
+  let cash = 950000, inv = 4800000;
+  for (let m = 0; m < 12; m++) { cash += (take - contrib) - (spend + band0 + nc + college); if (m === 0) cash -= 300000; inv = (inv + contrib + match) * (1 + rate); }
+  check('month 12 cash by the longhand', kids.monthly[11].cashCents, cash);
+  check('month 12 investments untouched by the event', kids.monthly[11].investmentsCents, Math.round(inv), 1);
+  check('the lines: term life at 11× $72,000', kids.lines.filter(l => l.id === 'termLifeSuggested')[0].value, 79200000);
+  check('term life in force is unknown, not zero', kids.lines.filter(l => l.id === 'termLifeInForce')[0].value, null);
+  check('age when the first turns 18: 32 + 0 + 18', kids.lines.filter(l => l.id === 'ageAtEighteen')[0].value, 50);
+  const home = E.run(Demo.build(), tpl('kids'), { startsOn: 0, care: 'parentHome' }, { tables: T, d: 'default' });
+  check('a parent at home on a one-income household: income stops', home.monthly[0].incomeCents, 0);
+  check('and childcare is not paid', home.monthly[0].expensesCents, spend + band0 + college);
+  const partnerHome = E.run(Demo.build(), tpl('kids'), { startsOn: 0, care: 'parentHome', whoseIncome: 'partner' }, { tables: T, d: 'default' });
+  check('a partner who earns nothing staying home stops nothing', partnerHome.monthly[0].incomeCents, take - contrib);
+  const withOop = Demo.build(); withOop.insurance.oopMaxCents = 800000;
+  check('with an out-of-pocket maximum entered, the birth costs that', E.run(withOop, tpl('kids'), { startsOn: 0 }, { tables: T, d: 'default' }).monthly[0].cashCents, 950000 + (take - contrib) - (spend + band0 + nc + college) - 800000);
+  const mars = E.run(Demo.build(), tpl('kids'), { startsOn: 0, state: 'XX' }, { tables: T, d: 'default' });
+  check('an unknown state falls back to the national figure', mars.monthly[0].expensesCents, spend + band0 + T.childcareByState.national.monthlyCents + college);
+
+})();
+
 section('The D&D folder\'s vendored copies');
 
 (function () {

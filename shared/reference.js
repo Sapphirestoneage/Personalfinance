@@ -55,6 +55,8 @@
     cobraAca: 'cobra_aca_2024.json',
     travelBands: 'travel_bands.json',
     reentryGap: 'reentry_gap.json',
+    childCost: 'child_cost.json',
+    childcareByState: 'childcare_by_state.json',
     accessRules: 'access_rules.json',
     confidenceWeights: 'confidence_weights.json',
     uiBenefits: 'ui_benefits.json',
