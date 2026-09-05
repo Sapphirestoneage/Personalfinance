@@ -3640,6 +3640,45 @@ is first.
 
 ---
 
+## D-066 — Seven questions a balance sheet should answer, in one engine
+
+*(BRIEF.md §3.3, §3.5 — the numbers; the room is D-067.)* Net worth is one
+number. `engines/statement.js` answers the questions the number hides, each
+as its own Result, each re-derived by hand on the demo in `test/run.js`:
+
+- **Three portfolios**, not one list: liquid financial · illiquid financial ·
+  non-financial, filed by `access_rules.json`. The demo's uncharacterised
+  investment lump files as taxable — and says so — until the intake's three
+  boxes split it.
+- **Confidence-weighted net worth**: Σ value × weight for every *rated*
+  asset, less debts, beside the plain figure. An unrated asset is
+  **excluded** from the weighted total and counted, never assumed
+  guaranteed. Nothing rated, nothing weighted.
+- **The liquidity ladder**: today · this month · this year · never, by the
+  rated liquidity or the rule's default, with money behind an access age
+  you have not reached moved to "never" — except a Roth's contributions,
+  reachable at the Roth's own liquidity. No date of birth means the gate
+  cannot be applied and the Result says so rather than pretending.
+- **The bridge to 59½**: the FI date at the current pace (the standard
+  variant, `engines/fire.js`) against 59½, times annual spend, against what
+  is reachable before then — taxable, cash, Roth basis, HSA. The demo:
+  FI at 51, an 8.5-year gap, $321,300 needed, $57,500 reachable, $263,800
+  short. FI after 59½ needs no bridge.
+- **The worst plausible year**: highest deductible + out-of-pocket maximum
+  + six months of essentials − the state unemployment benefit (the cap or
+  half the weekly wage, whichever is lower, for the state's weeks up to 26),
+  against cash. The demo: $21,400 cost, $4,200 of NC benefit, $7,700 short
+  after cash. The benefit carries `ui_benefits.json`'s unverified status.
+- **Income concentration**: the largest source over the household total.
+- **A rental in ratios**: NOI from rent net of vacancy and operating costs,
+  cap rate on the linked asset's value, DSCR against PITI, cash-on-cash on
+  equity. Vacancy is proposed at 8% and the Result says when it assumed it.
+
+Nothing here re-implements a formula that exists: FI years come from
+`engines/fire.js` and `engines/projection.js`, totals from `Schema`.
+
+---
+
 ## D-046 — HP is measured in weeks, which is what makes §3A stop contradicting itself
 
 The Dungeons & Dividends rulebook defines Hit Points twice in the same

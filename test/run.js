@@ -5241,6 +5241,144 @@ section('The tax engine');
   }
 })();
 
+section('The Statement engine');
+
+(function () {
+  const St = require(path.join(ROOT, 'engines/statement.js'));
+  const T = Object.assign({}, TABLES, {
+    accessRules: require(path.join(ROOT, 'data/access_rules.json')),
+    confidenceWeights: require(path.join(ROOT, 'data/confidence_weights.json')),
+    uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json'))
+  });
+  function rich() {
+    const h = Demo.build();
+    h.assets = [
+      Schema.createAsset({ id: 'cash', category: 'cash', valueCents: 950000, liquid: true, taxCharacter: 'cash', confidence: 1 }),
+      Schema.createAsset({ id: 'k401', category: 'retirement', valueCents: 3000000, taxCharacter: 'pretax', confidence: 2 }),
+      Schema.createAsset({ id: 'roth', category: 'retirement', valueCents: 1200000, taxCharacter: 'roth', costBasisCents: 800000, confidence: 2 }),
+      Schema.createAsset({ id: 'brok', category: 'investment', valueCents: 600000, taxCharacter: 'taxable', confidence: 2 }),
+      Schema.createAsset({ id: 'house', category: 'real_estate', valueCents: 30000000, confidence: 3 }),
+      Schema.createAsset({ id: 'biz', category: 'other', valueCents: 5000000, taxCharacter: 'business', confidence: 4 })
+    ];
+    return h;
+  }
+
+  /* -- Three portfolios ------------------------------------------------- */
+  {
+    const p = St.portfolios(rich(), T.accessRules);
+    check('liquid financial is cash + brokerage', p.buckets.liquidFinancial.totalCents, 1550000);
+    check('illiquid financial is the retirement money', p.buckets.illiquidFinancial.totalCents, 4200000);
+    check('non-financial is the house and the business', p.buckets.nonFinancial.totalCents, 35000000);
+    check('the total is all of it', p.value, 40750000);
+    check('and the plain net worth nets the demo debts', p.plainNetWorthCents, 40750000 - 2160000);
+    check('the demo lump, uncharacterised, files as taxable', St.portfolios(Demo.build(), T.accessRules).buckets.liquidFinancial.totalCents, 5750000);
+    check('nothing owned, nothing filed', St.portfolios(Schema.createHousehold({}), T.accessRules).status, 'incomplete');
+  }
+
+  /* -- Confidence-weighted net worth ------------------------------------- */
+  {
+    /* 9,500×1 + 30,000×.85 + 12,000×.85 + 6,000×.85 + 300,000×.5 + 50,000×0
+       = 9,500 + 25,500 + 10,200 + 5,100 + 150,000 + 0 = 200,300; less 21,600. */
+    const c = St.confidenceWeightedNetWorth(rich(), T.confidenceWeights);
+    check('weighted assets by hand', c.weightedAssetsCents, 20030000);
+    check('less debts', c.value, 20030000 - 2160000);
+    check('against a plain figure of 385,900', c.plainNetWorthCents, 40750000 - 2160000);
+    check('the haircut is the difference', c.haircutCents, 40750000 - 20030000);
+    check('every asset was rated', c.unratedCount, 0);
+    const half = rich(); half.assets[4].confidence = null;
+    const c2 = St.confidenceWeightedNetWorth(half, T.confidenceWeights);
+    check('an unrated asset is excluded, not counted in full', c2.unratedAssetsCents, 30000000);
+    check('and counted', c2.unratedCount, 1);
+    check('nothing rated means nothing weighted', St.confidenceWeightedNetWorth(Demo.build(), T.confidenceWeights).status, 'incomplete');
+  }
+
+  /* -- The liquidity ladder, gated by age ---------------------------------- */
+  {
+    const l = St.liquidityLadder(rich(), T.accessRules, { age: 32 });
+    check('cash is reachable today', l.bands.today, 950000);
+    /* Brokerage (2) 6,000 + Roth basis 8,000 at the Roth's default 3 → 30 days: 6,000; this year: 8,000. */
+    check('the brokerage this month', l.bands.thisMonth, 600000);
+    check('the Roth basis this year', l.bands.thisYear, 800000);
+    /* Never: 401(k) 30,000 + Roth earnings 4,000 + house 300,000 + business 50,000. */
+    check('pre-59½ money, the house and the business are never', l.bands.never, 3000000 + 400000 + 30000000 + 5000000);
+    check('gated money is named', l.gatedCents, 3400000);
+    check('reachable within a year is the value', l.value, 950000 + 600000 + 800000);
+    const older = St.liquidityLadder(rich(), T.accessRules, { age: 60 });
+    check('at 60 the gate is open', older.gatedCents, 0);
+    check('and the 401(k) sits at its own liquidity', older.bands.thisYear, 3000000 + 1200000);
+    const noAge = rich(); noAge.people[0].dob = null;
+    const na = St.liquidityLadder(noAge, T.accessRules);
+    checkTrue('with no age the gate cannot be applied and it says so', na.ageKnown === false && na.gatedCents === 0);
+    checkTrue('a rated liquidity overrides the rule', St.liquidityLadder(Object.assign(rich(), { assets: [Schema.createAsset({ category: 'real_estate', valueCents: 100, liquidity: 1 })] }), T.accessRules, { age: 40 }).bands.today === 100);
+  }
+
+  /* -- The bridge to 59½ ------------------------------------------------------ */
+  {
+    const b = St.bridgeGap(Demo.build(), T);
+    /* Demo: age 32, 19 years to FI → 51; 8.5 years × 37,800 = 321,300 needed;
+       reachable before 59½: cash 9,500 + the uncharacterised lump as taxable 48,000. */
+    check('FI lands at 51', Math.round(b.fiAge), 51);
+    check('the gap is 8.5 years', b.gapYears, 8.5);
+    check('needing 321,300', b.needCents, 32130000);
+    check('with 57,500 reachable', b.availableCents, 5750000);
+    check('so 263,800 short', b.value, 26380000);
+    check('covered years is available over annual spend', b.coveredYears, 1.5);
+    const r = St.bridgeGap(rich(), T, { age: 32 });
+    check('the Roth basis and the brokerage count, the 401(k) does not', r.availableCents, 950000 + 600000 + 800000);
+    const old = St.bridgeGap(Demo.build(), T, { age: 58 });
+    checkTrue('FI after 59½ needs no bridge', old.noBridgeNeeded === true && old.value === 0);
+    const noDob = Demo.build(); noDob.people[0].dob = null;
+    check('no date of birth, no bridge', St.bridgeGap(noDob, T).status, 'incomplete');
+  }
+
+  /* -- The worst plausible year ------------------------------------------------ */
+  {
+    /* 2,500 deductible + 0 oop + 6 × 3,150 = 21,400; NC benefit min(350,
+       692) × 12 weeks = 4,200; net 17,200; cash 9,500 → 7,700 short. */
+    const w = St.worstPlausibleYear(Demo.build(), T);
+    check('the cost of a bad year', w.costCents, 2140000);
+    check('the benefit is the state cap times its weeks', w.benefitCents, 420000);
+    check('at 350 a week', w.benefitWeeklyCents, 35000);
+    check('for 12 weeks in NC', w.benefitWeeks, 12);
+    check('net of benefit', w.netCents, 1720000);
+    check('short after cash', w.value, 770000);
+    checkTrue('and it says the out-of-pocket max is unknown', w.oopMaxKnown === false);
+    checkTrue('and how much to trust the benefit', w.benefitConfidence === 'unverified');
+    const oop = Demo.build(); oop.insurance.oopMaxCents = 800000;
+    check('an out-of-pocket max adds to the cost', St.worstPlausibleYear(oop, T).costCents, 2940000);
+    const noState = Demo.build(); noState.state = null;
+    check('no state, no benefit assumed', St.worstPlausibleYear(noState, T).benefitCents, 0);
+    const wa = Demo.build(); wa.state = 'WA';
+    check('a generous state is capped by the wage, not the max', St.worstPlausibleYear(wa, T).benefitWeeklyCents, Math.round(7200000 / 52 * 0.5));
+    const noDed = Demo.build(); noDed.insurance.highestDeductibleCents = null;
+    check('no deductible, no figure', St.worstPlausibleYear(noDed, T).status, 'incomplete');
+  }
+
+  /* -- Concentration and a rental ---------------------------------------------- */
+  {
+    check('one job is total concentration', St.incomeConcentration(Demo.build()).value, 1);
+    const two = Demo.build();
+    two.people[0].incomeSources.push(Schema.createIncomeSource({ source: 'Side', grossAnnualIncomeCents: 1800000 }));
+    check('72k of 90k is 0.8', St.incomeConcentration(two).value, 0.8);
+    check('no income, no ratio', St.incomeConcentration(Schema.createHousehold({})).status, 'incomplete');
+
+    const h = rich();
+    h.debts.push(Schema.createDebt({ id: 'mtg', balanceCents: 20000000, type: 'mortgage' }));
+    const prop = Schema.createProperty({ assetId: 'house', mortgageId: 'mtg', rentMonthlyCents: 240000, pitiMonthlyCents: 150000, opexMonthlyCents: 40000 });
+    /* NOI = (2,400 × .92 − 400) × 12 = (2,208 − 400) × 12 = 21,696.
+       Cap = 21,696 / 300,000 = 7.23%. Debt service 18,000. DSCR 1.205.
+       Cash-on-cash = 3,696 / 100,000 equity = 3.7%. */
+    const m = St.propertyMetrics(h, prop);
+    check('NOI by hand', m.noiCents, 2169600);
+    check('cap rate', Math.round(m.capRate * 10000) / 10000, 0.0723);
+    check('DSCR', Math.round(m.dscr * 1000) / 1000, 1.205);
+    check('cash-on-cash on 100,000 of equity', Math.round(m.cashOnCash * 1000) / 1000, 0.037);
+    checkTrue('the vacancy was assumed and says so', m.vacancyAssumed && m.vacancyRate === 0.08);
+    check('monthly cash flow', m.cashFlowMonthlyCents, 30800);
+    check('a rental with no asset link is incomplete', St.propertyMetrics(h, Schema.createProperty({})).status, 'incomplete');
+  }
+})();
+
 section('What is finished');
 
 (function () {
