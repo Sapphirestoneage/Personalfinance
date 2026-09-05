@@ -127,7 +127,10 @@
        which the ten Tier 0 inputs do not capture. household.capturingFullMatch
        is nullable on purpose — see DECISIONS.md D-008. */
     (function () {
-      var capturing = household ? household.capturingFullMatch : undefined;
+      /* Derived from the contribution percentage and the match cap when
+         both are known (D-061); the stored answer otherwise. */
+      var capturingR = Schema.capturingFullMatchDerived(household);
+      var capturing = Money.isOk(capturingR) ? capturingR.value : undefined;
       if (Money.isOk(match) && match.value === 0) {
         steps.push(met('match_available', { note: 'No employer match to capture.' }));
         return;
@@ -236,7 +239,8 @@
 
     /* 2. A real match going uncaptured. Only fires on an explicit "no" —
           an unanswered question is not a finding. */
-    if (Money.isOk(match) && match.value > 0 && household.capturingFullMatch === false) {
+    var capturingFlag = Schema.capturingFullMatchDerived(household);
+    if (Money.isOk(match) && match.value > 0 && Money.isOk(capturingFlag) && capturingFlag.value === false) {
       fire('match_left_on_table', { annualMatchCents: match.value });
     }
 

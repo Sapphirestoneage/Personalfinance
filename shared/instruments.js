@@ -22,17 +22,18 @@
       Reference: require('./reference.js'),
       Tier0: require('../engines/tier0.js'),
       Ratios: require('../engines/ratios.js'),
-      Foo: require('../engines/foo.js')
+      Foo: require('../engines/foo.js'),
+      CashFlow: require('../engines/cashflow.js')
     };
   } else {
     var S = root.SLAF || {};
     deps = { Money: S.Money, Schema: S.Schema, Spine: S.Spine, Reference: S.Reference,
-             Tier0: S.Tier0, Ratios: S.Ratios, Foo: S.Foo };
+             Tier0: S.Tier0, Ratios: S.Ratios, Foo: S.Foo, CashFlow: S.CashFlow };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Spine, deps.Reference, deps.Tier0, deps.Ratios, deps.Foo);
+  var api = factory(deps.Money, deps.Schema, deps.Spine, deps.Reference, deps.Tier0, deps.Ratios, deps.Foo, deps.CashFlow);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Instruments = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Spine, Reference, Tier0, Ratios, Foo) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Spine, Reference, Tier0, Ratios, Foo, CashFlow) {
   'use strict';
 
   var MS_PER_DAY = 86400000;
@@ -83,15 +84,19 @@
    */
   function compute(household, tables, now) {
     var rates = Tier0.savingsRate(household, tables);
-    var ratios = Ratios.all(household, tables);
+    var ratios = Ratios.all(household, tables, { snapshots: Spine.listSnapshots() });
     function ratioRow(id) {
       return ratios.rows.filter(function (r) { return r.id === id; })[0] || null;
     }
     var results = {
       netWorth: Tier0.netWorth(household),
-      /* Your money only — the match is counted separately. Contributed
-         variant lands with §4.2; until then the residual is the headline. */
-      savingsRate: rates.excludingMatch,
+      /* The CONTRIBUTED rate is the headline when the 401(k) percentage is
+         known — what actually went somewhere — and the residual (gross
+         less spending less tax) stands in until then. D-080. */
+      savingsRate: (function () {
+        var c = CashFlow.savingsRateContributed(household, tables);
+        return Money.isOk(c) ? c : rates.excludingMatch;
+      })(),
       emergencyFundMonths: Tier0.emergencyFundMonths(household),
       debtToIncome: Tier0.debtToIncome(household),
       fiEtaYear: etaYear(household, tables, now),

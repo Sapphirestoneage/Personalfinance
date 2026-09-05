@@ -122,6 +122,14 @@
           <input type="text" inputmode="decimal" data-in="expenses" aria-label="Monthly spending"/></span>
           <span class="slaf-hint">Also from Start Here, and also only previewed here.</span>
         </label>
+        <label class="slaf-field" style="margin:0"><span class="slaf-label">Spend at</span>
+          <span class="slaf-input-shell">
+          <select data-in="basis" aria-label="Spending basis">
+            <option value="current">What you spend now</option>
+            <option value="floor" id="basis-floor">The floor — fixed lines only</option>
+          </select></span>
+          <span class="slaf-hint" id="basis-hint"></span>
+        </label>
         <label class="slaf-field" style="margin:0"><span class="slaf-label">You’d cut, a month</span>
           <span class="slaf-input-shell"><span class="slaf-affix">$</span>
           <input type="text" inputmode="decimal" data-in="cut" placeholder="e.g. 300" aria-label="Monthly cut"/></span>
@@ -257,12 +265,16 @@
 <script src="../shared/suggest.js"></script>
 <script src="../shared/seed.js"></script>
 <script src="../shared/progress.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/cashflow.js"></script>
 <script src="../engines/runway.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
-      Reference = SLAF.Reference, Ownership = SLAF.Ownership, Runway = SLAF.Runway;
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership, Runway = SLAF.Runway,
+      CashFlow = SLAF.CashFlow;
 
   var ROOM_ID = 'runway';
   var TABLES = null;
@@ -272,8 +284,17 @@
   var state = {
     preset: 'quit', cushion: null, expenses: null, cut: null, other: null,
     severance: null, extra: null, benefitMonthly: null, benefitMonths: null,
-    rampShape: 'linear', rampTarget: null, rampMonths: null, target: 12
+    rampShape: 'linear', rampTarget: null, rampMonths: null, target: 12,
+    basis: 'current'
   };
+
+  /* The floor from Cash Flow — the fixed lines plus debt minimums. Read,
+     never typed here; null until at least one line is marked. D-082. */
+  function floorCents() {
+    if (!TABLES || !TABLES.expenseCategories) return null;
+    var f = CashFlow.minimumViableMonthCents(Spine.getProfile(), TABLES.expenseCategories);
+    return Money.isOk(f) ? f.value : null;
+  }
 
   var MONEY_KEYS = ['cushion', 'expenses', 'cut', 'other', 'severance', 'extra',
                     'benefitMonthly', 'rampTarget'];
@@ -299,7 +320,11 @@
     return {
       preset: state.preset,
       cushionCents: state.cushion,
-      monthlyExpensesCents: state.expenses,
+      /* A typed figure wins; else the floor when chosen and known; else
+         the household's spending inside the engine. */
+      monthlyExpensesCents: Money.isEntered(state.expenses) ? state.expenses
+        : (state.basis === 'floor' && Money.isEntered(floorCents())) ? floorCents() : null,
+      expenseBasis: !Money.isEntered(state.expenses) && state.basis === 'floor' && Money.isEntered(floorCents()) ? 'floor' : 'current',
       expenseCutCents: state.cut,
       otherMonthlyIncomeCents: state.other,
       severanceCents: state.severance,
@@ -316,6 +341,7 @@
 
   function displayFor(key) {
     if (key === 'preset') return state.preset;
+    if (key === 'basis') return state.basis;
     if (key === 'rampShape') return state.rampShape;
     if (key === 'target') return String(state.target);
     if (COUNT_KEYS.indexOf(key) !== -1) {
@@ -332,6 +358,7 @@
   function readInto(key, raw) {
     var text = String(raw).trim();
     if (key === 'preset') { state.preset = text; return; }
+    if (key === 'basis') { state.basis = text === 'floor' ? 'floor' : 'current'; return; }
     if (key === 'rampShape') { state.rampShape = text; return; }
     if (key === 'target') { state.target = Number(text) || 12; return; }
     if (COUNT_KEYS.indexOf(key) !== -1) {
@@ -430,7 +457,7 @@
     } else {
       setFigure('out-runway', months(r.runwayMonths),
         Money.formatCents(r.startingCents) + ' to start with, going out at '
-          + Money.formatCents(r.monthlyOutflowCents) + ' a month. The balance passes zero '
+          + Money.formatCents(r.monthlyOutflowCents) + ' a month' + (r.expenseBasis === 'floor' ? ' at the floor' : '') + '. The balance passes zero '
           + 'during month ' + r.ranOutInMonth + '.');
     }
 
@@ -440,7 +467,7 @@
     if (r.sustainable) {
       note.innerHTML = '<strong>This is not a runway, it is a living.</strong> '
         + Money.formatCents(r.steadyInflowCents) + ' a month coming in against '
-        + Money.formatCents(r.monthlyOutflowCents) + ' going out. The cushion is a buffer '
+        + Money.formatCents(r.monthlyOutflowCents) + ' going out' + (r.expenseBasis === 'floor' ? ' at the floor' : '') + '. The cushion is a buffer '
         + 'against a bad month, not the thing paying the bills.';
     } else if (r.steadyMonthlyBurnCents <= 0) {
       note.innerHTML = '<strong>The gap closes before the money does not quite.</strong> '
@@ -598,6 +625,13 @@
        inputs, not copied in — a figure the page put in a box read as one
        the person had confirmed. D-062. */
     paintInputs();
+    var floor = floorCents();
+    var floorOpt = el('basis-floor');
+    floorOpt.disabled = !Money.isEntered(floor);
+    el('basis-hint').textContent = Money.isEntered(floor)
+      ? 'The floor is ' + Money.formatCents(floor) + '/mo — the lines marked fixed in Cash Flow, plus debt minimums.'
+        + (state.basis === 'floor' && Money.isEntered(state.expenses) ? ' A typed spending figure overrides it.' : '')
+      : 'Mark fixed lines in Cash Flow to run this at the floor.';
     var r = Runway.project(h, TABLES, opts());
     renderRunway(r);
 

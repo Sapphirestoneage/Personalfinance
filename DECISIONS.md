@@ -3850,6 +3850,279 @@ correct to 10 and read the band), `test/forms.js` on both cards,
 
 ---
 
+## D-079 — Benchmarks: where a household stands against a convention, and which conventions
+
+*(BRIEF.md §4.1. Opens T4.)* `engines/benchmarks.js` is seven numbers that
+compare the household to something outside it, and every one names the
+convention it leans on:
+
+- **The wealth multiplier** — what a dollar at your age becomes by 65 on
+  `wealth_multiplier.json`'s falling return path. **Monthly to $1M / $2M**
+  is the level contribution that lands on the target with what is already
+  invested growing alongside: (target − existing × M) ÷ Σ of the suffix
+  products of the monthly factors. This is a second growth model beside
+  `engines/projection.js`, on purpose: the projection loop is *the* loop
+  for one rate with contributions and this file calls it for the FI date
+  and the at-65 balance; the multiplier is a rate that changes with age,
+  parameterised in data, and its curve is computed here and nowhere else.
+- **PAW / AAW / UAW** — net worth over age × income ÷ 10, from *The
+  Millionaire Next Door*; ≥ 2 prodigious, ≤ 0.5 under. Divisor and
+  cut-offs in `data/levels_of_wealth.json`.
+- **The five levels** — each a Result: 1 no high-interest debt (by the FOO
+  rule) and a starter fund in cash; 2 a savings rate ≥ 20%; 3 expected
+  growth on investments ≥ a year of take-home; 4 net worth ≥ 2× the PAW
+  expectation *and* an FI ratio ≥ 1; 5 self-declared and **never assigned
+  by the engine**. The level is the run of met checks from the bottom; an
+  unknown check (a debt with no rate) stops the count and is reported,
+  never counted as passed or failed. The demo, carrying a high-interest
+  card, is at level 0; with every rate under the threshold it is at 2.
+- **What 1% more** — Δ years to FI and Δ balance at 65 for one more point
+  of savings rate. Uses the projection loop twice; nothing new.
+- **Human capital** — present value of gross pay from now to the stop age
+  (`targets.retireAge`, D-070) at a real discount.
+  `assumptions.humanCapitalDiscountRate` is a new assumption, default 2%,
+  overridable like the others; without a stop age the Result asks for one.
+- **Net worth in years** — net worth over a year of spending.
+
+**Not decided here.** Where these are *shown* is D-083 (Snapshot and
+dashboard). Level 5 has no field yet; a declaration belongs with T8's
+Enough room, and until then the level caps at 4.
+
+**Compatibility note.** `assumptions.humanCapitalDiscountRate` joins
+`ASSUMPTION_DEFAULTS`; a stored household without it resolves to the
+default through `Schema.resolveAssumptions` as every assumption does.
+`data/levels_of_wealth.json` is registered as `levelsOfWealth`.
+
+**Verified.** `node test/run.js`: the return path at four ages, a year
+from 64 by a longhand product, monthly-to-$1M simulated forward to within
+$10 of the target, PAW for the demo (35,900 ÷ 230,400, under), the levels
+at 0 and at 2, one point of savings rate as $720 moving FI a year closer
+and compounding past 33 × $720 by 65, human capital by the annuity
+formula, net worth in years.
+
+---
+
+## D-080 — Two savings rates: what is left, and what actually went somewhere
+
+*(BRIEF.md §4.2.)* `Tier0.savingsRate` is the **residual**: gross less a
+year of spending less estimated tax, over gross. It says how much *could*
+have been saved. `CashFlow.savingsRateContributed` is the **contributed**
+rate: the 401(k) percentage of gross, Roth and HSA so far this year, and
+the tracked lines in the savings bucket, over gross. It says how much
+*was*. Both are shown on the Snapshot; the dashboard's Thrust instrument
+is the contributed rate when the percentage is known and the residual
+until then, and the Result says which (`variant`).
+
+**The gap is a finding, not a number.** Residual minus contributed is
+money leaving the paycheque that nobody has named — the demo's $1,345 a
+month. The Snapshot says so in a sentence under the card, with the
+accounted-for parts listed, rather than adding an "unallocated" figure
+to the instrument grid: it is a prompt to go and track a month, and it
+belongs beside the rate it questions.
+
+**Three rules the formula needed:**
+
+- **Not entered is not zero.** A blank Roth or HSA is listed in
+  `notEntered` and left out; the sentence says so. With no contribution
+  percentage at all the Result is incomplete and asks for it — this is
+  the one input the rate cannot do without.
+- **The retirement line and the percentage are the same dollars.** A
+  tracked `retirement` line in Cash Flow is almost always the 401(k) the
+  percentage describes, so the larger of the two counts, once, and the
+  Result reports which was used (`retirementOverlap`). Every other
+  savings category adds.
+- **It lives in `engines/cashflow.js`**, not `tier0.js`, because tracked
+  entries are Cash Flow's, and cashflow already depends on tier0 — the
+  other direction would be a cycle.
+
+**Compatibility note.** No stored shape changed. The Snapshot loads
+`engines/cashflow.js`; `shared/instruments.js` gains a CashFlow
+dependency, which `index.html` and `rooms/refresh.html` already load.
+A snapshot taken before this entry stored the residual under
+`savingsRate`; a delta against it after a percentage is entered compares
+a residual to a contributed figure, and the instrument's `variant` is
+there to say so.
+
+**Found in passing.** `engines/foo.js` still read the raw
+`household.capturingFullMatch` for its match step, so a household that
+had answered the 401(k) card (percentage and cap, D-061) but never the
+old yes/no was "not enough entered to place you on the ladder" on the
+dashboard while the same numbers placed it at step 2 in node. Both sites
+now read `Schema.capturingFullMatchDerived`. The page sweep used in
+verification now also fails on a visible load notice, which is how this
+one had hidden.
+
+**Verified.** `node test/run.js`: the demo's 4% of $72,000 plus $1,500
+Roth as 6.1% against a 28.5% residual, $16,140 a year unallocated; with
+the tracked month the $400 retirement line counts once instead of the
+percentage, plus $3,600 emergency savings; the headline instrument's
+variant with and without a percentage. A phone-browser read of the
+Snapshot card and the dashboard's Thrust cell.
+
+---
+
+## D-081 — Fourteen more ratios, in the one registry, most of them without a band
+
+*(BRIEF.md §4.3.)* `engines/ratios.js` gains fourteen rows, each calling
+the engine that already owns the number — `engines/statement.js` for
+income concentration, the weighted net worth, the ladder, the worst year
+and the bridge; `engines/benchmarks.js` for net worth in years and human
+capital; `Reference.marginalBracket` for bracket room; `Tier0.yearsToFire`
+for the FI date. Nothing is re-derived. Three are new arithmetic:
+
+- **Shadow runway** — cash + a Roth's contributions + home equity at a
+  haircut, over monthly expenses: the runway if you were willing to raid
+  the Roth and sell the house. The haircut is a new assumption,
+  `assumptions.homeEquityHaircut`, default 0.8, overridable like the
+  others; the Result reports the pool and the haircut it used.
+- **Lifestyle inflation** and **net worth growth** read snapshots back
+  (D-056). "A year ago" is the most recent snapshot at least eleven
+  months before now — a snapshot taken "about a year later" rarely lands
+  on the day. With none, the Result says to save one and come back; with
+  one too recent, it says that. A snapshot's `fields` may hold a bare
+  number or a `{status, value}` Result; both are read. Growth from a net
+  worth of exactly zero is undefined and says so; a raise of zero leaves
+  nothing to measure inflation against.
+- **Giving rate** — the `gifts` category over take-home. A tracked month
+  with no gifts line is 0%; no tracked month is incomplete.
+
+**Bands.** `ratio_benchmarks.json` moves to 1.2. Only three of the
+fourteen get a verdict: shadow runway borrows the 3–6 month emergency
+fund convention on its wider pool; worst-year coverage calls 1× covered
+by definition and half-covered the watch line (a convention chosen here,
+and the note says so); lifestyle inflation uses "keep at least half of
+every raise". The other eleven carry `null` bands with a note saying
+why — one paycheque reading 100% concentration is a fact about the
+household, not a fault, and the tithe is not a financial convention.
+**Automation ratio is registered as unavailable** with what it would
+need (which contributions are automated — the Skill Stacker's question,
+T7), so nothing pretends to know it.
+
+**Two new units.** `dollars` (a figure, not a monthly flow — the weighted
+net worth and bracket room) and `date` (a decimal year, shown as
+"Sep 2045"). `cents` keeps its "/mo" meaning.
+
+**Snapshots reach the engine as an option**, not through the household:
+`Ratios.all(h, tables, { snapshots, now })`, passed by the rooms and by
+`shared/instruments.js` from `Spine.listSnapshots()`. The engine stays
+pure; `now` is injectable so the tests pin a date.
+
+**Compatibility note.** No stored shape changed. `engines/ratios.js` now
+depends on `statement.js`, `benchmarks.js` and `shared/reference.js`;
+every page that loads it (`index.html`, `rooms/ratios.html`,
+`rooms/health.html`, `rooms/refresh.html`) loads those and `fire.js`,
+which the registry test enforces. The `assumptions.homeEquityHaircut`
+default resolves for any stored household.
+
+**Verified.** `node test/run.js`: every new row on the demo — 100%
+concentration, the weighted figure at half of rated cash less debt, the
+ladder at 100% reachable, shadow runway 9,500 ÷ 3,150 and then a
+$300,000 home with $200,000 owed adding $80,000, worst-year coverage
+9,500 ÷ 17,200 in the watch zone, $171 of gifts over take-home, $49,800
+of bracket room before 24%, the 8.5-year bridge, human capital at about
+23× financial capital, the FI date to the day from a pinned now,
+lifestyle inflation 4,200 ÷ 12,000 from a year-old snapshot storing a
+Result and a bare number, growth annualised over the real gap, and the
+three "cannot say" cases. The radar now plots sixteen banded ratios for
+the demo. A phone-browser read of the Every Ratio room and the Health
+room.
+
+---
+
+## D-082 — Which lines could not be cut: the floor, and how much of a month is cuttable
+
+*(BRIEF.md §4.4.)* Every spending line in Cash Flow gets a third cell: a
+"fixed" tick — could this not be cut next month? Stored as
+`expenseEntry.fixed`: `null` not asked, `true` fixed, `false` cuttable.
+A tick needs a line to sit on; on an empty line it un-ticks itself. A
+savings line is not asked (a floor is spending), and the derived debt
+minimums are fixed by nature and say so.
+
+**Two numbers from it**, both in `engines/cashflow.js`:
+
+- **The minimum viable month** — the fixed lines plus debt minimums:
+  what next month costs if everything cuttable is cut. It appears in the
+  Monthly Spending card once at least one line has been answered by hand;
+  until then the card says what to tick. Lines nobody has answered are
+  counted and reported as unasked, never assumed fixed or cuttable — the
+  demo with three lines ticked reads "5 lines not yet marked either way".
+- **Cuttability** — 1 − floor ÷ spending. The demo: 1 − 2,135 ÷ 3,200,
+  33%.
+
+**Runway runs at the floor.** The Runway room gains a "Spend at" choice:
+what you spend now, or the floor. The option is disabled with a hint
+until Cash Flow has a floor; chosen, it passes the floor as the
+expense figure and `expenseBasis: 'floor'`, which the engine echoes and
+the room words ("going out at $2,135 a month at the floor"). A typed
+spending figure still wins, and the hint says so. The demo's runway
+moves from 3 months to 4. Nothing about the floor is stored in Runway;
+it is read from Cash Flow each time, which keeps one owner.
+
+**Compatibility note.** `expenseEntry.fixed` is a new nullable field on
+every entry; entries written before this read as `null` (not asked),
+and `Schema.createExpenseEntry` sets it. `CashFlow.summarise` rows carry
+`fixedMonthlyCents`, `fixedAsked` and `fixed`. The Runway room now loads
+`engines/projection.js`, `tier0.js` and `cashflow.js`. Rooms updated:
+`rooms/cash-flow.html`, `rooms/runway.html`.
+
+**Verified.** `node test/run.js`: a fresh entry not asked; nothing marked
+asks rather than assumes; minimums fixed by nature at $305; the floor at
+1,500 + 180 + 150 + 305 with four lines unasked; cuttability 1 − 2,135 ÷
+3,200; the engine echoing the basis and the money lasting longer at the
+floor. A phone-browser walk: tick three lines, read the floor and 33%,
+reload and find them ticked, a tick on an empty line refused, Runway's
+hint and the switch from 3 months to 4 "at the floor".
+`test/alignment.js` on the widened `.cat-row`.
+
+---
+
+## D-083 — Where the new numbers show: the Weather, the Flight plan, and three benchmarks that disagree
+
+*(BRIEF.md §4.5. Closes T4.)* Three places, no new figures — everything
+here reads an engine that already exists.
+
+- **The Weather panel** on the dashboard gains two rows from the ratio
+  registry: income concentration and worst-year coverage. Its "left blank
+  on purpose" note changes from three risks to two: sequence-of-returns
+  and longevity still have no honest gauge, but under-insurance is now
+  priced piece by piece in the Coverage Checkup (D-071), and the note
+  says so and points there.
+- **The Flight plan** gains a second strip under the FOO ladder: L1–L5,
+  the level as the run of met checks from the bottom
+  (`Benchmarks.levelsOfWealth`, D-079), and a sentence naming the check
+  that stopped it — "Not yet at level 1. Next: level 1, no high-interest
+  debt, and a starter emergency fund in cash" for the demo. A check that
+  cannot be judged is said to be unjudgeable, not failed.
+- **The Snapshot** gains a "Three benchmarks, and they disagree — here's
+  why" card: the SCF percentile, the retirement multiple and PAW side by
+  side, then one sentence. `Benchmarks.threeBenchmarks` gives each a
+  one-word verdict (ahead / about average / behind; off the chart
+  either way counts as a verdict) and writes the sentence: when they
+  agree, "rare, and worth believing"; when they do not, what each one
+  measures — the percentile ranks against every household your age
+  whatever they earn, the multiple scales a milestone to your income,
+  PAW expects age × income ÷ 10 and is unforgiving early. Under it, the
+  rest of D-079: a dollar at your age by 65, monthly to $1M and $2M, and
+  what one more point of savings rate does.
+
+**Why a sentence and not a fourth number.** Averaging three benchmarks
+that disagree would be a score, and SPEC §12.7 says no score. The
+disagreement is the finding.
+
+**Compatibility note.** No stored shape changed. The Snapshot loads
+`engines/benchmarks.js`; the registry gains the `out-benchmarks` anchor.
+The dashboard formats the `dollars` and `date` units (D-081) in its
+Weather rows.
+
+**Verified.** `node test/run.js`: all three verdicts for the demo (48th
+about average, 0.7× against a 1.4× milestone behind, PAW 0.2× behind);
+$600,000 invested makes all three say ahead and agree; a blank household
+says fewer than two can be worked out. A phone-browser read of the
+Weather rows, the levels strip and the benchmarks card; the page sweep;
+`test/alignment.js` on the three cells.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool. **The numbers D-046
@@ -3873,7 +4146,9 @@ Twice now two sessions have reached for the same next number and one has
 renumbered on merge: the SPARKS T3 entries moved past the D&D D-064/D-065 to
 become D-066–D-071, and the D&D T9 entries then moved past those to become
 D-072–D-078. **The rule that settles it: whichever side is still unpushed
-renumbers.** From D-064 on, every number in this file is unique.
+renumbers.** It applied a third time: the SPARKS T4 entries, written as
+D-072–D-076 while the D&D T9 entries took those numbers on main, became
+D-079–D-083 on merge. From D-064 on, every number in this file is unique.
 
 ---
 

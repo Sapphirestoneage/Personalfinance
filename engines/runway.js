@@ -226,6 +226,8 @@
       severanceCents: severance,
       startingCents: cushion + severance,
       monthlyExpensesCents: expenses,
+      /* 'current' unless the room passed the floor (D-082). */
+      expenseBasis: o.expenseBasis || 'current',
       expenseCutCents: cut,
       extraMonthlyCostCents: extra,
       otherMonthlyIncomeCents: other,

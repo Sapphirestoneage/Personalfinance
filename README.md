@@ -111,6 +111,7 @@ engines/            Shared calculation engines — one function per concept
   income.js           hourly/weekly/monthly pay into a year, and jobs by month
   tax.js              federal ordinary + capital gains, FICA, a state schedule, the ACA cliff
   statement.js        three portfolios, weighted net worth, the ladder, the bridge, the worst year
+  benchmarks.js       the wealth multiplier, monthly to $1M, PAW, the five levels, 1% more, human capital
 data/               Versioned reference tables (JSON, never inlined in code)
 test/run.js         Re-derives every formula outside the browser
 test/alignment.js   Browser layout check — side-by-side cells must line up
