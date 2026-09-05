@@ -1,9 +1,29 @@
 {
   "id": "partner_conventions",
-  "version": "0.1",
-  "asOf": "2026-09-01",
-  "source": "PLACEHOLDER \u2014 filled by the room that reads it (D-099).",
-  "confidence": "unverified",
-  "confidenceNote": "Not yet written.",
-  "note": "the three ways couples split a shared month, and what each is called"
+  "version": "1.0",
+  "asOf": "2026-09-05",
+  "source": "The three ways couples commonly split a shared month, as personal-finance guides and couples' money columns describe them: equal halves, in proportion to income, or one pool. Names and one-line descriptions only; no survey sits behind them and none is a rule.",
+  "confidence": "convention",
+  "confidenceNote": "Each mode is a convention people choose, not a benchmark, and this file does not say which is fair. The sentences describe when people tend to pick each one; a couple's own arrangement replaces them.",
+  "note": "Read by engines/partner.js. The mode ids match household.partner.splitMode (equal | proportional | pooled). D-099.",
+  "modes": [
+    {
+      "id": "equal",
+      "label": "Equal halves",
+      "sentence": "Each pays half of the shared month, whatever each earns.",
+      "whenChosen": "People choose it when the two incomes are close, or when keeping the split simple matters more than matching it to pay."
+    },
+    {
+      "id": "proportional",
+      "label": "In proportion to income",
+      "sentence": "Each pays the share of the shared month that matches their share of the household's income.",
+      "whenChosen": "People choose it when the incomes are far apart, so that the same month costs each of them a similar slice of their pay."
+    },
+    {
+      "id": "pooled",
+      "label": "One pool",
+      "sentence": "All income goes into one pool, all shared costs come out of it, and what is left is saved together.",
+      "whenChosen": "People choose it when they think of the money as one household's rather than two people's, and are happy for either to spend from the pool."
+    }
+  ]
 }

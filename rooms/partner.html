@@ -4,29 +4,37 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Partner · SPARKS</title>
-<meta name="description" content="What your job actually pays, once you count every hour it takes and everything it costs you to do it."/>
+<meta name="description" content="Two incomes, one household: how the shared month is split, what each of you keeps, and how much rides on one paycheque."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. THE TEMPLATE ROOM. DECISIONS.md D-097.
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-099. Built on the frozen template
+  (shared/room.js, D-097).
 
-  1. READS   The person's income (owned by Start Here) and filingStatus, for
-             the tax estimate; a month's spending, for the lens.
-  2. WRITES  It OWNS person.work — paid hours, unpaid overtime, commute,
-             work costs, weeks a year, and (folded) prep and decompression.
-             Nothing else edits those. It does not touch income.
-  3. CALLS   engines/hourly.js. Tax comes from engines/tier0.js's effective-
-             rate lookup, never a second calculation.
-  4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses and says so (Gate.fillGuesses). Each unpaid-
-             hours box is optional: blank is none, not unanswered.
-  5. CONFIG  data/effective_tax_rates_2026.json.
+  1. READS   Both adults' income (owned by Start Here — the partner's pay is
+             the second adult's intake_partner_income source), the filing
+             status for the per-person tax estimate, the household month
+             for the shared-month guess, and the incomeConcentration ratio
+             from engines/ratios.js.
+  2. WRITES  It OWNS household.partner — splitMode (equal | proportional |
+             pooled) and sharedMonthlyCents. Nothing else edits those. It
+             does not touch anyone's income.
+  3. CALLS   engines/partner.js. Take-home per person comes from
+             engines/tier0.js run on a household holding only that person
+             (an approximation, said as one in the drawer); the share of
+             income that is one paycheque is the ratio engine's
+             incomeConcentration, never a second calculation.
+  4. EMPTY   The registry removes the room for one adult. Opened by deep
+             link with an empty spine it renders "Just you" with the
+             intake's guesses and says so (Gate.fillGuesses). No split
+             chosen reads as equal halves, and says it is the default.
+  5. CONFIG  data/partner_conventions.json (the three modes, convention),
+             data/effective_tax_rates_2026.json (the tax estimate).
 
-  THE SHAPE (shared/room.js, frozen here): one number, one chart, the lens,
-  five inputs and two folded, the assumptions drawer with sources, why
-  this matters at your stage, one out-of-scope line to Get Help. The ids
-  below are the deep links.
+  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens, two
+  inputs, the assumptions drawer with sources, why this matters at your
+  stage, one out-of-scope line to Get Help. The ids below are the deep links.
 
   LIVE-FORM: built once — shared/room.js builds the inputs from the spec
   on load and only sets .value, never under focus.
@@ -57,25 +65,25 @@
 
   <section class="slaf-card" id="number">
     <div class="room-head-row">
-      <span class="slaf-eyebrow">Your real rate</span>
+      <span class="slaf-eyebrow">Each share of the shared month</span>
       <div id="room-lens"></div>
     </div>
     <div class="room-number" id="room-number"></div>
   </section>
 
   <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Where the week goes</span>
+    <span class="slaf-eyebrow">The shared month, split</span>
     <div id="room-chart"></div>
   </section>
 
   <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The hours the job takes</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave anything blank that doesn't apply — working from home means no commute, and blank is none rather than unanswered.</p>
+    <span class="slaf-eyebrow">How you split</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Pick the way you split, and say what the shared month costs. Until you type it, the shared month is the household month from Start Here.</p>
     <div id="room-inputs"></div>
   </section>
 
   <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Priced in life</span>
+    <span class="slaf-eyebrow">Through the lens</span>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
     <ul class="room-amounts" id="room-amounts"></ul>
   </section>
@@ -95,7 +103,8 @@
 
   <p class="disclaimer">
     Educational tool, not financial advice. Tax is estimated from a flat
-    effective-rate table, not a return. Your numbers stay in this browser.
+    effective-rate table, one person at a time, not a return. Your numbers
+    stay in this browser.
   </p>
 </main>
 
@@ -111,7 +120,13 @@
 <script src="../shared/gate.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
-<script src="../engines/hourly.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../engines/statement.js"></script>
+<script src="../engines/benchmarks.js"></script>
+<script src="../engines/ratios.js"></script>
+<script src="../engines/partner.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
 <script src="../shared/room.js"></script>
@@ -119,111 +134,131 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Hourly = SLAF.Hourly, Charts = SLAF.Charts, Room = SLAF.Room;
+      Partner = SLAF.Partner, Charts = SLAF.Charts, Room = SLAF.Room;
 
-  /* ---- writes: this room owns person.work ------------------------------------ */
-  function writeWork(key, value) {
-    var person = Spine.ensurePrimaryPerson('You');
-    var current = Schema.workProfile(Schema.personById(Spine.getProfile(), person.id));
-    var next = Object.assign({}, current);
-    next[key] = value;
-    Spine.upsertPerson({ id: person.id, work: next });
-  }
-  function readWork(h) { return Schema.workProfile(Schema.primaryPerson(h)); }
-  function hoursInput(key, label, placeholder, hint) {
-    return { ctl: key, label: label, kind: 'number', placeholder: placeholder, affix: 'h', hint: hint,
-      read: function (h) { return readWork(h)[key]; }, write: function (v) { writeWork(key, v === null || v <= 0 ? null : v); } };
-  }
-  function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
+  /* ---- writes: this room owns household.partner ------------------------------ */
+  function plan(h) { return Schema.createPartnerPlan((h || {}).partner); }
+  function pct(rate) { return Money.formatRate(rate, { decimals: 0 }); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function theirs(p) { return p.label === 'You' ? 'your' : esc(p.label) + '’s'; }
+  function taxSource(T) { var t = T.effectiveTaxRates; return 'data/effective_tax_rates_2026.json v' + t.version + ' — ' + t.source + ' (' + t.confidence + ')'; }
 
-  var HOUR_COLOURS = { paid: Charts.COLORS.series[0], unpaidOvertimeHoursPerWeek: Charts.COLORS.series[3], commuteHoursPerWeek: Charts.COLORS.series[1], prepHoursPerWeek: Charts.COLORS.series[2], decompressHoursPerWeek: Charts.COLORS.series[4] };
+  var COLOUR = { share: Charts.COLORS.spend, keeps: Charts.COLORS.target, pool: Charts.COLORS.contributed };
 
   Room.mount({
-    id: 'partner', /* STUB — being built (D-099) */
-    tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    id: 'partner',
+    tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states', 'partnerConventions', 'ratioBenchmarks'],
     reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'],
 
     number: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return { label: 'Actually, an hour', value: null, reason: w.reason + (/not earning/.test(w.reason || '') ? '' : '') };
-      var sub = 'On paper <strong>' + perHour(w.nominalHourlyCents) + '</strong> · you keep <strong>' + Money.formatRate(w.retained, { decimals: 0 }) + '</strong> of it'
-        + ' · ' + Money.formatCents(w.keptAnnualCents) + ' kept over ' + w.annualTotalHours.toLocaleString('en-US') + ' hours a year';
-      if (w.costsMoreThanItPays) sub += '. <strong>This job costs more than it pays</strong> — check the monthly costs; if they are right, that is the finding';
-      if (w.implausibleHours) sub += '. ' + w.paidHoursPerWeek + ' paid hours a week makes this look enormous; the arithmetic is right, the comparison is not';
-      if (!w.taxKnown) sub += '. Tax is not in yet: ' + (w.taxReason || '');
-      return { label: 'Actually, an hour', value: perHour(w.realHourlyCents), sub: sub, zone: w.costsMoreThanItPays ? 'out' : (w.retained !== null && w.retained < 0.5 ? 'watch' : null), result: w };
+      var s = Partner.split(h, T);
+      if (!Money.isOk(s)) return { label: 'Your share', value: null, reason: s.reason };
+      var you = s.people[0], them = s.people[1], sub;
+      var shared = Money.formatCents(s.sharedCents);
+      if (s.mode === 'pooled') {
+        var value = shared + ' out' + (s.poolInCents !== null ? ' of ' + Money.formatCents(s.poolInCents) + ' in' : '');
+        if (s.poolLeftCents !== null) {
+          sub = s.poolLeftCents >= 0
+            ? 'Left each month, together: <strong>' + Money.formatCents(s.poolLeftCents) + '</strong> after the shared ' + shared
+            : 'The shared month is <strong>' + Money.formatCents(-s.poolLeftCents) + '</strong> more than the two take-homes bring in — that comes out of savings';
+        } else {
+          sub = 'What comes in is not estimated yet: ' + esc(you.takeHomeReason || them.takeHomeReason || '');
+        }
+        if (s.sharedSource === 'household') sub += '. The shared month is the household month until you type it';
+        return { label: 'One pool', value: value, sub: sub, zone: s.zone, result: s };
+      }
+      sub = '<strong>' + esc(you.label) + '</strong> ' + (you.label === 'You' ? 'pay' : 'pays') + ' ' + Money.formatCents(you.shareCents)
+        + ' · <strong>' + esc(them.label) + '</strong> pays ' + Money.formatCents(them.shareCents) + ' of the shared ' + shared + ' a month';
+      if (you.burden !== null && them.burden !== null) sub += ' · ' + pct(you.burden) + ' of ' + theirs(you) + ' take-home, ' + pct(them.burden) + ' of ' + theirs(them);
+      else if (you.takeHomeReason || them.takeHomeReason) sub += '. Take-home is not estimated yet: ' + esc(you.takeHomeReason || them.takeHomeReason);
+      if (s.modeFallback) sub += '. <strong>' + esc(s.modeFallback) + '</strong>';
+      if (s.zeroEarner) sub += '. ' + esc(s.zeroEarner) + ' has no pay entered above zero, so in proportion to income their share is nothing';
+      if (s.outOfPocketCents !== null) sub += '. <strong>The shared month is ' + Money.formatCents(s.outOfPocketCents) + ' more than the two take-homes together</strong> — the rest is out of pocket, from savings';
+      else if (s.heavy.length) sub += '. More than half of ' + (s.heavy.length === 2 ? 'both take-homes' : (s.heavy[0] === 'You' ? 'your take-home' : esc(s.heavy[0]) + '’s take-home')) + ' goes to the shared month';
+      if (s.modeChosen === null) sub += '. Halves is the default until you choose a split';
+      if (s.sharedSource === 'household') sub += '. The shared month is the household month until you type it';
+      return { label: you.label === 'You' ? 'Your share' : you.label + '’s share', value: Money.formatCents(you.shareCents), sub: sub, zone: s.zone, result: s };
     },
 
     chart: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return Charts.stacked({ rows: [], empty: 'Add your paid hours to see where the week goes.' });
-      var parts = [{ label: 'Paid', value: w.paidHoursPerWeek, color: HOUR_COLOURS.paid }].concat((w.unpaidParts || []).map(function (p) { return { label: p.label, value: p.hours, color: HOUR_COLOURS[p.key] }; }));
-      var gross = w.grossAnnualIncomeCents, tax = w.estimatedTaxCents || 0, costs = w.annualWorkCostsCents, kept = w.keptAnnualCents;
-      return Charts.stacked({
-        title: 'Hours a week, and where the pay goes',
-        rows: [
-          { label: 'Your week', note: w.totalHoursPerWeek + ' h, ' + w.paidHoursPerWeek + ' paid', parts: parts },
-          { label: 'A year of pay', note: 'per ' + Money.formatCents(gross), parts: [
-            { label: 'Kept', value: kept / gross * w.totalHoursPerWeek, color: Charts.COLORS.growth },
-            { label: 'Tax', value: tax / gross * w.totalHoursPerWeek, color: Charts.COLORS.debt },
-            { label: 'Costs of working', value: costs / gross * w.totalHoursPerWeek, color: Charts.COLORS.series[3] }
-          ] }
-        ],
-        format: function (v) { return (Math.round(v * 10) / 10) + ' h'; }
+      var s = Partner.split(h, T);
+      if (!Money.isOk(s)) return Charts.stacked({ rows: [], empty: s.reason });
+      var takeHomes = s.people.map(function (p) { return p.takeHomeCents; }).filter(function (v) { return v !== null; });
+      var max = Math.max.apply(null, takeHomes.concat([s.sharedCents])) || 1;
+      var rows = s.people.map(function (p) {
+        if (s.mode === 'pooled') {
+          return { label: p.label, note: p.takeHomeCents === null ? (p.takeHomeReason || '') : 'into the pool',
+            parts: [{ label: 'Into the pool', value: p.takeHomeCents === null ? 0 : p.takeHomeCents, color: COLOUR.pool }] };
+        }
+        var parts = [{ label: 'Share of the shared month', value: p.shareCents, color: COLOUR.share }];
+        if (p.keepsCents !== null) parts.push({ label: 'Kept', value: Math.max(0, p.keepsCents), color: COLOUR.keeps });
+        return { label: p.label, note: p.takeHomeCents === null ? (p.takeHomeReason || '') : 'of ' + Money.formatCents(p.takeHomeCents) + ' take-home', parts: parts };
       });
+      return Charts.stacked({ title: 'The shared month, split', rows: rows, max: max });
     },
 
     inputs: [
-      hoursInput('contractedHoursPerWeek', 'Paid hours a week', 'e.g. 40'),
-      hoursInput('unpaidOvertimeHoursPerWeek', 'Unpaid overtime', 'e.g. 3'),
-      hoursInput('commuteHoursPerWeek', 'Commuting', 'e.g. 5'),
-      { ctl: 'workCostsMonthlyCents', label: 'Costs of working, a month', kind: 'money', placeholder: 'e.g. 400', hint: 'Petrol, parking, transit, work clothes, lunches you would not otherwise buy, childcare only while working.',
-        read: function (h) { return readWork(h).workCostsMonthlyCents; }, write: function (v) { writeWork('workCostsMonthlyCents', v); } },
-      { ctl: 'weeksPerYear', label: 'Weeks worked a year', kind: 'number', placeholder: String(Schema.WORK_DEFAULTS.weeksPerYear),
-        read: function (h) { var w = readWork(h).weeksPerYear; return w === Schema.WORK_DEFAULTS.weeksPerYear ? null : w; }, write: function (v) { writeWork('weeksPerYear', v === null || v <= 0 ? Schema.WORK_DEFAULTS.weeksPerYear : v); } }
-    ],
-    moreLabel: 'The hours around the job',
-    more: [
-      hoursInput('prepHoursPerWeek', 'Getting ready', 'e.g. 2.5'),
-      hoursInput('decompressHoursPerWeek', 'Decompressing', 'e.g. 2.5')
+      { ctl: 'splitMode', label: 'How you split the shared month', kind: 'choice',
+        options: [['equal', 'Equal halves'], ['proportional', 'In proportion to income'], ['pooled', 'One pool']],
+        hint: 'Halves, each in proportion to what they earn, or everything into one pool.',
+        read: function (h) { return plan(h).splitMode; },
+        write: function (v) { Spine.set('partner.splitMode', Partner.MODES.indexOf(v) >= 0 ? v : null); } },
+      { ctl: 'sharedMonthlyCents', label: 'Shared costs, a month', kind: 'money', placeholder: 'e.g. 3,000',
+        hint: 'Rent or mortgage, bills, food, the things you pay for together. Leave it blank to use the household month from Start Here.',
+        read: function (h) { return plan(h).sharedMonthlyCents; },
+        write: function (v) { Spine.set('partner.sharedMonthlyCents', v); },
+        propose: function (h) { var spend = Schema.monthlyExpensesCents(h); return Money.isOk(spend) ? { value: spend.value, source: 'your household month from Start Here' } : null; } }
     ],
 
     amounts: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      var spend = Schema.monthlyExpensesCents(h);
-      var rows = [];
-      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
-      if (Money.isOk(w)) {
-        rows.push({ label: 'A year of tax, estimated', cents: w.estimatedTaxCents || 0 });
-        if (w.annualWorkCostsCents > 0) rows.push({ label: 'A year of the costs of working', cents: w.annualWorkCostsCents });
+      var s = Partner.split(h, T);
+      if (!Money.isOk(s)) return [];
+      var rows = [{ label: 'The shared month', cents: s.sharedCents, href: s.sharedSource === 'household' ? Ownership.linkTo('start', 'q-expenses') : '#inputs' }];
+      if (s.mode === 'pooled') {
+        if (s.poolInCents !== null) rows.push({ label: 'Into the pool, a month', cents: s.poolInCents });
+        if (s.poolLeftCents !== null) rows.push({ label: 'Left each month, together', cents: s.poolLeftCents });
+        return rows;
       }
-      rows.push({ label: 'A $1,200 thing you are eyeing', cents: 120000 });
+      rows.push({ label: (s.people[0].label === 'You' ? 'Your' : s.people[0].label + '’s') + ' share', cents: s.people[0].shareCents });
+      rows.push({ label: s.people[1].label + '’s share', cents: s.people[1].shareCents });
       return rows;
     },
 
     assumptions: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      var tax = T.effectiveTaxRates;
-      var work = readWork(h);
-      return [
-        { label: 'Tax', value: Money.isOk(w) && w.taxKnown ? Money.formatRate(w.effectiveRate || (w.estimatedTaxCents / w.grossAnnualIncomeCents), { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')' },
-        { label: 'Weeks a year', value: String(Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear), source: Money.isEntered(work.weeksPerYear) && work.weeksPerYear !== Schema.WORK_DEFAULTS.weeksPerYear ? 'yours' : 'the default: 52 less four weeks of leave and holidays (convention)' },
-        { label: 'Unpaid hours', value: 'count as work', source: 'Your Money or Your Life: an hour the job takes is an hour it costs, paid or not (convention)' },
-        { label: 'Real return, for the lens', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' }
+      var s = Partner.split(h, T);
+      var conv = T.partnerConventions;
+      var mode = Money.isOk(s) ? s.mode : (plan(h).splitMode || Partner.DEFAULT_MODE);
+      var row = Partner.convention(T, mode);
+      var rows = [
+        { label: 'How you split', value: Partner.modeLabel(mode) + (Money.isOk(s) && s.modeChosen === null ? ' (the default until you choose)' : Money.isOk(s) && s.modeFallback ? ' (fell back from ' + Partner.modeLabel(s.modeChosen).toLowerCase() + ')' : ''),
+          source: (row ? row.sentence + ' ' + row.whenChosen + ' — ' : '') + 'data/partner_conventions.json v' + conv.version + ' (' + conv.confidence + ')' },
+        { label: 'The shared month', value: Money.isOk(s) ? Money.formatCents(s.sharedCents) : 'not known yet',
+          source: Money.isOk(s) && s.sharedSource === 'typed' ? 'yours' : 'the household month from Start Here, until you type the shared costs' }
       ];
+      if (Money.isOk(s)) {
+        s.people.forEach(function (p) {
+          rows.push({ label: 'Tax, ' + (p.label === 'You' ? 'you' : p.label), value: p.effectiveRate !== null ? Money.formatRate(p.effectiveRate, { decimals: 1 }) + ' effective' : 'not estimated yet' + (p.takeHomeReason ? ' — ' + p.takeHomeReason : ''),
+            source: 'estimated one person at a time at the household filing status (' + (h.filingStatus || 'not chosen') + '). An approximation: a joint return taxes the combined income, not each pay on its own. ' + taxSource(T) });
+        });
+        rows.push({ label: 'One paycheque', value: s.concentration !== null ? Money.formatRate(s.concentration, { decimals: 0 }) + ' of household income' : 'not known yet' + (s.concentrationReason ? ' — ' + s.concentrationReason : ''),
+          source: 'engines/ratios.js incomeConcentration: largest income ÷ household income' });
+      }
+      rows.push({ label: 'The watch line', value: Money.formatRate(Partner.HEAVY_SHARE, { decimals: 0 }) + ' of a take-home', source: 'a share above half of what one of you brings home is flagged (convention)' });
+      return rows;
     },
 
     why: function (h, T, situation) {
       return {
-        employed: 'Employed, the headline rate is the one on the offer letter. This one is the rate that decides whether the next thing — a raise, a move, an hour of overtime — is worth it.',
-        selfEmployed: 'Self-employed, there is no headline rate, only this one: what is left after the tax you set aside and the hours the work really takes, including the ones nobody bills.',
-        mixed: 'With a job and your own work, each has a real rate. This reads the job; put the own-work hours in as a second job in Start Here to compare them.',
-        student: 'A part-time job at a student’s stage is priced against study hours, not against a career. If the real rate is low, the question is what the hours are taking from.',
-        betweenJobs: '', retired: ''
-      }[situation] || 'Any job has a headline rate and a real one. The gap between them is what this room measures.';
+        employed: 'Two paycheques make one household month, and how it is split decides what each of you has left. Halves is simple; in proportion is what most people mean by fair when the pay is far apart. Pick one on purpose.',
+        selfEmployed: 'Own work pays unevenly, so a proportional split wobbles month to month with the income behind it. Split on a typical year of pay, not the last invoice, and let the pool absorb the lean months.',
+        mixed: 'A job and your own work on one side, a paycheque on the other: the proportional split reads the year’s total, not the steady part of it, so check that the share still fits the months the own work is thin.',
+        student: 'While one of you studies, the other’s pay carries more of the shared month than the split alone suggests. The proportional share says how much; the take-home percentage says whether it is heavy.',
+        retired: 'Two incomes from what was built — pensions, Social Security, a draw — split the same way pay did. The concentration figure says how much of the month rides on one of them.',
+        betweenJobs: 'Between jobs, a partner’s pay is the runway. The proportional split puts the shared month almost entirely on them for now; the take-home percentage says how long that is sustainable.'
+      }[situation] || 'One household, two incomes: how the shared month is split decides what each of you keeps.';
     },
 
-    scope: 'This room does not model overtime pay, shift differentials, or a second job’s hours on their own. Tax is a flat estimate, not a return.'
+    scope: 'This room does not decide what is fair, hold separate accounts, or know your legal arrangement.'
   });
 })();
 </script>
