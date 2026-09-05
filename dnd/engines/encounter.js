@@ -84,6 +84,17 @@
     return ladder[ladder.length - 1].dc;
   }
 
+  /** A creature's to-hit bonus from CR — the attack-roll twin of dcFor(). */
+  function attackBonusFor(cr, tables) {
+    var n = crToNumber(cr);
+    if (n === null) return null;
+    var ladder = tables.dndRules.encounterRules.crToAttackBonus;
+    for (var i = 0; i < ladder.length; i++) {
+      if (ladder[i].maxCr === null || n <= ladder[i].maxCr) return ladder[i].bonus;
+    }
+    return ladder[ladder.length - 1].bonus;
+  }
+
   function tierForLevel(level, tables) {
     var tiers = tables.dndRules.encounterRules.tiers;
     for (var i = 0; i < tiers.length; i++) {
@@ -232,6 +243,17 @@
     var halved = held.some(function (b) { return b.effect === 'halve'; });
     var advantage = held.some(function (b) { return b.effect === 'advantage'; });
 
+    /* Two ways to get hurt, as in 5e (DD-019). An ATTACK is a bill, a lawsuit,
+       a lost stream: d20 + a CR bonus against your Armour Class, so insurance
+       does its real job. A SAVE goes around armour and targets judgment. */
+    var isAttack = monster.resolution === 'attack';
+
+    /* Debt Burden's disadvantage — the rulebook's own rule, applied at last.
+       5e's cancel rule holds: advantage and disadvantage together are neither. */
+    var burdenRow = Money.isOk(sheet.debtBurden) ? sheet.debtBurden.row : null;
+    var burdenDis = burdenRow && Array.isArray(burdenRow.saveDisadvantage)
+      ? burdenRow.saveDisadvantage : [];
+
     /* Exhaustion (§9.7) subtracts from every save. This is the whole reason it
        is derived rather than decorative: being close to the edge really does
        make you easier to move — you cannot wait for a better offer, shop the
@@ -241,17 +263,35 @@
     var exhPenalty = Money.isOk(exh) ? exh.savePenalty : 0;
 
     var modifier = target && target.ok ? target.modifier : null;
+    var disadvantage = !isAttack && !!target && burdenDis.indexOf(target.stat) !== -1;
+    var netRoll = (advantage ? 1 : 0) - (disadvantage ? 1 : 0);   /* 5e: they cancel */
     var effectiveMod = modifier;
-    if (effectiveMod !== null) {
-      if (advantage) effectiveMod += rules.effects.advantageBonus;
+    if (effectiveMod !== null && !isAttack) {
+      effectiveMod += netRoll * rules.effects.advantageBonus;
       effectiveMod -= exhPenalty;
     }
 
-    /* Chance the save FAILS, i.e. the attack lands. A natural 1 always fails
-       and a natural 20 always succeeds, so it never reaches 0 or 1. */
+    /* Attack rolls: the creature's d20 + bonus must reach your AC. A blocker
+       that would grant YOU advantage on a save instead hampers the attacker
+       — same value, applied to its roll. Exhaustion is a judgment penalty and
+       does not lower your insurance, so it does not apply here. */
+    var attackBonus = isAttack ? attackBonusFor(monster.cr, tables) : null;
+    var ac = Money.isOk(sheet.armorClass) ? sheet.armorClass.value : null;
+    var effectiveAttack = attackBonus;
+    if (isAttack && effectiveAttack !== null && advantage) effectiveAttack -= rules.effects.advantageBonus;
+
+    /* Chance it lands. On a save: the save fails. On an attack: the roll
+       reaches AC. A natural 1 always misses/fails and a 20 always hits/saves,
+       so it never reaches 0 or 1 — a 5% floor either way. */
     var hitChance = null;
     if (negated) hitChance = 0;
-    else if (effectiveMod !== null && dc !== null) {
+    else if (isAttack) {
+      if (effectiveAttack !== null && ac !== null) {
+        var rawA = (21 + effectiveAttack - ac) / rules.d20.sides;
+        hitChance = Math.max(rules.d20.autoFailChance, Math.min(1 - rules.d20.autoSucceedChance, rawA));
+        hitChance = Math.round(hitChance * 1000) / 1000;
+      }
+    } else if (effectiveMod !== null && dc !== null) {
       var raw = (dc - effectiveMod - 1) / rules.d20.sides;
       hitChance = Math.max(rules.d20.autoFailChance,
                   Math.min(1 - rules.d20.autoSucceedChance, raw));
@@ -291,6 +331,10 @@
       deathSaves: hpAfter === 0 && cur !== null && damageWeeks > 0,
       massiveDamage: massive,
       negated: negated, halved: halved, advantage: advantage,
+      resolution: isAttack ? 'attack' : 'save',
+      attackBonus: attackBonus, effectiveAttack: effectiveAttack, armorClass: ac,
+      disadvantage: disadvantage,
+      disadvantageFrom: disadvantage ? 'Debt Burden level ' + sheet.debtBurden.value : null,
       exhaustion: Money.isOk(exh) ? exh.value : null,
       exhaustionLabel: Money.isOk(exh) ? exh.row.label : null,
       exhaustionPenalty: exhPenalty,
@@ -399,6 +443,7 @@
       return {
         id: t.id, label: t.label, blurb: t.blurb,
         creatures: users, count: users.length,
+        attacks: users.filter(function (c) { return c.resolution === 'attack'; }).length,
         saves: saves, hitsAll: hitsAll,
         blockers: blockers,
         crRange: crs.length ? { min: crs[0], max: crs[crs.length - 1] } : null
@@ -495,7 +540,31 @@
              recorded: total - unknown, any: total > 0 };
   }
 
+  /**
+   * What gets through your armour — DD-019. The attack-roll creatures, each
+   * with the chance its roll reaches your AC. This is the sentence the AC
+   * panel could never say before: which bills your insurance actually stops.
+   */
+  function armourGaps(sheet, tables) {
+    if (!Money.isOk(sheet.armorClass)) {
+      return { ready: false, reason: 'Armour Class needs Dexterity and your cover answered.', rows: [] };
+    }
+    var ac = sheet.armorClass.value;
+    var rules = tables.dndRules.encounterRules;
+    var rows = allCreatures(tables).filter(function (c) { return c.resolution === 'attack'; })
+      .map(function (c) {
+        var b = attackBonusFor(c.cr, tables);
+        var raw = (21 + b - ac) / rules.d20.sides;
+        var chance = Math.max(rules.d20.autoFailChance, Math.min(1 - rules.d20.autoSucceedChance, raw));
+        return { creature: c, attackBonus: b, chance: Math.round(chance * 100) / 100 };
+      }).sort(function (a, b) { return b.chance - a.chance; });
+    return { ready: true, ac: ac, rows: rows,
+             landing: rows.filter(function (r) { return r.chance >= 0.5; }).length };
+  }
+
   return {
+    attackBonusFor: attackBonusFor,
+    armourGaps: armourGaps,
     typeChart: typeChart,
     typeDefence: typeDefence,
     typeHistory: typeHistory,

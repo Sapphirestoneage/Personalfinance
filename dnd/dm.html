@@ -91,6 +91,12 @@
       <div><label for="f-runway">Weeks of runway</label>
         <input type="number" id="f-runway" min="0" max="520" step="1" placeholder="e.g. 4"/></div>
     </div>
+    <div class="two" style="margin-top:var(--space-3)">
+      <div><label for="f-ac">Armour Class</label>
+        <input type="number" id="f-ac" min="5" max="35" step="1" placeholder="10 + DEX + cover"/></div>
+      <div><p class="note" style="margin:22px 0 0">Bills and lawsuits attack this; pitches and panics go around it.
+        Leave it blank and the attackers report unknown rather than assuming no cover.</p></div>
+    </div>
     <p class="note" style="margin:var(--space-2) 0 0" id="exh-note"></p>
 
     <label style="margin-top:var(--space-3)">Saving throws</label>
@@ -165,6 +171,8 @@
                 creature: el('pick').value || null };
     var r = el('f-runway').value;
     out.runway = r === '' ? null : Number(r);
+    var a = el('f-ac').value;
+    out.ac = a === '' ? null : Number(a);
     Char.STAT_IDS.forEach(function (id) {
       var v = el('sv-' + id).value;
       if (v !== '') out.saves[id] = Number(v);
@@ -180,6 +188,7 @@
     if (!s) return;
     el('f-name').value = s.name || '';
     el('f-runway').value = Money.isEntered(s.runway) ? String(s.runway) : '';
+    el('f-ac').value = Money.isEntered(s.ac) ? String(s.ac) : '';
     Char.STAT_IDS.forEach(function (id) {
       el('sv-' + id).value = s.saves && Money.isEntered(s.saves[id]) ? String(s.saves[id]) : '';
     });
@@ -206,6 +215,7 @@
     return {
       stats: stats, klass: null, proficiencyBonus: 0, level: null,
       currentHp: Money.isEntered(s.runway) ? Money.ok(s.runway) : null,
+      armorClass: Money.isEntered(s.ac) ? Money.ok(s.ac, { layers: [] }) : null,
       maxHp: null,
       /* Blockers keyed to a sub-stat are answered by the DM's tri-state
          selects instead, so no sub-scores are supplied. */
@@ -249,7 +259,7 @@
       subScores[cat.subStat] = Money.ok(Math.max(cat.min, 8));
     });
     var withHeld = { stats: sheet.stats, klass: null, proficiencyBonus: 0, level: null,
-                     currentHp: sheet.currentHp, maxHp: null, subScores: subScores };
+                     currentHp: sheet.currentHp, armorClass: sheet.armorClass, maxHp: null, subScores: subScores };
     var out = Enc.run(withHeld, creature, {
       tables: TABLES, mode: mode,
       household: { dndProfile: dmProfileFor(probe, s) }
@@ -282,18 +292,24 @@
     var verdict = r.negated
       ? who + ' cannot be touched by this.'
       : r.hitChance === null
-        ? 'Not enough about them to say — give the save it targets a number.'
+        ? (r.resolution === 'attack'
+            ? 'Not enough about them to say — this one attacks Armour Class, and theirs is blank.'
+            : 'Not enough about them to say — give the save it targets a number.')
         : r.massiveDamage
           ? 'Massive damage. Straight past death saves.'
           : 'It lands ' + pct(r.hitChance) + ' of the time.';
 
-    var figs = [
+    var figs = (r.resolution === 'attack' ? [
+      ['It attacks', '+' + (r.attackBonus === null ? '?' : r.attackBonus) + ' vs AC'],
+      ['Their AC', r.armorClass === null ? '—' : r.armorClass],
+    ] : [
       ['Target save', r.targetSave ? r.targetSave + ' ' + (r.modifier === null ? '—' : sign(r.modifier)) : '—'],
       ['DC', r.dc === null ? '—' : r.dc],
+    ]).concat([
       ['Chance it lands', r.hitChance === null ? '—' : pct(r.hitChance)],
       ['Damage', r.damageWeeks + ' wk' + (r.perPeriod ? '/' + r.perPeriod : '')],
       ['Runway after', r.hpAfter === null ? '—' : r.hpBefore + ' → ' + r.hpAfter]
-    ];
+    ]);
     if (r.exhaustionPenalty > 0) {
       figs.splice(1, 0, ['Exhaustion', r.exhaustionLabel + ' · −' + r.exhaustionPenalty]);
     }

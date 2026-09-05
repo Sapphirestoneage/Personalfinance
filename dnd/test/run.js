@@ -335,8 +335,12 @@ section('Dungeons & Dividends — the encounter engine');
   const bare = Encounter.run(sheet, behemoth, { tables: TABLES, household: { dndProfile: {} } });
   const insured = Encounter.run(sheet, behemoth, {
     tables: TABLES, household: { dndProfile: { healthCoverage: 2 } } });
-  checkTrue('health cover halves the Behemoth', insured.halved);
-  check('to exactly half', insured.damageWeeks, bare.damageWeeks / 2);
+  /* DD-019: health cover no longer halves the Behemoth as a blocker — it is
+     armour, and armour acts through AC on an attack roll. Counting it in both
+     places was the double-count this pass removed. */
+  check('the Behemoth attacks Armour Class', insured.resolution, 'attack');
+  checkTrue('health cover is not a blocker on it any more', !insured.halved);
+  check('so damage is the full roll either way', insured.damageWeeks, bare.damageWeeks);
   checkTrue('uninsured, it is massive damage against an 18-week pool', bare.massiveDamage);
 
   /* -- the 5%/95% clamp -------------------------------------------------- */
@@ -1484,6 +1488,126 @@ section('Dungeons & Dividends — the bestiary extension');
   });
   checkTrue('scenarioForesight is a blocker and a declared sub-stat',
     !!R.blockers.scenarioForesight && declared.indexOf('scenarioForesight') !== -1);
+})();
+
+section('Dungeons & Dividends — two ways to get hurt (DD-019)');
+
+(function () {
+  const Encounter = require(path.join(ROOT, 'engines/encounter.js'));
+  const R = TABLES.dndRules, E = R.encounterRules;
+  const all = R.monsters.concat(R.hazards);
+
+  /* Every creature says which door it comes through. */
+  all.forEach(function (c) {
+    checkTrue(`${c.name} resolves by attack or save`, ['attack', 'save'].indexOf(c.resolution) !== -1);
+  });
+  const attackers = all.filter(function (c) { return c.resolution === 'attack'; });
+  check('eight creatures attack AC', attackers.length, 8);
+  ['Medical Bankruptcy Behemoth', 'Identity Thief', 'The Layoff Reaper', 'The Sudden Ability Drain']
+    .forEach(function (n) {
+      checkTrue(`${n} is a bill, not a pitch — it attacks`,
+        attackers.some(function (c) { return c.name === n; }));
+    });
+  ['Timeshare Charm-Caster', 'Crypto Siren', 'MLM Cultist'].forEach(function (n) {
+    checkTrue(`${n} goes around armour — it forces a save`,
+      all.filter(function (c) { return c.name === n; })[0].resolution === 'save');
+  });
+
+  /* Armour is counted ONCE. An armour-layer blocker on an attack creature would
+     count insurance as AC and again as a halve. Immunity (negate) is not armour
+     and may stay. */
+  const ARMOUR = ['healthInsurance', 'disabilityInsurance', 'umbrella', 'emergencyFund'];
+  attackers.forEach(function (c) {
+    c.blockedBy.forEach(function (b) {
+      checkTrue(`${c.name}: ${b.id} is not counted as both armour and a blocker`,
+        ARMOUR.indexOf(b.id) === -1 || b.effect === 'negate');
+    });
+  });
+
+  /* The to-hit ladder rises with CR and is the DMG's shape. */
+  checkTrue('a to-hit ladder exists', Array.isArray(E.crToAttackBonus) && E.crToAttackBonus.length > 3);
+  check('CR 1 attacks at +3', Encounter.attackBonusFor('1', TABLES), 3);
+  check('CR 8 attacks at +7', Encounter.attackBonusFor('8', TABLES), 7);
+  check('CR 15 attacks at +8', Encounter.attackBonusFor('15', TABLES), 8);
+  checkTrue('and it never goes down', (function () {
+    let prev = -Infinity;
+    for (let cr = 0; cr <= 25; cr++) { const b = Encounter.attackBonusFor(String(cr), TABLES); if (b < prev) return false; prev = b; }
+    return true;
+  })());
+
+  /* Attack rolls: d20 + bonus reaches AC. Insurance moves this and nothing
+     else does — not exhaustion, which is a judgment penalty. */
+  function sheetAt(ac, weeks, burden) {
+    const s = { stats: { STR: Money.ok(12), DEX: Money.ok(12), CON: Money.ok(12), INT: Money.ok(12), WIS: Money.ok(12), CHA: Money.ok(12) },
+      klass: null, proficiencyBonus: 2, level: Money.ok(5), currentHp: Money.ok(weeks), maxHp: { weeks: 44 }, subScores: {},
+      armorClass: ac === null ? Money.incomplete('no AC', ['DEX']) : Money.ok(ac, { layers: [] }) };
+    if (burden !== undefined) s.debtBurden = Money.ok(burden, { row: R.debtBurden[burden] });
+    return s;
+  }
+  const opts = { tables: TABLES, household: { dndProfile: {} } };
+  const beh = all.filter(function (c) { return c.name === 'Medical Bankruptcy Behemoth'; })[0];
+  const lo = Encounter.run(sheetAt(11, 30), beh, opts);
+  const hi = Encounter.run(sheetAt(25, 30), beh, opts);
+  check('the Behemoth resolves as an attack', lo.resolution, 'attack');
+  check('at +8', lo.attackBonus, 8);
+  check('against AC 11 it lands 90%', lo.hitChance, 0.9);
+  check('against AC 25 it lands 20%', hi.hitChance, 0.2);
+  checkTrue('more armour, fewer hits', hi.hitChance < lo.hitChance);
+  check('the save fields are empty on an attack', lo.dc, Encounter.dcFor(beh.cr, TABLES));
+  check('exhaustion does not apply to an attack',
+    Encounter.run(sheetAt(11, 0.5), beh, opts).hitChance, lo.hitChance);
+  check('no AC means no chance, not a guessed one',
+    Encounter.run(sheetAt(null, 30), beh, opts).hitChance, null);
+
+  /* Debt Burden's disadvantage — the rulebook's rule, finally applied. */
+  const imp = all.filter(function (c) { return c.name === 'Lifestyle-Inflation Imp'; })[0];
+  const clean = Encounter.run(sheetAt(17, 30, 0), imp, opts);
+  const l1 = Encounter.run(sheetAt(17, 30, 1), imp, opts);
+  check('Debt Burden 1 gives disadvantage on a CON save', l1.disadvantage, true);
+  checkTrue('and names itself', /Debt Burden level 1/.test(l1.disadvantageFrom));
+  checkTrue('so the Imp lands more often', l1.hitChance > clean.hitChance);
+  check('the raw modifier is untouched', l1.modifier, clean.modifier);
+  check('level 3 is DEX, not CON', Encounter.run(sheetAt(17, 30, 3), imp, opts).disadvantage, false);
+  const wraith = all.filter(function (c) { return c.name === 'Payday Loan Wraith'; })[0];
+  check('and a DEX save at level 3 does get it',
+    Encounter.run(sheetAt(17, 30, 3), wraith, opts).disadvantage, true);
+  R.debtBurden.forEach(function (row) {
+    checkTrue(`burden level ${row.level} declares its disadvantage as data`, Array.isArray(row.saveDisadvantage));
+  });
+
+  /* A debt-free household is level 0, and level 0 has a row. It used to come
+     back rowless, and the sheet crashed on a household with no debt — caught by
+     the phone pass, not by any unit test, which is why this one exists. */
+  const debtFree = Character.debtBurden(Schema.createHousehold(), TABLES);
+  checkTrue('no debt is level 0, not incomplete', Money.isOk(debtFree) && debtFree.value === 0);
+  checkTrue('and it carries its row', !!debtFree.row);
+  /* Guarded, so a missing row is a failed check and not a crashed suite. */
+  check('with no disadvantage', debtFree.row ? (debtFree.row.saveDisadvantage || []).length : 'no row', 0);
+  check('and the row is the data\'s own level 0', debtFree.row ? debtFree.row.level : 'no row', 0);
+
+  /* 5e's cancel rule: advantage and disadvantage together are neither. */
+  /* Self-Awareness 14+ grants advantage against the Imp (automated saving only
+     halves it), so the sub-score is what has to be supplied here. */
+  const aware = Object.assign({}, sheetAt(17, 30, 1), { subScores: { selfAwareness: Money.ok(15) } });
+  const both = Encounter.run(aware, imp, opts);
+  checkTrue('a held advantage and a burden disadvantage', both.advantage && both.disadvantage);
+  check('cancel to the raw modifier', both.effectiveModifier, both.modifier);
+
+  /* The AC panel's answer. */
+  const gaps = Encounter.armourGaps(sheetAt(17, 30), TABLES);
+  checkTrue('armour gaps are ready with an AC', gaps.ready);
+  check('and list every attacker', gaps.rows.length, attackers.length);
+  checkTrue('sorted most-likely first', gaps.rows.every(function (r, i) { return i === 0 || gaps.rows[i - 1].chance >= r.chance; }));
+  checkTrue('without an AC it says so', !Encounter.armourGaps(sheetAt(null, 30), TABLES).ready);
+
+  /* -- pages ------------------------------------------------------------- */
+  const enc = fs.readFileSync(path.join(ROOT, 'encounter.html'), 'utf8');
+  checkTrue('the encounter room shows attack figures', /'It attacks'/.test(enc) && /'Your AC'/.test(enc));
+  checkTrue('and has the armour panel', /id="armour-list"/.test(enc) && /Enc\.armourGaps/.test(enc));
+  checkTrue('and explains disadvantage', /disadvantageFrom/.test(enc));
+  checkTrue('DM mode takes an AC', /id="f-ac"/.test(fs.readFileSync(path.join(ROOT, 'dm.html'), 'utf8')));
+  checkTrue('the bestiary says which creatures attack AC', /attacks AC/.test(fs.readFileSync(path.join(ROOT, 'bestiary.html'), 'utf8')));
+  checkTrue('the sheet says what AC is for', /v-ac-note/.test(fs.readFileSync(path.join(ROOT, 'sheet.html'), 'utf8')));
 })();
 
 section('Dungeons & Dividends — six abilities, like D&D Beyond (DD-018)');

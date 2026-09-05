@@ -400,6 +400,7 @@
               + '</select>') + '</div>'
         + '<div class="panel"><div class="big-num na" id="v-ac">' + DASH + '</div>'
           + '<div class="panel-label">Armour class</div>'
+          + '<div class="micro" id="v-ac-note" style="text-align:left"></div>'
           + sharpen('ac', 'Sharpen',
               '<label for="f-health">Health insurance</label><select id="f-health"><option value="">—</option>'
               + '<option value="0">None</option><option value="1">High-deductible</option>'
@@ -710,6 +711,19 @@
     var acNode = el('v-ac');
     acNode.textContent = Money.isOk(s.armorClass) ? s.armorClass.value : DASH;
     acNode.classList.toggle('na', !Money.isOk(s.armorClass));
+    /* What the number is FOR (DD-019): the bills that attack it, and how many
+       get through. No inputs in this node, so it may be rebuilt. */
+    var gaps = Enc.armourGaps(s, TABLES);
+    var burdenDis = Money.isOk(s.debtBurden) && s.debtBurden.row && s.debtBurden.row.saveDisadvantage
+      ? s.debtBurden.row.saveDisadvantage : [];
+    html('v-ac-note', (gaps.ready
+        ? gaps.rows.length + ' creatures attack this — bills, lawsuits, lost streams. '
+          + (gaps.landing === 0 ? 'None' : gaps.landing === gaps.rows.length ? 'All of them' : gaps.landing + ' of them')
+          + ' would land more often than not. Only cover moves it.'
+        : 'Bills and lawsuits attack this number; pitches go around it. It needs DEX and your cover.')
+      + (burdenDis.length
+          ? '<br/><span class="bad">Debt Burden ' + s.debtBurden.value + ': disadvantage on '
+            + esc(burdenDis.join(' and ')) + ' saves.</span>' : ''));
     var def = Char.defenses(s.featuresEarned, s.subclassFeatures);
     html('v-defences', def.length
       ? def.map(function (d) { return '<div><b>' + esc(d.kind) + '</b> — ' + esc(d.text) + '</div>'; }).join('')

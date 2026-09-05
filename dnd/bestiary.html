@@ -88,7 +88,7 @@
 
   <section id="monsters">
     <h2>The Monster Manual</h2>
-    <p class="sec-note">Monsters are people and institutions whose incentives don't run with yours — whether or not they mean you harm. Some are predators. Some are entirely well-meaning and still bad for you, which is the harder category to see coming. Names marked <span class="ext">+</span> were written for this build; the rest came from the rulebook as supplied.</p>
+    <p class="sec-note">Monsters are people and institutions whose incentives don't run with yours — whether or not they mean you harm. Some are predators. Some are entirely well-meaning and still bad for you, which is the harder category to see coming. A creature that <b>attacks AC</b> is a bill or a lawsuit — it comes at your insurance, and insurance is what stops it. One that forces a <b>save</b> is a pitch or a panic — it goes around your cover and targets your judgment, because no policy stops you buying a timeshare. Names marked <span class="ext">+</span> were written for this build; the rest came from the rulebook as supplied.</p>
     <div class="tablewrap"><table><thead><tr>
       <th>Monster</th><th>CR</th><th>Type</th><th>Save</th><th>Damage</th><th>Notes</th>
     </tr></thead><tbody id="monster-rows"></tbody></table></div>
@@ -171,13 +171,13 @@
   function render(rules) {
     el('monster-rows').innerHTML = rules.monsters.map(function (m) {
       return '<tr>' + nameCell(m) + td(m.cr, 'cr') + td(m.type)
-        + td(m.save + ' save', 'save') + td(m.damage) + td(m.note) + '</tr>';
+        + td(m.resolution === 'attack' ? 'attacks AC' : m.save + ' save', 'save') + td(m.damage) + td(m.note) + '</tr>';
     }).join('');
 
     el('hazard-rows').innerHTML = rules.hazards.map(function (z) {
       return '<tr>' + nameCell(z)
         + '<td><span class="cat">' + esc(z.category) + '</span></td>'
-        + td(z.cr, 'cr') + td(z.save, 'save') + td(z.damage) + td(z.note) + '</tr>';
+        + td(z.cr, 'cr') + td(z.resolution === 'attack' ? 'attacks AC' : z.save, 'save') + td(z.damage) + td(z.note) + '</tr>';
     }).join('');
     el('massive-damage').textContent = rules.deathSaves.massiveDamage;
 
