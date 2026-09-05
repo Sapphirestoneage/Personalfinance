@@ -12,7 +12,8 @@
   ROOM SPEC — SPEC.md §11.
 
   1. READS   household.debts[] (balance, rate, minPayment, type,
-             emotionalTag, ownerIds).
+             emotionalTag, ownerIds; interestFree, archived, borrowedOn,
+             dueOn — D-124).
   2. WRITES  household.debts[] — raw inputs only, itemised. This is the room
              that turns the Financial Snapshot's single lump-sum debt record
              into real per-debt entries, which is what the Debt Calculator
@@ -53,6 +54,18 @@
   .debt-promo { font-size: var(--text-xs); margin: var(--space-2) 0 0; }
   .debt-promo.is-warn { color: var(--color-caution); }
   .debt-promo.is-good { color: var(--color-positive); }
+  .debt-flags { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin-top: var(--space-2); }
+  .debt-flag { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-xs); color: var(--color-text-muted); cursor: pointer; }
+  .debt-flag input { margin: 0; width: 16px; height: 16px; accent-color: var(--color-accent); }
+  .debt-dates { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-2); }
+  .debt-archive { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; }
+  .debt-archive:hover { border-color: var(--color-border-active); color: var(--color-text); }
+  details.archived { margin-top: var(--space-3); border: 1px dashed var(--color-border); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); }
+  details.archived summary { cursor: pointer; font-size: var(--text-sm); color: var(--color-text-muted); }
+  details.archived summary small { color: var(--color-text-faint); }
+  .arch-row { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  .arch-row:first-child { border-top: none; }
+  .arch-row .arch-meta { color: var(--color-text-faint); font-size: var(--text-xs); display: block; }
 
   .strategies { display: grid; gap: var(--space-2); }
   .strategy { text-align: left; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; font-family: var(--font-body); color: var(--color-text); }
@@ -102,6 +115,11 @@
     <h2 style="margin:var(--space-2) 0 var(--space-3)">One line per debt</h2>
     <div id="debt-list"></div>
     <button type="button" class="slaf-btn" id="btn-add" style="width:100%">+ Add a debt</button>
+    <details class="archived" id="archived" hidden>
+      <summary>Set aside <small id="archived-count"></small></summary>
+      <p class="debt-hint" style="margin:var(--space-2) 0">Paid off, or on hold. Nothing here is counted or planned; restore one to bring it back.</p>
+      <div id="archived-list"></div>
+    </details>
     <div class="actions">
       <button type="button" class="slaf-btn" id="btn-demo">Try with example numbers</button>
       <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Clear</button>
@@ -203,10 +221,26 @@
   var DEBT_TYPES = [
     ['credit_card', 'Credit card'], ['student_loan', 'Student loan'],
     ['auto', 'Car loan'], ['mortgage', 'Mortgage'], ['personal', 'Personal loan'],
+    ['family', 'Borrowed from family or a friend'],
     ['medical', 'Medical'], ['other', 'Other']
   ];
 
-  function debtsOf(h) { return (h.debts || []).slice(); }
+  /* The live list: what is counted and planned. Archived debts sit in the
+     drawer below it and are read by nothing (Schema.archivedDebts). D-124. */
+  function debtsOf(h) { return (h.debts || []).filter(function (d) { return d.archived !== true; }); }
+
+  /* What a debt still needs before it can be planned — said live, under the
+     row, because the row itself is not rebuilt while someone is typing in
+     it (shared/liveform.js) and a stale warning read as a broken one. */
+  function warningFor(d) {
+    var missing = [];
+    if (!Money.isEntered(Debt.effectiveRate(d))) missing.push('an interest rate (or tick “no interest”)');
+    if (!Money.isEntered(d.minPaymentCents)) {
+      var derived = Debt.minimumPaymentCents(d, RULES);
+      if (!Money.isOk(derived)) missing.push(d.type === 'family' ? 'a monthly amount, or the date it is due back' : 'a minimum payment');
+    }
+    return missing.length ? 'Needs ' + missing.join(' and ') + ' before it can be planned.' : '';
+  }
 
   function renderDebts(h) {
     var list = el('debt-list');
@@ -223,22 +257,23 @@
 
     var tags = (RULES.emotionalPriority.tags || []);
     list.innerHTML = debts.map(function (d) {
-      var missing = [];
-      if (!Money.isEntered(d.rate)) missing.push('an interest rate');
-      if (!Money.isEntered(d.minPaymentCents)) {
-        var derived = Debt.minimumPaymentCents(d, RULES);
-        if (!Money.isOk(derived)) missing.push('a minimum payment');
-      }
-      return '<div class="debt">'
+      var free = d.interestFree === true;
+      return '<div class="debt" data-row="' + d.id + '">'
         + '<div class="debt-top">'
         + '<input class="debt-name" data-debt="' + d.id + '" data-field="label" '
         + 'value="' + (d.label || '').replace(/"/g, '&quot;') + '" placeholder="Name this debt" aria-label="Debt name"/>'
+        + '<button type="button" class="debt-archive" data-archive="' + d.id + '" title="Paid off or on hold — keep it, stop counting it">Set aside</button>'
         + '<button type="button" class="debt-remove" data-remove="' + d.id + '" aria-label="Remove">✕</button>'
         + '</div>'
         + '<div class="debt-grid">'
         + field(d, 'balanceCents', 'Balance', '$', null, 'e.g. 3200')
-        + field(d, 'rate', 'Rate', null, '%', 'e.g. 22.9')
-        + field(d, 'minPaymentCents', 'Min /mo', '$', null, 'e.g. 95')
+        + field(d, 'rate', 'Rate', null, '%', free ? '0' : 'e.g. 22.9', free)
+        + field(d, 'minPaymentCents', 'Min /mo', '$', null, d.type === 'family' ? 'or a due date' : 'e.g. 95')
+        + '</div>'
+        + '<div class="debt-flags">'
+        /* Money owed to family, a 0% loan from a dealer, a hospital plan:
+           no interest is an answer, not a missing rate. D-124. */
+        + '<label class="debt-flag" title="No interest is charged on this, ever"><input type="checkbox" data-debt="' + d.id + '" data-field="interestFree"' + (free ? ' checked' : '') + '/>No interest charged</label>'
         + '</div>'
         + '<div class="debt-meta">'
         + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Type</span>'
@@ -255,40 +290,83 @@
           }).join('')
         + '</select></span></label>'
         + '</div>'
+        /* Two dates on every debt: when it started, and when it is due
+           back in full. On a family loan the due date is what the minimum
+           comes from when no monthly amount was agreed. D-124. */
+        + '<div class="debt-dates">'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Borrowed on</span>'
+        + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id + '" data-field="borrowedOn" value="' + (d.borrowedOn || '') + '" aria-label="Date borrowed"/></span></label>'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Due back by</span>'
+        + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id + '" data-field="dueOn" value="' + (d.dueOn || '') + '" aria-label="Date due back in full"/></span></label>'
+        + '</div>'
+        + '<p class="debt-hint" data-family-hint="' + d.id + '"' + (d.type === 'family' ? '' : ' hidden') + '>With a due date and no monthly amount, the minimum is the balance spread over the months left.</p>'
         /* The limit only means something on revolving debt — a mortgage has
-           no limit for the balance to be a share of — so the field appears
-           only for cards, and only there. Leaving it blank keeps credit
-           utilisation unavailable rather than assuming a limit.
-           DECISIONS.md D-045. */
-        + (d.type === 'credit_card'
-            ? '<div class="debt-limit">'
-              + field(d, 'creditLimitCents', 'Credit limit', '$', null, 'e.g. 10000')
-              + '<p class="debt-hint">Optional, and only used for credit utilisation — '
-              + 'balance against limit, where 30% is the usual ceiling. Blank means the '
-              + 'ratio stays unavailable rather than guessed.</p>'
-              /* A 0% card is a card with a deadline. Without these two the
-                 payoff plan treats today's rate as permanent. D-053. */
-              + '<div class="debt-grid" style="margin-top:var(--space-3)">'
-              + '<label class="slaf-field" style="margin:0"><span class="slaf-label">0% / promo ends</span>'
-              + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id
-              + '" data-field="promoEndsOn" value="' + (d.promoEndsOn || '')
-              + '" aria-label="Promotional rate end date"/></span></label>'
-              + field(d, 'postPromoRate', 'Then the rate becomes', null, '%', 'e.g. 24.99')
-              + '</div>'
-              + '<p class="debt-promo" data-promo="' + d.id + '"></p></div>'
-            : '')
-        + (missing.length
-            ? '<p class="debt-warn">Needs ' + missing.join(' and ') + ' before it can be planned.</p>'
-            : '')
+           no limit for the balance to be a share of — so the block is shown
+           only for cards. Built for every row and hidden by type, so a
+           change of type never rebuilds the row under a finger. D-045. */
+        + '<div class="debt-limit" data-cardonly="' + d.id + '"' + (d.type === 'credit_card' ? '' : ' hidden') + '>'
+        + field(d, 'creditLimitCents', 'Credit limit', '$', null, 'e.g. 10000')
+        + '<p class="debt-hint">Optional, and only used for credit utilisation — '
+        + 'balance against limit, where 30% is the usual ceiling. Blank means the '
+        + 'ratio stays unavailable rather than guessed.</p>'
+        /* A 0% card is a card with a deadline. Without these two the
+           payoff plan treats today's rate as permanent. D-053. */
+        + '<div class="debt-grid" style="margin-top:var(--space-3)">'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">0% / promo ends</span>'
+        + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id
+        + '" data-field="promoEndsOn" value="' + (d.promoEndsOn || '')
+        + '" aria-label="Promotional rate end date"/></span></label>'
+        + field(d, 'postPromoRate', 'Then the rate becomes', null, '%', 'e.g. 24.99')
+        + '</div>'
+        + '<p class="debt-promo" data-promo="' + d.id + '"></p></div>'
+        + '<p class="debt-warn" data-warn="' + d.id + '"></p>'
         + '</div>';
     }).join('');
 
-    paintPromos();
+    paintLive();
 
     if (focusedId && focusedField) {
       var again = list.querySelector('[data-debt="' + focusedId + '"][data-field="' + focusedField + '"]');
       if (again) { again.focus(); if (again.select) again.select(); }
     }
+  }
+
+  /* The drawer of debts set aside. No inputs, so it is rebuilt freely. */
+  function renderArchived(h) {
+    var gone = Schema.archivedDebts(h);
+    el('archived').hidden = !gone.length;
+    el('archived-count').textContent = gone.length ? gone.length + (gone.length === 1 ? ' debt' : ' debts') : '';
+    el('archived-list').innerHTML = gone.map(function (d) {
+      var t = DEBT_TYPES.filter(function (x) { return x[0] === d.type; })[0];
+      return '<div class="arch-row"><span>' + esc(d.label || 'Debt')
+        + '<span class="arch-meta">' + (t ? t[1] : 'Debt') + (Money.isEntered(d.balanceCents) ? ' · ' + Money.formatCents(d.balanceCents) + ' when set aside' : '') + '</span></span>'
+        + '<span><button type="button" class="debt-archive" data-restore="' + d.id + '">Restore</button> '
+        + '<button type="button" class="debt-remove" data-remove="' + d.id + '" aria-label="Remove for good">✕</button></span></div>';
+    }).join('');
+  }
+
+  /* Everything under a row that is text or a hidden flag — the warning,
+     the promo line, which blocks show for the type, whether the rate box
+     is live — painted on every write WITHOUT rebuilding the row. This is
+     what keeps the row honest while the user is still inside it. */
+  function paintLive() {
+    var debts = debtsOf(Spine.getProfile());
+    debts.forEach(function (d) {
+      var warn = document.querySelector('[data-warn="' + d.id + '"]');
+      if (warn) warn.textContent = warningFor(d);
+      var card = document.querySelector('[data-cardonly="' + d.id + '"]');
+      if (card) card.hidden = d.type !== 'credit_card';
+      var fam = document.querySelector('[data-family-hint="' + d.id + '"]');
+      if (fam) fam.hidden = d.type !== 'family';
+      var rate = document.querySelector('input[data-debt="' + d.id + '"][data-field="rate"]');
+      if (rate && rate !== document.activeElement) {
+        rate.disabled = d.interestFree === true;
+        if (d.interestFree === true) rate.value = '0%';
+      }
+      var box = document.querySelector('input[data-debt="' + d.id + '"][data-field="interestFree"]');
+      if (box) box.checked = d.interestFree === true;
+    });
+    paintPromos();
   }
 
   /* The only number that matters about a 0% card: whether you clear it
@@ -336,7 +414,7 @@
     });
   }
 
-  function field(debt, key, label, prefix, suffix, placeholder) {
+  function field(debt, key, label, prefix, suffix, placeholder, disabled) {
     var raw = debt[key];
     var shown = '';
     if (Money.isEntered(raw)) {
@@ -344,10 +422,12 @@
         ? Money.formatRate(raw, { decimals: 2 }).replace(/\.?0+%$/, '%')
         : Money.formatCents(raw);
     }
+    if (key === 'rate' && disabled) shown = '0%';
     return '<label class="slaf-field" style="margin:0"><span class="slaf-label">' + label + '</span>'
       + '<span class="slaf-input-shell">'
       + (prefix ? '<span class="slaf-affix">' + prefix + '</span>' : '')
       + '<input type="text" inputmode="decimal" data-debt="' + debt.id + '" data-field="' + key + '" '
+      + (disabled ? 'disabled ' : '')
       + 'value="' + shown + '" placeholder="' + placeholder + '" aria-label="' + label + '"/>'
       + (suffix ? '<span class="slaf-affix">' + suffix + '</span>' : '')
       + '</span></label>';
@@ -363,7 +443,7 @@
     var node = evt.target;
     var id = node.getAttribute && node.getAttribute('data-debt');
     var key = node.getAttribute && node.getAttribute('data-field');
-    if (!id || !key || key === 'label' || key === 'promoEndsOn'
+    if (!id || !key || key === 'label' || DATE_FIELDS[key] || key === 'interestFree'
         || node.tagName === 'SELECT') return;
     var debt = findDebt(Spine.getProfile(), id);
     if (!debt) return;
@@ -375,9 +455,9 @@
     var node = evt.target;
     var id = node.getAttribute && node.getAttribute('data-debt');
     var key = node.getAttribute && node.getAttribute('data-field');
-    if (!id || !key || node.tagName === 'SELECT') return;
+    if (!id || !key || node.tagName === 'SELECT' || key === 'interestFree') return;
     writeField(id, key, node.value);
-    if (key === 'promoEndsOn') return;
+    if (DATE_FIELDS[key]) return;
     /* Tidy the value on THIS node rather than waiting for a rebuild to do
        it — the rebuild is now deferred until the user leaves the form, and
        setting one node's value replaces nothing. */
@@ -392,19 +472,36 @@
     }
   });
 
+  var DATE_FIELDS = { promoEndsOn: true, borrowedOn: true, dueOn: true };
+
   el('debt-list').addEventListener('change', function (evt) {
     var node = evt.target;
-    if (node.tagName !== 'SELECT') return;
-    writeField(node.getAttribute('data-debt'), node.getAttribute('data-field'), node.value);
+    var key = node.getAttribute && node.getAttribute('data-field');
+    if (node.tagName === 'SELECT') { writeField(node.getAttribute('data-debt'), key, node.value); return; }
+    if (key === 'interestFree') { writeField(node.getAttribute('data-debt'), key, node.checked); return; }
+    /* A phone's date picker commits on change, not on blur. */
+    if (DATE_FIELDS[key]) writeField(node.getAttribute('data-debt'), key, node.value);
   });
 
-  el('debt-list').addEventListener('click', function (evt) {
+  function onListClick(evt) {
+    var arch = evt.target.closest('[data-archive]');
+    if (arch) {
+      Spine.upsertDebt({ id: arch.getAttribute('data-archive'), archived: true });
+      debtForm.force(); render(); return;
+    }
+    var back = evt.target.closest('[data-restore]');
+    if (back) {
+      Spine.upsertDebt({ id: back.getAttribute('data-restore'), archived: false });
+      debtForm.force(); render(); return;
+    }
     var btn = evt.target.closest('[data-remove]');
     if (!btn) return;
     Spine.removeById('debts', btn.getAttribute('data-remove'));
     debtForm.force();
     render();
-  });
+  }
+  el('debt-list').addEventListener('click', onListClick);
+  el('archived-list').addEventListener('click', onListClick);
 
   el('debt-list').addEventListener('keydown', function (evt) {
     if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') {
@@ -423,14 +520,27 @@
     if (!debt) return;
     var patch = { id: id };
     if (key === 'label') patch.label = rawValue === '' ? null : rawValue;
-    else if (key === 'type') patch.type = rawValue;
+    else if (key === 'type') {
+      patch.type = rawValue;
+      /* Money from family usually carries no interest: say so by default
+         when nothing about the rate has been said yet. It can be unticked. */
+      if (rawValue === 'family' && debt.interestFree === null && !Money.isEntered(debt.rate)) { patch.interestFree = true; patch.rate = 0; }
+    }
     else if (key === 'emotionalTag') patch.emotionalTag = rawValue === '' ? null : rawValue;
-    else if (key === 'promoEndsOn') patch.promoEndsOn = rawValue === '' ? null : rawValue;
+    else if (DATE_FIELDS[key]) patch[key] = rawValue === '' ? null : rawValue;
+    else if (key === 'interestFree') {
+      /* Ticked: the rate is 0 and stays 0. Unticked: a 0 that only came
+         from the tick goes back to "not entered", so the row asks again. */
+      patch.interestFree = !!rawValue;
+      patch.rate = rawValue ? 0 : (debt.rate === 0 ? null : debt.rate);
+    }
     else if (key === 'rate' || key === 'postPromoRate') {
       patch[key] = Money.parseRatePercent(rawValue);
+      if (key === 'rate' && Money.isEntered(patch.rate) && patch.rate > 0) patch.interestFree = false;
     }
     else patch[key] = Money.parseMoney(rawValue);
     Spine.upsertDebt(patch);
+    paintLive();
     render();
   }
 
@@ -500,9 +610,10 @@
        as if it were planned. */
     el('plan-chart').innerHTML = !Money.isOk(plan) ? '' : Charts.bars({
       title: 'What you owe, by balance',
-      rows: (h.debts || []).filter(function (d) { return Money.isEntered(d.balanceCents) && d.balanceCents > 0; }).map(function (d) {
+      rows: debtsOf(h).filter(function (d) { return Money.isEntered(d.balanceCents) && d.balanceCents > 0; }).map(function (d) {
+        var rate = Debt.effectiveRate(d);
         return { label: d.label || 'Debt', value: d.balanceCents, color: Charts.COLORS.debt,
-          note: Money.isEntered(d.rate) ? rateLabel(d.rate) : 'no rate' };
+          note: Money.isEntered(rate) ? (rate === 0 && d.interestFree ? 'no interest' : rateLabel(rate)) : 'no rate' };
       })
     });
     if (Money.isOk(plan)) {
@@ -684,6 +795,7 @@
     if (!RULES) return;
     var h = Spine.getProfile();
     debtForm.request();
+    renderArchived(h);
     /* Every ordering is run once here and shared by the three outputs. */
     var cmp = Debt.compareStrategies(scoped(h), RULES, { extraMonthlyCents: extraCents });
     var plan = renderPlan(h, cmp);

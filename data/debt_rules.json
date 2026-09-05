@@ -1,6 +1,6 @@
 {
   "id": "debt_rules",
-  "version": "1.0",
+  "version": "1.1",
   "asOf": "2026-01-01",
   "source": "Payoff-ordering strategies and minimum-payment conventions for the Debt Calculator.",
   "confidence": "convention",
@@ -31,6 +31,14 @@
         ],
         "method": "not_derivable",
         "note": "Depends on the original term and amortisation schedule. Ask the user rather than inventing one."
+      },
+      {
+        "id": "family_balance_over_months_to_due",
+        "appliesToTypes": [
+          "family"
+        ],
+        "method": "balance_over_months_to_due",
+        "note": "Money borrowed from family or a friend has no statement and usually no interest: the minimum is the balance spread evenly over the months until the agreed pay-back date. A typed monthly amount still wins. D-124"
       }
     ]
   },

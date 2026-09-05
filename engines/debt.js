@@ -62,7 +62,27 @@
       return Money.ok(Math.min(debt.balanceCents, Math.max(pct, floor)),
         { derived: true, ruleId: rule.id });
     }
+    /* A family loan: no statement, no formula — a date it is due back. The
+       minimum is the balance spread over the months left. D-124. */
+    if (rule.method === 'balance_over_months_to_due') {
+      var left = Schema.monthsUntil(debt.dueOn, undefined, {
+        field: 'dueOn',
+        missingReason: 'Add the date it is due back, or a monthly amount you have agreed.',
+        passedReason: 'That due date has passed — enter the monthly amount you are paying now.'
+      });
+      if (!Money.isOk(left)) return Money.incomplete(left.reason, ['minPaymentCents', 'dueOn']);
+      return Money.ok(Math.min(debt.balanceCents, Math.ceil(debt.balanceCents / left.value)),
+        { derived: true, ruleId: rule.id, monthsLeft: left.value });
+    }
     return Money.incomplete('No minimum-payment rule for this debt type.', ['minPaymentCents']);
+  }
+
+  /** The rate a debt charges today: 0 when it is interest-free, else what
+   *  was typed; null when neither is known. D-124. */
+  function effectiveRate(debt) {
+    if (!debt) return null;
+    if (debt.interestFree === true) return 0;
+    return Money.isEntered(debt.rate) ? debt.rate : null;
   }
 
   /* ---- Ordering ---------------------------------------------------------- */
@@ -217,7 +237,8 @@
     var prepared = [], missing = [];
     debts.forEach(function (d) {
       var min = minimumPaymentCents(d, rules);
-      if (!Money.isEntered(d.rate)) {
+      var rate = effectiveRate(d);
+      if (!Money.isEntered(rate)) {
         missing.push({ id: d.id, label: d.label, needs: 'an interest rate' });
         return;
       }
@@ -227,7 +248,7 @@
       }
       prepared.push({
         id: d.id, label: d.label || 'Debt', type: d.type,
-        balanceCents: d.balanceCents, rate: d.rate,
+        balanceCents: d.balanceCents, rate: rate,
         /* Carried through, because the simulation asks each month what rate
            this debt charges and a promo that got dropped here would make a
            0% card look free for the whole plan. D-053. */
@@ -456,6 +477,7 @@
 
   return {
     promoStatus: promoStatus,
+    effectiveRate: effectiveRate,
     rateInMonth: rateInMonth,
     clearBeforePromoEnds: clearBeforePromoEnds,
     minimumRuleFor: minimumRuleFor,

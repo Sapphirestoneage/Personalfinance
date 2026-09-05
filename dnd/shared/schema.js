@@ -163,7 +163,11 @@
     'debt.balanceCents':                         { class: 'raw',        unit: 'cents' },
     'debt.rate':                                 { class: 'raw',        unit: 'rate',    period: 'annual' },
     'debt.minPaymentCents':                      { class: 'raw',        unit: 'cents',   period: 'monthly' },
-    'debt.type':                                 { class: 'raw',        unit: 'enum',    values: ['credit_card', 'student_loan', 'auto', 'mortgage', 'personal', 'medical', 'other'] },
+    'debt.type':                                 { class: 'raw',        unit: 'enum',    values: ['credit_card', 'student_loan', 'auto', 'mortgage', 'personal', 'family', 'medical', 'other'], note: 'family = borrowed from family or a friend, usually interest-free and due by a date. D-124' },
+    'debt.interestFree':                         { class: 'raw',        unit: 'bool',    note: 'true = no interest is charged, ever; the rate is stored as 0 alongside so every reader agrees. null not asked. D-124' },
+    'debt.archived':                             { class: 'raw',        unit: 'bool',    note: 'true = paid off or set aside; kept for the record, read by nothing that aggregates or plans. Restorable. D-124' },
+    'debt.borrowedOn':                           { class: 'raw',        unit: 'iso-date', note: 'when the money was borrowed. Null means not asked' },
+    'debt.dueOn':                                { class: 'raw',        unit: 'iso-date', note: 'when it is due back in full. On a family loan with no monthly amount, the minimum is the balance over the months left. D-124' },
     'debt.creditLimitCents':                     { class: 'raw',        unit: 'cents',   note: 'revolving debt only \u2014 the limit the balance is a share of. Owned by Debt Payoff. DECISIONS.md D-045' },
     'debt.promoEndsOn':                          { class: 'raw',        unit: 'iso-date', note: 'when a 0%/promotional rate ends. Null means the rate is not promotional' },
     'debt.postPromoRate':                        { class: 'raw',        unit: 'rate',    period: 'annual', note: 'the rate the balance reverts to when the promo ends' },
@@ -892,6 +896,16 @@
       promoEndsOn: f.promoEndsOn === undefined ? null : f.promoEndsOn,
       postPromoRate: f.postPromoRate === undefined ? null : f.postPromoRate,
       emotionalTag: f.emotionalTag === undefined ? null : f.emotionalTag,
+      /* Money borrowed from family or a friend usually carries no interest
+         and a date it is due back, not a rate and a statement minimum. A
+         debt that is interest-free says so here AND stores rate 0, so a
+         reader that only knows about `rate` still gets the right number.
+         Archived debts are kept for the record and read by nothing that
+         adds up or plans. D-124. */
+      interestFree: f.interestFree === undefined ? null : f.interestFree,
+      archived: f.archived === true,
+      borrowedOn: f.borrowedOn === undefined ? null : f.borrowedOn,
+      dueOn: f.dueOn === undefined ? null : f.dueOn,
       ownerIds: f.ownerIds || []
     };
   }
@@ -1329,8 +1343,13 @@
 
   function aggregatableDebts(household) {
     return ((household && household.debts) || []).filter(function (d) {
-      return isAggregatable(d, household);
+      return d && d.archived !== true && isAggregatable(d, household);
     });
+  }
+
+  /** The debts set aside: paid off or on hold, kept for the record. D-124. */
+  function archivedDebts(household) {
+    return ((household && household.debts) || []).filter(function (d) { return d && d.archived === true; });
   }
 
   /** Every income source across every adult. Children's income is excluded. */
@@ -1667,6 +1686,7 @@
     ownedBy: ownedBy,
     aggregatableAssets: aggregatableAssets,
     aggregatableDebts: aggregatableDebts,
+    archivedDebts: archivedDebts,
     allIncomeSources: allIncomeSources,
     totalAssetsCents: totalAssetsCents,
     otherAssetsCents: otherAssetsCents,

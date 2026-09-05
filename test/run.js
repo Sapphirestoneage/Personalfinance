@@ -825,6 +825,42 @@ function threeDebtHousehold() {
   check('a rateless debt blocks the simulation', r.status, 'incomplete');
   checkTrue('and the reason names the debt', /Mystery loan/.test(r.reason), r.reason);
 
+  /* -- Family loans, no interest, set aside, dates (D-124) ---------------- */
+  const inTwoYears = (() => { const d = new Date(); d.setUTCFullYear(d.getUTCFullYear() + 2); return d.toISOString().slice(0, 10); })();
+  const family = Schema.createDebt({ id: 'mum', label: 'Mum, for the car', balanceCents: 240000, type: 'family', interestFree: true, rate: 0, dueOn: inTwoYears, ownerIds: ['P'] });
+  check('a family loan defaults to not archived', family.archived, false);
+  check('interest-free reads as a 0 rate', Debt.effectiveRate(family), 0);
+  check('a debt with neither rate nor the flag has no rate', Debt.effectiveRate(Schema.createDebt({})), null);
+  const famMin = Debt.minimumPaymentCents(family, RULES);
+  checkTrue('the minimum comes from the due date', Money.isOk(famMin) && famMin.derived === true);
+  check('and is the balance over the months left', famMin.value, Math.ceil(240000 / Schema.monthsUntil(inTwoYears).value));
+  check('the rule is the family one', famMin.ruleId, 'family_balance_over_months_to_due');
+  const undated = Debt.minimumPaymentCents(Schema.createDebt({ type: 'family', balanceCents: 100000 }), RULES);
+  check('with no due date and no amount it asks for one', undated.status, 'incomplete');
+  checkTrue('and says which', /due back|monthly amount/.test(undated.reason), undated.reason);
+  const famHh = Schema.createHousehold({ people: [Schema.createPerson({ id: 'P', role: 'adult' })], debts: [family] });
+  const famSim = Debt.simulate(famHh, RULES, { strategyId: 'avalanche' });
+  checkTrue('an interest-free family loan simulates', Money.isOk(famSim), famSim.reason);
+  check('and costs no interest', famSim.totalInterestCents, 0);
+  checkTrue('and clears by the due date', famSim.value <= Schema.monthsUntil(inTwoYears).value);
+
+  const parked = Schema.createHousehold({ people: [Schema.createPerson({ id: 'P', role: 'adult' })], debts: [
+    Schema.createDebt({ id: 'a', balanceCents: 50000, rate: 0.2, minPaymentCents: 2500, type: 'credit_card', ownerIds: ['P'] }),
+    Schema.createDebt({ id: 'b', balanceCents: 999900, rate: 0.2, minPaymentCents: 2500, type: 'personal', archived: true, ownerIds: ['P'] })
+  ] });
+  check('an archived debt is not counted in total debt', Schema.totalDebtCents(parked).value, 50000);
+  check('nor in the minimums', Schema.monthlyDebtPaymentsCents(parked).value, 2500);
+  check('and is listed as archived', Schema.archivedDebts(parked).map(d => d.id).join(','), 'b');
+  checkTrue('the plan ignores it', Money.isOk(Debt.simulate(parked, RULES, {})) && Debt.simulate(parked, RULES, {}).startingBalanceCents === 50000);
+  checkTrue('debt.type admits family', Schema.FIELDS['debt.type'].values.includes('family'));
+  ['debt.interestFree', 'debt.archived', 'debt.borrowedOn', 'debt.dueOn'].forEach(k => checkTrue(`${k} is classed`, !!Schema.FIELDS[k]));
+  const debtPage = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
+  checkTrue('the room offers the family type', /'family', 'Borrowed from family/.test(debtPage));
+  checkTrue('the room has the no-interest tick', /data-field="interestFree"/.test(debtPage));
+  checkTrue('the room can set a debt aside and restore it', /data-archive=/.test(debtPage) && /data-restore=/.test(debtPage));
+  checkTrue('the room asks for the two dates', /data-field="borrowedOn"/.test(debtPage) && /data-field="dueOn"/.test(debtPage));
+  checkTrue('the warning under a row is painted live, not rebuilt', /paintLive\(\)/.test(debtPage) && /data-warn=/.test(debtPage));
+
   /* A payment that cannot outrun the interest must be reported, not looped. */
   const underwater = Schema.createHousehold({
     people: [Schema.createPerson({ id: 'P', role: 'adult' })],
