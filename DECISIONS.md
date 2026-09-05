@@ -4704,7 +4704,24 @@ and the climb ahead against the FIRE number. FIRE: the path to and past
 your stop age against your number, crossing marked. The Skill Stacker:
 the ledger by skill, the five stacks as bars against their caps, and
 the three curves through the same module (the poster's claim drawn
-dashed past its clip).
+dashed past its clip). Cash Flow: a ring of the month by category and a
+stacked bar per bucket, in place of the old split bar. Savings Rate: a
+year's gross as tax, spending and saved; the what-ifs as bars. The
+Snapshot: assets by category, and your net worth as a bar among the
+SCF breakpoints for your age band. The Statement: the three portfolios
+as a ring, owned against owed as bars running both ways from one zero,
+the liquidity ladder as one stacked row. Debt Payoff: what is still
+owed month by month with the other orderings dashed behind it and each
+payoff marked, interest and months per strategy as bars, each debt's
+balance. Goals: each goal's progress toward its own target, and a
+month's requirements stacked. Runway and The Windfall: their hand-drawn
+plots redrawn through the module (the cushion floor and "runs out"
+marked; all at once against spread out). Every Ratio: each banded ratio
+as a bar in its verdict's colour with the comfortable range shaded
+behind it, incomplete ones saying what they need. What If, Life: net
+worth and cash for dream, default and disaster over the horizon, doing
+nothing dashed, the FI number and the cushion floor as the lines to
+watch.
 
 **Not done, on purpose.** No chart is interactive: a static SVG is
 readable on a phone, prints, and cannot get out of step with the

@@ -51,11 +51,6 @@
   .cat-derived { display: flex; justify-content: flex-end; align-items: center; font-size: var(--text-sm); }
   .cat-derived .slaf-owned-from { font-size: 10px; }
 
-  .split { display: flex; height: 12px; border-radius: var(--radius-pill); overflow: hidden; background: rgba(30,58,138,.4); margin: var(--space-3) 0 var(--space-2); }
-  .split > i { display: block; height: 100%; transition: width 400ms ease; }
-  .split-key { display: flex; flex-wrap: wrap; gap: var(--space-3); font-size: var(--text-xs); color: var(--color-text-subtle); }
-  .split-key span::before { content: '●'; margin-right: 5px; }
-
   table.cmp { width: 100%; border-collapse: collapse; font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
   table.cmp th { text-align: right; font-weight: 400; color: var(--color-text-faint); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); padding-bottom: var(--space-2); }
   table.cmp th:first-child, table.cmp td:first-child { text-align: left; }
@@ -110,6 +105,7 @@
     </div>
     <div class="slaf-figure" data-figure>—</div>
     <p class="slaf-reason" data-reason></p>
+    <div id="summary-charts"></div>
     <div data-detail></div>
   </section>
 
@@ -158,22 +154,17 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/cashflow.js"></script>
+<script src="../shared/charts.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
       Reference = SLAF.Reference, Demo = SLAF.DemoPersona, CashFlow = SLAF.CashFlow,
-      Ownership = SLAF.Ownership;
+      Ownership = SLAF.Ownership, Charts = SLAF.Charts;
 
   var ROOM_ID = 'cash-flow';
   var TABLES = null;
   var templateId = '50_30_20';
-
-  var BUCKET_COLOUR = {
-    needs: 'var(--color-accent)',
-    wants: 'var(--sapphire-200)',
-    savings: 'var(--color-positive)'
-  };
 
   function el(id) { return document.getElementById(id); }
 
@@ -425,22 +416,43 @@
       + 'Runway can run <a href="runway.html#the-plan">at the floor →</a></p>';
   }
 
+  /* Two pictures of the same month, from the engine's rows and nothing
+     else: a donut of what leaves (savings is a destination, so it is not a
+     slice), and one stacked bar per bucket showing the lines inside it.
+     Each category is given one colour — spending lines first, in the
+     engine's largest-first order, then the savings lines — so it is the
+     same colour in both. The palette has eight steps; a second lap through
+     it is drawn translucent so no two legend chips match. A bucket with
+     nothing entered has no row — it is not a bucket of $0. */
+  function summaryCharts(summary) {
+    var colourOf = {}, palette = Charts.COLORS.series;
+    summary.categories.filter(function (c) { return c.bucket !== 'savings'; })
+      .concat(summary.categories.filter(function (c) { return c.bucket === 'savings'; }))
+      .forEach(function (c, i) {
+        colourOf[c.categoryId] = palette[i % palette.length] + (i >= palette.length ? '99' : '');
+      });
+    function part(c) { return { label: c.label, value: c.monthlyCents, color: colourOf[c.categoryId] }; }
+    var spending = summary.categories.filter(function (c) {
+      return c.bucket !== 'savings' && c.monthlyCents > 0;
+    });
+    var rows = TABLES.expenseCategories.buckets.map(function (b) {
+      return { label: b.label, parts: summary.categories.filter(function (c) {
+        return c.bucket === b.id && c.monthlyCents > 0;
+      }).map(part) };
+    }).filter(function (r) { return r.parts.length; });
+    return Charts.donut({
+      title: 'Spending by category',
+      slices: spending.map(part),
+      center: { big: Money.formatCents(summary.spendMonthlyCents), small: 'a month' },
+      empty: 'Nothing has left yet — every line entered is savings.'
+    }) + Charts.stacked({ title: 'Each bucket, line by line', rows: rows });
+  }
+
   function renderSummary(summary) {
     var detail = '';
     if (Money.isOk(summary)) {
-      var buckets = TABLES.expenseCategories.buckets;
-      var total = buckets.reduce(function (s, b) { return s + (summary.byBucket[b.id] || 0); }, 0);
-      var bars = buckets.map(function (b) {
-        var v = summary.byBucket[b.id] || 0;
-        return '<i style="width:' + (total ? v / total * 100 : 0) + '%;background:'
-          + BUCKET_COLOUR[b.id] + '"></i>';
-      }).join('');
-      var key = buckets.map(function (b) {
-        return '<span style="color:' + BUCKET_COLOUR[b.id] + '">' + b.label + ' '
-          + Money.formatCents(summary.byBucket[b.id] || 0) + '</span>';
-      }).join('');
-      detail = '<div class="split">' + bars + '</div><div class="split-key">' + key + '</div>'
-        + dl([
+      el('summary-charts').innerHTML = summaryCharts(summary);
+      detail = dl([
           ['Essential only', Money.formatCents(summary.essentialMonthlyCents)],
           ['Into savings', Money.formatCents(summary.savingsMonthlyCents)]
         ].concat(floorRows()))
@@ -452,6 +464,7 @@
         if (node) node.textContent = Money.formatCents(summary.byBucket[b.id] || 0);
       });
     } else {
+      el('summary-charts').innerHTML = '';
       TABLES.expenseCategories.buckets.forEach(function (b) {
         var node = document.querySelector('[data-bucket-total="' + b.id + '"]');
         if (node) node.textContent = Money.EM_DASH;

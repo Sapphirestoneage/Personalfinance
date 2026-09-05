@@ -56,16 +56,6 @@
   .col .flags { font-size: var(--text-xs); color: var(--color-text-muted); margin: 0; padding-left: 1em; }
   .col .flags li.is-bad { color: #e4b04a; }
 
-  .plot { width: 100%; height: auto; display: block; margin-top: var(--space-3); }
-  .plot .axis { stroke: var(--color-border-strong); stroke-width: .6; }
-  .plot .zero { stroke: #b5544d; stroke-width: .5; stroke-dasharray: 2 2; }
-  .plot .ln { fill: none; stroke-width: 1.2; }
-  .plot .ln.dream { stroke: var(--sapphire-200); }
-  .plot .ln.default { stroke: var(--color-accent); }
-  .plot .ln.disaster { stroke: #e4b04a; }
-  .plot .ln.baseline { stroke: var(--color-text-faint); stroke-dasharray: 2 2; stroke-width: .8; }
-  .plot .lbl { font-size: 5px; fill: var(--color-text-faint); font-family: var(--font-body); }
-
   .saved-row { display: grid; grid-template-columns: 1fr auto auto; gap: var(--space-2); align-items: center; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
   .saved-row:first-child { border-top: none; }
   .saved-row small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
@@ -111,8 +101,10 @@
     <span class="slaf-eyebrow">Dream · default · disaster</span>
     <h2 style="margin:var(--space-2) 0 0">The same event, three ways</h2>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0" id="three-hint"></p>
+    <div id="worth-chart"></div>
+    <p class="why" id="worth-why"></p>
     <div class="cols" id="cols"></div>
-    <svg class="plot" id="plot" viewBox="0 0 200 110" role="img" aria-label="Cash over the horizon, three ways"></svg>
+    <div id="cash-chart"></div>
     <p class="why" id="plot-why"></p>
     <div id="lines" style="margin-top:var(--space-3)"></div>
     <p class="why" id="three-why"></p>
@@ -166,11 +158,13 @@
 <script src="../engines/vpw.js"></script>
 <script src="../engines/ss.js"></script>
 <script src="../engines/events.js"></script>
+<script src="../shared/charts.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
-      Reference = SLAF.Reference, Ownership = SLAF.Ownership, Events = SLAF.Events, Suggest = SLAF.Suggest;
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership, Events = SLAF.Events, Suggest = SLAF.Suggest,
+      Charts = SLAF.Charts;
 
   var ROOM_ID = 'what-if-life';
   var TABLES = null, EVENTS = null;
@@ -315,13 +309,13 @@
   function renderThree() {
     var t = template();
     var cols = el('cols');
-    if (!t) { cols.innerHTML = ''; el('plot').innerHTML = ''; el('three-hint').textContent = 'Pick an event to run it.'; el('three-why').textContent = ''; el('plot-why').textContent = ''; return null; }
+    if (!t) { cols.innerHTML = ''; clearPlots(); el('three-hint').textContent = 'Pick an event to run it.'; el('three-why').textContent = ''; return null; }
     var all = Events.runAll(Spine.getProfile(), t, state.answers, opts());
     var order = TABLES.tripleD.order;
     var bad = order.filter(function (d) { return !Money.isOk(all[d]); });
     if (bad.length) {
       cols.innerHTML = '<p class="slaf-reason">' + esc(all[bad[0]].reason) + '</p>';
-      el('plot').innerHTML = ''; el('three-hint').textContent = ''; el('three-why').textContent = ''; el('plot-why').textContent = '';
+      clearPlots(); el('three-hint').textContent = ''; el('three-why').textContent = '';
       return null;
     }
     el('three-hint').textContent = 'Over ' + Math.round(t.horizonMonths / 12) + ' years. Dream: returns at the 75th percentile, income 10% higher after, no gap. Default: the median, your income, the usual gap. Disaster: the 25th percentile, income 15% lower, the gap three times over, and the worst plausible year landing on top.';
@@ -378,27 +372,54 @@
       }).join('') + '</dl>';
   }
 
-  var PAD_L = 24, PAD_R = 6, PAD_T = 8, PAD_B = 14, W = 200, H = 110;
+  function clearPlots() {
+    el('worth-chart').innerHTML = ''; el('worth-why').textContent = '';
+    el('cash-chart').innerHTML = ''; el('plot-why').textContent = '';
+  }
+
+  /* Two pictures from the same three runs. Net worth over the horizon is
+     the "which way does it go" picture; cash against the cushion floor is
+     the "does it get thin along the way" one. The default run is the
+     filled area in both; dream and disaster are lines against it; doing
+     nothing is the dotted line. Long horizons thin to yearly points. */
+  var SERIES_COLOR = { dream: Charts.COLORS.target, 'default': Charts.COLORS.contributed, disaster: Charts.COLORS.debt };
   function renderPlot(all, order) {
-    var series = ['baseline'].concat(order).map(function (k) { return { k: k, rows: all[k].monthly }; });
-    var lo = 0, hi = 1;
-    series.forEach(function (s) { s.rows.forEach(function (r) { lo = Math.min(lo, r.cashCents); hi = Math.max(hi, r.cashCents); }); });
-    var n = series[0].rows.length;
-    function x(m) { return PAD_L + (m / (n - 1)) * (W - PAD_L - PAD_R); }
-    function y(c) { return H - PAD_B - ((c - lo) / (hi - lo || 1)) * (H - PAD_T - PAD_B); }
-    var parts = [];
-    parts.push('<line class="axis" x1="' + PAD_L + '" y1="' + PAD_T + '" x2="' + PAD_L + '" y2="' + (H - PAD_B) + '"/>');
-    parts.push('<line class="axis" x1="' + PAD_L + '" y1="' + (H - PAD_B) + '" x2="' + (W - PAD_R) + '" y2="' + (H - PAD_B) + '"/>');
-    if (lo < 0) parts.push('<line class="zero" x1="' + PAD_L + '" y1="' + y(0) + '" x2="' + (W - PAD_R) + '" y2="' + y(0) + '"/>');
-    parts.push('<text class="lbl" x="' + (PAD_L - 2) + '" y="' + (y(hi) + 4) + '" text-anchor="end">' + esc(Money.formatCents(hi).replace(/\.\d+$/, '')) + '</text>');
-    parts.push('<text class="lbl" x="' + (PAD_L - 2) + '" y="' + (y(lo) + 2) + '" text-anchor="end">' + esc(Money.formatCents(lo).replace(/\.\d+$/, '')) + '</text>');
-    parts.push('<text class="lbl" x="' + x(n - 1) + '" y="' + (H - PAD_B + 8) + '" text-anchor="end">' + Math.round(n / 12) + ' yrs</text>');
-    series.forEach(function (s) {
-      var d = s.rows.map(function (r, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(r.cashCents).toFixed(1); }).join(' ');
-      parts.push('<path class="ln ' + s.k + '" d="' + d + '"/>');
+    var months = all['default'].monthly.length;
+    var byYear = months > 24;
+    function pts(rows, key) {
+      return byYear ? Charts.yearly(rows, function (r) { return r[key]; }, 0)
+        : rows.map(function (r) { return [r.month, r[key]]; });
+    }
+    function series(key, fillDefault) {
+      return order.map(function (d) {
+        return { id: d, label: all[d].bundle.label, color: SERIES_COLOR[d] || Charts.COLORS.series[0],
+          fill: fillDefault && d === 'default', width: d === 'default' ? 2 : 1.5, points: pts(all[d].monthly, key) };
+      }).concat(Money.isOk(all.baseline) ? [{ id: 'baseline', label: 'doing nothing', color: Charts.COLORS.muted,
+        fill: false, dash: true, points: pts(all.baseline.monthly, key) }] : []);
+    }
+    var x = { label: byYear ? 'years' : 'months', format: function (v) { return String(Math.round(v)); } };
+    var ctx = all['default'].ctx || {};
+    var years = Math.round(months / 12);
+
+    var worthLines = [];
+    if (Money.isEntered(ctx.fireNumberCents)) worthLines.push({ y: ctx.fireNumberCents, label: 'FI number', color: Charts.COLORS.growth });
+    el('worth-chart').innerHTML = Charts.area({
+      title: 'Net worth over the horizon, three ways',
+      series: series('netWorthCents', true), hLines: worthLines, x: x
     });
-    el('plot').innerHTML = parts.join('');
-    el('plot-why').textContent = 'Cash on hand, month by month: the dotted grey line is doing nothing; blue is the default, pale blue the dream, amber the disaster. Below the red line the cash is gone.';
+    el('worth-why').textContent = 'Net worth, ' + (byYear ? 'year by year' : 'month by month') + ' over ' + years
+      + ' years: blue is the default, green the dream, red the disaster; the dotted line is doing nothing.'
+      + (worthLines.length ? ' The FI number is the line to cross.' : '');
+
+    var cashLines = [];
+    if (Money.isEntered(ctx.efFloorCents)) cashLines.push({ y: ctx.efFloorCents, label: 'cushion floor', color: Charts.COLORS.spend });
+    el('cash-chart').innerHTML = Charts.area({
+      title: 'Cash over the horizon, three ways',
+      series: series('cashCents', true), hLines: cashLines, x: x
+    });
+    el('plot-why').textContent = 'Cash on hand, the same three ways.'
+      + (cashLines.length ? ' The amber line is the cushion floor — your sleep-at-night number when you have set one, else three months of spending; the question is whether any line dips under it.' : '')
+      + ' Below zero the cash is gone.';
   }
 
   /* ---- Saving ---------------------------------------------------------------- */

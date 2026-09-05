@@ -116,6 +116,7 @@
     <div class="key">
       <span class="k-tax">Tax</span><span class="k-spend">Spending</span><span class="k-save">Saved</span>
     </div>
+    <div id="b-chart"></div>
     <div class="out-detail" id="b-detail"></div>
     <p class="why" id="b-why"></p>
   </section>
@@ -138,6 +139,7 @@
       is a look, not a change.
     </p>
     <div id="wi-body"></div>
+    <div id="wi-chart"></div>
     <p class="why" id="wi-why"></p>
   </section>
 
@@ -164,12 +166,13 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/foo.js"></script>
+<script src="../shared/charts.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
       Reference = SLAF.Reference, Ownership = SLAF.Ownership,
-      Tier0 = SLAF.Tier0, Foo = SLAF.Foo;
+      Tier0 = SLAF.Tier0, Foo = SLAF.Foo, Charts = SLAF.Charts;
 
   var ROOM_ID = 'savings-rate';
   var TABLES = null;
@@ -222,6 +225,7 @@
     var r = rates[LEAD_VARIANT];
     if (!Money.isOk(r)) {
       el('b-stack').innerHTML = '';
+      el('b-chart').innerHTML = '';
       el('b-detail').innerHTML = '';
       el('b-why').textContent = r.reason || '';
       return;
@@ -240,6 +244,22 @@
     el('b-stack').innerHTML = parts.map(function (p) {
       return '<span class="' + p[0] + '" style="width:' + (shown === 0 ? 0 : p[1] / shown * 100) + '%"></span>';
     }).join('');
+
+    /* The same three figures as shares of gross — the engine's, not a
+       second sum: tax + spending + saved is gross by construction. A
+       shortfall has no share of a whole, so that case gets no ring; the
+       sentence under the detail says what happened instead. Saved is the
+       lead variant, your money only. */
+    el('b-chart').innerHTML = saved < 0 ? '' : Charts.donut({
+      title: 'Where a year of gross pay goes',
+      slices: [
+        { label: 'Tax', value: r.estimatedTaxCents, color: Charts.COLORS.series[7],
+          note: 'flat effective rate' },
+        { label: 'Spending', value: r.annualExpensesCents, color: Charts.COLORS.spend },
+        { label: 'Saved', value: saved, color: Charts.COLORS.target, note: 'your money only' }
+      ],
+      center: { big: Money.formatCents(gross), small: 'gross a year' }
+    });
 
     el('b-detail').innerHTML = dl([
       ['Gross pay', Money.formatCents(gross)],
@@ -302,6 +322,7 @@
 
     if (!Money.isOk(base) || !Money.isEntered(gross) || gross <= 0) {
       el('wi-body').innerHTML = '';
+      el('wi-chart').innerHTML = '';
       el('wi-why').textContent = Money.isOk(base)
         ? 'This needs a gross income above zero.'
         : (base.reason || '');
@@ -348,6 +369,29 @@
                 : '')
             : Money.EM_DASH) + '</td></tr>';
       }).join('') + '</tbody></table>';
+
+    /* The same rows as bars. The date is the figure that moves, so the bars
+       are years to work-optional when any row has one; before the
+       projection can run they fall back to the rate itself. A row whose
+       projection never arrives is an empty bar, not a zero. */
+    var anyYears = rows.some(function (row) { return Money.isOk(row.years); });
+    el('wi-chart').innerHTML = Charts.bars({
+      title: anyYears ? 'Work-optional in' : 'Savings rate',
+      rows: rows.map(function (row) {
+        return {
+          label: row.label,
+          note: (Money.isEntered(row.rate) ? Money.formatRate(row.rate, { decimals: 1 }) + ' saved' : '')
+            /* A word joiner after the minus: a phone-width label would
+               otherwise break the line between the sign and the dollars. */
+            + (row.monthlyCutCents ? ' · −\u2060' + Money.formatCents(row.monthlyCutCents) + '/mo' : ''),
+          value: anyYears
+            ? (Money.isOk(row.years) ? row.years.value : null)
+            : (Money.isEntered(row.rate) ? row.rate : null),
+          color: row.points === 0 ? Charts.COLORS.contributed : Charts.COLORS.target
+        };
+      }),
+      format: anyYears ? years : function (v) { return Money.formatRate(v, { decimals: 1 }); }
+    });
 
     var ten = rows[rows.length - 1];
     var baseFire = Tier0.fireNumber(h);

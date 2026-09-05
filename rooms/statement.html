@@ -135,7 +135,9 @@
         <span class="sub" id="nw-weighted-sub"></span>
       </div>
     </div>
+    <div id="portfolio-donut"></div>
     <div id="portfolio-list" style="margin-top:var(--space-3)"></div>
+    <div id="portfolio-bars"></div>
     <p class="why" id="portfolio-why"></p>
   </section>
 
@@ -159,6 +161,7 @@
     <span class="slaf-eyebrow">The liquidity ladder</span>
     <h2 style="margin:var(--space-2) 0 0">What you could reach, and when</h2>
     <ul class="ladder" id="ladder-list"></ul>
+    <div id="ladder-chart"></div>
     <p class="why" id="ladder-why"></p>
   </section>
 
@@ -228,11 +231,12 @@
 <script src="../engines/selfemployed.js"></script>
 <script src="../engines/tax.js"></script>
 <script src="../engines/statement.js"></script>
+<script src="../shared/charts.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference,
-      Ownership = SLAF.Ownership, Statement = SLAF.Statement, Tax = SLAF.Tax;
+      Ownership = SLAF.Ownership, Statement = SLAF.Statement, Tax = SLAF.Tax, Charts = SLAF.Charts;
 
   var ROOM_ID = 'statement';
   var TABLES = null;
@@ -499,7 +503,8 @@
       setFig('nw-weighted', 'nw-weighted-sub', false, c.reason, '');
     }
     var list = el('portfolio-list');
-    if (!Money.isOk(p)) { list.innerHTML = ''; el('portfolio-why').textContent = p.reason; return; }
+    if (!Money.isOk(p)) { list.innerHTML = ''; el('portfolio-donut').innerHTML = ''; el('portfolio-bars').innerHTML = ''; el('portfolio-why').textContent = p.reason; return; }
+    renderPortfolioCharts(h, p);
     list.innerHTML = p.order.map(function (id) {
       var b = p.buckets[id];
       return '<div class="portfolio"><div class="head"><h3>' + esc(b.label) + '</h3><span class="tot">' + fmt(b.totalCents) + '</span></div>'
@@ -512,11 +517,48 @@
     el('portfolio-why').textContent = 'Weights: guaranteed counts in full, 85%+ at 0.85, "don\'t count on it" at half, "probably zero" at nothing — a convention (data/confidence_weights.json), shown beside the plain figure, never instead of it.';
   }
 
+  /* The three portfolios as shares of what is owned, with the plain net
+     worth in the middle when the debts are known; then every asset and
+     every debt on one scale, running opposite ways from the same zero. Both
+     are drawn from the portfolios Result and nothing else. */
+  function renderPortfolioCharts(h, p) {
+    el('portfolio-donut').innerHTML = Charts.donut({
+      title: 'What you own, in three portfolios',
+      slices: p.order.map(function (id, i) {
+        var b = p.buckets[id];
+        return { label: b.label, value: b.totalCents, color: Charts.COLORS.series[i % Charts.COLORS.series.length],
+          note: b.assets.length ? b.assets.length + (b.assets.length === 1 ? ' asset' : ' assets') : 'nothing here' };
+      }),
+      center: Money.isEntered(p.plainNetWorthCents)
+        ? { big: Charts.shortMoney(p.plainNetWorthCents), small: 'net worth' }
+        : { big: Charts.shortMoney(p.totalAssetsCents), small: 'owned' }
+    });
+    var owned = p.order.reduce(function (rows, id) {
+      return rows.concat(p.buckets[id].assets.map(function (x) {
+        return { label: x.asset.label || x.rule.key, value: x.asset.valueCents, color: Charts.COLORS.contributed };
+      }));
+    }, []);
+    var owed = Schema.aggregatableDebts(h).filter(function (d) { return Money.isEntered(d.balanceCents); }).map(function (d) {
+      return { label: d.label || 'Debt', value: -d.balanceCents, color: Charts.COLORS.debt, note: 'owed' };
+    });
+    el('portfolio-bars').innerHTML = '<span class="slaf-label" style="display:block;margin-top:var(--space-3)">Owned against owed</span>'
+      + Charts.bars({ rows: owned.concat(owed) });
+  }
+
   function renderLadder(h, all) {
     var l = all.liquidityLadder;
     var list = el('ladder-list');
-    if (!Money.isOk(l)) { list.innerHTML = ''; el('ladder-why').textContent = l.reason; return; }
+    if (!Money.isOk(l)) { list.innerHTML = ''; el('ladder-chart').innerHTML = ''; el('ladder-why').textContent = l.reason; return; }
     var total = l.bands.today + l.bands.thisMonth + l.bands.thisYear + l.bands.never;
+    el('ladder-chart').innerHTML = Charts.stacked({
+      title: 'How much you could reach, and when',
+      rows: [{ label: 'All of it', note: 'by when you could reach it', parts: [
+        { label: 'Today', value: l.bands.today, color: Charts.COLORS.series[0] },
+        { label: 'Within a month', value: l.bands.thisMonth, color: Charts.COLORS.series[1] },
+        { label: 'Within a year', value: l.bands.thisYear, color: Charts.COLORS.series[3] },
+        { label: 'Not without a penalty, a sale, or a birthday', value: l.bands.never, color: Charts.COLORS.muted }
+      ] }]
+    });
     var rows = [['Today', l.bands.today, l.cumulative.today], ['Within a month', l.bands.thisMonth, l.cumulative.thisMonth], ['Within a year', l.bands.thisYear, l.cumulative.thisYear], ['Not without a penalty, a sale, or a birthday', l.bands.never, null]];
     list.innerHTML = rows.map(function (r, i) {
       return '<li' + (i === 3 ? ' class="never"' : '') + '><span>' + r[0] + (r[2] !== null ? ' <span style="color:var(--color-text-faint)">· ' + fmt(r[2]) + ' cumulative</span>' : '') + '</span><span class="amt">' + fmt(r[1]) + '</span>'

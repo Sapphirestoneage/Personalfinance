@@ -121,6 +121,7 @@
     <div class="slaf-figure" data-figure>—</div>
     <p class="slaf-reason" data-reason></p>
     <div data-detail></div>
+    <div id="plan-chart"></div>
   </section>
 
   <section class="slaf-card" id="out-strategies">
@@ -129,6 +130,7 @@
       Same money every month — only the order changes. Total interest shown.
     </p>
     <div class="strategies" id="strategy-list"></div>
+    <div id="strategy-chart"></div>
   </section>
 
   <section class="slaf-card" id="out-rewards" hidden>
@@ -147,6 +149,7 @@
 
   <section class="slaf-card" id="out-timeline">
     <span class="slaf-eyebrow">The order they fall</span>
+    <div id="timeline-chart"></div>
     <ol class="timeline" id="timeline"></ol>
     <p class="slaf-reason" id="timeline-reason"></p>
   </section>
@@ -169,11 +172,12 @@
 <script src="../shared/demo-persona.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/debt.js"></script>
+<script src="../shared/charts.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
-      Reference = SLAF.Reference, Demo = SLAF.DemoPersona, Debt = SLAF.Debt;
+      Reference = SLAF.Reference, Demo = SLAF.DemoPersona, Debt = SLAF.Debt, Charts = SLAF.Charts;
 
   var ROOM_ID = 'debt-payoff';
   var RULES = null;
@@ -479,10 +483,25 @@
     return y + (y === 1 ? ' yr' : ' yrs') + (m ? ' ' + m + ' mo' : '');
   }
 
-  function renderPlan(h) {
+  /* A rate as it reads on a statement: 22.9%, not 22.90%. */
+  function rateLabel(rate) {
+    return Money.formatRate(rate, { decimals: 2 }).replace(/\.?0+%$/, '%');
+  }
+
+  function renderPlan(h, cmp) {
     h = scoped(h);
     var plan = Debt.simulate(h, RULES, { strategyId: strategyId, extraMonthlyCents: extraCents });
     var detail = '';
+    /* Every balance on one scale. Drawn only once the plan is complete, so
+       a debt that still needs a rate is named in the reason, not pictured
+       as if it were planned. */
+    el('plan-chart').innerHTML = !Money.isOk(plan) ? '' : Charts.bars({
+      title: 'What you owe, by balance',
+      rows: (h.debts || []).filter(function (d) { return Money.isEntered(d.balanceCents) && d.balanceCents > 0; }).map(function (d) {
+        return { label: d.label || 'Debt', value: d.balanceCents, color: Charts.COLORS.debt,
+          note: Money.isEntered(d.rate) ? rateLabel(d.rate) : 'no rate' };
+      })
+    });
     if (Money.isOk(plan)) {
       var baseline = Debt.simulate(h, RULES, { strategyId: strategyId, extraMonthlyCents: 0 });
       var rows = [
@@ -500,7 +519,6 @@
       /* If this ordering isn't the cheapest, say what choosing it costs.
          That is the honest way to present the Convenience Method: it is a
          real option, and it has a price. */
-      var cmp = Debt.compareStrategies(h, RULES, { extraMonthlyCents: extraCents });
       if (Money.isOk(cmp) && cmp.cheapestStrategyId !== strategyId
           && cmp.results[cmp.cheapestStrategyId] && Money.isOk(cmp.results[cmp.cheapestStrategyId])) {
         var cheapest = cmp.results[cmp.cheapestStrategyId];
@@ -517,12 +535,10 @@
     return plan;
   }
 
-  function renderStrategies(h) {
-    h = scoped(h);
+  function renderStrategies(h, cmp) {
     var wrap = el('strategy-list');
     var previousNote = el('tie-note');
     if (previousNote) previousNote.remove();
-    var cmp = Debt.compareStrategies(h, RULES, { extraMonthlyCents: extraCents });
 
     wrap.innerHTML = RULES.strategies.map(function (s) {
       var r = cmp.results ? cmp.results[s.id] : null;
@@ -555,6 +571,25 @@
         '<p class="slaf-reason" id="tie-note">With these debts every order works out the same — '
         + 'the one costing you most is also the one you\u2019d clear first. Pick whichever you like.</p>');
     }
+
+    /* The same four, as two pictures: what each order costs in interest,
+       and how long each takes. The chosen one is lit; an order that could
+       not be run shows a dash, not a zero-length bar. */
+    var chart = el('strategy-chart');
+    if (!Money.isOk(cmp)) { chart.innerHTML = ''; return; }
+    var rowsFor = function (pick) {
+      return RULES.strategies.map(function (s) {
+        var r = cmp.results[s.id];
+        var ok = r && Money.isOk(r);
+        return { label: s.label, value: ok ? pick(r) : null,
+          color: s.id === strategyId ? Charts.COLORS.growth : Charts.COLORS.muted,
+          note: s.id === strategyId ? 'chosen' : (ok && cmp.cheapestStrategyId === s.id ? 'cheapest' : null) };
+      });
+    };
+    chart.innerHTML = '<span class="slaf-label" style="display:block;margin-top:var(--space-3)">Total interest, by order</span>'
+      + Charts.bars({ title: 'Total interest by strategy', rows: rowsFor(function (r) { return r.totalInterestCents; }) })
+      + '<span class="slaf-label" style="display:block;margin-top:var(--space-3)">Months to clear, by order</span>'
+      + Charts.bars({ title: 'Months to clear by strategy', rows: rowsFor(function (r) { return r.value; }), format: monthsLabel });
   }
 
   el('strategy-list').addEventListener('click', function (evt) {
@@ -564,15 +599,37 @@
     render();
   });
 
-  function renderTimeline(plan) {
-    var list = el('timeline'), reason = el('timeline-reason');
+  function renderTimeline(plan, cmp) {
+    var list = el('timeline'), reason = el('timeline-reason'), chart = el('timeline-chart');
     if (!Money.isOk(plan)) {
       list.innerHTML = '';
+      chart.innerHTML = '';
       reason.textContent = plan.reason || '';
       reason.hidden = false;
       return;
     }
     reason.hidden = true;
+    /* What is still owed, month by month, for the chosen order — filled —
+       with the other orders as thin dashed lines behind it, and a mark
+       where each debt falls. Month 0 is today's balance. */
+    var remaining = function (r) {
+      return [[0, r.startingBalanceCents]].concat(r.schedule.map(function (m) { return [m.month, m.remainingCents]; }));
+    };
+    var others = !Money.isOk(cmp) ? [] : RULES.strategies.filter(function (s) {
+      var r = cmp.results[s.id];
+      return s.id !== strategyId && r && Money.isOk(r);
+    }).map(function (s) {
+      return { label: s.label, color: Charts.COLORS.muted, points: remaining(cmp.results[s.id]), fill: false, dash: true, width: 1.2 };
+    });
+    chart.innerHTML = Charts.area({
+      title: 'Balance remaining, month by month',
+      series: [{ label: plan.strategy.label + ' — what is still owed', color: Charts.COLORS.debt, points: remaining(plan), fill: true }].concat(others),
+      /* The last debt falls on the plot's right edge, where a label would
+         run off it; the list below names that one. */
+      vLines: plan.payoffs.map(function (p) { return { x: p.month, label: p.month < plan.value ? (p.label || 'Debt') : '' }; }),
+      x: { label: 'months from now', format: function (m) { return String(Math.round(m)); } },
+      y: { min: 0 }
+    });
     list.innerHTML = plan.payoffs.map(function (p) {
       return '<li><span>' + (p.label || 'Debt') + '</span>'
         + '<span class="tl-when">' + monthsLabel(p.month) + ' · '
@@ -592,9 +649,11 @@
     if (!RULES) return;
     var h = Spine.getProfile();
     debtForm.request();
-    var plan = renderPlan(h);
-    renderStrategies(h);
-    renderTimeline(plan);
+    /* Every ordering is run once here and shared by the three outputs. */
+    var cmp = Debt.compareStrategies(scoped(h), RULES, { extraMonthlyCents: extraCents });
+    var plan = renderPlan(h, cmp);
+    renderStrategies(h, cmp);
+    renderTimeline(plan, cmp);
     renderRewards(h);
   }
 
