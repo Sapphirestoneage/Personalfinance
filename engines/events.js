@@ -539,13 +539,18 @@
         warn: warn === true, bad: bad === true, perColumn: ln.perColumn === true };
     });
 
-    /* FI from the end state: what is invested then, growing at the
-       household's own assumption with the end-state contribution. */
+    /* FI from the end state, on the dashboard's own terms (Tier0.yearsToFire):
+       everything left over is invested. So what is invested then, plus the
+       cash beyond the cushion floor, grows at the household's assumption
+       with the end state's residual savings — income less spending, plus
+       the plan and the match — continuing each year. */
     var end = monthly[monthly.length - 1];
     var fiMonths = null;
     if (Money.isEntered(ctx.fireNumberCents)) {
-      var y = Projection.yearsToTargetCents({ startCents: end.investmentsCents, targetCents: ctx.fireNumberCents,
-        annualRate: ctx.expectedReturnRate, annualContributionCents: (end.contributionCents + end.matchCents) * MONTHS });
+      var floor = Money.isEntered(ctx.efFloorCents) ? ctx.efFloorCents : 0;
+      var residual = Math.max(0, (end.incomeCents - end.expensesCents + end.contributionCents + end.matchCents) * MONTHS);
+      var y = Projection.yearsToTargetCents({ startCents: end.investmentsCents + Math.max(0, end.cashCents - floor), targetCents: ctx.fireNumberCents,
+        annualRate: ctx.expectedReturnRate, annualContributionCents: residual });
       if (Money.isOk(y)) fiMonths = H + Math.round(y.value * MONTHS);
     }
 

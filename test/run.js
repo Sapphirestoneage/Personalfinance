@@ -7046,6 +7046,34 @@ section('Life events: two households, one, on the demo');
   checkTrue('the template asks the room for a partner file', tpl.partnerFile === true);
 })();
 
+section('3D: the instruments three ways');
+
+(function () {
+  /* D-088: the events engine on the empty template, read back per instrument. */
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) {} });
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const h = Demo.build();
+  const td = InstrumentsMain.threeD(h, T);
+  check('three columns', td.value, 3);
+  check('in the table\'s order', td.order.join(','), 'dream,default,disaster');
+  const nw = d => td.columns[d].netWorth.value;
+  checkTrue('net worth ten years out: dream > default > disaster', nw('dream') > nw('default') && nw('default') > nw('disaster'));
+  check('the default column is the baseline run', nw('default'), E.baseline(h, { tables: T }).netWorthAtEndCents);
+  const sr = d => td.columns[d].savingsRate.value;
+  checkTrue('the savings rate rises with income up 10% and falls with it down 15%', sr('dream') > sr('default') && sr('default') > sr('disaster'));
+  check('the default savings rate is the residual with the match: (4,860 − 3,150 + 120) × 12 ÷ 72,000', sr('default'), (486000 - 315000 + 12000) / 600000, 1e-9);
+  checkTrue('runway at the horizon is months of the end-state spending', td.columns['default'].emergencyFundMonths.value > 0);
+  check('debt-to-income does not move, and says why', td.columns['default'].debtToIncome.status, 'incomplete');
+  check('nor does the FOO step', td.columns['default'].fooStep.status, 'incomplete');
+  checkTrue('the FI year is a year', Number.isInteger(td.columns['default'].fiEtaYear.value) && td.columns['default'].fiEtaYear.value > 2030);
+  checkTrue('the dream reaches FI sooner', td.columns.dream.fiEtaYear.value <= td.columns['default'].fiEtaYear.value);
+  const dash = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  checkTrue('the dashboard has the toggle and loads the events engine', /id="btn-3d"/.test(dash) && /engines\/events\.js/.test(dash));
+  check('a blank household cannot fan out, and says what it needs', InstrumentsMain.threeD(Schema.createHousehold({}), T).status, 'incomplete');
+})();
+
 section('The D&D folder\'s vendored copies');
 
 (function () {

@@ -23,17 +23,18 @@
       Tier0: require('../engines/tier0.js'),
       Ratios: require('../engines/ratios.js'),
       Foo: require('../engines/foo.js'),
-      CashFlow: require('../engines/cashflow.js')
+      CashFlow: require('../engines/cashflow.js'),
+      Events: require('../engines/events.js')
     };
   } else {
     var S = root.SLAF || {};
     deps = { Money: S.Money, Schema: S.Schema, Spine: S.Spine, Reference: S.Reference,
-             Tier0: S.Tier0, Ratios: S.Ratios, Foo: S.Foo, CashFlow: S.CashFlow };
+             Tier0: S.Tier0, Ratios: S.Ratios, Foo: S.Foo, CashFlow: S.CashFlow, Events: S.Events };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Spine, deps.Reference, deps.Tier0, deps.Ratios, deps.Foo, deps.CashFlow);
+  var api = factory(deps.Money, deps.Schema, deps.Spine, deps.Reference, deps.Tier0, deps.Ratios, deps.Foo, deps.CashFlow, deps.Events);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Instruments = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Spine, Reference, Tier0, Ratios, Foo, CashFlow) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Spine, Reference, Tier0, Ratios, Foo, CashFlow, Events) {
   'use strict';
 
   var MS_PER_DAY = 86400000;
@@ -179,6 +180,38 @@
     }
   }
 
+  /* ---- 3D: every instrument three ways (BRIEF §6.4, D-088) ----------------
+     The events engine on the EMPTY template — the Triple D bundles on the
+     baseline, no event — read back per instrument at the horizon. Load
+     and debt-to-income do not move with returns or income-after, and the
+     FOO step is a placement, not a projection: those three stay as they
+     are and say so. */
+  function threeD(household, tables) {
+    if (!Events) return Money.incomplete('The events engine is not loaded.', ['events']);
+    var all = Events.runAll(household, Events.EMPTY, {}, { tables: tables });
+    var order = (tables && tables.tripleD && tables.tripleD.order) || ['dream', 'default', 'disaster'];
+    var bad = order.filter(function (d) { return !Money.isOk(all[d]); });
+    if (bad.length) return all[bad[0]];
+    var out = { order: order, horizonYears: all['default'].horizonMonths / 12, columns: {} };
+    order.forEach(function (d) {
+      var r = all[d];
+      var first = r.monthly[0], last = r.monthly[r.monthly.length - 1];
+      var grossThen = r.ctx.takeHomeMonthlyCents > 0 ? (first.incomeCents + first.contributionCents) / r.ctx.takeHomeMonthlyCents * r.ctx.grossMonthlyCents : null;
+      var saved = first.incomeCents - first.expensesCents + first.contributionCents + first.matchCents;
+      out.columns[d] = {
+        label: r.bundle.label,
+        netWorth: Money.ok(last.netWorthCents),
+        savingsRate: grossThen ? Money.ok(saved / grossThen) : Money.incomplete('No income.', ['grossAnnualIncome']),
+        emergencyFundMonths: last.expensesCents > 0 ? Money.ok(Math.max(0, last.cashCents) / last.expensesCents) : Money.incomplete('No spending.', ['monthlyExpenses']),
+        debtToIncome: Money.incomplete('Does not move with returns or income-after.', []),
+        fiEtaYear: r.fiMonthsFromNow === null ? Money.incomplete('No FI number yet.', ['monthlyExpenses'])
+          : Money.ok(new Date(Date.now() + r.fiMonthsFromNow * 30.4375 * MS_PER_DAY).getFullYear()),
+        fooStep: Money.incomplete('A placement, not a projection.', [])
+      };
+    });
+    return Money.ok(order.length, out);
+  }
+
   return {
     INSTRUMENTS: INSTRUMENTS,
     compute: compute,
@@ -186,6 +219,7 @@
     snapshot: snapshot,
     deltas: deltas,
     format: format,
-    formatDelta: formatDelta
+    formatDelta: formatDelta,
+    threeD: threeD
   };
 });

@@ -4220,9 +4220,12 @@ plausible year from D-068 landing the month the event starts). The
 return percentiles are a planning convention in `data/return_bands.json`,
 bracketing the household's own 7% nominal. Every column is measured
 against the same engine on an empty event. Outputs: the monthly rows,
-net worth at the horizon, the shift in the FI date (from the end state,
-at the household's own assumption), the thinnest month or the month the
-cash runs out, the match lost, and flags.
+net worth at the horizon, the shift in the FI date (from the end state
+on the dashboard's own terms: what is invested plus the cash beyond the
+cushion, growing at the household's assumption with the end state's
+residual savings continuing — so the baseline's FI date is the
+dashboard's), the thinnest month or the month the cash runs out, the
+match lost, and flags.
 
 **The room** (`rooms/what-if-life.html`, explore). Pick an event, answer
 its questions — defaults proposed (D-060), a table's opinion where it
@@ -4431,6 +4434,44 @@ at home stopping the one income; the national fallback for an unknown
 state; the offer's take-home from the tax table, no match for three
 months then 4% of $90,000, the $2,000 off investments, three months of
 the old match lost, and the same job offered again changing nothing.
+
+---
+
+## D-088 — 3D on the dashboard: every instrument three ways, with nothing changing but the assumptions
+
+*(BRIEF.md §6.4. Closes T6.)* A "3D" toggle on the panel. On, each
+instrument fans into three small values under its figure — dream,
+default, disaster — from `Instruments.threeD`, which runs the events
+engine (D-086) on the **empty** template: the Triple D bundles on the
+baseline, no event. Altitude is net worth ten years out; Thrust is the
+first month's savings rate with income at the bundle's multiplier; Fuel
+is cash at the horizon in months of the spending then; Distance is the
+FI year from the run's end state. Load and Heading do not move with
+returns or income-after — debt-to-income is a ratio of today's figures
+and the FOO step is a placement, not a projection — so they stay as
+they are and the column says why. Off, the panel is exactly as before.
+
+**Why the empty template and not a fourth instrument.** The point of
+Triple D is the spread, not a number; the dashboard already has the six
+numbers, and the toggle shows how wide "about" is for each without
+adding a seventh. The setting is remembered for the session only
+(`sessionStorage`), never stored with the household.
+
+**Compatibility note.** No stored shape changed. `shared/instruments.js`
+gains an optional Events dependency; `index.html` loads the events
+engine and everything it can call (`rating`, `rerank`, `hourly`,
+`selfemployed`, `tax`, `debt`, `quickmath`, `vpw`, `ss`). Pages that
+load instruments without the events engine (Refresh) simply cannot fan
+out, and nothing on them asks to.
+
+**Verified.** `node test/run.js`: three columns in the table's order,
+net worth dream > default > disaster with the default equal to the
+baseline run, the default savings rate as (4,860 − 3,150 + 120) × 12 ÷
+72,000, load and heading declining to move, the FI year a year and the
+dream's no later, a blank household naming what it needs. A
+phone-browser tap of the toggle on the demo, the setting surviving a
+reload, and the whole-site sweep — which also caught the dashboard
+missing the rating module the Rerank engine needs, fixed here.
 
 ---
 
