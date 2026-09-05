@@ -4,29 +4,37 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Housing Decision · SPARKS</title>
-<meta name="description" content="What your job actually pays, once you count every hour it takes and everything it costs you to do it."/>
+<meta name="description" content="Rent against buying, this place, this rate: the monthly cost of each, the price-to-rent ratio, and the years to a down payment."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. THE TEMPLATE ROOM. DECISIONS.md D-097.
+  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md D-099.
 
-  1. READS   The person's income (owned by Start Here) and filingStatus, for
-             the tax estimate; a month's spending, for the lens.
-  2. WRITES  It OWNS person.work — paid hours, unpaid overtime, commute,
-             work costs, weeks a year, and (folded) prep and decompression.
-             Nothing else edits those. It does not touch income.
-  3. CALLS   engines/hourly.js. Tax comes from engines/tier0.js's effective-
-             rate lookup, never a second calculation.
+  1. READS   A month's spending, gross income and cash (owned by Start
+             Here), the state, and Start Here's "no rent" answer
+             (meta.noRent).
+  2. WRITES  It OWNS household.housing — the rent a month, the place's
+             price, the down payment share and the mortgage rate. Nothing
+             else edits those; it touches nothing else.
+  3. CALLS   engines/housing.js. The mortgage payment is
+             engines/projection.js's levelPaymentCents (the one amortisation
+             in the repo); the housing-ratio band is read through
+             engines/ratios.js's verdict; a year of savings comes from
+             engines/tier0.js's savingsRate, the lens's basis.
   4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses and says so (Gate.fillGuesses). Each unpaid-
-             hours box is optional: blank is none, not unanswered.
-  5. CONFIG  data/effective_tax_rates_2026.json.
+             intake's guesses for income, spending and cash, proposes a
+             rent (30% of gross), a price (18× a year of rent), 20% down
+             and the dated rate through Suggest, and says what it needs
+             until the price is entered. Empty is not zero: no price, no
+             comparison.
+  5. CONFIG  data/housing_conventions.json, data/price_to_rent.json,
+             data/mortgage_rates.json, data/ratio_benchmarks.json.
 
-  THE SHAPE (shared/room.js, frozen here): one number, one chart, the lens,
-  five inputs and two folded, the assumptions drawer with sources, why
-  this matters at your stage, one out-of-scope line to Get Help. The ids
-  below are the deep links.
+  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens,
+  four inputs, the assumptions drawer with sources, why this matters at
+  your stage, one out-of-scope line to Get Help. The ids below are the
+  deep links.
 
   LIVE-FORM: built once — shared/room.js builds the inputs from the spec
   on load and only sets .value, never under focus.
@@ -57,20 +65,20 @@
 
   <section class="slaf-card" id="number">
     <div class="room-head-row">
-      <span class="slaf-eyebrow">Your real rate</span>
+      <span class="slaf-eyebrow">Own against rent, a month</span>
       <div id="room-lens"></div>
     </div>
     <div class="room-number" id="room-number"></div>
   </section>
 
   <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Where the week goes</span>
+    <span class="slaf-eyebrow">Rent against own</span>
     <div id="room-chart"></div>
   </section>
 
   <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The hours the job takes</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave anything blank that doesn't apply — working from home means no commute, and blank is none rather than unanswered.</p>
+    <span class="slaf-eyebrow">The place</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">A place you are weighing, at today's price and today's rate. If Start Here says you pay no rent, leave the rent blank to weigh owning against nothing — or type a rent to weigh it against a place you would rent instead.</p>
     <div id="room-inputs"></div>
   </section>
 
@@ -94,8 +102,9 @@
   </section>
 
   <p class="disclaimer">
-    Educational tool, not financial advice. Tax is estimated from a flat
-    effective-rate table, not a return. Your numbers stay in this browser.
+    Educational tool, not financial advice. The rate is a dated average,
+    not a quote; the carrying costs are national rules of thumb. Your
+    numbers stay in this browser.
   </p>
 </main>
 
@@ -111,7 +120,13 @@
 <script src="../shared/gate.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
-<script src="../engines/hourly.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../engines/statement.js"></script>
+<script src="../engines/benchmarks.js"></script>
+<script src="../engines/ratios.js"></script>
+<script src="../engines/housing.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
 <script src="../shared/room.js"></script>
@@ -119,111 +134,165 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Hourly = SLAF.Hourly, Charts = SLAF.Charts, Room = SLAF.Room;
+      Housing = SLAF.Housing, Charts = SLAF.Charts, Room = SLAF.Room;
 
-  /* ---- writes: this room owns person.work ------------------------------------ */
-  function writeWork(key, value) {
-    var person = Spine.ensurePrimaryPerson('You');
-    var current = Schema.workProfile(Schema.personById(Spine.getProfile(), person.id));
-    var next = Object.assign({}, current);
-    next[key] = value;
-    Spine.upsertPerson({ id: person.id, work: next });
-  }
-  function readWork(h) { return Schema.workProfile(Schema.primaryPerson(h)); }
-  function hoursInput(key, label, placeholder, hint) {
-    return { ctl: key, label: label, kind: 'number', placeholder: placeholder, affix: 'h', hint: hint,
-      read: function (h) { return readWork(h)[key]; }, write: function (v) { writeWork(key, v === null || v <= 0 ? null : v); } };
-  }
-  function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
+  var MONTHS = 12;
+  var RENT_SHARE_OF_GROSS = 0.30;   /* the 30% rule, a convention, for the proposal only */
+  var DOWN_CONVENTION = 0.20;       /* the 20% down convention, for the proposal only */
 
-  var HOUR_COLOURS = { paid: Charts.COLORS.series[0], unpaidOvertimeHoursPerWeek: Charts.COLORS.series[3], commuteHoursPerWeek: Charts.COLORS.series[1], prepHoursPerWeek: Charts.COLORS.series[2], decompressHoursPerWeek: Charts.COLORS.series[4] };
+  /* ---- reads ------------------------------------------------------------------ */
+  function plan(h) { return (h && h.housing) || {}; }
+  function noRent(h) { return !!(h && h.meta && h.meta.noRent === true); }
+  function grossMonthly(h) { var g = Schema.grossAnnualIncomeCents(h); return Money.isOk(g) && g.value > 0 ? g.value / MONTHS : null; }
+
+  /* The rent this room would propose: 30% of gross a month — never when
+     Start Here says there is no rent to pay. */
+  function rentGuess(h) {
+    if (noRent(h)) return null;
+    var gm = grossMonthly(h);
+    return gm === null ? null : { value: Math.round(gm * RENT_SHARE_OF_GROSS), source: 'the 30% rule (convention)' };
+  }
+
+  function money(c) { return Money.formatCents(c); }
+  function ptrWords(band) {
+    return { buying: 'buying favoured', neutral: 'neutral', renting: 'renting favoured', none: 'no band' }[band] || 'no band';
+  }
+  function years(y) {
+    if (!Money.isEntered(y)) return '';
+    if (y === 0) return 'in hand';
+    var r = Math.round(y * 10) / 10;
+    if (r < 1) return Money.formatMonths(Math.round(y * MONTHS)) + ' away';
+    return r + (r === 1 ? ' year' : ' years') + ' away';
+  }
 
   Room.mount({
-    id: 'housing', /* STUB — being built (D-099) */
-    tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
-    reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'],
+    id: 'housing',
+    tables: ['housingConventions', 'priceToRent', 'mortgageRates', 'ratioBenchmarks', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    reads: ['monthlyExpenses', 'grossAnnualIncome', 'cashSavings', 'state'],
 
     number: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return { label: 'Actually, an hour', value: null, reason: w.reason + (/not earning/.test(w.reason || '') ? '' : '') };
-      var sub = 'On paper <strong>' + perHour(w.nominalHourlyCents) + '</strong> · you keep <strong>' + Money.formatRate(w.retained, { decimals: 0 }) + '</strong> of it'
-        + ' · ' + Money.formatCents(w.keptAnnualCents) + ' kept over ' + w.annualTotalHours.toLocaleString('en-US') + ' hours a year';
-      if (w.costsMoreThanItPays) sub += '. <strong>This job costs more than it pays</strong> — check the monthly costs; if they are right, that is the finding';
-      if (w.implausibleHours) sub += '. ' + w.paidHoursPerWeek + ' paid hours a week makes this look enormous; the arithmetic is right, the comparison is not';
-      if (!w.taxKnown) sub += '. Tax is not in yet: ' + (w.taxReason || '');
-      return { label: 'Actually, an hour', value: perHour(w.realHourlyCents), sub: sub, zone: w.costsMoreThanItPays ? 'out' : (w.retained !== null && w.retained < 0.5 ? 'watch' : null), result: w };
+      var r = Housing.compare(h, T);
+      if (!Money.isOk(r)) return { label: 'Own against rent, a month', value: null, reason: r.reason };
+      var diff = r.value;
+      var value = (diff >= 0 ? '+' : '−') + money(Math.abs(diff)) + ' a month to ' + (diff >= 0 ? 'own' : 'rent');
+      var bits = [];
+      bits.push('own <strong>' + money(r.ownCents) + '</strong> (of which ' + money(r.unrecoverableCents) + ' unrecoverable)');
+      bits.push(r.rentIsNone ? 'rent <strong>no rent</strong>' : 'rent <strong>' + money(r.rentCents) + '</strong>');
+      if (r.priceToRent !== null) bits.push('price-to-rent ' + (Math.round(r.priceToRent * 10) / 10) + ' (' + ptrWords(r.priceToRentBand) + ')');
+      if (r.housingRatio !== null) bits.push(Money.formatRate(r.housingRatio, { decimals: 0 }) + ' of gross');
+      var downBit = money(r.downCents) + ' down';
+      if (r.yearsToDown !== null) downBit += ', ' + years(r.yearsToDown);
+      else if (r.neverAtThisPace) downBit += ', never at this pace';
+      bits.push(downBit);
+      var sub = bits.join(' · ');
+      var notes = [];
+      if (r.rentIsNone) notes.push('Start Here says you pay no rent, so this weighs owning against nothing: every dollar of owning is new. Type a rent above to weigh it against renting a place instead');
+      if (r.ratioReason) notes.push(r.ratioReason);
+      if (r.yearsReason && !r.neverAtThisPace) notes.push(r.yearsReason);
+      if (r.cashAfterCents !== null) {
+        notes.push('After the down payment and ' + money(r.closingCents) + ' of closing costs, cash would be ' + money(r.cashAfterCents)
+          + (r.floorCents !== null ? (r.belowFloor ? ' — under the ' + r.floorMonths + '-month floor of ' + money(r.floorCents) : ', above the ' + r.floorMonths + '-month floor of ' + money(r.floorCents)) : ''));
+      }
+      if (r.principalCents === 0) notes.push('With the whole price down there is no mortgage: owning is tax, insurance and upkeep alone');
+      if (notes.length) sub += '. ' + notes.join('. ') + '.';
+      return { label: 'Own against rent, a month', value: value, sub: sub, zone: r.zone, result: r };
     },
 
+    /* One stacked pair: rent as one part, owning as principal, interest,
+       tax, insurance and maintenance, both in cents a month on one scale. */
     chart: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return Charts.stacked({ rows: [], empty: 'Add your paid hours to see where the week goes.' });
-      var parts = [{ label: 'Paid', value: w.paidHoursPerWeek, color: HOUR_COLOURS.paid }].concat((w.unpaidParts || []).map(function (p) { return { label: p.label, value: p.hours, color: HOUR_COLOURS[p.key] }; }));
-      var gross = w.grossAnnualIncomeCents, tax = w.estimatedTaxCents || 0, costs = w.annualWorkCostsCents, kept = w.keptAnnualCents;
+      var r = Housing.compare(h, T);
+      if (!Money.isOk(r)) return Charts.stacked({ rows: [], empty: r.reason || 'Nothing to draw yet.' });
       return Charts.stacked({
-        title: 'Hours a week, and where the pay goes',
+        title: 'A month of renting against a month of owning',
         rows: [
-          { label: 'Your week', note: w.totalHoursPerWeek + ' h, ' + w.paidHoursPerWeek + ' paid', parts: parts },
-          { label: 'A year of pay', note: 'per ' + Money.formatCents(gross), parts: [
-            { label: 'Kept', value: kept / gross * w.totalHoursPerWeek, color: Charts.COLORS.growth },
-            { label: 'Tax', value: tax / gross * w.totalHoursPerWeek, color: Charts.COLORS.debt },
-            { label: 'Costs of working', value: costs / gross * w.totalHoursPerWeek, color: Charts.COLORS.series[3] }
+          { label: 'Rent', note: r.rentIsNone ? 'no rent' : 'a month', parts: [{ label: 'Rent', value: r.rentCents, color: Charts.COLORS.spend }] },
+          { label: 'Own', note: money(r.unrecoverableCents) + ' unrecoverable', parts: [
+            { label: 'Principal', value: r.principalMonthlyCents, color: Charts.COLORS.contributed },
+            { label: 'Interest', value: r.interestMonthlyCents, color: Charts.COLORS.debt },
+            { label: 'Property tax', value: r.taxCents, color: Charts.COLORS.series[6] },
+            { label: 'Insurance', value: r.insuranceCents, color: Charts.COLORS.series[4] },
+            { label: 'Maintenance', value: r.maintenanceCents, color: Charts.COLORS.series[5] }
           ] }
-        ],
-        format: function (v) { return (Math.round(v * 10) / 10) + ' h'; }
+        ]
       });
     },
 
     inputs: [
-      hoursInput('contractedHoursPerWeek', 'Paid hours a week', 'e.g. 40'),
-      hoursInput('unpaidOvertimeHoursPerWeek', 'Unpaid overtime', 'e.g. 3'),
-      hoursInput('commuteHoursPerWeek', 'Commuting', 'e.g. 5'),
-      { ctl: 'workCostsMonthlyCents', label: 'Costs of working, a month', kind: 'money', placeholder: 'e.g. 400', hint: 'Petrol, parking, transit, work clothes, lunches you would not otherwise buy, childcare only while working.',
-        read: function (h) { return readWork(h).workCostsMonthlyCents; }, write: function (v) { writeWork('workCostsMonthlyCents', v); } },
-      { ctl: 'weeksPerYear', label: 'Weeks worked a year', kind: 'number', placeholder: String(Schema.WORK_DEFAULTS.weeksPerYear),
-        read: function (h) { var w = readWork(h).weeksPerYear; return w === Schema.WORK_DEFAULTS.weeksPerYear ? null : w; }, write: function (v) { writeWork('weeksPerYear', v === null || v <= 0 ? Schema.WORK_DEFAULTS.weeksPerYear : v); } }
-    ],
-    moreLabel: 'The hours around the job',
-    more: [
-      hoursInput('prepHoursPerWeek', 'Getting ready', 'e.g. 2.5'),
-      hoursInput('decompressHoursPerWeek', 'Decompressing', 'e.g. 2.5')
+      { ctl: 'rent', label: 'Rent, a month', kind: 'money', placeholder: 'e.g. 1,900', hint: 'What renting costs, or would cost. Blank with a "no rent" answer in Start Here means no rent.',
+        read: function (h) { return plan(h).rentMonthlyCents; },
+        write: function (v) { Spine.set('housing.rentMonthlyCents', v); },
+        propose: function (h) { return rentGuess(h); } },
+      { ctl: 'price', label: 'The place, its price', kind: 'money', placeholder: 'e.g. 300,000',
+        read: function (h) { return plan(h).priceCents; },
+        write: function (v) { Spine.set('housing.priceCents', v); },
+        propose: function (h, T) {
+          var p = plan(h), ptr = T && T.priceToRent;
+          if (!ptr || !Money.isEntered(ptr.ratio)) return null;
+          var rent = Money.isEntered(p.rentMonthlyCents) ? { value: p.rentMonthlyCents, source: 'your rent' } : rentGuess(h);
+          if (!rent) return null;
+          return { value: Math.round(rent.value * MONTHS * ptr.ratio), source: ptr.ratio + '× a year of ' + rent.source + ' (data/price_to_rent.json, ' + ptr.confidence + ')' };
+        } },
+      { ctl: 'downPct', label: 'Down payment, share of price', kind: 'pct', placeholder: 'e.g. 20',
+        read: function (h) { return plan(h).downPct; },
+        write: function (v) { Spine.set('housing.downPct', v === null ? null : Math.max(0, Math.min(1, v))); },
+        propose: function () { return { value: DOWN_CONVENTION, source: 'the 20% convention' }; } },
+      { ctl: 'rate', label: 'Mortgage rate', kind: 'pct', placeholder: 'e.g. 6.5', hint: 'A 30-year fixed. The proposal is a dated average, not a quote.',
+        read: function (h) { return plan(h).rate; },
+        write: function (v) { Spine.set('housing.rate', v === null ? null : Math.max(0, v)); },
+        propose: function (h, T) {
+          var m = T && T.mortgageRates;
+          if (!m || !Money.isEntered(m.thirtyYearFixed)) return null;
+          return { value: m.thirtyYearFixed, source: 'the 30-year average as of ' + m.asOf + ' (data/mortgage_rates.json, ' + m.confidence + ')' };
+        } }
     ],
 
     amounts: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      var spend = Schema.monthlyExpensesCents(h);
-      var rows = [];
-      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
-      if (Money.isOk(w)) {
-        rows.push({ label: 'A year of tax, estimated', cents: w.estimatedTaxCents || 0 });
-        if (w.annualWorkCostsCents > 0) rows.push({ label: 'A year of the costs of working', cents: w.annualWorkCostsCents });
-      }
-      rows.push({ label: 'A $1,200 thing you are eyeing', cents: 120000 });
+      var r = Housing.compare(h, T);
+      if (!Money.isOk(r)) return [];
+      var rows = [
+        { label: 'A month of owning', cents: r.ownCents },
+        { label: 'The down payment', cents: r.downCents },
+        { label: 'The closing costs', cents: r.closingCents }
+      ];
+      if (r.value !== 0) rows.push({ label: 'A year of the difference' + (r.value > 0 ? ', owning over renting' : ', renting over owning'), cents: Math.abs(r.value) * MONTHS });
       return rows;
     },
 
     assumptions: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      var tax = T.effectiveTaxRates;
-      var work = readWork(h);
+      var c = T.housingConventions || {}, m = T.mortgageRates || {}, ptr = T.priceToRent || {}, b = T.ratioBenchmarks || {};
+      var src = 'data/housing_conventions.json v' + c.version + ' — ' + (c.confidence || 'unverified');
+      var band = b.bands && b.bands.housingRatio;
+      var ptrBands = ptr.bands || {};
+      var pct = function (v) { return Money.formatRate(v, { decimals: 1 }); };
       return [
-        { label: 'Tax', value: Money.isOk(w) && w.taxKnown ? Money.formatRate(w.effectiveRate || (w.estimatedTaxCents / w.grossAnnualIncomeCents), { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')' },
-        { label: 'Weeks a year', value: String(Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear), source: Money.isEntered(work.weeksPerYear) && work.weeksPerYear !== Schema.WORK_DEFAULTS.weeksPerYear ? 'yours' : 'the default: 52 less four weeks of leave and holidays (convention)' },
-        { label: 'Unpaid hours', value: 'count as work', source: 'Your Money or Your Life: an hour the job takes is an hour it costs, paid or not (convention)' },
-        { label: 'Real return, for the lens', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' }
+        { label: 'Property tax', value: pct(c.propertyTaxRate) + ' of price a year', source: 'the US average effective rate; by state it runs from under 0.3% to over 2% (' + src + ')' },
+        { label: 'Insurance', value: pct(c.insuranceRate) + ' of price a year', source: 'a national rule of thumb (' + src + ')' },
+        { label: 'Maintenance', value: pct(c.maintenanceRate) + ' of price a year', source: 'the "1% rule" (' + src + ')' },
+        { label: 'Closing costs', value: pct(c.closingCostRate) + ' of price', source: 'a national rule of thumb (' + src + ')' },
+        { label: 'The term', value: Money.isEntered(c.termMonths) ? (c.termMonths / MONTHS) + ' years, fixed' : '—', source: 'the 30-year convention (' + src + ')' },
+        { label: 'The rate proposed', value: Money.formatRate(m.thirtyYearFixed, { decimals: 2 }), source: 'the 30-year average as of ' + m.asOf + ' — data/mortgage_rates.json v' + m.version + ' (' + (m.confidence || 'unverified') + '). Rates move weekly; yours is the one to type.' },
+        { label: 'Price-to-rent bands', value: 'under ' + ptrBands.buyingFavouredBelow + ' buying favoured, over ' + ptrBands.rentingFavouredAbove + ' renting favoured', source: 'data/price_to_rent.json v' + ptr.version + ' (' + (ptr.confidence || 'unverified') + '); the price proposed is ' + ptr.ratio + '× a year of rent' },
+        { label: 'The housing ratio', value: band ? 'good to ' + Money.formatRate(band.good, { decimals: 0 }) + ', watch to ' + Money.formatRate(band.warn, { decimals: 0 }) : '—', source: 'the 28% front-end rule — data/ratio_benchmarks.json v' + b.version + ' (' + (b.confidence || 'convention') + '), the band the Ratios room reads' },
+        { label: 'The down payment', value: '20% proposed', source: 'the 20% convention: the share at which a lender stops asking for mortgage insurance' },
+        { label: 'The cash floor', value: c.guardrails ? c.guardrails.emergencyFundMonths + ' months of spending' : '—', source: 'the emergency-fund floor after closing (' + src + ')' },
+        { label: 'Years to the down payment', value: 'shortfall ÷ a year of savings', source: 'a year of savings is the lens’s basis (engines/tier0.js savingsRate, the match counted when known); no growth on the cash, no rise in the price' },
+        { label: 'Prices and rents', value: 'held still', source: 'the price does not change and the rent does not rise — this is one month, weighed today, not a forecast' }
       ];
     },
 
     why: function (h, T, situation) {
       return {
-        employed: 'Employed, the headline rate is the one on the offer letter. This one is the rate that decides whether the next thing — a raise, a move, an hour of overtime — is worth it.',
-        selfEmployed: 'Self-employed, there is no headline rate, only this one: what is left after the tax you set aside and the hours the work really takes, including the ones nobody bills.',
-        mixed: 'With a job and your own work, each has a real rate. This reads the job; put the own-work hours in as a second job in Start Here to compare them.',
-        student: 'A part-time job at a student’s stage is priced against study hours, not against a career. If the real rate is low, the question is what the hours are taking from.',
-        betweenJobs: '', retired: ''
-      }[situation] || 'Any job has a headline rate and a real one. The gap between them is what this room measures.';
+        employed: 'Employed, the question is usually whether the payment fits — the 28% rule is a lender’s rule as much as a planner’s — and whether the down payment leaves a cushion behind it. Owning is not a cost you can cut in a bad month; the unrecoverable part is what you are really paying for the roof.',
+        selfEmployed: 'Self-employed, the arithmetic is the same and the lender is not: expect to show two years of tax returns, and expect the rate proposed here to be the optimistic end. A down payment that empties the cushion is a bigger risk when the income is your own.',
+        mixed: 'With a job and your own work, the job’s pay is what a lender counts first and the own-work income is what they discount. Size the payment on the pay you can prove, and treat the rest as what pays the maintenance line.',
+        student: 'A student’s stage almost always favours renting: the price-to-rent ratio is only half of it — closing and selling costs together run near a tenth of the price, and a move in two years eats that whole. The down-payment line is the one to watch; the rest can wait.',
+        retired: 'Retired, a paid-off house is the "no rent" answer in Start Here, and this room then weighs a new place against nothing. Owning still costs tax, insurance and upkeep every month; whether to carry a mortgage at all is a decumulation question as much as a housing one.',
+        betweenJobs: 'Between jobs is not the moment to buy, said plainly: a lender wants income to count, and the cushion is what the runway is made of. This room is for looking at what the place would cost once the pay is back.'
+      }[situation] || 'A place to rent and a place to buy each cost something every month; only part of what owning costs buys you anything. This room puts the two side by side.';
     },
 
-    scope: 'This room does not model overtime pay, shift differentials, or a second job’s hours on their own. Tax is a flat estimate, not a return.'
+    scope: 'This room does not know your market, your credit, closing details, or whether prices or rents will rise.'
   });
 })();
 </script>

@@ -1,10 +1,14 @@
 {
   "id": "price_to_rent",
-  "version": "1.0",
+  "version": "1.1",
   "asOf": "2025-12-31",
   "source": "The price-to-annual-rent ratio for US housing in the region of 18 nationally in 2025 (Zillow / Census-derived estimates), from about 12 in cheaper metros to over 35 in the most expensive.",
   "confidence": "unverified",
-  "confidenceNote": "A single national figure, recalled and rounded. Used only to PROPOSE a price from the rent you pay now; the price is the first thing to change.",
-  "note": "price ≈ monthly rent × 12 × ratio. D-088.",
-  "ratio": 18
+  "confidenceNote": "A single national figure, recalled and rounded. Used to PROPOSE a price from the rent you pay now; the price is the first thing to change. The bands are the rule of thumb repeated in consumer guides: under 15 buying is favoured, over 20 renting is, between is neutral.",
+  "note": "price ≈ monthly rent × 12 × ratio. bands: price-to-annual-rent below buyingFavouredBelow reads 'buying favoured', above rentingFavouredAbove 'renting favoured', between 'neutral'. D-088, D-099.",
+  "ratio": 18,
+  "bands": {
+    "buyingFavouredBelow": 15,
+    "rentingFavouredAbove": 20
+  }
 }
