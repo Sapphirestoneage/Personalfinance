@@ -1,9 +1,34 @@
 {
   "id": "estate_basics",
-  "version": "0.1",
-  "asOf": "2026-09-01",
-  "source": "PLACEHOLDER \u2014 filled by the room that reads it (D-098).",
-  "confidence": "unverified",
-  "confidenceNote": "Not yet written.",
-  "note": "what passes by beneficiary, by will, or by the state"
+  "version": "1.0",
+  "asOf": "2026-09-05",
+  "source": "General US patterns for how property passes at death: beneficiary designations and payable-on-death forms first, joint title next, then a will, and the state's intestacy rules when there is none. Not legal advice; the details vary by state and by account.",
+  "confidence": "convention",
+  "confidenceNote": "Widely described conventions, not statute. Which route a given asset takes depends on how the account is set up and on the state; this table maps each category to the route it usually takes when nothing special has been done.",
+  "note": "what passes by beneficiary, by will, or by the state",
+
+  "routes": [
+    { "id": "beneficiary", "label": "By beneficiary designation", "note": "The form on the account decides. It overrides the will." },
+    { "id": "title",       "label": "By title",                   "note": "Property held jointly with right of survivorship passes to the co-owner by the deed or the account title, not the will." },
+    { "id": "will",        "label": "By will",                    "note": "Whatever has no designation and no joint title goes through the will, and through probate." },
+    { "id": "state",       "label": "By the state's rules",       "note": "With no will, the state's intestacy rules decide who gets what would have passed by will; with no beneficiary named, the designated accounts usually fall back to the estate and take the same road." }
+  ],
+
+  "categories": [
+    { "category": "cash",        "label": "Cash & savings",           "passesBy": "beneficiary", "note": "A payable-on-death (POD) designation on a bank account passes it straight to the person named. Without one it falls into the estate." },
+    { "category": "investment",  "label": "Brokerage & taxable",      "passesBy": "will",        "note": "A plain brokerage account has no beneficiary unless a transfer-on-death registration was added; by default it passes by will." },
+    { "category": "retirement",  "label": "Retirement accounts",      "passesBy": "beneficiary", "note": "401(k)s and IRAs pass by the beneficiary form on file with the plan, whatever the will says. A workplace plan's form usually names the spouse by law unless waived." },
+    { "category": "real_estate", "label": "Property",                 "passesBy": "will",        "note": "Solely held property passes by will. Property held jointly with right of survivorship passes by title to the co-owner instead; assets here carry no title flag, so it is counted as solely held." },
+    { "category": "vehicle",     "label": "Vehicles",                 "passesBy": "will",        "note": "A vehicle in one name passes by will; some states allow a transfer-on-death registration on the title." },
+    { "category": "other",       "label": "Everything else",          "passesBy": "will",        "note": "Anything with no designation and no joint title goes through the will." }
+  ],
+
+  "documents": {
+    "will":          "A will says who gets what passes through your estate, and who settles it; without one the state's rules decide.",
+    "beneficiaries": "A beneficiary form on each retirement account, life-insurance policy and payable-on-death bank account passes that money directly, ahead of the will.",
+    "poa":           "A power of attorney names someone to act for you — pay bills, sign, decide — while you are alive but cannot; it ends at death."
+  },
+
+  "guardian": "A will is also where a guardian for minor children is named. Without one, a court chooses.",
+  "lifeInsurance": "Life insurance passes by its beneficiary form too; it is not an asset in this model, so it is not counted here."
 }
