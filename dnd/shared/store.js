@@ -244,10 +244,18 @@
     if (!Array.isArray(p.encounters)) p.encounters = [];
     p.encounters.unshift({
       on: new Date().toISOString(),
+      /* Historically the creature's NAME, not an id. Renaming the field would
+         orphan every stored record, so the name stays and readers join on it —
+         see Encounter.typeHistory(), which also back-fills the two fields below
+         for rows written before T10 added them. */
       monsterId: rec.monsterId || null,
       outcome: rec.outcome || null,
       reason: rec.reason || null,
       damageWeeks: Money.isEntered(rec.damageWeeks) ? rec.damageWeeks : null,
+      /* T10 reads these. Added late: D-064's compatibility note described them
+         as already present and they were not, which is corrected in D-079. */
+      attackType: rec.attackType || null,
+      tier: rec.tier || null,
       source: rec.source || 'self'
     });
     /* Keep the log bounded — this lives in localStorage alongside everything

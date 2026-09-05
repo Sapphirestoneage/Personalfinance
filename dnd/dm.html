@@ -383,6 +383,8 @@
         outcome: r.negated ? 'immune' : (r.halved || r.advantage ? 'resisted' : 'hit'),
         reason: LAST.scenario.name ? 'DM scenario: ' + LAST.scenario.name : 'DM scenario',
         damageWeeks: r.damageWeeks,
+        attackType: r.attackType,
+        tier: r.tier,
         /* Never 'self'. A scenario you set up for someone else must not read
            later as something that happened to you. */
         source: 'dm'

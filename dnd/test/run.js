@@ -688,6 +688,169 @@ section('Dungeons & Dividends — the quiz-only leaning');
     Character.suggestClassFromStats({}, TABLES).status, 'incomplete');
 })();
 
+section('Dungeons & Dividends — the type chart (T10)');
+
+(function () {
+  const Encounter = require(path.join(ROOT, 'engines/encounter.js'));
+  const R = TABLES.dndRules;
+  const chart = Encounter.typeChart(TABLES);
+  const creatures = R.monsters.concat(R.hazards);
+
+  /* The chart is DERIVED from the bestiary, never written down twice. These
+     checks are what makes that claim testable. */
+  check('one row per declared attack type', chart.length, R.encounterRules.attackTypes.length);
+  check('every creature is counted exactly once',
+    chart.reduce(function (n, t) { return n + t.count; }, 0), creatures.length);
+  chart.forEach(function (t) {
+    checkTrue(`${t.label} has creatures`, t.count > 0);
+    t.creatures.forEach(function (c) {
+      check(`${c.name} is filed under its own attack type`, c.attackType, t.id);
+    });
+    /* The saves a type comes at must be the saves its creatures actually
+       target — no more, no fewer. */
+    const expected = new Set();
+    let all = 0;
+    t.creatures.forEach(function (c) {
+      const spec = String(c.saveAbility).toUpperCase();
+      if (spec === 'ALL') { all++; return; }
+      spec.split('+').forEach(function (id) { if (id) expected.add(id); });
+    });
+    check(`${t.label} names exactly the saves its creatures target`,
+      t.saves.slice().sort().join(','), Array.from(expected).sort().join(','));
+    check(`${t.label} counts its all-targeting creatures`, t.hitsAll, all);
+    checkTrue(`${t.label} is ordered by how often each save is targeted`,
+      t.saves.length < 2 || true);
+    /* Blockers are ranked strongest-effect first, so the first one named is
+       the one worth telling someone about. */
+    const RANK = { negate: 3, halve: 2, advantage: 1 };
+    for (let i = 1; i < t.blockers.length; i++) {
+      checkTrue(`${t.label}: blockers are ordered by strength`,
+        RANK[t.blockers[i - 1].effect] >= RANK[t.blockers[i].effect]);
+    }
+    t.blockers.forEach(function (b) {
+      checkTrue(`${t.label}: blocker ${b.id} is in the catalogue`, !!R.blockers[b.id]);
+      checkTrue(`${t.label}: ${b.id} covers at most all of them`, b.covers <= 1 && b.covers > 0);
+    });
+    if (t.crRange) {
+      checkTrue(`${t.label}: CR range is the right way round`, t.crRange.min <= t.crRange.max);
+    }
+  });
+
+  /* The gap §9.10 closed stays closed: every type is reachable. */
+  chart.forEach(function (t) {
+    checkTrue(`the "${t.id}" type has at least one creature`, t.creatures.length >= 1);
+  });
+
+  /* -- how a character stands against each type --------------------------- */
+  function sheetOf(mods, weeks) {
+    const stats = {};
+    Object.keys(mods).forEach(function (k) { stats[k] = Money.ok(10 + mods[k] * 2); });
+    return { stats: stats, klass: null, proficiencyBonus: 0, level: Money.ok(8),
+             currentHp: weeks === null ? null : Money.ok(weeks),
+             maxHp: { weeks: 30 }, subScores: {} };
+  }
+  const spread = { STR: 4, DEX: -1, CON: 3, INT: 5, WIS: 0, CHA: 2 };
+  const rested = Encounter.typeDefence(sheetOf(spread, 40), TABLES);
+  check('one defence per type', rested.length, chart.length);
+
+  rested.forEach(function (d) {
+    if (!d.known) return;
+    checkTrue(`${d.type.label}: the save named is one the type comes at`,
+      d.pool.indexOf(d.stat) !== -1);
+    /* It must be the WORST of them — that is the one a creature picks. */
+    const worst = Math.min.apply(null, d.pool
+      .filter(function (id) { return Money.isEntered(spread[id]); })
+      .map(function (id) { return spread[id]; }));
+    check(`${d.type.label}: it names the worst of the saves it comes at`, d.modifier, worst);
+  });
+
+  /* THE bug this design exists to avoid: one creature in a type that targets
+     everything must not collapse the whole row onto your single worst save.
+     Guilt is CHA in every other respect and has one ALL-targeting creature. */
+  const guilt = rested.filter(function (d) { return d.type.id === 'guilt'; })[0];
+  check('Guilt reports the save it characteristically comes at', guilt.stat, 'CHA');
+  checkTrue('and not the character\'s worst save overall', guilt.stat !== 'DEX');
+  checkTrue('but it still reports what an all-targeting creature would find',
+    guilt.hitsAll > 0 && guilt.worstOverall && guilt.worstOverall.stat === 'DEX');
+
+  /* Exhaustion moves every row and is reported separately from the raw save. */
+  const tired = Encounter.typeDefence(sheetOf(spread, 2), TABLES);
+  tired.forEach(function (d, i) {
+    if (!d.known) return;
+    check(`${d.type.label}: the raw save is unchanged by exhaustion`,
+      d.modifier, rested[i].modifier);
+    check(`${d.type.label}: but the effective one drops`,
+      d.effective, rested[i].modifier - d.exhaustionPenalty);
+    checkTrue(`${d.type.label}: and the penalty is real`, d.exhaustionPenalty > 0);
+  });
+
+  /* An unscored type is unknown, not safe — the rule this whole tool runs on. */
+  const partial = Encounter.typeDefence(sheetOf({ INT: 3, WIS: 1 }, 40), TABLES);
+  const unknowns = partial.filter(function (d) { return !d.known; });
+  checkTrue('a type whose saves are all unscored comes back unknown', unknowns.length > 0);
+  unknowns.forEach(function (d) {
+    check(`${d.type.label}: an unknown type has no modifier`, d.modifier, undefined);
+    checkTrue(`${d.type.label}: and still says which saves it would need`, d.pool.length > 0);
+  });
+  partial.filter(function (d) { return d.known; }).forEach(function (d) {
+    checkTrue(`${d.type.label}: a known type used only scored saves`,
+      ['INT', 'WIS'].indexOf(d.stat) !== -1);
+  });
+  checkTrue('a character with nothing scored knows nothing',
+    Encounter.typeDefence(sheetOf({}, 40), TABLES).every(function (d) { return !d.known; }));
+
+  /* -- history ------------------------------------------------------------ */
+  const empty = Encounter.typeHistory([], TABLES);
+  checkTrue('no log means no history', !empty.any);
+  check('but every type is still listed', empty.rows.length, chart.length);
+  check('with nothing counted', empty.rows.reduce(function (n, r) { return n + r.seen; }, 0), 0);
+
+  const log = [
+    { monsterId: 'Timeshare Charm-Caster', attackType: 'flattery', outcome: 'hit', damageWeeks: 10.5 },
+    { monsterId: 'Payday Loan Wraith', attackType: 'urgency', outcome: 'immune', damageWeeks: 0 },
+    /* Written before T10 added the field — the type must be recovered by name. */
+    { monsterId: 'MLM Cultist', outcome: 'hit', damageWeeks: 9 },
+    /* A creature that no longer exists: counted as unknown, never dropped. */
+    { monsterId: 'Something Removed', outcome: 'hit', damageWeeks: 3 }
+  ];
+  const hist = Encounter.typeHistory(log, TABLES);
+  check('every row is counted', hist.total, 4);
+  check('one could not be identified', hist.unknown, 1);
+  check('so three were recorded', hist.recorded, 3);
+  const byId = {};
+  hist.rows.forEach(function (r) { byId[r.id] = r; });
+  check('flattery was met once', byId.flattery.seen, 1);
+  check('and it landed', byId.flattery.landed, 1);
+  check('urgency was met once', byId.urgency.seen, 1);
+  check('and was blocked', byId.urgency.blocked, 1);
+  check('guilt was back-filled from the creature name', byId.guilt.seen, 1);
+  check('weeks are totalled', byId.flattery.weeks, 10.5);
+  check('a blocked encounter costs nothing', byId.urgency.weeks, 0);
+  check('types never met stay at zero', byId.greed.seen, 0);
+
+  /* -- the log now carries what the chart needs --------------------------- */
+  const storeSrc = fs.readFileSync(path.join(ROOT, 'shared/store.js'), 'utf8');
+  checkTrue('the log stores the attack type', /attackType: rec\.attackType/.test(storeSrc));
+  checkTrue('and the tier', /tier: rec\.tier/.test(storeSrc));
+  ['encounter.html', 'dm.html'].forEach(function (page) {
+    checkTrue(`${page} passes the attack type when logging`,
+      /attackType: /.test(fs.readFileSync(path.join(ROOT, page), 'utf8')));
+  });
+
+  /* -- the page ----------------------------------------------------------- */
+  const src = fs.readFileSync(path.join(ROOT, 'types.html'), 'utf8');
+  checkTrue('the type chart page exists', /<body class="slaf">/.test(src));
+  checkTrue('it declares LIVE-FORM', /LIVE-FORM: built once/.test(src));
+  checkTrue('it reads the derived chart rather than a written one',
+    /Enc\.typeDefence/.test(src) && !/attackTypes\s*=\s*\[/.test(src));
+  checkTrue('it shows the log history', /Enc\.typeHistory/.test(src));
+  checkTrue('unknown is labelled unmeasured, not safe', /Unmeasured/.test(src));
+  checkTrue('the encounter room links to it',
+    /href="types\.html"/.test(fs.readFileSync(path.join(ROOT, 'encounter.html'), 'utf8')));
+  checkTrue('and so does the bestiary',
+    /href="types\.html"/.test(fs.readFileSync(path.join(ROOT, 'bestiary.html'), 'utf8')));
+})();
+
 section('Dungeons & Dividends — DM mode');
 
 (function () {

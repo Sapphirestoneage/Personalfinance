@@ -340,7 +340,165 @@
     return { ready: true, weakest: weakest, tier: tier, creatures: creatures };
   }
 
+  /* ---- the type chart — T10 ---------------------------------------------
+     Six attack types, and what each of them actually is: not a label, but the
+     set of saves the creatures using it target and the defences that stop
+     them. All of it is DERIVED from the bestiary rather than written down
+     twice. Add a creature and the chart moves; write the chart by hand and it
+     is wrong the first time somebody does.                                 */
+
+  /**
+   * For every attack type: which saves it comes at, what blocks it, and how
+   * often — counted over the creatures that actually use it.
+   */
+  function typeChart(tables) {
+    var creatures = allCreatures(tables);
+    return tables.dndRules.encounterRules.attackTypes.map(function (t) {
+      var users = creatures.filter(function (c) { return c.attackType === t.id; });
+
+      /* Which saves this type comes at. "ALL" is kept separate: a creature
+         that targets everything says nothing about which save is special. */
+      var saveCount = {}, hitsAll = 0;
+      users.forEach(function (c) {
+        var spec = String(c.saveAbility || '').toUpperCase();
+        if (spec === 'ALL') { hitsAll++; return; }
+        spec.split('+').forEach(function (id) {
+          if (id) saveCount[id] = (saveCount[id] || 0) + 1;
+        });
+      });
+      var saves = Object.keys(saveCount).sort(function (a, b) {
+        return saveCount[b] - saveCount[a] || (a < b ? -1 : 1);
+      });
+
+      /* What stops it, and how hard. A blocker that negates on one creature
+         and gives advantage on another is reported under its strongest
+         effect, because that is the one worth telling someone about. */
+      var RANK = { negate: 3, halve: 2, advantage: 1 };
+      var blockCount = {};
+      users.forEach(function (c) {
+        (c.blockedBy || []).forEach(function (b) {
+          var seen = blockCount[b.id];
+          if (!seen) seen = blockCount[b.id] = { id: b.id, count: 0, effect: b.effect };
+          seen.count++;
+          if (RANK[b.effect] > RANK[seen.effect]) seen.effect = b.effect;
+        });
+      });
+      var blockers = Object.keys(blockCount).map(function (id) {
+        var b = blockCount[id];
+        var cat = tables.dndRules.blockers[id] || {};
+        return { id: id, count: b.count, effect: b.effect,
+                 label: cat.label || id, kind: cat.kind || 'rule', detail: cat.detail || '',
+                 covers: b.count / users.length };
+      }).sort(function (a, b) {
+        return RANK[b.effect] - RANK[a.effect] || b.count - a.count;
+      });
+
+      var crs = users.map(function (c) { return crToNumber(c.cr); })
+        .filter(function (n) { return n !== null; }).sort(function (a, b) { return a - b; });
+
+      return {
+        id: t.id, label: t.label, blurb: t.blurb,
+        creatures: users, count: users.length,
+        saves: saves, hitsAll: hitsAll,
+        blockers: blockers,
+        crRange: crs.length ? { min: crs[0], max: crs[crs.length - 1] } : null
+      };
+    });
+  }
+
+  /**
+   * How THIS character stands against each type.
+   *
+   * The defence against a type is the worst of the saves it comes at, because
+   * that is the one a creature will pick — the same rule targetSave() uses,
+   * called rather than restated. A type whose saves are all unscored comes
+   * back `known: false`: not resistant, not exposed, unmeasured.
+   */
+  function typeDefence(sheet, tables) {
+    var saves = Character.savingThrows(sheet.stats, sheet.klass, sheet.proficiencyBonus, tables);
+    var exh = Character.exhaustion(sheet.currentHp, tables);
+    var penalty = Money.isOk(exh) ? exh.savePenalty : 0;
+
+    return typeChart(tables).map(function (t) {
+      /* The defence is measured against the saves this type CHARACTERISTICALLY
+         comes at, not against every save it could ever touch. One creature in
+         the type that targets everything would otherwise collapse the whole
+         row to your single worst save — and then Guilt, which is CHA in every
+         other respect, reports itself as a Dexterity problem. The ALL-targeting
+         creatures are reported separately instead, so the page can say both
+         things without either drowning the other. */
+      var named = saves.filter(function (s) { return t.saves.indexOf(s.stat) !== -1; });
+      var pool = named.length ? named : saves;   /* a type of nothing but ALL */
+      var scored = pool.filter(function (s) { return s.ok; });
+
+      /* What a creature that hits everything would find, kept apart. */
+      var allScored = saves.filter(function (s) { return s.ok; })
+        .sort(function (a, b) { return a.modifier - b.modifier; });
+      var worstOverall = t.hitsAll > 0 && allScored.length ? allScored[0] : null;
+
+      if (!pool.length || !scored.length) {
+        return { type: t, known: false, pool: pool.map(function (s) { return s.stat; }),
+                 hitsAll: t.hitsAll,
+                 worstOverall: worstOverall
+                   ? { stat: worstOverall.stat, effective: worstOverall.modifier - penalty }
+                   : null };
+      }
+      scored.sort(function (a, b) { return a.modifier - b.modifier; });
+      var worst = scored[0];
+      return {
+        type: t, known: true,
+        stat: worst.stat,
+        modifier: worst.modifier,
+        effective: worst.modifier - penalty,
+        exhaustionPenalty: penalty,
+        unscored: pool.filter(function (s) { return !s.ok; }).map(function (s) { return s.stat; }),
+        pool: pool.map(function (s) { return s.stat; }),
+        hitsAll: t.hitsAll,
+        worstOverall: worstOverall
+          ? { stat: worstOverall.stat, effective: worstOverall.modifier - penalty }
+          : null
+      };
+    });
+  }
+
+  /**
+   * What has actually come at you, from the encounter log.
+   *
+   * Rows written before T10 carry no attackType, so the creature is looked up
+   * by name and the type filled in. A row naming a creature that no longer
+   * exists is counted as unknown rather than dropped — it happened, and
+   * silently losing history is worse than an untidy total.
+   */
+  function typeHistory(encounters, tables) {
+    var byName = {};
+    allCreatures(tables).forEach(function (c) { byName[c.name] = c; });
+
+    var counts = {}, unknown = 0, total = 0;
+    (encounters || []).forEach(function (row) {
+      total++;
+      var type = row.attackType;
+      if (!type && row.monsterId && byName[row.monsterId]) type = byName[row.monsterId].attackType;
+      if (!type) { unknown++; return; }
+      var c = counts[type] || (counts[type] = { type: type, seen: 0, landed: 0, blocked: 0, weeks: 0 });
+      c.seen++;
+      if (row.outcome === 'immune') c.blocked++;
+      else c.landed++;
+      if (Money.isEntered(row.damageWeeks)) c.weeks += row.damageWeeks;
+    });
+
+    var rows = tables.dndRules.encounterRules.attackTypes.map(function (t) {
+      var c = counts[t.id] || { type: t.id, seen: 0, landed: 0, blocked: 0, weeks: 0 };
+      return { id: t.id, label: t.label, seen: c.seen, landed: c.landed,
+               blocked: c.blocked, weeks: Math.round(c.weeks * 10) / 10 };
+    });
+    return { rows: rows, total: total, unknown: unknown,
+             recorded: total - unknown, any: total > 0 };
+  }
+
   return {
+    typeChart: typeChart,
+    typeDefence: typeDefence,
+    typeHistory: typeHistory,
     parseDice: parseDice,
     expectedDice: expectedDice,
     rollDice: rollDice,
