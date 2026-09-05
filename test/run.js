@@ -1840,8 +1840,8 @@ section('SWAN Number');
   /* -- Ownership: exactly one room may edit it --------------------------- */
   check('the SWAN target is owned by Sleep At Night',
     Ownership.field('swanTarget').owner, 'sleep-at-night');
-  check('and Sleep At Night owns only the number and the four coverage facts (D-071)',
-    Ownership.ownedBy('sleep-at-night').sort().join(','), 'disabilityMonthly,oopMax,swanTarget,termLife,umbrella');
+  check('and Sleep At Night owns only the number, the four coverage facts (D-071) and who depends on you (D-094)',
+    Ownership.ownedBy('sleep-at-night').sort().join(','), 'dependents,disabilityMonthly,oopMax,swanTarget,termLife,umbrella');
   const chip = Ownership.describe('swanTarget', months6, 'financial-snapshot');
   check('elsewhere it renders as a read-only $18,900', chip.display, '$18,900');
   check('and it is not editable there', chip.isOwnHere, false);
@@ -4439,7 +4439,7 @@ section('Whether there is an employer at all');
   /* -- The enum itself ---------------------------------------------------- */
   {
     const ids = Schema.EMPLOYMENT_STATUSES.map(r => r.id);
-    check('there are seven working situations', ids.length, 7);
+    check('there are eight working situations', ids.length, 8);
     check('each one is listed once', new Set(ids).size, ids.length);
     Schema.EMPLOYMENT_STATUSES.forEach(function (row) {
       checkTrue(`${row.id} says whether money is coming in`, typeof row.earning === 'boolean');
@@ -7468,13 +7468,381 @@ section('Between jobs: the unemployed sequence');
   /* Dependents and disability, same pass. */
   checkTrue('"on disability" is a working situation whose benefit is income', Schema.employmentStatus('disabled').benefits === true && Schema.employmentStatus('disabled').earning === false);
   check('dependents starts unasked', Schema.createHousehold({}).dependents, null);
-  check('… and "no" is kept as false, not blank', Schema.createHousehold({ dependents: false }).dependents, false);
+  check('… and "no" is kept as an empty list, not blank (D-094)', JSON.stringify(Schema.createHousehold({ dependents: false }).dependents), '[]');
   const alone = Schema.createHousehold({ dependents: false });
   checkTrue('term life does not apply when nobody depends on the income', !Ownership.describe('termLife', alone, 'sleep-at-night').applies);
   checkTrue('… and does when someone does, or when unasked', Ownership.describe('termLife', Schema.createHousehold({ dependents: true }), 'sleep-at-night').applies && Ownership.describe('termLife', Schema.createHousehold({}), 'sleep-at-night').applies);
   checkTrue('Start Here asks it', /id="q-dependents"/.test(fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8')) && Registry.byId('start').subsections.some(x => x.id === 'q-dependents'));
   checkTrue('Sleep At Night says so instead of asking', /Nobody depends on your income/.test(fs.readFileSync(path.join(ROOT, 'rooms/sleep-at-night.html'), 'utf8')));
   checkTrue('… and unemploymentOf never returns undefined for a raw person', Schema.unemploymentOf(Schema.createHousehold({ people: [{ id: 'x', employmentStatus: 'unemployed', role: 'adult' }] })).since === null);
+})();
+
+section('Core (D-094): the command log — set, undo, redo, batch');
+
+(function () {
+  /* The spine instance ownership.js registered its labels and readers
+     with is the one that can describe an entry ("cash & savings …"). */
+  const Spine = SpineMain;
+  Spine.reset();
+  checkTrue('a fresh household has nothing to undo', !Spine.canUndo() && !Spine.canRedo());
+  checkTrue('and peekUndo says so with null, not a throw', Spine.peekUndo() === null);
+  checkTrue('undo on an empty stack is a no-op', Spine.undo() === null);
+
+  /* One write, one entry. */
+  Spine.set('meta.noRent', true, 'No rent');
+  check('set() writes the path', Spine.get('meta.noRent'), true);
+  check('… and records one entry', Spine.historySize().undo, 1);
+  check('with the label the caller gave', Spine.peekUndo().label, 'No rent');
+  check('and the path, before and after', JSON.stringify(Spine.peekUndo().changes), JSON.stringify([{ path: 'meta.noRent', before: null, after: true }]));
+  checkTrue('stamped when', /^\d{4}-\d{2}-\d{2}T/.test(Spine.peekUndo().ts));
+
+  const undone = Spine.undo();
+  check('undo returns the entry it applied', undone.label, 'No rent');
+  check('and the value is back to before', Spine.get('meta.noRent'), null);
+  checkTrue('now there is a redo and no undo', Spine.canRedo() && !Spine.canUndo());
+  check('redo puts it back', (Spine.redo(), Spine.get('meta.noRent')), true);
+  check('undo and redo do not grow the log', Spine.historySize().undo, 1);
+  check('… nor leave a redo behind', Spine.historySize().redo, 0);
+
+  /* A new write after an undo drops the redo branch. */
+  Spine.undo();
+  Spine.set('meta.hasDebt', false, 'No debt');
+  check('a fresh write clears the redo stack', Spine.historySize().redo, 0);
+
+  /* The label comes from the owned field that moved, formatted, when no
+     label is given: the hover text on the button. */
+  Spine.upsertAsset(Schema.createAsset({ id: 'a_cash', category: 'cash', valueCents: 950000 }));
+  checkTrue('a room write is described by the field that moved: ' + Spine.peekUndo().label,
+    /Cash|cash/.test(Spine.peekUndo().label) && /— → \$9,500/.test(Spine.peekUndo().label));
+  Spine.upsertAsset({ id: 'a_cash', valueCents: 1200000 });
+  check('before → after, in dollars', Spine.peekUndo().label.replace(/^[^$]*/, ''), '$9,500 → $12,000');
+  Spine.undo();
+  check('undoing a room write restores the number', Schema.cashCents(Spine.getProfile()).value, 950000);
+
+  /* Several writes as one entry. */
+  const before = Spine.historySize().undo;
+  Spine.batch('Filled in the one-pager', function () {
+    Spine.set('state', 'NC');
+    Spine.set('filingStatus', 'single');
+    Spine.set('meta.noRent', false);
+  });
+  check('a batch is one entry', Spine.historySize().undo - before, 1);
+  check('with the batch label', Spine.peekUndo().label, 'Filled in the one-pager');
+  check('holding every change', Spine.peekUndo().changes.length, 3);
+  Spine.undo();
+  check('one undo reverts all of it (state)', Spine.getProfile().state, null);
+  check('… (filing)', Spine.getProfile().filingStatus, null);
+  check('… (no rent)', Spine.get('meta.noRent'), null);
+  Spine.redo();
+  check('one redo re-applies all of it', Spine.getProfile().state + '/' + Spine.getProfile().filingStatus, 'NC/single');
+  check('a batch that changes nothing records nothing', (Spine.batch('nothing', function () {}), Spine.historySize().undo - before), 1);
+
+  /* The stacks live in the household, so they survive a reload. */
+  checkTrue('the stacks are stored with the household', Array.isArray(Spine.getProfile().meta.undoStack) && Spine.getProfile().meta.undoStack.length === Spine.historySize().undo);
+  const sizeBefore = Spine.historySize().undo;
+  Spine._reload();
+  check('after a reload the log is still there', Spine.historySize().undo, sizeBefore);
+  checkTrue('an export leaves the log behind — it is this browser\'s, not the household\'s', Spine.exportObject().household.meta.undoStack === undefined && Spine.exportJSON().indexOf('undoStack') === -1);
+  check('… and the profile keeps it', Spine.historySize().undo, sizeBefore);
+
+  /* The cap. */
+  for (let i = 0; i < 120; i++) Spine.set('meta.noRent', i % 2 === 0, 'toggle ' + i);
+  check('the log holds the last hundred, no more', Spine.historySize().undo, Spine.HISTORY_CAP);
+  check('… which is 100', Spine.HISTORY_CAP, 100);
+  check('and the oldest fell off, not the newest', Spine.peekUndo().label, 'toggle 119');
+
+  /* An explicit reset clears it. */
+  Spine.reset();
+  checkTrue('reset clears both stacks', !Spine.canUndo() && !Spine.canRedo());
+  check('and leaves nothing behind in meta', (Spine.getProfile().meta.undoStack || []).length, 0);
+
+  /* Undoing a gate change restores every field the gate removed. The
+     one-pager wraps a situation change in one batch: the status, and the
+     branches that no longer exist go with it. */
+  Spine.ensurePrimaryPerson('You');
+  const you = Schema.primaryPerson(Spine.getProfile());
+  Spine.batch('Employed', function () {
+    Spine.upsertPerson({ id: you.id, employmentStatus: 'employed' });
+    Spine.upsertIncomeSource(you.id, Schema.createIncomeSource({ id: 'intake_income', type: 'w2', grossAnnualIncomeCents: 6200000,
+      employerMatch: { matchPercent: 0.5, matchCapPercentOfSalary: 0.06 } }));
+    Spine.set('retirement.contributionPercent', 6);
+  });
+  const Gate = require(path.join(ROOT, 'shared/gate.js'));
+  checkTrue('an employed household has the retirement branch', Gate.exists(Spine.getProfile(), 'retirement') && Gate.exists(Spine.getProfile(), 'employerMatch'));
+  Spine.batch('Now retired', function () {
+    Spine.upsertPerson({ id: you.id, employmentStatus: 'retired' });
+    /* What the gate removes goes with the change — not hidden, gone. */
+    Spine.upsertIncomeSource(you.id, { id: 'intake_income', type: 'pension', employerMatch: null });
+    Spine.set('retirement.contributionPercent', null);
+  });
+  checkTrue('retired: the retirement branch is gone', !Gate.exists(Spine.getProfile(), 'retirement'));
+  check('… and the match with it', Schema.primaryPerson(Spine.getProfile()).incomeSources[0].employerMatch, null);
+  check('… and the contribution', Spine.get('retirement.contributionPercent'), null);
+  check('the gate change is one entry', Spine.peekUndo().label, 'Now retired');
+  Spine.undo();
+  check('undoing the gate change restores the status', Schema.primaryPerson(Spine.getProfile()).employmentStatus, 'employed');
+  const src = Schema.primaryPerson(Spine.getProfile()).incomeSources[0];
+  check('… the match percent', src.employerMatch && src.employerMatch.matchPercent, 0.5);
+  check('… the match cap', src.employerMatch && src.employerMatch.matchCapPercentOfSalary, 0.06);
+  check('… the contribution', Spine.get('retirement.contributionPercent'), 6);
+  check('… the source type', src.type, 'w2');
+  checkTrue('and the branch exists again', Gate.exists(Spine.getProfile(), 'retirement'));
+  Spine.redo();
+  checkTrue('redo takes it away again', !Gate.exists(Spine.getProfile(), 'retirement'));
+
+  /* Undo works after a reload too — the whole point of storing it. */
+  Spine._reload && Spine._reload();
+  Spine.undo();
+  checkTrue('a reloaded page can still undo', Gate.exists(Spine.getProfile(), 'retirement'));
+
+  /* Undo never takes the clock with it: confirmedAt and updatedAt are
+     not in the diff, so undoing a value does not un-confirm the field. */
+  Spine.reset();
+  Spine.set('state', 'NC', 'State');
+  Spine.confirm('state');
+  check('confirming records no entry', Spine.historySize().undo, 1);
+  Spine.undo();
+  checkTrue('undo leaves the confirmation stamp alone', !!Spine.confirmedAt('state'));
+
+  /* A guess flagged in meta.guessed clears when a real number lands. */
+  Spine.set('meta.guessed.cashSavings', true, 'guess');
+  Spine.upsertAsset(Schema.createAsset({ id: 'a_cash', category: 'cash', valueCents: 100000 }));
+  checkTrue('a real number replaces a guess: the flag goes', !Spine.getProfile().meta.guessed.cashSavings);
+  Spine.reset();
+})();
+
+section('Core (D-094): the gate — exists() per situation');
+
+(function () {
+  const Gate = require(path.join(ROOT, 'shared/gate.js'));
+  const Registry = require(path.join(ROOT, 'shared/registry.js'));
+  function hh(situation, extra) {
+    const s = Gate.byId(situation);
+    const h = Schema.createHousehold(Object.assign({ people: [Schema.createPerson({ role: 'adult', employmentStatus: s ? s.status : null })] }, extra || {}));
+    return h;
+  }
+  check('six situations', Gate.SITUATIONS.length, 6);
+  check('each maps to a working status', Gate.SITUATIONS.filter(s => Schema.employmentStatus(s.status)).length, 6);
+  check('each names the dashboard lead', Gate.SITUATIONS.filter(s => typeof s.lead === 'string').length, 6);
+  check('unanswered: no situation', Gate.situationOf(Schema.createHousehold({})), null);
+  check('the primary person\'s status picks it', Gate.situationOf(hh('retired')), 'retired');
+  check('"both" is mixed', Gate.situationOf(hh('mixed')), 'mixed');
+
+  /* The brief's table, as a truth table. */
+  const T = {
+    /*                 income retire ownWork unemp pension stipend hours savings decum protection career */
+    employed:     { income: true,  retirement: true,  ownWork: false, unemployment: false, pension: false, stipend: false, hours: true,  savingsRate: true,  decumulation: false, protection: true,  career: true },
+    selfEmployed: { income: true,  retirement: false, ownWork: true,  unemployment: false, pension: false, stipend: false, hours: true,  savingsRate: true,  decumulation: false, protection: true,  career: true },
+    betweenJobs:  { income: false, retirement: false, ownWork: false, unemployment: true,  pension: false, stipend: false, hours: false, savingsRate: false, decumulation: false, protection: true,  career: false },
+    student:      { income: true,  retirement: false, ownWork: false, unemployment: false, pension: false, stipend: true,  hours: true,  savingsRate: true,  decumulation: false, protection: false, career: true },
+    retired:      { income: true,  retirement: false, ownWork: false, unemployment: false, pension: true,  stipend: false, hours: false, savingsRate: false, decumulation: true,  protection: true,  career: false },
+    mixed:        { income: true,  retirement: true,  ownWork: true,  unemployment: false, pension: false, stipend: false, hours: true,  savingsRate: true,  decumulation: false, protection: true,  career: true }
+  };
+  Object.keys(T).forEach(function (s) {
+    const h = hh(s);
+    Object.keys(T[s]).forEach(function (k) {
+      check(`${s}: ${k} ${T[s][k] ? 'exists' : 'is absent'}`, Gate.exists(h, k), T[s][k]);
+    });
+  });
+  checkTrue('downstream of retirement: match and payroll follow it', ['employed', 'retired', 'selfEmployed'].every(s => Gate.exists(hh(s), 'employerMatch') === T[s].retirement && Gate.exists(hh(s), 'payroll') === T[s].retirement));
+  checkTrue('downstream of own work: variable income and the quarterly follow it', ['selfEmployed', 'employed', 'mixed'].every(s => Gate.exists(hh(s), 'variableIncome') === T[s].ownWork && Gate.exists(hh(s), 'quarterlyTax') === T[s].ownWork));
+  checkTrue('the real hourly wage needs hours', ['employed', 'retired', 'betweenJobs'].every(s => Gate.exists(hh(s), 'realHourlyWage') === T[s].hours));
+
+  /* Between jobs with an income source (severance, a partner): income exists. */
+  const bj = hh('betweenJobs');
+  bj.people[0].incomeSources.push(Schema.createIncomeSource({ type: 'other', grossAnnualIncomeCents: 1200000 }));
+  checkTrue('between jobs with money coming in: income exists', Gate.exists(bj, 'income'));
+
+  /* Unanswered: everything a person could need is there — the map before
+     the intake shows every room. */
+  const none = Schema.createHousehold({});
+  const absentWhenUnanswered = Gate.BRANCHES.filter(k => !Gate.exists(none, k));
+  check('unanswered: only the branches that need a fact are absent', absentWhenUnanswered.sort().join(','), 'childcare,daySchool,dependents,partner,unemployment');
+
+  /* The household branches. */
+  check('no partner: the partner branch is absent', Gate.exists(hh('employed'), 'partner'), false);
+  const two = hh('employed'); two.people.push(Schema.createPerson({ role: 'adult', label: 'Sam' }));
+  check('two adults: it exists', Gate.exists(two, 'partner'), true);
+  check('no dependents answered: absent', Gate.exists(hh('employed'), 'dependents'), false);
+  check('"no": absent', Gate.exists(hh('employed', { dependents: false }), 'dependents'), false);
+  check('a dependent: exists', Gate.exists(hh('employed', { dependents: [{ age: 9 }] }), 'dependents'), true);
+  check('a nine-year-old is not childcare', Gate.exists(hh('employed', { dependents: [{ age: 9 }] }), 'childcare'), false);
+  check('a three-year-old is', Gate.exists(hh('employed', { dependents: [{ age: 3 }] }), 'childcare'), true);
+  check('day school needs the community flag and a child', Gate.exists(hh('employed', { dependents: [{ age: 9 }], community: { daySchool: true } }), 'daySchool'), true);
+  check('… not just the flag', Gate.exists(hh('employed', { community: { daySchool: true } }), 'daySchool'), false);
+  check('debt exists until "no debt"', Gate.exists(hh('employed'), 'debt'), true);
+  const noDebt = hh('employed'); noDebt.meta.hasDebt = false;
+  check('… then it is absent', Gate.exists(noDebt, 'debt'), false);
+  check('student loans: a student with debt', Gate.exists(hh('student'), 'studentLoans'), true);
+  check('… not a retiree', Gate.exists(hh('retired'), 'studentLoans'), false);
+  check('an unknown key exists — nothing is gated by accident', Gate.exists(hh('retired'), 'notAKey'), true);
+  check('an empty household exists too', Gate.exists(null, 'income'), true);
+
+  /* The lead. */
+  check('employed leads with the savings rate', Gate.lead(hh('employed')), 'savingsRate');
+  check('self-employed with owner\'s pay', Gate.lead(hh('selfEmployed')), 'ownersPay');
+  check('between jobs with the runway', Gate.lead(hh('betweenJobs')), 'runwayDays');
+  check('a student with the loans', Gate.lead(hh('student')), 'loanTrajectory');
+  check('retired with the withdrawal rate', Gate.lead(hh('retired')), 'withdrawalRate');
+  check('unanswered leads with the savings rate', Gate.lead(none), 'savingsRate');
+  check('branches() answers every key', Object.keys(Gate.branches(hh('employed'))).length, Gate.BRANCHES.length);
+
+  /* The cards, never more than ten, and only for what applies. */
+  Object.keys(Gate.ORDER).forEach(function (s) {
+    const cards = Gate.fieldsFor(s, hh(s));
+    checkTrue(`${s}: at most ten cards (${cards.length})`, cards.length <= Gate.MAX_FIELDS);
+    checkTrue(`${s}: no partner card for one adult`, !cards.some(c => c.key === 'partnerPay'));
+  });
+  checkTrue('two adults: the partner card appears', Gate.fieldsFor('employed', two).some(c => c.key === 'partnerPay'));
+  checkTrue('employed has the 401(k) card', Gate.fieldsFor('employed', hh('employed')).some(c => c.key === 'plan'));
+  checkTrue('self-employed does not', !Gate.fieldsFor('selfEmployed', hh('selfEmployed')).some(c => c.key === 'plan'));
+  checkTrue('between jobs has its own card and no pay card', Gate.fieldsFor('betweenJobs', hh('betweenJobs')).some(c => c.key === 'betweenJobs') && !Gate.fieldsFor('betweenJobs', hh('betweenJobs')).some(c => c.key === 'pay'));
+  check('an unknown situation has no cards', Gate.fieldsFor('nope', none).length, 0);
+  checkTrue('every card field is an owned field', Gate.allCards().every(c => c.fields.every(f => !!Ownership.field(f))));
+
+  /* Rooms whose requires are absent are not in the map. */
+  const all = Registry.all().length;
+  check('unanswered: every room', Registry.forHousehold(none).length, all);
+  check('no household: every room', Registry.forHousehold(null).length, all);
+  const retiredRooms = Registry.forHousehold(hh('retired')).map(r => r.id);
+  const gone = Registry.all().map(r => r.id).filter(id => retiredRooms.indexOf(id) === -1).sort().join(',');
+  check('retired: the working rooms are gone', gone, 'accounts,credential,fire,hassle,real-hourly-wage,savings-rate,self-employed,side-hustle');
+  const bjRooms = Registry.forHousehold(hh('betweenJobs')).map(r => r.id);
+  checkTrue('between jobs: no hourly wage, no savings rate, runway stays', bjRooms.indexOf('real-hourly-wage') === -1 && bjRooms.indexOf('savings-rate') === -1 && bjRooms.indexOf('runway') !== -1);
+  checkTrue('employed: own-work room is gone, the rest stay', Registry.forHousehold(hh('employed')).map(r => r.id).indexOf('self-employed') === -1 && Registry.forHousehold(hh('employed')).length === all - 1);
+  checkTrue('self-employed: the 401(k) room is gone', Registry.forHousehold(hh('selfEmployed')).map(r => r.id).indexOf('accounts') === -1);
+  checkTrue('every requires key is a branch', Object.keys(Registry.REQUIRES).every(id => Registry.REQUIRES[id].every(k => Gate.BRANCHES.indexOf(k) !== -1)));
+  checkTrue('every requires room is a room', Object.keys(Registry.REQUIRES).every(id => !!Registry.byId(id)));
+  check('byTag with a household filters the same way', Registry.byTag('all', hh('retired')).length, retiredRooms.length);
+  check('byTag without one is every room', Registry.byTag('all').length, all);
+  check('the demo is one room short — no own work', Registry.forHousehold(Demo.build()).length, all - 1);
+
+  /* Guesses: a default for every guessable control, from the tables. */
+  const tables = Object.assign({}, TABLES, { onepagerDefaults: require(path.join(ROOT, 'data/onepager_defaults.json')), uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')), matchDefaults: require(path.join(ROOT, 'data/match_defaults.json')) });
+  const g = Gate.guesses('employed', hh('employed'), tables);
+  check('employed pay is guessed at the median', g.pay.value, 6200000);
+  check('spending is 55% of gross a month', g.spending.value, Math.round(6200000 / 12 * 0.55));
+  check('cash is a month of that', g.cash.value, g.spending.value);
+  check('the deductible is the common one', g.deductible.value, 150000);
+  check('the contribution takes the match', g.contribution.value, 6);
+  checkTrue('every guess says where it came from', Object.keys(g).every(k => typeof g[k].source === 'string' && g[k].source.length > 0));
+  checkTrue('nothing is guessed as a number without a value', Object.keys(g).every(k => g[k].value !== undefined && g[k].value !== null));
+  check('no employer: no match guess', Gate.guesses('selfEmployed', hh('selfEmployed'), tables).matchPercent, undefined);
+  check('a student is guessed to have a loan', Gate.guesses('student', hh('student'), tables).hasDebt.value, 'yes');
+  check('… and nothing invested', Gate.guesses('student', hh('student'), tables).investments.value, 0);
+  const bjNC = hh('betweenJobs', { state: 'NC' });
+  const gb = Gate.guesses('betweenJobs', bjNC, tables);
+  check('between jobs in NC: the weekly cap', gb.weekly.value, tables.uiBenefits.states.NC.maxWeeklyDollars * 100);
+  check('… and the weeks', gb.weeks.value, tables.uiBenefits.states.NC.weeks);
+  check('no tables: no guesses, not a throw', Object.keys(Gate.guesses('employed', hh('employed'), {})).length, 0);
+  check('the milestone multiple interpolates (age 35 between 30 and 40)', Gate.milestoneMultiple(tables.retirementMilestones, 35), (function () {
+    const m = tables.retirementMilestones.milestones; const a = m.find(r => r.age === 30), b = m.find(r => r.age === 40); return a.multiple + (b.multiple - a.multiple) / 2; })());
+})();
+
+section('Core (D-094): the lens, by hand');
+
+(function () {
+  const Lens = require(path.join(ROOT, 'shared/lens.js'));
+  const Gate = require(path.join(ROOT, 'shared/gate.js'));
+  const demo = Demo.build();
+  const T = TABLES;
+
+  check('four modes', Lens.MODES.map(m => m.id).join(','), '$,hours,bought,pushed');
+  check('the demo has all four', Lens.available(demo, T).length, 4);
+  const retired = Schema.createHousehold({ people: [Schema.createPerson({ role: 'adult', employmentStatus: 'retired' })] });
+  check('a retiree has no hours lens', Lens.available(retired, T).map(m => m.id).join(','), '$,bought,pushed');
+  const bj = Schema.createHousehold({ people: [Schema.createPerson({ role: 'adult', employmentStatus: 'unemployed' })] });
+  check('nor does someone between jobs', Lens.available(bj, T).map(m => m.id).join(','), '$,bought,pushed');
+  checkTrue('hours on a retiree is incomplete, not zero', !Money.isOk(Lens.apply(100000, 'hours', retired, T)));
+
+  /* $ is the number itself. */
+  check('$ passes dollars through', Lens.format(123456, '$', demo, T), '$1,235');
+  check('nothing to show is an em dash', Lens.format(null, 'hours', demo, T), Money.EM_DASH);
+
+  /* Hours: dollars ÷ the real hourly wage, the same one the room shows. */
+  const wage = Hourly.realHourlyWage(demo, T).value;
+  const h = Lens.apply(1000000, 'hours', demo, T);
+  check('hours = cents ÷ real hourly wage', h.value, 1000000 / wage, 1e-9);
+  check('… shown as time', h.display, Money.formatAsTime(1000000, wage));
+  check('$10,000 on the demo is ' + h.display, h.display, Math.round(1000000 / wage) + ' h');
+
+  /* FI moves by the projection's fractional years; check it against the
+     closed form n = ln((T + C/r)/(P + C/r)) / ln(1 + r). */
+  const fi = Lens.fiInputs(demo, T);
+  checkTrue('the FI inputs come from the same three the dashboard uses', Money.isOk(fi) && fi.targetCents === Tier0.fireNumber(demo).value && fi.investmentsCents === Schema.investmentsCents(demo).value);
+  check('the real return is the household assumption', fi.rate, Schema.resolveAssumptions(demo).returnReal);
+  function closed(P) { const C = fi.annualSavingsCents, r = fi.rate; return Math.log((fi.targetCents + C / r) / (P + C / r)) / Math.log(1 + r); }
+  const b = Lens.apply(1000000, 'bought', demo, T);
+  check('years to FI now, within a tenth of the closed form', b.yearsNow, closed(fi.investmentsCents), 0.1);
+  check('years to FI with $10,000 more saved', b.yearsThen, closed(fi.investmentsCents + 1000000), 0.1);
+  check('months bought = the difference, in months, rounded', b.value, Math.round((b.yearsNow - b.yearsThen) * 12));
+  checkTrue('$10,000 saved buys months, not nothing: ' + b.display, b.value > 0 && /sooner$/.test(b.display));
+  const p = Lens.apply(1000000, 'pushed', demo, T);
+  checkTrue('$10,000 spent pushes FI later: ' + p.display, p.value > 0 && /later$/.test(p.display));
+  check('bought and pushed are near mirrors', p.value, b.value, 1);
+  checkTrue('a small amount still moves: ' + Lens.format(100000, 'pushed', demo, T), /< 1 mo later|\d mo later/.test(Lens.format(100000, 'pushed', demo, T)));
+  check('a big one reads in years', /yrs sooner$/.test(Lens.format(30000000, 'bought', demo, T)), true);
+  check('zero moves nothing', Lens.format(0, 'pushed', demo, T), 'FI unmoved');
+  checkTrue('nothing saved: FI cannot move, and says why', /Nothing is being saved/.test(Lens.apply(100000, 'bought', Schema.createHousehold({ people: [Schema.createPerson({ role: 'adult', employmentStatus: 'employed' })] }), T).reason || '') || !Money.isOk(Lens.apply(100000, 'bought', Schema.createHousehold({}), T)));
+
+  /* Fractional years in the projection: start 0, no return, $400 a year
+     to $1,000 is two and a half years, three whole ones. */
+  check('whole years by default', Projection.yearsToTargetCents({ startCents: 0, targetCents: 100000, annualRate: 0, annualContributionCents: 40000 }).value, 3);
+  check('fractional when asked', Projection.yearsToTargetCents({ startCents: 0, targetCents: 100000, annualRate: 0, annualContributionCents: 40000, fractional: true }).value, 2.5);
+  check('already there is zero either way', Projection.yearsToTargetCents({ startCents: 100000, targetCents: 100000, annualRate: 0.05, fractional: true }).value, 0);
+
+  /* The mode is per session and falls back to dollars. */
+  check('no sessionStorage: dollars', Lens.mode(), '$');
+  check('setMode without one still answers', Lens.setMode('hours'), '$');
+  const html = Lens.toggleHtml(demo, T, 'lens-test');
+  checkTrue('the toggle is one button a mode, dollars pressed', (html.match(/slaf-lens-btn/g) || []).length === 4 && /data-lens="\$" aria-pressed="true"/.test(html));
+  checkTrue('a retiree\'s toggle has no hours', (Lens.toggleHtml(retired, T).match(/slaf-lens-btn/g) || []).length === 3);
+  checkTrue('formatAsTime: minutes under an hour, tenths under a hundred', Money.formatAsTime(500, 2000) === '15 min' && Money.formatAsTime(30000, 2000) === '15 h' && Money.formatAsTime(3000000, 2000) === '1,500 h');
+})();
+
+section('Core (D-094): the schema branches and their migrations');
+
+(function () {
+  const h = Schema.createHousehold({});
+  check('dependents start unanswered', h.dependents, null);
+  check('"yes" from before is one person of unknown age', JSON.stringify(Schema.createHousehold({ dependents: true }).dependents), '[{"age":null}]');
+  check('"no" is an empty list', JSON.stringify(Schema.createHousehold({ dependents: false }).dependents), '[]');
+  check('a list keeps its ages', JSON.stringify(Schema.createHousehold({ dependents: [{ age: 4 }, { age: 12 }] }).dependents), '[{"age":4},{"age":12}]');
+  check('term life applies to a bare "yes"', Ownership.describe('termLife', Object.assign(Schema.createHousehold({}), { dependents: true }), 'sleep-at-night').applies, true);
+  check('… not to a bare "no"', Ownership.describe('termLife', Object.assign(Schema.createHousehold({}), { dependents: false }), 'sleep-at-night').applies, false);
+  check('dependents reads a bare "no" as none', Ownership.field('dependents').read(Object.assign(Schema.createHousehold({}), { dependents: false })).value, 0);
+  check('… and formats it', Ownership.field('dependents').format(0), 'No');
+  check('… two people', Ownership.field('dependents').format(2), '2 people');
+
+  check('health cover starts unknown', h.insurance.health.type, null);
+  check('… with no monthly cost', h.insurance.health.monthlyCents, null);
+  check('an unknown health type is dropped', Schema.createHousehold({ insurance: { health: { type: 'magic' } } }).insurance.health.type, null);
+  check('a known one is kept', Schema.createHousehold({ insurance: { health: { type: 'parent' } } }).insurance.health.type, 'parent');
+  check('estate starts unanswered', JSON.stringify(h.estate), JSON.stringify({ beneficiariesSet: null, willExists: null, poaExists: null }));
+  check('giving starts unanswered', JSON.stringify(h.giving), JSON.stringify({ pctOfIncome: null, annualTargetCents: null }));
+  check('one-offs start empty', h.oneOffs.length, 0);
+  const oo = Schema.createOneOff({ label: 'Tax refund', cents: 120000, direction: 'in', on: '2026-04-15' });
+  checkTrue('a one-off has an id, a label, cents, a direction and a date', /^/.test(oo.id) && oo.label === 'Tax refund' && oo.cents === 120000 && oo.direction === 'in' && oo.on === '2026-04-15');
+  check('a bad direction is out — money leaving is the safe reading', Schema.createOneOff({ cents: 100, direction: 'sideways' }).direction, 'out');
+  check('the community flag starts unanswered', h.community.daySchool, null);
+  check('the real return assumption is 5%', Schema.resolveAssumptions(h).returnReal, 0.05);
+  check('inflation 3%', Schema.resolveAssumptions(h).inflation, 0.03);
+  check('an income source can carry a low month', Schema.createIncomeSource({ variableLowCents: 200000, variableHighCents: 600000 }).variableLowCents, 200000);
+  check('… and a high one', Schema.createIncomeSource({ variableLowCents: 200000, variableHighCents: 600000 }).variableHighCents, 600000);
+  check('"a month on average" is a pay basis', IncomeEngine.BASES.filter(b => b.id === 'variable').length, 1);
+  check('… twelve a year', IncomeEngine.BASES.filter(b => b.id === 'variable')[0].periods, 12);
+  check('meta.guessed starts empty', JSON.stringify(h.meta.guessed), '{}');
+  check('no rent starts unanswered', h.meta.noRent, null);
+  checkTrue('the undo stacks start empty', Array.isArray(h.meta.undoStack) && h.meta.undoStack.length === 0 && Array.isArray(h.meta.redoStack));
+  checkTrue('every stored household still round-trips (the migration keeps the old shape)', (function () {
+    const old = JSON.parse(JSON.stringify(Demo.build()));
+    delete old.oneOffs; delete old.estate; delete old.giving; old.dependents = true; delete old.insurance.health; delete old.community; delete old.meta.guessed;
+    const back = Schema.createHousehold(old);
+    return back.oneOffs.length === 0 && back.estate.willExists === null && back.dependents.length === 1 && back.insurance.health.type === null && back.community.daySchool === null;
+  })());
+  check('the one-pager defaults table is registered', require(path.join(ROOT, 'shared/reference.js')).TABLE_FILES.onepagerDefaults, 'onepager_defaults.json');
+  const d = require(path.join(ROOT, 'data/onepager_defaults.json'));
+  checkTrue('… and carries the reference-data header', typeof d.version === 'string' && typeof d.asOf === 'string' && typeof d.source === 'string' && typeof d.confidence === 'string' && typeof d.confidenceNote === 'string');
 })();
 
 section('Two decision sequences that cannot collide');

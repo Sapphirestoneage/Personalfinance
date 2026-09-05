@@ -524,7 +524,7 @@ const CASES = [
         /* $72,000 with a 1 typed into it, NOT a bare "1". The exact digits
            depend on where the caret landed; what matters is that the saved
            figure is still in there. */
-        ['the saved answer was not wiped by typing', v.value.replace(/[^0-9]/g, '').indexOf('72000') !== -1, true],
+        ['the saved answer was not wiped by typing', v.value.replace(/[^0-9]/g, '').replace('1', '') === '72000', true],
         ['and the new keystroke landed too', v.value.replace(/[^0-9]/g, '').length > 5, true],
         ['it saved on blur without a Next tap', stored > 0, true],
         ['and the field settles again afterwards', v.settled, true]

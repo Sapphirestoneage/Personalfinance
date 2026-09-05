@@ -4829,6 +4829,180 @@ between-jobs action and Runway prefilled.
 
 ---
 
+## D-094 — One pager in, one pager out: the core
+
+*(The brief, "SLAF Money Rooms": "One pager in, one pager out. A person
+fills in one short page, everything else prepopulated, and gets a
+dashboard back. The dashboard is home. Every number on it opens the room
+it came from." Build order: core, then the input page, the dashboard,
+the room template on Real Hourly Wage, then rooms in tranches, and
+History last; stop for review after each. This entry is the core, the
+first of those; the rest are logged as they land.)* Nothing here is a
+room. It is the four things every room and page will lean on, written
+once so they cannot drift: a command log on the spine, the gate, the
+lens, and which rooms exist for whom. T8 (D-093, the FI-losophy rooms)
+is set aside for this pass — see `LATER.md`.
+
+**Where the brief's schema went.** The brief writes the household as dot
+paths under `slaf:spine:v2` with `spine.set(path, value, label)`. The
+household already has a shape (D-047 onward) that thirty rooms read, so
+the shape stays and `set(path)` is layered on it: `Spine.set('meta.noRent',
+true, 'No rent')` writes the dot path, `Spine.get(path)` reads it, and the
+existing helpers (`upsertAsset`, `setMonthlyExpenses`, …) keep working —
+every one of them goes through the same `save()`, which is where the log
+lives. The storage key stays `slaf.household.v2`; the brief's key would
+have meant a migration for nothing. Likewise the registry: the brief's
+`rooms.json` fields — `id, title, file, reads, writes, requires,
+dashboardNumber, order` — are already the registry rows' fields (`needs`
+for reads, the ownership rows for writes, `order` from the path), with
+`requires` new, and it stays a JS module rather than a JSON file that
+needs an async load before the map can draw.
+
+**The command log.** Every `save()` diffs the household against the last
+one saved — leaf by leaf, plain objects recursed, arrays compared whole
+— and records what moved as one entry `{ label, ts, changes: [{ path,
+before, after }] }`. `Spine.undo()` applies the befores and moves the
+entry to the redo stack; `redo()` the afters; a fresh write clears redo.
+`Spine.batch(label, fn)` records everything inside `fn` as one entry —
+the one-pager's "See my dashboard", an import, a situation change. The
+label is the caller's or, failing that, the first owned field that
+moved, formatted from the ownership row: "Cash & savings $9,500 →
+$12,000" — the hover text on the button. The stacks live in
+`meta.undoStack` / `meta.redoStack`, so they survive a reload and go
+with `reset()`; the cap is 100 entries, oldest off. What is never in the
+diff: `meta.updatedAt`, `meta.confirmedAt`, `meta.visitedRooms`,
+`meta.createdAt` and the stacks themselves — undoing a number does not
+un-confirm it, and the clock is not history. An export leaves the stacks
+behind: the log is this browser's, not the household's, and a share
+code should not carry a hundred edits. `shared/undo.js` draws the two
+buttons top right on every page (thirty pages carry it), each saying
+what it will do or why it cannot ("Nothing to undo"), with Cmd/Ctrl-Z
+and Cmd/Ctrl-Shift-Z doing the same except inside a box being typed in,
+where the browser's own undo keeps its meaning. Every page already
+re-renders on the spine's change notification, so undo redraws without
+a load.
+
+**Undoing a gate change restores every field the gate removed.** The
+brief asks for this to be tested explicitly, and it is: employed with a
+50%-of-6% match and a 6% contribution, then one batch "Now retired" that
+sets the status and removes the match and the contribution (the retirement
+branch no longer exists, so its facts go — absent, not hidden); one undo
+brings back the status, both match numbers and the contribution; redo
+takes them away again; and after a reload the undo still works.
+
+**The gate.** `shared/gate.js` is the whole of "what's your situation?":
+six situations — employed, self-employed, between jobs, student, retired,
+mixed — each mapped to one working status (`employed`, `selfEmployed`,
+`unemployed`, `student`, `retired`, `both`) and naming the dashboard's
+lead number (savings rate and the FI date; owner's pay and the
+quarterly; the runway in days; the loan trajectory; the withdrawal
+rate). `student` is a new eighth working status: earning, no employer.
+`Gate.exists(household, key)` is the single check every room and every
+computation calls — never `if (value === 0)`. The branches: `income`,
+`retirement` (with `employerMatch` and `payroll` following it), `ownWork`
+(with `variableIncome` and `quarterlyTax`), `unemployment`, `pension`,
+`stipend`, `partner`, `hours` and `realHourlyWage`, `career`,
+`savingsRate`, `decumulation`, `protection`, `dependents`, `childcare`,
+`daySchool`, `debt`, `studentLoans`. Unanswered situation: everything
+that needs no fact exists, so the map before the intake shows every
+room. Between jobs: `income` exists only once something is coming in
+(severance typed, a partner's pay). A student has no `protection` branch
+and does have `studentLoans`; a retiree has `pension` and `decumulation`
+and no `hours`, `savingsRate` or `career`. `fieldsFor(situation, h)`
+lists the one-pager's cards in order — never more than ten, the partner
+card only for two adults, the 401(k) card only where a match could exist
+— and `guesses(situation, h, tables)` proposes a default for every
+guessable control with where it came from, from
+`data/onepager_defaults.json` (US median pay, spending as a share of
+gross, a month of cash, the common deductible — all `unverified`) plus
+the milestone multiple for investments, the most common match, and the
+state's benefit cap for someone between jobs. Nothing in `guesses` is
+stored: the page proposes, "See my dashboard" commits what was left
+untouched and flags it in `meta.guessed[fieldId]`; the spine clears the
+flag the moment a real reading replaces it. The ownership chip has a
+third state for it (`slaf-owned--guess`, "a guess — fix it in …").
+
+**Which rooms exist.** `Registry.REQUIRES` names the branch a room needs:
+Accounts needs `retirement`; Real Hourly Wage and Worth the Hassle need
+`hours`; Savings Rate and FIRE need `savingsRate`; Self-Employed needs
+`ownWork`; Credential and Side Hustle need `career`. `forHousehold(h)`
+is the map for this person, `byTag(tag, h)` filters the drawer the same
+way, and `map.html` passes the household. A retiree's map loses eight
+rooms; someone between jobs loses the wage and the savings rate and
+keeps the runway; the demo (employed) loses only the own-work room.
+
+**The lens.** `shared/lens.js` is the one toggle every room will carry:
+`$`, `hours`, `bought`, `pushed`. Hours is dollars over the real hourly
+wage — the same `Hourly.realHourlyWage` the room shows — and is absent,
+not disabled, when the household has no `realHourlyWage` branch
+(retired, between jobs). Bought and pushed are how many months FI moves
+if the amount were saved instead, or spent: years-to-target from the
+projection engine with the household's real return, the FI number and
+this year's savings — the three the dashboard's Distance uses — run
+twice, from today's investments and from investments ± the amount. The
+projection's `yearsToTargetCents` answered in whole years, so $10,000
+read as "FI unmoved" whenever it did not cross a year boundary; it gains
+`fractional: true`, interpolating inside the crossing year (start 0, no
+return, $400 a year to $1,000: 2.5 years, 3 whole). On the demo $10,000
+saved is FI five months sooner, spent five months later; $1,000 is
+"< 1 mo". The mode is per session (`sessionStorage`), never a household
+fact, and falls back to dollars.
+
+**The schema, for what the tranches will need.** `household.dependents`
+is now a list `[{ age }]` — a bare `true` from D-092 loads as one person
+of unknown age, `false` as an empty list, unanswered stays null — so the
+childcare and day-school branches can read ages. The Sleep At Night
+row owns it (it was Start Here's for one release). `insurance.health`
+gains `{ type: employer | marketplace | cobra | medicaid | parent | none,
+monthlyCents }`; `household.estate` `{ beneficiariesSet, willExists,
+poaExists }`; `household.giving` `{ pctOfIncome, annualTargetCents }`;
+`household.oneOffs[]` `{ id, label, cents, direction: in | out, on }`
+(an unknown direction reads as out — money leaving is the safe reading);
+`community.daySchool`; an income source's `variableLowCents` /
+`variableHighCents` with "a month on average — it varies" as a pay
+basis; `assumptions.returnReal` 0.05 and `inflation` 0.03;
+`meta.guessed`, `meta.noRent`, and the two stacks. Everything starts
+null or empty; nothing existing changed shape except `dependents`.
+`Money.formatAsTime(cents, wageCents)` is the hours formatter (minutes
+under an hour, tenths under a hundred).
+
+**Not in this repo, for the record.** The brief says to read "Student
+Loan Decision" and "Money Calendar & Pay-Later" before writing anything.
+Neither is a room here — both are ideas in `SPEC.md` / `ROADMAP.md` —
+so the rooms read were Real Hourly Wage, the map shell, Start Here, the
+dashboard, Runway and Debt Payoff.
+
+**Compatibility note.** `household.dependents` changed shape: boolean →
+array of `{ age }` (true → `[{ age: null }]`, false → `[]`, null → null)
+via `Schema.createDependents`, applied on every `createHousehold`. Rooms
+updated to match: Sleep At Night, Start Here, the ownership rows
+(`dependents`, `termLife`). A future room reads it as a list and never
+compares it to `true`. New fields (`insurance.health`, `estate`,
+`giving`, `oneOffs`, `community.daySchool`, `variableLowCents` /
+`variableHighCents`, `meta.guessed`, `meta.noRent`, `meta.undoStack` /
+`redoStack`) load null / empty from any older save. `Schema.EMPLOYMENT_STATUSES`
+has eight rows (`student` added). `Spine.save` now records history:
+a room that writes many fields in one gesture should wrap them in
+`Spine.batch(label, fn)` or the undo button will step through them one
+at a time. `Projection.yearsToTargetCents` returns whole years unless
+`fractional: true`; no caller changed.
+
+**Verified.** `node test/run.js` (11,619): set / undo / redo / batch /
+the 100 cap / labels from the ownership rows / the log after a reload /
+reset clearing it / exports without it; the gate-change batch above;
+`exists` for every branch in every situation as a truth table; the lead
+per situation; the cards under ten with the partner and 401(k) cards
+conditional; the guesses from the tables; `forHousehold` per situation;
+the lens by hand against the closed form n = ln((T + C/r)/(P + C/r)) /
+ln(1 + r) within a tenth of a year, hours = cents ÷ wage, the
+fractional projection; every new schema branch and the `dependents`
+migration. `node dnd/test/run.js`, `node test/export.js` (the round
+trip minus the log), `node test/forms.js` on a phone-shaped browser, and
+the sweep of every page for console errors. "One pager in, one pager
+out" is not yet true: this is the core under it; the input page is next.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have
