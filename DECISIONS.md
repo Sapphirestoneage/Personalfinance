@@ -3410,6 +3410,25 @@ contribution and `hasDebt` are Start Here's. Read them through
 
 ---
 
+# The Dungeons & Dividends entries
+
+Everything below this line is about the `dnd/` tool. **The numbers D-046
+through D-052 appear twice in this file** — once above for SPARKS and once
+below for D&D — because these entries were written while the D&D tool was
+going to be its own repository (D-049, D-050). In a reference like
+"DECISIONS.md D-046", the one that is meant is the one on the same side of
+this line as the file doing the referencing: `shared/suggest.js` means the
+SPARKS D-046, `dnd/engines/character.js` means the D&D one. The exception is
+`dnd/shared/*.js`, which are byte-identical vendored copies of the SPARKS
+files and therefore carry SPARKS numbers.
+
+**From here on the log is one sequence.** A new entry — for either side —
+takes the highest number in the whole file plus one, which is why the next
+D&D entry after D-052 is D-062. Renumbering the seven duplicates properly is
+a documentation pass of its own and has not been done.
+
+---
+
 ## D-046 — HP is measured in weeks, which is what makes §3A stop contradicting itself
 
 The Dungeons & Dividends rulebook defines Hit Points twice in the same
@@ -3808,3 +3827,134 @@ shipped three times in this repository — "Proficiencies &amp; training", then
 scans the string arguments of every escaping helper and fails on a pre-escaped
 entity. Verified by reintroducing the bug deliberately: the suite catches it and
 names the offending string.
+
+---
+
+## D-062 — A monster's danger is a property of the meeting, not of the monster
+
+BRIEF.md §9.3 asks for an encounter engine: pick a creature from the bestiary,
+run it at the sheet, and get back what actually happens. The design question it
+forces is where danger lives. A "CR 5 Timeshare Charm-Caster" sounds like a
+fixed quantity, and it is not one — the same creature is a shrug to someone with
+a high Wisdom score and six months of reserve, and a genuine threat to someone
+with neither. So nothing in `engines/encounter.js` computes a monster's danger.
+It computes a *meeting*: this creature, this sheet, this set of defences.
+
+### Save DCs are derived from CR, because the rulebook never set them
+
+Rulebook §13 leaves save DCs open. The two options were to invent a DC per
+creature — fourteen unfalsifiable numbers — or to derive all of them from the
+one property every creature already has, its Challenge Rating. The ladder is in
+`data/dnd_rules.json` under `encounterRules.crToDc`: CR ≤ 0.25 → DC 10, rising
+to DC 20 at CR 20 and DC 21 above it. It follows the shape of a CR-to-save-DC
+progression — harder monster, harder save — and the specific numbers are a
+convention chosen here, not a measurement and not agreed with anyone. That is
+said in the data file itself, in the `source` field, so nobody later mistakes it
+for research. Disagreeing with it means editing one array, and every creature
+moves together. Inventing fourteen numbers would have meant disagreeing with it
+fourteen times.
+
+`crToNumber` handles the three shapes the bestiary actually uses: `1/4`, `7`,
+and `18–20` (a range, which takes its lower bound so a range is never scored as
+more dangerous than its floor).
+
+### Three blocker states, and why the brief's two were not enough
+
+A blocker is a thing you hold that changes the encounter — an emergency fund,
+disability insurance, a high Threat Detection score. The brief's shape implies a
+boolean: you have it or you don't. That is the same mistake as `|| 0`.
+
+**"You have no disability insurance" and "nobody has asked you about disability
+insurance" are different claims, and only the first should make a monster look
+more dangerous.** So `blockerState()` returns `held`, `absent`, or `unknown`,
+and unknown applies nothing — no effect, no penalty, no assumption either way.
+The page lists them separately, under what it would need to know. This is the
+deviation from the brief in this tranche and it is deliberate; the rest of the
+repo would be lying about a blank if it did anything else.
+
+The catalogue of fourteen blockers lives in data (`dnd_rules.json.blockers`) and
+says what each blocker *is*. The predicates that decide whether this character
+actually holds one live in the engine, because "six months of reserve" is a
+computation over the household, not a fact to be stored. Blockers keyed to a
+sub-stat need no predicate at all — they read `subScores[id] >= min`, and an
+unscored sub-stat comes back unknown for free.
+
+Three effects, all read from data: `negate` (the attack cannot land), `halve`,
+and `advantage`. Advantage is rolling twice and keeping the better, which is
+worth about **+3.7** on a d20 on average; it is applied as a flat modifier
+rather than simulated, and the 3.7 is in `encounterRules.effects` where it can
+be argued with.
+
+### The save the monster targets is your worst one
+
+`targetSave()` reads the creature's `saveAbility`. A single ability picks that
+save. A pair like `CON+DEX` picks **whichever of the two is worse** — a monster
+attacks where you are thinnest, not where it is convenient. `ALL` means the
+worst of all six. Unscored saves are excluded from the comparison rather than
+treated as terrible: a blank is a blank, not a weakness, and if none of the
+targeted saves is scored the engine reports the target without a number instead
+of guessing one.
+
+The same rule drives the radar chart and the "natural predators" list. The two
+lowest *scored* saves are the weak spokes, and the creatures that hunt there at
+your tier are listed. Fewer than two scored saves and the panel says so rather
+than drawing a shape out of nothing.
+
+### The clamp, and Massive Damage
+
+A natural 1 always fails and a natural 20 always succeeds, so the chance an
+attack lands is clamped to 5%–95% however lopsided the arithmetic gets. A
+character can be very well defended; they cannot be immune by having big
+numbers. They *can* be immune by holding a `negate` blocker, which is the point
+— the Payday Loan Wraith cannot touch you at all if you have three months of
+reserve, and no Wisdom score achieves that.
+
+Damage is already in weeks, because HP is weeks (D-046). Rulebook §3A's Massive
+Damage rule then falls out for free: a single hit at or above Max HP skips the
+death saves and goes straight to insolvency, and the engine flags it.
+
+### The worked example, hand-derived
+
+The brief says the acceptance criterion is that this "reproduces the audit's
+worked example". **I do not have the audit** — only BRIEF.md, which quotes its
+conclusions but not its arithmetic. So the criterion was re-derived by hand
+against the demo persona rather than checked against a source I cannot read, and
+that is worth knowing before trusting the match:
+
+    Timeshare Charm-Caster, CR 3      → DC 13 (CR ≤ 4 band)
+    demo sheet's WIS save              → +1
+    holds the Self-Awareness blocker   → advantage, +3.7
+    effective modifier                 → +4.7
+    chance it lands = (13 − 4.7 − 1)/20 = 7.3/20 = 0.365   → 37%
+    damage 3d6 expected                → 10.5 weeks
+    current HP 13                      → 2.5 weeks left
+
+All six figures match what the page prints.
+
+### The encounter log, which exists for T10
+
+`shared/store.js` gains `logEncounter(rec)` / `encounters()`, capped at 50 and
+newest first. Nothing in §9.3 needs a log — it is there because T10's type chart
+wants to know which attack types actually landed on you over time, and a record
+written from the start is worth more than one that begins the day T10 ships. The
+shape is `{at, monster, attackType, tier, targetSave, dc, hitChance,
+damageWeeks, hpBefore, hpAfter, mode}`. Anything reading it should treat missing
+fields as missing, as ever.
+
+### Compatibility note
+
+**Stored shape:** `dnd.character.v1` gains `encounters` — an array, capped at
+50, newest first, of the record above. It is **added**; absent means no
+encounter has been run, which is not the same as zero encounters and should not
+be rendered as one. Nothing existing changed shape. `household.dndProfile` gains
+optional `disabilityInsurance` and `umbrellaPolicy` (booleans, absent = not
+asked); `healthCoverage` and `automatedSaving` were already there.
+
+**Rooms updated:** `dnd/encounter.html` (new), `dnd/sheet.html` and
+`dnd/bestiary.html` (links to it only). No SPARKS room reads or writes any of
+this.
+
+**Before writing any of these from a new room:** the encounter log is the D&D
+tool's own, under `dnd.character.v1`, not part of the household model, and it is
+deliberately not exported by `shared/export.js` — a lead magnet ships a
+character, not a play history.

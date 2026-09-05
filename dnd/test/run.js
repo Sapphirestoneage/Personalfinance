@@ -218,6 +218,146 @@ section('Dungeons & Dividends — level, HP and AC');
   check('the spectrum ranks highest first', spec[0].id, 'incomePower');
 })();
 
+section('Dungeons & Dividends — the encounter engine');
+
+(function () {
+  const Encounter = require(path.join(ROOT, 'engines/encounter.js'));
+  const R = TABLES.dndRules;
+
+  /* -- every creature carries the full §9.3 shape, or this fails ---------- */
+  const creatures = R.monsters.concat(R.hazards);
+  check('fourteen creatures in all', creatures.length, 14);
+  creatures.forEach(function (c) {
+    checkTrue(`${c.name} has a save ability`, typeof c.saveAbility === 'string' && c.saveAbility.length > 0);
+    checkTrue(`${c.name} has a damage spec`, !!c.damageSpec);
+    checkTrue(`${c.name} has an attack type`, !!c.attackType);
+    checkTrue(`${c.name} has a tier`, ['I', 'II', 'III', 'IV'].indexOf(c.tier) !== -1);
+    checkTrue(`${c.name} declares what blocks it`, Array.isArray(c.blockedBy));
+    checkTrue(`${c.name} names where it hunts`, Array.isArray(c.lair) && c.lair.length > 0);
+    (c.blockedBy || []).forEach(function (b) {
+      checkTrue(`${c.name}: blocker "${b.id}" exists in the catalogue`, !!R.blockers[b.id]);
+      checkTrue(`${c.name}: effect "${b.effect}" is a real effect`,
+        ['negate', 'halve', 'advantage'].indexOf(b.effect) !== -1);
+    });
+    /* Every attack type must be one T10 will know about. */
+    checkTrue(`${c.name}: attack type is declared in the rules`,
+      R.encounterRules.attackTypes.some(t => t.id === c.attackType));
+  });
+
+  /* -- the ladders ------------------------------------------------------- */
+  check('CR 1/8 -> DC 10', Encounter.dcFor('1/8', TABLES), 10);
+  check('CR 3 -> DC 13', Encounter.dcFor('3', TABLES), 13);
+  check('CR 8 -> DC 16', Encounter.dcFor('8', TABLES), 16);
+  check('a CR range takes its lower bound', Encounter.dcFor('18–20', TABLES), Encounter.dcFor('18', TABLES));
+  check('an absent CR yields no DC', Encounter.dcFor('—', TABLES), null);
+  check('3d6 averages 10.5', Encounter.expectedDice(Encounter.parseDice('3d6')), 10.5);
+  check('a malformed dice string parses to nothing', Encounter.parseDice('lots'), null);
+
+  /* -- a pair of saves targets the WORSE of the two ---------------------- */
+  const saves = [
+    { stat: 'CON', ok: true, modifier: 5 },
+    { stat: 'DEX', ok: true, modifier: 1 },
+    { stat: 'WIS', ok: true, modifier: 3 }
+  ];
+  check('a paired save picks the weaker side',
+    Encounter.targetSave({ saveAbility: 'CON+DEX' }, saves).stat, 'DEX');
+  check('ALL picks the weakest of everything',
+    Encounter.targetSave({ saveAbility: 'ALL' }, saves).stat, 'DEX');
+  check('a single save picks itself',
+    Encounter.targetSave({ saveAbility: 'WIS' }, saves).stat, 'WIS');
+
+  /* -- THE WORKED EXAMPLE, re-derived by hand ----------------------------
+     A Level 3 Earner: WIS 13 (+1), not WIS-proficient, 13 weeks of HP.
+     Against the Timeshare Charm-Caster (CR 3, WIS save, 3d6):
+       DC          CR 3 sits on the maxCr-4 rung        -> 13
+       modifier    WIS 13 -> +1, no proficiency          -> +1
+       advantage   Self-Awareness 15 >= 14               -> +3.7
+       hit chance  (13 − 4.7 − 1) / 20                   -> 0.365
+       damage      3 × 3.5                               -> 10.5 weeks
+       hp after    13 − 10.5                             -> 2.5              */
+  const sheet = {
+    stats: { STR: Money.ok(12), DEX: Money.ok(13), CON: Money.ok(14),
+             INT: Money.ok(14), WIS: Money.ok(13), CHA: Money.ok(9) },
+    klass: TABLES.dndClasses.classes.filter(c => c.id === 'earner')[0],
+    proficiencyBonus: 2,
+    currentHp: Money.ok(13),
+    maxHp: { weeks: 18, reducedByDebt: true },
+    level: Money.ok(3),
+    subScores: { selfAwareness: Money.ok(15), threatDetection: Money.ok(10) },
+    debtBurden: Money.ok(2),
+    suggestedClass: Money.ok('earner', { ranked: [] })
+  };
+  const timeshare = R.monsters.filter(m => m.name === 'Timeshare Charm-Caster')[0];
+  const r = Encounter.run(sheet, timeshare, { tables: TABLES, household: { dndProfile: {} } });
+
+  check('worked example: target save', r.targetSave, 'WIS');
+  check('worked example: modifier', r.modifier, 1);
+  check('worked example: DC', r.dc, 13);
+  checkTrue('worked example: advantage from Self-Awareness', r.advantage);
+  check('worked example: effective modifier', Math.round(r.effectiveModifier * 10) / 10, 4.7);
+  check('worked example: chance it lands', r.hitChance, 0.365);
+  check('worked example: damage in weeks', r.damageWeeks, 10.5);
+  check('worked example: hit points after', r.hpAfter, 2.5);
+  checkTrue('worked example: not a death-save situation', !r.deathSaves);
+  checkTrue('worked example: Threat Detection 10 is below the bar, so absent',
+    r.blockedBy.some(b => b.id === 'threatDetection' && b.state === 'absent'));
+
+  /* -- three states, and unknown must never help the monster ------------- */
+  const unknownSheet = Object.assign({}, sheet, { subScores: {} });
+  const u = Encounter.run(unknownSheet, timeshare, { tables: TABLES, household: { dndProfile: {} } });
+  check('an unscored blocker reads as unknown, not absent',
+    u.blockedBy.filter(b => b.state === 'unknown').length, 2);
+  checkTrue('and unknown grants nothing', !u.advantage && !u.negated && !u.halved);
+  check('so the save is the bare modifier', u.effectiveModifier, 1);
+
+  /* -- negate really does mean cannot land ------------------------------- */
+  const wardedSheet = Object.assign({}, sheet, {
+    subScores: { threatDetection: Money.ok(18), selfAwareness: Money.ok(15) } });
+  const w = Encounter.run(wardedSheet, timeshare, { tables: TABLES, household: { dndProfile: {} } });
+  checkTrue('Threat Detection 18 negates the Charm-Caster', w.negated);
+  check('a negated attack lands never', w.hitChance, 0);
+  check('and deals nothing', w.damageWeeks, 0);
+  check('so hit points do not move', w.hpAfter, w.hpBefore);
+
+  /* -- halve ------------------------------------------------------------- */
+  const behemoth = R.hazards.filter(h => h.name === 'Medical Bankruptcy Behemoth')[0];
+  const bare = Encounter.run(sheet, behemoth, { tables: TABLES, household: { dndProfile: {} } });
+  const insured = Encounter.run(sheet, behemoth, {
+    tables: TABLES, household: { dndProfile: { healthCoverage: 2 } } });
+  checkTrue('health cover halves the Behemoth', insured.halved);
+  check('to exactly half', insured.damageWeeks, bare.damageWeeks / 2);
+  checkTrue('uninsured, it is massive damage against an 18-week pool', bare.massiveDamage);
+
+  /* -- the 5%/95% clamp -------------------------------------------------- */
+  const godlike = Object.assign({}, sheet, {
+    stats: Object.assign({}, sheet.stats, { WIS: Money.ok(20) }), proficiencyBonus: 6 });
+  const g = Encounter.run(godlike, timeshare, { tables: TABLES, household: { dndProfile: {} } });
+  checkTrue('however good the save, a natural 1 still fails', g.hitChance >= 0.05);
+  const hopeless = Object.assign({}, sheet, {
+    stats: Object.assign({}, sheet.stats, { WIS: Money.ok(8) }), proficiencyBonus: 2 });
+  const hp = Encounter.run(hopeless, R.hazards.filter(h => h.name === 'Market Crash Elemental')[0],
+    { tables: TABLES, household: { dndProfile: {} } });
+  checkTrue('and however bad, a natural 20 still saves', hp.hitChance <= 0.95);
+
+  /* -- rolling stays inside the possible range --------------------------- */
+  let lo = Infinity, hi = -Infinity;
+  for (let i = 0; i < 200; i++) {
+    const roll = Encounter.run(sheet, timeshare,
+      { tables: TABLES, household: { dndProfile: {} }, mode: 'roll' });
+    lo = Math.min(lo, roll.damageWeeks); hi = Math.max(hi, roll.damageWeeks);
+  }
+  checkTrue('3d6 never rolls below 3', lo >= 3);
+  checkTrue('3d6 never rolls above 18', hi <= 18);
+
+  /* -- predators: unscored saves are not weaknesses ---------------------- */
+  const p = Encounter.predators(sheet, TABLES);
+  checkTrue('the map is ready with six scored saves', p.ready);
+  check('it names two weakest', p.weakest.length, 2);
+  check('a level 3 character is tier I', p.tier.id, 'I');
+  const thin = Object.assign({}, sheet, { stats: { WIS: Money.ok(8) } });
+  checkTrue('with one save scored there is no map yet', !Encounter.predators(thin, TABLES).ready);
+})();
+
 section('Dungeons & Dividends — nothing is escaped twice');
 
 (function () {
@@ -238,6 +378,24 @@ section('Dungeons & Dividends — nothing is escaped twice');
           `"${m[1].slice(0, 60)}" is escaped again inside ${fn}() and renders as literal &amp;`);
       }
     });
+  });
+
+  /* esc() must not receive markup either. Escaping a string that already
+     carries the tags you meant to keep renders them as visible text — the
+     same mistake as pre-escaping an entity, wearing a different hat. */
+  ['index.html', 'sheet.html', 'bestiary.html', 'encounter.html'].forEach(function (page) {
+    const src = fs.readFileSync(path.join(ROOT, page), 'utf8');
+    const call = /esc\(\s*'((?:[^'\\]|\\.)*)'/g;
+    let m;
+    while ((m = call.exec(src)) !== null) {
+      checkTrue(`${page}: esc(…) argument carries no markup`,
+        !/<\/?[a-z][^>]*>/i.test(m[1]),
+        `"${m[1].slice(0, 60)}" would render its tags as text`);
+    }
+    /* The join-with-markup form is the one that actually bit. */
+    checkTrue(`${page}: no esc(x.join('<tag>')) form`,
+      !/esc\([^)]*\.join\(\s*'[^']*<[^']*'\s*\)/.test(src),
+      'escape each value first, then join with markup');
   });
 
   /* And the same for the second argument position, where labels usually sit. */

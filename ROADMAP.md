@@ -40,6 +40,8 @@ Twenty-five rooms are live. Against this document's own tiers:
 | **T6** — Life events + Triple D | — | One engine, one room, templates as data |
 | **T7** — Skill Stacker | — | New room, reads the `dnd/` catalogue |
 | **T8** — FI-losophy rooms | — | Designed Week, Enough, Unlearning, Time Buckets, Dreamline, time-denominated display |
+| **T9** — Dungeons & Dividends (`dnd/`) | **in progress — 3 of 11** | 9.1 the sheet is the form (D-052, D&D block) · 9.3 the encounter engine: CR→DC ladder, three blocker states, natural-predator radar, encounter log (D-062) · 9.11 SRD attribution and the non-affiliation line. Remaining: 9.2 share card · 9.4 tiers of play · 9.5 personality import (needs T2's suggested state) · 9.6 Tier 1 result upgrade · 9.7 conditions & energy · 9.8 XP & rests (needs T7) · 9.9 DM mode · 9.10 bestiary expansion |
+| **T10** — Attack-type chart | blocked on T9 | Reads §9.3's `attackType` and the encounter log |
 
 Wedding and Dream Calculator are one Goal Costing Engine with two templates,
 per `SPEC.md` §8. Credit Card calc is a filtered view of the Debt Calculator,
@@ -67,14 +69,16 @@ risks it cannot see (D-044). Neither adds a number the other rooms did not
 already own; the radar is deliberately not a score, and The Score is where
 adding them up happens, with its weighting on the page (D-043).
 
-One Tier 5 idea has been built, and it is **not in this repo** — the **DND
-Character Sheet** shipped as its own product,
-[dungeons-and-dividends](https://github.com/Sapphirestoneage/dungeons-and-dividends).
-It is not a room, it is not in `shared/registry.js`, and it never appears on
-the Map; it is a separate tool with its own front door, built to be handed to
-someone who has never opened SPARKS. See `DECISIONS.md` D-046 through D-049 for
-the mechanics that were settled while building it — HP measured in weeks, the
-scoring calibration, and why the class count is seven and not ten.
+One Tier 5 idea has been built, and it is **a separate product living in this
+repo** — **Dungeons & Dividends**, in `dnd/`, served at
+`sapphirestoneage.github.io/Personalfinance/dnd/`. It was going to be its own
+repository and is not; see D-049 and D-050 for why it moved into a folder
+instead. It is still not a room: it is not in `shared/registry.js`, it never
+appears on the Map, and it has its own front door, built to be handed to
+someone who has never opened SPARKS. See the D&D block of `DECISIONS.md`
+(D-046 onward, below the divider) for the mechanics settled while building it
+— HP measured in weeks, the scoring calibration, why the class count is seven
+and not ten, and how the sheet stays typeable on a phone.
 
 It does not fork the maths. Its calculation core is `shared/money.js`,
 `shared/schema.js`, `engines/tier0.js` and `engines/projection.js` from this
@@ -373,7 +377,7 @@ Everything below this line is the owner's document, kept as written.
 - [x] ✅ MBTI-for-Finance
 - [x] ✅ Astrology-for-Finance
 - [x] ✅ Financial Enneagram (solo version)
-- [x] ✅ DND Character Sheet — **BUILT, as a separate product**: [dungeons-and-dividends](https://github.com/Sapphirestoneage/dungeons-and-dividends). Not a room here. D-046/047/048/049
+- [x] ✅ DND Character Sheet — **BUILT, as a separate product** that lives in this repo under `dnd/`. Not a room here. D&D block of `DECISIONS.md`, D-046 onward
 - [x] ✅ Harry Potter House / Divergent Faction
 - [x] ✅ League of Legends / Smite Character System (individualized financial avatars)
 - [x] ✅ Maslow's Hierarchy applied to finance

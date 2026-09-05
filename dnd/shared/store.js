@@ -232,6 +232,33 @@
     return quizComplete(tables) ? 1 : 0;
   }
 
+  /**
+   * Append an encounter to the log. The record shape is general on purpose
+   * (BRIEF §9.3): `source` distinguishes an encounter a DM set from one you
+   * logged yourself, which is what T10's "what just happened?" flow will
+   * append to. Nothing reads `source` yet; it is here so the log does not
+   * need migrating later.
+   */
+  function logEncounter(rec) {
+    var p = profile();
+    if (!Array.isArray(p.encounters)) p.encounters = [];
+    p.encounters.unshift({
+      on: new Date().toISOString(),
+      monsterId: rec.monsterId || null,
+      outcome: rec.outcome || null,
+      reason: rec.reason || null,
+      damageWeeks: Money.isEntered(rec.damageWeeks) ? rec.damageWeeks : null,
+      source: rec.source || 'self'
+    });
+    /* Keep the log bounded — this lives in localStorage alongside everything
+       else, and an unbounded list is how that quietly fills up. */
+    if (p.encounters.length > 50) p.encounters.length = 50;
+    save();
+    return p.encounters;
+  }
+
+  function encounters() { return profile().encounters || []; }
+
   function reset() {
     state = blank();
     try { self.localStorage.removeItem(KEY); } catch (e) { /* private mode */ }
@@ -244,6 +271,7 @@
     patchProfile: patchProfile, setMoney: setMoney, setDebt: setDebt, setDebtRate: setDebtRate,
   setFilingStatus: setFilingStatus,
     moneyEntered: moneyEntered, quizComplete: quizComplete, tier: tier,
+    logEncounter: logEncounter, encounters: encounters,
     reset: reset, save: save
   };
 });
