@@ -28,8 +28,8 @@
              feeds), data/effective_tax_rates_2026.json, data/se_tax_2026.json.
 
   LIVE-FORM: built once. There is no input, select or textarea on this
-  page at all — the sheet is read-only by design; the buttons navigate,
-  page between months, and close one.
+  page at all — the cards are read-only by design; the buttons navigate,
+  open a card, page between months, and close one.
   THEMING: none this pass.
 -->
 <style>
@@ -44,19 +44,40 @@
   .month-nav .status.is-closed { color: var(--color-positive); }
   .nav-btn { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-sm); padding: 4px var(--space-3); cursor: pointer; }
   .nav-btn:hover { border-color: var(--color-border-active); color: var(--color-text); }
-  .sheet-head { display: grid; grid-template-columns: 1fr 88px 88px 88px; gap: var(--space-2); margin-top: var(--space-4); font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); padding-bottom: var(--space-1); border-bottom: 1px solid var(--color-border); }
-  .sheet-head span:not(:first-child) { text-align: right; }
-  .bucket-row { display: grid; grid-template-columns: 1fr 88px 88px 88px; gap: var(--space-1) var(--space-2); padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border); align-items: baseline; scroll-margin-top: var(--space-4); }
-  .bucket-row.just-added { background: rgba(48,164,108,.10); outline: 2px solid var(--color-positive); outline-offset: -2px; border-radius: var(--radius-sm); }
-  .bucket-row .b-name { font-weight: 600; }
-  .bucket-row .b-from { display: block; font-size: var(--text-xs); color: var(--color-text-faint); font-weight: 400; }
-  .bucket-row .b-num { font-family: var(--font-display); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
-  .bucket-row .b-num.is-none { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-sm); }
-  .bucket-row .b-num.is-over { color: var(--color-critical); }
-  .bucket-row .b-num.is-under { color: var(--color-positive); }
-  .bucket-row .b-num small { display: block; font-family: var(--font-body); font-size: var(--text-xs); color: var(--color-caution); }
-  .bucket-row .b-lines { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-muted); display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); }
-  .bucket-row .b-acts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+  /* Five cards, one per bucket (D-129). Each carries one comparison bar
+     in the Every Ratio room's bar language (.slaf-bars in theme.css):
+     the faint zone is the estimate, the marker its edge, the fill what
+     actually landed — green within, red over; for income, green at or
+     above, amber short. Tap the card to open its lines. */
+  .cards { display: grid; gap: var(--space-3); margin-top: var(--space-4); }
+  .bucket-card { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3) var(--space-3) var(--space-2); scroll-margin-top: var(--space-4); }
+  .bucket-card.just-added { background: rgba(48,164,108,.10); outline: 2px solid var(--color-positive); outline-offset: -2px; }
+  .bucket-card .c-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); width: 100%; background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+  .bucket-card .c-name { font-weight: 600; }
+  .bucket-card .c-from { display: block; font-size: var(--text-xs); color: var(--color-text-faint); font-weight: 400; }
+  .bucket-card .c-diff { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+  .bucket-card .c-diff small { display: block; font-family: var(--font-body); font-size: var(--text-xs); color: var(--color-text-faint); }
+  .bucket-card .c-diff.is-over { color: var(--color-critical); }
+  .bucket-card .c-diff.is-under { color: var(--color-positive); }
+  .bucket-card .c-diff.is-short { color: var(--color-caution); }
+  .bucket-card .c-diff.is-none { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-sm); }
+  .bucket-card .slaf-bars { margin-top: var(--space-2); }
+  .bucket-card .slaf-bars .row { grid-template-columns: 82px 1fr auto; padding: 3px 0; }
+  .bucket-card .slaf-bars .lbl { font-size: var(--text-xs); color: var(--color-text-faint); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); }
+  .bucket-card .slaf-bars .val { font-size: var(--text-sm); }
+  .bucket-card .slaf-bars .val.is-over { color: var(--color-critical); }
+  .bucket-card .slaf-bars .val.is-under { color: var(--color-positive); }
+  .bucket-card .slaf-bars .val.is-short { color: var(--color-caution); }
+  .bucket-card .slaf-bars .val small { display: block; font-size: var(--text-xs); color: var(--color-caution); }
+  .bucket-card .c-body { display: none; margin-top: var(--space-2); padding-top: var(--space-2); border-top: 1px solid var(--color-border); }
+  .bucket-card.is-open .c-body { display: block; }
+  .bucket-card .c-lines { list-style: none; margin: 0; padding: 0; font-size: var(--text-sm); }
+  .bucket-card .c-lines li { display: flex; justify-content: space-between; gap: var(--space-3); padding: 3px 0; color: var(--color-text-muted); }
+  .bucket-card .c-lines li span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .bucket-card .c-lines li.is-hint { color: var(--color-text-faint); font-size: var(--text-xs); }
+  .bucket-card .c-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-top: var(--space-2); }
+  .bucket-card .c-chev { display: inline-block; transition: transform .15s; color: var(--color-text-faint); font-size: var(--text-xs); margin-left: var(--space-1); }
+  .bucket-card.is-open .c-chev { transform: rotate(90deg); }
   .pill { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-accent-hover); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; text-decoration: none; }
   .pill:hover { border-color: var(--color-accent); }
   .pill.is-quiet { color: var(--color-text-faint); }
@@ -67,10 +88,6 @@
   ul.months li { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
   ul.months li:first-child { border-top: none; }
   .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
-  @media (max-width: 420px) {
-    .sheet-head, .bucket-row { grid-template-columns: 1fr 72px 72px 72px; }
-    .sheet-head { font-size: 9px; }
-  }
 </style>
 </head>
 <body class="slaf">
@@ -78,7 +95,7 @@
 <header class="room-head">
   <a class="room-back" href="../index.html">← Home</a>
   <h1>Budget</h1>
-  <p class="room-lede">Five buckets, what you expected beside what happened. Nothing is typed here: the Add button goes to Income or the expense log, and the figure comes back on its own. At the end of the month, close it.</p>
+  <p class="room-lede">Five buckets, what you expected against what happened, one bar each. Nothing is typed here: open a bucket and its Add button goes to Income or the expense log, and the figure comes back on its own. At the end of the month, close it.</p>
 </header>
 
 <main class="slaf-wrap">
@@ -90,8 +107,7 @@
       <h2 id="month-title">—<span class="status" id="month-status"></span></h2>
       <button type="button" class="nav-btn" id="btn-next" aria-label="Later month">→</button>
     </div>
-    <div class="sheet-head"><span>Bucket</span><span>Estimated</span><span>Actual</span><span>Difference</span></div>
-    <div id="rows"></div>
+    <div class="cards" id="rows"></div>
     <p class="why" id="sheet-why"></p>
   </section>
 
@@ -155,30 +171,65 @@
   };
   var ADD_WORDS = { income: 'Log income', expenses: 'Log an expense', savings: 'Log a transfer to savings', investments: 'Log a contribution', debt: 'Log a payment' };
 
-  function numCell(cents, cls, sub) {
-    if (!Money.isEntered(cents)) return '<span class="b-num is-none">—</span>';
-    return '<span class="b-num' + (cls || '') + '">' + esc(money(cents)) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>';
+  var openBucket = null;     /* the one card open */
+
+  /* The comparison bar: one track scaled to the larger of the two, the
+     estimate as a faint zone with a marker at its edge, the actual as the
+     fill, coloured by which side of the estimate it landed on. */
+  function compareBar(r, closed) {
+    var est = r.estimatedCents, act = r.actualCents;
+    var shown = Money.isEntered(r.revisedCents) ? r.revisedCents : act;
+    var hasEst = Money.isEntered(est), hasAct = Money.isEntered(act);
+    var max = Math.max(hasEst ? est : 0, hasAct ? shown : 0, 1);
+    var state = verdict(r);
+    var color = state === 'over' ? 'var(--color-critical)' : state === 'short' ? 'var(--color-caution)' : state === 'under' || state === 'on' ? 'var(--color-positive)' : 'var(--color-text-faint)';
+    var pct = function (c) { return Math.max(0, Math.min(100, c / max * 100)); };
+    var estRow = '<div class="row' + (hasEst ? '' : ' is-empty') + '"><span class="lbl">Estimated</span><span class="track">'
+      + (hasEst ? '<u style="left:0;width:' + pct(est) + '%;background:var(--color-text-muted)"></u><b style="left:' + pct(est) + '%" title="Estimated"></b>' : '')
+      + '</span><span class="val">' + (hasEst ? esc(money(est)) : '—') + '</span></div>';
+    var actRow = '<div class="row' + (hasAct ? '' : ' is-empty') + '"><span class="lbl">Actual</span><span class="track">'
+      + (hasEst ? '<u style="left:0;width:' + pct(est) + '%;background:var(--color-text-muted)"></u>' : '')
+      + (hasAct && shown > 0 ? '<i style="left:0;width:' + pct(shown) + '%;background:' + color + '"></i>' : '')
+      + (hasEst ? '<b style="left:' + pct(est) + '%" title="Estimated"></b>' : '')
+      + '</span><span class="val is-' + state + '">' + (hasAct ? esc(money(act)) : '—') + (Money.isEntered(r.revisedCents) ? '<small>revised ' + esc(money(r.revisedCents)) + '</small>' : '') + '</span></div>';
+    return '<div class="slaf-chart slaf-bars">' + estRow + actRow + '</div>';
+  }
+  /* over: spent past the estimate. under: within it. short: income below
+     what was expected. on: exactly. none: nothing to compare. */
+  function verdict(r) {
+    var diff = r.differenceCents;
+    if (!Money.isEntered(diff)) return 'none';
+    if (diff === 0) return 'on';
+    if (r.bucket === 'income') return diff < 0 ? 'short' : 'under';
+    return diff > 0 ? 'over' : 'under';
+  }
+  function diffCell(r) {
+    var state = verdict(r), diff = r.differenceCents;
+    if (state === 'none') return '<span class="c-diff is-none">' + (Money.isEntered(r.actualCents) && !Money.isEntered(r.estimatedCents) ? esc(money(r.actualCents)) + '<small>no estimate</small>' : '—') + '</span>';
+    var word = state === 'on' ? 'on the estimate' : state === 'over' ? 'over' : state === 'short' ? 'short' : r.bucket === 'income' ? 'above' : 'under';
+    return '<span class="c-diff is-' + state + '">' + (state === 'on' ? '±' : '') + esc(money(Math.abs(diff))) + '<small>' + esc(word) + '</small></span>';
   }
   function renderSheet(h) {
     var sheet = Budget.month(h, TABLES, CAT(), month);
     el('month-title').innerHTML = esc(sheet.label) + '<span class="status' + (sheet.status === 'closed' ? ' is-closed' : '') + '" id="month-status">'
       + (sheet.status === 'closed' ? 'closed ' + esc(shortDate(sheet.closedAt)) : sheet.isFuture ? 'ahead — estimates only' : sheet.isCurrent ? 'open, this month' : 'open, not yet closed') + '</span>';
+    if (justAdded) openBucket = justAdded;
     el('rows').innerHTML = sheet.rows.map(function (r) {
       var open = sheet.status === 'open';
-      var diff = r.differenceCents;
-      var diffCls = !Money.isEntered(diff) ? '' : r.bucket === 'income' ? (diff < 0 ? ' is-over' : diff > 0 ? ' is-under' : '') : (diff > 0 ? ' is-over' : diff < 0 ? ' is-under' : '');
-      var diffText = Money.isEntered(diff) ? (diff > 0 ? '+' : diff < 0 ? '−' : '') + money(Math.abs(diff)) : null;
-      var lines = (r.lines || []).map(function (l) { return esc(l.label) + ' ' + esc(money(l.cents)) + (l.times > 1 ? ' ×' + l.times : ''); });
-      if (r.bucket === 'income' && sheet.status === 'open' && sheet.incomeCostsCents) lines.push('costs of earning it ' + esc(money(sheet.incomeCostsCents)) + (sheet.deductibleCents ? ' (' + esc(money(sheet.deductibleCents)) + ' deductible)' : ''));
-      return '<div class="bucket-row' + (justAdded === r.bucket ? ' just-added' : '') + '" id="bucket-' + r.bucket + '">'
-        + '<span><span class="b-name">' + esc(r.label) + '</span><span class="b-from">' + esc(sheet.status === 'closed' ? 'as closed' : (Money.isEntered(r.estimatedCents) ? 'estimate from ' + r.estFrom : (r.estReason || 'no estimate yet'))) + '</span></span>'
-        + numCell(r.estimatedCents)
-        + numCell(r.actualCents, '', r.revisedCents !== null && r.revisedCents !== undefined ? 'revised ' + money(r.revisedCents) : null)
-        + (diffText ? '<span class="b-num' + diffCls + '">' + esc(diffText) + '</span>' : '<span class="b-num is-none">—</span>')
-        + (lines.length ? '<span class="b-lines">' + lines.join(' · ') + '</span>' : '')
-        + (open ? '<span class="b-acts"><button type="button" class="pill" data-add="' + r.bucket + '">+ ' + esc(ADD_WORDS[r.bucket]) + '</button>'
-            + (r.bucket === 'income' ? '<a class="pill is-quiet" href="income.html#log">Every entry →</a>' : '<a class="pill is-quiet" href="cash-flow.html#log">The log →</a>') + '</span>' : '')
-        + '</div>';
+      var isOpen = openBucket === r.bucket;
+      var lines = (r.lines || []).map(function (l) { return '<li><span>' + esc(l.label) + (l.times > 1 ? ' ×' + l.times : '') + '</span><span>' + esc(money(l.cents)) + '</span></li>'; });
+      if (r.bucket === 'income' && sheet.status === 'open' && sheet.incomeCostsCents) lines.push('<li class="is-hint"><span>costs of earning it' + (sheet.deductibleCents ? ' (' + esc(money(sheet.deductibleCents)) + ' deductible)' : '') + '</span><span>' + esc(money(sheet.incomeCostsCents)) + '</span></li>');
+      if (!lines.length) lines.push('<li class="is-hint"><span>' + esc(open ? 'Nothing has landed in this bucket yet this month.' : 'Nothing was logged in this bucket.') + '</span></li>');
+      return '<article class="bucket-card' + (justAdded === r.bucket ? ' just-added' : '') + (isOpen ? ' is-open' : '') + '" id="bucket-' + r.bucket + '">'
+        + '<button type="button" class="c-head" data-toggle="' + r.bucket + '" aria-expanded="' + isOpen + '">'
+        + '<span><span class="c-name">' + esc(r.label) + '<span class="c-chev">▶</span></span><span class="c-from">' + esc(sheet.status === 'closed' ? 'as closed' : (Money.isEntered(r.estimatedCents) ? 'estimate from ' + r.estFrom : (r.estReason || 'no estimate yet'))) + '</span></span>'
+        + diffCell(r) + '</button>'
+        + compareBar(r, sheet.status === 'closed')
+        + '<div class="c-body"><ul class="c-lines">' + lines.join('') + '</ul>'
+        + '<div class="c-extras" id="extras-' + r.bucket + '"></div>'
+        + (open ? '<div class="c-acts"><button type="button" class="pill" data-add="' + r.bucket + '">+ ' + esc(ADD_WORDS[r.bucket]) + '</button>'
+            + (r.bucket === 'income' ? '<a class="pill is-quiet" href="income.html#log">Every entry →</a>' : '<a class="pill is-quiet" href="cash-flow.html#log">The log →</a>') + '</div>' : '')
+        + '</div></article>';
     }).join('');
     var why;
     if (sheet.status === 'closed') why = 'Frozen as it was closed. A late entry logged into this month shows as “revised” beside the actual and changes nothing else. Read it against other months in <a href="variance.html">Estimated vs Actual</a>.';
@@ -224,6 +275,8 @@
   el('btn-prev').addEventListener('click', function () { month = Budget.shift(month, -1); render(); });
   el('btn-next').addEventListener('click', function () { month = Budget.shift(month, 1); render(); });
   el('rows').addEventListener('click', function (evt) {
+    var t = evt.target.closest('[data-toggle]');
+    if (t) { var which = t.getAttribute('data-toggle'); openBucket = openBucket === which ? null : which; render(); return; }
     var b = evt.target.closest('[data-add]');
     if (!b) return;
     var bucket = b.getAttribute('data-add');

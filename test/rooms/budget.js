@@ -81,7 +81,9 @@ module.exports = function (t) {
   check('zero input fields on the sheet', (markup.match(/<input|<select|<textarea/g) || []).length, 0);
   checkTrue('the script builds none either', !/<input|<select|<textarea/.test(page.replace(/<!--[\s\S]*?-->/g, '').split('<script')[1] || ''));
   checkTrue('the Add button navigates with a way back', /sessionStorage\.setItem\(RETURN_KEY/.test(page) && /for=budget&month=/.test(page));
-  checkTrue('and the way back lands on the bucket row', /just-added/.test(page) && /bucket-' \+ justAdded/.test(page));
+  checkTrue('and the way back lands on the bucket card', /just-added/.test(page) && /bucket-' \+ justAdded/.test(page));
+  checkTrue('five cards, each with a comparison bar in the ratios room’s bar language and its Add inside', /class="bucket-card/.test(page) && /slaf-bars/.test(page) && /data-toggle=/.test(page) && /c-body/.test(page) && page.indexOf('data-add="') > page.indexOf('<div class="c-body">'));
+  checkTrue('the bar colours over and under apart, and an income shortfall as its own thing', /is-over/.test(page) && /is-under/.test(page) && /is-short/.test(page));
   checkTrue('the room re-renders on every spine change, so a new entry updates the actual with no refresh', /Spine\.onChange\(render\)/.test(page));
   checkTrue('late entries are synced on every render', /Budget\.syncRevised\(/.test(page));
   const room = Registry.byId('budget');
