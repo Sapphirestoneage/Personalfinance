@@ -4,34 +4,37 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>History · SPARKS</title>
-<meta name="description" content="What your job actually pays, once you count every hour it takes and everything it costs you to do it."/>
+<meta name="description" content="Every snapshot you froze, and what moved between them: net worth over time, and the log of what you changed."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. THE TEMPLATE ROOM. DECISIONS.md D-097.
+  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md D-122.
+  THE BRIEF'S LAST STEP: History.
 
-  1. READS   The person's income (owned by Start Here) and filingStatus, for
-             the tax estimate; a month's spending, for the lens.
-  2. WRITES  It OWNS person.work — paid hours, unpaid overtime, commute,
-             work costs, weeks a year, and (folded) prep and decompression.
-             Nothing else edits those. It does not touch income.
-  3. CALLS   engines/hourly.js. Tax comes from engines/tier0.js's effective-
-             rate lookup, never a second calculation.
-  4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses and says so (Gate.fillGuesses). Each unpaid-
-             hours box is optional: blank is none, not unanswered.
-  5. CONFIG  data/effective_tax_rates_2026.json.
+  1. READS   Every snapshot frozen (shared/spine-v2.js listSnapshots — the
+             instruments' outputs and every owned field at that moment), the
+             household as it is now (through shared/instruments.js), and the
+             command log (meta.undoStack).
+  2. WRITES  It OWNS household.history.compareTo — which snapshot to
+             measure from. "Freeze now" appends a snapshot through
+             shared/instruments.js; a snapshot is not in the household, so
+             it is not an undo entry and cannot be undone — only ignored.
+  3. CALLS   engines/history.js: after − before, and the share of before.
+             Nothing financial is derived here.
+  4. EMPTY   With no snapshot the number says "Freeze once to start" and
+             the log is still listed; with an empty spine the guesses
+             banner shows and the freeze button still works.
+  5. CONFIG  none.
 
-  THE SHAPE (shared/room.js, frozen here): one number, one chart, the lens,
-  five inputs and two folded, the assumptions drawer with sources, why
-  this matters at your stage, one out-of-scope line to Get Help. The ids
-  below are the deep links.
+  THE COMPARE-TO SELECT: the template builds its inputs once, so the
+  select's options are painted by `after` from the current snapshot list —
+  only when the list has changed, never while the select has focus.
 
   LIVE-FORM: built once — shared/room.js builds the inputs from the spec
-  on load and only sets .value, never under focus.
-  THEMING: none this pass. A theme is a class on <body> and a palette in
-  shared/theme.css.
+  on load and only sets .value, never under focus; `after` sets <option>s
+  on the node it built and never while it is focused.
+  THEMING: none this pass.
 -->
 <style>
   .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
@@ -57,25 +60,25 @@
 
   <section class="slaf-card" id="number">
     <div class="room-head-row">
-      <span class="slaf-eyebrow">Your real rate</span>
+      <span class="slaf-eyebrow">Since the first snapshot</span>
       <div id="room-lens"></div>
     </div>
     <div class="room-number" id="room-number"></div>
   </section>
 
   <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Where the week goes</span>
+    <span class="slaf-eyebrow">Net worth over time</span>
     <div id="room-chart"></div>
   </section>
 
   <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The hours the job takes</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave anything blank that doesn't apply — working from home means no commute, and blank is none rather than unanswered.</p>
+    <span class="slaf-eyebrow">Compare and freeze</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Pick the snapshot to measure from, or freeze today’s numbers to add one.</p>
     <div id="room-inputs"></div>
   </section>
 
   <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Priced in life</span>
+    <span class="slaf-eyebrow">Through the lens</span>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
     <ul class="room-amounts" id="room-amounts"></ul>
   </section>
@@ -94,8 +97,7 @@
   </section>
 
   <p class="disclaimer">
-    Educational tool, not financial advice. Tax is estimated from a flat
-    effective-rate table, not a return. Your numbers stay in this browser.
+    Educational tool, not financial advice. Your numbers stay in this browser.
   </p>
 </main>
 
@@ -112,6 +114,16 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/hourly.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../engines/statement.js"></script>
+<script src="../engines/benchmarks.js"></script>
+<script src="../engines/ratios.js"></script>
+<script src="../engines/events.js"></script>
+<script src="../engines/skills.js"></script>
+<script src="../shared/instruments.js"></script>
+<script src="../engines/history.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
 <script src="../shared/room.js"></script>
@@ -119,112 +131,96 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Hourly = SLAF.Hourly, Charts = SLAF.Charts, Room = SLAF.Room;
+      Charts = SLAF.Charts, Room = SLAF.Room, History = SLAF.History, Instruments = SLAF.Instruments;
 
-  /* ---- writes: this room owns person.work ------------------------------------ */
-  function writeWork(key, value) {
-    var person = Spine.ensurePrimaryPerson('You');
-    var current = Schema.workProfile(Schema.personById(Spine.getProfile(), person.id));
-    var next = Object.assign({}, current);
-    next[key] = value;
-    Spine.upsertPerson({ id: person.id, work: next });
-  }
-  function readWork(h) { return Schema.workProfile(Schema.primaryPerson(h)); }
-  function hoursInput(key, label, placeholder, hint) {
-    return { ctl: key, label: label, kind: 'number', placeholder: placeholder, affix: 'h', hint: hint,
-      read: function (h) { return readWork(h)[key]; }, write: function (v) { writeWork(key, v === null || v <= 0 ? null : v); } };
-  }
-  function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
+  function review(h, T) { return History.review(h, Spine.listSnapshots(), T, {}); }
+  function pct(v) { return v === null || v === undefined ? '' : ' (' + (v >= 0 ? '+' : '−') + Math.round(Math.abs(v) * 1000) / 10 + '%)'; }
+  function signed(c) { return (c >= 0 ? '+' : '−') + Money.formatCents(Math.abs(c)); }
+  var lastOptions = null;
 
-  var HOUR_COLOURS = { paid: Charts.COLORS.series[0], unpaidOvertimeHoursPerWeek: Charts.COLORS.series[3], commuteHoursPerWeek: Charts.COLORS.series[1], prepHoursPerWeek: Charts.COLORS.series[2], decompressHoursPerWeek: Charts.COLORS.series[4] };
-
-  Room.mount({
-    id: 'history', /* STUB — being built (D-101) */
-    tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
-    reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'],
+  var room = Room.mount({
+    id: 'history',
+    reads: ['cashSavings', 'investments', 'totalDebt'],
 
     number: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return { label: 'Actually, an hour', value: null, reason: w.reason + (/not earning/.test(w.reason || '') ? '' : '') };
-      var sub = 'On paper <strong>' + perHour(w.nominalHourlyCents) + '</strong> · you keep <strong>' + Money.formatRate(w.retained, { decimals: 0 }) + '</strong> of it'
-        + ' · ' + Money.formatCents(w.keptAnnualCents) + ' kept over ' + w.annualTotalHours.toLocaleString('en-US') + ' hours a year';
-      if (w.costsMoreThanItPays) sub += '. <strong>This job costs more than it pays</strong> — check the monthly costs; if they are right, that is the finding';
-      if (w.implausibleHours) sub += '. ' + w.paidHoursPerWeek + ' paid hours a week makes this look enormous; the arithmetic is right, the comparison is not';
-      if (!w.taxKnown) sub += '. Tax is not in yet: ' + (w.taxReason || '');
-      return { label: 'Actually, an hour', value: perHour(w.realHourlyCents), sub: sub, zone: w.costsMoreThanItPays ? 'out' : (w.retained !== null && w.retained < 0.5 ? 'watch' : null), result: w };
+      var r = review(h, T);
+      var log = r.log;
+      var logLine = log.count ? 'the log holds ' + log.count + (log.count === 1 ? ' change' : ' changes') + ', the last “' + log.last.label + '” ' + log.last.ago : 'nothing changed yet';
+      if (!Money.isOk(r)) return { label: r.count ? 'Since ' + r.sinceLabel : 'Since your first snapshot', value: null, reason: r.reason + ' · ' + logLine };
+      var sub = ['cash', 'investments', 'debt'].map(function (k) { var c = r[k]; return c.before !== null && c.after !== null ? k + ' ' + Money.formatCents(c.before) + ' → ' + Money.formatCents(c.after) : null; }).filter(Boolean).join(' · ')
+        + ' · ' + r.count + (r.count === 1 ? ' snapshot' : ' snapshots') + (r.baselineFallback ? ' (the one you picked is gone; measured from the first)' : '') + ' · ' + logLine;
+      return { label: 'Net worth since ' + r.sinceLabel, value: signed(r.value) + pct(r.netWorth.pct), sub: sub, zone: r.zone, result: r };
     },
 
     chart: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return Charts.stacked({ rows: [], empty: 'Add your paid hours to see where the week goes.' });
-      var parts = [{ label: 'Paid', value: w.paidHoursPerWeek, color: HOUR_COLOURS.paid }].concat((w.unpaidParts || []).map(function (p) { return { label: p.label, value: p.hours, color: HOUR_COLOURS[p.key] }; }));
-      var gross = w.grossAnnualIncomeCents, tax = w.estimatedTaxCents || 0, costs = w.annualWorkCostsCents, kept = w.keptAnnualCents;
-      return Charts.stacked({
-        title: 'Hours a week, and where the pay goes',
-        rows: [
-          { label: 'Your week', note: w.totalHoursPerWeek + ' h, ' + w.paidHoursPerWeek + ' paid', parts: parts },
-          { label: 'A year of pay', note: 'per ' + Money.formatCents(gross), parts: [
-            { label: 'Kept', value: kept / gross * w.totalHoursPerWeek, color: Charts.COLORS.growth },
-            { label: 'Tax', value: tax / gross * w.totalHoursPerWeek, color: Charts.COLORS.debt },
-            { label: 'Costs of working', value: costs / gross * w.totalHoursPerWeek, color: Charts.COLORS.series[3] }
-          ] }
-        ],
-        format: function (v) { return (Math.round(v * 10) / 10) + ' h'; }
+      var r = review(h, T);
+      if (!r.points || !r.points.length) return Charts.area({ series: [], empty: r.count ? 'That snapshot did not hold a net worth.' : 'Freeze once to start the line.' });
+      return Charts.area({
+        title: 'Net worth at each snapshot, and today',
+        series: [{ label: 'Net worth', color: Charts.COLORS.growth, fill: true, points: r.points.map(function (p) { return [p.x, p.y]; }) }],
+        dots: r.points.filter(function (p) { return p.isBaseline || p.isNow; }).map(function (p) { return { x: p.x, y: p.y }; }),
+        x: { label: 'days since the first snapshot', format: function (v) { return String(Math.round(v)); } }
       });
     },
 
     inputs: [
-      hoursInput('contractedHoursPerWeek', 'Paid hours a week', 'e.g. 40'),
-      hoursInput('unpaidOvertimeHoursPerWeek', 'Unpaid overtime', 'e.g. 3'),
-      hoursInput('commuteHoursPerWeek', 'Commuting', 'e.g. 5'),
-      { ctl: 'workCostsMonthlyCents', label: 'Costs of working, a month', kind: 'money', placeholder: 'e.g. 400', hint: 'Petrol, parking, transit, work clothes, lunches you would not otherwise buy, childcare only while working.',
-        read: function (h) { return readWork(h).workCostsMonthlyCents; }, write: function (v) { writeWork('workCostsMonthlyCents', v); } },
-      { ctl: 'weeksPerYear', label: 'Weeks worked a year', kind: 'number', placeholder: String(Schema.WORK_DEFAULTS.weeksPerYear),
-        read: function (h) { var w = readWork(h).weeksPerYear; return w === Schema.WORK_DEFAULTS.weeksPerYear ? null : w; }, write: function (v) { writeWork('weeksPerYear', v === null || v <= 0 ? Schema.WORK_DEFAULTS.weeksPerYear : v); } }
-    ],
-    moreLabel: 'The hours around the job',
-    more: [
-      hoursInput('prepHoursPerWeek', 'Getting ready', 'e.g. 2.5'),
-      hoursInput('decompressHoursPerWeek', 'Decompressing', 'e.g. 2.5')
+      { ctl: 'compareTo', label: 'Compare against', kind: 'select', options: [['', 'The first snapshot']],
+        read: function (h) { return Schema.createHistoryPlan(h.history).compareTo; }, write: function (v) { Spine.set('history.compareTo', v || null); } },
+      { ctl: 'freeze', label: 'Freeze today’s numbers', kind: 'choice', options: [['now', 'Freeze now']], hint: 'A snapshot cannot be undone; it can be ignored.',
+        read: function () { return null; }, write: function () { Instruments.snapshot(Spine.getProfile(), TABLESNOW()); } }
     ],
 
     amounts: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      var spend = Schema.monthlyExpensesCents(h);
-      var rows = [];
-      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
-      if (Money.isOk(w)) {
-        rows.push({ label: 'A year of tax, estimated', cents: w.estimatedTaxCents || 0 });
-        if (w.annualWorkCostsCents > 0) rows.push({ label: 'A year of the costs of working', cents: w.annualWorkCostsCents });
-      }
-      rows.push({ label: 'A $1,200 thing you are eyeing', cents: 120000 });
+      var r = review(h, T);
+      if (!Money.isOk(r)) return [];
+      var rows = [{ label: 'Net worth, the change', cents: r.value }];
+      if (r.cash.delta !== null) rows.push({ label: 'Cash, the change', cents: r.cash.delta });
+      if (r.investments.delta !== null) rows.push({ label: 'Investments, the change', cents: r.investments.delta });
       return rows;
     },
 
     assumptions: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      var tax = T.effectiveTaxRates;
-      var work = readWork(h);
       return [
-        { label: 'Tax', value: Money.isOk(w) && w.taxKnown ? Money.formatRate(w.effectiveRate || (w.estimatedTaxCents / w.grossAnnualIncomeCents), { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')' },
-        { label: 'Weeks a year', value: String(Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear), source: Money.isEntered(work.weeksPerYear) && work.weeksPerYear !== Schema.WORK_DEFAULTS.weeksPerYear ? 'yours' : 'the default: 52 less four weeks of leave and holidays (convention)' },
-        { label: 'Unpaid hours', value: 'count as work', source: 'Your Money or Your Life: an hour the job takes is an hour it costs, paid or not (convention)' },
-        { label: 'Real return, for the lens', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' }
+        { label: 'A snapshot holds', value: History.frozenNames().length + ' instruments and every owned field', source: History.frozenNames().join(', ') + ' — shared/instruments.js' },
+        { label: '“Now”', value: 'recomputed', source: 'from the household as it is, never a stored figure' },
+        { label: 'The log', value: 'this browser’s', source: 'meta.undoStack, capped at 100; an export or share code leaves it behind (D-094)' },
+        { label: 'Snapshots', value: 'this browser’s', source: 'kept beside the household; a share code carries them' }
       ];
     },
 
     why: function (h, T, situation) {
       return {
-        employed: 'Employed, the headline rate is the one on the offer letter. This one is the rate that decides whether the next thing — a raise, a move, an hour of overtime — is worth it.',
-        selfEmployed: 'Self-employed, there is no headline rate, only this one: what is left after the tax you set aside and the hours the work really takes, including the ones nobody bills.',
-        mixed: 'With a job and your own work, each has a real rate. This reads the job; put the own-work hours in as a second job in Start Here to compare them.',
-        student: 'A part-time job at a student’s stage is priced against study hours, not against a career. If the real rate is low, the question is what the hours are taking from.',
-        betweenJobs: '', retired: ''
-      }[situation] || 'Any job has a headline rate and a real one. The gap between them is what this room measures.';
+        employed: 'Employed, the savings rate is a trend before it is a number: the line here is the one place it shows.',
+        selfEmployed: 'Self-employed, the months are uneven; the snapshots even them out into a slope.',
+        mixed: 'Two incomes, one line. The slope is what both are doing together.',
+        student: 'A student’s line is mostly flat or mostly debt; the first snapshot after graduation is the one to keep.',
+        retired: 'Retired, the draw shows up here first — a line that slopes down is the withdrawal rate made visible.',
+        betweenJobs: 'Between jobs, the runway’s slope is the line; freeze on the day the job ended so the drawdown is measured from there.'
+      }[situation] || 'A number today is one point. A line needs two; this is where the second one comes from.';
     },
 
-    scope: 'This room does not model overtime pay, shift differentials, or a second job’s hours on their own. Tax is a flat estimate, not a return.'
+    scope: 'This room does not sync anywhere; snapshots and the log live in this browser, and a share code carries the snapshots but not the log.',
+
+    after: function (h, T) {
+      /* The compare-to options come from the snapshot list, painted only
+         when the list changed and never under focus. */
+      var sel = document.querySelector('[data-ctl="compareTo"]');
+      if (!sel) return;
+      var snaps = Spine.listSnapshots();
+      var key = snaps.map(function (s) { return s.id; }).join(',');
+      if (key === lastOptions || sel === document.activeElement) return;
+      lastOptions = key;
+      var cur = Schema.createHistoryPlan(h.history).compareTo || '';
+      sel.innerHTML = '<option value="">The first snapshot</option>' + snaps.map(function (s) {
+        var d = new Date(s.timestamp);
+        return '<option value="' + s.id + '">' + (isNaN(d.getTime()) ? s.id : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })) + '</option>';
+      }).join('');
+      sel.value = cur;
+    }
   });
+
+  /* The freeze needs the loaded tables; the template holds them. */
+  function TABLESNOW() { return room ? room.tables() : null; }
 })();
 </script>
 </body>
