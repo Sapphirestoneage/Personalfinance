@@ -476,7 +476,7 @@
       "requires": [
         "unemployment"
       ],
-      "dashboardNumber": null,
+      "dashboardNumber": "runwayDays",
       "order": 31
     },
     {
@@ -515,7 +515,7 @@
       "requires": [
         "decumulation"
       ],
-      "dashboardNumber": null,
+      "dashboardNumber": "withdrawalRate",
       "order": 33
     },
     {
@@ -784,7 +784,7 @@
       "requires": [
         "debt"
       ],
-      "dashboardNumber": null,
+      "dashboardNumber": "loanTrajectory",
       "order": 49
     },
     {

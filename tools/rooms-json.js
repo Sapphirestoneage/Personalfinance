@@ -23,7 +23,7 @@ const Instruments = require(path.join(ROOT, 'shared/instruments.js'));
 /* The instrument → room map the dashboard uses (index.html OPENS). */
 const OPENS = {
   netWorth: 'statement', savingsRate: 'savings-rate', emergencyFundMonths: 'runway', debtToIncome: 'debt-payoff', fiEtaYear: 'fire',
-  fooStep: 'foo-ladder', ownersPay: 'self-employed', runwayDays: 'runway', loanTrajectory: 'debt-payoff', withdrawalRate: 'fire'
+  fooStep: 'foo-ladder', ownersPay: 'self-employed', runwayDays: 'between-jobs', loanTrajectory: 'student-loans', withdrawalRate: 'decumulation'
 };
 
 function build() {

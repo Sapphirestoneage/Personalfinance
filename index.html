@@ -423,7 +423,7 @@
   var OPENS = {
     netWorth: ['statement', 'portfolios'], savingsRate: ['savings-rate', 'rate'], emergencyFundMonths: ['runway', 'the-plan'],
     debtToIncome: ['debt-payoff', 'debts'], fiEtaYear: ['fire', 'targets'], fooStep: ['foo-ladder', null],
-    ownersPay: ['self-employed', 'quarterly'], runwayDays: ['runway', 'the-plan'], loanTrajectory: ['debt-payoff', 'plan'], withdrawalRate: ['fire', 'targets']
+    ownersPay: ['self-employed', 'quarterly'], runwayDays: ['between-jobs', 'number'], loanTrajectory: ['student-loans', 'number'], withdrawalRate: ['decumulation', 'number']
   };
   function opens(id) {
     var o = OPENS[id] || ['start', null];
@@ -654,7 +654,7 @@
         + (bareMonths !== null && bareMonths !== months ? ' (' + bareMonths + ' on cash alone)' : '') + '.';
     if (gap) say += ' A search typically runs <strong>' + gap.medianMonths + ' months</strong>, ' + gap.meanMonths + ' on average (' + gap.confidence + ').';
     if (!Money.isOk(ben)) say += ' ' + esc(ben.reason);
-    return { say: say, room: 'runway', anchor: 'the-plan', go: 'See the runway, month by month →',
+    return { say: say, room: Registry.byId('between-jobs') ? 'between-jobs' : 'runway', anchor: Registry.byId('between-jobs') ? 'number' : 'the-plan', go: 'See the runway, month by month →',
       critical: !sustainable && gap && months < gap.medianMonths };
   }
   /* Retired, the next thing is the draw against the convention. D-096. */
@@ -733,19 +733,19 @@
     var s = Gate.situationOf(h);
     if (s === 'betweenJobs') {
       var r = c.byId.runwayDays;
-      if (!r.ok) return { cap: 'The day the cash runs out', big: null, reason: r.result.reason, say: '', room: 'runway', anchor: 'the-plan', go: 'See the runway, month by month →' };
-      if (r.result.sustainable) return { cap: 'The day the cash runs out', big: 'Not soon', say: 'What comes in covers the month, so the cash is not being drawn down.', room: 'runway', anchor: 'the-plan', go: 'See the runway, month by month →' };
+      if (!r.ok) return { cap: 'The day the cash runs out', big: null, reason: r.result.reason, say: '', room: 'between-jobs', anchor: 'number', go: 'Open Between Jobs →' };
+      if (r.result.sustainable) return { cap: 'The day the cash runs out', big: 'Not soon', say: 'What comes in covers the month, so the cash is not being drawn down.', room: 'between-jobs', anchor: 'number', go: 'Open Between Jobs →' };
       var when = new Date(Date.now() + r.result.value * 86400000);
-      return { cap: 'The day the cash runs out', big: when.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), say: r.result.value.toLocaleString('en-US') + ' days at this spending, benefit and severance counted.', room: 'runway', anchor: 'the-plan', go: 'See the runway, month by month →' };
+      return { cap: 'The day the cash runs out', big: when.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), say: r.result.value.toLocaleString('en-US') + ' days at this spending, benefit and severance counted.', room: 'between-jobs', anchor: 'number', go: 'Open Between Jobs →' };
     }
     if (s === 'retired') {
       var w = c.byId.withdrawalRate, inv = Schema.investmentsCents(h), age = Schema.primaryAge(h), a = Schema.resolveAssumptions(h);
-      if (!w.ok || !Money.isOk(inv)) return { cap: 'The age the money lasts to', big: null, reason: w.ok ? inv.reason : w.result.reason, say: '', room: 'fire', anchor: 'targets', go: 'Open FIRE →' };
+      if (!w.ok || !Money.isOk(inv)) return { cap: 'The age the money lasts to', big: null, reason: w.ok ? inv.reason : w.result.reason, say: '', room: 'decumulation', anchor: 'number', go: 'Open Decumulation →' };
       var y = SLAF.Projection.yearsUntilEmptyCents({ startCents: inv.value, annualDrawCents: w.result.annualDrawCents, annualRate: a.returnReal });
-      if (!Money.isOk(y)) return { cap: 'The age the money lasts to', big: null, reason: y.reason, say: '', room: 'fire', anchor: 'targets', go: 'Open FIRE →' };
-      if (y.never) return { cap: 'The age the money lasts to', big: 'Outlasts you', say: 'At a ' + Money.formatRate(a.returnReal, { decimals: 0 }) + ' real return the draw never empties the investments.', room: 'fire', anchor: 'targets', go: 'See it year by year →' };
+      if (!Money.isOk(y)) return { cap: 'The age the money lasts to', big: null, reason: y.reason, say: '', room: 'decumulation', anchor: 'number', go: 'Open Decumulation →' };
+      if (y.never) return { cap: 'The age the money lasts to', big: 'Outlasts you', say: 'At a ' + Money.formatRate(a.returnReal, { decimals: 0 }) + ' real return the draw never empties the investments.', room: 'decumulation', anchor: 'chart', go: 'See it year by year →' };
       var at = Money.isEntered(age) ? Math.round(age + y.value) : null;
-      return { cap: 'The age the money lasts to', big: at !== null ? String(at) : (Math.round(y.value) + ' years'), say: Math.round(y.value) + ' years of ' + Money.formatCents(w.result.annualDrawCents) + ' a year at a ' + Money.formatRate(a.returnReal, { decimals: 0 }) + ' real return' + (at !== null ? '' : ' (add your birth date for the age)') + '.', room: 'fire', anchor: 'targets', go: 'See it year by year →' };
+      return { cap: 'The age the money lasts to', big: at !== null ? String(at) : (Math.round(y.value) + ' years'), say: Math.round(y.value) + ' years of ' + Money.formatCents(w.result.annualDrawCents) + ' a year at a ' + Money.formatRate(a.returnReal, { decimals: 0 }) + ' real return' + (at !== null ? '' : ' (add your birth date for the age)') + '.', room: 'decumulation', anchor: 'chart', go: 'See it year by year →' };
     }
     var fi = c.byId.fiEtaYear;
     if (!fi.exists) return { cap: 'The date it points to', big: null, reason: 'No savings rate in this situation, so no FI date.', say: '', room: 'start', anchor: null, go: 'Start Here →' };

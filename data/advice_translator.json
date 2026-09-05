@@ -1,6 +1,6 @@
 {
   "id": "advice_translator",
-  "version": "1.0",
+  "version": "1.1",
   "asOf": "2026-09-01",
   "source": "Common personal-finance advice as it circulates — the 4% rule, 'never touch the emergency fund', 'always take the match', 'pay yourself first', 'save 10%', 'a house is an investment', 'rent is throwing money away', 'cut the coffee' — each restated for one household's numbers. The rules of thumb are conventions; the translations are arithmetic on the household's own figures.",
   "confidence": "convention",
@@ -16,8 +16,8 @@
       ],
       "headline": "“Never touch your emergency fund.”",
       "body": "This is what it is for. {cash} of cash covers {cashMonths} of your {spending} a month; drawing on it now is the fund working, not failing.",
-      "room": "runway",
-      "anchor": "the-plan"
+      "room": "between-jobs",
+      "anchor": "number"
     },
     {
       "id": "take_the_match",
@@ -41,8 +41,8 @@
       ],
       "headline": "“The 4% rule.”",
       "body": "You draw {withdrawalRate} of your investments a year to cover what income does not — {annualDraw}. Under 4% the convention says the money outlasts you; above 5% it starts to worry.",
-      "room": "fire",
-      "anchor": "targets"
+      "room": "decumulation",
+      "anchor": "number"
     },
     {
       "id": "retired_not_drawing",
@@ -54,8 +54,8 @@
       ],
       "headline": "“Retirement means living off the portfolio.”",
       "body": "What comes in, {income} a month, covers your {spending} a month, so nothing is drawn. The {investments} invested is a reserve of {investmentYears} of spending, not a paycheque — and the 4% rule has nothing to say until it is.",
-      "room": "fire",
-      "anchor": "targets"
+      "room": "decumulation",
+      "anchor": "number"
     },
     {
       "id": "pay_yourself_first",
@@ -92,8 +92,8 @@
       ],
       "headline": "“Student loans follow you forever.”",
       "body": "At the minimums yours clear in {loanYear}. Every extra {hundred} a month moves that earlier; the payoff room shows by how much.",
-      "room": "debt-payoff",
-      "anchor": "plan"
+      "room": "student-loans",
+      "anchor": "number"
     },
     {
       "id": "set_aside_the_tax",
@@ -105,8 +105,8 @@
       ],
       "headline": "“Set aside a third for tax.”",
       "body": "On {gross} a year the estimate is {tax}, {effectiveRate} — about {taxMonthly} a month put somewhere it cannot be spent, and a quarterly to pay.",
-      "room": "self-employed",
-      "anchor": "quarterly"
+      "room": "tax",
+      "anchor": "number"
     },
     {
       "id": "save_ten_percent",
@@ -143,8 +143,8 @@
       ],
       "headline": "“Three to six months of expenses in cash.”",
       "body": "You hold {cashMonths} of your {spending} a month. Three months is {threeMonths}; you are {cashGap} short of that floor.",
-      "room": "runway",
-      "anchor": "the-plan"
+      "room": "protection",
+      "anchor": "number"
     },
     {
       "id": "rent_is_not_thrown_away",
@@ -156,8 +156,8 @@
       ],
       "headline": "“Rent is throwing money away.”",
       "body": "Rent buys a place to live, the way a mortgage's interest, tax, insurance and upkeep do — none of which build equity either. The question is the price-to-rent ratio where you are, not the word.",
-      "room": "what-if-life",
-      "anchor": "pick"
+      "room": "housing",
+      "anchor": "number"
     },
     {
       "id": "invest_what_you_do_not_need",
