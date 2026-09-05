@@ -4403,3 +4403,92 @@ LIVE INPUTS built once in `buildShell` — `paint()` writes only `.checked` and
 must never give `.statuslist` innerHTML (D-034). Write the map whole rather than
 setting single keys, or unticking the last one becomes indistinguishable from
 never having been asked.
+
+---
+
+## D-069 — Rests and pace, in the only unit HP has
+
+BRIEF §9.8, which the build-status table had marked as blocked on T7. It was not.
+T7's Skill Stacker would supply *skill* XP; the Experience this sheet already has
+is FIRE progress, and the rulebook already specifies all three recoveries under
+`deathSaves.recovery`:
+
+> **Short Rest** (a pay cycle) — regain HP equal to (income − expenses) for that
+> cycle, if positive. **Long Rest** (a strong, uninterrupted month or quarter) —
+> regain HP up to max, contingent on a CON save. **Potion** (a windfall) — heals
+> a fixed amount immediately, no rest required.
+
+Everything needed was already in the household. Only one number was missing.
+
+### One conversion, because HP is weeks
+
+All three recoveries convert through the same figure: **what a week of runway
+costs, which is a week of expenses.** A short rest is the monthly surplus divided
+by that. A potion is a windfall divided by that. A long rest is the deficit
+divided by the short-rest rate. Nothing new was invented to make them commensurable
+— D-046 already did that work.
+
+The demo persona: expenses of $3,150 a month make a week of HP cost **$727**, the
+surplus restores **2.4 weeks a month**, and the 5-week deficit closes in **2.1
+months**. Re-derived by hand and matched.
+
+### A negative surplus is an answer, not an error
+
+`shortRest` returns the negative number and flags `losing: true`, and the sheet
+says it plainly: *"You are spending more than you keep, so rests take runway away
+rather than restoring it. Nothing below this line gets better until that number
+is positive."* `longRest` reports `unreachable` rather than offering a negative
+month count as though it were a countdown, and `levelPace` says `goingBackwards`
+rather than a time-to-arrival. Three places where the arithmetic would happily
+produce a plausible-looking wrong number, and none of them do.
+
+### The one number that was missing
+
+The rulebook makes a Long Rest "contingent on a CON save" and never sets the DC.
+That is the only judgement call in the tranche, so it is in data
+(`longRest.baseDc` 10, `dcPerExhaustionLevel` 2) and marked `origin: extension`.
+
+It rises with exhaustion, which is the honest shape: a good quarter restores
+someone who is Watchful and barely dents someone who is Spent. The demo character
+is Rested, so DC 10 against CON +2 — 65%. Drop their cash and it becomes DC 14
+against +0, which is 35%. The save uses the same 5%–95% clamp as an encounter,
+for the same reason.
+
+### Pace asks the function that already knows
+
+`nextLevelTarget()` has computed the dollars to the next level since the sheet
+was built. `levelPace()` calls it and turns dollars into time. It does **not**
+re-derive the target, and it does **not** apply investment growth over a single
+level — compounding across one hop is noise dressed as precision, and the FIRE
+projection, which spans decades, is where returns belong and is Tier0's already.
+A test asserts `pace.needCents === nextLevelTarget(...).value`, so a second
+derivation cannot creep in later.
+
+### Two things the tests caught in the harness, not the code
+
+Building a household by writing `monthlyExpensesCents` and `cashCents` flat onto
+it produced a sheet with a null Level and no HP. That was the engine correctly
+refusing a shape it does not read — cash is a liquid **asset** and expenses live
+under `expenses.monthlyEssential` — so the test now builds households through
+Schema's own constructors, as the sheet's example does.
+
+Then Max HP stayed null because CON runs through the savings rate, which
+subtracts estimated tax, which needs `effective_tax_rates_2026.json` — absent
+from the D&D suite's table set. Both were the harness lying, not the engine, and
+both are worth recording because the next person to write a test here will hit
+them in the same order.
+
+### Compatibility note
+
+**Stored shape:** nothing. Every figure here is derived on read, so none of it
+can go stale against the numbers it comes from.
+
+**Rooms updated:** `dnd/data/dnd_rules.json` (`longRest`),
+`dnd/engines/character.js` (`shortRest`, `longRest`, `levelPace`) and
+`dnd/sheet.html` (the Rest and recovery section). No page stores anything new.
+
+**Before writing any of these from a new room:** `shortRest` returns a Result
+whose value may be **negative** — check `losing` rather than assuming a floor of
+zero, and never clamp it, because the negative number is the finding. `longRest`
+needs a sheet with both `currentHp` and `maxHp`; `maxHp` is null whenever CON is
+incomplete, which is more often than you would expect.

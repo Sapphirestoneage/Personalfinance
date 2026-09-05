@@ -111,6 +111,17 @@
   .muted { color: var(--color-text-muted); }
   .burden { border-left: 3px solid var(--color-caution); padding: var(--space-2) var(--space-3); background: var(--color-surface); font-size: var(--text-sm); line-height: var(--leading-normal); border-radius: var(--radius-sm); margin-top: var(--space-2); }
   .burden.b45 { border-left-color: var(--color-critical); }
+  /* ---- rests and pace (BRIEF §9.8) ---- */
+  .rest { font-size: var(--text-sm); line-height: var(--leading-normal); }
+  .rest .big { font-family: var(--font-display); font-size: var(--text-xl); display: block; }
+  .rest .sub { color: var(--color-text-muted); display: block; }
+  .rest .warn { color: var(--color-critical); }
+  .rest p { margin: var(--space-2) 0 0; color: var(--color-text-muted); }
+  .restfigs { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-2); margin-top: var(--space-2); }
+  .restfig { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2); }
+  .restfig .k { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-subtle); }
+  .restfig .v { font-family: var(--font-display); font-size: var(--text-lg); }
+
   /* ---- conditions (BRIEF §9.7) ---- */
   .exh { border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: var(--space-3); background: var(--color-surface); }
   .exh.lit { border-color: var(--color-critical); }
@@ -430,6 +441,13 @@
           + '<div id="v-status-detail"></div>'
           + '<div class="panel-label">Status effects · you declare these</div></div>'
       + '</div>'
+      + '<h2 class="sec">Rest and recovery</h2>'
+      + '<div class="lower">'
+        + '<div class="panel"><div id="v-shortrest"></div><div class="panel-label">Short rest · one pay cycle</div></div>'
+        + '<div class="panel"><div id="v-longrest"></div><div class="panel-label">Long rest · back to full</div></div>'
+      + '</div>'
+      + '<div class="panel" style="margin-top:var(--space-3)"><div id="v-pace"></div>'
+        + '<div class="panel-label">Pace · what the next level costs</div></div>'
       + '<h2 class="sec">Where you are in the arc</h2>'
       + '<div class="tierstrip" id="v-tierstrip"></div>'
       + '<div class="lower">'
@@ -699,6 +717,80 @@
         return esc(t.name); }).join('<br/>'));
     }
     html('v-prof-list', prof.join('') || '<span class="faint">Nothing yet.</span>');
+
+    /* --- rests and pace (BRIEF §9.8) --------------------------------------
+       All three read the same surplus. A negative one is a real answer and is
+       said plainly, because "you are losing runway" is the single most useful
+       sentence this panel can produce. */
+    var sr = Char.shortRest(h, TABLES);
+    if (Money.isOk(sr)) {
+      var wpm = Math.round(sr.weeksPerMonth * 10) / 10;
+      html('v-shortrest', '<div class="rest">'
+        + '<span class="big' + (sr.losing ? ' warn' : '') + '">'
+          + (wpm >= 0 ? '+' : '') + wpm + ' weeks</span>'
+        + '<span class="sub">of runway per month, from what you do not spend'
+          + (sr.matchIncluded ? ', employer match included' : '') + '</span>'
+        + '<div class="restfigs">'
+          + '<div class="restfig"><div class="k">One week of HP costs</div><div class="v">'
+            + esc(Money.formatCents(sr.weekCostCents)) + '</div></div>'
+          + '<div class="restfig"><div class="k">A year of rests</div><div class="v">'
+            + (Math.round(sr.weeksPerYear * 10) / 10) + ' wk</div></div>'
+        + '</div>'
+        + (sr.losing
+            ? '<p class="warn">You are spending more than you keep, so rests take runway away rather than '
+              + 'restoring it. Nothing below this line gets better until that number is positive.</p>'
+            : '<p>' + esc(TABLES.dndRules.longRest.potionNote) + '</p>')
+        + '</div>');
+    } else {
+      html('v-shortrest', '<span class="faint">' + esc(sr.reason) + '</span>');
+    }
+
+    var lr = Char.longRest(s, h, TABLES);
+    if (Money.isOk(lr)) {
+      html('v-longrest', '<div class="rest">'
+        + (lr.atMax
+            ? '<span class="big">At full</span><span class="sub">Nothing to recover — your runway is at its cap for this class and level.</span>'
+            : '<span class="big">' + (Math.round(lr.deficitWeeks * 10) / 10) + ' weeks</span>'
+              + '<span class="sub">short of your maximum</span>')
+        + '<div class="restfigs">'
+          + '<div class="restfig"><div class="k">CON save to finish it</div><div class="v">DC ' + lr.dc
+            + (lr.conModifier === null ? '' : ' · ' + (lr.conModifier >= 0 ? '+' : '') + lr.conModifier) + '</div></div>'
+          + '<div class="restfig"><div class="k">Chance it holds</div><div class="v">'
+            + (lr.chance === null ? DASH : Math.round(lr.chance * 100) + '%') + '</div></div>'
+        + '</div>'
+        + (lr.atMax ? ''
+            : lr.unreachable
+              ? '<p class="warn">At your current surplus a long rest never completes — the deficit is not closing.</p>'
+              : (lr.monthsToFull === null
+                  ? '<p>Add your income and filing status to see how long a full recovery takes.</p>'
+                  : '<p>About ' + (Math.round(lr.monthsToFull * 10) / 10) + ' months of uninterrupted rest '
+                    + 'to reach full. The DC rises with exhaustion — the deeper the hole, the more has to go '
+                    + 'right without interruption.</p>'))
+        + '</div>');
+    } else {
+      html('v-longrest', '<span class="faint">' + esc(lr.reason) + '</span>');
+    }
+
+    var lp = Char.levelPace(h, TABLES, s.level);
+    if (Money.isOk(lp)) {
+      html('v-pace', '<div class="rest">'
+        + (lp.atCap
+            ? '<span class="big">Level 20</span><span class="sub">There is no next level. This is the part you were saving for.</span>'
+            : '<span class="big">' + esc(Money.formatCents(lp.needCents)) + '</span>'
+              + '<span class="sub">more invested reaches level ' + lp.nextLevel + '</span>'
+              + (lp.goingBackwards
+                  ? '<p class="warn">At a negative surplus you are not moving toward it.</p>'
+                  : lp.stalled
+                    ? '<p class="warn">Nothing is being saved, so this level never arrives on its own.</p>'
+                    : lp.yearsToNext === null
+                      ? ''
+                      : '<p>About ' + (Math.round(lp.yearsToNext * 10) / 10) + ' years at what you currently '
+                        + 'save. Contributions only — no growth assumed over a single level, because '
+                        + 'compounding across one hop is noise dressed as precision.</p>'))
+        + '</div>');
+    } else {
+      html('v-pace', '<span class="faint">' + esc(lp.reason) + '</span>');
+    }
 
     /* --- conditions (BRIEF §9.7) ------------------------------------------
        Exhaustion is derived and repaints freely. The status checkboxes are

@@ -1851,5 +1851,13 @@
       }
     ]
   },
-  "statusNote": "BRIEF §9.7. Status effects are SELF-DECLARED, like alignment — they are facts about your situation that no number in the household can see. Nothing here is computed and nothing is inferred; if you have not said, the sheet says you have not said."
+  "statusNote": "BRIEF §9.7. Status effects are SELF-DECLARED, like alignment — they are facts about your situation that no number in the household can see. Nothing here is computed and nothing is inferred; if you have not said, the sheet says you have not said.",
+  "longRest": {
+    "note": "BRIEF §9.8. The rulebook says a Long Rest restores HP to max \"contingent on a CON save\" and never sets the DC. These two numbers are that DC, written for this build. The DC rises with exhaustion because the deeper the hole, the more months have to go uninterrupted for a full recovery to actually happen — a good quarter restores someone who is Watchful and barely dents someone who is Spent.",
+    "origin": "extension",
+    "baseDc": 10,
+    "dcPerExhaustionLevel": 2,
+    "shortRestNote": "One pay cycle. Surplus converts to runway at one week of expenses per week of HP.",
+    "potionNote": "A windfall heals immediately and needs no rest. What it heals is its size divided by one week of expenses."
+  }
 }

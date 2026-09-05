@@ -28,13 +28,18 @@ const ROOT = path.join(__dirname, '..');
 
 const Money = require(path.join(ROOT, 'shared/money.js'));
 const Character = require(path.join(ROOT, 'engines/character.js'));
+const Schema = require(path.join(ROOT, 'shared/schema.js'));
 
 const table = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, 'data', f), 'utf8'));
 const TABLES = {
   dndRules: table('dnd_rules.json'),
   dndClasses: table('dnd_classes.json'),
   dndScoring: table('dnd_scoring.json'),
-  fooRules: table('foo_rules.json')
+  fooRules: table('foo_rules.json'),
+  /* CON runs through the savings rate, which subtracts estimated tax, which
+     needs this table. Without it CON is incomplete and Max HP is null — which
+     is the engine behaving correctly and a test harness behaving badly. */
+  effectiveTaxRates: table('effective_tax_rates_2026.json')
 };
 
 let passed = 0;
@@ -675,6 +680,145 @@ section('Dungeons & Dividends — the quiz-only leaning');
 
   check('and with nothing answered it declines to guess',
     Character.suggestClassFromStats({}, TABLES).status, 'incomplete');
+})();
+
+section('Dungeons & Dividends — rests and pace');
+
+(function () {
+  const R = TABLES.dndRules;
+
+  /* BRIEF §9.8. The rulebook specifies the rests under deathSaves.recovery and
+     leaves only the Long Rest's CON save DC unset, so that is the one number
+     written here — in data, marked. */
+  check('the long-rest DC is marked as an extension', R.longRest.origin, 'extension');
+  checkTrue('it has a base DC', typeof R.longRest.baseDc === 'number');
+  checkTrue('and a step per exhaustion level', typeof R.longRest.dcPerExhaustionLevel === 'number');
+  checkTrue('the rulebook still describes all three recoveries',
+    R.deathSaves.recovery.length === 3
+    && R.deathSaves.recovery.some(function (x) { return /Short Rest/.test(x); })
+    && R.deathSaves.recovery.some(function (x) { return /Long Rest/.test(x); })
+    && R.deathSaves.recovery.some(function (x) { return /Potion/.test(x); }));
+
+  /* A household the engine can actually read, built the way Schema builds one. */
+  function household(income, monthlyExpenses, cash, investments) {
+    /* Built the way the sheet builds its example, through Schema's own
+       constructors — cash is a liquid ASSET and expenses live under
+       expenses.monthlyEssential, not as bare keys on the household. Writing
+       them flat produced a sheet with a null Level and no HP at all, which is
+       the engine correctly refusing a household it cannot read. */
+    const h = Schema.createHousehold();
+    h.filingStatus = 'single';
+    const person = Schema.createPerson({ id: 'p1', role: 'adult' });
+    person.incomeSources = [Schema.createIncomeSource({
+      id: 'i1', personId: 'p1', grossAnnualIncomeCents: income, type: 'w2' })];
+    h.people = [person];
+    h.assets = [
+      Schema.createAsset({ id: 'a_cash', category: 'cash', valueCents: cash, liquid: true }),
+      Schema.createAsset({ id: 'a_inv', category: 'investment', valueCents: investments, liquid: false })
+    ];
+    h.expenses = { monthlyEssential: { estimatedValueCents: monthlyExpenses,
+      trackedValueCents: null, source: 'estimated' }, entries: [] };
+    /* CON is built from the savings rate, the fixed-cost share, years
+       sustained and disruption survived — leave those out and maxHp is null,
+       correctly, which is what a long rest needs. */
+    h.dndProfile = { fixedCostShare: 0.55, yearsSustained: 4, disruptionSurvived: true,
+      healthCoverage: 2, automatedSaving: 'most',
+      declaredMethod: 'standardArray', declaredScores: {
+      taxLiteracy: 13, marketLiteracy: 12, instrumentLiteracy: 11,
+      scenarioForesight: 14, selfAwareness: 15, threatDetection: 10,
+      negotiation: 10, network: 9, personability: 8 } };
+    return h;
+  }
+  const rich = household(7200000, 315000, 1000000, 4800000);
+
+  /* Short rest: surplus per cycle, converted to runway at one week of expenses
+     per week of HP. The conversion is the whole point — HP is weeks (D-046). */
+  const sr = Character.shortRest(rich, TABLES);
+  checkTrue('a short rest scores for a complete household', Money.isOk(sr));
+  check('a week of HP costs a week of expenses',
+    Math.round(sr.weekCostCents), Math.round(315000 * 12 / 52));
+  checkTrue('and the surplus is positive here', sr.weeksPerMonth > 0);
+  checkTrue('not losing runway', !sr.losing);
+  check('a year is twelve months of it',
+    Math.round(sr.weeksPerYear * 100), Math.round(sr.weeksPerMonth * 12 * 100));
+
+  /* Overspending is a real answer, not an error and not a zero. */
+  const poor = household(3600000, 400000, 300000, 200000);
+  const srPoor = Character.shortRest(poor, TABLES);
+  checkTrue('overspending still scores', Money.isOk(srPoor));
+  checkTrue('and reports the surplus as negative', srPoor.weeksPerMonth < 0);
+  checkTrue('flagged as losing runway', srPoor.losing);
+
+  /* Missing inputs stay missing. */
+  const bare = Schema.createHousehold();
+  checkTrue('no numbers means no rest figure', !Money.isOk(Character.shortRest(bare, TABLES)));
+  const noIncome = household(null, 315000, 1000000, 4800000);
+  checkTrue('expenses without income is still incomplete',
+    !Money.isOk(Character.shortRest(noIncome, TABLES)));
+
+  /* Long rest: deficit, DC, and the same 5%-95% clamp an encounter save uses. */
+  const sheet = Character.sheet(rich, TABLES);
+  checkTrue('the demo-shaped household builds a sheet', sheet.ready);
+  const lr = Character.longRest(sheet, rich, TABLES);
+  checkTrue('a long rest scores', Money.isOk(lr));
+  check('the deficit is max minus current',
+    Math.round(lr.deficitWeeks), Math.max(0, sheet.maxHp.weeks - sheet.currentHp.value));
+  checkTrue('the deficit is never negative', lr.deficitWeeks >= 0);
+  const exhHere = Character.exhaustion(sheet.currentHp, TABLES);
+  check('the DC is the base plus the exhaustion step',
+    lr.dc, R.longRest.baseDc + exhHere.value * R.longRest.dcPerExhaustionLevel);
+  checkTrue('the chance never reaches certainty either way',
+    lr.chance === null || (lr.chance >= 0.05 && lr.chance <= 0.95));
+
+  /* The DC must actually rise with exhaustion, or the rule is decorative. */
+  function sheetAt(weeks) {
+    return { stats: { CON: Money.ok(14) }, klass: null, proficiencyBonus: 2,
+             currentHp: Money.ok(weeks), maxHp: { weeks: 20 } };
+  }
+  const restedDc = Character.longRest(sheetAt(18), rich, TABLES).dc;
+  const spentDc = Character.longRest(sheetAt(0.5), rich, TABLES).dc;
+  checkTrue('a deeper hole is a harder long rest', spentDc > restedDc);
+  check('rested is the base DC', restedDc, R.longRest.baseDc);
+
+  /* At max there is nothing to recover, and it says so rather than dividing. */
+  const full = Character.longRest(
+    { stats: { CON: Money.ok(14) }, klass: null, proficiencyBonus: 2,
+      currentHp: Money.ok(20), maxHp: { weeks: 20 } }, rich, TABLES);
+  checkTrue('at max HP the deficit is zero', full.atMax);
+  check('and there is nothing to wait for', full.deficitWeeks, 0);
+
+  /* A negative surplus can never close a deficit, and must not report a
+     negative number of months as though it were a countdown. */
+  const stuck = Character.longRest(sheetAt(5), poor, TABLES);
+  checkTrue('a shrinking runway never completes a long rest', stuck.unreachable);
+  checkTrue('and no month count is offered',
+    stuck.monthsToFull === null || stuck.monthsToFull > 0);
+
+  /* Pace reuses nextLevelTarget rather than deriving the dollars again. */
+  const pace = Character.levelPace(rich, TABLES, sheet.level);
+  checkTrue('pace scores', Money.isOk(pace));
+  check('it aims at the next level up', pace.nextLevel, sheet.level.value + 1);
+  const target = Character.nextLevelTarget(rich, TABLES, sheet.level.value);
+  check('and asks nextLevelTarget for the dollars rather than re-deriving them',
+    pace.needCents, target.value);
+  checkTrue('the years are positive', pace.yearsToNext > 0);
+  checkTrue('and not centuries', pace.yearsToNext < 100);
+
+  const pacePoor = Character.levelPace(poor, TABLES, Character.sheet(poor, TABLES).level);
+  checkTrue('a negative surplus is going backwards, not arriving slowly',
+    pacePoor.goingBackwards && pacePoor.yearsToNext === null);
+
+  check('level 20 has no next level', Character.levelPace(rich, TABLES, Money.ok(20)).atCap, true);
+  checkTrue('and no Level at all is incomplete, not level 1',
+    !Money.isOk(Character.levelPace(rich, TABLES, Money.incomplete('none', []))));
+
+  /* -- the sheet shows all three ------------------------------------------ */
+  const src = fs.readFileSync(path.join(ROOT, 'sheet.html'), 'utf8');
+  ['v-shortrest', 'v-longrest', 'v-pace'].forEach(function (id) {
+    checkTrue(`the sheet has ${id}`, src.indexOf('id="' + id + '"') !== -1);
+  });
+  checkTrue('and says plainly when runway is going backwards',
+    /losing runway|rests take runway away/.test(src));
 })();
 
 section('Dungeons & Dividends — conditions and exhaustion');
