@@ -479,11 +479,12 @@
 
   /* ---- HP, in weeks ----------------------------------------------------- */
 
-  function maxHp(hitDie, lvl, conMod, burdenLevel, tables) {
+  function maxHp(hitDie, lvl, conMod, burdenLevel, tables, perLevelBonus) {
     var perLevel = Math.ceil((hitDie + 1) / 2);
     var minGain = tables.dndScoring.hp.minGainPerLevel;
-    var total = hitDie + conMod;
-    for (var l = 2; l <= lvl; l++) total += Math.max(minGain, perLevel + conMod);
+    var bonus = perLevelBonus || 0;                 /* Tough, Backdoor Roth — DD-023 */
+    var total = hitDie + conMod + bonus;
+    for (var l = 2; l <= lvl; l++) total += Math.max(minGain, perLevel + conMod) + bonus;
     total = Math.max(1, total);
     var pen = tables.dndScoring.hp.debtBurdenMaxHpPenalty;
     var reduced = Money.isEntered(burdenLevel) && burdenLevel >= pen.level;
@@ -700,7 +701,7 @@
      10 + DEX, then layered coverage. Only the emergency-fund shield's +2 is
      stated in the rulebook; the rest are agreed values living in data/.    */
 
-  function armorClass(household, tables, dexMod, lvl, activeClassCount, burdenLevel) {
+  function armorClass(household, tables, dexMod, lvl, activeClassCount, burdenLevel, acBonus) {
     var p = profileOf(household);
     var rules = tables.dndRules;
     var layers = [];
@@ -724,6 +725,9 @@
     var umb = rules.armor.filter(function (a) { return a.id === 'umbrella'; })[0];
     if (p.umbrellaPolicy === true) {
       ac += umb.ac; layers.push({ id: 'umbrella', label: umb.label, ac: umb.ac });
+    }
+    if (acBonus) {                                   /* House Hack — DD-023 */
+      ac += acBonus; layers.push({ id: 'feat', label: 'Feat', ac: acBonus });
     }
     if (activeClassCount >= 2) {
       var pb = proficiencyBonus(lvl, tables);
@@ -920,16 +924,19 @@
    * §3 gives every stat a save and each class proficiency in two of them;
    * proficiency adds the proficiency bonus, exactly as at a table.
    */
-  function savingThrows(stats, cls, profBonus, tables) {
+  function savingThrows(stats, cls, profBonus, tables, grants) {
     var defs = tables.dndRules.stats;
+    var g = grants || {};
     return defs.map(function (d) {
       var r = stats[d.id];
-      var proficient = !!(cls && cls.saves.indexOf(d.id) !== -1);
+      var fromFeat = (g.saveProficiencies || []).indexOf(d.id) !== -1;
+      var proficient = !!(cls && cls.saves.indexOf(d.id) !== -1) || fromFeat;
       if (!r || !Money.isOk(r)) {
         return { stat: d.id, name: d.name, save: d.save, proficient: proficient, ok: false };
       }
-      var mod = modifier(r.value) + (proficient ? profBonus : 0);
-      return { stat: d.id, name: d.name, save: d.save, proficient: proficient, ok: true, modifier: mod };
+      var mod = modifier(r.value) + (proficient ? profBonus : 0) + (g.saveBonus || 0);
+      return { stat: d.id, name: d.name, save: d.save, proficient: proficient, ok: true, modifier: mod,
+               fromFeat: fromFeat };
     });
   }
 
@@ -1073,6 +1080,76 @@
 
   /* ---- The whole sheet -------------------------------------------------- */
 
+  /* ---- Advancements: ASIs and feats — DD-023 ---------------------------
+     At each ASI level you take +2 to one ability (or +1 to two), or a feat.
+     The choice is stored per level in dndProfile.advancements and only counts
+     once that level is reached — drop a level and the choice waits, it is not
+     lost. Only INT, WIS and CHA can be raised: they are the abilities you
+     decide, and levelling is exactly when you decide again. STR, DEX and CON
+     are measured from money; decreeing +2 income is fiction.               */
+
+  function advancements(household, tables, lvl) {
+    var cad = tables.dndClasses.cadence;
+    var stored = profileOf(household).advancements || {};
+    return cad.asiLevels.map(function (L) {
+      var choice = stored[String(L)] || null;
+      return { level: L, reached: lvl >= L, choice: choice };
+    });
+  }
+
+  function featByName(name, tables) {
+    return tables.dndRules.generalFeats.filter(function (f) { return f.name === name; })[0] || null;
+  }
+
+  /** Everything the reached advancements actually grant, folded together. */
+  function grantsFrom(advs, tables) {
+    var out = { asi: {}, feats: [], saveProficiencies: [], saveBonus: 0,
+                maxHpPerLevel: 0, acBonus: 0, blockers: [] };
+    var cap = tables.dndClasses.cadence.asi.cap;
+    advs.forEach(function (a) {
+      if (!a.reached || !a.choice) return;
+      if (a.choice.kind === 'asi' && a.choice.plus) {
+        Object.keys(a.choice.plus).forEach(function (id) {
+          out.asi[id] = (out.asi[id] || 0) + a.choice.plus[id];
+        });
+      }
+      if (a.choice.kind === 'feat') {
+        var f = featByName(a.choice.feat, tables);
+        if (!f) return;
+        out.feats.push(f.name);
+        var g = f.grants || {};
+        if (g.saveProficiency && out.saveProficiencies.indexOf(g.saveProficiency) === -1) out.saveProficiencies.push(g.saveProficiency);
+        if (g.saveBonus) out.saveBonus += g.saveBonus;
+        if (g.maxHpPerLevel) out.maxHpPerLevel += g.maxHpPerLevel;
+        if (g.acBonus) out.acBonus += g.acBonus;
+        if (g.blocker && out.blockers.indexOf(g.blocker) === -1) out.blockers.push(g.blocker);
+      }
+    });
+    out.cap = cap;
+    return out;
+  }
+
+  /** Apply ASIs to the abilities that may take them, capped, and say so. */
+  function applyAsi(stats, asi, tables) {
+    var allowed = tables.dndClasses.cadence.asi.abilities;
+    var cap = tables.dndClasses.cadence.asi.cap;
+    var out = {};
+    Object.keys(stats).forEach(function (id) {
+      var r = stats[id];
+      var plus = asi[id] || 0;
+      if (!Money.isOk(r) || !plus || allowed.indexOf(id) === -1) { out[id] = r; return; }
+      var raised = Math.min(cap, r.value + plus);
+      /* Carry the Result's extras (bought, average…) but never its value or
+         status — Money.ok spreads extras over the result, and a stray
+         value: undefined in there erased the raised score. */
+      var extra = {};
+      Object.keys(r).forEach(function (k) { if (k !== 'value' && k !== 'status') extra[k] = r[k]; });
+      extra.base = r.value; extra.asi = raised - r.value; extra.modifier = modifier(raised);
+      out[id] = Money.ok(raised, extra);
+    });
+    return out;
+  }
+
   function sheet(household, tables) {
     if (!tables || !tables.dndRules || !tables.dndClasses || !tables.dndScoring) {
       return { ready: false, reason: 'The Dungeons & Dividends tables are not loaded.' };
@@ -1083,6 +1160,10 @@
 
     var lvlResult = level(household, tables);
     var lvl = Money.isOk(lvlResult) ? lvlResult.value : 1;
+
+    var advs = advancements(household, tables, lvl);
+    var grants = grantsFrom(advs, tables);
+    stats = applyAsi(stats, grants.asi, tables);
 
     var burden = debtBurden(household, tables);
     var burdenLevel = Money.isOk(burden) ? burden.value : null;
@@ -1096,13 +1177,13 @@
 
     var hp = null;
     if (cls && Money.isEntered(conMod)) {
-      hp = maxHp(cls.hitDie, lvl, conMod, burdenLevel, tables);
+      hp = maxHp(cls.hitDie, lvl, conMod, burdenLevel, tables, grants.maxHpPerLevel);
     }
     var cur = currentHp(household);
 
     var classCount = Money.isOk(suggested) ? activeClassCount(suggested.ranked) : 0;
     var ac = Money.isEntered(dexMod)
-      ? armorClass(household, tables, dexMod, lvl, classCount, burdenLevel)
+      ? armorClass(household, tables, dexMod, lvl, classCount, burdenLevel, grants.acBonus)
       : Money.incomplete('DEX needs all three of its sub-stats before AC can be read.',
           ['liquidityAgility', 'structuralMobility', 'obligationFlex']);
 
@@ -1128,6 +1209,8 @@
       maxHp: hp,
       currentHp: cur,
       armorClass: ac,
+      advancements: advs,
+      grants: grants,
       nextLevel: nextLevelTarget(household, tables, lvl),
       alignment: p.alignment || null
     };
@@ -1169,6 +1252,10 @@
     featuresEarned: featuresEarned,
     subclassFeatures: subclassFeatures,
     savingThrows: savingThrows,
+    advancements: advancements,
+    grantsFrom: grantsFrom,
+    applyAsi: applyAsi,
+    featByName: featByName,
     skillList: skillList,
     initiative: initiative,
     hitDiceLabel: hitDiceLabel,

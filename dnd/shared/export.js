@@ -103,7 +103,8 @@
     subclassId: { trust: 'declared', note: 'A subclass they picked. Available from level 3 and never assigned automatically.' },
     declaredScores: { trust: 'varies', note: 'Depends entirely on declaredMethod — read that first.' },
     declaredMethod: { trust: 'declared', note: 'How the nine scores came to exist. THE key to reading declaredScores.' },
-    rolledValues: { trust: 'generated', note: 'Dice. Never data.' }
+    rolledValues: { trust: 'generated', note: 'Dice. Never data.' },
+    advancements: { trust: 'declared', note: 'ASI and feat choices per level, chosen by the person. Game state; never a fact about them.' }
   };
 
   /* How much a set of declaredScores is worth, by how it was produced. */

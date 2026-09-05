@@ -6292,3 +6292,73 @@ unchanged at 37%.
 `savingThrows()`, the radar, the predators list and the type chart all read from
 it. **Before writing any of these from a new room:** a new class needs one
 strong and one weak save; the test will say so.
+
+---
+
+## DD-023 — ASIs and feats that do something
+
+Every "ASI or Feat" level on every class read "—". Feats had a name and a
+sentence and no mechanical field. A 5e player picks a feat *for* what it does,
+and levelling up here changed nothing an encounter could feel. The last of the
+review's items.
+
+### ASIs: +2, or +1/+1, to an ability you decide
+
+At each ASI level (4, 8, 12, 16, 19 — 5e's cadence, already in the data) you
+take +2 to one ability or +1 to two, capped at 20, or a feat instead. The choice
+is stored per level in `dndProfile.advancements` and **counts only once that
+level is reached** — drop a level and the choice waits; it is not lost.
+
+**Only INT, WIS and CHA can be raised.** They are the abilities you decide, and
+levelling is exactly when you get to decide again. STR, DEX and CON are measured
+from money — decreeing +2 income is fiction, and an ASI pointed at one is
+ignored. A raised score carries `base` and `asi` on its Result and shows a ▲ on
+the sheet.
+
+### Feats: one mechanic each, and the engine reads it
+
+The eight general feats each grant exactly one thing, written in data with a
+`why`:
+
+    House Hack                        +1 AC        housing cost hedged by a tenant
+    Backdoor Roth                     +1 HP/level  more tax-advantaged capacity
+    Real Estate Professional Status   INT save     you read the paperwork for a living
+    Golden Handcuffs Break            selfAwareness held — you have already priced leaving
+    The Ask                           negotiation held — you ask
+    Lucky                             +1 all saves  5e's three rerolls, as an honest flat point
+    Tough                             +1 HP/level  5e's +2 HP/level, in weeks
+    Mobile                            DEX save     you can move, so nothing pins you
+
+`saveProficiency` and `saveBonus` flow through `savingThrows()`; `maxHpPerLevel`
+through `maxHp()`; `acBonus` is a named armour layer; `blocker` counts as held in
+`blockerState()`, so The Ask makes the Wage-Stagnation Wraith unable to land on
+someone who asks. All five reach the encounter engine, which is the test of
+whether a feat is real.
+
+Class, subclass and debt feats **stay flavour** and the sheet says so — "Flavour
+— no mechanic yet" — rather than listing them beside real feats as if they did
+something. Giving twenty-odd class feats mechanics is its own design pass.
+
+### The picker lives with the class picker
+
+One select per reached ASI level, in the same signature-guarded block as the
+class and subclass pickers, so a live select is never rebuilt under a finger for
+nothing (D-034). The signature now includes the choices and the open feats. Only
+feats with a mechanic appear in the menu.
+
+### Compatibility note
+
+**Stored shape:** `dndProfile.advancements` is **added** — an object keyed by
+ASI level as a string, each `{ kind: 'asi', plus: { WIS: 2 } }` or
+`{ kind: 'feat', feat: 'Tough' }`. Absent means nothing chosen. Exported with
+provenance `declared`; `FORMAT.md` says not to import it as anything.
+
+**Rooms updated:** `dnd/data/dnd_rules.json` (feat grants), `dnd/data/dnd_classes.json`
+(`cadence.asi`), `dnd/engines/character.js` (`advancements`, `grantsFrom`,
+`applyAsi`, `featByName`; `savingThrows`, `maxHp`, `armorClass` take grants),
+`dnd/engines/encounter.js` (grants passed to saves; granted blockers held),
+`dnd/sheet.html`, `dnd/shared/export.js`, `dnd/FORMAT.md`.
+
+**Before writing any of these from a new room:** pass `sheet.grants` to
+`savingThrows()` or feats silently stop working there; a new general feat must
+grant exactly one of the five kinds, and the test will insist.

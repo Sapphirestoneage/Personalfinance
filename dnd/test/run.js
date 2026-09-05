@@ -1494,6 +1494,110 @@ section('Dungeons & Dividends — the bestiary extension');
     !!R.blockers.scenarioForesight && declared.indexOf('scenarioForesight') !== -1);
 })();
 
+section('Dungeons & Dividends — ASIs and feats that do something (DD-023)');
+
+(function () {
+  const Encounter = require(path.join(ROOT, 'engines/encounter.js'));
+  const R = TABLES.dndRules, C = TABLES.dndClasses, cad = C.cadence;
+  const KINDS = ['acBonus', 'maxHpPerLevel', 'saveProficiency', 'saveBonus', 'blocker'];
+
+  /* Every general feat grants exactly one mechanic the engine reads, and says why. */
+  R.generalFeats.forEach(function (f) {
+    checkTrue(`${f.name} grants something`, !!f.grants);
+    const keys = Object.keys(f.grants || {}).filter(function (k) { return KINDS.indexOf(k) !== -1; });
+    check(`${f.name} grants exactly one mechanic`, keys.length, 1);
+    checkTrue(`${f.name} explains itself`, typeof (f.grants || {}).why === 'string' && f.grants.why.length > 10);
+    if (f.grants.blocker) checkTrue(`${f.name}'s blocker exists`, !!R.blockers[f.grants.blocker]);
+    if (f.grants.saveProficiency) checkTrue(`${f.name}'s save is real`, ['STR','DEX','CON','INT','WIS','CHA'].indexOf(f.grants.saveProficiency) !== -1);
+  });
+  check('ASIs raise only the abilities you decide', cad.asi.abilities.join(','), 'INT,WIS,CHA');
+  check('+2 or +1/+1, like 5e', cad.asi.plus + '/' + cad.asi.split.join('+'), '2/1+1');
+  check('capped at 20', cad.asi.cap, 20);
+
+  /* A level-8 household, built the way the suite builds one. */
+  function household(advs) {
+    const h = Schema.createHousehold(); h.filingStatus = 'single';
+    const p = Schema.createPerson({ id: 'p1', role: 'adult' });
+    p.incomeSources = [Schema.createIncomeSource({ id: 'i1', personId: 'p1', grossAnnualIncomeCents: 7200000, type: 'w2' })];
+    h.people = [p];
+    h.assets = [Schema.createAsset({ id: 'c', category: 'cash', valueCents: 1000000, liquid: true }),
+                Schema.createAsset({ id: 'i', category: 'investment', valueCents: 24000000, liquid: false })];
+    h.expenses = { monthlyEssential: { estimatedValueCents: 315000, trackedValueCents: null, source: 'estimated' }, entries: [] };
+    h.dndProfile = { fixedCostShare: 0.55, yearsSustained: 4, disruptionSurvived: true, healthCoverage: 2, automatedSaving: 'most',
+      declaredMethod: 'standardArray', declaredScores: { STR: 10, DEX: 10, CON: 10, INT: 13, WIS: 19, CHA: 10 },
+      advancements: advs || {} };
+    return h;
+  }
+  const plain = Character.sheet(household({}), TABLES);
+  checkTrue('the household is high enough level to have ASIs', plain.levelValue >= 8);
+  check('two advancement slots are reached', plain.advancements.filter(function (a) { return a.reached; }).length, 2);
+  checkTrue('and later ones are not', plain.advancements.some(function (a) { return !a.reached; }));
+
+  /* An ASI raises the score and the modifier, and says so. */
+  const asi = Character.sheet(household({ '4': { kind: 'asi', plus: { INT: 2 } } }), TABLES);
+  check('+2 INT lands', asi.stats.INT.value, plain.stats.INT.value + 2);
+  check('and is marked as an ASI', asi.stats.INT.asi, 2);
+  check('and the base is kept', asi.stats.INT.base, plain.stats.INT.value);
+  const capped = Character.sheet(household({ '4': { kind: 'asi', plus: { WIS: 2 } } }), TABLES);
+  check('an ASI never exceeds 20', capped.stats.WIS.value, 20);
+  check('and records only what actually applied', capped.stats.WIS.asi, 20 - plain.stats.WIS.value);
+  const split = Character.sheet(household({ '4': { kind: 'asi', plus: { INT: 1, CHA: 1 } } }), TABLES);
+  check('+1/+1 splits', split.stats.INT.value + '/' + split.stats.CHA.value,
+    (plain.stats.INT.value + 1) + '/' + (plain.stats.CHA.value + 1));
+  const str = Character.sheet(household({ '4': { kind: 'asi', plus: { STR: 2 } } }), TABLES);
+  check('an ASI on a measured ability is ignored — you cannot decree income',
+    str.stats.STR.value, plain.stats.STR.value);
+  const early = Character.sheet(household({ '16': { kind: 'asi', plus: { INT: 2 } } }), TABLES);
+  check('a choice at an unreached level waits', early.stats.INT.value, plain.stats.INT.value);
+
+  /* Feats reach the numbers they claim to. */
+  const tough = Character.sheet(household({ '4': { kind: 'feat', feat: 'Tough' } }), TABLES);
+  check('Tough adds a week per level to Max HP', tough.maxHp.weeks, plain.maxHp.weeks + plain.levelValue);
+  /* Save grants are tested on a fully scored stats map — this household's DEX
+     is deliberately incomplete (DD-018), so its DEX save has no modifier. */
+  const full = { STR: Money.ok(10), DEX: Money.ok(12), CON: Money.ok(10), INT: Money.ok(10), WIS: Money.ok(10), CHA: Money.ok(10) };
+  const gr = function (advs) { return Character.grantsFrom(Character.advancements(household(advs), TABLES, 8), TABLES); };
+  const dexSave = function (grants) { return Character.savingThrows(full, plain.klass, 3, TABLES, grants)
+    .filter(function (x) { return x.stat === 'DEX'; })[0]; };
+  const noFeat = dexSave(gr({}));
+  const withMobile = dexSave(gr({ '4': { kind: 'feat', feat: 'Mobile' } }));
+  check('Mobile makes DEX a proficient save', withMobile.modifier, noFeat.modifier + 3);
+  checkTrue('and says the proficiency came from a feat', withMobile.fromFeat);
+  check('Lucky is +1 to every save', dexSave(gr({ '4': { kind: 'feat', feat: 'Lucky' } })).modifier, noFeat.modifier + 1);
+  const wisSave = Character.savingThrows(full, plain.klass, 3, TABLES, gr({ '4': { kind: 'feat', feat: 'Lucky' } }))
+    .filter(function (x) { return x.stat === 'WIS'; })[0];
+  check('every save, not just one', wisSave.modifier,
+    Character.savingThrows(full, plain.klass, 3, TABLES, gr({})).filter(function (x) { return x.stat === 'WIS'; })[0].modifier + 1);
+  /* AC needs a fully measured DEX, which this household deliberately lacks
+     (its bought DEX drops the moment cash makes one DEX sub-stat real — DD-018).
+     So House Hack is tested on armorClass() directly, where the bonus lands. */
+  const hackHh = household({ '4': { kind: 'feat', feat: 'House Hack' } });
+  const hackGrants = Character.grantsFrom(Character.advancements(hackHh, TABLES, 8), TABLES);
+  check('House Hack grants +1 AC', hackGrants.acBonus, 1);
+  const acPlain = Character.armorClass(hackHh, TABLES, 0, 8, 0, 0, 0);
+  const acHack = Character.armorClass(hackHh, TABLES, 0, 8, 0, 0, hackGrants.acBonus);
+  check('and armorClass applies it', acHack.value, acPlain.value + 1);
+  checkTrue('as a named layer', acHack.layers.some(function (l) { return l.id === 'feat'; }));
+  const ask = Character.sheet(household({ '4': { kind: 'feat', feat: 'The Ask' } }), TABLES);
+  check('The Ask grants the negotiation blocker', ask.grants.blockers.join(','), 'negotiation');
+  const wraith = R.monsters.filter(function (m) { return m.name === 'Wage-Stagnation Wraith'; })[0];
+  const opts = { tables: TABLES, household: household({}) };
+  checkTrue('and the Wage-Stagnation Wraith cannot land on someone who asks',
+    Encounter.run(ask, wraith, opts).negated && !Encounter.run(plain, wraith, opts).negated);
+  const two = Character.sheet(household({ '4': { kind: 'feat', feat: 'Tough' }, '8': { kind: 'feat', feat: 'Lucky' } }), TABLES);
+  check('two feats stack', two.grants.feats.join(','), 'Tough,Lucky');
+  check('an unknown feat grants nothing', Character.sheet(household({ '4': { kind: 'feat', feat: 'Nope' } }), TABLES).grants.feats.length, 0);
+
+  /* -- the sheet ---------------------------------------------------------- */
+  const src = fs.readFileSync(path.join(ROOT, 'sheet.html'), 'utf8');
+  checkTrue('the sheet builds an advancement select per reached level', /data-adv=/.test(src));
+  checkTrue('inside the signature-guarded picker block', src.indexOf('data-adv=') > src.indexOf('function paintPickers') && src.indexOf('data-adv=') < src.indexOf('function describeExport'));
+  checkTrue('and the signature includes the choices', /reached\.map\(function \(a\) \{ return a\.level/.test(src));
+  checkTrue('flavour feats say so', /Flavour — no mechanic yet/.test(src));
+  checkTrue('a raised score is marked', /r\.asi \? ' ▲'/.test(src));
+  checkTrue('FORMAT.md describes advancements', /advancements/.test(fs.readFileSync(path.join(ROOT, 'FORMAT.md'), 'utf8')));
+})();
+
 section('Dungeons & Dividends — one strong save, one weak (DD-022)');
 
 (function () {

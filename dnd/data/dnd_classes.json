@@ -22,7 +22,21 @@
       16,
       19
     ],
-    "capstoneLevel": 18
+    "capstoneLevel": 18,
+    "asi": {
+      "plus": 2,
+      "split": [
+        1,
+        1
+      ],
+      "cap": 20,
+      "abilities": [
+        "INT",
+        "WIS",
+        "CHA"
+      ],
+      "note": "DD-023. At each ASI level you take +2 to one ability or +1 to two — 5e's rule — or a feat instead. Only INT, WIS and CHA can be raised: they are the abilities you decide, and levelling is exactly when you get to decide again. STR, DEX and CON are measured from money; decreeing +2 income is fiction."
+    }
   },
   "classes": [
     {

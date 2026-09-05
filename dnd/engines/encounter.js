@@ -145,6 +145,10 @@
   function blockerState(id, ctx) {
     var cat = ctx.tables.dndRules.blockers[id];
     if (!cat) return null;
+    /* A feat can grant a blocker outright — The Ask counts as negotiation
+       held whatever the score says. DD-023. */
+    var granted = ctx.sheet && ctx.sheet.grants && ctx.sheet.grants.blockers;
+    if (granted && granted.indexOf(id) !== -1) return true;
     if (cat.subStat) {
       /* No subScores at all is the same claim as an unscored one: we have not
          been told. It must never throw — a caller holding a partial sheet is
@@ -232,7 +236,7 @@
                 profile: household.dndProfile || {} };
     var rules = tables.dndRules.encounterRules;
 
-    var saves = Character.savingThrows(sheet.stats, sheet.klass, sheet.proficiencyBonus, tables);
+    var saves = Character.savingThrows(sheet.stats, sheet.klass, sheet.proficiencyBonus, tables, sheet.grants);
     var target = targetSave(monster, saves);
     var dc = dcFor(monster.cr, tables);
     var blockers = resolveBlockers(monster, ctx);
@@ -391,7 +395,7 @@
    */
   function predators(sheet, tables, opts) {
     var o = opts || {};
-    var saves = Character.savingThrows(sheet.stats, sheet.klass, sheet.proficiencyBonus, tables)
+    var saves = Character.savingThrows(sheet.stats, sheet.klass, sheet.proficiencyBonus, tables, sheet.grants)
       .filter(function (s) { return s.ok; });
     if (saves.length < 2) {
       return { ready: false, reason: 'Score more of your saves to see what hunts you.', weakest: [], creatures: [] };
@@ -490,7 +494,7 @@
    * back `known: false`: not resistant, not exposed, unmeasured.
    */
   function typeDefence(sheet, tables) {
-    var saves = Character.savingThrows(sheet.stats, sheet.klass, sheet.proficiencyBonus, tables);
+    var saves = Character.savingThrows(sheet.stats, sheet.klass, sheet.proficiencyBonus, tables, sheet.grants);
     var exh = Character.exhaustion(sheet.currentHp, tables);
     var penalty = Money.isOk(exh) ? exh.savePenalty : 0;
 
