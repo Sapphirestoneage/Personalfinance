@@ -98,6 +98,18 @@
       "order": 3.4
     },
     {
+      "id": "variance",
+      "title": "Estimated vs Actual",
+      "file": "rooms/variance.html",
+      "reads": [
+        "monthsClosed"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 3.5
+    },
+    {
       "id": "financial-snapshot",
       "title": "Financial Snapshot",
       "file": "rooms/financial-snapshot.html",

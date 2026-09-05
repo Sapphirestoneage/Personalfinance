@@ -598,7 +598,11 @@
     monthsClosed: {
       label: 'Months closed', owner: 'budget', anchor: 'close',
       read: function (h) { var n = ((h.ledger || {}).months || []).length; return n ? Money.ok(n) : Money.incomplete('No month closed yet.', ['monthsClosed']); },
-      format: function (v) { return v + (v === 1 ? ' month' : ' months'); }
+      format: function (v) { return v + (v === 1 ? ' month' : ' months'); },
+      /* Until a month is closed there is nothing to read back, and no path
+         should wait on it: the reading room says so itself. */
+      applies: function (h) { return ((h.ledger || {}).months || []).length > 0; },
+      notApplicableBecause: 'No month closed yet — close one on the Budget.'
     },
     historyCompareTo: {
       label: 'Comparing against', owner: 'history', anchor: 'inputs',

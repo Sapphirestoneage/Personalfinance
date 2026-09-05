@@ -105,6 +105,22 @@
       ]
     },
     {
+      id: 'variance',
+      kind: 'read',
+      needs: ['monthsClosed'],
+      order: 3.5,
+      title: 'Estimated vs Actual',
+      blurb: 'Every closed month read back: what you expected against what happened, bucket by bucket, and whether the guesses are getting better.',
+      href: 'rooms/variance.html',
+      tier: 1,
+      tags: ['income', 'cashflow'],
+      subsections: [
+        { id: 'month',   label: 'One month' },
+        { id: 'trend',   label: 'Month over month' },
+        { id: 'buckets', label: 'Bucket by bucket' }
+      ]
+    },
+    {
       id: 'cash-flow',
       kind: 'core',
       needs: ['monthlyExpenses'],

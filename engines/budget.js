@@ -41,7 +41,7 @@
   var LABELS = { income: 'Income', expenses: 'Expenses', savings: 'Savings', investments: 'Investments', debt: 'Debt' };
   var MONTHS = 12;
 
-  function closedMonths(h) { return ((h && h.ledger && h.ledger.months) || []).slice(); }
+  function closedMonths(h) { return ((h && h.ledger && h.ledger.months) || []).map(function (m) { return Schema.createMonthRecord(m); }).filter(function (m) { return m.id; }); }
   function recordFor(h, ym) { return closedMonths(h).filter(function (m) { return m.id === ym; })[0] || null; }
   function isClosed(h, ym) { return !!recordFor(h, ym); }
   function lastClosedBefore(h, ym) {
