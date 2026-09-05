@@ -110,6 +110,7 @@ engines/            Shared calculation engines — one function per concept
   health.js           the health score: ratios, weighted by age cohort
   income.js           hourly/weekly/monthly pay into a year, and jobs by month
   tax.js              federal ordinary + capital gains, FICA, a state schedule, the ACA cliff
+  skills.js           the Skill Stacker: three at a time, did or didn't, a ledger of what each day was worth
   statement.js        three portfolios, weighted net worth, the ladder, the bridge, the worst year
   benchmarks.js       the wealth multiplier, monthly to $1M, PAW, the five levels, 1% more, human capital
   rerank.js           cost rank against value rank, and the lines where the two orders disagree

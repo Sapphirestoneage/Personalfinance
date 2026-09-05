@@ -39,7 +39,12 @@
     dndRules: 'dnd_rules.json',
     dndClasses: 'dnd_classes.json',
     dndScoring: 'dnd_scoring.json',
-    dndAlignments: 'dnd_alignments.json'
+    dndAlignments: 'dnd_alignments.json',
+    /* The Skill Stacker's catalogue, authored here (D-090). */
+    skills: 'skills.json',
+    stacks: 'stacks.json',
+    hundredWays: 'hundred_ways.json',
+    curves: 'curves.json'
   };
 
   var cache = {};

@@ -4573,6 +4573,101 @@ missing the rating module the Rerank engine needs, fixed here.
 
 ---
 
+## D-090 — The Skill Stacker: three at a time, did or didn't, and a ledger of what each day was worth
+
+*(BRIEF.md §7. T7.)* A room, `rooms/stacker.html` (about-you, order
+20; The Rerank stays at 19 and everything from What Matters on moves
+one down), an engine, `engines/skills.js`, and a catalogue authored in
+`dnd/data/` beside the D&D sheet it draws its levers and sub-stats
+from: `skills.json` (twenty-six skills), `hundred_ways.json` (thirty
+everyday savings, read as trialable skills), `stacks.json` (five stacks
+with a cap each) and `curves.json` (the three curves' parameters). The
+SPARKS loader registers them as `skills`, `stacks`, `hundredWays`,
+`curves` at `../dnd/data/…`; the D&D loader registers the same four by
+bare name.
+
+**What a skill is.** `kind` once / habit / periodic; `effect` either
+`risk` (worth $0 a year, on purpose — the Anchor stack is worth nothing
+in a normal year and everything in a bad one, and a number on sleep
+would be a lie), a fixed `cents` a year, or a `formula` in the
+life-events expression language (D-087) over `Events.context`, so
+"a third of the dining-out line" is the same figure whichever room
+asks. The context gains `diningMonthlyCents`, `groceriesMonthlyCents`,
+`foodMonthlyCents`, `matchLeftMonthlyCents` (the cap's match less what
+the current contribution captures) and `rerankCutOneMonthlyCents` (the
+dearest non-need line The Rerank flagged). A once-skill may carry
+`verify` — an ownership row and a test (`present`, `equals`,
+`gteField`, `source`) — and is **marked done from the household's own
+facts on load, never asked**; if the fact stops holding it is un-marked,
+unless the person marked it done themselves.
+
+**States and the three-slot rule.** once: locked → available → trial →
+done. habit: locked → available → trial → practicing (seven of the last
+thirty days) → habit (twenty-one) — and back: fourteen unlogged days
+(the skill's own `decayDays`, thirty for cut-one-line) to practicing,
+forty-five to available with a lapse counted and the log kept.
+periodic: locked → available → practicing → done, due again after
+`everyDays`. At most **three** may sit in trial or practicing; a fourth
+is refused with the reason and the three in the way. A habit that has
+become a habit frees its slot. A prerequisite is met by done or habit.
+The thresholds live in `skills.json` `rules`, not in code.
+
+**The ledger.** A did-tap writes one row `{on, skill, cents}` at the
+skill's annual value ÷ 365 (cook dinner on the demo: 93,600 ÷ 365 =
+256 cents); a didn't-tap removes that day's row and counts a second
+miss when yesterday was a miss too. The only totals are sums of rows:
+today's, the ledger's, and the ledger × the wealth multiplier at your
+age (D-079) for "at 65". **Feedback, not gamification** (BRIEF §7 D-C):
+no streaks, no points, no badges; the days-of-thirty count is the
+state's own arithmetic.
+
+**Stacks.** A waterfall: each skill's stand-alone value while active,
+times its declared synergy multiplier when the partner is active too,
+summed, then capped at the stack's `capCents` or twelve months of its
+`capField` line when that is known and smaller — so The Kitchen can
+never claim more than the food actually bought. **Next skill**:
+available, prerequisites met, at the FOO step or at none in particular,
+best return on effort (value ÷ (learnHours + practiceMinutes × 365 ÷
+60)), nudged ×1.5 toward the lowest D&D sub-stat when a caller says
+which; the hundred ways are never the suggestion.
+
+**Automation ratio** (§4.3, listed unavailable since D-081): the annual
+value of active skills marked "runs by itself" over every active
+skill's, nothing to say until an active skill is worth dollars.
+
+**Compatibility note.** The household gains `skills` — a map by
+catalogue id of `{state, kind, startedOn, log[], misses[], last30,
+secondMisses, lapses, valuePerDayCents, valueSource, automated, dueOn,
+lastDone, verifiedOn, verifiedBy}` — and `practiceLedger[]` of
+`{on, skill, cents}`. Both are owned by the Stacker
+(`shared/ownership.js` `practiceLedger`). `Spine.updateProfile` merges
+`skills` field-wise like the other small fact objects, so a room
+writing one skill cannot wipe another; the ledger is replaced whole
+like `goals`. `Instruments.outputs` (and so every snapshot from the
+dashboard and Refresh, which now load the engine) carries
+`practiceLedgerCents`, which is what the Annual Review will read. No
+existing field changed shape; a household saved before this loads with
+an empty map and an empty ledger.
+
+**Verified.** `node test/run.js`: the catalogue graded (unique ids,
+levers and sub-stats on the sheet, prerequisites and synergies real,
+habits decay and periodics recur, effects well-formed, verify clauses
+against ownership rows); on the demo the facts prove enter-the-facts,
+name-your-debt and starter-fund ($9,500 cash ≥ $2,500 deductible) and
+not capture-the-match; the match left = 72,000 × (6% − 4%) × 50% = $720
+a year; cook dinner 12 × 30% × $260; a locked, a done and a fourth
+equip refused with reasons; eight days → practicing at 256 a day and a
+2,048-cent ledger; two didn'ts → one second miss; twenty-one → habit and
+the slot freed; decay at 13, 14 and 45 days; a periodic due in thirty;
+The Kitchen's waterfall by hand (54,000 + 93,600 × 1.25 = 171,000) and
+its cap at twelve months of a lean food line; the ledger at 65 =
+2,048 × the multiplier from 32; the automation ratio 0 then 1, read by
+Every Ratio; the ledger in the instruments. A phone-browser tap
+through take-on, did, and the refusal on the demo; the alignment pass
+on the figures and the three curves; the whole-site sweep.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

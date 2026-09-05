@@ -442,6 +442,17 @@
       label: 'Monthly expenses', owner: 'cash-flow', anchor: 'spending',
       read: function (h) { return Schema.monthlyExpensesCents(h); },
       format: function (v) { return money(v) + '/mo'; }
+    },
+    /* The practice ledger: every logged day's worth, summed. Written one
+       row at a time by the Skill Stacker and by nothing else. D-090. */
+    practiceLedger: {
+      label: 'Practice ledger', owner: 'stacker', anchor: 'today',
+      read: function (h) {
+        var rows = h.practiceLedger || [];
+        if (!rows.length) return Money.incomplete('No days logged yet.', ['practiceLedger']);
+        return Money.ok(rows.reduce(function (t, e) { return t + (Money.isEntered(e.cents) ? e.cents : 0); }, 0), { days: rows.length });
+      },
+      format: money
     }
   };
 

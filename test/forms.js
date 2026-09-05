@@ -240,6 +240,40 @@ const CASES = [
     }
   },
   {
+    room: '/rooms/stacker.html',
+    container: '#today-list',
+    seed: 'spending',
+    /* Take the suggestion on, then log a day: the tap lands, the row is
+       written, and the figure moves. There is nothing typed here; the
+       controls are buttons, and the check is that they survive a tap. */
+    prepare: async (page) => {
+      await page.waitForSelector('#browse-list .line');
+      await page.tap('#btn-next');
+      await page.waitForTimeout(300);
+      await page.tap('#browse-list [data-equip="cook-dinner"]');
+      await page.waitForTimeout(300);
+    },
+    fields: [],
+    expect: async (page) => {
+      await page.tap('#today-list [data-log="did"][data-skill="cook-dinner"]');
+      await page.waitForTimeout(500);
+      const s = await page.evaluate(() => {
+        const h = JSON.parse(localStorage.getItem('slaf.household.v2')) || {};
+        return { on: Object.keys(h.skills).filter(k => ['trial', 'practicing'].includes(h.skills[k].state)).length,
+          done: Object.keys(h.skills).filter(k => h.skills[k].state === 'done').length,
+          rows: (h.practiceLedger || []).length, cents: (h.practiceLedger || [{}])[0].cents,
+          fig: document.getElementById('fig-today').textContent };
+      });
+      return [
+        ['two skills on', s.on, 2],
+        ['at least three proven done from the demo', s.done >= 3, true],
+        ['one ledger row', s.rows, 1],
+        ['worth 93,600 ÷ 365', s.cents, 256],
+        ['and the figure shows it', s.fig, '$2.56']
+      ];
+    }
+  },
+  {
     room: '/rooms/fire.html',
     container: '#targets',
     seed: 'demo',

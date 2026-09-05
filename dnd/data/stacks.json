@@ -1,0 +1,78 @@
+{
+  "id": "stacks",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "Five named stacks: ordered skills that compound on each other, with a cap on what the stack may claim a year so synergy multipliers cannot run past the line they act on (BRIEF §7.1).",
+  "confidence": "convention",
+  "confidenceNote": "The groupings and the caps are choices, not findings.",
+  "note": "skills in order; capCents is the most a stack is worth a year however the multipliers stack; capField names the household line the cap is really bounded by, when there is one. D-090.",
+  "stacks": [
+    {
+      "id": "kitchen",
+      "name": "The Kitchen",
+      "lever": "keeper",
+      "skills": [
+        "weekly-shop",
+        "cook-dinner",
+        "pack-lunch"
+      ],
+      "capField": "foodMonthlyCents",
+      "capCents": 600000,
+      "why": "Three habits on the same two lines; the cap is the food you actually buy."
+    },
+    {
+      "id": "match",
+      "name": "The Match",
+      "lever": "compounder",
+      "skills": [
+        "capture-the-match",
+        "raise-one-point",
+        "automate-savings"
+      ],
+      "capField": null,
+      "capCents": 2000000,
+      "why": "The plan, then one more point, then never touching it."
+    },
+    {
+      "id": "negotiator",
+      "name": "The Negotiator",
+      "lever": "earner",
+      "skills": [
+        "negotiate-a-bill",
+        "know-your-market",
+        "ask-for-the-raise"
+      ],
+      "capField": null,
+      "capCents": 1500000,
+      "why": "Small asks practise the big one."
+    },
+    {
+      "id": "anchor",
+      "name": "The Anchor",
+      "lever": "anchor",
+      "skills": [
+        "know-your-number",
+        "starter-fund",
+        "cover-checkup",
+        "term-life"
+      ],
+      "capField": null,
+      "capCents": 0,
+      "why": "Worth nothing a year and everything in a bad one; the cap is zero because the value is risk, not dollars."
+    },
+    {
+      "id": "keeper",
+      "name": "The Keeper",
+      "lever": "keeper",
+      "skills": [
+        "track-a-month",
+        "rerank-your-costs",
+        "cut-one-line",
+        "no-spend-day"
+      ],
+      "capField": null,
+      "capCents": 1200000,
+      "why": "See it, rank it, cut it, keep it cut."
+    }
+  ]
+}

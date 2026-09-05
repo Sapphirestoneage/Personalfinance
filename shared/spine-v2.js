@@ -440,7 +440,8 @@
       }
       if (key === 'goals') { next.goals = p.goals; return; }
       if (key === 'assumptions' || key === 'assumptionOverrides' || key === 'meta'
-          || key === 'targets' || key === 'allocation' || key === 'insurance' || key === 'retirement') {
+          || key === 'targets' || key === 'allocation' || key === 'insurance' || key === 'retirement'
+          || key === 'skills') {
         /* Small fact objects merge, so a room writing one field cannot
            wipe another room's. D-066. */
         next[key] = Object.assign({}, next[key], p[key]);

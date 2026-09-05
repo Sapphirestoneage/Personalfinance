@@ -24,17 +24,18 @@
       Ratios: require('../engines/ratios.js'),
       Foo: require('../engines/foo.js'),
       CashFlow: require('../engines/cashflow.js'),
-      Events: require('../engines/events.js')
+      Events: require('../engines/events.js'),
+      Skills: require('../engines/skills.js')
     };
   } else {
     var S = root.SLAF || {};
     deps = { Money: S.Money, Schema: S.Schema, Spine: S.Spine, Reference: S.Reference,
-             Tier0: S.Tier0, Ratios: S.Ratios, Foo: S.Foo, CashFlow: S.CashFlow, Events: S.Events };
+             Tier0: S.Tier0, Ratios: S.Ratios, Foo: S.Foo, CashFlow: S.CashFlow, Events: S.Events, Skills: S.Skills || null };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Spine, deps.Reference, deps.Tier0, deps.Ratios, deps.Foo, deps.CashFlow, deps.Events);
+  var api = factory(deps.Money, deps.Schema, deps.Spine, deps.Reference, deps.Tier0, deps.Ratios, deps.Foo, deps.CashFlow, deps.Events, deps.Skills);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Instruments = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Spine, Reference, Tier0, Ratios, Foo, CashFlow, Events) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Spine, Reference, Tier0, Ratios, Foo, CashFlow, Events, Skills) {
   'use strict';
 
   var MS_PER_DAY = 86400000;
@@ -126,6 +127,9 @@
     c.rows.forEach(function (r) { out[r.id] = r.result; });
     /* Both savings-rate variants, so a delta on either is possible later. */
     out.savingsRateIncludingMatch = c.savingsRates.includingMatch;
+    /* The practice ledger's running total, so an Annual Review can say
+       what a year of logged days added up to. D-090. */
+    if (Skills) out.practiceLedgerCents = Money.ok(Skills.ledgerTotalCents(household));
     return out;
   }
 

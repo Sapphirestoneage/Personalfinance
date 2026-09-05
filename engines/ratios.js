@@ -35,7 +35,8 @@
       CashFlow: require('./cashflow.js'),
       Statement: require('./statement.js'),
       Benchmarks: require('./benchmarks.js'),
-      Reference: require('../shared/reference.js')
+      Reference: require('../shared/reference.js'),
+      Skills: require('./skills.js')
     };
   } else {
     deps = {
@@ -45,14 +46,22 @@
       CashFlow: root.SLAF && root.SLAF.CashFlow,
       Statement: root.SLAF && root.SLAF.Statement,
       Benchmarks: root.SLAF && root.SLAF.Benchmarks,
-      Reference: root.SLAF && root.SLAF.Reference
+      Reference: root.SLAF && root.SLAF.Reference,
+      Skills: null
     };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.CashFlow, deps.Statement, deps.Benchmarks, deps.Reference);
+  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.CashFlow, deps.Statement, deps.Benchmarks, deps.Reference, deps.Skills);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Ratios = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, CashFlow, Statement, Benchmarks, Reference) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, CashFlow, Statement, Benchmarks, Reference, SkillsDep) {
   'use strict';
+
+  /* The skills engine is optional and, in a browser, may be loaded after
+     this file — so it is looked up when a ratio asks, not when this runs. */
+  function skillsEngine() {
+    if (SkillsDep) return SkillsDep;
+    return (typeof self !== 'undefined' && self.SLAF && self.SLAF.Skills) || null;
+  }
 
   var MONTHS = 12;
   var MS_PER_DAY = 86400000;
@@ -528,9 +537,12 @@
     { id: 'automationRatio', label: 'Automation ratio', tier: 21,
       formula: 'automated savings ÷ all savings',
       unit: 'rate', needs: 'which contributions are automated — asked by the Skill Stacker',
-      note: 'Listed now so nothing pretends to know it. Arrives with the Skill Stacker (T7).',
-      compute: function () {
-        return unavailable('Which contributions are automated is not asked anywhere yet; the Skill Stacker will.', ['skills']);
+      note: 'The Skill Stacker asks which active skills run without you; the ratio is their annual value over every active skill\'s. D-090.',
+      compute: function (c) {
+        var Skills = skillsEngine();
+        if (!Skills) return unavailable('The skills engine is not loaded.', ['skills']);
+        var r = Skills.automationRatio(c.household, c.tables);
+        return Money.isOk(r) ? r : unavailable(r.reason, r.missing);
       } },
 
     { id: 'givingRate', label: 'Giving rate', tier: 21,
