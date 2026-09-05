@@ -127,6 +127,7 @@
     <div class="slaf-figure" data-figure>—</div>
     <p class="slaf-reason" data-reason></p>
     <div data-detail></div>
+    <div id="nw-chart"></div>
   </section>
 
   <section class="slaf-card" id="out-savings-rate">
@@ -191,6 +192,7 @@
     <div class="slaf-figure" data-figure>—</div>
     <p class="slaf-reason" data-reason></p>
     <div data-detail></div>
+    <div id="pct-chart"></div>
   </section>
 
   <section class="slaf-card" id="out-retirement">
@@ -246,15 +248,23 @@
 <script src="../engines/cashflow.js"></script>
 <script src="../engines/benchmarks.js"></script>
 <script src="../engines/swan.js"></script>
+<script src="../shared/charts.js"></script>
 <script>
 (function () {
   'use strict';
 
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
       Reference = SLAF.Reference, Ownership = SLAF.Ownership,
-      Tier0 = SLAF.Tier0, Foo = SLAF.Foo;
+      Tier0 = SLAF.Tier0, Foo = SLAF.Foo, Charts = SLAF.Charts;
 
   var ROOM_ID = 'financial-snapshot';
+
+  /* Display names for asset.category (shared/schema.js FIELDS), in the
+     order the donut lists them so each keeps its colour between renders. */
+  var ASSET_CATEGORIES = [
+    ['cash', 'Cash'], ['investment', 'Investments'], ['retirement', 'Retirement accounts'],
+    ['real_estate', 'Real estate'], ['vehicle', 'Vehicles'], ['other', 'Other']
+  ];
   var TABLES = null;
 
   /* Stable ids for the single records this room keeps inside the itemised
@@ -327,7 +337,7 @@
     }).join('') + '</dl>';
   }
 
-  function renderNetWorth(r) {
+  function renderNetWorth(r, h) {
     var detail = '';
     if (Money.isOk(r)) {
       var assets = r.totalAssetsCents, debt = r.totalDebtCents;
@@ -344,6 +354,27 @@
         + '</div>';
     }
     setCard('out-net-worth', r, function (v) { return Money.formatCents(v); }, detail);
+    el('nw-chart').innerHTML = Money.isOk(r) ? assetsDonut(h, r) : '';
+  }
+
+  /* What is owned, by category, with the net figure in the middle. The
+     slices are the same aggregatable records the engine summed; a record
+     with no amount is not a slice, and a category nobody has entered is
+     not listed as $0. */
+  function assetsDonut(h, nw) {
+    var byCategory = {};
+    Schema.aggregatableAssets(h).forEach(function (a) {
+      if (!Money.isEntered(a.valueCents) || a.valueCents <= 0) return;
+      byCategory[a.category] = (byCategory[a.category] || 0) + a.valueCents;
+    });
+    return Charts.donut({
+      title: 'Assets by category',
+      slices: ASSET_CATEGORIES.filter(function (c) { return byCategory[c[0]] > 0; })
+        .map(function (c, i) {
+          return { label: c[1], value: byCategory[c[0]], color: Charts.COLORS.series[i % Charts.COLORS.series.length] };
+        }),
+      center: { big: Money.formatCents(nw.value), small: 'net worth' }
+    });
   }
 
   function renderSavingsRate(rates) {
@@ -422,7 +453,7 @@
     }, detail);
   }
 
-  function renderPercentile(r) {
+  function renderPercentile(r, nw) {
     var section = el('out-percentile');
     var figure = section.querySelector('[data-figure]');
     var reason = section.querySelector('[data-reason]');
@@ -449,6 +480,28 @@
       reason.textContent = r.reason || '';
       detail.innerHTML = '';
     }
+    el('pct-chart').innerHTML = percentileBars(r, nw);
+  }
+
+  /* Your net worth against the band's breakpoints, as bars. The band comes
+     back on every result that found one — placed, above or below the
+     chart — so an off-chart figure still gets drawn where it sits. No
+     band, or no net worth, and there is nothing to draw against. */
+  function percentileBars(r, nw) {
+    var bands = (TABLES.netWorthPercentiles && TABLES.netWorthPercentiles.bands) || [];
+    var band = r.bandLabel && bands.filter(function (b) { return b.label === r.bandLabel; })[0];
+    if (!band || !Money.isOk(nw)) return '';
+    var rows = band.breakpoints.filter(function (p) { return p.percentile >= 25; }).map(function (p) {
+      return { label: p.percentile + 'th', note: p.percentile === 50 ? 'median' : '',
+               value: Math.round(p.netWorth * 100), color: Charts.COLORS.muted };
+    });
+    var you = { label: 'You', value: nw.value, color: Charts.COLORS.growth };
+    var at = rows.length;
+    for (var i = 0; i < rows.length; i++) { if (nw.value < rows[i].value) { at = i; break; } }
+    rows.splice(at, 0, you);
+    return Charts.bars({ title: 'Net worth against the ' + band.label + ' age band', rows: rows })
+      + '<p class="slaf-reason">Household net worth at each percentile for ' + band.label
+      + ' (' + r.referenceVersion + '). Breakpoints are approximations for banding.</p>';
   }
 
   function renderRetirement(r) {
@@ -576,7 +629,7 @@
 
     var all = Tier0.computeAll(h, TABLES);
 
-    renderNetWorth(all.netWorth);
+    renderNetWorth(all.netWorth, h);
     renderSavingsRate({
       excludingMatch: all.savingsRateExcludingMatch,
       includingMatch: all.savingsRateIncludingMatch,
@@ -610,7 +663,7 @@
           + ' a year at a ' + Money.formatRate(all.fireNumber.swrRate) + ' withdrawal rate.</p>'
         : '');
     renderFireProgress(all.fireProgress);
-    renderPercentile(all.netWorthPercentile);
+    renderPercentile(all.netWorthPercentile, all.netWorth);
     renderRetirement(all.retirementBenchmark);
     renderBenchmarks(h);
     renderFoo(all.foo);

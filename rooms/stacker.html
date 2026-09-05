@@ -96,17 +96,11 @@
   .wf .amt { font-variant-numeric: tabular-nums; text-align: right; }
   .wf .cap { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-muted); border-top: 1px dashed var(--color-border); padding-top: var(--space-1); margin-top: var(--space-1); }
 
-  .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); align-items: stretch; }
-  @media (max-width: 480px) { .three { grid-template-columns: 1fr; } }
+  .three { display: grid; grid-template-columns: 1fr; gap: var(--space-3); align-items: stretch; }
+  @media (min-width: 720px) { .three { grid-template-columns: repeat(3, 1fr); } }
   .curve { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; }
   .curve .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
-  .curve svg { width: 100%; height: auto; display: block; margin-top: var(--space-2); }
-  .curve .axis { stroke: var(--color-border-strong); stroke-width: .6; fill: none; }
-  .curve .ln { stroke: var(--color-accent); stroke-width: 1.4; fill: none; }
-  .curve .ln.is-fiction { stroke: #e4b04a; stroke-dasharray: 3 2; }
-  .curve .clip { stroke: var(--color-text-faint); stroke-width: .5; stroke-dasharray: 1 2; }
-  .curve .lbl { font-size: 6px; fill: var(--color-text-faint); font-family: var(--font-body); }
-  .curve .mark { fill: var(--color-accent); }
+  .curve .slaf-chart { margin-top: var(--space-2); }
   .curve p { font-size: var(--text-xs); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
 
   .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
@@ -145,6 +139,7 @@
       <div class="figure-cell"><span class="cap">The ledger</span><span class="big" id="fig-ledger">—</span><span class="sub" id="fig-ledger-sub"></span></div>
       <div class="figure-cell"><span class="cap">At 65</span><span class="big" id="fig-end">—</span><span class="sub" id="fig-end-sub"></span></div>
     </div>
+    <div id="ledger-ring"></div>
     <div class="next" id="next-card" hidden>
       <div><span class="cap">Next</span><h3 id="next-name"></h3><p id="next-why"></p></div>
       <button type="button" class="slaf-btn slaf-btn--primary" id="btn-next">Take it on</button>
@@ -177,16 +172,17 @@
       you are actually doing, up to a cap — The Kitchen can never claim more
       than the food you buy.
     </p>
-    <div id="stack-list"></div>
+    <div id="stack-bars"></div>
+    <div id="stack-list" style="margin-top:var(--space-4)"></div>
   </section>
 
   <section class="slaf-card" id="curves" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">Three curves</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">The poster, the practice, the ledger</h2>
     <div class="three">
-      <div class="curve"><span class="cap">The poster: 1% a day</span><svg id="curve-poster" viewBox="0 0 200 120" role="img" aria-label="1.01 to the power of days, clipped"></svg><p id="curve-poster-p"></p></div>
-      <div class="curve"><span class="cap">Capability</span><svg id="curve-cap" viewBox="0 0 200 120" role="img" aria-label="A logistic curve of capability against practice days"></svg><p id="curve-cap-p"></p></div>
-      <div class="curve"><span class="cap">The ledger, to 65</span><svg id="curve-ledger" viewBox="0 0 200 120" role="img" aria-label="The ledger total grown to 65"></svg><p id="curve-ledger-p"></p></div>
+      <div class="curve"><span class="cap">The poster: 1% a day</span><div id="curve-poster"></div><p id="curve-poster-p"></p></div>
+      <div class="curve"><span class="cap">Capability</span><div id="curve-cap"></div><p id="curve-cap-p"></p></div>
+      <div class="curve"><span class="cap">The ledger, to 65</span><div id="curve-ledger"></div><p id="curve-ledger-p"></p></div>
     </div>
   </section>
 
@@ -230,6 +226,7 @@
 <script src="../engines/ss.js"></script>
 <script src="../engines/events.js"></script>
 <script src="../engines/skills.js"></script>
+<script src="../shared/charts.js"></script>
 <script>
 (function () {
   'use strict';
@@ -438,7 +435,9 @@
 
   function renderStacks() {
     var hh = h();
-    el('stack-list').innerHTML = Skills.stackValues(hh, TABLES).map(function (r) {
+    var values = Skills.stackValues(hh, TABLES);
+    renderStackBars(values);
+    el('stack-list').innerHTML = values.map(function (r) {
       var st = r.stack;
       var maxRow = Math.max(1, r.capCents, r.rawCents);
       var rows = r.rows.map(function (row) {
@@ -455,61 +454,89 @@
     }).join('');
   }
 
-  /* ---- Curves --------------------------------------------------------------------- */
+  /* ---- Curves: three pictures through the one chart module -------------------- */
 
-  function polyline(points, w, hgt, pad) {
-    var xs = points.map(function (p) { return p[0]; }), ys = points.map(function (p) { return p[1]; });
-    var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y1 = Math.max.apply(null, ys);
-    var sx = function (x) { return pad + (x - x0) / ((x1 - x0) || 1) * (w - 2 * pad); };
-    var sy = function (y) { return hgt - pad - y / (y1 || 1) * (hgt - 2 * pad); };
-    return { d: points.map(function (p) { return sx(p[0]).toFixed(1) + ',' + sy(p[1]).toFixed(1); }).join(' '), sx: sx, sy: sy };
-  }
-  function frame(w, hgt, pad, xl, yl) {
-    return '<path class="axis" d="M' + pad + ',' + pad + ' L' + pad + ',' + (hgt - pad) + ' L' + (w - pad) + ',' + (hgt - pad) + '"/>'
-      + '<text class="lbl" x="' + (w - pad) + '" y="' + (hgt - 2) + '" text-anchor="end">' + esc(xl) + '</text>'
-      + '<text class="lbl" x="' + (pad + 2) + '" y="' + (pad - 2) + '">' + esc(yl) + '</text>';
-  }
   function renderCurves() {
-    var W = 200, H = 120, P = 14;
+    var Charts = SLAF.Charts;
     var c = TABLES.curves;
+    var hh = h();
     /* 1. The poster, drawn as the fiction it is: clipped at the cap. */
-    var pts = [], clipAt = null;
+    var pts = [], honest = [], clipAt = null;
     for (var d = 0; d <= c.poster.days; d += 5) {
-      var v = Skills.posterValue(TABLES, d);
+      pts.push([d, Skills.posterValue(TABLES, d)]);
+      if (Math.pow(c.poster.base, d) <= c.poster.cap * 1.5) honest.push([d, Math.pow(c.poster.base, d)]);
       if (clipAt === null && Math.pow(c.poster.base, d) >= c.poster.cap) clipAt = d;
-      pts.push([d, v]);
     }
-    var pl = polyline(pts, W, H, P);
-    el('curve-poster').innerHTML = frame(W, H, P, 'days', '×' + c.poster.cap)
-      + '<polyline class="ln is-fiction" points="' + pl.d + '"/>'
-      + (clipAt !== null ? '<line class="clip" x1="' + pl.sx(clipAt).toFixed(1) + '" y1="' + P + '" x2="' + pl.sx(clipAt).toFixed(1) + '" y2="' + (H - P) + '"/>' : '');
-    el('curve-poster-p').textContent = c.poster.base + ' a day is ×' + (Math.round(Math.pow(c.poster.base, c.poster.days) * 10) / 10) + ' in ' + c.poster.days + ' days. Nothing compounds like that, so the line is clipped at ×' + c.poster.cap + (clipAt !== null ? ', day ' + clipAt : '') + '.';
+    el('curve-poster').innerHTML = Charts.area({
+      title: 'The poster: 1.01 to the power of days, clipped',
+      series: [{ label: 'Clipped at ×' + c.poster.cap, color: Charts.COLORS.spend, fill: true, points: pts },
+               { label: 'What it claims', color: Charts.COLORS.debt, fill: false, dash: true, points: honest }],
+      vLines: clipAt !== null ? [{ x: clipAt, label: 'day ' + clipAt }] : [],
+      x: { label: 'days', format: function (v) { return String(Math.round(v)); } },
+      y: { min: 0, max: c.poster.cap * 1.5, format: function (v) { return '×' + (Math.round(v * 10) / 10); } }
+    });
+    el('curve-poster-p').textContent = c.poster.base + ' a day is ×' + (Math.round(Math.pow(c.poster.base, c.poster.days) * 10) / 10) + ' in ' + c.poster.days + ' days. Nothing compounds like that, so the line is clipped at ×' + c.poster.cap + (clipAt !== null ? ' on day ' + clipAt : '') + '.';
     /* 2. Capability: logistic on practice days, with your best habit marked. */
     var cp = [];
     for (var dd = 0; dd <= 120; dd += 4) cp.push([dd, Skills.capability(TABLES, dd)]);
-    var cl = polyline(cp, W, H, P);
-    var hh = h();
     var best = 0;
-    Object.keys(hh.skills || {}).forEach(function (id) { var s = hh.skills[id]; if (s.kind === 'habit') best = Math.max(best, s.log.length); });
-    el('curve-cap').innerHTML = frame(W, H, P, 'practice days', 'capability')
-      + '<polyline class="ln" points="' + cl.d + '"/>'
-      + (best ? '<circle class="mark" r="2.5" cx="' + cl.sx(Math.min(120, best)).toFixed(1) + '" cy="' + cl.sy(Skills.capability(TABLES, best)).toFixed(1) + '"/>' : '');
+    Object.keys(hh.skills || {}).forEach(function (id) { var st = hh.skills[id]; if (st.kind === 'habit') best = Math.max(best, st.log.length); });
+    el('curve-cap').innerHTML = Charts.area({
+      title: 'Capability against practice days',
+      series: [{ label: 'Capability', color: Charts.COLORS.contributed, fill: true, points: cp }],
+      dots: best ? [{ x: Math.min(120, best), y: Skills.capability(TABLES, best), color: Charts.COLORS.target }] : [],
+      vLines: [{ x: c.logistic.midpointDays, label: 'day ' + c.logistic.midpointDays }],
+      x: { label: 'practice days', format: function (v) { return String(Math.round(v)); } },
+      y: { min: 0, max: 1, format: function (v) { return Math.round(v * 100) + '%'; } }
+    });
     el('curve-cap-p').textContent = 'A logistic: slow at first, fastest around day ' + c.logistic.midpointDays + ', then levelling. ' + (best ? 'Your longest-logged habit is at ' + best + ' day' + (best === 1 ? '' : 's') + ', ' + Math.round(100 * Skills.capability(TABLES, best)) + '% of the way.' : 'No habit logged yet.');
     /* 3. The ledger, grown to 65 along the wealth multiplier. */
     var total = Skills.ledgerTotalCents(hh);
     var fv = Skills.ledgerFutureValue(hh, TABLES);
-    var table = TABLES.wealthMultiplier;
     if (Money.isOk(fv) && total > 0) {
-      var curve = Benchmarks.curve(table, fv.age);
+      var curve = Benchmarks.curve(TABLES.wealthMultiplier, fv.age);
       var lp = [[fv.age, total]], acc = total;
-      for (var m = 0; m < curve.factors.length; m++) { acc *= curve.factors[m]; if ((m + 1) % curve.perYear === 0) lp.push([fv.age + (m + 1) / curve.perYear, acc]); }
-      var ll = polyline(lp, W, H, P);
-      el('curve-ledger').innerHTML = frame(W, H, P, 'age ' + fv.endAge, fmt(fv.value)) + '<polyline class="ln" points="' + ll.d + '"/>';
+      for (var m = 0; m < curve.factors.length; m++) { acc *= curve.factors[m]; if ((m + 1) % curve.perYear === 0) lp.push([fv.age + (m + 1) / curve.perYear, Math.round(acc)]); }
+      el('curve-ledger').innerHTML = Charts.area({
+        title: 'The ledger grown to 65',
+        series: [{ label: 'The ledger, grown', color: Charts.COLORS.growth, fill: true, points: lp }],
+        hLines: [{ y: total, label: 'logged ' + Charts.shortMoney(total), color: Charts.COLORS.contributed }],
+        x: { label: 'age', format: function (v) { return String(Math.round(v)); } }
+      });
       el('curve-ledger-p').textContent = fmt(total) + ' logged so far becomes ' + fmt(fv.value) + ' at ' + fv.endAge + ' — the wealth multiplier at ' + fv.age + ', a convention, not a forecast.';
     } else {
-      el('curve-ledger').innerHTML = frame(W, H, P, 'age', '$');
-      el('curve-ledger-p').textContent = total > 0 ? fv.reason : 'Nothing in the ledger yet. Log a day and this draws itself.';
+      el('curve-ledger').innerHTML = Charts.area({ series: [], empty: total > 0 ? fv.reason : 'Nothing in the ledger yet. Log a day and this draws itself.' });
+      el('curve-ledger-p').textContent = '';
     }
+  }
+
+  /* ---- The ledger by skill, and the stacks side by side ----------------------- */
+
+  function renderLedgerRing() {
+    var Charts = SLAF.Charts;
+    var hh = h();
+    var by = {}, order = [];
+    (hh.practiceLedger || []).forEach(function (e) {
+      if (!by[e.skill]) { by[e.skill] = 0; order.push(e.skill); }
+      by[e.skill] += e.cents;
+    });
+    el('ledger-ring').innerHTML = order.length ? Charts.donut({
+      title: 'The ledger by skill',
+      slices: order.map(function (id) { var s = Skills.byId(TABLES, id); return { label: s ? s.name : id, value: by[id] }; }),
+      center: { big: Charts.shortMoney(Skills.ledgerTotalCents(hh)), small: 'logged' }
+    }) : '';
+  }
+
+  function renderStackBars(values) {
+    var Charts = SLAF.Charts;
+    el('stack-bars').innerHTML = Charts.bars({
+      title: 'The five stacks a year',
+      rows: values.map(function (r) {
+        return { label: r.stack.name, value: r.value, note: r.activeCount + ' of ' + r.total + ' on' + (r.capped ? ' · capped' : ''),
+                 color: r.value > 0 ? Charts.COLORS.target : Charts.COLORS.muted, marker: r.capCents > 0 ? { at: r.capCents, label: 'cap ' + fmt(r.capCents) } : null };
+      }),
+      max: Math.max.apply(null, values.map(function (r) { return Math.max(r.capCents, r.value); }).concat([1]))
+    });
   }
 
   /* ---- Facts first: what the household already proves, and what time undid ---- */
@@ -526,6 +553,7 @@
   function renderNow() {
     if (!TABLES) return;
     todayForm.request(); browseForm.request(); waysForm.request();
+    renderLedgerRing();
     renderStacks();
     renderCurves();
     el('reading-list').innerHTML = ['grossAnnualIncome', 'monthlyExpenses', 'capturingFullMatch', 'rerankCut', 'practiceLedger']

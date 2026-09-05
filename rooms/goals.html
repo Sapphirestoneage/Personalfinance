@@ -81,6 +81,7 @@
     <div class="slaf-figure" data-figure>—</div>
     <p class="slaf-reason" data-reason></p>
     <div id="together-body" style="margin-top:var(--space-3)"></div>
+    <div id="together-chart"></div>
   </section>
 
   <section id="goal-list"></section>
@@ -115,11 +116,12 @@
 <script src="../engines/tier0.js"></script>
 <script src="../engines/cashflow.js"></script>
 <script src="../engines/goals.js"></script>
+<script src="../shared/charts.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
-      Reference = SLAF.Reference, Goals = SLAF.Goals;
+      Reference = SLAF.Reference, Goals = SLAF.Goals, Charts = SLAF.Charts;
 
   var ROOM_ID = 'goals';
   var TABLES = null;
@@ -248,6 +250,7 @@
       reason.textContent = all.reason || '';
       reason.hidden = false;
       el('together-body').innerHTML = '';
+      el('together-chart').innerHTML = '';
       return;
     }
     figure.classList.remove('slaf-figure--incomplete');
@@ -269,6 +272,40 @@
         + '</div>';
     }
     el('together-body').innerHTML = body;
+    renderTogetherChart(h, all);
+  }
+
+  /* Each goal as a bar toward its own target — the bar is the share saved,
+     the note says the dollars — and, under it, the month every goal wants
+     stacked into one bar so the total reads at the end. A goal that cannot
+     be planned yet shows a dash and says why, never a zero-length bar. */
+  function renderTogetherChart(h, all) {
+    var goals = h.goals || [];
+    var rows = all.plans.map(function (p, i) {
+      var goal = goals[i] || {};
+      var name = goal.name || 'A goal';
+      if (!Money.isOk(p)) return { label: name, value: null, note: p.reason || 'Not enough to plan yet.', empty: '\u2014' };
+      var share = p.totalCents > 0 ? Math.min(1, p.savedCents / p.totalCents) : 1;
+      var when = p.alreadyThere ? 'funded'
+        : Money.isOk(p.monthsUntil) ? monthsLabel(p.monthsUntil.value) : 'no date';
+      return { label: name, value: share, color: Charts.COLORS.series[i % Charts.COLORS.series.length],
+        note: Money.formatCents(p.savedCents) + ' of ' + Money.formatCents(p.totalCents) + ' \u00b7 ' + when };
+    });
+    var html = '<span class="slaf-label" style="display:block;margin-top:var(--space-3)">How far along each one is</span>'
+      + Charts.bars({ title: 'Progress toward each goal', rows: rows, max: 1,
+          format: function (v) { return Math.round(v * 100) + '%'; } });
+    var parts = all.plans.map(function (p, i) {
+      return { label: (goals[i] && goals[i].name) || 'A goal', plan: p, i: i };
+    }).filter(function (x) {
+      return Money.isOk(x.plan) && Money.isEntered(x.plan.requiredMonthlyCents) && x.plan.requiredMonthlyCents > 0;
+    }).map(function (x) {
+      return { label: x.label, value: x.plan.requiredMonthlyCents, color: Charts.COLORS.series[x.i % Charts.COLORS.series.length] };
+    });
+    if (parts.length) {
+      html += '<span class="slaf-label" style="display:block;margin-top:var(--space-3)">A month, all goals together</span>'
+        + Charts.stacked({ title: 'What every goal needs a month, together', rows: [{ label: 'A month', parts: parts }] });
+    }
+    el('together-chart').innerHTML = html;
   }
 
   /* Every goal card is a form. Rebuilding the list while someone is typing

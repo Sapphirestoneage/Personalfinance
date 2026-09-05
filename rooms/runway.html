@@ -45,14 +45,6 @@
 
   .scenario-note { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border-radius: var(--radius-sm); padding: var(--space-3); margin-top: var(--space-3); }
 
-  .plot { width: 100%; height: auto; display: block; margin-top: var(--space-3); }
-  .plot .axis { stroke: var(--color-border-strong); stroke-width: 1; }
-  .plot .zero { stroke: var(--color-critical); stroke-width: .8; stroke-dasharray: 3 2; }
-  .plot .band { fill: rgba(46,111,232,.14); }
-  .plot .curve { stroke: var(--color-accent); stroke-width: 1.6; fill: none; }
-  .plot .mark { stroke: var(--color-border-active); stroke-width: .8; stroke-dasharray: 2 2; }
-  .plot .cap { fill: var(--color-text-faint); font-size: 6.5px; font-family: var(--font-body); }
-
   ul.milestones { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); }
   ul.milestones li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
   ul.milestones li .w { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--color-text-muted); }
@@ -211,7 +203,7 @@
     <span class="slaf-eyebrow">The drawdown</span>
     <h2 style="margin:var(--space-2) 0 0">What the balance does, month by month</h2>
     <div id="path-body" hidden>
-      <svg class="plot" id="path" viewBox="0 0 200 110" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="path-desc"></svg>
+      <div id="path"></div>
       <p id="path-desc" class="why"></p>
       <ul class="milestones" id="milestones"></ul>
     </div>
@@ -269,12 +261,14 @@
 <script src="../engines/tier0.js"></script>
 <script src="../engines/cashflow.js"></script>
 <script src="../engines/runway.js"></script>
+<script src="../engines/swan.js"></script>
+<script src="../shared/charts.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
       Reference = SLAF.Reference, Ownership = SLAF.Ownership, Runway = SLAF.Runway,
-      CashFlow = SLAF.CashFlow;
+      CashFlow = SLAF.CashFlow, Swan = SLAF.Swan, Charts = SLAF.Charts;
 
   var ROOM_ID = 'runway';
   var TABLES = null;
@@ -485,53 +479,49 @@
 
   /* ---- The drawdown ------------------------------------------------------ */
 
-  var PAD_L = 32, PAD_R = 6, PAD_T = 8, PAD_B = 16, W = 200, H = 110;
+  /* The sleep-at-night number, when one is set — a line on the chart, so
+     "how long the money lasts" and "how long until it feels thin" can be
+     read off the same picture. Read, never typed here. */
+  function swanFloorCents() {
+    if (!Swan) return null;
+    var t = Swan.targetCents(Spine.getProfile());
+    return Money.isOk(t) ? t.value : null;
+  }
 
-  function renderPath(r) {
+  function renderPath(r, presets) {
     /* Chart only as far as the story goes: a few months past zero, or the
        whole horizon when it never runs out. Sixty flat months of nothing
        happening would squash the part that matters. */
     var last = r.sustainable ? r.horizonMonths
       : Math.min(r.horizonMonths, Math.max(r.ranOutInMonth + 2, 6));
-    var rows = r.rows.slice(0, last);
-    var top = Math.max.apply(null, rows.map(function (p) { return p.balanceCents; })
-      .concat([r.startingCents]));
-    var bottom = Math.min.apply(null, rows.map(function (p) { return p.balanceCents; }).concat([0]));
-    var span = (top - bottom) || 1;
-
-    function x(m) { return PAD_L + ((m - 1) / Math.max(1, last - 1)) * (W - PAD_L - PAD_R); }
-    function y(c) { return H - PAD_B - ((c - bottom) / span) * (H - PAD_T - PAD_B); }
-
-    var parts = [];
-    var zeroY = y(0);
-    /* The band under the curve, clipped at zero, so "how much is left"
-       reads as an area rather than a line you have to trace. */
-    var area = rows.map(function (p, i) {
-      return (i === 0 ? 'M' : 'L') + x(p.month).toFixed(2) + ' '
-        + y(Math.max(0, p.balanceCents)).toFixed(2);
-    }).join(' ') + ' L' + x(rows[rows.length - 1].month).toFixed(2) + ' ' + zeroY.toFixed(2)
-      + ' L' + x(1).toFixed(2) + ' ' + zeroY.toFixed(2) + ' Z';
-    parts.push('<path class="band" d="' + area + '"/>');
-
-    parts.push('<line class="zero" x1="' + PAD_L + '" y1="' + zeroY + '" x2="' + (W - PAD_R) + '" y2="' + zeroY + '"/>');
-    parts.push('<path class="curve" d="' + rows.map(function (p, i) {
-      return (i === 0 ? 'M' : 'L') + x(p.month).toFixed(2) + ' ' + y(p.balanceCents).toFixed(2);
-    }).join(' ') + '"/>');
-
-    if (r.benefitEndsAfterMonth && r.benefitEndsAfterMonth <= last) {
-      parts.push('<line class="mark" x1="' + x(r.benefitEndsAfterMonth) + '" y1="' + PAD_T
-        + '" x2="' + x(r.benefitEndsAfterMonth) + '" y2="' + (H - PAD_B) + '"/>');
-      parts.push('<text class="cap" text-anchor="middle" x="' + x(r.benefitEndsAfterMonth)
-        + '" y="' + (PAD_T - 1) + '">benefit ends</text>');
+    function points(run) {
+      return [[0, run.startingCents]].concat(run.rows.slice(0, last).map(function (p) {
+        return [p.month, p.balanceCents];
+      }));
     }
-    parts.push('<line class="axis" x1="' + PAD_L + '" y1="' + PAD_T + '" x2="' + PAD_L + '" y2="' + (H - PAD_B) + '"/>');
-    parts.push('<text class="cap" text-anchor="end" x="' + (PAD_L - 3) + '" y="' + (y(top) + 2) + '">'
-      + Money.formatCents(top) + '</text>');
-    parts.push('<text class="cap" text-anchor="end" x="' + (PAD_L - 3) + '" y="' + (zeroY + 2) + '">$0</text>');
-    parts.push('<text class="cap" x="' + PAD_L + '" y="' + (H - 4) + '">month 1</text>');
-    parts.push('<text class="cap" text-anchor="end" x="' + (W - PAD_R) + '" y="' + (H - 4) + '">month '
-      + last + '</text>');
-    el('path').innerHTML = parts.join('');
+    var series = [{ id: r.preset.id, label: r.preset.label, color: Charts.COLORS.cash, fill: true, points: points(r) }];
+    /* The other two exits, thin and dashed, from the same render as the
+       table below — never recomputed for the picture. */
+    var OTHER = { quit: Charts.COLORS.spend, laid_off: Charts.COLORS.series[4], business: Charts.COLORS.target };
+    (presets || []).forEach(function (row) {
+      if (row.preset.id === r.preset.id || !Money.isOk(row.result)) return;
+      series.push({ id: row.preset.id, label: row.preset.label, color: OTHER[row.preset.id] || Charts.COLORS.muted,
+        fill: false, dash: true, points: points(row.result) });
+    });
+    var hLines = [];
+    var swan = swanFloorCents();
+    if (Money.isEntered(swan)) hLines.push({ y: swan, label: 'sleep-at-night', color: Charts.COLORS.target });
+    var vLines = [];
+    if (!r.sustainable && r.ranOutInMonth <= last) vLines.push({ x: r.ranOutInMonth, label: 'runs out' });
+    if (r.benefitEndsAfterMonth && r.benefitEndsAfterMonth <= last) vLines.push({ x: r.benefitEndsAfterMonth, label: 'benefit ends' });
+
+    el('path').innerHTML = Charts.area({
+      title: 'Cash balance, month by month',
+      series: series,
+      hLines: hLines,
+      vLines: vLines,
+      x: { label: 'months' }
+    });
 
     el('path-desc').textContent = r.sustainable
       ? 'The balance holds or grows: nothing here ends it.'
@@ -595,8 +585,7 @@
 
   /* ---- Three exits ------------------------------------------------------- */
 
-  function renderCompare() {
-    var rows = Runway.acrossPresets(Spine.getProfile(), TABLES, opts());
+  function renderCompare(rows) {
     var body = el('compare').querySelector('tbody');
     if (!rows.some(function (row) { return Money.isOk(row.result); })) {
       body.innerHTML = '';
@@ -635,10 +624,11 @@
     var r = Runway.project(h, TABLES, opts());
     renderRunway(r);
 
+    var presets = Runway.acrossPresets(h, TABLES, opts());
     el('path-body').hidden = !Money.isOk(r);
-    if (Money.isOk(r)) renderPath(r);
+    if (Money.isOk(r)) renderPath(r, presets); else el('path').innerHTML = '';
     renderFix(r);
-    renderCompare();
+    renderCompare(presets);
 
     el('reading-list').innerHTML = ['cashSavings', 'monthlyExpenses']
       .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');

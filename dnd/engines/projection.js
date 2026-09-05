@@ -138,6 +138,38 @@
     });
   }
 
+  /**
+   * The path, not just the end: a balance and its contributions year by
+   * year, growing at `annualRate` with `monthlyContributionCents` added each
+   * month until `contributeYears`, then `withdrawAnnualCents` a year taken
+   * out (a twelfth a month) until `years`. This is the compound loop every
+   * growth chart draws — the FIRE room's line to retirement and past it —
+   * so it lives here with the other one, rather than once per room.
+   * Returns { years: [{ year, ageOrYear, balanceCents, contributedCents }] }.
+   */
+  function pathCents(opts) {
+    var o = opts || {};
+    var missing = Money.missingFrom({ annualRate: o.annualRate, years: o.years });
+    if (missing.length) return Money.incomplete('Need a rate and a number of years.', missing);
+    if (o.years <= 0) return Money.incomplete('Need at least a year.', ['years']);
+    var start = Money.isEntered(o.startCents) ? o.startCents : 0;
+    var monthly = Money.isEntered(o.monthlyContributionCents) ? o.monthlyContributionCents : 0;
+    var stopAt = Money.isEntered(o.contributeYears) ? o.contributeYears : o.years;
+    var draw = Money.isEntered(o.withdrawAnnualCents) ? o.withdrawAnnualCents / 12 : 0;
+    var r = o.annualRate / 12;
+    var balance = start, contributed = start;
+    var rows = [{ year: 0, balanceCents: Math.round(balance), contributedCents: Math.round(contributed) }];
+    var wentBroke = null;
+    for (var m = 1; m <= Math.round(o.years * 12); m++) {
+      balance *= (1 + r);
+      if (m <= stopAt * 12) { balance += monthly; contributed += monthly; }
+      else { balance -= draw; contributed -= draw; }
+      if (balance < 0 && wentBroke === null) wentBroke = m / 12;
+      if (m % 12 === 0) rows.push({ year: m / 12, balanceCents: Math.round(balance), contributedCents: Math.round(contributed) });
+    }
+    return Money.ok(Math.round(balance), { years: rows, contributeYears: stopAt, brokeAtYear: wentBroke, annualRate: o.annualRate });
+  }
+
   /* ---- Level-payment loans ----------------------------------------------
      A fixed payment over a fixed term with no extra payments HAS a closed
      form, and using it here is correct — unlike the payoff simulation in
@@ -195,6 +227,7 @@
     principalForPaymentCents: principalForPaymentCents,
     futureValueCents: futureValueCents,
     futureValueMonthlyCents: futureValueMonthlyCents,
+    pathCents: pathCents,
     presentValueNeededCents: presentValueNeededCents,
     yearsToTargetCents: yearsToTargetCents
   };

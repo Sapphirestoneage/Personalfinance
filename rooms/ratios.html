@@ -48,6 +48,11 @@
   .r-note { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
   .r-band { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1); }
 
+  /* The bar labels are ratio names, which are long; let them wrap rather
+     than truncate on a phone. */
+  .slaf-bars .row { grid-template-columns: minmax(96px, 38%) 1fr auto; }
+  .slaf-bars .lbl { white-space: normal; line-height: 1.2; }
+
   .zonebar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: var(--space-3); border-radius: var(--radius-pill); overflow: hidden; }
   .zonebar span { height: 10px; }
   .z-good { background: var(--color-positive); }
@@ -100,18 +105,21 @@
       These four have real numbers attached because underwriters use them. That
       makes them the most quotable and the most over-read.
     </p>
+    <div id="bars-lending"></div>
     <ul class="ratios" id="list-lending"></ul>
   </section>
 
   <section class="slaf-card" id="out-safety">
     <span class="slaf-eyebrow">How much cushion</span>
     <h2 style="margin:var(--space-2) 0 0">Time, not money</h2>
+    <div id="bars-safety"></div>
     <ul class="ratios" id="list-safety"></ul>
   </section>
 
   <section class="slaf-card" id="out-wealth">
     <span class="slaf-eyebrow">What you own</span>
     <h2 style="margin:var(--space-2) 0 0">Shape of the balance sheet</h2>
+    <div id="bars-wealth"></div>
     <ul class="ratios" id="list-wealth"></ul>
   </section>
 
@@ -157,11 +165,12 @@
 <script src="../engines/statement.js"></script>
 <script src="../engines/benchmarks.js"></script>
 <script src="../engines/ratios.js"></script>
+<script src="../shared/charts.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference,
-      Ownership = SLAF.Ownership, Ratios = SLAF.Ratios;
+      Ownership = SLAF.Ownership, Ratios = SLAF.Ratios, Charts = SLAF.Charts;
 
   var ROOM_ID = 'ratios';
   var TABLES = null;
@@ -231,6 +240,64 @@
     }).join('');
   }
 
+  /* ---- The bars ----------------------------------------------------------
+     One Charts.bars per unit inside a group, because a rate and a count of
+     months cannot share an axis. The comfortable range from the band is
+     the faint green zone; the bar takes the colour of its verdict; a ratio
+     that cannot compute says what it needs instead of drawing a stand-in. */
+  var UNIT_FORMAT = {
+    rate:     function (v) { return Money.formatRate(v, { decimals: 1 }); },
+    months:   function (v) { return (Math.round(v * 10) / 10) + ' mo'; },
+    multiple: function (v) { return (Math.round(v * 100) / 100) + '×'; }
+  };
+  var UNIT_WORD = { rate: 'Rates', months: 'Months', multiple: 'Multiples' };
+  var ZONE_COLOR = {
+    good: Charts.COLORS.target, watch: Charts.COLORS.spend,
+    out: Charts.COLORS.debt, none: Charts.COLORS.contributed
+  };
+
+  function needsText(row) {
+    var missing = (row.result && row.result.missing) || [];
+    var names = missing.map(function (id) {
+      var f = Ownership.FIELDS[id];
+      return f && f.label ? f.label.toLowerCase()
+        : id.replace(/([A-Z])/g, ' $1').toLowerCase();
+    });
+    return 'needs ' + (names.length ? names.join(', ') : 'more');
+  }
+
+  function renderBars(nodeId, rows) {
+    var byUnit = {};
+    rows.forEach(function (r) {
+      if (!UNIT_FORMAT[r.unit] || r.unavailable) return;
+      (byUnit[r.unit] = byUnit[r.unit] || []).push(r);
+    });
+    var units = Object.keys(UNIT_FORMAT).filter(function (u) { return byUnit[u]; });
+    el(nodeId).innerHTML = units.map(function (unit) {
+      var group = byUnit[unit];
+      var top = 0;
+      var bars = group.map(function (r) {
+        var band = r.verdict.band, zones = [];
+        if (r.ok) top = Math.max(top, r.value);
+        if (band && band.good !== null && band.warn !== null) {
+          top = Math.max(top, band.warn, band.good * 1.25);
+          zones.push(band.direction === 'lower'
+            ? { from: 0, to: band.good, color: Charts.COLORS.target }
+            : { from: band.good, to: Infinity, color: Charts.COLORS.target });
+        }
+        return {
+          label: r.label,
+          value: r.ok ? r.value : null,
+          color: ZONE_COLOR[r.ok ? r.verdict.zone : 'none'],
+          zones: zones,
+          empty: r.ok ? null : needsText(r)
+        };
+      });
+      return (units.length > 1 ? '<div class="r-band" style="margin-top:var(--space-3)">' + esc(UNIT_WORD[unit]) + '</div>' : '')
+        + Charts.bars({ rows: bars, format: UNIT_FORMAT[unit], max: top > 0 ? top : null });
+    }).join('');
+  }
+
   function renderNow() {
     if (!TABLES) return;
     var h = Spine.getProfile();
@@ -276,6 +343,9 @@
     lending.concat(safety, blocked).forEach(function (r) { taken[r.id] = true; });
     var wealth = rows.filter(function (r) { return !taken[r.id]; });
 
+    renderBars('bars-lending', lending);
+    renderBars('bars-safety', safety);
+    renderBars('bars-wealth', wealth);
     renderList('list-lending', lending);
     renderList('list-safety', safety);
     renderList('list-wealth', wealth);

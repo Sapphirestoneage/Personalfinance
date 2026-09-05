@@ -7310,6 +7310,78 @@ section('The Skill Stacker: the catalogue, and the engine on the demo');
     /engines\/skills\.js/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')) && /engines\/skills\.js/.test(fs.readFileSync(path.join(ROOT, 'rooms/refresh.html'), 'utf8')));
 })();
 
+section('Charts: the one way a number becomes a picture');
+
+(function () {
+  /* D-091. Pure functions that return markup; what is graded is the
+     arithmetic behind the axes and the shares, and that nothing draws
+     from a stand-in. */
+  const Charts = require(path.join(ROOT, 'shared/charts.js'));
+  check('short money: hundreds', Charts.shortMoney(95000), '$950');
+  check('short money: thousands', Charts.shortMoney(480000), '$4.8K');
+  check('short money: round thousands', Charts.shortMoney(4800000), '$48K');
+  check('short money: millions', Charts.shortMoney(120000000), '$1.2M');
+  check('short money: negative', Charts.shortMoney(-2500000), '-$25K');
+  check('a nice step for a $29M range over five ticks is $5M', Charts.niceStep(2916458500, 5), 500000000);
+  check('ticks cover the range in round steps', Charts.ticks(0, 72, 6).join(','), '0,10,20,30,40,50,60,70');
+  check('ticks from 25 to 80', Charts.ticks(25, 80, 6).join(','), '30,40,50,60,70,80');
+
+  const a = Charts.area({ series: [{ label: 'a', points: [[30, 0], [40, 100000], [50, 500000]] }], hLines: [{ y: 300000, label: 'FI' }] });
+  checkTrue('an area chart is an svg in a .slaf-chart', /^<div class="slaf-chart"><svg /.test(a));
+  checkTrue('… with a filled path under the first series', /<path class="fill"/.test(a));
+  checkTrue('… the line above it', /<path class="line"/.test(a));
+  checkTrue('… the horizontal line and its label', /<line class="hline"/.test(a) && /FI<\/text>/.test(a));
+  checkTrue('… and a legend naming both', /<ul class="slaf-legend">.*>a<\/li>.*FI<\/li>/.test(a));
+  checkTrue('no series: says so instead of drawing', /is-empty/.test(Charts.area({ series: [] })));
+
+  const d = Charts.donut({ slices: [{ label: 'Cash', value: 950000 }, { label: 'Invest', value: 4800000 }, { label: 'Nothing', value: 0 }] });
+  checkTrue('a donut is a ring of arcs', (d.match(/<circle class="arc"/g) || []).length === 2);
+  checkTrue('… a zero slice is listed, not drawn', /Nothing/.test(d) && (d.match(/<circle class="arc"/g) || []).length === 2);
+  checkTrue('… the centre is the total', /\$57,500/.test(d));
+  checkTrue('… and the shares add up', /17%/.test(d) && /83%/.test(d));
+  /* 950,000 ÷ 5,750,000 of the circumference 2π·42 = 263.89 → 43.60 */
+  checkTrue('… each arc\'s length is its share of the circumference', /stroke-dasharray="43\.60 220\.29"/.test(d));
+  checkTrue('an empty donut says so', /is-empty/.test(Charts.donut({ slices: [] })));
+
+  const b = Charts.bars({ rows: [{ label: 'x', value: 100 }, { label: 'y', value: -50 }, { label: 'z', value: null, empty: 'needs a month' }] });
+  checkTrue('bars with a negative share a zero at the middle', /has-negative/.test(b) && /left:50%;width:50%/.test(b) && /left:25%;width:25%/.test(b));
+  checkTrue('… and a missing row draws nothing, with its reason', /is-empty/.test(b) && /needs a month/.test(b));
+  const s = Charts.stacked({ rows: [{ label: 'm', parts: [{ label: 'a', value: 25 }, { label: 'b', value: 75 }] }] });
+  checkTrue('a stacked row is parts to a hundred', /width:25%/.test(s) && /width:75%/.test(s));
+  check('yearly thins a monthly list to every twelfth row and the last', Charts.yearly(Array.from({ length: 30 }, (_, i) => i), r => r).map(p => p[0]).join(','), '0,1,2,2.4166666666666665');
+
+  const Projection = require(path.join(ROOT, 'engines/projection.js'));
+  /* $1,000 to start, $4,000 a month at 7%, 40 years in then 15 years of
+     $48,000 out: the PFC calculator's own example, 10,268,234 at
+     retirement on its (annual) convention; monthly compounding lands a
+     little higher. */
+  const p = Projection.pathCents({ startCents: 100000, monthlyContributionCents: 400000, annualRate: 0.07, years: 55, contributeYears: 40, withdrawAnnualCents: 4800000 });
+  check('the path has a row per year plus the start', p.years.length, 56);
+  checkTrue('at retirement the balance is in the region of $10.5M', p.years[40].balanceCents > 1040000000 && p.years[40].balanceCents < 1060000000, p.years[40].balanceCents);
+  check('contributions stop at the stop year', p.years[41].contributedCents, p.years[40].contributedCents - 4800000);
+  checkTrue('and it never runs out', p.brokeAtYear === null);
+  const broke = Projection.pathCents({ startCents: 1000000, monthlyContributionCents: 0, annualRate: 0.05, years: 10, contributeYears: 0, withdrawAnnualCents: 240000 });
+  checkTrue('a pot drawn too hard names the year it empties', Money.isEntered(broke.brokeAtYear) && broke.brokeAtYear > 4 && broke.brokeAtYear < 6, broke.brokeAtYear);
+  check('a path with no rate is incomplete', Projection.pathCents({ years: 10 }).status, 'incomplete');
+
+  const Skills = require(path.join(ROOT, 'engines/skills.js'));
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) {} });
+  (function () {
+    const h = Demo.build(); h.expenses.entries = Demo.buildSpending();
+    let r = Skills.equip(h, 'cook-dinner', T, '2026-09-05'); h.skills = r.value.skills;
+    for (let i = 0; i < 8; i++) { r = Skills.logDay(h, 'cook-dinner', true, T, Skills.addDays('2026-09-05', -i)); h.skills = r.value.skills; h.practiceLedger = r.value.practiceLedger; }
+    check('back-filling earlier days counts from the latest day known', h.skills['cook-dinner'].last30, 8);
+    check('… and eight days is practicing', h.skills['cook-dinner'].state, 'practicing');
+  })();
+
+  ['index.html', 'rooms/fire.html', 'rooms/stacker.html'].forEach(f => {
+    checkTrue(`${f} loads the chart module`, /shared\/charts\.js/.test(fs.readFileSync(path.join(ROOT, f), 'utf8')));
+  });
+  checkTrue('the dashboard draws the ring, not the old stack', !/nw-stack/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')));
+})();
+
 section('Two decision sequences that cannot collide');
 
 (function () {

@@ -58,16 +58,6 @@
   table.grid tr.is-here td { background: var(--color-surface-active); }
   .table-scroll { overflow-x: auto; }
 
-  .plot { width: 100%; height: auto; display: block; margin-top: var(--space-3); }
-  .plot .axis { stroke: var(--color-border-strong); stroke-width: 1; }
-  .plot .lump { stroke: var(--color-accent); stroke-width: 1.4; fill: none; }
-  .plot .spread { stroke: var(--color-text-muted); stroke-width: 1.4; fill: none; stroke-dasharray: 4 2; }
-  .plot .cap { fill: var(--color-text-faint); font-size: 7px; font-family: var(--font-body); }
-  .key { display: flex; gap: var(--space-4); flex-wrap: wrap; font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-2); }
-  .key span::before { content: ''; display: inline-block; width: 14px; height: 0; border-top: 2px solid currentColor; vertical-align: middle; margin-right: 6px; }
-  .key .k-lump { color: var(--color-accent); }
-  .key .k-spread { color: var(--color-text-muted); }
-
   .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
   .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
@@ -139,8 +129,7 @@
     <div class="slaf-figure" data-figure>—</div>
     <p class="slaf-reason" data-reason></p>
     <div id="path-body" hidden>
-      <svg class="plot" id="path" viewBox="0 0 200 110" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="path-desc"></svg>
-      <div class="key"><span class="k-lump">all at once</span><span class="k-spread">spread out</span></div>
+      <div id="path"></div>
       <p id="path-desc" class="why"></p>
     </div>
   </section>
@@ -180,11 +169,12 @@
 <script src="../shared/ownership.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../engines/windfall.js"></script>
+<script src="../shared/charts.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
-      Reference = SLAF.Reference, Windfall = SLAF.Windfall;
+      Reference = SLAF.Reference, Windfall = SLAF.Windfall, Charts = SLAF.Charts;
 
   var ROOM_ID = 'windfall';
 
@@ -332,6 +322,7 @@
     if (!Money.isOk(r) || r.degenerate) {
       setFigure('out-cost', null, Money.isOk(r) ? '' : r.reason);
       el('path-body').hidden = true;
+      el('path').innerHTML = '';
       return;
     }
     var ahead = r.gapCents >= 0;
@@ -347,35 +338,24 @@
     renderPath(r);
   }
 
-  var PAD_L = 30, PAD_R = 6, PAD_T = 8, PAD_B = 16, W = 200, H = 110;
-
   function renderPath(r) {
-    var all = r.path.map(function (p) { return Math.max(p.lumpCents, p.spreadCents); })
-      .concat(r.path.map(function (p) { return Math.min(p.lumpCents, p.spreadCents); }));
-    var top = Math.max.apply(null, all), bottom = Math.min.apply(null, all.concat([r.amountCents]));
-    var span = top - bottom || 1;
-    function x(m) { return PAD_L + ((m - 1) / Math.max(1, r.months - 1)) * (W - PAD_L - PAD_R); }
-    function y(c) { return H - PAD_B - ((c - bottom) / span) * (H - PAD_T - PAD_B); }
-
-    function line(key) {
-      return r.path.map(function (p, i) {
-        return (i === 0 ? 'M' : 'L') + x(p.month).toFixed(2) + ' ' + y(p[key]).toFixed(2);
-      }).join(' ');
-    }
-
-    var parts = [];
-    parts.push('<line class="axis" x1="' + PAD_L + '" y1="' + PAD_T + '" x2="' + PAD_L + '" y2="' + (H - PAD_B) + '"/>');
-    parts.push('<line class="axis" x1="' + PAD_L + '" y1="' + (H - PAD_B) + '" x2="' + (W - PAD_R) + '" y2="' + (H - PAD_B) + '"/>');
-    parts.push('<path class="spread" d="' + line('spreadCents') + '"/>');
-    parts.push('<path class="lump" d="' + line('lumpCents') + '"/>');
-    parts.push('<text class="cap" text-anchor="end" x="' + (PAD_L - 3) + '" y="' + (PAD_T + 3) + '">'
-      + Money.formatCents(top) + '</text>');
-    parts.push('<text class="cap" text-anchor="end" x="' + (PAD_L - 3) + '" y="' + (H - PAD_B) + '">'
-      + Money.formatCents(bottom) + '</text>');
-    parts.push('<text class="cap" x="' + PAD_L + '" y="' + (H - 4) + '">month 1</text>');
-    parts.push('<text class="cap" text-anchor="end" x="' + (W - PAD_R) + '" y="' + (H - 4) + '">month '
-      + r.months + '</text>');
-    el('path').innerHTML = parts.join('');
+    /* The two routes start from the same dollar, so the picture is drawn
+       from the amount up rather than from zero — from zero, a few hundred
+       dollars of difference on a five-figure sum is a single flat line. */
+    var lows = r.path.map(function (p) { return Math.min(p.lumpCents, p.spreadCents); });
+    var bottom = Math.min.apply(null, lows.concat([r.amountCents]));
+    el('path').innerHTML = Charts.area({
+      title: 'What the money is worth, month by month, both ways',
+      series: [
+        { id: 'lump', label: 'all at once', color: Charts.COLORS.growth, fill: true,
+          points: r.path.map(function (p) { return [p.month, p.lumpCents]; }) },
+        { id: 'spread', label: 'spread out', color: Charts.COLORS.contributed, fill: false, dash: true,
+          points: r.path.map(function (p) { return [p.month, p.spreadCents]; }) }
+      ],
+      hLines: [{ y: r.amountCents, label: 'what you started with', color: Charts.COLORS.muted }],
+      y: { min: bottom },
+      x: { label: 'months' }
+    });
 
     el('path-desc').textContent = 'Both lines end the window with every dollar invested; only the '
       + 'route differs. On average across the ' + r.months + ' months, spreading leaves '
