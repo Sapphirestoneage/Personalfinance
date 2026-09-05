@@ -95,6 +95,15 @@
     'household.housing.priceCents':              { class: 'raw',        unit: 'cents',   note: 'a place being weighed: with rentMonthlyCents (what renting costs), downPct (0–1), rate (mortgage, decimal). Owned by Housing Decision. D-099' },
     'household.purchase.priceCents':             { class: 'raw',        unit: 'cents',   note: 'a big purchase: with monthsAway, financeRate (decimal, null = cash), label. Owned by Big Purchase. D-099' },
     'household.variableIncome.bufferMonths':     { class: 'raw',        unit: 'months',  note: 'months of the low-to-average gap held as a buffer. Owned by Variable Income. D-099' },
+    'household.enough.monthlyCents':             { class: 'raw',        unit: 'cents',   note: 'what you would live on by choice, a month; source curve|entered. Owned by Enough. D-101' },
+    'household.designedWeek.blocks[].hours':     { class: 'raw',        unit: 'hours',   note: 'a block of the designed week; costCents a week; categoryId the expense line. Owned by Designed Week. D-101' },
+    'household.timeBuckets[].decade':            { class: 'raw',        unit: 'age',     note: 'a decade (30 = your thirties) with experiences[] {label, costCents, year}. Owned by Time Buckets. D-101' },
+    'household.dreams[].monthlyCents':           { class: 'raw',        unit: 'cents',   note: 'a dream priced a month. Owned by Dreamline. D-101' },
+    'household.reversibility.decisionId':        { class: 'raw',        unit: 'id',      note: 'the decision being weighed, with given{} answers. Owned by Reversibility. D-101' },
+    'household.unlearning.dropped':              { class: 'raw',        unit: 'ids',     note: 'rules from data/unlearning.json you have let go of. Owned by Unlearning. D-101' },
+    'household.studentLoans.plan':               { class: 'raw',        unit: 'enum',    values: ['standard', 'income_driven', 'aggressive'], note: 'with extraMonthlyCents, idrShare (0–1 of discretionary income), forgivenessYears. Owned by Student Loan Decision. D-101' },
+    'household.calendar.cadence':                { class: 'raw',        unit: 'enum',    values: ['weekly', 'fortnightly', 'semimonthly', 'monthly'], note: 'with nextPaydayDay (1–31), bills[] {label, cents, day}, payLater[] {label, cents, dueDay, instalmentsLeft}. Owned by Money Calendar. D-101' },
+    'household.history.compareTo':               { class: 'raw',        unit: 'id',      note: 'the snapshot History compares today against. Owned by History. D-101' },
     'meta.guessed':                              { class: 'raw',        unit: 'map',     note: '{ fieldId: true } for figures the one-pager committed as guesses; cleared per field the moment a real number is written. D-094' },
     'meta.noRent':                               { class: 'raw',        unit: 'bool',    note: 'no rent to pay; lowers the spending guess. D-094' },
     'person.unemployment.benefitStatus':         { class: 'raw',        unit: 'enum',    values: ['receiving', 'applied', 'notApplied', 'ineligible'], note: 'between jobs: whether unemployment is coming. With benefitWeeklyCents, benefitWeeksLeft, severanceCents, lastGrossAnnualCents and since. Owned by Start Here. D-092' },
@@ -750,6 +759,63 @@
     var f = fields || {};
     return { bufferMonths: Money.isEntered(f.bufferMonths) ? f.bufferMonths : null };
   }
+  /* The third wave (D-101 scaffolding): the LATER.md rooms — the T8
+     shapes (D-093 draft, now built), the loan decision, the calendar,
+     History's compare-to. */
+  function createEnough(fields) {
+    var f = fields || {};
+    return { monthlyCents: Money.isEntered(f.monthlyCents) ? f.monthlyCents : null, source: f.source === 'curve' || f.source === 'entered' ? f.source : null };
+  }
+  function createWeekBlock(fields) {
+    var f = fields || {};
+    return { id: f.id || newId('wk'), label: f.label === undefined ? null : f.label, hours: Money.isEntered(f.hours) ? f.hours : null,
+      categoryId: f.categoryId === undefined ? null : f.categoryId, costCents: Money.isEntered(f.costCents) ? f.costCents : null };
+  }
+  function createDesignedWeek(fields) { var f = fields || {}; return { blocks: (f.blocks || []).map(createWeekBlock) }; }
+  function createExperience(fields) {
+    var f = fields || {};
+    return { id: f.id || newId('xp'), label: f.label === undefined ? null : f.label, costCents: Money.isEntered(f.costCents) ? f.costCents : null, year: Money.isEntered(f.year) ? f.year : null };
+  }
+  function createTimeBucket(fields) {
+    var f = fields || {};
+    return { decade: Money.isEntered(f.decade) ? f.decade : null, experiences: (f.experiences || []).map(createExperience) };
+  }
+  function createDream(fields) {
+    var f = fields || {};
+    return { id: f.id || newId('dr'), label: f.label === undefined ? null : f.label, monthlyCents: Money.isEntered(f.monthlyCents) ? f.monthlyCents : null };
+  }
+  function createReversibilityPlan(fields) {
+    var f = fields || {};
+    return { decisionId: typeof f.decisionId === 'string' && f.decisionId ? f.decisionId : null, given: f.given && typeof f.given === 'object' ? f.given : {} };
+  }
+  function createUnlearning(fields) {
+    var f = fields || {};
+    return { dropped: (f.dropped || []).filter(function (id) { return typeof id === 'string' && id; }) };
+  }
+  var LOAN_PLANS = ['standard', 'income_driven', 'aggressive'];
+  function createStudentLoanPlan(fields) {
+    var f = fields || {};
+    return { plan: LOAN_PLANS.indexOf(f.plan) >= 0 ? f.plan : null, extraMonthlyCents: Money.isEntered(f.extraMonthlyCents) ? f.extraMonthlyCents : null,
+      idrShare: Money.isEntered(f.idrShare) ? f.idrShare : null, forgivenessYears: Money.isEntered(f.forgivenessYears) ? f.forgivenessYears : null };
+  }
+  var PAY_CADENCES = ['weekly', 'fortnightly', 'semimonthly', 'monthly'];
+  function createBill(fields) {
+    var f = fields || {};
+    return { id: f.id || newId('bill'), label: f.label === undefined ? null : f.label, cents: Money.isEntered(f.cents) ? f.cents : null, day: Money.isEntered(f.day) ? f.day : null };
+  }
+  function createPayLater(fields) {
+    var f = fields || {};
+    return { id: f.id || newId('bnpl'), label: f.label === undefined ? null : f.label, cents: Money.isEntered(f.cents) ? f.cents : null, dueDay: Money.isEntered(f.dueDay) ? f.dueDay : null, instalmentsLeft: Money.isEntered(f.instalmentsLeft) ? f.instalmentsLeft : null };
+  }
+  function createCalendar(fields) {
+    var f = fields || {};
+    return { cadence: PAY_CADENCES.indexOf(f.cadence) >= 0 ? f.cadence : null, nextPaydayDay: Money.isEntered(f.nextPaydayDay) ? f.nextPaydayDay : null,
+      bills: (f.bills || []).map(createBill), payLater: (f.payLater || []).map(createPayLater) };
+  }
+  function createHistoryPlan(fields) {
+    var f = fields || {};
+    return { compareTo: typeof f.compareTo === 'string' && f.compareTo ? f.compareTo : null };
+  }
   /* Estate basics: three yes/no facts. */
   function createEstate(fields) {
     var f = fields || {};
@@ -1114,6 +1180,15 @@
       housing: createHousingPlan(f.housing),
       purchase: createPurchasePlan(f.purchase),
       variableIncome: createVariableIncomePlan(f.variableIncome),
+      enough: createEnough(f.enough),
+      designedWeek: createDesignedWeek(f.designedWeek),
+      timeBuckets: (f.timeBuckets || []).map(createTimeBucket).filter(function (b) { return b.decade !== null; }),
+      dreams: (f.dreams || []).map(createDream),
+      reversibility: createReversibilityPlan(f.reversibility),
+      unlearning: createUnlearning(f.unlearning),
+      studentLoans: createStudentLoanPlan(f.studentLoans),
+      calendar: createCalendar(f.calendar),
+      history: createHistoryPlan(f.history),
       /* The Skill Stacker's standing per skill, keyed by catalogue id, and
          the practice ledger it writes a row to each logged day. D-090. */
       skills: createSkills(f.skills),
@@ -1556,6 +1631,21 @@
     createPurchasePlan: createPurchasePlan,
     createVariableIncomePlan: createVariableIncomePlan,
     SPLIT_MODES: SPLIT_MODES,
+    createEnough: createEnough,
+    createWeekBlock: createWeekBlock,
+    createDesignedWeek: createDesignedWeek,
+    createExperience: createExperience,
+    createTimeBucket: createTimeBucket,
+    createDream: createDream,
+    createReversibilityPlan: createReversibilityPlan,
+    createUnlearning: createUnlearning,
+    createStudentLoanPlan: createStudentLoanPlan,
+    createBill: createBill,
+    createPayLater: createPayLater,
+    createCalendar: createCalendar,
+    createHistoryPlan: createHistoryPlan,
+    LOAN_PLANS: LOAN_PLANS,
+    PAY_CADENCES: PAY_CADENCES,
     createGiving: createGiving,
     SKILL_STATES: SKILL_STATES,
     SKILL_KINDS: SKILL_KINDS,

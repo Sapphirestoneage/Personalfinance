@@ -1,0 +1,90 @@
+{
+  "id": "week_blocks",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "Starter blocks for a designed week (BRIEF §8, after Tim Ferriss's 'ideal week' and Your Money or Your Life's life-energy ledger): the hours a week most people put where, and the expense line each block lands on so its cost can be proposed from your own tracked month.",
+  "confidence": "convention",
+  "confidenceNote": "The hours are typical, not yours; every block is a proposal to edit or delete. The categories are the ones in data/expense_categories.json.",
+  "note": "blocks: label, hours a week, and the categoryId whose tracked monthly figure prices the block (× 12 ÷ 52 for a week); null where a block costs nothing. hoursInWeek is the arithmetic ceiling. D-101.",
+  "hoursInWeek": 168,
+  "blocks": [
+    {
+      "id": "sleep",
+      "label": "Sleep",
+      "hours": 56,
+      "categoryId": null
+    },
+    {
+      "id": "work",
+      "label": "Work",
+      "hours": 40,
+      "categoryId": null
+    },
+    {
+      "id": "getting-there",
+      "label": "Getting there and back",
+      "hours": 5,
+      "categoryId": "transportation"
+    },
+    {
+      "id": "home",
+      "label": "Home: the roof, the bills",
+      "hours": 0,
+      "categoryId": "housing"
+    },
+    {
+      "id": "cook-eat",
+      "label": "Cooking and eating in",
+      "hours": 12,
+      "categoryId": "groceries"
+    },
+    {
+      "id": "out",
+      "label": "Out: friends, meals, drinks",
+      "hours": 6,
+      "categoryId": "dining_out"
+    },
+    {
+      "id": "move",
+      "label": "Moving: gym, run, play",
+      "hours": 4,
+      "categoryId": "personal_care"
+    },
+    {
+      "id": "screens",
+      "label": "Screens and shows",
+      "hours": 14,
+      "categoryId": "subscriptions"
+    },
+    {
+      "id": "fun",
+      "label": "Things you do for fun",
+      "hours": 6,
+      "categoryId": "entertainment"
+    },
+    {
+      "id": "errands",
+      "label": "Errands and chores",
+      "hours": 8,
+      "categoryId": "shopping"
+    },
+    {
+      "id": "people",
+      "label": "Family, care, calls",
+      "hours": 8,
+      "categoryId": null
+    },
+    {
+      "id": "learn",
+      "label": "Learning something",
+      "hours": 3,
+      "categoryId": null
+    },
+    {
+      "id": "away",
+      "label": "Away: a trip, a weekend",
+      "hours": 2,
+      "categoryId": "travel"
+    }
+  ]
+}

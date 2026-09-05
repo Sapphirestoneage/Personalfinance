@@ -510,6 +510,83 @@
       format: function (v) { return v + ' mo'; }
     },
 
+    /* ---- The third wave: the LATER.md rooms (D-101). ---- */
+    enoughMonthly: {
+      label: 'Enough, a month', owner: 'enough', anchor: 'inputs',
+      read: function (h) { var v = (h.enough || {}).monthlyCents; return Money.isEntered(v) ? Money.ok(v, { source: h.enough.source }) : Money.incomplete('Not decided yet.', ['enough']); },
+      format: function (v) { return money(v) + '/mo'; }
+    },
+    designedHours: {
+      label: 'The designed week, hours placed', owner: 'week', anchor: 'inputs',
+      read: function (h) { var b = ((h.designedWeek || {}).blocks || []).filter(function (x) { return Money.isEntered(x.hours); }); return b.length ? Money.ok(b.reduce(function (t, x) { return t + x.hours; }, 0), { blocks: b.length }) : Money.incomplete('No blocks placed yet.', ['designedWeek']); },
+      format: function (v) { return v + ' h'; }
+    },
+    bucketsPlanned: {
+      label: 'Time buckets, planned', owner: 'buckets', anchor: 'inputs',
+      read: function (h) { var xs = []; (h.timeBuckets || []).forEach(function (b) { (b.experiences || []).forEach(function (x) { if (Money.isEntered(x.costCents)) xs.push(x.costCents); }); }); return xs.length ? Money.ok(xs.reduce(function (t, c) { return t + c; }, 0), { count: xs.length }) : Money.incomplete('Nothing planned yet.', ['timeBuckets']); },
+      format: money
+    },
+    dreamsMonthly: {
+      label: 'Dreams, a month', owner: 'dreamline', anchor: 'inputs',
+      read: function (h) { var ds = (h.dreams || []).filter(function (d) { return Money.isEntered(d.monthlyCents); }); return ds.length ? Money.ok(ds.reduce(function (t, d) { return t + d.monthlyCents; }, 0), { count: ds.length }) : Money.incomplete('No dream priced yet.', ['dreams']); },
+      format: function (v) { return money(v) + '/mo'; }
+    },
+    reversibilityDecision: {
+      label: 'The decision being weighed', owner: 'reversibility', anchor: 'inputs',
+      read: function (h) { var v = (h.reversibility || {}).decisionId; return v ? Money.ok(v) : Money.incomplete('None picked yet.', ['reversibility']); },
+      format: function (v) { return String(v).replace(/[-_]/g, ' '); }
+    },
+    unlearningDropped: {
+      label: 'Rules let go of', owner: 'unlearning', anchor: 'inputs',
+      read: function (h) { var d = ((h.unlearning || {}).dropped || []); return d.length ? Money.ok(d.length, { ids: d }) : Money.incomplete('None let go of yet.', ['unlearning']); },
+      format: function (v) { return v === 0 ? 'none yet' : v + (v === 1 ? ' rule' : ' rules'); }
+    },
+    loanPlan: {
+      label: 'Student loan plan', owner: 'student-loans', anchor: 'inputs',
+      read: function (h) { var v = (h.studentLoans || {}).plan; return v ? Money.ok(v) : Money.incomplete('Not chosen yet.', ['plan']); },
+      format: function (v) { return { standard: 'Standard', income_driven: 'Income-driven', aggressive: 'Aggressive' }[v] || v; }
+    },
+    loanExtra: {
+      label: 'Extra to the loans, a month', owner: 'student-loans', anchor: 'inputs',
+      read: function (h) { var v = (h.studentLoans || {}).extraMonthlyCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['extraMonthlyCents']); },
+      format: function (v) { return money(v) + '/mo'; }
+    },
+    idrShare: {
+      label: 'Income-driven share', owner: 'student-loans', anchor: 'inputs',
+      read: function (h) { var v = (h.studentLoans || {}).idrShare; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['idrShare']); },
+      format: function (v) { return Math.round(v * 100) + '% of discretionary income'; }
+    },
+    forgivenessYears: {
+      label: 'Forgiveness after', owner: 'student-loans', anchor: 'inputs',
+      read: function (h) { var v = (h.studentLoans || {}).forgivenessYears; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['forgivenessYears']); },
+      format: function (v) { return v + ' years'; }
+    },
+    payCadence: {
+      label: 'Paid', owner: 'calendar', anchor: 'inputs',
+      read: function (h) { var v = (h.calendar || {}).cadence; return v ? Money.ok(v) : Money.incomplete('Not entered yet.', ['cadence']); },
+      format: function (v) { return { weekly: 'every week', fortnightly: 'every two weeks', semimonthly: 'twice a month', monthly: 'monthly' }[v] || v; }
+    },
+    nextPayday: {
+      label: 'Next payday, day of month', owner: 'calendar', anchor: 'inputs',
+      read: function (h) { var v = (h.calendar || {}).nextPaydayDay; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['nextPaydayDay']); },
+      format: function (v) { return 'the ' + v + (v === 1 || v === 21 || v === 31 ? 'st' : v === 2 || v === 22 ? 'nd' : v === 3 || v === 23 ? 'rd' : 'th'); }
+    },
+    billsMonthly: {
+      label: 'Bills on a date, a month', owner: 'calendar', anchor: 'inputs',
+      read: function (h) { var bs = ((h.calendar || {}).bills || []).filter(function (b) { return Money.isEntered(b.cents); }); return bs.length ? Money.ok(bs.reduce(function (t, b) { return t + b.cents; }, 0), { count: bs.length }) : Money.incomplete('No bills listed yet.', ['bills']); },
+      format: function (v) { return money(v) + '/mo'; }
+    },
+    payLaterDue: {
+      label: 'Pay-later due this month', owner: 'calendar', anchor: 'inputs',
+      read: function (h) { var ps = ((h.calendar || {}).payLater || []).filter(function (b) { return Money.isEntered(b.cents); }); return ps.length ? Money.ok(ps.reduce(function (t, b) { return t + b.cents; }, 0), { count: ps.length }) : Money.incomplete('None listed.', ['payLater']); },
+      format: money
+    },
+    historyCompareTo: {
+      label: 'Comparing against', owner: 'history', anchor: 'inputs',
+      read: function (h) { var v = (h.history || {}).compareTo; return v ? Money.ok(v) : Money.incomplete('The first snapshot, until you pick one.', ['compareTo']); },
+      format: function (v) { return 'snapshot ' + String(v).slice(-4); }
+    },
+
     /* What The Rerank would cut (D-085): the flagged lines, a year's worth.
        Derived, owned by the room that asks the questions. */
     rerankCut: {

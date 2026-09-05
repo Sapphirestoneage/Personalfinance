@@ -1,0 +1,148 @@
+{
+  "id": "unlearning",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "The Unlearning ladder (BRIEF §8): the advice everyone hears, sorted by whether it applies at your FOO step and where your banded ratios sit. Steps from data/foo_rules.json; zones from data/ratio_benchmarks.json.",
+  "confidence": "convention",
+  "confidenceNote": "The mapping of advice to steps is a judgement, not a finding. It is here so it can be argued with line by line rather than baked into copy.",
+  "note": "rules: each line names the advice, who says it, and when it applies — by FOO step (steps: [min, max]) and/or by a ratio's zone. Status is derived: applies / stop believing (you are past it) / not yet (you are before it) / unknown (nothing to judge by). No model call; every rule is a range. D-101.",
+  "rules": [
+    {
+      "id": "starter-fund-first",
+      "advice": "Save $1,000 before anything else.",
+      "source": "Ramsey / Money Guy step 1",
+      "steps": [
+        0,
+        1
+      ],
+      "note": "The first thing a deductible has to meet. After step 1 it is done, and 'save more cash first' becomes the thing to stop believing."
+    },
+    {
+      "id": "pay-off-all-debt-before-investing",
+      "advice": "Pay off every debt before you invest a dollar.",
+      "source": "the snowball",
+      "steps": [
+        3,
+        3
+      ],
+      "ratio": {
+        "id": "debtToIncome",
+        "zones": [
+          "out",
+          "watch"
+        ]
+      },
+      "note": "True of high-interest debt at step 3. Past it, a 4% mortgage is not an emergency and skipping the match to prepay it costs the match."
+    },
+    {
+      "id": "get-the-match",
+      "advice": "Always take the full employer match.",
+      "source": "Money Guy step 2",
+      "steps": [
+        2,
+        9
+      ],
+      "note": "A 50–100% instant return. Only 'not yet' while the starter fund is not there."
+    },
+    {
+      "id": "six-months-of-expenses",
+      "advice": "Keep six months of expenses in cash.",
+      "source": "the emergency-fund rule",
+      "steps": [
+        4,
+        4
+      ],
+      "note": "Step 4's job. Before it, the starter fund and the match come first; after it, more cash is a choice, not a rule."
+    },
+    {
+      "id": "cut-the-lattes",
+      "advice": "Cut the small stuff — the lattes, the subscriptions.",
+      "source": "every budgeting column",
+      "ratio": {
+        "id": "savingsRate",
+        "zones": [
+          "out"
+        ]
+      },
+      "note": "Worth doing when the savings rate is out of band and there is nothing bigger to move. Otherwise it is the smallest lever in the room."
+    },
+    {
+      "id": "max-the-roth",
+      "advice": "Max a Roth IRA every year.",
+      "source": "Money Guy step 6",
+      "steps": [
+        6,
+        9
+      ],
+      "note": "After the HSA and the full fund. Before that it competes with things that pay more."
+    },
+    {
+      "id": "buy-dont-rent",
+      "advice": "Renting is throwing money away — buy.",
+      "source": "received wisdom",
+      "ratio": {
+        "id": "housingRatio",
+        "zones": [
+          "good"
+        ]
+      },
+      "steps": [
+        4,
+        9
+      ],
+      "note": "Only once the fund is full and a payment would sit inside the housing band. Before that it is a leveraged bet on one asset with no cushion."
+    },
+    {
+      "id": "invest-in-index-funds",
+      "advice": "Just buy the index and hold.",
+      "source": "Bogle",
+      "steps": [
+        2,
+        9
+      ],
+      "note": "From the match onward. It is not advice about whether to invest yet; that is the ladder's job."
+    },
+    {
+      "id": "hustle-harder",
+      "advice": "Get a second job — you can't save your way out.",
+      "source": "the side-hustle chorus",
+      "ratio": {
+        "id": "savingsRate",
+        "zones": [
+          "out"
+        ]
+      },
+      "note": "Applies when the rate is out of band and the spending side has been looked at. Past it, hours have a price too — see Real Hourly Wage."
+    },
+    {
+      "id": "hyper-accumulate",
+      "advice": "Put 25% of gross away.",
+      "source": "Money Guy step 8",
+      "steps": [
+        7,
+        9
+      ],
+      "note": "The target for the top of the ladder. Not a rule for someone still building the fund."
+    },
+    {
+      "id": "never-carry-a-balance",
+      "advice": "Never carry a credit-card balance.",
+      "source": "everyone",
+      "steps": [
+        0,
+        9
+      ],
+      "note": "Always applies. It is the one line here with no 'not yet'."
+    },
+    {
+      "id": "prepay-the-mortgage",
+      "advice": "Pay the mortgage off early.",
+      "source": "the debt-free crowd",
+      "steps": [
+        9,
+        9
+      ],
+      "note": "Step 9: after every tax-advantaged dollar. Before that it is the lowest return on the list."
+    }
+  ]
+}

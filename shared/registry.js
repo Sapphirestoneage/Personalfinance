@@ -856,6 +856,195 @@
       ]
   });
 
+  /* Enough — the LATER.md rooms (D-101). */
+  ROOMS.push({
+    id: 'enough',
+    kind: 'about-you',
+    needs: ['monthlyExpenses', 'investments'],
+    order: 43,
+    title: 'Enough',
+    blurb: 'The monthly figure you would live on by choice — typed, or proposed from the joy curve — and the second FI number it makes, against the first.',
+    href: 'rooms/enough.html',
+    tier: 2,
+    tags: ['cashflow'],
+      subsections: [
+        { id: 'number',      label: 'Enough, a month' },
+        { id: 'chart',       label: 'Two FI numbers' },
+        { id: 'inputs',      label: 'What enough is' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
+  /* Designed Week — the LATER.md rooms (D-101). */
+  ROOMS.push({
+    id: 'week',
+    kind: 'about-you',
+    needs: ['monthlyExpenses'],
+    order: 44,
+    title: 'Designed Week',
+    blurb: 'The week you would design: 168 hours in blocks, what each block costs and buys, and the month that week adds up to against the one you have.',
+    href: 'rooms/week.html',
+    tier: 2,
+    tags: ['cashflow'],
+      subsections: [
+        { id: 'number',      label: 'The designed week, a month' },
+        { id: 'chart',       label: 'Where the hours go' },
+        { id: 'inputs',      label: 'The blocks' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
+  /* Time Buckets — the LATER.md rooms (D-101). */
+  ROOMS.push({
+    id: 'buckets',
+    kind: 'about-you',
+    needs: ['investments', 'monthlyExpenses'],
+    order: 45,
+    title: 'Time Buckets',
+    blurb: 'What you plan to do in each decade, priced, and whether the plan and the money line up in time.',
+    href: 'rooms/buckets.html',
+    tier: 2,
+    tags: ['cashflow'],
+      subsections: [
+        { id: 'number',      label: 'Planned, all decades' },
+        { id: 'chart',       label: 'By decade' },
+        { id: 'inputs',      label: 'Each decade' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
+  /* Dreamline — the LATER.md rooms (D-101). */
+  ROOMS.push({
+    id: 'dreamline',
+    kind: 'about-you',
+    needs: ['monthlyExpenses', 'grossAnnualIncome'],
+    order: 46,
+    title: 'Dreamline',
+    blurb: 'Price the dreams a month, add the cost of living, pad it: the target monthly income, and the hours a week at your real rate it takes.',
+    href: 'rooms/dreamline.html',
+    tier: 2,
+    tags: ['income'],
+      subsections: [
+        { id: 'number',      label: 'Target monthly income' },
+        { id: 'chart',       label: 'Dreams against the month' },
+        { id: 'inputs',      label: 'The dreams' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
+  /* Reversibility — the LATER.md rooms (D-101). */
+  ROOMS.push({
+    id: 'reversibility',
+    kind: 'about-you',
+    needs: ['cashSavings', 'monthlyExpenses'],
+    order: 47,
+    title: 'Reversibility',
+    blurb: 'A decision you are weighing: what it would cost to undo, and how long — a door, or a one-way street.',
+    href: 'rooms/reversibility.html',
+    tier: 2,
+    tags: ['cashflow'],
+      subsections: [
+        { id: 'number',      label: 'What undoing costs' },
+        { id: 'chart',       label: 'Cost and months to undo' },
+        { id: 'inputs',      label: 'The decision' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
+  /* Unlearning — the LATER.md rooms (D-101). */
+  ROOMS.push({
+    id: 'unlearning',
+    kind: 'about-you',
+    needs: ['monthlyExpenses'],
+    order: 48,
+    title: 'Unlearning',
+    blurb: 'The advice everyone hears, sorted by whether it still applies to you — and the rules you have let go of.',
+    href: 'rooms/unlearning.html',
+    tier: 2,
+    tags: ['cashflow'],
+      subsections: [
+        { id: 'number',      label: 'Rules that no longer apply' },
+        { id: 'chart',       label: 'Applies, past it, not yet' },
+        { id: 'inputs',      label: 'Let go' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
+  /* Student Loan Decision — the LATER.md rooms (D-101). */
+  ROOMS.push({
+    id: 'student-loans',
+    kind: 'about-you',
+    needs: ['totalDebt', 'grossAnnualIncome'],
+    order: 49,
+    title: 'Student Loan Decision',
+    blurb: 'Standard, income-driven, or aggressive: what each pays a month, when each clears, and what each costs in interest — for the loans you listed.',
+    href: 'rooms/student-loans.html',
+    tier: 2,
+    tags: ['debt'],
+      subsections: [
+        { id: 'number',      label: 'The plan that clears them' },
+        { id: 'chart',       label: 'Three plans, side by side' },
+        { id: 'inputs',      label: 'The plan' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
+  /* Money Calendar & Pay-Later — the LATER.md rooms (D-101). */
+  ROOMS.push({
+    id: 'calendar',
+    kind: 'about-you',
+    needs: ['monthlyExpenses', 'cashSavings'],
+    order: 50,
+    title: 'Money Calendar & Pay-Later',
+    blurb: 'Paydays and bills across a month, pay-later instalments counted: the low point, and the day it lands.',
+    href: 'rooms/calendar.html',
+    tier: 2,
+    tags: ['cashflow'],
+      subsections: [
+        { id: 'number',      label: 'The low point this month' },
+        { id: 'chart',       label: 'Cash across the month' },
+        { id: 'inputs',      label: 'Paydays, bills, pay-later' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
+  /* History — the LATER.md rooms (D-101). */
+  ROOMS.push({
+    id: 'history',
+    kind: 'read',
+    needs: ['cashSavings', 'investments', 'totalDebt'],
+    order: 51,
+    title: 'History',
+    blurb: 'Every snapshot you froze, and what moved between them: net worth over time, and the log of what you changed.',
+    href: 'rooms/history.html',
+    tier: 2,
+    tags: ['cashflow'],
+      subsections: [
+        { id: 'number',      label: 'Since the first snapshot' },
+        { id: 'chart',       label: 'Net worth over time' },
+        { id: 'inputs',      label: 'Compare and freeze' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
   /* Where every room's out-of-scope line points (D-097). Reads the gate for
      a line per stage; owns nothing; optional by definition. */
   ROOMS.push({
@@ -909,7 +1098,9 @@
     'career-move': ['career'],
     partner: ['partner'],
     kids: ['dependents'],
-    'variable-income': ['variableIncome']
+    'variable-income': ['variableIncome'],
+    dreamline: ['hours'],
+    'student-loans': ['debt']
   };
   function gate() {
     if (typeof module === 'object' && module.exports) return require('./gate.js');

@@ -1,0 +1,254 @@
+{
+  "id": "reversibility",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "How much a decision costs to undo, and how long it takes (BRIEF §8, Reversibility): the sunk-cost-and-search arithmetic behind 'is this a door or a one-way street'. Formulas in the life-events expression language over the household context and the room's own answers; conventions drawn from the housing, moving and re-entry tables.",
+  "confidence": "convention",
+  "confidenceNote": "Every undo figure is a convention for the kind of decision, never a quote: a house sells at about 8% in costs, a car loses about a fifth in its first year, a search runs a median 2.3 months.",
+  "note": "decisions: id, label, questions (id, ask, unit, default), undoCents (a formula or null), undoMonths (a formula or null), reversible: true / 'partly' / false, and why. D-101.",
+  "decisions": [
+    {
+      "id": "buy-a-house",
+      "label": "Buy a house",
+      "questions": [
+        {
+          "id": "price",
+          "ask": "The price",
+          "unit": "dollars",
+          "default": null
+        }
+      ],
+      "undoCents": {
+        "+": [
+          {
+            "*": [
+              "@price",
+              {
+                "table": "housingConventions",
+                "path": [
+                  "sellingCostRate"
+                ]
+              }
+            ]
+          },
+          {
+            "table": "movingCost",
+            "path": [
+              "bands",
+              "local",
+              "cents"
+            ]
+          }
+        ]
+      },
+      "undoMonths": 4,
+      "reversible": "partly",
+      "why": "Selling costs about 8% of the price and a move; a sale takes a season."
+    },
+    {
+      "id": "buy-a-car",
+      "label": "Buy a new car",
+      "questions": [
+        {
+          "id": "price",
+          "ask": "The price",
+          "unit": "dollars",
+          "default": null
+        }
+      ],
+      "undoCents": {
+        "*": [
+          "@price",
+          0.2
+        ]
+      },
+      "undoMonths": 1,
+      "reversible": "partly",
+      "why": "About a fifth of the price is gone the first year; selling takes weeks."
+    },
+    {
+      "id": "change-jobs",
+      "label": "Change jobs",
+      "questions": [],
+      "undoCents": {
+        "*": [
+          {
+            "table": "reentryGap",
+            "path": [
+              "medianMonths"
+            ]
+          },
+          "$monthlyExpensesCents"
+        ]
+      },
+      "undoMonths": {
+        "table": "reentryGap",
+        "path": [
+          "medianMonths"
+        ]
+      },
+      "reversible": true,
+      "why": "Undoing it is another search: a median 2.3 months of spending with nothing coming in."
+    },
+    {
+      "id": "move-cities",
+      "label": "Move to another city",
+      "questions": [
+        {
+          "id": "distance",
+          "ask": "How far",
+          "unit": "text",
+          "choices": [
+            {
+              "id": "local",
+              "label": "Across town"
+            },
+            {
+              "id": "regional",
+              "label": "Within the region"
+            },
+            {
+              "id": "crossCountry",
+              "label": "Across the country"
+            }
+          ],
+          "default": "regional"
+        }
+      ],
+      "undoCents": {
+        "+": [
+          {
+            "*": [
+              2,
+              {
+                "table": "movingCost",
+                "path": [
+                  "bands",
+                  "@distance",
+                  "cents"
+                ]
+              }
+            ]
+          },
+          {
+            "*": [
+              2,
+              {
+                "coalesce": [
+                  "$housingMonthlyCents",
+                  0
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "undoMonths": 2,
+      "reversible": true,
+      "why": "The move there and back, plus two months of rent to break a lease."
+    },
+    {
+      "id": "sabbatical",
+      "label": "Take a sabbatical",
+      "questions": [],
+      "undoCents": {
+        "*": [
+          {
+            "table": "reentryGap",
+            "path": [
+              "medianMonths"
+            ]
+          },
+          "$monthlyExpensesCents"
+        ]
+      },
+      "undoMonths": {
+        "table": "reentryGap",
+        "path": [
+          "medianMonths"
+        ]
+      },
+      "reversible": true,
+      "why": "The way back is a search: the re-entry gap, at your spending."
+    },
+    {
+      "id": "go-freelance",
+      "label": "Go freelance",
+      "questions": [],
+      "undoCents": {
+        "*": [
+          {
+            "table": "reentryGap",
+            "path": [
+              "meanMonths"
+            ]
+          },
+          "$monthlyExpensesCents"
+        ]
+      },
+      "undoMonths": {
+        "table": "reentryGap",
+        "path": [
+          "meanMonths"
+        ]
+      },
+      "reversible": true,
+      "why": "Going back is a search too, and the mean gap is the honest figure for a gap on the CV."
+    },
+    {
+      "id": "sign-a-lease",
+      "label": "Sign a year's lease",
+      "questions": [
+        {
+          "id": "rent",
+          "ask": "Rent a month",
+          "unit": "dollars",
+          "default": "$housingMonthlyCents"
+        }
+      ],
+      "undoCents": {
+        "*": [
+          2,
+          "@rent"
+        ]
+      },
+      "undoMonths": 1,
+      "reversible": true,
+      "why": "Two months of rent is the usual break fee."
+    },
+    {
+      "id": "lend-to-family",
+      "label": "Lend money to family",
+      "questions": [
+        {
+          "id": "amount",
+          "ask": "The amount",
+          "unit": "dollars",
+          "default": null
+        }
+      ],
+      "undoCents": "@amount",
+      "undoMonths": null,
+      "reversible": false,
+      "why": "Assume it will not come back; if it does, it was a gift that returned."
+    },
+    {
+      "id": "have-a-child",
+      "label": "Have a child",
+      "questions": [],
+      "undoCents": null,
+      "undoMonths": null,
+      "reversible": false,
+      "why": "The one on this list that cannot be undone. What it costs is in What If, Life."
+    },
+    {
+      "id": "get-married",
+      "label": "Get married",
+      "questions": [],
+      "undoCents": null,
+      "undoMonths": null,
+      "reversible": "partly",
+      "why": "Reversible in law and expensive in every other way; no figure here is honest."
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "id": "bucket_ideas",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "Experience ideas by decade, in the spirit of Bill Perkins's Die With Zero time buckets: what people tend to want to do in each decade of an adult life, with a rule-of-thumb cost for each.",
+  "confidence": "convention",
+  "confidenceNote": "Every figure is a round convention for the kind of thing, not a quote.",
+  "note": "decades: keyed by the decade's first age; each idea carries a label and a typical cost in cents. Proposals only; the room stores what you actually plan. D-101.",
+  "decades": {
+    "20": [
+      {
+        "label": "A long trip on a shoestring",
+        "cents": 300000
+      },
+      {
+        "label": "A festival with everyone",
+        "cents": 80000
+      },
+      {
+        "label": "Learn to dive, climb, sail",
+        "cents": 150000
+      }
+    ],
+    "30": [
+      {
+        "label": "A big trip with friends before the kids",
+        "cents": 500000
+      },
+      {
+        "label": "A wedding, or someone else's abroad",
+        "cents": 400000
+      },
+      {
+        "label": "A week somewhere you have always meant to go",
+        "cents": 350000
+      }
+    ],
+    "40": [
+      {
+        "label": "A family trip they will remember",
+        "cents": 800000
+      },
+      {
+        "label": "A sabbatical month",
+        "cents": 1200000
+      },
+      {
+        "label": "The instrument, the boat, the thing",
+        "cents": 600000
+      }
+    ],
+    "50": [
+      {
+        "label": "A long trip with your partner",
+        "cents": 1000000
+      },
+      {
+        "label": "Help a kid start out",
+        "cents": 1500000
+      },
+      {
+        "label": "The physical adventure while the knees hold",
+        "cents": 700000
+      }
+    ],
+    "60": [
+      {
+        "label": "The slow trip: a month, not a week",
+        "cents": 1200000
+      },
+      {
+        "label": "A place by the water for a season",
+        "cents": 900000
+      },
+      {
+        "label": "Bring the whole family somewhere",
+        "cents": 1500000
+      }
+    ],
+    "70": [
+      {
+        "label": "The cruise, the river, the rails",
+        "cents": 800000
+      },
+      {
+        "label": "Give while you can watch it land",
+        "cents": 2000000
+      }
+    ],
+    "80": [
+      {
+        "label": "Close to home, everyone there",
+        "cents": 300000
+      }
+    ]
+  }
+}

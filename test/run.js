@@ -7724,7 +7724,7 @@ section('Core (D-094): the gate — exists() per situation');
   check('unanswered: every room but the ones that need a fact (a status, a partner, a dependent)', gone(none), 'between-jobs,kids,partner');
   check('no household: every room', Registry.forHousehold(null).length, all);
   const retiredRooms = Registry.forHousehold(hh('retired')).map(r => r.id);
-  check('retired: the working rooms are gone, and Between Jobs', gone(hh('retired')), 'accounts,between-jobs,career-move,credential,fire,hassle,kids,partner,real-hourly-wage,savings-rate,self-employed,side-hustle,variable-income');
+  check('retired: the working rooms are gone, and Between Jobs', gone(hh('retired')), 'accounts,between-jobs,career-move,credential,dreamline,fire,hassle,kids,partner,real-hourly-wage,savings-rate,self-employed,side-hustle,variable-income');
   const bjRooms = Registry.forHousehold(hh('betweenJobs')).map(r => r.id);
   checkTrue('between jobs: no hourly wage, no savings rate, runway stays', bjRooms.indexOf('real-hourly-wage') === -1 && bjRooms.indexOf('savings-rate') === -1 && bjRooms.indexOf('runway') !== -1);
   check('employed, alone, no dependents: own work, between jobs, decumulation, partner, kids and variable income are gone', gone(hh('employed')), 'between-jobs,decumulation,kids,partner,self-employed,variable-income');

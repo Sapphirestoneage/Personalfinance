@@ -678,6 +678,150 @@
       "order": 42
     },
     {
+      "id": "enough",
+      "title": "Enough",
+      "file": "rooms/enough.html",
+      "reads": [
+        "monthlyExpenses",
+        "investments"
+      ],
+      "writes": [
+        "enoughMonthly"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 43
+    },
+    {
+      "id": "week",
+      "title": "Designed Week",
+      "file": "rooms/week.html",
+      "reads": [
+        "monthlyExpenses"
+      ],
+      "writes": [
+        "designedHours"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 44
+    },
+    {
+      "id": "buckets",
+      "title": "Time Buckets",
+      "file": "rooms/buckets.html",
+      "reads": [
+        "investments",
+        "monthlyExpenses"
+      ],
+      "writes": [
+        "bucketsPlanned"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 45
+    },
+    {
+      "id": "dreamline",
+      "title": "Dreamline",
+      "file": "rooms/dreamline.html",
+      "reads": [
+        "monthlyExpenses",
+        "grossAnnualIncome"
+      ],
+      "writes": [
+        "dreamsMonthly"
+      ],
+      "requires": [
+        "hours"
+      ],
+      "dashboardNumber": null,
+      "order": 46
+    },
+    {
+      "id": "reversibility",
+      "title": "Reversibility",
+      "file": "rooms/reversibility.html",
+      "reads": [
+        "cashSavings",
+        "monthlyExpenses"
+      ],
+      "writes": [
+        "reversibilityDecision"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 47
+    },
+    {
+      "id": "unlearning",
+      "title": "Unlearning",
+      "file": "rooms/unlearning.html",
+      "reads": [
+        "monthlyExpenses"
+      ],
+      "writes": [
+        "unlearningDropped"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 48
+    },
+    {
+      "id": "student-loans",
+      "title": "Student Loan Decision",
+      "file": "rooms/student-loans.html",
+      "reads": [
+        "totalDebt",
+        "grossAnnualIncome"
+      ],
+      "writes": [
+        "loanPlan",
+        "loanExtra",
+        "idrShare",
+        "forgivenessYears"
+      ],
+      "requires": [
+        "debt"
+      ],
+      "dashboardNumber": null,
+      "order": 49
+    },
+    {
+      "id": "calendar",
+      "title": "Money Calendar & Pay-Later",
+      "file": "rooms/calendar.html",
+      "reads": [
+        "monthlyExpenses",
+        "cashSavings"
+      ],
+      "writes": [
+        "payCadence",
+        "nextPayday",
+        "billsMonthly",
+        "payLaterDue"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 50
+    },
+    {
+      "id": "history",
+      "title": "History",
+      "file": "rooms/history.html",
+      "reads": [
+        "cashSavings",
+        "investments",
+        "totalDebt"
+      ],
+      "writes": [
+        "historyCompareTo"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 51
+    },
+    {
       "id": "refresh",
       "title": "Refresh",
       "file": "rooms/refresh.html",

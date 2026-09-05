@@ -1,0 +1,11 @@
+{
+  "id": "dreamline",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "Tim Ferriss's Dreamline (The 4-Hour Workweek): price each dream a month, add the cost of living, and pad it — the Target Monthly Income is what it takes to fund the life, and the interesting number is how many hours a week at your real hourly wage that is.",
+  "confidence": "convention",
+  "confidenceNote": "The 1.3 is Ferriss's own figure; a convention, kept as one.",
+  "note": "bufferMultiplier: the pad on (expenses + dreams) that gives the target monthly income. horizonMonths: the timeline the exercise is written for. D-101.",
+  "bufferMultiplier": 1.3,
+  "horizonMonths": 6
+}

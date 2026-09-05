@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Designed Week · SPARKS</title>
+<meta name="description" content="What your job actually pays, once you count every hour it takes and everything it costs you to do it."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. THE TEMPLATE ROOM. DECISIONS.md D-097.
+
+  1. READS   The person's income (owned by Start Here) and filingStatus, for
+             the tax estimate; a month's spending, for the lens.
+  2. WRITES  It OWNS person.work — paid hours, unpaid overtime, commute,
+             work costs, weeks a year, and (folded) prep and decompression.
+             Nothing else edits those. It does not touch income.
+  3. CALLS   engines/hourly.js. Tax comes from engines/tier0.js's effective-
+             rate lookup, never a second calculation.
+  4. EMPTY   Opened by deep link with an empty spine it renders with the
+             intake's guesses and says so (Gate.fillGuesses). Each unpaid-
+             hours box is optional: blank is none, not unanswered.
+  5. CONFIG  data/effective_tax_rates_2026.json.
+
+  THE SHAPE (shared/room.js, frozen here): one number, one chart, the lens,
+  five inputs and two folded, the assumptions drawer with sources, why
+  this matters at your stage, one out-of-scope line to Get Help. The ids
+  below are the deep links.
+
+  LIVE-FORM: built once — shared/room.js builds the inputs from the spec
+  on load and only sets .value, never under focus.
+  THEMING: none this pass. A theme is a class on <body> and a palette in
+  shared/theme.css.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../index.html">← Home</a>
+  <h1>Designed Week</h1>
+  <p class="room-lede">The week you would design: 168 hours in blocks, what each block costs and buys, and the month that week adds up to against the one you have.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+  <div class="room-standalone" id="room-standalone" hidden></div>
+
+  <section class="slaf-card" id="number">
+    <div class="room-head-row">
+      <span class="slaf-eyebrow">Your real rate</span>
+      <div id="room-lens"></div>
+    </div>
+    <div class="room-number" id="room-number"></div>
+  </section>
+
+  <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Where the week goes</span>
+    <div id="room-chart"></div>
+  </section>
+
+  <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The hours the job takes</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave anything blank that doesn't apply — working from home means no commute, and blank is none rather than unanswered.</p>
+    <div id="room-inputs"></div>
+  </section>
+
+  <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Priced in life</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
+    <ul class="room-amounts" id="room-amounts"></ul>
+  </section>
+
+  <details class="room-drawer" id="assumptions">
+    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
+    <div class="room-assumptions-body" id="room-assumptions"></div>
+  </details>
+
+  <p class="room-why" id="room-why" hidden></p>
+  <p class="room-scope" id="room-scope"></p>
+
+  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What this is reading</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Tax is estimated from a flat
+    effective-rate table, not a return. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/suggest.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../shared/charts.js"></script>
+<script src="../shared/room.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
+      Hourly = SLAF.Hourly, Charts = SLAF.Charts, Room = SLAF.Room;
+
+  /* ---- writes: this room owns person.work ------------------------------------ */
+  function writeWork(key, value) {
+    var person = Spine.ensurePrimaryPerson('You');
+    var current = Schema.workProfile(Schema.personById(Spine.getProfile(), person.id));
+    var next = Object.assign({}, current);
+    next[key] = value;
+    Spine.upsertPerson({ id: person.id, work: next });
+  }
+  function readWork(h) { return Schema.workProfile(Schema.primaryPerson(h)); }
+  function hoursInput(key, label, placeholder, hint) {
+    return { ctl: key, label: label, kind: 'number', placeholder: placeholder, affix: 'h', hint: hint,
+      read: function (h) { return readWork(h)[key]; }, write: function (v) { writeWork(key, v === null || v <= 0 ? null : v); } };
+  }
+  function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
+
+  var HOUR_COLOURS = { paid: Charts.COLORS.series[0], unpaidOvertimeHoursPerWeek: Charts.COLORS.series[3], commuteHoursPerWeek: Charts.COLORS.series[1], prepHoursPerWeek: Charts.COLORS.series[2], decompressHoursPerWeek: Charts.COLORS.series[4] };
+
+  Room.mount({
+    id: 'week', /* STUB — being built (D-101) */
+    tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'],
+
+    number: function (h, T) {
+      var w = Hourly.realHourlyWage(h, T, {});
+      if (!Money.isOk(w)) return { label: 'Actually, an hour', value: null, reason: w.reason + (/not earning/.test(w.reason || '') ? '' : '') };
+      var sub = 'On paper <strong>' + perHour(w.nominalHourlyCents) + '</strong> · you keep <strong>' + Money.formatRate(w.retained, { decimals: 0 }) + '</strong> of it'
+        + ' · ' + Money.formatCents(w.keptAnnualCents) + ' kept over ' + w.annualTotalHours.toLocaleString('en-US') + ' hours a year';
+      if (w.costsMoreThanItPays) sub += '. <strong>This job costs more than it pays</strong> — check the monthly costs; if they are right, that is the finding';
+      if (w.implausibleHours) sub += '. ' + w.paidHoursPerWeek + ' paid hours a week makes this look enormous; the arithmetic is right, the comparison is not';
+      if (!w.taxKnown) sub += '. Tax is not in yet: ' + (w.taxReason || '');
+      return { label: 'Actually, an hour', value: perHour(w.realHourlyCents), sub: sub, zone: w.costsMoreThanItPays ? 'out' : (w.retained !== null && w.retained < 0.5 ? 'watch' : null), result: w };
+    },
+
+    chart: function (h, T) {
+      var w = Hourly.realHourlyWage(h, T, {});
+      if (!Money.isOk(w)) return Charts.stacked({ rows: [], empty: 'Add your paid hours to see where the week goes.' });
+      var parts = [{ label: 'Paid', value: w.paidHoursPerWeek, color: HOUR_COLOURS.paid }].concat((w.unpaidParts || []).map(function (p) { return { label: p.label, value: p.hours, color: HOUR_COLOURS[p.key] }; }));
+      var gross = w.grossAnnualIncomeCents, tax = w.estimatedTaxCents || 0, costs = w.annualWorkCostsCents, kept = w.keptAnnualCents;
+      return Charts.stacked({
+        title: 'Hours a week, and where the pay goes',
+        rows: [
+          { label: 'Your week', note: w.totalHoursPerWeek + ' h, ' + w.paidHoursPerWeek + ' paid', parts: parts },
+          { label: 'A year of pay', note: 'per ' + Money.formatCents(gross), parts: [
+            { label: 'Kept', value: kept / gross * w.totalHoursPerWeek, color: Charts.COLORS.growth },
+            { label: 'Tax', value: tax / gross * w.totalHoursPerWeek, color: Charts.COLORS.debt },
+            { label: 'Costs of working', value: costs / gross * w.totalHoursPerWeek, color: Charts.COLORS.series[3] }
+          ] }
+        ],
+        format: function (v) { return (Math.round(v * 10) / 10) + ' h'; }
+      });
+    },
+
+    inputs: [
+      hoursInput('contractedHoursPerWeek', 'Paid hours a week', 'e.g. 40'),
+      hoursInput('unpaidOvertimeHoursPerWeek', 'Unpaid overtime', 'e.g. 3'),
+      hoursInput('commuteHoursPerWeek', 'Commuting', 'e.g. 5'),
+      { ctl: 'workCostsMonthlyCents', label: 'Costs of working, a month', kind: 'money', placeholder: 'e.g. 400', hint: 'Petrol, parking, transit, work clothes, lunches you would not otherwise buy, childcare only while working.',
+        read: function (h) { return readWork(h).workCostsMonthlyCents; }, write: function (v) { writeWork('workCostsMonthlyCents', v); } },
+      { ctl: 'weeksPerYear', label: 'Weeks worked a year', kind: 'number', placeholder: String(Schema.WORK_DEFAULTS.weeksPerYear),
+        read: function (h) { var w = readWork(h).weeksPerYear; return w === Schema.WORK_DEFAULTS.weeksPerYear ? null : w; }, write: function (v) { writeWork('weeksPerYear', v === null || v <= 0 ? Schema.WORK_DEFAULTS.weeksPerYear : v); } }
+    ],
+    moreLabel: 'The hours around the job',
+    more: [
+      hoursInput('prepHoursPerWeek', 'Getting ready', 'e.g. 2.5'),
+      hoursInput('decompressHoursPerWeek', 'Decompressing', 'e.g. 2.5')
+    ],
+
+    amounts: function (h, T) {
+      var w = Hourly.realHourlyWage(h, T, {});
+      var spend = Schema.monthlyExpensesCents(h);
+      var rows = [];
+      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
+      if (Money.isOk(w)) {
+        rows.push({ label: 'A year of tax, estimated', cents: w.estimatedTaxCents || 0 });
+        if (w.annualWorkCostsCents > 0) rows.push({ label: 'A year of the costs of working', cents: w.annualWorkCostsCents });
+      }
+      rows.push({ label: 'A $1,200 thing you are eyeing', cents: 120000 });
+      return rows;
+    },
+
+    assumptions: function (h, T) {
+      var w = Hourly.realHourlyWage(h, T, {});
+      var tax = T.effectiveTaxRates;
+      var work = readWork(h);
+      return [
+        { label: 'Tax', value: Money.isOk(w) && w.taxKnown ? Money.formatRate(w.effectiveRate || (w.estimatedTaxCents / w.grossAnnualIncomeCents), { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')' },
+        { label: 'Weeks a year', value: String(Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear), source: Money.isEntered(work.weeksPerYear) && work.weeksPerYear !== Schema.WORK_DEFAULTS.weeksPerYear ? 'yours' : 'the default: 52 less four weeks of leave and holidays (convention)' },
+        { label: 'Unpaid hours', value: 'count as work', source: 'Your Money or Your Life: an hour the job takes is an hour it costs, paid or not (convention)' },
+        { label: 'Real return, for the lens', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' }
+      ];
+    },
+
+    why: function (h, T, situation) {
+      return {
+        employed: 'Employed, the headline rate is the one on the offer letter. This one is the rate that decides whether the next thing — a raise, a move, an hour of overtime — is worth it.',
+        selfEmployed: 'Self-employed, there is no headline rate, only this one: what is left after the tax you set aside and the hours the work really takes, including the ones nobody bills.',
+        mixed: 'With a job and your own work, each has a real rate. This reads the job; put the own-work hours in as a second job in Start Here to compare them.',
+        student: 'A part-time job at a student’s stage is priced against study hours, not against a career. If the real rate is low, the question is what the hours are taking from.',
+        betweenJobs: '', retired: ''
+      }[situation] || 'Any job has a headline rate and a real one. The gap between them is what this room measures.';
+    },
+
+    scope: 'This room does not model overtime pay, shift differentials, or a second job’s hours on their own. Tax is a flat estimate, not a return.'
+  });
+})();
+</script>
+</body>
+</html>
