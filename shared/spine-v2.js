@@ -917,6 +917,30 @@
     save(); notify();
     return h.notApplicable[key] === true;
   }
+  /** The Skill Tree's one write: a skill done (with the day and how), or
+   *  reopened. Nothing else about a skill is ever stored. D-131. */
+  function setSkillDone(id, on, by, label) {
+    var h = load();
+    h.skillTree = Schema.createSkillTree(h.skillTree || {});
+    if (on === false || on === null) delete h.skillTree.state[id];
+    else h.skillTree.state[id] = { state: 'done', on: typeof on === 'string' && on ? on : new Date().toISOString().slice(0, 10), by: by === 'proof' ? 'proof' : 'self' };
+    pendingLabel = label || ((on === false || on === null ? 'Reopened skill: ' : 'Skill done: ') + id);
+    save(); notify();
+    return h.skillTree.state[id] || null;
+  }
+  /** An exercise completed (or un-completed), with what a run computed. D-131. */
+  function markExercise(id, done, result, label) {
+    var h = load();
+    h.exercises = Schema.createExercisesLog(h.exercises || {});
+    if (done === false) { delete h.exercises.done[id]; delete h.exercises.results[id]; }
+    else {
+      h.exercises.done[id] = typeof done === 'string' && done ? done : new Date().toISOString().slice(0, 10);
+      if (result && typeof result === 'object') h.exercises.results[id] = result;
+    }
+    pendingLabel = label || ((done === false ? 'Undid exercise: ' : 'Exercise done: ') + id);
+    save(); notify();
+    return h.exercises.done[id] || null;
+  }
   /** The one-time answer: is there an employer 401(k)? D-129. */
   function setHas401k(value) {
     var h = load();
@@ -1407,6 +1431,8 @@
     markReimbursed: markReimbursed,
     togglePreset: togglePreset,
     setNotApplicable: setNotApplicable,
+    setSkillDone: setSkillDone,
+    markExercise: markExercise,
     setHas401k: setHas401k,
     upsertIncomeEntry: upsertIncomeEntry,
     removeIncomeEntry: removeIncomeEntry,

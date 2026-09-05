@@ -210,6 +210,9 @@
     'skills[id].automated':                      { class: 'raw',        unit: 'bool',    note: 'runs without you — the automation ratio counts these. D-090' },
     'skills[id].dueOn':                          { class: 'raw',        unit: 'date',    note: 'periodic skills: lastDone + everyDays' },
     'skills[id].verifiedBy':                     { class: 'raw',        unit: 'enum',    values: ['household', 'self'], note: 'household = marked done from a fact the model already holds, and un-marked if the fact stops holding' },
+    'skillTree.state[id].state':                 { class: 'raw',        unit: 'enum',    values: ['done'], note: 'the Skill Tree\'s standing per skill: only done is stored, with `on` (ISO day) and `by` (proof | self); open, locked, bypassed, fogged and not-yours are derived by engines/skilltree.js every time and never written. Owned by the Skill Tree. D-131' },
+    'exercises.done[id]':                        { class: 'raw',        unit: 'date',    note: 'ISO day an exercise was completed; completing one boosts its skill to Open, never to Done. Owned by Exercises. D-131' },
+    'exercises.results[id]':                     { class: 'raw',        unit: 'object',  note: 'what a `run` exercise computed when it was completed, kept so it can be compared later. Owned by Exercises. D-131' },
     'practiceLedger[].cents':                    { class: 'raw',        unit: 'cents',   note: 'one row per skill per logged day: what that day\'s practice is worth. Feedback, not points. D-090' },
     'expenses.entries[].fixed':                  { class: 'raw',        unit: 'bool',    note: 'null not asked; true = could not be cut next month. Feeds the minimum viable month and cuttability. D-082' },
     'goals[].targetDate':                        { class: 'raw',        unit: 'iso-date' },
@@ -691,6 +694,27 @@
       verifiedOn: iso(f.verifiedOn),
       verifiedBy: f.verifiedBy === undefined ? null : f.verifiedBy
     };
+  }
+  /* The Skill Tree stores only `done` (D-131): every other state is
+     derived from the household by engines/skilltree.js, so the tree can
+     never disagree with the facts. */
+  var SKILL_TREE_BY = ['proof', 'self'];
+  function createSkillTree(fields) {
+    var f = fields || {};
+    var state = {};
+    Object.keys(f.state || {}).forEach(function (id) {
+      var v = f.state[id];
+      if (!v || v.state !== 'done') return;
+      state[id] = { state: 'done', on: typeof v.on === 'string' && v.on ? v.on : null, by: SKILL_TREE_BY.indexOf(v.by) >= 0 ? v.by : 'self' };
+    });
+    return { state: state };
+  }
+  function createExercisesLog(fields) {
+    var f = fields || {};
+    var done = {}, results = {};
+    Object.keys(f.done || {}).forEach(function (id) { if (typeof f.done[id] === 'string' && f.done[id]) done[id] = f.done[id]; });
+    Object.keys(f.results || {}).forEach(function (id) { if (f.results[id] && typeof f.results[id] === 'object') results[id] = f.results[id]; });
+    return { done: done, results: results };
   }
   function createSkills(fields) {
     var out = {};
@@ -1410,6 +1434,9 @@
       /* The Skill Stacker's standing per skill, keyed by catalogue id, and
          the practice ledger it writes a row to each logged day. D-090. */
       skills: createSkills(f.skills),
+      /* The Skill Tree's standing and the exercise library's log (D-131). */
+      skillTree: createSkillTree(f.skillTree),
+      exercises: createExercisesLog(f.exercises),
       practiceLedger: (f.practiceLedger || []).map(createPracticeEntry).filter(function (e) { return e.on && e.skill; }),
       assumptions: Object.assign({}, ASSUMPTION_DEFAULTS, f.assumptions || {}),
       /* User overrides persist SEPARATELY from the defaults so "reset to
@@ -1929,6 +1956,8 @@
     createPurchasePlan: createPurchasePlan,
     BUDGET_PRESETS: BUDGET_PRESETS,
     createNotApplicable: createNotApplicable,
+    createSkillTree: createSkillTree,
+    createExercisesLog: createExercisesLog,
     createVariableIncomePlan: createVariableIncomePlan,
     SPLIT_MODES: SPLIT_MODES,
     createEnough: createEnough,
