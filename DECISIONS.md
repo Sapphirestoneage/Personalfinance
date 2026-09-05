@@ -6558,6 +6558,89 @@ the ids itself, must not treat a tag as a reason to reorder anything, and
 must not write `keepReasons` from a rule of its own — the only writer is the
 household, through this room.
 
+## D-133 — Debt Payoff: how interest works, asked once
+
+**The confusion.** A debt row asked about interest in four controls, in
+three places. A `Rate` box at the top; a `No interest charged` tick
+immediately under it; and then, a screen further down inside the
+cards-only block, a separate `0% / promo ends` date beside `Then the rate
+becomes`. Three of those four say something about 0%, and two of them mean
+opposite things: interest-free is forever, a promo is a deadline (D-053).
+Someone with a balance-transfer card met the tick first, ticked it, and the
+plan then treated the card as free for life — the exact error D-053 exists
+to prevent, reachable in one tap because the honest answer was hidden a
+screen below.
+
+**The room now asks once.** A `How interest works` block per debt with
+three answers — *A rate that stays*, *0% or a promo rate*, *No interest,
+ever* — and only the fields that answer owns: a rate; a rate with an end
+date and a go-to rate; or nothing at all. Under them, one line saying what
+the plan will actually do: "Planned at 5.50% for the whole payoff",
+"Planned at 0.00% until June 2027, then 24.99%", "Nothing is added to this
+balance." A promo missing its end date or its go-to rate says so in that
+same line, in the words that name the consequence: *the plan treats today's
+rate as permanent*.
+
+The promo fields are no longer cards-only. `Debt.promoStatus` never cared
+about type, and a 0% dealer loan or a 0% hospital plan is a real thing;
+hiding the fields behind `type === 'credit_card'` was a bug that made those
+debts unrepresentable. The credit limit stays cards-only, because a
+mortgage has no limit for a balance to be a share of (D-045).
+
+**The mode is derived, never stored.** `interestFree` means never,
+a stored `promoEndsOn` means promo, anything else means stays. So there is
+no new field, nothing migrates, and a household imported from anywhere
+lands in the right mode on its own.
+
+That derivation deadlocks in one place, and the fix is worth writing down:
+promo mode is entered *because* a date is stored, but the date box only
+shows in promo mode, so a card with no date could never get one. The tap
+itself is therefore remembered for the visit and never stored — the same
+treatment a dismissed suggestion gets (D-132). A debt left in promo with
+nothing filled in is still, to every engine, a plain fixed-rate debt, which
+is what the sentence under the fields says.
+
+Switching modes rewrites only the fields that mode owns, so a stale promo
+date can never sit behind a debt the household has said is fixed-rate and
+re-enter the plan through `promoStatus`. Leaving *no interest, ever* puts
+the rate back to unanswered when the 0 only ever came from that answer —
+the rule the old tick already had — so the row asks again rather than
+planning a real debt at 0%.
+
+**Every field built once, shown by mode.** Two inputs for one field would
+give `paintInterest()` and the change handler two nodes to disagree about.
+The fields are built once and hidden by mode, so switching mode paints and
+never rebuilds the row under a finger (D-034).
+
+### The figures
+
+Every number in the plan card now sits on one fixed column with what it
+means beside it, rather than a two-column list of bare figures: *Interest
+you'll pay · $2,888 · The cost of borrowing, on top of what you actually
+owe.* The four orderings read as a table — name, interest, time to clear on
+fixed rails, with the column captions said once above the list instead of
+repeated under every row.
+
+**A tie badges nothing.** When every ordering produces the same total, the
+room used to badge one of them "cheapest" while showing four identical
+figures, which reads as a bug rather than as a tie. The tie is now worked
+out before the rows are drawn: no badge, and the two comparison bar charts
+stand down as well, because four bars of identical length drawn twice is
+the tie note drawn badly. The note above them already says it in words.
+
+### Compatibility note
+
+Stored shape: unchanged. No field is added, removed, or renamed, and no
+migration runs. `interestFree`, `rate`, `promoEndsOn` and `postPromoRate`
+are written exactly as before and mean exactly what they meant; only the
+controls that write them moved. A household saved before this entry opens
+in the mode its stored values imply. `data/debt_rules.json` is untouched.
+Rooms updated: `rooms/debt-payoff.html` only. A future room that wants to
+say how a debt charges interest should derive it the same way rather than
+adding a mode field — `interestFree` first, then `promoEndsOn`, then a
+plain rate — and must keep treating a promo with no end date as a
+fixed-rate debt, never as free money.
+
 ---
 
 # The Dungeons & Dividends entries

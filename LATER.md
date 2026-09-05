@@ -98,3 +98,19 @@ moved between them. `rooms/history.html`, D-122.
   favourability is a tag someone ticks, not a calculation: nothing checks
   whether the interest is actually deductible at their income, and doing so
   needs the Tax room to own a figure it does not own yet.
+
+## How interest works, asked once (D-133)
+
+- **Built**: the three-answer interest block, the derived mode, the promo
+  fields freed from the cards-only block, the plain sentence per mode, the
+  figures on one rail with their meanings, the orderings as a table, the
+  tie that badges nothing. D-133.
+- Still open: the same four-controls-in-three-places problem exists
+  wherever a rate is asked for with a variant beside it. Housing asks for a
+  mortgage rate with no promo concept at all, so a 0% or an ARM cannot be
+  said there. Worth one pass over every room that takes a rate, using this
+  block as the pattern, rather than fixing them one at a time.
+- Also open: a debt left in promo mode with nothing filled in is a
+  fixed-rate debt to every engine, which is honest but silent. A nudge on
+  the plan card naming those debts would be better than a sentence only
+  visible inside the row.
