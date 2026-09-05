@@ -8426,7 +8426,7 @@ section('The D&D folder\'s vendored copies');
 
   /* Byte-identical, deliberately — including the SLAF namespace they register
      under, so this comparison stays exact. */
-  ['shared/money.js', 'shared/schema.js', 'engines/projection.js', 'engines/tier0.js',
+  ['shared/money.js', 'shared/schema.js', 'engines/projection.js', 'engines/tier0.js', 'engines/foo.js',
    'shared/theme.css', 'shared/fonts.css', 'favicon.svg']
     .forEach(function (rel) {
       const here = fs.readFileSync(path.join(ROOT, rel));

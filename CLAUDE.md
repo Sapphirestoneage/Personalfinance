@@ -103,3 +103,21 @@ one.
   desktop click resolves too fast to show the bugs a real tap finds, and a
   programmatic `.focus()` hides them completely.
 - Log every assumption in `DECISIONS.md`, matching the existing entry format.
+
+## End every session with a link
+
+The repo owner is not a coder and does not want to hunt for what was built.
+**Finish every session by printing a clickable link to the thing you changed**,
+as the last thing in your reply.
+
+GitHub Pages serves from `main` at
+`https://sapphirestoneage.github.io/Personalfinance/` — so a room is only live
+once its work is **on `main`**. Give the deep link to the specific room, not the
+site root:
+
+    https://sapphirestoneage.github.io/Personalfinance/dnd/campaign.html
+
+If the work is still on a feature branch, **say so in one line** and give the
+branch link instead of a Pages link that would show the old version. Never hand
+over a Pages URL for something that is not on `main` yet — it looks broken and
+it is not.

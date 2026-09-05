@@ -1,0 +1,2258 @@
+{
+  "id": "dnd_scenarios",
+  "version": "1.0",
+  "asOf": "2026-09-05",
+  "source": "Written for this build. The situations are ordinary ones; the ORDER they should be answered in is the Financial Order of Operations (data/foo_rules.json), which is what makes a 'should have' computable rather than an opinion.",
+  "confidence": "convention",
+  "confidenceNote": "Every money figure is a plausible instance, not a measurement. Scenarios are a teaching device: the point is the ORDER of the choices, not the size of the numbers.",
+  "note": "DD-024. A scenario is a situation with three options. Each option carries: `serves` — the FOO step it advances, or null; `lever` — which of the seven class levers it pulls, or null; `subStats` — what practising it trains; and `money` — the deltas, each expressed as `cents` (absolute), `months` (x monthly expenses) or `pctIncome` (x gross annual income) so a scenario fits any character. The 'should have done' is NOT authored here: the engine computes it from `serves` against your live FOO placement, so it moves as you move.",
+  "rules": {
+    "boardSize": 6,
+    "roundsPerChapter": 10,
+    "stackWarnCount": 6,
+    "stackSubStatShare": 0.4,
+    "moneyKinds": [
+      "cents",
+      "months",
+      "pctIncome"
+    ],
+    "moneyFields": [
+      "cash",
+      "investments",
+      "debt",
+      "incomeAnnual",
+      "monthlyExpenses"
+    ],
+    "note": "boardSize scenarios are offered each round and you resolve one — choosing what to face is itself a decision. roundsPerChapter rounds make a chapter, and a chapter ends in a review. stackWarnCount: that many of a chapter's choices on one lever raises the stacking warning. stackSubStatShare: one sub-stat taking that share of a chapter's training raises it too."
+  },
+  "scenarios": [
+    {
+      "id": "the-boiler",
+      "title": "The boiler gives up",
+      "setup": "It is February. The boiler makes a noise it has not made before, and then no noise at all. The engineer wants eight hundred, today.",
+      "prompt": "Where does the eight hundred come from?",
+      "fooStep": 1,
+      "tiers": [
+        "I",
+        "II"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "card",
+          "label": "Put it on the card",
+          "outcome": "It is warm again by evening. The balance is eight hundred higher and the rate is 22%.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "debt": {
+              "cents": 80000
+            }
+          },
+          "note": "This is what a starter fund exists to prevent, and why it is step one."
+        },
+        {
+          "id": "starter",
+          "label": "This is what the fund is for",
+          "outcome": "You move eight hundred and feel almost nothing. That feeling is the entire product.",
+          "serves": 1,
+          "lever": "anchor",
+          "subStats": {
+            "reserveDepth": 2,
+            "scenarioForesight": 1
+          },
+          "money": {
+            "cash": {
+              "cents": -80000
+            }
+          }
+        },
+        {
+          "id": "defer",
+          "label": "Shower at the gym until March",
+          "outcome": "You save the eight hundred and lose six weeks of evenings. The boiler still needs fixing in March, and the part has gone up.",
+          "serves": null,
+          "lever": "keeper",
+          "subStats": {
+            "selfAwareness": 1
+          },
+          "money": {
+            "cash": {
+              "cents": -5000
+            }
+          },
+          "note": "Deferral is not avoidance. The bill waits, and sometimes grows."
+        }
+      ]
+    },
+    {
+      "id": "the-eleven-subscriptions",
+      "title": "Eleven of them",
+      "setup": "You export a year of the current account and sort by merchant. There are eleven recurring charges. You can name four.",
+      "prompt": "What do you do with the other seven?",
+      "fooStep": 0,
+      "tiers": [
+        "I",
+        "II"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "cancel-most",
+          "label": "Cancel seven, keep four",
+          "outcome": "Ninety-one a month back, permanently, for forty minutes of clicking. The best hourly rate you will earn this year.",
+          "serves": 0,
+          "lever": "keeper",
+          "subStats": {
+            "selfAwareness": 2,
+            "consistency": 1
+          },
+          "money": {
+            "monthlyExpenses": {
+              "cents": -9100
+            }
+          }
+        },
+        {
+          "id": "cancel-one",
+          "label": "Cancel the worst one",
+          "outcome": "Fourteen a month. You feel virtuous and the other six renew on the 3rd.",
+          "serves": 0,
+          "lever": "keeper",
+          "subStats": {
+            "selfAwareness": 1
+          },
+          "money": {
+            "monthlyExpenses": {
+              "cents": -1400
+            }
+          }
+        },
+        {
+          "id": "keep",
+          "label": "You use them, sort of",
+          "outcome": "You might. The Subscription Slime divides quietly; nobody ever signs up for eleven of anything.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "monthlyExpenses": {
+              "cents": 1200
+            }
+          },
+          "note": "Two more will appear by summer. They always do."
+        }
+      ]
+    },
+    {
+      "id": "the-benefits-window",
+      "title": "The enrolment window",
+      "setup": "Two weeks to pick your benefits. The default is pre-ticked and someone in HR has clearly never read it.",
+      "prompt": "How much of the form do you actually read?",
+      "fooStep": 0,
+      "tiers": [
+        "I",
+        "II"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "read-it",
+          "label": "Read all of it, once",
+          "outcome": "Ninety minutes. You find the match, the HSA, and a life policy you are paying for twice.",
+          "serves": 2,
+          "lever": "compounder",
+          "subStats": {
+            "instrumentLiteracy": 2,
+            "taxLiteracy": 1
+          },
+          "money": {
+            "monthlyExpenses": {
+              "cents": -2200
+            }
+          }
+        },
+        {
+          "id": "defaults",
+          "label": "Take the defaults",
+          "outcome": "The defaults are set for the company's convenience, not yours. Nothing bad happens today.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {}
+        },
+        {
+          "id": "skip",
+          "label": "Miss the window",
+          "outcome": "Enrolment closes. You are on the standard plan for a year, whichever one that is.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "monthlyExpenses": {
+              "cents": 4000
+            }
+          },
+          "note": "A year is a long time to pay for a plan nobody chose."
+        }
+      ]
+    },
+    {
+      "id": "the-overdraft-again",
+      "title": "Into the overdraft, again",
+      "setup": "Third month running. It is never much and it is always the same week.",
+      "prompt": "What is the actual fix?",
+      "fooStep": 1,
+      "tiers": [
+        "I"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "buffer",
+          "label": "Build a one-month buffer first",
+          "outcome": "You cut hard for two months to get a float in place. The overdraft stops happening because it cannot.",
+          "serves": 1,
+          "lever": "anchor",
+          "subStats": {
+            "reserveDepth": 2,
+            "consistency": 1
+          },
+          "money": {
+            "cash": {
+              "months": 0.5
+            },
+            "monthlyExpenses": {
+              "cents": -6000
+            }
+          }
+        },
+        {
+          "id": "call",
+          "label": "Call and ask them to waive it",
+          "outcome": "They waive two of the three. Pleasant, useful, and it changes nothing about next month.",
+          "serves": null,
+          "lever": "earner",
+          "subStats": {
+            "negotiation": 1,
+            "personability": 1
+          },
+          "money": {
+            "cash": {
+              "cents": 7000
+            }
+          }
+        },
+        {
+          "id": "shuffle",
+          "label": "Move payday around it",
+          "outcome": "You are now managing a timing problem forever, in your head, for free.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {},
+          "note": "The Overdraft Gremlin charges you for not having money — the problem you already had."
+        }
+      ]
+    },
+    {
+      "id": "the-destination-birthday",
+      "title": "The destination fortieth",
+      "setup": "Your oldest friend turns forty in Lisbon. Flights, four nights, and a dinner someone has already booked.",
+      "prompt": "Twelve hundred you have not got. What happens?",
+      "fooStep": 1,
+      "tiers": [
+        "I",
+        "II"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "all-in",
+          "label": "Go, and put it on the card",
+          "outcome": "It is a wonderful weekend. It is also twelve hundred at 22%, which is a wonderful weekend and then eighteen months.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "debt": {
+              "cents": 120000
+            }
+          }
+        },
+        {
+          "id": "one-night",
+          "label": "Go for the Saturday only",
+          "outcome": "Four hundred. You are at the dinner, which was the point, and home before the expensive part.",
+          "serves": null,
+          "lever": "keeper",
+          "subStats": {
+            "negotiation": 1,
+            "selfAwareness": 2
+          },
+          "money": {
+            "cash": {
+              "cents": -40000
+            }
+          }
+        },
+        {
+          "id": "decline",
+          "label": "Send a good message and stay",
+          "outcome": "You are not there. He understands, mostly. You keep four hundred and a small ache.",
+          "serves": 1,
+          "lever": "keeper",
+          "subStats": {
+            "selfAwareness": 1
+          },
+          "money": {},
+          "note": "Real, and the campaign will not pretend it costs nothing."
+        }
+      ]
+    },
+    {
+      "id": "the-match",
+      "title": "Free money, declined",
+      "setup": "The employer matches the first 5%. You are putting in 2%, and have been for three years.",
+      "prompt": "What do you do with the three points?",
+      "fooStep": 2,
+      "tiers": [
+        "I",
+        "II"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "full",
+          "label": "Go to 5% from next payslip",
+          "outcome": "A 100% return, instantly, on the only trade in finance that is actually free. Take-home drops less than you feared because of the tax.",
+          "serves": 2,
+          "lever": "compounder",
+          "subStats": {
+            "savingsRate": 2,
+            "instrumentLiteracy": 1
+          },
+          "money": {
+            "investments": {
+              "pctIncome": 0.1
+            },
+            "monthlyExpenses": {
+              "cents": -1000
+            }
+          }
+        },
+        {
+          "id": "split",
+          "label": "Go to 3.5%, see how it feels",
+          "outcome": "Half the free money. Better than none, and you will not revisit it for two years.",
+          "serves": 2,
+          "lever": "compounder",
+          "subStats": {
+            "savingsRate": 1
+          },
+          "money": {
+            "investments": {
+              "pctIncome": 0.05
+            }
+          }
+        },
+        {
+          "id": "stay",
+          "label": "You need the take-home",
+          "outcome": "Sometimes true. Three years of an unclaimed match is not a small number, and it compounds.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {},
+          "note": "The rulebook calls this leaving the match on the table. It is FOO step two for a reason."
+        }
+      ]
+    },
+    {
+      "id": "the-raise-lands",
+      "title": "The raise lands",
+      "setup": "Six percent, effective next month. It is the first real one in four years.",
+      "prompt": "Where does it go before you get used to it?",
+      "fooStep": 2,
+      "tiers": [
+        "I",
+        "II"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "lifestyle",
+          "label": "Nowhere in particular",
+          "outcome": "By the third month you could not say where it went. The Lifestyle-Creep Hydra grows a head, and every head was reasonable.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.06
+            },
+            "monthlyExpenses": {
+              "pctIncome": 0.055
+            }
+          }
+        },
+        {
+          "id": "automate",
+          "label": "Raise the contribution by the same six",
+          "outcome": "You never see it, so you never miss it. This is the single highest-leverage moment a raise ever has.",
+          "serves": 2,
+          "lever": "compounder",
+          "subStats": {
+            "savingsRate": 2,
+            "consistency": 2
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.06
+            },
+            "investments": {
+              "pctIncome": 0.06
+            }
+          }
+        },
+        {
+          "id": "half",
+          "label": "Half to the future, half to now",
+          "outcome": "Three points saved, three points enjoyed. Defensible, sustainable, and honest about being a person.",
+          "serves": 2,
+          "lever": "compounder",
+          "subStats": {
+            "savingsRate": 1,
+            "selfAwareness": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.06
+            },
+            "investments": {
+              "pctIncome": 0.03
+            },
+            "monthlyExpenses": {
+              "pctIncome": 0.025
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-card-balance",
+      "title": "Four thousand at twenty-two percent",
+      "setup": "It accumulated over two years in pieces small enough that none of them felt like a decision.",
+      "prompt": "How do you attack it?",
+      "fooStep": 3,
+      "tiers": [
+        "I",
+        "II"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "avalanche",
+          "label": "Highest rate first, hard",
+          "outcome": "Eight hundred and eighty a year in interest, stopped. Nothing else you can buy returns 22% guaranteed.",
+          "serves": 3,
+          "lever": "keeper",
+          "subStats": {
+            "consistency": 2,
+            "instrumentLiteracy": 1
+          },
+          "money": {
+            "debt": {
+              "cents": -150000
+            },
+            "cash": {
+              "cents": -150000
+            }
+          }
+        },
+        {
+          "id": "minimum",
+          "label": "Minimums, and get to it later",
+          "outcome": "The minimum is designed to keep you there. At this rate 'later' is roughly nineteen years.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "debt": {
+              "cents": 40000
+            }
+          },
+          "note": "Debt Burden level 1: disadvantage on CON saves. It is the rulebook's own rule."
+        },
+        {
+          "id": "transfer",
+          "label": "Move it to a 0% deal",
+          "outcome": "Eighteen months of breathing room and a 3% fee. Genuinely useful — if you use the eighteen months.",
+          "serves": 3,
+          "lever": "keeper",
+          "subStats": {
+            "instrumentLiteracy": 2,
+            "marketLiteracy": 1
+          },
+          "money": {
+            "debt": {
+              "cents": 12000
+            }
+          },
+          "note": "A 0% card is a card with a deadline."
+        }
+      ]
+    },
+    {
+      "id": "the-sibling",
+      "title": "Your sister asks",
+      "setup": "Fifteen hundred. She is good for it, probably, and has been good for it before, twice, slowly.",
+      "prompt": "What do you say?",
+      "fooStep": 3,
+      "tiers": [
+        "I",
+        "II",
+        "III"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "give",
+          "label": "Give it, and call it given",
+          "outcome": "The money is gone and the relationship is not. Nobody is owed anything, which is the cheapest possible version of this.",
+          "serves": null,
+          "lever": "keeper",
+          "subStats": {
+            "selfAwareness": 2,
+            "personability": 1
+          },
+          "money": {
+            "cash": {
+              "cents": -150000
+            }
+          }
+        },
+        {
+          "id": "lend",
+          "label": "Lend it, with a date on it",
+          "outcome": "Written down, a date, no interest. It works or it does not, and either way you both know which.",
+          "serves": null,
+          "lever": "earner",
+          "subStats": {
+            "negotiation": 2,
+            "personability": 1
+          },
+          "money": {
+            "cash": {
+              "cents": -150000
+            }
+          }
+        },
+        {
+          "id": "decline",
+          "label": "Say no, kindly and early",
+          "outcome": "The hardest option and often the right one. The Well-Meaning Family Familiar is a CHA save for a reason.",
+          "serves": 3,
+          "lever": "keeper",
+          "subStats": {
+            "selfAwareness": 2,
+            "negotiation": 1
+          },
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-car-finance",
+      "title": "Eleven percent on a car",
+      "setup": "Two years left. The car is fine. The rate is not.",
+      "prompt": "What is worth doing?",
+      "fooStep": 3,
+      "tiers": [
+        "I",
+        "II"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "overpay",
+          "label": "Overpay it into the ground",
+          "outcome": "Every hundred is a guaranteed 11%. There is no fund that offers you that.",
+          "serves": 3,
+          "lever": "keeper",
+          "subStats": {
+            "consistency": 2
+          },
+          "money": {
+            "debt": {
+              "cents": -200000
+            },
+            "cash": {
+              "cents": -200000
+            }
+          }
+        },
+        {
+          "id": "refinance",
+          "label": "Refinance to six",
+          "outcome": "Twenty minutes of forms for half the rate. Boring, unglamorous, and one of the best-paid hours available.",
+          "serves": 3,
+          "lever": "keeper",
+          "subStats": {
+            "instrumentLiteracy": 2,
+            "negotiation": 1
+          },
+          "money": {
+            "monthlyExpenses": {
+              "cents": -8000
+            }
+          }
+        },
+        {
+          "id": "upgrade",
+          "label": "Actually, trade up",
+          "outcome": "A newer car, a longer term, a bigger balance. The Commission Churn-Wraith would like a word.",
+          "serves": null,
+          "lever": "speculator",
+          "subStats": {},
+          "money": {
+            "debt": {
+              "cents": 600000
+            },
+            "monthlyExpenses": {
+              "cents": 12000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-layoff-rumour",
+      "title": "The rumour",
+      "setup": "Two teams went last quarter. Nobody has said anything about yours, which is exactly what they said last time.",
+      "prompt": "What do you do with the next three months?",
+      "fooStep": 4,
+      "tiers": [
+        "II",
+        "III"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "build",
+          "label": "Build the fund like it is a job",
+          "outcome": "You get to five months. Nothing happens. That is what a good outcome looks like, and it feels like nothing.",
+          "serves": 4,
+          "lever": "anchor",
+          "subStats": {
+            "reserveDepth": 2,
+            "scenarioForesight": 2
+          },
+          "money": {
+            "cash": {
+              "months": 2
+            },
+            "monthlyExpenses": {
+              "cents": -12000
+            }
+          }
+        },
+        {
+          "id": "cv",
+          "label": "Update the CV and take two calls",
+          "outcome": "Not money, but Strength. The Layoff Reaper does not damage the balance — it removes the thing refilling it.",
+          "serves": null,
+          "lever": "earner",
+          "subStats": {
+            "structuralMobility": 2,
+            "network": 2
+          },
+          "money": {}
+        },
+        {
+          "id": "nothing",
+          "label": "It is probably fine",
+          "outcome": "It is probably fine. The Reaper attacks at +7 against an Armour Class you have not built.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-cash-in-the-wrong-account",
+      "title": "Nine thousand at nought point one",
+      "setup": "The emergency fund is doing its job. It is doing it in an account paying 0.1% while inflation does 3.",
+      "prompt": "Where should it live?",
+      "fooStep": 4,
+      "tiers": [
+        "II",
+        "III"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "hysa",
+          "label": "Move it to a proper savings account",
+          "outcome": "Twenty minutes for roughly four hundred a year, every year, at no risk. Nothing else on this list is that clean.",
+          "serves": 4,
+          "lever": "anchor",
+          "subStats": {
+            "instrumentLiteracy": 2,
+            "marketLiteracy": 1
+          },
+          "money": {
+            "cash": {
+              "cents": 40000
+            }
+          }
+        },
+        {
+          "id": "leave",
+          "label": "Leave it, it is the safe option",
+          "outcome": "It is the familiar option. The Inflation Wraith does 1d4 a month and never announces itself.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "cash": {
+              "cents": -27000
+            }
+          }
+        },
+        {
+          "id": "invest-all",
+          "label": "Put it in the market instead",
+          "outcome": "Higher expected return, and no longer an emergency fund. You have swapped your armour for a bigger sword.",
+          "serves": null,
+          "lever": "compounder",
+          "subStats": {
+            "marketLiteracy": 1
+          },
+          "money": {
+            "cash": {
+              "months": -3
+            },
+            "investments": {
+              "months": 3
+            }
+          },
+          "note": "An emergency fund that can fall 30% on the day you need it is not one."
+        }
+      ]
+    },
+    {
+      "id": "the-holiday-vs-fund",
+      "title": "Two thousand, one summer",
+      "setup": "The fund is at two months. The trip is real, booked-able, and with people you will not easily gather again.",
+      "prompt": "Which one wins?",
+      "fooStep": 4,
+      "tiers": [
+        "II"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "go",
+          "label": "Go, in full",
+          "outcome": "It is a good holiday. The fund is still two months and you knew that when you booked.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "cash": {
+              "cents": -200000
+            }
+          }
+        },
+        {
+          "id": "cheaper",
+          "label": "Go, but at half",
+          "outcome": "Same people, fewer nights, a worse hotel nobody remembers. You keep a thousand and lose almost nothing that mattered.",
+          "serves": 4,
+          "lever": "keeper",
+          "subStats": {
+            "selfAwareness": 2,
+            "negotiation": 1
+          },
+          "money": {
+            "cash": {
+              "cents": -100000
+            }
+          }
+        },
+        {
+          "id": "postpone",
+          "label": "Finish the fund first",
+          "outcome": "You are not there. The fund reaches four months in November and the next trip is not a decision at all.",
+          "serves": 4,
+          "lever": "anchor",
+          "subStats": {
+            "reserveDepth": 2,
+            "consistency": 1
+          },
+          "money": {
+            "cash": {
+              "months": 1
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-hsa",
+      "title": "The account nobody explains",
+      "setup": "High-deductible plan, HSA offered. Everyone treats it as a medical current account.",
+      "prompt": "What is it actually for?",
+      "fooStep": 5,
+      "tiers": [
+        "II",
+        "III"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "max-invest",
+          "label": "Max it and invest the balance",
+          "outcome": "Deductible going in, growing untaxed, out untaxed for medical. It is the only account that does all three, and it is on step five.",
+          "serves": 5,
+          "lever": "compounder",
+          "subStats": {
+            "taxLiteracy": 2,
+            "instrumentLiteracy": 2
+          },
+          "money": {
+            "investments": {
+              "cents": 400000
+            },
+            "monthlyExpenses": {
+              "cents": -6000
+            }
+          }
+        },
+        {
+          "id": "spend",
+          "label": "Use it for this year's costs",
+          "outcome": "Fine, and a waste of the best tax shelter available to you. It is a retirement account wearing a plaster.",
+          "serves": 5,
+          "lever": "keeper",
+          "subStats": {
+            "taxLiteracy": 1
+          },
+          "money": {
+            "cash": {
+              "cents": 60000
+            }
+          }
+        },
+        {
+          "id": "skip",
+          "label": "Too complicated",
+          "outcome": "The Whole-Life-Insurance Basilisk thrives on exactly this: complexity as a defence against being examined.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-roth-deadline",
+      "title": "April, and the space unused",
+      "setup": "You can still fund last year's Roth for another eleven days. Seven thousand of space, permanently gone after that.",
+      "prompt": "How much goes in?",
+      "fooStep": 6,
+      "tiers": [
+        "II",
+        "III"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "max",
+          "label": "Max it",
+          "outcome": "Never taxed again, ever. Roth space is use-it-or-lose-it and does not roll forward.",
+          "serves": 6,
+          "lever": "compounder",
+          "subStats": {
+            "taxLiteracy": 2,
+            "savingsRate": 2
+          },
+          "money": {
+            "investments": {
+              "cents": 700000
+            },
+            "cash": {
+              "cents": -700000
+            }
+          }
+        },
+        {
+          "id": "partial",
+          "label": "What you can — two thousand",
+          "outcome": "Two thousand of permanently tax-free space claimed. Five thousand of it expires quietly on the 15th.",
+          "serves": 6,
+          "lever": "compounder",
+          "subStats": {
+            "taxLiteracy": 1,
+            "savingsRate": 1
+          },
+          "money": {
+            "investments": {
+              "cents": 200000
+            },
+            "cash": {
+              "cents": -200000
+            }
+          }
+        },
+        {
+          "id": "skip",
+          "label": "Next year",
+          "outcome": "There is no next year for this year's space. It is the one deadline in personal finance that does not negotiate.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-bonus",
+      "title": "Five thousand, once",
+      "setup": "It lands in March, taxed hard, and it is not part of your normal life.",
+      "prompt": "What happens to it?",
+      "fooStep": 6,
+      "tiers": [
+        "II",
+        "III"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "invest",
+          "label": "Straight into the tax-advantaged space",
+          "outcome": "It never becomes part of your baseline, which is the whole trick with money that arrives once.",
+          "serves": 6,
+          "lever": "compounder",
+          "subStats": {
+            "savingsRate": 2,
+            "taxLiteracy": 1
+          },
+          "money": {
+            "investments": {
+              "cents": 500000
+            }
+          }
+        },
+        {
+          "id": "upgrade",
+          "label": "The car, finally",
+          "outcome": "A better car and a higher baseline: insurance, tax, tyres. The one-off became a monthly.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "monthlyExpenses": {
+              "cents": 9000
+            }
+          }
+        },
+        {
+          "id": "split",
+          "label": "Half invested, half spent on purpose",
+          "outcome": "Deliberate, spent on something chosen rather than absorbed. This is what a sustainable version looks like.",
+          "serves": 6,
+          "lever": "compounder",
+          "subStats": {
+            "savingsRate": 1,
+            "selfAwareness": 2
+          },
+          "money": {
+            "investments": {
+              "cents": 250000
+            },
+            "cash": {
+              "cents": -250000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-promotion",
+      "title": "A real jump",
+      "setup": "Eighteen percent and a title. It is the biggest single change to your income you will see for years.",
+      "prompt": "What does the eighteen percent do?",
+      "fooStep": 7,
+      "tiers": [
+        "III",
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "max-space",
+          "label": "Fill the tax-advantaged space first",
+          "outcome": "You max the 401(k) for the first time. Your take-home barely moves and your future changes shape.",
+          "serves": 7,
+          "lever": "compounder",
+          "subStats": {
+            "savingsRate": 2,
+            "taxLiteracy": 2
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.18
+            },
+            "investments": {
+              "pctIncome": 0.14
+            }
+          }
+        },
+        {
+          "id": "lifestyle",
+          "label": "Move somewhere nicer",
+          "outcome": "Rent up, commute changed, and the raise is fully spent before the first payslip clears. The Rent Spike is a permanent raise to the cost of existing.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.18
+            },
+            "monthlyExpenses": {
+              "pctIncome": 0.16
+            }
+          }
+        },
+        {
+          "id": "split",
+          "label": "Max the space, then move",
+          "outcome": "Both, in order. It takes eleven months instead of one and you arrive with the space filled.",
+          "serves": 7,
+          "lever": "compounder",
+          "subStats": {
+            "savingsRate": 1,
+            "scenarioForesight": 2
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.18
+            },
+            "investments": {
+              "pctIncome": 0.09
+            },
+            "monthlyExpenses": {
+              "pctIncome": 0.06
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-inheritance",
+      "title": "Twenty-five thousand and a difficult week",
+      "setup": "It arrives at the worst possible time to make a good decision, which is how it always arrives.",
+      "prompt": "What do you do in the first month?",
+      "fooStep": 8,
+      "tiers": [
+        "III",
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "park",
+          "label": "Park it in cash for ninety days",
+          "outcome": "You do nothing on purpose. The single best move available, and the only one that costs nothing to reverse.",
+          "serves": 8,
+          "lever": "anchor",
+          "subStats": {
+            "selfAwareness": 2,
+            "scenarioForesight": 2
+          },
+          "money": {
+            "cash": {
+              "cents": 2500000
+            }
+          }
+        },
+        {
+          "id": "lump",
+          "label": "Invest the lot on Monday",
+          "outcome": "Historically the higher-expected-value move, and a genuinely hard one to hold through a bad month.",
+          "serves": 8,
+          "lever": "compounder",
+          "subStats": {
+            "marketLiteracy": 2,
+            "instrumentLiteracy": 1
+          },
+          "money": {
+            "investments": {
+              "cents": 2500000
+            }
+          }
+        },
+        {
+          "id": "spend-some",
+          "label": "Ten for the kitchen, the rest invested",
+          "outcome": "Named, bounded, and done deliberately. Money that arrives once should buy something you can point at.",
+          "serves": 8,
+          "lever": "compounder",
+          "subStats": {
+            "selfAwareness": 1,
+            "savingsRate": 1
+          },
+          "money": {
+            "investments": {
+              "cents": 1500000
+            },
+            "cash": {
+              "cents": 200000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-tip",
+      "title": "Your colleague is up three hundred percent",
+      "setup": "He tells you at lunch, twice. He has told everyone. He is not lying.",
+      "prompt": "What do you do?",
+      "fooStep": 8,
+      "tiers": [
+        "II",
+        "III",
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "buy",
+          "label": "Put five thousand in",
+          "outcome": "The Crypto Siren does not chase you — that is the whole trick. It sings the number you needed to hear.",
+          "serves": null,
+          "lever": "speculator",
+          "subStats": {},
+          "money": {
+            "cash": {
+              "cents": -500000
+            },
+            "investments": {
+              "cents": 250000
+            }
+          }
+        },
+        {
+          "id": "small",
+          "label": "A hundred, as a toy",
+          "outcome": "Bounded, named as entertainment, and it cannot hurt you. Most people cannot actually hold this line.",
+          "serves": null,
+          "lever": "speculator",
+          "subStats": {
+            "selfAwareness": 2
+          },
+          "money": {
+            "cash": {
+              "cents": -10000
+            }
+          }
+        },
+        {
+          "id": "decline",
+          "label": "Nothing, and change the subject",
+          "outcome": "Market Literacy negates this one outright. You know what a returns figure quoted without a time period is worth.",
+          "serves": 8,
+          "lever": "compounder",
+          "subStats": {
+            "marketLiteracy": 2,
+            "threatDetection": 2
+          },
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-umbrella",
+      "title": "The thing that takes all of it",
+      "setup": "You have a house, a car, savings, and a teenager about to drive. One bad afternoon reaches all of it.",
+      "prompt": "What stands between that afternoon and everything?",
+      "fooStep": 4,
+      "tiers": [
+        "III",
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "umbrella",
+          "label": "Buy the umbrella policy",
+          "outcome": "Two hundred a year for full plate against the single biggest possible hit. Armour Class, not judgment.",
+          "serves": 4,
+          "lever": "anchor",
+          "subStats": {
+            "scenarioForesight": 2,
+            "threatDetection": 1
+          },
+          "money": {
+            "monthlyExpenses": {
+              "cents": 1700
+            }
+          },
+          "note": "+3 AC in the rulebook's own terms."
+        },
+        {
+          "id": "deductibles",
+          "label": "Raise the deductibles instead",
+          "outcome": "Cheaper premiums, more exposure. You have made the common hits worse to make the rare one no better.",
+          "serves": null,
+          "lever": "keeper",
+          "subStats": {},
+          "money": {
+            "monthlyExpenses": {
+              "cents": -800
+            }
+          }
+        },
+        {
+          "id": "ignore",
+          "label": "It will not happen to you",
+          "outcome": "It probably will not. The Medical Bankruptcy Behemoth attacks at +8 and does 12d10.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-disability-question",
+      "title": "If you could not work on Monday",
+      "setup": "Your income is one body. There is a group policy at 40% and a private one that would take it to 65.",
+      "prompt": "What do you do about the gap?",
+      "fooStep": 4,
+      "tiers": [
+        "II",
+        "III"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "private",
+          "label": "Top it up privately",
+          "outcome": "Forty a month to protect the entire Strength column. The Sudden Ability Drain is an attack roll, and this is the armour against it.",
+          "serves": 4,
+          "lever": "anchor",
+          "subStats": {
+            "scenarioForesight": 2,
+            "threatDetection": 2
+          },
+          "money": {
+            "monthlyExpenses": {
+              "cents": 4000
+            }
+          }
+        },
+        {
+          "id": "group",
+          "label": "The group policy is fine",
+          "outcome": "Forty percent of your income, taxed, if the definition is met. Read the definition.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {}
+        },
+        {
+          "id": "nothing",
+          "label": "Nothing, for now",
+          "outcome": "The one that protects your income directly, declined. It is the most-skipped armour on the sheet.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-crash",
+      "title": "Down thirty-four percent",
+      "setup": "Eleven months of gains, gone in six weeks. Every headline agrees it is different this time.",
+      "prompt": "What do you do on the worst Tuesday?",
+      "fooStep": 8,
+      "tiers": [
+        "III",
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "hold",
+          "label": "Nothing. Deliberately nothing.",
+          "outcome": "The crash was a paper loss and cost you nothing. The panic-sell is the damage, and you did not take it.",
+          "serves": 8,
+          "lever": "compounder",
+          "subStats": {
+            "marketLiteracy": 2,
+            "selfAwareness": 2
+          },
+          "money": {}
+        },
+        {
+          "id": "sell",
+          "label": "Move it to cash until it settles",
+          "outcome": "You crystallise the loss and now need to be right twice. 8d10 weeks is what selling at the bottom costs a real pile.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "investments": {
+              "pctIncome": -0.6
+            },
+            "cash": {
+              "pctIncome": 0.45
+            }
+          }
+        },
+        {
+          "id": "buy",
+          "label": "Buy more, on schedule",
+          "outcome": "Same contribution, cheaper units, no heroics. The Market Crash Elemental is a WIS save and you made it.",
+          "serves": 8,
+          "lever": "compounder",
+          "subStats": {
+            "marketLiteracy": 2,
+            "consistency": 2
+          },
+          "money": {
+            "investments": {
+              "pctIncome": 0.08
+            },
+            "cash": {
+              "pctIncome": -0.08
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-mortgage-overpay",
+      "title": "Three point one percent",
+      "setup": "Fourteen years left. You have five hundred a month spare and two obvious homes for it.",
+      "prompt": "Overpay, or invest?",
+      "fooStep": 9,
+      "tiers": [
+        "III",
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "overpay",
+          "label": "Overpay the mortgage",
+          "outcome": "A guaranteed 3.1%, tax-free, and a house owned outright sooner. Worse on a spreadsheet, better in a bad decade.",
+          "serves": 9,
+          "lever": "anchor",
+          "subStats": {
+            "reserveDepth": 1,
+            "selfAwareness": 1
+          },
+          "money": {
+            "monthlyExpenses": {
+              "cents": -4000
+            },
+            "investments": {
+              "cents": 300000
+            }
+          }
+        },
+        {
+          "id": "invest",
+          "label": "Invest it",
+          "outcome": "Higher expected return over fourteen years, and a mortgage that is still there in the bad decade.",
+          "serves": 8,
+          "lever": "compounder",
+          "subStats": {
+            "marketLiteracy": 2
+          },
+          "money": {
+            "investments": {
+              "cents": 600000
+            }
+          }
+        },
+        {
+          "id": "split",
+          "label": "Half each",
+          "outcome": "The answer most people can actually hold, which makes it better than the optimal one they abandon.",
+          "serves": 9,
+          "lever": "compounder",
+          "subStats": {
+            "selfAwareness": 2,
+            "scenarioForesight": 1
+          },
+          "money": {
+            "investments": {
+              "cents": 450000
+            },
+            "monthlyExpenses": {
+              "cents": -2000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-house-hack",
+      "title": "The flat downstairs",
+      "setup": "The maisonette below comes up. You could buy it, live in half, and let the other.",
+      "prompt": "Do you?",
+      "fooStep": 9,
+      "tiers": [
+        "III",
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "hack",
+          "label": "Buy it and let the other half",
+          "outcome": "Your housing cost is hedged by a tenant. It is the House Hack feat, and it is +1 AC in the rulebook's terms.",
+          "serves": 9,
+          "lever": "landholder",
+          "subStats": {
+            "obligationFlex": 2,
+            "instrumentLiteracy": 2
+          },
+          "money": {
+            "debt": {
+              "pctIncome": 2.4
+            },
+            "incomeAnnual": {
+              "pctIncome": 0.16
+            },
+            "monthlyExpenses": {
+              "pctIncome": 0.04
+            }
+          }
+        },
+        {
+          "id": "run-numbers",
+          "label": "Run it properly, then decline",
+          "outcome": "The numbers do not work at this price. Declining after doing the work is a skill, not a failure.",
+          "serves": null,
+          "lever": "landholder",
+          "subStats": {
+            "instrumentLiteracy": 2,
+            "scenarioForesight": 2
+          },
+          "money": {}
+        },
+        {
+          "id": "reit",
+          "label": "Buy property the liquid way instead",
+          "outcome": "Property exposure without the tenant, the boiler, or the concentration. Less upside, far less to go wrong.",
+          "serves": 8,
+          "lever": "compounder",
+          "subStats": {
+            "marketLiteracy": 1,
+            "instrumentLiteracy": 1
+          },
+          "money": {
+            "investments": {
+              "pctIncome": 0.15
+            },
+            "cash": {
+              "pctIncome": -0.15
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-employer-stock",
+      "title": "Forty percent in one ticker",
+      "setup": "Years of vesting have quietly made your employer your largest holding. They also pay your salary.",
+      "prompt": "What do you do about the concentration?",
+      "fooStep": 8,
+      "tiers": [
+        "III",
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "sell-down",
+          "label": "Sell down to ten percent",
+          "outcome": "You pay some tax and remove the case where one company takes both your income and your savings on the same day.",
+          "serves": 8,
+          "lever": "compounder",
+          "subStats": {
+            "marketLiteracy": 2,
+            "threatDetection": 2,
+            "instrumentLiteracy": 1
+          },
+          "money": {}
+        },
+        {
+          "id": "hold",
+          "label": "It has been good to you",
+          "outcome": "The Concentration Golem is built from a single stock, usually your employer's, usually while it was working.",
+          "serves": null,
+          "lever": "speculator",
+          "subStats": {},
+          "money": {}
+        },
+        {
+          "id": "hedge",
+          "label": "Stop buying more, keep what you have",
+          "outcome": "You stop adding without triggering the tax. Half a fix, and it stops the problem growing.",
+          "serves": 8,
+          "lever": "compounder",
+          "subStats": {
+            "marketLiteracy": 1,
+            "selfAwareness": 1
+          },
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-golden-handcuffs",
+      "title": "Vesting in eighteen months",
+      "setup": "You do not like the job. Leaving costs a number you can compute exactly, which is what makes it hard.",
+      "prompt": "What do you do with the eighteen months?",
+      "fooStep": 9,
+      "tiers": [
+        "III",
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "price-it",
+          "label": "Work out the real number and decide",
+          "outcome": "You price the years, not just the equity. The Golden Handcuffs' damage is the years, not the money.",
+          "serves": 9,
+          "lever": "earner",
+          "subStats": {
+            "selfAwareness": 2,
+            "structuralMobility": 2,
+            "negotiation": 1
+          },
+          "money": {}
+        },
+        {
+          "id": "stay",
+          "label": "Stay for the vest, obviously",
+          "outcome": "Eighteen more months. It may well be right — it is only a trap if you never did the sum.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.04
+            }
+          }
+        },
+        {
+          "id": "leave",
+          "label": "Leave now",
+          "outcome": "You walk from real money for real reasons. Expensive, and sometimes the only way out.",
+          "serves": null,
+          "lever": "earner",
+          "subStats": {
+            "structuralMobility": 2
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": -0.08
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-parent",
+      "title": "Your mother needs help",
+      "setup": "Not a crisis. A slow one: appointments, then afternoons, then most of a week a month.",
+      "prompt": "How does this get held?",
+      "fooStep": 4,
+      "tiers": [
+        "III",
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "both",
+          "label": "Money and time, split with your brother",
+          "outcome": "Named, shared, and written down before anyone is exhausted. The Care-Giving Toll takes income and hours at once.",
+          "serves": 4,
+          "lever": "anchor",
+          "subStats": {
+            "scenarioForesight": 2,
+            "personability": 2,
+            "network": 1
+          },
+          "money": {
+            "monthlyExpenses": {
+              "pctIncome": 0.03
+            }
+          }
+        },
+        {
+          "id": "money",
+          "label": "Send money, keep the job",
+          "outcome": "Cleanest financially. Somebody else is still doing the afternoons, and it is usually the nearest sibling.",
+          "serves": null,
+          "lever": "earner",
+          "subStats": {
+            "negotiation": 1
+          },
+          "money": {
+            "monthlyExpenses": {
+              "pctIncome": 0.05
+            }
+          }
+        },
+        {
+          "id": "time",
+          "label": "Drop to four days",
+          "outcome": "Twenty percent of your Strength, given deliberately. The right call for many people and it should be a decision, not a drift.",
+          "serves": null,
+          "lever": "keeper",
+          "subStats": {
+            "personability": 2,
+            "selfAwareness": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": -0.2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-sabbatical",
+      "title": "Six months off",
+      "setup": "You have the runway. You have not had more than eleven consecutive days off in nine years.",
+      "prompt": "Do you take it?",
+      "fooStep": 9,
+      "tiers": [
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "take",
+          "label": "Take the six months",
+          "outcome": "Your pile stops growing and starts justifying itself. This is what tier IV is for — working out what it was for.",
+          "serves": 9,
+          "lever": "anchor",
+          "subStats": {
+            "selfAwareness": 2,
+            "scenarioForesight": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": -0.45
+            },
+            "cash": {
+              "months": -4
+            }
+          }
+        },
+        {
+          "id": "two",
+          "label": "Take two months",
+          "outcome": "Most of the reset, a fraction of the cost, and no conversation with anyone about a gap on a CV.",
+          "serves": 9,
+          "lever": "keeper",
+          "subStats": {
+            "selfAwareness": 2,
+            "negotiation": 2
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": -0.14
+            },
+            "cash": {
+              "months": -1.5
+            }
+          }
+        },
+        {
+          "id": "decline",
+          "label": "Not yet",
+          "outcome": "There is always a reason. Tier IV's own note: the question stops being how much and starts being when, and then why.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-coast-number",
+      "title": "You crossed it in March",
+      "setup": "What you have already invested will fund the retirement you want, without another penny added.",
+      "prompt": "So what changes?",
+      "fooStep": 9,
+      "tiers": [
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "downshift",
+          "label": "Take the interesting job that pays less",
+          "outcome": "The pile carries the retirement; the salary only has to carry today. This is the option Coast FI buys and almost nobody takes.",
+          "serves": 9,
+          "lever": "earner",
+          "subStats": {
+            "selfAwareness": 2,
+            "structuralMobility": 2
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": -0.25
+            }
+          }
+        },
+        {
+          "id": "keep",
+          "label": "Keep going, retire earlier",
+          "outcome": "Entirely legitimate. Worth checking, once, that it is a choice and not a habit wearing the clothes of one.",
+          "serves": 9,
+          "lever": "compounder",
+          "subStats": {
+            "consistency": 1
+          },
+          "money": {
+            "investments": {
+              "pctIncome": 0.2
+            }
+          }
+        },
+        {
+          "id": "stop",
+          "label": "Stop entirely",
+          "outcome": "Coast is not Full. The difference is roughly a decade of expenses, and the Sequence-of-Returns Serpent lives in the first five years.",
+          "serves": null,
+          "lever": "speculator",
+          "subStats": {},
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": -0.95
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-side-project",
+      "title": "Two hundred a month, from nothing",
+      "setup": "The thing you built at weekends now earns without you touching it most weeks.",
+      "prompt": "What do you do with it?",
+      "fooStep": 8,
+      "tiers": [
+        "II",
+        "III",
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "scale",
+          "label": "Put six months into scaling it",
+          "outcome": "The Builder's whole lever: income created from nothing rather than negotiated from someone.",
+          "serves": 8,
+          "lever": "builder",
+          "subStats": {
+            "hustleCapacity": 2,
+            "structuralMobility": 2,
+            "network": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "cents": 480000
+            },
+            "monthlyExpenses": {
+              "cents": 4000
+            }
+          }
+        },
+        {
+          "id": "reinvest",
+          "label": "Feed it back in, slowly",
+          "outcome": "It grows at the speed it grows. No second job, no burnout, and it is still there in two years.",
+          "serves": 8,
+          "lever": "builder",
+          "subStats": {
+            "hustleCapacity": 1,
+            "consistency": 2
+          },
+          "money": {
+            "incomeAnnual": {
+              "cents": 180000
+            }
+          }
+        },
+        {
+          "id": "pocket",
+          "label": "Take it as spending money",
+          "outcome": "Two hundred a month of pure lifestyle, and the thing stays exactly the size it is.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "monthlyExpenses": {
+              "cents": 20000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-payday-loan-ad",
+      "title": "The ad that knows",
+      "setup": "It followed you here. Money in your account in ten minutes, it says, and it is not lying.",
+      "prompt": "Do you take it?",
+      "fooStep": 1,
+      "tiers": [
+        "I"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "no-and-list",
+          "label": "No — write down what the £200 was actually for",
+          "outcome": "It was a car repair you knew about in March. The list is short and it is the same list every year, which means it can be saved for.",
+          "serves": 1,
+          "lever": "anchor",
+          "subStats": {
+            "scenarioForesight": 2,
+            "selfAwareness": 1
+          },
+          "money": {
+            "cash": {
+              "months": 0.25
+            }
+          }
+        },
+        {
+          "id": "borrow-friend",
+          "label": "Ask someone you know instead",
+          "outcome": "Cheaper than the ad by a very long way. It also spends something you cannot rebuild as easily as money.",
+          "serves": null,
+          "lever": "earner",
+          "subStats": {
+            "network": 1,
+            "personability": 1
+          },
+          "money": {
+            "cash": {
+              "cents": 20000
+            }
+          }
+        },
+        {
+          "id": "take-it",
+          "label": "Take the ten-minute money",
+          "outcome": "You have it by lunchtime. The fee is a flat number that looks small and is an annual rate you would not say out loud.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "cash": {
+              "cents": 20000
+            },
+            "debt": {
+              "cents": 26000
+            }
+          },
+          "note": "This is the Overdraft Gremlin with a marketing budget: it charges you for not having money."
+        }
+      ]
+    },
+    {
+      "id": "the-first-raise",
+      "title": "Four percent",
+      "setup": "Your first raise. It lands in the account on the 28th and it is genuinely nice.",
+      "prompt": "Where does it go?",
+      "fooStep": 1,
+      "tiers": [
+        "I",
+        "II"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "to-the-float",
+          "label": "Straight into the starter emergency fund, before you see it",
+          "outcome": "You never adjust to it, so you never miss it. The float is finished months earlier than it would have been.",
+          "serves": 1,
+          "lever": "anchor",
+          "subStats": {
+            "savingsRate": 2,
+            "consistency": 2,
+            "reserveDepth": 1
+          },
+          "money": {
+            "cash": {
+              "pctIncome": 0.04
+            }
+          }
+        },
+        {
+          "id": "split-it",
+          "label": "Half to the fund, half to your life",
+          "outcome": "Slower, and you actually keep doing it. A rule you follow beats a rule you abandon in March.",
+          "serves": 1,
+          "lever": "keeper",
+          "subStats": {
+            "savingsRate": 1,
+            "consistency": 1
+          },
+          "money": {
+            "cash": {
+              "pctIncome": 0.02
+            },
+            "monthlyExpenses": {
+              "pctIncome": 0.0017
+            }
+          }
+        },
+        {
+          "id": "lifestyle",
+          "label": "Upgrade the flat",
+          "outcome": "The raise is now a permanent bill. Raises can be taken back by a landlord more easily than by an employer.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "monthlyExpenses": {
+              "pctIncome": 0.0033
+            }
+          },
+          "note": "Lifestyle creep is the only monster that arrives on your best day."
+        }
+      ]
+    },
+    {
+      "id": "the-tax-refund",
+      "title": "A refund you forgot about",
+      "setup": "Nine hundred pounds you had already mentally spent on nothing in particular.",
+      "prompt": "What is it for?",
+      "fooStep": 1,
+      "tiers": [
+        "I",
+        "II"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "float",
+          "label": "It is the emergency fund, finished",
+          "outcome": "The one job a windfall is unambiguously good at: buying a floor you did not have.",
+          "serves": 1,
+          "lever": "anchor",
+          "subStats": {
+            "reserveDepth": 2,
+            "liquidityAgility": 1
+          },
+          "money": {
+            "cash": {
+              "cents": 90000
+            }
+          }
+        },
+        {
+          "id": "card",
+          "label": "Onto the credit card",
+          "outcome": "Right money, wrong rung — with no float, the next surprise puts it straight back on the card.",
+          "serves": 3,
+          "lever": "keeper",
+          "subStats": {
+            "consistency": 1
+          },
+          "money": {
+            "debt": {
+              "cents": -90000
+            }
+          }
+        },
+        {
+          "id": "fix-the-withholding",
+          "label": "Take it, and fix why it happened",
+          "outcome": "A refund is your own money, returned late and without interest. You change the code so next year it arrives monthly instead.",
+          "serves": 1,
+          "lever": "keeper",
+          "subStats": {
+            "taxLiteracy": 3,
+            "selfAwareness": 1
+          },
+          "money": {
+            "cash": {
+              "cents": 90000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-flatmate-leaves",
+      "title": "Your flatmate is moving out",
+      "setup": "Six weeks' notice, politely given. Your share of the rent is about to be all of it.",
+      "prompt": "What do you do with the six weeks?",
+      "fooStep": 1,
+      "tiers": [
+        "I"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "replace",
+          "label": "Find someone before they go",
+          "outcome": "Boring, unglamorous, and it keeps a fixed cost cut in half. Fixed costs are the ones that decide how hard everything else is.",
+          "serves": 1,
+          "lever": "landholder",
+          "subStats": {
+            "obligationFlex": 2,
+            "network": 1
+          },
+          "money": {
+            "monthlyExpenses": {
+              "cents": 0
+            }
+          }
+        },
+        {
+          "id": "move-smaller",
+          "label": "Use the break to move somewhere cheaper",
+          "outcome": "A month of upheaval buys a permanently lower floor. Moving is one of the few levers that changes the monthly number and stays changed.",
+          "serves": 1,
+          "lever": "anchor",
+          "subStats": {
+            "structuralMobility": 2,
+            "obligationFlex": 2
+          },
+          "money": {
+            "monthlyExpenses": {
+              "months": -0.12
+            },
+            "cash": {
+              "cents": -60000
+            }
+          }
+        },
+        {
+          "id": "absorb",
+          "label": "Cover it alone and see how it goes",
+          "outcome": "It goes the way the arithmetic says. The gap does not close by being lived in.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "monthlyExpenses": {
+              "months": 0.35
+            }
+          },
+          "note": "This is the fixed-cost share of your spending rising — the number Constitution is built out of."
+        }
+      ]
+    },
+    {
+      "id": "the-second-property",
+      "title": "The second property",
+      "setup": "A flat two streets over, priced like someone needs it gone this month.",
+      "prompt": "Is this the thing to do with the money?",
+      "fooStep": 9,
+      "tiers": [
+        "III",
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "run-the-numbers",
+          "label": "Price it properly — voids, repairs, management, tax — then decide",
+          "outcome": "The honest yield is well under the headline once a month of voids a year is in it. You may still buy, but not by accident.",
+          "serves": 9,
+          "lever": "landholder",
+          "subStats": {
+            "instrumentLiteracy": 2,
+            "scenarioForesight": 2,
+            "taxLiteracy": 1
+          },
+          "money": {}
+        },
+        {
+          "id": "index-instead",
+          "label": "Put the deposit in the index fund you already hold",
+          "outcome": "No tenants, no boiler, no second mortgage. Less of a story to tell and about the same expected return.",
+          "serves": 9,
+          "lever": "compounder",
+          "subStats": {
+            "marketLiteracy": 1,
+            "consistency": 1
+          },
+          "money": {
+            "cash": {
+              "months": -6
+            },
+            "investments": {
+              "months": 6
+            }
+          }
+        },
+        {
+          "id": "buy-it",
+          "label": "Buy it — it is cheap and it will not be there next week",
+          "outcome": "You are now a landlord with one tenant, which is a portfolio of one. When they leave, your income from it is zero.",
+          "serves": null,
+          "lever": "landholder",
+          "subStats": {
+            "obligationFlex": -1
+          },
+          "money": {
+            "cash": {
+              "months": -6
+            },
+            "debt": {
+              "months": 24
+            },
+            "investments": {
+              "months": 30
+            }
+          },
+          "note": "Concentration is the risk here, not property. One tenant is not diversified."
+        }
+      ]
+    },
+    {
+      "id": "the-withdrawal-order",
+      "title": "Which pot first",
+      "setup": "The income has stopped on purpose. Three pots, taxed three different ways, and a number you need each year.",
+      "prompt": "Which one do you draw from first?",
+      "fooStep": 9,
+      "tiers": [
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "sequence-it",
+          "label": "Work out the order once, on paper, and follow it",
+          "outcome": "Drawing in the right order is worth years of spending at the far end, and it costs one afternoon. It is the highest-paid afternoon of the whole plan.",
+          "serves": 9,
+          "lever": "keeper",
+          "subStats": {
+            "taxLiteracy": 3,
+            "instrumentLiteracy": 2,
+            "scenarioForesight": 1
+          },
+          "money": {}
+        },
+        {
+          "id": "cash-buffer",
+          "label": "Hold two years in cash and refill it in good years",
+          "outcome": "You stop being forced to sell into a fall. It costs a little return to buy the ability to not care what the market did this year.",
+          "serves": 9,
+          "lever": "anchor",
+          "subStats": {
+            "reserveDepth": 2,
+            "liquidityAgility": 2,
+            "threatDetection": 1
+          },
+          "money": {
+            "cash": {
+              "months": 24
+            },
+            "investments": {
+              "months": -24
+            }
+          }
+        },
+        {
+          "id": "whatever-is-easiest",
+          "label": "Take it from whichever account is easiest to reach",
+          "outcome": "Convenient, and it quietly hands years of the plan to the tax code. Nothing feels wrong at any single withdrawal.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "investments": {
+              "months": -3
+            }
+          },
+          "note": "The damage here is invisible per-transaction and enormous cumulatively, which is what makes it worth a rule."
+        }
+      ]
+    },
+    {
+      "id": "the-phone-contract",
+      "title": "Thirty-nine a month, forever",
+      "setup": "The handset is 'free'. The contract is two years and the maths is done somewhere you cannot see it.",
+      "prompt": "What do you sign?",
+      "fooStep": 1,
+      "tiers": [
+        "I"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "sim-only",
+          "label": "Keep the old handset, take a rolling SIM",
+          "outcome": "The handset was never free — it was a loan at a rate nobody had to print. You keep the difference every month, and you can leave any time.",
+          "serves": 1,
+          "lever": "keeper",
+          "subStats": {
+            "instrumentLiteracy": 2,
+            "obligationFlex": 2,
+            "savingsRate": 1
+          },
+          "money": {
+            "monthlyExpenses": {
+              "cents": -2500
+            }
+          }
+        },
+        {
+          "id": "negotiate",
+          "label": "Ring them and say you are leaving",
+          "outcome": "Ten minutes of mild discomfort takes a third off. The number was always negotiable; nobody was ever going to volunteer that.",
+          "serves": 1,
+          "lever": "earner",
+          "subStats": {
+            "negotiation": 2,
+            "personability": 1
+          },
+          "money": {
+            "monthlyExpenses": {
+              "cents": -1300
+            }
+          }
+        },
+        {
+          "id": "sign",
+          "label": "Sign — it is only thirty-nine a month",
+          "outcome": "Two years at thirty-nine is nine hundred and thirty-six pounds, committed, for a phone. Small monthly numbers are how large annual ones get past you.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "monthlyExpenses": {
+              "cents": 1400
+            }
+          },
+          "note": "This is the fixed-cost share creeping up — the number Constitution is built out of."
+        }
+      ]
+    }
+  ]
+}

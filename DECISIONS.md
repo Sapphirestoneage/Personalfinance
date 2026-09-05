@@ -8337,3 +8337,145 @@ provenance `declared`; `FORMAT.md` says not to import it as anything.
 **Before writing any of these from a new room:** pass `sheet.grants` to
 `savingThrows()` or feats silently stop working there; a new general feat must
 grant exactly one of the five kinds, and the test will insist.
+
+---
+
+## DD-024 — The campaign: ten rounds, a fork of your household, and advice that moves with you
+
+The sheet was a snapshot. You filled in the form, you got a character, and that
+was the whole game — nothing to *do* with it. This adds the loop the sheet was
+missing: a board of six scenarios, one choice a round, ten rounds to a chapter,
+and a chapter review that says where you shifted, what following the ladder
+would have been worth, and whether you have been pulling the same lever every
+single time.
+
+`dnd/campaign.html`, `dnd/engines/campaign.js`, `dnd/data/dnd_scenarios.json`.
+
+### It never writes to your real numbers
+
+A campaign forks the household the moment it starts. Every consequence lands on
+`state.household`, which is a deep copy. The sheet you filled in is untouched,
+and the room says so on the prologue in plain words. A game that quietly edited
+someone's actual recorded finances because they clicked a card would be
+indefensible, and "we'd probably remember to undo it" is not a design.
+
+The fork is written through the same ids the D&D suite already uses —
+`dnd_person`, `dnd_asset_cash`, `dnd_asset_investments`, `dnd_income`,
+`dnd_debt_total` — so `Schema` and `Tier0` read it exactly as they read the
+real one. Nothing in the campaign knows a different shape of household.
+
+### It does not author the right answer
+
+This is the part that makes it a teaching tool rather than a quiz with an answer
+key. **No scenario says which option is correct.** Each option declares only
+which FOO step it *serves* — `serves: 3` means "this is a step-3 move" — and the
+engine compares that against your **live** placement from `engines/foo.js`.
+
+    onStep  100   it serves the step you are actually standing on
+    behind   60   it serves a step you have already cleared
+    ahead    20   it serves a step you have not reached yet
+    none     10   it serves nothing
+
+Money is a tiebreak only, never the ranking. So the same option scores
+differently for two different players, and differently for *you* in round nine
+than in round one: paying down a card is the right move on step 3 and premature
+on step 1. "What you should have done" is therefore re-derived every round from
+where you now stand, not looked up. `Foo.evaluate()` owns the ladder here as it
+owns it everywhere else in the suite — the campaign re-derives nothing.
+
+### The frontier: an honest answer when the ladder cannot see
+
+`engines/foo.js` returns a placement only for an *unmet* judgeable step. Past
+step 4 it honestly returns `unknown`, because the suite does not collect
+contributions. The campaign cannot just go silent there — the players furthest
+along would get the least.
+
+So `fooStepOf()` returns a **frontier**: the step the ladder stopped at, marked
+`certain: false`, with the reason and the missing fields. Everything below the
+stop is established as *met*, so "at or past step N" is a fact even when "on
+step N" is not, and the room shows it as a frontier rather than a verdict. A
+completely empty household is not placeless either — it stops at step 0 and
+names the two fields it needs.
+
+### The prologue asks the two questions, and only the two
+
+Rather than widening the ladder, the prologue asks the two things FOO is
+actually missing to place most people: is there an employer match, and are you
+capturing all of it. Two questions, built once and only read (D-034).
+
+### Money three ways, so one scenario fits every character
+
+A boiler costing a flat $800 is wrong for both incomes it might meet. Each
+option's money is written as any of `cents` (absolute), `months` (multiples of
+your monthly essential expenses) or `pctIncome` (a share of gross annual), and
+they add. An unreadable basis returns `null`, not `0` — a scenario that cannot
+be priced for you is incomplete, not free.
+
+### The stacking warning
+
+Two warnings, both from the record rather than from taste: six or more of ten
+choices pulling the same class lever, and more than 40% of everything you
+practised landing in one sub-stat. A character who solves every problem by
+investing harder is a real failure mode and the review names it.
+
+### The bank
+
+37 scenarios, 111 options, spread across FOO steps 0–9 and tiers I–IV.
+
+The per-tier floor took two goes to get right, and both wrong answers looked
+reasonable. The first draft asked for a **board's** worth — six — which deals
+the same six cards every round. The obvious correction, a **chapter's** worth —
+ten — is also wrong: by the last of ten rounds the player has already used
+nine, and the board still needs six unseen cards underneath them. The real
+floor is `boardSize + roundsPerChapter - 1` = **15 per tier**, because
+`board()` falls back to reoffering seen cards the moment fewer than a board's
+worth are left.
+
+A walk through a real chapter is what caught it — an eleven-card tier I dealt
+three repeats in ten rounds while both count guards were green. Tier I was the
+thinnest at seven, and tier I is exactly where a first-time reader lands. Five
+new scenarios were written and seven existing ones re-tagged into the tier they
+also genuinely belong to, bringing every tier to at least 15. The test now
+states the real floor **and** plays a full chapter asserting no card is dealt
+twice, because the count is only a proxy: the resolvability filter can thin a
+pool that passes the count.
+
+Board order is a deterministic PRNG seeded from the run — reload gives the same
+six, because refreshing for a hand you like better is not the game. The test that
+round two deals a fresh hand runs across a hundred seeds rather than one: with
+six cards drawn from eleven, two rounds can legitimately coincide, and asserting
+it on a single seed is a coin flip dressed as a test.
+
+### Verification
+
+Walked the whole loop in a browser on the demo persona: prologue, placement at
+step 2, board of six, ten rounds, review showing "followed the ladder 4 times
+out of 10", Level 3 → 5, net worth $35,900 → $72,570, and both stacking warnings
+firing. Chapter 2 opened, survived a reload, and the real household was byte-for-
+byte unchanged afterwards.
+
+Re-derived outside the browser that the mechanic actually teaches: following the
+ladder is worth **$32,720 more over ten rounds and $143,133 over thirty** than
+choosing carelessly, and the careless player never leaves step 2. A teaching
+mechanic that pays nothing is decoration.
+
+### Compatibility note
+
+**Stored shape:** `dndProfile.campaign` is **added** — `{ chapter, round,
+household, chapterOpening, records: [{ scenarioId, optionId, serves, lever,
+subStats, best, followed }] }`. `household` inside it is the **fork**, never the
+real one; nothing outside the campaign may read it as the household. Absent
+means no campaign started. Two prologue answers are written to the *real*
+household where the schema already has homes for them: an income source's
+`employerMatch` and the household's `capturingFullMatch`.
+
+**Rooms updated:** `dnd/campaign.html` (new), `dnd/engines/campaign.js` (new),
+`dnd/data/dnd_scenarios.json` (new), `dnd/engines/foo.js` (vendored byte-identical
+from `engines/foo.js`; the guard in `test/run.js` now covers it),
+`dnd/shared/reference.js` (`dndScenarios` registered), `dnd/sheet.html` (link).
+
+**Before writing any of these from a new room:** never read
+`dndProfile.campaign.household` as the household — it is a fork and its numbers
+are fictional. A new scenario must declare `serves` for at least one option or
+it teaches nothing, and the test insists; write its money as `cents`, `months`
+or `pctIncome`, never as a bare number.
