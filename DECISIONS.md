@@ -6342,6 +6342,128 @@ reading "a month of spending" gets the closed average for free through
 `Schema.monthlyExpensesCents` and should say so when it names its
 source (`.source === 'closed'`, `.months`).
 
+## D-131 — The Skill Tree and the Exercise Library, as rooms: two ladders, one game
+
+*(The Skill Tree spec: Civ VI's two trees that cross unlock, the FOO
+ladder as the technology tree and the skill tree as the civics tree;
+four states plus fog; boosts that open and never award; warps that
+reveal and never award; the exercise library in five kinds; versioning
+house wide. Built in the spec's order, one commit a step.)*
+
+**The file gap, and what was built against it.** The spec brings in
+FI-Skill-Tree-v6.3 (625 skills, ~280 links, 125 micro actions), and
+says its step 1 has to be written against the file's real internals.
+The file is not in this repo, on this machine, or reachable from this
+session. So `scripts/extract-v63.mjs` is written to the SHAPE it must
+emit — three stamped tables — and exits with that shape and a plain
+message until the file is dropped at the root (or `$SKILL_TREE_V63`);
+its extraction body is a stub that throws once the file is found, to
+be written against what is really there. Everything downstream is built
+against the shape and runs today on a **seed**: `scripts/seed-skill-tree.mjs`
+turns the Stacker's 26 catalogue skills (D-090) plus the skills the spec
+names for its cross links, warps and fog into `data/skill_tree.json`
+(five bands, six trees, 40 skills, five warps) and `data/skill_links.json`
+(28 cross links, the ladder both ways); `scripts/seed-exercises.mjs`
+writes `data/exercises.json` (the twelve runs, the thirteen canon
+exercises, one micro per seed skill; quests and dares wait for the v6.3
+content). Both are deterministic. When the file arrives, step 1 is
+"write the mapping, regenerate, verify the counts", and nothing else
+moves.
+
+**Two ladders, cross unlocked.** `engines/skilltree.js` is a pure
+function: household and tables in, every skill's state and reason out,
+the standard Result. A skill can carry `gate.foo` (it opens at that
+ladder step; the reason says "Opens at FOO step 8. You are on step 2."
+or "You are not placed on the ladder yet", linking the ladder) and the
+links table carries `fooRequires[step]` (skills a step needs; the tree
+reports `ladderNeeds` and the fortress line prints them under the
+rung). Both directions are in the seed: reading the plan's summary is
+needed by step 3; tax loss harvesting opens at step 8.
+
+**Four states, a fifth for the board, and not-yours.** `done` is the
+only state ever stored (`household.skillTree.state[id] = { state,
+on, by: proof | self }`); `open`, `locked`, `bypassed` and `fogged` are
+derived on every call, so the tree can never disagree with the facts.
+**Locked always says why**, in one of three shapes — a skill prerequisite
+("Locked. Needs: Enter the facts."), a ladder gate, a household threshold
+("Locked. Needs one closed month in the ledger. You have 0.") — each
+with a link to the thing that unlocks it, and the tests hold that no
+locked skill is unreachable. A skill whose `appliesWhen` fails the
+situation is **not yours**: absent, never counted (D-055's line). Fog:
+the band you are in renders in full, the next half lit (names, no
+chips), the rest silhouettes with a count; the engine blanks a fogged
+skill's name so no room can print it. A band that comes into view is
+announced once.
+
+**Boosts open, never award.** Something the household did in the app —
+a month closed, thirty dated expenses, a debt paid off, a snapshot
+frozen, an exercise completed, a fact the ownership map already holds —
+moves a locked skill to open, with provenance `boost` and a partly
+filled bar. Done still needs the skill's own proof: the card's "I can
+do this: mark it done", or a fact that proves it (below). The app never
+awards mastery for using the app.
+
+**Warps reveal, never award.** A warp's proof is a held balance (eight
+months of spending in cash), a count (twelve closed months), a fact
+answered (a will and named beneficiaries, a house owned outright) —
+never a box saying "I know this". An active warp puts its branch in
+`bypassed`: counts as satisfied for what it gated, drawn dashed with
+"skipped", reopenable forever, and a stored done still wins over it.
+
+**The Stacker reads the tree.** Done moved out of the Skill Stacker's
+own storage (D-090): `Skills.state` reads `skillTree.state` first,
+`markDone` and `verifyOnce` write the tree (by `self` and by `proof`),
+and the Stacker record keeps only its practice states and provenance
+(`verifiedBy`, `dueOn`). A household saved before this still reads its
+Stacker done through the tree engine. Dashboard block 3 sets the next
+open skill beside "the next thing to learn / unlearn", read from the
+same engine; nothing is stored there.
+
+**The exercise library.** `engines/exercises.js` and `rooms/exercises.html`:
+one shape, five kinds. A `run` is computed through the engine that owns
+the calculation (fire, statement, decumulation, cashflow, projection)
+and stays locked, naming the field and the room to add it in, until it
+can — no silent zero. A `canon` exercise credits its work and author and
+is described in this app's words; `origin` is attribution, never a
+quotation. Completing any exercise boosts its skill; a run keeps its
+result to compare later (`household.exercises`).
+
+**Versioning, house wide.** `version.json` at the root, `major.minor`
+only: the major is the shape, the minor a pass. Money Rooms is **2.0,
+"The Ledger era"** — spine v2, registry-driven, now 57 rooms.
+`Schema.APP_VERSION` carries the same string (a test holds the two
+together), every export and share code is stamped `appVersion`, and the
+progress strip prints "Money Rooms v2.0" in every room's footer. The
+D&D side is vendored, so it follows.
+
+**Calls made.** The two rooms are `about-you` (each owns a field), not
+`explore`, because the house rule is that an explore room owns nothing.
+The extractor's target files are `data/skill_tree.json` (not the spec's
+`data/skills.json`, which is the Stacker's catalogue, vendored under
+`dnd/data/`), `data/skill_links.json`, `data/exercises.json`. The tree
+engine is `engines/skilltree.js`, beside the Stacker's `engines/skills.js`,
+rather than replacing it: the Stacker's practice engine stays, reading
+the tree. The board keeps the spec's grammar and geometry (148 × 56
+nodes, 212 pitch, 76 row, orthogonal wires with 8px turns, a 3px boost
+bar, an 80px fog wash) in the house tokens, since a room may not carry
+its own hex values.
+
+### Compatibility note
+
+Stored shape: `household.skillTree` ({ state: {} }) and
+`household.exercises` ({ done: {}, results: {} }) are new branches,
+empty by default; the Stacker's `skills[id].state` no longer takes the
+value `done` for a once-skill (its `verifiedOn` / `verifiedBy` stay).
+A household saved before this reads through the constructors; a Stacker
+`done` it holds is read as done by the tree engine, so nothing is lost
+and nothing migrates. Exports gain `appVersion`. Rooms updated:
+`rooms/stacker.html` (writes the tree on verification), `index.html`
+(block 3 reads the tree), `shared/progress.js` (the footer). New:
+`rooms/skill-tree.html`, `rooms/exercises.html`. A future room that
+wants to say a skill is done calls `Spine.setSkillDone`; one that wants
+a skill's state calls `SkillTree.stateOf` and never reads
+`household.skills[id].state` for done.
+
 ---
 
 # The Dungeons & Dividends entries

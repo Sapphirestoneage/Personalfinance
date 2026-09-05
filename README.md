@@ -71,6 +71,9 @@ index.html          The front door: the Dashboard once it has what it needs, the
 foo-ladder.js       The FOO ladder's logic (shell at rooms/foo-ladder.html): build() once, paint() on every change
 map.html            Room directory: next-unfinished first, then the groups, tag filter
 MONEY-MAP.md        The discovery map that preceded the ledger build (D-128, revised in D-129); where it and the build spec differ, the decisions are what shipped
+DESIGN-AUDIT.md     The design-audit brief: everything the app is and does, for a reviewer who has never seen the repo
+version.json        The product version, major.minor; Schema.APP_VERSION matches, every export is stamped, every footer prints it (D-131)
+scripts/            extract-v63.mjs (the Skill Tree's data port, waiting on the file), seed-skill-tree.mjs and seed-exercises.mjs (the seed it runs on today)
 favicon.svg         Sapphire mark
 rooms/              One HTML file per room
 vendor/fonts/       Self-hosted typefaces (no CDN, no other vendored code)
@@ -132,6 +135,8 @@ engines/            Shared calculation engines — one function per concept
   ledger.js           the tax engine for dated income entries — W-2 withheld, 1099 owed with SE tax, unemployment owed without it, not taxable — and the month they add up to (D-128, D-129)
   budget.js           the reflected budget: estimated beside actual, the month closed (D-128); five cards with presets stacked in (D-129)
   presets.js          Rule of Five, Emergency fund, Max IRA, Max 401(k) — each read through the function that owns it, stacked into a bucket's estimate (D-129, D-130)
+  skilltree.js        the Skill Tree: household in, per-skill state and reason out — done, open, locked with the reason, bypassed by a warp, fogged; boosts open, never award (D-131)
+  exercises.js        the exercise library in five kinds; a run computed through the engine that owns it, locked until the field it needs exists (D-131)
   variance.js         closed months read back: one month, the trend, the pattern (D-128)
   betweenjobs.js, protection.js, decumulation.js, taxroom.js, estate.js, giving.js,
   careermove.js, partner.js, kids.js, housing.js, purchase.js, variableincome.js,
