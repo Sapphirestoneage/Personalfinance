@@ -419,7 +419,8 @@
     retirement: 'the retirement plan', targets: 'a target', meta: 'a setting', oneOffs: 'a one-off', ratings: 'a rating', rerank: 'the rerank',
     skills: 'a skill', scenarios: 'a scenario', properties: 'a property', futureIncome: 'future income', values: 'your values', community: 'community',
     estate: 'estate basics', giving: 'giving', decumulation: 'the drawdown', tax: 'tax facts', career: 'the offer', partner: 'the split', kids: 'the kids',
-    housing: 'the place', purchase: 'the purchase', variableIncome: 'the buffer', dependents: 'who depends on you', assumptions: 'an assumption', assumptionOverrides: 'an assumption' };
+    housing: 'the place', purchase: 'the purchase', variableIncome: 'the buffer', dependents: 'who depends on you', assumptions: 'an assumption', assumptionOverrides: 'an assumption',
+    ledger: 'the ledger', budget: 'the budget' };
   function record(changes, label) {
     if (!changes.length) return;
     cache.meta.undoStack = cache.meta.undoStack || [];
@@ -781,9 +782,93 @@
   function upsertExpenseEntry(entry) {
     var h = load();
     h.expenses.entries = h.expenses.entries || [];
-    var result = upsertIn(h.expenses.entries, entry);
+    /* The merged record goes back through the constructor, so the rule
+       "deductible only when linked to an income entry" holds whatever a
+       form sends (D-128). */
+    var merged = upsertIn(h.expenses.entries, entry);
+    var normalised = Schema.createExpenseEntry(merged);
+    Object.keys(merged).forEach(function (k) { delete merged[k]; });
+    Object.keys(normalised).forEach(function (k) { merged[k] = normalised[k]; });
     save(); notify();
-    return result;
+    return merged;
+  }
+
+  /* ---- The ledger (D-128) ------------------------------------------------ */
+
+  function upsertIncomeEntry(entry) {
+    var h = load();
+    h.ledger = h.ledger || Schema.createLedger({});
+    var merged = upsertIn(h.ledger.income, entry);
+    var normalised = Schema.createIncomeEntry(merged);
+    Object.keys(merged).forEach(function (k) { delete merged[k]; });
+    Object.keys(normalised).forEach(function (k) { merged[k] = normalised[k]; });
+    save(); notify();
+    return merged;
+  }
+  function removeIncomeEntry(id) {
+    var h = load();
+    var list = (h.ledger && h.ledger.income) || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) { list.splice(i, 1); save(); notify(); return true; }
+    }
+    return false;
+  }
+  function upsertIncomeCost(entryId, cost) {
+    var h = load();
+    var entry = ((h.ledger && h.ledger.income) || []).filter(function (e) { return e.id === entryId; })[0];
+    if (!entry || !Schema.costsAllowed(entry.kind)) return null;
+    entry.costs = entry.costs || [];
+    var merged = upsertIn(entry.costs, cost);
+    var normalised = Schema.createIncomeCost(merged);
+    Object.keys(merged).forEach(function (k) { delete merged[k]; });
+    Object.keys(normalised).forEach(function (k) { merged[k] = normalised[k]; });
+    save(); notify();
+    return merged;
+  }
+  function removeIncomeCost(entryId, costId) {
+    var h = load();
+    var entry = ((h.ledger && h.ledger.income) || []).filter(function (e) { return e.id === entryId; })[0];
+    if (!entry) return false;
+    for (var i = 0; i < (entry.costs || []).length; i++) {
+      if (entry.costs[i].id === costId) { entry.costs.splice(i, 1); save(); notify(); return true; }
+    }
+    return false;
+  }
+  /** Close a month: append its record once. A second close is refused. */
+  function closeMonth(record) {
+    var h = load();
+    h.ledger = h.ledger || Schema.createLedger({});
+    var r = Schema.createMonthRecord(record);
+    if (!r.id) return { ok: false, reason: 'A month record needs a YYYY-MM month.' };
+    if (h.ledger.months.some(function (m) { return m.id === r.id; })) return { ok: false, reason: r.label + ' is already closed.' };
+    if (!r.closedAt) r.closedAt = new Date().toISOString();
+    h.ledger.months.push(r);
+    h.ledger.months.sort(function (a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; });
+    pendingLabel = 'Closed ' + r.label;
+    save(); notify();
+    return { ok: true, reason: null, record: JSON.parse(JSON.stringify(r)) };
+  }
+  /** A late entry against a closed month: only actualRevised moves. */
+  function reviseMonth(monthId, actualRevised) {
+    var h = load();
+    var m = ((h.ledger && h.ledger.months) || []).filter(function (x) { return x.id === monthId; })[0];
+    if (!m) return { ok: false, reason: 'No closed month ' + monthId + '.' };
+    var next = {};
+    Schema.BUDGET_BUCKETS.forEach(function (b) { next[b] = actualRevised && Money.isEntered(actualRevised[b]) ? actualRevised[b] : m.actual[b]; });
+    m.actualRevised = next;
+    save({ record: false }); notify();
+    return { ok: true, reason: null };
+  }
+  function setBudgetEstimate(month, bucket, cents, label) {
+    var h = load();
+    h.budget = h.budget || Schema.createBudget({});
+    h.budget.estimated = h.budget.estimated || {};
+    h.budget.estimated[month] = h.budget.estimated[month] || {};
+    if (Money.isEntered(cents)) h.budget.estimated[month][bucket] = cents; else delete h.budget.estimated[month][bucket];
+    if (!Object.keys(h.budget.estimated[month]).length) delete h.budget.estimated[month];
+    pendingLabel = label || ('Expected ' + bucket + ' for ' + Schema.monthLabel(month));
+    save(); notify();
+    return h.budget.estimated[month] ? h.budget.estimated[month][bucket] : null;
   }
 
   function removeExpenseEntry(id) {
@@ -1264,6 +1349,13 @@
     removeGoal: removeGoal,
     upsertExpenseEntry: upsertExpenseEntry,
     removeExpenseEntry: removeExpenseEntry,
+    upsertIncomeEntry: upsertIncomeEntry,
+    removeIncomeEntry: removeIncomeEntry,
+    upsertIncomeCost: upsertIncomeCost,
+    removeIncomeCost: removeIncomeCost,
+    closeMonth: closeMonth,
+    reviseMonth: reviseMonth,
+    setBudgetEstimate: setBudgetEstimate,
     setAssumptionOverride: setAssumptionOverride,
     setSwanTarget: setSwanTarget,
     storageState: storageState,

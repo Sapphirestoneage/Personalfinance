@@ -177,7 +177,16 @@
     'expenses.entries[].categoryId':             { class: 'raw',        unit: 'enum',    note: 'an id from data/expense_categories.json' },
     'expenses.entries[].amountCents':            { class: 'raw',        unit: 'cents' },
     'expenses.entries[].period':                 { class: 'raw',        unit: 'enum',    values: ['monthly', 'once'] },
-    'expenses.entries[].source':                 { class: 'raw',        unit: 'enum',    values: ['manual', 'imported', 'rerank'], note: 'SPEC.md §12.5; rerank = a custom cost line typed on The Rerank, D-085' },
+    'expenses.entries[].source':                 { class: 'raw',        unit: 'enum',    values: ['manual', 'imported', 'rerank', 'log'], note: 'SPEC.md §12.5; rerank = a custom cost line typed on The Rerank, D-085; log = a dated occurrence logged in the Expenses section, counted by the budget as an actual and never as the typical month, D-128' },
+    'expenses.entries[].linkedIncomeId':         { class: 'raw',        unit: 'id',      note: 'the ledger income entry this expense produces; null = personal. D-128' },
+    'expenses.entries[].deductible':             { class: 'raw',        unit: 'bool',    note: 'true only when linkedIncomeId is set — enforced by createExpenseEntry, so a personal expense can never reduce taxable income. D-128' },
+    'expenses.entries[].hidden':                 { class: 'raw',        unit: 'bool',    note: 'off the default list, still counted. D-128' },
+    'expenses.entries[].active':                 { class: 'raw',        unit: 'bool',    note: 'false = archived: stops counting toward new estimates and actuals; closed months are untouched. D-128' },
+    'household.ledger.income[].kind':            { class: 'raw',        unit: 'enum',    values: ['w2', 'se', 'bonus', 'gift', 'side', 'dividend', 'rental', 'other'], note: 'a dated income entry: amountCents, frequency (once, weekly, fortnightly, monthly, annual), receivedOn, taxable, taxMethod (w2, se, none), costs[] for se/side/rental, hidden, active. Owned by Income. D-128' },
+    'household.ledger.income[].taxMethod':       { class: 'raw',        unit: 'enum',    values: ['w2', 'se', 'none'], note: 'how the tax engine nets it: withholding, self-employment tax on the net of costs, or nothing (a gift). D-128' },
+    'household.ledger.income[].costs[].category': { class: 'raw',       unit: 'enum',    values: ['mileage', 'home_office', 'equipment', 'contractor_fees', 'licensing', 'platform_fees', 'other'], note: 'the costs of producing this income, on the entry itself; each with amountCents, date, deductible. D-128' },
+    'household.ledger.months[].id':              { class: 'raw',        unit: 'id',      note: 'a MonthRecord, YYYY-MM: status closed, estimated and actual per bucket (income, expenses, savings, investments, debt), actualRevised for late entries, closedAt. Append-only; closing twice is refused. Owned by Budget. D-128' },
+    'household.budget.estimated':                { class: 'raw',        unit: 'object',  note: 'YYYY-MM → bucket → cents: an open month\'s estimate set by hand (the Estimated-vs-Actual room\'s one write). Absent = last closed month\'s actual, else the onboarding figures. Owned by Budget. D-128' },
     'rerank.rows[].id':                          { class: 'raw',        unit: 'id',      note: 'a categoryId, or an expense entry id for a custom line. D-085' },
     'rerank.rows[].miss':                        { class: 'raw',        unit: 'enum',    values: ['yes', 'some', 'no'], note: 'would you miss it? null = not asked' },
     'rerank.rows[].who':                         { class: 'raw',        unit: 'enum',    values: ['me', 'both', 'show'], note: 'who is it really for: me, both of us, or for show' },
@@ -932,6 +941,7 @@
    */
   function createExpenseEntry(fields) {
     var f = fields || {};
+    var linked = typeof f.linkedIncomeId === 'string' && f.linkedIncomeId ? f.linkedIncomeId : null;
     return {
       id: f.id || newId('e'),
       categoryId: f.categoryId || null,
@@ -939,12 +949,133 @@
       period: f.period || 'monthly',            // 'monthly' | 'once'
       date: f.date === undefined ? null : f.date,        // ISO, dated entries only
       descriptor: f.descriptor === undefined ? null : f.descriptor,
-      source: f.source || 'manual',             // 'manual' | 'imported'
+      source: f.source || 'manual',             // 'manual' | 'imported' | 'rerank' | 'log'
       categorizedBy: f.categorizedBy === undefined ? null : f.categorizedBy,
       /* Could this line be cut next month? null = not asked; true = fixed
          (rent, insurance, a minimum); false = cuttable. D-082. */
-      fixed: f.fixed === undefined ? null : f.fixed
+      fixed: f.fixed === undefined ? null : f.fixed,
+      /* The ledger (D-128). An expense either is personal, or it produces
+         one income entry; only the second kind can ever be deductible,
+         and that is decided HERE, not in a form — a personal expense
+         handed deductible: true is stored as false. */
+      linkedIncomeId: linked,
+      deductible: !!(linked && f.deductible === true),
+      hidden: f.hidden === true,
+      active: f.active === undefined ? true : f.active !== false
     };
+  }
+
+  /* ---- The ledger: dated money in, and the months closed on it (D-128) ----
+     An income ENTRY is a dated event — this paycheque, this invoice paid,
+     this gift — which is a different thing from an income SOURCE (the
+     description of a job, annualised, that every ratio reads). The two
+     coexist: the source is the profile, the entry is the record. */
+  var INCOME_KINDS = ['w2', 'se', 'bonus', 'gift', 'side', 'dividend', 'rental', 'other'];
+  var INCOME_FREQUENCIES = ['once', 'weekly', 'fortnightly', 'monthly', 'annual'];
+  var TAX_METHODS = ['w2', 'se', 'none'];
+  var INCOME_COST_CATEGORIES = ['mileage', 'home_office', 'equipment', 'contractor_fees', 'licensing', 'platform_fees', 'other'];
+  /* Which kinds carry the costs of producing them, and how each is netted
+     by default. A gift is never taxable; everything else is until unticked. */
+  var INCOME_KIND_RULES = {
+    w2:       { label: 'W-2 salary or wages',      method: 'w2',   taxable: true,  costs: false },
+    se:       { label: '1099 / self-employment',   method: 'se',   taxable: true,  costs: true },
+    bonus:    { label: 'Bonus',                    method: 'w2',   taxable: true,  costs: false },
+    gift:     { label: 'Gift',                     method: 'none', taxable: false, costs: false },
+    side:     { label: 'Side income (cash, not 1099)', method: 'se', taxable: true, costs: true },
+    dividend: { label: 'Dividends or interest',    method: 'w2',   taxable: true,  costs: false },
+    rental:   { label: 'Rental income',            method: 'se',   taxable: true,  costs: true },
+    other:    { label: 'Other',                    method: 'w2',   taxable: true,  costs: false }
+  };
+  function costsAllowed(kind) { return !!(INCOME_KIND_RULES[kind] && INCOME_KIND_RULES[kind].costs); }
+
+  function createIncomeCost(fields) {
+    var f = fields || {};
+    return {
+      id: f.id || newId('ic'),
+      label: f.label === undefined ? null : f.label,
+      amountCents: Money.isEntered(f.amountCents) ? f.amountCents : null,
+      category: INCOME_COST_CATEGORIES.indexOf(f.category) >= 0 ? f.category : 'other',
+      date: typeof f.date === 'string' && f.date ? f.date : null,
+      deductible: f.deductible === undefined ? true : f.deductible !== false
+    };
+  }
+
+  function createIncomeEntry(fields) {
+    var f = fields || {};
+    var kind = INCOME_KINDS.indexOf(f.kind) >= 0 ? f.kind : 'other';
+    var rule = INCOME_KIND_RULES[kind];
+    var taxable = kind === 'gift' ? false : (f.taxable === undefined ? rule.taxable : f.taxable !== false);
+    var method = !taxable ? 'none' : (TAX_METHODS.indexOf(f.taxMethod) >= 0 && f.taxMethod !== 'none' ? f.taxMethod : rule.method);
+    return {
+      id: f.id || newId('in'),
+      personId: f.personId || null,
+      label: f.label === undefined ? null : f.label,
+      kind: kind,
+      amountCents: Money.isEntered(f.amountCents) ? f.amountCents : null,
+      frequency: INCOME_FREQUENCIES.indexOf(f.frequency) >= 0 ? f.frequency : 'once',
+      receivedOn: typeof f.receivedOn === 'string' && f.receivedOn ? f.receivedOn : null,
+      taxable: taxable,
+      taxMethod: method,
+      /* The costs of producing it live on the entry, so they are always
+         traceable to the income they support. Kinds without costs keep
+         an empty list, never a hidden one. */
+      costs: rule.costs ? (f.costs || []).map(createIncomeCost) : [],
+      hidden: f.hidden === true,
+      active: f.active === undefined ? true : f.active !== false,
+      source: f.source || 'manual',
+      note: f.note === undefined ? null : f.note
+    };
+  }
+
+  var BUDGET_BUCKETS = ['income', 'expenses', 'savings', 'investments', 'debt'];
+  function bucketCents(o) {
+    var out = {};
+    BUDGET_BUCKETS.forEach(function (b) { out[b] = o && Money.isEntered(o[b]) ? o[b] : null; });
+    return out;
+  }
+  function monthLabel(ym) {
+    var m = /^(\d{4})-(\d{2})$/.exec(ym || '');
+    if (!m) return ym || null;
+    return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][+m[2] - 1] + ' ' + m[1];
+  }
+  /* A MonthRecord: one closed month, estimated and actual side by side,
+     never merged; late entries go to actualRevised and nothing else. */
+  function createMonthRecord(fields) {
+    var f = fields || {};
+    var month = /^\d{4}-\d{2}$/.test(f.month || f.id || '') ? (f.month || f.id) : null;
+    return {
+      id: month,
+      month: month,
+      label: f.label || monthLabel(month),
+      status: 'closed',
+      closedAt: typeof f.closedAt === 'string' ? f.closedAt : null,
+      estimated: bucketCents(f.estimated),
+      actual: bucketCents(f.actual),
+      actualRevised: f.actualRevised ? bucketCents(f.actualRevised) : null,
+      lines: f.lines && typeof f.lines === 'object' ? f.lines : {},
+      sources: f.sources && typeof f.sources === 'object' ? f.sources : { income: [], expenses: [] },
+      note: f.note === undefined ? null : f.note
+    };
+  }
+  function createLedger(fields) {
+    var f = fields || {};
+    return {
+      income: (f.income || []).map(createIncomeEntry),
+      months: (f.months || []).map(createMonthRecord).filter(function (m) { return m.id; }),
+      /* Archive prompts the person waved away, by entry id. D-128 (7). */
+      dismissed: Array.isArray(f.dismissed) ? f.dismissed.slice() : []
+    };
+  }
+  function createBudget(fields) {
+    var f = fields || {};
+    var est = {};
+    Object.keys(f.estimated || {}).forEach(function (ym) {
+      if (!/^\d{4}-\d{2}$/.test(ym)) return;
+      var row = {};
+      BUDGET_BUCKETS.forEach(function (b) { if (Money.isEntered((f.estimated[ym] || {})[b])) row[b] = f.estimated[ym][b]; });
+      if (Object.keys(row).length) est[ym] = row;
+    });
+    return { estimated: est };
   }
 
   /**
@@ -1203,6 +1334,9 @@
       studentLoans: createStudentLoanPlan(f.studentLoans),
       calendar: createCalendar(f.calendar),
       history: createHistoryPlan(f.history),
+      /* The ledger and the budget's hand-set estimates (D-128). */
+      ledger: createLedger(f.ledger),
+      budget: createBudget(f.budget),
       /* The Skill Stacker's standing per skill, keyed by catalogue id, and
          the practice ledger it writes a row to each logged day. D-090. */
       skills: createSkills(f.skills),
@@ -1621,6 +1755,19 @@
     createIncomeSource: createIncomeSource,
     createEstimatedTrackedPair: createEstimatedTrackedPair,
     createExpenseEntry: createExpenseEntry,
+    createIncomeEntry: createIncomeEntry,
+    createIncomeCost: createIncomeCost,
+    createMonthRecord: createMonthRecord,
+    createLedger: createLedger,
+    createBudget: createBudget,
+    INCOME_KINDS: INCOME_KINDS,
+    INCOME_FREQUENCIES: INCOME_FREQUENCIES,
+    INCOME_KIND_RULES: INCOME_KIND_RULES,
+    INCOME_COST_CATEGORIES: INCOME_COST_CATEGORIES,
+    TAX_METHODS: TAX_METHODS,
+    BUDGET_BUCKETS: BUDGET_BUCKETS,
+    costsAllowed: costsAllowed,
+    monthLabel: monthLabel,
     createGoal: createGoal,
     createGoalLineItem: createGoalLineItem,
     createSwanTarget: createSwanTarget,

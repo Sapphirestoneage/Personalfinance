@@ -8235,6 +8235,78 @@ section('LATER.md, built (D-100): the log across tabs, worded labels, the defaul
   })());
 })();
 
+section('The ledger (D-128): income entries, the expense log, closed months');
+(function () {
+  /* Constructors. */
+  const gift = Schema.createIncomeEntry({ kind: 'gift', amountCents: 50000, taxable: true, taxMethod: 'w2', costs: [{ amountCents: 1 }] });
+  check('a gift is never taxable, whatever the form says', gift.taxable + '/' + gift.taxMethod, 'false/none');
+  check('and carries no costs', gift.costs.length, 0);
+  const se = Schema.createIncomeEntry({ kind: 'se', amountCents: 200000, frequency: 'once', receivedOn: '2026-09-10', costs: [{ label: 'Miles', amountCents: 20000, category: 'mileage' }, { amountCents: 500, category: 'nonsense' }] });
+  check('1099 nets by self-employment tax', se.taxMethod, 'se');
+  check('its costs are kept, deductible by default, with an unknown category read as other', se.costs.length + '/' + se.costs[0].deductible + '/' + se.costs[1].category, '2/true/other');
+  ['w2', 'bonus', 'dividend', 'other'].forEach(k => check(`${k} carries no costs`, Schema.createIncomeEntry({ kind: k, costs: [{ amountCents: 1 }] }).costs.length, 0));
+  ['se', 'side', 'rental'].forEach(k => checkTrue(`${k} may carry costs`, Schema.costsAllowed(k)));
+  check('an unknown kind is other', Schema.createIncomeEntry({ kind: 'lottery' }).kind, 'other');
+  check('an unknown frequency is once', Schema.createIncomeEntry({ frequency: 'daily' }).frequency, 'once');
+  check('untaxable other nets by nothing', Schema.createIncomeEntry({ kind: 'other', taxable: false }).taxMethod, 'none');
+  check('active and shown by default', se.active + '/' + se.hidden, 'true/false');
+  check('the eight kinds', Schema.INCOME_KINDS.join(','), 'w2,se,bonus,gift,side,dividend,rental,other');
+  check('the five frequencies', Schema.INCOME_FREQUENCIES.join(','), 'once,weekly,fortnightly,monthly,annual');
+
+  /* The hard rule, at the data layer. */
+  const personal = Schema.createExpenseEntry({ categoryId: 'groceries', amountCents: 100, deductible: true });
+  check('a personal expense cannot be deductible, whatever the form says', personal.deductible, false);
+  const linked = Schema.createExpenseEntry({ categoryId: 'mileage', amountCents: 100, linkedIncomeId: se.id, deductible: true });
+  check('a linked expense can be', linked.deductible, true);
+  check('a linked expense is not deductible until asked', Schema.createExpenseEntry({ linkedIncomeId: se.id }).deductible, false);
+  check('an empty link is no link', Schema.createExpenseEntry({ linkedIncomeId: '', deductible: true }).linkedIncomeId + '/' + Schema.createExpenseEntry({ linkedIncomeId: '' }).deductible, 'null/false');
+  check('an older entry reads as active and shown', Schema.createExpenseEntry({ categoryId: 'x' }).active + '/' + Schema.createExpenseEntry({ categoryId: 'x' }).hidden, 'true/false');
+  const S2 = require(path.join(ROOT, 'shared/spine-v2.js'));
+  S2.reset();
+  S2.upsertExpenseEntry({ id: 'x', categoryId: 'groceries', amountCents: 5, deductible: true });
+  check('the spine enforces it on write too', S2.getProfile().expenses.entries[0].deductible, false);
+  S2.upsertExpenseEntry({ id: 'x', linkedIncomeId: 'in1', deductible: true });
+  check('and lets a link through', S2.getProfile().expenses.entries[0].deductible, true);
+  S2.upsertExpenseEntry({ id: 'x', linkedIncomeId: null });
+  check('unlinking drops the deduction with it', S2.getProfile().expenses.entries[0].deductible, false);
+
+  /* Income entries through the spine. */
+  S2.upsertIncomeEntry({ id: 'in1', kind: 'se', amountCents: 100000, frequency: 'once', receivedOn: '2026-09-03' });
+  check('an income entry lands in the ledger', S2.getProfile().ledger.income.length, 1);
+  check('… with a worded undo label', S2.peekUndo().label, 'Changed the ledger');
+  const c = S2.upsertIncomeCost('in1', { label: 'Miles', amountCents: 20000, category: 'mileage' });
+  check('a cost lands on the entry', S2.getProfile().ledger.income[0].costs.length + '/' + c.category, '1/mileage');
+  S2.upsertIncomeEntry({ id: 'in2', kind: 'w2', amountCents: 300000 });
+  check('a cost on a W-2 entry is refused', S2.upsertIncomeCost('in2', { amountCents: 1 }), null);
+  check('removing a cost', S2.removeIncomeCost('in1', c.id) + '/' + S2.getProfile().ledger.income[0].costs.length, 'true/0');
+  check('removing an entry', S2.removeIncomeEntry('in2') + '/' + S2.getProfile().ledger.income.length, 'true/1');
+
+  /* Closed months: once, append-only, revised beside not over. */
+  const r1 = S2.closeMonth({ month: '2026-09', estimated: { income: 100, expenses: 50 }, actual: { income: 120, expenses: 60 } });
+  checkTrue('a month closes', r1.ok);
+  check('with a label', S2.getProfile().ledger.months[0].label, 'September 2026');
+  check('and a worded undo label', S2.peekUndo().label, 'Closed September 2026');
+  check('and both columns kept', JSON.stringify(S2.getProfile().ledger.months[0].estimated) + JSON.stringify(S2.getProfile().ledger.months[0].actual), '{"income":100,"expenses":50,"savings":null,"investments":null,"debt":null}{"income":120,"expenses":60,"savings":null,"investments":null,"debt":null}');
+  const r2 = S2.closeMonth({ month: '2026-09' });
+  check('closing it again is refused', r2.ok + '|' + r2.reason, 'false|September 2026 is already closed.');
+  check('a record without a month is refused', S2.closeMonth({ estimated: {} }).ok, false);
+  S2.reviseMonth('2026-09', { expenses: 75 });
+  const m = S2.getProfile().ledger.months[0];
+  check('a late entry moves only the revised column', m.actual.expenses + '/' + m.actualRevised.expenses + '/' + m.actualRevised.income, '60/75/120');
+  check('the estimate is untouched', m.estimated.expenses, 50);
+  S2.closeMonth({ month: '2026-08', actual: { income: 1 } });
+  check('months are kept in order', S2.getProfile().ledger.months.map(x => x.id).join(','), '2026-08,2026-09');
+  S2.setBudgetEstimate('2026-10', 'expenses', 55000);
+  check('a hand-set estimate is stored by month and bucket', S2.getProfile().budget.estimated['2026-10'].expenses, 55000);
+  check('… with a worded label', S2.peekUndo().label, 'Expected expenses for October 2026');
+  S2.setBudgetEstimate('2026-10', 'expenses', null);
+  check('and cleared', S2.getProfile().budget.estimated['2026-10'], undefined);
+  const round = Schema.createHousehold(JSON.parse(JSON.stringify(S2.getProfile())));
+  check('the ledger survives a round trip through the constructor', round.ledger.income.length + '/' + round.ledger.months.length + '/' + round.ledger.months[1].actualRevised.expenses, '1/2/75');
+  checkTrue('a household saved before the ledger reads with an empty one', Schema.createHousehold({ people: [] }).ledger.income.length === 0 && Schema.createHousehold({ people: [] }).ledger.months.length === 0);
+  S2.reset();
+})();
+
 section('Two decision sequences that cannot collide');
 
 (function () {
