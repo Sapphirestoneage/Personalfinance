@@ -407,6 +407,109 @@
       format: function (v) { return money(v) + '/yr'; }
     },
 
+    /* ---- The second wave of tranche rooms (D-099). ---- */
+    offerGross: {
+      label: 'The offer, a year', owner: 'career-move', anchor: 'inputs',
+      read: function (h) { var v = (h.career && h.career.offer || {}).grossAnnualCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('No offer entered yet.', ['offer.grossAnnualCents']); },
+      format: money
+    },
+    offerHours: {
+      label: 'The offer’s hours a week', owner: 'career-move', anchor: 'inputs',
+      read: function (h) { var v = (h.career && h.career.offer || {}).hoursPerWeek; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['offer.hoursPerWeek']); },
+      format: function (v) { return v + ' h'; }
+    },
+    offerCommute: {
+      label: 'The offer’s commute a week', owner: 'career-move', anchor: 'inputs',
+      read: function (h) { var v = (h.career && h.career.offer || {}).commuteHoursPerWeek; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['offer.commuteHoursPerWeek']); },
+      format: function (v) { return v + ' h'; }
+    },
+    offerCosts: {
+      label: 'The offer’s costs of working, a month', owner: 'career-move', anchor: 'inputs',
+      read: function (h) { var v = (h.career && h.career.offer || {}).workCostsMonthlyCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['offer.workCostsMonthlyCents']); },
+      format: function (v) { return money(v) + '/mo'; }
+    },
+    offerSignOn: {
+      label: 'Sign-on', owner: 'career-move', anchor: 'inputs',
+      read: function (h) { var v = (h.career && h.career.offer || {}).signOnCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['offer.signOnCents']); },
+      format: money
+    },
+    splitMode: {
+      label: 'How shared costs are split', owner: 'partner', anchor: 'inputs',
+      read: function (h) { var v = (h.partner || {}).splitMode; return v ? Money.ok(v) : Money.incomplete('Not chosen yet.', ['splitMode']); },
+      format: function (v) { return { equal: 'Equal halves', proportional: 'In proportion to income', pooled: 'One pool' }[v] || v; },
+      applies: function (h) { return Schema.adults(h).length >= 2; }, notApplicableBecause: 'Just you.'
+    },
+    sharedMonthly: {
+      label: 'Shared costs, a month', owner: 'partner', anchor: 'inputs',
+      read: function (h) { var v = (h.partner || {}).sharedMonthlyCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['sharedMonthlyCents']); },
+      format: function (v) { return money(v) + '/mo'; }
+    },
+    tuitionTarget: {
+      label: 'Tuition target, per child', owner: 'kids', anchor: 'inputs',
+      read: function (h) { var v = (h.kids || {}).tuitionTargetCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['tuitionTargetCents']); },
+      format: money
+    },
+    tuitionSaved: {
+      label: 'Saved for tuition so far', owner: 'kids', anchor: 'inputs',
+      read: function (h) { var v = (h.kids || {}).tuitionSavedCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['tuitionSavedCents']); },
+      format: money
+    },
+    tuitionMonthly: {
+      label: 'Going to tuition, a month', owner: 'kids', anchor: 'inputs',
+      read: function (h) { var v = (h.kids || {}).tuitionMonthlyCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['tuitionMonthlyCents']); },
+      format: function (v) { return money(v) + '/mo'; }
+    },
+    rentMonthly: {
+      label: 'Rent, a month', owner: 'housing', anchor: 'inputs',
+      read: function (h) { var v = (h.housing || {}).rentMonthlyCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['rentMonthlyCents']); },
+      format: function (v) { return money(v) + '/mo'; }
+    },
+    homePrice: {
+      label: 'The place, its price', owner: 'housing', anchor: 'inputs',
+      read: function (h) { var v = (h.housing || {}).priceCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['priceCents']); },
+      format: money
+    },
+    downPct: {
+      label: 'Down payment, share of price', owner: 'housing', anchor: 'inputs',
+      read: function (h) { var v = (h.housing || {}).downPct; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['downPct']); },
+      format: function (v) { return Math.round(v * 100) + '%'; }
+    },
+    mortgageRate: {
+      label: 'Mortgage rate', owner: 'housing', anchor: 'inputs',
+      read: function (h) { var v = (h.housing || {}).rate; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['rate']); },
+      format: function (v) { return Money.formatRate(v, { decimals: 2 }); }
+    },
+    purchasePrice: {
+      label: 'The purchase', owner: 'big-purchase', anchor: 'inputs',
+      read: function (h) { var v = (h.purchase || {}).priceCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['priceCents']); },
+      format: money
+    },
+    purchaseMonths: {
+      label: 'Months until the purchase', owner: 'big-purchase', anchor: 'inputs',
+      read: function (h) { var v = (h.purchase || {}).monthsAway; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['monthsAway']); },
+      format: function (v) { return v + ' mo'; }
+    },
+    purchaseRate: {
+      label: 'Financing rate', owner: 'big-purchase', anchor: 'inputs',
+      read: function (h) { var v = (h.purchase || {}).financeRate; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Paid in cash, or not entered.', ['financeRate']); },
+      format: function (v) { return Money.formatRate(v, { decimals: 1 }); }
+    },
+    incomeLow: {
+      label: 'A low month', owner: 'variable-income', anchor: 'inputs',
+      read: function (h) { var s = variableSource(h); return s && Money.isEntered(s.variableLowCents) ? Money.ok(s.variableLowCents) : Money.incomplete('Not entered yet.', ['variableLowCents']); },
+      format: function (v) { return money(v) + '/mo'; }
+    },
+    incomeHigh: {
+      label: 'A high month', owner: 'variable-income', anchor: 'inputs',
+      read: function (h) { var s = variableSource(h); return s && Money.isEntered(s.variableHighCents) ? Money.ok(s.variableHighCents) : Money.incomplete('Not entered yet.', ['variableHighCents']); },
+      format: function (v) { return money(v) + '/mo'; }
+    },
+    bufferMonths: {
+      label: 'Buffer, months', owner: 'variable-income', anchor: 'inputs',
+      read: function (h) { var v = (h.variableIncome || {}).bufferMonths; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['bufferMonths']); },
+      format: function (v) { return v + ' mo'; }
+    },
+
     /* What The Rerank would cut (D-085): the flagged lines, a year's worth.
        Derived, owned by the room that asks the questions. */
     rerankCut: {
@@ -632,6 +735,14 @@
     return src && src !== ownerId ? 'room' : 'entered';
   }
 
+  /* The income source Variable Income reads and writes: the first with a
+     variable basis or own-work type, else the primary person's first. */
+  function variableSource(h) {
+    var p = Schema.primaryPerson(h || {});
+    var list = (p && p.incomeSources) || [];
+    return list.filter(function (s) { return s.frequency === 'variable' || s.type === '1099'; })[0] || list[0] || null;
+  }
+
   function ageOf(household, fieldId) {
     var St = stalenessModule();
     if (!St) return null;
@@ -731,6 +842,7 @@
 
   return {
     FIELDS: FIELDS,
+    variableSource: variableSource,
     FILING_LABELS: FILING_LABELS,
     readings: readings,
     write: write,

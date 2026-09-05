@@ -89,6 +89,12 @@
     'person.unemployment.expectedSearchMonths':  { class: 'raw',        unit: 'months',  note: 'how long you expect the search to take; floorMonthlyCents is the bare-minimum month. Owned by Between Jobs. D-098' },
     'household.decumulation.stockShare':         { class: 'raw',        unit: 'ratio',   note: 'share of investments in stocks, for the VPW table; with plannedAnnualDrawCents and socialSecurityAt. Owned by Decumulation. D-098' },
     'household.tax.otherPreTaxAnnualCents':      { class: 'raw',        unit: 'cents',   note: 'pre-tax money beyond the workplace plan (HSA, traditional IRA), a year; withheldAnnualCents is what has been withheld. Owned by Tax. D-098' },
+    'household.career.offer.grossAnnualCents':   { class: 'raw',        unit: 'cents',   note: 'an offer being weighed: with hoursPerWeek, commuteHoursPerWeek, workCostsMonthlyCents, signOnCents. Owned by Career Move. D-099' },
+    'household.partner.splitMode':               { class: 'raw',        unit: 'enum',    values: ['equal', 'proportional', 'pooled'], note: 'how shared costs are split; sharedMonthlyCents is the shared month. Owned by Partner. D-099' },
+    'household.kids.tuitionTargetCents':         { class: 'raw',        unit: 'cents',   note: 'a tuition target per child; tuitionSavedCents so far, tuitionMonthlyCents going in. Owned by Kids and Tuition. D-099' },
+    'household.housing.priceCents':              { class: 'raw',        unit: 'cents',   note: 'a place being weighed: with rentMonthlyCents (what renting costs), downPct (0–1), rate (mortgage, decimal). Owned by Housing Decision. D-099' },
+    'household.purchase.priceCents':             { class: 'raw',        unit: 'cents',   note: 'a big purchase: with monthsAway, financeRate (decimal, null = cash), label. Owned by Big Purchase. D-099' },
+    'household.variableIncome.bufferMonths':     { class: 'raw',        unit: 'months',  note: 'months of the low-to-average gap held as a buffer. Owned by Variable Income. D-099' },
     'meta.guessed':                              { class: 'raw',        unit: 'map',     note: '{ fieldId: true } for figures the one-pager committed as guesses; cleared per field the moment a real number is written. D-094' },
     'meta.noRent':                               { class: 'raw',        unit: 'bool',    note: 'no rent to pay; lowers the spending guess. D-094' },
     'person.unemployment.benefitStatus':         { class: 'raw',        unit: 'enum',    values: ['receiving', 'applied', 'notApplied', 'ineligible'], note: 'between jobs: whether unemployment is coming. With benefitWeeklyCents, benefitWeeksLeft, severanceCents, lastGrossAnnualCents and since. Owned by Start Here. D-092' },
@@ -713,6 +719,37 @@
       withheldAnnualCents: Money.isEntered(f.withheldAnnualCents) ? f.withheldAnnualCents : null
     };
   }
+  /* The second wave of tranche rooms (D-099): each a small branch the room
+     owns. Nothing here is derived; every field is what the person typed. */
+  function createCareer(fields) {
+    var f = fields || {}; var o = f.offer || {};
+    function c(v) { return Money.isEntered(v) ? v : null; }
+    return { offer: { grossAnnualCents: c(o.grossAnnualCents), hoursPerWeek: c(o.hoursPerWeek), commuteHoursPerWeek: c(o.commuteHoursPerWeek), workCostsMonthlyCents: c(o.workCostsMonthlyCents), signOnCents: c(o.signOnCents) } };
+  }
+  var SPLIT_MODES = ['equal', 'proportional', 'pooled'];
+  function createPartnerPlan(fields) {
+    var f = fields || {};
+    return { splitMode: SPLIT_MODES.indexOf(f.splitMode) >= 0 ? f.splitMode : null, sharedMonthlyCents: Money.isEntered(f.sharedMonthlyCents) ? f.sharedMonthlyCents : null };
+  }
+  function createKidsPlan(fields) {
+    var f = fields || {};
+    function c(v) { return Money.isEntered(v) ? v : null; }
+    return { tuitionTargetCents: c(f.tuitionTargetCents), tuitionSavedCents: c(f.tuitionSavedCents), tuitionMonthlyCents: c(f.tuitionMonthlyCents) };
+  }
+  function createHousingPlan(fields) {
+    var f = fields || {};
+    function c(v) { return Money.isEntered(v) ? v : null; }
+    return { rentMonthlyCents: c(f.rentMonthlyCents), priceCents: c(f.priceCents), downPct: c(f.downPct), rate: c(f.rate) };
+  }
+  function createPurchasePlan(fields) {
+    var f = fields || {};
+    function c(v) { return Money.isEntered(v) ? v : null; }
+    return { priceCents: c(f.priceCents), monthsAway: c(f.monthsAway), financeRate: c(f.financeRate), label: typeof f.label === 'string' && f.label ? f.label : null };
+  }
+  function createVariableIncomePlan(fields) {
+    var f = fields || {};
+    return { bufferMonths: Money.isEntered(f.bufferMonths) ? f.bufferMonths : null };
+  }
   /* Estate basics: three yes/no facts. */
   function createEstate(fields) {
     var f = fields || {};
@@ -1071,6 +1108,12 @@
       giving: createGiving(f.giving),
       decumulation: createDecumulation(f.decumulation),
       tax: createTaxFacts(f.tax),
+      career: createCareer(f.career),
+      partner: createPartnerPlan(f.partner),
+      kids: createKidsPlan(f.kids),
+      housing: createHousingPlan(f.housing),
+      purchase: createPurchasePlan(f.purchase),
+      variableIncome: createVariableIncomePlan(f.variableIncome),
       /* The Skill Stacker's standing per skill, keyed by catalogue id, and
          the practice ledger it writes a row to each logged day. D-090. */
       skills: createSkills(f.skills),
@@ -1503,6 +1546,13 @@
     createEstate: createEstate,
     createDecumulation: createDecumulation,
     createTaxFacts: createTaxFacts,
+    createCareer: createCareer,
+    createPartnerPlan: createPartnerPlan,
+    createKidsPlan: createKidsPlan,
+    createHousingPlan: createHousingPlan,
+    createPurchasePlan: createPurchasePlan,
+    createVariableIncomePlan: createVariableIncomePlan,
+    SPLIT_MODES: SPLIT_MODES,
     createGiving: createGiving,
     SKILL_STATES: SKILL_STATES,
     SKILL_KINDS: SKILL_KINDS,

@@ -730,6 +730,132 @@
       ]
   });
 
+  /* Career Move — the second wave of tranche rooms (D-099). */
+  ROOMS.push({
+    id: 'career-move',
+    kind: 'about-you',
+    needs: ['grossAnnualIncome'],
+    order: 37,
+    title: 'Career Move',
+    blurb: 'An offer against the job you have: the real hourly wage of each, the take-home difference, and how far the FI date moves.',
+    href: 'rooms/career-move.html',
+    tier: 2,
+    tags: ['income'],
+      subsections: [
+        { id: 'number',      label: 'The real difference an hour' },
+        { id: 'chart',       label: 'Now against the offer' },
+        { id: 'inputs',      label: 'The offer' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
+  /* Partner — the second wave of tranche rooms (D-099). */
+  ROOMS.push({
+    id: 'partner',
+    kind: 'about-you',
+    needs: ['grossAnnualIncome', 'monthlyExpenses'],
+    order: 38,
+    title: 'Partner',
+    blurb: 'Two incomes, one household: how the shared month is split, what each of you keeps, and how much rides on one paycheque.',
+    href: 'rooms/partner.html',
+    tier: 2,
+    tags: ['income', 'cashflow'],
+      subsections: [
+        { id: 'number',      label: 'Each share of the shared month' },
+        { id: 'chart',       label: 'The shared month, split' },
+        { id: 'inputs',      label: 'How you split' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
+  /* Kids and Tuition — the second wave of tranche rooms (D-099). */
+  ROOMS.push({
+    id: 'kids',
+    kind: 'about-you',
+    needs: ['monthlyExpenses'],
+    order: 39,
+    title: 'Kids and Tuition',
+    blurb: 'What each child costs a year at their age, childcare while they are small, and what tuition needs a month to land on time.',
+    href: 'rooms/kids.html',
+    tier: 2,
+    tags: ['cashflow'],
+      subsections: [
+        { id: 'number',      label: 'What the kids cost a year' },
+        { id: 'chart',       label: 'By child, by year' },
+        { id: 'inputs',      label: 'Tuition' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
+  /* Housing Decision — the second wave of tranche rooms (D-099). */
+  ROOMS.push({
+    id: 'housing',
+    kind: 'about-you',
+    needs: ['monthlyExpenses', 'grossAnnualIncome', 'cashSavings'],
+    order: 40,
+    title: 'Housing Decision',
+    blurb: 'Rent against buying, this place, this rate: the monthly cost of each, the price-to-rent ratio, and the years to a down payment.',
+    href: 'rooms/housing.html',
+    tier: 2,
+    tags: ['cashflow'],
+      subsections: [
+        { id: 'number',      label: 'Own against rent, a month' },
+        { id: 'chart',       label: 'Rent against own' },
+        { id: 'inputs',      label: 'The place' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
+  /* Big Purchase — the second wave of tranche rooms (D-099). */
+  ROOMS.push({
+    id: 'big-purchase',
+    kind: 'about-you',
+    needs: ['cashSavings', 'monthlyExpenses'],
+    order: 41,
+    title: 'Big Purchase',
+    blurb: 'One thing you are eyeing: hours of your life, months of FI, what the cash looks like after, and what financing it costs.',
+    href: 'rooms/big-purchase.html',
+    tier: 2,
+    tags: ['cashflow'],
+      subsections: [
+        { id: 'number',      label: 'What it costs in life' },
+        { id: 'chart',       label: 'Cash before and after' },
+        { id: 'inputs',      label: 'The purchase' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
+  /* Variable Income — the second wave of tranche rooms (D-099). */
+  ROOMS.push({
+    id: 'variable-income',
+    kind: 'about-you',
+    needs: ['grossAnnualIncome', 'monthlyExpenses'],
+    order: 42,
+    title: 'Variable Income',
+    blurb: 'A low month, a high month, an average: the salary to pay yourself, the buffer that smooths the gap, and how many low months it covers.',
+    href: 'rooms/variable-income.html',
+    tier: 2,
+    tags: ['income'],
+      subsections: [
+        { id: 'number',      label: 'The salary to pay yourself' },
+        { id: 'chart',       label: 'Low, average, high' },
+        { id: 'inputs',      label: 'The months' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
   /* Where every room's out-of-scope line points (D-097). Reads the gate for
      a line per stage; owns nothing; optional by definition. */
   ROOMS.push({
@@ -779,7 +905,11 @@
     'between-jobs': ['unemployment'],
     protection: ['protection'],
     decumulation: ['decumulation'],
-    tax: ['income']
+    tax: ['income'],
+    'career-move': ['career'],
+    partner: ['partner'],
+    kids: ['dependents'],
+    'variable-income': ['variableIncome']
   };
   function gate() {
     if (typeof module === 'object' && module.exports) return require('./gate.js');

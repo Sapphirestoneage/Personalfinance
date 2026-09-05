@@ -75,6 +75,8 @@
     protectionConventions: 'protection_conventions.json',
     estateBasics: 'estate_basics.json',
     givingConventions: 'giving_conventions.json',
+    variableIncomeConventions: 'variable_income_conventions.json',
+    partnerConventions: 'partner_conventions.json',
     accessRules: 'access_rules.json',
     confidenceWeights: 'confidence_weights.json',
     uiBenefits: 'ui_benefits.json',

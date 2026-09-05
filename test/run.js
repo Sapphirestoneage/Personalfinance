@@ -7720,20 +7720,20 @@ section('Core (D-094): the gate — exists() per situation');
 
   /* Rooms whose requires are absent are not in the map. */
   const all = Registry.all().length;
-  check('unanswered: every room but the one that needs the status (Between Jobs)', Registry.forHousehold(none).length, all - 1);
+  function gone(h) { const ids = Registry.forHousehold(h).map(r => r.id); return Registry.all().map(r => r.id).filter(id => ids.indexOf(id) === -1).sort().join(','); }
+  check('unanswered: every room but the ones that need a fact (a status, a partner, a dependent)', gone(none), 'between-jobs,kids,partner');
   check('no household: every room', Registry.forHousehold(null).length, all);
   const retiredRooms = Registry.forHousehold(hh('retired')).map(r => r.id);
-  const gone = Registry.all().map(r => r.id).filter(id => retiredRooms.indexOf(id) === -1).sort().join(',');
-  check('retired: the working rooms are gone, and Between Jobs', gone, 'accounts,between-jobs,credential,fire,hassle,real-hourly-wage,savings-rate,self-employed,side-hustle');
+  check('retired: the working rooms are gone, and Between Jobs', gone(hh('retired')), 'accounts,between-jobs,career-move,credential,fire,hassle,kids,partner,real-hourly-wage,savings-rate,self-employed,side-hustle,variable-income');
   const bjRooms = Registry.forHousehold(hh('betweenJobs')).map(r => r.id);
   checkTrue('between jobs: no hourly wage, no savings rate, runway stays', bjRooms.indexOf('real-hourly-wage') === -1 && bjRooms.indexOf('savings-rate') === -1 && bjRooms.indexOf('runway') !== -1);
-  checkTrue('employed: own work, Between Jobs and Decumulation are gone, the rest stay', Registry.forHousehold(hh('employed')).map(r => r.id).indexOf('self-employed') === -1 && Registry.forHousehold(hh('employed')).length === all - 3);
+  check('employed, alone, no dependents: own work, between jobs, decumulation, partner, kids and variable income are gone', gone(hh('employed')), 'between-jobs,decumulation,kids,partner,self-employed,variable-income');
   checkTrue('self-employed: the 401(k) room is gone', Registry.forHousehold(hh('selfEmployed')).map(r => r.id).indexOf('accounts') === -1);
   checkTrue('every requires key is a branch', Object.keys(Registry.REQUIRES).every(id => Registry.REQUIRES[id].every(k => Gate.BRANCHES.indexOf(k) !== -1)));
   checkTrue('every requires room is a room', Object.keys(Registry.REQUIRES).every(id => !!Registry.byId(id)));
   check('byTag with a household filters the same way', Registry.byTag('all', hh('retired')).length, retiredRooms.length);
   check('byTag without one is every room', Registry.byTag('all').length, all);
-  check('the demo is three rooms short — no own work, not between jobs, not drawing down', Registry.forHousehold(Demo.build()).length, all - 3);
+  check('the demo is six rooms short — no own work, not between jobs, not drawing down, alone, nobody depending', gone(Demo.build()), 'between-jobs,decumulation,kids,partner,self-employed,variable-income');
 
   /* Guesses: a default for every guessable control, from the tables. */
   const tables = Object.assign({}, TABLES, { onepagerDefaults: require(path.join(ROOT, 'data/onepager_defaults.json')), uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')), matchDefaults: require(path.join(ROOT, 'data/match_defaults.json')) });
