@@ -1,0 +1,380 @@
+{
+  "id": "freelance",
+  "title": "Going freelance",
+  "blurb": "A revenue target, a ramp, the hours — the self-employment tax on top, the month it breaks even, and the rate an hour has to bill to match the job.",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "confidence": "convention",
+  "drawsOn": [
+    "takeHome",
+    "grossAnnualIncome",
+    "workProfile",
+    "cashSavings",
+    "investments",
+    "employerMatch"
+  ],
+  "questions": [
+    {
+      "id": "revenue",
+      "ask": "Revenue you would aim for, a year",
+      "unit": "dollars",
+      "default": "$grossAnnualCents"
+    },
+    {
+      "id": "ramp",
+      "ask": "Months to get there",
+      "unit": "months",
+      "default": 6,
+      "min": 1,
+      "max": 36
+    },
+    {
+      "id": "hours",
+      "ask": "Hours a week, all in",
+      "unit": "hours",
+      "default": {
+        "coalesce": [
+          "$hoursPerWeek",
+          40
+        ]
+      }
+    },
+    {
+      "id": "startup",
+      "ask": "Startup costs, one-off",
+      "unit": "dollars",
+      "default": 300000
+    },
+    {
+      "id": "keepJob",
+      "ask": "The job",
+      "choices": [
+        {
+          "id": "quit",
+          "label": "Quit"
+        },
+        {
+          "id": "partTime",
+          "label": "Keep it part-time, half the pay"
+        }
+      ],
+      "default": "quit"
+    },
+    {
+      "id": "startsOn",
+      "ask": "Starting in how many months?",
+      "unit": "months",
+      "default": 2,
+      "min": 0,
+      "max": 24
+    }
+  ],
+  "startsOn": "@startsOn",
+  "gapMonths": 0,
+  "diff": {
+    "income": [
+      {
+        "label": "The paycheque, gone or halved",
+        "from": 0,
+        "months": null,
+        "multiplier": {
+          "if": [
+            {
+              "eq": [
+                "@keepJob",
+                "partTime"
+              ]
+            },
+            0.5,
+            0
+          ]
+        }
+      },
+      {
+        "label": "Freelance, first third of the ramp",
+        "from": 0,
+        "months": {
+          "round": {
+            "/": [
+              "@ramp",
+              3
+            ]
+          }
+        },
+        "addCents": {
+          "round": {
+            "*": [
+              {
+                "/": [
+                  1,
+                  6
+                ]
+              },
+              "$freelanceNetMonthly"
+            ]
+          }
+        }
+      },
+      {
+        "label": "Freelance, second third",
+        "from": {
+          "round": {
+            "/": [
+              "@ramp",
+              3
+            ]
+          }
+        },
+        "months": {
+          "round": {
+            "/": [
+              "@ramp",
+              3
+            ]
+          }
+        },
+        "addCents": {
+          "round": {
+            "*": [
+              0.5,
+              "$freelanceNetMonthly"
+            ]
+          }
+        }
+      },
+      {
+        "label": "Freelance, last third",
+        "from": {
+          "*": [
+            2,
+            {
+              "round": {
+                "/": [
+                  "@ramp",
+                  3
+                ]
+              }
+            }
+          ]
+        },
+        "months": {
+          "-": [
+            "@ramp",
+            {
+              "*": [
+                2,
+                {
+                  "round": {
+                    "/": [
+                      "@ramp",
+                      3
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "addCents": {
+          "round": {
+            "*": [
+              {
+                "/": [
+                  5,
+                  6
+                ]
+              },
+              "$freelanceNetMonthly"
+            ]
+          }
+        }
+      },
+      {
+        "label": "Freelance, at the target",
+        "from": "@ramp",
+        "months": null,
+        "addCents": "$freelanceNetMonthly"
+      }
+    ],
+    "expenses": [
+      {
+        "label": "Health cover off payroll (COBRA, single)",
+        "from": 0,
+        "months": null,
+        "addCents": {
+          "if": [
+            {
+              "eq": [
+                "@keepJob",
+                "quit"
+              ]
+            },
+            {
+              "table": "cobraAca",
+              "path": [
+                "monthly",
+                "cobraSingleCents"
+              ]
+            },
+            0
+          ]
+        }
+      }
+    ],
+    "oneTime": [
+      {
+        "label": "Startup costs",
+        "when": 0,
+        "cents": "@startup"
+      }
+    ],
+    "assets": []
+  },
+  "lines": [
+    {
+      "id": "seTax",
+      "label": "Self-employment tax at the target, a year",
+      "unit": "dollars",
+      "value": {
+        "fn": "seTax",
+        "args": {
+          "netProfitCents": "@revenue"
+        }
+      }
+    },
+    {
+      "id": "netMonthly",
+      "label": "What the target leaves a month, after tax and the SE tax on top",
+      "unit": "dollarsMonthly",
+      "value": "$freelanceNetMonthly"
+    },
+    {
+      "id": "takeHomeNow",
+      "label": "Take-home now, a month",
+      "unit": "dollarsMonthly",
+      "value": "$takeHomeMonthlyCents"
+    },
+    {
+      "id": "hourlyNow",
+      "label": "An hour of your life is really worth, now",
+      "unit": "hourly",
+      "value": {
+        "fn": "realHourly",
+        "args": {
+          "grossAnnualCents": "$grossAnnualCents",
+          "hoursPerWeek": {
+            "coalesce": [
+              "$hoursPerWeek",
+              40
+            ]
+          },
+          "commuteHoursPerWeek": {
+            "coalesce": [
+              "$commuteHoursPerWeek",
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "rateToMatch",
+      "label": "The rate an hour must bill to match that, with the SE tax on top",
+      "unit": "hourly",
+      "value": {
+        "round": {
+          "/": [
+            "^hourlyNow",
+            0.86
+          ]
+        }
+      },
+      "note": "Divides by 0.86: the extra 15.3% × 92.35% a self-employed person pays."
+    },
+    {
+      "id": "billableHours",
+      "label": "Billable hours a week at that rate to hit the target",
+      "unit": "count",
+      "value": {
+        "round": {
+          "/": [
+            {
+              "/": [
+                "@revenue",
+                52
+              ]
+            },
+            "^rateToMatch"
+          ]
+        }
+      },
+      "warn": {
+        "gt": [
+          "^billableHours",
+          "@hours"
+        ]
+      },
+      "note": "Amber when it exceeds the hours you said."
+    },
+    {
+      "id": "breakEven",
+      "label": "Months until freelance income reaches the ramp target",
+      "unit": "months",
+      "value": "@ramp"
+    }
+  ],
+  "protect": [
+    "Health cover, every month of it",
+    "Quarterly estimated tax, set aside as it is earned",
+    "The cushion — the ramp is paid for out of it"
+  ],
+  "cut": [],
+  "tripleD": {},
+  "outputs": [
+    "runwayMinMonths",
+    "netWorthAtEndCents",
+    "fiDateShiftMonths"
+  ],
+  "horizonMonths": 120,
+  "sources": [
+    "data/se_tax_2026.json",
+    "data/effective_tax_rates_2026.json",
+    "data/cobra_aca_2024.json",
+    "data/triple_d.json",
+    "data/return_bands.json"
+  ],
+  "derived": [
+    {
+      "id": "freelanceNetMonthly",
+      "value": {
+        "round": {
+          "-": [
+            {
+              "fn": "takeHomeMonthly",
+              "args": {
+                "grossAnnualCents": "@revenue"
+              }
+            },
+            {
+              "/": [
+                {
+                  "*": [
+                    0.5,
+                    {
+                      "fn": "seTax",
+                      "args": {
+                        "netProfitCents": "@revenue"
+                      }
+                    }
+                  ]
+                },
+                12
+              ]
+            }
+          ]
+        }
+      },
+      "note": "take-home of the revenue as if salary, less half the SE tax a month — the half an employer would have paid"
+    }
+  ]
+}

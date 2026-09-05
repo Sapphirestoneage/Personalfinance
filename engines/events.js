@@ -35,7 +35,8 @@
       Rerank: require('./rerank.js'),
       CashFlow: require('./cashflow.js'),
       Hourly: require('./hourly.js'),
-      SelfEmployed: require('./selfemployed.js')
+      SelfEmployed: require('./selfemployed.js'),
+      Tax: require('./tax.js')
     };
   } else {
     deps = {
@@ -47,13 +48,14 @@
       Rerank: root.SLAF && root.SLAF.Rerank,
       CashFlow: root.SLAF && root.SLAF.CashFlow,
       Hourly: root.SLAF && root.SLAF.Hourly,
-      SelfEmployed: root.SLAF && root.SLAF.SelfEmployed
+      SelfEmployed: root.SLAF && root.SLAF.SelfEmployed,
+      Tax: root.SLAF && root.SLAF.Tax
     };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.Projection, deps.Statement, deps.Rerank, deps.CashFlow, deps.Hourly, deps.SelfEmployed);
+  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.Projection, deps.Statement, deps.Rerank, deps.CashFlow, deps.Hourly, deps.SelfEmployed, deps.Tax);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Events = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, Projection, Statement, Rerank, CashFlow, Hourly, SelfEmployed) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, Projection, Statement, Rerank, CashFlow, Hourly, SelfEmployed, Tax) {
   'use strict';
 
   var MONTHS = 12;
@@ -173,6 +175,16 @@
         return val(Projection.levelPaymentCents({ principalCents: args.principalCents, annualRate: args.annualRate, months: args.months }));
       case 'seTax':
         return SelfEmployed && t.seTax ? val(SelfEmployed.selfEmploymentTax(args.netProfitCents, h.filingStatus, t.seTax)) : null;
+      case 'stateTaxAnnual': {
+        /* The state schedule (engines/tax.js) on this household's taxable
+           income, with the state swapped. */
+        if (!Tax || !t.stateBrackets || !t.federalBrackets) return null;
+        var sh = withIncome(h, args.grossAnnualCents);
+        if (!sh) return null;
+        sh.state = args.state;
+        var est = Tax.estimate(sh, t);
+        return Money.isOk(est) && est.stateIncluded ? est.stateCents : null;
+      }
       default: return null;
     }
   }
@@ -297,6 +309,9 @@
 
     var env = { ctx: ctx, tables: tables, answers: {}, household: household };
     env.answers = answers(tpl, given, env);
+    /* Derived figures a template names once and uses many times — written
+       into the context under their own names, in order, after the answers. */
+    (tpl.derived || []).forEach(function (dv) { env.ctx = ctx = Object.assign({}, ctx); ctx[dv.id] = evaluate(dv.value, env); });
     var bundle = bundleFor(tables, tpl, d);
     var rate = tables.returnBands.percentiles[bundle.returns];
     if (!Money.isEntered(rate)) return Money.incomplete('No return band named ' + bundle.returns + '.', ['returnBands']);

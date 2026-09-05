@@ -6794,6 +6794,43 @@ section('Life events: buying a place, on the demo');
   checkTrue('cash-on-cash is negative here', hb.cashOnCash.value < 0);
 })();
 
+section('Life events: going freelance, on the demo');
+
+(function () {
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const SE = require(path.join(ROOT, 'engines/selfemployed.js'));
+  const T = Object.assign({}, TABLES, {
+    commonCosts: require(path.join(ROOT, 'data/common_costs.json')),
+    tripleD: require(path.join(ROOT, 'data/triple_d.json')),
+    returnBands: require(path.join(ROOT, 'data/return_bands.json')),
+    cobraAca: require(path.join(ROOT, 'data/cobra_aca_2024.json'))
+  });
+  const tpl = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/freelance.json'), 'utf8'));
+  const h = Demo.build();
+  const r = E.run(h, tpl, { startsOn: 0 }, { tables: T, d: 'default' });
+  const by = {}; r.lines.forEach(l => { by[l.id] = l; });
+  /* The derived figure: take-home of $72,000 as salary, less half the SE tax a month. */
+  const seTax = SE.selfEmploymentTax(7200000, 'single', T.seTax).value;
+  const net = Math.round(486000 - 0.5 * seTax / 12);
+  check('SE tax on $72,000 from the one engine', by.seTax.value, seTax);
+  check('what the target leaves a month', r.ctx.freelanceNetMonthly, net);
+  check('month 1: a sixth of it, the job gone', r.monthly[0].incomeCents, Math.round(net / 6));
+  check('month 1 spending adds COBRA', r.monthly[0].expensesCents, 315000 + 76100);
+  check('month 1 cash: 9,500 − 3,000 startup + a sixth in − the month out', r.monthly[0].cashCents, 950000 - 300000 + Math.round(net / 6) - (315000 + 76100));
+  check('no plan, no match while freelancing', r.monthly[0].matchCents + r.monthly[0].contributionCents, 0);
+  /* Month 12: two months at a sixth, two at a half, two at five sixths, six at the target. */
+  let cash = 950000 - 300000;
+  const ramp = [1 / 6, 1 / 6, 0.5, 0.5, 5 / 6, 5 / 6, 1, 1, 1, 1, 1, 1];
+  ramp.forEach(f => { cash += (f === 1 ? net : Math.round(net * f)) - (315000 + 76100); });
+  check('month 12 cash by the ramp', r.monthly[11].cashCents, cash);
+  check('the rate to match: the real hourly wage over 0.86', by.rateToMatch.value, Math.round(by.hourlyNow.value / 0.86));
+  check('billable hours a week at that rate: 72,000 ÷ 52 ÷ the rate', by.billableHours.value, Math.round(7200000 / 52 / by.rateToMatch.value));
+  check('which is more than the forty hours said: amber', by.billableHours.warn, true);
+  const part = E.run(h, tpl, { startsOn: 0, keepJob: 'partTime' }, { tables: T, d: 'default' });
+  check('part-time keeps half the paycheque and its plan', part.monthly[0].incomeCents, Math.round(486000 * 0.5) - 12000 + Math.round(net / 6));
+  check('and no COBRA', part.monthly[0].expensesCents, 315000);
+})();
+
 section('The D&D folder\'s vendored copies');
 
 (function () {

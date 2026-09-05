@@ -4338,6 +4338,20 @@ line (`"^piti"`) and carry `warn` / `bad` expressions. The demo's
 $324,000 at 20% down is red on cash and amber on the ratio, and the
 cash runs out in the closing month, which is the honest answer.
 
+**5 · Going freelance.** A revenue target (your gross, proposed), months
+to get there, honest hours, startup costs, quit or keep the job
+part-time at half pay. What the target leaves a month is a `derived`
+figure the template names once — the take-home of the revenue as if
+salary, less half the self-employment tax a month (the half an employer
+would have paid), both through the engines that exist — and the ramp is
+three steps of a sixth, a half and five sixths. Quitting adds COBRA.
+Lines: the SE tax at the target, the real hourly wage now, the rate an
+hour must bill to match it with the SE tax on top (÷ 0.86, a stated
+approximation), the billable hours a week that implies (amber when it
+exceeds the hours you said — the demo's $72,000 needs 57 billable hours
+at the rate that matches a 40-hour job), and the ramp length. Templates
+may now carry `derived` figures.
+
 **Verified.** `node test/run.js`: for each, month 1 and month 12 of the
 default run on the demo by longhand — the child's first year at $3,150 +
 $1,200 + $1,000 + $250 a month with the $3,000 birth in month 1; a parent

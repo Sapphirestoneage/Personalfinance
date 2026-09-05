@@ -109,6 +109,16 @@
       "items": {
         "$ref": "line"
       }
+    },
+    "derived": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "value"
+        ]
+      }
     }
   },
   "definitions": {
