@@ -6863,6 +6863,38 @@ section('Life events: moving, on the demo');
   check('staying in the same state changes no tax', dflt.lines.filter(l => l.id === 'stateThere')[0].value, ncTax);
 })();
 
+section('Life events: a debt sprint, on the demo');
+
+(function () {
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const DebtEngine = require(path.join(ROOT, 'engines/debt.js'));
+  const T = Object.assign({}, TABLES, {
+    commonCosts: require(path.join(ROOT, 'data/common_costs.json')),
+    tripleD: require(path.join(ROOT, 'data/triple_d.json')),
+    returnBands: require(path.join(ROOT, 'data/return_bands.json'))
+  });
+  const tpl = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/debt-sprint.json'), 'utf8'));
+  const h = Demo.build(); h.expenses.entries = Demo.buildSpending();
+  const r = E.run(h, tpl, { startsOn: 0 }, { tables: T, d: 'default' });
+  const by = {}; r.lines.forEach(l => { by[l.id] = l; });
+  check('both of the demo\'s cut lines are needs, so nothing is proposed from them and $200 stands in', r.answers.extra, 20000);
+  check('two lines were flagged all the same', by.cutLines.value, 2);
+  const now = DebtEngine.simulate(h, T.debtRules, { strategyId: 'avalanche', extraMonthlyCents: 0 });
+  const sprint = DebtEngine.simulate(h, T.debtRules, { strategyId: 'avalanche', extraMonthlyCents: 20000 });
+  check('months to debt-free at the minimums, from Debt Payoff\'s engine', by.monthsNow.value, now.months);
+  check('and with $200 a month more', by.monthsSprint.value, sprint.months);
+  check('interest saved is the difference of the two courses', by.interestSaved.value, now.totalInterestCents - sprint.totalInterestCents);
+  check('month 1 spending is $200 lighter', r.monthly[0].expensesCents, 315000 - 20000);
+  check('and cash is exactly the baseline: the $200 went to the debt', r.monthly[0].cashCents, 1097000);
+  check('net worth is $200 better than doing nothing in month 1', r.monthly[0].netWorthCents, 1097000 + Math.round((4800000 + 24000 + 12000) * (1 + 0.05 / 12)) - (2160000 - 20000));
+  check('after six months the sprint stops: month 12 spending is the full month', r.monthly[11].expensesCents, 315000);
+  check('month 12 net worth carries six payments of $200', r.monthly[11].netWorthCents - E.baseline(h, { tables: T }).monthly[11].netWorthCents, 6 * 20000);
+  const wanted = Demo.build(); wanted.expenses.entries = Demo.buildSpending(); wanted.ratings.rerank.dining_out = 2;
+  wanted.expenses.entries.filter(e => e.categoryId === 'dining_out')[0].amountCents = 50000;   /* dear enough to be in the top three by cost */
+  const r2 = E.run(wanted, tpl, { startsOn: 0 }, { tables: T, d: 'default' });
+  checkTrue('with a want flagged to cut, its cost is the proposal', r2.ctx.rerankCutTopMonthlyCents > 0 && r2.answers.extra === r2.ctx.rerankCutTopMonthlyCents);
+})();
+
 section('The D&D folder\'s vendored copies');
 
 (function () {

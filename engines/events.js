@@ -36,7 +36,9 @@
       CashFlow: require('./cashflow.js'),
       Hourly: require('./hourly.js'),
       SelfEmployed: require('./selfemployed.js'),
-      Tax: require('./tax.js')
+      Tax: require('./tax.js'),
+      Debt: require('./debt.js'),
+      QuickMath: require('./quickmath.js')
     };
   } else {
     deps = {
@@ -49,13 +51,15 @@
       CashFlow: root.SLAF && root.SLAF.CashFlow,
       Hourly: root.SLAF && root.SLAF.Hourly,
       SelfEmployed: root.SLAF && root.SLAF.SelfEmployed,
-      Tax: root.SLAF && root.SLAF.Tax
+      Tax: root.SLAF && root.SLAF.Tax,
+      Debt: root.SLAF && root.SLAF.Debt,
+      QuickMath: root.SLAF && root.SLAF.QuickMath
     };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.Projection, deps.Statement, deps.Rerank, deps.CashFlow, deps.Hourly, deps.SelfEmployed, deps.Tax);
+  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.Projection, deps.Statement, deps.Rerank, deps.CashFlow, deps.Hourly, deps.SelfEmployed, deps.Tax, deps.Debt, deps.QuickMath);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Events = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, Projection, Statement, Rerank, CashFlow, Hourly, SelfEmployed, Tax) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, Projection, Statement, Rerank, CashFlow, Hourly, SelfEmployed, Tax, Debt, QuickMath) {
   'use strict';
 
   var MONTHS = 12;
@@ -175,6 +179,18 @@
         return val(Projection.levelPaymentCents({ principalCents: args.principalCents, annualRate: args.annualRate, months: args.months }));
       case 'seTax':
         return SelfEmployed && t.seTax ? val(SelfEmployed.selfEmploymentTax(args.netProfitCents, h.filingStatus, t.seTax)) : null;
+      case 'debtFreeMonths': {
+        if (!Debt || !t.debtRules) return null;
+        var sim = Debt.simulate(h, t.debtRules, { strategyId: args.strategyId || 'avalanche', extraMonthlyCents: args.extraMonthlyCents || 0 });
+        return Money.isOk(sim) ? sim.months : null;
+      }
+      case 'debtInterest': {
+        if (!Debt || !t.debtRules) return null;
+        var sim2 = Debt.simulate(h, t.debtRules, { strategyId: args.strategyId || 'avalanche', extraMonthlyCents: args.extraMonthlyCents || 0 });
+        return Money.isOk(sim2) ? sim2.totalInterestCents : null;
+      }
+      case 'costPerUse':
+        return QuickMath ? val(QuickMath.costPerUse({ priceCents: args.priceCents, uses: args.uses })) : null;
       case 'stateTaxAnnual': {
         /* The state schedule (engines/tax.js) on this household's taxable
            income, with the state swapped. */
@@ -212,10 +228,17 @@
     }
     var other = Schema.otherAssetsCents(household);
     var fire = Tier0.fireNumber(household);
-    var cut = 0;
+    var cut = 0, cutTop = 0, cutCount = 0;
     if (Rerank && tables && tables.expenseCategories) {
       var r = Rerank.analyse(household, tables);
-      if (Money.isOk(r)) cut = r.flaggedMonthlyCents;
+      if (Money.isOk(r)) {
+        cut = r.flaggedMonthlyCents;
+        cutCount = r.cut.length;
+        /* The four dearest cut lines that are not needs: what a sprint
+           actually takes to zero. */
+        cutTop = r.cut.filter(function (row) { return !row.need; }).sort(function (a, b) { return b.monthlyCents - a.monthlyCents; })
+          .slice(0, 4).reduce(function (tot, row) { return tot + row.monthlyCents; }, 0);
+      }
     }
     var swan = household.swan && Money.isEntered(household.swan.targetCents) ? household.swan.targetCents : null;
     /* Whose income is whose, for events that take one earner out. */
@@ -262,6 +285,8 @@
       contributionMonthlyCents: contribution,
       fireNumberCents: val(fire),
       rerankCutMonthlyCents: cut,
+      rerankCutCount: cutCount,
+      rerankCutTopMonthlyCents: cutTop,
       swanFloorCents: swan,
       deductibleCents: num((household.insurance || {}).highestDeductibleCents),
       age: Schema.primaryAge(household),
@@ -346,8 +371,10 @@
       });
     }
     var incomeItems = items('income'), expenseItems = items('expenses'), oneTimes = items('oneTime'), assetMoves = items('assets');
+    /* Extra payments to existing debt: cash out, debt down, month by month. */
+    var debtPayments = items('debtPayments');
     var flags = [];
-    incomeItems.concat(expenseItems, oneTimes, assetMoves).forEach(function (it) {
+    incomeItems.concat(expenseItems, oneTimes, assetMoves, debtPayments).forEach(function (it) {
       if (it.unpriced) flags.push({ key: 'unpriced', month: null, text: it.label + ' could not be priced from what is entered; it is left out.' });
     });
     expenseItems.forEach(function (it) {
@@ -434,6 +461,11 @@
         var interest = loan.balance * loan.rate / MONTHS;
         var principal = Math.min(loan.balance, loan.pmt - interest);
         loan.balance -= principal; debt -= principal;
+      });
+      debtPayments.forEach(function (it) {
+        if (m < it.from || m >= it.to || it.addCents === null) return;
+        var pay = Math.min(it.addCents, Math.max(0, debt));
+        cash -= pay; debt -= pay;
       });
       if (m === start && shockCents) cash -= shockCents;
 

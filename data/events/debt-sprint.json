@@ -1,0 +1,156 @@
+{
+  "id": "debt-sprint",
+  "title": "A debt sprint",
+  "blurb": "A few months with The Rerank's cut lines at zero and every freed dollar on the dearest debt — and the month it is gone.",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "confidence": "convention",
+  "drawsOn": [
+    "rerank",
+    "debts",
+    "monthlyExpenses",
+    "cashSavings"
+  ],
+  "questions": [
+    {
+      "id": "months",
+      "ask": "How many months of sprint?",
+      "unit": "months",
+      "default": 6,
+      "min": 1,
+      "max": 24
+    },
+    {
+      "id": "extra",
+      "ask": "Freed each month and sent to the debt",
+      "unit": "dollars",
+      "default": {
+        "if": [
+          {
+            "gt": [
+              "$rerankCutTopMonthlyCents",
+              0
+            ]
+          },
+          "$rerankCutTopMonthlyCents",
+          20000
+        ]
+      },
+      "hint": "Proposed from up to four of The Rerank's cut lines that are not needs; $200 when nothing is flagged."
+    },
+    {
+      "id": "startsOn",
+      "ask": "Starting in how many months?",
+      "unit": "months",
+      "default": 1,
+      "min": 0,
+      "max": 12
+    }
+  ],
+  "startsOn": "@startsOn",
+  "gapMonths": 0,
+  "diff": {
+    "income": [],
+    "expenses": [
+      {
+        "label": "The cut lines, at zero for the sprint",
+        "from": 0,
+        "months": "@months",
+        "addCents": {
+          "neg": "@extra"
+        }
+      }
+    ],
+    "oneTime": [],
+    "assets": [],
+    "debtPayments": [
+      {
+        "label": "Every freed dollar onto the debt",
+        "from": 0,
+        "months": "@months",
+        "addCents": "@extra"
+      }
+    ]
+  },
+  "lines": [
+    {
+      "id": "cutLines",
+      "label": "Lines The Rerank flagged to cut",
+      "unit": "count",
+      "value": "$rerankCutCount"
+    },
+    {
+      "id": "monthsNow",
+      "label": "Months to debt-free at the minimums, avalanche",
+      "unit": "months",
+      "value": {
+        "fn": "debtFreeMonths",
+        "args": {
+          "extraMonthlyCents": 0
+        }
+      }
+    },
+    {
+      "id": "monthsSprint",
+      "label": "…with the freed amount every month until it is gone",
+      "unit": "months",
+      "value": {
+        "fn": "debtFreeMonths",
+        "args": {
+          "extraMonthlyCents": "@extra"
+        }
+      },
+      "note": "The full-course figure from Debt Payoff's own engine; the sprint above stops after the months you chose."
+    },
+    {
+      "id": "interestSaved",
+      "label": "Interest saved over the full course",
+      "unit": "dollars",
+      "value": {
+        "-": [
+          {
+            "fn": "debtInterest",
+            "args": {
+              "extraMonthlyCents": 0
+            }
+          },
+          {
+            "fn": "debtInterest",
+            "args": {
+              "extraMonthlyCents": "@extra"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "endMonth",
+      "label": "The sprint ends, months from now",
+      "unit": "months",
+      "value": {
+        "+": [
+          "@startsOn",
+          "@months"
+        ]
+      }
+    }
+  ],
+  "protect": [
+    "The minimum on every debt, every month",
+    "The cushion — a sprint is paid from spending, not from cash"
+  ],
+  "cut": [
+    "rerank:cut"
+  ],
+  "tripleD": {},
+  "outputs": [
+    "netWorthAtEndCents",
+    "fiDateShiftMonths"
+  ],
+  "horizonMonths": 120,
+  "sources": [
+    "data/debt_rules.json",
+    "data/triple_d.json",
+    "data/return_bands.json"
+  ]
+}

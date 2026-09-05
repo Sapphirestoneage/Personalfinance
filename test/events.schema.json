@@ -61,7 +61,12 @@
         "expenses",
         "oneTime",
         "assets"
-      ]
+      ],
+      "properties": {
+        "debtPayments": {
+          "type": "array"
+        }
+      }
     },
     "protect": {
       "type": "array",

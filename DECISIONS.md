@@ -4363,6 +4363,17 @@ the same month there, the state tax here and there, the move. Raleigh to
 Austin on the demo: a month a fifteenth dearer, $2,375.75 of NC tax
 gone.
 
+**7 · A debt sprint.** Months of sprint, the amount freed each month
+(proposed from up to four of The Rerank's cut lines that are not needs,
+dearest first; $200 stands in when nothing qualifies), starting when.
+The cut lines go to zero for the sprint and every freed dollar is paid
+onto the debt — a new `debtPayments` diff list: cash out, debt down,
+never past zero. Lines from Debt Payoff's own engine through two new
+calls, `debtFreeMonths` and `debtInterest`: months to debt-free at the
+minimums and with the amount kept up for the full course, and the
+interest saved between them. The sprint itself stops when you said;
+the full-course figure is labelled as such.
+
 **Verified.** `node test/run.js`: for each, month 1 and month 12 of the
 default run on the demo by longhand — the child's first year at $3,150 +
 $1,200 + $1,000 + $250 a month with the $3,000 birth in month 1; a parent
