@@ -1098,6 +1098,33 @@
    * caller shows the confirm; this does the write. Older schemas migrate
    * on the reload that follows, through the same path a stored blob takes.
    */
+  /**
+   * mergeImport(text) — ADDS a file to the household here instead of
+   * replacing it: records the lists lack, blank scalars, snapshots not
+   * already held. shared/importer.js decides what "adds" means; this is
+   * the write. One command-log entry, so one undo takes it back. D-125.
+   */
+  function mergeImport(text, Importer) {
+    var check = inspectImport(text);
+    if (!check.ok) return check;
+    if (!Importer || typeof Importer.merge !== 'function') return { ok: false, reason: 'The importer is not loaded.' };
+    var merged = Importer.merge(getProfile(), Schema.createHousehold(check.household));
+    var h = load();
+    var keep = { undoStack: h.meta.undoStack || [], redoStack: h.meta.redoStack || [], visitedRooms: h.meta.visitedRooms || [] };
+    var next = Schema.createHousehold(merged.household);
+    Object.keys(h).forEach(function (k) { delete h[k]; });
+    Object.keys(next).forEach(function (k) { h[k] = next[k]; });
+    h.meta = h.meta || {};
+    h.meta.undoStack = keep.undoStack; h.meta.redoStack = keep.redoStack; h.meta.visitedRooms = keep.visitedRooms;
+    pendingLabel = 'Added ' + merged.added.total + (merged.added.total === 1 ? ' thing' : ' things') + ' from a file';
+    save(); notify();
+    var have = {};
+    listSnapshots().forEach(function (s) { have[s.id] = true; });
+    var newSnaps = (check.snapshots || []).filter(function (s) { return s && s.id && !have[s.id]; });
+    if (newSnaps.length) writeRaw(SNAPSHOT_KEY, JSON.stringify(listSnapshots().concat(newSnaps).sort(function (a, b) { return String(a.timestamp).localeCompare(String(b.timestamp)); })));
+    return { ok: true, reason: null, added: merged.added, snapshotsAdded: newSnaps.length, household: getProfile() };
+  }
+
   function importJSON(text) {
     var check = inspectImport(text);
     if (!check.ok) return check;
@@ -1270,6 +1297,7 @@
     exportFilename: exportFilename,
     inspectImport: inspectImport,
     importJSON: importJSON,
+    mergeImport: mergeImport,
     toShareCode: toShareCode,
     fromShareCode: fromShareCode,
     shareFragment: shareFragment,

@@ -1045,6 +1045,29 @@
       ]
   });
 
+  /* Your Data: every way numbers get in or out of this browser — a file, a
+     share link, a pasted statement sorted into the right lists — in one
+     place. Writes through the same spine helpers the owner rooms use; owns
+     no field (D-125). A utility, off the path like Refresh (D-057). */
+  ROOMS.push({
+    id: 'data',
+    kind: 'core',
+    utility: true,
+    needs: [],
+    order: 98,
+    title: 'Your Data',
+    blurb: 'Download a file, copy a share link, load one — replacing or adding to what is here — or paste in a statement and have every line sorted into the debt, account, expense or income it is.',
+    href: 'rooms/data.html',
+    tier: 0,
+    tags: ['income', 'cashflow', 'debt'],
+    subsections: [
+      { id: 'out',   label: 'Take it with you' },
+      { id: 'file',  label: 'Load a file' },
+      { id: 'paste', label: 'Paste in new numbers' },
+      { id: 'reset', label: 'Start over' }
+    ]
+  });
+
   /* Where every room's out-of-scope line points (D-097). Reads the gate for
      a line per stage; owns nothing; optional by definition. */
   ROOMS.push({

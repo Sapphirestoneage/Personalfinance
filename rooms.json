@@ -822,6 +822,16 @@
       "order": 51
     },
     {
+      "id": "data",
+      "title": "Your Data",
+      "file": "rooms/data.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 98
+    },
+    {
       "id": "refresh",
       "title": "Refresh",
       "file": "rooms/refresh.html",
