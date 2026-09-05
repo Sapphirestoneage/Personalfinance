@@ -4,26 +4,26 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>The Dashboard · SPARKS</title>
-<meta name="description" content="The Dashboard now lives at the site root."/>
+<meta name="description" content="The Dashboard now lives at dashboard.html."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  REDIRECT — the Dashboard is the front door now (index.html, DECISIONS.md
-  D-058). This file exists so links to rooms/dashboard.html, hash included,
+  REDIRECT — the Dashboard lives at dashboard.html (DECISIONS.md D-058,
+  D-092). This file exists so links to rooms/dashboard.html, hash included,
   keep working. LIVE-FORM: built once. No inputs.
 -->
-<meta http-equiv="refresh" content="0; url=../index.html"/>
+<meta http-equiv="refresh" content="0; url=../dashboard.html"/>
 </head>
 <body class="slaf">
 <main class="slaf-wrap">
-  <p style="color:var(--color-text-muted)">The Dashboard has moved to the front page.
-    <a href="../index.html" id="go">Open it →</a></p>
+  <p style="color:var(--color-text-muted)">The Dashboard has moved.
+    <a href="../dashboard.html" id="go">Open it →</a></p>
 </main>
 <script>
   /* Carry the section hash across so a deep link still lands. */
   (function () {
-    var target = '../index.html' + (location.hash || '');
+    var target = '../dashboard.html' + (location.hash || '');
     document.getElementById('go').setAttribute('href', target);
     location.replace(target);
   })();

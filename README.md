@@ -67,7 +67,8 @@ typing in it.
 ## Layout
 
 ```
-index.html          The front door: the Dashboard once it has what it needs, the intake landing until then (D-058)
+index.html          The home page of stresslessaboutmoney.com (D-092); the site's other pages are the folders below
+dashboard.html      The Dashboard once it has what it needs, the intake landing until then (D-058, moved by D-092)
 foo-ladder.js       The FOO ladder's logic (shell at rooms/foo-ladder.html): build() once, paint() on every change
 map.html            Room directory: next-unfinished first, then the groups, tag filter
 favicon.svg         Sapphire mark

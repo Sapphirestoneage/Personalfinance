@@ -2122,7 +2122,7 @@ section('Room script tags');
      ported and became the most script-heavy page in the repo. */
   const pages = fs.readdirSync(path.join(ROOT, 'rooms'))
     .filter(f => f.endsWith('.html')).map(f => ['rooms/' + f, '../'])
-    .concat([['index.html', '']]);
+    .concat([['index.html', ''], ['dashboard.html', '']]);
 
   pages.forEach(function (entry) {
     const file = entry[0], prefix = entry[1];
@@ -2158,7 +2158,7 @@ section('Room script tags');
     /\[hidden\]\s*\{[^}]*display:\s*none\s*!important/.test(theme));
 
   fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => f.endsWith('.html'))
-    .map(f => path.join('rooms', f)).concat(['index.html']).forEach(function (file) {
+    .map(f => path.join('rooms', f)).concat(['index.html', 'dashboard.html']).forEach(function (file) {
       const html = fs.readFileSync(path.join(ROOT, file), 'utf8');
       /* Only the page's own CSS counts. A room is free to MENTION [hidden]
          in a comment explaining that it toggles the attribute — that is
@@ -2379,7 +2379,7 @@ section('Live forms');
 (function () {
   const roomsDir = path.join(ROOT, 'rooms');
   const htmlPages = fs.readdirSync(roomsDir).filter(f => f.endsWith('.html'))
-    .map(f => path.join('rooms', f)).concat(['index.html']);
+    .map(f => path.join('rooms', f)).concat(['index.html', 'dashboard.html']);
 
   htmlPages.forEach(function (file) {
     const html = fs.readFileSync(path.join(ROOT, file), 'utf8');
@@ -4628,7 +4628,7 @@ section('The clock');
        is not there yet, nothing registers and nothing ever gets stamped —
        silently. So the order is asserted for every page that loads both. */
     const pages = fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f))
-      .map(f => 'rooms/' + f).concat(['index.html', 'map.html']);
+      .map(f => 'rooms/' + f).concat(['index.html', 'dashboard.html', 'map.html']);
     pages.forEach(function (page) {
       const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
       const spine = html.search(/<script src="[^"]*spine-v2\.js"/);
@@ -4783,17 +4783,18 @@ section('Age, and the three that move');
 
   /* -- The dashboard's first screen is built from the instrument list ------ */
   {
-    /* The dashboard is index.html since D-058; rooms/dashboard.html is a
-       redirect that must carry the hash across. */
-    const dash = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+    /* The dashboard was index.html from D-058 until D-092 moved it to
+       dashboard.html so the site's home page could take the root;
+       rooms/dashboard.html is a redirect that must carry the hash across. */
+    const dash = fs.readFileSync(path.join(ROOT, 'dashboard.html'), 'utf8');
     const stub = fs.readFileSync(path.join(ROOT, 'rooms/dashboard.html'), 'utf8');
-    checkTrue('rooms/dashboard.html redirects to the front page', /url=\.\.\/index\.html/.test(stub));
+    checkTrue('rooms/dashboard.html redirects to dashboard.html', /url=\.\.\/dashboard\.html/.test(stub));
     checkTrue('and carries the hash', stub.indexOf('location.hash') !== -1);
     checkTrue('the front page is a router', dash.indexOf('function route(') !== -1);
     checkTrue('with an explicit example-numbers action behind a confirm',
       dash.indexOf('id="btn-example"') !== -1 && dash.indexOf('window.confirm(') !== -1);
     checkTrue('that never runs on load', !/DemoPersona\.build\(\)[\s\S]{0,200}addEventListener|load[\s\S]{0,40}DemoPersona\.build/.test(dash));
-    check('the registry points the dashboard at the root', Registry.byId('dashboard').href, 'index.html');
+    check('the registry points the dashboard at the root', Registry.byId('dashboard').href, 'dashboard.html');
     check('and the ladder at rooms/', Registry.byId('foo-ladder').href, 'rooms/foo-ladder.html');
     checkTrue('the front page loads the instrument list', dash.indexOf('shared/instruments.js') !== -1);
     checkTrue('and the staleness reader', dash.indexOf('shared/staleness.js') !== -1);
@@ -6456,7 +6457,7 @@ section('Three benchmarks, and where the new numbers show');
   const blank = Schema.createHousehold({});
   checkTrue('a blank household: fewer than two can be worked out', /Fewer than two/.test(B.threeBenchmarks(blank, TABLES).sentence));
 
-  const dash = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const dash = fs.readFileSync(path.join(ROOT, 'dashboard.html'), 'utf8');
   checkTrue('the Weather panel lists income concentration and worst-year coverage', /'incomeConcentration'/.test(dash) && /'worstPlausibleYearCoverage'/.test(dash));
   checkTrue('the Flight plan carries the five levels', /id="wealth-levels"/.test(dash));
   const snap = fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8');
@@ -7069,7 +7070,7 @@ section('3D: the instruments three ways');
   check('nor does the FOO step', td.columns['default'].fooStep.status, 'incomplete');
   checkTrue('the FI year is a year', Number.isInteger(td.columns['default'].fiEtaYear.value) && td.columns['default'].fiEtaYear.value > 2030);
   checkTrue('the dream reaches FI sooner', td.columns.dream.fiEtaYear.value <= td.columns['default'].fiEtaYear.value);
-  const dash = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const dash = fs.readFileSync(path.join(ROOT, 'dashboard.html'), 'utf8');
   checkTrue('the dashboard has the toggle and loads the events engine', /id="btn-3d"/.test(dash) && /engines\/events\.js/.test(dash));
   check('a blank household cannot fan out, and says what it needs', InstrumentsMain.threeD(Schema.createHousehold({}), T).status, 'incomplete');
 })();
@@ -7307,7 +7308,7 @@ section('The Skill Stacker: the catalogue, and the engine on the demo');
   checkTrue('four screens exist', ['today', 'browse', 'stacks', 'curves'].every(id => new RegExp('id="' + id + '"').test(html)));
   checkTrue('the lists are guarded', /LIVE-FORM: guarded/.test(html) && (html.match(/LiveForm\.guard\(/g) || []).length === 3);
   checkTrue('the dashboard and Refresh load the engine so a snapshot carries the ledger',
-    /engines\/skills\.js/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')) && /engines\/skills\.js/.test(fs.readFileSync(path.join(ROOT, 'rooms/refresh.html'), 'utf8')));
+    /engines\/skills\.js/.test(fs.readFileSync(path.join(ROOT, 'dashboard.html'), 'utf8')) && /engines\/skills\.js/.test(fs.readFileSync(path.join(ROOT, 'rooms/refresh.html'), 'utf8')));
 })();
 
 section('Charts: the one way a number becomes a picture');
@@ -7376,10 +7377,10 @@ section('Charts: the one way a number becomes a picture');
     check('… and eight days is practicing', h.skills['cook-dinner'].state, 'practicing');
   })();
 
-  ['index.html', 'rooms/fire.html', 'rooms/stacker.html'].forEach(f => {
+  ['dashboard.html', 'rooms/fire.html', 'rooms/stacker.html'].forEach(f => {
     checkTrue(`${f} loads the chart module`, /shared\/charts\.js/.test(fs.readFileSync(path.join(ROOT, f), 'utf8')));
   });
-  checkTrue('the dashboard draws the ring, not the old stack', !/nw-stack/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')));
+  checkTrue('the dashboard draws the ring, not the old stack', !/nw-stack/.test(fs.readFileSync(path.join(ROOT, 'dashboard.html'), 'utf8')));
 })();
 
 section('Two decision sequences that cannot collide');

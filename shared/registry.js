@@ -283,9 +283,9 @@
       order: 15,
       title: 'The Dashboard',
       blurb: 'Every threshold ratio as one shape, plus altitude, fuel, engine load, thrust, weather and the flight plan \u2014 the whole panel at a glance.',
-      /* The front door since D-058: index.html renders the dashboard once
+      /* The dashboard, at the root as dashboard.html since D-092 (index.html is the site's home page); it renders the panel once
          it has what it needs, and the intake landing until then. */
-      href: 'index.html',
+      href: 'dashboard.html',
       tier: 1,
       tags: ['income', 'cashflow', 'debt'],
       subsections: [

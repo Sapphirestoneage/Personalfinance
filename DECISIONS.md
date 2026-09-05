@@ -4739,6 +4739,64 @@ demo, the whole-site sweep, the forms walk and the alignment pass.
 
 ---
 
+## D-092 — The Dashboard moves to dashboard.html; index.html becomes the site's home page
+
+*(The stresslessaboutmoney.com rebuild. The marketing site now lives in this
+repo: one deploy and one design system with the rooms.)* A custom domain on
+GitHub Pages can only put one file at its root, and the root of
+stresslessaboutmoney.com has to be the home page — the page that leads with
+the stressed earner, not a panel of six instruments for someone who has
+already answered thirteen questions. D-058 put the Dashboard at `index.html`
+because a returning visitor should land on their panel; that is still true
+for a visitor who has a panel, and the home page's forwarding does it for
+them. A first-time visitor lands on a sentence instead.
+
+**Decision: `index.html` is the home page of the site. The Dashboard is
+`dashboard.html`, still at the repo root.** It is a rename and nothing else:
+every relative path inside it (`shared/…`, `engines/…`, `rooms/…`) resolves
+exactly as before, and `Progress.atRoot()` still finds it at the root because
+its registry `href` is still not under `rooms/`. The router logic, the intake
+landing and the example-numbers action are unchanged.
+
+**Old links hold.** Share links are built as the directory plus `#h=…`
+(D-059), which now resolves to the home page. The home page's first inline
+script, before anything paints, forwards any hash that is a share code
+(`#h=`) or a dashboard section (`#panel`, `#out-…`, `#reading`) to
+`dashboard.html` with the hash intact. `rooms/dashboard.html` now redirects to
+`../dashboard.html`, hash included, exactly as it redirected to
+`../index.html` before. Refresh's "done" button lands on `dashboard.html`.
+
+**The site itself** is static HTML under the root — `index.html`,
+`start-here/`, `coaching/`, `tools/`, `frameworks/`, `about/`, `media/`,
+`notes/`, `privacy/`, `terms/`, `404.html` — sharing one `site.css` and one
+`site.js`. It uses `shared/theme.css` and `shared/fonts.css` as its tokens
+and type, and adds a light palette, a warm accent and a calm mode as token
+overrides in `site.css`, the way `dnd/shared/skin.css` adds parchment. The
+rooms are untouched and stay navy. Content the site reads (testimonials,
+framework and note metadata) lives in `site/`, not `data/`, because every
+`data/*.json` is a versioned reference table that `test/run.js` requires a
+confidence stamp on. The site's own checks are `node test/site.js`.
+
+Folders rather than `coaching.html`: `/coaching/` resolves on GitHub Pages
+and under `python3 -m http.server` alike, so every page's canonical URL is
+the same in both. A `CNAME` file carries the domain. The GitHub Pages
+subpath (`sapphirestoneage.github.io/Personalfinance/`) still works because
+every link is relative, as README insists.
+
+### Compatibility note
+
+Stored shape: nothing. Registry `href` for `dashboard` is `dashboard.html`;
+anything that hard-coded `index.html` as the dashboard should read
+`Ownership.linkTo()` or the registry instead. Files updated:
+`shared/registry.js`, `rooms/dashboard.html`, `rooms/refresh.html`,
+`test/run.js` (the dashboard-specific reads point at `dashboard.html`; the
+generic page sweeps now cover both files), `test/alignment.js` (the
+instrument grid is checked at `/dashboard.html`), `README.md`.
+`test/forms.js` addresses rooms by path and needed no change. A future room
+should never link to `index.html` expecting the panel.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have
