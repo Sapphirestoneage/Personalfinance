@@ -161,7 +161,7 @@
           return '<li class="card">' + ribbon
             + '<h3><a href="' + esc(href) + '">' + esc(r.title) + '</a></h3>'
             + '<p>' + esc(r.blurb) + '</p>'
-            + '<div class="card-meta"><span class="muted">Free · nothing leaves your browser</span>'
+            + '<div class="card-meta">'
             + '<button type="button" class="btn btn--small btn--ghost" data-share="' + esc(href) + '">Share this room</button></div>'
             + '</li>';
         }).join('') + '</ul></div>';

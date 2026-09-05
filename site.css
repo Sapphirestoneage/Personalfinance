@@ -173,6 +173,7 @@ details > summary { cursor: pointer; }
 .small { font-size: var(--text-sm); }
 .prose > * + h2 { margin-top: var(--space-6); }
 .prose ul li { margin-bottom: var(--space-2); }
+.prose .btn { margin-bottom: var(--space-3); }
 .center { text-align: center; }
 
 /* A placeholder is a thing Eli fills in. It should look like one on the
@@ -264,7 +265,7 @@ a.card:hover, .card:has(> a:hover) { border-color: var(--color-border-active); b
 .card p { color: var(--color-text-muted); font-size: var(--text-md); margin-bottom: var(--space-3); }
 .card .arrow-link { font-size: var(--text-md); }
 .card--wide { grid-column: 1 / -1; }
-.card-meta { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); margin-top: var(--space-3); font-size: var(--text-sm); position: relative; z-index: 1; }
+.card-meta { display: flex; justify-content: flex-end; align-items: center; gap: var(--space-3); margin-top: var(--space-3); font-size: var(--text-sm); position: relative; z-index: 1; }
 .ribbon { display: inline-block; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--warm); border: 1px solid currentColor; border-radius: var(--radius-pill); padding: 2px var(--space-2); margin-bottom: var(--space-3); }
 .card-group { margin-top: var(--space-6); }
 .card-group > h2 { margin-bottom: var(--space-2); }
