@@ -117,7 +117,7 @@
         <span class="slaf-input-shell"><input type="date" id="f-date" aria-label="Date received"/></span></label>
       <label class="slaf-field" data-for="taxable"><span class="slaf-label">Taxed how</span>
         <span class="slaf-input-shell"><select id="f-method" aria-label="Tax method">
-          <option value="w2">Withheld, like wages</option><option value="se">Self-employment tax</option><option value="none">Not taxable</option>
+          <option value="w2">W-2 — tax withheld before it arrives</option><option value="se">1099 — owed later, with self-employment tax</option><option value="unemployment">Unemployment — taxable, nothing withheld, no self-employment tax</option><option value="none">Not taxable</option>
         </select></span></label>
       <p class="slaf-hint wide" id="kind-hint" style="margin:0"></p>
     </div>
@@ -190,7 +190,7 @@
   function say(id, text, cls) { var n = el(id); n.hidden = !text; n.textContent = text || ''; n.className = 'say' + (cls ? ' ' + cls : ''); }
   var KINDS = Schema.INCOME_KIND_RULES;
   var FREQ_WORDS = { once: 'one time', weekly: 'a week', fortnightly: 'every two weeks', monthly: 'a month', annual: 'a year' };
-  var METHOD_WORDS = { w2: 'withheld like wages', se: 'self-employment tax', none: 'not taxable' };
+  var METHOD_WORDS = { w2: 'W-2, withheld', se: '1099, owed with SE tax', unemployment: 'unemployment, owed, no SE tax', none: 'not taxable' };
   var KIND_HINTS = {
     w2: 'A paycheque. Withheld at the year’s blended rate; the employer match and pre-tax deferral stay on Start Here.',
     se: 'Contract or freelance pay, a 1099. Self-employment tax on what is left after the costs of earning it — add those below once it is saved.',
@@ -199,6 +199,7 @@
     side: 'Cash work with no 1099. Taxed as self-employment; its costs come off first.',
     dividend: 'Dividends or interest. Withheld like wages here — a return treats qualified dividends more kindly.',
     rental: 'Rent from a place you own. Netted here as self-employment, as the spec asked; a return treats it as ordinary income with its own costs.',
+    unemployment: 'A benefit cheque. Taxed as income, but with no Social Security or Medicare on it, and nothing is withheld unless you asked — so some of it is owed at tax time.',
     other: 'Anything else. Say whether it is taxed.'
   };
 
@@ -257,13 +258,13 @@
       id: editingId || undefined, personId: existing ? existing.personId : person.id,
       kind: kind, label: el('f-label').value.trim() || null, amountCents: cents,
       frequency: el('f-frequency').value, receivedOn: el('f-date').value || null,
-      taxable: kind === 'gift' ? false : method !== 'none', taxMethod: method === 'none' ? (KINDS[kind].method) : method,
+      taxable: kind === 'gift' ? false : method !== 'none', taxMethod: kind === 'gift' ? 'none' : method,
       costs: existing ? existing.costs : []
     }));
     var saved = Spine.upsertIncomeEntry(entry);
     var net = Ledger.netOf(saved, Spine.getProfile(), TABLES);
     say('form-say', (existing ? 'Saved. ' : 'Added. ') + (saved.label || KINDS[saved.kind].label) + ' ' + Money.formatCents(saved.amountCents) + ' ' + FREQ_WORDS[saved.frequency]
-      + (Money.isOk(net) ? ' nets ' + Money.formatCents(net.value) + ' after ' + Money.formatCents(net.taxCents) + ' of tax.' : '.')
+      + (Money.isOk(net) ? ' nets ' + Money.formatCents(net.value) + ' after ' + Money.formatCents(net.taxCents) + ' of tax' + (net.owedCents > 0 ? ', none of it withheld — set it aside for tax time.' : '.') : '.')
       + (Schema.costsAllowed(saved.kind) ? ' Add the costs of earning it below.' : ''), 'is-good');
     if (Schema.costsAllowed(saved.kind)) detailId = saved.id;
     fillForm(null);
@@ -284,7 +285,7 @@
         + '<span><span class="e-name">' + esc(e.label || KINDS[e.kind].label) + '</span>'
         + '<span class="e-kind">' + esc(KINDS[e.kind].label) + ' · ' + esc(FREQ_WORDS[e.frequency]) + (e.receivedOn ? ' · ' + esc(e.receivedOn) : '') + ' · ' + esc(METHOD_WORDS[e.taxable === false ? 'none' : e.taxMethod]) + '</span></span>'
         + '<span class="e-amt">' + (Money.isEntered(e.amountCents) ? esc(Money.formatCents(e.amountCents)) : '—')
-        + '<span class="e-net">' + costsLine + (Money.isOk(net) ? 'nets ' + esc(Money.formatCents(net.value)) : esc(net.reason || '')) + '</span></span>'
+        + '<span class="e-net">' + costsLine + (Money.isOk(net) ? 'nets ' + esc(Money.formatCents(net.value)) + (net.owedCents > 0 ? ' · ' + esc(Money.formatCents(net.owedCents)) + ' owed at tax time' : '') : esc(net.reason || '')) + '</span></span>'
         + '<span class="e-acts">'
         + '<button type="button" class="pill" data-edit="' + e.id + '">Edit</button>'
         + (Schema.costsAllowed(e.kind) ? '<button type="button" class="pill' + (e.id === detailId ? ' is-on' : '') + '" data-detail="' + e.id + '">Costs' + (e.costs.length ? ' (' + e.costs.length + ')' : '') + '</button>' : '')
