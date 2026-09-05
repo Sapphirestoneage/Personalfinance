@@ -321,6 +321,52 @@
     });
   }
 
+  /* ---- 8. Three benchmarks, and why they disagree ------------------------- */
+
+  /**
+   * The SCF percentile, the retirement multiple and PAW answer three
+   * different questions — against peers of your age, against a milestone
+   * for your age and income, against age × income ÷ 10 — so they disagree
+   * for most people, and the sentence says how. Each verdict is a word;
+   * `agree` is true only when all three point the same way.
+   */
+  function threeBenchmarks(household, tables) {
+    var pct = Tier0.netWorthPercentile(household, tables);
+    var mult = Tier0.retirementBenchmark(household, tables);
+    var paw = pawRatio(household, tables);
+    var v = {
+      /* Off the chart either way is still a verdict: the table simply has no
+         percentile to quote past its ends. */
+      percentile: pct.status === 'above_chart' ? 'ahead' : pct.status === 'below_chart' ? 'behind'
+        : !Money.isOk(pct) ? null : pct.value >= 60 ? 'ahead' : pct.value <= 40 ? 'behind' : 'middle',
+      multiple: !Money.isOk(mult) || !Money.isEntered(mult.targetMultiple) ? null : (mult.onTrack ? 'ahead' : 'behind'),
+      paw: !Money.isOk(paw) ? null : paw.classification === 'prodigious' ? 'ahead' : paw.classification === 'under' ? 'behind' : 'middle'
+    };
+    var said = ['percentile', 'multiple', 'paw'].filter(function (k) { return v[k] !== null; });
+    var words = { ahead: 'ahead', behind: 'behind', middle: 'about average' };
+    var why = {
+      percentile: 'The percentile ranks you against every household your age, whatever they earn.',
+      multiple: 'The retirement multiple asks whether what you have invested is the milestone for your age, scaled to your income.',
+      paw: 'PAW expects age × income ÷ 10, which is unforgiving early in a career and generous late.'
+    };
+    var agree = said.length >= 2 && said.every(function (k) { return v[k] === v[said[0]]; });
+    var sentence;
+    if (said.length < 2) {
+      sentence = 'Fewer than two of the three can be worked out yet.';
+    } else if (agree) {
+      sentence = 'All ' + (said.length === 3 ? 'three' : 'of them') + ' say ' + words[v[said[0]]] + ' — rare, and worth believing.';
+    } else {
+      sentence = said.map(function (k, i) {
+        var name = k === 'percentile' ? 'the percentile' : k === 'multiple' ? 'the retirement multiple' : 'PAW';
+        if (i === 0) name = name.charAt(0).toUpperCase() + name.slice(1);
+        return name + ' says ' + words[v[k]];
+      }).join(', ') + '. They measure different things: ' + said.map(function (k) { return why[k]; }).join(' ');
+    }
+    return Money.ok(said.length, {
+      percentile: pct, multiple: mult, paw: paw, verdicts: v, agree: agree, sentence: sentence
+    });
+  }
+
   function all(household, tables, opts) {
     return {
       wealthMultiplier: wealthMultiplier(household, tables, opts),
@@ -329,7 +375,8 @@
       levelsOfWealth: levelsOfWealth(household, tables, opts),
       onePercentMore: onePercentMore(household, tables, opts),
       humanCapital: humanCapital(household, tables, opts),
-      netWorthInYears: netWorthInYears(household)
+      netWorthInYears: netWorthInYears(household),
+      threeBenchmarks: threeBenchmarks(household, tables)
     };
   }
 
@@ -345,6 +392,7 @@
     onePercentMore: onePercentMore,
     humanCapital: humanCapital,
     netWorthInYears: netWorthInYears,
+    threeBenchmarks: threeBenchmarks,
     all: all
   };
 });

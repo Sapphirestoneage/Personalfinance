@@ -148,6 +148,7 @@
   .steps i { width: 26px; height: 26px; border-radius: var(--radius-sm); border: 1px solid var(--color-border-strong); display: inline-flex; align-items: center; justify-content: center; font-size: var(--text-xs); font-style: normal; color: var(--color-text-faint); }
   .steps i.done { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
   .steps i.here { border-color: var(--color-accent-hover); color: var(--color-accent-hover); }
+  .steps.levels { margin-top: var(--space-3); }
 
   .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
@@ -253,6 +254,8 @@
     <h2 style="margin:var(--space-2) 0 0">Where you are on the ladder</h2>
     <div class="steps" id="foo-steps"></div>
     <p class="why" id="foo-why"></p>
+    <div class="steps levels" id="wealth-levels" aria-label="The five levels of wealth"></div>
+    <p class="why" id="levels-why"></p>
     <ul class="goals" id="goal-bars"></ul>
     <p class="why" id="goals-why"></p>
   </section>
@@ -312,7 +315,8 @@
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
       Reference = SLAF.Reference, Ownership = SLAF.Ownership,
       Tier0 = SLAF.Tier0, Foo = SLAF.Foo, Ratios = SLAF.Ratios, Goals = SLAF.Goals,
-      Staleness = SLAF.Staleness, Instruments = SLAF.Instruments;
+      Staleness = SLAF.Staleness, Instruments = SLAF.Instruments,
+      Benchmarks = SLAF.Benchmarks;
 
   var ROOM_ID = 'dashboard';
   var TABLES = null;
@@ -336,6 +340,9 @@
       case 'multiple': return Money.formatMultiple(row.value);
       case 'cents':    return Money.formatCents(row.value) + '/mo';
       case 'years':    return (Math.round(row.value * 10) / 10) + ' years';
+      case 'dollars':  return Money.formatCents(row.value);
+      case 'date':     return (function (v) { var y = Math.floor(v), m = Math.round((v - y) * 12); if (m === 12) { y++; m = 0; }
+                         return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][m] + ' ' + y; })(row.value);
       default:         return String(row.value);
     }
   }
@@ -718,12 +725,32 @@
         + (foo.flags.length ? foo.flags.length + ' flag' + (foo.flags.length === 1 ? '' : 's')
             + ' worth reading in the Snapshot.' : 'No out-of-bounds flags.');
 
+    renderLevels(h);
     renderGoals(h);
     renderWeather(all);
 
     el('reading-list').innerHTML =
       ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt']
         .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+
+  /* ---- Flight plan: the five levels beside the FOO step (D-076) ----------
+     A second strip under the ladder: the level is the run of met checks
+     from the bottom, and the sentence names the check that stopped it. */
+  function renderLevels(h) {
+    var lv = Benchmarks.levelsOfWealth(h, TABLES);
+    var strip = el('wealth-levels'), why = el('levels-why');
+    if (!Money.isOk(lv)) { strip.innerHTML = ''; why.textContent = lv.reason; return; }
+    strip.innerHTML = lv.checks.map(function (c) {
+      var cls = c.met === true ? 'done' : (lv.stoppedBy && lv.stoppedBy.id === c.id) ? 'here' : '';
+      return '<i class="' + cls + '" title="' + esc(c.label) + ': ' + esc(c.test) + '">L' + c.id + '</i>';
+    }).join('');
+    var label = lv.value === 0 ? 'Not yet at level 1' : 'Level ' + lv.value + ' of 5, ' + esc(lv.checks[lv.value - 1].label);
+    why.textContent = label + '. '
+      + (lv.stoppedBy
+          ? (lv.stoppedBy.unknown ? 'Level ' + lv.stoppedBy.id + ' cannot be judged yet: ' + lv.stoppedBy.reason
+             : 'Next: level ' + lv.stoppedBy.id + ', ' + lv.checks[lv.stoppedBy.id - 1].test)
+          : 'Level 5 is yours to declare; nothing here decides it.');
   }
 
   /* ---- Flight plan, second half: the goals -------------------------------
@@ -803,7 +830,9 @@
     ['realEstateConcentration', 'How much of your net worth is one building.'],
     ['liquidToIlliquid', 'How much you could reach quickly against how much you could not.'],
     ['investmentToNetWorth', 'How much of what you own is actually invested.'],
-    ['cashDrag', 'How much is sitting in cash beyond what a cushion needs.']
+    ['cashDrag', 'How much is sitting in cash beyond what a cushion needs.'],
+    ['incomeConcentration', 'How much of the household\u2019s income is one paycheque.'],
+    ['worstPlausibleYearCoverage', 'How much of everything going wrong at once the cash would carry.']
   ];
 
   function renderWeather(all) {
@@ -821,12 +850,12 @@
         + (r.row.ok ? '' : ' · ' + esc(r.row.result.reason)) + '</span></li>';
     }).join('');
 
-    el('weather-blind').innerHTML = '<strong>Three risks this panel deliberately '
-      + 'leaves blank.</strong> Sequence-of-returns risk needs a return distribution to '
-      + 'simulate against; longevity risk needs mortality tables; the underinsurance gap '
-      + 'needs your actual cover, which nothing here asks for yet. Each of those would be '
-      + 'a made-up number wearing a gauge, so there is no gauge. What is above is the part '
-      + 'that can be worked out from what you have entered.';
+    el('weather-blind').innerHTML = '<strong>Two risks this panel deliberately '
+      + 'leaves blank, and one it prices piece by piece.</strong> Sequence-of-returns risk needs a return distribution to '
+      + 'simulate against; longevity risk needs mortality tables. Each would be '
+      + 'a made-up number wearing a gauge, so there is no gauge. Under-insurance is not one number either: '
+      + 'the Coverage Checkup in Sleep At Night reads each cover against what it would have to carry, '
+      + 'and the worst-year row above is the part of that the cash has to absorb.';
   }
 
   function jumpToHash() {

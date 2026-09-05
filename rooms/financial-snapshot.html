@@ -82,6 +82,13 @@
   .handoff-cold:hover { border-color: var(--color-focus-ring); }
 
   .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+  @media (max-width: 380px) { .three { grid-template-columns: 1fr; } }
+  .three .cell { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .three .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); min-height: 2.6em; }
+  .three .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; }
+  .three .big.is-incomplete { color: var(--color-text-faint); }
+  .three .sub { font-size: var(--text-xs); color: var(--color-text-muted); }
 </style>
 </head>
 <body class="slaf">
@@ -193,6 +200,14 @@
     <div data-detail></div>
   </section>
 
+  <section class="slaf-card" id="out-benchmarks">
+    <div class="out-head"><span class="slaf-eyebrow">Three benchmarks</span></div>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Three benchmarks, and they disagree — here’s why</h2>
+    <div class="three" id="three-benchmarks"></div>
+    <p class="slaf-reason" id="three-why"></p>
+    <div data-detail id="benchmarks-more"></div>
+  </section>
+
   <section class="slaf-card" id="out-foo">
     <div class="out-head"><span class="slaf-eyebrow">Where you are on the ladder</span></div>
     <div class="slaf-figure" data-figure>—</div>
@@ -229,6 +244,7 @@
 <script src="../engines/tier0.js"></script>
 <script src="../engines/foo.js"></script>
 <script src="../engines/cashflow.js"></script>
+<script src="../engines/benchmarks.js"></script>
 <script src="../engines/swan.js"></script>
 <script>
 (function () {
@@ -497,6 +513,47 @@
     });
   }
 
+  /* Three benchmarks side by side, and the sentence on why they disagree
+     (D-076). Under them, the rest of engines/benchmarks.js: a dollar at
+     your age, monthly to $1M and $2M, and what one more point does. */
+  function renderBenchmarks(h) {
+    var B = SLAF.Benchmarks;
+    var t = B.threeBenchmarks(h, TABLES);
+    function cell(cap, r, show, sub) {
+      var ok = Money.isOk(r);
+      return '<div class="cell"><span class="cap">' + cap + '</span>'
+        + '<span class="big' + (ok ? '' : ' is-incomplete') + '">' + (ok ? show(r) : Money.EM_DASH) + '</span>'
+        + '<span class="sub">' + (ok ? sub(r) : (r.reason || '')) + '</span></div>';
+    }
+    el('three-benchmarks').innerHTML =
+      cell('SCF percentile', t.percentile, function (r) { return Math.round(r.value) + 'th'; }, function (r) { return 'of households ' + r.bandLabel; })
+      + cell('Retirement multiple', t.multiple, function (r) { return Money.formatMultiple(r.value); },
+          function (r) { return Money.isEntered(r.targetMultiple) ? 'milestone ' + Money.formatMultiple(r.targetMultiple) + ' at your age' : 'no milestone for this age'; })
+      + cell('PAW', t.paw, function (r) { return Money.formatMultiple(r.value); },
+          function (r) { return r.classification === 'prodigious' ? 'prodigious accumulator' : r.classification === 'under' ? 'under-accumulator' : 'average accumulator'; });
+    el('three-why').textContent = t.sentence;
+
+    var m = B.wealthMultiplier(h, TABLES);
+    var one = B.onePercentMore(h, TABLES);
+    var rows = [];
+    if (Money.isOk(m)) {
+      rows.push(['A dollar at ' + m.age + ', by ' + m.endAge, Money.formatMultiple(m.value)]);
+      B.milestones(h, TABLES).forEach(function (ms) {
+        var r = ms.result;
+        rows.push(['Monthly to ' + Money.formatCents(ms.targetCents) + ' by ' + m.endAge,
+          Money.isOk(r) ? (r.alreadyThere ? 'already on course' : Money.formatCents(r.value) + '/mo') : Money.EM_DASH]);
+      });
+    }
+    if (Money.isOk(one)) {
+      rows.push(['One more point of savings rate', Money.formatCents(one.extraAnnualCents) + '/yr'
+        + (Money.isEntered(one.deltaYears) ? ' · FI ' + (one.deltaYears === 0 ? 'unchanged' : Math.abs(one.deltaYears) + ' yr' + (Math.abs(one.deltaYears) === 1 ? '' : 's') + (one.deltaYears < 0 ? ' sooner' : ' later')) : '')
+        + (one.at65 ? ' · ' + Money.formatCents(one.at65.deltaCents) + ' more at 65' : '')]);
+    }
+    el('benchmarks-more').innerHTML = rows.length
+      ? dl(rows) + '<p class="slaf-reason">The multiplier is the Money Guy convention in data/wealth_multiplier.json: a return that starts at 10% at 20 and falls to 5.5% by 65. A convention, not a forecast.</p>'
+      : '';
+  }
+
   function renderFlags(flags) {
     var body = el('flags-body');
     if (!flags || !flags.length) {
@@ -555,6 +612,7 @@
     renderFireProgress(all.fireProgress);
     renderPercentile(all.netWorthPercentile);
     renderRetirement(all.retirementBenchmark);
+    renderBenchmarks(h);
     renderFoo(all.foo);
     renderFlags(all.foo ? all.foo.flags : []);
   }

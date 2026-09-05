@@ -66,6 +66,7 @@
         { id: 'out-fire-progress',    label: 'FIRE progress' },
         { id: 'out-percentile',       label: 'Net worth percentile' },
         { id: 'out-retirement',       label: 'Retirement benchmark' },
+        { id: 'out-benchmarks',       label: 'Three benchmarks' },
         { id: 'out-foo',              label: 'FOO placement' },
         { id: 'out-flags',            label: 'Out-of-bounds flags' }
       ]

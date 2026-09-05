@@ -6300,7 +6300,7 @@ section('The benchmarks');
 
   /* Net worth in years: 35,900 ÷ 37,800. */
   check('net worth in years', B.netWorthInYears(Demo.build()).value, 3590000 / 3780000, 1e-12);
-  check('all() answers every question', Object.keys(B.all(Demo.build(), T)).length, 7);
+  check('all() answers every question', Object.keys(B.all(Demo.build(), T)).length, 8);
 })();
 
 section('The contributed savings rate');
@@ -6437,6 +6437,31 @@ section('Fixed lines, the floor, and cuttability');
   checkTrue('the Runway room offers the floor as a basis', /data-in="basis"/.test(runwayHtml) && /value="floor"/.test(runwayHtml));
   const cfHtml = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
   checkTrue('Cash Flow asks per line', /data-fixed=/.test(cfHtml));
+})();
+
+section('Three benchmarks, and where the new numbers show');
+
+(function () {
+  /* D-076 */
+  const B = require(path.join(ROOT, 'engines/benchmarks.js'));
+  const t = B.threeBenchmarks(Demo.build(), TABLES);
+  check('all three can be worked out for the demo', t.value, 3);
+  check('the percentile verdict', t.verdicts.percentile, t.percentile.value >= 60 ? 'ahead' : t.percentile.value <= 40 ? 'behind' : 'middle');
+  check('the multiple: 48,000 ÷ 72,000 against a 1× milestone at 32 is behind', t.verdicts.multiple, 'behind');
+  check('PAW: under', t.verdicts.paw, 'behind');
+  checkTrue('the sentence names what each measures', /measure different things|say/.test(t.sentence));
+  const rich = Demo.build(); rich.assets.filter(a => a.category === 'investment')[0].valueCents = 60000000;
+  const r = B.threeBenchmarks(rich, TABLES);
+  checkTrue('with $600,000 invested every verdict is ahead, and they agree', r.agree && r.verdicts.percentile === 'ahead' && r.verdicts.multiple === 'ahead' && r.verdicts.paw === 'ahead');
+  const blank = Schema.createHousehold({});
+  checkTrue('a blank household: fewer than two can be worked out', /Fewer than two/.test(B.threeBenchmarks(blank, TABLES).sentence));
+
+  const dash = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  checkTrue('the Weather panel lists income concentration and worst-year coverage', /'incomeConcentration'/.test(dash) && /'worstPlausibleYearCoverage'/.test(dash));
+  checkTrue('the Flight plan carries the five levels', /id="wealth-levels"/.test(dash));
+  const snap = fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8');
+  checkTrue('the Snapshot has the three-benchmarks card', /id="out-benchmarks"/.test(snap) && /id="three-benchmarks"/.test(snap));
+  checkTrue('and the registry links to it', Registry.byId('financial-snapshot').subsections.some(x => x.id === 'out-benchmarks'));
 })();
 
 section('The D&D folder\'s vendored copies');

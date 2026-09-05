@@ -4076,6 +4076,53 @@ hint and the switch from 3 months to 4 "at the floor".
 
 ---
 
+## D-076 — Where the new numbers show: the Weather, the Flight plan, and three benchmarks that disagree
+
+*(BRIEF.md §4.5. Closes T4.)* Three places, no new figures — everything
+here reads an engine that already exists.
+
+- **The Weather panel** on the dashboard gains two rows from the ratio
+  registry: income concentration and worst-year coverage. Its "left blank
+  on purpose" note changes from three risks to two: sequence-of-returns
+  and longevity still have no honest gauge, but under-insurance is now
+  priced piece by piece in the Coverage Checkup (D-071), and the note
+  says so and points there.
+- **The Flight plan** gains a second strip under the FOO ladder: L1–L5,
+  the level as the run of met checks from the bottom
+  (`Benchmarks.levelsOfWealth`, D-072), and a sentence naming the check
+  that stopped it — "Not yet at level 1. Next: level 1, no high-interest
+  debt, and a starter emergency fund in cash" for the demo. A check that
+  cannot be judged is said to be unjudgeable, not failed.
+- **The Snapshot** gains a "Three benchmarks, and they disagree — here's
+  why" card: the SCF percentile, the retirement multiple and PAW side by
+  side, then one sentence. `Benchmarks.threeBenchmarks` gives each a
+  one-word verdict (ahead / about average / behind; off the chart
+  either way counts as a verdict) and writes the sentence: when they
+  agree, "rare, and worth believing"; when they do not, what each one
+  measures — the percentile ranks against every household your age
+  whatever they earn, the multiple scales a milestone to your income,
+  PAW expects age × income ÷ 10 and is unforgiving early. Under it, the
+  rest of D-072: a dollar at your age by 65, monthly to $1M and $2M, and
+  what one more point of savings rate does.
+
+**Why a sentence and not a fourth number.** Averaging three benchmarks
+that disagree would be a score, and SPEC §12.7 says no score. The
+disagreement is the finding.
+
+**Compatibility note.** No stored shape changed. The Snapshot loads
+`engines/benchmarks.js`; the registry gains the `out-benchmarks` anchor.
+The dashboard formats the `dollars` and `date` units (D-074) in its
+Weather rows.
+
+**Verified.** `node test/run.js`: all three verdicts for the demo (48th
+about average, 0.7× against a 1.4× milestone behind, PAW 0.2× behind);
+$600,000 invested makes all three say ahead and agree; a blank household
+says fewer than two can be worked out. A phone-browser read of the
+Weather rows, the levels strip and the benchmarks card; the page sweep;
+`test/alignment.js` on the three cells.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool. **The numbers D-046
