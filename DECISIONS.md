@@ -5310,6 +5310,133 @@ line. No console errors.
 
 ---
 
+## D-098 — The first six tranche rooms: what each owns, before it is built
+
+*(The brief's step 5, tranches A and B: Between Jobs, Protection;
+Decumulation, Tax, Estate Basics, Giving. Each room is its own entry
+from D-101; this one is the ground under them.)* Twelve rooms are
+built in parallel on the frozen template (D-097), so the parts they
+share — the schema, the ownership map, the registry, the reference
+table names — are written first, in one place, by one hand, and each
+room then only writes its own files: `rooms/<id>.html`,
+`engines/<id>.js`, its table in `data/`, and `test/rooms/<id>.js`.
+
+**The schema.** `person.unemployment` gains `expectedSearchMonths` and
+`floorMonthlyCents` (Between Jobs). `household.decumulation` is new —
+`{ stockShare, plannedAnnualDrawCents, socialSecurityAt }`. `household.tax`
+is new — `{ otherPreTaxAnnualCents, withheldAnnualCents }`.
+`insurance.health`, `estate` and `giving` already existed (D-094).
+
+**The ownership map.** One row per fact, each owned by its room at the
+template's `inputs` anchor: `expectedSearchMonths`, `floorMonthly`
+(between-jobs; apply only when between jobs); `healthCover`,
+`healthMonthly` (protection); `stockShare`, `plannedAnnualDraw`,
+`socialSecurityAt` (decumulation); `otherPreTax`, `withheld` (tax);
+`beneficiariesSet`, `willExists`, `poaExists` (estate); `givingPct`,
+`givingTarget` (giving). Sleep At Night keeps the four coverage facts;
+Protection reads them as chips.
+
+**The registry.** Six rows, kind `about-you` (each owns facts), the
+template's six subsection ids, tier 2, orders 31–36, and `REQUIRES`:
+Between Jobs needs the `unemployment` branch, Protection `protection`,
+Decumulation `decumulation`, Tax `income`; Estate Basics and Giving are
+for everyone. Three reference tables are registered ahead of the rooms
+that fill them — `protectionConventions`, `estateBasics`,
+`givingConventions` — as placeholders with the header fields, because
+`Reference.load()` with no names loads every table on many pages.
+
+**The tests.** `test/rooms/<id>.js` files, one a room, run by a loader
+in `test/run.js` with the suite's helpers and every table; a room built
+in parallel never edits the suite itself. Refresh moves to order 99 so
+it stays last on the path whatever is added.
+
+**Compatibility note.** New branches load null or empty from any older
+save. `Registry.forHousehold` now removes Between Jobs for anyone not
+between jobs and Decumulation for anyone not retired, so the map's
+count moves with the situation; the tests name the rooms that go
+rather than counting.
+
+---
+
+## D-099 — The second six: Career Move, Partner, Kids and Tuition, Housing Decision, Big Purchase, Variable Income
+
+*(Tranches C and D of the brief's step 5, scaffolded the same way as
+D-098; the rooms themselves are D-107 onward.)* The schema gains a small
+branch each: `household.career.offer` `{ grossAnnualCents, hoursPerWeek,
+commuteHoursPerWeek, workCostsMonthlyCents, signOnCents }`;
+`household.partner` `{ splitMode: equal | proportional | pooled,
+sharedMonthlyCents }`; `household.kids` `{ tuitionTargetCents,
+tuitionSavedCents, tuitionMonthlyCents }`; `household.housing`
+`{ rentMonthlyCents, priceCents, downPct, rate }`; `household.purchase`
+`{ priceCents, monthsAway, financeRate, label }`;
+`household.variableIncome` `{ bufferMonths }`, with the low and high
+month living on the income source (`variableLowCents`,
+`variableHighCents`, D-094) and `Ownership.variableSource(h)` naming
+which source that is — the first with a variable basis or own-work
+type, else the primary person's first.
+
+Ownership rows, each at `inputs`: `offerGross`, `offerHours`,
+`offerCommute`, `offerCosts`, `offerSignOn`; `splitMode` (applies only
+with two adults), `sharedMonthly`; `tuitionTarget`, `tuitionSaved`,
+`tuitionMonthly`; `rentMonthly`, `homePrice`, `downPct`, `mortgageRate`;
+`purchasePrice`, `purchaseMonths`, `purchaseRate`; `incomeLow`,
+`incomeHigh`, `bufferMonths`. Registry rows at orders 37–42, all
+`about-you` (Big Purchase too: it owns the purchase), with `REQUIRES`:
+Career Move `career`, Partner `partner`, Kids `dependents`, Variable
+Income `variableIncome`; Housing and Big Purchase for everyone. Two
+placeholder tables: `partnerConventions`, `variableIncomeConventions`.
+Kids and Housing reuse `childCost`, `childcareByState`,
+`housingConventions`, `priceToRent`, `mortgageRates` from T6.
+
+---
+
+## D-100 — LATER.md, built: one log across tabs, worded labels, the default lens, rooms.json
+
+*(The direction after step 1: finish everything, the LATER section
+included. The rooms on that list are their own entries; these are the
+four that are not rooms.)*
+
+**One log across tabs.** The spine's `storage` listener used to drop
+the cache when another tab wrote; the command log diffs against the
+last thing this tab saved, so the next write here would have recorded
+the other tab's changes as its own. It now reloads — cache, last-saved,
+last-readings — so both tabs read one household and one stack, and an
+undo in either takes back the latest write, whichever tab made it.
+
+**Labels for list edits.** A write that moves no owned field (a goal
+added, a rating, a flag) was labelled with its first dot path, "goals.0
+and 3 more". `describeChanges` now names the part of the household in
+words — "Changed a goal", "Changed a debt (3 fields)", "4 changes across
+a person, an asset" — from a small dictionary of the household's parts.
+
+**The lens on a phone.** Under 420px the four buttons tighten (11px, 8px
+padding) so the toggle and the undo pair share a row without wrapping.
+
+**The default lens as a household setting.** `meta.displayUnit` — `$`,
+`hours`, `bought` or `pushed`, null by default — is what `Lens.mode()`
+falls back to when the session has not chosen; a page's own toggle wins
+for that session. `Lens.setDefault(unit)` writes it through the spine as
+one labelled entry ("Read money as hours") and clears the session's
+choice so the default shows at once. The dashboard's data drawer holds
+the control. This is the small version of T8's display unit: one stored
+preference, every page reading it through the lens it already has.
+
+**rooms.json.** `tools/rooms-json.js` writes the registry as JSON in the
+brief's shape — `id, title, file, reads (needs), writes (the ownership
+map), requires (the gate branches), dashboardNumber (the instrument the
+room opens from), order` — and the suite checks the committed
+`rooms.json` is exactly what the tool writes, so it cannot drift. The
+registry stays a JS module (D-094); the JSON is for anything outside the
+browser.
+
+**Verified.** `node test/run.js`: the worded labels, the default lens
+stored, read, undone and cleared, the storage listener's reload, the
+phone rule, rooms.json's shape and freshness. Run `node tools/rooms-json.js`
+after any registry or ownership change; the suite says so when it is
+stale.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have
