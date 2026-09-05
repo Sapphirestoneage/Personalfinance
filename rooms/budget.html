@@ -29,7 +29,9 @@
 
   LIVE-FORM: built once. There is no input, select or textarea on this
   page at all — the cards are read-only by design; the buttons navigate,
-  open a card, page between months, and close one.
+  open a card, page between months, stack a preset, mark one not
+  applicable, and close a month. The Hypothetical view (D-129) holds its
+  what-ifs in this page's memory only and calls nothing on the spine.
   THEMING: none this pass.
 -->
 <style>
@@ -87,6 +89,21 @@
   .preset .p-btn[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
   .preset.is-unavailable .p-name, .preset.is-unavailable .p-amt { color: var(--color-text-faint); }
   .preset a { color: var(--color-accent-hover); }
+  .preset .p-na { background: none; border: 1px dashed var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-faint); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; }
+  .preset .p-na[aria-pressed="true"] { border-style: solid; color: var(--color-caution); border-color: var(--color-caution); }
+  .preset.is-na .p-name { color: var(--color-caution); }
+  .preset.is-na .p-name small { color: var(--color-caution); }
+  .na-note { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+  .na-note button { background: none; border: 0; padding: 0; font: inherit; color: var(--color-accent-hover); cursor: pointer; text-decoration: underline; }
+  /* Hypothetical — a what-if view of the same sheet. Visually its own
+     thing: dashed amber edge, amber banner, and nothing on it writes. */
+  .hypo-bar { display: flex; justify-content: flex-end; margin-top: var(--space-2); }
+  .hypo-toggle { background: none; border: 1px dashed var(--color-border-strong); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 3px var(--space-3); cursor: pointer; }
+  .hypo-toggle[aria-pressed="true"] { border-style: solid; border-color: var(--color-caution); color: var(--color-caution); }
+  #sheet.is-hypo { outline: 2px dashed var(--color-caution); outline-offset: -2px; background: rgba(232,184,75,.06); }
+  .hypo-banner { display: none; align-items: baseline; gap: var(--space-2); margin-top: var(--space-3); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: rgba(232,184,75,.14); color: var(--color-caution); font-size: var(--text-sm); }
+  .hypo-banner strong { text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); font-size: 10px; }
+  #sheet.is-hypo .hypo-banner { display: flex; }
   .ask { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--color-text-muted); padding: 4px 0; }
   .bucket-card .c-chev { display: inline-block; transition: transform .15s; color: var(--color-text-faint); font-size: var(--text-xs); margin-left: var(--space-1); }
   .bucket-card.is-open .c-chev { transform: rotate(90deg); }
@@ -119,6 +136,8 @@
       <h2 id="month-title">—<span class="status" id="month-status"></span></h2>
       <button type="button" class="nav-btn" id="btn-next" aria-label="Later month">→</button>
     </div>
+    <div class="hypo-bar"><button type="button" class="hypo-toggle" id="btn-hypo" aria-pressed="false">What if… (a view that saves nothing)</button></div>
+    <div class="hypo-banner" id="hypo-banner" role="status"><strong>Hypothetical</strong><span>A what-if view of this month. Options you marked not applicable are back, and anything you stack here is not saved — switch it off and the real budget is exactly as it was.</span></div>
     <div class="cards" id="rows"></div>
     <p class="why" id="sheet-why"></p>
   </section>
@@ -186,6 +205,24 @@
   var ADD_WORDS = { income: 'Log income', expenses: 'Log an expense', savings: 'Log a transfer to savings', investments: 'Log a contribution', debt: 'Log a payment' };
 
   var openBucket = null;     /* the one card open */
+  /* Hypothetical (D-129): a what-if copy of the household for this page
+     only. Presets stacked and the 401(k) answer live in `hypoOverlay`,
+     never in the spine; N/A marks are lifted so the options come back. */
+  var hypo = false;
+  var hypoOverlay = null;
+  function householdForView(h) {
+    if (!hypo) return h;
+    if (!hypoOverlay) hypoOverlay = { presets: JSON.parse(JSON.stringify((h.budget && h.budget.presets && h.budget.presets[month]) || {})), has401k: (h.retirement || {}).has401k };
+    var c = JSON.parse(JSON.stringify(h));
+    c.notApplicable = {};
+    c.budget = c.budget || { estimated: {}, presets: {} };
+    c.budget.presets = c.budget.presets || {};
+    c.budget.presets[month] = hypoOverlay.presets;
+    c.retirement = c.retirement || {};
+    c.retirement.has401k = hypoOverlay.has401k;
+    return c;
+  }
+  function presetOpts(h) { return { now: Date.now(), notApplicable: h.notApplicable || {}, hypothetical: hypo }; }
 
   /* The comparison bar: one track scaled to the larger of the two, the
      estimate as a faint zone with a marker at its edge, the actual as the
@@ -224,12 +261,15 @@
     return '<span class="c-diff is-' + state + '">' + (state === 'on' ? '±' : '') + esc(money(Math.abs(diff))) + '<small>' + esc(word) + '</small></span>';
   }
   function renderSheet(h) {
-    var sheet = Budget.month(h, TABLES, CAT(), month);
+    var sheet = Budget.month(h, TABLES, CAT(), month, undefined, { presets: presetOpts(h) });
+    el('sheet').classList.toggle('is-hypo', hypo);
+    el('btn-hypo').setAttribute('aria-pressed', String(hypo));
+    el('btn-hypo').textContent = hypo ? 'Back to the real budget' : 'What if… (a view that saves nothing)';
     el('month-title').innerHTML = esc(sheet.label) + '<span class="status' + (sheet.status === 'closed' ? ' is-closed' : '') + '" id="month-status">'
       + (sheet.status === 'closed' ? 'closed ' + esc(shortDate(sheet.closedAt)) : sheet.isFuture ? 'ahead — estimates only' : sheet.isCurrent ? 'open, this month' : 'open, not yet closed') + '</span>';
     if (justAdded) openBucket = justAdded;
     el('rows').innerHTML = sheet.rows.map(function (r) {
-      var open = sheet.status === 'open';
+      var open = sheet.status === 'open' && !hypo;
       var isOpen = openBucket === r.bucket;
       var lines = (r.lines || []).map(function (l) { return '<li><span>' + esc(l.label) + (l.times > 1 ? ' ×' + l.times : '') + '</span><span>' + esc(money(l.cents)) + '</span></li>'; });
       if (r.bucket === 'income' && sheet.status === 'open' && sheet.incomeCostsCents) lines.push('<li class="is-hint"><span>costs of earning it' + (sheet.deductibleCents ? ' (' + esc(money(sheet.deductibleCents)) + ' deductible)' : '') + '</span><span>' + esc(money(sheet.incomeCostsCents)) + '</span></li>');
@@ -255,7 +295,11 @@
 
     /* Close. */
     var closeBtn = el('btn-close');
-    if (sheet.status === 'closed') {
+    if (hypo) {
+      el('close-title').textContent = 'A what-if cannot be closed';
+      el('close-hint').textContent = 'Nothing in the Hypothetical view is saved, so there is nothing to close. Switch back to the real budget first.';
+      closeBtn.hidden = true;
+    } else if (sheet.status === 'closed') {
       el('close-title').textContent = sheet.label + ' is closed';
       el('close-hint').textContent = 'Closed ' + shortDate(sheet.closedAt) + '. It cannot be closed again; the record is append-only.';
       closeBtn.hidden = true;
@@ -276,23 +320,30 @@
      button stacks it into this month's Estimated or takes it out. The Max
      401(k) preset is absent until an employer 401(k) is indicated — asked
      once, here, with two buttons. */
-  function presetOpts() { return { now: Date.now() }; }
   function renderPresets(h, sheet) {
-    var all = Presets.available(h, TABLES, presetOpts());
+    var all = Presets.available(h, TABLES, presetOpts(h));
     var chosen = (h.budget && h.budget.presets && h.budget.presets[month]) || {};
+    var liveNa = Spine.getProfile().notApplicable || {};
     ['savings', 'investments'].forEach(function (b) {
       var box = el('extras-' + b);
       if (!box) return;
       var list = all.filter(function (p) { return p.bucket === b && !p.hidden; });
+      var hiddenNa = all.filter(function (p) { return p.bucket === b && p.hidden; });
       var html = list.map(function (p) {
         var on = (chosen[b] || []).indexOf(p.id) >= 0;
+        var wasNa = hypo && liveNa[p.id] === true;
+        var naBtn = p.structural && !hypo ? '<button type="button" class="p-na" data-na="' + p.id + '" aria-pressed="false" title="Not applicable to me — drops it from every live figure">N/A</button>' : '';
         if (!p.offered) {
-          return '<div class="preset is-unavailable"><span class="p-name">' + esc(p.label) + '<small>' + esc(p.reason || '') + (p.owner && p.owner.room !== 'budget' ? ' <a href="' + esc(p.owner.room) + '.html">' + esc(p.owner.label) + ' →</a>' : '') + '</small></span><span class="p-amt">—</span></div>';
+          return '<div class="preset is-unavailable"><span class="p-name">' + esc(p.label) + '<small>' + esc(p.reason || '') + (p.owner && p.owner.room !== 'budget' ? ' <a href="' + esc(p.owner.room) + '.html">' + esc(p.owner.label) + ' →</a>' : '') + '</small></span><span class="p-amt">—</span>' + naBtn + '</div>';
         }
-        return '<div class="preset' + (on ? '' : ' is-off') + '"><span class="p-name">' + esc(p.label) + '<small>' + esc(p.result.why || p.short) + '</small></span>'
+        return '<div class="preset' + (on ? '' : ' is-off') + (wasNa ? ' is-na' : '') + '"><span class="p-name">' + esc(p.label) + '<small>' + (wasNa ? 'Marked not applicable — here as a what-if only. ' : '') + esc(p.result.why || p.short) + '</small></span>'
           + '<span class="p-amt">' + esc(money(p.monthlyCents)) + '/mo</span>'
+          + naBtn
           + '<button type="button" class="p-btn" data-preset="' + p.id + '" data-bucket="' + b + '" aria-pressed="' + on + '">' + (on ? 'Stacked ✓' : 'Stack it') + '</button></div>';
       });
+      if (hiddenNa.length) {
+        html.push('<p class="na-note">' + hiddenNa.map(function (p) { return esc(p.label); }).join(', ') + ' marked not applicable — out of every live figure. <button type="button" data-na-off="' + esc(hiddenNa.map(function (p) { return p.id; }).join(',')) + '">Applies after all</button> · <button type="button" data-hypo="on">Try it in What-if</button></p>');
+      }
       if (b === 'investments' && Presets.ask401k(h)) {
         html.push('<div class="ask"><span>Is there an employer 401(k) to contribute to?</span><button type="button" class="pill" data-has401k="yes">Yes</button><button type="button" class="pill is-quiet" data-has401k="no">No</button></div>');
       }
@@ -317,21 +368,49 @@
     render();
     el('sheet').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
-  el('btn-prev').addEventListener('click', function () { month = Budget.shift(month, -1); render(); });
-  el('btn-next').addEventListener('click', function () { month = Budget.shift(month, 1); render(); });
+  el('btn-prev').addEventListener('click', function () { month = Budget.shift(month, -1); hypoOverlay = null; render(); });
+  el('btn-next').addEventListener('click', function () { month = Budget.shift(month, 1); hypoOverlay = null; render(); });
   el('rows').addEventListener('click', function (evt) {
     var t = evt.target.closest('[data-toggle]');
     if (t) { var which = t.getAttribute('data-toggle'); openBucket = openBucket === which ? null : which; render(); return; }
     var pr = evt.target.closest('[data-preset]');
-    if (pr) { Spine.togglePreset(month, pr.getAttribute('data-bucket'), pr.getAttribute('data-preset')); return; }
+    if (pr) {
+      var bkt = pr.getAttribute('data-bucket'), pid = pr.getAttribute('data-preset');
+      if (hypo) {   /* the what-if: this page's memory only, never the spine */
+        var ids = (hypoOverlay.presets[bkt] || []).slice();
+        if (ids.indexOf(pid) >= 0) ids.splice(ids.indexOf(pid), 1); else ids.push(pid);
+        hypoOverlay.presets[bkt] = ids;
+        render();
+        return;
+      }
+      Spine.togglePreset(month, bkt, pid);
+      return;
+    }
     var ask = evt.target.closest('[data-has401k]');
-    if (ask) { Spine.setHas401k(ask.getAttribute('data-has401k') === 'yes'); return; }
+    if (ask) {
+      if (hypo) { hypoOverlay.has401k = ask.getAttribute('data-has401k') === 'yes'; render(); return; }
+      Spine.setHas401k(ask.getAttribute('data-has401k') === 'yes');
+      return;
+    }
+    var na = evt.target.closest('[data-na]');
+    if (na && !hypo) { Spine.setNotApplicable(na.getAttribute('data-na'), true); return; }
+    var naOff = evt.target.closest('[data-na-off]');
+    if (naOff && !hypo) { naOff.getAttribute('data-na-off').split(',').forEach(function (k) { Spine.setNotApplicable(k, false); }); return; }
+    var hy = evt.target.closest('[data-hypo]');
+    if (hy) { setHypo(true); return; }
     var b = evt.target.closest('[data-add]');
     if (!b) return;
     var bucket = b.getAttribute('data-add');
     try { sessionStorage.setItem(RETURN_KEY, JSON.stringify({ month: month, bucket: bucket, y: window.scrollY })); } catch (e) { /* fine */ }
     location.href = ADD_TARGET[bucket](month);
   });
+  function setHypo(on) {
+    hypo = !!on;
+    hypoOverlay = null;   /* rebuilt from the live sheet on entry; dropped on exit */
+    render();
+    if (hypo) el('hypo-banner').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  el('btn-hypo').addEventListener('click', function () { setHypo(!hypo); });
   el('btn-close').addEventListener('click', function () {
     var h = Spine.getProfile();
     var payload = Budget.recordPayload(h, TABLES, CAT(), month);
@@ -353,7 +432,7 @@
     if (!month) month = Budget.nextOpenMonth(h);
     /* A late entry into a closed month moves only its revised column. */
     if (Budget.syncRevised(h, TABLES, CAT(), Spine)) h = Spine.getProfile();
-    renderSheet(h);
+    renderSheet(householdForView(h));
     renderMonths(h);
   }
 

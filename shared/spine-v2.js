@@ -907,6 +907,16 @@
     save(); notify();
     return want;
   }
+  /** Mark a structural option as not applicable, or applicable again. D-129. */
+  function setNotApplicable(key, on, label) {
+    var h = load();
+    var next = Object.assign({}, h.notApplicable || {});
+    if (on === false) delete next[key]; else next[key] = true;
+    h.notApplicable = Schema.createNotApplicable(next);
+    pendingLabel = label || ((on === false ? 'Applies again: ' : 'Not applicable: ') + key);
+    save(); notify();
+    return h.notApplicable[key] === true;
+  }
   /** The one-time answer: is there an employer 401(k)? D-129. */
   function setHas401k(value) {
     var h = load();
@@ -1396,6 +1406,7 @@
     removeExpenseEntry: removeExpenseEntry,
     markReimbursed: markReimbursed,
     togglePreset: togglePreset,
+    setNotApplicable: setNotApplicable,
     setHas401k: setHas401k,
     upsertIncomeEntry: upsertIncomeEntry,
     removeIncomeEntry: removeIncomeEntry,

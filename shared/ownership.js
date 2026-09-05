@@ -825,14 +825,21 @@
          not applicable, which is a different thing and must never be counted
          as an outstanding task. Fields with no applies() always apply.
          DECISIONS.md D-055. */
-      applies: f.applies ? !!f.applies(household || {}) : true,
-      notApplicableBecause: f.notApplicableBecause || null,
+      applies: userSaysNa(household, fieldId) ? false : (f.applies ? !!f.applies(household || {}) : true),
+      notApplicableBecause: userSaysNa(household, fieldId) ? 'You marked this not applicable.' : (f.notApplicableBecause || null),
+      /* Marked N/A by the household itself, in the Budget room (D-129):
+         a structural option that does not exist for them, as opposed
+         to one the situation rules out. */
+      userNotApplicable: userSaysNa(household, fieldId),
       /* How old the figure is. null-safe: without staleness.js loaded the
          age is still computed from the stamp, just never judged. D-057. */
       age: isSet ? ageOf(household, fieldId) : null
     };
   }
 
+  function userSaysNa(household, fieldId) {
+    return !!(household && household.notApplicable && household.notApplicable[fieldId] === true);
+  }
   function confidenceOf(household, fieldId, ownerId) {
     var m = (household && household.meta) || {};
     if (m.guessed && m.guessed[fieldId]) return 'guess';

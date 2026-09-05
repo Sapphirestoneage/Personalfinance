@@ -73,7 +73,31 @@ module.exports = function (t) {
   check('the answer can change', Spine.getProfile().retirement.has401k, false);
   Spine.reset();
 
+  /* Not applicable (D-129): out of every live figure, back in a what-if. */
+  section('Not applicable and the Hypothetical view (D-129)');
+  const hn = hh({ retirement: { has401k: true }, notApplicable: { max401k: true, nope: false, 'bad key!': true }, budget: { presets: { '2026-09': { investments: ['maxIra', 'max401k'] } } } });
+  check('the constructor keeps only true marks with sane keys', Object.keys(hn.notApplicable).join(','), 'max401k');
+  const live = Presets.available(hn, T, { now: NOW, notApplicable: hn.notApplicable });
+  const p401 = live.filter(p => p.id === 'max401k')[0];
+  check('an N/A preset is hidden and not offered in the live list', p401.hidden + '/' + p401.offered + '/' + p401.notApplicable, 'true/false/true');
+  check('… and drops out of the live estimate', Budget.month(hn, T, T.expenseCategories, '2026-09', NOW, { presets: { now: NOW, notApplicable: hn.notApplicable } }).rows.filter(r => r.bucket === 'investments')[0].estimatedCents, ira.value);
+  const what = Presets.available(hn, T, { now: NOW, notApplicable: hn.notApplicable, hypothetical: true });
+  check('in the what-if it shows again, still marked', what.filter(p => p.id === 'max401k')[0].hidden + '/' + what.filter(p => p.id === 'max401k')[0].notApplicable, 'false/true');
+  const Ownership = require(path.join(ROOT, 'shared/ownership.js'));
+  const emp = hh({ notApplicable: { employerMatch: true } });
+  const rowE = Ownership.describe('employerMatch', emp, 'budget');
+  check('an ownership field marked N/A reads as not applicable, and says it was you', rowE.applies + '/' + rowE.userNotApplicable + '/' + rowE.notApplicableBecause, 'false/true/You marked this not applicable.');
+  check('… and never as an outstanding task', Ownership.describe('employerMatch', hh(), 'budget').applies, true);
+  Spine.reset();
+  Spine.setNotApplicable('maxIra', true);
+  check('the spine stores the mark', Spine.getProfile().notApplicable.maxIra, true);
+  Spine.setNotApplicable('maxIra', false);
+  check('… and lifts it', Spine.getProfile().notApplicable.maxIra, undefined);
+  Spine.reset();
+
   const page = fs.readFileSync(path.join(ROOT, 'rooms/budget.html'), 'utf8');
+  checkTrue('the room has an N/A button on structural presets and a Hypothetical view', /data-na=/.test(page) && /Spine\.setNotApplicable\(/.test(page) && /id="btn-hypo"/.test(page) && /is-hypo/.test(page) && /hypo-banner/.test(page));
+  checkTrue('… in which nothing reaches the spine: the what-if guard sits before every write', /if \(hypo\) \{[^}]*hypoOverlay/.test(page) && /if \(na && !hypo\)/.test(page) && /open = sheet\.status === 'open' && !hypo/.test(page));
   checkTrue('the room stacks presets with buttons, nothing typed', /data-preset=/.test(page) && /Spine\.togglePreset\(/.test(page) && /data-has401k=/.test(page) && /Presets\.ask401k\(/.test(page));
   checkTrue('… and loads the limits table it reads', /'irsLimits'/.test(page) && /engines\/presets\.js/.test(page));
 };
