@@ -57,6 +57,8 @@ const EQUAL_HEIGHT = [
   ['/rooms/sleep-at-night.html', '.pair'],
   ['/rooms/sleep-at-night.html', '.cover-grid'],
   ['/rooms/financial-snapshot.html', '.three'],
+  ['/rooms/rerank.html', '.rate-row'],
+  ['/rooms/rerank.html', '.pair'],
   ['/rooms/values.html', '.two'],
   ['/rooms/fulfillment.html', '.quads'],
   ['/rooms/sleep-at-night.html', '.basis']

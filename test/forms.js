@@ -160,6 +160,68 @@ const CASES = [
     }
   },
   {
+    room: '/rooms/rerank.html',
+    container: '#cost-list',
+    seed: 'demo',
+    /* Stage 1: a proposed line and a custom one, typed. The lists appear
+       once the tables have loaded, so wait for the first line. */
+    prepare: async (page) => { await page.waitForSelector('#cost-list .line'); await page.tap('#btn-add'); },
+    fields: [
+      { sel: '#cost-list input[data-line="rent_or_mortgage"]', type: '1400' },
+      { sel: '#cost-list input[data-custom-label]', type: 'Allotment', clearFirst: true },
+      { sel: '#cost-list .line.custom input[data-line]', type: '25' }
+    ],
+    expect: async (page) => {
+      const s = await page.evaluate(() => {
+        const h = JSON.parse(localStorage.getItem('slaf.household.v2')) || {};
+        const of = id => (h.expenses.entries.filter(e => e.id === id)[0] || {});
+        const custom = h.expenses.entries.filter(e => e.source === 'rerank' && !/^rr_/.test(e.id))[0] || {};
+        return { rent: of('rr_rent_or_mortgage').amountCents, rentSource: of('rr_rent_or_mortgage').source,
+          customLabel: custom.descriptor, customCents: custom.amountCents };
+      });
+      return [
+        ['the proposed rent became a line', s.rent, 140000],
+        ['with source rerank', s.rentSource, 'rerank'],
+        ['the custom line kept its name', s.customLabel, 'Allotment'],
+        ['and its amount', s.customCents, 2500]
+      ];
+    }
+  },
+  {
+    room: '/rooms/rerank.html',
+    container: '#rate-list',
+    seed: 'spending',
+    /* Stages 2-4 on the demo month: the rating and the two selects survive
+       the tap; then an arrow on stage 3, and stage 4 shows a figure. */
+    prepare: async (page) => { await page.waitForSelector('#rate-list .rate-row'); },
+    fields: [
+      { sel: '#rate-list select[data-rating-item="housing"]', type: '' },
+      { sel: '#rate-list select[data-row="housing"][data-field="miss"]', type: '' },
+      { sel: '#rate-list select[data-row="housing"][data-field="who"]', type: '' }
+    ],
+    expect: async (page) => {
+      await page.selectOption('#rate-list select[data-rating-item="housing"]', '7');
+      await page.waitForTimeout(500);
+      await page.selectOption('#rate-list select[data-row="housing"][data-field="miss"]', 'some');
+      await page.waitForTimeout(500);
+      await page.tap('#rank-list [data-move="down"]:not([disabled])');
+      await page.waitForTimeout(500);
+      const s = await page.evaluate(() => {
+        const h = JSON.parse(localStorage.getItem('slaf.household.v2')) || {};
+        return { joy: (h.ratings.rerank || {}).housing,
+          miss: ((h.rerank.rows || []).filter(r => r.id === 'housing')[0] || {}).miss,
+          ranked: (h.rerank.rows || []).filter(r => r.valueRank !== null).length,
+          gap: document.getElementById('gap-annual').textContent };
+      });
+      return [
+        ['the rating was stored in the one ratings store', s.joy, 7],
+        ['would-you-miss-it was stored', s.miss, 'some'],
+        ['the arrow wrote a hand order for every rated line', s.ranked, 9],
+        ['and stage 4 shows a figure', /\$/.test(s.gap), true]
+      ];
+    }
+  },
+  {
     room: '/rooms/fire.html',
     container: '#targets',
     seed: 'demo',

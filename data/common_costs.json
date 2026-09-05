@@ -1,0 +1,31 @@
+{
+  "id": "common_costs",
+  "version": "1.0",
+  "asOf": "2023-12-31",
+  "source": "Twenty everyday cost lines with monthly figures in the region of the BLS Consumer Expenditure Survey 2023 averages per consumer unit (about $6,440 a month in total, of which these lines are the recognisable part), rounded to a figure a person would actually recognise on a statement.",
+  "confidence": "unverified",
+  "confidenceNote": "Approximate. Written from the shape of the 2023 CES tables, not copied from them line by line; some lines (phone, streaming, gym, coffee) are folded into broader CES categories and are split out here as rules of thumb. Every figure is a PROPOSAL scaled to the household's own monthly essentials when those are known, shown as a suggestion and never stored until typed. D-084.",
+  "note": "categoryId is an id from data/expense_categories.json; `essential` mirrors that table so the scale factor can be derived from the essential lines only. BRIEF §5.",
+  "lines": [
+    { "id": "rent_or_mortgage", "label": "Rent or mortgage",       "categoryId": "housing",        "monthlyCents": 175000, "essential": true },
+    { "id": "utilities",        "label": "Power, water, gas",      "categoryId": "utilities",      "monthlyCents": 32000,  "essential": true },
+    { "id": "groceries",        "label": "Groceries",              "categoryId": "groceries",      "monthlyCents": 52000,  "essential": true },
+    { "id": "car_payment",      "label": "Car payment",            "categoryId": "transportation", "monthlyCents": 42000,  "essential": true },
+    { "id": "fuel",             "label": "Fuel",                   "categoryId": "transportation", "monthlyCents": 22000,  "essential": true },
+    { "id": "car_insurance",    "label": "Car insurance",          "categoryId": "insurance",      "monthlyCents": 15000,  "essential": true },
+    { "id": "health_insurance", "label": "Health insurance",       "categoryId": "healthcare",     "monthlyCents": 35000,  "essential": true },
+    { "id": "phone",            "label": "Phone",                  "categoryId": "utilities",      "monthlyCents": 9000,   "essential": true },
+    { "id": "internet",         "label": "Internet",               "categoryId": "utilities",      "monthlyCents": 7000,   "essential": true },
+    { "id": "childcare",        "label": "Childcare",              "categoryId": "childcare",      "monthlyCents": 0,      "essential": true },
+    { "id": "dining_out",       "label": "Eating out",             "categoryId": "dining_out",     "monthlyCents": 33000,  "essential": false },
+    { "id": "coffee_takeaway",  "label": "Coffee and takeaway",    "categoryId": "dining_out",     "monthlyCents": 9000,   "essential": false },
+    { "id": "streaming",        "label": "Streaming",              "categoryId": "subscriptions",  "monthlyCents": 5000,   "essential": false },
+    { "id": "gym",              "label": "Gym",                    "categoryId": "subscriptions",  "monthlyCents": 4500,   "essential": false },
+    { "id": "clothing",         "label": "Clothing",               "categoryId": "shopping",       "monthlyCents": 16000,  "essential": false },
+    { "id": "personal_care",    "label": "Hair, skin, personal care", "categoryId": "personal_care", "monthlyCents": 8000, "essential": false },
+    { "id": "entertainment",    "label": "Going out",              "categoryId": "entertainment",  "monthlyCents": 20000,  "essential": false },
+    { "id": "travel",           "label": "Travel",                 "categoryId": "travel",         "monthlyCents": 18000,  "essential": false },
+    { "id": "gifts",            "label": "Gifts",                  "categoryId": "gifts",          "monthlyCents": 12000,  "essential": false },
+    { "id": "pets",             "label": "Pets",                   "categoryId": "other",          "monthlyCents": 6000,   "essential": false }
+  ]
+}

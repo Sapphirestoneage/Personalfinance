@@ -138,7 +138,11 @@
     'expenses.entries[].categoryId':             { class: 'raw',        unit: 'enum',    note: 'an id from data/expense_categories.json' },
     'expenses.entries[].amountCents':            { class: 'raw',        unit: 'cents' },
     'expenses.entries[].period':                 { class: 'raw',        unit: 'enum',    values: ['monthly', 'once'] },
-    'expenses.entries[].source':                 { class: 'raw',        unit: 'enum',    values: ['manual', 'imported'], note: 'SPEC.md §12.5' },
+    'expenses.entries[].source':                 { class: 'raw',        unit: 'enum',    values: ['manual', 'imported', 'rerank'], note: 'SPEC.md §12.5; rerank = a custom cost line typed on The Rerank, D-084' },
+    'rerank.rows[].id':                          { class: 'raw',        unit: 'id',      note: 'a categoryId, or an expense entry id for a custom line. D-084' },
+    'rerank.rows[].miss':                        { class: 'raw',        unit: 'enum',    values: ['yes', 'some', 'no'], note: 'would you miss it? null = not asked' },
+    'rerank.rows[].who':                         { class: 'raw',        unit: 'enum',    values: ['me', 'both', 'show'], note: 'who is it really for: me, both of us, or for show' },
+    'rerank.rows[].valueRank':                   { class: 'raw',        unit: 'count',   note: '1 = most valuable, set by hand on the rerank stage; null = not reranked, ordered by joy' },
     'expenses.entries[].fixed':                  { class: 'raw',        unit: 'bool',    note: 'null not asked; true = could not be cut next month. Feeds the minimum viable month and cuttability. D-082' },
     'goals[].targetDate':                        { class: 'raw',        unit: 'iso-date' },
     'goals[].savedCents':                        { class: 'raw',        unit: 'cents' },
@@ -500,6 +504,22 @@
     });
   }
 
+  /* The Rerank's answers beside each cost line (D-084). The 1-10 joy lives
+     in ratings.rerank like every other rating; this holds the rest. */
+  function createRerankRow(fields) {
+    var f = fields || {};
+    return {
+      id: f.id || null,
+      miss: f.miss === undefined ? null : f.miss,
+      who: f.who === undefined ? null : f.who,
+      valueRank: f.valueRank === undefined ? null : f.valueRank
+    };
+  }
+  function createRerank(fields) {
+    var f = fields || {};
+    return { rows: (f.rows || []).filter(function (r) { return r && r.id; }).map(createRerankRow) };
+  }
+
   function createTargets(fields) {
     var f = fields || {};
     return {
@@ -810,6 +830,8 @@
       property: (f.property || []).map(createProperty),
       /* Target split, one screen, owned by Where It Goes. */
       allocation: createAllocation(f.allocation),
+      /* The Rerank's miss / who / value order per cost line. D-084. */
+      rerank: createRerank(f.rerank),
       /* When you mean to stop, and when the coast variant grows to. Owned
          by FIRE; the unstored preview knob is gone. */
       targets: createTargets(f.targets),
@@ -1205,6 +1227,8 @@
     createProperty: createProperty,
     createAllocation: createAllocation,
     createTargets: createTargets,
+    createRerank: createRerank,
+    createRerankRow: createRerankRow,
     allocationStatus: allocationStatus,
     createScenario: createScenario,
     assetRule: assetRule,
