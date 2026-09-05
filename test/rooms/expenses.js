@@ -38,7 +38,35 @@ module.exports = function (t) {
   check('a recurring entry does not land before its first date', CashFlow.logInMonth(h, CAT, '2026-07').count, 0);
   check('the 31st clamps', CashFlow.logOccurrences(Schema.createExpenseEntry({ amountCents: 1, period: 'monthly', date: '2026-01-31', source: 'log' }), '2026-09')[0].date, '2026-09-30');
 
+  /* Three paths (D-129): a reimbursable expense counts in full while it
+     is pending, and the repayment is a credit in the month it came back. */
+  const hr = Schema.createHousehold({});
+  hr.expenses.entries = [
+    Schema.createExpenseEntry({ id: 'r1', categoryId: 'dining_out', amountCents: 8000, period: 'once', date: '2026-09-18', source: 'log', produced: 'reimbursable', reimbursableFrom: 'work', deductible: true }),
+    Schema.createExpenseEntry({ id: 'r2', categoryId: 'dining_out', amountCents: 3000, period: 'once', date: '2026-09-19', source: 'log', reimbursableFrom: 'Sam', expectedAmountCents: 1500, reimbursementStatus: 'received', dateReceived: '2026-10-04' }),
+    Schema.createExpenseEntry({ id: 'p1', categoryId: 'groceries', amountCents: 5000, period: 'once', date: '2026-09-20', source: 'log' })
+  ];
+  const sep = CashFlow.logInMonth(hr, CAT, '2026-09');
+  check('September: all three count in full, the pending one flagged', sep.byBucket.expenses + '/' + sep.pendingReimbursementCents + '/' + sep.reimbursedCents, '16000/8000/0');
+  check('… the reimbursable one is never deductible', sep.deductibleCents + '/' + sep.rows.filter(r => r.id === 'r1')[0].deductible, '0/false');
+  check('… and says who owes it', sep.rows.filter(r => r.id === 'r1')[0].reimbursableFrom + '/' + sep.rows.filter(r => r.id === 'r1')[0].reimbursementStatus, 'work/pending');
+  const oct = CashFlow.logInMonth(hr, CAT, '2026-10');
+  check('October: the repayment lands as a credit on the day it came', oct.rows.map(r => r.id + ':' + r.cents + ':' + r.date).join(','), 'r2:credit:-1500:2026-10-04');
+  check('… reducing Expenses Actual in October, not September', oct.byBucket.expenses + '/' + oct.reimbursedCents + '/' + oct.personalCents, '-1500/1500/-1500');
+  check('… by the amount expected when nothing else was recorded', oct.rows[0].credit + '/' + oct.byGroup.food, 'true/-1500');
+  check('still waiting: only the pending one', CashFlow.pendingReimbursements(hr).map(e => e.id).join(','), 'r1');
+  const S2 = require(path.join(ROOT, 'shared/spine-v2.js'));
+  S2.reset();
+  S2.upsertExpenseEntry(hr.expenses.entries[0]);
+  S2.markReimbursed('r1', { dateReceived: '2026-11-02', receivedAmountCents: 7500 });
+  const nov = CashFlow.logInMonth(S2.getProfile(), CAT, '2026-11');
+  check('paid back through the spine: the credit is what actually came, in its month', nov.rows[0].cents + '/' + nov.rows[0].date, '-7500/2026-11-02');
+  check('… and September still carries the expense in full', CashFlow.logInMonth(S2.getProfile(), CAT, '2026-09').byBucket.expenses, 8000);
+
   const page = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
+  checkTrue('the page asks what it produced, three ways', /id="l-produced"/.test(page) && /value="reimbursable"/.test(page) && /value="linked"/.test(page) && /value="personal"/.test(page));
+  checkTrue('… with who owes it and how much', /id="l-from"/.test(page) && /id="l-expected"/.test(page));
+  checkTrue('… and a Paid back action that goes through the spine', /Spine\.markReimbursed\(/.test(page) && /data-paid=/.test(page));
   checkTrue('the page has the log form', /id="log-form"/.test(page) && /id="l-linked"/.test(page));
   checkTrue('the deductible tick is live only when linked', /el\('l-deductible'\)\.disabled = !linked/.test(page));
   checkTrue('the category select is grouped into the nine', /cats\.groups/.test(page) && /optgroup/.test(page));

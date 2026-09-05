@@ -69,6 +69,8 @@
   ul.logged .lg-what small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
   ul.logged .lg-amt { font-variant-numeric: tabular-nums; white-space: nowrap; }
   ul.logged .lg-cost { color: var(--color-caution); }
+  ul.logged .lg-credit { color: var(--color-positive); }
+  ul.logged li.is-credit .lg-what { color: var(--color-text-muted); }
   ul.logged .lg-x { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 1px var(--space-2); cursor: pointer; }
   .log-total { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-2); }
 
@@ -173,7 +175,17 @@
       <label class="slaf-field wide"><span class="slaf-label">A note</span>
         <span class="slaf-input-shell"><input type="text" id="l-note" placeholder="e.g. Trader Joe’s" aria-label="Note"/></span></label>
       <label class="slaf-field wide"><span class="slaf-label">What it produced</span>
-        <span class="slaf-input-shell"><select id="l-linked" aria-label="Income entry this expense produced"><option value="">Nothing — a personal expense</option></select></span></label>
+        <span class="slaf-input-shell"><select id="l-produced" aria-label="What this expense produced">
+          <option value="personal">Nothing — a personal expense</option>
+          <option value="linked">Income — it is a cost of earning an entry</option>
+          <option value="reimbursable">A repayment — someone owes it back to me</option>
+        </select></span></label>
+      <label class="slaf-field wide" id="l-linked-wrap" hidden><span class="slaf-label">Which income entry</span>
+        <span class="slaf-input-shell"><select id="l-linked" aria-label="Income entry this expense produced"><option value="">Choose one</option></select></span></label>
+      <label class="slaf-field" id="l-from-wrap" hidden><span class="slaf-label">Owed back by</span>
+        <span class="slaf-input-shell"><input type="text" id="l-from" placeholder="e.g. work, Sam" aria-label="Who will pay it back"/></span></label>
+      <label class="slaf-field" id="l-expected-wrap" hidden><span class="slaf-label">Expected back</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="l-expected" placeholder="same as amount" aria-label="Amount expected back"/></span></label>
       <label class="flag"><input type="checkbox" id="l-recurring"/> Repeats every month</label>
       <label class="flag" id="l-deductible-wrap"><input type="checkbox" id="l-deductible" disabled/> Reduces the tax on that income</label>
       <p class="slaf-hint wide" id="l-hint" style="margin:0"></p>
@@ -785,7 +797,7 @@
     var sel = el('l-linked');
     var cur = sel.value;
     var list = Ledger.entries(h).filter(function (e) { return e.active !== false && Schema.costsAllowed(e.kind); });
-    sel.innerHTML = '<option value="">Nothing — a personal expense</option>' + list.map(function (e) {
+    sel.innerHTML = '<option value="">Choose one</option>' + list.map(function (e) {
       return '<option value="' + e.id + '">' + esc(e.label || Schema.INCOME_KIND_RULES[e.kind].label) + ' (' + esc(Money.formatCents(e.amountCents)) + ')</option>';
     }).join('');
     if (list.some(function (e) { return e.id === cur; })) sel.value = cur;
@@ -793,38 +805,66 @@
   }
   /* The rule, shown: the tick is live only when an income entry is picked.
      The data layer enforces it again on every write. */
+  /* Three paths (D-129): personal, linked (the only deductible one), or
+     reimbursable (never deductible; a credit in the month it comes back). */
+  function producedPath() { return el('l-produced').value; }
   function paintDeductible() {
-    var linked = !!el('l-linked').value;
+    var path = producedPath();
+    var linked = path === 'linked' && !!el('l-linked').value;
+    el('l-linked-wrap').hidden = path !== 'linked';
+    el('l-from-wrap').hidden = path !== 'reimbursable';
+    el('l-expected-wrap').hidden = path !== 'reimbursable';
     el('l-deductible').disabled = !linked;
     if (!linked) el('l-deductible').checked = false;
     el('l-deductible-wrap').classList.toggle('is-off', !linked);
-    el('l-hint').textContent = linked ? 'Logged against that income. Tick the box and it comes off the profit before self-employment tax.' : 'A personal expense can never reduce taxable income; pick the income entry it produced to make it deductible.';
+    el('l-hint').textContent = path === 'reimbursable' ? 'Counts in full until it is paid back. When it is, tap “Paid back” on the line and the credit lands in that month — never back in this one. Never deductible.'
+      : linked ? 'Logged against that income. Tick the box and it comes off the profit before self-employment tax.'
+      : path === 'linked' ? 'Pick the income entry it produced. Only a cost of earning can ever reduce the tax.'
+      : 'A personal expense can never reduce taxable income; if it produced an income entry, or someone owes it back, say so above.';
     var opt = el('l-category').selectedOptions[0];
-    if (!linked && opt && opt.getAttribute('data-cost')) el('l-hint').textContent = 'A cost of earning it needs the income entry it produced — pick one above, or it is filed as personal spending in “Other”.';
+    if (!linked && opt && opt.getAttribute('data-cost')) el('l-hint').textContent = 'A cost of earning it needs the income entry it produced — choose “Income” above and pick one, or it is filed as personal spending in “Other”.';
   }
+  el('l-produced').addEventListener('change', paintDeductible);
   el('l-linked').addEventListener('change', paintDeductible);
   el('l-category').addEventListener('change', paintDeductible);
   el('l-amount').addEventListener('focus', function () { var c = Money.parseMoney(el('l-amount').value); el('l-amount').value = Money.isEntered(c) ? String(c / 100) : ''; el('l-amount').select(); });
   el('l-amount').addEventListener('blur', function () { var c = Money.parseMoney(el('l-amount').value); el('l-amount').value = Money.isEntered(c) ? Money.formatCents(c, { decimals: c % 100 ? 2 : 0 }) : ''; });
+  el('l-expected').addEventListener('focus', function () { var c = Money.parseMoney(el('l-expected').value); el('l-expected').value = Money.isEntered(c) ? String(c / 100) : ''; el('l-expected').select(); });
+  el('l-expected').addEventListener('blur', function () { var c = Money.parseMoney(el('l-expected').value); el('l-expected').value = Money.isEntered(c) ? Money.formatCents(c, { decimals: c % 100 ? 2 : 0 }) : ''; });
   el('log-form').addEventListener('keydown', function (evt) { if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') { evt.preventDefault(); el('btn-log').click(); } });
   el('btn-log').addEventListener('click', function () {
     var cents = Money.parseMoney(el('l-amount').value);
     if (!Money.isEntered(cents)) { el('log-say').textContent = 'An amount, first.'; el('l-amount').focus(); return; }
-    var linked = el('l-linked').value || null;
+    var path = producedPath();
+    var linked = path === 'linked' ? (el('l-linked').value || null) : null;
+    if (path === 'linked' && !linked) { el('log-say').textContent = 'Which income entry did it produce?'; el('l-linked').focus(); return; }
     var opt = el('l-category').selectedOptions[0];
     var categoryId = el('l-category').value;
     if (!linked && opt && opt.getAttribute('data-cost')) categoryId = 'other';
+    var expected = Money.parseMoney(el('l-expected').value);
     var entry = Schema.createExpenseEntry({
       categoryId: categoryId, amountCents: cents, period: el('l-recurring').checked ? 'monthly' : 'once',
       date: el('l-date').value || today(), descriptor: el('l-note').value.trim() || null, source: 'log',
-      linkedIncomeId: linked, deductible: !!linked && el('l-deductible').checked
+      produced: linked ? 'linked' : path === 'reimbursable' ? 'reimbursable' : 'personal',
+      linkedIncomeId: linked, deductible: !!linked && el('l-deductible').checked,
+      reimbursableFrom: path === 'reimbursable' ? (el('l-from').value.trim() || null) : null,
+      expectedAmountCents: path === 'reimbursable' && Money.isEntered(expected) ? expected : undefined
     });
     Spine.upsertExpenseEntry(entry);
-    el('log-say').textContent = 'Logged ' + Money.formatCents(cents) + (linked ? (entry.deductible ? ', deductible against ' : ', against ') + (el('l-linked').selectedOptions[0].textContent) : '') + '.';
-    el('l-amount').value = ''; el('l-note').value = ''; el('l-recurring').checked = false;
+    el('log-say').textContent = 'Logged ' + Money.formatCents(cents) + (linked ? (entry.deductible ? ', deductible against ' : ', against ') + (el('l-linked').selectedOptions[0].textContent)
+      : entry.produced === 'reimbursable' ? ', ' + Money.formatCents(entry.expectedAmountCents) + ' owed back' + (entry.reimbursableFrom ? ' by ' + entry.reimbursableFrom : '') : '') + '.';
+    el('l-amount').value = ''; el('l-note').value = ''; el('l-recurring').checked = false; el('l-from').value = ''; el('l-expected').value = '';
     render();
   });
   el('logged').addEventListener('click', function (evt) {
+    var paid = evt.target.closest('[data-paid]');
+    if (paid) {
+      var when = el('l-date').value || today();
+      Spine.markReimbursed(paid.getAttribute('data-paid'), { dateReceived: when });
+      el('log-say').textContent = 'Paid back on ' + when + '. The credit lands in that month.';
+      render();
+      return;
+    }
     var b = evt.target.closest('[data-unlog]');
     if (!b) return;
     Spine.removeExpenseEntry(b.getAttribute('data-unlog'));
@@ -834,16 +874,20 @@
     paintLinked(h);
     var m = Ledger.thisMonth();
     var log = CashFlow.logInMonth(h, TABLES.expenseCategories, m);
-    el('log-month-title').textContent = Schema.monthLabel(m) + (log.count ? ' · ' + Money.formatCents(log.personalCents) + ' personal' + (log.incomeCostsCents ? ' · ' + Money.formatCents(log.incomeCostsCents) + ' costs of earning' : '') : '');
+    el('log-month-title').textContent = Schema.monthLabel(m) + (log.count ? ' · ' + Money.formatCents(log.personalCents) + ' personal' + (log.incomeCostsCents ? ' · ' + Money.formatCents(log.incomeCostsCents) + ' costs of earning' : '') + (log.pendingReimbursementCents ? ' · ' + Money.formatCents(log.pendingReimbursementCents) + ' owed back to you' : '') : '');
     var names = {};
     Ledger.entries(h).forEach(function (e) { names[e.id] = e.label || Schema.INCOME_KIND_RULES[e.kind].label; });
     el('logged').innerHTML = log.rows.filter(function (r) { return !r.hidden; }).map(function (r) {
       var cat = CashFlow.categoryById(TABLES.expenseCategories, r.categoryId);
-      return '<li><span class="lg-date">' + esc(r.date.slice(5)) + '</span>'
-        + '<span class="lg-what">' + esc(r.descriptor || (cat ? cat.label : r.categoryId)) + '<small>' + esc(cat ? cat.label : r.categoryId) + (r.recurring ? ' · every month' : '')
-        + (r.linkedIncomeId ? ' · for ' + esc(names[r.linkedIncomeId] || 'an income entry') + (r.deductible ? ', deductible' : ', not deductible') : '') + '</small></span>'
-        + '<span class="lg-amt' + (r.linkedIncomeId ? ' lg-cost' : '') + '">' + esc(Money.formatCents(r.cents)) + '</span>'
-        + '<button type="button" class="lg-x" data-unlog="' + r.entryId + '" aria-label="Remove">✕</button></li>';
+      var reimb = r.produced === 'reimbursable';
+      var tail = r.credit ? ' · paid back' + (r.reimbursableFrom ? ' by ' + esc(r.reimbursableFrom) : '')
+        : reimb ? (r.reimbursementStatus === 'received' ? ' · paid back' : ' · owed back' + (r.reimbursableFrom ? ' by ' + esc(r.reimbursableFrom) : '') + ', counts until it is')
+        : r.linkedIncomeId ? ' · for ' + esc(names[r.linkedIncomeId] || 'an income entry') + (r.deductible ? ', deductible' : ', not deductible') : '';
+      return '<li' + (r.credit ? ' class="is-credit"' : '') + '><span class="lg-date">' + esc(r.date.slice(5)) + '</span>'
+        + '<span class="lg-what">' + esc(r.descriptor || (cat ? cat.label : r.categoryId)) + '<small>' + esc(cat ? cat.label : r.categoryId) + (r.recurring ? ' · every month' : '') + tail + '</small></span>'
+        + '<span class="lg-amt' + (r.linkedIncomeId ? ' lg-cost' : r.credit ? ' lg-credit' : '') + '">' + esc((r.credit ? '−' : '') + Money.formatCents(Math.abs(r.cents))) + '</span>'
+        + (r.credit ? '<span></span>' : reimb && r.reimbursementStatus !== 'received' ? '<button type="button" class="lg-x" data-paid="' + r.entryId + '" title="Mark it paid back on the date in the form">Paid back</button>'
+        : '<button type="button" class="lg-x" data-unlog="' + r.entryId + '" aria-label="Remove">✕</button>') + '</li>';
     }).join('') || '<li><span class="slaf-hint" style="grid-column:1/-1">Nothing logged this month yet.</span></li>';
   }
   /* ---------- Where it flows: the Sankey (D-128) ------------------------------
@@ -869,8 +913,15 @@
         var net = Money.isEntered(r.takeHomeCents) ? r.takeHomeCents : r.grossCents;
         links.push({ from: id, to: 'pool', value: net, color: C.series[1] });
       });
+      /* A reimbursement received is an inflow to the pool, not a negative
+         outgoing: the sankey cannot draw a link backwards (D-129). */
+      if (log.reimbursedCents > 0) {
+        nodes.push({ id: 'in_reimb', label: 'Paid back to you', column: 0, color: C.positive || C.series[2] });
+        links.push({ from: 'in_reimb', to: 'pool', value: log.reimbursedCents, color: C.positive || C.series[2] });
+      }
       var byBucket = {}, byGroup = {};
       log.rows.forEach(function (r) {
+        if (r.credit) return;
         byBucket[r.bucket] = (byBucket[r.bucket] || 0) + r.cents;
         var key = r.bucket + '|' + r.group;
         byGroup[key] = (byGroup[key] || 0) + r.cents;
@@ -887,7 +938,7 @@
         }
       });
       var out = Object.keys(byBucket).reduce(function (t, b) { return t + byBucket[b]; }, 0);
-      var left = inc.takeHomeCents - out;
+      var left = inc.takeHomeCents + (log.reimbursedCents || 0) - out;
       el('flow-why').textContent = inc.count ? Money.formatCents(inc.takeHomeCents) + ' came in after tax; ' + Money.formatCents(out) + ' has been logged going out' + (left > 0 ? ', ' + Money.formatCents(left) + ' not yet logged anywhere.' : left < 0 ? ' — more than came in.' : '.') : 'Nothing logged as coming in this month yet; the outgoings are drawn against an empty pool.';
     } else {
       el('flow-title').textContent = 'A typical month, from the lines above';

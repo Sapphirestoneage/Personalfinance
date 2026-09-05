@@ -538,22 +538,47 @@
    */
   function logInMonth(household, catalog, month) {
     var rows = [], byGroup = {}, byBucket = { expenses: 0, savings: 0, investments: 0, debt: 0, income_costs: 0 };
-    var personal = 0, costs = 0, deductible = 0;
+    var personal = 0, costs = 0, deductible = 0, pendingReimb = 0, reimbursed = 0;
     logEntries(household).forEach(function (e) {
       if (e.active === false) return;
+      var reimb = e.produced === 'reimbursable';
       logOccurrences(e, month).forEach(function (o) {
         var g = groupOf(catalog, e.categoryId);
         var gr = groupById(catalog, g);
         var bucket = e.linkedIncomeId ? 'income_costs' : ((gr && gr.bucketOf) || 'expenses');
         rows.push({ id: e.id, entryId: e.id, date: o.date, cents: o.cents, categoryId: e.categoryId, group: g, bucket: bucket,
-          descriptor: e.descriptor || null, linkedIncomeId: e.linkedIncomeId || null, deductible: e.deductible === true, recurring: e.period === 'monthly', hidden: e.hidden === true });
+          descriptor: e.descriptor || null, linkedIncomeId: e.linkedIncomeId || null, deductible: e.deductible === true, recurring: e.period === 'monthly', hidden: e.hidden === true,
+          produced: e.produced || (e.linkedIncomeId ? 'linked' : 'personal'),
+          reimbursableFrom: reimb ? e.reimbursableFrom || null : null, reimbursementStatus: reimb ? e.reimbursementStatus : null, expectedAmountCents: reimb ? e.expectedAmountCents : null });
         byGroup[g] = (byGroup[g] || 0) + o.cents;
         byBucket[bucket] = (byBucket[bucket] || 0) + o.cents;
         if (e.linkedIncomeId) { costs += o.cents; if (e.deductible === true) deductible += o.cents; } else personal += o.cents;
+        if (reimb && e.reimbursementStatus !== 'received') pendingReimb += o.cents;
       });
+      /* A reimbursement received lands as a credit in the month it came,
+         against the bucket the expense sat in — never back in the month
+         of the expense (D-129). The expense itself stayed in full above. */
+      if (reimb && e.reimbursementStatus === 'received' && e.dateReceived && e.dateReceived.slice(0, 7) === month) {
+        var back = Money.isEntered(e.receivedAmountCents) ? e.receivedAmountCents : (Money.isEntered(e.expectedAmountCents) ? e.expectedAmountCents : e.amountCents);
+        if (!Money.isEntered(back) || back === 0) return;
+        var g2 = groupOf(catalog, e.categoryId);
+        var gr2 = groupById(catalog, g2);
+        var bucket2 = (gr2 && gr2.bucketOf) || 'expenses';
+        rows.push({ id: e.id + ':credit', entryId: e.id, date: e.dateReceived, cents: -back, categoryId: e.categoryId, group: g2, bucket: bucket2,
+          descriptor: e.descriptor || null, linkedIncomeId: null, deductible: false, recurring: false, hidden: e.hidden === true,
+          produced: 'reimbursable', credit: true, reimbursableFrom: e.reimbursableFrom || null, reimbursementStatus: 'received', expectedAmountCents: e.expectedAmountCents });
+        byGroup[g2] = (byGroup[g2] || 0) - back;
+        byBucket[bucket2] = (byBucket[bucket2] || 0) - back;
+        personal -= back; reimbursed += back;
+      }
     });
     rows.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
-    return { month: month, rows: rows, byGroup: byGroup, byBucket: byBucket, personalCents: personal, incomeCostsCents: costs, deductibleCents: deductible, count: rows.length };
+    return { month: month, rows: rows, byGroup: byGroup, byBucket: byBucket, personalCents: personal, incomeCostsCents: costs, deductibleCents: deductible,
+      pendingReimbursementCents: pendingReimb, reimbursedCents: reimbursed, count: rows.length };
+  }
+  /** Reimbursable expenses still waiting to be paid back, whatever the month. */
+  function pendingReimbursements(household) {
+    return logEntries(household).filter(function (e) { return e.active !== false && e.produced === 'reimbursable' && e.reimbursementStatus !== 'received'; });
   }
 
   return {
@@ -564,6 +589,7 @@
     logEntries: logEntries,
     logOccurrences: logOccurrences,
     logInMonth: logInMonth,
+    pendingReimbursements: pendingReimbursements,
     normaliseToMonthly: normaliseToMonthly,
     summarise: summarise,
     netMonthlyIncomeCents: netMonthlyIncomeCents,
