@@ -4,29 +4,29 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Big Purchase · SPARKS</title>
-<meta name="description" content="What your job actually pays, once you count every hour it takes and everything it costs you to do it."/>
+<meta name="description" content="One thing you are eyeing: hours of your life, months of FI, what the cash looks like after, and what financing it costs."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. THE TEMPLATE ROOM. DECISIONS.md D-097.
+  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md D-099.
 
-  1. READS   The person's income (owned by Start Here) and filingStatus, for
-             the tax estimate; a month's spending, for the lens.
-  2. WRITES  It OWNS person.work — paid hours, unpaid overtime, commute,
-             work costs, weeks a year, and (folded) prep and decompression.
-             Nothing else edits those. It does not touch income.
-  3. CALLS   engines/hourly.js. Tax comes from engines/tier0.js's effective-
-             rate lookup, never a second calculation.
+  1. READS   Cash (Start Here), a month of spending (Start Here), income
+             (Start Here) and — only where the branch exists — the real
+             hourly wage from engines/hourly.js through the lens.
+  2. WRITES  It OWNS household.purchase: priceCents, monthsAway,
+             financeRate (decimal; null = cash) and label (the kind).
+             Nothing else edits those. It touches nothing else.
+  3. CALLS   engines/purchase.js, which reuses shared/lens.js (hours, FI
+             pushed), engines/projection.js (the level payment) and
+             engines/quickmath.js (the 20/3/8 car rule) — no second copy of
+             any of them.
   4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses and says so (Gate.fillGuesses). Each unpaid-
-             hours box is optional: blank is none, not unanswered.
-  5. CONFIG  data/effective_tax_rates_2026.json.
-
-  THE SHAPE (shared/room.js, frozen here): one number, one chart, the lens,
-  five inputs and two folded, the assumptions drawer with sources, why
-  this matters at your stage, one out-of-scope line to Get Help. The ids
-  below are the deep links.
+             intake's guesses and says so (Gate.fillGuesses); the number
+             waits for a price and says so. Months blank means no date yet
+             and prices it as if today; rate blank means paid in cash.
+  5. CONFIG  None of its own. The 3/6-month cushion and the finance terms
+             are conventions stated in the drawer.
 
   LIVE-FORM: built once — shared/room.js builds the inputs from the spec
   on load and only sets .value, never under focus.
@@ -41,6 +41,7 @@
   .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
   .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  .room-drawer-links { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
 </style>
 </head>
 <body class="slaf">
@@ -57,25 +58,25 @@
 
   <section class="slaf-card" id="number">
     <div class="room-head-row">
-      <span class="slaf-eyebrow">Your real rate</span>
+      <span class="slaf-eyebrow">One thing, priced</span>
       <div id="room-lens"></div>
     </div>
     <div class="room-number" id="room-number"></div>
   </section>
 
   <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Where the week goes</span>
+    <span class="slaf-eyebrow">Cash before and after</span>
     <div id="room-chart"></div>
   </section>
 
   <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The hours the job takes</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave anything blank that doesn't apply — working from home means no commute, and blank is none rather than unanswered.</p>
+    <span class="slaf-eyebrow">The purchase</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave the months blank if there is no date yet — it is priced as if today. Leave the rate blank if you would pay cash; type 0 for a 0% loan.</p>
     <div id="room-inputs"></div>
   </section>
 
   <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Priced in life</span>
+    <span class="slaf-eyebrow">Through the lens</span>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
     <ul class="room-amounts" id="room-amounts"></ul>
   </section>
@@ -83,6 +84,7 @@
   <details class="room-drawer" id="assumptions">
     <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
     <div class="room-assumptions-body" id="room-assumptions"></div>
+    <p class="room-drawer-links">The small rules this leans on — cost per use, the 20/3/8 car rule, the rule of five — live in <a href="quick-math.html">Quick Math →</a>. The wage behind the hours is set in <a href="real-hourly-wage.html">Real Hourly Wage →</a>.</p>
   </details>
 
   <p class="room-why" id="room-why" hidden></p>
@@ -94,8 +96,8 @@
   </section>
 
   <p class="disclaimer">
-    Educational tool, not financial advice. Tax is estimated from a flat
-    effective-rate table, not a return. Your numbers stay in this browser.
+    Educational tool, not financial advice. The cushion months and the loan
+    terms are conventions, not rules. Your numbers stay in this browser.
   </p>
 </main>
 
@@ -112,6 +114,8 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/hourly.js"></script>
+<script src="../engines/quickmath.js"></script>
+<script src="../engines/purchase.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
 <script src="../shared/room.js"></script>
@@ -119,111 +123,137 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Hourly = SLAF.Hourly, Charts = SLAF.Charts, Room = SLAF.Room;
+      Purchase = SLAF.Purchase, Charts = SLAF.Charts, Room = SLAF.Room;
 
-  /* ---- writes: this room owns person.work ------------------------------------ */
-  function writeWork(key, value) {
-    var person = Spine.ensurePrimaryPerson('You');
-    var current = Schema.workProfile(Schema.personById(Spine.getProfile(), person.id));
-    var next = Object.assign({}, current);
-    next[key] = value;
-    Spine.upsertPerson({ id: person.id, work: next });
-  }
-  function readWork(h) { return Schema.workProfile(Schema.primaryPerson(h)); }
-  function hoursInput(key, label, placeholder, hint) {
-    return { ctl: key, label: label, kind: 'number', placeholder: placeholder, affix: 'h', hint: hint,
-      read: function (h) { return readWork(h)[key]; }, write: function (v) { writeWork(key, v === null || v <= 0 ? null : v); } };
-  }
-  function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
+  /* ---- writes: this room owns household.purchase ------------------------------ */
+  function readPlan(h) { return Purchase.plan(h); }
 
-  var HOUR_COLOURS = { paid: Charts.COLORS.series[0], unpaidOvertimeHoursPerWeek: Charts.COLORS.series[3], commuteHoursPerWeek: Charts.COLORS.series[1], prepHoursPerWeek: Charts.COLORS.series[2], decompressHoursPerWeek: Charts.COLORS.series[4] };
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function hoursWord(hours) {
+    if (hours < 1) return Math.round(hours * 60) + ' minutes';
+    var n = hours < 10 ? Math.round(hours * 10) / 10 : Math.round(hours);
+    return n.toLocaleString('en-US') + (n === 1 ? ' hour' : ' hours');
+  }
+  function monthsWord(m) { var n = Math.round(m * 10) / 10; return n + (n === 1 ? ' month' : ' months'); }
+  function kindName(kind) {
+    for (var i = 0; i < Purchase.KINDS.length; i++) if (Purchase.KINDS[i][0] === kind) return Purchase.KINDS[i][1].toLowerCase();
+    return 'the purchase';
+  }
+
+  /* The headline: hours at the real wage; without a wage, the FI months
+     pushed; without either, months of spending. Each says what it is. */
+  function headline(r) {
+    if (r.hours !== null) return { value: hoursWord(r.hours), basis: 'at your real hourly wage of ' + Money.formatCents(r.wageCents, { decimals: 2 }) + '/h' };
+    if (r.fiMonthsPushed !== null) return { value: r.fiMonthsPushed === 0 ? 'FI unmoved' : monthsWord(r.fiMonthsPushed) + ' of FI', basis: r.fiMonthsPushed === 0 ? 'less than a month of FI, spent' : 'FI arrives that much later if this is spent' };
+    if (r.monthsOfSpending !== null) return { value: monthsWord(r.monthsOfSpending) + ' of spending', basis: 'no wage and no savings rate to read it in, so this is the price against a month of spending' };
+    return { value: Money.formatCents(r.priceCents), basis: 'add your spending in Start Here to read this in life' };
+  }
+
+  function subLine(r) {
+    var bits = ['<strong>' + Money.formatCents(r.priceCents) + '</strong>' + (r.kind ? ' for ' + esc(kindName(r.kind)) : '')];
+    if (r.hours !== null && r.fiDisplay) bits.push(esc(r.fiDisplay));
+    if (r.cashAfterCents !== null && r.floorCents !== null) {
+      var after = r.financed ? 'cash stays at <strong>' + Money.formatCents(r.cashAfterCents) + '</strong> — nothing leaves up front'
+        : 'cash after: <strong>' + Money.formatCents(r.cashAfterCents) + '</strong>, ' + (r.cashShortOfFloor ? 'under' : 'above') + ' the ' + r.cushion.floorMonths + '-month floor of ' + Money.formatCents(r.floorCents);
+      bits.push(after);
+      if (r.affordToday) bits.push('you can afford it today and stay above the floor');
+      else if (r.monthlySavingCents !== null) bits.push('or <strong>' + Money.formatCents(r.monthlySavingCents) + ' a month</strong> for ' + r.monthsAway + ' months to have it without dipping under');
+      else if (!r.financed) bits.push(Money.formatCents(r.needCents) + ' more than the cash above the floor — add months until you buy to see the monthly');
+    } else if (r.cashReason || r.spendReason) {
+      bits.push(esc(r.cashReason || r.spendReason));
+    }
+    if (r.financed && r.paymentCents !== null) {
+      bits.push('financed at ' + Money.formatRate(r.financeRate, { decimals: 1 }) + ' over ' + r.termMonths + ' months: <strong>' + Money.formatCents(r.paymentCents) + '/mo</strong>, ' + Money.formatCents(r.totalInterestCents) + ' of interest');
+      if (r.carRule) {
+        var pay = r.carRule.checks.filter(function (c) { return c.key === 'payment'; })[0];
+        var termLeg = r.carRule.checks.filter(function (c) { return c.key === 'term'; })[0];
+        bits.push('20/3/8: the payment is ' + (pay && pay.pass ? 'under' : 'over') + ' the 8% cap of ' + Money.formatCents(r.carRule.paymentCapCents) + '/mo' + (termLeg && !termLeg.pass ? ', and ' + r.termMonths + ' months is past the rule’s three years' : ''));
+      }
+    }
+    if (!r.monthsKnown) bits.push('no date yet, so priced as if today');
+    return bits.join(' · ');
+  }
 
   Room.mount({
-    id: 'big-purchase', /* STUB — being built (D-099) */
+    id: 'big-purchase',
     tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
-    reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'],
+    reads: ['cashSavings', 'monthlyExpenses', 'grossAnnualIncome'],
 
     number: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return { label: 'Actually, an hour', value: null, reason: w.reason + (/not earning/.test(w.reason || '') ? '' : '') };
-      var sub = 'On paper <strong>' + perHour(w.nominalHourlyCents) + '</strong> · you keep <strong>' + Money.formatRate(w.retained, { decimals: 0 }) + '</strong> of it'
-        + ' · ' + Money.formatCents(w.keptAnnualCents) + ' kept over ' + w.annualTotalHours.toLocaleString('en-US') + ' hours a year';
-      if (w.costsMoreThanItPays) sub += '. <strong>This job costs more than it pays</strong> — check the monthly costs; if they are right, that is the finding';
-      if (w.implausibleHours) sub += '. ' + w.paidHoursPerWeek + ' paid hours a week makes this look enormous; the arithmetic is right, the comparison is not';
-      if (!w.taxKnown) sub += '. Tax is not in yet: ' + (w.taxReason || '');
-      return { label: 'Actually, an hour', value: perHour(w.realHourlyCents), sub: sub, zone: w.costsMoreThanItPays ? 'out' : (w.retained !== null && w.retained < 0.5 ? 'watch' : null), result: w };
+      var r = Purchase.weigh(h, T);
+      if (!Money.isOk(r)) return { label: 'What it costs in life', value: null, reason: r.reason };
+      var head = headline(r);
+      return { label: 'What it costs in life', value: head.value, sub: esc(head.basis) + ' · ' + subLine(r), zone: r.zone, result: r };
     },
 
     chart: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return Charts.stacked({ rows: [], empty: 'Add your paid hours to see where the week goes.' });
-      var parts = [{ label: 'Paid', value: w.paidHoursPerWeek, color: HOUR_COLOURS.paid }].concat((w.unpaidParts || []).map(function (p) { return { label: p.label, value: p.hours, color: HOUR_COLOURS[p.key] }; }));
-      var gross = w.grossAnnualIncomeCents, tax = w.estimatedTaxCents || 0, costs = w.annualWorkCostsCents, kept = w.keptAnnualCents;
-      return Charts.stacked({
-        title: 'Hours a week, and where the pay goes',
+      var r = Purchase.weigh(h, T);
+      if (!Money.isOk(r) || r.cashCents === null || r.floorCents === null) {
+        return Charts.bars({ rows: [], empty: Money.isOk(r) ? (r.cashReason || r.spendReason) : 'Add a price, and your cash and spending in Start Here, to see the cash before and after.' });
+      }
+      return Charts.bars({
+        title: 'Cash against the cushion',
         rows: [
-          { label: 'Your week', note: w.totalHoursPerWeek + ' h, ' + w.paidHoursPerWeek + ' paid', parts: parts },
-          { label: 'A year of pay', note: 'per ' + Money.formatCents(gross), parts: [
-            { label: 'Kept', value: kept / gross * w.totalHoursPerWeek, color: Charts.COLORS.growth },
-            { label: 'Tax', value: tax / gross * w.totalHoursPerWeek, color: Charts.COLORS.debt },
-            { label: 'Costs of working', value: costs / gross * w.totalHoursPerWeek, color: Charts.COLORS.series[3] }
-          ] }
-        ],
-        format: function (v) { return (Math.round(v * 10) / 10) + ' h'; }
+          { label: 'Cash now', value: r.cashCents, color: Charts.COLORS.cash },
+          { label: 'Cash after', note: r.financed ? 'financed, nothing leaves up front' : r.paidNow ? 'paid today' : 'if paid today', value: r.cashAfterCents, color: r.zone === 'out' ? Charts.COLORS.debt : Charts.COLORS.spend, marker: { at: r.floorCents, label: 'the ' + r.cushion.floorMonths + '-month floor' } },
+          { label: r.cushion.floorMonths + '-month floor', note: 'the floor', value: r.floorCents, color: Charts.COLORS.target },
+          { label: r.cushion.fullMonths + '-month cushion', value: r.fullCents, color: Charts.COLORS.muted }
+        ]
       });
     },
 
     inputs: [
-      hoursInput('contractedHoursPerWeek', 'Paid hours a week', 'e.g. 40'),
-      hoursInput('unpaidOvertimeHoursPerWeek', 'Unpaid overtime', 'e.g. 3'),
-      hoursInput('commuteHoursPerWeek', 'Commuting', 'e.g. 5'),
-      { ctl: 'workCostsMonthlyCents', label: 'Costs of working, a month', kind: 'money', placeholder: 'e.g. 400', hint: 'Petrol, parking, transit, work clothes, lunches you would not otherwise buy, childcare only while working.',
-        read: function (h) { return readWork(h).workCostsMonthlyCents; }, write: function (v) { writeWork('workCostsMonthlyCents', v); } },
-      { ctl: 'weeksPerYear', label: 'Weeks worked a year', kind: 'number', placeholder: String(Schema.WORK_DEFAULTS.weeksPerYear),
-        read: function (h) { var w = readWork(h).weeksPerYear; return w === Schema.WORK_DEFAULTS.weeksPerYear ? null : w; }, write: function (v) { writeWork('weeksPerYear', v === null || v <= 0 ? Schema.WORK_DEFAULTS.weeksPerYear : v); } }
-    ],
-    moreLabel: 'The hours around the job',
-    more: [
-      hoursInput('prepHoursPerWeek', 'Getting ready', 'e.g. 2.5'),
-      hoursInput('decompressHoursPerWeek', 'Decompressing', 'e.g. 2.5')
+      { ctl: 'price', label: 'The price', kind: 'money', placeholder: 'e.g. 1,200',
+        read: function (h) { return readPlan(h).priceCents; },
+        write: function (v) { Spine.set('purchase.priceCents', v === null || v < 0 ? null : v); } },
+      { ctl: 'months', label: 'Months until you buy', kind: 'number', placeholder: 'e.g. 6', affix: 'mo', hint: '0 is now; blank is no date yet.',
+        read: function (h) { return readPlan(h).monthsAway; },
+        write: function (v) { Spine.set('purchase.monthsAway', v === null ? null : Math.max(0, Math.round(v))); } },
+      { ctl: 'rate', label: 'Financing rate', kind: 'pct', placeholder: 'blank = cash', hint: 'The APR if you would borrow for it. Blank means paid in cash.',
+        read: function (h) { return readPlan(h).financeRate; },
+        write: function (v) { Spine.set('purchase.financeRate', v === null || v < 0 ? null : v); } },
+      { ctl: 'kind', label: 'What it is', kind: 'select', options: [['', 'Not said']].concat(Purchase.KINDS),
+        read: function (h) { return readPlan(h).label; },
+        write: function (v) { Spine.set('purchase.label', v === null || v === '' ? null : v); } }
     ],
 
     amounts: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
+      var r = Purchase.weigh(h, T);
       var spend = Schema.monthlyExpensesCents(h);
       var rows = [];
-      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
-      if (Money.isOk(w)) {
-        rows.push({ label: 'A year of tax, estimated', cents: w.estimatedTaxCents || 0 });
-        if (w.annualWorkCostsCents > 0) rows.push({ label: 'A year of the costs of working', cents: w.annualWorkCostsCents });
+      if (Money.isOk(r)) {
+        rows.push({ label: 'The price', cents: r.priceCents, href: '#inputs' });
+        if (r.financed && r.totalInterestCents !== null) rows.push({ label: 'The interest, financed over ' + r.termMonths + ' months', cents: r.totalInterestCents });
       }
-      rows.push({ label: 'A $1,200 thing you are eyeing', cents: 120000 });
+      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
       return rows;
     },
 
     assumptions: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      var tax = T.effectiveTaxRates;
-      var work = readWork(h);
+      var r = Purchase.weigh(h, T);
+      var p = readPlan(h);
+      var a = Schema.resolveAssumptions(h);
       return [
-        { label: 'Tax', value: Money.isOk(w) && w.taxKnown ? Money.formatRate(w.effectiveRate || (w.estimatedTaxCents / w.grossAnnualIncomeCents), { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')' },
-        { label: 'Weeks a year', value: String(Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear), source: Money.isEntered(work.weeksPerYear) && work.weeksPerYear !== Schema.WORK_DEFAULTS.weeksPerYear ? 'yours' : 'the default: 52 less four weeks of leave and holidays (convention)' },
-        { label: 'Unpaid hours', value: 'count as work', source: 'Your Money or Your Life: an hour the job takes is an hour it costs, paid or not (convention)' },
-        { label: 'Real return, for the lens', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' }
+        { label: 'The cushion', value: Purchase.CUSHION.floorMonths + ' months of spending is the floor, ' + Purchase.CUSHION.fullMonths + ' the full fund', source: 'the 3–6 month convention in mainstream guidance and the FOO’s emergency-fund rung; data/liquidity_benchmarks.json draws the same bands (convention)' },
+        { label: 'Finance term', value: Purchase.termFor(p.label) + ' months', source: (p.label === 'car' ? 'a car loan runs about five years' : 'a personal loan or store credit runs about three') + ' — an assumption this room makes, not a quote (convention). Interest is the level payment × the term, less the price, from engines/projection.js' },
+        { label: 'When it is paid', value: !Money.isEntered(p.monthsAway) ? 'no date yet — priced as if today' : p.monthsAway === 0 ? 'today, in one go' : 'in ' + p.monthsAway + ' months, saved from the cash above the floor', source: 'the monthly is the shortfall ÷ the months, rounded up to the cent; paid in cash means the whole price leaves at once' },
+        { label: 'Hours of life', value: Money.isOk(r) && r.wageCents !== null ? Money.formatCents(r.wageCents, { decimals: 2 }) + ' an hour, your real rate' : 'no wage in this situation', source: 'Real Hourly Wage: pay after tax and the costs of working, over every hour the job takes (engines/hourly.js)' },
+        { label: 'Real return, for the FI lens', value: Money.formatRate(a.returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' }
       ];
     },
 
     why: function (h, T, situation) {
       return {
-        employed: 'Employed, the headline rate is the one on the offer letter. This one is the rate that decides whether the next thing — a raise, a move, an hour of overtime — is worth it.',
-        selfEmployed: 'Self-employed, there is no headline rate, only this one: what is left after the tax you set aside and the hours the work really takes, including the ones nobody bills.',
-        mixed: 'With a job and your own work, each has a real rate. This reads the job; put the own-work hours in as a second job in Start Here to compare them.',
-        student: 'A part-time job at a student’s stage is priced against study hours, not against a career. If the real rate is low, the question is what the hours are taking from.',
-        betweenJobs: '', retired: ''
-      }[situation] || 'Any job has a headline rate and a real one. The gap between them is what this room measures.';
+        employed: 'With a paycheque the question is rarely whether you can pay for it; it is how many hours it takes and how far the floor drops. This prices both, and says whether the cash after is still three months of spending.',
+        selfEmployed: 'Your own work has slow months, and the floor is what carries you through them. A purchase that leaves the cash under three months of spending is a bet that the next quarter is a good one — this says how big the bet is.',
+        mixed: 'Two kinds of income, one floor. The job steadies the cushion; the own-work side is what a slow month tests. Price the thing in hours here, and keep the cash after above the floor.',
+        student: 'At this stage the hours lens is the whole point: a price in hours of a part-time job is the truest reading of what a thing costs. The floor still matters, but the hours are the number to sit with.',
+        retired: 'Retired, the purchase comes from income or from the reserve. There is no wage to read it in hours, so the number is months of FI pushed or months of spending — and the floor is the reserve that has to last.',
+        betweenJobs: 'Between jobs, the cash is the runway, and a purchase from it is days of runway gone. Said plainly: unless it is the thing that gets the next job, it waits — or it comes from somewhere other than the runway.'
+      }[situation] || 'Any purchase costs money, hours and months of FI at once. This room prices all three and shows what the cash looks like after.';
     },
 
-    scope: 'This room does not model overtime pay, shift differentials, or a second job’s hours on their own. Tax is a flat estimate, not a return.'
+    scope: 'This room does not judge whether you should; it prices the choice in hours, months of FI and cash, and stops there.'
   });
 })();
 </script>
