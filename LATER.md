@@ -50,6 +50,17 @@ moved between them. `rooms/history.html`, D-122.
 - **A date on every expenditure and incoming amount** and an
   **incoming-money list** — the expense log in Cash Flow and the Income
   room's entries. D-128.
+- **The revision (D-129)**: Unemployment as a kind and exactly four ways
+  to be taxed; an expense that is personal, linked or reimbursable, with
+  the repayment a credit in the month it came; the budget as five cards
+  with one comparison bar each; Rule of Five, Max IRA and Max 401(k)
+  presets stacked into the estimate; Not applicable, and a Hypothetical
+  view that never writes.
+- Still open after D-129: N/A buttons beside the situation-gate fields
+  in their own rooms (the map is read by `Ownership.describe` already;
+  only Budget offers the toggle); a Rule of Five preset that takes a
+  price of its own rather than Big Purchase's; presets for Savings
+  beyond the one rule.
 - Still open from `MONEY-MAP.md`: estimated / potential dates on a line
   (`dateKind`), one-offs and the calendar's bills retired into log entries
   (Q5), the calendar grid drawn from the log, entries moving balances

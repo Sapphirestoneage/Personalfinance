@@ -70,7 +70,7 @@ typing in it.
 index.html          The front door: the Dashboard once it has what it needs, the intake landing until then (D-058)
 foo-ladder.js       The FOO ladder's logic (shell at rooms/foo-ladder.html): build() once, paint() on every change
 map.html            Room directory: next-unfinished first, then the groups, tag filter
-MONEY-MAP.md        The discovery map that preceded the ledger build (D-128); where it and the build spec differ, D-128 is what shipped
+MONEY-MAP.md        The discovery map that preceded the ledger build (D-128, revised in D-129); where it and the build spec differ, the decisions are what shipped
 favicon.svg         Sapphire mark
 rooms/              One HTML file per room
 vendor/fonts/       Self-hosted typefaces (no CDN, no other vendored code)
@@ -129,8 +129,9 @@ engines/            Shared calculation engines — one function per concept
   vpw.js              variable percentage withdrawal, year by year to the plan age
   ss.js               a Social Security estimate from the income entered, bend points and claim age
   advice.js           the Advice Translator: a piece of advice restated for this household (D-096)
-  ledger.js           the tax engine for dated income entries, and the month they add up to (D-128)
-  budget.js           the reflected budget: estimated beside actual, the month closed (D-128)
+  ledger.js           the tax engine for dated income entries — W-2 withheld, 1099 owed with SE tax, unemployment owed without it, not taxable — and the month they add up to (D-128, D-129)
+  budget.js           the reflected budget: estimated beside actual, the month closed (D-128); five cards with presets stacked in (D-129)
+  presets.js          Rule of Five, Max IRA, Max 401(k) — each read through the function that owns it, stacked into a bucket's estimate (D-129)
   variance.js         closed months read back: one month, the trend, the pattern (D-128)
   betweenjobs.js, protection.js, decumulation.js, taxroom.js, estate.js, giving.js,
   careermove.js, partner.js, kids.js, housing.js, purchase.js, variableincome.js,

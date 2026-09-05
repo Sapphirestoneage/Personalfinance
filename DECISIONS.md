@@ -6118,6 +6118,122 @@ ledger). New: `rooms/income.html`, `rooms/budget.html`,
 `active === false` always — or call `CashFlow.summarise` /
 `CashFlow.logInMonth`, which do.
 
+## D-129 — The ledger, revised: four ways to be taxed, three things an expense can produce, a budget of cards with presets, N/A and the what-if
+
+*(The revised build spec for Income / Expenses / Budget / Estimated-vs-
+Actual: eleven build items, one commit each, built directly against it
+on top of D-128. Items 8–11 — the analysis room, hide and set aside, the
+Sankey, Variable Income — were already what the revision asked for and
+were re-verified rather than rebuilt.)*
+
+**Nine kinds of income, and exactly four ways to be taxed.** Income
+entries gain `unemployment`, and `taxMethod` is now exactly `w2`
+(withheld before it arrives), `se` (owed later, with self-employment
+tax), `unemployment` (taxable as income, nothing withheld, no
+self-employment tax) and `none`. `engines/ledger.js netOf` nets the same
+$2,000 four genuinely different ways and every result now says what was
+withheld, what is still owed and what cash actually landed
+(`withheldCents`, `owedCents`, `cashReceivedCents`), so a benefit cheque
+never reads as fully spendable. The year by method keeps unemployment
+out of wages (`annualByMethod.unemploymentCents`); `Tax.estimate` takes
+it as `otherOrdinaryCents` — ordinary income with no payroll tax on it —
+and the Tax room passes the ledger's figure through. Calls made:
+`taxMethod: 'none'` with no `taxable` given reads as not taxable, so a
+form that only asks Taxed How stays consistent; a gift still forces
+`none`.
+
+**Three things an expense can produce, decided in the constructor.**
+`expenses.entries[].produced` is `personal`, `linked` or `reimbursable`,
+exclusive. Personal can never be deductible. Linked (`linkedIncomeId`)
+is the only path that can. Reimbursable records who owes it back
+(`reimbursableFrom`), what is expected (`expectedAmountCents`, default
+the amount), `reimbursementStatus` pending → received, and when it did
+(`dateReceived`, `receivedAmountCents`); it is never deductible, it
+carries no link, and it **counts in full in Actual while pending**. When
+it is paid back — `Spine.markReimbursed`, the "Paid back" action on the
+log line — `CashFlow.logInMonth` lands a credit row in the month of
+`dateReceived`, against the bucket the expense sat in, **never back in
+the month of the expense**, so a closed month never moves and the
+Estimated-vs-Actual record stays honest. The Sankey draws a repayment as
+an inflow to the pool, not a negative outgoing. A spine patch that adds a
+link or a payer switches the path rather than being pinned by the stored
+one.
+
+**The budget is five cards with one bar each.** The grid sheet became
+five bucket cards. Each carries a horizontal Estimated-vs-Actual
+comparison bar in the Every Ratio room's bar language (`.slaf-bars`):
+the estimate as a faint zone with a marker at its edge, the actual as the
+fill — green within, red over, amber for income that came in short. A
+card opens to its lines and its Add button lives inside; the Add still
+routes to Income or the expense log with the way back (D-128). Still
+zero input fields on the page; the Estimated, Actual, Close and
+late-entry rules did not change.
+
+**Presets, read through the function that owns each.**
+`engines/presets.js`: **Rule of Five** calls `QuickMath.ruleOfFive` on
+the Big Purchase room's price and spreads the shortfall to five of it
+over the months until the purchase (a year when no date is set, and it
+says so); it is not a second formula. **Max the IRA** and **Max the
+401(k)** read `data/irs_limits_2026.json`, a twelfth a month, with the
+catch-up from exactly 50 by the spine's date of birth (no date of birth:
+the base limit, and a nudge to add one). Max 401(k) is **absent, not
+disabled**, until an employer 401(k) is indicated — `retirement.has401k`,
+asked once in the Investments card with two buttons, and not asked of
+the self-employed. Presets stack into the bucket's Estimated
+(`household.budget.presets[month][bucket]`): on top of a hand-set figure,
+or **in place of** the last-closed / onboarding fallback — those already
+hold what was put in, and stacking a limit on top would count it twice.
+A preset that can no longer be read (the 401(k) answered no) drops out of
+the live figure; the stored list is left alone so it comes back when it
+can.
+
+**Not applicable is the household's word, and a what-if is not a
+write.** A structural preset gains an N/A button:
+`household.notApplicable[key] = true` drops it from every live figure,
+and `shared/ownership.js` reads the same map, so a field marked there is
+**not applicable, never an outstanding task** (D-055's distinction), and
+the row says it was you who said so (`userNotApplicable`). "Applies
+after all" lifts the mark. The Budget room's **Hypothetical** view is
+visually its own thing — dashed amber edge, amber banner, Add and Close
+gone — and holds its what-ifs (presets stacked, the 401(k) answer, the
+N/A marks lifted) in the page's memory only. It calls nothing on the
+spine; the browser check confirms localStorage is byte-identical before,
+during and after. Switching it off drops the overlay and the real budget
+is exactly as it was: D-052's rule, what-ifs get thrown away, kept.
+
+**The seven-step check the revised spec set** — a W-2 paycheque, a 1099
+gig with $200 of mileage and an unemployment benefit in one month treated
+three ways; Income Actual as a card with a bar, the combined net figure;
+a personal, a linked and a reimbursable expense with only the linked one
+moving the tax base; Rule of Five and Max 401(k) stacking, and the 401(k)
+disappearing without employer access; N/A dropping it from live and
+Hypothetical bringing it back without a write; the month closed once and
+read in Estimated vs Actual; the gig set aside with next month no longer
+expecting it and the closed month keeping it — runs through the pages on
+a phone browser and passes with no console error.
+
+### Compatibility note
+
+Stored shape: `ledger.income[].kind` admits `'unemployment'` and
+`taxMethod` admits `'unemployment'` (the constructor maps the kind to
+the method); `expenses.entries[]` rows gain `produced` (`'personal'`
+unless a link or a payer says otherwise), `reimbursableFrom` (null),
+`expectedAmountCents` (null), `reimbursementStatus` (null),
+`dateReceived` (null), `receivedAmountCents` (null); `retirement` gains
+`has401k` (null = not asked); `household.budget` gains `presets` ({});
+`household` gains `notApplicable` ({}). A household saved before this
+reads through the constructors with the defaults; nothing migrates, and
+an older row with a `linkedIncomeId` reads as `produced: 'linked'`.
+Rooms updated: `rooms/income.html`, `rooms/cash-flow.html`,
+`rooms/budget.html`, `engines/taxroom.js` (reads the unemployment
+figure). A future room reading `expenses.entries` must treat a
+`reimbursable` row as personal spending until `reimbursementStatus` is
+`'received'`, and then credit `receivedAmountCents` (else
+`expectedAmountCents`, else the amount) in the month of `dateReceived` —
+or call `CashFlow.logInMonth`, which does. A future room offering a
+structural option should check `household.notApplicable[key]` first, or
+read the field through `Ownership.describe`, which does.
+
 ---
 
 # The Dungeons & Dividends entries
