@@ -714,7 +714,7 @@
     /* What the number is FOR (DD-019): the bills that attack it, and how many
        get through. No inputs in this node, so it may be rebuilt. */
     var gaps = Enc.armourGaps(s, TABLES);
-    var burdenDis = Money.isOk(s.debtBurden) && s.debtBurden.row.saveDisadvantage
+    var burdenDis = Money.isOk(s.debtBurden) && s.debtBurden.row && s.debtBurden.row.saveDisadvantage
       ? s.debtBurden.row.saveDisadvantage : [];
     html('v-ac-note', (gaps.ready
         ? gaps.rows.length + ' creatures attack this — bills, lawsuits, lost streams. '

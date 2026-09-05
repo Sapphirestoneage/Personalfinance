@@ -6055,6 +6055,17 @@ encounter room has the full list. That is the sentence the AC panel could never
 say before. DM mode takes an AC for the target; the bestiary's Save column reads
 "attacks AC" for the eight; the type chart says how many of a type are bills.
 
+### Found by the phone pass, not by a unit test
+
+The first cut crashed the sheet on any household with no debt:
+`debtBurden()` returned `Money.ok(0, …)` **without a row** when there were no
+balances, attaching one only at levels 1–5, and the new AC note was the first
+reader to touch `.row` on a debt-free household. Every unit suite was green;
+`test/forms.js` — the one that taps through real pages — was not. Level 0 now
+carries its row from the data like every other level, the sheet guards the read
+anyway, and a unit test asserts a debt-free household comes back with a row.
+That test was verified by reverting the fix: the suite goes red.
+
 ### Compatibility note
 
 **Stored shape:** nothing. `resolution` is reference data on creatures;

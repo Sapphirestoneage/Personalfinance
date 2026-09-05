@@ -1575,6 +1575,16 @@ section('Dungeons & Dividends — two ways to get hurt (DD-019)');
     checkTrue(`burden level ${row.level} declares its disadvantage as data`, Array.isArray(row.saveDisadvantage));
   });
 
+  /* A debt-free household is level 0, and level 0 has a row. It used to come
+     back rowless, and the sheet crashed on a household with no debt — caught by
+     the phone pass, not by any unit test, which is why this one exists. */
+  const debtFree = Character.debtBurden(Schema.createHousehold(), TABLES);
+  checkTrue('no debt is level 0, not incomplete', Money.isOk(debtFree) && debtFree.value === 0);
+  checkTrue('and it carries its row', !!debtFree.row);
+  /* Guarded, so a missing row is a failed check and not a crashed suite. */
+  check('with no disadvantage', debtFree.row ? (debtFree.row.saveDisadvantage || []).length : 'no row', 0);
+  check('and the row is the data\'s own level 0', debtFree.row ? debtFree.row.level : 'no row', 0);
+
   /* 5e's cancel rule: advantage and disadvantage together are neither. */
   /* Self-Awareness 14+ grants advantage against the Imp (automated saving only
      halves it), so the sub-score is what has to be supplied here. */

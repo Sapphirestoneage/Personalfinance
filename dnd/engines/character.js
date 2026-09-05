@@ -444,7 +444,13 @@
     var withBalance = debts.filter(function (d) {
       return Money.isEntered(d.balanceCents) && d.balanceCents > 0;
     });
-    if (!withBalance.length) return Money.ok(0, { reason: 'No debt entered.' });
+    /* Level 0 is a level with a row of its own — "No burden", no disadvantage.
+       It used to come back rowless, and the first reader to touch .row on a
+       debt-free household crashed the sheet (DD-019, found by the phone pass).
+       An ok Result now always carries its row. */
+    if (!withBalance.length) {
+      return Money.ok(0, { reason: 'No debt entered.', row: tables.dndRules.debtBurden[0] });
+    }
 
     var foo = tables && tables.fooRules;
     var hiRate = foo && foo.thresholds && Money.isEntered(foo.thresholds.highInterestDebtRate)
