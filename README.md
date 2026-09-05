@@ -103,7 +103,8 @@ engines/            Shared calculation engines — one function per concept
   tier0.js            the nine Tier 0 outputs
   foo.js              Financial Order of Operations ladder + flags
   cashflow.js         categorised spending, budget templates, divergence
-  debt.js             payoff simulation, four orderings, credit-card view
+  debt.js             payoff simulation, four orderings, credit-card view; the reasons a
+                      debt is worth keeping, and the hold-back that orders one last (D-132)
   fire.js             one calculateFIRE(), six variants
   projection.js       compound growth with contributions — the only such loop
   hourly.js           real hourly wage, and prices in hours of life

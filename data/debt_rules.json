@@ -102,5 +102,55 @@
   "limits": {
     "maxMonths": 600,
     "note": "50 years. A simulation that hits this is reported as never paying off at the current payment, not truncated silently."
+  },
+  "keepReasons": {
+    "note": "The rational counterpart to emotionalPriority: why a debt might be fine to carry on purpose. Multi-select on each debt; an empty list is \"None\". These NEVER change the payoff order by themselves - the household must flip excludeFromAggressive on the debt for that (D-132). suggestWhen is offered at entry time from the debt's own type and rate, shown as a suggestion and stored only when confirmed.",
+    "lowRateCeiling": 0.06,
+    "lowRateNote": "A rate at or under this reads as low enough to be worth suggesting 'Low interest rate'. A convention, not a threshold the maths uses: the payoff engine always works from the real rate.",
+    "tags": [
+      {
+        "id": "low_rate",
+        "label": "Low interest rate",
+        "hint": "Cheap money is worth keeping cheap.",
+        "suggestWhen": {
+          "rateAtMost": 0.06
+        }
+      },
+      {
+        "id": "tax_favoured",
+        "label": "Tax-favourable interest",
+        "hint": "Mortgage or student-loan interest, the kind that can actually be deducted.",
+        "suggestWhen": {
+          "types": [
+            "mortgage",
+            "student_loan"
+          ]
+        }
+      },
+      {
+        "id": "appreciating",
+        "label": "Backed by an appreciating asset",
+        "hint": "A mortgage on a home, for instance: the debt buys something that may be worth more later.",
+        "suggestWhen": {
+          "types": [
+            "mortgage"
+          ]
+        }
+      },
+      {
+        "id": "building_credit",
+        "label": "Building credit on purpose",
+        "hint": "Kept open deliberately, for the utilisation and the history.",
+        "suggestWhen": null
+      },
+      {
+        "id": "subsidised",
+        "label": "Employer-subsidised or promotional rate",
+        "hint": "Someone else is paying part of it, or the rate is a promotion that has not ended.",
+        "suggestWhen": {
+          "hasPromo": true
+        }
+      }
+    ]
   }
 }

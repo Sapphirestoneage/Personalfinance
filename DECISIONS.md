@@ -6464,6 +6464,100 @@ wants to say a skill is done calls `Spine.setSkillDone`; one that wants
 a skill's state calls `SkillTree.stateOf` and never reads
 `household.skills[id].state` for done.
 
+## D-132 — Debt Payoff: reasons to keep it, and a hold-back the household flips itself
+
+**Decision.** A debt row now answers two questions, not one. `emotionalTag`
+("Feels like") stays exactly as it was; beside it sits `keepReasons`, a
+multi-select of the rational reasons a debt is worth keeping: low interest
+rate, tax-favourable interest, backed by an appreciating asset, building
+credit on purpose, employer-subsidised or promotional rate. The default is
+None, which is an empty list, and nothing is ever pre-selected. Separately,
+`excludeFromAggressive` is a per-debt checkbox — "Exclude from aggressive
+payoff suggestions" — that the household ticks itself.
+
+**The reasons never move the money.** A tag is a note about why a balance is
+being carried; it changes no rate, no minimum, no order and no total. Only
+the checkbox changes the plan, and only because someone ticked it. The room
+says so in the row, in those words, so nobody has to infer it: *"Reasons on
+their own change nothing about the payoff order."* The unit suite proves it
+by running the same household twice, tagged and untagged, and comparing the
+whole plan object byte for byte.
+
+**What the checkbox does.** `Debt.orderDebts` runs the chosen strategy over
+every debt as before, then moves the held ones to the tail, keeping their
+relative order. A held debt still receives its minimum every month — it is
+being paid, just never targeted by the extra — so the plan still finishes.
+This is a stable partition after the sort rather than a term inside it, so
+every strategy behaves the same way and no strategy's own logic had to learn
+about the flag. The room then prints what the decision costs: it re-runs the
+plan with nothing held, and shows the interest difference. That re-run is a
+what-if and is never written (D-052).
+
+**The suggestion, at entry time only.** When a debt has no reasons yet,
+`Debt.suggestedKeepReasons(debt, rules)` reads that debt's own Type and Rate
+and offers the ones that fit, rendered muted and dashed with a "Keep these"
+chip and a dismiss, under the line *"nothing is saved until you say so"*
+(D-060). It never runs in the background, never classifies a debt that
+already carries reasons, and stores nothing until the household confirms. A
+dismissal lives for the visit and is not stored either: a dismissed
+suggestion is not an answer.
+
+Two guards inside the suggestion are worth naming. A 0% card that reverts to
+24.99% is offered "employer-subsidised or promotional rate" and *not* "low
+interest rate" — a promo rate is a deadline, not a cheap loan (D-053) — while
+a promo that stays cheap after it ends is offered both. And an expired promo
+is not a reason to keep anything, so it is judged on its real rate alone.
+
+**The chips are painted, never rebuilt.** They sit inside `debt-list`,
+which is guarded (D-034), so a tap must not rebuild the row it landed in.
+The first build relied on `render()` to redraw the chips and it did not: the
+guard correctly refused, so after "Keep these" the reasons were stored but
+the chips still read as suggestions and "None" still read as the answer,
+which is the worst possible outcome for a control whose entire job is to say
+what is stored. `paintKeep(d)` now runs inside `paintLive()` and writes the
+pressed state, the suggested class, the label, the suggestion line's
+visibility and the hint text onto the nodes already on the page. The
+suggestion line is therefore always rendered and hidden when empty, rather
+than conditionally built.
+
+**Where the tags show.** Inline, in the payoff prioritisation view itself,
+never on a separate screen: each row of the plan chart and each entry in the
+timeline carries its reasons as small chips, and a held debt is labelled
+"held back on purpose" in the same line. The prioritisation is where someone
+is deciding, so that is where the reasons have to be.
+
+**The convention, not a threshold.** `data/debt_rules.json` gains a
+`keepReasons` block holding the five tags, their labels and hints, and their
+`suggestWhen` conditions. `lowRateCeiling` is 0.06 and is used *only* to
+decide whether to offer the low-rate tag. No calculation reads it: the
+avalanche still sorts on the real rate, to the cent. It is written down in
+the table with that note attached so a later reader does not mistake it for
+a maths constant.
+
+`keepReasons` and `excludeFromAggressive` get no `shared/ownership.js` rows,
+for the same reason `emotionalTag` has none: the ownership map holds the
+household's shared figures, and these are per-row attributes of a debt that
+only Debt Payoff ever reads or writes.
+
+### Compatibility note
+
+Stored shape: `Schema.createDebt` gains two fields on every debt —
+`keepReasons` (an array of ids from `Schema.KEEP_REASONS`, empty by default)
+and `excludeFromAggressive` (a boolean, `false` by default). Both are
+cleaned by the constructor: an unknown id is dropped, a repeat is kept once,
+and anything that is not an array reads as None, so a hand-edited or
+imported file cannot put a debt into a state the engine has not seen. A
+household saved before this entry reads through the constructor and comes
+back with `keepReasons: []` and `excludeFromAggressive: false`, which is
+exactly the old behaviour: nothing is held back, the plan is unchanged, and
+no migration runs. `Spine.upsertDebt` accepts both. `FIELDS` gains
+`debt.keepReasons[]` and `debt.excludeFromAggressive`. Rooms updated:
+`rooms/debt-payoff.html` only. A future room that renders a debt should read
+its reasons through `Debt.keepReasonLabels(debt, rules)` rather than mapping
+the ids itself, must not treat a tag as a reason to reorder anything, and
+must not write `keepReasons` from a rule of its own — the only writer is the
+household, through this room.
+
 ---
 
 # The Dungeons & Dividends entries

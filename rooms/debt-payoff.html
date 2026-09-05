@@ -74,6 +74,23 @@
   .strategy-name { font-weight: 600; }
   .strategy-figure { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .strategy-blurb { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  /* Reasons to keep it (D-132): the rational axis, beside "Feels like".
+     A chip is on, off, or suggested — suggested is dashed and says so,
+     and nothing is stored until it is confirmed. */
+  .keep { margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--color-border); }
+  .keep-cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); display: block; margin-bottom: 6px; }
+  .keep-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .keep-chip { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 3px var(--space-2); cursor: pointer; white-space: nowrap; }
+  .keep-chip[aria-pressed="true"] { border-color: var(--color-accent); color: var(--color-text); background: var(--color-surface-active); }
+  .keep-chip.is-suggested { border-style: dashed; border-color: var(--color-caution); color: var(--color-caution); }
+  .keep-chip.is-none[aria-pressed="true"] { border-color: var(--color-text-subtle); color: var(--color-text-subtle); background: none; }
+  .keep-suggest { font-size: var(--text-xs); color: var(--color-caution); margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+  .keep-suggest button { background: none; border: 1px solid var(--color-caution); border-radius: var(--radius-pill); color: var(--color-caution); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; }
+  .keep-hint { font-size: var(--text-xs); color: var(--color-text-faint); margin: 6px 0 0; }
+  /* The tags, wherever the payoff order is shown. */
+  .tagline { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: 6px; vertical-align: middle; }
+  .tagline i { font-style: normal; font-size: 10px; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 0 6px; color: var(--color-text-subtle); white-space: nowrap; }
+  .tagline i.is-held { border-color: var(--color-caution); color: var(--color-caution); }
   .badge { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-positive); border: 1px solid var(--color-positive); border-radius: var(--radius-pill); padding: 1px var(--space-2); margin-left: var(--space-2); }
 
   ol.timeline { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
@@ -228,6 +245,13 @@
   /* The live list: what is counted and planned. Archived debts sit in the
      drawer below it and are read by nothing (Schema.archivedDebts). D-124. */
   function debtsOf(h) { return (h.debts || []).filter(function (d) { return d.archived !== true; }); }
+  /* A copy with every hold released, used only to price what holding one
+     back costs. Never written, never shown as the plan (D-052). */
+  function unheld(h) {
+    return Object.assign({}, h, { debts: (h.debts || []).map(function (d) {
+      return d.excludeFromAggressive ? Object.assign({}, d, { excludeFromAggressive: false }) : d;
+    }) });
+  }
 
   /* What a debt still needs before it can be planned — said live, under the
      row, because the row itself is not rebuilt while someone is typing in
@@ -290,6 +314,7 @@
           }).join('')
         + '</select></span></label>'
         + '</div>'
+        + keepBlock(d)
         /* Two dates on every debt: when it started, and when it is due
            back in full. On a family loan the due date is what the minimum
            comes from when no monthly amount was agreed. D-124. */
@@ -365,8 +390,37 @@
       }
       var box = document.querySelector('input[data-debt="' + d.id + '"][data-field="interestFree"]');
       if (box) box.checked = d.interestFree === true;
+      paintKeep(d);
     });
     paintPromos();
+  }
+
+  /* The keep chips live inside the guarded list, so the row is never
+     rebuilt under a finger to show a tap landing (D-034). They are painted
+     here instead: which are on, whether any are still only suggested,
+     whether None is the answer, and what the hold-back is doing. D-132. */
+  function paintKeep(d) {
+    var on = d.keepReasons || [];
+    var suggested = (suggestDismissed[d.id] ? [] : Debt.suggestedKeepReasons(d, RULES)).map(function (t) { return t.id; });
+    Debt.keepReasonTags(RULES).forEach(function (t) {
+      var chip = document.querySelector('[data-keep="' + d.id + '"][data-reason="' + t.id + '"]');
+      if (!chip) return;
+      var isOn = on.indexOf(t.id) >= 0;
+      var isSuggested = !isOn && suggested.indexOf(t.id) >= 0;
+      chip.setAttribute('aria-pressed', String(isOn || isSuggested));
+      chip.classList.toggle('is-suggested', isSuggested);
+      chip.textContent = t.label + (isSuggested ? ' \u00b7' : '');
+    });
+    var none = document.querySelector('[data-keep="' + d.id + '"][data-reason=""]');
+    if (none) none.setAttribute('aria-pressed', String(on.length === 0));
+    var line = document.querySelector('[data-keep-suggest="' + d.id + '"]');
+    if (line) line.hidden = suggested.length === 0;
+    var hint = document.querySelector('[data-keep-hint="' + d.id + '"]');
+    if (hint) {
+      hint.textContent = d.excludeFromAggressive === true
+        ? 'Kept on purpose: the plan orders this last and sends it only its minimum.'
+        : 'Reasons on their own change nothing about the payoff order. Tick the box above to actually hold this one back.';
+    }
   }
 
   /* The only number that matters about a 0% card: whether you clear it
@@ -478,12 +532,20 @@
     var node = evt.target;
     var key = node.getAttribute && node.getAttribute('data-field');
     if (node.tagName === 'SELECT') { writeField(node.getAttribute('data-debt'), key, node.value); return; }
-    if (key === 'interestFree') { writeField(node.getAttribute('data-debt'), key, node.checked); return; }
+    if (key === 'interestFree' || key === 'excludeFromAggressive') { writeField(node.getAttribute('data-debt'), key, node.checked); return; }
     /* A phone's date picker commits on change, not on blur. */
     if (DATE_FIELDS[key]) writeField(node.getAttribute('data-debt'), key, node.value);
   });
 
   function onListClick(evt) {
+    /* Reasons to keep it (D-132): a chip toggles one, "None" clears them,
+       and the suggestion is confirmed or dismissed as a whole. */
+    var chip = evt.target.closest('[data-keep]');
+    if (chip) { toggleKeep(chip.getAttribute('data-keep'), chip.getAttribute('data-reason')); return; }
+    var yes = evt.target.closest('[data-keep-confirm]');
+    if (yes) { confirmSuggestion(yes.getAttribute('data-keep-confirm')); return; }
+    var no = evt.target.closest('[data-keep-dismiss]');
+    if (no) { suggestDismissed[no.getAttribute('data-keep-dismiss')] = true; paintLive(); return; }
     var arch = evt.target.closest('[data-archive]');
     if (arch) {
       Spine.upsertDebt({ id: arch.getAttribute('data-archive'), archived: true });
@@ -515,6 +577,79 @@
     return null;
   }
 
+  /* ---- Reasons to keep it (D-132) ----------------------------------------
+     Two axes, never one: "Feels like" is how the debt sits with you, this
+     is the case for carrying it on purpose. Multi-select, because more than
+     one can be true. An empty list is None, and None is the default: a
+     suggestion read off this debt's own type and rate is shown checked but
+     dashed, stored only when it is confirmed, and dismissable. Nothing
+     here reorders the plan — the toggle beneath does that, and only when
+     the household flips it. */
+  var suggestDismissed = {};      /* per debt, this visit only: never stored */
+
+  function keepBlock(d) {
+    var tags = Debt.keepReasonTags(RULES);
+    var on = d.keepReasons || [];
+    var suggested = suggestDismissed[d.id] ? [] : Debt.suggestedKeepReasons(d, RULES);
+    var suggestedIds = suggested.map(function (t) { return t.id; });
+    var chips = tags.map(function (t) {
+      var isOn = on.indexOf(t.id) >= 0;
+      var isSuggested = !isOn && suggestedIds.indexOf(t.id) >= 0;
+      return '<button type="button" class="keep-chip' + (isSuggested ? ' is-suggested' : '') + '" data-keep="' + d.id
+        + '" data-reason="' + t.id + '" aria-pressed="' + (isOn || isSuggested) + '" title="' + esc(t.hint || t.label) + '">'
+        + esc(t.label) + (isSuggested ? ' ·' : '') + '</button>';
+    }).join('');
+    var noneOn = on.length === 0;
+    chips += '<button type="button" class="keep-chip is-none" data-keep="' + d.id + '" data-reason="" aria-pressed="' + noneOn
+      + '" title="No particular reason to keep it">None</button>';
+    /* Always rendered, hidden when there is nothing to suggest: painted in
+       place afterwards, because the row it sits in is never rebuilt. */
+    var suggestLine = '<p class="keep-suggest" data-keep-suggest="' + d.id + '"' + (suggested.length ? '' : ' hidden') + '>'
+      + 'Suggested from this debt’s type and rate — nothing is saved until you say so. '
+      + '<button type="button" data-keep-confirm="' + d.id + '">Keep these</button>'
+      + '<button type="button" data-keep-dismiss="' + d.id + '">Not these</button></p>';
+    var held = d.excludeFromAggressive === true;
+    return '<div class="keep">'
+      + '<span class="keep-cap">Reasons to keep it</span>'
+      + '<div class="keep-chips">' + chips + '</div>'
+      + suggestLine
+      + '<div class="debt-flags" style="margin-top:var(--space-2)">'
+      + '<label class="debt-flag" title="The plan still pays its minimum; it just stops aiming the extra here"><input type="checkbox" data-debt="' + d.id
+      + '" data-field="excludeFromAggressive"' + (held ? ' checked' : '') + '/>Exclude from aggressive payoff suggestions</label>'
+      + '</div>'
+      + '<p class="keep-hint" data-keep-hint="' + d.id + '">' + (held
+          ? 'Kept on purpose: the plan orders this last and sends it only its minimum.'
+          : 'Reasons on their own change nothing about the payoff order. Tick the box above to actually hold this one back.') + '</p>'
+      + '</div>';
+  }
+
+  /** Toggle one reason. Confirming a suggestion is the same write. */
+  function toggleKeep(id, reasonId) {
+    var d = findDebt(Spine.getProfile(), id);
+    if (!d) return;
+    var on = (d.keepReasons || []).slice();
+    if (reasonId === '') on = [];                                  /* None clears the lot */
+    else {
+      /* A suggested chip and a plain one toggle identically: tapping one on
+         stores just that one and leaves the rest of the suggestion showing,
+         which is how a suggestion stays a suggestion until it is confirmed. */
+      var i = on.indexOf(reasonId);
+      if (i >= 0) on.splice(i, 1); else on.push(reasonId);
+    }
+    Spine.upsertDebt({ id: id, keepReasons: on });
+    paintLive();
+    render();
+  }
+  function confirmSuggestion(id) {
+    var d = findDebt(Spine.getProfile(), id);
+    if (!d) return;
+    var ids = Debt.suggestedKeepReasons(d, RULES).map(function (t) { return t.id; });
+    if (!ids.length) return;
+    Spine.upsertDebt({ id: id, keepReasons: (d.keepReasons || []).concat(ids) });
+    paintLive();
+    render();
+  }
+
   function writeField(id, key, rawValue) {
     var debt = findDebt(Spine.getProfile(), id);
     if (!debt) return;
@@ -527,6 +662,9 @@
       if (rawValue === 'family' && debt.interestFree === null && !Money.isEntered(debt.rate)) { patch.interestFree = true; patch.rate = 0; }
     }
     else if (key === 'emotionalTag') patch.emotionalTag = rawValue === '' ? null : rawValue;
+    /* The household's own call, and the only thing that moves the order.
+       The reasons beside it are never read here (D-132). */
+    else if (key === 'excludeFromAggressive') patch.excludeFromAggressive = !!rawValue;
     else if (DATE_FIELDS[key]) patch[key] = rawValue === '' ? null : rawValue;
     else if (key === 'interestFree') {
       /* Ticked: the rate is 0 and stays 0. Unticked: a 0 that only came
@@ -612,8 +750,12 @@
       title: 'What you owe, by balance',
       rows: debtsOf(h).filter(function (d) { return Money.isEntered(d.balanceCents) && d.balanceCents > 0; }).map(function (d) {
         var rate = Debt.effectiveRate(d);
-        return { label: d.label || 'Debt', value: d.balanceCents, color: Charts.COLORS.debt,
-          note: Money.isEntered(rate) ? (rate === 0 && d.interestFree ? 'no interest' : rateLabel(rate)) : 'no rate' };
+        var kept = Debt.keepReasonLabels(d, RULES).map(function (t) { return t.label.toLowerCase(); });
+        var note = Money.isEntered(rate) ? (rate === 0 && d.interestFree ? 'no interest' : rateLabel(rate)) : 'no rate';
+        /* Why this one is being kept, next to it — not on another screen. */
+        if (Debt.isExcluded(d)) note += ' · held back on purpose';
+        if (kept.length) note += ' · ' + kept.join(', ');
+        return { label: d.label || 'Debt', value: d.balanceCents, color: Charts.COLORS.debt, note: note };
       })
     });
     if (Money.isOk(plan)) {
@@ -633,6 +775,21 @@
       /* If this ordering isn't the cheapest, say what choosing it costs.
          That is the honest way to present the Convenience Method: it is a
          real option, and it has a price. */
+      /* Holding a debt back has a price, and the room says it rather than
+         letting the number move quietly. The plan is still the user's. */
+      var held = debtsOf(h).filter(function (d) { return Debt.isExcluded(d) && Money.isEntered(d.balanceCents) && d.balanceCents > 0; });
+      if (held.length) {
+        var freed = Debt.simulate(unheld(h), RULES, { strategyId: strategyId, extraMonthlyCents: extraCents });
+        var names = held.map(function (d) { return esc(d.label || 'one debt'); }).join(' and ');
+        detail += '<p class="slaf-reason">You are keeping ' + names + ' on purpose, so the extra never aims '
+          + (held.length === 1 ? 'there' : 'at those') + ' while anything else is live.'
+          + (Money.isOk(freed) && freed.totalInterestCents < plan.totalInterestCents
+              ? ' That costs ' + Money.formatCents(plan.totalInterestCents - freed.totalInterestCents)
+                + ' more in interest than letting the plan target ' + (held.length === 1 ? 'it' : 'them') + '.'
+              : ' It costs nothing extra here — the plan would have got to '
+                + (held.length === 1 ? 'it' : 'them') + ' last anyway.')
+          + '</p>';
+      }
       if (Money.isOk(cmp) && cmp.cheapestStrategyId !== strategyId
           && cmp.results[cmp.cheapestStrategyId] && Money.isOk(cmp.results[cmp.cheapestStrategyId])) {
         var cheapest = cmp.results[cmp.cheapestStrategyId];
@@ -775,8 +932,16 @@
       x: { label: 'paid off by', format: monthLabel },
       y: { min: 0 }
     });
+    var byId = {};
+    debtsOf(scoped(Spine.getProfile())).forEach(function (d) { byId[d.id] = d; });
     list.innerHTML = plan.payoffs.map(function (p) {
+      var d = byId[p.debtId] || {};
+      /* The reasons, inline with the order they affect — and the one that
+         actually holds a debt back, said as such (D-132). */
+      var tags = Debt.keepReasonLabels(d, RULES).map(function (t) { return '<i title="' + esc(t.hint || '') + '">' + esc(t.label) + '</i>'; });
+      if (Debt.isExcluded(d)) tags.unshift('<i class="is-held" title="You are keeping this one on purpose: it is ordered last and gets only its minimum">held back on purpose</i>');
       return '<li><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle;background:' + (colourOf[p.debtId] || Charts.COLORS.target) + '"></i>' + esc(p.label || 'Debt')
+        + (tags.length ? '<span class="tagline">' + tags.join('') + '</span>' : '')
         + '<small style="display:block;color:var(--color-text-faint)">from ' + Money.formatCents(plan.startingBalances[p.debtId]) + '</small></span>'
         + '<span class="tl-when">' + longMonth(p.month) + ' · ' + monthsLabel(p.month) + ' · '
         + Money.formatCents(p.interestPaidCents) + ' interest</span></li>';

@@ -86,3 +86,15 @@ moved between them. `rooms/history.html`, D-122.
   a Triple D run bound to a chosen life event in the Exercises room; a
   band's cutscene as its own screen rather than a card.
 
+## Reasons to keep a debt (D-132)
+
+- **Built**: the five reasons, the multi-select, the suggestion at entry
+  time, the hold-back toggle, the tags inline in the payoff order, the
+  interest cost of holding one back. D-132.
+- Still open: the reasons are per debt and go no further. A household-level
+  read of them — "you are carrying $X on purpose, at $Y a year" across every
+  held debt at once — would belong on the Statement or the dashboard, not in
+  Debt Payoff, and would need an owner deciding before it is built. Tax
+  favourability is a tag someone ticks, not a calculation: nothing checks
+  whether the interest is actually deductible at their income, and doing so
+  needs the Tax room to own a figure it does not own yet.

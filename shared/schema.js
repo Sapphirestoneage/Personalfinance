@@ -175,6 +175,8 @@
     'debt.archived':                             { class: 'raw',        unit: 'bool',    note: 'true = paid off or set aside; kept for the record, read by nothing that aggregates or plans. Restorable. D-124' },
     'debt.borrowedOn':                           { class: 'raw',        unit: 'iso-date', note: 'when the money was borrowed. Null means not asked' },
     'debt.dueOn':                                { class: 'raw',        unit: 'iso-date', note: 'when it is due back in full. On a family loan with no monthly amount, the minimum is the balance over the months left. D-124' },
+    'debt.keepReasons[]':                        { class: 'raw',        unit: 'enum',    values: ['low_rate', 'tax_favoured', 'appreciating', 'building_credit', 'subsidised'], note: 'why this debt might be fine to carry on purpose - the rational axis, independent of emotionalTag. A list: more than one can apply, and an empty list is "no particular reason to keep it". Suggested from the debt\'s own type and rate at entry time, stored only when confirmed. Never changes the payoff order by itself. Owned by Debt Payoff. D-132' },
+    'debt.excludeFromAggressive':                { class: 'raw',        unit: 'bool',    note: 'the household\'s decision that this debt is kept on purpose: the payoff plan orders it last and sends it only its minimum. The keep reasons inform this and never set it. Owned by Debt Payoff. D-132' },
     'debt.creditLimitCents':                     { class: 'raw',        unit: 'cents',   note: 'revolving debt only \u2014 the limit the balance is a share of. Owned by Debt Payoff. DECISIONS.md D-045' },
     'debt.promoEndsOn':                          { class: 'raw',        unit: 'iso-date', note: 'when a 0%/promotional rate ends. Null means the rate is not promotional' },
     'debt.postPromoRate':                        { class: 'raw',        unit: 'rate',    period: 'annual', note: 'the rate the balance reverts to when the promo ends' },
@@ -926,6 +928,16 @@
     { id: 'taxable', label: 'Taxable',  hint: 'brokerage, anything with no tax wrapper' }
   ];
 
+  /* The ids data/debt_rules.json defines; the constructor keeps the list
+     honest without reading the table, which loads later than the schema. */
+  var KEEP_REASONS = ['low_rate', 'tax_favoured', 'appreciating', 'building_credit', 'subsidised'];
+  function keepReasonList(v) {
+    if (!Array.isArray(v)) return [];
+    var out = [];
+    v.forEach(function (id) { if (KEEP_REASONS.indexOf(id) >= 0 && out.indexOf(id) < 0) out.push(id); });
+    return out;
+  }
+
   function createDebt(fields) {
     var f = fields || {};
     return {
@@ -948,6 +960,16 @@
       promoEndsOn: f.promoEndsOn === undefined ? null : f.promoEndsOn,
       postPromoRate: f.postPromoRate === undefined ? null : f.postPromoRate,
       emotionalTag: f.emotionalTag === undefined ? null : f.emotionalTag,
+      /* The rational counterpart to emotionalTag, and a separate axis from
+         it: why this debt might be fine to carry on purpose. A list, since
+         more than one can be true of the same debt; an empty list is
+         "None - no particular reason to keep it". Unknown ids are dropped
+         and each is kept once. Setting one never touches the other. D-132. */
+      keepReasons: keepReasonList(f.keepReasons),
+      /* The household's own decision, which the reasons inform and never
+         trigger: this debt is kept on purpose, so the payoff plan stops
+         aiming the extra at it. Reasons alone change nothing. D-132. */
+      excludeFromAggressive: f.excludeFromAggressive === true,
       /* Money borrowed from family or a friend usually carries no interest
          and a date it is due back, not a rate and a statement minimum. A
          debt that is interest-free says so here AND stores rate 0, so a
@@ -1961,6 +1983,8 @@
     createPurchasePlan: createPurchasePlan,
     BUDGET_PRESETS: BUDGET_PRESETS,
     createNotApplicable: createNotApplicable,
+    KEEP_REASONS: KEEP_REASONS,
+    keepReasonList: keepReasonList,
     createSkillTree: createSkillTree,
     APP_VERSION: APP_VERSION,
     createExercisesLog: createExercisesLog,
