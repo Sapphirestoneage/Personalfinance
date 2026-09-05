@@ -75,6 +75,7 @@
     'person.work.workCostsMonthlyCents':         { class: 'raw',        unit: 'cents',   period: 'monthly' },
     'person.work.weeksPerYear':                  { class: 'assumption', unit: 'weeks',   default: WORK_DEFAULTS.weeksPerYear },
     'computed.realHourlyWageCents':              { class: 'computed',   unit: 'cents',   note: 'per hour of life the job actually costs' },
+    'person.employmentStatus':                   { class: 'raw',        unit: 'enum',    values: ['employed', 'selfEmployed', 'both', 'notWorking', 'retired'], note: 'null means not asked. Decides whether an employer match is even a question \u2014 see EMPLOYMENT_STATUSES and DECISIONS.md D-055' },
     'incomeSource.grossAnnualIncomeCents':       { class: 'raw',        unit: 'cents',   period: 'annual', note: 'THE annual figure every room reads. Derived from rateCents x frequency when those are set \u2014 see engines/income.js and DECISIONS.md D-047' },
     'incomeSource.frequency':                    { class: 'raw',        unit: 'enum',    values: ['annual', 'monthly', 'semimonthly', 'fortnightly', 'weekly', 'hourly'], note: 'how the person is actually paid; semimonthly is 24 a year and fortnightly is 26 \u2014 they are not the same' },
     'incomeSource.rateCents':                    { class: 'raw',        unit: 'cents',   note: 'pay at `frequency`. Null means the annual figure was entered directly' },
@@ -93,6 +94,8 @@
     'incomeSource.employerMatch.matchPercent':          { class: 'raw', unit: 'rate',    note: '0.5 === employer matches 50 cents on the dollar' },
     'incomeSource.employerMatch.matchCapPercentOfSalary': { class: 'raw', unit: 'rate',  note: '0.06 === capped at the first 6% of salary' },
     'asset.valueCents':                          { class: 'raw',        unit: 'cents' },
+    'asset.taxCharacter':                        { class: 'raw',        unit: 'enum',    values: ['pretax', 'roth', 'taxable', 'hsa', '529', 'daf', 'cash', 'property', 'business', 'other', 'unknown'], note: 'how the account is taxed. null means not asked; unknown means the person entered only a total. BRIEF §3.1, D-061' },
+    'meta.hasDebt':                              { class: 'raw',        unit: 'bool',    note: 'null not asked; false means "no debt" as an answer, which takes Debt Payoff off the path. D-061' },
     'asset.category':                            { class: 'raw',        unit: 'enum',    values: ['cash', 'investment', 'retirement', 'real_estate', 'vehicle', 'other'] },
     'asset.liquid':                              { class: 'raw',        unit: 'bool' },
     'debt.balanceCents':                         { class: 'raw',        unit: 'cents' },
@@ -215,6 +218,125 @@
     };
   }
 
+  /**
+   * Are you working, and for whom?
+   *
+   * This exists because the app was asking everybody about their employer
+   * match. If you are between jobs, self-employed, or retired, there is no
+   * employer, so that question has no true answer \u2014 and worse, leaving it
+   * blank left the room permanently reading "1 thing left".
+   *
+   *   earning    \u2014 is money expected to be coming in from work
+   *   hasEmployer\u2014 is there a company that could match contributions
+   *
+   * `hasEmployer: false` does not mean "no retirement plan". A self-employed
+   * person has a solo 401(k) with no match; a retiree may be drawing from
+   * one. It means exactly one thing: the employer-match pair of questions is
+   * not applicable, and is therefore not counted as missing.
+   * DECISIONS.md D-055.
+   */
+  var EMPLOYMENT_STATUSES = [
+    { id: 'employed',     label: 'Working for an employer',
+      short: 'Employed',      earning: true,  hasEmployer: true },
+    { id: 'selfEmployed', label: 'Self-employed or freelance',
+      short: 'Self-employed', earning: true,  hasEmployer: false },
+    { id: 'both',         label: 'Both \u2014 a job and my own work',
+      short: 'Both',          earning: true,  hasEmployer: true },
+    { id: 'notWorking',   label: 'Not working right now',
+      short: 'Not working',   earning: false, hasEmployer: false },
+    { id: 'retired',      label: 'Retired',
+      short: 'Retired',       earning: false, hasEmployer: false }
+  ];
+
+  function employmentStatus(id) {
+    for (var i = 0; i < EMPLOYMENT_STATUSES.length; i++) {
+      if (EMPLOYMENT_STATUSES[i].id === id) return EMPLOYMENT_STATUSES[i];
+    }
+    return null;
+  }
+
+  /**
+   * householdEmployment(h) \u2014 the primary person's status, as a row.
+   * Returns null when it has not been answered. A caller that treats null
+   * as "no employer" is wrong: unanswered is not an answer, and the whole
+   * point of this field is that the two are different.
+   */
+  function householdEmployment(household) {
+    var p = primaryPerson(household || {});
+    return p ? employmentStatus(p.employmentStatus) : null;
+  }
+
+  /**
+   * Could this household have an employer match at all?
+   *
+   * UNANSWERED COUNTS AS YES, deliberately \u2014 every household saved before
+   * this field existed has no status, and silently deciding they have no
+   * employer would hide a question they have already answered. So does an
+   * already-entered match, whatever the status now says: a figure someone
+   * typed is never hidden by a later answer to a different question.
+   */
+  function couldHaveEmployerMatch(household) {
+    var row = householdEmployment(household);
+    if (!row) return true;
+    if (row.hasEmployer) return true;
+    var p = primaryPerson(household || {});
+    var sources = (p && p.incomeSources) || [];
+    for (var i = 0; i < sources.length; i++) {
+      var m = sources[i].employerMatch || {};
+      if (Money.isEntered(m.matchPercent) || Money.isEntered(m.matchCapPercentOfSalary)) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Is "are you contributing enough to get all of it?" a live question?
+   *
+   * Yes whenever a match COULD exist and is not known to be zero. It used
+   * to appear only once a non-zero match had been typed, which made the
+   * intake's count grow from 9 to 10 halfway through — "1 of 9" on the
+   * first screen, "all 10 answered" on the last. A count that only ever
+   * shrinks as you answer is one people can trust. BRIEF §1.1 item 3.
+   */
+  function capturingQuestionApplies(household) {
+    if (!couldHaveEmployerMatch(household)) return false;
+    var p = primaryPerson(household || {});
+    var s = p && p.incomeSources && p.incomeSources[0];
+    var m = (s && s.employerMatch) || {};
+    var entered = Money.isEntered(m.matchPercent) && Money.isEntered(m.matchCapPercentOfSalary);
+    if (entered && (m.matchPercent === 0 || m.matchCapPercentOfSalary === 0)) return false;
+    return true;
+  }
+
+  /**
+   * capturingFullMatchDerived(h) — is the person contributing at least the
+   * match cap? A FACT that follows from two others (contributionPercent and
+   * the cap), so once both are known it is never asked. Returns a Result:
+   * ok(true/false) when both are known, incomplete otherwise. The stored
+   * household.capturingFullMatch answer is the fallback for a household
+   * that answered the old question before contributionPercent existed.
+   * D-061.
+   */
+  function capturingFullMatchDerived(household) {
+    var h = household || {};
+    var contribution = (h.retirement || {}).contributionPercent;
+    var p = primaryPerson(h);
+    var s = p && p.incomeSources && p.incomeSources[0];
+    var m = (s && s.employerMatch) || {};
+    if (Money.isEntered(contribution) && Money.isEntered(m.matchCapPercentOfSalary)) {
+      return Money.ok(contribution / 100 >= m.matchCapPercentOfSalary - 1e-9, {
+        derived: true, contributionPercent: contribution, matchCapPercentOfSalary: m.matchCapPercentOfSalary
+      });
+    }
+    if (h.capturingFullMatch === true) return Money.ok(true, { derived: false });
+    if (h.capturingFullMatch === false) return Money.ok(false, { derived: false });
+    return Money.incomplete('Add what you contribute to see this.', ['contributionPercent']);
+  }
+
+  function hasDebtAnswered(household) {
+    var m = (household && household.meta) || {};
+    return m.hasDebt === true || m.hasDebt === false;
+  }
+
   function createPerson(fields) {
     var f = fields || {};
     return {
@@ -222,6 +344,14 @@
       label: f.label || null,
       role: f.role || 'adult',
       dob: f.dob === undefined ? null : f.dob,     // ISO 'YYYY-MM-DD'
+      /* Whether there is a job at all, and what kind. This is not derivable
+         from the income sources: "no rate entered" means the question was
+         skipped, "not earning" is a pay basis, and neither of them tells you
+         whether there is an EMPLOYER — which is the only thing that makes an
+         employer match a real question. null means not asked yet, and that
+         is deliberately different from every answer below.
+         See EMPLOYMENT_STATUSES and DECISIONS.md D-055. */
+      employmentStatus: f.employmentStatus === undefined ? null : f.employmentStatus,
       incomeSources: f.incomeSources || [],
       work: createWorkProfile(f.work)
     };
@@ -235,9 +365,21 @@
       category: f.category || 'other',
       valueCents: f.valueCents === undefined ? null : f.valueCents,
       liquid: f.liquid === undefined ? false : f.liquid,
-      ownerIds: f.ownerIds || []
+      ownerIds: f.ownerIds || [],
+      /* How the money is taxed on the way out. Asked in three boxes by
+         Start Here (pre-tax / Roth / taxable); a lump typed as one total is
+         'unknown', which is an answer — null is "never asked". D-061. */
+      taxCharacter: f.taxCharacter === undefined ? null : f.taxCharacter
     };
   }
+
+  /* The three characters Start Here asks for. The fuller list in
+     FIELD_CLASSES is what the 10x Statement (T3) will use. */
+  var TAX_CHARACTERS = [
+    { id: 'pretax',  label: 'Pre-tax',  hint: '401(k), traditional IRA, 403(b)' },
+    { id: 'roth',    label: 'Roth',     hint: 'Roth IRA, Roth 401(k)' },
+    { id: 'taxable', label: 'Taxable',  hint: 'brokerage, anything with no tax wrapper' }
+  ];
 
   function createDebt(fields) {
     var f = fields || {};
@@ -513,7 +655,15 @@
       meta: Object.assign({
         visitedRooms: [],
         createdAt: null,
-        updatedAt: null
+        updatedAt: null,
+        /* { fieldId: ISO } — when each owned field was last set or
+           re-confirmed. Absent for every field until it is next written,
+           which is what "unknown" looks like. DECISIONS.md D-056. */
+        confirmedAt: {},
+        /* "Any debt?" — null not asked, true yes, false a deliberate no that
+           takes Debt Payoff off the path and its figures off every room's
+           list of needs. D-061. */
+        hasDebt: null
       }, f.meta || {})
     };
   }
@@ -861,6 +1011,14 @@
     newId: newId,
     createHousehold: createHousehold,
     createPerson: createPerson,
+    EMPLOYMENT_STATUSES: EMPLOYMENT_STATUSES,
+    employmentStatus: employmentStatus,
+    householdEmployment: householdEmployment,
+    couldHaveEmployerMatch: couldHaveEmployerMatch,
+    capturingQuestionApplies: capturingQuestionApplies,
+    capturingFullMatchDerived: capturingFullMatchDerived,
+    hasDebtAnswered: hasDebtAnswered,
+    TAX_CHARACTERS: TAX_CHARACTERS,
     createWorkProfile: createWorkProfile,
     WORK_DEFAULTS: WORK_DEFAULTS,
     createAsset: createAsset,

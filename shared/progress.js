@@ -65,11 +65,19 @@
     var room = Registry.byId(roomId);
     if (!room) return null;
     var needs = room.needs || [];
-    var missing = [], filled = [];
+    var missing = [], filled = [], notApplicable = [];
 
     needs.forEach(function (fieldId) {
       var d = Ownership.describe(fieldId, household, roomId);
       if (!d) return;                       /* unknown field id: not a gate */
+      /* A field that has stopped being a question is not outstanding work.
+         Someone who told us they have no employer must not be chased for
+         an employer match forever. It leaves the denominator too, so the
+         room can actually reach 100%. DECISIONS.md D-055. */
+      if (!d.applies) {
+        notApplicable.push({ fieldId: fieldId, label: d.label, because: d.notApplicableBecause });
+        return;
+      }
       var entry = {
         fieldId: fieldId,
         label: d.label,
@@ -92,6 +100,7 @@
       filledCount: filled.length,
       filled: filled,
       missing: missing,
+      notApplicable: notApplicable,
       complete: missing.length === 0,
       standalone: total === 0,
       share: total === 0 ? 1 : filled.length / total
@@ -185,11 +194,17 @@
      One component so the wording, the ordering and the links cannot drift
      between twenty-four rooms.                                           */
 
+  /* A page whose registry href is not under rooms/ sits at the site root
+     (the dashboard, since D-058) and links without the ../ prefix. */
+  function atRoot(roomId) {
+    var room = Registry.byId(roomId);
+    return !!(room && room.href && room.href.indexOf('rooms/') !== 0);
+  }
+
   function href(path, roomId) {
     /* Rooms live in rooms/; the FOO ladder is at the root. Registry hrefs
        are written relative to the root, so a room has to climb out. */
-    var inRoomsDir = roomId !== 'foo-ladder';
-    return (inRoomsDir ? '../' : '') + path;
+    return (atRoot(roomId) ? '' : '../') + path;
   }
 
   /**
@@ -225,6 +240,15 @@
         + 'It works from the numbers you type here, so there is nothing to fill in first.</p>');
     }
 
+    /* Questions that stopped applying are said out loud once, so a room that
+       reads "everything it needs" is not quietly ignoring two boxes you can
+       see are empty. DECISIONS.md D-055. */
+    if (row.notApplicable && row.notApplicable.length) {
+      out.push('<p class="slaf-progress-note">Not asked: '
+        + row.notApplicable.map(function (f) { return escapeHtml(f.label); }).join(', ')
+        + '. ' + escapeHtml(row.notApplicable[0].because || '') + '</p>');
+    }
+
     out.push('<div class="slaf-progress-nav">');
     if (nb.prev) {
       out.push('<a class="slaf-progress-btn" href="' + escapeHtml(href(nb.prev.href, roomId))
@@ -258,8 +282,7 @@
    */
   function headerNavHtml(roomId) {
     var nb = neighbours(roomId);
-    var atRoot = roomId === 'foo-ladder';
-    var mapHref = (atRoot ? '' : '../') + 'map.html';
+    var mapHref = (atRoot(roomId) ? '' : '../') + 'map.html';
 
     function link(room, dir) {
       if (!room) {
@@ -332,7 +355,28 @@
       box.innerHTML = stripHtml(roomId, Spine.getProfile());
     }
     paint();
-    Spine.onChange(paint);
+
+    /* A write during a tap (blur → save → change) used to repaint this
+       strip synchronously. When an item drops off the list the document
+       gets shorter; if the page is scrolled near the bottom the browser
+       clamps the scroll and everything above shifts under the finger — the
+       Next button moved 40px between touchend and click and the tap was
+       lost. So: repaint after the tap has finished, coalesced, and hold the
+       strip's height across the change so the document never shrinks
+       mid-gesture. Same family as D-034/D-046. */
+    var pending = null, release = null;
+    function repaintLater() {
+      if (pending) clearTimeout(pending);
+      pending = setTimeout(function () {
+        pending = null;
+        var held = box.offsetHeight;
+        if (held) box.style.minHeight = held + 'px';
+        paint();
+        if (release) clearTimeout(release);
+        release = setTimeout(function () { box.style.minHeight = ''; release = null; }, 600);
+      }, 400);
+    }
+    Spine.onChange(repaintLater);
     /* The header nav is static for a room — path order does not change with
        the household — so it is built once and never repainted. */
     mountHeader(roomId);

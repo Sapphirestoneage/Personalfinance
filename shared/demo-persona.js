@@ -33,6 +33,7 @@
     state: 'NC',
     filingStatus: 'single',
 
+    employmentStatus: 'employed',           // a W-2 job, so the match questions apply
     grossAnnualIncome: 72000,
     incomeType: 'w2',
     employerMatchPercent: 0.5,              // matches 50 cents on the dollar
@@ -42,6 +43,16 @@
 
     cashSavings: 9500,
     investmentsAndRetirement: 48000,
+
+    /* Retirement setup and the deductible — the facts the FOO ladder's
+       timeline reads. 4% into the plan against a 6% match cap is exactly
+       why capturingFullMatch is false above: the demo leaves match on the
+       table, and the ladder should say so. Not on a high-deductible plan,
+       so the HSA question does not apply. */
+    contributionPercent: 4,                 // whole percent of salary
+    rothContributedThisYear: 1500,
+    onHdhp: false,
+    highestDeductible: 2500,
 
     debts: [
       { label: 'Student loan', balance: 18400, rate: 0.055, minPayment: 210, type: 'student_loan' },
@@ -96,6 +107,7 @@
       label: VALUES.label,
       role: 'adult',
       dob: VALUES.dob,
+      employmentStatus: VALUES.employmentStatus,
       work: Object.assign({}, VALUES.work, {
         workCostsMonthlyCents: Money.toCents(VALUES.work.workCosts)
       })
@@ -150,7 +162,17 @@
         entries: []
       },
       capturingFullMatch: VALUES.capturingFullMatch,
-      meta: { isDemo: true }
+      retirement: Schema.createRetirement({
+        contributionPercent: VALUES.contributionPercent,
+        rothContributedCents: Money.toCents(VALUES.rothContributedThisYear),
+        onHdhp: VALUES.onHdhp
+      }),
+      insurance: Schema.createInsurance({
+        highestDeductibleCents: Money.toCents(VALUES.highestDeductible)
+      }),
+      /* Robin has two debts, and says so: hasDebt is the answer that keeps
+         Debt Payoff on the path. D-061. */
+      meta: { isDemo: true, hasDebt: true }
     });
 
     return household;

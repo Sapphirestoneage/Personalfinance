@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Start Here · SPARKS</title>
-<meta name="description" content="Nine questions, one at a time. Answer once and every other room opens already filled in."/>
+<meta name="description" content="A few short questions, one at a time. Answer once and every other room opens already filled in."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
@@ -13,19 +13,32 @@
 
   1. READS   The whole household, so a returning visitor sees their own
              answers rather than blanks.
-  2. WRITES  It OWNS these raw fields (shared/ownership.js): person dob,
-             household state and filingStatus, the primary income source's
-             grossAnnualIncomeCents and employerMatch, the cash and
-             investment assets, expenses.monthlyEssential.estimatedValue-
-             Cents, and capturingFullMatch. Nowhere else may edit them.
-             It does NOT write debts (Debt Payoff owns those) or spending
-             categories (Cash Flow owns those) — it hands off instead.
+  2. WRITES  It OWNS these raw fields (shared/ownership.js): each adult's
+             employmentStatus, dob and label; household state, filingStatus
+             and meta.hasDebt; each adult's primary income source
+             (rate, basis, annual figure, employerMatch); the cash asset and
+             the investment assets (three tax characters, or one 'unknown'
+             total); expenses.monthlyEssential.estimatedValueCents;
+             retirement.contributionPercent; insurance.highestDeductible-
+             Cents. Nowhere else may edit them. capturingFullMatch is
+             DERIVED from the contribution against the cap and no longer
+             asked (D-061). It does NOT write debts (Debt Payoff owns those)
+             or spending categories (Cash Flow owns those) — it hands off.
+
+  ELEVEN CARDS for one W-2 person with no debt (BRIEF §2.2): household,
+  working, born + state, pay, filing, spending, cash, investments, the
+  401(k) card (match + contribution, capture derived), deductible, debt.
+  A second person adds one card. Suggested values (D-060) sit in the match
+  boxes and the contribution box until tapped; the household never holds
+  them until then.
   3. CALLS   Nothing computational. It is an input surface; every figure it
              shows back comes from shared/ownership.js.
   4. EMPTY   Every question starts blank with a format-only placeholder.
              Skip leaves a field unset — never zero. An unanswered question
              is a real, visible state on the review screen.
-  5. CONFIG  None. Deliberately: this room must work before anything loads.
+  5. CONFIG  data/states.json (the state picker) and data/match_defaults
+             .json (the suggested match). Both optional: the room works with
+             typed answers before either loads.
 -->
 <style>
   .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-3); }
@@ -86,6 +99,18 @@
   .pay-basis .choices { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
   @media (max-width: 380px) { .q-pair { grid-template-columns: 1fr; } }
 
+  .q-three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-2); }
+  @media (max-width: 420px) { .q-three { grid-template-columns: 1fr; } }
+  .q-three .slaf-label { display: block; margin-bottom: var(--space-1); }
+  .q-three .slaf-hint { display: block; margin-top: var(--space-1); font-size: var(--text-xs); color: var(--color-text-faint); }
+  .q-about { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+  .q-about .span { grid-column: 1 / -1; }
+  .q-link { background: none; border: none; padding: 0; margin: var(--space-3) 0 0; color: var(--color-accent-hover); font-family: var(--font-body); font-size: var(--text-sm); text-decoration: underline; cursor: pointer; }
+  .plan-none { margin-top: var(--space-3); }
+  .plan-derived { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; min-height: 2.9em; }
+  .plan-derived strong { color: var(--color-text); }
+  .rail-group { color: var(--color-text-faint); }
+
   .nav { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-5); }
   .nav .spacer { flex: 1; }
 
@@ -125,6 +150,50 @@
 <main class="slaf-wrap">
 
   <!-- ============ QUESTIONS, in priority order ============ -->
+  <section class="slaf-card q" id="q-household" data-q>
+    <p class="q-text">Just you, or two of you?</p>
+    <p class="q-help">Two means one household with one set of numbers and two people earning into it. Everything below asks about you first, and the other of you gets one card of their own.</p>
+    <div class="choices" data-choices="household">
+      <button type="button" class="choice" data-value="one">Just me</button>
+      <button type="button" class="choice" data-value="two">Two of us</button>
+    </div>
+    <p class="q-unlocks">Decides whether a second pay box and a second birthday appear. Nothing else changes.</p>
+  </section>
+
+  <section class="slaf-card q" id="q-employment" data-q>
+    <p class="q-text">Are you working right now?</p>
+    <p class="q-help">This decides what we bother asking you. There is no wrong answer here, and no question below depends on you saying yes.</p>
+    <div class="choices" data-choices="employmentStatus"></div>
+    <p class="q-unlocks">If there is no employer, the 401(k) card stops being asked — and stops counting as unfinished.</p>
+  </section>
+
+  <section class="slaf-card q" id="q-partner" data-q>
+    <p class="q-text">And the other of you?</p>
+    <p class="q-help">A name to tell you apart, whether they are working, and when they were born. Their pay goes on the next card, beside yours.</p>
+    <label class="slaf-field"><span class="slaf-label">What to call them</span>
+      <span class="slaf-input-shell"><input type="text" data-partner="label" placeholder="e.g. Sam" autocomplete="off" aria-label="The other person's name"/></span></label>
+    <span class="slaf-label" style="display:block;margin:var(--space-3) 0 var(--space-2)">Are they working right now?</span>
+    <div class="choices" data-partner-choices="employmentStatus"></div>
+    <span class="slaf-label" style="display:block;margin:var(--space-3) 0 var(--space-2)">When were they born?</span>
+    <div class="q-about">
+      <span class="slaf-input-shell"><select data-partner="month" aria-label="Their birth month"></select></span>
+      <span class="slaf-input-shell"><select data-partner="year" aria-label="Their birth year"></select></span>
+    </div>
+    <p class="q-unlocks">Their pay counts toward the household income every room reads.</p>
+  </section>
+
+  <section class="slaf-card q" id="q-about" data-q>
+    <p class="q-text">When were you born, and where are you?</p>
+    <p class="q-help">Month and year is enough — the day is not used for anything. The state is used later for cost-of-living and state-specific rules.</p>
+    <div class="q-about">
+      <span class="slaf-input-shell"><select data-about="month" aria-label="Birth month"></select></span>
+      <span class="slaf-input-shell"><select data-about="year" aria-label="Birth year"></select></span>
+      <span class="slaf-input-shell span"><select data-about="state" aria-label="State"></select></span>
+    </div>
+    <p class="q-warn" id="dob-warn" hidden></p>
+    <p class="q-unlocks">Feeds the net-worth percentile and the age-based savings milestones.</p>
+  </section>
+
   <section class="slaf-card q" id="q-income" data-q>
     <p class="q-text">What do you earn before tax?</p>
     <p class="q-help">However you're actually paid — by the hour, the week, the month. We'll turn it into a year. Not working right now is an answer too; pick it on the right.</p>
@@ -139,6 +208,22 @@
       <span class="slaf-input-shell">
         <input type="text" inputmode="decimal" data-pay="hours" placeholder="e.g. 40" aria-label="Hours a week"/></span>
     </label>
+    <p class="q-warn" id="income-employment-note" hidden></p>
+
+    <div id="pay-partner" hidden>
+      <span class="slaf-label" style="display:block;margin:var(--space-3) 0 var(--space-2)" id="pay-partner-label">Their pay</span>
+      <div class="pay-row">
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+          <input type="text" inputmode="decimal" data-partner-pay="rate" placeholder="e.g. 4200" aria-label="What the other person is paid"/></span>
+        <span class="slaf-input-shell">
+          <select data-partner-pay="basis" aria-label="How often they are paid"></select></span>
+      </div>
+      <label class="slaf-field pay-hours" id="pay-partner-hours" hidden>
+        <span class="slaf-label">Their hours a week</span>
+        <span class="slaf-input-shell">
+          <input type="text" inputmode="decimal" data-partner-pay="hours" placeholder="e.g. 40" aria-label="Their hours a week"/></span>
+      </label>
+    </div>
     <p class="pay-out" id="pay-out"></p>
 
     <button type="button" class="pay-more" id="btn-jobs" aria-expanded="false">
@@ -189,48 +274,58 @@
 
   <section class="slaf-card q" id="q-investments" data-q>
     <p class="q-text">And how much is invested?</p>
-    <p class="q-help">Retirement accounts and brokerage together. Skip if there's nothing yet.</p>
-    <span class="slaf-input-shell"><span class="slaf-affix">$</span>
-      <input type="text" inputmode="decimal" data-write="investments" placeholder="e.g. 48000" aria-label="Investments and retirement"/></span>
-    <p class="q-unlocks">Feeds net worth, FIRE progress and the retirement benchmark.</p>
+    <p class="q-help">Three kinds, because they are taxed three ways on the way out. Skip any that's empty. If you only know the total, say so below.</p>
+    <div class="q-three" id="invest-split">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Pre-tax</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-invest="pretax" placeholder="e.g. 30000" aria-label="Pre-tax investments"/></span>
+        <span class="slaf-hint">401(k), traditional IRA</span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Roth</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-invest="roth" placeholder="e.g. 12000" aria-label="Roth investments"/></span>
+        <span class="slaf-hint">Roth IRA, Roth 401(k)</span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Taxable</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-invest="taxable" placeholder="e.g. 6000" aria-label="Taxable investments"/></span>
+        <span class="slaf-hint">brokerage, no wrapper</span></label>
+    </div>
+    <div id="invest-total" hidden>
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+        <input type="text" inputmode="decimal" data-invest="total" placeholder="e.g. 48000" aria-label="Investments and retirement, in total"/></span>
+    </div>
+    <button type="button" class="q-link" id="btn-invest-mode">I only know the total</button>
+    <p class="q-unlocks">Feeds net worth, FIRE progress and the retirement benchmark. The split feeds the bridge to 59½ later.</p>
   </section>
 
-  <section class="slaf-card q" id="q-dob" data-q>
-    <p class="q-text">When were you born?</p>
-    <p class="q-help">Only used to compare you against people your own age.</p>
-    <span class="slaf-input-shell"><input type="date" data-write="dob" aria-label="Date of birth"/></span>
-    <p class="q-warn" id="dob-warn" hidden></p>
-    <p class="q-unlocks">Feeds the net-worth percentile and the age-based savings milestones.</p>
-  </section>
-
-  <section class="slaf-card q" id="q-state" data-q>
-    <p class="q-text">Which state are you in?</p>
-    <p class="q-help">Two letters. Used later for cost-of-living and state-specific rules.</p>
-    <span class="slaf-input-shell"><input type="text" maxlength="2" data-write="state" placeholder="e.g. NC" autocomplete="off" spellcheck="false" aria-label="State"/></span>
-    <p class="q-unlocks">Nothing in Tier 0 needs it yet — it's here so later rooms don't have to ask again.</p>
-  </section>
-
-  <section class="slaf-card q" id="q-match" data-q>
-    <p class="q-text">Does your employer match retirement contributions?</p>
-    <p class="q-help">"50% of the first 6%" is 50 on the left and 6 on the right. Enter 0 and 0 if there's no match.</p>
-    <div class="q-pair">
+  <section class="slaf-card q" id="q-plan" data-q>
+    <p class="q-text">Your 401(k): what do they match, and what do you put in?</p>
+    <p class="q-help">"50% of the first 6%" is 50 on the left and 6 in the middle. If you know there's a match but not the numbers, the most common shape is already pencilled in — tap it to use it.</p>
+    <div class="q-three">
       <label class="slaf-field" style="margin:0"><span class="slaf-label">They match</span>
-        <span class="slaf-input-shell"><input type="text" inputmode="decimal" data-write="matchPercent" placeholder="e.g. 50" aria-label="Match percentage"/><span class="slaf-affix">%</span></span></label>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" data-plan="matchPercent" placeholder="e.g. 50" aria-label="Match percentage"/><span class="slaf-affix">%</span></span></label>
       <label class="slaf-field" style="margin:0"><span class="slaf-label">…of the first</span>
-        <span class="slaf-input-shell"><input type="text" inputmode="decimal" data-write="matchCap" placeholder="e.g. 6" aria-label="Match cap as a percentage of salary"/><span class="slaf-affix">%</span></span></label>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" data-plan="matchCap" placeholder="e.g. 6" aria-label="Match cap as a percentage of salary"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">You put in</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" data-plan="contributionPercent" placeholder="e.g. 6" aria-label="Your contribution as a percentage of salary"/><span class="slaf-affix">%</span></span></label>
     </div>
-    <p class="q-unlocks">This is the only guaranteed return in the whole ladder.</p>
+    <button type="button" class="slaf-btn slaf-btn--quiet plan-none" id="btn-no-match">There's no match</button>
+    <p class="plan-derived" id="plan-derived"></p>
+    <p class="q-unlocks">The match is the only guaranteed return in the whole ladder. Whether you capture all of it follows from these three numbers — nobody has to be asked.</p>
   </section>
 
-  <section class="slaf-card q" id="q-capturing" data-q>
-    <p class="q-text">Are you contributing enough to get all of it?</p>
-    <p class="q-help">If you're not sure, say so — an unanswered question is never scored as a failure.</p>
-    <div class="choices" data-choices="capturingFullMatch">
-      <button type="button" class="choice" data-value="yes">Yes, I get the full match</button>
-      <button type="button" class="choice" data-value="no">No, I'm leaving some of it</button>
-      <button type="button" class="choice" data-value="">Not sure — haven't checked</button>
+  <section class="slaf-card q" id="q-deductible" data-q>
+    <p class="q-text">What's your highest deductible this year?</p>
+    <p class="q-help">Health, car or home — whichever single excess is largest. It's the first thing a cash cushion has to cover, and the very first step of the ladder.</p>
+    <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+      <input type="text" inputmode="decimal" data-write="deductible" placeholder="e.g. 3000" aria-label="Highest deductible"/></span>
+    <p class="q-unlocks">Step 1 of the FOO ladder is exactly this number against your cash.</p>
+  </section>
+
+  <section class="slaf-card q" id="q-debt" data-q>
+    <p class="q-text">Do you owe anything?</p>
+    <p class="q-help">Cards, loans, a mortgage. Yes just opens the door to Debt Payoff, where each one is listed. No takes that room off your path entirely.</p>
+    <div class="choices" data-choices="hasDebt">
+      <button type="button" class="choice" data-value="yes">Yes — I'll list it next</button>
+      <button type="button" class="choice" data-value="no">No, nothing</button>
     </div>
-    <p class="q-unlocks">Step 2 of the ladder can't be judged without this.</p>
+    <p class="q-unlocks">"No" is an answer: every room that reads debt figures stops waiting for them.</p>
   </section>
 
   <div class="nav" id="nav">
@@ -268,23 +363,31 @@
 <script src="../shared/money.js"></script>
 <script src="../shared/schema.js"></script>
 <script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
 <script src="../shared/ownership.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/demo-persona.js"></script>
 <script src="../shared/liveform.js"></script>
+<script src="../shared/suggest.js"></script>
 <script src="../engines/income.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
       Registry = SLAF.Registry, Ownership = SLAF.Ownership, Demo = SLAF.DemoPersona,
-      Income = SLAF.Income;
+      Income = SLAF.Income, Suggest = SLAF.Suggest, Reference = SLAF.Reference;
 
   var ROOM_ID = 'start';
   var INCOME_ID = 'tier0_income_primary';
-  var CASH_ID = 'tier0_cash';
-  var INVEST_ID = 'tier0_investments';
+  var PARTNER_ID = 'tier0_partner';
+  var PARTNER_INCOME_ID = 'tier0_income_partner';
+  var INVEST_IDS = { pretax: 'tier0_invest_pretax', roth: 'tier0_invest_roth', taxable: 'tier0_invest_taxable' };
+  var TABLES = { states: null, matchDefaults: null };
+
+  function adultsOf(h) { return (h.people || []).filter(function (p) { return p.role === 'adult'; }); }
+  function partnerOf(h) { return adultsOf(h)[1] || null; }
+  function hasPartner(h) { return adultsOf(h).length >= 2; }
 
   function el(id) { return document.getElementById(id); }
 
@@ -302,22 +405,17 @@
     return null;
   }
 
+  /* A source written by writeJob() carries only the fields that job edit
+     touched, so employerMatch can genuinely be absent. Every reader here
+     wants the whole shape, so normalise once rather than guarding at each
+     of the six call sites — one of which was missing its guard and threw. */
   function incomeSourceOf(h) {
     var p = Schema.primaryPerson(h);
-    return p && p.incomeSources.length ? p.incomeSources[0] : null;
-  }
-
-  function writeAsset(categories, canonicalCategory, liquid, label, cents) {
-    var person = Spine.ensurePrimaryPerson('You');
-    var h = Spine.getProfile();
-    var existing = assetByCategory(h, categories);
-    Spine.upsertAsset({
-      id: existing ? existing.id : (canonicalCategory === 'cash' ? CASH_ID : INVEST_ID),
-      label: existing && existing.label ? existing.label : label,
-      category: existing ? existing.category : canonicalCategory,
-      valueCents: cents,
-      liquid: liquid,
-      ownerIds: existing && existing.ownerIds.length ? existing.ownerIds : [person.id]
+    var raw = p && p.incomeSources.length ? p.incomeSources[0] : null;
+    if (!raw) return null;
+    if (raw.employerMatch) return raw;
+    return Object.assign({}, raw, {
+      employerMatch: { matchPercent: null, matchCapPercentOfSalary: null }
     });
   }
 
@@ -361,13 +459,9 @@
 
   /* Recompute every source's annual figure from its rate, and store it.
      This is the one place the derived number is written. */
-  function recomputeIncome() {
-    var h = Spine.getProfile();
-    var person = Schema.primaryPerson(h);
-    if (!person) return null;
-    var summary = Income.summarise(person.incomeSources, Schema.workProfile(person));
+  function recomputeIncomeFor(person, h) {
+    var summary = Income.summarise(person.incomeSources || [], Schema.workProfile(person));
     if (!Money.isOk(summary)) return summary;
-
     var basis = h.incomeBasis === 'runRate' ? 'runRate' : 'earned';
     summary.rows.forEach(function (row) {
       /* A row with no rate is an annual figure typed straight in — leave it
@@ -382,19 +476,43 @@
     return summary;
   }
 
+  /* Every adult, so a second person's pay is annualised the same way. */
+  function recomputeIncome() {
+    var h = Spine.getProfile();
+    var person = Schema.primaryPerson(h);
+    if (!person) return null;
+    var out = recomputeIncomeFor(person, h);
+    var partner = partnerOf(h);
+    if (partner) recomputeIncomeFor(partner, h);
+    return out;
+  }
+
   function writeJob(id, patch) {
     var person = Spine.ensurePrimaryPerson('You');
     Spine.upsertIncomeSource(person.id, Object.assign({ id: id }, patch));
     recomputeIncome();
   }
 
+  function writePartnerJob(patch) {
+    var partner = partnerOf(Spine.getProfile());
+    if (!partner) return;
+    var existing = (partner.incomeSources || [])[0];
+    var record = { id: existing ? existing.id : PARTNER_INCOME_ID,
+      source: (existing && existing.source) || 'Their pay',
+      frequency: (existing && existing.frequency) || 'annual' };
+    Object.keys(patch || {}).forEach(function (k) { if (patch[k] !== undefined) record[k] = patch[k]; });
+    Spine.upsertIncomeSource(partner.id, record);
+    recomputeIncome();
+  }
+
   /* -- the basis select on the main question -- */
   (function () {
-    var sel = document.querySelector('[data-pay="basis"]');
-    if (!sel) return;
-    sel.innerHTML = Income.BASES.map(function (b) {
+    var opts = Income.BASES.map(function (b) {
       return '<option value="' + b.id + '">' + b.label + '</option>';
     }).join('');
+    Array.prototype.forEach.call(document.querySelectorAll('[data-pay="basis"], [data-partner-pay="basis"]'), function (sel) {
+      sel.innerHTML = opts;
+    });
   })();
 
   function firstSource() { return primarySources()[0] || null; }
@@ -413,6 +531,8 @@
     if (hoursNode && hoursNode !== document.activeElement) {
       hoursNode.value = Money.isEntered(src.hoursPerWeek) ? String(src.hoursPerWeek) : '';
     }
+
+    paintPartnerPay();
 
     var out = el('pay-out');
     if (!out) return;
@@ -445,8 +565,74 @@
       parts.push('Your current job alone would be '
         + Money.formatCents(summary.runRateCents) + '.');
     }
+    var h = Spine.getProfile();
+    if (hasPartner(h)) {
+      var total = Schema.grossAnnualIncomeCents(h);
+      var pSum = Income.summarise((partnerOf(h).incomeSources || []), Schema.workProfile(partnerOf(h)));
+      if (Money.isOk(total) && Money.isOk(pSum) && pSum.sourceCount > 0) {
+        parts.push('Together that\u2019s <strong>' + Money.formatCents(total.value) + '</strong> a year.');
+      }
+    }
     out.innerHTML = parts.join(' ');
   }
+
+  /* The other person's pay: one row, shown only when there are two of you.
+     Same basis list, same annualising, written to their own source. */
+  function paintPartnerPay() {
+    var h = Spine.getProfile();
+    var wrap = el('pay-partner');
+    if (!wrap) return;
+    var partner = partnerOf(h);
+    wrap.hidden = !partner;
+    if (!partner) return;
+    el('pay-partner-label').textContent = (partner.label || 'Their') + (partner.label ? '\u2019s pay' : ' pay');
+    var src = (partner.incomeSources || [])[0] || {};
+    var rate = document.querySelector('[data-partner-pay="rate"]');
+    var sel = document.querySelector('[data-partner-pay="basis"]');
+    var hours = document.querySelector('[data-partner-pay="hours"]');
+    var basisId = src.frequency || 'annual';
+    var basis = Income.basisById(basisId) || Income.basisById('annual');
+    if (sel && sel !== document.activeElement) sel.value = basisId;
+    if (rate && rate !== document.activeElement) {
+      var cents = Money.isEntered(src.rateCents) ? src.rateCents : src.grossAnnualIncomeCents;
+      rate.value = Money.isEntered(cents) && !basis.noPay ? Money.formatCents(cents) : '';
+      rate.parentNode.style.display = basis.noPay ? 'none' : '';
+    }
+    el('pay-partner-hours').hidden = !basis.needsHours;
+    if (hours && hours !== document.activeElement) hours.value = Money.isEntered(src.hoursPerWeek) ? String(src.hoursPerWeek) : '';
+  }
+
+  document.addEventListener('change', function (evt) {
+    var node = evt.target;
+    if (!node.getAttribute || node.getAttribute('data-partner-pay') !== 'basis') return;
+    /* A rate typed and not yet blurred travels with the basis change, so
+       picking "a month" right after typing the figure keeps the figure. */
+    var rateNode = document.querySelector('[data-partner-pay="rate"]');
+    var typed = rateNode ? Money.parseMoney(rateNode.value) : null;
+    var patch = { frequency: node.value };
+    if (Money.isEntered(typed)) {
+      patch.rateCents = typed;
+      if (node.value === 'annual') patch.grossAnnualIncomeCents = typed;
+    }
+    writePartnerJob(patch);
+    paintPay();
+  });
+  document.addEventListener('focusout', function (evt) {
+    var node = evt.target;
+    if (!node.getAttribute) return;
+    var k = node.getAttribute('data-partner-pay');
+    if (k === 'rate') {
+      var cents = Money.parseMoney(node.value);
+      var partner = partnerOf(Spine.getProfile());
+      var freq = ((partner && partner.incomeSources[0]) || {}).frequency || 'annual';
+      writePartnerJob({ rateCents: cents, grossAnnualIncomeCents: freq === 'annual' && Money.isEntered(cents) ? cents : undefined });
+      node.value = Money.isEntered(cents) ? Money.formatCents(cents) : '';
+    } else if (k === 'hours') {
+      var n = String(node.value).trim() === '' ? null : Number(node.value);
+      writePartnerJob({ hoursPerWeek: (n === null || isNaN(n) || n <= 0) ? null : n });
+    } else return;
+    paintPay();
+  });
 
   document.addEventListener('change', function (evt) {
     var node = evt.target;
@@ -663,7 +849,381 @@
 
   /* ---------- the questions ---------------------------------------------- */
 
+  /* The working-situation choices are built ONCE, at load, from
+     Schema.EMPLOYMENT_STATUSES so the labels live in exactly one place. The
+     room is guarded, but this needs no guard: it runs before anything is on
+     screen and never runs again. */
+  (function () {
+    var box = document.querySelector('[data-choices="employmentStatus"]');
+    if (!box) return;
+    box.innerHTML = (Schema.EMPLOYMENT_STATUSES || []).map(function (row) {
+      return '<button type="button" class="choice" data-value="' + row.id + '">'
+        + row.label + '</button>';
+    }).join('');
+  })();
+
+  /* The income question changes its tone once you have said you are not
+     working — but it never changes its answer. Saying "not working" is not
+     the same as typing zero into the box, and this writes nothing.
+     Text only; no control is touched. DECISIONS.md D-055. */
+  function paintEmploymentNote() {
+    var note = el('income-employment-note');
+    if (!note) return;
+    var row = Schema.householdEmployment(Spine.getProfile());
+    if (!row || row.earning) { note.hidden = true; note.textContent = ''; return; }
+    note.hidden = false;
+    note.textContent = row.id === 'retired'
+      ? 'You said you\u2019re retired. Pension, annuity or drawdown income goes here \u2014 '
+        + 'if nothing is coming in, pick \u201cnot earning right now\u201d on the right rather than typing 0.'
+      : 'You said you\u2019re not working. Benefits, severance or anything still landing goes here \u2014 '
+        + 'if nothing is, pick \u201cnot earning right now\u201d on the right rather than typing 0.';
+  }
+
+  /* ---------- selects built once: months, years, states ------------------ */
+
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  function buildDateSelects(monthSel, yearSel) {
+    var thisYear = new Date().getFullYear();
+    monthSel.innerHTML = '<option value="">Month</option>' + MONTHS.map(function (m, i) {
+      return '<option value="' + (i + 1) + '">' + m + '</option>';
+    }).join('');
+    var years = [];
+    for (var y = thisYear - 14; y >= thisYear - 100; y--) years.push('<option value="' + y + '">' + y + '</option>');
+    yearSel.innerHTML = '<option value="">Year</option>' + years.join('');
+  }
+  buildDateSelects(document.querySelector('[data-about="month"]'), document.querySelector('[data-about="year"]'));
+  buildDateSelects(document.querySelector('[data-partner="month"]'), document.querySelector('[data-partner="year"]'));
+
+  function dobFrom(monthSel, yearSel) {
+    var m = monthSel.value, y = yearSel.value;
+    if (!m || !y) return null;
+    return y + '-' + (m.length === 1 ? '0' + m : m) + '-01';
+  }
+  function setDob(monthSel, yearSel, dob) {
+    var mt = /^(\d{4})-(\d{2})/.exec(dob || '');
+    /* Nothing stored yet: leave a half-chosen month or year alone rather
+       than wiping it between the two picks. */
+    if (!mt) return;
+    if (monthSel !== document.activeElement) monthSel.value = String(parseInt(mt[2], 10));
+    if (yearSel !== document.activeElement) yearSel.value = mt[1];
+  }
+
+  /* The state picker. Until data/states.json arrives it holds only what is
+     stored, so a saved answer never reads back as blank. Rebuilt exactly
+     once, when the table lands, and never while it is focused. */
+  var stateSel = document.querySelector('[data-about="state"]');
+  var stateOptionsBuilt = false;
+  function buildStateSelect() {
+    if (stateOptionsBuilt || stateSel === document.activeElement) return;
+    var stored = Spine.getProfile().state || '';
+    var rows = TABLES.states ? TABLES.states.states : (stored ? [{ code: stored, name: stored }] : []);
+    stateSel.innerHTML = '<option value="">State</option>' + rows.map(function (r) {
+      return '<option value="' + r.code + '">' + esc(r.name) + '</option>';
+    }).join('');
+    stateSel.value = stored;
+    if (TABLES.states) stateOptionsBuilt = true;
+  }
+  buildStateSelect();
+
+  /* The working-situation choices are built ONCE, at load, from
+     Schema.EMPLOYMENT_STATUSES so the labels live in exactly one place. */
+  Array.prototype.forEach.call(document.querySelectorAll('[data-choices="employmentStatus"], [data-partner-choices="employmentStatus"]'), function (box) {
+    box.innerHTML = (Schema.EMPLOYMENT_STATUSES || []).map(function (row) {
+      return '<button type="button" class="choice" data-value="' + row.id + '">' + row.label + '</button>';
+    }).join('');
+  });
+
+  /* The income question changes its tone once you have said you are not
+     working — but it never changes its answer. Saying "not working" is not
+     the same as typing zero into the box, and this writes nothing.
+     Text only; no control is touched. DECISIONS.md D-055. */
+  function paintEmploymentNote() {
+    var note = el('income-employment-note');
+    if (!note) return;
+    var row = Schema.householdEmployment(Spine.getProfile());
+    if (!row || row.earning) { note.hidden = true; note.textContent = ''; return; }
+    note.hidden = false;
+    note.textContent = row.id === 'retired'
+      ? 'You said you’re retired. Pension, annuity or drawdown income goes here — '
+        + 'if nothing is coming in, pick “not earning right now” on the right rather than typing 0.'
+      : 'You said you’re not working. Benefits, severance or anything still landing goes here — '
+        + 'if nothing is, pick “not earning right now” on the right rather than typing 0.';
+  }
+
+  function pressed(box, value) {
+    Array.prototype.forEach.call(box.querySelectorAll('.choice'), function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-value') === value));
+    });
+  }
+
+  /* ---------- investments: three characters, or one total ----------------
+     Split mode writes up to three assets with a taxCharacter; total mode
+     writes one 'unknown'. Which mode you see follows what is stored, and
+     the link flips it. D-061. */
+  var investMode = null;   /* 'split' | 'total', decided from storage on first paint */
+  function investAssets(h) {
+    var out = {};
+    (h.assets || []).forEach(function (a) {
+      if (a.taxCharacter === 'pretax' || a.taxCharacter === 'roth' || a.taxCharacter === 'taxable') out[a.taxCharacter] = a;
+    });
+    return out;
+  }
+  function totalAsset(h) {
+    var list = (h.assets || []).filter(function (a) {
+      return (a.category === 'investment' || a.category === 'retirement')
+        && a.taxCharacter !== 'pretax' && a.taxCharacter !== 'roth' && a.taxCharacter !== 'taxable';
+    });
+    return list[0] || null;
+  }
+  function paintInvestments(h) {
+    var split = investAssets(h), total = totalAsset(h);
+    if (investMode === null) investMode = Object.keys(split).length ? 'split' : (total ? 'total' : 'split');
+    el('invest-split').hidden = investMode !== 'split';
+    el('invest-total').hidden = investMode !== 'total';
+    el('btn-invest-mode').textContent = investMode === 'split' ? 'I only know the total' : 'I can split it by tax treatment';
+    Object.keys(INVEST_IDS).forEach(function (k) {
+      var node = document.querySelector('[data-invest="' + k + '"]');
+      if (settable(node)) node.value = split[k] && Money.isEntered(split[k].valueCents) ? Money.formatCents(split[k].valueCents) : '';
+      settle(node);
+    });
+    var tNode = document.querySelector('[data-invest="total"]');
+    if (settable(tNode)) tNode.value = total && Money.isEntered(total.valueCents) ? Money.formatCents(total.valueCents) : '';
+    settle(tNode);
+  }
+  function commitInvestments() {
+    var h = Spine.getProfile();
+    var person = Spine.ensurePrimaryPerson('You');
+    if (investMode === 'total') {
+      var t = document.querySelector('[data-invest="total"]');
+      var cents = Money.parseMoney(t.value);
+      /* Collapsing into a total: the characterised records go, the one
+         'unknown' record stays. */
+      Object.keys(investAssets(h)).forEach(function (k) { Spine.removeById('assets', investAssets(h)[k].id); });
+      Ownership.write('investments', cents);
+      var ta = totalAsset(Spine.getProfile());
+      if (ta && ta.taxCharacter !== 'unknown') Spine.upsertAsset({ id: ta.id, taxCharacter: 'unknown' });
+      return;
+    }
+    var any = false;
+    Object.keys(INVEST_IDS).forEach(function (k) {
+      var node = document.querySelector('[data-invest="' + k + '"]');
+      var c = Money.parseMoney(Suggest.entered(node));
+      var existing = investAssets(Spine.getProfile())[k];
+      if (Money.isEntered(c)) {
+        any = true;
+        Spine.upsertAsset({
+          id: existing ? existing.id : INVEST_IDS[k],
+          label: existing && existing.label ? existing.label : ({ pretax: 'Pre-tax investments', roth: 'Roth investments', taxable: 'Taxable investments' })[k],
+          category: k === 'taxable' ? 'investment' : 'retirement',
+          valueCents: c, liquid: false, taxCharacter: k,
+          ownerIds: existing && existing.ownerIds && existing.ownerIds.length ? existing.ownerIds : [person.id]
+        });
+      } else if (existing) {
+        Spine.removeById('assets', existing.id);
+      }
+    });
+    /* A total typed earlier would now double-count beside the split. */
+    var total = totalAsset(Spine.getProfile());
+    if (any && total) Spine.removeById('assets', total.id);
+  }
+  el('btn-invest-mode').addEventListener('click', function () {
+    investMode = investMode === 'split' ? 'total' : 'split';
+    paintInvestments(Spine.getProfile());
+  });
+
+  /* ---------- the 401(k) card: match, contribution, capture derived ------- */
+  function planNodes() {
+    return {
+      pct: document.querySelector('[data-plan="matchPercent"]'),
+      cap: document.querySelector('[data-plan="matchCap"]'),
+      contrib: document.querySelector('[data-plan="contributionPercent"]')
+    };
+  }
+  function writeContribution(percent) {
+    var h = Spine.getProfile();
+    Spine.updateProfile({ retirement: Object.assign({}, h.retirement || {}, { contributionPercent: percent }) });
+  }
+  function paintPlan(h) {
+    var n = planNodes();
+    var s = incomeSourceOf(h);
+    var m = s ? s.employerMatch : { matchPercent: null, matchCapPercentOfSalary: null };
+    var contrib = (h.retirement || {}).contributionPercent;
+    var pctNum = Money.isEntered(m.matchPercent) ? String(Math.round(m.matchPercent * 10000) / 100) : '';
+    var capNum = Money.isEntered(m.matchCapPercentOfSalary) ? String(Math.round(m.matchCapPercentOfSalary * 10000) / 100) : '';
+    if (settable(n.pct)) { Suggest.clear(n.pct); n.pct.value = pctNum; }
+    if (settable(n.cap)) { Suggest.clear(n.cap); n.cap.value = capNum; }
+    if (settable(n.contrib)) { Suggest.clear(n.contrib); n.contrib.value = Money.isEntered(contrib) ? String(contrib) : ''; }
+    settle(n.pct); settle(n.cap); settle(n.contrib);
+
+    /* Suggestions: the most common formula while the match is blank; the
+       cap while the contribution is blank. Shown, not stored — D-060. */
+    var def = TABLES.matchDefaults && TABLES.matchDefaults.mostCommon;
+    if (def && pctNum === '' && capNum === '') {
+      var useMatch = function () {
+        writeIncome('matchPercent', def.matchPercent);
+        writeIncome('matchCapPercentOfSalary', def.matchCapPercentOfSalary);
+        paintPlan(Spine.getProfile());
+      };
+      var src = 'the most common formula, ' + def.label + ' (Vanguard, How America Saves)';
+      Suggest.show(n.pct, { value: def.matchPercent, display: String(def.matchPercent * 100), source: src, onUse: useMatch });
+      Suggest.show(n.cap, { value: def.matchCapPercentOfSalary, display: String(def.matchCapPercentOfSalary * 100), source: src, onUse: useMatch });
+    }
+    if (capNum !== '' && m.matchCapPercentOfSalary > 0 && !Money.isEntered(contrib)) {
+      Suggest.show(n.contrib, { value: m.matchCapPercentOfSalary * 100, display: capNum,
+        source: 'the match cap — the least that captures all of it',
+        onUse: function (v) { writeContribution(v); paintPlan(Spine.getProfile()); } });
+    }
+
+    paintPlanDerived(h);
+  }
+
+  /* The sentence under the three boxes. Drawn from the household on paint
+     and from the BOXES on every keystroke, so it is already in place before
+     a finger reaches Next — a line that appears on blur moves the button
+     mid-tap (D-046). */
+  function paintPlanDerived(h) {
+    var line = el('plan-derived');
+    var s = incomeSourceOf(h);
+    var m = s ? s.employerMatch : { matchPercent: null, matchCapPercentOfSalary: null };
+    var capNum = Money.isEntered(m.matchCapPercentOfSalary) ? String(Math.round(m.matchCapPercentOfSalary * 10000) / 100) : '';
+    var cap = Schema.capturingFullMatchDerived(h);
+    var matchCents = Schema.employerMatchCents(h);
+    if (Money.isEntered(m.matchPercent) && Money.isEntered(m.matchCapPercentOfSalary)
+        && (m.matchPercent === 0 || m.matchCapPercentOfSalary === 0)) {
+      line.innerHTML = 'No match — nothing to capture. Whatever you put in is all yours.';
+    } else if (Money.isOk(cap) && cap.derived) {
+      line.innerHTML = cap.value
+        ? 'That captures <strong>the full match</strong>'
+          + (Money.isOk(matchCents) ? ' — about ' + Money.formatCents(matchCents.value) + ' a year of free money.' : '.')
+        : 'Putting in <strong>' + capNum + '%</strong> would capture all of it'
+          + (Money.isOk(matchCents) ? ' — about ' + Money.formatCents(matchCents.value) + ' a year you are not collecting now.' : '.');
+    } else {
+      line.innerHTML = '';
+    }
+  }
+
+  /* The household as it WOULD be with what is in the boxes right now —
+     a copy, never written. */
+  function planLiveHousehold() {
+    var h = JSON.parse(JSON.stringify(Spine.getProfile()));
+    var n = planNodes();
+    var pct = Money.parseRatePercent(Suggest.entered(n.pct));
+    var cap = Money.parseRatePercent(Suggest.entered(n.cap));
+    var raw = Suggest.entered(n.contrib).trim();
+    var c = raw === '' ? null : Number(raw);
+    var person = Schema.primaryPerson(h);
+    if (person) {
+      if (!person.incomeSources.length) person.incomeSources.push({ id: INCOME_ID, employerMatch: {} });
+      person.incomeSources[0].employerMatch = { matchPercent: pct, matchCapPercentOfSalary: cap };
+    }
+    h.retirement = Object.assign({}, h.retirement || {}, { contributionPercent: (c === null || isNaN(c) || c < 0) ? null : c });
+    return h;
+  }
+  document.addEventListener('input', function (evt) {
+    var node = evt.target;
+    if (node && node.getAttribute && node.getAttribute('data-plan')) paintPlanDerived(planLiveHousehold());
+  });
+  function commitPlan() {
+    var n = planNodes();
+    var pct = Money.parseRatePercent(Suggest.entered(n.pct));
+    var cap = Money.parseRatePercent(Suggest.entered(n.cap));
+    var raw = Suggest.entered(n.contrib).trim();
+    var c = raw === '' ? null : Number(raw);
+    var h = Spine.getProfile();
+    var s = incomeSourceOf(h);
+    var m = s ? s.employerMatch : {};
+    if (pct !== m.matchPercent) writeIncome('matchPercent', pct);
+    if (cap !== m.matchCapPercentOfSalary) writeIncome('matchCapPercentOfSalary', cap);
+    var contrib = (c === null || isNaN(c) || c < 0) ? null : c;
+    if (contrib !== (h.retirement || {}).contributionPercent) writeContribution(contrib);
+  }
+  el('btn-no-match').addEventListener('click', function () {
+    writeIncome('matchPercent', 0);
+    writeIncome('matchCapPercentOfSalary', 0);
+    paintPlan(Spine.getProfile());
+  });
+
+  /* ---------- the other person ----------------------------------------- */
+  function paintPartner(h) {
+    var partner = partnerOf(h);
+    if (!partner) return;
+    var label = document.querySelector('[data-partner="label"]');
+    if (settable(label)) label.value = partner.label || '';
+    settle(label);
+    pressed(document.querySelector('[data-partner-choices]'), partner.employmentStatus || '');
+    setDob(document.querySelector('[data-partner="month"]'), document.querySelector('[data-partner="year"]'), partner.dob);
+  }
+  function commitPartner() {
+    var partner = partnerOf(Spine.getProfile());
+    if (!partner) return;
+    var label = String(document.querySelector('[data-partner="label"]').value || '').trim();
+    var dob = dobFrom(document.querySelector('[data-partner="month"]'), document.querySelector('[data-partner="year"]'));
+    Spine.upsertPerson({ id: partner.id, label: label === '' ? null : label, dob: dob });
+  }
+  document.querySelector('[data-partner-choices]').addEventListener('click', function (evt) {
+    var btn = evt.target.closest('.choice');
+    if (!btn) return;
+    var partner = partnerOf(Spine.getProfile());
+    if (!partner) return;
+    Spine.upsertPerson({ id: partner.id, employmentStatus: btn.getAttribute('data-value') });
+    paintPartner(Spine.getProfile());
+  });
+
+  /* ---------- born + state ----------------------------------------------- */
+  function paintAbout(h) {
+    var p = Schema.primaryPerson(h);
+    setDob(document.querySelector('[data-about="month"]'), document.querySelector('[data-about="year"]'), p ? p.dob : null);
+    buildStateSelect();
+    if (stateSel !== document.activeElement) stateSel.value = h.state || '';
+    paintDobWarning(p ? p.dob : null);
+  }
+  function commitAbout() {
+    var person = Spine.ensurePrimaryPerson('You');
+    var dob = dobFrom(document.querySelector('[data-about="month"]'), document.querySelector('[data-about="year"]'));
+    if (dob !== (Schema.primaryPerson(Spine.getProfile()) || {}).dob) Spine.upsertPerson({ id: person.id, dob: dob });
+    var st = stateSel.value || null;
+    if (st !== (Spine.getProfile().state || null)) Spine.updateProfile({ state: st });
+  }
+
   var QUESTIONS = [
+    { id: 'q-household', field: 'employmentStatus', kind: 'choice',
+      isSet: function (h) { return adultsOf(h).length > 0; },
+      read: function (h) { var n = adultsOf(h).length; return n >= 2 ? 'two' : n === 1 ? 'one' : ''; },
+      write: function (v) {
+        var me = Spine.ensurePrimaryPerson('You');
+        var partner = partnerOf(Spine.getProfile());
+        if (v === 'two' && !partner) {
+          Spine.upsertPerson(Schema.createPerson({ id: PARTNER_ID, label: null, role: 'adult' }));
+        } else if (v === 'one' && partner) {
+          if (!window.confirm('Remove the second person and their pay from this household?')) return;
+          Spine.removeById('people', partner.id);
+        }
+        void me;
+        paintPay();
+      } },
+
+    /* Asked early because it decides which of the later questions are real
+       questions at all. DECISIONS.md D-055. */
+    { id: 'q-employment', field: 'employmentStatus', kind: 'choice',
+      read: function (h) {
+        var p = Schema.primaryPerson(h);
+        return (p && p.employmentStatus) || '';
+      },
+      write: function (v) {
+        var person = Spine.ensurePrimaryPerson('You');
+        Spine.upsertPerson({ id: person.id, employmentStatus: v === '' ? null : v });
+        paintEmploymentNote();
+      } },
+
+    { id: 'q-partner', field: 'employmentStatus', kind: 'custom',
+      applies: function (h) { return hasPartner(h); },
+      isSet: function (h) { var p = partnerOf(h); return !!(p && p.employmentStatus && p.dob); },
+      paint: paintPartner, commit: commitPartner },
+
+    { id: 'q-about', field: 'dob', kind: 'custom',
+      isSet: function (h) { var p = Schema.primaryPerson(h); return !!(p && p.dob && h.state); },
+      paint: paintAbout, commit: commitAbout },
+
     /* The box holds what you are PAID at your chosen frequency. When that
        frequency is 'a year' the two are the same number, which is why a
        household saved before this reads back unchanged. */
@@ -698,55 +1258,49 @@
       read: function (h) { return h.expenses.monthlyEssential.estimatedValueCents; },
       write: function (cents) { Spine.setMonthlyExpenses(cents, 'estimated'); } },
 
+    /* Cash writes through Ownership.write(): the Refresh page sets the same
+       record, and one function writing it is what keeps that from being a
+       second copy. DECISIONS.md D-057. */
     { id: 'q-cash', field: 'cashSavings', kind: 'money',
       read: function (h) { var a = assetByCategory(h, ['cash']); return a ? a.valueCents : null; },
-      write: function (cents) { writeAsset(['cash'], 'cash', true, 'Cash & savings', cents); } },
+      write: function (cents) { Ownership.write('cashSavings', cents); } },
 
-    { id: 'q-investments', field: 'investments', kind: 'money',
-      read: function (h) { var a = assetByCategory(h, ['investment', 'retirement']); return a ? a.valueCents : null; },
-      write: function (cents) { writeAsset(['investment', 'retirement'], 'investment', false, 'Investments + retirement', cents); } },
+    { id: 'q-investments', field: 'investments', kind: 'custom',
+      paint: paintInvestments, commit: commitInvestments },
 
-    { id: 'q-dob', field: 'dob', kind: 'date',
-      read: function (h) { var p = Schema.primaryPerson(h); return p && p.dob ? p.dob : ''; },
-      write: function (v) {
-        var person = Spine.ensurePrimaryPerson('You');
-        Spine.upsertPerson({ id: person.id, dob: v === '' ? null : v });
-      } },
-
-    { id: 'q-state', field: 'state', kind: 'text',
-      read: function (h) { return h.state || ''; },
-      write: function (v) {
-        var clean = String(v || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
-        Spine.updateProfile({ state: clean === '' ? null : clean });
-      } },
-
-    { id: 'q-match', field: 'employerMatch', kind: 'pair',
-      read: function (h) {
+    /* Not asked when there is no employer to ask about. Schema decides,
+       so the map, the room strips and this flow all agree. D-055. */
+    { id: 'q-plan', field: 'employerMatch', kind: 'custom',
+      applies: function (h) { return Schema.couldHaveEmployerMatch(h); },
+      isSet: function (h) {
         var s = incomeSourceOf(h);
-        return s ? [s.employerMatch.matchPercent, s.employerMatch.matchCapPercentOfSalary] : [null, null];
+        return !!(s && Money.isEntered(s.employerMatch.matchPercent) && Money.isEntered(s.employerMatch.matchCapPercentOfSalary)
+          && Money.isEntered((h.retirement || {}).contributionPercent));
       },
-      write: function (pair) {
-        writeIncome('matchPercent', pair[0]);
-        writeIncome('matchCapPercentOfSalary', pair[1]);
+      paint: paintPlan, commit: commitPlan },
+
+    { id: 'q-deductible', field: 'highestDeductible', kind: 'money',
+      read: function (h) { return (h.insurance || {}).highestDeductibleCents; },
+      write: function (cents) {
+        var h = Spine.getProfile();
+        Spine.updateProfile({ insurance: Object.assign({}, h.insurance || {}, { highestDeductibleCents: cents }) });
       } },
 
-    { id: 'q-capturing', field: 'capturingFullMatch', kind: 'choice',
-      /* Only worth asking once a real match exists. */
-      applies: function (h) {
-        var s = incomeSourceOf(h);
-        return !!(s && Money.isEntered(s.employerMatch.matchPercent)
-          && Money.isEntered(s.employerMatch.matchCapPercentOfSalary)
-          && s.employerMatch.matchPercent > 0 && s.employerMatch.matchCapPercentOfSalary > 0);
-      },
-      read: function (h) {
-        if (h.capturingFullMatch === true) return 'yes';
-        if (h.capturingFullMatch === false) return 'no';
-        return '';
-      },
-      write: function (v) {
-        Spine.updateProfile({ capturingFullMatch: v === 'yes' ? true : (v === 'no' ? false : null) });
-      } }
+    { id: 'q-debt', field: 'hasDebt', kind: 'choice',
+      read: function (h) { var m = h.meta || {}; return m.hasDebt === true ? 'yes' : m.hasDebt === false ? 'no' : ''; },
+      write: function (v) { Spine.updateProfile({ meta: { hasDebt: v === 'yes' ? true : v === 'no' ? false : null } }); } }
   ];
+
+  /* Three groups with a rough time each, shown in the rail. BRIEF §2.2. */
+  var GROUPS = [
+    { label: 'About you',              mins: '~1 min', ids: ['q-household', 'q-employment', 'q-partner', 'q-about'] },
+    { label: 'Money in and out',       mins: '~1 min', ids: ['q-income', 'q-filing', 'q-expenses'] },
+    { label: 'What you hold and owe',  mins: '~2 min', ids: ['q-cash', 'q-investments', 'q-plan', 'q-deductible', 'q-debt'] }
+  ];
+  function groupOf(id) {
+    for (var i = 0; i < GROUPS.length; i++) { if (GROUPS[i].ids.indexOf(id) !== -1) return GROUPS[i]; }
+    return null;
+  }
 
   var index = 0;
   var reviewing = false;
@@ -769,6 +1323,8 @@
      changed. Removed the moment the field is focused. */
   function settle(node) {
     if (!node || node.tagName !== 'INPUT') return;
+    /* A proposal is not a saved answer; it must not read as one. D-060. */
+    if (Suggest.isSuggested(node)) { node.classList.remove('is-settled'); return; }
     var hasValue = String(node.value || '').trim() !== '';
     node.classList.toggle('is-settled', hasValue && node !== document.activeElement);
     /* Not on the all-at-once page: nine copies of the same sentence is
@@ -779,6 +1335,7 @@
 
   function paint(q) {
     var h = Spine.getProfile();
+    if (q.kind === 'custom') { q.paint(h); return; }
     var stored = q.read(h);
     if (q.kind === 'choice') {
       var buttons = el(q.id).querySelectorAll('.choice');
@@ -801,13 +1358,23 @@
          where the caret has to be repositioned and the answer looks lost. */
       if (settable(nodes[0])) nodes[0].value = Money.isEntered(stored) ? Money.formatCents(stored) : '';
       settle(nodes[0]);
+      /* The pay card has more on it than the one box: the basis select,
+         the hours, the other person's row, the line underneath. This used
+         to sit after an early return and never ran on show. */
+      if (q.field === 'grossAnnualIncome') { paintPay(); paintJobs(); paintBasisChoice(); paintEmploymentNote(); }
       return;
     }
     if (settable(nodes[0])) nodes[0].value = stored || '';
     settle(nodes[0]);
+  }
 
-    if (q.field === 'dob') paintDobWarning(stored);
-    if (q.field === 'grossAnnualIncome') { paintPay(); paintJobs(); paintBasisChoice(); }
+  /* Is this question answered? Custom cards say for themselves; the rest
+     ask the ownership map, which is the same answer the strip and the map
+     give. */
+  function answered(q, h) {
+    if (typeof q.isSet === 'function') return q.isSet(h);
+    var d = Ownership.describe(q.field, h, ROOM_ID);
+    return !!(d && d.isSet);
   }
 
   /* A date that cannot be true is not the same as a date not given, and the
@@ -825,13 +1392,15 @@
     warn.textContent = say;
   }
 
-  (function () {
-    var node = document.querySelector('input[data-write="dob"]');
-    if (!node) return;
-    ['change', 'input', 'blur'].forEach(function (evt) {
-      node.addEventListener(evt, function () { paintDobWarning(node.value); });
-    });
-  })();
+  /* The born/state selects and the partner's: a change commits and repaints
+     the card, which is where the warning is drawn. Nothing is rebuilt. */
+  document.addEventListener('change', function (evt) {
+    var node = evt.target;
+    if (!node || node.tagName !== 'SELECT') return;
+    if (!(node.getAttribute('data-about') || node.getAttribute('data-partner'))) return;
+    var q = questionOfNode(node);
+    if (q && q.kind === 'custom') { q.commit(); q.paint(Spine.getProfile()); }
+  });
 
   /* The "this is saved, tap to change it" line. Created once per question at
      load and only ever toggled after that — no control is ever rebuilt.
@@ -869,16 +1438,28 @@
   /* Focus brightens the field; blur saves it and settles it again. The blur
      save is what makes the all-at-once page work — there is no Next button
      on it to commit against. */
+  function isOwnInput(node) {
+    if (!node || !node.getAttribute || node.tagName !== 'INPUT') return false;
+    return !!(node.getAttribute('data-write') || node.getAttribute('data-plan')
+      || node.getAttribute('data-invest') || node.getAttribute('data-partner'));
+  }
+
   document.addEventListener('focusin', function (evt) {
-    var node = evt.target;
-    if (!node || !node.getAttribute || !node.getAttribute('data-write')) return;
-    node.classList.remove('is-settled');
+    if (!isOwnInput(evt.target)) return;
+    evt.target.classList.remove('is-settled');
   });
 
   document.addEventListener('focusout', function (evt) {
     var node = evt.target;
-    if (!node || !node.getAttribute || !node.getAttribute('data-write')) return;
+    if (!isOwnInput(node)) return;
     var q = questionOfNode(node);
+    if (q && q.kind === 'custom') {
+      q.commit();
+      /* Repaint the card's OTHER boxes (derived line, suggestions); the
+         one just left is formatted by paint since it is no longer active. */
+      q.paint(Spine.getProfile());
+      return;
+    }
     if (q) {
       commit(q);
       /* Re-format this one node rather than repainting the card, so nothing
@@ -893,6 +1474,7 @@
 
   function commit(q) {
     if (q.kind === 'choice') return;                /* choices write on click */
+    if (q.kind === 'custom') { q.commit(); return; }
     var nodes = inputsOf(q);
     if (q.kind === 'pair') {
       q.write([Money.parseRatePercent(nodes[0].value), Money.parseRatePercent(nodes[1].value)]);
@@ -919,7 +1501,9 @@
     el('nav').hidden = false;
 
     paint(q);
-    el('rail-label').textContent = 'Question ' + (index + 1);
+    var g = groupOf(q.id);
+    el('rail-label').innerHTML = 'Question ' + (index + 1)
+      + (g ? ' <span class="rail-group">· ' + g.label + ' · ' + g.mins + '</span>' : '');
     el('rail-count').textContent = (index + 1) + ' of ' + list.length;
     el('dots').innerHTML = list.map(function (_, i) {
       return '<i class="' + (i < index ? 'done' : i === index ? 'here' : '') + '"></i>';
@@ -937,7 +1521,8 @@
        An empty question still takes focus, because there the keyboard is
        the helpful thing. See DECISIONS.md D-046. */
     var first = el(q.id).querySelector('input, .choice');
-    if (first && first.tagName === 'INPUT' && String(first.value || '').trim() === '') {
+    if (first && first.tagName === 'INPUT' && String(first.value || '').trim() === ''
+        && !Suggest.isSuggested(first)) {
       first.focus();
     }
     if (history.replaceState) history.replaceState(null, '', '#' + q.id);
@@ -968,6 +1553,10 @@
       if (!btn) return;
       q.write(btn.getAttribute('data-value'));
       paint(q);
+      /* On the all-at-once page a tap must not throw you back into the
+         one-at-a-time flow. Answering "not working" there can remove the
+         match questions from the page, so it redraws rather than steps. */
+      if (reviewing) { setTimeout(showReview, 140); return; }
       setTimeout(function () { step(1, false); }, 140);
     });
   });
@@ -999,10 +1588,7 @@
       paint(q);
     });
 
-    var unanswered = list.filter(function (q) {
-      var d = Ownership.describe(q.field, h, ROOM_ID);
-      return !(d && d.isSet);
-    });
+    var unanswered = list.filter(function (q) { return !answered(q, h); });
     el('review-body').innerHTML = '<p class="q-help" style="margin:0">'
       + (unanswered.length === 0
           ? 'All ' + list.length + ' answered, and every one of them is above — change '
@@ -1010,13 +1596,14 @@
           : unanswered.length + ' of ' + list.length + ' still blank ('
             + unanswered.map(function (q) {
                 var d = Ownership.describe(q.field, h, ROOM_ID);
-                return (d ? d.label : q.field).toLowerCase();
+                return (q.id === 'q-partner' ? 'the other person' : q.id === 'q-about' ? 'born + state'
+                  : q.id === 'q-plan' ? 'your 401(k)' : d ? d.label : q.field).toLowerCase();
               }).join(', ') + '). Everything else is filled in above — you can '
             + 'answer the rest there, or leave them; nothing here guesses at a blank.')
       + '</p>';
 
     /* Point the hand-off at whichever room actually comes next. */
-    var next = Registry.nextAfter(ROOM_ID, Spine.getVisitedRooms());
+    var next = Registry.nextAfter(ROOM_ID, Spine.getVisitedRooms(), h);
     if (next) {
       el('handoff-title').textContent = next.title;
       el('handoff-link').textContent = 'Go to ' + next.title + ' →';
@@ -1040,9 +1627,12 @@
     var demo = Demo.build();
     Spine.updateProfile({
       people: demo.people, filingStatus: demo.filingStatus, state: demo.state,
-      assets: demo.assets, expenses: demo.expenses,
-      capturingFullMatch: demo.capturingFullMatch
+      assets: demo.assets, debts: demo.debts, expenses: demo.expenses,
+      capturingFullMatch: demo.capturingFullMatch,
+      retirement: demo.retirement, insurance: demo.insurance,
+      meta: { hasDebt: demo.meta.hasDebt }
     });
+    investMode = null;
     showReview();
   });
 
@@ -1063,15 +1653,11 @@
       if (list[i].id === hash) { index = i; show(); return; }
     }
     var h = Spine.getProfile();
-    var answered = list.filter(function (q) {
-      var d = Ownership.describe(q.field, h, ROOM_ID);
-      return d && d.isSet;
-    }).length;
-    if (answered === list.length && answered > 0) { showReview(); return; }
+    var done = list.filter(function (q) { return answered(q, h); }).length;
+    if (done === list.length && done > 0) { showReview(); return; }
     /* Otherwise resume at the first unanswered question. */
     for (var j = 0; j < list.length; j++) {
-      var dd = Ownership.describe(list[j].field, h, ROOM_ID);
-      if (!dd || !dd.isSet) { index = j; break; }
+      if (!answered(list[j], h)) { index = j; break; }
     }
     show();
   }
@@ -1083,6 +1669,19 @@
   window.addEventListener('hashchange', route);
 
   route();
+
+  /* The state list and the suggested match arrive after first paint. The
+     state select is rebuilt once (never while focused); the plan card
+     repaints so its proposals appear. Neither writes anything. */
+  Reference.load(['states', 'matchDefaults']).then(function (t) {
+    TABLES.states = t.states;
+    TABLES.matchDefaults = t.matchDefaults;
+    buildStateSelect();
+    var live = liveQuestions();
+    (reviewing ? live : live.slice(index, index + 1)).forEach(function (q) {
+      if (q.id === 'q-plan' || q.id === 'q-about') paint(q);
+    });
+  }).catch(function () { /* typed answers still work without the tables */ });
 })();
 </script>
 </body>

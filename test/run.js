@@ -31,6 +31,13 @@ const Foo = require(path.join(ROOT, 'engines/foo.js'));
 const CashFlow = require(path.join(ROOT, 'engines/cashflow.js'));
 const Debt = require(path.join(ROOT, 'engines/debt.js'));
 const Ownership = require(path.join(ROOT, 'shared/ownership.js'));
+/* The spine instance ownership.js registered its field reader with. Later
+   sections re-require the spine under a fake localStorage and drop it from
+   the module cache, so this handle is the only way back to the original. */
+const SpineMain = require(path.join(ROOT, 'shared/spine-v2.js'));
+/* Same reason: instruments.js binds to the spine instance it is required
+   against, so it is required here while that is still the original. */
+const InstrumentsMain = require(path.join(ROOT, 'shared/instruments.js'));
 const Fire = require(path.join(ROOT, 'engines/fire.js'));
 const Projection = require(path.join(ROOT, 'engines/projection.js'));
 const Hourly = require(path.join(ROOT, 'engines/hourly.js'));
@@ -1828,7 +1835,7 @@ section('SWAN Number');
   check('the SWAN target is owned by Sleep At Night',
     Ownership.field('swanTarget').owner, 'sleep-at-night');
   check('and Sleep At Night owns nothing else',
-    Ownership.ownedBy('sleep-at-night').sort().join(','), 'highestDeductible,swanTarget');
+    Ownership.ownedBy('sleep-at-night').sort().join(','), 'swanTarget');
   const chip = Ownership.describe('swanTarget', months6, 'financial-snapshot');
   check('elsewhere it renders as a read-only $18,900', chip.display, '$18,900');
   check('and it is not editable there', chip.isOwnHere, false);
@@ -4408,6 +4415,521 @@ section('Not earning');
   }
 })();
 
+section('Whether there is an employer at all');
+
+(function () {
+  function withStatus(status, match) {
+    const h = Schema.createHousehold({});
+    h.people.push(Schema.createPerson({
+      id: 'P', label: 'You', role: 'adult', dob: '1994-04-12', employmentStatus: status
+    }));
+    h.people[0].incomeSources.push(Schema.createIncomeSource(Object.assign({
+      personId: 'P', grossAnnualIncomeCents: 7200000
+    }, match ? { employerMatch: match } : {})));
+    h.assets.push(Schema.createAsset({ category: 'cash', valueCents: 500000, liquid: true }));
+    return h;
+  }
+
+  /* -- The enum itself ---------------------------------------------------- */
+  {
+    const ids = Schema.EMPLOYMENT_STATUSES.map(r => r.id);
+    check('there are five working situations', ids.length, 5);
+    check('each one is listed once', new Set(ids).size, ids.length);
+    Schema.EMPLOYMENT_STATUSES.forEach(function (row) {
+      checkTrue(`${row.id} says whether money is coming in`, typeof row.earning === 'boolean');
+      checkTrue(`${row.id} says whether there is an employer`, typeof row.hasEmployer === 'boolean');
+      checkTrue(`${row.id} has a label and a short label`, !!row.label && !!row.short);
+      /* You cannot have an employer without earning. The reverse is fine —
+         that is what self-employment is. */
+      checkTrue(`${row.id} does not claim an employer while not earning`,
+        !(row.hasEmployer && !row.earning));
+    });
+    check('an unknown id is null, not a guess', Schema.employmentStatus('freelancing'), null);
+  }
+
+  /* -- Who could have a match --------------------------------------------- */
+  {
+    checkTrue('an employee could have a match',
+      Schema.couldHaveEmployerMatch(withStatus('employed')));
+    checkTrue('so could someone doing both',
+      Schema.couldHaveEmployerMatch(withStatus('both')));
+    checkTrue('the self-employed could not',
+      !Schema.couldHaveEmployerMatch(withStatus('selfEmployed')));
+    checkTrue('nor could someone not working',
+      !Schema.couldHaveEmployerMatch(withStatus('notWorking')));
+    checkTrue('nor a retiree',
+      !Schema.couldHaveEmployerMatch(withStatus('retired')));
+
+    /* Unanswered is not an answer. Every household saved before this field
+       existed has no status, and deciding for them that they have no
+       employer would silently hide a question they may have answered. */
+    checkTrue('an unanswered status still gets asked',
+      Schema.couldHaveEmployerMatch(withStatus(null)));
+    checkTrue('and so does a household with no people at all',
+      Schema.couldHaveEmployerMatch(Schema.createHousehold({})));
+
+    /* A figure someone typed is never hidden by a later answer to a
+       different question. */
+    const typedThenQuit = withStatus('notWorking',
+      { matchPercent: 0.5, matchCapPercentOfSalary: 0.06 });
+    checkTrue('a match already entered keeps its question',
+      Schema.couldHaveEmployerMatch(typedThenQuit));
+  }
+
+  /* -- What that does to "what is left to do" ------------------------------ */
+  {
+    const employed = Progress.forRoom('start', withStatus('employed'));
+    const retired  = Progress.forRoom('start', withStatus('retired'));
+
+    checkTrue('an employee is asked about the match',
+      employed.missing.concat(employed.filled).some(f => f.fieldId === 'employerMatch'));
+    checkTrue('a retiree is not',
+      !retired.missing.concat(retired.filled).some(f => f.fieldId === 'employerMatch'));
+    checkTrue('and it is recorded as not applicable rather than dropped',
+      retired.notApplicable.some(f => f.fieldId === 'employerMatch'));
+    checkTrue('with a reason a person can read',
+      retired.notApplicable.every(f => typeof f.because === 'string' && f.because.length > 0));
+
+    /* The bug this exists to kill: the room could never reach 100% because
+       two questions with no true answer sat in the denominator forever. */
+    check('the retiree has three fewer things to answer',
+      employed.total - retired.total, 3);
+    checkTrue('and the denominator shrank, not just the numerator',
+      retired.total < employed.total);
+
+    /* Same household, everything else filled: the retiree finishes. */
+    const done = withStatus('retired');
+    done.state = 'NC';
+    done.filingStatus = 'single';
+    done.meta.hasDebt = false;
+    done.insurance.highestDeductibleCents = 250000;
+    done.expenses.monthlyEssential.estimatedValueCents = 315000;
+    done.assets.push(Schema.createAsset({ category: 'investment', valueCents: 4800000 }));
+    const row = Progress.forRoom('start', done);
+    check('a retiree who answers everything else is finished', row.missing.length, 0);
+    checkTrue('and reads as complete', row.complete);
+    check('at a full share', row.share, 1);
+  }
+
+  /* -- describe() is the single place that decides ------------------------- */
+  {
+    const d = Ownership.describe('employerMatch', withStatus('selfEmployed'), 'start');
+    checkTrue('describe says the field does not apply', d.applies === false);
+    checkTrue('and still knows who would own it', d.ownerId === 'start');
+    const plain = Ownership.describe('cashSavings', withStatus('selfEmployed'), 'start');
+    checkTrue('a field with no applies() always applies', plain.applies === true);
+    check('and carries no reason to explain', plain.notApplicableBecause, null);
+  }
+
+  /* -- The status is itself an owned field --------------------------------- */
+  {
+    const e = Ownership.describe('employmentStatus', withStatus('notWorking'), 'map');
+    checkTrue('the status reads back as set', e.isSet);
+    check('shown by its short label', e.display, 'Not working');
+    check('owned by Start Here', e.ownerId, 'start');
+    checkTrue('linking to its own question', /#q-employment$/.test(e.href));
+    const blank = Ownership.describe('employmentStatus', Schema.createHousehold({}), 'map');
+    checkTrue('and unanswered is unanswered, not "not working"', !blank.isSet);
+  }
+})();
+
+section('The clock');
+
+(function () {
+  /* The same module instance ownership.js registered its reader with. */
+  const Spine = SpineMain;
+  function tick() { var t = Date.now(); while (Date.now() - t < 3) { /* spin */ } }
+
+  /* -- A write stamps the field it changed, and only that field ---------- */
+  {
+    Spine.reset();
+    check('a fresh household has no stamps', Object.keys(Spine.getProfile().meta.confirmedAt).length, 0);
+    check('an unstamped field reads null, not a date', Spine.confirmedAt('state'), null);
+
+    Spine.updateProfile({ state: 'NC' });
+    const first = Spine.confirmedAt('state');
+    checkTrue('writing a value stamps it', /^\d{4}-\d{2}-\d{2}T/.test(first || ''));
+    check('and leaves untouched fields unstamped', Spine.confirmedAt('filingStatus'), null);
+
+    tick();
+    Spine.updateProfile({ state: 'NC' });
+    check('re-saving the same value does not move the clock', Spine.confirmedAt('state'), first);
+
+    tick();
+    Spine.updateProfile({ state: 'VA' });
+    checkTrue('a different value does', Spine.confirmedAt('state') > first);
+  }
+
+  /* -- The spine stamps; rooms never do ---------------------------------- */
+  {
+    Spine.reset();
+    Spine.ensurePrimaryPerson('You');
+    const p = Spine.getProfile().people[0];
+    Spine.upsertAsset(Schema.createAsset({ id: 'c', category: 'cash', valueCents: 950000, liquid: true }));
+    checkTrue('an asset written through upsertAsset stamps cashSavings', !!Spine.confirmedAt('cashSavings'));
+    check('but not investments', Spine.confirmedAt('investments'), null);
+    Spine.upsertPerson({ id: p.id, dob: '1994-04-12' });
+    checkTrue('a person write stamps dob', !!Spine.confirmedAt('dob'));
+    checkTrue('and age, which is read from it', !!Spine.confirmedAt('age'));
+  }
+
+  /* -- confirm(): yes, still that ---------------------------------------- */
+  {
+    Spine.reset();
+    Spine.upsertAsset(Schema.createAsset({ id: 'c', category: 'cash', valueCents: 950000, liquid: true }));
+    const before = Spine.confirmedAt('cashSavings');
+    tick();
+    const stamped = Spine.confirm('cashSavings');
+    checkTrue('confirm re-stamps without a value change', stamped > before);
+    check('and returns the stamp it wrote', Spine.confirmedAt('cashSavings'), stamped);
+    check('and the value is untouched', Schema.cashCents(Spine.getProfile()).value, 950000);
+  }
+
+  /* -- Snapshots are read back ------------------------------------------- */
+  {
+    Spine.reset();
+    Spine._clearSnapshots && Spine._clearSnapshots();
+    check('no snapshot, no latest', Spine.latestSnapshot(), null);
+    check('no snapshot, no delta', Spine.snapshotDelta('netWorth', Money.ok(100)), null);
+
+    Spine.updateProfile({ state: 'NC' });
+    Spine.upsertAsset(Schema.createAsset({ id: 'c', category: 'cash', valueCents: 950000, liquid: true }));
+    const snap = Spine.appendSnapshot({ computedOutputs: { netWorth: Money.ok(950000), months: 3 } });
+    check('a snapshot freezes every owned field by id', snap.fields.cashSavings, 950000);
+    check('including ones read as strings', snap.fields.state, 'NC');
+    check('and null for the unset', snap.fields.investments, null);
+    check('latestSnapshot is that one', Spine.latestSnapshot().id, snap.id);
+
+    const d = Spine.snapshotDelta('netWorth', Money.ok(1200000));
+    check('a Result output reads through to its value', d.before, 950000);
+    check('and the delta is after minus before', d.delta, 250000);
+    check('dated to the snapshot', d.since, snap.timestamp);
+    check('a bare-number output reads too', Spine.snapshotDelta('months', 4).delta, 1);
+    const f = Spine.snapshotDelta('cashSavings', Money.ok(950000));
+    check('a field id compares against the frozen fields', f.before, 950000);
+    checkTrue('and unchanged is unchanged', !f.changed && f.delta === 0);
+    const sd = Spine.snapshotDelta('state', 'VA');
+    checkTrue('a non-numeric change is reported without a delta', sd.changed && sd.delta === null);
+    check('an id the snapshot never recorded is null, not zero', Spine.snapshotDelta('nope', 5), null);
+    const inc = Spine.snapshotDelta('netWorth', Money.incomplete('x', []));
+    check('an incomplete current value reads as null after', inc.after, null);
+    check('with no numeric delta', inc.delta, null);
+  }
+
+  /* -- Every page loads the spine before the ownership map ---------------- */
+  {
+    /* ownership.js hands its field reader to the spine at load. If the spine
+       is not there yet, nothing registers and nothing ever gets stamped —
+       silently. So the order is asserted for every page that loads both. */
+    const pages = fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f))
+      .map(f => 'rooms/' + f).concat(['index.html', 'map.html']);
+    pages.forEach(function (page) {
+      const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
+      const spine = html.search(/<script src="[^"]*spine-v2\.js"/);
+      const own = html.search(/<script src="[^"]*ownership\.js"/);
+      if (own === -1) return;
+      checkTrue(`${page} loads the spine before the ownership map`, spine !== -1 && spine < own);
+    });
+  }
+
+  /* -- Compatibility: older shapes -------------------------------------- */
+  {
+    const old = Schema.createHousehold({ meta: { updatedAt: '2026-01-01T00:00:00Z' } });
+    check('a household built without stamps gets an empty map', JSON.stringify(old.meta.confirmedAt), '{}');
+    check('and keeps its other meta', old.meta.updatedAt, '2026-01-01T00:00:00Z');
+  }
+})();
+
+section('Age, and the three that move');
+
+(function () {
+  const Spine = SpineMain;
+  const Staleness = require(path.join(ROOT, 'shared/staleness.js'));
+  const Instruments = InstrumentsMain;
+  const table = require(path.join(ROOT, 'data/staleness.json'));
+  const DAY = 86400000;
+
+  /* -- The table ----------------------------------------------------------- */
+  {
+    ['asOf', 'confidence', 'source', 'confidenceNote', 'version'].forEach(k =>
+      checkTrue(`staleness.json carries ${k}`, !!table[k]));
+    check('it is a convention, not a finding', table.confidence, 'convention');
+    Object.keys(table.staleAfterDays).forEach(f =>
+      checkTrue(`staleness names a real field: ${f}`, !!Ownership.FIELDS[f]));
+    table.volatile.forEach(f =>
+      checkTrue(`volatile field ${f} has an interval`, typeof table.staleAfterDays[f] === 'number'));
+    check('a date of birth never goes stale', table.staleAfterDays.dob, null);
+    checkTrue('cash goes stale within a pay cycle or two', table.staleAfterDays.cashSavings <= 31);
+  }
+
+  /* -- Three states, never collapsed ---------------------------------------- */
+  {
+    Staleness.use(null);
+    const now = Date.parse('2026-09-04T12:00:00Z');
+    const h = Schema.createHousehold({ meta: { updatedAt: '2026-08-25T12:00:00Z' } });
+    h.meta.confirmedAt = { cashSavings: '2026-09-01T12:00:00Z' };
+
+    const known = Staleness.describe(h, 'cashSavings', now);
+    check('a stamped field has a real age', known.days, 3);
+    checkTrue('and says it is per-field', known.perField);
+    check('read as "updated 3 days ago"', known.label, 'updated 3 days ago');
+    check('with no table there is no verdict', known.stale, null);
+
+    const unknown = Staleness.describe(h, 'investments', now);
+    check('an unstamped field falls back to the last save', unknown.days, 10);
+    checkTrue('and says it is not per-field', !unknown.perField);
+    checkTrue('with a label that admits it', /not dated/.test(unknown.label));
+
+    const nothing = Staleness.describe(Schema.createHousehold({}), 'cashSavings', now);
+    check('nothing saved, nothing to date', nothing.days, null);
+    check('and an empty label', nothing.label, '');
+
+    Staleness.use(table);
+    check('with the table, 3 days is fresh', Staleness.describe(h, 'cashSavings', now).stale, false);
+    h.meta.confirmedAt.cashSavings = '2026-07-01T12:00:00Z';
+    check('and 65 days is stale', Staleness.describe(h, 'cashSavings', now).stale, true);
+    check('while a date of birth never is', Staleness.describe(
+      Object.assign({}, h, { meta: { confirmedAt: { dob: '2020-01-01T00:00:00Z' } } }), 'dob', now).stale, false);
+    check('the fallback age also gets a verdict', Staleness.describe(h, 'investments', now).stale, false);
+
+    ['today', 'yesterday', '30 days ago', 'about a month ago', '3 months ago', 'over a year ago', '2 years ago']
+      .forEach(function (want, i) {
+        const days = [0, 1, 30, 45, 90, 400, 800][i];
+        check(`${days} days reads as "${want}"`, Staleness.label(days, true), 'updated ' + want);
+      });
+
+    const sum = Staleness.summary(h, now);
+    check('the summary walks the volatile list', sum.rows.length, table.volatile.length);
+    checkTrue('and names the oldest', sum.oldest && sum.oldest.fieldId === 'cashSavings');
+    checkTrue('and knows something is stale', sum.anyStale);
+  }
+
+  /* -- Ownership shows the age --------------------------------------------- */
+  {
+    Staleness.use(table);
+    Spine.reset();
+    Spine.upsertAsset(Schema.createAsset({ id: 'c', category: 'cash', valueCents: 950000, liquid: true }));
+    const d = Ownership.describe('cashSavings', Spine.getProfile(), 'dashboard');
+    checkTrue('describe carries an age', !!d.age && d.age.days === 0);
+    checkTrue('and the chip prints it', /updated today/.test(Ownership.chip('cashSavings', Spine.getProfile(), 'dashboard')));
+    const old = Spine.getProfile(); old.meta.confirmedAt.cashSavings = '2020-01-01T00:00:00Z';
+    checkTrue('a stale figure is marked in the chip', /is-stale/.test(Ownership.chip('cashSavings', old, 'dashboard')));
+    checkTrue('an unset field has no age', Ownership.describe('investments', Spine.getProfile(), 'dashboard').age === null);
+  }
+
+  /* -- One write path for the figures that move ---------------------------- */
+  {
+    Spine.reset();
+    check('cash and investments declare a shared write path',
+      Ownership.writable().sort().join(','), 'cashSavings,investments');
+    Ownership.write('cashSavings', 980000);
+    check('writing cash creates the Tier 0 cash record', Schema.cashCents(Spine.getProfile()).value, 980000);
+    Ownership.write('cashSavings', 990000);
+    check('writing again updates it in place', Schema.cashCents(Spine.getProfile()).value, 990000);
+    check('and there is exactly one cash asset', Spine.getProfile().assets.filter(a => a.category === 'cash').length, 1);
+    checkTrue('it is liquid', Spine.getProfile().assets[0].liquid === true);
+    let threw = false;
+    try { Ownership.write('dob', '1990-01-01'); } catch (e) { threw = true; }
+    checkTrue('a field with no shared path refuses rather than guessing', threw);
+    const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
+    checkTrue('Start Here writes cash through the same path', start.indexOf("Ownership.write('cashSavings'") !== -1);
+    checkTrue('and no longer has its own asset writer', start.indexOf('function writeAsset') === -1);
+    const refresh = fs.readFileSync(path.join(ROOT, 'rooms/refresh.html'), 'utf8');
+    checkTrue('Refresh writes through it too', refresh.indexOf('Ownership.write(') !== -1);
+    checkTrue('and never calls upsertAsset itself', refresh.indexOf('upsertAsset') === -1);
+  }
+
+  /* -- The instrument list is the snapshot list ---------------------------- */
+  {
+    const h = Demo.build();
+    const now = Date.parse('2026-09-04T12:00:00Z');
+    const c = Instruments.compute(h, TABLES, now);
+    check('six instruments', c.rows.length, 6);
+    check('in panel order', c.rows.map(r => r.cap).join(' '), 'Altitude Thrust Fuel Load Distance Heading');
+    checkTrue('every one computes for the demo', c.rows.every(r => r.ok));
+    /* Net worth: 9,500 + 48,000 − 18,400 − 3,200 = 35,900. */
+    check('altitude is the demo net worth', c.byId.netWorth.result.value, 3590000);
+    check('formatted as dollars', Instruments.format(c.byId.netWorth), '$35,900');
+    check('fuel is cash over spending: 9,500 / 3,150', Math.round(c.byId.emergencyFundMonths.result.value * 100) / 100, 3.02);
+    check('heading is the FOO step the engine places you on', c.byId.fooStep.result.value, Tier0.computeAll(h, TABLES).foo.placement.step);
+    checkTrue('distance is a calendar year, not a count of years', c.byId.fiEtaYear.result.value > 2026);
+    check('which is now plus years-to-FI', c.byId.fiEtaYear.result.value,
+      new Date(now + Tier0.yearsToFire(h, TABLES).value * 365.25 * DAY).getFullYear());
+
+    const out = Instruments.outputs(h, TABLES, now);
+    c.rows.forEach(r => checkTrue(`a snapshot would carry ${r.id}`, r.id in out));
+    checkTrue('plus the including-match savings rate', 'savingsRateIncludingMatch' in out);
+
+    Spine.reset();
+    Spine.updateProfile({ people: h.people, assets: h.assets, debts: h.debts, expenses: h.expenses,
+      filingStatus: h.filingStatus, state: h.state, capturingFullMatch: h.capturingFullMatch,
+      retirement: h.retirement, insurance: h.insurance });
+    const rec = Instruments.snapshot(Spine.getProfile(), TABLES);
+    check('a taken snapshot freezes net worth', rec.computedOutputs.netWorth.value, 3590000);
+    check('and the frozen fields', rec.fields.cashSavings, 950000);
+    Ownership.write('cashSavings', 1250000);
+    const d = Instruments.deltas(Spine.getProfile(), TABLES, now);
+    check('net worth moved by the cash change', d.netWorth.delta, 300000);
+    check('formatted with a sign', Instruments.formatDelta(c.byId.netWorth, d.netWorth), '+$3,000');
+    check('runway moved too', Math.round(d.emergencyFundMonths.delta * 100) / 100, Math.round((1250000 - 950000) / 315000 * 100) / 100);
+    check('nothing to say when nothing moved', Instruments.formatDelta(c.byId.fooStep, { delta: 0 }), '');
+  }
+
+  /* -- The dashboard's first screen is built from the instrument list ------ */
+  {
+    /* The dashboard is index.html since D-058; rooms/dashboard.html is a
+       redirect that must carry the hash across. */
+    const dash = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+    const stub = fs.readFileSync(path.join(ROOT, 'rooms/dashboard.html'), 'utf8');
+    checkTrue('rooms/dashboard.html redirects to the front page', /url=\.\.\/index\.html/.test(stub));
+    checkTrue('and carries the hash', stub.indexOf('location.hash') !== -1);
+    checkTrue('the front page is a router', dash.indexOf('function route(') !== -1);
+    checkTrue('with an explicit example-numbers action behind a confirm',
+      dash.indexOf('id="btn-example"') !== -1 && dash.indexOf('window.confirm(') !== -1);
+    checkTrue('that never runs on load', !/DemoPersona\.build\(\)[\s\S]{0,200}addEventListener|load[\s\S]{0,40}DemoPersona\.build/.test(dash));
+    check('the registry points the dashboard at the root', Registry.byId('dashboard').href, 'index.html');
+    check('and the ladder at rooms/', Registry.byId('foo-ladder').href, 'rooms/foo-ladder.html');
+    checkTrue('the front page loads the instrument list', dash.indexOf('shared/instruments.js') !== -1);
+    checkTrue('and the staleness reader', dash.indexOf('shared/staleness.js') !== -1);
+    checkTrue('and hands it the table', dash.indexOf('Staleness.use(') !== -1);
+    checkTrue('it renders the grid from Instruments.compute', dash.indexOf('Instruments.compute(') !== -1);
+    checkTrue('and deltas from Instruments.deltas', dash.indexOf('Instruments.deltas(') !== -1);
+    checkTrue('with one next action', dash.indexOf('id="next-action"') !== -1);
+    checkTrue('and a refresh link', dash.indexOf("Ownership.linkTo('refresh')") !== -1);
+    /* Caveats fold: every info toggle names a node that exists in the HTML,
+       so nothing is built at toggle time. */
+    const toggles = dash.match(/data-info="([^"]+)"/g) || [];
+    checkTrue('there are info toggles', toggles.length >= 2);
+    toggles.forEach(t => {
+      const id = t.match(/"([^"]+)"/)[1];
+      checkTrue(`toggle target #${id} is in the HTML`, dash.indexOf('id="' + id + '"') !== -1);
+    });
+    /* Every FOO flag the engine can fire has a sentence and a room. */
+    const rules = require(path.join(ROOT, 'data/foo_rules.json'));
+    rules.outOfBoundsFlags.forEach(f =>
+      checkTrue(`the next-action card can say ${f.key}`, dash.indexOf(f.key + ':') !== -1));
+  }
+
+  /* -- The Refresh page is a utility, not a room on the map ---------------- */
+  {
+    const r = Registry.byId('refresh');
+    checkTrue('Refresh is registered', !!r);
+    checkTrue('as a utility', r.utility === true);
+    check('walking the volatile list', r.needs.slice().sort().join(','), table.volatile.slice().sort().join(','));
+    checkTrue('and last on the path so it never interrupts a first walk',
+      Registry.inOrder()[Registry.inOrder().length - 1].id === 'refresh');
+    const map = fs.readFileSync(path.join(ROOT, 'map.html'), 'utf8');
+    checkTrue('the map skips utility rooms', map.indexOf('!r.utility') !== -1);
+  }
+})();
+
+section('Suggested, not stored');
+
+(function () {
+  const src = fs.readFileSync(path.join(ROOT, 'shared/suggest.js'), 'utf8');
+  const Suggest = require(path.join(ROOT, 'shared/suggest.js'));
+  ['show', 'clear', 'isSuggested', 'entered', 'all'].forEach(fn =>
+    checkTrue(`Suggest exposes ${fn}()`, typeof Suggest[fn] === 'function'));
+  /* The whole guarantee: this file cannot write to the household. */
+  checkTrue('suggest.js never touches the spine', !/Spine\.|localStorage|updateProfile|upsert/.test(src));
+  checkTrue('and never requires it', !/require\(/.test(src));
+  checkTrue('focus clears the shown value so a blur reads empty', /addEventListener\('focus'[\s\S]{0,400}node\.value = ''/.test(src));
+  checkTrue('show() refuses to paint over an entered value', /if \(!isSuggested\(node\) && String\(node\.value/.test(src));
+  const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('the suggested style is in the shared theme', theme.indexOf('.slaf-input--suggested') !== -1);
+  checkTrue('with a dashed shell', /is-suggested \{ border-style: dashed/.test(theme));
+  /* No engine or schema reader can see a suggestion because none is stored:
+     the ownership readings of a household are the same before and after a
+     suggestion would be shown — there is no API to store one. */
+  checkTrue('there is no way to store a suggestion', !/state: 'suggested'|state:"suggested"/.test(
+    fs.readFileSync(path.join(ROOT, 'shared/schema.js'), 'utf8') + fs.readFileSync(path.join(ROOT, 'shared/spine-v2.js'), 'utf8')));
+})();
+
+section('Eleven cards');
+
+(function () {
+  /* -- "No debt" is an answer ------------------------------------------ */
+  {
+    const h = Demo.build();
+    checkTrue('the demo says it has debt', h.meta.hasDebt === true);
+    checkTrue('Debt Payoff is on its path', Registry.nextAfter('start', [], h).id === 'debt-payoff');
+    const none = Demo.build(); none.meta.hasDebt = false; none.debts = [];
+    check('with no debt the path skips Debt Payoff', Registry.nextAfter('start', [], none).id, 'cash-flow');
+    checkTrue('and total debt stops applying', !Ownership.describe('totalDebt', none, 'map').applies);
+    checkTrue('and so do the payments', !Ownership.describe('monthlyDebtPayments', none, 'map').applies);
+    checkTrue('so the dashboard is complete for a debt-free household', Progress.forRoom('dashboard', none).complete);
+    const unasked = Demo.build(); unasked.meta.hasDebt = null; unasked.debts = [];
+    checkTrue('unanswered still asks for debt figures', Ownership.describe('totalDebt', unasked, 'map').applies);
+    checkTrue('utility pages are never "next"', Registry.inOrder().every(r => !r.utility || Registry.nextAfter(r.id, [], h) === null || Registry.nextAfter(null, Registry.inOrder().filter(x => x.id !== r.id).map(x => x.id), h).id !== r.id));
+    check('hasDebt is owned by Start Here', Ownership.field('hasDebt').owner, 'start');
+  }
+
+  /* -- Capturing the match is derived ---------------------------------- */
+  {
+    const h = Demo.build();
+    const d = Schema.capturingFullMatchDerived(h);
+    checkTrue('4% against a 6% cap is not the full match', d.value === false && d.derived);
+    h.retirement.contributionPercent = 6;
+    checkTrue('6% against 6% is', Schema.capturingFullMatchDerived(h).value === true);
+    h.retirement.contributionPercent = 10;
+    checkTrue('and so is more', Schema.capturingFullMatchDerived(h).value === true);
+    h.retirement.contributionPercent = null;
+    h.capturingFullMatch = true;
+    const fb = Schema.capturingFullMatchDerived(h);
+    checkTrue('with no contribution the old stored answer is the fallback', fb.value === true && fb.derived === false);
+    h.capturingFullMatch = null;
+    check('and with neither it is incomplete', Schema.capturingFullMatchDerived(h).status, 'incomplete');
+    check('the ownership map reads the derivation', Ownership.describe('capturingFullMatch', Demo.build(), 'start').display, 'No');
+    const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
+    checkTrue('Start Here no longer asks it', start.indexOf('data-choices="capturingFullMatch"') === -1);
+  }
+
+  /* -- The stored shape ------------------------------------------------ */
+  {
+    check('a new asset has no tax character', Schema.createAsset({}).taxCharacter, null);
+    check('and keeps one it is given', Schema.createAsset({ taxCharacter: 'roth' }).taxCharacter, 'roth');
+    check('three characters are asked', Schema.TAX_CHARACTERS.map(t => t.id).join(','), 'pretax,roth,taxable');
+    check('a new household has not answered about debt', Schema.createHousehold({}).meta.hasDebt, null);
+    check('the demo answers every intake field', Progress.forRoom('start', Demo.build()).missing.length, 0);
+    ['contributionPercent', 'highestDeductible', 'hasDebt', 'dob', 'state', 'employerMatch'].forEach(f =>
+      check(`${f} is owned by Start Here`, Ownership.field(f).owner, 'start'));
+    check('Sleep At Night reads the deductible as a chip',
+      fs.readFileSync(path.join(ROOT, 'rooms/sleep-at-night.html'), 'utf8').indexOf("Ownership.chip('highestDeductible'") !== -1, true);
+    check('Where It Goes reads the contribution as a chip',
+      fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8').indexOf("Ownership.chip('contributionPercent'") !== -1, true);
+    checkTrue('and has no box for it',
+      fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8').indexOf('data-setup="contributionPercent"') === -1);
+  }
+
+  /* -- The two tables -------------------------------------------------- */
+  {
+    const states = require(path.join(ROOT, 'data/states.json'));
+    check('fifty states, DC and other', states.states.length, 52);
+    checkTrue('every code is two letters or OTHER', states.states.every(r => /^[A-Z]{2}$|^OTHER$/.test(r.code)));
+    checkTrue('NC is North Carolina', states.states.some(r => r.code === 'NC' && r.name === 'North Carolina'));
+    const md = require(path.join(ROOT, 'data/match_defaults.json'));
+    check('the suggested match is 50% of the first 6%', md.mostCommon.matchPercent + '/' + md.mostCommon.matchCapPercentOfSalary, '0.5/0.06');
+    check('marked as a convention', md.confidence, 'convention');
+    const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
+    checkTrue('Start Here shows it through Suggest, never writes it', /Suggest\.show\(n\.pct/.test(start));
+    checkTrue('with a "no match" button that writes zeros explicitly', start.indexOf("id=\"btn-no-match\"") !== -1 && /writeIncome\('matchPercent', 0\)/.test(start));
+    /* Eleven cards for one W-2 person with no debt: count the sections. */
+    const cards = (start.match(/<section class="slaf-card q" id="q-/g) || []).length;
+    check('twelve cards in the markup', cards, 12);
+    checkTrue('one of which is the second person, shown only when there are two', /id: 'q-partner'[\s\S]{0,120}applies: function \(h\) \{ return hasPartner\(h\)/.test(start));
+  }
+
+  /* -- The strip repaints after a tap, not during one ------------------- */
+  {
+    const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+    checkTrue('the footer strip defers its repaint', /setTimeout\([\s\S]{0,400}paint\(\)/.test(prog));
+    checkTrue('and holds its height across it', prog.indexOf('box.style.minHeight = held') !== -1);
+    const sug = fs.readFileSync(path.join(ROOT, 'shared/suggest.js'), 'utf8');
+    checkTrue('a suggestion chip keeps its space when off', sug.indexOf("'is-off'") !== -1 && sug.indexOf('chip.hidden = true') === -1);
+    checkTrue('and a focused box is never marked suggested', /node === document\.activeElement\) \{ chipFor\(node\); return; \}/.test(sug));
+  }
+})();
+
 section('What is finished');
 
 (function () {
@@ -4444,7 +4966,9 @@ section('What is finished');
      short on-ramp and goes back to being a wall of twenty-five rooms —
      which is the thing D-051 exists to prevent, so it should fail loudly. */
   {
-    const core = Registry.ROOMS.filter(r => r.kind === 'core');
+    /* Utility pages (Refresh, D-057) are gathering pages that never sit on
+       the map, so they are not part of the four-room on-ramp. */
+    const core = Registry.ROOMS.filter(r => r.kind === 'core' && !r.utility);
     checkTrue('the core stays four rooms or fewer', core.length <= 4,
       `core is now ${core.map(r => r.title).join(', ')} — if this is deliberate, `
         + 'update the check and D-051 together');
@@ -4499,7 +5023,11 @@ section('What is finished');
        would move for reasons unrelated to effort. */
     const everyNeed = [];
     Registry.ROOMS.forEach(r => (r.needs || []).forEach(n => everyNeed.push(n)));
-    const distinct = new Set(everyNeed).size;
+    /* ...and over fields that APPLY to this household. A field that has
+       stopped being a question (an HSA with no high-deductible plan) is not
+       something left to do. D-055. */
+    const distinct = Array.from(new Set(everyNeed))
+      .filter(f => Ownership.describe(f, h, 'map').applies).length;
     check('the total is distinct fields, not room-by-room mentions',
       o.fieldsTotal, distinct);
     checkTrue('which is far fewer than the mentions', everyNeed.length > distinct);
@@ -4521,6 +5049,12 @@ section('What is finished');
     const empty = Progress.overall(Schema.createHousehold({}));
     check('an empty household has answered nothing', empty.fieldsFilled, 0);
     check('but still knows how much there is', empty.fieldsTotal, distinct);
+    /* And the demo is the one household that answers everything a room can
+       read — if a new need is added and the persona is not extended to
+       match, this is where it shows. */
+    const demoDistinct = Array.from(new Set(everyNeed))
+      .filter(f => Ownership.describe(f, Demo.build(), 'map').applies).length;
+    check('the demo answers every applicable field', done.fieldsFilled, demoDistinct);
   }
 
   /* -- Where to go next --------------------------------------------------- */
@@ -4576,7 +5110,9 @@ section('What is finished');
     checkTrue('a room links to its neighbour through ../',
       /\.\.\/rooms\//.test(Progress.headerNavHtml('fire')));
     checkTrue('the front page does not',
-      !/\.\.\//.test(Progress.headerNavHtml('foo-ladder')));
+      !/\.\.\//.test(Progress.headerNavHtml('dashboard')));
+    checkTrue('and the ladder, now in rooms/, does',
+      /\.\.\//.test(Progress.headerNavHtml('foo-ladder')));
 
     check('an unknown room renders no nav rather than a broken one',
       /href/.test(Progress.headerNavHtml('nope')), true);
@@ -4594,7 +5130,7 @@ section('What is finished');
     /* From a room, links climb out of rooms/; from the root they must not. */
     checkTrue('links from a room are relative to rooms/',
       /\.\.\/rooms\/start\.html/.test(strip), strip.slice(0, 400));
-    const fromRoot = Progress.stripHtml('foo-ladder', h);
+    const fromRoot = Progress.stripHtml('dashboard', h);
     checkTrue('links from the front page are not',
       !/\.\.\//.test(fromRoot), fromRoot.slice(0, 400));
 
@@ -4648,9 +5184,9 @@ section('Facts answered once');
   /* -- Every new fact is owned by exactly one room ----------------------- */
   {
     const OWNED = {
-      contributionPercent: 'accounts', rothContributed: 'accounts',
+      contributionPercent: 'start', rothContributed: 'accounts',
       hsaContributed: 'accounts', marginalRate: 'accounts',
-      highestDeductible: 'sleep-at-night'
+      highestDeductible: 'start'
     };
     const h = Schema.createHousehold({});
     h.retirement = { contributionPercent: 4, rothContributedCents: 300000,
@@ -4695,6 +5231,64 @@ section('Facts answered once');
     /* It must still own the things that ARE local to it. */
     checkTrue('but it still owns its own prepaid figures',
       foo.indexOf("field({ label: 'Prepaid goal'") !== -1);
+  }
+
+  /* -- The waterfall pours take-home, not gross ---------------------------- */
+  {
+    const h = Demo.build();
+    const th = Tier0.takeHomeMonthlyCents(h, TABLES);
+    /* $72,000 at the table's 19% effective rate for a single filer is
+       $13,680 of tax; ($72,000 − $13,680) / 12 = $4,860 a month. */
+    check('demo take-home is $4,860 a month', th.value, 486000);
+    check('at the table rate', th.effectiveRate, 0.19);
+    check('so the gap is $1,710, not the pre-tax $2,850', th.value - 315000, 171000);
+    const noFiling = Demo.build(); noFiling.filingStatus = null;
+    check('no filing status, no take-home', Tier0.takeHomeMonthlyCents(noFiling, TABLES).status, 'incomplete');
+    const foo = fs.readFileSync(path.join(ROOT, 'foo-ladder.js'), 'utf8');
+    checkTrue('the ladder reads take-home from Tier0', foo.indexOf('Tier0.takeHomeMonthlyCents') !== -1);
+    checkTrue('and no longer subtracts expenses from gross',
+      foo.indexOf('d.mIncome - d.mExpenses') === -1, 'BRIEF §1.1 item 1');
+    checkTrue('and loads the tax table it needs', foo.indexOf("'effectiveTaxRates'") !== -1);
+    const idx = fs.readFileSync(path.join(ROOT, 'rooms/foo-ladder.html'), 'utf8');
+    checkTrue('the ladder page loads tier0 before the ladder script',
+      idx.indexOf('engines/tier0.js') !== -1 && idx.indexOf('engines/tier0.js') < idx.indexOf('foo-ladder.js'));
+  }
+
+  /* -- The footer and the timeline read the same list ---------------------- */
+  {
+    const needs = Registry.byId('foo-ladder').needs;
+    ['filingStatus', 'highestDeductible', 'contributionPercent', 'rothContributed', 'hsaContributed']
+      .forEach(f => checkTrue(`the ladder declares it needs ${f}`, needs.indexOf(f) !== -1, 'BRIEF §1.1 item 2'));
+    const row = Progress.forRoom('foo-ladder', Demo.build());
+    checkTrue('the demo persona completes the ladder', row.complete);
+    checkTrue('with the HSA marked not applicable rather than missing',
+      row.notApplicable.some(f => f.fieldId === 'hsaContributed'));
+    const hdhp = Demo.build(); hdhp.retirement.onHdhp = true;
+    checkTrue('on a high-deductible plan the HSA becomes a real need',
+      !Progress.forRoom('foo-ladder', hdhp).complete);
+  }
+
+  /* -- The intake's count only shrinks ------------------------------------- */
+  {
+    const fresh = Schema.createHousehold({});
+    checkTrue('with nothing answered the capturing question counts', Schema.capturingQuestionApplies(fresh));
+    const h = Demo.build();
+    checkTrue('with a real match it counts', Schema.capturingQuestionApplies(h));
+    h.people[0].incomeSources[0].employerMatch = { matchPercent: 0, matchCapPercentOfSalary: 0 };
+    checkTrue('with no match it stops', !Schema.capturingQuestionApplies(h));
+    /* A typed match keeps its question whatever the status says (D-055),
+       so the no-employer case has to be one where nothing was typed. */
+    const se = Demo.build(); se.people[0].employmentStatus = 'selfEmployed';
+    se.people[0].incomeSources[0].employerMatch = { matchPercent: null, matchCapPercentOfSalary: null };
+    checkTrue('with no employer it stops', !Schema.capturingQuestionApplies(se));
+    checkTrue('and the ownership map uses the same rule',
+      !Ownership.describe('capturingFullMatch', se, 'start').applies
+      && Ownership.describe('capturingFullMatch', fresh, 'start').applies);
+    const startNeeds = Progress.forRoom('start', fresh);
+    /* Thirteen shared fields, eleven cards: the 401(k) card carries the
+       match, the contribution and the derived capture; born + state share
+       one card. D-061. */
+     check('so Start Here counts thirteen fields from the first screen', startNeeds.total, 13);
   }
 
   /* -- Rooms that hold facts are not "explore" rooms --------------------- */

@@ -22,23 +22,28 @@
     {
       id: 'start',
       kind: 'core',
-      needs: ['dob', 'state', 'filingStatus', 'grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'employerMatch', 'capturingFullMatch'],
+      needs: ['employmentStatus', 'dob', 'state', 'filingStatus', 'grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments',
+              'employerMatch', 'contributionPercent', 'capturingFullMatch', 'highestDeductible', 'hasDebt'],
       order: 1,
       title: 'Start Here',
-      blurb: 'Nine questions, one at a time, in plain English. Answer once and every other room opens already filled in.',
+      blurb: 'A short set of questions, one at a time, in plain English. Answer once and every other room opens already filled in.',
       href: 'rooms/start.html',
       tier: 0,
       tags: ['income', 'cashflow', 'debt'],
       subsections: [
-        { id: 'q-dob',         label: 'Date of birth' },
-        { id: 'q-state',       label: 'State' },
+        { id: 'q-household',   label: 'Just you, or two' },
+        { id: 'q-employment',  label: 'Working situation' },
+        { id: 'q-partner',     label: 'The other of you' },
+        { id: 'q-about',       label: 'Born, and where' },
+        { id: 'q-income',      label: 'Income' },
         { id: 'q-filing',      label: 'Filing status' },
-        { id: 'q-income',      label: 'Gross annual income' },
-        { id: 'q-expenses',    label: 'Monthly expenses' },
-        { id: 'q-cash',        label: 'Cash & savings' },
+        { id: 'q-expenses',    label: 'Monthly spending' },
+        { id: 'q-cash',        label: 'Cash' },
         { id: 'q-investments', label: 'Investments' },
-        { id: 'q-match',       label: 'Employer match' },
-        { id: 'q-capturing',   label: 'Capturing the match' }
+        { id: 'q-plan',        label: 'Your 401(k)' },
+        { id: 'q-deductible',  label: 'Highest deductible' },
+        { id: 'q-debt',        label: 'Any debt' },
+        { id: 'review',        label: 'Your answers' }
       ]
     },
     {
@@ -270,15 +275,15 @@
       order: 15,
       title: 'The Dashboard',
       blurb: 'Every threshold ratio as one shape, plus altitude, fuel, engine load, thrust, weather and the flight plan \u2014 the whole panel at a glance.',
-      href: 'rooms/dashboard.html',
+      /* The front door since D-058: index.html renders the dashboard once
+         it has what it needs, and the intake landing until then. */
+      href: 'index.html',
       tier: 1,
       tags: ['income', 'cashflow', 'debt'],
       subsections: [
+        { id: 'panel',        label: 'The panel' },
         { id: 'out-radar',    label: 'All of it at once' },
         { id: 'out-altitude', label: 'Altitude' },
-        { id: 'out-fuel',     label: 'Fuel' },
-        { id: 'out-load',     label: 'Engine load' },
-        { id: 'out-thrust',   label: 'Thrust' },
         { id: 'out-weather',  label: 'Weather' },
         { id: 'out-plan',     label: 'Flight plan' },
         { id: 'reading',      label: 'Reading from elsewhere' }
@@ -469,14 +474,19 @@
     {
       id: 'foo-ladder',
       kind: 'read',
-      needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'employerMatch', 'dob'],
+      /* Every shared figure the month-by-month timeline reads, so the
+         footer and the timeline cannot disagree about what is missing.
+         The two prepaid figures stay local to the page and optional.
+         BRIEF §1.1 item 2. */
+      needs: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses', 'cashSavings', 'employerMatch', 'dob',
+              'highestDeductible', 'contributionPercent', 'rothContributed', 'hsaContributed'],
       order: 21,
       title: 'FOO Ladder',
       blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
-      href: 'index.html',
+      href: 'rooms/foo-ladder.html',
       tier: 0,
       tags: ['cashflow', 'debt'],
-      /* The FOO calculator sits at the repo root (index.html), so this href
+      /* The FOO calculator sat at the repo root until D-058, so this href
          is relative to map.html, which also lives at the root. A
          single-view app with no stable section anchors yet; declaring none
          is deliberate — see DECISIONS.md D-007. */
@@ -502,6 +512,28 @@
      what is required from what is optional, which is most of why a suite
      this size feels like homework. See DECISIONS.md D-051.
 
+  /* A utility page: reached from the dashboard's staleness line and from
+     the room-to-room nav, never listed on the map's groups — it asks for
+     nothing new, it re-asks the three figures that move. It writes those
+     through the owner's own write path (Ownership.write), so it is not a
+     second editor of a second copy. DECISIONS.md D-057. */
+  ROOMS.push({
+    id: 'refresh',
+    kind: 'core',
+    utility: true,
+    needs: ['cashSavings', 'investments', 'totalDebt'],
+    order: 26,
+    title: 'Refresh',
+    blurb: 'The three figures that move — cash, investments, what you owe — re-checked in under a minute, and a snapshot taken so the dashboard can say what changed.',
+    href: 'rooms/refresh.html',
+    tier: 0,
+    tags: ['cashflow', 'debt'],
+    subsections: [
+      { id: 'fields', label: 'The three that move' },
+      { id: 'done',   label: 'Snapshot' }
+    ]
+  });
+
   /* `needs` lists the shared fields a room reads before it can show its main
      output — the ids in shared/ownership.js, which know who owns each one and
      which question to land on. shared/progress.js turns that into "what is
@@ -516,9 +548,12 @@
 
   function all() { return inOrder(); }
 
-  /** The next room after this one that hasn't been visited yet. */
-  function nextAfter(roomId, visitedIds) {
-    var path = inOrder();
+  /** The next room after this one that hasn't been visited yet. Pass the
+   *  household and Debt Payoff is skipped for someone who answered "no
+   *  debt" (D-061) — there is nothing to list there. */
+  function nextAfter(roomId, visitedIds, household) {
+    var noDebt = !!(household && household.meta && household.meta.hasDebt === false);
+    var path = inOrder().filter(function (r) { return !(noDebt && r.id === 'debt-payoff') && !r.utility; });
     var seen = visitedIds || [];
     var from = 0;
     /* A null roomId asks for the first unvisited room anywhere on the path. */

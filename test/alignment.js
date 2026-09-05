@@ -39,8 +39,10 @@ const TARGETS = [
   ['/rooms/side-hustle.html', '.grid-2'],
   ['/rooms/credential.html', '.grid-2'],
   ['/rooms/net-worth.html', '.asset-grid'],
-  ['/', '.grid2'],
-  ['/rooms/cash-flow.html', '.cat-row']
+  ['/rooms/foo-ladder.html', '.grid2'],
+  ['/rooms/cash-flow.html', '.cat-row'],
+  ['/rooms/start.html', '.q-three'],
+  ['/rooms/start.html', '.q-about']
 ];
 
 /* Cells that sit side by side as CARDS rather than as labelled controls.
@@ -49,7 +51,7 @@ const TARGETS = [
    a tall one is exactly the unevenness this file exists to prevent. */
 const EQUAL_HEIGHT = [
   ['/rooms/savings-rate.html', '.pair'],
-  ['/rooms/dashboard.html', '.panels'],
+  ['/', '.instruments'],
   ['/rooms/hassle.html', '.rates'],
   ['/rooms/sleep-at-night.html', '.pair'],
   ['/rooms/values.html', '.two'],

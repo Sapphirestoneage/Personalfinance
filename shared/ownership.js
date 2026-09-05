@@ -27,19 +27,21 @@
     deps = {
       Money: require('./money.js'),
       Schema: require('./schema.js'),
-      Registry: require('./registry.js')
+      Registry: require('./registry.js'),
+      Spine: require('./spine-v2.js')
     };
   } else {
     deps = {
       Money: root.SLAF && root.SLAF.Money,
       Schema: root.SLAF && root.SLAF.Schema,
-      Registry: root.SLAF && root.SLAF.Registry
+      Registry: root.SLAF && root.SLAF.Registry,
+      Spine: root.SLAF && root.SLAF.Spine
     };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Registry);
+  var api = factory(deps.Money, deps.Schema, deps.Registry, deps.Spine);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Ownership = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Registry) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Registry, Spine) {
   'use strict';
 
   var FILING_LABELS = {
@@ -49,7 +51,54 @@
     head_of_household: 'Head of household'
   };
 
+  var EMPLOYMENT_LABELS = (function () {
+    var out = {};
+    (Schema.EMPLOYMENT_STATUSES || []).forEach(function (row) { out[row.id] = row.short; });
+    return out;
+  })();
+
   function money(v) { return Money.formatCents(v); }
+
+  /* Resolved at call time rather than at load, so a page that never loads
+     staleness.js still gets a chip (without an age), and script order does
+     not matter. */
+  function stalenessModule() {
+    if (typeof module === 'object' && module.exports) {
+      try { return require('./staleness.js'); } catch (e) { return null; }
+    }
+    var g = (typeof self !== 'undefined') ? self : null;
+    return g && g.SLAF && g.SLAF.Staleness ? g.SLAF.Staleness : null;
+  }
+
+  /* ---- The one write path for a Tier 0 asset ------------------------------
+     Start Here and the Refresh page both set cash and investments. They are
+     the SAME record either way — this is the single function that writes
+     it, so there is no second copy to drift. DECISIONS.md D-057. */
+  var CASH_ID = 'tier0_cash';
+  var INVEST_ID = 'tier0_investments';
+
+  function assetByCategory(h, categories) {
+    var list = (h && h.assets) || [];
+    for (var i = 0; i < list.length; i++) {
+      if (categories.indexOf(list[i].category) !== -1) return list[i];
+    }
+    return null;
+  }
+
+  function writeAsset(categories, canonicalCategory, liquid, label, cents) {
+    if (!Spine) throw new Error('Ownership.write needs the spine');
+    var person = Spine.ensurePrimaryPerson('You');
+    var h = Spine.getProfile();
+    var existing = assetByCategory(h, categories);
+    return Spine.upsertAsset({
+      id: existing ? existing.id : (canonicalCategory === 'cash' ? CASH_ID : INVEST_ID),
+      label: existing && existing.label ? existing.label : label,
+      category: existing ? existing.category : canonicalCategory,
+      valueCents: cents,
+      liquid: liquid,
+      ownerIds: existing && existing.ownerIds && existing.ownerIds.length ? existing.ownerIds : [person.id]
+    });
+  }
 
   /* ---- The ownership map -------------------------------------------------
      owner   — the room id that may EDIT this field
@@ -59,7 +108,7 @@
 
   var FIELDS = {
     dob: {
-      label: 'Date of birth', owner: 'start', anchor: 'q-dob',
+      label: 'Date of birth', owner: 'start', anchor: 'q-about',
       read: function (h) {
         var p = Schema.primaryPerson(h);
         return p && p.dob ? Money.ok(p.dob) : Money.incomplete('Not set yet.', ['dob']);
@@ -71,7 +120,7 @@
       }
     },
     age: {
-      label: 'Age', owner: 'start', anchor: 'q-dob',
+      label: 'Age', owner: 'start', anchor: 'q-about',
       read: function (h) {
         var a = Schema.primaryAge(h);
         return Money.isEntered(a) ? Money.ok(a) : Money.incomplete('Not set yet.', ['dob']);
@@ -79,7 +128,7 @@
       format: function (v) { return v + ''; }
     },
     state: {
-      label: 'State', owner: 'start', anchor: 'q-state',
+      label: 'State', owner: 'start', anchor: 'q-about',
       read: function (h) { return h.state ? Money.ok(h.state) : Money.incomplete('Not set yet.', ['state']); },
       format: function (v) { return v; }
     },
@@ -98,39 +147,69 @@
     cashSavings: {
       label: 'Cash & savings', owner: 'start', anchor: 'q-cash',
       read: function (h) { return Schema.cashCents(h); },
-      format: money
+      format: money,
+      write: function (cents) { return writeAsset(['cash'], 'cash', true, 'Cash & savings', cents); }
     },
     investments: {
       label: 'Investments + retirement', owner: 'start', anchor: 'q-investments',
       read: function (h) { return Schema.investmentsCents(h); },
-      format: money
+      format: money,
+      write: function (cents) {
+        return writeAsset(['investment', 'retirement'], 'investment', false, 'Investments + retirement', cents);
+      }
+    },
+    employmentStatus: {
+      label: 'Working situation', owner: 'start', anchor: 'q-employment',
+      read: function (h) {
+        var p = Schema.primaryPerson(h);
+        var v = p && p.employmentStatus;
+        return v ? Money.ok(v) : Money.incomplete('Not answered yet.', ['employmentStatus']);
+      },
+      format: function (v) { return EMPLOYMENT_LABELS[v] || v; }
     },
     employerMatch: {
-      label: 'Employer match', owner: 'start', anchor: 'q-match',
+      label: 'Employer match', owner: 'start', anchor: 'q-plan',
       read: function (h) { return Schema.employerMatchCents(h); },
-      format: function (v) { return money(v) + '/yr'; }
+      format: function (v) { return money(v) + '/yr'; },
+      /* No employer, no match to ask about. See applies() below. */
+      applies: function (h) { return Schema.couldHaveEmployerMatch(h); },
+      notApplicableBecause: 'You said there is no employer.'
     },
     capturingFullMatch: {
-      label: 'Capturing the full match', owner: 'start', anchor: 'q-capturing',
+      label: 'Capturing the full match', owner: 'start', anchor: 'q-plan',
+      /* Derived from what you contribute against the cap once both are
+         known; the stored yes/no is only the fallback. D-061. */
+      read: function (h) { return Schema.capturingFullMatchDerived(h); },
+      format: function (v) { return v ? 'Yes' : 'No'; },
+      applies: function (h) { return Schema.capturingQuestionApplies(h); },
+      notApplicableBecause: 'There is no match to capture.'
+    },
+    hasDebt: {
+      label: 'Any debt', owner: 'start', anchor: 'q-debt',
       read: function (h) {
-        if (h.capturingFullMatch === true) return Money.ok(true);
-        if (h.capturingFullMatch === false) return Money.ok(false);
-        return Money.incomplete('Not answered yet.', ['capturingFullMatch']);
+        var m = (h.meta || {});
+        if (m.hasDebt === true) return Money.ok(true);
+        if (m.hasDebt === false) return Money.ok(false);
+        return Money.incomplete('Not answered yet.', ['hasDebt']);
       },
-      format: function (v) { return v ? 'Yes' : 'No'; }
+      format: function (v) { return v ? 'Yes' : 'None'; }
     },
 
     /* Where It Goes owns your retirement setup. These were asked by the FOO
        ladder AND by Where It Goes, and kept by neither — the same question
        twice, forgotten twice. DECISIONS.md D-052. */
     contributionPercent: {
-      label: 'Workplace contribution', owner: 'accounts', anchor: 'setup',
+      label: 'Workplace contribution', owner: 'start', anchor: 'q-plan',
       read: function (h) {
         var v = (h.retirement || {}).contributionPercent;
         return Money.isEntered(v) ? Money.ok(v)
           : Money.incomplete('Not answered yet.', ['contributionPercent']);
       },
-      format: function (v) { return v + '% of salary'; }
+      format: function (v) { return v + '% of salary'; },
+      /* A workplace plan needs a workplace. The self-employed have a solo
+         401(k) with no match, which is a different question (T3). */
+      applies: function (h) { return Schema.couldHaveEmployerMatch(h); },
+      notApplicableBecause: 'You said there is no employer.'
     },
     rothContributed: {
       label: 'Roth so far this year', owner: 'accounts', anchor: 'setup',
@@ -148,7 +227,11 @@
         return Money.isEntered(v) ? Money.ok(v)
           : Money.incomplete('Not answered yet.', ['hsaContributedCents']);
       },
-      format: money
+      format: money,
+      /* Only a question on a high-deductible plan — there is no HSA to
+         contribute to otherwise, so it must not count as unfinished. */
+      applies: function (h) { return !!((h.retirement || {}).onHdhp); },
+      notApplicableBecause: 'No HSA without a high-deductible plan.'
     },
     marginalRate: {
       label: 'Marginal tax rate', owner: 'accounts', anchor: 'setup',
@@ -163,7 +246,7 @@
     /* Sleep At Night owns the deductible: it is the first thing a cash
        cushion has to cover, which is that room's whole subject. */
     highestDeductible: {
-      label: 'Highest deductible', owner: 'sleep-at-night', anchor: 'deductible',
+      label: 'Highest deductible', owner: 'start', anchor: 'q-deductible',
       read: function (h) {
         var v = (h.insurance || {}).highestDeductibleCents;
         return Money.isEntered(v) ? Money.ok(v)
@@ -177,12 +260,18 @@
     totalDebt: {
       label: 'Total debt', owner: 'debt-payoff', anchor: 'debts',
       read: function (h) { return Schema.totalDebtCents(h); },
-      format: money
+      format: money,
+      /* "No debt" is an answer (D-061): the figure is not missing, there is
+         nothing to list, and no room should wait on it. */
+      applies: function (h) { return (h.meta || {}).hasDebt !== false; },
+      notApplicableBecause: 'You said there is no debt.'
     },
     monthlyDebtPayments: {
       label: 'Monthly debt payments', owner: 'debt-payoff', anchor: 'debts',
       read: function (h) { return Schema.monthlyDebtPaymentsCents(h); },
-      format: function (v) { return money(v) + '/mo'; }
+      format: function (v) { return money(v) + '/mo'; },
+      applies: function (h) { return (h.meta || {}).hasDebt !== false; },
+      notApplicableBecause: 'You said there is no debt.'
     },
 
     /* The Net Worth room owns everything you own that Start Here doesn't
@@ -270,8 +359,40 @@
       result: result,
       isSet: isSet,
       display: isSet ? f.format(result.value) : Money.EM_DASH,
-      isOwnHere: currentRoomId === f.owner
+      isOwnHere: currentRoomId === f.owner,
+      /* Some fields stop being questions once you have answered another one.
+         An employer match is not missing when there is no employer — it is
+         not applicable, which is a different thing and must never be counted
+         as an outstanding task. Fields with no applies() always apply.
+         DECISIONS.md D-055. */
+      applies: f.applies ? !!f.applies(household || {}) : true,
+      notApplicableBecause: f.notApplicableBecause || null,
+      /* How old the figure is. null-safe: without staleness.js loaded the
+         age is still computed from the stamp, just never judged. D-057. */
+      age: isSet ? ageOf(household, fieldId) : null
     };
+  }
+
+  function ageOf(household, fieldId) {
+    var St = stalenessModule();
+    if (!St) return null;
+    return St.describe(household || {}, fieldId);
+  }
+
+  /**
+   * write(fieldId, value) — set a field through its owner's own write path.
+   * Only fields that declare one; everything else is written by its room.
+   */
+  function write(fieldId, value) {
+    var f = field(fieldId);
+    if (!f || typeof f.write !== 'function') {
+      throw new Error('No shared write path for ' + fieldId + ' — write it in its owner room');
+    }
+    return f.write(value);
+  }
+
+  function writable() {
+    return Object.keys(FIELDS).filter(function (k) { return typeof FIELDS[k].write === 'function'; });
   }
 
   function escapeHtml(s) {
@@ -289,10 +410,15 @@
     var d = describe(fieldId, household, currentRoomId);
     if (!d) return '';
     if (d.isSet) {
-      return '<a class="slaf-owned" href="' + d.href + '">'
+      var age = d.age && d.age.label
+        ? ' · <span class="slaf-owned-age' + (d.age.stale === true ? ' is-stale' : '') + '">'
+          + escapeHtml(d.age.label) + '</span>'
+        : '';
+      return '<a class="slaf-owned' + (d.age && d.age.stale === true ? ' slaf-owned--stale' : '')
+        + '" href="' + d.href + '">'
         + '<span class="slaf-owned-label">' + escapeHtml(d.label) + '</span>'
         + '<span class="slaf-owned-value">' + escapeHtml(d.display) + '</span>'
-        + '<span class="slaf-owned-from">from ' + escapeHtml(d.ownerTitle) + ' →</span>'
+        + '<span class="slaf-owned-from">from ' + escapeHtml(d.ownerTitle) + ' →' + age + '</span>'
         + '</a>';
     }
     return '<a class="slaf-owned slaf-owned--empty" href="' + d.href + '">'
@@ -313,6 +439,26 @@
   }
 
   /** Which fields a given room owns — used by the intake to know its scope. */
+  /**
+   * readings(h) — every owned field's current value, by id; null when not
+   * set. This is what the spine diffs on each save to stamp confirmedAt,
+   * and what a snapshot freezes as `fields`. The spine cannot depend on
+   * this file (it loads first), so this file hands the reader to it.
+   * DECISIONS.md D-056.
+   */
+  function readings(household) {
+    var out = {};
+    Object.keys(FIELDS).forEach(function (id) {
+      var r;
+      try { r = FIELDS[id].read(household || {}); } catch (e) { r = null; }
+      out[id] = r && Money.isOk(r) ? r.value : null;
+    });
+    return out;
+  }
+  if (Spine && typeof Spine.registerFieldReaders === 'function') {
+    Spine.registerFieldReaders(readings);
+  }
+
   function ownedBy(roomId) {
     return Object.keys(FIELDS).filter(function (k) { return FIELDS[k].owner === roomId; });
   }
@@ -320,6 +466,9 @@
   return {
     FIELDS: FIELDS,
     FILING_LABELS: FILING_LABELS,
+    readings: readings,
+    write: write,
+    writable: writable,
     field: field,
     linkTo: linkTo,
     describe: describe,

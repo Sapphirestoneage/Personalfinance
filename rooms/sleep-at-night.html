@@ -14,7 +14,8 @@
   1. READS   cash & savings (Start Here), monthly expenses (Cash Flow),
              and computed Emergency Fund Coverage from engines/tier0.js.
   2. WRITES  household.swan — and nothing else. It is the only room that
-             may, per shared/ownership.js.
+             may, per shared/ownership.js. The deductible it used to own is
+             asked in Start Here now (D-061) and rendered here as a chip.
   3. CALLS   engines/swan.js. Emergency Fund Coverage is NOT recalculated
              here; it is read from engines/tier0.js so there is one of it.
   4. EMPTY   With no number named, every output says so. A months-based
@@ -120,10 +121,7 @@
       step is exactly this, and it reads the number from here rather than
       asking you for it again.
     </p>
-    <label class="slaf-field" style="margin:var(--space-3) 0 0"><span class="slaf-label">Largest single deductible</span>
-      <span class="slaf-input-shell"><span class="slaf-affix">$</span>
-      <input type="text" inputmode="decimal" data-deductible placeholder="e.g. 3000" aria-label="Highest deductible"/></span>
-    </label>
+    <div id="deductible-chip" style="margin-top:var(--space-3)"></div>
     <p class="why" id="deductible-read"></p>
   </section>
 
@@ -469,20 +467,18 @@
   }
   window.addEventListener('hashchange', jumpToHash);
 
-  /* The deductible. A fact, owned here, read by the FOO ladder's first step.
-     LIVE-FORM: one control, in the HTML above, never rebuilt. */
+  /* The deductible. A fact, asked once in Start Here (D-061) and read here
+     as a chip that links back to the question. This room used to own the
+     box; the ownership map says who does now, and this just renders it. */
   (function () {
-    var node = document.querySelector('[data-deductible]');
-    if (!node) return;
     function paintDeductible() {
-      if (node !== document.activeElement) {
-        var v = (Spine.getProfile().insurance || {}).highestDeductibleCents;
-        node.value = Money.isEntered(v) ? Money.formatCents(v) : '';
-      }
+      var h = Spine.getProfile();
+      var chip = el('deductible-chip');
+      if (chip) chip.innerHTML = Ownership.chip('highestDeductible', h, ROOM_ID);
       var read = el('deductible-read');
       if (!read) return;
-      var cash = Schema.cashCents(Spine.getProfile());
-      var ded = (Spine.getProfile().insurance || {}).highestDeductibleCents;
+      var cash = Schema.cashCents(h);
+      var ded = (h.insurance || {}).highestDeductibleCents;
       if (!Money.isEntered(ded) || !Money.isOk(cash)) { read.textContent = ''; return; }
       read.textContent = cash.value >= ded
         ? 'Covered — your ' + Money.formatCents(cash.value) + ' in cash clears it.'
@@ -490,15 +486,6 @@
           + Money.formatCents(cash.value) + ' against a ' + Money.formatCents(ded)
           + ' excess.';
     }
-    node.addEventListener('blur', function () {
-      var h = Spine.getProfile();
-      Spine.updateProfile({ insurance: Object.assign({}, h.insurance || {},
-        { highestDeductibleCents: Money.parseMoney(node.value) }) });
-      paintDeductible();
-    });
-    node.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); node.blur(); }
-    });
     Spine.onChange(paintDeductible);
     paintDeductible();
   })();

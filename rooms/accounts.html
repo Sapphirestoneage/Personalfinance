@@ -83,11 +83,7 @@
       of it. Now it lives here, and every room that needs it reads this.
     </p>
     <div class="setup-grid">
-      <label class="slaf-field" style="margin:0"><span class="slaf-label">You contribute</span>
-        <span class="slaf-input-shell">
-        <input type="text" inputmode="decimal" data-setup="contributionPercent" placeholder="e.g. 4" aria-label="Workplace contribution percent"/>
-        <span class="slaf-affix">% of salary</span></span>
-      </label>
+      <div class="slaf-field" style="margin:0" id="contribution-chip"></div>
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Your marginal tax rate</span>
         <span class="slaf-input-shell">
         <input type="text" inputmode="decimal" data-setup="marginalRate" placeholder="e.g. 22" aria-label="Marginal tax rate"/>
@@ -366,6 +362,10 @@
   }
 
   function paintSetup() {
+    /* What you contribute is asked in Start Here now (D-061); this room
+       reads it as a chip that links back to the question. */
+    var chip = el('contribution-chip');
+    if (chip) chip.innerHTML = Ownership.chip('contributionPercent', Spine.getProfile(), ROOM_ID);
     document.querySelectorAll('[data-setup]').forEach(function (node) {
       if (node === document.activeElement) return;
       var key = node.getAttribute('data-setup');

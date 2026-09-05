@@ -85,6 +85,27 @@
     });
   }
 
+  /* ------------------------------------------------------ Take-home pay
+     Gross minus the estimated tax, as a month. This is the money that can
+     actually be pointed at anything — the FOO ladder's waterfall pours it,
+     and for a long time poured the pre-tax figure instead, which put every
+     step date about a third too early. BRIEF §1.1 item 1.
+     One formula: the tax comes from estimatedAnnualTaxCents(), never a
+     second lookup.                                                        */
+
+  function takeHomeMonthlyCents(household, tables) {
+    var gross = Schema.grossAnnualIncomeCents(household);
+    if (!Money.isOk(gross)) return gross;
+    var tax = estimatedAnnualTaxCents(household, tables);
+    if (!Money.isOk(tax)) return tax;
+    return Money.ok(Math.round((gross.value - tax.value) / MONTHS_PER_YEAR), {
+      grossAnnualIncomeCents: gross.value,
+      estimatedTaxCents: tax.value,
+      effectiveRate: tax.effectiveRate,
+      referenceVersion: tax.referenceVersion
+    });
+  }
+
   /* ------------------------------------------------------- 2. Savings rate
      (gross − annual expenses − estimated taxes) / gross.
 
@@ -402,6 +423,7 @@
   return {
     netWorth: netWorth,
     estimatedAnnualTaxCents: estimatedAnnualTaxCents,
+    takeHomeMonthlyCents: takeHomeMonthlyCents,
     savingsRate: savingsRate,
     emergencyFundMonths: emergencyFundMonths,
     debtToIncome: debtToIncome,

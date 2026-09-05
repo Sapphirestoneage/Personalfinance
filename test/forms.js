@@ -92,6 +92,31 @@ const CASES = [
     }
   },
   {
+    /* The Refresh page: every box opens holding the current figure, and
+       typing over it must replace it, not append to it — a phone selects
+       nothing on tap, so the case types with clearFirst. */
+    room: '/rooms/refresh.html',
+    container: '#fields',
+    seed: 'demo',
+    fields: [
+      { sel: 'input[data-field="cashSavings"]', type: '9800', clearFirst: true },
+      { sel: 'input[data-field="investments"]', type: '50000', clearFirst: true },
+      { sel: 'input[data-field="debtBalance"]', type: '18000', clearFirst: true }
+    ],
+    expect: async (page) => {
+      const h = await page.evaluate(() => JSON.parse(localStorage.getItem('slaf.household.v2')) || {});
+      const cash = h.assets.filter(a => a.category === 'cash')[0];
+      const inv = h.assets.filter(a => a.category === 'investment')[0];
+      return [
+        ['cash was rewritten in place', cash.valueCents, 980000],
+        ['and there is still exactly one cash record', h.assets.filter(a => a.category === 'cash').length, 1],
+        ['investments were rewritten', inv.valueCents, 5000000],
+        ['the first debt balance was rewritten', h.debts[0].balanceCents, 1800000],
+        ['and cash got a fresh stamp', typeof h.meta.confirmedAt.cashSavings, 'string']
+      ];
+    }
+  },
+  {
     room: '/rooms/net-worth.html',
     container: '#asset-list',
     seed: 'demo',
@@ -137,7 +162,7 @@ const CASES = [
     /* The front page. It is the most input-heavy page in the repo and it is
        hand-built vanilla — the exact place the keyboard bug would come back
        if the build-once rule slipped. */
-    room: '/',
+    room: '/rooms/foo-ladder.html',
     container: '.wrap',
     seed: 'demo',
     prepare: async (page) => {
@@ -327,6 +352,43 @@ const CASES = [
         /* 26 x 40 x 48 paid weeks */
         ['and it became a year', src.grossAnnualIncomeCents, 4992000],
         ['which the page states', out.indexOf('$49,920') !== -1, true]
+      ];
+    }
+  },
+  {
+    /* The 401(k) card opens with the match boxes holding a SUGGESTION
+       (D-060) and a chip beside them. Tapping from a suggested box into
+       the next one, typing over the proposal, must land — and the chip
+       coming and going must not move anything under the finger. */
+    room: '/rooms/start.html',
+    container: '#q-plan',
+    seed: 'demo',
+    prepare: async (page) => {
+      /* Clear the demo's match so the suggestion shows. */
+      await page.evaluate(() => {
+        const h = JSON.parse(localStorage.getItem('slaf.household.v2'));
+        h.people[0].incomeSources[0].employerMatch = { matchPercent: null, matchCapPercentOfSalary: null };
+        h.retirement.contributionPercent = null;
+        localStorage.setItem('slaf.household.v2', JSON.stringify(h));
+        location.hash = '#q-plan';
+      });
+      await page.reload({ waitUntil: 'networkidle' });
+      await page.waitForTimeout(600);
+    },
+    fields: [
+      { sel: '#q-plan input[data-plan="matchPercent"]', type: '100' },
+      { sel: '#q-plan input[data-plan="matchCap"]', type: '4' },
+      { sel: '#q-plan input[data-plan="contributionPercent"]', type: '5' }
+    ],
+    expect: async (page) => {
+      const h = await page.evaluate(() => JSON.parse(localStorage.getItem('slaf.household.v2')));
+      const m = h.people[0].incomeSources[0].employerMatch;
+      const suggestedBefore = await page.evaluate(() => document.querySelectorAll('#q-plan [data-suggested]').length);
+      return [
+        ['the typed match replaced the suggestion', m.matchPercent, 1],
+        ['and the cap', Math.round(m.matchCapPercentOfSalary * 100), 4],
+        ['and the contribution was kept', h.retirement.contributionPercent, 5],
+        ['nothing is still only suggested', suggestedBefore, 0]
       ];
     }
   },

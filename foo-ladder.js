@@ -27,7 +27,7 @@
   'use strict';
 
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
-      Reference = SLAF.Reference, Ownership = SLAF.Ownership;
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership, Tier0 = SLAF.Tier0;
 
   var ROOM_ID = 'foo-ladder';
 
@@ -95,6 +95,7 @@
     /* Assumption-class. Defaults are legitimate here, and visible. */
     efMonths: ASSUMPTIONS.efMonths, growthRate: ASSUMPTIONS.growthRate,
     limits: Object.assign({}, FALLBACK_LIMITS),
+    tables: null,         /* reference tables, once loaded; the gap waits for them */
     /* View */
     hdhp: false, hsaFamilyPlan: false, growthOn: false, windfallOn: false,
     showWindfall: false, showInputs: true, showAssumptions: false, openStep: null
@@ -134,6 +135,15 @@
     var primary = Schema.allIncomeSources(h0)[0];
     d.matchCapPct = primary && entered(primary.employerMatch.matchCapPercentOfSalary)
       ? primary.employerMatch.matchCapPercentOfSalary * 100 : null;
+    /* No employer means no match cap, and that is a real zero rather than a
+       blank: the person answered "self-employed" / "not working" / "retired"
+       in Start Here, and step 2 is not a thing they can do. Steps 6 and 7
+       take the larger of your own contribution and the cap, so a zero there
+       is exactly right — without it they would wait forever on a number
+       that is never coming. DECISIONS.md D-055. */
+    d.hasEmployer = Schema.couldHaveEmployerMatch(h0);
+    if (!d.hasEmployer && !entered(d.matchCapPct)) d.matchCapPct = 0;
+    if (!d.hasEmployer && !entered(state.contribPct)) state.contribPct = 0;
     d.debts = Schema.aggregatableDebts(h0)
       .filter(function (x) { return entered(x.balanceCents) && x.balanceCents > 0; })
       .map(function (x, i) {
@@ -147,8 +157,23 @@
       });
     d.mIncome = entered(d.incomeVal) ? d.incomeVal / 12 : null;
     d.mExpenses = entered(d.expTotal) ? d.expTotal : null;
-    d.gapReady = entered(d.mIncome) && entered(d.mExpenses);
-    d.gap = d.gapReady ? d.mIncome - d.mExpenses : null;
+    /* The waterfall pours what actually lands, not the gross. This used to
+       be gross minus expenses, which put every step date about a third too
+       early for anyone who pays tax. One formula: Tier0 owns the tax
+       estimate and the take-home figure; nothing here re-derives either.
+       Until the tax table has loaded there is no take-home and no gap —
+       an incomplete, never a pre-tax stand-in. BRIEF §1.1 item 1. */
+    var takeHome = state.tables ? Tier0.takeHomeMonthlyCents(h0, state.tables) : null;
+    d.takeHome = takeHome && Money.isOk(takeHome) ? takeHome.value / 100 : null;
+    d.takeHomeWhy = takeHome && !Money.isOk(takeHome) ? takeHome.reason : null;
+    d.effectiveRate = takeHome && Money.isOk(takeHome) ? takeHome.effectiveRate : null;
+    d.gapReady = entered(d.takeHome) && entered(d.mExpenses);
+    d.gap = d.gapReady ? d.takeHome - d.mExpenses : null;
+    /* No prepaid goal set means step 8 has nothing to fund: it is not
+       applicable, which is different from a target of zero, and it must not
+       hold the whole timeline hostage. A goal WITH a target still needs its
+       balance. BRIEF §1.1 item 2. */
+    d.prepaidSet = entered(state.prepaidTarget);
     d.iraLimit = state.limits.ira + (entered(d.age) && d.age >= 50 ? state.limits.iraCatchup : 0);
     d.k401Limit = state.limits.k401 + (entered(d.age) && d.age >= 50 ? state.limits.k401Catchup : 0);
     d.hsaLimit = state.hsaFamilyPlan ? state.limits.hsaFamily : state.limits.hsaSelf;
@@ -161,16 +186,17 @@
      against a null.                                                      */
   function simulate(d) {
     var needs = [
-      ['income', entered(d.mIncome)], ['monthly expenses', entered(d.mExpenses)],
+      ['income', entered(d.mIncome)],
+      ['take-home pay (income and filing status)', entered(d.takeHome)],
+      ['monthly expenses', entered(d.mExpenses)],
       ['your age', entered(d.age)],
       ['your deductible', entered(state.deductibleTarget)],
       ['your contribution %', entered(state.contribPct)],
       ['your match cap %', entered(d.matchCapPct)],
       ['emergency fund balance', entered(d.efBalance)],
-      ['Roth contributed so far', entered(state.rothCur)],
-      ['prepaid goal', entered(state.prepaidTarget)],
-      ['prepaid balance', entered(state.prepaidBal)]
+      ['Roth contributed so far', entered(state.rothCur)]
     ];
+    if (d.prepaidSet) needs.push(['prepaid balance', entered(state.prepaidBal)]);
     if (state.hdhp) needs.push(['HSA contributed so far', entered(state.hsaCur)]);
     var missing = needs.filter(function (n) { return !n[1]; }).map(function (n) { return n[0]; });
     if (missing.length) return { ready: false, missing: missing, baseline: null, windDone: null, windRows: [] };
@@ -201,8 +227,10 @@
         var a5b = take(d.hsaLimit - s.hsaCur);
         if (a5b > 0) { s.hsaCur += a5b; rows.push({ label: 'Step 5 · Fill HSA', amt: a5b }); }
       }
-      var a8 = take(state.prepaidTarget - s.prepaid);
-      if (a8 > 0) { s.prepaid += a8; rows.push({ label: 'Step 8 · Prepaid future expenses', amt: a8 }); }
+      if (d.prepaidSet) {
+        var a8 = take(state.prepaidTarget - s.prepaid);
+        if (a8 > 0) { s.prepaid += a8; rows.push({ label: 'Step 8 · Prepaid future expenses', amt: a8 }); }
+      }
       var low = s.debts.filter(function (x) { return x.apr <= 6 && x.balance > 0; })
         .sort(function (a, b) { return b.apr - a.apr; });
       for (var j = 0; j < low.length; j++) {
@@ -238,7 +266,7 @@
           else if (step === 4) { if (s5need <= 0) ok = true; else if (av >= s5need) { committed += s5need; ok = true; } }
           else if (step === 5) { if (s6need <= 0) ok = true; else if (av >= s6need) { committed += s6need; ok = true; } }
           else if (step === 6) { if (s7need <= 0) ok = true; else if (av >= s7need) { committed += s7need; ok = true; } }
-          else if (step === 7 && prepaid >= state.prepaidTarget) ok = true;
+          else if (step === 7 && (!d.prepaidSet || prepaid >= state.prepaidTarget)) ok = true;
           else if (step === 8 && !dbts.some(function (x) { return x.apr <= 6 && x.balance > 0.5; })) ok = true;
           if (!ok) return;
           done[step] = m; step++;
@@ -279,7 +307,7 @@
          targets — a deductible first, then months of expenses. They used to
          be two inputs, which let them contradict each other and made you
          type your savings twice. DECISIONS.md D-049. */
-      cash: d.efBalance, ef: d.efBalance, prepaid: state.prepaidBal,
+      cash: d.efBalance, ef: d.efBalance, prepaid: d.prepaidSet ? state.prepaidBal : 0,
       rothCur: state.rothCur, hsaCur: entered(state.hsaCur) ? state.hsaCur : 0,
       debts: liveDebts
     };
@@ -317,6 +345,8 @@
           act: d.efBalance < st.deductibleTarget ? 'Stack cash to ' + fmt(st.deductibleTarget) + ' first.' : 'Covered. Keep this cash untouched.' }; } },
 
       { n: 2, title: 'Employer match', needs: [entered(s2gapMo), entered(d.matchCapPct)],
+        na: !d.hasEmployer,
+        naSub: 'No employer to match you — this step is already behind you.',
         missing: 'your income, contribution % and match cap %',
         why: 'A match is an instant 50-100% return. Nothing else compounds a raise like this.',
         build: function () { return {
@@ -372,7 +402,9 @@
           act: 'Automate into low-cost index funds.' }; } },
 
       { n: 8, title: 'Prepaid future expenses', needs: [entered(st.prepaidBal), entered(st.prepaidTarget)],
-        missing: "your future-goal target and what's saved toward it",
+        na: !d.prepaidSet,
+        naSub: 'No prepaid goal set — nothing to fund here yet. Add a target above if there is one.',
+        missing: "what's saved toward your prepaid goal",
         why: 'Only after your retirement is secured do you prepay the future. Oxygen mask on yourself first.',
         build: function () { return {
           sub: st.prepaidBal >= st.prepaidTarget ? 'Future goals funded.'
@@ -516,7 +548,7 @@
     var root = document.getElementById('root');
     var wrap = h('div', { class: 'wrap' });
 
-    wrap.appendChild(h('a', { class: 'back', href: 'map.html', text: '← All rooms' }));
+    wrap.appendChild(h('a', { class: 'back', href: '../map.html', text: '← All rooms' }));
 
     wrap.appendChild(h('header', { style: { paddingTop: '16px', paddingBottom: '20px', textAlign: 'center' } }, [
       h('div', { style: { display: 'flex', justifyContent: 'center', marginBottom: '12px' } }, gemCrown()),
@@ -710,8 +742,10 @@
       b.labelEl.textContent = b.label || info.label;
       b.link.setAttribute('href', info.href);
       b.link.className = 'slaf-owned slaf-owned--field' + (info.isSet ? '' : ' slaf-owned--empty');
-      b.value.textContent = info.display;
-      b.from.textContent = info.ownerTitle + ' →';
+      b.value.textContent = info.applies ? info.display : 'n/a';
+      b.from.textContent = info.applies
+        ? info.ownerTitle + ' →'
+        : (info.notApplicableBecause || 'Not applicable.');
     });
 
     /* every field: value only, and never while it is focused */
@@ -745,14 +779,17 @@
       ui.gapFigure.appendChild(h('span', {
         style: { fontSize: 'var(--text-md)', color: 'var(--color-accent-hover)' }, text: '/mo' }));
       ui.gapDetail.className = '';
-      ui.gapDetail.textContent = fmt(d.mIncome) + '/mo in · ' + fmt(d.mExpenses) + '/mo out'
+      ui.gapDetail.textContent = fmt(d.takeHome) + '/mo take-home (' + fmt(d.mIncome)
+        + ' gross at ~' + Math.round(d.effectiveRate * 100) + '% tax) · ' + fmt(d.mExpenses) + '/mo out'
         + (d.gap <= 0 ? ' — a negative gap blocks every step.' : '');
     } else {
       ui.gapFigure.className = 'slaf-figure slaf-figure--incomplete';
       ui.gapFigure.style.color = '';
       ui.gapFigure.textContent = '—';
       ui.gapDetail.className = 'needs';
-      ui.gapDetail.textContent = 'Add your income and expenses above.';
+      ui.gapDetail.textContent = d.takeHomeWhy
+        ? d.takeHomeWhy + ' The gap is take-home minus spending, so it waits for both.'
+        : 'Add your income, filing status and expenses in Start Here.';
     }
 
     /* windfall */
@@ -816,14 +853,19 @@
     /* the nine steps */
     steps.forEach(function (s, i) {
       var node = ui.steps[i];
-      var ready = s.needs.every(Boolean);
+      /* A step that cannot apply to you is not a step you are failing.
+         It says why, rather than asking forever for a number that has no
+         true value. DECISIONS.md D-055. */
+      var na = s.na === true;
+      var ready = !na && s.needs.every(Boolean);
       var built = ready ? s.build() : null;
       var landed = active ? active[i] : null;
       node.card.className = 'card' + (sim.ready && i === curIdx ? ' card-active' : '');
       node.title.textContent = s.title;
-      node.sub.textContent = ready ? built.sub : 'Add ' + s.missing + ' to see this.';
+      node.sub.textContent = na ? s.naSub
+        : ready ? built.sub : 'Add ' + s.missing + ' to see this.';
       node.sub.style.color = ready ? 'var(--color-text-muted)' : 'var(--color-text-faint)';
-      node.when.textContent = sim.ready ? monthLabel(landed) : '—';
+      node.when.textContent = (na || !sim.ready) ? '—' : monthLabel(landed);
       node.barWrap.hidden = !ready;
       if (ready) node.fill.style.width = clamp(built.pct, 0, 100) + '%';
       node.detail.hidden = state.openStep !== i;
@@ -866,7 +908,8 @@
   SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(function (h0) { state.household = h0; paint(); });
 
-  Reference.load(['irsLimits']).then(function (t) {
+  Reference.load(['irsLimits', 'effectiveTaxRates']).then(function (t) {
+    state.tables = t;
     var L = t.irsLimits.limits;
     state.limits = {
       k401: L.elective401k, k401Catchup: L.elective401kCatchup50Plus,

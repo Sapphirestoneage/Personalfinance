@@ -2920,6 +2920,496 @@ session does not "clean up" work it did not recognise.
 
 ---
 
+## D-055 — "Are you working?" is asked first, and it removes questions
+
+Start Here asked everybody the same nine questions, and two of them were
+*"does your employer match retirement contributions?"* and *"are you
+contributing enough to get all of it?"*.
+
+If you are self-employed, retired, or between jobs, neither question has a
+true answer. Leaving them blank was the only honest thing to do, and blank
+was punished: `shared/progress.js` counts a room's `needs` and reports what
+is unfilled, so the room said **"1 thing left"** forever, the map's
+completion pill never turned green, and the FOO ladder's step 2 sat at
+*"add your income, contribution % and match cap %"* for someone with no
+employer to ask.
+
+That is the app telling a person they are incomplete for a fact about their
+life.
+
+**Decision: ask about the working situation first, and let the answer take
+questions off the list.**
+
+### The field
+
+`person.employmentStatus` — one of five ids, or `null`:
+
+| id | label | earning | hasEmployer |
+|---|---|---|---|
+| `employed` | Working for an employer | yes | yes |
+| `selfEmployed` | Self-employed or freelance | yes | **no** |
+| `both` | Both — a job and my own work | yes | yes |
+| `notWorking` | Not working right now | no | no |
+| `retired` | Retired | no | no |
+
+The table lives in `shared/schema.js` as `EMPLOYMENT_STATUSES`, and it is
+the only place these labels exist — `shared/ownership.js` and
+`rooms/start.html` both read it rather than restating it.
+
+`hasEmployer: false` means exactly one thing: **the employer-match pair is
+not applicable.** It does not mean "no retirement plan" — a self-employed
+person has a solo 401(k) with no match, and a retiree may be drawing from
+one. `engines/accounts.js` is untouched by this.
+
+### Why this is not derivable from the income sources
+
+It looks like it should be. It is not:
+
+- **No rate entered** means the income question was skipped.
+- **`frequency: 'none'`** (D-048) means "I am not earning" — a deliberate
+  zero, and a fact about *pay*, not about whether there is an employer.
+- Neither says whether a **company exists that could match you**, which is
+  the only thing the two match questions depend on.
+
+A freelancer earning $80k and an employee earning $80k are indistinguishable
+in the income sources and want different questions. So this is stored, not
+inferred.
+
+### Not applicable is not missing
+
+`Ownership.describe()` gained two fields:
+
+    applies              — false when the field has stopped being a question
+    notApplicableBecause — the sentence to show instead
+
+A field with no `applies()` always applies, so nothing else in the map
+changed. `Progress.forRoom()` drops a non-applying field from **both** sides
+of the fraction — it leaves the denominator, not just the numerator, which
+is the whole point: a retiree can now reach 100% on Start Here. The dropped
+fields come back as `row.notApplicable`, and the footer strip says them out
+loud ("Not asked: Employer match. You said there is no employer."), because
+a room claiming it "has everything it needs" while two visible boxes sit
+empty would read as a bug.
+
+The FOO ladder does the same thing one level down: a step can now declare
+`na`, and step 2 reads *"No employer to match you — this step is already
+behind you"* rather than asking forever.
+
+### Two deliberate refusals to guess
+
+- **Unanswered counts as "could have a match."** Every household saved
+  before this field existed has `employmentStatus: null`, and quietly
+  deciding they have no employer would hide a question they may already have
+  answered. `null` is not an answer, and this is the one place that matters.
+- **A match already entered keeps its question**, whatever the status now
+  says. Answering "not working" must never hide a figure someone typed.
+  `Schema.couldHaveEmployerMatch()` checks the stored match before it
+  returns false.
+
+And a third, in the income question: saying "not working" **writes nothing**.
+It changes the help text under the box — *"Benefits, severance or anything
+still landing goes here; if nothing is, pick 'not earning right now' rather
+than typing 0"* — and leaves the field alone. `null` and `0` stay distinct
+(CLAUDE.md, `SPEC.md` §4–5); the pay basis `none` is still the only way to
+say zero, and it stays the person's own tap.
+
+### Compatibility note
+
+**Stored shape:** `person.employmentStatus` is **added**, defaulting to
+`null`. Nothing is renamed, moved or removed. `Schema.createPerson()` sets
+it; `Spine.upsertPerson({ id, employmentStatus })` writes it; existing blobs
+read back with `null` and behave exactly as before, because `null` means
+"still ask about the match".
+
+**Rooms updated:** `rooms/start.html` (new first question `#q-employment`,
+`applies` gates on `#q-match` and `#q-capturing`, the income help note),
+`foo-ladder.js` (step 2's `na`, the borrowed-chip "n/a", and a match cap of
+`0` rather than `null` for a no-employer household so steps 6 and 7 are not
+blocked on a number that is never coming). `shared/demo-persona.js` sets
+`employed`, so the example household is unchanged in every other respect.
+
+**Before calling `getProfile()`:** if you are about to ask about anything
+that presumes an employer, call `Schema.couldHaveEmployerMatch(household)`
+first, and if you are adding a shared field that can stop being a question,
+give it an `applies(household)` in `shared/ownership.js` rather than
+special-casing it in your room — that is the one place `Progress` reads.
+
+---
+
+## D-056 — Time exists: every owned field knows when it was last confirmed, and snapshots are read back
+
+*(BRIEF.md §0.3 D-D.)* Nothing in the household said **when** a number was
+true. A cash balance typed in March rendered in September exactly as it did
+the day it was entered, and a runway computed from it looked just as
+confident. The snapshots the Financial Snapshot room could save were
+write-only: nothing ever read one back, so there was no "since last time".
+
+**Decision: two additions to the stored shape, both read by the UI.**
+
+### `meta.confirmedAt` — the clock
+
+`household.meta.confirmedAt` is `{ [fieldId]: ISO }`, keyed by the ids in
+`shared/ownership.js`. It is stamped **by the spine, not by rooms**: on every
+`save()`, the spine reads every owned field before and after the write and
+stamps the ones whose value changed. A room writes exactly as it always did.
+`Spine.confirm(fieldId)` re-stamps without changing the value — the "yes,
+still $9,500" tap.
+
+The spine cannot know what the owned fields are (the map loads after it), so
+`shared/ownership.js` hands it a reader — `Spine.registerFieldReaders(fn)` —
+at load. `Ownership.readings(h)` is that reader and is public, so a snapshot
+can freeze the same set.
+
+Stamping is by **value**, not by write: re-saving the same figure does not
+move the clock, and typing a different figure into the same box does.
+Diffing on `JSON.stringify` of the read value is deliberate — it is the
+cheapest thing that is also correct for cents, rates, dates and booleans.
+
+### Snapshots are read
+
+`Spine.appendSnapshot()` now also freezes `fields` — every owned field's
+value by id — beside the `rawInputs` and `computedOutputs` a caller passes.
+Two new reads:
+
+- `Spine.latestSnapshot()` — the most recent record or `null`.
+- `Spine.snapshotDelta(id, current)` — `{ since, before, after, delta,
+  changed }` for a computed-output id **or** a field id. A stored output may
+  be a bare number or a `{ status, value }` Result; both read. `delta` is
+  numeric only when both sides are numbers; otherwise `null` with `changed`
+  still honest.
+
+Every output the dashboard shows is what a snapshot should carry, so that a
+delta never has to recompute an old input against a newer reference table.
+The dashboard's own snapshot call (T1.4) passes its instrument values as
+`computedOutputs` for exactly this reason.
+
+### Compatibility note
+
+**Stored shape:** `meta.confirmedAt` is **added**, defaulting to `{}`. Every
+household saved before this has no stamps at all; `Spine.confirmedAt(id)`
+returns `null` for them, and the display rule is "last updated N days ago,
+unknown per field" from `meta.updatedAt` until the field is next written.
+Snapshot records gain `fields`; older records lack it, and `snapshotDelta()`
+falls back to `computedOutputs` and then returns `null` rather than
+guessing. No schema-version bump: nothing is renamed, moved or removed, and
+a v2 blob without these keys is a valid v2 blob.
+
+**Rooms updated:** none had to change to get stamps — that is the point. The
+Financial Snapshot room's existing snapshot button now freezes `fields` for
+free. `shared/ownership.js` gained a dependency on `shared/spine-v2.js`
+(the spine never depends back on it).
+
+**Before calling `getProfile()` / `updateProfile()`:** a room that wants to
+show age reads `Spine.confirmedAt(fieldId)` (or `shared/staleness.js` once
+it lands, D-057) and never writes `meta.confirmedAt` itself; a room that
+wants a delta calls `Spine.snapshotDelta(id, currentResult)` and shows
+nothing when it returns `null`.
+
+---
+
+## D-057 — Age is shown, and the three figures that move get a page of their own
+
+*(BRIEF.md §1.4.)* D-056 put a clock on every owned field. This is what the
+clock is for.
+
+### The review intervals are data
+
+`data/staleness.json` carries `staleAfterDays` per ownership field id (cash,
+investments and debts at 30; spending at 90; income at 180; a date of birth
+`null`, because it never goes stale) and the short `volatile` list. They are
+review intervals, `confidence: convention` — past the interval a figure turns
+amber and is offered for a re-confirm; it is **never** discounted, zeroed or
+hidden for being old. Stale is a prompt to look, not a verdict.
+
+`shared/staleness.js` reads the stamps back: `describe(h, fieldId)` gives
+`{ days, perField, stale, label }`. Three states, never collapsed: a stamped
+field has a real age; an unstamped one (every household saved before D-056)
+falls back to the household's last save with `perField: false` and the label
+says so ("last saved 12 days ago (this figure not dated)"); a field with no
+value has nothing to date. `stale` is `null` unless both an age and an
+interval exist, so nothing ever colours on a guess.
+
+Every `Ownership.chip()` now ends with "updated N days ago", amber past the
+interval. `Ownership.describe()` carries the same under `age`.
+
+### The Refresh page, and why it is not a second editor
+
+`rooms/refresh.html` walks the volatile list: cash, investments, each debt
+balance. Every box opens **holding the current figure in entered style** —
+not settled-grey, because the whole point is to look at it. Enter on an
+unchanged figure calls `Spine.confirm()` (the clock moves, the value does
+not); a different figure writes; an empty box writes nothing. Then one
+snapshot, then home.
+
+This looked like a violation of D-017 — cash and investments are owned by
+Start Here, debts by Debt Payoff, and here is a third page with boxes for
+them. The rule's purpose is that there is never a second **copy** to drift.
+So the resolution is structural, not an exemption:
+
+- `Ownership.FIELDS.cashSavings.write()` / `.investments.write()` are the
+  one function that writes those records. `rooms/start.html` was changed to
+  call `Ownership.write()` too; its own `writeAsset` is gone. The Refresh
+  page and Start Here are two places to press the same button.
+- Debt balances go through `Spine.upsertDebt({ id, balanceCents })`, the
+  same call Debt Payoff makes on the same record.
+
+The registry marks the page `utility: true`. It never appears in the map's
+groups (a chore should not look like a room); it is reached from the
+dashboard's staleness line and from the room-to-room nav. It sits last on
+the path so it never interrupts a first walk.
+
+### One list of instruments
+
+`shared/instruments.js` is the list of the six dashboard figures — net
+worth, savings rate, runway, debt-to-income, FI year, FOO step — each a call
+into the engine that owns it. A snapshot freezes exactly that list
+(`Instruments.snapshot()`), and the dashboard reads deltas against it
+(`Instruments.deltas()`), so the two can never disagree about what "since
+last time" covers. The FI year is `Tier0.yearsToFire` projected onto a
+calendar; the coast age lands with T3.6.
+
+### Compatibility note
+
+**Stored shape:** nothing new. Snapshot `computedOutputs` now carry the
+instrument ids above (older records carry Tier0's `computeAll` keys, and
+`snapshotDelta` returns `null` for an id a record lacks).
+
+**Rooms updated:** `rooms/start.html` (writes cash and investments through
+`Ownership.write`), `rooms/refresh.html` (new), `map.html` (skips utility
+rooms). `shared/registry.js` gained the `utility` flag.
+
+**Before writing a volatile field from anywhere new:** call
+`Ownership.write(fieldId, value)` if the field declares a write path; if it
+does not, the room that owns it is the only place it may be written.
+
+---
+
+## D-058 — The Dashboard is the front door; the FOO ladder is a room
+
+*(BRIEF.md §1.2. Supersedes D-007's amendment.)* D-007 kept the FOO
+calculator at the site root because moving it would change what an existing
+visitor landed on. That was the right call for a calculator with no memory.
+The suite now has one — a household, a clock (D-056), snapshots that read
+back — and what a returning visitor should land on is **their panel**, not
+a calculator that re-derives one step of it.
+
+**Decision: `index.html` is a router.** When `Progress.forRoom('dashboard')`
+is complete it renders the Dashboard (the same page that was
+`rooms/dashboard.html`; that file is now a redirect so old links hold).
+Until then it renders the intake landing: one sentence, **Start Here →**,
+and **See it with example numbers** above the fold. The example button is
+still an explicit action behind a confirm; demo data never loads by itself.
+A visitor part-way through sees how many answers are in and a link to the
+next unanswered question rather than the landing copy again.
+
+A household with no debts is not blocked. "No debts entered" is still
+incomplete, not zero (empty ≠ zero), so the router treats `totalDebt` as the
+one need that does not gate the panel: with the other four figures in, the
+dashboard renders and the Load instrument says what it is waiting for. T2's
+`meta.hasDebt` ("any debt? yes/no") is what makes that answer explicit; until
+it lands the router is deliberately lenient on that one field only.
+
+The FOO ladder moves to `rooms/foo-ladder.html`. Its script stays at the
+repo root as `foo-ladder.js` (the test suite reads it there); only the shell
+moved. `Progress` no longer special-cases `'foo-ladder'` as the root page:
+a room is at the root when its registry `href` is not under `rooms/`, which
+is now exactly the dashboard.
+
+`map.html` becomes the "All rooms" drawer: the next-unfinished room as one
+card first, then the four groups. The "rooms visited N of 25" bar is gone —
+visiting is not progress, answering is — and the "answers given" bar stays.
+
+### Compatibility note
+
+Stored shape: nothing. `rooms/dashboard.html` links redirect, hash included.
+Registry `href` for `dashboard` is `index.html` and for `foo-ladder` is
+`rooms/foo-ladder.html`; anything that hard-coded either path should read
+`Ownership.linkTo()` instead. Rooms updated: `map.html`, `index.html`,
+`rooms/dashboard.html`, `rooms/foo-ladder.html`; `test/forms.js` and
+`test/alignment.js` retargeted.
+
+---
+
+## D-059 — The household can leave the browser, by hand only
+
+*(BRIEF.md §1.6.)* Everything lives in one browser's `localStorage`. That is
+the privacy story and it is also a trap: a new phone, a cleared cache or a
+partner's laptop and the household is gone or duplicated. There was no way
+to carry it.
+
+**Decision: three hand-carried paths, no server.**
+
+- **A file.** `Spine.exportJSON()` writes `{ format: 'slaf-export',
+  exportVersion, schemaVersion, exportedAt, household, snapshots }` and
+  `Spine.exportFilename()` names it `slaf-household-YYYY-MM-DD.json`.
+  `Spine.inspectImport(text)` checks a payload without touching storage;
+  `Spine.importJSON(text)` replaces the household **and** the snapshots. A
+  bare household (the stored shape itself) is accepted too. A file from a
+  **newer** schema is refused with the two version numbers — migrations
+  only run forward, and guessing at a shape this build has never seen is
+  how a blob gets quarantined. Older ones migrate on the reload that
+  follows, through the same path a stored blob takes.
+- **A share link.** `Spine.toShareCode()` is the export, deflated with
+  `CompressionStream('deflate-raw')` and base64url'd, prefixed `z`; where
+  the platform lacks the stream it is plain JSON prefixed `j`, and either
+  kind reads on either platform. It travels in the URL **fragment**
+  (`#h=…`), which a browser never sends to a server. The demo household
+  with a snapshot is about 2.8 KB of fragment; the ceiling the brief set
+  is 8 KB and `test/export.js` holds it there.
+- **Arrival.** `index.html` reads `#h=` on load and **offers** — "this link
+  carries Robin Sparks, saved Sep 4; loading it replaces yours" — behind a
+  confirm. It never loads on its own, and dismissing strips the fragment.
+
+The Dashboard's "Your data" card carries all three, and the landing links
+to it. Export always includes the snapshots so that "since last time"
+survives a move.
+
+### Compatibility note
+
+Stored shape: nothing. The export envelope is versioned separately
+(`exportVersion: 1`) so it can grow without a schema bump. `test/export.js`
+is a new suite: export → import deep-equal, share-code round trip, size.
+
+---
+
+## D-060 — A suggested value is shown, never stored
+
+*(BRIEF.md §0.3 D-A and §2.1. Partially supersedes SPEC.md §5 "inputs ship
+empty" — an input may ship showing a proposal.)*
+
+The brief asked for a third input state between empty and entered:
+`suggested`, sourced from a reference table or a derived figure, rendered
+distinctly, counted as unanswered until confirmed. It proposed storing it as
+`{ value, state: 'suggested' | 'entered', source }` on every scalar owned
+field, with a migration wrapping existing bare values.
+
+**Decision: the state exists; the stored shape does not change.** A
+suggestion lives only in a DOM node's display. `shared/suggest.js` paints it
+(muted, dashed underline, a "Use this" chip naming the source) and reports
+it; the room that owns the field does the write when the person taps the
+chip or types. The household never holds a suggested value at all.
+
+Why not the stored shape the brief described:
+
+- Every reader in the app — `Schema.cashCents()`, every engine, every
+  ownership `read` — takes bare numbers. Wrapping them means every one of
+  those unwraps and checks `state`, and the one that forgets feeds a guess
+  into a formula. The brief's own test ("no room writes a suggested value
+  into a formula without confirmation") is a test that the discipline held.
+  Not storing the value makes the discipline unnecessary: an engine cannot
+  read what is not there.
+- The only thing storing buys is remembering that a suggestion was shown.
+  Every suggestion here is deterministic — a table row or a derivation from
+  fields the household already holds — so it costs nothing to show it again.
+- Empty ≠ zero (CLAUDE.md, SPEC.md §4–5) stays exactly as strict, with no new
+  third value in storage to reason about. `Progress` needs no change: a
+  suggested field reads as `null`, which is unanswered.
+
+### The mechanics that make "never in a formula" true by construction
+
+`Suggest.show(node, { value, display, source, onUse })` writes the display
+into the box and marks it `data-suggested`. **Focusing the box clears it**,
+so a blur handler that reads `node.value` gets `''` — precisely what an
+empty box gives — and leaving it blank re-shows the proposal rather than an
+empty field. `Suggest.entered(node)` is the read a room should use where it
+reads a box outside a blur. "Use this" calls the room's `onUse(value)`,
+which writes through the room's ordinary path, then the state is entered
+like any other. `show()` refuses to paint over a box that already holds an
+entered value: a suggestion never overwrites an answer.
+
+Nothing is rebuilt: `show()` writes `.value` and classes on a node in the
+page and adds one chip beside it, once. D-034 holds.
+
+### Compatibility note
+
+Stored shape: **nothing changes.** No migration. Rooms opt in one box at a
+time by calling `Suggest.show()`; a room that never does is unaffected.
+`test/run.js` asserts `shared/suggest.js` never references the spine.
+
+---
+
+## D-061 — Eleven cards: the intake asks less, derives one answer, and takes "no debt" as an answer
+
+*(BRIEF.md §2.2; carries the brief's D-E "two people are first-class" as far
+as the intake goes.)* Start Here asked the same person about their date of
+birth in one card and their state in another, about the employer match in
+one card and whether they captured it in another, and never asked whether
+there was a second person or any debt at all — so a debt-free household was
+"incomplete" in every room that reads debt, forever.
+
+**Decision: eleven cards for one W-2 person with no debt, in three groups
+with a time on each.** *About you* (~1 min): just you or two; working; the
+other of you (only when two); born + state. *Money in and out* (~1 min):
+pay; filing; spending. *What you hold and owe* (~2 min): cash; investments;
+the 401(k) card; deductible; any debt. The rail says which group you are in.
+
+### What changed in the questions
+
+- **Just you, or two of you?** Two adds one card — a name, whether they are
+  working, born month/year — and a second pay row on the income card, with
+  the same basis list and the same annualising, written to their own income
+  source on their own person record. Household income is the sum, as
+  `Schema.grossAnnualIncomeCents` already did. "Just me" again removes the
+  second person (behind a confirm). No `partner` flag: `people[1]` is the
+  fact.
+- **Born month + year, and state, on one card.** The day was never used;
+  `dob` is stored as `YYYY-MM-01`. The state is picked from
+  `data/states.json`, not typed. A half-chosen date is never wiped between
+  the two picks.
+- **Investments in three boxes** — pre-tax, Roth, taxable — each an asset
+  record with a `taxCharacter`, or one total marked `'unknown'` behind an
+  "I only know the total" link. Switching to a total collapses the split;
+  typing a split removes a total, so nothing double-counts.
+- **The 401(k) card**: match % · of the first % · you put in %. The match
+  boxes open **suggesting** 50% of the first 6% from
+  `data/match_defaults.json` (Vanguard, How America Saves; a mode, not a
+  mean) and the contribution box suggests the cap once the cap is known —
+  shown, never stored, D-060. "There's no match" writes 0 and 0 explicitly;
+  nobody types zeros. **Whether you capture the full match is derived**
+  (`Schema.capturingFullMatchDerived`: contribution ≥ cap) and no longer
+  asked; the old stored yes/no is the fallback for households that answered
+  it before the contribution existed. The sentence under the boxes updates
+  as you type, not on blur.
+- **Highest deductible** and **what you contribute** move to Start Here.
+  Sleep At Night and Where It Goes render them as chips that link back.
+- **Any debt?** `meta.hasDebt`. "No" is an answer: `Registry.nextAfter()`
+  drops Debt Payoff from the path, and `totalDebt` /
+  `monthlyDebtPayments` stop applying (the D-055 mechanism), so every room
+  that reads debt reads complete instead of waiting.
+
+### Two things found on the way
+
+The strip at the foot of every room repainted synchronously on every write.
+When an item dropped off its list the document got shorter; with the page
+scrolled near the bottom the browser clamped the scroll and the Next button
+moved 40px between touch-end and click. The tap was lost. `Progress.mount`
+now repaints 400ms after a change, coalesced, and holds the strip's height
+across the repaint. A "Use this" chip that vanished on blur did the same in
+miniature; it keeps its space now (`visibility`, not `[hidden]`).
+
+### Compatibility note
+
+**Stored shape:** `meta.hasDebt` (null / true / false) and
+`asset.taxCharacter` (null, or one of the enum in `Schema.FIELDS`) are
+**added**; both default to null. `dob` may now be `YYYY-MM-01`. A second
+adult is `people[1]` with `role: 'adult'` — nothing new in the person
+record beyond D-055's `employmentStatus`. `household.capturingFullMatch`
+stays for compatibility and is read only when the derivation cannot run.
+
+**Rooms updated:** `rooms/start.html` (rebuilt), `rooms/sleep-at-night.html`
+and `rooms/accounts.html` (chips), `shared/registry.js` (`nextAfter` takes
+the household; Start Here's `needs` and anchors), `shared/ownership.js`
+(owners and anchors moved; `hasDebt`; `applies` on the debt figures and on
+`contributionPercent`), `shared/progress.js` (deferred strip), `foo-ladder.js`
+(no employer → contribution 0 like the cap). The demo persona answers
+`hasDebt: true`.
+
+**Before writing any of these from a new room:** the deductible, the
+contribution and `hasDebt` are Start Here's. Read them through
+`Ownership.describe()`; do not add a box.
+
+---
+
 ## D-046 — HP is measured in weeks, which is what makes §3A stop contradicting itself
 
 The Dungeons & Dividends rulebook defines Hit Points twice in the same

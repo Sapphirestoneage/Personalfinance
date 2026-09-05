@@ -69,12 +69,8 @@
 </header>
 
 <section class="progress" aria-label="Progress">
+  <div id="next-card"></div>
   <div class="progress-head">
-    <span class="slaf-eyebrow">Rooms visited</span>
-    <span class="progress-count" id="progress-count">—</span>
-  </div>
-  <div class="slaf-bar"><span id="progress-bar" style="width:0"></span></div>
-  <div class="progress-head" style="margin-top:var(--space-3)">
     <span class="slaf-eyebrow">Answers given</span>
     <span class="progress-count" id="answers-count">—</span>
   </div>
@@ -152,7 +148,9 @@
         blurb: 'Not homework, and never required. These test a hypothetical without touching your real figures; nothing you type here is kept.' }
     ];
     var byKind = { core: [], read: [], 'about-you': [], explore: [] };
-    rooms.forEach(function (r) { (byKind[r.kind] || byKind.explore).push(r); });
+    /* Utility pages (Refresh) are reached from the dashboard, not chosen
+       from a list; listing them here would make a chore look like a room. */
+    rooms.forEach(function (r) { if (!r.utility) (byKind[r.kind] || byKind.explore).push(r); });
 
     GROUPS.forEach(function (g) {
       if (!byKind[g.kind].length) return;
@@ -188,8 +186,12 @@
       a.href = room.href;
       a.innerHTML =
         '<div class="room-top">'
+        /* No digit. Cards are grouped by kind, so path order read as
+           1, 2, 3, 5 / 4, 6, 8 — a sequence that looked broken. The tick
+           for a visited room stays; the path order lives in the header
+           nav of every room, where it is walked rather than read. */
         + '<span class="slaf-step ' + (seen ? 'slaf-step--done' : isNext ? 'slaf-step--next' : '') + '">'
-        + (seen ? '✓' : room.order) + '</span>'
+        + (seen ? '✓' : isNext ? '→' : '·') + '</span>'
         + '<h2>' + room.title + '</h2>'
         + (isNext ? '<span class="next-flag">next</span>'
                   : seen ? '<span class="visited">visited</span>' : '') + '</div>'
@@ -218,18 +220,36 @@
       + '<span class="slaf-done-pill">' + row.missing.length + ' to fill in</span></div>';
   }
 
-  /* SPEC.md §12.7 — a plain visited-rooms progress bar off getVisitedRooms().
-     No XP, no streaks, no score. "N of {total in registry}". */
-  function renderProgress() {
-    var total = Registry.total();
-    /* Count only ids the registry still knows about, so a renamed or removed
-       room can't push the bar past 100%. */
-    var known = Registry.all().map(function (r) { return r.id; });
-    var seen = Spine.getVisitedRooms().filter(function (id) { return known.indexOf(id) !== -1; });
-    el('progress-count').textContent = seen.length + ' of ' + total;
-    el('progress-bar').style.width = (total === 0 ? 0 : (seen.length / total) * 100) + '%';
+  /* SPEC.md §12.7 — no XP, no streaks, no score. The "rooms visited" bar
+     is gone (BRIEF §1.2): visiting is not progress, answering is. What is
+     left is the one bar that gates anything, and above it the single card
+     that says where to go next. */
+  function renderNextCard() {
+    var h = Spine.getProfile();
+    var next = Progress.nextUnfinished(h, null);
+    var box = el('next-card');
+    if (!next) {
+      box.innerHTML = '<a class="room room--next" href="' + Registry.byId('dashboard').href + '">'
+        + '<div class="room-top"><span class="slaf-step slaf-step--done">✓</span><h2>The Dashboard</h2>'
+        + '<span class="next-flag">all filled in</span></div>'
+        + '<p>Every figure the rooms share is answered. The panel is live.</p></a>';
+      return;
+    }
+    var first = next.missing[0];
+    box.innerHTML = '<a class="room room--next" href="' + (first ? first.href : next.href) + '">'
+      + '<div class="room-top"><span class="slaf-step slaf-step--next">→</span><h2>' + next.title + '</h2>'
+      + '<span class="next-flag">next</span></div>'
+      + '<p>' + (first
+          ? 'Still needs <strong>' + first.label.toLowerCase() + '</strong>'
+            + (first.ownerId !== next.roomId ? ' — asked in ' + first.ownerTitle : '')
+            + (next.missing.length > 1 ? ', and ' + (next.missing.length - 1) + ' more' : '') + '.'
+          : next.blurb) + '</p></a>';
+  }
 
-    /* The second bar is the one that actually gates anything: distinct
+  function renderProgress() {
+    renderNextCard();
+
+    /* The bar that actually gates anything: distinct
        shared figures answered, counted once each however many rooms read
        them. See DECISIONS.md D-050. */
     var o = Progress.overall(Spine.getProfile());
