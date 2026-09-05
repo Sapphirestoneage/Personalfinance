@@ -4162,3 +4162,77 @@ that is what made it reusable here.
 with `stats`, `klass`, `proficiencyBonus` and `level`, and tolerates `null` for
 the last three. It ranks only scored saves. If you call it, do not print its
 `tier` unless your caller actually has a Level.
+
+---
+
+## D-066 — Fifteen more creatures, and a mark saying which are ours
+
+BRIEF §9.10. The bestiary had fourteen creatures from the rulebook. Three things
+were wrong with that as a set, and none of them was "too few".
+
+**"Greed" had no creature at all.** It is one of six declared attack types, so
+§9.6's moves panel and T10's type chart could never show it. Five creatures now
+use it — the Meme-Stock Swarm, the Crypto Siren, the Day-Trading Leech, the
+Concentration Golem and the Golden Handcuffs — and a test asserts every declared
+attack type is reachable, which is the check that would have caught the gap.
+
+**Tier I had two creatures**, and tier I is where a first-time player is standing
+when they open the thing. It now has six, all small: a Subscription Slime, an
+Overdraft Gremlin, a Buy-Now-Pay-Later Sprite and a Free-Trial Snare. Tier IV
+went from two to four, because the end of the game was thin in the other
+direction.
+
+**Strength had one.** Strength is earning power, and nothing much attacked it —
+so the Wage-Stagnation Wraith (which does nothing at all, that being the attack)
+and the Layoff Reaper (which does not damage the balance, it removes the thing
+refilling it) now do.
+
+Final spread: 29 creatures, every tier at six or more, every attack type used,
+every save targeted by at least two.
+
+### The provenance mark
+
+The rulebook is someone else's work; these fifteen are not. Every added creature
+carries `"origin": "extension"` in the data, the file's own `note` says so at the
+top, and the bestiary page prints a `+` next to the name with the rest explained
+in the section intro. Three tests hold this together: the fourteen rulebook
+creatures are still present and still named exactly as supplied, everything else
+is marked, and the file's note says which is which.
+
+This matters more than tidiness. Someone reading `dnd_rules.json` in six months
+needs to know which lines they can argue with freely and which came from a
+document they should go back and check.
+
+### Two creatures that deal no damage, deliberately
+
+Writing the coverage tests turned up `"dice": "0"` on the Market Crash Elemental
+and the Sudden Ability Drain, and my first test called it malformed. It is not:
+one is a paper loss and the other reduces a stat, so neither costs weeks of
+runway. `parseDice` returns null and `expectedDice` turns that into 0, which is
+the right answer. The test now asserts exactly two such creatures exist, that
+they expect zero weeks, and that each says in its note why there are no dice —
+so the zero stays a decision rather than decaying into an oversight.
+
+### A blocker the catalogue was missing
+
+Three new creatures wanted to be blocked by Scenario Foresight — you had already
+pictured this going wrong, so it arrives as a plan rather than as news. It is a
+real declared sub-stat and was simply absent from the blocker catalogue, so it
+was added there (marked as an extension too) rather than bending the creatures to
+the fourteen blockers that happened to exist. A test now asserts every sub-stat
+blocker points at a real sub-stat and carries a threshold.
+
+### Compatibility note
+
+**Stored shape:** nothing. Creatures are reference data, not stored state.
+
+**Rooms updated:** `dnd/data/dnd_rules.json` (15 creatures, 1 blocker, the note)
+and `dnd/bestiary.html` (the `+` marker and the two section intros). Every other
+page picks the new creatures up for free, because they all read the same tables —
+the Tier 1 hunt panel and the encounter room's predator list both grew without
+being touched.
+
+**Before writing any of these from a new room:** monsters carry `type`, hazards
+carry `category` — that split is the rulebook's and was kept rather than tidied,
+so a room rendering both must handle each. Do not assume `damageSpec.dice`
+parses; `"0"` is a legitimate value meaning no hit-point damage.

@@ -48,6 +48,7 @@
   .mname { font-weight: 600; color: var(--color-text); white-space: nowrap; }
   .cr { font-variant-numeric: tabular-nums; white-space: nowrap; }
   .save { white-space: nowrap; color: var(--color-accent-hover); }
+  .ext { color: var(--color-accent-hover); font-weight: 700; cursor: help; }
   .cat { display: inline-block; font-size: var(--text-xs); padding: 2px var(--space-2); border-radius: var(--radius-pill); border: 1px solid var(--color-border-strong); color: var(--color-text-muted); white-space: nowrap; }
   .tree { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-3); background: var(--color-surface-raised); }
   .tree h3 { margin-top: 0; }
@@ -86,7 +87,7 @@
 
   <section id="monsters">
     <h2>The Monster Manual</h2>
-    <p class="sec-note">Monsters are people and institutions whose incentives don't run with yours — whether or not they mean you harm. Some are predators. Some are entirely well-meaning and still bad for you, which is the harder category to see coming.</p>
+    <p class="sec-note">Monsters are people and institutions whose incentives don't run with yours — whether or not they mean you harm. Some are predators. Some are entirely well-meaning and still bad for you, which is the harder category to see coming. Names marked <span class="ext">+</span> were written for this build; the rest came from the rulebook as supplied.</p>
     <div class="tablewrap"><table><thead><tr>
       <th>Monster</th><th>CR</th><th>Type</th><th>Save</th><th>Damage</th><th>Notes</th>
     </tr></thead><tbody id="monster-rows"></tbody></table></div>
@@ -94,7 +95,7 @@
 
   <section id="hazards">
     <h2>Hazards</h2>
-    <p class="sec-note">Hazards aren't people — they're events, closer to weather than to an adversary. Nobody's incentives are against you here. They sort by where they originate: the environment around you, your relationships, or your own body.</p>
+    <p class="sec-note">Hazards aren't people — they're events, closer to weather than to an adversary. Nobody's incentives are against you here. They sort by where they originate: the environment around you, your relationships, or your own body. Names marked <span class="ext">+</span> were written for this build.</p>
     <div class="tablewrap"><table><thead><tr>
       <th>Hazard</th><th>Category</th><th>CR</th><th>Save</th><th>Damage</th><th>Notes</th>
     </tr></thead><tbody id="hazard-rows"></tbody></table></div>
@@ -156,14 +157,24 @@
   }
   function td(v, cls) { return '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(v) + '</td>'; }
 
+  /* A creature written for this build is marked, in the data and on the page.
+     The rulebook is someone else's work and the extension is not, so a reader
+     must be able to tell which is which without opening the JSON. Escape the
+     name first, then add the marker — never the other way round. */
+  function nameCell(c) {
+    return '<td class="mname">' + esc(c.name)
+      + (c.origin === 'extension' ? ' <span class="ext" title="Written for this build, not in the rulebook">+</span>' : '')
+      + '</td>';
+  }
+
   function render(rules) {
     el('monster-rows').innerHTML = rules.monsters.map(function (m) {
-      return '<tr>' + td(m.name, 'mname') + td(m.cr, 'cr') + td(m.type)
+      return '<tr>' + nameCell(m) + td(m.cr, 'cr') + td(m.type)
         + td(m.save + ' save', 'save') + td(m.damage) + td(m.note) + '</tr>';
     }).join('');
 
     el('hazard-rows').innerHTML = rules.hazards.map(function (z) {
-      return '<tr>' + td(z.name, 'mname')
+      return '<tr>' + nameCell(z)
         + '<td><span class="cat">' + esc(z.category) + '</span></td>'
         + td(z.cr, 'cr') + td(z.save, 'save') + td(z.damage) + td(z.note) + '</tr>';
     }).join('');

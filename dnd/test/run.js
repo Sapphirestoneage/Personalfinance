@@ -226,7 +226,7 @@ section('Dungeons & Dividends — the encounter engine');
 
   /* -- every creature carries the full §9.3 shape, or this fails ---------- */
   const creatures = R.monsters.concat(R.hazards);
-  check('fourteen creatures in all', creatures.length, 14);
+  check('twenty-nine creatures in all', creatures.length, 29);
   creatures.forEach(function (c) {
     checkTrue(`${c.name} has a save ability`, typeof c.saveAbility === 'string' && c.saveAbility.length > 0);
     checkTrue(`${c.name} has a damage spec`, !!c.damageSpec);
@@ -675,6 +675,113 @@ section('Dungeons & Dividends — the quiz-only leaning');
 
   check('and with nothing answered it declines to guess',
     Character.suggestClassFromStats({}, TABLES).status, 'incomplete');
+})();
+
+section('Dungeons & Dividends — the bestiary extension');
+
+(function () {
+  const Encounter = require(path.join(ROOT, 'engines/encounter.js'));
+  const R = TABLES.dndRules;
+  const creatures = R.monsters.concat(R.hazards);
+
+  /* BRIEF §9.10. The rulebook's fourteen creatures are one thing; creatures
+     written for this build are another, and a reader must be able to tell them
+     apart without asking. Anything added here carries origin: "extension". */
+  const RULEBOOK = [
+    'Lifestyle-Inflation Imp', 'Payday Loan Wraith', 'Commission Churn-Wraith',
+    'Timeshare Charm-Caster', 'MLM Cultist', 'Well-Meaning Family Familiar',
+    'Whole-Life-Insurance Basilisk', 'Identity Thief',
+    'Market Crash Elemental', 'Inflation Wraith', 'Divorce Dragon',
+    'The Dual-Income Collapse', 'Medical Bankruptcy Behemoth', 'The Sudden Ability Drain'
+  ];
+  const fromRulebook = creatures.filter(function (c) { return !c.origin; });
+  check('the rulebook\'s fourteen are all still here', fromRulebook.length, 14);
+  check('and they are the same fourteen, unedited away',
+    fromRulebook.map(function (c) { return c.name; }).sort().join('|'),
+    RULEBOOK.slice().sort().join('|'));
+  creatures.filter(function (c) { return RULEBOOK.indexOf(c.name) === -1; })
+    .forEach(function (c) {
+      check(`${c.name} is marked as an extension, not passed off as rulebook`,
+        c.origin, 'extension');
+    });
+  checkTrue('the file says so at the top',
+    /origin.*extension/.test(R.note) && /Rulebook content, PLUS/.test(R.note));
+
+  /* No duplicates — a second creature with the same name would render twice
+     in every list and log ambiguously. */
+  const names = creatures.map(function (c) { return c.name; });
+  check('every creature name is unique', new Set(names).size, names.length);
+
+  /* The gap this tranche existed to close: "greed" was a declared attack type
+     with no creature using it, so the Tier 1 moves panel could never show it.
+     Every declared type must now be reachable. */
+  R.encounterRules.attackTypes.forEach(function (t) {
+    checkTrue(`some creature actually uses the "${t.id}" attack type`,
+      creatures.some(function (c) { return c.attackType === t.id; }));
+  });
+
+  /* Every tier needs enough to be worth showing, and tier I most of all —
+     that is where a first-time player is standing. */
+  ['I', 'II', 'III', 'IV'].forEach(function (tier) {
+    checkTrue(`tier ${tier} has at least three creatures`,
+      creatures.filter(function (c) { return c.tier === tier; }).length >= 3);
+  });
+
+  /* Every save ability names real stats, so targetSave() can never come back
+     with an empty pool and print nothing at someone. */
+  const STATS = R.stats.map(function (s) { return s.id; });
+  creatures.forEach(function (c) {
+    const spec = String(c.saveAbility).toUpperCase();
+    checkTrue(`${c.name}: saveAbility "${spec}" names real stats`,
+      spec === 'ALL' || spec.split('+').every(function (x) { return STATS.indexOf(x) !== -1; }));
+    checkTrue(`${c.name}: CR "${c.cr}" parses to a number`,
+      Encounter.crToNumber(c.cr) !== null);
+    /* "0" is a deliberate value, not a missing one: the Market Crash Elemental
+       and the Sudden Ability Drain do no hit-point damage at all — one is a
+       paper loss, the other reduces a stat. parseDice returns null for them and
+       expectedDice turns that into 0, which is the right answer. Anything else
+       must be real dice. */
+    checkTrue(`${c.name}: damage dice are real dice or a deliberate "0"`,
+      c.damageSpec.dice === '0' || !!Encounter.parseDice(c.damageSpec.dice));
+  });
+
+  /* The bestiary page renders these fields directly, so a missing one prints
+     "undefined" in a table cell. Monsters use `type`, hazards use `category` —
+     the rulebook's own split, kept rather than tidied. */
+  R.monsters.forEach(function (m) {
+    checkTrue(`${m.name}: monster row has type, save, damage and note`,
+      !!m.type && !!m.save && !!m.damage && !!m.note);
+  });
+  R.hazards.forEach(function (z) {
+    checkTrue(`${z.name}: hazard row has category, save, damage and note`,
+      !!z.category && !!z.save && !!z.damage && !!z.note);
+    checkTrue(`${z.name}: category is one the page explains`,
+      ['Environmental', 'Relationship', 'Personal'].indexOf(z.category) !== -1);
+  });
+  checkTrue('the bestiary page marks extensions',
+    /origin === 'extension'/.test(fs.readFileSync(path.join(ROOT, 'bestiary.html'), 'utf8')));
+
+  check('exactly two creatures deal no hit-point damage',
+    creatures.filter(function (c) { return c.damageSpec.dice === '0'; }).length, 2);
+  creatures.filter(function (c) { return c.damageSpec.dice === '0'; }).forEach(function (c) {
+    check(`${c.name} expects zero weeks of damage`,
+      Encounter.expectedDice(Encounter.parseDice(c.damageSpec.dice)), 0);
+    checkTrue(`${c.name} says in its note why there are no dice`,
+      typeof c.damageSpec.note === 'string' && c.damageSpec.note.length > 0);
+  });
+
+  /* A blocker catalogue entry keyed to a sub-stat must name a real one, or
+     blockerState() silently returns unknown for ever. */
+  const declared = Character.declaredIds(R);
+  const computed = R.subStats.map(function (m) { return m.id; });
+  Object.keys(R.blockers).forEach(function (id) {
+    const b = R.blockers[id];
+    if (!b.subStat) return;
+    checkTrue(`blocker ${id} points at a real sub-stat`, computed.indexOf(b.subStat) !== -1);
+    checkTrue(`blocker ${id} has a threshold`, typeof b.min === 'number');
+  });
+  checkTrue('scenarioForesight is a blocker and a declared sub-stat',
+    !!R.blockers.scenarioForesight && declared.indexOf('scenarioForesight') !== -1);
 })();
 
 section('Dungeons & Dividends — what hunts you on the money-free page');
