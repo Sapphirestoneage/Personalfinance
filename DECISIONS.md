@@ -6253,3 +6253,42 @@ figure. **Rooms updated:** `dnd/engines/encounter.js` (`recurring`,
 `dnd/encounter.html` (three new figures and the verdict), `dnd/dm.html` (says
 the figure is gross). **Before writing any of these from a new room:** read
 `r.recurring` first — `hpAfter` means a different thing on each side of it.
+
+---
+
+## DD-022 — One strong save, one weak, and every save covered
+
+The rulebook gave three of the seven classes the identical CON/WIS pair, and
+left Dexterity and Intelligence to one class each. In play that meant six
+classes had no proficiency against anything that came at DEX — the Payday Loan
+Wraith, the Identity Thief — and the type chart flattened for half the roster,
+because Keeper, Compounder and Anchor were the same character as far as saves
+went.
+
+5e's own shape is one **strong** save (DEX, CON or WIS) and one **weak** (STR,
+INT or CHA) per class, with every save covered. That is what the classes have
+now:
+
+    Earner      STR/CON   (was STR/CHA)   the fighter's pair: earning is a body
+    Keeper      WIS/CHA   (was CON/WIS)   discipline, and immunity to the pitch
+    Builder     DEX/CHA   (was STR/CHA)   the rogue's pair: quick, persuasive
+    Compounder  CON/INT   (was CON/WIS)   patience and knowledge — its own primaries
+    Landholder  DEX/INT   (was DEX/CON)   nimble, and reads the paperwork
+    Anchor      CON/STR   (was CON/WIS)   the barbarian's pair: stability by bulk
+    Speculator  WIS/INT   (unchanged)     the wizard's pair
+
+Every save is now proficient for at least two classes; no pair is shared by
+more than two (5e itself gives Fighter and Barbarian the same one). Each class
+carries its rulebook pair as `savesRulebook`, so the original is recorded rather
+than overwritten.
+
+The demo character is an Earner, and the §9.3 acceptance figure — the Timeshare
+targets WIS, which the Earner was not proficient in before and is not now — is
+unchanged at 37%.
+
+### Compatibility note
+
+**Stored shape:** nothing. **Rooms updated:** `dnd/data/dnd_classes.json` only;
+`savingThrows()`, the radar, the predators list and the type chart all read from
+it. **Before writing any of these from a new room:** a new class needs one
+strong and one weak save; the test will say so.

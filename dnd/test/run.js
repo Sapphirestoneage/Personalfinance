@@ -1494,6 +1494,36 @@ section('Dungeons & Dividends — the bestiary extension');
     !!R.blockers.scenarioForesight && declared.indexOf('scenarioForesight') !== -1);
 })();
 
+section('Dungeons & Dividends — one strong save, one weak (DD-022)');
+
+(function () {
+  const C = TABLES.dndClasses;
+  const STRONG = ['DEX', 'CON', 'WIS'], WEAK = ['STR', 'INT', 'CHA'];
+  checkTrue('the classes file says why the saves changed', /DD-022/.test(C.savesNote || ''));
+  const cov = {};
+  C.classes.forEach(function (k) {
+    check(`${k.name} has two saves`, k.saves.length, 2);
+    checkTrue(`${k.name} has one strong save`, k.saves.some(function (s) { return STRONG.indexOf(s) !== -1; }));
+    checkTrue(`${k.name} has one weak save`, k.saves.some(function (s) { return WEAK.indexOf(s) !== -1; }));
+    checkTrue(`${k.name} keeps the rulebook's pair on record`, Array.isArray(k.savesRulebook) && k.savesRulebook.length === 2);
+    k.saves.forEach(function (s) { cov[s] = (cov[s] || 0) + 1; });
+  });
+  ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'].forEach(function (s) {
+    checkTrue(`${s} is a proficient save for at least two classes`, (cov[s] || 0) >= 2);
+  });
+  /* No two classes with identical pairs is too strict (5e has Fighter and
+     Barbarian both STR/CON); but the rulebook's three-way CON/WIS tie is gone. */
+  const pairs = C.classes.map(function (k) { return k.saves.slice().sort().join('/'); });
+  const most = Math.max.apply(null, pairs.map(function (p) { return pairs.filter(function (q) { return q === p; }).length; }));
+  checkTrue('no save pair is shared by three classes', most <= 2);
+  /* Proficiency actually lands on the new saves. */
+  const earner = C.classes.filter(function (k) { return k.id === 'earner'; })[0];
+  const stats = { STR: Money.ok(10), DEX: Money.ok(10), CON: Money.ok(10), INT: Money.ok(10), WIS: Money.ok(10), CHA: Money.ok(10) };
+  const saves = Character.savingThrows(stats, earner, 2, TABLES);
+  check('the Earner is now proficient in CON', saves.filter(function (s) { return s.stat === 'CON'; })[0].modifier, 2);
+  check('and no longer in CHA', saves.filter(function (s) { return s.stat === 'CHA'; })[0].modifier, 0);
+})();
+
 section('Dungeons & Dividends — a bleed is measured against a rest (DD-021)');
 
 (function () {
