@@ -89,8 +89,13 @@
   </section>
 
   <section class="slaf-card card-gap" id="log">
-    <span class="slaf-eyebrow">What comes in</span>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-3)">
+      <span class="slaf-eyebrow">What comes in</span>
+      <button type="button" class="slaf-manage-toggle" id="btn-manage" aria-pressed="false" title="Hide, set aside, restore">⚙ Manage sources</button>
+    </div>
     <h2 style="margin:var(--space-2) 0 0">Every entry</h2>
+    <div id="archive-prompts"></div>
+    <div class="slaf-manage" id="manage" hidden></div>
     <p class="slaf-hint" id="log-hint" style="margin:var(--space-2) 0 0">Nothing logged yet. Add the first one below.</p>
     <ul class="entries" id="entries"></ul>
   </section>
@@ -165,10 +170,16 @@
 <script src="../engines/income.js"></script>
 <script src="../engines/selfemployed.js"></script>
 <script src="../engines/ledger.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/budget.js"></script>
+<script src="../shared/manage.js"></script>
 <script>
 (function () {
   'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Ledger = SLAF.Ledger;
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Ledger = SLAF.Ledger, Manage = SLAF.Manage, Budget = SLAF.Budget;
+  var manageOpen = false, manageState = 'active';
   var ROOM_ID = 'income';
   var TABLES = null;
   var editingId = null;     /* the entry the form holds, or null for a new one */
@@ -297,6 +308,42 @@
     }
   });
 
+  /* ---- Manage sources: hide, set aside, restore (D-128) ------------------- */
+  function manageItems(h) {
+    return Ledger.entries(h).map(function (e) {
+      return { id: e.id, label: e.label || KINDS[e.kind].label, meta: KINDS[e.kind].label + ' · ' + (Money.isEntered(e.amountCents) ? Money.formatCents(e.amountCents) + ' ' + FREQ_WORDS[e.frequency] : 'no amount'),
+        hidden: e.hidden === true, active: e.active !== false, once: e.frequency === 'once', month: e.receivedOn ? e.receivedOn.slice(0, 7) : null };
+    });
+  }
+  function renderManage(h) {
+    el('manage').hidden = !manageOpen;
+    el('btn-manage').setAttribute('aria-pressed', String(manageOpen));
+    if (manageOpen) el('manage').innerHTML = Manage.panel(manageItems(h), manageState);
+    /* A one-time entry whose month has closed: was it a one-off? */
+    var closed = function (m) { return Budget.isClosed(h, m); };
+    var due = Manage.suggestArchive(manageItems(h), closed, (h.ledger || {}).dismissed);
+    el('archive-prompts').innerHTML = due.map(function (it) {
+      return '<div class="slaf-archive-prompt"><span>' + esc(it.label) + ' was a one-time entry and its month is closed.<small>Set it aside? It stays in that month’s record; it stops counting from now on.</small></span>'
+        + '<span class="slaf-manage-acts"><button type="button" class="slaf-manage-act" data-prompt="archive" data-id="' + esc(it.id) + '">Set aside</button><button type="button" class="slaf-manage-act" data-prompt="dismiss" data-id="' + esc(it.id) + '">Not now</button></span></div>';
+    }).join('');
+  }
+  el('btn-manage').addEventListener('click', function () { manageOpen = !manageOpen; render(); });
+  Manage.bind(el('manage'), function (state) { manageState = state; render(); }, function (act, id) {
+    if (act === 'hide') Spine.upsertIncomeEntry({ id: id, hidden: true });
+    else if (act === 'show') Spine.upsertIncomeEntry({ id: id, hidden: false });
+    else if (act === 'archive') Spine.upsertIncomeEntry({ id: id, active: false });
+    else if (act === 'restore') Spine.upsertIncomeEntry({ id: id, active: true, hidden: false });
+    render();
+  });
+  el('archive-prompts').addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-prompt]');
+    if (!b) return;
+    var id = b.getAttribute('data-id');
+    if (b.getAttribute('data-prompt') === 'archive') Spine.upsertIncomeEntry({ id: id, active: false });
+    else Spine.set('ledger.dismissed', ((Spine.getProfile().ledger || {}).dismissed || []).concat([id]), 'Kept ' + id);
+    render();
+  });
+
   /* ---- This month ---------------------------------------------------------- */
   function renderMonth(h) {
     var m = Ledger.month(h, TABLES, Ledger.thisMonth());
@@ -362,6 +409,7 @@
     var h = Spine.getProfile();
     renderMonth(h);
     renderList(h);
+    renderManage(h);
     renderCosts(h);
   }
   function jumpToHash() {

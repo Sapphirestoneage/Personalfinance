@@ -182,7 +182,12 @@
       <button type="button" class="slaf-btn slaf-btn--primary" id="btn-log">Log it</button>
       <span class="slaf-hint" id="log-say"></span>
     </div>
-    <h3 style="margin:var(--space-4) 0 0;font-size:var(--text-base)" id="log-month-title">This month</h3>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-3);margin-top:var(--space-4)">
+      <h3 style="margin:0;font-size:var(--text-base)" id="log-month-title">This month</h3>
+      <button type="button" class="slaf-manage-toggle" id="btn-manage-log" aria-pressed="false" title="Hide, set aside, restore">⚙ Manage</button>
+    </div>
+    <div id="log-prompts"></div>
+    <div class="slaf-manage" id="manage-log" hidden></div>
     <ul class="logged" id="logged"></ul>
   </section>
 
@@ -245,6 +250,8 @@
 <script src="../engines/income.js"></script>
 <script src="../engines/selfemployed.js"></script>
 <script src="../engines/ledger.js"></script>
+<script src="../engines/budget.js"></script>
+<script src="../shared/manage.js"></script>
 <script src="../shared/charts.js"></script>
 <script>
 (function () {
@@ -743,6 +750,7 @@
     renderTemplate(h);
     renderDivergence(h);
     renderLog(h);
+    renderManageLog(h);
   }
 
   /* ---------- the expense log (D-128) ----------------------------------------
@@ -830,6 +838,48 @@
         + '<button type="button" class="lg-x" data-unlog="' + r.entryId + '" aria-label="Remove">✕</button></li>';
     }).join('') || '<li><span class="slaf-hint" style="grid-column:1/-1">Nothing logged this month yet.</span></li>';
   }
+  /* Manage the log: hide, set aside, restore (D-128). */
+  var Manage = SLAF.Manage, Budget = SLAF.Budget;
+  var manageOpen = false, manageState = 'active';
+  function logItems(h) {
+    var names = {};
+    Ledger.entries(h).forEach(function (e) { names[e.id] = e.label || Schema.INCOME_KIND_RULES[e.kind].label; });
+    return CashFlow.logEntries(h).map(function (e) {
+      var cat = CashFlow.categoryById(TABLES.expenseCategories, e.categoryId);
+      return { id: e.id, label: e.descriptor || (cat ? cat.label : e.categoryId), meta: (cat ? cat.label : '') + ' · ' + Money.formatCents(e.amountCents) + (e.period === 'monthly' ? ' every month' : e.date ? ' on ' + e.date : '') + (e.linkedIncomeId ? ' · for ' + (names[e.linkedIncomeId] || 'an income entry') : ''),
+        hidden: e.hidden === true, active: e.active !== false, once: e.period !== 'monthly', month: e.date ? e.date.slice(0, 7) : null };
+    });
+  }
+  function renderManageLog(h) {
+    el('manage-log').hidden = !manageOpen;
+    el('btn-manage-log').setAttribute('aria-pressed', String(manageOpen));
+    if (manageOpen) el('manage-log').innerHTML = Manage.panel(logItems(h), manageState);
+    var due = Manage.suggestArchive(logItems(h).filter(function (it) { return it.once; }), function (m) { return Budget.isClosed(h, m); }, (h.ledger || {}).dismissed)
+      /* Only recurring lines are worth asking about: a one-time receipt in a closed month is simply history. */
+      .filter(function () { return false; });
+    var recurringDone = CashFlow.logEntries(h).filter(function (e) { return e.active !== false && e.period === 'monthly' && e.date && Budget.isClosed(h, e.date.slice(0, 7)) && ((h.ledger || {}).dismissed || []).indexOf(e.id) === -1 && e.linkedIncomeId && !Ledger.activeEntries(h).some(function (x) { return x.id === e.linkedIncomeId; }); });
+    el('log-prompts').innerHTML = due.concat(recurringDone.map(function (e) { var it = logItems(h).filter(function (x) { return x.id === e.id; })[0]; return it; })).map(function (it) {
+      return '<div class="slaf-archive-prompt"><span>' + esc(it.label) + ' repeats every month for an income entry that is set aside.<small>Set it aside too?</small></span>'
+        + '<span class="slaf-manage-acts"><button type="button" class="slaf-manage-act" data-prompt="archive" data-id="' + esc(it.id) + '">Set aside</button><button type="button" class="slaf-manage-act" data-prompt="dismiss" data-id="' + esc(it.id) + '">Not now</button></span></div>';
+    }).join('');
+  }
+  el('btn-manage-log').addEventListener('click', function () { manageOpen = !manageOpen; render(); });
+  Manage.bind(el('manage-log'), function (state) { manageState = state; render(); }, function (act, id) {
+    if (act === 'hide') Spine.upsertExpenseEntry({ id: id, hidden: true });
+    else if (act === 'show') Spine.upsertExpenseEntry({ id: id, hidden: false });
+    else if (act === 'archive') Spine.upsertExpenseEntry({ id: id, active: false });
+    else if (act === 'restore') Spine.upsertExpenseEntry({ id: id, active: true, hidden: false });
+    render();
+  });
+  el('log-prompts').addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-prompt]');
+    if (!b) return;
+    var id = b.getAttribute('data-id');
+    if (b.getAttribute('data-prompt') === 'archive') Spine.upsertExpenseEntry({ id: id, active: false });
+    else Spine.set('ledger.dismissed', ((Spine.getProfile().ledger || {}).dismissed || []).concat([id]), 'Kept ' + id);
+    render();
+  });
+
   (function returnChip() {
     if (!/[?&]for=budget/.test(location.search)) return;
     var mm = /[?&]month=(\d{4}-\d{2})/.exec(location.search);

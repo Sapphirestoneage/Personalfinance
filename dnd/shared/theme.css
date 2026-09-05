@@ -682,3 +682,23 @@ a.slaf-explain-chip:hover { border-color: var(--color-accent); }
 .slaf-explain-chip.is-empty { color: var(--color-text-faint); border-style: dashed; }
 .slaf-explain-chip small { color: var(--color-accent-hover); }
 @media (max-width: 420px) { .slaf-explain-row { grid-template-columns: 1fr; gap: 2px; } }
+
+/* ---- Manage sources: hide, set aside, restore (shared/manage.js) ---------- */
+.slaf-manage-toggle { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 3px var(--space-2); cursor: pointer; }
+.slaf-manage-toggle[aria-pressed="true"], .slaf-manage-toggle:hover { border-color: var(--color-accent); color: var(--color-accent-hover); }
+.slaf-manage { margin-top: var(--space-3); border: 1px dashed var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-3); }
+.slaf-manage-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.slaf-manage-chip { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 3px var(--space-2); cursor: pointer; }
+.slaf-manage-chip[aria-pressed="true"] { border-color: var(--color-accent); color: var(--color-accent-hover); }
+.slaf-manage-chip small { color: var(--color-text-faint); }
+.slaf-manage-note { margin: var(--space-2) 0 0; }
+.slaf-manage-list { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
+.slaf-manage-list li { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+.slaf-manage-list li:first-child { border-top: none; }
+.slaf-manage-list b { font-weight: 600; }
+.slaf-manage-list small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+.slaf-manage-acts { display: flex; gap: var(--space-1); flex-shrink: 0; }
+.slaf-manage-act { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-accent-hover); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; }
+.slaf-manage-act:hover { border-color: var(--color-accent); }
+.slaf-archive-prompt { margin-top: var(--space-3); border-left: 3px solid var(--color-caution); background: rgba(232,184,75,.08); padding: var(--space-2) var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; justify-content: space-between; }
+.slaf-archive-prompt span small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
