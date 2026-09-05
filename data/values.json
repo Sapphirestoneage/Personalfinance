@@ -92,7 +92,13 @@
     }
   ],
   "unmappedCategoryIds": [
-    "other"
+    "other",
+    "mileage",
+    "home_office",
+    "equipment",
+    "contractor_fees",
+    "licensing",
+    "platform_fees"
   ],
   "unmappedNote": "\"Everything else\" is deliberately unmapped. Money that lands there has not been claimed by anything, which is itself worth seeing."
 }

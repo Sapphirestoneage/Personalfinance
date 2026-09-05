@@ -13,9 +13,13 @@
 
   1. READS   household.expenses.entries[], expenses.monthlyEssential,
              people[].incomeSources[].grossAnnualIncomeCents, filingStatus.
-  2. WRITES  expenses.entries[] (raw), and expenses.monthlyEssential
-             .trackedValueCents — via Spine.setMonthlyExpenses(cents,
-             'tracked'), which never touches the estimate. Nothing else.
+  2. WRITES  expenses.entries[] (raw) — the typical-month lines, and the
+             expense LOG (D-128): dated occurrences with source 'log', a
+             link to the income entry they produced, and a deduction the
+             data layer allows only when linked; and expenses
+             .monthlyEssential.trackedValueCents — via
+             Spine.setMonthlyExpenses(cents, 'tracked'), which never touches
+             the estimate. Nothing else.
   3. CALLS   engines/cashflow.js for every figure. Take-home pay comes from
              engines/tier0.js's effective-tax lookup, not a second tax
              calculation.
@@ -51,6 +55,22 @@
   .tile .t-sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
   .glance-why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
   @media (max-width: 420px) { .glance { grid-template-columns: 1fr 1fr; } .glance .tile:first-child { grid-column: 1 / -1; } }
+
+  .return-chip { display: inline-block; font-size: var(--text-sm); color: var(--color-accent-hover); border: 1px dashed var(--color-border-active); border-radius: var(--radius-pill); padding: 4px var(--space-3); text-decoration: none; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3); margin-top: var(--space-3); }
+  .form-grid .wide { grid-column: 1 / -1; }
+  .flag { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--color-text-muted); cursor: pointer; }
+  .flag input { margin: 0; width: 16px; height: 16px; accent-color: var(--color-accent); }
+  .flag.is-off { color: var(--color-text-faint); }
+  ul.logged { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
+  ul.logged li { display: grid; grid-template-columns: auto 1fr auto auto; gap: var(--space-1) var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); align-items: center; }
+  ul.logged li:first-child { border-top: none; }
+  ul.logged .lg-date { color: var(--color-text-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  ul.logged .lg-what small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  ul.logged .lg-amt { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  ul.logged .lg-cost { color: var(--color-caution); }
+  ul.logged .lg-x { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 1px var(--space-2); cursor: pointer; }
+  .log-total { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-2); }
 
   .bucket { margin-bottom: var(--space-4); }
   .bucket:last-child { margin-bottom: 0; }
@@ -136,6 +156,36 @@
     </div>
   </section>
 
+  <section class="slaf-card" id="log" style="margin-top:var(--space-4)">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap">
+      <span class="slaf-eyebrow">The expense log</span>
+      <a class="return-chip" id="return-chip" href="budget.html#bucket-expenses" hidden>← Back to the budget</a>
+    </div>
+    <h2 style="margin:var(--space-2) 0 0">Log what actually went out</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">A receipt, a bill paid, a transfer made — on its date. The lines above are the typical month; this is the actual one, and the budget reads it. A cost of earning an income entry is logged here too, against that entry, and can only reduce the tax when it is.</p>
+    <div class="form-grid" id="log-form">
+      <label class="slaf-field"><span class="slaf-label">Amount</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="l-amount" placeholder="e.g. 64.20" aria-label="Amount"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Date</span>
+        <span class="slaf-input-shell"><input type="date" id="l-date" aria-label="Date"/></span></label>
+      <label class="slaf-field wide"><span class="slaf-label">What for</span>
+        <span class="slaf-input-shell"><select id="l-category" aria-label="Category"></select></span></label>
+      <label class="slaf-field wide"><span class="slaf-label">A note</span>
+        <span class="slaf-input-shell"><input type="text" id="l-note" placeholder="e.g. Trader Joe’s" aria-label="Note"/></span></label>
+      <label class="slaf-field wide"><span class="slaf-label">What it produced</span>
+        <span class="slaf-input-shell"><select id="l-linked" aria-label="Income entry this expense produced"><option value="">Nothing — a personal expense</option></select></span></label>
+      <label class="flag"><input type="checkbox" id="l-recurring"/> Repeats every month</label>
+      <label class="flag" id="l-deductible-wrap"><input type="checkbox" id="l-deductible" disabled/> Reduces the tax on that income</label>
+      <p class="slaf-hint wide" id="l-hint" style="margin:0"></p>
+    </div>
+    <div class="actions">
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-log">Log it</button>
+      <span class="slaf-hint" id="log-say"></span>
+    </div>
+    <h3 style="margin:var(--space-4) 0 0;font-size:var(--text-base)" id="log-month-title">This month</h3>
+    <ul class="logged" id="logged"></ul>
+  </section>
+
   <section class="slaf-card" id="out-summary">
     <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-3)">
       <span class="slaf-eyebrow">Monthly spending</span>
@@ -193,6 +243,8 @@
 <script src="../engines/tier0.js"></script>
 <script src="../engines/cashflow.js"></script>
 <script src="../engines/income.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/ledger.js"></script>
 <script src="../shared/charts.js"></script>
 <script>
 (function () {
@@ -206,6 +258,7 @@
   var templateId = '50_30_20';
 
   function el(id) { return document.getElementById(id); }
+  function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
   /* This room shows one box per category, which represents the manual
      monthly total for that category. Look it up by CATEGORY, not by an id
@@ -689,7 +742,104 @@
 
     renderTemplate(h);
     renderDivergence(h);
+    renderLog(h);
   }
+
+  /* ---------- the expense log (D-128) ----------------------------------------
+     Built once: the form is markup. The list holds a remove button per
+     row and nothing typed, so it rebuilds freely. A logged entry has
+     source 'log' and a date; the typical-month lines above never see it. */
+  var Ledger = SLAF.Ledger;
+  function today() { var d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1 < 10 ? '0' : '') + (d.getMonth() + 1) + '-' + (d.getDate() < 10 ? '0' : '') + d.getDate(); }
+  function buildLogForm() {
+    var cats = TABLES.expenseCategories;
+    var groups = (cats.groups || []).filter(function (g) { return g.id !== 'income_costs'; });
+    var html = groups.map(function (g) {
+      var inGroup = cats.categories.filter(function (c) { return c.group === g.id && !c.derivedFrom; });
+      if (!inGroup.length) return '';
+      return '<optgroup label="' + esc(g.label) + '">' + inGroup.map(function (c) { return '<option value="' + c.id + '">' + esc(c.label) + '</option>'; }).join('') + '</optgroup>';
+    }).join('');
+    var costs = cats.categories.filter(function (c) { return c.group === 'income_costs'; });
+    html += '<optgroup label="Costs of earning an income entry">' + costs.map(function (c) { return '<option value="' + c.id + '" data-cost="1">' + esc(c.label) + '</option>'; }).join('') + '</optgroup>';
+    el('l-category').innerHTML = html;
+    el('l-category').value = 'groceries';
+    if (!el('l-date').value) el('l-date').value = today();
+  }
+  function paintLinked(h) {
+    var sel = el('l-linked');
+    var cur = sel.value;
+    var list = Ledger.entries(h).filter(function (e) { return e.active !== false && Schema.costsAllowed(e.kind); });
+    sel.innerHTML = '<option value="">Nothing — a personal expense</option>' + list.map(function (e) {
+      return '<option value="' + e.id + '">' + esc(e.label || Schema.INCOME_KIND_RULES[e.kind].label) + ' (' + esc(Money.formatCents(e.amountCents)) + ')</option>';
+    }).join('');
+    if (list.some(function (e) { return e.id === cur; })) sel.value = cur;
+    paintDeductible();
+  }
+  /* The rule, shown: the tick is live only when an income entry is picked.
+     The data layer enforces it again on every write. */
+  function paintDeductible() {
+    var linked = !!el('l-linked').value;
+    el('l-deductible').disabled = !linked;
+    if (!linked) el('l-deductible').checked = false;
+    el('l-deductible-wrap').classList.toggle('is-off', !linked);
+    el('l-hint').textContent = linked ? 'Logged against that income. Tick the box and it comes off the profit before self-employment tax.' : 'A personal expense can never reduce taxable income; pick the income entry it produced to make it deductible.';
+    var opt = el('l-category').selectedOptions[0];
+    if (!linked && opt && opt.getAttribute('data-cost')) el('l-hint').textContent = 'A cost of earning it needs the income entry it produced — pick one above, or it is filed as personal spending in “Other”.';
+  }
+  el('l-linked').addEventListener('change', paintDeductible);
+  el('l-category').addEventListener('change', paintDeductible);
+  el('l-amount').addEventListener('focus', function () { var c = Money.parseMoney(el('l-amount').value); el('l-amount').value = Money.isEntered(c) ? String(c / 100) : ''; el('l-amount').select(); });
+  el('l-amount').addEventListener('blur', function () { var c = Money.parseMoney(el('l-amount').value); el('l-amount').value = Money.isEntered(c) ? Money.formatCents(c) : ''; });
+  el('log-form').addEventListener('keydown', function (evt) { if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') { evt.preventDefault(); el('btn-log').click(); } });
+  el('btn-log').addEventListener('click', function () {
+    var cents = Money.parseMoney(el('l-amount').value);
+    if (!Money.isEntered(cents)) { el('log-say').textContent = 'An amount, first.'; el('l-amount').focus(); return; }
+    var linked = el('l-linked').value || null;
+    var opt = el('l-category').selectedOptions[0];
+    var categoryId = el('l-category').value;
+    if (!linked && opt && opt.getAttribute('data-cost')) categoryId = 'other';
+    var entry = Schema.createExpenseEntry({
+      categoryId: categoryId, amountCents: cents, period: el('l-recurring').checked ? 'monthly' : 'once',
+      date: el('l-date').value || today(), descriptor: el('l-note').value.trim() || null, source: 'log',
+      linkedIncomeId: linked, deductible: !!linked && el('l-deductible').checked
+    });
+    Spine.upsertExpenseEntry(entry);
+    el('log-say').textContent = 'Logged ' + Money.formatCents(cents) + (linked ? (entry.deductible ? ', deductible against ' : ', against ') + (el('l-linked').selectedOptions[0].textContent) : '') + '.';
+    el('l-amount').value = ''; el('l-note').value = ''; el('l-recurring').checked = false;
+    render();
+  });
+  el('logged').addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-unlog]');
+    if (!b) return;
+    Spine.removeExpenseEntry(b.getAttribute('data-unlog'));
+    render();
+  });
+  function renderLog(h) {
+    paintLinked(h);
+    var m = Ledger.thisMonth();
+    var log = CashFlow.logInMonth(h, TABLES.expenseCategories, m);
+    el('log-month-title').textContent = Schema.monthLabel(m) + (log.count ? ' · ' + Money.formatCents(log.personalCents) + ' personal' + (log.incomeCostsCents ? ' · ' + Money.formatCents(log.incomeCostsCents) + ' costs of earning' : '') : '');
+    var names = {};
+    Ledger.entries(h).forEach(function (e) { names[e.id] = e.label || Schema.INCOME_KIND_RULES[e.kind].label; });
+    el('logged').innerHTML = log.rows.filter(function (r) { return !r.hidden; }).map(function (r) {
+      var cat = CashFlow.categoryById(TABLES.expenseCategories, r.categoryId);
+      return '<li><span class="lg-date">' + esc(r.date.slice(5)) + '</span>'
+        + '<span class="lg-what">' + esc(r.descriptor || (cat ? cat.label : r.categoryId)) + '<small>' + esc(cat ? cat.label : r.categoryId) + (r.recurring ? ' · every month' : '')
+        + (r.linkedIncomeId ? ' · for ' + esc(names[r.linkedIncomeId] || 'an income entry') + (r.deductible ? ', deductible' : ', not deductible') : '') + '</small></span>'
+        + '<span class="lg-amt' + (r.linkedIncomeId ? ' lg-cost' : '') + '">' + esc(Money.formatCents(r.cents)) + '</span>'
+        + '<button type="button" class="lg-x" data-unlog="' + r.entryId + '" aria-label="Remove">✕</button></li>';
+    }).join('') || '<li><span class="slaf-hint" style="grid-column:1/-1">Nothing logged this month yet.</span></li>';
+  }
+  (function returnChip() {
+    if (!/[?&]for=budget/.test(location.search)) return;
+    var mm = /[?&]month=(\d{4}-\d{2})/.exec(location.search);
+    var chip = el('return-chip');
+    chip.hidden = false;
+    chip.href = 'budget.html' + (mm ? '?month=' + mm[1] : '') + '#bucket-expenses';
+    chip.textContent = '← Back to the budget' + (mm ? ' for ' + Schema.monthLabel(mm[1]) : '');
+    var cat = /[?&]category=([a-z_]+)/.exec(location.search);
+    if (cat) window.__logCategory = cat[1];
+  })();
 
   /* ---------- actions --------------------------------------------------- */
 
@@ -761,6 +911,8 @@
     }).join('');
     el('f-template').value = templateId;
     buildInputs();
+    buildLogForm();
+    if (window.__logCategory && CashFlow.categoryById(tables.expenseCategories, window.__logCategory)) el('l-category').value = window.__logCategory;
     render();
     jumpToHash();
   }).catch(function (err) {

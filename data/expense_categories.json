@@ -1,11 +1,11 @@
 {
   "id": "expense_categories",
-  "version": "1.1",
+  "version": "1.2",
   "asOf": "2026-01-01",
   "source": "Category list and needs/wants/savings bucketing for the Cash Flow calc.",
   "confidence": "convention",
   "confidenceNote": "A category vocabulary, not a dataset. Nothing here is a measured figure.",
-  "note": "Config, not code (SPEC.md Section 7). Adding a category is a data edit. `bucket` drives budget-template comparison; `essential` marks the categories that roll up into the tracked figure compared against the user's monthly-essential estimate. `keywords` exist for the future bank-import categoriser (SPEC.md Section 12.5) and are unused by manual entry. A category carrying `derivedFrom` is not typed in at all: its value is computed from the household field named there, and the room that owns that field is the only place it can be changed. Debt minimums are the case in point \u2014 they are the sum of the itemised debts, so typing them here would be a third editable copy of a number that already exists twice.",
+  "note": "Config, not code (SPEC.md Section 7). Adding a category is a data edit. `bucket` drives budget-template comparison; `essential` marks the categories that roll up into the tracked figure compared against the user's monthly-essential estimate. `keywords` exist for the future bank-import categoriser (SPEC.md Section 12.5) and are unused by manual entry. A category carrying `derivedFrom` is not typed in at all: its value is computed from the household field named there, and the room that owns that field is the only place it can be changed. Debt minimums are the case in point — they are the sum of the itemised debts, so typing them here would be a third editable copy of a number that already exists twice. Version 1.2 (D-128): every category carries a `group`, one of the nine budget groups (housing, transportation, food, debt_payments, insurance, personal, kids, giving, other) or savings / investments / income_costs; `groups` lists them with the budget bucket each feeds. The `costs` bucket holds the costs of producing an income entry — logged against that entry in the expense log, never counted as the typical month.",
   "buckets": [
     {
       "id": "needs",
@@ -21,6 +21,11 @@
       "id": "savings",
       "label": "Savings & extra debt",
       "note": "Money that stays yours, or kills a balance faster."
+    },
+    {
+      "id": "costs",
+      "label": "Costs of earning it",
+      "note": "Money spent to produce an income entry. Logged against that entry; never a personal line."
     }
   ],
   "categories": [
@@ -34,7 +39,8 @@
         "mortgage",
         "hoa"
       ],
-      "typicalShareOfBucket": 0.45
+      "typicalShareOfBucket": 0.45,
+      "group": "housing"
     },
     {
       "id": "utilities",
@@ -47,7 +53,8 @@
         "water",
         "internet"
       ],
-      "typicalShareOfBucket": 0.1
+      "typicalShareOfBucket": 0.1,
+      "group": "housing"
     },
     {
       "id": "groceries",
@@ -59,7 +66,8 @@
         "supermarket",
         "market"
       ],
-      "typicalShareOfBucket": 0.2
+      "typicalShareOfBucket": 0.2,
+      "group": "food"
     },
     {
       "id": "transportation",
@@ -72,7 +80,8 @@
         "parking",
         "auto"
       ],
-      "typicalShareOfBucket": 0.13
+      "typicalShareOfBucket": 0.13,
+      "group": "transportation"
     },
     {
       "id": "insurance",
@@ -83,7 +92,8 @@
         "insurance",
         "premium"
       ],
-      "typicalShareOfBucket": 0.07
+      "typicalShareOfBucket": 0.07,
+      "group": "insurance"
     },
     {
       "id": "healthcare",
@@ -96,7 +106,8 @@
         "dental",
         "medical"
       ],
-      "typicalShareOfBucket": 0.04
+      "typicalShareOfBucket": 0.04,
+      "group": "other"
     },
     {
       "id": "childcare",
@@ -108,7 +119,8 @@
         "childcare",
         "preschool"
       ],
-      "typicalShareOfBucket": 0.01
+      "typicalShareOfBucket": 0.01,
+      "group": "kids"
     },
     {
       "id": "debt_minimums",
@@ -120,7 +132,8 @@
         "card payment"
       ],
       "derivedFrom": "monthlyDebtPayments",
-      "ownedBy": "debt-payoff"
+      "ownedBy": "debt-payoff",
+      "group": "debt_payments"
     },
     {
       "id": "dining_out",
@@ -133,7 +146,8 @@
         "coffee",
         "delivery"
       ],
-      "typicalShareOfBucket": 0.25
+      "typicalShareOfBucket": 0.25,
+      "group": "food"
     },
     {
       "id": "entertainment",
@@ -145,7 +159,8 @@
         "concert",
         "games"
       ],
-      "typicalShareOfBucket": 0.12
+      "typicalShareOfBucket": 0.12,
+      "group": "personal"
     },
     {
       "id": "subscriptions",
@@ -156,7 +171,8 @@
         "subscription",
         "streaming"
       ],
-      "typicalShareOfBucket": 0.06
+      "typicalShareOfBucket": 0.06,
+      "group": "personal"
     },
     {
       "id": "shopping",
@@ -168,7 +184,8 @@
         "amazon",
         "retail"
       ],
-      "typicalShareOfBucket": 0.22
+      "typicalShareOfBucket": 0.22,
+      "group": "personal"
     },
     {
       "id": "travel",
@@ -180,7 +197,8 @@
         "hotel",
         "airbnb"
       ],
-      "typicalShareOfBucket": 0.12
+      "typicalShareOfBucket": 0.12,
+      "group": "personal"
     },
     {
       "id": "personal_care",
@@ -192,7 +210,8 @@
         "gym",
         "spa"
       ],
-      "typicalShareOfBucket": 0.1
+      "typicalShareOfBucket": 0.1,
+      "group": "personal"
     },
     {
       "id": "gifts",
@@ -204,7 +223,8 @@
         "charity",
         "gift"
       ],
-      "typicalShareOfBucket": 0.08
+      "typicalShareOfBucket": 0.08,
+      "group": "giving"
     },
     {
       "id": "other",
@@ -212,7 +232,8 @@
       "bucket": "wants",
       "essential": false,
       "keywords": [],
-      "typicalShareOfBucket": 0.05
+      "typicalShareOfBucket": 0.05,
+      "group": "other"
     },
     {
       "id": "retirement",
@@ -223,7 +244,8 @@
         "401k",
         "ira"
       ],
-      "typicalShareOfBucket": 0.5
+      "typicalShareOfBucket": 0.5,
+      "group": "investments"
     },
     {
       "id": "investments",
@@ -235,7 +257,8 @@
         "vanguard",
         "fidelity"
       ],
-      "typicalShareOfBucket": 0.2
+      "typicalShareOfBucket": 0.2,
+      "group": "investments"
     },
     {
       "id": "emergency_savings",
@@ -245,7 +268,8 @@
       "keywords": [
         "transfer to savings"
       ],
-      "typicalShareOfBucket": 0.2
+      "typicalShareOfBucket": 0.2,
+      "group": "savings"
     },
     {
       "id": "extra_debt_payment",
@@ -256,9 +280,145 @@
         "extra payment",
         "principal"
       ],
-      "typicalShareOfBucket": 0.1
+      "typicalShareOfBucket": 0.1,
+      "group": "debt_payments"
+    },
+    {
+      "id": "mileage",
+      "label": "Mileage",
+      "bucket": "costs",
+      "group": "income_costs",
+      "essential": false,
+      "keywords": [
+        "miles",
+        "mileage",
+        "fuel to client"
+      ]
+    },
+    {
+      "id": "home_office",
+      "label": "Home office",
+      "bucket": "costs",
+      "group": "income_costs",
+      "essential": false,
+      "keywords": [
+        "home office"
+      ]
+    },
+    {
+      "id": "equipment",
+      "label": "Equipment",
+      "bucket": "costs",
+      "group": "income_costs",
+      "essential": false,
+      "keywords": [
+        "laptop",
+        "equipment",
+        "tools",
+        "camera"
+      ]
+    },
+    {
+      "id": "contractor_fees",
+      "label": "Contractor fees",
+      "bucket": "costs",
+      "group": "income_costs",
+      "essential": false,
+      "keywords": [
+        "contractor",
+        "subcontract"
+      ]
+    },
+    {
+      "id": "licensing",
+      "label": "Licensing",
+      "bucket": "costs",
+      "group": "income_costs",
+      "essential": false,
+      "keywords": [
+        "license",
+        "licence",
+        "permit",
+        "certification"
+      ]
+    },
+    {
+      "id": "platform_fees",
+      "label": "Platform fees",
+      "bucket": "costs",
+      "group": "income_costs",
+      "essential": false,
+      "keywords": [
+        "platform fee",
+        "etsy fee",
+        "uber fee",
+        "stripe",
+        "paypal fee"
+      ]
     }
   ],
-  "typicalShareNote": "typicalShareOfBucket is how a bucket's dollars are usually split across its categories \u2014 rough proportions in the shape of the BLS Consumer Expenditure Survey (2023), rounded and transcribed from memory, so they sum to 1 within each bucket and are NOT to be read as a measured figure. Confidence for these shares alone: unverified. Used only to PROPOSE a first month in Cash Flow (D-063): every line is a suggestion until the person taps it, and nothing derived reads a suggestion.",
-  "typicalShareConfidence": "unverified"
+  "typicalShareNote": "typicalShareOfBucket is how a bucket's dollars are usually split across its categories — rough proportions in the shape of the BLS Consumer Expenditure Survey (2023), rounded and transcribed from memory, so they sum to 1 within each bucket and are NOT to be read as a measured figure. Confidence for these shares alone: unverified. Used only to PROPOSE a first month in Cash Flow (D-063): every line is a suggestion until the person taps it, and nothing derived reads a suggestion.",
+  "typicalShareConfidence": "unverified",
+  "groups": [
+    {
+      "id": "housing",
+      "label": "Housing",
+      "bucketOf": "expenses"
+    },
+    {
+      "id": "transportation",
+      "label": "Transportation",
+      "bucketOf": "expenses"
+    },
+    {
+      "id": "food",
+      "label": "Food",
+      "bucketOf": "expenses"
+    },
+    {
+      "id": "debt_payments",
+      "label": "Debt payments",
+      "bucketOf": "debt"
+    },
+    {
+      "id": "insurance",
+      "label": "Insurance",
+      "bucketOf": "expenses"
+    },
+    {
+      "id": "personal",
+      "label": "Personal / discretionary",
+      "bucketOf": "expenses"
+    },
+    {
+      "id": "kids",
+      "label": "Kids / dependents",
+      "bucketOf": "expenses"
+    },
+    {
+      "id": "giving",
+      "label": "Giving",
+      "bucketOf": "expenses"
+    },
+    {
+      "id": "other",
+      "label": "Other",
+      "bucketOf": "expenses"
+    },
+    {
+      "id": "savings",
+      "label": "Savings",
+      "bucketOf": "savings"
+    },
+    {
+      "id": "investments",
+      "label": "Investments",
+      "bucketOf": "investments"
+    },
+    {
+      "id": "income_costs",
+      "label": "Costs of earning it",
+      "bucketOf": "income_costs"
+    }
+  ]
 }

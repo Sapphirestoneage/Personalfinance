@@ -133,9 +133,16 @@
    * Roll the household's expense entries up by category and by bucket.
    * Returns a Result; an empty store is incomplete, not a pile of zeroes.
    */
-  function summarise(household, catalog) {
+  function summarise(household, catalog, opts) {
     var entries = (household && household.expenses && household.expenses.entries) || [];
+    var includeLog = !!(opts && opts.includeLog);
     var usable = entries.filter(function (e) {
+      /* The log's dated occurrences (D-128) are actuals for the budget,
+         not the typical month: they are left out here unless asked for,
+         so a receipt logged does not double a line already typed. An
+         income cost is never part of the household's month either. */
+      if (!includeLog && (e.source === 'log' || e.linkedIncomeId)) return false;
+      if (e.active === false) return false;
       return Money.isEntered(e.amountCents) && e.categoryId;
     });
 
@@ -498,9 +505,65 @@
     });
   }
 
+  /* ---- The expense log (D-128) --------------------------------------------
+     Dated occurrences: a receipt, a bill paid, a transfer made. A logged
+     entry with period 'monthly' repeats on its day each month from its
+     date on; 'once' lands on its date. Archived entries never count. */
+  function groupOf(catalog, categoryId) {
+    var c = categoryById(catalog, categoryId);
+    return c && c.group ? c.group : 'other';
+  }
+  function groupById(catalog, groupId) {
+    var list = (catalog && catalog.groups) || [];
+    for (var i = 0; i < list.length; i++) { if (list[i].id === groupId) return list[i]; }
+    return null;
+  }
+  function logEntries(household) {
+    return ((household && household.expenses && household.expenses.entries) || []).filter(function (e) { return e && e.source === 'log'; });
+  }
+  function ym(date) { return typeof date === 'string' && date.length >= 7 ? date.slice(0, 7) : null; }
+  function logOccurrences(entry, month) {
+    if (!entry || !Money.isEntered(entry.amountCents) || !entry.date || !/^\d{4}-\d{2}$/.test(month || '')) return [];
+    if (entry.period !== 'monthly') return ym(entry.date) === month ? [{ date: entry.date, cents: entry.amountCents }] : [];
+    if (ym(entry.date) > month) return [];
+    var y = +month.slice(0, 4), m = +month.slice(5, 7) - 1;
+    var dim = new Date(y, m + 1, 0).getDate();
+    var day = Math.min(+entry.date.slice(8, 10) || 1, dim);
+    return [{ date: month + '-' + (day < 10 ? '0' : '') + day, cents: entry.amountCents }];
+  }
+  /**
+   * logInMonth(household, catalog, 'YYYY-MM') — every active logged
+   * occurrence in the month with its group, and the totals: by group, by
+   * budget bucket, personal against income costs, deductible.
+   */
+  function logInMonth(household, catalog, month) {
+    var rows = [], byGroup = {}, byBucket = { expenses: 0, savings: 0, investments: 0, debt: 0, income_costs: 0 };
+    var personal = 0, costs = 0, deductible = 0;
+    logEntries(household).forEach(function (e) {
+      if (e.active === false) return;
+      logOccurrences(e, month).forEach(function (o) {
+        var g = groupOf(catalog, e.categoryId);
+        var gr = groupById(catalog, g);
+        var bucket = e.linkedIncomeId ? 'income_costs' : ((gr && gr.bucketOf) || 'expenses');
+        rows.push({ id: e.id, entryId: e.id, date: o.date, cents: o.cents, categoryId: e.categoryId, group: g, bucket: bucket,
+          descriptor: e.descriptor || null, linkedIncomeId: e.linkedIncomeId || null, deductible: e.deductible === true, recurring: e.period === 'monthly', hidden: e.hidden === true });
+        byGroup[g] = (byGroup[g] || 0) + o.cents;
+        byBucket[bucket] = (byBucket[bucket] || 0) + o.cents;
+        if (e.linkedIncomeId) { costs += o.cents; if (e.deductible === true) deductible += o.cents; } else personal += o.cents;
+      });
+    });
+    rows.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+    return { month: month, rows: rows, byGroup: byGroup, byBucket: byBucket, personalCents: personal, incomeCostsCents: costs, deductibleCents: deductible, count: rows.length };
+  }
+
   return {
     categoryById: categoryById,
     categorise: categorise,
+    groupOf: groupOf,
+    groupById: groupById,
+    logEntries: logEntries,
+    logOccurrences: logOccurrences,
+    logInMonth: logInMonth,
     normaliseToMonthly: normaliseToMonthly,
     summarise: summarise,
     netMonthlyIncomeCents: netMonthlyIncomeCents,

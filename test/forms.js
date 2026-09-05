@@ -738,6 +738,27 @@ const CASES = [
     }
   },
   {
+    /* The expense log's form on the same page: built once, saved on a tap. */
+    room: '/rooms/cash-flow.html',
+    container: '#log-form',
+    seed: 'demo',
+    fields: [
+      { sel: '#l-amount', type: '64.20' },
+      { sel: '#l-note', type: 'Trader Joes' }
+    ],
+    expect: async (page) => {
+      await page.tap('#btn-log');
+      await page.waitForTimeout(300);
+      const e = await page.evaluate(() => (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).expenses.entries.filter(x => x.source === 'log')[0]);
+      return [
+        ['the receipt was logged', e && e.amountCents, 6420],
+        ['with its note', e && e.descriptor, 'Trader Joes'],
+        ['as a personal expense', e && e.linkedIncomeId, null],
+        ['and not deductible', e && e.deductible, false]
+      ];
+    }
+  },
+  {
     room: '/rooms/cash-flow.html',
     container: '#buckets',
     seed: 'demo',

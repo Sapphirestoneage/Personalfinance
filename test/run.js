@@ -5077,6 +5077,9 @@ section('A first month, proposed');
 (function () {
   const cats = require(path.join(ROOT, 'data/expense_categories.json'));
   cats.buckets.forEach(function (b) {
+    /* The costs bucket is logged against income entries, never proposed
+       as a share of a month (D-128). */
+    if (b.id === 'costs') return;
     const total = cats.categories.filter(c => c.bucket === b.id && !c.derivedFrom)
       .reduce((s, c) => s + (c.typicalShareOfBucket || 0), 0);
     check(`${b.id}: typical shares sum to one`, Math.round(total * 1000) / 1000, 1);
