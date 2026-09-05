@@ -1,0 +1,15 @@
+{
+  "id": "confidence_weights",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "The confidence-weighted net worth in BiggerPockets' Personal Financial Statement: each asset is rated 1-4 for how sure you are it is worth what you say, and the statement shows a weighted total beside the plain one.",
+  "confidence": "convention",
+  "confidenceNote": "The weights are a convention chosen to make the four ratings mean something in dollars \u2014 'guaranteed' counts in full, 'probably zero' not at all. There is no research behind 0.85 or 0.5.",
+  "note": "Keyed by asset.confidence. An asset with no rating counts in full in the plain total and is EXCLUDED from the weighted one, which the room says out loud. D-064.",
+  "weights": {
+    "1": 1.0,
+    "2": 0.85,
+    "3": 0.5,
+    "4": 0.0
+  }
+}

@@ -3502,6 +3502,92 @@ is simply not proposed. Rooms updated: `rooms/cash-flow.html`.
 
 ---
 
+## D-064 — The 10x Statement's shape: what an asset is, how sure you are, when you can reach it
+
+*(BRIEF.md §3.1–3.2, §3.4–3.6. Carries the brief's D-E further: every list
+already has `ownerIds`, and `people[1]` is a first-class adult since D-061.)*
+
+A balance sheet that says only "what" is a list of numbers. The Statement
+(T3) asks three more things of every asset — how sure are you it is worth
+that, how fast could you reach it, and at what age — and files each one
+under one of three portfolios. This entry is the stored shape; the room and
+its engine follow.
+
+### The asset record grows, and every new field starts null
+
+`liquidity` (1 today · 2 within 30 days · 3 within 12 months · 4 can't or
+won't sell) and `confidence` (1 guaranteed · 2 85%+ · 3 real but don't count
+on it · 4 probably zero) are **rated, never guessed**: `null` means not
+rated, and the default from `data/access_rules.json` is proposed in the box
+(D-060), never written. `costBasisCents`, `hassle` (1–3, for anything that
+earns), `cashFlowMonthlyCents` and `accessAgeOverride` likewise start null.
+
+`liquid` stays. Every ratio that reads it keeps reading it; the Statement
+writes it from `liquidity` when that is rated (`liquid === liquidity <= 2`),
+so the two cannot disagree once a rating exists.
+
+`data/access_rules.json` is keyed by `taxCharacter` with a fallback by
+`category`: the portfolio bucket (liquid financial / illiquid financial /
+non-financial), the default liquidity, and the access age — 59½ for pre-tax
+and Roth earnings, 65 for a non-medical HSA, none for taxable, and Roth
+contributions reachable any time (`basisAccessAge: null`), which is what the
+bridge to 59½ counts. `Schema.assetRule`, `assetAccessAge` and
+`assetLiquidity` are the three readers; the override wins, then the rating,
+then the rule, and each says which it used.
+
+### New records
+
+- `futureIncome[]` — a pension, Social Security, an annuity, an inheritance
+  you would rather not count: `monthlyCents`, a start (`startsOn` or
+  `startsAtAge`), an end, a `confidence` 1–4, `inflationAdjusted`. Not net
+  worth and not income yet; its own list.
+- `property[]` — what a rental **does**, linked by `assetId` to the
+  `real_estate` asset that says what it **is**. The value is never stored
+  twice (D-017). Rent, PITI, operating costs, a vacancy rate (proposed at
+  8%, a landlord convention), hassle and prospects. Cap rate, cash-on-cash
+  and DSCR are derived, never stored.
+- `insurance` gains the Coverage Checkup: `oopMaxCents`, `termLifeCents`,
+  `disabilityMonthlyCents`, `umbrella`. Sleep At Night owns all of it.
+- `allocation` — `stocks`, `bonds`, `cash` as fractions and a
+  `rebalanceBand`. Where It Goes owns it.
+- `targets` — `retireAge` and `coastAge`, owned by FIRE. The coast age was
+  a preview knob that forgot itself on reload; it is a fact about you.
+- `scenarios[]` — named, dated diffs for the life-events engine (T6).
+  Nothing reads them yet.
+- `incomeSource.hassle` — Return on Hassle applied to the job.
+
+The spine merges the small fact objects (`targets`, `allocation`,
+`insurance`, `retirement`) on write, so a room setting one field cannot wipe
+another room's; the lists get `upsertFutureIncome`, `upsertProperty`,
+`upsertScenario` in the same shape as the others.
+
+### Four tables, three of them unverified
+
+`confidence_weights.json` (1.0 / 0.85 / 0.5 / 0 — a convention, after the
+BiggerPockets PFS) is the only one this entry would defend. `ui_benefits.json`
+(state maximum weekly benefit and duration), `aca_2026.json` (the poverty
+level, the applicable-percentage table, the 400% cliff) and
+`state_brackets_2026.json` (none / flat / graduated, single filer, 51
+jurisdictions) are all transcribed from memory and marked `unverified`;
+every figure that reaches a screen from them says so. The state schedule is
+applied to *federal* taxable income as a stand-in for state taxable income,
+a stated simplification.
+
+### Compatibility note
+
+**Stored shape:** additions only. Six new nullable asset fields; one on the
+income source; four on `insurance`; the `futureIncome`, `property`,
+`scenarios` lists; the `allocation` and `targets` objects. Everything
+defaults to null or `[]` and a v2 blob without them is a valid v2 blob. No
+schema-version bump. `liquid` is unchanged in meaning.
+
+**Rooms updated in this entry:** none — this is the shape. The rooms that
+own the new fields land in the commits that follow (the Statement, FIRE's
+targets, Sleep At Night's checkup, Where It Goes' allocation), each adding
+its ownership rows and anchors.
+
+---
+
 ## D-046 — HP is measured in weeks, which is what makes §3A stop contradicting itself
 
 The Dungeons & Dividends rulebook defines Hit Points twice in the same

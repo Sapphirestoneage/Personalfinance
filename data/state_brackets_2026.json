@@ -1,0 +1,791 @@
+{
+  "id": "state_brackets",
+  "version": "2026.0",
+  "asOf": "2026-01-01",
+  "taxYear": 2026,
+  "source": "State individual income tax structures \u2014 no tax, a flat rate, or graduated brackets (single filer) \u2014 in the shape of the Tax Foundation's annual 'State Individual Income Tax Rates and Brackets'. Transcribed from memory of the 2025 edition; 2026 changes are not reflected.",
+  "confidence": "unverified",
+  "confidenceNote": "NOT checked state by state. Brackets are for single filers; joint brackets are approximated as double the single thresholds where a state does that, which is not every state. Local income taxes, standard deductions, exemptions and credits are ignored. Every room that shows a state figure says 'approximate'.",
+  "note": "engines/tax.js applies the schedule to FEDERAL taxable income (gross minus the federal standard deduction) as a stand-in for state taxable income \u2014 a deliberate simplification that the confidence note carries. `jointMultiplier` is applied to single thresholds for married_joint. D-064.",
+  "jointMultiplier": 2.0,
+  "states": {
+    "AK": {
+      "type": "none"
+    },
+    "FL": {
+      "type": "none"
+    },
+    "NV": {
+      "type": "none"
+    },
+    "NH": {
+      "type": "none"
+    },
+    "SD": {
+      "type": "none"
+    },
+    "TN": {
+      "type": "none"
+    },
+    "TX": {
+      "type": "none"
+    },
+    "WA": {
+      "type": "none"
+    },
+    "WY": {
+      "type": "none"
+    },
+    "AZ": {
+      "type": "flat",
+      "rate": 0.025
+    },
+    "CO": {
+      "type": "flat",
+      "rate": 0.044
+    },
+    "GA": {
+      "type": "flat",
+      "rate": 0.0519
+    },
+    "ID": {
+      "type": "flat",
+      "rate": 0.053
+    },
+    "IL": {
+      "type": "flat",
+      "rate": 0.0495
+    },
+    "IN": {
+      "type": "flat",
+      "rate": 0.03
+    },
+    "IA": {
+      "type": "flat",
+      "rate": 0.038
+    },
+    "KY": {
+      "type": "flat",
+      "rate": 0.04
+    },
+    "MA": {
+      "type": "flat",
+      "rate": 0.05
+    },
+    "MI": {
+      "type": "flat",
+      "rate": 0.0425
+    },
+    "MS": {
+      "type": "flat",
+      "rate": 0.044
+    },
+    "NC": {
+      "type": "flat",
+      "rate": 0.0425
+    },
+    "PA": {
+      "type": "flat",
+      "rate": 0.0307
+    },
+    "UT": {
+      "type": "flat",
+      "rate": 0.045
+    },
+    "LA": {
+      "type": "flat",
+      "rate": 0.03
+    },
+    "CA": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 10756,
+          "rate": 0.01
+        },
+        {
+          "upTo": 25499,
+          "rate": 0.02
+        },
+        {
+          "upTo": 40245,
+          "rate": 0.04
+        },
+        {
+          "upTo": 55866,
+          "rate": 0.06
+        },
+        {
+          "upTo": 70606,
+          "rate": 0.08
+        },
+        {
+          "upTo": 360659,
+          "rate": 0.093
+        },
+        {
+          "upTo": 432787,
+          "rate": 0.103
+        },
+        {
+          "upTo": 721314,
+          "rate": 0.113
+        },
+        {
+          "upTo": null,
+          "rate": 0.123
+        }
+      ]
+    },
+    "NY": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 8500,
+          "rate": 0.04
+        },
+        {
+          "upTo": 11700,
+          "rate": 0.045
+        },
+        {
+          "upTo": 13900,
+          "rate": 0.0525
+        },
+        {
+          "upTo": 80650,
+          "rate": 0.055
+        },
+        {
+          "upTo": 215400,
+          "rate": 0.06
+        },
+        {
+          "upTo": 1077550,
+          "rate": 0.0685
+        },
+        {
+          "upTo": 5000000,
+          "rate": 0.0965
+        },
+        {
+          "upTo": 25000000,
+          "rate": 0.103
+        },
+        {
+          "upTo": null,
+          "rate": 0.109
+        }
+      ]
+    },
+    "NJ": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 20000,
+          "rate": 0.014
+        },
+        {
+          "upTo": 35000,
+          "rate": 0.0175
+        },
+        {
+          "upTo": 40000,
+          "rate": 0.035
+        },
+        {
+          "upTo": 75000,
+          "rate": 0.05525
+        },
+        {
+          "upTo": 500000,
+          "rate": 0.0637
+        },
+        {
+          "upTo": 1000000,
+          "rate": 0.0897
+        },
+        {
+          "upTo": null,
+          "rate": 0.1075
+        }
+      ]
+    },
+    "OR": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 4400,
+          "rate": 0.0475
+        },
+        {
+          "upTo": 11050,
+          "rate": 0.0675
+        },
+        {
+          "upTo": 125000,
+          "rate": 0.0875
+        },
+        {
+          "upTo": null,
+          "rate": 0.099
+        }
+      ]
+    },
+    "MN": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 32570,
+          "rate": 0.0535
+        },
+        {
+          "upTo": 106990,
+          "rate": 0.068
+        },
+        {
+          "upTo": 198630,
+          "rate": 0.0785
+        },
+        {
+          "upTo": null,
+          "rate": 0.0985
+        }
+      ]
+    },
+    "MD": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 1000,
+          "rate": 0.02
+        },
+        {
+          "upTo": 2000,
+          "rate": 0.03
+        },
+        {
+          "upTo": 3000,
+          "rate": 0.04
+        },
+        {
+          "upTo": 100000,
+          "rate": 0.0475
+        },
+        {
+          "upTo": 125000,
+          "rate": 0.05
+        },
+        {
+          "upTo": 150000,
+          "rate": 0.0525
+        },
+        {
+          "upTo": 250000,
+          "rate": 0.055
+        },
+        {
+          "upTo": null,
+          "rate": 0.0575
+        }
+      ]
+    },
+    "VA": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 3000,
+          "rate": 0.02
+        },
+        {
+          "upTo": 5000,
+          "rate": 0.03
+        },
+        {
+          "upTo": 17000,
+          "rate": 0.05
+        },
+        {
+          "upTo": null,
+          "rate": 0.0575
+        }
+      ]
+    },
+    "WI": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 14680,
+          "rate": 0.035
+        },
+        {
+          "upTo": 29370,
+          "rate": 0.044
+        },
+        {
+          "upTo": 323290,
+          "rate": 0.053
+        },
+        {
+          "upTo": null,
+          "rate": 0.0765
+        }
+      ]
+    },
+    "HI": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 9600,
+          "rate": 0.014
+        },
+        {
+          "upTo": 14400,
+          "rate": 0.032
+        },
+        {
+          "upTo": 19200,
+          "rate": 0.055
+        },
+        {
+          "upTo": 24000,
+          "rate": 0.064
+        },
+        {
+          "upTo": 36000,
+          "rate": 0.068
+        },
+        {
+          "upTo": 48000,
+          "rate": 0.072
+        },
+        {
+          "upTo": 125000,
+          "rate": 0.076
+        },
+        {
+          "upTo": 175000,
+          "rate": 0.079
+        },
+        {
+          "upTo": 225000,
+          "rate": 0.0825
+        },
+        {
+          "upTo": 275000,
+          "rate": 0.09
+        },
+        {
+          "upTo": 325000,
+          "rate": 0.1
+        },
+        {
+          "upTo": null,
+          "rate": 0.11
+        }
+      ]
+    },
+    "DC": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 10000,
+          "rate": 0.04
+        },
+        {
+          "upTo": 40000,
+          "rate": 0.06
+        },
+        {
+          "upTo": 60000,
+          "rate": 0.065
+        },
+        {
+          "upTo": 250000,
+          "rate": 0.085
+        },
+        {
+          "upTo": 500000,
+          "rate": 0.0925
+        },
+        {
+          "upTo": 1000000,
+          "rate": 0.0975
+        },
+        {
+          "upTo": null,
+          "rate": 0.1075
+        }
+      ]
+    },
+    "OH": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 26050,
+          "rate": 0.0
+        },
+        {
+          "upTo": 100000,
+          "rate": 0.0275
+        },
+        {
+          "upTo": null,
+          "rate": 0.035
+        }
+      ]
+    },
+    "SC": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 3560,
+          "rate": 0.0
+        },
+        {
+          "upTo": 17830,
+          "rate": 0.03
+        },
+        {
+          "upTo": null,
+          "rate": 0.064
+        }
+      ]
+    },
+    "MO": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 1313,
+          "rate": 0.0
+        },
+        {
+          "upTo": 2626,
+          "rate": 0.02
+        },
+        {
+          "upTo": 3939,
+          "rate": 0.025
+        },
+        {
+          "upTo": 5252,
+          "rate": 0.03
+        },
+        {
+          "upTo": 6565,
+          "rate": 0.035
+        },
+        {
+          "upTo": 7878,
+          "rate": 0.04
+        },
+        {
+          "upTo": 9191,
+          "rate": 0.045
+        },
+        {
+          "upTo": null,
+          "rate": 0.047
+        }
+      ]
+    },
+    "CT": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 10000,
+          "rate": 0.02
+        },
+        {
+          "upTo": 50000,
+          "rate": 0.045
+        },
+        {
+          "upTo": 100000,
+          "rate": 0.055
+        },
+        {
+          "upTo": 200000,
+          "rate": 0.06
+        },
+        {
+          "upTo": 250000,
+          "rate": 0.065
+        },
+        {
+          "upTo": 500000,
+          "rate": 0.069
+        },
+        {
+          "upTo": null,
+          "rate": 0.0699
+        }
+      ]
+    },
+    "AL": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 500,
+          "rate": 0.02
+        },
+        {
+          "upTo": 3000,
+          "rate": 0.04
+        },
+        {
+          "upTo": null,
+          "rate": 0.05
+        }
+      ]
+    },
+    "AR": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 4500,
+          "rate": 0.02
+        },
+        {
+          "upTo": 8900,
+          "rate": 0.04
+        },
+        {
+          "upTo": null,
+          "rate": 0.039
+        }
+      ]
+    },
+    "DE": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 2000,
+          "rate": 0.0
+        },
+        {
+          "upTo": 5000,
+          "rate": 0.022
+        },
+        {
+          "upTo": 10000,
+          "rate": 0.039
+        },
+        {
+          "upTo": 20000,
+          "rate": 0.048
+        },
+        {
+          "upTo": 25000,
+          "rate": 0.052
+        },
+        {
+          "upTo": 60000,
+          "rate": 0.0555
+        },
+        {
+          "upTo": null,
+          "rate": 0.066
+        }
+      ]
+    },
+    "KS": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 23000,
+          "rate": 0.052
+        },
+        {
+          "upTo": null,
+          "rate": 0.0558
+        }
+      ]
+    },
+    "ME": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 26050,
+          "rate": 0.058
+        },
+        {
+          "upTo": 61600,
+          "rate": 0.0675
+        },
+        {
+          "upTo": null,
+          "rate": 0.0715
+        }
+      ]
+    },
+    "MT": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 21100,
+          "rate": 0.047
+        },
+        {
+          "upTo": null,
+          "rate": 0.059
+        }
+      ]
+    },
+    "NE": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 3700,
+          "rate": 0.0246
+        },
+        {
+          "upTo": 22170,
+          "rate": 0.0351
+        },
+        {
+          "upTo": 35730,
+          "rate": 0.0501
+        },
+        {
+          "upTo": null,
+          "rate": 0.052
+        }
+      ]
+    },
+    "NM": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 5500,
+          "rate": 0.017
+        },
+        {
+          "upTo": 11000,
+          "rate": 0.032
+        },
+        {
+          "upTo": 16000,
+          "rate": 0.047
+        },
+        {
+          "upTo": 210000,
+          "rate": 0.049
+        },
+        {
+          "upTo": null,
+          "rate": 0.059
+        }
+      ]
+    },
+    "ND": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 48475,
+          "rate": 0.0
+        },
+        {
+          "upTo": 244825,
+          "rate": 0.0195
+        },
+        {
+          "upTo": null,
+          "rate": 0.025
+        }
+      ]
+    },
+    "OK": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 1000,
+          "rate": 0.0025
+        },
+        {
+          "upTo": 2500,
+          "rate": 0.0075
+        },
+        {
+          "upTo": 3750,
+          "rate": 0.0175
+        },
+        {
+          "upTo": 4900,
+          "rate": 0.0275
+        },
+        {
+          "upTo": 7200,
+          "rate": 0.0375
+        },
+        {
+          "upTo": null,
+          "rate": 0.0475
+        }
+      ]
+    },
+    "RI": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 79900,
+          "rate": 0.0375
+        },
+        {
+          "upTo": 181650,
+          "rate": 0.0475
+        },
+        {
+          "upTo": null,
+          "rate": 0.0599
+        }
+      ]
+    },
+    "VT": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 47900,
+          "rate": 0.0335
+        },
+        {
+          "upTo": 116000,
+          "rate": 0.066
+        },
+        {
+          "upTo": 242000,
+          "rate": 0.076
+        },
+        {
+          "upTo": null,
+          "rate": 0.0875
+        }
+      ]
+    },
+    "WV": {
+      "type": "brackets",
+      "single": [
+        {
+          "upTo": 10000,
+          "rate": 0.0222
+        },
+        {
+          "upTo": 25000,
+          "rate": 0.0296
+        },
+        {
+          "upTo": 40000,
+          "rate": 0.0333
+        },
+        {
+          "upTo": 60000,
+          "rate": 0.0444
+        },
+        {
+          "upTo": null,
+          "rate": 0.0482
+        }
+      ]
+    }
+  }
+}

@@ -5039,6 +5039,103 @@ section('A first month, proposed');
     fs.readFileSync(path.join(ROOT, 'engines/cashflow.js'), 'utf8').indexOf('suggest') === -1);
 })();
 
+section('The Statement: shape and tables');
+
+(function () {
+  const rules = require(path.join(ROOT, 'data/access_rules.json'));
+  const weights = require(path.join(ROOT, 'data/confidence_weights.json'));
+  const ui = require(path.join(ROOT, 'data/ui_benefits.json'));
+  const aca = require(path.join(ROOT, 'data/aca_2026.json'));
+  const st = require(path.join(ROOT, 'data/state_brackets_2026.json'));
+  const states = require(path.join(ROOT, 'data/states.json'));
+
+  /* -- New records start empty, never zero ------------------------------- */
+  {
+    const h = Schema.createHousehold({});
+    ['futureIncome', 'property', 'scenarios'].forEach(k => check(`${k} starts as an empty list`, JSON.stringify(h[k]), '[]'));
+    check('targets start unset', JSON.stringify(h.targets), '{"retireAge":null,"coastAge":null}');
+    checkTrue('allocation starts unset', Object.values(h.allocation).every(v => v === null));
+    const ins = h.insurance;
+    checkTrue('the coverage checkup starts unanswered', ins.oopMaxCents === null && ins.termLifeCents === null && ins.disabilityMonthlyCents === null && ins.umbrella === null);
+    const a = Schema.createAsset({});
+    ['liquidity', 'confidence', 'costBasisCents', 'hassle', 'cashFlowMonthlyCents', 'accessAgeOverride'].forEach(k =>
+      check(`asset.${k} starts null`, a[k], null));
+    check('an income source has no hassle rating until rated', Schema.createIncomeSource({}).hassle, null);
+    const old = Schema.createHousehold({ insurance: { highestDeductibleCents: 250000 } });
+    check('an older insurance record keeps its deductible', old.insurance.highestDeductibleCents, 250000);
+    check('and gains the new questions as unanswered', old.insurance.umbrella, null);
+    const fi = Schema.createFutureIncome({ label: 'Pension', monthlyCents: 120000, startsAtAge: 65 });
+    checkTrue('a future income has an id and its fields', /^fi_/.test(fi.id) && fi.monthlyCents === 120000 && fi.startsAtAge === 65 && fi.confidence === null);
+    const prop = Schema.createProperty({ assetId: 'a1', rentMonthlyCents: 180000 });
+    check('a property carries no value of its own — the asset does', prop.valueCents, undefined);
+    check('but links to it', prop.assetId, 'a1');
+  }
+
+  /* -- The spine merges the small fact objects ---------------------------- */
+  {
+    const Spine = SpineMain;
+    Spine.reset();
+    Spine.updateProfile({ targets: { retireAge: 60 } });
+    Spine.updateProfile({ targets: { coastAge: 65 } });
+    check('writing one target keeps the other', JSON.stringify(Spine.getProfile().targets), '{"retireAge":60,"coastAge":65}');
+    Spine.updateProfile({ insurance: { oopMaxCents: 800000 } });
+    Spine.updateProfile({ insurance: { highestDeductibleCents: 250000 } });
+    check('the coverage checkup and the deductible coexist', Spine.getProfile().insurance.oopMaxCents, 800000);
+    Spine.upsertFutureIncome(Schema.createFutureIncome({ id: 'p1', label: 'Pension', monthlyCents: 120000 }));
+    Spine.upsertFutureIncome({ id: 'p1', monthlyCents: 130000 });
+    check('a future income upserts in place', Spine.getProfile().futureIncome.length + ':' + Spine.getProfile().futureIncome[0].monthlyCents, '1:130000');
+    Spine.upsertProperty(Schema.createProperty({ id: 'r1', assetId: 'a1' }));
+    check('a property upserts', Spine.getProfile().property[0].assetId, 'a1');
+  }
+
+  /* -- access_rules covers every kind of asset ---------------------------- */
+  {
+    const chars = Schema.FIELDS['asset.taxCharacter'].values;
+    chars.forEach(c => checkTrue(`access rule for ${c}`, !!rules.byTaxCharacter[c]));
+    Schema.FIELDS['asset.category'].values.forEach(c => checkTrue(`category fallback for ${c}`, !!rules.byTaxCharacter[rules.byCategory[c]]));
+    Object.keys(rules.byTaxCharacter).forEach(c => {
+      const r = rules.byTaxCharacter[c];
+      checkTrue(`${c} files into a real bucket`, rules.buckets.some(b => b.id === r.bucket));
+      checkTrue(`${c} has a default liquidity 1-4`, r.liquidity >= 1 && r.liquidity <= 4);
+    });
+    check('pre-tax money waits for 59½', rules.byTaxCharacter.pretax.accessAge, 59.5);
+    check('Roth basis does not', rules.byTaxCharacter.roth.basisAccessAge, null);
+    check('but Roth earnings do', rules.byTaxCharacter.roth.accessAge, 59.5);
+    check('an HSA opens up at 65', rules.byTaxCharacter.hsa.accessAge, 65);
+    check('cash is reachable today', rules.byTaxCharacter.cash.liquidity, 1);
+    check('a house is not', rules.byTaxCharacter.property.liquidity, 4);
+    /* The helpers */
+    check('a retirement-category lump is treated as pre-tax', Schema.assetRule({ category: 'retirement' }, rules).key, 'pretax');
+    check('a characterised asset wins over its category', Schema.assetRule({ category: 'retirement', taxCharacter: 'roth' }, rules).key, 'roth');
+    check('an override wins over the rule', Schema.assetAccessAge({ taxCharacter: 'pretax', accessAgeOverride: 55 }, rules), 55);
+    check('no override, the rule', Schema.assetAccessAge({ taxCharacter: 'pretax' }, rules), 59.5);
+    check('a rated liquidity is used and marked rated', JSON.stringify(Schema.assetLiquidity({ liquidity: 2, category: 'real_estate' }, rules)), '{"value":2,"rated":true}');
+    check('an unrated one is the default and says so', JSON.stringify(Schema.assetLiquidity({ category: 'real_estate' }, rules)), '{"value":4,"rated":false}');
+  }
+
+  /* -- The other tables -------------------------------------------------- */
+  {
+    check('confidence weights: guaranteed counts in full', weights.weights['1'], 1);
+    check('and probably-zero counts nothing', weights.weights['4'], 0);
+    checkTrue('weights fall as confidence falls', [1, 2, 3, 4].every((k, i) => i === 0 || weights.weights[String(k)] <= weights.weights[String(k - 1)]));
+    const codes = states.states.map(r => r.code).filter(c => c !== 'OTHER');
+    codes.forEach(c => checkTrue(`UI benefits cover ${c}`, !!ui.states[c] && ui.states[c].maxWeeklyDollars > 0 && ui.states[c].weeks > 0));
+    codes.forEach(c => checkTrue(`state tax covers ${c}`, !!st.states[c] && ['none', 'flat', 'brackets'].includes(st.states[c].type)));
+    Object.keys(st.states).forEach(c => {
+      const row = st.states[c];
+      if (row.type === 'brackets') {
+        checkTrue(`${c} brackets climb`, row.single.every((b, i) => i === 0 || b.upTo === null || b.upTo > row.single[i - 1].upTo));
+        check(`${c} top bracket is open`, row.single[row.single.length - 1].upTo, null);
+      }
+      if (row.type === 'flat') checkTrue(`${c} flat rate is a rate`, row.rate > 0 && row.rate < 0.15);
+    });
+    checkTrue('Texas has no income tax', st.states.TX.type === 'none');
+    checkTrue('the ACA table admits it is unverified', aca.confidence === 'unverified' && ui.confidence === 'unverified' && st.confidence === 'unverified');
+    checkTrue('ACA applicable percentages climb with income', aca.applicablePercentage.every((r, i) => i === 0 || r.percent >= aca.applicablePercentage[i - 1].percent));
+    check('and end at the cliff', aca.applicablePercentage[aca.applicablePercentage.length - 1].upToFplMultiple, aca.cliffMultiple);
+  }
+})();
+
 section('What is finished');
 
 (function () {

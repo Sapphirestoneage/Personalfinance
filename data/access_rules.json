@@ -1,0 +1,146 @@
+{
+  "id": "access_rules",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "How each kind of account can be reached: the age-59\u00bd rule for pre-tax and Roth earnings (IRC 72(t)), Roth contributions withdrawable any time, HSA non-medical use penalty-free from 65, 529 restricted to qualified education, a donor-advised fund irrevocable. Liquidity scale after BiggerPockets' Personal Financial Statement: 1 today \u00b7 2 within 30 days \u00b7 3 within 12 months \u00b7 4 can't or won't sell.",
+  "confidence": "convention",
+  "confidenceNote": "The access ages are statute and stable; the default liquidity per kind is a convention (a brokerage account settles in days, a house takes months) and every asset can override it.",
+  "note": "Keyed by asset.taxCharacter, with a fallback by asset.category for assets never characterised. `bucket` is the portfolio the 10x Statement files it under. `accessAge` null means no age gate. `basisAccessAge` is for Roth: contributions come out any time, earnings wait for 59\u00bd \u2014 the bridge to 59\u00bd counts only the basis. D-064.",
+  "liquidityScale": [
+    {
+      "value": 1,
+      "label": "Today",
+      "horizonDays": 0
+    },
+    {
+      "value": 2,
+      "label": "Within 30 days",
+      "horizonDays": 30
+    },
+    {
+      "value": 3,
+      "label": "Within 12 months",
+      "horizonDays": 365
+    },
+    {
+      "value": 4,
+      "label": "Can't or won't sell",
+      "horizonDays": null
+    }
+  ],
+  "confidenceScale": [
+    {
+      "value": 1,
+      "label": "Guaranteed"
+    },
+    {
+      "value": 2,
+      "label": "85% or better"
+    },
+    {
+      "value": 3,
+      "label": "Real, but don't count on it"
+    },
+    {
+      "value": 4,
+      "label": "Probably zero"
+    }
+  ],
+  "byTaxCharacter": {
+    "cash": {
+      "bucket": "liquidFinancial",
+      "liquidity": 1,
+      "accessAge": null,
+      "basisAccessAge": null
+    },
+    "taxable": {
+      "bucket": "liquidFinancial",
+      "liquidity": 2,
+      "accessAge": null,
+      "basisAccessAge": null
+    },
+    "pretax": {
+      "bucket": "illiquidFinancial",
+      "liquidity": 3,
+      "accessAge": 59.5,
+      "basisAccessAge": 59.5
+    },
+    "roth": {
+      "bucket": "illiquidFinancial",
+      "liquidity": 3,
+      "accessAge": 59.5,
+      "basisAccessAge": null
+    },
+    "hsa": {
+      "bucket": "illiquidFinancial",
+      "liquidity": 3,
+      "accessAge": 65,
+      "basisAccessAge": 65,
+      "note": "medical spending any time; anything else waits for 65"
+    },
+    "529": {
+      "bucket": "illiquidFinancial",
+      "liquidity": 4,
+      "accessAge": null,
+      "basisAccessAge": null,
+      "note": "qualified education only"
+    },
+    "daf": {
+      "bucket": "illiquidFinancial",
+      "liquidity": 4,
+      "accessAge": null,
+      "basisAccessAge": null,
+      "note": "irrevocable \u2014 it is not yours to spend"
+    },
+    "property": {
+      "bucket": "nonFinancial",
+      "liquidity": 4,
+      "accessAge": null,
+      "basisAccessAge": null
+    },
+    "business": {
+      "bucket": "nonFinancial",
+      "liquidity": 4,
+      "accessAge": null,
+      "basisAccessAge": null
+    },
+    "other": {
+      "bucket": "nonFinancial",
+      "liquidity": 3,
+      "accessAge": null,
+      "basisAccessAge": null
+    },
+    "unknown": {
+      "bucket": "illiquidFinancial",
+      "liquidity": 3,
+      "accessAge": 59.5,
+      "basisAccessAge": 59.5,
+      "note": "a lump entered as one total: treated as retirement money until split"
+    }
+  },
+  "byCategory": {
+    "cash": "cash",
+    "investment": "taxable",
+    "retirement": "pretax",
+    "real_estate": "property",
+    "vehicle": "other",
+    "other": "other"
+  },
+  "buckets": [
+    {
+      "id": "liquidFinancial",
+      "label": "Liquid financial",
+      "blurb": "Reachable this month without a penalty or a sale that takes a season."
+    },
+    {
+      "id": "illiquidFinancial",
+      "label": "Illiquid financial",
+      "blurb": "Yours, invested, and gated \u2014 by an age, a purpose or a lock-up."
+    },
+    {
+      "id": "nonFinancial",
+      "label": "Non-financial",
+      "blurb": "Things, not accounts: a home, a car, a business. Worth something; not spendable."
+    }
+  ]
+}

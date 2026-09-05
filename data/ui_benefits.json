@@ -1,0 +1,217 @@
+{
+  "id": "ui_benefits",
+  "version": "2025.0",
+  "asOf": "2025-07-01",
+  "source": "State unemployment insurance: the maximum weekly benefit and the standard maximum duration in weeks, by state, as published by each state agency and compiled by the U.S. Department of Labor's Significant Provisions of State UI Laws. Transcribed from memory of the 2025 compilation.",
+  "confidence": "unverified",
+  "confidenceNote": "NOT checked against the DOL compilation line by line. Every room that shows an expected benefit labels it an estimate and links to the state agency. Actual benefits depend on base-period wages; the maximum is a ceiling, not a promise.",
+  "note": "expected weekly benefit \u2248 min(maxWeeklyDollars, replacementRate \u00d7 prior weekly wage). Used by the worst-plausible-year figure (D-064) and the Runway room. States without a dependent allowance are shown without one.",
+  "replacementRate": 0.5,
+  "replacementRateNote": "Most states replace roughly half of the base-period weekly wage up to the cap; a convention here, not a per-state table.",
+  "states": {
+    "AL": {
+      "maxWeeklyDollars": 275,
+      "weeks": 14
+    },
+    "AK": {
+      "maxWeeklyDollars": 370,
+      "weeks": 26
+    },
+    "AZ": {
+      "maxWeeklyDollars": 320,
+      "weeks": 26
+    },
+    "AR": {
+      "maxWeeklyDollars": 451,
+      "weeks": 16
+    },
+    "CA": {
+      "maxWeeklyDollars": 450,
+      "weeks": 26
+    },
+    "CO": {
+      "maxWeeklyDollars": 781,
+      "weeks": 26
+    },
+    "CT": {
+      "maxWeeklyDollars": 703,
+      "weeks": 26
+    },
+    "DE": {
+      "maxWeeklyDollars": 450,
+      "weeks": 26
+    },
+    "DC": {
+      "maxWeeklyDollars": 444,
+      "weeks": 26
+    },
+    "FL": {
+      "maxWeeklyDollars": 275,
+      "weeks": 12
+    },
+    "GA": {
+      "maxWeeklyDollars": 365,
+      "weeks": 14
+    },
+    "HI": {
+      "maxWeeklyDollars": 796,
+      "weeks": 26
+    },
+    "ID": {
+      "maxWeeklyDollars": 556,
+      "weeks": 20
+    },
+    "IL": {
+      "maxWeeklyDollars": 605,
+      "weeks": 26
+    },
+    "IN": {
+      "maxWeeklyDollars": 390,
+      "weeks": 26
+    },
+    "IA": {
+      "maxWeeklyDollars": 714,
+      "weeks": 16
+    },
+    "KS": {
+      "maxWeeklyDollars": 589,
+      "weeks": 16
+    },
+    "KY": {
+      "maxWeeklyDollars": 665,
+      "weeks": 24
+    },
+    "LA": {
+      "maxWeeklyDollars": 275,
+      "weeks": 26
+    },
+    "ME": {
+      "maxWeeklyDollars": 595,
+      "weeks": 26
+    },
+    "MD": {
+      "maxWeeklyDollars": 430,
+      "weeks": 26
+    },
+    "MA": {
+      "maxWeeklyDollars": 1033,
+      "weeks": 26
+    },
+    "MI": {
+      "maxWeeklyDollars": 446,
+      "weeks": 20
+    },
+    "MN": {
+      "maxWeeklyDollars": 890,
+      "weeks": 26
+    },
+    "MS": {
+      "maxWeeklyDollars": 235,
+      "weeks": 26
+    },
+    "MO": {
+      "maxWeeklyDollars": 320,
+      "weeks": 20
+    },
+    "MT": {
+      "maxWeeklyDollars": 703,
+      "weeks": 28
+    },
+    "NE": {
+      "maxWeeklyDollars": 546,
+      "weeks": 26
+    },
+    "NV": {
+      "maxWeeklyDollars": 538,
+      "weeks": 26
+    },
+    "NH": {
+      "maxWeeklyDollars": 427,
+      "weeks": 26
+    },
+    "NJ": {
+      "maxWeeklyDollars": 875,
+      "weeks": 26
+    },
+    "NM": {
+      "maxWeeklyDollars": 605,
+      "weeks": 26
+    },
+    "NY": {
+      "maxWeeklyDollars": 504,
+      "weeks": 26
+    },
+    "NC": {
+      "maxWeeklyDollars": 350,
+      "weeks": 12
+    },
+    "ND": {
+      "maxWeeklyDollars": 748,
+      "weeks": 26
+    },
+    "OH": {
+      "maxWeeklyDollars": 583,
+      "weeks": 26
+    },
+    "OK": {
+      "maxWeeklyDollars": 539,
+      "weeks": 16
+    },
+    "OR": {
+      "maxWeeklyDollars": 812,
+      "weeks": 26
+    },
+    "PA": {
+      "maxWeeklyDollars": 605,
+      "weeks": 26
+    },
+    "RI": {
+      "maxWeeklyDollars": 705,
+      "weeks": 26
+    },
+    "SC": {
+      "maxWeeklyDollars": 326,
+      "weeks": 20
+    },
+    "SD": {
+      "maxWeeklyDollars": 514,
+      "weeks": 26
+    },
+    "TN": {
+      "maxWeeklyDollars": 275,
+      "weeks": 12
+    },
+    "TX": {
+      "maxWeeklyDollars": 577,
+      "weeks": 26
+    },
+    "UT": {
+      "maxWeeklyDollars": 712,
+      "weeks": 26
+    },
+    "VT": {
+      "maxWeeklyDollars": 705,
+      "weeks": 26
+    },
+    "VA": {
+      "maxWeeklyDollars": 378,
+      "weeks": 12
+    },
+    "WA": {
+      "maxWeeklyDollars": 1079,
+      "weeks": 26
+    },
+    "WV": {
+      "maxWeeklyDollars": 622,
+      "weeks": 26
+    },
+    "WI": {
+      "maxWeeklyDollars": 370,
+      "weeks": 26
+    },
+    "WY": {
+      "maxWeeklyDollars": 595,
+      "weeks": 26
+    }
+  }
+}
