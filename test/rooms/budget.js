@@ -89,6 +89,24 @@ module.exports = function (t) {
   hc.ledger.months = [Schema.createMonthRecord({ month: '2026-08', estimated: {}, actual: { expenses: 0 } })];
   check('a closed month with nothing logged does not count as a month of spending', Schema.monthlyExpensesCents(hc).source, 'tracked');
 
+  /* What the log moved since cash was confirmed (D-130, Q8): read, never applied. */
+  const hm = Schema.createHousehold({ filingStatus: 'single', state: 'NC', people: [Schema.createPerson({ id: 'P', role: 'adult', employmentStatus: 'employed', incomeSources: [Schema.createIncomeSource({ id: 'i', personId: 'P', grossAnnualIncomeCents: 7200000 })] })] });
+  hm.ledger.income = [
+    Schema.createIncomeEntry({ id: 'w', kind: 'w2', amountCents: 200000, frequency: 'once', receivedOn: '2026-09-10' }),
+    Schema.createIncomeEntry({ id: 'g', kind: 'gift', amountCents: 10000, frequency: 'once', receivedOn: '2026-09-01' }),
+    Schema.createIncomeEntry({ id: 'p', kind: 'bonus', amountCents: 999900, frequency: 'once', receivedOn: '2026-09-12', dateKind: 'potential' })
+  ];
+  hm.expenses.entries = [
+    Schema.createExpenseEntry({ id: 'e1', categoryId: 'groceries', amountCents: 6420, period: 'once', date: '2026-09-04', source: 'log' }),
+    Schema.createExpenseEntry({ id: 'e0', categoryId: 'groceries', amountCents: 5000, period: 'once', date: '2026-09-02', source: 'log' }),
+    Schema.createExpenseEntry({ id: 'e2', categoryId: 'shopping', amountCents: 70000, period: 'once', date: '2026-09-20', source: 'log', dateKind: 'potential' })
+  ];
+  const w2cash = require(path.join(ROOT, 'engines/ledger.js')).netOf(hm.ledger.income[0], hm, T).cashReceivedCents;
+  const mv = Budget.cashMovedSince(hm, T, CAT, '2026-09-03T10:00:00.000Z', Date.parse('2026-09-15T12:00:00'));
+  check('since the 3rd: the paycheque’s cash (net of withholding) in, the receipt after the 3rd out; the gift before it and the potentials never', mv.inCents + '/' + mv.outCents + '/' + mv.value + '/' + mv.count, w2cash + '/6420/' + (w2cash - 6420) + '/2');
+  check('never confirmed: nothing to count from', Budget.cashMovedSince(hm, T, CAT, null).status, 'incomplete');
+  checkTrue('the Statement sets it beside the cash figure and applies nothing', /cashMovedSince\(/.test(fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8')) && /nothing moves it for you/.test(fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8')));
+
   /* The page: no field to type in, ever. */
   const page = fs.readFileSync(path.join(ROOT, 'rooms/budget.html'), 'utf8');
   const markup = page.replace(/<script[\s\S]*?<\/script>/g, '').replace(/<!--[\s\S]*?-->/g, '');

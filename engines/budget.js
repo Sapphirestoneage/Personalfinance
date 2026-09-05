@@ -175,6 +175,35 @@
       sources: act.sources, canClose: m <= cur, isCurrent: m === cur, isFuture: m > cur };
   }
 
+  /**
+   * cashMovedSince(h, T, catalog, sinceIso, now) — what the ledger and
+   * the log say has moved through cash since a date: income actually
+   * received (cash landed, net of what was withheld) less every logged
+   * outgoing, potential dates never counted, reimbursements credited on
+   * the day they came. A read-only figure for the Statement to set beside
+   * the cash balance the person confirmed (D-130, MONEY-MAP.md Q8); it
+   * writes nothing and moves no balance.
+   */
+  function cashMovedSince(h, T, catalog, sinceIso, now) {
+    if (!sinceIso) return Money.incomplete('The cash figure has never been confirmed, so there is no date to count from.', ['confirmedAt']);
+    var since = String(sinceIso).slice(0, 10);
+    var today = Ledger.thisMonth(now) + '-' + (function () { var d = now ? new Date(now) : new Date(); return (d.getDate() < 10 ? '0' : '') + d.getDate(); })();
+    if (since > today) return Money.ok(0, { inCents: 0, outCents: 0, since: since, until: today, count: 0 });
+    var months = [];
+    for (var m = since.slice(0, 7); m <= today.slice(0, 7); m = shift(m, 1)) months.push(m);
+    var inC = 0, outC = 0, count = 0;
+    months.forEach(function (ym) {
+      var inc = Ledger.month(h, T, ym);
+      inc.rows.forEach(function (r) {
+        var perLanding = r.net && Money.isEntered(r.net.cashReceivedCents) ? r.net.cashReceivedCents : (r.occurrences.length ? Math.round(r.grossCents / r.occurrences.length) : 0);
+        r.occurrences.forEach(function (o) { if (o.date >= since && o.date <= today) { inC += perLanding; count++; } });
+      });
+      var log = CashFlow.logInMonth(h, catalog, ym);
+      log.rows.forEach(function (r) { if (r.date >= since && r.date <= today) { outC += r.cents; count++; } });
+    });
+    return Money.ok(inC - outC, { inCents: inC, outCents: outC, since: since, until: today, count: count });
+  }
+
   /** The record Spine.closeMonth takes, from the open month as it stands. */
   function recordPayload(h, T, catalog, ym, now) {
     var sheet = month(h, T, catalog, ym, now);
@@ -225,6 +254,7 @@
     actual: actual,
     month: month,
     recordPayload: recordPayload,
+    cashMovedSince: cashMovedSince,
     revisedFor: revisedFor,
     syncRevised: syncRevised
   };
