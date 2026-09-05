@@ -67,7 +67,13 @@ typing in it.
 ## Layout
 
 ```
-index.html          The home page of stresslessaboutmoney.com (D-092); the site's other pages are the folders below
+index.html          The home page of stresslessaboutmoney.com (D-092)
+start-here/ coaching/ tools/ frameworks/ about/ media/ notes/ privacy/ terms/ 404.html
+                    The rest of the site, one folder per page, static HTML
+site.css  site.js   The site's one stylesheet and one script, on top of shared/theme.css
+site/               Content the site reads: testimonials.json (consent required to render)
+CNAME  robots.txt  sitemap.xml  TODO-ELI.md
+                    The domain, the crawler files, and every placeholder Eli still has to fill
 dashboard.html      The Dashboard once it has what it needs, the intake landing until then (D-058, moved by D-092)
 foo-ladder.js       The FOO ladder's logic (shell at rooms/foo-ladder.html): build() once, paint() on every change
 map.html            Room directory: next-unfinished first, then the groups, tag filter
@@ -124,6 +130,7 @@ test/run.js         Re-derives every formula outside the browser
 test/alignment.js   Browser layout check — side-by-side cells must line up
 test/forms.js       Mobile browser check — typing must survive, keyboard must stay
 test/export.js      Export → import round trip, share-link round trip, size ceiling
+test/site.js        The marketing site: head, landmarks, links, sitemap, placeholders vs TODO-ELI.md
 SPEC.md             The full Tier 0–2 build spec. The authority.
 ROADMAP.md          The master idea index, tiers 0–24, + what's actually built
 DECISIONS.md        Running log of what was decided and why.

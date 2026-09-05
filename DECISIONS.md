@@ -4797,6 +4797,64 @@ should never link to `index.html` expecting the panel.
 
 ---
 
+## D-093 — The site's tokens: a light palette, one warm accent, calm mode, and the Can I? thresholds
+
+*(The stresslessaboutmoney.com build, D-092. Logged here so no later page
+has to reverse-engineer a hex value from a finished file, per D-002.)*
+
+**Light palette** (`site.css`, applied under `html[data-theme="light"]`
+and, with no explicit choice, under `prefers-color-scheme: light`):
+ground `#F7F6F2`, surfaces `#FFFFFF`, active surface `#EAF1FE`, borders
+`#DDE2EB` / `#B9C3D6` / `#2E6FE8`, text `#0B2249` (the navy-800 of the
+dark scale), muted `#2F3F63`, subtle `#55628A`, faint `#66739A`, accent
+`#1D4ED8` (sapphire-600, 6.3:1 on white) with hover `#1E40AF`, positive
+`#1F7A4D`, caution `#8A6B1B`, critical `#B3261E`. Every value clears WCAG
+AA against the ground it sits on; the faint text is deliberately darker
+than the dark theme's faint, which at 50% alpha is decoration rather than
+reading text.
+
+**The one warm accent:** `--warm` is `#F2C57C` on navy and `#8A5A14` on
+the light ground. It is used only where the page is telling someone they
+are okay — the Can I? verdict when the answer is yes, the "That's
+completely fine" section, the checklist dots, the start-here ribbon. Never
+a button, never a warning, so it keeps meaning one thing.
+
+**Calm mode** (`html[data-calm="on"]`): the accent and the warm accent
+both become the text colour, the primary button becomes an outline, every
+animation and transition is switched off, and body text goes from 17px to
+19px. Nothing is removed from the page; it is the same page with less
+asking for attention. Persisted as `slam.calm`; the theme as `slam.theme`.
+Those two keys are the whole of what the site stores.
+
+**Type:** body 17px Space Grotesk at 1.65 leading (the rooms are UI at
+14px; the site is reading), lead 19px, h1 `clamp(2rem, 1.2rem + 3.6vw,
+3.1rem)` Fraunces at weight 500, measure 68ch. Fonts preloaded, still
+`font-display: swap`.
+
+**The Can I? widget's thresholds** — its own, not an engine's, because no
+engine answers "can I afford this one thing" and the widget is a first
+look, not a plan. Everything is integer cents from `shared/money.js`, an
+empty field gives no sentence, and $0 is answered as $0. What is left is
+take-home minus fixed bills. A monthly cost is a plain yes at up to 25% of
+what is left, "probably, but a real commitment" to 60%, "fits on paper"
+to 100%, and past that "not on this month's numbers" — with the line that
+this is a fact about the month, not the person. A one-time cost is a yes
+at up to one month of what is left, "yes, with a plan" to four months,
+and beyond that "a saving-up job" that points at Goals. Fixed bills at or
+above take-home short-circuits to Cash Flow. When the spine holds a
+household, take-home comes from `Tier0.takeHomeMonthlyCents` and fixed
+bills from `Schema.monthlyExpensesCents` — proposed and said so, never
+written back, and the modules that read them load only then.
+
+**Verified.** `node test/site.js` (head, landmarks, links, sitemap,
+placeholders against TODO-ELI.md, JSON-LD, storage keys). Every page loaded
+in a phone-shaped headless browser with no console errors; the widget,
+teaser, toggles and prefill driven end to end; Lighthouse mobile on `/`,
+`/coaching`, `/tools`: performance 98, accessibility 100, best practices
+100, SEO 100.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have
