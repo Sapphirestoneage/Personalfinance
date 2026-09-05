@@ -1,9 +1,20 @@
 {
   "id": "student_loan_conventions",
-  "version": "0.1",
+  "version": "1.0",
   "asOf": "2026-09-01",
-  "source": "PLACEHOLDER \u2014 filled by the room that reads it (D-101).",
-  "confidence": "unverified",
-  "confidenceNote": "Not yet written.",
-  "note": "the standard 10-year term, the income-driven share and forgiveness horizons, the aggressive plan"
+  "source": "The three shapes US federal student-loan repayment takes — a level payment over a fixed term, a share of discretionary income with the remainder forgiven after a horizon, and the level plan with extra on top — stated as shapes, not as any year's rules, plan names, or poverty table.",
+  "confidence": "convention",
+  "confidenceNote": "Every figure here is the round number the shape is usually described with, not a current regulation: a 10-year standard term, 10% of discretionary income, discretionary income above 150% of a poverty line rounded to $15,000 for one person, forgiveness after 20 years (25 for graduate borrowings). Servicers, plan names and thresholds change; the person's own plan letter wins over all of it.",
+  "note": "Read by engines/studentloans.js (the Student Loan Decision room, D-101). The standard plan uses the loan's listed minimum when there is one and the level payment over standardTermYears at the loan's rate when there is not. The income-driven payment is max(0, (gross − discretionaryPovertyMultiple × povertyLineDollars) × idrShareOfDiscretionary ÷ 12), held flat because income growth is not modelled. The aggressive plan is the standard plan plus household.studentLoans.extraMonthlyCents. A forgiven balance may be taxed as income in the year it is forgiven; that tax is named, not modelled.",
+  "standardTermYears": 10,
+  "idrShareOfDiscretionary": 0.10,
+  "discretionaryPovertyMultiple": 1.5,
+  "povertyLineDollars": 15000,
+  "povertyLineNote": "A household of one, rounded. A convention for the shape of the calculation, not the current federal poverty guideline for any year or household size.",
+  "forgivenessYears": 20,
+  "forgivenessYearsGraduate": 25,
+  "forgivenessNote": "The room proposes forgivenessYears; a person who borrowed for graduate study types 25. Forgiveness of 0 or blank means the income-driven payment runs until the loans clear, with no write-off.",
+  "aggressive": {
+    "note": "The standard plan's payments plus a fixed extra every month, applied through engines/debt.js the way Debt Payoff applies an extra. With no extra typed it equals the standard plan."
+  }
 }
