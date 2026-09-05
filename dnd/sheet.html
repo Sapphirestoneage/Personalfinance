@@ -83,6 +83,11 @@
   .ability .nm { font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-subtle); }
   .ability .sc { font-family: var(--font-display); font-size: var(--text-2xl); line-height: 1.1; }
   .ability.is-bought { border-style: dashed; }
+  .feat.taken { border-color: var(--color-accent); }
+  .feat .grant { color: var(--color-accent-hover); font-size: var(--text-xs); }
+  .advs { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-2); }
+  .adv { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); }
+  .adv .k { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-subtle); min-width: 64px; }
   .ability .bought-tag { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--color-accent-hover); margin-top: var(--space-1); line-height: 1.3; }
   .ability .md { display: inline-block; min-width: 40px; margin-top: var(--space-1); padding: 2px 0; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); background: var(--color-surface); font-size: var(--text-sm); color: var(--color-accent-hover); }
   .rows { display: grid; }
@@ -665,7 +670,7 @@
       ? (p.declaredScores || {}) : {};
     Char.STAT_IDS.forEach(function (id) {
       var r = s.stats[id], ok = Money.isOk(r), bought = ok && r.bought === true;
-      txt('ab-' + id, ok ? r.value : DASH);
+      txt('ab-' + id, ok ? r.value + (r.asi ? ' ▲' : '') : DASH);
       txt('mod-' + id, ok ? sign(Char.modifier(r.value)) : DASH);
       /* A bought Strength is dashed and says so (DD-018). Once real money
          reaches it the bought score stops applying, and a blank where a 15
@@ -970,10 +975,18 @@
               }).join('') : '')
       : '<span class="faint">No class yet.</span>');
 
+    var taken = s.grants.feats;
     html('v-feats', (s.feats.open.length || s.feats.locked.length)
       ? s.feats.open.map(function (f) {
-          return '<div class="feat"><b>' + esc(f.name) + '</b> <span class="src">' + esc(f.source)
-            + '</span><br/>' + esc(f.detail) + '</div>'; }).join('')
+          /* DD-023: a feat with a mechanic says what it grants; one without
+             says it is flavour, rather than implying a benefit it has not got. */
+          var def = Char.featByName(f.name, TABLES);
+          var g = def && def.grants;
+          var isTaken = taken.indexOf(f.name) !== -1;
+          return '<div class="feat' + (isTaken ? ' taken' : '') + '"><b>' + esc(f.name) + '</b> <span class="src">' + esc(f.source)
+            + (isTaken ? ' · taken' : '') + '</span><br/>' + esc(f.detail)
+            + (g ? '<br/><span class="grant">' + esc(g.why) + '</span>'
+                 : '<br/><span class="faint">Flavour — no mechanic yet.</span>') + '</div>'; }).join('')
         + s.feats.locked.map(function (f) {
             return '<div class="feat lock"><b>' + esc(f.name) + '</b> <span class="src">' + esc(f.source)
               + '</span><br/>' + esc(f.why || f.detail) + '</div>'; }).join('')
@@ -986,7 +999,10 @@
 
   var pickerSignature = null;
   function paintPickers(s, isExample) {
-    var sig = (s.chosenClassId || '') + '|' + (s.subclassId || '') + '|' + s.subclassAvailable + '|' + isExample;
+    var reached = s.advancements.filter(function (a) { return a.reached; });
+    var sig = (s.chosenClassId || '') + '|' + (s.subclassId || '') + '|' + s.subclassAvailable + '|' + isExample
+      + '|' + reached.map(function (a) { return a.level + ':' + JSON.stringify(a.choice); }).join(',')
+      + '|' + s.feats.open.map(function (f) { return f.name; }).join(',');
     if (sig === pickerSignature) return;      /* don't rebuild live selects for nothing */
     pickerSignature = sig;
     if (!s.klass || isExample) {
@@ -1008,7 +1024,46 @@
       out += '<span class="faint" style="font-size:var(--text-sm)">Subclass unlocks at level '
         + TABLES.dndClasses.cadence.subclassChosenAt + '.</span>';
     }
+    /* Advancements — one select per ASI level reached (DD-023). Built here in
+       the same signature-guarded block as the class pickers, so a live select
+       is never replaced under a finger for nothing. */
+    var cad = TABLES.dndClasses.cadence;
+    if (reached.length) {
+      out += '<div class="advs">' + reached.map(function (a) {
+        var cur = a.choice ? (a.choice.kind === 'feat' ? 'feat:' + a.choice.feat : 'asi:' + JSON.stringify(a.choice.plus)) : '';
+        var opts = '<option value="">Level ' + a.level + ' — choose…</option>';
+        cad.asi.abilities.forEach(function (id) {
+          var v = 'asi:' + JSON.stringify((function (o) { o[id] = cad.asi.plus; return o; })({}));
+          opts += '<option value="' + esc(v) + '"' + (cur === v ? ' selected' : '') + '>+' + cad.asi.plus + ' ' + id + '</option>';
+        });
+        cad.asi.abilities.forEach(function (a1, i) { cad.asi.abilities.forEach(function (a2, j) {
+          if (j <= i) return;
+          var o = {}; o[a1] = cad.asi.split[0]; o[a2] = cad.asi.split[1];
+          var v = 'asi:' + JSON.stringify(o);
+          opts += '<option value="' + esc(v) + '"' + (cur === v ? ' selected' : '') + '>+1 ' + a1 + ', +1 ' + a2 + '</option>';
+        }); });
+        s.feats.open.forEach(function (f) {
+          if (!Char.featByName(f.name, TABLES)) return;    /* only feats with a mechanic */
+          var v = 'feat:' + f.name;
+          opts += '<option value="' + esc(v) + '"' + (cur === v ? ' selected' : '') + '>Feat: ' + esc(f.name) + '</option>';
+        });
+        return '<label class="adv"><span class="k">Level ' + a.level + '</span>'
+          + '<select data-adv="' + a.level + '" style="max-width:280px">' + opts + '</select></label>';
+      }).join('') + '</div>';
+    }
     html('v-pickers', out);
+    var advSel = document.querySelectorAll('#v-pickers select[data-adv]');
+    for (var ai = 0; ai < advSel.length; ai++) {
+      advSel[ai].addEventListener('change', function (e) {
+        var v = e.target.value, L = e.target.getAttribute('data-adv');
+        var all = Object.assign({}, Store.profile().advancements || {});
+        if (!v) delete all[L];
+        else if (v.indexOf('feat:') === 0) all[L] = { kind: 'feat', feat: v.slice(5) };
+        else all[L] = { kind: 'asi', plus: JSON.parse(v.slice(4)) };
+        Store.patchProfile({ advancements: all });
+        pickerSignature = null; paint();
+      });
+    }
     var ov = el('class-override');
     if (ov) ov.addEventListener('change', function () {
       Store.patchProfile({ classOverride: ov.value || null, subclassId: null });

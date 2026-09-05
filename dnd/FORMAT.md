@@ -59,6 +59,10 @@ optional. Two worth knowing about:
   present-and-all-false means asked and answered "none".** Those are different
   claims and an importer that collapses them is throwing away an answer.
 - **`alignment`** — a single id, also self-declared, also never computed.
+- **`advancements`** — `{ "4": { kind: "asi", plus: { WIS: 2 } }, "8": { kind: "feat", feat: "Tough" } }`,
+  keyed by ASI level. Game state. It raises INT/WIS/CHA on the sheet and grants
+  feat mechanics; it says nothing about the person and should not be imported
+  as anything.
 
 Neither is derived from any number, so neither can be reconstructed if you drop
 it.

@@ -6247,3 +6247,189 @@ unchanged in shape.
 `resolution`, and if it attacks, must not carry an armour-layer blocker except
 as `negate`. Check `r.resolution` before reading `r.dc` or `r.attackBonus` —
 only one of them means anything for a given result.
+
+---
+
+## DD-020 — A failed save has to cost something
+
+Two rulebook creatures dealt `0` damage: the Market Crash Elemental (CR 18) and
+the Sudden Ability Drain (CR 10). Their own notes said damage happens *only on a
+failed save* and *on a hit* respectively — but with dice of zero, a failed save
+did nothing at all. A CR 18 that cannot hurt you is not a monster, and DD-010
+had even written a test asserting the zero was deliberate. It was deliberate in
+the rulebook and wrong in play.
+
+**Market Crash Elemental — 8d10 on a failed WIS save.** The crash itself is a
+paper loss and costs nothing; the damage is the *panic-sell*. A failed save
+crystallises the loss, and 8d10 weeks is what selling at the bottom costs a
+tier-IV pile. Pass the save and the paper recovers. That is the rulebook's own
+design ("the save is about your reaction, not the event") given the dice it
+needed.
+
+**The Sudden Ability Drain — 6d8 on a hit.** An injury or illness that takes you
+out of work. It is an attack creature (DD-019), so disability insurance is the
+armour against it, and the weeks are the income that does not arrive while you
+cannot earn. Written at the CR-10 peer rate — the Layoff Reaper is 6d8. The STR
+reduction the rulebook describes is the Disabled status, which you declare.
+
+Both creatures stay rulebook creatures (no `origin`); only their `damageSpec`
+carries `origin: "extension"` and a `rulebook` field recording what was there
+and why it changed. The test that asserted exactly two zero-damage creatures now
+asserts none.
+
+### Compatibility note
+
+**Stored shape:** nothing. **Rooms updated:** `dnd/data/dnd_rules.json` only;
+every page reads the dice from there. **Before writing any of these from a new
+room:** a creature with no dice is a data error now, not a design choice — the
+test will say so.
+
+---
+
+## DD-021 — A bleed is measured against a rest
+
+Nine creatures deal damage *per period* — the Lifestyle-Inflation Imp's "1d4 a
+month", the Hydra's "4d8 a year". The encounter room subtracted that once, as
+if it were a single hit, and printed "HP 13 → 10.5". A D&D player's first
+question is *"over how many rounds?"*, and the answer was that nobody had asked.
+
+The honest figure for a creature that bleeds you per period is the **net**:
+what it takes each period minus what a short rest gives back in the same
+period (DD-013 — your surplus, in weeks of runway). From the net comes the
+sentence that matters: **how long until the runway is gone.**
+
+    Lifestyle-Inflation Imp, $72k earner   2.5 wk/month − 2.4 healed = −0.1 net  → gone in 130 months
+    same Imp, $36k earner                  2.5 wk/month − (−0.9)     = 3.4 net   → gone in 4 months
+    Lifestyle-Creep Hydra, $72k            18 wk/year − 28.2 healed  → never; you out-heal it
+    same Hydra, $36k                       18 − (−10.4) = 28.4 net   → gone in 1 year
+
+That is the game finally saying what a recurring creature *is*: the Imp is
+harmless to a saver and lethal to an overspender, and the number is the reason.
+A negative surplus is not clamped — it shows as negative healing, so the net is
+worse than the chip, which is true.
+
+Rules that fall out: "HP after" for a recurring creature means *after one
+period, net*, and never goes up (out-healing is "never", not a heal). Massive
+Damage stays a *single hit* at or above Max HP — a monthly chip never triggers
+it however big the pile it eventually takes. Incident-shaped periods
+("instalment", "incident") have no clock, so no healing offsets them and they
+resolve as one hit. With no household — DM mode's hypothetical target — healing
+is unknown, the raw chip stands, and the page says so rather than pretending.
+
+### Compatibility note
+
+**Stored shape:** nothing. Logged `damageWeeks` is still the gross per-period
+figure. **Rooms updated:** `dnd/engines/encounter.js` (`recurring`,
+`healPerPeriod`, `netPerPeriod`, `periodsToZero` on every result),
+`dnd/encounter.html` (three new figures and the verdict), `dnd/dm.html` (says
+the figure is gross). **Before writing any of these from a new room:** read
+`r.recurring` first — `hpAfter` means a different thing on each side of it.
+
+---
+
+## DD-022 — One strong save, one weak, and every save covered
+
+The rulebook gave three of the seven classes the identical CON/WIS pair, and
+left Dexterity and Intelligence to one class each. In play that meant six
+classes had no proficiency against anything that came at DEX — the Payday Loan
+Wraith, the Identity Thief — and the type chart flattened for half the roster,
+because Keeper, Compounder and Anchor were the same character as far as saves
+went.
+
+5e's own shape is one **strong** save (DEX, CON or WIS) and one **weak** (STR,
+INT or CHA) per class, with every save covered. That is what the classes have
+now:
+
+    Earner      STR/CON   (was STR/CHA)   the fighter's pair: earning is a body
+    Keeper      WIS/CHA   (was CON/WIS)   discipline, and immunity to the pitch
+    Builder     DEX/CHA   (was STR/CHA)   the rogue's pair: quick, persuasive
+    Compounder  CON/INT   (was CON/WIS)   patience and knowledge — its own primaries
+    Landholder  DEX/INT   (was DEX/CON)   nimble, and reads the paperwork
+    Anchor      CON/STR   (was CON/WIS)   the barbarian's pair: stability by bulk
+    Speculator  WIS/INT   (unchanged)     the wizard's pair
+
+Every save is now proficient for at least two classes; no pair is shared by
+more than two (5e itself gives Fighter and Barbarian the same one). Each class
+carries its rulebook pair as `savesRulebook`, so the original is recorded rather
+than overwritten.
+
+The demo character is an Earner, and the §9.3 acceptance figure — the Timeshare
+targets WIS, which the Earner was not proficient in before and is not now — is
+unchanged at 37%.
+
+### Compatibility note
+
+**Stored shape:** nothing. **Rooms updated:** `dnd/data/dnd_classes.json` only;
+`savingThrows()`, the radar, the predators list and the type chart all read from
+it. **Before writing any of these from a new room:** a new class needs one
+strong and one weak save; the test will say so.
+
+---
+
+## DD-023 — ASIs and feats that do something
+
+Every "ASI or Feat" level on every class read "—". Feats had a name and a
+sentence and no mechanical field. A 5e player picks a feat *for* what it does,
+and levelling up here changed nothing an encounter could feel. The last of the
+review's items.
+
+### ASIs: +2, or +1/+1, to an ability you decide
+
+At each ASI level (4, 8, 12, 16, 19 — 5e's cadence, already in the data) you
+take +2 to one ability or +1 to two, capped at 20, or a feat instead. The choice
+is stored per level in `dndProfile.advancements` and **counts only once that
+level is reached** — drop a level and the choice waits; it is not lost.
+
+**Only INT, WIS and CHA can be raised.** They are the abilities you decide, and
+levelling is exactly when you get to decide again. STR, DEX and CON are measured
+from money — decreeing +2 income is fiction, and an ASI pointed at one is
+ignored. A raised score carries `base` and `asi` on its Result and shows a ▲ on
+the sheet.
+
+### Feats: one mechanic each, and the engine reads it
+
+The eight general feats each grant exactly one thing, written in data with a
+`why`:
+
+    House Hack                        +1 AC        housing cost hedged by a tenant
+    Backdoor Roth                     +1 HP/level  more tax-advantaged capacity
+    Real Estate Professional Status   INT save     you read the paperwork for a living
+    Golden Handcuffs Break            selfAwareness held — you have already priced leaving
+    The Ask                           negotiation held — you ask
+    Lucky                             +1 all saves  5e's three rerolls, as an honest flat point
+    Tough                             +1 HP/level  5e's +2 HP/level, in weeks
+    Mobile                            DEX save     you can move, so nothing pins you
+
+`saveProficiency` and `saveBonus` flow through `savingThrows()`; `maxHpPerLevel`
+through `maxHp()`; `acBonus` is a named armour layer; `blocker` counts as held in
+`blockerState()`, so The Ask makes the Wage-Stagnation Wraith unable to land on
+someone who asks. All five reach the encounter engine, which is the test of
+whether a feat is real.
+
+Class, subclass and debt feats **stay flavour** and the sheet says so — "Flavour
+— no mechanic yet" — rather than listing them beside real feats as if they did
+something. Giving twenty-odd class feats mechanics is its own design pass.
+
+### The picker lives with the class picker
+
+One select per reached ASI level, in the same signature-guarded block as the
+class and subclass pickers, so a live select is never rebuilt under a finger for
+nothing (D-034). The signature now includes the choices and the open feats. Only
+feats with a mechanic appear in the menu.
+
+### Compatibility note
+
+**Stored shape:** `dndProfile.advancements` is **added** — an object keyed by
+ASI level as a string, each `{ kind: 'asi', plus: { WIS: 2 } }` or
+`{ kind: 'feat', feat: 'Tough' }`. Absent means nothing chosen. Exported with
+provenance `declared`; `FORMAT.md` says not to import it as anything.
+
+**Rooms updated:** `dnd/data/dnd_rules.json` (feat grants), `dnd/data/dnd_classes.json`
+(`cadence.asi`), `dnd/engines/character.js` (`advancements`, `grantsFrom`,
+`applyAsi`, `featByName`; `savingThrows`, `maxHp`, `armorClass` take grants),
+`dnd/engines/encounter.js` (grants passed to saves; granted blockers held),
+`dnd/sheet.html`, `dnd/shared/export.js`, `dnd/FORMAT.md`.
+
+**Before writing any of these from a new room:** pass `sheet.grants` to
+`savingThrows()` or feats silently stop working there; a new general feat must
+grant exactly one of the five kinds, and the test will insist.

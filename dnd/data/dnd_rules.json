@@ -417,43 +417,75 @@
   "generalFeats": [
     {
       "name": "House Hack",
-      "requires": "DEX floor + The Landholder access"
+      "requires": "DEX floor + The Landholder access",
+      "grants": {
+        "acBonus": 1,
+        "why": "Housing cost hedged by a tenant — armour against the Rent Spike."
+      }
     },
     {
       "name": "Backdoor Roth",
-      "requires": "Income exceeds direct-contribution limits"
+      "requires": "Income exceeds direct-contribution limits",
+      "grants": {
+        "maxHpPerLevel": 1,
+        "why": "More tax-advantaged capacity: a deeper pool to draw on, +1 week per level."
+      }
     },
     {
       "name": "Real Estate Professional Status",
-      "requires": "Sufficient hours + Real Estate level"
+      "requires": "Sufficient hours + Real Estate level",
+      "grants": {
+        "saveProficiency": "INT",
+        "why": "You read the paperwork for a living."
+      }
     },
     {
       "name": "Golden Handcuffs Break",
-      "requires": "Coast FI"
+      "requires": "Coast FI",
+      "grants": {
+        "blocker": "selfAwareness",
+        "why": "You have already priced leaving; the Handcuffs have nothing to hold."
+      }
     },
     {
       "name": "The Ask",
       "requires": "Negotiation ≥ 15",
       "subStat": "negotiation",
       "min": 15,
-      "detail": "Successfully negotiate a raise or rate; grants a permanent STR bonus."
+      "detail": "Successfully negotiate a raise or rate; grants a permanent STR bonus.",
+      "grants": {
+        "blocker": "negotiation",
+        "why": "You ask, and it counts as held wherever negotiation blocks a creature."
+      }
     },
     {
       "name": "Lucky",
       "requires": null,
-      "detail": "Reroll one failed save per Long Rest."
+      "detail": "Reroll one failed save per Long Rest.",
+      "grants": {
+        "saveBonus": 1,
+        "why": "+1 to every save. 5e's Lucky is three rerolls a day; a flat point is the honest average."
+      }
     },
     {
       "name": "Tough",
       "requires": null,
-      "detail": "+2 Max HP per level, retroactively — a deliberately built emergency fund, not a passive trait."
+      "detail": "+2 Max HP per level, retroactively — a deliberately built emergency fund, not a passive trait.",
+      "grants": {
+        "maxHpPerLevel": 1,
+        "why": "+1 week of runway per level, as 5e's Tough is +2 HP per level."
+      }
     },
     {
       "name": "Mobile",
       "requires": "Structural Mobility ≥ 13",
       "subStat": "structuralMobility",
       "min": 13,
-      "detail": "Relocate for a job or cost-of-living arbitrage without a resilience check."
+      "detail": "Relocate for a job or cost-of-living arbitrage without a resilience check.",
+      "grants": {
+        "saveProficiency": "DEX",
+        "why": "You can move, so what needs you pinned in place cannot pin you."
+      }
     }
   ],
   "featTrees": [
@@ -1237,12 +1269,14 @@
       "category": "Personal",
       "cr": 10,
       "save": "STR",
-      "damage": "Permanent STR reduction until addressed",
+      "damage": "6d8 weeks of lost income on a hit, and the Disabled status",
       "note": "An injury or illness event that triggers the Disabled status effect directly",
       "saveAbility": "STR",
       "damageSpec": {
-        "dice": "0",
-        "note": "Permanent STR reduction until addressed, rather than hit-point damage."
+        "dice": "6d8",
+        "note": "An injury or illness that takes you out of work. The weeks are the income that does not arrive while you cannot earn it; the STR reduction is the Disabled status, which you declare on the sheet.",
+        "origin": "extension",
+        "rulebook": "The rulebook set these dice to 0 and described the effect as a STR reduction only. A hit that does nothing is not an attack; the weeks are written here at the CR-10 peer rate (the Layoff Reaper, 6d8), and disability insurance is the armour against it."
       },
       "attackType": "fear",
       "tier": "III",
@@ -1320,12 +1354,14 @@
       "category": "Environmental",
       "cr": 18,
       "save": "WIS",
-      "damage": "Paper Level loss only converts to real HP damage if the WIS save is failed",
+      "damage": "8d10 realised loss on a failed WIS save; nothing on a pass",
       "note": "Not malicious — a weather event. The save is about your reaction, not the event",
       "saveAbility": "WIS",
       "damageSpec": {
-        "dice": "0",
-        "note": "Paper loss only. Damage happens ONLY on a failed save — the save is your reaction, not the event."
+        "dice": "8d10",
+        "note": "The crash itself is a paper loss and costs nothing. The DAMAGE is the panic-sell: a failed WIS save crystallises the loss, and 8d10 weeks is what selling at the bottom costs a tier-IV pile. Pass the save and the paper recovers.",
+        "origin": "extension",
+        "rulebook": "The rulebook set these dice to 0 while saying damage happens only on a failed save — which meant a failed save did nothing. The dice are written here; the design is the rulebook's."
       },
       "attackType": "fear",
       "tier": "IV",
@@ -1912,5 +1948,6 @@
     "shortRestNote": "One pay cycle. Surplus converts to runway at one week of expenses per week of HP.",
     "potionNote": "A windfall heals immediately and needs no rest. What it heals is its size divided by one week of expenses."
   },
-  "debtBurdenNote": "Rulebook §3A. saveDisadvantage is the rulebook's own 'disadvantage on X saves' at each level, written as data so the encounter engine applies it (DD-019). Level 4's 'any check involving borrowing' has no check to attach to yet and keeps DEX from level 3."
+  "debtBurdenNote": "Rulebook §3A. saveDisadvantage is the rulebook's own 'disadvantage on X saves' at each level, written as data so the encounter engine applies it (DD-019). Level 4's 'any check involving borrowing' has no check to attach to yet and keeps DEX from level 3.",
+  "generalFeatsNote": "DD-023. Each general feat GRANTS one mechanic the engine reads: acBonus, maxHpPerLevel, saveProficiency, saveBonus or blocker (counts as held). Written for this build — the rulebook names the feats and their prerequisites and gives them no mechanics. Class, subclass and debt feats stay flavour until they are given one; the sheet says so rather than implying a benefit."
 }

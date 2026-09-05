@@ -1447,8 +1447,7 @@ section('Dungeons & Dividends — the bestiary extension');
        paper loss, the other reduces a stat. parseDice returns null for them and
        expectedDice turns that into 0, which is the right answer. Anything else
        must be real dice. */
-    checkTrue(`${c.name}: damage dice are real dice or a deliberate "0"`,
-      c.damageSpec.dice === '0' || !!Encounter.parseDice(c.damageSpec.dice));
+    checkTrue(`${c.name}: damage dice are real dice`, !!Encounter.parseDice(c.damageSpec.dice));
   });
 
   /* The bestiary page renders these fields directly, so a missing one prints
@@ -1467,13 +1466,18 @@ section('Dungeons & Dividends — the bestiary extension');
   checkTrue('the bestiary page marks extensions',
     /origin === 'extension'/.test(fs.readFileSync(path.join(ROOT, 'bestiary.html'), 'utf8')));
 
-  check('exactly two creatures deal no hit-point damage',
-    creatures.filter(function (c) { return c.damageSpec.dice === '0'; }).length, 2);
-  creatures.filter(function (c) { return c.damageSpec.dice === '0'; }).forEach(function (c) {
-    check(`${c.name} expects zero weeks of damage`,
-      Encounter.expectedDice(Encounter.parseDice(c.damageSpec.dice)), 0);
-    checkTrue(`${c.name} says in its note why there are no dice`,
-      typeof c.damageSpec.note === 'string' && c.damageSpec.note.length > 0);
+  /* DD-020: no creature deals nothing any more. Two rulebook creatures had
+     dice of 0 while their own notes said damage happened on a failed save or
+     a hit — so a failed save did nothing. Both now roll real dice, and each
+     records in `rulebook` what the rulebook had and why it changed. */
+  check('no creature deals zero hit-point damage',
+    creatures.filter(function (c) { return c.damageSpec.dice === '0'; }).length, 0);
+  ['Market Crash Elemental', 'The Sudden Ability Drain'].forEach(function (n) {
+    const c = creatures.filter(function (x) { return x.name === n; })[0];
+    checkTrue(`${n} now rolls real dice`, Encounter.expectedDice(Encounter.parseDice(c.damageSpec.dice)) > 0);
+    check(`${n}'s dice are marked as written here`, c.damageSpec.origin, 'extension');
+    checkTrue(`${n} records what the rulebook had`, /0/.test(c.damageSpec.rulebook || ''));
+    checkTrue(`${n} itself is still a rulebook creature`, !c.origin);
   });
 
   /* A blocker catalogue entry keyed to a sub-stat must name a real one, or
@@ -1488,6 +1492,218 @@ section('Dungeons & Dividends — the bestiary extension');
   });
   checkTrue('scenarioForesight is a blocker and a declared sub-stat',
     !!R.blockers.scenarioForesight && declared.indexOf('scenarioForesight') !== -1);
+})();
+
+section('Dungeons & Dividends — ASIs and feats that do something (DD-023)');
+
+(function () {
+  const Encounter = require(path.join(ROOT, 'engines/encounter.js'));
+  const R = TABLES.dndRules, C = TABLES.dndClasses, cad = C.cadence;
+  const KINDS = ['acBonus', 'maxHpPerLevel', 'saveProficiency', 'saveBonus', 'blocker'];
+
+  /* Every general feat grants exactly one mechanic the engine reads, and says why. */
+  R.generalFeats.forEach(function (f) {
+    checkTrue(`${f.name} grants something`, !!f.grants);
+    const keys = Object.keys(f.grants || {}).filter(function (k) { return KINDS.indexOf(k) !== -1; });
+    check(`${f.name} grants exactly one mechanic`, keys.length, 1);
+    checkTrue(`${f.name} explains itself`, typeof (f.grants || {}).why === 'string' && f.grants.why.length > 10);
+    if (f.grants.blocker) checkTrue(`${f.name}'s blocker exists`, !!R.blockers[f.grants.blocker]);
+    if (f.grants.saveProficiency) checkTrue(`${f.name}'s save is real`, ['STR','DEX','CON','INT','WIS','CHA'].indexOf(f.grants.saveProficiency) !== -1);
+  });
+  check('ASIs raise only the abilities you decide', cad.asi.abilities.join(','), 'INT,WIS,CHA');
+  check('+2 or +1/+1, like 5e', cad.asi.plus + '/' + cad.asi.split.join('+'), '2/1+1');
+  check('capped at 20', cad.asi.cap, 20);
+
+  /* A level-8 household, built the way the suite builds one. */
+  function household(advs) {
+    const h = Schema.createHousehold(); h.filingStatus = 'single';
+    const p = Schema.createPerson({ id: 'p1', role: 'adult' });
+    p.incomeSources = [Schema.createIncomeSource({ id: 'i1', personId: 'p1', grossAnnualIncomeCents: 7200000, type: 'w2' })];
+    h.people = [p];
+    h.assets = [Schema.createAsset({ id: 'c', category: 'cash', valueCents: 1000000, liquid: true }),
+                Schema.createAsset({ id: 'i', category: 'investment', valueCents: 24000000, liquid: false })];
+    h.expenses = { monthlyEssential: { estimatedValueCents: 315000, trackedValueCents: null, source: 'estimated' }, entries: [] };
+    h.dndProfile = { fixedCostShare: 0.55, yearsSustained: 4, disruptionSurvived: true, healthCoverage: 2, automatedSaving: 'most',
+      declaredMethod: 'standardArray', declaredScores: { STR: 10, DEX: 10, CON: 10, INT: 13, WIS: 19, CHA: 10 },
+      advancements: advs || {} };
+    return h;
+  }
+  const plain = Character.sheet(household({}), TABLES);
+  checkTrue('the household is high enough level to have ASIs', plain.levelValue >= 8);
+  check('two advancement slots are reached', plain.advancements.filter(function (a) { return a.reached; }).length, 2);
+  checkTrue('and later ones are not', plain.advancements.some(function (a) { return !a.reached; }));
+
+  /* An ASI raises the score and the modifier, and says so. */
+  const asi = Character.sheet(household({ '4': { kind: 'asi', plus: { INT: 2 } } }), TABLES);
+  check('+2 INT lands', asi.stats.INT.value, plain.stats.INT.value + 2);
+  check('and is marked as an ASI', asi.stats.INT.asi, 2);
+  check('and the base is kept', asi.stats.INT.base, plain.stats.INT.value);
+  const capped = Character.sheet(household({ '4': { kind: 'asi', plus: { WIS: 2 } } }), TABLES);
+  check('an ASI never exceeds 20', capped.stats.WIS.value, 20);
+  check('and records only what actually applied', capped.stats.WIS.asi, 20 - plain.stats.WIS.value);
+  const split = Character.sheet(household({ '4': { kind: 'asi', plus: { INT: 1, CHA: 1 } } }), TABLES);
+  check('+1/+1 splits', split.stats.INT.value + '/' + split.stats.CHA.value,
+    (plain.stats.INT.value + 1) + '/' + (plain.stats.CHA.value + 1));
+  const str = Character.sheet(household({ '4': { kind: 'asi', plus: { STR: 2 } } }), TABLES);
+  check('an ASI on a measured ability is ignored — you cannot decree income',
+    str.stats.STR.value, plain.stats.STR.value);
+  const early = Character.sheet(household({ '16': { kind: 'asi', plus: { INT: 2 } } }), TABLES);
+  check('a choice at an unreached level waits', early.stats.INT.value, plain.stats.INT.value);
+
+  /* Feats reach the numbers they claim to. */
+  const tough = Character.sheet(household({ '4': { kind: 'feat', feat: 'Tough' } }), TABLES);
+  check('Tough adds a week per level to Max HP', tough.maxHp.weeks, plain.maxHp.weeks + plain.levelValue);
+  /* Save grants are tested on a fully scored stats map — this household's DEX
+     is deliberately incomplete (DD-018), so its DEX save has no modifier. */
+  const full = { STR: Money.ok(10), DEX: Money.ok(12), CON: Money.ok(10), INT: Money.ok(10), WIS: Money.ok(10), CHA: Money.ok(10) };
+  const gr = function (advs) { return Character.grantsFrom(Character.advancements(household(advs), TABLES, 8), TABLES); };
+  const dexSave = function (grants) { return Character.savingThrows(full, plain.klass, 3, TABLES, grants)
+    .filter(function (x) { return x.stat === 'DEX'; })[0]; };
+  const noFeat = dexSave(gr({}));
+  const withMobile = dexSave(gr({ '4': { kind: 'feat', feat: 'Mobile' } }));
+  check('Mobile makes DEX a proficient save', withMobile.modifier, noFeat.modifier + 3);
+  checkTrue('and says the proficiency came from a feat', withMobile.fromFeat);
+  check('Lucky is +1 to every save', dexSave(gr({ '4': { kind: 'feat', feat: 'Lucky' } })).modifier, noFeat.modifier + 1);
+  const wisSave = Character.savingThrows(full, plain.klass, 3, TABLES, gr({ '4': { kind: 'feat', feat: 'Lucky' } }))
+    .filter(function (x) { return x.stat === 'WIS'; })[0];
+  check('every save, not just one', wisSave.modifier,
+    Character.savingThrows(full, plain.klass, 3, TABLES, gr({})).filter(function (x) { return x.stat === 'WIS'; })[0].modifier + 1);
+  /* AC needs a fully measured DEX, which this household deliberately lacks
+     (its bought DEX drops the moment cash makes one DEX sub-stat real — DD-018).
+     So House Hack is tested on armorClass() directly, where the bonus lands. */
+  const hackHh = household({ '4': { kind: 'feat', feat: 'House Hack' } });
+  const hackGrants = Character.grantsFrom(Character.advancements(hackHh, TABLES, 8), TABLES);
+  check('House Hack grants +1 AC', hackGrants.acBonus, 1);
+  const acPlain = Character.armorClass(hackHh, TABLES, 0, 8, 0, 0, 0);
+  const acHack = Character.armorClass(hackHh, TABLES, 0, 8, 0, 0, hackGrants.acBonus);
+  check('and armorClass applies it', acHack.value, acPlain.value + 1);
+  checkTrue('as a named layer', acHack.layers.some(function (l) { return l.id === 'feat'; }));
+  const ask = Character.sheet(household({ '4': { kind: 'feat', feat: 'The Ask' } }), TABLES);
+  check('The Ask grants the negotiation blocker', ask.grants.blockers.join(','), 'negotiation');
+  const wraith = R.monsters.filter(function (m) { return m.name === 'Wage-Stagnation Wraith'; })[0];
+  const opts = { tables: TABLES, household: household({}) };
+  checkTrue('and the Wage-Stagnation Wraith cannot land on someone who asks',
+    Encounter.run(ask, wraith, opts).negated && !Encounter.run(plain, wraith, opts).negated);
+  const two = Character.sheet(household({ '4': { kind: 'feat', feat: 'Tough' }, '8': { kind: 'feat', feat: 'Lucky' } }), TABLES);
+  check('two feats stack', two.grants.feats.join(','), 'Tough,Lucky');
+  check('an unknown feat grants nothing', Character.sheet(household({ '4': { kind: 'feat', feat: 'Nope' } }), TABLES).grants.feats.length, 0);
+
+  /* -- the sheet ---------------------------------------------------------- */
+  const src = fs.readFileSync(path.join(ROOT, 'sheet.html'), 'utf8');
+  checkTrue('the sheet builds an advancement select per reached level', /data-adv=/.test(src));
+  checkTrue('inside the signature-guarded picker block', src.indexOf('data-adv=') > src.indexOf('function paintPickers') && src.indexOf('data-adv=') < src.indexOf('function describeExport'));
+  checkTrue('and the signature includes the choices', /reached\.map\(function \(a\) \{ return a\.level/.test(src));
+  checkTrue('flavour feats say so', /Flavour — no mechanic yet/.test(src));
+  checkTrue('a raised score is marked', /r\.asi \? ' ▲'/.test(src));
+  checkTrue('FORMAT.md describes advancements', /advancements/.test(fs.readFileSync(path.join(ROOT, 'FORMAT.md'), 'utf8')));
+})();
+
+section('Dungeons & Dividends — one strong save, one weak (DD-022)');
+
+(function () {
+  const C = TABLES.dndClasses;
+  const STRONG = ['DEX', 'CON', 'WIS'], WEAK = ['STR', 'INT', 'CHA'];
+  checkTrue('the classes file says why the saves changed', /DD-022/.test(C.savesNote || ''));
+  const cov = {};
+  C.classes.forEach(function (k) {
+    check(`${k.name} has two saves`, k.saves.length, 2);
+    checkTrue(`${k.name} has one strong save`, k.saves.some(function (s) { return STRONG.indexOf(s) !== -1; }));
+    checkTrue(`${k.name} has one weak save`, k.saves.some(function (s) { return WEAK.indexOf(s) !== -1; }));
+    checkTrue(`${k.name} keeps the rulebook's pair on record`, Array.isArray(k.savesRulebook) && k.savesRulebook.length === 2);
+    k.saves.forEach(function (s) { cov[s] = (cov[s] || 0) + 1; });
+  });
+  ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'].forEach(function (s) {
+    checkTrue(`${s} is a proficient save for at least two classes`, (cov[s] || 0) >= 2);
+  });
+  /* No two classes with identical pairs is too strict (5e has Fighter and
+     Barbarian both STR/CON); but the rulebook's three-way CON/WIS tie is gone. */
+  const pairs = C.classes.map(function (k) { return k.saves.slice().sort().join('/'); });
+  const most = Math.max.apply(null, pairs.map(function (p) { return pairs.filter(function (q) { return q === p; }).length; }));
+  checkTrue('no save pair is shared by three classes', most <= 2);
+  /* Proficiency actually lands on the new saves. */
+  const earner = C.classes.filter(function (k) { return k.id === 'earner'; })[0];
+  const stats = { STR: Money.ok(10), DEX: Money.ok(10), CON: Money.ok(10), INT: Money.ok(10), WIS: Money.ok(10), CHA: Money.ok(10) };
+  const saves = Character.savingThrows(stats, earner, 2, TABLES);
+  check('the Earner is now proficient in CON', saves.filter(function (s) { return s.stat === 'CON'; })[0].modifier, 2);
+  check('and no longer in CHA', saves.filter(function (s) { return s.stat === 'CHA'; })[0].modifier, 0);
+})();
+
+section('Dungeons & Dividends — a bleed is measured against a rest (DD-021)');
+
+(function () {
+  const Encounter = require(path.join(ROOT, 'engines/encounter.js'));
+  const all = TABLES.dndRules.monsters.concat(TABLES.dndRules.hazards);
+  function hh(income, cash) {
+    const h = Schema.createHousehold(); h.filingStatus = 'single';
+    const p = Schema.createPerson({ id: 'p1', role: 'adult' });
+    p.incomeSources = [Schema.createIncomeSource({ id: 'i1', personId: 'p1', grossAnnualIncomeCents: income, type: 'w2' })];
+    h.people = [p];
+    h.assets = [Schema.createAsset({ id: 'c', category: 'cash', valueCents: cash, liquid: true })];
+    h.expenses = { monthlyEssential: { estimatedValueCents: 315000, trackedValueCents: null, source: 'estimated' }, entries: [] };
+    h.dndProfile = { fixedCostShare: 0.55, yearsSustained: 4, disruptionSurvived: true, healthCoverage: 2,
+      automatedSaving: 'none', declaredMethod: 'pointBuy',
+      declaredScores: { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 } };
+    return h;
+  }
+  const imp = all.filter(function (c) { return c.name === 'Lifestyle-Inflation Imp'; })[0];
+  const hydra = all.filter(function (c) { return c.name === 'Lifestyle-Creep Hydra'; })[0];
+  const timeshare = all.filter(function (c) { return c.name === 'Timeshare Charm-Caster'; })[0];
+
+  /* "1d4 a month" used to be subtracted once, like a single hit. Now it is
+     netted against what a short rest gives back in the same period. */
+  const rich = hh(7200000, 1000000), poor = hh(3600000, 1000000);
+  const rImp = Encounter.run(Character.sheet(rich, TABLES), imp, { tables: TABLES, household: rich });
+  const pImp = Encounter.run(Character.sheet(poor, TABLES), imp, { tables: TABLES, household: poor });
+  checkTrue('the Imp is recurring', rImp.recurring);
+  check('per month', rImp.perPeriod, 'month');
+  checkTrue('healing per month is read from the household', rImp.healPerPeriod !== null && rImp.healPerPeriod > 0);
+  check('net is damage minus healing', rImp.netPerPeriod, Math.round((rImp.damageWeeks - rImp.healPerPeriod) * 10) / 10);
+  checkTrue('a saver barely bleeds', rImp.netPerPeriod < 0.5);
+  checkTrue('an overspender bleeds the full chip and then some', pImp.netPerPeriod > rImp.damageWeeks);
+  checkTrue('and negative healing is a real answer, not clamped', pImp.healPerPeriod < 0);
+  checkTrue('runway-gone is months, not weeks', pImp.periodsToZero > 0 && pImp.periodsToZero < 12);
+  check('it equals ceil(runway / net)', pImp.periodsToZero, Math.ceil(pImp.hpBefore / pImp.netPerPeriod));
+  check('HP after is after ONE period, net', pImp.hpAfter, Math.max(0, Math.round((pImp.hpBefore - pImp.netPerPeriod) * 10) / 10));
+
+  /* Out-healing a bleed is "never", and HP after does not go up. */
+  const rHydra = Encounter.run(Character.sheet(rich, TABLES), hydra, { tables: TABLES, household: rich });
+  check('a yearly bleed heals per year', rHydra.perPeriod, 'year');
+  checkTrue('a saver out-heals the Hydra', rHydra.netPerPeriod < 0);
+  check('so runway is never gone', rHydra.periodsToZero, null);
+  check('and HP after is unchanged, not inflated', rHydra.hpAfter, rHydra.hpBefore);
+
+  /* A single hit is still a single hit. */
+  const once = Encounter.run(Character.sheet(rich, TABLES), timeshare, { tables: TABLES, household: rich });
+  checkTrue('a once creature is not recurring', !once.recurring);
+  check('and carries no healing figure', once.healPerPeriod, null);
+  check('its HP after is the raw hit', once.hpAfter, Math.max(0, Math.round((once.hpBefore - once.damageWeeks) * 10) / 10));
+
+  /* Massive damage is a single hit at or above Max HP. A monthly chip never
+     qualifies however large the pile it eventually takes. */
+  const spike = all.filter(function (c) { return c.name === 'The Sudden Rent Spike'; })[0];
+  const rSpike = Encounter.run(Character.sheet(poor, TABLES), spike, { tables: TABLES, household: poor });
+  checkTrue('a recurring creature never triggers massive damage', !rSpike.massiveDamage);
+
+  /* Incident-shaped periods have no clock, so nothing offsets them. */
+  const bnpl = all.filter(function (c) { return c.name === 'Buy-Now-Pay-Later Sprite'; })[0];
+  const rB = Encounter.run(Character.sheet(rich, TABLES), bnpl, { tables: TABLES, household: rich });
+  checkTrue('"instalment" is not a time period', !rB.recurring);
+
+  /* No household means no healing figure, and the raw damage stands — said,
+     not hidden. */
+  const bare = { stats: { CON: Money.ok(10) }, klass: null, proficiencyBonus: 0, level: null,
+                 currentHp: Money.ok(13), maxHp: null, subScores: {} };
+  const noH = Encounter.run(bare, imp, { tables: TABLES, household: {} });
+  checkTrue('still recurring', noH.recurring);
+  check('but healing is unknown', noH.healPerPeriod, null);
+  check('and HP after uses the raw chip', noH.hpAfter, Math.round((13 - noH.damageWeeks) * 10) / 10);
+
+  /* -- the page ------------------------------------------------------------ */
+  const enc = fs.readFileSync(path.join(ROOT, 'encounter.html'), 'utf8');
+  checkTrue('the encounter room shows what you heal', /'You heal'/.test(enc));
+  checkTrue('and the net', /\['Net'/.test(enc));
+  checkTrue('and when the runway is gone', /'Runway gone in'/.test(enc));
+  checkTrue('and says "never" when you out-heal it', /never — you out-heal it/.test(enc));
 })();
 
 section('Dungeons & Dividends — two ways to get hurt (DD-019)');
