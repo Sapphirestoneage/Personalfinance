@@ -4148,7 +4148,14 @@ become D-066–D-071, and the D&D T9 entries then moved past those to become
 D-072–D-078. **The rule that settles it: whichever side is still unpushed
 renumbers.** It applied a third time: the SPARKS T4 entries, written as
 D-072–D-076 while the D&D T9 entries took those numbers on main, became
-D-079–D-083 on merge. From D-064 on, every number in this file is unique.
+D-079–D-083 on merge, and a fourth: the D&D T10 entry, written as D-079 while
+the T4 entries took that number, became D-084. From D-064 on, every number in
+this file is unique.
+
+That this keeps happening is the argument for renumbering the seven duplicates
+and being done with it. It has not been worth interrupting feature work for so
+far — but four collisions in two days is the point at which it starts costing
+more than the pass would.
 
 ---
 
@@ -5367,7 +5374,7 @@ has to know about specific blockers, and it is the one place to check.
 
 ---
 
-## D-079 — Six types, derived from the bestiary, and a log field I said existed and did not
+## D-084 — Six types, derived from the bestiary, and a log field I said existed and did not
 
 T10. §9.3 gave every creature an `attackType` and nothing ever read them
 sideways. This does: not *what is this monster* but **what kind of thing works on
