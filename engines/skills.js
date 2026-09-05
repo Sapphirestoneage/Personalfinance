@@ -366,7 +366,10 @@
     var misses = cur.misses.filter(function (d) { return d !== day; });
     if (did) log.push(day); else misses.push(day);
     log = uniqSorted(log); misses = uniqSorted(misses);
-    var last30 = countWithin(log, day, r.windowDays);
+    /* The window ends on the latest day known, so back-filling an earlier
+       day never shrinks the count. */
+    var ref = log.length && log[log.length - 1] > day ? log[log.length - 1] : day;
+    var last30 = countWithin(log, ref, r.windowDays);
 
     var nextState = cur.state;
     if (skill.kind === 'habit') {

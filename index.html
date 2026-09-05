@@ -143,10 +143,6 @@
   .gauge .g-out { background: var(--color-critical); }
   .gauge .g-none { background: var(--color-accent); }
 
-  .stack { display: flex; height: 22px; border-radius: var(--radius-sm); overflow: hidden; margin-top: var(--space-3); background: rgba(30,58,138,.4); }
-  .stack > span { height: 100%; }
-  .key { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-2); font-size: var(--text-xs); color: var(--color-text-muted); }
-  .key span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
 
   .steps { display: flex; flex-wrap: wrap; gap: 4px; margin-top: var(--space-3); }
   .steps i { width: 26px; height: 26px; border-radius: var(--radius-sm); border: 1px solid var(--color-border-strong); display: inline-flex; align-items: center; justify-content: center; font-size: var(--text-xs); font-style: normal; color: var(--color-text-faint); }
@@ -239,9 +235,11 @@
 
   <section class="slaf-card dash" id="out-altitude" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">Altitude · what it is made of</span>
-    <div class="stack" id="nw-stack"></div>
-    <div class="key" id="nw-key"></div>
+    <div id="nw-donut"></div>
     <p class="why" id="nw-why"></p>
+    <span class="slaf-eyebrow" style="display:block;margin-top:var(--space-5)">Altitude · the climb ahead</span>
+    <div id="nw-path"></div>
+    <p class="why" id="nw-path-why"></p>
   </section>
 
   <section class="slaf-card dash" id="out-weather" style="margin-top:var(--space-4)">
@@ -327,6 +325,7 @@
 <script src="engines/ss.js"></script>
 <script src="engines/events.js"></script>
 <script src="engines/skills.js"></script>
+<script src="shared/charts.js"></script>
 <script src="shared/instruments.js"></script>
 <script>
 (function () {
@@ -340,10 +339,11 @@
   var ROOM_ID = 'dashboard';
   var TABLES = null;
 
+  /* One colour per asset category, from the chart palette so the ring's
+     slices stay apart on the dark panel. */
   var CATEGORY_COLOURS = {
-    cash: 'var(--sapphire-300)', investment: 'var(--sapphire-500)',
-    retirement: 'var(--sapphire-600)', real_estate: 'var(--navy-500)',
-    vehicle: 'var(--navy-600)', other: 'var(--navy-700)'
+    cash: '#3ECFCF', investment: '#5AA9FF', retirement: '#B085F5',
+    real_estate: '#4CC38A', vehicle: '#E8B84B', other: '#93C5FD'
   };
 
   function el(id) { return document.getElementById(id); }
@@ -579,28 +579,67 @@
   }
 
   function renderAltitude(h) {
+    var Charts = SLAF.Charts;
     var nw = Tier0.netWorth(h);
     el('nw-why').textContent = Money.isOk(nw)
-      ? Money.formatCents(nw.totalAssetsCents) + ' owned across the categories below, ' + Money.formatCents(nw.totalDebtCents) + ' owed.'
+      ? Money.formatCents(nw.totalAssetsCents) + ' owned across the categories in the ring, ' + Money.formatCents(nw.totalDebtCents) + ' owed against it.'
       : nw.reason || '';
 
-    var groups = {}, total = 0;
+    /* The ring: every asset category as a share of what is owned, the net
+       figure in the middle, debt as its own slice so the ring is the whole
+       balance sheet and not only its good half. */
+    var groups = {}, order = [];
     Schema.aggregatableAssets(h).forEach(function (a) {
       if (!Money.isEntered(a.valueCents) || a.valueCents <= 0) return;
-      groups[a.category] = (groups[a.category] || 0) + a.valueCents;
-      total += a.valueCents;
+      if (!groups[a.category]) { groups[a.category] = 0; order.push(a.category); }
+      groups[a.category] += a.valueCents;
     });
-    if (total <= 0) { el('nw-stack').innerHTML = ''; el('nw-key').innerHTML = ''; return; }
-    el('nw-stack').innerHTML = Object.keys(groups).map(function (k) {
-      return '<span style="width:' + (groups[k] / total * 100) + '%;background:'
-        + (CATEGORY_COLOURS[k] || 'var(--navy-600)') + '"></span>';
-    }).join('');
-    el('nw-key').innerHTML = Object.keys(groups).map(function (k) {
-      return '<span>'
-        + '<i style="display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;background:'
-        + (CATEGORY_COLOURS[k] || 'var(--navy-600)') + '"></i>'
-        + esc(k.replace('_', ' ')) + ' ' + Math.round(groups[k] / total * 100) + '%</span>';
-    }).join('');
+    var slices = order.map(function (k) { return { label: k.replace('_', ' '), value: groups[k], color: CATEGORY_COLOURS[k] || Charts.COLORS.series[order.indexOf(k) % 8] }; });
+    if (Money.isOk(nw) && nw.totalDebtCents > 0) slices.push({ label: 'owed', value: nw.totalDebtCents, color: Charts.COLORS.debt, note: 'debt, against the rest' });
+    el('nw-donut').innerHTML = slices.length ? Charts.donut({
+      title: 'What net worth is made of', slices: slices,
+      center: { big: Money.isOk(nw) ? Charts.shortMoney(nw.value) : '—', small: 'net worth' }
+    }) : '';
+
+    /* The climb: what is invested, growing at the expected return with
+       this year's savings added each month until the stop age, then
+       spending drawn out — against the FIRE number. Projection.pathCents
+       is the loop; the FIRE room draws the same line with more knobs. */
+    var host = el('nw-path'), why = el('nw-path-why');
+    var age = Schema.primaryAge(h);
+    var inv = Schema.investmentsCents(h);
+    var fire = Tier0.fireNumber(h);
+    var rates = Tier0.savingsRate(h, TABLES);
+    var basis = Money.isOk(rates.includingMatch) ? rates.includingMatch : rates.excludingMatch;
+    if (!Money.isEntered(age) || !Money.isOk(inv) || !Money.isOk(fire) || !Money.isOk(basis)) {
+      host.innerHTML = ''; why.textContent = ''; return;
+    }
+    var a = Schema.resolveAssumptions(h);
+    var stopAge = Money.isEntered((h.targets || {}).retireAge) ? h.targets.retireAge : null;
+    var endAge = Math.min(95, Math.max((stopAge || age) + 20, 80));
+    var path = SLAF.Projection.pathCents({
+      startCents: inv.value, monthlyContributionCents: Math.round(basis.annualSavingsCents / 12),
+      annualRate: a.expectedReturnRate, years: endAge - age,
+      contributeYears: stopAge === null ? endAge - age : Math.max(0, stopAge - age),
+      withdrawAnnualCents: fire.annualExpensesCents
+    });
+    if (!Money.isOk(path)) { host.innerHTML = ''; why.textContent = path.reason; return; }
+    var crossed = null;
+    path.years.forEach(function (r) { if (crossed === null && r.balanceCents >= fire.value) crossed = age + r.year; });
+    host.innerHTML = Charts.area({
+      title: 'Investments over time against the FIRE number',
+      series: [
+        { label: 'Investments', color: Charts.COLORS.growth, fill: true, points: path.years.map(function (r) { return [age + r.year, Math.max(0, r.balanceCents)]; }) },
+        { label: 'What you put in', color: Charts.COLORS.contributed, fill: false, points: path.years.map(function (r) { return [age + r.year, Math.max(0, r.contributedCents)]; }) }
+      ],
+      hLines: [{ y: fire.value, label: 'FIRE ' + Charts.shortMoney(fire.value), color: Charts.COLORS.target }],
+      vLines: stopAge !== null ? [{ x: stopAge, label: 'stop at ' + stopAge }] : [],
+      dots: crossed !== null ? [{ x: crossed, y: fire.value }] : [],
+      x: { label: 'age', format: function (v) { return String(Math.round(v)); } }
+    });
+    why.textContent = Money.formatCents(Math.round(basis.annualSavingsCents / 12)) + ' a month at ' + Money.formatRate(a.expectedReturnRate, { decimals: 1 })
+      + (stopAge !== null ? ' until ' + stopAge + ', then ' + Money.formatCents(fire.annualExpensesCents) + ' a year out' : '; set a stop age in FIRE to see the drawdown')
+      + '. ' + (crossed !== null ? 'Crosses the number at ' + crossed + '.' : 'Does not reach the number in this window.') + ' One fixed return, so a smooth line.';
   }
 
   /* ---- The router ------------------------------------------------------------

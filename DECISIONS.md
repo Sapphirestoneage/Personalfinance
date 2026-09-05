@@ -4668,6 +4668,60 @@ on the figures and the three curves; the whole-site sweep.
 
 ---
 
+## D-091 — Charts: one module, three shapes, and the Personal Finance Club look
+
+*(A systemic pass, asked for by name: "way more pie charts, donut
+charts, bar charts and graphs", in the style of Personal Finance Club's
+calculators.)* `shared/charts.js` is the one way a number becomes a
+picture: `area` for anything over time, `donut` for anything that is a
+share of a whole, `bars` and `stacked` for anything compared. Each takes
+figures an engine already produced and returns markup; nothing is
+computed there beyond scales and ticks, and a missing Result draws
+nothing rather than a stand-in — a chart's empty state is a sentence.
+
+**The look.** A dark panel with a hairline border, faint gridlines,
+short dollar ticks ($48K, $1.2M), a filled area under the line the
+chart is about, thinner lines for what it is measured against, a
+dashed horizontal line for the number to cross, and a legend under the
+plot. The palette is named for what a series usually is — `growth` (the
+red PFC draws the compounding line in), `contributed`, `target`,
+`spend`, `debt`, `cash` — plus eight steps for donuts, all chosen to
+stay apart on the navy. Styles are in `theme.css` under "Charts"; no
+room redeclares them.
+
+**The growth line.** `Projection.pathCents` is the loop every growth
+chart draws — a balance year by year, contributions in until a stop
+year, spending out after — so FIRE's line to retirement and past it,
+and the dashboard's "climb ahead", are the same arithmetic with
+different knobs. It sits in `engines/projection.js` with the other
+compound loop rather than once per room, and is mirrored to `dnd/`.
+The "what you put in" line is drawn net of withdrawals and floored at
+zero: once the pot is paying you back it has nothing more to say.
+
+**Where the pictures went.** The dashboard: a ring of what net worth is
+made of (debt as its own slice, so the ring is the whole balance sheet)
+and the climb ahead against the FIRE number. FIRE: the path to and past
+your stop age against your number, crossing marked. The Skill Stacker:
+the ledger by skill, the five stacks as bars against their caps, and
+the three curves through the same module (the poster's claim drawn
+dashed past its clip).
+
+**Not done, on purpose.** No chart is interactive: a static SVG is
+readable on a phone, prints, and cannot get out of step with the
+figures beside it. No chart is drawn from a stand-in number. The radar
+stays as it is; it is not a share, a comparison or a series.
+
+**Verified.** `node test/run.js`: short-money labels, nice steps and
+ticks by hand, an area chart's fill, line, target line and legend, a
+donut's arcs as shares of 2π·42 and a zero slice listed but not drawn,
+bars sharing a zero when one is negative, a stacked row's parts, the
+path on the PFC calculator's own example ($1,000 + $4,000 a month at 7%
+for 40 years lands near $10.5M; a pot drawn too hard names the year it
+empties). Every page screenshotted on a phone-shaped browser with the
+demo, the whole-site sweep, the forms walk and the alignment pass.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

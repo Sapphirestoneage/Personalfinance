@@ -82,6 +82,8 @@
     <p class="slaf-reason" data-reason></p>
     <div class="slaf-bar" style="margin-top:var(--space-3)"><span id="progress-bar" style="width:0"></span></div>
     <div data-detail></div>
+    <div id="out-path"></div>
+    <p class="why slaf-hint" id="path-why" style="margin:var(--space-2) 0 0"></p>
   </section>
 
   <section class="slaf-card" id="variants">
@@ -153,6 +155,7 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/fire.js"></script>
+<script src="../shared/charts.js"></script>
 <script>
 (function () {
   'use strict';
@@ -270,7 +273,7 @@
     el('progress-bar').style.width =
       (Money.isOk(prog) ? Math.min(100, Math.max(0, prog.value * 100)) : 0) + '%';
 
-    if (!ok) { detail.innerHTML = ''; return; }
+    if (!ok) { detail.innerHTML = ''; el('out-path').innerHTML = ''; el('path-why').textContent = ''; return; }
 
     var rows = [
       ['Expenses it covers', Money.formatCents(target.annualExpensesCents) + '/yr'],
@@ -288,6 +291,7 @@
     }
     /* Under coast, "years away" is years to the coast number, not to
        stopping — so the comparison is only made for the other five. */
+    renderPath(h, target, prog);
     var against = target.variant.mode === 'coast' ? null : againstTarget(h, prog);
     if (against) rows.push(['You want to stop at', against]);
     detail.className = 'out-detail';
@@ -299,6 +303,58 @@
       + (target.expenseSource === 'estimated'
           ? '<p class="slaf-reason">Based on your estimated spending. Track a month in Cash Flow and this sharpens up.</p>'
           : '');
+  }
+
+  /* The path: what is invested, growing at the expected return with this
+     year's savings added each month until you stop, then your expenses drawn
+     out — against what you put in and the number to cross. The loop is
+     Projection.pathCents; nothing is computed here. */
+  function renderPath(h, target, prog) {
+    var host = el('out-path'), why = el('path-why');
+    var Charts = SLAF.Charts;
+    var age = Schema.primaryAge(h);
+    if (!Money.isOk(target) || !Money.isOk(prog) || !Money.isEntered(age) || target.variant.mode === 'coast') {
+      host.innerHTML = ''; why.textContent = ''; return;
+    }
+    var rates = SLAF.Tier0.savingsRate(h, TABLES);
+    var basis = Money.isOk(rates.includingMatch) ? rates.includingMatch : rates.excludingMatch;
+    if (!Money.isOk(basis)) { host.innerHTML = ''; why.textContent = ''; return; }
+    var assumptions = Schema.resolveAssumptions(h, optsFor(variantId, h).localOverrides);
+    var stopAge = Money.isEntered((h.targets || {}).retireAge) ? h.targets.retireAge
+      : (Money.isOk(prog.yearsAway) ? Math.ceil(age + prog.yearsAway.value) : null);
+    var endAge = Math.min(95, Math.max((stopAge || age) + 20, 80));
+    var path = SLAF.Projection.pathCents({
+      startCents: prog.investmentsCents,
+      monthlyContributionCents: Math.round(basis.annualSavingsCents / 12),
+      annualRate: assumptions.expectedReturnRate,
+      years: endAge - age,
+      contributeYears: stopAge === null ? endAge - age : Math.max(0, stopAge - age),
+      withdrawAnnualCents: target.annualExpensesCents
+    });
+    if (!Money.isOk(path)) { host.innerHTML = ''; why.textContent = path.reason; return; }
+    /* What you put in is drawn net of withdrawals and floored at zero: once
+       the pot is paying you back, the line has nothing left to say. */
+    var pts = function (k) { return path.years.map(function (r) { return [age + r.year, Math.max(0, r[k])]; }); };
+    var crossed = null;
+    path.years.forEach(function (r) { if (crossed === null && r.balanceCents >= target.value) crossed = age + r.year; });
+    host.innerHTML = Charts.area({
+      title: 'Investments over time against your number',
+      series: [
+        { label: 'Investments', color: Charts.COLORS.growth, points: pts('balanceCents'), fill: true },
+        { label: 'What you put in', color: Charts.COLORS.contributed, points: pts('contributedCents'), fill: false }
+      ],
+      hLines: [{ y: target.value, label: target.variant.label + ' ' + Charts.shortMoney(target.value), color: Charts.COLORS.target }],
+      vLines: stopAge !== null ? [{ x: stopAge, label: 'stop at ' + stopAge }] : [],
+      dots: crossed !== null ? [{ x: crossed, y: target.value }] : [],
+      x: { label: 'age', format: function (v) { return String(Math.round(v)); } },
+      y: { min: Math.min(0, path.value) }
+    });
+    why.textContent = Money.formatCents(prog.investmentsCents) + ' today, ' + Money.formatCents(Math.round(basis.annualSavingsCents / 12)) + ' a month added until '
+      + (stopAge !== null ? 'age ' + stopAge : 'the end') + ' at ' + Money.formatRate(assumptions.expectedReturnRate, { decimals: 1 }) + ' a year'
+      + (stopAge !== null ? ', then ' + Money.formatCents(target.annualExpensesCents) + ' a year drawn out' : '')
+      + '. ' + (crossed !== null ? 'The line crosses your number at ' + crossed + '.' : 'The line does not reach your number in this window.')
+      + (path.brokeAtYear !== null ? ' It runs out at ' + Math.round(age + path.brokeAtYear) + '.' : '')
+      + ' A single fixed return, so a smooth curve; real years are not smooth.';
   }
 
   /* "Stop at 55 — at this pace you get there at 51, 4 years early." Needs
