@@ -223,6 +223,7 @@
   function load() {
     if (cache) return cache;
     loadUncached();
+    lastSaved = clone(cache);
     /* First reading of every owned field, so the first save() has
        something to compare against. See registerFieldReaders(). */
     if (lastReadings === null) lastReadings = readings();
@@ -305,7 +306,11 @@
     var current = readings();
     if (lastReadings !== null) {
       Object.keys(current).forEach(function (id) {
-        if (!same(current[id], lastReadings[id])) cache.meta.confirmedAt[id] = now;
+        if (!same(current[id], lastReadings[id])) {
+          cache.meta.confirmedAt[id] = now;
+          /* A real number replaced a guess: it is no longer one. D-094. */
+          if (cache.meta.guessed && cache.meta.guessed[id]) delete cache.meta.guessed[id];
+        }
       });
     }
     lastReadings = current;
@@ -328,11 +333,105 @@
     return m[fieldId] || null;
   }
 
-  function save() {
+  /* ---- The command log (D-094) ----------------------------------------------
+     Every save diffs the household against the last one saved and records
+     what changed — path, before, after — as one undo entry (or one grouped
+     entry for a batch). Undo applies the befores, redo the afters. The
+     stacks live in meta so they survive a reload and go with a reset. */
+  var HISTORY_CAP = 100;
+  var HISTORY_SKIP = { 'meta.updatedAt': true, 'meta.confirmedAt': true, 'meta.undoStack': true, 'meta.redoStack': true, 'meta.visitedRooms': true, 'meta.createdAt': true };
+  var lastSaved = null;
+  var applyingHistory = false;
+  var batchDepth = 0, batchChanges = null, batchLabel = null;
+  var pendingLabel = null;
+  var fieldLabels = null;
+
+  function registerFieldLabels(fn) { fieldLabels = fn; }
+  function clone(v) { return v === undefined ? undefined : JSON.parse(JSON.stringify(v)); }
+  function isPlain(v) { return v !== null && typeof v === 'object' && !Array.isArray(v); }
+
+  /** Every leaf that differs between a and b, as { path, before, after }. */
+  function diff(a, b, prefix, out) {
+    var keys = {};
+    if (isPlain(a)) Object.keys(a).forEach(function (k) { keys[k] = true; });
+    if (isPlain(b)) Object.keys(b).forEach(function (k) { keys[k] = true; });
+    Object.keys(keys).forEach(function (k) {
+      var p = prefix ? prefix + '.' + k : k;
+      if (HISTORY_SKIP[p]) return;
+      var va = isPlain(a) ? a[k] : undefined, vb = isPlain(b) ? b[k] : undefined;
+      if (isPlain(va) && isPlain(vb)) { diff(va, vb, p, out); return; }
+      if (!same(va, vb)) out.push({ path: p, before: clone(va), after: clone(vb) });
+    });
+    return out;
+  }
+  function getPath(obj, path) {
+    var parts = String(path).split('.');
+    var cur = obj;
+    for (var i = 0; i < parts.length; i++) { if (cur === null || cur === undefined) return undefined; cur = cur[parts[i]]; }
+    return cur;
+  }
+  function setPath(obj, path, value) {
+    var parts = String(path).split('.');
+    var cur = obj;
+    for (var i = 0; i < parts.length - 1; i++) {
+      var k = parts[i];
+      if (cur[k] === null || typeof cur[k] !== 'object') cur[k] = /^\d+$/.test(parts[i + 1]) ? [] : {};
+      cur = cur[k];
+    }
+    var last = parts[parts.length - 1];
+    if (value === undefined) { if (Array.isArray(cur)) cur.splice(Number(last), 1); else delete cur[last]; }
+    else cur[last] = value;
+  }
+  /* "cash & savings $9,500 → $12,000": the first owned field that moved,
+     else the first path. */
+  function describeChanges(changes, beforeReadings, afterReadings) {
+    if (fieldLabels && beforeReadings && afterReadings) {
+      var labels = fieldLabels();
+      var ids = Object.keys(labels);
+      for (var i = 0; i < ids.length; i++) {
+        var id = ids[i];
+        if (!same(beforeReadings[id], afterReadings[id])) {
+          var f = labels[id];
+          var fmt = function (v) { return v === null || v === undefined ? '—' : (f.format ? f.format(v) : String(v)); };
+          return f.label + ' ' + fmt(beforeReadings[id]) + ' → ' + fmt(afterReadings[id]);
+        }
+      }
+    }
+    if (!changes.length) return '';
+    var c = changes[0];
+    return c.path + (changes.length > 1 ? ' and ' + (changes.length - 1) + ' more' : '');
+  }
+  function record(changes, label) {
+    if (!changes.length) return;
+    cache.meta.undoStack = cache.meta.undoStack || [];
+    if (batchDepth > 0) {
+      changes.forEach(function (c) {
+        var seen = batchChanges.filter(function (x) { return x.path === c.path; })[0];
+        if (seen) seen.after = c.after; else batchChanges.push(c);
+      });
+      if (!batchLabel && label) batchLabel = label;
+      return;
+    }
+    cache.meta.undoStack.push({ label: label, ts: new Date().toISOString(), changes: changes });
+    while (cache.meta.undoStack.length > HISTORY_CAP) cache.meta.undoStack.shift();
+    cache.meta.redoStack = [];
+  }
+
+  function save(opts) {
     if (!cache) return;
     var now = new Date().toISOString();
     cache.meta.updatedAt = now;
+    var beforeReadings = lastReadings;
     stampChanged(now);
+    if (!applyingHistory && !(opts && opts.record === false)) {
+      var changes = lastSaved ? diff(lastSaved, cache, '', []) : [];
+      if (changes.length) {
+        var label = pendingLabel || describeChanges(changes, beforeReadings, lastReadings);
+        record(changes, label);
+        pendingLabel = null;
+      }
+    }
+    lastSaved = clone(cache);
     if (!storage.writable) {
       /* Something we could not read is sitting in that key. The session
          still works — it just does not persist, which is the correct cost
@@ -454,6 +553,73 @@
     notify();
     return getProfile();
   }
+
+  /* ---- set / get / batch / undo / redo (D-094) ------------------------------ */
+
+  /** One write to a dot path, labelled for the undo button. */
+  function set(path, value, label) {
+    var h = load();
+    pendingLabel = label || null;
+    setPath(h, path, value);
+    save(); notify();
+    return getPath(getProfile(), path);
+  }
+  function get(path) { return getPath(getProfile(), path); }
+
+  /** Several writes as one undo entry. */
+  function batch(label, fn) {
+    load();
+    if (batchDepth === 0) { batchChanges = []; batchLabel = label || null; }
+    batchDepth++;
+    try { fn(); }
+    finally {
+      batchDepth--;
+      if (batchDepth === 0) {
+        var changes = batchChanges; batchChanges = null;
+        var lbl = batchLabel; batchLabel = null;
+        if (changes.length) {
+          cache.meta.undoStack = cache.meta.undoStack || [];
+          cache.meta.undoStack.push({ label: lbl || describeChanges(changes, null, null), ts: new Date().toISOString(), changes: changes });
+          while (cache.meta.undoStack.length > HISTORY_CAP) cache.meta.undoStack.shift();
+          cache.meta.redoStack = [];
+          save({ record: false }); notify();
+        }
+      }
+    }
+  }
+  function applyEntry(entry, direction) {
+    applyingHistory = true;
+    try {
+      entry.changes.forEach(function (c) { setPath(cache, c.path, clone(direction === 'undo' ? c.before : c.after)); });
+      save({ record: false });
+    } finally { applyingHistory = false; }
+    notify();
+  }
+  function undo() {
+    var h = load();
+    var stack = h.meta.undoStack || [];
+    if (!stack.length) return null;
+    var entry = stack.pop();
+    h.meta.redoStack = h.meta.redoStack || [];
+    h.meta.redoStack.push(entry);
+    applyEntry(entry, 'undo');
+    return entry;
+  }
+  function redo() {
+    var h = load();
+    var stack = h.meta.redoStack || [];
+    if (!stack.length) return null;
+    var entry = stack.pop();
+    h.meta.undoStack = h.meta.undoStack || [];
+    h.meta.undoStack.push(entry);
+    applyEntry(entry, 'redo');
+    return entry;
+  }
+  function peekUndo() { var s = load().meta.undoStack || []; return s.length ? clone(s[s.length - 1]) : null; }
+  function peekRedo() { var s = load().meta.redoStack || []; return s.length ? clone(s[s.length - 1]) : null; }
+  function canUndo() { return !!peekUndo(); }
+  function canRedo() { return !!peekRedo(); }
+  function historySize() { var m = load().meta; return { undo: (m.undoStack || []).length, redo: (m.redoStack || []).length, cap: HISTORY_CAP }; }
 
   /* ---- Shaped helpers — the call sites rooms should actually use --------- */
 
@@ -852,9 +1018,15 @@
       exportVersion: EXPORT_VERSION,
       schemaVersion: Schema.SCHEMA_VERSION,
       exportedAt: new Date().toISOString(),
-      household: getProfile(),
+      household: withoutHistory(getProfile()),
       snapshots: listSnapshots()
     };
+  }
+  /* The command log is this browser's, not the household's: a share code
+     carries the numbers, never a hundred undo entries. D-094. */
+  function withoutHistory(h) {
+    if (h && h.meta) { delete h.meta.undoStack; delete h.meta.redoStack; }
+    return h;
   }
   function exportJSON() { return JSON.stringify(exportObject(), null, 2); }
 
@@ -1001,9 +1173,19 @@
     removeRaw(STORAGE_KEY);
     cache = null;
     lastReadings = null;
+    lastSaved = null;
     load();
     notify();
     return getProfile();
+  }
+
+  /** Drop the cache and read storage again — what a page load does. The
+   *  tests use it to prove the command log survives one. */
+  function _reload() {
+    cache = null;
+    lastReadings = null;
+    lastSaved = null;
+    return load();
   }
 
   return {
@@ -1042,6 +1224,18 @@
     latestSnapshot: latestSnapshot,
     snapshotDelta: snapshotDelta,
     registerFieldReaders: registerFieldReaders,
+    registerFieldLabels: registerFieldLabels,
+    set: set,
+    get: get,
+    batch: batch,
+    undo: undo,
+    redo: redo,
+    canUndo: canUndo,
+    canRedo: canRedo,
+    peekUndo: peekUndo,
+    peekRedo: peekRedo,
+    historySize: historySize,
+    HISTORY_CAP: HISTORY_CAP,
     confirm: confirm,
     confirmedAt: confirmedAt,
     exportObject: exportObject,
@@ -1054,6 +1248,7 @@
     shareFragment: shareFragment,
     codeFromFragment: codeFromFragment,
     reset: reset,
+    _reload: _reload,
     _migrateLegacy: migrateLegacy
   };
 });

@@ -602,3 +602,22 @@ h3 { font-size: var(--text-md); }
 .slaf-bars .track.is-stack i { position: static; border-radius: 0; height: 100%; }
 .slaf-bars.has-negative .track:before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--color-border-strong); }
 .slaf-bars .val { font-size: var(--text-sm); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+
+/* A figure the one-pager filled in as a guess and nobody has typed over yet:
+   dashed, and it says so. D-094. */
+.slaf-owned--guess { border-left-style: dashed; border-left-color: var(--color-caution); }
+.slaf-owned--guess .slaf-owned-value { color: var(--color-caution); }
+
+/* ---- Undo / redo, top right on every page (shared/undo.js). D-094. ---- */
+.slaf-undo { position: fixed; top: 10px; right: 10px; z-index: 40; display: flex; gap: 6px; }
+.slaf-undo-btn { border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); background: var(--color-surface-raised); color: var(--color-text); font-size: var(--text-sm); min-height: 34px; padding: 0 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; backdrop-filter: blur(6px); }
+.slaf-undo-btn:disabled { opacity: .35; cursor: default; }
+.slaf-undo-btn span { font-size: var(--text-xs); }
+/* On a phone the top-right corner is the room nav's; the pair sits
+   bottom right, above the soft keyboard's usual reach, as a thumb reaches. */
+@media (max-width: 640px) { .slaf-undo { top: auto; bottom: 14px; right: 12px; } html.has-undo body { padding-bottom: 72px; } .slaf-undo-btn span { display: none; } .slaf-undo-btn { padding: 0 10px; min-height: 38px; box-shadow: 0 2px 10px rgba(0,0,0,.25); } }
+
+/* ---- The lens toggle (shared/lens.js). D-094. ---- */
+.slaf-lens { display: inline-flex; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); overflow: hidden; }
+.slaf-lens-btn { border: none; background: transparent; color: var(--color-text-muted); font-size: var(--text-xs); min-height: 32px; padding: 0 12px; cursor: pointer; }
+.slaf-lens-btn[aria-pressed="true"] { background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }

@@ -62,7 +62,11 @@ function loadDemo() {
   ok('after a reset the household is empty', Spine.getProfile().people.length === 0);
   const r = Spine.importJSON(text);
   ok('import accepts the file', r.ok === true, r.reason);
-  eq('the household comes back identical', Spine.getProfile(), before);
+  /* The command log is this browser's, not the household's: an export
+     leaves it behind, so it is not part of "identical" (D-094). */
+  function sansLog(h) { const c = JSON.parse(JSON.stringify(h)); delete c.meta.undoStack; delete c.meta.redoStack; return c; }
+  eq('the household comes back identical', sansLog(Spine.getProfile()), sansLog(before));
+  ok('… without the undo log, which stays with the browser that made it', text.indexOf('undoStack') === -1);
   eq('and so do the snapshots', Spine.listSnapshots(), snapsBefore);
 
   console.log('\nImport refuses what it should');
