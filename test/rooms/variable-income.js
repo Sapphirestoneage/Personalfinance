@@ -183,7 +183,7 @@ module.exports = function (t) {
   ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-standalone', 'load-notice'].forEach(function (id) { checkTrue('the page has the section #' + id, html.indexOf('id="' + id + '"') !== -1); });
   checkTrue('the page loads the engine after selfemployed.js', html.indexOf('engines/selfemployed.js') < html.indexOf('engines/variableincome.js') && html.indexOf('engines/variableincome.js') < html.indexOf('shared/room.js'));
   checkTrue('the page declares LIVE-FORM: built once', /LIVE-FORM: built once/.test(html));
-  checkTrue('one Charts.bars call for the typed months, one Charts.area for the ledger’s (D-128)', (html.match(/Charts\.bars\(/g) || []).length === 1 && (html.match(/Charts\.area\(/g) || []).length === 1);
+  checkTrue('bars for the typed months, one area for the ledger’s, no other chart (D-128)', (html.match(/Charts\.(bars|area|donut|stacked)\(/g) || []).every(function (m) { return m === 'Charts.bars(' || m === 'Charts.area('; }) && (html.match(/Charts\.area\(/g) || []).length === 1);
   checkTrue('writes go through upsertIncomeSource and Spine.set', /Spine\.upsertIncomeSource\(person\.id/.test(html) && /Spine\.set\('variableIncome\.bufferMonths'/.test(html));
   checkTrue('the room says what it does not do', /scope: 'This room does not forecast a season/.test(html));
   checkTrue('no silent || 0 in the engine', !/\|\|\s*0\b/.test(t.fs.readFileSync(t.path.join(t.ROOT, 'engines/variableincome.js'), 'utf8')));

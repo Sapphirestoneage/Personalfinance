@@ -6009,6 +6009,117 @@ they show.
 
 ---
 
+## D-128 — The ledger: income entries, the expense log, the reflected budget, the month closed
+
+*(The build spec for Income / Expenses / Budget / Estimated-vs-Actual, built
+directly against; `MONEY-MAP.md` was the discovery pass before it.)* Nine
+build items, one commit each.
+
+**Two records, not one.** An income **entry** is a dated event — this
+paycheque, this invoice paid, this gift — in `household.ledger.income[]`:
+kind (w2, se, bonus, gift, side, dividend, rental, other), amount,
+frequency (once, weekly, fortnightly, monthly, annual), received-on,
+taxable and the tax method (w2 withholding, se on the net of costs, none),
+and for se / side / rental the costs of producing it on the entry itself
+(mileage, home office, equipment, contractor fees, licensing, platform
+fees). An income **source** stays what it was: Start Here's annualised
+description of a job, the figure every ratio reads. The two coexist on
+purpose — retrofitting every reader onto dated events would have been the
+rewrite SPEC.md §3 warns against — and the Tax room reads the ledger's
+year by method when entries recur, its sources otherwise
+(`engines/taxroom.js splitIncome`).
+
+**One tax engine for entries.** `engines/ledger.js netOf`: a gift nets
+nothing; W-2 pay is withheld at the year's blended effective rate (Tier
+0's lookup, read at the household's annual gross); 1099, side and rental
+income pay self-employment tax on the profit net of costs through
+`engines/selfemployed.js` — W-2 wages counted against the wage base — plus
+income tax at the rate less the FICA share, the arithmetic
+`quarterlyEstimated` already does. The same $2,000 nets three different
+ways and the suite checks each by hand. Rental is netted as
+self-employment because the spec asked; the room says a return treats it
+differently. `occurrences` lands a recurring entry from the month it was
+first received, never before; `month` nets every active landing.
+
+**The expense log lives in Cash Flow.** One store, one owner (D-017): a
+logged occurrence is an `expenses.entries[]` row with `source: 'log'`, a
+date, a category in one of nine groups (`group` on every category in
+`data/expense_categories.json` 1.2, plus savings, investments and
+income_costs), optionally the income entry it produced
+(`linkedIncomeId`) and a deduction. **The hard rule is in the
+constructor**: `deductible` is stored true only when `linkedIncomeId` is
+set, and every spine write goes back through the constructor, so a
+personal expense can never reduce taxable income whatever a form sends.
+The typical-month lines and every ratio ignore the log; the budget reads
+it as actuals (`CashFlow.logInMonth`).
+
+**The budget is a reflection.** `engines/budget.js`: Estimated per bucket
+is a hand-set figure for the month, else the last closed month's actual,
+else what Start Here and Cash Flow already hold (take-home; the lines by
+group; the workplace contribution; the debt minimums) — the one-pager is
+the onboarding. Actual is the ledger's income netted of tax and the log by
+bucket; the cost of earning an income entry sits under income and in
+neither bucket. `rooms/budget.html` has no input, select or textarea; Add
+carries the month and a way back (`?for=budget&month=…`) to Income or the
+log with the bucket's category picked, and the return lands on the row
+that changed, lit once. **Close** freezes both columns into a
+`MonthRecord` in `household.ledger.months[]` (`Spine.closeMonth`, refused
+a second time, append-only, sorted); an entry logged into a closed month
+afterwards moves only `actualRevised` (`Budget.syncRevised`), never the
+record. The record lives in the household, not the snapshot store, so it
+exports, merges and undoes with everything else.
+
+**Estimated vs Actual** (`rooms/variance.html`, `engines/variance.js`)
+reads records only: one month with the miss that hurts marked, the trend
+across closed months, per bucket the average miss and whether it is off
+the same way every month. Its one write is a button — the last three
+months' average as the next open month's estimate through
+`Spine.setBudgetEstimate` — and nothing moves until it is tapped.
+
+**Hide and set aside** (`shared/manage.js`): hidden is cosmetic and still
+counts; set aside (`active: false`) stops counting from now on and leaves
+closed months as they were. After a one-time entry's month closes, a
+dismissible prompt asks whether it was a one-off (`ledger.dismissed`
+remembers a no). **Where it flows**: `Charts.sankey`, drawn in Cash Flow
+from the live entries on every render, never a saved dataset. **Variable
+Income** reads the ledger's 1099, side and bonus entries as a filtered
+view with a rolling three-, six- or twelve-month average
+(`variableIncome.windowMonths`); when they exist the observed low, high
+and average stand in for the typed ones; it adds no income.
+
+**Rooms and the path.** Income (`income`), Budget (`budget`) and
+Estimated vs Actual (`variance`) are registered after Cash Flow as
+about-you / read rooms so the four-room core (D-051) stays four.
+`monthsClosed` is not applicable until a month exists, so no path waits
+on it.
+
+**The end-to-end check the spec set** — a W-2 paycheque and a 1099 gig
+with $200 of mileage in one month; the budget's income actual as the
+combined net-of-tax figure; a personal expense and one linked to the gig
+with only the linked one moving the tax base; the month closed once,
+locked, and read in Estimated vs Actual; the gig set aside with next
+month no longer expecting it and the closed month keeping it in full —
+runs through the pages on a phone browser and passes with no console
+error.
+
+### Compatibility note
+
+Stored shape: `household.ledger` (`income[]`, `months[]`, `dismissed[]`)
+and `household.budget.estimated` are new branches, empty by default;
+`expenses.entries[]` rows gain `linkedIncomeId` (null), `deductible`
+(false), `hidden` (false), `active` (true), and `source` admits `'log'`;
+`household.variableIncome` gains `windowMonths` (null). A household saved
+before this reads through the constructors with the defaults; nothing
+migrates. Rooms updated: `rooms/cash-flow.html` (the log, the flow,
+Manage), `rooms/variable-income.html`, `rooms/tax.html` (loads the
+ledger). New: `rooms/income.html`, `rooms/budget.html`,
+`rooms/variance.html`. A future room reading `expenses.entries` must skip
+`source === 'log'` unless it wants occurrences, and skip
+`active === false` always — or call `CashFlow.summarise` /
+`CashFlow.logInMonth`, which do.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

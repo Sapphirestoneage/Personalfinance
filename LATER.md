@@ -45,12 +45,13 @@ frozen template (D-097); the stash is superseded and dropped.
 And the brief's own last step, **History** — every snapshot and what
 moved between them. `rooms/history.html`, D-122.
 
-## Waiting on the Money Map (not built)
+## From the Money Map — built (D-128)
 
-- **A date on every expenditure and incoming amount**, with estimated and
-  potential dates, and an **incoming-money list** — asked for alongside the
-  Cash Flow rework. Specified in `MONEY-MAP.md` (Task 3, and open questions
-  1, 5 and 13) rather than built, because it is the Income and Expenses
-  data model that map exists to settle; building it first would have
-  designed it twice. Cash Flow's rework (D-126) and the calendar grid
-  (D-127) change nothing in the stored shape so that either answer fits.
+- **A date on every expenditure and incoming amount** and an
+  **incoming-money list** — the expense log in Cash Flow and the Income
+  room's entries. D-128.
+- Still open from `MONEY-MAP.md`: estimated / potential dates on a line
+  (`dateKind`), one-offs and the calendar's bills retired into log entries
+  (Q5), the calendar grid drawn from the log, entries moving balances
+  (Q8), a trailing-average "monthly expenses" once months close (Q10),
+  one rent field (Q11).

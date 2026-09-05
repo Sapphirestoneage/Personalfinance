@@ -1,5 +1,10 @@
 # Money Map & Impact Analysis — Income / Expenses / Budget / Month-End Close
 
+*Superseded in part by the build spec that followed it — see `DECISIONS.md`
+D-128 for what shipped and where it differs (the costs sub-table lives on
+the income entry AND linked expense rows exist; the closed month lives in
+the household; Cash Flow is the Expenses section).*
+
 *A discovery pass, not a build pass. Nothing in this document is built, scaffolded
 or registered. It maps the ask — an Income section, an Expenses section, a
 reflected Budget with a month-end close, and an Estimated-vs-Actual room — onto

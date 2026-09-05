@@ -70,7 +70,7 @@ typing in it.
 index.html          The front door: the Dashboard once it has what it needs, the intake landing until then (D-058)
 foo-ladder.js       The FOO ladder's logic (shell at rooms/foo-ladder.html): build() once, paint() on every change
 map.html            Room directory: next-unfinished first, then the groups, tag filter
-MONEY-MAP.md        Discovery map for the Income / Expenses / Budget / month-end close ask — not built, awaiting answers
+MONEY-MAP.md        The discovery map that preceded the ledger build (D-128); where it and the build spec differ, D-128 is what shipped
 favicon.svg         Sapphire mark
 rooms/              One HTML file per room
 vendor/fonts/       Self-hosted typefaces (no CDN, no other vendored code)
@@ -95,6 +95,7 @@ shared/             The spine everything depends on
   ownership.js        one owner per shared number, and the chips that link to it
   explain.js          the ⓘ on a ratio: what, why, what moves it, and links to what it reads (D-123)
   importer.js         a pasted statement sorted into debts, assets, expenses and pay; a file merged (D-125)
+  manage.js           hide, set aside, restore: the sources panel Income and the expense log share (D-128)
 engines/            Shared calculation engines — one function per concept
   tier0.js            the nine Tier 0 outputs
   foo.js              Financial Order of Operations ladder + flags
@@ -128,6 +129,9 @@ engines/            Shared calculation engines — one function per concept
   vpw.js              variable percentage withdrawal, year by year to the plan age
   ss.js               a Social Security estimate from the income entered, bend points and claim age
   advice.js           the Advice Translator: a piece of advice restated for this household (D-096)
+  ledger.js           the tax engine for dated income entries, and the month they add up to (D-128)
+  budget.js           the reflected budget: estimated beside actual, the month closed (D-128)
+  variance.js         closed months read back: one month, the trend, the pattern (D-128)
   betweenjobs.js, protection.js, decumulation.js, taxroom.js, estate.js, giving.js,
   careermove.js, partner.js, kids.js, housing.js, purchase.js, variableincome.js,
   enough.js, week.js, buckets.js, dreamline.js, reversibility.js, unlearning.js,
