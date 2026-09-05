@@ -162,6 +162,10 @@
   ul.heat .v.is-good { color: var(--color-positive); }
   ul.heat .v.is-out { color: var(--color-critical); }
   ul.heat .meta { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-muted); }
+  ul.heat .xp, ol.legend .xp { grid-column: 1 / -1; }
+  ul.heat .xp:empty, ol.legend .xp:empty { display: none; }
+  a.rname { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--color-border-strong); }
+  a.rname:hover { color: var(--color-accent-hover); }
 
   ul.goals { list-style: none; margin: var(--space-4) 0 0; padding: 0; }
   ul.goals li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
@@ -407,6 +411,7 @@
 <script src="engines/runway.js"></script>
 <script src="engines/betweenjobs.js"></script>
 <script src="shared/charts.js"></script>
+<script src="shared/explain.js"></script>
 <script src="shared/gate.js"></script>
 <script src="shared/lens.js"></script>
 <script src="engines/advice.js"></script>
@@ -414,7 +419,7 @@
 <script>
 (function () {
   'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Explain = SLAF.Explain,
       Reference = SLAF.Reference, Ownership = SLAF.Ownership,
       Tier0 = SLAF.Tier0, Foo = SLAF.Foo, Ratios = SLAF.Ratios, Goals = SLAF.Goals,
       Staleness = SLAF.Staleness, Instruments = SLAF.Instruments,
@@ -499,11 +504,30 @@
 
     el('radar').innerHTML = parts.join('');
 
+    /* Each spoke: the name links to its row in Every Ratio, and the ⓘ opens
+       what it is, why it matters, what moves it, and the numbers it reads,
+       each linked to the room that owns it. shared/explain.js. */
+    var h = Spine.getProfile();
     el('radar-legend').innerHTML = pts.map(function (p, i) {
+      var row = p.row;
       return '<li><span class="n">' + (i + 1) + '</span>'
-        + '<span>' + esc(p.label) + '</span>'
-        + '<span class="v is-' + p.zone + '">' + esc(showRatio(p)) + '</span></li>';
+        + '<span><a class="rname" href="' + Ownership.linkTo('ratios', 'r-' + p.id) + '">' + esc(p.label) + '</a>' + Explain.button(p.id) + '</span>'
+        + '<span class="v is-' + p.zone + '">' + esc(showRatio(p)) + '</span>'
+        + (row ? '<span class="xp">' + Explain.panel(row, h, 'dashboard', { band: bandWords(row) }) + '</span>' : '')
+        + '</li>';
     }).join('');
+    Explain.bind(el('radar-legend'));
+  }
+
+  /* The band in the figure's own unit, for the ⓘ. */
+  function bandWords(row) {
+    var b = row.verdict && row.verdict.band;
+    if (!b || b.good === null) return b && b.note ? b.note : '';
+    function u(v) {
+      return row.unit === 'rate' ? Money.formatRate(v, { decimals: 0 })
+        : row.unit === 'months' ? v + ' months' : row.unit === 'multiple' ? v + 'x' : String(v);
+    }
+    return (b.direction === 'lower' ? 'Comfortable at or below ' : 'Comfortable at or above ') + u(b.good) + '. ' + (b.note || '');
   }
 
   /* ---- The six instruments -------------------------------------------------
@@ -1040,6 +1064,7 @@
 
     /* radar */
     var r = Ratios.radar(h, TABLES, { snapshots: Spine.listSnapshots() });
+    if (Money.isOk(r)) r.points.forEach(function (p) { p.row = all.rows.filter(function (x) { return x.id === p.id; })[0] || null; });
     el('radar-body').hidden = !Money.isOk(r);
     if (Money.isOk(r)) {
       renderRadar(r);
@@ -1175,7 +1200,7 @@
   var WEATHER = [
     ['realEstateConcentration', 'How much of your net worth is one building.'],
     ['liquidToIlliquid', 'How much you could reach quickly against how much you could not.'],
-    ['investmentToNetWorth', 'How much of what you own is actually invested.'],
+    ['investedShare', 'How much of what you own is actually invested.'],
     ['cashDrag', 'How much is sitting in cash beyond what a cushion needs.'],
     ['incomeConcentration', 'How much of the household\u2019s income is one paycheque.'],
     ['worstPlausibleYearCoverage', 'How much of everything going wrong at once the cash would carry.']
@@ -1187,14 +1212,17 @@
       return row ? { row: row, blurb: spec[1] } : null;
     }).filter(Boolean);
 
+    var h = Spine.getProfile();
     el('weather-list').innerHTML = rows.map(function (r) {
       var zone = r.row.verdict.zone;
       var cls = zone === 'good' ? ' is-good' : zone === 'out' ? ' is-out' : '';
-      return '<li><span class="nm">' + esc(r.row.label) + '</span>'
+      return '<li><span class="nm"><a class="rname" href="' + Ownership.linkTo('ratios', 'r-' + r.row.id) + '">' + esc(r.row.label) + '</a>' + Explain.button(r.row.id) + '</span>'
         + '<span class="v' + cls + '">' + showRatio(r.row) + '</span>'
         + '<span class="meta">' + esc(r.blurb)
-        + (r.row.ok ? '' : ' · ' + esc(r.row.result.reason)) + '</span></li>';
+        + (r.row.ok ? '' : ' · ' + esc(r.row.result.reason)) + '</span>'
+        + '<span class="xp">' + Explain.panel(r.row, h, 'dashboard', { band: bandWords(r.row) }) + '</span></li>';
     }).join('');
+    Explain.bind(el('weather-list'));
 
     el('weather-blind').innerHTML = '<strong>Two risks this panel deliberately '
       + 'leaves blank, and one it prices piece by piece.</strong> Sequence-of-returns risk needs a return distribution to '

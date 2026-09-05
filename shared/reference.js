@@ -41,6 +41,7 @@
     values: 'values.json',
     hassleDefaults: 'hassle_defaults.json',
     ratioBenchmarks: 'ratio_benchmarks.json',
+    ratioExplainers: 'ratio_explainers.json',
     healthScore: 'health_score.json',
     staleness: 'staleness.json',
     states: 'states.json',

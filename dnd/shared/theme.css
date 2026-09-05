@@ -669,3 +669,16 @@ details.room-drawer summary small { display: block; font-family: var(--font-body
 .slaf-chart.is-animated .track > i, .slaf-chart.is-animated .track.is-stack > i { transform-origin: left; animation: slaf-grow .7s cubic-bezier(.2,.8,.2,1) both; }
 .slaf-chart.is-animated svg path, .slaf-chart.is-animated svg circle, .slaf-chart.is-animated svg polygon, .slaf-chart.is-animated svg rect:not(.panel) { animation: slaf-rise .6s ease-out both; }
 @media (prefers-reduced-motion: reduce) { .slaf-chart.is-animated * { animation: none !important; } }
+
+/* ---- The ⓘ on a ratio (shared/explain.js) --------------------------------- */
+.slaf-info { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-muted); font: italic 700 12px/1 var(--font-display); cursor: pointer; margin-left: var(--space-2); vertical-align: middle; flex: 0 0 auto; padding: 0; }
+.slaf-info:hover, .slaf-info.is-open { border-color: var(--color-accent); color: var(--color-accent-hover); }
+.slaf-explain { margin: var(--space-2) 0 0; padding: var(--space-3); border: 1px solid var(--color-border); border-left: 3px solid var(--color-accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: rgba(46,111,232,.06); font-size: var(--text-sm); color: var(--color-text); text-align: left; }
+.slaf-explain-row { display: grid; grid-template-columns: 92px 1fr; gap: var(--space-2) var(--space-3); padding: var(--space-1) 0; align-items: baseline; }
+.slaf-explain-k { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
+.slaf-explain-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.slaf-explain-chip { display: inline-block; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 2px var(--space-2); font-size: var(--text-xs); color: var(--color-text); text-decoration: none; }
+a.slaf-explain-chip:hover { border-color: var(--color-accent); }
+.slaf-explain-chip.is-empty { color: var(--color-text-faint); border-style: dashed; }
+.slaf-explain-chip small { color: var(--color-accent-hover); }
+@media (max-width: 420px) { .slaf-explain-row { grid-template-columns: 1fr; gap: 2px; } }

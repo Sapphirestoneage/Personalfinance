@@ -337,10 +337,15 @@
         return over(c.autoPayment, c.monthlyGross, { denominatorName: 'grossAnnualIncome' });
       } },
 
-    { id: 'investmentToNetWorth', label: 'Investment to net worth', tier: 18,
-      formula: 'investments ÷ net worth',
-      unit: 'rate', needs: 'your investments and your net worth',
-      compute: function (c) { return over(c.investments, c.netWorth, { denominatorName: 'netWorth' }); } },
+    /* Investments over EVERYTHING owned, not over net worth: divided by net
+       worth the figure read 195% for a household with $70k invested and
+       $41k of debt, which is arithmetic nobody can act on. Over assets it
+       is a share, it cannot pass 100%, and it means what the label says. */
+    { id: 'investedShare', label: 'Invested share of what you own', tier: 18,
+      formula: 'investments ÷ total assets',
+      unit: 'rate', needs: 'your investments and your assets',
+      note: 'How much of what you own is working. Right for a renter, different for someone whose wealth is a paid-off house.',
+      compute: function (c) { return over(c.investments, c.totalAssets, { denominatorName: 'totalAssets' }); } },
 
     { id: 'fiRatio', label: 'FI ratio', tier: 18,
       formula: '(investments × safe withdrawal rate) ÷ annual expenses',
@@ -776,12 +781,16 @@
   function all(household, tables, opts) {
     var c = context(household, tables, opts);
     var bands = tables && tables.ratioBenchmarks;
+    var explainers = tables && tables.ratioExplainers;
     var rows = RATIOS.map(function (r) {
       var result = r.compute(c);
       var v = Money.isOk(result) ? result.value : null;
       return {
         id: r.id, label: r.label, tier: r.tier, formula: r.formula,
         unit: r.unit, note: r.note || null, needs: r.needs,
+        /* What it is, why it matters, what moves it, and which owned
+           fields it reads — data/ratio_explainers.json, when loaded. */
+        explain: (explainers && explainers.ratios && explainers.ratios[r.id]) || null,
         result: result,
         value: v,
         ok: Money.isOk(result),

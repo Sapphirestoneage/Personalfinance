@@ -78,6 +78,7 @@ const TABLES = {
   values: require(path.join(ROOT, 'data/values.json')),
   hassleDefaults: require(path.join(ROOT, 'data/hassle_defaults.json')),
   ratioBenchmarks: require(path.join(ROOT, 'data/ratio_benchmarks.json')),
+  ratioExplainers: require(path.join(ROOT, 'data/ratio_explainers.json')),
   irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json')),
   accessRules: require(path.join(ROOT, 'data/access_rules.json')),
   confidenceWeights: require(path.join(ROOT, 'data/confidence_weights.json')),
@@ -2798,6 +2799,30 @@ section('Ratios');
       const b = TABLES.ratioBenchmarks.bands[id];
       return (b.good === null) === (b.warn === null);
     }));
+
+  /* -- Every ratio explains itself: what, why, what moves it, and which
+        owned fields it reads, each of which must resolve. The dashboard and
+        Every Ratio put this behind the ⓘ on the row (shared/explain.js). */
+  const EX = TABLES.ratioExplainers.ratios;
+  RatiosEngine.RATIOS.forEach(r => {
+    const e = EX[r.id];
+    checkTrue(`"${r.id}" has an explainer`, !!e);
+    if (!e) return;
+    ['what', 'why', 'improve'].forEach(k => checkTrue(`"${r.id}" explains ${k}`, typeof e[k] === 'string' && e[k].length > 20));
+    checkTrue(`"${r.id}" names what it looks at`, Array.isArray(e.looksAt) && e.looksAt.length > 0);
+    (e.looksAt || []).forEach(f => checkTrue(`"${r.id}" looks at a field ownership knows: ${f}`, !!Ownership.FIELDS[f]));
+  });
+  Object.keys(EX).forEach(id => checkTrue(`explainer "${id}" names a ratio that exists`, !!RatiosEngine.byId(id)));
+  const explained = RatiosEngine.all(Demo.build(), TABLES).rows;
+  checkTrue('Ratios.all attaches the explainer to each row', explained.every(r => r.explain && r.explain.what));
+  const invested = explained.find(r => r.id === 'investedShare');
+  checkTrue('invested share is over total assets, so it cannot pass 100%', invested.ok && invested.value <= 1);
+  check('and the old net-worth denominator is gone', RatiosEngine.byId('investmentToNetWorth'), null);
+  ['index.html', 'rooms/ratios.html'].forEach(f => {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    checkTrue(`${f} loads shared/explain.js`, /shared\/explain\.js/.test(src));
+    checkTrue(`${f} puts the ⓘ on its ratio rows`, /Explain\.button\(/.test(src) && /Explain\.panel\(/.test(src));
+  });
 
   /* -- Reading mutates nothing -------------------------------------------- */
   const before = JSON.stringify(h);
@@ -6416,7 +6441,7 @@ section('The ratios T3 unlocked');
 
   check('every new band is in the table', ['incomeConcentration', 'shadowRunway', 'worstPlausibleYearCoverage', 'lifestyleInflation', 'fiDate']
     .every(id => TABLES.ratioBenchmarks.bands[id]), true);
-  check('the bands table moved to 1.3 (withdrawal rate, D-096)', TABLES.ratioBenchmarks.version, '1.3');
+  checkTrue('the bands table moved past 1.3 (withdrawal rate, D-096; invested share, D-123)', parseFloat(TABLES.ratioBenchmarks.version) >= 1.3);
 })();
 
 section('Fixed lines, the floor, and cuttability');

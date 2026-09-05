@@ -99,7 +99,7 @@
       "label": "How it's held",
       "blurb": "Whether the money you have is working or sitting.",
       "ratios": [
-        "investmentToNetWorth",
+        "investedShare",
         "cashDrag",
         "liquidToIlliquid",
         "solvencyRatio"
