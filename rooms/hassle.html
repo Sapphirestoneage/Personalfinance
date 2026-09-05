@@ -450,7 +450,7 @@
     var wage = SLAF.Hourly.realHourlyWage(h, TABLES);
     el('reading-list').innerHTML =
       '<a class="slaf-owned' + (Money.isOk(wage) ? '' : ' slaf-owned--empty') + '" href="'
-      + Ownership.linkTo('real-hourly-wage', 'out-rate') + '">'
+      + Ownership.linkTo('real-hourly-wage', 'number') + '">'
       + '<span class="slaf-owned-label">Real hourly wage</span>'
       + '<span class="slaf-owned-value">'
       + (Money.isOk(wage) ? perHour(wage.value) : Money.EM_DASH) + '</span>'

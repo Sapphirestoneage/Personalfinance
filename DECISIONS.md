@@ -5216,6 +5216,100 @@ opens the room it came from.
 
 ---
 
+## D-097 — One shape for every room, proven on Real Hourly Wage and frozen
+
+*(The brief's step 4: "Room template (number, one chart animated, lens
+toggle, 2–5 inputs written to spine, assumptions drawer with sources,
+'Why this matters at your stage', out-of-scope line → Get Help;
+shareable deep links; render standalone with defaults) proven on Real
+Hourly Wage then frozen.")* `shared/room.js` is that shape. A room's
+page holds the skeleton — the ids `number`, `chart`, `inputs`,
+`amounts`, `assumptions`, `reading` as deep links, and the hosts
+`room-number`, `room-chart`, `room-inputs`, `room-lens`,
+`room-amounts`, `room-assumptions`, `room-why`, `room-scope`,
+`reading-list`, `room-standalone` — and calls `Room.mount(spec)` with:
+`number(h, T)` for the headline (value, label, sub, zone); `chart(h, T)`
+returning one `Charts.*` call; `inputs` (two to five; the module throws
+on fewer or more) and `more` (folded) each with a `read(h)` and a
+`write(raw)`; `amounts(h, T)` for the rows the lens reads; `assumptions(h,
+T)` for the drawer, each with a source; `why(h, T, situation)`; and
+`scope`, one line, to which the template appends the Get Help link.
+The template builds the inputs once, paints values never under focus,
+proposes a room's own guesses through Suggest where the spec gives a
+`propose`, names every write as one undo entry ("Paid hours a week →
+40"), re-draws the chart only when its HTML changes (typing in a box
+never re-animates it), wires the lens, the hash (a deep link into a
+folded drawer opens it), the progress strip and the reference tables.
+
+**Standalone with defaults.** A room opened by deep link with an empty
+spine renders anyway: `Gate.fillGuesses(h, T)` returns a copy of the
+household with the intake's guesses standing in for whatever the room's
+registry `needs` are missing — a person, employed, at the median pay;
+spending at 55% of gross; a month of cash; the milestone's investments;
+the common deductible; single; no debt — and lists what it filled in
+`meta.standalone`. The room renders from the copy, the spine is not
+written, and a banner says "shown with guesses for …" with the link to
+Start Here. A retiree with income keeps it; between jobs no pay is
+invented. The demo needs nothing filled.
+
+**Animated.** One CSS rule in `shared/theme.css`: bars grow from the
+left, areas and rings rise in, on the `is-animated` class the template
+adds when the chart changes; `prefers-reduced-motion` turns it off.
+
+**Real Hourly Wage on the template.** The number is the real rate an
+hour, with the headline rate, the share kept, and the year's kept
+dollars over the year's hours under it — and the two easy-to-misread
+results (a job that costs more than it pays, a handful of paid hours)
+said in the sub-line. The chart is one stacked pair: the week as paid
+and unpaid hours, and the year of pay as kept, tax and the costs of
+working, on the same hours scale. Five inputs — paid hours, unpaid
+overtime, commuting, the monthly costs of working, weeks a year — and
+two folded, getting ready and decompressing; all write `person.work`
+as before. The amounts under the lens: a month of spending, the year's
+tax, the year's costs of working, and a $1,200 thing. The assumptions
+drawer names the tax table, its version and confidence, the 48-week
+default, the Your-Money-or-Your-Life convention that unpaid hours count,
+and the real return the lens uses. "Why this matters" is written for
+each situation the room exists for. The old sections (`out-rate`,
+`out-hours`, `out-price`) are gone; Worth the Hassle, Retroactive Worth
+and the translator now link to `number` and `amounts`.
+
+**Get Help.** `rooms/get-help.html`, where every scope line points:
+what the rooms do not do (returns, picks, quotes, legal documents, debt
+in crisis, bank links) and what kind of person does — a fee-only
+fiduciary planner, an enrolled agent or CPA, a non-profit credit
+counsellor, an estate lawyer, the state's unemployment office — with a
+line per situation. Kinds of help, never a name or a link; registered as
+an optional room owning nothing, before Refresh on the path (Refresh
+moves to order 30 to stay last).
+
+**Frozen.** From here every room built for the brief — the tranches, and
+the ones in `LATER.md` — uses `Room.mount` unchanged. A room that needs
+something the template does not have adds it to the template, in one
+place, with a decision entry; it does not grow a shape of its own.
+
+**Compatibility note.** `Registry` gains `get-help` (order 29) and
+Refresh is order 30. Real Hourly Wage's subsections are the template's
+six ids; `out-rate`, `out-hours`, `out-price` no longer exist. The
+registry test accepts `Room.mount(` in place of a literal
+`registerRoom(` call. `Gate.fillGuesses` is new and pure. `person.work`
+is unchanged.
+
+**Verified.** `node test/run.js`: `fillGuesses` by hand (the median pay,
+55% spending, a month of cash, the list of what was filled, the source
+untouched, a retiree's income kept, no pay between jobs); the shape's
+ids on the page, five inputs and two folded, the old anchors gone and
+nobody linking to them; Get Help's kind, order and the absence of any
+firm or link. `test/forms.js`: typing paid hours and monthly costs on
+a phone lands in `person.work` with a labelled undo entry. By hand on a
+phone: the room empty (guesses banner, number after typing 40 paid
+hours: $26.16/h on $62,000 at 19% tax), on the demo ($21.04/h, you keep
+56%), the hours lens (a $1,200 thing is 57 hours), a cost typed and the
+number moving, the drawer opening from a deep link, Get Help's stage
+line. No console errors.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

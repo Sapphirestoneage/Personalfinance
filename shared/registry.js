@@ -196,12 +196,15 @@
       href: 'rooms/real-hourly-wage.html',
       tier: 1,
       tags: ['income'],
+      /* The template room (D-097): the same six ids every room on the
+         template has, so a deep link means the same thing everywhere. */
       subsections: [
-        { id: 'reading',   label: 'What this reads' },
-        { id: 'out-rate',  label: 'Your real rate' },
-        { id: 'hours',     label: 'The hours it takes' },
-        { id: 'out-hours', label: 'Paid vs. given' },
-        { id: 'out-price', label: 'Priced in life' }
+        { id: 'number',      label: 'Your real rate' },
+        { id: 'chart',       label: 'Where the week goes' },
+        { id: 'inputs',      label: 'The hours it takes' },
+        { id: 'amounts',     label: 'Priced in life' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
       ]
     },
     {
@@ -589,7 +592,7 @@
     kind: 'core',
     utility: true,
     needs: ['cashSavings', 'investments', 'totalDebt'],
-    order: 29,
+    order: 30,
     title: 'Refresh',
     blurb: 'The three figures that move — cash, investments, what you owe — re-checked in under a minute, and a snapshot taken so the dashboard can say what changed.',
     href: 'rooms/refresh.html',
@@ -598,6 +601,26 @@
     subsections: [
       { id: 'fields', label: 'The three that move' },
       { id: 'done',   label: 'Snapshot' }
+    ]
+  });
+
+  /* Where every room's out-of-scope line points (D-097). Reads the gate for
+     a line per stage; owns nothing; optional by definition. */
+  ROOMS.push({
+    id: 'get-help',
+    kind: 'explore',
+    utility: true,
+    needs: [],
+    order: 29,
+    title: 'Get Help',
+    blurb: 'What these rooms deliberately do not do, and what kind of person answers those questions. Kinds of help, never a name.',
+    href: 'rooms/get-help.html',
+    tier: 0,
+    tags: ['income', 'cashflow', 'debt'],
+    subsections: [
+      { id: 'not-here', label: 'What these rooms do not do' },
+      { id: 'who',      label: 'Who answers them' },
+      { id: 'stage',    label: 'At your stage' }
     ]
   });
 

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Get Help · SPARKS</title>
+<meta name="description" content="What these rooms deliberately do not do, and what kind of help to look for when a question is one of those."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. THE OUT-OF-SCOPE LANDING. DECISIONS.md D-097.
+
+  1. READS   your situation (the gate), to say which kinds of help usually
+             matter at your stage. Nothing else.
+  2. WRITES  nothing.
+  3. SHOWS   what every room's out-of-scope line points at: the questions
+             this app does not answer, and what kind of person answers
+             them. No names, no links to any firm, no referrals.
+  4. EMPTY   renders the same with an empty spine; the stage line is
+             absent until a situation is chosen.
+  5. CONFIG  none.
+
+  LIVE-FORM: built once. There are no inputs on this page.
+  THEMING: none this pass; a theme is a class on <body>.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+  ul.kinds { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ul.kinds li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  ul.kinds li:first-child { border-top: none; }
+  ul.kinds b { display: block; font-family: var(--font-display); font-size: var(--text-md); }
+  ul.kinds p { margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../index.html">← Home</a>
+  <h1>Get Help</h1>
+  <p class="room-lede">Every room has a line saying what it does not do. This is where those lines point: the questions that need a person, and what kind.</p>
+</header>
+
+<main class="slaf-wrap">
+  <section class="slaf-card" id="not-here">
+    <span class="slaf-eyebrow">What these rooms do not do</span>
+    <ul class="kinds">
+      <li><b>Tax returns and filings</b><p>Every tax figure here is an estimate from a flat effective-rate table. Nothing here files anything, handles state quirks, or knows your deductions.</p></li>
+      <li><b>Investment picks</b><p>The rooms model returns as one assumed rate. Which fund, which account, which day — not here.</p></li>
+      <li><b>Insurance quotes and claims</b><p>The Coverage Checkup reads what you hold against what it would have to carry; it cannot price a policy or judge a claim.</p></li>
+      <li><b>Legal documents</b><p>Estate Basics asks whether a will, beneficiaries and a power of attorney exist. Writing them is a lawyer's work, or a service that is one.</p></li>
+      <li><b>Debt in crisis</b><p>The payoff room orders what you owe. Collections, bankruptcy, a hardship plan — those need someone who does it every day.</p></li>
+      <li><b>Bank connections</b><p>Nothing here links to an account. Every number is typed, pasted, or guessed and marked as one.</p></li>
+    </ul>
+  </section>
+
+  <section class="slaf-card" id="who" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Who answers them</span>
+    <ul class="kinds">
+      <li><b>A fee-only fiduciary planner</b><p>Paid by you, not by what they sell, and bound to act in your interest. Ask both questions before anything else. One-off, hourly and flat-fee engagements exist.</p></li>
+      <li><b>An enrolled agent or a CPA</b><p>For the return, a notice, self-employment estimates, or a year with a sale, a move, or an inheritance in it.</p></li>
+      <li><b>A non-profit credit counsellor</b><p>For debt that has stopped being a spreadsheet problem. Look for non-profit status and a fee schedule up front.</p></li>
+      <li><b>An estate lawyer</b><p>For the will, the trust, the power of attorney, and who gets what — especially with children, property or a business.</p></li>
+      <li><b>Your state's unemployment office</b><p>For the benefit itself: eligibility, the weekly amount, the weeks. The Between Jobs room reads a cap; the office decides.</p></li>
+    </ul>
+  </section>
+
+  <section class="slaf-card" id="stage" style="margin-top:var(--space-4)" hidden>
+    <span class="slaf-eyebrow">At your stage</span>
+    <p class="slaf-hint" id="stage-say" style="margin-top:var(--space-2)"></p>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. This page names kinds of help, never
+    a firm or a person. Nothing here is a referral.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../shared/gate.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Spine = SLAF.Spine, Gate = SLAF.Gate;
+  var STAGE = {
+    employed: 'The usual first professional is a tax preparer in a year something changes — a move, a house, equity pay. A planner earns their fee once there is a decision with more than one right answer.',
+    selfEmployed: 'An enrolled agent or CPA pays for themselves on the quarterlies alone. A planner comes later; a bookkeeper may come sooner.',
+    betweenJobs: 'The unemployment office first, for the benefit. A non-profit credit counsellor if the runway is shorter than the search. Nobody is paid for advice out of a runway.',
+    student: 'The financial aid office, for the loans and what they cost. Almost nothing else at this stage needs a paid professional.',
+    retired: 'A fee-only planner for the drawdown and Social Security timing, an estate lawyer for the documents, and a tax preparer for the year the withdrawals start.',
+    mixed: 'A tax preparer who knows self-employment, for the two kinds of income on one return. The rest as for anyone employed.'
+  };
+  function render() {
+    var s = Gate.situationOf(Spine.getProfile());
+    var box = document.getElementById('stage');
+    box.hidden = !s;
+    if (s) document.getElementById('stage-say').textContent = STAGE[s] || '';
+  }
+  Spine.registerRoom('get-help');
+  SLAF.Progress.mount('get-help');
+  Spine.onChange(render);
+  render();
+})();
+</script>
+</body>
+</html>

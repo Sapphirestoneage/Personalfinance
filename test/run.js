@@ -6069,7 +6069,7 @@ Registry.all().forEach(function (room) {
   checkTrue(`${room.id} carries at least one filter tag`,
     room.tags.some(t => Registry.FILTER_TAGS.includes(t)));
   checkTrue(`${room.id} registers itself with the spine`,
-    html.includes('registerRoom'), 'no registerRoom() call found');
+    html.includes('registerRoom') || html.includes('Room.mount('), 'no registerRoom() call found (the template does it for a Room.mount room)');
   checkTrue(`${room.id} uses the shared stylesheet, not its own hex values`,
     html.includes('theme.css'));
 });
@@ -8039,6 +8039,60 @@ section('The dashboard (D-096): four blocks, the leads, the translator');
   checkTrue('the lens toggle re-renders in place, no page load', /Lens\.setMode\(b\.getAttribute\('data-lens'\)\);\s*renderNow\(\);/.test(page));
   checkTrue('a theme has a place', /THEMING:/.test(page));
   check('the dashboard\'s registry blurb says what it is', /Home\./.test(Registry.byId('dashboard').blurb), true);
+})();
+
+section('The room template (D-097): one shape, proven on Real Hourly Wage');
+
+(function () {
+  const Gate = require(path.join(ROOT, 'shared/gate.js'));
+  const Room = require(path.join(ROOT, 'shared/room.js'));
+  const T = Object.assign({}, TABLES, { onepagerDefaults: require(path.join(ROOT, 'data/onepager_defaults.json')), uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')), matchDefaults: require(path.join(ROOT, 'data/match_defaults.json')) });
+
+  /* Standalone: an empty spine renders with the intake's guesses, and says
+     which. The spine is untouched. */
+  const empty = Schema.createHousehold({});
+  const filled = Gate.fillGuesses(empty, T);
+  check('an empty household gets a person', filled.people.length, 1);
+  check('… employed, the default situation', Gate.situationOf(filled), 'employed');
+  check('… the median pay', Schema.grossAnnualIncomeCents(filled).value, 6200000);
+  check('… spending at 55% of gross a month', Schema.monthlyExpensesCents(filled).value, Math.round(6200000 / 12 * 0.55));
+  check('… a month of cash', Schema.cashCents(filled).value, Schema.monthlyExpensesCents(filled).value);
+  checkTrue('… investments from the milestone or the fallback', Schema.investmentsCents(filled).value > 0);
+  check('… and says what it filled', filled.meta.standalone.join(','), 'employmentStatus,grossAnnualIncome,monthlyExpenses,cashSavings,investments,highestDeductible,filingStatus,hasDebt');
+  check('the source household is untouched', empty.people.length + (empty.assets || []).length, 0);
+  const half = Schema.createHousehold({ people: [Schema.createPerson({ role: 'adult', employmentStatus: 'retired', incomeSources: [Schema.createIncomeSource({ grossAnnualIncomeCents: 2400000 })] })] });
+  const halfFilled = Gate.fillGuesses(half, T);
+  check('a retiree with income keeps it', Schema.grossAnnualIncomeCents(halfFilled).value, 2400000);
+  checkTrue('… and only what was missing is guessed', halfFilled.meta.standalone.indexOf('grossAnnualIncome') === -1 && halfFilled.meta.standalone.indexOf('monthlyExpenses') !== -1);
+  checkTrue('the demo needs nothing filled', Gate.fillGuesses(Demo.build(), T).meta.standalone.length === 0);
+  const bj = Schema.createHousehold({ people: [Schema.createPerson({ role: 'adult', employmentStatus: 'unemployed' })] });
+  checkTrue('between jobs, no pay is invented', !Money.isOk(Schema.grossAnnualIncomeCents(Gate.fillGuesses(bj, T))));
+
+  /* The shape: the ids every template room has, and the room that proved it. */
+  check('the template names its hosts', Room.IDS.join(','), 'room-number,room-chart,room-inputs,room-lens,room-amounts,room-assumptions,room-why,room-scope,reading-list');
+  const rhw = fs.readFileSync(path.join(ROOT, 'rooms/real-hourly-wage.html'), 'utf8');
+  Room.IDS.forEach(id => checkTrue(`Real Hourly Wage has #${id}`, new RegExp('id="' + id + '"').test(rhw)));
+  ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading'].forEach(id => checkTrue(`… and the deep link #${id}`, new RegExp('id="' + id + '"').test(rhw)));
+  checkTrue('it mounts the template', /Room\.mount\(\{/.test(rhw));
+  checkTrue('with a number, a chart, inputs, amounts, assumptions, why and scope', ['number:', 'chart:', 'inputs:', 'amounts:', 'assumptions:', 'why:', 'scope:'].every(k => rhw.indexOf(k) !== -1));
+  const inputs = (rhw.match(/hoursInput\('(contractedHoursPerWeek|unpaidOvertimeHoursPerWeek|commuteHoursPerWeek)'/g) || []).length + (rhw.match(/ctl: 'workCostsMonthlyCents'|ctl: 'weeksPerYear'/g) || []).length;
+  check('five inputs on the page, two folded', inputs, 5);
+  checkTrue('its old sections are gone', rhw.indexOf('id="out-rate"') === -1 && rhw.indexOf('id="out-hours"') === -1 && rhw.indexOf('id="out-price"') === -1);
+  checkTrue('it declares its live-form discipline and a place for a theme', /LIVE-FORM: built once/.test(rhw) && /THEMING:/.test(rhw));
+  checkTrue('the room refuses fewer than two or more than five inputs', /inputs\.length < 2 \|\| spec\.inputs\.length > 5/.test(fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8')));
+  checkTrue('the chart redraws only when it changes', /if \(html === lastChart\) return;/.test(fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8')));
+  checkTrue('every write is one labelled undo entry', /Spine\.batch\(c\.label \+ ' → ' \+ shown, fn\)/.test(fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8')));
+  checkTrue('the chart animates', /@keyframes slaf-grow/.test(fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8')) && /prefers-reduced-motion/.test(fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8')));
+  checkTrue('nobody links to the old anchors', ['rooms/hassle.html', 'rooms/worth.html'].every(f => !/real-hourly-wage', 'out-/.test(fs.readFileSync(path.join(ROOT, f), 'utf8'))));
+
+  /* Get Help: where the out-of-scope line points. */
+  const help = Registry.byId('get-help');
+  checkTrue('Get Help is a room', !!help);
+  check('… optional, owning nothing', help.kind + '/' + help.needs.length, 'explore/0');
+  check('… before Refresh on the path', help.order < Registry.byId('refresh').order, true);
+  checkTrue('… and names kinds of help, never a firm', (function () { const g = fs.readFileSync(path.join(ROOT, 'rooms/get-help.html'), 'utf8'); return /fee-only fiduciary/.test(g) && !/https?:\/\//.test(g.replace(/<link[^>]*>/g, '')); })());
+  checkTrue('the template points its scope line there', /Registry\.byId\('get-help'\)/.test(fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8')));
+  checkTrue('the real hourly wage room says what it does not do', /scope: 'This room does not model/.test(rhw));
 })();
 
 section('Two decision sequences that cannot collide');

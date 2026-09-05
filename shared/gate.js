@@ -297,9 +297,54 @@
     return { rows: rows, unmatched: unmatched };
   }
 
+  /* ---- Standalone: a room opened by deep link with an empty spine ---------
+     fillGuesses(h, T) → a COPY of the household with the intake's guesses
+     standing in for whatever is missing — a pay source, a month's
+     spending, cash, investments, the deductible — for the situation
+     chosen, or an employed one when none is. `meta.standalone` lists what
+     was filled so the room can say "shown with guesses". Nothing is
+     stored: the caller renders from the copy and the spine is untouched.
+     The room template (shared/room.js) is the only caller. D-097. */
+  function fillGuesses(household, tables) {
+    var h = JSON.parse(JSON.stringify(household || Schema.createHousehold({})));
+    var sit = situationOf(h) || 'employed';
+    var g = guesses(sit, h, tables);
+    var filled = [];
+    var people = h.people || (h.people = []);
+    var you = Schema.primaryPerson(h);
+    if (!you) {
+      you = Schema.createPerson({ id: 'guess_person', label: 'You', role: 'adult', employmentStatus: byId(sit).status });
+      people.push(you); filled.push('employmentStatus');
+    }
+    if (!Money.isOk(Schema.grossAnnualIncomeCents(h)) && g.pay && sit !== 'betweenJobs') {
+      var annual = g.pay.basis === 'monthly' ? g.pay.value * MONTHS : g.pay.value;
+      you.incomeSources = (you.incomeSources || []).concat([Schema.createIncomeSource({ id: 'guess_income', personId: you.id, type: 'w2', grossAnnualIncomeCents: annual, rateCents: g.pay.value, frequency: g.pay.basis || 'annual' })]);
+      filled.push('grossAnnualIncome');
+    }
+    if (!Money.isOk(Schema.monthlyExpensesCents(h)) && g.spending) {
+      h.expenses = h.expenses || {}; h.expenses.monthlyEssential = h.expenses.monthlyEssential || {};
+      h.expenses.monthlyEssential.estimatedValueCents = g.spending.value; filled.push('monthlyExpenses');
+    }
+    if (!Money.isOk(Schema.cashCents(h)) && g.cash) {
+      h.assets = (h.assets || []).concat([Schema.createAsset({ id: 'guess_cash', category: 'cash', liquid: true, valueCents: g.cash.value })]); filled.push('cashSavings');
+    }
+    if (!Money.isOk(Schema.investmentsCents(h)) && g.investments) {
+      h.assets = (h.assets || []).concat([Schema.createAsset({ id: 'guess_inv', category: 'investment', valueCents: g.investments.value })]); filled.push('investments');
+    }
+    if (!Money.isEntered((h.insurance || {}).highestDeductibleCents) && g.deductible) {
+      h.insurance = h.insurance || {}; h.insurance.highestDeductibleCents = g.deductible.value; filled.push('highestDeductible');
+    }
+    if (!h.filingStatus && g.filing) { h.filingStatus = g.filing.value; filled.push('filingStatus'); }
+    if (h.meta && h.meta.hasDebt === null) { h.meta.hasDebt = false; filled.push('hasDebt'); }
+    h.meta = h.meta || {};
+    h.meta.standalone = filled;
+    return h;
+  }
+
   return {
     MAX_FIELDS: MAX_FIELDS,
     IMPORT_KEYS: IMPORT_KEYS,
+    fillGuesses: fillGuesses,
     parseImport: parseImport,
     SITUATIONS: SITUATIONS,
     CARDS: CARDS,

@@ -337,6 +337,26 @@ const CASES = [
     }
   },
   {
+    /* The template room (D-097): inputs built once from the spec; typing
+       into two of them lands in person.work, each as its own undo entry. */
+    room: '/rooms/real-hourly-wage.html',
+    container: '#room-inputs',
+    seed: 'demo',
+    fields: [
+      { sel: '[data-ctl="contractedHoursPerWeek"]', type: '35' },
+      { sel: '[data-ctl="workCostsMonthlyCents"]', type: '650' }
+    ],
+    expect: async (page) => {
+      const r = await page.evaluate(() => { const S = SLAF; const w = S.Schema.workProfile(S.Schema.primaryPerson(S.Spine.getProfile())); return { hours: w.contractedHoursPerWeek, costs: w.workCostsMonthlyCents, label: S.Spine.peekUndo().label, number: document.getElementById('room-number').innerText }; });
+      return [
+        ['the paid hours landed', r.hours, 35],
+        ['the costs landed, in cents', r.costs, 65000],
+        ['the last write is a labelled undo entry', r.label, 'Costs of working, a month → $650'],
+        ['and the number is there', r.number.indexOf('/h') !== -1, true]
+      ];
+    }
+  },
+  {
     room: '/rooms/fire.html',
     container: '#targets',
     seed: 'demo',

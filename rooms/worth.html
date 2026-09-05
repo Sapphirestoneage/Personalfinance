@@ -385,7 +385,7 @@
     var noWage = rows.some(function (r) { return Money.isOk(r.result) && !r.result.lifeHoursKnown; });
     el('reads-why').innerHTML = noWage
       ? 'The last column is blank until this knows what an hour of your life '
-        + 'actually pays. <a href="' + Ownership.linkTo('real-hourly-wage', 'out-hours')
+        + 'actually pays. <a href="' + Ownership.linkTo('real-hourly-wage', 'amounts')
         + '">Work out your real hourly wage →</a>'
       : (summary.bestValue
           ? esc(summary.bestValue.label || 'One of these') + ' is the best value on this list at '

@@ -621,3 +621,49 @@ h3 { font-size: var(--text-md); }
 .slaf-lens { display: inline-flex; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); overflow: hidden; }
 .slaf-lens-btn { border: none; background: transparent; color: var(--color-text-muted); font-size: var(--text-xs); min-height: 32px; padding: 0 12px; cursor: pointer; }
 .slaf-lens-btn[aria-pressed="true"] { background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+
+/* ---- The room template (shared/room.js). D-097. ---- */
+.room-number { display: flex; flex-direction: column; }
+.room-number .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+.room-number .big { font-family: var(--font-display); font-size: var(--text-2xl, 2rem); line-height: 1.1; margin-top: var(--space-2); font-variant-numeric: tabular-nums; }
+.room-number .big.is-incomplete { font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text-faint); }
+.room-number .big.is-good { color: var(--color-positive); }
+.room-number .big.is-watch { color: var(--color-caution); }
+.room-number .big.is-out { color: var(--color-critical); }
+.room-number .sub { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-2); }
+.room-number .sub strong { color: var(--color-text); font-variant-numeric: tabular-nums; }
+.room-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+@media (max-width: 380px) { .room-grid { grid-template-columns: 1fr; } }
+.room-grid .slaf-field { margin: 0; }
+.room-more { margin-top: var(--space-3); }
+.room-more summary { cursor: pointer; font-size: var(--text-sm); color: var(--color-text-muted); padding: var(--space-2) 0; }
+.room-more .room-grid { margin-top: var(--space-2); }
+.room-head-row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
+ul.room-amounts { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); }
+ul.room-amounts li { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-1) 0; border-top: 1px solid var(--color-border); }
+ul.room-amounts li span { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--color-text); }
+ul.room-amounts li a { color: inherit; text-decoration: none; }
+ul.room-amounts li a:hover { text-decoration: underline; }
+details.room-drawer { margin-top: var(--space-4); border: 1px dashed var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); }
+details.room-drawer summary { cursor: pointer; font-family: var(--font-display); font-size: var(--text-md); padding: var(--space-2) 0; }
+details.room-drawer summary small { display: block; font-family: var(--font-body); font-size: var(--text-xs); color: var(--color-text-faint); }
+.room-assumptions-body dl { display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-3); margin: var(--space-2) 0 0; font-size: var(--text-sm); }
+.room-assumptions-body dt { color: var(--color-text-faint); }
+.room-assumptions-body dd { margin: 0; }
+.room-assumptions-body dd b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.room-assumptions-body dd small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+.room-why { font-size: var(--text-sm); color: var(--color-text-muted); border-left: 3px solid var(--color-accent); padding: var(--space-2) var(--space-3); margin-top: var(--space-4); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: rgba(46,111,232,.08); }
+.room-scope { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-4); }
+.room-scope a { color: var(--color-accent-hover); }
+.room-standalone { font-size: var(--text-sm); border: 1px dashed var(--color-caution); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-4); color: var(--color-text-muted); }
+.room-standalone a { color: var(--color-accent-hover); }
+.choices { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.choices .choice { flex: 1 1 auto; border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); color: var(--color-text); padding: var(--space-2) var(--space-3); font-size: var(--text-sm); cursor: pointer; text-align: left; min-height: 40px; }
+.choices .choice[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+
+/* One chart, animated when it changes: bars grow, areas and rings draw in. */
+@keyframes slaf-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes slaf-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.slaf-chart.is-animated .track > i, .slaf-chart.is-animated .track.is-stack > i { transform-origin: left; animation: slaf-grow .7s cubic-bezier(.2,.8,.2,1) both; }
+.slaf-chart.is-animated svg path, .slaf-chart.is-animated svg circle, .slaf-chart.is-animated svg polygon, .slaf-chart.is-animated svg rect:not(.panel) { animation: slaf-rise .6s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .slaf-chart.is-animated * { animation: none !important; } }
