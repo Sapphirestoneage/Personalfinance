@@ -31,6 +31,10 @@
     netWorthPercentiles: 'net_worth_percentiles_scf_2022.json',
     irsLimits: 'irs_limits_2026.json',
     savingsPresets: 'savings_presets.json',
+    /* The Skill Tree and the Exercise Library (D-131). */
+    skillTree: 'skill_tree.json',
+    skillLinks: 'skill_links.json',
+    exercises: 'exercises.json',
     fooRules: 'foo_rules.json',
     expenseCategories: 'expense_categories.json',
     budgetTemplates: 'budget_templates.json',
