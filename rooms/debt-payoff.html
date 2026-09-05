@@ -46,7 +46,10 @@
   .debt-name { flex: 1; min-width: 0; background: transparent; border: none; border-bottom: 1px solid var(--color-border-strong); color: var(--color-text); font-family: var(--font-body); font-size: var(--text-base); padding: 2px 0; outline: none; }
   .debt-name:focus { border-bottom-color: var(--color-border-active); }
   .debt-remove { background: none; border: none; color: var(--color-accent); cursor: pointer; font-size: var(--text-md); padding: 0 var(--space-1); }
-  .debt-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-2); align-items: stretch; }
+  .debt-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-2); align-items: end; }
+  .debt-grid--2 { grid-template-columns: 1fr 1fr; }
+  .debt-grid--3 { grid-template-columns: 1fr 1fr 1fr; }
+  .debt-grid > * { min-width: 0; }
   .debt-meta { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); align-items: stretch; margin-top: var(--space-2); }
   .debt-warn { font-size: var(--text-xs); color: var(--color-caution); margin: var(--space-2) 0 0; }
   .debt-limit { margin-top: var(--space-2); }
@@ -70,16 +73,27 @@
   .strategies { display: grid; gap: var(--space-2); }
   .strategy { text-align: left; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; font-family: var(--font-body); color: var(--color-text); }
   .strategy[aria-pressed="true"] { border-color: var(--color-border-active); background: var(--color-surface-active); }
-  .strategy-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
-  .strategy-name { font-weight: 600; }
-  .strategy-figure { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .strategy-blurb { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  /* Name, interest, time to clear — three columns on fixed rails, so the
+     four orderings read down as a table and not as four ragged cards. */
+  .strategy-head { display: grid; grid-template-columns: minmax(0, 1fr) 8.5ch 8ch; gap: var(--space-3); align-items: baseline; }
+  .strategy-name { font-weight: 600; min-width: 0; }
+  .strategy-figure, .strategy-when { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+  .strategy-blurb { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; min-width: 0; }
+  .strategy-cols { display: grid; grid-template-columns: minmax(0, 1fr) 8.5ch 8ch; gap: var(--space-3); padding: 0 var(--space-3) 2px; font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); white-space: nowrap; }
+  .strategy-cols span + span { text-align: right; }
+  .strategy-first { color: var(--color-text-faint); }
+  @media (max-width: 420px) {
+    .strategy-head, .strategy-cols { grid-template-columns: minmax(0, 1fr) 7.5ch 7ch; gap: var(--space-2); }
+    .strategy-cols { padding: 0 var(--space-3); }
+    .strategy-blurb { font-size: var(--text-xs); }
+  }
   /* Reasons to keep it (D-132): the rational axis, beside "Feels like".
      A chip is on, off, or suggested — suggested is dashed and says so,
      and nothing is stored until it is confirmed. */
   .keep { margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--color-border); }
   .keep-cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); display: block; margin-bottom: 6px; }
   .keep-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .keep-chip.is-none { margin-left: auto; }
   .keep-chip { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 3px var(--space-2); cursor: pointer; white-space: nowrap; }
   .keep-chip[aria-pressed="true"] { border-color: var(--color-accent); color: var(--color-text); background: var(--color-surface-active); }
   .keep-chip.is-suggested { border-style: dashed; border-color: var(--color-caution); color: var(--color-caution); }
@@ -100,10 +114,39 @@
   ol.timeline li:first-child { border-top: none; }
   .tl-when { color: var(--color-text-subtle); font-variant-numeric: tabular-nums; text-align: right; }
 
+  /* Every figure on one rail, with what it means beside it. The value
+     column is fixed so the digits line up down the card however long the
+     label is; the meaning sits in its own column and never pushes them. */
   .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
-  .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
-  .out-detail dt { color: var(--color-text-faint); }
-  .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  .out-detail dl { display: grid; grid-template-columns: minmax(0, auto) 9.5ch 1fr; gap: 0; margin: 0; align-items: baseline; }
+  .out-detail dt { color: var(--color-text-muted); padding: var(--space-2) var(--space-3) var(--space-2) 0; border-top: 1px solid var(--color-border); grid-column: 1; white-space: nowrap; }
+  .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-display); color: var(--color-text); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); grid-column: 2; white-space: nowrap; }
+  .out-detail .dl-why { color: var(--color-text-faint); font-size: var(--text-xs); padding: var(--space-2) 0 var(--space-2) var(--space-3); border-top: 1px solid var(--color-border); grid-column: 3; line-height: var(--leading-snug, 1.35); }
+  .out-detail dl > :nth-child(-n+3) { border-top: none; }
+  @media (max-width: 460px) {
+    .out-detail dl { grid-template-columns: minmax(0, 1fr) auto; }
+    .out-detail dt { grid-column: 1; padding-bottom: 0; }
+    .out-detail dd { grid-column: 2; padding-bottom: 0; }
+    .out-detail .dl-why { grid-column: 1 / -1; border-top: none; padding: 2px 0 var(--space-2); }
+    .out-detail dl > :nth-child(-n+3) { border-top: none; }
+    .out-detail dl > :nth-child(3n+1):not(:nth-child(-n+3)), .out-detail dl > :nth-child(3n+2):not(:nth-child(-n+3)) { border-top: 1px solid var(--color-border); }
+  }
+
+  /* How interest works: one question, three answers, and only the fields
+     that answer owns. Replaces a Rate box, a "no interest" tick and a
+     promo pair that sat in three different places (D-133). */
+  .interest { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3) var(--space-3); margin: var(--space-3) 0 0; min-width: 0; }
+  .interest-cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); padding: 0 var(--space-2); margin-left: calc(var(--space-2) * -1); }
+  .imodes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: var(--space-3); }
+  .imode { font-family: var(--font-body); font-size: var(--text-xs); line-height: 1.25; border: none; border-left: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-muted); padding: var(--space-2) var(--space-1); cursor: pointer; text-align: center; min-width: 0; display: flex; align-items: center; justify-content: center; text-wrap: balance; }
+  .imode:first-child { border-left: none; }
+  .imode:hover { color: var(--color-text); background: var(--color-surface-raised); }
+  .imode[aria-pressed="true"] { background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+  .igrid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); align-items: end; }
+  .igrid.is-promo { grid-template-columns: 1fr 1.2fr 1fr; }
+  .igrid .ifield { min-width: 0; display: block; }
+  .interest-say { font-size: var(--text-xs); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-snug, 1.35); }
+  @media (max-width: 420px) { .igrid.is-promo { grid-template-columns: 1fr 1fr; } .igrid.is-promo .ifield[data-ipart="rate"] { grid-column: 1 / -1; } }
 
   .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
@@ -281,7 +324,6 @@
 
     var tags = (RULES.emotionalPriority.tags || []);
     list.innerHTML = debts.map(function (d) {
-      var free = d.interestFree === true;
       return '<div class="debt" data-row="' + d.id + '">'
         + '<div class="debt-top">'
         + '<input class="debt-name" data-debt="' + d.id + '" data-field="label" '
@@ -289,16 +331,11 @@
         + '<button type="button" class="debt-archive" data-archive="' + d.id + '" title="Paid off or on hold — keep it, stop counting it">Set aside</button>'
         + '<button type="button" class="debt-remove" data-remove="' + d.id + '" aria-label="Remove">✕</button>'
         + '</div>'
-        + '<div class="debt-grid">'
+        + '<div class="debt-grid debt-grid--2">'
         + field(d, 'balanceCents', 'Balance', '$', null, 'e.g. 3200')
-        + field(d, 'rate', 'Rate', null, '%', free ? '0' : 'e.g. 22.9', free)
         + field(d, 'minPaymentCents', 'Min /mo', '$', null, d.type === 'family' ? 'or a due date' : 'e.g. 95')
         + '</div>'
-        + '<div class="debt-flags">'
-        /* Money owed to family, a 0% loan from a dealer, a hospital plan:
-           no interest is an answer, not a missing rate. D-124. */
-        + '<label class="debt-flag" title="No interest is charged on this, ever"><input type="checkbox" data-debt="' + d.id + '" data-field="interestFree"' + (free ? ' checked' : '') + '/>No interest charged</label>'
-        + '</div>'
+        + interestBlock(d)
         + '<div class="debt-meta">'
         + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Type</span>'
         + '<span class="slaf-input-shell"><select data-debt="' + d.id + '" data-field="type">'
@@ -308,7 +345,7 @@
         + '</select></span></label>'
         + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Feels like</span>'
         + '<span class="slaf-input-shell"><select data-debt="' + d.id + '" data-field="emotionalTag">'
-        + '<option value="">No particular weight</option>'
+        + '<option value="">Neutral</option>'
         + tags.map(function (t) {
             return '<option value="' + t.id + '"' + (d.emotionalTag === t.id ? ' selected' : '') + '>' + t.label + '</option>';
           }).join('')
@@ -333,17 +370,7 @@
         + field(d, 'creditLimitCents', 'Credit limit', '$', null, 'e.g. 10000')
         + '<p class="debt-hint">Optional, and only used for credit utilisation — '
         + 'balance against limit, where 30% is the usual ceiling. Blank means the '
-        + 'ratio stays unavailable rather than guessed.</p>'
-        /* A 0% card is a card with a deadline. Without these two the
-           payoff plan treats today's rate as permanent. D-053. */
-        + '<div class="debt-grid" style="margin-top:var(--space-3)">'
-        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">0% / promo ends</span>'
-        + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id
-        + '" data-field="promoEndsOn" value="' + (d.promoEndsOn || '')
-        + '" aria-label="Promotional rate end date"/></span></label>'
-        + field(d, 'postPromoRate', 'Then the rate becomes', null, '%', 'e.g. 24.99')
-        + '</div>'
-        + '<p class="debt-promo" data-promo="' + d.id + '"></p></div>'
+        + 'ratio stays unavailable rather than guessed.</p></div>'
         + '<p class="debt-warn" data-warn="' + d.id + '"></p>'
         + '</div>';
     }).join('');
@@ -391,8 +418,60 @@
       var box = document.querySelector('input[data-debt="' + d.id + '"][data-field="interestFree"]');
       if (box) box.checked = d.interestFree === true;
       paintKeep(d);
+      paintInterest(d);
     });
     paintPromos();
+  }
+
+  /* The interest block, painted rather than rebuilt: which mode is on,
+     which fields that mode owns, what the rate box is called, and one
+     plain sentence saying what the plan will actually do with it. */
+  function paintInterest(d) {
+    var mode = interestMode(d);
+    var scope = document.querySelector('[data-interest="' + d.id + '"]');
+    if (!scope) return;
+    INTEREST_MODES.forEach(function (m) {
+      var b = scope.querySelector('[data-imode][data-mode="' + m[0] + '"]');
+      if (b) b.setAttribute('aria-pressed', String(mode === m[0]));
+    });
+    var show = { rate: mode !== 'never', promo: mode === 'promo', post: mode === 'promo' };
+    Object.keys(show).forEach(function (part) {
+      var n = scope.querySelector('[data-ipart="' + part + '"]');
+      if (n) n.hidden = !show[part];
+    });
+    var grid = scope.querySelector('[data-igrid]');
+    if (grid) grid.classList.toggle('is-promo', mode === 'promo');
+    var lab = scope.querySelector('[data-ipart="rate"] .slaf-label');
+    if (lab) lab.textContent = mode === 'promo' ? 'Rate right now' : 'Rate';
+    var rate = scope.querySelector('input[data-field="rate"]');
+    if (rate && rate !== document.activeElement) {
+      rate.placeholder = mode === 'promo' ? '0' : 'e.g. 22.9';
+    }
+    var say = scope.querySelector('[data-interest-say]');
+    if (say) say.textContent = interestSentence(d, mode);
+  }
+
+  /** An ISO day as a month a person reads, without a timezone shifting it. */
+  function isoMonth(iso) {
+    var m = /^(\d{4})-(\d{2})/.exec(iso || '');
+    if (!m) return 'that date';
+    return new Date(+m[1], +m[2] - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
+
+  /** What the plan will do with this debt's interest, in one line. */
+  function interestSentence(d, mode) {
+    var r = Debt.effectiveRate(d);
+    if (mode === 'never') return 'Nothing is added to this balance. Only your payments bring it down.';
+    if (mode === 'promo') {
+      if (!d.promoEndsOn) return 'Add the date it ends, or the plan treats today’s rate as permanent.';
+      if (!Money.isEntered(d.postPromoRate)) return 'Add the rate it becomes, or the plan treats today’s rate as permanent.';
+      return 'Planned at ' + (Money.isEntered(r) ? Money.formatRate(r, { decimals: 2 }) : 'today’s rate')
+        + ' until ' + isoMonth(d.promoEndsOn) + ', then '
+        + Money.formatRate(d.postPromoRate, { decimals: 2 }) + '.';
+    }
+    return Money.isEntered(r)
+      ? 'Planned at ' + Money.formatRate(r, { decimals: 2 }) + ' for the whole payoff.'
+      : 'Add the rate and this debt joins the plan.';
   }
 
   /* The keep chips live inside the guarded list, so the row is never
@@ -540,6 +619,8 @@
   function onListClick(evt) {
     /* Reasons to keep it (D-132): a chip toggles one, "None" clears them,
        and the suggestion is confirmed or dismissed as a whole. */
+    var im = evt.target.closest('[data-imode]');
+    if (im) { setInterestMode(im.getAttribute('data-imode'), im.getAttribute('data-mode')); return; }
     var chip = evt.target.closest('[data-keep]');
     if (chip) { toggleKeep(chip.getAttribute('data-keep'), chip.getAttribute('data-reason')); return; }
     var yes = evt.target.closest('[data-keep-confirm]');
@@ -575,6 +656,103 @@
     var list = h.debts || [];
     for (var i = 0; i < list.length; i++) { if (list[i].id === id) return list[i]; }
     return null;
+  }
+
+  /* ---- How interest works on this debt -----------------------------------
+     One question instead of four scattered controls. Before this the row
+     asked for a Rate, offered a "No interest charged" tick right beneath
+     it, and then — a hundred pixels further down, inside the cards-only
+     block — asked separately for "0% / promo ends" and "Then the rate
+     becomes". Three of those four say something about 0%, and two of them
+     mean opposite things: interest-free is forever, a promo is a deadline
+     (D-053). People ticked the wrong one, and the plan then treated a
+     balance-transfer card as free for life.
+
+     So the row now asks how interest is charged, once, and shows only the
+     fields that answer belongs to. The mode is DERIVED from what is
+     already stored, never stored itself, so nothing migrates and an
+     imported household lands in the right mode on its own:
+
+       interest-free            -> never
+       a promo end date         -> promo
+       anything else            -> stays
+
+     Every mode's fields are built once and hidden by mode, exactly like
+     the cards-only block, so switching mode paints and never rebuilds the
+     row under a finger (D-034). */
+  var INTEREST_MODES = [
+    ['stays', 'A rate that stays', 'The rate is what it is, and it does not change on a date you know about.'],
+    ['promo', '0% or a promo rate', 'Cheap now, then it jumps on a date. The plan counts the jump.'],
+    ['never', 'No interest, ever', 'Nothing is added to this balance. Family loans, most hospital plans.']
+  ];
+
+  /* Deriving the mode purely from stored data deadlocks on promo: the
+     mode is "promo" because a date is stored, but the date box only shows
+     in promo mode, so a card with no date yet can never get one. So the
+     tap itself is remembered, for the visit only and never stored — the
+     same treatment a dismissed suggestion gets. A debt left in promo with
+     nothing filled in is still, to every engine, a plain fixed-rate debt,
+     and the sentence under the fields says exactly that. */
+  var interestIntent = {};
+
+  function interestMode(d) {
+    if (d.interestFree === true) return 'never';
+    if (d.promoEndsOn) return 'promo';
+    if (interestIntent[d.id] === 'promo') return 'promo';
+    return 'stays';
+  }
+
+  function interestBlock(d) {
+    var mode = interestMode(d);
+    var seg = INTEREST_MODES.map(function (m) {
+      return '<button type="button" class="imode" data-imode="' + d.id + '" data-mode="' + m[0] + '"'
+        + ' aria-pressed="' + (mode === m[0]) + '" title="' + esc(m[2]) + '">' + esc(m[1]) + '</button>';
+    }).join('');
+    /* Each input is built exactly once and then shown or hidden by mode.
+       Two inputs for the same field would give paintLive() and the change
+       handler two nodes to disagree about. */
+    return '<fieldset class="interest" data-interest="' + d.id + '">'
+      + '<legend class="interest-cap">How interest works</legend>'
+      + '<div class="imodes" role="group" aria-label="How interest is charged on this debt">' + seg + '</div>'
+      + '<div class="igrid" data-igrid="' + d.id + '">'
+      + '<span class="ifield" data-ipart="rate" data-for="' + d.id + '"' + (mode === 'never' ? ' hidden' : '') + '>'
+      + field(d, 'rate', mode === 'promo' ? 'Rate right now' : 'Rate', null, '%', mode === 'promo' ? '0' : 'e.g. 22.9')
+      + '</span>'
+      + '<span class="ifield" data-ipart="promo" data-for="' + d.id + '"' + (mode === 'promo' ? '' : ' hidden') + '>'
+      + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Until</span>'
+      + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id
+      + '" data-field="promoEndsOn" value="' + (d.promoEndsOn || '')
+      + '" aria-label="Promotional rate end date"/></span></label></span>'
+      + '<span class="ifield" data-ipart="post" data-for="' + d.id + '"' + (mode === 'promo' ? '' : ' hidden') + '>'
+      + field(d, 'postPromoRate', 'Then', null, '%', 'e.g. 24.99')
+      + '</span>'
+      + '</div>'
+      + '<p class="interest-say" data-interest-say="' + d.id + '"></p>'
+      + '<p class="debt-promo" data-promo="' + d.id + '"></p>'
+      + '</fieldset>';
+  }
+
+  /** Switching mode rewrites only the fields that mode owns, so a stale
+      promo date can never sit behind a debt the user says is fixed-rate
+      and quietly re-enter the plan through promoStatus(). */
+  function setInterestMode(id, mode) {
+    var d = findDebt(Spine.getProfile(), id);
+    if (!d || interestMode(d) === mode) return;
+    var patch = { id: id };
+    if (mode === 'never') { patch.interestFree = true; patch.rate = 0; patch.promoEndsOn = null; patch.postPromoRate = null; }
+    else if (mode === 'stays') {
+      patch.interestFree = false;
+      patch.promoEndsOn = null; patch.postPromoRate = null;
+      /* Leaving "no interest, ever" puts the rate back to unanswered when
+         the 0 only ever came from that answer, so the row asks again
+         rather than planning a real debt at 0%. Same rule the tick had. */
+      if (d.interestFree === true && d.rate === 0) patch.rate = null;
+    }
+    else { patch.interestFree = false; }
+    if (mode === 'promo') interestIntent[id] = 'promo'; else delete interestIntent[id];
+    Spine.upsertDebt(patch);
+    paintLive();
+    render();
   }
 
   /* ---- Reasons to keep it (D-132) ----------------------------------------
@@ -722,9 +900,12 @@
     if (detail) { detail.innerHTML = isOk && detailHtml ? detailHtml : ''; detail.className = 'out-detail'; }
   }
 
+  /** label · figure · what the figure means. Three columns, so the digits
+      sit on one rail and the explanation never pushes them out of line. */
   function dl(rows) {
     return '<dl>' + rows.map(function (r) {
-      return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+      return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>'
+        + '<span class="dl-why">' + (r[2] || '') + '</span>';
     }).join('') + '</dl>';
   }
 
@@ -761,14 +942,19 @@
     if (Money.isOk(plan)) {
       var baseline = Debt.simulate(h, RULES, { strategyId: strategyId, extraMonthlyCents: 0 });
       var rows = [
-        ['Interest you’ll pay', Money.formatCents(plan.totalInterestCents)],
-        ['Total you’ll pay', Money.formatCents(plan.totalPaidCents)],
-        ['Per month', Money.formatCents(plan.monthlyBudgetCents)]
+        ['Interest you’ll pay', Money.formatCents(plan.totalInterestCents),
+         'The cost of borrowing, on top of what you actually owe.'],
+        ['Total you’ll pay', Money.formatCents(plan.totalPaidCents),
+         'Every payment added up, balances and interest together.'],
+        ['Per month', Money.formatCents(plan.monthlyBudgetCents),
+         'Every minimum, plus the extra, going out each month.']
       ];
       if (Money.isOk(baseline) && Money.isEntered(extraCents) && extraCents > 0) {
         rows.push(['Saved vs. minimums only',
-          Money.formatCents(baseline.totalInterestCents - plan.totalInterestCents)]);
-        rows.push(['Sooner by', monthsLabel(baseline.value - plan.value)]);
+          Money.formatCents(baseline.totalInterestCents - plan.totalInterestCents),
+          'Interest the extra keeps out of the lender’s hands.']);
+        rows.push(['Sooner by', monthsLabel(baseline.value - plan.value),
+          'How much earlier the extra gets you to zero.']);
       }
       detail = dl(rows);
 
@@ -811,33 +997,45 @@
     var previousNote = el('tie-note');
     if (previousNote) previousNote.remove();
 
+    /* With some sets of debts every ordering lands in the same place —
+       usually because the highest-rate debt is also the smallest. Work
+       that out first: badging one row "cheapest" while all four show the
+       same figure reads as a bug, not as a tie. */
+    var totals = RULES.strategies
+      .map(function (s) { return cmp.results && cmp.results[s.id]; })
+      .filter(function (r) { return r && Money.isOk(r); })
+      .map(function (r) { return r.totalInterestCents; });
+    var allTie = totals.length > 1 && totals.every(function (t) { return t === totals[0]; });
+
     wrap.innerHTML = RULES.strategies.map(function (s) {
       var r = cmp.results ? cmp.results[s.id] : null;
       var ok = r && Money.isOk(r);
       var badge = '';
-      if (ok && cmp.cheapestStrategyId === s.id) badge = '<span class="badge">cheapest</span>';
+      if (allTie) badge = '';
+      else if (ok && cmp.cheapestStrategyId === s.id) badge = '<span class="badge">cheapest</span>';
       else if (ok && cmp.firstWinStrategyId === s.id && cmp.firstWinStrategyId !== cmp.cheapestStrategyId) {
         badge = '<span class="badge" style="color:var(--sapphire-200);border-color:var(--sapphire-200)">first win soonest</span>';
       }
       return '<button type="button" class="strategy" data-strategy="' + s.id + '" '
         + 'aria-pressed="' + (s.id === strategyId) + '">'
-        + '<span class="strategy-head"><span class="strategy-name">' + s.label + badge + '</span>'
-        + '<span class="strategy-figure">' + (ok ? Money.formatCents(r.totalInterestCents) : Money.EM_DASH) + '</span></span>'
-        + '<p class="strategy-blurb">' + s.blurb + '</p>'
-        + (ok ? '<p class="strategy-blurb" style="color:var(--color-text-faint)">'
-                + monthsLabel(r.value) + ' · first debt gone in '
-                + monthsLabel(r.payoffs[0].month) + '</p>' : '')
+        + '<span class="strategy-head">'
+        + '<span class="strategy-name">' + s.label + badge + '</span>'
+        + '<span class="strategy-figure">' + (ok ? Money.formatCents(r.totalInterestCents) : Money.EM_DASH) + '</span>'
+        + '<span class="strategy-when">' + (ok ? monthsLabel(r.value) : Money.EM_DASH) + '</span>'
+        + '</span>'
+        + '<p class="strategy-blurb">' + s.blurb
+        + (ok ? ' <span class="strategy-first">First debt gone in ' + monthsLabel(r.payoffs[0].month) + '.</span>' : '')
+        + '</p>'
         + '</button>';
     }).join('');
 
-    /* With some sets of debts every ordering lands in the same place —
-       usually because the highest-rate debt is also the smallest. Say so,
-       rather than showing four identical figures and looking broken. */
-    var totals = RULES.strategies
-      .map(function (s) { return cmp.results && cmp.results[s.id]; })
-      .filter(function (r) { return r && Money.isOk(r); })
-      .map(function (r) { return r.totalInterestCents; });
-    if (totals.length > 1 && totals.every(function (t) { return t === totals[0]; })) {
+    /* The captions belong to the columns, so they are said once above the
+       list rather than repeated under every row. */
+    wrap.insertAdjacentHTML('afterbegin',
+      '<div class="strategy-cols" aria-hidden="true">'
+      + '<span></span><span>Interest</span><span>Clear in</span></div>');
+
+    if (allTie) {
       wrap.insertAdjacentHTML('beforebegin',
         '<p class="slaf-reason" id="tie-note">With these debts every order works out the same — '
         + 'the one costing you most is also the one you\u2019d clear first. Pick whichever you like.</p>');
@@ -848,13 +1046,17 @@
        not be run shows a dash, not a zero-length bar. */
     var chart = el('strategy-chart');
     if (!Money.isOk(cmp)) { chart.innerHTML = ''; return; }
+    /* Four bars of identical length, twice, is not a comparison — it is the
+       tie note drawn badly. The note above already says every order lands
+       in the same place, so the pictures stand down until they differ. */
+    if (allTie) { chart.innerHTML = ''; return; }
     var rowsFor = function (pick) {
       return RULES.strategies.map(function (s) {
         var r = cmp.results[s.id];
         var ok = r && Money.isOk(r);
         return { label: s.label, value: ok ? pick(r) : null,
           color: s.id === strategyId ? Charts.COLORS.growth : Charts.COLORS.muted,
-          note: s.id === strategyId ? 'chosen' : (ok && cmp.cheapestStrategyId === s.id ? 'cheapest' : null) };
+          note: s.id === strategyId ? 'chosen' : (!allTie && ok && cmp.cheapestStrategyId === s.id ? 'cheapest' : null) };
       });
     };
     chart.innerHTML = '<span class="slaf-label" style="display:block;margin-top:var(--space-3)">Total interest, by order</span>'
