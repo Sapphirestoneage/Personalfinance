@@ -1,9 +1,21 @@
 {
   "id": "calendar_conventions",
-  "version": "0.1",
+  "version": "1.0",
   "asOf": "2026-09-01",
-  "source": "PLACEHOLDER \u2014 filled by the room that reads it (D-101).",
-  "confidence": "unverified",
-  "confidenceNote": "Not yet written.",
-  "note": "the pay cadences and the bill-timing conventions a month is drawn with"
+  "source": "Payroll and billing conventions: a weekly pay cycle is 52 paydays a year, a fortnightly one 26, a semimonthly one 24 (two a month), a monthly one 12; a bill is drawn on the day it is due; a pay-later instalment is a bill due on its day; spending with no date is spread evenly over the month's days.",
+  "confidence": "convention",
+  "confidenceNote": "Nothing here is a measurement. Paydays a month is arithmetic on the cycle (52 ÷ 12, 26 ÷ 12, 2, 1); the timing rules are the simplest honest reading of a month, and the room says so in its assumptions drawer. A person's real bank draws a bill a day or two around its due date, and a weekly pay cycle lands five paydays in some months and four in others — the month drawn here is the average one.",
+  "note": "the pay cadences and the bill-timing conventions a month is drawn with (Money Calendar & Pay-Later)",
+  "cadences": {
+    "weekly":      { "label": "Weekly",         "paydaysPerYear": 52, "paydaysPerMonth": 4.333333333333333, "intervalDays": 7 },
+    "fortnightly": { "label": "Every two weeks", "paydaysPerYear": 26, "paydaysPerMonth": 2.1666666666666665, "intervalDays": 14 },
+    "semimonthly": { "label": "Twice a month",  "paydaysPerYear": 24, "paydaysPerMonth": 2, "intervalDays": null },
+    "monthly":     { "label": "Monthly",        "paydaysPerYear": 12, "paydaysPerMonth": 1, "intervalDays": null }
+  },
+  "semimonthlyGapDays": 15,
+  "billDrawnOnDueDay": true,
+  "payLaterCountsAsBill": true,
+  "undatedSpendingSpreadEvenly": true,
+  "horizonDays": 31,
+  "tightWeekDays": 7
 }
