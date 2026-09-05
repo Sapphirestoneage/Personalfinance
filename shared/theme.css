@@ -605,6 +605,15 @@ h3 { font-size: var(--text-md); }
 .slaf-bars.has-negative .track:before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--color-border-strong); }
 .slaf-bars .val { font-size: var(--text-sm); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 
+/* Marked not applicable by the household (D-130): dashed, amber, and it
+   says so rather than asking for the figure. The toggle sits in the
+   owner room beside the input. */
+.slaf-owned--na { border-left-style: dashed; border-left-color: var(--color-caution); opacity: .85; }
+.slaf-owned--na .slaf-owned-value { color: var(--color-caution); }
+.slaf-na { background: none; border: 1px dashed var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-faint); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; }
+.slaf-na[aria-pressed="true"] { border-style: solid; color: var(--color-caution); border-color: var(--color-caution); }
+.slaf-na-off { opacity: .45; }
+
 /* A figure the one-pager filled in as a guess and nobody has typed over yet:
    dashed, and it says so. D-094. */
 .slaf-owned--guess { border-left-style: dashed; border-left-color: var(--color-caution); }

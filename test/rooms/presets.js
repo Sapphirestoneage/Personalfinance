@@ -107,6 +107,13 @@ module.exports = function (t) {
   check('… and lifts it', Spine.getProfile().notApplicable.maxIra, undefined);
   Spine.reset();
 
+  /* N/A in an owner room, and the chip everywhere else (D-130). */
+  const acc = fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8');
+  checkTrue('Where It Goes offers N/A for the workplace plan and the HSA, through the spine', /naButton\('contributionPercent'/.test(acc) && /naButton\('hsaContributed'/.test(acc) && /Spine\.setNotApplicable\(/.test(acc));
+  const naHtml = Ownership.naButton('hsaContributed', hh({ notApplicable: { hsaContributed: true } }));
+  checkTrue('the button reads its state from the household', /aria-pressed="true"/.test(naHtml) && /data-na-field="hsaContributed"/.test(naHtml) && /aria-pressed="false"/.test(Ownership.naButton('hsaContributed', hh())));
+  checkTrue('a chip for a field marked N/A says so instead of asking for it', /slaf-owned--na/.test(Ownership.chip('hsaContributed', hh({ notApplicable: { hsaContributed: true } }), 'foo-ladder')) && /You marked this not applicable/.test(Ownership.chip('hsaContributed', hh({ notApplicable: { hsaContributed: true } }), 'foo-ladder')));
+
   const page = fs.readFileSync(path.join(ROOT, 'rooms/budget.html'), 'utf8');
   checkTrue('the room has an N/A button on structural presets and a Hypothetical view', /data-na=/.test(page) && /Spine\.setNotApplicable\(/.test(page) && /id="btn-hypo"/.test(page) && /is-hypo/.test(page) && /hypo-banner/.test(page));
   checkTrue('… in which nothing reaches the spine: the what-if guard sits before every write', /if \(hypo\) \{[^}]*hypoOverlay/.test(page) && /if \(na && !hypo\)/.test(page) && /open = sheet\.status === 'open' && !hypo/.test(page));

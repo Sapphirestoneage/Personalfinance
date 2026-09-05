@@ -895,9 +895,27 @@
    * A value that isn't set yet says so and still links, so the way to fix it
    * is always one tap away.
    */
+  /** A small N/A toggle for a structural option, for its owner room to set
+   *  beside the input (D-130). The room wires the click to
+   *  Spine.setNotApplicable(fieldId, on). */
+  function naButton(fieldId, household, words) {
+    var on = userSaysNa(household, fieldId);
+    var w = words || {};
+    return '<button type="button" class="slaf-na" data-na-field="' + escapeHtml(fieldId) + '" aria-pressed="' + on + '" title="' + (on ? 'Marked not applicable — tap to say it applies after all' : 'Not applicable to me — drops it from every live figure') + '">'
+      + escapeHtml(on ? (w.on || 'Not applicable ✓') : (w.off || 'N/A')) + '</button>';
+  }
+
   function chip(fieldId, household, currentRoomId) {
     var d = describe(fieldId, household, currentRoomId);
     if (!d) return '';
+    /* Marked not applicable by the household (D-130): say so, not "add it". */
+    if (d.userNotApplicable) {
+      return '<a class="slaf-owned slaf-owned--na" href="' + d.href + '">'
+        + '<span class="slaf-owned-label">' + escapeHtml(d.label) + '</span>'
+        + '<span class="slaf-owned-value">n/a</span>'
+        + '<span class="slaf-owned-from">' + escapeHtml(d.notApplicableBecause || 'Not applicable.') + '</span>'
+        + '</a>';
+    }
     if (d.isSet) {
       var age = d.age && d.age.label
         ? ' · <span class="slaf-owned-age' + (d.age.stale === true ? ' is-stale' : '') + '">'
@@ -971,6 +989,7 @@
     describe: describe,
     chip: chip,
     inlineChip: inlineChip,
+    naButton: naButton,
     ownedBy: ownedBy
   };
 });
