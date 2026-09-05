@@ -38,7 +38,9 @@
       SelfEmployed: require('./selfemployed.js'),
       Tax: require('./tax.js'),
       Debt: require('./debt.js'),
-      QuickMath: require('./quickmath.js')
+      QuickMath: require('./quickmath.js'),
+      VPW: require('./vpw.js'),
+      SocialSecurity: require('./ss.js')
     };
   } else {
     deps = {
@@ -53,13 +55,15 @@
       SelfEmployed: root.SLAF && root.SLAF.SelfEmployed,
       Tax: root.SLAF && root.SLAF.Tax,
       Debt: root.SLAF && root.SLAF.Debt,
-      QuickMath: root.SLAF && root.SLAF.QuickMath
+      QuickMath: root.SLAF && root.SLAF.QuickMath,
+      VPW: root.SLAF && root.SLAF.VPW,
+      SocialSecurity: root.SLAF && root.SLAF.SocialSecurity
     };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.Projection, deps.Statement, deps.Rerank, deps.CashFlow, deps.Hourly, deps.SelfEmployed, deps.Tax, deps.Debt, deps.QuickMath);
+  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.Projection, deps.Statement, deps.Rerank, deps.CashFlow, deps.Hourly, deps.SelfEmployed, deps.Tax, deps.Debt, deps.QuickMath, deps.VPW, deps.SocialSecurity);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Events = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, Projection, Statement, Rerank, CashFlow, Hourly, SelfEmployed, Tax, Debt, QuickMath) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, Projection, Statement, Rerank, CashFlow, Hourly, SelfEmployed, Tax, Debt, QuickMath, VPW, SocialSecurity) {
   'use strict';
 
   var MONTHS = 12;
@@ -164,7 +168,43 @@
     switch (name) {
       case 'takeHomeMonthly': {
         var clone = withIncome(h, args.grossAnnualCents);
-        return clone ? val(Tier0.takeHomeMonthlyCents(clone, t)) : null;
+        if (!clone) return null;
+        if (args.filingStatus) clone.filingStatus = args.filingStatus;
+        return val(Tier0.takeHomeMonthlyCents(clone, t));
+      }
+      case 'growTo': {
+        /* A balance with a yearly contribution, grown for some years at a
+           rate — the one projection loop. */
+        return val(Projection.futureValueCents({ startCents: args.startCents, annualRate: args.annualRate, years: Math.max(0, Math.round(args.years)), annualContributionCents: args.annualContributionCents || 0 }));
+      }
+      case 'ssMonthly': {
+        if (!SocialSecurity) return null;
+        return val(SocialSecurity.estimate(h, t, { retireAge: args.retireAge, claimAge: args.claimAge, grossAnnualCents: args.grossAnnualCents }));
+      }
+      case 'acaPremiumMonthly': {
+        /* A marketplace premium for the bridge years: the applicable share
+           of income, capped at the unsubsidised silver benchmark. */
+        if (!Tax || !t.aca || !t.cobraAca) return null;
+        var cliff = Tax.acaCliff(t.aca, args.magiCents, Schema.adults(h).length || 1);
+        if (!Money.isOk(cliff)) return null;
+        var full = t.cobraAca.monthly.acaSilver40Cents * (Money.isEntered(args.ageFactor) ? args.ageFactor : 1);
+        if (cliff.overCliff) return Math.round(full);
+        var pct = Money.isEntered(cliff.applicablePercentage) ? cliff.applicablePercentage : null;
+        if (pct === null) return Math.round(full);
+        return Math.round(Math.min(full, args.magiCents * pct / 12));
+      }
+      case 'vpwPlan': case 'vpwFirstYear': case 'vpwDieWith': case 'vpwPeakAge': case 'vpwFirstShortAge': {
+        if (!VPW || !t.vpwTable) return null;
+        var ss = args.ssMonthlyCents || 0, claimAge = args.claimAge || 67;
+        var p = VPW.plan({ table: t.vpwTable, portfolioCents: args.portfolioCents, retireAge: args.retireAge, planAge: args.planAge,
+          stockShare: args.stockShare, realReturn: args.realReturn, annualSpendCents: args.annualSpendCents,
+          otherIncomeCents: function (age) { return age >= claimAge ? ss * 12 : 0; } });
+        if (!Money.isOk(p)) return null;
+        if (name === 'vpwPlan') return p.success ? 1 : 0;
+        if (name === 'vpwFirstYear') return p.firstWithdrawalCents;
+        if (name === 'vpwDieWith') return p.dieWithCents;
+        if (name === 'vpwPeakAge') return p.peakAge;
+        return p.firstShortAge;
       }
       case 'realHourly': {
         if (!Hourly) return null;
@@ -260,6 +300,8 @@
     var expensesVal = val(Schema.monthlyExpensesCents(household));
     return {
       housingMonthlyCents: byCategory && Money.isEntered(byCategory.housing) ? byCategory.housing : null,
+      retireAge: num((household.targets || {}).retireAge),
+      allocationStocks: num((household.allocation || {}).stocks),
       /* The cushion floor: the sleep-at-night number when there is one,
          else three months of spending. */
       efFloorCents: swan !== null ? swan : (Money.isEntered(expensesVal) ? expensesVal * 3 : null),
@@ -382,16 +424,6 @@
         flags.push({ key: 'unpriced', month: null, text: it.label + ' scales a tracked line (' + it.categoryId + ') and there is no tracked month; it is left out.' });
       }
     });
-    /* Named lines: figures the template wants shown beside the columns. */
-    env.lines = {};
-    var lines = (tpl.lines || []).map(function (ln) {
-      var v = evaluate(ln.value, env);
-      env.lines[ln.id] = v;
-      var warn = ln.warn === undefined ? null : evaluate(ln.warn, env);
-      var bad = ln.bad === undefined ? null : evaluate(ln.bad, env);
-      return { id: ln.id, label: ln.label, unit: ln.unit || 'dollars', value: v, note: ln.note || null,
-        warn: warn === true, bad: bad === true };
-    });
 
     /* The shock: the worst plausible year lands the month the event starts. */
     var shockCents = 0;
@@ -484,6 +516,26 @@
     if (Money.isEntered(ctx.swanFloorCents) && monthly.some(function (r) { return r.cashCents < ctx.swanFloorCents; })) {
       flags.push({ key: 'swan', month: null, text: 'Cash falls below your sleep-at-night number along the way.' });
     }
+
+    /* Named lines: figures the template wants shown beside the columns. */
+    env.lines = {};
+    /* Run-level figures a line may read: the column's return, and the end
+       state the column arrived at. */
+    var endRow = monthly[monthly.length - 1];
+    env.ctx = ctx = Object.assign({}, ctx, {
+      rate: rate, bundleId: d,
+      investmentsAtEndCents: endRow.investmentsCents, cashAtEndCents: endRow.cashCents, netWorthAtEndCents: endRow.netWorthCents,
+      contributionAnnualAtEndCents: (endRow.contributionCents + endRow.matchCents) * MONTHS,
+      horizonYears: H / MONTHS
+    });
+    var lines = (tpl.lines || []).map(function (ln) {
+      var v = evaluate(ln.value, env);
+      env.lines[ln.id] = v;
+      var warn = ln.warn === undefined ? null : evaluate(ln.warn, env);
+      var bad = ln.bad === undefined ? null : evaluate(ln.bad, env);
+      return { id: ln.id, label: ln.label, unit: ln.unit || 'dollars', value: v, note: ln.note || null,
+        warn: warn === true, bad: bad === true, perColumn: ln.perColumn === true };
+    });
 
     /* FI from the end state: what is invested then, growing at the
        household's own assumption with the end-state contribution. */

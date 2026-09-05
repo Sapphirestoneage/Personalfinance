@@ -6920,6 +6920,89 @@ section('Life events: a big purchase, on the demo');
   check('the template writes nothing: no expenses, no income', tpl.diff.income.length + tpl.diff.expenses.length + tpl.diff.assets.length, 0);
 })();
 
+section('Variable withdrawal and Social Security, by hand');
+
+(function () {
+  const VPW = require(path.join(ROOT, 'engines/vpw.js'));
+  const SS = require(path.join(ROOT, 'engines/ss.js'));
+  const vpw = require(path.join(ROOT, 'data/vpw_table.json'));
+  const ss = require(path.join(ROOT, 'data/ss_bend_points_2026.json'));
+  check('the VPW share at 60, 60/40, from the table', VPW.percentageAt(vpw, 60, 0.6), 0.050, 1e-12);
+  check('at 57 it is interpolated between 55 and 60', VPW.percentageAt(vpw, 57, 0.6), 0.046 + (0.050 - 0.046) * 2 / 5, 1e-12);
+  check('a 45% stock share reads the 40/60 column', VPW.percentageAt(vpw, 60, 0.45), 0.046, 1e-12);
+  check('below the table it holds the first row', VPW.percentageAt(vpw, 30, 0.6), 0.038, 1e-12);
+  /* Two years of a $1,000,000 portfolio from 65: withdraw 5.5%, grow the rest 5%. */
+  const p = VPW.plan({ table: vpw, portfolioCents: 100000000, retireAge: 65, planAge: 66, stockShare: 0.6, realReturn: 0.05, annualSpendCents: 5000000 });
+  check('year one withdraws 5.5%: $55,000', p.years[0].withdrawalCents, 5500000);
+  check('which covers $50,000', p.years[0].covered, true);
+  check('the rest grows 5%: $945,000 → $992,250', p.years[0].portfolioAfterCents, 99225000);
+  check('year two withdraws 5.5% + a tenth of a point of that', p.years[1].withdrawalCents, Math.round(99225000 * (0.055 + (0.061 - 0.055) / 5)));
+  check('success when every year is covered', p.success, true);
+  const short = VPW.plan({ table: vpw, portfolioCents: 20000000, retireAge: 65, planAge: 70, stockShare: 0.6, realReturn: 0.05, annualSpendCents: 5000000 });
+  check('a $200,000 portfolio cannot pay $50,000: short from the first year', short.firstShortAge, 65);
+  const withSS = VPW.plan({ table: vpw, portfolioCents: 20000000, retireAge: 65, planAge: 70, stockShare: 0.6, realReturn: 0.05, annualSpendCents: 5000000, otherIncomeCents: function (age) { return age >= 67 ? 4500000 : 0; } });
+  check('other income from 67 covers from 67', withSS.firstShortAge, 65);
+  checkTrue('and the years say which were covered', withSS.years[2].covered && !withSS.years[0].covered);
+  /* The spend curve: 1.5% a year less after 70. */
+  const late = VPW.plan({ table: vpw, portfolioCents: 100000000, retireAge: 70, planAge: 72, stockShare: 0.6, realReturn: 0.05, annualSpendCents: 5000000 });
+  check('at 72 the need is 50,000 × 0.985²', late.years[2].needCents, Math.round(5000000 * Math.pow(0.985, 2)));
+
+  /* Social Security: the bend-point formula on $72,000 from 22 to 55. */
+  const h = Demo.build();
+  const est = SS.estimate(h, { ssBendPoints: ss }, { retireAge: 55, claimAge: 67 });
+  check('33 working years counted', est.yearsCounted, 33);
+  const aime = 72000 * 33 / 35 / 12;
+  check('AIME: 72,000 × 33 ÷ 35 ÷ 12', est.aimeDollars, Math.round(aime));
+  const pia = 0.9 * 1226 + 0.32 * (aime - 1226);
+  check('PIA: 90% to the first bend, 32% to the second', est.piaDollars, Math.round(pia));
+  check('at full retirement age the factor is 1', est.claimFactor, 1);
+  check('the monthly benefit in cents', est.value, Math.round(pia * 100));
+  const early = SS.estimate(h, { ssBendPoints: ss }, { retireAge: 55, claimAge: 62 });
+  check('claiming at 62: 36 months at 5/9% and 24 at 5/12% off', early.claimFactor, 1 - 36 * 0.005556 - 24 * 0.004167, 1e-9);
+  const late70 = SS.estimate(h, { ssBendPoints: ss }, { retireAge: 55, claimAge: 70 });
+  check('claiming at 70: 24% more', late70.claimFactor, 1.24, 1e-9);
+  const capped = SS.estimate(h, { ssBendPoints: ss }, { retireAge: 55, grossAnnualCents: 30000000 });
+  check('income above the wage base is capped there', capped.aimeDollars, Math.round(176100 * 33 / 35 / 12));
+  const noDob = Demo.build(); noDob.people[0].dob = null;
+  check('no date of birth: incomplete', SS.estimate(noDob, { ssBendPoints: ss }, {}).missing.join(','), 'dob');
+})();
+
+section('Life events: stopping or coasting, on the demo');
+
+(function () {
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const VPW = require(path.join(ROOT, 'engines/vpw.js'));
+  const SS = require(path.join(ROOT, 'engines/ss.js'));
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) {} });
+  const tpl = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/retire-or-coast.json'), 'utf8'));
+  const h = Demo.build();
+  const all = E.runAll(h, tpl, {}, { tables: T });
+  const r = all['default'];
+  const by = {}; r.lines.forEach(l => { by[l.id] = l; });
+  check('stop at 55 by default (no target set)', r.answers.retireAge, 55);
+  check('spending a year proposed from the month: 12 × 3,150', r.answers.spend, 3780000);
+  check('the event changes nothing month to month: month 12 is the baseline', r.monthly[11].cashCents, all.baseline.monthly[11].cashCents);
+  check('23 years to stop', by.yearsToStop.value, 23);
+  check('Social Security from the SS engine, stopping at 55, claiming at 67', by.ssMonthly.value, SS.estimate(h, T, { retireAge: 55, claimAge: 67 }).value);
+  /* The portfolio at 55: the ten-year run's end, then thirteen years at the column's 5% with the end-state contributions. */
+  const endInv = r.monthly[119].investmentsCents, contribYear = (r.monthly[119].contributionCents + r.monthly[119].matchCents) * 12;
+  let grown = endInv; for (let y = 0; y < 13; y++) grown = grown * 1.05 + contribYear;
+  check('the portfolio at 55 by the projection loop', by.portfolioAtStop.value, Math.round(grown));
+  const plan = VPW.plan({ table: T.vpwTable, portfolioCents: by.portfolioAtStop.value, retireAge: 55, planAge: 95, stockShare: 0.6, realReturn: 0.05, annualSpendCents: 3780000 + 12 * by.acaBridge.value, otherIncomeCents: age => age >= 67 ? by.ssMonthly.value * 12 : 0 });
+  check('holds to 95? the VPW engine\'s answer', by.success.value, plan.success ? 1 : 0);
+  check('the first short age, the same', by.firstShort.value, plan.firstShortAge);
+  check('left at 95, the same', by.dieWith.value, plan.dieWithCents);
+  checkTrue('the demo cannot stop at 55: short from the first year', by.success.value === 0 && by.firstShort.value === 55);
+  checkTrue('per-column lines are marked for the room', by.success.perColumn && !by.ssMonthly.perColumn);
+  checkTrue('the dream column leaves more than the disaster', all.dream.lines.filter(l => l.id === 'dieWith')[0].value > all.disaster.lines.filter(l => l.id === 'dieWith')[0].value);
+  const targeted = Demo.build(); targeted.targets = Schema.createTargets({ retireAge: 65 });
+  const late = E.run(targeted, tpl, {}, { tables: T, d: 'default' });
+  check('with a stop age in FIRE Number it is the default', late.answers.retireAge, 65);
+  check('no bridge to 65 when stopping at 65', late.lines.filter(l => l.id === 'acaBridge')[0].value, 0);
+})();
+
 section('The D&D folder\'s vendored copies');
 
 (function () {

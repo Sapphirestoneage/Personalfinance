@@ -1,0 +1,327 @@
+{
+  "id": "retire-or-coast",
+  "title": "Stopping, or coasting",
+  "blurb": "Stop at the age you chose: the portfolio then, what a variable withdrawal pays, Social Security from the claim age, health cover to 65, and whether it holds to 95 — under all three D's.",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "confidence": "unverified",
+  "drawsOn": [
+    "targets",
+    "investments",
+    "monthlyExpenses",
+    "grossAnnualIncome",
+    "dob",
+    "allocation",
+    "contributionPercent"
+  ],
+  "questions": [
+    {
+      "id": "retireAge",
+      "ask": "Stop working at age",
+      "unit": "age",
+      "default": {
+        "coalesce": [
+          "$retireAge",
+          55
+        ]
+      },
+      "min": 30,
+      "max": 80,
+      "hint": "From FIRE Number's targets when set."
+    },
+    {
+      "id": "claimAge",
+      "ask": "Claim Social Security at",
+      "unit": "age",
+      "default": 67,
+      "min": 62,
+      "max": 70
+    },
+    {
+      "id": "planAge",
+      "ask": "Plan to age",
+      "unit": "age",
+      "default": 95,
+      "min": 70,
+      "max": 105
+    },
+    {
+      "id": "stockShare",
+      "ask": "Stocks, as a share of the portfolio then",
+      "unit": "percent",
+      "default": {
+        "coalesce": [
+          "$allocationStocks",
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "spend",
+      "ask": "Spending a year in retirement, today's dollars",
+      "unit": "dollars",
+      "default": {
+        "*": [
+          12,
+          "$monthlyExpensesCents"
+        ]
+      }
+    }
+  ],
+  "startsOn": 0,
+  "gapMonths": 0,
+  "diff": {
+    "income": [],
+    "expenses": [],
+    "oneTime": [],
+    "assets": []
+  },
+  "derived": [
+    {
+      "id": "yearsToStop",
+      "value": {
+        "max": [
+          0,
+          {
+            "-": [
+              "@retireAge",
+              "$age"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "lines": [
+    {
+      "id": "yearsToStop",
+      "label": "Years until you stop",
+      "unit": "years",
+      "value": "$yearsToStop"
+    },
+    {
+      "id": "ssMonthly",
+      "label": "Social Security a month from the claim age, on today's income",
+      "unit": "dollarsMonthly",
+      "value": {
+        "fn": "ssMonthly",
+        "args": {
+          "retireAge": "@retireAge",
+          "claimAge": "@claimAge"
+        }
+      }
+    },
+    {
+      "id": "acaBridge",
+      "label": "Health cover a month until 65, on the marketplace at that spending",
+      "unit": "dollarsMonthly",
+      "value": {
+        "if": [
+          {
+            "lt": [
+              "@retireAge",
+              65
+            ]
+          },
+          {
+            "fn": "acaPremiumMonthly",
+            "args": {
+              "magiCents": "@spend",
+              "ageFactor": 1.5
+            }
+          },
+          0
+        ]
+      },
+      "note": "The premium is the applicable share of income for that income, capped at 1.5× the benchmark silver for a 40-year-old; unverified tables."
+    },
+    {
+      "id": "portfolioAtStop",
+      "label": "The portfolio at that age, grown at this column's return with today's contributions",
+      "unit": "dollars",
+      "perColumn": true,
+      "value": {
+        "fn": "growTo",
+        "args": {
+          "startCents": "$investmentsAtEndCents",
+          "annualRate": "$rate",
+          "years": {
+            "max": [
+              0,
+              {
+                "-": [
+                  "$yearsToStop",
+                  "$horizonYears"
+                ]
+              }
+            ]
+          },
+          "annualContributionCents": "$contributionAnnualAtEndCents"
+        }
+      },
+      "note": "Ten years of the monthly run, then the projection engine for the rest."
+    },
+    {
+      "id": "firstYear",
+      "label": "The first year's variable withdrawal (VPW)",
+      "unit": "dollars",
+      "perColumn": true,
+      "value": {
+        "fn": "vpwFirstYear",
+        "args": {
+          "portfolioCents": "^portfolioAtStop",
+          "retireAge": "@retireAge",
+          "planAge": "@planAge",
+          "stockShare": "@stockShare",
+          "realReturn": "$rate",
+          "annualSpendCents": "@spend",
+          "ssMonthlyCents": "^ssMonthly",
+          "claimAge": "@claimAge"
+        }
+      }
+    },
+    {
+      "id": "success",
+      "label": "Holds to the plan age (1 = every year covered)",
+      "unit": "count",
+      "perColumn": true,
+      "value": {
+        "fn": "vpwPlan",
+        "args": {
+          "portfolioCents": "^portfolioAtStop",
+          "retireAge": "@retireAge",
+          "planAge": "@planAge",
+          "stockShare": "@stockShare",
+          "realReturn": "$rate",
+          "annualSpendCents": {
+            "+": [
+              "@spend",
+              {
+                "*": [
+                  12,
+                  "^acaBridge"
+                ]
+              }
+            ]
+          },
+          "ssMonthlyCents": "^ssMonthly",
+          "claimAge": "@claimAge"
+        }
+      },
+      "bad": {
+        "eq": [
+          "^success",
+          0
+        ]
+      }
+    },
+    {
+      "id": "firstShort",
+      "label": "First age the withdrawal falls short",
+      "unit": "age",
+      "perColumn": true,
+      "value": {
+        "fn": "vpwFirstShortAge",
+        "args": {
+          "portfolioCents": "^portfolioAtStop",
+          "retireAge": "@retireAge",
+          "planAge": "@planAge",
+          "stockShare": "@stockShare",
+          "realReturn": "$rate",
+          "annualSpendCents": {
+            "+": [
+              "@spend",
+              {
+                "*": [
+                  12,
+                  "^acaBridge"
+                ]
+              }
+            ]
+          },
+          "ssMonthlyCents": "^ssMonthly",
+          "claimAge": "@claimAge"
+        }
+      }
+    },
+    {
+      "id": "peakAge",
+      "label": "The age the portfolio peaks",
+      "unit": "age",
+      "perColumn": true,
+      "value": {
+        "fn": "vpwPeakAge",
+        "args": {
+          "portfolioCents": "^portfolioAtStop",
+          "retireAge": "@retireAge",
+          "planAge": "@planAge",
+          "stockShare": "@stockShare",
+          "realReturn": "$rate",
+          "annualSpendCents": {
+            "+": [
+              "@spend",
+              {
+                "*": [
+                  12,
+                  "^acaBridge"
+                ]
+              }
+            ]
+          },
+          "ssMonthlyCents": "^ssMonthly",
+          "claimAge": "@claimAge"
+        }
+      }
+    },
+    {
+      "id": "dieWith",
+      "label": "Left at the plan age",
+      "unit": "dollars",
+      "perColumn": true,
+      "value": {
+        "fn": "vpwDieWith",
+        "args": {
+          "portfolioCents": "^portfolioAtStop",
+          "retireAge": "@retireAge",
+          "planAge": "@planAge",
+          "stockShare": "@stockShare",
+          "realReturn": "$rate",
+          "annualSpendCents": {
+            "+": [
+              "@spend",
+              {
+                "*": [
+                  12,
+                  "^acaBridge"
+                ]
+              }
+            ]
+          },
+          "ssMonthlyCents": "^ssMonthly",
+          "claimAge": "@claimAge"
+        }
+      }
+    }
+  ],
+  "protect": [
+    "Health cover across the bridge to 65",
+    "A bad first decade — VPW shrinks every later withdrawal after one",
+    "The plan age: living past it is the risk the withdrawal rate is sized for"
+  ],
+  "cut": [],
+  "tripleD": {},
+  "outputs": [
+    "success",
+    "peakAge",
+    "dieWith"
+  ],
+  "horizonMonths": 120,
+  "sources": [
+    "data/vpw_table.json",
+    "data/ss_bend_points_2026.json",
+    "data/aca_2026.json",
+    "data/cobra_aca_2024.json",
+    "data/triple_d.json",
+    "data/return_bands.json"
+  ]
+}

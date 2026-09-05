@@ -158,6 +158,8 @@
 <script src="../engines/tax.js"></script>
 <script src="../engines/debt.js"></script>
 <script src="../engines/quickmath.js"></script>
+<script src="../engines/vpw.js"></script>
+<script src="../engines/ss.js"></script>
 <script src="../engines/events.js"></script>
 <script>
 (function () {
@@ -307,6 +309,9 @@
         + (r.lostMatchCents ? '<dt>Match lost</dt><dd>' + fmt(r.lostMatchCents) + '</dd>' : '')
         + (r.gapMonths ? '<dt>Gap after</dt><dd>' + r.gapMonths + ' mo</dd>' : '')
         + (r.shockCents ? '<dt>Worst year on top</dt><dd>' + fmt(r.shockCents) + '</dd>' : '')
+        + (r.lines || []).filter(function (l) { return l.perColumn; }).map(function (l) {
+            return '<dt>' + esc(l.label) + '</dt><dd' + (l.bad ? ' style="color:#e4b04a"' : l.warn ? ' style="color:#e4b04a"' : '') + '>' + lineText(l) + '</dd>';
+          }).join('')
         + '</dl>'
         + (r.flags.length ? '<ul class="flags">' + r.flags.map(function (f) { return '<li' + (f.key === 'cashOut' || f.key === 'swan' ? ' class="is-bad"' : '') + '>' + esc(f.text) + '</li>'; }).join('') + '</ul>' : '')
         + '</div>';
@@ -335,11 +340,12 @@
   }
   function renderLines(r) {
     var host = el('lines');
-    if (!r || !r.lines || !r.lines.length) { host.innerHTML = ''; return; }
+    var shared = r && r.lines ? r.lines.filter(function (l) { return !l.perColumn; }) : [];
+    if (!shared.length) { host.innerHTML = ''; return; }
     host.innerHTML = '<dl style="display:grid;grid-template-columns:1fr auto;gap:var(--space-1) var(--space-3);margin:0;font-size:var(--text-sm)">'
-      + r.lines.map(function (l) {
+      + shared.map(function (l) {
         return '<dt style="color:var(--color-text-muted)">' + esc(l.label) + (l.note ? '<br/><small style="color:var(--color-text-faint)">' + esc(l.note) + '</small>' : '') + '</dt>'
-          + '<dd style="margin:0;text-align:right;font-variant-numeric:tabular-nums">' + lineText(l) + '</dd>';
+          + '<dd style="margin:0;text-align:right;font-variant-numeric:tabular-nums' + (l.bad || l.warn ? ';color:#e4b04a' : '') + '">' + lineText(l) + '</dd>';
       }).join('') + '</dl>';
   }
 

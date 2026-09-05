@@ -4383,6 +4383,30 @@ joy per $1,000 on your own rating with no verdict attached, cash after
 against the cushion floor (red under it), and when the thirty days end.
 Five-year horizon.
 
+**9 · Stopping, or coasting.** Stop at the age you chose (FIRE Number's
+target when set), claim Social Security at 67, plan to 95, the stock
+share of the portfolio then (Where It Goes's target when set), spending a
+year in today's dollars. Two engines arrive with it. `engines/vpw.js` is
+the Bogleheads variable percentage withdrawal: the share of the
+portfolio to take each year rises with age from `data/vpw_table.json`
+(recalled, unverified), interpolated by age, the nearer of two stock
+columns; the plan runs a year at a time to the plan age, withdrawing
+the share, growing the rest at the column's real return, and calling a
+year covered when the withdrawal plus other income meets the spend —
+which falls 1.5% a year past 70, a stated convention. `engines/ss.js`
+estimates Social Security from the income entered: the current income
+every year from 22 to the stop age, capped at the wage base, averaged
+over 35, through the bend-point formula and the early or delayed claim
+factor, from `data/ss_bend_points_2026.json` (recalled, unverified).
+Health cover to 65 is the marketplace's applicable share of that
+spending, capped at 1.5× the benchmark silver. The template's lines are
+**per column**: the portfolio at the stop age (the ten-year run's end,
+then the projection loop at the column's return), the first year's
+withdrawal, holds-to-95, the first short age, the peak age, and what is
+left — so the three D's each answer. The demo cannot stop at 55 on any
+column, short from the first year, which is the honest answer; nothing
+here decides whether to coast, it shows what stopping would need.
+
 **Verified.** `node test/run.js`: for each, month 1 and month 12 of the
 default run on the demo by longhand — the child's first year at $3,150 +
 $1,200 + $1,000 + $250 a month with the $3,000 birth in month 1; a parent
