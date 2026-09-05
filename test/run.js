@@ -6705,6 +6705,34 @@ section('Life events: the kids, on the demo');
 
 })();
 
+section('Life events: the job offer, on the demo');
+
+(function () {
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const T = Object.assign({}, TABLES, {
+    commonCosts: require(path.join(ROOT, 'data/common_costs.json')),
+    tripleD: require(path.join(ROOT, 'data/triple_d.json')),
+    returnBands: require(path.join(ROOT, 'data/return_bands.json'))
+  });
+  const tpl = id => JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/' + id + '.json'), 'utf8'));
+  const take = 486000, contrib = 24000, match = 12000, spend = 315000, rate = 0.05 / 12;
+  /* The job offer: $90,000, 60 hours, 8 hours of commute, one remote day, $2,000 unvested, 3-month wait. */
+  const job = E.run(Demo.build(), tpl('job-change'), { base: 9000000, hours: 60, commute: 8, remoteDays: 1, startsOn: 0, unvested: 200000 }, { tables: T, d: 'default' });
+  const takeThere = Tier0.takeHomeMonthlyCents(Object.assign(Demo.build(), { people: [Object.assign(Demo.build().people[0], { incomeSources: [Schema.createIncomeSource({ personId: 'demo_person_robin', grossAnnualIncomeCents: 9000000 })] })] }), T).value;
+  check('take-home there, from the one tax lookup', job.lines.filter(l => l.id === 'takeHomeThere')[0].value, takeThere);
+  check('month 1 income: the new take-home less 4% of the new salary', job.monthly[0].incomeCents, takeThere - 30000);
+  check('month 1: no match yet (waiting), so nothing goes in but the contribution', job.monthly[0].matchCents, 0);
+  check('month 4: their match at 4% of $90,000', job.monthly[3].matchCents, 30000);
+  check('the forfeited match comes off investments in month 1, with no cash on the other side', job.monthly[0].investmentsCents, Math.round((4800000 - 200000 + 30000) * (1 + rate)));
+  check('three months of the old match lost while waiting', job.lostMatchCents, 3 * match);
+  const hourlyNow = job.lines.filter(l => l.id === 'hourlyNow')[0].value, hourlyThere = job.lines.filter(l => l.id === 'hourlyThere')[0].value;
+  checkTrue('an hour is worth less there: more money, many more hours', hourlyThere < hourlyNow);
+  check('month 12 cash by the longhand', job.monthly[11].cashCents, 950000 + 12 * (takeThere - 30000 - spend));
+  const same = E.run(Demo.build(), tpl('job-change'), { base: 7200000, hours: 40, commute: 5, startsOn: 0, waitMonths: 0, matchPercent: 0.02 }, { tables: T, d: 'default' });
+  check('the same job offered again changes nothing in month 1', same.monthly[0].incomeCents, take - contrib);
+  check('and the same match: 2% of $72,000 is what the demo captures now', same.monthly[0].matchCents, match);
+})();
+
 section('The D&D folder\'s vendored copies');
 
 (function () {

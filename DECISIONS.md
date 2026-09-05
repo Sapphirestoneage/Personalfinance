@@ -4307,6 +4307,17 @@ seventeen. The demo's cash runs out in month 37 with one child in NC
 childcare, which is the finding. Children born in one batch rather than
 staggered: an approximation, named here.
 
+**3 · A job offer.** The offer card: base, bonus, their match as a share
+of salary, honest hours, commute, remote days, start, unvested match
+forfeited, months before their match begins (90 days proposed). Income
+scales by the ratio of take-homes through the one tax lookup; the plan
+contribution follows the new base; the match follows theirs and is zero
+through the wait; the forfeited match comes off investments the month
+you leave. Lines: an hour of your life on each side through
+`engines/hourly.js` (the demo's $90,000 at sixty hours is worth *less* an
+hour than its $72,000 at forty), take-home on each side, and one more
+point of the new salary. No new tables.
+
 **Verified.** `node test/run.js`: for each, month 1 and month 12 of the
 default run on the demo by longhand — the child's first year at $3,150 +
 $1,200 + $1,000 + $250 a month with the $3,000 birth in month 1; a parent

@@ -8,6 +8,7 @@
   "note": "Order is the order the room lists them in. A template not listed here is not offered.",
   "events": [
     "sabbatical",
-    "kids"
+    "kids",
+    "job-change"
   ]
 }
