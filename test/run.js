@@ -1834,8 +1834,8 @@ section('SWAN Number');
   /* -- Ownership: exactly one room may edit it --------------------------- */
   check('the SWAN target is owned by Sleep At Night',
     Ownership.field('swanTarget').owner, 'sleep-at-night');
-  check('and Sleep At Night owns nothing else',
-    Ownership.ownedBy('sleep-at-night').sort().join(','), 'swanTarget');
+  check('and Sleep At Night owns only the number and the four coverage facts (D-069)',
+    Ownership.ownedBy('sleep-at-night').sort().join(','), 'disabilityMonthly,oopMax,swanTarget,termLife,umbrella');
   const chip = Ownership.describe('swanTarget', months6, 'financial-snapshot');
   check('elsewhere it renders as a read-only $18,900', chip.display, '$18,900');
   check('and it is not editable there', chip.isOwnHere, false);
@@ -6136,6 +6136,62 @@ section('Targets, owned by FIRE');
   const dflt = Fire.calculateFIRE(Demo.build(), fireT, { variantId: 'coast' });
   checkTrue('coast to 60 needs more today than coast to 65', Money.isOk(stored) && Money.isOk(dflt) && stored.value > dflt.value);
   check('and says which age it grew to', stored.coastTargetAge, 60);
+})();
+
+section('The Coverage Checkup, and how it is split');
+
+(function () {
+  /* D-069: four facts about cover, owned by Sleep At Night; a target mix,
+     owned by Where It Goes. Both stored, both read-only elsewhere. */
+  ['oopMax', 'termLife', 'disabilityMonthly', 'umbrella'].forEach(function (f) {
+    check(`${f} is owned by Sleep At Night`, Ownership.field(f).owner, 'sleep-at-night');
+    check(`${f} links to the coverage card`, Ownership.field(f).anchor, 'coverage');
+  });
+  ['allocationStocks', 'allocationBonds', 'allocationCash', 'rebalanceBand'].forEach(function (f) {
+    check(`${f} is owned by Where It Goes`, Ownership.field(f).owner, 'accounts');
+    check(`${f} links to the allocation card`, Ownership.field(f).anchor, 'allocation');
+  });
+  const san = fs.readFileSync(path.join(ROOT, 'rooms/sleep-at-night.html'), 'utf8');
+  const acc = fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8');
+  checkTrue('the coverage card exists', /id="coverage"/.test(san));
+  checkTrue('the allocation card exists', /id="allocation"/.test(acc));
+  checkTrue('the deductible is still asked in Start Here, not here', !/data-field="highestDeductible"|id="c-deductible"/.test(san)
+    && Ownership.field('highestDeductible').owner === 'start');
+  checkTrue('Where It Goes says so in its title', /how it.s split/.test(Registry.byId('accounts').title));
+  checkTrue('Sleep At Night lists the checkup', Registry.byId('sleep-at-night').subsections.some(s => s.id === 'coverage'));
+  checkTrue('Where It Goes lists the split', Registry.byId('accounts').subsections.some(s => s.id === 'allocation'));
+
+  const h = Demo.build();
+  check('nothing entered: not priced, not zero', Ownership.field('oopMax').read(h).status, 'incomplete');
+  check('umbrella unanswered is incomplete', Ownership.field('umbrella').read(h).status, 'incomplete');
+  h.insurance.umbrella = false;
+  check('"no" is an answer', Ownership.field('umbrella').read(h).status, 'ok');
+  check('formatted as No', Ownership.field('umbrella').format(false), 'No');
+  h.insurance.disabilityMonthlyCents = 300000;
+  check('a monthly benefit is formatted per month', Ownership.field('disabilityMonthly').format(300000), '$3,000/mo');
+  const elsewhere = Ownership.describe('oopMax', Object.assign(h, { insurance: Object.assign(h.insurance, { oopMaxCents: 800000 }) }), 'statement');
+  checkTrue('elsewhere it is a read-only chip linking home', !elsewhere.mine && /sleep-at-night\.html#coverage$/.test(elsewhere.href));
+
+  /* The mix, checked by one function. */
+  check('no mix: incomplete', Schema.allocationStatus(h).status, 'incomplete');
+  h.allocation = Schema.createAllocation({ stocks: 0.7 });
+  const part = Schema.allocationStatus(h);
+  check('one slice: 70% placed', part.value, 0.7, 1e-12);
+  checkTrue('and not complete', !part.complete && part.missing.join(',') === 'bonds,cash');
+  h.allocation = Schema.createAllocation({ stocks: 0.7, bonds: 0.2, cash: 0.15 });
+  const over = Schema.allocationStatus(h);
+  checkTrue('adds to 105%: complete but not balanced', over.complete && !over.balanced && Math.abs(over.value - 1.05) < 1e-12);
+  h.allocation = Schema.createAllocation({ stocks: 0.7, bonds: 0.2, cash: 0.1, rebalanceBand: 0.05 });
+  checkTrue('adds to 100%: balanced', Schema.allocationStatus(h).balanced);
+  check('a share reads as a percentage', Ownership.field('allocationStocks').format(0.7), '70%');
+  check('the band reads as ±', Ownership.field('rebalanceBand').format(0.05), '±5%');
+
+  /* The worst plausible year reads the out-of-pocket maximum from here. */
+  const St = require(path.join(ROOT, 'engines/statement.js'));
+  const T = Object.assign({}, TABLES, { uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')) });
+  const without = St.worstPlausibleYear(Demo.build(), T);
+  const withOop = St.worstPlausibleYear(h, T);
+  checkTrue('and the year costs exactly that much more', Money.isOk(without) && Money.isOk(withOop) && withOop.value - without.value === 800000);
 })();
 
 section('The D&D folder\'s vendored copies');

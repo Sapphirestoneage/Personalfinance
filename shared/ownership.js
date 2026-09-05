@@ -106,6 +106,17 @@
      read    — pull the current value out of the household, as a Result
      format  — how to show it once read                                    */
 
+  function allocationRow(slice, label) {
+    return {
+      label: label, owner: 'accounts', anchor: 'allocation',
+      read: function (h) {
+        var v = (h.allocation || {})[slice];
+        return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not set.', ['allocation.' + slice]);
+      },
+      format: function (v) { return Money.formatRate(v, { decimals: 0 }); }
+    };
+  }
+
   var FIELDS = {
     dob: {
       label: 'Date of birth', owner: 'start', anchor: 'q-about',
@@ -253,6 +264,55 @@
           : Money.incomplete('Not answered yet.', ['highestDeductibleCents']);
       },
       format: money
+    },
+
+    /* The Coverage Checkup (D-069): four facts about your cover, asked in
+       Sleep At Night, read by the Statement's worst plausible year. */
+    oopMax: {
+      label: 'Out-of-pocket maximum', owner: 'sleep-at-night', anchor: 'coverage',
+      read: function (h) {
+        var v = (h.insurance || {}).oopMaxCents;
+        return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['oopMaxCents']);
+      },
+      format: money
+    },
+    termLife: {
+      label: 'Term life in force', owner: 'sleep-at-night', anchor: 'coverage',
+      read: function (h) {
+        var v = (h.insurance || {}).termLifeCents;
+        return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['termLifeCents']);
+      },
+      format: money
+    },
+    disabilityMonthly: {
+      label: 'Disability benefit', owner: 'sleep-at-night', anchor: 'coverage',
+      read: function (h) {
+        var v = (h.insurance || {}).disabilityMonthlyCents;
+        return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['disabilityMonthlyCents']);
+      },
+      format: function (v) { return money(v) + '/mo'; }
+    },
+    umbrella: {
+      label: 'Umbrella policy', owner: 'sleep-at-night', anchor: 'coverage',
+      read: function (h) {
+        var v = (h.insurance || {}).umbrella;
+        return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['umbrella']);
+      },
+      format: function (v) { return v ? 'Yes' : 'No'; }
+    },
+
+    /* The target mix (D-069): stated in Where It Goes, a target rather than
+       a reading of the accounts. Shares of one; formatted as percentages. */
+    allocationStocks: allocationRow('stocks', 'Target: stocks'),
+    allocationBonds: allocationRow('bonds', 'Target: bonds'),
+    allocationCash: allocationRow('cash', 'Target: cash'),
+    rebalanceBand: {
+      label: 'Rebalance band', owner: 'accounts', anchor: 'allocation',
+      read: function (h) {
+        var v = (h.allocation || {}).rebalanceBand;
+        return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not set.', ['rebalanceBand']);
+      },
+      format: function (v) { return '\u00b1' + Money.formatRate(v, { decimals: 0 }); }
     },
 
     /* Debt Payoff owns every debt figure. The Financial Snapshot used to take

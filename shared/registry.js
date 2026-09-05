@@ -160,6 +160,7 @@
       subsections: [
         { id: 'number',        label: 'Your number' },
         { id: 'deductible',    label: 'Your highest deductible' },
+        { id: 'coverage',      label: 'Coverage checkup' },
         { id: 'out-compare',   label: 'Yours vs. the maths' },
         { id: 'out-gap',       label: 'Getting there' },
         { id: 'milestones',    label: 'The usual milestones' },
@@ -303,16 +304,17 @@
       kind: 'about-you',
       needs: ['grossAnnualIncome', 'filingStatus'],
       order: 17,
-      title: 'Where It Goes',
-      blurb: 'Roth, Traditional or taxable \u2014 and how much a Solo 401(k) actually lets you put away.',
+      title: 'Where It Goes & how it\u2019s split',
+      blurb: 'Roth, Traditional or taxable, how much a Solo 401(k) actually lets you put away \u2014 and the mix you are aiming for.',
       href: 'rooms/accounts.html',
       tier: 2,
       tags: ['income'],
       subsections: [
         { id: 'setup',   label: 'Your retirement setup' },
         { id: 'compare', label: 'Roth vs. Traditional vs. taxable' },
-        { id: 'solo',    label: 'Solo 401(k)' },
-        { id: 'reading', label: 'Reading from elsewhere' }
+        { id: 'solo',       label: 'Solo 401(k)' },
+        { id: 'allocation', label: 'How it\u2019s split' },
+        { id: 'reading',    label: 'Reading from elsewhere' }
       ]
     },
     {

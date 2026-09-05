@@ -474,6 +474,22 @@
     };
   }
 
+  /** The target mix, checked: which slices are entered, what they add to,
+   *  and whether that is 100%. One function so the room, the ownership
+   *  chip and the tests agree on what "balanced" means. D-069. */
+  function allocationStatus(household) {
+    var a = (household && household.allocation) || {};
+    var slices = ['stocks', 'bonds', 'cash'];
+    var entered = slices.filter(function (k) { return Money.isEntered(a[k]); });
+    if (!entered.length) return Money.incomplete('No target mix yet.', ['allocation']);
+    var sum = entered.reduce(function (t, k) { return t + a[k]; }, 0);
+    return Money.ok(sum, {
+      complete: entered.length === slices.length,
+      missing: slices.filter(function (k) { return !Money.isEntered(a[k]); }),
+      balanced: entered.length === slices.length && Math.abs(sum - 1) < 1e-9
+    });
+  }
+
   function createTargets(fields) {
     var f = fields || {};
     return {
@@ -1176,6 +1192,7 @@
     createProperty: createProperty,
     createAllocation: createAllocation,
     createTargets: createTargets,
+    allocationStatus: allocationStatus,
     createScenario: createScenario,
     assetRule: assetRule,
     assetAccessAge: assetAccessAge,

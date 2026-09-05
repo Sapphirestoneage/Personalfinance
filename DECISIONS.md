@@ -3794,6 +3794,62 @@ on `#targets`, `test/alignment.js` on `.params`.
 
 ---
 
+## D-069 — The Coverage Checkup lives in Sleep At Night; the target mix lives in Where It Goes
+
+*(BRIEF.md §3.2.)* Two small fact cards, each in the room whose question
+it answers, each writing fields that D-064 added and nobody wrote.
+
+**Coverage checkup** (`rooms/sleep-at-night.html`, anchor `coverage`).
+Four facts about your cover: the health out-of-pocket maximum, term life
+in force, the long-term disability benefit a month, and whether an
+umbrella policy exists (Not sure / Yes / No — `null` / `true` / `false`;
+"no" is an answer). Under them a read-out in four sentences — a bad
+health year against your cash, term life as years of the household's
+spending, disability as a share of what you spend, the umbrella as it is
+— and a link to the Statement's worst plausible year, which reads the
+out-of-pocket maximum from this card and prices the year that much
+higher. Blank means not entered: the read-out says "not priced" rather
+than assuming zero. The deductible stays asked in Start Here (D-061);
+this card does not ask it again. Ownership rows `oopMax`, `termLife`,
+`disabilityMonthly`, `umbrella`, owned by `sleep-at-night`.
+
+**How it's split** (`rooms/accounts.html`, anchor `allocation`). The room
+is retitled "Where It Goes & how it's split". Stocks, bonds and cash as
+percentages, stored as shares of one, plus a rebalance band. It is a
+stated *target*, not a reading of the accounts — the assets do not carry
+an asset class, so nothing here claims to know your actual mix.
+`Schema.allocationStatus(h)` is the one function that says what the
+slices add to, which are missing, and whether they are balanced; the
+read-out uses it ("Adds to 105%, not 100% — 5% too much." · "70% stocks ·
+20% bonds · 10% cash. With a ±5% band, stocks are rebalanced outside
+65%–75%."). A share outside 0–100 is not stored. Ownership rows
+`allocationStocks`, `allocationBonds`, `allocationCash`, `rebalanceBand`,
+owned by `accounts`.
+
+**Both cards are static markup, `.value` only** (LIVE-FORM: built once),
+written on blur through `Spine.updateProfile`, whose field-wise merge of
+`insurance` and `allocation` (D-064) means a card writing one field
+leaves every other — the deductible included — alone. `test/forms.js`
+checks exactly that on a phone.
+
+**Compatibility note.** No stored shape changed. What changed is who
+writes: `insurance.oopMaxCents / termLifeCents / disabilityMonthlyCents /
+umbrella` by `sleep-at-night`, `allocation.*` by `accounts`. A room that
+wants any of them reads the ownership row and links to the card. The
+worst plausible year already read `oopMaxCents`; it now has somewhere
+the number can come from.
+
+**Verified.** `node test/run.js` (owners, anchors, the deductible left
+with Start Here, umbrella "no" as an answer, the mix at 70 / 70+20+15 /
+70+20+10 with a band, the worst year exactly $8,000 dearer with the
+maximum entered), a phone-browser walk (type all four, read "13.2 years
+of your household's spending" and "95% of what you spend", reload, the
+Statement's worst year at $29,400; enter 70/20/15 and read "5% too much",
+correct to 10 and read the band), `test/forms.js` on both cards,
+`test/alignment.js` on `.cover-grid` and `.grid-2`.
+
+---
+
 ## D-046 — HP is measured in weeks, which is what makes §3A stop contradicting itself
 
 The Dungeons & Dividends rulebook defines Hit Points twice in the same

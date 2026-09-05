@@ -117,6 +117,49 @@ const CASES = [
     }
   },
   {
+    room: '/rooms/sleep-at-night.html',
+    container: '#coverage',
+    seed: 'demo',
+    fields: [
+      { sel: '#c-oop', type: '8000' },
+      { sel: '#c-life', type: '500000' },
+      { sel: '#c-disability', type: '3000' }
+    ],
+    expect: async (page) => {
+      const i = await page.evaluate(() =>
+        (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).insurance || {});
+      return [
+        ['the out-of-pocket maximum was stored', i.oopMaxCents, 800000],
+        ['the term life was stored', i.termLifeCents, 50000000],
+        ['the disability benefit was stored', i.disabilityMonthlyCents, 300000],
+        ['and the deductible from Start Here was left alone', i.highestDeductibleCents, 250000]
+      ];
+    }
+  },
+  {
+    room: '/rooms/accounts.html',
+    container: '#allocation',
+    seed: 'demo',
+    fields: [
+      { sel: '[data-alloc="stocks"]', type: '70' },
+      { sel: '[data-alloc="bonds"]', type: '20' },
+      { sel: '[data-alloc="cash"]', type: '10' },
+      { sel: '[data-alloc="rebalanceBand"]', type: '5' }
+    ],
+    expect: async (page) => {
+      const a = await page.evaluate(() =>
+        (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).allocation || {});
+      const read = await page.evaluate(() => document.getElementById('alloc-read').textContent);
+      return [
+        ['stocks stored as a share of one', a.stocks, 0.7],
+        ['bonds too', a.bonds, 0.2],
+        ['cash too', a.cash, 0.1],
+        ['the band too', a.rebalanceBand, 0.05],
+        ['and the read-out names the band', /65%–75%/.test(read), true]
+      ];
+    }
+  },
+  {
     room: '/rooms/fire.html',
     container: '#targets',
     seed: 'demo',
