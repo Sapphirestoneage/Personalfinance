@@ -135,7 +135,11 @@
     var cat = ctx.tables.dndRules.blockers[id];
     if (!cat) return null;
     if (cat.subStat) {
-      var r = ctx.sheet.subScores[cat.subStat];
+      /* No subScores at all is the same claim as an unscored one: we have not
+         been told. It must never throw — a caller holding a partial sheet is
+         exactly who this three-state answer exists for. */
+      var scores = ctx.sheet && ctx.sheet.subScores;
+      var r = scores ? scores[cat.subStat] : null;
       if (!r || !Money.isOk(r)) return null;
       return r.value >= cat.min;
     }
@@ -228,9 +232,20 @@
     var halved = held.some(function (b) { return b.effect === 'halve'; });
     var advantage = held.some(function (b) { return b.effect === 'advantage'; });
 
+    /* Exhaustion (§9.7) subtracts from every save. This is the whole reason it
+       is derived rather than decorative: being close to the edge really does
+       make you easier to move — you cannot wait for a better offer, shop the
+       policy or walk away — and every creature here is built for exactly that.
+       An unmeasurable runway means no penalty, not a guessed one. */
+    var exh = Character.exhaustion(sheet.currentHp, tables);
+    var exhPenalty = Money.isOk(exh) ? exh.savePenalty : 0;
+
     var modifier = target && target.ok ? target.modifier : null;
     var effectiveMod = modifier;
-    if (effectiveMod !== null && advantage) effectiveMod += rules.effects.advantageBonus;
+    if (effectiveMod !== null) {
+      if (advantage) effectiveMod += rules.effects.advantageBonus;
+      effectiveMod -= exhPenalty;
+    }
 
     /* Chance the save FAILS, i.e. the attack lands. A natural 1 always fails
        and a natural 20 always succeeds, so it never reaches 0 or 1. */
@@ -276,6 +291,9 @@
       deathSaves: hpAfter === 0 && cur !== null && damageWeeks > 0,
       massiveDamage: massive,
       negated: negated, halved: halved, advantage: advantage,
+      exhaustion: Money.isOk(exh) ? exh.value : null,
+      exhaustionLabel: Money.isOk(exh) ? exh.row.label : null,
+      exhaustionPenalty: exhPenalty,
       blockedBy: blockers, held: held, unknown: unknown,
       lair: monster.lair || [],
       mode: o.mode === 'roll' ? 'roll' : 'expected'

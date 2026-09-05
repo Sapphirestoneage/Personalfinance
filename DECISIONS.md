@@ -4309,3 +4309,97 @@ and only read).
 who has no Level. Tests assert the four tiers tile levels 1–20 with no gap and no
 overlap, and that every level lands in exactly one tier and one milestone band;
 if you add a tier, those are the checks that will tell you what you broke.
+
+---
+
+## D-068 — Exhaustion is derived, statuses are declared, and both change the game
+
+BRIEF §9.7. Two different kinds of condition, and the whole entry is about why
+they are treated differently.
+
+### Statuses are declared, because nothing in the household can see them
+
+The rulebook gives eight status effects — Unemployed (Collecting), Disabled,
+Discharged, Full-Time Student, W-2, 1099, Underwater, Means-Tested — each with
+what it grants, what it restricts and how long it lasts. Not one of them is
+visible in a number. A household with a modest income and a small balance looks
+identical whether the person is a student, on benefits or between jobs, and the
+restrictions differ enormously.
+
+So they are self-declared, like alignment: eight checkboxes, nothing inferred.
+`statuses()` returns `asked: false` when the key has never been written and
+`asked: true` with an empty list when someone has ticked and unticked — because
+"I have none of these" is an answer and "nobody asked me" is not, and collapsing
+them would lose the difference. `FORMAT.md` now says so, so an importer does not
+quietly throw the distinction away.
+
+### Exhaustion is derived, because it is not a mood
+
+The rulebook names **Exhausted** exactly once — as what Unemployed decays into —
+and never defines it. That is a §13-shaped hole, so this fills it, marked
+`origin: "extension"` like everything else written here.
+
+The definition that makes it worth having: **exhaustion is what a thin buffer
+costs you in decisions you can no longer afford to make well.** Not a feeling,
+not a self-report. It reads current HP — weeks of runway — and nothing else:
+
+    12+ weeks  0  Rested            you can say no, wait, and shop around
+    8–12       1  Watchful          you check the balance before ordinary purchases
+    4–8        2  Stretched         timing drives choices instead of price
+    2–4        3  Cornered          you cannot walk away from a bad deal
+    1–2        4  Running on fumes  decisions ordered by what is due next
+    0–1        5  Spent             every option is urgent, so every option costs more
+    0          6  Down              death saves, not decisions
+
+### And it subtracts from every save, which is what stops it being decoration
+
+Each level is a −1 to every saving throw, applied inside `Encounter.run()`. This
+is the point of the whole tranche. Being near the edge genuinely does make you
+easier to move — you cannot wait for a better offer, shop the policy, or walk
+away — and every creature in the bestiary is built to exploit exactly that. Now
+the model says so: the same character with the same Wisdom faces a Timeshare
+Charm-Caster at 37% when rested and 56% on fumes, and it is the runway doing it,
+not the Wisdom.
+
+The encounter room prints the penalty as its own figure and a sentence saying
+where it came from. A number that moves for unstated reasons is worse than no
+number.
+
+An unmeasurable runway applies **no** penalty rather than a guessed one, and
+`exhaustion()` returns incomplete rather than "Rested" — absent is not rested,
+the same way absent is not zero.
+
+### Two bugs found by writing the tests
+
+**The bottom of the ladder was unreachable.** Bands run minWeeks-inclusive to
+maxWeeks-exclusive, so level 5 ("under a week", floor 0) swallowed exactly zero
+and level 6 ("Down") could never happen. Zero is a different state from nearly
+out — it is the death-save state — so level 5 now carries `minWeeksExclusive` in
+the data and the engine honours it. Tests probe sixteen runway values including
+every boundary, assert each lands in exactly one band, and assert more runway is
+never more exhaustion.
+
+**`blockerState` threw on a sheet with no `subScores`.** A partial sheet is
+exactly who the three-state answer exists for, so a missing map now reads as
+`unknown` like an unscored stat rather than crashing.
+
+### Compatibility note
+
+**Stored shape:** `dndProfile.statuses` is **added** — a map of
+`{ statusId: boolean }` over the eight ids `unemployed`, `disability`,
+`discharged`, `student`, `w2`, `selfEmployed`, `underwater`, `meansTested`.
+Absent means never asked; present with all-false means asked and answered none.
+Nothing existing changed. Exhaustion stores nothing at all — it is derived on
+every read, so it can never go stale against the numbers it comes from.
+
+**Rooms updated:** `dnd/data/dnd_rules.json` (the exhaustion ladder, status ids,
+two notes), `dnd/engines/character.js` (`exhaustion`, `statuses`),
+`dnd/engines/encounter.js` (the save penalty, and the `subScores` guard),
+`dnd/sheet.html` (the Conditions section) and `dnd/encounter.html` (the penalty
+figure and its explanation). `dnd/FORMAT.md` documents the new key.
+
+**Before writing any of these from a new room:** the status checkboxes are
+LIVE INPUTS built once in `buildShell` — `paint()` writes only `.checked` and
+must never give `.statuslist` innerHTML (D-034). Write the map whole rather than
+setting single keys, or unticking the last one becomes indistinguishable from
+never having been asked.

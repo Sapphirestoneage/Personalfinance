@@ -111,6 +111,28 @@
   .muted { color: var(--color-text-muted); }
   .burden { border-left: 3px solid var(--color-caution); padding: var(--space-2) var(--space-3); background: var(--color-surface); font-size: var(--text-sm); line-height: var(--leading-normal); border-radius: var(--radius-sm); margin-top: var(--space-2); }
   .burden.b45 { border-left-color: var(--color-critical); }
+  /* ---- conditions (BRIEF §9.7) ---- */
+  .exh { border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: var(--space-3); background: var(--color-surface); }
+  .exh.lit { border-color: var(--color-critical); }
+  .exh .lv { font-family: var(--font-display); font-size: var(--text-xl); }
+  .exh .pen { font-size: var(--text-sm); color: var(--color-critical); }
+  .exh .ef { font-size: var(--text-sm); color: var(--color-text-muted); line-height: var(--leading-normal); margin-top: var(--space-2); }
+  .exh .tl { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1); font-style: italic; }
+  .exhtrack { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; margin: var(--space-2) 0; }
+  .exhtrack i { height: 8px; border-radius: 2px; background: var(--color-surface-active); display: block; }
+  .exhtrack i.on { background: var(--color-critical); }
+  .statuslist { display: grid; gap: var(--space-1); }
+  .statusrow { display: grid; grid-template-columns: 20px 1fr; gap: var(--space-2); align-items: start; font-size: var(--text-sm); padding: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-sm); cursor: pointer; line-height: var(--leading-normal); }
+  .statusrow:hover { border-color: var(--color-border-active); }
+  .statusrow input { margin-top: 3px; }
+  .statusrow b { display: block; font-weight: 600; }
+  .statusrow .tr { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
+  .stdetail { border: 1px solid var(--color-accent); border-radius: var(--radius-sm); padding: var(--space-3); margin-top: var(--space-2); font-size: var(--text-sm); line-height: var(--leading-normal); }
+  .stdetail b { font-family: var(--font-display); display: block; }
+  .stdetail .g { color: var(--color-text-muted); display: block; margin-top: var(--space-1); }
+  .stdetail .r { color: var(--color-critical); display: block; margin-top: var(--space-1); }
+  .stdetail .d { color: var(--color-text-faint); font-size: var(--text-xs); display: block; margin-top: var(--space-1); }
+
   /* ---- tiers of play (BRIEF §9.4) ---- */
   .tierstrip { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-1); margin-top: var(--space-3); }
   .tierseg { border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: var(--space-2); background: var(--color-surface); text-align: center; }
@@ -394,6 +416,20 @@
         + '<div class="panel"><div class="rows" id="v-passives"></div><div class="panel-label">Senses</div></div>'
         + '<div class="panel"><div id="v-levers"></div><div class="panel-label">Levers · what you can actually swing</div></div>'
       + '</div>'
+      + '<h2 class="sec">Conditions</h2>'
+      + '<div class="lower">'
+        + '<div class="panel"><div id="v-exhaustion"></div><div class="panel-label">Exhaustion · derived from runway</div></div>'
+        + '<div class="panel"><div class="statuslist">' + rules.statusEffects.map(function (st) {
+            /* LIVE-FORM: built once, here, at boot. paint() only ever writes
+               .checked on these — never innerHTML on this container. */
+            return '<label class="statusrow" for="st-' + esc(st.id) + '">'
+              + '<input type="checkbox" id="st-' + esc(st.id) + '" data-status="' + esc(st.id) + '"/>'
+              + '<span><b>' + esc(st.name) + '</b>'
+              + '<span class="tr">' + esc(st.trigger) + '</span></span></label>';
+          }).join('') + '</div>'
+          + '<div id="v-status-detail"></div>'
+          + '<div class="panel-label">Status effects · you declare these</div></div>'
+      + '</div>'
       + '<h2 class="sec">Where you are in the arc</h2>'
       + '<div class="tierstrip" id="v-tierstrip"></div>'
       + '<div class="lower">'
@@ -408,6 +444,19 @@
   }
 
   /* ==================== READ / WRITE ==================== */
+
+  /* Written as a whole map so unticking is a real answer rather than an
+     absence. Once you have touched this at all, "none" means none. */
+  function collectStatuses() {
+    if (SHOWING_EXAMPLE) return;
+    var map = {};
+    TABLES.dndRules.statusEffects.forEach(function (st) {
+      var box = el('st-' + st.id);
+      if (box) map[st.id] = !!box.checked;
+    });
+    Store.patchProfile({ statuses: map });
+    paint();
+  }
 
   function collect() {
     Store.setMoney('grossAnnualIncomeCents', readMoney('f-income'));
@@ -651,6 +700,49 @@
     }
     html('v-prof-list', prof.join('') || '<span class="faint">Nothing yet.</span>');
 
+    /* --- conditions (BRIEF §9.7) ------------------------------------------
+       Exhaustion is derived and repaints freely. The status checkboxes are
+       LIVE INPUTS built once in buildShell — only .checked is written here,
+       never innerHTML on .statuslist, or a tap mid-list would lose the
+       keyboard-less equivalent: the tap itself. D-034. */
+    var exh = Char.exhaustion(s.currentHp, TABLES);
+    if (Money.isOk(exh)) {
+      /* Six segments for the six levels above Rested. Level 0 lights none —
+         an earlier version prepended a seventh and lit it whenever the level
+         was non-zero, which showed five lit at level 4. */
+      var track = '', top = TABLES.dndRules.exhaustion.levels.length - 1;
+      for (var ei = 1; ei <= top; ei++) {
+        track += '<i class="' + (ei <= exh.value ? 'on' : '') + '"></i>';
+      }
+      html('v-exhaustion',
+        '<div class="exh' + (exh.value > 0 ? ' lit' : '') + '">'
+        + '<span class="lv">' + esc(exh.row.label) + '</span> '
+        + (exh.value > 0
+            ? '<span class="pen">level ' + exh.value + ' · −' + exh.savePenalty + ' to every save</span>'
+            : '<span class="pen" style="color:var(--color-text-faint)">no penalty</span>')
+        + '<div class="exhtrack">' + track + '</div>'
+        + '<div class="ef">' + esc(exh.row.effect) + '</div>'
+        + '<div class="tl">' + esc(exh.row.tell) + '</div></div>');
+    } else {
+      html('v-exhaustion', '<span class="faint">' + esc(exh.reason) + '</span>');
+    }
+
+    var st = Char.statuses(h, TABLES);
+    st.rows.forEach(function (row) {
+      var box = el('st-' + row.id);
+      if (box) box.checked = st.held.indexOf(row) !== -1;
+    });
+    html('v-status-detail', st.held.length
+      ? st.held.map(function (row) {
+          return '<div class="stdetail"><b>' + esc(row.name) + '</b>'
+            + '<span class="g">Grants: ' + esc(row.grants) + '</span>'
+            + '<span class="r">Restricts: ' + esc(row.restricts) + '</span>'
+            + '<span class="d">Duration: ' + esc(row.duration) + '</span></div>';
+        }).join('')
+      : '<div class="micro" style="text-align:left">'
+        + (st.asked ? 'None declared.' : 'None declared yet — tick any that apply. Nothing here is guessed from your numbers, because none of it is visible in them.')
+        + '</div>');
+
     /* --- tiers of play (BRIEF §9.4) ---------------------------------------
        No inputs in any of these three containers, so they are rebuilt freely.
        An unplaced character gets the strip greyed and a line saying why, not a
@@ -809,6 +901,9 @@
       /* The class pickers write straight to the profile and repaint themselves;
          routing them through collect() would read them as sheet inputs. */
       if (e.target.matches('#class-override, #subclass-pick')) return;
+      /* Status effects are self-declared and live on the profile, not among the
+         money fields collect() reads. Same routing as the class pickers. */
+      if (e.target.matches('[data-status]')) { collectStatuses(); return; }
       collect();
     });
     area.addEventListener('blur', function (e) {

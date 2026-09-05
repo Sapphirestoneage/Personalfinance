@@ -677,6 +677,127 @@ section('Dungeons & Dividends — the quiz-only leaning');
     Character.suggestClassFromStats({}, TABLES).status, 'incomplete');
 })();
 
+section('Dungeons & Dividends — conditions and exhaustion');
+
+(function () {
+  const Encounter = require(path.join(ROOT, 'engines/encounter.js'));
+  const R = TABLES.dndRules;
+  const ladder = R.exhaustion.levels;
+
+  /* BRIEF §9.7. The rulebook names "Exhausted" once, as what Unemployed decays
+     into, and never defines it. This ladder is the definition and is marked as
+     written for this build. */
+  check('the exhaustion ladder is marked as an extension', R.exhaustion.origin, 'extension');
+  check('seven levels, 0 through 6', ladder.length, 7);
+  ladder.forEach(function (l, i) {
+    check(`level ${i} is numbered in order`, l.level, i);
+    check(`level ${i} penalty equals its level`, l.savePenalty, i);
+    ['label', 'effect', 'tell'].forEach(function (k) {
+      checkTrue(`level ${i} says ${k}`, typeof l[k] === 'string' && l[k].length > 0);
+    });
+  });
+
+  /* The ladder must cover every possible runway with no hole and no overlap,
+     or exhaustion() falls through and returns incomplete for a real number. */
+  const probes = [0, 0.01, 0.5, 0.99, 1, 1.5, 2, 3.9, 4, 7.99, 8, 11.99, 12, 12.01, 40, 1000];
+  probes.forEach(function (w) {
+    const hits = ladder.filter(function (l) {
+      const floor = l.minWeeks === null ? true
+        : (l.minWeeksExclusive ? w > l.minWeeks : w >= l.minWeeks);
+      const ceil = l.maxWeeks === null ? true
+        : (l.maxWeeks === 0 ? w <= 0 : w < l.maxWeeks);
+      return floor && ceil;
+    });
+    check(`${w} weeks lands in exactly one band`, hits.length, 1);
+    const e = Character.exhaustion(Money.ok(w), TABLES);
+    checkTrue(`${w} weeks scores`, Money.isOk(e));
+    check(`${w} weeks matches the band it falls in`, e.value, hits[0].level);
+  });
+
+  /* The boundaries are the bit that goes wrong. A band runs from minWeeks
+     inclusive to maxWeeks exclusive, so 12 weeks is Rested and 11.99 is not. */
+  check('12 weeks is Rested', Character.exhaustion(Money.ok(12), TABLES).value, 0);
+  check('11.99 weeks is not', Character.exhaustion(Money.ok(11.99), TABLES).value, 1);
+  check('0 weeks is Down', Character.exhaustion(Money.ok(0), TABLES).value, 6);
+  checkTrue('and more runway is never more exhaustion', (function () {
+    let prev = 7;
+    for (let w = 0; w <= 30; w += 0.25) {
+      const v = Character.exhaustion(Money.ok(w), TABLES).value;
+      if (v > prev) return false;
+      prev = v;
+    }
+    return true;
+  })());
+
+  /* No runway measured is not "rested". */
+  const noHp = Character.exhaustion(Money.incomplete('no cash', ['cash']), TABLES);
+  checkTrue('an unmeasurable runway is incomplete, not level 0', !Money.isOk(noHp));
+  checkTrue('and it does not throw on null', !Money.isOk(Character.exhaustion(null, TABLES)));
+
+  /* Exhaustion has to MOVE something or it is decoration. */
+  function sheetWith(weeks) {
+    return { stats: { STR: Money.ok(12), DEX: Money.ok(10), CON: Money.ok(12),
+                      INT: Money.ok(10), WIS: Money.ok(12), CHA: Money.ok(10) },
+             klass: null, proficiencyBonus: 2, level: Money.ok(3),
+             currentHp: Money.ok(weeks), maxHp: { weeks: 20 }, subScores: {} };
+  }
+  const monster = R.monsters.filter(function (m) { return m.name === 'Timeshare Charm-Caster'; })[0];
+  const opts = { tables: TABLES, household: { dndProfile: {} } };
+  const rested = Encounter.run(sheetWith(40), monster, opts);
+  const fumes = Encounter.run(sheetWith(1.5), monster, opts);
+  check('a rested character takes no penalty', rested.exhaustionPenalty, 0);
+  check('one on fumes takes four', fumes.exhaustionPenalty, 4);
+  check('the raw save modifier is the same either way', fumes.modifier, rested.modifier);
+  check('the effective one is four lower', fumes.effectiveModifier, rested.effectiveModifier - 4);
+  checkTrue('so the same creature lands more often', fumes.hitChance > rested.hitChance);
+  check('and the result carries the label so the page can explain itself',
+    fumes.exhaustionLabel, 'Running on fumes');
+
+  /* A partial sheet must not crash the blocker predicates. */
+  const bare = { stats: { WIS: Money.ok(12), INT: Money.ok(10), CHA: Money.ok(10) },
+                 klass: null, proficiencyBonus: 0, level: null, currentHp: null };
+  let threw = false;
+  try { Encounter.run(bare, monster, opts); } catch (e) { threw = true; }
+  checkTrue('a sheet with no subScores does not throw', !threw);
+  check('and an unmeasurable runway applies no penalty',
+    Encounter.run(bare, monster, opts).exhaustionPenalty, 0);
+
+  /* -- statuses are declared, never inferred ------------------------------ */
+  check('eight status effects', R.statusEffects.length, 8);
+  const ids = R.statusEffects.map(function (st) { return st.id; });
+  check('each has a stable id', new Set(ids).size, 8);
+  ids.forEach(function (id) {
+    checkTrue(`status id "${id}" is a safe element id`, /^[A-Za-z][A-Za-z0-9]*$/.test(id));
+  });
+  R.statusEffects.forEach(function (st) {
+    ['name', 'trigger', 'grants', 'restricts', 'duration'].forEach(function (k) {
+      checkTrue(`${st.id} says ${k}`, typeof st[k] === 'string' && st[k].length > 0);
+    });
+  });
+
+  const never = Character.statuses({ dndProfile: {} }, TABLES);
+  checkTrue('never asked is not the same as none', !never.asked);
+  check('and nothing is held', never.held.length, 0);
+  const none = Character.statuses({ dndProfile: { statuses: {} } }, TABLES);
+  checkTrue('asked and answered "none" is a real answer', none.asked);
+  check('with nothing held', none.held.length, 0);
+  const two = Character.statuses({ dndProfile: { statuses: { w2: true, underwater: true, student: false } } }, TABLES);
+  check('two declared', two.held.length, 2);
+  checkTrue('and only the ones ticked', two.held.every(function (x) { return ['w2', 'underwater'].indexOf(x.id) !== -1; }));
+  checkTrue('a status is never inferred from the numbers',
+    !/statuses\s*\[/.test(fs.readFileSync(path.join(ROOT, 'engines/character.js'), 'utf8').split('function statuses')[1].slice(0, 400).replace(/held\[/g, '')));
+
+  /* -- the sheet builds the boxes once ------------------------------------ */
+  const src = fs.readFileSync(path.join(ROOT, 'sheet.html'), 'utf8');
+  checkTrue('the status checkboxes are built in buildShell',
+    src.indexOf('data-status=') < src.indexOf('function paint()'));
+  checkTrue('paint only writes .checked on them', /box\.checked = /.test(src));
+  checkTrue('and never innerHTML on the list',
+    !/html\('v-statuslist'|statuslist'\)\.innerHTML/.test(src));
+  checkTrue('the encounter room explains the penalty when there is one',
+    /exhaustionPenalty > 0/.test(fs.readFileSync(path.join(ROOT, 'encounter.html'), 'utf8')));
+})();
+
 section('Dungeons & Dividends — tiers of play');
 
 (function () {

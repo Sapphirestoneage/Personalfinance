@@ -51,6 +51,18 @@ Every key is optional. Only those named in `contains` are present.
 | `expenses` | `{ monthlyEssential, entries }` | `monthlyEssential.estimatedValueCents` is set; `entries` is always `[]` — this tool does no categorisation. |
 | `dndProfile` | object | Game state. Nothing in SPARKS reads it. Keep it: it round-trips, costs nothing, and is what lets someone come back. |
 
+`dndProfile` grows over time and an importer should treat every key in it as
+optional. Two worth knowing about:
+
+- **`statuses`** — a map of `{ statusId: boolean }` for the rulebook's eight
+  status effects, self-declared on the sheet. **Absent means never asked;
+  present-and-all-false means asked and answered "none".** Those are different
+  claims and an importer that collapses them is throwing away an answer.
+- **`alignment`** — a single id, also self-declared, also never computed.
+
+Neither is derived from any number, so neither can be reconstructed if you drop
+it.
+
 Ids are stable and namespaced `dnd_*` on purpose, so a re-import updates the
 same records instead of growing duplicates.
 

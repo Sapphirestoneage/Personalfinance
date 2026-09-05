@@ -455,6 +455,62 @@
     });
   }
 
+  /**
+   * Exhaustion — BRIEF §9.7.
+   *
+   * The rulebook names "Exhausted" once, as what the Unemployed status decays
+   * into, and never defines it. This is the definition, and the key choice is
+   * that it is DERIVED rather than declared: exhaustion is not a mood, it is
+   * what a thin buffer costs you in decisions you can no longer afford to make
+   * well. So it reads current HP — weeks of runway — and nothing else.
+   *
+   * Bands run from minWeeks (inclusive) up to maxWeeks (exclusive), so 12 weeks
+   * is Rested and 11.9 is Watchful. The bottom is the exception and says so in
+   * the data: level 5 carries minWeeksExclusive, because "under a week" must not
+   * swallow exactly zero — zero is level 6, Down, which is the death-save state
+   * and a different thing from nearly out.
+   */
+  function exhaustion(hpResult, tables) {
+    if (!Money.isOk(hpResult)) {
+      return Money.incomplete('Runway is needed before exhaustion means anything.',
+        hpResult && hpResult.missing ? hpResult.missing : ['currentHp']);
+    }
+    var weeks = hpResult.value;
+    var levels = tables.dndRules.exhaustion.levels;
+    for (var i = 0; i < levels.length; i++) {
+      var l = levels[i];
+      var aboveFloor = l.minWeeks === null ? true
+        : (l.minWeeksExclusive ? weeks > l.minWeeks : weeks >= l.minWeeks);
+      var belowCeil = l.maxWeeks === null ? true
+        : (l.maxWeeks === 0 ? weeks <= 0 : weeks < l.maxWeeks);
+      if (aboveFloor && belowCeil) {
+        return Money.ok(l.level, { row: l, weeks: weeks, savePenalty: l.savePenalty });
+      }
+    }
+    /* Only reachable if the ladder itself has a hole; the tests forbid one. */
+    return Money.incomplete('No exhaustion band covers ' + weeks + ' weeks.', ['exhaustion']);
+  }
+
+  /**
+   * Which of the rulebook's status effects this character has declared.
+   * Self-declared, like alignment — nothing here is inferred from the numbers,
+   * because none of it is visible in them. An undeclared status is undeclared,
+   * not false.
+   */
+  function statuses(household, tables) {
+    var p = profileOf(household);
+    var held = p.statuses;
+    var all = tables.dndRules.statusEffects;
+    if (!held || typeof held !== 'object') {
+      return { asked: false, held: [], rows: all };
+    }
+    return {
+      asked: true,
+      held: all.filter(function (st) { return held[st.id] === true; }),
+      rows: all
+    };
+  }
+
   /* ---- Armour Class ------------------------------------------------------
      10 + DEX, then layered coverage. Only the emergency-fund shield's +2 is
      stated in the rulebook; the rest are agreed values living in data/.    */
@@ -913,6 +969,8 @@
     debtBurden: debtBurden,
     maxHp: maxHp,
     currentHp: currentHp,
+    exhaustion: exhaustion,
+    statuses: statuses,
     armorClass: armorClass,
     leverActivity: leverActivity,
     suggestClass: suggestClass,

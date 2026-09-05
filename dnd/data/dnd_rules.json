@@ -1460,6 +1460,7 @@
   },
   "statusEffects": [
     {
+      "id": "unemployed",
       "name": "Unemployed (Collecting)",
       "trigger": "Job loss, filed for Unemployment Insurance",
       "grants": "A recurring Short-Rest-style HP source (the weekly benefit)",
@@ -1467,6 +1468,7 @@
       "duration": "State-dependent, commonly ~26 weeks; ends early on new income, or decays into Exhausted"
     },
     {
+      "id": "disability",
       "name": "Disabled (Government Disability)",
       "trigger": "Qualifying disability determination",
       "grants": "A long-term recurring income stream; often bundled health coverage (an AC boost)",
@@ -1474,6 +1476,7 @@
       "duration": "Indefinite, subject to a periodic Continuing Disability Review"
     },
     {
+      "id": "discharged",
       "name": "Discharged (Post-Bankruptcy)",
       "trigger": "Chapter 7 or 13 completed",
       "grants": "Most prior debt wiped — a Restoration effect on HP",
@@ -1481,6 +1484,7 @@
       "duration": "Long, fixed; fades as the credit-damage penalty tapers"
     },
     {
+      "id": "student",
       "name": "Full-Time Student",
       "trigger": "Enrolled at least half-time",
       "grants": "Federal loan interest/payments paused — temporary immunity to Debt-class monster damage on those loans",
@@ -1488,6 +1492,7 @@
       "duration": "Ends at graduation or dropping below half-time"
     },
     {
+      "id": "w2",
       "name": "W-2 Employee",
       "trigger": "Standard employment classification",
       "grants": "Employer 401(k) match (a passive buff) and employer-sponsored insurance (AC)",
@@ -1495,6 +1500,7 @@
       "duration": "Ends on job change or reclassification"
     },
     {
+      "id": "selfEmployed",
       "name": "1099 / Self-Employed",
       "trigger": "Independent contractor or business owner",
       "grants": "Solo 401(k)/SEP IRA with far higher contribution limits",
@@ -1502,6 +1508,7 @@
       "duration": "Ends on reclassification as W-2"
     },
     {
+      "id": "underwater",
       "name": "Underwater / Negative Equity",
       "trigger": "Mortgage balance exceeds home value",
       "grants": "—",
@@ -1509,6 +1516,7 @@
       "duration": "Ends when equity turns positive"
     },
     {
+      "id": "meansTested",
       "name": "Means-Tested Benefit",
       "trigger": "Income/assets under a program threshold",
       "grants": "A real AC boost (low-cost healthcare)",
@@ -1770,5 +1778,78 @@
       "detail": "You had already pictured this going wrong, so it arrives as a plan rather than as news.",
       "origin": "extension"
     }
-  }
+  },
+  "exhaustion": {
+    "note": "BRIEF §9.7. The rulebook names \"Exhausted\" once — as what the Unemployed status decays into — and never defines it. This ladder is written for this build to fill that gap, and is marked origin: extension. It is DERIVED from runway, never self-declared: exhaustion is not a mood, it is what a thin buffer costs you in decisions you can no longer afford to make well.",
+    "origin": "extension",
+    "unit": "weeks of runway (HP)",
+    "savePenaltyNote": "Each level subtracts from every saving throw. Being close to the edge really does make you easier to move: you cannot wait for a better offer, shop the policy, or walk away, and every creature in the bestiary is built to exploit exactly that.",
+    "levels": [
+      {
+        "level": 0,
+        "maxWeeks": null,
+        "minWeeks": 12,
+        "label": "Rested",
+        "savePenalty": 0,
+        "effect": "You can afford to say no, wait, and shop around. That is what the buffer buys.",
+        "tell": "A bad week is an annoyance."
+      },
+      {
+        "level": 1,
+        "maxWeeks": 12,
+        "minWeeks": 8,
+        "label": "Watchful",
+        "savePenalty": 1,
+        "effect": "You check the balance before ordinary purchases. Small friction, but the deciding has started to cost something.",
+        "tell": "You know roughly what is in the account without looking."
+      },
+      {
+        "level": 2,
+        "maxWeeks": 8,
+        "minWeeks": 4,
+        "label": "Stretched",
+        "savePenalty": 2,
+        "effect": "Timing starts to drive choices instead of price. You take the option that is available now over the one that is better.",
+        "tell": "You have begun paying more to pay later."
+      },
+      {
+        "level": 3,
+        "maxWeeks": 4,
+        "minWeeks": 2,
+        "label": "Cornered",
+        "savePenalty": 3,
+        "effect": "You can no longer walk away from a bad deal, which is the condition every predator in the bestiary is built for.",
+        "tell": "A single unexpected bill would change the month."
+      },
+      {
+        "level": 4,
+        "maxWeeks": 2,
+        "minWeeks": 1,
+        "label": "Running on fumes",
+        "savePenalty": 4,
+        "effect": "Decisions are made in order of what is due next. Interest rates stop being a factor you can weigh.",
+        "tell": "You are choosing which bill is late."
+      },
+      {
+        "level": 5,
+        "maxWeeks": 1,
+        "minWeeks": 0,
+        "label": "Spent",
+        "savePenalty": 5,
+        "effect": "Every option costs more than it should, because every option is now urgent. This is where the most expensive money in the world gets borrowed.",
+        "tell": "Less than a week of cover left.",
+        "minWeeksExclusive": true
+      },
+      {
+        "level": 6,
+        "maxWeeks": 0,
+        "minWeeks": null,
+        "label": "Down",
+        "savePenalty": 6,
+        "effect": "At 0 HP. Death saves, not decisions — see the Death Saves rules.",
+        "tell": "The runway is gone."
+      }
+    ]
+  },
+  "statusNote": "BRIEF §9.7. Status effects are SELF-DECLARED, like alignment — they are facts about your situation that no number in the household can see. Nothing here is computed and nothing is inferred; if you have not said, the sheet says you have not said."
 }

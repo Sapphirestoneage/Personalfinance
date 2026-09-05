@@ -248,6 +248,13 @@
     }).join('');
   }
 
+  /* The runway ceiling of an exhaustion level, for the copy that explains the
+     penalty. Read from the same ladder the engine uses — never restated here. */
+  function nextBandWeeks(level) {
+    var row = TABLES.dndRules.exhaustion.levels.filter(function (l) { return l.level === level; })[0];
+    return row && row.maxWeeks !== null ? row.maxWeeks : 0;
+  }
+
   function renderResult(r) {
     LAST = r;
     el('btn-log').hidden = false;
@@ -267,6 +274,11 @@
       ['Damage', r.damageWeeks + ' wk' + (r.perPeriod ? '/' + r.perPeriod : '')],
       ['HP after', r.hpAfter === null ? '—' : r.hpBefore + ' → ' + r.hpAfter]
     ];
+    /* §9.7 moves this number, so it has to say so. A chance that shifts with no
+       stated reason is worse than no chance at all. */
+    if (r.exhaustionPenalty > 0) {
+      figs.splice(1, 0, ['Exhaustion', r.exhaustionLabel + ' · −' + r.exhaustionPenalty]);
+    }
 
     var blocks = r.blockedBy.map(function (b) {
       var mark = b.state === 'held' ? '✓' : (b.state === 'absent' ? '✗' : '?');
@@ -281,6 +293,13 @@
     el('result').innerHTML = '<div class="result ' + cls + '">'
       + '<p class="verdict">' + esc(verdict) + '</p>'
       + (r.advantage ? '<p class="note">You roll this save with advantage.</p>' : '')
+      + (r.exhaustionPenalty > 0
+          ? '<p class="note">You are <b>' + esc(r.exhaustionLabel) + '</b> — under '
+            + esc(String(r.exhaustionPenalty === 6 ? 0 : nextBandWeeks(r.exhaustion)))
+            + ' weeks of runway — so every save here is ' + r.exhaustionPenalty
+            + ' worse than your Wisdom alone would give. Being near the edge is what '
+            + 'makes you easy to move, and this creature is built for it.</p>'
+          : '')
       + '<div class="figs">' + figs.map(function (f) {
           return '<div class="fig"><div class="k">' + esc(f[0]) + '</div><div class="v">' + esc(f[1]) + '</div></div>';
         }).join('') + '</div>'
