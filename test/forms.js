@@ -42,6 +42,34 @@ const EXECUTABLE = process.env.SLAF_CHROMIUM || '/opt/pw-browsers/chromium';
    walk the fields in order, tapping each one and typing into it. */
 const CASES = [
   {
+    /* The D&D sheet puts its inputs INSIDE the sheet that re-renders on every
+       keystroke — the exact shape of the bug D-034 exists for. If paint() ever
+       starts replacing a node instead of writing to it, this is where it shows
+       up: the tapped input comes back untagged. */
+    room: '/dnd/sheet.html',
+    container: '#sheet-area',
+    seed: 'empty',
+    fields: [
+      { sel: '#f-income', type: '72000' },
+      { sel: '#f-expenses', type: '3150' },
+      { sel: '#f-cash', type: '9500' },
+      { sel: '#f-investments', type: '48000' },
+      { sel: '#f-debt', type: '21600' }
+    ],
+    expect: async (page) => {
+      const d = await page.evaluate(() =>
+        JSON.parse(localStorage.getItem('dnd.character.v1')) || {});
+      const asset = (cat) => (d.assets || []).find(a => a.category === cat) || {};
+      return [
+        ['income landed on the person', d.people[0].incomeSources[0].grossAnnualIncomeCents, 7200000],
+        ['spending landed', d.expenses.monthlyEssential.estimatedValueCents, 315000],
+        ['cash landed', asset('cash').valueCents, 950000],
+        ['investments landed', asset('investment').valueCents, 4800000],
+        ['debt landed', (d.debts || [])[0].balanceCents, 2160000]
+      ];
+    }
+  },
+  {
     room: '/rooms/debt-payoff.html',
     container: '#debt-list',
     seed: 'empty',

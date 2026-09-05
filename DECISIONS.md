@@ -3760,3 +3760,109 @@ repository means both tools are served from the same origin, so a future
 importer *could* read the other's `localStorage` directly rather than passing
 a file around — but the file remains the supported path, because it is the
 one that keeps working if the folder ever does move out.
+
+---
+
+## D-051 — The D&D tool's licence posture, and what "parody" actually constrains
+
+The Dungeons & Dividends audit (BRIEF.md §T9) requires an SRD 5.1 CC-BY-4.0
+attribution and a non-affiliation line **in the first commit**, and sets the
+parody rule: riff on names, never reproduce a stat block, artwork, or a
+Wizards-owned creature or setting name.
+
+**What is actually borrowed is mechanics**, and mechanics only: the 8–20
+ability scale and its modifier formula, the proficiency bonus, saving throws,
+hit dice, death saves, the alignment grid, 5e's point-buy cost curve, and
+4d6-drop-lowest. Game mechanics are not themselves copyrightable, but the SRD
+is offered under CC BY 4.0 and attributing it is both the cheap option and the
+honest one, so `dnd/README.md` and `bestiary.html` carry the full notice and
+every page carries a short non-affiliation line.
+
+An audit of the existing content found it already clean. Every monster and
+hazard is either invented here (Lifestyle-Inflation Imp, Commission
+Churn-Wraith, Timeshare Charm-Caster) or a public-domain figure pressed into
+service — imp, wraith, basilisk, elemental, dragon, behemoth, familiar. No
+stat block is reproduced; the damage expressions are dice notation, which is
+not a stat block.
+
+**The tests are the enforcement, not the intention.** `dnd/test/run.js` now
+asserts the attribution and disclaimer are present on every surface, that the
+title carries no D&D word mark, and that a tripwire list of Wizards-owned
+creature and setting names (Tarrasque, Beholder, Mind Flayer, Waterdeep,
+Forgotten Realms and a dozen more) appears nowhere in the data or the pages.
+Note that the rulebook's own §12 FAQ discusses a Tarrasque; that reference was
+never transcribed into `data/`, and the test now makes sure it never is.
+
+### What a later change needs to know
+
+Adding a monster means adding an original or public-domain name. If a new
+entry trips the tripwire the build fails, and the fix is to rename it — not to
+edit the list.
+
+---
+
+## D-052 — The D&D sheet is the form, and how that survives D-034
+
+BRIEF.md §9.1 asks for the Tier 2 page to be inverted: no intake form, the five
+numbers typed into the boxes they actually feed. Income sits in Strength, cash
+sits in Hit Points, investments sit in Experience, spending sits beside your FI
+number, debt sits in Debt Burden. Optional questions become a "sharpen" toggle
+on the panel they belong to.
+
+**This puts live inputs inside a container that re-renders on every keystroke,
+which is precisely the bug D-034 exists to prevent.** Rebuild that container
+mid-tap on a phone and the soft keyboard closes and will not reopen, because a
+programmatic `.focus()` cannot bring it back.
+
+The resolution is a hard split, and it is the reason `sheet.html` is written
+the way it is:
+
+    buildShell()   runs once, at boot. Creates every node, inputs included.
+    paint()        runs on every change. Writes textContent and .value ONLY.
+
+The rule that keeps it true: **a container holding an input is never given
+`innerHTML` after boot.** Containers with no inputs — the feature list, the
+levers table, the senses panel — are rebuilt freely, and are. Event wiring is
+one delegated listener on the shell, so it survives every repaint without
+rebinding.
+
+`test/forms.js` now taps all five money fields on a Pixel 7 and asserts each
+node is the same node afterwards, then asserts the values landed in the right
+places in the household. If `paint()` ever starts replacing a node instead of
+writing to it, that test fails.
+
+One knock-on: the class and subclass pickers are `<select>`s inside a repainted
+region, so they are rebuilt only when their own signature changes (class,
+subclass, availability). Rebuilding them on every keystroke would drop an open
+dropdown.
+
+### Initiative, and why it is not derived from the savings rate
+
+§9.1 also adds initiative = DEX modifier + an automation bonus. The obvious
+implementation reads the savings rate; that would be wrong. Initiative is how
+fast you act *before you have decided to act*, and a large savings rate
+executed by hand every month is exactly the case this is meant to tell apart
+from money that moves itself. So it is a separate question with its own answer,
+and `data/dnd_scoring.json` holds the bonus table.
+
+Unanswered means unanswered: the sheet shows the DEX modifier alone and says
+"DEX only — say how automatic your saving is", rather than adding +0 and
+implying the question was asked and answered.
+
+### The example state
+
+An untouched sheet renders the full example character, visibly ghosted, with
+one line and one button. Nothing is stored until the button is pressed — the
+demo persona still never loads by itself. The example seeds the declared scores
+as well as the money, because the ghosted preview shows a complete character
+and writing only the money would drop INT, WIS and CHA the moment you pressed
+the button; it never writes over a quiz someone already completed.
+
+### A recurring bug, now caught mechanically
+
+Pre-escaping a string that is then passed to a helper which escapes it has now
+shipped three times in this repository — "Proficiencies &amp; training", then
+"Investments &amp; retirement" and "Cash &amp; savings". `dnd/test/run.js` now
+scans the string arguments of every escaping helper and fails on a pre-escaped
+entity. Verified by reintroducing the bug deliberately: the suite catches it and
+names the offending string.

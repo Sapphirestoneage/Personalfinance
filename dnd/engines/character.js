@@ -708,6 +708,28 @@
     });
   }
 
+  /**
+   * Initiative — DEX modifier plus an automation bonus (BRIEF §9.1).
+   * Money that moves itself acts before you have decided to act, which is what
+   * initiative measures. Deliberately NOT derived from the savings rate: a
+   * large rate executed by hand every month is precisely the case this is
+   * meant to tell apart. Unanswered means unscored, never +0.
+   */
+  function initiative(stats, profile, tables) {
+    var dex = stats && stats.DEX;
+    if (!dex || !Money.isOk(dex)) {
+      return Money.incomplete('DEX needs all three of its sub-stats first.', ['DEX']);
+    }
+    var dexMod = modifier(dex.value);
+    var rule = tables.dndScoring.initiative;
+    var answer = profile && profile.automatedSaving;
+    if (!answer || !Money.isEntered(rule.automationBonus[answer])) {
+      return Money.ok(dexMod, { dexMod: dexMod, bonus: null, automationUnknown: true });
+    }
+    var bonus = rule.automationBonus[answer];
+    return Money.ok(dexMod + bonus, { dexMod: dexMod, bonus: bonus, automationUnknown: false });
+  }
+
   /** Hit dice, written the way a sheet writes them: 3d8. */
   function hitDiceLabel(cls, lvl) {
     if (!cls || !Money.isEntered(lvl)) return null;
@@ -901,6 +923,7 @@
     subclassFeatures: subclassFeatures,
     savingThrows: savingThrows,
     skillList: skillList,
+    initiative: initiative,
     hitDiceLabel: hitDiceLabel,
     passives: passives,
     defenses: defenses,

@@ -218,6 +218,91 @@ section('Dungeons & Dividends — level, HP and AC');
   check('the spectrum ranks highest first', spec[0].id, 'incomePower');
 })();
 
+section('Dungeons & Dividends — nothing is escaped twice');
+
+(function () {
+  /* This exact bug has shipped three times: a string containing &amp; is
+     passed to a helper that escapes its argument, so the reader sees the
+     literal "&amp;". The helpers below all escape, so a pre-escaped entity in
+     one of their string arguments is always wrong. */
+  const HELPERS = ['esc', 'panel', 'moneyInput', 'selectInput', 'sharpen'];
+  ['index.html', 'sheet.html', 'bestiary.html'].forEach(function (page) {
+    const src = fs.readFileSync(path.join(ROOT, page), 'utf8');
+    HELPERS.forEach(function (fn) {
+      /* Match the helper call and grab its quoted string arguments. */
+      const call = new RegExp(fn + "\\(\\s*'((?:[^'\\\\]|\\\\.)*)'", 'g');
+      let m;
+      while ((m = call.exec(src)) !== null) {
+        checkTrue(`${page}: ${fn}(…) argument is not pre-escaped`,
+          !/&(amp|lt|gt|quot);/.test(m[1]),
+          `"${m[1].slice(0, 60)}" is escaped again inside ${fn}() and renders as literal &amp;`);
+      }
+    });
+  });
+
+  /* And the same for the second argument position, where labels usually sit. */
+  ['sheet.html'].forEach(function (page) {
+    const src = fs.readFileSync(path.join(ROOT, page), 'utf8');
+    const call = /(?:moneyInput|selectInput|sharpen)\([^)]*?,\s*'((?:[^'\\]|\\.)*)'/g;
+    let m;
+    while ((m = call.exec(src)) !== null) {
+      checkTrue(`${page}: helper label is not pre-escaped`,
+        !/&(amp|lt|gt|quot);/.test(m[1]),
+        `"${m[1].slice(0, 60)}" would render as literal &amp;`);
+    }
+  });
+})();
+
+section('Dungeons & Dividends — licence and IP posture');
+
+(function () {
+  /* The brief requires the SRD attribution and a non-affiliation line, and
+     requires them in the first commit. They are load-bearing, not decoration,
+     so they are asserted rather than trusted to survive a rewrite. */
+  const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
+  const bestiary = fs.readFileSync(path.join(ROOT, 'bestiary.html'), 'utf8');
+
+  [['README.md', readme], ['bestiary.html', bestiary]].forEach(function (pair) {
+    checkTrue(pair[0] + ' names the SRD 5.1', /System Reference Document 5\.1/.test(pair[1]));
+    checkTrue(pair[0] + ' names the CC BY 4.0 licence',
+      /Creative Commons Attribution 4\.0/.test(pair[1]));
+    checkTrue(pair[0] + ' links the licence text',
+      /creativecommons\.org\/licenses\/by\/4\.0/.test(pair[1]));
+    checkTrue(pair[0] + ' disclaims affiliation',
+      /not affiliated with[\s\S]{0,80}Wizards of the Coast/i.test(pair[1]));
+  });
+
+  /* Every page a stranger can land on carries the disclaimer. */
+  ['index.html', 'sheet.html', 'bestiary.html'].forEach(function (page) {
+    const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
+    checkTrue(page + ' carries a non-affiliation line',
+      /Wizards of the Coast/.test(html));
+  });
+
+  /* Parody rules: riff on names, never reproduce a Wizards-owned creature or
+     setting. This list is the tripwire — if one of these ever appears in the
+     data or the pages, the rule has been broken somewhere. */
+  const OWNED = ['tarrasque', 'beholder', 'mind flayer', 'illithid', 'displacer beast',
+                 'owlbear', 'githyanki', 'modron', 'slaad', 'faerun', 'waterdeep',
+                 'forgotten realms', 'baldur', 'neverwinter', 'drizzt', 'strahd'];
+  const surfaces = ['data/dnd_rules.json', 'data/dnd_classes.json', 'data/dnd_scoring.json',
+                    'data/dnd_alignments.json', 'index.html', 'sheet.html', 'bestiary.html'];
+  surfaces.forEach(function (f) {
+    const text = fs.readFileSync(path.join(ROOT, f), 'utf8').toLowerCase();
+    OWNED.forEach(function (name) {
+      checkTrue(`${f} does not use "${name}"`, text.indexOf(name) === -1,
+        'parody riffs on names; it does not reproduce Wizards-owned ones');
+    });
+  });
+
+  /* And the title must not carry a D&D mark. "Dungeons & Dividends" riffs;
+     the actual mark is the two words together. */
+  const title = (fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')
+    .match(/<title>([^<]*)<\/title>/) || [])[1] || '';
+  checkTrue('the title does not contain the D&D word mark',
+    !/dungeons\s*&(amp;)?\s*dragons/i.test(title), 'title was: ' + title);
+})();
+
 section('Dungeons & Dividends — the two skins');
 
 (function () {

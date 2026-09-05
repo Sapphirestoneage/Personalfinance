@@ -182,3 +182,23 @@ checks that the vendored copies here have not drifted.
 It is a lens on numbers you already have. Nothing here is financial advice, no
 threshold in it is a law, and a low score is a prompt to look at something —
 not a verdict on you.
+
+
+---
+
+## Licence and attribution
+
+This work includes material from the System Reference Document 5.1 ("SRD 5.1") by Wizards of the Coast LLC, available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.
+
+What is actually borrowed is **mechanics**: the 8–20 ability scale and its
+modifier formula, proficiency bonus, saving throws, hit dice, death saves, the
+alignment grid, 5e's point-buy costs, and 4d6-drop-lowest. No stat block, no
+artwork, no creature, and no setting name is reproduced. Every monster and
+hazard here is either an original invention or a public-domain figure — an
+imp, a wraith, a basilisk — pressed into service against your money.
+
+Dungeons & Dividends is an independent parody. It is not affiliated with, endorsed by, or sponsored by Wizards of the Coast LLC or Hasbro, Inc. Dungeons & Dragons and D&D are trademarks of Wizards of the Coast LLC.
+
+Everything else in this repository — the seven levers, the eighteen sub-stats,
+the scoring, the bestiary, the alignment grid and all of its writing — is
+original work.
