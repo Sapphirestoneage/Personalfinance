@@ -8121,6 +8121,59 @@ section('The room template (D-097): one shape, proven on Real Hourly Wage');
   });
 })();
 
+section('LATER.md, built (D-100): the log across tabs, worded labels, the default lens, rooms.json');
+
+(function () {
+  const Spine = SpineMain;
+  const Lens = require(path.join(ROOT, 'shared/lens.js'));
+  const tool = require(path.join(ROOT, 'tools/rooms-json.js'));
+
+  /* A write to a list with no owned field moving is named in words. */
+  Spine.reset();
+  Spine.registerRoom('start');
+  Spine.upsertGoal(Schema.createGoal ? Schema.createGoal({ name: 'A trip', targetCents: 100000 }) : { id: 'g1', name: 'A trip', targetCents: 100000 });
+  checkTrue('a goal added reads as "Changed a goal", not a dot path: ' + Spine.peekUndo().label, /^Changed a goal/.test(Spine.peekUndo().label));
+  Spine.set('community.daySchool', true);
+  check('a setting reads in words too', Spine.peekUndo().label, 'Changed community');
+  Spine.reset();
+
+  /* The default lens lives with the household; the session's choice wins.
+     The lens reaches the spine by require, which by this point in the run
+     is a later instance than SpineMain (earlier sections re-require it), so
+     read back through the same instance the lens writes to. */
+  const S2 = require(path.join(ROOT, 'shared/spine-v2.js'));
+  S2.reset();
+  check('no default: dollars', Lens.mode(), '$');
+  check('setDefault stores it on the household', (Lens.setDefault('bought'), S2.get('meta.displayUnit')), 'bought');
+  check('… and the lens reads it', Lens.mode(), 'bought');
+  check('… as one labelled undo entry', S2.peekUndo().label, 'Read money as bought');
+  check('an unknown unit clears it', (Lens.setDefault('nope'), Lens.mode()), '$');
+  S2.reset();
+  check('reset forgets it', Lens.mode(), '$');
+  check('the schema starts it null', Schema.createHousehold({}).meta.displayUnit, null);
+  checkTrue('the dashboard offers the choice in the data drawer', /id="display-unit-host"/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')) && /Lens\.setDefault\(/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')));
+
+  /* Another tab's write: the cache reloads and the log diffs against what
+     is stored, not what this tab last saved. */
+  checkTrue('the storage listener reloads rather than only dropping the cache', /cache = null; lastSaved = null; lastReadings = null;\s*load\(\);/.test(fs.readFileSync(path.join(ROOT, 'shared/spine-v2.js'), 'utf8')));
+
+  /* The lens fits a phone. */
+  checkTrue('the lens shrinks under 420px', /max-width: 420px\) \{\s*\.slaf-lens-btn \{ padding: 0 8px/.test(fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8')));
+
+  /* rooms.json is the registry, generated, and fresh. */
+  const rooms = tool.build();
+  check('every room is in rooms.json', rooms.length, Registry.all().length);
+  checkTrue('each row has the brief\'s fields', rooms.every(r => ['id', 'title', 'file', 'reads', 'writes', 'requires', 'dashboardNumber', 'order'].every(k => k in r)));
+  check('Start Here writes what ownership says', rooms.filter(r => r.id === 'start')[0].writes.join(','), Ownership.ownedBy('start').join(','));
+  check('Accounts requires the retirement branch', rooms.filter(r => r.id === 'accounts')[0].requires.join(','), 'retirement');
+  check('FIRE is where the FI year opens', rooms.filter(r => r.id === 'fire')[0].dashboardNumber, 'fiEtaYear');
+  check('the committed rooms.json is what the tool writes now (run node tools/rooms-json.js)', fs.readFileSync(path.join(ROOT, 'rooms.json'), 'utf8'), tool.render());
+  checkTrue('and the dashboard opens the same rooms the tool says', (function () {
+    const page = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+    return Object.keys(tool.OPENS).every(k => new RegExp(k + ": \\['" + tool.OPENS[k] + "'").test(page));
+  })());
+})();
+
 section('Two decision sequences that cannot collide');
 
 (function () {

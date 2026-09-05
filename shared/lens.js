@@ -103,9 +103,30 @@
   }
 
   /* ---- The chosen mode, this session ---------------------------------------- */
-  function mode() {
-    try { var m = sessionStorage.getItem(STORE_KEY); return MODES.some(function (x) { return x.id === m; }) ? m : '$'; } catch (e) { return '$'; }
+  function spine() {
+    if (typeof module === 'object' && module.exports) { try { return require('./spine-v2.js'); } catch (e) { return null; } }
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    return g && g.SLAF && g.SLAF.Spine ? g.SLAF.Spine : null;
   }
+  function valid(m) { return MODES.some(function (x) { return x.id === m; }); }
+  /* This session's choice; failing that, the household's stored default
+     (meta.displayUnit, set from the dashboard's data drawer); failing
+     that, dollars. D-100. */
+  function mode() {
+    try { var m = sessionStorage.getItem(STORE_KEY); if (valid(m)) return m; } catch (e) { /* fine */ }
+    var S = spine();
+    var d = S && S.get ? S.get('meta.displayUnit') : null;
+    return valid(d) ? d : '$';
+  }
+  /** The household's default lens, stored with it. */
+  function setDefault(m) {
+    var S = spine();
+    if (!S || !S.set) return null;
+    S.set('meta.displayUnit', valid(m) ? m : null, 'Read money as ' + (valid(m) ? m : 'dollars'));
+    try { sessionStorage.removeItem(STORE_KEY); } catch (e) { /* fine */ }
+    return mode();
+  }
+  function defaultMode() { var S = spine(); var d = S && S.get ? S.get('meta.displayUnit') : null; return valid(d) ? d : null; }
   function setMode(m) {
     try { sessionStorage.setItem(STORE_KEY, m); } catch (e) { /* fine */ }
     return mode();
@@ -118,5 +139,5 @@
     }).join('') + '</div>';
   }
 
-  return { MODES: MODES, STORE_KEY: STORE_KEY, wage: wage, available: available, fiInputs: fiInputs, apply: apply, format: format, formatMonths: formatMonths, mode: mode, setMode: setMode, toggleHtml: toggleHtml };
+  return { MODES: MODES, STORE_KEY: STORE_KEY, wage: wage, available: available, fiInputs: fiInputs, apply: apply, format: format, formatMonths: formatMonths, mode: mode, setMode: setMode, setDefault: setDefault, defaultMode: defaultMode, toggleHtml: toggleHtml };
 });

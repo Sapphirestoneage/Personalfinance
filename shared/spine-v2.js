@@ -404,9 +404,22 @@
       }
     }
     if (!changes.length) return '';
-    var c = changes[0];
-    return c.path + (changes.length > 1 ? ' and ' + (changes.length - 1) + ' more' : '');
+    /* No owned field moved: name the part of the household that did, in
+       words — "an asset", "a debt" — rather than a dot path. D-100. */
+    var tops = {};
+    changes.forEach(function (c) { tops[String(c.path).split('.')[0]] = true; });
+    var keys = Object.keys(tops);
+    if (keys.length === 1) {
+      var word = PART_WORDS[keys[0]] || keys[0];
+      return (changes.length === 1 ? 'Changed ' : 'Changed ') + word + (changes.length > 1 ? ' (' + changes.length + ' fields)' : '');
+    }
+    return changes.length + ' changes across ' + keys.map(function (k) { return PART_WORDS[k] || k; }).join(', ');
   }
+  var PART_WORDS = { people: 'a person', assets: 'an asset', debts: 'a debt', goals: 'a goal', expenses: 'spending', insurance: 'insurance',
+    retirement: 'the retirement plan', targets: 'a target', meta: 'a setting', oneOffs: 'a one-off', ratings: 'a rating', rerank: 'the rerank',
+    skills: 'a skill', scenarios: 'a scenario', properties: 'a property', futureIncome: 'future income', values: 'your values', community: 'community',
+    estate: 'estate basics', giving: 'giving', decumulation: 'the drawdown', tax: 'tax facts', career: 'the offer', partner: 'the split', kids: 'the kids',
+    housing: 'the place', purchase: 'the purchase', variableIncome: 'the buffer', dependents: 'who depends on you', assumptions: 'an assumption', assumptionOverrides: 'an assumption' };
   function record(changes, label) {
     if (!changes.length) return;
     cache.meta.undoStack = cache.meta.undoStack || [];
@@ -494,7 +507,14 @@
      this tab's listeners. Keeps two open rooms from diverging. */
   if (typeof window !== 'undefined' && window.addEventListener) {
     window.addEventListener('storage', function (evt) {
-      if (evt.key === STORAGE_KEY) { cache = null; notify(); }
+      if (evt.key !== STORAGE_KEY) return;
+      /* Reload rather than just drop: the command log diffs against the
+         last thing SAVED, and that is now the other tab's. Both tabs read
+         one stack, so an undo here takes back the other tab's write too —
+         one log, whichever tab holds the button. D-100. */
+      cache = null; lastSaved = null; lastReadings = null;
+      load();
+      notify();
     });
   }
 

@@ -340,7 +340,12 @@
   </details>
 
   <details class="drawer" id="your-data-drawer">
-    <summary>Your data <small>Download a file, copy a share link, load one, or start over.</small></summary>
+    <summary>Your data <small>Download a file, copy a share link, load one, or start over. And how money reads by default.</small></summary>
+    <div class="slaf-card" id="display-unit">
+      <span class="slaf-eyebrow">Read money as, by default</span>
+      <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">The lens on every page starts here. A tap on a page's own toggle wins for that session.</p>
+      <div id="display-unit-host"></div>
+    </div>
   <section class="slaf-card" id="your-data">
     <span class="slaf-eyebrow">Your data</span>
     <h2 style="margin:var(--space-2) 0 0">It lives in this browser. Take it with you.</h2>
@@ -778,9 +783,18 @@
   document.addEventListener('click', function (evt) {
     var b = evt.target.closest('.slaf-lens-btn');
     if (!b) return;
-    Lens.setMode(b.getAttribute('data-lens'));
+    if (b.closest('#display-unit-host')) Lens.setDefault(b.getAttribute('data-lens'));
+    else Lens.setMode(b.getAttribute('data-lens'));
     renderNow();
   });
+  function renderDisplayUnit(h) {
+    var host = el('display-unit-host');
+    if (!host) return;
+    var cur = Lens.defaultMode() || '$';
+    host.innerHTML = '<div class="slaf-lens" role="group" aria-label="Read money as, by default">' + Lens.available(h, TABLES).map(function (m) {
+      return '<button type="button" class="slaf-lens-btn" data-lens="' + m.id + '" aria-pressed="' + (m.id === cur) + '" title="' + m.long + '">' + m.label + '</button>';
+    }).join('') + '</div>';
+  }
 
   /* ---- How old the three that move are ------------------------------------- */
 
@@ -1004,6 +1018,7 @@
     renderNextAction(h, c);
     renderLearn(h);
     renderDate(h, c);
+    renderDisplayUnit(h);
     renderAgeLine(h);
 
     /* radar */

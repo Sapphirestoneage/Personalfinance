@@ -1,0 +1,695 @@
+{
+  "generatedBy": "tools/rooms-json.js",
+  "note": "Generated from shared/registry.js and shared/ownership.js; do not edit by hand.",
+  "rooms": [
+    {
+      "id": "start",
+      "title": "Start Here",
+      "file": "rooms/start.html",
+      "reads": [
+        "employmentStatus",
+        "unemployment",
+        "dob",
+        "state",
+        "filingStatus",
+        "grossAnnualIncome",
+        "monthlyExpenses",
+        "cashSavings",
+        "investments",
+        "employerMatch",
+        "contributionPercent",
+        "capturingFullMatch",
+        "highestDeductible",
+        "hasDebt"
+      ],
+      "writes": [
+        "dob",
+        "age",
+        "state",
+        "filingStatus",
+        "grossAnnualIncome",
+        "unemployment",
+        "cashSavings",
+        "investments",
+        "employmentStatus",
+        "employerMatch",
+        "capturingFullMatch",
+        "hasDebt",
+        "contributionPercent",
+        "highestDeductible",
+        "dependents"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 1
+    },
+    {
+      "id": "debt-payoff",
+      "title": "Debt Payoff",
+      "file": "rooms/debt-payoff.html",
+      "reads": [
+        "totalDebt",
+        "monthlyDebtPayments"
+      ],
+      "writes": [
+        "totalDebt",
+        "monthlyDebtPayments"
+      ],
+      "requires": [],
+      "dashboardNumber": "debtToIncome",
+      "order": 2
+    },
+    {
+      "id": "cash-flow",
+      "title": "Cash Flow",
+      "file": "rooms/cash-flow.html",
+      "reads": [
+        "monthlyExpenses"
+      ],
+      "writes": [
+        "monthlyExpenses"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 3
+    },
+    {
+      "id": "financial-snapshot",
+      "title": "Financial Snapshot",
+      "file": "rooms/financial-snapshot.html",
+      "reads": [
+        "grossAnnualIncome",
+        "monthlyExpenses",
+        "cashSavings",
+        "investments",
+        "totalDebt",
+        "dob",
+        "filingStatus"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 4
+    },
+    {
+      "id": "statement",
+      "title": "The Statement",
+      "file": "rooms/statement.html",
+      "reads": [
+        "cashSavings",
+        "investments",
+        "totalDebt"
+      ],
+      "writes": [
+        "otherAssets",
+        "confidenceWeightedNetWorth",
+        "futureIncome",
+        "netWorth"
+      ],
+      "requires": [],
+      "dashboardNumber": "netWorth",
+      "order": 5
+    },
+    {
+      "id": "savings-rate",
+      "title": "Savings Rate",
+      "file": "rooms/savings-rate.html",
+      "reads": [
+        "grossAnnualIncome",
+        "monthlyExpenses"
+      ],
+      "writes": [],
+      "requires": [
+        "savingsRate"
+      ],
+      "dashboardNumber": "savingsRate",
+      "order": 6
+    },
+    {
+      "id": "sleep-at-night",
+      "title": "Sleep At Night",
+      "file": "rooms/sleep-at-night.html",
+      "reads": [
+        "monthlyExpenses",
+        "cashSavings"
+      ],
+      "writes": [
+        "oopMax",
+        "termLife",
+        "disabilityMonthly",
+        "umbrella",
+        "swanTarget"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 7
+    },
+    {
+      "id": "fire",
+      "title": "FIRE Number",
+      "file": "rooms/fire.html",
+      "reads": [
+        "monthlyExpenses",
+        "investments",
+        "dob"
+      ],
+      "writes": [
+        "retireAge",
+        "coastAge"
+      ],
+      "requires": [
+        "savingsRate"
+      ],
+      "dashboardNumber": "fiEtaYear",
+      "order": 8
+    },
+    {
+      "id": "real-hourly-wage",
+      "title": "Real Hourly Wage",
+      "file": "rooms/real-hourly-wage.html",
+      "reads": [
+        "grossAnnualIncome"
+      ],
+      "writes": [],
+      "requires": [
+        "hours"
+      ],
+      "dashboardNumber": null,
+      "order": 9
+    },
+    {
+      "id": "hassle",
+      "title": "Worth the Hassle",
+      "file": "rooms/hassle.html",
+      "reads": [
+        "grossAnnualIncome"
+      ],
+      "writes": [],
+      "requires": [
+        "hours"
+      ],
+      "dashboardNumber": null,
+      "order": 10
+    },
+    {
+      "id": "quick-math",
+      "title": "Quick Math",
+      "file": "rooms/quick-math.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 11
+    },
+    {
+      "id": "self-employed",
+      "title": "Going Self-Employed",
+      "file": "rooms/self-employed.html",
+      "reads": [
+        "grossAnnualIncome",
+        "filingStatus",
+        "state"
+      ],
+      "writes": [],
+      "requires": [
+        "ownWork"
+      ],
+      "dashboardNumber": "ownersPay",
+      "order": 12
+    },
+    {
+      "id": "side-hustle",
+      "title": "Side Hustle",
+      "file": "rooms/side-hustle.html",
+      "reads": [
+        "grossAnnualIncome",
+        "filingStatus"
+      ],
+      "writes": [],
+      "requires": [
+        "career"
+      ],
+      "dashboardNumber": null,
+      "order": 13
+    },
+    {
+      "id": "ratios",
+      "title": "Every Ratio",
+      "file": "rooms/ratios.html",
+      "reads": [
+        "grossAnnualIncome",
+        "monthlyExpenses",
+        "cashSavings",
+        "investments",
+        "totalDebt"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 14
+    },
+    {
+      "id": "dashboard",
+      "title": "The Dashboard",
+      "file": "index.html",
+      "reads": [
+        "grossAnnualIncome",
+        "monthlyExpenses",
+        "cashSavings",
+        "investments",
+        "totalDebt"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 15
+    },
+    {
+      "id": "credential",
+      "title": "Worth Learning",
+      "file": "rooms/credential.html",
+      "reads": [
+        "grossAnnualIncome"
+      ],
+      "writes": [],
+      "requires": [
+        "career"
+      ],
+      "dashboardNumber": null,
+      "order": 16
+    },
+    {
+      "id": "accounts",
+      "title": "Where It Goes & how it’s split",
+      "file": "rooms/accounts.html",
+      "reads": [
+        "grossAnnualIncome",
+        "filingStatus"
+      ],
+      "writes": [
+        "rothContributed",
+        "hsaContributed",
+        "marginalRate",
+        "allocationStocks",
+        "allocationBonds",
+        "allocationCash",
+        "rebalanceBand"
+      ],
+      "requires": [
+        "retirement"
+      ],
+      "dashboardNumber": null,
+      "order": 17
+    },
+    {
+      "id": "fulfillment",
+      "title": "Enough",
+      "file": "rooms/fulfillment.html",
+      "reads": [
+        "monthlyExpenses"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 18
+    },
+    {
+      "id": "rerank",
+      "title": "The Rerank",
+      "file": "rooms/rerank.html",
+      "reads": [
+        "monthlyExpenses"
+      ],
+      "writes": [
+        "rerankCut"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 19
+    },
+    {
+      "id": "stacker",
+      "title": "The Skill Stacker",
+      "file": "rooms/stacker.html",
+      "reads": [],
+      "writes": [
+        "practiceLedger"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 20
+    },
+    {
+      "id": "values",
+      "title": "What Matters",
+      "file": "rooms/values.html",
+      "reads": [
+        "monthlyExpenses"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 21
+    },
+    {
+      "id": "goals",
+      "title": "Goals",
+      "file": "rooms/goals.html",
+      "reads": [
+        "monthlyExpenses"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 22
+    },
+    {
+      "id": "foo-ladder",
+      "title": "FOO Ladder",
+      "file": "rooms/foo-ladder.html",
+      "reads": [
+        "grossAnnualIncome",
+        "filingStatus",
+        "monthlyExpenses",
+        "cashSavings",
+        "employerMatch",
+        "dob",
+        "highestDeductible",
+        "contributionPercent",
+        "rothContributed",
+        "hsaContributed"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": "fooStep",
+      "order": 23
+    },
+    {
+      "id": "worth",
+      "title": "Worth It",
+      "file": "rooms/worth.html",
+      "reads": [
+        "grossAnnualIncome"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 24
+    },
+    {
+      "id": "windfall",
+      "title": "The Windfall",
+      "file": "rooms/windfall.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 25
+    },
+    {
+      "id": "runway",
+      "title": "The Runway",
+      "file": "rooms/runway.html",
+      "reads": [
+        "cashSavings",
+        "monthlyExpenses"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": "emergencyFundMonths",
+      "order": 26
+    },
+    {
+      "id": "health",
+      "title": "The Score",
+      "file": "rooms/health.html",
+      "reads": [
+        "dob",
+        "grossAnnualIncome",
+        "monthlyExpenses",
+        "cashSavings",
+        "investments"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 27
+    },
+    {
+      "id": "what-if-life",
+      "title": "What If, Life",
+      "file": "rooms/what-if-life.html",
+      "reads": [
+        "grossAnnualIncome",
+        "monthlyExpenses",
+        "cashSavings",
+        "investments"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 28
+    },
+    {
+      "id": "get-help",
+      "title": "Get Help",
+      "file": "rooms/get-help.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 29
+    },
+    {
+      "id": "between-jobs",
+      "title": "Between Jobs",
+      "file": "rooms/between-jobs.html",
+      "reads": [
+        "unemployment",
+        "monthlyExpenses",
+        "cashSavings"
+      ],
+      "writes": [
+        "expectedSearchMonths",
+        "floorMonthly"
+      ],
+      "requires": [
+        "unemployment"
+      ],
+      "dashboardNumber": null,
+      "order": 31
+    },
+    {
+      "id": "protection",
+      "title": "Protection",
+      "file": "rooms/protection.html",
+      "reads": [
+        "monthlyExpenses",
+        "cashSavings",
+        "grossAnnualIncome"
+      ],
+      "writes": [
+        "healthCover",
+        "healthMonthly"
+      ],
+      "requires": [
+        "protection"
+      ],
+      "dashboardNumber": null,
+      "order": 32
+    },
+    {
+      "id": "decumulation",
+      "title": "Decumulation",
+      "file": "rooms/decumulation.html",
+      "reads": [
+        "investments",
+        "monthlyExpenses",
+        "grossAnnualIncome"
+      ],
+      "writes": [
+        "stockShare",
+        "plannedAnnualDraw",
+        "socialSecurityAt"
+      ],
+      "requires": [
+        "decumulation"
+      ],
+      "dashboardNumber": null,
+      "order": 33
+    },
+    {
+      "id": "tax",
+      "title": "Tax",
+      "file": "rooms/tax.html",
+      "reads": [
+        "grossAnnualIncome",
+        "filingStatus",
+        "state"
+      ],
+      "writes": [
+        "otherPreTax",
+        "withheld"
+      ],
+      "requires": [
+        "income"
+      ],
+      "dashboardNumber": null,
+      "order": 34
+    },
+    {
+      "id": "estate",
+      "title": "Estate Basics",
+      "file": "rooms/estate.html",
+      "reads": [],
+      "writes": [
+        "beneficiariesSet",
+        "willExists",
+        "poaExists"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 35
+    },
+    {
+      "id": "giving",
+      "title": "Giving",
+      "file": "rooms/giving.html",
+      "reads": [
+        "grossAnnualIncome"
+      ],
+      "writes": [
+        "givingPct",
+        "givingTarget"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 36
+    },
+    {
+      "id": "career-move",
+      "title": "Career Move",
+      "file": "rooms/career-move.html",
+      "reads": [
+        "grossAnnualIncome"
+      ],
+      "writes": [
+        "offerGross",
+        "offerHours",
+        "offerCommute",
+        "offerCosts",
+        "offerSignOn"
+      ],
+      "requires": [
+        "career"
+      ],
+      "dashboardNumber": null,
+      "order": 37
+    },
+    {
+      "id": "partner",
+      "title": "Partner",
+      "file": "rooms/partner.html",
+      "reads": [
+        "grossAnnualIncome",
+        "monthlyExpenses"
+      ],
+      "writes": [
+        "splitMode",
+        "sharedMonthly"
+      ],
+      "requires": [
+        "partner"
+      ],
+      "dashboardNumber": null,
+      "order": 38
+    },
+    {
+      "id": "kids",
+      "title": "Kids and Tuition",
+      "file": "rooms/kids.html",
+      "reads": [
+        "monthlyExpenses"
+      ],
+      "writes": [
+        "tuitionTarget",
+        "tuitionSaved",
+        "tuitionMonthly"
+      ],
+      "requires": [
+        "dependents"
+      ],
+      "dashboardNumber": null,
+      "order": 39
+    },
+    {
+      "id": "housing",
+      "title": "Housing Decision",
+      "file": "rooms/housing.html",
+      "reads": [
+        "monthlyExpenses",
+        "grossAnnualIncome",
+        "cashSavings"
+      ],
+      "writes": [
+        "rentMonthly",
+        "homePrice",
+        "downPct",
+        "mortgageRate"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 40
+    },
+    {
+      "id": "big-purchase",
+      "title": "Big Purchase",
+      "file": "rooms/big-purchase.html",
+      "reads": [
+        "cashSavings",
+        "monthlyExpenses"
+      ],
+      "writes": [
+        "purchasePrice",
+        "purchaseMonths",
+        "purchaseRate"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 41
+    },
+    {
+      "id": "variable-income",
+      "title": "Variable Income",
+      "file": "rooms/variable-income.html",
+      "reads": [
+        "grossAnnualIncome",
+        "monthlyExpenses"
+      ],
+      "writes": [
+        "incomeLow",
+        "incomeHigh",
+        "bufferMonths"
+      ],
+      "requires": [
+        "variableIncome"
+      ],
+      "dashboardNumber": null,
+      "order": 42
+    },
+    {
+      "id": "refresh",
+      "title": "Refresh",
+      "file": "rooms/refresh.html",
+      "reads": [
+        "cashSavings",
+        "investments",
+        "totalDebt"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 99
+    }
+  ]
+}

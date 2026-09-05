@@ -585,6 +585,8 @@ h3 { font-size: var(--text-md); }
 .slaf-donut .small { font-family: var(--font-body); font-size: 6px; fill: var(--color-text-faint); text-transform: uppercase; letter-spacing: .06em; }
 .slaf-donut .slaf-legend { margin-top: 0; }
 @media (max-width: 420px) {
+  .slaf-lens-btn { padding: 0 8px; font-size: 11px; min-height: 30px; }
+  .slaf-lens { max-width: 100%; }
   .slaf-donut { grid-template-columns: 1fr; justify-items: center; }
   .slaf-donut .slaf-legend { width: 100%; }
 }

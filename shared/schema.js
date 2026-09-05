@@ -1146,6 +1146,9 @@
            the one-pager can show "from The Statement" beside a number it
            did not enter itself. D-095. */
         source: {},
+        /* The household's default lens — '$', 'hours', 'bought' or
+           'pushed' — used when the session has not chosen one. D-100. */
+        displayUnit: null,
         /* "I don't pay rent" — living with family, or a paid-off place;
            lowers the spending guess and nothing else. D-094. */
         noRent: null
