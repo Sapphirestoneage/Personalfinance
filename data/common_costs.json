@@ -4,7 +4,7 @@
   "asOf": "2023-12-31",
   "source": "Twenty everyday cost lines with monthly figures in the region of the BLS Consumer Expenditure Survey 2023 averages per consumer unit (about $6,440 a month in total, of which these lines are the recognisable part), rounded to a figure a person would actually recognise on a statement.",
   "confidence": "unverified",
-  "confidenceNote": "Approximate. Written from the shape of the 2023 CES tables, not copied from them line by line; some lines (phone, streaming, gym, coffee) are folded into broader CES categories and are split out here as rules of thumb. Every figure is a PROPOSAL scaled to the household's own monthly essentials when those are known, shown as a suggestion and never stored until typed. D-084.",
+  "confidenceNote": "Approximate. Written from the shape of the 2023 CES tables, not copied from them line by line; some lines (phone, streaming, gym, coffee) are folded into broader CES categories and are split out here as rules of thumb. Every figure is a PROPOSAL scaled to the household's own monthly essentials when those are known, shown as a suggestion and never stored until typed. D-085.",
   "note": "categoryId is an id from data/expense_categories.json; `essential` mirrors that table so the scale factor can be derived from the essential lines only. BRIEF §5.",
   "lines": [
     { "id": "rent_or_mortgage", "label": "Rent or mortgage",       "categoryId": "housing",        "monthlyCents": 175000, "essential": true },

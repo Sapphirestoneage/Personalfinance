@@ -301,7 +301,7 @@
       format: function (v) { return v ? 'Yes' : 'No'; }
     },
 
-    /* What The Rerank would cut (D-084): the flagged lines, a year's worth.
+    /* What The Rerank would cut (D-085): the flagged lines, a year's worth.
        Derived, owned by the room that asks the questions. */
     rerankCut: {
       label: 'What The Rerank would cut', owner: 'rerank', anchor: 'gap',

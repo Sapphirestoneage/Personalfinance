@@ -1,6 +1,6 @@
 /* ==========================================================================
    engines/rerank.js — cost rank against value rank, and where they disagree.
-   BRIEF §5, DECISIONS.md D-084.
+   BRIEF §5, DECISIONS.md D-085.
    --------------------------------------------------------------------------
      lines(h, tables)     every cost line: the tracked categories and custom
                           lines when a month exists, else the common-cost

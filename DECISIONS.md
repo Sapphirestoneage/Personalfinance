@@ -4123,7 +4123,7 @@ Weather rows, the levels strip and the benchmarks card; the page sweep;
 
 ---
 
-## D-084 — The Rerank: cost order against value order, and the lines where they disagree
+## D-085 — The Rerank: cost order against value order, and the lines where they disagree
 
 *(BRIEF.md §5. T5, one room.)* `rooms/rerank.html` asks four things in
 four stages and shows one picture. The standalone prototype the brief
@@ -4197,7 +4197,7 @@ stages; `test/alignment.js` on the rate rows and the figure pair.
 
 ---
 
-## D-085 — Two decision sequences, so they can stop colliding
+## D-086 — Two decision sequences, so they can stop colliding
 
 The D&D entries were written while that tool was going to be its own repository
 (DD-004, DD-005), so they restarted their numbering at D-046 — head-on into the
@@ -4211,7 +4211,8 @@ That was survivable. What was not was the knock-on: parallel sessions kept
 reaching for the same next free number, and one side had to renumber on merge
 **four times in two days** — SPARKS T3 moved past the D&D T9 entries, then the
 D&D T9 entries moved past those, then SPARKS T4, then the D&D type chart. A fifth
-happened while this very entry was being written; see below. Each was cheap.
+and a sixth happened while this very entry was being written; see below. Each
+was cheap.
 Together they were a standing tax on every merge, and every one of them rewrote
 numbers that other commit messages already referenced.
 
@@ -4256,7 +4257,7 @@ reference pointing at an entry number that does not exist, and a `DD-` snuck int
 than naming an example number: writing one here would make this entry itself a
 dangling reference, and the guard catches that too.)
 
-### A fifth collision, during the pass that was fixing collisions
+### Two more collisions, during the pass that was fixing collisions
 
 While this was being written, another session pushed the T5 Rerank entry and took
 **D-084** — the number the D&D type chart was using. `main` briefly carried two
@@ -4268,7 +4269,12 @@ become DD-017 in this pass, so their D-084 is unique the moment the two branches
 meet. That is the whole argument for the split, demonstrated by the problem
 occurring one last time and then failing to matter.
 
-This entry is therefore **D-085**, the next free SPARKS number after theirs.
+It then happened a sixth time, on the very next push: that session renumbered
+its Rerank entry to D-085 on the assumption that D-084 was still taken by the
+type chart — which by then it was not. So this entry is **D-086**, the next free
+number after theirs, and **D-084 is now a permanent gap** in the SPARKS
+sequence. A gap costs nothing. A reused number costs a reader pointing at the
+wrong decision, which is what all of this is for.
 
 ### Compatibility note
 

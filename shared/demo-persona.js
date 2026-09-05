@@ -95,7 +95,7 @@
       { categoryId: 'retirement',        amount: 400 }
     ],
 
-    /* How much each line gives Robin, 1-10, for The Rerank (D-084). Chosen
+    /* How much each line gives Robin, 1-10, for The Rerank (D-085). Chosen
        so the cost order and the value order disagree in both directions:
        housing and the debt minimums cost the most and give the least, the
        subscriptions and going out cost the least and give the most. */
@@ -180,7 +180,7 @@
         highestDeductibleCents: Money.toCents(VALUES.highestDeductible)
       }),
       /* The Rerank's joy per line, in the one ratings store. The lines
-         themselves arrive with buildSpending(). D-084. */
+         themselves arrive with buildSpending(). D-085. */
       ratings: { rerank: Object.assign({}, VALUES.rerankJoy) },
       /* Robin has two debts, and says so: hasDebt is the answer that keeps
          Debt Payoff on the path. D-061. */
