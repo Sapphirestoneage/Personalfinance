@@ -86,6 +86,7 @@
     if (typeof x === 'string') {
       if (x.charAt(0) === '@') { var a = env.answers[x.slice(1)]; return a === undefined ? null : a; }
       if (x.charAt(0) === '$') { var c = env.ctx[x.slice(1)]; return c === undefined ? null : c; }
+      if (x.charAt(0) === '^') { var l = env.lines && env.lines[x.slice(1)]; return l === undefined ? null : l; }
       return x;
     }
     if (Array.isArray(x)) return x.map(function (y) { return evaluate(y, env); });
@@ -221,7 +222,12 @@
       var sum = CashFlow.summarise(household, tables.expenseCategories);
       if (Money.isOk(sum)) { byCategory = {}; sum.categories.forEach(function (row) { byCategory[row.categoryId] = row.monthlyCents; }); }
     }
+    var expensesVal = val(Schema.monthlyExpensesCents(household));
     return {
+      housingMonthlyCents: byCategory && Money.isEntered(byCategory.housing) ? byCategory.housing : null,
+      /* The cushion floor: the sleep-at-night number when there is one,
+         else three months of spending. */
+      efFloorCents: swan !== null ? swan : (Money.isEntered(expensesVal) ? expensesVal * 3 : null),
       primaryIncomeShare: allGross > 0 ? primaryGross / allGross : null,
       partnerIncomeShare: allGross > 0 ? (allGross - primaryGross) / allGross : null,
       hoursPerWeek: num(work.contractedHoursPerWeek),
@@ -315,6 +321,9 @@
           contributionMultiplier: evaluate(it.contributionMultiplier === undefined ? null : it.contributionMultiplier, env),
           addCents: evaluate(it.addCents === undefined ? null : it.addCents, env),
           cents: evaluate(it.cents === undefined ? null : it.cents, env),
+          debtCents: evaluate(it.debtCents === undefined ? null : it.debtCents, env),
+          debtRate: evaluate(it.debtRate === undefined ? null : it.debtRate, env),
+          debtMonths: evaluate(it.debtMonths === undefined ? null : it.debtMonths, env),
           unpriced: (it.multiplier !== undefined && evaluate(it.multiplier, env) === null)
             || (it.addCents !== undefined && evaluate(it.addCents, env) === null)
             || (it.cents !== undefined && evaluate(it.cents, env) === null)
@@ -332,9 +341,14 @@
       }
     });
     /* Named lines: figures the template wants shown beside the columns. */
+    env.lines = {};
     var lines = (tpl.lines || []).map(function (ln) {
       var v = evaluate(ln.value, env);
-      return { id: ln.id, label: ln.label, unit: ln.unit || 'dollars', value: v, note: ln.note || null };
+      env.lines[ln.id] = v;
+      var warn = ln.warn === undefined ? null : evaluate(ln.warn, env);
+      var bad = ln.bad === undefined ? null : evaluate(ln.bad, env);
+      return { id: ln.id, label: ln.label, unit: ln.unit || 'dollars', value: v, note: ln.note || null,
+        warn: warn === true, bad: bad === true };
     });
 
     /* The shock: the worst plausible year lands the month the event starts. */
@@ -347,6 +361,10 @@
 
     if (!ctx.matchKnown) flags.push({ key: 'matchUnknown', month: null, text: 'No 401(k) contribution entered, so no match is counted either way.' });
     var cash = ctx.cashCents, inv = ctx.investmentsCents, other = ctx.otherAssetsCents, debt = ctx.totalDebtCents;
+    /* Loans a template takes on: a balance that amortises at the level
+       payment (engines/projection.js) — the payment itself is an expense
+       the template adds; here only the balance moves. */
+    var loans = [];
     var monthly = [], runwayMin = null, lostMatch = 0, firstNegative = null, lowRunway = null;
     for (var m = 0; m < H; m++) {
       var mult = 1, adds = 0, matchMult = null, contribMult = null;
@@ -389,6 +407,18 @@
            write-down — with no cash on the other side. */
         if (it.source !== 'none') cash -= it.cents;
         if (it.target === 'investments') inv += it.cents; else other += it.cents;
+        if (it.debtCents !== null && it.debtCents > 0) {
+          var pmt = (it.debtRate !== null && it.debtMonths !== null)
+            ? val(Projection.levelPaymentCents({ principalCents: it.debtCents, annualRate: it.debtRate, months: it.debtMonths })) : null;
+          loans.push({ balance: it.debtCents, rate: it.debtRate || 0, pmt: pmt });
+          debt += it.debtCents;
+        }
+      });
+      loans.forEach(function (loan) {
+        if (loan.pmt === null || loan.balance <= 0) return;
+        var interest = loan.balance * loan.rate / MONTHS;
+        var principal = Math.min(loan.balance, loan.pmt - interest);
+        loan.balance -= principal; debt -= principal;
       });
       if (m === start && shockCents) cash -= shockCents;
 

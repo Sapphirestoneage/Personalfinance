@@ -4318,6 +4318,26 @@ you leave. Lines: an hour of your life on each side through
 hour than its $72,000 at forty), take-home on each side, and one more
 point of the new salary. No new tables.
 
+**4 · Buying a place, or a house hack.** Rent now (the tracked housing
+line, else 30% of gross), a price proposed at 18× a year of it
+(`data/price_to_rent.json`), the down payment share, the rate from the
+dated `data/mortgage_rates.json`, units in the building with you in one,
+rent per other unit, the hassle of being a landlord, closing when. The
+rent stops; the level payment (through `engines/projection.js`), tax,
+insurance and upkeep at the rules of thumb in
+`data/housing_conventions.json` start; closing costs leave in cash; the
+down payment becomes equity, the rest of the building an asset against
+a loan that amortises month by month — the engine now carries loans a
+template takes on. Rent from the other units arrives less 8% vacancy.
+Lines with **guardrails**: PITI over 25% of gross reads amber, a DSCR
+under 1.2 reads amber, cash after closing under the cushion floor (the
+sleep-at-night number, else three months of spending) reads red; plus
+NOI, cash-on-cash, and what selling in year two would cost at 11% of
+the price with no price change. A line may now reference an earlier
+line (`"^piti"`) and carry `warn` / `bad` expressions. The demo's
+$324,000 at 20% down is red on cash and amber on the ratio, and the
+cash runs out in the closing month, which is the honest answer.
+
 **Verified.** `node test/run.js`: for each, month 1 and month 12 of the
 default run on the demo by longhand — the child's first year at $3,150 +
 $1,200 + $1,000 + $250 a month with the $3,000 birth in month 1; a parent

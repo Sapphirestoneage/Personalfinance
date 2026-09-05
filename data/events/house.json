@@ -1,0 +1,70 @@
+{
+  "id": "house",
+  "title": "Buying a place — or a house hack",
+  "blurb": "A price proposed from your rent, the payment with tax, insurance and upkeep, units you would rent out, and what you could not undo in year two.",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "confidence": "convention",
+  "drawsOn": ["takeHome", "monthlyExpenses", "cashSavings", "investments", "housingLine", "swan"],
+  "questions": [
+    { "id": "rentNow",  "ask": "What you pay for housing now, a month", "unit": "dollars", "default": { "coalesce": ["$housingMonthlyCents", { "round": { "*": [0.3, "$grossMonthlyCents"] }}] }, "hint": "From your tracked month when there is one; else 30% of gross." },
+    { "id": "price",    "ask": "Price",                                  "unit": "dollars", "default": { "round": { "*": ["@rentNow", 12, { "table": "priceToRent", "path": ["ratio"] }] } }, "hint": "Proposed at 18× a year of your rent — a national ratio." },
+    { "id": "downPct",  "ask": "Down payment, as a share of price",      "unit": "percent", "default": 0.20 },
+    { "id": "rate",     "ask": "Mortgage rate",                          "unit": "percent", "default": { "table": "mortgageRates", "path": ["thirtyYearFixed"] }, "hint": "The dated average in data/mortgage_rates.json." },
+    { "id": "units",    "ask": "Units in the building, you in one",      "unit": "count",   "default": 1, "min": 1, "max": 4 },
+    { "id": "rentPerUnit", "ask": "Rent per other unit, a month",         "unit": "dollars", "default": "@rentNow" },
+    { "id": "hassle",   "ask": "Hassle of being a landlord, 1–10",       "unit": "count",   "default": 5, "min": 1, "max": 10 },
+    { "id": "startsOn", "ask": "Closing in how many months?",            "unit": "months",  "default": 6, "min": 0, "max": 36 }
+  ],
+  "startsOn": "@startsOn",
+  "gapMonths": 0,
+  "diff": {
+    "income": [
+      { "label": "Rent from the other units, less vacancy", "from": 0, "months": null,
+        "addCents": { "round": { "*": [ { "-": ["@units", 1] }, "@rentPerUnit", { "-": [1, { "table": "housingConventions", "path": ["vacancyRate"] }] } ] } } }
+    ],
+    "expenses": [
+      { "label": "Rent stops", "from": 0, "months": null, "addCents": { "neg": "@rentNow" } },
+      { "label": "Mortgage payment", "from": 0, "months": null,
+        "addCents": { "fn": "levelPayment", "args": { "principalCents": { "round": { "*": ["@price", { "-": [1, "@downPct"] }] } }, "annualRate": "@rate", "months": { "table": "housingConventions", "path": ["termMonths"] } } } },
+      { "label": "Property tax, insurance, upkeep", "from": 0, "months": null,
+        "addCents": { "round": { "/": [ { "*": ["@price", { "+": [ { "table": "housingConventions", "path": ["propertyTaxRate"] }, { "table": "housingConventions", "path": ["insuranceRate"] }, { "table": "housingConventions", "path": ["maintenanceRate"] } ] }] }, 12 ] } } }
+    ],
+    "oneTime": [
+      { "label": "Closing costs", "when": 0, "cents": { "round": { "*": ["@price", { "table": "housingConventions", "path": ["closingCostRate"] }] } } }
+    ],
+    "assets": [
+      { "label": "The down payment becomes equity; the mortgage becomes debt", "when": 0, "target": "other",
+        "cents": { "round": { "*": ["@price", "@downPct"] } },
+        "debtCents": { "round": { "*": ["@price", { "-": [1, "@downPct"] }] } }, "debtRate": "@rate", "debtMonths": { "table": "housingConventions", "path": ["termMonths"] } },
+      { "label": "The rest of the building is yours too, against the loan", "when": 0, "target": "other", "source": "none",
+        "cents": { "round": { "*": ["@price", { "-": [1, "@downPct"] }] } } }
+    ]
+  },
+  "lines": [
+    { "id": "payment",  "label": "Mortgage payment, a month", "unit": "dollarsMonthly",
+      "value": { "fn": "levelPayment", "args": { "principalCents": { "round": { "*": ["@price", { "-": [1, "@downPct"] }] } }, "annualRate": "@rate", "months": { "table": "housingConventions", "path": ["termMonths"] } } } },
+    { "id": "piti",     "label": "Payment with tax and insurance (PITI)", "unit": "dollarsMonthly",
+      "value": { "+": ["^payment", { "round": { "/": [ { "*": ["@price", { "+": [ { "table": "housingConventions", "path": ["propertyTaxRate"] }, { "table": "housingConventions", "path": ["insuranceRate"] } ] }] }, 12 ] } }] } },
+    { "id": "housingRatio", "label": "PITI as a share of gross income", "unit": "percent",
+      "value": { "/": ["^piti", "$grossMonthlyCents"] }, "warn": { "gt": ["^housingRatio", { "table": "housingConventions", "path": ["guardrails", "pitiToGross"] }] }, "note": "Amber over 25%." },
+    { "id": "cashAfter", "label": "Cash after closing", "unit": "dollars",
+      "value": { "-": ["$cashCents", { "round": { "*": ["@price", { "+": ["@downPct", { "table": "housingConventions", "path": ["closingCostRate"] }] }] } }] },
+      "bad": { "lt": ["^cashAfter", "$efFloorCents"] }, "note": "Red under your cushion floor: the sleep-at-night number, or three months of spending." },
+    { "id": "noi",      "label": "Rent net of vacancy and upkeep, a year (NOI)", "unit": "dollars",
+      "value": { "round": { "-": [ { "*": [12, { "-": ["@units", 1] }, "@rentPerUnit", { "-": [1, { "table": "housingConventions", "path": ["vacancyRate"] }] }] }, { "*": ["@price", { "+": [ { "table": "housingConventions", "path": ["propertyTaxRate"] }, { "table": "housingConventions", "path": ["insuranceRate"] }, { "table": "housingConventions", "path": ["maintenanceRate"] } ] }] } ] } } },
+    { "id": "dscr",     "label": "Debt service coverage (NOI ÷ a year of payments)", "unit": "count",
+      "value": { "if": [ { "gt": ["@units", 1] }, { "/": ["^noi", { "*": [12, "^payment"] }] }, null ] },
+      "warn": { "lt": ["^dscr", { "table": "housingConventions", "path": ["guardrails", "dscr"] }] }, "note": "Only with units to rent. Amber under 1.2." },
+    { "id": "cashOnCash", "label": "Cash-on-cash return", "unit": "percent",
+      "value": { "if": [ { "gt": ["@units", 1] }, { "/": [ { "-": ["^noi", { "*": [12, "^payment"] }] }, { "*": ["@price", { "+": ["@downPct", { "table": "housingConventions", "path": ["closingCostRate"] }] }] } ] }, null ] } },
+    { "id": "reversal", "label": "What selling in year two would cost (closing + selling, no price change)", "unit": "dollars",
+      "value": { "round": { "*": ["@price", { "+": [ { "table": "housingConventions", "path": ["closingCostRate"] }, { "table": "housingConventions", "path": ["sellingCostRate"] } ] }] } } }
+  ],
+  "protect": ["The cushion after closing", "A year of the payment in reach", "Your weekends, if the hassle rating is honest"],
+  "cut": [],
+  "tripleD": {},
+  "outputs": ["netWorthAtEndCents", "fiDateShiftMonths", "runwayMinMonths"],
+  "horizonMonths": 120,
+  "sources": ["data/housing_conventions.json", "data/price_to_rent.json", "data/mortgage_rates.json", "data/triple_d.json", "data/return_bands.json"]
+}

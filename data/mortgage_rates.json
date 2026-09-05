@@ -1,0 +1,11 @@
+{
+  "id": "mortgage_rates",
+  "version": "2026.1",
+  "asOf": "2026-01-01",
+  "source": "Freddie Mac Primary Mortgage Market Survey: the 30-year fixed average sat in the region of 6.5% through late 2025.",
+  "confidence": "unverified",
+  "confidenceNote": "A dated, recalled figure. Rates move weekly; this is a proposal, dated so a person can see how old it is, never a quote.",
+  "note": "Decimal annual rate. D-087.",
+  "thirtyYearFixed": 0.065,
+  "fifteenYearFixed": 0.058
+}

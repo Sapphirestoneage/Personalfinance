@@ -6733,6 +6733,67 @@ section('Life events: the job offer, on the demo');
   check('and the same match: 2% of $72,000 is what the demo captures now', same.monthly[0].matchCents, match);
 })();
 
+section('Life events: buying a place, on the demo');
+
+(function () {
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const T = Object.assign({}, TABLES, {
+    commonCosts: require(path.join(ROOT, 'data/common_costs.json')),
+    tripleD: require(path.join(ROOT, 'data/triple_d.json')),
+    returnBands: require(path.join(ROOT, 'data/return_bands.json')),
+    housingConventions: require(path.join(ROOT, 'data/housing_conventions.json')),
+    priceToRent: require(path.join(ROOT, 'data/price_to_rent.json')),
+    mortgageRates: require(path.join(ROOT, 'data/mortgage_rates.json'))
+  });
+  const tpl = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/house.json'), 'utf8'));
+  const h = Demo.build(); h.expenses.entries = Demo.buildSpending();
+  const r = E.run(h, tpl, { startsOn: 0 }, { tables: T, d: 'default' });
+  const by = {}; r.lines.forEach(l => { by[l.id] = l; });
+
+  /* Proposed from the tracked $1,500 of housing: 1,500 × 12 × 18. */
+  check('the rent now comes from the tracked month', r.answers.rentNow, 150000);
+  check('the price proposed at 18× a year of rent', r.answers.price, 32400000);
+  check('the rate from the dated table', r.answers.rate, 0.065);
+  /* The level payment by the closed form, written out. */
+  const P = 32400000 * 0.8, i = 0.065 / 12, n = 360;
+  const pmt = Math.round(P * i / (1 - Math.pow(1 + i, -n)));
+  check('the payment: $259,200 at 6.5% over 360 months', by.payment.value, pmt);
+  check('which is $1,638.32', pmt, 163832);
+  const ti = Math.round(32400000 * (0.011 + 0.005) / 12);
+  check('PITI adds tax and insurance at 1.1% + 0.5%', by.piti.value, pmt + ti);
+  check('34.5% of gross: amber', by.housingRatio.warn, true);
+  check('cash after closing: 9,500 − 23% of the price', by.cashAfter.value, 950000 - Math.round(32400000 * 0.23));
+  check('which is under the floor: red', by.cashAfter.bad, true);
+  check('no units to rent: no DSCR', by.dscr.value, null);
+  check('selling in year two: 11% of the price', by.reversal.value, Math.round(32400000 * 0.11));
+
+  /* Month 1 and 12, longhand, with the loan amortising. */
+  const take = 486000, contrib = 24000, match = 12000, spend = 315000, rate = 0.05 / 12;
+  const upkeep = Math.round(32400000 * 0.026 / 12);
+  let cash = 950000 - Math.round(32400000 * 0.03) - Math.round(32400000 * 0.2), inv = 4800000, bal = P;
+  const rows = [];
+  for (let m = 0; m < 12; m++) {
+    cash += (take - contrib) - (spend - 150000 + pmt + upkeep);
+    inv = (inv + contrib + match) * (1 + rate);
+    const interest = bal * i; bal -= (pmt - interest);
+    rows.push({ cash: cash, nw: Math.round(cash + inv + 32400000 - (2160000 + bal)) });
+  }
+  check('month 1 spending: 3,150 − 1,500 rent + the payment + 2.6% a year of upkeep, tax and insurance', r.monthly[0].expensesCents, spend - 150000 + pmt + upkeep);
+  check('month 1 cash', r.monthly[0].cashCents, rows[0].cash);
+  check('month 1 net worth counts the whole building against the loan', r.monthly[0].netWorthCents, rows[0].nw, 2);
+  check('month 12 cash', r.monthly[11].cashCents, rows[11].cash);
+  check('month 12 net worth, the loan a year further down', r.monthly[11].netWorthCents, rows[11].nw, 2);
+  checkTrue('the demo cannot close on this: cash out in month 1', r.flags.some(f => f.key === 'cashOut' && f.month === 0));
+
+  /* A duplex: the other unit pays, less 8% vacancy. */
+  const hack = E.run(h, tpl, { startsOn: 0, units: 2 }, { tables: T, d: 'default' });
+  const hb = {}; hack.lines.forEach(l => { hb[l.id] = l; });
+  check('month 1 income adds the other unit at 92%', hack.monthly[0].incomeCents, take - contrib + Math.round(150000 * 0.92));
+  check('NOI: a year of that less 2.6% of the price', hb.noi.value, Math.round(12 * 150000 * 0.92 - 32400000 * 0.026));
+  check('DSCR under 1.2: amber', hb.dscr.warn, true);
+  checkTrue('cash-on-cash is negative here', hb.cashOnCash.value < 0);
+})();
+
 section('The D&D folder\'s vendored copies');
 
 (function () {

@@ -192,7 +192,10 @@
             "cash",
             "none"
           ]
-        }
+        },
+        "debtCents": {},
+        "debtRate": {},
+        "debtMonths": {}
       }
     },
     "line": {
@@ -224,7 +227,9 @@
         "value": {},
         "note": {
           "type": "string"
-        }
+        },
+        "warn": {},
+        "bad": {}
       }
     }
   }
