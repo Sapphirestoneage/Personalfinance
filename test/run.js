@@ -5136,6 +5136,111 @@ section('The Statement: shape and tables');
   }
 })();
 
+section('The tax engine');
+
+(function () {
+  const Tax = require(path.join(ROOT, 'engines/tax.js'));
+  const T = {
+    federalBrackets: require(path.join(ROOT, 'data/federal_brackets_2026.json')),
+    seTax: require(path.join(ROOT, 'data/se_tax_2026.json')),
+    stateBrackets: require(path.join(ROOT, 'data/state_brackets_2026.json')),
+    aca: require(path.join(ROOT, 'data/aca_2026.json'))
+  };
+
+  /* -- Ordinary income, by hand ------------------------------------------- */
+  {
+    /* 72,000 single: taxable 72,000 − 16,100 = 55,900.
+       10% of 12,400 = 1,240; 12% of 38,000 = 4,560; 22% of 5,500 = 1,210. */
+    const o = Tax.ordinaryTax(T.federalBrackets, 7200000, 'single');
+    check('taxable income is gross minus the standard deduction', o.taxableIncomeCents, 5590000);
+    check('the ordinary tax is 7,010', o.value, 701000);
+    check('in three slices', o.slices.length, 3);
+    check('the marginal rate is 22%', o.marginalRate, 0.22);
+    check('the standard deduction was used', o.deductionKind, 'standard');
+    const itemised = Tax.ordinaryTax(T.federalBrackets, 7200000, 'single', { deductionCents: 2000000 });
+    check('a larger itemised deduction wins', itemised.deductionKind + ':' + itemised.taxableIncomeCents, 'itemised:5200000');
+    const deferred = Tax.ordinaryTax(T.federalBrackets, 7200000, 'single', { aboveTheLineCents: 500000 });
+    check('a 401(k) deferral comes off before the deduction', deferred.taxableIncomeCents, 5090000);
+    check('and saves 22 cents on the dollar at this bracket', 701000 - deferred.value, 110000);
+    check('below the deduction the tax is zero, not negative', Tax.ordinaryTax(T.federalBrackets, 1000000, 'single').value, 0);
+    check('no filing status, no tax', Tax.ordinaryTax(T.federalBrackets, 7200000, null).status, 'incomplete');
+    check('no income, no tax', Tax.ordinaryTax(T.federalBrackets, null, 'single').status, 'incomplete');
+    check('a million single lands in the top bracket', Tax.ordinaryTax(T.federalBrackets, 100000000, 'single').marginalRate, 0.37);
+  }
+
+  /* -- Gains stack on top ------------------------------------------------- */
+  {
+    /* 10,000 of gains on 40,000 of ordinary taxable: 9,450 fills the 0%
+       band (to 49,450), the remaining 550 is taxed at 15% = 82.50. */
+    const cg = Tax.capitalGainsTax(T.federalBrackets, 1000000, 4000000, 'single');
+    check('gains fill the 0% band first', cg.slices[0].dollars, 9450);
+    check('then 15%', cg.value, 8250);
+    check('the marginal gains rate is what the last dollar paid', cg.marginalRate, 0.15);
+    check('gains on nothing else are all in the 0% band', Tax.capitalGainsTax(T.federalBrackets, 1000000, 0, 'single').value, 0);
+    check('no gains, no tax', Tax.capitalGainsTax(T.federalBrackets, 0, 4000000, 'single').value, 0);
+    /* Stacking matters: the same 10,000 on 45,000 straddles the band. */
+    check('the same gains higher up pay more', Tax.capitalGainsTax(T.federalBrackets, 1000000, 4500000, 'single').value, 83250);
+  }
+
+  /* -- FICA ---------------------------------------------------------------- */
+  {
+    const f = Tax.fica(T.seTax, 7200000, 'single');
+    check('the employee pays 7.65% on 72,000', f.value, 550800);
+    check('6.2% of it Social Security', f.socialSecurityCents, 446400);
+    check('1.45% Medicare', f.medicareCents, 104400);
+    check('and no additional Medicare below the threshold', f.additionalMedicareCents, 0);
+    const big = Tax.fica(T.seTax, 30000000, 'single');
+    checkTrue('Social Security stops at the wage base', big.cappedAtWageBase && big.socialSecurityCents === Math.round(T.seTax.socialSecurityWageBase * 100 * 0.062));
+    check('additional Medicare on the excess over 200,000', big.additionalMedicareCents, 90000);
+  }
+
+  /* -- State ---------------------------------------------------------------- */
+  {
+    check('Texas: nothing', Tax.stateTax(T.stateBrackets, 'TX', 5590000, 'single').value, 0);
+    check('North Carolina: flat 4.25% on taxable', Tax.stateTax(T.stateBrackets, 'NC', 5590000, 'single').value, 237575);
+    const ca = Tax.stateTax(T.stateBrackets, 'CA', 5590000, 'single');
+    /* CA single on 55,900: 1% to 10,756 (107.56) + 2% to 25,499 (294.86)
+       + 4% to 40,245 (589.84) + 6% to 55,866 (937.26) + 8% on 34 (2.72). */
+    check('California walks its brackets', ca.value, Math.round((107.56 + 294.86 + 589.84 + 937.26 + 2.72) * 100));
+    check('and reports the marginal rate reached', ca.marginalRate, 0.08);
+    checkTrue('married joint doubles the single thresholds', Tax.stateTax(T.stateBrackets, 'CA', 5590000, 'married_joint').value < ca.value);
+    checkTrue('the state figure says it is an approximation', /federal taxable income/.test(ca.approximation));
+    check('no state, no figure', Tax.stateTax(T.stateBrackets, null, 5590000, 'single').status, 'incomplete');
+  }
+
+  /* -- The ACA cliff --------------------------------------------------------- */
+  {
+    const a = Tax.acaCliff(T.aca, 5000000, 1);
+    check('50,000 for one is about 3.2× the poverty level', Math.round(a.value * 100) / 100, Math.round(50000 / 15650 * 100) / 100);
+    checkTrue('under the cliff', !a.overCliff);
+    check('with room before it', a.roomBeforeCliffCents, Math.round((15650 * 4 - 50000) * 100));
+    checkTrue('an expected contribution is named', a.expectedContributionCents > 0);
+    const over = Tax.acaCliff(T.aca, 7000000, 1);
+    checkTrue('70,000 for one is over the cliff', over.overCliff && over.roomBeforeCliffCents === 0 && over.applicablePercentage === null);
+    checkTrue('a bigger household moves the cliff up', Tax.acaCliff(T.aca, 7000000, 3).overCliff === false);
+  }
+
+  /* -- The whole estimate on the demo -------------------------------------- */
+  {
+    const r = Tax.estimate(Demo.build(), T, {});
+    check('federal ordinary 7,010', r.federalOrdinaryCents, 701000);
+    check('FICA 5,508', r.ficaCents, 550800);
+    check('NC state 2,375.75', r.stateCents, 237575);
+    check('total 14,893.75', r.value, 1489375);
+    check('take-home is gross minus all of it', r.takeHomeAnnualCents, 7200000 - 1489375);
+    check('at an effective rate near the lookup table', Math.round(r.effectiveRate * 100), 21);
+    checkTrue('it says what it did not model', r.notModelled.length >= 5);
+    check('and how much to trust it', r.confidence, 'unverified');
+    const side = Tax.estimate(Demo.build(), T, { selfEmploymentCents: 1000000 });
+    checkTrue('side income adds SE tax', side.selfEmploymentTaxCents > 0);
+    checkTrue('and its deductible half comes off ordinary income', side.components.ordinary.aboveTheLineCents === side.components.selfEmployment.deductibleHalfCents);
+    const noState = Demo.build(); noState.state = null;
+    check('no state means no state tax and says so', Tax.estimate(noState, T, {}).stateIncluded, false);
+    const src = fs.readFileSync(path.join(ROOT, 'engines/tax.js'), 'utf8');
+    checkTrue('SE tax is reused, never re-derived', src.indexOf('SelfEmployed.selfEmploymentTax(') !== -1 && !/netEarningsFactor/.test(src));
+  }
+})();
+
 section('What is finished');
 
 (function () {

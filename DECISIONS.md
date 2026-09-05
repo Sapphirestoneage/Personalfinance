@@ -3588,6 +3588,58 @@ its ownership rows and anchors.
 
 ---
 
+## D-065 — A tax engine in named steps; the effective-rate table stays as the fallback
+
+*(BRIEF.md §3.7.)* The app had one tax number: the effective-rate lookup in
+`data/effective_tax_rates_2026.json`, a blend of income tax and FICA by
+gross band. It was honest about being a blend (D-009, D-036). It could not
+say what the next dollar costs, what a deferral saves, or what a gain pays.
+
+**Decision: `engines/tax.js` computes federal tax in named steps, each its
+own function with its own Result**, so a room can show the working and a
+test can pin every line:
+
+- `ordinaryTax` — gross, less above-the-line deferrals, less the larger of
+  the standard and an itemised deduction, walked up the bracket ladder.
+- `capitalGainsTax` — long-term gains **stacked on top** of ordinary taxable
+  income and taxed at 0 / 15 / 20 by where the stack lands. Ten thousand of
+  gains on forty thousand of ordinary income pays $82.50; the same gains on
+  forty-five thousand pays $832.50. Stacking is the whole point.
+- `fica` — the employee's 6.2% to the wage base, 1.45% uncapped, and the
+  additional 0.9% over the threshold, from `se_tax_2026.json`.
+- self-employment tax — `engines/selfemployed.js`, reused; the deductible
+  half comes off ordinary income. Nothing is re-derived.
+- `stateTax` — none / flat / graduated from `state_brackets_2026.json`,
+  applied to **federal** taxable income as a stated stand-in.
+- `acaCliff` — where MAGI sits against 400% of the poverty level, with the
+  room before the cliff. Flags and distance only; it never prices a plan.
+- `estimate` — all of it, plus `notModelled`: credits, AMT, NIIT, QBI, state
+  deductions and local taxes. The number is an estimate and says so.
+
+On the demo persona ($72,000, single, NC): ordinary $7,010, FICA $5,508,
+state $2,375.75, total $14,893.75, an effective 20.7% against the lookup
+table's 19%. Every one of those was derived by hand in `test/run.js` before
+the engine produced it.
+
+**What stays.** Tier0's take-home and savings rate keep reading the
+effective-rate table. It is the fallback here when the lines a real
+computation needs are missing, and swapping every reader onto the new
+engine is a change with its own blast radius (every savings rate in the app
+moves ~2 points) that belongs to T4, deliberately.
+
+The brief's acceptance criterion — within $200 of the BiggerPockets PFS v9
+demo household — could not be run: that spreadsheet is not in this repo.
+The hand derivations above are the check that stands in its place.
+
+### Compatibility note
+
+Stored shape: nothing. `data/federal_brackets_2026.json` gains a
+`capitalGains` ladder (version 2026.1), same unverified status as the rest
+of the file. No room reads the engine yet; the Statement's bracket ladder
+is first.
+
+---
+
 ## D-046 — HP is measured in weeks, which is what makes §3A stop contradicting itself
 
 The Dungeons & Dividends rulebook defines Hit Points twice in the same

@@ -1,6 +1,6 @@
 {
   "id": "federal_brackets",
-  "version": "2026.0",
+  "version": "2026.1",
   "asOf": "2026-01-01",
   "taxYear": 2026,
   "source": "Federal ordinary-income brackets and standard deductions for tax year 2026 as announced by the IRS in its annual inflation adjustments (Rev. Proc. 2025-32). Transcribed from memory of the announcement; not yet re-derived against the published text.",
@@ -133,6 +133,65 @@
       {
         "upToTaxableIncome": null,
         "rate": 0.37
+      }
+    ]
+  },
+  "capitalGains": {
+    "note": "Long-term capital gains and qualified dividends stack on top of ordinary taxable income and are taxed at 0 / 15 / 20% by where that stack lands. Thresholds are the TOP of taxable income for each rate, by filing status. Same source and the same unverified status as the ordinary brackets.",
+    "single": [
+      {
+        "upToTaxableIncome": 49450,
+        "rate": 0.0
+      },
+      {
+        "upToTaxableIncome": 545500,
+        "rate": 0.15
+      },
+      {
+        "upToTaxableIncome": null,
+        "rate": 0.2
+      }
+    ],
+    "married_joint": [
+      {
+        "upToTaxableIncome": 98900,
+        "rate": 0.0
+      },
+      {
+        "upToTaxableIncome": 613700,
+        "rate": 0.15
+      },
+      {
+        "upToTaxableIncome": null,
+        "rate": 0.2
+      }
+    ],
+    "married_separate": [
+      {
+        "upToTaxableIncome": 49450,
+        "rate": 0.0
+      },
+      {
+        "upToTaxableIncome": 306850,
+        "rate": 0.15
+      },
+      {
+        "upToTaxableIncome": null,
+        "rate": 0.2
+      }
+    ],
+    "head_of_household": [
+      {
+        "upToTaxableIncome": 66200,
+        "rate": 0.0
+      },
+      {
+        "upToTaxableIncome": 579600,
+        "rate": 0.15
+      },
+      {
+        "upToTaxableIncome": null,
+        "rate": 0.2
       }
     ]
   }
