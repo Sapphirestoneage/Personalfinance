@@ -3961,6 +3961,74 @@ Snapshot card and the dashboard's Thrust cell.
 
 ---
 
+## D-074 — Fourteen more ratios, in the one registry, most of them without a band
+
+*(BRIEF.md §4.3.)* `engines/ratios.js` gains fourteen rows, each calling
+the engine that already owns the number — `engines/statement.js` for
+income concentration, the weighted net worth, the ladder, the worst year
+and the bridge; `engines/benchmarks.js` for net worth in years and human
+capital; `Reference.marginalBracket` for bracket room; `Tier0.yearsToFire`
+for the FI date. Nothing is re-derived. Three are new arithmetic:
+
+- **Shadow runway** — cash + a Roth's contributions + home equity at a
+  haircut, over monthly expenses: the runway if you were willing to raid
+  the Roth and sell the house. The haircut is a new assumption,
+  `assumptions.homeEquityHaircut`, default 0.8, overridable like the
+  others; the Result reports the pool and the haircut it used.
+- **Lifestyle inflation** and **net worth growth** read snapshots back
+  (D-056). "A year ago" is the most recent snapshot at least eleven
+  months before now — a snapshot taken "about a year later" rarely lands
+  on the day. With none, the Result says to save one and come back; with
+  one too recent, it says that. A snapshot's `fields` may hold a bare
+  number or a `{status, value}` Result; both are read. Growth from a net
+  worth of exactly zero is undefined and says so; a raise of zero leaves
+  nothing to measure inflation against.
+- **Giving rate** — the `gifts` category over take-home. A tracked month
+  with no gifts line is 0%; no tracked month is incomplete.
+
+**Bands.** `ratio_benchmarks.json` moves to 1.2. Only three of the
+fourteen get a verdict: shadow runway borrows the 3–6 month emergency
+fund convention on its wider pool; worst-year coverage calls 1× covered
+by definition and half-covered the watch line (a convention chosen here,
+and the note says so); lifestyle inflation uses "keep at least half of
+every raise". The other eleven carry `null` bands with a note saying
+why — one paycheque reading 100% concentration is a fact about the
+household, not a fault, and the tithe is not a financial convention.
+**Automation ratio is registered as unavailable** with what it would
+need (which contributions are automated — the Skill Stacker's question,
+T7), so nothing pretends to know it.
+
+**Two new units.** `dollars` (a figure, not a monthly flow — the weighted
+net worth and bracket room) and `date` (a decimal year, shown as
+"Sep 2045"). `cents` keeps its "/mo" meaning.
+
+**Snapshots reach the engine as an option**, not through the household:
+`Ratios.all(h, tables, { snapshots, now })`, passed by the rooms and by
+`shared/instruments.js` from `Spine.listSnapshots()`. The engine stays
+pure; `now` is injectable so the tests pin a date.
+
+**Compatibility note.** No stored shape changed. `engines/ratios.js` now
+depends on `statement.js`, `benchmarks.js` and `shared/reference.js`;
+every page that loads it (`index.html`, `rooms/ratios.html`,
+`rooms/health.html`, `rooms/refresh.html`) loads those and `fire.js`,
+which the registry test enforces. The `assumptions.homeEquityHaircut`
+default resolves for any stored household.
+
+**Verified.** `node test/run.js`: every new row on the demo — 100%
+concentration, the weighted figure at half of rated cash less debt, the
+ladder at 100% reachable, shadow runway 9,500 ÷ 3,150 and then a
+$300,000 home with $200,000 owed adding $80,000, worst-year coverage
+9,500 ÷ 17,200 in the watch zone, $171 of gifts over take-home, $49,800
+of bracket room before 24%, the 8.5-year bridge, human capital at about
+23× financial capital, the FI date to the day from a pinned now,
+lifestyle inflation 4,200 ÷ 12,000 from a year-old snapshot storing a
+Result and a bare number, growth annualised over the real gap, and the
+three "cannot say" cases. The radar now plots sixteen banded ratios for
+the demo. A phone-browser read of the Every Ratio room and the Health
+room.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool. **The numbers D-046

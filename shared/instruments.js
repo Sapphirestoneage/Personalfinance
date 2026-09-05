@@ -84,7 +84,7 @@
    */
   function compute(household, tables, now) {
     var rates = Tier0.savingsRate(household, tables);
-    var ratios = Ratios.all(household, tables);
+    var ratios = Ratios.all(household, tables, { snapshots: Spine.listSnapshots() });
     function ratioRow(id) {
       return ratios.rows.filter(function (r) { return r.id === id; })[0] || null;
     }

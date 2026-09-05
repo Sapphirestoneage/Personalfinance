@@ -50,6 +50,9 @@
        still to come before the stop age. A planning assumption, overridable
        like the others. BRIEF §4.1, DECISIONS.md D-072. */
     humanCapitalDiscountRate: 0.02,
+    /* What a home's equity is worth when you would have to sell in a hurry
+       — the shadow runway counts it at this fraction. BRIEF §4.3, D-074. */
+    homeEquityHaircut: 0.8,
     /* Deliberately NULL. A marginal rate depends on bracket, state and
        filing status, and this app has an EFFECTIVE-rate table, not a
        marginal one — deriving one from the other would be a fabricated
@@ -156,6 +159,7 @@
     'assumptions.expectedReturnRate':            { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.expectedReturnRate },
     'assumptions.swrRate':                       { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.swrRate },
     'assumptions.humanCapitalDiscountRate':      { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.humanCapitalDiscountRate, note: 'real discount on pay still to come, for human capital. D-072' },
+    'assumptions.homeEquityHaircut':             { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.homeEquityHaircut, note: 'the fraction of home equity the shadow runway counts. D-074' },
 
     /* Computed — never stored on the household, never user-editable.
        Recomputed from raw inputs on every read. Listed here so a tool can

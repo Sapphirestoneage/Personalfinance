@@ -153,6 +153,9 @@
 <script src="../engines/tier0.js"></script>
 <script src="../engines/foo.js"></script>
 <script src="../engines/cashflow.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../engines/statement.js"></script>
+<script src="../engines/benchmarks.js"></script>
 <script src="../engines/ratios.js"></script>
 <script>
 (function () {
@@ -177,6 +180,13 @@
     });
   }
 
+  /* A decimal year (2045 + month/12) as "Sep 2045". */
+  function monthYear(v) {
+    var year = Math.floor(v), month = Math.round((v - year) * 12);
+    if (month === 12) { year++; month = 0; }
+    return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month] + ' ' + year;
+  }
+
   function show(row) {
     if (!row.ok) return Money.EM_DASH;
     switch (row.unit) {
@@ -185,6 +195,8 @@
       case 'multiple': return Money.formatMultiple(row.value);
       case 'cents':    return Money.formatCents(row.value) + '/mo';
       case 'years':    return (Math.round(row.value * 10) / 10) + ' years';
+      case 'dollars':  return Money.formatCents(row.value);
+      case 'date':     return monthYear(row.value);
       default:         return String(row.value);
     }
   }
@@ -196,7 +208,8 @@
     function u(v) {
       return row.unit === 'rate' ? Money.formatRate(v, { decimals: 0 })
         : row.unit === 'months' ? v + ' months'
-        : row.unit === 'multiple' ? v + 'x' : String(v);
+        : row.unit === 'multiple' ? v + 'x'
+        : row.unit === 'dollars' ? Money.formatCents(v) : String(v);
     }
     var aim = b.direction === 'lower' ? 'Comfortable at or below ' + u(b.good)
       : 'Comfortable at or above ' + u(b.good);
@@ -221,7 +234,7 @@
   function renderNow() {
     if (!TABLES) return;
     var h = Spine.getProfile();
-    var a = Ratios.all(h, TABLES);
+    var a = Ratios.all(h, TABLES, { snapshots: Spine.listSnapshots() });
     var rows = a.rows;
 
     el('tally').textContent = a.value + ' of ' + a.total + ' answerable';

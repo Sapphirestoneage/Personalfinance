@@ -301,6 +301,9 @@
 <script src="engines/foo.js"></script>
 <script src="engines/cashflow.js"></script>
 <script src="engines/goals.js"></script>
+<script src="engines/fire.js"></script>
+<script src="engines/statement.js"></script>
+<script src="engines/benchmarks.js"></script>
 <script src="engines/ratios.js"></script>
 <script src="shared/instruments.js"></script>
 <script>
@@ -675,7 +678,7 @@
     if (!TABLES) return;
     var h = Spine.getProfile();
     if (!route(h)) return;
-    var all = Ratios.all(h, TABLES);
+    var all = Ratios.all(h, TABLES, { snapshots: Spine.listSnapshots() });
 
     /* first screen */
     var c = renderInstruments(h);
@@ -683,7 +686,7 @@
     renderAgeLine(h);
 
     /* radar */
-    var r = Ratios.radar(h, TABLES);
+    var r = Ratios.radar(h, TABLES, { snapshots: Spine.listSnapshots() });
     el('radar-body').hidden = !Money.isOk(r);
     if (Money.isOk(r)) {
       renderRadar(r);

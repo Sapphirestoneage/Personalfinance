@@ -78,7 +78,13 @@ const TABLES = {
   values: require(path.join(ROOT, 'data/values.json')),
   hassleDefaults: require(path.join(ROOT, 'data/hassle_defaults.json')),
   ratioBenchmarks: require(path.join(ROOT, 'data/ratio_benchmarks.json')),
-  irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json'))
+  irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json')),
+  accessRules: require(path.join(ROOT, 'data/access_rules.json')),
+  confidenceWeights: require(path.join(ROOT, 'data/confidence_weights.json')),
+  uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')),
+  federalBrackets: require(path.join(ROOT, 'data/federal_brackets_2026.json')),
+  wealthMultiplier: require(path.join(ROOT, 'data/wealth_multiplier.json')),
+  levelsOfWealth: require(path.join(ROOT, 'data/levels_of_wealth.json'))
 };
 
 /* ---- Tiny harness ------------------------------------------------------ */
@@ -2683,7 +2689,7 @@ section('Ratios');
   checkTrue('every ratio states its formula in words',
     RatiosEngine.RATIOS.every(r => typeof r.formula === 'string' && r.formula.length > 5));
   checkTrue('every ratio declares a unit',
-    RatiosEngine.RATIOS.every(r => ['rate', 'months', 'multiple', 'cents', 'years'].includes(r.unit)));
+    RatiosEngine.RATIOS.every(r => ['rate', 'months', 'multiple', 'cents', 'years', 'dollars', 'date'].includes(r.unit)));
 
   /* -- Hand-derived values ------------------------------------------------ */
   check('DTI is $305 over $6,000 a month', by.debtToIncome.value, 305 / 6000, 1e-12);
@@ -2723,7 +2729,7 @@ section('Ratios');
   check('and names what it would need',
     by.creditUtilization.result.missing.join(','), 'creditLimitTotal');
   check('life insurance multiple is reported unavailable', by.lifeInsuranceMultiple.unavailable, true);
-  check('exactly two ratios are unavailable', a.unavailableCount, 2);
+  check('exactly three ratios are unavailable (credit limits, life cover, automation — the last until T7)', a.unavailableCount, 3);
   checkTrue('an unavailable ratio never carries a value',
     a.rows.filter(r => r.unavailable).every(r => r.value === null));
 
@@ -2769,7 +2775,7 @@ section('Ratios');
     RatiosEngine.position(3, { direction: 'higher', good: null, warn: null }), null);
 
   const radar = RatiosEngine.radar(h, TABLES);
-  check('the radar plots every banded ratio that computed', radar.value, 14);
+  check('the radar plots every banded ratio that computed (14 before D-074, + shadow runway and worst-year coverage)', radar.value, 16);
   checkTrue('and only ones with a band',
     radar.points.every(p => p.band && p.band.good !== null));
   checkTrue('every plotted point has a position inside the ceiling',
@@ -6325,6 +6331,75 @@ section('The contributed savings rate');
   const inst = InstrumentsMain.compute(bare, T);
   check('the dashboard headline is the contributed rate', inst.byId.savingsRate.result.variant, 'contributed');
   check('and falls back to the residual without a percentage', InstrumentsMain.compute(none, T).byId.savingsRate.result.variant, 'excludingMatch');
+})();
+
+section('The ratios T3 unlocked');
+
+(function () {
+  /* D-074: fourteen more rows in the one registry, each hand-derived. */
+  const R = RatiosEngine;
+  const NOW = Date.parse('2026-09-05T12:00:00Z');
+  function rows(h, opts) {
+    const a = R.all(h, TABLES, Object.assign({ now: NOW }, opts || {}));
+    /* Flatten: the Result's value and extras, plus the row's verdict. */
+    const by = {}; a.rows.forEach(r => { by[r.id] = Object.assign({}, r.result, { ok: r.ok, unavailable: r.unavailable, verdict: r.verdict, result: r.result }); });
+    return by;
+  }
+  const h = Demo.build();
+  const by = rows(h);
+
+  check('income concentration: one paycheque is 100%', by.incomeConcentration.value, 1);
+  check('unrated everywhere: no weighted net worth', by.confidenceWeightedNetWorth.ok, false);
+  const rated = Demo.build(); rated.assets[0].confidence = 3;
+  check('cash rated "do not count on it": half of $9,500 less $21,600 debt', rows(rated).confidenceWeightedNetWorth.value, 475000 - 2160000);
+  check('everything the demo owns is reachable within a year', by.liquidityLadder.value, 1, 1e-12);
+  check('shadow runway with no Roth basis and no home is plain runway: 9,500 ÷ 3,150', by.shadowRunway.value, 9500 / 3150, 1e-12);
+  const homed = Demo.build();
+  homed.assets.push(Schema.createAsset({ category: 'real_estate', valueCents: 30000000 }));
+  homed.debts.push(Schema.createDebt({ type: 'mortgage', balanceCents: 20000000, rate: 0.06, minPaymentCents: 150000 }));
+  const sh = rows(homed).shadowRunway;
+  check('a $300,000 home with $200,000 owed adds 80% of $100,000', sh.poolCents, 950000 + 8000000);
+  check('as months of a $3,150 month', sh.value, 8950000 / 315000, 1e-12);
+  check('the haircut is the 0.8 assumption', sh.haircut, 0.8);
+  check('worst-year coverage: $9,500 cash over $17,200 net', by.worstPlausibleYearCoverage.value, 9500 / 17200, 1e-9);
+  check('which is in the watch zone', by.worstPlausibleYearCoverage.verdict.zone, 'watch');
+  check('automation is unavailable until the Skill Stacker asks', by.automationRatio.unavailable, true);
+  check('giving rate without a tracked month is incomplete', by.givingRate.ok, false);
+  const giving = Demo.build();
+  giving.expenses.entries = Demo.buildSpending().concat([Schema.createExpenseEntry({ categoryId: 'gifts', amountCents: 17100 })]);
+  const take = Tier0.takeHomeMonthlyCents(giving, TABLES).value;
+  check('$171 of gifts over take-home', rows(giving).givingRate.value, 17100 / take, 1e-12);
+  check('net worth in years: 35,900 ÷ 37,800', by.netWorthInYears.value, 3590000 / 3780000, 1e-12);
+  check('human to financial capital needs a stop age', by.humanToFinancialCapital.missing.join(','), 'retireAge');
+  const stopping = Demo.build(); stopping.targets = Schema.createTargets({ retireAge: 55 });
+  const hf = rows(stopping).humanToFinancialCapital;
+  check('with one: the $1,317,039 annuity over $57,500', hf.value, hf.humanCapitalCents / 5750000, 1e-12);
+  checkTrue('which is about 23×', hf.value > 22.5 && hf.value < 23.5);
+  check('room in the bracket: $49,800 before 24%', by.bracketRoom.value, 4980000);
+  check('and says the next rate', by.bracketRoom.nextRate, 0.24);
+  check('bridge to 59½: 8.5 years for the demo', by.bridgeGapYears.value, 8.5);
+  check('FI date: 19 years of 365.25 days from noon on 5 Sep 2026', by.fiDate.iso, '2045-09-05');
+  check('as a decimal year to the month', by.fiDate.value, 2045 + 8 / 12, 1e-12);
+
+  /* The two that need a year to exist. */
+  check('lifestyle inflation with no snapshot asks for one', by.lifestyleInflation.missing.join(','), 'snapshots');
+  const recent = [{ timestamp: '2026-06-01T00:00:00Z', fields: { grossAnnualIncome: 6000000, monthlyExpenses: 280000, netWorth: 2000000 } }];
+  checkTrue('a three-month-old snapshot is too recent', /more recent/.test(rows(h, { snapshots: recent }).lifestyleInflation.result.reason));
+  const yearOld = [{ timestamp: '2025-08-01T00:00:00Z', fields: { grossAnnualIncome: { status: 'ok', value: 6000000 }, monthlyExpenses: 280000, netWorth: 2000000 } }];
+  const li = rows(h, { snapshots: yearOld }).lifestyleInflation;
+  check('a $12,000 raise against $350/mo more spending: 4,200 ÷ 12,000', li.value, 4200 / 12000, 1e-12);
+  check('read from a snapshot that stored a Result and a bare number alike', li.raiseCents, 1200000);
+  check('below half a raise kept: good', li.verdict.zone, 'good');
+  const g = rows(h, { snapshots: yearOld }).netWorthGrowthRate;
+  const years = (NOW - Date.parse('2025-08-01T00:00:00Z')) / 86400000 / 365.25;
+  check('net worth growth: 15,900 over 20,000, per year', g.value, (3590000 - 2000000) / 2000000 / years, 1e-12);
+  const flat = [{ timestamp: '2025-08-01T00:00:00Z', fields: { grossAnnualIncome: 7200000, monthlyExpenses: 280000, netWorth: 0 } }];
+  checkTrue('no raise: nothing to measure against', /not risen/.test(rows(h, { snapshots: flat }).lifestyleInflation.result.reason));
+  checkTrue('growth from zero is undefined', /undefined/.test(rows(h, { snapshots: flat }).netWorthGrowthRate.result.reason));
+
+  check('every new band is in the table', ['incomeConcentration', 'shadowRunway', 'worstPlausibleYearCoverage', 'lifestyleInflation', 'fiDate']
+    .every(id => TABLES.ratioBenchmarks.bands[id]), true);
+  check('the bands table moved to 1.2', TABLES.ratioBenchmarks.version, '1.2');
 })();
 
 section('The D&D folder\'s vendored copies');

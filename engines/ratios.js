@@ -32,23 +32,34 @@
       Money: require('../shared/money.js'),
       Schema: require('../shared/schema.js'),
       Tier0: require('./tier0.js'),
-      CashFlow: require('./cashflow.js')
+      CashFlow: require('./cashflow.js'),
+      Statement: require('./statement.js'),
+      Benchmarks: require('./benchmarks.js'),
+      Reference: require('../shared/reference.js')
     };
   } else {
     deps = {
       Money: root.SLAF && root.SLAF.Money,
       Schema: root.SLAF && root.SLAF.Schema,
       Tier0: root.SLAF && root.SLAF.Tier0,
-      CashFlow: root.SLAF && root.SLAF.CashFlow
+      CashFlow: root.SLAF && root.SLAF.CashFlow,
+      Statement: root.SLAF && root.SLAF.Statement,
+      Benchmarks: root.SLAF && root.SLAF.Benchmarks,
+      Reference: root.SLAF && root.SLAF.Reference
     };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.CashFlow);
+  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.CashFlow, deps.Statement, deps.Benchmarks, deps.Reference);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Ratios = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, CashFlow) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, CashFlow, Statement, Benchmarks, Reference) {
   'use strict';
 
   var MONTHS = 12;
+  var MS_PER_DAY = 86400000;
+  var DAYS_PER_YEAR = 365.25;
+  /* Two readings count as a year apart at eleven months — a snapshot taken
+     "about a year later" rarely lands on the day. BRIEF §4.3. */
+  var YEAR_APART_DAYS = 335;
 
   /* A ratio this app deliberately cannot compute, and what it would need. */
   function unavailable(reason, needs) {
@@ -61,8 +72,10 @@
 
   /* ---- The context every ratio reads ------------------------------------
      Built once per call so twenty ratios do not each re-walk the asset list. */
-  function context(household, tables) {
-    var c = { household: household, tables: tables || {} };
+  function context(household, tables, opts) {
+    var c = { household: household, tables: tables || {}, opts: opts || {} };
+    c.snapshots = (opts && opts.snapshots) || [];
+    c.now = opts && Money.isEntered(opts.now) ? opts.now : Date.now();
     c.assumptions = Schema.resolveAssumptions(household);
     c.grossAnnual = val(Schema.grossAnnualIncomeCents(household));
     c.monthlyGross = Money.isEntered(c.grossAnnual) ? c.grossAnnual / MONTHS : null;
@@ -86,6 +99,17 @@
     c.liquidAssets = liquidCount ? liquid : (Money.isEntered(c.cash) ? c.cash : null);
     c.realEstate = realEstate;
 
+    /* For the shadow runway: a Roth's contributions come out any time, and
+       a home is worth something in a hurry — at a haircut. D-074. */
+    var rothBasis = 0;
+    Schema.aggregatableAssets(household).forEach(function (a) {
+      if (!Money.isEntered(a.valueCents)) return;
+      var key = c.tables.accessRules ? Schema.assetRule(a, c.tables.accessRules).key : a.taxCharacter;
+      if (key === 'roth' && Money.isEntered(a.costBasisCents)) rothBasis += Math.min(a.costBasisCents, a.valueCents);
+    });
+    c.rothBasis = rothBasis;
+    c.takeHomeMonthly = val(Tier0.takeHomeMonthlyCents(household, c.tables));
+
     function debtSum(pred, field) {
       var total = 0, counted = 0;
       c.debts.forEach(function (d) {
@@ -96,6 +120,7 @@
       return counted ? total : null;
     }
     c.mortgageBalance = debtSum(function (d) { return d.type === 'mortgage'; }, 'balanceCents');
+    c.homeEquity = realEstate > 0 ? Math.max(0, realEstate - (Money.isEntered(c.mortgageBalance) ? c.mortgageBalance : 0)) : 0;
     c.mortgagePayment = debtSum(function (d) { return d.type === 'mortgage'; }, 'minPaymentCents');
     c.autoPayment = debtSum(function (d) { return d.type === 'auto'; }, 'minPaymentCents');
     c.revolvingBalance = debtSum(function (d) { return d.type === 'credit_card'; }, 'balanceCents');
@@ -132,8 +157,36 @@
       });
       c.needsMonthly = c.spend.byBucket.needs || 0;
       c.wantsMonthly = c.spend.byBucket.wants || 0;
+      c.giftsMonthly = 0;
+      c.spend.categories.forEach(function (row) { if (row.categoryId === 'gifts') c.giftsMonthly += row.monthlyCents; });
     }
     return c;
+  }
+
+  /* ---- Reading a snapshot back ---------------------------------------------
+     `fields` holds every owned reading at the time — a bare number or a
+     {status, value} Result. The most recent snapshot at least eleven months
+     before `now` is "then". */
+  function stored(bucket, id) {
+    if (!bucket || !Object.prototype.hasOwnProperty.call(bucket, id)) return null;
+    var v = bucket[id];
+    if (v && typeof v === 'object' && 'status' in v) return v.status === 'ok' ? v.value : null;
+    return Money.isEntered(v) ? v : null;
+  }
+  function aYearAgo(c) {
+    var best = null;
+    c.snapshots.forEach(function (s) {
+      var t = Date.parse(s.timestamp);
+      if (!Number.isFinite(t)) return;
+      if ((c.now - t) / MS_PER_DAY < YEAR_APART_DAYS) return;
+      if (!best || t > best.t) best = { t: t, snap: s };
+    });
+    return best;
+  }
+  function needsAYear(c) {
+    return Money.incomplete(c.snapshots.length
+      ? 'Needs a snapshot at least eleven months old to compare against; the oldest is more recent than that.'
+      : 'Save a snapshot on the Financial Snapshot, then come back in a year.', ['snapshots']);
   }
 
   function over(numerator, denominator, opts) {
@@ -408,8 +461,175 @@
       formula: 'property value ÷ total assets',
       unit: 'rate', needs: 'a property and your other assets',
       compute: function (c) {
-        if (!c.realEstate) return Money.incomplete('Add a property in Net Worth to see this.', ['otherAssets']);
+        if (!c.realEstate) return Money.incomplete('Add a property on The Statement to see this.', ['otherAssets']);
         return over(c.realEstate, c.totalAssets, { denominatorName: 'totalAssets' });
+      } },
+
+    /* --- BRIEF §4.3 — the numbers T3 unlocked (D-074) --------------------- */
+    { id: 'incomeConcentration', label: 'Income concentration', tier: 21,
+      formula: 'largest income source ÷ household income',
+      unit: 'rate', needs: 'your income sources',
+      note: '100% means one paycheque. No convention says where it should sit; two incomes at 60/40 read 60%.',
+      compute: function (c) {
+        if (!Statement) return unavailable('The Statement engine is not loaded.', ['statement']);
+        return Statement.incomeConcentration(c.household);
+      } },
+
+    { id: 'confidenceWeightedNetWorth', label: 'Confidence-weighted net worth', tier: 21,
+      formula: 'Σ asset × confidence weight − debts',
+      unit: 'dollars', needs: 'at least one asset rated for confidence on The Statement',
+      note: 'Unrated assets are left out, not assumed guaranteed. Weights are a convention (data/confidence_weights.json).',
+      compute: function (c) {
+        if (!Statement) return unavailable('The Statement engine is not loaded.', ['statement']);
+        if (!c.tables.confidenceWeights) return Money.incomplete('The confidence weights are not loaded.', ['confidenceWeights']);
+        return Statement.confidenceWeightedNetWorth(c.household, c.tables.confidenceWeights);
+      } },
+
+    { id: 'liquidityLadder', label: 'Reachable within a year', tier: 21,
+      formula: 'assets reachable within a year ÷ all assets',
+      unit: 'rate', needs: 'your assets, rated on The Statement or at their default liquidity',
+      note: 'The four rungs — today, a month, a year, not without a penalty — come back with the figure.',
+      compute: function (c) {
+        if (!Statement) return unavailable('The Statement engine is not loaded.', ['statement']);
+        var l = Statement.liquidityLadder(c.household, c.tables.accessRules);
+        if (!Money.isOk(l)) return l;
+        var total = l.bands.today + l.bands.thisMonth + l.bands.thisYear + l.bands.never;
+        var r = over(l.cumulative.thisYear, total, { denominatorName: 'assets' });
+        if (Money.isOk(r)) { r.bands = l.bands; r.cumulative = l.cumulative; r.gatedCents = l.gatedCents; }
+        return r;
+      } },
+
+    { id: 'shadowRunway', label: 'Shadow runway', tier: 21,
+      formula: '(cash + Roth contributions + home equity × haircut) ÷ monthly expenses',
+      unit: 'months', needs: 'your cash and monthly expenses; Roth basis and a home make it longer',
+      note: 'Runway if you were willing to raid the Roth and sell the house. The haircut is an assumption (80%).',
+      compute: function (c) {
+        if (!Money.isEntered(c.cash)) return Money.incomplete('Add your cash to see this.', ['cashSavings']);
+        var haircut = c.assumptions.homeEquityHaircut;
+        var pool = c.cash + c.rothBasis + Math.round(c.homeEquity * haircut);
+        var r = over(pool, c.monthlyExpenses, { denominatorName: 'monthlyExpenses' });
+        if (Money.isOk(r)) { r.poolCents = pool; r.rothBasisCents = c.rothBasis; r.homeEquityCents = c.homeEquity; r.haircut = haircut; }
+        return r;
+      } },
+
+    { id: 'worstPlausibleYearCoverage', label: 'Worst-year coverage', tier: 21,
+      formula: 'cash ÷ the worst plausible year, net of the unemployment benefit',
+      unit: 'multiple', needs: 'cash, your deductible, monthly essentials and your state',
+      note: '1× means the cash would carry you through everything going wrong at once. Replaces "3–6 months" once the inputs exist.',
+      compute: function (c) {
+        if (!Statement) return unavailable('The Statement engine is not loaded.', ['statement']);
+        var w = Statement.worstPlausibleYear(c.household, c.tables);
+        if (!Money.isOk(w)) return w;
+        var r = over(w.cashCents, w.netCents, { denominatorName: 'worstYear', zeroReason: 'Nothing to cover: the worst year nets to zero.' });
+        if (Money.isOk(r)) { r.worstYearNetCents = w.netCents; r.shortCents = w.value; }
+        return r;
+      } },
+
+    { id: 'automationRatio', label: 'Automation ratio', tier: 21,
+      formula: 'automated savings ÷ all savings',
+      unit: 'rate', needs: 'which contributions are automated — asked by the Skill Stacker',
+      note: 'Listed now so nothing pretends to know it. Arrives with the Skill Stacker (T7).',
+      compute: function () {
+        return unavailable('Which contributions are automated is not asked anywhere yet; the Skill Stacker will.', ['skills']);
+      } },
+
+    { id: 'givingRate', label: 'Giving rate', tier: 21,
+      formula: 'gifts ÷ take-home pay, monthly',
+      unit: 'rate', needs: 'a categorised month and your take-home pay',
+      note: 'The tithe is a religious convention, not a financial one, so there is no band.',
+      compute: function (c) {
+        if (!c.spend) return Money.incomplete('Categorise a month in Cash Flow to see this.', ['expenseEntries']);
+        return over(c.giftsMonthly, c.takeHomeMonthly, { denominatorName: 'takeHome' });
+      } },
+
+    { id: 'netWorthInYears', label: 'Net worth in years', tier: 21,
+      formula: 'net worth ÷ a year of spending',
+      unit: 'years', needs: 'your net worth and monthly expenses',
+      note: 'How long what you own would last at what you spend, before growth.',
+      compute: function (c) {
+        if (!Benchmarks) return unavailable('The benchmarks engine is not loaded.', ['benchmarks']);
+        return Benchmarks.netWorthInYears(c.household);
+      } },
+
+    { id: 'humanToFinancialCapital', label: 'Human to financial capital', tier: 21,
+      formula: 'present value of pay to the stop age ÷ (cash + investments)',
+      unit: 'multiple', needs: 'your income, age, stop age (FIRE Number) and financial assets',
+      note: 'High early in a career, falling toward zero as pay is converted into assets. No convention.',
+      compute: function (c) {
+        if (!Benchmarks) return unavailable('The benchmarks engine is not loaded.', ['benchmarks']);
+        var hc = Benchmarks.humanCapital(c.household, c.tables);
+        if (!Money.isOk(hc)) return hc;
+        var fin = (Money.isEntered(c.cash) ? c.cash : 0) + (Money.isEntered(c.investments) ? c.investments : 0);
+        if (!Money.isEntered(c.cash) && !Money.isEntered(c.investments)) return Money.incomplete('Add your cash and investments.', ['cashSavings', 'investments']);
+        var r = over(hc.value, fin, { denominatorName: 'financialCapital', zeroReason: 'With no financial capital yet the ratio has no floor.' });
+        if (Money.isOk(r)) { r.humanCapitalCents = hc.value; r.financialCapitalCents = fin; }
+        return r;
+      } },
+
+    { id: 'bracketRoom', label: 'Room in your bracket', tier: 21,
+      formula: 'top of the current federal bracket − taxable income',
+      unit: 'dollars', needs: 'your income and filing status',
+      note: 'How much more you could earn or convert before the next dollar is taxed higher. Federal only, unverified table.',
+      compute: function (c) {
+        if (!Reference || !c.tables.federalBrackets) return Money.incomplete('The federal bracket table is not loaded.', ['federalBrackets']);
+        if (!Money.isEntered(c.grossAnnual)) return Money.incomplete('Add your income to find the bracket.', ['grossAnnualIncome']);
+        var b = Reference.marginalBracket(c.tables.federalBrackets, c.grossAnnual / 100, c.household.filingStatus);
+        if (!Money.isOk(b)) return b;
+        if (b.roomBeforeNextBracketDollars === null) return Money.incomplete('You are in the top bracket; there is no next one.', []);
+        return Money.ok(Math.round(b.roomBeforeNextBracketDollars * 100), { marginalRate: b.value, nextRate: b.nextRate });
+      } },
+
+    { id: 'bridgeGapYears', label: 'Bridge to 59½', tier: 21,
+      formula: '59½ − the age FI arrives at the current pace',
+      unit: 'years', needs: 'your date of birth, spending, investments and savings rate',
+      note: 'Years between stopping and the retirement accounts opening. Zero if FI lands after 59½.',
+      compute: function (c) {
+        if (!Statement) return unavailable('The Statement engine is not loaded.', ['statement']);
+        var b = Statement.bridgeGap(c.household, c.tables);
+        if (!Money.isOk(b)) return b;
+        return Money.ok(b.gapYears, { fiAge: b.fiAge, shortCents: b.value, coveredYears: b.coveredYears });
+      } },
+
+    { id: 'lifestyleInflation', label: 'Lifestyle inflation', tier: 21,
+      formula: 'rise in yearly spending ÷ rise in income, since a snapshot a year ago',
+      unit: 'rate', needs: 'a snapshot at least eleven months old, with income and expenses in it',
+      note: 'Below 50% means most of a raise was kept. Needs time to exist before it can say anything.',
+      compute: function (c) {
+        var then = aYearAgo(c);
+        if (!then) return needsAYear(c);
+        var incThen = stored(then.snap.fields, 'grossAnnualIncome'), expThen = stored(then.snap.fields, 'monthlyExpenses');
+        if (!Money.isEntered(incThen) || !Money.isEntered(expThen)) return Money.incomplete('That snapshot did not hold both income and expenses.', ['snapshots']);
+        if (!Money.isEntered(c.grossAnnual) || !Money.isEntered(c.monthlyExpenses)) return Money.incomplete('Add your income and expenses now to compare.', ['grossAnnualIncome', 'monthlyExpenses']);
+        var dInc = c.grossAnnual - incThen, dExp = (c.monthlyExpenses - expThen) * MONTHS;
+        if (dInc <= 0) return Money.incomplete('Income has not risen since then, so there is no raise to measure against.', []);
+        return Money.ok(dExp / dInc, { since: then.snap.timestamp, incomeThenCents: incThen, expensesThenMonthlyCents: expThen, raiseCents: dInc, extraSpendCents: dExp });
+      } },
+
+    { id: 'netWorthGrowthRate', label: 'Net worth growth', tier: 21,
+      formula: '(net worth now − then) ÷ |then|, per year, since a snapshot a year ago',
+      unit: 'rate', needs: 'a snapshot at least eleven months old',
+      note: 'Annualised over the actual gap. Undefined from a net worth of exactly zero.',
+      compute: function (c) {
+        var then = aYearAgo(c);
+        if (!then) return needsAYear(c);
+        var nwThen = stored(then.snap.fields, 'netWorth');
+        if (nwThen === null) nwThen = stored(then.snap.computedOutputs, 'netWorth');
+        if (!Money.isEntered(nwThen)) return Money.incomplete('That snapshot did not hold a net worth.', ['snapshots']);
+        if (!Money.isEntered(c.netWorth)) return Money.incomplete('Add your assets and debts now to compare.', ['netWorth']);
+        if (nwThen === 0) return Money.incomplete('Growth from exactly zero is undefined.', []);
+        var years = (c.now - then.t) / MS_PER_DAY / DAYS_PER_YEAR;
+        return Money.ok((c.netWorth - nwThen) / Math.abs(nwThen) / years, { since: then.snap.timestamp, thenCents: nwThen, nowCents: c.netWorth, years: Math.round(years * 100) / 100 });
+      } },
+
+    { id: 'fiDate', label: 'FI date', tier: 21,
+      formula: 'today + years to FI at the current pace',
+      unit: 'date', needs: 'your spending, investments and savings rate',
+      note: 'The same projection as the FI year on the dashboard, to the month.',
+      compute: function (c) {
+        var y = Tier0.yearsToFire(c.household, c.tables);
+        if (!Money.isOk(y)) return y;
+        var d = new Date(c.now + y.value * DAYS_PER_YEAR * MS_PER_DAY);
+        return Money.ok(d.getUTCFullYear() + d.getUTCMonth() / MONTHS, { iso: d.toISOString().slice(0, 10), years: y.value, alreadyThere: y.alreadyThere === true });
       } }
   ];
 
@@ -482,8 +702,8 @@
    * The spokes for the radar: every ratio that computed AND has a band.
    * Anything without a band is left off rather than given an invented axis.
    */
-  function radar(household, tables) {
-    var a = all(household, tables);
+  function radar(household, tables, opts) {
+    var a = all(household, tables, opts);
     var points = a.rows.filter(function (r) {
       return r.ok && r.verdict.band && r.verdict.band.good !== null;
     }).map(function (r) {
@@ -513,8 +733,8 @@
    * number, so a room can say "14 of 30" rather than showing thirty dashes
    * and no explanation.
    */
-  function all(household, tables) {
-    var c = context(household, tables);
+  function all(household, tables, opts) {
+    var c = context(household, tables, opts);
     var bands = tables && tables.ratioBenchmarks;
     var rows = RATIOS.map(function (r) {
       var result = r.compute(c);
@@ -538,8 +758,8 @@
   }
 
   /** The subset that has a band, for the radar chart — SPEC.md §13 Tier 20. */
-  function scored(household, tables) {
-    var a = all(household, tables);
+  function scored(household, tables, opts) {
+    var a = all(household, tables, opts);
     return Money.ok(a.value, {
       rows: a.rows.filter(function (r) { return r.ok && r.verdict.zone !== 'none'; }),
       total: a.total

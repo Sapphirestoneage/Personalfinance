@@ -1,6 +1,6 @@
 {
   "id": "ratio_benchmarks",
-  "version": "1.1",
+  "version": "1.2",
   "asOf": "2026-01-01",
   "source": "Threshold values as they are commonly cited in lending and personal-finance guidance: the 28/36 housing and back-end rules used by mortgage underwriters, the 30%/10% credit-utilisation figures repeated by the bureaus, and the 3-6 month emergency-fund range. Where no convention exists the band is marked null and the ratio is reported without a verdict.",
   "confidence": "convention",
@@ -162,6 +162,90 @@
       "good": null,
       "warn": null,
       "note": "Benchmarked by age in data/retirement_milestones.json, not by a fixed number."
+    },
+    "incomeConcentration": {
+      "direction": "lower",
+      "good": null,
+      "warn": null,
+      "note": "No convention. One paycheque reads 100%; that is a fact about the household, not a fault."
+    },
+    "confidenceWeightedNetWorth": {
+      "direction": "higher",
+      "good": null,
+      "warn": null,
+      "note": "A figure, not a ratio; compared to the plain net worth beside it on The Statement."
+    },
+    "liquidityLadder": {
+      "direction": "higher",
+      "good": null,
+      "warn": null,
+      "note": "No convention; right for a renter with a brokerage, wrong for a homeowner with a 401(k)."
+    },
+    "shadowRunway": {
+      "direction": "higher",
+      "good": 6,
+      "warn": 3,
+      "note": "The same 3–6 month convention as emergency fund coverage, applied to a wider pool."
+    },
+    "worstPlausibleYearCoverage": {
+      "direction": "higher",
+      "good": 1,
+      "warn": 0.5,
+      "note": "1× is covered by definition; half-covered is the watch line, a convention chosen here."
+    },
+    "automationRatio": {
+      "direction": "higher",
+      "good": null,
+      "warn": null,
+      "note": "Not computed until the Skill Stacker asks which contributions are automated."
+    },
+    "givingRate": {
+      "direction": "higher",
+      "good": null,
+      "warn": null,
+      "note": "The 10% tithe is a religious convention, not a financial one; no band."
+    },
+    "netWorthInYears": {
+      "direction": "higher",
+      "good": null,
+      "warn": null,
+      "note": "Reads like the FI ratio in years; benchmarked by age elsewhere, not here."
+    },
+    "humanToFinancialCapital": {
+      "direction": "lower",
+      "good": null,
+      "warn": null,
+      "note": "Falls through a career by construction; no fixed number is right at every age."
+    },
+    "bracketRoom": {
+      "direction": "higher",
+      "good": null,
+      "warn": null,
+      "note": "A planning figure for conversions and raises, not a health measure."
+    },
+    "bridgeGapYears": {
+      "direction": "lower",
+      "good": null,
+      "warn": null,
+      "note": "Zero means no bridge is needed; a longer gap is not worse if the bridge is funded."
+    },
+    "lifestyleInflation": {
+      "direction": "lower",
+      "good": 0.5,
+      "warn": 1.0,
+      "note": "Keep at least half of every raise: a common rule of thumb. Above 100% spending rose faster than pay."
+    },
+    "netWorthGrowthRate": {
+      "direction": "higher",
+      "good": null,
+      "warn": null,
+      "note": "Depends entirely on the starting figure; no convention."
+    },
+    "fiDate": {
+      "direction": "lower",
+      "good": null,
+      "warn": null,
+      "note": "A date, not a ratio."
     }
   }
 }
