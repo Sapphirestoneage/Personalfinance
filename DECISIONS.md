@@ -4648,3 +4648,90 @@ key the tool writes has a provenance entry, so it will fail if you forget, which
 is the point. If you add a scoring method, add it to `METHOD_TRUST`; without an
 entry it is reported `generated`, which is safe but wrong for a genuine
 self-report.
+
+---
+
+## D-072 — DM mode: the scenario is the URL, and it never touches your character
+
+BRIEF §9.9, the last of T9. The encounter room answers *what does this do to
+me*. `dm.html` answers *what would this do to someone like this* — a different
+and more useful question, and the one you actually want when explaining to a
+friend why an emergency fund is not optional.
+
+### It needed no new engine
+
+`Encounter.run()` takes a sheet. It does not care whether that sheet came from
+someone's real numbers or from six boxes on a page, which is the whole reason
+this tranche was small: a hand-composed target is just a sheet with a `stats`
+map and a `currentHp`. A save left blank is simply **not put in the map**, so it
+reads as unscored rather than as zero, and the creature cannot target it with a
+number — the same rule as everywhere else, arrived at for free.
+
+The one piece of real work is that the DM's answers about defences have to
+override the engine's own predicates. That is done by running once to learn which
+blockers the creature cares about, translating the DM's answers into the
+sub-scores and profile fields that satisfy exactly the held ones, and running
+again. Cheaper than teaching the engine a second source of truth, and it means
+the engine's three-state logic still does the deciding.
+
+### Three states, because a DM who has not decided is not a target who lacks it
+
+Every defence is **held**, **missing**, or **not established**, and not
+established applies nothing. Dropping to a boolean here would have made the DM
+page more confident than the player's sheet, which is precisely backwards — the
+DM knows *less* about a hypothetical person, not more. The result says how many
+defences were left open and that they counted for nothing.
+
+The controls are generated from the blocker catalogue, never listed, so a
+blocker added later is answerable the day it lands. A test asserts no blocker id
+appears literally anywhere on the page — verified by hardcoding one on purpose
+and watching it fail.
+
+### The scenario is the URL
+
+Everything — the target's name, their runway, six save modifiers, fifteen
+defence answers and the creature — is base64url in the hash. Sharing a scenario
+is copying the address bar. No server, no account, and **nothing written to
+storage**: a test asserts the page never touches `localStorage` at all.
+
+An unreadable hash is ignored rather than raised. A broken link should open an
+empty page, not an error, because the person who received it did nothing wrong.
+
+### The one thing it writes
+
+"Log against my sheet", which records the encounter with `source: 'dm'`. That
+field has been in the log since §9.3 and this is the first thing to set it. It
+matters: a scenario you composed for a friend must never read back later as
+something that happened to you. Tests assert the page calls no other `Store`
+writer at all — not `setMoney`, not `patchProfile`, not `importCharacter` — and
+that `source: 'self'` appears nowhere in the file.
+
+### The worked example, re-derived
+
+A target with WIS +0 and three weeks of runway, meeting a Timeshare
+Charm-Caster:
+
+    three weeks of runway         → Cornered, −3 to every save
+    WIS +0, effective             → −3
+    CR 3                          → DC 13
+    chance it lands = (13 + 3 − 1)/20 = 15/20   → 75%
+    3d6 expected                  → 10.5 weeks
+    runway 3                      → 0
+
+Give the same person forty weeks of runway and nothing else changes but the
+exhaustion, and the creature lands far less often. That is the entire argument
+for an emergency fund, in one screen, about someone who is not you.
+
+### Compatibility note
+
+**Stored shape:** nothing added. The existing `encounters[].source` field gains
+its second value, `'dm'` — anything reading the log should treat `source` as an
+open set and not assume `'self'`.
+
+**Rooms updated:** `dnd/dm.html` (new), linked from `dnd/encounter.html`.
+
+**Before writing any of these from a new room:** if you add a blocker to the
+catalogue it appears here automatically, but if it is answered from the
+*household* rather than a sub-stat, add it to `dmProfileFor()` — otherwise a DM
+can tick "they have it" and nothing will happen. That is the one place this page
+has to know about specific blockers, and it is the one place to check.

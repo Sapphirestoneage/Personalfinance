@@ -688,6 +688,112 @@ section('Dungeons & Dividends — the quiz-only leaning');
     Character.suggestClassFromStats({}, TABLES).status, 'incomplete');
 })();
 
+section('Dungeons & Dividends — DM mode');
+
+(function () {
+  const Encounter = require(path.join(ROOT, 'engines/encounter.js'));
+  const R = TABLES.dndRules;
+  const src = fs.readFileSync(path.join(ROOT, 'dm.html'), 'utf8');
+
+  /* BRIEF §9.9. The encounter room answers "what does this do to me"; this
+     answers "what would this do to someone like this". */
+  checkTrue('the DM page exists and is a page', /<body class="slaf">/.test(src));
+  checkTrue('it declares LIVE-FORM', /LIVE-FORM: built once/.test(src));
+  checkTrue('the encounter room links to it',
+    /href="dm\.html"/.test(fs.readFileSync(path.join(ROOT, 'encounter.html'), 'utf8')));
+
+  /* Nothing on this page may touch the player's own character, with exactly
+     one exception: the log, which must be tagged so a scenario the DM set up
+     never reads later as something that happened to them. */
+  checkTrue('the only write is the encounter log', /Store\.logEncounter/.test(src));
+  checkTrue("and it is never logged as 'self'", !/source: 'self'/.test(src));
+  checkTrue("it is logged as 'dm'", /source: 'dm'/.test(src));
+  ['setMoney', 'patchProfile', 'setDebt', 'setFilingStatus', 'importCharacter'].forEach(function (fn) {
+    checkTrue(`DM mode never calls Store.${fn}`, src.indexOf('Store.' + fn) === -1);
+  });
+
+  /* Three states here too. A DM who has not decided is not the same as a
+     target who lacks the thing, and dropping to a boolean would make this page
+     more confident than the sheet — precisely backwards. */
+  checkTrue('blockers offer not-established as well as held and absent',
+    /value=""[^>]*>Not established/.test(src) && /value="held"/.test(src) && /value="absent"/.test(src));
+  checkTrue('and unanswered applies nothing',
+    /said === 'held' \? 'held' : \(said === 'absent' \? 'absent' : 'unknown'\)/.test(src));
+
+  /* The scenario lives in the URL, not in storage. */
+  checkTrue('the scenario is encoded into the hash', /location\.hash/.test(src));
+  checkTrue('base64url, so it survives being pasted anywhere',
+    /replace\(\/\\\+\/g, '-'\)/.test(src) || /'-'\)\.replace/.test(src));
+  checkTrue('an unreadable hash is ignored rather than thrown at the reader',
+    /catch \(e\) \{ return null; \}/.test(src));
+  checkTrue('the scenario is never written to storage',
+    !/localStorage/.test(src));
+
+  /* The page reuses the engine rather than growing a second one. */
+  checkTrue('it runs the shared encounter engine', /Enc\.run\(/.test(src));
+  checkTrue('and reads the shared blocker catalogue', /TABLES\.dndRules\.blockers/.test(src));
+  checkTrue('and the shared exhaustion ladder', /Char\.exhaustion/.test(src));
+
+  /* A hand-composed target is just a sheet, which is why no new engine was
+     needed. Verify the engine really does take one. */
+  function target(saves, runway) {
+    const stats = {};
+    Object.keys(saves).forEach(function (id) { stats[id] = Money.ok(10 + saves[id] * 2); });
+    return { stats: stats, klass: null, proficiencyBonus: 0, level: null,
+             currentHp: runway === null ? null : Money.ok(runway), maxHp: null, subScores: {} };
+  }
+  const timeshare = R.monsters.filter(function (m) { return m.name === 'Timeshare Charm-Caster'; })[0];
+  const opts = { tables: TABLES, household: { dndProfile: {} } };
+
+  /* The worked example from the browser pass, re-derived here: WIS +0 with
+     three weeks of runway is Cornered (-3), against DC 13. */
+  const dave = Encounter.run(target({ WIS: 0, CON: 1 }, 3), timeshare, opts);
+  check('the save it targets', dave.targetSave, 'WIS');
+  check('the DC', dave.dc, 13);
+  check('exhaustion at three weeks', dave.exhaustionPenalty, 3);
+  check('so the effective modifier', dave.effectiveModifier, -3);
+  check('and it lands three times in four', dave.hitChance, 0.75);
+  check('for the average of 3d6', dave.damageWeeks, 10.5);
+
+  /* The same target with more runway is the same person, easier to move only
+     because the buffer is gone. */
+  const rested = Encounter.run(target({ WIS: 0, CON: 1 }, 40), timeshare, opts);
+  check('with runway, no exhaustion penalty', rested.exhaustionPenalty, 0);
+  checkTrue('and the creature lands less often', rested.hitChance < dave.hitChance);
+  check('the raw save is unchanged', rested.modifier, dave.modifier);
+
+  /* A blank save is unscored, not zero — the same rule as everywhere else. */
+  const blank = Encounter.run(target({ CON: 1 }, 3), timeshare, opts);
+  check('a save nobody set cannot be targeted with a number', blank.modifier, null);
+  check('and no hit chance is invented', blank.hitChance, null);
+
+  /* Every blocker in the catalogue needs a control, or a DM cannot answer it.
+     The page generates them from the catalogue rather than listing them, which
+     is the only way that stays true — so the check is that it generates, and
+     that nobody has quietly started hardcoding ids alongside. A hardcoded list
+     is the bug: it is how a blocker added later ends up unanswerable. */
+  checkTrue('the controls are generated from the catalogue, not listed',
+    /Object\.keys\(rules\.blockers\)\.map/.test(src));
+  checkTrue('and the select id comes from the catalogue key',
+    /id="bl-' \+ esc\(id\)/.test(src));
+  const hardcoded = Object.keys(R.blockers).filter(function (id) {
+    return new RegExp("'bl-" + id + "'|\"bl-" + id + "\"").test(src);
+  });
+  check('no blocker id is hardcoded on the page', hardcoded.join(','), '');
+  checkTrue('reading the answers walks the catalogue too',
+    /Object\.keys\(TABLES\.dndRules\.blockers\)/.test(src));
+
+  /* And the three states are the three the engine understands. */
+  ['held', 'absent'].forEach(function (state) {
+    checkTrue(`"${state}" is an option a DM can choose`,
+      new RegExp('value="' + state + '"').test(src));
+  });
+
+  /* Every creature is selectable, ordered so the small ones come first. */
+  checkTrue('all creatures are offered', /Enc\.allCreatures\(TABLES\)/.test(src));
+  checkTrue('sorted by CR', /crToNumber\(a\.cr\)/.test(src));
+})();
+
 section('Dungeons & Dividends — the share card');
 
 (function () {

@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>DM mode — Dungeons &amp; Dividends</title>
+<meta name="description" content="Build an encounter for someone else: choose a creature, set the target's saves, runway and defences, and share the scenario as a link."/>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="shared/skin.css"/>
+<!--
+  DM MODE — BRIEF §9.9.
+
+  The encounter room answers "what does this do to ME". This answers "what would
+  this do to SOMEONE LIKE THIS", which is a different and more interesting
+  question, and the one you actually want when explaining to a friend why an
+  emergency fund is not optional.
+
+  NOTHING HERE TOUCHES YOUR CHARACTER. The target is composed on this page and
+  lives in the URL, never in storage. The single exception is the Log button,
+  which writes to your own encounter log with source: 'dm' so a scenario you set
+  up is never confused with something that happened to you.
+
+  THREE BLOCKER STATES, STILL. A DM setting a scene can say a target holds a
+  defence, lacks it, or that it has not been established — and "not established"
+  applies nothing, exactly as it does on the player's side. Dropping to a
+  boolean here would have made the DM page more confident than the sheet, which
+  is precisely backwards.
+
+  THE SCENARIO IS THE URL. Everything is encoded in the hash, so sharing it is
+  copying the address bar. No server, no storage, no account.
+
+  LIVE-FORM: built once. Every control is created during boot and only ever read
+  or has its .value written. Results render into containers that hold no inputs.
+-->
+<style>
+  .wrap { max-width: 760px; margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-7); }
+  h1 { font-family: var(--font-display); font-size: var(--text-xl); margin: 0 0 var(--space-2); }
+  h2 { font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-5) 0 var(--space-2); }
+  .note { color: var(--color-text-muted); font-size: var(--text-sm); line-height: var(--leading-normal); margin: 0 0 var(--space-3); }
+  .faint { color: var(--color-text-faint); }
+  .panel { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); }
+  label { display: block; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); margin-bottom: 4px; }
+  select, input[type=number], input[type=text] { height: var(--control-height); font-family: var(--font-body); font-size: var(--text-base); background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: 0 var(--space-2); width: 100%; box-sizing: border-box; }
+  select:focus, input:focus { outline: 2px solid var(--color-focus-ring); outline-offset: 1px; }
+  .saves { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+  @media (min-width: 620px) { .saves { grid-template-columns: repeat(6, 1fr); } }
+  .two { display: grid; grid-template-columns: 1fr; gap: var(--space-3); }
+  @media (min-width: 620px) { .two { grid-template-columns: 1fr 1fr; } }
+  .blockrow { display: grid; grid-template-columns: 1fr 140px; gap: var(--space-2); align-items: center; padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); font-size: var(--text-sm); }
+  .blockrow:last-child { border-bottom: 0; }
+  .blockrow .d { font-size: var(--text-xs); color: var(--color-text-faint); display: block; }
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+  .btn { font-family: var(--font-body); font-size: var(--text-base); background: var(--color-accent); color: var(--color-accent-contrast); border: 0; border-radius: var(--radius-sm); padding: 0 var(--space-4); height: var(--control-height); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+  .btn.ghost { background: transparent; color: var(--color-accent-hover); border: 1px solid var(--color-border-strong); }
+  .result { border: 1px solid var(--color-accent); border-radius: var(--radius-md); padding: var(--space-4); background: var(--color-surface-raised); margin-top: var(--space-3); }
+  .result.safe { border-color: var(--color-positive, #4c9a6a); }
+  .result.bad { border-color: var(--color-critical); }
+  .verdict { font-family: var(--font-display); font-size: var(--text-xl); margin: 0 0 var(--space-3); }
+  .figs { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-2); }
+  @media (min-width: 620px) { .figs { grid-template-columns: repeat(3, 1fr); } }
+  .fig { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2); }
+  .fig .k { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-subtle); }
+  .fig .v { font-family: var(--font-display); font-size: var(--text-lg); }
+  .foot { margin-top: var(--space-6); text-align: center; font-size: var(--text-sm); }
+  .foot a { color: var(--color-accent-hover); }
+  .notice { padding: var(--space-3); border-radius: var(--radius-sm); margin: var(--space-3) 0; font-size: var(--text-sm); border: 1px solid var(--color-critical); color: var(--color-critical); }
+  .shared { border: 1px solid var(--color-accent); border-radius: var(--radius-sm); padding: var(--space-3); font-size: var(--text-sm); margin-bottom: var(--space-3); }
+</style>
+</head>
+<body class="slaf">
+<script src="shared/skin.js"></script>
+<script>DND.Skin.init();</script>
+<div class="wrap">
+  <div class="skin-bar" id="skin-bar"></div>
+  <div id="load-notice" class="notice" hidden></div>
+
+  <h1>DM mode</h1>
+  <p class="note">Build an encounter for <em>someone else</em>. Set what the target looks like, pick what
+     comes at them, and see what happens. Nothing here touches your own character — the whole
+     scenario lives in the link, so sharing it is copying the address bar.</p>
+
+  <div id="shared-note" class="shared" hidden></div>
+
+  <h2>The target</h2>
+  <div class="panel">
+    <div class="two">
+      <div><label for="f-name">Who are they</label>
+        <input type="text" id="f-name" placeholder="A friend, a hypothetical, anyone"/></div>
+      <div><label for="f-runway">Weeks of runway</label>
+        <input type="number" id="f-runway" min="0" max="520" step="1" placeholder="e.g. 4"/></div>
+    </div>
+    <p class="note" style="margin:var(--space-2) 0 0" id="exh-note"></p>
+
+    <label style="margin-top:var(--space-3)">Saving throws</label>
+    <div class="saves" id="save-inputs"></div>
+    <p class="note" style="margin-top:var(--space-2)">Leave one blank and it counts as unscored, exactly as
+       it would on a real sheet — the creature simply cannot target it.</p>
+  </div>
+
+  <h2>What comes at them</h2>
+  <select id="pick" aria-label="Choose a creature"></select>
+
+  <h2>What they have</h2>
+  <p class="note">Held, missing, or not established. <b>Not established applies nothing</b> — a DM who has
+     not decided is not the same as a target who lacks it.</p>
+  <div class="panel"><div id="blockers"></div></div>
+
+  <div class="actions">
+    <button type="button" class="btn" id="btn-run">Run it</button>
+    <button type="button" class="btn ghost" id="btn-roll">Roll it</button>
+    <button type="button" class="btn ghost" id="btn-link">Copy the scenario link</button>
+    <button type="button" class="btn ghost" id="btn-log" hidden>Log against my sheet</button>
+  </div>
+
+  <div id="result"></div>
+
+  <p class="foot"><a href="encounter.html">← Your own weakness map</a> &nbsp;·&nbsp;
+     <a href="bestiary.html">The Bestiary</a> &nbsp;·&nbsp; <a href="sheet.html">Your sheet</a></p>
+  <p class="foot faint" style="font-size:var(--text-xs)">An independent parody. Not affiliated with or endorsed by Wizards of the Coast. <a href="bestiary.html#attribution">Licence &amp; attribution</a>.</p>
+</div>
+
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/store.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/tier0.js"></script>
+<script src="engines/character.js"></script>
+<script src="engines/encounter.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Char = SLAF.Character, Store = DND.Store, Enc = DND.Encounter;
+  var TABLES = null, LAST = null, CREATURES = [];
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function sign(n) { return (n >= 0 ? '+' : '') + n; }
+  function pct(v) { return Math.round(v * 100) + '%'; }
+
+  /* ---- the scenario lives in the URL ------------------------------------
+     Base64url of the JSON, so it survives being pasted into anything that
+     mangles punctuation. Unreadable hashes are ignored rather than thrown at
+     the reader — a broken link should open an empty page, not an error. */
+  function encode(obj) {
+    var json = JSON.stringify(obj);
+    var b64 = btoa(unescape(encodeURIComponent(json)));
+    return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function decode(str) {
+    try {
+      var b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+      while (b64.length % 4) b64 += '=';
+      return JSON.parse(decodeURIComponent(escape(atob(b64))));
+    } catch (e) { return null; }
+  }
+
+  function readScenario() {
+    var out = { name: el('f-name').value.trim() || null, saves: {}, blockers: {},
+                creature: el('pick').value || null };
+    var r = el('f-runway').value;
+    out.runway = r === '' ? null : Number(r);
+    Char.STAT_IDS.forEach(function (id) {
+      var v = el('sv-' + id).value;
+      if (v !== '') out.saves[id] = Number(v);
+    });
+    Object.keys(TABLES.dndRules.blockers).forEach(function (b) {
+      var v = el('bl-' + b).value;
+      if (v) out.blockers[b] = v;
+    });
+    return out;
+  }
+
+  function writeScenario(s) {
+    if (!s) return;
+    el('f-name').value = s.name || '';
+    el('f-runway').value = Money.isEntered(s.runway) ? String(s.runway) : '';
+    Char.STAT_IDS.forEach(function (id) {
+      el('sv-' + id).value = s.saves && Money.isEntered(s.saves[id]) ? String(s.saves[id]) : '';
+    });
+    Object.keys(TABLES.dndRules.blockers).forEach(function (b) {
+      el('bl-' + b).value = (s.blockers && s.blockers[b]) || '';
+    });
+    if (s.creature) el('pick').value = s.creature;
+  }
+
+  /* ---- a target, shaped like a sheet ------------------------------------
+     The engine takes a sheet. It does not care whether that sheet came from
+     someone's real numbers or from six boxes on this page, which is exactly
+     why this page needed no new engine. An unfilled save is left OUT of the
+     stats map, so it reads as unscored rather than as zero. */
+  function targetSheet(s) {
+    var stats = {};
+    Char.STAT_IDS.forEach(function (id) {
+      if (s.saves && Money.isEntered(s.saves[id])) {
+        /* The boxes take a save modifier directly; turn it back into the score
+           that produces it, because that is what the engine reads. */
+        stats[id] = Money.ok(10 + s.saves[id] * 2);
+      }
+    });
+    return {
+      stats: stats, klass: null, proficiencyBonus: 0, level: null,
+      currentHp: Money.isEntered(s.runway) ? Money.ok(s.runway) : null,
+      maxHp: null,
+      /* Blockers keyed to a sub-stat are answered by the DM's tri-state
+         selects instead, so no sub-scores are supplied. */
+      subScores: {}
+    };
+  }
+
+  /* The DM's answers override the engine's own predicates. Held and absent are
+     both real answers; anything else stays unknown and applies nothing. */
+  function applyDmBlockers(result, s) {
+    result.blockedBy.forEach(function (b) {
+      var said = s.blockers && s.blockers[b.id];
+      b.state = said === 'held' ? 'held' : (said === 'absent' ? 'absent' : 'unknown');
+    });
+    result.held = result.blockedBy.filter(function (b) { return b.state === 'held'; });
+    result.unknown = result.blockedBy.filter(function (b) { return b.state === 'unknown'; });
+    return result;
+  }
+
+  function run(mode) {
+    var s = readScenario();
+    var creature = CREATURES.filter(function (c) { return c.name === s.creature; })[0];
+    if (!creature) return;
+
+    /* Run once to learn which blockers this creature cares about, apply the
+       DM's answers, then run again with those answers in force. Cheaper than
+       teaching the engine a second source of truth. */
+    var sheet = targetSheet(s);
+    var opts = { tables: TABLES, household: { dndProfile: {} }, mode: mode };
+    var probe = Enc.run(sheet, creature, opts);
+    applyDmBlockers(probe, s);
+
+    /* Re-derive with the DM's held blockers in force, by handing the engine
+       sub-scores that satisfy exactly those and a profile that answers the
+       rest. Blockers the DM left unanswered get neither, so they stay unknown
+       — the engine's own three-state logic does the work. */
+    var subScores = {};
+    probe.blockedBy.forEach(function (b) {
+      var cat = TABLES.dndRules.blockers[b.id] || {};
+      if (b.state !== 'held' || !cat.subStat) return;
+      subScores[cat.subStat] = Money.ok(Math.max(cat.min, 8));
+    });
+    var withHeld = { stats: sheet.stats, klass: null, proficiencyBonus: 0, level: null,
+                     currentHp: sheet.currentHp, maxHp: null, subScores: subScores };
+    var out = Enc.run(withHeld, creature, {
+      tables: TABLES, mode: mode,
+      household: { dndProfile: dmProfileFor(probe, s) }
+    });
+    applyDmBlockers(out, s);
+    render(out, s, creature);
+  }
+
+  /* Blockers that read the household rather than a sub-stat need a profile
+     that answers them the way the DM said. Only the held ones are written;
+     absent and unknown are simply not answered, which the engine already
+     treats correctly. */
+  function dmProfileFor(probe, s) {
+    var p = {};
+    probe.blockedBy.forEach(function (b) {
+      if ((s.blockers && s.blockers[b.id]) !== 'held') return;
+      if (b.id === 'healthInsurance') p.healthCoverage = 2;
+      if (b.id === 'disabilityInsurance') p.disabilityInsurance = true;
+      if (b.id === 'umbrella') p.umbrellaPolicy = true;
+      if (b.id === 'automatedSaving') p.automatedSaving = 'most';
+    });
+    return p;
+  }
+
+  function render(r, s, creature) {
+    LAST = { result: r, scenario: s };
+    el('btn-log').hidden = false;
+    var cls = r.negated ? 'safe' : (r.deathSaves || r.massiveDamage ? 'bad' : '');
+    var who = s.name ? esc(s.name) : 'They';
+    var verdict = r.negated
+      ? who + ' cannot be touched by this.'
+      : r.hitChance === null
+        ? 'Not enough about them to say — give the save it targets a number.'
+        : r.massiveDamage
+          ? 'Massive damage. Straight past death saves.'
+          : 'It lands ' + pct(r.hitChance) + ' of the time.';
+
+    var figs = [
+      ['Target save', r.targetSave ? r.targetSave + ' ' + (r.modifier === null ? '—' : sign(r.modifier)) : '—'],
+      ['DC', r.dc === null ? '—' : r.dc],
+      ['Chance it lands', r.hitChance === null ? '—' : pct(r.hitChance)],
+      ['Damage', r.damageWeeks + ' wk' + (r.perPeriod ? '/' + r.perPeriod : '')],
+      ['Runway after', r.hpAfter === null ? '—' : r.hpBefore + ' → ' + r.hpAfter]
+    ];
+    if (r.exhaustionPenalty > 0) {
+      figs.splice(1, 0, ['Exhaustion', r.exhaustionLabel + ' · −' + r.exhaustionPenalty]);
+    }
+
+    el('result').innerHTML = '<div class="result ' + cls + '">'
+      + '<p class="verdict">' + verdict + '</p>'
+      + '<p class="note">' + esc(creature.name) + ' · CR ' + esc(creature.cr)
+        + ' · ' + esc(creature.attackType) + ' · tier ' + esc(creature.tier) + '</p>'
+      + (r.advantage ? '<p class="note">They roll this save with advantage.</p>' : '')
+      + '<div class="figs">' + figs.map(function (f) {
+          return '<div class="fig"><div class="k">' + esc(f[0]) + '</div><div class="v">' + esc(f[1]) + '</div></div>';
+        }).join('') + '</div>'
+      + (r.damageNote ? '<p class="note" style="margin-top:var(--space-3)">' + esc(r.damageNote) + '</p>' : '')
+      + (r.unknown.length
+          ? '<p class="note faint" style="margin-top:var(--space-3)">' + r.unknown.length
+            + ' defence' + (r.unknown.length === 1 ? '' : 's') + ' not established, so '
+            + (r.unknown.length === 1 ? 'it counts' : 'they count') + ' for nothing.</p>'
+          : '')
+      + (r.lair.length
+          ? '<p class="note" style="margin-top:var(--space-3)"><b>Where it hunts:</b> '
+            + r.lair.map(esc).join(' · ') + '</p>'
+          : '')
+      + '<p class="note faint">' + (r.mode === 'roll' ? 'One roll of the dice.' : 'Expected damage — the average, not a roll.') + '</p>'
+      + '</div>';
+  }
+
+  function buildOnce() {
+    var rules = TABLES.dndRules;
+
+    el('save-inputs').innerHTML = Char.STAT_IDS.map(function (id) {
+      return '<div><label for="sv-' + id + '">' + id + '</label>'
+        + '<input type="number" id="sv-' + id + '" min="-5" max="12" step="1" placeholder="—"/></div>';
+    }).join('');
+
+    CREATURES = Enc.allCreatures(TABLES).slice().sort(function (a, b) {
+      return (Enc.crToNumber(a.cr) || 0) - (Enc.crToNumber(b.cr) || 0);
+    });
+    el('pick').innerHTML = CREATURES.map(function (c) {
+      return '<option value="' + esc(c.name) + '">' + esc(c.name) + ' — CR ' + esc(c.cr)
+        + ' · ' + esc(c.attackType) + '</option>';
+    }).join('');
+
+    el('blockers').innerHTML = Object.keys(rules.blockers).map(function (id) {
+      var b = rules.blockers[id];
+      return '<div class="blockrow"><span><b>' + esc(b.label) + '</b>'
+        + '<span class="d">' + esc(b.detail) + '</span></span>'
+        + '<select id="bl-' + esc(id) + '" aria-label="' + esc(b.label) + '">'
+        + '<option value="">Not established</option>'
+        + '<option value="held">They have it</option>'
+        + '<option value="absent">They do not</option>'
+        + '</select></div>';
+    }).join('');
+  }
+
+  function paintExhaustion() {
+    var v = el('f-runway').value;
+    if (v === '') { el('exh-note').textContent = 'Leave it blank and exhaustion does not apply — a runway nobody has stated is not a rested one.'; return; }
+    var e = Char.exhaustion(Money.ok(Number(v)), TABLES);
+    el('exh-note').textContent = Money.isOk(e)
+      ? e.row.label + (e.value > 0 ? ' — every save is ' + e.savePenalty + ' worse. ' : ' — no penalty. ') + e.row.tell
+      : e.reason;
+  }
+
+  function wire() {
+    el('btn-run').addEventListener('click', function () { run('expected'); });
+    el('btn-roll').addEventListener('click', function () { run('roll'); });
+    el('f-runway').addEventListener('input', paintExhaustion);
+
+    el('btn-link').addEventListener('click', function () {
+      var url = location.href.split('#')[0] + '#s=' + encode(readScenario());
+      var btn = el('btn-link');
+      function done() {
+        btn.textContent = 'Link copied';
+        setTimeout(function () { btn.textContent = 'Copy the scenario link'; }, 1800);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(done, function () { window.prompt('Copy this:', url); });
+      } else { window.prompt('Copy this:', url); }
+      location.hash = 's=' + encode(readScenario());
+    });
+
+    el('btn-log').addEventListener('click', function () {
+      if (!LAST) return;
+      var r = LAST.result;
+      Store.logEncounter({
+        monsterId: r.monster,
+        outcome: r.negated ? 'immune' : (r.halved || r.advantage ? 'resisted' : 'hit'),
+        reason: LAST.scenario.name ? 'DM scenario: ' + LAST.scenario.name : 'DM scenario',
+        damageWeeks: r.damageWeeks,
+        /* Never 'self'. A scenario you set up for someone else must not read
+           later as something that happened to you. */
+        source: 'dm'
+      });
+      var btn = el('btn-log');
+      btn.textContent = 'Logged';
+      setTimeout(function () { btn.textContent = 'Log against my sheet'; }, 1800);
+    });
+  }
+
+  SLAF.Reference.load().then(function (tables) {
+    TABLES = tables;
+    DND.Skin.mount(el('skin-bar'));
+    buildOnce();
+    wire();
+
+    var hash = location.hash.replace(/^#/, '');
+    var m = /(?:^|&)s=([A-Za-z0-9_-]+)/.exec(hash);
+    var loaded = m ? decode(m[1]) : null;
+    if (loaded) {
+      writeScenario(loaded);
+      var box = el('shared-note');
+      box.hidden = false;
+      box.innerHTML = '<b>A scenario was shared with you.</b> Everything below is filled in from the '
+        + 'link — change anything you like, it is only ever in the address bar.';
+      paintExhaustion();
+      run('expected');
+    } else {
+      paintExhaustion();
+    }
+  }).catch(function (err) {
+    var n = el('load-notice');
+    n.hidden = false;
+    n.textContent = 'Couldn’t load the game data (' + err.message + '). If you opened this file '
+      + 'directly it needs to be served over http — try the published link instead.';
+  });
+})();
+</script>
+</body>
+</html>
