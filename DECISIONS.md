@@ -4236,3 +4236,76 @@ being touched.
 carry `category` — that split is the rulebook's and was kept rather than tidied,
 so a room rendering both must handle each. Do not assume `damageSpec.dice`
 parses; `"0"` is a legitimate value meaning no hit-point damage.
+
+---
+
+## D-067 — Four tiers of play, and a function that refuses to place you
+
+BRIEF §9.4. The sheet could tell you your Level and the encounter room could
+tell you what hunts you, but nothing told you what part of the game you were in
+— which is the thing a tier is for. A level is a number; a tier is a job
+description.
+
+The four tiers already existed in `encounterRules.tiers` as names and level
+ranges, put there by §9.3 so creatures could be tagged. Each now also says what
+that stage is **about**, what it **looks like** from inside, what **ends** it,
+and its **biggest risk**. That prose is written for this build, not the rulebook,
+so every tier carries `origin: "extension"` and a test asserts it.
+
+    I    1–4    Stop the bleeding and build the first buffer
+    II   5–10   Widen the gap, then make it move without you
+    III  11–16  Stop losing it — the pile is big enough that protecting beats adding
+    IV   17–20  Turn a pile into an income, and work out what it was for
+
+### tierProgress() takes a Result, not a number
+
+This is the whole design decision in the tranche. `tierForLevel(3)` takes an
+integer and always returns a tier, which is right for its caller — a creature
+list needs *some* tier. But a character with no income and no spending figure has
+no Level, and calling them "tier I — getting off the floor" is a diagnosis nobody
+asked for and the page has no basis for.
+
+So `tierProgress(levelResult, tables)` takes the Level **Result** and returns
+`{ placed: false, reason }` when it is not `ok`. The sheet prints the reason. It
+is the same rule as an unscored save not being a weakness, applied to the arc
+instead of to a stat: absent is not the beginning.
+
+### What the panels show
+
+A four-segment strip with your tier lit and completed tiers dimmed, then two
+panels: this tier (what it is about, a bar showing how far through it you are,
+what it looks like, the milestone from the rulebook's own `levelBands`, and the
+biggest risk) and what is next (what ends this tier, what the next one is about,
+how many levels away, and **which creatures come into range when you cross**).
+
+That last list is the part that makes a tier feel like a place rather than a
+label. At level 3 it names nine creatures waiting in tier II, and they are the
+same creatures the encounter room will run.
+
+### The filter that was already there
+
+`predators()` has taken a `tierOnly` option since §9.3 and nothing ever passed
+it. §9.4 is what it was for: the encounter room now has "Only what can reach me
+at my tier", which takes the demo character's predator list from 21 to 5.
+
+It is **off by default**. Everything that hunts where you are thin is the more
+honest first answer, and the far-off ones are the interesting half — the filter
+is a narrowing you ask for, not one applied on your behalf.
+
+### Compatibility note
+
+**Stored shape:** nothing. The tier filter is a live control, not a stored
+preference — deliberately, so nobody returns to a filtered view they have
+forgotten they asked for.
+
+**Rooms updated:** `dnd/data/dnd_rules.json` (tier prose + `tierNote`),
+`dnd/engines/encounter.js` (`tierProgress`), `dnd/sheet.html` (the strip and two
+panels; no inputs in any of the three containers, so they repaint freely under
+D-034) and `dnd/encounter.html` (the filter checkbox, built once in the markup
+and only read).
+
+**Before writing any of these from a new room:** use `tierProgress()` and honour
+`placed: false` — do not fall back to `tierForLevel()` to get a tier for someone
+who has no Level. Tests assert the four tiers tile levels 1–20 with no gap and no
+overlap, and that every level lands in exactly one tier and one milestone band;
+if you add a tier, those are the checks that will tell you what you broke.

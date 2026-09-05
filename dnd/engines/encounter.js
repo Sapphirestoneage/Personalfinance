@@ -92,6 +92,40 @@
     return tiers[0];
   }
 
+  /**
+   * Where you are in the arc — BRIEF §9.4.
+   *
+   * Returns the tier you are in, the one after it, how far through this one you
+   * are, and the creatures that come into range when you cross. It takes a
+   * Result for the level rather than a number, because a character with no Level
+   * is not "tier I" — they are unplaced, and saying otherwise is the same
+   * over-claim as calling an unscored save a weakness.
+   */
+  function tierProgress(levelResult, tables) {
+    if (!Money.isOk(levelResult)) {
+      return { placed: false, reason: 'Add your numbers and this places you in the arc.' };
+    }
+    var level = levelResult.value;
+    var tiers = tables.dndRules.encounterRules.tiers;
+    var here = tierForLevel(level, tables);
+    var idx = tiers.indexOf(here);
+    var next = idx >= 0 && idx + 1 < tiers.length ? tiers[idx + 1] : null;
+    var span = here.maxLevel - here.minLevel + 1;
+    var through = level - here.minLevel + 1;
+
+    var arriving = next
+      ? allCreatures(tables).filter(function (c) { return c.tier === next.id; })
+      : [];
+    return {
+      placed: true, level: level, tier: here, next: next,
+      levelsIntoTier: through, tierSpan: span,
+      levelsToNext: next ? next.minLevel - level : null,
+      percentThroughTier: Math.round((through / span) * 100),
+      arrivingNext: arriving,
+      last: !next
+    };
+  }
+
   /* ---- blockers ----------------------------------------------------------
      The catalogue in data says what each blocker IS. These predicates say
      whether this character actually holds it, and return null for "we have
@@ -295,6 +329,7 @@
     crToNumber: crToNumber,
     dcFor: dcFor,
     tierForLevel: tierForLevel,
+    tierProgress: tierProgress,
     blockerState: blockerState,
     resolveBlockers: resolveBlockers,
     targetSave: targetSave,

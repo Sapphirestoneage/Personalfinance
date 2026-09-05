@@ -1598,25 +1598,45 @@
         "id": "I",
         "minLevel": 1,
         "maxLevel": 4,
-        "name": "Getting off the floor"
+        "name": "Getting off the floor",
+        "about": "Stop the bleeding and build the first buffer. Nothing else on this list works while a balance is compounding faster than you can pay it.",
+        "looksLike": "Every shock is a crisis, because there is nothing between you and it.",
+        "endsWhen": "A month of expenses exists somewhere you can reach it, and no debt is growing faster than you can pay it down.",
+        "biggestRisk": "Small, constant, unnoticed damage — the creatures here do 1d4 and never announce themselves.",
+        "origin": "extension"
       },
       {
         "id": "II",
         "minLevel": 5,
         "maxLevel": 10,
-        "name": "Building the engine"
+        "name": "Building the engine",
+        "about": "Widen the gap between what arrives and what leaves, then make the gap move on its own.",
+        "looksLike": "You can absorb one bad month. Two would hurt. The saving still depends on you remembering.",
+        "endsWhen": "The saving happens without you, the employer match is captured, and a full emergency fund is in place.",
+        "biggestRisk": "Your own raises. This is where lifestyle creep does its best work, because every head it grows is reasonable.",
+        "origin": "extension"
       },
       {
         "id": "III",
         "minLevel": 11,
         "maxLevel": 16,
-        "name": "Protecting the pile"
+        "name": "Protecting the pile",
+        "about": "Stop losing it. The pile is now big enough that protecting it beats adding to it.",
+        "looksLike": "A good year adds more than you earn. A bad one could take back several.",
+        "endsWhen": "A bad year is survivable without selling anything, and no single event — health, job, one holding — can take a third of it.",
+        "biggestRisk": "Concentration and the things insurance exists for. The creatures here hit for 4d8 and up.",
+        "origin": "extension"
       },
       {
         "id": "IV",
         "minLevel": 17,
         "maxLevel": 20,
-        "name": "Living off it"
+        "name": "Living off it",
+        "about": "Turn a pile into an income, and work out what it was for.",
+        "looksLike": "The maths works. The question stops being how much and starts being when, and then why.",
+        "endsWhen": "It doesn't. This is the part you were saving for.",
+        "biggestRisk": "Order, not average. The same returns in the wrong sequence are a different retirement.",
+        "origin": "extension"
       }
     ],
     "effects": {
@@ -1656,7 +1676,8 @@
         "label": "Greed",
         "blurb": "Moves you by what you stand to gain."
       }
-    ]
+    ],
+    "tierNote": "BRIEF §9.4. The four tiers are the rulebook's level bands read as stages of play: what this part of the game is about, what it feels like, and what ends it. The level ranges are the rulebook's; the prose is written for this build and marked origin: extension on each tier."
   },
   "blockers": {
     "emergencyFund": {

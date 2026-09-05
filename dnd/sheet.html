@@ -111,6 +111,23 @@
   .muted { color: var(--color-text-muted); }
   .burden { border-left: 3px solid var(--color-caution); padding: var(--space-2) var(--space-3); background: var(--color-surface); font-size: var(--text-sm); line-height: var(--leading-normal); border-radius: var(--radius-sm); margin-top: var(--space-2); }
   .burden.b45 { border-left-color: var(--color-critical); }
+  /* ---- tiers of play (BRIEF §9.4) ---- */
+  .tierstrip { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-1); margin-top: var(--space-3); }
+  .tierseg { border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: var(--space-2); background: var(--color-surface); text-align: center; }
+  .tierseg .rn { font-family: var(--font-display); font-size: var(--text-lg); }
+  .tierseg .nm { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-subtle); line-height: 1.3; display: block; margin-top: 2px; }
+  .tierseg .lv { font-size: var(--text-xs); color: var(--color-text-faint); display: block; }
+  .tierseg.done { border-color: var(--color-border); opacity: .55; }
+  .tierseg.here { border-color: var(--color-accent); background: var(--color-surface-active); }
+  .tierseg.here .nm { color: var(--color-accent-hover); }
+  .tierbar { height: 6px; border-radius: var(--radius-pill); background: var(--color-surface-active); overflow: hidden; margin-top: var(--space-2); }
+  .tierbar > span { display: block; height: 100%; background: var(--color-accent); }
+  .tierline { margin: 0 0 var(--space-2); font-size: var(--text-sm); line-height: var(--leading-normal); }
+  .tierline b { font-family: var(--font-display); font-size: var(--text-base); display: block; margin-bottom: 2px; }
+  .tierline .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-subtle); display: block; }
+  .arriving { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-2); }
+  .arriving span { font-size: var(--text-xs); border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 1px var(--space-2); color: var(--color-text-muted); }
+
   .lower { display: grid; gap: var(--space-3); grid-template-columns: 1fr; margin-top: var(--space-3); }
   @media (min-width: 900px) { .lower { grid-template-columns: 1fr 2fr; } }
   table.attacks { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
@@ -176,12 +193,13 @@
 <script src="engines/projection.js"></script>
 <script src="engines/tier0.js"></script>
 <script src="engines/character.js"></script>
+<script src="engines/encounter.js"></script>
 <script src="shared/export.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Char = SLAF.Character, Store = DND.Store, Schema = SLAF.Schema,
-      Export = DND.Export;
+      Export = DND.Export, Enc = DND.Encounter;
   var TABLES = null, BUILT = false, DASH = Money.EM_DASH;
   var SHOWING_EXAMPLE = false;
 
@@ -375,6 +393,12 @@
       + '<div class="lower">'
         + '<div class="panel"><div class="rows" id="v-passives"></div><div class="panel-label">Senses</div></div>'
         + '<div class="panel"><div id="v-levers"></div><div class="panel-label">Levers · what you can actually swing</div></div>'
+      + '</div>'
+      + '<h2 class="sec">Where you are in the arc</h2>'
+      + '<div class="tierstrip" id="v-tierstrip"></div>'
+      + '<div class="lower">'
+        + '<div class="panel"><div id="v-tier-now"></div><div class="panel-label">This tier</div></div>'
+        + '<div class="panel"><div id="v-tier-next"></div><div class="panel-label">What is next</div></div>'
       + '</div>'
       + '<h2 class="sec">Class</h2><div class="actions" id="v-pickers"></div>'
       + '<div class="lower">'
@@ -626,6 +650,54 @@
         return esc(t.name); }).join('<br/>'));
     }
     html('v-prof-list', prof.join('') || '<span class="faint">Nothing yet.</span>');
+
+    /* --- tiers of play (BRIEF §9.4) ---------------------------------------
+       No inputs in any of these three containers, so they are rebuilt freely.
+       An unplaced character gets the strip greyed and a line saying why, not a
+       guess at tier I: tierProgress() takes the Level Result rather than a
+       number precisely so it can refuse. */
+    var tp = Enc.tierProgress(s.level, TABLES);
+    var tiers = TABLES.dndRules.encounterRules.tiers;
+    html('v-tierstrip', tiers.map(function (t) {
+      var cls = !tp.placed ? ''
+        : (t.id === tp.tier.id ? ' here' : (t.maxLevel < tp.level ? ' done' : ''));
+      return '<div class="tierseg' + cls + '"><span class="rn">' + esc(t.id) + '</span>'
+        + '<span class="nm">' + esc(t.name) + '</span>'
+        + '<span class="lv">levels ' + t.minLevel + '–' + t.maxLevel + '</span></div>';
+    }).join(''));
+
+    if (!tp.placed) {
+      html('v-tier-now', '<span class="faint">' + esc(tp.reason) + '</span>');
+      html('v-tier-next', '<span class="faint">Your Level places you in the arc, and your '
+        + 'Level needs investments and a spending figure.</span>');
+    } else {
+      var band = TABLES.dndRules.levelBands.filter(function (b) {
+        return tp.level >= b.minLevel && tp.level <= b.maxLevel; })[0];
+      html('v-tier-now',
+        '<p class="tierline"><b>Tier ' + esc(tp.tier.id) + ' — ' + esc(tp.tier.name) + '</b>'
+          + esc(tp.tier.about) + '</p>'
+        + '<div class="tierbar"><span style="width:' + tp.percentThroughTier + '%"></span></div>'
+        + '<p class="tierline" style="margin-top:var(--space-2)"><span class="lbl">Level '
+          + tp.level + ' · ' + tp.levelsIntoTier + ' of ' + tp.tierSpan + ' in this tier</span>'
+          + esc(tp.tier.looksLike) + '</p>'
+        + (band ? '<p class="tierline"><span class="lbl">Milestone for this band</span>'
+            + esc(band.milestone) + '</p>' : '')
+        + '<p class="tierline"><span class="lbl">Biggest risk here</span>'
+          + esc(tp.tier.biggestRisk) + '</p>');
+
+      html('v-tier-next', tp.last
+        ? '<p class="tierline"><b>There is no tier V</b>' + esc(tp.tier.endsWhen) + '</p>'
+        : '<p class="tierline"><span class="lbl">This tier ends when</span>'
+            + esc(tp.tier.endsWhen) + '</p>'
+          + '<p class="tierline"><b>Then: tier ' + esc(tp.next.id) + ' — ' + esc(tp.next.name) + '</b>'
+            + esc(tp.next.about) + '</p>'
+          + '<p class="tierline"><span class="lbl">' + tp.levelsToNext + ' level'
+            + (tp.levelsToNext === 1 ? '' : 's') + ' away · what comes into range</span>'
+            + (tp.arrivingNext.length
+                ? '<span class="arriving">' + tp.arrivingNext.map(function (c) {
+                    return '<span>' + esc(c.name) + '</span>'; }).join('') + '</span>'
+                : 'Nothing new.') + '</p>');
+    }
 
     /* senses + levers (no inputs inside — safe to rebuild) */
     html('v-passives', Char.passives(s.subScores, TABLES).map(function (x) {

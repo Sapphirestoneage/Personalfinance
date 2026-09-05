@@ -677,6 +677,103 @@ section('Dungeons & Dividends — the quiz-only leaning');
     Character.suggestClassFromStats({}, TABLES).status, 'incomplete');
 })();
 
+section('Dungeons & Dividends — tiers of play');
+
+(function () {
+  const Encounter = require(path.join(ROOT, 'engines/encounter.js'));
+  const R = TABLES.dndRules;
+  const tiers = R.encounterRules.tiers;
+
+  /* BRIEF §9.4. Every tier has to be able to say what it is for, what it feels
+     like, what ends it and what to watch — or the panel prints blanks. */
+  check('four tiers', tiers.length, 4);
+  tiers.forEach(function (t) {
+    ['about', 'looksLike', 'endsWhen', 'biggestRisk'].forEach(function (k) {
+      checkTrue(`tier ${t.id} says ${k}`, typeof t[k] === 'string' && t[k].length > 20);
+    });
+    check(`tier ${t.id} prose is marked as written for this build`, t.origin, 'extension');
+  });
+
+  /* The bands must tile levels 1-20 with no gap and no overlap, or a character
+     can fall between two tiers and tierForLevel silently returns tier I. */
+  const sorted = tiers.slice().sort(function (a, b) { return a.minLevel - b.minLevel; });
+  check('the tiers start at level 1', sorted[0].minLevel, 1);
+  check('and finish at level 20', sorted[sorted.length - 1].maxLevel, 20);
+  for (let i = 1; i < sorted.length; i++) {
+    check(`tier ${sorted[i].id} starts where tier ${sorted[i - 1].id} stops`,
+      sorted[i].minLevel, sorted[i - 1].maxLevel + 1);
+  }
+  for (let lvl = 1; lvl <= 20; lvl++) {
+    const hit = tiers.filter(function (t) { return lvl >= t.minLevel && lvl <= t.maxLevel; });
+    check(`level ${lvl} lands in exactly one tier`, hit.length, 1);
+  }
+
+  /* An unplaced character is unplaced. tierProgress takes the Level Result, not
+     a number, precisely so it can say "no" instead of guessing tier I. */
+  const nowhere = Encounter.tierProgress(Money.incomplete('no level', []), TABLES);
+  checkTrue('no Level means not placed', !nowhere.placed);
+  checkTrue('and it says why', typeof nowhere.reason === 'string' && nowhere.reason.length > 0);
+  checkTrue('a null Level does not throw', !Encounter.tierProgress(null, TABLES).placed);
+
+  /* Walking every level: the arithmetic must stay inside its own tier. */
+  for (let lvl = 1; lvl <= 20; lvl++) {
+    const p = Encounter.tierProgress(Money.ok(lvl), TABLES);
+    checkTrue(`L${lvl}: placed`, p.placed);
+    checkTrue(`L${lvl}: is inside its tier`,
+      lvl >= p.tier.minLevel && lvl <= p.tier.maxLevel);
+    checkTrue(`L${lvl}: progress through the tier is 1..100%`,
+      p.percentThroughTier > 0 && p.percentThroughTier <= 100);
+    checkTrue(`L${lvl}: counts its position in the band`,
+      p.levelsIntoTier >= 1 && p.levelsIntoTier <= p.tierSpan);
+    if (p.last) {
+      check(`L${lvl}: the last tier has no next`, p.next, null);
+      check(`L${lvl}: and nothing new arrives`, p.arrivingNext.length, 0);
+    } else {
+      checkTrue(`L${lvl}: the next tier starts above this level`, p.next.minLevel > lvl);
+      check(`L${lvl}: levels to next is the gap`, p.levelsToNext, p.next.minLevel - lvl);
+      checkTrue(`L${lvl}: everything arriving belongs to the next tier`,
+        p.arrivingNext.every(function (c) { return c.tier === p.next.id; }));
+      checkTrue(`L${lvl}: something actually arrives`, p.arrivingNext.length > 0);
+    }
+  }
+
+  /* Only tier IV is terminal. */
+  check('exactly one tier is the last one',
+    [1, 5, 11, 17].map(function (l) { return Encounter.tierProgress(Money.ok(l), TABLES).last; })
+      .filter(Boolean).length, 1);
+
+  /* The level bands the panel reads alongside the tiers must cover every level
+     too, or the milestone line vanishes without explanation. */
+  for (let lvl = 1; lvl <= 20; lvl++) {
+    check(`level ${lvl} has exactly one milestone band`,
+      R.levelBands.filter(function (b) { return lvl >= b.minLevel && lvl <= b.maxLevel; }).length, 1);
+  }
+
+  /* tierOnly was in the engine from §9.3 and unused until now. */
+  const sheet = { stats: { STR: Money.ok(12), DEX: Money.ok(8), CON: Money.ok(12),
+                           INT: Money.ok(10), WIS: Money.ok(8), CHA: Money.ok(10) },
+                  klass: null, proficiencyBonus: 2, level: Money.ok(3) };
+  const all = Encounter.predators(sheet, TABLES);
+  const mine = Encounter.predators(sheet, TABLES, { tierOnly: true });
+  checkTrue('filtering to my tier never adds creatures',
+    mine.creatures.length <= all.creatures.length);
+  checkTrue('and everything left really is at my tier',
+    mine.creatures.every(function (c) { return c.tier === mine.tier.id; }));
+  check('the weakest saves do not change when you filter',
+    mine.weakest.join(','), all.weakest.join(','));
+
+  /* -- the pages wire it up ---------------------------------------------- */
+  const sheetSrc = fs.readFileSync(path.join(ROOT, 'sheet.html'), 'utf8');
+  checkTrue('the sheet loads the encounter engine',
+    /<script src="engines\/encounter\.js"><\/script>/.test(sheetSrc));
+  checkTrue('the sheet has a tier strip', /id="v-tierstrip"/.test(sheetSrc));
+  checkTrue('and both tier panels', /id="v-tier-now"/.test(sheetSrc) && /id="v-tier-next"/.test(sheetSrc));
+  const encSrc = fs.readFileSync(path.join(ROOT, 'encounter.html'), 'utf8');
+  checkTrue('the encounter room offers the tier filter', /id="f-tieronly"/.test(encSrc));
+  checkTrue('and it is off by default (no checked attribute)',
+    !/id="f-tieronly"[^>]*checked/.test(encSrc));
+})();
+
 section('Dungeons & Dividends — the bestiary extension');
 
 (function () {
