@@ -785,12 +785,33 @@
     /* The merged record goes back through the constructor, so the rule
        "deductible only when linked to an income entry" holds whatever a
        form sends (D-128). */
-    var merged = upsertIn(h.expenses.entries, entry);
+    /* A patch that adds a link, or a payer, is a change of path: the
+       stored `produced` must not pin the old one (D-129). */
+    var e = entry || {};
+    if (e.produced === undefined) {
+      if (typeof e.linkedIncomeId === 'string' && e.linkedIncomeId) e = Object.assign({}, e, { produced: 'linked' });
+      else if (e.reimbursableFrom || e.reimbursable === true) e = Object.assign({}, e, { produced: 'reimbursable' });
+    }
+    var merged = upsertIn(h.expenses.entries, e);
     var normalised = Schema.createExpenseEntry(merged);
     Object.keys(merged).forEach(function (k) { delete merged[k]; });
     Object.keys(normalised).forEach(function (k) { merged[k] = normalised[k]; });
     save(); notify();
     return merged;
+  }
+
+  /** A reimbursable expense paid back: the credit lands on the day it came,
+   *  never in the original month. D-129. */
+  function markReimbursed(id, when) {
+    var w = when || {};
+    var h = load();
+    var e = (h.expenses.entries || []).filter(function (x) { return x.id === id; })[0];
+    if (!e || e.produced !== 'reimbursable') return null;
+    var today = new Date();
+    var iso = today.getFullYear() + '-' + (today.getMonth() + 1 < 10 ? '0' : '') + (today.getMonth() + 1) + '-' + (today.getDate() < 10 ? '0' : '') + today.getDate();
+    pendingLabel = 'Paid back: ' + (e.descriptor || e.categoryId);
+    return upsertExpenseEntry({ id: id, reimbursementStatus: 'received', dateReceived: typeof w.dateReceived === 'string' && w.dateReceived ? w.dateReceived : iso,
+      receivedAmountCents: Money.isEntered(w.receivedAmountCents) ? w.receivedAmountCents : (Money.isEntered(e.expectedAmountCents) ? e.expectedAmountCents : e.amountCents) });
   }
 
   /* ---- The ledger (D-128) ------------------------------------------------ */
@@ -1349,6 +1370,7 @@
     removeGoal: removeGoal,
     upsertExpenseEntry: upsertExpenseEntry,
     removeExpenseEntry: removeExpenseEntry,
+    markReimbursed: markReimbursed,
     upsertIncomeEntry: upsertIncomeEntry,
     removeIncomeEntry: removeIncomeEntry,
     upsertIncomeCost: upsertIncomeCost,

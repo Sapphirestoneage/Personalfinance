@@ -184,7 +184,13 @@
     'expenses.entries[].hidden':                 { class: 'raw',        unit: 'bool',    note: 'off the default list, still counted. D-128' },
     'expenses.entries[].active':                 { class: 'raw',        unit: 'bool',    note: 'false = archived: stops counting toward new estimates and actuals; closed months are untouched. D-128' },
     'household.ledger.income[].kind':            { class: 'raw',        unit: 'enum',    values: ['w2', 'se', 'bonus', 'gift', 'side', 'dividend', 'rental', 'other'], note: 'a dated income entry: amountCents, frequency (once, weekly, fortnightly, monthly, annual), receivedOn, taxable, taxMethod (w2, se, none), costs[] for se/side/rental, hidden, active. Owned by Income. D-128' },
-    'household.ledger.income[].taxMethod':       { class: 'raw',        unit: 'enum',    values: ['w2', 'se', 'none'], note: 'how the tax engine nets it: withholding, self-employment tax on the net of costs, or nothing (a gift). D-128' },
+    'household.ledger.income[].taxMethod':       { class: 'raw',        unit: 'enum',    values: ['w2', 'se', 'unemployment', 'none'], note: 'taxed how: withheld at the source; owed with self-employment tax on the net of costs; owed as ordinary income with no SE tax (unemployment); or not taxable. Four, no catch-all. D-128, D-129' },
+    'expenses.entries[].produced':               { class: 'raw',        unit: 'enum',    values: ['personal', 'linked', 'reimbursable'], note: 'what the expense produced: nothing (personal, never deductible); an income entry (linkedIncomeId, the only deductible path); or a repayment expected from someone (reimbursable: never deductible, counts in full while pending, a credit in the month received). D-129' },
+    'expenses.entries[].reimbursableFrom':       { class: 'raw',        unit: 'text',    note: 'who is paying it back. D-129' },
+    'expenses.entries[].expectedAmountCents':    { class: 'raw',        unit: 'cents',   note: 'what is expected back; defaults to the amount. D-129' },
+    'expenses.entries[].reimbursementStatus':    { class: 'raw',        unit: 'enum',    values: ['pending', 'received'], note: 'pending counts in full; received posts a credit dated dateReceived, never into the original month. D-129' },
+    'expenses.entries[].dateReceived':           { class: 'raw',        unit: 'iso-date', note: 'the day the repayment landed; the credit sits in that month. D-129' },
+    'expenses.entries[].receivedAmountCents':    { class: 'raw',        unit: 'cents',   note: 'what actually came back; defaults to expectedAmountCents. D-129' },
     'household.ledger.income[].costs[].category': { class: 'raw',       unit: 'enum',    values: ['mileage', 'home_office', 'equipment', 'contractor_fees', 'licensing', 'platform_fees', 'other'], note: 'the costs of producing this income, on the entry itself; each with amountCents, date, deductible. D-128' },
     'household.ledger.months[].id':              { class: 'raw',        unit: 'id',      note: 'a MonthRecord, YYYY-MM: status closed, estimated and actual per bucket (income, expenses, savings, investments, debt), actualRevised for late entries, closedAt. Append-only; closing twice is refused. Owned by Budget. D-128' },
     'household.budget.estimated':                { class: 'raw',        unit: 'object',  note: 'YYYY-MM → bucket → cents: an open month\'s estimate set by hand (the Estimated-vs-Actual room\'s one write). Absent = last closed month\'s actual, else the onboarding figures. Owned by Budget. D-128' },
@@ -942,9 +948,20 @@
    * The roll-up in engines/cashflow.js normalises both to a monthly figure,
    * so adding import later changes no aggregation code — SPEC.md §12.5.
    */
+  var PRODUCED = ['personal', 'linked', 'reimbursable'];
   function createExpenseEntry(fields) {
     var f = fields || {};
     var linked = typeof f.linkedIncomeId === 'string' && f.linkedIncomeId ? f.linkedIncomeId : null;
+    /* Three paths, exclusive (D-129). Asked for outright by `produced`, or
+       read off the fields: a link makes it linked, a reimbursement makes
+       it reimbursable, otherwise personal. A reimbursable expense carries
+       no link, so it can never be deductible by the rule below. */
+    var produced = PRODUCED.indexOf(f.produced) >= 0 ? f.produced
+      : linked ? 'linked'
+      : (f.reimbursableFrom || f.reimbursementStatus || f.reimbursable === true) ? 'reimbursable' : 'personal';
+    if (produced !== 'linked') linked = null;
+    var reimb = produced === 'reimbursable';
+    var status = reimb ? (f.reimbursementStatus === 'received' ? 'received' : 'pending') : null;
     return {
       id: f.id || newId('e'),
       categoryId: f.categoryId || null,
@@ -961,8 +978,14 @@
          one income entry; only the second kind can ever be deductible,
          and that is decided HERE, not in a form — a personal expense
          handed deductible: true is stored as false. */
+      produced: produced,
       linkedIncomeId: linked,
       deductible: !!(linked && f.deductible === true),
+      reimbursableFrom: reimb && typeof f.reimbursableFrom === 'string' && f.reimbursableFrom ? f.reimbursableFrom : null,
+      expectedAmountCents: reimb ? (Money.isEntered(f.expectedAmountCents) ? f.expectedAmountCents : (Money.isEntered(f.amountCents) ? f.amountCents : null)) : null,
+      reimbursementStatus: status,
+      dateReceived: reimb && status === 'received' && typeof f.dateReceived === 'string' && f.dateReceived ? f.dateReceived : null,
+      receivedAmountCents: reimb && status === 'received' && Money.isEntered(f.receivedAmountCents) ? f.receivedAmountCents : null,
       hidden: f.hidden === true,
       active: f.active === undefined ? true : f.active !== false
     };
@@ -973,9 +996,14 @@
      this gift — which is a different thing from an income SOURCE (the
      description of a job, annualised, that every ratio reads). The two
      coexist: the source is the profile, the entry is the record. */
-  var INCOME_KINDS = ['w2', 'se', 'bonus', 'gift', 'side', 'dividend', 'rental', 'other'];
+  var INCOME_KINDS = ['w2', 'se', 'bonus', 'gift', 'side', 'dividend', 'rental', 'unemployment', 'other'];
   var INCOME_FREQUENCIES = ['once', 'weekly', 'fortnightly', 'monthly', 'annual'];
-  var TAX_METHODS = ['w2', 'se', 'none'];
+  /* Taxed how — exactly four, no catch-all (D-129):
+       w2            withheld at the source
+       se            owed, not withheld, and subject to self-employment tax
+       unemployment  owed, not withheld, ordinary income, NO self-employment tax
+       none          not taxable */
+  var TAX_METHODS = ['w2', 'se', 'unemployment', 'none'];
   var INCOME_COST_CATEGORIES = ['mileage', 'home_office', 'equipment', 'contractor_fees', 'licensing', 'platform_fees', 'other'];
   /* Which kinds carry the costs of producing them, and how each is netted
      by default. A gift is never taxable; everything else is until unticked. */
@@ -987,6 +1015,7 @@
     side:     { label: 'Side income (cash, not 1099)', method: 'se', taxable: true, costs: true },
     dividend: { label: 'Dividends or interest',    method: 'w2',   taxable: true,  costs: false },
     rental:   { label: 'Rental income',            method: 'se',   taxable: true,  costs: true },
+    unemployment: { label: 'Unemployment benefit', method: 'unemployment', taxable: true, costs: false },
     other:    { label: 'Other',                    method: 'w2',   taxable: true,  costs: false }
   };
   function costsAllowed(kind) { return !!(INCOME_KIND_RULES[kind] && INCOME_KIND_RULES[kind].costs); }
@@ -1009,6 +1038,8 @@
     var rule = INCOME_KIND_RULES[kind];
     var taxable = kind === 'gift' ? false : (f.taxable === undefined ? rule.taxable : f.taxable !== false);
     var method = !taxable ? 'none' : (TAX_METHODS.indexOf(f.taxMethod) >= 0 && f.taxMethod !== 'none' ? f.taxMethod : rule.method);
+    /* 'none' as the method IS "not taxable": the two fields agree either way. */
+    if (f.taxMethod === 'none' && f.taxable === undefined) { taxable = false; method = 'none'; }
     return {
       id: f.id || newId('in'),
       personId: f.personId || null,
@@ -1768,6 +1799,7 @@
     INCOME_KIND_RULES: INCOME_KIND_RULES,
     INCOME_COST_CATEGORIES: INCOME_COST_CATEGORIES,
     TAX_METHODS: TAX_METHODS,
+    PRODUCED: PRODUCED,
     BUDGET_BUCKETS: BUDGET_BUCKETS,
     costsAllowed: costsAllowed,
     monthLabel: monthLabel,

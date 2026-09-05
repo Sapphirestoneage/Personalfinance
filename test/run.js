@@ -8253,7 +8253,20 @@ section('The ledger (D-128): income entries, the expense log, closed months');
   check('an unknown frequency is once', Schema.createIncomeEntry({ frequency: 'daily' }).frequency, 'once');
   check('untaxable other nets by nothing', Schema.createIncomeEntry({ kind: 'other', taxable: false }).taxMethod, 'none');
   check('active and shown by default', se.active + '/' + se.hidden, 'true/false');
-  check('the eight kinds', Schema.INCOME_KINDS.join(','), 'w2,se,bonus,gift,side,dividend,rental,other');
+  check('the nine kinds, unemployment among them', Schema.INCOME_KINDS.join(','), 'w2,se,bonus,gift,side,dividend,rental,unemployment,other');
+  check('taxed how: exactly four, no catch-all', Schema.TAX_METHODS.join(','), 'w2,se,unemployment,none');
+  const ue = Schema.createIncomeEntry({ kind: 'unemployment', amountCents: 60000, frequency: 'weekly' });
+  check('unemployment is taxable, owed, and not self-employment', ue.taxable + '/' + ue.taxMethod + '/' + ue.costs.length, 'true/unemployment/0');
+  check('a method of none reads as not taxable', Schema.createIncomeEntry({ kind: 'other', taxMethod: 'none' }).taxable, false);
+  /* The three paths of an expense (D-129). */
+  const rb = Schema.createExpenseEntry({ categoryId: 'subscriptions', amountCents: 1599, reimbursableFrom: 'Sam', deductible: true, linkedIncomeId: 'in1', produced: 'reimbursable' });
+  check('a reimbursable expense is its own path, with no link', rb.produced + '/' + rb.linkedIncomeId, 'reimbursable/null');
+  check('… never deductible, whatever the form says', rb.deductible, false);
+  check('… pending, expecting the amount back by default', rb.reimbursementStatus + '/' + rb.expectedAmountCents + '/' + rb.reimbursableFrom, 'pending/1599/Sam');
+  check('a link makes it linked', Schema.createExpenseEntry({ linkedIncomeId: 'in1' }).produced, 'linked');
+  check('nothing makes it personal', Schema.createExpenseEntry({ categoryId: 'x' }).produced, 'personal');
+  check('a status alone makes it reimbursable', Schema.createExpenseEntry({ amountCents: 500, reimbursementStatus: 'received', dateReceived: '2026-10-02' }).produced + '/' + Schema.createExpenseEntry({ amountCents: 500, reimbursementStatus: 'received', dateReceived: '2026-10-02' }).dateReceived, 'reimbursable/2026-10-02');
+  check('a pending one has no received date', Schema.createExpenseEntry({ amountCents: 500, produced: 'reimbursable', dateReceived: '2026-10-02' }).dateReceived, null);
   check('the five frequencies', Schema.INCOME_FREQUENCIES.join(','), 'once,weekly,fortnightly,monthly,annual');
 
   /* The hard rule, at the data layer. */
@@ -8272,6 +8285,14 @@ section('The ledger (D-128): income entries, the expense log, closed months');
   check('and lets a link through', S2.getProfile().expenses.entries[0].deductible, true);
   S2.upsertExpenseEntry({ id: 'x', linkedIncomeId: null });
   check('unlinking drops the deduction with it', S2.getProfile().expenses.entries[0].deductible, false);
+  S2.upsertExpenseEntry({ id: 'r', categoryId: 'subscriptions', amountCents: 1599, produced: 'reimbursable', reimbursableFrom: 'Sam', date: '2026-09-20', source: 'log', deductible: true });
+  check('a reimbursable expense through the spine is pending and not deductible', S2.getProfile().expenses.entries[1].reimbursementStatus + '/' + S2.getProfile().expenses.entries[1].deductible, 'pending/false');
+  S2.markReimbursed('r', { dateReceived: '2026-10-03' });
+  const paid = S2.getProfile().expenses.entries[1];
+  check('marked received: the date and the amount that came back', paid.reimbursementStatus + '/' + paid.dateReceived + '/' + paid.receivedAmountCents, 'received/2026-10-03/1599');
+  check('… the original expense keeps its own date', paid.date, '2026-09-20');
+  check('… with a worded label', S2.peekUndo().label, 'Paid back: subscriptions');
+  check('a personal expense cannot be marked reimbursed', S2.markReimbursed('x', {}), null);
 
   /* Income entries through the spine. */
   S2.upsertIncomeEntry({ id: 'in1', kind: 'se', amountCents: 100000, frequency: 'once', receivedOn: '2026-09-03' });
