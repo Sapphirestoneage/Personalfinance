@@ -397,7 +397,7 @@
           apply: function (v) { state.cushion = v; paintInputs(); render(); } },
         { node: document.querySelector('[data-in="expenses"]'),
           value: Money.isOk(spend) ? spend.value : null, display: Money.isOk(spend) ? Money.formatCents(spend.value) : '',
-          source: 'your monthly spending' + (spend.source === 'tracked' ? ', from Cash Flow' : ', your Start Here estimate'),
+          source: 'your monthly spending' + (spend.source === 'closed' ? ', the average of your last ' + spend.months.length + ' closed ' + (spend.months.length === 1 ? 'month' : 'months') + ' in Budget' : spend.source === 'tracked' ? ', from Cash Flow' : ', your Start Here estimate'),
           apply: function (v) { state.expenses = v; paintInputs(); render(); } }
       ];
     }

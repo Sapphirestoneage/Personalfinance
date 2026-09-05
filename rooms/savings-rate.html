@@ -275,7 +275,9 @@
       ? 'That is a shortfall, not a rate — you are spending '
         + Money.formatCents(-saved) + ' a year more than you take home. '
         + 'Everything below this line is arithmetic about a gap.'
-      : 'Expenses are the ' + (r.expenseSource === 'tracked'
+      : 'Expenses are the ' + (r.expenseSource === 'closed'
+          ? 'average of the months you have closed in Budget'
+          : r.expenseSource === 'tracked'
           ? 'tracked figure from a categorised month'
           : 'estimate you entered')
         + ', times twelve. Tax is a flat effective-rate lookup, not a return.';

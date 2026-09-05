@@ -1668,8 +1668,23 @@
      forever, divergence is its own computed field.                       */
 
   /** The figure any calculator should use as "monthly expenses" today. */
+  /* The closed months' average (D-130, MONEY-MAP.md Q10): the expenses
+     bucket's actual over the last few closed months — truer than one
+     categorised month once a month has actually been closed. */
+  var CLOSED_AVERAGE_MONTHS = 3;
+  function closedAverageExpensesCents(household) {
+    var months = ((household && household.ledger && household.ledger.months) || [])
+      .filter(function (m) { return m && m.actual && Money.isEntered(m.actual.expenses) && m.actual.expenses > 0; })
+      .sort(function (a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; })
+      .slice(-CLOSED_AVERAGE_MONTHS);
+    if (!months.length) return null;
+    var total = months.reduce(function (t, m) { return t + m.actual.expenses; }, 0);
+    return { cents: Math.round(total / months.length), months: months.map(function (m) { return m.id; }) };
+  }
   function monthlyExpensesCents(household) {
     var e = (household && household.expenses && household.expenses.monthlyEssential) || {};
+    var closed = closedAverageExpensesCents(household);
+    if (closed) return Money.ok(closed.cents, { source: 'closed', months: closed.months });
     if (Money.isEntered(e.trackedValueCents)) {
       return Money.ok(e.trackedValueCents, { source: 'tracked' });
     }
@@ -1920,6 +1935,8 @@
     grossAnnualIncomeCents: grossAnnualIncomeCents,
     employerMatchCents: employerMatchCents,
     monthlyExpensesCents: monthlyExpensesCents,
+    closedAverageExpensesCents: closedAverageExpensesCents,
+    CLOSED_AVERAGE_MONTHS: CLOSED_AVERAGE_MONTHS,
     expenseDivergenceCents: expenseDivergenceCents,
     MAX_PLAUSIBLE_AGE: MAX_PLAUSIBLE_AGE,
     ageFromDob: ageFromDob,
