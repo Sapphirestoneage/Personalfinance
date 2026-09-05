@@ -305,9 +305,12 @@
      was filled so the room can say "shown with guesses". Nothing is
      stored: the caller renders from the copy and the spine is untouched.
      The room template (shared/room.js) is the only caller. D-097. */
-  function fillGuesses(household, tables) {
+  function fillGuesses(household, tables, situation) {
     var h = JSON.parse(JSON.stringify(household || Schema.createHousehold({})));
-    var sit = situationOf(h) || 'employed';
+    /* A room that exists for one situation (retired, between jobs) asks
+       for that situation to be guessed when none is chosen — its
+       `guessAs`; a chosen situation always wins. D-101. */
+    var sit = situationOf(h) || (byId(situation) ? situation : null) || 'employed';
     var g = guesses(sit, h, tables);
     var filled = [];
     var people = h.people || (h.people = []);

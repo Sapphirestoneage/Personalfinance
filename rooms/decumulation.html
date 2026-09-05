@@ -4,29 +4,34 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Decumulation · SPARKS</title>
-<meta name="description" content="What your job actually pays, once you count every hour it takes and everything it costs you to do it."/>
+<meta name="description" content="How a retiree draws: the withdrawal rate against the convention, what the variable-percentage table allows at your age, and the age the money lasts to."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. THE TEMPLATE ROOM. DECISIONS.md D-097.
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-098.
 
-  1. READS   The person's income (owned by Start Here) and filingStatus, for
-             the tax estimate; a month's spending, for the lens.
-  2. WRITES  It OWNS person.work — paid hours, unpaid overtime, commute,
-             work costs, weeks a year, and (folded) prep and decompression.
-             Nothing else edits those. It does not touch income.
-  3. CALLS   engines/hourly.js. Tax comes from engines/tier0.js's effective-
-             rate lookup, never a second calculation.
+  1. READS   Investments, a month's spending and the income that comes in
+             (a pension or Social Security entered as income), all owned by
+             Start Here; the date of birth for the age; the real-return
+             assumption (D-094).
+  2. WRITES  It OWNS household.decumulation — the share in stocks, a planned
+             draw a year, and the age Social Security starts. Nothing else
+             edits those. It does not touch income, spending or investments.
+  3. CALLS   engines/decumulation.js, which reads the withdrawal rate from
+             engines/ratios.js, the years-until-empty from
+             engines/projection.js (the dashboard's loop, so the two agree)
+             and the VPW share from engines/vpw.js — never a second copy.
   4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses and says so (Gate.fillGuesses). Each unpaid-
-             hours box is optional: blank is none, not unanswered.
-  5. CONFIG  data/effective_tax_rates_2026.json.
+             intake's guesses and says so (Gate.fillGuesses). Each box here
+             is optional: blank means the table's middle column, the
+             computed draw, and no Social Security note.
+  5. CONFIG  data/vpw_table.json, data/ratio_benchmarks.json (withdrawalRate).
 
-  THE SHAPE (shared/room.js, frozen here): one number, one chart, the lens,
-  five inputs and two folded, the assumptions drawer with sources, why
-  this matters at your stage, one out-of-scope line to Get Help. The ids
-  below are the deep links.
+  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens,
+  three inputs, the assumptions drawer with sources, why this matters at
+  your stage, one out-of-scope line to Get Help. The ids below are the deep
+  links.
 
   LIVE-FORM: built once — shared/room.js builds the inputs from the spec
   on load and only sets .value, never under focus.
@@ -48,7 +53,7 @@
 <header class="room-head">
   <a class="room-back" href="../index.html">← Home</a>
   <h1>Decumulation</h1>
-  <p class="room-lede">How a retiree draws: the withdrawal rate against the convention, what the variable-percentage table allows at your age, and the age the money lasts to.</p>
+  <p class="room-lede">How you draw on what you saved: the rate against the convention, what the variable-percentage table allows at your age, and the age the money lasts to.</p>
 </header>
 
 <main class="slaf-wrap">
@@ -57,25 +62,25 @@
 
   <section class="slaf-card" id="number">
     <div class="room-head-row">
-      <span class="slaf-eyebrow">Your real rate</span>
+      <span class="slaf-eyebrow">How long it lasts</span>
       <div id="room-lens"></div>
     </div>
     <div class="room-number" id="room-number"></div>
   </section>
 
   <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Where the week goes</span>
+    <span class="slaf-eyebrow">The balance, year by year</span>
     <div id="room-chart"></div>
   </section>
 
   <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The hours the job takes</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave anything blank that doesn't apply — working from home means no commute, and blank is none rather than unanswered.</p>
+    <span class="slaf-eyebrow">How you draw</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave anything blank to use the guess shown: the table's middle column, the spending your income does not cover, and full retirement age.</p>
     <div id="room-inputs"></div>
   </section>
 
   <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Priced in life</span>
+    <span class="slaf-eyebrow">Through the lens</span>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
     <ul class="room-amounts" id="room-amounts"></ul>
   </section>
@@ -94,8 +99,8 @@
   </section>
 
   <p class="disclaimer">
-    Educational tool, not financial advice. Tax is estimated from a flat
-    effective-rate table, not a return. Your numbers stay in this browser.
+    Educational tool, not financial advice. Every figure here is before tax
+    on withdrawals, at one steady real return. Your numbers stay in this browser.
   </p>
 </main>
 
@@ -111,7 +116,15 @@
 <script src="../shared/gate.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../engines/statement.js"></script>
+<script src="../engines/benchmarks.js"></script>
+<script src="../engines/ratios.js"></script>
 <script src="../engines/hourly.js"></script>
+<script src="../engines/vpw.js"></script>
+<script src="../engines/decumulation.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
 <script src="../shared/room.js"></script>
@@ -119,111 +132,126 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Hourly = SLAF.Hourly, Charts = SLAF.Charts, Room = SLAF.Room;
+      Decumulation = SLAF.Decumulation, Charts = SLAF.Charts, Room = SLAF.Room;
 
-  /* ---- writes: this room owns person.work ------------------------------------ */
-  function writeWork(key, value) {
-    var person = Spine.ensurePrimaryPerson('You');
-    var current = Schema.workProfile(Schema.personById(Spine.getProfile(), person.id));
-    var next = Object.assign({}, current);
-    next[key] = value;
-    Spine.upsertPerson({ id: person.id, work: next });
-  }
-  function readWork(h) { return Schema.workProfile(Schema.primaryPerson(h)); }
-  function hoursInput(key, label, placeholder, hint) {
-    return { ctl: key, label: label, kind: 'number', placeholder: placeholder, affix: 'h', hint: hint,
-      read: function (h) { return readWork(h)[key]; }, write: function (v) { writeWork(key, v === null || v <= 0 ? null : v); } };
-  }
-  function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
+  /* ---- writes: this room owns household.decumulation ------------------------- */
+  function readDec(h) { return (h && h.decumulation) || {}; }
+  function set(key, value) { Spine.set('decumulation.' + key, value); }
+  function ageLabel(a) { return 'age ' + a; }
 
-  var HOUR_COLOURS = { paid: Charts.COLORS.series[0], unpaidOvertimeHoursPerWeek: Charts.COLORS.series[3], commuteHoursPerWeek: Charts.COLORS.series[1], prepHoursPerWeek: Charts.COLORS.series[2], decompressHoursPerWeek: Charts.COLORS.series[4] };
+  /* ---- guesses, as a retiree --------------------------------------------------
+     The template fills an empty spine with the intake's guesses, and with the
+     situation unanswered the gate guesses "employed" — whose withdrawal rate
+     is, rightly, "a number for a retiree". This room exists only for
+     retirees, so when the situation itself was guessed it asks the gate for
+     a retiree's guesses instead. Nothing is written; the banner still says
+     the figures are guesses — the template's `guessAs` does it (D-101). */
+  /* The template guesses a retiree here (guessAs), so nothing to re-guess. */
+  function asRetiree(h) { return h; }
+  function planFor(h, T) { return Decumulation.plan(asRetiree(h, T), T); }
 
   Room.mount({
-    id: 'decumulation', /* STUB — being built (D-098) */
-    tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
-    reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'],
+    id: 'decumulation',
+    guessAs: 'retired',
+    reads: ['investments', 'monthlyExpenses', 'grossAnnualIncome', 'dob'],
 
     number: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return { label: 'Actually, an hour', value: null, reason: w.reason + (/not earning/.test(w.reason || '') ? '' : '') };
-      var sub = 'On paper <strong>' + perHour(w.nominalHourlyCents) + '</strong> · you keep <strong>' + Money.formatRate(w.retained, { decimals: 0 }) + '</strong> of it'
-        + ' · ' + Money.formatCents(w.keptAnnualCents) + ' kept over ' + w.annualTotalHours.toLocaleString('en-US') + ' hours a year';
-      if (w.costsMoreThanItPays) sub += '. <strong>This job costs more than it pays</strong> — check the monthly costs; if they are right, that is the finding';
-      if (w.implausibleHours) sub += '. ' + w.paidHoursPerWeek + ' paid hours a week makes this look enormous; the arithmetic is right, the comparison is not';
-      if (!w.taxKnown) sub += '. Tax is not in yet: ' + (w.taxReason || '');
-      return { label: 'Actually, an hour', value: perHour(w.realHourlyCents), sub: sub, zone: w.costsMoreThanItPays ? 'out' : (w.retained !== null && w.retained < 0.5 ? 'watch' : null), result: w };
+      var p = planFor(h, T);
+      var label = 'The age the money lasts to';
+      if (!Money.isOk(p)) return { label: label, value: null, reason: p.reason };
+      var sub = 'Draw <strong>' + Money.formatCents(p.drawCents) + '</strong> a year = <strong>' + Money.formatRate(p.withdrawalRate, { decimals: 1 }) + '</strong> of ' + Money.formatCents(p.investmentsCents);
+      if (p.vpw) sub += '; VPW allows <strong>' + Money.formatCents(p.vpw.allowedCents) + '</strong> at ' + ageLabel(p.vpw.age);
+      if (p.covered) sub += '. Income covers spending, so nothing is drawn' + (p.planned ? ' — the planned draw is zero' : '');
+      else if (p.planned) sub += '. Your planned figure' + (Money.isEntered(p.computedDrawCents) && p.computedDrawCents !== p.drawCents ? '; spending not covered by income is ' + Money.formatCents(p.computedDrawCents) : '');
+      if (p.socialSecurityInYears !== null) sub += '. This draw runs until Social Security starts at ' + p.socialSecurityAt + ', ' + p.socialSecurityInYears + ' year' + (p.socialSecurityInYears === 1 ? '' : 's') + ' from now; no benefit is estimated here';
+      if (p.stockShareClamped) sub += '. The share in stocks was read as ' + Math.round(p.stockShare * 100) + '%';
+      var value, tail = '';
+      if (p.never) value = 'Outlasts you';
+      else if (p.lastsToAge !== null) value = String(p.lastsToAge);
+      else { value = Math.round(p.yearsUntilEmpty) + ' years'; tail = ' <a href="' + Ownership.linkTo('start', 'q-about') + '">Add your birth date for the age →</a>'; }
+      if (!p.never) sub += '. ' + (Math.round(p.yearsUntilEmpty * 10) / 10) + ' years at a ' + Money.formatRate(p.returnReal, { decimals: 0 }) + ' real return';
+      else sub += '. At a ' + Money.formatRate(p.returnReal, { decimals: 0 }) + ' real return the draw never empties the investments';
+      return { label: label, value: value, sub: sub + tail, zone: p.zone === 'none' ? null : p.zone, result: p };
     },
 
     chart: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return Charts.stacked({ rows: [], empty: 'Add your paid hours to see where the week goes.' });
-      var parts = [{ label: 'Paid', value: w.paidHoursPerWeek, color: HOUR_COLOURS.paid }].concat((w.unpaidParts || []).map(function (p) { return { label: p.label, value: p.hours, color: HOUR_COLOURS[p.key] }; }));
-      var gross = w.grossAnnualIncomeCents, tax = w.estimatedTaxCents || 0, costs = w.annualWorkCostsCents, kept = w.keptAnnualCents;
-      return Charts.stacked({
-        title: 'Hours a week, and where the pay goes',
-        rows: [
-          { label: 'Your week', note: w.totalHoursPerWeek + ' h, ' + w.paidHoursPerWeek + ' paid', parts: parts },
-          { label: 'A year of pay', note: 'per ' + Money.formatCents(gross), parts: [
-            { label: 'Kept', value: kept / gross * w.totalHoursPerWeek, color: Charts.COLORS.growth },
-            { label: 'Tax', value: tax / gross * w.totalHoursPerWeek, color: Charts.COLORS.debt },
-            { label: 'Costs of working', value: costs / gross * w.totalHoursPerWeek, color: Charts.COLORS.series[3] }
-          ] }
-        ],
-        format: function (v) { return (Math.round(v * 10) / 10) + ' h'; }
+      var p = planFor(h, T);
+      if (!Money.isOk(p)) return Charts.area({ series: [], empty: p.reason });
+      var byAge = p.age !== null;
+      var x0 = byAge ? p.age : 0;
+      var series = [{ id: 'planned', label: 'Drawing ' + Money.formatCents(p.drawCents) + ' a year', color: Charts.COLORS.growth,
+        points: p.path.map(function (r) { return [x0 + r.year, r.balanceCents]; }) }];
+      if (p.vpwPath) series.push({ id: 'vpw', label: 'VPW: the table’s share each year', color: Charts.COLORS.contributed, fill: false, dash: true,
+        points: p.vpwPath.map(function (r) { return [x0 + r.year, r.balanceCents]; }) });
+      var dots = [];
+      if (!p.never && p.yearsUntilEmpty <= p.horizonYears) dots.push({ x: x0 + p.yearsUntilEmpty, y: 0, color: Charts.COLORS.debt });
+      var vLines = [];
+      if (byAge && p.socialSecurityInYears !== null && p.socialSecurityAt <= x0 + p.horizonYears) vLines.push({ x: p.socialSecurityAt, label: 'Social Security' });
+      return Charts.area({
+        title: 'Investments, year by year, drawing as planned and as the VPW table allows',
+        series: series,
+        x: { label: byAge ? 'age' : 'years from now', format: function (v) { return String(Math.round(v)); } },
+        y: { min: 0 },
+        hLines: [{ y: 0, label: 'Empty', color: Charts.COLORS.debt }],
+        dots: dots,
+        vLines: vLines
       });
     },
 
     inputs: [
-      hoursInput('contractedHoursPerWeek', 'Paid hours a week', 'e.g. 40'),
-      hoursInput('unpaidOvertimeHoursPerWeek', 'Unpaid overtime', 'e.g. 3'),
-      hoursInput('commuteHoursPerWeek', 'Commuting', 'e.g. 5'),
-      { ctl: 'workCostsMonthlyCents', label: 'Costs of working, a month', kind: 'money', placeholder: 'e.g. 400', hint: 'Petrol, parking, transit, work clothes, lunches you would not otherwise buy, childcare only while working.',
-        read: function (h) { return readWork(h).workCostsMonthlyCents; }, write: function (v) { writeWork('workCostsMonthlyCents', v); } },
-      { ctl: 'weeksPerYear', label: 'Weeks worked a year', kind: 'number', placeholder: String(Schema.WORK_DEFAULTS.weeksPerYear),
-        read: function (h) { var w = readWork(h).weeksPerYear; return w === Schema.WORK_DEFAULTS.weeksPerYear ? null : w; }, write: function (v) { writeWork('weeksPerYear', v === null || v <= 0 ? Schema.WORK_DEFAULTS.weeksPerYear : v); } }
-    ],
-    moreLabel: 'The hours around the job',
-    more: [
-      hoursInput('prepHoursPerWeek', 'Getting ready', 'e.g. 2.5'),
-      hoursInput('decompressHoursPerWeek', 'Decompressing', 'e.g. 2.5')
+      { ctl: 'stockShare', label: 'Share in stocks', kind: 'pct', placeholder: 'e.g. 60', hint: 'Of the investments. The VPW table has a 60% and a 40% column; the nearer one is used.',
+        read: function (h) { return readDec(h).stockShare; },
+        write: function (v) { set('stockShare', v === null ? null : Decumulation.clamp01(v)); },
+        propose: function () { return { value: Decumulation.DEFAULT_STOCK_SHARE, source: 'the VPW table’s middle column (convention)' }; } },
+      { ctl: 'plannedAnnualDrawCents', label: 'Planned draw, a year', kind: 'money', placeholder: 'e.g. 20,000', hint: 'What you mean to take from investments in a year. Blank uses the spending your income does not cover.',
+        read: function (h) { return readDec(h).plannedAnnualDrawCents; },
+        write: function (v) { set('plannedAnnualDrawCents', v === null ? null : Math.max(0, Math.round(v))); },
+        propose: function (h, T) {
+          var row = Decumulation.withdrawalRow(asRetiree(h, T), T);
+          if (!row || !row.ok || !(row.result.annualDrawCents > 0)) return null;
+          return { value: row.result.annualDrawCents, source: 'spending not covered by income' };
+        } },
+      { ctl: 'socialSecurityAt', label: 'Social Security from', kind: 'number', placeholder: 'e.g. 67', hint: 'The age you claim, or claimed. Only a note about timing — no benefit is estimated here.',
+        read: function (h) { return readDec(h).socialSecurityAt; },
+        write: function (v) { set('socialSecurityAt', v === null || v <= 0 ? null : Math.round(v)); },
+        propose: function (h, T) {
+          var fra = T && T.ssBendPoints && Money.isEntered(T.ssBendPoints.fullRetirementAge) ? T.ssBendPoints.fullRetirementAge : 67;
+          return { value: fra, source: 'full retirement age for most people (convention)' };
+        } }
     ],
 
     amounts: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
+      var p = planFor(h, T);
       var spend = Schema.monthlyExpensesCents(h);
       var rows = [];
+      if (Money.isOk(p)) rows.push({ label: 'A year’s draw', cents: p.drawCents, href: p.planned ? Ownership.linkTo('decumulation', 'inputs') : null });
       if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
-      if (Money.isOk(w)) {
-        rows.push({ label: 'A year of tax, estimated', cents: w.estimatedTaxCents || 0 });
-        if (w.annualWorkCostsCents > 0) rows.push({ label: 'A year of the costs of working', cents: w.annualWorkCostsCents });
-      }
-      rows.push({ label: 'A $1,200 thing you are eyeing', cents: 120000 });
+      if (Money.isOk(p) && p.vpw) rows.push({ label: 'What VPW allows this year', cents: p.vpw.allowedCents });
       return rows;
     },
 
     assumptions: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      var tax = T.effectiveTaxRates;
-      var work = readWork(h);
+      var p = planFor(h, T);
+      var vpw = T.vpwTable, bands = T.ratioBenchmarks, band = bands && bands.bands && bands.bands.withdrawalRate;
+      var share = Decumulation.stockShareOf(readDec(h));
       return [
-        { label: 'Tax', value: Money.isOk(w) && w.taxKnown ? Money.formatRate(w.effectiveRate || (w.estimatedTaxCents / w.grossAnnualIncomeCents), { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')' },
-        { label: 'Weeks a year', value: String(Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear), source: Money.isEntered(work.weeksPerYear) && work.weeksPerYear !== Schema.WORK_DEFAULTS.weeksPerYear ? 'yours' : 'the default: 52 less four weeks of leave and holidays (convention)' },
-        { label: 'Unpaid hours', value: 'count as work', source: 'Your Money or Your Life: an hour the job takes is an hour it costs, paid or not (convention)' },
-        { label: 'Real return, for the lens', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' }
+        { label: 'Real return', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094) — one steady rate, no bad decades' },
+        { label: 'The VPW table', value: Money.isOk(p) && p.vpw ? Money.formatRate(p.vpw.percentage, { decimals: 1 }) + ' at ' + ageLabel(p.vpw.age) + ', ' + Math.round(share.value * 100) + '% stocks' : 'needs your age', source: vpw ? 'data/vpw_table.json v' + vpw.version + ' — ' + vpw.confidence + ': ' + vpw.confidenceNote : 'data/vpw_table.json' },
+        { label: 'Share in stocks', value: Math.round(share.value * 100) + '%', source: share.entered ? (share.clamped ? 'yours, read within 0–100%' : 'yours') : 'the table’s middle column (convention)' },
+        { label: 'The withdrawal band', value: band ? Money.formatRate(band.good, { decimals: 0 }) + ' good / ' + Money.formatRate(band.warn, { decimals: 0 }) + ' watch' : '—', source: bands ? 'data/ratio_benchmarks.json v' + bands.version + ' — ' + (band && band.note ? band.note : bands.source) + ' (' + bands.confidence + ')' : 'data/ratio_benchmarks.json' },
+        { label: 'Tax on withdrawals', value: 'none modelled', source: 'every figure here is pre-tax; a traditional 401(k) or IRA draw is taxed as income and the after-tax draw is smaller' },
+        { label: 'Social Security', value: 'not estimated', source: 'engines/ss.js estimates from a working salary and a retiree’s income here is already the pension or benefit; the age you enter is used only to note when the draw changes' }
       ];
     },
 
     why: function (h, T, situation) {
       return {
-        employed: 'Employed, the headline rate is the one on the offer letter. This one is the rate that decides whether the next thing — a raise, a move, an hour of overtime — is worth it.',
-        selfEmployed: 'Self-employed, there is no headline rate, only this one: what is left after the tax you set aside and the hours the work really takes, including the ones nobody bills.',
-        mixed: 'With a job and your own work, each has a real rate. This reads the job; put the own-work hours in as a second job in Start Here to compare them.',
-        student: 'A part-time job at a student’s stage is priced against study hours, not against a career. If the real rate is low, the question is what the hours are taking from.',
-        betweenJobs: '', retired: ''
-      }[situation] || 'Any job has a headline rate and a real one. The gap between them is what this room measures.';
+        retired: 'Retired, the question turns around: not how fast the pile grows but how long it lasts. The rate you draw at, against the 4% convention, is the one number that says whether this is a plan or a countdown; the VPW table is the answer to what a person your age could take instead.',
+        employed: '', selfEmployed: '', mixed: '', student: '', betweenJobs: ''
+      }[situation] || '';
     },
 
-    scope: 'This room does not model overtime pay, shift differentials, or a second job’s hours on their own. Tax is a flat estimate, not a return.'
+    scope: 'This room does not model taxes on withdrawals, Medicare, or sequence-of-returns risk.'
   });
 })();
 </script>

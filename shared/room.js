@@ -25,6 +25,8 @@
        assumptions(h, T) → [{ label, value, source }]       the drawer
        why(h, T)     → string                                per situation
        scope: string           the out-of-scope line (→ Get Help)
+       guessAs: 'retired'      (optional) the situation to guess on an empty
+                               spine, for a room that exists for one
      })
 
    LIVE-FORM: built once. Inputs are built from the spec on mount and only
@@ -112,7 +114,7 @@
     function household() {
       var h = Spine.getProfile();
       if (spec.standalone === false || !TABLES || !standalone(h)) return h;
-      return Gate.fillGuesses(h, TABLES);
+      return Gate.fillGuesses(h, TABLES, spec.guessAs || null);
     }
 
     /* ---- Paint --------------------------------------------------------------- */
