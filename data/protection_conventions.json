@@ -1,9 +1,13 @@
 {
   "id": "protection_conventions",
-  "version": "0.1",
+  "version": "1.0",
   "asOf": "2026-09-01",
-  "source": "PLACEHOLDER \u2014 filled by the room that reads it (D-098).",
-  "confidence": "unverified",
-  "confidenceNote": "Not yet written.",
-  "note": "income replacement and life-cover multiples, the cushion floor"
+  "source": "Rules of thumb used in first-pass protection arithmetic: long-term disability cover is sold to replace about 60% of gross pay; term life is sized at about ten times gross income when someone lives on it; a cash cushion of three months of spending is the floor and six months is the full cushion. None is a regulation or a quote.",
+  "confidence": "convention",
+  "confidenceNote": "Every figure is a rule of thumb, and each has a range in practice: disability policies replace 50-70% of pay, life-cover multiples run from 7x to 15x depending on age and debts, and the cushion advice runs from three to twelve months. The room shows which it used; a real policy or a planner's number replaces it.",
+  "note": "Shares are decimal fractions; multiples are ratios to gross annual income; months are months of a month's spending. Read by engines/protection.js. D-098.",
+  "disabilityReplacementShare": 0.6,
+  "lifeCoverMultiple": 10,
+  "cushionFloorMonths": 3,
+  "cushionFullMonths": 6
 }
