@@ -4029,6 +4029,53 @@ room.
 
 ---
 
+## D-075 — Which lines could not be cut: the floor, and how much of a month is cuttable
+
+*(BRIEF.md §4.4.)* Every spending line in Cash Flow gets a third cell: a
+"fixed" tick — could this not be cut next month? Stored as
+`expenseEntry.fixed`: `null` not asked, `true` fixed, `false` cuttable.
+A tick needs a line to sit on; on an empty line it un-ticks itself. A
+savings line is not asked (a floor is spending), and the derived debt
+minimums are fixed by nature and say so.
+
+**Two numbers from it**, both in `engines/cashflow.js`:
+
+- **The minimum viable month** — the fixed lines plus debt minimums:
+  what next month costs if everything cuttable is cut. It appears in the
+  Monthly Spending card once at least one line has been answered by hand;
+  until then the card says what to tick. Lines nobody has answered are
+  counted and reported as unasked, never assumed fixed or cuttable — the
+  demo with three lines ticked reads "5 lines not yet marked either way".
+- **Cuttability** — 1 − floor ÷ spending. The demo: 1 − 2,135 ÷ 3,200,
+  33%.
+
+**Runway runs at the floor.** The Runway room gains a "Spend at" choice:
+what you spend now, or the floor. The option is disabled with a hint
+until Cash Flow has a floor; chosen, it passes the floor as the
+expense figure and `expenseBasis: 'floor'`, which the engine echoes and
+the room words ("going out at $2,135 a month at the floor"). A typed
+spending figure still wins, and the hint says so. The demo's runway
+moves from 3 months to 4. Nothing about the floor is stored in Runway;
+it is read from Cash Flow each time, which keeps one owner.
+
+**Compatibility note.** `expenseEntry.fixed` is a new nullable field on
+every entry; entries written before this read as `null` (not asked),
+and `Schema.createExpenseEntry` sets it. `CashFlow.summarise` rows carry
+`fixedMonthlyCents`, `fixedAsked` and `fixed`. The Runway room now loads
+`engines/projection.js`, `tier0.js` and `cashflow.js`. Rooms updated:
+`rooms/cash-flow.html`, `rooms/runway.html`.
+
+**Verified.** `node test/run.js`: a fresh entry not asked; nothing marked
+asks rather than assumes; minimums fixed by nature at $305; the floor at
+1,500 + 180 + 150 + 305 with four lines unasked; cuttability 1 − 2,135 ÷
+3,200; the engine echoing the basis and the money lasting longer at the
+floor. A phone-browser walk: tick three lines, read the floor and 33%,
+reload and find them ticked, a tick on an empty line refused, Runway's
+hint and the switch from 3 months to 4 "at the floor".
+`test/alignment.js` on the widened `.cat-row`.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool. **The numbers D-046

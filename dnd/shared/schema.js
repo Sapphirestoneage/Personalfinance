@@ -139,6 +139,7 @@
     'expenses.entries[].amountCents':            { class: 'raw',        unit: 'cents' },
     'expenses.entries[].period':                 { class: 'raw',        unit: 'enum',    values: ['monthly', 'once'] },
     'expenses.entries[].source':                 { class: 'raw',        unit: 'enum',    values: ['manual', 'imported'], note: 'SPEC.md §12.5' },
+    'expenses.entries[].fixed':                  { class: 'raw',        unit: 'bool',    note: 'null not asked; true = could not be cut next month. Feeds the minimum viable month and cuttability. D-075' },
     'goals[].targetDate':                        { class: 'raw',        unit: 'iso-date' },
     'goals[].savedCents':                        { class: 'raw',        unit: 'cents' },
     'goals[].monthlyContributionCents':          { class: 'raw',        unit: 'cents',   period: 'monthly' },
@@ -581,7 +582,10 @@
       date: f.date === undefined ? null : f.date,        // ISO, dated entries only
       descriptor: f.descriptor === undefined ? null : f.descriptor,
       source: f.source || 'manual',             // 'manual' | 'imported'
-      categorizedBy: f.categorizedBy === undefined ? null : f.categorizedBy
+      categorizedBy: f.categorizedBy === undefined ? null : f.categorizedBy,
+      /* Could this line be cut next month? null = not asked; true = fixed
+         (rent, insurance, a minimum); false = cuttable. D-075. */
+      fixed: f.fixed === undefined ? null : f.fixed
     };
   }
 

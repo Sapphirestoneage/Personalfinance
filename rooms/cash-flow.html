@@ -43,7 +43,10 @@
   .bucket-total { font-family: var(--font-display); font-size: var(--text-md); font-variant-numeric: tabular-nums; }
   .bucket-note { font-size: var(--text-xs); color: var(--color-text-faint); margin: 0 0 var(--space-3); }
 
-  .cat-row { display: grid; grid-template-columns: 1fr 108px 28px; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2); }
+  .cat-row { display: grid; grid-template-columns: 1fr 108px 52px; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2); }
+  .cat-fixed { display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: var(--text-xs); color: var(--color-text-faint); cursor: pointer; white-space: nowrap; }
+  .cat-fixed input { margin: 0; width: 16px; height: 16px; accent-color: var(--color-accent); }
+  .cat-fixed.is-derived { cursor: default; }
   .cat-label { font-size: var(--text-sm); color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .cat-derived { display: flex; justify-content: flex-end; align-items: center; font-size: var(--text-sm); }
   .cat-derived .slaf-owned-from { font-size: 10px; }
@@ -228,14 +231,34 @@
           : '<span class="slaf-input-shell"><span class="slaf-affix">$</span>'
             + '<input type="text" inputmode="decimal" data-cat="' + cat.id
             + '" placeholder="/mo" aria-label="' + cat.label + ' per month"/></span>';
+        /* The third cell: is this line fixed — could it not be cut next
+           month? A savings line is not spending, so it is not asked; a
+           derived line (debt minimums) is fixed by nature. D-075. */
+        var fixedCell = cat.derivedFrom
+          ? '<span class="cat-fixed is-derived" title="A minimum payment cannot be cut">fixed</span>'
+          : bucket.id === 'savings'
+            ? '<span class="cat-fixed is-derived"></span>'
+            : '<label class="cat-fixed" title="Tick if you could not cut this next month"><input type="checkbox" data-fixed="' + cat.id + '" aria-label="' + cat.label + ' is fixed"/>fixed</label>';
         row.innerHTML =
-          '<span class="cat-label" title="' + cat.label + '">' + cat.label + '</span>'
+          '<span class="cat-label" title="' + cat.label + '">' + (cat.essential ? '● ' : '') + cat.label + '</span>'
           + valueCell
-          + '<span style="text-align:center;color:var(--color-text-faint);font-size:var(--text-xs)">'
-          + (cat.essential ? '●' : '') + '</span>';
+          + fixedCell;
         section.appendChild(row);
       });
       wrap.appendChild(section);
+    });
+
+    wrap.addEventListener('change', function (evt) {
+      var box = evt.target.closest('input[data-fixed]');
+      if (!box) return;
+      var existing = entryFor(Spine.getProfile(), box.getAttribute('data-fixed'));
+      if (!existing) {
+        /* A flag needs a line to sit on. */
+        box.checked = false;
+        return;
+      }
+      Spine.upsertExpenseEntry(Object.assign({}, existing, { fixed: box.checked }));
+      render();
     });
 
     wrap.addEventListener('focusin', function (evt) {
@@ -289,6 +312,12 @@
       } else if (!SLAF.Suggest.isSuggested(input)) {
         input.value = '';
       }
+    }
+    var boxes = document.querySelectorAll('input[data-fixed]');
+    for (var b = 0; b < boxes.length; b++) {
+      var e = entryFor(h, boxes[b].getAttribute('data-fixed'));
+      boxes[b].checked = !!(e && e.fixed === true);
+      boxes[b].disabled = !e;
     }
     proposeMonth(h);
   }
@@ -380,6 +409,22 @@
     }).join('') + '</dl>';
   }
 
+  /* The floor: fixed lines plus debt minimums — next month if everything
+     cuttable were cut. Shown once at least one line has been answered. */
+  function floorRows() {
+    var f = CashFlow.minimumViableMonthCents(Spine.getProfile(), TABLES.expenseCategories);
+    if (!Money.isOk(f)) return [];
+    var c = CashFlow.cuttability(Spine.getProfile(), TABLES.expenseCategories);
+    return [['The floor — fixed lines only', Money.formatCents(f.value)],
+            ['Cuttable', Money.isOk(c) ? Money.formatRate(c.value, { decimals: 0 }) + ' of spending' : Money.EM_DASH]];
+  }
+  function floorNote() {
+    var f = CashFlow.minimumViableMonthCents(Spine.getProfile(), TABLES.expenseCategories);
+    if (!Money.isOk(f)) return '<p class="slaf-reason">Tick “fixed” on the lines you could not cut next month and the floor appears here — the month Runway can test against.</p>';
+    return '<p class="slaf-reason">' + (f.unaskedCount ? f.unaskedCount + ' line' + (f.unaskedCount === 1 ? '' : 's') + ' not yet marked either way. ' : '')
+      + 'Runway can run <a href="runway.html#the-plan">at the floor →</a></p>';
+  }
+
   function renderSummary(summary) {
     var detail = '';
     if (Money.isOk(summary)) {
@@ -398,8 +443,9 @@
         + dl([
           ['Essential only', Money.formatCents(summary.essentialMonthlyCents)],
           ['Into savings', Money.formatCents(summary.savingsMonthlyCents)]
-        ])
-        + '<p class="slaf-reason">Savings isn’t counted as spending — that money hasn’t left.</p>';
+        ].concat(floorRows()))
+        + '<p class="slaf-reason">Savings isn’t counted as spending — that money hasn’t left.</p>'
+        + floorNote();
 
       TABLES.expenseCategories.buckets.forEach(function (b) {
         var node = document.querySelector('[data-bucket-total="' + b.id + '"]');

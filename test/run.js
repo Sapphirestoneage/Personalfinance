@@ -6402,6 +6402,43 @@ section('The ratios T3 unlocked');
   check('the bands table moved to 1.2', TABLES.ratioBenchmarks.version, '1.2');
 })();
 
+section('Fixed lines, the floor, and cuttability');
+
+(function () {
+  /* D-075: which lines could not be cut next month. */
+  const cat = TABLES.expenseCategories;
+  const h = Demo.build();
+  h.expenses.entries = Demo.buildSpending();
+  check('a fresh entry is not asked', Schema.createExpenseEntry({ categoryId: 'housing', amountCents: 1 }).fixed, null);
+  check('nothing marked: the floor asks, it does not assume', CashFlow.minimumViableMonthCents(h, cat).missing.join(','), 'expenseEntries.fixed');
+  const sum = CashFlow.summarise(h, cat);
+  const debt = sum.categories.filter(r => r.categoryId === 'debt_minimums')[0];
+  checkTrue('debt minimums are fixed by nature', debt.fixed === true && debt.fixedMonthlyCents === 30500);
+
+  ['housing', 'utilities', 'insurance'].forEach(id => { h.expenses.entries.filter(e => e.categoryId === id)[0].fixed = true; });
+  h.expenses.entries.filter(e => e.categoryId === 'dining_out')[0].fixed = false;
+  const floor = CashFlow.minimumViableMonthCents(h, cat);
+  check('the floor: housing 1,500 + utilities 180 + insurance 150 + minimums 305', floor.value, 150000 + 18000 + 15000 + 30500);
+  check('spending it sits inside: 2,895 tracked + 305 minimums', floor.spendMonthlyCents, 289500 + 30500);
+  check('four lines answered by hand, plus minimums by nature', floor.askedCount, 5);
+  check('and four not yet asked (groceries, transport, subscriptions, entertainment)', floor.unaskedCount, 4);
+  checkTrue('savings lines are outside the floor', floor.fixedRows.every(r => r.categoryId !== 'retirement' && r.categoryId !== 'emergency_savings'));
+  const cut = CashFlow.cuttability(h, cat);
+  check('cuttability = 1 − 2,135 ÷ 3,200', cut.value, 1 - 213500 / 320000, 1e-12);
+
+  /* The Runway engine reports the basis it was given and the room chooses. */
+  const T = Object.assign({}, TABLES);
+  const now = RunwayEngine.project(h, T, { preset: 'quit' });
+  const atFloor = RunwayEngine.project(h, T, { preset: 'quit', monthlyExpensesCents: floor.value, expenseBasis: 'floor' });
+  check('the default basis is current', now.expenseBasis, 'current');
+  check('at the floor the engine says so', atFloor.expenseBasis, 'floor');
+  checkTrue('and the money lasts longer', atFloor.value > now.value);
+  const runwayHtml = fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8');
+  checkTrue('the Runway room offers the floor as a basis', /data-in="basis"/.test(runwayHtml) && /value="floor"/.test(runwayHtml));
+  const cfHtml = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
+  checkTrue('Cash Flow asks per line', /data-fixed=/.test(cfHtml));
+})();
+
 section('The D&D folder\'s vendored copies');
 
 (function () {

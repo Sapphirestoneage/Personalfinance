@@ -177,7 +177,12 @@
          added — otherwise the figure would be counted twice. */
       if (cat.derivedFrom) return;
       var n = normaliseToMonthly(byCategory[id]);
-      addRow(cat, n.monthlyCents, { entryCount: n.counted, monthsCovered: n.monthsCovered });
+      /* Which of this category's dollars could not be cut next month, and
+         whether anyone has said. D-075. */
+      var fixedPart = normaliseToMonthly(byCategory[id].filter(function (e) { return e.fixed === true; }));
+      var unasked = byCategory[id].filter(function (e) { return e.fixed !== true && e.fixed !== false; }).length;
+      addRow(cat, n.monthlyCents, { entryCount: n.counted, monthsCovered: n.monthsCovered,
+        fixedMonthlyCents: fixedPart.monthlyCents, fixedAsked: unasked === 0, fixed: unasked === 0 && fixedPart.monthlyCents === n.monthlyCents });
     });
 
     /* Derived categories: the value comes from the household field named in
@@ -190,7 +195,9 @@
       if (!source) return;
       var value = source(household);
       if (!Money.isOk(value)) return;
-      addRow(cat, value.value, { derived: true, derivedFrom: cat.derivedFrom, ownedBy: cat.ownedBy || null });
+      /* A derived line — debt minimums — is fixed by nature. */
+      addRow(cat, value.value, { derived: true, derivedFrom: cat.derivedFrom, ownedBy: cat.ownedBy || null,
+        fixedMonthlyCents: value.value, fixedAsked: true, fixed: true });
     });
 
     categories.sort(function (a, b) { return b.monthlyCents - a.monthlyCents; });
@@ -442,6 +449,46 @@
     });
   }
 
+  /* ---- The floor (BRIEF §4.4, D-075) ------------------------------------
+     minimumViableMonthCents: the spending lines marked fixed, plus the
+     derived debt minimums — what next month costs if everything cuttable
+     is cut. cuttability: 1 − floor ÷ spending. Both need at least one line
+     answered; a line nobody has answered is neither fixed nor cuttable, and
+     is counted and reported as unasked rather than assumed either way.
+     Savings lines are outside both: a floor is spending. */
+  function minimumViableMonthCents(household, catalog) {
+    var summary = summarise(household, catalog);
+    if (!Money.isOk(summary)) return summary;
+    var floor = 0, asked = 0, unasked = 0, fixedRows = [];
+    summary.categories.forEach(function (row) {
+      if (row.bucket === 'savings') return;
+      if (row.fixedAsked) asked++; else unasked++;
+      if (row.fixedMonthlyCents) { floor += row.fixedMonthlyCents; fixedRows.push({ categoryId: row.categoryId, label: row.label, monthlyCents: row.fixedMonthlyCents, derived: row.derived === true }); }
+    });
+    var answeredByHand = summary.categories.some(function (row) { return row.bucket !== 'savings' && !row.derived && row.fixedAsked; });
+    if (!answeredByHand) {
+      return Money.incomplete('Mark which lines you could not cut next month to see the floor.', ['expenseEntries.fixed']);
+    }
+    return Money.ok(floor, {
+      spendMonthlyCents: summary.spendMonthlyCents,
+      fixedRows: fixedRows,
+      askedCount: asked,
+      unaskedCount: unasked,
+      monthsCovered: summary.monthsCovered
+    });
+  }
+
+  function cuttability(household, catalog) {
+    var floor = minimumViableMonthCents(household, catalog);
+    if (!Money.isOk(floor)) return floor;
+    var r = Money.safeDivide(floor.spendMonthlyCents - floor.value, floor.spendMonthlyCents, {
+      denominatorName: 'monthlyExpenses',
+      zeroReason: 'Nothing is spent, so nothing can be cut.'
+    });
+    if (Money.isOk(r)) { r.floorCents = floor.value; r.spendMonthlyCents = floor.spendMonthlyCents; r.unaskedCount = floor.unaskedCount; }
+    return r;
+  }
+
   function trackedEssentialCents(household, catalog) {
     var summary = summarise(household, catalog);
     if (!Money.isOk(summary)) return summary;
@@ -463,6 +510,8 @@
     templateTargets: templateTargets,
     compareToTemplate: compareToTemplate,
     trackedEssentialCents: trackedEssentialCents,
-    savingsRateContributed: savingsRateContributed
+    savingsRateContributed: savingsRateContributed,
+    minimumViableMonthCents: minimumViableMonthCents,
+    cuttability: cuttability
   };
 });
