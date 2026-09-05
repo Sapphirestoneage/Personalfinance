@@ -5437,6 +5437,260 @@ stale.
 
 ---
 
+## D-101 — The LATER.md rooms: what each owns, before it is built
+
+*(The third scaffolding entry, after D-098 and D-099; the rooms are
+D-114 onward.)* The parked T8 shapes (the D-093 draft, never landed)
+come into the schema as they were, with three more for the loan
+decision, the calendar and History: `household.enough` `{ monthlyCents,
+source }`; `household.designedWeek.blocks[]` `{ id, label, hours,
+categoryId, costCents }`; `household.timeBuckets[]` `{ decade,
+experiences[] { id, label, costCents, year } }`; `household.dreams[]`
+`{ id, label, monthlyCents }`; `household.reversibility` `{ decisionId,
+given }`; `household.unlearning` `{ dropped[] }`; `household.studentLoans`
+`{ plan: standard | income_driven | aggressive, extraMonthlyCents,
+idrShare, forgivenessYears }`; `household.calendar` `{ cadence: weekly |
+fortnightly | semimonthly | monthly, nextPaydayDay, bills[] { id, label,
+cents, day }, payLater[] { id, label, cents, dueDay, instalmentsLeft } }`;
+`household.history` `{ compareTo }`. Ownership rows at `inputs`:
+`enoughMonthly`, `designedHours`, `bucketsPlanned`, `dreamsMonthly`,
+`reversibilityDecision`, `unlearningDropped`, `loanPlan`, `loanExtra`,
+`idrShare`, `forgivenessYears`, `payCadence`, `nextPayday`,
+`billsMonthly`, `payLaterDue`, `historyCompareTo` — each reading
+incomplete when unset, never a zero. Registry rows at orders 43–51,
+History last among the rooms (kind `read`), with `REQUIRES`: Dreamline
+`hours`, Student Loan Decision `debt`. The five T8 tables land in
+`data/` as the draft wrote them (`unlearning`, `weekBlocks`,
+`bucketIdeas`, `dreamline`, `reversibility`, all `convention`), with two
+placeholders, `studentLoanConventions` and `calendarConventions`. The
+template gains `guessAs`: a room that exists for one situation names the
+situation to guess on an empty spine, and `Gate.fillGuesses(h, T,
+situation)` honours it when none is chosen.
+
+---
+
+## D-102 — Between Jobs: the day the cash runs out, against the search
+
+Appears for the `unemployment` branch. Reads the between-jobs facts
+from Start Here, spending, cash, dependents, and health cover from
+Protection. Owns `expectedSearchMonths` (proposed from the re-entry
+gap's median) and `floorMonthlyCents` (proposed at 70% of spending, a
+convention). Computes through `Runway.project` on the laid-off preset,
+run twice — at today's spending and at the floor — with the benefit as
+weekly × 52 ÷ 12, severance, and a partner's pay after tax
+(`BetweenJobs.otherIncome`, which the dashboard's runway lead now reads
+too, so the two agree): the days the money lasts, the date it runs
+out, the months to spare or short against the expected search, the
+benefit's end. One area chart of cash month by month with the floor as
+a second line and the search marked. The lens reads a month of
+spending, the floor, the severance, the benefit a month. Edge cases:
+no benefit, no severance, a partner's pay making it sustainable
+("Covered"), a search longer than the runway (critical wording), the
+floor equal to spending. Hand-derived: $6,000 cash, $3,000 a month,
+$1,516.67 of benefit for three months and $4,000 of severance lasts
+four months, 122 days; six at a $2,100 floor.
+
+---
+
+## D-103 — Protection: each need against what is held
+
+Appears for the `protection` branch (everyone but a student). Reads
+spending, cash, income, the deductible and who depends on you from
+Start Here, and Sleep At Night's four coverage facts as chips. Owns
+`insurance.health.type` and `monthlyCents`. `Protection.checkup`: a bad
+health year (the out-of-pocket maximum, else the deductible, against
+cash); if you could not work (60% of income a month against the
+disability benefit); if you died (ten times income against term life,
+only when someone depends on you); the cushion (three and six months
+against cash) — need, held, gap, with a side not entered left null and
+named, never guessed. The number is the biggest gap, ranked with
+monthly gaps annualised; zone good with none, watch with one, out with
+two or more. One bar chart of held over need, capped at 1.25 with the
+need marked. Conventions in `data/protection_conventions.json`.
+Hand-derived: $60,000 gross, $3,000 spending, $6,000 cash, $1,500
+deductible, a four-year-old, $100,000 of term life, $2,000 a month of
+disability → gaps −$4,500, $1,000 a month, $500,000, $3,000.
+
+---
+
+## D-104 — Decumulation: the age the money lasts to
+
+Appears for the `decumulation` branch. Reads investments, spending,
+income, age and the real return. Owns `decumulation.stockShare`
+(clamped to 0–1), `plannedAnnualDrawCents` (when typed it replaces the
+computed draw), `socialSecurityAt`. The draw is the `withdrawalRate`
+ratio's (D-096) or the planned one; the rate against the 4% / 5% band;
+what the variable-percentage table allows at this age and stock share
+(`Vpw.percentageAt`); years until empty through
+`Projection.yearsUntilEmptyCents`, so the room's age equals the
+dashboard's. One area chart of the balance year by year with the VPW
+path beside it and a dot where it empties. Social Security is a timing
+note and a line on the chart, never an estimated amount: `ss.js` needs
+an earnings history a retiree's income is not. Uses `guessAs: 'retired'`.
+Hand-derived: $420,000 drawing $13,200 is 3.14%, good; never empties at
+5% real, 31.8 years at 0%; VPW at 68 and 60% stocks, 5.86%, allows
+$24,612.
+
+---
+
+## D-105 — Tax: the effective rate, the bracket, and whether a refund is coming
+
+Appears for the `income` branch. Reads income, filing status, state,
+the workplace contribution (a whole percent, as stored) and the
+working situation; owns `tax.otherPreTaxAnnualCents` and
+`withheldAnnualCents`. `TaxRoom.picture` feeds `Tax.estimate` — the
+bracket walk that already exists, with FICA on wages and
+self-employment tax on profit — and reuses `Reference.marginalBracket`
+for the bracket and the room left in it. Self-employed, all gross is
+profit; mixed, the 1099 source is. Refund-or-owe is withheld less
+federal income tax, self-employment tax and state tax, said as
+"(federal only)" without a state. One stacked row of where a dollar of
+pay goes. The drawer shows the blunter effective-rate estimate the rest
+of the app uses beside this one. Hand-derived: single, NC, $62,000 at
+6% → federal $4,813.60, NC $1,792.65, FICA $4,743, 12% bracket with
+$8,220 of room. Below the standard deduction, federal is $0 and the rate
+is FICA alone.
+
+---
+
+## D-106 — Estate Basics: three facts, and what would pass by the state's rules
+
+For everyone; owns `estate.beneficiariesSet`, `willExists`,
+`poaExists`, each yes, not yet, or not answered. `Estate.review` sums
+the assets by how each category passes — cash and retirement by
+beneficiary or payable-on-death, investments, property, vehicles and
+the rest by will, and without a will by the state — from
+`data/estate_basics.json` (a general US pattern, not legal advice), and
+names the dollars that would pass by the state's rules rather than
+your choice. A donut by route; a guardian line when someone depends on
+you and there is no will. It never shows guesses: there is no sensible
+guess for any of the three. Hand-derived on the demo: nothing answered,
+$57,500 at risk; a will, $9,500; all three, $0.
+
+---
+
+## D-107 — Giving: a share of income, in dollars, months of FI and hours
+
+For everyone; owns `giving.pctOfIncome` and `annualTargetCents`, the
+target winning when typed. `Giving.plan`: the year and month given, the
+four shares people talk about — one, two, five and ten per cent, the
+tithe named as a religious convention — for this income from
+`data/giving_conventions.json`, the FI cost through `Lens.apply(...,
+'pushed')` and the hours a year through the hours lens, and what was
+actually given last month through the giving-rate ratio when Cash Flow
+has a categorised month. Four bars plus your own share. Hand-derived:
+$62,000 at 2% is $1,240 a year, $103.33 a month; 10% is $6,200.
+
+---
+
+## D-108 — Career Move: an offer against the job you have, an hour at a time
+
+Appears for the `career` branch. Reads income, filing status, the
+current job's hours and costs from Real Hourly Wage, spending and
+investments. Owns `career.offer` — the year, hours a week, commute,
+costs of working, sign-on. `CareerMove.compare` runs both jobs through
+the one `Hourly.realHourlyWage`: the offer is a copy of the household
+paying the offer with its own work overrides (blank carries the current
+job's, a typed zero stays zero); take-home through `Tier0`; the FI move
+through the projection's fractional years the way the lens does, the
+sign-on landing in investments after tax, the employer match left out
+of both sides so they share a basis. Four bars: each job's real and
+headline rate. Hand-derived on the demo against $80,000 at 40 hours, no
+commute, $100 a month of costs: $21.04 to $26.91 an hour, $8,480 more
+kept, FI 30 months sooner.
+
+---
+
+## D-109 — Partner: the shared month split three ways
+
+Appears for the `partner` branch (two adults). Reads both adults'
+income and the household month; owns `partner.splitMode` (equal,
+proportional, pooled) and `sharedMonthlyCents`. `Partner.split`: each
+adult's take-home through `Tier0` on a copy holding only that adult (an
+approximation, said in the drawer), each share of the shared month by
+the chosen mode with exact-sum rounding, what each keeps, the share of
+household income that is one paycheque through the concentration
+ratio, and a watch when a share exceeds half of that person's
+take-home. One stacked row per adult. Conventions in
+`data/partner_conventions.json`. Hand-derived: $72,000 and $48,000 with
+$3,000 shared: $1,800 / $1,200 in proportion, $1,500 each, 0.6
+concentration.
+
+---
+
+## D-110 — Kids and Tuition: what each child costs at their age
+
+Appears for the `dependents` branch. Reads the ages from Start Here,
+the state, spending and the day-school answer; owns
+`kids.tuitionTargetCents` (per child), `tuitionSavedCents`,
+`tuitionMonthlyCents`. `Kids.plan`: the monthly cost from the USDA-based
+bands for each age, childcare from the state table under five, day
+school for 5–17 when the community answer says so, years to eighteen,
+and the level monthly payment that lands the target by then at the
+real return through `Projection.levelPaymentCents`, the saved pot going
+to the first bill first. A bar per child and one for tuition with what
+is going in marked. A child with no age is costed as an infant and says
+so; one past eighteen is due now. Hand-derived: ages four and nine in NC
+cost $3,800 a month, $45,600 a year; $50,000 each with $5,000 saved needs
+$309.94 and $206.10 a month.
+
+---
+
+## D-111 — Housing Decision: own against rent, this place, this rate
+
+For everyone. Reads spending, income, cash, the state and the no-rent
+answer; owns `housing.rentMonthlyCents`, `priceCents`, `downPct`,
+`rate`. `Housing.compare`: the level payment through the one
+amortisation in the repo, tax, insurance and upkeep from
+`data/housing_conventions.json`, the unrecoverable part named, rent
+against it, the price-to-rent ratio against bands added to
+`data/price_to_rent.json` (buying favoured below 15, renting above 20),
+the housing share of gross against the 28% convention, the down payment
+and closing costs against cash with the years to the down payment at
+today's savings. Two stacked rows. Proposals: rent at 30% of gross, 20%
+down, the rate table's current rate; a price is never invented, so an
+empty spine shows proposals to tap rather than a computed number.
+Hand-derived: $300,000 at 20% down and 6.5% over 30 years is $1,516.96,
+own $2,166.96, +$266.96 over $1,900 of rent, price-to-rent 13.2.
+
+---
+
+## D-112 — Big Purchase: one thing, priced in hours, months of FI and cash
+
+For everyone. Reads cash, spending, income and the real hourly wage
+where it exists; owns `purchase.priceCents`, `monthsAway`,
+`financeRate`, `label` (a kind). `Purchase.weigh` frames four readings
+that already exist: hours through the lens, FI pushed through the
+lens, cash after against the three- and six-month cushions, financing
+through `Projection.levelPaymentCents` over 36 months (60 for a car,
+with Quick Math's 20/3/8 rule carried through). Blank months is "no date
+yet", priced as today; zero is now. Four bars. Hand-derived on the
+demo: $1,200 is 57 hours; cash after $8,300 is under the $9,450 floor,
+out now, watch at six months and $191.67 a month; 9% over 36 months is
+$38.16 a month and $173.76 of interest.
+
+---
+
+## D-113 — Variable Income: the salary to pay yourself
+
+Appears for the `variableIncome` branch. Reads the average
+(a variable-basis source's own monthly figure first, else gross ÷ 12),
+spending, cash, and the quarterly through `SelfEmployed.quarterlyEstimated`
+with the source's annual figure read as profit; owns the low and high
+month on the source (`Ownership.variableSource`) and
+`variableIncome.bufferMonths`. `VariableIncome.plan`: the pay-yourself
+salary at the low month (spending when the low month is below it), the
+buffer as the low-to-average gap times the months, the emergency
+cushion that comes first, how many low months in a row the cash covers,
+and the tax off the top a month. Five bars with the spending line to
+clear. Uses `guessAs: 'selfEmployed'`. Conventions in
+`data/variable_income_conventions.json`. Hand-derived: $60,000 → $5,000
+average; low $3,500, high $6,500, $3,000 spending, $9,000 cash, three
+months → buffer $4,500, the cushion first, every low month covered; low
+$2,500 → $500 short, 18 low months covered.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have
