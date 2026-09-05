@@ -785,7 +785,7 @@
     tags: ['cashflow'],
       subsections: [
         { id: 'number',      label: 'What the kids cost a year' },
-        { id: 'chart',       label: 'By child, by year' },
+        { id: 'chart',       label: 'By child, a month' },
         { id: 'inputs',      label: 'Tuition' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },

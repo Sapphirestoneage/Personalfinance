@@ -4,29 +4,29 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Kids and Tuition · SPARKS</title>
-<meta name="description" content="What your job actually pays, once you count every hour it takes and everything it costs you to do it."/>
+<meta name="description" content="What each child costs a year at their age, childcare while they are small, and what tuition needs a month to land on time."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. THE TEMPLATE ROOM. DECISIONS.md D-097.
+  ROOM SPEC — SPEC.md §11. ON THE TEMPLATE (shared/room.js, D-097). D-099.
 
-  1. READS   The person's income (owned by Start Here) and filingStatus, for
-             the tax estimate; a month's spending, for the lens.
-  2. WRITES  It OWNS person.work — paid hours, unpaid overtime, commute,
-             work costs, weeks a year, and (folded) prep and decompression.
-             Nothing else edits those. It does not touch income.
-  3. CALLS   engines/hourly.js. Tax comes from engines/tier0.js's effective-
-             rate lookup, never a second calculation.
-  4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses and says so (Gate.fillGuesses). Each unpaid-
-             hours box is optional: blank is none, not unanswered.
-  5. CONFIG  data/effective_tax_rates_2026.json.
+  1. READS   The dependents and their ages (owned by Start Here), the state
+             (for childcare), a month's spending (for the lens), and whether
+             a day school is in the picture (community.daySchool).
+  2. WRITES  It OWNS household.kids — tuitionTargetCents (per child),
+             tuitionSavedCents and tuitionMonthlyCents. Nothing else edits
+             those. It does not touch the dependents or their ages.
+  3. CALLS   engines/kids.js. The level monthly contribution comes from
+             engines/projection.js's one annuity formula, never a second.
+  4. EMPTY   Opened by deep link with an empty spine it renders the intake's
+             guesses for spending and says so (Gate.fillGuesses); with nobody
+             depending on you entered it says that instead of a number.
+  5. CONFIG  data/child_cost.json, data/childcare_by_state.json.
 
-  THE SHAPE (shared/room.js, frozen here): one number, one chart, the lens,
-  five inputs and two folded, the assumptions drawer with sources, why
-  this matters at your stage, one out-of-scope line to Get Help. The ids
-  below are the deep links.
+  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens, three
+  inputs, the assumptions drawer with sources, why this matters at your
+  stage, one out-of-scope line to Get Help. The ids below are the deep links.
 
   LIVE-FORM: built once — shared/room.js builds the inputs from the spec
   on load and only sets .value, never under focus.
@@ -57,25 +57,25 @@
 
   <section class="slaf-card" id="number">
     <div class="room-head-row">
-      <span class="slaf-eyebrow">Your real rate</span>
+      <span class="slaf-eyebrow">What the kids cost a year</span>
       <div id="room-lens"></div>
     </div>
     <div class="room-number" id="room-number"></div>
   </section>
 
   <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Where the week goes</span>
+    <span class="slaf-eyebrow">By child, a month</span>
     <div id="room-chart"></div>
   </section>
 
   <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The hours the job takes</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave anything blank that doesn't apply — working from home means no commute, and blank is none rather than unanswered.</p>
+    <span class="slaf-eyebrow">Tuition</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">One target for each child, one pot saved so far, one figure going in a month. Leave the target blank if tuition is not a plan yet — blank is not a $0 target.</p>
     <div id="room-inputs"></div>
   </section>
 
   <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Priced in life</span>
+    <span class="slaf-eyebrow">Through the lens</span>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
     <ul class="room-amounts" id="room-amounts"></ul>
   </section>
@@ -94,8 +94,8 @@
   </section>
 
   <p class="disclaimer">
-    Educational tool, not financial advice. Tax is estimated from a flat
-    effective-rate table, not a return. Your numbers stay in this browser.
+    Educational tool, not financial advice. The cost of a child is a
+    published average, not your receipts. Your numbers stay in this browser.
   </p>
 </main>
 
@@ -111,7 +111,7 @@
 <script src="../shared/gate.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
-<script src="../engines/hourly.js"></script>
+<script src="../engines/kids.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
 <script src="../shared/room.js"></script>
@@ -119,111 +119,122 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Hourly = SLAF.Hourly, Charts = SLAF.Charts, Room = SLAF.Room;
+      Kids = SLAF.Kids, Charts = SLAF.Charts, Room = SLAF.Room;
 
-  /* ---- writes: this room owns person.work ------------------------------------ */
-  function writeWork(key, value) {
-    var person = Spine.ensurePrimaryPerson('You');
-    var current = Schema.workProfile(Schema.personById(Spine.getProfile(), person.id));
-    var next = Object.assign({}, current);
-    next[key] = value;
-    Spine.upsertPerson({ id: person.id, work: next });
-  }
-  function readWork(h) { return Schema.workProfile(Schema.primaryPerson(h)); }
-  function hoursInput(key, label, placeholder, hint) {
-    return { ctl: key, label: label, kind: 'number', placeholder: placeholder, affix: 'h', hint: hint,
-      read: function (h) { return readWork(h)[key]; }, write: function (v) { writeWork(key, v === null || v <= 0 ? null : v); } };
-  }
-  function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
+  /* ---- writes: this room owns household.kids ---------------------------------- */
+  function readKids(h) { return Schema.createKidsPlan(h.kids); }
+  function money(c) { return Money.formatCents(c); }
+  function perMonth(c) { return money(c) + ' a month'; }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 
-  var HOUR_COLOURS = { paid: Charts.COLORS.series[0], unpaidOvertimeHoursPerWeek: Charts.COLORS.series[3], commuteHoursPerWeek: Charts.COLORS.series[1], prepHoursPerWeek: Charts.COLORS.series[2], decompressHoursPerWeek: Charts.COLORS.series[4] };
+  /* The tuition line in words, shared by the number's sub and the chart. */
+  function tuitionWords(p) {
+    var t = p.tuition;
+    if (!t) return null;
+    if (t.allFunded) return 'tuition is <strong>funded</strong> for ' + plural(p.count, 'child', 'children') + ' at ' + money(t.targetCents) + ' each';
+    var s = '';
+    if (t.dueNowCount) s += plural(t.dueNowCount, 'tuition bill is', 'tuition bills are') + ' <strong>due now</strong>' + (t.neededMonthlyCents > 0 ? '; the rest needs ' : '');
+    if (t.neededMonthlyCents > 0) s += (t.dueNowCount ? '' : 'tuition needs ') + '<strong>' + perMonth(t.neededMonthlyCents) + '</strong> to land by 18';
+    if (t.monthlyCents !== null) s += ', ' + money(t.monthlyCents) + ' going in' + (t.onTime === false ? ' — <strong>' + money(t.shortMonthlyCents) + ' a month short</strong>' : t.onTime ? ' — on time' : '');
+    else s += ', nothing entered as going in';
+    return s;
+  }
 
   Room.mount({
-    id: 'kids', /* STUB — being built (D-099) */
-    tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
-    reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'],
+    id: 'kids',
+    tables: ['childCost', 'childcareByState', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    reads: ['dependents', 'state', 'monthlyExpenses'],
 
     number: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return { label: 'Actually, an hour', value: null, reason: w.reason + (/not earning/.test(w.reason || '') ? '' : '') };
-      var sub = 'On paper <strong>' + perHour(w.nominalHourlyCents) + '</strong> · you keep <strong>' + Money.formatRate(w.retained, { decimals: 0 }) + '</strong> of it'
-        + ' · ' + Money.formatCents(w.keptAnnualCents) + ' kept over ' + w.annualTotalHours.toLocaleString('en-US') + ' hours a year';
-      if (w.costsMoreThanItPays) sub += '. <strong>This job costs more than it pays</strong> — check the monthly costs; if they are right, that is the finding';
-      if (w.implausibleHours) sub += '. ' + w.paidHoursPerWeek + ' paid hours a week makes this look enormous; the arithmetic is right, the comparison is not';
-      if (!w.taxKnown) sub += '. Tax is not in yet: ' + (w.taxReason || '');
-      return { label: 'Actually, an hour', value: perHour(w.realHourlyCents), sub: sub, zone: w.costsMoreThanItPays ? 'out' : (w.retained !== null && w.retained < 0.5 ? 'watch' : null), result: w };
+      var p = Kids.plan(h, T);
+      if (!Money.isOk(p)) return { label: 'A year of the kids', value: null, reason: p.reason };
+      var bits = [plural(p.count, 'child', 'children')];
+      if (p.underFive) bits.push('childcare ' + (p.childcareUnknown ? 'not priced for ' + plural(p.childcareUnknown, 'child', 'children') : '<strong>' + perMonth(p.childcareMonthlyCents) + '</strong>') + ' while under five');
+      if (p.daySchool && p.daySchoolMonthlyCents > 0) bits.push('day school ' + perMonth(p.daySchoolMonthlyCents));
+      var tw = tuitionWords(p);
+      bits.push(tw || (p.tuitionReason === 'No tuition target entered.' ? 'no tuition target yet' : 'no tuition line'));
+      var sub = bits.join(' · ') + '.';
+      if (p.children.some(function (c) { return !c.ageKnown; })) sub += ' An age is missing: that child is costed as an infant until it is entered.';
+      return { label: 'A year of the kids, at their ages now', value: money(p.annualCents), sub: sub, zone: p.zone, result: p };
     },
 
     chart: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return Charts.stacked({ rows: [], empty: 'Add your paid hours to see where the week goes.' });
-      var parts = [{ label: 'Paid', value: w.paidHoursPerWeek, color: HOUR_COLOURS.paid }].concat((w.unpaidParts || []).map(function (p) { return { label: p.label, value: p.hours, color: HOUR_COLOURS[p.key] }; }));
-      var gross = w.grossAnnualIncomeCents, tax = w.estimatedTaxCents || 0, costs = w.annualWorkCostsCents, kept = w.keptAnnualCents;
-      return Charts.stacked({
-        title: 'Hours a week, and where the pay goes',
-        rows: [
-          { label: 'Your week', note: w.totalHoursPerWeek + ' h, ' + w.paidHoursPerWeek + ' paid', parts: parts },
-          { label: 'A year of pay', note: 'per ' + Money.formatCents(gross), parts: [
-            { label: 'Kept', value: kept / gross * w.totalHoursPerWeek, color: Charts.COLORS.growth },
-            { label: 'Tax', value: tax / gross * w.totalHoursPerWeek, color: Charts.COLORS.debt },
-            { label: 'Costs of working', value: costs / gross * w.totalHoursPerWeek, color: Charts.COLORS.series[3] }
-          ] }
-        ],
-        format: function (v) { return (Math.round(v * 10) / 10) + ' h'; }
+      var p = Kids.plan(h, T);
+      if (!Money.isOk(p)) return Charts.bars({ rows: [], empty: p.reason });
+      var rows = p.children.map(function (c, i) {
+        var note = c.past18 ? 'past 18' : !c.ageKnown ? 'costed as an infant' : money(c.costCents) + (c.childcareApplies ? (Money.isEntered(c.childcareCents) ? ' + ' + money(c.childcareCents) + ' childcare' : ' + childcare not priced') : '') + (c.daySchoolCents ? ' + ' + money(c.daySchoolCents) + ' day school' : '');
+        return { label: c.label, value: c.monthlyCents, note: note, color: Charts.COLORS.series[i % Charts.COLORS.series.length] };
       });
+      var t = p.tuition;
+      rows.push({
+        label: 'Tuition, a month needed',
+        value: t ? t.neededMonthlyCents : null,
+        note: t ? (t.allFunded ? 'funded' : t.dueNowCount ? plural(t.dueNowCount, 'bill', 'bills') + ' due now' : t.monthlyCents !== null ? money(t.monthlyCents) + ' going in' : 'to land by 18') : 'add a target below',
+        empty: 'no target',
+        color: t && t.onTime === false ? Charts.COLORS.spend : Charts.COLORS.target,
+        marker: t && t.monthlyCents !== null ? { at: t.monthlyCents, label: money(t.monthlyCents) + ' going in' } : null
+      });
+      return Charts.bars({ rows: rows, format: function (v) { return money(v) + '/mo'; } });
     },
 
     inputs: [
-      hoursInput('contractedHoursPerWeek', 'Paid hours a week', 'e.g. 40'),
-      hoursInput('unpaidOvertimeHoursPerWeek', 'Unpaid overtime', 'e.g. 3'),
-      hoursInput('commuteHoursPerWeek', 'Commuting', 'e.g. 5'),
-      { ctl: 'workCostsMonthlyCents', label: 'Costs of working, a month', kind: 'money', placeholder: 'e.g. 400', hint: 'Petrol, parking, transit, work clothes, lunches you would not otherwise buy, childcare only while working.',
-        read: function (h) { return readWork(h).workCostsMonthlyCents; }, write: function (v) { writeWork('workCostsMonthlyCents', v); } },
-      { ctl: 'weeksPerYear', label: 'Weeks worked a year', kind: 'number', placeholder: String(Schema.WORK_DEFAULTS.weeksPerYear),
-        read: function (h) { var w = readWork(h).weeksPerYear; return w === Schema.WORK_DEFAULTS.weeksPerYear ? null : w; }, write: function (v) { writeWork('weeksPerYear', v === null || v <= 0 ? Schema.WORK_DEFAULTS.weeksPerYear : v); } }
-    ],
-    moreLabel: 'The hours around the job',
-    more: [
-      hoursInput('prepHoursPerWeek', 'Getting ready', 'e.g. 2.5'),
-      hoursInput('decompressHoursPerWeek', 'Decompressing', 'e.g. 2.5')
+      { ctl: 'tuitionTargetCents', label: 'Tuition target, per child', kind: 'money', placeholder: 'e.g. 50,000',
+        hint: 'What you want to have for each child when they turn 18. The child-cost table’s convention is $250 a month from birth for half an in-state degree; it gives no lump sum, so nothing is proposed here.',
+        read: function (h) { return readKids(h).tuitionTargetCents; }, write: function (v) { Spine.set('kids.tuitionTargetCents', v); } },
+      { ctl: 'tuitionSavedCents', label: 'Saved for tuition so far', kind: 'money', placeholder: 'e.g. 5,000',
+        hint: 'One pot for the household. It goes to the oldest child’s bill first.',
+        read: function (h) { return readKids(h).tuitionSavedCents; }, write: function (v) { Spine.set('kids.tuitionSavedCents', v); } },
+      { ctl: 'tuitionMonthlyCents', label: 'Going to tuition, a month', kind: 'money', placeholder: 'e.g. 200',
+        hint: 'Across all the children. Measured against what is needed to land every target by 18.',
+        read: function (h) { return readKids(h).tuitionMonthlyCents; }, write: function (v) { Spine.set('kids.tuitionMonthlyCents', v); } }
     ],
 
     amounts: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      var spend = Schema.monthlyExpensesCents(h);
+      var p = Kids.plan(h, T);
       var rows = [];
+      if (!Money.isOk(p)) return rows;
+      rows.push({ label: 'A year of the kids’ costs', cents: p.annualCents });
+      if (p.underFive && p.childcareMonthlyCents > 0) rows.push({ label: 'Childcare, a month', cents: p.childcareMonthlyCents, href: Ownership.linkTo('start', 'q-about') });
+      if (p.tuition) rows.push({ label: 'The tuition gap today', cents: p.tuition.gapCents, href: Ownership.linkTo('kids', 'inputs') });
+      var spend = Schema.monthlyExpensesCents(h);
       if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
-      if (Money.isOk(w)) {
-        rows.push({ label: 'A year of tax, estimated', cents: w.estimatedTaxCents || 0 });
-        if (w.annualWorkCostsCents > 0) rows.push({ label: 'A year of the costs of working', cents: w.annualWorkCostsCents });
-      }
-      rows.push({ label: 'A $1,200 thing you are eyeing', cents: 120000 });
       return rows;
     },
 
     assumptions: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      var tax = T.effectiveTaxRates;
-      var work = readWork(h);
-      return [
-        { label: 'Tax', value: Money.isOk(w) && w.taxKnown ? Money.formatRate(w.effectiveRate || (w.estimatedTaxCents / w.grossAnnualIncomeCents), { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')' },
-        { label: 'Weeks a year', value: String(Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear), source: Money.isEntered(work.weeksPerYear) && work.weeksPerYear !== Schema.WORK_DEFAULTS.weeksPerYear ? 'yours' : 'the default: 52 less four weeks of leave and holidays (convention)' },
-        { label: 'Unpaid hours', value: 'count as work', source: 'Your Money or Your Life: an hour the job takes is an hour it costs, paid or not (convention)' },
-        { label: 'Real return, for the lens', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' }
+      var cost = T.childCost, care = T.childcareByState;
+      var p = Kids.plan(h, T);
+      var bands = cost && cost.bands ? cost.bands.slice().sort(function (a, b) { return a.fromMonths - b.fromMonths; }) : [];
+      var bandWords = bands.length ? money(bands[0].monthlyCents) + ' a month at 0 to 2, rising to ' + money(bands[bands.length - 1].monthlyCents) + ' at ' + bands[bands.length - 1].label : 'not loaded';
+      var careWords = 'not loaded';
+      if (care) {
+        var cc = Kids.childcareFor(care, h.state);
+        careWords = Money.isEntered(cc.cents) ? perMonth(cc.cents) + (cc.source === 'state' ? ' in ' + h.state : ', the national figure' + (h.state ? '' : ' (no state entered)')) : (cc.reason || 'not priced');
+      }
+      var rows = [
+        { label: 'What a child costs', value: bandWords, source: cost ? 'data/child_cost.json v' + cost.version + ', as of ' + cost.asOf + ' — ' + cost.source + ' (' + cost.confidence + ': ' + cost.confidenceNote + ')' : 'data/child_cost.json' },
+        { label: 'Childcare while under five', value: careWords, source: care ? 'data/childcare_by_state.json v' + care.version + ', as of ' + care.asOf + ' — ' + care.source + ' (' + care.confidence + ')' : 'data/childcare_by_state.json' },
+        { label: 'Real return on tuition saving', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094) — a real rate, so the target is in today’s dollars' },
+        { label: 'Saving stops at 18', value: 'each child’s target is due on their 18th birthday', source: 'a convention; the cost bands end there too' },
+        { label: 'The target is per child', value: 'one pot saved, to the oldest first', source: 'one saved figure for the household lands on the first bill first (convention)' },
+        { label: 'College saving convention', value: cost && cost.college && cost.college.half ? money(cost.college.half.monthlyCents) + ' a month from birth for ' + cost.college.half.label.toLowerCase() : 'not loaded', source: 'data/child_cost.json — a planning convention, not a cost; it gives no lump sum, so no target is proposed' }
       ];
+      if (Money.isOk(p) && p.daySchool) rows.push({ label: 'Day school', value: Money.isEntered(cost.privateSchoolMonthlyCents) ? perMonth(cost.privateSchoolMonthlyCents) + ' per child from 5 to 17' : 'in the picture, not priced', source: 'data/child_cost.json privateSchoolMonthlyCents — an average private-school tuition, not a school’s price' });
+      return rows;
     },
 
     why: function (h, T, situation) {
       return {
-        employed: 'Employed, the headline rate is the one on the offer letter. This one is the rate that decides whether the next thing — a raise, a move, an hour of overtime — is worth it.',
-        selfEmployed: 'Self-employed, there is no headline rate, only this one: what is left after the tax you set aside and the hours the work really takes, including the ones nobody bills.',
-        mixed: 'With a job and your own work, each has a real rate. This reads the job; put the own-work hours in as a second job in Start Here to compare them.',
-        student: 'A part-time job at a student’s stage is priced against study hours, not against a career. If the real rate is low, the question is what the hours are taking from.',
-        betweenJobs: '', retired: ''
-      }[situation] || 'Any job has a headline rate and a real one. The gap between them is what this room measures.';
+        employed: 'Employed, the kids are a line that grows with them: each band costs more than the last, childcare falls away at five, and tuition is the one bill you can see coming eighteen years out. What goes in a month now is the whole difference.',
+        selfEmployed: 'Self-employed, the kids’ costs are the fixed line under a variable income. Knowing the month’s figure — and what tuition needs on top — is what sets the floor the lean months have to clear.',
+        mixed: 'With a job and your own work, the kids cost the same either way; what changes is which income the childcare and the tuition saving come out of. This is the figure both have to cover between them.',
+        student: 'Studying with children, their cost sits beside your own tuition. Childcare while they are under five is usually the line that decides whether the hours add up; the tuition target can wait until the income does.',
+        retired: 'Retired, anyone entered here is depending on your income — grandchildren are not dependents unless you have said so in Start Here. If they are, their cost comes out of the draw, and a tuition target is a gift with a date on it.',
+        betweenJobs: 'Between jobs, childcare is the line that moves first — it is the cost of looking for work, and the cost of taking it. The tuition saving can pause; the runway cannot.'
+      }[situation] || 'Each child costs more as they grow, and tuition is the one bill with a date on it. This room prices both at their ages now.';
     },
 
-    scope: 'This room does not model overtime pay, shift differentials, or a second job’s hours on their own. Tax is a flat estimate, not a return.'
+    scope: 'This room does not know a school’s actual price, financial aid, or 529 rules.'
   });
 })();
 </script>
