@@ -143,6 +143,14 @@
     'rerank.rows[].miss':                        { class: 'raw',        unit: 'enum',    values: ['yes', 'some', 'no'], note: 'would you miss it? null = not asked' },
     'rerank.rows[].who':                         { class: 'raw',        unit: 'enum',    values: ['me', 'both', 'show'], note: 'who is it really for: me, both of us, or for show' },
     'rerank.rows[].valueRank':                   { class: 'raw',        unit: 'count',   note: '1 = most valuable, set by hand on the rerank stage; null = not reranked, ordered by joy' },
+    'skills[id].state':                          { class: 'raw',        unit: 'enum',    values: ['locked', 'available', 'trial', 'practicing', 'habit', 'done'], note: 'the Skill Stacker\'s standing per catalogue skill. Owned by the Stacker. D-090' },
+    'skills[id].kind':                           { class: 'raw',        unit: 'enum',    values: ['once', 'habit', 'periodic'], note: 'copied from the catalogue when equipped, so the state can be read without it' },
+    'skills[id].log[]':                          { class: 'raw',        unit: 'date',    note: 'ISO days the habit was done; misses[] the days it was explicitly not. A day in neither is unanswered' },
+    'skills[id].valuePerDayCents':               { class: 'computed',   unit: 'cents',   note: 'the annual effect ÷ 365 at the last log, kept so the ledger row is reproducible' },
+    'skills[id].automated':                      { class: 'raw',        unit: 'bool',    note: 'runs without you — the automation ratio counts these. D-090' },
+    'skills[id].dueOn':                          { class: 'raw',        unit: 'date',    note: 'periodic skills: lastDone + everyDays' },
+    'skills[id].verifiedBy':                     { class: 'raw',        unit: 'enum',    values: ['household', 'self'], note: 'household = marked done from a fact the model already holds, and un-marked if the fact stops holding' },
+    'practiceLedger[].cents':                    { class: 'raw',        unit: 'cents',   note: 'one row per skill per logged day: what that day\'s practice is worth. Feedback, not points. D-090' },
     'expenses.entries[].fixed':                  { class: 'raw',        unit: 'bool',    note: 'null not asked; true = could not be cut next month. Feeds the minimum viable month and cuttability. D-082' },
     'goals[].targetDate':                        { class: 'raw',        unit: 'iso-date' },
     'goals[].savedCents':                        { class: 'raw',        unit: 'cents' },
@@ -520,6 +528,51 @@
     return { rows: (f.rows || []).filter(function (r) { return r && r.id; }).map(createRerankRow) };
   }
 
+  /* One skill's standing in the Skill Stacker (D-090). `state` is the only
+     field every kind uses; the rest fill in as the kind needs them. Empty
+     lists and null dates are "nothing yet", never zero. */
+  var SKILL_STATES = ['locked', 'available', 'trial', 'practicing', 'habit', 'done'];
+  var SKILL_KINDS = ['once', 'habit', 'periodic'];
+  function createSkillState(fields) {
+    var f = fields || {};
+    function iso(v) { return typeof v === 'string' && v ? v : null; }
+    return {
+      state: SKILL_STATES.indexOf(f.state) >= 0 ? f.state : 'available',
+      kind: SKILL_KINDS.indexOf(f.kind) >= 0 ? f.kind : null,
+      startedOn: iso(f.startedOn),
+      /* Days it was done, and days it was explicitly not. A day in neither
+         list was not answered, which is the third state. */
+      log: Array.isArray(f.log) ? f.log.filter(function (d) { return typeof d === 'string'; }) : [],
+      misses: Array.isArray(f.misses) ? f.misses.filter(function (d) { return typeof d === 'string'; }) : [],
+      last30: Money.isEntered(f.last30) ? f.last30 : 0,
+      secondMisses: Money.isEntered(f.secondMisses) ? f.secondMisses : 0,
+      lapses: Money.isEntered(f.lapses) ? f.lapses : 0,
+      valuePerDayCents: Money.isEntered(f.valuePerDayCents) ? f.valuePerDayCents : null,
+      valueSource: f.valueSource === undefined ? null : f.valueSource,
+      automated: f.automated === true,
+      dueOn: iso(f.dueOn),
+      lastDone: iso(f.lastDone),
+      verifiedOn: iso(f.verifiedOn),
+      verifiedBy: f.verifiedBy === undefined ? null : f.verifiedBy
+    };
+  }
+  function createSkills(fields) {
+    var out = {};
+    var src = fields || {};
+    Object.keys(src).forEach(function (id) { if (src[id]) out[id] = createSkillState(src[id]); });
+    return out;
+  }
+  /* A day's practice, in cents: feedback, not points. One row per skill
+     per day; the Stacker replaces a day's row rather than adding to it. */
+  function createPracticeEntry(fields) {
+    var f = fields || {};
+    return {
+      on: typeof f.on === 'string' ? f.on : null,
+      skill: f.skill || null,
+      cents: Money.isEntered(f.cents) ? f.cents : 0
+    };
+  }
+
   function createTargets(fields) {
     var f = fields || {};
     return {
@@ -837,6 +890,10 @@
       targets: createTargets(f.targets),
       /* Named, dated diffs for the life-events engine (T6). */
       scenarios: (f.scenarios || []).map(createScenario),
+      /* The Skill Stacker's standing per skill, keyed by catalogue id, and
+         the practice ledger it writes a row to each logged day. D-090. */
+      skills: createSkills(f.skills),
+      practiceLedger: (f.practiceLedger || []).map(createPracticeEntry).filter(function (e) { return e.on && e.skill; }),
       assumptions: Object.assign({}, ASSUMPTION_DEFAULTS, f.assumptions || {}),
       /* User overrides persist SEPARATELY from the defaults so "reset to
          default" is always possible — SPEC.md §3, assumption class. */
@@ -1229,6 +1286,11 @@
     createTargets: createTargets,
     createRerank: createRerank,
     createRerankRow: createRerankRow,
+    SKILL_STATES: SKILL_STATES,
+    SKILL_KINDS: SKILL_KINDS,
+    createSkillState: createSkillState,
+    createSkills: createSkills,
+    createPracticeEntry: createPracticeEntry,
     allocationStatus: allocationStatus,
     createScenario: createScenario,
     assetRule: assetRule,

@@ -1,0 +1,22 @@
+{
+  "id": "curves",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "The three curves from The Skill Stacker page: the poster's 1.01 a day (compounding to 37.8× in a year, which is why it is clipped), a logistic capability curve on practice days, and the ledger's dollars grown to 65 on the wealth multiplier.",
+  "confidence": "convention",
+  "confidenceNote": "The poster curve is a motivational fiction and is drawn as one, clipped at the cap; the logistic parameters are a guess at how a habit actually takes; the ledger curve is arithmetic on the practice ledger.",
+  "note": "poster: value = min(cap, base^days). logistic: capability(days) = max ÷ (1 + e^(−k (days − midpoint))). D-090.",
+  "poster": {
+    "base": 1.01,
+    "cap": 3.0,
+    "days": 365
+  },
+  "logistic": {
+    "max": 1.0,
+    "k": 0.08,
+    "midpointDays": 45
+  },
+  "ledger": {
+    "toAge": 65
+  }
+}

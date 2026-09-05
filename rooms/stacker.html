@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>The Skill Stacker · SPARKS</title>
+<meta name="description" content="Three money skills at a time: did it or didn't, what today was worth, and what the ledger becomes by 65."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. BRIEF §7 "The Skill Stacker". DECISIONS.md D-090.
+
+  1. READS   the catalogue in dnd/data/ (skills, the hundred ways, the
+             stacks, the curves); the household facts a once-skill verifies
+             against (income, debt, cash against the deductible, the
+             sleep-at-night number, the match, the coverage, the targets);
+             the dining and groceries lines and The Rerank's cut, which
+             price the habits; the FOO step; the wealth multiplier at your
+             age; the latest snapshot's ledger total.
+  2. WRITES  It OWNS: household.skills — where each skill stands, its log
+             of did and didn't days, whether it runs by itself — and the
+             practice ledger, one row per logged day. Nothing else. A
+             once-skill the facts already prove is marked done here from
+             those facts, never asked again.
+  3. SHOWS   Today: the lines on (three at a time), did / didn't, what
+             today was worth, the ledger, the ledger grown to 65, and the
+             one skill to take on next. Every skill, by lever. The five
+             stacks as waterfalls. Three curves: the poster's 1.01 a day
+             drawn as the fiction it is, a capability curve, and the ledger
+             to 65.
+  4. FEEDS   Every Ratio (the automation ratio), the Annual Review (the
+             ledger total rides in every snapshot).
+  5. DEMO    the household's own numbers; "Try with example numbers" on
+             Start marks Robin's proven skills done and prices the rest.
+
+  LIVE-FORM: guarded — the lines rebuild through shared/liveform.js and
+  are never rebuilt while a finger is in them.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .stages { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-2); margin: 0 0 var(--space-4); }
+  .stages a { display: block; text-align: center; font-size: var(--text-xs); text-decoration: none; color: var(--color-text-muted); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-1); }
+  .stages a b { display: block; font-family: var(--font-display); font-size: var(--text-lg); color: var(--color-text); }
+
+  .line { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: center; padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  .line:first-child { border-top: none; }
+  .line .nm { font-size: var(--text-sm); min-width: 0; }
+  .line .nm small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  .line .nm .st { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; padding: 1px 6px; border-radius: var(--radius-sm); border: 1px solid var(--color-border-strong); color: var(--color-text-muted); margin-left: var(--space-1); vertical-align: middle; }
+  .line .nm .st.is-habit { background: var(--color-accent); color: var(--color-accent-contrast); border-color: transparent; }
+  .line .nm .st.is-done { background: var(--color-positive); color: #04120a; border-color: transparent; }
+  .line .nm .st.is-locked { color: var(--color-text-faint); }
+  .line .acts { display: inline-flex; gap: var(--space-1); flex-wrap: wrap; justify-content: flex-end; }
+  .line .acts button { min-height: 36px; }
+  .line .acts .on { border-color: var(--color-accent); background: var(--color-surface-active); }
+  .line .meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-size: var(--text-xs); color: var(--color-text-muted); }
+  .line .meta b { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  .line .meta .auto { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+  .line .meta .auto.is-on { color: var(--color-text); }
+  .line .meta .auto:before { content: ''; width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--color-border-strong); display: inline-block; }
+  .line .meta .auto.is-on:before { background: var(--color-accent); border-color: var(--color-accent); }
+
+  .figures { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-top: var(--space-4); }
+  @media (max-width: 420px) { .figures { grid-template-columns: 1fr 1fr; } }
+  .figure-cell { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; min-height: 96px; }
+  .figure-cell .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  .figure-cell .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); }
+  .figure-cell .big.is-incomplete { font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text-faint); }
+  .figure-cell .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: auto; padding-top: var(--space-2); }
+
+  .next { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-3); margin-top: var(--space-4); display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: center; }
+  .next .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  .next h3 { margin: var(--space-1) 0 0; font-size: var(--text-md); }
+  .next p { margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+
+  .levers { display: flex; gap: var(--space-1); flex-wrap: wrap; margin: 0 0 var(--space-3); }
+  .levers button { font-size: var(--text-xs); min-height: 32px; padding: 0 var(--space-3); }
+  .levers button.is-on { border-color: var(--color-accent); background: var(--color-surface-active); }
+
+  .stack { border-top: 1px solid var(--color-border); padding: var(--space-3) 0; }
+  .stack:first-child { border-top: none; }
+  .stack h3 { margin: 0; font-size: var(--text-md); display: flex; justify-content: space-between; gap: var(--space-2); }
+  .stack h3 .val { font-family: var(--font-display); font-variant-numeric: tabular-nums; }
+  .stack .why { font-size: var(--text-xs); color: var(--color-text-faint); margin: 2px 0 var(--space-2); }
+  .wf { display: grid; grid-template-columns: 1fr auto auto; gap: 2px var(--space-2); font-size: var(--text-sm); align-items: center; }
+  .wf .bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--color-surface-raised); overflow: hidden; margin-bottom: var(--space-1); }
+  .wf .bar i { display: block; height: 100%; background: var(--color-accent); }
+  .wf .off { color: var(--color-text-faint); }
+  .wf .mult { font-size: var(--text-xs); color: var(--color-text-muted); }
+  .wf .amt { font-variant-numeric: tabular-nums; text-align: right; }
+  .wf .cap { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-muted); border-top: 1px dashed var(--color-border); padding-top: var(--space-1); margin-top: var(--space-1); }
+
+  .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); align-items: stretch; }
+  @media (max-width: 480px) { .three { grid-template-columns: 1fr; } }
+  .curve { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; }
+  .curve .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  .curve svg { width: 100%; height: auto; display: block; margin-top: var(--space-2); }
+  .curve .axis { stroke: var(--color-border-strong); stroke-width: .6; fill: none; }
+  .curve .ln { stroke: var(--color-accent); stroke-width: 1.4; fill: none; }
+  .curve .ln.is-fiction { stroke: #e4b04a; stroke-dasharray: 3 2; }
+  .curve .clip { stroke: var(--color-text-faint); stroke-width: .5; stroke-dasharray: 1 2; }
+  .curve .lbl { font-size: 6px; fill: var(--color-text-faint); font-family: var(--font-body); }
+  .curve .mark { fill: var(--color-accent); }
+  .curve p { font-size: var(--text-xs); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .refused { font-size: var(--text-sm); color: var(--color-caution); margin: var(--space-2) 0 0; min-height: 1.2em; }
+  .actions { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-3); }
+  .notice { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-4); font-size: var(--text-sm); }
+  .notice.is-error { border-color: #b5544d; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>The Skill Stacker</h1>
+  <p class="room-lede">Three money skills at a time. Did it or didn’t, what today was worth, and what the ledger becomes by 65.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <nav class="stages" aria-label="The four screens">
+    <a href="#today"><b>1</b>Today</a>
+    <a href="#browse"><b>2</b>Every skill</a>
+    <a href="#stacks"><b>3</b>The stacks</a>
+    <a href="#curves"><b>4</b>Three curves</a>
+  </nav>
+
+  <section class="slaf-card" id="today">
+    <span class="slaf-eyebrow">Today</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)" id="today-title">What is on</h2>
+    <p class="slaf-hint" id="today-hint" style="margin:0 0 var(--space-3)"></p>
+    <div id="today-list"></div>
+    <p class="refused" id="today-note" aria-live="polite"></p>
+    <div class="figures">
+      <div class="figure-cell"><span class="cap">Today was worth</span><span class="big" id="fig-today">—</span><span class="sub" id="fig-today-sub"></span></div>
+      <div class="figure-cell"><span class="cap">The ledger</span><span class="big" id="fig-ledger">—</span><span class="sub" id="fig-ledger-sub"></span></div>
+      <div class="figure-cell"><span class="cap">At 65</span><span class="big" id="fig-end">—</span><span class="sub" id="fig-end-sub"></span></div>
+    </div>
+    <div class="next" id="next-card" hidden>
+      <div><span class="cap">Next</span><h3 id="next-name"></h3><p id="next-why"></p></div>
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-next">Take it on</button>
+    </div>
+    <p class="why" id="today-why"></p>
+  </section>
+
+  <section class="slaf-card" id="browse" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Every skill</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">By lever</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      Each skill trains one of the seven levers. A once-skill the household
+      already proves is marked done here without asking; a habit is logged a
+      day at a time; a periodic one comes due again. Best return on effort
+      first, within a lever.
+    </p>
+    <div class="levers" id="levers" role="group" aria-label="Filter by lever"></div>
+    <div id="browse-list"></div>
+    <p class="refused" id="browse-note" aria-live="polite"></p>
+    <h3 style="margin:var(--space-5) 0 var(--space-2);font-size:var(--text-md)">Thirty of the hundred ways</h3>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)" id="ways-hint"></p>
+    <div id="ways-list"></div>
+  </section>
+
+  <section class="slaf-card" id="stacks" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The stacks</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Skills that compound on each other</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      A stack is worth its skills' values, times the synergy between the ones
+      you are actually doing, up to a cap — The Kitchen can never claim more
+      than the food you buy.
+    </p>
+    <div id="stack-list"></div>
+  </section>
+
+  <section class="slaf-card" id="curves" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Three curves</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">The poster, the practice, the ledger</h2>
+    <div class="three">
+      <div class="curve"><span class="cap">The poster: 1% a day</span><svg id="curve-poster" viewBox="0 0 200 120" role="img" aria-label="1.01 to the power of days, clipped"></svg><p id="curve-poster-p"></p></div>
+      <div class="curve"><span class="cap">Capability</span><svg id="curve-cap" viewBox="0 0 200 120" role="img" aria-label="A logistic curve of capability against practice days"></svg><p id="curve-cap-p"></p></div>
+      <div class="curve"><span class="cap">The ledger, to 65</span><svg id="curve-ledger" viewBox="0 0 200 120" role="img" aria-label="The ledger total grown to 65"></svg><p id="curve-ledger-p"></p></div>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. A skill's annual figure is a
+    stated convention or your own lines, and a day's row in the ledger is
+    that figure ÷ 365 — feedback, not points. Your numbers stay in this
+    browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/liveform.js"></script>
+<script src="../shared/staleness.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/rating.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/statement.js"></script>
+<script src="../engines/swan.js"></script>
+<script src="../engines/benchmarks.js"></script>
+<script src="../engines/rerank.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../engines/debt.js"></script>
+<script src="../engines/quickmath.js"></script>
+<script src="../engines/vpw.js"></script>
+<script src="../engines/ss.js"></script>
+<script src="../engines/events.js"></script>
+<script src="../engines/skills.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference,
+      Ownership = SLAF.Ownership, Skills = SLAF.Skills, Benchmarks = SLAF.Benchmarks;
+
+  var ROOM_ID = 'stacker';
+  var TABLES = null;
+  var lever = 'all';
+  var LEVERS = [['all', 'All'], ['earner', 'Earner'], ['keeper', 'Keeper'], ['builder', 'Builder'], ['compounder', 'Compounder'],
+                ['landholder', 'Landholder'], ['anchor', 'Anchor'], ['speculator', 'Speculator']];
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function fmt(c) { return Money.formatCents(c); }
+  function fmtSmall(c) { return Money.formatCents(c, { decimals: 2 }); }
+  function today() { return Skills.dayISO(); }
+  function h() { return Spine.getProfile(); }
+
+  /* Every move the engine makes comes back as a patch or a refusal; the
+     patch is written, the refusal is shown where the tap happened. */
+  function apply(result, noteId) {
+    var note = el(noteId);
+    if (Money.isOk(result)) { note.textContent = ''; Spine.updateProfile(result.value); return true; }
+    note.textContent = result.reason;
+    return false;
+  }
+
+  function stateLabel(st, skill, stored) {
+    if (st === 'done' && skill.kind === 'periodic' && stored && stored.dueOn) return 'done · due ' + stored.dueOn;
+    return st;
+  }
+  function stateChip(st, skill, stored) {
+    return '<span class="st is-' + st + '">' + esc(stateLabel(st, skill, stored)) + '</span>';
+  }
+  function valueLine(skill, v) {
+    if (!Money.isOk(v)) return esc(v.reason);
+    if (v.risk) return 'worth $0 a year and something in a bad one';
+    return 'about <b>' + fmt(v.value) + '</b> a year';
+  }
+
+  /* ---- Today ------------------------------------------------------------------ */
+
+  function renderToday() {
+    var t = Skills.today(h(), TABLES, { today: today() });
+    var list = el('today-list');
+    el('today-title').textContent = t.lines.length ? 'What is on' : 'Nothing on yet';
+    el('today-hint').textContent = t.equippedCount + ' of ' + t.maxEquipped + ' on. '
+      + (t.lines.length ? 'Tap did or didn’t for each habit; mark a once-skill or a periodic one done when it is.' : 'Take one on from the list below, or the suggestion.');
+    list.innerHTML = t.lines.map(function (line) {
+      var s = line.skill, stored = h().skills[s.id] || {};
+      var acts = '';
+      if (s.kind === 'habit') {
+        acts = '<button type="button" class="slaf-btn' + (line.loggedToday === true ? ' on' : '') + '" data-log="did" data-skill="' + esc(s.id) + '">Did</button>'
+          + '<button type="button" class="slaf-btn' + (line.loggedToday === false ? ' on' : '') + '" data-log="didnt" data-skill="' + esc(s.id) + '">Didn’t</button>';
+      } else if (s.kind === 'once') {
+        acts = '<button type="button" class="slaf-btn" data-done="' + esc(s.id) + '">Done</button>';
+      } else {
+        acts = '<button type="button" class="slaf-btn' + (line.due ? ' slaf-btn--primary' : '') + '" data-done="' + esc(s.id) + '">' + (line.due ? 'Due — done' : 'Done today') + '</button>';
+      }
+      acts += '<button type="button" class="slaf-btn slaf-btn--quiet" data-drop="' + esc(s.id) + '" aria-label="Put ' + esc(s.name) + ' down">Drop</button>';
+      var meta = [];
+      if (s.kind === 'habit') meta.push('<span><b>' + line.last30 + '</b> of the last 30 days</span>');
+      if (s.kind === 'habit' && line.secondMisses) meta.push('<span><b>' + line.secondMisses + '</b> second miss' + (line.secondMisses === 1 ? '' : 'es') + '</span>');
+      meta.push('<span>' + (Money.isEntered(line.perDayCents) ? '<b>' + fmtSmall(line.perDayCents) + '</b> a day' : (line.risk ? 'worth $0 a day, by design' : 'not priced yet')) + '</span>');
+      if (Money.isEntered(line.valueCents) && line.valueCents > 0) {
+        meta.push('<span class="auto' + (line.automated ? ' is-on' : '') + '" data-auto="' + esc(s.id) + '" role="button" tabindex="0">' + (line.automated ? 'runs by itself' : 'runs by itself?') + '</span>');
+      }
+      return '<div class="line" data-skill-line="' + esc(s.id) + '"><span class="nm">' + esc(s.name) + stateChip(line.state, s, stored)
+        + '<small>' + esc(s.kind === 'habit' ? 'habit · ' + s.lever : s.kind === 'once' ? 'once · ' + s.lever : 'every ' + s.everyDays + ' days · ' + s.lever) + '</small></span>'
+        + '<span class="acts">' + acts + '</span><span class="meta">' + meta.join('') + '</span></div>';
+    }).join('');
+
+    setFigure('fig-today', Money.ok(t.todayCents), fmtSmall, t.todayCents ? 'the rows logged today, at each skill’s value ÷ 365' : 'nothing logged today');
+    setFigure('fig-ledger', Money.ok(t.ledgerCents), fmt, ledgerSub(t));
+    setFigure('fig-end', t.atEnd, fmt, Money.isOk(t.atEnd)
+      ? 'the ledger × ' + (Math.round(t.atEnd.multiplier * 10) / 10) + ', a dollar at ' + t.atEnd.age + ' by ' + t.atEnd.endAge + ' on the wealth multiplier'
+      : '');
+
+    var card = el('next-card');
+    if (Money.isOk(t.next) && t.equippedCount < t.maxEquipped) {
+      card.hidden = false;
+      el('next-name').textContent = t.next.value.name;
+      el('next-why').textContent = t.next.why + (t.next.fooStep !== null ? ' · you are at FOO step ' + t.next.fooStep : '');
+      el('btn-next').setAttribute('data-skill', t.next.value.id);
+    } else {
+      card.hidden = true;
+    }
+    el('today-why').textContent = 'A habit counts while it is logged: seven of thirty days makes it practicing, twenty-one a habit; fourteen unlogged days and it slips back, forty-five and it is off. The ledger keeps every row either way.';
+  }
+  function ledgerSub(t) {
+    var rows = (h().practiceLedger || []).length;
+    var d = Spine.snapshotDelta('practiceLedgerCents', Money.ok(t.ledgerCents));
+    var since = d && Money.isEntered(d.delta) && d.delta !== 0 ? ' · ' + (d.delta > 0 ? '+' : '−') + fmt(Math.abs(d.delta)) + ' since your last snapshot' : '';
+    return rows + ' row' + (rows === 1 ? '' : 's') + since;
+  }
+  function setFigure(id, result, format, sub) {
+    var node = el(id);
+    if (Money.isOk(result)) { node.textContent = format(result.value); node.className = 'big'; }
+    else { node.textContent = result.reason; node.className = 'big is-incomplete'; }
+    el(id + '-sub').textContent = sub;
+  }
+
+  var todayForm = SLAF.LiveForm.guard(el('today-list'), renderToday);
+
+  /* Every control in these lists is a button. A tap leaves focus on the
+     button it landed on, which the guard would read as "someone is in
+     here" and hold the rebuild — so after a tap has been acted on, the
+     lists are rebuilt at once. There is no typed input to protect. */
+
+  el('today-list').addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-log]');
+    if (b) { apply(Skills.logDay(h(), b.getAttribute('data-skill'), b.getAttribute('data-log') === 'did', TABLES, today()), 'today-note'); rebuilt(); return; }
+    b = evt.target.closest('[data-done]');
+    if (b) { apply(Skills.markDone(h(), b.getAttribute('data-done'), TABLES, today()), 'today-note'); rebuilt(); return; }
+    b = evt.target.closest('[data-drop]');
+    if (b) { apply(Skills.drop(h(), b.getAttribute('data-drop')), 'today-note'); rebuilt(); return; }
+    b = evt.target.closest('[data-auto]');
+    if (b) { var id = b.getAttribute('data-auto'); apply(Skills.setAutomated(h(), id, !(h().skills[id] || {}).automated), 'today-note'); rebuilt(); }
+  });
+  el('today-list').addEventListener('keydown', function (evt) {
+    if (evt.key !== 'Enter' && evt.key !== ' ') return;
+    var b = evt.target.closest('[data-auto]');
+    if (b) { evt.preventDefault(); b.click(); }
+  });
+  el('btn-next').addEventListener('click', function () {
+    apply(Skills.equip(h(), el('btn-next').getAttribute('data-skill'), TABLES, today()), 'today-note'); rebuilt();
+  });
+
+  /* ---- Browse ------------------------------------------------------------------ */
+
+  function skillRow(s, noteId) {
+    var hh = h();
+    var st = Skills.state(hh, s);
+    var stored = hh.skills[s.id] || null;
+    var v = Skills.valuePerYear(hh, s, TABLES);
+    var hours = Skills.effortHours(s, TABLES);
+    var acts = '';
+    if (st === 'available') acts += '<button type="button" class="slaf-btn" data-equip="' + esc(s.id) + '">Take on</button>';
+    if (st === 'available' && s.kind !== 'habit') acts += '<button type="button" class="slaf-btn slaf-btn--quiet" data-done="' + esc(s.id) + '">Already done</button>';
+    if (st === 'trial' || st === 'practicing' || st === 'habit') acts += '<button type="button" class="slaf-btn slaf-btn--quiet" data-drop="' + esc(s.id) + '">Drop</button>';
+    if (st === 'done' && s.kind === 'periodic' && Skills.due(hh, s, today())) acts += '<button type="button" class="slaf-btn" data-done="' + esc(s.id) + '">Due — done</button>';
+    if (st === 'done' && stored && stored.verifiedBy === 'self') acts += '<button type="button" class="slaf-btn slaf-btn--quiet" data-drop="' + esc(s.id) + '">Not done</button>';
+    var need = st === 'locked' ? Skills.unmetPrereqs(hh, s).map(function (id) { var p = Skills.byId(TABLES, id); return p ? p.name : id; }) : [];
+    var meta = ['<span>' + valueLine(s, v) + '</span>',
+      '<span>' + (Math.round(hours * 10) / 10) + ' h a year</span>'];
+    if (st === 'done' && stored && stored.verifiedBy === 'household') meta.push('<span>proven by your own numbers</span>');
+    if (need.length) meta.push('<span>first: ' + esc(need.join(', ')) + '</span>');
+    if (s.synergy && s.synergy.length) meta.push('<span>×' + s.synergy[0].multiplier + ' with ' + esc((Skills.byId(TABLES, s.synergy[0].with) || {}).name || s.synergy[0].with) + '</span>');
+    return '<div class="line" data-skill-row="' + esc(s.id) + '"><span class="nm">' + esc(s.name) + stateChip(st, s, stored)
+      + '<small>' + esc(s.kind + ' · ' + s.lever + (s.fooStep ? ' · FOO step ' + s.fooStep : '') + ' · ' + s.source) + '</small></span>'
+      + '<span class="acts">' + acts + '</span><span class="meta">' + meta.join('') + '</span></div>';
+  }
+
+  function renderLevers() {
+    el('levers').innerHTML = LEVERS.map(function (l) {
+      return '<button type="button" class="slaf-btn' + (lever === l[0] ? ' is-on' : '') + '" data-lever="' + l[0] + '">' + l[1] + '</button>';
+    }).join('');
+  }
+  el('levers').addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-lever]');
+    if (!b) return;
+    lever = b.getAttribute('data-lever');
+    renderLevers(); browseForm.force(); waysForm.force();
+  });
+
+  function ordered(list) {
+    var hh = h();
+    var rank = { trial: 0, practicing: 0, habit: 1, available: 2, locked: 3, done: 4 };
+    return list.map(function (s) { return { s: s, st: Skills.state(hh, s), roe: Skills.returnOnEffort(hh, s, TABLES).value }; })
+      .sort(function (a, b) { return rank[a.st] - rank[b.st] || b.roe - a.roe || a.s.level - b.s.level; })
+      .map(function (r) { return r.s; });
+  }
+  function renderBrowse() {
+    var cat = Skills.catalogue(TABLES).filter(function (s) { return !s.trial && (lever === 'all' || s.lever === lever); });
+    el('browse-list').innerHTML = ordered(cat).map(function (s) { return skillRow(s, 'browse-note'); }).join('')
+      || '<p class="slaf-reason">No skill trains that lever yet.</p>';
+  }
+  function renderWays() {
+    var hw = TABLES.hundredWays;
+    el('ways-hint').textContent = hw.confidenceNote + ' Each is a trial: take one on and its figure counts only while it is logged.';
+    var ways = Skills.catalogue(TABLES).filter(function (s) { return s.trial && (lever === 'all' || s.lever === lever); });
+    el('ways-list').innerHTML = ordered(ways).map(function (s) { return skillRow(s, 'browse-note'); }).join('')
+      || '<p class="slaf-reason">Every one of the thirty is a keeper.</p>';
+  }
+  var browseForm = SLAF.LiveForm.guard(el('browse-list'), renderBrowse);
+  var waysForm = SLAF.LiveForm.guard(el('ways-list'), renderWays);
+  function rebuilt() { todayForm.force(); browseForm.force(); waysForm.force(); render(); }
+
+  function browseClick(evt) {
+    var b = evt.target.closest('[data-equip]');
+    if (b) { apply(Skills.equip(h(), b.getAttribute('data-equip'), TABLES, today()), 'browse-note'); rebuilt(); return; }
+    b = evt.target.closest('[data-done]');
+    if (b) { apply(Skills.markDone(h(), b.getAttribute('data-done'), TABLES, today()), 'browse-note'); rebuilt(); return; }
+    b = evt.target.closest('[data-drop]');
+    if (b) { apply(Skills.drop(h(), b.getAttribute('data-drop')), 'browse-note'); rebuilt(); }
+  }
+  el('browse-list').addEventListener('click', browseClick);
+  el('ways-list').addEventListener('click', browseClick);
+
+  /* ---- Stacks -------------------------------------------------------------------- */
+
+  function renderStacks() {
+    var hh = h();
+    el('stack-list').innerHTML = Skills.stackValues(hh, TABLES).map(function (r) {
+      var st = r.stack;
+      var maxRow = Math.max(1, r.capCents, r.rawCents);
+      var rows = r.rows.map(function (row) {
+        return '<span class="' + (row.active ? '' : 'off') + '">' + esc(row.name) + (row.active ? '' : ' · ' + esc(row.state)) + '</span>'
+          + '<span class="mult">' + (row.multiplier !== 1 ? '×' + row.multiplier : '') + '</span>'
+          + '<span class="amt' + (row.active ? '' : ' off') + '">' + (row.active ? (row.valued ? fmt(row.valueCents) : 'not priced') : '—') + '</span>'
+          + '<span class="bar"><i style="width:' + Math.round(100 * row.valueCents / maxRow) + '%"></i></span>';
+      }).join('');
+      var capLine = r.capCents === 0
+        ? 'Capped at $0 on purpose: ' + esc(st.why)
+        : (r.capped ? 'Capped at ' + fmt(r.capCents) : 'Cap ' + fmt(r.capCents)) + (r.capFrom !== 'stack' ? ', twelve months of the line it acts on' : '') + '. ' + esc(st.why);
+      return '<div class="stack" data-stack="' + esc(st.id) + '"><h3><span>' + esc(st.name) + ' <small style="color:var(--color-text-faint);font-weight:normal">' + r.activeCount + ' of ' + r.total + '</small></span><span class="val">' + fmt(r.value) + '<small style="font-family:var(--font-body);color:var(--color-text-faint)"> /yr</small></span></h3>'
+        + '<div class="wf">' + rows + '<span class="cap">' + capLine + '</span></div></div>';
+    }).join('');
+  }
+
+  /* ---- Curves --------------------------------------------------------------------- */
+
+  function polyline(points, w, hgt, pad) {
+    var xs = points.map(function (p) { return p[0]; }), ys = points.map(function (p) { return p[1]; });
+    var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y1 = Math.max.apply(null, ys);
+    var sx = function (x) { return pad + (x - x0) / ((x1 - x0) || 1) * (w - 2 * pad); };
+    var sy = function (y) { return hgt - pad - y / (y1 || 1) * (hgt - 2 * pad); };
+    return { d: points.map(function (p) { return sx(p[0]).toFixed(1) + ',' + sy(p[1]).toFixed(1); }).join(' '), sx: sx, sy: sy };
+  }
+  function frame(w, hgt, pad, xl, yl) {
+    return '<path class="axis" d="M' + pad + ',' + pad + ' L' + pad + ',' + (hgt - pad) + ' L' + (w - pad) + ',' + (hgt - pad) + '"/>'
+      + '<text class="lbl" x="' + (w - pad) + '" y="' + (hgt - 2) + '" text-anchor="end">' + esc(xl) + '</text>'
+      + '<text class="lbl" x="' + (pad + 2) + '" y="' + (pad - 2) + '">' + esc(yl) + '</text>';
+  }
+  function renderCurves() {
+    var W = 200, H = 120, P = 14;
+    var c = TABLES.curves;
+    /* 1. The poster, drawn as the fiction it is: clipped at the cap. */
+    var pts = [], clipAt = null;
+    for (var d = 0; d <= c.poster.days; d += 5) {
+      var v = Skills.posterValue(TABLES, d);
+      if (clipAt === null && Math.pow(c.poster.base, d) >= c.poster.cap) clipAt = d;
+      pts.push([d, v]);
+    }
+    var pl = polyline(pts, W, H, P);
+    el('curve-poster').innerHTML = frame(W, H, P, 'days', '×' + c.poster.cap)
+      + '<polyline class="ln is-fiction" points="' + pl.d + '"/>'
+      + (clipAt !== null ? '<line class="clip" x1="' + pl.sx(clipAt).toFixed(1) + '" y1="' + P + '" x2="' + pl.sx(clipAt).toFixed(1) + '" y2="' + (H - P) + '"/>' : '');
+    el('curve-poster-p').textContent = c.poster.base + ' a day is ×' + (Math.round(Math.pow(c.poster.base, c.poster.days) * 10) / 10) + ' in ' + c.poster.days + ' days. Nothing compounds like that, so the line is clipped at ×' + c.poster.cap + (clipAt !== null ? ', day ' + clipAt : '') + '.';
+    /* 2. Capability: logistic on practice days, with your best habit marked. */
+    var cp = [];
+    for (var dd = 0; dd <= 120; dd += 4) cp.push([dd, Skills.capability(TABLES, dd)]);
+    var cl = polyline(cp, W, H, P);
+    var hh = h();
+    var best = 0;
+    Object.keys(hh.skills || {}).forEach(function (id) { var s = hh.skills[id]; if (s.kind === 'habit') best = Math.max(best, s.log.length); });
+    el('curve-cap').innerHTML = frame(W, H, P, 'practice days', 'capability')
+      + '<polyline class="ln" points="' + cl.d + '"/>'
+      + (best ? '<circle class="mark" r="2.5" cx="' + cl.sx(Math.min(120, best)).toFixed(1) + '" cy="' + cl.sy(Skills.capability(TABLES, best)).toFixed(1) + '"/>' : '');
+    el('curve-cap-p').textContent = 'A logistic: slow at first, fastest around day ' + c.logistic.midpointDays + ', then levelling. ' + (best ? 'Your longest-logged habit is at ' + best + ' day' + (best === 1 ? '' : 's') + ', ' + Math.round(100 * Skills.capability(TABLES, best)) + '% of the way.' : 'No habit logged yet.');
+    /* 3. The ledger, grown to 65 along the wealth multiplier. */
+    var total = Skills.ledgerTotalCents(hh);
+    var fv = Skills.ledgerFutureValue(hh, TABLES);
+    var table = TABLES.wealthMultiplier;
+    if (Money.isOk(fv) && total > 0) {
+      var curve = Benchmarks.curve(table, fv.age);
+      var lp = [[fv.age, total]], acc = total;
+      for (var m = 0; m < curve.factors.length; m++) { acc *= curve.factors[m]; if ((m + 1) % curve.perYear === 0) lp.push([fv.age + (m + 1) / curve.perYear, acc]); }
+      var ll = polyline(lp, W, H, P);
+      el('curve-ledger').innerHTML = frame(W, H, P, 'age ' + fv.endAge, fmt(fv.value)) + '<polyline class="ln" points="' + ll.d + '"/>';
+      el('curve-ledger-p').textContent = fmt(total) + ' logged so far becomes ' + fmt(fv.value) + ' at ' + fv.endAge + ' — the wealth multiplier at ' + fv.age + ', a convention, not a forecast.';
+    } else {
+      el('curve-ledger').innerHTML = frame(W, H, P, 'age', '$');
+      el('curve-ledger-p').textContent = total > 0 ? fv.reason : 'Nothing in the ledger yet. Log a day and this draws itself.';
+    }
+  }
+
+  /* ---- Facts first: what the household already proves, and what time undid ---- */
+
+  function reconcile() {
+    var hh = h();
+    var v = Skills.verifyOnce(hh, TABLES, today());
+    var d = Skills.decay(Object.assign({}, hh, { skills: v.skills }), TABLES, today());
+    if (v.verified.length || v.reverted.length || d.changes.length) Spine.updateProfile({ skills: d.skills });
+  }
+
+  /* ---- Render -------------------------------------------------------------------- */
+
+  function renderNow() {
+    if (!TABLES) return;
+    todayForm.request(); browseForm.request(); waysForm.request();
+    renderStacks();
+    renderCurves();
+    el('reading-list').innerHTML = ['grossAnnualIncome', 'monthlyExpenses', 'capturingFullMatch', 'rerankCut', 'practiceLedger']
+      .map(function (f) { return Ownership.chip(f, h(), ROOM_ID); }).join('');
+  }
+  var queued = false;
+  function render() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () { queued = false; renderNow(); }, 0);
+  }
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    SLAF.Staleness.use(tables.staleness);
+    renderLevers();
+    reconcile();
+    renderNow();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

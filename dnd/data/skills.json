@@ -1,0 +1,849 @@
+{
+  "id": "skills",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "The Skill Stacker's catalogue: twenty-six money skills, each tied to one of the seven Dungeons & Dividends classes (its lever) and the sub-stats it trains, with an effect either verified from the household's own facts or valued by a stated convention (BRIEF §7.1).",
+  "confidence": "convention",
+  "confidenceNote": "Every dollar figure here is a rule of thumb — a third off the dining line for cooking, $300 a year for a phone call — and says so in its source line. Effort figures are guesses at learning hours and daily practice minutes. Nothing here is measured.",
+  "note": "kind: once (done when verified or marked), habit (logged daily; decays after decayDays missed), periodic (due every everyDays). effect: cents_per_year with a fixed cents or a formula in the events engine's expression language over the household context; risk effects are worth $0 by design. verify: a household fact that marks a once-skill done on load — field is an ownership row; present / equals / gteField / source. fooStep: the FOO step this belongs to (0 = any). level: 1 starter, 2 built, 3 practised. rules: the thresholds the engine reads, see there. D-090.",
+  "rules": {
+    "maxEquipped": 3,
+    "windowDays": 30,
+    "trialDays": 7,
+    "habitDays": 21,
+    "decayDays": 14,
+    "lapseDays": 45,
+    "nudgeMultiplier": 1.5,
+    "minEffortHours": 0.25,
+    "note": "maxEquipped: how many skills may sit in trial or practicing at once. A habit in trial becomes practicing at trialDays logged in the last windowDays and a habit at habitDays; a habit unlogged for the skill's own decayDays (else this default) falls back to practicing, and for lapseDays to available. nudgeMultiplier weights a skill that trains the lowest sub-stat in nextSkill. minEffortHours keeps return-on-effort finite for a skill with no stated effort."
+  },
+  "skills": [
+    {
+      "id": "enter-the-facts",
+      "name": "Enter the facts",
+      "lever": "keeper",
+      "subStats": {
+        "selfAwareness": 2,
+        "consistency": 1
+      },
+      "kind": "once",
+      "effect": {
+        "type": "risk",
+        "cents": 0
+      },
+      "effort": {
+        "learnHours": 0.5,
+        "practiceMinutes": 0
+      },
+      "prereqs": [],
+      "unlocks": [],
+      "synergy": [],
+      "verify": {
+        "field": "grossAnnualIncome",
+        "present": true
+      },
+      "decayDays": null,
+      "everyDays": null,
+      "fooStep": 0,
+      "level": 1,
+      "source": "The intake; a person who has written the numbers down can see them."
+    },
+    {
+      "id": "know-your-number",
+      "name": "Know your sleep-at-night number",
+      "lever": "anchor",
+      "subStats": {
+        "selfAwareness": 2,
+        "reserveDepth": 1
+      },
+      "kind": "once",
+      "effect": {
+        "type": "risk",
+        "cents": 0
+      },
+      "effort": {
+        "learnHours": 0.25,
+        "practiceMinutes": 0
+      },
+      "prereqs": [],
+      "unlocks": [],
+      "synergy": [],
+      "verify": {
+        "field": "swanTarget",
+        "present": true
+      },
+      "decayDays": null,
+      "everyDays": null,
+      "fooStep": 1,
+      "level": 1,
+      "source": "Sleep At Night: the amount that stops the 3am arithmetic."
+    },
+    {
+      "id": "capture-the-match",
+      "name": "Capture the full match",
+      "lever": "compounder",
+      "subStats": {
+        "savingsRate": 2,
+        "instrumentLiteracy": 1
+      },
+      "kind": "once",
+      "effect": {
+        "type": "cents_per_year",
+        "formula": {
+          "*": [
+            12,
+            "$matchLeftMonthlyCents"
+          ]
+        }
+      },
+      "effort": {
+        "learnHours": 1,
+        "practiceMinutes": 0
+      },
+      "prereqs": [
+        "enter-the-facts"
+      ],
+      "unlocks": [
+        "raise-one-point"
+      ],
+      "synergy": [],
+      "verify": {
+        "field": "capturingFullMatch",
+        "equals": true
+      },
+      "decayDays": null,
+      "everyDays": null,
+      "fooStep": 2,
+      "level": 1,
+      "source": "Money Guy FOO step 2: the match is a 50–100% instant return."
+    },
+    {
+      "id": "name-your-debt",
+      "name": "Name every debt and its rate",
+      "lever": "keeper",
+      "subStats": {
+        "obligationFlex": 1,
+        "threatDetection": 1
+      },
+      "kind": "once",
+      "effect": {
+        "type": "risk",
+        "cents": 0
+      },
+      "effort": {
+        "learnHours": 0.5,
+        "practiceMinutes": 0
+      },
+      "prereqs": [],
+      "unlocks": [],
+      "synergy": [],
+      "verify": {
+        "field": "totalDebt",
+        "present": true
+      },
+      "decayDays": null,
+      "everyDays": null,
+      "fooStep": 3,
+      "level": 1,
+      "source": "Debt Payoff: a balance with no rate cannot be judged."
+    },
+    {
+      "id": "starter-fund",
+      "name": "Hold a starter fund",
+      "lever": "anchor",
+      "subStats": {
+        "reserveDepth": 2
+      },
+      "kind": "once",
+      "effect": {
+        "type": "risk",
+        "cents": 0
+      },
+      "effort": {
+        "learnHours": 0.5,
+        "practiceMinutes": 0
+      },
+      "prereqs": [],
+      "unlocks": [],
+      "synergy": [],
+      "verify": {
+        "field": "cashSavings",
+        "gteField": "highestDeductible"
+      },
+      "decayDays": null,
+      "everyDays": null,
+      "fooStep": 1,
+      "level": 1,
+      "source": "FOO step 1: the highest deductible in cash."
+    },
+    {
+      "id": "know-your-bracket",
+      "name": "Know your marginal bracket",
+      "lever": "compounder",
+      "subStats": {
+        "taxLiteracy": 2
+      },
+      "kind": "once",
+      "effect": {
+        "type": "risk",
+        "cents": 0
+      },
+      "effort": {
+        "learnHours": 0.5,
+        "practiceMinutes": 0
+      },
+      "prereqs": [],
+      "unlocks": [],
+      "synergy": [],
+      "verify": {
+        "field": "marginalRate",
+        "present": true
+      },
+      "decayDays": null,
+      "everyDays": null,
+      "fooStep": 4,
+      "level": 1,
+      "source": "Where It Goes: the rate on the next dollar decides Roth against traditional."
+    },
+    {
+      "id": "track-a-month",
+      "name": "Track one whole month",
+      "lever": "keeper",
+      "subStats": {
+        "selfAwareness": 2,
+        "consistency": 1
+      },
+      "kind": "once",
+      "effect": {
+        "type": "risk",
+        "cents": 0
+      },
+      "effort": {
+        "learnHours": 2,
+        "practiceMinutes": 0
+      },
+      "prereqs": [],
+      "unlocks": [],
+      "synergy": [],
+      "verify": {
+        "field": "monthlyExpenses",
+        "source": "tracked"
+      },
+      "decayDays": null,
+      "everyDays": null,
+      "fooStep": 0,
+      "level": 1,
+      "source": "Cash Flow: a categorised month replaces the guess."
+    },
+    {
+      "id": "rerank-your-costs",
+      "name": "Rerank your costs",
+      "lever": "keeper",
+      "subStats": {
+        "selfAwareness": 2,
+        "obligationFlex": 1
+      },
+      "kind": "once",
+      "effect": {
+        "type": "cents_per_year",
+        "formula": {
+          "*": [
+            12,
+            {
+              "coalesce": [
+                "$rerankCutTopMonthlyCents",
+                0
+              ]
+            }
+          ]
+        }
+      },
+      "effort": {
+        "learnHours": 1,
+        "practiceMinutes": 0
+      },
+      "prereqs": [
+        "track-a-month"
+      ],
+      "unlocks": [
+        "cut-one-line"
+      ],
+      "synergy": [],
+      "verify": {
+        "field": "rerankCut",
+        "present": true
+      },
+      "decayDays": null,
+      "everyDays": null,
+      "fooStep": 0,
+      "level": 2,
+      "source": "A year of the flagged lines that are not needs — housing flagged as 'cut' is a finding, not a saving. The Rerank, D-085."
+    },
+    {
+      "id": "raise-one-point",
+      "name": "Raise the contribution one point",
+      "lever": "compounder",
+      "subStats": {
+        "savingsRate": 2,
+        "consistency": 1
+      },
+      "kind": "once",
+      "effect": {
+        "type": "cents_per_year",
+        "formula": {
+          "*": [
+            0.01,
+            "$grossAnnualCents"
+          ]
+        }
+      },
+      "effort": {
+        "learnHours": 0.5,
+        "practiceMinutes": 0
+      },
+      "prereqs": [
+        "capture-the-match"
+      ],
+      "unlocks": [],
+      "synergy": [],
+      "verify": null,
+      "decayDays": null,
+      "everyDays": null,
+      "fooStep": 5,
+      "level": 2,
+      "source": "One more point of salary into the plan, every year."
+    },
+    {
+      "id": "cover-checkup",
+      "name": "Do the Coverage Checkup",
+      "lever": "anchor",
+      "subStats": {
+        "threatDetection": 2,
+        "reserveDepth": 1
+      },
+      "kind": "once",
+      "effect": {
+        "type": "risk",
+        "cents": 0
+      },
+      "effort": {
+        "learnHours": 1,
+        "practiceMinutes": 0
+      },
+      "prereqs": [],
+      "unlocks": [],
+      "synergy": [],
+      "verify": {
+        "field": "oopMax",
+        "present": true
+      },
+      "decayDays": null,
+      "everyDays": null,
+      "fooStep": 1,
+      "level": 1,
+      "source": "Sleep At Night: four facts about your cover."
+    },
+    {
+      "id": "term-life",
+      "name": "Buy term life at 10–12× income",
+      "lever": "anchor",
+      "subStats": {
+        "threatDetection": 2
+      },
+      "kind": "once",
+      "effect": {
+        "type": "risk",
+        "cents": 0
+      },
+      "effort": {
+        "learnHours": 2,
+        "practiceMinutes": 0
+      },
+      "prereqs": [
+        "cover-checkup"
+      ],
+      "unlocks": [],
+      "synergy": [],
+      "verify": {
+        "field": "termLife",
+        "present": true
+      },
+      "decayDays": null,
+      "everyDays": null,
+      "fooStep": 1,
+      "level": 2,
+      "source": "A convention for anyone with dependants."
+    },
+    {
+      "id": "pick-a-stop-age",
+      "name": "Pick a stop age",
+      "lever": "compounder",
+      "subStats": {
+        "scenarioForesight": 2
+      },
+      "kind": "once",
+      "effect": {
+        "type": "risk",
+        "cents": 0
+      },
+      "effort": {
+        "learnHours": 0.25,
+        "practiceMinutes": 0
+      },
+      "prereqs": [],
+      "unlocks": [],
+      "synergy": [],
+      "verify": {
+        "field": "retireAge",
+        "present": true
+      },
+      "decayDays": null,
+      "everyDays": null,
+      "fooStep": 0,
+      "level": 1,
+      "source": "FIRE Number: the age you intend to stop, stored."
+    },
+    {
+      "id": "set-a-mix",
+      "name": "Set a target mix",
+      "lever": "compounder",
+      "subStats": {
+        "marketLiteracy": 2,
+        "instrumentLiteracy": 1
+      },
+      "kind": "once",
+      "effect": {
+        "type": "risk",
+        "cents": 0
+      },
+      "effort": {
+        "learnHours": 1,
+        "practiceMinutes": 0
+      },
+      "prereqs": [],
+      "unlocks": [],
+      "synergy": [],
+      "verify": {
+        "field": "rebalanceBand",
+        "present": true
+      },
+      "decayDays": null,
+      "everyDays": null,
+      "fooStep": 6,
+      "level": 2,
+      "source": "Where It Goes: stocks, bonds, cash, and a band."
+    },
+    {
+      "id": "cook-dinner",
+      "name": "Cook dinner",
+      "lever": "keeper",
+      "subStats": {
+        "consistency": 2,
+        "savingsRate": 1
+      },
+      "kind": "habit",
+      "effect": {
+        "type": "cents_per_year",
+        "formula": {
+          "*": [
+            12,
+            0.3,
+            {
+              "coalesce": [
+                "$diningMonthlyCents",
+                0
+              ]
+            }
+          ]
+        }
+      },
+      "effort": {
+        "learnHours": 3,
+        "practiceMinutes": 45
+      },
+      "prereqs": [],
+      "unlocks": [],
+      "synergy": [
+        {
+          "with": "weekly-shop",
+          "multiplier": 1.25,
+          "why": "A planned shop makes the cooking cheaper and the takeaway rarer."
+        }
+      ],
+      "verify": null,
+      "decayDays": 14,
+      "everyDays": null,
+      "fooStep": 0,
+      "level": 1,
+      "source": "The dining-out line shrinks by about a third when most dinners are cooked; the share is a convention."
+    },
+    {
+      "id": "weekly-shop",
+      "name": "One weekly shop from a list",
+      "lever": "keeper",
+      "subStats": {
+        "consistency": 1,
+        "obligationFlex": 1
+      },
+      "kind": "habit",
+      "effect": {
+        "type": "cents_per_year",
+        "formula": {
+          "*": [
+            12,
+            0.1,
+            {
+              "coalesce": [
+                "$groceriesMonthlyCents",
+                0
+              ]
+            }
+          ]
+        }
+      },
+      "effort": {
+        "learnHours": 1,
+        "practiceMinutes": 30
+      },
+      "prereqs": [],
+      "unlocks": [],
+      "synergy": [],
+      "verify": null,
+      "decayDays": 14,
+      "everyDays": null,
+      "fooStep": 0,
+      "level": 1,
+      "source": "A list and one trip cut the grocery line about a tenth; a convention."
+    },
+    {
+      "id": "no-spend-day",
+      "name": "Two no-spend days a week",
+      "lever": "keeper",
+      "subStats": {
+        "consistency": 2
+      },
+      "kind": "habit",
+      "effect": {
+        "type": "cents_per_year",
+        "cents": 60000
+      },
+      "effort": {
+        "learnHours": 0.5,
+        "practiceMinutes": 5
+      },
+      "prereqs": [],
+      "unlocks": [],
+      "synergy": [],
+      "verify": null,
+      "decayDays": 14,
+      "everyDays": null,
+      "fooStep": 0,
+      "level": 1,
+      "source": "About $600 a year in the impulse lines; a convention."
+    },
+    {
+      "id": "pack-lunch",
+      "name": "Pack lunch",
+      "lever": "keeper",
+      "subStats": {
+        "consistency": 1
+      },
+      "kind": "habit",
+      "effect": {
+        "type": "cents_per_year",
+        "cents": 180000
+      },
+      "effort": {
+        "learnHours": 1,
+        "practiceMinutes": 15
+      },
+      "prereqs": [],
+      "unlocks": [],
+      "synergy": [
+        {
+          "with": "cook-dinner",
+          "multiplier": 1.2,
+          "why": "Tonight's dinner is tomorrow's lunch."
+        }
+      ],
+      "verify": null,
+      "decayDays": 14,
+      "everyDays": null,
+      "fooStep": 0,
+      "level": 1,
+      "source": "$10 a working day less on lunch, 3 days a week — about $1,800 a year; a convention."
+    },
+    {
+      "id": "cut-one-line",
+      "name": "Cut one flagged line",
+      "lever": "keeper",
+      "subStats": {
+        "obligationFlex": 2
+      },
+      "kind": "habit",
+      "effect": {
+        "type": "cents_per_year",
+        "formula": {
+          "*": [
+            12,
+            {
+              "coalesce": [
+                "$rerankCutOneMonthlyCents",
+                0
+              ]
+            }
+          ]
+        }
+      },
+      "effort": {
+        "learnHours": 0.5,
+        "practiceMinutes": 5
+      },
+      "prereqs": [
+        "rerank-your-costs"
+      ],
+      "unlocks": [],
+      "synergy": [],
+      "verify": null,
+      "decayDays": 30,
+      "everyDays": null,
+      "fooStep": 0,
+      "level": 2,
+      "source": "The dearest non-need line The Rerank flagged, kept cut for a year; nothing until the rerank has flagged one. D-085."
+    },
+    {
+      "id": "track-daily",
+      "name": "Log spending daily",
+      "lever": "keeper",
+      "subStats": {
+        "selfAwareness": 2,
+        "consistency": 2
+      },
+      "kind": "habit",
+      "effect": {
+        "type": "risk",
+        "cents": 0
+      },
+      "effort": {
+        "learnHours": 0.5,
+        "practiceMinutes": 3
+      },
+      "prereqs": [],
+      "unlocks": [],
+      "synergy": [],
+      "verify": null,
+      "decayDays": 14,
+      "everyDays": null,
+      "fooStep": 0,
+      "level": 1,
+      "source": "Awareness; no dollar value claimed."
+    },
+    {
+      "id": "negotiate-a-bill",
+      "name": "Call one bill a month and ask",
+      "lever": "earner",
+      "subStats": {
+        "negotiation": 2,
+        "personability": 1
+      },
+      "kind": "periodic",
+      "effect": {
+        "type": "cents_per_year",
+        "cents": 30000
+      },
+      "effort": {
+        "learnHours": 1,
+        "practiceMinutes": 20
+      },
+      "prereqs": [],
+      "unlocks": [],
+      "synergy": [],
+      "verify": null,
+      "decayDays": null,
+      "everyDays": 30,
+      "fooStep": 0,
+      "level": 1,
+      "source": "Insurance, internet, phone: about $300 a year from a yearly call each; a convention."
+    },
+    {
+      "id": "ask-for-the-raise",
+      "name": "Ask for the raise",
+      "lever": "earner",
+      "subStats": {
+        "negotiation": 2,
+        "incomeTrajectory": 2
+      },
+      "kind": "periodic",
+      "effect": {
+        "type": "cents_per_year",
+        "formula": {
+          "*": [
+            0.03,
+            "$grossAnnualCents"
+          ]
+        }
+      },
+      "effort": {
+        "learnHours": 4,
+        "practiceMinutes": 0
+      },
+      "prereqs": [
+        "negotiate-a-bill"
+      ],
+      "unlocks": [],
+      "synergy": [
+        {
+          "with": "know-your-market",
+          "multiplier": 1.5,
+          "why": "An ask with a number behind it lands."
+        }
+      ],
+      "verify": null,
+      "decayDays": null,
+      "everyDays": 365,
+      "fooStep": 0,
+      "level": 3,
+      "source": "A 3% ask once a year, granted about half the time — shown at the full 3%, a convention."
+    },
+    {
+      "id": "know-your-market",
+      "name": "Know your market rate",
+      "lever": "earner",
+      "subStats": {
+        "incomePower": 2,
+        "network": 1
+      },
+      "kind": "periodic",
+      "effect": {
+        "type": "risk",
+        "cents": 0
+      },
+      "effort": {
+        "learnHours": 2,
+        "practiceMinutes": 0
+      },
+      "prereqs": [],
+      "unlocks": [],
+      "synergy": [],
+      "verify": null,
+      "decayDays": null,
+      "everyDays": 365,
+      "fooStep": 0,
+      "level": 2,
+      "source": "What the role pays elsewhere, checked yearly."
+    },
+    {
+      "id": "rebalance",
+      "name": "Rebalance to the band",
+      "lever": "compounder",
+      "subStats": {
+        "marketLiteracy": 2,
+        "consistency": 1
+      },
+      "kind": "periodic",
+      "effect": {
+        "type": "risk",
+        "cents": 0
+      },
+      "effort": {
+        "learnHours": 1,
+        "practiceMinutes": 20
+      },
+      "prereqs": [
+        "set-a-mix"
+      ],
+      "unlocks": [],
+      "synergy": [],
+      "verify": null,
+      "decayDays": null,
+      "everyDays": 90,
+      "fooStep": 6,
+      "level": 2,
+      "source": "Back to the target mix when a slice drifts past the band."
+    },
+    {
+      "id": "refresh-the-three",
+      "name": "Refresh the three that move",
+      "lever": "anchor",
+      "subStats": {
+        "selfAwareness": 1,
+        "consistency": 1
+      },
+      "kind": "periodic",
+      "effect": {
+        "type": "risk",
+        "cents": 0
+      },
+      "effort": {
+        "learnHours": 0.1,
+        "practiceMinutes": 2
+      },
+      "prereqs": [],
+      "unlocks": [],
+      "synergy": [],
+      "verify": null,
+      "decayDays": null,
+      "everyDays": 30,
+      "fooStep": 0,
+      "level": 1,
+      "source": "Cash, investments, debts — the Refresh page, monthly."
+    },
+    {
+      "id": "annual-review",
+      "name": "The annual review",
+      "lever": "anchor",
+      "subStats": {
+        "scenarioForesight": 2,
+        "selfAwareness": 1
+      },
+      "kind": "periodic",
+      "effect": {
+        "type": "risk",
+        "cents": 0
+      },
+      "effort": {
+        "learnHours": 2,
+        "practiceMinutes": 0
+      },
+      "prereqs": [
+        "refresh-the-three"
+      ],
+      "unlocks": [],
+      "synergy": [],
+      "verify": null,
+      "decayDays": null,
+      "everyDays": 365,
+      "fooStep": 0,
+      "level": 2,
+      "source": "A snapshot a year, read back: lifestyle inflation, net worth growth."
+    },
+    {
+      "id": "automate-savings",
+      "name": "Automate the savings",
+      "lever": "compounder",
+      "subStats": {
+        "consistency": 2,
+        "savingsRate": 1
+      },
+      "kind": "once",
+      "effect": {
+        "type": "risk",
+        "cents": 0
+      },
+      "effort": {
+        "learnHours": 1,
+        "practiceMinutes": 0
+      },
+      "prereqs": [],
+      "unlocks": [],
+      "synergy": [],
+      "verify": null,
+      "decayDays": null,
+      "everyDays": null,
+      "fooStep": 5,
+      "level": 1,
+      "source": "A transfer on payday that never asks. Marks the skill automated.",
+      "note": "Marking this done sets automated on itself; the automation ratio counts habits marked automated."
+    }
+  ]
+}

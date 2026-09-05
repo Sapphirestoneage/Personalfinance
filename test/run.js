@@ -7074,6 +7074,242 @@ section('3D: the instruments three ways');
   check('a blank household cannot fan out, and says what it needs', InstrumentsMain.threeD(Schema.createHousehold({}), T).status, 'incomplete');
 })();
 
+section('The Skill Stacker: the catalogue, and the engine on the demo');
+
+(function () {
+  /* D-090. The catalogue is data in dnd/data/; this reads it the way the
+     room does and grades it before grading the engine. */
+  const Skills = require(path.join(ROOT, 'engines/skills.js'));
+  const Benchmarks = require(path.join(ROOT, 'engines/benchmarks.js'));
+  const EventsEngine = require(path.join(ROOT, 'engines/events.js'));
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) {} });
+  ['skills', 'stacks', 'hundredWays', 'curves'].forEach(k => checkTrue(`the ${k} table loads from dnd/data through TABLE_FILES`, !!T[k] && !!T[k].version));
+  const DndRef = require(path.join(ROOT, 'dnd/shared/reference.js'));
+  ['skills', 'stacks', 'hundredWays', 'curves'].forEach(k => checkTrue(`dnd/shared/reference.js registers ${k} too`, !!DndRef.TABLE_FILES[k] && fs.existsSync(path.join(ROOT, 'dnd/data', DndRef.TABLE_FILES[k]))));
+  ['skills', 'stacks', 'hundred_ways', 'curves'].forEach(f => {
+    const t = JSON.parse(fs.readFileSync(path.join(ROOT, 'dnd/data', f + '.json'), 'utf8'));
+    ['asOf', 'confidence', 'source', 'confidenceNote', 'version'].forEach(k => checkTrue(`dnd/data/${f}.json carries ${k}`, typeof t[k] === 'string' && t[k].length > 0));
+  });
+
+  const cat = Skills.catalogue(T);
+  const ids = cat.map(s => s.id);
+  check('every id in the catalogue is unique', new Set(ids).size, ids.length);
+  check('twenty-six skills plus thirty ways', cat.length, 56);
+  const subStats = T.dndRules ? null : JSON.parse(fs.readFileSync(path.join(ROOT, 'dnd/data/dnd_rules.json'), 'utf8')).subStats.map(s => s.id);
+  const levers = ['earner', 'keeper', 'builder', 'compounder', 'landholder', 'anchor', 'speculator'];
+  cat.forEach(s => {
+    const where = `skill ${s.id}`;
+    checkTrue(`${where}: kind is once, habit or periodic`, Schema.SKILL_KINDS.includes(s.kind));
+    checkTrue(`${where}: lever is one of the seven classes`, levers.includes(s.lever));
+    checkTrue(`${where}: every sub-stat it trains is on the D&D sheet`, Object.keys(s.subStats).every(k => subStats.includes(k)));
+    checkTrue(`${where}: prerequisites, unlocks and synergies name real skills`,
+      s.prereqs.concat(s.unlocks, s.synergy.map(y => y.with)).every(id => ids.includes(id)));
+    checkTrue(`${where}: a habit decays, a periodic recurs, a once-skill does neither`,
+      s.kind === 'habit' ? Money.isEntered(s.decayDays) && s.everyDays === null
+        : s.kind === 'periodic' ? Money.isEntered(s.everyDays) && s.decayDays === null
+        : s.decayDays === null && s.everyDays === null);
+    checkTrue(`${where}: the effect is risk, fixed cents or a formula`,
+      s.effect.type === 'risk' || Money.isEntered(s.effect.cents) || !!s.effect.formula);
+    checkTrue(`${where}: only a once-skill verifies from the facts, and against an ownership row`,
+      s.verify === null || (s.kind === 'once' && !!Ownership.field(s.verify.field) && (!s.verify.gteField || !!Ownership.field(s.verify.gteField))));
+    checkTrue(`${where}: no prerequisite on itself`, !s.prereqs.includes(s.id));
+  });
+  T.stacks.stacks.forEach(st => {
+    checkTrue(`stack ${st.id}: every skill exists`, st.skills.every(id => ids.includes(id)));
+    checkTrue(`stack ${st.id}: the cap is integer cents`, Number.isInteger(st.capCents) && st.capCents >= 0);
+  });
+  check('the ledger grows to the wealth multiplier\'s end age', T.curves.ledger.toAge, T.wealthMultiplier.endAge);
+
+  /* ---- The demo: what the facts already prove ------------------------------ */
+  const day = '2026-09-05';
+  const now = Date.parse(day + 'T12:00:00Z');
+  const h = Demo.build(); h.expenses.entries = Demo.buildSpending();
+  const ctx = EventsEngine.context(h, T);
+  check('context: the dining line', ctx.diningMonthlyCents, 26000);
+  check('context: the groceries line', ctx.groceriesMonthlyCents, 45000);
+  check('context: food is both', ctx.foodMonthlyCents, 71000);
+  /* Full match 72,000 × 6% × 50% = 2,160 a year; 4% contributed captures
+     1,440; 720 left = 6,000 cents a month. */
+  check('context: the match left on the table, a month', ctx.matchLeftMonthlyCents, 6000);
+  check('context: no non-need line is flagged on the demo, so the dearest is zero', ctx.rerankCutOneMonthlyCents, 0);
+
+  const v = Skills.verifyOnce(h, T, day);
+  checkTrue('the demo proves at least three once-skills', v.verified.length >= 3, v.verified.join(','));
+  ['enter-the-facts', 'name-your-debt', 'starter-fund'].forEach(id => checkTrue(`… including ${id}`, v.verified.includes(id)));
+  checkTrue('capture-the-match is NOT proven: Robin leaves match on the table', !v.verified.includes('capture-the-match'));
+  check('a verified skill records who said so', v.skills['starter-fund'].verifiedBy, 'household');
+  h.skills = v.skills;
+  check('verifying again changes nothing', Skills.verifyOnce(h, T, day).verified.length, 0);
+  (function () {
+    const poorer = JSON.parse(JSON.stringify(h));
+    poorer.assets[0].valueCents = 100000;                    /* $1,000 < the $2,500 deductible */
+    const r = Skills.verifyOnce(poorer, T, day);
+    checkTrue('a fact that stops holding un-marks the skill it proved', r.reverted.includes('starter-fund'));
+    poorer.skills['name-your-debt'].verifiedBy = 'self';
+    poorer.meta.hasDebt = false; poorer.debts = [];
+    checkTrue('but a skill marked done by hand stays done', !Skills.verifyOnce(poorer, T, day).reverted.includes('name-your-debt'));
+  })();
+
+  /* ---- Worth, by hand ------------------------------------------------------- */
+  const by = id => Skills.byId(T, id);
+  check('capture the match = 12 × 6,000', Skills.valuePerYear(h, by('capture-the-match'), T).value, 72000);
+  check('cook dinner = 12 × 30% × 26,000', Skills.valuePerYear(h, by('cook-dinner'), T).value, 93600);
+  check('weekly shop = 12 × 10% × 45,000', Skills.valuePerYear(h, by('weekly-shop'), T).value, 54000);
+  check('ask for the raise = 3% × 7,200,000', Skills.valuePerYear(h, by('ask-for-the-raise'), T).value, 216000);
+  check('a risk skill is worth $0', Skills.valuePerYear(h, by('know-your-number'), T).value, 0);
+  checkTrue('… and says it is by design', Skills.valuePerYear(h, by('know-your-number'), T).risk === true);
+  check('a hundred-ways entry is its stated cents', Skills.valuePerYear(h, by('brew-coffee'), T).value, 90000);
+  check('effort: cook dinner is 3 h + 45 min × 365 ÷ 60', Skills.effortHours(by('cook-dinner'), T), 276.75, 1e-9);
+  check('return on effort: capture the match, 72,000 ÷ 1 h', Skills.returnOnEffort(h, by('capture-the-match'), T).value, 72000);
+  (function () {
+    const blank = Schema.createHousehold({});
+    const r = Skills.valuePerYear(blank, by('cook-dinner'), T);
+    check('a formula on a blank household is worth $0 only where the line coalesces to 0', r.value, 0);
+    const m = Skills.valuePerYear(blank, by('capture-the-match'), T);
+    check('… and incomplete where it does not', m.status, 'incomplete');
+  })();
+
+  /* ---- Next, equip, refuse ------------------------------------------------- */
+  const next = Skills.nextSkill(h, T, { now: now });
+  check('the demo\'s next skill is its FOO step: capture the match', next.value.id, 'capture-the-match');
+  check('… at step 2', next.fooStep, 2);
+  checkTrue('the hundred ways are trials, never the suggestion', !next.value.trial);
+  const nudged = Skills.nextSkill(h, T, { fooStep: 0, lowestSubStat: 'consistency' });
+  checkTrue('with a lowest sub-stat, the suggestion trains it', !!nudged.value.subStats.consistency, nudged.value.id);
+
+  let r = Skills.equip(h, 'raise-one-point', T, day);
+  check('a locked skill is refused', r.status, 'incomplete');
+  checkTrue('… naming the prerequisite', /Capture the full match/.test(r.reason) && r.missing.includes('capture-the-match'));
+  check('a done skill is refused', Skills.equip(h, 'starter-fund', T, day).status, 'incomplete');
+  ['capture-the-match', 'cook-dinner', 'weekly-shop'].forEach(id => { r = Skills.equip(h, id, T, day); checkTrue(`${id} goes on`, Money.isOk(r)); h.skills = r.value.skills; });
+  check('a once-skill on is in trial', Skills.state(h, by('capture-the-match')), 'trial');
+  check('three on', Skills.equipped(h, T).length, 3);
+  r = Skills.equip(h, 'pack-lunch', T, day);
+  check('a fourth is refused', r.status, 'incomplete');
+  checkTrue('… with the reason', /3 at a time/.test(r.reason));
+  check('… and the three in the way', r.missing.slice().sort().join(','), 'capture-the-match,cook-dinner,weekly-shop');
+  check('equipping again is refused', Skills.equip(h, 'cook-dinner', T, day).reason, 'Already on.');
+
+  /* ---- Days logged ----------------------------------------------------------- */
+  for (let i = 0; i < 8; i++) { r = Skills.logDay(h, 'cook-dinner', true, T, Skills.addDays(day, i)); h.skills = r.value.skills; h.practiceLedger = r.value.practiceLedger; }
+  check('eight days logged: practicing', h.skills['cook-dinner'].state, 'practicing');
+  check('… last30 counts them', h.skills['cook-dinner'].last30, 8);
+  check('… a day is worth 93,600 ÷ 365', h.skills['cook-dinner'].valuePerDayCents, 256);
+  check('… and the ledger holds eight rows of it', Skills.ledgerTotalCents(h), 2048);
+  r = Skills.logDay(h, 'cook-dinner', true, T, day); h.skills = r.value.skills; h.practiceLedger = r.value.practiceLedger;
+  check('logging a day twice writes one row', h.practiceLedger.length, 8);
+  r = Skills.logDay(h, 'cook-dinner', false, T, Skills.addDays(day, 8)); h.skills = r.value.skills; h.practiceLedger = r.value.practiceLedger;
+  r = Skills.logDay(h, 'cook-dinner', false, T, Skills.addDays(day, 9)); h.skills = r.value.skills; h.practiceLedger = r.value.practiceLedger;
+  check('two didn\'ts in a row is one second miss', h.skills['cook-dinner'].secondMisses, 1);
+  check('a didn\'t writes no row', Skills.ledgerTotalCents(h), 2048);
+  check('today\'s figure is the rows on that day', Skills.ledgerOn(h, Skills.addDays(day, 3)), 256);
+  check('a once-skill is not logged a day at a time', Skills.logDay(h, 'capture-the-match', false, T, day).status, 'incomplete');
+  (function () {
+    let hh = JSON.parse(JSON.stringify(h));
+    for (let i = 0; i < 21; i++) { const x = Skills.logDay(hh, 'weekly-shop', true, T, Skills.addDays(day, i)); hh.skills = x.value.skills; hh.practiceLedger = x.value.practiceLedger; }
+    check('twenty-one of thirty days is a habit', hh.skills['weekly-shop'].state, 'habit');
+    check('… which frees the slot', Skills.equipped(hh, T).length, 2);
+    checkTrue('… and a fourth now goes on', Money.isOk(Skills.equip(hh, 'pack-lunch', T, day)));
+    let d = Skills.decay(hh, T, Skills.addDays(day, 20 + 13));
+    check('thirteen unlogged days: nothing moves', d.changes.length, 0);
+    d = Skills.decay(hh, T, Skills.addDays(day, 20 + 14));
+    check('fourteen: the habit slips to practicing', d.changes.filter(c => c.id === 'weekly-shop')[0].to, 'practicing');
+    d = Skills.decay(hh, T, Skills.addDays(day, 20 + 45));
+    check('forty-five: it is off', d.changes.filter(c => c.id === 'weekly-shop')[0].to, 'available');
+    check('… with a lapse counted', d.skills['weekly-shop'].lapses, 1);
+    check('… and the log kept', d.skills['weekly-shop'].log.length, 21);
+  })();
+
+  /* ---- Periodic --------------------------------------------------------------- */
+  (function () {
+    let hh = JSON.parse(JSON.stringify(h));
+    let x = Skills.drop(hh, 'weekly-shop'); hh.skills = x.value.skills;
+    x = Skills.equip(hh, 'negotiate-a-bill', T, day); hh.skills = x.value.skills;
+    check('a periodic on is practicing', hh.skills['negotiate-a-bill'].state, 'practicing');
+    x = Skills.markDone(hh, 'negotiate-a-bill', T, day); hh.skills = x.value.skills;
+    check('done today, due again in thirty days', hh.skills['negotiate-a-bill'].dueOn, '2026-10-05');
+    checkTrue('not due tomorrow', !Skills.due(hh, by('negotiate-a-bill'), '2026-09-06'));
+    checkTrue('due on the day', Skills.due(hh, by('negotiate-a-bill'), '2026-10-05'));
+    checkTrue('done satisfies a prerequisite', Money.isOk(Skills.equip(hh, 'ask-for-the-raise', T, day)));
+  })();
+
+  /* ---- Stacks: the waterfall by hand --------------------------------------- */
+  (function () {
+    let hh = JSON.parse(JSON.stringify(h));
+    for (let i = 0; i < 8; i++) { const x = Skills.logDay(hh, 'weekly-shop', true, T, Skills.addDays(day, i)); hh.skills = x.value.skills; hh.practiceLedger = x.value.practiceLedger; }
+    const k = Skills.stackValue(hh, 'kitchen', T);
+    /* weekly shop 54,000 ×1; cook dinner 93,600 × 1.25 (the shop is active)
+       = 117,000; pack lunch off. Cap: min(600,000, 12 × 71,000) = 600,000. */
+    check('The Kitchen: cook dinner carries its synergy', k.rows.filter(x => x.id === 'cook-dinner')[0].valueCents, 117000);
+    check('… the shop does not (no synergy declared on it)', k.rows.filter(x => x.id === 'weekly-shop')[0].valueCents, 54000);
+    check('… pack lunch is off', k.rows.filter(x => x.id === 'pack-lunch')[0].valueCents, 0);
+    check('… the stack is the sum', k.value, 171000);
+    check('… under the stack\'s own cap', k.capCents, 600000);
+    checkTrue('… not capped', !k.capped);
+    /* A household with little food: the cap is twelve months of that line. */
+    const lean = JSON.parse(JSON.stringify(hh));
+    lean.expenses.entries.forEach(e => { if (e.categoryId === 'groceries') e.amountCents = 10000; if (e.categoryId === 'dining_out') e.amountCents = 5000; });
+    lean.skills['pack-lunch'] = Schema.createSkillState({ state: 'practicing', kind: 'habit' });
+    const lk = Skills.stackValue(lean, 'kitchen', T);
+    check('lean: raw is 12,000 + 18,000 × 1.25 + 180,000 × 1.2', lk.rawCents, 12000 + 22500 + 216000);
+    check('lean: the cap is twelve months of food', lk.capCents, 180000);
+    check('… named as such', lk.capFrom, 'foodMonthlyCents');
+    check('… and the stack is worth the cap', lk.value, 180000);
+    const a = Skills.stackValue(hh, 'anchor', T);
+    check('The Anchor is worth $0 with one skill done', a.value, 0);
+    check('… and one of four is active', a.activeCount, 1);
+    check('an unknown stack is refused', Skills.stackValue(hh, 'nope', T).status, 'incomplete');
+  })();
+
+  /* ---- The ledger to 65, the automation ratio, the snapshot --------------------- */
+  const fv = Skills.ledgerFutureValue(h, T, { now: now });
+  const table = T.wealthMultiplier;
+  let mult = 1; Benchmarks.curve(table, 32).factors.forEach(f => { mult *= f; });
+  check('the ledger at 65 is the total × the multiplier from 32', fv.value, Math.round(2048 * mult));
+  check('… at Robin\'s age', fv.age, 32);
+  check('a household without a birthday cannot grow the ledger', Skills.ledgerFutureValue(Schema.createHousehold({ practiceLedger: h.practiceLedger }), T).status, 'incomplete');
+
+  let ar = Skills.automationRatio(h, T);
+  check('nothing automated: the ratio is 0 of cook dinner', ar.value, 0);
+  check('… over 93,600', ar.totalCents, 93600);
+  r = Skills.setAutomated(h, 'cook-dinner', true); h.skills = r.value.skills;
+  ar = Skills.automationRatio(h, T);
+  check('cook dinner automated: the ratio is 1', ar.value, 1);
+  check('nothing active: the ratio has nothing to say', Skills.automationRatio(Schema.createHousehold({}), T).status, 'incomplete');
+  const ratioRow = RatiosEngine.all(h, T).rows.filter(x => x.id === 'automationRatio')[0];
+  check('Every Ratio reads it', ratioRow.value, 1);
+  checkTrue('… and no longer lists it as unavailable', !ratioRow.unavailable);
+  check('the instruments carry the ledger total for the Annual Review', InstrumentsMain.outputs(h, T).practiceLedgerCents.value, 2048);
+  const own = Ownership.field('practiceLedger');
+  check('the ledger is owned by the Stacker', own.owner, 'stacker');
+  check('… and reads the total', own.read(h).value, 2048);
+  check('… incomplete with no rows, not zero', own.read(Schema.createHousehold({})).status, 'incomplete');
+
+  /* ---- Today, and the room ----------------------------------------------------- */
+  const t = Skills.today(h, T, { today: Skills.addDays(day, 3), now: now });
+  check('today lists the three on', t.lines.length, 3);
+  check('… with the day\'s rows', t.todayCents, 256);
+  checkTrue('… and knows which were logged', t.lines.filter(l => l.skill.id === 'cook-dinner')[0].loggedToday === true);
+  checkTrue('no suggestion while three are on', !Money.isOk(t.next) || t.equippedCount === t.maxEquipped);
+  check('the curves: the poster is clipped at ×3', Skills.posterValue(T, 365), 3);
+  check('… and honest below it', Skills.posterValue(T, 10), Math.pow(1.01, 10), 1e-12);
+  check('capability at the midpoint is half', Skills.capability(T, 45), 0.5, 1e-12);
+  check('a schema round-trip keeps a skill\'s standing', Schema.createHousehold(JSON.parse(JSON.stringify(h))).skills['cook-dinner'].log.length, 8);
+  check('… and the ledger', Schema.createHousehold(JSON.parse(JSON.stringify(h))).practiceLedger.length, 8);
+  check('an unknown state is read as available', Schema.createSkillState({ state: 'weird' }).state, 'available');
+
+  const room = Registry.byId('stacker');
+  check('the room is an about-you room', room.kind, 'about-you');
+  check('… at order 20', room.order, 20);
+  const html = fs.readFileSync(path.join(ROOT, 'rooms/stacker.html'), 'utf8');
+  checkTrue('four screens exist', ['today', 'browse', 'stacks', 'curves'].every(id => new RegExp('id="' + id + '"').test(html)));
+  checkTrue('the lists are guarded', /LIVE-FORM: guarded/.test(html) && (html.match(/LiveForm\.guard\(/g) || []).length === 3);
+  checkTrue('the dashboard and Refresh load the engine so a snapshot carries the ledger',
+    /engines\/skills\.js/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')) && /engines\/skills\.js/.test(fs.readFileSync(path.join(ROOT, 'rooms/refresh.html'), 'utf8')));
+})();
+
 section('Two decision sequences that cannot collide');
 
 (function () {

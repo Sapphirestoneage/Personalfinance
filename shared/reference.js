@@ -64,6 +64,12 @@
     movingCost: 'moving_cost.json',
     vpwTable: 'vpw_table.json',
     ssBendPoints: 'ss_bend_points_2026.json',
+    /* The Skill Stacker's catalogue is authored beside the D&D data it
+       draws its levers and sub-stats from (BRIEF §7.1, D-090). */
+    skills: '../dnd/data/skills.json',
+    stacks: '../dnd/data/stacks.json',
+    hundredWays: '../dnd/data/hundred_ways.json',
+    curves: '../dnd/data/curves.json',
     accessRules: 'access_rules.json',
     confidenceWeights: 'confidence_weights.json',
     uiBenefits: 'ui_benefits.json',

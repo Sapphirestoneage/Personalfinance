@@ -268,7 +268,7 @@
     }
     var other = Schema.otherAssetsCents(household);
     var fire = Tier0.fireNumber(household);
-    var cut = 0, cutTop = 0, cutCount = 0;
+    var cut = 0, cutTop = 0, cutOne = 0, cutCount = 0;
     if (Rerank && tables && tables.expenseCategories) {
       var r = Rerank.analyse(household, tables);
       if (Money.isOk(r)) {
@@ -276,8 +276,9 @@
         cutCount = r.cut.length;
         /* The four dearest cut lines that are not needs: what a sprint
            actually takes to zero. */
-        cutTop = r.cut.filter(function (row) { return !row.need; }).sort(function (a, b) { return b.monthlyCents - a.monthlyCents; })
-          .slice(0, 4).reduce(function (tot, row) { return tot + row.monthlyCents; }, 0);
+        var cutSorted = r.cut.filter(function (row) { return !row.need; }).sort(function (a, b) { return b.monthlyCents - a.monthlyCents; });
+        cutTop = cutSorted.slice(0, 4).reduce(function (tot, row) { return tot + row.monthlyCents; }, 0);
+        cutOne = cutSorted.length ? cutSorted[0].monthlyCents : 0;
       }
     }
     var swan = household.swan && Money.isEntered(household.swan.targetCents) ? household.swan.targetCents : null;
@@ -298,7 +299,18 @@
       if (Money.isOk(sum)) { byCategory = {}; sum.categories.forEach(function (row) { byCategory[row.categoryId] = row.monthlyCents; }); }
     }
     var expensesVal = val(Schema.monthlyExpensesCents(household));
+    /* The match still on the table: what the cap would pay, less what the
+       current contribution captures. Null until the match itself is known.
+       Read by the Skill Stacker's capture-the-match (D-090). */
+    var fullMatch = Schema.employerMatchCents(household);
+    var matchLeft = Money.isOk(fullMatch) ? Math.max(0, fullMatch.value - matchYear) : null;
+    var dining = byCategory && Money.isEntered(byCategory.dining_out) ? byCategory.dining_out : null;
+    var groceries = byCategory && Money.isEntered(byCategory.groceries) ? byCategory.groceries : null;
     return {
+      diningMonthlyCents: dining,
+      groceriesMonthlyCents: groceries,
+      foodMonthlyCents: dining === null && groceries === null ? null : (dining || 0) + (groceries || 0),
+      matchLeftMonthlyCents: matchLeft === null ? null : Math.round(matchLeft / MONTHS),
       housingMonthlyCents: byCategory && Money.isEntered(byCategory.housing) ? byCategory.housing : null,
       retireAge: num((household.targets || {}).retireAge),
       allocationStocks: num((household.allocation || {}).stocks),
@@ -329,6 +341,7 @@
       rerankCutMonthlyCents: cut,
       rerankCutCount: cutCount,
       rerankCutTopMonthlyCents: cutTop,
+      rerankCutOneMonthlyCents: cutOne,
       swanFloorCents: swan,
       deductibleCents: num((household.insurance || {}).highestDeductibleCents),
       age: Schema.primaryAge(household),

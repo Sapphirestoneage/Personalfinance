@@ -1,0 +1,207 @@
+{
+  "id": "hundred_ways",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "In the spirit of ChooseFI's '100 ways to save': thirty everyday savings, each with an annual figure in the region commonly quoted for it, offered as trialable skills in the Stacker's browse list.",
+  "confidence": "convention",
+  "confidenceNote": "Thirty of the hundred, and every figure a rule of thumb. A trial is exactly that: the value is claimed only while the habit is logged.",
+  "note": "kind as in skills.json; every entry is lever keeper, fooStep 0, level 1, no prerequisites. D-090.",
+  "defaults": {
+    "lever": "keeper",
+    "subStats": {
+      "consistency": 1,
+      "savingsRate": 1
+    },
+    "effort": {
+      "learnHours": 0.5,
+      "practiceMinutes": 5
+    },
+    "decayDays": 14,
+    "everyDays": 30,
+    "fooStep": 0,
+    "level": 1,
+    "note": "What every way becomes when it is read as a skill: a keeper habit or once-skill with a small stated effort, no prerequisites, no synergy, and its annual figure as a fixed cents_per_year effect. practiceMinutes applies to habits only; everyDays to periodics only."
+  },
+  "ways": [
+    {
+      "id": "library-card",
+      "name": "Use the library, not the bookshop",
+      "cents": 12000,
+      "kind": "habit"
+    },
+    {
+      "id": "cancel-unused-subs",
+      "name": "Cancel the subscriptions you forgot",
+      "cents": 24000,
+      "kind": "once"
+    },
+    {
+      "id": "brew-coffee",
+      "name": "Brew coffee at home",
+      "cents": 90000,
+      "kind": "habit"
+    },
+    {
+      "id": "generic-brands",
+      "name": "Buy the store brand",
+      "cents": 36000,
+      "kind": "habit"
+    },
+    {
+      "id": "thermostat",
+      "name": "Two degrees on the thermostat",
+      "cents": 15000,
+      "kind": "once"
+    },
+    {
+      "id": "led-bulbs",
+      "name": "LED bulbs everywhere",
+      "cents": 8000,
+      "kind": "once"
+    },
+    {
+      "id": "cut-cable",
+      "name": "Cut cable",
+      "cents": 100000,
+      "kind": "once"
+    },
+    {
+      "id": "phone-mvno",
+      "name": "Move the phone to a cheap carrier",
+      "cents": 48000,
+      "kind": "once"
+    },
+    {
+      "id": "insurance-quotes",
+      "name": "Re-quote the insurance yearly",
+      "cents": 30000,
+      "kind": "periodic"
+    },
+    {
+      "id": "meal-plan",
+      "name": "Plan the week's meals",
+      "cents": 60000,
+      "kind": "habit"
+    },
+    {
+      "id": "bulk-staples",
+      "name": "Buy staples in bulk",
+      "cents": 20000,
+      "kind": "habit"
+    },
+    {
+      "id": "water-bottle",
+      "name": "Carry a water bottle",
+      "cents": 15000,
+      "kind": "habit"
+    },
+    {
+      "id": "bike-short-trips",
+      "name": "Bike the short trips",
+      "cents": 40000,
+      "kind": "habit"
+    },
+    {
+      "id": "air-filter",
+      "name": "Change the air filter",
+      "cents": 5000,
+      "kind": "periodic"
+    },
+    {
+      "id": "dry-outside",
+      "name": "Line-dry the laundry",
+      "cents": 12000,
+      "kind": "habit"
+    },
+    {
+      "id": "cash-envelope",
+      "name": "A cash envelope for the fun money",
+      "cents": 30000,
+      "kind": "habit"
+    },
+    {
+      "id": "thirty-day-list",
+      "name": "The thirty-day wait list",
+      "cents": 50000,
+      "kind": "habit"
+    },
+    {
+      "id": "buy-used",
+      "name": "Buy it used first",
+      "cents": 40000,
+      "kind": "habit"
+    },
+    {
+      "id": "cook-double",
+      "name": "Cook double, freeze half",
+      "cents": 30000,
+      "kind": "habit"
+    },
+    {
+      "id": "home-haircut",
+      "name": "Home haircuts",
+      "cents": 30000,
+      "kind": "habit"
+    },
+    {
+      "id": "negotiate-rent",
+      "name": "Ask about the rent at renewal",
+      "cents": 60000,
+      "kind": "periodic"
+    },
+    {
+      "id": "unplug",
+      "name": "Unplug what idles",
+      "cents": 4000,
+      "kind": "once"
+    },
+    {
+      "id": "credit-card-rewards",
+      "name": "Put the fixed bills on a rewards card, paid in full",
+      "cents": 20000,
+      "kind": "once"
+    },
+    {
+      "id": "free-fun",
+      "name": "One free thing every weekend",
+      "cents": 40000,
+      "kind": "habit"
+    },
+    {
+      "id": "gift-budget",
+      "name": "A gift budget, set in January",
+      "cents": 20000,
+      "kind": "once"
+    },
+    {
+      "id": "audit-bank-fees",
+      "name": "Kill the bank fees",
+      "cents": 12000,
+      "kind": "once"
+    },
+    {
+      "id": "energy-audit",
+      "name": "A utility energy audit",
+      "cents": 15000,
+      "kind": "once"
+    },
+    {
+      "id": "secondhand-kids",
+      "name": "Secondhand for the kids' gear",
+      "cents": 40000,
+      "kind": "habit"
+    },
+    {
+      "id": "skip-delivery",
+      "name": "Pick it up instead of delivery",
+      "cents": 25000,
+      "kind": "habit"
+    },
+    {
+      "id": "shop-with-list",
+      "name": "Never shop without a list",
+      "cents": 20000,
+      "kind": "habit"
+    }
+  ]
+}

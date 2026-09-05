@@ -61,6 +61,8 @@ const EQUAL_HEIGHT = [
   ['/rooms/rerank.html', '.pair'],
   ['/rooms/what-if-life.html', '.qgrid'],
   ['/rooms/what-if-life.html', '.cols'],
+  ['/rooms/stacker.html', '.figures'],
+  ['/rooms/stacker.html', '.three'],
   ['/rooms/values.html', '.two'],
   ['/rooms/fulfillment.html', '.quads'],
   ['/rooms/sleep-at-night.html', '.basis']
