@@ -1,0 +1,27 @@
+{
+  "id": "levels_of_wealth",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "The five 'levels of wealth' as popularised by personal-finance educators (the Money Guy Show's framing is the closest match), and Stanley & Danko's prodigious / under accumulator of wealth test from The Millionaire Next Door: expected net worth = age × pre-tax income ÷ 10.",
+  "confidence": "convention",
+  "confidenceNote": "Thresholds are the conventions as commonly quoted, not measured findings. The 20% savings rate, the 'growth beats take-home' test and the 2× / 0.5× PAW cut-offs are rules of thumb; the levels are a way of naming where someone is, never a score.",
+  "note": "BRIEF §4.1. Level 5 is self-declared and is never assigned by the engine. Each check names the household fields it reads; a check that cannot be made is reported as unknown, not as failed. D-072.",
+  "paw": {
+    "divisor": 10,
+    "prodigious": 2.0,
+    "under": 0.5,
+    "note": "ratio = actual net worth ÷ (age × gross income ÷ divisor). ≥ prodigious is a PAW, ≤ under is a UAW, between is an average accumulator."
+  },
+  "levels": [
+    { "id": 1, "label": "Stable",     "test": "No high-interest debt, and a starter emergency fund in cash.",
+      "reads": ["debts", "cashSavings", "monthlyExpenses"], "usesFooRules": true },
+    { "id": 2, "label": "Saver",      "test": "A savings rate of 20% or more.",
+      "reads": ["savingsRate"], "savingsRate": 0.20 },
+    { "id": 3, "label": "Compounding", "test": "The expected growth on your investments in a year is at least your annual take-home pay.",
+      "reads": ["investments", "expectedReturnRate", "grossAnnualIncome"] },
+    { "id": 4, "label": "Independent", "test": "Net worth at least twice what a prodigious accumulator would expect, and an FI ratio of 1 or more.",
+      "reads": ["netWorth", "age", "grossAnnualIncome", "fiRatio"], "pawMultiple": 2, "fiRatio": 1 },
+    { "id": 5, "label": "Abundant",   "test": "Self-declared: you decide that money has stopped being a question.",
+      "reads": [], "selfDeclared": true }
+  ]
+}

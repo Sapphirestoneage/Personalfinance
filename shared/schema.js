@@ -46,6 +46,10 @@
   var ASSUMPTION_DEFAULTS = {
     expectedReturnRate: 0.07,   // nominal annual, decimal fraction
     swrRate: 0.04,             // safe withdrawal rate, decimal fraction
+    /* Real discount rate for human capital — the present value of the pay
+       still to come before the stop age. A planning assumption, overridable
+       like the others. BRIEF §4.1, DECISIONS.md D-072. */
+    humanCapitalDiscountRate: 0.02,
     /* Deliberately NULL. A marginal rate depends on bracket, state and
        filing status, and this app has an EFFECTIVE-rate table, not a
        marginal one — deriving one from the other would be a fabricated
@@ -151,6 +155,7 @@
     'worthChecks[].actualRating':                { class: 'raw',        unit: 'rating',  note: 'what it turned out to be worth, 1-10, after' },
     'assumptions.expectedReturnRate':            { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.expectedReturnRate },
     'assumptions.swrRate':                       { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.swrRate },
+    'assumptions.humanCapitalDiscountRate':      { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.humanCapitalDiscountRate, note: 'real discount on pay still to come, for human capital. D-072' },
 
     /* Computed — never stored on the household, never user-editable.
        Recomputed from raw inputs on every read. Listed here so a tool can

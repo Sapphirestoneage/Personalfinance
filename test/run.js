@@ -6194,6 +6194,109 @@ section('The Coverage Checkup, and how it is split');
   checkTrue('and the year costs exactly that much more', Money.isOk(without) && Money.isOk(withOop) && withOop.value - without.value === 800000);
 })();
 
+section('The benchmarks');
+
+(function () {
+  /* D-072: the numbers that place a household against a convention. */
+  const B = require(path.join(ROOT, 'engines/benchmarks.js'));
+  const T = Object.assign({}, TABLES, {
+    wealthMultiplier: require(path.join(ROOT, 'data/wealth_multiplier.json')),
+    levelsOfWealth: require(path.join(ROOT, 'data/levels_of_wealth.json'))
+  });
+  const wm = T.wealthMultiplier;
+
+  /* The return path: 10% at 20, falling a tenth of a point a year to 5.5%. */
+  check('return at 20', B.returnAt(wm, 20), 0.10, 1e-12);
+  check('return at 32', B.returnAt(wm, 32), 0.088, 1e-12);
+  check('return at 65 sits on the floor', B.returnAt(wm, 65), 0.055, 1e-12);
+  check('return at 80 stays on the floor', B.returnAt(wm, 80), 0.055, 1e-12);
+
+  /* One year from 64: twelve monthly factors, written out longhand. */
+  let longhand = 1;
+  for (let m = 0; m < 12; m++) {
+    const age = 64 + m / 12;
+    const rate = Math.max(0.055, 0.10 - 0.001 * (age - 20));
+    longhand *= 1 + rate / 12;
+  }
+  const at64 = B.wealthMultiplier(Demo.build(), T, { age: 64 });
+  check('a dollar at 64 grows for twelve months', at64.months, 12);
+  check('by the longhand product', at64.value, longhand, 1e-12);
+  check('a dollar at 65 is a dollar', B.wealthMultiplier(Demo.build(), T, { age: 65 }).value, 1);
+  const at32 = B.wealthMultiplier(Demo.build(), T);
+  check('the demo is 32', at32.age, 32);
+  check('with 396 months to run', at32.months, 396);
+  checkTrue('and a dollar at 32 beats a dollar at 40 beats a dollar at 64',
+    at32.value > B.wealthMultiplier(Demo.build(), T, { age: 40 }).value && B.wealthMultiplier(Demo.build(), T, { age: 40 }).value > at64.value);
+  const noDob = Demo.build(); noDob.people[0].dob = null;
+  check('no date of birth: incomplete, naming dob', B.wealthMultiplier(noDob, T).missing.join(','), 'dob');
+
+  /* Monthly to $1M: simulate the contributions forward and land on target. */
+  const bare = Demo.build();
+  bare.assets = bare.assets.filter(a => a.category !== 'investment');
+  bare.assets.push(Schema.createAsset({ category: 'investment', valueCents: 0 }));
+  const m1 = B.monthlyToReach(bare, T, 100000000);
+  check('with nothing invested the existing balance grows to nothing', m1.existingGrowsToCents, 0);
+  let balance = 0;
+  const c = B.curve(wm, 32);
+  for (let m = 0; m < c.months; m++) balance = (balance + m1.value) * c.factors[m];
+  checkTrue('paying that every month lands within $10 of $1M', Math.abs(balance - 100000000) < 1000);
+  const m1demo = B.monthlyToReach(Demo.build(), T, 100000000);
+  checkTrue('the demo\'s $48,000 already growing lowers the monthly', m1demo.value < m1.value && m1demo.existingGrowsToCents === Math.round(4800000 * at32.value));
+  const rich = Demo.build();
+  rich.assets.filter(a => a.category === 'investment')[0].valueCents = 20000000;
+  check('$200,000 at 32 already grows past $1M: nothing a month', B.monthlyToReach(rich, T, 100000000).value, 0);
+  checkTrue('and says so', B.monthlyToReach(rich, T, 100000000).alreadyThere);
+  check('two milestones, $1M and $2M', B.milestones(Demo.build(), T).map(x => x.targetCents).join(','), '100000000,200000000');
+
+  /* PAW: expected = age × income ÷ 10. Demo: 32 × 72,000 ÷ 10 = 230,400. */
+  const paw = B.pawRatio(Demo.build(), T);
+  check('expected net worth for the demo', paw.expectedNetWorthCents, 23040000);
+  check('ratio 35,900 ÷ 230,400', paw.value, 3590000 / 23040000, 1e-12);
+  check('which is an under-accumulator', paw.classification, 'under');
+  const paw2 = B.pawRatio(rich, T);
+  check('with $200,000 invested the ratio is (200,000 + 9,500 − 21,600) ÷ 230,400', paw2.value, 18790000 / 23040000, 1e-12);
+  check('which is average', paw2.classification, 'average');
+  const paw3 = Demo.build(); paw3.assets.filter(a => a.category === 'investment')[0].valueCents = 50000000;
+  check('$500,000 invested: prodigious', B.pawRatio(paw3, T).classification, 'prodigious');
+
+  /* The five levels. The demo carries a high-interest card: level 0. */
+  const lv = B.levelsOfWealth(Demo.build(), T);
+  check('the demo is at level 0', lv.value, 0);
+  check('stopped by level 1', lv.stoppedBy.id, 1);
+  check('because of one high-interest debt', lv.checks[0].result.highInterestDebtCount, 1);
+  check('level 5 is never assigned by the engine', lv.checks[4].met, null);
+  checkTrue('and says it is self-declared', lv.checks[4].result.selfDeclared === true);
+  const stable = Demo.build();
+  stable.debts.forEach(d => { d.rate = 0.05; });
+  const lv2 = B.levelsOfWealth(stable, T);
+  check('with every rate under the threshold, level 1 is met', lv2.checks[0].met, true);
+  check('the starter fund target is one month of spending', lv2.checks[0].result.starterTargetCents, 315000);
+  check('the 31.5% savings rate clears level 2', lv2.checks[1].met, true);
+  check('level 3 needs growth ≥ take-home: $48,000 × 7% does not', lv2.checks[2].met, false);
+  check('so the household is at level 2', lv2.value, 2);
+  const unrated = Demo.build(); unrated.debts.forEach(d => { d.rate = null; });
+  check('a debt with no rate makes level 1 unknown, not failed', B.levelsOfWealth(unrated, T).checks[0].met, null);
+
+  /* One more point of savings rate: $720 a year on $72,000. */
+  const one = B.onePercentMore(Demo.build(), T);
+  check('one point of $72,000 is $720', one.extraAnnualCents, 72000);
+  check('the FI date moves a year closer', one.deltaYears, -1);
+  checkTrue('and the balance at 65 rises', one.at65.deltaCents > 0 && one.at65.years === 33);
+  checkTrue('by more than 33 × $720, because it compounds', one.at65.deltaCents > 33 * 72000);
+
+  /* Human capital: an annuity of $72,000 for 23 years at 2% real. */
+  const hc = Demo.build(); hc.targets = Schema.createTargets({ retireAge: 55 });
+  const pv = B.humanCapital(hc, T);
+  check('23 years to the stop age', pv.years, 23);
+  check('present value by the annuity formula', pv.value, Math.round(7200000 * (1 - Math.pow(1.02, -23)) / 0.02), 1);
+  check('no stop age: incomplete, naming retireAge', B.humanCapital(Demo.build(), T).missing.join(','), 'retireAge');
+  check('the discount rate is an assumption with a default', Schema.resolveAssumptions(Demo.build()).humanCapitalDiscountRate, 0.02);
+
+  /* Net worth in years: 35,900 ÷ 37,800. */
+  check('net worth in years', B.netWorthInYears(Demo.build()).value, 3590000 / 3780000, 1e-12);
+  check('all() answers every question', Object.keys(B.all(Demo.build(), T)).length, 7);
+})();
+
 section('The D&D folder\'s vendored copies');
 
 (function () {

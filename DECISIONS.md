@@ -3850,6 +3850,58 @@ correct to 10 and read the band), `test/forms.js` on both cards,
 
 ---
 
+## D-072 — Benchmarks: where a household stands against a convention, and which conventions
+
+*(BRIEF.md §4.1. Opens T4.)* `engines/benchmarks.js` is seven numbers that
+compare the household to something outside it, and every one names the
+convention it leans on:
+
+- **The wealth multiplier** — what a dollar at your age becomes by 65 on
+  `wealth_multiplier.json`'s falling return path. **Monthly to $1M / $2M**
+  is the level contribution that lands on the target with what is already
+  invested growing alongside: (target − existing × M) ÷ Σ of the suffix
+  products of the monthly factors. This is a second growth model beside
+  `engines/projection.js`, on purpose: the projection loop is *the* loop
+  for one rate with contributions and this file calls it for the FI date
+  and the at-65 balance; the multiplier is a rate that changes with age,
+  parameterised in data, and its curve is computed here and nowhere else.
+- **PAW / AAW / UAW** — net worth over age × income ÷ 10, from *The
+  Millionaire Next Door*; ≥ 2 prodigious, ≤ 0.5 under. Divisor and
+  cut-offs in `data/levels_of_wealth.json`.
+- **The five levels** — each a Result: 1 no high-interest debt (by the FOO
+  rule) and a starter fund in cash; 2 a savings rate ≥ 20%; 3 expected
+  growth on investments ≥ a year of take-home; 4 net worth ≥ 2× the PAW
+  expectation *and* an FI ratio ≥ 1; 5 self-declared and **never assigned
+  by the engine**. The level is the run of met checks from the bottom; an
+  unknown check (a debt with no rate) stops the count and is reported,
+  never counted as passed or failed. The demo, carrying a high-interest
+  card, is at level 0; with every rate under the threshold it is at 2.
+- **What 1% more** — Δ years to FI and Δ balance at 65 for one more point
+  of savings rate. Uses the projection loop twice; nothing new.
+- **Human capital** — present value of gross pay from now to the stop age
+  (`targets.retireAge`, D-070) at a real discount.
+  `assumptions.humanCapitalDiscountRate` is a new assumption, default 2%,
+  overridable like the others; without a stop age the Result asks for one.
+- **Net worth in years** — net worth over a year of spending.
+
+**Not decided here.** Where these are *shown* is D-076 (Snapshot and
+dashboard). Level 5 has no field yet; a declaration belongs with T8's
+Enough room, and until then the level caps at 4.
+
+**Compatibility note.** `assumptions.humanCapitalDiscountRate` joins
+`ASSUMPTION_DEFAULTS`; a stored household without it resolves to the
+default through `Schema.resolveAssumptions` as every assumption does.
+`data/levels_of_wealth.json` is registered as `levelsOfWealth`.
+
+**Verified.** `node test/run.js`: the return path at four ages, a year
+from 64 by a longhand product, monthly-to-$1M simulated forward to within
+$10 of the target, PAW for the demo (35,900 ÷ 230,400, under), the levels
+at 0 and at 2, one point of savings rate as $720 moving FI a year closer
+and compounding past 33 × $720 by 65, human capital by the annuity
+formula, net worth in years.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool. **The numbers D-046

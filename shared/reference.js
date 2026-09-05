@@ -47,6 +47,7 @@
     matchDefaults: 'match_defaults.json',
     federalBrackets: 'federal_brackets_2026.json',
     wealthMultiplier: 'wealth_multiplier.json',
+    levelsOfWealth: 'levels_of_wealth.json',
     accessRules: 'access_rules.json',
     confidenceWeights: 'confidence_weights.json',
     uiBenefits: 'ui_benefits.json',
