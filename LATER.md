@@ -1,56 +1,46 @@
-# LATER.md — things that would be better, not built this pass
+# LATER.md — what the brief said not to build, and then said to
 
 The one-pager brief (D-094 onward) said: do not add rooms or features
 outside it; if something would be substantially better, write it here.
 The direction after step 1 was to finish everything, this list included
-(D-095), so it is now a build list: each line says what it is, where the
-work already is, and — once built — the decision entry that landed it.
+(D-095), so every line below was built. Each says what it is and the
+decision entry that landed it. Nothing on this list is waiting.
 
-## Parked from T8 (the FI-losophy rooms, D-093 draft)
+## From T8 (the FI-losophy rooms, the D-093 draft) — built
 
-The T8 foundations were built and green (11,698 checks) before the brief
-arrived and are set aside in a git stash on the working branch, labelled
-"T8 foundations: display unit, engines, data, skeleton rooms (D-093
-draft) — set aside for the one-pager". Popping it will conflict with
-`shared/money.js` (`formatAsTime` now lives in the tree), `schema.js`,
-`ownership.js`, `spine-v2.js`, `theme.css` and `registry.js`; take the
-tree's side and re-apply the T8 additions on top.
+The T8 foundations were parked in a git stash before the brief arrived.
+The engines and tables were lifted from it and each room rebuilt on the
+frozen template (D-097); the stash is superseded and dropped.
 
-- **Enough** — a monthly "enough" number and the ETA to it as a seventh
-  dashboard instrument. Overlaps the FI number; the brief's dashboard has
-  four blocks and no seventh instrument.
-- **Designed Week** — the week as 168 hour-blocks, what each costs and
-  buys. Time-denominated display belongs to the lens now (`hours`);
-  the week as a room is out of scope.
-- **Time Buckets** — money by decade of life, ideas per bucket.
-- **Dreamline** — dated dreams costed against the savings rate.
-- **Reversibility** — a decision's undo cost. The command log gives the
-  literal version; the room was about life decisions.
-- **Unlearning** — a catalogue of money rules to drop. The brief's
-  "next thing to learn / unlearn" block on the dashboard is the small
-  version; the catalogue (`data/unlearning.json` in the stash) could feed
-  it later.
-- **Display unit as a household setting** (`meta.displayUnit`, every
-  formatter honouring it). The brief's lens is per session and per page,
-  which is simpler; a stored preference can come back if people ask.
+- **Enough** — the monthly figure you would live on by choice, and the
+  second FI number it makes. `rooms/enough.html`, D-114.
+- **Designed Week** — 168 hours in blocks, what each costs and buys, the
+  month the week adds up to. `rooms/week.html`, D-115.
+- **Time Buckets** — what you plan to do in each decade, priced, against
+  the money there will be. `rooms/buckets.html`, D-116.
+- **Dreamline** — dreams priced a month, the target monthly income, the
+  hours a week at the real rate. `rooms/dreamline.html`, D-117.
+- **Reversibility** — what a decision costs to undo, and how long.
+  `rooms/reversibility.html`, D-118.
+- **Unlearning** — the advice everyone hears, sorted by whether it still
+  applies, and what you have let go of. `rooms/unlearning.html`, D-119.
+  The dashboard's learn/unlearn block (D-096) is its top line.
+- **Display unit as a household setting** — the small version: one
+  stored default lens (`meta.displayUnit`) every page reads. D-100.
 
-## Noticed while building the core
+## Noticed while building the core — built
 
-- **Undo across tabs.** The log is per browser and the cache is per tab;
-  two tabs open on the same household can each undo their own writes and
-  clobber the other's. A `storage` event listener that reloads the cache
-  would fix it. Not now: the brief's flow is one page at a time.
-- **Undo labels for list edits.** "assets.2 and 3 more" is what an
-  unlabelled write to a list looks like when no owned field moved. Every
-  room write of consequence moves an owned field, so it rarely shows;
-  the fix is a label on each `upsert*` call.
-- **The lens on a phone.** Four buttons top right beside two undo
-  buttons is a lot of chrome at 390px. The room template step will
-  decide where the toggle sits; the undo pair may collapse to one menu.
-- **`rooms.json`.** The brief wants the registry as JSON. It stays a JS
-  module so the map draws synchronously; a build-free export of the
-  same rows to JSON is a ten-line script if a consumer outside the
-  browser ever needs it.
-- **Student Loan Decision, Money Calendar & Pay-Later.** Named in the
-  brief as rooms to read first; they are ideas in `SPEC.md` /
-  `ROADMAP.md`, not rooms. If they are wanted they are tranche work.
+- **Undo across tabs** — another tab's write reloads this tab's cache,
+  so both read one household and one log. D-100.
+- **Undo labels for list edits** — "Changed a goal", not a dot path.
+  D-100.
+- **The lens on a phone** — the four buttons tighten under 420px. D-100.
+- **`rooms.json`** — generated from the registry by
+  `tools/rooms-json.js`; the suite checks it is fresh. D-100.
+- **Student Loan Decision** — standard, income-driven, aggressive, side
+  by side. `rooms/student-loans.html`, D-120.
+- **Money Calendar & Pay-Later** — paydays and bills across a month, the
+  low point. `rooms/calendar.html`, D-121.
+
+And the brief's own last step, **History** — every snapshot and what
+moved between them. `rooms/history.html`, D-122.
