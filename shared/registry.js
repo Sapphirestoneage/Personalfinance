@@ -82,6 +82,7 @@
       tier: 1,
       tags: ['cashflow', 'income'],
       subsections: [
+        { id: 'glance',          label: 'At a glance' },
         { id: 'spending',        label: 'A typical month' },
         { id: 'out-summary',     label: 'Monthly spending' },
         { id: 'out-net-flow',    label: 'What’s left' },
