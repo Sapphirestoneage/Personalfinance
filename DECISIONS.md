@@ -5861,6 +5861,154 @@ the room it came from, every room the same shape.
 
 ---
 
+## D-123 — Freeze says what it did, and every ratio explains itself
+
+Two things the phone showed. **Freeze today's numbers** saved a snapshot
+and changed nothing on the screen, so it read as broken: the dashboard's
+age line now says how many snapshots there are and when the last was
+taken, turns green with "just now" after the tap, and links to History.
+And a ratio was a name and a coloured figure with nothing behind it:
+every ratio row — the dashboard's radar legend and weather list, and
+Every Ratio — now carries a ⓘ that opens what it is, why it matters, what
+moves it, the formula, the band in words, and a chip for each field it
+looks at that links to the room owning that number (`shared/explain.js`
+over `data/ratio_explainers.json`; `Ratios.all` attaches the entry to
+each row as `explain`). The name on the dashboard links to the row in
+Every Ratio. A ratio without an explainer fails the suite.
+
+**Invested share.** "Investment to net worth" read 195% for a household
+with $70,000 invested and $41,110 of debt — arithmetic nobody can act on.
+It is now `investedShare`, investments over total assets, which cannot
+pass 100% and means what its label says. `data/ratio_benchmarks.json`
+1.4 and `data/health_score.json` follow the rename.
+
+### Compatibility note
+
+Stored shape: nothing. A snapshot's `computedOutputs` holds ratios by id
+only through the instruments, none of which is this one, so no stored
+delta breaks. Rooms updated: `index.html`, `rooms/ratios.html`.
+
+---
+
+## D-124 — A debt from family, no interest, set aside, and two dates
+
+A car bought with money from a parent had no way in: it needed "an
+interest rate and a minimum payment", and a rate typed as 0 on a card
+opened the promo fields. Four changes to the debt record, all in
+`Schema.createDebt`:
+
+- `type` admits **`family`** — borrowed from family or a friend. Choosing
+  it with nothing said about the rate ticks no-interest and stores a 0.
+- **`interestFree`** — true means no interest, ever; the rate is stored
+  as 0 alongside so a reader that only knows `rate` agrees
+  (`Debt.effectiveRate`). Unticking a 0 that only came from the tick
+  puts the rate back to "not entered", so the row asks again.
+- **`archived`** — set aside: paid off, or on hold. Kept for the record
+  in a drawer, restorable, read by nothing that adds up or plans
+  (`Schema.aggregatableDebts` excludes it; `Schema.archivedDebts` lists
+  it).
+- **`borrowedOn`** and **`dueOn`** on every debt. On a family loan with no
+  monthly amount, the minimum is the balance over the months until
+  `dueOn` — a new rule, `balance_over_months_to_due`, in
+  `data/debt_rules.json` 1.1; a typed amount still wins.
+
+The row's warning and its type-dependent blocks (the card's limit and
+promo fields, the family hint) are painted live on every write without
+rebuilding the row (`paintLive`), because the deferred rebuild
+(`shared/liveform.js`) left a stale "needs an interest rate" under a car
+loan for as long as a finger stayed in the form — which on a phone is
+the whole time.
+
+### Compatibility note
+
+Stored shape: `debt` gains `interestFree` (null), `archived` (false),
+`borrowedOn` (null), `dueOn` (null); `debt.type` gains `family`. A debt
+saved before this reads with the defaults through `createDebt` on load;
+nothing migrates. Rooms updated: `rooms/debt-payoff.html`. A future room
+reading `household.debts` should filter `archived !== true` — or read
+`Schema.aggregatableDebts`, which does — and treat `interestFree === true`
+as a 0 rate.
+
+---
+
+## D-125 — Your Data: a file added or replacing, and a pasted statement sorted
+
+Export lived in a folded drawer on the dashboard, a loaded file could
+only replace everything, and the one-pager's paste answered its own ten
+questions and nothing else. `rooms/data.html` is every way numbers get in
+or out, in one place:
+
+- **A file, added.** `Spine.mergeImport` brings in what a file has that
+  this browser lacks — records by id, people and their income sources,
+  expense entries, blank scalars, snapshots — and changes nothing already
+  entered; one command-log entry, one undo. Replace is still
+  `Spine.importJSON` (D-059), and the person is told which is which
+  before either happens. The merge is `Importer.merge`, pure, so the
+  suite can check it record by record.
+- **A pasted statement, sorted.** `Importer.classify` places each line
+  with an amount, by a word in `data/import_keywords.json`, as a debt of
+  a type, an asset of a category, a monthly expense in a category
+  (through the catalogue's own keywords too), or pay on a basis; a line
+  no word matches is shown as skipped, never guessed. Every placement is
+  shown with a kind and a detail select before "Add" writes the lot in
+  one batch through the same spine helpers the owner rooms use
+  (`Importer.plan` → `Importer.apply`). A monthly expense line for a
+  category that already has one replaces it rather than doubling; a
+  single income source is updated, not duplicated; a family loan comes in
+  interest-free.
+
+Your Data owns no field. Like Refresh (D-057) and the one-pager's paste
+(D-095) it is a write path into records other rooms own, and each record
+lands where its owner will show it. It is a utility, off the path.
+
+### Compatibility note
+
+Stored shape: nothing new. Rooms updated: `index.html` (the data drawer
+links here). `data/import_keywords.json` is config: a word that places a
+line is a data edit.
+
+---
+
+## D-126 — Cash Flow: the month at a glance, the common lines open, a per aid
+
+The page opened on nineteen boxes. It now opens on three tiles — comes
+in (take-home, Tier 0's one tax lookup), goes out (the lines, savings
+excluded because that money has not left), left — each saying what it
+needs when it cannot show a figure, with the floor (D-082) beneath. The
+lines most months have are open; the rest fold under "N more lines" per
+bucket, and a folded line that holds a value opens itself, so nothing
+typed is ever hidden. Beside each amount a **per** select — a month, a
+week, every two weeks, a year — turns what was typed into the month that
+is stored, through the same `BASES` `engines/income.js` annualises pay
+with, and a hint under the line says what was kept. The select applies to
+the number just typed and returns to "a month".
+
+**The stored shape is deliberately unchanged.** The earlier ask — a date
+on every expenditure and incoming amount, estimated and potential dates,
+an incoming-money list — is the Income and Expenses data model that
+`MONEY-MAP.md` exists to settle first (its Task 3 and open questions 1, 5
+and 13). Building it here would have designed it twice.
+
+### Compatibility note
+
+Stored shape: nothing. Rooms updated: `rooms/cash-flow.html`; the
+registry row gains the `glance` subsection.
+
+---
+
+## D-127 — Money Calendar: the month as a calendar
+
+Under the balance line, the same 31 days as a grid — rows of seven from
+Sunday, the first row padded so a day sits under its weekday, a cell a
+day with the payday and each bill or pay-later instalment on the day it
+lands, the cash at the end of the day, the low point outlined, days under
+zero and the tight stretch shaded (`Calendar.weeks`, drawn from the one
+month the engine already runs). Nothing new is stored; when the Money
+Map's dated entries land (D-126, `MONEY-MAP.md` Q5), this grid is where
+they show.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

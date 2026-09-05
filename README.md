@@ -70,6 +70,7 @@ typing in it.
 index.html          The front door: the Dashboard once it has what it needs, the intake landing until then (D-058)
 foo-ladder.js       The FOO ladder's logic (shell at rooms/foo-ladder.html): build() once, paint() on every change
 map.html            Room directory: next-unfinished first, then the groups, tag filter
+MONEY-MAP.md        Discovery map for the Income / Expenses / Budget / month-end close ask — not built, awaiting answers
 favicon.svg         Sapphire mark
 rooms/              One HTML file per room
 vendor/fonts/       Self-hosted typefaces (no CDN, no other vendored code)
@@ -92,6 +93,8 @@ shared/             The spine everything depends on
   room.js             the one shape every room has (D-097) — number, chart, lens, inputs, drawer
   instruments.js      the dashboard's instruments, the ones a snapshot freezes
   ownership.js        one owner per shared number, and the chips that link to it
+  explain.js          the ⓘ on a ratio: what, why, what moves it, and links to what it reads (D-123)
+  importer.js         a pasted statement sorted into debts, assets, expenses and pay; a file merged (D-125)
 engines/            Shared calculation engines — one function per concept
   tier0.js            the nine Tier 0 outputs
   foo.js              Financial Order of Operations ladder + flags
