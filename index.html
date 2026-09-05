@@ -257,6 +257,7 @@
       <p class="headline" id="learn-headline"></p>
       <p class="say" id="learn-say"></p>
       <a class="go" id="learn-go" href="#"></a>
+      <p class="say" id="learn-skill" style="margin-top:var(--space-3);padding-top:var(--space-2);border-top:1px solid var(--color-border)"></p>
     </div>
   </section>
 
@@ -413,6 +414,7 @@
 <script src="shared/charts.js"></script>
 <script src="shared/explain.js"></script>
 <script src="shared/gate.js"></script>
+<script src="engines/skilltree.js"></script>
 <script src="shared/lens.js"></script>
 <script src="engines/advice.js"></script>
 <script src="shared/instruments.js"></script>
@@ -751,6 +753,19 @@
     go.href = room ? Ownership.linkTo(it.room, it.anchor) : Ownership.linkTo('start', null);
     go.textContent = (room ? 'Open ' + room.title : 'Start Here') + ' →';
     box.className = 'learn' + (it.kind === 'unlearn' ? ' is-unlearn' : '');
+    renderNextSkill(h);
+  }
+  /* The one skill beside it (D-131): the next open skill on the tree, the
+     hour's counterpart to the ladder's next dollar. Reads the same state
+     the tree writes; nothing is stored here. */
+  function renderNextSkill(h) {
+    var node = el('learn-skill');
+    if (!node || !SLAF.SkillTree) return;
+    var r;
+    try { r = SLAF.SkillTree.evaluate(h, TABLES, { snapshots: Spine.listSnapshots().length, roomTitle: function (id) { var rr = Registry.byId(id); return rr ? rr.title : id; } }); } catch (e) { node.textContent = ''; return; }
+    var s = r.nextOpen[0];
+    if (!s) { node.innerHTML = 'The next skill: nothing is open yet. <a href="rooms/skill-tree.html">The tree says what would open one →</a>'; return; }
+    node.innerHTML = 'The next skill: <strong>' + esc(s.name) + '</strong> · ' + esc(s.minutes) + (s.firstAction ? ' · first, ' + esc(s.firstAction.title.replace(/^The first fifteen minutes: /, '').toLowerCase()) : '') + '. <a href="rooms/skill-tree.html#skill-' + esc(s.id) + '">Open the tree →</a>';
   }
 
   /* ---- Block 4: the date it points to, and the lens --------------------------- */

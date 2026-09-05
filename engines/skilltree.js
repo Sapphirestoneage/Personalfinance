@@ -201,9 +201,12 @@
     var satisfied = function (id) { var st = out[id]; return !!st && (st.state === 'done' || st.state === 'bypassed'); };
 
     /* First pass: done and bypassed, which need nothing else. */
+    var legacy = (h.skills) || {};   /* a household saved before D-131: the Stacker's own done */
     yours.forEach(function (s) {
       var d = stored[s.id];
+      var old = s.stackerId && legacy[s.stackerId] && legacy[s.stackerId].state === 'done' ? legacy[s.stackerId] : null;
       if (d && d.state === 'done') out[s.id] = { state: 'done', provenance: d.by === 'proof' ? 'proof' : 'self', doneOn: d.on || null, reasons: [] };
+      else if (old) out[s.id] = { state: 'done', provenance: old.verifiedBy === 'household' ? 'proof' : 'self', doneOn: old.verifiedOn || old.lastDone || null, reasons: [] };
       else if (bypassedBy[s.id]) out[s.id] = { state: 'bypassed', provenance: 'warp', warp: bypassedBy[s.id].id, warpLabel: bypassedBy[s.id].label, reasons: [] };
     });
     /* Second pass: open or locked, with the reasons; iterate until stable

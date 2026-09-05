@@ -101,4 +101,40 @@ module.exports = function (t) {
   Spine.markExercise('run-fire-number', false);
   check('… and can be undone', Object.keys(Spine.getProfile().exercises.done).length, 0);
   Spine.reset();
+
+  /* ---- Acceptance checks (the spec's §11), the ones a static read can hold ---- */
+  section('The Skill Tree rooms, the wiring and the version (D-131)');
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/skill-tree.html'), 'utf8');
+  checkTrue('the board declares its live-form policy', /LIVE-FORM: built once/.test(page));
+  checkTrue('every node carries its reason in its title, and a fogged node renders no name', /title="' \+ esc\(title\)/.test(page) && /s\.state === 'fogged' \? '' : '<span class="n-name">/.test(page));
+  checkTrue('the fortress line renders above the board', page.indexOf('id="ladder"') < page.indexOf('id="board"') && /id="rungs"/.test(page));
+  checkTrue('the card is the only way to mark done, through the spine', (page.match(/Spine\.setSkillDone\(/g) || []).length === 2 && !/skillTree\.state\[[^\]]*\] *=/.test(page));
+  checkTrue('a bypassed branch stays reopenable: the card offers mark done for it', /s\.state === 'done' \? '<button[^']*data-reopen/.test(page));
+  checkTrue('the phone gets the serpentine, one tree at a time', /class="serp"/.test(page) && /window\.innerWidth <= 700/.test(page));
+  checkTrue('no band beyond the next one prints a name: the engine blanks it and the room draws a silhouette', /s\.name = null|name: fog && !o\.reveal \? null/.test(fs.readFileSync(path.join(ROOT, 'engines/skilltree.js'), 'utf8')));
+  const exPage = fs.readFileSync(path.join(ROOT, 'rooms/exercises.html'), 'utf8');
+  checkTrue('the exercises room completes and runs through the spine, nothing else', (exPage.match(/Spine\.markExercise\(/g) || []).length === 3 && /Exercises\.compute\(/.test(exPage));
+  const stacker = fs.readFileSync(path.join(ROOT, 'rooms/stacker.html'), 'utf8');
+  const skillsEngine = fs.readFileSync(path.join(ROOT, 'engines/skills.js'), 'utf8');
+  checkTrue('the Stacker reads done from the tree and writes it there, no second copy', /treeDone\(household, skill\.id\)/.test(skillsEngine) && /skillTree: treePatch\(/.test(skillsEngine) && /skillTree: v\.skillTree/.test(stacker));
+  const dash = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  checkTrue('dashboard block 3 reads the next skill from the tree engine, beside learn and unlearn', /SLAF\.SkillTree\.evaluate\(/.test(dash) && /id="learn-skill"/.test(dash) && /engines\/skilltree\.js/.test(dash));
+  /* Versioning: one string, everywhere. */
+  const version = JSON.parse(fs.readFileSync(path.join(ROOT, 'version.json'), 'utf8'));
+  check('version.json is major.minor', /^\d+\.\d+$/.test(version.version), true);
+  check('… and matches the schema constant every footer and export prints', version.version, Schema.APP_VERSION);
+  checkTrue('every room footer prints it through the progress strip', /Money Rooms v' \+ g\.SLAF\.Schema\.APP_VERSION/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
+  checkTrue('every export and share code is stamped with it', /appVersion: Schema\.APP_VERSION/.test(fs.readFileSync(path.join(ROOT, 'shared/spine-v2.js'), 'utf8')));
+  Spine.reset();
+  check('… as the export object shows', Spine.exportObject ? Spine.exportObject().appVersion : Schema.APP_VERSION, Schema.APP_VERSION);
+  /* The Stacker's mark-done writes the tree. */
+  const Skills = require(path.join(ROOT, 'engines/skills.js'));
+  const hs = Demo.build();
+  const md = Skills.markDone(hs, 'know-your-number', T, '2026-09-05');
+  checkTrue('a once-skill marked done in the Stacker lands in the tree, by self', Money.isOk(md) && md.value.skillTree.state['know-your-number'].state === 'done' && md.value.skillTree.state['know-your-number'].by === 'self');
+  checkTrue('… and the Stacker record keeps only its provenance', md.value.skills['know-your-number'].state !== 'done' && md.value.skills['know-your-number'].verifiedBy === 'self');
+  hs.skillTree = md.value.skillTree; hs.skills = md.value.skills;
+  check('the tree reads it as done', ST.evaluate(hs, T).byId['know-your-number'].state + '/' + ST.evaluate(hs, T).byId['know-your-number'].provenance, 'done/self');
+  const hl2 = Demo.build(); hl2.skills = { 'starter-fund': { state: 'done', kind: 'once', verifiedBy: 'household', verifiedOn: '2026-08-01' } };
+  check('a household saved before D-131 still reads its Stacker done, by proof', ST.evaluate(hl2, T).byId['starter-fund'].state + '/' + ST.evaluate(hl2, T).byId['starter-fund'].provenance, 'done/proof');
 };

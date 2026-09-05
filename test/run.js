@@ -7222,14 +7222,16 @@ section('The Skill Stacker: the catalogue, and the engine on the demo');
   ['enter-the-facts', 'name-your-debt', 'starter-fund'].forEach(id => checkTrue(`… including ${id}`, v.verified.includes(id)));
   checkTrue('capture-the-match is NOT proven: Robin leaves match on the table', !v.verified.includes('capture-the-match'));
   check('a verified skill records who said so', v.skills['starter-fund'].verifiedBy, 'household');
-  h.skills = v.skills;
+  check('… and done lives in the tree, by proof (D-131)', v.skillTree.state['starter-fund'].state + '/' + v.skillTree.state['starter-fund'].by, 'done/proof');
+  h.skills = v.skills; h.skillTree = v.skillTree;
   check('verifying again changes nothing', Skills.verifyOnce(h, T, day).verified.length, 0);
+  check('the Stacker reads done from the tree', Skills.state(h, Skills.byId(T, 'starter-fund')), 'done');
   (function () {
     const poorer = JSON.parse(JSON.stringify(h));
     poorer.assets[0].valueCents = 100000;                    /* $1,000 < the $2,500 deductible */
     const r = Skills.verifyOnce(poorer, T, day);
     checkTrue('a fact that stops holding un-marks the skill it proved', r.reverted.includes('starter-fund'));
-    poorer.skills['name-your-debt'].verifiedBy = 'self';
+    poorer.skillTree.state['name-your-debt'].by = 'self';
     poorer.meta.hasDebt = false; poorer.debts = [];
     checkTrue('but a skill marked done by hand stays done', !Skills.verifyOnce(poorer, T, day).reverted.includes('name-your-debt'));
   })();

@@ -605,6 +605,9 @@ h3 { font-size: var(--text-md); }
 .slaf-bars.has-negative .track:before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--color-border-strong); }
 .slaf-bars .val { font-size: var(--text-sm); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 
+/* The version line every room's footer prints (D-131). */
+.slaf-version { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; margin: var(--space-3) 0 0; letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
+
 /* Marked not applicable by the household (D-130): dashed, amber, and it
    says so rather than asking for the figure. The toggle sits in the
    owner room beside the input. */

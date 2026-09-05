@@ -1208,6 +1208,7 @@
       format: EXPORT_FORMAT,
       exportVersion: EXPORT_VERSION,
       schemaVersion: Schema.SCHEMA_VERSION,
+      appVersion: Schema.APP_VERSION,
       exportedAt: new Date().toISOString(),
       household: withoutHistory(getProfile()),
       snapshots: listSnapshots()

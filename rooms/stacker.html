@@ -546,7 +546,8 @@
     var hh = h();
     var v = Skills.verifyOnce(hh, TABLES, today());
     var d = Skills.decay(Object.assign({}, hh, { skills: v.skills }), TABLES, today());
-    if (v.verified.length || v.reverted.length || d.changes.length) Spine.updateProfile({ skills: d.skills });
+    /* Done lives in the tree (D-131): a fact that proves a skill writes it there, by proof. */
+    if (v.verified.length || v.reverted.length || d.changes.length) Spine.updateProfile({ skills: d.skills, skillTree: v.skillTree });
   }
 
   /* ---- Render -------------------------------------------------------------------- */

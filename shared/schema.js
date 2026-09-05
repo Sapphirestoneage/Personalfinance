@@ -34,6 +34,11 @@
   'use strict';
 
   var SCHEMA_VERSION = 2;
+  /* The product version, major.minor: the major is the shape, the minor a
+     pass. version.json at the root carries the same string (a test holds
+     them together); every export and share code is stamped with it and
+     every room footer prints it. D-131. */
+  var APP_VERSION = '2.0';
 
   /* ======================================================================
      System assumption defaults — SPEC.md §12.2 (RESOLVED: 7% return, 4% SWR)
@@ -1957,6 +1962,7 @@
     BUDGET_PRESETS: BUDGET_PRESETS,
     createNotApplicable: createNotApplicable,
     createSkillTree: createSkillTree,
+    APP_VERSION: APP_VERSION,
     createExercisesLog: createExercisesLog,
     createVariableIncomePlan: createVariableIncomePlan,
     SPLIT_MODES: SPLIT_MODES,

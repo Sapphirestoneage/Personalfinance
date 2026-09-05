@@ -351,8 +351,11 @@
     var tail = host.querySelector('.disclaimer');
     if (tail) host.insertBefore(box, tail); else host.appendChild(box);
 
+    /* The version, printed in every room's footer (D-131): version.json
+       carries the same string, and the test holds the two together. */
+    var version = g.SLAF.Schema && g.SLAF.Schema.APP_VERSION ? '<p class="slaf-version">Money Rooms v' + g.SLAF.Schema.APP_VERSION + '</p>' : '';
     function paint() {
-      box.innerHTML = stripHtml(roomId, Spine.getProfile());
+      box.innerHTML = stripHtml(roomId, Spine.getProfile()) + version;
     }
     paint();
 
