@@ -4,29 +4,32 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Dreamline · SPARKS</title>
-<meta name="description" content="What your job actually pays, once you count every hour it takes and everything it costs you to do it."/>
+<meta name="description" content="Price the dreams a month, add the cost of living, pad it: the target monthly income, and the hours a week at your real rate it takes."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. THE TEMPLATE ROOM. DECISIONS.md D-097.
+  ROOM SPEC — SPEC.md §11. BRIEF §8 "Dreamline". DECISIONS.md D-093 / D-101.
 
-  1. READS   The person's income (owned by Start Here) and filingStatus, for
-             the tax estimate; a month's spending, for the lens.
-  2. WRITES  It OWNS person.work — paid hours, unpaid overtime, commute,
-             work costs, weeks a year, and (folded) prep and decompression.
-             Nothing else edits those. It does not touch income.
-  3. CALLS   engines/hourly.js. Tax comes from engines/tier0.js's effective-
-             rate lookup, never a second calculation.
+  1. READS   A month's spending (Cash Flow) and the income (Start Here) as
+             chips; the real hourly wage from engines/hourly.js and take-home
+             from engines/tier0.js — both shown, neither re-derived; the pad
+             and the horizon in data/dreamline.json.
+  2. WRITES  It OWNS household.dreams: five slots, dream_1 … dream_5, each a
+             price a month and (folded) a kind. Ownership row dreamsMonthly.
+             Nothing else edits those; it touches nothing else.
+  3. CALLS   engines/dreamline.js. The rate is Real Hourly Wage's, the tax
+             is Tier 0's effective-rate lookup, never a second calculation.
   4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses and says so (Gate.fillGuesses). Each unpaid-
-             hours box is optional: blank is none, not unanswered.
-  5. CONFIG  data/effective_tax_rates_2026.json.
+             intake's guesses and says so (Gate.fillGuesses): the target
+             shows from guessed spending; the hours wait for paid hours in
+             Real Hourly Wage. A blank dream is no dream, not a zero.
+  5. CONFIG  data/dreamline.json (bufferMultiplier 1.3, horizonMonths 6).
 
-  THE SHAPE (shared/room.js, frozen here): one number, one chart, the lens,
-  five inputs and two folded, the assumptions drawer with sources, why
-  this matters at your stage, one out-of-scope line to Get Help. The ids
-  below are the deep links.
+  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens, five
+  inputs and five folded, the assumptions drawer with sources, why this
+  matters at your stage, one out-of-scope line to Get Help. The ids below
+  are the deep links.
 
   LIVE-FORM: built once — shared/room.js builds the inputs from the spec
   on load and only sets .value, never under focus.
@@ -57,25 +60,25 @@
 
   <section class="slaf-card" id="number">
     <div class="room-head-row">
-      <span class="slaf-eyebrow">Your real rate</span>
+      <span class="slaf-eyebrow">The life, a month</span>
       <div id="room-lens"></div>
     </div>
     <div class="room-number" id="room-number"></div>
   </section>
 
   <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Where the week goes</span>
+    <span class="slaf-eyebrow">Dreams against the month</span>
     <div id="room-chart"></div>
   </section>
 
   <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The hours the job takes</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave anything blank that doesn't apply — working from home means no commute, and blank is none rather than unanswered.</p>
+    <span class="slaf-eyebrow">The dreams</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Price each one as what it would cost a month — a trip saved for over the year, a course by its instalments, a place by its rent. Leave a slot blank and it is simply not a dream yet, not a dream of nothing.</p>
     <div id="room-inputs"></div>
   </section>
 
   <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Priced in life</span>
+    <span class="slaf-eyebrow">Through the lens</span>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
     <ul class="room-amounts" id="room-amounts"></ul>
   </section>
@@ -94,8 +97,9 @@
   </section>
 
   <p class="disclaimer">
-    Educational tool, not financial advice. Tax is estimated from a flat
-    effective-rate table, not a return. Your numbers stay in this browser.
+    Educational tool, not financial advice. The pad is a convention, tax is
+    estimated from a flat effective-rate table, not a return. Your numbers
+    stay in this browser.
   </p>
 </main>
 
@@ -112,118 +116,119 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/hourly.js"></script>
+<script src="../engines/dreamline.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
 <script src="../shared/room.js"></script>
 <script>
 (function () {
   'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Hourly = SLAF.Hourly, Charts = SLAF.Charts, Room = SLAF.Room;
+  var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
+      Engine = SLAF.Dreamline, Charts = SLAF.Charts, Room = SLAF.Room;
 
-  /* ---- writes: this room owns person.work ------------------------------------ */
-  function writeWork(key, value) {
-    var person = Spine.ensurePrimaryPerson('You');
-    var current = Schema.workProfile(Schema.personById(Spine.getProfile(), person.id));
-    var next = Object.assign({}, current);
-    next[key] = value;
-    Spine.upsertPerson({ id: person.id, work: next });
-  }
-  function readWork(h) { return Schema.workProfile(Schema.primaryPerson(h)); }
-  function hoursInput(key, label, placeholder, hint) {
-    return { ctl: key, label: label, kind: 'number', placeholder: placeholder, affix: 'h', hint: hint,
-      read: function (h) { return readWork(h)[key]; }, write: function (v) { writeWork(key, v === null || v <= 0 ? null : v); } };
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
   }
   function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
+  function hours(h) { return (Math.round(h * 10) / 10).toLocaleString('en-US', { maximumFractionDigits: 1 }); }
+  function wageLink() { return '<a href="' + esc(Ownership.linkTo('real-hourly-wage', 'inputs')) + '">Real Hourly Wage</a>'; }
 
-  var HOUR_COLOURS = { paid: Charts.COLORS.series[0], unpaidOvertimeHoursPerWeek: Charts.COLORS.series[3], commuteHoursPerWeek: Charts.COLORS.series[1], prepHoursPerWeek: Charts.COLORS.series[2], decompressHoursPerWeek: Charts.COLORS.series[4] };
+  /* ---- writes: this room owns household.dreams, five slots -------------------- */
+  function writeSlot(i, fields) {
+    Spine.set('dreams', Engine.withSlot(Engine.dreams(Spine.getProfile()), i, fields));
+  }
+  function priceInput(i) {
+    return { ctl: 'dream' + i, label: 'Dream ' + i + ', a month', kind: 'money', placeholder: 'e.g. ' + [800, 600, 250, 150, 100][i - 1],
+      read: function (h) { var d = Engine.slot(h, i); return d ? d.monthlyCents : null; },
+      write: function (v) { writeSlot(i, { monthlyCents: v === null || v <= 0 ? null : v }); } };
+  }
+  function kindInput(i) {
+    return { ctl: 'kind' + i, label: 'Dream ' + i + ' is', kind: 'select', options: [['', '—']].concat(Engine.KINDS),
+      read: function (h) { var d = Engine.slot(h, i); return d ? d.label : null; },
+      write: function (v) { writeSlot(i, { label: v }); } };
+  }
+  var slots = [1, 2, 3, 4, 5];
+
+  var PART_COLOURS = { spending: Charts.COLORS.spend, buffer: Charts.COLORS.muted, dreams: [Charts.COLORS.series[0], Charts.COLORS.series[1], Charts.COLORS.series[4], Charts.COLORS.series[5], Charts.COLORS.series[6]] };
 
   Room.mount({
-    id: 'dreamline', /* STUB — being built (D-101) */
-    tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
-    reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'],
+    id: 'dreamline',
+    tables: ['dreamline', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    reads: ['monthlyExpenses', 'grossAnnualIncome'],
 
     number: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return { label: 'Actually, an hour', value: null, reason: w.reason + (/not earning/.test(w.reason || '') ? '' : '') };
-      var sub = 'On paper <strong>' + perHour(w.nominalHourlyCents) + '</strong> · you keep <strong>' + Money.formatRate(w.retained, { decimals: 0 }) + '</strong> of it'
-        + ' · ' + Money.formatCents(w.keptAnnualCents) + ' kept over ' + w.annualTotalHours.toLocaleString('en-US') + ' hours a year';
-      if (w.costsMoreThanItPays) sub += '. <strong>This job costs more than it pays</strong> — check the monthly costs; if they are right, that is the finding';
-      if (w.implausibleHours) sub += '. ' + w.paidHoursPerWeek + ' paid hours a week makes this look enormous; the arithmetic is right, the comparison is not';
-      if (!w.taxKnown) sub += '. Tax is not in yet: ' + (w.taxReason || '');
-      return { label: 'Actually, an hour', value: perHour(w.realHourlyCents), sub: sub, zone: w.costsMoreThanItPays ? 'out' : (w.retained !== null && w.retained < 0.5 ? 'watch' : null), result: w };
+      var p = Engine.picture(h, T);
+      if (!Money.isOk(p)) return { label: 'Target monthly income', value: null, reason: p.reason };
+      var t = p.target, g = p.gap, hrs = p.hours;
+      var parts = [];
+      if (t.pricedCount === 0) parts.push('no dream priced' + (t.unpricedCount ? ' (' + t.unpricedCount + ' named)' : ''));
+      else parts.push('<strong>' + t.pricedCount + (t.pricedCount === 1 ? ' dream' : ' dreams') + ', ' + Money.formatCents(t.dreamsCents) + ' a month</strong>' + (t.unpricedCount ? ' (' + t.unpricedCount + ' unpriced)' : ''));
+      parts.push('spending ' + Money.formatCents(t.expensesCents));
+      parts.push('× ' + t.bufferMultiplier);
+      if (Money.isOk(g)) parts.push('you take home ' + Money.formatCents(g.takeHomeMonthlyCents) + ': <strong>' + Money.formatCents(Math.abs(g.value)) + (g.short ? ' short' : ' to spare') + '</strong>');
+      else parts.push('take-home is not in yet — ' + esc(g.reason));
+      var sub = parts.join(' · ');
+      if (Money.isOk(hrs)) sub += '. <strong>' + hours(hrs.value) + ' hours a week</strong> at ' + perHour(hrs.wageCents) + ' (' + wageLink() + '), ' + hours(hrs.hoursNow) + ' now';
+      else sub += '. To see it in hours a week: ' + esc(hrs.reason) + ' — in ' + wageLink();
+      return { label: 'Target monthly income', value: Money.formatCents(p.value), sub: sub, zone: p.zone, result: p };
     },
 
     chart: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return Charts.stacked({ rows: [], empty: 'Add your paid hours to see where the week goes.' });
-      var parts = [{ label: 'Paid', value: w.paidHoursPerWeek, color: HOUR_COLOURS.paid }].concat((w.unpaidParts || []).map(function (p) { return { label: p.label, value: p.hours, color: HOUR_COLOURS[p.key] }; }));
-      var gross = w.grossAnnualIncomeCents, tax = w.estimatedTaxCents || 0, costs = w.annualWorkCostsCents, kept = w.keptAnnualCents;
+      var p = Engine.picture(h, T);
+      if (!Money.isOk(p)) return Charts.stacked({ rows: [], empty: 'Add your monthly spending to draw the month.' });
+      var parts = [{ label: 'Spending', value: p.target.expensesCents, color: PART_COLOURS.spending }];
+      p.dreams.forEach(function (d, k) {
+        if (Money.isEntered(d.monthlyCents)) parts.push({ label: d.name, value: d.monthlyCents, color: PART_COLOURS.dreams[k % PART_COLOURS.dreams.length] });
+      });
+      parts.push({ label: 'The pad, × ' + p.target.bufferMultiplier, value: p.target.bufferCents, color: PART_COLOURS.buffer });
       return Charts.stacked({
-        title: 'Hours a week, and where the pay goes',
-        rows: [
-          { label: 'Your week', note: w.totalHoursPerWeek + ' h, ' + w.paidHoursPerWeek + ' paid', parts: parts },
-          { label: 'A year of pay', note: 'per ' + Money.formatCents(gross), parts: [
-            { label: 'Kept', value: kept / gross * w.totalHoursPerWeek, color: Charts.COLORS.growth },
-            { label: 'Tax', value: tax / gross * w.totalHoursPerWeek, color: Charts.COLORS.debt },
-            { label: 'Costs of working', value: costs / gross * w.totalHoursPerWeek, color: Charts.COLORS.series[3] }
-          ] }
-        ],
-        format: function (v) { return (Math.round(v * 10) / 10) + ' h'; }
+        title: 'The target month: spending, each dream, the pad',
+        rows: [{ label: 'The target month', note: p.target.pricedCount ? p.target.pricedCount + ' priced' : 'no dream yet', parts: parts }]
       });
     },
 
-    inputs: [
-      hoursInput('contractedHoursPerWeek', 'Paid hours a week', 'e.g. 40'),
-      hoursInput('unpaidOvertimeHoursPerWeek', 'Unpaid overtime', 'e.g. 3'),
-      hoursInput('commuteHoursPerWeek', 'Commuting', 'e.g. 5'),
-      { ctl: 'workCostsMonthlyCents', label: 'Costs of working, a month', kind: 'money', placeholder: 'e.g. 400', hint: 'Petrol, parking, transit, work clothes, lunches you would not otherwise buy, childcare only while working.',
-        read: function (h) { return readWork(h).workCostsMonthlyCents; }, write: function (v) { writeWork('workCostsMonthlyCents', v); } },
-      { ctl: 'weeksPerYear', label: 'Weeks worked a year', kind: 'number', placeholder: String(Schema.WORK_DEFAULTS.weeksPerYear),
-        read: function (h) { var w = readWork(h).weeksPerYear; return w === Schema.WORK_DEFAULTS.weeksPerYear ? null : w; }, write: function (v) { writeWork('weeksPerYear', v === null || v <= 0 ? Schema.WORK_DEFAULTS.weeksPerYear : v); } }
-    ],
-    moreLabel: 'The hours around the job',
-    more: [
-      hoursInput('prepHoursPerWeek', 'Getting ready', 'e.g. 2.5'),
-      hoursInput('decompressHoursPerWeek', 'Decompressing', 'e.g. 2.5')
-    ],
+    inputs: slots.map(priceInput),
+    moreLabel: 'Name each dream',
+    more: slots.map(kindInput),
 
     amounts: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      var spend = Schema.monthlyExpensesCents(h);
-      var rows = [];
-      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
-      if (Money.isOk(w)) {
-        rows.push({ label: 'A year of tax, estimated', cents: w.estimatedTaxCents || 0 });
-        if (w.annualWorkCostsCents > 0) rows.push({ label: 'A year of the costs of working', cents: w.annualWorkCostsCents });
-      }
-      rows.push({ label: 'A $1,200 thing you are eyeing', cents: 120000 });
+      var p = Engine.picture(h, T);
+      if (!Money.isOk(p)) return [];
+      var rows = [{ label: 'The target month', cents: p.value }];
+      if (p.target.pricedCount) rows.push({ label: 'The dreams, a month', cents: p.target.dreamsCents, href: '#inputs' });
+      if (Money.isOk(p.gap) && p.gap.value !== 0) rows.push({ label: p.gap.short ? 'Short of the target, a month' : 'Over the target, a month', cents: Math.abs(p.gap.value) });
+      if (p.target.pricedCount) rows.push({ label: 'The dreams over ' + p.horizon.months + ' months', cents: p.horizon.dreamsOverHorizonCents });
+      rows.push({ label: 'A month of spending', cents: p.target.expensesCents, href: Ownership.linkTo('cash-flow', 'spending') });
       return rows;
     },
 
     assumptions: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      var tax = T.effectiveTaxRates;
-      var work = readWork(h);
+      var d = T.dreamline || {}, tax = T.effectiveTaxRates || {};
+      var p = Engine.picture(h, T);
+      var hrs = Money.isOk(p) ? p.hours : null, g = Money.isOk(p) ? p.gap : null;
+      var tableSource = 'data/dreamline.json v' + (d.version || '?') + ' — ' + (d.source || '') + ' (' + (d.confidence || 'convention') + ')';
       return [
-        { label: 'Tax', value: Money.isOk(w) && w.taxKnown ? Money.formatRate(w.effectiveRate || (w.estimatedTaxCents / w.grossAnnualIncomeCents), { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')' },
-        { label: 'Weeks a year', value: String(Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear), source: Money.isEntered(work.weeksPerYear) && work.weeksPerYear !== Schema.WORK_DEFAULTS.weeksPerYear ? 'yours' : 'the default: 52 less four weeks of leave and holidays (convention)' },
-        { label: 'Unpaid hours', value: 'count as work', source: 'Your Money or Your Life: an hour the job takes is an hour it costs, paid or not (convention)' },
-        { label: 'Real return, for the lens', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' }
+        { label: 'The pad', value: '× ' + Engine.buffer(T), source: tableSource + (d.confidenceNote ? ' — ' + d.confidenceNote : '') },
+        { label: 'The horizon', value: Money.formatMonths(Engine.horizonMonths(T)), source: 'the timeline the exercise is written for; each dream is also shown as what it costs over it (convention, data/dreamline.json)' },
+        { label: 'Real hourly wage', value: hrs && Money.isOk(hrs) ? perHour(hrs.wageCents) + ', ' + hours(hrs.hoursNow) + ' h a week now' : 'not in yet' + (hrs && hrs.reason ? ' — ' + hrs.reason : ''), source: 'Real Hourly Wage, with its own assumptions: the flat tax estimate, weeks a year, and every hour the job takes counted as work' },
+        { label: 'Take-home', value: g && Money.isOk(g) ? Money.formatCents(g.takeHomeMonthlyCents) + ' a month at ' + Money.formatRate(g.effectiveRate, { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + (tax.version || '?') + ' — ' + (tax.source || '') + ' (' + (tax.confidence || '') + ')' },
+        { label: 'Weeks in a month', value: String(Math.round(Engine.WEEKS_PER_MONTH * 100) / 100), source: '52 ÷ 12: a monthly figure over a weekly rate (convention)' }
       ];
     },
 
     why: function (h, T, situation) {
       return {
-        employed: 'Employed, the headline rate is the one on the offer letter. This one is the rate that decides whether the next thing — a raise, a move, an hour of overtime — is worth it.',
-        selfEmployed: 'Self-employed, there is no headline rate, only this one: what is left after the tax you set aside and the hours the work really takes, including the ones nobody bills.',
-        mixed: 'With a job and your own work, each has a real rate. This reads the job; put the own-work hours in as a second job in Start Here to compare them.',
-        student: 'A part-time job at a student’s stage is priced against study hours, not against a career. If the real rate is low, the question is what the hours are taking from.',
+        employed: 'Employed, the salary is fixed and the dreams feel like a someday. Priced a month and turned into hours a week at the rate the job really pays, a dream becomes a number of Tuesdays — and the gap between the target and what you take home is the size of the raise, the side income, or the cut in spending that closes it.',
+        selfEmployed: 'Self-employed, the target monthly income is the number to set your rate and your hours against. Priced this way, a dream is so many billable hours a week at what you actually keep — and the pad is the slack a variable income needs to fund a dream without missing a month.',
+        mixed: 'With a job and your own work, the target is what the two together need to bring in a month. The hours here are at the job’s real rate; if your own work keeps more per hour, the dreams cost fewer of them, and that is a reason to lean that way.',
+        student: 'At a student’s stage the dreams are cheap to price and dear in hours: a part-time rate turns a modest dream into a large slice of the week. That is the honest arithmetic of the next few years, and a reason to price the dream now and time it for later.',
         betweenJobs: '', retired: ''
-      }[situation] || 'Any job has a headline rate and a real one. The gap between them is what this room measures.';
+      }[situation] || 'A dream priced a month is a number; at your real hourly wage it is hours of your week. This room does that arithmetic and nothing else.';
     },
 
-    scope: 'This room does not model overtime pay, shift differentials, or a second job’s hours on their own. Tax is a flat estimate, not a return.'
+    scope: 'This room does not plan the dreams or find the hours; it prices them a month and turns that into hours of your week.'
   });
 })();
 </script>
