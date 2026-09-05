@@ -326,7 +326,8 @@
       parts.push('<rect class="node" x="' + n.x + '" y="' + n.y + '" width="' + NW + '" height="' + n.h + '" rx="2" fill="' + (n.color || COLORS.contributed) + '"><title>' + esc(n.label + ': ' + format(n.v)) + '</title></rect>');
       var tx = last ? n.x - 4 : n.x + NW + 4, anchor = last ? 'end' : 'start';
       var ty = n.y + Math.min(n.h / 2, 8) + 3;
-      parts.push('<text class="tick" x="' + tx + '" y="' + ty + '" text-anchor="' + anchor + '">' + esc(trim(n.label, 18)) + '</text>');
+      var label = String(n.label || ''); if (label.length > 18) label = label.slice(0, 17) + '…';
+      parts.push('<text class="tick" x="' + tx + '" y="' + ty + '" text-anchor="' + anchor + '">' + esc(label) + '</text>');
       if (n.h > 22) parts.push('<text class="tick small" x="' + tx + '" y="' + (ty + 11) + '" text-anchor="' + anchor + '">' + esc(shortMoney(n.v)) + '</text>');
     });
     return '<div class="slaf-chart slaf-sankey"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.title || 'where the money flows') + '">' + parts.join('') + '</svg></div>';
