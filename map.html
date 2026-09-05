@@ -94,6 +94,7 @@
 <script src="shared/spine-v2.js"></script>
 <script src="shared/ownership.js"></script>
 <script src="shared/progress.js"></script>
+<script src="shared/undo.js"></script>
 <script>
 (function () {
   'use strict';
@@ -124,7 +125,7 @@
 
   function renderRooms() {
     var visited = Spine.getVisitedRooms();
-    var rooms = Registry.byTag(activeTag);
+    var rooms = Registry.byTag(activeTag, Spine.getProfile());
     var list = el('room-list');
     list.innerHTML = '';
 

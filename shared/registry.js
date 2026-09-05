@@ -613,6 +613,35 @@
 
   function all() { return inOrder(); }
 
+  /* Which branch a room needs before it is a room for this household
+     (D-094). Rooms with none are for everyone. The check is Gate.exists,
+     reached lazily because the gate loads after the registry. */
+  var REQUIRES = {
+    accounts: ['retirement'],
+    credential: ['career'],
+    'self-employed': ['ownWork'],
+    'side-hustle': ['career'],
+    'real-hourly-wage': ['hours'],
+    hassle: ['hours'],
+    'savings-rate': ['savingsRate'],
+    fire: ['savingsRate']
+  };
+  function gate() {
+    if (typeof module === 'object' && module.exports) return require('./gate.js');
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    return g && g.SLAF && g.SLAF.Gate ? g.SLAF.Gate : null;
+  }
+  function requires(roomId) { return REQUIRES[roomId] || []; }
+  function applies(room, household) {
+    var G = gate();
+    if (!G || !household) return true;
+    return requires(room.id).every(function (k) { return G.exists(household, k); });
+  }
+  /** The rooms that exist for this household, in path order. */
+  function forHousehold(household) {
+    return inOrder().filter(function (r) { return applies(r, household); });
+  }
+
   /** The next room after this one that hasn't been visited yet. Pass the
    *  household and Debt Payoff is skipped for someone who answered "no
    *  debt" (D-061) — there is nothing to list there. */
@@ -636,9 +665,10 @@
     return null;
   }
 
-  function byTag(tag) {
-    if (!tag || tag === 'all') return all();
-    return inOrder().filter(function (r) { return r.tags.indexOf(tag) !== -1; });
+  function byTag(tag, household) {
+    var list = household ? forHousehold(household) : all();
+    if (!tag || tag === 'all') return list;
+    return list.filter(function (r) { return r.tags.indexOf(tag) !== -1; });
   }
 
   function total() { return ROOMS.length; }
@@ -648,6 +678,10 @@
     ROOMS: ROOMS,
     all: all,
     inOrder: inOrder,
+    REQUIRES: REQUIRES,
+    requires: requires,
+    applies: applies,
+    forHousehold: forHousehold,
     nextAfter: nextAfter,
     byId: byId,
     byTag: byTag,

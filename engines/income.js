@@ -70,6 +70,10 @@
     { id: 'fortnightly', label: 'every 2 weeks', short: '2wk', periods: 26,
       note: 'Every two weeks — 26 payslips, because a year is not 24 fortnights.' },
     { id: 'weekly',      label: 'a week',      short: 'wk',  periods: 52 },
+    /* Variable income — freelance, tips, commission — given as a month on
+       average. The arithmetic is monthly; the label says it varies. D-094. */
+    { id: 'variable',    label: 'a month on average \u2014 it varies', short: 'avg', periods: 12,
+      note: 'An average month. The runway and the rates read it as steady, which is the one thing it is not.' },
     { id: 'hourly',      label: 'an hour',     short: 'hr',  periods: null,
       needsHours: true,
       note: 'Needs your hours a week — there is no honest hourly-to-yearly number without them.' },

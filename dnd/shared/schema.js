@@ -44,6 +44,10 @@
   var WORK_DEFAULTS = { weeksPerYear: 48 };
 
   var ASSUMPTION_DEFAULTS = {
+    /* The brief's two (D-094): a real return for the lens and the plan,
+       inflation for anything that reads a nominal figure forward. */
+    returnReal: 0.05,
+    inflation: 0.03,
     expectedReturnRate: 0.07,   // nominal annual, decimal fraction
     swrRate: 0.04,             // safe withdrawal rate, decimal fraction
     /* Real discount rate for human capital — the present value of the pay
@@ -72,7 +76,18 @@
     'household.filingStatus':                    { class: 'raw',        unit: 'enum',    values: ['single', 'married_joint', 'married_separate', 'head_of_household'] },
     'household.state':                           { class: 'raw',        unit: 'usps',    note: '2-letter state code' },
     'household.capturingFullMatch':              { class: 'raw',        unit: 'bool',    note: 'null = not answered; needed by FOO step 2. DECISIONS.md D-008' },
-    'household.dependents':                      { class: 'raw',        unit: 'bool',    note: 'null = not asked; false = nobody depends on this income, so term life is not a gap. Owned by Start Here. D-092' },
+    'household.dependents':                      { class: 'raw',        unit: 'list',    note: 'null = not asked; [] = nobody; else [{ age }]. Nobody: term life is not a gap. D-092, D-094' },
+    'household.community.daySchool':             { class: 'raw',        unit: 'bool',    note: 'a day school in the picture; asked only when there are dependents. D-094' },
+    'incomeSource.variableLowCents':             { class: 'raw',        unit: 'cents',   note: 'a low month and (variableHighCents) a high one, for variable income; owner\'s pay reads the low end. D-094' },
+    'insurance.health.type':                     { class: 'raw',        unit: 'enum',    values: ['employer', 'marketplace', 'cobra', 'medicaid', 'parent', 'none'], note: 'with monthlyCents. D-094' },
+    'estate.beneficiariesSet':                   { class: 'raw',        unit: 'bool',    note: 'with willExists and poaExists: three yes/no facts, null until asked. D-094' },
+    'giving.pctOfIncome':                        { class: 'raw',        unit: 'rate',    note: 'annualTargetCents when typed over the share. D-094' },
+    'assumptions.returnReal':                    { class: 'assumption', unit: 'rate',    default: 0.05, note: 'the real return the lens and the plan use. D-094' },
+    'assumptions.inflation':                     { class: 'assumption', unit: 'rate',    default: 0.03, note: 'D-094' },
+    'meta.undoStack':                            { class: 'raw',        unit: 'list',    note: 'the command log: { label, ts, changes[{ path, before, after }] }, capped at 100; redoStack likewise. D-094' },
+    'household.oneOffs[].cents':                 { class: 'raw',        unit: 'cents',   note: 'a one-off coming, in (direction in) or out; `on` is the month. From the one-pager. D-094' },
+    'meta.guessed':                              { class: 'raw',        unit: 'map',     note: '{ fieldId: true } for figures the one-pager committed as guesses; cleared per field the moment a real number is written. D-094' },
+    'meta.noRent':                               { class: 'raw',        unit: 'bool',    note: 'no rent to pay; lowers the spending guess. D-094' },
     'person.unemployment.benefitStatus':         { class: 'raw',        unit: 'enum',    values: ['receiving', 'applied', 'notApplied', 'ineligible'], note: 'between jobs: whether unemployment is coming. With benefitWeeklyCents, benefitWeeksLeft, severanceCents, lastGrossAnnualCents and since. Owned by Start Here. D-092' },
     'person.dob':                                { class: 'raw',        unit: 'iso-date' },
     'person.role':                               { class: 'raw',        unit: 'enum',    values: ['adult', 'child', 'dependent', 'other'] },
@@ -210,6 +225,9 @@
     return prefix + '_' + Date.now().toString(36) + '_' + idCounter.toString(36);
   }
 
+  /* variableLowCents / variableHighCents: a month at the low and high end,
+     for self-employed and mixed income (D-094). Owner's pay is read from
+     the low end; nothing here averages them into a steady figure. */
   function createIncomeSource(fields) {
     var f = fields || {};
     return {
@@ -233,6 +251,8 @@
       monthsWorked: f.monthsWorked === undefined ? null : f.monthsWorked,
       /* Is this still the job? Drives the run-rate figure. */
       ongoing: f.ongoing === undefined ? true : !!f.ongoing,
+      variableLowCents: Money.isEntered(f.variableLowCents) ? f.variableLowCents : null,
+      variableHighCents: Money.isEntered(f.variableHighCents) ? f.variableHighCents : null,
       type: f.type || 'w2',
       /* Return on Hassle applied to the job: 1 easy · 2 moderate · 3
          annoying. null until rated. D-066. */
@@ -301,7 +321,11 @@
     { id: 'notWorking',   label: 'Not working, and not looking right now',
       short: 'Not working',   earning: false, hasEmployer: false },
     { id: 'retired',      label: 'Retired',
-      short: 'Retired',       earning: false, hasEmployer: false }
+      short: 'Retired',       earning: false, hasEmployer: false },
+    /* A student: maybe a part-time job, no employer plan to speak of, and
+       loans are the usual debt. The one-pager's gate (D-094). */
+    { id: 'student',      label: 'Student',
+      short: 'Student',       earning: true,  hasEmployer: false }
   ];
 
   function employmentStatus(id) {
@@ -638,6 +662,57 @@
     };
   }
 
+  /* Who depends on this income: null not asked, [] nobody, else one entry
+     an age (null when unknown). A household saved with the old yes/no
+     reads as [{age: null}] or []. D-094. */
+  function createDependent(fields) {
+    var f = fields || {};
+    return { age: Money.isEntered(f.age) ? f.age : null };
+  }
+  function createDependents(v) {
+    if (v === true) return [createDependent(null)];
+    if (v === false) return [];
+    if (Array.isArray(v)) return v.map(createDependent);
+    return null;
+  }
+  /* Protection beyond the deductible (D-094): health cover as a kind and a
+     monthly cost, beside the checkup's four facts. */
+  var HEALTH_TYPES = ['employer', 'marketplace', 'cobra', 'medicaid', 'parent', 'none'];
+  function createHealth(fields) {
+    var f = fields || {};
+    return {
+      type: HEALTH_TYPES.indexOf(f.type) >= 0 ? f.type : null,
+      monthlyCents: Money.isEntered(f.monthlyCents) ? f.monthlyCents : null
+    };
+  }
+  /* Estate basics: three yes/no facts. */
+  function createEstate(fields) {
+    var f = fields || {};
+    function tri(v) { return typeof v === 'boolean' ? v : null; }
+    return { beneficiariesSet: tri(f.beneficiariesSet), willExists: tri(f.willExists), poaExists: tri(f.poaExists) };
+  }
+  /* Giving: a share of income, and a yearly target when typed over. */
+  function createGiving(fields) {
+    var f = fields || {};
+    return {
+      pctOfIncome: Money.isEntered(f.pctOfIncome) ? f.pctOfIncome : null,
+      annualTargetCents: Money.isEntered(f.annualTargetCents) ? f.annualTargetCents : null
+    };
+  }
+
+  /* A one-off in or out — a bonus, a tax bill, a car — that the one-pager
+     takes in one line so the dashboard and Runway can see it coming. D-094. */
+  function createOneOff(fields) {
+    var f = fields || {};
+    return {
+      id: f.id || newId('one'),
+      label: f.label === undefined ? null : f.label,
+      cents: Money.isEntered(f.cents) ? f.cents : null,
+      direction: f.direction === 'in' ? 'in' : 'out',   // unknown reads as leaving
+      on: typeof f.on === 'string' && f.on ? f.on : null
+    };
+  }
+
   function createTargets(fields) {
     var f = fields || {};
     return {
@@ -886,7 +961,8 @@
       oopMaxCents: f.oopMaxCents === undefined ? null : f.oopMaxCents,
       termLifeCents: f.termLifeCents === undefined ? null : f.termLifeCents,
       disabilityMonthlyCents: f.disabilityMonthlyCents === undefined ? null : f.disabilityMonthlyCents,
-      umbrella: f.umbrella === undefined ? null : f.umbrella
+      umbrella: f.umbrella === undefined ? null : f.umbrella,
+      health: createHealth(f.health)
     };
   }
 
@@ -905,7 +981,9 @@
       /* Does anyone depend on your income? null not asked, true, or a
          deliberate false — which takes term life off the coverage checkup
          and off every list of needs. D-092. */
-      dependents: f.dependents === true ? true : f.dependents === false ? false : null,
+      dependents: createDependents(f.dependents),
+      /* The household's community: a day school changes what tuition is. */
+      community: { daySchool: f.community && typeof f.community.daySchool === 'boolean' ? f.community.daySchool : null },
       assets: f.assets || [],
       debts: f.debts || [],
       expenses: {
@@ -959,6 +1037,10 @@
       targets: createTargets(f.targets),
       /* Named, dated diffs for the life-events engine (T6). */
       scenarios: (f.scenarios || []).map(createScenario),
+      /* One-offs coming, in or out (D-094). */
+      oneOffs: (f.oneOffs || []).map(createOneOff),
+      estate: createEstate(f.estate),
+      giving: createGiving(f.giving),
       /* The Skill Stacker's standing per skill, keyed by catalogue id, and
          the practice ledger it writes a row to each logged day. D-090. */
       skills: createSkills(f.skills),
@@ -978,7 +1060,18 @@
         /* "Any debt?" — null not asked, true yes, false a deliberate no that
            takes Debt Payoff off the path and its figures off every room's
            list of needs. D-061. */
-        hasDebt: null
+        hasDebt: null,
+        /* The command log: what changed, before and after, so any write can
+           be undone and redone. Capped at 100 by the spine. D-094. */
+        undoStack: [],
+        redoStack: [],
+        /* { fieldId: true } — figures the one-pager filled in as guesses
+           that were never typed over. Read as real numbers everywhere and
+           shown as guesses everywhere, until replaced. D-094. */
+        guessed: {},
+        /* "I don't pay rent" — living with family, or a paid-off place;
+           lowers the spending guess and nothing else. D-094. */
+        noRent: null
       }, f.meta || {})
     };
   }
@@ -1368,6 +1461,13 @@
     createTargets: createTargets,
     createRerank: createRerank,
     createRerankRow: createRerankRow,
+    createOneOff: createOneOff,
+    createDependent: createDependent,
+    createDependents: createDependents,
+    HEALTH_TYPES: HEALTH_TYPES,
+    createHealth: createHealth,
+    createEstate: createEstate,
+    createGiving: createGiving,
     SKILL_STATES: SKILL_STATES,
     SKILL_KINDS: SKILL_KINDS,
     createSkillState: createSkillState,

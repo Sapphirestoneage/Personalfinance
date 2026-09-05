@@ -70,6 +70,7 @@
     stacks: '../dnd/data/stacks.json',
     hundredWays: '../dnd/data/hundred_ways.json',
     curves: '../dnd/data/curves.json',
+    onepagerDefaults: 'onepager_defaults.json',
     accessRules: 'access_rules.json',
     confidenceWeights: 'confidence_weights.json',
     uiBenefits: 'ui_benefits.json',

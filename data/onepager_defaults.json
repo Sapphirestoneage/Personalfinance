@@ -1,0 +1,22 @@
+{
+  "id": "onepager_defaults",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "Starting guesses for the one-page intake (D-094): the US median full-time wage (BLS usual weekly earnings, 2025, annualised and rounded), typical self-employed and side incomes, a retired household's income, a student's part-time job and month, a spending share of gross, one month of cash, a common health deductible, 6% into the plan.",
+  "confidence": "unverified",
+  "confidenceNote": "Every figure is a round starting guess shown as one and replaced the moment a real number is typed. None is a benchmark; the point is a filled page, not a right one.",
+  "note": "Dollars, not cents; shares as decimals. spendingShareNoRent is the share when the person says they pay no rent. investmentsFallbackDollars stands in when no age or income gives a milestone. D-094.",
+  "medianW2AnnualDollars": 62000,
+  "selfEmployedAnnualDollars": 55000,
+  "sideWorkAnnualDollars": 12000,
+  "retiredMonthlyDollars": 3500,
+  "studentMonthlyDollars": 600,
+  "studentSpendingDollars": 1400,
+  "spendingShareOfGross": 0.55,
+  "spendingShareNoRent": 0.35,
+  "spendingFloorDollars": 2200,
+  "cashMonths": 1,
+  "deductibleDollars": 1500,
+  "investmentsFallbackDollars": 5000,
+  "contributionPercent": 6
+}

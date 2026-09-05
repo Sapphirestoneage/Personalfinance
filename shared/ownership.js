@@ -304,15 +304,17 @@
       format: money,
       /* Life cover replaces an income someone else lives on. Nobody
          depending on it: not a gap, not a question. D-092. */
-      applies: function (h) { return h.dependents !== false; },
+      applies: function (h) { var d = Schema.createDependents(h.dependents); return !(d && d.length === 0); },
       notApplicableBecause: 'Nobody depends on your income.'
     },
     dependents: {
-      label: 'Anyone depending on your income', owner: 'start', anchor: 'q-dependents',
+      label: 'Anyone depending on your income', owner: 'sleep-at-night', anchor: 'coverage',
       read: function (h) {
-        return typeof h.dependents === 'boolean' ? Money.ok(h.dependents) : Money.incomplete('Not answered yet.', ['dependents']);
+        /* Stored as a list; a bare yes/no from before D-094 still reads. */
+        var d = Schema.createDependents(h.dependents);
+        return d ? Money.ok(d.length, { ages: d.map(function (x) { return x.age; }) }) : Money.incomplete('Not answered yet.', ['dependents']);
       },
-      format: function (v) { return v ? 'Yes' : 'No'; }
+      format: function (v) { return v === 0 ? 'No' : v + (v === 1 ? ' person' : ' people'); }
     },
     disabilityMonthly: {
       label: 'Disability benefit', owner: 'sleep-at-night', anchor: 'coverage',
@@ -527,6 +529,9 @@
       isSet: isSet,
       display: isSet ? f.format(result.value) : Money.EM_DASH,
       isOwnHere: currentRoomId === f.owner,
+      /* Filled in by the one-pager as a guess and never typed over:
+         shown as one everywhere, until it is. D-094. */
+      guessed: !!(household && household.meta && household.meta.guessed && household.meta.guessed[fieldId]),
       /* Some fields stop being questions once you have answered another one.
          An employer match is not missing when there is no employer — it is
          not applicable, which is a different thing and must never be counted
@@ -581,11 +586,11 @@
         ? ' · <span class="slaf-owned-age' + (d.age.stale === true ? ' is-stale' : '') + '">'
           + escapeHtml(d.age.label) + '</span>'
         : '';
-      return '<a class="slaf-owned' + (d.age && d.age.stale === true ? ' slaf-owned--stale' : '')
+      return '<a class="slaf-owned' + (d.age && d.age.stale === true ? ' slaf-owned--stale' : '') + (d.guessed ? ' slaf-owned--guess' : '')
         + '" href="' + d.href + '">'
         + '<span class="slaf-owned-label">' + escapeHtml(d.label) + '</span>'
         + '<span class="slaf-owned-value">' + escapeHtml(d.display) + '</span>'
-        + '<span class="slaf-owned-from">from ' + escapeHtml(d.ownerTitle) + ' →' + age + '</span>'
+        + '<span class="slaf-owned-from">' + (d.guessed ? 'a guess \u2014 fix it in ' : 'from ') + escapeHtml(d.ownerTitle) + ' →' + age + '</span>'
         + '</a>';
     }
     return '<a class="slaf-owned slaf-owned--empty" href="' + d.href + '">'
@@ -621,6 +626,13 @@
       out[id] = r && Money.isOk(r) ? r.value : null;
     });
     return out;
+  }
+  if (Spine && typeof Spine.registerFieldLabels === 'function') {
+    Spine.registerFieldLabels(function () {
+      var out = {};
+      Object.keys(FIELDS).forEach(function (id) { out[id] = { label: FIELDS[id].label, format: FIELDS[id].format }; });
+      return out;
+    });
   }
   if (Spine && typeof Spine.registerFieldReaders === 'function') {
     Spine.registerFieldReaders(readings);
