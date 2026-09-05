@@ -83,10 +83,15 @@
     if (!R) return Money.incomplete('The runway engine is not loaded.', []);
     var u = Schema.unemploymentOf(household);
     var ben = Schema.benefitMonthlyCents(household);
+    /* A partner's pay keeps the month going: the Between Jobs engine is
+       the one owner of that reading, so the lead and the room agree. */
+    var BJ = lazy('BetweenJobs', '../engines/betweenjobs.js');
+    var other = BJ && BJ.otherIncome ? BJ.otherIncome(household, tables) : null;
     var r = R.project(household, tables, { preset: 'laid_off',
       severanceCents: Money.isEntered(u.severanceCents) ? u.severanceCents : null,
       benefitMonthlyCents: Money.isOk(ben) ? ben.value : null,
-      benefitMonths: Money.isOk(ben) && ben.months !== null ? Math.round(ben.months) : null });
+      benefitMonths: Money.isOk(ben) && ben.months !== null ? Math.round(ben.months) : null,
+      otherMonthlyIncomeCents: other && Money.isEntered(other.cents) && other.cents > 0 ? other.cents : null });
     if (!Money.isOk(r)) return r;
     var sustainable = r.runwayMonths >= R.HORIZON_MONTHS;
     return Money.ok(Math.round(r.runwayMonths * DAYS_PER_MONTH), { months: r.runwayMonths, sustainable: sustainable, ranOutInMonth: r.ranOutInMonth });

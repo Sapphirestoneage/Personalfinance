@@ -357,6 +357,66 @@ const CASES = [
     }
   },
   {
+    /* Giving (D-098): two boxes, both owned; the target wins over the share. */
+    room: '/rooms/giving.html',
+    container: '#room-inputs',
+    seed: 'demo',
+    fields: [
+      { sel: '[data-ctl="pctOfIncome"]', type: '5' },
+      { sel: '[data-ctl="annualTargetCents"]', type: '1200' }
+    ],
+    expect: async (page) => {
+      const r = await page.evaluate(() => { const S = SLAF; const g = S.Spine.getProfile().giving; return { pct: g.pctOfIncome, target: g.annualTargetCents, number: document.getElementById('room-number').innerText }; });
+      return [
+        ['the share landed as a ratio', r.pct, 0.05],
+        ['the target landed, in cents', r.target, 120000],
+        ['and the number is the target with the share worked back', r.number.indexOf('$1,200') !== -1 && r.number.indexOf('1.7%') !== -1, true]
+      ];
+    }
+  },
+  {
+    /* Between Jobs (D-098): the two owned boxes land on person.unemployment. */
+    room: '/rooms/between-jobs.html',
+    container: '#room-inputs',
+    seed: 'demo',
+    prepare: async (page) => {
+      await page.evaluate(() => {
+        const p = SLAF.Schema.primaryPerson(SLAF.Spine.getProfile());
+        SLAF.Spine.upsertPerson({ id: p.id, employmentStatus: 'unemployed', unemployment: { since: '2026-07-01', benefitStatus: 'receiving', benefitWeeklyCents: 35000, benefitWeeksLeft: 12, severanceCents: 400000 } });
+      });
+      await page.waitForTimeout(400);
+    },
+    fields: [
+      { sel: '[data-ctl="expectedSearchMonths"]', type: '6' },
+      { sel: '[data-ctl="floorMonthlyCents"]', type: '2500' }
+    ],
+    expect: async (page) => {
+      const u = await page.evaluate(() => SLAF.Schema.unemploymentOf(SLAF.Spine.getProfile()));
+      return [
+        ['the expected search landed', u.expectedSearchMonths, 6],
+        ['the floor landed, in cents', u.floorMonthlyCents, 250000],
+        ['the rest of the card survived', u.severanceCents, 400000]
+      ];
+    }
+  },
+  {
+    /* Protection (D-098): a select and a money box, the room's own two. */
+    room: '/rooms/protection.html',
+    container: '#room-inputs',
+    seed: 'demo',
+    prepare: async (page) => { await page.selectOption('[data-ctl="healthType"]', 'employer'); await page.waitForTimeout(300); },
+    fields: [
+      { sel: '[data-ctl="healthMonthly"]', type: '350' }
+    ],
+    expect: async (page) => {
+      const h = await page.evaluate(() => SLAF.Spine.getProfile().insurance.health);
+      return [
+        ['the monthly cost landed, in cents', h.monthlyCents, 35000],
+        ['and the kind chosen landed', h.type, 'employer']
+      ];
+    }
+  },
+  {
     room: '/rooms/fire.html',
     container: '#targets',
     seed: 'demo',
