@@ -4,32 +4,46 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Reversibility · SPARKS</title>
-<meta name="description" content="What your job actually pays, once you count every hour it takes and everything it costs you to do it."/>
+<meta name="description" content="A decision you are weighing: what it would cost to undo, and how long — a door, or a one-way street."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. THE TEMPLATE ROOM. DECISIONS.md D-097.
+  ROOM SPEC — SPEC.md §11. BRIEF §8 "Reversibility". DECISIONS.md D-101.
 
-  1. READS   The person's income (owned by Start Here) and filingStatus, for
-             the tax estimate; a month's spending, for the lens.
-  2. WRITES  It OWNS person.work — paid hours, unpaid overtime, commute,
-             work costs, weeks a year, and (folded) prep and decompression.
-             Nothing else edits those. It does not touch income.
-  3. CALLS   engines/hourly.js. Tax comes from engines/tier0.js's effective-
-             rate lookup, never a second calculation.
-  4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses and says so (Gate.fillGuesses). Each unpaid-
-             hours box is optional: blank is none, not unanswered.
-  5. CONFIG  data/effective_tax_rates_2026.json.
+  1. READS   Cash & savings and income (Start Here), a month of spending
+             (Cash Flow) — the household context the table's formulas read
+             through engines/events.js, and the yardstick the verdict is
+             sized against.
+  2. WRITES  It OWNS household.reversibility: the decision being weighed
+             (decisionId) and the answers to its questions (given{}).
+             Nothing else edits those; it edits nothing else.
+  3. CALLS   engines/reversibility.js, which evaluates the table's formula
+             through engines/events.js's expression evaluator — never a
+             second copy of the arithmetic.
+  4. EMPTY   Opened with an empty spine it renders with the intake's
+             guesses for cash and spending and says so (Gate.fillGuesses);
+             with no decision picked the number says "Pick a decision".
+  5. CONFIG  data/reversibility.json (the decisions, their questions and
+             formulas), which reads data/housing_conventions.json,
+             data/moving_cost.json and data/reentry_gap.json.
 
-  THE SHAPE (shared/room.js, frozen here): one number, one chart, the lens,
-  five inputs and two folded, the assumptions drawer with sources, why
-  this matters at your stage, one out-of-scope line to Get Help. The ids
-  below are the deep links.
+  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens, four
+  inputs, the assumptions drawer with sources, why this matters at your
+  stage, one out-of-scope line to Get Help. The ids below are the deep links.
+
+  THE ANSWER BOXES: the questions differ per decision and the template
+  builds its boxes once, so the boxes are generic slots fixed in kind —
+  two money boxes and one choice box — and the chosen decision's questions
+  are painted onto them by `after`: the label text, the disabled state of a
+  slot the decision has no question for, and the choice box's options.
+  A slot's label and options are set on existing nodes; no input node is
+  ever rebuilt.
 
   LIVE-FORM: built once — shared/room.js builds the inputs from the spec
-  on load and only sets .value, never under focus.
+  on load and only sets .value, never under focus. `after` sets label text,
+  .disabled and <option>s on the nodes it built, and never while the box
+  holds focus.
   THEMING: none this pass. A theme is a class on <body> and a palette in
   shared/theme.css.
 -->
@@ -41,6 +55,7 @@
   .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
   .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  .slaf-field.is-idle { opacity: .45; }
 </style>
 </head>
 <body class="slaf">
@@ -57,25 +72,25 @@
 
   <section class="slaf-card" id="number">
     <div class="room-head-row">
-      <span class="slaf-eyebrow">Your real rate</span>
+      <span class="slaf-eyebrow">What undoing costs</span>
       <div id="room-lens"></div>
     </div>
     <div class="room-number" id="room-number"></div>
   </section>
 
   <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Where the week goes</span>
+    <span class="slaf-eyebrow">Cost and months to undo</span>
     <div id="room-chart"></div>
   </section>
 
   <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The hours the job takes</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave anything blank that doesn't apply — working from home means no commute, and blank is none rather than unanswered.</p>
+    <span class="slaf-eyebrow">The decision</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Pick the decision; the boxes below take on its questions. A box the decision does not ask is greyed out. Leave an answer blank and the table's default fills it, and the number says so.</p>
     <div id="room-inputs"></div>
   </section>
 
   <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Priced in life</span>
+    <span class="slaf-eyebrow">Through the lens</span>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
     <ul class="room-amounts" id="room-amounts"></ul>
   </section>
@@ -94,8 +109,9 @@
   </section>
 
   <p class="disclaimer">
-    Educational tool, not financial advice. Tax is estimated from a flat
-    effective-rate table, not a return. Your numbers stay in this browser.
+    Educational tool, not financial advice. Every undo figure is a stated
+    convention for the kind of decision, never a quote. Your numbers stay
+    in this browser.
   </p>
 </main>
 
@@ -111,119 +127,197 @@
 <script src="../shared/gate.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
+<script src="../engines/cashflow.js"></script>
 <script src="../engines/hourly.js"></script>
+<script src="../engines/events.js"></script>
+<script src="../engines/reversibility.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
 <script src="../shared/room.js"></script>
 <script>
 (function () {
   'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Hourly = SLAF.Hourly, Charts = SLAF.Charts, Room = SLAF.Room;
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Reference = SLAF.Reference,
+      Engine = SLAF.Reversibility, Charts = SLAF.Charts, Room = SLAF.Room;
 
-  /* ---- writes: this room owns person.work ------------------------------------ */
-  function writeWork(key, value) {
-    var person = Spine.ensurePrimaryPerson('You');
-    var current = Schema.workProfile(Schema.personById(Spine.getProfile(), person.id));
-    var next = Object.assign({}, current);
-    next[key] = value;
-    Spine.upsertPerson({ id: person.id, work: next });
-  }
-  function readWork(h) { return Schema.workProfile(Schema.primaryPerson(h)); }
-  function hoursInput(key, label, placeholder, hint) {
-    return { ctl: key, label: label, kind: 'number', placeholder: placeholder, affix: 'h', hint: hint,
-      read: function (h) { return readWork(h)[key]; }, write: function (v) { writeWork(key, v === null || v <= 0 ? null : v); } };
-  }
-  function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
+  var T = null;   /* the tables, from ready(); the slots need them to know their question */
 
-  var HOUR_COLOURS = { paid: Charts.COLORS.series[0], unpaidOvertimeHoursPerWeek: Charts.COLORS.series[3], commuteHoursPerWeek: Charts.COLORS.series[1], prepHoursPerWeek: Charts.COLORS.series[2], decompressHoursPerWeek: Charts.COLORS.series[4] };
+  /* ---- reads and writes: this room owns household.reversibility -------------- */
+  function plan(h) { return Schema.createReversibilityPlan((h || {}).reversibility); }
+  function decision(h) { return T ? Engine.byId(T, plan(h).decisionId) : null; }
+  function writeGiven(qid, v) {
+    var given = plan(Spine.getProfile()).given;
+    var next = Object.assign({}, given);
+    if (v === null || v === undefined) delete next[qid]; else next[qid] = v;
+    Spine.set('reversibility.given', next);
+  }
+  function undo(h) { return Engine.undo(h, plan(h).decisionId, plan(h).given, T); }
+
+  /* A generic answer box, fixed in kind. Which question it holds depends
+     on the decision: the n-th money question, or the choice question. */
+  function slot(ctl, kind, unit, index) {
+    function question(h) { var d = decision(h); return d ? (Engine.slots(d)[unit][index] || null) : null; }
+    return {
+      ctl: ctl, kind: kind, label: 'Answer ' + (index + 1), placeholder: kind === 'money' ? 'e.g. 12,000' : '',
+      options: kind === 'select' ? [['', '—']] : undefined,
+      question: question,
+      read: function (h) { var q = question(h); if (!q) return null; var v = plan(h).given[q.id]; return v === undefined ? null : v; },
+      write: function (v) { var q = question(Spine.getProfile()); if (q) writeGiven(q.id, v); },
+      propose: function (h, tables) {
+        var q = question(h);
+        if (!q || q.default === null || q.default === undefined || kind !== 'money') return null;
+        var a = Engine.answers(decision(h), {}, h, tables).answers[q.id];
+        return Money.isEntered(a) ? { value: a, source: 'the table’s default: ' + Engine.describe(q.default, decision(h)) } : null;
+      }
+    };
+  }
+  var SLOTS = [slot('a1', 'money', 'money', 0), slot('a2', 'money', 'money', 1), slot('a3', 'select', 'choice', 0)];
+
+  function costText(r) {
+    return Money.formatCents(r.value) + (Money.isEntered(r.months) ? ' and ' + Money.formatMonths(r.months) : '');
+  }
+  function tableSource(name) {
+    var t = T && T[name];
+    return t ? 'data/' + (Reference.TABLE_FILES[name] || name) + ' v' + t.version + ' (' + t.confidence + ')' : name;
+  }
 
   Room.mount({
-    id: 'reversibility', /* STUB — being built (D-101) */
-    tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
-    reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'],
+    id: 'reversibility',
+    tables: ['reversibility', 'housingConventions', 'movingCost', 'reentryGap', 'expenseCategories', 'effectiveTaxRates',
+      'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    reads: ['cashSavings', 'monthlyExpenses', 'grossAnnualIncome'],
 
-    number: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return { label: 'Actually, an hour', value: null, reason: w.reason + (/not earning/.test(w.reason || '') ? '' : '') };
-      var sub = 'On paper <strong>' + perHour(w.nominalHourlyCents) + '</strong> · you keep <strong>' + Money.formatRate(w.retained, { decimals: 0 }) + '</strong> of it'
-        + ' · ' + Money.formatCents(w.keptAnnualCents) + ' kept over ' + w.annualTotalHours.toLocaleString('en-US') + ' hours a year';
-      if (w.costsMoreThanItPays) sub += '. <strong>This job costs more than it pays</strong> — check the monthly costs; if they are right, that is the finding';
-      if (w.implausibleHours) sub += '. ' + w.paidHoursPerWeek + ' paid hours a week makes this look enormous; the arithmetic is right, the comparison is not';
-      if (!w.taxKnown) sub += '. Tax is not in yet: ' + (w.taxReason || '');
-      return { label: 'Actually, an hour', value: perHour(w.realHourlyCents), sub: sub, zone: w.costsMoreThanItPays ? 'out' : (w.retained !== null && w.retained < 0.5 ? 'watch' : null), result: w };
+    /* The decision list comes from the table, which is not there when the
+       boxes are built; ready() runs once, before the first paint, and fills
+       the select's options on the node the template built. */
+    ready: function (tables) {
+      T = tables;
+      var sel = document.querySelector('[data-ctl="decision"]');
+      if (!sel) return;
+      Engine.list(T).forEach(function (d) {
+        var o = document.createElement('option');
+        o.value = d.id; o.textContent = d.label;
+        sel.appendChild(o);
+      });
     },
 
-    chart: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return Charts.stacked({ rows: [], empty: 'Add your paid hours to see where the week goes.' });
-      var parts = [{ label: 'Paid', value: w.paidHoursPerWeek, color: HOUR_COLOURS.paid }].concat((w.unpaidParts || []).map(function (p) { return { label: p.label, value: p.hours, color: HOUR_COLOURS[p.key] }; }));
-      var gross = w.grossAnnualIncomeCents, tax = w.estimatedTaxCents || 0, costs = w.annualWorkCostsCents, kept = w.keptAnnualCents;
-      return Charts.stacked({
-        title: 'Hours a week, and where the pay goes',
+    number: function (h) {
+      var r = undo(h);
+      var label = 'What undoing costs';
+      if (!Money.isOk(r)) return { label: label, value: null, reason: r.reason };
+      var d = r.decision.label;
+      if (r.unpriced) {
+        return { label: label, value: r.irreversible ? 'Cannot be undone' : 'No honest figure', zone: r.zone,
+          sub: '<strong>' + d + '</strong> is <strong>' + r.verdict + '</strong>. ' + r.why, result: r };
+      }
+      var sub = '<strong>' + d + '</strong> is ' + (r.verdict ? '<strong>' + r.verdict + '</strong>' : 'unsized: ' + r.verdictReason) + '. ' + r.why;
+      if (r.irreversible) sub += ' The table marks it irreversible: the figure is what is gone, not a way back.';
+      if (Money.isEntered(r.monthsOfSpending)) sub += ' That is ' + (Math.round(r.monthsOfSpending * 10) / 10) + ' months of your spending.';
+      if (r.defaulted.length) {
+        var dec = decision(h);
+        sub += ' Using the table’s default for ' + r.defaulted.map(function (id) { var q = dec.questions.filter(function (x) { return x.id === id; })[0]; return q ? q.ask.toLowerCase() : id; }).join(' and ') + '.';
+      }
+      return { label: label, value: costText(r), sub: sub, zone: r.zone, result: r };
+    },
+
+    chart: function (h) {
+      var r = undo(h);
+      var spend = Schema.monthlyExpensesCents(h), cash = Schema.cashCents(h);
+      var undoRow = { label: 'To undo it', note: Money.isOk(r) ? r.decision.label : 'no decision yet', color: Charts.COLORS.debt,
+        value: Money.isOk(r) && Money.isEntered(r.value) ? r.value : null,
+        empty: Money.isOk(r) ? (r.irreversible ? 'cannot be undone' : 'no honest figure') : (r.reason || '—') };
+      if (Money.isOk(r) && Money.isEntered(r.months)) undoRow.note += ' · ' + Money.formatMonths(r.months);
+      return Charts.bars({
         rows: [
-          { label: 'Your week', note: w.totalHoursPerWeek + ' h, ' + w.paidHoursPerWeek + ' paid', parts: parts },
-          { label: 'A year of pay', note: 'per ' + Money.formatCents(gross), parts: [
-            { label: 'Kept', value: kept / gross * w.totalHoursPerWeek, color: Charts.COLORS.growth },
-            { label: 'Tax', value: tax / gross * w.totalHoursPerWeek, color: Charts.COLORS.debt },
-            { label: 'Costs of working', value: costs / gross * w.totalHoursPerWeek, color: Charts.COLORS.series[3] }
-          ] }
-        ],
-        format: function (v) { return (Math.round(v * 10) / 10) + ' h'; }
+          undoRow,
+          { label: 'A month of spending', value: Money.isOk(spend) ? spend.value : null, color: Charts.COLORS.spend, empty: 'not entered' },
+          { label: 'Cash on hand', value: Money.isOk(cash) ? cash.value : null, color: Charts.COLORS.cash, empty: 'not entered' }
+        ]
       });
     },
 
     inputs: [
-      hoursInput('contractedHoursPerWeek', 'Paid hours a week', 'e.g. 40'),
-      hoursInput('unpaidOvertimeHoursPerWeek', 'Unpaid overtime', 'e.g. 3'),
-      hoursInput('commuteHoursPerWeek', 'Commuting', 'e.g. 5'),
-      { ctl: 'workCostsMonthlyCents', label: 'Costs of working, a month', kind: 'money', placeholder: 'e.g. 400', hint: 'Petrol, parking, transit, work clothes, lunches you would not otherwise buy, childcare only while working.',
-        read: function (h) { return readWork(h).workCostsMonthlyCents; }, write: function (v) { writeWork('workCostsMonthlyCents', v); } },
-      { ctl: 'weeksPerYear', label: 'Weeks worked a year', kind: 'number', placeholder: String(Schema.WORK_DEFAULTS.weeksPerYear),
-        read: function (h) { var w = readWork(h).weeksPerYear; return w === Schema.WORK_DEFAULTS.weeksPerYear ? null : w; }, write: function (v) { writeWork('weeksPerYear', v === null || v <= 0 ? Schema.WORK_DEFAULTS.weeksPerYear : v); } }
-    ],
-    moreLabel: 'The hours around the job',
-    more: [
-      hoursInput('prepHoursPerWeek', 'Getting ready', 'e.g. 2.5'),
-      hoursInput('decompressHoursPerWeek', 'Decompressing', 'e.g. 2.5')
+      { ctl: 'decision', label: 'The decision', kind: 'select', options: [['', 'Pick a decision…']],
+        read: function (h) { return plan(h).decisionId; },
+        write: function (v) { Spine.set('reversibility.decisionId', v === null || v === '' ? null : String(v)); } },
+      SLOTS[0], SLOTS[1], SLOTS[2]
     ],
 
-    amounts: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      var spend = Schema.monthlyExpensesCents(h);
+    amounts: function (h) {
+      var r = undo(h);
+      var spend = Schema.monthlyExpensesCents(h), cash = Schema.cashCents(h);
       var rows = [];
-      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
-      if (Money.isOk(w)) {
-        rows.push({ label: 'A year of tax, estimated', cents: w.estimatedTaxCents || 0 });
-        if (w.annualWorkCostsCents > 0) rows.push({ label: 'A year of the costs of working', cents: w.annualWorkCostsCents });
-      }
-      rows.push({ label: 'A $1,200 thing you are eyeing', cents: 120000 });
+      if (Money.isOk(r) && Money.isEntered(r.value)) rows.push({ label: 'To undo: ' + r.decision.label.toLowerCase(), cents: r.value, href: Ownership.linkTo('reversibility', 'inputs') });
+      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('cash-flow', 'spending') });
+      if (Money.isOk(cash)) rows.push({ label: 'Cash & savings', cents: cash.value, href: Ownership.linkTo('start', 'q-cash') });
       return rows;
     },
 
-    assumptions: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      var tax = T.effectiveTaxRates;
-      var work = readWork(h);
-      return [
-        { label: 'Tax', value: Money.isOk(w) && w.taxKnown ? Money.formatRate(w.effectiveRate || (w.estimatedTaxCents / w.grossAnnualIncomeCents), { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')' },
-        { label: 'Weeks a year', value: String(Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear), source: Money.isEntered(work.weeksPerYear) && work.weeksPerYear !== Schema.WORK_DEFAULTS.weeksPerYear ? 'yours' : 'the default: 52 less four weeks of leave and holidays (convention)' },
-        { label: 'Unpaid hours', value: 'count as work', source: 'Your Money or Your Life: an hour the job takes is an hour it costs, paid or not (convention)' },
-        { label: 'Real return, for the lens', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' }
+    assumptions: function (h) {
+      var table = T.reversibility;
+      var d = decision(h);
+      var rows = [
+        { label: 'Every undo figure', value: 'a convention, not a quote', source: table.confidenceNote + ' — data/reversibility.json v' + table.version + ' (' + table.confidence + ')' },
+        { label: 'A door', value: '≤ ' + Engine.DOOR.spendMonths + ' month of spending and ≤ ' + Engine.DOOR.months + ' month to undo', source: 'the verdict’s thresholds (convention, engines/reversibility.js)' },
+        { label: 'A one-way street', value: '> ' + Engine.ONE_WAY.spendMonths + ' months of spending or > ' + Engine.ONE_WAY.months + ' months to undo', source: 'or anything the table marks irreversible; everything between is a heavy door (convention)' }
       ];
+      if (!d) return rows;
+      rows.push({ label: 'Cost to undo, ' + d.label.toLowerCase(), value: Engine.describe(d.undoCents, d), source: d.why + ' (data/reversibility.json)' });
+      rows.push({ label: 'Months to undo', value: d.undoMonths === null ? 'no figure' : Engine.describe(d.undoMonths, d) + (typeof d.undoMonths === 'number' ? ' months' : ''), source: 'data/reversibility.json — ' + d.label.toLowerCase() });
+      Engine.references(d).forEach(function (ref) {
+        var node = T[ref.table], resolved = true;
+        var ans = Engine.answers(d, plan(h).given, h, T).answers;
+        ref.path.forEach(function (p) {
+          var key = typeof p === 'string' && p.charAt(0) === '@' ? ans[p.slice(1)] : p;
+          node = node && key !== null && key !== undefined && typeof node === 'object' ? node[key] : undefined;
+          if (node === undefined) resolved = false;
+        });
+        var shown = !resolved ? 'not resolved' : typeof node === 'number' ? (/cents$/i.test(ref.path[ref.path.length - 1]) ? Money.formatCents(node) : /rate$/i.test(ref.path[ref.path.length - 1]) ? Money.formatRate(node, { decimals: 0 }) : String(node)) : String(node);
+        rows.push({ label: ref.key, value: shown, source: tableSource(ref.table) });
+      });
+      return rows;
     },
 
-    why: function (h, T, situation) {
+    why: function (h, tables, situation) {
       return {
-        employed: 'Employed, the headline rate is the one on the offer letter. This one is the rate that decides whether the next thing — a raise, a move, an hour of overtime — is worth it.',
-        selfEmployed: 'Self-employed, there is no headline rate, only this one: what is left after the tax you set aside and the hours the work really takes, including the ones nobody bills.',
-        mixed: 'With a job and your own work, each has a real rate. This reads the job; put the own-work hours in as a second job in Start Here to compare them.',
-        student: 'A part-time job at a student’s stage is priced against study hours, not against a career. If the real rate is low, the question is what the hours are taking from.',
-        betweenJobs: '', retired: ''
-      }[situation] || 'Any job has a headline rate and a real one. The gap between them is what this room measures.';
+        employed: 'Employed, the paycheque covers the cost of undoing most things, so the question is the months: how long you would be paying twice, or searching, before it was undone.',
+        selfEmployed: 'Self-employed, there is no paycheque behind an undo, so the cost comes out of the buffer. A one-way street with a thin buffer is the decision to sleep on.',
+        mixed: 'With a job and your own work, the job covers the cost of undoing and the own work is what an undo interrupts. Read the months as months of your own work lost.',
+        student: 'At a student’s stage the sums are small but so is the runway: a cost that is one month of spending is a door, and one that is six is the whole year’s margin.',
+        retired: 'Retired, an undo comes out of the portfolio, not a paycheque, and the months are months the withdrawal rate runs higher. Reversibility matters more the shorter the runway.',
+        betweenJobs: 'Between jobs, every decision is measured in runway: the months to undo are months of runway spent, and a heavy door now is a one-way street until the next job.'
+      }[situation] || 'A decision’s reversibility matters more the shorter the runway: what it costs to undo, measured in months of spending, says which kind of decision it is.';
     },
 
-    scope: 'This room does not model overtime pay, shift differentials, or a second job’s hours on their own. Tax is a flat estimate, not a return.'
+    scope: 'This room does not decide for you; it says what undoing would cost so you know which kind of decision it is.',
+
+    /* Paint the chosen decision's questions onto the fixed slots: label
+       text, the disabled state, and the choice box's options. Nodes are
+       never rebuilt, and a box that holds focus is left alone. */
+    after: function (h) {
+      SLOTS.forEach(function (s) {
+        var node = document.querySelector('[data-ctl="' + s.ctl + '"]');
+        if (!node) return;
+        var q = s.question(h);
+        var field = node.closest('.slaf-field');
+        var label = field && field.querySelector('.slaf-label');
+        if (label) label.textContent = q ? q.ask : '—';
+        s.label = q ? q.ask : 'Answer ' + (SLOTS.indexOf(s) + 1);   /* so the undo entry names the question */
+        if (node !== document.activeElement) node.disabled = !q;
+        if (field) field.classList.toggle('is-idle', !q);
+        if (s.kind === 'select' && node !== document.activeElement) {
+          var choices = q ? (q.choices || []) : [];
+          var sig = choices.map(function (c) { return c.id; }).join('|');
+          if (node.getAttribute('data-choices-sig') !== sig) {
+            while (node.options.length > 1) node.remove(1);
+            choices.forEach(function (c) { var o = document.createElement('option'); o.value = c.id; o.textContent = c.label; node.appendChild(o); });
+            node.setAttribute('data-choices-sig', sig);
+          }
+          var raw = s.read(h);
+          node.value = raw === null || raw === undefined ? '' : String(raw);
+        }
+      });
+    }
   });
 })();
 </script>
