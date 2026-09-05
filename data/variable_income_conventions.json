@@ -1,9 +1,30 @@
 {
   "id": "variable_income_conventions",
-  "version": "0.1",
-  "asOf": "2026-09-01",
-  "source": "PLACEHOLDER \u2014 filled by the room that reads it (D-099).",
-  "confidence": "unverified",
-  "confidenceNote": "Not yet written.",
-  "note": "the buffer in months and the pay-yourself rule for uneven income"
+  "version": "1.0",
+  "asOf": "2026-09-05",
+  "source": "The conventions people who live on uneven income pass around: pay yourself a fixed monthly salary set at or near your low month (the pay-yourself rule, the Profit First / freelancer-forum version of it); hold a buffer of the low-to-average gap, three months of it as the usual floor and six as full; and, for the self-employed, take the quarterly tax set-aside off the top before the salary. Conventions, not benchmarks.",
+  "confidence": "convention",
+  "confidenceNote": "None of these is a rule with a study behind it. The pay-yourself rule and the three-and-six-month buffer are the numbers that come up in freelancer advice again and again; they are sensible, not measured. The tax-off-the-top line is how a quarterly estimate has to work, not a preference. The 70% and 130% proposals are only a starting shape for a low and high month when nobody has typed one.",
+  "note": "the buffer in months and the pay-yourself rule for uneven income",
+  "payYourself": {
+    "rule": "Pay yourself a fixed monthly salary at or near your low month, and let the good months fill the buffer rather than the spending.",
+    "basis": "low",
+    "note": "A salary set at the low month is one the worst month can still pay. If the low month is below spending, spending is the salary and the shortfall is what the buffer covers."
+  },
+  "buffer": {
+    "usualMonths": 3,
+    "fullMonths": 6,
+    "of": "the gap between an average month and a low month",
+    "note": "Three months of the low-to-average gap is the usual floor; six is a full buffer. This is separate from the emergency cushion of three months of spending, which comes first."
+  },
+  "emergencyCushionMonths": 3,
+  "taxOffTheTop": {
+    "appliesTo": ["selfEmployed", "mixed"],
+    "note": "The quarterly estimate is set aside before the salary is paid, not after: a month's share is the quarter divided by three."
+  },
+  "propose": {
+    "lowShareOfAverage": 0.7,
+    "highShareOfAverage": 1.3,
+    "note": "Seven-tenths and thirteen-tenths of the average month, as a first shape of the swing. Yours replace them."
+  }
 }
