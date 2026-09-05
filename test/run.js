@@ -6555,6 +6555,525 @@ section('The Rerank');
   checkTrue('the rating control is the shared one, in its own scope', /Rating\.controlHtml\(\{ scope: Rerank\.SCOPE/.test(html) && Rating.ANCHORS.rerank);
 })();
 
+section('Life events: the template schema, and the engine on the demo');
+
+(function () {
+  /* D-087. A small validator for test/events.schema.json — enough of JSON
+     Schema (required, type, enum, pattern, min/max, items, $ref into
+     definitions) to grade every template without a dependency. */
+  const schema = JSON.parse(fs.readFileSync(path.join(ROOT, 'test/events.schema.json'), 'utf8'));
+  function validate(node, spec, where, out) {
+    if (spec.$ref) spec = schema.definitions[spec.$ref];
+    if (spec.enum && !spec.enum.includes(node)) out.push(where + ' must be one of ' + spec.enum.join('|'));
+    if (spec.type) {
+      const t = Array.isArray(node) ? 'array' : node === null ? 'null' : typeof node;
+      if (t !== spec.type) { out.push(where + ' should be ' + spec.type + ', is ' + t); return; }
+    }
+    if (spec.pattern && typeof node === 'string' && !new RegExp(spec.pattern).test(node)) out.push(where + ' does not match ' + spec.pattern);
+    if (typeof node === 'number') {
+      if (spec.minimum !== undefined && node < spec.minimum) out.push(where + ' below ' + spec.minimum);
+      if (spec.maximum !== undefined && node > spec.maximum) out.push(where + ' above ' + spec.maximum);
+    }
+    if (Array.isArray(node)) {
+      if (spec.minItems !== undefined && node.length < spec.minItems) out.push(where + ' needs at least ' + spec.minItems);
+      if (spec.maxItems !== undefined && node.length > spec.maxItems) out.push(where + ' has more than ' + spec.maxItems);
+      if (spec.items) node.forEach((x, i) => validate(x, spec.items, where + '[' + i + ']', out));
+    }
+    if (node && typeof node === 'object' && !Array.isArray(node)) {
+      (spec.required || []).forEach(k => { if (!(k in node)) out.push(where + ' is missing ' + k); });
+      Object.keys(spec.properties || {}).forEach(k => { if (k in node) validate(node[k], spec.properties[k], where + '.' + k, out); });
+    }
+  }
+  const index = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/index.json'), 'utf8'));
+  const onDisk = fs.readdirSync(path.join(ROOT, 'data/events')).filter(f => f.endsWith('.json') && f !== 'index.json').map(f => f.replace(/\.json$/, ''));
+  check('every template on disk is in the index', onDisk.sort().join(','), index.events.slice().sort().join(','));
+  const templates = {};
+  index.events.forEach(function (id) {
+    const tpl = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/' + id + '.json'), 'utf8'));
+    templates[id] = tpl;
+    const problems = [];
+    validate(tpl, schema, id, problems);
+    ['income', 'expenses', 'oneTime', 'assets'].forEach(k => (tpl.diff[k] || []).forEach((it, i) => validate(it, { $ref: 'diffItem' }, id + '.diff.' + k + '[' + i + ']', problems)));
+    check(`data/events/${id}.json fits the schema`, problems.join('; '), '');
+    check(`${id}: the file name is its id`, tpl.id, id);
+    checkTrue(`${id}: every table it names exists`, tpl.sources.every(src => fs.existsSync(path.join(ROOT, src))));
+  });
+
+  /* The expression language, on its own. */
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const env = { answers: { months: 6, where: 'domestic' }, ctx: { cashCents: 950000 }, tables: { travelBands: require(path.join(ROOT, 'data/travel_bands.json')) } };
+  check('a number is itself', E.evaluate(7, env), 7);
+  check('an answer', E.evaluate('@months', env), 6);
+  check('a household figure', E.evaluate('$cashCents', env), 950000);
+  check('arithmetic', E.evaluate({ '*': ['@months', 2] }, env), 12);
+  check('a table lookup through an answer', E.evaluate({ table: 'travelBands', path: ['bands', '@where', 'monthlyCents'] }, env), 150000);
+  check('if', E.evaluate({ if: [{ eq: ['@where', 'domestic'] }, 1, 2] }, env), 1);
+  check('a missing answer makes the whole thing null', E.evaluate({ '+': ['@nothing', 1] }, env), null);
+  check('a missing table path is null, not a crash', E.evaluate({ table: 'travelBands', path: ['bands', 'mars', 'monthlyCents'] }, env), null);
+
+  /* The demo's sabbatical, default column, re-derived month by month. */
+  const T = Object.assign({}, TABLES, {
+    commonCosts: require(path.join(ROOT, 'data/common_costs.json')),
+    tripleD: require(path.join(ROOT, 'data/triple_d.json')),
+    returnBands: require(path.join(ROOT, 'data/return_bands.json')),
+    cobraAca: require(path.join(ROOT, 'data/cobra_aca_2024.json')),
+    travelBands: require(path.join(ROOT, 'data/travel_bands.json')),
+    reentryGap: require(path.join(ROOT, 'data/reentry_gap.json'))
+  });
+  const h = Demo.build();
+  const all = E.runAll(h, templates.sabbatical, {}, { tables: T });
+  const r = all['default'];
+  check('the default run answers every question from the defaults', JSON.stringify(r.answers), '{"months":6,"where":"home","leaveOrQuit":"quit","startsOn":3}');
+  check('the gap after quitting is the median re-entry, 2.3 months rounded', r.gapMonths, 2);
+  /* Independent arithmetic. Take-home 4,860; 4% contribution 240; captured
+     match 50% of 4% of 72,000 = 120 a month; spending 3,150; COBRA 761. */
+  const take = 486000, contrib = 24000, match = 12000, spend = 315000, cobra = 76100, rate = 0.05 / 12;
+  let cash = 950000, inv = 4800000;
+  const rows = [];
+  for (let m = 0; m < 12; m++) {
+    const off = m >= 3 && m < 9, gap = m >= 9 && m < 11;
+    const employed = !(off || gap);
+    const income = employed ? take - contrib : 0;
+    const expenses = spend + (off ? cobra : 0);
+    cash += income - expenses;
+    inv = (inv + (employed ? contrib + match : 0)) * (1 + rate);
+    rows.push({ cash: cash, inv: Math.round(inv) });
+  }
+  check('month 1 cash: 9,500 + 4,620 − 3,150', r.monthly[0].cashCents, rows[0].cash);
+  check('month 1 cash by the longhand', rows[0].cash, 1097000);
+  check('month 1 investments: (48,000 + 240 + 120) grown a month at 5%', r.monthly[0].investmentsCents, rows[0].inv);
+  check('month 12 cash: three months in, six off with COBRA, two of gap, one back', r.monthly[11].cashCents, rows[11].cash);
+  check('month 12 cash by the longhand', rows[11].cash, 950000 + 3 * 147000 - 6 * (spend + cobra) - 2 * spend + 147000);
+  check('month 12 investments', r.monthly[11].investmentsCents, rows[11].inv, 1);
+  check('eight months of match lost, $120 each', r.lostMatchCents, 8 * match);
+  checkTrue('the cash runs out, and the run says in which month', r.flags.some(f => f.key === 'cashOut' && f.month === 6));
+  check('nothing is unpriced on the demo', r.flags.filter(f => f.key === 'unpriced').length, 0);
+
+  /* Three ways. */
+  checkTrue('dream beats default beats disaster at the end', all.dream.netWorthAtEndCents > all['default'].netWorthAtEndCents && all['default'].netWorthAtEndCents > all.disaster.netWorthAtEndCents);
+  check('the dream has no gap', all.dream.gapMonths, 0);
+  check('the disaster triples it', all.disaster.gapMonths, 7);
+  check('and lands the worst plausible year: $17,200 net', all.disaster.shockCents, 1720000);
+  checkTrue('every column is measured against doing nothing', all.baseline.netWorthAtEndCents > 0 && all['default'].vsBaselineCents === all['default'].netWorthAtEndCents - all.baseline.netWorthAtEndCents);
+  checkTrue('an FI shift is a number of months', Number.isInteger(all['default'].fiDateShiftMonths));
+  const leave = E.run(h, templates.sabbatical, { leaveOrQuit: 'leave' }, { tables: T, d: 'default' });
+  check('unpaid leave has no re-entry gap', leave.gapMonths, 0);
+  const blank = E.run(Schema.createHousehold({}), templates.sabbatical, {}, { tables: T });
+  check('a blank household cannot run a month, and says what it needs', blank.missing.join(','), 'grossAnnualIncome,monthlyExpenses,cashSavings,investments');
+
+  checkTrue('the room is registered as an explore room', Registry.byId('what-if-life') && Registry.byId('what-if-life').kind === 'explore');
+})();
+
+section('Life events: the kids, on the demo');
+
+(function () {
+  /* D-088. Each template's default run, month 1 and month 12, by hand. */
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const T = Object.assign({}, TABLES, {
+    commonCosts: require(path.join(ROOT, 'data/common_costs.json')),
+    tripleD: require(path.join(ROOT, 'data/triple_d.json')),
+    returnBands: require(path.join(ROOT, 'data/return_bands.json')),
+    childCost: require(path.join(ROOT, 'data/child_cost.json')),
+    childcareByState: require(path.join(ROOT, 'data/childcare_by_state.json'))
+  });
+  const tpl = id => JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/' + id + '.json'), 'utf8'));
+  const take = 486000, contrib = 24000, match = 12000, spend = 315000, rate = 0.05 / 12;
+
+  /* Kids, born now (startsOn 0 so the year under test is the first year). */
+  const kids = E.run(Demo.build(), tpl('kids'), { startsOn: 0 }, { tables: T, d: 'default' });
+  const band0 = T.childCost.bands[0].monthlyCents, nc = T.childcareByState.states.NC.monthlyCents, college = T.childCost.college.half.monthlyCents;
+  check('the state defaulted from the household', kids.answers.state, 'NC');
+  check('childcare in NC, from the table', nc, 100000);
+  check('month 1 spending: 3,150 + ages 0–2 + NC childcare + half a degree', kids.monthly[0].expensesCents, spend + band0 + nc + college);
+  check('the birth, out of pocket, lands in month 1 at the table figure (no OOP max entered)', kids.monthly[0].cashCents, 950000 + (take - contrib) - (spend + band0 + nc + college) - 300000);
+  let cash = 950000, inv = 4800000;
+  for (let m = 0; m < 12; m++) { cash += (take - contrib) - (spend + band0 + nc + college); if (m === 0) cash -= 300000; inv = (inv + contrib + match) * (1 + rate); }
+  check('month 12 cash by the longhand', kids.monthly[11].cashCents, cash);
+  check('month 12 investments untouched by the event', kids.monthly[11].investmentsCents, Math.round(inv), 1);
+  check('the lines: term life at 11× $72,000', kids.lines.filter(l => l.id === 'termLifeSuggested')[0].value, 79200000);
+  check('term life in force is unknown, not zero', kids.lines.filter(l => l.id === 'termLifeInForce')[0].value, null);
+  check('age when the first turns 18: 32 + 0 + 18', kids.lines.filter(l => l.id === 'ageAtEighteen')[0].value, 50);
+  const home = E.run(Demo.build(), tpl('kids'), { startsOn: 0, care: 'parentHome' }, { tables: T, d: 'default' });
+  check('a parent at home on a one-income household: income stops', home.monthly[0].incomeCents, 0);
+  check('and childcare is not paid', home.monthly[0].expensesCents, spend + band0 + college);
+  const partnerHome = E.run(Demo.build(), tpl('kids'), { startsOn: 0, care: 'parentHome', whoseIncome: 'partner' }, { tables: T, d: 'default' });
+  check('a partner who earns nothing staying home stops nothing', partnerHome.monthly[0].incomeCents, take - contrib);
+  const withOop = Demo.build(); withOop.insurance.oopMaxCents = 800000;
+  check('with an out-of-pocket maximum entered, the birth costs that', E.run(withOop, tpl('kids'), { startsOn: 0 }, { tables: T, d: 'default' }).monthly[0].cashCents, 950000 + (take - contrib) - (spend + band0 + nc + college) - 800000);
+  const mars = E.run(Demo.build(), tpl('kids'), { startsOn: 0, state: 'XX' }, { tables: T, d: 'default' });
+  check('an unknown state falls back to the national figure', mars.monthly[0].expensesCents, spend + band0 + T.childcareByState.national.monthlyCents + college);
+
+})();
+
+section('Life events: the job offer, on the demo');
+
+(function () {
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const T = Object.assign({}, TABLES, {
+    commonCosts: require(path.join(ROOT, 'data/common_costs.json')),
+    tripleD: require(path.join(ROOT, 'data/triple_d.json')),
+    returnBands: require(path.join(ROOT, 'data/return_bands.json'))
+  });
+  const tpl = id => JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/' + id + '.json'), 'utf8'));
+  const take = 486000, contrib = 24000, match = 12000, spend = 315000, rate = 0.05 / 12;
+  /* The job offer: $90,000, 60 hours, 8 hours of commute, one remote day, $2,000 unvested, 3-month wait. */
+  const job = E.run(Demo.build(), tpl('job-change'), { base: 9000000, hours: 60, commute: 8, remoteDays: 1, startsOn: 0, unvested: 200000 }, { tables: T, d: 'default' });
+  const takeThere = Tier0.takeHomeMonthlyCents(Object.assign(Demo.build(), { people: [Object.assign(Demo.build().people[0], { incomeSources: [Schema.createIncomeSource({ personId: 'demo_person_robin', grossAnnualIncomeCents: 9000000 })] })] }), T).value;
+  check('take-home there, from the one tax lookup', job.lines.filter(l => l.id === 'takeHomeThere')[0].value, takeThere);
+  check('month 1 income: the new take-home less 4% of the new salary', job.monthly[0].incomeCents, takeThere - 30000);
+  check('month 1: no match yet (waiting), so nothing goes in but the contribution', job.monthly[0].matchCents, 0);
+  check('month 4: their match at 4% of $90,000', job.monthly[3].matchCents, 30000);
+  check('the forfeited match comes off investments in month 1, with no cash on the other side', job.monthly[0].investmentsCents, Math.round((4800000 - 200000 + 30000) * (1 + rate)));
+  check('three months of the old match lost while waiting', job.lostMatchCents, 3 * match);
+  const hourlyNow = job.lines.filter(l => l.id === 'hourlyNow')[0].value, hourlyThere = job.lines.filter(l => l.id === 'hourlyThere')[0].value;
+  checkTrue('an hour is worth less there: more money, many more hours', hourlyThere < hourlyNow);
+  check('month 12 cash by the longhand', job.monthly[11].cashCents, 950000 + 12 * (takeThere - 30000 - spend));
+  const same = E.run(Demo.build(), tpl('job-change'), { base: 7200000, hours: 40, commute: 5, startsOn: 0, waitMonths: 0, matchPercent: 0.02 }, { tables: T, d: 'default' });
+  check('the same job offered again changes nothing in month 1', same.monthly[0].incomeCents, take - contrib);
+  check('and the same match: 2% of $72,000 is what the demo captures now', same.monthly[0].matchCents, match);
+})();
+
+section('Life events: buying a place, on the demo');
+
+(function () {
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const T = Object.assign({}, TABLES, {
+    commonCosts: require(path.join(ROOT, 'data/common_costs.json')),
+    tripleD: require(path.join(ROOT, 'data/triple_d.json')),
+    returnBands: require(path.join(ROOT, 'data/return_bands.json')),
+    housingConventions: require(path.join(ROOT, 'data/housing_conventions.json')),
+    priceToRent: require(path.join(ROOT, 'data/price_to_rent.json')),
+    mortgageRates: require(path.join(ROOT, 'data/mortgage_rates.json'))
+  });
+  const tpl = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/house.json'), 'utf8'));
+  const h = Demo.build(); h.expenses.entries = Demo.buildSpending();
+  const r = E.run(h, tpl, { startsOn: 0 }, { tables: T, d: 'default' });
+  const by = {}; r.lines.forEach(l => { by[l.id] = l; });
+
+  /* Proposed from the tracked $1,500 of housing: 1,500 × 12 × 18. */
+  check('the rent now comes from the tracked month', r.answers.rentNow, 150000);
+  check('the price proposed at 18× a year of rent', r.answers.price, 32400000);
+  check('the rate from the dated table', r.answers.rate, 0.065);
+  /* The level payment by the closed form, written out. */
+  const P = 32400000 * 0.8, i = 0.065 / 12, n = 360;
+  const pmt = Math.round(P * i / (1 - Math.pow(1 + i, -n)));
+  check('the payment: $259,200 at 6.5% over 360 months', by.payment.value, pmt);
+  check('which is $1,638.32', pmt, 163832);
+  const ti = Math.round(32400000 * (0.011 + 0.005) / 12);
+  check('PITI adds tax and insurance at 1.1% + 0.5%', by.piti.value, pmt + ti);
+  check('34.5% of gross: amber', by.housingRatio.warn, true);
+  check('cash after closing: 9,500 − 23% of the price', by.cashAfter.value, 950000 - Math.round(32400000 * 0.23));
+  check('which is under the floor: red', by.cashAfter.bad, true);
+  check('no units to rent: no DSCR', by.dscr.value, null);
+  check('selling in year two: 11% of the price', by.reversal.value, Math.round(32400000 * 0.11));
+
+  /* Month 1 and 12, longhand, with the loan amortising. */
+  const take = 486000, contrib = 24000, match = 12000, spend = 315000, rate = 0.05 / 12;
+  const upkeep = Math.round(32400000 * 0.026 / 12);
+  let cash = 950000 - Math.round(32400000 * 0.03) - Math.round(32400000 * 0.2), inv = 4800000, bal = P;
+  const rows = [];
+  for (let m = 0; m < 12; m++) {
+    cash += (take - contrib) - (spend - 150000 + pmt + upkeep);
+    inv = (inv + contrib + match) * (1 + rate);
+    const interest = bal * i; bal -= (pmt - interest);
+    rows.push({ cash: cash, nw: Math.round(cash + inv + 32400000 - (2160000 + bal)) });
+  }
+  check('month 1 spending: 3,150 − 1,500 rent + the payment + 2.6% a year of upkeep, tax and insurance', r.monthly[0].expensesCents, spend - 150000 + pmt + upkeep);
+  check('month 1 cash', r.monthly[0].cashCents, rows[0].cash);
+  check('month 1 net worth counts the whole building against the loan', r.monthly[0].netWorthCents, rows[0].nw, 2);
+  check('month 12 cash', r.monthly[11].cashCents, rows[11].cash);
+  check('month 12 net worth, the loan a year further down', r.monthly[11].netWorthCents, rows[11].nw, 2);
+  checkTrue('the demo cannot close on this: cash out in month 1', r.flags.some(f => f.key === 'cashOut' && f.month === 0));
+
+  /* A duplex: the other unit pays, less 8% vacancy. */
+  const hack = E.run(h, tpl, { startsOn: 0, units: 2 }, { tables: T, d: 'default' });
+  const hb = {}; hack.lines.forEach(l => { hb[l.id] = l; });
+  check('month 1 income adds the other unit at 92%', hack.monthly[0].incomeCents, take - contrib + Math.round(150000 * 0.92));
+  check('NOI: a year of that less 2.6% of the price', hb.noi.value, Math.round(12 * 150000 * 0.92 - 32400000 * 0.026));
+  check('DSCR under 1.2: amber', hb.dscr.warn, true);
+  checkTrue('cash-on-cash is negative here', hb.cashOnCash.value < 0);
+})();
+
+section('Life events: going freelance, on the demo');
+
+(function () {
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const SE = require(path.join(ROOT, 'engines/selfemployed.js'));
+  const T = Object.assign({}, TABLES, {
+    commonCosts: require(path.join(ROOT, 'data/common_costs.json')),
+    tripleD: require(path.join(ROOT, 'data/triple_d.json')),
+    returnBands: require(path.join(ROOT, 'data/return_bands.json')),
+    cobraAca: require(path.join(ROOT, 'data/cobra_aca_2024.json'))
+  });
+  const tpl = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/freelance.json'), 'utf8'));
+  const h = Demo.build();
+  const r = E.run(h, tpl, { startsOn: 0 }, { tables: T, d: 'default' });
+  const by = {}; r.lines.forEach(l => { by[l.id] = l; });
+  /* The derived figure: take-home of $72,000 as salary, less half the SE tax a month. */
+  const seTax = SE.selfEmploymentTax(7200000, 'single', T.seTax).value;
+  const net = Math.round(486000 - 0.5 * seTax / 12);
+  check('SE tax on $72,000 from the one engine', by.seTax.value, seTax);
+  check('what the target leaves a month', r.ctx.freelanceNetMonthly, net);
+  check('month 1: a sixth of it, the job gone', r.monthly[0].incomeCents, Math.round(net / 6));
+  check('month 1 spending adds COBRA', r.monthly[0].expensesCents, 315000 + 76100);
+  check('month 1 cash: 9,500 − 3,000 startup + a sixth in − the month out', r.monthly[0].cashCents, 950000 - 300000 + Math.round(net / 6) - (315000 + 76100));
+  check('no plan, no match while freelancing', r.monthly[0].matchCents + r.monthly[0].contributionCents, 0);
+  /* Month 12: two months at a sixth, two at a half, two at five sixths, six at the target. */
+  let cash = 950000 - 300000;
+  const ramp = [1 / 6, 1 / 6, 0.5, 0.5, 5 / 6, 5 / 6, 1, 1, 1, 1, 1, 1];
+  ramp.forEach(f => { cash += (f === 1 ? net : Math.round(net * f)) - (315000 + 76100); });
+  check('month 12 cash by the ramp', r.monthly[11].cashCents, cash);
+  check('the rate to match: the real hourly wage over 0.86', by.rateToMatch.value, Math.round(by.hourlyNow.value / 0.86));
+  check('billable hours a week at that rate: 72,000 ÷ 52 ÷ the rate', by.billableHours.value, Math.round(7200000 / 52 / by.rateToMatch.value));
+  check('which is more than the forty hours said: amber', by.billableHours.warn, true);
+  const part = E.run(h, tpl, { startsOn: 0, keepJob: 'partTime' }, { tables: T, d: 'default' });
+  check('part-time keeps half the paycheque and its plan', part.monthly[0].incomeCents, Math.round(486000 * 0.5) - 12000 + Math.round(net / 6));
+  check('and no COBRA', part.monthly[0].expensesCents, 315000);
+})();
+
+section('Life events: moving, on the demo');
+
+(function () {
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const Tax = require(path.join(ROOT, 'engines/tax.js'));
+  const T = Object.assign({}, TABLES, {
+    commonCosts: require(path.join(ROOT, 'data/common_costs.json')),
+    tripleD: require(path.join(ROOT, 'data/triple_d.json')),
+    returnBands: require(path.join(ROOT, 'data/return_bands.json')),
+    colIndex: require(path.join(ROOT, 'data/col_index.json')),
+    movingCost: require(path.join(ROOT, 'data/moving_cost.json')),
+    stateBrackets: require(path.join(ROOT, 'data/state_brackets_2026.json'))
+  });
+  const tpl = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/move.json'), 'utf8'));
+  const h = Demo.build();
+  check('forty cities, and every one has a state', Object.keys(T.colIndex.cities).length === 40 && Object.values(T.colIndex.cities).every(c => /^[A-Z]{2}$/.test(c.state)), true);
+  /* Raleigh to Austin: 103 → 110, NC's 4.25% flat tax to none. */
+  const r = E.run(h, tpl, { startsOn: 0, fromCity: 'raleigh', toCity: 'austin', band: 'crossCountry' }, { tables: T, d: 'default' });
+  const by = {}; r.lines.forEach(l => { by[l.id] = l; });
+  check('the ratio: 110 over 103, less one', by.ratio.value, 110 / 103 - 1, 1e-12);
+  const ncTax = Tax.estimate(h, T).stateCents;
+  check('state tax here from the one tax engine: NC on the demo', by.stateNow.value, ncTax);
+  check('and $2,375.75 it is', ncTax, 237575);
+  check('state tax there: Texas has none', by.stateThere.value, 0);
+  check('month 1 spending: the month scaled by 110/103, less a twelfth of the NC tax', r.monthly[0].expensesCents, Math.round(315000 * 110 / 103) + Math.round(-ncTax / 12));
+  check('the move itself, across the country, in month 1', r.monthly[0].cashCents, 950000 + (486000 - 24000) - (Math.round(315000 * 110 / 103) + Math.round(-ncTax / 12)) - 900000);
+  check('month 12 cash', r.monthly[11].cashCents, 950000 - 900000 + 12 * ((486000 - 24000) - (Math.round(315000 * 110 / 103) + Math.round(-ncTax / 12))));
+  const dflt = E.run(h, tpl, { startsOn: 0 }, { tables: T, d: 'default' });
+  check('from "not listed": the national average is the base', dflt.lines.filter(l => l.id === 'ratio')[0].value, 103 / 100 - 1, 1e-12);
+  check('staying in the same state changes no tax', dflt.lines.filter(l => l.id === 'stateThere')[0].value, ncTax);
+})();
+
+section('Life events: a debt sprint, on the demo');
+
+(function () {
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const DebtEngine = require(path.join(ROOT, 'engines/debt.js'));
+  const T = Object.assign({}, TABLES, {
+    commonCosts: require(path.join(ROOT, 'data/common_costs.json')),
+    tripleD: require(path.join(ROOT, 'data/triple_d.json')),
+    returnBands: require(path.join(ROOT, 'data/return_bands.json'))
+  });
+  const tpl = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/debt-sprint.json'), 'utf8'));
+  const h = Demo.build(); h.expenses.entries = Demo.buildSpending();
+  const r = E.run(h, tpl, { startsOn: 0 }, { tables: T, d: 'default' });
+  const by = {}; r.lines.forEach(l => { by[l.id] = l; });
+  check('both of the demo\'s cut lines are needs, so nothing is proposed from them and $200 stands in', r.answers.extra, 20000);
+  check('two lines were flagged all the same', by.cutLines.value, 2);
+  const now = DebtEngine.simulate(h, T.debtRules, { strategyId: 'avalanche', extraMonthlyCents: 0 });
+  const sprint = DebtEngine.simulate(h, T.debtRules, { strategyId: 'avalanche', extraMonthlyCents: 20000 });
+  check('months to debt-free at the minimums, from Debt Payoff\'s engine', by.monthsNow.value, now.months);
+  check('and with $200 a month more', by.monthsSprint.value, sprint.months);
+  check('interest saved is the difference of the two courses', by.interestSaved.value, now.totalInterestCents - sprint.totalInterestCents);
+  check('month 1 spending is $200 lighter', r.monthly[0].expensesCents, 315000 - 20000);
+  check('and cash is exactly the baseline: the $200 went to the debt', r.monthly[0].cashCents, 1097000);
+  check('net worth is $200 better than doing nothing in month 1', r.monthly[0].netWorthCents, 1097000 + Math.round((4800000 + 24000 + 12000) * (1 + 0.05 / 12)) - (2160000 - 20000));
+  check('after six months the sprint stops: month 12 spending is the full month', r.monthly[11].expensesCents, 315000);
+  check('month 12 net worth carries six payments of $200', r.monthly[11].netWorthCents - E.baseline(h, { tables: T }).monthly[11].netWorthCents, 6 * 20000);
+  const wanted = Demo.build(); wanted.expenses.entries = Demo.buildSpending(); wanted.ratings.rerank.dining_out = 2;
+  wanted.expenses.entries.filter(e => e.categoryId === 'dining_out')[0].amountCents = 50000;   /* dear enough to be in the top three by cost */
+  const r2 = E.run(wanted, tpl, { startsOn: 0 }, { tables: T, d: 'default' });
+  checkTrue('with a want flagged to cut, its cost is the proposal', r2.ctx.rerankCutTopMonthlyCents > 0 && r2.answers.extra === r2.ctx.rerankCutTopMonthlyCents);
+})();
+
+section('Life events: a big purchase, on the demo');
+
+(function () {
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const T = Object.assign({}, TABLES, {
+    commonCosts: require(path.join(ROOT, 'data/common_costs.json')),
+    tripleD: require(path.join(ROOT, 'data/triple_d.json')),
+    returnBands: require(path.join(ROOT, 'data/return_bands.json'))
+  });
+  const tpl = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/big-purchase.json'), 'utf8'));
+  const h = Demo.build();
+  const r = E.run(h, tpl, { startsOn: 0 }, { tables: T, d: 'default' });
+  const by = {}; r.lines.forEach(l => { by[l.id] = l; });
+  check('the real hourly wage from engines/hourly.js: $21.04', by.hourlyNow.value, 2104);
+  check('$2,500 is 119 hours of life', by.hoursOfLife.value, Math.round(250000 / 2104));
+  check('cost per use over 120 uses, from Quick Math\'s engine', by.perUse.value, Math.round(250000 / 120));
+  check('joy per $1,000: 7 over 2.5', by.joyPerThousand.value, 2.8);
+  check('cash after: 9,500 − 2,500', by.cashAfter.value, 700000);
+  check('which is under three months of spending: red', by.cashAfter.bad, true);
+  check('the purchase leaves in month 1', r.monthly[0].cashCents, 1097000 - 250000);
+  check('and nothing else changes: month 12 is the baseline less $2,500', r.monthly[11].cashCents, E.baseline(h, { tables: T }).monthly[11].cashCents - 250000);
+  check('the horizon is five years', r.horizonMonths, 60);
+  check('the template writes nothing: no expenses, no income', tpl.diff.income.length + tpl.diff.expenses.length + tpl.diff.assets.length, 0);
+})();
+
+section('Variable withdrawal and Social Security, by hand');
+
+(function () {
+  const VPW = require(path.join(ROOT, 'engines/vpw.js'));
+  const SS = require(path.join(ROOT, 'engines/ss.js'));
+  const vpw = require(path.join(ROOT, 'data/vpw_table.json'));
+  const ss = require(path.join(ROOT, 'data/ss_bend_points_2026.json'));
+  check('the VPW share at 60, 60/40, from the table', VPW.percentageAt(vpw, 60, 0.6), 0.050, 1e-12);
+  check('at 57 it is interpolated between 55 and 60', VPW.percentageAt(vpw, 57, 0.6), 0.046 + (0.050 - 0.046) * 2 / 5, 1e-12);
+  check('a 45% stock share reads the 40/60 column', VPW.percentageAt(vpw, 60, 0.45), 0.046, 1e-12);
+  check('below the table it holds the first row', VPW.percentageAt(vpw, 30, 0.6), 0.038, 1e-12);
+  /* Two years of a $1,000,000 portfolio from 65: withdraw 5.5%, grow the rest 5%. */
+  const p = VPW.plan({ table: vpw, portfolioCents: 100000000, retireAge: 65, planAge: 66, stockShare: 0.6, realReturn: 0.05, annualSpendCents: 5000000 });
+  check('year one withdraws 5.5%: $55,000', p.years[0].withdrawalCents, 5500000);
+  check('which covers $50,000', p.years[0].covered, true);
+  check('the rest grows 5%: $945,000 → $992,250', p.years[0].portfolioAfterCents, 99225000);
+  check('year two withdraws 5.5% + a tenth of a point of that', p.years[1].withdrawalCents, Math.round(99225000 * (0.055 + (0.061 - 0.055) / 5)));
+  check('success when every year is covered', p.success, true);
+  const short = VPW.plan({ table: vpw, portfolioCents: 20000000, retireAge: 65, planAge: 70, stockShare: 0.6, realReturn: 0.05, annualSpendCents: 5000000 });
+  check('a $200,000 portfolio cannot pay $50,000: short from the first year', short.firstShortAge, 65);
+  const withSS = VPW.plan({ table: vpw, portfolioCents: 20000000, retireAge: 65, planAge: 70, stockShare: 0.6, realReturn: 0.05, annualSpendCents: 5000000, otherIncomeCents: function (age) { return age >= 67 ? 4500000 : 0; } });
+  check('other income from 67 covers from 67', withSS.firstShortAge, 65);
+  checkTrue('and the years say which were covered', withSS.years[2].covered && !withSS.years[0].covered);
+  /* The spend curve: 1.5% a year less after 70. */
+  const late = VPW.plan({ table: vpw, portfolioCents: 100000000, retireAge: 70, planAge: 72, stockShare: 0.6, realReturn: 0.05, annualSpendCents: 5000000 });
+  check('at 72 the need is 50,000 × 0.985²', late.years[2].needCents, Math.round(5000000 * Math.pow(0.985, 2)));
+
+  /* Social Security: the bend-point formula on $72,000 from 22 to 55. */
+  const h = Demo.build();
+  const est = SS.estimate(h, { ssBendPoints: ss }, { retireAge: 55, claimAge: 67 });
+  check('33 working years counted', est.yearsCounted, 33);
+  const aime = 72000 * 33 / 35 / 12;
+  check('AIME: 72,000 × 33 ÷ 35 ÷ 12', est.aimeDollars, Math.round(aime));
+  const pia = 0.9 * 1226 + 0.32 * (aime - 1226);
+  check('PIA: 90% to the first bend, 32% to the second', est.piaDollars, Math.round(pia));
+  check('at full retirement age the factor is 1', est.claimFactor, 1);
+  check('the monthly benefit in cents', est.value, Math.round(pia * 100));
+  const early = SS.estimate(h, { ssBendPoints: ss }, { retireAge: 55, claimAge: 62 });
+  check('claiming at 62: 36 months at 5/9% and 24 at 5/12% off', early.claimFactor, 1 - 36 * 0.005556 - 24 * 0.004167, 1e-9);
+  const late70 = SS.estimate(h, { ssBendPoints: ss }, { retireAge: 55, claimAge: 70 });
+  check('claiming at 70: 24% more', late70.claimFactor, 1.24, 1e-9);
+  const capped = SS.estimate(h, { ssBendPoints: ss }, { retireAge: 55, grossAnnualCents: 30000000 });
+  check('income above the wage base is capped there', capped.aimeDollars, Math.round(176100 * 33 / 35 / 12));
+  const noDob = Demo.build(); noDob.people[0].dob = null;
+  check('no date of birth: incomplete', SS.estimate(noDob, { ssBendPoints: ss }, {}).missing.join(','), 'dob');
+})();
+
+section('Life events: stopping or coasting, on the demo');
+
+(function () {
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const VPW = require(path.join(ROOT, 'engines/vpw.js'));
+  const SS = require(path.join(ROOT, 'engines/ss.js'));
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) {} });
+  const tpl = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/retire-or-coast.json'), 'utf8'));
+  const h = Demo.build();
+  const all = E.runAll(h, tpl, {}, { tables: T });
+  const r = all['default'];
+  const by = {}; r.lines.forEach(l => { by[l.id] = l; });
+  check('stop at 55 by default (no target set)', r.answers.retireAge, 55);
+  check('spending a year proposed from the month: 12 × 3,150', r.answers.spend, 3780000);
+  check('the event changes nothing month to month: month 12 is the baseline', r.monthly[11].cashCents, all.baseline.monthly[11].cashCents);
+  check('23 years to stop', by.yearsToStop.value, 23);
+  check('Social Security from the SS engine, stopping at 55, claiming at 67', by.ssMonthly.value, SS.estimate(h, T, { retireAge: 55, claimAge: 67 }).value);
+  /* The portfolio at 55: the ten-year run's end, then thirteen years at the column's 5% with the end-state contributions. */
+  const endInv = r.monthly[119].investmentsCents, contribYear = (r.monthly[119].contributionCents + r.monthly[119].matchCents) * 12;
+  let grown = endInv; for (let y = 0; y < 13; y++) grown = grown * 1.05 + contribYear;
+  check('the portfolio at 55 by the projection loop', by.portfolioAtStop.value, Math.round(grown));
+  const plan = VPW.plan({ table: T.vpwTable, portfolioCents: by.portfolioAtStop.value, retireAge: 55, planAge: 95, stockShare: 0.6, realReturn: 0.05, annualSpendCents: 3780000 + 12 * by.acaBridge.value, otherIncomeCents: age => age >= 67 ? by.ssMonthly.value * 12 : 0 });
+  check('holds to 95? the VPW engine\'s answer', by.success.value, plan.success ? 1 : 0);
+  check('the first short age, the same', by.firstShort.value, plan.firstShortAge);
+  check('left at 95, the same', by.dieWith.value, plan.dieWithCents);
+  checkTrue('the demo cannot stop at 55: short from the first year', by.success.value === 0 && by.firstShort.value === 55);
+  checkTrue('per-column lines are marked for the room', by.success.perColumn && !by.ssMonthly.perColumn);
+  checkTrue('the dream column leaves more than the disaster', all.dream.lines.filter(l => l.id === 'dieWith')[0].value > all.disaster.lines.filter(l => l.id === 'dieWith')[0].value);
+  const targeted = Demo.build(); targeted.targets = Schema.createTargets({ retireAge: 65 });
+  const late = E.run(targeted, tpl, {}, { tables: T, d: 'default' });
+  check('with a stop age in FIRE Number it is the default', late.answers.retireAge, 65);
+  check('no bridge to 65 when stopping at 65', late.lines.filter(l => l.id === 'acaBridge')[0].value, 0);
+})();
+
+section('Life events: two households, one, on the demo');
+
+(function () {
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const T = Object.assign({}, TABLES, {
+    commonCosts: require(path.join(ROOT, 'data/common_costs.json')),
+    tripleD: require(path.join(ROOT, 'data/triple_d.json')),
+    returnBands: require(path.join(ROOT, 'data/return_bands.json'))
+  });
+  const tpl = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/partner-merge.json'), 'utf8'));
+  const h = Demo.build(); h.expenses.entries = Demo.buildSpending();
+  const partner = { partnerGross: 6000000, partnerExpenses: 280000, partnerCash: 500000, partnerInvestments: 2000000, partnerDebt: 1000000 };
+  const r = E.run(h, tpl, Object.assign({ startsOn: 0 }, partner), { tables: T, d: 'default' });
+  const by = {}; r.lines.forEach(l => { by[l.id] = l; });
+  /* Take-homes through the one tax lookup: single on each, joint on the sum. */
+  function takeHome(gross, filing) {
+    const c = Demo.build(); c.filingStatus = filing;
+    c.people[0].incomeSources = [Schema.createIncomeSource({ personId: c.people[0].id, grossAnnualIncomeCents: gross })];
+    return Tier0.takeHomeMonthlyCents(c, T).value;
+  }
+  const apart = 486000 + takeHome(6000000, 'single'), joint = takeHome(13200000, 'married_joint');
+  check('two take-homes, filing single', by.takeHomeApart.value, apart);
+  check('one take-home, filing jointly, on $132,000', by.takeHomeJoint.value, joint);
+  check('the filing change is the difference', by.filingDelta.value, joint - apart);
+  check('the duplicate line proposed is the tracked housing', r.answers.duplicateLines, 150000);
+  check('the month together: 3,150 + 2,800 − 1,500', by.spendTogether.value, 445000);
+  check('the FI number for two at 4%: 25 × a year of that', by.fiNumberTogether.value, 25 * 12 * 445000);
+  check('the FI ratio for two: (48,000 + 20,000) over it', by.fiRatioTogether.value, 6800000 / (25 * 12 * 445000), 1e-12);
+  /* Month 1: the joint take-home, your plan and match as before, their cash, investments and debt joining. */
+  check('month 1 income: the joint take-home less your 4%', r.monthly[0].incomeCents, joint - 24000);
+  check('the plan and match continue', r.monthly[0].contributionCents + r.monthly[0].matchCents, 36000);
+  check('month 1 cash: 9,500 + their 5,000 + income − the month together', r.monthly[0].cashCents, 950000 + 500000 + (joint - 24000) - 445000);
+  check('month 1 investments: 48,000 + their 20,000 + 360, grown a month', r.monthly[0].investmentsCents, Math.round((4800000 + 2000000 + 36000) * (1 + 0.05 / 12)));
+  check('month 1 net worth carries their $10,000 of debt', r.monthly[0].netWorthCents, r.monthly[0].cashCents + r.monthly[0].investmentsCents - (2160000 + 1000000));
+  let cash = 950000 + 500000; for (let m = 0; m < 12; m++) cash += (joint - 24000) - 445000;
+  check('month 12 cash by the longhand', r.monthly[11].cashCents, cash);
+  /* Without a partner's figures the event cannot price itself and says so, and changes nothing. */
+  const alone = E.run(h, tpl, {}, { tables: T, d: 'default' });
+  checkTrue('no partner figures: the income and expense items are flagged unpriced', alone.flags.filter(f => f.key === 'unpriced').length >= 2);
+  check('and the month is the baseline', alone.monthly[0].cashCents, E.baseline(h, { tables: T }).monthly[0].cashCents);
+  checkTrue('the template asks the room for a partner file', tpl.partnerFile === true);
+})();
+
+section('3D: the instruments three ways');
+
+(function () {
+  /* D-089: the events engine on the empty template, read back per instrument. */
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) {} });
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const h = Demo.build();
+  const td = InstrumentsMain.threeD(h, T);
+  check('three columns', td.value, 3);
+  check('in the table\'s order', td.order.join(','), 'dream,default,disaster');
+  const nw = d => td.columns[d].netWorth.value;
+  checkTrue('net worth ten years out: dream > default > disaster', nw('dream') > nw('default') && nw('default') > nw('disaster'));
+  check('the default column is the baseline run', nw('default'), E.baseline(h, { tables: T }).netWorthAtEndCents);
+  const sr = d => td.columns[d].savingsRate.value;
+  checkTrue('the savings rate rises with income up 10% and falls with it down 15%', sr('dream') > sr('default') && sr('default') > sr('disaster'));
+  check('the default savings rate is the residual with the match: (4,860 − 3,150 + 120) × 12 ÷ 72,000', sr('default'), (486000 - 315000 + 12000) / 600000, 1e-9);
+  checkTrue('runway at the horizon is months of the end-state spending', td.columns['default'].emergencyFundMonths.value > 0);
+  check('debt-to-income does not move, and says why', td.columns['default'].debtToIncome.status, 'incomplete');
+  check('nor does the FOO step', td.columns['default'].fooStep.status, 'incomplete');
+  checkTrue('the FI year is a year', Number.isInteger(td.columns['default'].fiEtaYear.value) && td.columns['default'].fiEtaYear.value > 2030);
+  checkTrue('the dream reaches FI sooner', td.columns.dream.fiEtaYear.value <= td.columns['default'].fiEtaYear.value);
+  const dash = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  checkTrue('the dashboard has the toggle and loads the events engine', /id="btn-3d"/.test(dash) && /engines\/events\.js/.test(dash));
+  check('a blank household cannot fan out, and says what it needs', InstrumentsMain.threeD(Schema.createHousehold({}), T).status, 'incomplete');
+})();
+
 section('Two decision sequences that cannot collide');
 
 (function () {

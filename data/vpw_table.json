@@ -1,0 +1,28 @@
+{
+  "id": "vpw_table",
+  "version": "1.0",
+  "asOf": "2025-12-31",
+  "source": "The Bogleheads Variable Percentage Withdrawal (VPW) table: the share of a portfolio to withdraw each year so that a real-return assumption depletes it by 100, rising with age; figures here are in the region of the published 60/40 and 40/60 columns.",
+  "confidence": "unverified",
+  "confidenceNote": "Recalled from the shape of the published table and rounded to a tenth of a point; interpolated between the ages listed. VPW is a method, not a guarantee: a bad decade shrinks every later withdrawal. The spend-curve decline after 70 is a separate planning convention, not part of VPW.",
+  "note": "percentages: annual withdrawal as a decimal fraction of the portfolio at the start of the year, by age, for two stock shares; the engine interpolates by age and picks the nearer column by stock share. spendDeclineAfterAge / spendDeclinePerYear: real spending falls this fraction a year past that age. planAge: the age the plan is run to. D-088.",
+  "columns": { "stocks60": 0.60, "stocks40": 0.40 },
+  "percentages": {
+    "40":  { "stocks60": 0.038, "stocks40": 0.034 },
+    "45":  { "stocks60": 0.040, "stocks40": 0.036 },
+    "50":  { "stocks60": 0.043, "stocks40": 0.039 },
+    "55":  { "stocks60": 0.046, "stocks40": 0.042 },
+    "60":  { "stocks60": 0.050, "stocks40": 0.046 },
+    "65":  { "stocks60": 0.055, "stocks40": 0.051 },
+    "70":  { "stocks60": 0.061, "stocks40": 0.058 },
+    "75":  { "stocks60": 0.070, "stocks40": 0.067 },
+    "80":  { "stocks60": 0.085, "stocks40": 0.082 },
+    "85":  { "stocks60": 0.110, "stocks40": 0.107 },
+    "90":  { "stocks60": 0.157, "stocks40": 0.154 },
+    "95":  { "stocks60": 0.250, "stocks40": 0.250 },
+    "99":  { "stocks60": 1.000, "stocks40": 1.000 }
+  },
+  "spendDeclineAfterAge": 70,
+  "spendDeclinePerYear": 0.015,
+  "planAge": 95
+}

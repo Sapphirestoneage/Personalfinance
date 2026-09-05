@@ -4294,6 +4294,285 @@ you are on before picking a number, and never renumber a `D-` reference inside
 
 ---
 
+## D-087 — One life event, three ways: the events engine, the What If room, and the first template
+
+*(BRIEF.md §6.1, §6.2, §6.3 item 1. Opens T6.)* A life event is DATA — a
+template in `data/events/` with its questions and a dated diff — and one
+engine runs any of them month by month, three ways.
+
+**The engine** (`engines/events.js`). A template's diff is written in a
+small expression language over the answers (`"@months"`), the household
+(`"$cashCents"`) and the reference tables (`{"table": "travelBands",
+"path": [...]}`), with arithmetic, `if`, and table lookups; a missing
+operand makes the result `null`, and an item that prices to `null` is
+left out and flagged, never taken as zero. The month loop is the
+calendar: take-home in, the 401(k) contribution and the *captured* match
+out to investments while employed, spending out, one-time costs and
+asset moves on their month; investments grow through
+`Projection.futureValueMonthlyCents` one month at a time, so compounding
+is not re-implemented. Then the Triple D bundle from `data/triple_d.json`:
+dream (75th-percentile real returns, income 10% higher after, no gap),
+default (median, your income, the template's gap), disaster (25th
+percentile, income 15% lower, the gap three times over, and the worst
+plausible year from D-068 landing the month the event starts). The
+return percentiles are a planning convention in `data/return_bands.json`,
+bracketing the household's own 7% nominal. Every column is measured
+against the same engine on an empty event. Outputs: the monthly rows,
+net worth at the horizon, the shift in the FI date (from the end state
+on the dashboard's own terms: what is invested plus the cash beyond the
+cushion, growing at the household's assumption with the end state's
+residual savings continuing — so the baseline's FI date is the
+dashboard's), the thinnest month or the month the cash runs out, the
+match lost, and flags.
+
+**The room** (`rooms/what-if-life.html`, explore). Pick an event, answer
+its questions — defaults proposed (D-060), a table's opinion where it
+has one — read the three columns and the cash line, write the disaster
+line in your own words, and optionally save. **Nothing is stored but a
+saved scenario**: `scenarios[]` gets the event id, the answers and the
+disaster line, dated; every other answer is a what-if. The question
+form is guarded and rebuilt only when the event changes.
+
+**Templates are graded by a schema.** `test/events.schema.json` says
+what every template must carry (questions with units or choices, the
+four diff lists, protect, cut, outputs, a horizon, sources), and
+`test/run.js` validates every file in `data/events/` against it with a
+small validator of its own. Templates load on demand through
+`Reference.loadEvents()`, not with every page.
+
+**The sabbatical.** Months off, where, leave-or-quit, starting when. No
+paycheque for the duration; living away on top of home costs from
+`data/travel_bands.json`; COBRA for a single person from
+`data/cobra_aca_2024.json`; the lines The Rerank flagged, cut for the
+duration. Quitting adds a re-entry gap from `data/reentry_gap.json` (the
+BLS median spell, 2.3 months; the disaster column triples it); unpaid
+leave has none. All three tables are marked unverified or convention
+and say so. The demo cannot afford six months off: cash runs out in
+month 7 in every column, $960 of match is lost, and the default column
+ends $46,143 behind doing nothing at ten years — which is the point of
+showing it.
+
+**Compatibility note.** No stored shape changed; `scenarios[].diff` is
+used for the first time, as `{ templateId, answers, disasterLine,
+savedOn }`. New tables: `tripleD`, `returnBands`, `events` (the index),
+`cobraAca`, `travelBands`, `reentryGap`.
+
+**Verified.** `node test/run.js`: the schema on every template, the
+expression language on nine cases, the demo's default sabbatical
+re-derived month by month for months 1 and 12 by a longhand loop (cash
+$10,970 then −$14,386; investments from (48,000 + 240 + 120) grown a
+month at 5%), eight months of match lost, the cash-out month, the three
+columns ordered, the gap at 0 / 2 / 7, the $17,200 shock, a blank
+household naming its four missing inputs. A phone-browser walk: the
+proposed defaults, typing 3 months, switching to unpaid leave, saving
+with a disaster line, reopening after a reload. `test/forms.js` on the
+question form; `test/alignment.js` on the question grid and the columns.
+
+---
+
+## D-088 — The life-event templates, one by one
+
+*(BRIEF.md §6.3, items 2–10. A running entry: each template is its own
+commit and adds its block here. The engine and the first template are
+D-087.)* Two things every template shares, decided with the second one:
+
+- **A template may call an engine by name.** `{"fn": "takeHomeMonthly",
+  "args": {...}}`, `realHourly`, `levelPayment`, `seTax`: the engine
+  builds a household with the stated figures swapped in and hands it to
+  the real function, so a template never re-derives a tax, a wage or a
+  payment. `coalesce` picks the first non-null of a list — a state's
+  figure, else the national one — and a `source: 'none'` asset move is a
+  loss with no cash on the other side. Income items may scale the plan
+  contribution and the match separately from the paycheque.
+- **Lines.** A template may name figures to show beside the columns
+  (`lines: [{ id, label, unit, value }]`), evaluated from the default
+  run; they are how a template says something with no verdict attached.
+
+**2 · A child, or another.** Count, first birth in N years, childcare or
+a parent at home (and whose income stops), public or private school,
+saving for college or not, the state for childcare prices. Costs come
+from `data/child_cost.json` — six three-year bands rising with age, in
+the region of the USDA's $310,000 to seventeen, private school at about
+$12,000 a year, a birth at the out-of-pocket maximum when the Coverage
+Checkup has one and about $3,000 otherwise, and college saving as a
+convention (half or a full in-state degree) — and
+`data/childcare_by_state.json`, centre-based infant care for 51 states
+recalled from Child Care Aware 2023 with a national fallback. All
+unverified and marked so. A parent at home takes that person's share of
+income out for five years; with one income entered, "my partner's"
+stops nothing and the copy says so. The lines: term life at 11× income
+beside what is in force (unknown, not zero, until Sleep At Night has
+it), your age at the birth and when the child turns 18 — Die With Zero's
+time buckets stated as facts, with no verdict — and the cost to
+seventeen. The demo's cash runs out in month 37 with one child in NC
+childcare, which is the finding. Children born in one batch rather than
+staggered: an approximation, named here.
+
+**3 · A job offer.** The offer card: base, bonus, their match as a share
+of salary, honest hours, commute, remote days, start, unvested match
+forfeited, months before their match begins (90 days proposed). Income
+scales by the ratio of take-homes through the one tax lookup; the plan
+contribution follows the new base; the match follows theirs and is zero
+through the wait; the forfeited match comes off investments the month
+you leave. Lines: an hour of your life on each side through
+`engines/hourly.js` (the demo's $90,000 at sixty hours is worth *less* an
+hour than its $72,000 at forty), take-home on each side, and one more
+point of the new salary. No new tables.
+
+**4 · Buying a place, or a house hack.** Rent now (the tracked housing
+line, else 30% of gross), a price proposed at 18× a year of it
+(`data/price_to_rent.json`), the down payment share, the rate from the
+dated `data/mortgage_rates.json`, units in the building with you in one,
+rent per other unit, the hassle of being a landlord, closing when. The
+rent stops; the level payment (through `engines/projection.js`), tax,
+insurance and upkeep at the rules of thumb in
+`data/housing_conventions.json` start; closing costs leave in cash; the
+down payment becomes equity, the rest of the building an asset against
+a loan that amortises month by month — the engine now carries loans a
+template takes on. Rent from the other units arrives less 8% vacancy.
+Lines with **guardrails**: PITI over 25% of gross reads amber, a DSCR
+under 1.2 reads amber, cash after closing under the cushion floor (the
+sleep-at-night number, else three months of spending) reads red; plus
+NOI, cash-on-cash, and what selling in year two would cost at 11% of
+the price with no price change. A line may now reference an earlier
+line (`"^piti"`) and carry `warn` / `bad` expressions. The demo's
+$324,000 at 20% down is red on cash and amber on the ratio, and the
+cash runs out in the closing month, which is the honest answer.
+
+**5 · Going freelance.** A revenue target (your gross, proposed), months
+to get there, honest hours, startup costs, quit or keep the job
+part-time at half pay. What the target leaves a month is a `derived`
+figure the template names once — the take-home of the revenue as if
+salary, less half the self-employment tax a month (the half an employer
+would have paid), both through the engines that exist — and the ramp is
+three steps of a sixth, a half and five sixths. Quitting adds COBRA.
+Lines: the SE tax at the target, the real hourly wage now, the rate an
+hour must bill to match it with the SE tax on top (÷ 0.86, a stated
+approximation), the billable hours a week that implies (amber when it
+exceeds the hours you said — the demo's $72,000 needs 57 billable hours
+at the rate that matches a 40-hour job), and the ramp length. Templates
+may now carry `derived` figures.
+
+**6 · Moving somewhere else.** Forty cities in `data/col_index.json`, a
+hand-curated cost-of-living index recalled from the composite
+publishers and marked unverified, with the state each city is in; the
+move itself from `data/moving_cost.json` in three bands. The month is
+scaled by the index ratio; the state income tax on each side comes from
+`engines/tax.js` through a new `stateTaxAnnual` engine call with the
+state swapped, and the difference lands on the month. Lines: the ratio,
+the same month there, the state tax here and there, the move. Raleigh to
+Austin on the demo: a month a fifteenth dearer, $2,375.75 of NC tax
+gone.
+
+**7 · A debt sprint.** Months of sprint, the amount freed each month
+(proposed from up to four of The Rerank's cut lines that are not needs,
+dearest first; $200 stands in when nothing qualifies), starting when.
+The cut lines go to zero for the sprint and every freed dollar is paid
+onto the debt — a new `debtPayments` diff list: cash out, debt down,
+never past zero. Lines from Debt Payoff's own engine through two new
+calls, `debtFreeMonths` and `debtInterest`: months to debt-free at the
+minimums and with the amount kept up for the full course, and the
+interest saved between them. The sprint itself stops when you said;
+the full-course figure is labelled as such.
+
+**8 · A big purchase.** Cost, uses a year, years it lasts, the joy you
+predict, and buying in a month — the thirty-day wait built into the
+default. One-time cash out; otherwise the template changes nothing and
+writes nothing. Lines: the real hourly wage, hours of your life the
+price costs, cost per use through Quick Math's engine (`costPerUse`),
+joy per $1,000 on your own rating with no verdict attached, cash after
+against the cushion floor (red under it), and when the thirty days end.
+Five-year horizon.
+
+**9 · Stopping, or coasting.** Stop at the age you chose (FIRE Number's
+target when set), claim Social Security at 67, plan to 95, the stock
+share of the portfolio then (Where It Goes's target when set), spending a
+year in today's dollars. Two engines arrive with it. `engines/vpw.js` is
+the Bogleheads variable percentage withdrawal: the share of the
+portfolio to take each year rises with age from `data/vpw_table.json`
+(recalled, unverified), interpolated by age, the nearer of two stock
+columns; the plan runs a year at a time to the plan age, withdrawing
+the share, growing the rest at the column's real return, and calling a
+year covered when the withdrawal plus other income meets the spend —
+which falls 1.5% a year past 70, a stated convention. `engines/ss.js`
+estimates Social Security from the income entered: the current income
+every year from 22 to the stop age, capped at the wage base, averaged
+over 35, through the bend-point formula and the early or delayed claim
+factor, from `data/ss_bend_points_2026.json` (recalled, unverified).
+Health cover to 65 is the marketplace's applicable share of that
+spending, capped at 1.5× the benchmark silver. The template's lines are
+**per column**: the portfolio at the stop age (the ten-year run's end,
+then the projection loop at the column's return), the first year's
+withdrawal, holds-to-95, the first short age, the peak age, and what is
+left — so the three D's each answer. The demo cannot stop at 55 on any
+column, short from the first year, which is the honest answer; nothing
+here decides whether to coast, it shows what stopping would need.
+
+**10 · Two households, one.** Their gross, their month, their cash,
+investments and debt, the lines you would stop paying twice (your
+housing line proposed: one home, not two), merging when. The room shows
+a paste box for a partner's exported household on this template only:
+the file is **inspected, never imported** (`Spine.inspectImport`), its
+five figures become answers on the page, and nothing is stored — the
+note says so. Income becomes one take-home for two, filing jointly,
+through the one tax lookup with the filing status swapped, scaled as a
+ratio so your plan and match continue; their month joins less the
+duplicates; their cash, investments and debt join in the first month
+(a `cash` target with no source is money arriving). Lines: the two
+take-homes apart against the one together and the filing change
+between them (a penalty reads negative), the duplicates, the month
+together, the FI number for two at 4% and the FI ratio for two beside
+yours alone. Without a partner's figures the event prices nothing and
+says so.
+
+**Verified.** `node test/run.js`: for each, month 1 and month 12 of the
+default run on the demo by longhand — the child's first year at $3,150 +
+$1,200 + $1,000 + $250 a month with the $3,000 birth in month 1; a parent
+at home stopping the one income; the national fallback for an unknown
+state; the offer's take-home from the tax table, no match for three
+months then 4% of $90,000, the $2,000 off investments, three months of
+the old match lost, and the same job offered again changing nothing.
+
+---
+
+## D-089 — 3D on the dashboard: every instrument three ways, with nothing changing but the assumptions
+
+*(BRIEF.md §6.4. Closes T6.)* A "3D" toggle on the panel. On, each
+instrument fans into three small values under its figure — dream,
+default, disaster — from `Instruments.threeD`, which runs the events
+engine (D-087) on the **empty** template: the Triple D bundles on the
+baseline, no event. Altitude is net worth ten years out; Thrust is the
+first month's savings rate with income at the bundle's multiplier; Fuel
+is cash at the horizon in months of the spending then; Distance is the
+FI year from the run's end state. Load and Heading do not move with
+returns or income-after — debt-to-income is a ratio of today's figures
+and the FOO step is a placement, not a projection — so they stay as
+they are and the column says why. Off, the panel is exactly as before.
+
+**Why the empty template and not a fourth instrument.** The point of
+Triple D is the spread, not a number; the dashboard already has the six
+numbers, and the toggle shows how wide "about" is for each without
+adding a seventh. The setting is remembered for the session only
+(`sessionStorage`), never stored with the household.
+
+**Compatibility note.** No stored shape changed. `shared/instruments.js`
+gains an optional Events dependency; `index.html` loads the events
+engine and everything it can call (`rating`, `rerank`, `hourly`,
+`selfemployed`, `tax`, `debt`, `quickmath`, `vpw`, `ss`). Pages that
+load instruments without the events engine (Refresh) simply cannot fan
+out, and nothing on them asks to.
+
+**Verified.** `node test/run.js`: three columns in the table's order,
+net worth dream > default > disaster with the default equal to the
+baseline run, the default savings rate as (4,860 − 3,150 + 120) × 12 ÷
+72,000, load and heading declining to move, the FI year a year and the
+dream's no later, a blank household naming what it needs. A
+phone-browser tap of the toggle on the demo, the setting surviving a
+reload, and the whole-site sweep — which also caught the dashboard
+missing the rating module the Rerank engine needs, fixed here.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

@@ -72,6 +72,10 @@
   .inst .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .inst .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .inst .big.is-incomplete { font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text-faint); white-space: normal; }
+  .inst .three-d { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; margin-top: var(--space-2); font-size: 10px; color: var(--color-text-faint); }
+  .inst .three-d b { display: block; font-weight: 600; color: var(--color-text); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .inst .three-d span:first-child b { color: var(--sapphire-200); }
+  .inst .three-d span:last-child b { color: #e4b04a; }
   .inst .big.is-good { color: var(--color-positive); }
   .inst .big.is-watch { color: var(--color-caution); }
   .inst .big.is-out { color: var(--color-critical); }
@@ -192,8 +196,12 @@
   </section>
 
   <section class="slaf-card dash" id="panel">
-    <span class="slaf-eyebrow">The panel</span>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-2)">
+      <span class="slaf-eyebrow">The panel</span>
+      <button type="button" class="info-toggle" id="btn-3d" aria-pressed="false" title="Every instrument three ways: dream, default, disaster">3D</button>
+    </div>
     <div class="instruments" id="instruments"></div>
+    <p class="why" id="three-d-why" hidden></p>
 
     <div class="next" id="next-action" hidden>
       <span class="cap">Next action</span>
@@ -308,6 +316,16 @@
 <script src="engines/statement.js"></script>
 <script src="engines/benchmarks.js"></script>
 <script src="engines/ratios.js"></script>
+<script src="shared/rating.js"></script>
+<script src="engines/rerank.js"></script>
+<script src="engines/hourly.js"></script>
+<script src="engines/selfemployed.js"></script>
+<script src="engines/tax.js"></script>
+<script src="engines/debt.js"></script>
+<script src="engines/quickmath.js"></script>
+<script src="engines/vpw.js"></script>
+<script src="engines/ss.js"></script>
+<script src="engines/events.js"></script>
 <script src="shared/instruments.js"></script>
 <script>
 (function () {
@@ -413,11 +431,38 @@
     }
   };
 
+  /* The 3D toggle: page-local, remembered for the session only. D-089. */
+  var threeD = false;
+  try { threeD = sessionStorage.getItem('slaf.dash.3d') === '1'; } catch (e) { threeD = false; }
+  function threeDCell(row, td) {
+    if (!td) return '';
+    return '<span class="three-d">' + td.order.map(function (d) {
+      var col = td.columns[d], r = col[row.id];
+      /* Compact: three figures share one cell's width. */
+      function compact(unit, v) {
+        if (unit === 'cents') { var k = Math.round(v / 100000); return Math.abs(v) >= 10000000 ? (v < 0 ? '−' : '') + '$' + Math.abs(k) + 'k' : Money.formatCents(v); }
+        if (unit === 'months') return Math.round(v) + ' mo';
+        if (unit === 'rate') return Money.formatRate(v, { decimals: 1 });
+        return String(v);
+      }
+      var text = Money.isOk(r) ? compact(row.unit, r.value) : '—';
+      return '<span><b>' + esc(text) + '</b>' + esc(col.label.toLowerCase()) + '</span>';
+    }).join('') + '</span>';
+  }
+
   function renderInstruments(h) {
     var c = Instruments.compute(h, TABLES);
     var deltas = Instruments.deltas(h, TABLES);
     var snap = Spine.latestSnapshot();
     var since = snap ? ' since ' + shortDate(snap.timestamp) : '';
+    var td = null;
+    if (threeD) { var t3 = Instruments.threeD(h, TABLES); td = Money.isOk(t3) ? t3 : null; }
+    el('btn-3d').setAttribute('aria-pressed', String(threeD));
+    el('three-d-why').hidden = !threeD;
+    el('three-d-why').textContent = threeD
+      ? (td ? 'Each instrument ' + td.horizonYears + ' years out, three ways, with nothing changing but the assumptions: dream (75th-percentile returns, income up 10%), default (the median, your income), disaster (25th percentile, income down 15%, the worst plausible year on top). Load and heading do not move with those. Cash sits as cash for the ten years here, so the default FI year lands a little after the panel\u2019s own.'
+            : 'Three ways needs your income, spending, cash and investments.')
+      : '';
     el('instruments').innerHTML = c.rows.map(function (row) {
       var ok = row.ok;
       var zone = row.verdict && row.verdict.zone && row.verdict.zone !== 'none' ? ' is-' + row.verdict.zone : '';
@@ -441,6 +486,7 @@
         + esc(ok ? Instruments.format(row) : (row.result.reason || Money.EM_DASH)) + '</span>'
         + '<span class="delta' + dCls + '">' + esc(dText) + '</span>'
         + '<span class="sub">' + esc(ok ? SUB[row.id](row.result, c) : '') + '</span>'
+        + threeDCell(row, td)
         + '</div>';
     }).join('');
     return c;
@@ -864,6 +910,12 @@
     if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   window.addEventListener('hashchange', jumpToHash);
+
+  el('btn-3d').addEventListener('click', function () {
+    threeD = !threeD;
+    try { sessionStorage.setItem('slaf.dash.3d', threeD ? '1' : '0'); } catch (e) { /* fine */ }
+    renderNow();
+  });
 
   /* ⓘ toggles: the caveat paragraphs are in the HTML; this flips `hidden`. */
   Array.prototype.forEach.call(document.querySelectorAll('.info-toggle'), function (btn) {

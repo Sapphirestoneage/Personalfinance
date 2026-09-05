@@ -1,0 +1,51 @@
+{
+  "id": "job-change",
+  "title": "A job offer",
+  "blurb": "The offer card against the job you have: take-home, the match you would forfeit and wait for, the hours, and what an hour is really worth on each side.",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "confidence": "convention",
+  "drawsOn": ["grossAnnualIncome", "takeHome", "employerMatch", "contributionPercent", "workProfile", "deductible", "state"],
+  "questions": [
+    { "id": "base",        "ask": "Base salary offered",                    "unit": "dollars", "default": { "round": { "*": [1.1, "$grossAnnualCents"] } } },
+    { "id": "bonus",       "ask": "Bonus, a year, you would count on",       "unit": "dollars", "default": 0 },
+    { "id": "matchPercent", "ask": "Their 401(k) match, as a share of salary", "unit": "percent", "default": 0.04, "hint": "What they put in if you contribute enough to get all of it." },
+    { "id": "hours",       "ask": "Hours a week, honestly",                 "unit": "hours",   "default": { "coalesce": ["$hoursPerWeek", 40] } },
+    { "id": "commute",     "ask": "Commute hours a week, on office days",   "unit": "hours",   "default": { "coalesce": ["$commuteHoursPerWeek", 5] } },
+    { "id": "remoteDays",  "ask": "Remote days a week",                     "unit": "count",   "default": 0, "min": 0, "max": 5 },
+    { "id": "startsOn",    "ask": "Starting in how many months?",           "unit": "months",  "default": 2, "min": 0, "max": 24 },
+    { "id": "unvested",    "ask": "Unvested match you would forfeit",       "unit": "dollars", "default": 0 },
+    { "id": "waitMonths",  "ask": "Months before their match starts",       "unit": "months",  "default": 3, "min": 0, "max": 24, "hint": "A 90-day wait is common." }
+  ],
+  "startsOn": "@startsOn",
+  "gapMonths": 0,
+  "diff": {
+    "income": [
+      { "label": "The new take-home, at the household's own tax estimate", "from": 0, "months": null,
+        "multiplier": { "/": [ { "fn": "takeHomeMonthly", "args": { "grossAnnualCents": { "+": ["@base", "@bonus"] } } }, "$takeHomeMonthlyCents" ] },
+        "contributionMultiplier": { "/": ["@base", "$grossAnnualCents"] },
+        "matchMultiplier": { "coalesce": [ { "/": [ { "*": ["@matchPercent", "@base"] }, { "*": [12, "$matchMonthlyCents"] } ] }, 1 ] } },
+      { "label": "Waiting for their match to start", "from": 0, "months": "@waitMonths", "matchMultiplier": 0 }
+    ],
+    "expenses": [],
+    "oneTime": [],
+    "assets": [
+      { "label": "Unvested match, forfeited", "when": 0, "cents": { "neg": "@unvested" }, "target": "investments", "source": "none" }
+    ]
+  },
+  "lines": [
+    { "id": "hourlyNow",   "label": "An hour of your life is really worth, now", "unit": "hourly",
+      "value": { "fn": "realHourly", "args": { "grossAnnualCents": "$grossAnnualCents", "hoursPerWeek": { "coalesce": ["$hoursPerWeek", 40] }, "commuteHoursPerWeek": { "coalesce": ["$commuteHoursPerWeek", 0] } } } },
+    { "id": "hourlyThere", "label": "…and there", "unit": "hourly",
+      "value": { "fn": "realHourly", "args": { "grossAnnualCents": { "+": ["@base", "@bonus"] }, "hoursPerWeek": "@hours", "commuteHoursPerWeek": { "*": ["@commute", { "-": [1, { "/": ["@remoteDays", 5] }] }] } } } },
+    { "id": "takeHomeThere", "label": "Take-home there, a month", "unit": "dollarsMonthly", "value": { "fn": "takeHomeMonthly", "args": { "grossAnnualCents": { "+": ["@base", "@bonus"] } } } },
+    { "id": "takeHomeNow",   "label": "Take-home now, a month",   "unit": "dollarsMonthly", "value": "$takeHomeMonthlyCents" },
+    { "id": "onePercent",    "label": "One more point of the new salary, a year", "unit": "dollars", "value": { "round": { "*": [0.01, "@base"] } }, "note": "What +1% into the new plan would add each year — the Snapshot's ‘one more point’ line, for the new number." }
+  ],
+  "protect": ["Health cover across the gap between plans", "The match you have already vested", "Your real hourly wage — an offer that pays more and takes more hours can pay less"],
+  "cut": [],
+  "tripleD": {},
+  "outputs": ["fiDateShiftMonths", "netWorthAtEndCents", "lostMatchCents"],
+  "horizonMonths": 120,
+  "sources": ["data/effective_tax_rates_2026.json", "data/triple_d.json", "data/return_bands.json"]
+}

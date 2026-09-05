@@ -1,0 +1,65 @@
+{
+  "id": "kids",
+  "title": "A child, or another",
+  "blurb": "What a child costs by age band, childcare or a parent at home, and what that does to the next ten years.",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "confidence": "unverified",
+  "drawsOn": ["takeHome", "monthlyExpenses", "cashSavings", "investments", "employerMatch", "state", "coverage", "twoIncomes"],
+  "questions": [
+    { "id": "count",       "ask": "How many?",                              "unit": "count",  "default": 1, "min": 1, "max": 4 },
+    { "id": "startsOn",    "ask": "First birth in how many years?",         "unit": "years",  "default": 1, "min": 0, "max": 15 },
+    { "id": "care",        "ask": "The first five years",                   "choices": [
+        { "id": "childcare", "label": "Childcare, both keep working" }, { "id": "parentHome", "label": "A parent at home" } ],
+      "default": "childcare" },
+    { "id": "whoseIncome", "ask": "If a parent stays home, whose income stops?", "choices": [
+        { "id": "primary", "label": "Mine" }, { "id": "partner", "label": "My partner’s" } ],
+      "default": "primary", "hint": "Only matters with a parent at home. With one income entered, ‘my partner’s’ stops nothing." },
+    { "id": "school",      "ask": "School from age 5",                      "choices": [
+        { "id": "public", "label": "Public" }, { "id": "private", "label": "Private" } ],
+      "default": "public" },
+    { "id": "college",     "ask": "Saving for college from birth",          "choices": [
+        { "id": "none", "label": "Not saving" }, { "id": "half", "label": "Half an in-state degree" }, { "id": "full", "label": "A full in-state degree" } ],
+      "default": "half" },
+    { "id": "state",       "ask": "State, for childcare prices",            "unit": "text", "default": "$state" }
+  ],
+  "startsOn": { "*": ["@startsOn", 12] },
+  "gapMonths": 0,
+  "diff": {
+    "income": [
+      { "label": "One income stops for five years", "from": 0, "months": 60,
+        "multiplier": { "if": [ { "eq": ["@care", "parentHome"] }, { "-": [1, { "if": [ { "eq": ["@whoseIncome", "partner"] }, "$partnerIncomeShare", "$primaryIncomeShare" ] } ] }, 1 ] } }
+    ],
+    "expenses": [
+      { "label": "Ages 0 to 2",  "from": 0,   "months": 36, "addCents": { "*": ["@count", { "table": "childCost", "path": ["bands", 0, "monthlyCents"] }] } },
+      { "label": "Ages 3 to 5",  "from": 36,  "months": 36, "addCents": { "*": ["@count", { "table": "childCost", "path": ["bands", 1, "monthlyCents"] }] } },
+      { "label": "Ages 6 to 8",  "from": 72,  "months": 36, "addCents": { "*": ["@count", { "table": "childCost", "path": ["bands", 2, "monthlyCents"] }] } },
+      { "label": "Ages 9 to 11", "from": 108, "months": 36, "addCents": { "*": ["@count", { "table": "childCost", "path": ["bands", 3, "monthlyCents"] }] } },
+      { "label": "Childcare, the first five years", "from": 0, "months": 60,
+        "addCents": { "if": [ { "eq": ["@care", "childcare"] },
+          { "*": ["@count", { "coalesce": [ { "table": "childcareByState", "path": ["states", "@state", "monthlyCents"] }, { "table": "childcareByState", "path": ["national", "monthlyCents"] } ] }] }, 0 ] } },
+      { "label": "Private school from age 5", "from": 60, "months": null,
+        "addCents": { "if": [ { "eq": ["@school", "private"] }, { "*": ["@count", { "table": "childCost", "path": ["privateSchoolMonthlyCents"] }] }, 0 ] } },
+      { "label": "College, put away from birth", "from": 0, "months": 216,
+        "addCents": { "*": ["@count", { "table": "childCost", "path": ["college", "@college", "monthlyCents"] }] } }
+    ],
+    "oneTime": [
+      { "label": "The birth, out of pocket", "when": 0,
+        "cents": { "*": ["@count", { "coalesce": ["$oopMaxCents", { "table": "childCost", "path": ["birthOutOfPocketCents"] }] }] } }
+    ],
+    "assets": []
+  },
+  "lines": [
+    { "id": "termLifeSuggested", "label": "Term life the convention suggests (11× income)", "unit": "dollars", "value": { "*": [ { "table": "childCost", "path": ["termLifeMultiple"] }, "$grossAnnualCents" ] } },
+    { "id": "termLifeInForce",   "label": "Term life in force (Sleep At Night)",            "unit": "dollars", "value": "$termLifeCents" },
+    { "id": "ageAtBirth",        "label": "Your age at the first birth",                    "unit": "age",     "value": { "+": ["$age", "@startsOn"] } },
+    { "id": "ageAtEighteen",     "label": "Your age when the first turns 18",               "unit": "age",     "value": { "+": ["$age", "@startsOn", 18] } },
+    { "id": "toSeventeen",       "label": "To age 17, per child, before college",           "unit": "dollars", "value": { "table": "childCost", "path": ["toSeventeenCents"] } }
+  ],
+  "protect": ["Health cover with the child on it", "Term life, if none is in force", "The emergency fund — a child is a new fixed line"],
+  "cut": [],
+  "tripleD": {},
+  "outputs": ["netWorthAtEndCents", "fiDateShiftMonths", "runwayMinMonths"],
+  "horizonMonths": 120,
+  "sources": ["data/child_cost.json", "data/childcare_by_state.json", "data/triple_d.json", "data/return_bands.json"]
+}

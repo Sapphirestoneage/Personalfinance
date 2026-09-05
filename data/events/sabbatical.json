@@ -1,0 +1,44 @@
+{
+  "id": "sabbatical",
+  "title": "A sabbatical",
+  "blurb": "Months off, at home or away — what it costs, what it costs later, and how long the cash holds.",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "confidence": "convention",
+  "drawsOn": ["takeHome", "monthlyExpenses", "cashSavings", "investments", "employerMatch", "rerank"],
+  "questions": [
+    { "id": "months",      "ask": "How many months off?",            "unit": "months", "default": 6, "min": 1, "max": 36 },
+    { "id": "where",       "ask": "Where would you be?",              "choices": [
+        { "id": "home", "label": "At home" }, { "id": "domestic", "label": "Travelling in the US" },
+        { "id": "abroad_cheap", "label": "Abroad, low-cost" }, { "id": "abroad_costly", "label": "Abroad, high-cost" } ],
+      "default": "home" },
+    { "id": "leaveOrQuit", "ask": "Leave of absence, or quit?",       "choices": [
+        { "id": "leave", "label": "Unpaid leave — the job waits" }, { "id": "quit", "label": "Quit — find the next one after" } ],
+      "default": "quit" },
+    { "id": "startsOn",    "ask": "Starting in how many months?",     "unit": "months", "default": 3, "min": 0, "max": 60 }
+  ],
+  "startsOn": "@startsOn",
+  "gapAfter": "@months",
+  "gapMonths": { "if": [ { "eq": ["@leaveOrQuit", "quit"] }, { "table": "reentryGap", "path": ["medianMonths"] }, 0 ] },
+  "diff": {
+    "income": [
+      { "label": "No paycheque while away", "from": 0, "months": "@months", "multiplier": 0 }
+    ],
+    "expenses": [
+      { "label": "Living away, on top of home costs", "from": 0, "months": "@months",
+        "addCents": { "table": "travelBands", "path": ["bands", "@where", "monthlyCents"] } },
+      { "label": "Health cover off payroll (COBRA, single)", "from": 0, "months": "@months",
+        "addCents": { "table": "cobraAca", "path": ["monthly", "cobraSingleCents"] } },
+      { "label": "The lines The Rerank flagged, cut for the duration", "from": 0, "months": "@months",
+        "addCents": { "neg": "$rerankCutMonthlyCents" } }
+    ],
+    "oneTime": [],
+    "assets": []
+  },
+  "protect": ["Health cover, every month of it", "The sleep-at-night floor", "Roth contributions while there is earned income this year"],
+  "cut": ["rerank:cut"],
+  "tripleD": {},
+  "outputs": ["lostMatchCents", "runwayMinMonths", "fiDateShiftMonths", "netWorthAtEndCents"],
+  "horizonMonths": 120,
+  "sources": ["data/cobra_aca_2024.json", "data/travel_bands.json", "data/reentry_gap.json", "data/triple_d.json", "data/return_bands.json"]
+}

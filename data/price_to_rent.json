@@ -1,0 +1,10 @@
+{
+  "id": "price_to_rent",
+  "version": "1.0",
+  "asOf": "2025-12-31",
+  "source": "The price-to-annual-rent ratio for US housing in the region of 18 nationally in 2025 (Zillow / Census-derived estimates), from about 12 in cheaper metros to over 35 in the most expensive.",
+  "confidence": "unverified",
+  "confidenceNote": "A single national figure, recalled and rounded. Used only to PROPOSE a price from the rent you pay now; the price is the first thing to change.",
+  "note": "price ≈ monthly rent × 12 × ratio. D-088.",
+  "ratio": 18
+}

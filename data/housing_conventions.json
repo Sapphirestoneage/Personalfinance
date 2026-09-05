@@ -1,0 +1,17 @@
+{
+  "id": "housing_conventions",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "Rules of thumb used in first-pass real-estate arithmetic: property tax around 1.1% of value a year (US average effective rate), homeowner's insurance around 0.5%, maintenance around 1% (the '1% rule'), closing costs around 3% of price to buy, selling costs around 8% (agent commissions plus closing) to sell, an 8% vacancy allowance on rent, and a 30-year fixed term.",
+  "confidence": "convention",
+  "confidenceNote": "Every figure is a national rule of thumb; property tax alone ranges from under 0.3% to over 2% by state. The template shows which it used; the room lets the price and rate be changed, and the rest can be edited here.",
+  "note": "Rates are decimal fractions of price per year. Guardrails: PITI over 25% of gross monthly income reads amber; a DSCR under 1.2 reads amber; cash after closing under the emergency-fund floor reads red. D-088.",
+  "propertyTaxRate": 0.011,
+  "insuranceRate": 0.005,
+  "maintenanceRate": 0.01,
+  "closingCostRate": 0.03,
+  "sellingCostRate": 0.08,
+  "vacancyRate": 0.08,
+  "termMonths": 360,
+  "guardrails": { "pitiToGross": 0.25, "dscr": 1.2, "emergencyFundMonths": 3 }
+}

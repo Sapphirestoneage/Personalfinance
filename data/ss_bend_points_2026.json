@@ -1,0 +1,20 @@
+{
+  "id": "ss_bend_points_2026",
+  "version": "2026.0",
+  "asOf": "2026-01-01",
+  "source": "Social Security's primary insurance amount formula: 90% of average indexed monthly earnings up to the first bend point, 32% to the second, 15% above; 2026 bend points in the region of $1,226 and $7,391; the taxable wage base near $176,100 (2025) rising with wages; full retirement age 67 for those born 1960 or later; a reduction of 5/9 of 1% a month for the first 36 months claimed early and 5/12 of 1% beyond, and 8% a year of delayed credit to 70.",
+  "confidence": "unverified",
+  "confidenceNote": "Bend points and the wage base are recalled and rounded; the real ones are published each October. The estimate assumes the current income every working year, no indexing, and a career from 22 — an approximation to make the number visible, not a statement.",
+  "note": "Dollars, monthly, for the bend points; annual for the wage base. D-088.",
+  "bendPoints": [1226, 7391],
+  "rates": [0.90, 0.32, 0.15],
+  "wageBaseAnnual": 176100,
+  "fullRetirementAge": 67,
+  "earliestAge": 62,
+  "latestAge": 70,
+  "earlyReductionFirst36": 0.005556,
+  "earlyReductionBeyond": 0.004167,
+  "delayedCreditPerYear": 0.08,
+  "careerStartAge": 22,
+  "computationYears": 35
+}

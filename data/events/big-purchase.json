@@ -1,0 +1,189 @@
+{
+  "id": "big-purchase",
+  "title": "A big purchase",
+  "blurb": "What it costs in hours of your life, what each use costs, and a thirty-day wait built in. Writes nothing.",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "confidence": "convention",
+  "drawsOn": [
+    "grossAnnualIncome",
+    "workProfile",
+    "cashSavings"
+  ],
+  "questions": [
+    {
+      "id": "cost",
+      "ask": "What it costs",
+      "unit": "dollars",
+      "default": 250000
+    },
+    {
+      "id": "usesPerYear",
+      "ask": "Times a year you would use it",
+      "unit": "count",
+      "default": 24,
+      "min": 1
+    },
+    {
+      "id": "years",
+      "ask": "Years it would last",
+      "unit": "years",
+      "default": 5,
+      "min": 1,
+      "max": 30
+    },
+    {
+      "id": "joy",
+      "ask": "How much it would give you, 1–10",
+      "unit": "count",
+      "default": 7,
+      "min": 1,
+      "max": 10
+    },
+    {
+      "id": "startsOn",
+      "ask": "Buying in how many months?",
+      "unit": "months",
+      "default": 1,
+      "min": 0,
+      "max": 24,
+      "hint": "One month is the thirty-day wait."
+    }
+  ],
+  "startsOn": "@startsOn",
+  "gapMonths": 0,
+  "diff": {
+    "income": [],
+    "expenses": [],
+    "oneTime": [
+      {
+        "label": "The purchase",
+        "when": 0,
+        "cents": "@cost"
+      }
+    ],
+    "assets": []
+  },
+  "lines": [
+    {
+      "id": "hourlyNow",
+      "label": "An hour of your life is really worth",
+      "unit": "hourly",
+      "value": {
+        "fn": "realHourly",
+        "args": {
+          "grossAnnualCents": "$grossAnnualCents",
+          "hoursPerWeek": {
+            "coalesce": [
+              "$hoursPerWeek",
+              40
+            ]
+          },
+          "commuteHoursPerWeek": {
+            "coalesce": [
+              "$commuteHoursPerWeek",
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "hoursOfLife",
+      "label": "Hours of your life it costs",
+      "unit": "count",
+      "value": {
+        "round": {
+          "/": [
+            "@cost",
+            "^hourlyNow"
+          ]
+        }
+      }
+    },
+    {
+      "id": "perUse",
+      "label": "Cost per use over its life",
+      "unit": "dollars",
+      "value": {
+        "fn": "costPerUse",
+        "args": {
+          "priceCents": "@cost",
+          "uses": {
+            "*": [
+              "@usesPerYear",
+              "@years"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "joyPerThousand",
+      "label": "Joy per $1,000, on your own rating",
+      "unit": "count",
+      "value": {
+        "/": [
+          {
+            "round": {
+              "*": [
+                10,
+                {
+                  "/": [
+                    "@joy",
+                    {
+                      "/": [
+                        "@cost",
+                        100000
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          10
+        ]
+      },
+      "note": "The rating you gave, over the price in thousands, to one decimal. No verdict: a 7 for $2,500 reads 2.8 either way."
+    },
+    {
+      "id": "cashAfter",
+      "label": "Cash after buying it",
+      "unit": "dollars",
+      "value": {
+        "-": [
+          "$cashCents",
+          "@cost"
+        ]
+      },
+      "bad": {
+        "lt": [
+          "^cashAfter",
+          "$efFloorCents"
+        ]
+      },
+      "note": "Red under the cushion floor."
+    },
+    {
+      "id": "waitEnds",
+      "label": "The thirty days end, months from now",
+      "unit": "months",
+      "value": "@startsOn"
+    }
+  ],
+  "protect": [
+    "The cushion",
+    "The thirty days"
+  ],
+  "cut": [],
+  "tripleD": {},
+  "outputs": [
+    "netWorthAtEndCents"
+  ],
+  "horizonMonths": 60,
+  "sources": [
+    "data/triple_d.json",
+    "data/return_bands.json"
+  ]
+}
