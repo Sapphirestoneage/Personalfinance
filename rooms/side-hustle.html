@@ -110,6 +110,7 @@
     <p class="slaf-hint" style="margin:0" id="kind-hint"></p>
 
     <p class="slaf-hint" id="marginal-shared" style="margin:var(--space-3) 0 0"></p>
+    <p class="slaf-hint" data-suggest-note style="margin:var(--space-2) 0 0"></p>
     <div class="flag" id="marginal-note"></div>
   </section>
 
@@ -162,6 +163,7 @@
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
 <script src="../shared/ownership.js"></script>
+<script src="../shared/suggest.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
@@ -415,6 +417,30 @@
      and in the other room and kept by neither. It is stored once now
      (Where It Goes owns it); this room prefills from it and writes back, so
      answering it in either place answers it in both. D-052. */
+
+  /* With no stored rate, the federal bracket is PROPOSED — muted, dashed,
+     "Use this" — from data/federal_brackets_2026.json: gross minus the
+     standard deduction, walked up the ladder. Federal only, an estimate,
+     and unverified until that table is checked against the IRS text; the
+     source line says all three. Tapping it writes the shared rate exactly
+     as typing it would. D-062. */
+  function suggestBracket(node) {
+    if (!node || !TABLES || !TABLES.federalBrackets) return;
+    var h = Spine.getProfile();
+    var gross = Schema.grossAnnualIncomeCents(h);
+    if (!Money.isOk(gross)) return;
+    var b = Reference.marginalBracket(TABLES.federalBrackets, gross.value / 100, h.filingStatus);
+    if (!Money.isOk(b)) return;
+    SLAF.Suggest.show(node, {
+      value: b.value,
+      display: String(Math.round(b.value * 1000) / 10),
+      source: 'the ' + TABLES.federalBrackets.taxYear + ' federal bracket for '
+        + Money.formatCents(gross.value) + ' gross, ' + (Ownership.FILING_LABELS[h.filingStatus] || h.filingStatus).toLowerCase()
+        + ' \u2014 federal only, an estimate (' + TABLES.federalBrackets.confidence + ')',
+      onUse: function (rate) { Spine.setAssumptionOverride('marginalRate', rate); }
+    });
+  }
+
   function syncMarginal() {
     var node = document.getElementById('in-marginal');
     var note = document.getElementById('marginal-shared');
@@ -426,10 +452,12 @@
     if (!Money.isEntered(v.marginal) && Money.isEntered(stored)) {
       v.marginal = stored;
       if (node !== document.activeElement) {
+        SLAF.Suggest.clear(node);
         node.value = String(Math.round(stored * 1000) / 10);
       }
       render();
     }
+    if (!Money.isEntered(stored) && !Money.isEntered(v.marginal)) suggestBracket(node);
     if (note) {
       note.innerHTML = Money.isEntered(stored)
         ? 'Your saved rate, from <a href="' + Ownership.linkTo('accounts', 'setup')
@@ -443,7 +471,7 @@
     var node = document.getElementById('in-marginal');
     if (!node) return;
     node.addEventListener('blur', function () {
-      var rate = Money.parseRatePercent(node.value);
+      var rate = Money.parseRatePercent(SLAF.Suggest.entered(node));
       var stored = Schema.resolveAssumptions(Spine.getProfile()).marginalRate;
       if (rate !== stored) Spine.setAssumptionOverride('marginalRate', rate);
       syncMarginal();
@@ -459,6 +487,7 @@
 
   Reference.load().then(function (tables) {
     TABLES = tables;
+    syncMarginal();
     renderNow();
     jumpToHash();
   }).catch(function (err) {

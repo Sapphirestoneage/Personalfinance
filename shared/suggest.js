@@ -43,21 +43,27 @@
     });
   }
 
-  /* The chip lives once per node, right after the shell (or after the node
-     when there is no shell). Created on first show(), then only toggled. */
+  /* The chip lives once per node, INSIDE the input shell as its last
+     flex item — beside the affix, never below the box — so a suggestion
+     adds no height and a row of side-by-side boxes stays a row. (Below the
+     box it made one grid cell 80px taller than its neighbour.) Without a
+     shell it sits right after the node. The source sentence goes to the
+     nearest [data-suggest-note] in the card if the room provides one, and
+     to the chip's title regardless. Created on first show(), then only
+     toggled; it keeps its space when off (visibility, not [hidden]) so
+     nothing under a finger moves. Same family of bug as D-046. */
   function chipFor(node) {
     if (node._slafChip) return node._slafChip;
-    var host = shellOf(node) || node;
-    /* Both keep their space when off (visibility, not [hidden]): a chip
-       that vanished on blur moved the Next button under a finger. Same
-       family of bug as D-046 — nothing under the user's finger may move. */
+    var shell = shellOf(node);
     var chip = document.createElement('button');
     chip.type = 'button';
     chip.className = CLS_CHIP + ' is-off';
-    var src = document.createElement('span');
-    src.className = CLS_SRC + ' is-off';
-    host.insertAdjacentElement('afterend', src);
-    host.insertAdjacentElement('afterend', chip);
+    var src = noteHostFor(node) || document.createElement('span');
+    if (!src.hasAttribute('data-suggest-note')) {
+      src.className = CLS_SRC + ' is-off';
+      (shell || node).insertAdjacentElement('afterend', src);
+    }
+    if (shell) shell.appendChild(chip); else node.insertAdjacentElement('afterend', chip);
     chip.addEventListener('click', function () {
       var s = node._slafSuggest;
       if (!s) return;
@@ -88,6 +94,11 @@
     return chip;
   }
 
+  function noteHostFor(node) {
+    var card = node.closest ? (node.closest('.slaf-card') || node.closest('section') || node.closest('form')) : null;
+    return card ? card.querySelector('[data-suggest-note]') : null;
+  }
+
   function paint(node) {
     var s = node._slafSuggest;
     if (!s) return;
@@ -102,10 +113,11 @@
     node.setAttribute('data-suggest-source', s.source || '');
     var chip = chipFor(node);
     chip.classList.remove('is-off');
-    chip.textContent = s.useLabel || 'Use this';
+    chip.textContent = s.useLabel || 'Use';
     chip.setAttribute('title', s.source ? 'From: ' + s.source : 'Suggested');
     node._slafSource.classList.remove('is-off');
-    node._slafSource.innerHTML = 'Suggested' + (s.source ? ' — ' + escapeHtml(s.source) : '') + '. Tap to use, or type your own.';
+    node._slafSource.hidden = false;
+    node._slafSource.innerHTML = 'Suggested' + (s.source ? ' — ' + escapeHtml(s.source) : '') + '. Tap “Use”, or type your own.';
   }
 
   /**
@@ -141,7 +153,13 @@
     node.removeAttribute('data-suggested');
     node.removeAttribute('data-suggest-source');
     var shell = shellOf(node); if (shell) shell.classList.remove(CLS_SHELL);
-    if (node._slafChip) { node._slafChip.classList.add('is-off'); node._slafSource.classList.add('is-off'); }
+    if (node._slafChip) {
+      node._slafChip.classList.add('is-off');
+      /* A shared note host is cleared, not just faded: another box in the
+         same card may be using it next. */
+      if (node._slafSource.hasAttribute('data-suggest-note')) node._slafSource.textContent = '';
+      else node._slafSource.classList.add('is-off');
+    }
   }
 
   function isSuggested(node) {

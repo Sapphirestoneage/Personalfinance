@@ -1,0 +1,139 @@
+{
+  "id": "federal_brackets",
+  "version": "2026.0",
+  "asOf": "2026-01-01",
+  "taxYear": 2026,
+  "source": "Federal ordinary-income brackets and standard deductions for tax year 2026 as announced by the IRS in its annual inflation adjustments (Rev. Proc. 2025-32). Transcribed from memory of the announcement; not yet re-derived against the published text.",
+  "confidence": "unverified",
+  "confidenceNote": "Thresholds have NOT been checked against the IRS revenue procedure line by line. Every room that shows a bracket from this file labels it 'federal only, estimate' until that pass is done (BRIEF \u00a72.4). Marginal bracket only \u2014 no credits, no phase-outs, no state.",
+  "note": "Rates are decimal fractions. Each bracket row is the TOP of taxable income taxed at that rate (null = no ceiling). Taxable income = gross minus the standard deduction for the filing status; nothing else is subtracted. Reference.marginalBracket(h) does the lookup; it is a SUGGESTION on marginalRate (D-062), never written without the person tapping it.",
+  "unit": "decimal fraction",
+  "standardDeduction": {
+    "single": 16100,
+    "married_joint": 32200,
+    "married_separate": 16100,
+    "head_of_household": 24150
+  },
+  "brackets": {
+    "single": [
+      {
+        "upToTaxableIncome": 12400,
+        "rate": 0.1
+      },
+      {
+        "upToTaxableIncome": 50400,
+        "rate": 0.12
+      },
+      {
+        "upToTaxableIncome": 105700,
+        "rate": 0.22
+      },
+      {
+        "upToTaxableIncome": 201775,
+        "rate": 0.24
+      },
+      {
+        "upToTaxableIncome": 256225,
+        "rate": 0.32
+      },
+      {
+        "upToTaxableIncome": 640600,
+        "rate": 0.35
+      },
+      {
+        "upToTaxableIncome": null,
+        "rate": 0.37
+      }
+    ],
+    "married_joint": [
+      {
+        "upToTaxableIncome": 24800,
+        "rate": 0.1
+      },
+      {
+        "upToTaxableIncome": 100800,
+        "rate": 0.12
+      },
+      {
+        "upToTaxableIncome": 211400,
+        "rate": 0.22
+      },
+      {
+        "upToTaxableIncome": 403550,
+        "rate": 0.24
+      },
+      {
+        "upToTaxableIncome": 512450,
+        "rate": 0.32
+      },
+      {
+        "upToTaxableIncome": 768700,
+        "rate": 0.35
+      },
+      {
+        "upToTaxableIncome": null,
+        "rate": 0.37
+      }
+    ],
+    "married_separate": [
+      {
+        "upToTaxableIncome": 12400,
+        "rate": 0.1
+      },
+      {
+        "upToTaxableIncome": 50400,
+        "rate": 0.12
+      },
+      {
+        "upToTaxableIncome": 105700,
+        "rate": 0.22
+      },
+      {
+        "upToTaxableIncome": 201775,
+        "rate": 0.24
+      },
+      {
+        "upToTaxableIncome": 256225,
+        "rate": 0.32
+      },
+      {
+        "upToTaxableIncome": 384350,
+        "rate": 0.35
+      },
+      {
+        "upToTaxableIncome": null,
+        "rate": 0.37
+      }
+    ],
+    "head_of_household": [
+      {
+        "upToTaxableIncome": 17700,
+        "rate": 0.1
+      },
+      {
+        "upToTaxableIncome": 67450,
+        "rate": 0.12
+      },
+      {
+        "upToTaxableIncome": 105700,
+        "rate": 0.22
+      },
+      {
+        "upToTaxableIncome": 201775,
+        "rate": 0.24
+      },
+      {
+        "upToTaxableIncome": 256200,
+        "rate": 0.32
+      },
+      {
+        "upToTaxableIncome": 640600,
+        "rate": 0.35
+      },
+      {
+        "upToTaxableIncome": null,
+        "rate": 0.37
+      }
+    ]
+  }
+}

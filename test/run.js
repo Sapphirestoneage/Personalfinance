@@ -4930,6 +4930,74 @@ section('Eleven cards');
   }
 })();
 
+section('Proposed, not taken');
+
+(function () {
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const table = require(path.join(ROOT, 'data/federal_brackets_2026.json'));
+
+  /* -- The bracket table ---------------------------------------------- */
+  {
+    check('it is unverified, and says so', table.confidence, 'unverified');
+    Object.keys(table.brackets).forEach(function (fs_) {
+      const ladder = table.brackets[fs_];
+      checkTrue(`${fs_}: rates climb`, ladder.every((b, i) => i === 0 || b.rate > ladder[i - 1].rate));
+      checkTrue(`${fs_}: thresholds climb`, ladder.every((b, i) => i === 0 || b.upToTaxableIncome === null || b.upToTaxableIncome > ladder[i - 1].upToTaxableIncome));
+      check(`${fs_}: the top bracket has no ceiling`, ladder[ladder.length - 1].upToTaxableIncome, null);
+      checkTrue(`${fs_}: has a standard deduction`, table.standardDeduction[fs_] > 0);
+    });
+    check('joint is twice single at the bottom', table.brackets.married_joint[0].upToTaxableIncome, 2 * table.brackets.single[0].upToTaxableIncome);
+  }
+
+  /* -- The lookup -------------------------------------------------------- */
+  {
+    const b = Reference.marginalBracket(table, 72000, 'single');
+    /* 72,000 − 16,100 = 55,900 taxable: past 50,400, inside the 22% band. */
+    check('the demo lands in the 22% bracket', b.value, 0.22);
+    check('on 55,900 of taxable income', b.taxableIncomeDollars, 55900);
+    check('with 49,800 of room before 24%', b.roomBeforeNextBracketDollars, 49800);
+    check('and the next rate named', b.nextRate, 0.24);
+    checkTrue('marked federal only', b.federalOnly === true);
+    check('carries the table confidence', b.confidence, 'unverified');
+    check('below the deduction the bracket is 10% on nothing', Reference.marginalBracket(table, 10000, 'single').taxableIncomeDollars, 0);
+    check('a million is the top rate', Reference.marginalBracket(table, 1000000, 'married_joint').value, 0.37);
+    check('with no room above', Reference.marginalBracket(table, 1000000, 'married_joint').roomBeforeNextBracketDollars, null);
+    check('no income, no bracket', Reference.marginalBracket(table, null, 'single').status, 'incomplete');
+    check('no filing status, no bracket', Reference.marginalBracket(table, 72000, null).status, 'incomplete');
+    check('no table, no bracket', Reference.marginalBracket(null, 72000, 'single').status, 'incomplete');
+    /* The effective-rate table is NOT where this comes from (D-036). */
+    const src = fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8');
+    checkTrue('the bracket walks its own table, not the effective-rate bands',
+      /function marginalBracket[\s\S]{0,1500}table\.brackets\[filingStatus\]/.test(src) && !/marginalBracket[\s\S]{0,1500}effectiveRate/.test(src));
+  }
+
+  /* -- seed.js proposes; it never writes ---------------------------------- */
+  {
+    const seedSrc = fs.readFileSync(path.join(ROOT, 'shared/seed.js'), 'utf8');
+    const Seed = require(path.join(ROOT, 'shared/seed.js'));
+    checkTrue('Seed exposes mount()', typeof Seed.mount === 'function');
+    checkTrue('seed.js never touches the spine', !/Spine\.|updateProfile|upsert|localStorage/.test(seedSrc));
+    checkTrue('it shows through Suggest', seedSrc.indexOf('Suggest.show(') !== -1);
+    ['runway', 'quick-math', 'self-employed'].forEach(function (room) {
+      const html = fs.readFileSync(path.join(ROOT, 'rooms', room + '.html'), 'utf8');
+      checkTrue(`${room} mounts the seed toggle`, html.indexOf('SLAF.Seed.mount(') !== -1);
+      checkTrue(`${room} loads seed.js after suggest.js`, html.indexOf('shared/suggest.js') !== -1 && html.indexOf('shared/suggest.js') < html.indexOf('shared/seed.js'));
+      checkTrue(`${room} still writes nothing to the household`, !/Spine\.(updateProfile|upsert[A-Za-z]+|setMonthlyExpenses)\(/.test(html.replace(/\/\*[\s\S]*?\*\//g, '')));
+    });
+    const se = fs.readFileSync(path.join(ROOT, 'rooms/self-employed.html'), 'utf8');
+    checkTrue('W2 vs 1099 no longer writes the salary straight into the box', !/v\['w-salary'\] = gross\.value/.test(se));
+    ['side-hustle', 'credential', 'accounts'].forEach(function (room) {
+      const html = fs.readFileSync(path.join(ROOT, 'rooms', room + '.html'), 'utf8');
+      checkTrue(`${room} proposes the federal bracket`, html.indexOf('Reference.marginalBracket(') !== -1);
+      checkTrue(`${room} labels it federal only and unverified`, /federal only, an estimate/.test(html));
+      checkTrue(`${room} reads the box through Suggest.entered`, html.indexOf('Suggest.entered(node)') !== -1);
+    });
+    const acc = fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8');
+    checkTrue('Where It Goes has one box for the marginal rate, not two', acc.indexOf('id="a-now"') === -1 && acc.indexOf('data-setup="marginalRate"') !== -1);
+    checkTrue('and the comparison reads the shared rate', /currentTaxRate: assumptions\.marginalRate/.test(acc));
+  }
+})();
+
 section('What is finished');
 
 (function () {

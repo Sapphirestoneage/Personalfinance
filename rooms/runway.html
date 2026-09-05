@@ -111,6 +111,7 @@
     <div class="group">
       <span class="slaf-label">The basics</span>
       <div class="grid2">
+        <div id="seed-host" style="grid-column:1 / -1" hidden></div>
         <label class="slaf-field" style="margin:0"><span class="slaf-label" id="cushion-label">What you can spend</span>
           <span class="slaf-input-shell"><span class="slaf-affix">$</span>
           <input type="text" inputmode="decimal" data-in="cushion" aria-label="Cushion"/></span>
@@ -253,6 +254,8 @@
 <script src="../shared/spine-v2.js"></script>
 <script src="../shared/liveform.js"></script>
 <script src="../shared/ownership.js"></script>
+<script src="../shared/suggest.js"></script>
+<script src="../shared/seed.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../engines/runway.js"></script>
 <script>
@@ -357,12 +360,35 @@
   });
 
   /* Switching scenario hides field groups; it never rebuilds them. */
+  /* Your cash and your spending, proposed — not written into the plan
+     until you tap them. Hypotheticals stay local (D-052); this only fills
+     the two boxes that ARE facts. D-062. */
+  var seed = SLAF.Seed.mount({
+    roomId: ROOM_ID, host: el('seed-host'),
+    seeds: function () {
+      var h = Spine.getProfile();
+      var cash = Schema.cashCents(h), spend = Schema.monthlyExpensesCents(h);
+      return [
+        { node: document.querySelector('[data-in="cushion"]'),
+          value: Money.isOk(cash) ? cash.value : null, display: Money.isOk(cash) ? Money.formatCents(cash.value) : '',
+          source: 'your cash & savings, from Start Here',
+          apply: function (v) { state.cushion = v; paintInputs(); render(); } },
+        { node: document.querySelector('[data-in="expenses"]'),
+          value: Money.isOk(spend) ? spend.value : null, display: Money.isOk(spend) ? Money.formatCents(spend.value) : '',
+          source: 'your monthly spending' + (spend.source === 'tracked' ? ', from Cash Flow' : ', your Start Here estimate'),
+          apply: function (v) { state.expenses = v; paintInputs(); render(); } }
+      ];
+    }
+  });
+
   function paintInputs() {
     var preset = Runway.PRESETS[state.preset] || Runway.PRESETS.quit;
     document.querySelectorAll('[data-in]').forEach(function (node) {
       if (node === document.activeElement) return;
+      if (SLAF.Suggest.isSuggested(node) && !Money.isEntered(state[node.getAttribute('data-in')])) return;
       node.value = displayFor(node.getAttribute('data-in'));
     });
+    seed.refresh();
     el('scenario-note').textContent = preset.blurb + ' ' + preset.note;
     el('cushion-label').textContent = preset.cushionLabel;
     document.querySelector('[data-group="benefit"]').hidden = !preset.benefit;
@@ -568,17 +594,9 @@
     if (!TABLES) return;
     var h = Spine.getProfile();
 
-    /* The two borrowed figures default from the household the first time
-       they are needed, so the page opens filled in rather than blank. */
-    if (!Money.isEntered(state.cushion)) {
-      var cash = Schema.cashCents(h);
-      if (Money.isOk(cash)) state.cushion = cash.value;
-    }
-    if (!Money.isEntered(state.expenses)) {
-      var exp = Schema.monthlyExpensesCents(h);
-      if (Money.isOk(exp)) state.expenses = exp.value;
-    }
-
+    /* The two borrowed figures are PROPOSED by the seed toggle above the
+       inputs, not copied in — a figure the page put in a box read as one
+       the person had confirmed. D-062. */
     paintInputs();
     var r = Runway.project(h, TABLES, opts());
     renderRunway(r);

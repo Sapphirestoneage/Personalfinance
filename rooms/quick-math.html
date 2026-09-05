@@ -76,6 +76,7 @@
   <section class="slaf-card" id="hysa">
     <span class="slaf-eyebrow">Switching savings accounts</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">Is it worth moving?</h2>
+    <div id="seed-host" hidden></div>
     <div class="grid-3">
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Balance</span>
         <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="h-balance" placeholder="e.g. 9500" aria-label="Balance"/></span></label>
@@ -180,6 +181,8 @@
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
 <script src="../shared/ownership.js"></script>
+<script src="../shared/suggest.js"></script>
+<script src="../shared/seed.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/quickmath.js"></script>
@@ -223,6 +226,20 @@
       if (evt.key === 'Enter') { evt.preventDefault(); node.blur(); }
     });
   }
+
+  /* The balance you might move is the cash you already told Start Here
+     about — proposed, not taken. D-062. */
+  var seed = SLAF.Seed.mount({
+    roomId: ROOM_ID, host: el('seed-host'),
+    seeds: function () {
+      var cash = SLAF.Schema.cashCents(Spine.getProfile());
+      return [{ node: el('h-balance'),
+        value: Money.isOk(cash) ? cash.value : null, display: Money.isOk(cash) ? Money.formatCents(cash.value) : '',
+        source: 'your cash & savings, from Start Here',
+        apply: function (c) { v['h-balance'] = c; el('h-balance').value = Money.formatCents(c); render(); } }];
+    }
+  });
+  Spine.onChange(function () { seed.refresh(); });
 
   [['h-balance', 'money'], ['h-old', 'rate'], ['h-new', 'rate'], ['h-days', 'number'], ['h-fee', 'money'],
    ['u-price', 'money'], ['u-uses', 'number'], ['u-months', 'number'],

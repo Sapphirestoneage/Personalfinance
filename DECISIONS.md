@@ -3410,6 +3410,64 @@ contribution and `hasDebt` are Start Here's. Read them through
 
 ---
 
+## D-062 — Explore rooms open with your numbers proposed, and the federal bracket is one of them
+
+*(BRIEF.md §0.3 D-B and §2.3–2.4. Supersedes the "never derive a marginal
+rate" line of D-036/D-052 for the FEDERAL bracket only.)*
+
+### The what-if rooms propose, never take
+
+Runway, Quick Math and W2 vs 1099 already knew the numbers they asked for —
+cash, spending, pay — and asked anyway, or (W2 vs 1099) wrote the salary
+straight into the box so it read as an answer the person had given.
+`shared/seed.js` mounts one toggle at the top of each — **Open with: my
+numbers · a blank page** — and in "my numbers" every box it can fill shows
+the household figure as a suggestion (D-060) naming its source. "Use this"
+calls the room's `apply()`, which writes the room's LOCAL state and nothing
+else. Hypotheticals still never reach the household (D-052). The choice is
+remembered for the session, not stored.
+
+Seeds: Runway — cash → cushion, monthly spending → spending. Quick Math —
+cash → the balance you might move. W2 vs 1099 — gross → the salary side.
+Not seeded, deliberately: Quick Math's "rate now" (the brief's table says
+the highest-rate debt; a savings rate is not a debt rate, so that would be
+a wrong number in a real-looking box); Windfall (nothing in the household
+is a windfall); the Credential's cost and raise (yours to invent).
+
+### The federal bracket is derived — as a suggestion
+
+`data/federal_brackets_2026.json` carries the ordinary-income brackets and
+standard deductions for tax year 2026, `confidence: unverified` until they
+are checked line by line against the IRS revenue procedure. Every place it
+is shown says "federal only, an estimate (unverified)".
+`Reference.marginalBracket(table, grossDollars, filingStatus)` walks gross
+minus the standard deduction up the ladder and returns the rate with the
+taxable income used, the room before the next bracket and the next rate —
+the numbers the Statement's bracket ladder (T3) will show.
+
+D-036 refused to derive a marginal rate from the *effective-rate* table,
+and still does: that table is a blend that says nothing about the next
+dollar. This is a different derivation from a different table, and it is
+**a proposal, not a value**: Side Hustle, the Credential and Where It Goes
+show it in the marginal-rate box only while no rate is stored, and "Use
+this" writes `assumptionOverrides.marginalRate` exactly as typing would.
+State tax is out of scope and the source line says so.
+
+Where It Goes had two boxes for one fact — "your marginal tax rate" in the
+setup and "your tax rate now" in the Roth-vs-Traditional comparison. The
+second is gone; the comparison reads the shared rate and shows it as a
+chip. "Rate in retirement" stays a local input: nobody knows it.
+
+### Compatibility note
+
+Stored shape: nothing. Rooms updated: `rooms/runway.html`,
+`rooms/quick-math.html`, `rooms/self-employed.html` (toggle + seeds),
+`rooms/side-hustle.html`, `rooms/credential.html`, `rooms/accounts.html`
+(bracket proposal; the duplicate box removed). New: `shared/seed.js`,
+`data/federal_brackets_2026.json`, `Reference.marginalBracket()`.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool. **The numbers D-046
@@ -3424,7 +3482,7 @@ files and therefore carry SPARKS numbers.
 
 **From here on the log is one sequence.** A new entry — for either side —
 takes the highest number in the whole file plus one, which is why the next
-D&D entry after D-052 is D-062. Renumbering the seven duplicates properly is
+D&D entry after D-052 is D-063. Renumbering the seven duplicates properly is
 a documentation pass of its own and has not been done.
 
 ---
@@ -3830,7 +3888,7 @@ names the offending string.
 
 ---
 
-## D-062 — A monster's danger is a property of the meeting, not of the monster
+## D-063 — A monster's danger is a property of the meeting, not of the monster
 
 BRIEF.md §9.3 asks for an encounter engine: pick a creature from the bestiary,
 run it at the sheet, and get back what actually happens. The design question it

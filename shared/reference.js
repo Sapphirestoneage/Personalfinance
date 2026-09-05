@@ -44,7 +44,8 @@
     healthScore: 'health_score.json',
     staleness: 'staleness.json',
     states: 'states.json',
-    matchDefaults: 'match_defaults.json'
+    matchDefaults: 'match_defaults.json',
+    federalBrackets: 'federal_brackets_2026.json'
   };
 
   var cache = {};
@@ -296,6 +297,46 @@
   }
 
   /** Collect the version stamp of every table used, for a snapshot. */
+  /**
+   * marginalBracket(table, grossAnnualIncomeDollars, filingStatus) — the
+   * FEDERAL bracket the next ordinary dollar falls in: gross minus the
+   * standard deduction, walked up the ladder. An estimate, federal only,
+   * and a SUGGESTION wherever it is shown (D-062): it never becomes the
+   * stored marginal rate unless the person taps it. Returns a Result with
+   * the rate, the taxable income used, and the room left before the next
+   * bracket — which is the number the Statement's bracket ladder shows.
+   */
+  function marginalBracket(table, grossAnnualIncomeDollars, filingStatus) {
+    if (!table) return Money.incomplete('Federal bracket table is not loaded.', ['federalBrackets']);
+    if (!Money.isEntered(grossAnnualIncomeDollars)) {
+      return Money.incomplete('Add your gross income to find the bracket.', ['grossAnnualIncome']);
+    }
+    if (!filingStatus) return Money.incomplete('Choose a filing status to find the bracket.', ['filingStatus']);
+    var ladder = table.brackets[filingStatus];
+    var deduction = table.standardDeduction[filingStatus];
+    if (!ladder || !Money.isEntered(deduction)) {
+      return Money.incomplete('No bracket table for filing status "' + filingStatus + '".', ['filingStatus']);
+    }
+    var taxable = Math.max(0, grossAnnualIncomeDollars - deduction);
+    for (var i = 0; i < ladder.length; i++) {
+      var b = ladder[i];
+      if (b.upToTaxableIncome === null || taxable <= b.upToTaxableIncome) {
+        return Money.ok(b.rate, {
+          taxableIncomeDollars: taxable,
+          standardDeductionDollars: deduction,
+          bracketTopDollars: b.upToTaxableIncome,
+          roomBeforeNextBracketDollars: b.upToTaxableIncome === null ? null : b.upToTaxableIncome - taxable,
+          nextRate: ladder[i + 1] ? ladder[i + 1].rate : null,
+          federalOnly: true,
+          referenceVersion: table.version,
+          referenceId: table.id,
+          confidence: table.confidence
+        });
+      }
+    }
+    return Money.incomplete('Income is outside the bracket table.', ['grossAnnualIncome']);
+  }
+
   function versionsOf(tables) {
     var out = {};
     Object.keys(tables || {}).forEach(function (k) {
@@ -312,6 +353,7 @@
     lookupNetWorthPercentile: lookupNetWorthPercentile,
     lookupLiquidityBand: lookupLiquidityBand,
     CONFIDENCE_LEVELS: CONFIDENCE_LEVELS,
+    marginalBracket: marginalBracket,
     CONFIDENCE_LABELS: CONFIDENCE_LABELS,
     provenanceOf: provenanceOf,
     provenance: provenance,
