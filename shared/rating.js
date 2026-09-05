@@ -43,7 +43,8 @@
   var ANCHORS = {
     joy:    { low: 'barely notice it', high: 'would not give it up', label: 'Joy' },
     hassle: { low: 'no bother at all', high: 'genuinely painful',    label: 'Hassle' },
-    worth:  { low: 'not worth it',     high: 'worth every penny',    label: 'Worth it' }
+    worth:  { low: 'not worth it',     high: 'worth every penny',    label: 'Worth it' },
+    rerank: { low: 'would not miss it', high: 'could not do without', label: 'What it gives you' }
   };
 
   function anchors(scope) {

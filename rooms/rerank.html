@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>The Rerank · SPARKS</title>
+<meta name="description" content="Your costs in order of size, then in order of what they give you — and the lines where the two orders disagree."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. BRIEF §5 "The Rerank". DECISIONS.md D-084.
+
+  1. READS   the tracked month (Cash Flow) when one exists; otherwise the
+             twenty common cost lines in data/common_costs.json, scaled to
+             your monthly essentials and PROPOSED, never stored; the debt
+             minimums (Debt Payoff); the monthly expenses.
+  2. WRITES  It OWNS: the 1-10 "what it gives you" per line (ratings.rerank),
+             would-you-miss-it and who-is-it-for per line, the hand-set value
+             order (household.rerank.rows), and any cost line typed here —
+             a common line or a custom one — which becomes an expense entry
+             with source 'rerank' the moment an amount is typed.
+  3. SHOWS   four stages: what it costs → what it gives you → your order →
+             the gap: cost rank against value rank, the lines flagged cut or
+             keep, what the cut lines add up to a year and at 25×.
+  4. FEEDS   Life Events (the sabbatical "cut" list), the Skill Stacker
+             (cook-dinner's value from the dining line), Enough.
+  5. DEMO    "Try with example numbers" loads the demo month and Robin's
+             ratings: two lines flagged cut, two flagged keep.
+
+  LIVE-FORM: guarded — the three lists rebuild through shared/liveform.js
+  and are never rebuilt while a finger is in them.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .stages { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-2); margin: 0 0 var(--space-4); }
+  .stages a { display: block; text-align: center; font-size: var(--text-xs); text-decoration: none; color: var(--color-text-muted); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-1); }
+  .stages a b { display: block; font-family: var(--font-display); font-size: var(--text-lg); color: var(--color-text); }
+
+  .line { display: grid; grid-template-columns: 1fr 112px; gap: var(--space-2); align-items: center; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  .line:first-child { border-top: none; }
+  .line .nm { font-size: var(--text-sm); min-width: 0; }
+  .line .nm small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  .line .amt { text-align: right; font-variant-numeric: tabular-nums; font-size: var(--text-sm); }
+  .line.custom { grid-template-columns: 1fr 112px 32px; }
+  .line .rm { border: none; background: none; color: var(--color-text-faint); font-size: var(--text-base); cursor: pointer; padding: 0; }
+
+  .rate-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-2); align-items: end; padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  .rate-row:first-child { border-top: none; }
+  .rate-row .head { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: var(--space-2); font-size: var(--text-sm); }
+  .rate-row .head .amt { color: var(--color-text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .rate-row .slaf-label { font-size: 10px; }
+  @media (max-width: 380px) { .rate-row { grid-template-columns: 1fr 1fr; } .rate-row .head { grid-column: 1 / -1; } }
+
+  .rank-row { display: grid; grid-template-columns: 28px 1fr auto auto; gap: var(--space-2); align-items: center; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); touch-action: none; }
+  .rank-row:first-child { border-top: none; }
+  .rank-row.is-dragging { opacity: .5; }
+  .rank-row.is-over { border-top: 2px solid var(--color-accent); }
+  .rank-row .pos { font-family: var(--font-display); color: var(--color-text-faint); text-align: center; }
+  .rank-row .nm { font-size: var(--text-sm); min-width: 0; cursor: grab; }
+  .rank-row .nm small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  .rank-row .cost { font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+  .rank-row .mv { display: inline-flex; gap: 2px; }
+  .rank-row .mv button { width: 34px; height: 34px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); color: var(--color-text); cursor: pointer; font-size: var(--text-sm); }
+  .rank-row .mv button:disabled { opacity: .3; cursor: default; }
+
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
+  @media (max-width: 420px) { .pair { grid-template-columns: 1fr; } }
+  .figure-cell { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; }
+  .figure-cell .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  .figure-cell .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); }
+  .figure-cell .big.is-incomplete { font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text-faint); }
+  .figure-cell .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: auto; padding-top: var(--space-2); }
+
+  .plot { width: 100%; height: auto; display: block; margin-top: var(--space-3); }
+  .plot .axis { stroke: var(--color-border-strong); stroke-width: .6; }
+  .plot .diag { stroke: var(--color-border); stroke-width: .6; stroke-dasharray: 2 2; }
+  .plot .dot { fill: var(--color-text-muted); }
+  .plot .dot.is-cut { fill: #e4b04a; }
+  .plot .dot.is-keep { fill: var(--color-accent); }
+  .plot .lbl { font-size: 5px; fill: var(--color-text-faint); font-family: var(--font-body); }
+  .plot .qlabel { font-size: 5px; fill: var(--color-text-faint); font-family: var(--font-body); text-transform: uppercase; letter-spacing: .06em; }
+
+  .flagged { border-top: 1px solid var(--color-border); padding: var(--space-3) 0; }
+  .flagged:first-child { border-top: none; }
+  .flagged .tag { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; padding: 2px 6px; border-radius: var(--radius-sm); margin-right: var(--space-2); }
+  .flagged .tag.cut { background: #e4b04a; color: #1c1300; }
+  .flagged .tag.keep { background: var(--color-accent); color: var(--color-accent-contrast); }
+  .flagged .tag.need { background: var(--color-surface-raised); color: var(--color-text-muted); border: 1px solid var(--color-border-strong); }
+  .flagged p { margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .actions { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-3); }
+  .notice { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-4); font-size: var(--text-sm); }
+  .notice.is-error { border-color: #b5544d; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>The Rerank</h1>
+  <p class="room-lede">Your costs in order of size, then in order of what they give you — and the lines where the two orders disagree.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <nav class="stages" aria-label="The four stages">
+    <a href="#costs"><b>1</b>What it costs</a>
+    <a href="#rate"><b>2</b>What it gives</a>
+    <a href="#rerank"><b>3</b>Your order</a>
+    <a href="#gap"><b>4</b>The gap</a>
+  </nav>
+
+  <section class="slaf-card" id="costs">
+    <span class="slaf-eyebrow">Stage 1 · What it costs</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Every line, a month</h2>
+    <p class="slaf-hint" id="costs-basis" style="margin:0 0 var(--space-3)"></p>
+    <div id="cost-list"></div>
+    <p class="slaf-hint" data-suggest-note style="margin:var(--space-2) 0 0"></p>
+    <div class="actions">
+      <button type="button" class="slaf-btn" id="btn-add">+ Add a cost of your own</button>
+      <button type="button" class="slaf-btn" id="btn-demo">Try with example numbers</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Clear what I typed here</button>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="rate" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Stage 2 · What it gives you</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Three questions a line</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      One to ten for what it gives you, whether you would miss it, and who it
+      is really for. Skip any line; an unrated line simply stays out of the
+      ranking rather than being scored a zero.
+    </p>
+    <div id="rate-list"></div>
+    <p class="why" id="rate-why"></p>
+  </section>
+
+  <section class="slaf-card" id="rerank" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Stage 3 · Your order</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Most valuable at the top</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      Ordered by your ratings to start. Drag a line, or use the arrows, until
+      the order is the one you would actually defend.
+    </p>
+    <div id="rank-list"></div>
+    <div class="actions">
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-reset-order" hidden>Back to the rated order</button>
+    </div>
+    <p class="why" id="rank-why"></p>
+  </section>
+
+  <section class="slaf-card" id="gap" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Stage 4 · The gap</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Where the two orders disagree</h2>
+    <div class="pair">
+      <div class="figure-cell"><span class="cap">Flagged to cut, a year</span><span class="big" id="gap-annual">—</span><span class="sub" id="gap-annual-sub"></span></div>
+      <div class="figure-cell"><span class="cap">At 25×, what that is worth to FI</span><span class="big" id="gap-fi">—</span><span class="sub" id="gap-fi-sub"></span></div>
+    </div>
+    <svg class="plot" id="plot" viewBox="0 0 200 160" role="img" aria-label="Cost rank against value rank"></svg>
+    <p class="why" id="plot-why"></p>
+    <div id="flag-list" style="margin-top:var(--space-3)"></div>
+    <p class="why" id="gap-why"></p>
+  </section>
+
+  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. The 25× figure is the 4% rule
+    inverted — a planning convention, not a promise. Your numbers stay in
+    this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/liveform.js"></script>
+<script src="../shared/staleness.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/suggest.js"></script>
+<script src="../shared/rating.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/demo-persona.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/rerank.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership, Rating = SLAF.Rating,
+      Rerank = SLAF.Rerank, Suggest = SLAF.Suggest;
+
+  var ROOM_ID = 'rerank';
+  var TABLES = null;
+  var MISS = [['', 'Would you miss it?'], ['yes', 'Yes, a lot'], ['some', 'Some'], ['no', 'Not really']];
+  var WHO = [['', 'Who is it for?'], ['me', 'Me'], ['both', 'Both of us'], ['show', 'For show']];
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function fmt(c) { return Money.formatCents(c); }
+  function analysis() { return TABLES ? Rerank.analyse(Spine.getProfile(), TABLES) : Money.incomplete('Loading.', []); }
+
+  /* ---- Stage 1: the cost lines ------------------------------------------ */
+
+  function entryById(h, id) {
+    var list = (h.expenses && h.expenses.entries) || [];
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+    return null;
+  }
+
+  function renderCosts() {
+    var h = Spine.getProfile();
+    var list = el('cost-list');
+    var l = Rerank.lines(h, TABLES);
+    var basis = el('costs-basis');
+    if (!Money.isOk(l)) {
+      list.innerHTML = '<p class="slaf-reason">' + esc(l.reason) + '</p>';
+      basis.textContent = '';
+      return;
+    }
+    basis.textContent = l.basis === 'entered'
+      ? 'Your tracked month, from Cash Flow. Change a category there; add a finer line here.'
+      : 'No month tracked yet, so twenty everyday lines are proposed' + (Money.isEntered(l.scale) ? ', scaled to your ' + fmt(Schema.monthlyExpensesCents(h).value) + ' of monthly essentials' : '')
+        + '. Nothing is counted until you type it; a proposal you never touch stays a proposal.';
+    list.innerHTML = l.lines.map(function (line) {
+      if (line.source === 'derived') {
+        return '<div class="line" data-line-id="' + esc(line.id) + '"><span class="nm">' + esc(line.label) + '<small>from Debt Payoff</small></span>'
+          + '<span class="amt">' + Ownership.inlineChip('monthlyDebtPayments', h, ROOM_ID) + '</span></div>';
+      }
+      if (line.source === 'entered' && !line.custom) {
+        return '<div class="line" data-line-id="' + esc(line.id) + '"><span class="nm">' + esc(line.label) + '<small>tracked in Cash Flow</small></span>'
+          + '<a class="amt slaf-owned slaf-owned--field" href="' + Ownership.linkTo('cash-flow', 'spending') + '"><span class="slaf-owned-value">' + fmt(line.monthlyCents) + '</span></a></div>';
+      }
+      var entry = line.custom ? entryById(h, line.entryId) : null;
+      var isCommon = line.source === 'suggested' || (entry && entry.id.indexOf(Rerank.SUGGESTED_ENTRY_PREFIX) === 0);
+      return '<div class="line' + (line.custom && !isCommon ? ' custom' : '') + '" data-line-id="' + esc(line.id) + '">'
+        + (line.custom && !isCommon
+            ? '<span class="nm"><input type="text" data-custom-label="' + esc(line.entryId) + '" value="' + esc(line.label) + '" placeholder="Name it" aria-label="Cost name" style="width:100%"/></span>'
+            : '<span class="nm">' + esc(line.label) + '<small>' + (line.source === 'suggested' ? 'proposed' : 'yours') + '</small></span>')
+        + '<span class="slaf-input-shell"><span class="slaf-affix">$</span>'
+        + '<input type="text" inputmode="decimal" data-line="' + esc(line.id) + '" data-category="' + esc(line.categoryId) + '" data-label="' + esc(line.label) + '"'
+        + (line.source === 'suggested' || !Money.isEntered(line.monthlyCents) ? '' : ' value="' + fmt(line.monthlyCents) + '"') + ' placeholder="/mo" aria-label="' + esc(line.label) + ' per month"/></span>'
+        + (line.custom && !isCommon ? '<button type="button" class="rm" data-remove="' + esc(line.entryId) + '" aria-label="Remove">✕</button>' : '')
+        + '</div>';
+    }).join('');
+    /* Proposals are shown, never stored — D-060. */
+    l.lines.forEach(function (line) {
+      if (line.source !== 'suggested') return;
+      var node = list.querySelector('input[data-line="' + line.id + '"]');
+      if (!node) return;
+      Suggest.show(node, {
+        value: line.monthlyCents, display: fmt(line.monthlyCents),
+        source: 'an everyday figure (data/common_costs.json, ' + TABLES.commonCosts.confidence + ')' + (Money.isEntered(l.scale) ? ', scaled to your essentials' : ''),
+        onUse: function (cents) { writeLine(line.id, line.categoryId, line.label, cents); render(); }
+      });
+    });
+  }
+
+  /* A typed amount becomes an expense entry with source 'rerank' — for a
+     common line under a stable id so it replaces its proposal, for a custom
+     line under the entry's own id. */
+  function writeLine(lineId, categoryId, label, cents) {
+    var h = Spine.getProfile();
+    var isEntry = !!entryById(h, lineId);
+    var id = isEntry ? lineId : Rerank.SUGGESTED_ENTRY_PREFIX + lineId;
+    var existing = entryById(h, id);
+    if (!Money.isEntered(cents)) {
+      if (existing) removeEntry(id);
+      return;
+    }
+    Spine.upsertExpenseEntry(Schema.createExpenseEntry({
+      id: id, categoryId: existing ? existing.categoryId : categoryId, amountCents: cents, period: 'monthly',
+      source: 'rerank', descriptor: existing ? existing.descriptor : label, fixed: existing ? existing.fixed : null
+    }));
+  }
+  function removeEntry(id) {
+    var h = Spine.getProfile();
+    var keep = (h.expenses.entries || []).filter(function (e) { return e.id !== id; });
+    Spine.updateProfile({ expenses: { entries: keep } });
+  }
+
+  var costForm = SLAF.LiveForm.guard(el('cost-list'), renderCosts);
+
+  el('cost-list').addEventListener('focusin', function (evt) {
+    var input = evt.target.closest('input[data-line]');
+    if (!input) return;
+    if (Suggest.isSuggested(input)) return;             /* the shell handles it */
+    var raw = Money.parseMoney(input.value);
+    input.value = Money.isEntered(raw) ? String(raw / 100) : '';
+    input.select();
+  });
+  el('cost-list').addEventListener('focusout', function (evt) {
+    var input = evt.target.closest('input[data-line]');
+    if (input) {
+      var cents = Money.parseMoney(Suggest.entered(input));
+      writeLine(input.getAttribute('data-line'), input.getAttribute('data-category'), input.getAttribute('data-label'), cents);
+      render();
+      return;
+    }
+    var name = evt.target.closest('input[data-custom-label]');
+    if (name) {
+      var h = Spine.getProfile();
+      var e = entryById(h, name.getAttribute('data-custom-label'));
+      var text = name.value.trim();
+      if (e && text && text !== e.descriptor) { Spine.upsertExpenseEntry(Object.assign({}, e, { descriptor: text })); render(); }
+    }
+  });
+  el('cost-list').addEventListener('keydown', function (evt) {
+    if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') { evt.preventDefault(); evt.target.blur(); }
+  });
+  el('cost-list').addEventListener('click', function (evt) {
+    var btn = evt.target.closest('[data-remove]');
+    if (!btn) return;
+    removeEntry(btn.getAttribute('data-remove'));
+    costForm.force(); render();
+  });
+
+  el('btn-add').addEventListener('click', function () {
+    var id = Schema.newId('e');
+    Spine.upsertExpenseEntry(Schema.createExpenseEntry({
+      id: id, categoryId: 'other', amountCents: null, period: 'monthly', source: 'rerank', descriptor: 'Something else'
+    }));
+    /* A custom line with no amount is still a line to type into. */
+    costForm.force(); render();
+    var node = el('cost-list').querySelector('input[data-custom-label="' + id + '"]');
+    if (node) { node.focus(); node.select(); }
+  });
+
+  el('btn-demo').addEventListener('click', function () {
+    var d = SLAF.DemoPersona;
+    Spine.updateProfile({ expenses: { entries: d.buildSpending() }, ratings: { rerank: Object.assign({}, d.VALUES.rerankJoy) } });
+    costForm.force(); rateForm.force(); rankForm.force(); render();
+  });
+  el('btn-clear').addEventListener('click', function () {
+    var h = Spine.getProfile();
+    var keep = (h.expenses.entries || []).filter(function (e) { return e.source !== 'rerank'; });
+    Spine.updateProfile({ expenses: { entries: keep }, rerank: { rows: [] } });
+    costForm.force(); rateForm.force(); rankForm.force(); render();
+  });
+
+  /* ---- Stage 2: rate ------------------------------------------------------ */
+
+  function rowsFor(h) { return (h.rerank && h.rerank.rows) || []; }
+  function writeRow(id, patch) {
+    var h = Spine.getProfile();
+    var rows = rowsFor(h).map(function (r) { return Object.assign({}, r); });
+    var found = null;
+    rows.forEach(function (r) { if (r.id === id) found = r; });
+    if (!found) { found = Schema.createRerankRow({ id: id }); rows.push(found); }
+    Object.keys(patch).forEach(function (k) { found[k] = patch[k]; });
+    Spine.updateProfile({ rerank: { rows: rows } });
+  }
+
+  function renderRate() {
+    var a = analysis();
+    var list = el('rate-list');
+    if (!Money.isOk(a)) { list.innerHTML = '<p class="slaf-reason">' + esc(a.reason) + '</p>'; el('rate-why').textContent = ''; return; }
+    list.innerHTML = a.rows.filter(function (r) { return r.costRank !== null; }).sort(function (x, y) { return x.costRank - y.costRank; }).map(function (r) {
+      function sel(field, options, current) {
+        return '<label class="slaf-field" style="margin:0"><span class="slaf-label">' + esc(options[0][1]) + '</span><span class="slaf-input-shell"><select data-row="' + esc(r.id) + '" data-field="' + field + '" aria-label="' + esc(options[0][1] + ' — ' + r.label) + '">'
+          + options.map(function (o, i) { return i === 0 ? '<option value=""' + (current ? '' : ' selected') + '>—</option>' : '<option value="' + o[0] + '"' + (current === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('')
+          + '</select></span></label>';
+      }
+      return '<div class="rate-row" data-row-id="' + esc(r.id) + '">'
+        + '<div class="head"><span>' + esc(r.label) + (r.need ? ' <span style="color:var(--color-text-faint)">· a need</span>' : '') + '</span><span class="amt">' + fmt(r.monthlyCents) + '/mo · #' + r.costRank + ' by cost</span></div>'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">What it gives you</span>'
+        + Rating.controlHtml({ scope: Rerank.SCOPE, itemId: r.id, value: r.joy, label: r.label }) + '</label>'
+        + sel('miss', MISS, r.miss)
+        + sel('who', WHO, r.who)
+        + '</div>';
+    }).join('');
+    var costed = a.rows.length - a.uncostedCount - a.proposedCount;
+    el('rate-why').textContent = (a.ratedCount
+      ? a.ratedCount + ' of ' + costed + ' rated.' + (a.unratedCount ? ' The other ' + a.unratedCount + ' stay out of the ranking until rated.' : '')
+      : 'Nothing rated yet.') + (a.uncostedCount ? ' ' + a.uncostedCount + ' line' + (a.uncostedCount === 1 ? ' has' : 's have') + ' no amount yet.' : '');
+  }
+  var rateForm = SLAF.LiveForm.guard(el('rate-list'), renderRate);
+
+  el('rate-list').addEventListener('change', function (evt) {
+    var read = Rating.readTarget(evt.target);
+    if (read) { Spine.setRating(read.scope, read.itemId, read.value); render(); return; }
+    var node = evt.target.closest('select[data-row]');
+    if (!node) return;
+    var patch = {}; patch[node.getAttribute('data-field')] = node.value === '' ? null : node.value;
+    writeRow(node.getAttribute('data-row'), patch);
+    render();
+  });
+
+  /* ---- Stage 3: rerank ---------------------------------------------------- */
+
+  function writeOrder(ids) {
+    var h = Spine.getProfile();
+    var rows = rowsFor(h).map(function (r) { return Object.assign({}, r); });
+    ids.forEach(function (id, i) {
+      var found = null;
+      rows.forEach(function (r) { if (r.id === id) found = r; });
+      if (!found) { found = Schema.createRerankRow({ id: id }); rows.push(found); }
+      found.valueRank = i + 1;
+    });
+    Spine.updateProfile({ rerank: { rows: rows } });
+  }
+  function clearOrder() {
+    var h = Spine.getProfile();
+    var rows = rowsFor(h).map(function (r) { return Object.assign({}, r, { valueRank: null }); });
+    Spine.updateProfile({ rerank: { rows: rows } });
+  }
+  function move(id, delta) {
+    var o = Rerank.valueOrder(Spine.getProfile(), TABLES);
+    if (!Money.isOk(o)) return;
+    var ids = o.ids.slice();
+    var i = ids.indexOf(id);
+    var j = i + delta;
+    if (i < 0 || j < 0 || j >= ids.length) return;
+    ids.splice(i, 1); ids.splice(j, 0, id);
+    writeOrder(ids);
+    rankForm.force(); render();
+  }
+
+  function renderRank() {
+    var a = analysis();
+    var list = el('rank-list');
+    var o = Money.isOk(a) ? Rerank.valueOrder(Spine.getProfile(), TABLES) : a;
+    if (!Money.isOk(o) || !o.ids.length) {
+      list.innerHTML = '<p class="slaf-reason">Rate at least one line above and it appears here.</p>';
+      el('rank-why').textContent = ''; el('btn-reset-order').hidden = true; return;
+    }
+    list.innerHTML = o.rows.map(function (r, i) {
+      return '<div class="rank-row" data-rank-id="' + esc(r.id) + '" draggable="true">'
+        + '<span class="pos">' + (i + 1) + '</span>'
+        + '<span class="nm">' + esc(r.label) + '<small>' + (Rating.isValid(r.joy) ? r.joy + ' · ' : '') + (r.miss ? { yes: 'would miss it', some: 'would miss it some', no: 'would not miss it' }[r.miss] : 'not asked') + '</small></span>'
+        + '<span class="cost">#' + r.costRank + ' by cost</span>'
+        + '<span class="mv"><button type="button" data-move="up" data-id="' + esc(r.id) + '" aria-label="Move up"' + (i === 0 ? ' disabled' : '') + '>▲</button>'
+        + '<button type="button" data-move="down" data-id="' + esc(r.id) + '" aria-label="Move down"' + (i === o.rows.length - 1 ? ' disabled' : '') + '>▼</button></span>'
+        + '</div>';
+    }).join('');
+    el('rank-why').textContent = a.valueOrder === 'hand' ? 'Your order. It is stored, and stage 4 uses it.' : 'The rated order. Move anything and the order becomes yours.';
+    el('btn-reset-order').hidden = a.valueOrder !== 'hand';
+  }
+  var rankForm = SLAF.LiveForm.guard(el('rank-list'), renderRank);
+
+  el('rank-list').addEventListener('click', function (evt) {
+    var btn = evt.target.closest('[data-move]');
+    if (!btn) return;
+    move(btn.getAttribute('data-id'), btn.getAttribute('data-move') === 'up' ? -1 : 1);
+  });
+  el('btn-reset-order').addEventListener('click', function () { clearOrder(); rankForm.force(); render(); });
+
+  /* Pointer drag: press on a row, move, release over another row. Works for
+     mouse and touch alike; the arrows remain for anyone who prefers them. */
+  (function () {
+    var list = el('rank-list'), dragging = null, over = null;
+    function rowAt(x, y) {
+      var node = document.elementFromPoint(x, y);
+      return node ? node.closest('.rank-row') : null;
+    }
+    list.addEventListener('pointerdown', function (evt) {
+      var handle = evt.target.closest('.nm');
+      if (!handle) return;
+      dragging = handle.closest('.rank-row');
+      dragging.classList.add('is-dragging');
+      dragging.setPointerCapture(evt.pointerId);
+      evt.preventDefault();
+    });
+    list.addEventListener('pointermove', function (evt) {
+      if (!dragging) return;
+      var row = rowAt(evt.clientX, evt.clientY);
+      if (over && over !== row) over.classList.remove('is-over');
+      over = row && row !== dragging ? row : null;
+      if (over) over.classList.add('is-over');
+    });
+    function end(evt) {
+      if (!dragging) return;
+      var from = dragging.getAttribute('data-rank-id');
+      var target = over ? over.getAttribute('data-rank-id') : null;
+      dragging.classList.remove('is-dragging');
+      if (over) over.classList.remove('is-over');
+      dragging = null; over = null;
+      if (!target || target === from) return;
+      var o = Rerank.valueOrder(Spine.getProfile(), TABLES);
+      if (!Money.isOk(o)) return;
+      var ids = o.ids.slice();
+      ids.splice(ids.indexOf(from), 1);
+      ids.splice(ids.indexOf(target), 0, from);
+      writeOrder(ids);
+      rankForm.force(); render();
+    }
+    list.addEventListener('pointerup', end);
+    list.addEventListener('pointercancel', end);
+    list.addEventListener('dragstart', function (evt) { evt.preventDefault(); });
+  })();
+
+  /* ---- Stage 4: the gap --------------------------------------------------- */
+
+  var PAD = 18, W = 200, H = 160;
+  function renderPlot(a) {
+    var svg = el('plot');
+    var rated = a.rows.filter(function (r) { return r.valueRank !== null; });
+    var n = rated.length;
+    if (n < 2) { svg.innerHTML = ''; el('plot-why').textContent = n ? 'Rate one more line to draw the picture.' : ''; return; }
+    function x(rank) { return PAD + ((rank - 1) / (n - 1)) * (W - 2 * PAD); }
+    function y(rank) { return PAD + ((rank - 1) / (n - 1)) * (H - 2 * PAD); }
+    var parts = [];
+    parts.push('<line class="diag" x1="' + x(1) + '" y1="' + y(1) + '" x2="' + x(n) + '" y2="' + y(n) + '"/>');
+    parts.push('<line class="axis" x1="' + PAD + '" y1="' + (H - PAD) + '" x2="' + (W - PAD) + '" y2="' + (H - PAD) + '"/>');
+    parts.push('<line class="axis" x1="' + PAD + '" y1="' + PAD + '" x2="' + PAD + '" y2="' + (H - PAD) + '"/>');
+    parts.push('<text class="qlabel" x="' + PAD + '" y="' + (H - PAD + 9) + '">costs most</text>');
+    parts.push('<text class="qlabel" text-anchor="end" x="' + (W - PAD) + '" y="' + (H - PAD + 9) + '">costs least</text>');
+    parts.push('<text class="qlabel" transform="translate(' + (PAD - 5) + ',' + (H - PAD) + ') rotate(-90)">gives least</text>');
+    parts.push('<text class="qlabel" transform="translate(' + (PAD - 5) + ',' + (PAD + 34) + ') rotate(-90)">gives most</text>');
+    parts.push('<text class="qlabel" text-anchor="end" x="' + (W - PAD) + '" y="' + (PAD - 5) + '">keep</text>');
+    parts.push('<text class="qlabel" x="' + (PAD + 4) + '" y="' + (H - PAD - 8) + '">cut</text>');
+    rated.forEach(function (r) {
+      var cx = x(r.costRank), cy = y(r.valueRank);
+      parts.push('<circle class="dot' + (r.flag === 'cut' ? ' is-cut' : r.flag === 'keep' ? ' is-keep' : '') + '" cx="' + cx + '" cy="' + cy + '" r="3"><title>' + esc(r.label) + ': #' + r.costRank + ' by cost, #' + r.valueRank + ' by value</title></circle>');
+      if (r.flag !== 'ok') parts.push(cx > W / 2
+        ? '<text class="lbl" text-anchor="end" x="' + (cx - 4) + '" y="' + (cy + 2) + '">' + esc(r.label) + '</text>'
+        : '<text class="lbl" x="' + (cx + 4) + '" y="' + (cy + 2) + '">' + esc(r.label) + '</text>');
+    });
+    svg.innerHTML = parts.join('');
+    el('plot-why').textContent = 'Each dot is a line: how it ranks by cost across, by what it gives you up. On the dotted line the two agree. Bottom-left costs a lot for little; top-right costs little for a lot.';
+  }
+
+  function renderGap(a) {
+    var annual = el('gap-annual'), fi = el('gap-fi');
+    if (!Money.isOk(a) || !a.ratedCount) {
+      annual.textContent = Money.EM_DASH; annual.classList.add('is-incomplete');
+      fi.textContent = Money.EM_DASH; fi.classList.add('is-incomplete');
+      el('gap-annual-sub').textContent = Money.isOk(a) ? 'Rate some lines first.' : (a.reason || '');
+      el('gap-fi-sub').textContent = '';
+      el('flag-list').innerHTML = ''; el('gap-why').textContent = ''; el('plot').innerHTML = ''; el('plot-why').textContent = '';
+      return;
+    }
+    annual.textContent = fmt(a.flaggedAnnualCents); annual.classList.remove('is-incomplete');
+    fi.textContent = fmt(a.fiImpactCents); fi.classList.remove('is-incomplete');
+    el('gap-annual-sub').textContent = a.cut.length + ' line' + (a.cut.length === 1 ? '' : 's') + ' flagged, ' + fmt(a.flaggedMonthlyCents) + ' a month. Top ' + a.threshold + ' by cost, trailing by more than ' + a.threshold + ' places in value.';
+    el('gap-fi-sub').textContent = 'Every dollar a year you no longer need is $' + a.fiMultiple + ' you no longer have to hold — the 4% rule, inverted.';
+    renderPlot(a);
+    var flagged = a.cut.concat(a.keep);
+    el('flag-list').innerHTML = flagged.length ? flagged.map(function (r) {
+      var copy;
+      if (r.flag === 'cut') {
+        copy = r.need
+          ? 'A need — it is not going anywhere. But it is #' + r.costRank + ' by cost and #' + r.valueRank + ' by what it gives you, which is a reason to shop it, renegotiate it, or shrink it rather than accept it.'
+          : '#' + r.costRank + ' by cost, #' + r.valueRank + ' by what it gives you. ' + fmt(r.monthlyCents * 12) + ' a year' + (r.miss === 'no' ? ', and you said you would not miss it.' : r.who === 'show' ? ', and you said it is for show.' : '.');
+      } else {
+        copy = '#' + r.valueRank + ' by what it gives you, only #' + r.costRank + ' by cost. ' + fmt(r.monthlyCents) + ' a month well spent; protect it when cutting.';
+      }
+      return '<div class="flagged"><span class="tag ' + r.flag + '">' + r.flag + '</span>' + (r.need ? '<span class="tag need">need</span>' : '') + '<strong>' + esc(r.label) + '</strong><p>' + esc(copy) + '</p></div>';
+    }).join('') : '<p class="slaf-reason">Nothing flagged: what costs the most is also what gives you the most, or nothing trails by enough to say.</p>';
+    el('gap-why').textContent = 'Threshold: max(3, a quarter of the rated lines) = ' + a.threshold + '. ' + (a.valueOrder === 'hand' ? 'Value order is yours, from stage 3.' : 'Value order is by rating; reorder in stage 3 to overrule it.');
+  }
+
+  /* ---- Render ------------------------------------------------------------ */
+
+  function renderNow() {
+    if (!TABLES) return;
+    costForm.request(); rateForm.request(); rankForm.request();
+    renderGap(analysis());
+    el('reading-list').innerHTML = ['monthlyExpenses', 'monthlyDebtPayments']
+      .map(function (f) { return Ownership.chip(f, Spine.getProfile(), ROOM_ID); }).join('');
+  }
+  var queued = false;
+  function render() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () { queued = false; renderNow(); }, 0);
+  }
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    SLAF.Staleness.use(tables.staleness);
+    renderNow();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

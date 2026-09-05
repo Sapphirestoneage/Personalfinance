@@ -6464,6 +6464,97 @@ section('Three benchmarks, and where the new numbers show');
   checkTrue('and the registry links to it', Registry.byId('financial-snapshot').subsections.some(x => x.id === 'out-benchmarks'));
 })();
 
+section('The Rerank');
+
+(function () {
+  /* D-084: cost rank against value rank. */
+  const R = require(path.join(ROOT, 'engines/rerank.js'));
+  const T = Object.assign({}, TABLES, { commonCosts: require(path.join(ROOT, 'data/common_costs.json')) });
+  check('threshold is max(3, a quarter)', [4, 9, 12, 20, 40].map(R.threshold).join(','), '3,3,3,5,10');
+
+  /* No month tracked: twenty proposals, scaled to the essentials. */
+  const fresh = Demo.build();
+  const l = R.lines(fresh, T);
+  check('the demo without a month gets proposals', l.basis, 'suggested');
+  const tableEssential = T.commonCosts.lines.filter(x => x.essential).reduce((t, x) => t + x.monthlyCents, 0);
+  check('scaled by 3,150 over the table\'s essential lines', l.scale, 315000 / tableEssential, 1e-12);
+  checkTrue('a zero line (childcare) is not proposed', l.lines.every(x => x.id !== 'childcare'));
+  checkTrue('the debt minimums ride along, derived', l.lines.some(x => x.id === 'debt_minimums' && x.source === 'derived' && x.monthlyCents === 30500));
+  const unrated = Demo.build(); unrated.ratings = {};
+  checkTrue('nothing rated: no flags, no value ranks', R.analyse(unrated, T).rows.every(r => r.valueRank === null && r.flag === null));
+
+  /* A proposal typed becomes an entry under a stable id and replaces itself. */
+  const typed = Demo.build();
+  typed.expenses.entries = [Schema.createExpenseEntry({ id: R.SUGGESTED_ENTRY_PREFIX + 'gym', categoryId: 'subscriptions', amountCents: 4000, source: 'rerank', descriptor: 'Gym' })];
+  const tl = R.lines(typed, T);
+  check('the gym line appears once, as entered', tl.lines.filter(x => x.label === 'Gym').map(x => x.source).join(','), 'entered');
+  checkTrue('and the other proposals stay', tl.lines.some(x => x.id === 'streaming' && x.source === 'suggested'));
+  typed.expenses.entries.push(Schema.createExpenseEntry({ id: 'e_blank', categoryId: 'other', amountCents: null, source: 'rerank', descriptor: 'Allotment' }));
+  typed.ratings = { rerank: { e_blank: 9 } };
+  const blankLine = R.analyse(typed, T);
+  const ratedProposal = Demo.build(); ratedProposal.ratings = { rerank: { groceries: 8 } };
+  checkTrue('a rated proposal is still a proposal: no rank', R.analyse(ratedProposal, T).rows.filter(r => r.id === 'groceries')[0].costRank === null);
+  checkTrue('a custom line with no amount is listed but ranked nowhere', R.lines(typed, T).lines.some(x => x.id === 'e_blank')
+    && blankLine.rows.filter(r => r.id === 'e_blank')[0].costRank === null && blankLine.uncostedCount === 1 && blankLine.ratedCount === 0);
+
+  /* The demo month plus Robin's ratings: the acceptance criterion. */
+  const h = Demo.build();
+  h.expenses.entries = Demo.buildSpending();
+  const a = R.analyse(h, T);
+  check('nine lines rated (eight tracked spending lines + minimums; savings excluded)', a.ratedCount, 9);
+  check('threshold 3', a.threshold, 3);
+  const by = {}; a.rows.forEach(r => { by[r.id] = r; });
+  check('housing is #1 by cost', by.housing.costRank, 1);
+  check('and #7 by value (joy 4, dearer than transportation at the same joy)', by.housing.valueRank, 7);
+  check('so it is flagged cut', by.housing.flag, 'cut');
+  checkTrue('and is a need, for the softer copy', by.housing.need);
+  check('debt minimums #3 by cost, #9 by value: cut', by.debt_minimums.flag, 'cut');
+  check('entertainment #8 by cost, #1 by value: keep', by.entertainment.flag, 'keep');
+  check('subscriptions #9 by cost, #2 by value: keep', by.subscriptions.flag, 'keep');
+  check('groceries #2 by cost, #4 by value: ok', by.groceries.flag, 'ok');
+  checkTrue('at least two cut and two keep', a.cut.length >= 2 && a.keep.length >= 2);
+  check('flagged a year: (1,500 + 305) × 12', a.flaggedAnnualCents, 180500 * 12);
+  check('at 25×', a.fiImpactCents, 180500 * 12 * 25);
+  check('value order is by rating until reranked', a.valueOrder, 'joy');
+
+  /* A hand order overrules the ratings, and only when every rated line has one. */
+  const order = R.valueOrder(h, T).ids;
+  const swapped = order.slice(); swapped.splice(0, 1); swapped.push(order[0]);   /* entertainment to the bottom */
+  h.rerank = Schema.createRerank({ rows: swapped.map((id, i) => ({ id: id, valueRank: i + 1 })) });
+  const b = R.analyse(h, T);
+  check('the order is now by hand', b.valueOrder, 'hand');
+  check('entertainment last', b.rows.filter(r => r.id === 'entertainment')[0].valueRank, 9);
+  check('and no longer a keep', b.rows.filter(r => r.id === 'entertainment')[0].flag, 'ok');
+  h.rerank = Schema.createRerank({ rows: [{ id: 'housing', valueRank: 1 }] });
+  check('a partial hand order falls back to the ratings', R.analyse(h, T).valueOrder, 'joy');
+
+  /* Miss breaks ties in the rated order; unrated lines stay out. */
+  const tie = Demo.build(); tie.expenses.entries = Demo.buildSpending();
+  tie.ratings.rerank.groceries = 8; tie.ratings.rerank.dining_out = 8;
+  tie.rerank = Schema.createRerank({ rows: [{ id: 'dining_out', miss: 'yes' }, { id: 'groceries', miss: 'no' }] });
+  const tb = {}; R.analyse(tie, T).rows.forEach(r => { tb[r.id] = r; });
+  checkTrue('"would miss it" ranks above "would not" at the same joy', tb.dining_out.valueRank < tb.groceries.valueRank);
+  delete tie.ratings.rerank.utilities;
+  const tu = R.analyse(tie, T);
+  check('an unrated line has no rank and no flag', tu.rows.filter(r => r.id === 'utilities').map(r => r.valueRank + ':' + r.flag).join(), 'null:null');
+  check('and is counted', tu.unratedCount, 1);
+
+  /* Schema, registry, ownership. */
+  check('a rerank row defaults to not asked', JSON.stringify(Schema.createRerankRow({ id: 'x' })), '{"id":"x","miss":null,"who":null,"valueRank":null}');
+  check('the household carries rerank rows', JSON.stringify(Schema.createHousehold({}).rerank), '{"rows":[]}');
+  checkTrue('source may be rerank', Schema.FIELDS['expenses.entries[].source'].values.indexOf('rerank') !== -1);
+  const room = Registry.byId('rerank');
+  checkTrue('The Rerank is registered, about you, after Enough', room && room.kind === 'about-you' && room.order === Registry.byId('fulfillment').order + 1);
+  check('what it would cut is owned by the room', Ownership.field('rerankCut').owner, 'rerank');
+  const cutRead = Ownership.field('rerankCut').read(Object.assign(Demo.build(), { expenses: { monthlyEssential: Demo.build().expenses.monthlyEssential, entries: Demo.buildSpending() } }));
+  check('and reads the flagged year', cutRead.value, 180500 * 12);
+  check('formatted per year', Ownership.field('rerankCut').format(2166000), '$21,660/yr');
+  const html = fs.readFileSync(path.join(ROOT, 'rooms/rerank.html'), 'utf8');
+  checkTrue('four stages exist', ['costs', 'rate', 'rerank', 'gap'].every(id => new RegExp('id="' + id + '"').test(html)));
+  checkTrue('the lists are guarded', /LIVE-FORM: guarded/.test(html) && (html.match(/LiveForm\.guard\(/g) || []).length === 3);
+  checkTrue('the rating control is the shared one, in its own scope', /Rating\.controlHtml\(\{ scope: Rerank\.SCOPE/.test(html) && Rating.ANCHORS.rerank);
+})();
+
 section('The D&D folder\'s vendored copies');
 
 (function () {

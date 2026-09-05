@@ -301,6 +301,27 @@
       format: function (v) { return v ? 'Yes' : 'No'; }
     },
 
+    /* What The Rerank would cut (D-084): the flagged lines, a year's worth.
+       Derived, owned by the room that asks the questions. */
+    rerankCut: {
+      label: 'What The Rerank would cut', owner: 'rerank', anchor: 'gap',
+      read: function (h) {
+        var R = (typeof module === 'object' && module.exports)
+          ? require('../engines/rerank.js')
+          : (typeof self !== 'undefined' && self.SLAF && self.SLAF.Rerank);
+        var tables = (typeof module === 'object' && module.exports)
+          ? { expenseCategories: require('../data/expense_categories.json'), commonCosts: require('../data/common_costs.json') }
+          : (typeof self !== 'undefined' && self.SLAF && self.SLAF.Reference && self.SLAF.Reference.cached
+              ? { expenseCategories: self.SLAF.Reference.cached('expenseCategories'), commonCosts: self.SLAF.Reference.cached('commonCosts') } : null);
+        if (!R || !tables || !tables.expenseCategories) return Money.incomplete('Not ranked yet.', ['ratings']);
+        var a = R.analyse(h, tables);
+        if (!Money.isOk(a)) return a;
+        if (!a.ratedCount) return Money.incomplete('Nothing rated on The Rerank yet.', ['ratings']);
+        return Money.ok(a.flaggedAnnualCents, { cut: a.cut.length, keep: a.keep.length });
+      },
+      format: function (v) { return money(v) + '/yr'; }
+    },
+
     /* The target mix (D-071): stated in Where It Goes, a target rather than
        a reading of the accounts. Shares of one; formatted as percentages. */
     allocationStocks: allocationRow('stocks', 'Target: stocks'),

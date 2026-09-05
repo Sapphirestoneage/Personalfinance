@@ -112,6 +112,7 @@ engines/            Shared calculation engines — one function per concept
   tax.js              federal ordinary + capital gains, FICA, a state schedule, the ACA cliff
   statement.js        three portfolios, weighted net worth, the ladder, the bridge, the worst year
   benchmarks.js       the wealth multiplier, monthly to $1M, PAW, the five levels, 1% more, human capital
+  rerank.js           cost rank against value rank, and the lines where the two orders disagree
 data/               Versioned reference tables (JSON, never inlined in code)
 test/run.js         Re-derives every formula outside the browser
 test/alignment.js   Browser layout check — side-by-side cells must line up

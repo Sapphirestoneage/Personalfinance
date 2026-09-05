@@ -4123,6 +4123,79 @@ Weather rows, the levels strip and the benchmarks card; the page sweep;
 
 ---
 
+## D-084 — The Rerank: cost order against value order, and the lines where they disagree
+
+*(BRIEF.md §5. T5, one room.)* `rooms/rerank.html` asks four things in
+four stages and shows one picture. The standalone prototype the brief
+names was not in this repository, so the room was built from the brief's
+spec; nothing was copied, and no localStorage key exists but the spine's.
+
+**Stage 1, what it costs.** With a tracked month, the lines are Cash
+Flow's categories (read-only chips linking there) plus any finer line
+typed here. Without one, twenty everyday lines from
+`data/common_costs.json` are **proposed** (D-060) — scaled to the
+household's monthly essentials by the ratio of those to the table's own
+essential lines, unverified and said so — and never stored until typed.
+A typed proposal becomes an expense entry with `source: 'rerank'`, the
+line's label as `descriptor`, and the stable id `rr_<line>` so it replaces
+its proposal instead of sitting beside it; "Add a cost of your own" makes
+the same kind of entry under a fresh id. The debt minimums ride along as
+a derived line from Debt Payoff. Savings lines are not costs and are
+left out.
+
+**Stage 2, what it gives you.** Three questions a line: 1–10 through the
+shared rating control in its own scope `rerank` (anchors "would not miss
+it" / "could not do without"), would-you-miss-it, who-is-it-for. The
+rating lives in `ratings.rerank` like every other rating; the other two
+answers and the hand order live in `household.rerank.rows`, keyed by the
+line id. **Enough's joy ratings are not reused**: Enough rates
+categories, the Rerank rates every line including custom ones and the
+minimums, on different anchors, and one field cannot have two owners.
+
+**Stage 3, your order.** The rated lines, by rating (miss breaking ties,
+then cheaper first) until the person moves one — arrows or pointer drag,
+both — after which every rated line gets a `valueRank` and the order is
+theirs. A partial hand order (a line rated after the reorder) falls
+back to the ratings and says so; "Back to the rated order" clears it.
+
+**Stage 4, the gap.** `engines/rerank.js` ranks by cost and by value and
+flags with threshold k = max(3, round(n × 0.25)): **cut** when a line is
+in the top k by cost and its value rank trails its cost rank by more
+than k; **keep** when it is in the top k by value and its cost rank
+trails its value rank by more than k; **ok** otherwise. A need can be
+flagged cut and the copy softens — "not going anywhere, but a reason to
+shop it, renegotiate it, or shrink it". An unrated line has no rank and
+no flag; it is never scored zero. The cut lines add up a year, and at
+25× — the 4% rule inverted, named as a convention. The plot is cost rank
+across against value rank up, the diagonal being agreement.
+
+**The demo** (Robin's month plus `rerankJoy` in `shared/demo-persona.js`)
+flags housing and the debt minimums cut — both needs, so both soften —
+and subscriptions and going out keep: $1,805 a month, $21,660 a year,
+$541,500 at 25×.
+
+**Compatibility note.** New stored shapes: `household.rerank = { rows:
+[{ id, miss, who, valueRank }] }` (`Schema.createRerank`), the rating
+scope `ratings.rerank`, and `expenses.entries[].source` gains the value
+`'rerank'`. Every other reader of entries already treats a source it does
+not know as a line; Cash Flow's summary folds `rr_` lines into their
+category like any other. The room order shifted by one for every room
+after Enough so the Rerank sits beside it. A new ownership row,
+`rerankCut`, reads the flagged year and links to `rerank#gap`. Registered
+table: `commonCosts`.
+
+**Verified.** `node test/run.js`: the threshold at five sizes, proposals
+scaled by 3,150 over the table's essentials, a typed proposal replacing
+itself, every rank and flag on the demo by hand, the sums, a hand order
+overruling the ratings and a partial one not, miss breaking a tie, an
+unrated line out of the ranking, the schema and registry shapes. A
+phone-browser walk through all four stages: use-this on a proposal, the
+demo button, an arrow, a drag, the reset, a re-rating changing the gap,
+who-is-it-for stored; `test/forms.js` taps through the three input
+stages; `test/alignment.js` on the rate rows and the figure pair.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool. **The numbers D-046
