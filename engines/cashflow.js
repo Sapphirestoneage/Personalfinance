@@ -380,6 +380,68 @@
      Spine.setMonthlyExpenses(cents, 'tracked'), which preserves the estimate
      and leaves the divergence computable forever.                        */
 
+  /* ---- The contributed savings rate (BRIEF §4.2, D-073) --------------------
+     Tier0.savingsRate is the RESIDUAL: what is left of gross after spending
+     and tax. This is the CONTRIBUTED rate: what actually went somewhere —
+     the 401(k) percentage, Roth and HSA so far this year, and the tracked
+     lines in the savings bucket. The gap between the two is money going
+     somewhere nobody has named, and comes back as unallocatedMonthlyCents.
+
+     One overlap is handled rather than double-counted: a tracked
+     `retirement` line and the contribution percentage are usually the same
+     dollars, so the larger of the two counts, once. Every other savings
+     category adds. Roth and HSA count only when entered; a blank one is
+     listed in `notEntered`, never taken as zero. */
+  function savingsRateContributed(household, tables) {
+    var gross = Schema.grossAnnualIncomeCents(household);
+    if (!Money.isOk(gross)) return gross;
+    var ret = household.retirement || {};
+    if (!Money.isEntered(ret.contributionPercent)) {
+      return Money.incomplete('Add what you contribute to your 401(k) to see what you actually put away.', ['contributionPercent']);
+    }
+    var pretax = Math.round(gross.value * ret.contributionPercent / 100);
+    var parts = [{ id: 'pretax', label: ret.contributionPercent + '% of gross', annualCents: pretax }];
+    var notEntered = [];
+    ['rothContributedCents', 'hsaContributedCents'].forEach(function (k) {
+      if (Money.isEntered(ret[k])) parts.push({ id: k, label: k === 'rothContributedCents' ? 'Roth so far this year' : 'HSA so far this year', annualCents: ret[k] });
+      else notEntered.push(k);
+    });
+    var catalog = tables && tables.expenseCategories;
+    var summary = catalog ? summarise(household, catalog) : null;
+    var retirementLine = 0, overlapUsed = false;
+    if (summary && Money.isOk(summary)) {
+      summary.categories.forEach(function (row) {
+        if (row.bucket !== 'savings' || !row.monthlyCents) return;
+        if (row.categoryId === 'retirement') { retirementLine = row.monthlyCents * MONTHS_PER_YEAR; return; }
+        parts.push({ id: 'tracked:' + row.categoryId, label: row.label + ' (tracked)', annualCents: row.monthlyCents * MONTHS_PER_YEAR });
+      });
+    }
+    if (retirementLine > pretax) {
+      parts[0] = { id: 'tracked:retirement', label: 'Retirement (tracked, more than the percentage)', annualCents: retirementLine };
+      overlapUsed = true;
+    }
+    var contributed = parts.reduce(function (t, p) { return t + p.annualCents; }, 0);
+    var rate = Money.safeDivide(contributed, gross.value, {
+      denominatorName: 'grossAnnualIncome',
+      zeroReason: 'A gross income of zero can\u2019t produce a savings rate.'
+    });
+    if (!Money.isOk(rate)) return rate;
+    var residual = Tier0.savingsRate(household, tables).excludingMatch;
+    var unallocated = Money.isOk(residual) ? residual.annualSavingsCents - contributed : null;
+    return Money.ok(rate.value, {
+      variant: 'contributed',
+      annualSavingsCents: contributed,
+      grossAnnualIncomeCents: gross.value,
+      parts: parts,
+      notEntered: notEntered,
+      retirementOverlap: { pretaxCents: pretax, trackedCents: retirementLine, usedTracked: overlapUsed },
+      residualRate: Money.isOk(residual) ? residual.value : null,
+      residualAnnualCents: Money.isOk(residual) ? residual.annualSavingsCents : null,
+      unallocatedAnnualCents: unallocated,
+      unallocatedMonthlyCents: unallocated === null ? null : Math.round(unallocated / MONTHS_PER_YEAR)
+    });
+  }
+
   function trackedEssentialCents(household, catalog) {
     var summary = summarise(household, catalog);
     if (!Money.isOk(summary)) return summary;
@@ -400,6 +462,7 @@
     templateById: templateById,
     templateTargets: templateTargets,
     compareToTemplate: compareToTemplate,
-    trackedEssentialCents: trackedEssentialCents
+    trackedEssentialCents: trackedEssentialCents,
+    savingsRateContributed: savingsRateContributed
   };
 });

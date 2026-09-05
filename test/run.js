@@ -6297,6 +6297,36 @@ section('The benchmarks');
   check('all() answers every question', Object.keys(B.all(Demo.build(), T)).length, 7);
 })();
 
+section('The contributed savings rate');
+
+(function () {
+  /* D-073: residual is what is left; contributed is what went somewhere. */
+  const T = Object.assign({}, TABLES);
+  const bare = Demo.build();
+  const c = CashFlow.savingsRateContributed(bare, T);
+  check('demo without a tracked month: 4% of $72,000 + $1,500 Roth = $4,380', c.annualSavingsCents, 438000);
+  check('as a rate', c.value, 438000 / 7200000, 1e-12);
+  check('HSA not entered is listed, not zeroed', c.notEntered.join(','), 'hsaContributedCents');
+  check('the residual beside it is 28.5%', c.residualRate, 0.285, 1e-12);
+  check('so $16,140 a year is unallocated', c.unallocatedAnnualCents, 2052000 - 438000);
+  check('which is $1,345 a month', c.unallocatedMonthlyCents, 134500);
+
+  const tracked = Demo.build();
+  tracked.expenses.entries = Demo.buildSpending();
+  const t = CashFlow.savingsRateContributed(tracked, T);
+  check('with the tracked month, the $400 retirement line beats the 4% and counts once', t.retirementOverlap.usedTracked, true);
+  check('$4,800 retirement + $1,500 Roth + $3,600 emergency savings', t.annualSavingsCents, 480000 + 150000 + 360000);
+  checkTrue('the parts are named', t.parts.map(p => p.id).join(',') === 'tracked:retirement,rothContributedCents,tracked:emergency_savings');
+
+  const none = Demo.build(); none.retirement.contributionPercent = null;
+  check('no contribution percentage: incomplete, naming it', CashFlow.savingsRateContributed(none, T).missing.join(','), 'contributionPercent');
+
+  /* The headline instrument prefers the contributed rate. */
+  const inst = InstrumentsMain.compute(bare, T);
+  check('the dashboard headline is the contributed rate', inst.byId.savingsRate.result.variant, 'contributed');
+  check('and falls back to the residual without a percentage', InstrumentsMain.compute(none, T).byId.savingsRate.result.variant, 'excludingMatch');
+})();
+
 section('The D&D folder\'s vendored copies');
 
 (function () {

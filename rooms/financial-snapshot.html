@@ -132,8 +132,13 @@
       <span class="variant-label">Including employer match</span>
       <span class="variant-value" id="sr-including">—</span>
     </div>
+    <div class="variant-row">
+      <span class="variant-label">Contributed — what actually went somewhere</span>
+      <span class="variant-value" id="sr-contributed">—</span>
+    </div>
     <p class="slaf-reason" data-reason></p>
     <div data-detail></div>
+    <div class="slaf-flag" id="sr-unallocated" hidden></div>
   </section>
 
   <section class="slaf-card" id="out-emergency-fund">
@@ -223,6 +228,7 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/foo.js"></script>
+<script src="../engines/cashflow.js"></script>
 <script src="../engines/swan.js"></script>
 <script>
 (function () {
@@ -329,7 +335,7 @@
     var reason = section.querySelector('[data-reason]');
     var detail = section.querySelector('[data-detail]');
 
-    [['sr-excluding', rates.excludingMatch], ['sr-including', rates.includingMatch]]
+    [['sr-excluding', rates.excludingMatch], ['sr-including', rates.includingMatch], ['sr-contributed', rates.contributed]]
       .forEach(function (pair) {
         var node = el(pair[0]), res = pair[1];
         var isOk = Money.isOk(res);
@@ -354,6 +360,25 @@
         + '(' + primaryResult.referenceVersion + '), not a return.</p>';
     } else {
       detail.innerHTML = '';
+    }
+
+    /* The finding: residual minus contributed is money going somewhere
+       nobody has named. Shown only when both rates exist. D-073. */
+    var c = rates.contributed;
+    var flag = el('sr-unallocated');
+    if (Money.isOk(c) && Money.isEntered(c.unallocatedMonthlyCents)) {
+      var gap = c.unallocatedMonthlyCents;
+      flag.hidden = false;
+      flag.innerHTML = gap > 0
+        ? '<strong>' + Money.formatCents(gap) + '/mo is going somewhere you haven\u2019t named.</strong><br/>'
+          + 'After spending and tax, ' + Money.formatCents(Math.round(c.residualAnnualCents / 12)) + '/mo is left; '
+          + Money.formatCents(Math.round(c.annualSavingsCents / 12)) + '/mo of it is accounted for ('
+          + c.parts.map(function (p) { return p.label.toLowerCase(); }).join(', ') + ').'
+          + (c.notEntered.length ? ' Roth or HSA not entered this year count as not entered, not zero.' : '')
+        : '<strong>You put away more than the residual says is left.</strong><br/>Either spending is overstated or a contribution is counted twice; the tracked month in Cash Flow is the place to look.';
+    } else {
+      flag.hidden = true;
+      flag.innerHTML = '';
     }
   }
 
@@ -497,7 +522,8 @@
     renderNetWorth(all.netWorth);
     renderSavingsRate({
       excludingMatch: all.savingsRateExcludingMatch,
-      includingMatch: all.savingsRateIncludingMatch
+      includingMatch: all.savingsRateIncludingMatch,
+      contributed: SLAF.CashFlow.savingsRateContributed(h, TABLES)
     });
     el('provenance').innerHTML = Reference.provenance(TABLES,
       ['netWorthPercentiles', 'retirementMilestones', 'effectiveTaxRates'])

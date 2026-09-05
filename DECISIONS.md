@@ -3902,6 +3902,65 @@ formula, net worth in years.
 
 ---
 
+## D-073 — Two savings rates: what is left, and what actually went somewhere
+
+*(BRIEF.md §4.2.)* `Tier0.savingsRate` is the **residual**: gross less a
+year of spending less estimated tax, over gross. It says how much *could*
+have been saved. `CashFlow.savingsRateContributed` is the **contributed**
+rate: the 401(k) percentage of gross, Roth and HSA so far this year, and
+the tracked lines in the savings bucket, over gross. It says how much
+*was*. Both are shown on the Snapshot; the dashboard's Thrust instrument
+is the contributed rate when the percentage is known and the residual
+until then, and the Result says which (`variant`).
+
+**The gap is a finding, not a number.** Residual minus contributed is
+money leaving the paycheque that nobody has named — the demo's $1,345 a
+month. The Snapshot says so in a sentence under the card, with the
+accounted-for parts listed, rather than adding an "unallocated" figure
+to the instrument grid: it is a prompt to go and track a month, and it
+belongs beside the rate it questions.
+
+**Three rules the formula needed:**
+
+- **Not entered is not zero.** A blank Roth or HSA is listed in
+  `notEntered` and left out; the sentence says so. With no contribution
+  percentage at all the Result is incomplete and asks for it — this is
+  the one input the rate cannot do without.
+- **The retirement line and the percentage are the same dollars.** A
+  tracked `retirement` line in Cash Flow is almost always the 401(k) the
+  percentage describes, so the larger of the two counts, once, and the
+  Result reports which was used (`retirementOverlap`). Every other
+  savings category adds.
+- **It lives in `engines/cashflow.js`**, not `tier0.js`, because tracked
+  entries are Cash Flow's, and cashflow already depends on tier0 — the
+  other direction would be a cycle.
+
+**Compatibility note.** No stored shape changed. The Snapshot loads
+`engines/cashflow.js`; `shared/instruments.js` gains a CashFlow
+dependency, which `index.html` and `rooms/refresh.html` already load.
+A snapshot taken before this entry stored the residual under
+`savingsRate`; a delta against it after a percentage is entered compares
+a residual to a contributed figure, and the instrument's `variant` is
+there to say so.
+
+**Found in passing.** `engines/foo.js` still read the raw
+`household.capturingFullMatch` for its match step, so a household that
+had answered the 401(k) card (percentage and cap, D-061) but never the
+old yes/no was "not enough entered to place you on the ladder" on the
+dashboard while the same numbers placed it at step 2 in node. Both sites
+now read `Schema.capturingFullMatchDerived`. The page sweep used in
+verification now also fails on a visible load notice, which is how this
+one had hidden.
+
+**Verified.** `node test/run.js`: the demo's 4% of $72,000 plus $1,500
+Roth as 6.1% against a 28.5% residual, $16,140 a year unallocated; with
+the tracked month the $400 retirement line counts once instead of the
+percentage, plus $3,600 emergency savings; the headline instrument's
+variant with and without a percentage. A phone-browser read of the
+Snapshot card and the dashboard's Thrust cell.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool. **The numbers D-046
