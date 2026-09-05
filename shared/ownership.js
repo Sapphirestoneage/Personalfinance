@@ -338,6 +338,25 @@
       format: money
     },
 
+    /* D-068: the ages you plan around, stored in household.targets and
+       written only by FIRE Number. */
+    retireAge: {
+      label: 'Stop working at', owner: 'fire', anchor: 'targets',
+      read: function (h) {
+        var v = h.targets && h.targets.retireAge;
+        return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not decided yet.', ['retireAge']);
+      },
+      format: function (v) { return 'age ' + v; }
+    },
+    coastAge: {
+      label: 'Coast: arrive by', owner: 'fire', anchor: 'targets',
+      read: function (h) {
+        var v = h.targets && h.targets.coastAge;
+        return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not decided yet.', ['coastAge']);
+      },
+      format: function (v) { return 'age ' + v; }
+    },
+
     monthlyExpenses: {
       label: 'Monthly expenses', owner: 'cash-flow', anchor: 'spending',
       read: function (h) { return Schema.monthlyExpensesCents(h); },

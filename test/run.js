@@ -6107,6 +6107,37 @@ section('The Statement room');
   check('future income is the sum of the entered monthly amounts', Ownership.field('futureIncome').read(h).value, 120000);
 })();
 
+section('Targets, owned by FIRE');
+
+(function () {
+  /* D-068: the ages you plan around are stored, not previewed. */
+  check('the stop age is owned by FIRE', Ownership.field('retireAge').owner, 'fire');
+  check('the coast age is owned by FIRE', Ownership.field('coastAge').owner, 'fire');
+  const fire = fs.readFileSync(path.join(ROOT, 'rooms/fire.html'), 'utf8');
+  checkTrue('both link to an anchor that exists', /id="targets"/.test(fire)
+    && Ownership.field('retireAge').anchor === 'targets' && Ownership.field('coastAge').anchor === 'targets');
+  checkTrue('the unstored coast preview knob is gone', !/p-coast-age/.test(fire));
+  checkTrue('the room declares its live-form policy for the target boxes', /LIVE-FORM: built once/.test(fire));
+  checkTrue('FIRE lists the targets as a subsection',
+    Registry.byId('fire').subsections.some(function (s) { return s.id === 'targets'; }));
+
+  const h = Demo.build();
+  check('undecided: incomplete, not zero', Ownership.field('retireAge').read(h).status, 'incomplete');
+  check('and the coast age too', Ownership.field('coastAge').read(h).status, 'incomplete');
+  h.targets = Schema.createTargets({ retireAge: 55, coastAge: 60 });
+  check('a decided stop age reads back', Ownership.field('retireAge').read(h).value, 55);
+  check('formatted as an age', Ownership.field('retireAge').format(55), 'age 55');
+  const chip = Ownership.describe('coastAge', h, 'statement');
+  checkTrue('elsewhere it is read-only and links home', !chip.mine && /fire\.html#targets$/.test(chip.href));
+
+  /* The coast variant reads the stored age instead of a knob. */
+  const fireT = Object.assign({}, TABLES);
+  const stored = Fire.calculateFIRE(h, fireT, { variantId: 'coast', coastTargetAge: h.targets.coastAge });
+  const dflt = Fire.calculateFIRE(Demo.build(), fireT, { variantId: 'coast' });
+  checkTrue('coast to 60 needs more today than coast to 65', Money.isOk(stored) && Money.isOk(dflt) && stored.value > dflt.value);
+  check('and says which age it grew to', stored.coastTargetAge, 60);
+})();
+
 section('The D&D folder\'s vendored copies');
 
 (function () {

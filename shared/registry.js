@@ -180,6 +180,7 @@
         { id: 'reading',    label: 'What this reads' },
         { id: 'out-target', label: 'Your number' },
         { id: 'variants',   label: 'Six ways to ask it' },
+        { id: 'targets',    label: 'Your targets' },
         { id: 'params',     label: 'Try different assumptions' }
       ]
     },

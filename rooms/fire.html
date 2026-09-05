@@ -44,6 +44,7 @@
   .variant-figure.is-incomplete { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-sm); }
   .variant-blurb { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
   .variant-eta { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+  .variant-eta:empty { display: none; }
 
   .params { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
   @media (max-width: 380px) { .params { grid-template-columns: 1fr; } }
@@ -92,6 +93,25 @@
     <div class="variants" id="variant-list"></div>
   </section>
 
+  <section class="slaf-card" id="targets">
+    <span class="slaf-eyebrow">Your targets</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      Stored, and read by the rooms that plan around a date. Leave either
+      blank if you have not decided.
+    </p>
+    <div class="params">
+      <label class="slaf-field" style="margin:0">
+        <span class="slaf-label">Stop working at age</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="t-retire" placeholder="e.g. 55" autocomplete="off"/></span>
+      </label>
+      <label class="slaf-field" style="margin:0">
+        <span class="slaf-label">Coast: arrive by age</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="t-coast" placeholder="65" autocomplete="off"/></span>
+      </label>
+    </div>
+    <p class="preview-note" id="targets-note"></p>
+  </section>
+
   <section class="slaf-card" id="params">
     <span class="slaf-eyebrow">Try different assumptions</span>
     <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
@@ -106,10 +126,6 @@
       <label class="slaf-field" style="margin:0">
         <span class="slaf-label">Expected return</span>
         <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="p-return" placeholder="7"/><span class="slaf-affix">%</span></span>
-      </label>
-      <label class="slaf-field" style="margin:0">
-        <span class="slaf-label">Coast: arrive by age</span>
-        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="p-coast-age" placeholder="65"/></span>
       </label>
       <label class="slaf-field" style="margin:0">
         <span class="slaf-label">Barista: part-time pay</span>
@@ -151,18 +167,21 @@
      that lets you test a more conservative SWR does it as a local,
      non-persistent override for that view, not a change to the stored
      default. Reloading the page returns you to your real assumptions. */
-  var preview = { swrRate: null, expectedReturnRate: null, coastTargetAge: null, baristaAnnualIncomeCents: null };
+  var preview = { swrRate: null, expectedReturnRate: null, baristaAnnualIncomeCents: null };
+  /* The coast age is not a preview: it is stored in household.targets and
+     owned here (D-068), alongside the age you intend to stop. */
 
   function el(id) { return document.getElementById(id); }
 
-  function optsFor(id) {
+  function optsFor(id, h) {
+    var targets = (h && h.targets) || {};
     var localOverrides = {};
     if (Money.isEntered(preview.swrRate)) localOverrides.swrRate = preview.swrRate;
     if (Money.isEntered(preview.expectedReturnRate)) localOverrides.expectedReturnRate = preview.expectedReturnRate;
     return {
       variantId: id,
       localOverrides: localOverrides,
-      coastTargetAge: preview.coastTargetAge,
+      coastTargetAge: Money.isEntered(targets.coastAge) ? targets.coastAge : null,
       baristaAnnualIncomeCents: preview.baristaAnnualIncomeCents
     };
   }
@@ -186,28 +205,48 @@
       }).join('');
   }
 
+  /* Built once, then patched in place: a tap on a variant must land on the
+     same button that was under the finger at touchstart, and a blur on a
+     target box re-renders this list in between. */
   function renderVariants(h) {
-    var all = Fire.allVariants(h, TABLES, optsFor(null));
-    el('variant-list').innerHTML = TABLES.fireVariants.variants.map(function (v) {
+    var all = Fire.allVariants(h, TABLES, optsFor(null, h));
+    var list = el('variant-list');
+    if (list.children.length === TABLES.fireVariants.variants.length) {
+      TABLES.fireVariants.variants.forEach(function (v) {
+        var entry = all[v.id];
+        var t = entry.target, prog = entry.progress;
+        var ok = Money.isOk(t);
+        var btn = list.querySelector('[data-variant="' + v.id + '"]');
+        btn.setAttribute('aria-pressed', v.id === variantId);
+        var fig = btn.querySelector('.variant-figure');
+        fig.textContent = ok ? Money.formatCents(t.value) : Money.EM_DASH;
+        fig.classList.toggle('is-incomplete', !ok);
+        btn.querySelector('.variant-eta').textContent = variantEta(t, prog);
+      });
+      return;
+    }
+    list.innerHTML = TABLES.fireVariants.variants.map(function (v) {
       var entry = all[v.id];
       var t = entry.target, prog = entry.progress;
       var ok = Money.isOk(t);
-      var eta = '';
-      if (ok && Money.isOk(prog) && Money.isOk(prog.yearsAway)) {
-        eta = Money.formatRate(Math.min(1, prog.value), { decimals: 0 }) + ' of the way · '
-          + (prog.yearsAway.value === 0 ? 'already there' : prog.yearsAway.value + ' yrs away');
-      } else if (!ok) {
-        eta = t.reason || '';
-      }
       return '<button type="button" class="variant" data-variant="' + v.id + '" '
         + 'aria-pressed="' + (v.id === variantId) + '">'
         + '<span class="variant-head"><span class="variant-name">' + v.label + '</span>'
         + '<span class="variant-figure' + (ok ? '' : ' is-incomplete') + '">'
         + (ok ? Money.formatCents(t.value) : Money.EM_DASH) + '</span></span>'
         + '<p class="variant-blurb">' + v.blurb + '</p>'
-        + (eta ? '<p class="variant-eta">' + eta + '</p>' : '')
+        + '<p class="variant-eta">' + variantEta(t, prog) + '</p>'
         + '</button>';
     }).join('');
+  }
+
+  function variantEta(t, prog) {
+    if (!Money.isOk(t)) return t.reason || '';
+    if (Money.isOk(prog) && Money.isOk(prog.yearsAway)) {
+      return Money.formatRate(Math.min(1, prog.value), { decimals: 0 }) + ' of the way \u00b7 '
+        + (prog.yearsAway.value === 0 ? 'already there' : prog.yearsAway.value + ' yrs away');
+    }
+    return '';
   }
 
   function renderTarget(h) {
@@ -219,8 +258,8 @@
     var variant = Fire.variantById(TABLES.fireVariants, variantId);
     el('target-label').textContent = variant ? variant.label : 'Your number';
 
-    var target = Fire.calculateFIRE(h, TABLES, optsFor(variantId));
-    var prog = Fire.progressToward(h, TABLES, optsFor(variantId));
+    var target = Fire.calculateFIRE(h, TABLES, optsFor(variantId, h));
+    var prog = Fire.progressToward(h, TABLES, optsFor(variantId, h));
     var ok = Money.isOk(target);
 
     figure.textContent = ok ? Money.formatCents(target.value) : Money.EM_DASH;
@@ -247,6 +286,10 @@
     if (Money.isOk(prog)) {
       rows.push(['You have', Money.formatCents(prog.investmentsCents)]);
     }
+    /* Under coast, "years away" is years to the coast number, not to
+       stopping — so the comparison is only made for the other five. */
+    var against = target.variant.mode === 'coast' ? null : againstTarget(h, prog);
+    if (against) rows.push(['You want to stop at', against]);
     detail.className = 'out-detail';
     detail.innerHTML = dl(rows)
       + '<p class="slaf-reason">' + (Money.isOk(prog) ? yearsLabel(prog.yearsAway) : prog.reason || '') + '</p>'
@@ -258,9 +301,41 @@
           : '');
   }
 
+  /* "Stop at 55 — at this pace you get there at 51, 4 years early." Needs
+     the stored target, the age, and a finished progress Result. */
+  function againstTarget(h, prog) {
+    var want = h.targets && h.targets.retireAge;
+    if (!Money.isEntered(want)) return null;
+    var age = Schema.primaryAge(h);
+    if (!Money.isEntered(age) || !Money.isOk(prog) || !Money.isOk(prog.yearsAway)) return want + '';
+    var at = Math.round(age + prog.yearsAway.value);
+    var diff = want - at;
+    return want + ' \u2014 at this pace you get there at ' + at
+      + (diff === 0 ? ', right on time' : diff > 0 ? ', ' + diff + ' year' + (diff === 1 ? '' : 's') + ' early'
+         : ', ' + (-diff) + ' year' + (diff === -1 ? '' : 's') + ' late');
+  }
+
+  /* LIVE-FORM: built once — the two target boxes are static markup; only
+     their .value is written, and never while one of them has focus. */
+  function paintTargets(h) {
+    var t = h.targets || {};
+    [['t-retire', t.retireAge], ['t-coast', t.coastAge]].forEach(function (spec) {
+      var node = el(spec[0]);
+      if (document.activeElement === node) return;
+      node.value = Money.isEntered(spec[1]) ? spec[1] + '' : '';
+    });
+    var age = Schema.primaryAge(h);
+    var notes = [];
+    if (Money.isEntered(t.coastAge) && Money.isEntered(age) && t.coastAge <= age) notes.push('Your coast age is already behind you.');
+    if (Money.isEntered(t.retireAge) && Money.isEntered(age) && t.retireAge <= age) notes.push('Your stop age is already behind you.');
+    if (!Money.isEntered(t.coastAge)) notes.push('Coast uses ' + TABLES.fireVariants.defaults.coastTargetAge + ' until you set an age.');
+    el('targets-note').textContent = notes.join(' ');
+  }
+
   function render() {
     if (!TABLES) return;
     var h = Spine.getProfile();
+    paintTargets(h);
     renderReading(h);
     renderVariants(h);
     renderTarget(h);
@@ -280,8 +355,25 @@
     el('out-target').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
+  [['t-retire', 'retireAge'], ['t-coast', 'coastAge']].forEach(function (spec) {
+    var node = el(spec[0]);
+    function commit() {
+      var raw = node.value.trim();
+      var n = raw === '' ? null : Number(raw);
+      var patch = {};
+      patch[spec[1]] = (n === null || !Number.isFinite(n) || n < 0) ? null : n;
+      var current = (Spine.getProfile().targets || {})[spec[1]];
+      if ((current === undefined ? null : current) === patch[spec[1]]) return;
+      Spine.updateProfile({ targets: patch });
+    }
+    node.addEventListener('blur', commit);
+    node.addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter') { evt.preventDefault(); node.blur(); }
+    });
+  });
+
   [['p-swr', 'swrRate', 'rate'], ['p-return', 'expectedReturnRate', 'rate'],
-   ['p-coast-age', 'coastTargetAge', 'number'], ['p-barista', 'baristaAnnualIncomeCents', 'money']]
+   ['p-barista', 'baristaAnnualIncomeCents', 'money']]
   .forEach(function (spec) {
     var node = el(spec[0]);
     node.addEventListener('blur', function () {

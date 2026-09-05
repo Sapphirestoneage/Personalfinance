@@ -117,6 +117,23 @@ const CASES = [
     }
   },
   {
+    room: '/rooms/fire.html',
+    container: '#targets',
+    seed: 'demo',
+    fields: [
+      { sel: '#t-retire', type: '55' },
+      { sel: '#t-coast', type: '60' }
+    ],
+    expect: async (page) => {
+      const t = await page.evaluate(() =>
+        (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).targets || {});
+      return [
+        ['the stop age was stored', t.retireAge, 55],
+        ['the coast age was stored', t.coastAge, 60]
+      ];
+    }
+  },
+  {
     room: '/rooms/statement.html',
     container: '#asset-list',
     seed: 'demo',

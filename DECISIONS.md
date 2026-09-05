@@ -3745,6 +3745,55 @@ on `#asset-list`, `test/alignment.js` on `.asset-grid` and `.pair`.
 
 ---
 
+## D-068 — The ages you plan around are stored, and FIRE Number owns them
+
+*(BRIEF.md §3.6.)* `household.targets` (`retireAge`, `coastAge`, shape from
+D-064) was written by nobody. FIRE Number now has a "Your targets" card
+(anchor `targets`) with two boxes, stored on blur through
+`Spine.updateProfile({ targets })`, and two ownership rows, `retireAge`
+and `coastAge`, owned by `fire` and read-only everywhere else.
+
+**What changed in the room.**
+
+- **The coast age is no longer a preview knob.** SPEC §12.2 keeps the
+  withdrawal rate and expected return as local, unstored overrides — a
+  what-if. The age you coast to is not a what-if; it is a decision, and it
+  was being lost on every reload. The coast variant now reads
+  `targets.coastAge`, and the table's 65 only until an age is set, which
+  the card says.
+- **The stop age is compared to your pace.** With a stop age, a date of
+  birth and a finished progress Result, the number card adds a row: "You
+  want to stop at 55 — at this pace you get there at 51, 4 years early."
+  Not under coast, where "years away" means years to the coast number, not
+  to stopping.
+- **The variant buttons are built once and patched in place.** They were
+  rebuilt with `innerHTML` on every render, and a blur on a target box
+  renders — so a tap on "Coast" that also blurred a box landed on a button
+  that had just been replaced, and did nothing. Found by tapping through
+  on a phone-shaped browser; the same class of bug as D-034, on buttons
+  instead of inputs.
+
+**Not done here, deliberately.** The Statement's bridge still runs from the
+FI date at the current pace, not from the stop age; reading the stop age
+there is a T4 question (the bridge from a *chosen* date is a different
+number and wants its own row). The Refresh page keeps to the three that
+move; a target is not something that goes stale.
+
+**Compatibility note.** No stored shape changed. `targets.retireAge` and
+`targets.coastAge` are now written, by `fire` only, as plain years
+(`null` = undecided). `Spine.updateProfile` merges `targets` field-wise
+like `meta`, so a room that writes one leaves the other alone. A future
+room that plans around a date reads `Ownership.field('retireAge')` and
+links to `fire#targets`; it does not ask again.
+
+**Verified.** `node test/run.js` (owners, anchors, the knob gone, coast to
+60 needs more than coast to 65), a phone-browser walk (type 55 and 60,
+the row reads "at this pace you get there at 51, 4 years early", coast
+reads "Over 28 years, to age 60", both survive a reload), `test/forms.js`
+on `#targets`, `test/alignment.js` on `.params`.
+
+---
+
 ## D-046 — HP is measured in weeks, which is what makes §3A stop contradicting itself
 
 The Dungeons & Dividends rulebook defines Hit Points twice in the same
