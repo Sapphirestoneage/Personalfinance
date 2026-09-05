@@ -5691,6 +5691,176 @@ $2,500 → $500 short, 18 low months covered.
 
 ---
 
+## D-114 — Enough: the number you would live on by choice
+
+For everyone. Owns `enough.monthlyCents` and `source` (`curve` or
+`entered`). `Enough.current`: typed, else the joy curve's knee from
+the Fulfillment room — spending less the lines in the two low-joy
+quadrants of a categorised month — else 85% of spending as a stated
+convention. `Enough.fiTwo`: the FI number on spending and the FI number
+on enough through the one `Tier0.fireNumber`, the years to each at
+today's savings through the projection's fractional years the way the
+lens does, and the gap in dollars and years. One area chart of
+investments over time with both numbers as lines and a dot where each
+is crossed; the path compounds monthly, so it crosses a touch before
+the yearly closed form and the test checks the first yearly row past
+the number rather than a literal. Hand-derived on the demo: $3,150 and
+$2,600 at 4% are $945,000 and $780,000, a gap of $165,000.
+
+---
+
+## D-115 — Designed Week: 168 hours, priced
+
+For everyone. Owns `designedWeek.blocks` — the table's blocks, the
+first five as the inputs and the rest folded, each a number of hours a
+week, a block's cost proposed from the tracked month's matching line or
+the table's default. `Week`: hours placed against 168 (over 168 is
+flagged, never clamped), the designed month as Σ block cost × 52 ÷ 12,
+the FI number that month implies, the gap by category against the month
+you have, and the hours the week costs of itself at the real hourly
+wage. One stacked row of the 168 hours with the unplaced remainder.
+Hand-derived: 56 + 40 + 20 + 10 + 8 hours with $80 and $60 a week on
+two of them: 134 placed, 34 unplaced, $606.67 a month.
+
+---
+
+## D-116 — Time Buckets: decades, priced
+
+For everyone. Owns `timeBuckets` — one money box a decade from the
+current one to the seventies (from 30 when age is unknown, said so),
+typing a total that replaces a decade's 'Planned' line or tops up an
+itemised list; the ideas table proposes a decade's typical figure.
+`Buckets.plan`: each decade's price and years away, the running total,
+and — from ONE `Projection.pathCents` run at today's savings (Tier 0's
+figure) and the real return, to the plan age — the money there will be
+at each decade's start and the first decade the plan outruns it; the
+plan as a share of the FI number. One bar a decade with the projected
+money marked. Hand-derived: age 32, $12,000 in the thirties and $30,000
+in the forties; $48,000 invested and $20,520 a year at 5% for eight
+years is $272,885 by forty, so the plan is fine; $312,000 planned is
+strained from the forties; a stop age of 36 gives four years of saving
+then growth alone.
+
+---
+
+## D-117 — Dreamline: the target monthly income
+
+Appears for the `hours` branch. Owns `dreams` — five slots, each
+priced a month and given a kind (travel, a sabbatical, a course, a
+place, a gift, other). `Dreamline`: dreams a month, the target monthly
+income as (spending + dreams) × 1.3 (Ferriss's pad, a convention),
+the gap against take-home, and the hours a week at the real hourly
+wage for the target and for each dream, at 52 ÷ 12 weeks a month. One
+stacked row of the target month: spending, each dream, the pad.
+Hand-derived: $3,150 and $800 + $600 → $5,915; at $21.04 an hour,
+64.9 hours a week.
+
+---
+
+## D-118 — Reversibility: a door, or a one-way street
+
+For everyone. Owns `reversibility.decisionId` and `given`. The
+decisions, their questions and their undo formulas live in
+`data/reversibility.json` and are evaluated through the life-events
+engine's expression evaluator — never a second copy of the arithmetic.
+The template builds inputs once, so the questions sit on generic boxes
+fixed in kind — two money, one choice — and the room paints each box's
+label and options from the chosen decision, disabling a box the
+decision has no question for; a question's default is a proposal.
+The verdict against a month of spending: under a month and under a
+month to undo is a door; over six months of spending or over a year to
+undo is a one-way street; between is a heavy door; a decision the
+table marks irreversible, or leaves unpriced, is a one-way street
+whatever it costs. Three bars: the undo cost, a month, the cash.
+Hand-derived: a $300,000 house at 8% selling costs plus a $2,000 local
+move is $26,000 and four months — a one-way street at $3,150 a month.
+
+---
+
+## D-119 — Unlearning: the ladder, and what you let go of
+
+For everyone. Owns `unlearning.dropped`. Every rule in
+`data/unlearning.json` judged by the FOO step and the banded ratios
+(the draft's `classify`): applies, stop believing, not yet, unknown.
+The number is the rules that no longer apply and are not yet let go
+of; the inputs are a rule picked (page-local, it chooses what the
+choice acts on) and "let go" or "still holding it". A rule let go of
+while it still applies is flagged as early. Four bars by status. The
+dashboard's learn/unlearn block (D-096) is this ladder's top line and
+the drawer says so. On the demo, step 2: three rules to drop, six not
+yet.
+
+---
+
+## D-120 — Student Loan Decision: three shapes of repayment
+
+Appears for the `debt` branch; uses `guessAs: 'student'`. Owns
+`studentLoans.plan`, `extraMonthlyCents`, `idrShare`,
+`forgivenessYears`. The loans typed as student loans — or a student's
+lump debt from the one-pager, said so — run through `Debt.simulate` on
+a copy holding only them for the standard plan (the listed minimum, or
+the level payment over the ten-year term through
+`Projection.levelPaymentCents`) and the aggressive plan (standard plus
+the extra); the income-driven plan is the one loop the debt engine does
+not have: a flat share of discretionary income above 150% of a $15,000
+poverty line, month by month with interest accruing, negative
+amortisation named, the remainder forgiven at the horizon, income held
+flat. The number is the cheapest plan that clears them; three bars of
+total paid. Conventions in `data/student_loan_conventions.json`, the
+shapes of US federal plans, not any year's rules. Hand-derived: $20,000
+at 5% is $212.13 a month for ten years, about $25,456; at $40,000 the
+income-driven payment is $145.83 against $83.33 of first-month
+interest; $60,000 at 7% on $25,000 pays $20.83 against $350 and is
+forgiven larger than it started.
+
+---
+
+## D-121 — Money Calendar & Pay-Later: the low point
+
+For everyone. Owns `calendar.cadence`, `nextPaydayDay`, two bills on a
+date (rent, with its month from Housing Decision or the 30% guess, and
+the biggest other bill) and one pay-later instalment, folded.
+`Calendar.month`: 31 days from today; take-home a month through Tier 0
+shared across the cadence's paydays (52 ÷ 12, 26 ÷ 12, 2 or 1; the
+semimonthly partner fifteen days off inside 1–30; a day past the
+month's end is its last day); each bill drawn the first time its day
+comes round; the rest of spending spread over the month's days; the
+lowest balance and its day, below zero named, a tight stretch under a
+week of spending. One area chart of cash day by day, zero and a week of
+spending as lines, the paydays dotted. Conventions in
+`data/calendar_conventions.json`. Hand-derived from the 1st: $500 of
+cash, $900 of rent on the 1st, $1,800 of spending, paid twice a month
+on the 5th and 20th: −$430 on day one, −$520 by the 4th, a payday on
+the 5th.
+
+---
+
+## D-122 — History: the brief's last step
+
+For everyone, a reading. Owns `history.compareTo`. `History.review`
+reads every snapshot (the instruments' outputs and every owned field at
+that moment, frozen through `Instruments.snapshot`) against the
+household as it is now, recomputed, never a stored figure: net worth
+since the chosen snapshot or the first, with cash, investments and debt
+then and now, every instrument then and now, the command log's last ten
+entries, and the chart's points. The compare-to select is painted from
+the snapshot list only when it changes and never under focus; "Freeze
+now" appends a snapshot through the instruments engine and, being
+outside the household, is not an undo entry — it can be ignored, not
+undone. A deleted compare-to falls back to the first and says so; one
+snapshot gives a change but no zone. The tests pass the snapshot list
+explicitly, since the shared store carries snapshots from earlier
+sections.
+
+**And the whole.** With this entry the brief is built end to end: the
+core (D-094), the one-pager (D-095), the dashboard (D-096), the
+template (D-097), twenty-one rooms on it (D-102 to D-122), and every
+line of `LATER.md` (D-100, D-114 to D-121). "One pager in, one pager
+out" is true: one page in, a dashboard back, every number on it opening
+the room it came from, every room the same shape.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have
