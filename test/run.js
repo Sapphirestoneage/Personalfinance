@@ -2120,7 +2120,7 @@ section('Room script tags');
     Ratios: 'engines/ratios.js', Credential: 'engines/credential.js',
     Worth: 'engines/worth.js', Windfall: 'engines/windfall.js',
     Runway: 'engines/runway.js', Health: 'engines/health.js',
-    Income: 'engines/income.js'
+    Income: 'engines/income.js', Ledger: 'engines/ledger.js'
   };
   const FILE_TO_GLOBAL = {};
   Object.keys(GLOBAL_TO_FILE).forEach(g => { FILE_TO_GLOBAL[GLOBAL_TO_FILE[g]] = g; });
