@@ -70,6 +70,9 @@
   ul.logged .lg-amt { font-variant-numeric: tabular-nums; white-space: nowrap; }
   ul.logged .lg-cost { color: var(--color-caution); }
   ul.logged .lg-credit { color: var(--color-positive); }
+  ul.logged .lg-date small { display: block; font-size: 9px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-caution); }
+  ul.logged li.is-potential { opacity: .6; }
+  ul.logged li.is-potential .lg-amt { text-decoration: underline dotted; }
   ul.logged li.is-credit .lg-what { color: var(--color-text-muted); }
   ul.logged .lg-x { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 1px var(--space-2); cursor: pointer; }
   .log-total { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-2); }
@@ -170,6 +173,10 @@
         <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="l-amount" placeholder="e.g. 64.20" aria-label="Amount"/></span></label>
       <label class="slaf-field"><span class="slaf-label">Date</span>
         <span class="slaf-input-shell"><input type="date" id="l-date" aria-label="Date"/></span></label>
+      <label class="slaf-field wide"><span class="slaf-label">The date is</span>
+        <span class="slaf-input-shell"><select id="l-datekind" aria-label="How sure the date is">
+          <option value="exact">Exact — it went out, or it is due</option><option value="estimated">Estimated — about then</option><option value="potential">Potential — it may not happen; drawn, not counted</option>
+        </select></span></label>
       <label class="slaf-field wide"><span class="slaf-label">What for</span>
         <span class="slaf-input-shell"><select id="l-category" aria-label="Category"></select></span></label>
       <label class="slaf-field wide"><span class="slaf-label">A note</span>
@@ -844,7 +851,7 @@
     var expected = Money.parseMoney(el('l-expected').value);
     var entry = Schema.createExpenseEntry({
       categoryId: categoryId, amountCents: cents, period: el('l-recurring').checked ? 'monthly' : 'once',
-      date: el('l-date').value || today(), descriptor: el('l-note').value.trim() || null, source: 'log',
+      date: el('l-date').value || today(), dateKind: el('l-datekind').value, descriptor: el('l-note').value.trim() || null, source: 'log',
       produced: linked ? 'linked' : path === 'reimbursable' ? 'reimbursable' : 'personal',
       linkedIncomeId: linked, deductible: !!linked && el('l-deductible').checked,
       reimbursableFrom: path === 'reimbursable' ? (el('l-from').value.trim() || null) : null,
@@ -853,7 +860,7 @@
     Spine.upsertExpenseEntry(entry);
     el('log-say').textContent = 'Logged ' + Money.formatCents(cents) + (linked ? (entry.deductible ? ', deductible against ' : ', against ') + (el('l-linked').selectedOptions[0].textContent)
       : entry.produced === 'reimbursable' ? ', ' + Money.formatCents(entry.expectedAmountCents) + ' owed back' + (entry.reimbursableFrom ? ' by ' + entry.reimbursableFrom : '') : '') + '.';
-    el('l-amount').value = ''; el('l-note').value = ''; el('l-recurring').checked = false; el('l-from').value = ''; el('l-expected').value = '';
+    el('l-amount').value = ''; el('l-note').value = ''; el('l-recurring').checked = false; el('l-from').value = ''; el('l-expected').value = ''; el('l-datekind').value = 'exact';
     render();
   });
   el('logged').addEventListener('click', function (evt) {
@@ -874,7 +881,8 @@
     paintLinked(h);
     var m = Ledger.thisMonth();
     var log = CashFlow.logInMonth(h, TABLES.expenseCategories, m);
-    el('log-month-title').textContent = Schema.monthLabel(m) + (log.count ? ' · ' + Money.formatCents(log.personalCents) + ' personal' + (log.incomeCostsCents ? ' · ' + Money.formatCents(log.incomeCostsCents) + ' costs of earning' : '') + (log.pendingReimbursementCents ? ' · ' + Money.formatCents(log.pendingReimbursementCents) + ' owed back to you' : '') : '');
+    el('log-month-title').textContent = Schema.monthLabel(m) + (log.count ? ' · ' + Money.formatCents(log.personalCents) + ' personal' + (log.incomeCostsCents ? ' · ' + Money.formatCents(log.incomeCostsCents) + ' costs of earning' : '') + (log.pendingReimbursementCents ? ' · ' + Money.formatCents(log.pendingReimbursementCents) + ' owed back to you' : '') : '')
+      + (log.potentialCents ? ' · ' + Money.formatCents(log.potentialCents) + ' potential, not counted' : '');
     var names = {};
     Ledger.entries(h).forEach(function (e) { names[e.id] = e.label || Schema.INCOME_KIND_RULES[e.kind].label; });
     el('logged').innerHTML = log.rows.filter(function (r) { return !r.hidden; }).map(function (r) {
@@ -883,12 +891,20 @@
       var tail = r.credit ? ' · paid back' + (r.reimbursableFrom ? ' by ' + esc(r.reimbursableFrom) : '')
         : reimb ? (r.reimbursementStatus === 'received' ? ' · paid back' : ' · owed back' + (r.reimbursableFrom ? ' by ' + esc(r.reimbursableFrom) : '') + ', counts until it is')
         : r.linkedIncomeId ? ' · for ' + esc(names[r.linkedIncomeId] || 'an income entry') + (r.deductible ? ', deductible' : ', not deductible') : '';
-      return '<li' + (r.credit ? ' class="is-credit"' : '') + '><span class="lg-date">' + esc(r.date.slice(5)) + '</span>'
-        + '<span class="lg-what">' + esc(r.descriptor || (cat ? cat.label : r.categoryId)) + '<small>' + esc(cat ? cat.label : r.categoryId) + (r.recurring ? ' · every month' : '') + tail + '</small></span>'
+      return '<li' + (r.credit ? ' class="is-credit"' : '') + '><span class="lg-date">' + esc(r.date.slice(5)) + (r.dateKind === 'estimated' ? '<small>about</small>' : '') + '</span>'
+        + '<span class="lg-what">' + esc(r.descriptor || (cat ? cat.label : r.categoryId)) + '<small>' + esc(cat ? cat.label : r.categoryId) + (r.recurring ? ' · every month' : '') + (r.dateKind === 'estimated' ? ' · date estimated' : '') + tail + '</small></span>'
         + '<span class="lg-amt' + (r.linkedIncomeId ? ' lg-cost' : r.credit ? ' lg-credit' : '') + '">' + esc((r.credit ? '−' : '') + Money.formatCents(Math.abs(r.cents))) + '</span>'
         + (r.credit ? '<span></span>' : reimb && r.reimbursementStatus !== 'received' ? '<button type="button" class="lg-x" data-paid="' + r.entryId + '" title="Mark it paid back on the date in the form">Paid back</button>'
         : '<button type="button" class="lg-x" data-unlog="' + r.entryId + '" aria-label="Remove">✕</button>') + '</li>';
     }).join('') || '<li><span class="slaf-hint" style="grid-column:1/-1">Nothing logged this month yet.</span></li>';
+    /* Potential dates: drawn, never counted (D-130). */
+    el('logged').innerHTML += (log.potentialRows || []).filter(function (r) { return !r.hidden; }).map(function (r) {
+      var cat = CashFlow.categoryById(TABLES.expenseCategories, r.categoryId);
+      return '<li class="is-potential"><span class="lg-date">' + esc(r.date.slice(5)) + '<small>maybe</small></span>'
+        + '<span class="lg-what">' + esc(r.descriptor || (cat ? cat.label : r.categoryId)) + '<small>' + esc(cat ? cat.label : r.categoryId) + ' · potential — not counted until you make it exact</small></span>'
+        + '<span class="lg-amt">' + esc(Money.formatCents(r.cents)) + '</span>'
+        + '<button type="button" class="lg-x" data-unlog="' + r.entryId + '" aria-label="Remove">✕</button></li>';
+    }).join('');
   }
   /* ---------- Where it flows: the Sankey (D-128) ------------------------------
      Drawn from the spine on every render — the month's income entries netted

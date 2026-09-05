@@ -222,14 +222,16 @@
     var anchor = entry.receivedOn ? new Date(entry.receivedOn + 'T00:00:00') : null;
     if (anchor && isNaN(anchor.getTime())) anchor = null;
     var out = [];
+    var kind = Schema.DATE_KINDS && Schema.DATE_KINDS.indexOf(entry.dateKind) >= 0 ? entry.dateKind : 'exact';
+    var stamp = function (o) { o.dateKind = kind; if (kind === 'potential') o.potential = true; if (kind !== 'exact') o.estimated = true; return o; };
     if (entry.frequency === 'once') {
-      if (ym(entry.receivedOn) === month) out.push({ date: entry.receivedOn, cents: entry.amountCents });
+      if (ym(entry.receivedOn) === month) out.push(stamp({ date: entry.receivedOn, cents: entry.amountCents }));
       return out;
     }
     if (!anchor) {
       /* Undated recurring: its average month, on the 1st, marked estimated. */
       var avg = monthlyGrossCents(entry);
-      if (Money.isEntered(avg)) out.push({ date: iso(p.y, p.m, 1), cents: avg, estimated: true });
+      if (Money.isEntered(avg)) out.push(stamp({ date: iso(p.y, p.m, 1), cents: avg, estimated: true, dateKind: kind === 'exact' ? 'estimated' : kind }));
       return out;
     }
     /* A recurring entry lands from the month it was first received in; it
@@ -238,11 +240,11 @@
     if (anchorYm > month) return out;
     if (entry.frequency === 'monthly') {
       var d = Math.min(anchor.getDate(), dim);
-      out.push({ date: iso(p.y, p.m, d), cents: entry.amountCents });
+      out.push(stamp({ date: iso(p.y, p.m, d), cents: entry.amountCents }));
       return out;
     }
     if (entry.frequency === 'annual') {
-      if (anchor.getMonth() === p.m) out.push({ date: iso(p.y, p.m, Math.min(anchor.getDate(), dim)), cents: entry.amountCents });
+      if (anchor.getMonth() === p.m) out.push(stamp({ date: iso(p.y, p.m, Math.min(anchor.getDate(), dim)), cents: entry.amountCents }));
       return out;
     }
     var step = entry.frequency === 'weekly' ? 7 : 14;
@@ -253,7 +255,7 @@
       var day = new Date(a0.getFullYear(), a0.getMonth(), a0.getDate() + i * step);
       if (day > last) break;
       if (day < first) continue;
-      out.push({ date: iso(day.getFullYear(), day.getMonth(), day.getDate()), cents: entry.amountCents });
+      out.push(stamp({ date: iso(day.getFullYear(), day.getMonth(), day.getDate()), cents: entry.amountCents }));
     }
     return out;
   }
@@ -262,14 +264,22 @@
    * month(household, tables, 'YYYY-MM') — every active entry's landings in
    * the month, each netted: { grossCents, netCents, taxCents, costsCents,
    * rows: [{ entry, occurrences, grossCents, netCents, taxCents }] }.
-   * Archived entries never count; hidden ones always do.
+   * Archived entries never count; hidden ones always do. An entry whose
+   * date is only potential (D-130) is never counted: it is listed apart
+   * in `potentialRows` with `potentialCents`, so a calendar can draw it.
    */
   function month(household, tables, monthId) {
     var m = monthId || thisMonth();
-    var rows = [], gross = 0, net = 0, tax = 0, costsTotal = 0, takeHome = 0, incomplete = [];
+    var rows = [], gross = 0, net = 0, tax = 0, costsTotal = 0, takeHome = 0, incomplete = [], potentialRows = [], potential = 0;
     activeEntries(household).forEach(function (e) {
       var occ = occurrences(e, m);
       if (!occ.length) return;
+      if (e.dateKind === 'potential') {
+        var pg = occ.reduce(function (t, o) { return t + o.cents; }, 0);
+        potentialRows.push({ entry: e, occurrences: occ, grossCents: pg, potential: true });
+        potential += pg;
+        return;
+      }
       var one = netOf(e, household, tables);
       var count = occ.length;
       var g = occ.reduce(function (t, o) { return t + o.cents; }, 0);
@@ -282,7 +292,8 @@
     });
     /* takeHomeCents is gross less tax — what the budget's Income bucket
        counts; the costs of earning it are the expense side's business. */
-    return Money.ok(net, { month: m, label: Schema.monthLabel(m), grossCents: gross, netCents: net, takeHomeCents: takeHome, taxCents: tax, costsCents: costsTotal, rows: rows, incomplete: incomplete, count: rows.length });
+    return Money.ok(net, { month: m, label: Schema.monthLabel(m), grossCents: gross, netCents: net, takeHomeCents: takeHome, taxCents: tax, costsCents: costsTotal, rows: rows, incomplete: incomplete, count: rows.length,
+      potentialRows: potentialRows, potentialCents: potential });
   }
 
   /* ---- The year, by method — what the Tax room reads ------------------------

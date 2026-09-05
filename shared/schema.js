@@ -185,7 +185,9 @@
     'expenses.entries[].hidden':                 { class: 'raw',        unit: 'bool',    note: 'off the default list, still counted. D-128' },
     'expenses.entries[].active':                 { class: 'raw',        unit: 'bool',    note: 'false = archived: stops counting toward new estimates and actuals; closed months are untouched. D-128' },
     'household.ledger.income[].kind':            { class: 'raw',        unit: 'enum',    values: ['w2', 'se', 'bonus', 'gift', 'side', 'dividend', 'rental', 'other'], note: 'a dated income entry: amountCents, frequency (once, weekly, fortnightly, monthly, annual), receivedOn, taxable, taxMethod (w2, se, none), costs[] for se/side/rental, hidden, active. Owned by Income. D-128' },
+    'household.ledger.income[].dateKind':        { class: 'raw',        unit: 'enum',    values: ['exact', 'estimated', 'potential'], note: 'how sure the date is — the same three as an expense: potential income (a bonus that may not come) is drawn, never counted. D-130' },
     'household.ledger.income[].taxMethod':       { class: 'raw',        unit: 'enum',    values: ['w2', 'se', 'unemployment', 'none'], note: 'taxed how: withheld at the source; owed with self-employment tax on the net of costs; owed as ordinary income with no SE tax (unemployment); or not taxable. Four, no catch-all. D-128, D-129' },
+    'expenses.entries[].dateKind':               { class: 'raw',        unit: 'enum',    values: ['exact', 'estimated', 'potential'], note: 'how sure the date is: exact (it happened / it is due), estimated (about then), potential (might not happen at all). Actual counts exact and estimated; potential is drawn on the calendar and reported apart, never counted. D-130' },
     'expenses.entries[].produced':               { class: 'raw',        unit: 'enum',    values: ['personal', 'linked', 'reimbursable'], note: 'what the expense produced: nothing (personal, never deductible); an income entry (linkedIncomeId, the only deductible path); or a repayment expected from someone (reimbursable: never deductible, counts in full while pending, a credit in the month received). D-129' },
     'expenses.entries[].reimbursableFrom':       { class: 'raw',        unit: 'text',    note: 'who is paying it back. D-129' },
     'expenses.entries[].expectedAmountCents':    { class: 'raw',        unit: 'cents',   note: 'what is expected back; defaults to the amount. D-129' },
@@ -952,6 +954,11 @@
    * so adding import later changes no aggregation code — SPEC.md §12.5.
    */
   var PRODUCED = ['personal', 'linked', 'reimbursable'];
+  /* How sure a date is (D-130): exact, estimated (about then), potential
+     (might not happen). Unknown reads as exact, the way every older row
+     was meant. */
+  var DATE_KINDS = ['exact', 'estimated', 'potential'];
+  function dateKindOf(v) { return DATE_KINDS.indexOf(v) >= 0 ? v : 'exact'; }
   function createExpenseEntry(fields) {
     var f = fields || {};
     var linked = typeof f.linkedIncomeId === 'string' && f.linkedIncomeId ? f.linkedIncomeId : null;
@@ -971,6 +978,7 @@
       amountCents: f.amountCents === undefined ? null : f.amountCents,
       period: f.period || 'monthly',            // 'monthly' | 'once'
       date: f.date === undefined ? null : f.date,        // ISO, dated entries only
+      dateKind: dateKindOf(f.dateKind),
       descriptor: f.descriptor === undefined ? null : f.descriptor,
       source: f.source || 'manual',             // 'manual' | 'imported' | 'rerank' | 'log'
       categorizedBy: f.categorizedBy === undefined ? null : f.categorizedBy,
@@ -1051,6 +1059,7 @@
       amountCents: Money.isEntered(f.amountCents) ? f.amountCents : null,
       frequency: INCOME_FREQUENCIES.indexOf(f.frequency) >= 0 ? f.frequency : 'once',
       receivedOn: typeof f.receivedOn === 'string' && f.receivedOn ? f.receivedOn : null,
+      dateKind: dateKindOf(f.dateKind),
       taxable: taxable,
       taxMethod: method,
       /* The costs of producing it live on the entry, so they are always
@@ -1827,6 +1836,7 @@
     INCOME_COST_CATEGORIES: INCOME_COST_CATEGORIES,
     TAX_METHODS: TAX_METHODS,
     PRODUCED: PRODUCED,
+    DATE_KINDS: DATE_KINDS,
     BUDGET_BUCKETS: BUDGET_BUCKETS,
     costsAllowed: costsAllowed,
     monthLabel: monthLabel,

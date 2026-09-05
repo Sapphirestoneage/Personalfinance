@@ -115,6 +115,10 @@
         </select></span></label>
       <label class="slaf-field"><span class="slaf-label" id="f-date-label">Received on</span>
         <span class="slaf-input-shell"><input type="date" id="f-date" aria-label="Date received"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">The date is</span>
+        <span class="slaf-input-shell"><select id="f-datekind" aria-label="How sure the date is">
+          <option value="exact">Exact — it landed, or it is due</option><option value="estimated">Estimated — about then</option><option value="potential">Potential — it may not come at all</option>
+        </select></span></label>
       <label class="slaf-field" data-for="taxable"><span class="slaf-label">Taxed how</span>
         <span class="slaf-input-shell"><select id="f-method" aria-label="Tax method">
           <option value="w2">W-2 — tax withheld before it arrives</option><option value="se">1099 — owed later, with self-employment tax</option><option value="unemployment">Unemployment — taxable, nothing withheld, no self-employment tax</option><option value="none">Not taxable</option>
@@ -230,6 +234,7 @@
     el('f-amount').value = e && Money.isEntered(e.amountCents) ? Money.formatCents(e.amountCents) : '';
     el('f-frequency').value = e ? e.frequency : 'once';
     el('f-date').value = e && e.receivedOn ? e.receivedOn : '';
+    el('f-datekind').value = e && e.dateKind ? e.dateKind : 'exact';
     el('f-method').value = e ? (e.taxable === false ? 'none' : e.taxMethod) : 'w2';
     showForKind(el('f-kind').value);
     el('form-cap').textContent = e ? 'Editing ' + (e.label || KINDS[e.kind].label) : 'Add an entry';
@@ -257,7 +262,7 @@
     var entry = Schema.createIncomeEntry(Object.assign({}, existing || {}, {
       id: editingId || undefined, personId: existing ? existing.personId : person.id,
       kind: kind, label: el('f-label').value.trim() || null, amountCents: cents,
-      frequency: el('f-frequency').value, receivedOn: el('f-date').value || null,
+      frequency: el('f-frequency').value, receivedOn: el('f-date').value || null, dateKind: el('f-datekind').value,
       taxable: kind === 'gift' ? false : method !== 'none', taxMethod: kind === 'gift' ? 'none' : method,
       costs: existing ? existing.costs : []
     }));
@@ -283,7 +288,7 @@
       var costsLine = Schema.costsAllowed(e.kind) && Money.isEntered(netOfCosts) && netOfCosts !== e.amountCents ? Money.formatCents(netOfCosts) + ' after costs · ' : '';
       return '<li' + (e.id === editingId ? ' class="is-editing"' : '') + '>'
         + '<span><span class="e-name">' + esc(e.label || KINDS[e.kind].label) + '</span>'
-        + '<span class="e-kind">' + esc(KINDS[e.kind].label) + ' · ' + esc(FREQ_WORDS[e.frequency]) + (e.receivedOn ? ' · ' + esc(e.receivedOn) : '') + ' · ' + esc(METHOD_WORDS[e.taxable === false ? 'none' : e.taxMethod]) + '</span></span>'
+        + '<span class="e-kind">' + esc(KINDS[e.kind].label) + ' · ' + esc(FREQ_WORDS[e.frequency]) + (e.receivedOn ? ' · ' + esc(e.receivedOn) + (e.dateKind === 'estimated' ? ' (about then)' : e.dateKind === 'potential' ? ' (potential — not counted)' : '') : '') + ' · ' + esc(METHOD_WORDS[e.taxable === false ? 'none' : e.taxMethod]) + '</span></span>'
         + '<span class="e-amt">' + (Money.isEntered(e.amountCents) ? esc(Money.formatCents(e.amountCents)) : '—')
         + '<span class="e-net">' + costsLine + (Money.isOk(net) ? 'nets ' + esc(Money.formatCents(net.value)) + (net.owedCents > 0 ? ' · ' + esc(Money.formatCents(net.owedCents)) + ' owed at tax time' : '') : esc(net.reason || '')) + '</span></span>'
         + '<span class="e-acts">'
@@ -352,7 +357,8 @@
     if (!m.count) { el('month-figure').textContent = '—'; el('month-sub').textContent = 'Nothing lands this month yet. A recurring entry lands on its days; a one-time one on its date.'; return; }
     el('month-figure').textContent = Money.formatCents(m.netCents) + ' net';
     el('month-sub').textContent = Money.formatCents(m.grossCents) + ' gross across ' + m.count + (m.count === 1 ? ' entry' : ' entries') + ', ' + Money.formatCents(m.taxCents) + ' of tax' + (m.costsCents ? ' and ' + Money.formatCents(m.costsCents) + ' of costs' : '') + ' taken off.'
-      + (m.incomplete.length ? ' ' + m.incomplete.length + ' could not be netted: ' + m.incomplete.map(function (x) { return x.reason; }).join(' ') : '');
+      + (m.incomplete.length ? ' ' + m.incomplete.length + ' could not be netted: ' + m.incomplete.map(function (x) { return x.reason; }).join(' ') : '')
+      + (m.potentialCents ? ' Not counted: ' + Money.formatCents(m.potentialCents) + ' that may not come.' : '');
   }
 
   /* ---- The costs of earning it -------------------------------------------- */

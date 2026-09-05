@@ -100,6 +100,19 @@ module.exports = function (t) {
   check('the month is labelled', m.label, 'September 2026');
   check('this month reads the clock', Ledger.thisMonth(Date.parse('2026-09-05T12:00:00')), '2026-09');
 
+  /* How sure a date is (D-130): estimated lands and counts; potential is
+     drawn apart and never counted. */
+  const h5 = hh(); h5.ledger.income = [
+    Schema.createIncomeEntry({ id: 'a', kind: 'w2', amountCents: 100000, frequency: 'once', receivedOn: '2026-09-10' }),
+    Schema.createIncomeEntry({ id: 'b', kind: 'bonus', amountCents: 50000, frequency: 'once', receivedOn: '2026-09-20', dateKind: 'estimated' }),
+    Schema.createIncomeEntry({ id: 'c', kind: 'bonus', amountCents: 300000, frequency: 'once', receivedOn: '2026-09-25', dateKind: 'potential' })
+  ];
+  check('unknown reads as exact; the three kinds are kept', h5.ledger.income.map(e => e.dateKind).join(','), 'exact,estimated,potential');
+  check('an estimated landing carries its kind', Ledger.occurrences(h5.ledger.income[1], '2026-09')[0].dateKind + '/' + Ledger.occurrences(h5.ledger.income[1], '2026-09')[0].estimated, 'estimated/true');
+  const m5 = Ledger.month(h5, T, '2026-09');
+  check('exact and estimated count, potential does not', m5.grossCents + '/' + m5.count, '150000/2');
+  check('… and the potential one is listed apart with its amount', m5.potentialRows.map(r => r.entry.id).join(',') + '/' + m5.potentialCents, 'c/300000');
+
   /* The Tax room reads the ledger when it recurs. */
   const y = Ledger.annualByMethod(h3, Date.parse('2026-09-20'));
   check('the year by method: wages from the fortnightly cheque', y.wagesCents, 6500000);

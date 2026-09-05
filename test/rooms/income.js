@@ -19,4 +19,6 @@ module.exports = function (t) {
   h.ledger.income = [Schema.createIncomeEntry({ kind: 'w2', amountCents: 240000, frequency: 'fortnightly' }), Schema.createIncomeEntry({ kind: 'gift', amountCents: 50000, frequency: 'once' }), Schema.createIncomeEntry({ kind: 'se', amountCents: 100000, frequency: 'monthly', active: false })];
   check('… and is the recurring active entries a month', Ownership.field('ledgerIncome').read(h).value, Math.round(240000 * 26 / 12));
   check('… owned by Income', Ownership.field('ledgerIncome').owner, 'income');
+  const pageK = fs.readFileSync(path.join(ROOT, 'rooms/income.html'), 'utf8');
+  checkTrue('the Income form asks how sure the date is, three ways (D-130)', /id="f-datekind"/.test(pageK) && /value="potential"/.test(pageK) && /dateKind: el\('f-datekind'\)\.value/.test(pageK));
 };

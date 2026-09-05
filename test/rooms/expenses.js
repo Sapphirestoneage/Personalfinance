@@ -63,7 +63,21 @@ module.exports = function (t) {
   check('paid back through the spine: the credit is what actually came, in its month', nov.rows[0].cents + '/' + nov.rows[0].date, '-7500/2026-11-02');
   check('… and September still carries the expense in full', CashFlow.logInMonth(S2.getProfile(), CAT, '2026-09').byBucket.expenses, 8000);
 
+  /* How sure a date is (D-130). */
+  const hk = Schema.createHousehold({});
+  hk.expenses.entries = [
+    Schema.createExpenseEntry({ id: 'k1', categoryId: 'groceries', amountCents: 5000, period: 'once', date: '2026-09-03', source: 'log' }),
+    Schema.createExpenseEntry({ id: 'k2', categoryId: 'housing', amountCents: 150000, period: 'monthly', date: '2026-08-01', source: 'log', dateKind: 'estimated' }),
+    Schema.createExpenseEntry({ id: 'k3', categoryId: 'shopping', amountCents: 80000, period: 'once', date: '2026-09-15', source: 'log', dateKind: 'potential' })
+  ];
+  const mk = CashFlow.logInMonth(hk, CAT, '2026-09');
+  check('exact and estimated dates count in Actual; a potential one never does', mk.byBucket.expenses + '/' + mk.count, '155000/2');
+  check('… the estimated one says so on its row', mk.rows.filter(r => r.id === 'k2')[0].dateKind + '/' + mk.rows.filter(r => r.id === 'k2')[0].estimated, 'estimated/true');
+  check('… the potential one is listed apart, with its amount', mk.potentialRows.map(r => r.id).join(',') + '/' + mk.potentialCents, 'k3/80000');
+  check('a bad kind reads as exact', Schema.createExpenseEntry({ dateKind: 'sometime' }).dateKind, 'exact');
+
   const page = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
+  checkTrue('the log asks how sure the date is, three ways', /id="l-datekind"/.test(page) && /value="potential"/.test(page) && /dateKind: el\('l-datekind'\)\.value/.test(page));
   checkTrue('the page asks what it produced, three ways', /id="l-produced"/.test(page) && /value="reimbursable"/.test(page) && /value="linked"/.test(page) && /value="personal"/.test(page));
   checkTrue('… with who owes it and how much', /id="l-from"/.test(page) && /id="l-expected"/.test(page));
   checkTrue('… and a Paid back action that goes through the spine', /Spine\.markReimbursed\(/.test(page) && /data-paid=/.test(page));

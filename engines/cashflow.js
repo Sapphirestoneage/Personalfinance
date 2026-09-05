@@ -524,12 +524,14 @@
   function ym(date) { return typeof date === 'string' && date.length >= 7 ? date.slice(0, 7) : null; }
   function logOccurrences(entry, month) {
     if (!entry || !Money.isEntered(entry.amountCents) || !entry.date || !/^\d{4}-\d{2}$/.test(month || '')) return [];
-    if (entry.period !== 'monthly') return ym(entry.date) === month ? [{ date: entry.date, cents: entry.amountCents }] : [];
+    var kind = Schema.DATE_KINDS && Schema.DATE_KINDS.indexOf(entry.dateKind) >= 0 ? entry.dateKind : 'exact';
+    var stamp = function (o) { o.dateKind = kind; if (kind === 'potential') o.potential = true; if (kind !== 'exact') o.estimated = true; return o; };
+    if (entry.period !== 'monthly') return ym(entry.date) === month ? [stamp({ date: entry.date, cents: entry.amountCents })] : [];
     if (ym(entry.date) > month) return [];
     var y = +month.slice(0, 4), m = +month.slice(5, 7) - 1;
     var dim = new Date(y, m + 1, 0).getDate();
     var day = Math.min(+entry.date.slice(8, 10) || 1, dim);
-    return [{ date: month + '-' + (day < 10 ? '0' : '') + day, cents: entry.amountCents }];
+    return [stamp({ date: month + '-' + (day < 10 ? '0' : '') + day, cents: entry.amountCents })];
   }
   /**
    * logInMonth(household, catalog, 'YYYY-MM') — every active logged
@@ -538,7 +540,7 @@
    */
   function logInMonth(household, catalog, month) {
     var rows = [], byGroup = {}, byBucket = { expenses: 0, savings: 0, investments: 0, debt: 0, income_costs: 0 };
-    var personal = 0, costs = 0, deductible = 0, pendingReimb = 0, reimbursed = 0;
+    var personal = 0, costs = 0, deductible = 0, pendingReimb = 0, reimbursed = 0, potentialRows = [], potential = 0;
     logEntries(household).forEach(function (e) {
       if (e.active === false) return;
       var reimb = e.produced === 'reimbursable';
@@ -546,8 +548,15 @@
         var g = groupOf(catalog, e.categoryId);
         var gr = groupById(catalog, g);
         var bucket = e.linkedIncomeId ? 'income_costs' : ((gr && gr.bucketOf) || 'expenses');
+        /* A potential date is drawn, never counted (D-130). */
+        if (o.potential) {
+          potentialRows.push({ id: e.id, entryId: e.id, date: o.date, cents: o.cents, categoryId: e.categoryId, group: g, bucket: bucket, descriptor: e.descriptor || null, recurring: e.period === 'monthly', hidden: e.hidden === true, dateKind: 'potential', potential: true });
+          potential += o.cents;
+          return;
+        }
         rows.push({ id: e.id, entryId: e.id, date: o.date, cents: o.cents, categoryId: e.categoryId, group: g, bucket: bucket,
           descriptor: e.descriptor || null, linkedIncomeId: e.linkedIncomeId || null, deductible: e.deductible === true, recurring: e.period === 'monthly', hidden: e.hidden === true,
+          dateKind: o.dateKind || 'exact', estimated: o.estimated === true,
           produced: e.produced || (e.linkedIncomeId ? 'linked' : 'personal'),
           reimbursableFrom: reimb ? e.reimbursableFrom || null : null, reimbursementStatus: reimb ? e.reimbursementStatus : null, expectedAmountCents: reimb ? e.expectedAmountCents : null });
         byGroup[g] = (byGroup[g] || 0) + o.cents;
@@ -573,8 +582,9 @@
       }
     });
     rows.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+    potentialRows.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
     return { month: month, rows: rows, byGroup: byGroup, byBucket: byBucket, personalCents: personal, incomeCostsCents: costs, deductibleCents: deductible,
-      pendingReimbursementCents: pendingReimb, reimbursedCents: reimbursed, count: rows.length };
+      pendingReimbursementCents: pendingReimb, reimbursedCents: reimbursed, count: rows.length, potentialRows: potentialRows, potentialCents: potential };
   }
   /** Reimbursable expenses still waiting to be paid back, whatever the month. */
   function pendingReimbursements(household) {
