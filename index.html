@@ -799,8 +799,8 @@
     var rows = [];
     if (Money.isOk(spend)) rows.push(['A month of spending', spend.value, 'cash-flow', 'spending']);
     if (Money.isOk(basis) && basis.annualSavingsCents > 0 && Gate.exists(h, 'savingsRate')) rows.push(['A year of saving', basis.annualSavingsCents, 'savings-rate', 'rate']);
-    var one = (h.oneOffs || [])[0];
-    if (one && Money.isEntered(one.cents)) rows.push([one.direction === 'out' ? 'The one-off going out' : 'The one-off coming in', one.cents, 'start', 'q-fine-tune']);
+    var one = Schema.oneOffEntry(h);
+    if (one) rows.push([one.direction === 'out' ? 'The one-off going out' : 'The one-off coming in', one.cents, 'start', 'q-fine-tune']);
     el('date-lensed').innerHTML = rows.map(function (r) {
       var shown = mode === '$' ? Money.formatCents(r[1]) : Lens.format(r[1], mode, h, TABLES);
       return '<li><a href="' + Ownership.linkTo(r[2], r[3]) + '">' + esc(r[0]) + '</a><span>' + esc(shown) + '</span></li>';

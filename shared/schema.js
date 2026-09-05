@@ -85,7 +85,7 @@
     'assumptions.returnReal':                    { class: 'assumption', unit: 'rate',    default: 0.05, note: 'the real return the lens and the plan use. D-094' },
     'assumptions.inflation':                     { class: 'assumption', unit: 'rate',    default: 0.03, note: 'D-094' },
     'meta.undoStack':                            { class: 'raw',        unit: 'list',    note: 'the command log: { label, ts, changes[{ path, before, after }] }, capped at 100; redoStack likewise. D-094' },
-    'household.oneOffs[].cents':                 { class: 'raw',        unit: 'cents',   note: 'a one-off coming, in (direction in) or out; `on` is the month. From the one-pager. D-094' },
+    'household.oneOffs[].cents':                 { class: 'raw',        unit: 'cents',   note: 'a one-off coming, in (direction in) or out; `on` is the month. From the one-pager. D-094. Retired in D-130: the one-pager now writes a dated income entry (id oneoff_in) or a dated log entry (id oneoff_out), date estimated; this list is read only when neither exists (Schema.oneOffEntry)' },
     'person.unemployment.expectedSearchMonths':  { class: 'raw',        unit: 'months',  note: 'how long you expect the search to take; floorMonthlyCents is the bare-minimum month. Owned by Between Jobs. D-098' },
     'household.decumulation.stockShare':         { class: 'raw',        unit: 'ratio',   note: 'share of investments in stocks, for the VPW table; with plannedAnnualDrawCents and socialSecurityAt. Owned by Decumulation. D-098' },
     'household.tax.otherPreTaxAnnualCents':      { class: 'raw',        unit: 'cents',   note: 'pre-tax money beyond the workplace plan (HSA, traditional IRA), a year; withheldAnnualCents is what has been withheld. Owned by Tax. D-098' },
@@ -1683,24 +1683,47 @@
   }
   /**
    * The rent a month, one number (D-130, MONEY-MAP.md Q11). Cash Flow's
-   * housing line — a monthly expense entry in the `housing` category that
-   * is not a logged occurrence — is the fact; the Housing Decision room's
+   * housing line — a monthly expense entry in the `housing` category, the
+   * typical-month line or a recurring one logged on its day — is the
+   * fact; the Housing Decision room's
    * own field is only a place you would rent INSTEAD, read when there is
    * no line. Returns { cents, source: 'cash-flow' | 'housing' | 'none',
    * entryId } — never a guess; the rooms that guess say so themselves.
    */
   function rentMonthlyCents(household) {
     var h = household || {};
-    var lines = ((h.expenses && h.expenses.entries) || []).filter(function (e) {
-      return e && e.active !== false && e.categoryId === 'housing' && e.source !== 'log' && e.period !== 'once' && Money.isEntered(e.amountCents) && e.amountCents > 0;
+    var all = ((h.expenses && h.expenses.entries) || []).filter(function (e) {
+      return e && e.active !== false && e.categoryId === 'housing' && e.period !== 'once' && Money.isEntered(e.amountCents) && e.amountCents > 0;
     });
+    /* The typical-month line first; failing that, a recurring rent logged
+       on its day in the expense log (D-130, Q5) — never both. */
+    var lines = all.filter(function (e) { return e.source !== 'log'; });
+    if (!lines.length) lines = all.filter(function (e) { return e.source === 'log'; });
     if (lines.length) {
       var total = lines.reduce(function (t, e) { return t + e.amountCents; }, 0);
-      return { cents: total, source: 'cash-flow', entryId: lines[0].id, count: lines.length };
+      return { cents: total, source: 'cash-flow', entryId: lines[0].id, count: lines.length, logged: lines[0].source === 'log' };
     }
     var own = (h.housing || {}).rentMonthlyCents;
     if (Money.isEntered(own) && own > 0) return { cents: own, source: 'housing', entryId: null, count: 0 };
     return { cents: null, source: 'none', entryId: null, count: 0 };
+  }
+
+  /**
+   * The one-pager's one-off, wherever it lives (D-130, MONEY-MAP.md Q5):
+   * a dated income entry (`oneoff_in`) or a dated log entry (`oneoff_out`)
+   * since D-130, else the legacy `household.oneOffs[0]`. Returns
+   * { cents, direction, on: 'YYYY-MM', where: 'ledger'|'log'|'legacy' } or null.
+   */
+  var ONE_OFF_IN = 'oneoff_in', ONE_OFF_OUT = 'oneoff_out';
+  function oneOffEntry(household) {
+    var h = household || {};
+    var inc = ((h.ledger && h.ledger.income) || []).filter(function (e) { return e && e.id === ONE_OFF_IN && e.active !== false; })[0];
+    if (inc && Money.isEntered(inc.amountCents)) return { cents: inc.amountCents, direction: 'in', on: inc.receivedOn ? inc.receivedOn.slice(0, 7) : null, where: 'ledger', id: inc.id };
+    var out = ((h.expenses && h.expenses.entries) || []).filter(function (e) { return e && e.id === ONE_OFF_OUT && e.active !== false; })[0];
+    if (out && Money.isEntered(out.amountCents)) return { cents: out.amountCents, direction: 'out', on: out.date ? out.date.slice(0, 7) : null, where: 'log', id: out.id };
+    var legacy = (h.oneOffs || [])[0];
+    if (legacy && Money.isEntered(legacy.cents)) return { cents: legacy.cents, direction: legacy.direction === 'in' ? 'in' : 'out', on: legacy.on || null, where: 'legacy', id: legacy.id };
+    return null;
   }
 
   function monthlyExpensesCents(household) {
@@ -1958,6 +1981,9 @@
     employerMatchCents: employerMatchCents,
     monthlyExpensesCents: monthlyExpensesCents,
     rentMonthlyCents: rentMonthlyCents,
+    oneOffEntry: oneOffEntry,
+    ONE_OFF_IN: ONE_OFF_IN,
+    ONE_OFF_OUT: ONE_OFF_OUT,
     closedAverageExpensesCents: closedAverageExpensesCents,
     CLOSED_AVERAGE_MONTHS: CLOSED_AVERAGE_MONTHS,
     expenseDivergenceCents: expenseDivergenceCents,
