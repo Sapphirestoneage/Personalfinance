@@ -4,29 +4,44 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Unlearning · SPARKS</title>
-<meta name="description" content="What your job actually pays, once you count every hour it takes and everything it costs you to do it."/>
+<meta name="description" content="The advice everyone hears, sorted by whether it still applies to you — and the rules you have let go of."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. THE TEMPLATE ROOM. DECISIONS.md D-097.
+  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md D-101.
 
-  1. READS   The person's income (owned by Start Here) and filingStatus, for
-             the tax estimate; a month's spending, for the lens.
-  2. WRITES  It OWNS person.work — paid hours, unpaid overtime, commute,
-             work costs, weeks a year, and (folded) prep and decompression.
-             Nothing else edits those. It does not touch income.
-  3. CALLS   engines/hourly.js. Tax comes from engines/tier0.js's effective-
-             rate lookup, never a second calculation.
-  4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses and says so (Gate.fillGuesses). Each unpaid-
-             hours box is optional: blank is none, not unanswered.
-  5. CONFIG  data/effective_tax_rates_2026.json.
+  1. READS   A month's spending, cash, and gross income (all owned by Start
+             Here) — through them, your FOO step (engines/foo.js) and your
+             banded ratios (engines/ratios.js), which is what every rule in
+             data/unlearning.json is judged against.
+  2. WRITES  It OWNS household.unlearning.dropped — the ids of the rules
+             you have let go of (ownership row unlearningDropped). Two
+             inputs: a select "A rule" that picks which rule the second
+             input acts on, and a choice "Have you let it go?" that adds or
+             removes that rule's id via Spine.set('unlearning.dropped', …).
+             THE SELECT IS PAGE-LOCAL: which rule is showing is not a fact
+             about the household, so its read returns a page variable
+             (defaulting to the first "stop believing" rule), its write sets
+             that variable, and it calls nothing on the spine. Only the
+             choice writes.
+  3. CALLS   engines/unlearning.js — standing (the step and the zones),
+             judge (one rule against them), classify (every rule, the
+             counts, the ones to drop, the ones let go of early). The FOO
+             step and the ratio verdicts come from their engines, never a
+             second calculation. The dashboard's learn/unlearn block
+             (engines/advice.js, D-096) is the top line of this ladder; this
+             room does not repeat its items and the drawer names it.
+  4. EMPTY   Opened with an empty spine it renders with the intake's guesses
+             and says so (Gate.fillGuesses). With nothing to judge by — no
+             placement and no ratio verdict — every rule is unknown and the
+             number says so rather than showing a count.
+  5. CONFIG  data/unlearning.json (the rules), data/foo_rules.json (the
+             ladder), data/ratio_benchmarks.json (the bands).
 
-  THE SHAPE (shared/room.js, frozen here): one number, one chart, the lens,
-  five inputs and two folded, the assumptions drawer with sources, why
-  this matters at your stage, one out-of-scope line to Get Help. The ids
-  below are the deep links.
+  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens, two
+  inputs, the assumptions drawer with sources, why this matters at your
+  stage, one out-of-scope line to Get Help. The ids below are the deep links.
 
   LIVE-FORM: built once — shared/room.js builds the inputs from the spec
   on load and only sets .value, never under focus.
@@ -57,26 +72,26 @@
 
   <section class="slaf-card" id="number">
     <div class="room-head-row">
-      <span class="slaf-eyebrow">Your real rate</span>
+      <span class="slaf-eyebrow">Rules that no longer apply</span>
       <div id="room-lens"></div>
     </div>
     <div class="room-number" id="room-number"></div>
   </section>
 
   <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Where the week goes</span>
+    <span class="slaf-eyebrow">Applies, past it, not yet</span>
     <div id="room-chart"></div>
   </section>
 
   <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The hours the job takes</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave anything blank that doesn't apply — working from home means no commute, and blank is none rather than unanswered.</p>
+    <span class="slaf-eyebrow">Let go</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Pick a rule, then say whether you have let it go. The room remembers; the count above only drops for rules it also marks past you.</p>
     <div id="room-inputs"></div>
   </section>
 
   <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">Priced in life</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">What the rules you are past are about, where they are about an amount. The toggle up top reads them as dollars, hours of your life, or months of FI bought or pushed.</p>
     <ul class="room-amounts" id="room-amounts"></ul>
   </section>
 
@@ -94,8 +109,9 @@
   </section>
 
   <p class="disclaimer">
-    Educational tool, not financial advice. Tax is estimated from a flat
-    effective-rate table, not a return. Your numbers stay in this browser.
+    Educational tool, not financial advice. Which advice fits which step is
+    a judgement written down in a table, not a finding. Your numbers stay in
+    this browser.
   </p>
 </main>
 
@@ -111,7 +127,16 @@
 <script src="../shared/gate.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../engines/statement.js"></script>
+<script src="../engines/benchmarks.js"></script>
+<script src="../engines/ratios.js"></script>
 <script src="../engines/hourly.js"></script>
+<script src="../engines/debt.js"></script>
+<script src="../engines/advice.js"></script>
+<script src="../engines/unlearning.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
 <script src="../shared/room.js"></script>
@@ -119,111 +144,140 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Hourly = SLAF.Hourly, Charts = SLAF.Charts, Room = SLAF.Room;
+      Unlearning = SLAF.Unlearning, Advice = SLAF.Advice, Charts = SLAF.Charts, Room = SLAF.Room;
 
-  /* ---- writes: this room owns person.work ------------------------------------ */
-  function writeWork(key, value) {
-    var person = Spine.ensurePrimaryPerson('You');
-    var current = Schema.workProfile(Schema.personById(Spine.getProfile(), person.id));
-    var next = Object.assign({}, current);
-    next[key] = value;
-    Spine.upsertPerson({ id: person.id, work: next });
-  }
-  function readWork(h) { return Schema.workProfile(Schema.primaryPerson(h)); }
-  function hoursInput(key, label, placeholder, hint) {
-    return { ctl: key, label: label, kind: 'number', placeholder: placeholder, affix: 'h', hint: hint,
-      read: function (h) { return readWork(h)[key]; }, write: function (v) { writeWork(key, v === null || v <= 0 ? null : v); } };
-  }
-  function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
+  var TABLES = null;          /* set by ready(); the inputs need the table to list the rules */
+  var selectedId = null;      /* page-local: which rule the choice acts on. Not a household fact. */
+  var ADVICE_CHARS = 50;
 
-  var HOUR_COLOURS = { paid: Charts.COLORS.series[0], unpaidOvertimeHoursPerWeek: Charts.COLORS.series[3], commuteHoursPerWeek: Charts.COLORS.series[1], prepHoursPerWeek: Charts.COLORS.series[2], decompressHoursPerWeek: Charts.COLORS.series[4] };
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function short(text) { var t = String(text || ''); return t.length > ADVICE_CHARS ? t.slice(0, ADVICE_CHARS - 1).replace(/\s+\S*$/, '') + '…' : t; }
+  function quote(text) { return '‘' + text + '’'; }
+  function rules() { return TABLES && TABLES.unlearning ? TABLES.unlearning.rules : []; }
+  function classified(h) { return Unlearning.classify(h, TABLES, {}); }
+
+  /* The rule showing: the page's pick if it is a real id, else the first
+     "stop believing" rule, else the first rule in the table. */
+  function currentId(h) {
+    var all = rules();
+    if (selectedId && all.some(function (r) { return r.id === selectedId; })) return selectedId;
+    var c = classified(h);
+    var firstStop = c.columns && c.columns.stop.length ? c.columns.stop[0] : null;
+    return firstStop ? firstStop.id : (all.length ? all[0].id : null);
+  }
+  function rowById(c, id) { return (c.rows || []).filter(function (r) { return r.id === id; })[0] || null; }
+
+  /* ---- writes: this room owns household.unlearning.dropped -------------------- */
+  function writeDropped(id, letGo) {
+    if (!id) return;
+    Spine.set('unlearning.dropped', Unlearning.toggle(Unlearning.droppedIds(Spine.getProfile()), id, letGo));
+  }
+
+  var STATUS_ROWS = [
+    { status: 'applies', label: 'Still applies', color: Charts.COLORS.target },
+    { status: 'stop',    label: 'Stop believing', color: Charts.COLORS.growth },
+    { status: 'notYet',  label: 'Not yet', color: Charts.COLORS.contributed },
+    { status: 'unknown', label: 'Unknown', color: Charts.COLORS.muted }
+  ];
 
   Room.mount({
-    id: 'unlearning', /* STUB — being built (D-101) */
-    tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
-    reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'],
+    id: 'unlearning',
+    tables: null,   /* all of them: the ratios and the advice line read across the set */
+    reads: ['monthlyExpenses', 'cashSavings', 'grossAnnualIncome'],
+    ready: function (t) { TABLES = t; },
 
     number: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return { label: 'Actually, an hour', value: null, reason: w.reason + (/not earning/.test(w.reason || '') ? '' : '') };
-      var sub = 'On paper <strong>' + perHour(w.nominalHourlyCents) + '</strong> · you keep <strong>' + Money.formatRate(w.retained, { decimals: 0 }) + '</strong> of it'
-        + ' · ' + Money.formatCents(w.keptAnnualCents) + ' kept over ' + w.annualTotalHours.toLocaleString('en-US') + ' hours a year';
-      if (w.costsMoreThanItPays) sub += '. <strong>This job costs more than it pays</strong> — check the monthly costs; if they are right, that is the finding';
-      if (w.implausibleHours) sub += '. ' + w.paidHoursPerWeek + ' paid hours a week makes this look enormous; the arithmetic is right, the comparison is not';
-      if (!w.taxKnown) sub += '. Tax is not in yet: ' + (w.taxReason || '');
-      return { label: 'Actually, an hour', value: perHour(w.realHourlyCents), sub: sub, zone: w.costsMoreThanItPays ? 'out' : (w.retained !== null && w.retained < 0.5 ? 'watch' : null), result: w };
+      var c = Unlearning.classify(h, T, {});
+      var label = 'Rules that no longer apply';
+      if (!Money.isOk(c)) return { label: label, value: null, reason: c.reason };
+      var k = c.counts;
+      var parts = ['of ' + k.total];
+      parts.push(k.dropped + ' let go');
+      parts.push(k.applies + ' still ' + (k.applies === 1 ? 'applies' : 'apply'));
+      parts.push(k.notYet + ' not yet');
+      if (k.unknown) parts.push(k.unknown + ' unknown');
+      if (c.next) parts.push('the next to drop: <strong>' + esc(quote(c.next.advice)) + '</strong> — ' + esc(c.next.why));
+      else parts.push('<strong>nothing left to drop</strong> — every rule you are past, you have let go of');
+      var sub = parts.join(' · ');
+      if (c.letGoEarly.length) {
+        sub += '. <strong>Let go early:</strong> ' + c.letGoEarly.map(function (r) { return esc(quote(r.advice)) + ' — ' + (r.status === 'applies' ? 'it still applies' : 'it is not due yet') + ' (' + esc(r.why) + ')'; }).join('; ');
+      }
+      return { label: label, value: String(c.value), sub: sub, zone: c.zone, result: c };
     },
 
     chart: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return Charts.stacked({ rows: [], empty: 'Add your paid hours to see where the week goes.' });
-      var parts = [{ label: 'Paid', value: w.paidHoursPerWeek, color: HOUR_COLOURS.paid }].concat((w.unpaidParts || []).map(function (p) { return { label: p.label, value: p.hours, color: HOUR_COLOURS[p.key] }; }));
-      var gross = w.grossAnnualIncomeCents, tax = w.estimatedTaxCents || 0, costs = w.annualWorkCostsCents, kept = w.keptAnnualCents;
-      return Charts.stacked({
-        title: 'Hours a week, and where the pay goes',
-        rows: [
-          { label: 'Your week', note: w.totalHoursPerWeek + ' h, ' + w.paidHoursPerWeek + ' paid', parts: parts },
-          { label: 'A year of pay', note: 'per ' + Money.formatCents(gross), parts: [
-            { label: 'Kept', value: kept / gross * w.totalHoursPerWeek, color: Charts.COLORS.growth },
-            { label: 'Tax', value: tax / gross * w.totalHoursPerWeek, color: Charts.COLORS.debt },
-            { label: 'Costs of working', value: costs / gross * w.totalHoursPerWeek, color: Charts.COLORS.series[3] }
-          ] }
-        ],
-        format: function (v) { return (Math.round(v * 10) / 10) + ' h'; }
+      var c = Unlearning.classify(h, T, {});
+      if (!c.counts) return Charts.bars({ rows: [], empty: 'The rules table did not load.' });
+      var k = c.counts;
+      return Charts.bars({
+        title: 'Every rule in the table, by whether it fits you now',
+        rows: STATUS_ROWS.map(function (s) {
+          var note = s.status === 'stop' ? (k.stopDropped + ' of these let go of') : s.status === 'unknown' ? (k.unknown ? 'nothing to judge them by yet' : '') : '';
+          return { label: s.label, value: k[s.status], color: s.color, note: note || undefined };
+        }),
+        max: k.total,
+        format: function (v) { return v + (v === 1 ? ' rule' : ' rules'); }
       });
     },
 
     inputs: [
-      hoursInput('contractedHoursPerWeek', 'Paid hours a week', 'e.g. 40'),
-      hoursInput('unpaidOvertimeHoursPerWeek', 'Unpaid overtime', 'e.g. 3'),
-      hoursInput('commuteHoursPerWeek', 'Commuting', 'e.g. 5'),
-      { ctl: 'workCostsMonthlyCents', label: 'Costs of working, a month', kind: 'money', placeholder: 'e.g. 400', hint: 'Petrol, parking, transit, work clothes, lunches you would not otherwise buy, childcare only while working.',
-        read: function (h) { return readWork(h).workCostsMonthlyCents; }, write: function (v) { writeWork('workCostsMonthlyCents', v); } },
-      { ctl: 'weeksPerYear', label: 'Weeks worked a year', kind: 'number', placeholder: String(Schema.WORK_DEFAULTS.weeksPerYear),
-        read: function (h) { var w = readWork(h).weeksPerYear; return w === Schema.WORK_DEFAULTS.weeksPerYear ? null : w; }, write: function (v) { writeWork('weeksPerYear', v === null || v <= 0 ? Schema.WORK_DEFAULTS.weeksPerYear : v); } }
-    ],
-    moreLabel: 'The hours around the job',
-    more: [
-      hoursInput('prepHoursPerWeek', 'Getting ready', 'e.g. 2.5'),
-      hoursInput('decompressHoursPerWeek', 'Decompressing', 'e.g. 2.5')
+      { ctl: 'ruleId', label: 'A rule', kind: 'select', options: [],
+        read: function (h) { return currentId(h); },
+        /* Page-local. Sets which rule the choice below acts on; touches nothing in the spine. */
+        write: function (v) { selectedId = v || null; } },
+      { ctl: 'letGo', label: 'Have you let it go?', kind: 'choice', options: [['yes', 'Let go'], ['no', 'Still holding it']],
+        hint: 'Letting a rule go is remembered with your household. If it still applies, the room says so rather than hiding it.',
+        read: function (h) { var id = currentId(h); return id && Unlearning.droppedIds(h).indexOf(id) >= 0 ? 'yes' : 'no'; },
+        write: function (v) { writeDropped(currentId(Spine.getProfile()), v === 'yes'); } }
     ],
 
     amounts: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
+      var c = Unlearning.classify(h, T, {});
       var spend = Schema.monthlyExpensesCents(h);
-      var rows = [];
-      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
-      if (Money.isOk(w)) {
-        rows.push({ label: 'A year of tax, estimated', cents: w.estimatedTaxCents || 0 });
-        if (w.annualWorkCostsCents > 0) rows.push({ label: 'A year of the costs of working', cents: w.annualWorkCostsCents });
-      }
-      rows.push({ label: 'A $1,200 thing you are eyeing', cents: 120000 });
-      return rows;
+      return Unlearning.amounts(c, Money.isOk(spend) ? spend.value : null).map(function (a) {
+        return { label: a.label, cents: a.cents, href: '#inputs' };
+      });
     },
 
     assumptions: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      var tax = T.effectiveTaxRates;
-      var work = readWork(h);
-      return [
-        { label: 'Tax', value: Money.isOk(w) && w.taxKnown ? Money.formatRate(w.effectiveRate || (w.estimatedTaxCents / w.grossAnnualIncomeCents), { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')' },
-        { label: 'Weeks a year', value: String(Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear), source: Money.isEntered(work.weeksPerYear) && work.weeksPerYear !== Schema.WORK_DEFAULTS.weeksPerYear ? 'yours' : 'the default: 52 less four weeks of leave and holidays (convention)' },
-        { label: 'Unpaid hours', value: 'count as work', source: 'Your Money or Your Life: an hour the job takes is an hour it costs, paid or not (convention)' },
-        { label: 'Real return, for the lens', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' }
+      var c = Unlearning.classify(h, T, {});
+      var u = T.unlearning, foo = T.fooRules, bands = T.ratioBenchmarks, adv = T.adviceTranslator;
+      var where = c.step !== null && c.step !== undefined ? 'step ' + c.step : c.range ? 'at least step ' + c.range[0] : 'not placed yet';
+      var zoneIds = Object.keys(c.zones || {});
+      var pick = Advice && adv ? Advice.pick(h, T) : null;
+      var rows = [
+        { label: 'The rules', value: u.rules.length + ' rules, v' + u.version, source: u.source + ' (' + u.confidence + ')' },
+        { label: 'A rule’s step range', value: 'a judgement', source: u.confidenceNote },
+        { label: 'Your step', value: where, source: 'engines/foo.js against data/foo_rules.json v' + foo.version + ' — ' + foo.source + ' (' + foo.confidence + ')' + (c.range && c.step === null ? '. The ladder stopped on a step it could not judge, so rules are sorted against the range you could be in' : '') },
+        { label: 'Your bands', value: zoneIds.length ? zoneIds.map(function (id) { return id + ' ' + c.zones[id]; }).join(', ') : 'no ratio has a verdict yet', source: 'engines/ratios.js against data/ratio_benchmarks.json v' + bands.version + ' (' + bands.confidence + '). ' + bands.confidenceNote },
+        { label: 'The dashboard’s learn/unlearn line', value: pick && Money.isOk(pick) ? pick.item.headline + ' (' + pick.item.kind + ')' : 'nothing to translate yet',
+          source: 'engines/advice.js + data/advice_translator.json' + (adv ? ' v' + adv.version : '') + ' (D-096): one piece of advice restated for your numbers. It is the top line of this ladder; this room sorts the whole table and does not repeat its items. Home → the third block.' }
       ];
+      return rows;
     },
 
     why: function (h, T, situation) {
       return {
-        employed: 'Employed, the headline rate is the one on the offer letter. This one is the rate that decides whether the next thing — a raise, a move, an hour of overtime — is worth it.',
-        selfEmployed: 'Self-employed, there is no headline rate, only this one: what is left after the tax you set aside and the hours the work really takes, including the ones nobody bills.',
-        mixed: 'With a job and your own work, each has a real rate. This reads the job; put the own-work hours in as a second job in Start Here to compare them.',
-        student: 'A part-time job at a student’s stage is priced against study hours, not against a career. If the real rate is low, the question is what the hours are taking from.',
-        betweenJobs: '', retired: ''
-      }[situation] || 'Any job has a headline rate and a real one. The gap between them is what this room measures.';
+        employed: 'Employed, most of what you were told was told to someone on a different step. The ladder places you; the rules you are past are the ones to stop paying for — a starter fund kept growing, a debt prepaid over a match.',
+        selfEmployed: 'Self-employed, the rules were written for a paycheque: “take the match” has no match to take, and “six months of cash” means six months of a lumpier income. The step still sorts them; the source column says who was talking.',
+        mixed: 'With a job and your own work, the job’s ladder is the one the rules are judged on. What applies to the paycheque side applies; what the own-work side would change is the buffer, not the order.',
+        student: 'At a student’s stage most of the list is not yet: the ladder has not started, so the rules for the middle of it are for later. What applies now is the short list at the top — no balance carried, and a first fund.',
+        retired: 'Retired, the ladder is behind you and most of the list is past you: save first, take the match, build the fund. What is left is the handful of rules that never expire. The rest is the point of this room — the rule was true once, for someone on that step.',
+        betweenJobs: 'Between jobs the ladder pauses where it was; the rules you were past stay past, and “six months of cash” stops being advice and becomes the runway. Sort by what applies to the step you are holding, not the one you fear.'
+      }[situation] || 'Every rule here was true for someone on some step. This room sorts them by whether that step is yours.';
     },
 
-    scope: 'This room does not model overtime pay, shift differentials, or a second job’s hours on their own. Tax is a flat estimate, not a return.'
+    scope: 'This room does not tell you what to believe; it sorts what you have heard by whether it still fits, and remembers what you let go of.',
+
+    after: function (h, T) {
+      /* The select's options come from the table, which is not loaded when
+         the template builds the controls. Fill them once, then only ever
+         set .value like the template does. */
+      var node = document.querySelector('[data-ctl="ruleId"]');
+      if (!node || node.options.length) return;
+      rules().forEach(function (r) { var o = document.createElement('option'); o.value = r.id; o.textContent = short(r.advice); node.appendChild(o); });
+      node.value = currentId(h) || '';
+    }
   });
 })();
 </script>

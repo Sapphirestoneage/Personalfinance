@@ -1,11 +1,11 @@
 {
   "id": "unlearning",
-  "version": "1.0",
+  "version": "1.1",
   "asOf": "2026-01-01",
   "source": "The Unlearning ladder (BRIEF §8): the advice everyone hears, sorted by whether it applies at your FOO step and where your banded ratios sit. Steps from data/foo_rules.json; zones from data/ratio_benchmarks.json.",
   "confidence": "convention",
   "confidenceNote": "The mapping of advice to steps is a judgement, not a finding. It is here so it can be argued with line by line rather than baked into copy.",
-  "note": "rules: each line names the advice, who says it, and when it applies — by FOO step (steps: [min, max]) and/or by a ratio's zone. Status is derived: applies / stop believing (you are past it) / not yet (you are before it) / unknown (nothing to judge by). No model call; every rule is a range. D-101.",
+  "note": "rules: each line names the advice, who says it, and when it applies — by FOO step (steps: [min, max], 0–9) and/or by a ratio's zone (ratio: {id, zones}). Status is derived: applies / stop believing (you are past it) / not yet (you are before it) / unknown (nothing to judge by). No model call; every rule is a range. Optional amountCents (the dollar figure a rule is about) or months (of spending) let the lens price a rule; a rule with neither carries no amount. D-101.",
   "rules": [
     {
       "id": "starter-fund-first",
@@ -15,7 +15,8 @@
         0,
         1
       ],
-      "note": "The first thing a deductible has to meet. After step 1 it is done, and 'save more cash first' becomes the thing to stop believing."
+      "note": "The first thing a deductible has to meet. After step 1 it is done, and 'save more cash first' becomes the thing to stop believing.",
+      "amountCents": 100000
     },
     {
       "id": "pay-off-all-debt-before-investing",
@@ -52,7 +53,8 @@
         4,
         4
       ],
-      "note": "Step 4's job. Before it, the starter fund and the match come first; after it, more cash is a choice, not a rule."
+      "note": "Step 4's job. Before it, the starter fund and the match come first; after it, more cash is a choice, not a rule.",
+      "months": 6
     },
     {
       "id": "cut-the-lattes",
