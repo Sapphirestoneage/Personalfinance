@@ -117,13 +117,15 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/net-worth.html',
+    room: '/rooms/statement.html',
     container: '#asset-list',
     seed: 'demo',
     prepare: async (page) => { await page.tap('#btn-add'); },
     fields: [
-      { sel: '#asset-list input[data-field="label"]', type: 'The car' },
-      { sel: '#asset-list input[data-field="valueCents"]', type: '5000' }
+      /* The first cards are Start Here's cash and investments, whose names
+         and values are read-only here; the tap on #btn-add appends ours. */
+      { sel: '#asset-list .asset:last-child input[data-field="label"]', type: 'The car' },
+      { sel: '#asset-list .asset:last-child input[data-field="valueCents"]', type: '5000' }
     ],
     expect: async (page) => {
       const a = await page.evaluate(() =>

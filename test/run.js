@@ -6065,6 +6065,48 @@ Registry.all().forEach(function (room) {
    byte-identical here. If this fails you have not broken anything yet — you
    have edited one of a pair, and the fix is to copy it across.
    ========================================================================== */
+section('The Statement room');
+
+(function () {
+  /* D-067: The Statement replaces Net Worth as the owner of the itemised
+     assets and of net worth itself; the old file is a redirect. */
+  const stmt = Registry.byId('statement');
+  checkTrue('The Statement is registered', !!stmt);
+  check('as a core room', stmt.kind, 'core');
+  check('at the old Net Worth position', stmt.order, 5);
+  checkTrue('Net Worth is no longer a room', !Registry.byId('net-worth'));
+  const html = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
+  const stub = fs.readFileSync(path.join(ROOT, 'rooms/net-worth.html'), 'utf8');
+  checkTrue('the old Net Worth file redirects to it', /url=statement\.html/.test(stub));
+  ['#out-net-worth', '#ledger', '#from-elsewhere'].forEach(function (old) {
+    checkTrue(`old deep link ${old} is mapped`, stub.indexOf("'" + old + "'") !== -1);
+  });
+  checkTrue('the room declares its live-form policy', /LIVE-FORM: guarded/.test(html));
+  checkTrue('the room takes no debt input (Debt Payoff owns debts)', !/data-field="balanceCents"/.test(html));
+
+  check('itemised assets are owned by The Statement', Ownership.field('otherAssets').owner, 'statement');
+  check('net worth is owned by The Statement', Ownership.field('netWorth').owner, 'statement');
+  check('so is the weighted figure', Ownership.field('confidenceWeightedNetWorth').owner, 'statement');
+  check('and money that is coming', Ownership.field('futureIncome').owner, 'statement');
+  checkTrue('cash is still asked in Start Here', Ownership.field('cashSavings').owner === 'start');
+  ['otherAssets', 'netWorth', 'confidenceWeightedNetWorth', 'futureIncome'].forEach(function (f) {
+    const a = Ownership.field(f).anchor;
+    checkTrue(`${f} links to an anchor that exists`, new RegExp('id="' + a + '"').test(html));
+  });
+
+  const h = Demo.build();
+  const nothing = Ownership.field('confidenceWeightedNetWorth').read(h);
+  check('unrated everywhere: no weighted figure', nothing.status, 'incomplete');
+  h.assets[0].confidence = 3;
+  const some = Ownership.field('confidenceWeightedNetWorth').read(h);
+  check('one asset rated "do not count on it": half of it, less all the debt',
+    some.value, Math.round(h.assets[0].valueCents * 0.5) - Schema.totalDebtCents(h).value);
+  check('nothing coming: incomplete', Ownership.field('futureIncome').read(h).status, 'incomplete');
+  h.futureIncome = [Schema.createFutureIncome({ label: 'Pension', monthlyCents: 120000, startsAtAge: 67 }),
+                    Schema.createFutureIncome({ label: 'Maybe', monthlyCents: null })];
+  check('future income is the sum of the entered monthly amounts', Ownership.field('futureIncome').read(h).value, 120000);
+})();
+
 section('The D&D folder\'s vendored copies');
 
 (function () {

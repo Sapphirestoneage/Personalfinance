@@ -109,6 +109,8 @@ engines/            Shared calculation engines — one function per concept
   runway.js           how long the money lasts when the income stops
   health.js           the health score: ratios, weighted by age cohort
   income.js           hourly/weekly/monthly pay into a year, and jobs by month
+  tax.js              federal ordinary + capital gains, FICA, a state schedule, the ACA cliff
+  statement.js        three portfolios, weighted net worth, the ladder, the bridge, the worst year
 data/               Versioned reference tables (JSON, never inlined in code)
 test/run.js         Re-derives every formula outside the browser
 test/alignment.js   Browser layout check — side-by-side cells must line up

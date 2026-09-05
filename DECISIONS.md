@@ -3679,6 +3679,72 @@ Nothing here re-implements a formula that exists: FI years come from
 
 ---
 
+## D-067 — Net Worth becomes The Statement, and every asset gets rated where it is listed
+
+*(BRIEF.md §3.2, §3.4, §3.6 — the room.)* `rooms/net-worth.html` was a list
+of what you own and one number. `rooms/statement.html` replaces it, keeps
+its place on the path (core, order 5) and its tags, and takes over what it
+owned: the itemised assets (`otherAssets`) and net worth itself. Cash and
+investments stay Start Here's; the Statement renders them as field-sized
+chips that link back, and lets you rate them without owning them.
+
+**What the room does, top to bottom.** Three portfolios with the plain net
+worth beside the confidence-weighted one · every aggregatable asset, one
+card each, with liquidity and confidence selects (blank = "Not rated", the
+rule's default named in the blank option, proposed never stored per D-060)
+and a `<details>` for cost basis, monthly cash flow, hassle and an access-age
+override · the liquidity ladder · the bridge to 59½ · your bracket, a table
+built from `federal_brackets_2026.json` with the estimate from
+`engines/tax.js` under it · the worst plausible year · money that is coming
+(`household.futureIncome`, one card each) · reading from elsewhere, and a
+print button with a print stylesheet.
+
+**Decisions made here:**
+
+- **`liquid` follows the rating.** Setting liquidity writes
+  `liquid = liquidity <= 2` in the same patch, so `engines/ratios.js` and
+  every other reader of `asset.liquid` agree with the ladder. Rating your
+  savings account "within 12 months" takes it out of the liquidity ratio,
+  which is what the rating means.
+- **Kind is by category unless you say otherwise.** An investment entered
+  as one line shows "By category (Taxable)" as its blank option, and the
+  portfolio label says "(taxable, by category)" until a character is
+  chosen. A cash account has no Kind select — it is cash. An intake total
+  marked `unknown` keeps that mark when the blank option is re-selected, so
+  Start Here's one-total mode still recognises it.
+- **No debt input.** Debts belong to Debt Payoff (D-017); the statement
+  reads `totalDebt` and links to it. `test/run.js` checks the room has no
+  balance field.
+- **Two new derived ownership rows**, both owned here and read-only
+  everywhere: `confidenceWeightedNetWorth` (anchor `portfolios`; `Ownership`
+  reaches the engine and the weights table via `require` in node and via
+  `Reference.cached('confidenceWeights')` in a browser — a table the room
+  loads at boot) and `futureIncome` (the sum of the entered monthly
+  amounts, anchor `future`).
+- **The old file is a redirect.** `rooms/net-worth.html` stays so every old
+  link keeps working: `#out-net-worth` and `#ledger` land on `#portfolios`,
+  `#from-elsewhere` on `#reading`, anything else is passed through. It is
+  not in the registry and has no inputs.
+
+**Compatibility note.** No stored shape changed in this entry (the fields
+were added in D-064). What changed is who writes: itemised assets and the
+ratings on any asset are written by `statement`, through
+`Spine.upsertAsset`, and `futureIncome` rows through
+`Spine.upsertFutureIncome`. A future room that wants to show an asset's
+liquidity, confidence, cost basis or access age reads it and links to
+`statement#assets`; it does not own a copy.
+
+**Verified.** `node test/run.js` (the room section: registry, redirect map,
+ownership rows, anchors, weighted figure = half the demo's rated cash less
+all its debt), a phone-browser walk against the demo (rate, add a property,
+add a pension; portfolios $35,900 → $355,900 with the condo; weighted
+−$16,850 with one asset at "don't count on it"; ladder $48,000 this month +
+$9,500 this year; bridge 8.5 yrs / $263,800 short; bracket 22% with $49,800
+of room; worst year $7,700 short; both old-hash redirects), `test/forms.js`
+on `#asset-list`, `test/alignment.js` on `.asset-grid` and `.pair`.
+
+---
+
 ## D-046 — HP is measured in weeks, which is what makes §3A stop contradicting itself
 
 The Dungeons & Dividends rulebook defines Hit Points twice in the same

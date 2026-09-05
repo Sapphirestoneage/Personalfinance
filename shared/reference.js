@@ -360,6 +360,9 @@
     lookupLiquidityBand: lookupLiquidityBand,
     CONFIDENCE_LEVELS: CONFIDENCE_LEVELS,
     marginalBracket: marginalBracket,
+    /* A table already loaded this session, or null — for a reader that
+       cannot wait on a promise (an ownership `read`). */
+    cached: function (name) { return cache[name] || null; },
     CONFIDENCE_LABELS: CONFIDENCE_LABELS,
     provenanceOf: provenanceOf,
     provenance: provenance,

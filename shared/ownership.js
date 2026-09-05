@@ -277,12 +277,38 @@
     /* The Net Worth room owns everything you own that Start Here doesn't
        ask about — a house, a car, anything else. */
     otherAssets: {
-      label: 'Property & other assets', owner: 'net-worth', anchor: 'assets',
+      label: 'Property & other assets', owner: 'statement', anchor: 'assets',
       read: function (h) { return Schema.otherAssetsCents(h); },
       format: money
     },
+    /* The Statement's own facts (D-067). Confidence-weighted net worth is
+       derived — it lives here so the dashboard and the map can read it as
+       one figure with one owner. */
+    confidenceWeightedNetWorth: {
+      label: 'Confidence-weighted net worth', owner: 'statement', anchor: 'portfolios',
+      read: function (h) {
+        var St = (typeof module === 'object' && module.exports)
+          ? require('../engines/statement.js')
+          : (typeof self !== 'undefined' && self.SLAF && self.SLAF.Statement);
+        var weights = (typeof module === 'object' && module.exports)
+          ? require('../data/confidence_weights.json')
+          : (typeof self !== 'undefined' && self.SLAF && self.SLAF.Reference && self.SLAF.Reference.cached && self.SLAF.Reference.cached('confidenceWeights'));
+        if (!St || !weights) return Money.incomplete('Not rated yet.', ['confidence']);
+        return St.confidenceWeightedNetWorth(h, weights);
+      },
+      format: money
+    },
+    futureIncome: {
+      label: 'Money that is coming', owner: 'statement', anchor: 'future',
+      read: function (h) {
+        var rows = (h.futureIncome || []).filter(function (f) { return Money.isEntered(f.monthlyCents); });
+        if (!rows.length) return Money.incomplete('Nothing listed.', ['futureIncome']);
+        return Money.ok(rows.reduce(function (s, f) { return s + f.monthlyCents; }, 0), { count: rows.length });
+      },
+      format: function (v) { return money(v) + '/mo'; }
+    },
     netWorth: {
-      label: 'Net worth', owner: 'net-worth', anchor: 'out-net-worth',
+      label: 'Net worth', owner: 'statement', anchor: 'portfolios',
       read: function (h) {
         var a = Schema.totalAssetsCents(h), d = Schema.totalDebtCents(h);
         if (!Money.isOk(a) || !Money.isOk(d)) {

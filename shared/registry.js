@@ -108,20 +108,25 @@
       ]
     },
     {
-      id: 'net-worth',
+      id: 'statement',
       kind: 'core',
       needs: ['cashSavings', 'investments', 'totalDebt'],
       order: 5,
-      title: 'Net Worth',
-      blurb: 'Everything you own, everything you owe, and the one number underneath. The place to add a house or a car.',
-      href: 'rooms/net-worth.html',
+      title: 'The Statement',
+      blurb: 'Everything you own in three portfolios, how sure you are of each, how fast you could reach it — and the one number underneath. The place to add a house or a car.',
+      href: 'rooms/statement.html',
       tier: 1,
       tags: ['debt'],
+      /* Replaces Net Worth (D-067); rooms/net-worth.html redirects here. */
       subsections: [
-        { id: 'out-net-worth',  label: 'Net worth' },
-        { id: 'assets',         label: 'What you own' },
-        { id: 'from-elsewhere', label: 'Counted, but owned elsewhere' },
-        { id: 'ledger',         label: 'The whole ledger' }
+        { id: 'portfolios', label: 'Three portfolios' },
+        { id: 'assets',     label: 'Rate what you own' },
+        { id: 'ladder',     label: 'The liquidity ladder' },
+        { id: 'bridge',     label: 'The bridge to 59½' },
+        { id: 'brackets',   label: 'Your bracket' },
+        { id: 'worst-year', label: 'The worst plausible year' },
+        { id: 'future',     label: 'Money that is coming' },
+        { id: 'reading',    label: 'Reading from elsewhere' }
       ]
     },
     {
