@@ -6467,7 +6467,7 @@ section('Three benchmarks, and where the new numbers show');
 section('The Rerank');
 
 (function () {
-  /* D-084: cost rank against value rank. */
+  /* D-085: cost rank against value rank. */
   const R = require(path.join(ROOT, 'engines/rerank.js'));
   const T = Object.assign({}, TABLES, { commonCosts: require(path.join(ROOT, 'data/common_costs.json')) });
   check('threshold is max(3, a quarter)', [4, 9, 12, 20, 40].map(R.threshold).join(','), '3,3,3,5,10');

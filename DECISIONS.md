@@ -4123,7 +4123,7 @@ Weather rows, the levels strip and the benchmarks card; the page sweep;
 
 ---
 
-## D-084 — The Rerank: cost order against value order, and the lines where they disagree
+## D-085 — The Rerank: cost order against value order, and the lines where they disagree
 
 *(BRIEF.md §5. T5, one room.)* `rooms/rerank.html` asks four things in
 four stages and shows one picture. The standalone prototype the brief
@@ -4222,8 +4222,9 @@ D-072–D-078. **The rule that settles it: whichever side is still unpushed
 renumbers.** It applied a third time: the SPARKS T4 entries, written as
 D-072–D-076 while the D&D T9 entries took those numbers on main, became
 D-079–D-083 on merge, and a fourth: the D&D T10 entry, written as D-079 while
-the T4 entries took that number, became D-084. From D-064 on, every number in
-this file is unique.
+the T4 entries took that number, became D-084; and the SPARKS Rerank entry,
+written as D-084 at the same time, moved to D-085 on merge. From D-064 on,
+every number in this file is unique.
 
 That this keeps happening is the argument for renumbering the seven duplicates
 and being done with it. It has not been worth interrupting feature work for so

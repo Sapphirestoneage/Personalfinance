@@ -138,8 +138,8 @@
     'expenses.entries[].categoryId':             { class: 'raw',        unit: 'enum',    note: 'an id from data/expense_categories.json' },
     'expenses.entries[].amountCents':            { class: 'raw',        unit: 'cents' },
     'expenses.entries[].period':                 { class: 'raw',        unit: 'enum',    values: ['monthly', 'once'] },
-    'expenses.entries[].source':                 { class: 'raw',        unit: 'enum',    values: ['manual', 'imported', 'rerank'], note: 'SPEC.md §12.5; rerank = a custom cost line typed on The Rerank, D-084' },
-    'rerank.rows[].id':                          { class: 'raw',        unit: 'id',      note: 'a categoryId, or an expense entry id for a custom line. D-084' },
+    'expenses.entries[].source':                 { class: 'raw',        unit: 'enum',    values: ['manual', 'imported', 'rerank'], note: 'SPEC.md §12.5; rerank = a custom cost line typed on The Rerank, D-085' },
+    'rerank.rows[].id':                          { class: 'raw',        unit: 'id',      note: 'a categoryId, or an expense entry id for a custom line. D-085' },
     'rerank.rows[].miss':                        { class: 'raw',        unit: 'enum',    values: ['yes', 'some', 'no'], note: 'would you miss it? null = not asked' },
     'rerank.rows[].who':                         { class: 'raw',        unit: 'enum',    values: ['me', 'both', 'show'], note: 'who is it really for: me, both of us, or for show' },
     'rerank.rows[].valueRank':                   { class: 'raw',        unit: 'count',   note: '1 = most valuable, set by hand on the rerank stage; null = not reranked, ordered by joy' },
@@ -504,7 +504,7 @@
     });
   }
 
-  /* The Rerank's answers beside each cost line (D-084). The 1-10 joy lives
+  /* The Rerank's answers beside each cost line (D-085). The 1-10 joy lives
      in ratings.rerank like every other rating; this holds the rest. */
   function createRerankRow(fields) {
     var f = fields || {};
@@ -830,7 +830,7 @@
       property: (f.property || []).map(createProperty),
       /* Target split, one screen, owned by Where It Goes. */
       allocation: createAllocation(f.allocation),
-      /* The Rerank's miss / who / value order per cost line. D-084. */
+      /* The Rerank's miss / who / value order per cost line. D-085. */
       rerank: createRerank(f.rerank),
       /* When you mean to stop, and when the coast variant grows to. Owned
          by FIRE; the unstored preview knob is gone. */
