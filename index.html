@@ -30,13 +30,23 @@
   whose weighting SPEC.md §12.4 still marks [PENDING], and choosing weights
   here to make a prettier picture would be deciding it by accident.
 
-  FIRST SCREEN — BRIEF §1.5. Six instruments in a fixed grid (Altitude,
-  Thrust, Fuel, Load, Distance, Heading), each with its change since the
-  last snapshot; then ONE next action from the FOO flags; then the age of
-  the three figures that move. The radar, weather, goals and every caveat
-  paragraph sit below the fold, the caveats behind ⓘ toggles.
-  shared/instruments.js is the list of the six — the same list a snapshot
-  freezes, so "since last time" always covers exactly what is on screen.
+  ONE SCREEN, FOUR BLOCKS — the one-pager brief, D-096. (1) Where you
+  are: the instruments that exist for this situation (Gate.exists via
+  shared/instruments.js), the situation's own number first; (2) the next
+  thing money should do, from the money order of operations (FOO flags),
+  the runway when between jobs, the withdrawal rate when retired; (3) the
+  next thing to learn or unlearn, from the Advice Translator
+  (engines/advice.js, data/advice_translator.json); (4) the date it points
+  to — the FI date, the day the cash runs out, or the age the money lasts
+  to — with the lens toggle (shared/lens.js). Undo and redo top right.
+  Nothing else on the screen: the radar, the ring and the climb, the
+  weather, the flight plan, the goals and the data controls are folded
+  under "The full panel" and "Your data".
+  shared/instruments.js is the list a snapshot freezes, so "since last
+  time" always covers exactly what is on screen.
+
+  THEMING: none this pass. A theme would be a class on <body> and a second
+  palette in shared/theme.css; nothing here names a colour of its own.
 
   LIVE-FORM: built once. There are no inputs on this page; the ⓘ toggles
   flip `hidden` on a node that is in the HTML.
@@ -64,6 +74,32 @@
   ol.legend .v.is-good { color: var(--color-positive); }
   ol.legend .v.is-watch { color: var(--color-caution); }
   ol.legend .v.is-out { color: var(--color-critical); }
+
+  /* The four blocks: two by two, one column on a phone; the first spans. */
+  .blocks { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+  .blocks .block { margin: 0; }
+  .blocks #where { grid-column: 1 / -1; }
+  @media (max-width: 720px) { .blocks { grid-template-columns: 1fr; } }
+  .block-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
+  .learn .headline { font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-2) 0 0; }
+  .learn .say, .date .say { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .learn .say strong, .date .say strong { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  .learn .go, .date .go { display: inline-block; margin-top: var(--space-2); color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); }
+  .learn.is-unlearn .headline { text-decoration: line-through; text-decoration-color: var(--color-caution); text-decoration-thickness: 2px; }
+  .date .big { display: block; font-family: var(--font-display); font-size: var(--text-2xl, 2rem); line-height: 1.1; margin-top: var(--space-2); font-variant-numeric: tabular-nums; }
+  .date .big.is-incomplete { font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text-faint); }
+  ul.lensed { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); }
+  ul.lensed li { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-1) 0; border-top: 1px solid var(--color-border); }
+  ul.lensed li span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--color-text); }
+  ul.lensed li a { color: inherit; text-decoration: none; }
+  ul.lensed li a:hover { text-decoration: underline; }
+  details.drawer { margin-top: var(--space-4); border: 1px dashed var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); }
+  details.drawer summary { cursor: pointer; font-family: var(--font-display); font-size: var(--text-md); padding: var(--space-2) 0; }
+  details.drawer summary small { display: block; font-family: var(--font-body); font-size: var(--text-xs); color: var(--color-text-faint); }
+  details.drawer .slaf-card { margin-top: var(--space-3); }
+  .inst a { color: inherit; text-decoration: none; display: contents; }
+  .inst.is-lead { border-color: var(--color-border-active); background: var(--color-surface-active); }
+  .inst.is-lead .big { font-size: var(--text-2xl, 2rem); }
 
   /* The first screen: six instruments in a fixed 3×2 grid, 2×3 on a phone. */
   .instruments { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); align-items: stretch; }
@@ -162,7 +198,7 @@
 <header class="room-head">
   <a class="room-back" href="map.html">← All rooms</a>
   <h1 id="page-title">The Dashboard</h1>
-  <p class="room-lede" id="page-lede">Every threshold ratio as one shape, plus altitude, fuel, engine load, thrust, weather and the flight plan — the whole panel at a glance.</p>
+  <p class="room-lede" id="page-lede">Where you are, the next thing money should do, the next thing to learn, and the date it all points to. Every number opens the room it came from.</p>
 </header>
 
 <main class="slaf-wrap">
@@ -191,24 +227,54 @@
     </div>
   </section>
 
-  <section class="slaf-card dash" id="panel">
-    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-2)">
-      <span class="slaf-eyebrow">The panel</span>
+  <!-- ONE SCREEN, FOUR BLOCKS (D-096). Every number opens the room it came from. -->
+  <div class="blocks">
+  <section class="slaf-card dash block" id="where">
+    <div class="block-head">
+      <span class="slaf-eyebrow">Where you are</span>
       <button type="button" class="info-toggle" id="btn-3d" aria-pressed="false" title="Every instrument three ways: dream, default, disaster">3D</button>
     </div>
     <div class="instruments" id="instruments"></div>
     <p class="why" id="three-d-why" hidden></p>
+  </section>
 
+  <section class="slaf-card dash block" id="next">
+    <span class="slaf-eyebrow">The next thing money should do</span>
     <div class="next" id="next-action" hidden>
-      <span class="cap">Next action</span>
       <p class="say" id="next-say"></p>
       <a class="go" id="next-go" href="#"></a>
     </div>
-
-    <div class="age-line" id="age-line"></div>
   </section>
 
-  <section class="slaf-card dash" id="out-radar" style="margin-top:var(--space-4)">
+  <section class="slaf-card dash block" id="learn">
+    <span class="slaf-eyebrow" id="learn-cap">The next thing to learn</span>
+    <div class="learn">
+      <p class="headline" id="learn-headline"></p>
+      <p class="say" id="learn-say"></p>
+      <a class="go" id="learn-go" href="#"></a>
+    </div>
+  </section>
+
+  <section class="slaf-card dash block" id="date">
+    <div class="block-head">
+      <span class="slaf-eyebrow" id="date-cap">The date it points to</span>
+      <div id="lens-host"></div>
+    </div>
+    <div class="date">
+      <span class="big" id="date-big">—</span>
+      <p class="say" id="date-say"></p>
+      <ul class="lensed" id="date-lensed"></ul>
+      <a class="go" id="date-go" href="#"></a>
+    </div>
+  </section>
+  </div>
+
+  <!-- Everything else is here, folded: the radar, the ring and the climb,
+       the weather, the flight plan, the goals, what the panel reads. -->
+  <details class="drawer dash" id="full-panel">
+    <summary>The full panel <small>The radar, the ring and the climb, the weather, the flight plan, the goals.</small></summary>
+    <div class="age-line" id="age-line"></div>
+  <section class="slaf-card dash" id="out-radar">
     <span class="slaf-eyebrow">All of it at once</span>
     <h2 style="margin:var(--space-2) 0 0">Am I in the green everywhere?</h2>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">
@@ -271,7 +337,11 @@
     <div id="reading-list" style="margin-top:var(--space-3)"></div>
   </section>
 
-  <section class="slaf-card" id="your-data" style="margin-top:var(--space-4)">
+  </details>
+
+  <details class="drawer" id="your-data-drawer">
+    <summary>Your data <small>Download a file, copy a share link, load one, or start over.</small></summary>
+  <section class="slaf-card" id="your-data">
     <span class="slaf-eyebrow">Your data</span>
     <h2 style="margin:var(--space-2) 0 0">It lives in this browser. Take it with you.</h2>
     <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
@@ -288,6 +358,8 @@
     <p class="data-note" id="data-note" hidden></p>
     <textarea id="share-out" class="share-out" rows="3" readonly hidden aria-label="Share link"></textarea>
   </section>
+
+  </details>
 
   <p class="disclaimer">
     Educational tool, not financial advice. Thresholds come from
@@ -328,6 +400,9 @@
 <script src="engines/skills.js"></script>
 <script src="engines/runway.js"></script>
 <script src="shared/charts.js"></script>
+<script src="shared/gate.js"></script>
+<script src="shared/lens.js"></script>
+<script src="engines/advice.js"></script>
 <script src="shared/instruments.js"></script>
 <script>
 (function () {
@@ -336,7 +411,20 @@
       Reference = SLAF.Reference, Ownership = SLAF.Ownership,
       Tier0 = SLAF.Tier0, Foo = SLAF.Foo, Ratios = SLAF.Ratios, Goals = SLAF.Goals,
       Staleness = SLAF.Staleness, Instruments = SLAF.Instruments,
-      Benchmarks = SLAF.Benchmarks;
+      Benchmarks = SLAF.Benchmarks, Gate = SLAF.Gate, Lens = SLAF.Lens, Advice = SLAF.Advice, Registry = SLAF.Registry;
+
+  /* Every number opens the room it came from: the instrument → room map. */
+  var OPENS = {
+    netWorth: ['statement', 'portfolios'], savingsRate: ['savings-rate', 'rate'], emergencyFundMonths: ['runway', 'the-plan'],
+    debtToIncome: ['debt-payoff', 'debts'], fiEtaYear: ['fire', 'targets'], fooStep: ['foo-ladder', null],
+    ownersPay: ['self-employed', 'quarterly'], runwayDays: ['runway', 'the-plan'], loanTrajectory: ['debt-payoff', 'plan'], withdrawalRate: ['fire', 'targets']
+  };
+  function opens(id) {
+    var o = OPENS[id] || ['start', null];
+    /* A room that is not built yet falls back to the nearest one. */
+    if (!Registry.byId(o[0])) o = ['start', null];
+    return Ownership.linkTo(o[0], o[1]);
+  }
 
   var ROOM_ID = 'dashboard';
   var TABLES = null;
@@ -431,7 +519,11 @@
     },
     fooStep: function (r) {
       return r.flags && r.flags.length ? r.flags[0].label : (r.title || 'no out-of-bounds flags');
-    }
+    },
+    ownersPay: function (r) { return 'after ' + Money.formatRate(r.effectiveRate, { decimals: 0 }) + ' set aside for tax'; },
+    runwayDays: function (r) { return r.sustainable ? 'what comes in covers the month' : Money.formatMonths(r.months) + ' at this spending'; },
+    loanTrajectory: function (r) { return Money.formatMonths(r.months) + ' at the minimums'; },
+    withdrawalRate: function (r) { return r.covered ? 'nothing drawn — income covers it' : Money.formatCents(r.annualDrawCents) + ' a year drawn'; }
   };
 
   /* The 3D toggle: page-local, remembered for the session only. D-089. */
@@ -466,7 +558,7 @@
       ? (td ? 'Each instrument ' + td.horizonYears + ' years out, three ways, with nothing changing but the assumptions: dream (75th-percentile returns, income up 10%), default (the median, your income), disaster (25th percentile, income down 15%, the worst plausible year on top). Load and heading do not move with those. Cash sits as cash for the ten years here, so the default FI year lands a little after the panel\u2019s own.'
             : 'Three ways needs your income, spending, cash and investments.')
       : '';
-    el('instruments').innerHTML = c.rows.map(function (row) {
+    el('instruments').innerHTML = c.shown.map(function (row) {
       var ok = row.ok;
       var zone = row.verdict && row.verdict.zone && row.verdict.zone !== 'none' ? ' is-' + row.verdict.zone : '';
       var d = deltas[row.id];
@@ -483,14 +575,14 @@
           dText = 'no change' + since;
         }
       }
-      return '<div class="inst" id="inst-' + row.id + '">'
+      return '<div class="inst' + (row.isLead ? ' is-lead' : '') + '" id="inst-' + row.id + '"><a href="' + opens(row.id) + '" title="Open ' + esc(row.label) + '">'
         + '<span class="cap">' + esc(row.cap) + ' · ' + esc(row.label) + '</span>'
         + '<span class="big' + (ok ? zone : ' is-incomplete') + '">'
         + esc(ok ? Instruments.format(row) : (row.result.reason || Money.EM_DASH)) + '</span>'
         + '<span class="delta' + dCls + '">' + esc(dText) + '</span>'
-        + '<span class="sub">' + esc(ok ? SUB[row.id](row.result, c) : '') + '</span>'
+        + '<span class="sub">' + esc(ok && SUB[row.id] ? SUB[row.id](row.result, c) : '') + '</span>'
         + threeDCell(row, td)
-        + '</div>';
+        + '</a></div>';
     }).join('');
     return c;
   }
@@ -559,6 +651,15 @@
     return { say: say, room: 'runway', anchor: 'the-plan', go: 'See the runway, month by month →',
       critical: !sustainable && gap && months < gap.medianMonths };
   }
+  /* Retired, the next thing is the draw against the convention. D-096. */
+  function retiredDraw(row) {
+    var r = row.result, zone = row.verdict ? row.verdict.zone : 'none';
+    var room = Registry.byId('decumulation') ? 'decumulation' : 'fire';
+    if (r.covered) return { say: 'What comes in covers what goes out: <strong>nothing</strong> is drawn from investments. The next thing is deciding what the reserve is for.', room: room, anchor: room === 'fire' ? 'targets' : null, go: 'Plan the drawdown →', critical: false };
+    return { say: 'You draw <strong>' + Money.formatRate(r.value, { decimals: 1 }) + '</strong> of your investments a year — ' + Money.formatCents(r.annualDrawCents) + ' — '
+        + (zone === 'good' ? 'inside the 4% convention.' : zone === 'watch' ? 'between the 4% convention and the 5% where guidance starts to worry.' : 'above the 5% where guidance starts to worry. The next thing is closing that gap: spending, income, or a plan for the reserve to run down on purpose.'),
+      room: room, anchor: room === 'fire' ? 'targets' : null, go: 'See the drawdown year by year →', critical: zone === 'out' };
+  }
   function shortMonth(iso) {
     var m = /^(\d{4})-(\d{2})/.exec(iso || '');
     if (!m) return '';
@@ -572,6 +673,9 @@
     var action = null;
     if (Schema.isUnemployed(h)) {
       action = betweenJobs(h);
+      box.className = 'next' + (action.critical ? ' is-critical' : '');
+    } else if (Gate.situationOf(h) === 'retired' && c.byId.withdrawalRate.ok) {
+      action = retiredDraw(c.byId.withdrawalRate);
       box.className = 'next' + (action.critical ? ' is-critical' : '');
     } else if (flag && ACTION[flag.key]) {
       action = ACTION[flag.key](flag.detail || {});
@@ -593,6 +697,90 @@
     el('next-go').textContent = action.go;
     el('next-go').href = action.href || Ownership.linkTo(action.room, action.anchor);
   }
+
+  /* ---- Block 3: the next thing to learn, or unlearn --------------------------- */
+  function renderLearn(h) {
+    var p = Advice.pick(h, TABLES);
+    var box = document.querySelector('#learn .learn');
+    if (!Money.isOk(p)) {
+      el('learn-cap').textContent = 'The next thing to learn';
+      el('learn-headline').textContent = '';
+      el('learn-say').textContent = p.reason;
+      el('learn-go').hidden = true;
+      box.className = 'learn';
+      return;
+    }
+    var it = p.item;
+    el('learn-cap').textContent = it.kind === 'unlearn' ? 'The next thing to unlearn' : 'The next thing to learn';
+    el('learn-headline').textContent = it.headline;
+    el('learn-say').textContent = it.body;
+    var go = el('learn-go');
+    go.hidden = false;
+    var room = Registry.byId(it.room);
+    go.href = room ? Ownership.linkTo(it.room, it.anchor) : Ownership.linkTo('start', null);
+    go.textContent = (room ? 'Open ' + room.title : 'Start Here') + ' →';
+    box.className = 'learn' + (it.kind === 'unlearn' ? ' is-unlearn' : '');
+  }
+
+  /* ---- Block 4: the date it points to, and the lens --------------------------- */
+  function dateFor(h, c) {
+    var s = Gate.situationOf(h);
+    if (s === 'betweenJobs') {
+      var r = c.byId.runwayDays;
+      if (!r.ok) return { cap: 'The day the cash runs out', big: null, reason: r.result.reason, say: '', room: 'runway', anchor: 'the-plan', go: 'See the runway, month by month →' };
+      if (r.result.sustainable) return { cap: 'The day the cash runs out', big: 'Not soon', say: 'What comes in covers the month, so the cash is not being drawn down.', room: 'runway', anchor: 'the-plan', go: 'See the runway, month by month →' };
+      var when = new Date(Date.now() + r.result.value * 86400000);
+      return { cap: 'The day the cash runs out', big: when.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), say: r.result.value.toLocaleString('en-US') + ' days at this spending, benefit and severance counted.', room: 'runway', anchor: 'the-plan', go: 'See the runway, month by month →' };
+    }
+    if (s === 'retired') {
+      var w = c.byId.withdrawalRate, inv = Schema.investmentsCents(h), age = Schema.primaryAge(h), a = Schema.resolveAssumptions(h);
+      if (!w.ok || !Money.isOk(inv)) return { cap: 'The age the money lasts to', big: null, reason: w.ok ? inv.reason : w.result.reason, say: '', room: 'fire', anchor: 'targets', go: 'Open FIRE →' };
+      var y = SLAF.Projection.yearsUntilEmptyCents({ startCents: inv.value, annualDrawCents: w.result.annualDrawCents, annualRate: a.returnReal });
+      if (!Money.isOk(y)) return { cap: 'The age the money lasts to', big: null, reason: y.reason, say: '', room: 'fire', anchor: 'targets', go: 'Open FIRE →' };
+      if (y.never) return { cap: 'The age the money lasts to', big: 'Outlasts you', say: 'At a ' + Money.formatRate(a.returnReal, { decimals: 0 }) + ' real return the draw never empties the investments.', room: 'fire', anchor: 'targets', go: 'See it year by year →' };
+      var at = Money.isEntered(age) ? Math.round(age + y.value) : null;
+      return { cap: 'The age the money lasts to', big: at !== null ? String(at) : (Math.round(y.value) + ' years'), say: Math.round(y.value) + ' years of ' + Money.formatCents(w.result.annualDrawCents) + ' a year at a ' + Money.formatRate(a.returnReal, { decimals: 0 }) + ' real return' + (at !== null ? '' : ' (add your birth date for the age)') + '.', room: 'fire', anchor: 'targets', go: 'See it year by year →' };
+    }
+    var fi = c.byId.fiEtaYear;
+    if (!fi.exists) return { cap: 'The date it points to', big: null, reason: 'No savings rate in this situation, so no FI date.', say: '', room: 'start', anchor: null, go: 'Start Here →' };
+    if (!fi.ok) return { cap: 'The FI date', big: null, reason: fi.result.reason, say: '', room: 'fire', anchor: 'targets', go: 'Open FIRE →' };
+    var years = fi.result.years;
+    return { cap: 'The FI date', big: fi.result.alreadyThere ? 'Now' : String(fi.result.value),
+      say: fi.result.alreadyThere ? 'Your investments already cover your spending at the assumed withdrawal rate.' : (Math.round(years * 10) / 10) + ' years at this pace. Every dollar below moves it.',
+      room: 'fire', anchor: 'targets', go: 'Move the date in FIRE →' };
+  }
+  function renderDate(h, c) {
+    var d = dateFor(h, c);
+    el('date-cap').textContent = d.cap;
+    var big = el('date-big');
+    big.textContent = d.big === null ? d.reason : d.big;
+    big.className = 'big' + (d.big === null ? ' is-incomplete' : '');
+    el('date-say').textContent = d.say;
+    var go = el('date-go');
+    go.href = Registry.byId(d.room) ? Ownership.linkTo(d.room, d.anchor) : Ownership.linkTo('start', null);
+    go.textContent = d.go;
+    /* The lens: the amounts that move the date, read four ways. */
+    el('lens-host').innerHTML = Lens.toggleHtml(h, TABLES, 'lens');
+    var mode = Lens.mode();
+    var spend = Schema.monthlyExpensesCents(h);
+    var rates = Tier0.savingsRate(h, TABLES);
+    var basis = Money.isOk(rates.includingMatch) ? rates.includingMatch : rates.excludingMatch;
+    var rows = [];
+    if (Money.isOk(spend)) rows.push(['A month of spending', spend.value, 'cash-flow', 'spending']);
+    if (Money.isOk(basis) && basis.annualSavingsCents > 0 && Gate.exists(h, 'savingsRate')) rows.push(['A year of saving', basis.annualSavingsCents, 'savings-rate', 'rate']);
+    var one = (h.oneOffs || [])[0];
+    if (one && Money.isEntered(one.cents)) rows.push([one.direction === 'out' ? 'The one-off going out' : 'The one-off coming in', one.cents, 'start', 'q-fine-tune']);
+    el('date-lensed').innerHTML = rows.map(function (r) {
+      var shown = mode === '$' ? Money.formatCents(r[1]) : Lens.format(r[1], mode, h, TABLES);
+      return '<li><a href="' + Ownership.linkTo(r[2], r[3]) + '">' + esc(r[0]) + '</a><span>' + esc(shown) + '</span></li>';
+    }).join('');
+  }
+  document.addEventListener('click', function (evt) {
+    var b = evt.target.closest('.slaf-lens-btn');
+    if (!b) return;
+    Lens.setMode(b.getAttribute('data-lens'));
+    renderNow();
+  });
 
   /* ---- How old the three that move are ------------------------------------- */
 
@@ -699,7 +887,7 @@
     if (strip) strip.hidden = !ready;
     el('page-title').textContent = ready ? 'The Dashboard' : 'SPARKS';
     el('page-lede').textContent = ready
-      ? 'Every threshold ratio as one shape, plus altitude, fuel, engine load, thrust, weather and the flight plan — the whole panel at a glance.'
+      ? 'Where you are, the next thing money should do, the next thing to learn, and the date it all points to. Every number opens the room it came from.'
       : 'Small, sharp money tools that share one set of numbers.';
     if (ready) return true;
 
@@ -811,9 +999,11 @@
     if (!route(h)) return;
     var all = Ratios.all(h, TABLES, { snapshots: Spine.listSnapshots() });
 
-    /* first screen */
+    /* the four blocks */
     var c = renderInstruments(h);
     renderNextAction(h, c);
+    renderLearn(h);
+    renderDate(h, c);
     renderAgeLine(h);
 
     /* radar */

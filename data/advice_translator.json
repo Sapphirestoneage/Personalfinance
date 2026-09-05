@@ -1,0 +1,186 @@
+{
+  "id": "advice_translator",
+  "version": "1.0",
+  "asOf": "2026-09-01",
+  "source": "Common personal-finance advice as it circulates — the 4% rule, 'never touch the emergency fund', 'always take the match', 'pay yourself first', 'save 10%', 'a house is an investment', 'rent is throwing money away', 'cut the coffee' — each restated for one household's numbers. The rules of thumb are conventions; the translations are arithmetic on the household's own figures.",
+  "confidence": "convention",
+  "confidenceNote": "None of these is a finding. Each is a piece of advice people hear, marked learn (worth taking, and here is what it means for you) or unlearn (worth dropping, and here is why for you). The order is a judgement about what usually matters first.",
+  "note": "Each item: `when` names predicates engines/advice.js evaluates against the household (all must hold); `priority` orders ties (lower first); `body` carries {tokens} the engine fills. `room`/`anchor` say where to act. D-096.",
+  "items": [
+    {
+      "id": "ef_is_for_this",
+      "kind": "unlearn",
+      "priority": 1,
+      "when": [
+        "betweenJobs"
+      ],
+      "headline": "“Never touch your emergency fund.”",
+      "body": "This is what it is for. {cash} of cash covers {cashMonths} of your {spending} a month; drawing on it now is the fund working, not failing.",
+      "room": "runway",
+      "anchor": "the-plan"
+    },
+    {
+      "id": "take_the_match",
+      "kind": "learn",
+      "priority": 2,
+      "when": [
+        "matchLeftOnTable"
+      ],
+      "headline": "“Always take the whole match.”",
+      "body": "For you that is {matchGap} a year you are not collecting — a raise your employer already agreed to. Raising your contribution to {matchCap} takes it.",
+      "room": "accounts",
+      "anchor": "setup"
+    },
+    {
+      "id": "four_percent",
+      "kind": "learn",
+      "priority": 3,
+      "when": [
+        "retired",
+        "withdrawalKnown"
+      ],
+      "headline": "“The 4% rule.”",
+      "body": "You draw {withdrawalRate} of your investments a year to cover what income does not — {annualDraw}. Under 4% the convention says the money outlasts you; above 5% it starts to worry.",
+      "room": "fire",
+      "anchor": "targets"
+    },
+    {
+      "id": "retired_not_drawing",
+      "kind": "unlearn",
+      "priority": 3,
+      "when": [
+        "retired",
+        "withdrawalCovered"
+      ],
+      "headline": "“Retirement means living off the portfolio.”",
+      "body": "What comes in, {income} a month, covers your {spending} a month, so nothing is drawn. The {investments} invested is a reserve of {investmentYears} of spending, not a paycheque — and the 4% rule has nothing to say until it is.",
+      "room": "fire",
+      "anchor": "targets"
+    },
+    {
+      "id": "pay_yourself_first",
+      "kind": "learn",
+      "priority": 4,
+      "when": [
+        "savingsRateKnown",
+        "savingsRateBelowFloor"
+      ],
+      "headline": "“Pay yourself first.”",
+      "body": "Your savings rate is {savingsRate}; the floor most guidance uses is {floor}. For you the gap is {gapMonthly} a month, moved before the month starts rather than found at its end.",
+      "room": "savings-rate",
+      "anchor": "rate"
+    },
+    {
+      "id": "high_interest_first",
+      "kind": "learn",
+      "priority": 5,
+      "when": [
+        "highInterestDebt"
+      ],
+      "headline": "“Pay off high-interest debt before investing.”",
+      "body": "{highInterestBalance} of what you owe charges more than most markets return. Every dollar at it earns that rate, guaranteed, which no fund promises.",
+      "room": "debt-payoff",
+      "anchor": "plan"
+    },
+    {
+      "id": "student_loans_are_not_forever",
+      "kind": "unlearn",
+      "priority": 6,
+      "when": [
+        "student",
+        "hasDebt"
+      ],
+      "headline": "“Student loans follow you forever.”",
+      "body": "At the minimums yours clear in {loanYear}. Every extra {hundred} a month moves that earlier; the payoff room shows by how much.",
+      "room": "debt-payoff",
+      "anchor": "plan"
+    },
+    {
+      "id": "set_aside_the_tax",
+      "kind": "learn",
+      "priority": 7,
+      "when": [
+        "selfEmployed",
+        "incomeKnown"
+      ],
+      "headline": "“Set aside a third for tax.”",
+      "body": "On {gross} a year the estimate is {tax}, {effectiveRate} — about {taxMonthly} a month put somewhere it cannot be spent, and a quarterly to pay.",
+      "room": "self-employed",
+      "anchor": "quarterly"
+    },
+    {
+      "id": "save_ten_percent",
+      "kind": "unlearn",
+      "priority": 8,
+      "when": [
+        "savingsRateKnown",
+        "savingsRateAboveFloor"
+      ],
+      "headline": "“Save 10% and you are fine.”",
+      "body": "You are at {savingsRate}, already past it, and the number that matters now is not the rate but the date it points to: {fiYear}. The rate is a lever on the date, not a finish line.",
+      "room": "fire",
+      "anchor": "targets"
+    },
+    {
+      "id": "cut_the_coffee",
+      "kind": "unlearn",
+      "priority": 9,
+      "when": [
+        "hoursKnown"
+      ],
+      "headline": "“Cut the coffee.”",
+      "body": "At your real hourly wage of {wage} a {coffee} coffee is {coffeeTime} of your life; your rent is {rentTime}. Pointing at the small one is the mistake.",
+      "room": "real-hourly-wage",
+      "anchor": "out-price"
+    },
+    {
+      "id": "three_to_six_months",
+      "kind": "learn",
+      "priority": 10,
+      "when": [
+        "cashKnown",
+        "cashBelowThree"
+      ],
+      "headline": "“Three to six months of expenses in cash.”",
+      "body": "You hold {cashMonths} of your {spending} a month. Three months is {threeMonths}; you are {cashGap} short of that floor.",
+      "room": "runway",
+      "anchor": "the-plan"
+    },
+    {
+      "id": "rent_is_not_thrown_away",
+      "kind": "unlearn",
+      "priority": 11,
+      "when": [
+        "paysRent",
+        "incomeKnown"
+      ],
+      "headline": "“Rent is throwing money away.”",
+      "body": "Rent buys a place to live, the way a mortgage's interest, tax, insurance and upkeep do — none of which build equity either. The question is the price-to-rent ratio where you are, not the word.",
+      "room": "what-if-life",
+      "anchor": "pick"
+    },
+    {
+      "id": "invest_what_you_do_not_need",
+      "kind": "learn",
+      "priority": 12,
+      "when": [
+        "cashKnown",
+        "cashAboveNine"
+      ],
+      "headline": "“Cash is safe.”",
+      "body": "You hold {cashMonths} of spending in cash. Past six months the excess — {cashExcess} — loses to inflation every year it sits; the runway does not need it.",
+      "room": "statement",
+      "anchor": "portfolios"
+    },
+    {
+      "id": "start_anywhere",
+      "kind": "learn",
+      "priority": 20,
+      "when": [],
+      "headline": "“It is never too early, or too late.”",
+      "body": "The first number to know is what a month costs you: {spending}. Every other number on this page is measured against it.",
+      "room": "cash-flow",
+      "anchor": "spending"
+    }
+  ]
+}

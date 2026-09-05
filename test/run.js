@@ -4751,9 +4751,11 @@ section('Age, and the three that move');
     const h = Demo.build();
     const now = Date.parse('2026-09-04T12:00:00Z');
     const c = Instruments.compute(h, TABLES, now);
-    check('six instruments', c.rows.length, 6);
-    check('in panel order', c.rows.map(r => r.cap).join(' '), 'Altitude Thrust Fuel Load Distance Heading');
-    checkTrue('every one computes for the demo', c.rows.every(r => r.ok));
+    check('ten instruments, six for everyone and one lead each for the other situations (D-096)', c.rows.length, 10);
+    check('the demo, employed, shows six', c.shown.length, 6);
+    check('its own number first, then panel order', c.shown.map(r => r.cap).join(' '), 'Thrust Altitude Fuel Load Distance Heading');
+    checkTrue('every one shown computes for the demo', c.shown.every(r => r.ok));
+    checkTrue('the ones not shown say why, not a throw', c.rows.filter(r => !r.exists).every(r => !r.ok && typeof r.result.reason === 'string'));
     /* Net worth: 9,500 + 48,000 − 18,400 − 3,200 = 35,900. */
     check('altitude is the demo net worth', c.byId.netWorth.result.value, 3590000);
     check('formatted as dollars', Instruments.format(c.byId.netWorth), '$35,900');
@@ -6414,7 +6416,7 @@ section('The ratios T3 unlocked');
 
   check('every new band is in the table', ['incomeConcentration', 'shadowRunway', 'worstPlausibleYearCoverage', 'lifestyleInflation', 'fiDate']
     .every(id => TABLES.ratioBenchmarks.bands[id]), true);
-  check('the bands table moved to 1.2', TABLES.ratioBenchmarks.version, '1.2');
+  check('the bands table moved to 1.3 (withdrawal rate, D-096)', TABLES.ratioBenchmarks.version, '1.3');
 })();
 
 section('Fixed lines, the floor, and cuttability');
@@ -7930,6 +7932,113 @@ section('The one-pager (D-095): import, confidence, the drawer');
   checkTrue('the page declares its live-form discipline', /LIVE-FORM: built once/.test(start));
   checkTrue('and a place for a theme', /THEMING:/.test(start));
   checkTrue('the photo path degrades to paste when the browser cannot read text', /TextDetector/.test(start) && /paste/i.test(start));
+})();
+
+section('The dashboard (D-096): four blocks, the leads, the translator');
+
+(function () {
+  const Gate = require(path.join(ROOT, 'shared/gate.js'));
+  const Advice = require(path.join(ROOT, 'engines/advice.js'));
+  const Ratios = require(path.join(ROOT, 'engines/ratios.js'));
+  const T = Object.assign({}, TABLES, { adviceTranslator: require(path.join(ROOT, 'data/advice_translator.json')), uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')), reentryGap: require(path.join(ROOT, 'data/reentry_gap.json')), debtRules: require(path.join(ROOT, 'data/debt_rules.json')) });
+  const NOW = Date.parse('2026-09-05T12:00:00Z');
+  function hh(status, extra) {
+    const h = Schema.createHousehold(Object.assign({ state: 'NC', filingStatus: 'single', meta: { hasDebt: false, noRent: false },
+      people: [Schema.createPerson({ role: 'adult', employmentStatus: status, dob: '1990-06-01', incomeSources: [Schema.createIncomeSource({ id: 'intake_income', grossAnnualIncomeCents: 6000000 })] })],
+      assets: [Schema.createAsset({ category: 'cash', valueCents: 600000 }), Schema.createAsset({ category: 'investment', valueCents: 4000000 })] }, extra || {}));
+    h.expenses.monthlyEssential.estimatedValueCents = 300000;
+    return h;
+  }
+
+  /* The withdrawal rate, by hand: $3,100 × 12 − $24,000 = $13,200 over
+     $420,000 = 3.14%. Income covering spending draws nothing. */
+  const ret = hh('retired', { people: [Schema.createPerson({ role: 'adult', employmentStatus: 'retired', dob: '1958-03-01', incomeSources: [Schema.createIncomeSource({ grossAnnualIncomeCents: 2400000 })] })],
+    assets: [Schema.createAsset({ category: 'cash', valueCents: 1800000 }), Schema.createAsset({ category: 'investment', valueCents: 42000000 })] });
+  ret.expenses.monthlyEssential.estimatedValueCents = 310000;
+  const wr = Ratios.all(ret, T).rows.filter(r => r.id === 'withdrawalRate')[0];
+  check('withdrawal rate = (spending × 12 − income) ÷ investments', Math.round(wr.value * 10000) / 10000, Math.round(1320000 / 42000000 * 10000) / 10000);
+  check('… drawing $13,200 a year', wr.result.annualDrawCents, 1320000);
+  check('… inside the 4% band', wr.verdict.zone, 'good');
+  const covered = hh('retired'); covered.expenses.monthlyEssential.estimatedValueCents = 200000;
+  check('income covering spending draws nothing — a zero, not a blank', Ratios.all(covered, T).rows.filter(r => r.id === 'withdrawalRate')[0].result.value, 0);
+  checkTrue('… and says it is covered', Ratios.all(covered, T).rows.filter(r => r.id === 'withdrawalRate')[0].result.covered === true);
+  checkTrue('an employed household has no withdrawal rate', !Ratios.all(hh('employed'), T).rows.filter(r => r.id === 'withdrawalRate')[0].ok);
+  check('the band is 4% / 5%', T.ratioBenchmarks.bands.withdrawalRate.good + '/' + T.ratioBenchmarks.bands.withdrawalRate.warn, '0.04/0.05');
+
+  /* Years until empty, by hand: $100 drawing $30 a year at 0%: 3.33 years.
+     Growth outrunning the draw never empties. */
+  check('$100 drawing $30 at 0% lasts 3⅓ years', Projection.yearsUntilEmptyCents({ startCents: 10000, annualDrawCents: 3000, annualRate: 0 }).value, 3 + 1 / 3, 1e-9);
+  checkTrue('growth beyond the draw never empties', Projection.yearsUntilEmptyCents({ startCents: 10000, annualDrawCents: 300, annualRate: 0.05 }).never === true);
+  checkTrue('nothing drawn never empties', Projection.yearsUntilEmptyCents({ startCents: 10000, annualDrawCents: 0, annualRate: 0.05 }).never === true);
+  check('nothing to draw from is gone at once', Projection.yearsUntilEmptyCents({ startCents: 0, annualDrawCents: 300, annualRate: 0.05 }).value, 0);
+  /* $420,000 drawing $13,200 at 5% real: 13,200 / 420,000 = 3.1% < 5%, so it grows: never. At 0% it is 31.8 years. */
+  checkTrue('the retiree above outlasts the draw at 5% real', Projection.yearsUntilEmptyCents({ startCents: 42000000, annualDrawCents: 1320000, annualRate: 0.05 }).never === true);
+  check('… and at 0% real, 31.8 years', Math.round(Projection.yearsUntilEmptyCents({ startCents: 42000000, annualDrawCents: 1320000, annualRate: 0 }).value * 10) / 10, 31.8);
+
+  /* The instruments reflect the gate: the situation's number first, the
+     ones that do not exist not shown. */
+  function shown(h) { return InstrumentsMain.compute(h, T, NOW).shown.map(r => (r.isLead ? '*' : '') + r.id); }
+  check('employed: savings rate leads', shown(hh('employed'))[0], '*savingsRate');
+  checkTrue('… and no debt-to-income with no debt', shown(hh('employed')).indexOf('debtToIncome') === -1);
+  check('self-employed: owner\'s pay leads', shown(hh('selfEmployed'))[0], '*ownersPay');
+  check('… take-home a month = (gross − tax) ÷ 12', InstrumentsMain.compute(hh('selfEmployed'), T, NOW).byId.ownersPay.result.value, Tier0.takeHomeMonthlyCents(hh('selfEmployed'), T).value);
+  const bj = hh('unemployed', { people: [Schema.createPerson({ role: 'adult', employmentStatus: 'unemployed', dob: '1990-06-01', unemployment: { benefitStatus: 'receiving', benefitWeeklyCents: 35000, benefitWeeksLeft: 20 } })] });
+  check('between jobs: the runway in days leads', shown(bj)[0], '*runwayDays');
+  checkTrue('… and stands in for cash months', shown(bj).indexOf('emergencyFundMonths') === -1);
+  checkTrue('… no savings rate, no FI year', shown(bj).indexOf('savingsRate') === -1 && shown(bj).indexOf('fiEtaYear') === -1);
+  const rd = InstrumentsMain.compute(bj, T, NOW).byId.runwayDays.result;
+  checkTrue('days = months × 365.25 ÷ 12, rounded', rd.value === Math.round(rd.months * 365.25 / 12));
+  check('retired: the withdrawal rate leads', shown(ret)[0], '*withdrawalRate');
+  checkTrue('… no savings rate, no FI year', shown(ret).indexOf('savingsRate') === -1 && shown(ret).indexOf('fiEtaYear') === -1);
+  const stu = hh('student', { meta: { hasDebt: true, noRent: true }, debts: [Schema.createDebt({ label: 'Loans', balanceCents: 2000000, rate: 0.05, minPaymentCents: 21000, type: 'student_loan' })] });
+  check('a student with loans: the loans lead', shown(stu)[0], '*loanTrajectory');
+  const lt = InstrumentsMain.compute(stu, T, NOW).byId.loanTrajectory;
+  checkTrue('… the year the minimums clear it, from the debt engine', lt.ok && lt.result.value >= 2030 && lt.result.months === Debt.simulate(stu, T.debtRules, { strategyId: 'avalanche' }).months);
+  check('a student without loans still has no loans lead shown', shown(hh('student'))[0].indexOf('loanTrajectory'), -1);
+  check('mixed: savings rate leads, owner\'s pay shown too', shown(hh('both')).join(','), '*savingsRate,netWorth,emergencyFundMonths,fiEtaYear,fooStep,ownersPay');
+  check('the days format', InstrumentsMain.format({ unit: 'days', result: Money.ok(45, { sustainable: false }) }), '45 days');
+  check('… or covered', InstrumentsMain.format({ unit: 'days', result: Money.ok(1826, { sustainable: true }) }), 'Covered');
+
+  /* The Advice Translator: one item, the right one, its tokens filled. */
+  const table = T.adviceTranslator;
+  checkTrue('every item has a kind, a headline, a body and a room', table.items.every(i => /^(learn|unlearn)$/.test(i.kind) && i.headline && i.body && i.room));
+  checkTrue('every predicate named is one the engine knows', table.items.every(i => i.when.every(p => Advice.PREDICATES.indexOf(p) !== -1)));
+  checkTrue('every room named is a room', table.items.every(i => !!Registry.byId(i.room)));
+  checkTrue('the table carries the reference-data header', typeof table.version === 'string' && typeof table.confidence === 'string' && typeof table.confidenceNote === 'string');
+  function pick(h) { const p = Advice.pick(h, T, NOW); return Money.isOk(p) ? p.item : null; }
+  check('the demo: take the match', pick(Demo.build()).id, 'take_the_match');
+  checkTrue('… with the gap in dollars: ' + pick(Demo.build()).body, /\$2,160 a year/.test(pick(Demo.build()).body) && /6%/.test(pick(Demo.build()).body));
+  check('between jobs: the fund is for this', pick(bj).id, 'ef_is_for_this');
+  check('… an unlearn', pick(bj).kind, 'unlearn');
+  check('retired, drawing: the 4% rule', pick(ret).id, 'four_percent');
+  checkTrue('… with the rate: ' + pick(ret).body, /3\.1%/.test(pick(ret).body) && /\$13,200/.test(pick(ret).body));
+  check('retired, covered: not living off the portfolio', pick(covered).id, 'retired_not_drawing');
+  check('self-employed: set aside the tax', pick(hh('selfEmployed')).id, 'set_aside_the_tax');
+  check('a student with loans: they are not forever', pick(stu).id, 'student_loans_are_not_forever');
+  checkTrue('… naming the year', /\b20\d\d\b/.test(pick(stu).body));
+  const thin = hh('employed'); thin.assets = [Schema.createAsset({ category: 'cash', valueCents: 100000 }), Schema.createAsset({ category: 'investment', valueCents: 4000000 })];
+  checkTrue('a thin cushion: three to six months, unless a lower priority item wins', ['three_to_six_months', 'save_ten_percent', 'pay_yourself_first'].indexOf(pick(thin).id) !== -1);
+  checkTrue('no token is left unfilled in any item that applies, for any of these', [Demo.build(), bj, ret, covered, stu, hh('employed'), hh('selfEmployed'), hh('both'), Schema.createHousehold({})].every(h => { const l = Advice.list(h, T, NOW); return Money.isOk(l) && l.items.every(i => i.body.indexOf('{') === -1); }));
+  checkTrue('an empty household still gets the first number to know', Money.isOk(Advice.pick(Schema.createHousehold({}), T, NOW)));
+  checkTrue('a retiree is never told to save 10%', Advice.list(ret, T, NOW).items.every(i => i.id !== 'save_ten_percent' && i.id !== 'pay_yourself_first'));
+  checkTrue('without the table it says so', !Money.isOk(Advice.pick(Demo.build(), TABLES, NOW)));
+
+  /* The page: four blocks, nothing else on the screen, the lens and the
+     undo pair, every instrument opening a room. */
+  const page = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  ['where', 'next', 'learn', 'date'].forEach(id => checkTrue(`block #${id} is on the page`, new RegExp('id="' + id + '"').test(page)));
+  checkTrue('the blocks are the only sections outside the drawers', (function () {
+    const main = page.slice(page.indexOf('<main'), page.indexOf('<details class="drawer dash" id="full-panel">'));
+    const ids = (main.match(/<section class="slaf-card[^"]*" id="([a-z-]+)"/g) || []).map(m => m.replace(/.*id="/, '').replace('"', ''));
+    return ids.join(',') === 'landing,share-offer,where,next,learn,date';
+  })());
+  checkTrue('the full panel and the data controls are folded', /<details class="drawer dash" id="full-panel">/.test(page) && /<details class="drawer" id="your-data-drawer">/.test(page));
+  checkTrue('the page loads the gate, the lens, the translator and the undo pair', ['shared/gate.js', 'shared/lens.js', 'engines/advice.js', 'shared/undo.js'].every(f => page.indexOf('<script src="' + f + '">') !== -1));
+  checkTrue('every instrument opens a room', InstrumentsMain.INSTRUMENTS.every(i => new RegExp("\\b" + i.id + ": \\['[a-z-]+'").test(page)));
+  checkTrue('the instruments are rendered from the ones that exist', /c\.shown\.map\(function \(row\)/.test(page));
+  checkTrue('the lens toggle re-renders in place, no page load', /Lens\.setMode\(b\.getAttribute\('data-lens'\)\);\s*renderNow\(\);/.test(page));
+  checkTrue('a theme has a place', /THEMING:/.test(page));
+  check('the dashboard\'s registry blurb says what it is', /Home\./.test(Registry.byId('dashboard').blurb), true);
 })();
 
 section('Two decision sequences that cannot collide');

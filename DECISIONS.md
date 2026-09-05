@@ -5115,6 +5115,107 @@ dashboard, next.
 
 ---
 
+## D-096 — The dashboard is home: four blocks, and every number opens its room
+
+*(The brief's step 3: "one screen, four blocks: where you are; the next
+thing money should do (money order of operations); the next thing to
+learn/unlearn (Advice Translator); the date it points to with lens
+toggle; undo/redo top right; nothing else; reflects the gate.")*
+`index.html` is rebuilt to that shape. Everything it used to show is
+still there, folded under "The full panel" (the radar, the ring and the
+climb, the weather, the flight plan, the goals, what it reads, the
+snapshot line) and "Your data" (download, share, load, reset); nothing
+on the screen but the four.
+
+**Where you are.** The instruments that exist for this household, the
+situation's own number first and largest. `shared/instruments.js` rows
+gain `requires` (a gate branch) and `lead` (the `Gate.lead` id they
+answer to); `compute()` marks each row `exists` and `isLead` and returns
+`shown` — the existing ones, lead first. Four leads join the six: the
+owner's pay a month for own work (take-home from `Tier0`, so the tax
+set-aside is already out), the runway in days for someone between jobs
+(`Runway.project` on the laid-off preset, benefit and severance counted;
+it stands in for cash-months, which asks the same question with less),
+the year the loans clear for a student with loans (`Debt.simulate` at
+the minimums), and the withdrawal rate for a retiree. A snapshot still
+freezes all ten, so "since last time" holds whichever are on screen.
+Every cell is a link to the room that owns the number.
+
+**The withdrawal rate** is a ratio in `engines/ratios.js`: (spending × 12
+− income) ÷ investments, banded 4% / 5% in `data/ratio_benchmarks.json`
+(version 1.3, the convention marked as one). Income covering spending is
+a zero with `covered: true`, not a blank. It exists only where the
+decumulation branch does — a retiree, or an unanswered household — so it
+is not a spoke on an employed person's radar.
+
+**The next thing money should do.** The money order of operations as
+before (the top FOO flag with its dollars, else the step you are on);
+between jobs, the runway against how long a search takes (D-092); and
+now, retired, the draw against the convention: inside 4%, between 4 and
+5, or above 5 with the three ways to close it. It links to the
+Decumulation room once that exists and to FIRE until then.
+
+**The next thing to learn, or unlearn.** `engines/advice.js` and
+`data/advice_translator.json` (fourteen items, `convention`). Each item
+is a piece of advice people hear — the 4% rule, "never touch your
+emergency fund", "always take the match", "pay yourself first", "save
+10%", "cut the coffee", "rent is throwing money away", "cash is safe" —
+marked *learn* or *unlearn*, with predicates the engine evaluates
+against the household (between jobs, match left on the table, savings
+rate below or above the floor, high-interest debt, a thin or a fat
+cushion, hours known, retired and drawing or covered, a student with
+loans, self-employed with income) and a body whose tokens are filled
+from the engines that own the numbers: "For you that is $2,160 a year
+you are not collecting." `pick()` returns the first that applies by
+priority; `list()` every one, for a room that wants the whole
+translation. A retiree is never told to save 10%: the savings-rate
+predicates require the branch. An unlearned headline is struck through.
+
+**The date it points to.** Per situation: the FI date (employed,
+self-employed, mixed, a student); the day the cash runs out (between
+jobs, from the runway in days); the age the money lasts to (retired,
+from `Projection.yearsUntilEmptyCents` — investments drawn by the
+uncovered spending at the real return, the one drawdown loop the
+Decumulation room will share; "outlasts you" when growth beats the
+draw). Under it, the amounts that move the date — a month of spending,
+a year of saving, the one-off — read through the lens: dollars, hours,
+FI bought, FI pushed. The toggle re-renders in place.
+
+**Reflects the gate, no page load.** Every situation lands on its own
+dashboard: no debt-to-income without debt, no savings rate or FI year
+for a retiree or between jobs, the lead first. A change in any room —
+or an undo — redraws the page through the spine's change notification;
+the walk changes spending on the dashboard itself and watches the FI
+date move from 2045 to 2053 and back on undo, with the pushed-lens line
+moving with it.
+
+**Compatibility note.** `Instruments.INSTRUMENTS` has ten rows (`ownersPay`,
+`runwayDays`, `loanTrajectory`, `withdrawalRate` added), each with
+`requires`, `lead` and, for `runwayDays`, `replaces`; `compute()` returns
+`shown`, `lead` and marks rows `exists`/`isLead`. Snapshots taken before
+this carry six outputs; deltas for the new four read as "no snapshot"
+until the next freeze. `engines/ratios.js` has a `withdrawalRate` row and
+the benchmarks table a band for it; `Projection.yearsUntilEmptyCents` is
+new; `data/advice_translator.json` is registered as `adviceTranslator`.
+The dashboard's registry subsections are now `where`, `next`, `learn`,
+`date`, `full-panel` and the folded panels; `panel` is gone.
+
+**Verified.** `node test/run.js` (12,020): the withdrawal rate by hand
+($3,100 × 12 − $24,000 over $420,000 = 3.14%, good; covered is zero;
+absent for the employed); years-until-empty by hand ($100 drawing $30 at
+0%: 3⅓ years; the retiree above never at 5% real, 31.8 years at 0%);
+the leads per situation and what stands in for what; the translator's
+pick for the demo, between jobs, retired drawing and covered,
+self-employed, a student with loans, and no unfilled token in any item
+for nine households; the page's shape. The phone walk of all six
+situations plus the demo, the hours and pushed lenses, the change and
+the undo. `node dnd/test/run.js`, `test/export.js`, `test/forms.js`,
+`test/alignment.js`, and the console sweep of every page. "One pager
+out" is now true: the dashboard is one screen and every number on it
+opens the room it came from.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

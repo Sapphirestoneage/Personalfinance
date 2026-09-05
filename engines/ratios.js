@@ -81,6 +81,15 @@
 
   /* ---- The context every ratio reads ------------------------------------
      Built once per call so twenty ratios do not each re-walk the asset list. */
+  /* The gate, late-bound: it loads after this file on some pages. A
+     withdrawal rate is a retiree's number (or an unanswered household's). */
+  function decumulates(household) {
+    var G = null;
+    if (typeof module === 'object' && module.exports) { try { G = require('../shared/gate.js'); } catch (e) { G = null; } }
+    else { var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null; G = g && g.SLAF && g.SLAF.Gate; }
+    return G ? G.exists(household, 'decumulation') : true;
+  }
+
   function context(household, tables, opts) {
     var c = { household: household, tables: tables || {}, opts: opts || {} };
     c.snapshots = (opts && opts.snapshots) || [];
@@ -631,6 +640,25 @@
         if (nwThen === 0) return Money.incomplete('Growth from exactly zero is undefined.', []);
         var years = (c.now - then.t) / MS_PER_DAY / DAYS_PER_YEAR;
         return Money.ok((c.netWorth - nwThen) / Math.abs(nwThen) / years, { since: then.snap.timestamp, thenCents: nwThen, nowCents: c.netWorth, years: Math.round(years * 100) / 100 });
+      } },
+
+    /* What a retiree draws from investments each year, as a share of them:
+       spending not covered by what comes in (pension, Social Security, a
+       part-time wage). Nothing drawn is a zero, not a blank. The 4%/5%
+       band is the convention the Decumulation room reads too. D-096. */
+    { id: 'withdrawalRate', label: 'Withdrawal rate', tier: 21,
+      formula: '(spending × 12 − income) ÷ investments',
+      unit: 'rate', needs: 'your spending, income and investments',
+      note: 'The share of investments drawn each year to cover what income does not.',
+      compute: function (c) {
+        if (!decumulates(c.household)) return Money.incomplete('Not drawing down \u2014 a number for a retiree.', []);
+        if (!Money.isEntered(c.monthlyExpenses)) return Money.incomplete('Add your monthly spending to see this.', ['monthlyExpenses']);
+        if (!Money.isEntered(c.investments)) return Money.incomplete('Add your investments to see this.', ['investments']);
+        var income = Money.isEntered(c.grossAnnual) ? c.grossAnnual : 0;
+        var draw = c.monthlyExpenses * MONTHS - income;
+        if (draw <= 0) return Money.ok(0, { annualDrawCents: 0, covered: true });
+        if (c.investments <= 0) return Money.incomplete('Nothing invested to draw from.', ['investments']);
+        return Money.ok(draw / c.investments, { annualDrawCents: Math.round(draw), covered: false });
       } },
 
     { id: 'fiDate', label: 'FI date', tier: 21,

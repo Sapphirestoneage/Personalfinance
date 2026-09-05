@@ -71,6 +71,7 @@
     hundredWays: '../dnd/data/hundred_ways.json',
     curves: '../dnd/data/curves.json',
     onepagerDefaults: 'onepager_defaults.json',
+    adviceTranslator: 'advice_translator.json',
     accessRules: 'access_rules.json',
     confidenceWeights: 'confidence_weights.json',
     uiBenefits: 'ui_benefits.json',

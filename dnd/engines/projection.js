@@ -119,6 +119,34 @@
   }
 
   /**
+   * Years until `startCents`, growing at `annualRate` and drawn down by
+   * `annualDrawCents` at the end of each year, is gone. The retiree's date:
+   * the one drawdown loop the dashboard and the Decumulation room share.
+   * Nothing drawn, or growth covering the draw, never empties — an ok
+   * Result with `never: true` rather than a number. D-096.
+   */
+  function yearsUntilEmptyCents(opts) {
+    var o = opts || {};
+    var missing = Money.missingFrom({ startCents: o.startCents, annualDrawCents: o.annualDrawCents, annualRate: o.annualRate });
+    if (missing.length) return Money.incomplete('Need a starting balance, a yearly draw and a return assumption.', missing);
+    var maxYears = o.maxYears || DEFAULT_MAX_YEARS;
+    if (o.annualDrawCents <= 0) return Money.ok(maxYears, { never: true, annualRate: o.annualRate });
+    if (o.startCents <= 0) return Money.ok(0, { never: false, annualRate: o.annualRate });
+    var balance = o.startCents;
+    for (var year = 1; year <= maxYears; year++) {
+      var before = balance;
+      balance = balance * (1 + o.annualRate) - o.annualDrawCents;
+      if (balance <= 0) {
+        var frac = before > 0 ? Math.min(1, before * (1 + o.annualRate) / o.annualDrawCents) : 0;
+        return Money.ok((year - 1) + frac, { never: false, annualRate: o.annualRate });
+      }
+      /* Growth outrunning the draw: it never empties. */
+      if (balance >= before && year > 1) return Money.ok(maxYears, { never: true, annualRate: o.annualRate });
+    }
+    return Money.ok(maxYears, { never: true, annualRate: o.annualRate });
+  }
+
+  /**
    * Balance after `months` of MONTHLY compounding with a contribution added
    * at the end of each month. The annual version above is right for a yearly
    * savings figure; this is right for a habit — a subscription, a coffee, a
@@ -238,6 +266,7 @@
     futureValueMonthlyCents: futureValueMonthlyCents,
     pathCents: pathCents,
     presentValueNeededCents: presentValueNeededCents,
-    yearsToTargetCents: yearsToTargetCents
+    yearsToTargetCents: yearsToTargetCents,
+    yearsUntilEmptyCents: yearsUntilEmptyCents
   };
 });

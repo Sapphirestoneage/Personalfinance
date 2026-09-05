@@ -94,7 +94,8 @@ const EQUAL_HEIGHT = [
     const ctx = await b.newContext({ viewport: { width, height: 900 } });
     const p = await ctx.newPage();
     p.on('dialog', d => d.accept());
-    await p.goto(BASE + '/rooms/start.html', { waitUntil: 'networkidle' });
+    /* The demo persona is loaded by the dashboard, not the one-pager (D-095). */
+    await p.goto(BASE + '/index.html', { waitUntil: 'networkidle' });
     await p.waitForTimeout(300);
     await p.evaluate(() => { const d = SLAF.DemoPersona.build();
       SLAF.Spine.updateProfile({ people: d.people, filingStatus: d.filingStatus, state: d.state,

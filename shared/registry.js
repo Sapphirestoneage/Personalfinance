@@ -282,14 +282,18 @@
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
       order: 15,
       title: 'The Dashboard',
-      blurb: 'Every threshold ratio as one shape, plus altitude, fuel, engine load, thrust, weather and the flight plan \u2014 the whole panel at a glance.',
+      blurb: 'Home. Where you are, the next thing money should do, the next thing to learn, and the date it points to \u2014 every number opens the room it came from.',
       /* The front door since D-058: index.html renders the dashboard once
          it has what it needs, and the intake landing until then. */
       href: 'index.html',
       tier: 1,
       tags: ['income', 'cashflow', 'debt'],
       subsections: [
-        { id: 'panel',        label: 'The panel' },
+        { id: 'where',        label: 'Where you are' },
+        { id: 'next',         label: 'The next thing money should do' },
+        { id: 'learn',        label: 'The next thing to learn' },
+        { id: 'date',         label: 'The date it points to' },
+        { id: 'full-panel',   label: 'The full panel' },
         { id: 'out-radar',    label: 'All of it at once' },
         { id: 'out-altitude', label: 'Altitude' },
         { id: 'out-weather',  label: 'Weather' },

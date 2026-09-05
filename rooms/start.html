@@ -752,7 +752,11 @@
       });
       var x = h();
       if (!x.filingStatus) { Spine.set('filingStatus', ctl('filing').value || 'single'); flagged.filingStatus = true; }
-      if (x.meta.hasDebt === null) { Spine.set('meta.hasDebt', situation() === 'student' && ctl('debtBalance') && Suggest.isSuggested(ctl('debtBalance')) ? true : false); flagged.hasDebt = true; }
+      if (x.meta.hasDebt === null) {
+        /* The guess on the debt card: "no" for most, "yes" for a student. */
+        var gd = TABLES ? Gate.guesses(situation(), x, TABLES).hasDebt : null;
+        Spine.set('meta.hasDebt', !!(gd && gd.value === 'yes')); flagged.hasDebt = true;
+      }
       if (x.meta.noRent === null) Spine.set('meta.noRent', false);
       if (adults(x).length === 1 && !x.meta.householdAnswered) Spine.set('meta.householdAnswered', true);
       if (Object.keys(flagged).length) Spine.set('meta.guessed', Object.assign({}, x.meta.guessed || {}, flagged));

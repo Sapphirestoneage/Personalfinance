@@ -1,6 +1,6 @@
 {
   "id": "ratio_benchmarks",
-  "version": "1.2",
+  "version": "1.3",
   "asOf": "2026-01-01",
   "source": "Threshold values as they are commonly cited in lending and personal-finance guidance: the 28/36 housing and back-end rules used by mortgage underwriters, the 30%/10% credit-utilisation figures repeated by the bureaus, and the 3-6 month emergency-fund range. Where no convention exists the band is marked null and the ratio is reported without a verdict.",
   "confidence": "convention",
@@ -246,6 +246,12 @@
       "good": null,
       "warn": null,
       "note": "A date, not a ratio."
+    },
+    "withdrawalRate": {
+      "direction": "lower",
+      "good": 0.04,
+      "warn": 0.05,
+      "note": "The 4% rule as commonly cited; 5% is where most guidance starts to worry. A convention, not a finding — sequence risk is not in it."
     }
   }
 }
