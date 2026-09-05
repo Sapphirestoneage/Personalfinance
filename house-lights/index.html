@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>House Lights — Broadway Logbook</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Navy–Sapphire design system */
+    --navy-950:#060b18;
+    --navy-900:#0a1226;
+    --navy-800:#0f1b38;
+    --navy-700:#16264d;
+    --navy-600:#1e3364;
+    --sapphire:#2f6bff;
+    --sapphire-soft:#5b8cff;
+    --sapphire-glow:rgba(47,107,255,0.35);
+    --ice:#dbe6ff;
+    --ice-dim:#8fa3cc;
+    --gold:#ffc94d;
+    --gold-dim:#c79a35;
+    --green:#3ddc97;
+    --red:#ff5d5d;
+    --line:rgba(91,140,255,0.18);
+    --card:linear-gradient(160deg,#101d3f 0%,#0b142c 100%);
+    --r:10px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--navy-950);color:var(--ice);font-family:'Public Sans',sans-serif;-webkit-font-smoothing:antialiased;}
+  ::selection{background:var(--sapphire);color:#fff;}
+  a{color:var(--sapphire-soft);}
+
+  /* ---------- Header ---------- */
+  .hero{
+    position:relative;text-align:center;
+    padding:52px 20px 36px;
+    background:
+      radial-gradient(ellipse 70% 60% at 50% 0%, rgba(47,107,255,0.22), transparent 70%),
+      var(--navy-950);
+    border-bottom:1px solid var(--line);
+  }
+  .bulbs{position:absolute;top:12px;left:0;right:0;display:flex;justify-content:space-evenly;padding:0 8%;}
+  .bulb{width:5px;height:5px;border-radius:50%;background:var(--sapphire-soft);box-shadow:0 0 8px 2px var(--sapphire-glow);animation:fl 3.4s infinite ease-in-out;}
+  .bulb:nth-child(odd){animation-delay:.7s;}
+  .bulb:nth-child(3n){animation-delay:1.5s;}
+  @keyframes fl{0%,100%{opacity:1}50%{opacity:.25}}
+  @media(prefers-reduced-motion:reduce){.bulb{animation:none;}}
+  h1.title{font-family:'Bebas Neue',sans-serif;font-size:clamp(44px,8vw,78px);letter-spacing:.06em;margin:14px 0 4px;color:#fff;text-shadow:0 0 30px var(--sapphire-glow);}
+  .tagline{color:var(--ice-dim);font-size:13px;letter-spacing:.1em;text-transform:uppercase;}
+
+  /* ---------- Tabs ---------- */
+  .tabs{display:grid;grid-template-columns:repeat(6,1fr);background:var(--navy-900);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;max-width:980px;margin:0 auto;}
+  .tab-btn{font-family:'Bebas Neue',sans-serif;letter-spacing:.04em;font-size:clamp(11px,2.9vw,15px);background:none;border:none;color:var(--ice-dim);padding:15px 2px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:.15s;text-align:center;}
+  .tab-btn.active{color:var(--sapphire-soft);border-bottom-color:var(--sapphire);}
+  .tab-btn:hover{color:#fff;}
+
+  .wrap{max-width:980px;margin:0 auto;padding:26px 18px 90px;}
+  .view{display:none;} .view.active{display:block;}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:20px;}
+  .panel-label{font-family:'Bebas Neue',sans-serif;letter-spacing:.12em;color:var(--sapphire-soft);font-size:13px;margin-bottom:12px;text-transform:uppercase;}
+
+  input[type="text"],input[type="date"],input[type="number"],select,textarea{
+    background:var(--navy-950);border:1px solid var(--line);color:var(--ice);
+    padding:10px 12px;font-family:'Public Sans',sans-serif;font-size:13.5px;border-radius:6px;width:100%;
+  }
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--sapphire);box-shadow:0 0 0 2px var(--sapphire-glow);}
+  textarea{resize:vertical;min-height:44px;}
+
+  .btn{font-family:'Bebas Neue',sans-serif;letter-spacing:.09em;font-size:16px;background:var(--sapphire);color:#fff;border:none;padding:11px 26px;border-radius:6px;cursor:pointer;transition:.15s;}
+  .btn:hover{background:var(--sapphire-soft);box-shadow:0 0 18px var(--sapphire-glow);}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ice-dim);}
+  .btn.ghost:hover{color:#fff;border-color:var(--sapphire);box-shadow:none;}
+
+  /* ---------- Playbook ---------- */
+  .filter-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
+  .filter-row input[type="text"]{flex:1;min-width:180px;width:auto;}
+  .filter-row select{width:auto;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{font-size:11.5px;padding:6px 12px;border-radius:20px;border:1px solid var(--line);color:var(--ice-dim);background:transparent;cursor:pointer;transition:.15s;font-family:'Public Sans',sans-serif;}
+  .chip.on{background:var(--sapphire);color:#fff;border-color:var(--sapphire);font-weight:600;}
+  .chip:hover:not(.on){border-color:var(--sapphire-soft);color:#fff;}
+  .result-count{color:var(--ice-dim);font-size:12px;margin-top:6px;}
+
+  .mcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin-bottom:10px;overflow:hidden;transition:border-color .15s;}
+  .mcard:hover{border-color:rgba(91,140,255,0.45);}
+  .mcard-head{display:grid;grid-template-columns:1fr auto;gap:10px;padding:14px 16px;cursor:pointer;align-items:center;}
+  .mcat{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--sapphire-soft);font-weight:700;margin-bottom:3px;}
+  .mname{font-weight:700;font-size:15px;color:#fff;}
+  .mmeta{display:flex;gap:12px;font-size:11.5px;color:var(--ice-dim);margin-top:5px;flex-wrap:wrap;}
+  .mmeta b{color:var(--ice);}
+  .mprice{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13.5px;color:var(--gold);text-align:right;white-space:nowrap;}
+  .mdetail{display:none;padding:0 16px 16px;font-size:13px;line-height:1.55;border-top:1px dashed var(--line);padding-top:12px;}
+  .mdetail.open{display:block;}
+  .mdetail .row{margin-bottom:8px;}
+  .mdetail .row b{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--sapphire-soft);margin-bottom:2px;}
+
+  /* ---------- Logbook ---------- */
+  .grid3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:10px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+  .stars{display:flex;gap:4px;align-items:center;}
+  .star{font-size:24px;color:var(--navy-600);cursor:pointer;transition:.1s;user-select:none;}
+  .star.on{color:var(--gold);text-shadow:0 0 8px rgba(255,201,77,.5);}
+  .star:hover{transform:scale(1.15);}
+  .vibe-chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .field-lbl{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ice-dim);margin-bottom:6px;display:block;}
+
+  .log-entry{position:relative;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;padding:16px 18px 16px 22px;display:flex;gap:14px;align-items:center;transition:border-color .18s, transform .18s, box-shadow .18s;overflow:hidden;}
+  .log-entry::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--sapphire),transparent);opacity:.7;}
+  .log-entry:hover{border-color:rgba(91,140,255,.5);transform:translateY(-1px);box-shadow:0 8px 26px rgba(0,0,0,.35);}
+  .le-body{flex:1;min-width:0;}
+  .le-photos{display:flex;gap:6px;flex-shrink:0;}
+  .le-photos img{width:54px;height:54px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer;transition:transform .15s;}
+  .le-photos img:hover{transform:scale(1.06);border-color:var(--sapphire);}
+  .le-count{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--navy-950);background:var(--gold);border-radius:10px;padding:2px 8px;vertical-align:2px;margin-left:6px;}
+  #lightbox{position:fixed;inset:0;background:rgba(4,7,16,.92);z-index:200;display:none;align-items:center;justify-content:center;cursor:zoom-out;}
+  #lightbox img{max-width:92vw;max-height:88vh;border-radius:10px;box-shadow:0 20px 80px rgba(0,0,0,.7);}
+  .le-title{font-weight:700;font-size:15px;color:#fff;}
+  .le-stars{color:var(--gold);font-size:12px;letter-spacing:2px;}
+  .le-meta{font-size:11.5px;color:var(--ice-dim);margin-top:4px;line-height:1.5;}
+  .le-vibes{margin-top:5px;display:flex;gap:5px;flex-wrap:wrap;}
+  .le-vibe{font-size:10px;padding:3px 9px;border-radius:12px;background:rgba(47,107,255,0.15);color:var(--sapphire-soft);border:1px solid var(--line);}
+  .le-price{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:15px;color:var(--gold);}
+  .le-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;opacity:.6;padding:6px;}
+  .le-del:hover{opacity:1;}
+  .le-edit{background:none;border:none;color:var(--sapphire-soft);cursor:pointer;font-size:14px;opacity:.6;padding:6px;}
+  .le-edit:hover{opacity:1;}
+  .empty{text-align:center;color:var(--ice-dim);padding:44px 20px;font-size:13.5px;border:1px dashed var(--line);border-radius:var(--r);}
+  .save-note{font-size:11px;color:var(--ice-dim);margin:-8px 0 18px;}
+
+  /* ---------- Diagnostics ---------- */
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px;}
+  .stat-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;text-align:center;}
+  .stat-card .num{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--sapphire-soft);}
+  .stat-card .num.gold{color:var(--gold);}
+  .stat-card .lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ice-dim);margin-top:5px;}
+  .bar-row{display:grid;grid-template-columns:130px 1fr 44px;gap:10px;align-items:center;margin-bottom:9px;font-size:12px;}
+  .bar-track{height:10px;background:var(--navy-800);border-radius:6px;overflow:hidden;}
+  .bar-fill{height:100%;background:linear-gradient(90deg,var(--sapphire),var(--sapphire-soft));border-radius:6px;transition:width .5s ease;}
+  .bar-fill.gold{background:linear-gradient(90deg,var(--gold-dim),var(--gold));}
+  .bar-num{font-family:'IBM Plex Mono',monospace;color:var(--ice-dim);text-align:right;}
+
+  /* ---------- Show picker ---------- */
+  .show-picker{display:flex;flex-wrap:wrap;gap:6px;max-height:150px;overflow-y:auto;padding:10px;background:var(--navy-950);border:1px solid var(--line);border-radius:6px;}
+  .show-chip{font-size:11.5px;padding:6px 11px;border-radius:14px;border:1px solid var(--line);color:var(--ice);background:var(--navy-800);cursor:pointer;transition:.12s;font-family:'Public Sans',sans-serif;}
+  .show-chip:hover{border-color:var(--sapphire);color:#fff;}
+  .show-chip.picked{background:var(--sapphire);border-color:var(--sapphire);color:#fff;font-weight:600;}
+  .show-chip.logged{opacity:.38;border-style:dashed;color:var(--green);}
+  .show-chip.logged:hover{opacity:.7;border-color:var(--green);}
+  .cat-groups{display:flex;flex-direction:column;gap:8px;padding:12px;background:var(--navy-950);border:1px solid var(--line);border-radius:6px;}
+  .cat-group{display:flex;align-items:flex-start;gap:10px;}
+  .cat-lbl{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ice-dim);min-width:52px;padding-top:7px;}
+
+  /* ---------- Playbill document ---------- */
+  .playbill{max-width:430px;margin:0 auto 16px;background:#fdfcf7;color:#191510;border-radius:6px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.5);font-family:Georgia,'Times New Roman',serif;}
+  .pb-mast{background:#ffd800;padding:14px 20px 12px;}
+  .pb-mast .pb-logo{font-family:'Public Sans',sans-serif;font-weight:800;font-style:italic;font-size:30px;letter-spacing:-0.02em;color:#111;line-height:1;}
+  .pb-mast .pb-sub{font-family:'Public Sans',sans-serif;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:#332f00;margin-top:4px;}
+  .pb-body{padding:22px 24px 26px;}
+  .pb-title{text-align:center;font-size:21px;font-weight:700;margin-bottom:2px;}
+  .pb-under{text-align:center;font-size:11px;font-style:italic;color:#6b6455;margin-bottom:16px;}
+  .pb-rule{border:none;border-top:2px solid #191510;margin:14px 0 4px;}
+  .pb-sec{font-family:'Public Sans',sans-serif;font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;text-align:center;font-weight:700;margin:12px 0 8px;}
+  .pb-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;text-align:center;margin-bottom:6px;}
+  .pb-stats .n{font-size:19px;font-weight:700;}
+  .pb-stats .l{font-family:'Public Sans',sans-serif;font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:#6b6455;margin-top:2px;}
+  .pb-showline{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;padding:4px 0;border-bottom:1px dotted #c9c2ae;}
+  .pb-showline .t{font-weight:700;}
+  .pb-showline .d{color:#6b6455;font-size:11px;white-space:nowrap;}
+  .pb-cast{font-size:12.5px;line-height:1.8;text-align:center;}
+  .pb-cast b{font-weight:700;}
+  .pb-venues{font-size:11.5px;line-height:1.7;text-align:center;color:#3a352c;}
+  .pb-foot{text-align:center;font-family:'Public Sans',sans-serif;font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:#8a8270;margin-top:16px;border-top:1px solid #c9c2ae;padding-top:10px;}
+
+  /* ---------- Theatres checklist ---------- */  .prog-wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+  .prog-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;}
+  .prog-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+  .prog-title{font-family:'Bebas Neue',sans-serif;letter-spacing:.08em;font-size:15px;color:#fff;}
+  .prog-count{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--gold);}
+  .prog-track{height:12px;background:var(--navy-800);border-radius:8px;overflow:hidden;}
+  .prog-fill{height:100%;background:linear-gradient(90deg,var(--sapphire),var(--sapphire-soft));border-radius:8px;transition:width .5s ease;}
+  .prog-fill.gold{background:linear-gradient(90deg,var(--gold-dim),var(--gold));}
+  .prog-left{font-size:11px;color:var(--ice-dim);margin-top:7px;}
+  .prog-done{color:var(--green);}
+  .th-row{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:.15s;}
+  .th-row:hover{border-color:rgba(91,140,255,.45);}
+  .th-row.done{border-color:rgba(61,220,151,.35);}
+  .th-check{width:22px;height:22px;min-width:22px;border-radius:6px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:13px;color:transparent;transition:.15s;}
+  .th-row.done .th-check{background:var(--green);border-color:var(--green);color:var(--navy-950);font-weight:800;}
+  .th-name{font-weight:700;font-size:14px;color:#fff;}
+  .th-row.done .th-name{color:var(--green);}
+  .th-show{font-size:11.5px;color:var(--ice-dim);margin-top:2px;}
+  .th-show b{color:var(--gold);font-weight:600;}
+  .th-tag{margin-left:auto;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:10px;border:1px solid var(--line);color:var(--ice-dim);white-space:nowrap;}
+  .sdb-star,.sdb-plus{background:none;border:1px solid var(--line);border-radius:8px;color:var(--ice-dim);cursor:pointer;font-size:13px;padding:5px 9px;margin-left:8px;transition:.15s;}
+  .sdb-star:hover,.sdb-plus:hover{border-color:var(--gold);color:var(--gold);}
+  .sdb-star.on{color:var(--gold);border-color:rgba(255,201,77,.4);}
+  .sdb-plus{color:var(--green);border-color:rgba(61,220,151,.3);}
+  .sdb-minus{background:none;border:1px solid rgba(255,93,93,.3);border-radius:8px;color:var(--red);cursor:pointer;font-size:15px;padding:5px 10px;margin-left:6px;transition:.15s;line-height:1;}
+  .sdb-minus:hover{border-color:var(--red);background:rgba(255,93,93,.08);}
+  .wl-up,.wl-down,.wl-rm{background:none;border:1px solid var(--line);border-radius:7px;color:var(--ice);cursor:pointer;font-size:13px;padding:5px 9px;transition:.15s;}
+  .wl-up:hover,.wl-down:hover{border-color:var(--sapphire);color:var(--sapphire-soft);}
+  .wl-rm{color:var(--red);opacity:.7;}
+  .wl-rm:hover{opacity:1;border-color:var(--red);}
+  .th-hist{background:none;border:1px solid var(--line);border-radius:8px;color:var(--sapphire-soft);cursor:pointer;font-size:11px;padding:5px 9px;margin-left:8px;white-space:nowrap;transition:.15s;}
+  .th-hist:hover{border-color:var(--sapphire);color:#fff;}
+  .th-hist-panel{background:var(--navy-900);border:1px solid var(--line);border-top:none;border-radius:0 0 10px 10px;margin:-9px 0 10px;padding:14px;}
+  .th-section{font-family:'Bebas Neue',sans-serif;letter-spacing:.1em;color:var(--sapphire-soft);font-size:14px;margin:18px 0 10px;text-transform:uppercase;}
+  @media(max-width:480px){.prog-wrap{grid-template-columns:1fr;}}
+
+  /* ---------- Results / share card ---------- */  .share-card{
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(47,107,255,0.30), transparent 70%),
+      linear-gradient(165deg,#0e1a3a 0%,#070d1e 100%);
+    border:1px solid rgba(91,140,255,0.35);
+    border-radius:16px;padding:34px 28px;text-align:center;position:relative;overflow:hidden;
+    max-width:460px;margin:0 auto 18px;
+  }
+  .sc-eyebrow{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--sapphire-soft);margin-bottom:10px;}
+  .sc-emoji{font-size:52px;margin-bottom:6px;}
+  .sc-type{font-family:'Bebas Neue',sans-serif;font-size:38px;letter-spacing:.05em;color:#fff;margin-bottom:8px;text-shadow:0 0 24px var(--sapphire-glow);}
+  .sc-desc{font-size:13.5px;color:var(--ice);line-height:1.6;margin-bottom:20px;}
+  .sc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-radius:8px;overflow:hidden;margin-bottom:18px;}
+  .sc-stats div{background:rgba(10,18,38,0.9);padding:12px 6px;}
+  .sc-stats .n{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:16px;color:var(--gold);}
+  .sc-stats .l{font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ice-dim);margin-top:3px;}
+  .sc-badges{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+  .sc-badge{font-size:10.5px;padding:5px 12px;border-radius:14px;background:rgba(255,201,77,0.12);color:var(--gold);border:1px solid rgba(255,201,77,0.3);}
+  .sc-footer{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ice-dim);border-top:1px solid var(--line);padding-top:12px;}
+  .share-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+
+  @media(max-width:600px){
+    .grid3,.grid2{grid-template-columns:1fr;}
+    .log-entry{grid-template-columns:1fr auto;}
+    .le-del{grid-column:2;}
+    .bar-row{grid-template-columns:100px 1fr 40px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="bulbs">
+    <div class="bulb"></div><div class="bulb"></div><div class="bulb"></div><div class="bulb"></div><div class="bulb"></div>
+    <div class="bulb"></div><div class="bulb"></div><div class="bulb"></div><div class="bulb"></div><div class="bulb"></div>
+  </div>
+  <h1 class="title">House Lights</h1>
+  <div class="tagline">Broadway ticket playbook &amp; show logbook</div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ice-dim);margin-top:8px;letter-spacing:.08em;">v3.1 · Aug 4 2026 · 365-show database</div>
+</div>
+
+<div id="onThisDay" style="display:none;max-width:980px;margin:0 auto;padding:10px 18px;background:rgba(255,201,77,0.08);border-bottom:1px solid rgba(255,201,77,0.2);font-size:12.5px;color:var(--gold);text-align:center;"></div>
+
+<div class="tabs">
+  <button class="tab-btn active" data-view="playbook">Guide</button>
+  <button class="tab-btn" data-view="log">Logbook</button>
+  <button class="tab-btn" data-view="showdb">Shows</button>
+  <button class="tab-btn" data-view="theatres">Theatres</button>
+  <button class="tab-btn" data-view="stats">Stats</button>
+  <button class="tab-btn" data-view="results">Results</button>
+</div>
+
+<div class="wrap">
+
+<!-- ============ PLAYBOOK ============ -->
+<div class="view active" id="view-playbook">
+  <div class="panel">
+    <div class="panel-label">Box Office ▸ Filter</div>
+    <div class="filter-row">
+      <input type="text" id="search" placeholder="Search methods, e.g. lottery, TKTS, Amex...">
+      <select id="sortBy">
+        <option value="category">Sort: Category</option>
+        <option value="priceLow">Sort: Price (low → high)</option>
+        <option value="effort">Sort: Effort (easiest first)</option>
+        <option value="reliability">Sort: Reliability (highest)</option>
+      </select>
+    </div>
+    <div class="chips" id="catChips"></div>
+    <div class="result-count" id="resultCount"></div>
+  </div>
+  <div id="methodList"></div>
+</div>
+
+<!-- ============ LOGBOOK ============ -->
+<div class="view" id="view-log">
+  <div class="panel" id="addForm">
+    <div class="panel-label">Log a Show</div>
+    <div style="margin-bottom:10px;">
+      <span class="field-lbl">Find your show — search 20 years of Broadway, or tap a current one</span>
+      <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap;">
+        <input type="text" id="showSearch" placeholder="🔍 Search all shows since 2006..." style="flex:1;min-width:170px;width:auto;">
+        <button type="button" class="chip" id="quickToggle" style="padding:9px 14px;">⚡ Quick-add: OFF</button>
+      </div>
+      <div id="quickHint" style="display:none;font-size:11.5px;color:var(--gold);margin-bottom:8px;">⚡ Quick-add is ON — tapping a show logs it instantly (name + theatre only). Use ✎ on any entry later to add price, rating, and details.</div>
+      <div class="show-picker" id="showPicker"></div>
+    </div>
+    <div class="grid3">
+      <input type="text" id="f-show" list="showsDL" placeholder="Show name * (tap above or type)" required autocomplete="off">
+      <input type="date" id="f-date">
+      <div style="display:flex;gap:8px;">
+        <input type="number" id="f-price" placeholder="Price / ticket ($)" min="0" step="0.01" style="flex:2;">
+        <input type="number" id="f-qty" placeholder="# tix" min="1" step="1" style="flex:1;min-width:64px;" title="How many tickets you bought">
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--ice-dim);margin:-2px 0 10px;">Future date? It goes to your Upcoming list with a countdown, and joins your stats after the big night.</p>
+    <datalist id="showsDL"></datalist>
+    <div id="smartFill" style="display:none;margin-bottom:10px;padding:12px;background:rgba(47,107,255,0.10);border:1px solid var(--line);border-radius:6px;">
+      <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--sapphire-soft);margin-bottom:8px;">✨ Auto-fill the likely deal</div>
+      <div id="smartBtns" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+    </div>
+    <button type="button" id="detailsToggle" class="chip" style="margin-bottom:10px;padding:8px 14px;">＋ Add details — rating, who with, vibes, photo...</button>
+    <div id="detailsSection" style="display:none;">
+    <div class="grid2">
+      <select id="f-theatre"><option value="">Theatre (auto-fills for current shows)</option></select>
+      <select id="f-method"><option value="">How'd you get the ticket?</option></select>
+    </div>
+    <div class="grid2">
+      <select id="f-type">
+        <option value="">Where it played</option>
+        <option>Broadway</option>
+        <option>Off-Broadway</option>
+        <option>Off-Off-Broadway</option>
+        <option>Touring / Regional</option>
+        <option>Concert / Special</option>
+      </select>
+      <div></div>
+    </div>
+    <div style="margin-bottom:10px;">
+      <span class="field-lbl">Category (auto-suggests for known shows — tap to toggle)</span>
+      <div class="cat-groups">
+        <div class="cat-group"><span class="cat-lbl">Format</span><div class="vibe-chips" id="catFormat"></div></div>
+        <div class="cat-group"><span class="cat-lbl">Story</span><div class="vibe-chips" id="catStory"></div></div>
+        <div class="cat-group"><span class="cat-lbl">Tone</span><div class="vibe-chips" id="catTone"></div></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div>
+        <span class="field-lbl">Rating</span>
+        <div class="stars" id="stars">
+          <span class="star" data-v="1">★</span><span class="star" data-v="2">★</span><span class="star" data-v="3">★</span><span class="star" data-v="4">★</span><span class="star" data-v="5">★</span>
+        </div>
+      </div>
+      <div>
+        <span class="field-lbl">Who'd you go with?</span>
+        <select id="f-company">
+          <option value="Solo">Solo</option>
+          <option value="Friend">Friend</option>
+          <option value="Date">Date</option>
+          <option value="Family">Family</option>
+          <option value="Group">Group</option>
+        </select>
+        <input type="text" id="f-withWho" placeholder="Their name(s) — e.g. Ari, Zaidy" style="display:none;margin-top:8px;" autocomplete="off">
+      </div>
+    </div>
+    <div style="margin-bottom:10px;">
+      <span class="field-lbl">Vibe (pick any)</span>
+      <div class="vibe-chips" id="vibeChips"></div>
+    </div>
+    <div class="grid2">
+      <div>
+        <span class="field-lbl">Where you sat</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <select id="f-seatLevel" style="flex:1;min-width:120px;width:auto;">
+            <option value="">Level</option>
+            <option>Orchestra</option>
+            <option>Front Mezzanine</option>
+            <option>Rear Mezzanine</option>
+            <option>Mezzanine</option>
+            <option>Balcony</option>
+            <option>Box</option>
+            <option>Standing Room</option>
+            <option>Lottery Seats (varies)</option>
+          </select>
+          <select id="f-seatSide" style="flex:1;min-width:110px;width:auto;">
+            <option value="">Side</option>
+            <option>Center</option>
+            <option>Left</option>
+            <option>Right</option>
+            <option>Far Left</option>
+            <option>Far Right</option>
+          </select>
+          <select id="f-seatDepth" style="flex:1;min-width:100px;width:auto;">
+            <option value="">Depth</option>
+            <option>Front</option>
+            <option>Middle</option>
+            <option>Back</option>
+          </select>
+        </div>
+        <input type="text" id="f-seatNum" placeholder="Exact seat if you know it — e.g. C104, Row F 12 (optional)" style="margin-top:8px;">
+      </div>
+      <input type="text" id="f-face" placeholder="Face value ($, optional — to track savings)">
+    </div>
+    <div class="grid2">
+      <input type="text" id="f-actors" placeholder="Standout performers — comma separated (optional)">
+      <input type="text" id="f-recBy" placeholder="Who recommended it? (optional)" autocomplete="off">
+    </div>
+    <textarea id="f-notes" placeholder="Notes — best moment, would you see it again..."></textarea>
+    <div style="margin-top:10px;">
+      <span class="field-lbl">Photos — Playbill, seat view, stub (up to 3, stored compressed)</span>
+      <input type="file" id="f-photo" accept="image/*" multiple style="font-size:12px;color:var(--ice-dim);">
+      <div id="photoThumbs" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"></div>
+      <span id="photoStatus" style="font-size:11px;color:var(--ice-dim);"></span>
+    </div>
+    </div><!-- /detailsSection -->
+    <div style="margin-top:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <button type="button" class="btn" id="addBtn">Add to Logbook</button>
+      <button type="button" class="btn ghost" id="cancelEditBtn" style="display:none;">Cancel Edit</button>
+      <span id="formMsg" style="font-size:12px;"></span>
+    </div>
+  </div>
+  <div class="save-note" id="saveNote"></div>
+  <div id="upcomingPanel" style="display:none;" class="panel">
+    <div class="panel-label">🎟 Upcoming — The Countdown</div>
+    <div id="upcomingList"></div>
+  </div>
+  <div class="panel-label" id="logHeader" style="margin-top:6px;">Your Shows</div>
+  <div class="chips" id="logFilter" style="margin-bottom:12px;"></div>
+  <div id="logList"></div>
+</div>
+
+<!-- ============ SHOWS DATABASE ============ -->
+<div class="view" id="view-showdb">
+  <div class="prog-wrap">
+    <div class="prog-card">
+      <div class="prog-head"><span class="prog-title">Now Playing</span><span class="prog-count" id="sdbNowCount"></span></div>
+      <div class="prog-track"><div class="prog-fill" id="sdbNowFill"></div></div>
+      <div class="prog-left" id="sdbNowLeft"></div>
+    </div>
+    <div class="prog-card">
+      <div class="prog-head"><span class="prog-title">Past 20 Years</span><span class="prog-count" id="sdbHistCount"></span></div>
+      <div class="prog-track"><div class="prog-fill gold" id="sdbHistFill"></div></div>
+      <div class="prog-left" id="sdbHistLeft"></div>
+    </div>
+  </div>
+  <div id="repeatStrip" style="display:none;" class="panel"></div>
+  <div class="panel" style="padding:14px;">
+    <input type="text" id="sdbSearch" placeholder="🔍 Search the database..." style="margin-bottom:10px;">
+    <div class="chips" id="sdbFilter">
+      <button type="button" class="chip on" data-f="all">All</button>
+      <button type="button" class="chip" data-f="now">Now playing</button>
+      <button type="button" class="chip" data-f="unseen">Haven't seen</button>
+      <button type="button" class="chip" data-f="seen">Seen</button>
+      <button type="button" class="chip" data-f="wish">⭐ Wishlist</button>
+      <button type="button" class="chip" data-f="repeats">🔁 Seen ×2+</button>
+    </div>
+    <div style="font-size:11.5px;color:var(--ice-dim);margin-top:10px;line-height:1.6;">
+      <span style="color:var(--gold);">⚡ Tap a show once = seen.</span> Theatre, categories & stats fill themselves.
+      On seen shows: <b style="color:var(--green);">+1</b> = saw it again · <b style="color:var(--red);">−</b> = remove (added by mistake).
+      Add details anytime with ✎ in the Logbook.</div>
+  </div>
+  <div id="sdbList"></div>
+</div>
+
+<!-- ============ THEATRES ============ -->
+<div class="view" id="view-theatres">
+  <div class="prog-wrap">
+    <div class="prog-card">
+      <div class="prog-head"><span class="prog-title">Broadway</span><span class="prog-count" id="bwayCount"></span></div>
+      <div class="prog-track"><div class="prog-fill" id="bwayFill"></div></div>
+      <div class="prog-left" id="bwayLeft"></div>
+    </div>
+    <div class="prog-card">
+      <div class="prog-head"><span class="prog-title">Off-Broadway</span><span class="prog-count" id="offCount"></span></div>
+      <div class="prog-track"><div class="prog-fill gold" id="offFill"></div></div>
+      <div class="prog-left" id="offLeft"></div>
+    </div>
+  </div>
+  <div class="panel" style="padding:14px;">
+    <div class="chips" id="thFilter">
+      <button type="button" class="chip on" data-f="all">All</button>
+      <button type="button" class="chip" data-f="Broadway">Broadway</button>
+      <button type="button" class="chip" data-f="Off-Broadway">Off-Broadway</button>
+      <button type="button" class="chip" data-f="left">Still to visit</button>
+      <button type="button" class="chip" data-f="done">Visited</button>
+    </div>
+  </div>
+  <div id="theatreList"></div>
+  <p style="color:var(--ice-dim);font-size:11px;margin-top:14px;">Current shows as of August 2026 (Broadway League). Tap a theatre to check it off.</p>
+</div>
+
+<!-- ============ DIAGNOSTICS ============ -->
+<div class="view" id="view-stats">
+  <div class="stat-grid" id="statGrid"></div>
+  <div class="panel">
+    <div class="panel-label">📈 Shows Over Time</div>
+    <div id="timelineChart"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-label">🎨 Your Taste — Genre Mix</div>
+    <div id="donutChart" style="display:flex;gap:22px;align-items:center;flex-wrap:wrap;"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-label">🔁 Most-Watched Shows</div>
+    <div id="rewatchBars"><div class="empty" style="border:none;padding:20px;">See a show more than once and it'll rank here.</div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-label">💰 Theater Budget — SLAF Mode</div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+      <span style="font-size:13px;color:var(--ice-dim);" id="budgetYearLbl"></span>
+      <input type="number" id="budgetInput" placeholder="Annual budget ($)" style="width:150px;" min="0">
+      <input type="number" id="goalInput" placeholder="Show goal (#)" style="width:120px;" min="1" title="How many shows do you want to see this year?">
+      <button type="button" class="btn ghost" id="budgetSave" style="padding:8px 16px;font-size:13px;">Set</button>
+    </div>
+    <div id="budgetViz"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-label">Spending by Method</div>
+    <div id="methodBars"><div class="empty" style="border:none;padding:20px;">Log shows to see this.</div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-label">Ratings Distribution</div>
+    <div id="ratingBars"><div class="empty" style="border:none;padding:20px;">Log rated shows to see this.</div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-label">Who You Go With</div>
+    <div id="companyBars"><div class="empty" style="border:none;padding:20px;">Log shows to see this.</div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-label">Your Theatre Buddies</div>
+    <div id="buddyBars"><div class="empty" style="border:none;padding:20px;">Add names when you go with someone to build your buddy leaderboard.</div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-label">What You Watch — Genre Breakdown</div>
+    <div id="catBars"><div class="empty" style="border:none;padding:20px;">Tag categories when logging to see your taste profile.</div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-label">🗂 Your Data</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <button type="button" class="btn ghost" id="expJson" style="font-size:13px;padding:9px 16px;">Export Backup (JSON)</button>
+      <button type="button" class="btn" id="expXlsx" style="font-size:13px;padding:9px 16px;">📊 Excel Template + Your Data (.xlsx)</button>
+      <label class="btn" style="font-size:13px;padding:9px 16px;cursor:pointer;">📥 Import Excel / CSV<input type="file" id="impXlsx" accept=".xlsx,.xls,.csv" style="display:none;"></label>
+      <button type="button" class="btn ghost" id="expCsv" style="font-size:13px;padding:9px 16px;">Export CSV</button>
+      <label class="btn ghost" style="font-size:13px;padding:9px 16px;cursor:pointer;">Import JSON Backup<input type="file" id="impJson" accept=".json" style="display:none;"></label>
+    </div>
+    <p style="font-size:11px;color:var(--ice-dim);margin:10px 0 0;line-height:1.6;">
+      <b style="color:var(--ice);">Bulk-entry workflow:</b> Export the Excel template → it opens in Excel or Google Sheets with your shows pre-filled, an example row, and a "Valid Options" tab listing the exact values each column accepts → add rows → Import it back. Only <b>Show</b> is required per row; the importer matches columns by header name, skips exact duplicates, and auto-checks theatres.</p>
+  </div>
+  <div class="panel">
+    <div class="panel-label">💬 Your Best Recommenders</div>
+    <div id="recBars"><div class="empty" style="border:none;padding:20px;">Add "who recommended it" to shows — then see whose taste you should trust.</div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-label">🪑 Where You Sit</div>
+    <div id="seatBars"><div class="empty" style="border:none;padding:20px;">Pick seat levels when logging to see your habitat.</div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-label">Performers You've Seen Most</div>
+    <div id="actorBars"><div class="empty" style="border:none;padding:20px;">Add standout performers when logging shows to build this.</div></div>
+  </div>
+</div>
+
+<!-- ============ RESULTS ============ -->
+<div class="view" id="view-results">
+  <div id="resultsArea"></div>
+</div>
+
+</div>
+
+<script>
+/* ================= DATA ================= */
+const METHODS = [
+{m:"Broadway Direct Lottery",price:"$40–$60",sp:40,cat:"Lotteries",effort:1,eL:"Very Easy",rel:2,rL:"Low–Med",req:"Free account; enter day before show",pros:"Cheapest guaranteed-seat option; enter from anywhere; covers all Telecharge/Shubert shows",cons:"Not guaranteed; odds vary; seats assigned",url:"https://lottery.broadwaydirect.com",notes:"Enter by 3pm day before. Sign up for text alerts for flash drops too."},
+{m:"Lucky Seat Lottery",price:"$25–$50",sp:25,cat:"Lotteries",effort:1,eL:"Very Easy",rel:2,rL:"Low–Med",req:"Free account",pros:"Batch-enter for the entire upcoming week at once — unique vs other platforms",cons:"Not guaranteed; limited shows",url:"https://luckyseat.com",notes:"Underused advantage: enter 7 days ahead vs day-of only."},
+{m:"TodayTix Lottery",price:"$30–$50",sp:30,cat:"Lotteries",effort:1,eL:"Very Easy",rel:2,rL:"Low–Med",req:"Free TodayTix app",pros:"All in one app; covers many shows; same app as Rush tickets",cons:"Competitive; seat location unknown until purchase",url:"https://www.todaytix.com",notes:"Also shows Rush tickets at 10am — check both simultaneously each morning."},
+{m:"Hamilton Lottery ($10 seats)",price:"$10",sp:10,cat:"Lotteries",effort:1,eL:"Very Easy",rel:1,rL:"Low",req:"Free; enter via Hamilton app or Broadway Direct; weekly draw Fridays",pros:"Front orchestra for $10; 46 seats per performance",cons:"Extremely competitive; weekly not daily",url:"https://hamiltonmusical.com/lottery",notes:"Draws weeks out so out-of-towners can plan ahead. Enter every Friday."},
+{m:"Social Toaster Lottery",price:"$30–$60",sp:30,cat:"Lotteries",effort:1,eL:"Very Easy",rel:2,rL:"Low–Med",req:"Free account",pros:"Telecharge's lottery platform; covers Shubert-produced shows",cons:"Less intuitive UI; fewer shows than Broadway Direct",url:"https://my.socialtoaster.com/st/lottery_select/?key=BROADWAY",notes:"The backend powering many Telecharge/Shubert lotteries."},
+{m:"Nytix Lottery Aggregator",price:"Free (aggregator)",sp:0,cat:"Lotteries",effort:1,eL:"Very Easy",rel:3,rL:"Medium",req:"Free account",pros:"Aggregates multiple lottery links in one place; good discovery tool",cons:"Not a lottery itself — just a directory",url:"https://www.nytix.com",notes:"Use to find which shows have active lotteries, then enter on the actual platforms."},
+{m:"bwayrush.com",price:"Free (aggregator)",sp:0,cat:"Lotteries",effort:1,eL:"Very Easy",rel:3,rL:"Medium",req:"Free",pros:"Aggregates rush and lottery info for all Broadway shows",cons:"Directory only",url:"https://bwayrush.com",notes:"Good companion to Nytix — they sometimes surface different shows."},
+{m:"TodayTix (Rush + Discount)",price:"$30–$80",sp:30,cat:"Apps & Platforms",effort:1,eL:"Very Easy",rel:3,rL:"Medium",req:"Free app; digital rush opens 10–11am day-of",pros:"One-stop: lottery + rush + discounts; no physical line",cons:"Rush sells out fast; small service fee",url:"https://www.todaytix.com",notes:"Best single app for locals. Set a 10am reminder on days you want to go."},
+{m:"THEATR App",price:"$0–face value",sp:0,cat:"Apps & Platforms",effort:1,eL:"Very Easy",rel:3,rL:"Medium",req:"Free account; peer-to-peer resale",pros:"Sellers resell at or below face value; sometimes free; verified via receipt upload",cons:"Inventory unpredictable; insurance fee applies",url:"https://www.theatr-app.com",notes:"Best strategy: keep the app open and refresh 5–7pm in Midtown."},
+{m:"BroadwayBox",price:"10–50% off",sp:0,cat:"Apps & Platforms",effort:1,eL:"Very Easy",rel:4,rL:"High",req:"Free; no membership needed",pros:"Promo codes for advance tickets; pick your own seats",cons:"Not all shows; codes vary and expire",url:"https://www.broadwaybox.com",notes:"Always check before buying anything online — 30 seconds, often saves $20–40."},
+{m:"TheaterMania",price:"10–40% off",sp:0,cat:"Apps & Platforms",effort:1,eL:"Very Easy",rel:4,rL:"High",req:"Free account",pros:"Discount codes; also runs Gold Club for comps",cons:"Overlaps with BroadwayBox; selection differs — check both",url:"https://www.theatermania.com",notes:"Gold Club: up to 2 free tickets/month for ~$4.50 processing fee."},
+{m:"Playbill Club",price:"10–40% off",sp:0,cat:"Apps & Platforms",effort:1,eL:"Very Easy",rel:4,rL:"High",req:"Free Playbill.com account",pros:"Discount codes; in-person redemption kills service fees",cons:"Not all shows; codes change regularly",url:"https://www.playbill.com/club",notes:"Redeem IN PERSON at box office — saves ~$15–25/ticket vs online."},
+{m:"SeatPlan",price:"Free (research)",sp:0,cat:"Apps & Platforms",effort:1,eL:"Very Easy",rel:4,rL:"High",req:"Free",pros:"Real audience photos of views from specific seats",cons:"Research only — not a ticketing platform",url:"https://seatplan.com",notes:"Use before buying any partial/restricted view seat."},
+{m:"Show-Score",price:"~$4.50 fee",sp:4,cat:"Apps & Platforms",effort:2,eL:"Easy",rel:2,rL:"Low–Med",req:"Free account; write reviews to unlock comps",pros:"More reviews = lower fees; also a review aggregator",cons:"Limited inventory; must review consistently",url:"https://www.show-score.com",notes:"The more you review, the cheaper your comps get."},
+{m:"Broadway Communities (Reddit/FB/IG)",price:"Free",sp:0,cat:"Apps & Platforms",effort:1,eL:"Very Easy",rel:3,rL:"Medium",req:"Free",pros:"Crowdsourced tips, deal alerts, lottery strategies in real time",cons:"Info quality varies",url:"https://www.reddit.com/r/Broadway",notes:"Broadway for Broke People, Broadway on a Budget & r/Broadway surface deals fast."},
+{m:"TKTS Booth — Times Square",price:"20–50% off",sp:0,cat:"Same-Day / In-Person",effort:2,eL:"Easy",rel:4,rL:"High",req:"Show up same day; $7 service fee",pros:"Widest same-day selection; price known before you commit",cons:"Long lines; same-day only",url:"https://www.tdf.org/nyc/access/tkts",notes:"Check the TDF app for the current show list before going."},
+{m:"TKTS Booth — Lincoln Center",price:"20–50% off",sp:0,cat:"Same-Day / In-Person",effort:2,eL:"Easy",rel:5,rL:"Very High",req:"Show up same day",pros:"Much shorter lines; indoors; same inventory as Times Square",cons:"Out of the way for some",url:"https://www.tdf.org/nyc/access/tkts",notes:"Criminally underused. Often under 15 min wait. 61 W 62nd St."},
+{m:"TKTS 7-Day Fast Pass",price:"20–50% off",sp:0,cat:"Same-Day / In-Person",effort:1,eL:"Very Easy",rel:5,rL:"Very High",req:"TKTS stub from the past 7 days",pros:"Skip the line entirely on return visits",cons:"Only works after a recent TKTS visit",url:"https://www.tdf.org/nyc/access/tkts",notes:"Go twice in a week? Save your stub — eliminates the wait."},
+{m:"Box Office Rush",price:"$30–$50",sp:30,cat:"Same-Day / In-Person",effort:3,eL:"Medium",rel:3,rL:"Medium",req:"Arrive at box office opening (10am wkdays, noon Sun)",pros:"Reliable discount; great seat locations possible",cons:"Arrive early; popular shows fill fast",url:"https://www.playbill.com/article/broadway-rush-lottery-and-standing-room-only-policies",notes:"Arrive 30+ min early for popular shows. Not all shows advertise rush — always ask."},
+{m:"Standing Room Only (SRO)",price:"$30–$45",sp:30,cat:"Same-Day / In-Person",effort:2,eL:"Easy",rel:3,rL:"Medium",req:"Show up after sellout; day-of only",pros:"Cheapest way into a sold-out show",cons:"Standing only; not all shows offer it",url:"https://www.playbill.com/article/broadway-rush-lottery-and-standing-room-only-policies",notes:"Bring comfortable shoes. Ask the box office when you arrive."},
+{m:"Cancellation Line",price:"Face value",sp:0,cat:"Same-Day / In-Person",effort:4,eL:"Hard",rel:2,rL:"Low–Med",req:"Wait at box office near curtain time",pros:"Face value with no markup for sold-out shows",cons:"Not guaranteed; stressful",url:"https://www.playbill.com/article/broadway-rush-lottery-and-standing-room-only-policies",notes:"House seats and returns often release within 5 min of curtain."},
+{m:"House Seats Release (~5pm)",price:"Face value",sp:0,cat:"Same-Day / In-Person",effort:2,eL:"Easy",rel:2,rL:"Low–Med",req:"Monitor Telecharge 1–3 days before; check ~5pm",pros:"Good seats appear for 'sold out' shows",cons:"Unpredictable; sells fast",url:"https://www.telecharge.com",notes:"Set a 5pm reminder to check upcoming shows."},
+{m:"Partial / Restricted View",price:"20–40% off face",sp:0,cat:"Same-Day / In-Person",effort:1,eL:"Very Easy",rel:5,rL:"Very High",req:"None — filter on any ticketing site",pros:"Guaranteed seats cheaper; often barely restricted",cons:"May miss part of stage; descriptions vary",url:"https://seatplan.com",notes:"Check SeatPlan first to see actual photos of the view."},
+{m:"Invited Dress / Final Preview",price:"Free–deep discount",sp:0,cat:"Same-Day / In-Person",effort:2,eL:"Easy",rel:2,rL:"Low–Med",req:"Follow shows on IG + Broadway Direct email list early",pros:"Sometimes free; early look at new productions",cons:"Rare; little notice",url:"https://www.broadwaydirect.com",notes:"Follow shows from announcement day — invites come with very little notice."},
+{m:"Production Hold Releases",price:"Face value",sp:0,cat:"Same-Day / In-Person",effort:2,eL:"Easy",rel:2,rL:"Low–Med",req:"Monitor Telecharge after shows look sold out",pros:"Real inventory hides in production holds",cons:"Unpredictable timing",url:"https://www.telecharge.com",notes:"Holds release regularly and never get announced. Check a few days before."},
+{m:"TDF Membership",price:"$11–$62",sp:11,cat:"Memberships",effort:2,eL:"Easy",rel:4,rL:"High",req:"$42/yr; must qualify (student, teacher, union, nonprofit, retiree, under-30, arts pro)",pros:"Deep discounts year-round across Broadway, Off & Off-Off",cons:"Must qualify; limited booking window",url:"https://www.tdf.org/nyc/membership",notes:"Off-Off Broadway as low as $9 via 'Off-Off@$9'. Hugely powerful if you qualify."},
+{m:"TDF Papering Service",price:"$30 + $27.50/yr",sp:30,cat:"Memberships",effort:2,eL:"Easy",rel:2,rL:"Low–Med",req:"$27.50/yr; TDF eligibility applies",pros:"Official papering; fills empty seats at discount",cons:"Separate from membership; limited selection",url:"https://www.tdf.org",notes:"Less selection than private agencies but fully official."},
+{m:"Roundabout HipTix",price:"$30",sp:30,cat:"Memberships",effort:1,eL:"Very Easy",rel:5,rL:"Very High",req:"Ages 18–40; free to join",pros:"Advance purchase; guaranteed seats; pick your dates",cons:"Roundabout shows only",url:"https://www.roundabouttheatre.org/get-tickets/hiptix/",notes:"One of the best under-40 deals in NYC theater. Sign up now."},
+{m:"MTC35 (Manhattan Theatre Club)",price:"$30",sp:30,cat:"Memberships",effort:1,eL:"Very Easy",rel:5,rL:"Very High",req:"Ages 18–35; free to join",pros:"Advance purchase; pick seats; flat $30; Bway + Off-Bway",cons:"MTC shows only",url:"https://www.manhattantheatreclub.com/join/30-under-35/",notes:"Formerly '30 Under 30' — expanded to 35."},
+{m:"Lincoln Center LincTix",price:"$32",sp:32,cat:"Memberships",effort:1,eL:"Very Easy",rel:5,rL:"Very High",req:"Ages 18–35; free to join",pros:"All LCT shows; advance booking",cons:"LCT shows only",url:"https://www.lct.org/linctix",notes:"Covers Beaumont (Broadway) and Newhouse (Off-Broadway)."},
+{m:"Second Stage Theater",price:"~$30",sp:30,cat:"Memberships",effort:1,eL:"Very Easy",rel:4,rL:"High",req:"Student/under-35 programs; varies by season",pros:"Discounted tickets incl. Broadway (Hayes Theater)",cons:"Second Stage shows only",url:"https://2st.com",notes:"Check each season — offerings vary year to year."},
+{m:"Amex Preferred Seating",price:"Face value",sp:0,cat:"Credit Card Perks",effort:1,eL:"Very Easy",rel:4,rL:"High",req:"Any Amex (not prepaid); Ticketmaster account",pros:"Reserved block of good seats before general public",cons:"Not a discount — access only",url:"https://www.ticketmaster.com",notes:"Enter the 10-digit number on the back of your Amex as the offer code."},
+{m:"Amex Presale Access",price:"Face value",sp:0,cat:"Credit Card Perks",effort:1,eL:"Very Easy",rel:4,rL:"High",req:"Any Amex; online account",pros:"Buy before public on-sale — critical for hot shows",cons:"Not discounted; act fast",url:"https://www.americanexpress.com/en-us/entertainment/",notes:"Check the portal before any major show goes on sale. Often a 48-hour head start."},
+{m:"Amex Platinum Concierge",price:"Face value",sp:0,cat:"Credit Card Perks",effort:1,eL:"Very Easy",rel:5,rL:"Very High",req:"Amex Platinum ($695/yr)",pros:"Concierge buys the moment tickets go on sale",cons:"Platinum required; no discount",url:"https://www.americanexpress.com/en-us/entertainment/",notes:"Use for sold-out shows where timing is everything."},
+{m:"Citi Entertainment",price:"Face value / BOGO 50%",sp:0,cat:"Credit Card Perks",effort:1,eL:"Very Easy",rel:4,rL:"High",req:"Eligible Citi card",pros:"Presale + preferred seating; occasional BOGO 50% off",cons:"Availability varies by show",url:"https://www.citientertainment.com",notes:"Citi Double Cash has presale access with no annual fee."},
+{m:"Theater Extras",price:"~$0 + fees",sp:0,cat:"Papering Services",effort:2,eL:"Easy",rel:2,rL:"Low–Med",req:"Annual membership; application",pros:"Free/near-free tickets from producers; wide selection",cons:"Confidentiality rule; no-show fines; dress code",url:"https://www.theaterextras.com",notes:"One of the most-used papering agencies by Broadway producers."},
+{m:"Play-By-Play",price:"~$0 + fees",sp:0,cat:"Papering Services",effort:3,eL:"Medium",rel:2,rL:"Low–Med",req:"Annual membership; application + questionnaire; dress code enforced",pros:"Free tickets; curated audience; great shows possible",cons:"Selective; $20 no-show fine; strict dress code",url:"https://www.playbybway.com",notes:"More selective than other services."},
+{m:"Club Free Time",price:"~$0 + small fee",sp:0,cat:"Papering Services",effort:2,eL:"Easy",rel:2,rL:"Low–Med",req:"~$27.50/yr; application",pros:"~13,000 members; broad selection incl. concerts",cons:"Availability inconsistent vs pre-pandemic",url:"https://www.clubfreetime.com",notes:"High historical volume — 1,000+ shows/year."},
+{m:"TheaterMania Gold Club",price:"~$4.50/ticket",sp:4,cat:"Papering Services",effort:1,eL:"Very Easy",rel:3,rL:"Medium",req:"Paid membership",pros:"Up to 2 free tickets/month; easiest papering entry point",cons:"2/month cap; not every show",url:"https://www.theatermania.com/gold-club/",notes:"Good starting point before Theater Extras or Play-By-Play."},
+{m:"Producer's Perspective (Ken Davenport)",price:"$0",sp:0,cat:"Papering Services",effort:1,eL:"Very Easy",rel:1,rL:"Low",req:"None — follow the blog",pros:"Completely free; producer posts offers publicly",cons:"Rare and unpredictable",url:"https://www.theproducersperspective.com",notes:"Subscribe to the email list — one of the only producers who shares offers openly."},
+{m:"Roundabout Volunteer Usher",price:"$0",sp:0,cat:"Volunteer",effort:3,eL:"Medium",rel:4,rL:"High",req:"Sign up at box office in person; arrive 60–90 min early; black & white attire",pros:"Completely free full Broadway shows; easy work",cons:"Roundabout only; slots fill fast",url:"https://www.roundabouttheatre.org",notes:"One of the best-kept secrets in NYC theater. Book far ahead."},
+{m:"MTC Volunteer Usher",price:"$0",sp:0,cat:"Volunteer",effort:3,eL:"Medium",rel:4,rL:"High",req:"Call 212-399-3000 x5463 or email volunteerusher@mtc-nyc.org",pros:"Free Broadway + Off-Broadway at MTC venues",cons:"MTC only; must commit to a shift",url:"https://www.manhattantheatreclub.com",notes:"Contact early in the season — slots fill fast."},
+{m:"Off-Broadway Volunteer Ushering",price:"$0",sp:0,cat:"Volunteer",effort:3,eL:"Medium",rel:4,rL:"High",req:"Contact theaters directly: Atlantic, Playwrights Horizons, Classic Stage, Irish Rep, Vineyard...",pros:"Wide variety; easier slots than Broadway",cons:"Off-Broadway only; coordinate per theater",url:"https://www.playbill.com",notes:"Search 'volunteer usher' on Playbill for the full list."},
+{m:"Perks at Work",price:"10–40% off",sp:0,cat:"Corporate / Employee",effort:1,eL:"Very Easy",rel:3,rL:"Medium",req:"Employer enrollment — or try a business email",pros:"Broadway Inbound (Shubert wholesale) discounts; easy portal",cons:"Seats assigned; non-refundable",url:"https://www.perksatwork.com",notes:"Self-employed: try registering with your SLAF business email."},
+{m:"TicketsatWork / Working Advantage / Plum",price:"10–40% off",sp:0,cat:"Corporate / Employee",effort:1,eL:"Very Easy",rel:3,rL:"Medium",req:"Employer enrollment; all three share one backend (EBG)",pros:"Broad selection; also hotels & theme parks",cons:"No advantage to multiple accounts",url:"https://www.ticketsatwork.com",notes:"Same inventory, different branding across all three."},
+{m:"AAA Membership",price:"10–30% off",sp:0,cat:"Corporate / Employee",effort:1,eL:"Very Easy",rel:3,rL:"Medium",req:"AAA membership (~$60–80/yr)",pros:"Broadway discounts + roadside assistance + travel perks",cons:"Not always the deepest discount",url:"https://www.aaa.com",notes:"Worth it now that you have a car — roadside alone pays for itself."},
+{m:"University Alumni Programs",price:"Often 20–50% off",sp:0,cat:"Corporate / Employee",effort:1,eL:"Very Easy",rel:3,rL:"Medium",req:"Alumni/student/faculty of participating school",pros:"Deep discounts; advance booking; incl. Off-Broadway",cons:"School-specific",url:"https://www.yu.edu/alumni",notes:"Check what YU (Sy Syms) alumni benefits include."},
+{m:"NYC Broadway Week (2-for-1)",price:"50% off/ticket",sp:0,cat:"Seasonal Promotions",effort:1,eL:"Very Easy",rel:4,rL:"High",req:"None — buy when announced",pros:"Official 2-for-1 on major shows; pick your seats",cons:"Twice/year (Jan & Sept); limited participation",url:"https://www.nyctourism.com/broadway-week/",notes:"Winter 2026 ran Jan 20–Feb 12. Watch for September's edition."},
+{m:"Off-Broadway Week (2-for-1)",price:"50% off/ticket",sp:0,cat:"Seasonal Promotions",effort:1,eL:"Very Easy",rel:4,rL:"High",req:"None",pros:"Same 2-for-1 with less competition than Broadway Week",cons:"Twice/year (Feb & Oct)",url:"https://www.nyctourism.com/off-broadway-week/",notes:"Often overlooked — great for acclaimed smaller productions."},
+{m:"TDF Under-30",price:"$11–$40",sp:11,cat:"Young / Student",effort:1,eL:"Very Easy",rel:4,rL:"High",req:"Under 30; TDF membership; proof",pros:"Extremely cheap across all tiers of theater",cons:"Age-capped; TDF membership required",url:"https://www.tdf.org/nyc/membership",notes:"An eligibility category within TDF — not a separate signup."},
+{m:"HipTix App",price:"Varies",sp:0,cat:"Young / Student",effort:1,eL:"Very Easy",rel:4,rL:"High",req:"Young-adult age range; varies by theater",pros:"Aggregates young-theatergoer programs across theaters",cons:"Not all theaters participate",url:"https://hiptix.com",notes:"Different from Roundabout HipTix — this aggregates across theaters."},
+{m:"THEATR 5–7pm Midtown Strategy",price:"$0–face",sp:0,cat:"Timing & Strategy",effort:1,eL:"Very Easy",rel:3,rL:"Medium",req:"THEATR app; be near Midtown 5–7pm",pros:"Best window for last-minute deals before curtain",cons:"Requires flexibility + proximity",url:"https://www.theatr-app.com",notes:"Sellers panic-list near curtain — refresh aggressively 5–7pm."},
+{m:"Wednesday Matinee Timing",price:"Lower dynamic prices",sp:0,cat:"Timing & Strategy",effort:1,eL:"Very Easy",rel:4,rL:"High",req:"Buy Tue/Wed/Thu matinees",pros:"Lowest prices + best lottery odds + least crowded",cons:"Weekday daytime schedule",url:"https://www.telecharge.com",notes:"Wednesday matinees have the best lottery odds. Weekends run 2–3x higher."},
+{m:"Dynamic Pricing Watch",price:"Sometimes big drops",sp:0,cat:"Timing & Strategy",effort:3,eL:"Medium",rel:2,rL:"Low–Med",req:"Patience; monitor Telecharge repeatedly",pros:"Premium seats drop as date nears if not selling",cons:"Seat may sell while you wait",url:"https://www.telecharge.com",notes:"Works best for midweek performances not at full capacity."},
+{m:"Request 1 Ticket in Lottery",price:"Same lottery price",sp:0,cat:"Timing & Strategy",effort:1,eL:"Very Easy",rel:3,rL:"Medium",req:"Enter solo instead of requesting 2",pros:"Meaningfully better lottery odds",cons:"Can't bring a companion",url:"https://lottery.broadwaydirect.com",notes:"Simple but underused — always request 1 if you're flexible."},
+{m:"Broadway Direct Text Alerts",price:"Varies",sp:0,cat:"Timing & Strategy",effort:1,eL:"Very Easy",rel:3,rL:"Medium",req:"Free account; opt into texts",pros:"Flash sales hit texts before email",cons:"Notification volume can be high",url:"https://www.broadwaydirect.com",notes:"Most people only do email — texts give a real head start."},
+{m:"Understudies.org Alerts",price:"Often discounted",sp:0,cat:"Timing & Strategy",effort:1,eL:"Very Easy",rel:2,rL:"Low–Med",req:"Sign up + follow @understudiesdotorg on IG",pros:"Know when understudies go on; can trigger $30 releases",cons:"Rare; requires same-day flexibility",url:"https://understudies.org",notes:"Fan-submitted, mostly accurate. Instagram posts go up fastest."},
+{m:"Buy Directly at Box Office",price:"Face — no fees",sp:0,cat:"Timing & Strategy",effort:2,eL:"Easy",rel:4,rL:"High",req:"Go in person",pros:"No service fees (saves $15–25/ticket); may surface fresh house seats",cons:"Requires the trip; can't browse first",url:"https://www.playbill.com/venues",notes:"Also lets you ask directly about rush, SRO, or cancellation options."},
+];
+
+const CATEGORIES=[...new Set(METHODS.map(x=>x.cat))];
+
+/* All 41 Broadway theatres — current/upcoming shows per Broadway League, Aug 2026 */
+const THEATRES=[
+{n:"Al Hirschfeld Theatre",s:"Moulin Rouge! (next: Paddington)",c:"Broadway"},
+{n:"Ambassador Theatre",s:"Chicago",c:"Broadway"},
+{n:"August Wilson Theatre",s:"Upcoming: Paranormal Activity",c:"Broadway"},
+{n:"Belasco Theatre",s:"Maybe Happy Ending",c:"Broadway"},
+{n:"Bernard B. Jacobs Theatre",s:"The Outsiders",c:"Broadway"},
+{n:"Booth Theatre",s:"Currently dark",c:"Broadway"},
+{n:"Broadhurst Theatre",s:"CATS: The Jellicle Ball",c:"Broadway"},
+{n:"Broadway Theatre",s:"The Great Gatsby",c:"Broadway"},
+{n:"Circle in the Square Theatre",s:"Just In Time",c:"Broadway"},
+{n:"Ethel Barrymore Theatre",s:"Currently dark",c:"Broadway"},
+{n:"Eugene O'Neill Theatre",s:"The Book of Mormon",c:"Broadway"},
+{n:"Gerald Schoenfeld Theatre",s:"Buena Vista Social Club",c:"Broadway"},
+{n:"Gershwin Theatre",s:"Wicked",c:"Broadway"},
+{n:"Hayes Theater",s:"Upcoming: The Fantasticks",c:"Broadway"},
+{n:"Hudson Theatre",s:"Every Brilliant Thing (next: Other Desert Cities)",c:"Broadway"},
+{n:"Imperial Theatre",s:"Upcoming: 860",c:"Broadway"},
+{n:"James Earl Jones Theatre",s:"Upcoming: WANTED",c:"Broadway"},
+{n:"John Golden Theatre",s:"Operation Mincemeat",c:"Broadway"},
+{n:"Lena Horne Theatre",s:"SIX: The Musical",c:"Broadway"},
+{n:"Longacre Theatre",s:"Two Strangers (Carry a Cake Across New York)",c:"Broadway"},
+{n:"Lunt-Fontanne Theatre",s:"Currently dark",c:"Broadway"},
+{n:"Lyceum Theatre",s:"Oh, Mary!",c:"Broadway"},
+{n:"Lyric Theatre",s:"Harry Potter and the Cursed Child",c:"Broadway"},
+{n:"Majestic Theatre",s:"Currently dark",c:"Broadway"},
+{n:"Marquis Theatre",s:"Stranger Things: The First Shadow",c:"Broadway"},
+{n:"Minskoff Theatre",s:"The Lion King",c:"Broadway"},
+{n:"Music Box Theatre",s:"Upcoming: Inter Alia",c:"Broadway"},
+{n:"Nederlander Theatre",s:"Schmigadoon!",c:"Broadway"},
+{n:"Neil Simon Theatre",s:"MJ the Musical",c:"Broadway"},
+{n:"New Amsterdam Theatre",s:"Aladdin",c:"Broadway"},
+{n:"Palace Theatre",s:"The Lost Boys",c:"Broadway"},
+{n:"Richard Rodgers Theatre",s:"Hamilton",c:"Broadway"},
+{n:"Samuel J. Friedman Theatre",s:"Upcoming: School Girls; Or, The African Mean Girls Play",c:"Broadway"},
+{n:"Shubert Theatre",s:"Upcoming: Galileo",c:"Broadway"},
+{n:"St. James Theatre",s:"Titaníque (next: DOLLY)",c:"Broadway"},
+{n:"Stephen Sondheim Theatre",s:"& Juliet",c:"Broadway"},
+{n:"Studio 54",s:"The Rocky Horror Show",c:"Broadway"},
+{n:"Todd Haimes Theatre",s:"Upcoming: The Imaginary Invalid",c:"Broadway"},
+{n:"Vivian Beaumont Theater",s:"Ragtime (next: A Few Good Men)",c:"Broadway"},
+{n:"Walter Kerr Theatre",s:"Hadestown",c:"Broadway"},
+{n:"Winter Garden Theatre",s:"Death of a Salesman (next: Evita)",c:"Broadway"},
+/* Notable Off-Broadway houses */
+{n:"New World Stages (5 stages)",s:"Multiple productions",c:"Off-Broadway"},
+{n:"Westside Theatre",s:"Multiple productions",c:"Off-Broadway"},
+{n:"Orpheum Theatre",s:"Varies",c:"Off-Broadway"},
+{n:"Astor Place Theatre",s:"Blue Man Group",c:"Off-Broadway"},
+{n:"Daryl Roth Theatre",s:"Varies",c:"Off-Broadway"},
+{n:"Lucille Lortel Theatre",s:"Varies (MCC & others)",c:"Off-Broadway"},
+{n:"Minetta Lane Theatre",s:"Varies (Audible Theater)",c:"Off-Broadway"},
+{n:"Cherry Lane Theatre",s:"Varies",c:"Off-Broadway"},
+{n:"SoHo Playhouse",s:"Varies",c:"Off-Broadway"},
+{n:"The Public Theater (5 stages)",s:"Multiple productions",c:"Off-Broadway"},
+{n:"Atlantic Theater (Linda Gross)",s:"Season varies",c:"Off-Broadway"},
+{n:"Playwrights Horizons",s:"Season varies",c:"Off-Broadway"},
+{n:"Second Stage — Tony Kiser Theater",s:"Season varies",c:"Off-Broadway"},
+{n:"Signature Theatre (Pershing Sq.)",s:"Multiple productions",c:"Off-Broadway"},
+{n:"MCC Theater (Robert W. Wilson)",s:"Season varies",c:"Off-Broadway"},
+{n:"Vineyard Theatre",s:"Season varies",c:"Off-Broadway"},
+{n:"Classic Stage Company",s:"Season varies",c:"Off-Broadway"},
+{n:"Irish Repertory Theatre",s:"Season varies",c:"Off-Broadway"},
+{n:"59E59 Theaters",s:"Multiple productions",c:"Off-Broadway"},
+{n:"Laura Pels Theatre (Roundabout)",s:"Season varies",c:"Off-Broadway"},
+{n:"MTC — NY City Center Stage I & II",s:"Season varies",c:"Off-Broadway"},
+{n:"Lincoln Center — Mitzi Newhouse",s:"Season varies",c:"Off-Broadway"},
+{n:"Little Island Amph / The Shed",s:"Varies",c:"Off-Broadway"},
+{n:"Stage 42",s:"The Twenty-Sided Tavern",c:"Off-Broadway"},
+{n:"Theater Center (Off-Broadway)",s:"Perfect Crime",c:"Off-Broadway"},
+];
+const VIBES=["Electric","Emotional","Hilarious","Stunning staging","Star turn","Slow burn","Date night","Rush high","Sleeper hit","Overhyped","Cried","Standing ovation"];
+const activeCats=new Set();
+
+/* ================= STORAGE ================= */
+/* Fallback chain: Claude artifact storage → browser localStorage → session memory.
+   Both are written on save so data survives moving between the artifact viewer and a downloaded file. */
+const KEY='house-lights-logbook-v2';
+const TKEY='house-lights-theatres-v1';
+const WKEY='house-lights-wishlist-v1';
+const BKEY='house-lights-budget-v1';
+const BDGKEY='house-lights-badges-v1';
+const ELOKEY='house-lights-elo-v1';
+const GOALKEY='house-lights-goal-v1';
+let shows=[];
+let visited={};   // {theatreName:true}
+let wishlist=[];  // ordered array of show names — index = priority
+let budgets={};   // {year:amount}
+let earnedBadges=[];  // badge ids already celebrated
+let elo={};           // {showName:{r:rating,m:matches}}
+let goals={};         // {year:targetShows}
+let storageMode='memory';
+
+const store={
+  async get(k){
+    let claudeVal=null,localVal=null;
+    try{
+      if(window.storage){
+        const r=await window.storage.get(k,false);
+        if(r&&r.value)claudeVal=r.value;
+      }
+    }catch(e){}
+    try{localVal=localStorage.getItem(k);}catch(e){}
+    return claudeVal??localVal;   // artifact copy wins when both exist
+  },
+  async set(k,v){
+    let ok=false;
+    try{
+      if(window.storage){await window.storage.set(k,v,false);ok=true;storageMode='claude';}
+    }catch(e){}
+    try{localStorage.setItem(k,v);if(!ok){ok=true;storageMode='local';}}catch(e){}
+    if(!ok)storageMode='memory';
+    return ok;
+  }
+};
+
+async function loadShows(){
+  try{const v=await store.get(KEY);if(v)shows=JSON.parse(v);}catch(e){}
+  try{const v=await store.get(TKEY);if(v)visited=JSON.parse(v);}catch(e){}
+  try{
+    const v=await store.get(WKEY);
+    if(v){
+      const parsed=JSON.parse(v);
+      wishlist=Array.isArray(parsed)?parsed:Object.keys(parsed); // migrate old {name:{}} format
+    }
+  }catch(e){}
+  try{const v=await store.get(BKEY);if(v)budgets=JSON.parse(v);}catch(e){}
+  try{const v=await store.get(BDGKEY);if(v)earnedBadges=JSON.parse(v);}catch(e){}
+  try{const v=await store.get(ELOKEY);if(v)elo=JSON.parse(v);}catch(e){}
+  try{const v=await store.get(GOALKEY);if(v)goals=JSON.parse(v);}catch(e){}
+  // probe write so the save-note is accurate before first add
+  await store.set('house-lights-probe','1');
+  renderAll();
+  updateSaveNote();
+  renderOnThisDay();
+}
+async function saveShows(){await store.set(KEY,JSON.stringify(shows));updateSaveNote();checkBadges();}
+async function saveVisited(){await store.set(TKEY,JSON.stringify(visited));}
+async function saveWishlist(){await store.set(WKEY,JSON.stringify(wishlist));}
+function isWished(n){return wishlist.includes(n);}
+function addWish(n){if(!isWished(n))wishlist.push(n);}
+function removeWish(n){wishlist=wishlist.filter(x=>x!==n);}
+function moveWish(n,dir){
+  const i=wishlist.indexOf(n);if(i<0)return;
+  const j=i+dir;if(j<0||j>=wishlist.length)return;
+  [wishlist[i],wishlist[j]]=[wishlist[j],wishlist[i]];
+}
+async function saveBudgets(){await store.set(BKEY,JSON.stringify(budgets));}
+async function saveBadges(){await store.set(BDGKEY,JSON.stringify(earnedBadges));}
+async function saveElo(){await store.set(ELOKEY,JSON.stringify(elo));}
+async function saveGoals(){await store.set(GOALKEY,JSON.stringify(goals));}
+
+/* ---- export / import ---- */
+function exportJSON(){
+  try{
+  const blob=new Blob([JSON.stringify({exported:new Date().toISOString(),shows,visited,wishlist,budgets},null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='house-lights-backup.json';a.click();
+  toast('Backup created — check your downloads.');
+  }catch(err){toast('⚠️ Download blocked in this viewer — open in Chrome/Safari.',6000);}
+}
+function exportCSV(){
+  const esc=s=>'"'+String(s??'').replace(/"/g,'""')+'"';
+  const rows=[['Show','Date','Price/Ticket','Tickets','Face Value','Theatre','Method','Type','Rating','Company','With','Recommended By','Vibes','Categories','Actors','Seat','Notes']];
+  shows.forEach(x=>rows.push([x.show,x.date,x.price??'',x.qty||1,x.face??'',x.theatre,x.method,x.type,x.rating||'',x.company,(x.withWho||[]).join('; '),x.recBy||'',(x.vibes||[]).join('; '),(x.cats||[]).join('; '),(x.actors||[]).join('; '),x.seat,x.notes]));
+  const blob=new Blob([rows.map(r=>r.map(esc).join(',')).join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');
+  try{a.href=URL.createObjectURL(blob);a.download='house-lights-shows.csv';a.click();
+  toast('CSV created — check your downloads.');}catch(err){toast('⚠️ Download blocked in this viewer — open in Chrome/Safari.',6000);}
+}
+/* ---- Excel template export + Excel/CSV import ---- */
+const SHEET_HEADERS=['Show','Date (YYYY-MM-DD)','Price / Ticket','Tickets','Face Value / Ticket','Theatre','Method','Type','Rating (1-5)','Company','With (names, comma sep)','Recommended By','Vibes (comma sep)','Categories (comma sep)','Performers (comma sep)','Seat Level','Seat Side','Seat Depth','Exact Seat','Notes'];
+function entryToRow(x){
+  const sp=x.seatParts||{};
+  return [x.show,x.date||'',x.price??'',x.qty||1,x.face??'',x.theatre||'',x.method||'',x.type||'',x.rating||'',x.company||'',(x.withWho||[]).join(', '),x.recBy||'',(x.vibes||[]).join(', '),(x.cats||[]).join(', '),(x.actors||[]).join(', '),sp.level||'',sp.side||'',sp.depth||'',sp.num||(!sp.level?x.seat||'':''),x.notes||''];
+}
+function toast(msg,ms){
+  let t=document.getElementById('hlToast');
+  if(!t){
+    t=document.createElement('div');t.id='hlToast';
+    t.style.cssText='position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--navy-700);border:1px solid var(--line);border-radius:8px;padding:10px 16px;z-index:99;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.5);max-width:88vw;text-align:center;';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;t.style.display='block';
+  clearTimeout(t._tm);t._tm=setTimeout(()=>t.style.display='none',ms||4200);
+}
+function xlsxReady(){
+  if(typeof XLSX==='undefined'){
+    toast('⚠️ The Excel engine couldn\'t load here. Open this file in Chrome or Safari (not the chat preview) and it\'ll work.',6000);
+    return false;
+  }
+  return true;
+}
+function exportXLSX(){
+  if(!xlsxReady())return;
+  try{
+  const wb=XLSX.utils.book_new();
+  // Sheet 1: Shows — legend, headers, example, then real data
+  const rows=[
+    ['HOUSE LIGHTS — BULK ENTRY. Fill rows below the example. Only "Show" is required. Exact accepted values per column are on the "Valid Options" tab. Re-import via Stats → Your Data.'],
+    SHEET_HEADERS,
+    ['EXAMPLE → Hadestown','2026-03-14',47.5,2,120,'Walter Kerr Theatre','Broadway Direct Lottery','Broadway',5,'Friend','Ari','Zaidy','Electric, Cried','Musical, Original','Reeve Carney','Orchestra','Center','Middle','C104','Won the lottery on the 3rd try!'],
+    ...seenShows().concat(shows.filter(isUpcoming)).map(entryToRow)
+  ];
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=SHEET_HEADERS.map((h,i)=>({wch:i===0?28:Math.max(14,h.length+2)}));
+  XLSX.utils.book_append_sheet(wb,ws,'Shows');
+  // Sheet 2: Valid Options
+  const opts=[
+    ['Column','Accepted values (copy exactly — importer is case-insensitive)'],
+    ['Theatre',THEATRES.map(t=>t.n).join(' | ')],
+    ['Method (simple)','Lottery | Rush / Same-day | TKTS | Discount code / app | Membership (HipTix, TDF, etc.) | Free / Comp / Ushered | Credit card perk | Gift | Full price | Other'],
+    ['Method (specific)',METHODS.map(m=>m.m).join(' | ')],
+    ['Type','Broadway | Off-Broadway | Off-Off-Broadway | Touring / Regional | Concert / Special'],
+    ['Rating','1 | 2 | 3 | 4 | 5'],
+    ['Company','Solo | Friend | Date | Family | Group'],
+    ['Vibes',VIBES.join(' | ')],
+    ['Categories',Object.values(CAT_GROUPS).flat().join(' | ')],
+    ['Seat Level','Orchestra | Front Mezzanine | Rear Mezzanine | Mezzanine | Balcony | Box | Standing Room | Lottery Seats (varies)'],
+    ['Seat Side','Center | Left | Right | Far Left | Far Right'],
+    ['Seat Depth','Front | Middle | Back'],
+    ['Date','YYYY-MM-DD (e.g. 2026-03-14). Future dates become Upcoming. Blank is fine.'],
+  ];
+  const ws2=XLSX.utils.aoa_to_sheet(opts);
+  ws2['!cols']=[{wch:20},{wch:120}];
+  XLSX.utils.book_append_sheet(wb,ws2,'Valid Options');
+  XLSX.writeFile(wb,'house-lights-shows.xlsx');
+  toast('📊 Excel file created — check your downloads.');
+  }catch(err){
+    toast('⚠️ Download blocked in this viewer. Open the file in Chrome/Safari and try again.',6000);
+  }
+}
+function normDate(v){
+  if(v===''||v==null)return '';
+  if(v instanceof Date)return v.toISOString().slice(0,10);
+  if(typeof v==='number'){ // excel serial
+    const d=new Date(Math.round((v-25569)*86400*1000));
+    return isNaN(d)?'':d.toISOString().slice(0,10);
+  }
+  const str=String(v).trim();
+  const d=new Date(str);
+  return isNaN(d)?'':d.toISOString().slice(0,10);
+}
+function matchTheatre(v){
+  if(!v)return '';
+  const low=String(v).trim().toLowerCase();
+  const exact=THEATRES.find(t=>t.n.toLowerCase()===low);
+  if(exact)return exact.n;
+  const partial=THEATRES.find(t=>t.n.toLowerCase().includes(low)||low.includes(t.n.toLowerCase().replace(/ theatre| theater/,'')));
+  return partial?partial.n:String(v).trim();
+}
+function splitList(v){return String(v||'').split(/[,;]/).map(a=>a.trim()).filter(Boolean);}
+async function importXLSX(file){
+  if(!xlsxReady())return;
+  try{
+  const buf=await file.arrayBuffer();
+  const wb=XLSX.read(new Uint8Array(buf),{type:'array',cellDates:true});
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  // find the header row (contains 'Show')
+  const hIdx=raw.findIndex(r=>r.some(c=>String(c).trim().toLowerCase()==='show'));
+  if(hIdx<0){alert('Couldn\'t find a "Show" column header. Use the exported template.');return;}
+  const headers=raw[hIdx].map(h=>String(h).trim().toLowerCase());
+  const col=frag=>headers.findIndex(h=>h.includes(frag));
+  const C={show:col('show'),date:col('date'),price:col('price'),qty:col('ticket'),face:col('face'),theatre:col('theatre'),method:col('method'),type:col('type'),rating:col('rating'),company:col('company'),withWho:col('with ('),rec:col('recommended'),vibes:col('vibes'),cats:col('categories'),actors:col('performers'),level:col('seat level'),side:col('seat side'),depth:col('seat depth'),num:col('exact seat'),notes:col('notes')};
+  // 'Tickets' header contains 'ticket' but so does 'Price / Ticket' and 'Face Value / Ticket' — resolve precisely:
+  C.qty=headers.findIndex(h=>h==='tickets'||h==='# tix'||h==='qty');
+  C.price=headers.findIndex(h=>h.startsWith('price'));
+  C.face=headers.findIndex(h=>h.startsWith('face'));
+  let added=0,skippedDup=0,skippedBad=0;
+  const g=(r,i)=>i>=0?r[i]:'';
+  for(const r of raw.slice(hIdx+1)){
+    const show=String(g(r,C.show)||'').trim();
+    if(!show||show.startsWith('EXAMPLE'))continue;
+    const date=normDate(g(r,C.date));
+    // duplicate = same show + same date already present
+    if(shows.some(x=>x.show.toLowerCase()===show.toLowerCase()&&(x.date||'')===date)){skippedDup++;continue;}
+    const theatre=matchTheatre(g(r,C.theatre))||SHOW_MAP[show.toLowerCase()]||'';
+    const priceRaw=g(r,C.price);
+    const entry={
+      id:'s'+Date.now()+Math.random().toString(36).slice(2,6),
+      show,date,
+      price:priceRaw===''?null:(parseFloat(priceRaw)||0),
+      qty:Math.max(1,parseInt(g(r,C.qty))||1),
+      face:parseFloat(g(r,C.face))||null,
+      theatre,
+      method:String(g(r,C.method)||'').trim(),
+      type:String(g(r,C.type)||'').trim()||theatreCat(theatre),
+      rating:Math.min(5,Math.max(0,parseInt(g(r,C.rating))||0)),
+      company:String(g(r,C.company)||'').trim()||'Solo',
+      withWho:splitList(g(r,C.withWho)),
+      recBy:String(g(r,C.rec)||'').trim(),
+      vibes:splitList(g(r,C.vibes)),
+      cats:splitList(g(r,C.cats)),
+      actors:splitList(g(r,C.actors)),
+      seatParts:{level:String(g(r,C.level)||'').trim(),side:String(g(r,C.side)||'').trim(),depth:String(g(r,C.depth)||'').trim(),num:String(g(r,C.num)||'').trim()},
+      seat:[g(r,C.level),g(r,C.depth),g(r,C.side),g(r,C.num)].map(v=>String(v||'').trim()).filter(Boolean).join(' '),
+      notes:String(g(r,C.notes)||'').trim(),
+      photos:[]
+    };
+    shows.push(entry);
+    if(theatre&&!visited[theatre])visited[theatre]=true;
+    if(isWished(show))removeWish(show);
+    added++;
+  }
+  renderAll();
+  await saveShows();await saveVisited();await saveWishlist();
+  alert('Imported '+added+' show'+(added!==1?'s':'')+(skippedDup?' · skipped '+skippedDup+' duplicates':'')+'. Logbook total: '+shows.length+'.');
+  }catch(err){
+    toast('⚠️ Couldn\'t read that file: '+err.message,6000);
+  }
+}
+
+function importJSON(file){
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(Array.isArray(data.shows)){
+        // merge, skipping exact-id duplicates
+        const have=new Set(shows.map(x=>x.id));
+        data.shows.forEach(x=>{if(!have.has(x.id))shows.push(x);});
+        Object.assign(visited,data.visited||{});
+        Object.assign(wishlist,data.wishlist||{});
+        Object.assign(budgets,data.budgets||{});
+        renderAll();
+        await saveShows();await saveVisited();await saveWishlist();await saveBudgets();
+        alert('Imported! Logbook now has '+shows.length+' shows.');
+      }else alert('That file doesn\'t look like a House Lights backup.');
+    }catch(err){alert('Couldn\'t read that file: '+err.message);}
+  };
+  reader.readAsText(file);
+}
+function updateSaveNote(){
+  const el=document.getElementById('saveNote');
+  el.textContent=storageMode==='claude'
+    ?'✓ Saving to your Claude artifact storage — persists between visits.'
+    :storageMode==='local'
+    ?'✓ Saving to this browser — persists on this device. Use Export in Stats for a backup file.'
+    :'⚠ No storage available — entries last only this session. Export before closing!';
+}
+
+/* ================= PLAYBOOK ================= */
+function initChips(){
+  const w=document.getElementById('catChips');
+  w.innerHTML=CATEGORIES.map(c=>`<button type="button" class="chip" data-cat="${c}">${c}</button>`).join('');
+  w.querySelectorAll('.chip').forEach(ch=>ch.addEventListener('click',()=>{
+    const c=ch.dataset.cat;
+    activeCats.has(c)?(activeCats.delete(c),ch.classList.remove('on')):(activeCats.add(c),ch.classList.add('on'));
+    renderPlaybook();
+  }));
+}
+function renderPlaybook(){
+  const q=document.getElementById('search').value.trim().toLowerCase();
+  const s=document.getElementById('sortBy').value;
+  let list=METHODS.filter(x=>{
+    const mQ=!q||x.m.toLowerCase().includes(q)||x.cat.toLowerCase().includes(q)||x.notes.toLowerCase().includes(q);
+    const mC=activeCats.size===0||activeCats.has(x.cat);
+    return mQ&&mC;
+  });
+  if(s==='priceLow')list.sort((a,b)=>a.sp-b.sp);
+  else if(s==='effort')list.sort((a,b)=>a.effort-b.effort);
+  else if(s==='reliability')list.sort((a,b)=>b.rel-a.rel);
+  else list.sort((a,b)=>a.cat.localeCompare(b.cat)||a.m.localeCompare(b.m));
+
+  document.getElementById('resultCount').textContent=`${list.length} of ${METHODS.length} methods`;
+  document.getElementById('methodList').innerHTML=list.map((x,i)=>`
+    <div class="mcard">
+      <div class="mcard-head" data-i="${i}">
+        <div>
+          <div class="mcat">${x.cat}</div>
+          <div class="mname">${x.m}</div>
+          <div class="mmeta"><span>Effort: <b>${x.eL}</b></span><span>Reliability: <b>${x.rL}</b></span></div>
+        </div>
+        <div class="mprice">${x.price}</div>
+      </div>
+      <div class="mdetail" id="md-${i}">
+        <div class="row"><b>Requirements</b>${x.req}</div>
+        <div class="row"><b>Pros</b>${x.pros}</div>
+        <div class="row"><b>Cons</b>${x.cons}</div>
+        <div class="row"><b>Link</b><a href="${x.url}" target="_blank" rel="noopener">${x.url.replace('https://','')}</a></div>
+        <div class="row"><b>Notes</b>${x.notes}</div>
+      </div>
+    </div>`).join('')||`<div class="empty">No methods match. Clear a filter or the search box.</div>`;
+
+  document.querySelectorAll('.mcard-head').forEach(h=>h.addEventListener('click',()=>{
+    document.getElementById('md-'+h.dataset.i).classList.toggle('open');
+  }));
+}
+
+/* ================= SHOWS DATABASE TAB ================= */
+let sdbFilterVal='all';
+function initShowDB(){
+  document.querySelectorAll('#sdbFilter .chip').forEach(ch=>ch.addEventListener('click',()=>{
+    document.querySelectorAll('#sdbFilter .chip').forEach(c2=>c2.classList.remove('on'));
+    ch.classList.add('on');
+    sdbFilterVal=ch.dataset.f;
+    renderShowDB();
+  }));
+  document.getElementById('sdbSearch').addEventListener('input',renderShowDB);
+}
+/* shows whose successor is announced = closing soon */
+const CLOSING_SOON=new Set();
+THEATRES.forEach(t=>{
+  const m=(t.s||'').match(/^(.+?)\s*\(next:/);
+  if(m)CLOSING_SOON.add(m[1].trim());
+});
+function isClosingSoon(name){
+  if(CLOSING_SOON.has(name))return true;
+  return [...CLOSING_SOON].some(c=>name.toLowerCase().startsWith(c.toLowerCase()));
+}
+
+function theatreCat(th){
+  const t=THEATRES.find(x=>x.n===th);
+  return t?t.c:(th?'Broadway':'');
+}
+function loggedEntryFor(name){
+  return shows.find(x=>x.show.toLowerCase()===name.toLowerCase());
+}
+function isBareEntry(x){
+  return !x.date&&(x.price===null||x.price===undefined)&&!x.rating&&!x.method&&!x.notes&&!(x.actors&&x.actors.length)&&!(x.vibes&&x.vibes.length)&&!x.seat;
+}
+function renderWishlistView(q){
+  const meta=n=>ALL_SHOWS.find(s2=>s2.n===n)||{n,th:'',y:''};
+  let names=wishlist.filter(n=>!q||n.toLowerCase().includes(q));
+  const running=names.filter(n=>meta(n).y==='Now');
+  const closed=names.filter(n=>meta(n).y!=='Now');
+
+  const row=(n,idx,total,isRunning)=>{
+    const m=meta(n);
+    const nm=n.replace(/"/g,'&quot;');
+    return `<div class="th-row" style="${isRunning?'border-color:rgba(255,201,77,.4);':''}">
+      <span style="font-family:'IBM Plex Mono',monospace;color:${isRunning?'var(--gold)':'var(--ice-dim)'};font-size:14px;min-width:26px;font-weight:600;">${idx+1}</span>
+      <div style="flex:1;">
+        <div class="th-name">${n}${isRunning?' <span style="font-size:9px;letter-spacing:.1em;color:var(--navy-950);background:var(--gold);border-radius:8px;padding:2px 7px;vertical-align:2px;">RUNNING NOW</span>':''}${isRunning&&isClosingSoon(n)?' <span style="font-size:9px;letter-spacing:.1em;color:#fff;background:var(--red);border-radius:8px;padding:2px 7px;vertical-align:2px;">⏳ CLOSING SOON</span>':''}</div>
+        <div class="th-show">${m.th||''}${m.y&&m.y!=='Now'?' · closed '+m.y+' — pounce if it returns':''}</div>
+      </div>
+      <div style="display:flex;gap:4px;align-items:center;">
+        <button type="button" class="wl-up" data-n="${nm}" ${idx===0?'disabled style="opacity:.25;"':''} title="Higher priority">↑</button>
+        <button type="button" class="wl-down" data-n="${nm}" ${idx===total-1?'disabled style="opacity:.25;"':''} title="Lower priority">↓</button>
+        <button type="button" class="wl-rm" data-n="${nm}" title="Remove from wishlist">✕</button>
+      </div>
+    </div>`;
+  };
+
+  document.getElementById('sdbList').innerHTML=
+    (running.length||closed.length)
+    ?(running.length?`<div class="th-section">🎟 Running Now — See These First (${running.length})</div>`+running.map((n,i)=>row(n,i,running.length,true)).join(''):'')
+     +(closed.length?`<div class="th-section" style="margin-top:${running.length?'22px':'0'};">👀 Revival Watchlist — Closed, Waiting to Return (${closed.length})</div>
+       <div style="font-size:11.5px;color:var(--ice-dim);margin-bottom:10px;">If any of these announce a return or revival, they jump straight to your see-first list.</div>`
+       +closed.map((n,i)=>row(n,i,closed.length,false)).join(''):'')
+    :`<div class="empty">Nothing wishlisted yet. Tap the ☆ on any show you haven't seen — running or closed — and rank them here.</div>`;
+
+  const rerank=async()=>{renderWishlistView(q);await saveWishlist();};
+  document.querySelectorAll('.wl-up').forEach(b=>b.addEventListener('click',()=>{moveWish(b.dataset.n,-1);rerank();}));
+  document.querySelectorAll('.wl-down').forEach(b=>b.addEventListener('click',()=>{moveWish(b.dataset.n,1);rerank();}));
+  document.querySelectorAll('.wl-rm').forEach(b=>b.addEventListener('click',()=>{removeWish(b.dataset.n);rerank();}));
+}
+
+function renderShowDB(){
+  const wchip=document.querySelector('#sdbFilter .chip[data-f="wish"]');
+  if(wchip)wchip.textContent='⭐ Wishlist'+(wishlist.length?' ('+wishlist.length+')':'');
+  const q=document.getElementById('sdbSearch').value.trim().toLowerCase();
+  const nowShows=ALL_SHOWS.filter(s=>s.y==='Now');
+  const histShows=ALL_SHOWS.filter(s=>s.y!=='Now');
+  const seenOf=list=>list.filter(s=>loggedEntryFor(s.n)).length;
+
+  const nSeen=seenOf(nowShows),hSeen=seenOf(histShows);
+  document.getElementById('sdbNowCount').textContent=nSeen+' / '+nowShows.length;
+  document.getElementById('sdbNowFill').style.width=(nSeen/nowShows.length*100)+'%';
+  document.getElementById('sdbNowLeft').innerHTML=nSeen===nowShows.length
+    ?'<span class="prog-done">🏆 You\'ve seen everything on Broadway right now!</span>'
+    :(nowShows.length-nSeen)+' current shows you haven\'t seen';
+  document.getElementById('sdbHistCount').textContent=hSeen+' / '+histShows.length;
+  document.getElementById('sdbHistFill').style.width=(hSeen/histShows.length*100)+'%';
+  document.getElementById('sdbHistLeft').textContent=hSeen+' logged from the 2006–2026 archive';
+
+  // repeat-shows tracker strip
+  const rc={};
+  shows.forEach(x=>{rc[x.show]=(rc[x.show]||0)+1;});
+  const reps=Object.entries(rc).filter(p2=>p2[1]>1).sort((a,b)=>b[1]-a[1]);
+  const strip=document.getElementById('repeatStrip');
+  if(reps.length){
+    strip.style.display='block';
+    strip.innerHTML='<div class="panel-label" style="margin-bottom:8px;">🔁 Your Repeat Shows</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
+      reps.slice(0,10).map(p2=>`<span class="chip" style="cursor:default;color:var(--ice);border-color:rgba(255,201,77,.3);">${p2[0]} <b style="color:var(--gold);">×${p2[1]}</b></span>`).join('')+
+      '</div>';
+  }else strip.style.display='none';
+
+  // ⭐ Wishlist filter renders its own ordered priority view
+  if(sdbFilterVal==='wish'){
+    renderWishlistView(q);
+    return;
+  }
+  let list=ALL_SHOWS;
+  if(q)list=list.filter(s=>s.n.toLowerCase().includes(q));
+  if(sdbFilterVal==='now')list=list.filter(s=>s.y==='Now');
+  else if(sdbFilterVal==='seen')list=list.filter(s=>loggedEntryFor(s.n));
+  else if(sdbFilterVal==='unseen')list=list.filter(s=>!loggedEntryFor(s.n));
+  else if(sdbFilterVal==='wish')list=list.filter(s=>isWished(s.n));
+  else if(sdbFilterVal==='repeats')list=list.filter(s=>shows.filter(x=>x.show.toLowerCase()===s.n.toLowerCase()).length>1);
+
+  // group: Now Playing first, then years descending
+  const groups={};
+  list.forEach(s=>{
+    const key=s.y==='Now'?'Now Playing':String(s.y);
+    (groups[key]=groups[key]||[]).push(s);
+  });
+  const keys=Object.keys(groups).sort((a,b)=>{
+    if(a==='Now Playing')return -1;if(b==='Now Playing')return 1;
+    return (+b)-(+a);
+  });
+
+  const row=s=>{
+    const count=shows.filter(x=>x.show.toLowerCase()===s.n.toLowerCase()).length;
+    const seen=count>0;
+    const wished=isWished(s.n);
+    const nm=s.n.replace(/"/g,'&quot;');
+    return `<div class="th-row${seen?' done':''}" data-show="${nm}">
+      <div class="th-check">${seen&&count>1?'×'+count:'✓'}</div>
+      <div style="flex:1;"><div class="th-name">${s.n}${s.y==='Now'&&isClosingSoon(s.n)?' <span style="font-size:9px;color:var(--red);">⏳ closing soon</span>':''}</div><div class="th-show">${s.th||'Theatre unknown'}${s.y!=='Now'?' · closed '+s.y:''}${wished&&!seen?' · <span style="color:var(--gold)">on your wishlist</span>':''}</div></div>
+      ${seen?`<button type="button" class="sdb-plus" data-show="${nm}" title="Saw it again — add another viewing">+1</button><button type="button" class="sdb-minus" data-show="${nm}" title="Remove — added by mistake">−</button>`:`<button type="button" class="sdb-star${wished?' on':''}" data-show="${nm}" title="Wishlist">${wished?'⭐':'☆'}</button>`}
+      <span class="th-tag">${s.y==='Now'?'NOW':"'"+String(s.y).slice(2)}</span>
+    </div>`;
+  };
+  // sections collapse; Now Playing open by default, searching expands everything
+  window.sdbOpen=window.sdbOpen||new Set(['Now Playing']);
+  const forceOpen=!!q||sdbFilterVal==='seen'||sdbFilterVal==='wish';
+  document.getElementById('sdbList').innerHTML=keys.length
+    ?keys.map(k=>{
+      const open=forceOpen||window.sdbOpen.has(k);
+      return `<div class="th-section sdb-sec" data-k="${k}" style="cursor:pointer;user-select:none;">${open?'▾':'▸'} ${k} — ${groups[k].length}</div>`+
+        (open?groups[k].sort((a,b)=>a.n.localeCompare(b.n)).map(row).join(''):'');
+    }).join('')
+    :`<div class="empty">No shows match. Anything missing from the database can still be typed into the Logbook.</div>`;
+  document.querySelectorAll('.sdb-sec').forEach(h=>h.addEventListener('click',()=>{
+    const k=h.dataset.k;
+    window.sdbOpen.has(k)?window.sdbOpen.delete(k):window.sdbOpen.add(k);
+    renderShowDB();
+  }));
+
+  document.querySelectorAll('.sdb-star').forEach(b=>b.addEventListener('click',async e=>{
+    e.stopPropagation();
+    const n=b.dataset.show;
+    isWished(n)?removeWish(n):addWish(n);
+    renderShowDB();await saveWishlist();
+  }));
+  document.querySelectorAll('.sdb-minus').forEach(b=>b.addEventListener('click',async e=>{
+    e.stopPropagation();
+    const name=b.dataset.show;
+    const entries=shows.filter(x=>x.show.toLowerCase()===name.toLowerCase());
+    // remove the most recent BARE entry; detailed entries are protected
+    const bare=[...entries].reverse().find(isBareEntry);
+    if(bare){
+      shows=shows.filter(x=>x.id!==bare.id);
+      renderAll();await saveShows();
+      showUndo(bare);
+    }else{
+      const row=b.closest('.th-row');
+      row.style.borderColor='var(--gold)';
+      const msg=document.createElement('div');
+      msg.style.cssText='font-size:10.5px;color:var(--gold);padding:2px 0 0;';
+      msg.textContent='This entry has details (price/rating/notes) — remove it from the Logbook with ✕ so nothing is lost by accident.';
+      if(!row.querySelector('.protect-msg')){msg.className='protect-msg';row.children[1].appendChild(msg);}
+      setTimeout(()=>{row.style.borderColor='';msg.remove();},3500);
+    }
+  }));
+  document.querySelectorAll('.sdb-plus').forEach(b=>b.addEventListener('click',async e=>{
+    e.stopPropagation();
+    const name=b.dataset.show;
+    const th=SHOW_MAP[name.toLowerCase()]||'';
+    shows.push({id:'s'+Date.now()+Math.random().toString(36).slice(2,6),show:name,date:'',price:null,theatre:th,method:'',type:theatreCat(th),rating:0,company:'Solo',withWho:[],vibes:[],cats:GENRE_HINTS[name.toLowerCase()]||[],seat:'',face:null,actors:[],notes:'',photo:null});
+    renderAll();await saveShows();
+  }));
+  document.querySelectorAll('#sdbList .th-row').forEach(r=>r.addEventListener('click',async()=>{
+    const name=r.dataset.show;
+    const entry=loggedEntryFor(name);
+    if(entry)return; // already seen — use the +1 / − buttons instead
+
+    const th=SHOW_MAP[name.toLowerCase()]||'';
+    shows.push({
+      id:'s'+Date.now()+Math.random().toString(36).slice(2,6),
+      show:name,date:'',price:null,
+      theatre:th,method:'',type:theatreCat(th),
+      rating:0,company:'Solo',withWho:[],vibes:[],
+      cats:GENRE_HINTS[name.toLowerCase()]||[],
+      seat:'',face:null,actors:[],notes:'',photo:null
+    });
+    if(isWished(name)){removeWish(name);saveWishlist();}
+    if(th&&!visited[th]){visited[th]=true;saveVisited();}
+    renderAll();
+    await saveShows();
+  }));
+}
+
+/* ================= THEATRES ================= */
+/* theatre → every show that played there (current + 20-year archive) */
+const THEATRE_SHOWS={};
+function buildTheatreShows(){
+  ALL_SHOWS.forEach(sh=>{
+    if(!sh.th)return;
+    (THEATRE_SHOWS[sh.th]=THEATRE_SHOWS[sh.th]||[]).push(sh);
+  });
+  Object.values(THEATRE_SHOWS).forEach(list=>list.sort((a,b)=>{
+    if(a.y==='Now')return -1;if(b.y==='Now')return 1;return b.y-a.y;
+  }));
+}
+function histId(n){return 'hist-'+n.replace(/[^a-zA-Z0-9]/g,'');}
+window.thHistOpen=window.thHistOpen||new Set();
+
+function fillTheatreHistory(theatreName){
+  const panel=document.getElementById(histId(theatreName));
+  if(!panel)return;
+  const list=THEATRE_SHOWS[theatreName]||[];
+  panel.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <span style="font-size:11px;color:var(--ice-dim);">Everything at the ${theatreName}, past 20 years — tap any you saw:</span>
+      <button type="button" class="th-hist-close" data-n="${theatreName.replace(/"/g,'&quot;')}" style="background:none;border:1px solid var(--line);border-radius:6px;color:var(--ice-dim);cursor:pointer;font-size:11px;padding:4px 10px;white-space:nowrap;margin-left:10px;">✕ Close</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+      ${list.map(sh=>{
+        const seen=shows.some(x=>x.show.toLowerCase()===sh.n.toLowerCase());
+        return `<button type="button" class="show-chip th-hist-chip${seen?' logged':''}" data-s="${sh.n.replace(/"/g,'&quot;')}">${seen?'✓ ':''}${sh.n} <span style="opacity:.55;font-size:10px;">${sh.y==='Now'?'now':"'"+String(sh.y).slice(2)}</span></button>`;
+      }).join('')}
+    </div>`;
+  panel.style.display='block';
+  panel.querySelector('.th-hist-close').addEventListener('click',e=>{
+    e.stopPropagation();
+    window.thHistOpen.delete(theatreName);
+    panel.style.display='none';
+  });
+  panel.querySelectorAll('.th-hist-chip').forEach(ch=>ch.addEventListener('click',async e=>{
+    e.stopPropagation();
+    const name=ch.dataset.s;
+    const sy=window.scrollY; // remember where you were
+    const already=shows.find(x=>x.show.toLowerCase()===name.toLowerCase());
+    if(already){
+      if(isBareEntry(already)){
+        shows=shows.filter(x=>x.id!==already.id);
+        renderAll();await saveShows();
+        window.scrollTo(0,sy);
+      }
+      return;
+    }
+    shows.push({id:'s'+Date.now()+Math.random().toString(36).slice(2,6),show:name,date:'',price:null,theatre:theatreName,method:'',type:theatreCat(theatreName),rating:0,company:'Solo',withWho:[],vibes:[],cats:GENRE_HINTS[name.toLowerCase()]||[],seat:'',face:null,actors:[],notes:'',photos:[]});
+    if(!visited[theatreName]){visited[theatreName]=true;saveVisited();}
+    renderAll();await saveShows();
+    window.scrollTo(0,sy);
+  }));
+}
+function toggleTheatreHistory(theatreName){
+  if(window.thHistOpen.has(theatreName)){
+    window.thHistOpen.delete(theatreName);
+    const panel=document.getElementById(histId(theatreName));
+    if(panel)panel.style.display='none';
+  }else{
+    window.thHistOpen.add(theatreName);
+    fillTheatreHistory(theatreName);
+  }
+}
+
+let thFilterVal='all';
+function initTheatres(){
+  document.querySelectorAll('#thFilter .chip').forEach(ch=>ch.addEventListener('click',()=>{
+    document.querySelectorAll('#thFilter .chip').forEach(c2=>c2.classList.remove('on'));
+    ch.classList.add('on');
+    thFilterVal=ch.dataset.f;
+    renderTheatres();
+  }));
+}
+function renderTheatres(){
+  const bway=THEATRES.filter(t=>t.c==='Broadway');
+  const off=THEATRES.filter(t=>t.c==='Off-Broadway');
+  const bDone=bway.filter(t=>visited[t.n]).length;
+  const oDone=off.filter(t=>visited[t.n]).length;
+
+  document.getElementById('bwayCount').textContent=bDone+' / '+bway.length;
+  document.getElementById('bwayFill').style.width=(bDone/bway.length*100)+'%';
+  document.getElementById('bwayLeft').innerHTML=bDone===bway.length
+    ?'<span class="prog-done">🏆 All 41 Broadway houses conquered!</span>'
+    :(bway.length-bDone)+' theatres left to hit all 41';
+
+  document.getElementById('offCount').textContent=oDone+' / '+off.length;
+  document.getElementById('offFill').style.width=(oDone/off.length*100)+'%';
+  document.getElementById('offLeft').innerHTML=oDone===off.length
+    ?'<span class="prog-done">🏆 Off-Broadway complete!</span>'
+    :(off.length-oDone)+' venues left on the list';
+
+  let list=THEATRES;
+  if(thFilterVal==='Broadway'||thFilterVal==='Off-Broadway')list=list.filter(t=>t.c===thFilterVal);
+  else if(thFilterVal==='left')list=list.filter(t=>!visited[t.n]);
+  else if(thFilterVal==='done')list=list.filter(t=>visited[t.n]);
+
+  const bwayPart=list.filter(t=>t.c==='Broadway');
+  const offPart=list.filter(t=>t.c==='Off-Broadway');
+  const row=t=>{
+    const nm=t.n.replace(/"/g,'&quot;');
+    const histCount=(THEATRE_SHOWS[t.n]||[]).length;
+    return `<div class="th-row${visited[t.n]?' done':''}" data-n="${nm}">
+      <div class="th-check">✓</div>
+      <div style="flex:1;"><div class="th-name">${t.n}</div><div class="th-show">Now: <b>${t.s}</b></div></div>
+      ${histCount?`<button type="button" class="th-hist" data-n="${nm}" title="Every show here from the past 20 years">📜 ${histCount}</button>`:''}
+      <span class="th-tag">${t.c==='Broadway'?'BWAY':'OFF'}</span>
+    </div>
+    <div class="th-hist-panel" id="hist-${nm.replace(/[^a-zA-Z0-9]/g,'')}" style="display:none;"></div>`;
+  };
+  document.getElementById('theatreList').innerHTML=
+    (bwayPart.length?`<div class="th-section">Broadway — ${bwayPart.length}</div>`+bwayPart.map(row).join(''):'')+
+    (offPart.length?`<div class="th-section">Off-Broadway — ${offPart.length}</div>`+offPart.map(row).join(''):'')||
+    `<div class="empty">Nothing matches this filter.</div>`;
+
+  document.querySelectorAll('#theatreList .th-row').forEach(r=>r.addEventListener('click',async()=>{
+    const n=r.dataset.n;
+    visited[n]?delete visited[n]:visited[n]=true;
+    renderTheatres();
+    await saveVisited();
+  }));
+  document.querySelectorAll('.th-hist').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    toggleTheatreHistory(b.dataset.n);
+  }));
+  // re-open any panels that were open before this re-render, keeping them stable
+  window.thHistOpen.forEach(n=>fillTheatreHistory(n));
+}
+
+/* ================= LOGBOOK ================= */
+let curRating=0;
+const selVibes=new Set();
+const selCats=new Set();
+
+const CAT_GROUPS={
+  catFormat:["Musical","Play","Jukebox Musical","Play with Music","Revue / Concert","Immersive"],
+  catStory:["Original","Historical","Biographical","Movie Adaptation","Book Adaptation","Revival","Fictional"],
+  catTone:["Comedy","Drama","Dark Comedy","Dramedy","Family","Thriller / Horror","Romance"]
+};
+/* Auto-suggest categories for well-known shows */
+const GENRE_HINTS={
+  "hamilton":["Musical","Historical","Biographical","Drama"],
+  "six: the musical":["Musical","Historical","Comedy"],
+  "mj":["Jukebox Musical","Biographical"],
+  "mj the musical":["Jukebox Musical","Biographical"],
+  "& juliet":["Jukebox Musical","Comedy","Fictional"],
+  "moulin rouge! the musical":["Jukebox Musical","Movie Adaptation","Romance"],
+  "the great gatsby":["Musical","Book Adaptation","Drama"],
+  "aladdin":["Musical","Movie Adaptation","Family"],
+  "the lion king":["Musical","Movie Adaptation","Family"],
+  "wicked":["Musical","Book Adaptation","Fictional"],
+  "the book of mormon":["Musical","Comedy","Original"],
+  "chicago":["Musical","Revival","Dark Comedy"],
+  "hadestown":["Musical","Original","Fictional"],
+  "harry potter and the cursed child":["Play","Book Adaptation","Fictional"],
+  "the outsiders":["Musical","Book Adaptation","Drama"],
+  "maybe happy ending":["Musical","Original","Romance"],
+  "operation mincemeat":["Musical","Historical","Comedy"],
+  "oh, mary!":["Play","Historical","Comedy"],
+  "stranger things: the first shadow":["Play","Fictional","Thriller / Horror"],
+  "buena vista social club":["Jukebox Musical","Biographical"],
+  "just in time":["Jukebox Musical","Biographical"],
+  "titaníque":["Jukebox Musical","Comedy"],
+  "the rocky horror show":["Musical","Revival","Comedy"],
+  "cats: the jellicle ball":["Musical","Revival","Fictional"],
+  "death of a salesman":["Play","Revival","Drama"],
+  "ragtime":["Musical","Revival","Historical"],
+  "evita":["Musical","Revival","Biographical"],
+  "schmigadoon!":["Musical","Comedy","Fictional"],
+  "paranormal activity":["Play","Movie Adaptation","Thriller / Horror"],
+  "paddington the musical":["Musical","Movie Adaptation","Family"],
+  "dear evan hansen":["Musical","Original","Drama"],
+  "come from away":["Musical","Historical","Original"],
+  "waitress":["Musical","Movie Adaptation","Dramedy"],
+  "beetlejuice":["Musical","Movie Adaptation","Dark Comedy"],
+  "the band's visit":["Musical","Movie Adaptation","Drama"],
+  "a strange loop":["Musical","Original","Dramedy"],
+  "kimberly akimbo":["Musical","Original","Dramedy"],
+  "tina: the tina turner musical":["Jukebox Musical","Biographical"],
+  "ain't too proud":["Jukebox Musical","Biographical"],
+  "jagged little pill":["Jukebox Musical","Drama"],
+  "hell's kitchen":["Jukebox Musical","Biographical"],
+  "stereophonic":["Play with Music","Fictional","Drama"],
+  "the play that goes wrong":["Play","Comedy","Fictional"],
+  "to kill a mockingbird":["Play","Book Adaptation","Drama"],
+  "slave play":["Play","Original","Drama"],
+  "suffs":["Musical","Historical","Original"],
+  "cabaret":["Musical","Revival","Drama"],
+  "sweeney todd":["Musical","Revival","Thriller / Horror"],
+  "gypsy":["Musical","Revival","Biographical"],
+  "mamma mia!":["Jukebox Musical","Comedy","Romance"]
+};
+function applyGenreHints(name){
+  const hints=GENRE_HINTS[name.toLowerCase().replace(/\s*\(\d{4}.*?\)\s*$/,'').trim().toLowerCase()]||GENRE_HINTS[name.toLowerCase()];
+  if(!hints)return;
+  selCats.clear();
+  hints.forEach(h=>selCats.add(h));
+  document.querySelectorAll('.cat-chip').forEach(c=>c.classList.toggle('on',selCats.has(c.dataset.v)));
+}
+
+/* Show → theatre
