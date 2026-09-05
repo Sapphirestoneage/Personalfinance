@@ -7003,6 +7003,49 @@ section('Life events: stopping or coasting, on the demo');
   check('no bridge to 65 when stopping at 65', late.lines.filter(l => l.id === 'acaBridge')[0].value, 0);
 })();
 
+section('Life events: two households, one, on the demo');
+
+(function () {
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const T = Object.assign({}, TABLES, {
+    commonCosts: require(path.join(ROOT, 'data/common_costs.json')),
+    tripleD: require(path.join(ROOT, 'data/triple_d.json')),
+    returnBands: require(path.join(ROOT, 'data/return_bands.json'))
+  });
+  const tpl = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/partner-merge.json'), 'utf8'));
+  const h = Demo.build(); h.expenses.entries = Demo.buildSpending();
+  const partner = { partnerGross: 6000000, partnerExpenses: 280000, partnerCash: 500000, partnerInvestments: 2000000, partnerDebt: 1000000 };
+  const r = E.run(h, tpl, Object.assign({ startsOn: 0 }, partner), { tables: T, d: 'default' });
+  const by = {}; r.lines.forEach(l => { by[l.id] = l; });
+  /* Take-homes through the one tax lookup: single on each, joint on the sum. */
+  function takeHome(gross, filing) {
+    const c = Demo.build(); c.filingStatus = filing;
+    c.people[0].incomeSources = [Schema.createIncomeSource({ personId: c.people[0].id, grossAnnualIncomeCents: gross })];
+    return Tier0.takeHomeMonthlyCents(c, T).value;
+  }
+  const apart = 486000 + takeHome(6000000, 'single'), joint = takeHome(13200000, 'married_joint');
+  check('two take-homes, filing single', by.takeHomeApart.value, apart);
+  check('one take-home, filing jointly, on $132,000', by.takeHomeJoint.value, joint);
+  check('the filing change is the difference', by.filingDelta.value, joint - apart);
+  check('the duplicate line proposed is the tracked housing', r.answers.duplicateLines, 150000);
+  check('the month together: 3,150 + 2,800 − 1,500', by.spendTogether.value, 445000);
+  check('the FI number for two at 4%: 25 × a year of that', by.fiNumberTogether.value, 25 * 12 * 445000);
+  check('the FI ratio for two: (48,000 + 20,000) over it', by.fiRatioTogether.value, 6800000 / (25 * 12 * 445000), 1e-12);
+  /* Month 1: the joint take-home, your plan and match as before, their cash, investments and debt joining. */
+  check('month 1 income: the joint take-home less your 4%', r.monthly[0].incomeCents, joint - 24000);
+  check('the plan and match continue', r.monthly[0].contributionCents + r.monthly[0].matchCents, 36000);
+  check('month 1 cash: 9,500 + their 5,000 + income − the month together', r.monthly[0].cashCents, 950000 + 500000 + (joint - 24000) - 445000);
+  check('month 1 investments: 48,000 + their 20,000 + 360, grown a month', r.monthly[0].investmentsCents, Math.round((4800000 + 2000000 + 36000) * (1 + 0.05 / 12)));
+  check('month 1 net worth carries their $10,000 of debt', r.monthly[0].netWorthCents, r.monthly[0].cashCents + r.monthly[0].investmentsCents - (2160000 + 1000000));
+  let cash = 950000 + 500000; for (let m = 0; m < 12; m++) cash += (joint - 24000) - 445000;
+  check('month 12 cash by the longhand', r.monthly[11].cashCents, cash);
+  /* Without a partner's figures the event cannot price itself and says so, and changes nothing. */
+  const alone = E.run(h, tpl, {}, { tables: T, d: 'default' });
+  checkTrue('no partner figures: the income and expense items are flagged unpriced', alone.flags.filter(f => f.key === 'unpriced').length >= 2);
+  check('and the month is the baseline', alone.monthly[0].cashCents, E.baseline(h, { tables: T }).monthly[0].cashCents);
+  checkTrue('the template asks the room for a partner file', tpl.partnerFile === true);
+})();
+
 section('The D&D folder\'s vendored copies');
 
 (function () {

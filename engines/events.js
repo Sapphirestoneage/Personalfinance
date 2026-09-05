@@ -480,7 +480,9 @@
         /* source 'none': the target simply changes — a forfeited match, a
            write-down — with no cash on the other side. */
         if (it.source !== 'none') cash -= it.cents;
-        if (it.target === 'investments') inv += it.cents; else other += it.cents;
+        if (it.target === 'investments') inv += it.cents;
+        else if (it.target === 'cash') cash += it.cents;      /* money arriving, with no source here */
+        else other += it.cents;
         if (it.debtCents !== null && it.debtCents > 0) {
           var pmt = (it.debtRate !== null && it.debtMonths !== null)
             ? val(Projection.levelPaymentCents({ principalCents: it.debtCents, annualRate: it.debtRate, months: it.debtMonths })) : null;

@@ -4407,6 +4407,23 @@ left — so the three D's each answer. The demo cannot stop at 55 on any
 column, short from the first year, which is the honest answer; nothing
 here decides whether to coast, it shows what stopping would need.
 
+**10 · Two households, one.** Their gross, their month, their cash,
+investments and debt, the lines you would stop paying twice (your
+housing line proposed: one home, not two), merging when. The room shows
+a paste box for a partner's exported household on this template only:
+the file is **inspected, never imported** (`Spine.inspectImport`), its
+five figures become answers on the page, and nothing is stored — the
+note says so. Income becomes one take-home for two, filing jointly,
+through the one tax lookup with the filing status swapped, scaled as a
+ratio so your plan and match continue; their month joins less the
+duplicates; their cash, investments and debt join in the first month
+(a `cash` target with no source is money arriving). Lines: the two
+take-homes apart against the one together and the filing change
+between them (a penalty reads negative), the duplicates, the month
+together, the FI number for two at 4% and the FI ratio for two beside
+yours alone. Without a partner's figures the event prices nothing and
+says so.
+
 **Verified.** `node test/run.js`: for each, month 1 and month 12 of the
 default run on the demo by longhand — the child's first year at $3,150 +
 $1,200 + $1,000 + $250 a month with the $3,000 birth in month 1; a parent

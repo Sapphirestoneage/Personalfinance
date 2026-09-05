@@ -97,6 +97,11 @@
     <span class="slaf-eyebrow">Its questions</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)" id="answers-title">A few things only you know</h2>
     <p class="slaf-hint" style="margin:0 0 var(--space-3)">Defaults are proposed where a table has an opinion; change anything. Nothing here is stored unless you save the scenario below.</p>
+    <div id="partner-host" hidden style="margin-bottom:var(--space-3)">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Paste your partner’s exported household (Your data → Export)</span>
+        <span class="slaf-input-shell"><textarea id="partner-file" rows="3" placeholder="{ &quot;format&quot;: &quot;slaf-export&quot;, … }" aria-label="Partner's exported household" style="width:100%;background:none;border:none;color:inherit;font:inherit;resize:vertical"></textarea></span>
+        <span class="slaf-hint" id="partner-note">Read once, never stored: the figures it holds fill the questions below and go no further.</span></label>
+    </div>
     <div class="qgrid" id="question-list"></div>
     <p class="slaf-hint" data-suggest-note style="margin:var(--space-2) 0 0"></p>
     <p class="why" id="answers-why"></p>
@@ -215,6 +220,7 @@
     var list = el('question-list');
     if (!t) { list.innerHTML = ''; el('answers-title').textContent = 'Pick an event above'; el('answers-why').textContent = ''; return; }
     el('answers-title').textContent = t.title;
+    el('partner-host').hidden = !t.partnerFile;
     var env = envNow();
     var defaults = Events.answers(t, {}, env);
     list.innerHTML = t.questions.map(function (q) {
@@ -277,6 +283,29 @@
     if (v === null) delete state.answers[q.id]; else state.answers[q.id] = v;
     render();
   });
+  /* A partner's file: inspected, never imported. Its figures become
+     answers on this page and nothing else. */
+  el('partner-file').addEventListener('input', function () {
+    var text = el('partner-file').value.trim();
+    var note = el('partner-note');
+    if (!text) return;
+    var check = Spine.inspectImport(text);
+    if (!check.ok) { note.textContent = check.reason; return; }
+    var ph = check.household;
+    function v(r) { return Money.isOk(r) ? r.value : null; }
+    var picked = {
+      partnerGross: v(Schema.grossAnnualIncomeCents(ph)),
+      partnerExpenses: v(Schema.monthlyExpensesCents(ph)),
+      partnerCash: v(Schema.cashCents(ph)),
+      partnerInvestments: v(Schema.investmentsCents(ph)),
+      partnerDebt: v(Schema.totalDebtCents(ph))
+    };
+    var filled = 0;
+    Object.keys(picked).forEach(function (k) { if (Money.isEntered(picked[k])) { state.answers[k] = picked[k]; filled++; } });
+    note.textContent = filled + ' of 5 figures read from the file. Nothing was stored.';
+    questionForm.force(); render();
+  });
+
   el('question-list').addEventListener('keydown', function (evt) {
     if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') { evt.preventDefault(); evt.target.blur(); }
   });

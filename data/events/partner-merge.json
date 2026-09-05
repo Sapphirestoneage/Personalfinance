@@ -1,0 +1,277 @@
+{
+  "id": "partner-merge",
+  "title": "Two households, one",
+  "blurb": "Your numbers and a partner's, side by side and then together: the filing change, the lines you would stop paying twice, and the FI number for two.",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "confidence": "convention",
+  "drawsOn": [
+    "grossAnnualIncome",
+    "takeHome",
+    "monthlyExpenses",
+    "cashSavings",
+    "investments",
+    "totalDebt",
+    "housingLine",
+    "partnerFile"
+  ],
+  "partnerFile": true,
+  "questions": [
+    {
+      "id": "partnerGross",
+      "ask": "Their gross income, a year",
+      "unit": "dollars",
+      "default": null,
+      "hint": "Paste their exported household above and these fill in."
+    },
+    {
+      "id": "partnerExpenses",
+      "ask": "Their spending, a month",
+      "unit": "dollars",
+      "default": null
+    },
+    {
+      "id": "partnerCash",
+      "ask": "Their cash",
+      "unit": "dollars",
+      "default": 0
+    },
+    {
+      "id": "partnerInvestments",
+      "ask": "Their investments",
+      "unit": "dollars",
+      "default": 0
+    },
+    {
+      "id": "partnerDebt",
+      "ask": "Their debt",
+      "unit": "dollars",
+      "default": 0
+    },
+    {
+      "id": "duplicateLines",
+      "ask": "Lines you would stop paying twice, a month",
+      "unit": "dollars",
+      "default": {
+        "coalesce": [
+          "$housingMonthlyCents",
+          0
+        ]
+      },
+      "hint": "Proposed as your housing line: one home, not two."
+    },
+    {
+      "id": "startsOn",
+      "ask": "Merging in how many months?",
+      "unit": "months",
+      "default": 3,
+      "min": 0,
+      "max": 36
+    }
+  ],
+  "startsOn": "@startsOn",
+  "gapMonths": 0,
+  "derived": [
+    {
+      "id": "combinedGross",
+      "value": {
+        "+": [
+          "$grossAnnualCents",
+          "@partnerGross"
+        ]
+      }
+    },
+    {
+      "id": "jointTakeHome",
+      "value": {
+        "fn": "takeHomeMonthly",
+        "args": {
+          "grossAnnualCents": "$combinedGross",
+          "filingStatus": "married_joint"
+        }
+      }
+    },
+    {
+      "id": "partnerTakeHomeSingle",
+      "value": {
+        "fn": "takeHomeMonthly",
+        "args": {
+          "grossAnnualCents": "@partnerGross",
+          "filingStatus": "single"
+        }
+      }
+    }
+  ],
+  "diff": {
+    "income": [
+      {
+        "label": "One take-home for two, filing jointly",
+        "from": 0,
+        "months": null,
+        "multiplier": {
+          "/": [
+            "$jointTakeHome",
+            "$takeHomeMonthlyCents"
+          ]
+        },
+        "contributionMultiplier": 1,
+        "matchMultiplier": 1
+      }
+    ],
+    "expenses": [
+      {
+        "label": "Their month, less the lines paid twice",
+        "from": 0,
+        "months": null,
+        "addCents": {
+          "-": [
+            "@partnerExpenses",
+            "@duplicateLines"
+          ]
+        }
+      }
+    ],
+    "oneTime": [],
+    "assets": [
+      {
+        "label": "Their cash joins",
+        "when": 0,
+        "target": "cash",
+        "source": "none",
+        "cents": "@partnerCash"
+      },
+      {
+        "label": "Their investments join",
+        "when": 0,
+        "target": "investments",
+        "source": "none",
+        "cents": "@partnerInvestments"
+      },
+      {
+        "label": "Their debt joins",
+        "when": 0,
+        "target": "other",
+        "source": "none",
+        "cents": 0,
+        "debtCents": "@partnerDebt"
+      }
+    ]
+  },
+  "lines": [
+    {
+      "id": "takeHomeApart",
+      "label": "Two take-homes, filing single, a month",
+      "unit": "dollarsMonthly",
+      "value": {
+        "+": [
+          "$takeHomeMonthlyCents",
+          "$partnerTakeHomeSingle"
+        ]
+      }
+    },
+    {
+      "id": "takeHomeJoint",
+      "label": "One take-home, filing jointly, a month",
+      "unit": "dollarsMonthly",
+      "value": "$jointTakeHome"
+    },
+    {
+      "id": "filingDelta",
+      "label": "The filing change, a month",
+      "unit": "dollarsMonthly",
+      "value": {
+        "-": [
+          "^takeHomeJoint",
+          "^takeHomeApart"
+        ]
+      },
+      "note": "From the effective-rate table's married-joint column; a penalty reads negative."
+    },
+    {
+      "id": "duplicates",
+      "label": "Stopped paying twice, a month",
+      "unit": "dollarsMonthly",
+      "value": "@duplicateLines"
+    },
+    {
+      "id": "spendTogether",
+      "label": "The month together",
+      "unit": "dollarsMonthly",
+      "value": {
+        "-": [
+          {
+            "+": [
+              "$monthlyExpensesCents",
+              "@partnerExpenses"
+            ]
+          },
+          "@duplicateLines"
+        ]
+      }
+    },
+    {
+      "id": "fiNumberTogether",
+      "label": "FI number for two, at 4%",
+      "unit": "dollars",
+      "value": {
+        "round": {
+          "*": [
+            25,
+            12,
+            "^spendTogether"
+          ]
+        }
+      }
+    },
+    {
+      "id": "fiRatioTogether",
+      "label": "FI ratio for two",
+      "unit": "percent",
+      "value": {
+        "/": [
+          {
+            "+": [
+              "$investmentsCents",
+              "@partnerInvestments"
+            ]
+          },
+          "^fiNumberTogether"
+        ]
+      }
+    },
+    {
+      "id": "fiRatioAlone",
+      "label": "FI ratio alone, for comparison",
+      "unit": "percent",
+      "value": {
+        "/": [
+          "$investmentsCents",
+          {
+            "*": [
+              25,
+              12,
+              "$monthlyExpensesCents"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "protect": [
+    "Each person's cushion, until it is one cushion by choice",
+    "The match on both sides",
+    "A written agreement about the debt that came in"
+  ],
+  "cut": [],
+  "tripleD": {},
+  "outputs": [
+    "netWorthAtEndCents",
+    "fiDateShiftMonths"
+  ],
+  "horizonMonths": 120,
+  "sources": [
+    "data/effective_tax_rates_2026.json",
+    "data/triple_d.json",
+    "data/return_bands.json"
+  ]
+}

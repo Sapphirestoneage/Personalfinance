@@ -124,6 +124,9 @@
           "value"
         ]
       }
+    },
+    "partnerFile": {
+      "type": "boolean"
     }
   },
   "definitions": {
