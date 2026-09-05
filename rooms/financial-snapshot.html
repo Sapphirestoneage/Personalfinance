@@ -379,7 +379,7 @@
     }
 
     /* The finding: residual minus contributed is money going somewhere
-       nobody has named. Shown only when both rates exist. D-073. */
+       nobody has named. Shown only when both rates exist. D-080. */
     var c = rates.contributed;
     var flag = el('sr-unallocated');
     if (Money.isOk(c) && Money.isEntered(c.unallocatedMonthlyCents)) {
@@ -514,7 +514,7 @@
   }
 
   /* Three benchmarks side by side, and the sentence on why they disagree
-     (D-076). Under them, the rest of engines/benchmarks.js: a dollar at
+     (D-083). Under them, the rest of engines/benchmarks.js: a dollar at
      your age, monthly to $1M and $2M, and what one more point does. */
   function renderBenchmarks(h) {
     var B = SLAF.Benchmarks;

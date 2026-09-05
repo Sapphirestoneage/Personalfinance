@@ -111,6 +111,56 @@
   .muted { color: var(--color-text-muted); }
   .burden { border-left: 3px solid var(--color-caution); padding: var(--space-2) var(--space-3); background: var(--color-surface); font-size: var(--text-sm); line-height: var(--leading-normal); border-radius: var(--radius-sm); margin-top: var(--space-2); }
   .burden.b45 { border-left-color: var(--color-critical); }
+  /* ---- rests and pace (BRIEF §9.8) ---- */
+  .rest { font-size: var(--text-sm); line-height: var(--leading-normal); }
+  .rest .big { font-family: var(--font-display); font-size: var(--text-xl); display: block; }
+  .rest .sub { color: var(--color-text-muted); display: block; }
+  .rest .warn { color: var(--color-critical); }
+  .rest p { margin: var(--space-2) 0 0; color: var(--color-text-muted); }
+  .restfigs { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-2); margin-top: var(--space-2); }
+  .restfig { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2); }
+  .restfig .k { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-subtle); }
+  .restfig .v { font-family: var(--font-display); font-size: var(--text-lg); }
+
+  /* ---- conditions (BRIEF §9.7) ---- */
+  .exh { border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: var(--space-3); background: var(--color-surface); }
+  .exh.lit { border-color: var(--color-critical); }
+  .exh .lv { font-family: var(--font-display); font-size: var(--text-xl); }
+  .exh .pen { font-size: var(--text-sm); color: var(--color-critical); }
+  .exh .ef { font-size: var(--text-sm); color: var(--color-text-muted); line-height: var(--leading-normal); margin-top: var(--space-2); }
+  .exh .tl { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1); font-style: italic; }
+  .exhtrack { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; margin: var(--space-2) 0; }
+  .exhtrack i { height: 8px; border-radius: 2px; background: var(--color-surface-active); display: block; }
+  .exhtrack i.on { background: var(--color-critical); }
+  .statuslist { display: grid; gap: var(--space-1); }
+  .statusrow { display: grid; grid-template-columns: 20px 1fr; gap: var(--space-2); align-items: start; font-size: var(--text-sm); padding: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-sm); cursor: pointer; line-height: var(--leading-normal); }
+  .statusrow:hover { border-color: var(--color-border-active); }
+  .statusrow input { margin-top: 3px; }
+  .statusrow b { display: block; font-weight: 600; }
+  .statusrow .tr { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
+  .stdetail { border: 1px solid var(--color-accent); border-radius: var(--radius-sm); padding: var(--space-3); margin-top: var(--space-2); font-size: var(--text-sm); line-height: var(--leading-normal); }
+  .stdetail b { font-family: var(--font-display); display: block; }
+  .stdetail .g { color: var(--color-text-muted); display: block; margin-top: var(--space-1); }
+  .stdetail .r { color: var(--color-critical); display: block; margin-top: var(--space-1); }
+  .stdetail .d { color: var(--color-text-faint); font-size: var(--text-xs); display: block; margin-top: var(--space-1); }
+
+  /* ---- tiers of play (BRIEF §9.4) ---- */
+  .tierstrip { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-1); margin-top: var(--space-3); }
+  .tierseg { border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: var(--space-2); background: var(--color-surface); text-align: center; }
+  .tierseg .rn { font-family: var(--font-display); font-size: var(--text-lg); }
+  .tierseg .nm { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-subtle); line-height: 1.3; display: block; margin-top: 2px; }
+  .tierseg .lv { font-size: var(--text-xs); color: var(--color-text-faint); display: block; }
+  .tierseg.done { border-color: var(--color-border); opacity: .55; }
+  .tierseg.here { border-color: var(--color-accent); background: var(--color-surface-active); }
+  .tierseg.here .nm { color: var(--color-accent-hover); }
+  .tierbar { height: 6px; border-radius: var(--radius-pill); background: var(--color-surface-active); overflow: hidden; margin-top: var(--space-2); }
+  .tierbar > span { display: block; height: 100%; background: var(--color-accent); }
+  .tierline { margin: 0 0 var(--space-2); font-size: var(--text-sm); line-height: var(--leading-normal); }
+  .tierline b { font-family: var(--font-display); font-size: var(--text-base); display: block; margin-bottom: 2px; }
+  .tierline .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-subtle); display: block; }
+  .arriving { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-2); }
+  .arriving span { font-size: var(--text-xs); border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 1px var(--space-2); color: var(--color-text-muted); }
+
   .lower { display: grid; gap: var(--space-3); grid-template-columns: 1fr; margin-top: var(--space-3); }
   @media (min-width: 900px) { .lower { grid-template-columns: 1fr 2fr; } }
   table.attacks { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
@@ -129,6 +179,8 @@
   .btn { font-family: var(--font-body); font-size: var(--text-sm); background: var(--color-accent); color: var(--color-accent-contrast); border: 0; border-radius: var(--radius-sm); padding: 0 var(--space-4); height: var(--control-height); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
   .btn.ghost { background: transparent; color: var(--color-accent-hover); border: 1px solid var(--color-border-strong); }
   .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+  .bad { color: var(--color-critical); }
+  #import-result { border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: var(--space-3); margin-top: var(--space-3); }
   textarea { width: 100%; box-sizing: border-box; min-height: 84px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: var(--text-xs); background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: var(--space-2); }
   .foot { margin-top: var(--space-6); text-align: center; font-size: var(--text-sm); }
   .foot a { color: var(--color-accent-hover); }
@@ -164,7 +216,24 @@
   </div>
   <div id="export-detail" hidden><textarea id="export-box" readonly aria-label="Your character data"></textarea></div>
 
+  <h2 class="sec">Bring one back</h2>
+  <p class="note">Started on your phone and want to finish here? Open the file you saved, or paste it
+     in. This <b>replaces</b> the character on this device — one sheet, one person.</p>
+  <div class="actions">
+    <!-- LIVE-FORM: this input and the file picker are built here, once, and
+         only ever read. Nothing repaints this block. -->
+    <label class="btn ghost" for="f-import-file">Open a file</label>
+    <input type="file" id="f-import-file" accept="application/json,.json" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"/>
+    <button type="button" class="btn ghost" id="btn-import-paste">Paste it instead</button>
+  </div>
+  <div id="import-paste" hidden>
+    <textarea id="f-import-box" aria-label="Paste your character file" placeholder="Paste the whole file here, starting with {"></textarea>
+    <div class="actions"><button type="button" class="btn" id="btn-import-go">Load this character</button></div>
+  </div>
+  <div id="import-result" class="note" hidden></div>
+
   <p class="foot"><a href="encounter.html">Weakness map — what hunts you, and what blocks it →</a></p>
+  <p class="foot"><a href="card.html">Your card — the bit you send to the group chat →</a></p>
   <p class="foot"><a href="bestiary.html">The Bestiary — monsters, hazards and the tax authority →</a></p>
   <p class="foot" style="color:var(--color-text-faint);font-size:var(--text-xs)">An independent parody. Not affiliated with or endorsed by Wizards of the Coast. <a href="bestiary.html#attribution">Licence &amp; attribution</a>.</p>
 </div>
@@ -176,12 +245,13 @@
 <script src="engines/projection.js"></script>
 <script src="engines/tier0.js"></script>
 <script src="engines/character.js"></script>
+<script src="engines/encounter.js"></script>
 <script src="shared/export.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Char = SLAF.Character, Store = DND.Store, Schema = SLAF.Schema,
-      Export = DND.Export;
+      Export = DND.Export, Enc = DND.Encounter;
   var TABLES = null, BUILT = false, DASH = Money.EM_DASH;
   var SHOWING_EXAMPLE = false;
 
@@ -376,6 +446,33 @@
         + '<div class="panel"><div class="rows" id="v-passives"></div><div class="panel-label">Senses</div></div>'
         + '<div class="panel"><div id="v-levers"></div><div class="panel-label">Levers · what you can actually swing</div></div>'
       + '</div>'
+      + '<h2 class="sec">Conditions</h2>'
+      + '<div class="lower">'
+        + '<div class="panel"><div id="v-exhaustion"></div><div class="panel-label">Exhaustion · derived from runway</div></div>'
+        + '<div class="panel"><div class="statuslist">' + rules.statusEffects.map(function (st) {
+            /* LIVE-FORM: built once, here, at boot. paint() only ever writes
+               .checked on these — never innerHTML on this container. */
+            return '<label class="statusrow" for="st-' + esc(st.id) + '">'
+              + '<input type="checkbox" id="st-' + esc(st.id) + '" data-status="' + esc(st.id) + '"/>'
+              + '<span><b>' + esc(st.name) + '</b>'
+              + '<span class="tr">' + esc(st.trigger) + '</span></span></label>';
+          }).join('') + '</div>'
+          + '<div id="v-status-detail"></div>'
+          + '<div class="panel-label">Status effects · you declare these</div></div>'
+      + '</div>'
+      + '<h2 class="sec">Rest and recovery</h2>'
+      + '<div class="lower">'
+        + '<div class="panel"><div id="v-shortrest"></div><div class="panel-label">Short rest · one pay cycle</div></div>'
+        + '<div class="panel"><div id="v-longrest"></div><div class="panel-label">Long rest · back to full</div></div>'
+      + '</div>'
+      + '<div class="panel" style="margin-top:var(--space-3)"><div id="v-pace"></div>'
+        + '<div class="panel-label">Pace · what the next level costs</div></div>'
+      + '<h2 class="sec">Where you are in the arc</h2>'
+      + '<div class="tierstrip" id="v-tierstrip"></div>'
+      + '<div class="lower">'
+        + '<div class="panel"><div id="v-tier-now"></div><div class="panel-label">This tier</div></div>'
+        + '<div class="panel"><div id="v-tier-next"></div><div class="panel-label">What is next</div></div>'
+      + '</div>'
       + '<h2 class="sec">Class</h2><div class="actions" id="v-pickers"></div>'
       + '<div class="lower">'
         + '<div class="panel"><div id="v-features"></div><div class="panel-label">Class features earned</div></div>'
@@ -384,6 +481,19 @@
   }
 
   /* ==================== READ / WRITE ==================== */
+
+  /* Written as a whole map so unticking is a real answer rather than an
+     absence. Once you have touched this at all, "none" means none. */
+  function collectStatuses() {
+    if (SHOWING_EXAMPLE) return;
+    var map = {};
+    TABLES.dndRules.statusEffects.forEach(function (st) {
+      var box = el('st-' + st.id);
+      if (box) map[st.id] = !!box.checked;
+    });
+    Store.patchProfile({ statuses: map });
+    paint();
+  }
 
   function collect() {
     Store.setMoney('grossAnnualIncomeCents', readMoney('f-income'));
@@ -627,6 +737,171 @@
     }
     html('v-prof-list', prof.join('') || '<span class="faint">Nothing yet.</span>');
 
+    /* --- rests and pace (BRIEF §9.8) --------------------------------------
+       All three read the same surplus. A negative one is a real answer and is
+       said plainly, because "you are losing runway" is the single most useful
+       sentence this panel can produce. */
+    var sr = Char.shortRest(h, TABLES);
+    if (Money.isOk(sr)) {
+      var wpm = Math.round(sr.weeksPerMonth * 10) / 10;
+      html('v-shortrest', '<div class="rest">'
+        + '<span class="big' + (sr.losing ? ' warn' : '') + '">'
+          + (wpm >= 0 ? '+' : '') + wpm + ' weeks</span>'
+        + '<span class="sub">of runway per month, from what you do not spend'
+          + (sr.matchIncluded ? ', employer match included' : '') + '</span>'
+        + '<div class="restfigs">'
+          + '<div class="restfig"><div class="k">One week of HP costs</div><div class="v">'
+            + esc(Money.formatCents(sr.weekCostCents)) + '</div></div>'
+          + '<div class="restfig"><div class="k">A year of rests</div><div class="v">'
+            + (Math.round(sr.weeksPerYear * 10) / 10) + ' wk</div></div>'
+        + '</div>'
+        + (sr.losing
+            ? '<p class="warn">You are spending more than you keep, so rests take runway away rather than '
+              + 'restoring it. Nothing below this line gets better until that number is positive.</p>'
+            : '<p>' + esc(TABLES.dndRules.longRest.potionNote) + '</p>')
+        + '</div>');
+    } else {
+      html('v-shortrest', '<span class="faint">' + esc(sr.reason) + '</span>');
+    }
+
+    var lr = Char.longRest(s, h, TABLES);
+    if (Money.isOk(lr)) {
+      html('v-longrest', '<div class="rest">'
+        + (lr.atMax
+            ? '<span class="big">At full</span><span class="sub">Nothing to recover — your runway is at its cap for this class and level.</span>'
+            : '<span class="big">' + (Math.round(lr.deficitWeeks * 10) / 10) + ' weeks</span>'
+              + '<span class="sub">short of your maximum</span>')
+        + '<div class="restfigs">'
+          + '<div class="restfig"><div class="k">CON save to finish it</div><div class="v">DC ' + lr.dc
+            + (lr.conModifier === null ? '' : ' · ' + (lr.conModifier >= 0 ? '+' : '') + lr.conModifier) + '</div></div>'
+          + '<div class="restfig"><div class="k">Chance it holds</div><div class="v">'
+            + (lr.chance === null ? DASH : Math.round(lr.chance * 100) + '%') + '</div></div>'
+        + '</div>'
+        + (lr.atMax ? ''
+            : lr.unreachable
+              ? '<p class="warn">At your current surplus a long rest never completes — the deficit is not closing.</p>'
+              : (lr.monthsToFull === null
+                  ? '<p>Add your income and filing status to see how long a full recovery takes.</p>'
+                  : '<p>About ' + (Math.round(lr.monthsToFull * 10) / 10) + ' months of uninterrupted rest '
+                    + 'to reach full. The DC rises with exhaustion — the deeper the hole, the more has to go '
+                    + 'right without interruption.</p>'))
+        + '</div>');
+    } else {
+      html('v-longrest', '<span class="faint">' + esc(lr.reason) + '</span>');
+    }
+
+    var lp = Char.levelPace(h, TABLES, s.level);
+    if (Money.isOk(lp)) {
+      html('v-pace', '<div class="rest">'
+        + (lp.atCap
+            ? '<span class="big">Level 20</span><span class="sub">There is no next level. This is the part you were saving for.</span>'
+            : '<span class="big">' + esc(Money.formatCents(lp.needCents)) + '</span>'
+              + '<span class="sub">more invested reaches level ' + lp.nextLevel + '</span>'
+              + (lp.goingBackwards
+                  ? '<p class="warn">At a negative surplus you are not moving toward it.</p>'
+                  : lp.stalled
+                    ? '<p class="warn">Nothing is being saved, so this level never arrives on its own.</p>'
+                    : lp.yearsToNext === null
+                      ? ''
+                      : '<p>About ' + (Math.round(lp.yearsToNext * 10) / 10) + ' years at what you currently '
+                        + 'save. Contributions only — no growth assumed over a single level, because '
+                        + 'compounding across one hop is noise dressed as precision.</p>'))
+        + '</div>');
+    } else {
+      html('v-pace', '<span class="faint">' + esc(lp.reason) + '</span>');
+    }
+
+    /* --- conditions (BRIEF §9.7) ------------------------------------------
+       Exhaustion is derived and repaints freely. The status checkboxes are
+       LIVE INPUTS built once in buildShell — only .checked is written here,
+       never innerHTML on .statuslist, or a tap mid-list would lose the
+       keyboard-less equivalent: the tap itself. D-034. */
+    var exh = Char.exhaustion(s.currentHp, TABLES);
+    if (Money.isOk(exh)) {
+      /* Six segments for the six levels above Rested. Level 0 lights none —
+         an earlier version prepended a seventh and lit it whenever the level
+         was non-zero, which showed five lit at level 4. */
+      var track = '', top = TABLES.dndRules.exhaustion.levels.length - 1;
+      for (var ei = 1; ei <= top; ei++) {
+        track += '<i class="' + (ei <= exh.value ? 'on' : '') + '"></i>';
+      }
+      html('v-exhaustion',
+        '<div class="exh' + (exh.value > 0 ? ' lit' : '') + '">'
+        + '<span class="lv">' + esc(exh.row.label) + '</span> '
+        + (exh.value > 0
+            ? '<span class="pen">level ' + exh.value + ' · −' + exh.savePenalty + ' to every save</span>'
+            : '<span class="pen" style="color:var(--color-text-faint)">no penalty</span>')
+        + '<div class="exhtrack">' + track + '</div>'
+        + '<div class="ef">' + esc(exh.row.effect) + '</div>'
+        + '<div class="tl">' + esc(exh.row.tell) + '</div></div>');
+    } else {
+      html('v-exhaustion', '<span class="faint">' + esc(exh.reason) + '</span>');
+    }
+
+    var st = Char.statuses(h, TABLES);
+    st.rows.forEach(function (row) {
+      var box = el('st-' + row.id);
+      if (box) box.checked = st.held.indexOf(row) !== -1;
+    });
+    html('v-status-detail', st.held.length
+      ? st.held.map(function (row) {
+          return '<div class="stdetail"><b>' + esc(row.name) + '</b>'
+            + '<span class="g">Grants: ' + esc(row.grants) + '</span>'
+            + '<span class="r">Restricts: ' + esc(row.restricts) + '</span>'
+            + '<span class="d">Duration: ' + esc(row.duration) + '</span></div>';
+        }).join('')
+      : '<div class="micro" style="text-align:left">'
+        + (st.asked ? 'None declared.' : 'None declared yet — tick any that apply. Nothing here is guessed from your numbers, because none of it is visible in them.')
+        + '</div>');
+
+    /* --- tiers of play (BRIEF §9.4) ---------------------------------------
+       No inputs in any of these three containers, so they are rebuilt freely.
+       An unplaced character gets the strip greyed and a line saying why, not a
+       guess at tier I: tierProgress() takes the Level Result rather than a
+       number precisely so it can refuse. */
+    var tp = Enc.tierProgress(s.level, TABLES);
+    var tiers = TABLES.dndRules.encounterRules.tiers;
+    html('v-tierstrip', tiers.map(function (t) {
+      var cls = !tp.placed ? ''
+        : (t.id === tp.tier.id ? ' here' : (t.maxLevel < tp.level ? ' done' : ''));
+      return '<div class="tierseg' + cls + '"><span class="rn">' + esc(t.id) + '</span>'
+        + '<span class="nm">' + esc(t.name) + '</span>'
+        + '<span class="lv">levels ' + t.minLevel + '–' + t.maxLevel + '</span></div>';
+    }).join(''));
+
+    if (!tp.placed) {
+      html('v-tier-now', '<span class="faint">' + esc(tp.reason) + '</span>');
+      html('v-tier-next', '<span class="faint">Your Level places you in the arc, and your '
+        + 'Level needs investments and a spending figure.</span>');
+    } else {
+      var band = TABLES.dndRules.levelBands.filter(function (b) {
+        return tp.level >= b.minLevel && tp.level <= b.maxLevel; })[0];
+      html('v-tier-now',
+        '<p class="tierline"><b>Tier ' + esc(tp.tier.id) + ' — ' + esc(tp.tier.name) + '</b>'
+          + esc(tp.tier.about) + '</p>'
+        + '<div class="tierbar"><span style="width:' + tp.percentThroughTier + '%"></span></div>'
+        + '<p class="tierline" style="margin-top:var(--space-2)"><span class="lbl">Level '
+          + tp.level + ' · ' + tp.levelsIntoTier + ' of ' + tp.tierSpan + ' in this tier</span>'
+          + esc(tp.tier.looksLike) + '</p>'
+        + (band ? '<p class="tierline"><span class="lbl">Milestone for this band</span>'
+            + esc(band.milestone) + '</p>' : '')
+        + '<p class="tierline"><span class="lbl">Biggest risk here</span>'
+          + esc(tp.tier.biggestRisk) + '</p>');
+
+      html('v-tier-next', tp.last
+        ? '<p class="tierline"><b>There is no tier V</b>' + esc(tp.tier.endsWhen) + '</p>'
+        : '<p class="tierline"><span class="lbl">This tier ends when</span>'
+            + esc(tp.tier.endsWhen) + '</p>'
+          + '<p class="tierline"><b>Then: tier ' + esc(tp.next.id) + ' — ' + esc(tp.next.name) + '</b>'
+            + esc(tp.next.about) + '</p>'
+          + '<p class="tierline"><span class="lbl">' + tp.levelsToNext + ' level'
+            + (tp.levelsToNext === 1 ? '' : 's') + ' away · what comes into range</span>'
+            + (tp.arrivingNext.length
+                ? '<span class="arriving">' + tp.arrivingNext.map(function (c) {
+                    return '<span>' + esc(c.name) + '</span>'; }).join('') + '</span>'
+                : 'Nothing new.') + '</p>');
+    }
+
     /* senses + levers (no inputs inside — safe to rebuild) */
     html('v-passives', Char.passives(s.subScores, TABLES).map(function (x) {
       return '<div class="row"><span></span><span class="mod' + (x.ok ? '' : ' na') + '">'
@@ -737,6 +1012,9 @@
       /* The class pickers write straight to the profile and repaint themselves;
          routing them through collect() would read them as sheet inputs. */
       if (e.target.matches('#class-override, #subclass-pick')) return;
+      /* Status effects are self-declared and live on the profile, not among the
+         money fields collect() reads. Same routing as the class pickers. */
+      if (e.target.matches('[data-status]')) { collectStatuses(); return; }
       collect();
     });
     area.addEventListener('blur', function (e) {
@@ -783,6 +1061,57 @@
       box.hidden = !box.hidden;
       el('btn-toggle-json').textContent = box.hidden ? 'Show the file' : 'Hide the file';
     });
+    /* ---- import (BRIEF §9.5) --------------------------------------------
+       Validation first, always, and the file's own warnings are shown rather
+       than swallowed: an older-format file that still loads should say so. */
+    function loadCharacter(text) {
+      var box = el('import-result');
+      box.hidden = false;
+      var envelope;
+      try { envelope = JSON.parse(text); }
+      catch (e) {
+        box.innerHTML = '<b class="bad">That is not a character file.</b> It could not be read as '
+          + 'JSON at all — make sure you copied the whole thing, starting with a brace.';
+        return;
+      }
+      var v = Export.validate(envelope);
+      if (!v.ok) {
+        box.innerHTML = '<b class="bad">Not loaded.</b> ' + esc(v.errors[0])
+          + (v.errors.length > 1 ? ' (and ' + (v.errors.length - 1) + ' more)' : '');
+        return;
+      }
+      var res = Store.importCharacter(envelope);
+      if (!res.ok) { box.innerHTML = '<b class="bad">Not loaded.</b> ' + esc(res.reason); return; }
+      /* Deliberately NOT a buildShell(). The shell's structure never varies —
+         only its values do — and rebuilding it would replace every input node
+         for no reason, which is the one thing D-034 forbids. hydrate() writes
+         the new values into the nodes that are already there. */
+      hydrate(false);
+      paint();
+      box.innerHTML = '<b>Loaded.</b> Replaced ' + res.applied.length + ' part'
+        + (res.applied.length === 1 ? '' : 's') + ' of this sheet: ' + esc(res.applied.join(', ')) + '.'
+        + (v.warnings.length ? '<br/><span class="faint">' + esc(v.warnings.join(' ')) + '</span>' : '');
+    }
+
+    el('f-import-file').addEventListener('change', function (e) {
+      var f = e.target.files && e.target.files[0];
+      if (!f) return;
+      var r = new FileReader();
+      r.onload = function () { loadCharacter(String(r.result)); };
+      r.onerror = function () {
+        el('import-result').hidden = false;
+        el('import-result').innerHTML = '<b class="bad">Could not read that file.</b>';
+      };
+      r.readAsText(f);
+    });
+    el('btn-import-paste').addEventListener('click', function () {
+      var box = el('import-paste');
+      box.hidden = !box.hidden;
+    });
+    el('btn-import-go').addEventListener('click', function () {
+      loadCharacter(el('f-import-box').value);
+    });
+
     el('btn-export').addEventListener('click', function () {
       var text = el('export-box').value, btn = el('btn-export');
       function done() { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy instead'; }, 1600); }

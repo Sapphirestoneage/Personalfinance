@@ -53,6 +53,7 @@
   .radar text { fill: var(--color-text-subtle); font-size: 10px; font-family: var(--font-body); text-anchor: middle; }
   .radar text.weak { fill: var(--color-critical); font-weight: 600; }
   .legend { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; margin-top: var(--space-2); line-height: var(--leading-normal); }
+  .tieronly { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--color-text-muted); margin: 0 0 var(--space-2); cursor: pointer; }
   .pred { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: center; padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); font-size: var(--text-sm); }
   .pred:last-child { border-bottom: 0; }
   .pred .nm { font-weight: 600; }
@@ -110,6 +111,8 @@
     <div class="panel">
       <h2 style="margin-top:0">Natural predators</h2>
       <p class="note" id="pred-intro"></p>
+      <label class="tieronly"><input type="checkbox" id="f-tieronly"/>
+        <span>Only what can reach me at my tier</span></label>
       <div id="pred-list"></div>
     </div>
   </div>
@@ -129,6 +132,7 @@
   <p class="note faint">Kept in this browser only, newest first, capped at fifty.</p>
   <div id="log"></div>
 
+  <p class="foot"><a href="dm.html">DM mode — run this at someone else →</a></p>
   <p class="foot"><a href="bestiary.html">The Bestiary — every creature in full →</a></p>
   <p class="foot" style="color:var(--color-text-faint);font-size:var(--text-xs)">An independent parody. Not affiliated with or endorsed by Wizards of the Coast. <a href="bestiary.html#attribution">Licence &amp; attribution</a>.</p>
 </div>
@@ -205,7 +209,13 @@
 
   function renderMap() {
     var saves = Char.savingThrows(SHEET.stats, SHEET.klass, SHEET.proficiencyBonus, TABLES);
-    var p = Enc.predators(SHEET, TABLES);
+    /* LIVE-FORM: the checkbox is built once in the markup and only read.
+       tierOnly has been in the engine since §9.3 and nothing used it; §9.4 is
+       what it was for. Unchecked by default, because "everything that hunts
+       where you are thin" is the more honest first answer — the filter is a
+       narrowing you ask for, not one applied on your behalf. */
+    var tierOnly = !!(el('f-tieronly') && el('f-tieronly').checked);
+    var p = Enc.predators(SHEET, TABLES, { tierOnly: tierOnly });
     var weakest = p.ready ? p.weakest : [];
 
     el('radar').innerHTML = radar(saves, weakest);
@@ -228,7 +238,8 @@
         : 'You are thinnest on '
           + listJoin(p.weakest.map(function (w) { return '<b>' + esc(w) + '</b>'; })) + '.')
       + ' You are in tier ' + esc(p.tier.id) + ' — ' + esc(p.tier.name)
-      + '. These hunt where you are thin:';
+      + (tierOnly ? '. Filtered to tier ' + esc(p.tier.id) + ' — these can reach you now:'
+                  : '. These hunt where you are thin, at every stage:');
     el('pred-list').innerHTML = p.creatures.map(function (c) {
       var here = c.tier === p.tier.id;
       return '<div class="pred"><span><span class="nm">' + esc(c.name) + '</span>'
@@ -236,6 +247,13 @@
         + (here ? ' · a real threat at your tier' : ' · tier ' + esc(c.tier) + ', later') + '</span></span>'
         + '<span class="tag">CR ' + esc(c.cr) + '</span></div>';
     }).join('');
+  }
+
+  /* The runway ceiling of an exhaustion level, for the copy that explains the
+     penalty. Read from the same ladder the engine uses — never restated here. */
+  function nextBandWeeks(level) {
+    var row = TABLES.dndRules.exhaustion.levels.filter(function (l) { return l.level === level; })[0];
+    return row && row.maxWeeks !== null ? row.maxWeeks : 0;
   }
 
   function renderResult(r) {
@@ -257,6 +275,11 @@
       ['Damage', r.damageWeeks + ' wk' + (r.perPeriod ? '/' + r.perPeriod : '')],
       ['HP after', r.hpAfter === null ? '—' : r.hpBefore + ' → ' + r.hpAfter]
     ];
+    /* §9.7 moves this number, so it has to say so. A chance that shifts with no
+       stated reason is worse than no chance at all. */
+    if (r.exhaustionPenalty > 0) {
+      figs.splice(1, 0, ['Exhaustion', r.exhaustionLabel + ' · −' + r.exhaustionPenalty]);
+    }
 
     var blocks = r.blockedBy.map(function (b) {
       var mark = b.state === 'held' ? '✓' : (b.state === 'absent' ? '✗' : '?');
@@ -271,6 +294,13 @@
     el('result').innerHTML = '<div class="result ' + cls + '">'
       + '<p class="verdict">' + esc(verdict) + '</p>'
       + (r.advantage ? '<p class="note">You roll this save with advantage.</p>' : '')
+      + (r.exhaustionPenalty > 0
+          ? '<p class="note">You are <b>' + esc(r.exhaustionLabel) + '</b> — under '
+            + esc(String(r.exhaustionPenalty === 6 ? 0 : nextBandWeeks(r.exhaustion)))
+            + ' weeks of runway — so every save here is ' + r.exhaustionPenalty
+            + ' worse than your Wisdom alone would give. Being near the edge is what '
+            + 'makes you easy to move, and this creature is built for it.</p>'
+          : '')
       + '<div class="figs">' + figs.map(function (f) {
           return '<div class="fig"><div class="k">' + esc(f[0]) + '</div><div class="v">' + esc(f[1]) + '</div></div>';
         }).join('') + '</div>'
@@ -338,6 +368,7 @@
     }).join('');
     BUILT = true;
 
+    el('f-tieronly').addEventListener('change', renderMap);
     el('btn-run').addEventListener('click', function () { runNow('expected'); });
     el('btn-roll').addEventListener('click', function () { runNow('roll'); });
     el('btn-log').addEventListener('click', function () {

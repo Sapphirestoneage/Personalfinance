@@ -51,6 +51,18 @@ Every key is optional. Only those named in `contains` are present.
 | `expenses` | `{ monthlyEssential, entries }` | `monthlyEssential.estimatedValueCents` is set; `entries` is always `[]` — this tool does no categorisation. |
 | `dndProfile` | object | Game state. Nothing in SPARKS reads it. Keep it: it round-trips, costs nothing, and is what lets someone come back. |
 
+`dndProfile` grows over time and an importer should treat every key in it as
+optional. Two worth knowing about:
+
+- **`statuses`** — a map of `{ statusId: boolean }` for the rulebook's eight
+  status effects, self-declared on the sheet. **Absent means never asked;
+  present-and-all-false means asked and answered "none".** Those are different
+  claims and an importer that collapses them is throwing away an answer.
+- **`alignment`** — a single id, also self-declared, also never computed.
+
+Neither is derived from any number, so neither can be reconstructed if you drop
+it.
+
 Ids are stable and namespaced `dnd_*` on purpose, so a re-import updates the
 same records instead of growing duplicates.
 
@@ -65,6 +77,43 @@ That is honest enough to place Debt Burden and no more. If your importer has a
 real per-debt UI, treat this record as a placeholder to be replaced, not as
 data to be trusted — and consider telling the user so, rather than letting a
 made-up 4% sit in their debt list looking like something they typed.
+
+## `provenance` — which of this you may write down as fact
+
+The important question when importing is not *what is in this file* but **which
+of it may I store as data?** Money someone typed is data. A Wisdom score they
+**rolled** is not a self-assessment, it is a dice result, and a room that stored
+it would be inventing a person.
+
+So the envelope carries a `provenance` block describing only the keys actually
+present. Each entry has a `trust` and a `note`:
+
+| `trust` | Means | What to do with it |
+|---|---|---|
+| `typed` | The person entered this figure. | Import it as data. |
+| `declared` | A self-report — an estimate, a choice, a tick-box. | Show it as a **suggested value**, never store it silently. |
+| `generated` | Dice, a standard array, or a point-buy budget. | **Never store it.** It carries no information about the person. |
+| `mixed` | A container whose fields differ. | Read `profileFields` inside it. |
+
+`dndProfile` is always `mixed`, and its `profileFields` map spells out every key
+present. The one to read first is **`declaredScores`** — its trust is resolved
+from `declaredMethod` and reported directly, so you never have to work it out:
+
+```json
+"declaredScores": {
+  "trust": "generated",
+  "method": "roll",
+  "note": "Dice. Carries no information about the person at all."
+}
+```
+
+Only `featsOfStrength` (the behavioural quiz) and `homebrew` (typed in as a
+self-assessment) produce `declared`. `roll`, `standardArray` and `pointBuy` all
+produce `generated`, and **an unrecognised method is reported as `generated`**,
+because failing safe is the only sane default for a field this easy to misread.
+
+If your importer ignores `provenance` entirely, the safe reading is: import the
+household money, and treat everything inside `dndProfile` as decoration.
 
 ## `summary` is not authoritative
 

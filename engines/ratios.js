@@ -100,7 +100,7 @@
     c.realEstate = realEstate;
 
     /* For the shadow runway: a Roth's contributions come out any time, and
-       a home is worth something in a hurry — at a haircut. D-074. */
+       a home is worth something in a hurry — at a haircut. D-081. */
     var rothBasis = 0;
     Schema.aggregatableAssets(household).forEach(function (a) {
       if (!Money.isEntered(a.valueCents)) return;
@@ -465,7 +465,7 @@
         return over(c.realEstate, c.totalAssets, { denominatorName: 'totalAssets' });
       } },
 
-    /* --- BRIEF §4.3 — the numbers T3 unlocked (D-074) --------------------- */
+    /* --- BRIEF §4.3 — the numbers T3 unlocked (D-081) --------------------- */
     { id: 'incomeConcentration', label: 'Income concentration', tier: 21,
       formula: 'largest income source ÷ household income',
       unit: 'rate', needs: 'your income sources',

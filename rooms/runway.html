@@ -289,7 +289,7 @@
   };
 
   /* The floor from Cash Flow — the fixed lines plus debt minimums. Read,
-     never typed here; null until at least one line is marked. D-075. */
+     never typed here; null until at least one line is marked. D-082. */
   function floorCents() {
     if (!TABLES || !TABLES.expenseCategories) return null;
     var f = CashFlow.minimumViableMonthCents(Spine.getProfile(), TABLES.expenseCategories);

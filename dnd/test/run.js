@@ -28,13 +28,24 @@ const ROOT = path.join(__dirname, '..');
 
 const Money = require(path.join(ROOT, 'shared/money.js'));
 const Character = require(path.join(ROOT, 'engines/character.js'));
+const Schema = require(path.join(ROOT, 'shared/schema.js'));
 
 const table = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, 'data', f), 'utf8'));
+
+/* Every page in the folder, found rather than listed. These checks used to name
+   their pages, so each new page quietly escaped whichever lists nobody
+   remembered to update — encounter.html was missing from four of them and
+   card.html would have been missing from five. Adding a page now opts it in. */
+const PAGES = fs.readdirSync(ROOT).filter((f) => f.endsWith('.html')).sort();
 const TABLES = {
   dndRules: table('dnd_rules.json'),
   dndClasses: table('dnd_classes.json'),
   dndScoring: table('dnd_scoring.json'),
-  fooRules: table('foo_rules.json')
+  fooRules: table('foo_rules.json'),
+  /* CON runs through the savings rate, which subtracts estimated tax, which
+     needs this table. Without it CON is incomplete and Max HP is null — which
+     is the engine behaving correctly and a test harness behaving badly. */
+  effectiveTaxRates: table('effective_tax_rates_2026.json')
 };
 
 let passed = 0;
@@ -226,7 +237,7 @@ section('Dungeons & Dividends — the encounter engine');
 
   /* -- every creature carries the full §9.3 shape, or this fails ---------- */
   const creatures = R.monsters.concat(R.hazards);
-  check('fourteen creatures in all', creatures.length, 14);
+  check('twenty-nine creatures in all', creatures.length, 29);
   creatures.forEach(function (c) {
     checkTrue(`${c.name} has a save ability`, typeof c.saveAbility === 'string' && c.saveAbility.length > 0);
     checkTrue(`${c.name} has a damage spec`, !!c.damageSpec);
@@ -387,7 +398,7 @@ section('Dungeons & Dividends — nothing is escaped twice');
      literal "&amp;". The helpers below all escape, so a pre-escaped entity in
      one of their string arguments is always wrong. */
   const HELPERS = ['esc', 'panel', 'moneyInput', 'selectInput', 'sharpen'];
-  ['index.html', 'sheet.html', 'bestiary.html'].forEach(function (page) {
+  PAGES.forEach(function (page) {
     const src = fs.readFileSync(path.join(ROOT, page), 'utf8');
     HELPERS.forEach(function (fn) {
       /* Match the helper call and grab its quoted string arguments. */
@@ -404,7 +415,7 @@ section('Dungeons & Dividends — nothing is escaped twice');
   /* esc() must not receive markup either. Escaping a string that already
      carries the tags you meant to keep renders them as visible text — the
      same mistake as pre-escaping an entity, wearing a different hat. */
-  ['index.html', 'sheet.html', 'bestiary.html', 'encounter.html'].forEach(function (page) {
+  PAGES.forEach(function (page) {
     const src = fs.readFileSync(path.join(ROOT, page), 'utf8');
     const call = /esc\(\s*'((?:[^'\\]|\\.)*)'/g;
     let m;
@@ -452,7 +463,7 @@ section('Dungeons & Dividends — licence and IP posture');
   });
 
   /* Every page a stranger can land on carries the disclaimer. */
-  ['index.html', 'sheet.html', 'bestiary.html'].forEach(function (page) {
+  PAGES.forEach(function (page) {
     const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
     checkTrue(page + ' carries a non-affiliation line',
       /Wizards of the Coast/.test(html));
@@ -465,7 +476,7 @@ section('Dungeons & Dividends — licence and IP posture');
                  'owlbear', 'githyanki', 'modron', 'slaad', 'faerun', 'waterdeep',
                  'forgotten realms', 'baldur', 'neverwinter', 'drizzt', 'strahd'];
   const surfaces = ['data/dnd_rules.json', 'data/dnd_classes.json', 'data/dnd_scoring.json',
-                    'data/dnd_alignments.json', 'index.html', 'sheet.html', 'bestiary.html'];
+                    'data/dnd_alignments.json'].concat(PAGES);
   surfaces.forEach(function (f) {
     const text = fs.readFileSync(path.join(ROOT, f), 'utf8').toLowerCase();
     OWNED.forEach(function (name) {
@@ -523,7 +534,7 @@ section('Dungeons & Dividends — the two skins');
 (function () {
   /* Every page must load both halves and give the control somewhere to go,
      or the toggle silently does nothing on that page. */
-  ['index.html', 'sheet.html', 'bestiary.html'].forEach(function (page) {
+  PAGES.forEach(function (page) {
     const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
     checkTrue(`${page} loads skin.css`, /shared\/skin\.css/.test(html));
     checkTrue(`${page} loads skin.js`, /shared\/skin\.js/.test(html));
@@ -675,6 +686,641 @@ section('Dungeons & Dividends — the quiz-only leaning');
 
   check('and with nothing answered it declines to guess',
     Character.suggestClassFromStats({}, TABLES).status, 'incomplete');
+})();
+
+section('Dungeons & Dividends — DM mode');
+
+(function () {
+  const Encounter = require(path.join(ROOT, 'engines/encounter.js'));
+  const R = TABLES.dndRules;
+  const src = fs.readFileSync(path.join(ROOT, 'dm.html'), 'utf8');
+
+  /* BRIEF §9.9. The encounter room answers "what does this do to me"; this
+     answers "what would this do to someone like this". */
+  checkTrue('the DM page exists and is a page', /<body class="slaf">/.test(src));
+  checkTrue('it declares LIVE-FORM', /LIVE-FORM: built once/.test(src));
+  checkTrue('the encounter room links to it',
+    /href="dm\.html"/.test(fs.readFileSync(path.join(ROOT, 'encounter.html'), 'utf8')));
+
+  /* Nothing on this page may touch the player's own character, with exactly
+     one exception: the log, which must be tagged so a scenario the DM set up
+     never reads later as something that happened to them. */
+  checkTrue('the only write is the encounter log', /Store\.logEncounter/.test(src));
+  checkTrue("and it is never logged as 'self'", !/source: 'self'/.test(src));
+  checkTrue("it is logged as 'dm'", /source: 'dm'/.test(src));
+  ['setMoney', 'patchProfile', 'setDebt', 'setFilingStatus', 'importCharacter'].forEach(function (fn) {
+    checkTrue(`DM mode never calls Store.${fn}`, src.indexOf('Store.' + fn) === -1);
+  });
+
+  /* Three states here too. A DM who has not decided is not the same as a
+     target who lacks the thing, and dropping to a boolean would make this page
+     more confident than the sheet — precisely backwards. */
+  checkTrue('blockers offer not-established as well as held and absent',
+    /value=""[^>]*>Not established/.test(src) && /value="held"/.test(src) && /value="absent"/.test(src));
+  checkTrue('and unanswered applies nothing',
+    /said === 'held' \? 'held' : \(said === 'absent' \? 'absent' : 'unknown'\)/.test(src));
+
+  /* The scenario lives in the URL, not in storage. */
+  checkTrue('the scenario is encoded into the hash', /location\.hash/.test(src));
+  checkTrue('base64url, so it survives being pasted anywhere',
+    /replace\(\/\\\+\/g, '-'\)/.test(src) || /'-'\)\.replace/.test(src));
+  checkTrue('an unreadable hash is ignored rather than thrown at the reader',
+    /catch \(e\) \{ return null; \}/.test(src));
+  checkTrue('the scenario is never written to storage',
+    !/localStorage/.test(src));
+
+  /* The page reuses the engine rather than growing a second one. */
+  checkTrue('it runs the shared encounter engine', /Enc\.run\(/.test(src));
+  checkTrue('and reads the shared blocker catalogue', /TABLES\.dndRules\.blockers/.test(src));
+  checkTrue('and the shared exhaustion ladder', /Char\.exhaustion/.test(src));
+
+  /* A hand-composed target is just a sheet, which is why no new engine was
+     needed. Verify the engine really does take one. */
+  function target(saves, runway) {
+    const stats = {};
+    Object.keys(saves).forEach(function (id) { stats[id] = Money.ok(10 + saves[id] * 2); });
+    return { stats: stats, klass: null, proficiencyBonus: 0, level: null,
+             currentHp: runway === null ? null : Money.ok(runway), maxHp: null, subScores: {} };
+  }
+  const timeshare = R.monsters.filter(function (m) { return m.name === 'Timeshare Charm-Caster'; })[0];
+  const opts = { tables: TABLES, household: { dndProfile: {} } };
+
+  /* The worked example from the browser pass, re-derived here: WIS +0 with
+     three weeks of runway is Cornered (-3), against DC 13. */
+  const dave = Encounter.run(target({ WIS: 0, CON: 1 }, 3), timeshare, opts);
+  check('the save it targets', dave.targetSave, 'WIS');
+  check('the DC', dave.dc, 13);
+  check('exhaustion at three weeks', dave.exhaustionPenalty, 3);
+  check('so the effective modifier', dave.effectiveModifier, -3);
+  check('and it lands three times in four', dave.hitChance, 0.75);
+  check('for the average of 3d6', dave.damageWeeks, 10.5);
+
+  /* The same target with more runway is the same person, easier to move only
+     because the buffer is gone. */
+  const rested = Encounter.run(target({ WIS: 0, CON: 1 }, 40), timeshare, opts);
+  check('with runway, no exhaustion penalty', rested.exhaustionPenalty, 0);
+  checkTrue('and the creature lands less often', rested.hitChance < dave.hitChance);
+  check('the raw save is unchanged', rested.modifier, dave.modifier);
+
+  /* A blank save is unscored, not zero — the same rule as everywhere else. */
+  const blank = Encounter.run(target({ CON: 1 }, 3), timeshare, opts);
+  check('a save nobody set cannot be targeted with a number', blank.modifier, null);
+  check('and no hit chance is invented', blank.hitChance, null);
+
+  /* Every blocker in the catalogue needs a control, or a DM cannot answer it.
+     The page generates them from the catalogue rather than listing them, which
+     is the only way that stays true — so the check is that it generates, and
+     that nobody has quietly started hardcoding ids alongside. A hardcoded list
+     is the bug: it is how a blocker added later ends up unanswerable. */
+  checkTrue('the controls are generated from the catalogue, not listed',
+    /Object\.keys\(rules\.blockers\)\.map/.test(src));
+  checkTrue('and the select id comes from the catalogue key',
+    /id="bl-' \+ esc\(id\)/.test(src));
+  const hardcoded = Object.keys(R.blockers).filter(function (id) {
+    return new RegExp("'bl-" + id + "'|\"bl-" + id + "\"").test(src);
+  });
+  check('no blocker id is hardcoded on the page', hardcoded.join(','), '');
+  checkTrue('reading the answers walks the catalogue too',
+    /Object\.keys\(TABLES\.dndRules\.blockers\)/.test(src));
+
+  /* And the three states are the three the engine understands. */
+  ['held', 'absent'].forEach(function (state) {
+    checkTrue(`"${state}" is an option a DM can choose`,
+      new RegExp('value="' + state + '"').test(src));
+  });
+
+  /* Every creature is selectable, ordered so the small ones come first. */
+  checkTrue('all creatures are offered', /Enc\.allCreatures\(TABLES\)/.test(src));
+  checkTrue('sorted by CR', /crToNumber\(a\.cr\)/.test(src));
+})();
+
+section('Dungeons & Dividends — the share card');
+
+(function () {
+  /* BRIEF §9.2. The card is what actually travels, so the checks are about the
+     things that would make it travel wrong. */
+  const src = fs.readFileSync(path.join(ROOT, 'card.html'), 'utf8');
+
+  checkTrue('the card page exists and is a page', /<body class="slaf">/.test(src));
+  checkTrue('it declares LIVE-FORM like every other page', /LIVE-FORM: built once/.test(src));
+
+  /* Drawn on canvas on purpose: no web-font race, no CSS timing, no library. */
+  checkTrue('it draws on a canvas', /<canvas id="card"/.test(src));
+  checkTrue('and pulls in no library to do it',
+    !/<script src="(?!shared\/|engines\/)/.test(src));
+  ['shared/money.js', 'shared/schema.js', 'shared/store.js',
+   'engines/character.js', 'engines/encounter.js'].forEach(function (dep) {
+    checkTrue(`the card loads ${dep}`, src.indexOf('src="' + dep + '"') !== -1);
+  });
+
+  /* The canvas cannot read CSS custom properties, so the palettes are literal
+     — but there must be one per skin or the card ignores the toggle. */
+  TABLES.dndScoring && null;
+  const skins = JSON.parse(fs.readFileSync(path.join(ROOT, 'shared/skin.js'), 'utf8')
+    .match(/SKINS\s*=\s*(\[[\s\S]*?\]);/)[1].replace(/([a-zA-Z]+):/g, '"$1":').replace(/'/g, '"'));
+  skins.forEach(function (sk) {
+    checkTrue(`the card has a palette for the "${sk.id}" skin`,
+      new RegExp('\\b' + sk.id + ':\\s*\\{').test(src));
+  });
+
+  /* Every colour it paints with must be a real hex value. A mangled one fails
+     silently on canvas — the fill simply does not happen. */
+  const hexes = src.match(/#[0-9a-fA-F]{3,8}\b/g) || [];
+  checkTrue('the card defines some colours', hexes.length > 8);
+  hexes.forEach(function (hx) {
+    checkTrue(`${hx} is a valid hex colour`, /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(hx));
+  });
+
+  /* It must never print a placeholder for something nobody measured. The card
+     builds its figures by filtering on isOk and pushing only what scored. */
+  checkTrue('ability scores are filtered to the ones that scored',
+    /STAT_IDS\.filter\(function \(id\) \{ return Money\.isOk/.test(src));
+  checkTrue('vitals are pushed only when they are not null',
+    /if \(d\.hp !== null\)/.test(src) && /if \(d\.ac !== null\)/.test(src));
+  checkTrue('and the card never renders an em dash as a value',
+    !/Money\.EM_DASH/.test(src));
+
+  /* It grows to fit rather than leaving a slab of empty background. */
+  checkTrue('the card sizes itself to its content', /MIN_H|MAX_H/.test(src));
+  checkTrue('by measuring on a scratch canvas first',
+    /createElement\('canvas'\)/.test(src));
+
+  /* The whole point is that it can leave the browser. */
+  checkTrue('it can be saved as a PNG', /toBlob|toDataURL/.test(src));
+  checkTrue('with a filename built from the character', /function fileName/.test(src));
+  checkTrue('and a text fallback for anywhere an image will not go',
+    /function shareText/.test(src));
+  checkTrue('the share text carries a link back', /Roll your own/.test(src));
+
+  /* Reachable, or it may as well not exist. */
+  checkTrue('the sheet links to the card',
+    /href="card\.html"/.test(fs.readFileSync(path.join(ROOT, 'sheet.html'), 'utf8')));
+  checkTrue('and so does the Tier 1 result',
+    /href="card\.html"/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')));
+})();
+
+section('Dungeons & Dividends — rests and pace');
+
+(function () {
+  const R = TABLES.dndRules;
+
+  /* BRIEF §9.8. The rulebook specifies the rests under deathSaves.recovery and
+     leaves only the Long Rest's CON save DC unset, so that is the one number
+     written here — in data, marked. */
+  check('the long-rest DC is marked as an extension', R.longRest.origin, 'extension');
+  checkTrue('it has a base DC', typeof R.longRest.baseDc === 'number');
+  checkTrue('and a step per exhaustion level', typeof R.longRest.dcPerExhaustionLevel === 'number');
+  checkTrue('the rulebook still describes all three recoveries',
+    R.deathSaves.recovery.length === 3
+    && R.deathSaves.recovery.some(function (x) { return /Short Rest/.test(x); })
+    && R.deathSaves.recovery.some(function (x) { return /Long Rest/.test(x); })
+    && R.deathSaves.recovery.some(function (x) { return /Potion/.test(x); }));
+
+  /* A household the engine can actually read, built the way Schema builds one. */
+  function household(income, monthlyExpenses, cash, investments) {
+    /* Built the way the sheet builds its example, through Schema's own
+       constructors — cash is a liquid ASSET and expenses live under
+       expenses.monthlyEssential, not as bare keys on the household. Writing
+       them flat produced a sheet with a null Level and no HP at all, which is
+       the engine correctly refusing a household it cannot read. */
+    const h = Schema.createHousehold();
+    h.filingStatus = 'single';
+    const person = Schema.createPerson({ id: 'p1', role: 'adult' });
+    person.incomeSources = [Schema.createIncomeSource({
+      id: 'i1', personId: 'p1', grossAnnualIncomeCents: income, type: 'w2' })];
+    h.people = [person];
+    h.assets = [
+      Schema.createAsset({ id: 'a_cash', category: 'cash', valueCents: cash, liquid: true }),
+      Schema.createAsset({ id: 'a_inv', category: 'investment', valueCents: investments, liquid: false })
+    ];
+    h.expenses = { monthlyEssential: { estimatedValueCents: monthlyExpenses,
+      trackedValueCents: null, source: 'estimated' }, entries: [] };
+    /* CON is built from the savings rate, the fixed-cost share, years
+       sustained and disruption survived — leave those out and maxHp is null,
+       correctly, which is what a long rest needs. */
+    h.dndProfile = { fixedCostShare: 0.55, yearsSustained: 4, disruptionSurvived: true,
+      healthCoverage: 2, automatedSaving: 'most',
+      declaredMethod: 'standardArray', declaredScores: {
+      taxLiteracy: 13, marketLiteracy: 12, instrumentLiteracy: 11,
+      scenarioForesight: 14, selfAwareness: 15, threatDetection: 10,
+      negotiation: 10, network: 9, personability: 8 } };
+    return h;
+  }
+  const rich = household(7200000, 315000, 1000000, 4800000);
+
+  /* Short rest: surplus per cycle, converted to runway at one week of expenses
+     per week of HP. The conversion is the whole point — HP is weeks (D-046). */
+  const sr = Character.shortRest(rich, TABLES);
+  checkTrue('a short rest scores for a complete household', Money.isOk(sr));
+  check('a week of HP costs a week of expenses',
+    Math.round(sr.weekCostCents), Math.round(315000 * 12 / 52));
+  checkTrue('and the surplus is positive here', sr.weeksPerMonth > 0);
+  checkTrue('not losing runway', !sr.losing);
+  check('a year is twelve months of it',
+    Math.round(sr.weeksPerYear * 100), Math.round(sr.weeksPerMonth * 12 * 100));
+
+  /* Overspending is a real answer, not an error and not a zero. */
+  const poor = household(3600000, 400000, 300000, 200000);
+  const srPoor = Character.shortRest(poor, TABLES);
+  checkTrue('overspending still scores', Money.isOk(srPoor));
+  checkTrue('and reports the surplus as negative', srPoor.weeksPerMonth < 0);
+  checkTrue('flagged as losing runway', srPoor.losing);
+
+  /* Missing inputs stay missing. */
+  const bare = Schema.createHousehold();
+  checkTrue('no numbers means no rest figure', !Money.isOk(Character.shortRest(bare, TABLES)));
+  const noIncome = household(null, 315000, 1000000, 4800000);
+  checkTrue('expenses without income is still incomplete',
+    !Money.isOk(Character.shortRest(noIncome, TABLES)));
+
+  /* Long rest: deficit, DC, and the same 5%-95% clamp an encounter save uses. */
+  const sheet = Character.sheet(rich, TABLES);
+  checkTrue('the demo-shaped household builds a sheet', sheet.ready);
+  const lr = Character.longRest(sheet, rich, TABLES);
+  checkTrue('a long rest scores', Money.isOk(lr));
+  check('the deficit is max minus current',
+    Math.round(lr.deficitWeeks), Math.max(0, sheet.maxHp.weeks - sheet.currentHp.value));
+  checkTrue('the deficit is never negative', lr.deficitWeeks >= 0);
+  const exhHere = Character.exhaustion(sheet.currentHp, TABLES);
+  check('the DC is the base plus the exhaustion step',
+    lr.dc, R.longRest.baseDc + exhHere.value * R.longRest.dcPerExhaustionLevel);
+  checkTrue('the chance never reaches certainty either way',
+    lr.chance === null || (lr.chance >= 0.05 && lr.chance <= 0.95));
+
+  /* The DC must actually rise with exhaustion, or the rule is decorative. */
+  function sheetAt(weeks) {
+    return { stats: { CON: Money.ok(14) }, klass: null, proficiencyBonus: 2,
+             currentHp: Money.ok(weeks), maxHp: { weeks: 20 } };
+  }
+  const restedDc = Character.longRest(sheetAt(18), rich, TABLES).dc;
+  const spentDc = Character.longRest(sheetAt(0.5), rich, TABLES).dc;
+  checkTrue('a deeper hole is a harder long rest', spentDc > restedDc);
+  check('rested is the base DC', restedDc, R.longRest.baseDc);
+
+  /* At max there is nothing to recover, and it says so rather than dividing. */
+  const full = Character.longRest(
+    { stats: { CON: Money.ok(14) }, klass: null, proficiencyBonus: 2,
+      currentHp: Money.ok(20), maxHp: { weeks: 20 } }, rich, TABLES);
+  checkTrue('at max HP the deficit is zero', full.atMax);
+  check('and there is nothing to wait for', full.deficitWeeks, 0);
+
+  /* A negative surplus can never close a deficit, and must not report a
+     negative number of months as though it were a countdown. */
+  const stuck = Character.longRest(sheetAt(5), poor, TABLES);
+  checkTrue('a shrinking runway never completes a long rest', stuck.unreachable);
+  checkTrue('and no month count is offered',
+    stuck.monthsToFull === null || stuck.monthsToFull > 0);
+
+  /* Pace reuses nextLevelTarget rather than deriving the dollars again. */
+  const pace = Character.levelPace(rich, TABLES, sheet.level);
+  checkTrue('pace scores', Money.isOk(pace));
+  check('it aims at the next level up', pace.nextLevel, sheet.level.value + 1);
+  const target = Character.nextLevelTarget(rich, TABLES, sheet.level.value);
+  check('and asks nextLevelTarget for the dollars rather than re-deriving them',
+    pace.needCents, target.value);
+  checkTrue('the years are positive', pace.yearsToNext > 0);
+  checkTrue('and not centuries', pace.yearsToNext < 100);
+
+  const pacePoor = Character.levelPace(poor, TABLES, Character.sheet(poor, TABLES).level);
+  checkTrue('a negative surplus is going backwards, not arriving slowly',
+    pacePoor.goingBackwards && pacePoor.yearsToNext === null);
+
+  check('level 20 has no next level', Character.levelPace(rich, TABLES, Money.ok(20)).atCap, true);
+  checkTrue('and no Level at all is incomplete, not level 1',
+    !Money.isOk(Character.levelPace(rich, TABLES, Money.incomplete('none', []))));
+
+  /* -- the sheet shows all three ------------------------------------------ */
+  const src = fs.readFileSync(path.join(ROOT, 'sheet.html'), 'utf8');
+  ['v-shortrest', 'v-longrest', 'v-pace'].forEach(function (id) {
+    checkTrue(`the sheet has ${id}`, src.indexOf('id="' + id + '"') !== -1);
+  });
+  checkTrue('and says plainly when runway is going backwards',
+    /losing runway|rests take runway away/.test(src));
+})();
+
+section('Dungeons & Dividends — conditions and exhaustion');
+
+(function () {
+  const Encounter = require(path.join(ROOT, 'engines/encounter.js'));
+  const R = TABLES.dndRules;
+  const ladder = R.exhaustion.levels;
+
+  /* BRIEF §9.7. The rulebook names "Exhausted" once, as what Unemployed decays
+     into, and never defines it. This ladder is the definition and is marked as
+     written for this build. */
+  check('the exhaustion ladder is marked as an extension', R.exhaustion.origin, 'extension');
+  check('seven levels, 0 through 6', ladder.length, 7);
+  ladder.forEach(function (l, i) {
+    check(`level ${i} is numbered in order`, l.level, i);
+    check(`level ${i} penalty equals its level`, l.savePenalty, i);
+    ['label', 'effect', 'tell'].forEach(function (k) {
+      checkTrue(`level ${i} says ${k}`, typeof l[k] === 'string' && l[k].length > 0);
+    });
+  });
+
+  /* The ladder must cover every possible runway with no hole and no overlap,
+     or exhaustion() falls through and returns incomplete for a real number. */
+  const probes = [0, 0.01, 0.5, 0.99, 1, 1.5, 2, 3.9, 4, 7.99, 8, 11.99, 12, 12.01, 40, 1000];
+  probes.forEach(function (w) {
+    const hits = ladder.filter(function (l) {
+      const floor = l.minWeeks === null ? true
+        : (l.minWeeksExclusive ? w > l.minWeeks : w >= l.minWeeks);
+      const ceil = l.maxWeeks === null ? true
+        : (l.maxWeeks === 0 ? w <= 0 : w < l.maxWeeks);
+      return floor && ceil;
+    });
+    check(`${w} weeks lands in exactly one band`, hits.length, 1);
+    const e = Character.exhaustion(Money.ok(w), TABLES);
+    checkTrue(`${w} weeks scores`, Money.isOk(e));
+    check(`${w} weeks matches the band it falls in`, e.value, hits[0].level);
+  });
+
+  /* The boundaries are the bit that goes wrong. A band runs from minWeeks
+     inclusive to maxWeeks exclusive, so 12 weeks is Rested and 11.99 is not. */
+  check('12 weeks is Rested', Character.exhaustion(Money.ok(12), TABLES).value, 0);
+  check('11.99 weeks is not', Character.exhaustion(Money.ok(11.99), TABLES).value, 1);
+  check('0 weeks is Down', Character.exhaustion(Money.ok(0), TABLES).value, 6);
+  checkTrue('and more runway is never more exhaustion', (function () {
+    let prev = 7;
+    for (let w = 0; w <= 30; w += 0.25) {
+      const v = Character.exhaustion(Money.ok(w), TABLES).value;
+      if (v > prev) return false;
+      prev = v;
+    }
+    return true;
+  })());
+
+  /* No runway measured is not "rested". */
+  const noHp = Character.exhaustion(Money.incomplete('no cash', ['cash']), TABLES);
+  checkTrue('an unmeasurable runway is incomplete, not level 0', !Money.isOk(noHp));
+  checkTrue('and it does not throw on null', !Money.isOk(Character.exhaustion(null, TABLES)));
+
+  /* Exhaustion has to MOVE something or it is decoration. */
+  function sheetWith(weeks) {
+    return { stats: { STR: Money.ok(12), DEX: Money.ok(10), CON: Money.ok(12),
+                      INT: Money.ok(10), WIS: Money.ok(12), CHA: Money.ok(10) },
+             klass: null, proficiencyBonus: 2, level: Money.ok(3),
+             currentHp: Money.ok(weeks), maxHp: { weeks: 20 }, subScores: {} };
+  }
+  const monster = R.monsters.filter(function (m) { return m.name === 'Timeshare Charm-Caster'; })[0];
+  const opts = { tables: TABLES, household: { dndProfile: {} } };
+  const rested = Encounter.run(sheetWith(40), monster, opts);
+  const fumes = Encounter.run(sheetWith(1.5), monster, opts);
+  check('a rested character takes no penalty', rested.exhaustionPenalty, 0);
+  check('one on fumes takes four', fumes.exhaustionPenalty, 4);
+  check('the raw save modifier is the same either way', fumes.modifier, rested.modifier);
+  check('the effective one is four lower', fumes.effectiveModifier, rested.effectiveModifier - 4);
+  checkTrue('so the same creature lands more often', fumes.hitChance > rested.hitChance);
+  check('and the result carries the label so the page can explain itself',
+    fumes.exhaustionLabel, 'Running on fumes');
+
+  /* A partial sheet must not crash the blocker predicates. */
+  const bare = { stats: { WIS: Money.ok(12), INT: Money.ok(10), CHA: Money.ok(10) },
+                 klass: null, proficiencyBonus: 0, level: null, currentHp: null };
+  let threw = false;
+  try { Encounter.run(bare, monster, opts); } catch (e) { threw = true; }
+  checkTrue('a sheet with no subScores does not throw', !threw);
+  check('and an unmeasurable runway applies no penalty',
+    Encounter.run(bare, monster, opts).exhaustionPenalty, 0);
+
+  /* -- statuses are declared, never inferred ------------------------------ */
+  check('eight status effects', R.statusEffects.length, 8);
+  const ids = R.statusEffects.map(function (st) { return st.id; });
+  check('each has a stable id', new Set(ids).size, 8);
+  ids.forEach(function (id) {
+    checkTrue(`status id "${id}" is a safe element id`, /^[A-Za-z][A-Za-z0-9]*$/.test(id));
+  });
+  R.statusEffects.forEach(function (st) {
+    ['name', 'trigger', 'grants', 'restricts', 'duration'].forEach(function (k) {
+      checkTrue(`${st.id} says ${k}`, typeof st[k] === 'string' && st[k].length > 0);
+    });
+  });
+
+  const never = Character.statuses({ dndProfile: {} }, TABLES);
+  checkTrue('never asked is not the same as none', !never.asked);
+  check('and nothing is held', never.held.length, 0);
+  const none = Character.statuses({ dndProfile: { statuses: {} } }, TABLES);
+  checkTrue('asked and answered "none" is a real answer', none.asked);
+  check('with nothing held', none.held.length, 0);
+  const two = Character.statuses({ dndProfile: { statuses: { w2: true, underwater: true, student: false } } }, TABLES);
+  check('two declared', two.held.length, 2);
+  checkTrue('and only the ones ticked', two.held.every(function (x) { return ['w2', 'underwater'].indexOf(x.id) !== -1; }));
+  checkTrue('a status is never inferred from the numbers',
+    !/statuses\s*\[/.test(fs.readFileSync(path.join(ROOT, 'engines/character.js'), 'utf8').split('function statuses')[1].slice(0, 400).replace(/held\[/g, '')));
+
+  /* -- the sheet builds the boxes once ------------------------------------ */
+  const src = fs.readFileSync(path.join(ROOT, 'sheet.html'), 'utf8');
+  checkTrue('the status checkboxes are built in buildShell',
+    src.indexOf('data-status=') < src.indexOf('function paint()'));
+  checkTrue('paint only writes .checked on them', /box\.checked = /.test(src));
+  checkTrue('and never innerHTML on the list',
+    !/html\('v-statuslist'|statuslist'\)\.innerHTML/.test(src));
+  checkTrue('the encounter room explains the penalty when there is one',
+    /exhaustionPenalty > 0/.test(fs.readFileSync(path.join(ROOT, 'encounter.html'), 'utf8')));
+})();
+
+section('Dungeons & Dividends — tiers of play');
+
+(function () {
+  const Encounter = require(path.join(ROOT, 'engines/encounter.js'));
+  const R = TABLES.dndRules;
+  const tiers = R.encounterRules.tiers;
+
+  /* BRIEF §9.4. Every tier has to be able to say what it is for, what it feels
+     like, what ends it and what to watch — or the panel prints blanks. */
+  check('four tiers', tiers.length, 4);
+  tiers.forEach(function (t) {
+    ['about', 'looksLike', 'endsWhen', 'biggestRisk'].forEach(function (k) {
+      checkTrue(`tier ${t.id} says ${k}`, typeof t[k] === 'string' && t[k].length > 20);
+    });
+    check(`tier ${t.id} prose is marked as written for this build`, t.origin, 'extension');
+  });
+
+  /* The bands must tile levels 1-20 with no gap and no overlap, or a character
+     can fall between two tiers and tierForLevel silently returns tier I. */
+  const sorted = tiers.slice().sort(function (a, b) { return a.minLevel - b.minLevel; });
+  check('the tiers start at level 1', sorted[0].minLevel, 1);
+  check('and finish at level 20', sorted[sorted.length - 1].maxLevel, 20);
+  for (let i = 1; i < sorted.length; i++) {
+    check(`tier ${sorted[i].id} starts where tier ${sorted[i - 1].id} stops`,
+      sorted[i].minLevel, sorted[i - 1].maxLevel + 1);
+  }
+  for (let lvl = 1; lvl <= 20; lvl++) {
+    const hit = tiers.filter(function (t) { return lvl >= t.minLevel && lvl <= t.maxLevel; });
+    check(`level ${lvl} lands in exactly one tier`, hit.length, 1);
+  }
+
+  /* An unplaced character is unplaced. tierProgress takes the Level Result, not
+     a number, precisely so it can say "no" instead of guessing tier I. */
+  const nowhere = Encounter.tierProgress(Money.incomplete('no level', []), TABLES);
+  checkTrue('no Level means not placed', !nowhere.placed);
+  checkTrue('and it says why', typeof nowhere.reason === 'string' && nowhere.reason.length > 0);
+  checkTrue('a null Level does not throw', !Encounter.tierProgress(null, TABLES).placed);
+
+  /* Walking every level: the arithmetic must stay inside its own tier. */
+  for (let lvl = 1; lvl <= 20; lvl++) {
+    const p = Encounter.tierProgress(Money.ok(lvl), TABLES);
+    checkTrue(`L${lvl}: placed`, p.placed);
+    checkTrue(`L${lvl}: is inside its tier`,
+      lvl >= p.tier.minLevel && lvl <= p.tier.maxLevel);
+    checkTrue(`L${lvl}: progress through the tier is 1..100%`,
+      p.percentThroughTier > 0 && p.percentThroughTier <= 100);
+    checkTrue(`L${lvl}: counts its position in the band`,
+      p.levelsIntoTier >= 1 && p.levelsIntoTier <= p.tierSpan);
+    if (p.last) {
+      check(`L${lvl}: the last tier has no next`, p.next, null);
+      check(`L${lvl}: and nothing new arrives`, p.arrivingNext.length, 0);
+    } else {
+      checkTrue(`L${lvl}: the next tier starts above this level`, p.next.minLevel > lvl);
+      check(`L${lvl}: levels to next is the gap`, p.levelsToNext, p.next.minLevel - lvl);
+      checkTrue(`L${lvl}: everything arriving belongs to the next tier`,
+        p.arrivingNext.every(function (c) { return c.tier === p.next.id; }));
+      checkTrue(`L${lvl}: something actually arrives`, p.arrivingNext.length > 0);
+    }
+  }
+
+  /* Only tier IV is terminal. */
+  check('exactly one tier is the last one',
+    [1, 5, 11, 17].map(function (l) { return Encounter.tierProgress(Money.ok(l), TABLES).last; })
+      .filter(Boolean).length, 1);
+
+  /* The level bands the panel reads alongside the tiers must cover every level
+     too, or the milestone line vanishes without explanation. */
+  for (let lvl = 1; lvl <= 20; lvl++) {
+    check(`level ${lvl} has exactly one milestone band`,
+      R.levelBands.filter(function (b) { return lvl >= b.minLevel && lvl <= b.maxLevel; }).length, 1);
+  }
+
+  /* tierOnly was in the engine from §9.3 and unused until now. */
+  const sheet = { stats: { STR: Money.ok(12), DEX: Money.ok(8), CON: Money.ok(12),
+                           INT: Money.ok(10), WIS: Money.ok(8), CHA: Money.ok(10) },
+                  klass: null, proficiencyBonus: 2, level: Money.ok(3) };
+  const all = Encounter.predators(sheet, TABLES);
+  const mine = Encounter.predators(sheet, TABLES, { tierOnly: true });
+  checkTrue('filtering to my tier never adds creatures',
+    mine.creatures.length <= all.creatures.length);
+  checkTrue('and everything left really is at my tier',
+    mine.creatures.every(function (c) { return c.tier === mine.tier.id; }));
+  check('the weakest saves do not change when you filter',
+    mine.weakest.join(','), all.weakest.join(','));
+
+  /* -- the pages wire it up ---------------------------------------------- */
+  const sheetSrc = fs.readFileSync(path.join(ROOT, 'sheet.html'), 'utf8');
+  checkTrue('the sheet loads the encounter engine',
+    /<script src="engines\/encounter\.js"><\/script>/.test(sheetSrc));
+  checkTrue('the sheet has a tier strip', /id="v-tierstrip"/.test(sheetSrc));
+  checkTrue('and both tier panels', /id="v-tier-now"/.test(sheetSrc) && /id="v-tier-next"/.test(sheetSrc));
+  const encSrc = fs.readFileSync(path.join(ROOT, 'encounter.html'), 'utf8');
+  checkTrue('the encounter room offers the tier filter', /id="f-tieronly"/.test(encSrc));
+  checkTrue('and it is off by default (no checked attribute)',
+    !/id="f-tieronly"[^>]*checked/.test(encSrc));
+})();
+
+section('Dungeons & Dividends — the bestiary extension');
+
+(function () {
+  const Encounter = require(path.join(ROOT, 'engines/encounter.js'));
+  const R = TABLES.dndRules;
+  const creatures = R.monsters.concat(R.hazards);
+
+  /* BRIEF §9.10. The rulebook's fourteen creatures are one thing; creatures
+     written for this build are another, and a reader must be able to tell them
+     apart without asking. Anything added here carries origin: "extension". */
+  const RULEBOOK = [
+    'Lifestyle-Inflation Imp', 'Payday Loan Wraith', 'Commission Churn-Wraith',
+    'Timeshare Charm-Caster', 'MLM Cultist', 'Well-Meaning Family Familiar',
+    'Whole-Life-Insurance Basilisk', 'Identity Thief',
+    'Market Crash Elemental', 'Inflation Wraith', 'Divorce Dragon',
+    'The Dual-Income Collapse', 'Medical Bankruptcy Behemoth', 'The Sudden Ability Drain'
+  ];
+  const fromRulebook = creatures.filter(function (c) { return !c.origin; });
+  check('the rulebook\'s fourteen are all still here', fromRulebook.length, 14);
+  check('and they are the same fourteen, unedited away',
+    fromRulebook.map(function (c) { return c.name; }).sort().join('|'),
+    RULEBOOK.slice().sort().join('|'));
+  creatures.filter(function (c) { return RULEBOOK.indexOf(c.name) === -1; })
+    .forEach(function (c) {
+      check(`${c.name} is marked as an extension, not passed off as rulebook`,
+        c.origin, 'extension');
+    });
+  checkTrue('the file says so at the top',
+    /origin.*extension/.test(R.note) && /Rulebook content, PLUS/.test(R.note));
+
+  /* No duplicates — a second creature with the same name would render twice
+     in every list and log ambiguously. */
+  const names = creatures.map(function (c) { return c.name; });
+  check('every creature name is unique', new Set(names).size, names.length);
+
+  /* The gap this tranche existed to close: "greed" was a declared attack type
+     with no creature using it, so the Tier 1 moves panel could never show it.
+     Every declared type must now be reachable. */
+  R.encounterRules.attackTypes.forEach(function (t) {
+    checkTrue(`some creature actually uses the "${t.id}" attack type`,
+      creatures.some(function (c) { return c.attackType === t.id; }));
+  });
+
+  /* Every tier needs enough to be worth showing, and tier I most of all —
+     that is where a first-time player is standing. */
+  ['I', 'II', 'III', 'IV'].forEach(function (tier) {
+    checkTrue(`tier ${tier} has at least three creatures`,
+      creatures.filter(function (c) { return c.tier === tier; }).length >= 3);
+  });
+
+  /* Every save ability names real stats, so targetSave() can never come back
+     with an empty pool and print nothing at someone. */
+  const STATS = R.stats.map(function (s) { return s.id; });
+  creatures.forEach(function (c) {
+    const spec = String(c.saveAbility).toUpperCase();
+    checkTrue(`${c.name}: saveAbility "${spec}" names real stats`,
+      spec === 'ALL' || spec.split('+').every(function (x) { return STATS.indexOf(x) !== -1; }));
+    checkTrue(`${c.name}: CR "${c.cr}" parses to a number`,
+      Encounter.crToNumber(c.cr) !== null);
+    /* "0" is a deliberate value, not a missing one: the Market Crash Elemental
+       and the Sudden Ability Drain do no hit-point damage at all — one is a
+       paper loss, the other reduces a stat. parseDice returns null for them and
+       expectedDice turns that into 0, which is the right answer. Anything else
+       must be real dice. */
+    checkTrue(`${c.name}: damage dice are real dice or a deliberate "0"`,
+      c.damageSpec.dice === '0' || !!Encounter.parseDice(c.damageSpec.dice));
+  });
+
+  /* The bestiary page renders these fields directly, so a missing one prints
+     "undefined" in a table cell. Monsters use `type`, hazards use `category` —
+     the rulebook's own split, kept rather than tidied. */
+  R.monsters.forEach(function (m) {
+    checkTrue(`${m.name}: monster row has type, save, damage and note`,
+      !!m.type && !!m.save && !!m.damage && !!m.note);
+  });
+  R.hazards.forEach(function (z) {
+    checkTrue(`${z.name}: hazard row has category, save, damage and note`,
+      !!z.category && !!z.save && !!z.damage && !!z.note);
+    checkTrue(`${z.name}: category is one the page explains`,
+      ['Environmental', 'Relationship', 'Personal'].indexOf(z.category) !== -1);
+  });
+  checkTrue('the bestiary page marks extensions',
+    /origin === 'extension'/.test(fs.readFileSync(path.join(ROOT, 'bestiary.html'), 'utf8')));
+
+  check('exactly two creatures deal no hit-point damage',
+    creatures.filter(function (c) { return c.damageSpec.dice === '0'; }).length, 2);
+  creatures.filter(function (c) { return c.damageSpec.dice === '0'; }).forEach(function (c) {
+    check(`${c.name} expects zero weeks of damage`,
+      Encounter.expectedDice(Encounter.parseDice(c.damageSpec.dice)), 0);
+    checkTrue(`${c.name} says in its note why there are no dice`,
+      typeof c.damageSpec.note === 'string' && c.damageSpec.note.length > 0);
+  });
+
+  /* A blocker catalogue entry keyed to a sub-stat must name a real one, or
+     blockerState() silently returns unknown for ever. */
+  const declared = Character.declaredIds(R);
+  const computed = R.subStats.map(function (m) { return m.id; });
+  Object.keys(R.blockers).forEach(function (id) {
+    const b = R.blockers[id];
+    if (!b.subStat) return;
+    checkTrue(`blocker ${id} points at a real sub-stat`, computed.indexOf(b.subStat) !== -1);
+    checkTrue(`blocker ${id} has a threshold`, typeof b.min === 'number');
+  });
+  checkTrue('scenarioForesight is a blocker and a declared sub-stat',
+    !!R.blockers.scenarioForesight && declared.indexOf('scenarioForesight') !== -1);
 })();
 
 section('Dungeons & Dividends — what hunts you on the money-free page');

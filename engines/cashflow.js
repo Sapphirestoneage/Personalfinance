@@ -178,7 +178,7 @@
       if (cat.derivedFrom) return;
       var n = normaliseToMonthly(byCategory[id]);
       /* Which of this category's dollars could not be cut next month, and
-         whether anyone has said. D-075. */
+         whether anyone has said. D-082. */
       var fixedPart = normaliseToMonthly(byCategory[id].filter(function (e) { return e.fixed === true; }));
       var unasked = byCategory[id].filter(function (e) { return e.fixed !== true && e.fixed !== false; }).length;
       addRow(cat, n.monthlyCents, { entryCount: n.counted, monthsCovered: n.monthsCovered,
@@ -387,7 +387,7 @@
      Spine.setMonthlyExpenses(cents, 'tracked'), which preserves the estimate
      and leaves the divergence computable forever.                        */
 
-  /* ---- The contributed savings rate (BRIEF §4.2, D-073) --------------------
+  /* ---- The contributed savings rate (BRIEF §4.2, D-080) --------------------
      Tier0.savingsRate is the RESIDUAL: what is left of gross after spending
      and tax. This is the CONTRIBUTED rate: what actually went somewhere —
      the 401(k) percentage, Roth and HSA so far this year, and the tracked
@@ -449,7 +449,7 @@
     });
   }
 
-  /* ---- The floor (BRIEF §4.4, D-075) ------------------------------------
+  /* ---- The floor (BRIEF §4.4, D-082) ------------------------------------
      minimumViableMonthCents: the spending lines marked fixed, plus the
      derived debt minimums — what next month costs if everything cuttable
      is cut. cuttability: 1 − floor ÷ spending. Both need at least one line

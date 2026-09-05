@@ -5,7 +5,7 @@
   "source": "Dungeons & Dividends rulebook, Draft v1, as supplied by the repo owner. Sections cited per entry. This file is a transcription of that document, not an interpretation of it.",
   "confidence": "convention",
   "confidenceNote": "A house game system, not a financial standard. Nothing here is advice; the mechanics are a lens on numbers computed elsewhere in the suite.",
-  "note": "Rulebook content only. Every dollar-to-score threshold lives in dnd_scoring.json instead, because those were NOT specified by the rulebook (its Section 13 item 3 says so explicitly) and were agreed separately. Keeping them apart means a scoring recalibration never edits transcribed rules.",
+  "note": "Rulebook content, PLUS a bestiary extension written for this build. Every creature added here carries \"origin\": \"extension\" — anything without that field came from the rulebook as supplied. Every dollar-to-score threshold lives in dnd_scoring.json, not here.",
   "modifierBands": [
     {
       "min": 8,
@@ -579,6 +579,99 @@
       ]
     },
     {
+      "name": "Subscription Slime",
+      "cr": "1/4",
+      "type": "Habit",
+      "save": "WIS",
+      "damage": "1d4/month, and it grows",
+      "note": "Divides quietly. Nobody ever signs up for eleven of anything",
+      "saveAbility": "WIS",
+      "damageSpec": {
+        "dice": "1d4",
+        "per": "month",
+        "note": "Small enough to never make the list of things to cut."
+      },
+      "attackType": "complexity",
+      "tier": "I",
+      "blockedBy": [
+        {
+          "id": "threatDetection",
+          "effect": "negate"
+        },
+        {
+          "id": "selfAwareness",
+          "effect": "advantage"
+        }
+      ],
+      "lair": [
+        "A card on file you have not looked at in a year",
+        "Any free trial that asked for the card up front"
+      ],
+      "origin": "extension"
+    },
+    {
+      "name": "Overdraft Gremlin",
+      "cr": "1/2",
+      "type": "Fee",
+      "save": "INT",
+      "damage": "1d6 per incident, and it invites friends",
+      "note": "Charges you for not having money, which is the problem you already had",
+      "saveAbility": "INT",
+      "damageSpec": {
+        "dice": "1d6",
+        "per": "incident",
+        "note": "The second one lands before you have seen the first."
+      },
+      "attackType": "complexity",
+      "tier": "I",
+      "blockedBy": [
+        {
+          "id": "emergencyFund",
+          "effect": "negate"
+        },
+        {
+          "id": "instrumentLiteracy",
+          "effect": "advantage"
+        }
+      ],
+      "lair": [
+        "A balance you track by feel rather than by number",
+        "Any account where the buffer and the bill share a due date"
+      ],
+      "origin": "extension"
+    },
+    {
+      "name": "Buy-Now-Pay-Later Sprite",
+      "cr": "1/4",
+      "type": "Debt",
+      "save": "CHA",
+      "damage": "1d4 now, 1d4 four more times",
+      "note": "Splits one decision into four so none of them feels like one",
+      "saveAbility": "CHA",
+      "damageSpec": {
+        "dice": "1d4",
+        "per": "instalment",
+        "note": "It is the same money. It just arrives after you stopped counting."
+      },
+      "attackType": "urgency",
+      "tier": "I",
+      "blockedBy": [
+        {
+          "id": "selfAwareness",
+          "effect": "advantage"
+        },
+        {
+          "id": "lowDebtBurden",
+          "effect": "halve"
+        }
+      ],
+      "lair": [
+        "A checkout page with a smaller number next to the real one",
+        "Anything you would not buy twice"
+      ],
+      "origin": "extension"
+    },
+    {
       "name": "Commission Churn-Wraith",
       "cr": "2",
       "type": "Well-meaning-but-harmful",
@@ -697,6 +790,97 @@
       ]
     },
     {
+      "name": "Wage-Stagnation Wraith",
+      "cr": "2",
+      "type": "Erosion",
+      "save": "STR",
+      "damage": "2d6/year, silently",
+      "note": "Does nothing at all, which is the attack",
+      "saveAbility": "STR",
+      "damageSpec": {
+        "dice": "2d6",
+        "per": "year",
+        "note": "Damage by standing still while everything else moves."
+      },
+      "attackType": "complexity",
+      "tier": "II",
+      "blockedBy": [
+        {
+          "id": "negotiation",
+          "effect": "negate"
+        },
+        {
+          "id": "marketLiteracy",
+          "effect": "advantage"
+        }
+      ],
+      "lair": [
+        "A job you have held longer than your last raise",
+        "Any employer who prices new hires above their own staff"
+      ],
+      "origin": "extension"
+    },
+    {
+      "name": "Meme-Stock Swarm",
+      "cr": "3",
+      "type": "Speculation",
+      "save": "WIS",
+      "damage": "2d8, all at once",
+      "note": "Thousands of individually harmless opinions moving in one direction",
+      "saveAbility": "WIS",
+      "damageSpec": {
+        "dice": "2d8",
+        "note": "The swarm is never wrong until it disperses."
+      },
+      "attackType": "greed",
+      "tier": "II",
+      "blockedBy": [
+        {
+          "id": "marketLiteracy",
+          "effect": "halve"
+        },
+        {
+          "id": "selfAwareness",
+          "effect": "advantage"
+        }
+      ],
+      "lair": [
+        "A group chat where everyone is up",
+        "Any chart posted without an axis"
+      ],
+      "origin": "extension"
+    },
+    {
+      "name": "Crypto Siren",
+      "cr": "4",
+      "type": "Speculation",
+      "save": "WIS",
+      "damage": "3d6, and you row toward it",
+      "note": "Sings the number you needed to hear, at the volume you needed to hear it",
+      "saveAbility": "WIS",
+      "damageSpec": {
+        "dice": "3d6",
+        "note": "It does not chase you. That is the whole trick."
+      },
+      "attackType": "greed",
+      "tier": "II",
+      "blockedBy": [
+        {
+          "id": "marketLiteracy",
+          "effect": "negate"
+        },
+        {
+          "id": "threatDetection",
+          "effect": "advantage"
+        }
+      ],
+      "lair": [
+        "A returns figure quoted without a time period",
+        "Anyone who found it early and will tell you so"
+      ],
+      "origin": "extension"
+    },
+    {
       "name": "Whole-Life-Insurance Basilisk",
       "cr": "5",
       "type": "Well-meaning-but-harmful",
@@ -754,37 +938,160 @@
         "A reused password",
         "A public network"
       ]
-    }
-  ],
-  "hazards": [
+    },
     {
-      "name": "Market Crash Elemental",
-      "category": "Environmental",
-      "cr": 18,
-      "save": "WIS",
-      "damage": "Paper Level loss only converts to real HP damage if the WIS save is failed",
-      "note": "Not malicious — a weather event. The save is about your reaction, not the event",
-      "saveAbility": "WIS",
+      "name": "Day-Trading Leech",
+      "cr": "6",
+      "type": "Speculation",
+      "save": "INT",
+      "damage": "4d6/quarter, plus what it costs to hold",
+      "note": "Attaches during a winning week and feeds through every losing one",
+      "saveAbility": "INT",
       "damageSpec": {
-        "dice": "0",
-        "note": "Paper loss only. Damage happens ONLY on a failed save — the save is your reaction, not the event."
+        "dice": "4d6",
+        "per": "quarter",
+        "note": "Fees and spread bleed you whether or not you are right."
       },
-      "attackType": "fear",
-      "tier": "IV",
+      "attackType": "greed",
+      "tier": "III",
       "blockedBy": [
         {
           "id": "marketLiteracy",
           "effect": "negate"
         },
         {
-          "id": "automatedSaving",
+          "id": "instrumentLiteracy",
           "effect": "advantage"
         }
       ],
       "lair": [
-        "A portfolio you check daily",
-        "A headline"
-      ]
+        "An app that congratulates you for trading",
+        "Any strategy that needs you to be available at 09:30"
+      ],
+      "origin": "extension"
+    },
+    {
+      "name": "Lifestyle-Creep Hydra",
+      "cr": "7",
+      "type": "Habit",
+      "save": "CON",
+      "damage": "4d8/year, one new head per raise",
+      "note": "Cut one expense and two arrive to replace it, each of them reasonable",
+      "saveAbility": "CON",
+      "damageSpec": {
+        "dice": "4d8",
+        "per": "year",
+        "note": "Every head was a sensible decision on the day it grew."
+      },
+      "attackType": "flattery",
+      "tier": "III",
+      "blockedBy": [
+        {
+          "id": "automatedSaving",
+          "effect": "negate"
+        },
+        {
+          "id": "selfAwareness",
+          "effect": "advantage"
+        }
+      ],
+      "lair": [
+        "A raise that reached the current account before it reached a plan",
+        "Any upgrade you would find difficult to reverse"
+      ],
+      "origin": "extension"
+    },
+    {
+      "name": "The Layoff Reaper",
+      "cr": "10",
+      "type": "Income",
+      "save": "STR",
+      "damage": "6d8, and it takes the whole stream",
+      "note": "Announces itself in a calendar invite with no agenda",
+      "saveAbility": "STR",
+      "damageSpec": {
+        "dice": "6d8",
+        "note": "It does not damage the balance. It removes the thing refilling it."
+      },
+      "attackType": "fear",
+      "tier": "III",
+      "blockedBy": [
+        {
+          "id": "deepReserve",
+          "effect": "halve"
+        },
+        {
+          "id": "negotiation",
+          "effect": "advantage"
+        }
+      ],
+      "lair": [
+        "Any single employer providing most of a household's income",
+        "A quarter where your team's costs are discussed more than its output"
+      ],
+      "origin": "extension"
+    },
+    {
+      "name": "Concentration Golem",
+      "cr": "14",
+      "type": "Portfolio",
+      "save": "CON",
+      "damage": "6d10, all from one place",
+      "note": "Built from a single stock, usually your employer's, usually while it was working",
+      "saveAbility": "CON",
+      "damageSpec": {
+        "dice": "6d10",
+        "note": "The same company pays your salary and holds your savings."
+      },
+      "attackType": "greed",
+      "tier": "IV",
+      "blockedBy": [
+        {
+          "id": "diversified",
+          "effect": "negate"
+        },
+        {
+          "id": "marketLiteracy",
+          "effect": "advantage"
+        }
+      ],
+      "lair": [
+        "Equity compensation that was never sold down",
+        "Any position you would not buy today at today's price"
+      ],
+      "origin": "extension"
+    }
+  ],
+  "hazards": [
+    {
+      "name": "Free-Trial Snare",
+      "category": "Environmental",
+      "cr": "1/4",
+      "save": "WIS",
+      "damage": "1d4 on the day you forgot",
+      "note": "Costs nothing until precisely the moment it does",
+      "saveAbility": "WIS",
+      "damageSpec": {
+        "dice": "1d4",
+        "note": "Priced at zero for exactly as long as you are paying attention."
+      },
+      "attackType": "flattery",
+      "tier": "I",
+      "blockedBy": [
+        {
+          "id": "threatDetection",
+          "effect": "negate"
+        },
+        {
+          "id": "selfAwareness",
+          "effect": "advantage"
+        }
+      ],
+      "lair": [
+        "Any offer that needs a card to give you something free",
+        "A renewal date you did not write down"
+      ],
+      "origin": "extension"
     },
     {
       "name": "Inflation Wraith",
@@ -814,6 +1121,37 @@
       "lair": [
         "Cash held as a plan rather than a buffer"
       ]
+    },
+    {
+      "name": "The Sudden Rent Spike",
+      "category": "Environmental",
+      "cr": "5",
+      "save": "CON",
+      "damage": "3d8/month, permanently",
+      "note": "One letter, and the largest line in your budget moves",
+      "saveAbility": "CON",
+      "damageSpec": {
+        "dice": "3d8",
+        "per": "month",
+        "note": "Not a one-off hit — a permanent raise to the cost of existing."
+      },
+      "attackType": "urgency",
+      "tier": "II",
+      "blockedBy": [
+        {
+          "id": "emergencyFund",
+          "effect": "halve"
+        },
+        {
+          "id": "scenarioForesight",
+          "effect": "advantage"
+        }
+      ],
+      "lair": [
+        "A lease inside its final ninety days",
+        "Any market where moving costs more than staying"
+      ],
+      "origin": "extension"
     },
     {
       "name": "Divorce Dragon",
@@ -868,6 +1206,120 @@
       ]
     },
     {
+      "name": "The Sudden Ability Drain",
+      "category": "Personal",
+      "cr": 10,
+      "save": "STR",
+      "damage": "Permanent STR reduction until addressed",
+      "note": "An injury or illness event that triggers the Disabled status effect directly",
+      "saveAbility": "STR",
+      "damageSpec": {
+        "dice": "0",
+        "note": "Permanent STR reduction until addressed, rather than hit-point damage."
+      },
+      "attackType": "fear",
+      "tier": "III",
+      "blockedBy": [
+        {
+          "id": "disabilityInsurance",
+          "effect": "halve"
+        }
+      ],
+      "lair": [
+        "One income, one body"
+      ]
+    },
+    {
+      "name": "The Golden Handcuffs",
+      "category": "Personal",
+      "cr": "9",
+      "save": "WIS",
+      "damage": "5d6 in options you stop taking",
+      "note": "Pays you well enough that leaving becomes a mathematics problem you decline to do",
+      "saveAbility": "WIS",
+      "damageSpec": {
+        "dice": "5d6",
+        "note": "The damage is the years, not the money."
+      },
+      "attackType": "greed",
+      "tier": "III",
+      "blockedBy": [
+        {
+          "id": "selfAwareness",
+          "effect": "negate"
+        },
+        {
+          "id": "deepReserve",
+          "effect": "advantage"
+        }
+      ],
+      "lair": [
+        "Any vesting schedule longer than your patience",
+        "A role you describe by its compensation before its work"
+      ],
+      "origin": "extension"
+    },
+    {
+      "name": "The Care-Giving Toll",
+      "category": "Relationship",
+      "cr": "11",
+      "save": "CHA+WIS",
+      "damage": "5d8/year, in money and hours",
+      "note": "Arrives as love and stays as logistics",
+      "saveAbility": "CHA",
+      "damageSpec": {
+        "dice": "5d8",
+        "per": "year",
+        "note": "It takes income and time at once, which is why it hits so hard."
+      },
+      "attackType": "guilt",
+      "tier": "III",
+      "blockedBy": [
+        {
+          "id": "deepReserve",
+          "effect": "halve"
+        },
+        {
+          "id": "scenarioForesight",
+          "effect": "advantage"
+        }
+      ],
+      "lair": [
+        "A parent whose plan is 'we will work it out'",
+        "Any family where one person is nearest and therefore chosen"
+      ],
+      "origin": "extension"
+    },
+    {
+      "name": "Market Crash Elemental",
+      "category": "Environmental",
+      "cr": 18,
+      "save": "WIS",
+      "damage": "Paper Level loss only converts to real HP damage if the WIS save is failed",
+      "note": "Not malicious — a weather event. The save is about your reaction, not the event",
+      "saveAbility": "WIS",
+      "damageSpec": {
+        "dice": "0",
+        "note": "Paper loss only. Damage happens ONLY on a failed save — the save is your reaction, not the event."
+      },
+      "attackType": "fear",
+      "tier": "IV",
+      "blockedBy": [
+        {
+          "id": "marketLiteracy",
+          "effect": "negate"
+        },
+        {
+          "id": "automatedSaving",
+          "effect": "advantage"
+        }
+      ],
+      "lair": [
+        "A portfolio you check daily",
+        "A headline"
+      ]
+    },
+    {
       "name": "Medical Bankruptcy Behemoth",
       "category": "Personal",
       "cr": 15,
@@ -901,28 +1353,34 @@
       ]
     },
     {
-      "name": "The Sudden Ability Drain",
-      "category": "Personal",
-      "cr": 10,
-      "save": "STR",
-      "damage": "Permanent STR reduction until addressed",
-      "note": "An injury or illness event that triggers the Disabled status effect directly",
-      "saveAbility": "STR",
+      "name": "Sequence-of-Returns Serpent",
+      "category": "Environmental",
+      "cr": "17",
+      "save": "ALL",
+      "damage": "8d10, but only if it arrives early",
+      "note": "The same average return, delivered in the wrong order, at the worst possible moment",
+      "saveAbility": "ALL",
       "damageSpec": {
-        "dice": "0",
-        "note": "Permanent STR reduction until addressed, rather than hit-point damage."
+        "dice": "8d10",
+        "note": "Identical returns. Different order. One of you runs out of money."
       },
       "attackType": "fear",
-      "tier": "III",
+      "tier": "IV",
       "blockedBy": [
         {
-          "id": "disabilityInsurance",
+          "id": "deepReserve",
           "effect": "halve"
+        },
+        {
+          "id": "scenarioForesight",
+          "effect": "advantage"
         }
       ],
       "lair": [
-        "One income, one body"
-      ]
+        "The first five years of drawing down rather than paying in",
+        "Any plan that assumed an average would arrive on average"
+      ],
+      "origin": "extension"
     }
   ],
   "revenueGuild": {
@@ -1002,6 +1460,7 @@
   },
   "statusEffects": [
     {
+      "id": "unemployed",
       "name": "Unemployed (Collecting)",
       "trigger": "Job loss, filed for Unemployment Insurance",
       "grants": "A recurring Short-Rest-style HP source (the weekly benefit)",
@@ -1009,6 +1468,7 @@
       "duration": "State-dependent, commonly ~26 weeks; ends early on new income, or decays into Exhausted"
     },
     {
+      "id": "disability",
       "name": "Disabled (Government Disability)",
       "trigger": "Qualifying disability determination",
       "grants": "A long-term recurring income stream; often bundled health coverage (an AC boost)",
@@ -1016,6 +1476,7 @@
       "duration": "Indefinite, subject to a periodic Continuing Disability Review"
     },
     {
+      "id": "discharged",
       "name": "Discharged (Post-Bankruptcy)",
       "trigger": "Chapter 7 or 13 completed",
       "grants": "Most prior debt wiped — a Restoration effect on HP",
@@ -1023,6 +1484,7 @@
       "duration": "Long, fixed; fades as the credit-damage penalty tapers"
     },
     {
+      "id": "student",
       "name": "Full-Time Student",
       "trigger": "Enrolled at least half-time",
       "grants": "Federal loan interest/payments paused — temporary immunity to Debt-class monster damage on those loans",
@@ -1030,6 +1492,7 @@
       "duration": "Ends at graduation or dropping below half-time"
     },
     {
+      "id": "w2",
       "name": "W-2 Employee",
       "trigger": "Standard employment classification",
       "grants": "Employer 401(k) match (a passive buff) and employer-sponsored insurance (AC)",
@@ -1037,6 +1500,7 @@
       "duration": "Ends on job change or reclassification"
     },
     {
+      "id": "selfEmployed",
       "name": "1099 / Self-Employed",
       "trigger": "Independent contractor or business owner",
       "grants": "Solo 401(k)/SEP IRA with far higher contribution limits",
@@ -1044,6 +1508,7 @@
       "duration": "Ends on reclassification as W-2"
     },
     {
+      "id": "underwater",
       "name": "Underwater / Negative Equity",
       "trigger": "Mortgage balance exceeds home value",
       "grants": "—",
@@ -1051,6 +1516,7 @@
       "duration": "Ends when equity turns positive"
     },
     {
+      "id": "meansTested",
       "name": "Means-Tested Benefit",
       "trigger": "Income/assets under a program threshold",
       "grants": "A real AC boost (low-cost healthcare)",
@@ -1078,7 +1544,7 @@
   },
   "encounterRules": {
     "note": "BRIEF §9.3. The rulebook's own §13 leaves save DCs unset, so they are derived from CR here rather than invented per monster — one ladder, visible, arguable. Damage is expressed in HP, and HP is weeks (D-046), so every damage figure is already in weeks of runway.",
-    "source": "The ladder follows the shape of a CR-to-save-DC progression: harder monster, harder save. The numbers are a convention chosen here, not a measurement and not agreed elsewhere \u2014 argue with them by editing this array.",
+    "source": "The ladder follows the shape of a CR-to-save-DC progression: harder monster, harder save. The numbers are a convention chosen here, not a measurement and not agreed elsewhere — argue with them by editing this array.",
     "crToDc": [
       {
         "maxCr": 0.25,
@@ -1140,25 +1606,45 @@
         "id": "I",
         "minLevel": 1,
         "maxLevel": 4,
-        "name": "Getting off the floor"
+        "name": "Getting off the floor",
+        "about": "Stop the bleeding and build the first buffer. Nothing else on this list works while a balance is compounding faster than you can pay it.",
+        "looksLike": "Every shock is a crisis, because there is nothing between you and it.",
+        "endsWhen": "A month of expenses exists somewhere you can reach it, and no debt is growing faster than you can pay it down.",
+        "biggestRisk": "Small, constant, unnoticed damage — the creatures here do 1d4 and never announce themselves.",
+        "origin": "extension"
       },
       {
         "id": "II",
         "minLevel": 5,
         "maxLevel": 10,
-        "name": "Building the engine"
+        "name": "Building the engine",
+        "about": "Widen the gap between what arrives and what leaves, then make the gap move on its own.",
+        "looksLike": "You can absorb one bad month. Two would hurt. The saving still depends on you remembering.",
+        "endsWhen": "The saving happens without you, the employer match is captured, and a full emergency fund is in place.",
+        "biggestRisk": "Your own raises. This is where lifestyle creep does its best work, because every head it grows is reasonable.",
+        "origin": "extension"
       },
       {
         "id": "III",
         "minLevel": 11,
         "maxLevel": 16,
-        "name": "Protecting the pile"
+        "name": "Protecting the pile",
+        "about": "Stop losing it. The pile is now big enough that protecting it beats adding to it.",
+        "looksLike": "A good year adds more than you earn. A bad one could take back several.",
+        "endsWhen": "A bad year is survivable without selling anything, and no single event — health, job, one holding — can take a third of it.",
+        "biggestRisk": "Concentration and the things insurance exists for. The creatures here hit for 4d8 and up.",
+        "origin": "extension"
       },
       {
         "id": "IV",
         "minLevel": 17,
         "maxLevel": 20,
-        "name": "Living off it"
+        "name": "Living off it",
+        "about": "Turn a pile into an income, and work out what it was for.",
+        "looksLike": "The maths works. The question stops being how much and starts being when, and then why.",
+        "endsWhen": "It doesn't. This is the part you were saving for.",
+        "biggestRisk": "Order, not average. The same returns in the wrong sequence are a different retirement.",
+        "origin": "extension"
       }
     ],
     "effects": {
@@ -1198,7 +1684,8 @@
         "label": "Greed",
         "blurb": "Moves you by what you stand to gain."
       }
-    ]
+    ],
+    "tierNote": "BRIEF §9.4. The four tiers are the rulebook's level bands read as stages of play: what this part of the game is about, what it feels like, and what ends it. The level ranges are the rulebook's; the prose is written for this build and marked origin: extension on each tier."
   },
   "blockers": {
     "emergencyFund": {
@@ -1282,6 +1769,95 @@
       "label": "More than one lever running",
       "kind": "rule",
       "detail": "No single stream is the whole story."
+    },
+    "scenarioForesight": {
+      "label": "Scenario Foresight 14+",
+      "kind": "skill",
+      "subStat": "scenarioForesight",
+      "min": 14,
+      "detail": "You had already pictured this going wrong, so it arrives as a plan rather than as news.",
+      "origin": "extension"
     }
+  },
+  "exhaustion": {
+    "note": "BRIEF §9.7. The rulebook names \"Exhausted\" once — as what the Unemployed status decays into — and never defines it. This ladder is written for this build to fill that gap, and is marked origin: extension. It is DERIVED from runway, never self-declared: exhaustion is not a mood, it is what a thin buffer costs you in decisions you can no longer afford to make well.",
+    "origin": "extension",
+    "unit": "weeks of runway (HP)",
+    "savePenaltyNote": "Each level subtracts from every saving throw. Being close to the edge really does make you easier to move: you cannot wait for a better offer, shop the policy, or walk away, and every creature in the bestiary is built to exploit exactly that.",
+    "levels": [
+      {
+        "level": 0,
+        "maxWeeks": null,
+        "minWeeks": 12,
+        "label": "Rested",
+        "savePenalty": 0,
+        "effect": "You can afford to say no, wait, and shop around. That is what the buffer buys.",
+        "tell": "A bad week is an annoyance."
+      },
+      {
+        "level": 1,
+        "maxWeeks": 12,
+        "minWeeks": 8,
+        "label": "Watchful",
+        "savePenalty": 1,
+        "effect": "You check the balance before ordinary purchases. Small friction, but the deciding has started to cost something.",
+        "tell": "You know roughly what is in the account without looking."
+      },
+      {
+        "level": 2,
+        "maxWeeks": 8,
+        "minWeeks": 4,
+        "label": "Stretched",
+        "savePenalty": 2,
+        "effect": "Timing starts to drive choices instead of price. You take the option that is available now over the one that is better.",
+        "tell": "You have begun paying more to pay later."
+      },
+      {
+        "level": 3,
+        "maxWeeks": 4,
+        "minWeeks": 2,
+        "label": "Cornered",
+        "savePenalty": 3,
+        "effect": "You can no longer walk away from a bad deal, which is the condition every predator in the bestiary is built for.",
+        "tell": "A single unexpected bill would change the month."
+      },
+      {
+        "level": 4,
+        "maxWeeks": 2,
+        "minWeeks": 1,
+        "label": "Running on fumes",
+        "savePenalty": 4,
+        "effect": "Decisions are made in order of what is due next. Interest rates stop being a factor you can weigh.",
+        "tell": "You are choosing which bill is late."
+      },
+      {
+        "level": 5,
+        "maxWeeks": 1,
+        "minWeeks": 0,
+        "label": "Spent",
+        "savePenalty": 5,
+        "effect": "Every option costs more than it should, because every option is now urgent. This is where the most expensive money in the world gets borrowed.",
+        "tell": "Less than a week of cover left.",
+        "minWeeksExclusive": true
+      },
+      {
+        "level": 6,
+        "maxWeeks": 0,
+        "minWeeks": null,
+        "label": "Down",
+        "savePenalty": 6,
+        "effect": "At 0 HP. Death saves, not decisions — see the Death Saves rules.",
+        "tell": "The runway is gone."
+      }
+    ]
+  },
+  "statusNote": "BRIEF §9.7. Status effects are SELF-DECLARED, like alignment — they are facts about your situation that no number in the household can see. Nothing here is computed and nothing is inferred; if you have not said, the sheet says you have not said.",
+  "longRest": {
+    "note": "BRIEF §9.8. The rulebook says a Long Rest restores HP to max \"contingent on a CON save\" and never sets the DC. These two numbers are that DC, written for this build. The DC rises with exhaustion because the deeper the hole, the more months have to go uninterrupted for a full recovery to actually happen — a good quarter restores someone who is Watchful and barely dents someone who is Spent.",
+    "origin": "extension",
+    "baseDc": 10,
+    "dcPerExhaustionLevel": 2,
+    "shortRestNote": "One pay cycle. Surplus converts to runway at one week of expenses per week of HP.",
+    "potionNote": "A windfall heals immediately and needs no rest. What it heals is its size divided by one week of expenses."
   }
 }

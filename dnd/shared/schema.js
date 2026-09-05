@@ -48,10 +48,10 @@
     swrRate: 0.04,             // safe withdrawal rate, decimal fraction
     /* Real discount rate for human capital — the present value of the pay
        still to come before the stop age. A planning assumption, overridable
-       like the others. BRIEF §4.1, DECISIONS.md D-072. */
+       like the others. BRIEF §4.1, DECISIONS.md D-079. */
     humanCapitalDiscountRate: 0.02,
     /* What a home's equity is worth when you would have to sell in a hurry
-       — the shadow runway counts it at this fraction. BRIEF §4.3, D-074. */
+       — the shadow runway counts it at this fraction. BRIEF §4.3, D-081. */
     homeEquityHaircut: 0.8,
     /* Deliberately NULL. A marginal rate depends on bracket, state and
        filing status, and this app has an EFFECTIVE-rate table, not a
@@ -139,7 +139,7 @@
     'expenses.entries[].amountCents':            { class: 'raw',        unit: 'cents' },
     'expenses.entries[].period':                 { class: 'raw',        unit: 'enum',    values: ['monthly', 'once'] },
     'expenses.entries[].source':                 { class: 'raw',        unit: 'enum',    values: ['manual', 'imported'], note: 'SPEC.md §12.5' },
-    'expenses.entries[].fixed':                  { class: 'raw',        unit: 'bool',    note: 'null not asked; true = could not be cut next month. Feeds the minimum viable month and cuttability. D-075' },
+    'expenses.entries[].fixed':                  { class: 'raw',        unit: 'bool',    note: 'null not asked; true = could not be cut next month. Feeds the minimum viable month and cuttability. D-082' },
     'goals[].targetDate':                        { class: 'raw',        unit: 'iso-date' },
     'goals[].savedCents':                        { class: 'raw',        unit: 'cents' },
     'goals[].monthlyContributionCents':          { class: 'raw',        unit: 'cents',   period: 'monthly' },
@@ -159,8 +159,8 @@
     'worthChecks[].actualRating':                { class: 'raw',        unit: 'rating',  note: 'what it turned out to be worth, 1-10, after' },
     'assumptions.expectedReturnRate':            { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.expectedReturnRate },
     'assumptions.swrRate':                       { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.swrRate },
-    'assumptions.humanCapitalDiscountRate':      { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.humanCapitalDiscountRate, note: 'real discount on pay still to come, for human capital. D-072' },
-    'assumptions.homeEquityHaircut':             { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.homeEquityHaircut, note: 'the fraction of home equity the shadow runway counts. D-074' },
+    'assumptions.humanCapitalDiscountRate':      { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.humanCapitalDiscountRate, note: 'real discount on pay still to come, for human capital. D-079' },
+    'assumptions.homeEquityHaircut':             { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.homeEquityHaircut, note: 'the fraction of home equity the shadow runway counts. D-081' },
 
     /* Computed — never stored on the household, never user-editable.
        Recomputed from raw inputs on every read. Listed here so a tool can
@@ -584,7 +584,7 @@
       source: f.source || 'manual',             // 'manual' | 'imported'
       categorizedBy: f.categorizedBy === undefined ? null : f.categorizedBy,
       /* Could this line be cut next month? null = not asked; true = fixed
-         (rent, insurance, a minimum); false = cuttable. D-075. */
+         (rent, insurance, a minimum); false = cuttable. D-082. */
       fixed: f.fixed === undefined ? null : f.fixed
     };
   }

@@ -5,7 +5,7 @@
   "source": "The five 'levels of wealth' as popularised by personal-finance educators (the Money Guy Show's framing is the closest match), and Stanley & Danko's prodigious / under accumulator of wealth test from The Millionaire Next Door: expected net worth = age × pre-tax income ÷ 10.",
   "confidence": "convention",
   "confidenceNote": "Thresholds are the conventions as commonly quoted, not measured findings. The 20% savings rate, the 'growth beats take-home' test and the 2× / 0.5× PAW cut-offs are rules of thumb; the levels are a way of naming where someone is, never a score.",
-  "note": "BRIEF §4.1. Level 5 is self-declared and is never assigned by the engine. Each check names the household fields it reads; a check that cannot be made is reported as unknown, not as failed. D-072.",
+  "note": "BRIEF §4.1. Level 5 is self-declared and is never assigned by the engine. Each check names the household fields it reads; a check that cannot be made is reported as unknown, not as failed. D-079.",
   "paw": {
     "divisor": 10,
     "prodigious": 2.0,

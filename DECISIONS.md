@@ -3850,7 +3850,7 @@ correct to 10 and read the band), `test/forms.js` on both cards,
 
 ---
 
-## D-072 — Benchmarks: where a household stands against a convention, and which conventions
+## D-079 — Benchmarks: where a household stands against a convention, and which conventions
 
 *(BRIEF.md §4.1. Opens T4.)* `engines/benchmarks.js` is seven numbers that
 compare the household to something outside it, and every one names the
@@ -3884,7 +3884,7 @@ convention it leans on:
   overridable like the others; without a stop age the Result asks for one.
 - **Net worth in years** — net worth over a year of spending.
 
-**Not decided here.** Where these are *shown* is D-076 (Snapshot and
+**Not decided here.** Where these are *shown* is D-083 (Snapshot and
 dashboard). Level 5 has no field yet; a declaration belongs with T8's
 Enough room, and until then the level caps at 4.
 
@@ -3902,7 +3902,7 @@ formula, net worth in years.
 
 ---
 
-## D-073 — Two savings rates: what is left, and what actually went somewhere
+## D-080 — Two savings rates: what is left, and what actually went somewhere
 
 *(BRIEF.md §4.2.)* `Tier0.savingsRate` is the **residual**: gross less a
 year of spending less estimated tax, over gross. It says how much *could*
@@ -3961,7 +3961,7 @@ Snapshot card and the dashboard's Thrust cell.
 
 ---
 
-## D-074 — Fourteen more ratios, in the one registry, most of them without a band
+## D-081 — Fourteen more ratios, in the one registry, most of them without a band
 
 *(BRIEF.md §4.3.)* `engines/ratios.js` gains fourteen rows, each calling
 the engine that already owns the number — `engines/statement.js` for
@@ -4029,7 +4029,7 @@ room.
 
 ---
 
-## D-075 — Which lines could not be cut: the floor, and how much of a month is cuttable
+## D-082 — Which lines could not be cut: the floor, and how much of a month is cuttable
 
 *(BRIEF.md §4.4.)* Every spending line in Cash Flow gets a third cell: a
 "fixed" tick — could this not be cut next month? Stored as
@@ -4076,7 +4076,7 @@ hint and the switch from 3 months to 4 "at the floor".
 
 ---
 
-## D-076 — Where the new numbers show: the Weather, the Flight plan, and three benchmarks that disagree
+## D-083 — Where the new numbers show: the Weather, the Flight plan, and three benchmarks that disagree
 
 *(BRIEF.md §4.5. Closes T4.)* Three places, no new figures — everything
 here reads an engine that already exists.
@@ -4089,7 +4089,7 @@ here reads an engine that already exists.
   says so and points there.
 - **The Flight plan** gains a second strip under the FOO ladder: L1–L5,
   the level as the run of met checks from the bottom
-  (`Benchmarks.levelsOfWealth`, D-072), and a sentence naming the check
+  (`Benchmarks.levelsOfWealth`, D-079), and a sentence naming the check
   that stopped it — "Not yet at level 1. Next: level 1, no high-interest
   debt, and a starter emergency fund in cash" for the demo. A check that
   cannot be judged is said to be unjudgeable, not failed.
@@ -4102,7 +4102,7 @@ here reads an engine that already exists.
   measures — the percentile ranks against every household your age
   whatever they earn, the multiple scales a milestone to your income,
   PAW expects age × income ÷ 10 and is unforgiving early. Under it, the
-  rest of D-072: a dollar at your age by 65, monthly to $1M and $2M, and
+  rest of D-079: a dollar at your age by 65, monthly to $1M and $2M, and
   what one more point of savings rate does.
 
 **Why a sentence and not a fourth number.** Averaging three benchmarks
@@ -4111,7 +4111,7 @@ disagreement is the finding.
 
 **Compatibility note.** No stored shape changed. The Snapshot loads
 `engines/benchmarks.js`; the registry gains the `out-benchmarks` anchor.
-The dashboard formats the `dollars` and `date` units (D-074) in its
+The dashboard formats the `dollars` and `date` units (D-081) in its
 Weather rows.
 
 **Verified.** `node test/run.js`: all three verdicts for the demo (48th
@@ -4140,9 +4140,15 @@ takes the highest number in the whole file plus one, which is why the next
 D&D entry after D-052 is D-064. A new SPARKS entry goes immediately *above*
 this divider; a new D&D entry goes at the end of the file. Renumbering the
 seven duplicates properly is a documentation pass of its own and has not
-been done. The SPARKS entries written at the same time as the D&D D-064
-and D-065 were renumbered to D-066–D-071 on merge, so from D-064 on every
-number is unique.
+been done.
+
+Twice now two sessions have reached for the same next number and one has
+renumbered on merge: the SPARKS T3 entries moved past the D&D D-064/D-065 to
+become D-066–D-071, and the D&D T9 entries then moved past those to become
+D-072–D-078. **The rule that settles it: whichever side is still unpushed
+renumbers.** It applied a third time: the SPARKS T4 entries, written as
+D-072–D-076 while the D&D T9 entries took those numbers on main, became
+D-079–D-083 on merge. From D-064 on, every number in this file is unique.
 
 ---
 
@@ -4785,3 +4791,576 @@ that is what made it reusable here.
 with `stats`, `klass`, `proficiencyBonus` and `level`, and tolerates `null` for
 the last three. It ranks only scored saves. If you call it, do not print its
 `tier` unless your caller actually has a Level.
+
+---
+
+## D-072 — Fifteen more creatures, and a mark saying which are ours
+
+BRIEF §9.10. The bestiary had fourteen creatures from the rulebook. Three things
+were wrong with that as a set, and none of them was "too few".
+
+**"Greed" had no creature at all.** It is one of six declared attack types, so
+§9.6's moves panel and T10's type chart could never show it. Five creatures now
+use it — the Meme-Stock Swarm, the Crypto Siren, the Day-Trading Leech, the
+Concentration Golem and the Golden Handcuffs — and a test asserts every declared
+attack type is reachable, which is the check that would have caught the gap.
+
+**Tier I had two creatures**, and tier I is where a first-time player is standing
+when they open the thing. It now has six, all small: a Subscription Slime, an
+Overdraft Gremlin, a Buy-Now-Pay-Later Sprite and a Free-Trial Snare. Tier IV
+went from two to four, because the end of the game was thin in the other
+direction.
+
+**Strength had one.** Strength is earning power, and nothing much attacked it —
+so the Wage-Stagnation Wraith (which does nothing at all, that being the attack)
+and the Layoff Reaper (which does not damage the balance, it removes the thing
+refilling it) now do.
+
+Final spread: 29 creatures, every tier at six or more, every attack type used,
+every save targeted by at least two.
+
+### The provenance mark
+
+The rulebook is someone else's work; these fifteen are not. Every added creature
+carries `"origin": "extension"` in the data, the file's own `note` says so at the
+top, and the bestiary page prints a `+` next to the name with the rest explained
+in the section intro. Three tests hold this together: the fourteen rulebook
+creatures are still present and still named exactly as supplied, everything else
+is marked, and the file's note says which is which.
+
+This matters more than tidiness. Someone reading `dnd_rules.json` in six months
+needs to know which lines they can argue with freely and which came from a
+document they should go back and check.
+
+### Two creatures that deal no damage, deliberately
+
+Writing the coverage tests turned up `"dice": "0"` on the Market Crash Elemental
+and the Sudden Ability Drain, and my first test called it malformed. It is not:
+one is a paper loss and the other reduces a stat, so neither costs weeks of
+runway. `parseDice` returns null and `expectedDice` turns that into 0, which is
+the right answer. The test now asserts exactly two such creatures exist, that
+they expect zero weeks, and that each says in its note why there are no dice —
+so the zero stays a decision rather than decaying into an oversight.
+
+### A blocker the catalogue was missing
+
+Three new creatures wanted to be blocked by Scenario Foresight — you had already
+pictured this going wrong, so it arrives as a plan rather than as news. It is a
+real declared sub-stat and was simply absent from the blocker catalogue, so it
+was added there (marked as an extension too) rather than bending the creatures to
+the fourteen blockers that happened to exist. A test now asserts every sub-stat
+blocker points at a real sub-stat and carries a threshold.
+
+### Compatibility note
+
+**Stored shape:** nothing. Creatures are reference data, not stored state.
+
+**Rooms updated:** `dnd/data/dnd_rules.json` (15 creatures, 1 blocker, the note)
+and `dnd/bestiary.html` (the `+` marker and the two section intros). Every other
+page picks the new creatures up for free, because they all read the same tables —
+the Tier 1 hunt panel and the encounter room's predator list both grew without
+being touched.
+
+**Before writing any of these from a new room:** monsters carry `type`, hazards
+carry `category` — that split is the rulebook's and was kept rather than tidied,
+so a room rendering both must handle each. Do not assume `damageSpec.dice`
+parses; `"0"` is a legitimate value meaning no hit-point damage.
+
+---
+
+## D-073 — Four tiers of play, and a function that refuses to place you
+
+BRIEF §9.4. The sheet could tell you your Level and the encounter room could
+tell you what hunts you, but nothing told you what part of the game you were in
+— which is the thing a tier is for. A level is a number; a tier is a job
+description.
+
+The four tiers already existed in `encounterRules.tiers` as names and level
+ranges, put there by §9.3 so creatures could be tagged. Each now also says what
+that stage is **about**, what it **looks like** from inside, what **ends** it,
+and its **biggest risk**. That prose is written for this build, not the rulebook,
+so every tier carries `origin: "extension"` and a test asserts it.
+
+    I    1–4    Stop the bleeding and build the first buffer
+    II   5–10   Widen the gap, then make it move without you
+    III  11–16  Stop losing it — the pile is big enough that protecting beats adding
+    IV   17–20  Turn a pile into an income, and work out what it was for
+
+### tierProgress() takes a Result, not a number
+
+This is the whole design decision in the tranche. `tierForLevel(3)` takes an
+integer and always returns a tier, which is right for its caller — a creature
+list needs *some* tier. But a character with no income and no spending figure has
+no Level, and calling them "tier I — getting off the floor" is a diagnosis nobody
+asked for and the page has no basis for.
+
+So `tierProgress(levelResult, tables)` takes the Level **Result** and returns
+`{ placed: false, reason }` when it is not `ok`. The sheet prints the reason. It
+is the same rule as an unscored save not being a weakness, applied to the arc
+instead of to a stat: absent is not the beginning.
+
+### What the panels show
+
+A four-segment strip with your tier lit and completed tiers dimmed, then two
+panels: this tier (what it is about, a bar showing how far through it you are,
+what it looks like, the milestone from the rulebook's own `levelBands`, and the
+biggest risk) and what is next (what ends this tier, what the next one is about,
+how many levels away, and **which creatures come into range when you cross**).
+
+That last list is the part that makes a tier feel like a place rather than a
+label. At level 3 it names nine creatures waiting in tier II, and they are the
+same creatures the encounter room will run.
+
+### The filter that was already there
+
+`predators()` has taken a `tierOnly` option since §9.3 and nothing ever passed
+it. §9.4 is what it was for: the encounter room now has "Only what can reach me
+at my tier", which takes the demo character's predator list from 21 to 5.
+
+It is **off by default**. Everything that hunts where you are thin is the more
+honest first answer, and the far-off ones are the interesting half — the filter
+is a narrowing you ask for, not one applied on your behalf.
+
+### Compatibility note
+
+**Stored shape:** nothing. The tier filter is a live control, not a stored
+preference — deliberately, so nobody returns to a filtered view they have
+forgotten they asked for.
+
+**Rooms updated:** `dnd/data/dnd_rules.json` (tier prose + `tierNote`),
+`dnd/engines/encounter.js` (`tierProgress`), `dnd/sheet.html` (the strip and two
+panels; no inputs in any of the three containers, so they repaint freely under
+D-034) and `dnd/encounter.html` (the filter checkbox, built once in the markup
+and only read).
+
+**Before writing any of these from a new room:** use `tierProgress()` and honour
+`placed: false` — do not fall back to `tierForLevel()` to get a tier for someone
+who has no Level. Tests assert the four tiers tile levels 1–20 with no gap and no
+overlap, and that every level lands in exactly one tier and one milestone band;
+if you add a tier, those are the checks that will tell you what you broke.
+
+---
+
+## D-074 — Exhaustion is derived, statuses are declared, and both change the game
+
+BRIEF §9.7. Two different kinds of condition, and the whole entry is about why
+they are treated differently.
+
+### Statuses are declared, because nothing in the household can see them
+
+The rulebook gives eight status effects — Unemployed (Collecting), Disabled,
+Discharged, Full-Time Student, W-2, 1099, Underwater, Means-Tested — each with
+what it grants, what it restricts and how long it lasts. Not one of them is
+visible in a number. A household with a modest income and a small balance looks
+identical whether the person is a student, on benefits or between jobs, and the
+restrictions differ enormously.
+
+So they are self-declared, like alignment: eight checkboxes, nothing inferred.
+`statuses()` returns `asked: false` when the key has never been written and
+`asked: true` with an empty list when someone has ticked and unticked — because
+"I have none of these" is an answer and "nobody asked me" is not, and collapsing
+them would lose the difference. `FORMAT.md` now says so, so an importer does not
+quietly throw the distinction away.
+
+### Exhaustion is derived, because it is not a mood
+
+The rulebook names **Exhausted** exactly once — as what Unemployed decays into —
+and never defines it. That is a §13-shaped hole, so this fills it, marked
+`origin: "extension"` like everything else written here.
+
+The definition that makes it worth having: **exhaustion is what a thin buffer
+costs you in decisions you can no longer afford to make well.** Not a feeling,
+not a self-report. It reads current HP — weeks of runway — and nothing else:
+
+    12+ weeks  0  Rested            you can say no, wait, and shop around
+    8–12       1  Watchful          you check the balance before ordinary purchases
+    4–8        2  Stretched         timing drives choices instead of price
+    2–4        3  Cornered          you cannot walk away from a bad deal
+    1–2        4  Running on fumes  decisions ordered by what is due next
+    0–1        5  Spent             every option is urgent, so every option costs more
+    0          6  Down              death saves, not decisions
+
+### And it subtracts from every save, which is what stops it being decoration
+
+Each level is a −1 to every saving throw, applied inside `Encounter.run()`. This
+is the point of the whole tranche. Being near the edge genuinely does make you
+easier to move — you cannot wait for a better offer, shop the policy, or walk
+away — and every creature in the bestiary is built to exploit exactly that. Now
+the model says so: the same character with the same Wisdom faces a Timeshare
+Charm-Caster at 37% when rested and 56% on fumes, and it is the runway doing it,
+not the Wisdom.
+
+The encounter room prints the penalty as its own figure and a sentence saying
+where it came from. A number that moves for unstated reasons is worse than no
+number.
+
+An unmeasurable runway applies **no** penalty rather than a guessed one, and
+`exhaustion()` returns incomplete rather than "Rested" — absent is not rested,
+the same way absent is not zero.
+
+### Two bugs found by writing the tests
+
+**The bottom of the ladder was unreachable.** Bands run minWeeks-inclusive to
+maxWeeks-exclusive, so level 5 ("under a week", floor 0) swallowed exactly zero
+and level 6 ("Down") could never happen. Zero is a different state from nearly
+out — it is the death-save state — so level 5 now carries `minWeeksExclusive` in
+the data and the engine honours it. Tests probe sixteen runway values including
+every boundary, assert each lands in exactly one band, and assert more runway is
+never more exhaustion.
+
+**`blockerState` threw on a sheet with no `subScores`.** A partial sheet is
+exactly who the three-state answer exists for, so a missing map now reads as
+`unknown` like an unscored stat rather than crashing.
+
+### Compatibility note
+
+**Stored shape:** `dndProfile.statuses` is **added** — a map of
+`{ statusId: boolean }` over the eight ids `unemployed`, `disability`,
+`discharged`, `student`, `w2`, `selfEmployed`, `underwater`, `meansTested`.
+Absent means never asked; present with all-false means asked and answered none.
+Nothing existing changed. Exhaustion stores nothing at all — it is derived on
+every read, so it can never go stale against the numbers it comes from.
+
+**Rooms updated:** `dnd/data/dnd_rules.json` (the exhaustion ladder, status ids,
+two notes), `dnd/engines/character.js` (`exhaustion`, `statuses`),
+`dnd/engines/encounter.js` (the save penalty, and the `subScores` guard),
+`dnd/sheet.html` (the Conditions section) and `dnd/encounter.html` (the penalty
+figure and its explanation). `dnd/FORMAT.md` documents the new key.
+
+**Before writing any of these from a new room:** the status checkboxes are
+LIVE INPUTS built once in `buildShell` — `paint()` writes only `.checked` and
+must never give `.statuslist` innerHTML (D-034). Write the map whole rather than
+setting single keys, or unticking the last one becomes indistinguishable from
+never having been asked.
+
+---
+
+## D-075 — Rests and pace, in the only unit HP has
+
+BRIEF §9.8, which the build-status table had marked as blocked on T7. It was not.
+T7's Skill Stacker would supply *skill* XP; the Experience this sheet already has
+is FIRE progress, and the rulebook already specifies all three recoveries under
+`deathSaves.recovery`:
+
+> **Short Rest** (a pay cycle) — regain HP equal to (income − expenses) for that
+> cycle, if positive. **Long Rest** (a strong, uninterrupted month or quarter) —
+> regain HP up to max, contingent on a CON save. **Potion** (a windfall) — heals
+> a fixed amount immediately, no rest required.
+
+Everything needed was already in the household. Only one number was missing.
+
+### One conversion, because HP is weeks
+
+All three recoveries convert through the same figure: **what a week of runway
+costs, which is a week of expenses.** A short rest is the monthly surplus divided
+by that. A potion is a windfall divided by that. A long rest is the deficit
+divided by the short-rest rate. Nothing new was invented to make them commensurable
+— D-046 already did that work.
+
+The demo persona: expenses of $3,150 a month make a week of HP cost **$727**, the
+surplus restores **2.4 weeks a month**, and the 5-week deficit closes in **2.1
+months**. Re-derived by hand and matched.
+
+### A negative surplus is an answer, not an error
+
+`shortRest` returns the negative number and flags `losing: true`, and the sheet
+says it plainly: *"You are spending more than you keep, so rests take runway away
+rather than restoring it. Nothing below this line gets better until that number
+is positive."* `longRest` reports `unreachable` rather than offering a negative
+month count as though it were a countdown, and `levelPace` says `goingBackwards`
+rather than a time-to-arrival. Three places where the arithmetic would happily
+produce a plausible-looking wrong number, and none of them do.
+
+### The one number that was missing
+
+The rulebook makes a Long Rest "contingent on a CON save" and never sets the DC.
+That is the only judgement call in the tranche, so it is in data
+(`longRest.baseDc` 10, `dcPerExhaustionLevel` 2) and marked `origin: extension`.
+
+It rises with exhaustion, which is the honest shape: a good quarter restores
+someone who is Watchful and barely dents someone who is Spent. The demo character
+is Rested, so DC 10 against CON +2 — 65%. Drop their cash and it becomes DC 14
+against +0, which is 35%. The save uses the same 5%–95% clamp as an encounter,
+for the same reason.
+
+### Pace asks the function that already knows
+
+`nextLevelTarget()` has computed the dollars to the next level since the sheet
+was built. `levelPace()` calls it and turns dollars into time. It does **not**
+re-derive the target, and it does **not** apply investment growth over a single
+level — compounding across one hop is noise dressed as precision, and the FIRE
+projection, which spans decades, is where returns belong and is Tier0's already.
+A test asserts `pace.needCents === nextLevelTarget(...).value`, so a second
+derivation cannot creep in later.
+
+### Two things the tests caught in the harness, not the code
+
+Building a household by writing `monthlyExpensesCents` and `cashCents` flat onto
+it produced a sheet with a null Level and no HP. That was the engine correctly
+refusing a shape it does not read — cash is a liquid **asset** and expenses live
+under `expenses.monthlyEssential` — so the test now builds households through
+Schema's own constructors, as the sheet's example does.
+
+Then Max HP stayed null because CON runs through the savings rate, which
+subtracts estimated tax, which needs `effective_tax_rates_2026.json` — absent
+from the D&D suite's table set. Both were the harness lying, not the engine, and
+both are worth recording because the next person to write a test here will hit
+them in the same order.
+
+### Compatibility note
+
+**Stored shape:** nothing. Every figure here is derived on read, so none of it
+can go stale against the numbers it comes from.
+
+**Rooms updated:** `dnd/data/dnd_rules.json` (`longRest`),
+`dnd/engines/character.js` (`shortRest`, `longRest`, `levelPace`) and
+`dnd/sheet.html` (the Rest and recovery section). No page stores anything new.
+
+**Before writing any of these from a new room:** `shortRest` returns a Result
+whose value may be **negative** — check `losing` rather than assuming a floor of
+zero, and never clamp it, because the negative number is the finding. `longRest`
+needs a sheet with both `currentHp` and `maxHp`; `maxHp` is null whenever CON is
+incomplete, which is more often than you would expect.
+
+---
+
+## D-076 — The card is the product, so it is drawn rather than laid out
+
+BRIEF §9.2. This tool is a lead magnet, and what actually travels is not the
+page — it is the thing someone pastes into a group chat. `card.html` builds it.
+
+### Canvas, not HTML
+
+An SVG or a screenshot of the DOM depends on web fonts having loaded, on CSS the
+browser may not have applied yet, and in the general case on an html2canvas-shaped
+library this repo will not take. A 2D canvas draws the same pixels everywhere,
+exports with one `toBlob` call, and needs no dependency at all. The cost is doing
+text fitting and wrapping by hand, which came to about thirty lines.
+
+The canvas cannot read CSS custom properties, so the two skins are literal
+palettes in the file. Reading them back off a probe element would break silently
+the moment a token was renamed; a test asserts there is a palette for every skin
+`shared/skin.js` declares, so adding a third skin fails loudly instead.
+
+### It shows only what is scored
+
+Every figure comes from the same engine the sheet uses, and anything incomplete
+is **left off the card** rather than printed as a dash or a zero. A card with
+four ability scores on it is a fine card. A card claiming a Constitution nobody
+measured is a lie that then gets forwarded. Tests assert the ability list is
+filtered on `isOk`, that vitals are pushed only when non-null, and that the file
+never reaches for `EM_DASH` at all.
+
+### It grows to fit
+
+A character with three scored abilities and no alignment makes a shorter card
+than one with six and a full spread, and a fixed height leaves a slab of empty
+background that reads as a bug. So the layout runs once on a scratch canvas to
+find where the content ends, the real canvas is sized to that between a floor and
+a ceiling, and it draws again. Two passes, one layout function.
+
+### Three ways out, because one is never enough
+
+Save the PNG (`toBlob`, with a `toDataURL` fallback and a filename built from the
+character's name). Copy the text, for anywhere an image will not go. And a hint
+that press-and-hold works on a phone, because inside an embedded browser neither
+of the first two reliably fires.
+
+### A test-shaped bug found on the way
+
+Five checks in the D&D suite named their pages in a literal list — the escaping
+scan, the markup scan, the disclaimer check, the trademark scan and the skin
+check. `encounter.html` was missing from four of them and `card.html` would have
+been missing from five. The root suite's `<body class="slaf">` check, which
+exists *because* three pages once shipped unstyled and every test passed, named
+its pages too.
+
+Both now read the directory. That turned on 45 checks that had never run, all of
+which passed — but the next page added does not get to opt out of them by not
+being mentioned.
+
+### Compatibility note
+
+**Stored shape:** nothing. The card is derived on every draw and stores nothing.
+
+**Rooms updated:** `dnd/card.html` (new), linked from `dnd/sheet.html` and
+`dnd/index.html`. Both test suites now find pages rather than list them.
+
+**Before writing any of these from a new room:** the card reads
+`Store.household()` and nothing else, so anything you want on it has to be in
+the household or the profile first. If you add a page to `dnd/`, it is
+automatically subject to the escaping, disclaimer, trademark, skin and
+theme-class checks — that is deliberate.
+
+---
+
+## D-077 — The file says which of itself may be believed, and a character can come home
+
+BRIEF §9.5, which the build-status table had marked as blocked on T2's suggested
+state. It was blocked on the wrong thing. T2 gives SPARKS somewhere to *put* a
+suggestion (D-060); what was actually missing was this tool saying which values
+belong there — and that is a D&D-side job, so it could have been done at any
+point.
+
+### The question an importer actually has
+
+Not *what is in this file* but **which of it may I write down as fact?**
+
+Money someone typed is fact. A Wisdom score they **rolled** is not a
+self-assessment — it is a dice result, and a room that stored it would be
+inventing a person. The export carried no way to tell those apart, and the
+scores look identical in the JSON either way. That is the bug this fixes, and it
+would have been an ugly one: a SPARKS room confidently showing someone a Threat
+Detection of 15 that came out of `Math.random()`.
+
+So every envelope now carries `provenance`, describing **only the keys actually
+present** — describing absent ones would invite an importer to write defaults for
+things nobody answered. Four trust levels:
+
+    typed      the person entered this figure          → store it
+    declared   a self-report, estimate or choice       → show as a suggestion
+    generated  dice, standard array, or a point buy    → never store it
+    mixed      a container whose fields differ         → read profileFields
+
+`dndProfile` is always `mixed`, and its `profileFields` names every key present.
+The entry an importer is most likely to get wrong — `declaredScores` — is
+**resolved rather than deferred**: its trust is computed from `declaredMethod`
+and stated outright, so nobody has to work it out.
+
+Only `featsOfStrength` (the behavioural quiz) and `homebrew` (typed as a
+self-assessment) come back `declared`. `roll`, `standardArray` and `pointBuy` are
+`generated`, and **an unrecognised method is reported as `generated`** — failing
+safe is the only sane default for a field this easy to misread. A test asserts
+that, so adding a method without classifying it cannot quietly open the gate.
+
+`FORMAT.md` documents the whole thing, including the fallback for an importer
+that ignores `provenance` entirely: import the money, treat everything in
+`dndProfile` as decoration.
+
+### And the character can come home
+
+The tool could export and never import, so a character could not move between
+devices — start on a phone, finish on a laptop was impossible, which for a thing
+people are meant to pass around is a real gap.
+
+`Store.importCharacter(envelope)` **replaces** the keys the envelope names and
+leaves every other key completely alone. Replace rather than merge, deliberately:
+this tool holds exactly one character, and half-merging two produces a third
+person who does not exist. Leaving unnamed keys alone means an older file missing
+a newer key does not wipe it.
+
+`contains` is the authority on what to take, not the payload's own key list —
+`contains` is the part the format guarantees, so a key present but unnamed is
+ignored. Validation runs first and a file that fails is not applied at all, which
+was checked both ways in a browser: garbage and valid-JSON-wrong-shape both leave
+the existing character exactly as it was.
+
+The sheet's import does **not** rebuild the shell afterwards. The structure never
+varies, only the values do, and rebuilding would replace every input node for no
+reason — the one thing D-034 forbids. `hydrate()` writes the new values into the
+nodes already there.
+
+### Compatibility note
+
+**Stored shape:** unchanged. `provenance` is **added to the export envelope**,
+not to storage — an older importer that ignores it reads exactly what it read
+before, and the payload is byte-identical.
+
+**Rooms updated:** `dnd/shared/export.js` (`provenanceFor`, and the three trust
+tables), `dnd/shared/store.js` (`importCharacter`), `dnd/sheet.html` ("Bring one
+back" — a file picker and a paste box, both built once and only read) and
+`dnd/FORMAT.md`.
+
+**Before writing any of these from a new room:** if you add a field to
+`dndProfile`, add it to `PROFILE_FIELDS` in `export.js` — a test asserts every
+key the tool writes has a provenance entry, so it will fail if you forget, which
+is the point. If you add a scoring method, add it to `METHOD_TRUST`; without an
+entry it is reported `generated`, which is safe but wrong for a genuine
+self-report.
+
+---
+
+## D-078 — DM mode: the scenario is the URL, and it never touches your character
+
+BRIEF §9.9, the last of T9. The encounter room answers *what does this do to
+me*. `dm.html` answers *what would this do to someone like this* — a different
+and more useful question, and the one you actually want when explaining to a
+friend why an emergency fund is not optional.
+
+### It needed no new engine
+
+`Encounter.run()` takes a sheet. It does not care whether that sheet came from
+someone's real numbers or from six boxes on a page, which is the whole reason
+this tranche was small: a hand-composed target is just a sheet with a `stats`
+map and a `currentHp`. A save left blank is simply **not put in the map**, so it
+reads as unscored rather than as zero, and the creature cannot target it with a
+number — the same rule as everywhere else, arrived at for free.
+
+The one piece of real work is that the DM's answers about defences have to
+override the engine's own predicates. That is done by running once to learn which
+blockers the creature cares about, translating the DM's answers into the
+sub-scores and profile fields that satisfy exactly the held ones, and running
+again. Cheaper than teaching the engine a second source of truth, and it means
+the engine's three-state logic still does the deciding.
+
+### Three states, because a DM who has not decided is not a target who lacks it
+
+Every defence is **held**, **missing**, or **not established**, and not
+established applies nothing. Dropping to a boolean here would have made the DM
+page more confident than the player's sheet, which is precisely backwards — the
+DM knows *less* about a hypothetical person, not more. The result says how many
+defences were left open and that they counted for nothing.
+
+The controls are generated from the blocker catalogue, never listed, so a
+blocker added later is answerable the day it lands. A test asserts no blocker id
+appears literally anywhere on the page — verified by hardcoding one on purpose
+and watching it fail.
+
+### The scenario is the URL
+
+Everything — the target's name, their runway, six save modifiers, fifteen
+defence answers and the creature — is base64url in the hash. Sharing a scenario
+is copying the address bar. No server, no account, and **nothing written to
+storage**: a test asserts the page never touches `localStorage` at all.
+
+An unreadable hash is ignored rather than raised. A broken link should open an
+empty page, not an error, because the person who received it did nothing wrong.
+
+### The one thing it writes
+
+"Log against my sheet", which records the encounter with `source: 'dm'`. That
+field has been in the log since §9.3 and this is the first thing to set it. It
+matters: a scenario you composed for a friend must never read back later as
+something that happened to you. Tests assert the page calls no other `Store`
+writer at all — not `setMoney`, not `patchProfile`, not `importCharacter` — and
+that `source: 'self'` appears nowhere in the file.
+
+### The worked example, re-derived
+
+A target with WIS +0 and three weeks of runway, meeting a Timeshare
+Charm-Caster:
+
+    three weeks of runway         → Cornered, −3 to every save
+    WIS +0, effective             → −3
+    CR 3                          → DC 13
+    chance it lands = (13 + 3 − 1)/20 = 15/20   → 75%
+    3d6 expected                  → 10.5 weeks
+    runway 3                      → 0
+
+Give the same person forty weeks of runway and nothing else changes but the
+exhaustion, and the creature lands far less often. That is the entire argument
+for an emergency fund, in one screen, about someone who is not you.
+
+### Compatibility note
+
+**Stored shape:** nothing added. The existing `encounters[].source` field gains
+its second value, `'dm'` — anything reading the log should treat `source` as an
+open set and not assume `'self'`.
+
+**Rooms updated:** `dnd/dm.html` (new), linked from `dnd/encounter.html`.
+
+**Before writing any of these from a new room:** if you add a blocker to the
+catalogue it appears here automatically, but if it is answered from the
+*household* rather than a sub-stat, add it to `dmProfileFor()` — otherwise a DM
+can tick "they have it" and nothing will happen. That is the one place this page
+has to know about specific blockers, and it is the one place to check.

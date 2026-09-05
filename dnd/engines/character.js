@@ -455,6 +455,198 @@
     });
   }
 
+  /**
+   * Exhaustion — BRIEF §9.7.
+   *
+   * The rulebook names "Exhausted" once, as what the Unemployed status decays
+   * into, and never defines it. This is the definition, and the key choice is
+   * that it is DERIVED rather than declared: exhaustion is not a mood, it is
+   * what a thin buffer costs you in decisions you can no longer afford to make
+   * well. So it reads current HP — weeks of runway — and nothing else.
+   *
+   * Bands run from minWeeks (inclusive) up to maxWeeks (exclusive), so 12 weeks
+   * is Rested and 11.9 is Watchful. The bottom is the exception and says so in
+   * the data: level 5 carries minWeeksExclusive, because "under a week" must not
+   * swallow exactly zero — zero is level 6, Down, which is the death-save state
+   * and a different thing from nearly out.
+   */
+  function exhaustion(hpResult, tables) {
+    if (!Money.isOk(hpResult)) {
+      return Money.incomplete('Runway is needed before exhaustion means anything.',
+        hpResult && hpResult.missing ? hpResult.missing : ['currentHp']);
+    }
+    var weeks = hpResult.value;
+    var levels = tables.dndRules.exhaustion.levels;
+    for (var i = 0; i < levels.length; i++) {
+      var l = levels[i];
+      var aboveFloor = l.minWeeks === null ? true
+        : (l.minWeeksExclusive ? weeks > l.minWeeks : weeks >= l.minWeeks);
+      var belowCeil = l.maxWeeks === null ? true
+        : (l.maxWeeks === 0 ? weeks <= 0 : weeks < l.maxWeeks);
+      if (aboveFloor && belowCeil) {
+        return Money.ok(l.level, { row: l, weeks: weeks, savePenalty: l.savePenalty });
+      }
+    }
+    /* Only reachable if the ladder itself has a hole; the tests forbid one. */
+    return Money.incomplete('No exhaustion band covers ' + weeks + ' weeks.', ['exhaustion']);
+  }
+
+  /**
+   * Which of the rulebook's status effects this character has declared.
+   * Self-declared, like alignment — nothing here is inferred from the numbers,
+   * because none of it is visible in them. An undeclared status is undeclared,
+   * not false.
+   */
+  function statuses(household, tables) {
+    var p = profileOf(household);
+    var held = p.statuses;
+    var all = tables.dndRules.statusEffects;
+    if (!held || typeof held !== 'object') {
+      return { asked: false, held: [], rows: all };
+    }
+    return {
+      asked: true,
+      held: all.filter(function (st) { return held[st.id] === true; }),
+      rows: all
+    };
+  }
+
+  /* ---- Rests and pace — BRIEF §9.8 ---------------------------------------
+     The rulebook already specifies these under deathSaves.recovery:
+
+       Short Rest (a pay cycle) — regain HP equal to (income − expenses) for
+         that cycle, if positive.
+       Long Rest (a strong, uninterrupted month or quarter) — regain HP up to
+         max, contingent on a CON save.
+       Potion (a windfall) — heals a fixed amount immediately.
+
+     HP is weeks (D-046), so all three convert through one number: what a week
+     of runway costs, which is a week of expenses. Nothing here invents a
+     threshold; the only judgement call is the Long Rest's save DC, which is in
+     data and marked as an extension.                                        */
+
+  /**
+   * A short rest — one pay cycle's surplus, expressed in weeks of runway.
+   * Returns weeks gained per month and per year, and what one week costs.
+   * A negative surplus is a real answer: you are losing runway, not gaining it.
+   */
+  function shortRest(household, tables) {
+    var weekly = weeklyExpensesCents(household);
+    if (!Money.isOk(weekly)) return weekly;
+    if (weekly.value <= 0) {
+      return Money.incomplete('Monthly expenses need to be above zero to price a week.',
+        ['monthlyExpenses']);
+    }
+    var rates = Tier0.savingsRate(household, tables);
+    var basis = Money.isOk(rates.includingMatch) ? rates.includingMatch : rates.excludingMatch;
+    if (!Money.isOk(basis)) {
+      return Money.incomplete('Add your income, spending and filing status to see what a rest restores.',
+        basis.missing);
+    }
+    var perYearCents = basis.annualSavingsCents;
+    var perMonthCents = perYearCents / MONTHS_PER_YEAR;
+    return Money.ok(perMonthCents / weekly.value, {
+      weeksPerMonth: perMonthCents / weekly.value,
+      weeksPerYear: perYearCents / weekly.value,
+      surplusPerMonthCents: perMonthCents,
+      weekCostCents: weekly.value,
+      losing: perYearCents < 0,
+      matchIncluded: Money.isOk(rates.includingMatch)
+    });
+  }
+
+  /**
+   * A long rest — filling HP back to Max at the short-rest rate, and the CON
+   * save the rulebook makes it contingent on.
+   *
+   * The DC is the one judgement call in §9.8 and lives in data. It rises with
+   * exhaustion, which is the honest shape: the deeper the hole, the more has to
+   * go uninterrupted for a full recovery to actually happen.
+   */
+  function longRest(sheet, household, tables) {
+    var spec = tables.dndRules.longRest;
+    if (!Money.isOk(sheet.currentHp) || !sheet.maxHp) {
+      return Money.incomplete('Add your numbers to see what a full recovery takes.', ['currentHp']);
+    }
+    var gain = shortRest(household, tables);
+    var deficit = Math.max(0, sheet.maxHp.weeks - sheet.currentHp.value);
+    var exh = exhaustion(sheet.currentHp, tables);
+    var dc = spec.baseDc + (Money.isOk(exh) ? exh.value * spec.dcPerExhaustionLevel : 0);
+
+    var conMod = null;
+    var con = sheet.stats && sheet.stats.CON;
+    if (con && Money.isOk(con)) {
+      conMod = modifier(con.value)
+        + (sheet.klass && sheet.klass.saves.indexOf('CON') !== -1 ? sheet.proficiencyBonus : 0);
+    }
+    /* Same clamp as an encounter save: a natural 1 fails and a natural 20
+       succeeds, so this never reads 0% or 100%. */
+    var chance = null;
+    if (conMod !== null) {
+      var raw = (21 - dc + conMod) / 20;
+      chance = Math.max(0.05, Math.min(0.95, raw));
+      chance = Math.round(chance * 100) / 100;
+    }
+    var months = null;
+    if (Money.isOk(gain) && gain.weeksPerMonth > 0) months = deficit / gain.weeksPerMonth;
+
+    return Money.ok(deficit, {
+      deficitWeeks: deficit,
+      atMax: deficit === 0,
+      dc: dc,
+      conModifier: conMod,
+      chance: chance,
+      monthsToFull: months,
+      unreachable: Money.isOk(gain) && gain.weeksPerMonth <= 0 && deficit > 0
+    });
+  }
+
+  /**
+   * Pace — BRIEF §9.8's other half. How fast Experience actually accrues, in
+   * levels rather than dollars.
+   *
+   * nextLevelTarget() already knows what the next level costs in dollars; this
+   * only turns that into time, using the same surplus a short rest uses. Two
+   * functions, no second derivation of either number.
+   */
+  function levelPace(household, tables, currentLevel) {
+    if (!Money.isOk(currentLevel)) {
+      return Money.incomplete('A Level is needed before a pace means anything.', ['level']);
+    }
+    if (currentLevel.value >= 20) {
+      return Money.ok(0, { atCap: true, nextLevel: null, yearsToNext: 0, needCents: 0 });
+    }
+    var need = nextLevelTarget(household, tables, currentLevel.value);
+    if (!Money.isOk(need)) return need;
+
+    var rates = Tier0.savingsRate(household, tables);
+    var basis = Money.isOk(rates.includingMatch) ? rates.includingMatch : rates.excludingMatch;
+    if (!Money.isOk(basis)) {
+      return Money.incomplete('Add your income, spending and filing status to see your pace.',
+        basis.missing);
+    }
+    var perYear = basis.annualSavingsCents;
+
+    /* Contribution only — no growth assumed on the way to the NEXT level. A
+       single level is a short hop and compounding over it is noise dressed as
+       precision; the FIRE projection, which spans decades, is where returns
+       belong and Tier0 already owns it. */
+    var years = null;
+    if (need.value === 0) years = 0;
+    else if (perYear > 0) years = need.value / perYear;
+
+    return Money.ok(years, {
+      atCap: false,
+      nextLevel: need.nextLevel,
+      nextPct: need.nextPct,
+      needCents: need.value,
+      annualSavingsCents: perYear,
+      yearsToNext: years,
+      goingBackwards: perYear < 0,
+      stalled: perYear === 0 && need.value > 0
+    });
+  }
+
   /* ---- Armour Class ------------------------------------------------------
      10 + DEX, then layered coverage. Only the emergency-fund shield's +2 is
      stated in the rulebook; the rest are agreed values living in data/.    */
@@ -913,6 +1105,11 @@
     debtBurden: debtBurden,
     maxHp: maxHp,
     currentHp: currentHp,
+    exhaustion: exhaustion,
+    shortRest: shortRest,
+    longRest: longRest,
+    levelPace: levelPace,
+    statuses: statuses,
     armorClass: armorClass,
     leverActivity: leverActivity,
     suggestClass: suggestClass,

@@ -2775,7 +2775,7 @@ section('Ratios');
     RatiosEngine.position(3, { direction: 'higher', good: null, warn: null }), null);
 
   const radar = RatiosEngine.radar(h, TABLES);
-  check('the radar plots every banded ratio that computed (14 before D-074, + shadow runway and worst-year coverage)', radar.value, 16);
+  check('the radar plots every banded ratio that computed (14 before D-081, + shadow runway and worst-year coverage)', radar.value, 16);
   checkTrue('and only ones with a band',
     radar.points.every(p => p.band && p.band.good !== null));
   checkTrue('every plotted point has a position inside the ceiling',
@@ -6203,7 +6203,7 @@ section('The Coverage Checkup, and how it is split');
 section('The benchmarks');
 
 (function () {
-  /* D-072: the numbers that place a household against a convention. */
+  /* D-079: the numbers that place a household against a convention. */
   const B = require(path.join(ROOT, 'engines/benchmarks.js'));
   const T = Object.assign({}, TABLES, {
     wealthMultiplier: require(path.join(ROOT, 'data/wealth_multiplier.json')),
@@ -6306,7 +6306,7 @@ section('The benchmarks');
 section('The contributed savings rate');
 
 (function () {
-  /* D-073: residual is what is left; contributed is what went somewhere. */
+  /* D-080: residual is what is left; contributed is what went somewhere. */
   const T = Object.assign({}, TABLES);
   const bare = Demo.build();
   const c = CashFlow.savingsRateContributed(bare, T);
@@ -6336,7 +6336,7 @@ section('The contributed savings rate');
 section('The ratios T3 unlocked');
 
 (function () {
-  /* D-074: fourteen more rows in the one registry, each hand-derived. */
+  /* D-081: fourteen more rows in the one registry, each hand-derived. */
   const R = RatiosEngine;
   const NOW = Date.parse('2026-09-05T12:00:00Z');
   function rows(h, opts) {
@@ -6405,7 +6405,7 @@ section('The ratios T3 unlocked');
 section('Fixed lines, the floor, and cuttability');
 
 (function () {
-  /* D-075: which lines could not be cut next month. */
+  /* D-082: which lines could not be cut next month. */
   const cat = TABLES.expenseCategories;
   const h = Demo.build();
   h.expenses.entries = Demo.buildSpending();
@@ -6442,7 +6442,7 @@ section('Fixed lines, the floor, and cuttability');
 section('Three benchmarks, and where the new numbers show');
 
 (function () {
-  /* D-076 */
+  /* D-083 */
   const B = require(path.join(ROOT, 'engines/benchmarks.js'));
   const t = B.threeBenchmarks(Demo.build(), TABLES);
   check('all three can be worked out for the demo', t.value, 3);
@@ -6502,12 +6502,15 @@ section('The D&D folder\'s vendored copies');
      page with a bare <body> renders as unstyled black-on-white while still
      passing every content test. That is exactly how it shipped once: the
      tests read the text, nobody looked at the page. */
-  ['index.html', 'sheet.html', 'bestiary.html'].forEach(function (page) {
-    const html = fs.readFileSync(path.join(dnd, page), 'utf8');
-    checkTrue(`dnd/${page} opts into the theme with <body class="slaf">`,
-      /<body class="slaf">/.test(html),
-      'a bare <body> gets none of theme.css and renders black-on-white');
-  });
+  /* Found, not listed: naming the pages here meant every page added later
+     escaped the check that exists precisely because a page shipped unstyled. */
+  fs.readdirSync(dnd).filter(function (f) { return /\.html$/.test(f); }).sort()
+    .forEach(function (page) {
+      const html = fs.readFileSync(path.join(dnd, page), 'utf8');
+      checkTrue(`dnd/${page} opts into the theme with <body class="slaf">`,
+        /<body class="slaf">/.test(html),
+        'a bare <body> gets none of theme.css and renders black-on-white');
+    });
 
   /* And it is not a room: nothing in the registry may point into dnd/. */
   checkTrue('no registry entry points into dnd/',
