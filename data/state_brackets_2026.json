@@ -6,7 +6,7 @@
   "source": "State individual income tax structures \u2014 no tax, a flat rate, or graduated brackets (single filer) \u2014 in the shape of the Tax Foundation's annual 'State Individual Income Tax Rates and Brackets'. Transcribed from memory of the 2025 edition; 2026 changes are not reflected.",
   "confidence": "unverified",
   "confidenceNote": "NOT checked state by state. Brackets are for single filers; joint brackets are approximated as double the single thresholds where a state does that, which is not every state. Local income taxes, standard deductions, exemptions and credits are ignored. Every room that shows a state figure says 'approximate'.",
-  "note": "engines/tax.js applies the schedule to FEDERAL taxable income (gross minus the federal standard deduction) as a stand-in for state taxable income \u2014 a deliberate simplification that the confidence note carries. `jointMultiplier` is applied to single thresholds for married_joint. D-064.",
+  "note": "engines/tax.js applies the schedule to FEDERAL taxable income (gross minus the federal standard deduction) as a stand-in for state taxable income \u2014 a deliberate simplification that the confidence note carries. `jointMultiplier` is applied to single thresholds for married_joint. D-066.",
   "jointMultiplier": 2.0,
   "states": {
     "AK": {

@@ -5,7 +5,7 @@
   "source": "How each kind of account can be reached: the age-59\u00bd rule for pre-tax and Roth earnings (IRC 72(t)), Roth contributions withdrawable any time, HSA non-medical use penalty-free from 65, 529 restricted to qualified education, a donor-advised fund irrevocable. Liquidity scale after BiggerPockets' Personal Financial Statement: 1 today \u00b7 2 within 30 days \u00b7 3 within 12 months \u00b7 4 can't or won't sell.",
   "confidence": "convention",
   "confidenceNote": "The access ages are statute and stable; the default liquidity per kind is a convention (a brokerage account settles in days, a house takes months) and every asset can override it.",
-  "note": "Keyed by asset.taxCharacter, with a fallback by asset.category for assets never characterised. `bucket` is the portfolio the 10x Statement files it under. `accessAge` null means no age gate. `basisAccessAge` is for Roth: contributions come out any time, earnings wait for 59\u00bd \u2014 the bridge to 59\u00bd counts only the basis. D-064.",
+  "note": "Keyed by asset.taxCharacter, with a fallback by asset.category for assets never characterised. `bucket` is the portfolio the 10x Statement files it under. `accessAge` null means no age gate. `basisAccessAge` is for Roth: contributions come out any time, earnings wait for 59\u00bd \u2014 the bridge to 59\u00bd counts only the basis. D-066.",
   "liquidityScale": [
     {
       "value": 1,

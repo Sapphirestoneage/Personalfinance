@@ -5,7 +5,7 @@
   "source": "State unemployment insurance: the maximum weekly benefit and the standard maximum duration in weeks, by state, as published by each state agency and compiled by the U.S. Department of Labor's Significant Provisions of State UI Laws. Transcribed from memory of the 2025 compilation.",
   "confidence": "unverified",
   "confidenceNote": "NOT checked against the DOL compilation line by line. Every room that shows an expected benefit labels it an estimate and links to the state agency. Actual benefits depend on base-period wages; the maximum is a ceiling, not a promise.",
-  "note": "expected weekly benefit \u2248 min(maxWeeklyDollars, replacementRate \u00d7 prior weekly wage). Used by the worst-plausible-year figure (D-064) and the Runway room. States without a dependent allowance are shown without one.",
+  "note": "expected weekly benefit \u2248 min(maxWeeklyDollars, replacementRate \u00d7 prior weekly wage). Used by the worst-plausible-year figure (D-066) and the Runway room. States without a dependent allowance are shown without one.",
   "replacementRate": 0.5,
   "replacementRateNote": "Most states replace roughly half of the base-period weekly wage up to the cap; a convention here, not a per-state table.",
   "states": {

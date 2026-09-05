@@ -5,7 +5,7 @@
   "source": "Affordable Care Act marketplace subsidy mechanics: the federal poverty level (HHS 2025 guidelines, which govern 2026 coverage), the applicable-percentage table, and the 400%-of-FPL eligibility ceiling that returns for 2026 with the expiry of the 2021\u20132025 enhanced subsidies unless Congress extends them.",
   "confidence": "unverified",
   "confidenceNote": "The FPL figures and the applicable percentages are transcribed from memory and NOT checked against the HHS notice or the IRS revenue procedure; whether the 400% cliff applies in 2026 depends on legislation that may have moved. Shown as a warning, never as a dollar figure of subsidy.",
-  "note": "MAGI above cliffMultiple \u00d7 FPL for the household size loses the premium tax credit entirely (the 'cliff'). Below it, the expected contribution is applicablePercentage \u00d7 MAGI. engines/tax.js only flags the cliff and the distance to it; it does not price a plan. D-064.",
+  "note": "MAGI above cliffMultiple \u00d7 FPL for the household size loses the premium tax credit entirely (the 'cliff'). Below it, the expected contribution is applicablePercentage \u00d7 MAGI. engines/tax.js only flags the cliff and the distance to it; it does not price a plan. D-066.",
   "fpl": {
     "base": 15650,
     "perAdditionalPerson": 5500,

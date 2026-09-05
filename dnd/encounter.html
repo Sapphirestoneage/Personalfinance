@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Weakness Map · Dungeons &amp; Dividends</title>
+<meta name="description" content="Which saves you are thinnest on, what hunts there, and what would block it."/>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="shared/skin.css"/>
+<!--
+  THE ENCOUNTER ROOM — BRIEF §9.3, "the core of prep for weak spots".
+
+  A monster's danger is not a property of the monster. It is a property of the
+  monster meeting THIS sheet, which is why every number on this page moves when
+  the sheet does: the same Timeshare Charm-Caster is a shrug to a high-WIS
+  character with an emergency fund and a real threat to someone with neither.
+
+  THREE BLOCKER STATES, NOT TWO. Held, absent, and unknown. "You have no
+  disability insurance" and "nobody has asked you about disability insurance"
+  are different claims and only the first should make a monster look worse, so
+  unknown blockers apply nothing and are listed separately as "answer this and
+  we'll know". Same empty-is-not-zero rule as everywhere else.
+
+  ALL THRESHOLDS ARE DATA. The CR-to-DC ladder, tier bands, the advantage
+  bonus and the 5%/95% clamp live in data/dnd_rules.json under encounterRules.
+  This page renders; engines/encounter.js computes; neither invents a number.
+
+  LIVE-FORM: built once. The only control is the monster picker, built at boot
+  and never replaced; the result card it drives holds no inputs.
+
+  NOT BUILT YET, and noted where it attaches: tier-gated quests (§9.4) would
+  filter the predator list further; the "what blocks it" rows will link to
+  Stacker skills once T7 exists; attackType is carried on every creature ready
+  for T10's type chart but nothing reads it as a type yet.
+-->
+<style>
+  .wrap { max-width: 1080px; margin: 0 auto; padding: var(--space-3) var(--space-3) var(--space-7); }
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); }
+  .back { color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); }
+  h1 { font-family: var(--font-display); font-size: var(--text-2xl); margin: 0 0 var(--space-2); }
+  h2 { font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-5) 0 var(--space-2); }
+  .note { color: var(--color-text-muted); font-size: var(--text-sm); line-height: var(--leading-normal); margin: 0 0 var(--space-3); }
+  .faint { color: var(--color-text-faint); }
+  .panel { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-4); }
+  .cols { display: grid; gap: var(--space-3); grid-template-columns: 1fr; }
+  @media (min-width: 860px) { .cols { grid-template-columns: 320px 1fr; align-items: start; } }
+  .radar { display: block; margin: 0 auto; max-width: 300px; }
+  .radar .grid { fill: none; stroke: var(--color-border); }
+  .radar .shape { fill: var(--color-accent); fill-opacity: .18; stroke: var(--color-accent); stroke-width: 2; }
+  .radar .axis { stroke: var(--color-border); }
+  .radar text { fill: var(--color-text-subtle); font-size: 10px; font-family: var(--font-body); text-anchor: middle; }
+  .radar text.weak { fill: var(--color-critical); font-weight: 600; }
+  .legend { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; margin-top: var(--space-2); line-height: var(--leading-normal); }
+  .pred { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: center; padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); font-size: var(--text-sm); }
+  .pred:last-child { border-bottom: 0; }
+  .pred .nm { font-weight: 600; }
+  .pred .meta { font-size: var(--text-xs); color: var(--color-text-faint); }
+  .tag { display: inline-block; font-size: 9px; text-transform: uppercase; letter-spacing: .06em; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); padding: 1px var(--space-2); color: var(--color-text-muted); }
+  select, button.btn { font-family: var(--font-body); font-size: var(--text-sm); }
+  select { height: var(--control-height); background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: 0 var(--space-2); width: 100%; box-sizing: border-box; }
+  .btn { background: var(--color-accent); color: var(--color-accent-contrast); border: 0; border-radius: var(--radius-sm); padding: 0 var(--space-4); height: var(--control-height); cursor: pointer; }
+  .btn.ghost { background: transparent; color: var(--color-accent-hover); border: 1px solid var(--color-border-strong); }
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+  .result { border: 1px solid var(--color-accent); border-radius: var(--radius-md); padding: var(--space-4); background: var(--color-surface-raised); margin-top: var(--space-3); }
+  .result.safe { border-color: var(--color-positive); }
+  .result.bad { border-color: var(--color-critical); }
+  .verdict { font-family: var(--font-display); font-size: var(--text-xl); margin: 0 0 var(--space-2); }
+  .figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: var(--space-2); margin: var(--space-3) 0; }
+  .fig { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2); text-align: center; }
+  .fig .k { font-size: 9px; text-transform: uppercase; letter-spacing: .07em; color: var(--color-text-subtle); }
+  .fig .v { font-family: var(--font-display); font-size: var(--text-lg); }
+  .blk { display: grid; grid-template-columns: 18px 1fr; gap: var(--space-2); font-size: var(--text-sm); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); line-height: var(--leading-normal); }
+  .blk:last-child { border-bottom: 0; }
+  .blk .mark.held { color: var(--color-positive); }
+  .blk .mark.absent { color: var(--color-critical); }
+  .blk .mark.unknown { color: var(--color-caution); }
+  .blk .why { font-size: var(--text-xs); color: var(--color-text-faint); }
+  .lair { font-size: var(--text-sm); color: var(--color-text-muted); line-height: var(--leading-normal); }
+  .logrow { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); font-size: var(--text-sm); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+  .logrow:last-child { border-bottom: 0; }
+  .notice { padding: var(--space-3); border-radius: var(--radius-sm); margin: var(--space-3) 0; font-size: var(--text-sm); line-height: var(--leading-normal); border: 1px solid var(--color-border-strong); color: var(--color-text-muted); }
+  .notice.is-error { border-color: var(--color-critical); color: var(--color-critical); }
+  .foot { margin-top: var(--space-6); text-align: center; font-size: var(--text-sm); }
+  .foot a { color: var(--color-accent-hover); }
+</style>
+</head>
+<body class="slaf">
+<script src="shared/skin.js"></script>
+<script>DND.Skin.init();</script>
+<div class="wrap">
+  <div class="topbar">
+    <a class="back" href="sheet.html">← Your sheet</a>
+    <div class="skin-bar" id="skin-bar"></div>
+  </div>
+
+  <h1>Weakness map</h1>
+  <p class="note">Every number here moves when your sheet does. A monster's danger is not a
+     property of the monster — it is a property of the monster meeting you.</p>
+
+  <div id="load-notice" class="notice" hidden></div>
+  <div id="empty-notice" class="notice" hidden></div>
+
+  <div class="cols">
+    <div class="panel">
+      <div id="radar"></div>
+      <div class="legend" id="radar-legend"></div>
+    </div>
+    <div class="panel">
+      <h2 style="margin-top:0">Natural predators</h2>
+      <p class="note" id="pred-intro"></p>
+      <div id="pred-list"></div>
+    </div>
+  </div>
+
+  <h2>Run an encounter</h2>
+  <p class="note">Expected damage, not a roll — the average of what this creature does, against
+     your actual saves and whatever you already hold that blocks it.</p>
+  <select id="pick" aria-label="Choose a creature"></select>
+  <div class="actions">
+    <button type="button" class="btn" id="btn-run">Run it</button>
+    <button type="button" class="btn ghost" id="btn-roll">Roll it instead</button>
+    <button type="button" class="btn ghost" id="btn-log" hidden>Log this encounter</button>
+  </div>
+  <div id="result"></div>
+
+  <h2>Encounter log</h2>
+  <p class="note faint">Kept in this browser only, newest first, capped at fifty.</p>
+  <div id="log"></div>
+
+  <p class="foot"><a href="bestiary.html">The Bestiary — every creature in full →</a></p>
+  <p class="foot" style="color:var(--color-text-faint);font-size:var(--text-xs)">An independent parody. Not affiliated with or endorsed by Wizards of the Coast. <a href="bestiary.html#attribution">Licence &amp; attribution</a>.</p>
+</div>
+
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/store.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/tier0.js"></script>
+<script src="engines/character.js"></script>
+<script src="engines/encounter.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Char = SLAF.Character, Enc = DND.Encounter, Store = DND.Store;
+  var TABLES = null, SHEET = null, LAST = null, BUILT = false;
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function sign(n) { return (n >= 0 ? '+' : '') + n; }
+  function pct(x) { return Math.round(x * 100) + '%'; }
+
+  /* ---- the six-spoke radar ------------------------------------------------
+     Modifiers can be negative, so the scale is shifted rather than clipped:
+     a -1 save still draws, just very close to the centre. */
+  /* "A and B", "A, B and C" — `weakest` carries every save tied with the
+     second-thinnest, so it is not always two and a plain join(' and ') would
+     read "A and B and C". */
+  function listJoin(parts) {
+    if (parts.length < 2) return parts.join('');
+    return parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1];
+  }
+
+  function radar(saves, weakest) {
+    /* CY and the viewBox height must leave room for the labels drawn at
+       R + 16: the top one sits at CY − 121 and needs its ascender inside the
+       box, which at CY 122 it was not — STR came out clipped. */
+    var R = 105, CX = 130, CY = 132;
+    var scored = saves.filter(function (s) { return s.ok; });
+    if (scored.length < 3) return '';
+    var mods = scored.map(function (s) { return s.modifier; });
+    var lo = Math.min.apply(null, mods.concat([0])) - 1;
+    var hi = Math.max.apply(null, mods.concat([4])) + 1;
+    var span = hi - lo || 1;
+
+    var pts = [], axes = [], labels = [];
+    saves.forEach(function (s, i) {
+      var a = (Math.PI * 2 * i / saves.length) - Math.PI / 2;
+      var frac = s.ok ? (s.modifier - lo) / span : 0;
+      var r = 18 + frac * (R - 18);
+      pts.push((CX + Math.cos(a) * r).toFixed(1) + ',' + (CY + Math.sin(a) * r).toFixed(1));
+      axes.push('<line class="axis" x1="' + CX + '" y1="' + CY + '" x2="'
+        + (CX + Math.cos(a) * R).toFixed(1) + '" y2="' + (CY + Math.sin(a) * R).toFixed(1) + '"/>');
+      var lx = CX + Math.cos(a) * (R + 16), ly = CY + Math.sin(a) * (R + 16) + 4;
+      var weak = weakest.indexOf(s.stat) !== -1;
+      labels.push('<text class="' + (weak ? 'weak' : '') + '" x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '">'
+        + esc(s.stat) + ' ' + (s.ok ? sign(s.modifier) : '—') + '</text>');
+    });
+    var rings = [0.33, 0.66, 1].map(function (f) {
+      return '<circle class="grid" cx="' + CX + '" cy="' + CY + '" r="' + (18 + f * (R - 18)).toFixed(1) + '"/>';
+    }).join('');
+    return '<svg class="radar" viewBox="0 0 260 264" role="img" aria-label="Saving throw modifiers by ability">'
+      + rings + axes.join('')
+      + '<polygon class="shape" points="' + pts.join(' ') + '"/>'
+      + labels.join('') + '</svg>';
+  }
+
+  /* ---- render ------------------------------------------------------------ */
+
+  function renderMap() {
+    var saves = Char.savingThrows(SHEET.stats, SHEET.klass, SHEET.proficiencyBonus, TABLES);
+    var p = Enc.predators(SHEET, TABLES);
+    var weakest = p.ready ? p.weakest : [];
+
+    el('radar').innerHTML = radar(saves, weakest);
+    el('radar-legend').textContent = p.ready
+      ? 'Further out is safer. Your thinnest saves are marked — every save tied '
+        + 'with the second-thinnest, because a tie is a tie.'
+      : 'Score more of your saves to draw the map.';
+
+    if (!p.ready) {
+      el('pred-intro').textContent = p.reason;
+      el('pred-list').innerHTML = '';
+      return;
+    }
+    /* Escape each value, THEN join with markup. Escaping a string that already
+       contains the tags you meant to keep renders them as text — the same
+       mistake as pre-escaping an entity, wearing a different hat. */
+    var scoredCount = saves.filter(function (x) { return x.ok; }).length;
+    el('pred-intro').innerHTML = (p.weakest.length >= scoredCount
+        ? 'Your scored saves are all level, so nothing stands out as your thin spot.'
+        : 'You are thinnest on '
+          + listJoin(p.weakest.map(function (w) { return '<b>' + esc(w) + '</b>'; })) + '.')
+      + ' You are in tier ' + esc(p.tier.id) + ' — ' + esc(p.tier.name)
+      + '. These hunt where you are thin:';
+    el('pred-list').innerHTML = p.creatures.map(function (c) {
+      var here = c.tier === p.tier.id;
+      return '<div class="pred"><span><span class="nm">' + esc(c.name) + '</span>'
+        + '<span class="meta"><br/>' + esc(c.saveAbility) + ' save · ' + esc(c.attackType)
+        + (here ? ' · a real threat at your tier' : ' · tier ' + esc(c.tier) + ', later') + '</span></span>'
+        + '<span class="tag">CR ' + esc(c.cr) + '</span></div>';
+    }).join('');
+  }
+
+  function renderResult(r) {
+    LAST = r;
+    el('btn-log').hidden = false;
+    var cls = r.negated ? 'safe' : (r.deathSaves || r.massiveDamage ? 'bad' : '');
+    var verdict = r.negated
+      ? 'It cannot land.'
+      : r.massiveDamage
+        ? 'Massive damage — straight past death saves.'
+        : r.deathSaves
+          ? 'It would put you at zero.'
+          : 'It lands ' + pct(r.hitChance) + ' of the time.';
+
+    var figs = [
+      ['Target save', r.targetSave ? r.targetSave + ' ' + (r.modifier === null ? '—' : sign(r.modifier)) : '—'],
+      ['DC', r.dc === null ? '—' : r.dc],
+      ['Chance it lands', r.hitChance === null ? '—' : pct(r.hitChance)],
+      ['Damage', r.damageWeeks + ' wk' + (r.perPeriod ? '/' + r.perPeriod : '')],
+      ['HP after', r.hpAfter === null ? '—' : r.hpBefore + ' → ' + r.hpAfter]
+    ];
+
+    var blocks = r.blockedBy.map(function (b) {
+      var mark = b.state === 'held' ? '✓' : (b.state === 'absent' ? '✗' : '?');
+      var says = b.state === 'held'
+        ? 'You have this — ' + b.effect
+        : b.state === 'absent' ? 'You do not have this' : 'Not answered yet, so it counts for nothing';
+      return '<div class="blk"><span class="mark ' + b.state + '">' + mark + '</span>'
+        + '<span><b>' + esc(b.label) + '</b> <span class="tag">' + esc(b.kind) + '</span>'
+        + '<br/><span class="why">' + esc(says) + '. ' + esc(b.detail) + '</span></span></div>';
+    }).join('');
+
+    el('result').innerHTML = '<div class="result ' + cls + '">'
+      + '<p class="verdict">' + esc(verdict) + '</p>'
+      + (r.advantage ? '<p class="note">You roll this save with advantage.</p>' : '')
+      + '<div class="figs">' + figs.map(function (f) {
+          return '<div class="fig"><div class="k">' + esc(f[0]) + '</div><div class="v">' + esc(f[1]) + '</div></div>';
+        }).join('') + '</div>'
+      + (r.damageNote ? '<p class="note">' + esc(r.damageNote) + '</p>' : '')
+      + '<h2 style="font-size:var(--text-md);margin:var(--space-3) 0 var(--space-1)">What blocks it</h2>'
+      + (blocks || '<p class="note faint">Nothing blocks this one.</p>')
+      + (r.unknown.length
+          ? '<p class="note" style="margin-top:var(--space-3)">' + r.unknown.length
+            + ' of these you have not answered. <a href="sheet.html">Sharpen your sheet</a> and this gets sharper too.</p>'
+          : '')
+      + (r.lair.length
+          ? '<h2 style="font-size:var(--text-md);margin:var(--space-3) 0 var(--space-1)">Where it hunts</h2>'
+            + '<div class="lair">' + r.lair.map(esc).join(' · ') + '</div>'
+          : '')
+      + '<p class="note faint" style="margin-top:var(--space-3)">'
+      + (r.mode === 'roll' ? 'One roll of the dice.' : 'Expected damage — the average, not a roll.')
+      + '</p></div>';
+  }
+
+  function renderLog() {
+    var rows = Store.encounters();
+    el('log').innerHTML = rows.length
+      ? rows.map(function (e) {
+          var when = String(e.on).slice(0, 10);
+          return '<div class="logrow"><span><b>' + esc(e.monsterId || '?') + '</b> — '
+            + esc(e.outcome || '?') + (e.reason ? '<br/><span class="why faint" style="font-size:var(--text-xs)">'
+            + esc(e.reason) + '</span>' : '') + '</span>'
+            + '<span class="faint">' + esc(when) + (Money.isEntered(e.damageWeeks)
+              ? ' · ' + e.damageWeeks + ' wk' : '') + '</span></div>';
+        }).join('')
+      : '<p class="note faint">Nothing logged yet.</p>';
+  }
+
+  function creatureById(id) {
+    return Enc.allCreatures(TABLES).filter(function (c) { return c.name === id; })[0] || null;
+  }
+
+  function runNow(mode) {
+    var c = creatureById(el('pick').value);
+    if (!c) return;
+    renderResult(Enc.run(SHEET, c, { tables: TABLES, household: Store.household(), mode: mode }));
+  }
+
+  function boot(tables) {
+    TABLES = tables;
+    if (BUILT) return;
+    DND.Skin.mount(el('skin-bar'));
+    SHEET = Char.sheet(Store.household(), TABLES);
+    if (!SHEET.ready) {
+      el('load-notice').hidden = false;
+      el('load-notice').className = 'notice is-error';
+      el('load-notice').textContent = SHEET.reason;
+      return;
+    }
+    if (!Money.isOk(SHEET.currentHp)) {
+      el('empty-notice').hidden = false;
+      el('empty-notice').innerHTML = 'Your sheet has no hit points yet, so damage has nothing to '
+        + 'come off. <a href="sheet.html">Add your numbers</a> and every figure here sharpens.';
+    }
+
+    /* Built once. The picker is the only control on the page. */
+    el('pick').innerHTML = Enc.allCreatures(TABLES).map(function (c) {
+      return '<option value="' + esc(c.name) + '">' + esc(c.name) + ' · CR ' + esc(c.cr)
+        + ' · ' + esc(c.kind) + '</option>';
+    }).join('');
+    BUILT = true;
+
+    el('btn-run').addEventListener('click', function () { runNow('expected'); });
+    el('btn-roll').addEventListener('click', function () { runNow('roll'); });
+    el('btn-log').addEventListener('click', function () {
+      if (!LAST) return;
+      Store.logEncounter({
+        monsterId: LAST.monster,
+        outcome: LAST.negated ? 'immune' : (LAST.halved || LAST.advantage ? 'resisted' : 'hit'),
+        reason: LAST.held.length ? LAST.held.map(function (b) { return b.label; }).join(', ') : null,
+        damageWeeks: LAST.damageWeeks,
+        source: 'self'
+      });
+      renderLog();
+    });
+
+    renderMap();
+    renderLog();
+  }
+
+  SLAF.Reference.load().then(boot).catch(function (err) {
+    var n = el('load-notice');
+    n.hidden = false; n.className = 'notice is-error';
+    n.textContent = 'Couldn’t load the game data (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

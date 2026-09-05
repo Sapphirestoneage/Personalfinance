@@ -266,7 +266,7 @@
       format: money
     },
 
-    /* The Coverage Checkup (D-069): four facts about your cover, asked in
+    /* The Coverage Checkup (D-071): four facts about your cover, asked in
        Sleep At Night, read by the Statement's worst plausible year. */
     oopMax: {
       label: 'Out-of-pocket maximum', owner: 'sleep-at-night', anchor: 'coverage',
@@ -301,7 +301,7 @@
       format: function (v) { return v ? 'Yes' : 'No'; }
     },
 
-    /* The target mix (D-069): stated in Where It Goes, a target rather than
+    /* The target mix (D-071): stated in Where It Goes, a target rather than
        a reading of the accounts. Shares of one; formatted as percentages. */
     allocationStocks: allocationRow('stocks', 'Target: stocks'),
     allocationBonds: allocationRow('bonds', 'Target: bonds'),
@@ -341,7 +341,7 @@
       read: function (h) { return Schema.otherAssetsCents(h); },
       format: money
     },
-    /* The Statement's own facts (D-067). Confidence-weighted net worth is
+    /* The Statement's own facts (D-069). Confidence-weighted net worth is
        derived — it lives here so the dashboard and the map can read it as
        one figure with one owner. */
     confidenceWeightedNetWorth: {
@@ -398,7 +398,7 @@
       format: money
     },
 
-    /* D-068: the ages you plan around, stored in household.targets and
+    /* D-070: the ages you plan around, stored in household.targets and
        written only by FIRE Number. */
     retireAge: {
       label: 'Stop working at', owner: 'fire', anchor: 'targets',

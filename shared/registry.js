@@ -117,7 +117,7 @@
       href: 'rooms/statement.html',
       tier: 1,
       tags: ['debt'],
-      /* Replaces Net Worth (D-067); rooms/net-worth.html redirects here. */
+      /* Replaces Net Worth (D-069); rooms/net-worth.html redirects here. */
       subsections: [
         { id: 'portfolios', label: 'Three portfolios' },
         { id: 'assets',     label: 'Rate what you own' },

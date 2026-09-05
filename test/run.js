@@ -1834,7 +1834,7 @@ section('SWAN Number');
   /* -- Ownership: exactly one room may edit it --------------------------- */
   check('the SWAN target is owned by Sleep At Night',
     Ownership.field('swanTarget').owner, 'sleep-at-night');
-  check('and Sleep At Night owns only the number and the four coverage facts (D-069)',
+  check('and Sleep At Night owns only the number and the four coverage facts (D-071)',
     Ownership.ownedBy('sleep-at-night').sort().join(','), 'disabilityMonthly,oopMax,swanTarget,termLife,umbrella');
   const chip = Ownership.describe('swanTarget', months6, 'financial-snapshot');
   check('elsewhere it renders as a read-only $18,900', chip.display, '$18,900');
@@ -6068,7 +6068,7 @@ Registry.all().forEach(function (room) {
 section('The Statement room');
 
 (function () {
-  /* D-067: The Statement replaces Net Worth as the owner of the itemised
+  /* D-069: The Statement replaces Net Worth as the owner of the itemised
      assets and of net worth itself; the old file is a redirect. */
   const stmt = Registry.byId('statement');
   checkTrue('The Statement is registered', !!stmt);
@@ -6110,7 +6110,7 @@ section('The Statement room');
 section('Targets, owned by FIRE');
 
 (function () {
-  /* D-068: the ages you plan around are stored, not previewed. */
+  /* D-070: the ages you plan around are stored, not previewed. */
   check('the stop age is owned by FIRE', Ownership.field('retireAge').owner, 'fire');
   check('the coast age is owned by FIRE', Ownership.field('coastAge').owner, 'fire');
   const fire = fs.readFileSync(path.join(ROOT, 'rooms/fire.html'), 'utf8');
@@ -6141,7 +6141,7 @@ section('Targets, owned by FIRE');
 section('The Coverage Checkup, and how it is split');
 
 (function () {
-  /* D-069: four facts about cover, owned by Sleep At Night; a target mix,
+  /* D-071: four facts about cover, owned by Sleep At Night; a target mix,
      owned by Where It Goes. Both stored, both read-only elsewhere. */
   ['oopMax', 'termLife', 'disabilityMonthly', 'umbrella'].forEach(function (f) {
     check(`${f} is owned by Sleep At Night`, Ownership.field(f).owner, 'sleep-at-night');

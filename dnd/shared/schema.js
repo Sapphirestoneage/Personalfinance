@@ -97,9 +97,9 @@
     'asset.taxCharacter':                        { class: 'raw',        unit: 'enum',    values: ['pretax', 'roth', 'taxable', 'hsa', '529', 'daf', 'cash', 'property', 'business', 'other', 'unknown'], note: 'how the account is taxed. null means not asked; unknown means the person entered only a total. BRIEF §3.1, D-061' },
     'meta.hasDebt':                              { class: 'raw',        unit: 'bool',    note: 'null not asked; false means "no debt" as an answer, which takes Debt Payoff off the path. D-061' },
     'asset.category':                            { class: 'raw',        unit: 'enum',    values: ['cash', 'investment', 'retirement', 'real_estate', 'vehicle', 'other'] },
-    'asset.liquid':                              { class: 'raw',        unit: 'bool',    note: 'reachable this month. Kept for every reader that already uses it; written from `liquidity` when that is set (liquid === liquidity <= 2). D-064' },
-    'asset.liquidity':                           { class: 'raw',        unit: 'enum',    values: [1, 2, 3, 4], note: '1 today · 2 within 30 days · 3 within 12 months · 4 cannot/will not sell. null = not rated; the access_rules default is then PROPOSED, never stored. D-064' },
-    'asset.confidence':                          { class: 'raw',        unit: 'enum',    values: [1, 2, 3, 4], note: '1 guaranteed · 2 85%+ · 3 real but do not count on it · 4 probably zero. null = not rated and excluded from the weighted total. D-064' },
+    'asset.liquid':                              { class: 'raw',        unit: 'bool',    note: 'reachable this month. Kept for every reader that already uses it; written from `liquidity` when that is set (liquid === liquidity <= 2). D-066' },
+    'asset.liquidity':                           { class: 'raw',        unit: 'enum',    values: [1, 2, 3, 4], note: '1 today · 2 within 30 days · 3 within 12 months · 4 cannot/will not sell. null = not rated; the access_rules default is then PROPOSED, never stored. D-066' },
+    'asset.confidence':                          { class: 'raw',        unit: 'enum',    values: [1, 2, 3, 4], note: '1 guaranteed · 2 85%+ · 3 real but do not count on it · 4 probably zero. null = not rated and excluded from the weighted total. D-066' },
     'asset.costBasisCents':                      { class: 'raw',        unit: 'cents',   note: 'optional; what was paid in. For Roth it is the part reachable before 59½' },
     'asset.hassle':                              { class: 'raw',        unit: 'enum',    values: [1, 2, 3], note: '1 easy · 2 moderate · 3 annoying — for anything income-producing' },
     'asset.cashFlowMonthlyCents':                { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'net monthly cash the asset throws off; null for one that does not' },
@@ -115,7 +115,7 @@
     'allocation.stocks':                         { class: 'raw',        unit: 'rate',    note: 'target share; stocks + bonds + cash = 1. Owned by Where It Goes' },
     'allocation.rebalanceBand':                  { class: 'raw',        unit: 'rate',    note: 'how far a slice may drift before rebalancing, e.g. 0.05' },
     'targets.retireAge':                         { class: 'raw',        unit: 'years',   note: 'the age you intend to stop. Owned by FIRE' },
-    'targets.coastAge':                          { class: 'raw',        unit: 'years',   note: 'the age the coast variant grows to. Owned by FIRE; replaces the unstored preview knob. D-064' },
+    'targets.coastAge':                          { class: 'raw',        unit: 'years',   note: 'the age the coast variant grows to. Owned by FIRE; replaces the unstored preview knob. D-066' },
     'incomeSource.hassle':                       { class: 'raw',        unit: 'enum',    values: [1, 2, 3], note: 'Return on Hassle applied to the job itself' },
     'scenario.diff':                             { class: 'raw',        unit: 'object',  note: 'a named, dated overlay consumed by the life-events engine (T6). Nothing reads it yet' },
     'debt.balanceCents':                         { class: 'raw',        unit: 'cents' },
@@ -211,7 +211,7 @@
       ongoing: f.ongoing === undefined ? true : !!f.ongoing,
       type: f.type || 'w2',
       /* Return on Hassle applied to the job: 1 easy · 2 moderate · 3
-         annoying. null until rated. D-064. */
+         annoying. null until rated. D-066. */
       hassle: f.hassle === undefined ? null : f.hassle,
       employerMatch: f.employerMatch || {
         matchPercent: null,                        // 0.5 === 50 cents on the dollar
@@ -393,7 +393,7 @@
          Start Here (pre-tax / Roth / taxable); a lump typed as one total is
          'unknown', which is an answer — null is "never asked". D-061. */
       taxCharacter: f.taxCharacter === undefined ? null : f.taxCharacter,
-      /* The 10x Statement's per-asset facts (D-064). Every one starts null:
+      /* The 10x Statement's per-asset facts (D-066). Every one starts null:
          liquidity and confidence are rated, not guessed — the access_rules
          default is proposed in the box, never written. */
       liquidity: f.liquidity === undefined ? null : f.liquidity,
@@ -476,7 +476,7 @@
 
   /** The target mix, checked: which slices are entered, what they add to,
    *  and whether that is 100%. One function so the room, the ownership
-   *  chip and the tests agree on what "balanced" means. D-069. */
+   *  chip and the tests agree on what "balanced" means. D-071. */
   function allocationStatus(household) {
     var a = (household && household.allocation) || {};
     var slices = ['stocks', 'bonds', 'cash'];
@@ -730,7 +730,7 @@
     return {
       highestDeductibleCents: f.highestDeductibleCents === undefined
         ? null : f.highestDeductibleCents,
-      /* The Coverage Checkup (D-064): what a bad year can cost and what
+      /* The Coverage Checkup (D-066): what a bad year can cost and what
          stands behind you. All null until asked in Sleep At Night. */
       oopMaxCents: f.oopMaxCents === undefined ? null : f.oopMaxCents,
       termLifeCents: f.termLifeCents === undefined ? null : f.termLifeCents,
@@ -789,7 +789,7 @@
       swan: createSwanTarget(f.swan),
       /* Goals — SPEC.md §9 item 6. Owned by the Goals room. */
       goals: (f.goals || []).map(createGoal),
-      /* The 10x Statement's records (D-064). Money that is coming — a
+      /* The 10x Statement's records (D-066). Money that is coming — a
          pension, Social Security, an annuity — is not net worth and is not
          income yet; it is its own list. */
       futureIncome: (f.futureIncome || []).map(createFutureIncome),

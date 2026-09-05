@@ -442,7 +442,7 @@
       if (key === 'assumptions' || key === 'assumptionOverrides' || key === 'meta'
           || key === 'targets' || key === 'allocation' || key === 'insurance' || key === 'retirement') {
         /* Small fact objects merge, so a room writing one field cannot
-           wipe another room's. D-064. */
+           wipe another room's. D-066. */
         next[key] = Object.assign({}, next[key], p[key]);
         return;
       }
@@ -494,7 +494,7 @@
     return result;
   }
 
-  /* The 10x Statement's lists (D-064): same shape as the others. */
+  /* The 10x Statement's lists (D-066): same shape as the others. */
   function upsertFutureIncome(record) {
     var h = load();
     h.futureIncome = h.futureIncome || [];

@@ -3502,7 +3502,7 @@ is simply not proposed. Rooms updated: `rooms/cash-flow.html`.
 
 ---
 
-## D-064 — The 10x Statement's shape: what an asset is, how sure you are, when you can reach it
+## D-066 — The 10x Statement's shape: what an asset is, how sure you are, when you can reach it
 
 *(BRIEF.md §3.1–3.2, §3.4–3.6. Carries the brief's D-E further: every list
 already has `ownerIds`, and `people[1]` is a first-class adult since D-061.)*
@@ -3588,7 +3588,7 @@ its ownership rows and anchors.
 
 ---
 
-## D-065 — A tax engine in named steps; the effective-rate table stays as the fallback
+## D-067 — A tax engine in named steps; the effective-rate table stays as the fallback
 
 *(BRIEF.md §3.7.)* The app had one tax number: the effective-rate lookup in
 `data/effective_tax_rates_2026.json`, a blend of income tax and FICA by
@@ -3640,9 +3640,9 @@ is first.
 
 ---
 
-## D-066 — Seven questions a balance sheet should answer, in one engine
+## D-068 — Seven questions a balance sheet should answer, in one engine
 
-*(BRIEF.md §3.3, §3.5 — the numbers; the room is D-067.)* Net worth is one
+*(BRIEF.md §3.3, §3.5 — the numbers; the room is D-069.)* Net worth is one
 number. `engines/statement.js` answers the questions the number hides, each
 as its own Result, each re-derived by hand on the demo in `test/run.js`:
 
@@ -3679,7 +3679,7 @@ Nothing here re-implements a formula that exists: FI years come from
 
 ---
 
-## D-067 — Net Worth becomes The Statement, and every asset gets rated where it is listed
+## D-069 — Net Worth becomes The Statement, and every asset gets rated where it is listed
 
 *(BRIEF.md §3.2, §3.4, §3.6 — the room.)* `rooms/net-worth.html` was a list
 of what you own and one number. `rooms/statement.html` replaces it, keeps
@@ -3727,7 +3727,7 @@ print button with a print stylesheet.
   not in the registry and has no inputs.
 
 **Compatibility note.** No stored shape changed in this entry (the fields
-were added in D-064). What changed is who writes: itemised assets and the
+were added in D-066). What changed is who writes: itemised assets and the
 ratings on any asset are written by `statement`, through
 `Spine.upsertAsset`, and `futureIncome` rows through
 `Spine.upsertFutureIncome`. A future room that wants to show an asset's
@@ -3745,10 +3745,10 @@ on `#asset-list`, `test/alignment.js` on `.asset-grid` and `.pair`.
 
 ---
 
-## D-068 — The ages you plan around are stored, and FIRE Number owns them
+## D-070 — The ages you plan around are stored, and FIRE Number owns them
 
 *(BRIEF.md §3.6.)* `household.targets` (`retireAge`, `coastAge`, shape from
-D-064) was written by nobody. FIRE Number now has a "Your targets" card
+D-066) was written by nobody. FIRE Number now has a "Your targets" card
 (anchor `targets`) with two boxes, stored on blur through
 `Spine.updateProfile({ targets })`, and two ownership rows, `retireAge`
 and `coastAge`, owned by `fire` and read-only everywhere else.
@@ -3794,10 +3794,10 @@ on `#targets`, `test/alignment.js` on `.params`.
 
 ---
 
-## D-069 — The Coverage Checkup lives in Sleep At Night; the target mix lives in Where It Goes
+## D-071 — The Coverage Checkup lives in Sleep At Night; the target mix lives in Where It Goes
 
 *(BRIEF.md §3.2.)* Two small fact cards, each in the room whose question
-it answers, each writing fields that D-064 added and nobody wrote.
+it answers, each writing fields that D-066 added and nobody wrote.
 
 **Coverage checkup** (`rooms/sleep-at-night.html`, anchor `coverage`).
 Four facts about your cover: the health out-of-pocket maximum, term life
@@ -3828,7 +3828,7 @@ owned by `accounts`.
 
 **Both cards are static markup, `.value` only** (LIVE-FORM: built once),
 written on blur through `Spine.updateProfile`, whose field-wise merge of
-`insurance` and `allocation` (D-064) means a card writing one field
+`insurance` and `allocation` (D-066) means a card writing one field
 leaves every other — the deductible included — alone. `test/forms.js`
 checks exactly that on a phone.
 
@@ -3847,6 +3847,29 @@ of your household's spending" and "95% of what you spend", reload, the
 Statement's worst year at $29,400; enter 70/20/15 and read "5% too much",
 correct to 10 and read the band), `test/forms.js` on both cards,
 `test/alignment.js` on `.cover-grid` and `.grid-2`.
+
+---
+
+# The Dungeons & Dividends entries
+
+Everything below this line is about the `dnd/` tool. **The numbers D-046
+through D-052 appear twice in this file** — once above for SPARKS and once
+below for D&D — because these entries were written while the D&D tool was
+going to be its own repository (D-049, D-050). In a reference like
+"DECISIONS.md D-046", the one that is meant is the one on the same side of
+this line as the file doing the referencing: `shared/suggest.js` means the
+SPARKS D-046, `dnd/engines/character.js` means the D&D one. The exception is
+`dnd/shared/*.js`, which are byte-identical vendored copies of the SPARKS
+files and therefore carry SPARKS numbers.
+
+**From here on the log is one sequence.** A new entry — for either side —
+takes the highest number in the whole file plus one, which is why the next
+D&D entry after D-052 is D-064. A new SPARKS entry goes immediately *above*
+this divider; a new D&D entry goes at the end of the file. Renumbering the
+seven duplicates properly is a documentation pass of its own and has not
+been done. The SPARKS entries written at the same time as the D&D D-064
+and D-065 were renumbered to D-066–D-071 on merge, so from D-064 on every
+number is unique.
 
 ---
 
@@ -4248,3 +4271,244 @@ shipped three times in this repository — "Proficiencies &amp; training", then
 scans the string arguments of every escaping helper and fails on a pre-escaped
 entity. Verified by reintroducing the bug deliberately: the suite catches it and
 names the offending string.
+
+---
+
+## D-064 — A monster's danger is a property of the meeting, not of the monster
+
+BRIEF.md §9.3 asks for an encounter engine: pick a creature from the bestiary,
+run it at the sheet, and get back what actually happens. The design question it
+forces is where danger lives. A "CR 5 Timeshare Charm-Caster" sounds like a
+fixed quantity, and it is not one — the same creature is a shrug to someone with
+a high Wisdom score and six months of reserve, and a genuine threat to someone
+with neither. So nothing in `engines/encounter.js` computes a monster's danger.
+It computes a *meeting*: this creature, this sheet, this set of defences.
+
+### Save DCs are derived from CR, because the rulebook never set them
+
+Rulebook §13 leaves save DCs open. The two options were to invent a DC per
+creature — fourteen unfalsifiable numbers — or to derive all of them from the
+one property every creature already has, its Challenge Rating. The ladder is in
+`data/dnd_rules.json` under `encounterRules.crToDc`: CR ≤ 0.25 → DC 10, rising
+to DC 20 at CR 20 and DC 21 above it. It follows the shape of a CR-to-save-DC
+progression — harder monster, harder save — and the specific numbers are a
+convention chosen here, not a measurement and not agreed with anyone. That is
+said in the data file itself, in the `source` field, so nobody later mistakes it
+for research. Disagreeing with it means editing one array, and every creature
+moves together. Inventing fourteen numbers would have meant disagreeing with it
+fourteen times.
+
+`crToNumber` handles the three shapes the bestiary actually uses: `1/4`, `7`,
+and `18–20` (a range, which takes its lower bound so a range is never scored as
+more dangerous than its floor).
+
+### Three blocker states, and why the brief's two were not enough
+
+A blocker is a thing you hold that changes the encounter — an emergency fund,
+disability insurance, a high Threat Detection score. The brief's shape implies a
+boolean: you have it or you don't. That is the same mistake as `|| 0`.
+
+**"You have no disability insurance" and "nobody has asked you about disability
+insurance" are different claims, and only the first should make a monster look
+more dangerous.** So `blockerState()` returns `held`, `absent`, or `unknown`,
+and unknown applies nothing — no effect, no penalty, no assumption either way.
+The page lists them separately, under what it would need to know. This is the
+deviation from the brief in this tranche and it is deliberate; the rest of the
+repo would be lying about a blank if it did anything else.
+
+The catalogue of fourteen blockers lives in data (`dnd_rules.json.blockers`) and
+says what each blocker *is*. The predicates that decide whether this character
+actually holds one live in the engine, because "six months of reserve" is a
+computation over the household, not a fact to be stored. Blockers keyed to a
+sub-stat need no predicate at all — they read `subScores[id] >= min`, and an
+unscored sub-stat comes back unknown for free.
+
+Three effects, all read from data: `negate` (the attack cannot land), `halve`,
+and `advantage`. Advantage is rolling twice and keeping the better, which is
+worth about **+3.7** on a d20 on average; it is applied as a flat modifier
+rather than simulated, and the 3.7 is in `encounterRules.effects` where it can
+be argued with.
+
+### The save the monster targets is your worst one
+
+`targetSave()` reads the creature's `saveAbility`. A single ability picks that
+save. A pair like `CON+DEX` picks **whichever of the two is worse** — a monster
+attacks where you are thinnest, not where it is convenient. `ALL` means the
+worst of all six. Unscored saves are excluded from the comparison rather than
+treated as terrible: a blank is a blank, not a weakness, and if none of the
+targeted saves is scored the engine reports the target without a number instead
+of guessing one.
+
+The same rule drives the radar chart and the "natural predators" list. The two
+lowest *scored* saves are the weak spokes, and the creatures that hunt there at
+your tier are listed. Fewer than two scored saves and the panel says so rather
+than drawing a shape out of nothing.
+
+### The clamp, and Massive Damage
+
+A natural 1 always fails and a natural 20 always succeeds, so the chance an
+attack lands is clamped to 5%–95% however lopsided the arithmetic gets. A
+character can be very well defended; they cannot be immune by having big
+numbers. They *can* be immune by holding a `negate` blocker, which is the point
+— the Payday Loan Wraith cannot touch you at all if you have three months of
+reserve, and no Wisdom score achieves that.
+
+Damage is already in weeks, because HP is weeks (D-046). Rulebook §3A's Massive
+Damage rule then falls out for free: a single hit at or above Max HP skips the
+death saves and goes straight to insolvency, and the engine flags it.
+
+### The worked example, hand-derived
+
+The brief says the acceptance criterion is that this "reproduces the audit's
+worked example". **I do not have the audit** — only BRIEF.md, which quotes its
+conclusions but not its arithmetic. So the criterion was re-derived by hand
+against the demo persona rather than checked against a source I cannot read, and
+that is worth knowing before trusting the match:
+
+    Timeshare Charm-Caster, CR 3      → DC 13 (CR ≤ 4 band)
+    demo sheet's WIS save              → +1
+    holds the Self-Awareness blocker   → advantage, +3.7
+    effective modifier                 → +4.7
+    chance it lands = (13 − 4.7 − 1)/20 = 7.3/20 = 0.365   → 37%
+    damage 3d6 expected                → 10.5 weeks
+    current HP 13                      → 2.5 weeks left
+
+All six figures match what the page prints.
+
+### The encounter log, which exists for T10
+
+`shared/store.js` gains `logEncounter(rec)` / `encounters()`, capped at 50 and
+newest first. Nothing in §9.3 needs a log — it is there because T10's type chart
+wants to know which attack types actually landed on you over time, and a record
+written from the start is worth more than one that begins the day T10 ships. The
+shape is `{at, monster, attackType, tier, targetSave, dc, hitChance,
+damageWeeks, hpBefore, hpAfter, mode}`. Anything reading it should treat missing
+fields as missing, as ever.
+
+### Compatibility note
+
+**Stored shape:** `dnd.character.v1` gains `encounters` — an array, capped at
+50, newest first, of the record above. It is **added**; absent means no
+encounter has been run, which is not the same as zero encounters and should not
+be rendered as one. Nothing existing changed shape. `household.dndProfile` gains
+optional `disabilityInsurance` and `umbrellaPolicy` (booleans, absent = not
+asked); `healthCoverage` and `automatedSaving` were already there.
+
+**Rooms updated:** `dnd/encounter.html` (new), `dnd/sheet.html` and
+`dnd/bestiary.html` (links to it only). No SPARKS room reads or writes any of
+this.
+
+**Before writing any of these from a new room:** the encounter log is the D&D
+tool's own, under `dnd.character.v1`, not part of the household model, and it is
+deliberately not exported by `shared/export.js` — a lead magnet ships a
+character, not a play history.
+
+---
+
+## D-065 — The free page tells you what hunts you, and is careful about what it cannot see
+
+The Tier 1 page asks for no money at all. That is the whole point of it: it is
+the thing you send to someone who has never thought about a savings rate. But it
+meant the page ended on a class leaning, three ability scores and an alignment —
+a personality quiz result, and personality quiz results are forgettable.
+
+§9.3's encounter engine turned out to need nothing this page lacks. Predators are
+computed from saving throws, saving throws come from ability scores, and the page
+already has three of them. So the Tier 1 result now ends on **what hunts you**:
+your three scored saves with the two thinnest marked, the moves those creatures
+use, and the creatures themselves in CR order.
+
+### What it refuses to claim
+
+All of the care in this went into what the panel must *not* say.
+
+**Three of six saves are blank, and a blank is not a weakness.** STR, DEX and CON
+need real numbers. The obvious implementation treats them as zero, ranks all six,
+and tells someone their Constitution save is their great vulnerability when
+nobody ever asked. So the copy names them — "the other 3 (STR, DEX, CON) need
+real numbers and are **blank, not bad**" — and `predators()` already excluded
+unscored saves, which is why it could be reused unchanged. Four tests assert that
+an unscored save never appears in `weakest`; breaking that rule in the engine
+fails all four.
+
+**"Your two thinnest" means thinnest of the three we could score**, and the
+sentence says so rather than implying a ranking over six.
+
+**No tier is shown.** `predators()` falls back to tier I when there is no Level,
+which is right for its own callers, but a fallback tier is not a measured tier
+and this page has no Level at all. So the creature list is not gated by tier and
+the tier is never printed. The list spans CR 3 to CR 18 and is sorted ascending,
+with the copy saying plainly that some of them are a long way off — which is
+truer and more interesting than hiding the far ones.
+
+**The moves are a set, not a ranking.** It would be easy to count attack types
+across the matching creatures and announce "you are most exposed to guilt". That
+number would measure how many guilt-monsters I happened to write, not anything
+about the person. So the panel lists the distinct attack types with their blurbs
+and makes no claim about which dominates.
+
+### A tie is a tie — a change to §9.3's engine
+
+Building this found a real bug in the engine shipped yesterday. `predators()`
+took a flat slice of the two thinnest saves. Run the full quiz and it is easy to
+come out with INT, WIS and CHA all on the same modifier — at which point the
+panel marked two of three identical saves as thin and the third as safe, a claim
+the numbers do not support. The demo sheet had it too: four of its six saves sit
+on +1 and only two were being marked.
+
+`weakest` now carries **every save tied with the second-thinnest**. With no tie
+it still returns exactly two, so the common case is unchanged; with a tie it
+returns all of them. Both callers were updated to match — the Tier 1 panel and
+the encounter room's radar and intro — and both now say "all level, nothing
+stands out" when the tie covers every scored save, rather than naming an
+arbitrary pair.
+
+That made a plain `join(' and ')` wrong in three places, since a three-way tie
+rendered "INT and WIS and CHA". Both pages now have a `listJoin` that produces
+"A, B and C".
+
+The §9.3 acceptance criterion is unaffected: the Timeshare Charm-Caster against
+the demo sheet still targets WIS at DC 13 for 37% and 10.5 weeks, 13 → 2.5.
+
+### The share text is the product
+
+This tool is a lead magnet meant to be pasted into a group chat, so the copy
+button's output matters as much as the page. It was one `·`-joined line; it is
+now five: the leaning and alignment, the three scores, the two thinnest saves,
+the three nearest predators, and a link back. The predator names come through the
+same CR sort the panel uses — one function, called twice — so "hunted by" names
+the three that can actually reach you rather than three arbitrary ones.
+
+### The locked block now promises something specific
+
+It listed Level, HP and Armour as `?`. It still does, and adds the two things
+§9.3 made real: the full sheet fills in the three saves this page had to leave
+blank, and then you can actually *run* the creatures listed above — whether they
+land, how hard, and what it costs in weeks.
+
+### On the spec
+
+**I did not have §9.6's text when I built this.** BRIEF.md is not in the
+repository, and the pasted copy had aged out of the working context; all that
+survived was my own one-line note, "Tier 1 result upgrade". The repo owner chose
+to have me build from my own reading rather than re-paste the section, so this
+entry is the record of what I decided that section ought to mean: give the free
+page the encounter engine's payoff, and be scrupulous about the three scores it
+cannot see. If the real §9.6 asked for something else, this is the entry to
+argue with.
+
+### Compatibility note
+
+**Stored shape:** nothing. This page reads what it already read.
+
+**Rooms updated:** `dnd/index.html` (the hunt panel, the share text, the locked
+block), `dnd/engines/encounter.js` (`weakest` includes ties) and
+`dnd/encounter.html` (radar legend and intro copy, to match). Apart from the tie
+fix the engine needed no change to serve a class-less, level-less character with
+three scored saves — it was written to exclude blanks rather than zero them, and
+that is what made it reusable here.
+
+**Before writing any of these from a new room:** `predators()` takes anything
+with `stats`, `klass`, `proficiencyBonus` and `level`, and tolerates `null` for
+the last three. It ranks only scored saves. If you call it, do not print its
+`tier` unless your caller actually has a Level.

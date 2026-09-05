@@ -23,7 +23,7 @@
 
    and estimate() adds them up and says what it did not model. Every table
    it reads is marked unverified except the SE mechanics; the Result carries
-   that so a room can print it beside the number. DECISIONS.md D-065.
+   that so a room can print it beside the number. DECISIONS.md D-067.
 
    Money is integer cents. A missing input is incomplete, never zero.
    ========================================================================== */

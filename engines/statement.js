@@ -19,7 +19,7 @@
      propertyMetrics          cap rate, cash-on-cash, DSCR for a rental
 
    Every input comes from the household or a data/ table; nothing is
-   assumed silently. Money is integer cents. DECISIONS.md D-066.
+   assumed silently. Money is integer cents. DECISIONS.md D-068.
    ========================================================================== */
 (function (root, factory) {
   var deps;
