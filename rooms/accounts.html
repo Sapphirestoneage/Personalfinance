@@ -88,7 +88,7 @@
         <span class="slaf-input-shell">
         <input type="text" inputmode="decimal" data-setup="marginalRate" placeholder="e.g. 22" aria-label="Marginal tax rate"/>
         <span class="slaf-affix">%</span></span>
-        <span class="slaf-hint">The rate on your next dollar. Nothing here guesses it — an effective rate is a different number.</span>
+        <span class="slaf-hint">The rate on your next dollar. An effective rate is a different number; a federal bracket may be proposed below.</span>
       </label>
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Roth so far this year</span>
         <span class="slaf-input-shell"><span class="slaf-affix">$</span>
@@ -99,6 +99,7 @@
         <input type="text" inputmode="decimal" data-setup="hsaContributedCents" placeholder="e.g. 0" aria-label="HSA contributed so far"/></span>
       </label>
     </div>
+    <p class="slaf-hint" data-suggest-note style="margin:var(--space-2) 0 0"></p>
     <div class="setup-toggles">
       <label class="setup-toggle"><input type="checkbox" data-setup="onHdhp" aria-label="On a high-deductible health plan"/>
         <span>I'm on a high-deductible health plan (so an HSA is open to me)</span></label>
@@ -121,7 +122,7 @@
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Years until you use it</span>
         <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="a-years" placeholder="e.g. 30" aria-label="Years"/></span></label>
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Your tax rate now</span>
-        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="a-now" placeholder="e.g. 24" aria-label="Current tax rate"/><span class="slaf-affix">%</span></span></label>
+        <a class="slaf-owned slaf-owned--field" id="a-now-read" href="#setup"><span class="slaf-owned-value">—</span><span class="slaf-owned-from">the setup above →</span></a></label>
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Rate in retirement</span>
         <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="a-later" placeholder="e.g. 22" aria-label="Future tax rate"/><span class="slaf-affix">%</span></span></label>
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Expected return</span>
@@ -174,6 +175,7 @@
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
 <script src="../shared/ownership.js"></script>
+<script src="../shared/suggest.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../engines/selfemployed.js"></script>
 <script src="../engines/accounts.js"></script>
@@ -215,7 +217,9 @@
       if (evt.key === 'Enter') { evt.preventDefault(); node.blur(); }
     });
   }
-  [['a-amount', 'money'], ['a-years', 'number'], ['a-now', 'rate'], ['a-later', 'rate'],
+  /* "Your tax rate now" is the marginal rate in the setup above — one
+     fact, asked once (D-052). It used to be a second box here. D-062. */
+  [['a-amount', 'money'], ['a-years', 'number'], ['a-later', 'rate'],
    ['a-return', 'rate'], ['a-cg', 'rate'],
    ['s-profit', 'money'], ['s-employee', 'money']].forEach(function (x) { bind(x[0], x[1]); });
 
@@ -227,9 +231,18 @@
 
   function renderCompare(h) {
     var assumptions = Schema.resolveAssumptions(h);
+    /* Field-sized, so it sits in the row of inputs at the same height —
+       the full chip is taller than a box and broke the row. */
+    var nowRead = el('a-now-read');
+    if (nowRead) {
+      var d = Ownership.describe('marginalRate', h, ROOM_ID);
+      nowRead.className = 'slaf-owned slaf-owned--field' + (d.isSet ? '' : ' slaf-owned--empty');
+      nowRead.querySelector('.slaf-owned-value').textContent = d.display;
+      nowRead.querySelector('.slaf-owned-from').textContent = d.isSet ? 'the setup above →' : 'add it in the setup above →';
+    }
     var r = Accounts.compareAccounts({
       pretaxCents: v['a-amount'],
-      currentTaxRate: v['a-now'],
+      currentTaxRate: assumptions.marginalRate,
       futureTaxRate: v['a-later'],
       annualReturn: Money.isEntered(v['a-return']) ? v['a-return'] : assumptions.expectedReturnRate,
       years: v['a-years'],
@@ -361,6 +374,27 @@
     return (h.retirement || {})[key];
   }
 
+  /* With no stored marginal rate, the federal bracket is PROPOSED in its
+     box — gross minus the standard deduction, walked up the 2026 ladder.
+     Federal only, an estimate, unverified: the source line says so. Tapping
+     it writes the shared rate exactly as typing it would. D-062. */
+  function suggestBracket(node) {
+    if (!node || !TABLES || !TABLES.federalBrackets) return;
+    var h = Spine.getProfile();
+    var gross = Schema.grossAnnualIncomeCents(h);
+    if (!Money.isOk(gross)) return;
+    var b = Reference.marginalBracket(TABLES.federalBrackets, gross.value / 100, h.filingStatus);
+    if (!Money.isOk(b)) return;
+    SLAF.Suggest.show(node, {
+      value: b.value,
+      display: String(Math.round(b.value * 1000) / 10),
+      source: 'the ' + TABLES.federalBrackets.taxYear + ' federal bracket for '
+        + Money.formatCents(gross.value) + ' gross, ' + (Ownership.FILING_LABELS[h.filingStatus] || h.filingStatus).toLowerCase()
+        + ' \u2014 federal only, an estimate (' + TABLES.federalBrackets.confidence + ')',
+      onUse: function (rate) { Spine.setAssumptionOverride('marginalRate', rate); }
+    });
+  }
+
   function paintSetup() {
     /* What you contribute is asked in Start Here now (D-061); this room
        reads it as a chip that links back to the question. */
@@ -370,6 +404,10 @@
       if (node === document.activeElement) return;
       var key = node.getAttribute('data-setup');
       var v = readSetup(key);
+      if (key === 'marginalRate') {
+        if (Money.isEntered(v)) SLAF.Suggest.clear(node);
+        else { node.value = ''; suggestBracket(node); return; }
+      }
       if (node.type === 'checkbox') { node.checked = v === true; return; }
       if (SETUP_MONEY.indexOf(key) !== -1) {
         node.value = Money.isEntered(v) ? Money.formatCents(v) : '';
@@ -383,7 +421,7 @@
 
   function writeSetup(key, node) {
     if (key === 'marginalRate') {
-      Spine.setAssumptionOverride('marginalRate', Money.parseRatePercent(node.value));
+      Spine.setAssumptionOverride('marginalRate', Money.parseRatePercent(SLAF.Suggest.entered(node)));
       return;
     }
     var h = Spine.getProfile();
@@ -414,6 +452,7 @@
 
   Reference.load().then(function (tables) {
     TABLES = tables;
+    paintSetup();
     render();
     jumpToHash();
   }).catch(function (err) {

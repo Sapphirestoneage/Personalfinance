@@ -78,6 +78,7 @@
     <span class="slaf-eyebrow">Salary vs. contract</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">Which actually pays more?</h2>
     <div class="grid-2">
+      <div id="seed-host" style="grid-column:1 / -1" hidden></div>
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Salary on offer</span>
         <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="w-salary" placeholder="e.g. 72000" aria-label="W2 salary"/></span></label>
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Benefits it comes with</span>
@@ -150,6 +151,8 @@
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
 <script src="../shared/ownership.js"></script>
+<script src="../shared/suggest.js"></script>
+<script src="../shared/seed.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../engines/selfemployed.js"></script>
 <script>
@@ -337,19 +340,28 @@
   }
   window.addEventListener('hashchange', jumpToHash);
 
+  /* The salary to compare against is what you already told Start Here
+     you earn — proposed, not taken. It used to be written straight into
+     the box; now it is a suggestion until tapped. D-062. */
+  var seed = SLAF.Seed.mount({
+    roomId: ROOM_ID, host: el('seed-host'),
+    seeds: function () {
+      var gross = Schema.grossAnnualIncomeCents(Spine.getProfile());
+      return [{ node: el('w-salary'),
+        value: Money.isOk(gross) ? gross.value : null, display: Money.isOk(gross) ? Money.formatCents(gross.value) : '',
+        source: 'your gross income, from Start Here',
+        apply: function (c) { v['w-salary'] = c; el('w-salary').value = Money.formatCents(c); render(); } }];
+    }
+  });
+
   Spine.registerRoom(ROOM_ID);
 
   SLAF.Progress.mount(ROOM_ID);
-  Spine.onChange(render);
+  Spine.onChange(function () { seed.refresh(); render(); });
 
   Reference.load().then(function (tables) {
     TABLES = tables;
-    /* Default the salary side to what they already told us they earn. */
-    var gross = Schema.grossAnnualIncomeCents(Spine.getProfile());
-    if (Money.isOk(gross) && !Money.isEntered(v['w-salary'])) {
-      v['w-salary'] = gross.value;
-      el('w-salary').value = Money.formatCents(gross.value);
-    }
+    seed.refresh();
     render();
     jumpToHash();
   }).catch(function (err) {

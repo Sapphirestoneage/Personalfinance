@@ -227,10 +227,18 @@ h3 { font-size: var(--text-md); }
    this" or types. DECISIONS.md D-060. */
 .slaf-input-shell.is-suggested { border-style: dashed; }
 .slaf-input--suggested { color: var(--color-text-faint) !important; text-decoration: underline dashed; text-decoration-color: var(--color-border-strong); text-underline-offset: 3px; }
-.slaf-use-this { display: inline-block; margin-top: var(--space-2); margin-right: var(--space-2); font: inherit; font-size: var(--text-xs); color: var(--color-accent-hover); background: none; border: 1px dashed var(--color-border-active); border-radius: var(--radius-pill); padding: 2px var(--space-3); cursor: pointer; }
+.slaf-use-this { flex-shrink: 0; margin-left: var(--space-1); font: inherit; font-size: var(--text-xs); line-height: 1; color: var(--color-accent-hover); background: none; border: 1px dashed var(--color-border-active); border-radius: var(--radius-pill); padding: 3px var(--space-2); cursor: pointer; }
 .slaf-use-this:hover { background: var(--color-surface-active); }
-.slaf-suggest-source { display: inline; font-size: var(--text-xs); color: var(--color-text-faint); }
+.slaf-suggest-source { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1); }
+[data-suggest-note]:empty { display: none; }
 .slaf-use-this.is-off, .slaf-suggest-source.is-off { visibility: hidden; }
+
+/* The "open with my numbers / a blank page" toggle on explore rooms. D-062. */
+.slaf-seed { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: var(--space-4); font-size: var(--text-sm); }
+.slaf-seed-label { color: var(--color-text-faint); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; }
+.slaf-seed-btn { font: inherit; font-size: var(--text-sm); color: var(--color-text-muted); background: var(--color-surface-raised); border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); padding: 4px var(--space-3); cursor: pointer; }
+.slaf-seed-btn[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+.slaf-seed-note { flex-basis: 100%; font-size: var(--text-xs); color: var(--color-text-faint); }
 
 /* Hide number spinners — they invite scroll-wheel edits on a money field. */
 .slaf-input-shell > input[type="number"]::-webkit-outer-spin-button,
