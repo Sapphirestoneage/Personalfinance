@@ -990,5 +990,21 @@
         "threatDetection"
       ]
     }
+  },
+  "initiative": {
+    "note": "BRIEF §9.1: initiative = DEX modifier + an automation bonus. The reasoning is that initiative is how fast you act before you have decided to act, and money that moves itself acts without you. The bonus is NOT derived from a savings figure — it is a separate answer, because a large savings rate you execute by hand every month is exactly the case this is meant to distinguish. Unanswered means no bonus is shown at all, not +0.",
+    "automationBonus": {
+      "all": 2,
+      "most": 1,
+      "some": 0,
+      "none": 0
+    },
+    "labels": {
+      "all": "Everything moves on its own",
+      "most": "Most of it is automatic",
+      "some": "A bit of it is",
+      "none": "I move it by hand"
+    },
+    "source": "Agreed with the repo owner 2026-09-04. Values are a convention, not a measurement."
   }
 }

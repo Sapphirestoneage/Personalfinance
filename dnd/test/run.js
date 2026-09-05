@@ -218,6 +218,41 @@ section('Dungeons & Dividends — level, HP and AC');
   check('the spectrum ranks highest first', spec[0].id, 'incomePower');
 })();
 
+section('Dungeons & Dividends — nothing is escaped twice');
+
+(function () {
+  /* This exact bug has shipped three times: a string containing &amp; is
+     passed to a helper that escapes its argument, so the reader sees the
+     literal "&amp;". The helpers below all escape, so a pre-escaped entity in
+     one of their string arguments is always wrong. */
+  const HELPERS = ['esc', 'panel', 'moneyInput', 'selectInput', 'sharpen'];
+  ['index.html', 'sheet.html', 'bestiary.html'].forEach(function (page) {
+    const src = fs.readFileSync(path.join(ROOT, page), 'utf8');
+    HELPERS.forEach(function (fn) {
+      /* Match the helper call and grab its quoted string arguments. */
+      const call = new RegExp(fn + "\\(\\s*'((?:[^'\\\\]|\\\\.)*)'", 'g');
+      let m;
+      while ((m = call.exec(src)) !== null) {
+        checkTrue(`${page}: ${fn}(…) argument is not pre-escaped`,
+          !/&(amp|lt|gt|quot);/.test(m[1]),
+          `"${m[1].slice(0, 60)}" is escaped again inside ${fn}() and renders as literal &amp;`);
+      }
+    });
+  });
+
+  /* And the same for the second argument position, where labels usually sit. */
+  ['sheet.html'].forEach(function (page) {
+    const src = fs.readFileSync(path.join(ROOT, page), 'utf8');
+    const call = /(?:moneyInput|selectInput|sharpen)\([^)]*?,\s*'((?:[^'\\]|\\.)*)'/g;
+    let m;
+    while ((m = call.exec(src)) !== null) {
+      checkTrue(`${page}: helper label is not pre-escaped`,
+        !/&(amp|lt|gt|quot);/.test(m[1]),
+        `"${m[1].slice(0, 60)}" would render as literal &amp;`);
+    }
+  });
+})();
+
 section('Dungeons & Dividends — licence and IP posture');
 
 (function () {

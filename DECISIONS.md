@@ -3250,3 +3250,71 @@ never transcribed into `data/`, and the test now makes sure it never is.
 Adding a monster means adding an original or public-domain name. If a new
 entry trips the tripwire the build fails, and the fix is to rename it — not to
 edit the list.
+
+---
+
+## D-052 — The D&D sheet is the form, and how that survives D-034
+
+BRIEF.md §9.1 asks for the Tier 2 page to be inverted: no intake form, the five
+numbers typed into the boxes they actually feed. Income sits in Strength, cash
+sits in Hit Points, investments sit in Experience, spending sits beside your FI
+number, debt sits in Debt Burden. Optional questions become a "sharpen" toggle
+on the panel they belong to.
+
+**This puts live inputs inside a container that re-renders on every keystroke,
+which is precisely the bug D-034 exists to prevent.** Rebuild that container
+mid-tap on a phone and the soft keyboard closes and will not reopen, because a
+programmatic `.focus()` cannot bring it back.
+
+The resolution is a hard split, and it is the reason `sheet.html` is written
+the way it is:
+
+    buildShell()   runs once, at boot. Creates every node, inputs included.
+    paint()        runs on every change. Writes textContent and .value ONLY.
+
+The rule that keeps it true: **a container holding an input is never given
+`innerHTML` after boot.** Containers with no inputs — the feature list, the
+levers table, the senses panel — are rebuilt freely, and are. Event wiring is
+one delegated listener on the shell, so it survives every repaint without
+rebinding.
+
+`test/forms.js` now taps all five money fields on a Pixel 7 and asserts each
+node is the same node afterwards, then asserts the values landed in the right
+places in the household. If `paint()` ever starts replacing a node instead of
+writing to it, that test fails.
+
+One knock-on: the class and subclass pickers are `<select>`s inside a repainted
+region, so they are rebuilt only when their own signature changes (class,
+subclass, availability). Rebuilding them on every keystroke would drop an open
+dropdown.
+
+### Initiative, and why it is not derived from the savings rate
+
+§9.1 also adds initiative = DEX modifier + an automation bonus. The obvious
+implementation reads the savings rate; that would be wrong. Initiative is how
+fast you act *before you have decided to act*, and a large savings rate
+executed by hand every month is exactly the case this is meant to tell apart
+from money that moves itself. So it is a separate question with its own answer,
+and `data/dnd_scoring.json` holds the bonus table.
+
+Unanswered means unanswered: the sheet shows the DEX modifier alone and says
+"DEX only — say how automatic your saving is", rather than adding +0 and
+implying the question was asked and answered.
+
+### The example state
+
+An untouched sheet renders the full example character, visibly ghosted, with
+one line and one button. Nothing is stored until the button is pressed — the
+demo persona still never loads by itself. The example seeds the declared scores
+as well as the money, because the ghosted preview shows a complete character
+and writing only the money would drop INT, WIS and CHA the moment you pressed
+the button; it never writes over a quiz someone already completed.
+
+### A recurring bug, now caught mechanically
+
+Pre-escaping a string that is then passed to a helper which escapes it has now
+shipped three times in this repository — "Proficiencies &amp; training", then
+"Investments &amp; retirement" and "Cash &amp; savings". `dnd/test/run.js` now
+scans the string arguments of every escaping helper and fails on a pre-escaped
+entity. Verified by reintroducing the bug deliberately: the suite catches it and
+names the offending string.

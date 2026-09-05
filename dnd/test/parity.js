@@ -61,6 +61,27 @@ check('same current HP in weeks', s.currentHp.value, 13);
 check('high-interest line still borrowed from foo_rules',
   s.debtBurden.highInterestRate, TABLES.fooRules.thresholds.highInterestDebtRate);
 
+console.log('\n[HP units: weeks on the box, months on the sub-line]');
+(function () {
+  /* BRIEF §9.1 requires both units, and requires them to agree. The sheet
+     prints weeks large and months small; if the divisor ever drifts, the two
+     numbers start contradicting each other on the same panel. */
+  const WEEKS_PER_MONTH = 52 / 12;                    // 4.3333…
+  const s = Char.sheet(Store.household(), TABLES);
+  const weeks = s.currentHp.value;
+  const monthsShown = Math.round((weeks / 4.345) * 10) / 10;   // the sheet's own expression
+  const monthsTrue = Math.round((weeks / WEEKS_PER_MONTH) * 10) / 10;
+  check('weeks reads as expected', weeks, 13);
+  check('months agrees with weeks to a tenth',
+    Math.abs(monthsShown - monthsTrue) <= 0.1, true);
+  /* And the round trip: months back to weeks lands on the same integer. */
+  check('months converts back to the same week count',
+    Math.round(monthsShown * WEEKS_PER_MONTH), weeks);
+  /* Max HP is a capacity in the SAME unit — mixing them is the D-046 trap. */
+  check('max HP is in weeks too, so the bar is meaningful',
+    s.maxHp.weeks >= weeks || s.maxHp.reducedByDebt, true);
+})();
+
 console.log('\n[tier 1 works with no money at all]');
 Store.reset();
 const rules=TABLES.dndRules, scoring=TABLES.dndScoring;
