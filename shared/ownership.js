@@ -764,6 +764,24 @@
       read: function (h) { return Schema.monthlyExpensesCents(h); },
       format: function (v) { return money(v) + '/mo'; }
     },
+    /* The Skill Tree's one write and the exercise library's log (D-131):
+       only done is stored; every other state is derived. */
+    skillsDone: {
+      label: 'Skills done', owner: 'skill-tree', anchor: 'board',
+      read: function (h) {
+        var n = Object.keys((h.skillTree && h.skillTree.state) || {}).length;
+        return n ? Money.ok(n) : Money.incomplete('No skill marked done yet.', ['skillTree']);
+      },
+      format: function (v) { return v + (v === 1 ? ' skill' : ' skills'); }
+    },
+    exercisesDone: {
+      label: 'Exercises done', owner: 'exercises', anchor: 'list',
+      read: function (h) {
+        var n = Object.keys((h.exercises && h.exercises.done) || {}).length;
+        return n ? Money.ok(n) : Money.incomplete('No exercise completed yet.', ['exercises']);
+      },
+      format: function (v) { return v + (v === 1 ? ' exercise' : ' exercises'); }
+    },
     /* The practice ledger: every logged day's worth, summed. Written one
        row at a time by the Skill Stacker and by nothing else. D-090. */
     practiceLedger: {

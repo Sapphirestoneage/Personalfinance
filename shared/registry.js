@@ -486,6 +486,42 @@
         { id: 'reading', label: 'Reading from elsewhere' }
       ]
     },
+    /* The Skill Tree and the Exercise Library (D-131): what the next hour
+       does, beside the ladder's what the next dollar does. */
+    {
+      id: 'skill-tree',
+      kind: 'about-you',
+      needs: [],
+      order: 20.2,
+      title: 'The Skill Tree',
+      blurb: 'What the next hour does: every money skill in five bands, open, locked with the reason, done, or skipped because you are already past it. The ladder runs above it and the two unlock each other.',
+      href: 'rooms/skill-tree.html',
+      tier: 2,
+      tags: ['cashflow'],
+      subsections: [
+        { id: 'next',    label: 'What opens next' },
+        { id: 'ladder',  label: 'The fortress line' },
+        { id: 'board',   label: 'The board' },
+        { id: 'warps',   label: 'Warps' },
+        { id: 'reading', label: 'Reading from elsewhere' }
+      ]
+    },
+    {
+      id: 'exercises',
+      kind: 'about-you',
+      needs: [],
+      order: 20.4,
+      title: 'Exercises',
+      blurb: 'Every doable thing in one place, fifteen minutes or less by default: the first fifteen minutes of a skill, a named exercise from the canon credited to its author, or a calculation run on your own numbers. Completing one opens the skill it belongs to.',
+      href: 'rooms/exercises.html',
+      tier: 2,
+      tags: ['cashflow'],
+      subsections: [
+        { id: 'list',    label: 'What applies to you' },
+        { id: 'runs',    label: 'What the runs found' },
+        { id: 'reading', label: 'Reading from elsewhere' }
+      ]
+    },
     {
       id: 'goals',
       kind: 'about-you',

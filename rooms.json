@@ -377,6 +377,30 @@
       "order": 20
     },
     {
+      "id": "skill-tree",
+      "title": "The Skill Tree",
+      "file": "rooms/skill-tree.html",
+      "reads": [],
+      "writes": [
+        "skillsDone"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 20.2
+    },
+    {
+      "id": "exercises",
+      "title": "Exercises",
+      "file": "rooms/exercises.html",
+      "reads": [],
+      "writes": [
+        "exercisesDone"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 20.4
+    },
+    {
       "id": "values",
       "title": "What Matters",
       "file": "rooms/values.html",
