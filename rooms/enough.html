@@ -4,29 +4,33 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Enough · SPARKS</title>
-<meta name="description" content="What your job actually pays, once you count every hour it takes and everything it costs you to do it."/>
+<meta name="description" content="The monthly figure you would live on by choice — typed, or proposed from the joy curve — and the second FI number it makes, against the first."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. THE TEMPLATE ROOM. DECISIONS.md D-097.
+  ROOM SPEC — SPEC.md §11. BRIEF §8 "Enough". DECISIONS.md D-093 (draft), D-101.
 
-  1. READS   The person's income (owned by Start Here) and filingStatus, for
-             the tax estimate; a month's spending, for the lens.
-  2. WRITES  It OWNS person.work — paid hours, unpaid overtime, commute,
-             work costs, weeks a year, and (folded) prep and decompression.
-             Nothing else edits those. It does not touch income.
-  3. CALLS   engines/hourly.js. Tax comes from engines/tier0.js's effective-
-             rate lookup, never a second calculation.
-  4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses and says so (Gate.fillGuesses). Each unpaid-
-             hours box is optional: blank is none, not unanswered.
-  5. CONFIG  data/effective_tax_rates_2026.json.
+  1. READS   A month's spending and the investment balance (Start Here);
+             the joy curve — a categorised month in Cash Flow and its 1-10
+             ratings in the Fulfillment room — through engines/fulfillment.js;
+             this year's savings through Tier0.savingsRate; the withdrawal
+             rate and the real return from assumptions.
+  2. WRITES  It OWNS household.enough: monthlyCents and source
+             ('curve' | 'entered'). Nothing else. The proposal is never
+             written; it is shown through Suggest until the person types.
+  3. CALLS   engines/enough.js. The FI number is Tier0.fireNumber on a view
+             of the household whose month is Enough — one formula, one
+             withdrawal rate. The years are Projection.yearsToTargetCents the
+             way the lens counts them; the path is Projection.pathCents.
+  4. EMPTY   Opened with an empty spine it renders with the intake's guesses
+             (Gate.fillGuesses) and proposes 85% of the guessed spending,
+             named a convention.
+  5. CONFIG  data/expense_categories.json (which lines are essential).
 
-  THE SHAPE (shared/room.js, frozen here): one number, one chart, the lens,
-  five inputs and two folded, the assumptions drawer with sources, why
-  this matters at your stage, one out-of-scope line to Get Help. The ids
-  below are the deep links.
+  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens, two
+  inputs, the assumptions drawer with sources, why this matters at your
+  stage, one out-of-scope line to Get Help. The ids below are the deep links.
 
   LIVE-FORM: built once — shared/room.js builds the inputs from the spec
   on load and only sets .value, never under focus.
@@ -57,25 +61,25 @@
 
   <section class="slaf-card" id="number">
     <div class="room-head-row">
-      <span class="slaf-eyebrow">Your real rate</span>
+      <span class="slaf-eyebrow">Enough, a month</span>
       <div id="room-lens"></div>
     </div>
     <div class="room-number" id="room-number"></div>
   </section>
 
   <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Where the week goes</span>
+    <span class="slaf-eyebrow">Two FI numbers</span>
     <div id="room-chart"></div>
   </section>
 
   <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The hours the job takes</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave anything blank that doesn't apply — working from home means no commute, and blank is none rather than unanswered.</p>
+    <span class="slaf-eyebrow">What enough is</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">The month you would choose, not the one you have. Leave it blank and the room proposes one — from your joy curve once a month is categorised and rated, and as 85% of spending until then — but a proposal is never yours until you type it.</p>
     <div id="room-inputs"></div>
   </section>
 
   <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Priced in life</span>
+    <span class="slaf-eyebrow">Through the lens</span>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
     <ul class="room-amounts" id="room-amounts"></ul>
   </section>
@@ -94,8 +98,8 @@
   </section>
 
   <p class="disclaimer">
-    Educational tool, not financial advice. Tax is estimated from a flat
-    effective-rate table, not a return. Your numbers stay in this browser.
+    Educational tool, not financial advice. Both FI numbers are a withdrawal-rate
+    convention, not a guarantee. Your numbers stay in this browser.
   </p>
 </main>
 
@@ -109,121 +113,160 @@
 <script src="../shared/progress.js"></script>
 <script src="../shared/undo.js"></script>
 <script src="../shared/gate.js"></script>
+<script src="../shared/rating.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/fulfillment.js"></script>
 <script src="../engines/hourly.js"></script>
+<script src="../engines/enough.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
 <script src="../shared/room.js"></script>
 <script>
 (function () {
   'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Hourly = SLAF.Hourly, Charts = SLAF.Charts, Room = SLAF.Room;
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Registry = SLAF.Registry,
+      Enough = SLAF.Enough, Fulfillment = SLAF.Fulfillment, Charts = SLAF.Charts, Room = SLAF.Room;
 
-  /* ---- writes: this room owns person.work ------------------------------------ */
-  function writeWork(key, value) {
-    var person = Spine.ensurePrimaryPerson('You');
-    var current = Schema.workProfile(Schema.personById(Spine.getProfile(), person.id));
-    var next = Object.assign({}, current);
-    next[key] = value;
-    Spine.upsertPerson({ id: person.id, work: next });
+  /* ---- writes: this room owns household.enough ------------------------------ */
+  /* The figure and where it came from move together, as one undo entry:
+     the template's labelled batch wraps this one, so the label is the
+     box's ("Enough, a month → $2,600"). */
+  function writeEnough(cents, source) {
+    Spine.batch(null, function () {
+      Spine.set('enough.monthlyCents', cents);
+      Spine.set('enough.source', cents === null ? null : source);
+    });
   }
-  function readWork(h) { return Schema.workProfile(Schema.primaryPerson(h)); }
-  function hoursInput(key, label, placeholder, hint) {
-    return { ctl: key, label: label, kind: 'number', placeholder: placeholder, affix: 'h', hint: hint,
-      read: function (h) { return readWork(h)[key]; }, write: function (v) { writeWork(key, v === null || v <= 0 ? null : v); } };
+  function readEnough(h) { return Schema.createEnough((h && h.enough) || {}); }
+
+  function fmt(c) { return Money.formatCents(c); }
+  function years1(v) { return String(Math.round(v * 10) / 10); }
+  function inYears(r) {
+    if (!Money.isOk(r)) return '';
+    return r.alreadyThere ? ' — already there' : ' in ' + years1(r.value) + ' years';
   }
-  function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
+  function joyLink() { return '<a href="' + Ownership.linkTo('fulfillment', 'rate') + '">the joy curve →</a>'; }
 
-  var HOUR_COLOURS = { paid: Charts.COLORS.series[0], unpaidOvertimeHoursPerWeek: Charts.COLORS.series[3], commuteHoursPerWeek: Charts.COLORS.series[1], prepHoursPerWeek: Charts.COLORS.series[2], decompressHoursPerWeek: Charts.COLORS.series[4] };
-
-  Room.mount({
-    id: 'enough', /* STUB — being built (D-101) */
-    tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
-    reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'],
+  var mounted = null;   /* what Room.mount returns: render(), household(), tables() */
+  mounted = Room.mount({
+    id: 'enough',
+    tables: ['expenseCategories', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    reads: ['monthlyExpenses', 'investments'],
 
     number: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return { label: 'Actually, an hour', value: null, reason: w.reason + (/not earning/.test(w.reason || '') ? '' : '') };
-      var sub = 'On paper <strong>' + perHour(w.nominalHourlyCents) + '</strong> · you keep <strong>' + Money.formatRate(w.retained, { decimals: 0 }) + '</strong> of it'
-        + ' · ' + Money.formatCents(w.keptAnnualCents) + ' kept over ' + w.annualTotalHours.toLocaleString('en-US') + ' hours a year';
-      if (w.costsMoreThanItPays) sub += '. <strong>This job costs more than it pays</strong> — check the monthly costs; if they are right, that is the finding';
-      if (w.implausibleHours) sub += '. ' + w.paidHoursPerWeek + ' paid hours a week makes this look enormous; the arithmetic is right, the comparison is not';
-      if (!w.taxKnown) sub += '. Tax is not in yet: ' + (w.taxReason || '');
-      return { label: 'Actually, an hour', value: perHour(w.realHourlyCents), sub: sub, zone: w.costsMoreThanItPays ? 'out' : (w.retained !== null && w.retained < 0.5 ? 'watch' : null), result: w };
+      var two = Enough.fiTwo(h, T);
+      if (!Money.isOk(two)) return { label: 'Enough, a month', value: null, reason: two.reason };
+      var parts = [];
+      if (two.proposed) {
+        parts.push(two.source === 'curve'
+          ? 'proposed from your joy curve — type your own to keep it'
+          : 'a stand-in: 85% of spending, a convention — type your own');
+      }
+      parts.push('spending ' + fmt(two.spendMonthlyCents));
+      parts.push('FI on enough <strong>' + fmt(two.enoughFiCents) + '</strong>' + inYears(two.yearsToEnough));
+      parts.push('FI on spending ' + fmt(two.spendFiCents) + inYears(two.yearsToSpend));
+      if (two.enoughAboveSpending) {
+        parts.push('<strong>enough above spending</strong>: the gap runs the other way — ' + fmt(-two.gapCents) + ' more'
+          + (two.yearsGap !== null ? ' and ' + years1(-two.yearsGap) + ' years longer' : ''));
+      } else if (two.gapCents === 0) {
+        parts.push('enough equals spending: one number, not two');
+      } else {
+        parts.push('the gap: <strong>' + fmt(two.gapCents) + '</strong>' + (two.yearsGap !== null ? ', ' + years1(two.yearsGap) + ' years' : '') + ' — the cost of not knowing your enough');
+      }
+      if (two.yearsReason) parts.push(two.yearsReason);
+      if (two.source !== 'curve') {
+        var c = Enough.fromCurve(h, T);
+        parts.push(Money.isOk(c)
+          ? 'the joy curve would say ' + fmt(c.value) + ' (' + joyLink() + ')'
+          : 'the joy curve cannot propose yet: ' + c.reason + ' (' + joyLink() + ')');
+      }
+      return { label: 'Enough, a month', value: fmt(two.enoughMonthlyCents), sub: parts.join(' · '),
+        zone: two.enoughBelowSpending ? 'good' : null, result: two };
     },
 
     chart: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return Charts.stacked({ rows: [], empty: 'Add your paid hours to see where the week goes.' });
-      var parts = [{ label: 'Paid', value: w.paidHoursPerWeek, color: HOUR_COLOURS.paid }].concat((w.unpaidParts || []).map(function (p) { return { label: p.label, value: p.hours, color: HOUR_COLOURS[p.key] }; }));
-      var gross = w.grossAnnualIncomeCents, tax = w.estimatedTaxCents || 0, costs = w.annualWorkCostsCents, kept = w.keptAnnualCents;
-      return Charts.stacked({
-        title: 'Hours a week, and where the pay goes',
-        rows: [
-          { label: 'Your week', note: w.totalHoursPerWeek + ' h, ' + w.paidHoursPerWeek + ' paid', parts: parts },
-          { label: 'A year of pay', note: 'per ' + Money.formatCents(gross), parts: [
-            { label: 'Kept', value: kept / gross * w.totalHoursPerWeek, color: Charts.COLORS.growth },
-            { label: 'Tax', value: tax / gross * w.totalHoursPerWeek, color: Charts.COLORS.debt },
-            { label: 'Costs of working', value: costs / gross * w.totalHoursPerWeek, color: Charts.COLORS.series[3] }
-          ] }
+      var p = Enough.path(h, T);
+      if (!Money.isOk(p)) return Charts.area({ series: [], empty: p.reason });
+      var y0 = new Date().getFullYear();
+      var enoughColor = Charts.COLORS.series[0];
+      var dots = [];
+      if (p.crossSpendYear !== null) dots.push({ x: y0 + p.crossSpendYear, y: p.spendFiCents, color: Charts.COLORS.target });
+      if (p.crossEnoughYear !== null) dots.push({ x: y0 + p.crossEnoughYear, y: p.enoughFiCents, color: enoughColor });
+      return Charts.area({
+        title: 'Investments over time against both FI numbers',
+        series: [
+          { label: 'Investments', color: Charts.COLORS.growth, fill: true, points: p.rows.map(function (r) { return [y0 + r.year, Math.max(0, r.balanceCents)]; }) }
         ],
-        format: function (v) { return (Math.round(v * 10) / 10) + ' h'; }
+        hLines: [
+          { y: p.spendFiCents, label: 'FI on spending ' + Charts.shortMoney(p.spendFiCents), color: Charts.COLORS.target },
+          { y: p.enoughFiCents, label: 'FI on enough ' + Charts.shortMoney(p.enoughFiCents), color: enoughColor }
+        ],
+        dots: dots,
+        x: { label: 'year', format: function (v) { return String(Math.round(v)); } }
       });
     },
 
     inputs: [
-      hoursInput('contractedHoursPerWeek', 'Paid hours a week', 'e.g. 40'),
-      hoursInput('unpaidOvertimeHoursPerWeek', 'Unpaid overtime', 'e.g. 3'),
-      hoursInput('commuteHoursPerWeek', 'Commuting', 'e.g. 5'),
-      { ctl: 'workCostsMonthlyCents', label: 'Costs of working, a month', kind: 'money', placeholder: 'e.g. 400', hint: 'Petrol, parking, transit, work clothes, lunches you would not otherwise buy, childcare only while working.',
-        read: function (h) { return readWork(h).workCostsMonthlyCents; }, write: function (v) { writeWork('workCostsMonthlyCents', v); } },
-      { ctl: 'weeksPerYear', label: 'Weeks worked a year', kind: 'number', placeholder: String(Schema.WORK_DEFAULTS.weeksPerYear),
-        read: function (h) { var w = readWork(h).weeksPerYear; return w === Schema.WORK_DEFAULTS.weeksPerYear ? null : w; }, write: function (v) { writeWork('weeksPerYear', v === null || v <= 0 ? Schema.WORK_DEFAULTS.weeksPerYear : v); } }
-    ],
-    moreLabel: 'The hours around the job',
-    more: [
-      hoursInput('prepHoursPerWeek', 'Getting ready', 'e.g. 2.5'),
-      hoursInput('decompressHoursPerWeek', 'Decompressing', 'e.g. 2.5')
+      { ctl: 'monthlyCents', label: 'Enough, a month', kind: 'money', placeholder: 'e.g. 2,600',
+        hint: 'What you would live on by choice, a month — the life you would pick, priced.',
+        read: function (h) { return readEnough(h).monthlyCents; },
+        write: function (v) { writeEnough(v === null || v < 0 ? null : v, 'entered'); },
+        propose: function (h, T) { var p = Enough.propose(h, T); return Money.isOk(p) ? { value: p.value, source: p.source } : null; } },
+      { ctl: 'source', label: 'Where it came from', kind: 'choice', options: [['curve', 'From the joy curve'], ['entered', 'Typed']],
+        hint: 'Typed is whatever is in the box. From the joy curve writes the curve’s figure — spending less the low-joy lines — once a month is categorised and rated; until then it writes nothing.',
+        read: function (h) { return readEnough(h).source; },
+        write: function (v) {
+          if (v === 'curve') {
+            var c = Enough.fromCurve(Spine.getProfile(), mounted ? mounted.tables() : null);
+            if (Money.isOk(c)) writeEnough(c.value, 'curve');
+            return;
+          }
+          var cur = readEnough(Spine.getProfile()).monthlyCents;
+          if (v === 'entered' && Money.isEntered(cur)) writeEnough(cur, 'entered');
+        } }
     ],
 
     amounts: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
+      var two = Enough.fiTwo(h, T);
       var spend = Schema.monthlyExpensesCents(h);
       var rows = [];
+      if (Money.isOk(two)) rows.push({ label: 'A month of enough', cents: two.enoughMonthlyCents, href: '#inputs' });
       if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
-      if (Money.isOk(w)) {
-        rows.push({ label: 'A year of tax, estimated', cents: w.estimatedTaxCents || 0 });
-        if (w.annualWorkCostsCents > 0) rows.push({ label: 'A year of the costs of working', cents: w.annualWorkCostsCents });
-      }
-      rows.push({ label: 'A $1,200 thing you are eyeing', cents: 120000 });
+      if (Money.isOk(two) && two.monthlyGapCents !== 0) rows.push({ label: two.monthlyGapCents > 0 ? 'The gap, a month (spending − enough)' : 'The gap, a month (enough − spending)', cents: Math.abs(two.monthlyGapCents) });
       return rows;
     },
 
     assumptions: function (h, T) {
-      var w = Hourly.realHourlyWage(h, T, {});
-      var tax = T.effectiveTaxRates;
-      var work = readWork(h);
-      return [
-        { label: 'Tax', value: Money.isOk(w) && w.taxKnown ? Money.formatRate(w.effectiveRate || (w.estimatedTaxCents / w.grossAnnualIncomeCents), { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')' },
-        { label: 'Weeks a year', value: String(Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear), source: Money.isEntered(work.weeksPerYear) && work.weeksPerYear !== Schema.WORK_DEFAULTS.weeksPerYear ? 'yours' : 'the default: 52 less four weeks of leave and holidays (convention)' },
-        { label: 'Unpaid hours', value: 'count as work', source: 'Your Money or Your Life: an hour the job takes is an hour it costs, paid or not (convention)' },
-        { label: 'Real return, for the lens', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' }
+      var a = Schema.resolveAssumptions(h);
+      var two = Enough.fiTwo(h, T);
+      var c = Enough.fromCurve(h, T);
+      var Q = Fulfillment.QUADRANTS;
+      var rows = [
+        { label: 'Withdrawal rate', value: Money.formatRate(a.swrRate, { decimals: 1 }), source: 'assumptions.swrRate — both FI numbers are a year of the month ÷ this rate, through Tier0.fireNumber (default 4%, a convention)' },
+        { label: 'Real return, for the years', value: Money.formatRate(a.returnReal, { decimals: 1 }), source: 'assumptions.returnReal (D-094) — the lens’s rate, so the years here and the months bought or pushed there agree' },
+        { label: 'This year’s savings', value: Money.isOk(two) && two.contribution ? fmt(two.contribution.annualSavingsCents) + ' a year' : 'not known yet', source: Money.isOk(two) && two.contribution ? 'Tier0.savingsRate, ' + (two.contribution.basis === 'includingMatch' ? 'with the employer match' : 'without a match') + ' — the same basis as the lens and the dashboard' : (Money.isOk(two) && two.yearsReason) || 'income, expenses and filing status' },
+        { label: 'The lines the curve drops', value: Q.expensive.label + ' and ' + Q.small_meh.label, source: 'the two low-joy quadrants of the joy curve (engines/fulfillment.js: below the 5.5 joy midpoint); never a line marked essential in data/expense_categories.json' },
+        { label: 'The stand-in', value: Money.formatRate(Enough.CONVENTION_SHARE, { decimals: 0 }) + ' of spending', source: 'most people’s enough sits under their spending — a convention, shown until the curve can speak and never written' }
       ];
+      if (Money.isOk(c)) rows.push({ label: 'The curve’s thresholds', value: 'spend line ' + fmt(c.spendLineCents) + ', joy line ' + c.joyLine, source: 'the median monthly spend across the rated lines and the midpoint of the 1-10 scale; ' + c.ratedCount + ' rated, ' + fmt(c.droppedMonthlyCents) + ' a month dropped' });
+      return rows;
     },
 
     why: function (h, T, situation) {
+      var bj = Registry.byId('between-jobs');
       return {
-        employed: 'Employed, the headline rate is the one on the offer letter. This one is the rate that decides whether the next thing — a raise, a move, an hour of overtime — is worth it.',
-        selfEmployed: 'Self-employed, there is no headline rate, only this one: what is left after the tax you set aside and the hours the work really takes, including the ones nobody bills.',
-        mixed: 'With a job and your own work, each has a real rate. This reads the job; put the own-work hours in as a second job in Start Here to compare them.',
-        student: 'A part-time job at a student’s stage is priced against study hours, not against a career. If the real rate is low, the question is what the hours are taking from.',
-        betweenJobs: '', retired: ''
-      }[situation] || 'Any job has a headline rate and a real one. The gap between them is what this room measures.';
+        employed: 'Employed, the FI number everyone quotes is spending × 25. Enough makes a second one, and the years between them are the years a life you did not choose would cost — the number that decides how long the job has to last.',
+        selfEmployed: 'Self-employed, income moves and the FI number on spending moves with it; enough does not. It is the steadiest denominator you have, and the one a lean quarter is measured against.',
+        mixed: 'With a job and your own work, the question is which one you could put down, and when. Enough is the month that decides it: the smaller the number, the sooner the choice is yours.',
+        student: 'At a student’s stage enough is the number that survives graduation: the month you would live on by choice, set before a salary arrives to inflate it. Decide it now and the denominator is yours before the numerator is.',
+        retired: 'Retired, enough is the draw: the month you take from what you built, by choice rather than by habit. Against the balance it says whether the withdrawal rate is a worry or a comfort.',
+        betweenJobs: 'Between jobs, the floor and enough are cousins: the floor is what a month costs while you search, enough is what a month costs when you choose it. One says how long the money lasts; the other says what it is for.' + (bj ? ' The floor lives in ' + bj.title + '.' : '')
+      }[situation] || 'Spending makes one FI number. Enough makes a second, and the distance between them is what this room measures.';
     },
 
-    scope: 'This room does not model overtime pay, shift differentials, or a second job’s hours on their own. Tax is a flat estimate, not a return.'
+    scope: 'This room does not judge what is enough; it prices the number you give it against the one you spend.'
   });
 })();
 </script>
