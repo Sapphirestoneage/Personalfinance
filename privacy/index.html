@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" data-root="../">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Privacy · Eli Saperstein</title>
+<meta name="description" content="What this site stores (two settings in your browser), what it does not (no analytics, no cookies, no accounts), and what the tools keep on your own device."/>
+<link rel="canonical" href="https://stresslessaboutmoney.com/privacy/"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="StressLessAboutMoney"/>
+<meta property="og:title" content="Privacy · Eli Saperstein"/>
+<meta property="og:description" content="What this site stores (two settings in your browser), what it does not (no analytics, no cookies, no accounts), and what the tools keep on your own device."/>
+<meta property="og:url" content="https://stresslessaboutmoney.com/privacy/"/>
+<meta property="og:image" content="{{OG_IMAGE_URL}}"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Privacy · Eli Saperstein"/>
+<meta name="twitter:description" content="What this site stores (two settings in your browser), what it does not (no analytics, no cookies, no accounts), and what the tools keep on your own device."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="preload" href="../vendor/fonts/fraunces-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin/>
+<link rel="preload" href="../vendor/fonts/space-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin/>
+<script>
+  /* Theme and calm mode, read before first paint so nothing flashes. The
+     only two things this site stores. site.css / site.js, D-092. */
+  (function () {
+    try {
+      var t = localStorage.getItem('slam.theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+      if (localStorage.getItem('slam.calm') === 'on') document.documentElement.setAttribute('data-calm', 'on');
+    } catch (e) {}
+  })();
+</script>
+<style>
+  /* Critical: the ground, the type and the header bar, so the first paint
+     is already the right colour and shape before site.css arrives. */
+  body{margin:0;background:#081833;color:#EFF6FF;font-family:'Space Grotesk','Inter',system-ui,sans-serif}
+  html[data-theme="light"] body{background:#F7F6F2;color:#0B2249}
+  @media (prefers-color-scheme:light){html:not([data-theme="dark"]) body{background:#F7F6F2;color:#0B2249}}
+  .site-header .bar{min-height:60px;display:flex;align-items:center;gap:16px;max-width:1080px;margin:0 auto;padding:0 16px}
+  h1{font-family:'Fraunces','Iowan Old Style',Georgia,serif;font-weight:500}
+</style>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<link rel="stylesheet" href="../site.css"/>
+<!--
+  Analytics: none. To turn on Plausible (no cookies, no personal data),
+  uncomment the line below and nothing else changes.
+  <script defer data-domain="stresslessaboutmoney.com" src="https://plausible.io/js/script.js"></script>
+-->
+</head>
+<body class="slaf site">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="../">StressLessAboutMoney</a>
+    <nav class="nav" aria-label="Site"><a href="../start-here/">Start here</a><a href="../tools/">Tools</a><a href="../coaching/">Coaching</a><a href="../frameworks/">Frameworks</a><a href="../about/">About</a></nav>
+    <a class="btn btn--primary btn--small" href="../coaching/#talk">Talk to Eli</a>
+  </div>
+  <p class="subnav">Not ready to talk? <a href="../tools/">Start with a tool.</a></p>
+</header>
+<main id="main">
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Privacy</p>
+    <h1>What this site keeps, and where.</h1>
+    <p class="lead">Short, because there isn’t much to say.</p>
+  </div>
+</section>
+
+<section class="block prose">
+  <div class="wrap">
+    <h2>On this site</h2>
+    <p>The pages of stresslessaboutmoney.com store two settings in your browser’s local storage: whether you chose light or dark mode, and whether calm mode is on. That is all. There are no cookies, no analytics, no accounts, and no third-party scripts, with one exception below.</p>
+
+    <h2>The email list</h2>
+    <p>If you give your email address in the form at the bottom of the Notes page, it goes to the email provider named in that form and nowhere else. You get one short email when a new tool is finished. Unsubscribing is one click in any of them. <mark class="ph">{{EMAIL_PROVIDER_NAME}}</mark> is the provider; its own privacy policy applies to the address you give it.</p>
+
+    <h2>The Money Rooms</h2>
+    <p>The tools keep the numbers you type in your own browser’s local storage, on your own device. Nothing you type is sent to me or to anyone else; the pages make no network request that carries your data. If you copy a share link, your numbers are encoded inside that link itself — anyone you send it to can open them, so treat it the way you would treat a photo of the page. If you export a file, the file is yours and lives wherever you saved it.</p>
+    <p>Clearing your browser’s site data for this domain removes everything the tools stored. There is no copy anywhere else to remove.</p>
+
+    <h2>Coaching</h2>
+    <p>Anything you share in a session or on an intake form stays between us. The booking calendar is run by <mark class="ph">{{BOOKING_PROVIDER_NAME}}</mark>, and its privacy policy covers the details you enter there.</p>
+
+    <h2>Questions</h2>
+    <p>Email <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a>.</p>
+    <p class="small muted">Last updated <mark class="ph">{{PRIVACY_UPDATED_DATE}}</mark>.</p>
+  </div>
+</section>
+</main>
+<footer class="site-footer">
+  <div class="wrap wrap--wide">
+    <p class="line">Eli Z. Saperstein · Rockland County, NY · Works with people everywhere · Not a registered investment advisor; coaching is education, not advice.</p>
+    <nav aria-label="Footer">
+      <a href="../start-here/">Start here</a>
+      <a href="../tools/">Tools</a>
+      <a href="../coaching/">Coaching</a>
+      <a href="../frameworks/">Frameworks</a>
+      <a href="../about/">About</a>
+      <a href="../media/">Media</a>
+      <a href="../notes/">Notes</a>
+      <a href="../privacy/">Privacy</a>
+      <a href="../terms/">Terms</a>
+      <a href="https://github.com/sapphirestoneage/Personalfinance" rel="noopener">Source on GitHub</a>
+    </nav>
+    <div class="toggles">
+      <button type="button" class="toggle" data-toggle="theme">Dark mode</button>
+      <button type="button" class="toggle" data-toggle="calm" title="Fewer colours, no motion, larger type">Calm mode</button>
+    </div>
+  </div>
+</footer>
+<script src="../site.js"></script>
+</body>
+</html>
