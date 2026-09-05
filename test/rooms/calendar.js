@@ -73,11 +73,31 @@ module.exports = function (t) {
   checkTrue('… and none when Start Here says no rent', Cal.rentCents(hh({ meta: { noRent: true } })).cents === null);
   check('the chart points are one a day', Cal.balancePoints(r).length, 31);
 
+  /* The month as a grid (D-127): rows of seven from Sunday, padded so a
+     day sits under its weekday; each cell says what lands and where the
+     cash stands. 2026-09-01 is a Tuesday: two blanks first. */
+  const w = Cal.weeks(r);
+  check('the grid has five rows for 31 days from a Tuesday', w.length, 5);
+  check('the first row is padded to the weekday', w[0].slice(0, 2).join(','), ',');
+  check('the first day is the 1st, a Tuesday', w[0][2].dom + '/' + w[0][2].weekday, '1/Tue');
+  check('every row is seven wide', w.every(row => row.length === 7), true);
+  check('the last row is padded at the end', w[4].filter(c => c === null).length, 7 - ((31 + 2) % 7 || 7));
+  const day1 = w[0][2], day5 = w[0][6];
+  check('day 1 carries the rent as a bill', day1.bills.length + '/' + day1.bills[0].label + '/' + day1.outCents, '1/Rent/90000');
+  check('day 1 is the first of its month and today', day1.firstOfMonth + '/' + day1.today, 'true/true');
+  check('day 5 is a payday', day5.inCents, per);
+  check('the low point is marked once', w.flat().filter(c => c && c.isLow).map(c => c.dom).join(','), '4');
+  checkTrue('days under zero are marked', w.flat().filter(c => c && c.belowZero).length > 0);
+  check('the cells carry the balance the day ends on', day1.balanceCents, r.days[0].balanceCents);
+  check('an incomplete month has no grid', Cal.weeks(Money.incomplete('x', [])).length, 0);
+
+
   /* The table, the page, the map. */
   const conv = T.calendarConventions;
   check('four cadences', Object.keys(conv.cadences).length, 4);
   check('fortnightly is 26 ÷ 12 paydays a month', Math.round(conv.cadences.fortnightly.paydaysPerMonth * 1000) / 1000, Math.round(26 / 12 * 1000) / 1000);
   const page = fs.readFileSync(path.join(ROOT, 'rooms/calendar.html'), 'utf8');
+  checkTrue('the page draws the grid under the line', /cal-grid/.test(page) && /Cal\.weeks\(/.test(page));
   checkTrue('the page mounts the template as calendar', /Room\.mount\(\{/.test(page) && /id: 'calendar'/.test(page));
   ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list'].forEach(id => checkTrue(`… has #${id}`, new RegExp('id="' + id + '"').test(page)));
   checkTrue('… five inputs and two folded', ['cadence', 'nextPaydayDay', 'rentDay', 'bigCents', 'bigDay', 'plCents', 'plDay'].every(c => new RegExp("ctl: '" + c + "'").test(page)));

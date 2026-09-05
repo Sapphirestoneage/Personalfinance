@@ -221,6 +221,37 @@
     });
   }
 
+  /* The month as a grid: the window's days in rows of seven, each row
+     starting on Sunday, the first row padded with blanks so a day sits
+     under its weekday. Each cell carries what the day does — a payday,
+     the bills and pay-later instalments drawn, the spread — and where the
+     balance stands, so a page can draw a calendar rather than a line. */
+  var WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  function weeks(result) {
+    if (!Money.isOk(result)) return [];
+    var first = startOf(result.startDate);
+    var pad = first.getDay();
+    var rows = [], row = [], i;
+    for (i = 0; i < pad; i++) row.push(null);
+    result.days.forEach(function (d) {
+      var when = startOf(d.date);
+      row.push({
+        index: d.index, date: d.date, dom: d.dom, weekday: WEEKDAYS[when.getDay()],
+        firstOfMonth: d.dom === 1, month: when.toLocaleDateString('en-US', { month: 'short' }),
+        balanceCents: d.balanceCents, paydayCents: d.paydayCents, billsCents: d.billsCents, payLaterCents: d.payLaterCents, spreadCents: d.spreadCents,
+        inCents: d.paydayCents, outCents: d.billsCents + d.payLaterCents,
+        bills: result.billHits.filter(function (b) { return b.index === d.index; }).map(function (b) { return { label: b.label, cents: b.cents, kind: 'bill' }; })
+          .concat(result.payLaterHits.filter(function (b) { return b.index === d.index; }).map(function (b) { return { label: b.label, cents: b.cents, kind: 'payLater' }; })),
+        isLow: d.index === result.lowIndex, belowZero: d.balanceCents < 0,
+        tight: !!(result.tight && d.index >= result.tight.fromIndex && d.index <= result.tight.toIndex),
+        today: d.index === 0
+      });
+      if (row.length === 7) { rows.push(row); row = []; }
+    });
+    if (row.length) { while (row.length < 7) row.push(null); rows.push(row); }
+    return rows;
+  }
+
   /* The chart's points: [[day index, balance], …]. */
   function balancePoints(result) {
     if (!Money.isOk(result)) return [];
@@ -230,6 +261,8 @@
   return {
     month: month,
     balancePoints: balancePoints,
+    weeks: weeks,
+    WEEKDAYS: WEEKDAYS,
     rentCents: rentCents,
     semimonthlyPair: semimonthlyPair,
     paydayIndices: paydayIndices,

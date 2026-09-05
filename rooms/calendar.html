@@ -43,6 +43,28 @@
   .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
   .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  /* The month as a grid, under the line. A cell a day; what lands on it, and the cash at its end. */
+  .cal-grid { margin-top: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
+  .cal-head, .cal-row { display: grid; grid-template-columns: repeat(7, 1fr); }
+  .cal-head span { font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); text-align: center; padding: var(--space-1) 0; border-bottom: 1px solid var(--color-border); }
+  .cal-cell { min-height: 58px; padding: 4px 3px; border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); font-size: 10px; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .cal-cell:last-child { border-right: none; }
+  .cal-row:last-child .cal-cell { border-bottom: none; }
+  .cal-cell.is-blank { background: transparent; }
+  .cal-cell b { font-weight: 600; color: var(--color-text-muted); font-size: 11px; white-space: nowrap; }
+  .cal-cell.is-today b { color: var(--color-accent-hover); }
+  .cal-cell small { margin-top: auto; font-variant-numeric: tabular-nums; color: var(--color-text); }
+  .cal-cell.is-tight { background: rgba(232,184,75,.08); }
+  .cal-cell.is-under { background: rgba(229,72,77,.12); }
+  .cal-cell.is-under small { color: var(--color-critical); }
+  .cal-cell.is-low { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+  .cal-in, .cal-out { font-style: normal; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 3px; padding: 0 2px; }
+  .cal-in { color: var(--color-positive); background: rgba(48,164,108,.14); }
+  .cal-out { color: var(--color-critical); background: rgba(229,72,77,.12); }
+  .cal-out.is-pl { color: var(--color-caution); background: rgba(232,184,75,.14); }
+  .cal-key { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; }
+  .cal-key .k-low { outline: 2px solid var(--color-accent); outline-offset: 1px; border-radius: 2px; padding: 0 3px; }
+  .cal-key .k-under { background: rgba(229,72,77,.12); color: var(--color-critical); border-radius: 2px; padding: 0 3px; }
 </style>
 </head>
 <body class="slaf">
@@ -66,7 +88,7 @@
   </section>
 
   <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Cash across the month</span>
+    <span class="slaf-eyebrow">Cash across the month, and the month as a calendar</span>
     <div id="room-chart"></div>
   </section>
 
@@ -162,16 +184,35 @@
       return { label: 'The low point this month', value: Money.formatCents(r.lowCents) + ' on the ' + ordinal(r.lowDom), sub: sub, zone: r.zone, result: r };
     },
 
+    /* One picture in two parts: the balance line, and beneath it the same
+       31 days as a calendar — a cell a day, paydays and bills on the day
+       they land, the balance underneath, the low point and any day under
+       zero marked. Both are drawn from the one month the engine runs. */
     chart: function (h, T) {
       var r = m(h, T);
       if (!Money.isOk(r)) return Charts.area({ series: [], empty: r.reason });
-      return Charts.area({
+      var line = Charts.area({
         title: 'Cash, day by day, for 31 days',
         series: [{ label: 'Cash', color: Charts.COLORS.growth, fill: true, points: Cal.balancePoints(r) }],
         hLines: [{ y: 0, label: 'zero', color: Charts.COLORS.debt }, { y: r.weekCents, label: 'a week of spending', color: Charts.COLORS.target }],
         dots: r.paydays.map(function (p) { return { x: p.index, y: p.balanceCents }; }),
         x: { label: 'day', format: function (v) { return 'd' + Math.round(v + 1); } }
       });
+      var short = function (c) { var k = Math.abs(c) >= 100000; return (c < 0 ? '−' : '') + '$' + (k ? (Math.round(Math.abs(c) / 10000) / 10) + 'k' : Math.round(Math.abs(c) / 100)); };
+      var grid = '<div class="cal-grid" role="table" aria-label="The next 31 days as a calendar">'
+        + '<div class="cal-head">' + Cal.WEEKDAYS.map(function (w) { return '<span>' + w + '</span>'; }).join('') + '</div>'
+        + Cal.weeks(r).map(function (row) {
+          return '<div class="cal-row">' + row.map(function (d) {
+            if (!d) return '<span class="cal-cell is-blank"></span>';
+            var cls = 'cal-cell' + (d.today ? ' is-today' : '') + (d.isLow ? ' is-low' : '') + (d.belowZero ? ' is-under' : '') + (d.tight ? ' is-tight' : '');
+            var marks = '';
+            if (d.inCents > 0) marks += '<i class="cal-in" title="Payday">+' + short(d.inCents) + '</i>';
+            d.bills.forEach(function (b) { marks += '<i class="cal-out' + (b.kind === 'payLater' ? ' is-pl' : '') + '" title="' + b.label + '">−' + short(b.cents) + '</i>'; });
+            return '<span class="' + cls + '"><b>' + (d.firstOfMonth || d.today ? d.month + ' ' : '') + d.dom + '</b>' + marks + '<small>' + short(d.balanceCents) + '</small></span>';
+          }).join('') + '</div>';
+        }).join('')
+        + '</div><p class="cal-key"><i class="cal-in">+$</i> a payday · <i class="cal-out">−$</i> a bill · <i class="cal-out is-pl">−$</i> pay-later · the figure is the cash at the end of the day · <span class="k-low">the low point</span> · <span class="k-under">under zero</span></p>';
+      return line + grid;
     },
 
     inputs: [
