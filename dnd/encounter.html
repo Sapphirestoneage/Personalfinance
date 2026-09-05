@@ -288,6 +288,11 @@
     var cls = r.negated ? 'safe' : (r.deathSaves || r.massiveDamage ? 'bad' : '');
     var verdict = r.negated
       ? 'It cannot land.'
+      : r.recurring && r.healPerPeriod !== null && r.periodsToZero === null
+        ? 'It lands ' + pct(r.hitChance) + ' of the time — and you out-heal it.'
+        : r.recurring && r.periodsToZero !== null
+          ? 'It lands ' + pct(r.hitChance) + ' of the time. Unblocked, your runway is gone in '
+            + r.periodsToZero + ' ' + r.perPeriod + (r.periodsToZero === 1 ? '' : 's') + '.'
       : r.massiveDamage
         ? 'Massive damage — straight past death saves.'
         : r.deathSaves
@@ -306,7 +311,15 @@
       ['Chance it lands', r.hitChance === null ? '—' : pct(r.hitChance)],
     ];
     figs.push(['Damage', r.damageWeeks + ' wk' + (r.perPeriod ? '/' + r.perPeriod : '')]);
-    figs.push(['HP after', r.hpAfter === null ? '—' : r.hpBefore + ' → ' + r.hpAfter]);
+    if (r.recurring && r.healPerPeriod !== null) {
+      /* DD-021: a bleed is measured against what you heal in the same period. */
+      figs.push(['You heal', (r.healPerPeriod >= 0 ? '+' : '') + r.healPerPeriod + ' wk/' + r.perPeriod]);
+      figs.push(['Net', (r.netPerPeriod > 0 ? '−' : '+') + Math.abs(r.netPerPeriod) + ' wk/' + r.perPeriod]);
+      figs.push(['Runway gone in', r.periodsToZero === null ? 'never — you out-heal it'
+        : r.periodsToZero + ' ' + r.perPeriod + (r.periodsToZero === 1 ? '' : 's')]);
+    }
+    figs.push([r.recurring ? 'HP after one ' + r.perPeriod : 'HP after',
+      r.hpAfter === null ? '—' : r.hpBefore + ' → ' + r.hpAfter]);
     /* Anything that moved the chance is named, or the number is a mystery. */
     if (r.resolution === 'save' && r.exhaustionPenalty > 0) {
       figs.splice(1, 0, ['Exhaustion', r.exhaustionLabel + ' · −' + r.exhaustionPenalty]);
@@ -361,6 +374,9 @@
             + '<div class="lair">' + r.lair.map(esc).join(' · ') + '</div>'
           : '')
       + '<p class="note faint" style="margin-top:var(--space-3)">'
+      + (r.recurring && r.healPerPeriod === null
+          ? 'This one bleeds per ' + r.perPeriod + '. Add your income and spending to the sheet and it will be measured against what a short rest gives back. '
+          : '')
       + (r.mode === 'roll' ? 'One roll of the dice.' : 'Expected damage — the average, not a roll.')
       + '</p></div>';
   }

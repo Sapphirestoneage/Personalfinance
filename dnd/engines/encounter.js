@@ -306,12 +306,38 @@
     damageWeeks = Math.round(damageWeeks * 10) / 10;
 
     var cur = Money.isOk(sheet.currentHp) ? sheet.currentHp.value : null;
-    var hpAfter = cur === null ? null : Math.max(0, Math.round((cur - damageWeeks) * 10) / 10);
 
-    /* Massive Damage (§3A): a single hit at or above Max HP skips death saves
-       and goes straight to insolvency. */
+    /* RECURRING damage — DD-021. "1d4 a month" was being subtracted once, as
+       if it were a single hit, which answered a question nobody asked. The
+       honest figure for a creature that bleeds you per period is the NET: what
+       it takes each period minus what a short rest gives back in the same
+       period — and from that, how long until the runway is gone. Healing is
+       read from the household, never re-derived here. Incident-shaped periods
+       ("instalment", "incident") have no clock, so no healing offsets them. */
+    var PERIOD_MONTHS = { month: 1, quarter: 3, year: 12 };
+    var per = spec.per || null;
+    var recurring = !!(per && PERIOD_MONTHS[per]);
+    var healPerPeriod = null, netPerPeriod = null, periodsToZero = null;
+    if (recurring && !negated) {
+      var rest = Character.shortRest(household, tables);
+      if (Money.isOk(rest)) {
+        healPerPeriod = Math.round(rest.weeksPerMonth * PERIOD_MONTHS[per] * 10) / 10;
+        netPerPeriod = Math.round((damageWeeks - healPerPeriod) * 10) / 10;
+        if (cur !== null) {
+          periodsToZero = netPerPeriod > 0 ? Math.ceil(cur / netPerPeriod) : null;
+        }
+      }
+    }
+    /* After ONE hit for a once creature; after ONE period, net, for a
+       recurring one. When healing is unknown the raw damage is used and the
+       result says so through healPerPeriod === null. */
+    var perPeriodLoss = recurring && netPerPeriod !== null ? Math.max(0, netPerPeriod) : damageWeeks;
+    var hpAfter = cur === null ? null : Math.max(0, Math.round((cur - perPeriodLoss) * 10) / 10);
+
+    /* Massive Damage (§3A): a SINGLE hit at or above Max HP skips death saves
+       and goes straight to insolvency. A monthly chip is never a single hit. */
     var maxHp = sheet.maxHp ? sheet.maxHp.weeks : null;
-    var massive = !!(maxHp && damageWeeks >= maxHp);
+    var massive = !recurring && !!(maxHp && damageWeeks >= maxHp);
 
     return {
       monster: monster.name,
@@ -325,10 +351,14 @@
       hitChance: hitChance,
       damageWeeks: damageWeeks,
       damageNote: spec.note || null,
-      perPeriod: spec.per || null,
+      perPeriod: per,
+      recurring: recurring,
+      healPerPeriod: healPerPeriod,
+      netPerPeriod: netPerPeriod,
+      periodsToZero: periodsToZero,
       hpBefore: cur,
       hpAfter: hpAfter,
-      deathSaves: hpAfter === 0 && cur !== null && damageWeeks > 0,
+      deathSaves: hpAfter === 0 && cur !== null && perPeriodLoss > 0,
       massiveDamage: massive,
       negated: negated, halved: halved, advantage: advantage,
       resolution: isAttack ? 'attack' : 'save',

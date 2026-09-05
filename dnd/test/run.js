@@ -1494,6 +1494,84 @@ section('Dungeons & Dividends — the bestiary extension');
     !!R.blockers.scenarioForesight && declared.indexOf('scenarioForesight') !== -1);
 })();
 
+section('Dungeons & Dividends — a bleed is measured against a rest (DD-021)');
+
+(function () {
+  const Encounter = require(path.join(ROOT, 'engines/encounter.js'));
+  const all = TABLES.dndRules.monsters.concat(TABLES.dndRules.hazards);
+  function hh(income, cash) {
+    const h = Schema.createHousehold(); h.filingStatus = 'single';
+    const p = Schema.createPerson({ id: 'p1', role: 'adult' });
+    p.incomeSources = [Schema.createIncomeSource({ id: 'i1', personId: 'p1', grossAnnualIncomeCents: income, type: 'w2' })];
+    h.people = [p];
+    h.assets = [Schema.createAsset({ id: 'c', category: 'cash', valueCents: cash, liquid: true })];
+    h.expenses = { monthlyEssential: { estimatedValueCents: 315000, trackedValueCents: null, source: 'estimated' }, entries: [] };
+    h.dndProfile = { fixedCostShare: 0.55, yearsSustained: 4, disruptionSurvived: true, healthCoverage: 2,
+      automatedSaving: 'none', declaredMethod: 'pointBuy',
+      declaredScores: { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 } };
+    return h;
+  }
+  const imp = all.filter(function (c) { return c.name === 'Lifestyle-Inflation Imp'; })[0];
+  const hydra = all.filter(function (c) { return c.name === 'Lifestyle-Creep Hydra'; })[0];
+  const timeshare = all.filter(function (c) { return c.name === 'Timeshare Charm-Caster'; })[0];
+
+  /* "1d4 a month" used to be subtracted once, like a single hit. Now it is
+     netted against what a short rest gives back in the same period. */
+  const rich = hh(7200000, 1000000), poor = hh(3600000, 1000000);
+  const rImp = Encounter.run(Character.sheet(rich, TABLES), imp, { tables: TABLES, household: rich });
+  const pImp = Encounter.run(Character.sheet(poor, TABLES), imp, { tables: TABLES, household: poor });
+  checkTrue('the Imp is recurring', rImp.recurring);
+  check('per month', rImp.perPeriod, 'month');
+  checkTrue('healing per month is read from the household', rImp.healPerPeriod !== null && rImp.healPerPeriod > 0);
+  check('net is damage minus healing', rImp.netPerPeriod, Math.round((rImp.damageWeeks - rImp.healPerPeriod) * 10) / 10);
+  checkTrue('a saver barely bleeds', rImp.netPerPeriod < 0.5);
+  checkTrue('an overspender bleeds the full chip and then some', pImp.netPerPeriod > rImp.damageWeeks);
+  checkTrue('and negative healing is a real answer, not clamped', pImp.healPerPeriod < 0);
+  checkTrue('runway-gone is months, not weeks', pImp.periodsToZero > 0 && pImp.periodsToZero < 12);
+  check('it equals ceil(runway / net)', pImp.periodsToZero, Math.ceil(pImp.hpBefore / pImp.netPerPeriod));
+  check('HP after is after ONE period, net', pImp.hpAfter, Math.max(0, Math.round((pImp.hpBefore - pImp.netPerPeriod) * 10) / 10));
+
+  /* Out-healing a bleed is "never", and HP after does not go up. */
+  const rHydra = Encounter.run(Character.sheet(rich, TABLES), hydra, { tables: TABLES, household: rich });
+  check('a yearly bleed heals per year', rHydra.perPeriod, 'year');
+  checkTrue('a saver out-heals the Hydra', rHydra.netPerPeriod < 0);
+  check('so runway is never gone', rHydra.periodsToZero, null);
+  check('and HP after is unchanged, not inflated', rHydra.hpAfter, rHydra.hpBefore);
+
+  /* A single hit is still a single hit. */
+  const once = Encounter.run(Character.sheet(rich, TABLES), timeshare, { tables: TABLES, household: rich });
+  checkTrue('a once creature is not recurring', !once.recurring);
+  check('and carries no healing figure', once.healPerPeriod, null);
+  check('its HP after is the raw hit', once.hpAfter, Math.max(0, Math.round((once.hpBefore - once.damageWeeks) * 10) / 10));
+
+  /* Massive damage is a single hit at or above Max HP. A monthly chip never
+     qualifies however large the pile it eventually takes. */
+  const spike = all.filter(function (c) { return c.name === 'The Sudden Rent Spike'; })[0];
+  const rSpike = Encounter.run(Character.sheet(poor, TABLES), spike, { tables: TABLES, household: poor });
+  checkTrue('a recurring creature never triggers massive damage', !rSpike.massiveDamage);
+
+  /* Incident-shaped periods have no clock, so nothing offsets them. */
+  const bnpl = all.filter(function (c) { return c.name === 'Buy-Now-Pay-Later Sprite'; })[0];
+  const rB = Encounter.run(Character.sheet(rich, TABLES), bnpl, { tables: TABLES, household: rich });
+  checkTrue('"instalment" is not a time period', !rB.recurring);
+
+  /* No household means no healing figure, and the raw damage stands — said,
+     not hidden. */
+  const bare = { stats: { CON: Money.ok(10) }, klass: null, proficiencyBonus: 0, level: null,
+                 currentHp: Money.ok(13), maxHp: null, subScores: {} };
+  const noH = Encounter.run(bare, imp, { tables: TABLES, household: {} });
+  checkTrue('still recurring', noH.recurring);
+  check('but healing is unknown', noH.healPerPeriod, null);
+  check('and HP after uses the raw chip', noH.hpAfter, Math.round((13 - noH.damageWeeks) * 10) / 10);
+
+  /* -- the page ------------------------------------------------------------ */
+  const enc = fs.readFileSync(path.join(ROOT, 'encounter.html'), 'utf8');
+  checkTrue('the encounter room shows what you heal', /'You heal'/.test(enc));
+  checkTrue('and the net', /\['Net'/.test(enc));
+  checkTrue('and when the runway is gone', /'Runway gone in'/.test(enc));
+  checkTrue('and says "never" when you out-heal it', /never — you out-heal it/.test(enc));
+})();
+
 section('Dungeons & Dividends — two ways to get hurt (DD-019)');
 
 (function () {

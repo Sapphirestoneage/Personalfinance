@@ -323,6 +323,7 @@
           return '<div class="fig"><div class="k">' + esc(f[0]) + '</div><div class="v">' + esc(f[1]) + '</div></div>';
         }).join('') + '</div>'
       + (r.damageNote ? '<p class="note" style="margin-top:var(--space-3)">' + esc(r.damageNote) + '</p>' : '')
+      + (r.recurring ? '<p class="note faint">This one bleeds per ' + esc(r.perPeriod) + '. A hypothetical target has no rest to measure it against, so the figure above is one ' + esc(r.perPeriod) + ' gross.</p>' : '')
       + (r.unknown.length
           ? '<p class="note faint" style="margin-top:var(--space-3)">' + r.unknown.length
             + ' defence' + (r.unknown.length === 1 ? '' : 's') + ' not established, so '

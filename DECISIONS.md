@@ -6212,3 +6212,44 @@ asserts none.
 every page reads the dice from there. **Before writing any of these from a new
 room:** a creature with no dice is a data error now, not a design choice — the
 test will say so.
+
+---
+
+## DD-021 — A bleed is measured against a rest
+
+Nine creatures deal damage *per period* — the Lifestyle-Inflation Imp's "1d4 a
+month", the Hydra's "4d8 a year". The encounter room subtracted that once, as
+if it were a single hit, and printed "HP 13 → 10.5". A D&D player's first
+question is *"over how many rounds?"*, and the answer was that nobody had asked.
+
+The honest figure for a creature that bleeds you per period is the **net**:
+what it takes each period minus what a short rest gives back in the same
+period (DD-013 — your surplus, in weeks of runway). From the net comes the
+sentence that matters: **how long until the runway is gone.**
+
+    Lifestyle-Inflation Imp, $72k earner   2.5 wk/month − 2.4 healed = −0.1 net  → gone in 130 months
+    same Imp, $36k earner                  2.5 wk/month − (−0.9)     = 3.4 net   → gone in 4 months
+    Lifestyle-Creep Hydra, $72k            18 wk/year − 28.2 healed  → never; you out-heal it
+    same Hydra, $36k                       18 − (−10.4) = 28.4 net   → gone in 1 year
+
+That is the game finally saying what a recurring creature *is*: the Imp is
+harmless to a saver and lethal to an overspender, and the number is the reason.
+A negative surplus is not clamped — it shows as negative healing, so the net is
+worse than the chip, which is true.
+
+Rules that fall out: "HP after" for a recurring creature means *after one
+period, net*, and never goes up (out-healing is "never", not a heal). Massive
+Damage stays a *single hit* at or above Max HP — a monthly chip never triggers
+it however big the pile it eventually takes. Incident-shaped periods
+("instalment", "incident") have no clock, so no healing offsets them and they
+resolve as one hit. With no household — DM mode's hypothetical target — healing
+is unknown, the raw chip stands, and the page says so rather than pretending.
+
+### Compatibility note
+
+**Stored shape:** nothing. Logged `damageWeeks` is still the gross per-period
+figure. **Rooms updated:** `dnd/engines/encounter.js` (`recurring`,
+`healPerPeriod`, `netPerPeriod`, `periodsToZero` on every result),
+`dnd/encounter.html` (three new figures and the verdict), `dnd/dm.html` (says
+the figure is gross). **Before writing any of these from a new room:** read
+`r.recurring` first — `hpAfter` means a different thing on each side of it.
