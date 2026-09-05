@@ -1078,6 +1078,108 @@
     return null;
   }
 
+  /* ---- Why you got the character you got --------------------------------
+     DD-025. A score with no account of where it came from is a horoscope. For
+     every ability this returns the number, the three sub-stats under it, and
+     for each one the ACTUAL FIGURE OF YOURS that produced it — read back out
+     of the Result's own `input`, never re-derived here, so the explanation
+     cannot drift from the score it explains.
+
+     Nothing is invented for a sub-stat that did not score. An unscored one
+     carries the engine's own `reason` and the fields it is waiting on, so the
+     room can offer to fill exactly those and nothing else.                  */
+
+  function fmtRead(kind, v) {
+    if (!Money.isEntered(v)) return null;
+    if (kind === 'dollars') return Money.formatCents(Math.round(v * 100));
+    if (kind === 'percent') return Math.round(v * 100) + '%';
+    if (kind === 'years') return v === 1 ? '1 year' : v + ' years';
+    if (kind === 'months') {
+      var m = Math.round(v * 10) / 10;
+      return m === 1 ? '1 month' : m + ' months';
+    }
+    return String(v);
+  }
+
+  /* One sub-stat, said in the reader's own figures. */
+  function explainSub(def, result) {
+    var out = {
+      id: def.id, name: def.name, stat: def.stat, measures: def.measures,
+      kind: def.kind, score: null, from: null, bought: false,
+      status: 'blank', reason: null, missing: []
+    };
+    if (Money.isOk(result)) {
+      out.score = result.value;
+      out.bought = !!result.bought;
+      out.status = result.bought ? 'bought' : (def.kind === 'declared' ? 'chosen' : 'measured');
+      if (def.kind === 'computed' && def.reads && !result.bought) {
+        var said = def.reads.kind === 'checklist' ? def.reads.phrase
+                 : (fmtRead(def.reads.kind, result.input) === null ? null
+                    : def.reads.phrase.replace('{v}', fmtRead(def.reads.kind, result.input)));
+        out.from = said;
+      }
+      return out;
+    }
+    out.reason = (result && result.reason) || 'Not scored yet.';
+    out.missing = (result && result.missing) || [];
+    return out;
+  }
+
+  /**
+   * explain(household, tables) — the six abilities, each with its receipts.
+   *
+   * `status` per ability is the honest one of four:
+   *   measured — every sub-stat under it came from your money
+   *   chosen   — you decided it (INT, WIS, CHA always; or a bought fallback)
+   *   partial  — some scored, some are still waiting on a figure
+   *   blank    — nothing under it has a number yet
+   */
+  function explain(household, tables) {
+    if (!tables || !tables.dndRules || !tables.dndScoring) {
+      return { ready: false, reason: 'The Dungeons & Dividends tables are not loaded.' };
+    }
+    var rules = tables.dndRules;
+    var subScores = allSubStats(household, tables);
+    var stats = mainStats(subScores, tables);
+    var abilities = STAT_IDS.map(function (id) {
+      var meta = (rules.stats || []).filter(function (m) { return m.id === id; })[0] || { id: id, name: id };
+      var defs = rules.subStats.filter(function (m) { return m.stat === id; });
+      var parts = defs.map(function (def) { return explainSub(def, subScores[def.id]); });
+      var scored = parts.filter(function (p) { return p.score !== null; });
+      var r = stats[id];
+      var status = scored.length === 0 ? 'blank'
+                 : scored.length < parts.length ? 'partial'
+                 : parts.some(function (p) { return p.status === 'bought' || p.status === 'chosen'; })
+                   ? 'chosen' : 'measured';
+      /* Every field any unscored sub-stat is waiting on, said once. */
+      var waiting = [];
+      parts.forEach(function (p) {
+        p.missing.forEach(function (m) { if (waiting.indexOf(m) === -1) waiting.push(m); });
+      });
+      return {
+        id: id, name: meta.name, finance: meta.finance || null,
+        measures: meta.measures || null, save: meta.save || null,
+        score: Money.isOk(r) ? r.value : null,
+        modifier: Money.isOk(r) ? modifier(r.value) : null,
+        status: status,
+        reason: Money.isOk(r) ? null : (r && r.reason) || null,
+        parts: parts,
+        waitingOn: waiting
+      };
+    });
+    return {
+      ready: true,
+      abilities: abilities,
+      complete: abilities.every(function (a) { return a.score !== null; }),
+      /* What to ask for next, most-blocking first: an ability with nothing at
+         all before one that is merely thin. */
+      nextUp: abilities.filter(function (a) { return a.score === null; })
+        .sort(function (a, b) { return a.parts.filter(function (p) { return p.score !== null; }).length
+                                    - b.parts.filter(function (p) { return p.score !== null; }).length; })
+        .map(function (a) { return { ability: a.id, name: a.name, waitingOn: a.waitingOn }; })
+    };
+  }
+
   /* ---- The whole sheet -------------------------------------------------- */
 
   /* ---- Advancements: ASIs and feats — DD-023 ---------------------------
@@ -1257,6 +1359,7 @@
     applyAsi: applyAsi,
     featByName: featByName,
     skillList: skillList,
+    explain: explain,
     initiative: initiative,
     hitDiceLabel: hitDiceLabel,
     passives: passives,

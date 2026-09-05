@@ -63,6 +63,36 @@ const EXECUTABLE = process.env.SLAF_CHROMIUM || '/opt/pw-browsers/chromium';
    walk the fields in order, tapping each one and typing into it. */
 const CASES = [
   {
+    /* The campaign's CREATION step — five money boxes on a phone, typed into
+       in order. This is the room's front door now, so it is the one place a
+       lost keyboard would cost the most: someone typing their income into a
+       node that gets replaced mid-tap never gets the keyboard back, and they
+       leave. LIVE-FORM: built once at boot, only .value written after. */
+    room: '/dnd/campaign.html',
+    container: '#basics-fields',
+    seed: 'empty',
+    fields: [
+      { sel: '#c-income', type: '52000' },
+      { sel: '#c-expenses', type: '2800' },
+      { sel: '#c-cash', type: '6000' },
+      { sel: '#c-investments', type: '15000' },
+      { sel: '#c-debt', type: '3400' }
+    ],
+    expect: async (page) => {
+      const d = await page.evaluate(() =>
+        JSON.parse(localStorage.getItem('dnd.character.v1')) || {});
+      const asset = (cat) => (d.assets || []).find(a => a.category === cat) || {};
+      return [
+        ['income reached the person', d.people[0].incomeSources[0].grossAnnualIncomeCents, 5200000],
+        ['spending reached the household', d.expenses.monthlyEssential.estimatedValueCents, 280000],
+        ['cash landed as a liquid asset', asset('cash').valueCents, 600000],
+        ['investments landed', asset('investment').valueCents, 1500000],
+        /* Debt has its own writer; getting it through setMoney would throw. */
+        ['debt landed through setDebt', (d.debts || [])[0].balanceCents, 340000]
+      ];
+    }
+  },
+  {
     /* The D&D sheet puts its inputs INSIDE the sheet that re-renders on every
        keystroke — the exact shape of the bug D-034 exists for. If paint() ever
        starts replacing a node instead of writing to it, this is where it shows
@@ -885,6 +915,12 @@ const SELECT_CASES = [
       await page.evaluate((blob) => localStorage.setItem('dnd.character.v1', blob),
         JSON.stringify(DND_CHARACTER));
       await page.reload({ waitUntil: 'networkidle' });
+      await page.waitForTimeout(400);
+      /* Creation now fronts this room, so a character with numbers already in
+         it lands on "Your character", not the prologue. Walk the last step the
+         way a person does rather than reaching past it. */
+      const next = await page.$('#btn-result-next');
+      if (next) { await next.tap(); await page.waitForTimeout(300); }
     },
     picks: [
       ['#q-match', 'half6'],

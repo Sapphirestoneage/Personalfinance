@@ -8396,3 +8396,124 @@ from `engines/foo.js`; the guard in `test/run.js` now covers it),
 are fictional. A new scenario must declare `serves` for at least one option or
 it teaches nothing, and the test insists; write its money as `cents`, `months`
 or `pctIncome`, never as a bare number.
+
+---
+
+## DD-025 — Creation lives in the campaign: your numbers, your six, and the receipts
+
+The campaign asked you to arrive with a character already built, and building
+one was split across two other pages — `index.html` for the six abilities and
+`sheet.html` for the numbers. Nobody was walked through it, and neither page
+ended by telling you what you were and why. The repo owner's words: *"I put in
+basic info about me and it shows me what stats I am and only then does it show
+me in the campaign, and it gives me a detailed explanation."*
+
+So creation now runs inside `campaign.html` as four signposted steps — About
+you → Your six → Your character → The campaign — and you never leave the page.
+
+### The exception, and what makes it survivable
+
+**This deliberately breaks one-editor-per-field.** `sheet.html` and
+`campaign.html` can now both write your income, spending, cash, investments and
+debt. That is the thing `CLAUDE.md` says to stop and ask about, so it was
+asked, and the answer was to put the whole flow in the campaign.
+
+The exception is only safe because of two things, and both are enforced:
+
+1. **`shared/charform.js` declares the fields once.** Label, hint, unit, the
+   format-only placeholder, and *which Store writer the field uses*. Both rooms
+   render from that list. If the two ever disagree about what a field is called
+   or what an empty box means, one of them is not reading this file, and that
+   is the bug.
+2. **Every real write on the page goes through one function, `writeBasic()`.**
+   A test asserts there is exactly one call to `Store.setMoney`, one to
+   `Store.setDebt`, one to `Store.setFilingStatus`, that all three are inside
+   that function, and that no painter in the play loop calls it. "The campaign
+   never writes to your real numbers while you play" stops being a promise in a
+   comment and becomes a thing that is checked.
+
+The fork is untouched by any of this: starting a campaign still copies the
+household, and every consequence still lands on the copy.
+
+### Filing status is asked first, because it silently blocked a third of you
+
+A phone walk through the new flow ended with Constitution unscored and the
+reason `Choose a filing status to estimate taxes.` No filing status → no tax
+estimate → no savings rate → no CON, and no place on the ladder either. It
+looks like a detail and it blocks a third of the character, so it is now the
+first thing asked rather than something the sheet happened to have.
+
+### Point buy is D&D Beyond's, over all six
+
+27 points, everything starts at 8, nothing above 15, 5e's own cost table, read
+from `dnd_scoring.json` — no second copy. You are told to spend it on INT, WIS
+and CHA, and told plainly that money takes over STR, DEX and CON the moment it
+can measure them. Then the next screen shows that happening, which is a better
+explanation than any paragraph.
+
+### `Character.explain()` — the receipts
+
+A score with no account of where it came from is a horoscope. `explain()`
+returns, for each ability, its three sub-stats and **the actual figure of yours
+that produced each one** — read back out of the Result's own `input`, never
+re-derived, so the explanation cannot drift from the score it explains. On
+screen that reads: *"10 Income Power — from your gross income of $52,000 a
+year."* The phrasing per sub-stat lives in `dnd_rules.json` as `reads`, not in
+the page.
+
+Four honest statuses, and nothing is invented: `measured`, `chosen`, `partial`,
+`blank`. An unscored sub-stat carries the engine's own reason and the fields it
+waits on, so the optional finisher can offer exactly those and nothing else. An
+ability with a bought score reads as *chosen*, never as measured.
+
+### The mobility trap, which scored silently and wrongly
+
+`checklistScore()` does `item.options[stored]` — the stored number is an
+**index**, and the points are looked up from the table. The first version of
+the finisher stored the option's *points*. A 3-point answer to a three-option
+question becomes index 3, which does not exist, so Dexterity quietly refused to
+score while every stored value looked plausible. Only a phone walk found it.
+There is now a test that stores points on purpose and asserts it fails.
+
+### The campaign itself: correlated, not arbitrary
+
+Three changes, all from the same complaint — *"these qs dont feel correlated,
+also show which trait it's boosting"*:
+
+- **Options say what they train, before you pick.** "Practises **Self-Awareness
+  & Discipline** +2 · **Consistency** +1 · pulls The Keeper's lever." This
+  gives nothing away: which ability a move exercises is not the same as whether
+  it is the right move *now*, and the ladder's verdict still waits until after.
+  An option that trains nothing says so — "it is a way of not deciding".
+- **Every card says why it is in front of you.** "This is a step-2 problem, and
+  step 2 is where you are standing." A board of six that never explained itself
+  read as a random draw. It was never one.
+- **The two questions are motivated.** They used to appear with no stated
+  connection to the character just built. They now say why they are the only
+  two asked: an unclaimed employer match outranks nearly everything else, and
+  everything else the ladder needs it can already read.
+
+### Compatibility note
+
+**Stored shape:** nothing changes shape. Creation writes the same fields the
+sheet already wrote, through the same `Store` functions —
+`grossAnnualIncomeCents` on the first person's first income source,
+`monthlyEssential` on the household, the `dnd_asset_cash` / `dnd_asset_investments`
+assets, the single `dnd_debt_total` debt with its rate, `filingStatus`, and on
+`dndProfile`: `declaredMethod` / `declaredScores`, `incomeThreeYearsAgoCents`,
+`sideIncomeAnnualCents`, `fixedCostShare`, `yearsSustained`,
+`disruptionSurvived`, `mobility`. `dnd_rules.json` gains `reads` on each of the
+nine computed sub-stats; readers that do not know the key are unaffected.
+
+**Rooms updated:** `dnd/campaign.html` (the four-step flow, the finisher, the
+trained-trait labels, the why-this-card lines), `dnd/shared/charform.js` (new),
+`dnd/engines/character.js` (`explain()`), `dnd/data/dnd_rules.json` (`reads`),
+`dnd/test/run.js`, `test/forms.js`.
+
+**Before writing any of these from a new room:** `dndProfile.mobility` stores
+the **option index**, not the points — write points there and the score fails
+silently. Debt does not go through `Store.setMoney`; it has its own writer and
+its rate is load-bearing. And a new room that wants to edit these fields must
+render from `shared/charform.js` rather than inventing its own labels or units,
+or the two rooms will drift and there is no longer a single answer to what a
+field means.
