@@ -4562,3 +4562,89 @@ being mentioned.
 the household or the profile first. If you add a page to `dnd/`, it is
 automatically subject to the escaping, disclaimer, trademark, skin and
 theme-class checks — that is deliberate.
+
+---
+
+## D-071 — The file says which of itself may be believed, and a character can come home
+
+BRIEF §9.5, which the build-status table had marked as blocked on T2's suggested
+state. It was blocked on the wrong thing. T2 gives SPARKS somewhere to *put* a
+suggestion (D-060); what was actually missing was this tool saying which values
+belong there — and that is a D&D-side job, so it could have been done at any
+point.
+
+### The question an importer actually has
+
+Not *what is in this file* but **which of it may I write down as fact?**
+
+Money someone typed is fact. A Wisdom score they **rolled** is not a
+self-assessment — it is a dice result, and a room that stored it would be
+inventing a person. The export carried no way to tell those apart, and the
+scores look identical in the JSON either way. That is the bug this fixes, and it
+would have been an ugly one: a SPARKS room confidently showing someone a Threat
+Detection of 15 that came out of `Math.random()`.
+
+So every envelope now carries `provenance`, describing **only the keys actually
+present** — describing absent ones would invite an importer to write defaults for
+things nobody answered. Four trust levels:
+
+    typed      the person entered this figure          → store it
+    declared   a self-report, estimate or choice       → show as a suggestion
+    generated  dice, standard array, or a point buy    → never store it
+    mixed      a container whose fields differ         → read profileFields
+
+`dndProfile` is always `mixed`, and its `profileFields` names every key present.
+The entry an importer is most likely to get wrong — `declaredScores` — is
+**resolved rather than deferred**: its trust is computed from `declaredMethod`
+and stated outright, so nobody has to work it out.
+
+Only `featsOfStrength` (the behavioural quiz) and `homebrew` (typed as a
+self-assessment) come back `declared`. `roll`, `standardArray` and `pointBuy` are
+`generated`, and **an unrecognised method is reported as `generated`** — failing
+safe is the only sane default for a field this easy to misread. A test asserts
+that, so adding a method without classifying it cannot quietly open the gate.
+
+`FORMAT.md` documents the whole thing, including the fallback for an importer
+that ignores `provenance` entirely: import the money, treat everything in
+`dndProfile` as decoration.
+
+### And the character can come home
+
+The tool could export and never import, so a character could not move between
+devices — start on a phone, finish on a laptop was impossible, which for a thing
+people are meant to pass around is a real gap.
+
+`Store.importCharacter(envelope)` **replaces** the keys the envelope names and
+leaves every other key completely alone. Replace rather than merge, deliberately:
+this tool holds exactly one character, and half-merging two produces a third
+person who does not exist. Leaving unnamed keys alone means an older file missing
+a newer key does not wipe it.
+
+`contains` is the authority on what to take, not the payload's own key list —
+`contains` is the part the format guarantees, so a key present but unnamed is
+ignored. Validation runs first and a file that fails is not applied at all, which
+was checked both ways in a browser: garbage and valid-JSON-wrong-shape both leave
+the existing character exactly as it was.
+
+The sheet's import does **not** rebuild the shell afterwards. The structure never
+varies, only the values do, and rebuilding would replace every input node for no
+reason — the one thing D-034 forbids. `hydrate()` writes the new values into the
+nodes already there.
+
+### Compatibility note
+
+**Stored shape:** unchanged. `provenance` is **added to the export envelope**,
+not to storage — an older importer that ignores it reads exactly what it read
+before, and the payload is byte-identical.
+
+**Rooms updated:** `dnd/shared/export.js` (`provenanceFor`, and the three trust
+tables), `dnd/shared/store.js` (`importCharacter`), `dnd/sheet.html` ("Bring one
+back" — a file picker and a paste box, both built once and only read) and
+`dnd/FORMAT.md`.
+
+**Before writing any of these from a new room:** if you add a field to
+`dndProfile`, add it to `PROFILE_FIELDS` in `export.js` — a test asserts every
+key the tool writes has a provenance entry, so it will fail if you forget, which
+is the point. If you add a scoring method, add it to `METHOD_TRUST`; without an
+entry it is reported `generated`, which is safe but wrong for a genuine
+self-report.

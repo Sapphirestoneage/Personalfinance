@@ -78,6 +78,43 @@ real per-debt UI, treat this record as a placeholder to be replaced, not as
 data to be trusted — and consider telling the user so, rather than letting a
 made-up 4% sit in their debt list looking like something they typed.
 
+## `provenance` — which of this you may write down as fact
+
+The important question when importing is not *what is in this file* but **which
+of it may I store as data?** Money someone typed is data. A Wisdom score they
+**rolled** is not a self-assessment, it is a dice result, and a room that stored
+it would be inventing a person.
+
+So the envelope carries a `provenance` block describing only the keys actually
+present. Each entry has a `trust` and a `note`:
+
+| `trust` | Means | What to do with it |
+|---|---|---|
+| `typed` | The person entered this figure. | Import it as data. |
+| `declared` | A self-report — an estimate, a choice, a tick-box. | Show it as a **suggested value**, never store it silently. |
+| `generated` | Dice, a standard array, or a point-buy budget. | **Never store it.** It carries no information about the person. |
+| `mixed` | A container whose fields differ. | Read `profileFields` inside it. |
+
+`dndProfile` is always `mixed`, and its `profileFields` map spells out every key
+present. The one to read first is **`declaredScores`** — its trust is resolved
+from `declaredMethod` and reported directly, so you never have to work it out:
+
+```json
+"declaredScores": {
+  "trust": "generated",
+  "method": "roll",
+  "note": "Dice. Carries no information about the person at all."
+}
+```
+
+Only `featsOfStrength` (the behavioural quiz) and `homebrew` (typed in as a
+self-assessment) produce `declared`. `roll`, `standardArray` and `pointBuy` all
+produce `generated`, and **an unrecognised method is reported as `generated`**,
+because failing safe is the only sane default for a field this easy to misread.
+
+If your importer ignores `provenance` entirely, the safe reading is: import the
+household money, and treat everything inside `dndProfile` as decoration.
+
 ## `summary` is not authoritative
 
 It exists so you can show *"you are about to import The Earner, Level 3, 13/18

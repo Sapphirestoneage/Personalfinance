@@ -221,6 +221,101 @@ section('Stable ids, so a re-import updates rather than duplicates');
     env.household.assets.every(a => a.id.indexOf('dnd_') === 0));
 })();
 
+
+section('Dungeons & Dividends — provenance and the round trip (BRIEF §9.5)');
+(function () {
+  /* The importer's real question is not "what is in this file" but "which of it
+     may I write down as fact?" Money someone typed is fact. A Wisdom score they
+     ROLLED is not a self-assessment, it is a dice result, and a room that stored
+     it would be inventing a person. */
+
+  function withMethod(method, extra) {
+    const h = fullCharacter();
+    /* A method with no scores describes nothing, so both are set together —
+       which is also how the tool itself writes them. */
+    h.dndProfile = Object.assign({}, h.dndProfile, {
+      declaredMethod: method,
+      declaredScores: { taxLiteracy: 13, marketLiteracy: 12, instrumentLiteracy: 11,
+        scenarioForesight: 14, selfAwareness: 15, threatDetection: 10,
+        negotiation: 10, network: 9, personability: 8 }
+    }, extra || {});
+    return Export.build(h, TABLES);
+  }
+  const fieldsOf = (env) => env.provenance.dndProfile.profileFields;
+
+  const rolled = withMethod('roll', { rolledValues: [15, 14, 13] });
+  checkTrue('the envelope carries a provenance block', !!rolled.provenance);
+  check('rolled scores are generated, never data', fieldsOf(rolled).declaredScores.trust, 'generated');
+  check('and the method is named so a reader can check the reasoning',
+    fieldsOf(rolled).declaredScores.method, 'roll');
+  check('the dice themselves are generated too', fieldsOf(rolled).rolledValues.trust, 'generated');
+
+  check('a standard array is generated as well',
+    fieldsOf(withMethod('standardArray')).declaredScores.trust, 'generated');
+  check('so is point buy — it says what you wanted to be, not what you are',
+    fieldsOf(withMethod('pointBuy')).declaredScores.trust, 'generated');
+  check('the quiz is a self-report, which is a suggestion',
+    fieldsOf(withMethod('featsOfStrength')).declaredScores.trust, 'declared');
+  check('and so is typing them in yourself',
+    fieldsOf(withMethod('homebrew')).declaredScores.trust, 'declared');
+  check('an unrecognised method fails safe, not open',
+    fieldsOf(withMethod('something_new')).declaredScores.trust, 'generated');
+
+  const demo = Export.build(fullCharacter(), TABLES);
+  ['people', 'filingStatus', 'assets', 'debts', 'expenses'].forEach(function (k) {
+    if (!demo.provenance[k]) return;
+    check(`${k} is typed, so an importer may store it`, demo.provenance[k].trust, 'typed');
+  });
+  check('dndProfile is mixed and says to read the field list',
+    demo.provenance.dndProfile.trust, 'mixed');
+
+  /* Only what is present is described. Describing absent keys would invite an
+     importer to write defaults for things nobody answered. */
+  const bare = Export.build({ dndProfile: { alignment: 'chaotic_good' } }, TABLES);
+  check('an absent key gets no provenance entry', bare.provenance.people, undefined);
+  check('and a present one does', bare.provenance.dndProfile.profileFields.alignment.trust, 'declared');
+  check('an empty household carries no provenance at all',
+    Export.build({}, TABLES).provenance, undefined);
+
+  /* Every field the tool writes should be described, or an importer meets a key
+     with no guidance and has to guess. */
+  const described = Object.keys(Export.PROFILE_FIELDS);
+  Object.keys(fullCharacter().dndProfile).forEach(function (k) {
+    checkTrue(`dndProfile.${k} has a provenance entry`, described.indexOf(k) !== -1);
+  });
+  described.forEach(function (k) {
+    const f = Export.PROFILE_FIELDS[k];
+    checkTrue(`${k} declares a trust level`,
+      ['typed', 'declared', 'generated', 'varies'].indexOf(f.trust) !== -1);
+    checkTrue(`${k} explains itself`, typeof f.note === 'string' && f.note.length > 10);
+  });
+  Object.keys(Export.METHOD_TRUST).forEach(function (m) {
+    checkTrue(`method ${m} declares a trust level`,
+      ['declared', 'generated'].indexOf(Export.METHOD_TRUST[m].trust) !== -1);
+  });
+
+  /* -- the round trip ----------------------------------------------------- */
+  const envelope = Export.build(fullCharacter(), TABLES);
+  checkTrue("the tool's own export validates", Export.validate(envelope).ok);
+  checkTrue('the envelope names what it carries', envelope.contains.length > 0);
+  envelope.contains.forEach(function (k) {
+    checkTrue(`${k} is actually in the payload`,
+      Object.prototype.hasOwnProperty.call(envelope.household, k));
+  });
+
+  /* importCharacter REPLACES the keys the envelope names and leaves the rest
+     alone: this tool holds one character, and half-merging two produces a third
+     person who does not exist. contains is what the format guarantees, so it is
+     the authority — a payload key it does not name is ignored. */
+  const sneaky = JSON.parse(JSON.stringify(envelope));
+  sneaky.household.somethingElse = { rogue: true };
+  checkTrue('a payload key absent from contains is not offered for import',
+    sneaky.contains.indexOf('somethingElse') === -1);
+
+  checkTrue('random JSON does not validate', !Export.validate({ hello: 'world' }).ok);
+  checkTrue('and neither does nothing at all', !Export.validate(null).ok);
+})();
+
 console.log('\n' + '─'.repeat(66));
 if (!failures.length) { console.log(`✓ ${passed} checks passed`); process.exit(0); }
 console.log(`✗ ${failures.length} failed, ${passed} passed\n`);

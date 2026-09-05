@@ -179,6 +179,8 @@
   .btn { font-family: var(--font-body); font-size: var(--text-sm); background: var(--color-accent); color: var(--color-accent-contrast); border: 0; border-radius: var(--radius-sm); padding: 0 var(--space-4); height: var(--control-height); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
   .btn.ghost { background: transparent; color: var(--color-accent-hover); border: 1px solid var(--color-border-strong); }
   .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+  .bad { color: var(--color-critical); }
+  #import-result { border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: var(--space-3); margin-top: var(--space-3); }
   textarea { width: 100%; box-sizing: border-box; min-height: 84px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: var(--text-xs); background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: var(--space-2); }
   .foot { margin-top: var(--space-6); text-align: center; font-size: var(--text-sm); }
   .foot a { color: var(--color-accent-hover); }
@@ -213,6 +215,22 @@
     <button type="button" class="btn ghost" id="btn-clear">Clear everything</button>
   </div>
   <div id="export-detail" hidden><textarea id="export-box" readonly aria-label="Your character data"></textarea></div>
+
+  <h2 class="sec">Bring one back</h2>
+  <p class="note">Started on your phone and want to finish here? Open the file you saved, or paste it
+     in. This <b>replaces</b> the character on this device — one sheet, one person.</p>
+  <div class="actions">
+    <!-- LIVE-FORM: this input and the file picker are built here, once, and
+         only ever read. Nothing repaints this block. -->
+    <label class="btn ghost" for="f-import-file">Open a file</label>
+    <input type="file" id="f-import-file" accept="application/json,.json" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden"/>
+    <button type="button" class="btn ghost" id="btn-import-paste">Paste it instead</button>
+  </div>
+  <div id="import-paste" hidden>
+    <textarea id="f-import-box" aria-label="Paste your character file" placeholder="Paste the whole file here, starting with {"></textarea>
+    <div class="actions"><button type="button" class="btn" id="btn-import-go">Load this character</button></div>
+  </div>
+  <div id="import-result" class="note" hidden></div>
 
   <p class="foot"><a href="encounter.html">Weakness map — what hunts you, and what blocks it →</a></p>
   <p class="foot"><a href="card.html">Your card — the bit you send to the group chat →</a></p>
@@ -1043,6 +1061,57 @@
       box.hidden = !box.hidden;
       el('btn-toggle-json').textContent = box.hidden ? 'Show the file' : 'Hide the file';
     });
+    /* ---- import (BRIEF §9.5) --------------------------------------------
+       Validation first, always, and the file's own warnings are shown rather
+       than swallowed: an older-format file that still loads should say so. */
+    function loadCharacter(text) {
+      var box = el('import-result');
+      box.hidden = false;
+      var envelope;
+      try { envelope = JSON.parse(text); }
+      catch (e) {
+        box.innerHTML = '<b class="bad">That is not a character file.</b> It could not be read as '
+          + 'JSON at all — make sure you copied the whole thing, starting with a brace.';
+        return;
+      }
+      var v = Export.validate(envelope);
+      if (!v.ok) {
+        box.innerHTML = '<b class="bad">Not loaded.</b> ' + esc(v.errors[0])
+          + (v.errors.length > 1 ? ' (and ' + (v.errors.length - 1) + ' more)' : '');
+        return;
+      }
+      var res = Store.importCharacter(envelope);
+      if (!res.ok) { box.innerHTML = '<b class="bad">Not loaded.</b> ' + esc(res.reason); return; }
+      /* Deliberately NOT a buildShell(). The shell's structure never varies —
+         only its values do — and rebuilding it would replace every input node
+         for no reason, which is the one thing D-034 forbids. hydrate() writes
+         the new values into the nodes that are already there. */
+      hydrate(false);
+      paint();
+      box.innerHTML = '<b>Loaded.</b> Replaced ' + res.applied.length + ' part'
+        + (res.applied.length === 1 ? '' : 's') + ' of this sheet: ' + esc(res.applied.join(', ')) + '.'
+        + (v.warnings.length ? '<br/><span class="faint">' + esc(v.warnings.join(' ')) + '</span>' : '');
+    }
+
+    el('f-import-file').addEventListener('change', function (e) {
+      var f = e.target.files && e.target.files[0];
+      if (!f) return;
+      var r = new FileReader();
+      r.onload = function () { loadCharacter(String(r.result)); };
+      r.onerror = function () {
+        el('import-result').hidden = false;
+        el('import-result').innerHTML = '<b class="bad">Could not read that file.</b>';
+      };
+      r.readAsText(f);
+    });
+    el('btn-import-paste').addEventListener('click', function () {
+      var box = el('import-paste');
+      box.hidden = !box.hidden;
+    });
+    el('btn-import-go').addEventListener('click', function () {
+      loadCharacter(el('f-import-box').value);
+    });
+
     el('btn-export').addEventListener('click', function () {
       var text = el('export-box').value, btn = el('btn-export');
       function done() { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy instead'; }, 1600); }

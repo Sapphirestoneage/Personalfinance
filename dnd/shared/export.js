@@ -61,6 +61,60 @@
      this list is not its business and never appears in an export. */
   var OWNED_KEYS = ['people', 'filingStatus', 'assets', 'debts', 'expenses', 'dndProfile'];
 
+  /* ---- provenance — BRIEF §9.5 -------------------------------------------
+     The importer's real question is not "what is in this file" but "which of
+     it may I write down as fact?" Money someone typed is fact. A Wisdom score
+     they ROLLED is not a self-assessment, it is a dice result, and a room that
+     silently stored it would be inventing a person.
+
+     So every group of keys carries how it came to exist. `trust: 'typed'` may
+     be imported as data; `'declared'` is a self-report and belongs in
+     SPARKS's suggested state (D-060) rather than the household; `'generated'`
+     must not become data at any confidence, ever.                          */
+
+  var PROVENANCE = {
+    people: { trust: 'typed', note: 'Income figures the person entered.' },
+    filingStatus: { trust: 'typed', note: 'Chosen from a list; sets the tax estimate.' },
+    assets: { trust: 'typed', note: 'Cash and investments as two summary records, not itemised.' },
+    debts: { trust: 'typed', note: 'One summary record. Its rate is a stand-in, not a measured APR — see FORMAT.md.' },
+    expenses: { trust: 'typed', note: 'One monthly figure, estimated by the person.' },
+    dndProfile: { trust: 'mixed', note: 'Game state. See profileFields for what may be trusted.' }
+  };
+
+  /* Inside dndProfile the answer differs field by field, so it is spelled out
+     rather than left for an importer to guess. */
+  var PROFILE_FIELDS = {
+    incomeThreeYearsAgoCents: { trust: 'typed', note: 'A real past income figure.' },
+    sideIncomeAnnualCents: { trust: 'typed', note: 'A real side-income figure.' },
+    fixedCostShare: { trust: 'declared', note: 'The person\'s own estimate of their fixed-cost share.' },
+    yearsSustained: { trust: 'declared', note: 'Self-reported.' },
+    disruptionSurvived: { trust: 'declared', note: 'Self-reported.' },
+    healthCoverage: { trust: 'declared', note: 'Self-reported cover level.' },
+    disabilityInsurance: { trust: 'declared', note: 'Self-reported yes/no. Absent means never asked.' },
+    umbrellaPolicy: { trust: 'declared', note: 'Self-reported yes/no. Absent means never asked.' },
+    automatedSaving: { trust: 'declared', note: 'Self-reported: all / most / some / none.' },
+    mobility: { trust: 'declared', note: 'Self-reported checklist.' },
+    hustleReadiness: { trust: 'declared', note: 'Self-reported.' },
+    statuses: { trust: 'declared', note: 'Ticked by the person. Absent means never asked; all-false means asked and answered none.' },
+    alignment: { trust: 'declared', note: 'Chosen, never computed. Disposition, not measurement.' },
+    characterName: { trust: 'declared', note: 'A name they typed. Not their legal name and should not be treated as one.' },
+    quizAnswers: { trust: 'declared', note: 'Answers to behavioural questions.' },
+    classOverride: { trust: 'declared', note: 'A class they picked over the suggested one.' },
+    subclassId: { trust: 'declared', note: 'A subclass they picked. Available from level 3 and never assigned automatically.' },
+    declaredScores: { trust: 'varies', note: 'Depends entirely on declaredMethod — read that first.' },
+    declaredMethod: { trust: 'declared', note: 'How the nine scores came to exist. THE key to reading declaredScores.' },
+    rolledValues: { trust: 'generated', note: 'Dice. Never data.' }
+  };
+
+  /* How much a set of declaredScores is worth, by how it was produced. */
+  var METHOD_TRUST = {
+    featsOfStrength: { trust: 'declared', note: 'Answers to behavioural questions — a self-report, and the only method worth showing as a suggestion.' },
+    homebrew: { trust: 'declared', note: 'Typed in directly by the person as a self-assessment.' },
+    pointBuy: { trust: 'generated', note: 'A budget spent to build a character. Says what they wanted to be, not what they are.' },
+    standardArray: { trust: 'generated', note: 'A fixed set of numbers assigned to slots. Carries no information about the person.' },
+    roll: { trust: 'generated', note: 'Dice. Carries no information about the person at all.' }
+  };
+
   function clone(v) { return JSON.parse(JSON.stringify(v)); }
 
   function isEmptyObject(o) {
@@ -160,7 +214,40 @@
       var summary = summarise(h, tables);
       if (!isEmptyObject(summary)) envelope.summary = summary;
     }
+    var prov = provenanceFor(h, contains);
+    if (!isEmptyObject(prov)) envelope.provenance = prov;
     return envelope;
+  }
+
+  /**
+   * What may be trusted, for the keys this file actually carries — BRIEF §9.5.
+   *
+   * Only describes what is present. Describing absent keys would invite an
+   * importer to write defaults for things nobody answered.
+   */
+  function provenanceFor(household, contains) {
+    var out = {};
+    contains.forEach(function (key) {
+      if (PROVENANCE[key]) out[key] = clone(PROVENANCE[key]);
+    });
+    var p = household && household.dndProfile;
+    if (!out.dndProfile || !p) return out;
+
+    var fields = {};
+    Object.keys(p).forEach(function (k) {
+      if (PROFILE_FIELDS[k]) fields[k] = clone(PROFILE_FIELDS[k]);
+    });
+    /* declaredScores is the field an importer is most likely to get wrong, so
+       its entry is resolved here rather than left as "varies". */
+    if (fields.declaredScores) {
+      var m = METHOD_TRUST[p.declaredMethod] || null;
+      fields.declaredScores = m
+        ? { trust: m.trust, method: p.declaredMethod, note: m.note }
+        : { trust: 'generated', method: p.declaredMethod || null,
+            note: 'Unknown method — treat as generated, which is the safe reading.' };
+    }
+    if (!isEmptyObject(fields)) out.dndProfile.profileFields = fields;
+    return out;
   }
 
   function toJSON(household, tables) {
@@ -239,6 +326,10 @@
     toJSON: toJSON,
     filename: filename,
     validate: validate,
-    summarise: summarise
+    summarise: summarise,
+    provenanceFor: provenanceFor,
+    PROVENANCE: PROVENANCE,
+    PROFILE_FIELDS: PROFILE_FIELDS,
+    METHOD_TRUST: METHOD_TRUST
   };
 });

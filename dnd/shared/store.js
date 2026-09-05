@@ -259,6 +259,42 @@
 
   function encounters() { return profile().encounters || []; }
 
+  /**
+   * Load a character back in — BRIEF §9.5.
+   *
+   * The counterpart to the export, and the reason someone can start on a phone
+   * and finish on a laptop. Deliberately a REPLACE of the keys the envelope
+   * names, not a merge into whatever is here: this tool holds exactly one
+   * character, and half-merging two of them produces a third person who does
+   * not exist. Keys the envelope does not name are left completely alone, so
+   * an older file missing a newer key does not wipe it.
+   *
+   * Validation is the caller's job — call Export.validate() first and do not
+   * call this on a file that failed. The `contains` list is the authority on
+   * what to take; a key present in the payload but unnamed is ignored, because
+   * `contains` is the part the format guarantees.
+   */
+  function importCharacter(envelope) {
+    if (!envelope || !envelope.household) {
+      return { ok: false, applied: [], reason: 'Nothing to import.' };
+    }
+    var listed = Array.isArray(envelope.contains) && envelope.contains.length
+      ? envelope.contains
+      : Object.keys(envelope.household);
+    var state = load();
+    var applied = [];
+    listed.forEach(function (key) {
+      if (!Object.prototype.hasOwnProperty.call(envelope.household, key)) return;
+      state[key] = JSON.parse(JSON.stringify(envelope.household[key]));
+      applied.push(key);
+    });
+    if (!applied.length) return { ok: false, applied: [], reason: 'The file named no keys this tool stores.' };
+    /* A character without a profile object breaks every reader downstream. */
+    if (!state.dndProfile || typeof state.dndProfile !== 'object') state.dndProfile = {};
+    save();
+    return { ok: true, applied: applied };
+  }
+
   function reset() {
     state = blank();
     try { self.localStorage.removeItem(KEY); } catch (e) { /* private mode */ }
@@ -272,6 +308,7 @@
   setFilingStatus: setFilingStatus,
     moneyEntered: moneyEntered, quizComplete: quizComplete, tier: tier,
     logEncounter: logEncounter, encounters: encounters,
+    importCharacter: importCharacter,
     reset: reset, save: save
   };
 });
