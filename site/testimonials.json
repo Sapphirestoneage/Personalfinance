@@ -1,0 +1,17 @@
+{
+  "_about": "Testimonials for stresslessaboutmoney.com. site.js renders ONLY entries with consent === true AND a non-empty firstName AND a non-empty quote. Anything else is skipped silently. The section that shows them stays hidden while this list is empty.",
+  "_schema": {
+    "firstName": "string, required — first name only, as the person agreed to be shown",
+    "quote": "string, required — their words, unedited beyond trimming",
+    "context": "string, optional — a few words after the name, e.g. 'teacher, Brooklyn' or 'Clarity Package'",
+    "consent": "boolean, required — true only when the person has explicitly agreed to this quote appearing on the site with this name",
+    "consentDate": "string, optional — ISO date the consent was given, e.g. 2026-09-01",
+    "_example": {
+      "firstName": "Example",
+      "quote": "This entry is documentation. It never renders because consent is false.",
+      "context": "not a real person",
+      "consent": false
+    }
+  },
+  "entries": []
+}
