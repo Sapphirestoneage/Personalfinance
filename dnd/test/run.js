@@ -352,8 +352,29 @@ section('Dungeons & Dividends — the encounter engine');
   /* -- predators: unscored saves are not weaknesses ---------------------- */
   const p = Encounter.predators(sheet, TABLES);
   checkTrue('the map is ready with six scored saves', p.ready);
-  check('it names two weakest', p.weakest.length, 2);
+  checkTrue('it names at least two weakest', p.weakest.length >= 2);
   check('a level 3 character is tier I', p.tier.id, 'I');
+
+  /* A tie is a tie. Taking a flat slice of two would mark one save thin and
+     its numerical twin safe, so `weakest` carries everything tied with the
+     second-thinnest — no more and no less. */
+  const scored = Character.savingThrows(sheet.stats, sheet.klass, sheet.proficiencyBonus, TABLES)
+    .filter(function (x) { return x.ok; })
+    .sort(function (a, b) { return a.modifier - b.modifier; });
+  const cut = scored[1].modifier;
+  check('weakest is exactly the saves at or below the second-thinnest',
+    p.weakest.slice().sort().join(','),
+    scored.filter(function (x) { return x.modifier <= cut; })
+          .map(function (x) { return x.stat; }).sort().join(','));
+
+  const flat = { stats: { INT: Money.ok(14), WIS: Money.ok(14), CHA: Money.ok(14) },
+                 klass: null, proficiencyBonus: 0, level: null };
+  check('three saves all level names all three, not an arbitrary two',
+    Encounter.predators(flat, TABLES).weakest.length, 3);
+  const clear = { stats: { INT: Money.ok(18), WIS: Money.ok(12), CHA: Money.ok(6) },
+                  klass: null, proficiencyBonus: 0, level: null };
+  check('and with no tie it still names exactly two',
+    Encounter.predators(clear, TABLES).weakest.length, 2);
   const thin = Object.assign({}, sheet, { stats: { WIS: Money.ok(8) } });
   checkTrue('with one save scored there is no map yet', !Encounter.predators(thin, TABLES).ready);
 })();
@@ -654,6 +675,71 @@ section('Dungeons & Dividends — the quiz-only leaning');
 
   check('and with nothing answered it declines to guess',
     Character.suggestClassFromStats({}, TABLES).status, 'incomplete');
+})();
+
+section('Dungeons & Dividends — what hunts you on the money-free page');
+
+(function () {
+  const Encounter = require(path.join(ROOT, 'engines/encounter.js'));
+  /* BRIEF §9.6. The Tier 1 result runs §9.3's predator engine on the only
+     three saves a page with no dollars can score. The whole risk here is
+     over-claiming, so these checks are about what it must NOT say. */
+
+  /* A Tier 1 character: INT, WIS and CHA scored, the rest genuinely blank. */
+  const t1 = {
+    stats: { INT: Money.ok(14), WIS: Money.ok(11), CHA: Money.ok(9) },
+    klass: null, proficiencyBonus: 0, level: null
+  };
+  const p = Encounter.predators(t1, TABLES);
+  checkTrue('three scored saves are enough to draw the list', p.ready);
+  check('it still names exactly two weakest', p.weakest.length, 2);
+
+  /* The point of the whole panel: a blank save must never be called a
+     weakness. STR, DEX and CON are unscored here, so they cannot appear. */
+  ['STR', 'DEX', 'CON'].forEach(function (id) {
+    checkTrue(`${id} is blank, so it is not named as a weakness`,
+      p.weakest.indexOf(id) === -1);
+  });
+  check('the two thinnest of the three scored are CHA and WIS',
+    p.weakest.slice().sort().join(','), 'CHA,WIS');
+
+  /* No class, so no proficiency anywhere — a Tier 1 character has not picked
+     one, and savingThrows must not invent one. */
+  const saves = Character.savingThrows(t1.stats, null, 0, TABLES);
+  checkTrue('with no class, no save is proficient',
+    saves.every(function (x) { return !x.proficient; }));
+  check('exactly three of the six are scored',
+    saves.filter(function (x) { return x.ok; }).length, 3);
+
+  /* Every creature the panel can list must carry the fields it renders, or
+     the page prints "undefined" at someone. */
+  p.creatures.forEach(function (c) {
+    checkTrue(`${c.name} carries an attackType the page can label`,
+      TABLES.dndRules.encounterRules.attackTypes.some(function (t) { return t.id === c.attackType; }));
+    checkTrue(`${c.name} carries a CR`, c.cr !== undefined && c.cr !== null);
+    checkTrue(`${c.name} sorts by CR`, Encounter.crToNumber(c.cr) !== null);
+  });
+
+  /* One scored save is not a map, on this page as much as on the sheet. */
+  const one = { stats: { WIS: Money.ok(8) }, klass: null, proficiencyBonus: 0, level: null };
+  checkTrue('one scored save still draws nothing', !Encounter.predators(one, TABLES).ready);
+
+  /* A Tier 1 character has no Level, so the engine must not blow up on a
+     null one — and the page deliberately never shows the tier it falls back
+     to, because a fallback tier is not a measured tier. */
+  checkTrue('a null level does not break the engine', p.tier && !!p.tier.id);
+
+  /* -- the page itself wires it up --------------------------------------- */
+  const src = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  checkTrue('index.html loads the encounter engine',
+    /<script src="engines\/encounter\.js"><\/script>/.test(src));
+  checkTrue('index.html aliases DND.Encounter', /Enc = DND\.Encounter/.test(src));
+  checkTrue('the hunt panel is in the markup', /id="r-preds"/.test(src));
+  checkTrue('and it says the blank saves are blank, not bad',
+    /blank, not bad/.test(src));
+  /* The share text is the product — it must carry a link back or it cannot
+     do the one job a lead magnet has. */
+  checkTrue('the share text carries a link back', /Roll your own/.test(src));
 })();
 
 console.log('\n' + '\u2500'.repeat(66));

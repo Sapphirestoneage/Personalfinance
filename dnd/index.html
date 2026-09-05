@@ -103,6 +103,25 @@
   .specbar { height: 10px; border-radius: var(--radius-pill); background: var(--color-surface-active); overflow: hidden; }
   .specbar > span { display: block; height: 100%; background: var(--color-accent); }
   .specrow .p { text-align: right; font-variant-numeric: tabular-nums; color: var(--color-text-muted); }
+
+  /* ---- what hunts you (BRIEF §9.6, reading §9.3's engine) ---- */
+  .saverow { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-bottom: var(--space-3); }
+  .savechip { border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: var(--space-2); text-align: center; background: var(--color-surface-raised); }
+  .savechip .k { font-size: var(--text-xs); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; color: var(--color-text-subtle); }
+  .savechip .v { font-family: var(--font-display); font-size: var(--text-lg); }
+  .savechip.thin { border-color: var(--color-critical); }
+  .savechip.thin .v { color: var(--color-critical); }
+  .savechip.thin .k::after { content: " · thin"; color: var(--color-critical); }
+  .moves { display: grid; gap: var(--space-1); margin-bottom: var(--space-4); }
+  .move { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); background: var(--color-surface-raised); font-size: var(--text-sm); line-height: var(--leading-normal); }
+  .move b { font-family: var(--font-display); font-size: var(--text-base); margin-right: var(--space-2); }
+  .move span { color: var(--color-text-muted); }
+  .pred { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: center; padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); font-size: var(--text-sm); }
+  .pred:last-child { border-bottom: 0; }
+  .pred .nm { font-weight: 600; }
+  .pred .meta { font-size: var(--text-xs); color: var(--color-text-faint); }
+  .pred .tag { font-size: var(--text-xs); color: var(--color-text-subtle); white-space: nowrap; }
+  .predlist { margin-bottom: var(--space-4); }
   .align-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-1); margin-bottom: var(--space-3); }
   .align-cell { border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface); padding: var(--space-2); cursor: pointer; text-align: center; font-family: var(--font-body); color: var(--color-text); line-height: var(--leading-tight); }
   .align-cell:hover { border-color: var(--color-border-active); }
@@ -199,6 +218,12 @@
        visible as a high one — that's deliberate.</p>
     <div class="spec" id="r-spectrum"></div>
 
+    <h2 id="hunt-h">What hunts you</h2>
+    <p class="note" id="hunt-note"></p>
+    <div class="saverow" id="r-saves"></div>
+    <div class="moves" id="r-moves"></div>
+    <div class="predlist" id="r-preds"></div>
+
     <h2>Your alignment</h2>
     <p class="note">Disposition, not skill — so you pick it, nothing measures it.
        Down: how much you follow a system. Across: whose upside you're optimising for.</p>
@@ -216,6 +241,9 @@
          HP is how many weeks you could go with no income. AC is what stops a hit landing at all.
          Your class may well change too, because a class here is a lever you actually pull,
          not a temperament.</p>
+      <p>It also fills in the three saves this page had to leave blank — and then you can
+         actually <em>run</em> the things above. Not just which of them hunt you: whether they
+         land, how hard, and how many weeks it costs you when they do.</p>
       <a class="btn" href="sheet.html">Build the full sheet →</a>
     </div>
 
@@ -237,10 +265,11 @@
 <script src="engines/projection.js"></script>
 <script src="engines/tier0.js"></script>
 <script src="engines/character.js"></script>
+<script src="engines/encounter.js"></script>
 <script>
 (function () {
   'use strict';
-  var Money = SLAF.Money, Char = SLAF.Character, Store = DND.Store;
+  var Money = SLAF.Money, Char = SLAF.Character, Store = DND.Store, Enc = DND.Encounter;
   var TABLES = null, STEPS = [], at = 0, SUBS = [];
 
   var METHOD_UI = {
@@ -521,6 +550,91 @@
       + '<h3>' + a.emoji + ' ' + esc(a.name) + '</h3><p>' + esc(a.blurb) + '</p>';
   }
 
+  /* Lowest CR first, so a predator list reads as a progression rather than a
+     jumble: the ones that can reach you now, then the ones waiting further in.
+     Nothing is filtered out by tier, because a tier needs a Level and this page
+     has none. One sort, used by both the panel and the share text. */
+  /* "A and B", "A, B and C" — never "A and B and C", which is what a plain
+     join(' and ') gives you the moment a tie makes the list longer than two. */
+  function listJoin(parts) {
+    if (parts.length < 2) return parts.join('');
+    return parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1];
+  }
+
+  function byCr(creatures) {
+    return creatures.slice().sort(function (a, b) {
+      return (Enc.crToNumber(a.cr) || 0) - (Enc.crToNumber(b.cr) || 0);
+    });
+  }
+
+  /**
+   * What hunts you — BRIEF §9.6, running §9.3's engine on the three saves this
+   * page can honestly score.
+   *
+   * The care here is all in what it does NOT claim. Only INT, WIS and CHA are
+   * scored without money, so "your two thinnest" means the two thinnest OF
+   * THOSE THREE, and the page says exactly that. The other three saves are
+   * blanks, not zeroes, and a blank is not a weakness — listing them as
+   * unhunted would be a lie in the opposite direction, so they are named as
+   * unknown. No tier is shown either: a tier needs a Level and this page has
+   * none, so the creature list is not gated by one and does not pretend to be.
+   */
+  function renderHunt(stats) {
+    var saves = Char.savingThrows(stats, null, 0, TABLES);
+    var scored = saves.filter(function (x) { return x.ok; });
+    var blank = saves.filter(function (x) { return !x.ok; });
+    var p = Enc.predators({ stats: stats, klass: null, proficiencyBonus: 0, level: null }, TABLES);
+
+    /* Defensive, not a state the UI can reach: the result only renders once all
+       nine declared sub-stats are scored, and that always scores all three of
+       INT, WIS and CHA. Kept because a future entry point (a shared link, a
+       part-finished import) could arrive here with less, and drawing a map from
+       one save would be exactly the over-claim this panel exists to avoid. */
+    if (!p.ready) {
+      el('hunt-note').textContent = 'Answer enough to score at least two of Intelligence, Wisdom '
+        + 'and Charisma and this fills in — it reads the same engine the encounter room uses.';
+      el('r-saves').innerHTML = '';
+      el('r-moves').innerHTML = '';
+      el('r-preds').innerHTML = '';
+      return;
+    }
+
+    el('hunt-note').innerHTML = 'A save is how well you resist being moved. This page can score '
+      + esc(String(scored.length)) + ' of the 6 — the other '
+      + esc(String(blank.length)) + ' (' + blank.map(function (x) { return esc(x.stat); }).join(', ')
+      + ') need real numbers and are <b>blank, not bad</b>. '
+      + (p.weakest.length >= scored.length
+          ? 'The ones scored are all level, so nothing stands out as your thin spot — which means everything below can reach you equally.'
+          : 'Of the ones scored, you are thinnest on '
+            + listJoin(p.weakest.map(function (w) { return '<b>' + esc(w) + '</b>'; })) + '.')
+      + ' These come for you, lowest threat first. Some are a long way off.';
+
+    el('r-saves').innerHTML = scored.map(function (x) {
+      var thin = p.weakest.indexOf(x.stat) !== -1;
+      return '<div class="savechip' + (thin ? ' thin' : '') + '"><div class="k">' + esc(x.stat)
+        + '</div><div class="v">' + esc(Char.formatModifier(x.modifier)) + '</div></div>';
+    }).join('');
+
+    /* The moves, as a SET rather than a ranking. Counting how many creatures
+       use each type would only measure how many of each I happened to write. */
+    var seen = {}, types = [];
+    p.creatures.forEach(function (c) {
+      if (c.attackType && !seen[c.attackType]) { seen[c.attackType] = true; types.push(c.attackType); }
+    });
+    var defs = TABLES.dndRules.encounterRules.attackTypes;
+    el('r-moves').innerHTML = types.map(function (t) {
+      var d = defs.filter(function (x) { return x.id === t; })[0];
+      if (!d) return '';
+      return '<div class="move"><b>' + esc(d.label) + '</b><span>' + esc(d.blurb) + '</span></div>';
+    }).join('');
+
+    el('r-preds').innerHTML = byCr(p.creatures).map(function (c) {
+      return '<div class="pred"><span><span class="nm">' + esc(c.name) + '</span>'
+        + '<span class="meta"><br/>' + esc(c.saveAbility) + ' save · ' + esc(c.attackType) + '</span></span>'
+        + '<span class="tag">CR ' + esc(c.cr) + '</span></div>';
+    }).join('');
+  }
+
   function renderResult() {
     var h = Store.household();
     var subScores = Char.allSubStats(h, TABLES);
@@ -558,6 +672,7 @@
             + '<span class="p">' + Math.round(r.percent) + '%</span></div>';
         }).join('')
       : '<p class="note">Nothing scored yet.</p>';
+    renderHunt(stats);
     showAlignment();
   }
 
@@ -569,13 +684,30 @@
     var cls = Money.isOk(leaning) ? Char.classById(TABLES, leaning.value) : null;
     var al = TABLES.dndAlignments.alignments.filter(function (x) {
       return x.id === Store.profile().alignment; })[0];
-    var line = ['Dungeons & Dividends — I lean ' + (cls ? cls.name : '?')];
-    if (al) line.push(al.emoji + ' ' + al.name);
+    /* This text is the product. It gets pasted into a group chat, so it has to
+       read as a boast and a dare in five lines, and it must not claim the three
+       scores this page cannot see. */
+    var head = ['Dungeons & Dividends — I lean ' + (cls ? cls.name : '?')
+      + (al ? ' · ' + al.emoji + ' ' + al.name : '')];
+    var scores = [];
     ['INT', 'WIS', 'CHA'].forEach(function (id) {
       var r = stats[id];
-      if (Money.isOk(r)) line.push(id + ' ' + r.value + ' (' + Char.formatModifier(Char.modifier(r.value)) + ')');
+      if (Money.isOk(r)) scores.push(id + ' ' + r.value + ' (' + Char.formatModifier(Char.modifier(r.value)) + ')');
     });
-    return line.join(' · ');
+    if (scores.length) head.push(scores.join(' · '));
+
+    var p = Enc.predators({ stats: stats, klass: null, proficiencyBonus: 0, level: null }, TABLES);
+    if (p.ready) {
+      var nScored = Char.savingThrows(stats, null, 0, TABLES)
+        .filter(function (x) { return x.ok; }).length;
+      head.push(p.weakest.length >= nScored
+        ? 'All level so far — everything reaches me equally.'
+        : 'Thinnest on ' + listJoin(p.weakest) + '.');
+      var names = byCr(p.creatures).slice(0, 3).map(function (c) { return c.name; });
+      if (names.length) head.push('Hunted by: ' + names.join(', ') + '.');
+    }
+    head.push('Roll your own: ' + location.href.split('#')[0]);
+    return head.join('\n');
   }
 
   function finish() { renderResult(); show('result'); }

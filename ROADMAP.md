@@ -40,7 +40,7 @@ Twenty-five rooms are live. Against this document's own tiers:
 | **T6** — Life events + Triple D | — | One engine, one room, templates as data |
 | **T7** — Skill Stacker | — | New room, reads the `dnd/` catalogue |
 | **T8** — FI-losophy rooms | — | Designed Week, Enough, Unlearning, Time Buckets, Dreamline, time-denominated display |
-| **T9** — Dungeons & Dividends (`dnd/`) | **in progress — 3 of 11** | 9.1 the sheet is the form (D-052, D&D block) · 9.3 the encounter engine: CR→DC ladder, three blocker states, natural-predator radar, encounter log (D-064) · 9.11 SRD attribution and the non-affiliation line. Remaining: 9.2 share card · 9.4 tiers of play · 9.5 personality import (needs T2's suggested state) · 9.6 Tier 1 result upgrade · 9.7 conditions & energy · 9.8 XP & rests (needs T7) · 9.9 DM mode · 9.10 bestiary expansion |
+| **T9** — Dungeons & Dividends (`dnd/`) | **in progress — 4 of 11** | 9.1 the sheet is the form (D-052, D&D block) · 9.3 the encounter engine: CR→DC ladder, three blocker states, natural-predator radar, encounter log (D-064) · 9.6 the free page runs the predator engine on the three saves it can score, and says the other three are blank not bad (D-065) · 9.11 SRD attribution and the non-affiliation line. Remaining: 9.2 share card · 9.4 tiers of play · 9.5 personality import (needs T2's suggested state) · 9.7 conditions & energy · 9.8 XP & rests (needs T7) · 9.9 DM mode · 9.10 bestiary expansion |
 | **T10** — Attack-type chart | blocked on T9 | Reads §9.3's `attackType` and the encounter log |
 
 Wedding and Dream Calculator are one Goal Costing Engine with two templates,

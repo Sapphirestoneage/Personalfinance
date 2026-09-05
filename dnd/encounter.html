@@ -159,6 +159,14 @@
   /* ---- the six-spoke radar ------------------------------------------------
      Modifiers can be negative, so the scale is shifted rather than clipped:
      a -1 save still draws, just very close to the centre. */
+  /* "A and B", "A, B and C" — `weakest` carries every save tied with the
+     second-thinnest, so it is not always two and a plain join(' and ') would
+     read "A and B and C". */
+  function listJoin(parts) {
+    if (parts.length < 2) return parts.join('');
+    return parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1];
+  }
+
   function radar(saves, weakest) {
     /* CY and the viewBox height must leave room for the labels drawn at
        R + 16: the top one sits at CY − 121 and needs its ascender inside the
@@ -202,7 +210,8 @@
 
     el('radar').innerHTML = radar(saves, weakest);
     el('radar-legend').textContent = p.ready
-      ? 'Further out is safer. Your two thinnest saves are marked.'
+      ? 'Further out is safer. Your thinnest saves are marked — every save tied '
+        + 'with the second-thinnest, because a tie is a tie.'
       : 'Score more of your saves to draw the map.';
 
     if (!p.ready) {
@@ -213,9 +222,12 @@
     /* Escape each value, THEN join with markup. Escaping a string that already
        contains the tags you meant to keep renders them as text — the same
        mistake as pre-escaping an entity, wearing a different hat. */
-    el('pred-intro').innerHTML = 'You are thinnest on '
-      + p.weakest.map(function (w) { return '<b>' + esc(w) + '</b>'; }).join(' and ')
-      + '. You are in tier ' + esc(p.tier.id) + ' — ' + esc(p.tier.name)
+    var scoredCount = saves.filter(function (x) { return x.ok; }).length;
+    el('pred-intro').innerHTML = (p.weakest.length >= scoredCount
+        ? 'Your scored saves are all level, so nothing stands out as your thin spot.'
+        : 'You are thinnest on '
+          + listJoin(p.weakest.map(function (w) { return '<b>' + esc(w) + '</b>'; })) + '.')
+      + ' You are in tier ' + esc(p.tier.id) + ' — ' + esc(p.tier.name)
       + '. These hunt where you are thin:';
     el('pred-list').innerHTML = p.creatures.map(function (c) {
       var here = c.tier === p.tier.id;

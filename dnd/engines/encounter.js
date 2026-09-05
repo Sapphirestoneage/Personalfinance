@@ -270,8 +270,14 @@
     if (saves.length < 2) {
       return { ready: false, reason: 'Score more of your saves to see what hunts you.', weakest: [], creatures: [] };
     }
+    /* The two thinnest — PLUS anything tied with the second. Taking a flat
+       slice of two marks one of three equal saves as safe and its identical
+       twin as thin, which is a claim the numbers do not support. A tie is a
+       tie, and the caller is told about all of it. */
     var sorted = saves.slice().sort(function (a, b) { return a.modifier - b.modifier; });
-    var weakest = sorted.slice(0, 2).map(function (s) { return s.stat; });
+    var cut = sorted[1].modifier;
+    var weakest = sorted.filter(function (s) { return s.modifier <= cut; })
+                        .map(function (s) { return s.stat; });
     var tier = tierForLevel(Money.isOk(sheet.level) ? sheet.level.value : 1, tables);
 
     var creatures = allCreatures(tables).filter(function (c) {

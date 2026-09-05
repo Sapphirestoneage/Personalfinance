@@ -4052,3 +4052,113 @@ this.
 tool's own, under `dnd.character.v1`, not part of the household model, and it is
 deliberately not exported by `shared/export.js` — a lead magnet ships a
 character, not a play history.
+
+---
+
+## D-065 — The free page tells you what hunts you, and is careful about what it cannot see
+
+The Tier 1 page asks for no money at all. That is the whole point of it: it is
+the thing you send to someone who has never thought about a savings rate. But it
+meant the page ended on a class leaning, three ability scores and an alignment —
+a personality quiz result, and personality quiz results are forgettable.
+
+§9.3's encounter engine turned out to need nothing this page lacks. Predators are
+computed from saving throws, saving throws come from ability scores, and the page
+already has three of them. So the Tier 1 result now ends on **what hunts you**:
+your three scored saves with the two thinnest marked, the moves those creatures
+use, and the creatures themselves in CR order.
+
+### What it refuses to claim
+
+All of the care in this went into what the panel must *not* say.
+
+**Three of six saves are blank, and a blank is not a weakness.** STR, DEX and CON
+need real numbers. The obvious implementation treats them as zero, ranks all six,
+and tells someone their Constitution save is their great vulnerability when
+nobody ever asked. So the copy names them — "the other 3 (STR, DEX, CON) need
+real numbers and are **blank, not bad**" — and `predators()` already excluded
+unscored saves, which is why it could be reused unchanged. Four tests assert that
+an unscored save never appears in `weakest`; breaking that rule in the engine
+fails all four.
+
+**"Your two thinnest" means thinnest of the three we could score**, and the
+sentence says so rather than implying a ranking over six.
+
+**No tier is shown.** `predators()` falls back to tier I when there is no Level,
+which is right for its own callers, but a fallback tier is not a measured tier
+and this page has no Level at all. So the creature list is not gated by tier and
+the tier is never printed. The list spans CR 3 to CR 18 and is sorted ascending,
+with the copy saying plainly that some of them are a long way off — which is
+truer and more interesting than hiding the far ones.
+
+**The moves are a set, not a ranking.** It would be easy to count attack types
+across the matching creatures and announce "you are most exposed to guilt". That
+number would measure how many guilt-monsters I happened to write, not anything
+about the person. So the panel lists the distinct attack types with their blurbs
+and makes no claim about which dominates.
+
+### A tie is a tie — a change to §9.3's engine
+
+Building this found a real bug in the engine shipped yesterday. `predators()`
+took a flat slice of the two thinnest saves. Run the full quiz and it is easy to
+come out with INT, WIS and CHA all on the same modifier — at which point the
+panel marked two of three identical saves as thin and the third as safe, a claim
+the numbers do not support. The demo sheet had it too: four of its six saves sit
+on +1 and only two were being marked.
+
+`weakest` now carries **every save tied with the second-thinnest**. With no tie
+it still returns exactly two, so the common case is unchanged; with a tie it
+returns all of them. Both callers were updated to match — the Tier 1 panel and
+the encounter room's radar and intro — and both now say "all level, nothing
+stands out" when the tie covers every scored save, rather than naming an
+arbitrary pair.
+
+That made a plain `join(' and ')` wrong in three places, since a three-way tie
+rendered "INT and WIS and CHA". Both pages now have a `listJoin` that produces
+"A, B and C".
+
+The §9.3 acceptance criterion is unaffected: the Timeshare Charm-Caster against
+the demo sheet still targets WIS at DC 13 for 37% and 10.5 weeks, 13 → 2.5.
+
+### The share text is the product
+
+This tool is a lead magnet meant to be pasted into a group chat, so the copy
+button's output matters as much as the page. It was one `·`-joined line; it is
+now five: the leaning and alignment, the three scores, the two thinnest saves,
+the three nearest predators, and a link back. The predator names come through the
+same CR sort the panel uses — one function, called twice — so "hunted by" names
+the three that can actually reach you rather than three arbitrary ones.
+
+### The locked block now promises something specific
+
+It listed Level, HP and Armour as `?`. It still does, and adds the two things
+§9.3 made real: the full sheet fills in the three saves this page had to leave
+blank, and then you can actually *run* the creatures listed above — whether they
+land, how hard, and what it costs in weeks.
+
+### On the spec
+
+**I did not have §9.6's text when I built this.** BRIEF.md is not in the
+repository, and the pasted copy had aged out of the working context; all that
+survived was my own one-line note, "Tier 1 result upgrade". The repo owner chose
+to have me build from my own reading rather than re-paste the section, so this
+entry is the record of what I decided that section ought to mean: give the free
+page the encounter engine's payoff, and be scrupulous about the three scores it
+cannot see. If the real §9.6 asked for something else, this is the entry to
+argue with.
+
+### Compatibility note
+
+**Stored shape:** nothing. This page reads what it already read.
+
+**Rooms updated:** `dnd/index.html` (the hunt panel, the share text, the locked
+block), `dnd/engines/encounter.js` (`weakest` includes ties) and
+`dnd/encounter.html` (radar legend and intro copy, to match). Apart from the tie
+fix the engine needed no change to serve a class-less, level-less character with
+three scored saves — it was written to exclude blanks rather than zero them, and
+that is what made it reusable here.
+
+**Before writing any of these from a new room:** `predators()` takes anything
+with `stats`, `klass`, `proficiencyBonus` and `level`, and tolerates `null` for
+the last three. It ranks only scored saves. If you call it, do not print its
+`tier` unless your caller actually has a Level.
