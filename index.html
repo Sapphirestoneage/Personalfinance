@@ -1,33 +1,298 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-root="./">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>StressLessAboutMoney · Eli Saperstein</title>
-<meta name="description" content="The home page is being built. The Dashboard lives at dashboard.html."/>
-<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
-<link rel="stylesheet" href="shared/fonts.css"/>
-<link rel="stylesheet" href="shared/theme.css"/>
-<!--
-  TEMPORARY — DECISIONS.md D-092. The Dashboard moved to dashboard.html so
-  this file could become the home page of stresslessaboutmoney.com. Until
-  that page lands (the next commit), this stub forwards every visitor to
-  the Dashboard, hash included, so nothing that was shared breaks in the
-  meantime. LIVE-FORM: built once. No inputs.
--->
-<meta http-equiv="refresh" content="0; url=dashboard.html"/>
-</head>
-<body class="slaf">
-<main class="slaf-wrap">
-  <p style="color:var(--color-text-muted)">The Dashboard has moved.
-    <a href="dashboard.html" id="go">Open it →</a></p>
-</main>
+<title>You’re not bad with money · Eli Saperstein</title>
+<meta name="description" content="Personal finance coaching from Eli Saperstein, with no products and no commissions — plus free tools that answer the question you came in with, using your numbers."/>
+<link rel="canonical" href="https://stresslessaboutmoney.com/"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="StressLessAboutMoney"/>
+<meta property="og:title" content="You’re not bad with money · Eli Saperstein"/>
+<meta property="og:description" content="Personal finance coaching from Eli Saperstein, with no products and no commissions — plus free tools that answer the question you came in with, using your numbers."/>
+<meta property="og:url" content="https://stresslessaboutmoney.com/"/>
+<meta property="og:image" content="{{OG_IMAGE_URL}}"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="You’re not bad with money · Eli Saperstein"/>
+<meta name="twitter:description" content="Personal finance coaching from Eli Saperstein, with no products and no commissions — plus free tools that answer the question you came in with, using your numbers."/>
+<link rel="icon" href="./favicon.svg" type="image/svg+xml"/>
+<link rel="preload" href="./vendor/fonts/fraunces-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin/>
+<link rel="preload" href="./vendor/fonts/space-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin/>
 <script>
+  /* Theme and calm mode, read before first paint so nothing flashes. The
+     only two things this site stores. site.css / site.js, D-092. */
   (function () {
-    var target = 'dashboard.html' + (location.hash || '');
-    document.getElementById('go').setAttribute('href', target);
-    location.replace(target);
+    try {
+      var t = localStorage.getItem('slam.theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+      if (localStorage.getItem('slam.calm') === 'on') document.documentElement.setAttribute('data-calm', 'on');
+    } catch (e) {}
   })();
 </script>
+<style>
+  /* Critical: the ground, the type and the header bar, so the first paint
+     is already the right colour and shape before site.css arrives. */
+  body{margin:0;background:#081833;color:#EFF6FF;font-family:'Space Grotesk','Inter',system-ui,sans-serif}
+  html[data-theme="light"] body{background:#F7F6F2;color:#0B2249}
+  @media (prefers-color-scheme:light){html:not([data-theme="dark"]) body{background:#F7F6F2;color:#0B2249}}
+  .site-header .bar{min-height:60px;display:flex;align-items:center;gap:16px;max-width:1080px;margin:0 auto;padding:0 16px}
+  h1{font-family:'Fraunces','Iowan Old Style',Georgia,serif;font-weight:500}
+</style>
+<link rel="stylesheet" href="./shared/fonts.css"/>
+<link rel="stylesheet" href="./shared/theme.css"/>
+<link rel="stylesheet" href="./site.css"/>
+<script type="application/ld+json">{
+ "@context": "https://schema.org",
+ "@type": "ProfessionalService",
+ "name": "StressLessAboutFinance",
+ "url": "https://stresslessaboutmoney.com/",
+ "description": "Personal finance coaching. No products, no commissions, no assets under management.",
+ "founder": {
+  "@type": "Person",
+  "name": "Eli Z. Saperstein"
+ },
+ "areaServed": "US",
+ "priceRange": "{{CLARITY_PRICE}}–{{SORTED_PRICE}}",
+ "address": {
+  "@type": "PostalAddress",
+  "addressRegion": "NY",
+  "addressCountry": "US"
+ }
+}</script>
+<script type="application/ld+json">{
+ "@context": "https://schema.org",
+ "@type": "Person",
+ "name": "Eli Z. Saperstein",
+ "url": "https://stresslessaboutmoney.com/about/",
+ "jobTitle": "Personal finance coach",
+ "worksFor": {
+  "@type": "Organization",
+  "name": "StressLessAboutFinance"
+ },
+ "alumniOf": {
+  "@type": "CollegeOrUniversity",
+  "name": "Sy Syms School of Business, Yeshiva University"
+ },
+ "address": {
+  "@type": "PostalAddress",
+  "addressRegion": "NY",
+  "addressCountry": "US"
+ },
+ "sameAs": [
+  "{{BP_MONEY_EPISODE_URL}}",
+  "{{CHOOSEFI_LINK}}"
+ ]
+}</script>
+<!--
+  Analytics: none. To turn on Plausible (no cookies, no personal data),
+  uncomment the line below and nothing else changes.
+  <script defer data-domain="stresslessaboutmoney.com" src="https://plausible.io/js/script.js"></script>
+-->
+</head>
+<body class="slaf site">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="./">StressLessAboutMoney</a>
+    <nav class="nav" aria-label="Site"><a href="./start-here/">Start here</a><a href="./tools/">Tools</a><a href="./coaching/">Coaching</a><a href="./frameworks/">Frameworks</a><a href="./about/">About</a></nav>
+    <a class="btn btn--primary btn--small" href="./coaching/#talk">Talk to Eli</a>
+  </div>
+  <p class="subnav">Not ready to talk? <a href="./tools/">Start with a tool.</a></p>
+</header>
+<main id="main">
+<!--
+  HOME — DECISIONS.md D-092. Copy is Eli's, verbatim.
+
+  The first inline script forwards anything that used to be a Dashboard
+  link (the Dashboard sat at this URL until D-092): a #h= share code or a
+  dashboard section hash goes to dashboard.html with the hash intact.
+
+  The Can I? widget: three inputs in the HTML, never rebuilt. LIVE-FORM:
+  built once. Arithmetic is in site.js; money is integer cents via
+  shared/money.js.
+
+  The Money Mirror teaser: this repo has no "Money Mirror" room. Its only
+  financial-personality quiz is Dungeons & Dividends (dnd/index.html, 18
+  behavioural questions in dnd/data/dnd_scoring.json). The three questions
+  below are copied from that data, one from each of self-awareness,
+  scenario foresight and threat detection, with its own points. The
+  "full room" link goes there. If the Money Mirror is meant to be
+  something else, see TODO-ELI.md.
+-->
+<script>
+  (function () {
+    var h = location.hash || '';
+    if (/^#(h=|panel$|out-|reading$)/.test(h)) location.replace('dashboard.html' + h);
+  })();
+</script>
+
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Personal finance coaching · No products, no commissions</p>
+    <h1>You’re not bad with money. You’re carrying it alone.</h1>
+    <p class="lead">You earn enough. And opening the banking app still makes your chest tight. That gap has nothing to do with discipline. It’s what happens when nobody ever sat down with you and showed you how the pieces fit.</p>
+    <div class="btn-row">
+      <a class="btn btn--primary" href="coaching/#talk">Talk to Eli <span class="muted" style="font-weight:400">(free, 60 min)</span></a>
+      <a class="btn" href="tools/">Start with a tool instead</a>
+    </div>
+  </div>
+</section>
+
+<section class="block" aria-label="Things people say">
+  <div class="wrap wrap--wide">
+    <!--
+      ILLUSTRATIVE. These four lines are from the old site and are not
+      attributed quotes from clients. Real, consented quotes go in
+      site/testimonials.json and render in the Proof section below.
+    -->
+    <ul class="quotes">
+      <li>“I make a good salary. So why do I still feel broke?”</li>
+      <li>“I should have started years ago. Now it feels too late.”</li>
+      <li>“Every time I check the balance, I brace.”</li>
+      <li>“I just buy things and hope there’s enough.”</li>
+    </ul>
+  </div>
+</section>
+
+<section class="block" id="what-this-is">
+  <div class="wrap">
+    <h2>A quieter way to get your money sorted.</h2>
+    <p>Money stress is emotional before it’s informational. Most tools try to teach you first. I’d rather take the fear out of the room, look at the real numbers together, and hand you a plan short enough to actually do. Then, if you want, the tools carry the rest.</p>
+  </div>
+</section>
+
+<section class="block" id="three-ways">
+  <div class="wrap wrap--wide">
+    <h2>Three ways in</h2>
+    <ul class="cards">
+      <li class="card"><h3><a href="#can-i"><em>Just tell me if I’m okay.</em></a></h3><p>Three numbers, one sentence, forty seconds.</p><span class="arrow-link">The Can I? check ↓</span></li>
+      <li class="card"><h3><a href="coaching/"><em>I want a person.</em></a></h3><p>A free hour with your real numbers and no pitch at the end.</p><span class="arrow-link">The free conversation →</span></li>
+      <li class="card"><h3><a href="tools/"><em>I’ve read the FI blogs. I want depth.</em></a></h3><p>Twenty-seven rooms that share one set of numbers.</p><span class="arrow-link">The Money Rooms →</span></li>
+    </ul>
+  </div>
+</section>
+
+<section class="block" id="can-i">
+  <div class="wrap">
+    <div class="widget" data-can-i>
+      <p class="eyebrow">Can I?</p>
+      <h2>Three numbers. One sentence.</h2>
+      <p class="lead">What comes in, what has to go out, and the thing you’re wondering about. Nothing here is saved.</p>
+      <p class="prefill" data-prefill-note hidden></p>
+      <div class="field-row">
+        <label class="field"><span>Take-home pay, per month</span>
+          <span class="shell"><span class="affix" aria-hidden="true">$</span><input type="text" inputmode="decimal" data-field="takehome" placeholder="e.g. 4200" autocomplete="off"/></span></label>
+        <label class="field"><span>Fixed bills, per month</span>
+          <span class="shell"><span class="affix" aria-hidden="true">$</span><input type="text" inputmode="decimal" data-field="bills" placeholder="e.g. 2900" autocomplete="off"/></span></label>
+      </div>
+      <label class="field"><span>The thing you’re wondering about</span>
+        <span class="shell"><span class="affix" aria-hidden="true">$</span><input type="text" inputmode="decimal" data-field="thing" placeholder="e.g. 180" autocomplete="off"/></span></label>
+      <div class="segmented" role="group" aria-label="Is that a monthly cost or a one-time cost?">
+        <button type="button" data-basis="month" aria-pressed="true">a month</button>
+        <button type="button" data-basis="once" aria-pressed="false">one time</button>
+      </div>
+      <p class="verdict is-empty" data-verdict aria-live="polite">Fill in all three and the answer appears here.</p>
+      <div class="widget-foot">
+        <span>A rough answer from three numbers.</span>
+        <a class="arrow-link" href="rooms/cash-flow.html">The full Cash Flow room →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="leave-with">
+  <div class="wrap">
+    <h2>What you leave with</h2>
+    <p class="muted">From the free conversation.</p>
+    <ul class="checklist">
+      <li>A one-page picture of where you are, in plain words</li>
+      <li>The next three moves, in order</li>
+      <li>Which parts you can run yourself and which ones are worth help</li>
+      <li>The specific worry you came in with, answered</li>
+    </ul>
+    <a class="arrow-link" href="coaching/">How coaching works →</a>
+  </div>
+</section>
+
+<section class="block" id="how-i-got-here">
+  <div class="wrap">
+    <h2>How I got here</h2>
+    <p>I spent my early career auditing funds at Deloitte, which is a strange place to learn that money is mostly a feelings problem. The people who were fine weren’t the ones who knew the most. They were the ones who’d stopped being scared of looking. I’ve since coached <mark class="ph">{{CLIENT_COUNT}}</mark> people through that same shift, built a set of free tools so more people can do it without me, and spent time on the BiggerPockets Money podcast and with ChooseFI talking about what I’ve found.</p>
+    <a class="arrow-link" href="about/">About Eli →</a>
+  </div>
+</section>
+
+<section class="block" id="proof" hidden>
+  <div class="wrap wrap--wide">
+    <h2>In their words</h2>
+    <ul class="testimonials" data-testimonials></ul>
+  </div>
+</section>
+
+<section class="block" id="mirror">
+  <div class="wrap">
+    <p class="eyebrow">The Money Mirror</p>
+    <h2>Three questions about what you actually do.</h2>
+    <p class="lead">No arithmetic, nothing to revise for. The honest answer always scores.</p>
+    <form class="mirror" data-mirror data-mirror-lines='{"high":"You already look. The rooms will mostly confirm what you suspect, with your numbers on it.","mid":"You look sometimes, and then stop. The rooms are built for exactly that: one small question at a time.","low":"You would rather not look, which is the most common answer there is. Start with the Can I? check above — it only asks three things."}'>
+      <fieldset>
+        <legend>There’s a specific situation that reliably makes you spend money you didn’t plan to. Can you name it right now?</legend>
+        <label><input type="radio" name="m1" value="6"/><span>Yes — and I’ve actually built something in to stop it.</span></label>
+        <label><input type="radio" name="m1" value="4"/><span>Yes, instantly. I just haven’t done anything about it.</span></label>
+        <label><input type="radio" name="m1" value="2"/><span>Sort of. It’s more a mood than a moment.</span></label>
+        <label><input type="radio" name="m1" value="0"/><span>No — it feels random from the inside.</span></label>
+      </fieldset>
+      <fieldset>
+        <legend>Your income stops tomorrow. How precisely do you know what happens next?</legend>
+        <label><input type="radio" name="m2" value="6"/><span>Precisely. It’s written down, with dates and numbers.</span></label>
+        <label><input type="radio" name="m2" value="4"/><span>I’ve thought it through properly — just never wrote it down.</span></label>
+        <label><input type="radio" name="m2" value="2"/><span>Roughly. I know it would be bad.</span></label>
+        <label><input type="radio" name="m2" value="0"/><span>I genuinely don’t know, and I’d rather not find out.</span></label>
+      </fieldset>
+      <fieldset>
+        <legend>Someone you like and trust says they can get you a guaranteed 12% a year, no risk. Gut reaction?</legend>
+        <label><input type="radio" name="m3" value="6"/><span>“Guaranteed” and “no risk” at that number is the tell. I’m out.</span></label>
+        <label><input type="radio" name="m3" value="4"/><span>I’d want it in writing, and I’d probably still pass.</span></label>
+        <label><input type="radio" name="m3" value="1"/><span>I’d put a small amount in just to see.</span></label>
+        <label><input type="radio" name="m3" value="0"/><span>Honestly? I’d be interested.</span></label>
+      </fieldset>
+      <p class="verdict is-empty" data-mirror-result aria-live="polite">Three questions. One line back.</p>
+      <a class="arrow-link" href="dnd/">All eighteen questions, and what they add up to →</a>
+    </form>
+  </div>
+</section>
+
+<section class="block" id="not-ready">
+  <div class="wrap">
+    <div class="okay">
+      <h2>Not ready to talk?</h2>
+      <p>That’s completely fine. Most people who use this site never book a call. Pick one small tool and let it do the first step for you.</p>
+      <a class="arrow-link" href="tools/">The tools →</a>
+    </div>
+  </div>
+</section>
+</main>
+<footer class="site-footer">
+  <div class="wrap wrap--wide">
+    <p class="line">Eli Z. Saperstein · Rockland County, NY · Works with people everywhere · Not a registered investment advisor; coaching is education, not advice.</p>
+    <nav aria-label="Footer">
+      <a href="./start-here/">Start here</a>
+      <a href="./tools/">Tools</a>
+      <a href="./coaching/">Coaching</a>
+      <a href="./frameworks/">Frameworks</a>
+      <a href="./about/">About</a>
+      <a href="./media/">Media</a>
+      <a href="./notes/">Notes</a>
+      <a href="./privacy/">Privacy</a>
+      <a href="./terms/">Terms</a>
+      <a href="https://github.com/sapphirestoneage/Personalfinance" rel="noopener">Source on GitHub</a>
+    </nav>
+    <div class="toggles">
+      <button type="button" class="toggle" data-toggle="theme">Dark mode</button>
+      <button type="button" class="toggle" data-toggle="calm" title="Fewer colours, no motion, larger type">Calm mode</button>
+    </div>
+  </div>
+</footer>
+<script src="./shared/money.js"></script>
+<script src="./site.js"></script>
 </body>
 </html>
