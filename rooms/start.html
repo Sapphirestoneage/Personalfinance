@@ -316,6 +316,10 @@
     <p class="q-help">Health, car or home — whichever single excess is largest. It's the first thing a cash cushion has to cover, and the very first step of the ladder.</p>
     <span class="slaf-input-shell"><span class="slaf-affix">$</span>
       <input type="text" inputmode="decimal" data-write="deductible" placeholder="e.g. 3000" aria-label="Highest deductible"/></span>
+    <div class="choices" style="margin-top:var(--space-2)">
+      <button type="button" class="choice" id="btn-no-deductible">I don’t have one — I’m on someone else’s plan</button>
+    </div>
+    <p class="q-help">Under 26 and on a parent’s health plan, or covered on a partner’s, with no car or home policy of your own? Then there is no excess to cover, and that is the answer: nothing to save for here.</p>
     <p class="q-unlocks">Step 1 of the FOO ladder is exactly this number against your cash.</p>
   </section>
 
@@ -1285,6 +1289,13 @@
       write: function (cents) {
         var h = Spine.getProfile();
         Spine.updateProfile({ insurance: Object.assign({}, h.insurance || {}, { highestDeductibleCents: cents }) });
+      },
+      /* "I don't have one" is a typed zero, not a blank: it answers the
+         question, and step 1 of the ladder reads it as nothing to cover. */
+      after: function (h) {
+        var v = (h.insurance || {}).highestDeductibleCents;
+        var btn = el('btn-no-deductible');
+        if (btn) btn.setAttribute('aria-pressed', v === 0 ? 'true' : 'false');
       } },
 
     { id: 'q-debt', field: 'hasDebt', kind: 'choice',
@@ -1305,6 +1316,14 @@
 
   var index = 0;
   var reviewing = false;
+
+  el('btn-no-deductible').addEventListener('click', function () {
+    var h = Spine.getProfile();
+    Spine.updateProfile({ insurance: Object.assign({}, h.insurance || {}, { highestDeductibleCents: 0 }) });
+    var box = el('q-deductible').querySelector('[data-write="deductible"]');
+    if (box && box !== document.activeElement) box.value = '0';
+    render();
+  });
 
   function liveQuestions() {
     var h = Spine.getProfile();
@@ -1363,6 +1382,7 @@
          the hours, the other person's row, the line underneath. This used
          to sit after an early return and never ran on show. */
       if (q.field === 'grossAnnualIncome') { paintPay(); paintJobs(); paintBasisChoice(); paintEmploymentNote(); }
+      if (typeof q.after === 'function') q.after(h);
       return;
     }
     if (settable(nodes[0])) nodes[0].value = stored || '';
