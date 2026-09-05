@@ -1447,8 +1447,7 @@ section('Dungeons & Dividends — the bestiary extension');
        paper loss, the other reduces a stat. parseDice returns null for them and
        expectedDice turns that into 0, which is the right answer. Anything else
        must be real dice. */
-    checkTrue(`${c.name}: damage dice are real dice or a deliberate "0"`,
-      c.damageSpec.dice === '0' || !!Encounter.parseDice(c.damageSpec.dice));
+    checkTrue(`${c.name}: damage dice are real dice`, !!Encounter.parseDice(c.damageSpec.dice));
   });
 
   /* The bestiary page renders these fields directly, so a missing one prints
@@ -1467,13 +1466,18 @@ section('Dungeons & Dividends — the bestiary extension');
   checkTrue('the bestiary page marks extensions',
     /origin === 'extension'/.test(fs.readFileSync(path.join(ROOT, 'bestiary.html'), 'utf8')));
 
-  check('exactly two creatures deal no hit-point damage',
-    creatures.filter(function (c) { return c.damageSpec.dice === '0'; }).length, 2);
-  creatures.filter(function (c) { return c.damageSpec.dice === '0'; }).forEach(function (c) {
-    check(`${c.name} expects zero weeks of damage`,
-      Encounter.expectedDice(Encounter.parseDice(c.damageSpec.dice)), 0);
-    checkTrue(`${c.name} says in its note why there are no dice`,
-      typeof c.damageSpec.note === 'string' && c.damageSpec.note.length > 0);
+  /* DD-020: no creature deals nothing any more. Two rulebook creatures had
+     dice of 0 while their own notes said damage happened on a failed save or
+     a hit — so a failed save did nothing. Both now roll real dice, and each
+     records in `rulebook` what the rulebook had and why it changed. */
+  check('no creature deals zero hit-point damage',
+    creatures.filter(function (c) { return c.damageSpec.dice === '0'; }).length, 0);
+  ['Market Crash Elemental', 'The Sudden Ability Drain'].forEach(function (n) {
+    const c = creatures.filter(function (x) { return x.name === n; })[0];
+    checkTrue(`${n} now rolls real dice`, Encounter.expectedDice(Encounter.parseDice(c.damageSpec.dice)) > 0);
+    check(`${n}'s dice are marked as written here`, c.damageSpec.origin, 'extension');
+    checkTrue(`${n} records what the rulebook had`, /0/.test(c.damageSpec.rulebook || ''));
+    checkTrue(`${n} itself is still a rulebook creature`, !c.origin);
   });
 
   /* A blocker catalogue entry keyed to a sub-stat must name a real one, or

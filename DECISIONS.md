@@ -6176,3 +6176,39 @@ unchanged in shape.
 `resolution`, and if it attacks, must not carry an armour-layer blocker except
 as `negate`. Check `r.resolution` before reading `r.dc` or `r.attackBonus` —
 only one of them means anything for a given result.
+
+---
+
+## DD-020 — A failed save has to cost something
+
+Two rulebook creatures dealt `0` damage: the Market Crash Elemental (CR 18) and
+the Sudden Ability Drain (CR 10). Their own notes said damage happens *only on a
+failed save* and *on a hit* respectively — but with dice of zero, a failed save
+did nothing at all. A CR 18 that cannot hurt you is not a monster, and DD-010
+had even written a test asserting the zero was deliberate. It was deliberate in
+the rulebook and wrong in play.
+
+**Market Crash Elemental — 8d10 on a failed WIS save.** The crash itself is a
+paper loss and costs nothing; the damage is the *panic-sell*. A failed save
+crystallises the loss, and 8d10 weeks is what selling at the bottom costs a
+tier-IV pile. Pass the save and the paper recovers. That is the rulebook's own
+design ("the save is about your reaction, not the event") given the dice it
+needed.
+
+**The Sudden Ability Drain — 6d8 on a hit.** An injury or illness that takes you
+out of work. It is an attack creature (DD-019), so disability insurance is the
+armour against it, and the weeks are the income that does not arrive while you
+cannot earn. Written at the CR-10 peer rate — the Layoff Reaper is 6d8. The STR
+reduction the rulebook describes is the Disabled status, which you declare.
+
+Both creatures stay rulebook creatures (no `origin`); only their `damageSpec`
+carries `origin: "extension"` and a `rulebook` field recording what was there
+and why it changed. The test that asserted exactly two zero-damage creatures now
+asserts none.
+
+### Compatibility note
+
+**Stored shape:** nothing. **Rooms updated:** `dnd/data/dnd_rules.json` only;
+every page reads the dice from there. **Before writing any of these from a new
+room:** a creature with no dice is a data error now, not a design choice — the
+test will say so.

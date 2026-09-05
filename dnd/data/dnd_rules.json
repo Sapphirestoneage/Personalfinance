@@ -1237,12 +1237,14 @@
       "category": "Personal",
       "cr": 10,
       "save": "STR",
-      "damage": "Permanent STR reduction until addressed",
+      "damage": "6d8 weeks of lost income on a hit, and the Disabled status",
       "note": "An injury or illness event that triggers the Disabled status effect directly",
       "saveAbility": "STR",
       "damageSpec": {
-        "dice": "0",
-        "note": "Permanent STR reduction until addressed, rather than hit-point damage."
+        "dice": "6d8",
+        "note": "An injury or illness that takes you out of work. The weeks are the income that does not arrive while you cannot earn it; the STR reduction is the Disabled status, which you declare on the sheet.",
+        "origin": "extension",
+        "rulebook": "The rulebook set these dice to 0 and described the effect as a STR reduction only. A hit that does nothing is not an attack; the weeks are written here at the CR-10 peer rate (the Layoff Reaper, 6d8), and disability insurance is the armour against it."
       },
       "attackType": "fear",
       "tier": "III",
@@ -1320,12 +1322,14 @@
       "category": "Environmental",
       "cr": 18,
       "save": "WIS",
-      "damage": "Paper Level loss only converts to real HP damage if the WIS save is failed",
+      "damage": "8d10 realised loss on a failed WIS save; nothing on a pass",
       "note": "Not malicious — a weather event. The save is about your reaction, not the event",
       "saveAbility": "WIS",
       "damageSpec": {
-        "dice": "0",
-        "note": "Paper loss only. Damage happens ONLY on a failed save — the save is your reaction, not the event."
+        "dice": "8d10",
+        "note": "The crash itself is a paper loss and costs nothing. The DAMAGE is the panic-sell: a failed WIS save crystallises the loss, and 8d10 weeks is what selling at the bottom costs a tier-IV pile. Pass the save and the paper recovers.",
+        "origin": "extension",
+        "rulebook": "The rulebook set these dice to 0 while saying damage happens only on a failed save — which meant a failed save did nothing. The dice are written here; the design is the rulebook's."
       },
       "attackType": "fear",
       "tier": "IV",
