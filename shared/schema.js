@@ -86,6 +86,9 @@
     'assumptions.inflation':                     { class: 'assumption', unit: 'rate',    default: 0.03, note: 'D-094' },
     'meta.undoStack':                            { class: 'raw',        unit: 'list',    note: 'the command log: { label, ts, changes[{ path, before, after }] }, capped at 100; redoStack likewise. D-094' },
     'household.oneOffs[].cents':                 { class: 'raw',        unit: 'cents',   note: 'a one-off coming, in (direction in) or out; `on` is the month. From the one-pager. D-094' },
+    'person.unemployment.expectedSearchMonths':  { class: 'raw',        unit: 'months',  note: 'how long you expect the search to take; floorMonthlyCents is the bare-minimum month. Owned by Between Jobs. D-098' },
+    'household.decumulation.stockShare':         { class: 'raw',        unit: 'ratio',   note: 'share of investments in stocks, for the VPW table; with plannedAnnualDrawCents and socialSecurityAt. Owned by Decumulation. D-098' },
+    'household.tax.otherPreTaxAnnualCents':      { class: 'raw',        unit: 'cents',   note: 'pre-tax money beyond the workplace plan (HSA, traditional IRA), a year; withheldAnnualCents is what has been withheld. Owned by Tax. D-098' },
     'meta.guessed':                              { class: 'raw',        unit: 'map',     note: '{ fieldId: true } for figures the one-pager committed as guesses; cleared per field the moment a real number is written. D-094' },
     'meta.noRent':                               { class: 'raw',        unit: 'bool',    note: 'no rent to pay; lowers the spending guess. D-094' },
     'person.unemployment.benefitStatus':         { class: 'raw',        unit: 'enum',    values: ['receiving', 'applied', 'notApplied', 'ineligible'], note: 'between jobs: whether unemployment is coming. With benefitWeeklyCents, benefitWeeksLeft, severanceCents, lastGrossAnnualCents and since. Owned by Start Here. D-092' },
@@ -465,7 +468,11 @@
       benefitWeeklyCents: Money.isEntered(f.benefitWeeklyCents) ? f.benefitWeeklyCents : null,
       benefitWeeksLeft: Money.isEntered(f.benefitWeeksLeft) ? f.benefitWeeksLeft : null,
       severanceCents: Money.isEntered(f.severanceCents) ? f.severanceCents : null,
-      lastGrossAnnualCents: Money.isEntered(f.lastGrossAnnualCents) ? f.lastGrossAnnualCents : null
+      lastGrossAnnualCents: Money.isEntered(f.lastGrossAnnualCents) ? f.lastGrossAnnualCents : null,
+      /* The Between Jobs room's two (D-098): how long you expect the
+         search to take, and the bare-minimum month you could drop to. */
+      expectedSearchMonths: Money.isEntered(f.expectedSearchMonths) ? f.expectedSearchMonths : null,
+      floorMonthlyCents: Money.isEntered(f.floorMonthlyCents) ? f.floorMonthlyCents : null
     };
   }
 
@@ -683,6 +690,27 @@
     return {
       type: HEALTH_TYPES.indexOf(f.type) >= 0 ? f.type : null,
       monthlyCents: Money.isEntered(f.monthlyCents) ? f.monthlyCents : null
+    };
+  }
+  /* Decumulation (D-098): how a retiree draws. A stock share for the VPW
+     table, a planned yearly draw when typed over the computed one, and the
+     age Social Security (or a pension) starts. */
+  function createDecumulation(fields) {
+    var f = fields || {};
+    return {
+      stockShare: Money.isEntered(f.stockShare) ? f.stockShare : null,
+      plannedAnnualDrawCents: Money.isEntered(f.plannedAnnualDrawCents) ? f.plannedAnnualDrawCents : null,
+      socialSecurityAt: Money.isEntered(f.socialSecurityAt) ? f.socialSecurityAt : null
+    };
+  }
+  /* Tax facts the Tax room asks (D-098): pre-tax money beyond the workplace
+     contribution (HSA, a traditional IRA), and what has been withheld this
+     year, for a refund-or-owe estimate. */
+  function createTaxFacts(fields) {
+    var f = fields || {};
+    return {
+      otherPreTaxAnnualCents: Money.isEntered(f.otherPreTaxAnnualCents) ? f.otherPreTaxAnnualCents : null,
+      withheldAnnualCents: Money.isEntered(f.withheldAnnualCents) ? f.withheldAnnualCents : null
     };
   }
   /* Estate basics: three yes/no facts. */
@@ -1041,6 +1069,8 @@
       oneOffs: (f.oneOffs || []).map(createOneOff),
       estate: createEstate(f.estate),
       giving: createGiving(f.giving),
+      decumulation: createDecumulation(f.decumulation),
+      tax: createTaxFacts(f.tax),
       /* The Skill Stacker's standing per skill, keyed by catalogue id, and
          the practice ledger it writes a row to each logged day. D-090. */
       skills: createSkills(f.skills),
@@ -1471,6 +1501,8 @@
     HEALTH_TYPES: HEALTH_TYPES,
     createHealth: createHealth,
     createEstate: createEstate,
+    createDecumulation: createDecumulation,
+    createTaxFacts: createTaxFacts,
     createGiving: createGiving,
     SKILL_STATES: SKILL_STATES,
     SKILL_KINDS: SKILL_KINDS,

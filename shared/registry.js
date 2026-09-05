@@ -592,7 +592,7 @@
     kind: 'core',
     utility: true,
     needs: ['cashSavings', 'investments', 'totalDebt'],
-    order: 30,
+    order: 99,   /* always last on the path (D-057), whatever rooms are added */
     title: 'Refresh',
     blurb: 'The three figures that move — cash, investments, what you owe — re-checked in under a minute, and a snapshot taken so the dashboard can say what changed.',
     href: 'rooms/refresh.html',
@@ -602,6 +602,132 @@
       { id: 'fields', label: 'The three that move' },
       { id: 'done',   label: 'Snapshot' }
     ]
+  });
+
+  /* Between Jobs — the tranche rooms on the template (D-098). */
+  ROOMS.push({
+    id: 'between-jobs',
+    kind: 'about-you',
+    needs: ['unemployment', 'monthlyExpenses', 'cashSavings'],
+    order: 31,
+    title: 'Between Jobs',
+    blurb: 'The runway against the search: the day the cash runs out, with the benefit and severance counted, and the floor you could drop to.',
+    href: 'rooms/between-jobs.html',
+    tier: 2,
+    tags: ['cashflow'],
+      subsections: [
+        { id: 'number',      label: 'The day the cash runs out' },
+        { id: 'chart',       label: 'Cash, month by month' },
+        { id: 'inputs',      label: 'The search and the floor' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
+  /* Protection — the tranche rooms on the template (D-098). */
+  ROOMS.push({
+    id: 'protection',
+    kind: 'about-you',
+    needs: ['monthlyExpenses', 'cashSavings', 'grossAnnualIncome'],
+    order: 32,
+    title: 'Protection',
+    blurb: 'What a bad year would cost and what stands behind you: health, disability, life, the cushion — each need against what is held.',
+    href: 'rooms/protection.html',
+    tier: 2,
+    tags: ['cashflow'],
+      subsections: [
+        { id: 'number',      label: 'The biggest gap' },
+        { id: 'chart',       label: 'Need against held' },
+        { id: 'inputs',      label: 'Health cover' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
+  /* Decumulation — the tranche rooms on the template (D-098). */
+  ROOMS.push({
+    id: 'decumulation',
+    kind: 'about-you',
+    needs: ['investments', 'monthlyExpenses', 'grossAnnualIncome'],
+    order: 33,
+    title: 'Decumulation',
+    blurb: 'How a retiree draws: the withdrawal rate against the convention, what the variable-percentage table allows at your age, and the age the money lasts to.',
+    href: 'rooms/decumulation.html',
+    tier: 2,
+    tags: ['income'],
+      subsections: [
+        { id: 'number',      label: 'The age the money lasts to' },
+        { id: 'chart',       label: 'The balance, year by year' },
+        { id: 'inputs',      label: 'How you draw' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
+  /* Tax — the tranche rooms on the template (D-098). */
+  ROOMS.push({
+    id: 'tax',
+    kind: 'about-you',
+    needs: ['grossAnnualIncome', 'filingStatus', 'state'],
+    order: 34,
+    title: 'Tax',
+    blurb: 'Federal, state and payroll tax on your income: the effective rate, the marginal bracket and the room left in it, and whether a refund or a bill is coming.',
+    href: 'rooms/tax.html',
+    tier: 2,
+    tags: ['income'],
+      subsections: [
+        { id: 'number',      label: 'Your effective rate' },
+        { id: 'chart',       label: 'Where a dollar of pay goes' },
+        { id: 'inputs',      label: 'Pre-tax and withheld' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
+  /* Estate Basics — the tranche rooms on the template (D-098). */
+  ROOMS.push({
+    id: 'estate',
+    kind: 'about-you',
+    needs: [],
+    order: 35,
+    title: 'Estate Basics',
+    blurb: 'Three facts — beneficiaries named, a will, a power of attorney — and what would pass without them.',
+    href: 'rooms/estate.html',
+    tier: 2,
+    tags: ['cashflow'],
+      subsections: [
+        { id: 'number',      label: 'In place' },
+        { id: 'chart',       label: 'What passes how' },
+        { id: 'inputs',      label: 'The three facts' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
+  });
+
+  /* Giving — the tranche rooms on the template (D-098). */
+  ROOMS.push({
+    id: 'giving',
+    kind: 'about-you',
+    needs: ['grossAnnualIncome'],
+    order: 36,
+    title: 'Giving',
+    blurb: 'A share of income given, what it is in dollars and in months of FI, and where it sits against the conventions.',
+    href: 'rooms/giving.html',
+    tier: 2,
+    tags: ['income'],
+      subsections: [
+        { id: 'number',      label: 'Given, a year' },
+        { id: 'chart',       label: 'Three shares of income' },
+        { id: 'inputs',      label: 'How much' },
+        { id: 'amounts',     label: 'Through the lens' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'What this reads' }
+      ]
   });
 
   /* Where every room's out-of-scope line points (D-097). Reads the gate for
@@ -649,7 +775,11 @@
     'real-hourly-wage': ['hours'],
     hassle: ['hours'],
     'savings-rate': ['savingsRate'],
-    fire: ['savingsRate']
+    fire: ['savingsRate'],
+    'between-jobs': ['unemployment'],
+    protection: ['protection'],
+    decumulation: ['decumulation'],
+    tax: ['income']
   };
   function gate() {
     if (typeof module === 'object' && module.exports) return require('./gate.js');

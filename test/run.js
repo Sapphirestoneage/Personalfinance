@@ -7720,20 +7720,20 @@ section('Core (D-094): the gate — exists() per situation');
 
   /* Rooms whose requires are absent are not in the map. */
   const all = Registry.all().length;
-  check('unanswered: every room', Registry.forHousehold(none).length, all);
+  check('unanswered: every room but the one that needs the status (Between Jobs)', Registry.forHousehold(none).length, all - 1);
   check('no household: every room', Registry.forHousehold(null).length, all);
   const retiredRooms = Registry.forHousehold(hh('retired')).map(r => r.id);
   const gone = Registry.all().map(r => r.id).filter(id => retiredRooms.indexOf(id) === -1).sort().join(',');
-  check('retired: the working rooms are gone', gone, 'accounts,credential,fire,hassle,real-hourly-wage,savings-rate,self-employed,side-hustle');
+  check('retired: the working rooms are gone, and Between Jobs', gone, 'accounts,between-jobs,credential,fire,hassle,real-hourly-wage,savings-rate,self-employed,side-hustle');
   const bjRooms = Registry.forHousehold(hh('betweenJobs')).map(r => r.id);
   checkTrue('between jobs: no hourly wage, no savings rate, runway stays', bjRooms.indexOf('real-hourly-wage') === -1 && bjRooms.indexOf('savings-rate') === -1 && bjRooms.indexOf('runway') !== -1);
-  checkTrue('employed: own-work room is gone, the rest stay', Registry.forHousehold(hh('employed')).map(r => r.id).indexOf('self-employed') === -1 && Registry.forHousehold(hh('employed')).length === all - 1);
+  checkTrue('employed: own work, Between Jobs and Decumulation are gone, the rest stay', Registry.forHousehold(hh('employed')).map(r => r.id).indexOf('self-employed') === -1 && Registry.forHousehold(hh('employed')).length === all - 3);
   checkTrue('self-employed: the 401(k) room is gone', Registry.forHousehold(hh('selfEmployed')).map(r => r.id).indexOf('accounts') === -1);
   checkTrue('every requires key is a branch', Object.keys(Registry.REQUIRES).every(id => Registry.REQUIRES[id].every(k => Gate.BRANCHES.indexOf(k) !== -1)));
   checkTrue('every requires room is a room', Object.keys(Registry.REQUIRES).every(id => !!Registry.byId(id)));
   check('byTag with a household filters the same way', Registry.byTag('all', hh('retired')).length, retiredRooms.length);
   check('byTag without one is every room', Registry.byTag('all').length, all);
-  check('the demo is one room short — no own work', Registry.forHousehold(Demo.build()).length, all - 1);
+  check('the demo is three rooms short — no own work, not between jobs, not drawing down', Registry.forHousehold(Demo.build()).length, all - 3);
 
   /* Guesses: a default for every guessable control, from the tables. */
   const tables = Object.assign({}, TABLES, { onepagerDefaults: require(path.join(ROOT, 'data/onepager_defaults.json')), uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')), matchDefaults: require(path.join(ROOT, 'data/match_defaults.json')) });
@@ -8093,6 +8093,32 @@ section('The room template (D-097): one shape, proven on Real Hourly Wage');
   checkTrue('… and names kinds of help, never a firm', (function () { const g = fs.readFileSync(path.join(ROOT, 'rooms/get-help.html'), 'utf8'); return /fee-only fiduciary/.test(g) && !/https?:\/\//.test(g.replace(/<link[^>]*>/g, '')); })());
   checkTrue('the template points its scope line there', /Registry\.byId\('get-help'\)/.test(fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8')));
   checkTrue('the real hourly wage room says what it does not do', /scope: 'This room does not model/.test(rhw));
+})();
+
+/* ---- Room tests, one file a room (D-098) -------------------------------------
+   test/rooms/<id>.js exports a function taking this context and calling
+   section/check/checkTrue like the sections above. Rooms built in parallel
+   each own a file, so they never edit this one. */
+(function () {
+  const dir = path.join(ROOT, 'test', 'rooms');
+  if (!fs.existsSync(dir)) return;
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const ALL_TABLES = {};
+  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { ALL_TABLES[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) { /* a room test that needs it will say */ } });
+  const ctx = {
+    check, checkTrue, section, ROOT, fs, path,
+    Money, Schema, Demo, Registry, Ownership, Progress, Tier0, Foo, CashFlow, Debt, Projection, Hourly,
+    Spine: SpineMain, Instruments: InstrumentsMain, TABLES: ALL_TABLES,
+    Gate: require(path.join(ROOT, 'shared/gate.js')), Lens: require(path.join(ROOT, 'shared/lens.js')),
+    Room: require(path.join(ROOT, 'shared/room.js')), Advice: require(path.join(ROOT, 'engines/advice.js')),
+    Ratios: require(path.join(ROOT, 'engines/ratios.js')), Runway: require(path.join(ROOT, 'engines/runway.js')),
+    Tax: require(path.join(ROOT, 'engines/tax.js')), SelfEmployed: require(path.join(ROOT, 'engines/selfemployed.js')),
+    Vpw: require(path.join(ROOT, 'engines/vpw.js')), Ss: require(path.join(ROOT, 'engines/ss.js')), Events: require(path.join(ROOT, 'engines/events.js'))
+  };
+  fs.readdirSync(dir).filter(f => f.endsWith('.js')).sort().forEach(function (f) {
+    const run = require(path.join(dir, f));
+    if (typeof run === 'function') run(ctx);
+  });
 })();
 
 section('Two decision sequences that cannot collide');

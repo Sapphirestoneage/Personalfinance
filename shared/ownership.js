@@ -333,6 +333,80 @@
       format: function (v) { return v ? 'Yes' : 'No'; }
     },
 
+    /* ---- The tranche rooms (D-098): each owns the facts it asks. ---- */
+    expectedSearchMonths: {
+      label: 'Expected search, months', owner: 'between-jobs', anchor: 'inputs',
+      read: function (h) { var v = Schema.unemploymentOf(h).expectedSearchMonths; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['expectedSearchMonths']); },
+      format: function (v) { return v + ' mo'; },
+      applies: function (h) { return Schema.isUnemployed(h); }, notApplicableBecause: 'Not between jobs.'
+    },
+    floorMonthly: {
+      label: 'The floor, a month', owner: 'between-jobs', anchor: 'inputs',
+      read: function (h) { var v = Schema.unemploymentOf(h).floorMonthlyCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['floorMonthlyCents']); },
+      format: function (v) { return money(v) + '/mo'; },
+      applies: function (h) { return Schema.isUnemployed(h); }, notApplicableBecause: 'Not between jobs.'
+    },
+    healthCover: {
+      label: 'Health cover', owner: 'protection', anchor: 'inputs',
+      read: function (h) { var v = ((h.insurance || {}).health || {}).type; return v ? Money.ok(v) : Money.incomplete('Not answered yet.', ['health.type']); },
+      format: function (v) { return { employer: 'Through work', marketplace: 'Marketplace', cobra: 'COBRA', medicaid: 'Medicaid', parent: 'A parent’s plan', none: 'None' }[v] || v; }
+    },
+    healthMonthly: {
+      label: 'Health cover, a month', owner: 'protection', anchor: 'inputs',
+      read: function (h) { var v = ((h.insurance || {}).health || {}).monthlyCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['health.monthlyCents']); },
+      format: function (v) { return money(v) + '/mo'; }
+    },
+    stockShare: {
+      label: 'Share in stocks', owner: 'decumulation', anchor: 'inputs',
+      read: function (h) { var v = (h.decumulation || {}).stockShare; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['stockShare']); },
+      format: function (v) { return Math.round(v * 100) + '%'; }
+    },
+    plannedAnnualDraw: {
+      label: 'Planned draw, a year', owner: 'decumulation', anchor: 'inputs',
+      read: function (h) { var v = (h.decumulation || {}).plannedAnnualDrawCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['plannedAnnualDrawCents']); },
+      format: function (v) { return money(v) + '/yr'; }
+    },
+    socialSecurityAt: {
+      label: 'Social Security from', owner: 'decumulation', anchor: 'inputs',
+      read: function (h) { var v = (h.decumulation || {}).socialSecurityAt; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not decided yet.', ['socialSecurityAt']); },
+      format: function (v) { return 'age ' + v; }
+    },
+    otherPreTax: {
+      label: 'Other pre-tax, a year', owner: 'tax', anchor: 'inputs',
+      read: function (h) { var v = (h.tax || {}).otherPreTaxAnnualCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['otherPreTaxAnnualCents']); },
+      format: function (v) { return money(v) + '/yr'; }
+    },
+    withheld: {
+      label: 'Withheld so far', owner: 'tax', anchor: 'inputs',
+      read: function (h) { var v = (h.tax || {}).withheldAnnualCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['withheldAnnualCents']); },
+      format: money
+    },
+    beneficiariesSet: {
+      label: 'Beneficiaries named', owner: 'estate', anchor: 'inputs',
+      read: function (h) { var v = (h.estate || {}).beneficiariesSet; return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['beneficiariesSet']); },
+      format: function (v) { return v ? 'Yes' : 'No'; }
+    },
+    willExists: {
+      label: 'A will', owner: 'estate', anchor: 'inputs',
+      read: function (h) { var v = (h.estate || {}).willExists; return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['willExists']); },
+      format: function (v) { return v ? 'Yes' : 'No'; }
+    },
+    poaExists: {
+      label: 'A power of attorney', owner: 'estate', anchor: 'inputs',
+      read: function (h) { var v = (h.estate || {}).poaExists; return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['poaExists']); },
+      format: function (v) { return v ? 'Yes' : 'No'; }
+    },
+    givingPct: {
+      label: 'Giving, share of income', owner: 'giving', anchor: 'inputs',
+      read: function (h) { var v = (h.giving || {}).pctOfIncome; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['pctOfIncome']); },
+      format: function (v) { return Money.formatRate(v, { decimals: 1 }); }
+    },
+    givingTarget: {
+      label: 'Giving, a year', owner: 'giving', anchor: 'inputs',
+      read: function (h) { var v = (h.giving || {}).annualTargetCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['annualTargetCents']); },
+      format: function (v) { return money(v) + '/yr'; }
+    },
+
     /* What The Rerank would cut (D-085): the flagged lines, a year's worth.
        Derived, owned by the room that asks the questions. */
     rerankCut: {
