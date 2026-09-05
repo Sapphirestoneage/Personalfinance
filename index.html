@@ -325,6 +325,7 @@
 <script src="engines/ss.js"></script>
 <script src="engines/events.js"></script>
 <script src="engines/skills.js"></script>
+<script src="engines/runway.js"></script>
 <script src="shared/charts.js"></script>
 <script src="shared/instruments.js"></script>
 <script>
@@ -530,12 +531,48 @@
     }
   };
 
+  /* Between jobs, the next action is not a ladder step: it is how long the
+     money lasts against how long a search usually takes. Runway.project
+     with the laid-off preset, fed the household's own facts. D-092. */
+  function betweenJobs(h) {
+    var u = Schema.unemploymentOf(h);
+    var ben = Schema.benefitMonthlyCents(h);
+    var opts = { preset: 'laid_off', severanceCents: Money.isEntered(u.severanceCents) ? u.severanceCents : null,
+      benefitMonthlyCents: Money.isOk(ben) ? ben.value : null,
+      benefitMonths: Money.isOk(ben) && ben.months !== null ? Math.round(ben.months) : null };
+    var r = SLAF.Runway.project(h, TABLES, opts);
+    var bare = SLAF.Runway.project(h, TABLES, { preset: 'quit' });
+    var gap = TABLES.reentryGap;
+    if (!Money.isOk(r)) {
+      return { say: 'Between jobs. ' + esc(r.reason), room: 'start', anchor: 'q-expenses', go: 'Answer it in Start Here →', critical: false };
+    }
+    var months = r.runwayMonths, bareMonths = Money.isOk(bare) ? bare.runwayMonths : null;
+    var sustainable = months >= SLAF.Runway.HORIZON_MONTHS;
+    var say = 'Between jobs' + (u.since ? ' since ' + esc(shortMonth(u.since)) : '') + '. ';
+    say += sustainable
+      ? 'What is coming in covers the month; the cash is not being drawn down.'
+      : 'The money lasts <strong>' + months + ' month' + (months === 1 ? '' : 's') + '</strong> at ' + Money.formatCents(Schema.monthlyExpensesCents(h).value) + ' a month'
+        + (bareMonths !== null && bareMonths !== months ? ' (' + bareMonths + ' on cash alone)' : '') + '.';
+    if (gap) say += ' A search typically runs <strong>' + gap.medianMonths + ' months</strong>, ' + gap.meanMonths + ' on average (' + gap.confidence + ').';
+    if (!Money.isOk(ben)) say += ' ' + esc(ben.reason);
+    return { say: say, room: 'runway', anchor: 'the-plan', go: 'See the runway, month by month →',
+      critical: !sustainable && gap && months < gap.medianMonths };
+  }
+  function shortMonth(iso) {
+    var m = /^(\d{4})-(\d{2})/.exec(iso || '');
+    if (!m) return '';
+    return new Date(+m[1], +m[2] - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
+
   function renderNextAction(h, c) {
     var box = el('next-action');
     var foo = c.byId.fooStep.result;
     var flag = Money.isOk(foo) && foo.flags && foo.flags.length ? foo.flags[0] : null;
     var action = null;
-    if (flag && ACTION[flag.key]) {
+    if (Schema.isUnemployed(h)) {
+      action = betweenJobs(h);
+      box.className = 'next' + (action.critical ? ' is-critical' : '');
+    } else if (flag && ACTION[flag.key]) {
       action = ACTION[flag.key](flag.detail || {});
       box.className = 'next' + (flag.severity === 'critical' ? ' is-critical' : '');
     } else if (Money.isOk(foo)) {

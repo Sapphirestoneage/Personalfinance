@@ -4439,7 +4439,7 @@ section('Whether there is an employer at all');
   /* -- The enum itself ---------------------------------------------------- */
   {
     const ids = Schema.EMPLOYMENT_STATUSES.map(r => r.id);
-    check('there are five working situations', ids.length, 5);
+    check('there are seven working situations', ids.length, 7);
     check('each one is listed once', new Set(ids).size, ids.length);
     Schema.EMPLOYMENT_STATUSES.forEach(function (row) {
       checkTrue(`${row.id} says whether money is coming in`, typeof row.earning === 'boolean');
@@ -4510,6 +4510,7 @@ section('Whether there is an employer at all');
     done.meta.hasDebt = false;
     done.insurance.highestDeductibleCents = 250000;
     done.expenses.monthlyEssential.estimatedValueCents = 315000;
+    done.dependents = false;
     done.assets.push(Schema.createAsset({ category: 'investment', valueCents: 4800000 }));
     const row = Progress.forRoom('start', done);
     check('a retiree who answers everything else is finished', row.missing.length, 0);
@@ -4921,7 +4922,7 @@ section('Eleven cards');
     checkTrue('with a "no match" button that writes zeros explicitly', start.indexOf("id=\"btn-no-match\"") !== -1 && /writeIncome\('matchPercent', 0\)/.test(start));
     /* Eleven cards for one W-2 person with no debt: count the sections. */
     const cards = (start.match(/<section class="slaf-card q" id="q-/g) || []).length;
-    check('twelve cards in the markup', cards, 12);
+    check('fourteen cards in the markup', cards, 14);
     checkTrue('one of which is the second person, shown only when there are two', /id: 'q-partner'[\s\S]{0,120}applies: function \(h\) \{ return hasPartner\(h\)/.test(start));
   }
 
@@ -5740,10 +5741,11 @@ section('Facts answered once');
       !Ownership.describe('capturingFullMatch', se, 'start').applies
       && Ownership.describe('capturingFullMatch', fresh, 'start').applies);
     const startNeeds = Progress.forRoom('start', fresh);
-    /* Thirteen shared fields, eleven cards: the 401(k) card carries the
-       match, the contribution and the derived capture; born + state share
-       one card. D-061. */
-     check('so Start Here counts thirteen fields from the first screen', startNeeds.total, 13);
+    /* Fourteen shared fields: the 401(k) card carries the match, the
+       contribution and the derived capture; born + state share one card;
+       "anyone depending on you" is its own (D-061, D-092). Between jobs
+       does not count here — it applies only when the status says so. */
+     check('so Start Here counts fourteen fields from the first screen', startNeeds.total, 14);
   }
 
   /* -- Rooms that hold facts are not "explore" rooms --------------------- */
@@ -7380,6 +7382,99 @@ section('Charts: the one way a number becomes a picture');
     checkTrue(`${f} loads the chart module`, /shared\/charts\.js/.test(fs.readFileSync(path.join(ROOT, f), 'utf8')));
   });
   checkTrue('the dashboard draws the ring, not the old stack', !/nw-stack/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')));
+})();
+
+section('Between jobs: the unemployed sequence');
+
+(function () {
+  /* D-092. A sixth working situation with a card of its own, income no
+     longer the gate, and the dashboard opening on the runway. */
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const Runway = require(path.join(ROOT, 'engines/runway.js'));
+  const Progress = require(path.join(ROOT, 'shared/progress.js'));
+  const T = {};
+  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) {} });
+
+  const row = Schema.employmentStatus('unemployed');
+  checkTrue('"unemployed" is a working situation', !!row);
+  checkTrue('… that is not earning, has no employer, and is looking', row.earning === false && row.hasEmployer === false && row.seeking === true);
+  checkTrue('"not working" is still there, and not looking', Schema.employmentStatus('notWorking').seeking !== true);
+
+  const u = Schema.createUnemployment({ benefitStatus: 'receiving', benefitWeeklyCents: 35000, benefitWeeksLeft: 12, severanceCents: 400000 });
+  check('an unknown benefit status is null, not a guess', Schema.createUnemployment({ benefitStatus: 'maybe' }).benefitStatus, null);
+  check('every field starts null', Object.values(Schema.createUnemployment(null)).every(v => v === null), true);
+
+  function household(unemp, extra) {
+    const p = Schema.createPerson({ id: 'p', label: 'You', role: 'adult', dob: '2001-03-02', employmentStatus: 'unemployed', unemployment: unemp });
+    return Schema.createHousehold(Object.assign({ people: [p], filingStatus: 'single', state: 'NC',
+      assets: [Schema.createAsset({ id: 'a', category: 'cash', valueCents: 600000, liquid: true, ownerIds: ['p'] }),
+               Schema.createAsset({ id: 'b', category: 'investment', valueCents: 1000000, ownerIds: ['p'] })],
+      expenses: { monthlyEssential: { estimatedValueCents: 300000, trackedValueCents: null }, entries: [] },
+      insurance: { highestDeductibleCents: 0 }, meta: { hasDebt: false } }, extra || {}));
+  }
+  const h = household(u);
+  checkTrue('the household is between jobs', Schema.isUnemployed(h));
+  checkTrue('a person carries the facts', h.people[0].unemployment.benefitWeeklyCents === 35000);
+  const ben = Schema.benefitMonthlyCents(h);
+  checkTrue('the benefit is an ok Result — its extras never overwrite its status', Money.isOk(ben) && ben.benefitStatus === 'receiving');
+  check('$350 a week is 350 × 52 ÷ 12 a month', ben.value, 151667);
+  check('… for 12 ÷ 4.33 = 2.8 months', ben.months, 2.8);
+  check('"haven\'t applied" is worth $0 a month', Schema.benefitMonthlyCents(household({ benefitStatus: 'notApplied' })).value, 0);
+  check('no status yet: nothing to say', Schema.benefitMonthlyCents(household(null)).status, 'incomplete');
+  check('an employed household is not between jobs', Schema.benefitMonthlyCents(Demo.build()).status, 'incomplete');
+
+  const income = Ownership.describe('grossAnnualIncome', h, 'start');
+  checkTrue('income does not apply while between jobs with nothing coming in', !income.applies);
+  checkTrue('… and says why', /runway/.test(income.notApplicableBecause));
+  const withPartnerPay = household(u);
+  const partner = Schema.createPerson({ id: 'q', label: 'Sam', role: 'adult', employmentStatus: 'employed' });
+  partner.incomeSources.push(Schema.createIncomeSource({ id: 'i', personId: 'q', grossAnnualIncomeCents: 4000000 }));
+  withPartnerPay.people.push(partner);
+  checkTrue('… but applies again once a partner\'s pay is entered', Ownership.describe('grossAnnualIncome', withPartnerPay, 'start').applies);
+  checkTrue('the between-jobs row applies only when between jobs', Ownership.describe('unemployment', h, 'start').applies && !Ownership.describe('unemployment', Demo.build(), 'start').applies);
+  checkTrue('… and is set once the benefit status is answered', Ownership.describe('unemployment', h, 'start').isSet && !Ownership.describe('unemployment', household(null), 'start').isSet);
+
+  const dash = Progress.forRoom('dashboard', h);
+  check('the dashboard has nothing left to ask this household', dash.missing.length, 0);
+  checkTrue('… income sits in the not-applicable list', dash.notApplicable.some(f => f.fieldId === 'grossAnnualIncome'));
+  const start = Progress.forRoom('start', household(null));
+  checkTrue('Start Here lists the between-jobs card as outstanding until it is answered', start.missing.some(f => f.fieldId === 'unemployment'));
+  checkTrue('… and the 401(k) as not applicable', start.notApplicable.some(f => f.fieldId === 'employerMatch'));
+
+  /* The runway by hand: $6,000 cash, $3,000 a month out, $1,000 a month
+     of benefit for three months. 6,000 → 4,000 → 2,000 → 0 → −3,000: three
+     months, out in the fourth. */
+  const r = Runway.project(h, T, { preset: 'laid_off', benefitMonthlyCents: 100000, benefitMonths: 3 });
+  check('three months of runway', r.runwayMonths, 3);
+  check('… out of money in the fourth', r.ranOutInMonth, 4);
+  check('on cash alone, two', Runway.project(h, T, { preset: 'quit' }).runwayMonths, 2);
+
+  checkTrue('Start Here has the card', /id="q-unemployed"/.test(fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8')));
+  checkTrue('… and only asks it when between jobs', /id: 'q-unemployed'[\s\S]{0,160}Schema\.isUnemployed\(h\)/.test(fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8')));
+  checkTrue('… and stops asking for income then', /id: 'q-income'[\s\S]{0,400}!Schema\.isUnemployed\(h\) \|\| hasPartner\(h\)/.test(fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8')));
+  checkTrue('the registry links to the card', Registry.byId('start').subsections.some(x => x.id === 'q-unemployed'));
+  checkTrue('the dashboard loads the runway engine for the between-jobs action', /engines\/runway\.js/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')) && /function betweenJobs/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')));
+  checkTrue('Runway opens on laid off with the facts', /function prefillFromFacts/.test(fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8')));
+  (function () {
+    const c = InstrumentsMain.compute(h, T);
+    checkTrue('between jobs, the savings-rate instrument says why rather than asking for income', /Between jobs/.test(c.byId.savingsRate.result.reason));
+    checkTrue('… and net worth is still a number: "no debt" reads as zero owed', c.byId.netWorth.ok && c.byId.netWorth.result.value === 1600000);
+    check('"no debt" answered: total debt is $0, not a blank', Schema.totalDebtCents(h).value, 0);
+    check('… and so are the monthly payments', Schema.monthlyDebtPaymentsCents(h).value, 0);
+    check('unanswered with nothing listed stays incomplete', Schema.totalDebtCents(Schema.createHousehold({})).status, 'incomplete');
+  })();
+  checkTrue('a person saved without the field gets it empty', Schema.createPerson({ id: 'x', employmentStatus: 'employed' }).unemployment.since === null);
+
+  /* Dependents and disability, same pass. */
+  checkTrue('"on disability" is a working situation whose benefit is income', Schema.employmentStatus('disabled').benefits === true && Schema.employmentStatus('disabled').earning === false);
+  check('dependents starts unasked', Schema.createHousehold({}).dependents, null);
+  check('… and "no" is kept as false, not blank', Schema.createHousehold({ dependents: false }).dependents, false);
+  const alone = Schema.createHousehold({ dependents: false });
+  checkTrue('term life does not apply when nobody depends on the income', !Ownership.describe('termLife', alone, 'sleep-at-night').applies);
+  checkTrue('… and does when someone does, or when unasked', Ownership.describe('termLife', Schema.createHousehold({ dependents: true }), 'sleep-at-night').applies && Ownership.describe('termLife', Schema.createHousehold({}), 'sleep-at-night').applies);
+  checkTrue('Start Here asks it', /id="q-dependents"/.test(fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8')) && Registry.byId('start').subsections.some(x => x.id === 'q-dependents'));
+  checkTrue('Sleep At Night says so instead of asking', /Nobody depends on your income/.test(fs.readFileSync(path.join(ROOT, 'rooms/sleep-at-night.html'), 'utf8')));
+  checkTrue('… and unemploymentOf never returns undefined for a raw person', Schema.unemploymentOf(Schema.createHousehold({ people: [{ id: 'x', employmentStatus: 'unemployed', role: 'adult' }] })).since === null);
 })();
 
 section('Two decision sequences that cannot collide');

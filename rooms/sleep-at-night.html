@@ -348,12 +348,14 @@
     } else {
       rows.push(['A bad health year', 'Not priced \u2014 no out-of-pocket maximum entered.']);
     }
-    if (Money.isEntered(ins.termLifeCents)) {
+    if (h.dependents === false) {
+      rows.push(['If you died', 'Nobody depends on your income, so term life is not a gap here' + (Money.isEntered(ins.termLifeCents) ? ' \u2014 the ' + Money.formatCents(ins.termLifeCents) + ' in force is a choice, not a need.' : '.')]);
+    } else if (Money.isEntered(ins.termLifeCents)) {
       rows.push(['If you died', Money.isOk(monthly) && monthly.value > 0
         ? Money.formatCents(ins.termLifeCents) + ' of term life \u2014 ' + (Math.round(ins.termLifeCents / (monthly.value * 12) * 10) / 10) + ' years of your household\u2019s spending.'
         : Money.formatCents(ins.termLifeCents) + ' of term life. Add monthly expenses to see how many years that is.']);
     } else {
-      rows.push(['If you died', 'No term life entered.']);
+      rows.push(['If you died', 'No term life entered.' + (h.dependents === null ? ' Whether anyone depends on your income is asked in Start Here.' : '')]);
     }
     if (Money.isEntered(ins.disabilityMonthlyCents)) {
       rows.push(['If you could not work', Money.isOk(monthly) && monthly.value > 0

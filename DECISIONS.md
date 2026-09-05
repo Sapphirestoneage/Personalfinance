@@ -4739,6 +4739,96 @@ demo, the whole-site sweep, the forms walk and the alignment pass.
 
 ---
 
+## D-092 — Unemployed is an answer with a sequence of its own
+
+*(From the phone: "it's not taking into account the unemployment";
+"put in Unemployed and create a sequence for that".)* The working
+situation had "not working right now" and then went on asking what you
+earn, so a household between jobs never reached the dashboard: income
+stayed on the list of things Start Here still needed, and the map said
+so. Being out of work is not a shade of not working; it has its own
+facts and its own number.
+
+**A sixth working situation.** `unemployed` — "Unemployed — looking for
+work": not earning, no employer, `seeking: true`. "Not working" is
+relabelled "not working, and not looking right now" (caregiving,
+studying, a break) and keeps its meaning.
+
+**Its card.** `#q-unemployed` in Start Here, asked only when the status
+says so: the month the job ended; whether unemployment is coming —
+getting it, applied and waiting, haven't applied, not eligible — and,
+for the first two, what it pays a week and how many weeks are left,
+with the state's cap and weeks **proposed** from `data/ui_benefits.json`
+(never stored until tapped; the benefit is set by the state from your
+own wages, so the cap is the most it could be, not what it is; at half
+of the last pay when that is known); severance or final pay still in
+hand; what the last job paid a year. Stored on the person as
+`unemployment { since, benefitStatus, benefitWeeklyCents,
+benefitWeeksLeft, severanceCents, lastGrossAnnualCents }`, owned by
+Start Here.
+
+**Income stops being the gate.** The `grossAnnualIncome` ownership row
+does not apply while between jobs with nothing entered — "the runway is
+the number that matters now" — so the dashboard's needs are met, the map
+stops chasing it, and the income card is only shown when there is a
+partner whose pay belongs on it. Anything entered (a partner's pay, a
+benefit typed as income) counts as before, and then the row applies
+again. `Schema.benefitMonthlyCents` is weekly × 52 ÷ 12 while receiving
+or applied, $0 for not applied or not eligible, and nothing until
+answered; the engines that need a gross income (savings rate, DTI, the
+FI year) say so rather than pretending.
+
+**The dashboard opens on the runway.** The next action for a household
+between jobs is `Runway.project` on the laid-off preset fed these facts:
+"the money lasts N months at $X a month (M on cash alone); a search
+typically runs 2.3 months, 4.8 on average" — the re-entry gap table,
+labelled unverified — critical when the runway is shorter than the
+median. Runway itself opens on "laid off" with severance, the benefit a
+month and its months already in the boxes, page-local as before.
+
+**Also from the phone, same pass.** "I'm under 26 and don't have a
+deductible": one tap writes a typed zero for the highest deductible, an
+answer step 1 reads as nothing to cover. The debt timeline: one coloured
+line per debt with a dot where it falls, calendar months on the axis, and
+the list naming the month, the time and the interest from the balance it
+started at (the labels had piled onto one spot). The Statement's owed
+bars consolidate by kind — every credit card in one bar, a colour each.
+
+**Dependents, and disability.** "Does anyone depend on your income?"
+is a card of its own (`household.dependents`: null, true, or a
+deliberate false). "No" takes term life off the Coverage Checkup and off
+every list of needs — life cover replaces an income someone else lives
+on, and nobody living on it makes it a choice, not a gap. "On
+disability" is a seventh working situation: not working, no employer,
+and the benefit is income, entered on the income card the way a pension
+is.
+
+**And "no debt" finally reads as zero.** `Schema.totalDebtCents` and
+`monthlyDebtPaymentsCents` returned incomplete for an empty list even
+when `meta.hasDebt` was a deliberate false (D-061), so a debt-free
+household's Altitude and debt-to-income never resolved. With "no debt"
+answered and nothing listed they are $0; unanswered, an empty list is
+still incomplete — empty is not zero.
+
+**Compatibility note.** `person.unemployment` and `household.dependents`
+are new; a household saved
+without it loads with every field null. `employmentStatus` gains the
+values `unemployed` and `disabled`; `Schema.EMPLOYMENT_STATUSES` has
+seven rows and every consumer builds from it. `Debt.simulate` schedule rows gain `balances`
+(per-debt), and the result `startingBalances` and `debtLabels`. No
+existing field changed shape.
+
+**Verified.** `node test/run.js`: the sixth status, the benefit at
+$350 × 52 ÷ 12 = $1,516.67 a month for 2.8 months, income not applying
+and applying again with a partner's pay, the dashboard with nothing left
+to ask, Start Here listing the card, the runway by hand ($6,000 and
+$3,000 a month with $1,000 of benefit for three months: three months,
+out in the fourth; two on cash alone). `test/forms.js`: the card's taps
+and typing on a phone. Screenshots of the card, the dashboard's
+between-jobs action and Runway prefilled.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

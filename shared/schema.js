@@ -72,6 +72,8 @@
     'household.filingStatus':                    { class: 'raw',        unit: 'enum',    values: ['single', 'married_joint', 'married_separate', 'head_of_household'] },
     'household.state':                           { class: 'raw',        unit: 'usps',    note: '2-letter state code' },
     'household.capturingFullMatch':              { class: 'raw',        unit: 'bool',    note: 'null = not answered; needed by FOO step 2. DECISIONS.md D-008' },
+    'household.dependents':                      { class: 'raw',        unit: 'bool',    note: 'null = not asked; false = nobody depends on this income, so term life is not a gap. Owned by Start Here. D-092' },
+    'person.unemployment.benefitStatus':         { class: 'raw',        unit: 'enum',    values: ['receiving', 'applied', 'notApplied', 'ineligible'], note: 'between jobs: whether unemployment is coming. With benefitWeeklyCents, benefitWeeksLeft, severanceCents, lastGrossAnnualCents and since. Owned by Start Here. D-092' },
     'person.dob':                                { class: 'raw',        unit: 'iso-date' },
     'person.role':                               { class: 'raw',        unit: 'enum',    values: ['adult', 'child', 'dependent', 'other'] },
     'person.work.contractedHoursPerWeek':        { class: 'raw',        unit: 'hours',   period: 'weekly' },
@@ -287,7 +289,16 @@
       short: 'Self-employed', earning: true,  hasEmployer: false },
     { id: 'both',         label: 'Both \u2014 a job and my own work',
       short: 'Both',          earning: true,  hasEmployer: true },
-    { id: 'notWorking',   label: 'Not working right now',
+    /* Between jobs is its own answer, not a shade of "not working": it
+       has a sequence of its own — benefits, severance, a runway against a
+       search — and the income question stops being the gate. D-092. */
+    { id: 'unemployed',   label: 'Unemployed \u2014 looking for work',
+      short: 'Unemployed',    earning: false, hasEmployer: false, seeking: true },
+    /* On disability: not working, and the benefit is income — it goes on
+       the income card like a pension does. D-092. */
+    { id: 'disabled',     label: 'On disability',
+      short: 'On disability', earning: false, hasEmployer: false, benefits: true },
+    { id: 'notWorking',   label: 'Not working, and not looking right now',
       short: 'Not working',   earning: false, hasEmployer: false },
     { id: 'retired',      label: 'Retired',
       short: 'Retired',       earning: false, hasEmployer: false }
@@ -309,6 +320,34 @@
   function householdEmployment(household) {
     var p = primaryPerson(household || {});
     return p ? employmentStatus(p.employmentStatus) : null;
+  }
+
+  /** The primary person said they are between jobs. */
+  function isUnemployed(household) {
+    var row = householdEmployment(household);
+    return !!(row && row.seeking);
+  }
+  function unemploymentOf(household) {
+    var p = primaryPerson(household || {});
+    return p ? createUnemployment(p.unemployment) : createUnemployment(null);
+  }
+  /**
+   * The benefit as a monthly figure while it lasts: weekly × 52 ÷ 12, with
+   * the months it runs. Only while receiving or applied, and only with an
+   * amount typed — "haven't applied" is an answer worth nothing a month.
+   */
+  function benefitMonthlyCents(household) {
+    if (!isUnemployed(household)) return Money.incomplete('Not between jobs.', ['employmentStatus']);
+    var u = unemploymentOf(household);
+    if (u.benefitStatus === null) return Money.incomplete('Say whether you are getting unemployment.', ['unemployment']);
+    if (u.benefitStatus === 'notApplied' || u.benefitStatus === 'ineligible') {
+      return Money.ok(0, { benefitStatus: u.benefitStatus, months: 0, weeksLeft: 0 });
+    }
+    if (!Money.isEntered(u.benefitWeeklyCents)) return Money.incomplete('Add what the benefit pays a week.', ['unemployment']);
+    var weeks = Money.isEntered(u.benefitWeeksLeft) ? u.benefitWeeksLeft : null;
+    return Money.ok(Math.round(u.benefitWeeklyCents * 52 / 12), {
+      benefitStatus: u.benefitStatus, weeksLeft: weeks, months: weeks === null ? null : Math.round(weeks / (52 / 12) * 10) / 10
+    });
   }
 
   /**
@@ -382,6 +421,30 @@
     return m.hasDebt === true || m.hasDebt === false;
   }
 
+  /**
+   * Between jobs (D-092). Every field is null until answered; a benefit
+   * status of 'notApplied' or 'ineligible' is an answer with no amount.
+   *   since              'YYYY-MM-01' — the month the job ended
+   *   benefitStatus      'receiving' | 'applied' | 'notApplied' | 'ineligible'
+   *   benefitWeeklyCents what the state pays a week (yours to look up; the
+   *                      state cap is proposed, never assumed)
+   *   benefitWeeksLeft   how many weeks of it remain
+   *   severanceCents     a payout or final pay still in hand
+   *   lastGrossAnnualCents what the last job paid a year, for the benchmarks
+   */
+  var BENEFIT_STATUSES = ['receiving', 'applied', 'notApplied', 'ineligible'];
+  function createUnemployment(fields) {
+    var f = fields || {};
+    return {
+      since: typeof f.since === 'string' && f.since ? f.since : null,
+      benefitStatus: BENEFIT_STATUSES.indexOf(f.benefitStatus) >= 0 ? f.benefitStatus : null,
+      benefitWeeklyCents: Money.isEntered(f.benefitWeeklyCents) ? f.benefitWeeklyCents : null,
+      benefitWeeksLeft: Money.isEntered(f.benefitWeeksLeft) ? f.benefitWeeksLeft : null,
+      severanceCents: Money.isEntered(f.severanceCents) ? f.severanceCents : null,
+      lastGrossAnnualCents: Money.isEntered(f.lastGrossAnnualCents) ? f.lastGrossAnnualCents : null
+    };
+  }
+
   function createPerson(fields) {
     var f = fields || {};
     return {
@@ -397,6 +460,8 @@
          is deliberately different from every answer below.
          See EMPLOYMENT_STATUSES and DECISIONS.md D-055. */
       employmentStatus: f.employmentStatus === undefined ? null : f.employmentStatus,
+      /* Between jobs, when the status says so. D-092. */
+      unemployment: createUnemployment(f.unemployment),
       incomeSources: f.incomeSources || [],
       work: createWorkProfile(f.work)
     };
@@ -837,6 +902,10 @@
          judge. See DECISIONS.md D-008. Listed here rather than only being
          attached ad hoc, so it survives a save/load round trip. */
       capturingFullMatch: f.capturingFullMatch === undefined ? null : f.capturingFullMatch,
+      /* Does anyone depend on your income? null not asked, true, or a
+         deliberate false — which takes term life off the coverage checkup
+         and off every list of needs. D-092. */
+      dependents: f.dependents === true ? true : f.dependents === false ? false : null,
       assets: f.assets || [],
       debts: f.debts || [],
       expenses: {
@@ -1067,9 +1136,16 @@
     return sumAssetsByCategory(household, ['investment', 'retirement']);
   }
 
+  /* "No debt" (meta.hasDebt === false, D-061) is an answer: with nothing
+     listed it reads as zero owed and zero a month, not as a blank. Left
+     unanswered, an empty list is still incomplete — empty is not zero. */
+  function saidNoDebt(household) {
+    return !!(household && household.meta && household.meta.hasDebt === false);
+  }
   function totalDebtCents(household) {
     var summed = Money.sumCents(aggregatableDebts(household).map(function (d) { return d.balanceCents; }));
     if (summed.counted === 0) {
+      if (saidNoDebt(household)) return Money.ok(0, { none: true });
       return Money.incomplete('Add your debt balances to see this.', ['debts']);
     }
     return Money.ok(summed.total);
@@ -1078,6 +1154,7 @@
   function monthlyDebtPaymentsCents(household) {
     var summed = Money.sumCents(aggregatableDebts(household).map(function (d) { return d.minPaymentCents; }));
     if (summed.counted === 0) {
+      if (saidNoDebt(household)) return Money.ok(0, { none: true });
       return Money.incomplete('Add your monthly minimum payments to see this.', ['monthlyDebtPayments']);
     }
     return Money.ok(summed.total);
@@ -1260,6 +1337,11 @@
     EMPLOYMENT_STATUSES: EMPLOYMENT_STATUSES,
     employmentStatus: employmentStatus,
     householdEmployment: householdEmployment,
+    BENEFIT_STATUSES: BENEFIT_STATUSES,
+    createUnemployment: createUnemployment,
+    isUnemployed: isUnemployed,
+    unemploymentOf: unemploymentOf,
+    benefitMonthlyCents: benefitMonthlyCents,
     couldHaveEmployerMatch: couldHaveEmployerMatch,
     capturingQuestionApplies: capturingQuestionApplies,
     capturingFullMatchDerived: capturingFullMatchDerived,

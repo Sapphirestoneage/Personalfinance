@@ -171,6 +171,9 @@
         entries: []
       },
       capturingFullMatch: VALUES.capturingFullMatch,
+      /* Robin lives alone: nobody depends on this income, so term life is
+         not a gap on the checkup. D-092. */
+      dependents: false,
       retirement: Schema.createRetirement({
         contributionPercent: VALUES.contributionPercent,
         rothContributedCents: Money.toCents(VALUES.rothContributedThisYear),

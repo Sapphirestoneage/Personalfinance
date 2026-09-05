@@ -22,7 +22,7 @@
     {
       id: 'start',
       kind: 'core',
-      needs: ['employmentStatus', 'dob', 'state', 'filingStatus', 'grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments',
+      needs: ['employmentStatus', 'unemployment', 'dependents', 'dob', 'state', 'filingStatus', 'grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments',
               'employerMatch', 'contributionPercent', 'capturingFullMatch', 'highestDeductible', 'hasDebt'],
       order: 1,
       title: 'Start Here',
@@ -33,6 +33,8 @@
       subsections: [
         { id: 'q-household',   label: 'Just you, or two' },
         { id: 'q-employment',  label: 'Working situation' },
+        { id: 'q-unemployed',  label: 'Between jobs' },
+        { id: 'q-dependents',  label: 'Anyone depending on you' },
         { id: 'q-partner',     label: 'The other of you' },
         { id: 'q-about',       label: 'Born, and where' },
         { id: 'q-income',      label: 'Income' },

@@ -653,8 +653,27 @@
   SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(render);
 
+  /* Between jobs: the room opens on "laid off" with the household's own
+     figures in the boxes — severance, the benefit a month, its months —
+     rather than a blank quit scenario. Page-local still; nothing here is
+     written back. D-092. */
+  function prefillFromFacts() {
+    var h = Spine.getProfile();
+    if (!Schema.isUnemployed(h)) return;
+    var u = Schema.unemploymentOf(h);
+    var ben = Schema.benefitMonthlyCents(h);
+    state.preset = 'laid_off';
+    if (Money.isEntered(u.severanceCents)) state.severance = u.severanceCents;
+    if (Money.isOk(ben) && ben.value > 0) {
+      state.benefitMonthly = ben.value;
+      if (ben.months !== null) state.benefitMonths = Math.max(1, Math.round(ben.months));
+    }
+    paintInputs();
+  }
+
   Reference.load().then(function (tables) {
     TABLES = tables;
+    prefillFromFacts();
     renderNow();
     jumpToHash();
   }).catch(function (err) {

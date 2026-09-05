@@ -104,13 +104,20 @@
       fiEtaYear: etaYear(household, tables, now),
       fooStep: fooStep(household, tables)
     };
+    /* Between jobs, "add your income" is the wrong thing to say: income is
+       not being asked. The instruments that need one say why instead. D-092. */
+    var betweenJobs = Schema.isUnemployed && Schema.isUnemployed(household);
     var byId = {};
     var rows = INSTRUMENTS.map(function (spec) {
       var band = spec.band ? ratioRow(spec.band) : null;
+      var result = results[spec.id];
+      if (betweenJobs && !Money.isOk(result) && (result.missing || []).some(function (m) { return /income/i.test(m); })) {
+        result = Money.incomplete('Between jobs \u2014 nothing to measure against an income yet.', result.missing);
+      }
       var row = {
         id: spec.id, cap: spec.cap, label: spec.label, unit: spec.unit,
-        result: results[spec.id],
-        ok: Money.isOk(results[spec.id]),
+        result: result,
+        ok: Money.isOk(result),
         verdict: band ? band.verdict : null,
         bandRow: band
       };

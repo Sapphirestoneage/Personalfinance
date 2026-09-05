@@ -167,6 +167,37 @@
     <p class="q-unlocks">If there is no employer, the 401(k) card stops being asked — and stops counting as unfinished.</p>
   </section>
 
+  <section class="slaf-card q" id="q-unemployed" data-q>
+    <p class="q-text">Between jobs: what is coming in, and since when?</p>
+    <p class="q-help">This is the sequence for being out of work. Nothing here is a judgement — it is what your runway needs to know. Look the benefit up on your state’s site; the cap for your state is pencilled in, never assumed.</p>
+    <span class="slaf-label" style="display:block;margin:var(--space-3) 0 var(--space-2)">The job ended in</span>
+    <div class="pay-row">
+      <span class="slaf-input-shell"><select data-unemp="month" aria-label="Month the job ended"></select></span>
+      <span class="slaf-input-shell"><select data-unemp="year" aria-label="Year the job ended"></select></span>
+    </div>
+    <span class="slaf-label" style="display:block;margin:var(--space-3) 0 var(--space-2)">Unemployment benefit</span>
+    <div class="choices" data-unemp-choices>
+      <button type="button" class="choice" data-value="receiving">Getting it</button>
+      <button type="button" class="choice" data-value="applied">Applied, waiting</button>
+      <button type="button" class="choice" data-value="notApplied">Haven’t applied</button>
+      <button type="button" class="choice" data-value="ineligible">Not eligible</button>
+    </div>
+    <div id="unemp-benefit" hidden>
+      <div class="q-three" style="grid-template-columns:1fr 1fr">
+        <label class="slaf-field" style="margin:0"><span class="slaf-label">A week, before tax</span>
+          <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-unemp="weekly" placeholder="e.g. 350" aria-label="Weekly benefit"/></span></label>
+        <label class="slaf-field" style="margin:0"><span class="slaf-label">Weeks left</span>
+          <span class="slaf-input-shell"><input type="text" inputmode="numeric" data-unemp="weeks" placeholder="e.g. 20" aria-label="Weeks of benefit left"/></span></label>
+      </div>
+      <p class="slaf-hint" data-suggest-note style="margin:var(--space-2) 0 0"></p>
+    </div>
+    <label class="slaf-field" style="margin-top:var(--space-3)"><span class="slaf-label">Severance or final pay still in hand</span>
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-unemp="severance" placeholder="e.g. 4000" aria-label="Severance still in hand"/></span></label>
+    <label class="slaf-field"><span class="slaf-label">What the last job paid, a year</span>
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-unemp="last" placeholder="e.g. 52000" aria-label="What the last job paid a year"/></span></label>
+    <p class="q-unlocks" id="unemp-out">The dashboard opens on your runway — months of cash against a typical search — and Runway is already set to “laid off” with these figures.</p>
+  </section>
+
   <section class="slaf-card q" id="q-partner" data-q>
     <p class="q-text">And the other of you?</p>
     <p class="q-help">A name to tell you apart, whether they are working, and when they were born. Their pay goes on the next card, beside yours.</p>
@@ -192,6 +223,16 @@
     </div>
     <p class="q-warn" id="dob-warn" hidden></p>
     <p class="q-unlocks">Feeds the net-worth percentile and the age-based savings milestones.</p>
+  </section>
+
+  <section class="slaf-card q" id="q-dependents" data-q>
+    <p class="q-text">Does anyone depend on your income?</p>
+    <p class="q-help">A child, a partner who could not cover the bills alone, a parent you support. If nobody does, life insurance is not a gap in your cover, and the checkup stops asking about it.</p>
+    <div class="choices" data-choices="dependents">
+      <button type="button" class="choice" data-value="yes">Yes — someone does</button>
+      <button type="button" class="choice" data-value="no">No — only me</button>
+    </div>
+    <p class="q-unlocks">“No” takes term life off the Coverage Checkup in Sleep At Night.</p>
   </section>
 
   <section class="slaf-card q" id="q-income" data-q>
@@ -388,7 +429,7 @@
   var PARTNER_ID = 'tier0_partner';
   var PARTNER_INCOME_ID = 'tier0_income_partner';
   var INVEST_IDS = { pretax: 'tier0_invest_pretax', roth: 'tier0_invest_roth', taxable: 'tier0_invest_taxable' };
-  var TABLES = { states: null, matchDefaults: null };
+  var TABLES = { states: null, matchDefaults: null, uiBenefits: null };
 
   function adultsOf(h) { return (h.people || []).filter(function (p) { return p.role === 'adult'; }); }
   function partnerOf(h) { return adultsOf(h)[1] || null; }
@@ -880,6 +921,9 @@
     note.textContent = row.id === 'retired'
       ? 'You said you\u2019re retired. Pension, annuity or drawdown income goes here \u2014 '
         + 'if nothing is coming in, pick \u201cnot earning right now\u201d on the right rather than typing 0.'
+      : row.id === 'disabled'
+      ? 'You said you\u2019re on disability. The benefit is income: put what it pays here, by the month or the week. '
+        + 'If nothing is coming in yet, pick \u201cnot earning right now\u201d on the right rather than typing 0.'
       : 'You said you\u2019re not working. Benefits, severance or anything still landing goes here \u2014 '
         + 'if nothing is, pick \u201cnot earning right now\u201d on the right rather than typing 0.';
   }
@@ -1190,6 +1234,100 @@
     if (st !== (Spine.getProfile().state || null)) Spine.updateProfile({ state: st });
   }
 
+  /* ---------- between jobs (D-092) ---------------------------------------- */
+
+  function buildRecentDateSelects(monthSel, yearSel) {
+    var thisYear = new Date().getFullYear();
+    monthSel.innerHTML = '<option value="">Month</option>' + MONTHS.map(function (m, i) {
+      return '<option value="' + (i + 1) + '">' + m + '</option>';
+    }).join('');
+    var years = [];
+    for (var y = thisYear; y >= thisYear - 6; y--) years.push('<option value="' + y + '">' + y + '</option>');
+    yearSel.innerHTML = '<option value="">Year</option>' + years.join('');
+  }
+  buildRecentDateSelects(document.querySelector('[data-unemp="month"]'), document.querySelector('[data-unemp="year"]'));
+
+  function unempNode(k) { return document.querySelector('[data-unemp="' + k + '"]'); }
+
+  function writeUnemployment(patch) {
+    var person = Spine.ensurePrimaryPerson('You');
+    var cur = Schema.unemploymentOf(Spine.getProfile());
+    Spine.upsertPerson({ id: person.id, unemployment: Object.assign({}, cur, patch) });
+  }
+
+  function paintUnemployed(h) {
+    var u = Schema.unemploymentOf(h);
+    setDob(unempNode('month'), unempNode('year'), u.since);
+    var pressed = document.querySelectorAll('[data-unemp-choices] .choice');
+    for (var i = 0; i < pressed.length; i++) {
+      pressed[i].setAttribute('aria-pressed', String(pressed[i].getAttribute('data-value') === u.benefitStatus));
+    }
+    var hasBenefit = u.benefitStatus === 'receiving' || u.benefitStatus === 'applied';
+    el('unemp-benefit').hidden = !hasBenefit;
+    var weekly = unempNode('weekly'), weeks = unempNode('weeks');
+    if (settable(weekly)) weekly.value = Money.isEntered(u.benefitWeeklyCents) ? Money.formatCents(u.benefitWeeklyCents) : '';
+    if (settable(weeks)) weeks.value = Money.isEntered(u.benefitWeeksLeft) ? String(u.benefitWeeksLeft) : '';
+    if (settable(unempNode('severance'))) unempNode('severance').value = Money.isEntered(u.severanceCents) ? Money.formatCents(u.severanceCents) : '';
+    if (settable(unempNode('last'))) unempNode('last').value = Money.isEntered(u.lastGrossAnnualCents) ? Money.formatCents(u.lastGrossAnnualCents) : '';
+    [weekly, weeks, unempNode('severance'), unempNode('last')].forEach(settle);
+    /* The state's cap and weeks, proposed — never stored until tapped.
+       D-060. The benefit is set by the state from your own wages, so the
+       cap is the most it could be, not what it is. */
+    var table = TABLES.uiBenefits, st = h.state && table && table.states && table.states[h.state];
+    if (hasBenefit && st) {
+      var capCents = Math.round(st.maxWeeklyDollars * 100);
+      var replace = Money.isEntered(u.lastGrossAnnualCents) ? Math.min(capCents, Math.round(u.lastGrossAnnualCents / 52 * table.replacementRate)) : capCents;
+      if (!Money.isEntered(u.benefitWeeklyCents)) Suggest.show(weekly, { value: replace, display: Money.formatCents(replace),
+        source: (Money.isEntered(u.lastGrossAnnualCents) ? Math.round(table.replacementRate * 100) + '% of your last weekly pay, ' : '') + 'up to the ' + h.state + ' cap of $' + st.maxWeeklyDollars + ' a week (' + table.confidence + ')',
+        onUse: function (cents) { writeUnemployment({ benefitWeeklyCents: cents }); render(); } });
+      if (!Money.isEntered(u.benefitWeeksLeft)) Suggest.show(weeks, { value: st.weeks, display: String(st.weeks),
+        source: h.state + ' pays up to ' + st.weeks + ' weeks (' + table.confidence + ')',
+        onUse: function (n) { writeUnemployment({ benefitWeeksLeft: n }); render(); } });
+    } else { Suggest.clear(weekly); Suggest.clear(weeks); }
+    var out = el('unemp-out');
+    var ben = Schema.benefitMonthlyCents(h);
+    if (Money.isOk(ben) && ben.value > 0) {
+      out.textContent = 'That is about ' + Money.formatCents(ben.value) + ' a month' + (ben.months !== null ? ' for ' + ben.months + ' months' : '')
+        + '. The dashboard opens on your runway against a typical search, and Runway is set to “laid off” with these figures.';
+    } else {
+      out.textContent = 'The dashboard opens on your runway — months of cash against a typical search — and Runway is already set to “laid off” with these figures.';
+    }
+  }
+  function commitUnemployed() {
+    var since = dobFrom(unempNode('month'), unempNode('year'));
+    var cur = Schema.unemploymentOf(Spine.getProfile());
+    if (since !== cur.since) writeUnemployment({ since: since });
+  }
+  document.addEventListener('click', function (evt) {
+    var btn = evt.target.closest('[data-unemp-choices] .choice');
+    if (!btn) return;
+    writeUnemployment({ benefitStatus: btn.getAttribute('data-value') });
+    render();
+  });
+  document.addEventListener('focusout', function (evt) {
+    var node = evt.target;
+    if (!node.getAttribute) return;
+    var k = node.getAttribute('data-unemp');
+    if (!k || node.tagName !== 'INPUT') return;
+    if (k === 'weeks') {
+      var raw = String(Suggest.entered(node)).trim();
+      var n = raw === '' ? null : Number(raw);
+      writeUnemployment({ benefitWeeksLeft: (n === null || isNaN(n) || n < 0) ? null : Math.round(n) });
+    } else {
+      var cents = Money.parseMoney(Suggest.entered(node));
+      var key = { weekly: 'benefitWeeklyCents', severance: 'severanceCents', last: 'lastGrossAnnualCents' }[k];
+      var patch = {}; patch[key] = Money.isEntered(cents) ? cents : null;
+      writeUnemployment(patch);
+    }
+    render();
+  });
+  document.addEventListener('change', function (evt) {
+    var node = evt.target;
+    if (!node || node.tagName !== 'SELECT' || !node.getAttribute('data-unemp')) return;
+    commitUnemployed();
+    render();
+  });
+
   var QUESTIONS = [
     { id: 'q-household', field: 'employmentStatus', kind: 'choice',
       isSet: function (h) { return adultsOf(h).length > 0; },
@@ -1220,6 +1358,13 @@
         paintEmploymentNote();
       } },
 
+    /* Between jobs: the sequence for being out of work, only asked when
+       the working situation says so. D-092. */
+    { id: 'q-unemployed', field: 'unemployment', kind: 'custom',
+      applies: function (h) { return Schema.isUnemployed(h); },
+      isSet: function (h) { return !!Schema.unemploymentOf(h).benefitStatus; },
+      paint: paintUnemployed, commit: commitUnemployed },
+
     { id: 'q-partner', field: 'employmentStatus', kind: 'custom',
       applies: function (h) { return hasPartner(h); },
       isSet: function (h) { var p = partnerOf(h); return !!(p && p.employmentStatus && p.dob); },
@@ -1232,7 +1377,14 @@
     /* The box holds what you are PAID at your chosen frequency. When that
        frequency is 'a year' the two are the same number, which is why a
        household saved before this reads back unchanged. */
+    { id: 'q-dependents', field: 'dependents', kind: 'choice',
+      read: function (h) { return h.dependents === true ? 'yes' : h.dependents === false ? 'no' : ''; },
+      write: function (v) { Spine.updateProfile({ dependents: v === 'yes' ? true : v === 'no' ? false : null }); } },
+
     { id: 'q-income', field: 'grossAnnualIncome', kind: 'money',
+      /* Not asked of someone between jobs unless there is a partner whose
+         pay belongs on this card; the benefit lives on its own card. */
+      applies: function (h) { return !Schema.isUnemployed(h) || hasPartner(h); },
       read: function (h) {
         var s = incomeSourceOf(h);
         if (!s) return null;
@@ -1305,7 +1457,7 @@
 
   /* Three groups with a rough time each, shown in the rail. BRIEF §2.2. */
   var GROUPS = [
-    { label: 'About you',              mins: '~1 min', ids: ['q-household', 'q-employment', 'q-partner', 'q-about'] },
+    { label: 'About you',              mins: '~1 min', ids: ['q-household', 'q-employment', 'q-unemployed', 'q-partner', 'q-about', 'q-dependents'] },
     { label: 'Money in and out',       mins: '~1 min', ids: ['q-income', 'q-filing', 'q-expenses'] },
     { label: 'What you hold and owe',  mins: '~2 min', ids: ['q-cash', 'q-investments', 'q-plan', 'q-deductible', 'q-debt'] }
   ];
@@ -1328,6 +1480,15 @@
   function liveQuestions() {
     var h = Spine.getProfile();
     return QUESTIONS.filter(function (q) { return !q.applies || q.applies(h); });
+  }
+  /* Repaint what is on screen after a write: the one card in the flow, or
+     every live card on the all-at-once page. Values only; nothing is
+     rebuilt, so a box being typed in keeps its caret. */
+  function render() {
+    var list = liveQuestions();
+    if (reviewing) { list.forEach(paint); return; }
+    var q = list[Math.max(0, Math.min(index, list.length - 1))];
+    if (q) paint(q);
   }
 
   /* ---------- reading and writing the visible question -------------------- */
@@ -1694,9 +1855,10 @@
   /* The state list and the suggested match arrive after first paint. The
      state select is rebuilt once (never while focused); the plan card
      repaints so its proposals appear. Neither writes anything. */
-  Reference.load(['states', 'matchDefaults']).then(function (t) {
+  Reference.load(['states', 'matchDefaults', 'uiBenefits']).then(function (t) {
     TABLES.states = t.states;
     TABLES.matchDefaults = t.matchDefaults;
+    TABLES.uiBenefits = t.uiBenefits;
     buildStateSelect();
     var live = liveQuestions();
     (reviewing ? live : live.slice(index, index + 1)).forEach(function (q) {

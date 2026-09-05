@@ -274,6 +274,37 @@ const CASES = [
     }
   },
   {
+    room: '/rooms/start.html',
+    container: '#q-unemployed',
+    seed: 'demo',
+    /* Between jobs: the card appears once the status says so; the tap on
+       "Getting it" opens the benefit boxes, and typing into them survives. */
+    prepare: async (page) => {
+      await page.evaluate(() => {
+        const p = SLAF.Schema.primaryPerson(SLAF.Spine.getProfile());
+        SLAF.Spine.upsertPerson({ id: p.id, employmentStatus: 'unemployed' });
+      });
+      await page.goto(page.url().split('#')[0] + '#q-unemployed');
+      await page.waitForTimeout(400);
+      await page.tap('[data-unemp-choices] [data-value="receiving"]');
+      await page.waitForTimeout(400);
+    },
+    fields: [
+      { sel: '[data-unemp="weekly"]', type: '350' },
+      { sel: '[data-unemp="weeks"]', type: '20' },
+      { sel: '[data-unemp="severance"]', type: '4000' }
+    ],
+    expect: async (page) => {
+      const u = await page.evaluate(() => SLAF.Schema.unemploymentOf(SLAF.Spine.getProfile()));
+      return [
+        ['the status was stored', u.benefitStatus, 'receiving'],
+        ['the weekly benefit in cents', u.benefitWeeklyCents, 35000],
+        ['the weeks left', u.benefitWeeksLeft, 20],
+        ['the severance', u.severanceCents, 400000]
+      ];
+    }
+  },
+  {
     room: '/rooms/fire.html',
     container: '#targets',
     seed: 'demo',

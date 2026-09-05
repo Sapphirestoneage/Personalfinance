@@ -153,7 +153,26 @@
     grossAnnualIncome: {
       label: 'Gross annual income', owner: 'start', anchor: 'q-income',
       read: function (h) { return Schema.grossAnnualIncomeCents(h); },
-      format: money
+      format: money,
+      /* Between jobs with nothing coming in, income is not a question the
+         app should keep asking; the runway is the number now. Anything
+         entered — a partner's pay, a benefit typed as income — still
+         counts, and then the row applies as before. D-092. */
+      applies: function (h) { return !(Schema.isUnemployed(h) && !Money.isOk(Schema.grossAnnualIncomeCents(h))); },
+      notApplicableBecause: 'Between jobs — the runway is the number that matters now.'
+    },
+    unemployment: {
+      label: 'Between jobs', owner: 'start', anchor: 'q-unemployed',
+      read: function (h) {
+        var u = Schema.unemploymentOf(h);
+        return u.benefitStatus ? Money.ok(u.benefitStatus, { unemployment: u })
+          : Money.incomplete('Say whether unemployment is coming.', ['unemployment']);
+      },
+      format: function (v) {
+        return { receiving: 'getting unemployment', applied: 'applied, waiting', notApplied: 'not applied', ineligible: 'not eligible' }[v] || v;
+      },
+      applies: function (h) { return Schema.isUnemployed(h); },
+      notApplicableBecause: 'You are working.'
     },
     cashSavings: {
       label: 'Cash & savings', owner: 'start', anchor: 'q-cash',
@@ -282,7 +301,18 @@
         var v = (h.insurance || {}).termLifeCents;
         return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['termLifeCents']);
       },
-      format: money
+      format: money,
+      /* Life cover replaces an income someone else lives on. Nobody
+         depending on it: not a gap, not a question. D-092. */
+      applies: function (h) { return h.dependents !== false; },
+      notApplicableBecause: 'Nobody depends on your income.'
+    },
+    dependents: {
+      label: 'Anyone depending on your income', owner: 'start', anchor: 'q-dependents',
+      read: function (h) {
+        return typeof h.dependents === 'boolean' ? Money.ok(h.dependents) : Money.incomplete('Not answered yet.', ['dependents']);
+      },
+      format: function (v) { return v ? 'Yes' : 'No'; }
     },
     disabilityMonthly: {
       label: 'Disability benefit', owner: 'sleep-at-night', anchor: 'coverage',
