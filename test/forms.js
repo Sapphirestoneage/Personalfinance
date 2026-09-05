@@ -259,14 +259,19 @@ const CASES = [
       await page.waitForTimeout(500);
       const s = await page.evaluate(() => {
         const h = JSON.parse(localStorage.getItem('slaf.household.v2')) || {};
+        /* Done lives in the Skill Tree now (D-131); the Stacker record keeps
+           only the practice states and who proved it. */
+        const tree = (h.skillTree && h.skillTree.state) || {};
         return { on: Object.keys(h.skills).filter(k => ['trial', 'practicing'].includes(h.skills[k].state)).length,
-          done: Object.keys(h.skills).filter(k => h.skills[k].state === 'done').length,
+          done: Object.keys(tree).filter(k => tree[k].state === 'done').length,
+          byProof: Object.keys(tree).filter(k => tree[k].by === 'proof').length,
           rows: (h.practiceLedger || []).length, cents: (h.practiceLedger || [{}])[0].cents,
           fig: document.getElementById('fig-today').textContent };
       });
       return [
         ['two skills on', s.on, 2],
-        ['at least three proven done from the demo', s.done >= 3, true],
+        ['at least three proven done from the demo, in the tree', s.done >= 3, true],
+        ['… and marked as proved by the household, not by hand', s.byProof >= 3, true],
         ['one ledger row', s.rows, 1],
         ['worth 93,600 ÷ 365', s.cents, 256],
         ['and the figure shows it', s.fig, '$2.56']

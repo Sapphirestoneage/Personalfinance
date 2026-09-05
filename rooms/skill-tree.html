@@ -56,7 +56,7 @@
 
   /* ---- The fortress line: the ladder across the top ---- */
   .ladder { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-top: var(--space-3); }
-  .rung { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 6px 4px; text-align: center; font-size: var(--text-xs); color: var(--color-text-faint); position: relative; min-height: 54px; }
+  .rung { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 6px 5px; text-align: center; font-size: 10px; line-height: 1.25; color: var(--color-text-faint); position: relative; min-height: 54px; overflow-wrap: break-word; hyphens: auto; }
   .rung b { display: block; font-family: var(--font-display); font-size: var(--text-md); color: var(--color-text-muted); }
   .rung.is-met { border-color: var(--color-positive); color: var(--color-text); }
   .rung.is-met b { color: var(--color-positive); }
@@ -238,6 +238,12 @@
   function tree() { return SkillTree.evaluate(Spine.getProfile(), TABLES, { snapshots: Spine.listSnapshots().length, roomTitle: roomTitle }); }
   function stateWord(s) { return { done: 'Done', open: 'Open', locked: 'Locked', bypassed: 'Skipped', fogged: 'Fogged' }[s] || s; }
   function icon(s) { return s.state === 'fogged' ? '?' : s.state === 'done' ? '✓' : s.state === 'bypassed' ? '↷' : s.state === 'locked' ? '·' : '›'; }
+  /* The rung's short name: the ladder's own label is a sentence, and ten of
+     them across a screen truncate mid-word. Keyed on the rule's key, so a
+     new step in data/foo_rules.json falls back to its label. */
+  var RUNG_WORDS = { cover_basics: 'Cover the basics', starter_ef: 'Starter fund', employer_match: 'The match',
+    high_interest_debt: 'High-interest debt', full_ef: 'Full fund', max_hsa: 'The HSA', max_roth_ira: 'Roth IRA',
+    max_tax_advantaged: 'The rest of the space', hyper_accumulation: 'Hyper-accumulation', prepay_low_interest: 'Low-interest debt' };
 
   /* ---- What opens next ------------------------------------------------------ */
   function renderNext(r) {
@@ -270,7 +276,7 @@
       var n = Money.isEntered(st.step) ? st.step : i;
       var cls = r.fooStep !== null && n < r.fooStep ? ' is-met' : r.fooStep === n ? ' is-here' : '';
       var needs = r.ladderNeeds[String(n)] || [];
-      return '<div class="rung' + cls + '" title="' + esc(st.label) + '"><b>' + n + '</b>' + esc((st.short || st.label || '').slice(0, 26)) + (needs.length ? '<small>needs ' + needs.map(function (id) { return names[id] || id; }).join(', ') + '</small>' : '') + '</div>';
+      return '<div class="rung' + cls + '" title="' + esc(st.label) + '"><b>' + n + '</b>' + esc(RUNG_WORDS[st.key] || st.label || '') + (needs.length ? '<small>needs ' + needs.map(function (id) { return names[id] || id; }).join(', ') + '</small>' : '') + '</div>';
     }).join('');
     el('ladder-why').textContent = r.fooStep === null ? 'You are not placed on the ladder yet: answer Start Here and the step lights up. A step that needs a skill from the tree says so; the tree opens skills at the step they belong to.'
       : 'You are on step ' + r.fooStep + '. A step that needs a skill from the tree says so under it; the tree opens skills at the step they belong to, so the two ladders are one game.';
