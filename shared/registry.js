@@ -518,6 +518,24 @@
          single-view app with no stable section anchors yet; declaring none
          is deliberate — see DECISIONS.md D-007. */
       subsections: []
+    },
+    {
+      id: 'what-if-life',
+      kind: 'explore',
+      needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments'],
+      order: 27,
+      title: 'What If, Life',
+      blurb: 'A sabbatical, a move, a second income \u2014 one event at a time, three ways: dream, default, disaster.',
+      href: 'rooms/what-if-life.html',
+      tier: 2,
+      tags: ['cashflow', 'income'],
+      subsections: [
+        { id: 'pick',     label: 'Pick an event' },
+        { id: 'answers',  label: 'Its questions' },
+        { id: 'three',    label: 'Dream, default, disaster' },
+        { id: 'saved',    label: 'Saved scenarios' },
+        { id: 'reading',  label: 'Reading from elsewhere' }
+      ]
     }
   ];
 
@@ -549,7 +567,7 @@
     kind: 'core',
     utility: true,
     needs: ['cashSavings', 'investments', 'totalDebt'],
-    order: 27,
+    order: 28,
     title: 'Refresh',
     blurb: 'The three figures that move — cash, investments, what you owe — re-checked in under a minute, and a snapshot taken so the dashboard can say what changed.',
     href: 'rooms/refresh.html',

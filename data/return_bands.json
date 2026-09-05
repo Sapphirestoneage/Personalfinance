@@ -1,0 +1,10 @@
+{
+  "id": "return_bands",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "Real (after-inflation) annual return percentiles for a diversified stock-heavy portfolio over a decade, in the region of the long-run US record: about 2% at the 25th percentile of ten-year outcomes, 5% at the median, 8% at the 75th.",
+  "confidence": "convention",
+  "confidenceNote": "Planning bands, not a distribution fitted to data. Chosen to bracket the household's own expectedReturnRate assumption (7% nominal ≈ 5% real) so the default column matches the rest of the app and the other two say how wide 'about' is.",
+  "note": "Percentiles of annual real return, used by engines/events.js as a flat rate over the horizon. D-086.",
+  "percentiles": { "p25": 0.02, "p50": 0.05, "p75": 0.08 }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "reentry_gap",
+  "version": "1.0",
+  "asOf": "2024-12-01",
+  "source": "BLS Current Population Survey, duration of unemployment: the median spell in 2024 ran about 9–10 weeks and the mean about 20–21 weeks.",
+  "confidence": "unverified",
+  "confidenceNote": "Recalled figures for the population as a whole; the gap after a chosen break is not the same thing as a spell of unemployment, and varies by field. The template uses the median and the disaster column triples it.",
+  "note": "medianMonths = medianWeeks ÷ 4.33. D-086.",
+  "medianWeeks": 9.8,
+  "meanWeeks": 20.9,
+  "medianMonths": 2.3,
+  "meanMonths": 4.8
+}

@@ -1,0 +1,15 @@
+{
+  "id": "triple_d",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "source": "The Triple D framing — dream, default, disaster — as a fixed set of three assumption bundles applied to any life event, so every scenario is shown three ways rather than as one number.",
+  "confidence": "convention",
+  "confidenceNote": "The three bundles are a convention chosen here: which return percentile, what income does after the event, how long the gap runs. None is a forecast; the point is the spread between them, not any one column.",
+  "note": "returns names a percentile in data/return_bands.json; incomeAfter multiplies income once the event's gap has passed; gapMultiplier scales the template's own gap; shock names a one-time hit the engine knows how to price. BRIEF §6.1, D-086.",
+  "bundles": {
+    "dream":    { "label": "Dream",    "returns": "p75", "incomeAfter": 1.10, "gapMultiplier": 0, "shock": null },
+    "default":  { "label": "Default",  "returns": "p50", "incomeAfter": 1.00, "gapMultiplier": 1, "shock": null },
+    "disaster": { "label": "Disaster", "returns": "p25", "incomeAfter": 0.85, "gapMultiplier": 3, "shock": "worstPlausibleYear" }
+  },
+  "order": ["dream", "default", "disaster"]
+}

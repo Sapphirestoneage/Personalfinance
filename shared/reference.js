@@ -49,6 +49,12 @@
     wealthMultiplier: 'wealth_multiplier.json',
     levelsOfWealth: 'levels_of_wealth.json',
     commonCosts: 'common_costs.json',
+    tripleD: 'triple_d.json',
+    returnBands: 'return_bands.json',
+    events: 'events/index.json',
+    cobraAca: 'cobra_aca_2024.json',
+    travelBands: 'travel_bands.json',
+    reentryGap: 'reentry_gap.json',
     accessRules: 'access_rules.json',
     confidenceWeights: 'confidence_weights.json',
     uiBenefits: 'ui_benefits.json',
@@ -75,6 +81,30 @@
    * `basePath` is optional; omit it and the path is derived from where
    * shared/reference.js itself was served from.
    */
+  /**
+   * The life-event templates: data/events/index.json names them, one file
+   * each. Loaded on demand by the room that offers them, not by every page.
+   * Resolves with { index, byId, list }. D-086.
+   */
+  function loadEvents(basePath) {
+    var base = basePath === undefined ? defaultBase() : basePath;
+    return load(['events'], base).then(function (t) {
+      var index = t.events;
+      return Promise.all((index.events || []).map(function (id) {
+        var key = 'event:' + id;
+        if (cache[key]) return Promise.resolve(cache[key]);
+        return fetch(base + 'events/' + id + '.json').then(function (res) {
+          if (!res.ok) throw new Error('Could not load events/' + id + '.json (' + res.status + ')');
+          return res.json();
+        }).then(function (json) { cache[key] = json; return json; });
+      })).then(function (list) {
+        var byId = {};
+        list.forEach(function (tpl) { byId[tpl.id] = tpl; });
+        return { index: index, byId: byId, list: list };
+      });
+    });
+  }
+
   function load(names, basePath) {
     var wanted = names && names.length ? names : Object.keys(TABLE_FILES);
     var base = basePath === undefined ? defaultBase() : basePath;
@@ -369,6 +399,7 @@
     provenanceOf: provenanceOf,
     provenance: provenance,
     versionsOf: versionsOf,
-    _cache: cache
+    _cache: cache,
+    loadEvents: loadEvents
   };
 });

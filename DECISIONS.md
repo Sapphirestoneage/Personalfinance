@@ -4196,6 +4196,79 @@ stages; `test/alignment.js` on the rate rows and the figure pair.
 
 ---
 
+## D-086 — One life event, three ways: the events engine, the What If room, and the first template
+
+*(BRIEF.md §6.1, §6.2, §6.3 item 1. Opens T6.)* A life event is DATA — a
+template in `data/events/` with its questions and a dated diff — and one
+engine runs any of them month by month, three ways.
+
+**The engine** (`engines/events.js`). A template's diff is written in a
+small expression language over the answers (`"@months"`), the household
+(`"$cashCents"`) and the reference tables (`{"table": "travelBands",
+"path": [...]}`), with arithmetic, `if`, and table lookups; a missing
+operand makes the result `null`, and an item that prices to `null` is
+left out and flagged, never taken as zero. The month loop is the
+calendar: take-home in, the 401(k) contribution and the *captured* match
+out to investments while employed, spending out, one-time costs and
+asset moves on their month; investments grow through
+`Projection.futureValueMonthlyCents` one month at a time, so compounding
+is not re-implemented. Then the Triple D bundle from `data/triple_d.json`:
+dream (75th-percentile real returns, income 10% higher after, no gap),
+default (median, your income, the template's gap), disaster (25th
+percentile, income 15% lower, the gap three times over, and the worst
+plausible year from D-068 landing the month the event starts). The
+return percentiles are a planning convention in `data/return_bands.json`,
+bracketing the household's own 7% nominal. Every column is measured
+against the same engine on an empty event. Outputs: the monthly rows,
+net worth at the horizon, the shift in the FI date (from the end state,
+at the household's own assumption), the thinnest month or the month the
+cash runs out, the match lost, and flags.
+
+**The room** (`rooms/what-if-life.html`, explore). Pick an event, answer
+its questions — defaults proposed (D-060), a table's opinion where it
+has one — read the three columns and the cash line, write the disaster
+line in your own words, and optionally save. **Nothing is stored but a
+saved scenario**: `scenarios[]` gets the event id, the answers and the
+disaster line, dated; every other answer is a what-if. The question
+form is guarded and rebuilt only when the event changes.
+
+**Templates are graded by a schema.** `test/events.schema.json` says
+what every template must carry (questions with units or choices, the
+four diff lists, protect, cut, outputs, a horizon, sources), and
+`test/run.js` validates every file in `data/events/` against it with a
+small validator of its own. Templates load on demand through
+`Reference.loadEvents()`, not with every page.
+
+**The sabbatical.** Months off, where, leave-or-quit, starting when. No
+paycheque for the duration; living away on top of home costs from
+`data/travel_bands.json`; COBRA for a single person from
+`data/cobra_aca_2024.json`; the lines The Rerank flagged, cut for the
+duration. Quitting adds a re-entry gap from `data/reentry_gap.json` (the
+BLS median spell, 2.3 months; the disaster column triples it); unpaid
+leave has none. All three tables are marked unverified or convention
+and say so. The demo cannot afford six months off: cash runs out in
+month 7 in every column, $960 of match is lost, and the default column
+ends $46,143 behind doing nothing at ten years — which is the point of
+showing it.
+
+**Compatibility note.** No stored shape changed; `scenarios[].diff` is
+used for the first time, as `{ templateId, answers, disasterLine,
+savedOn }`. New tables: `tripleD`, `returnBands`, `events` (the index),
+`cobraAca`, `travelBands`, `reentryGap`.
+
+**Verified.** `node test/run.js`: the schema on every template, the
+expression language on nine cases, the demo's default sabbatical
+re-derived month by month for months 1 and 12 by a longhand loop (cash
+$10,970 then −$14,386; investments from (48,000 + 240 + 120) grown a
+month at 5%), eight months of match lost, the cash-out month, the three
+columns ordered, the gap at 0 / 2 / 7, the $17,200 shock, a blank
+household naming its four missing inputs. A phone-browser walk: the
+proposed defaults, typing 3 months, switching to unpaid leave, saving
+with a disaster line, reopening after a reload. `test/forms.js` on the
+question form; `test/alignment.js` on the question grid and the columns.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool. **The numbers D-046

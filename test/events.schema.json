@@ -1,0 +1,185 @@
+{
+  "$comment": "The shape every data/events/*.json must have. Checked by test/run.js with a small validator (no dependency). BRIEF \u00a76.3, D-086.",
+  "required": [
+    "id",
+    "title",
+    "version",
+    "asOf",
+    "confidence",
+    "drawsOn",
+    "questions",
+    "diff",
+    "protect",
+    "cut",
+    "tripleD",
+    "outputs",
+    "horizonMonths",
+    "sources"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "title": {
+      "type": "string"
+    },
+    "blurb": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "asOf": {
+      "type": "string"
+    },
+    "confidence": {
+      "enum": [
+        "sourced",
+        "convention",
+        "unverified"
+      ]
+    },
+    "drawsOn": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "$ref": "question"
+      },
+      "minItems": 1,
+      "maxItems": 9
+    },
+    "diff": {
+      "type": "object",
+      "required": [
+        "income",
+        "expenses",
+        "oneTime",
+        "assets"
+      ]
+    },
+    "protect": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "cut": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tripleD": {
+      "type": "object"
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "horizonMonths": {
+      "type": "number",
+      "minimum": 12,
+      "maximum": 480
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "gapMonths": {
+      "$comment": "a number or an expression"
+    },
+    "gapAfter": {
+      "$comment": "a number or an expression"
+    },
+    "startsOn": {
+      "$comment": "a number or an expression, usually \"@startsOn\""
+    }
+  },
+  "definitions": {
+    "question": {
+      "required": [
+        "id",
+        "ask"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][A-Za-z0-9]*$"
+        },
+        "ask": {
+          "type": "string"
+        },
+        "unit": {
+          "enum": [
+            "months",
+            "years",
+            "dollars",
+            "percent",
+            "count",
+            "age",
+            "date",
+            "hours",
+            "days",
+            "text"
+          ]
+        },
+        "choices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "label"
+            ]
+          }
+        },
+        "default": {},
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "hint": {
+          "type": "string"
+        }
+      }
+    },
+    "diffItem": {
+      "required": [
+        "label"
+      ],
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "from": {},
+        "months": {},
+        "multiplier": {},
+        "addCents": {},
+        "cents": {},
+        "categoryId": {
+          "type": "string"
+        },
+        "when": {},
+        "target": {
+          "enum": [
+            "cash",
+            "investments",
+            "other"
+          ]
+        }
+      }
+    }
+  }
+}

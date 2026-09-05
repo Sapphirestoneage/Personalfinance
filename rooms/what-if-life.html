@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>What If, Life · SPARKS</title>
+<meta name="description" content="A sabbatical, a move, a second income — one life event at a time, run three ways: dream, default, disaster."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. BRIEF §6.2. DECISIONS.md D-086.
+
+  1. READS   income, take-home, spending, cash, investments, the captured
+             401(k) match, the deductible and state (for the disaster
+             column's worst plausible year), The Rerank's cut lines, and
+             the household's return assumption.
+  2. WRITES  Only a saved scenario — scenarios[] — with the event, the
+             answers and the disaster line, when you ask. Every answer on
+             this page is otherwise a what-if and is not stored.
+  3. SHOWS   pick an event → its questions (defaults proposed) → three
+             columns, dream / default / disaster → the cash line over the
+             horizon → the disaster line, in your own words.
+  4. FEEDS   nothing yet; the dashboard's 3D toggle reads the same engine.
+  5. DEMO    the household's own numbers; "Try with example numbers" on
+             Start Here seeds them.
+
+  LIVE-FORM: guarded — the question form rebuilds only when the event
+  changes, through shared/liveform.js; values are written on blur.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-back:hover { text-decoration: underline; }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .events { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+  .events button { text-align: left; font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; }
+  .events button[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-accent); color: var(--color-accent-contrast); }
+  .events button small { display: block; font-size: var(--text-xs); opacity: .8; margin-top: 2px; }
+
+  .qgrid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
+  @media (max-width: 380px) { .qgrid { grid-template-columns: 1fr; } }
+
+  .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-top: var(--space-3); }
+  @media (max-width: 420px) { .cols { grid-template-columns: 1fr; } }
+  .col { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+  .col.is-default { border-color: var(--color-accent); }
+  .col .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  .col .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; }
+  .col .big.is-bad { color: #e4b04a; }
+  .col dl { display: grid; grid-template-columns: 1fr auto; gap: 2px var(--space-2); margin: 0; font-size: var(--text-xs); }
+  .col dt { color: var(--color-text-faint); }
+  .col dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  .col .flags { font-size: var(--text-xs); color: var(--color-text-muted); margin: 0; padding-left: 1em; }
+  .col .flags li.is-bad { color: #e4b04a; }
+
+  .plot { width: 100%; height: auto; display: block; margin-top: var(--space-3); }
+  .plot .axis { stroke: var(--color-border-strong); stroke-width: .6; }
+  .plot .zero { stroke: #b5544d; stroke-width: .5; stroke-dasharray: 2 2; }
+  .plot .ln { fill: none; stroke-width: 1.2; }
+  .plot .ln.dream { stroke: var(--sapphire-200); }
+  .plot .ln.default { stroke: var(--color-accent); }
+  .plot .ln.disaster { stroke: #e4b04a; }
+  .plot .ln.baseline { stroke: var(--color-text-faint); stroke-dasharray: 2 2; stroke-width: .8; }
+  .plot .lbl { font-size: 5px; fill: var(--color-text-faint); font-family: var(--font-body); }
+
+  .saved-row { display: grid; grid-template-columns: 1fr auto auto; gap: var(--space-2); align-items: center; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  .saved-row:first-child { border-top: none; }
+  .saved-row small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .actions { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-3); }
+  .notice { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-4); font-size: var(--text-sm); }
+  .notice.is-error { border-color: #b5544d; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>What If, Life</h1>
+  <p class="room-lede">One event at a time, three ways: the dream version, the default version, and the disaster.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="pick">
+    <span class="slaf-eyebrow">Pick an event</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">What are you thinking about?</h2>
+    <div class="events" id="event-list"></div>
+    <p class="why" id="pick-why"></p>
+  </section>
+
+  <section class="slaf-card" id="answers" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Its questions</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)" id="answers-title">A few things only you know</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">Defaults are proposed where a table has an opinion; change anything. Nothing here is stored unless you save the scenario below.</p>
+    <div class="qgrid" id="question-list"></div>
+    <p class="slaf-hint" data-suggest-note style="margin:var(--space-2) 0 0"></p>
+    <p class="why" id="answers-why"></p>
+  </section>
+
+  <section class="slaf-card" id="three" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Dream · default · disaster</span>
+    <h2 style="margin:var(--space-2) 0 0">The same event, three ways</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0" id="three-hint"></p>
+    <div class="cols" id="cols"></div>
+    <svg class="plot" id="plot" viewBox="0 0 200 110" role="img" aria-label="Cash over the horizon, three ways"></svg>
+    <p class="why" id="plot-why"></p>
+    <p class="why" id="three-why"></p>
+  </section>
+
+  <section class="slaf-card" id="saved" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The disaster line, and saving it</span>
+    <label class="slaf-field" style="margin-top:var(--space-3)"><span class="slaf-label">In one line: what would make this a disaster for you?</span>
+      <span class="slaf-input-shell"><input type="text" id="disaster-line" maxlength="160" placeholder="e.g. coming back to no job and under three months of cash" autocomplete="off"/></span></label>
+    <div class="actions">
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-save">Save this scenario</button>
+      <span class="slaf-hint" id="save-note" style="align-self:center"></span>
+    </div>
+    <div id="saved-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. The three columns are three
+    assumption bundles (data/triple_d.json), not forecasts; the return bands
+    are planning conventions. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/liveform.js"></script>
+<script src="../shared/staleness.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/suggest.js"></script>
+<script src="../shared/rating.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/statement.js"></script>
+<script src="../engines/rerank.js"></script>
+<script src="../engines/events.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership, Events = SLAF.Events, Suggest = SLAF.Suggest;
+
+  var ROOM_ID = 'what-if-life';
+  var TABLES = null, EVENTS = null;
+  /* Page-local. An event you are thinking about is not a fact about your
+     household; only "Save this scenario" writes. */
+  var state = { templateId: null, answers: {}, disasterLine: '' };
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function fmt(c) { return Money.formatCents(c); }
+  function signed(c) { return (c > 0 ? '+' : c < 0 ? '−' : '') + fmt(Math.abs(c)); }
+  function template() { return EVENTS && state.templateId ? EVENTS.byId[state.templateId] : null; }
+  function opts() { return { tables: TABLES }; }
+
+  /* ---- Pick ---------------------------------------------------------------- */
+
+  function renderPick() {
+    el('event-list').innerHTML = EVENTS.list.map(function (t) {
+      return '<button type="button" data-event="' + esc(t.id) + '" aria-pressed="' + (t.id === state.templateId) + '">' + esc(t.title) + '<small>' + esc(t.blurb || '') + '</small></button>';
+    }).join('');
+    el('pick-why').textContent = EVENTS.list.length + ' event' + (EVENTS.list.length === 1 ? '' : 's') + ' so far. Each is a template in data/events/: its questions, and what it does to a month.';
+  }
+  el('event-list').addEventListener('click', function (evt) {
+    var btn = evt.target.closest('[data-event]');
+    if (!btn) return;
+    state.templateId = btn.getAttribute('data-event');
+    state.answers = {};
+    renderPick();
+    questionForm.force();
+    render();
+    el('answers').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  /* ---- Questions ------------------------------------------------------------ */
+
+  function envNow() {
+    var ctx = Events.context(Spine.getProfile(), TABLES);
+    return { ctx: ctx, tables: TABLES };
+  }
+
+  function renderQuestions() {
+    var t = template();
+    var list = el('question-list');
+    if (!t) { list.innerHTML = ''; el('answers-title').textContent = 'Pick an event above'; el('answers-why').textContent = ''; return; }
+    el('answers-title').textContent = t.title;
+    var env = envNow();
+    var defaults = Events.answers(t, {}, env);
+    list.innerHTML = t.questions.map(function (q) {
+      if (q.choices) {
+        var cur = state.answers[q.id] !== undefined ? state.answers[q.id] : defaults[q.id];
+        return '<label class="slaf-field" style="margin:0"><span class="slaf-label">' + esc(q.ask) + '</span><span class="slaf-input-shell"><select data-q="' + esc(q.id) + '" aria-label="' + esc(q.ask) + '">'
+          + q.choices.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === cur ? ' selected' : '') + '>' + esc(c.label) + '</option>'; }).join('')
+          + '</select></span>' + (q.hint ? '<span class="slaf-hint">' + esc(q.hint) + '</span>' : '') + '</label>';
+      }
+      var affix = q.unit === 'dollars' ? '<span class="slaf-affix">$</span>' : '';
+      var suffix = q.unit === 'percent' ? '<span class="slaf-affix">%</span>' : q.unit === 'months' ? '<span class="slaf-affix">mo</span>' : q.unit === 'years' ? '<span class="slaf-affix">yrs</span>' : q.unit === 'hours' ? '<span class="slaf-affix">h</span>' : '';
+      var given = state.answers[q.id];
+      return '<label class="slaf-field" style="margin:0"><span class="slaf-label">' + esc(q.ask) + '</span>'
+        + '<span class="slaf-input-shell">' + affix + '<input type="text" inputmode="decimal" data-q="' + esc(q.id) + '" data-unit="' + esc(q.unit || 'count') + '"'
+        + (given !== undefined && given !== null ? ' value="' + esc(display(q, given)) + '"' : '') + ' aria-label="' + esc(q.ask) + '"/>' + suffix + '</span>'
+        + (q.hint ? '<span class="slaf-hint">' + esc(q.hint) + '</span>' : '') + '</label>';
+    }).join('');
+    /* Defaults are proposed, never stored — D-060. */
+    t.questions.forEach(function (q) {
+      if (q.choices) return;
+      var node = list.querySelector('input[data-q="' + q.id + '"]');
+      var d = defaults[q.id];
+      if (!node || state.answers[q.id] !== undefined || d === null || d === undefined) return;
+      Suggest.show(node, { value: d, display: display(q, d), source: typeof q.default === 'object' ? 'worked out from your numbers and the tables the event names' : 'the template’s usual figure',
+        onUse: function (v) { state.answers[q.id] = v; render(); } });
+    });
+    el('answers-why').textContent = t.drawsOn && t.drawsOn.length ? 'Reads: ' + t.drawsOn.join(', ') + '.' : '';
+  }
+  function display(q, v) {
+    if (q.unit === 'dollars') return Money.formatCents(v);
+    if (q.unit === 'percent') return String(Math.round(v * 1000) / 10);
+    return String(v);
+  }
+  function parse(q, raw) {
+    var text = String(raw).trim();
+    if (text === '') return null;
+    if (q.unit === 'dollars') return Money.parseMoney(text);
+    if (q.unit === 'percent') return Money.parseRatePercent(text);
+    var n = Number(text.replace(/[^0-9.\-]/g, ''));
+    if (!Number.isFinite(n)) return null;
+    if (Money.isEntered(q.min) && n < q.min) n = q.min;
+    if (Money.isEntered(q.max) && n > q.max) n = q.max;
+    return n;
+  }
+  var questionForm = SLAF.LiveForm.guard(el('question-list'), renderQuestions);
+
+  el('question-list').addEventListener('change', function (evt) {
+    var sel = evt.target.closest('select[data-q]');
+    if (!sel) return;
+    state.answers[sel.getAttribute('data-q')] = sel.value;
+    render();
+  });
+  el('question-list').addEventListener('focusout', function (evt) {
+    var input = evt.target.closest('input[data-q]');
+    if (!input) return;
+    var t = template(); if (!t) return;
+    var q = t.questions.filter(function (x) { return x.id === input.getAttribute('data-q'); })[0];
+    var v = parse(q, Suggest.entered(input));
+    if (v === null) delete state.answers[q.id]; else state.answers[q.id] = v;
+    render();
+  });
+  el('question-list').addEventListener('keydown', function (evt) {
+    if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') { evt.preventDefault(); evt.target.blur(); }
+  });
+
+  /* ---- Three columns -------------------------------------------------------- */
+
+  function renderThree() {
+    var t = template();
+    var cols = el('cols');
+    if (!t) { cols.innerHTML = ''; el('plot').innerHTML = ''; el('three-hint').textContent = 'Pick an event to run it.'; el('three-why').textContent = ''; el('plot-why').textContent = ''; return null; }
+    var all = Events.runAll(Spine.getProfile(), t, state.answers, opts());
+    var order = TABLES.tripleD.order;
+    var bad = order.filter(function (d) { return !Money.isOk(all[d]); });
+    if (bad.length) {
+      cols.innerHTML = '<p class="slaf-reason">' + esc(all[bad[0]].reason) + '</p>';
+      el('plot').innerHTML = ''; el('three-hint').textContent = ''; el('three-why').textContent = ''; el('plot-why').textContent = '';
+      return null;
+    }
+    el('three-hint').textContent = 'Over ' + Math.round(t.horizonMonths / 12) + ' years. Dream: returns at the 75th percentile, income 10% higher after, no gap. Default: the median, your income, the usual gap. Disaster: the 25th percentile, income 15% lower, the gap three times over, and the worst plausible year landing on top.';
+    cols.innerHTML = order.map(function (d) {
+      var r = all[d];
+      var cashOut = r.flags.filter(function (f) { return f.key === 'cashOut'; })[0];
+      return '<div class="col' + (d === 'default' ? ' is-default' : '') + '"><span class="cap">' + esc(r.bundle.label) + '</span>'
+        + '<span class="big' + (r.vsBaselineCents < 0 ? ' is-bad' : '') + '">' + signed(r.vsBaselineCents) + '</span>'
+        + '<span class="cap">vs doing nothing, net worth at ' + Math.round(r.horizonMonths / 12) + ' years</span>'
+        + '<dl>'
+        + '<dt>Net worth then</dt><dd>' + fmt(r.netWorthAtEndCents) + '</dd>'
+        + '<dt>FI date</dt><dd>' + (r.fiDateShiftMonths === null ? '—' : r.fiDateShiftMonths === 0 ? 'unchanged' : Math.abs(r.fiDateShiftMonths) + ' mo ' + (r.fiDateShiftMonths > 0 ? 'later' : 'sooner')) + '</dd>'
+        + '<dt>' + (cashOut ? 'Cash runs out' : 'Thinnest month') + '</dt><dd>' + (cashOut ? 'month ' + (cashOut.month + 1) : (r.runwayMinMonths === null ? '—' : r.runwayMinMonths + ' mo of runway')) + '</dd>'
+        + (r.lostMatchCents ? '<dt>Match lost</dt><dd>' + fmt(r.lostMatchCents) + '</dd>' : '')
+        + (r.gapMonths ? '<dt>Gap after</dt><dd>' + r.gapMonths + ' mo</dd>' : '')
+        + (r.shockCents ? '<dt>Worst year on top</dt><dd>' + fmt(r.shockCents) + '</dd>' : '')
+        + '</dl>'
+        + (r.flags.length ? '<ul class="flags">' + r.flags.map(function (f) { return '<li' + (f.key === 'cashOut' || f.key === 'swan' ? ' class="is-bad"' : '') + '>' + esc(f.text) + '</li>'; }).join('') + '</ul>' : '')
+        + '</div>';
+    }).join('');
+    renderPlot(all, order);
+    var protect = t.protect && t.protect.length ? 'Protect: ' + t.protect.join(' · ') + '. ' : '';
+    el('three-why').textContent = protect + 'Baseline is the same engine on an empty event.';
+    return all;
+  }
+
+  var PAD_L = 24, PAD_R = 6, PAD_T = 8, PAD_B = 14, W = 200, H = 110;
+  function renderPlot(all, order) {
+    var series = ['baseline'].concat(order).map(function (k) { return { k: k, rows: all[k].monthly }; });
+    var lo = 0, hi = 1;
+    series.forEach(function (s) { s.rows.forEach(function (r) { lo = Math.min(lo, r.cashCents); hi = Math.max(hi, r.cashCents); }); });
+    var n = series[0].rows.length;
+    function x(m) { return PAD_L + (m / (n - 1)) * (W - PAD_L - PAD_R); }
+    function y(c) { return H - PAD_B - ((c - lo) / (hi - lo || 1)) * (H - PAD_T - PAD_B); }
+    var parts = [];
+    parts.push('<line class="axis" x1="' + PAD_L + '" y1="' + PAD_T + '" x2="' + PAD_L + '" y2="' + (H - PAD_B) + '"/>');
+    parts.push('<line class="axis" x1="' + PAD_L + '" y1="' + (H - PAD_B) + '" x2="' + (W - PAD_R) + '" y2="' + (H - PAD_B) + '"/>');
+    if (lo < 0) parts.push('<line class="zero" x1="' + PAD_L + '" y1="' + y(0) + '" x2="' + (W - PAD_R) + '" y2="' + y(0) + '"/>');
+    parts.push('<text class="lbl" x="' + (PAD_L - 2) + '" y="' + (y(hi) + 4) + '" text-anchor="end">' + esc(Money.formatCents(hi).replace(/\.\d+$/, '')) + '</text>');
+    parts.push('<text class="lbl" x="' + (PAD_L - 2) + '" y="' + (y(lo) + 2) + '" text-anchor="end">' + esc(Money.formatCents(lo).replace(/\.\d+$/, '')) + '</text>');
+    parts.push('<text class="lbl" x="' + x(n - 1) + '" y="' + (H - PAD_B + 8) + '" text-anchor="end">' + Math.round(n / 12) + ' yrs</text>');
+    series.forEach(function (s) {
+      var d = s.rows.map(function (r, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(r.cashCents).toFixed(1); }).join(' ');
+      parts.push('<path class="ln ' + s.k + '" d="' + d + '"/>');
+    });
+    el('plot').innerHTML = parts.join('');
+    el('plot-why').textContent = 'Cash on hand, month by month: the dotted grey line is doing nothing; blue is the default, pale blue the dream, amber the disaster. Below the red line the cash is gone.';
+  }
+
+  /* ---- Saving ---------------------------------------------------------------- */
+
+  el('disaster-line').addEventListener('blur', function () { state.disasterLine = el('disaster-line').value.trim(); });
+
+  function summary(t, answers) {
+    return t.questions.map(function (q) {
+      var v = answers[q.id];
+      if (v === null || v === undefined) return null;
+      if (q.choices) { var c = q.choices.filter(function (x) { return x.id === v; })[0]; return c ? c.label : v; }
+      var text = display(q, v) + (q.unit === 'months' ? ' mo' : q.unit === 'years' ? ' yrs' : q.unit === 'percent' ? '%' : '');
+      return q.id === 'startsOn' ? 'in ' + text : text;
+    }).filter(Boolean).join(' · ');
+  }
+
+  el('btn-save').addEventListener('click', function () {
+    var t = template();
+    if (!t) { el('save-note').textContent = 'Pick an event first.'; return; }
+    state.disasterLine = el('disaster-line').value.trim();
+    var env = envNow();
+    var answers = Events.answers(t, state.answers, env);
+    var startsOn = null;
+    if (Money.isEntered(answers.startsOn)) {
+      var d = new Date(); d.setMonth(d.getMonth() + Math.round(answers.startsOn));
+      startsOn = d.toISOString().slice(0, 10);
+    }
+    Spine.upsertScenario(Schema.createScenario({
+      name: t.title + (summary(t, answers) ? ' — ' + summary(t, answers) : ''),
+      startsOn: startsOn,
+      diff: { templateId: t.id, answers: answers, disasterLine: state.disasterLine || null, savedOn: new Date().toISOString().slice(0, 10) }
+    }));
+    el('save-note').textContent = 'Saved.';
+    render();
+  });
+
+  function renderSaved() {
+    var list = (Spine.getProfile().scenarios || []);
+    el('saved-list').innerHTML = list.length ? list.map(function (s) {
+      var d = s.diff || {};
+      return '<div class="saved-row"><span>' + esc(s.name || 'Scenario') + '<small>' + (s.startsOn ? 'from ' + esc(s.startsOn) + ' · ' : '') + (d.disasterLine ? '“' + esc(d.disasterLine) + '”' : 'no disaster line') + '</small></span>'
+        + '<button type="button" class="slaf-btn slaf-btn--quiet" data-load="' + esc(s.id) + '">Open</button>'
+        + '<button type="button" class="slaf-btn slaf-btn--quiet" data-remove="' + esc(s.id) + '" aria-label="Remove">✕</button></div>';
+    }).join('') : '<p class="slaf-reason">Nothing saved yet. A saved scenario keeps the event, your answers and your disaster line — and nothing else changes.</p>';
+  }
+  el('saved-list').addEventListener('click', function (evt) {
+    var rm = evt.target.closest('[data-remove]');
+    if (rm) { Spine.removeById('scenarios', rm.getAttribute('data-remove')); render(); return; }
+    var open = evt.target.closest('[data-load]');
+    if (!open) return;
+    var s = (Spine.getProfile().scenarios || []).filter(function (x) { return x.id === open.getAttribute('data-load'); })[0];
+    if (!s || !s.diff || !EVENTS.byId[s.diff.templateId]) return;
+    state.templateId = s.diff.templateId;
+    state.answers = Object.assign({}, s.diff.answers || {});
+    state.disasterLine = s.diff.disasterLine || '';
+    el('disaster-line').value = state.disasterLine;
+    renderPick(); questionForm.force(); render();
+    el('three').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  /* ---- Render ------------------------------------------------------------ */
+
+  function renderNow() {
+    if (!TABLES || !EVENTS) return;
+    questionForm.request();
+    renderThree();
+    renderSaved();
+    el('reading-list').innerHTML = ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'contributionPercent']
+      .map(function (f) { return Ownership.chip(f, Spine.getProfile(), ROOM_ID); }).join('');
+  }
+  var queued = false;
+  function render() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () { queued = false; renderNow(); }, 0);
+  }
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+
+  Promise.all([Reference.load(), Reference.loadEvents()]).then(function (loaded) {
+    TABLES = loaded[0];
+    EVENTS = loaded[1];
+    SLAF.Staleness.use(TABLES.staleness);
+    if (!state.templateId && EVENTS.list.length) state.templateId = EVENTS.list[0].id;
+    renderPick();
+    questionForm.force();
+    renderNow();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

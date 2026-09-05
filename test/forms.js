@@ -222,6 +222,24 @@ const CASES = [
     }
   },
   {
+    room: '/rooms/what-if-life.html',
+    container: '#question-list',
+    seed: 'demo',
+    prepare: async (page) => { await page.waitForSelector('#question-list input[data-q="months"]'); },
+    fields: [
+      { sel: '#question-list input[data-q="months"]', type: '4' },
+      { sel: '#question-list select[data-q="where"]', type: '' },
+      { sel: '#question-list input[data-q="startsOn"]', type: '2' }
+    ],
+    expect: async (page) => {
+      const cols = await page.evaluate(() => document.getElementById('cols').innerText.replace(/\s+/g, ' '));
+      return [
+        ['three columns rendered', /DREAM.*DEFAULT.*DISASTER/i.test(cols), true],
+        ['and nothing was stored', await page.evaluate(() => (JSON.parse(localStorage.getItem('slaf.household.v2')).scenarios || []).length), 0]
+      ];
+    }
+  },
+  {
     room: '/rooms/fire.html',
     container: '#targets',
     seed: 'demo',

@@ -6555,6 +6555,115 @@ section('The Rerank');
   checkTrue('the rating control is the shared one, in its own scope', /Rating\.controlHtml\(\{ scope: Rerank\.SCOPE/.test(html) && Rating.ANCHORS.rerank);
 })();
 
+section('Life events: the template schema, and the engine on the demo');
+
+(function () {
+  /* D-086. A small validator for test/events.schema.json — enough of JSON
+     Schema (required, type, enum, pattern, min/max, items, $ref into
+     definitions) to grade every template without a dependency. */
+  const schema = JSON.parse(fs.readFileSync(path.join(ROOT, 'test/events.schema.json'), 'utf8'));
+  function validate(node, spec, where, out) {
+    if (spec.$ref) spec = schema.definitions[spec.$ref];
+    if (spec.enum && !spec.enum.includes(node)) out.push(where + ' must be one of ' + spec.enum.join('|'));
+    if (spec.type) {
+      const t = Array.isArray(node) ? 'array' : node === null ? 'null' : typeof node;
+      if (t !== spec.type) { out.push(where + ' should be ' + spec.type + ', is ' + t); return; }
+    }
+    if (spec.pattern && typeof node === 'string' && !new RegExp(spec.pattern).test(node)) out.push(where + ' does not match ' + spec.pattern);
+    if (typeof node === 'number') {
+      if (spec.minimum !== undefined && node < spec.minimum) out.push(where + ' below ' + spec.minimum);
+      if (spec.maximum !== undefined && node > spec.maximum) out.push(where + ' above ' + spec.maximum);
+    }
+    if (Array.isArray(node)) {
+      if (spec.minItems !== undefined && node.length < spec.minItems) out.push(where + ' needs at least ' + spec.minItems);
+      if (spec.maxItems !== undefined && node.length > spec.maxItems) out.push(where + ' has more than ' + spec.maxItems);
+      if (spec.items) node.forEach((x, i) => validate(x, spec.items, where + '[' + i + ']', out));
+    }
+    if (node && typeof node === 'object' && !Array.isArray(node)) {
+      (spec.required || []).forEach(k => { if (!(k in node)) out.push(where + ' is missing ' + k); });
+      Object.keys(spec.properties || {}).forEach(k => { if (k in node) validate(node[k], spec.properties[k], where + '.' + k, out); });
+    }
+  }
+  const index = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/index.json'), 'utf8'));
+  const onDisk = fs.readdirSync(path.join(ROOT, 'data/events')).filter(f => f.endsWith('.json') && f !== 'index.json').map(f => f.replace(/\.json$/, ''));
+  check('every template on disk is in the index', onDisk.sort().join(','), index.events.slice().sort().join(','));
+  const templates = {};
+  index.events.forEach(function (id) {
+    const tpl = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/' + id + '.json'), 'utf8'));
+    templates[id] = tpl;
+    const problems = [];
+    validate(tpl, schema, id, problems);
+    ['income', 'expenses', 'oneTime', 'assets'].forEach(k => (tpl.diff[k] || []).forEach((it, i) => validate(it, { $ref: 'diffItem' }, id + '.diff.' + k + '[' + i + ']', problems)));
+    check(`data/events/${id}.json fits the schema`, problems.join('; '), '');
+    check(`${id}: the file name is its id`, tpl.id, id);
+    checkTrue(`${id}: every table it names exists`, tpl.sources.every(src => fs.existsSync(path.join(ROOT, src))));
+  });
+
+  /* The expression language, on its own. */
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const env = { answers: { months: 6, where: 'domestic' }, ctx: { cashCents: 950000 }, tables: { travelBands: require(path.join(ROOT, 'data/travel_bands.json')) } };
+  check('a number is itself', E.evaluate(7, env), 7);
+  check('an answer', E.evaluate('@months', env), 6);
+  check('a household figure', E.evaluate('$cashCents', env), 950000);
+  check('arithmetic', E.evaluate({ '*': ['@months', 2] }, env), 12);
+  check('a table lookup through an answer', E.evaluate({ table: 'travelBands', path: ['bands', '@where', 'monthlyCents'] }, env), 150000);
+  check('if', E.evaluate({ if: [{ eq: ['@where', 'domestic'] }, 1, 2] }, env), 1);
+  check('a missing answer makes the whole thing null', E.evaluate({ '+': ['@nothing', 1] }, env), null);
+  check('a missing table path is null, not a crash', E.evaluate({ table: 'travelBands', path: ['bands', 'mars', 'monthlyCents'] }, env), null);
+
+  /* The demo's sabbatical, default column, re-derived month by month. */
+  const T = Object.assign({}, TABLES, {
+    commonCosts: require(path.join(ROOT, 'data/common_costs.json')),
+    tripleD: require(path.join(ROOT, 'data/triple_d.json')),
+    returnBands: require(path.join(ROOT, 'data/return_bands.json')),
+    cobraAca: require(path.join(ROOT, 'data/cobra_aca_2024.json')),
+    travelBands: require(path.join(ROOT, 'data/travel_bands.json')),
+    reentryGap: require(path.join(ROOT, 'data/reentry_gap.json'))
+  });
+  const h = Demo.build();
+  const all = E.runAll(h, templates.sabbatical, {}, { tables: T });
+  const r = all['default'];
+  check('the default run answers every question from the defaults', JSON.stringify(r.answers), '{"months":6,"where":"home","leaveOrQuit":"quit","startsOn":3}');
+  check('the gap after quitting is the median re-entry, 2.3 months rounded', r.gapMonths, 2);
+  /* Independent arithmetic. Take-home 4,860; 4% contribution 240; captured
+     match 50% of 4% of 72,000 = 120 a month; spending 3,150; COBRA 761. */
+  const take = 486000, contrib = 24000, match = 12000, spend = 315000, cobra = 76100, rate = 0.05 / 12;
+  let cash = 950000, inv = 4800000;
+  const rows = [];
+  for (let m = 0; m < 12; m++) {
+    const off = m >= 3 && m < 9, gap = m >= 9 && m < 11;
+    const employed = !(off || gap);
+    const income = employed ? take - contrib : 0;
+    const expenses = spend + (off ? cobra : 0);
+    cash += income - expenses;
+    inv = (inv + (employed ? contrib + match : 0)) * (1 + rate);
+    rows.push({ cash: cash, inv: Math.round(inv) });
+  }
+  check('month 1 cash: 9,500 + 4,620 − 3,150', r.monthly[0].cashCents, rows[0].cash);
+  check('month 1 cash by the longhand', rows[0].cash, 1097000);
+  check('month 1 investments: (48,000 + 240 + 120) grown a month at 5%', r.monthly[0].investmentsCents, rows[0].inv);
+  check('month 12 cash: three months in, six off with COBRA, two of gap, one back', r.monthly[11].cashCents, rows[11].cash);
+  check('month 12 cash by the longhand', rows[11].cash, 950000 + 3 * 147000 - 6 * (spend + cobra) - 2 * spend + 147000);
+  check('month 12 investments', r.monthly[11].investmentsCents, rows[11].inv, 1);
+  check('eight months of match lost, $120 each', r.lostMatchCents, 8 * match);
+  checkTrue('the cash runs out, and the run says in which month', r.flags.some(f => f.key === 'cashOut' && f.month === 6));
+  check('nothing is unpriced on the demo', r.flags.filter(f => f.key === 'unpriced').length, 0);
+
+  /* Three ways. */
+  checkTrue('dream beats default beats disaster at the end', all.dream.netWorthAtEndCents > all['default'].netWorthAtEndCents && all['default'].netWorthAtEndCents > all.disaster.netWorthAtEndCents);
+  check('the dream has no gap', all.dream.gapMonths, 0);
+  check('the disaster triples it', all.disaster.gapMonths, 7);
+  check('and lands the worst plausible year: $17,200 net', all.disaster.shockCents, 1720000);
+  checkTrue('every column is measured against doing nothing', all.baseline.netWorthAtEndCents > 0 && all['default'].vsBaselineCents === all['default'].netWorthAtEndCents - all.baseline.netWorthAtEndCents);
+  checkTrue('an FI shift is a number of months', Number.isInteger(all['default'].fiDateShiftMonths));
+  const leave = E.run(h, templates.sabbatical, { leaveOrQuit: 'leave' }, { tables: T, d: 'default' });
+  check('unpaid leave has no re-entry gap', leave.gapMonths, 0);
+  const blank = E.run(Schema.createHousehold({}), templates.sabbatical, {}, { tables: T });
+  check('a blank household cannot run a month, and says what it needs', blank.missing.join(','), 'grossAnnualIncome,monthlyExpenses,cashSavings,investments');
+
+  checkTrue('the room is registered as an explore room', Registry.byId('what-if-life') && Registry.byId('what-if-life').kind === 'explore');
+})();
+
 section('The D&D folder\'s vendored copies');
 
 (function () {

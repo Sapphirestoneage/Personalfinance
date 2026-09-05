@@ -1,0 +1,14 @@
+{
+  "id": "cobra_aca_2024",
+  "version": "1.0",
+  "asOf": "2024-10-01",
+  "source": "KFF Employer Health Benefits Survey 2024: average annual premiums of about $8,951 (single) and $25,572 (family); COBRA charges the full premium plus a 2% administration fee. ACA benchmark silver premium for a 40-year-old in 2024 in the region of $477 a month before any subsidy (KFF marketplace calculator).",
+  "confidence": "unverified",
+  "confidenceNote": "Figures recalled from the 2024 KFF releases, rounded; not copied from the tables. Premiums vary widely by plan, state and age, and an ACA subsidy can bring the marketplace figure far lower. A placeholder to make the health line visible, never a quote.",
+  "note": "Monthly cents. cobra = full premium ÷ 12 × 1.02. Used by the sabbatical template for the months off payroll. D-086.",
+  "monthly": {
+    "cobraSingleCents": 76100,
+    "cobraFamilyCents": 217400,
+    "acaSilver40Cents": 47700
+  }
+}
