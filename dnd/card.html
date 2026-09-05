@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Your card — Dungeons &amp; Dividends</title>
+<meta name="description" content="A share card for your Dungeons &amp; Dividends character — class, level, ability scores, alignment and what hunts you, as an image you can save."/>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="shared/skin.css"/>
+<!--
+  THE SHARE CARD — BRIEF §9.2.
+
+  This tool is a lead magnet. What actually travels is not the page, it is the
+  thing someone pastes into a group chat, so the card is the product and gets
+  built like one.
+
+  DRAWN ON CANVAS, NOT LAID OUT IN HTML. An SVG or a DOM screenshot depends on
+  web fonts loading, on CSS the browser might not have applied yet, and on
+  html2canvas-style libraries this repo will not take. A 2D canvas draws the
+  same pixels everywhere, exports with one toBlob call, and needs no
+  dependency. The cost is doing text wrapping by hand, which is thirty lines.
+
+  IT SHOWS ONLY WHAT IS SCORED. Every figure comes from the same engine the
+  sheet uses, and anything incomplete is simply left off the card rather than
+  printed as a dash or a zero. A card with four ability scores on it is a fine
+  card; a card claiming a Constitution nobody measured is not.
+
+  LIVE-FORM: built once. The only controls are three buttons and they are in
+  the markup from the start. Nothing here rebuilds a container holding input.
+-->
+<style>
+  .wrap { max-width: 720px; margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-7); }
+  h1 { font-family: var(--font-display); font-size: var(--text-xl); margin: 0 0 var(--space-2); }
+  .note { color: var(--color-text-muted); font-size: var(--text-sm); line-height: var(--leading-normal); margin: 0 0 var(--space-4); }
+  .stage { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); }
+  canvas { width: 100%; height: auto; display: block; border-radius: var(--radius-sm); }
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+  .btn { font-family: var(--font-body); font-size: var(--text-base); background: var(--color-accent); color: var(--color-accent-contrast); border: 0; border-radius: var(--radius-sm); padding: 0 var(--space-4); height: var(--control-height); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+  .btn.ghost { background: transparent; color: var(--color-accent-hover); border: 1px solid var(--color-border-strong); }
+  .nav { margin-top: var(--space-5); font-size: var(--text-sm); display: flex; gap: var(--space-4); flex-wrap: wrap; }
+  .nav a { color: var(--color-accent-hover); }
+  .notice { padding: var(--space-3); border-radius: var(--radius-sm); margin: var(--space-3) 0; font-size: var(--text-sm); border: 1px solid var(--color-critical); color: var(--color-critical); }
+  .hint { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-2); }
+</style>
+</head>
+<body class="slaf">
+<script src="shared/skin.js"></script>
+<script>DND.Skin.init();</script>
+<div class="wrap">
+  <div class="skin-bar" id="skin-bar"></div>
+  <div id="load-notice" class="notice" hidden></div>
+
+  <h1>Your card</h1>
+  <p class="note" id="intro">The bit that travels. Save it, then put it wherever your party lives.</p>
+
+  <div class="stage"><canvas id="card" width="1080" height="1200" aria-label="Your character card"></canvas></div>
+
+  <div class="actions">
+    <button type="button" class="btn" id="btn-save">Save the image</button>
+    <button type="button" class="btn ghost" id="btn-copy">Copy the text instead</button>
+    <button type="button" class="btn ghost" id="btn-skin">Try the other look</button>
+  </div>
+  <p class="hint" id="hint">On a phone you can also press and hold the card to save or share it.</p>
+
+  <div class="nav">
+    <a href="sheet.html">← Back to the sheet</a>
+    <a href="encounter.html">Run an encounter</a>
+    <a href="index.html">Build another character</a>
+  </div>
+
+  <p class="note" style="color:var(--color-text-faint);font-size:var(--text-xs);margin-top:var(--space-6)">An independent parody. Not affiliated with or endorsed by Wizards of the Coast. <a href="bestiary.html#attribution">Licence &amp; attribution</a>.</p>
+</div>
+
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/store.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/tier0.js"></script>
+<script src="engines/character.js"></script>
+<script src="engines/encounter.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Char = SLAF.Character, Store = DND.Store, Enc = DND.Encounter;
+  var TABLES = null, W = 1080;
+  /* The card grows to its content between these bounds; FOOTER_SPACE is the
+     room the "roll your own" line and the bottom border need below it. */
+  var MIN_H = 900, MAX_H = 1800, FOOTER_SPACE = 190;
+  function el(id) { return document.getElementById(id); }
+
+  /* Two palettes, matching the two skins, but written as plain values: the
+     canvas cannot read CSS custom properties, and reading them back off a
+     probe element would break the moment a token is renamed. */
+  var SKINS = {
+    navy: { bg: '#0d1b2e', panel: '#132a44', ink: '#f2f6fb', dim: '#9fb4cd',
+            accent: '#6fa8dc', rule: '#25415f', warn: '#e8836f' },
+    parchment: { bg: '#f4efe3', panel: '#eae2d0', ink: '#221c14', dim: '#6b5f4c',
+                 accent: '#8a5a2b', rule: '#d3c7ad', warn: '#a33a2a' }
+  };
+
+  function fit(ctx, text, max, size, weight, family) {
+    var s = size;
+    while (s > 10) {
+      ctx.font = weight + ' ' + s + 'px ' + family;
+      if (ctx.measureText(text).width <= max) break;
+      s -= 2;
+    }
+    return s;
+  }
+
+  function wrap(ctx, text, max) {
+    var words = String(text).split(' '), lines = [], line = '';
+    for (var i = 0; i < words.length; i++) {
+      var test = line ? line + ' ' + words[i] : words[i];
+      if (ctx.measureText(test).width > max && line) { lines.push(line); line = words[i]; }
+      else line = test;
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  /* Everything the card can say, and nothing it cannot. Each field is either a
+     real value or absent — never a dash, never a zero standing in for a blank. */
+  function cardData() {
+    var h = Store.household();
+    var s = Char.sheet(h, TABLES);
+    var p = h.dndProfile || {};
+    if (!s.ready) return null;
+
+    var al = TABLES.dndAlignments.alignments.filter(function (x) { return x.id === p.alignment; })[0];
+    var stats = Char.STAT_IDS.filter(function (id) { return Money.isOk(s.stats[id]); })
+      .map(function (id) {
+        return { id: id, score: s.stats[id].value, mod: Char.modifier(s.stats[id].value) };
+      });
+
+    var pred = Enc.predators(s, TABLES);
+    var hunted = pred.ready
+      ? pred.creatures.slice().sort(function (a, b) {
+          return (Enc.crToNumber(a.cr) || 0) - (Enc.crToNumber(b.cr) || 0);
+        }).slice(0, 3).map(function (c) { return c.name; })
+      : [];
+
+    var tp = Enc.tierProgress(s.level, TABLES);
+    return {
+      name: p.characterName || null,
+      klass: s.klass ? s.klass.name : null,
+      level: Money.isOk(s.level) ? s.level.value : null,
+      lever: s.klass ? s.klass.lever : null,
+      alignment: al || null,
+      stats: stats,
+      hp: Money.isOk(s.currentHp) ? s.currentHp.value : null,
+      maxHp: s.maxHp ? s.maxHp.weeks : null,
+      ac: Money.isOk(s.armorClass) ? s.armorClass.value : null,
+      tier: tp.placed ? tp.tier : null,
+      weakest: pred.ready ? pred.weakest : [],
+      hunted: hunted,
+      exhaustion: (function () {
+        var e = Char.exhaustion(s.currentHp, TABLES);
+        return Money.isOk(e) && e.value > 0 ? e.row.label : null;
+      })()
+    };
+  }
+
+  /* Two passes. A card for someone with three ability scores and no alignment
+     is shorter than one with six and a full spread, and a fixed height leaves
+     a slab of empty background that reads as a bug. So the layout runs once on
+     a scratch canvas to find where the content actually ends, then the real
+     canvas is sized to that and drawn again. */
+  function draw() {
+    var d = cardData();
+    var c = el('card');
+    var scratch = document.createElement('canvas');
+    scratch.width = W; scratch.height = MAX_H;
+    var bottom = drawInto(scratch.getContext('2d'), MAX_H, d);
+    var h = Math.max(MIN_H, Math.min(MAX_H, Math.round(bottom + FOOTER_SPACE)));
+    if (c.height !== h) c.height = h;
+    drawInto(c.getContext('2d'), h, d);
+  }
+
+  function drawInto(ctx, H, d) {
+    var sk = SKINS[DND.Skin.get()] || SKINS.navy;
+    var DISP = '"Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif';
+    var BODY = '"Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif';
+    var M = 72;
+
+    ctx.fillStyle = sk.bg; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = sk.rule; ctx.lineWidth = 4;
+    ctx.strokeRect(M / 2, M / 2, W - M, H - M);
+
+    if (!d || (!d.klass && !d.stats.length)) {
+      ctx.fillStyle = sk.dim; ctx.textAlign = 'center';
+      ctx.font = '40px ' + BODY;
+      ctx.fillText('No character yet.', W / 2, H / 2 - 20);
+      ctx.font = '30px ' + BODY;
+      ctx.fillText('Build one and this fills in.', W / 2, H / 2 + 34);
+      ctx.textAlign = 'left';
+      return MIN_H - FOOTER_SPACE;
+    }
+
+    var y = M + 40;
+    ctx.textAlign = 'left';
+
+    /* eyebrow */
+    ctx.fillStyle = sk.accent;
+    ctx.font = '600 26px ' + BODY;
+    ctx.fillText('DUNGEONS & DIVIDENDS', M, y);
+    y += 64;
+
+    /* name, or the class if there is no name */
+    var title = d.name || d.klass || 'Unnamed';
+    ctx.fillStyle = sk.ink;
+    var ts = fit(ctx, title, W - M * 2, 88, '400', DISP);
+    ctx.font = '400 ' + ts + 'px ' + DISP;
+    ctx.fillText(title, M, y);
+    y += 26;
+
+    /* class · level · lever */
+    if (d.klass) {
+      ctx.fillStyle = sk.dim;
+      ctx.font = '34px ' + BODY;
+      var sub = d.klass + (d.level !== null ? ', level ' + d.level : '');
+      ctx.fillText(sub, M, y + 30);
+      y += 44;
+      if (d.lever) {
+        ctx.fillStyle = sk.accent;
+        ctx.font = 'italic 30px ' + BODY;
+        ctx.fillText(d.lever, M, y + 30);
+        y += 40;
+      }
+    }
+    y += 34;
+
+    /* ability scores — only the ones that scored */
+    if (d.stats.length) {
+      var boxW = (W - M * 2 - 16 * (d.stats.length - 1)) / d.stats.length;
+      d.stats.forEach(function (st, i) {
+        var x = M + i * (boxW + 16);
+        ctx.fillStyle = sk.panel;
+        ctx.fillRect(x, y, boxW, 150);
+        ctx.fillStyle = sk.dim;
+        ctx.font = '600 22px ' + BODY;
+        ctx.textAlign = 'center';
+        ctx.fillText(st.id, x + boxW / 2, y + 40);
+        ctx.fillStyle = sk.ink;
+        ctx.font = '400 56px ' + DISP;
+        ctx.fillText(String(st.score), x + boxW / 2, y + 100);
+        ctx.fillStyle = sk.accent;
+        ctx.font = '26px ' + BODY;
+        ctx.fillText((st.mod >= 0 ? '+' : '') + st.mod, x + boxW / 2, y + 132);
+      });
+      ctx.textAlign = 'left';
+      y += 190;
+    }
+
+    /* vitals — each only if measured */
+    var vitals = [];
+    if (d.hp !== null) vitals.push(['HIT POINTS', d.hp + (d.maxHp !== null ? ' / ' + d.maxHp : '') + ' wk']);
+    if (d.ac !== null) vitals.push(['ARMOUR', String(d.ac)]);
+    if (d.tier) vitals.push(['TIER', d.tier.id + ' · ' + d.tier.name]);
+    if (vitals.length) {
+      vitals.forEach(function (v, i) {
+        var x = M + i * ((W - M * 2) / vitals.length);
+        ctx.fillStyle = sk.dim; ctx.font = '600 22px ' + BODY;
+        ctx.fillText(v[0], x, y);
+        ctx.fillStyle = sk.ink;
+        var vs = fit(ctx, v[1], (W - M * 2) / vitals.length - 20, 40, '400', DISP);
+        ctx.font = '400 ' + vs + 'px ' + DISP;
+        ctx.fillText(v[1], x, y + 46);
+      });
+      y += 96;
+    }
+
+    if (d.exhaustion) {
+      ctx.fillStyle = sk.warn; ctx.font = '600 26px ' + BODY;
+      ctx.fillText(d.exhaustion.toUpperCase() + ' — every save is harder', M, y + 8);
+      y += 52;
+    }
+
+    /* rule */
+    ctx.strokeStyle = sk.rule; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(M, y); ctx.lineTo(W - M, y); ctx.stroke();
+    y += 54;
+
+    /* alignment */
+    if (d.alignment) {
+      ctx.fillStyle = sk.dim; ctx.font = '600 22px ' + BODY;
+      ctx.fillText('ALIGNMENT', M, y);
+      ctx.fillStyle = sk.ink; ctx.font = '400 40px ' + DISP;
+      ctx.fillText(d.alignment.emoji + ' ' + d.alignment.name, M, y + 48);
+      ctx.fillStyle = sk.dim; ctx.font = '24px ' + BODY;
+      ctx.fillText(d.alignment.axisLabel, M, y + 84);
+      y += 128;
+    }
+
+    /* what hunts you */
+    if (d.hunted.length) {
+      ctx.fillStyle = sk.dim; ctx.font = '600 22px ' + BODY;
+      ctx.fillText(d.weakest.length ? 'THINNEST ON ' + d.weakest.join(' · ') : 'HUNTED BY', M, y);
+      y += 40;
+      ctx.fillStyle = sk.ink; ctx.font = '30px ' + BODY;
+      d.hunted.forEach(function (n) {
+        var lines = wrap(ctx, n, W - M * 2 - 30);
+        lines.forEach(function (ln, li) {
+          ctx.fillText((li === 0 ? '· ' : '  ') + ln, M, y);
+          y += 40;
+        });
+      });
+    }
+
+    /* footer */
+    ctx.fillStyle = sk.dim; ctx.font = '24px ' + BODY;
+    ctx.textAlign = 'center';
+    ctx.fillText('Roll your own character', W / 2, H - M - 46);
+    ctx.fillStyle = sk.accent; ctx.font = '600 26px ' + BODY;
+    ctx.fillText(location.host + location.pathname.replace(/card\.html$/, ''), W / 2, H - M - 8);
+    ctx.textAlign = 'left';
+    return y;
+  }
+
+  function shareText() {
+    var d = cardData();
+    if (!d) return 'Dungeons & Dividends';
+    var out = ['Dungeons & Dividends — ' + (d.name ? d.name + ', ' : '')
+      + (d.klass || 'no class yet') + (d.level !== null ? ' level ' + d.level : '')
+      + (d.alignment ? ' · ' + d.alignment.emoji + ' ' + d.alignment.name : '')];
+    if (d.stats.length) {
+      out.push(d.stats.map(function (s) {
+        return s.id + ' ' + s.score + ' (' + (s.mod >= 0 ? '+' : '') + s.mod + ')'; }).join(' · '));
+    }
+    if (d.hp !== null) out.push('HP ' + d.hp + (d.maxHp !== null ? '/' + d.maxHp : '') + ' weeks of runway.');
+    if (d.hunted.length) out.push('Hunted by: ' + d.hunted.join(', ') + '.');
+    out.push('Roll your own: ' + location.href.replace(/card\.html.*$/, ''));
+    return out.join('\n');
+  }
+
+  function fileName() {
+    var d = cardData();
+    var base = (d && (d.name || d.klass)) || 'character';
+    return 'dungeons-and-dividends-' + base.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.png';
+  }
+
+  function wire() {
+    el('btn-save').addEventListener('click', function () {
+      var c = el('card');
+      /* toBlob is the reliable path; a data-URL href is the fallback for
+         browsers that have not got it. Neither can be relied on inside an
+         embedded viewer, which is why the press-and-hold hint is there too. */
+      if (c.toBlob) {
+        c.toBlob(function (blob) {
+          if (!blob) return;
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url; a.download = fileName();
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+        }, 'image/png');
+      } else {
+        var a2 = document.createElement('a');
+        a2.href = c.toDataURL('image/png'); a2.download = fileName();
+        document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+      }
+    });
+
+    el('btn-copy').addEventListener('click', function () {
+      var text = shareText(), btn = el('btn-copy');
+      function done() {
+        btn.textContent = 'Copied';
+        setTimeout(function () { btn.textContent = 'Copy the text instead'; }, 1600);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { window.prompt('Copy this:', text); });
+      } else { window.prompt('Copy this:', text); }
+    });
+
+    el('btn-skin').addEventListener('click', function () {
+      DND.Skin.set(DND.Skin.get() === 'parchment' ? 'navy' : 'parchment');
+      draw();
+    });
+  }
+
+  SLAF.Reference.load().then(function (tables) {
+    TABLES = tables;
+    DND.Skin.mount(document.getElementById('skin-bar'));
+    wire();
+    draw();
+    /* The skin bar changes the page palette; the card has to follow it. */
+    document.getElementById('skin-bar').addEventListener('click', function () {
+      setTimeout(draw, 0);
+    });
+    Store.onChange(draw);
+  }).catch(function (err) {
+    var n = el('load-notice');
+    n.hidden = false;
+    n.textContent = 'Couldn’t load the game data (' + err.message + '). If you opened this file '
+      + 'directly it needs to be served over http — try the published link instead.';
+  });
+})();
+</script>
+</body>
+</html>

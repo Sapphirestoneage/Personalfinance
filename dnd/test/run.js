@@ -31,6 +31,12 @@ const Character = require(path.join(ROOT, 'engines/character.js'));
 const Schema = require(path.join(ROOT, 'shared/schema.js'));
 
 const table = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, 'data', f), 'utf8'));
+
+/* Every page in the folder, found rather than listed. These checks used to name
+   their pages, so each new page quietly escaped whichever lists nobody
+   remembered to update — encounter.html was missing from four of them and
+   card.html would have been missing from five. Adding a page now opts it in. */
+const PAGES = fs.readdirSync(ROOT).filter((f) => f.endsWith('.html')).sort();
 const TABLES = {
   dndRules: table('dnd_rules.json'),
   dndClasses: table('dnd_classes.json'),
@@ -392,7 +398,7 @@ section('Dungeons & Dividends — nothing is escaped twice');
      literal "&amp;". The helpers below all escape, so a pre-escaped entity in
      one of their string arguments is always wrong. */
   const HELPERS = ['esc', 'panel', 'moneyInput', 'selectInput', 'sharpen'];
-  ['index.html', 'sheet.html', 'bestiary.html'].forEach(function (page) {
+  PAGES.forEach(function (page) {
     const src = fs.readFileSync(path.join(ROOT, page), 'utf8');
     HELPERS.forEach(function (fn) {
       /* Match the helper call and grab its quoted string arguments. */
@@ -409,7 +415,7 @@ section('Dungeons & Dividends — nothing is escaped twice');
   /* esc() must not receive markup either. Escaping a string that already
      carries the tags you meant to keep renders them as visible text — the
      same mistake as pre-escaping an entity, wearing a different hat. */
-  ['index.html', 'sheet.html', 'bestiary.html', 'encounter.html'].forEach(function (page) {
+  PAGES.forEach(function (page) {
     const src = fs.readFileSync(path.join(ROOT, page), 'utf8');
     const call = /esc\(\s*'((?:[^'\\]|\\.)*)'/g;
     let m;
@@ -457,7 +463,7 @@ section('Dungeons & Dividends — licence and IP posture');
   });
 
   /* Every page a stranger can land on carries the disclaimer. */
-  ['index.html', 'sheet.html', 'bestiary.html'].forEach(function (page) {
+  PAGES.forEach(function (page) {
     const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
     checkTrue(page + ' carries a non-affiliation line',
       /Wizards of the Coast/.test(html));
@@ -470,7 +476,7 @@ section('Dungeons & Dividends — licence and IP posture');
                  'owlbear', 'githyanki', 'modron', 'slaad', 'faerun', 'waterdeep',
                  'forgotten realms', 'baldur', 'neverwinter', 'drizzt', 'strahd'];
   const surfaces = ['data/dnd_rules.json', 'data/dnd_classes.json', 'data/dnd_scoring.json',
-                    'data/dnd_alignments.json', 'index.html', 'sheet.html', 'bestiary.html'];
+                    'data/dnd_alignments.json'].concat(PAGES);
   surfaces.forEach(function (f) {
     const text = fs.readFileSync(path.join(ROOT, f), 'utf8').toLowerCase();
     OWNED.forEach(function (name) {
@@ -528,7 +534,7 @@ section('Dungeons & Dividends — the two skins');
 (function () {
   /* Every page must load both halves and give the control somewhere to go,
      or the toggle silently does nothing on that page. */
-  ['index.html', 'sheet.html', 'bestiary.html'].forEach(function (page) {
+  PAGES.forEach(function (page) {
     const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
     checkTrue(`${page} loads skin.css`, /shared\/skin\.css/.test(html));
     checkTrue(`${page} loads skin.js`, /shared\/skin\.js/.test(html));
@@ -680,6 +686,71 @@ section('Dungeons & Dividends — the quiz-only leaning');
 
   check('and with nothing answered it declines to guess',
     Character.suggestClassFromStats({}, TABLES).status, 'incomplete');
+})();
+
+section('Dungeons & Dividends — the share card');
+
+(function () {
+  /* BRIEF §9.2. The card is what actually travels, so the checks are about the
+     things that would make it travel wrong. */
+  const src = fs.readFileSync(path.join(ROOT, 'card.html'), 'utf8');
+
+  checkTrue('the card page exists and is a page', /<body class="slaf">/.test(src));
+  checkTrue('it declares LIVE-FORM like every other page', /LIVE-FORM: built once/.test(src));
+
+  /* Drawn on canvas on purpose: no web-font race, no CSS timing, no library. */
+  checkTrue('it draws on a canvas', /<canvas id="card"/.test(src));
+  checkTrue('and pulls in no library to do it',
+    !/<script src="(?!shared\/|engines\/)/.test(src));
+  ['shared/money.js', 'shared/schema.js', 'shared/store.js',
+   'engines/character.js', 'engines/encounter.js'].forEach(function (dep) {
+    checkTrue(`the card loads ${dep}`, src.indexOf('src="' + dep + '"') !== -1);
+  });
+
+  /* The canvas cannot read CSS custom properties, so the palettes are literal
+     — but there must be one per skin or the card ignores the toggle. */
+  TABLES.dndScoring && null;
+  const skins = JSON.parse(fs.readFileSync(path.join(ROOT, 'shared/skin.js'), 'utf8')
+    .match(/SKINS\s*=\s*(\[[\s\S]*?\]);/)[1].replace(/([a-zA-Z]+):/g, '"$1":').replace(/'/g, '"'));
+  skins.forEach(function (sk) {
+    checkTrue(`the card has a palette for the "${sk.id}" skin`,
+      new RegExp('\\b' + sk.id + ':\\s*\\{').test(src));
+  });
+
+  /* Every colour it paints with must be a real hex value. A mangled one fails
+     silently on canvas — the fill simply does not happen. */
+  const hexes = src.match(/#[0-9a-fA-F]{3,8}\b/g) || [];
+  checkTrue('the card defines some colours', hexes.length > 8);
+  hexes.forEach(function (hx) {
+    checkTrue(`${hx} is a valid hex colour`, /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(hx));
+  });
+
+  /* It must never print a placeholder for something nobody measured. The card
+     builds its figures by filtering on isOk and pushing only what scored. */
+  checkTrue('ability scores are filtered to the ones that scored',
+    /STAT_IDS\.filter\(function \(id\) \{ return Money\.isOk/.test(src));
+  checkTrue('vitals are pushed only when they are not null',
+    /if \(d\.hp !== null\)/.test(src) && /if \(d\.ac !== null\)/.test(src));
+  checkTrue('and the card never renders an em dash as a value',
+    !/Money\.EM_DASH/.test(src));
+
+  /* It grows to fit rather than leaving a slab of empty background. */
+  checkTrue('the card sizes itself to its content', /MIN_H|MAX_H/.test(src));
+  checkTrue('by measuring on a scratch canvas first',
+    /createElement\('canvas'\)/.test(src));
+
+  /* The whole point is that it can leave the browser. */
+  checkTrue('it can be saved as a PNG', /toBlob|toDataURL/.test(src));
+  checkTrue('with a filename built from the character', /function fileName/.test(src));
+  checkTrue('and a text fallback for anywhere an image will not go',
+    /function shareText/.test(src));
+  checkTrue('the share text carries a link back', /Roll your own/.test(src));
+
+  /* Reachable, or it may as well not exist. */
+  checkTrue('the sheet links to the card',
+    /href="card\.html"/.test(fs.readFileSync(path.join(ROOT, 'sheet.html'), 'utf8')));
+  checkTrue('and so does the Tier 1 result',
+    /href="card\.html"/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')));
 })();
 
 section('Dungeons & Dividends — rests and pace');

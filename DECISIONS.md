@@ -4492,3 +4492,73 @@ whose value may be **negative** — check `losing` rather than assuming a floor 
 zero, and never clamp it, because the negative number is the finding. `longRest`
 needs a sheet with both `currentHp` and `maxHp`; `maxHp` is null whenever CON is
 incomplete, which is more often than you would expect.
+
+---
+
+## D-070 — The card is the product, so it is drawn rather than laid out
+
+BRIEF §9.2. This tool is a lead magnet, and what actually travels is not the
+page — it is the thing someone pastes into a group chat. `card.html` builds it.
+
+### Canvas, not HTML
+
+An SVG or a screenshot of the DOM depends on web fonts having loaded, on CSS the
+browser may not have applied yet, and in the general case on an html2canvas-shaped
+library this repo will not take. A 2D canvas draws the same pixels everywhere,
+exports with one `toBlob` call, and needs no dependency at all. The cost is doing
+text fitting and wrapping by hand, which came to about thirty lines.
+
+The canvas cannot read CSS custom properties, so the two skins are literal
+palettes in the file. Reading them back off a probe element would break silently
+the moment a token was renamed; a test asserts there is a palette for every skin
+`shared/skin.js` declares, so adding a third skin fails loudly instead.
+
+### It shows only what is scored
+
+Every figure comes from the same engine the sheet uses, and anything incomplete
+is **left off the card** rather than printed as a dash or a zero. A card with
+four ability scores on it is a fine card. A card claiming a Constitution nobody
+measured is a lie that then gets forwarded. Tests assert the ability list is
+filtered on `isOk`, that vitals are pushed only when non-null, and that the file
+never reaches for `EM_DASH` at all.
+
+### It grows to fit
+
+A character with three scored abilities and no alignment makes a shorter card
+than one with six and a full spread, and a fixed height leaves a slab of empty
+background that reads as a bug. So the layout runs once on a scratch canvas to
+find where the content ends, the real canvas is sized to that between a floor and
+a ceiling, and it draws again. Two passes, one layout function.
+
+### Three ways out, because one is never enough
+
+Save the PNG (`toBlob`, with a `toDataURL` fallback and a filename built from the
+character's name). Copy the text, for anywhere an image will not go. And a hint
+that press-and-hold works on a phone, because inside an embedded browser neither
+of the first two reliably fires.
+
+### A test-shaped bug found on the way
+
+Five checks in the D&D suite named their pages in a literal list — the escaping
+scan, the markup scan, the disclaimer check, the trademark scan and the skin
+check. `encounter.html` was missing from four of them and `card.html` would have
+been missing from five. The root suite's `<body class="slaf">` check, which
+exists *because* three pages once shipped unstyled and every test passed, named
+its pages too.
+
+Both now read the directory. That turned on 45 checks that had never run, all of
+which passed — but the next page added does not get to opt out of them by not
+being mentioned.
+
+### Compatibility note
+
+**Stored shape:** nothing. The card is derived on every draw and stores nothing.
+
+**Rooms updated:** `dnd/card.html` (new), linked from `dnd/sheet.html` and
+`dnd/index.html`. Both test suites now find pages rather than list them.
+
+**Before writing any of these from a new room:** the card reads
+`Store.household()` and nothing else, so anything you want on it has to be in
+the household or the profile first. If you add a page to `dnd/`, it is
+automatically subject to the escaping, disclaimer, trademark, skin and
+theme-class checks — that is deliberate.
