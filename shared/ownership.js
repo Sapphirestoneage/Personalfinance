@@ -459,8 +459,15 @@
       read: function (h) { var v = (h.kids || {}).tuitionMonthlyCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['tuitionMonthlyCents']); },
       format: function (v) { return money(v) + '/mo'; }
     },
+    /* One rent (D-130): what you pay is Cash Flow's housing line; Housing
+       Decision's own field is a place you would rent instead. */
     rentMonthly: {
-      label: 'Rent, a month', owner: 'housing', anchor: 'inputs',
+      label: 'Rent or mortgage, a month', owner: 'cash-flow', anchor: 'spending',
+      read: function (h) { var r = Schema.rentMonthlyCents(h); return r.source === 'cash-flow' ? Money.ok(r.cents) : Money.incomplete('No housing line in Cash Flow yet.', ['housing']); },
+      format: function (v) { return money(v) + '/mo'; }
+    },
+    rentAlternative: {
+      label: 'A place you would rent instead, a month', owner: 'housing', anchor: 'inputs',
       read: function (h) { var v = (h.housing || {}).rentMonthlyCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['rentMonthlyCents']); },
       format: function (v) { return money(v) + '/mo'; }
     },

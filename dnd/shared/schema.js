@@ -92,7 +92,7 @@
     'household.career.offer.grossAnnualCents':   { class: 'raw',        unit: 'cents',   note: 'an offer being weighed: with hoursPerWeek, commuteHoursPerWeek, workCostsMonthlyCents, signOnCents. Owned by Career Move. D-099' },
     'household.partner.splitMode':               { class: 'raw',        unit: 'enum',    values: ['equal', 'proportional', 'pooled'], note: 'how shared costs are split; sharedMonthlyCents is the shared month. Owned by Partner. D-099' },
     'household.kids.tuitionTargetCents':         { class: 'raw',        unit: 'cents',   note: 'a tuition target per child; tuitionSavedCents so far, tuitionMonthlyCents going in. Owned by Kids and Tuition. D-099' },
-    'household.housing.priceCents':              { class: 'raw',        unit: 'cents',   note: 'a place being weighed: with rentMonthlyCents (what renting costs), downPct (0–1), rate (mortgage, decimal). Owned by Housing Decision. D-099' },
+    'household.housing.priceCents':              { class: 'raw',        unit: 'cents',   note: 'a place being weighed: with rentMonthlyCents (a place you would rent INSTEAD — the rent you pay is Cash Flow\'s housing line, read through Schema.rentMonthlyCents, D-130), downPct (0–1), rate (mortgage, decimal). Owned by Housing Decision. D-099' },
     'household.purchase.priceCents':             { class: 'raw',        unit: 'cents',   note: 'a big purchase: with monthsAway, financeRate (decimal, null = cash), label. Owned by Big Purchase. D-099' },
     'household.variableIncome.bufferMonths':     { class: 'raw',        unit: 'months',  note: 'months of the low-to-average gap held as a buffer. Owned by Variable Income. D-099' },
     'household.variableIncome.windowMonths':     { class: 'raw',        unit: 'months',  values: [3, 6, 12], note: 'the rolling window the room averages the ledger\'s variable months over. Owned by Variable Income. D-128' },
@@ -1681,6 +1681,28 @@
     var total = months.reduce(function (t, m) { return t + m.actual.expenses; }, 0);
     return { cents: Math.round(total / months.length), months: months.map(function (m) { return m.id; }) };
   }
+  /**
+   * The rent a month, one number (D-130, MONEY-MAP.md Q11). Cash Flow's
+   * housing line — a monthly expense entry in the `housing` category that
+   * is not a logged occurrence — is the fact; the Housing Decision room's
+   * own field is only a place you would rent INSTEAD, read when there is
+   * no line. Returns { cents, source: 'cash-flow' | 'housing' | 'none',
+   * entryId } — never a guess; the rooms that guess say so themselves.
+   */
+  function rentMonthlyCents(household) {
+    var h = household || {};
+    var lines = ((h.expenses && h.expenses.entries) || []).filter(function (e) {
+      return e && e.active !== false && e.categoryId === 'housing' && e.source !== 'log' && e.period !== 'once' && Money.isEntered(e.amountCents) && e.amountCents > 0;
+    });
+    if (lines.length) {
+      var total = lines.reduce(function (t, e) { return t + e.amountCents; }, 0);
+      return { cents: total, source: 'cash-flow', entryId: lines[0].id, count: lines.length };
+    }
+    var own = (h.housing || {}).rentMonthlyCents;
+    if (Money.isEntered(own) && own > 0) return { cents: own, source: 'housing', entryId: null, count: 0 };
+    return { cents: null, source: 'none', entryId: null, count: 0 };
+  }
+
   function monthlyExpensesCents(household) {
     var e = (household && household.expenses && household.expenses.monthlyEssential) || {};
     var closed = closedAverageExpensesCents(household);
@@ -1935,6 +1957,7 @@
     grossAnnualIncomeCents: grossAnnualIncomeCents,
     employerMatchCents: employerMatchCents,
     monthlyExpensesCents: monthlyExpensesCents,
+    rentMonthlyCents: rentMonthlyCents,
     closedAverageExpensesCents: closedAverageExpensesCents,
     CLOSED_AVERAGE_MONTHS: CLOSED_AVERAGE_MONTHS,
     expenseDivergenceCents: expenseDivergenceCents,

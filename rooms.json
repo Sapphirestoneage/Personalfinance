@@ -67,6 +67,7 @@
         "monthlyExpenses"
       ],
       "writes": [
+        "rentMonthly",
         "monthlyExpenses"
       ],
       "requires": [],
@@ -668,7 +669,7 @@
         "cashSavings"
       ],
       "writes": [
-        "rentMonthly",
+        "rentAlternative",
         "homePrice",
         "downPct",
         "mortgageRate"

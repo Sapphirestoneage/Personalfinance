@@ -81,8 +81,10 @@
   function rentCents(household) {
     var h = household || {};
     if (h.meta && h.meta.noRent === true) return { cents: null, source: 'none', reason: 'Start Here says there is no rent to pay.' };
-    var housing = h.housing || {};
-    if (Money.isEntered(housing.rentMonthlyCents)) return { cents: housing.rentMonthlyCents, source: 'housing', reason: null };
+    /* One rent (D-130): Cash Flow's housing line first, then a rent typed
+       in Housing Decision as the place you would rent instead. */
+    var r = Schema.rentMonthlyCents(h);
+    if (Money.isEntered(r.cents)) return { cents: r.cents, source: r.source, reason: null };
     var gross = Schema.grossAnnualIncomeCents(h);
     if (Money.isOk(gross) && gross.value > 0) return { cents: Math.round(gross.value / MONTHS * RENT_SHARE_OF_GROSS), source: 'guess', reason: null };
     return { cents: null, source: 'none', reason: 'No rent from Housing Decision and no income to guess it from.' };
