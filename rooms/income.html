@@ -231,7 +231,7 @@
   });
   el('f-amount').addEventListener('blur', function () {
     var c = Money.parseMoney(el('f-amount').value);
-    el('f-amount').value = Money.isEntered(c) ? Money.formatCents(c) : '';
+    el('f-amount').value = Money.isEntered(c) ? Money.formatCents(c, { decimals: c % 100 ? 2 : 0 }) : '';
   });
   el('add-form').addEventListener('keydown', function (evt) { if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') { evt.preventDefault(); el('btn-save').click(); } });
 
@@ -329,7 +329,7 @@
     }).join('') || '<li><span class="slaf-hint">Nothing logged against it yet.</span></li>';
   }
   el('c-amount').addEventListener('focus', function () { var c = Money.parseMoney(el('c-amount').value); el('c-amount').value = Money.isEntered(c) ? String(c / 100) : ''; el('c-amount').select(); });
-  el('c-amount').addEventListener('blur', function () { var c = Money.parseMoney(el('c-amount').value); el('c-amount').value = Money.isEntered(c) ? Money.formatCents(c) : ''; });
+  el('c-amount').addEventListener('blur', function () { var c = Money.parseMoney(el('c-amount').value); el('c-amount').value = Money.isEntered(c) ? Money.formatCents(c, { decimals: c % 100 ? 2 : 0 }) : ''; });
   el('cost-form').addEventListener('keydown', function (evt) { if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') { evt.preventDefault(); el('btn-cost').click(); } });
   el('btn-cost').addEventListener('click', function () {
     if (!detailId) return;

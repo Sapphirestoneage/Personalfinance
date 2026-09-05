@@ -89,6 +89,22 @@
       ]
     },
     {
+      id: 'budget',
+      kind: 'about-you',
+      needs: [],
+      order: 3.4,
+      title: 'Budget',
+      blurb: 'Five buckets, estimated beside actual, read from what Income and Cash Flow logged \u2014 never typed here \u2014 and closed at the end of the month.',
+      href: 'rooms/budget.html',
+      tier: 1,
+      tags: ['income', 'cashflow', 'debt'],
+      subsections: [
+        { id: 'sheet',  label: 'The sheet' },
+        { id: 'close',  label: 'Month-end' },
+        { id: 'months', label: 'Closed months' }
+      ]
+    },
+    {
       id: 'cash-flow',
       kind: 'core',
       needs: ['monthlyExpenses'],

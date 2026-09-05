@@ -595,6 +595,11 @@
       },
       format: function (v) { return money(v) + '/mo'; }
     },
+    monthsClosed: {
+      label: 'Months closed', owner: 'budget', anchor: 'close',
+      read: function (h) { var n = ((h.ledger || {}).months || []).length; return n ? Money.ok(n) : Money.incomplete('No month closed yet.', ['monthsClosed']); },
+      format: function (v) { return v + (v === 1 ? ' month' : ' months'); }
+    },
     historyCompareTo: {
       label: 'Comparing against', owner: 'history', anchor: 'inputs',
       read: function (h) { var v = (h.history || {}).compareTo; return v ? Money.ok(v) : Money.incomplete('The first snapshot, until you pick one.', ['compareTo']); },

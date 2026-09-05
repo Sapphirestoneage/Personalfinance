@@ -789,7 +789,7 @@
   el('l-linked').addEventListener('change', paintDeductible);
   el('l-category').addEventListener('change', paintDeductible);
   el('l-amount').addEventListener('focus', function () { var c = Money.parseMoney(el('l-amount').value); el('l-amount').value = Money.isEntered(c) ? String(c / 100) : ''; el('l-amount').select(); });
-  el('l-amount').addEventListener('blur', function () { var c = Money.parseMoney(el('l-amount').value); el('l-amount').value = Money.isEntered(c) ? Money.formatCents(c) : ''; });
+  el('l-amount').addEventListener('blur', function () { var c = Money.parseMoney(el('l-amount').value); el('l-amount').value = Money.isEntered(c) ? Money.formatCents(c, { decimals: c % 100 ? 2 : 0 }) : ''; });
   el('log-form').addEventListener('keydown', function (evt) { if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') { evt.preventDefault(); el('btn-log').click(); } });
   el('btn-log').addEventListener('click', function () {
     var cents = Money.parseMoney(el('l-amount').value);

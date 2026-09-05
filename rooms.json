@@ -86,6 +86,18 @@
       "order": 3.2
     },
     {
+      "id": "budget",
+      "title": "Budget",
+      "file": "rooms/budget.html",
+      "reads": [],
+      "writes": [
+        "monthsClosed"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 3.4
+    },
+    {
       "id": "financial-snapshot",
       "title": "Financial Snapshot",
       "file": "rooms/financial-snapshot.html",

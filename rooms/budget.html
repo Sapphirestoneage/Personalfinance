@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Budget · SPARKS</title>
+<meta name="description" content="Five buckets, estimated beside actual, read from what Income and Cash Flow logged — never typed here — and closed at the end of the month."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-128 (the budget).
+
+  1. READS   The ledger's income entries (Income) netted of tax, the expense
+             log (Cash Flow) by bucket, the typical-month lines and Start
+             Here's figures for the first estimates, and hand-set estimates
+             (household.budget.estimated).
+  2. WRITES  It OWNS household.ledger.months[] — the MonthRecord a Close
+             freezes, estimated beside actual, revised beside both when a
+             late entry lands. Nothing else edits those. It types no number:
+             the Add button on a bucket goes to Income or Cash Flow's log,
+             and the figure flows back.
+  3. CALLS   engines/budget.js — the sheet, the record, the revised column.
+  4. EMPTY   With nothing logged the Actual column is zero and the Estimated
+             column still fills from what Start Here and Cash Flow hold; a
+             bucket with no figure anywhere says what would give it one.
+  5. CONFIG  data/expense_categories.json (the groups and which bucket each
+             feeds), data/effective_tax_rates_2026.json, data/se_tax_2026.json.
+
+  LIVE-FORM: built once. There is no input, select or textarea on this
+  page at all — the sheet is read-only by design; the buttons navigate,
+  page between months, and close one.
+  THEMING: none this pass.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+  .card-gap { margin-top: var(--space-4); }
+  .month-nav { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+  .month-nav h2 { margin: 0; font-size: var(--text-lg); }
+  .month-nav .status { display: block; font-family: var(--font-body); font-size: var(--text-xs); color: var(--color-text-faint); font-weight: 400; }
+  .month-nav .status.is-closed { color: var(--color-positive); }
+  .nav-btn { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-sm); padding: 4px var(--space-3); cursor: pointer; }
+  .nav-btn:hover { border-color: var(--color-border-active); color: var(--color-text); }
+  .sheet-head { display: grid; grid-template-columns: 1fr 88px 88px 88px; gap: var(--space-2); margin-top: var(--space-4); font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); padding-bottom: var(--space-1); border-bottom: 1px solid var(--color-border); }
+  .sheet-head span:not(:first-child) { text-align: right; }
+  .bucket-row { display: grid; grid-template-columns: 1fr 88px 88px 88px; gap: var(--space-1) var(--space-2); padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border); align-items: baseline; scroll-margin-top: var(--space-4); }
+  .bucket-row.just-added { background: rgba(48,164,108,.10); outline: 2px solid var(--color-positive); outline-offset: -2px; border-radius: var(--radius-sm); }
+  .bucket-row .b-name { font-weight: 600; }
+  .bucket-row .b-from { display: block; font-size: var(--text-xs); color: var(--color-text-faint); font-weight: 400; }
+  .bucket-row .b-num { font-family: var(--font-display); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  .bucket-row .b-num.is-none { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-sm); }
+  .bucket-row .b-num.is-over { color: var(--color-critical); }
+  .bucket-row .b-num.is-under { color: var(--color-positive); }
+  .bucket-row .b-num small { display: block; font-family: var(--font-body); font-size: var(--text-xs); color: var(--color-caution); }
+  .bucket-row .b-lines { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-muted); display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); }
+  .bucket-row .b-acts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+  .pill { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-accent-hover); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; text-decoration: none; }
+  .pill:hover { border-color: var(--color-accent); }
+  .pill.is-quiet { color: var(--color-text-faint); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  .say { font-size: var(--text-sm); margin: var(--space-3) 0 0; color: var(--color-text-muted); }
+  .say.is-good { color: var(--color-positive); }
+  ul.months { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ul.months li { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  ul.months li:first-child { border-top: none; }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  @media (max-width: 420px) {
+    .sheet-head, .bucket-row { grid-template-columns: 1fr 72px 72px 72px; }
+    .sheet-head { font-size: 9px; }
+  }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../index.html">← Home</a>
+  <h1>Budget</h1>
+  <p class="room-lede">Five buckets, what you expected beside what happened. Nothing is typed here: the Add button goes to Income or the expense log, and the figure comes back on its own. At the end of the month, close it.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="sheet">
+    <div class="month-nav">
+      <button type="button" class="nav-btn" id="btn-prev" aria-label="Earlier month">←</button>
+      <h2 id="month-title">—<span class="status" id="month-status"></span></h2>
+      <button type="button" class="nav-btn" id="btn-next" aria-label="Later month">→</button>
+    </div>
+    <div class="sheet-head"><span>Bucket</span><span>Estimated</span><span>Actual</span><span>Difference</span></div>
+    <div id="rows"></div>
+    <p class="why" id="sheet-why"></p>
+  </section>
+
+  <section class="slaf-card card-gap" id="close">
+    <span class="slaf-eyebrow">Month-end</span>
+    <h2 style="margin:var(--space-2) 0 0" id="close-title">Close the month</h2>
+    <p class="slaf-hint" id="close-hint" style="margin:var(--space-2) 0 0"></p>
+    <div style="margin-top:var(--space-3)"><button type="button" class="slaf-btn slaf-btn--primary" id="btn-close" hidden>Close</button></div>
+    <p class="say" id="close-say" hidden></p>
+  </section>
+
+  <section class="slaf-card card-gap" id="months">
+    <span class="slaf-eyebrow">Closed months</span>
+    <p class="slaf-hint" id="months-hint" style="margin:var(--space-2) 0 0">None yet. Each one is kept as it was closed, estimated beside actual, and read in <a href="variance.html">Estimated vs Actual</a>.</p>
+    <ul class="months" id="months-list"></ul>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Income is netted at the year’s blended rate or as self-employment; the closed record keeps both columns forever. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/ledger.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/budget.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Budget = SLAF.Budget, Ledger = SLAF.Ledger;
+  var ROOM_ID = 'budget';
+  var TABLES = null;
+  var month = null;          /* the month shown */
+  var justAdded = null;      /* the bucket to light up once, after an Add */
+  var RETURN_KEY = 'slaf.budget.return';
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function money(c) { return Money.formatCents(c); }
+  function CAT() { return TABLES.expenseCategories; }
+
+  /* Where the Add button goes: the owner room, with the bucket's usual
+     category picked, and the way back carried in the query. */
+  var ADD_TARGET = {
+    income: function (m) { return 'income.html?for=budget&month=' + m + '#add'; },
+    expenses: function (m) { return 'cash-flow.html?for=budget&month=' + m + '&category=groceries#log'; },
+    savings: function (m) { return 'cash-flow.html?for=budget&month=' + m + '&category=emergency_savings#log'; },
+    investments: function (m) { return 'cash-flow.html?for=budget&month=' + m + '&category=retirement#log'; },
+    debt: function (m) { return 'cash-flow.html?for=budget&month=' + m + '&category=extra_debt_payment#log'; }
+  };
+  var ADD_WORDS = { income: 'Log income', expenses: 'Log an expense', savings: 'Log a transfer to savings', investments: 'Log a contribution', debt: 'Log a payment' };
+
+  function numCell(cents, cls, sub) {
+    if (!Money.isEntered(cents)) return '<span class="b-num is-none">—</span>';
+    return '<span class="b-num' + (cls || '') + '">' + esc(money(cents)) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>';
+  }
+  function renderSheet(h) {
+    var sheet = Budget.month(h, TABLES, CAT(), month);
+    el('month-title').innerHTML = esc(sheet.label) + '<span class="status' + (sheet.status === 'closed' ? ' is-closed' : '') + '" id="month-status">'
+      + (sheet.status === 'closed' ? 'closed ' + esc(shortDate(sheet.closedAt)) : sheet.isFuture ? 'ahead — estimates only' : sheet.isCurrent ? 'open, this month' : 'open, not yet closed') + '</span>';
+    el('rows').innerHTML = sheet.rows.map(function (r) {
+      var open = sheet.status === 'open';
+      var diff = r.differenceCents;
+      var diffCls = !Money.isEntered(diff) ? '' : r.bucket === 'income' ? (diff < 0 ? ' is-over' : diff > 0 ? ' is-under' : '') : (diff > 0 ? ' is-over' : diff < 0 ? ' is-under' : '');
+      var diffText = Money.isEntered(diff) ? (diff > 0 ? '+' : diff < 0 ? '−' : '') + money(Math.abs(diff)) : null;
+      var lines = (r.lines || []).map(function (l) { return esc(l.label) + ' ' + esc(money(l.cents)) + (l.times > 1 ? ' ×' + l.times : ''); });
+      if (r.bucket === 'income' && sheet.status === 'open' && sheet.incomeCostsCents) lines.push('costs of earning it ' + esc(money(sheet.incomeCostsCents)) + (sheet.deductibleCents ? ' (' + esc(money(sheet.deductibleCents)) + ' deductible)' : ''));
+      return '<div class="bucket-row' + (justAdded === r.bucket ? ' just-added' : '') + '" id="bucket-' + r.bucket + '">'
+        + '<span><span class="b-name">' + esc(r.label) + '</span><span class="b-from">' + esc(sheet.status === 'closed' ? 'as closed' : (Money.isEntered(r.estimatedCents) ? 'estimate from ' + r.estFrom : (r.estReason || 'no estimate yet'))) + '</span></span>'
+        + numCell(r.estimatedCents)
+        + numCell(r.actualCents, '', r.revisedCents !== null && r.revisedCents !== undefined ? 'revised ' + money(r.revisedCents) : null)
+        + (diffText ? '<span class="b-num' + diffCls + '">' + esc(diffText) + '</span>' : '<span class="b-num is-none">—</span>')
+        + (lines.length ? '<span class="b-lines">' + lines.join(' · ') + '</span>' : '')
+        + (open ? '<span class="b-acts"><button type="button" class="pill" data-add="' + r.bucket + '">+ ' + esc(ADD_WORDS[r.bucket]) + '</button>'
+            + (r.bucket === 'income' ? '<a class="pill is-quiet" href="income.html#log">Every entry →</a>' : '<a class="pill is-quiet" href="cash-flow.html#log">The log →</a>') + '</span>' : '')
+        + '</div>';
+    }).join('');
+    var why;
+    if (sheet.status === 'closed') why = 'Frozen as it was closed. A late entry logged into this month shows as “revised” beside the actual and changes nothing else. Read it against other months in <a href="variance.html">Estimated vs Actual</a>.';
+    else if (!Budget.closedMonths(h).length) why = 'With no month closed yet, each estimate comes from what Start Here and Cash Flow already hold. Close this month and next month’s estimates start from what actually happened.';
+    else why = 'Estimates come from the last closed month’s actuals unless one was set by hand in Estimated vs Actual. Actuals are what Income and the expense log have for this month so far.';
+    if (sheet.incomeIncomplete && sheet.incomeIncomplete.length) why += ' ' + sheet.incomeIncomplete.length + ' income ' + (sheet.incomeIncomplete.length === 1 ? 'entry' : 'entries') + ' could not be netted: ' + esc(sheet.incomeIncomplete[0].reason);
+    el('sheet-why').innerHTML = why;
+
+    /* Close. */
+    var closeBtn = el('btn-close');
+    if (sheet.status === 'closed') {
+      el('close-title').textContent = sheet.label + ' is closed';
+      el('close-hint').textContent = 'Closed ' + shortDate(sheet.closedAt) + '. It cannot be closed again; the record is append-only.';
+      closeBtn.hidden = true;
+    } else if (sheet.isFuture) {
+      el('close-title').textContent = 'Not yet';
+      el('close-hint').textContent = sheet.label + ' has not started. A month can be closed once it is the current month or has passed.';
+      closeBtn.hidden = true;
+    } else {
+      el('close-title').textContent = 'Close ' + sheet.label;
+      el('close-hint').textContent = 'Freezes the estimated and actual columns side by side as a record. Anything logged into this month afterwards shows as revised, never as a change to the record. ' + (sheet.isCurrent ? 'This month is still running — closing it now records what has landed so far.' : '');
+      closeBtn.hidden = false;
+      closeBtn.textContent = 'Close ' + sheet.label;
+    }
+    justAdded = null;
+  }
+  function renderMonths(h) {
+    var all = Budget.closedMonths(h);
+    el('months-hint').hidden = all.length > 0;
+    el('months-list').innerHTML = all.slice().reverse().map(function (m) {
+      var e = m.estimated.expenses, a = m.actual.expenses;
+      return '<li><span><a href="#" data-month="' + m.id + '">' + esc(m.label) + '</a></span><span>' + (Money.isEntered(a) ? 'spent ' + esc(money(a)) + (Money.isEntered(e) ? ' against ' + esc(money(e)) : '') : '') + (m.actualRevised ? ' · revised' : '') + '</span></li>';
+    }).join('');
+  }
+  el('months-list').addEventListener('click', function (evt) {
+    var a = evt.target.closest('[data-month]');
+    if (!a) return;
+    evt.preventDefault();
+    month = a.getAttribute('data-month');
+    render();
+    el('sheet').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  el('btn-prev').addEventListener('click', function () { month = Budget.shift(month, -1); render(); });
+  el('btn-next').addEventListener('click', function () { month = Budget.shift(month, 1); render(); });
+  el('rows').addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-add]');
+    if (!b) return;
+    var bucket = b.getAttribute('data-add');
+    try { sessionStorage.setItem(RETURN_KEY, JSON.stringify({ month: month, bucket: bucket, y: window.scrollY })); } catch (e) { /* fine */ }
+    location.href = ADD_TARGET[bucket](month);
+  });
+  el('btn-close').addEventListener('click', function () {
+    var h = Spine.getProfile();
+    var payload = Budget.recordPayload(h, TABLES, CAT(), month);
+    if (!payload) return;
+    if (!window.confirm('Close ' + payload.label + '? Estimated and actual are kept side by side as they stand. This cannot be undone from here — a late entry shows as revised.')) return;
+    var r = Spine.closeMonth(payload);
+    var say = el('close-say');
+    say.hidden = false;
+    say.className = 'say' + (r.ok ? ' is-good' : '');
+    say.textContent = r.ok ? payload.label + ' is closed. Next month’s estimates start from its actuals.' : r.reason;
+    render();
+  });
+
+  function shortDate(iso) { var d = new Date(iso); return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    if (!month) month = Budget.nextOpenMonth(h);
+    /* A late entry into a closed month moves only its revised column. */
+    if (Budget.syncRevised(h, TABLES, CAT(), Spine)) h = Spine.getProfile();
+    renderSheet(h);
+    renderMonths(h);
+  }
+
+  /* The way back from an Add: the month and bucket that sent us, the
+     scroll position, and one render's highlight on the row that changed. */
+  (function returned() {
+    var q = /[?&]month=(\d{4}-\d{2})/.exec(location.search);
+    if (q) month = q[1];
+    var raw = null;
+    try { raw = sessionStorage.getItem(RETURN_KEY); } catch (e) { raw = null; }
+    if (!raw) return;
+    try { sessionStorage.removeItem(RETURN_KEY); } catch (e) { /* fine */ }
+    var r = null;
+    try { r = JSON.parse(raw); } catch (e) { r = null; }
+    if (!r) return;
+    month = r.month || month;
+    justAdded = r.bucket || null;
+    window.addEventListener('load', function () {
+      var row = justAdded ? el('bucket-' + justAdded) : null;
+      if (row) row.scrollIntoView({ block: 'center' }); else if (typeof r.y === 'number') window.scrollTo(0, r.y);
+    });
+  })();
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+  Reference.load(['effectiveTaxRates', 'seTax', 'expenseCategories', 'budgetTemplates']).then(function (tables) {
+    TABLES = tables;
+    render();
+    if (!justAdded) jumpToHash();
+  }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error';
+    n.textContent = 'Couldn’t load the tables in data/ (' + err.message + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+  });
+})();
+</script>
+</body>
+</html>

@@ -245,7 +245,7 @@
    */
   function month(household, tables, monthId) {
     var m = monthId || thisMonth();
-    var rows = [], gross = 0, net = 0, tax = 0, costsTotal = 0, incomplete = [];
+    var rows = [], gross = 0, net = 0, tax = 0, costsTotal = 0, takeHome = 0, incomplete = [];
     activeEntries(household).forEach(function (e) {
       var occ = occurrences(e, m);
       if (!occ.length) return;
@@ -256,10 +256,12 @@
       /* Costs are per entry, not per landing: they come off once. */
       var n = one.takeHomeCents * count - one.allCostsCents;
       var t = one.taxCents * count;
-      rows.push({ entry: e, occurrences: occ, grossCents: g, netCents: n, taxCents: t, costsCents: one.allCostsCents, net: one });
-      gross += g; net += n; tax += t; costsTotal += one.allCostsCents;
+      rows.push({ entry: e, occurrences: occ, grossCents: g, netCents: n, taxCents: t, takeHomeCents: one.takeHomeCents * count, costsCents: one.allCostsCents, net: one });
+      gross += g; net += n; tax += t; costsTotal += one.allCostsCents; takeHome += one.takeHomeCents * count;
     });
-    return Money.ok(net, { month: m, label: Schema.monthLabel(m), grossCents: gross, netCents: net, taxCents: tax, costsCents: costsTotal, rows: rows, incomplete: incomplete, count: rows.length });
+    /* takeHomeCents is gross less tax — what the budget's Income bucket
+       counts; the costs of earning it are the expense side's business. */
+    return Money.ok(net, { month: m, label: Schema.monthLabel(m), grossCents: gross, netCents: net, takeHomeCents: takeHome, taxCents: tax, costsCents: costsTotal, rows: rows, incomplete: incomplete, count: rows.length });
   }
 
   /* ---- The year, by method — what the Tax room reads ------------------------
