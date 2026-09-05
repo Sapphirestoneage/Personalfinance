@@ -57,6 +57,7 @@
   .pred { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: center; padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); font-size: var(--text-sm); }
   .pred:last-child { border-bottom: 0; }
   .pred .nm { font-weight: 600; }
+  .pred .tag.bad { color: var(--color-critical); }
   .pred .meta { font-size: var(--text-xs); color: var(--color-text-faint); }
   .tag { display: inline-block; font-size: 9px; text-transform: uppercase; letter-spacing: .06em; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); padding: 1px var(--space-2); color: var(--color-text-muted); }
   select, button.btn { font-family: var(--font-body); font-size: var(--text-sm); }
@@ -116,6 +117,10 @@
       <div id="pred-list"></div>
     </div>
   </div>
+
+  <h2>What gets through your armour</h2>
+  <p class="note" id="armour-intro"></p>
+  <div id="armour-list"></div>
 
   <h2>Run an encounter</h2>
   <p class="note">Expected damage, not a roll — the average of what this creature does, against
@@ -257,6 +262,26 @@
     return row && row.maxWeeks !== null ? row.maxWeeks : 0;
   }
 
+  /* The AC panel's answer to "what is this number for" (DD-019). */
+  function renderArmour() {
+    var g = Enc.armourGaps(SHEET, TABLES);
+    if (!g.ready) {
+      el('armour-intro').textContent = g.reason;
+      el('armour-list').innerHTML = '';
+      return;
+    }
+    el('armour-intro').innerHTML = 'Your Armour Class is <b>' + esc(g.ac) + '</b>. ' + g.rows.length
+      + ' creatures attack it rather than your judgment — bills, lawsuits, lost streams — and '
+      + (g.landing === 0 ? 'none of them' : g.landing === g.rows.length ? 'all of them' : g.landing + ' of them')
+      + ' would land more often than not. Insurance is the only thing that moves this list.';
+    el('armour-list').innerHTML = g.rows.map(function (x) {
+      return '<div class="pred"><span><span class="nm">' + esc(x.creature.name) + '</span>'
+        + '<span class="meta"><br/>attacks at +' + esc(x.attackBonus) + ' · ' + esc(x.creature.attackType)
+        + ' · tier ' + esc(x.creature.tier) + '</span></span>'
+        + '<span class="tag' + (x.chance >= 0.5 ? ' bad' : '') + '">' + Math.round(x.chance * 100) + '%</span></div>';
+    }).join('');
+  }
+
   function renderResult(r) {
     LAST = r;
     el('btn-log').hidden = false;
@@ -269,17 +294,25 @@
           ? 'It would put you at zero.'
           : 'It lands ' + pct(r.hitChance) + ' of the time.';
 
-    var figs = [
+    /* Two ways to get hurt (DD-019): an attack roll against your AC, or a
+       save. The figures say which, because the number means different things. */
+    var figs = r.resolution === 'attack' ? [
+      ['It attacks', '+' + (r.attackBonus === null ? '?' : r.attackBonus) + ' vs AC'],
+      ['Your AC', r.armorClass === null ? '—' : r.armorClass],
+      ['Chance it lands', r.hitChance === null ? '—' : pct(r.hitChance)],
+    ] : [
       ['Target save', r.targetSave ? r.targetSave + ' ' + (r.modifier === null ? '—' : sign(r.modifier)) : '—'],
       ['DC', r.dc === null ? '—' : r.dc],
       ['Chance it lands', r.hitChance === null ? '—' : pct(r.hitChance)],
-      ['Damage', r.damageWeeks + ' wk' + (r.perPeriod ? '/' + r.perPeriod : '')],
-      ['HP after', r.hpAfter === null ? '—' : r.hpBefore + ' → ' + r.hpAfter]
     ];
-    /* §9.7 moves this number, so it has to say so. A chance that shifts with no
-       stated reason is worse than no chance at all. */
-    if (r.exhaustionPenalty > 0) {
+    figs.push(['Damage', r.damageWeeks + ' wk' + (r.perPeriod ? '/' + r.perPeriod : '')]);
+    figs.push(['HP after', r.hpAfter === null ? '—' : r.hpBefore + ' → ' + r.hpAfter]);
+    /* Anything that moved the chance is named, or the number is a mystery. */
+    if (r.resolution === 'save' && r.exhaustionPenalty > 0) {
       figs.splice(1, 0, ['Exhaustion', r.exhaustionLabel + ' · −' + r.exhaustionPenalty]);
+    }
+    if (r.disadvantage) {
+      figs.splice(1, 0, ['Disadvantage', r.disadvantageFrom]);
     }
 
     var blocks = r.blockedBy.map(function (b) {
@@ -294,7 +327,18 @@
 
     el('result').innerHTML = '<div class="result ' + cls + '">'
       + '<p class="verdict">' + esc(verdict) + '</p>'
-      + (r.advantage ? '<p class="note">You roll this save with advantage.</p>' : '')
+      + (r.resolution === 'attack' && r.hitChance === null && !r.negated
+          ? '<p class="note">This one attacks your Armour Class, and your AC is not scored yet — '
+            + 'answer your cover on the sheet and it will be.</p>' : '')
+      + (r.advantage && r.resolution === 'save' && !r.disadvantage ? '<p class="note">You roll this save with advantage.</p>' : '')
+      + (r.advantage && r.resolution === 'attack' ? '<p class="note">What you hold makes it attack at a disadvantage.</p>' : '')
+      + (r.advantage && r.disadvantage ? '<p class="note">Advantage from what you hold and disadvantage from your debt cancel out, as they do in 5e.</p>' : '')
+      + (r.disadvantage && !r.advantage
+          ? '<p class="note"><b>' + esc(r.disadvantageFrom) + '</b> gives you disadvantage on this save — the '
+            + 'rulebook\'s own rule, and the half of Debt Burden that makes debt scary.</p>' : '')
+      + (r.resolution === 'attack'
+          ? '<p class="note faint">A bill, not a pitch: it comes at your armour, and insurance is what stops it. Exhaustion does not lower your cover, so it does not apply here.</p>'
+          : '')
       + (r.exhaustionPenalty > 0
           ? '<p class="note">You are <b>' + esc(r.exhaustionLabel) + '</b> — under '
             + esc(String(r.exhaustionPenalty === 6 ? 0 : nextBandWeeks(r.exhaustion)))
@@ -387,6 +431,7 @@
     });
 
     renderMap();
+    renderArmour();
     renderLog();
   }
 

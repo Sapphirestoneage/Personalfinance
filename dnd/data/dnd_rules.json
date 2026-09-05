@@ -340,32 +340,44 @@
     {
       "level": 0,
       "trigger": "No burden",
-      "effect": "—"
+      "effect": "—",
+      "saveDisadvantage": []
     },
     {
       "level": 1,
       "trigger": "Minimum payments only",
-      "effect": "Disadvantage on CON saves against lifestyle inflation — little room to save aggressively while servicing debt"
+      "effect": "Disadvantage on CON saves against lifestyle inflation — little room to save aggressively while servicing debt",
+      "saveDisadvantage": [
+        "CON"
+      ]
     },
     {
       "level": 2,
       "trigger": "High-interest debt present",
-      "effect": "Max HP reduced by 25% (interest eats directly into runway); locks multiclassing into investing classes per §5A"
+      "effect": "Max HP reduced by 25% (interest eats directly into runway); locks multiclassing into investing classes per §5A",
+      "saveDisadvantage": []
     },
     {
       "level": 3,
       "trigger": "Multiple high-interest balances straining the budget",
-      "effect": "AC reduced; disadvantage on DEX saves"
+      "effect": "AC reduced; disadvantage on DEX saves",
+      "saveDisadvantage": [
+        "DEX"
+      ]
     },
     {
       "level": 4,
       "trigger": "Missed payments or collections",
-      "effect": "Credit damage — AC further reduced; disadvantage on any check involving borrowing"
+      "effect": "Credit damage — AC further reduced; disadvantage on any check involving borrowing",
+      "saveDisadvantage": [
+        "DEX"
+      ]
     },
     {
       "level": 5,
       "trigger": "Insolvency spiral",
-      "effect": "Merges directly into the Death Saves mechanic (§3A) as the terminal state"
+      "effect": "Merges directly into the Death Saves mechanic (§3A) as the terminal state",
+      "saveDisadvantage": []
     }
   ],
   "triageTechniques": [
@@ -547,7 +559,8 @@
       "lair": [
         "A peer group earning more than you",
         "A raise you have not yet assigned a job"
-      ]
+      ],
+      "resolution": "save"
     },
     {
       "name": "Payday Loan Wraith",
@@ -576,7 +589,8 @@
       "lair": [
         "No cash at all",
         "A bill due before payday"
-      ]
+      ],
+      "resolution": "save"
     },
     {
       "name": "Subscription Slime",
@@ -607,7 +621,8 @@
         "A card on file you have not looked at in a year",
         "Any free trial that asked for the card up front"
       ],
-      "origin": "extension"
+      "origin": "extension",
+      "resolution": "save"
     },
     {
       "name": "Overdraft Gremlin",
@@ -638,7 +653,8 @@
         "A balance you track by feel rather than by number",
         "Any account where the buffer and the bill share a due date"
       ],
-      "origin": "extension"
+      "origin": "extension",
+      "resolution": "attack"
     },
     {
       "name": "Buy-Now-Pay-Later Sprite",
@@ -669,7 +685,8 @@
         "A checkout page with a smaller number next to the real one",
         "Anything you would not buy twice"
       ],
-      "origin": "extension"
+      "origin": "extension",
+      "resolution": "save"
     },
     {
       "name": "Commission Churn-Wraith",
@@ -698,7 +715,8 @@
       "lair": [
         "Advice paid for by the product",
         "A workplace seminar"
-      ]
+      ],
+      "resolution": "save"
     },
     {
       "name": "Timeshare Charm-Caster",
@@ -728,7 +746,8 @@
         "A free holiday",
         "A free dinner",
         "Ninety minutes of your time"
-      ]
+      ],
+      "resolution": "save"
     },
     {
       "name": "MLM Cultist",
@@ -757,7 +776,8 @@
       "lair": [
         "A friend's living room",
         "A group chat you cannot leave"
-      ]
+      ],
+      "resolution": "save"
     },
     {
       "name": "Well-Meaning Family Familiar",
@@ -787,7 +807,8 @@
       "lair": [
         "A family occasion",
         "A crisis that is genuinely real"
-      ]
+      ],
+      "resolution": "save"
     },
     {
       "name": "Wage-Stagnation Wraith",
@@ -818,7 +839,8 @@
         "A job you have held longer than your last raise",
         "Any employer who prices new hires above their own staff"
       ],
-      "origin": "extension"
+      "origin": "extension",
+      "resolution": "save"
     },
     {
       "name": "Meme-Stock Swarm",
@@ -848,7 +870,8 @@
         "A group chat where everyone is up",
         "Any chart posted without an axis"
       ],
-      "origin": "extension"
+      "origin": "extension",
+      "resolution": "save"
     },
     {
       "name": "Crypto Siren",
@@ -878,7 +901,8 @@
         "A returns figure quoted without a time period",
         "Anyone who found it early and will tell you so"
       ],
-      "origin": "extension"
+      "origin": "extension",
+      "resolution": "save"
     },
     {
       "name": "Whole-Life-Insurance Basilisk",
@@ -908,7 +932,8 @@
         "A new baby",
         "A new mortgage",
         "A friend who just got licensed"
-      ]
+      ],
+      "resolution": "save"
     },
     {
       "name": "Identity Thief",
@@ -928,16 +953,13 @@
         {
           "id": "deepReserve",
           "effect": "halve"
-        },
-        {
-          "id": "emergencyFund",
-          "effect": "advantage"
         }
       ],
       "lair": [
         "A reused password",
         "A public network"
-      ]
+      ],
+      "resolution": "attack"
     },
     {
       "name": "Day-Trading Leech",
@@ -968,7 +990,8 @@
         "An app that congratulates you for trading",
         "Any strategy that needs you to be available at 09:30"
       ],
-      "origin": "extension"
+      "origin": "extension",
+      "resolution": "save"
     },
     {
       "name": "Lifestyle-Creep Hydra",
@@ -999,7 +1022,8 @@
         "A raise that reached the current account before it reached a plan",
         "Any upgrade you would find difficult to reverse"
       ],
-      "origin": "extension"
+      "origin": "extension",
+      "resolution": "save"
     },
     {
       "name": "The Layoff Reaper",
@@ -1029,7 +1053,8 @@
         "Any single employer providing most of a household's income",
         "A quarter where your team's costs are discussed more than its output"
       ],
-      "origin": "extension"
+      "origin": "extension",
+      "resolution": "attack"
     },
     {
       "name": "Concentration Golem",
@@ -1059,7 +1084,8 @@
         "Equity compensation that was never sold down",
         "Any position you would not buy today at today's price"
       ],
-      "origin": "extension"
+      "origin": "extension",
+      "resolution": "save"
     }
   ],
   "hazards": [
@@ -1091,7 +1117,8 @@
         "Any offer that needs a card to give you something free",
         "A renewal date you did not write down"
       ],
-      "origin": "extension"
+      "origin": "extension",
+      "resolution": "save"
     },
     {
       "name": "Inflation Wraith",
@@ -1120,7 +1147,8 @@
       ],
       "lair": [
         "Cash held as a plan rather than a buffer"
-      ]
+      ],
+      "resolution": "save"
     },
     {
       "name": "The Sudden Rent Spike",
@@ -1139,10 +1167,6 @@
       "tier": "II",
       "blockedBy": [
         {
-          "id": "emergencyFund",
-          "effect": "halve"
-        },
-        {
           "id": "scenarioForesight",
           "effect": "advantage"
         }
@@ -1151,7 +1175,8 @@
         "A lease inside its final ninety days",
         "Any market where moving costs more than staying"
       ],
-      "origin": "extension"
+      "origin": "extension",
+      "resolution": "attack"
     },
     {
       "name": "Divorce Dragon",
@@ -1175,7 +1200,8 @@
       ],
       "lair": [
         "Money never discussed out loud"
-      ]
+      ],
+      "resolution": "save"
     },
     {
       "name": "The Dual-Income Collapse",
@@ -1203,7 +1229,8 @@
       ],
       "lair": [
         "Fixed costs sized to both incomes"
-      ]
+      ],
+      "resolution": "attack"
     },
     {
       "name": "The Sudden Ability Drain",
@@ -1219,15 +1246,11 @@
       },
       "attackType": "fear",
       "tier": "III",
-      "blockedBy": [
-        {
-          "id": "disabilityInsurance",
-          "effect": "halve"
-        }
-      ],
+      "blockedBy": [],
       "lair": [
         "One income, one body"
-      ]
+      ],
+      "resolution": "attack"
     },
     {
       "name": "The Golden Handcuffs",
@@ -1257,7 +1280,8 @@
         "Any vesting schedule longer than your patience",
         "A role you describe by its compensation before its work"
       ],
-      "origin": "extension"
+      "origin": "extension",
+      "resolution": "save"
     },
     {
       "name": "The Care-Giving Toll",
@@ -1288,7 +1312,8 @@
         "A parent whose plan is 'we will work it out'",
         "Any family where one person is nearest and therefore chosen"
       ],
-      "origin": "extension"
+      "origin": "extension",
+      "resolution": "attack"
     },
     {
       "name": "Market Crash Elemental",
@@ -1317,7 +1342,8 @@
       "lair": [
         "A portfolio you check daily",
         "A headline"
-      ]
+      ],
+      "resolution": "save"
     },
     {
       "name": "Medical Bankruptcy Behemoth",
@@ -1335,14 +1361,6 @@
       "tier": "IV",
       "blockedBy": [
         {
-          "id": "healthInsurance",
-          "effect": "halve"
-        },
-        {
-          "id": "umbrella",
-          "effect": "advantage"
-        },
-        {
           "id": "deepReserve",
           "effect": "advantage"
         }
@@ -1350,7 +1368,8 @@
       "lair": [
         "No coverage",
         "A high deductible and no cash"
-      ]
+      ],
+      "resolution": "attack"
     },
     {
       "name": "Sequence-of-Returns Serpent",
@@ -1380,7 +1399,8 @@
         "The first five years of drawing down rather than paying in",
         "Any plan that assumed an average would arrive on average"
       ],
-      "origin": "extension"
+      "origin": "extension",
+      "resolution": "save"
     }
   ],
   "revenueGuild": {
@@ -1685,7 +1705,39 @@
         "blurb": "Moves you by what you stand to gain."
       }
     ],
-    "tierNote": "BRIEF §9.4. The four tiers are the rulebook's level bands read as stages of play: what this part of the game is about, what it feels like, and what ends it. The level ranges are the rulebook's; the prose is written for this build and marked origin: extension on each tier."
+    "tierNote": "BRIEF §9.4. The four tiers are the rulebook's level bands read as stages of play: what this part of the game is about, what it feels like, and what ends it. The level ranges are the rulebook's; the prose is written for this build and marked origin: extension on each tier.",
+    "resolutionNote": "DD-019. Two ways to get hurt, as in 5e. resolution:'attack' — a bill, a lawsuit, a lost income stream — rolls d20 + a CR-based bonus against your Armour Class, so insurance does its real job. resolution:'save' — a pitch, a panic, a temptation — goes around armour and targets a saving throw, because no policy stops you buying a timeshare. Armour-layer blockers (health, disability, umbrella, emergency fund) are removed from attack creatures' blockedBy so they are never counted twice; a negate immunity is kept because immunity is not armour.",
+    "crToAttackBonus": [
+      {
+        "maxCr": 3,
+        "bonus": 3
+      },
+      {
+        "maxCr": 4,
+        "bonus": 5
+      },
+      {
+        "maxCr": 7,
+        "bonus": 6
+      },
+      {
+        "maxCr": 10,
+        "bonus": 7
+      },
+      {
+        "maxCr": 15,
+        "bonus": 8
+      },
+      {
+        "maxCr": 20,
+        "bonus": 9
+      },
+      {
+        "maxCr": null,
+        "bonus": 10
+      }
+    ],
+    "attackBonusNote": "The shape of the DMG's monster-statistics-by-CR attack-bonus column: +3 through CR 3, +5 at 4, +6 at 5-7, +7 at 8-10, +8 at 11-15, +9 at 16-20. A convention, like the DC ladder."
   },
   "blockers": {
     "emergencyFund": {
@@ -1859,5 +1911,6 @@
     "dcPerExhaustionLevel": 2,
     "shortRestNote": "One pay cycle. Surplus converts to runway at one week of expenses per week of HP.",
     "potionNote": "A windfall heals immediately and needs no rest. What it heals is its size divided by one week of expenses."
-  }
+  },
+  "debtBurdenNote": "Rulebook §3A. saveDisadvantage is the rulebook's own 'disadvantage on X saves' at each level, written as data so the encounter engine applies it (DD-019). Level 4's 'any check involving borrowing' has no check to attach to yet and keeps DEX from level 3."
 }

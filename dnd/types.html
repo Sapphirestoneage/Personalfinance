@@ -182,6 +182,10 @@
             + (!d.known
                 ? '<br/><span class="faint">None of these are scored yet, so this is unknown '
                   + 'rather than safe.</span>' : '')
+            + (t.attacks
+                ? '<br/><span class="faint">' + t.attacks + ' of these ' + (t.attacks === 1 ? 'is a bill that attacks' : 'are bills that attack')
+                  + ' your <b>Armour Class</b> instead — insurance, not judgment, is what stops '
+                  + (t.attacks === 1 ? 'it' : 'those') + '.</span>' : '')
             + (d.hitsAll && d.worstOverall
                 ? '<br/><span class="faint">' + d.hitsAll + ' of these '
                   + (d.hitsAll === 1 ? 'hits' : 'hit') + ' <b>every</b> save at once. '

@@ -5710,3 +5710,84 @@ share text), `dnd/sheet.html` (bought/superseded tag), `dnd/card.html`
 Result before showing it as measured, and never write a bought STR/DEX/CON into
 anything money owns. If you add a builder method, add it to `ABILITY_METHODS` or
 its bought scores will be ignored for those three.
+
+---
+
+## DD-019 — Two ways to get hurt: bills attack your armour, pitches go around it
+
+The repo owner, reviewing the tool as a D&D player: *"isn't insurance AC?"* Yes —
+that is exactly the rulebook's design (§3A: emergency fund is the shield,
+health insurance is armour, disability is heavier armour, umbrella is full
+plate) and it is a good one. The problem was the other way round: **nothing ever
+attacked your AC.** Every creature forced a saving throw, so Armour Class was
+computed, printed as 17, and never rolled against — while the same insurance was
+counted a second time as a *blocker* ("health insurance halves the Behemoth"),
+because the encounter engine had no front door for armour and used a side one.
+
+### The split
+
+5e has two ways to get hurt, and they map onto money cleanly:
+
+- **An attack roll against AC.** Something physical comes at you and your
+  armour decides whether it lands. A hospital bill, a lawsuit, a stolen
+  identity, a lost income stream. **Insurance is armour against these.** Eight
+  creatures now carry `resolution: 'attack'` — the Medical Bankruptcy Behemoth,
+  Identity Thief, Layoff Reaper, Dual-Income Collapse, Sudden Rent Spike,
+  Care-Giving Toll, Overdraft Gremlin and the Sudden Ability Drain.
+- **A saving throw.** Something goes *around* your armour and targets your
+  judgment. The timeshare pitch, the crypto siren, the MLM cultist. **No policy
+  stops you buying a timeshare**, so your armour is correctly irrelevant. The
+  other twenty-one stay `resolution: 'save'`.
+
+The to-hit bonus comes from CR, on a ladder in data with the shape of the DMG's
+monster-statistics table (+3 through CR 3, +5 at 4, +6 at 5–7, +7 at 8–10, +8 at
+11–15, +9 at 16–20): the attack-roll twin of the DC ladder, and a convention in
+the same way. The Behemoth at +8 lands 90% against AC 11, 60% against 17, 20%
+against 25. Armour finally moves a number.
+
+### Counted once
+
+Armour-layer blockers — health, disability, umbrella, emergency fund — were
+**removed from the attack creatures' `blockedBy`** so they act through AC and
+nowhere else. The exception is `negate`: "you have three months of cash, so the
+Overdraft Gremlin has nothing to grab" is immunity, not armour, and stays. A
+test asserts no attack creature carries an armour layer as a non-negate blocker.
+
+A blocker that would give *you* advantage on a save instead gives the *attacker*
+disadvantage on an attack — same value, applied to its roll. Exhaustion is a
+judgment penalty and does not lower your cover, so it does not apply to attacks;
+a test holds that.
+
+### Debt Burden's disadvantage, applied at last
+
+The rulebook says level 1 gives disadvantage on CON saves and level 3 on DEX
+saves. The sheet printed that sentence and the engine never read it — half the
+mechanic, and the half that makes debt scary. Each burden row now carries
+`saveDisadvantage` as data and `run()` applies it to the targeted save. 5e's
+cancel rule holds: advantage from something you hold and disadvantage from your
+debt are together neither, and the result says so.
+
+### What AC is for, said on the sheet
+
+`armourGaps()` lists the attackers with the chance each reaches your AC. The
+sheet prints "8 creatures attack this — bills, lawsuits, lost streams. 7 of them
+would land more often than not. Only cover moves it." under the number, and the
+encounter room has the full list. That is the sentence the AC panel could never
+say before. DM mode takes an AC for the target; the bestiary's Save column reads
+"attacks AC" for the eight; the type chart says how many of a type are bills.
+
+### Compatibility note
+
+**Stored shape:** nothing. `resolution` is reference data on creatures;
+`saveDisadvantage` is reference data on burden rows. Encounter log rows are
+unchanged in shape.
+
+**Rooms updated:** `dnd/data/dnd_rules.json`, `dnd/engines/encounter.js`
+(`attackBonusFor`, `armourGaps`, the attack branch and disadvantage in `run()`,
+`attacks` on `typeChart` rows), `dnd/encounter.html`, `dnd/dm.html`,
+`dnd/sheet.html`, `dnd/bestiary.html`, `dnd/types.html`.
+
+**Before writing any of these from a new room:** a creature you add must say
+`resolution`, and if it attacks, must not carry an armour-layer blocker except
+as `negate`. Check `r.resolution` before reading `r.dc` or `r.attackBonus` —
+only one of them means anything for a given result.
