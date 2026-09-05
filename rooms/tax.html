@@ -19,7 +19,9 @@
              traditional IRA: pre-tax money beyond the workplace plan) and
              withheldAnnualCents (withheld or paid in estimates this year).
              Nothing else edits those. It does not touch income.
-  3. CALLS   engines/taxroom.js, which assembles engines/tax.js
+  3. CALLS   engines/taxroom.js — which reads the ledger's year by method
+             (engines/ledger.js, D-128) when dated income entries recur,
+             else the sources — and assembles engines/tax.js
              (Tax.estimate: the bracket walk, FICA, the state schedule, SE
              tax through engines/selfemployed.js), Reference.marginalBracket
              for the room left in the bracket, and Tier0's effective-rate
@@ -118,6 +120,8 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/selfemployed.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/ledger.js"></script>
 <script src="../engines/tax.js"></script>
 <script src="../engines/taxroom.js"></script>
 <script src="../engines/hourly.js"></script>

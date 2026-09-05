@@ -78,6 +78,7 @@ const TABLES = {
   values: require(path.join(ROOT, 'data/values.json')),
   hassleDefaults: require(path.join(ROOT, 'data/hassle_defaults.json')),
   ratioBenchmarks: require(path.join(ROOT, 'data/ratio_benchmarks.json')),
+  ratioExplainers: require(path.join(ROOT, 'data/ratio_explainers.json')),
   irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json')),
   accessRules: require(path.join(ROOT, 'data/access_rules.json')),
   confidenceWeights: require(path.join(ROOT, 'data/confidence_weights.json')),
@@ -823,6 +824,42 @@ function threeDebtHousehold() {
   const r = Debt.simulate(noRate, RULES, {});
   check('a rateless debt blocks the simulation', r.status, 'incomplete');
   checkTrue('and the reason names the debt', /Mystery loan/.test(r.reason), r.reason);
+
+  /* -- Family loans, no interest, set aside, dates (D-124) ---------------- */
+  const inTwoYears = (() => { const d = new Date(); d.setUTCFullYear(d.getUTCFullYear() + 2); return d.toISOString().slice(0, 10); })();
+  const family = Schema.createDebt({ id: 'mum', label: 'Mum, for the car', balanceCents: 240000, type: 'family', interestFree: true, rate: 0, dueOn: inTwoYears, ownerIds: ['P'] });
+  check('a family loan defaults to not archived', family.archived, false);
+  check('interest-free reads as a 0 rate', Debt.effectiveRate(family), 0);
+  check('a debt with neither rate nor the flag has no rate', Debt.effectiveRate(Schema.createDebt({})), null);
+  const famMin = Debt.minimumPaymentCents(family, RULES);
+  checkTrue('the minimum comes from the due date', Money.isOk(famMin) && famMin.derived === true);
+  check('and is the balance over the months left', famMin.value, Math.ceil(240000 / Schema.monthsUntil(inTwoYears).value));
+  check('the rule is the family one', famMin.ruleId, 'family_balance_over_months_to_due');
+  const undated = Debt.minimumPaymentCents(Schema.createDebt({ type: 'family', balanceCents: 100000 }), RULES);
+  check('with no due date and no amount it asks for one', undated.status, 'incomplete');
+  checkTrue('and says which', /due back|monthly amount/.test(undated.reason), undated.reason);
+  const famHh = Schema.createHousehold({ people: [Schema.createPerson({ id: 'P', role: 'adult' })], debts: [family] });
+  const famSim = Debt.simulate(famHh, RULES, { strategyId: 'avalanche' });
+  checkTrue('an interest-free family loan simulates', Money.isOk(famSim), famSim.reason);
+  check('and costs no interest', famSim.totalInterestCents, 0);
+  checkTrue('and clears by the due date', famSim.value <= Schema.monthsUntil(inTwoYears).value);
+
+  const parked = Schema.createHousehold({ people: [Schema.createPerson({ id: 'P', role: 'adult' })], debts: [
+    Schema.createDebt({ id: 'a', balanceCents: 50000, rate: 0.2, minPaymentCents: 2500, type: 'credit_card', ownerIds: ['P'] }),
+    Schema.createDebt({ id: 'b', balanceCents: 999900, rate: 0.2, minPaymentCents: 2500, type: 'personal', archived: true, ownerIds: ['P'] })
+  ] });
+  check('an archived debt is not counted in total debt', Schema.totalDebtCents(parked).value, 50000);
+  check('nor in the minimums', Schema.monthlyDebtPaymentsCents(parked).value, 2500);
+  check('and is listed as archived', Schema.archivedDebts(parked).map(d => d.id).join(','), 'b');
+  checkTrue('the plan ignores it', Money.isOk(Debt.simulate(parked, RULES, {})) && Debt.simulate(parked, RULES, {}).startingBalanceCents === 50000);
+  checkTrue('debt.type admits family', Schema.FIELDS['debt.type'].values.includes('family'));
+  ['debt.interestFree', 'debt.archived', 'debt.borrowedOn', 'debt.dueOn'].forEach(k => checkTrue(`${k} is classed`, !!Schema.FIELDS[k]));
+  const debtPage = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
+  checkTrue('the room offers the family type', /'family', 'Borrowed from family/.test(debtPage));
+  checkTrue('the room has the no-interest tick', /data-field="interestFree"/.test(debtPage));
+  checkTrue('the room can set a debt aside and restore it', /data-archive=/.test(debtPage) && /data-restore=/.test(debtPage));
+  checkTrue('the room asks for the two dates', /data-field="borrowedOn"/.test(debtPage) && /data-field="dueOn"/.test(debtPage));
+  checkTrue('the warning under a row is painted live, not rebuilt', /paintLive\(\)/.test(debtPage) && /data-warn=/.test(debtPage));
 
   /* A payment that cannot outrun the interest must be reported, not looped. */
   const underwater = Schema.createHousehold({
@@ -2083,7 +2120,8 @@ section('Room script tags');
     Ratios: 'engines/ratios.js', Credential: 'engines/credential.js',
     Worth: 'engines/worth.js', Windfall: 'engines/windfall.js',
     Runway: 'engines/runway.js', Health: 'engines/health.js',
-    Income: 'engines/income.js'
+    Income: 'engines/income.js', Ledger: 'engines/ledger.js', Budget: 'engines/budget.js', Variance: 'engines/variance.js',
+    Presets: 'engines/presets.js', SkillTree: 'engines/skilltree.js', Exercises: 'engines/exercises.js', Gate: 'shared/gate.js'
   };
   const FILE_TO_GLOBAL = {};
   Object.keys(GLOBAL_TO_FILE).forEach(g => { FILE_TO_GLOBAL[GLOBAL_TO_FILE[g]] = g; });
@@ -2798,6 +2836,30 @@ section('Ratios');
       const b = TABLES.ratioBenchmarks.bands[id];
       return (b.good === null) === (b.warn === null);
     }));
+
+  /* -- Every ratio explains itself: what, why, what moves it, and which
+        owned fields it reads, each of which must resolve. The dashboard and
+        Every Ratio put this behind the ⓘ on the row (shared/explain.js). */
+  const EX = TABLES.ratioExplainers.ratios;
+  RatiosEngine.RATIOS.forEach(r => {
+    const e = EX[r.id];
+    checkTrue(`"${r.id}" has an explainer`, !!e);
+    if (!e) return;
+    ['what', 'why', 'improve'].forEach(k => checkTrue(`"${r.id}" explains ${k}`, typeof e[k] === 'string' && e[k].length > 20));
+    checkTrue(`"${r.id}" names what it looks at`, Array.isArray(e.looksAt) && e.looksAt.length > 0);
+    (e.looksAt || []).forEach(f => checkTrue(`"${r.id}" looks at a field ownership knows: ${f}`, !!Ownership.FIELDS[f]));
+  });
+  Object.keys(EX).forEach(id => checkTrue(`explainer "${id}" names a ratio that exists`, !!RatiosEngine.byId(id)));
+  const explained = RatiosEngine.all(Demo.build(), TABLES).rows;
+  checkTrue('Ratios.all attaches the explainer to each row', explained.every(r => r.explain && r.explain.what));
+  const invested = explained.find(r => r.id === 'investedShare');
+  checkTrue('invested share is over total assets, so it cannot pass 100%', invested.ok && invested.value <= 1);
+  check('and the old net-worth denominator is gone', RatiosEngine.byId('investmentToNetWorth'), null);
+  ['index.html', 'rooms/ratios.html'].forEach(f => {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    checkTrue(`${f} loads shared/explain.js`, /shared\/explain\.js/.test(src));
+    checkTrue(`${f} puts the ⓘ on its ratio rows`, /Explain\.button\(/.test(src) && /Explain\.panel\(/.test(src));
+  });
 
   /* -- Reading mutates nothing -------------------------------------------- */
   const before = JSON.stringify(h);
@@ -5016,6 +5078,9 @@ section('A first month, proposed');
 (function () {
   const cats = require(path.join(ROOT, 'data/expense_categories.json'));
   cats.buckets.forEach(function (b) {
+    /* The costs bucket is logged against income entries, never proposed
+       as a share of a month (D-128). */
+    if (b.id === 'costs') return;
     const total = cats.categories.filter(c => c.bucket === b.id && !c.derivedFrom)
       .reduce((s, c) => s + (c.typicalShareOfBucket || 0), 0);
     check(`${b.id}: typical shares sum to one`, Math.round(total * 1000) / 1000, 1);
@@ -6416,7 +6481,7 @@ section('The ratios T3 unlocked');
 
   check('every new band is in the table', ['incomeConcentration', 'shadowRunway', 'worstPlausibleYearCoverage', 'lifestyleInflation', 'fiDate']
     .every(id => TABLES.ratioBenchmarks.bands[id]), true);
-  check('the bands table moved to 1.3 (withdrawal rate, D-096)', TABLES.ratioBenchmarks.version, '1.3');
+  checkTrue('the bands table moved past 1.3 (withdrawal rate, D-096; invested share, D-123)', parseFloat(TABLES.ratioBenchmarks.version) >= 1.3);
 })();
 
 section('Fixed lines, the floor, and cuttability');
@@ -7157,14 +7222,16 @@ section('The Skill Stacker: the catalogue, and the engine on the demo');
   ['enter-the-facts', 'name-your-debt', 'starter-fund'].forEach(id => checkTrue(`… including ${id}`, v.verified.includes(id)));
   checkTrue('capture-the-match is NOT proven: Robin leaves match on the table', !v.verified.includes('capture-the-match'));
   check('a verified skill records who said so', v.skills['starter-fund'].verifiedBy, 'household');
-  h.skills = v.skills;
+  check('… and done lives in the tree, by proof (D-131)', v.skillTree.state['starter-fund'].state + '/' + v.skillTree.state['starter-fund'].by, 'done/proof');
+  h.skills = v.skills; h.skillTree = v.skillTree;
   check('verifying again changes nothing', Skills.verifyOnce(h, T, day).verified.length, 0);
+  check('the Stacker reads done from the tree', Skills.state(h, Skills.byId(T, 'starter-fund')), 'done');
   (function () {
     const poorer = JSON.parse(JSON.stringify(h));
     poorer.assets[0].valueCents = 100000;                    /* $1,000 < the $2,500 deductible */
     const r = Skills.verifyOnce(poorer, T, day);
     checkTrue('a fact that stops holding un-marks the skill it proved', r.reverted.includes('starter-fund'));
-    poorer.skills['name-your-debt'].verifiedBy = 'self';
+    poorer.skillTree.state['name-your-debt'].by = 'self';
     poorer.meta.hasDebt = false; poorer.debts = [];
     checkTrue('but a skill marked done by hand stays done', !Skills.verifyOnce(poorer, T, day).reverted.includes('name-your-debt'));
   })();
@@ -8172,6 +8239,99 @@ section('LATER.md, built (D-100): the log across tabs, worded labels, the defaul
     const page = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
     return Object.keys(tool.OPENS).every(k => new RegExp(k + ": \\['" + tool.OPENS[k] + "'").test(page));
   })());
+})();
+
+section('The ledger (D-128): income entries, the expense log, closed months');
+(function () {
+  /* Constructors. */
+  const gift = Schema.createIncomeEntry({ kind: 'gift', amountCents: 50000, taxable: true, taxMethod: 'w2', costs: [{ amountCents: 1 }] });
+  check('a gift is never taxable, whatever the form says', gift.taxable + '/' + gift.taxMethod, 'false/none');
+  check('and carries no costs', gift.costs.length, 0);
+  const se = Schema.createIncomeEntry({ kind: 'se', amountCents: 200000, frequency: 'once', receivedOn: '2026-09-10', costs: [{ label: 'Miles', amountCents: 20000, category: 'mileage' }, { amountCents: 500, category: 'nonsense' }] });
+  check('1099 nets by self-employment tax', se.taxMethod, 'se');
+  check('its costs are kept, deductible by default, with an unknown category read as other', se.costs.length + '/' + se.costs[0].deductible + '/' + se.costs[1].category, '2/true/other');
+  ['w2', 'bonus', 'dividend', 'other'].forEach(k => check(`${k} carries no costs`, Schema.createIncomeEntry({ kind: k, costs: [{ amountCents: 1 }] }).costs.length, 0));
+  ['se', 'side', 'rental'].forEach(k => checkTrue(`${k} may carry costs`, Schema.costsAllowed(k)));
+  check('an unknown kind is other', Schema.createIncomeEntry({ kind: 'lottery' }).kind, 'other');
+  check('an unknown frequency is once', Schema.createIncomeEntry({ frequency: 'daily' }).frequency, 'once');
+  check('untaxable other nets by nothing', Schema.createIncomeEntry({ kind: 'other', taxable: false }).taxMethod, 'none');
+  check('active and shown by default', se.active + '/' + se.hidden, 'true/false');
+  check('the nine kinds, unemployment among them', Schema.INCOME_KINDS.join(','), 'w2,se,bonus,gift,side,dividend,rental,unemployment,other');
+  check('taxed how: exactly four, no catch-all', Schema.TAX_METHODS.join(','), 'w2,se,unemployment,none');
+  const ue = Schema.createIncomeEntry({ kind: 'unemployment', amountCents: 60000, frequency: 'weekly' });
+  check('unemployment is taxable, owed, and not self-employment', ue.taxable + '/' + ue.taxMethod + '/' + ue.costs.length, 'true/unemployment/0');
+  check('a method of none reads as not taxable', Schema.createIncomeEntry({ kind: 'other', taxMethod: 'none' }).taxable, false);
+  /* The three paths of an expense (D-129). */
+  const rb = Schema.createExpenseEntry({ categoryId: 'subscriptions', amountCents: 1599, reimbursableFrom: 'Sam', deductible: true, linkedIncomeId: 'in1', produced: 'reimbursable' });
+  check('a reimbursable expense is its own path, with no link', rb.produced + '/' + rb.linkedIncomeId, 'reimbursable/null');
+  check('… never deductible, whatever the form says', rb.deductible, false);
+  check('… pending, expecting the amount back by default', rb.reimbursementStatus + '/' + rb.expectedAmountCents + '/' + rb.reimbursableFrom, 'pending/1599/Sam');
+  check('a link makes it linked', Schema.createExpenseEntry({ linkedIncomeId: 'in1' }).produced, 'linked');
+  check('nothing makes it personal', Schema.createExpenseEntry({ categoryId: 'x' }).produced, 'personal');
+  check('a status alone makes it reimbursable', Schema.createExpenseEntry({ amountCents: 500, reimbursementStatus: 'received', dateReceived: '2026-10-02' }).produced + '/' + Schema.createExpenseEntry({ amountCents: 500, reimbursementStatus: 'received', dateReceived: '2026-10-02' }).dateReceived, 'reimbursable/2026-10-02');
+  check('a pending one has no received date', Schema.createExpenseEntry({ amountCents: 500, produced: 'reimbursable', dateReceived: '2026-10-02' }).dateReceived, null);
+  check('the five frequencies', Schema.INCOME_FREQUENCIES.join(','), 'once,weekly,fortnightly,monthly,annual');
+
+  /* The hard rule, at the data layer. */
+  const personal = Schema.createExpenseEntry({ categoryId: 'groceries', amountCents: 100, deductible: true });
+  check('a personal expense cannot be deductible, whatever the form says', personal.deductible, false);
+  const linked = Schema.createExpenseEntry({ categoryId: 'mileage', amountCents: 100, linkedIncomeId: se.id, deductible: true });
+  check('a linked expense can be', linked.deductible, true);
+  check('a linked expense is not deductible until asked', Schema.createExpenseEntry({ linkedIncomeId: se.id }).deductible, false);
+  check('an empty link is no link', Schema.createExpenseEntry({ linkedIncomeId: '', deductible: true }).linkedIncomeId + '/' + Schema.createExpenseEntry({ linkedIncomeId: '' }).deductible, 'null/false');
+  check('an older entry reads as active and shown', Schema.createExpenseEntry({ categoryId: 'x' }).active + '/' + Schema.createExpenseEntry({ categoryId: 'x' }).hidden, 'true/false');
+  const S2 = require(path.join(ROOT, 'shared/spine-v2.js'));
+  S2.reset();
+  S2.upsertExpenseEntry({ id: 'x', categoryId: 'groceries', amountCents: 5, deductible: true });
+  check('the spine enforces it on write too', S2.getProfile().expenses.entries[0].deductible, false);
+  S2.upsertExpenseEntry({ id: 'x', linkedIncomeId: 'in1', deductible: true });
+  check('and lets a link through', S2.getProfile().expenses.entries[0].deductible, true);
+  S2.upsertExpenseEntry({ id: 'x', linkedIncomeId: null });
+  check('unlinking drops the deduction with it', S2.getProfile().expenses.entries[0].deductible, false);
+  S2.upsertExpenseEntry({ id: 'r', categoryId: 'subscriptions', amountCents: 1599, produced: 'reimbursable', reimbursableFrom: 'Sam', date: '2026-09-20', source: 'log', deductible: true });
+  check('a reimbursable expense through the spine is pending and not deductible', S2.getProfile().expenses.entries[1].reimbursementStatus + '/' + S2.getProfile().expenses.entries[1].deductible, 'pending/false');
+  S2.markReimbursed('r', { dateReceived: '2026-10-03' });
+  const paid = S2.getProfile().expenses.entries[1];
+  check('marked received: the date and the amount that came back', paid.reimbursementStatus + '/' + paid.dateReceived + '/' + paid.receivedAmountCents, 'received/2026-10-03/1599');
+  check('… the original expense keeps its own date', paid.date, '2026-09-20');
+  check('… with a worded label', S2.peekUndo().label, 'Paid back: subscriptions');
+  check('a personal expense cannot be marked reimbursed', S2.markReimbursed('x', {}), null);
+
+  /* Income entries through the spine. */
+  S2.upsertIncomeEntry({ id: 'in1', kind: 'se', amountCents: 100000, frequency: 'once', receivedOn: '2026-09-03' });
+  check('an income entry lands in the ledger', S2.getProfile().ledger.income.length, 1);
+  check('… with a worded undo label', S2.peekUndo().label, 'Changed the ledger');
+  const c = S2.upsertIncomeCost('in1', { label: 'Miles', amountCents: 20000, category: 'mileage' });
+  check('a cost lands on the entry', S2.getProfile().ledger.income[0].costs.length + '/' + c.category, '1/mileage');
+  S2.upsertIncomeEntry({ id: 'in2', kind: 'w2', amountCents: 300000 });
+  check('a cost on a W-2 entry is refused', S2.upsertIncomeCost('in2', { amountCents: 1 }), null);
+  check('removing a cost', S2.removeIncomeCost('in1', c.id) + '/' + S2.getProfile().ledger.income[0].costs.length, 'true/0');
+  check('removing an entry', S2.removeIncomeEntry('in2') + '/' + S2.getProfile().ledger.income.length, 'true/1');
+
+  /* Closed months: once, append-only, revised beside not over. */
+  const r1 = S2.closeMonth({ month: '2026-09', estimated: { income: 100, expenses: 50 }, actual: { income: 120, expenses: 60 } });
+  checkTrue('a month closes', r1.ok);
+  check('with a label', S2.getProfile().ledger.months[0].label, 'September 2026');
+  check('and a worded undo label', S2.peekUndo().label, 'Closed September 2026');
+  check('and both columns kept', JSON.stringify(S2.getProfile().ledger.months[0].estimated) + JSON.stringify(S2.getProfile().ledger.months[0].actual), '{"income":100,"expenses":50,"savings":null,"investments":null,"debt":null}{"income":120,"expenses":60,"savings":null,"investments":null,"debt":null}');
+  const r2 = S2.closeMonth({ month: '2026-09' });
+  check('closing it again is refused', r2.ok + '|' + r2.reason, 'false|September 2026 is already closed.');
+  check('a record without a month is refused', S2.closeMonth({ estimated: {} }).ok, false);
+  S2.reviseMonth('2026-09', { expenses: 75 });
+  const m = S2.getProfile().ledger.months[0];
+  check('a late entry moves only the revised column', m.actual.expenses + '/' + m.actualRevised.expenses + '/' + m.actualRevised.income, '60/75/120');
+  check('the estimate is untouched', m.estimated.expenses, 50);
+  S2.closeMonth({ month: '2026-08', actual: { income: 1 } });
+  check('months are kept in order', S2.getProfile().ledger.months.map(x => x.id).join(','), '2026-08,2026-09');
+  S2.setBudgetEstimate('2026-10', 'expenses', 55000);
+  check('a hand-set estimate is stored by month and bucket', S2.getProfile().budget.estimated['2026-10'].expenses, 55000);
+  check('… with a worded label', S2.peekUndo().label, 'Expected expenses for October 2026');
+  S2.setBudgetEstimate('2026-10', 'expenses', null);
+  check('and cleared', S2.getProfile().budget.estimated['2026-10'], undefined);
+  const round = Schema.createHousehold(JSON.parse(JSON.stringify(S2.getProfile())));
+  check('the ledger survives a round trip through the constructor', round.ledger.income.length + '/' + round.ledger.months.length + '/' + round.ledger.months[1].actualRevised.expenses, '1/2/75');
+  checkTrue('a household saved before the ledger reads with an empty one', Schema.createHousehold({ people: [] }).ledger.income.length === 0 && Schema.createHousehold({ people: [] }).ledger.months.length === 0);
+  S2.reset();
 })();
 
 section('Two decision sequences that cannot collide');

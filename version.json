@@ -1,0 +1,7 @@
+{
+  "product": "Money Rooms",
+  "version": "2.0",
+  "name": "The Ledger era",
+  "asOf": "2026-09-05",
+  "note": "major.minor only: the major is the shape (spine v2, registry-driven rooms), the minor a pass. Schema.APP_VERSION must match; test/run.js checks. Stamped into every export and share code and printed in every room footer. D-131."
+}

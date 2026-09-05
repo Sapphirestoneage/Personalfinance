@@ -13,9 +13,13 @@
 
   1. READS   household.expenses.entries[], expenses.monthlyEssential,
              people[].incomeSources[].grossAnnualIncomeCents, filingStatus.
-  2. WRITES  expenses.entries[] (raw), and expenses.monthlyEssential
-             .trackedValueCents — via Spine.setMonthlyExpenses(cents,
-             'tracked'), which never touches the estimate. Nothing else.
+  2. WRITES  expenses.entries[] (raw) — the typical-month lines, and the
+             expense LOG (D-128): dated occurrences with source 'log', a
+             link to the income entry they produced, and a deduction the
+             data layer allows only when linked; and expenses
+             .monthlyEssential.trackedValueCents — via
+             Spine.setMonthlyExpenses(cents, 'tracked'), which never touches
+             the estimate. Nothing else.
   3. CALLS   engines/cashflow.js for every figure. Take-home pay comes from
              engines/tier0.js's effective-tax lookup, not a second tax
              calculation.
@@ -24,6 +28,10 @@
              amount is skipped, never counted as zero. With take-home known,
              every empty line is PROPOSED from the chosen split (D-063) —
              shown dashed, never stored, never counted until tapped.
+             THE SHAPE (D-126): the month at a glance first — comes in, goes
+             out, left — then the lines, the common ones open and the rest
+             folded, each with a "per" aid that turns "$120 a week" into the
+             monthly figure that is stored. The stored shape is unchanged.
   5. CONFIG  data/expense_categories.json (categories and buckets),
              data/budget_templates.json (the splits),
              data/effective_tax_rates_2026.json (take-home).
@@ -37,19 +45,65 @@
   section[id] { scroll-margin-top: var(--space-4); }
   .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
 
+  .glance { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-top: var(--space-3); }
+  .tile { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-2); background: var(--color-surface-raised); min-width: 0; }
+  .tile .t-cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
+  .tile .t-big { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile .t-big.is-incomplete { color: var(--color-text-faint); font-size: var(--text-base); white-space: normal; }
+  .tile .t-big.is-negative { color: var(--color-critical); }
+  .tile .t-big.is-good { color: var(--color-positive); }
+  .tile .t-sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
+  .glance-why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  @media (max-width: 420px) { .glance { grid-template-columns: 1fr 1fr; } .glance .tile:first-child { grid-column: 1 / -1; } }
+
+  .return-chip { display: inline-block; font-size: var(--text-sm); color: var(--color-accent-hover); border: 1px dashed var(--color-border-active); border-radius: var(--radius-pill); padding: 4px var(--space-3); text-decoration: none; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3); margin-top: var(--space-3); }
+  .form-grid .wide { grid-column: 1 / -1; }
+  .flag { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--color-text-muted); cursor: pointer; }
+  .flag input { margin: 0; width: 16px; height: 16px; accent-color: var(--color-accent); }
+  .flag.is-off { color: var(--color-text-faint); }
+  ul.logged { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
+  ul.logged li { display: grid; grid-template-columns: auto 1fr auto auto; gap: var(--space-1) var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); align-items: center; }
+  ul.logged li:first-child { border-top: none; }
+  ul.logged .lg-date { color: var(--color-text-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  ul.logged .lg-what small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  ul.logged .lg-amt { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  ul.logged .lg-cost { color: var(--color-caution); }
+  ul.logged .lg-credit { color: var(--color-positive); }
+  ul.logged .lg-date small { display: block; font-size: 9px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-caution); }
+  ul.logged li.is-potential { opacity: .6; }
+  ul.logged li.is-potential .lg-amt { text-decoration: underline dotted; }
+  ul.logged li.is-credit .lg-what { color: var(--color-text-muted); }
+  ul.logged .lg-x { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 1px var(--space-2); cursor: pointer; }
+  .log-total { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-2); }
+
   .bucket { margin-bottom: var(--space-4); }
   .bucket:last-child { margin-bottom: 0; }
   .bucket-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); margin-bottom: var(--space-2); }
   .bucket-total { font-family: var(--font-display); font-size: var(--text-md); font-variant-numeric: tabular-nums; }
   .bucket-note { font-size: var(--text-xs); color: var(--color-text-faint); margin: 0 0 var(--space-3); }
+  details.more { margin-top: var(--space-2); }
+  details.more summary { cursor: pointer; font-size: var(--text-xs); color: var(--color-accent-hover); padding: var(--space-1) 0; list-style: none; }
+  details.more summary::-webkit-details-marker { display: none; }
+  details.more summary::before { content: '+ '; }
+  details.more[open] summary::before { content: '− '; }
 
-  .cat-row { display: grid; grid-template-columns: 1fr 108px 52px; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2); }
+  .cat-row { display: grid; grid-template-columns: minmax(0, 1fr) 118px 72px 56px; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2); }
+  .cat-row .slaf-input-shell select { padding-left: 4px; padding-right: 4px; }
+  .cat-hint { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-faint); margin: -4px 0 var(--space-1); min-height: 0; }
+  .cat-hint:empty { display: none; }
   .cat-fixed { display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: var(--text-xs); color: var(--color-text-faint); cursor: pointer; white-space: nowrap; }
   .cat-fixed input { margin: 0; width: 16px; height: 16px; accent-color: var(--color-accent); }
   .cat-fixed.is-derived { cursor: default; }
-  .cat-label { font-size: var(--text-sm); color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .cat-derived { display: flex; justify-content: flex-end; align-items: center; font-size: var(--text-sm); }
+  .cat-label { font-size: var(--text-sm); color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cat-label small { display: block; font-size: var(--text-xs); color: var(--color-text-faint); white-space: normal; }
+  .cat-derived { display: flex; justify-content: flex-end; align-items: center; font-size: var(--text-sm); grid-column: 2 / -1; }
   .cat-derived .slaf-owned-from { font-size: 10px; }
+  @media (max-width: 420px) {
+    .cat-row { grid-template-columns: minmax(0, 1fr) 84px 56px; }
+    .cat-row .cat-label { grid-column: 1 / -1; }
+    .cat-row .cat-amount { grid-column: 1 / 2; }
+  }
 
   table.cmp { width: 100%; border-collapse: collapse; font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
   table.cmp th { text-align: right; font-weight: 400; color: var(--color-text-faint); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); padding-bottom: var(--space-2); }
@@ -73,19 +127,27 @@
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
   <h1>Cash Flow</h1>
-  <p class="room-lede">Where it actually goes, by category — and how far that sits from what you thought.</p>
+  <p class="room-lede">What comes in, what goes out, and what is left — a line at a time, in the amounts you actually know them in.</p>
 </header>
 
 <main class="slaf-wrap">
   <div class="notice" id="load-notice" hidden></div>
 
-  <section class="slaf-card" id="spending">
+  <section class="slaf-card" id="glance">
+    <span class="slaf-eyebrow">This month at a glance</span>
+    <div class="glance" id="glance-tiles"></div>
+    <p class="glance-why" id="glance-why"></p>
+  </section>
+
+  <section class="slaf-card" id="spending" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">A typical month</span>
-    <h2 style="margin:var(--space-2) 0 var(--space-3)">What goes out</h2>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">What goes out, a line at a time</h2>
     <p class="bucket-note">
-      Leave anything blank that doesn't apply. Blank means "not entered" — it
-      won't be counted as zero. Debt minimums aren't typed here: they're added
-      up from your actual debts, so tap the figure to change them.
+      Type each line in whatever you know it as — a week, every two weeks, a
+      year — and pick that beside it; it is stored as a month. Leave anything
+      blank that doesn't apply: blank is "not entered", never zero. Tick
+      <em>fixed</em> on a line you could not cut next month. Debt minimums come
+      from your actual debts, so tap that figure to change them there.
     </p>
     <div id="buckets"></div>
     <p class="slaf-hint" data-suggest-note style="margin:var(--space-3) 0 0"></p>
@@ -97,6 +159,62 @@
       <button type="button" class="slaf-btn" id="btn-demo">Try with example numbers</button>
       <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Clear</button>
     </div>
+  </section>
+
+  <section class="slaf-card" id="log" style="margin-top:var(--space-4)">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap">
+      <span class="slaf-eyebrow">The expense log</span>
+      <a class="return-chip" id="return-chip" href="budget.html#bucket-expenses" hidden>← Back to the budget</a>
+    </div>
+    <h2 style="margin:var(--space-2) 0 0">Log what actually went out</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">A receipt, a bill paid, a transfer made — on its date. The lines above are the typical month; this is the actual one, and the budget reads it. A cost of earning an income entry is logged here too, against that entry, and can only reduce the tax when it is.</p>
+    <div class="form-grid" id="log-form">
+      <label class="slaf-field"><span class="slaf-label">Amount</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="l-amount" placeholder="e.g. 64.20" aria-label="Amount"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Date</span>
+        <span class="slaf-input-shell"><input type="date" id="l-date" aria-label="Date"/></span></label>
+      <label class="slaf-field wide"><span class="slaf-label">The date is</span>
+        <span class="slaf-input-shell"><select id="l-datekind" aria-label="How sure the date is">
+          <option value="exact">Exact — it went out, or it is due</option><option value="estimated">Estimated — about then</option><option value="potential">Potential — it may not happen; drawn, not counted</option>
+        </select></span></label>
+      <label class="slaf-field wide"><span class="slaf-label">What for</span>
+        <span class="slaf-input-shell"><select id="l-category" aria-label="Category"></select></span></label>
+      <label class="slaf-field wide"><span class="slaf-label">A note</span>
+        <span class="slaf-input-shell"><input type="text" id="l-note" placeholder="e.g. Trader Joe’s" aria-label="Note"/></span></label>
+      <label class="slaf-field wide"><span class="slaf-label">What it produced</span>
+        <span class="slaf-input-shell"><select id="l-produced" aria-label="What this expense produced">
+          <option value="personal">Nothing — a personal expense</option>
+          <option value="linked">Income — it is a cost of earning an entry</option>
+          <option value="reimbursable">A repayment — someone owes it back to me</option>
+        </select></span></label>
+      <label class="slaf-field wide" id="l-linked-wrap" hidden><span class="slaf-label">Which income entry</span>
+        <span class="slaf-input-shell"><select id="l-linked" aria-label="Income entry this expense produced"><option value="">Choose one</option></select></span></label>
+      <label class="slaf-field" id="l-from-wrap" hidden><span class="slaf-label">Owed back by</span>
+        <span class="slaf-input-shell"><input type="text" id="l-from" placeholder="e.g. work, Sam" aria-label="Who will pay it back"/></span></label>
+      <label class="slaf-field" id="l-expected-wrap" hidden><span class="slaf-label">Expected back</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="l-expected" placeholder="same as amount" aria-label="Amount expected back"/></span></label>
+      <label class="flag"><input type="checkbox" id="l-recurring"/> Repeats every month</label>
+      <label class="flag" id="l-deductible-wrap"><input type="checkbox" id="l-deductible" disabled/> Reduces the tax on that income</label>
+      <p class="slaf-hint wide" id="l-hint" style="margin:0"></p>
+    </div>
+    <div class="actions">
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-log">Log it</button>
+      <span class="slaf-hint" id="log-say"></span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-3);margin-top:var(--space-4)">
+      <h3 style="margin:0;font-size:var(--text-base)" id="log-month-title">This month</h3>
+      <button type="button" class="slaf-manage-toggle" id="btn-manage-log" aria-pressed="false" title="Hide, set aside, restore">⚙ Manage</button>
+    </div>
+    <div id="log-prompts"></div>
+    <div class="slaf-manage" id="manage-log" hidden></div>
+    <ul class="logged" id="logged"></ul>
+  </section>
+
+  <section class="slaf-card" id="flow" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Where it flows</span>
+    <h2 style="margin:var(--space-2) 0 0" id="flow-title">This month, from what is logged</h2>
+    <div id="flow-chart"></div>
+    <p class="slaf-hint" id="flow-why" style="margin:var(--space-2) 0 0"></p>
   </section>
 
   <section class="slaf-card" id="out-summary">
@@ -155,19 +273,25 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/cashflow.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/ledger.js"></script>
+<script src="../engines/budget.js"></script>
+<script src="../shared/manage.js"></script>
 <script src="../shared/charts.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
       Reference = SLAF.Reference, Demo = SLAF.DemoPersona, CashFlow = SLAF.CashFlow,
-      Ownership = SLAF.Ownership, Charts = SLAF.Charts;
+      Ownership = SLAF.Ownership, Charts = SLAF.Charts, Income = SLAF.Income, Tier0 = SLAF.Tier0;
 
   var ROOM_ID = 'cash-flow';
   var TABLES = null;
   var templateId = '50_30_20';
 
   function el(id) { return document.getElementById(id); }
+  function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
   /* This room shows one box per category, which represents the manual
      monthly total for that category. Look it up by CATEGORY, not by an id
@@ -199,6 +323,22 @@
      container with shared/liveform.js instead. test/run.js checks that
      every room declares one of those two patterns, and test/forms.js taps
      through this page on a mobile browser to prove it holds. */
+  /* The lines most months have, open; the rest folded under "more". A
+     folded line with a value in it is unfolded on paint, so nothing typed
+     is ever hidden. Which are common is a reading of the catalogue's
+     typical shares, not a rule about anyone's life. */
+  var COMMON = { housing: 1, utilities: 1, groceries: 1, transportation: 1, debt_minimums: 1,
+                 dining_out: 1, entertainment: 1, subscriptions: 1, shopping: 1,
+                 retirement: 1, emergency_savings: 1, extra_debt_payment: 1 };
+  /* The "per" aid: the amount is typed as one of these and STORED as a
+     month, through the same bases engines/income.js annualises pay with —
+     one table of periods, not two. */
+  var PER = [['monthly', '/mo', 'a month'], ['weekly', '/wk', 'a week'], ['fortnightly', '/2wk', 'every two weeks'], ['annual', '/yr', 'a year']];
+  function toMonthlyCents(cents, per) {
+    var basis = Income.basisById(per) || Income.basisById('monthly');
+    return Math.round(cents * basis.periods / 12);
+  }
+
   function buildInputs() {
     var wrap = el('buckets');
     wrap.innerHTML = '';
@@ -212,31 +352,41 @@
         '<div class="bucket-head"><span class="slaf-eyebrow">' + bucket.label + '</span>'
         + '<span class="bucket-total" data-bucket-total="' + bucket.id + '">—</span></div>'
         + '<p class="bucket-note">' + bucket.note + '</p>';
+      var more = document.createElement('details');
+      more.className = 'more';
+      more.setAttribute('data-more', bucket.id);
+      var rare = cats.filter(function (c) { return !COMMON[c.id]; });
+      more.innerHTML = '<summary>' + rare.length + ' more line' + (rare.length === 1 ? '' : 's') + ' <small>' + rare.map(function (c) { return c.label.toLowerCase(); }).join(', ') + '</small></summary>';
 
       cats.forEach(function (cat) {
         var row = document.createElement('div');
         row.className = 'cat-row';
+        row.setAttribute('data-row', cat.id);
         /* A derived category is not typed in here. It shows the figure and
            links to the room that owns it — see shared/ownership.js. */
         var valueCell = cat.derivedFrom
           ? '<span class="cat-derived" data-derived="' + cat.derivedFrom + '"></span>'
-          : '<span class="slaf-input-shell"><span class="slaf-affix">$</span>'
+          : '<span class="slaf-input-shell cat-amount"><span class="slaf-affix">$</span>'
             + '<input type="text" inputmode="decimal" data-cat="' + cat.id
-            + '" placeholder="/mo" aria-label="' + cat.label + ' per month"/></span>';
+            + '" placeholder="e.g. 120" aria-label="' + cat.label + '"/></span>'
+            + '<span class="slaf-input-shell"><select data-per="' + cat.id + '" aria-label="' + cat.label + ', typed as">'
+            + PER.map(function (p) { return '<option value="' + p[0] + '">' + p[1] + '</option>'; }).join('') + '</select></span>';
         /* The third cell: is this line fixed — could it not be cut next
            month? A savings line is not spending, so it is not asked; a
            derived line (debt minimums) is fixed by nature. D-082. */
         var fixedCell = cat.derivedFrom
-          ? '<span class="cat-fixed is-derived" title="A minimum payment cannot be cut">fixed</span>'
+          ? ''
           : bucket.id === 'savings'
             ? '<span class="cat-fixed is-derived"></span>'
             : '<label class="cat-fixed" title="Tick if you could not cut this next month"><input type="checkbox" data-fixed="' + cat.id + '" aria-label="' + cat.label + ' is fixed"/>fixed</label>';
         row.innerHTML =
-          '<span class="cat-label" title="' + cat.label + '">' + (cat.essential ? '● ' : '') + cat.label + '</span>'
+          '<span class="cat-label" title="' + cat.label + '">' + cat.label + (cat.derivedFrom ? '<small>from your debts, in Debt Payoff</small>' : '') + '</span>'
           + valueCell
-          + fixedCell;
-        section.appendChild(row);
+          + fixedCell
+          + '<span class="cat-hint" data-hint="' + cat.id + '"></span>';
+        (COMMON[cat.id] ? section : more).appendChild(row);
       });
+      if (rare.length) section.appendChild(more);
       wrap.appendChild(section);
     });
 
@@ -266,18 +416,27 @@
       if (!input) return;
       var categoryId = input.getAttribute('data-cat');
       var existing = entryFor(Spine.getProfile(), categoryId);
-      var cents = Money.parseMoney(SLAF.Suggest.entered(input));
-      if (Money.isEntered(cents)) {
+      var typed = Money.parseMoney(SLAF.Suggest.entered(input));
+      var perNode = document.querySelector('select[data-per="' + categoryId + '"]');
+      var per = perNode ? perNode.value : 'monthly';
+      var hint = document.querySelector('[data-hint="' + categoryId + '"]');
+      if (Money.isEntered(typed)) {
+        var cents = toMonthlyCents(typed, per);
         Spine.upsertExpenseEntry(Schema.createExpenseEntry({
           id: existing ? existing.id : newEntryId(categoryId),
           categoryId: categoryId,
-          amountCents: cents, period: 'monthly', source: 'manual'
+          amountCents: cents, period: 'monthly', source: 'manual',
+          fixed: existing ? existing.fixed : null
         }));
+        if (hint) hint.textContent = per === 'monthly' ? '' : 'Typed as ' + Money.formatCents(typed) + ' ' + PER.filter(function (p) { return p[0] === per; })[0][2] + ' → ' + Money.formatCents(cents) + ' a month, which is what is kept.';
       } else if (existing) {
         /* Clearing a field removes the record. It does not store a zero —
            "I didn't enter this" and "I spend nothing here" stay different. */
         Spine.removeExpenseEntry(existing.id);
+        if (hint) hint.textContent = '';
       }
+      /* The aid applies to the number just typed; the box shows a month. */
+      if (perNode) perNode.value = 'monthly';
       render();
     });
 
@@ -311,7 +470,42 @@
       boxes[b].checked = !!(e && e.fixed === true);
       boxes[b].disabled = !e;
     }
+    /* A folded line that holds a value is opened, never hidden. */
+    Array.prototype.forEach.call(document.querySelectorAll('details.more'), function (more) {
+      var any = Array.prototype.some.call(more.querySelectorAll('input[data-cat]'), function (input) {
+        var en = entryFor(h, input.getAttribute('data-cat'));
+        return !!(en && Money.isEntered(en.amountCents));
+      });
+      if (any) more.open = true;
+    });
     proposeMonth(h);
+  }
+
+  /* ---------- the month at a glance --------------------------------------
+     Three tiles: what comes in (take-home, Tier 0's one tax lookup), what
+     goes out (the lines, savings excluded — that money has not left), and
+     what is left. Each says what it needs instead of showing a dash. */
+  function tile(cap, result, format, sub, cls) {
+    var ok = Money.isOk(result);
+    return '<div class="tile"><div class="t-cap">' + cap + '</div>'
+      + '<div class="t-big' + (ok ? (cls || '') : ' is-incomplete') + '">' + (ok ? format(result.value) : (result.reason || '—')) + '</div>'
+      + (ok && sub ? '<div class="t-sub">' + sub + '</div>' : '') + '</div>';
+  }
+  function renderGlance(h, summary, flow) {
+    var inc = Tier0.takeHomeMonthlyCents(h, TABLES);
+    var money = function (v) { return Money.formatCents(v); };
+    var left = Money.isOk(flow) ? Money.ok(flow.value) : (Money.isOk(inc) && Money.isOk(summary) ? Money.ok(inc.value - summary.spendMonthlyCents) : Money.incomplete(!Money.isOk(inc) ? 'Needs your income, in Start Here.' : 'Add a line below.'));
+    el('glance-tiles').innerHTML =
+      tile('Comes in', Money.isOk(inc) ? inc : Money.incomplete('Add your income in Start Here.'), money, Money.isOk(inc) ? 'take-home, after ' + Money.formatRate(inc.effectiveRate, { decimals: 0 }) + ' tax' : '')
+      + tile('Goes out', Money.isOk(summary) ? Money.ok(summary.spendMonthlyCents) : Money.incomplete('Add a line below.'), money, Money.isOk(summary) ? summary.categories.filter(function (c) { return c.bucket !== 'savings' && c.monthlyCents > 0; }).length + ' lines · savings not counted' : '')
+      + tile('Left', left, money, Money.isOk(left) && Money.isOk(summary) ? 'after ' + Money.formatCents(summary.savingsMonthlyCents) + ' into savings: ' + Money.formatCents(left.value - summary.savingsMonthlyCents) : '', Money.isOk(left) ? (left.value < 0 ? ' is-negative' : ' is-good') : '');
+    var floor = CashFlow.minimumViableMonthCents(h, TABLES.expenseCategories);
+    var why = '';
+    if (Money.isOk(left) && left.value < 0) why = 'More goes out than comes in. The lines below say where; the biggest ones move this most.';
+    else if (Money.isOk(floor)) why = 'The floor — the fixed lines and the debt minimums — is ' + Money.formatCents(floor.value) + ' a month. <a href="runway.html#the-plan">Runway can run at the floor →</a>';
+    else if (Money.isOk(summary)) why = 'Tick <em>fixed</em> on the lines you could not cut next month and the floor appears here.';
+    else why = 'Every empty line below is proposed from your take-home and the split you pick; tap “Use” on any, type your own, or take them all.';
+    el('glance-why').innerHTML = why;
   }
 
   /* ---------- a first month, proposed ---------------------------------------
@@ -566,9 +760,11 @@
     if (!TABLES) return;
     var h = Spine.getProfile();
     paintInputs(h);
-    renderSummary(CashFlow.summarise(h, TABLES.expenseCategories));
+    var summary = CashFlow.summarise(h, TABLES.expenseCategories);
+    renderSummary(summary);
 
     var flow = CashFlow.netCashFlow(h, TABLES.expenseCategories, TABLES);
+    renderGlance(h, summary, flow);
     setCard('out-net-flow', flow, function (v) { return Money.formatCents(v); },
       Money.isOk(flow) ? dl([
         ['Take-home pay', Money.formatCents(flow.netMonthlyIncomeCents)],
@@ -579,7 +775,257 @@
 
     renderTemplate(h);
     renderDivergence(h);
+    renderLog(h);
+    renderManageLog(h);
+    renderFlow(h);
   }
+
+  /* ---------- the expense log (D-128) ----------------------------------------
+     Built once: the form is markup. The list holds a remove button per
+     row and nothing typed, so it rebuilds freely. A logged entry has
+     source 'log' and a date; the typical-month lines above never see it. */
+  var Ledger = SLAF.Ledger;
+  function today() { var d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1 < 10 ? '0' : '') + (d.getMonth() + 1) + '-' + (d.getDate() < 10 ? '0' : '') + d.getDate(); }
+  function buildLogForm() {
+    var cats = TABLES.expenseCategories;
+    var groups = (cats.groups || []).filter(function (g) { return g.id !== 'income_costs'; });
+    var html = groups.map(function (g) {
+      var inGroup = cats.categories.filter(function (c) { return c.group === g.id && !c.derivedFrom; });
+      if (!inGroup.length) return '';
+      return '<optgroup label="' + esc(g.label) + '">' + inGroup.map(function (c) { return '<option value="' + c.id + '">' + esc(c.label) + '</option>'; }).join('') + '</optgroup>';
+    }).join('');
+    var costs = cats.categories.filter(function (c) { return c.group === 'income_costs'; });
+    html += '<optgroup label="Costs of earning an income entry">' + costs.map(function (c) { return '<option value="' + c.id + '" data-cost="1">' + esc(c.label) + '</option>'; }).join('') + '</optgroup>';
+    el('l-category').innerHTML = html;
+    el('l-category').value = 'groceries';
+    if (!el('l-date').value) el('l-date').value = today();
+  }
+  function paintLinked(h) {
+    var sel = el('l-linked');
+    var cur = sel.value;
+    var list = Ledger.entries(h).filter(function (e) { return e.active !== false && Schema.costsAllowed(e.kind); });
+    sel.innerHTML = '<option value="">Choose one</option>' + list.map(function (e) {
+      return '<option value="' + e.id + '">' + esc(e.label || Schema.INCOME_KIND_RULES[e.kind].label) + ' (' + esc(Money.formatCents(e.amountCents)) + ')</option>';
+    }).join('');
+    if (list.some(function (e) { return e.id === cur; })) sel.value = cur;
+    paintDeductible();
+  }
+  /* The rule, shown: the tick is live only when an income entry is picked.
+     The data layer enforces it again on every write. */
+  /* Three paths (D-129): personal, linked (the only deductible one), or
+     reimbursable (never deductible; a credit in the month it comes back). */
+  function producedPath() { return el('l-produced').value; }
+  function paintDeductible() {
+    var path = producedPath();
+    var linked = path === 'linked' && !!el('l-linked').value;
+    el('l-linked-wrap').hidden = path !== 'linked';
+    el('l-from-wrap').hidden = path !== 'reimbursable';
+    el('l-expected-wrap').hidden = path !== 'reimbursable';
+    el('l-deductible').disabled = !linked;
+    if (!linked) el('l-deductible').checked = false;
+    el('l-deductible-wrap').classList.toggle('is-off', !linked);
+    el('l-hint').textContent = path === 'reimbursable' ? 'Counts in full until it is paid back. When it is, tap “Paid back” on the line and the credit lands in that month — never back in this one. Never deductible.'
+      : linked ? 'Logged against that income. Tick the box and it comes off the profit before self-employment tax.'
+      : path === 'linked' ? 'Pick the income entry it produced. Only a cost of earning can ever reduce the tax.'
+      : 'A personal expense can never reduce taxable income; if it produced an income entry, or someone owes it back, say so above.';
+    var opt = el('l-category').selectedOptions[0];
+    if (!linked && opt && opt.getAttribute('data-cost')) el('l-hint').textContent = 'A cost of earning it needs the income entry it produced — choose “Income” above and pick one, or it is filed as personal spending in “Other”.';
+  }
+  el('l-produced').addEventListener('change', paintDeductible);
+  el('l-linked').addEventListener('change', paintDeductible);
+  el('l-category').addEventListener('change', paintDeductible);
+  el('l-amount').addEventListener('focus', function () { var c = Money.parseMoney(el('l-amount').value); el('l-amount').value = Money.isEntered(c) ? String(c / 100) : ''; el('l-amount').select(); });
+  el('l-amount').addEventListener('blur', function () { var c = Money.parseMoney(el('l-amount').value); el('l-amount').value = Money.isEntered(c) ? Money.formatCents(c, { decimals: c % 100 ? 2 : 0 }) : ''; });
+  el('l-expected').addEventListener('focus', function () { var c = Money.parseMoney(el('l-expected').value); el('l-expected').value = Money.isEntered(c) ? String(c / 100) : ''; el('l-expected').select(); });
+  el('l-expected').addEventListener('blur', function () { var c = Money.parseMoney(el('l-expected').value); el('l-expected').value = Money.isEntered(c) ? Money.formatCents(c, { decimals: c % 100 ? 2 : 0 }) : ''; });
+  el('log-form').addEventListener('keydown', function (evt) { if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') { evt.preventDefault(); el('btn-log').click(); } });
+  el('btn-log').addEventListener('click', function () {
+    var cents = Money.parseMoney(el('l-amount').value);
+    if (!Money.isEntered(cents)) { el('log-say').textContent = 'An amount, first.'; el('l-amount').focus(); return; }
+    var path = producedPath();
+    var linked = path === 'linked' ? (el('l-linked').value || null) : null;
+    if (path === 'linked' && !linked) { el('log-say').textContent = 'Which income entry did it produce?'; el('l-linked').focus(); return; }
+    var opt = el('l-category').selectedOptions[0];
+    var categoryId = el('l-category').value;
+    if (!linked && opt && opt.getAttribute('data-cost')) categoryId = 'other';
+    var expected = Money.parseMoney(el('l-expected').value);
+    var entry = Schema.createExpenseEntry({
+      categoryId: categoryId, amountCents: cents, period: el('l-recurring').checked ? 'monthly' : 'once',
+      date: el('l-date').value || today(), dateKind: el('l-datekind').value, descriptor: el('l-note').value.trim() || null, source: 'log',
+      produced: linked ? 'linked' : path === 'reimbursable' ? 'reimbursable' : 'personal',
+      linkedIncomeId: linked, deductible: !!linked && el('l-deductible').checked,
+      reimbursableFrom: path === 'reimbursable' ? (el('l-from').value.trim() || null) : null,
+      expectedAmountCents: path === 'reimbursable' && Money.isEntered(expected) ? expected : undefined
+    });
+    Spine.upsertExpenseEntry(entry);
+    el('log-say').textContent = 'Logged ' + Money.formatCents(cents) + (linked ? (entry.deductible ? ', deductible against ' : ', against ') + (el('l-linked').selectedOptions[0].textContent)
+      : entry.produced === 'reimbursable' ? ', ' + Money.formatCents(entry.expectedAmountCents) + ' owed back' + (entry.reimbursableFrom ? ' by ' + entry.reimbursableFrom : '') : '') + '.';
+    el('l-amount').value = ''; el('l-note').value = ''; el('l-recurring').checked = false; el('l-from').value = ''; el('l-expected').value = ''; el('l-datekind').value = 'exact';
+    render();
+  });
+  el('logged').addEventListener('click', function (evt) {
+    var paid = evt.target.closest('[data-paid]');
+    if (paid) {
+      var when = el('l-date').value || today();
+      Spine.markReimbursed(paid.getAttribute('data-paid'), { dateReceived: when });
+      el('log-say').textContent = 'Paid back on ' + when + '. The credit lands in that month.';
+      render();
+      return;
+    }
+    var b = evt.target.closest('[data-unlog]');
+    if (!b) return;
+    Spine.removeExpenseEntry(b.getAttribute('data-unlog'));
+    render();
+  });
+  function renderLog(h) {
+    paintLinked(h);
+    var m = Ledger.thisMonth();
+    var log = CashFlow.logInMonth(h, TABLES.expenseCategories, m);
+    el('log-month-title').textContent = Schema.monthLabel(m) + (log.count ? ' · ' + Money.formatCents(log.personalCents) + ' personal' + (log.incomeCostsCents ? ' · ' + Money.formatCents(log.incomeCostsCents) + ' costs of earning' : '') + (log.pendingReimbursementCents ? ' · ' + Money.formatCents(log.pendingReimbursementCents) + ' owed back to you' : '') : '')
+      + (log.potentialCents ? ' · ' + Money.formatCents(log.potentialCents) + ' potential, not counted' : '');
+    var names = {};
+    Ledger.entries(h).forEach(function (e) { names[e.id] = e.label || Schema.INCOME_KIND_RULES[e.kind].label; });
+    el('logged').innerHTML = log.rows.filter(function (r) { return !r.hidden; }).map(function (r) {
+      var cat = CashFlow.categoryById(TABLES.expenseCategories, r.categoryId);
+      var reimb = r.produced === 'reimbursable';
+      var tail = r.credit ? ' · paid back' + (r.reimbursableFrom ? ' by ' + esc(r.reimbursableFrom) : '')
+        : reimb ? (r.reimbursementStatus === 'received' ? ' · paid back' : ' · owed back' + (r.reimbursableFrom ? ' by ' + esc(r.reimbursableFrom) : '') + ', counts until it is')
+        : r.linkedIncomeId ? ' · for ' + esc(names[r.linkedIncomeId] || 'an income entry') + (r.deductible ? ', deductible' : ', not deductible') : '';
+      return '<li' + (r.credit ? ' class="is-credit"' : '') + '><span class="lg-date">' + esc(r.date.slice(5)) + (r.dateKind === 'estimated' ? '<small>about</small>' : '') + '</span>'
+        + '<span class="lg-what">' + esc(r.descriptor || (cat ? cat.label : r.categoryId)) + '<small>' + esc(cat ? cat.label : r.categoryId) + (r.recurring ? ' · every month' : '') + (r.dateKind === 'estimated' ? ' · date estimated' : '') + tail + '</small></span>'
+        + '<span class="lg-amt' + (r.linkedIncomeId ? ' lg-cost' : r.credit ? ' lg-credit' : '') + '">' + esc((r.credit ? '−' : '') + Money.formatCents(Math.abs(r.cents))) + '</span>'
+        + (r.credit ? '<span></span>' : reimb && r.reimbursementStatus !== 'received' ? '<button type="button" class="lg-x" data-paid="' + r.entryId + '" title="Mark it paid back on the date in the form">Paid back</button>'
+        : '<button type="button" class="lg-x" data-unlog="' + r.entryId + '" aria-label="Remove">✕</button>') + '</li>';
+    }).join('') || '<li><span class="slaf-hint" style="grid-column:1/-1">Nothing logged this month yet.</span></li>';
+    /* Potential dates: drawn, never counted (D-130). */
+    el('logged').innerHTML += (log.potentialRows || []).filter(function (r) { return !r.hidden; }).map(function (r) {
+      var cat = CashFlow.categoryById(TABLES.expenseCategories, r.categoryId);
+      return '<li class="is-potential"><span class="lg-date">' + esc(r.date.slice(5)) + '<small>maybe</small></span>'
+        + '<span class="lg-what">' + esc(r.descriptor || (cat ? cat.label : r.categoryId)) + '<small>' + esc(cat ? cat.label : r.categoryId) + ' · potential — not counted until you make it exact</small></span>'
+        + '<span class="lg-amt">' + esc(Money.formatCents(r.cents)) + '</span>'
+        + '<button type="button" class="lg-x" data-unlog="' + r.entryId + '" aria-label="Remove">✕</button></li>';
+    }).join('');
+  }
+  /* ---------- Where it flows: the Sankey (D-128) ------------------------------
+     Drawn from the spine on every render — the month's income entries netted
+     of tax, the log by bucket and by group — never from a saved dataset. With
+     nothing logged this month it draws the typical month instead: take-home
+     into the lines by group. */
+  function renderFlow(h) {
+    var m = Ledger.thisMonth();
+    var inc = Ledger.month(h, TABLES, m);
+    var log = CashFlow.logInMonth(h, TABLES.expenseCategories, m);
+    var C = Charts.COLORS, nodes = [], links = [];
+    var live = inc.count > 0 || log.count > 0;
+    var groupLabel = function (g) { var gr = CashFlow.groupById(TABLES.expenseCategories, g); return gr ? gr.label : g; };
+    var BUCKET_COLOR = { expenses: C.spend, savings: C.target, investments: C.contributed, debt: C.debt, income_costs: C.series[4] };
+    var BUCKET_LABEL = { expenses: 'Expenses', savings: 'Savings', investments: 'Investments', debt: 'Debt', income_costs: 'Costs of earning' };
+    nodes.push({ id: 'pool', label: 'Take-home', column: 1, color: C.contributed });
+    if (live) {
+      el('flow-title').textContent = Schema.monthLabel(m) + ', from what is logged';
+      inc.rows.forEach(function (r) {
+        var id = 'in_' + r.entry.id;
+        nodes.push({ id: id, label: r.entry.label || Schema.INCOME_KIND_RULES[r.entry.kind].label, column: 0, color: C.series[1] });
+        var net = Money.isEntered(r.takeHomeCents) ? r.takeHomeCents : r.grossCents;
+        links.push({ from: id, to: 'pool', value: net, color: C.series[1] });
+      });
+      /* A reimbursement received is an inflow to the pool, not a negative
+         outgoing: the sankey cannot draw a link backwards (D-129). */
+      if (log.reimbursedCents > 0) {
+        nodes.push({ id: 'in_reimb', label: 'Paid back to you', column: 0, color: C.positive || C.series[2] });
+        links.push({ from: 'in_reimb', to: 'pool', value: log.reimbursedCents, color: C.positive || C.series[2] });
+      }
+      var byBucket = {}, byGroup = {};
+      log.rows.forEach(function (r) {
+        if (r.credit) return;
+        byBucket[r.bucket] = (byBucket[r.bucket] || 0) + r.cents;
+        var key = r.bucket + '|' + r.group;
+        byGroup[key] = (byGroup[key] || 0) + r.cents;
+      });
+      Object.keys(byBucket).forEach(function (b) {
+        nodes.push({ id: 'b_' + b, label: BUCKET_LABEL[b] || b, column: 2, color: BUCKET_COLOR[b] || C.muted });
+        links.push({ from: 'pool', to: 'b_' + b, value: byBucket[b], color: BUCKET_COLOR[b] || C.muted });
+      });
+      Object.keys(byGroup).forEach(function (key) {
+        var b = key.split('|')[0], g = key.split('|')[1];
+        if (b === 'expenses' || b === 'income_costs') {
+          nodes.push({ id: 'g_' + key, label: groupLabel(g), column: 3, color: BUCKET_COLOR[b] });
+          links.push({ from: 'b_' + b, to: 'g_' + key, value: byGroup[key], color: BUCKET_COLOR[b] });
+        }
+      });
+      var out = Object.keys(byBucket).reduce(function (t, b) { return t + byBucket[b]; }, 0);
+      var left = inc.takeHomeCents + (log.reimbursedCents || 0) - out;
+      el('flow-why').textContent = inc.count ? Money.formatCents(inc.takeHomeCents) + ' came in after tax; ' + Money.formatCents(out) + ' has been logged going out' + (left > 0 ? ', ' + Money.formatCents(left) + ' not yet logged anywhere.' : left < 0 ? ' — more than came in.' : '.') : 'Nothing logged as coming in this month yet; the outgoings are drawn against an empty pool.';
+    } else {
+      el('flow-title').textContent = 'A typical month, from the lines above';
+      var take = Tier0.takeHomeMonthlyCents(h, TABLES);
+      var sum = CashFlow.summarise(h, TABLES.expenseCategories);
+      if (Money.isOk(take)) { nodes.push({ id: 'in_pay', label: 'Pay, after tax', column: 0, color: C.series[1] }); links.push({ from: 'in_pay', to: 'pool', value: take.value, color: C.series[1] }); }
+      if (Money.isOk(sum)) {
+        var groups = {};
+        sum.categories.forEach(function (c) { var g = CashFlow.groupOf(TABLES.expenseCategories, c.categoryId); var gr = CashFlow.groupById(TABLES.expenseCategories, g); var b = gr ? gr.bucketOf : 'expenses'; groups[b + '|' + g] = (groups[b + '|' + g] || 0) + c.monthlyCents; });
+        var buckets = {};
+        Object.keys(groups).forEach(function (k) { var b = k.split('|')[0]; buckets[b] = (buckets[b] || 0) + groups[k]; });
+        Object.keys(buckets).forEach(function (b) { nodes.push({ id: 'b_' + b, label: BUCKET_LABEL[b] || b, column: 2, color: BUCKET_COLOR[b] || C.muted }); links.push({ from: 'pool', to: 'b_' + b, value: buckets[b], color: BUCKET_COLOR[b] || C.muted }); });
+        Object.keys(groups).forEach(function (k) { var b = k.split('|')[0], g = k.split('|')[1]; if (b !== 'expenses') return; nodes.push({ id: 'g_' + k, label: groupLabel(g), column: 3, color: C.spend }); links.push({ from: 'b_' + b, to: 'g_' + k, value: groups[k], color: C.spend }); });
+      }
+      el('flow-why').textContent = 'Log income in Income and what goes out in the log below, and this redraws from the actual month.';
+    }
+    el('flow-chart').innerHTML = Charts.sankey({ title: 'Where the money flows', nodes: nodes, links: links, empty: 'Add your income in Start Here, or log a month, and the flow appears.' });
+  }
+
+  /* Manage the log: hide, set aside, restore (D-128). */
+  var Manage = SLAF.Manage, Budget = SLAF.Budget;
+  var manageOpen = false, manageState = 'active';
+  function logItems(h) {
+    var names = {};
+    Ledger.entries(h).forEach(function (e) { names[e.id] = e.label || Schema.INCOME_KIND_RULES[e.kind].label; });
+    return CashFlow.logEntries(h).map(function (e) {
+      var cat = CashFlow.categoryById(TABLES.expenseCategories, e.categoryId);
+      return { id: e.id, label: e.descriptor || (cat ? cat.label : e.categoryId), meta: (cat ? cat.label : '') + ' · ' + Money.formatCents(e.amountCents) + (e.period === 'monthly' ? ' every month' : e.date ? ' on ' + e.date : '') + (e.linkedIncomeId ? ' · for ' + (names[e.linkedIncomeId] || 'an income entry') : ''),
+        hidden: e.hidden === true, active: e.active !== false, once: e.period !== 'monthly', month: e.date ? e.date.slice(0, 7) : null };
+    });
+  }
+  function renderManageLog(h) {
+    el('manage-log').hidden = !manageOpen;
+    el('btn-manage-log').setAttribute('aria-pressed', String(manageOpen));
+    if (manageOpen) el('manage-log').innerHTML = Manage.panel(logItems(h), manageState);
+    var due = Manage.suggestArchive(logItems(h).filter(function (it) { return it.once; }), function (m) { return Budget.isClosed(h, m); }, (h.ledger || {}).dismissed)
+      /* Only recurring lines are worth asking about: a one-time receipt in a closed month is simply history. */
+      .filter(function () { return false; });
+    var recurringDone = CashFlow.logEntries(h).filter(function (e) { return e.active !== false && e.period === 'monthly' && e.date && Budget.isClosed(h, e.date.slice(0, 7)) && ((h.ledger || {}).dismissed || []).indexOf(e.id) === -1 && e.linkedIncomeId && !Ledger.activeEntries(h).some(function (x) { return x.id === e.linkedIncomeId; }); });
+    el('log-prompts').innerHTML = due.concat(recurringDone.map(function (e) { var it = logItems(h).filter(function (x) { return x.id === e.id; })[0]; return it; })).map(function (it) {
+      return '<div class="slaf-archive-prompt"><span>' + esc(it.label) + ' repeats every month for an income entry that is set aside.<small>Set it aside too?</small></span>'
+        + '<span class="slaf-manage-acts"><button type="button" class="slaf-manage-act" data-prompt="archive" data-id="' + esc(it.id) + '">Set aside</button><button type="button" class="slaf-manage-act" data-prompt="dismiss" data-id="' + esc(it.id) + '">Not now</button></span></div>';
+    }).join('');
+  }
+  el('btn-manage-log').addEventListener('click', function () { manageOpen = !manageOpen; render(); });
+  Manage.bind(el('manage-log'), function (state) { manageState = state; render(); }, function (act, id) {
+    if (act === 'hide') Spine.upsertExpenseEntry({ id: id, hidden: true });
+    else if (act === 'show') Spine.upsertExpenseEntry({ id: id, hidden: false });
+    else if (act === 'archive') Spine.upsertExpenseEntry({ id: id, active: false });
+    else if (act === 'restore') Spine.upsertExpenseEntry({ id: id, active: true, hidden: false });
+    render();
+  });
+  el('log-prompts').addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-prompt]');
+    if (!b) return;
+    var id = b.getAttribute('data-id');
+    if (b.getAttribute('data-prompt') === 'archive') Spine.upsertExpenseEntry({ id: id, active: false });
+    else Spine.set('ledger.dismissed', ((Spine.getProfile().ledger || {}).dismissed || []).concat([id]), 'Kept ' + id);
+    render();
+  });
+
+  (function returnChip() {
+    if (!/[?&]for=budget/.test(location.search)) return;
+    var mm = /[?&]month=(\d{4}-\d{2})/.exec(location.search);
+    var chip = el('return-chip');
+    chip.hidden = false;
+    chip.href = 'budget.html' + (mm ? '?month=' + mm[1] : '') + '#bucket-expenses';
+    chip.textContent = '← Back to the budget' + (mm ? ' for ' + Schema.monthLabel(mm[1]) : '');
+    var cat = /[?&]category=([a-z_]+)/.exec(location.search);
+    if (cat) window.__logCategory = cat[1];
+  })();
 
   /* ---------- actions --------------------------------------------------- */
 
@@ -651,6 +1097,8 @@
     }).join('');
     el('f-template').value = templateId;
     buildInputs();
+    buildLogForm();
+    if (window.__logCategory && CashFlow.categoryById(tables.expenseCategories, window.__logCategory)) el('l-category').value = window.__logCategory;
     render();
     jumpToHash();
   }).catch(function (err) {

@@ -62,7 +62,27 @@
       return Money.ok(Math.min(debt.balanceCents, Math.max(pct, floor)),
         { derived: true, ruleId: rule.id });
     }
+    /* A family loan: no statement, no formula — a date it is due back. The
+       minimum is the balance spread over the months left. D-124. */
+    if (rule.method === 'balance_over_months_to_due') {
+      var left = Schema.monthsUntil(debt.dueOn, undefined, {
+        field: 'dueOn',
+        missingReason: 'Add the date it is due back, or a monthly amount you have agreed.',
+        passedReason: 'That due date has passed — enter the monthly amount you are paying now.'
+      });
+      if (!Money.isOk(left)) return Money.incomplete(left.reason, ['minPaymentCents', 'dueOn']);
+      return Money.ok(Math.min(debt.balanceCents, Math.ceil(debt.balanceCents / left.value)),
+        { derived: true, ruleId: rule.id, monthsLeft: left.value });
+    }
     return Money.incomplete('No minimum-payment rule for this debt type.', ['minPaymentCents']);
+  }
+
+  /** The rate a debt charges today: 0 when it is interest-free, else what
+   *  was typed; null when neither is known. D-124. */
+  function effectiveRate(debt) {
+    if (!debt) return null;
+    if (debt.interestFree === true) return 0;
+    return Money.isEntered(debt.rate) ? debt.rate : null;
   }
 
   /* ---- Ordering ---------------------------------------------------------- */
@@ -74,6 +94,51 @@
     }
     return 0;
   }
+
+  /* ---- Reasons to keep it (D-132) ------------------------------------------
+     The rational axis, beside emotionalTag's emotional one. These are the
+     household's own words about why a debt is fine to carry; they are shown
+     wherever the payoff order is shown, and they never change that order.
+     Only `excludeFromAggressive`, which the household flips itself, does. */
+
+  function keepReasonTags(rules) { return (rules && rules.keepReasons && rules.keepReasons.tags) || []; }
+  function keepReasonById(rules, id) {
+    var tags = keepReasonTags(rules);
+    for (var i = 0; i < tags.length; i++) { if (tags[i].id === id) return tags[i]; }
+    return null;
+  }
+  /** The labels for a debt's stored reasons, in the table's own order. */
+  function keepReasonLabels(debt, rules) {
+    var ids = (debt && debt.keepReasons) || [];
+    return keepReasonTags(rules).filter(function (t) { return ids.indexOf(t.id) >= 0; })
+      .map(function (t) { return { id: t.id, label: t.label, hint: t.hint || null }; });
+  }
+  /**
+   * What this debt's own type and rate suggest, at entry time. A suggestion
+   * only: nothing here is stored until the household confirms it, and a
+   * debt that already carries reasons is never re-suggested to.
+   */
+  function suggestedKeepReasons(debt, rules, asOf) {
+    if (!debt || ((debt.keepReasons || []).length)) return [];
+    var rate = effectiveRate(debt);
+    var promo = promoStatus(debt, asOf);
+    return keepReasonTags(rules).filter(function (t) {
+      var w = t.suggestWhen;
+      if (!w) return false;
+      if (w.types && w.types.indexOf(debt.type) < 0) return false;
+      if (Money.isEntered(w.rateAtMost)) {
+        if (!Money.isEntered(rate) || rate > w.rateAtMost) return false;
+        /* A rate that is only low until the promotion ends is not a low
+           rate, it is a deadline: suggesting otherwise is the mistake
+           D-053 exists to stop. The promotional tag covers that case. */
+        if (promo && !promo.expired && Money.isEntered(promo.postRate) && promo.postRate > w.rateAtMost) return false;
+      }
+      if (w.hasPromo === true && !(promo && !promo.expired)) return false;
+      return true;
+    }).map(function (t) { return { id: t.id, label: t.label, hint: t.hint || null }; });
+  }
+  /** Kept on purpose: the household said so, not the tags. */
+  function isExcluded(debt) { return !!(debt && debt.excludeFromAggressive === true); }
 
   function strategyById(rules, id) {
     var list = (rules && rules.strategies) || [];
@@ -195,7 +260,14 @@
       });
     }
     if (strategy.direction === 'asc' && strategy.orderBy === 'rate') sorted.reverse();
-    return sorted;
+    /* A debt the household is keeping on purpose goes last in every
+       ordering, so the extra never aims at it while anything else is live.
+       It still gets its minimum every month: excluded from the aggression,
+       not from the plan. Its keep reasons do not put it here — only the
+       toggle does (D-132). */
+    var keep = sorted.filter(function (d) { return !d.excludeFromAggressive; });
+    var held = sorted.filter(function (d) { return d.excludeFromAggressive === true; });
+    return keep.concat(held);
   }
 
   /* ---- The simulation ----------------------------------------------------
@@ -217,7 +289,8 @@
     var prepared = [], missing = [];
     debts.forEach(function (d) {
       var min = minimumPaymentCents(d, rules);
-      if (!Money.isEntered(d.rate)) {
+      var rate = effectiveRate(d);
+      if (!Money.isEntered(rate)) {
         missing.push({ id: d.id, label: d.label, needs: 'an interest rate' });
         return;
       }
@@ -227,14 +300,18 @@
       }
       prepared.push({
         id: d.id, label: d.label || 'Debt', type: d.type,
-        balanceCents: d.balanceCents, rate: d.rate,
+        balanceCents: d.balanceCents, rate: rate,
         /* Carried through, because the simulation asks each month what rate
            this debt charges and a promo that got dropped here would make a
            0% card look free for the whole plan. D-053. */
         promoEndsOn: d.promoEndsOn || null,
         postPromoRate: Money.isEntered(d.postPromoRate) ? d.postPromoRate : null,
         minPaymentCents: min.value, minimumDerived: min.derived,
-        emotionalTag: d.emotionalTag
+        emotionalTag: d.emotionalTag,
+        /* Carried so the order and the views agree about which debts are
+           being kept on purpose, and why (D-132). */
+        keepReasons: (d.keepReasons || []).slice(),
+        excludeFromAggressive: d.excludeFromAggressive === true
       });
     });
 
@@ -456,11 +533,17 @@
 
   return {
     promoStatus: promoStatus,
+    effectiveRate: effectiveRate,
     rateInMonth: rateInMonth,
     clearBeforePromoEnds: clearBeforePromoEnds,
     minimumRuleFor: minimumRuleFor,
     minimumPaymentCents: minimumPaymentCents,
     emotionalPriority: emotionalPriority,
+    keepReasonTags: keepReasonTags,
+    keepReasonById: keepReasonById,
+    keepReasonLabels: keepReasonLabels,
+    suggestedKeepReasons: suggestedKeepReasons,
+    isExcluded: isExcluded,
     strategyById: strategyById,
     orderDebts: orderDebts,
     prepare: prepare,

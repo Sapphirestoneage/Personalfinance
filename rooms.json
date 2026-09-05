@@ -67,11 +67,48 @@
         "monthlyExpenses"
       ],
       "writes": [
+        "rentMonthly",
         "monthlyExpenses"
       ],
       "requires": [],
       "dashboardNumber": null,
       "order": 3
+    },
+    {
+      "id": "income",
+      "title": "Income",
+      "file": "rooms/income.html",
+      "reads": [],
+      "writes": [
+        "ledgerIncome"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 3.2
+    },
+    {
+      "id": "budget",
+      "title": "Budget",
+      "file": "rooms/budget.html",
+      "reads": [],
+      "writes": [
+        "monthsClosed"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 3.4
+    },
+    {
+      "id": "variance",
+      "title": "Estimated vs Actual",
+      "file": "rooms/variance.html",
+      "reads": [
+        "monthsClosed"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 3.5
     },
     {
       "id": "financial-snapshot",
@@ -338,6 +375,30 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 20
+    },
+    {
+      "id": "skill-tree",
+      "title": "The Skill Tree",
+      "file": "rooms/skill-tree.html",
+      "reads": [],
+      "writes": [
+        "skillsDone"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 20.2
+    },
+    {
+      "id": "exercises",
+      "title": "Exercises",
+      "file": "rooms/exercises.html",
+      "reads": [],
+      "writes": [
+        "exercisesDone"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 20.4
     },
     {
       "id": "values",
@@ -632,7 +693,7 @@
         "cashSavings"
       ],
       "writes": [
-        "rentMonthly",
+        "rentAlternative",
         "homePrice",
         "downPct",
         "mortgageRate"
@@ -669,7 +730,8 @@
       "writes": [
         "incomeLow",
         "incomeHigh",
-        "bufferMonths"
+        "bufferMonths",
+        "variableWindow"
       ],
       "requires": [
         "variableIncome"
@@ -820,6 +882,16 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 51
+    },
+    {
+      "id": "data",
+      "title": "Your Data",
+      "file": "rooms/data.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 98
     },
     {
       "id": "refresh",

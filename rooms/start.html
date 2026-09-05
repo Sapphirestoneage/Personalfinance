@@ -411,15 +411,34 @@
     var since = dobFrom(ctl('sinceMonth').value, ctl('sinceYear').value);
     if (since !== Schema.unemploymentOf(h()).since) writeUnemployment({ since: since });
   }
+  /* The one-off is a dated entry now (D-130, Q5): coming in, an income
+     entry the Income room and the calendar see; going out, a log entry
+     the budget and the calendar see. Its date is the 1st of the month,
+     marked estimated. Blank removes it. */
   function writeOneOff() {
     var cents = Money.parseMoney(Suggest.entered(ctl('oneOff')));
-    var existing = (h().oneOffs || [])[0];
-    if (!Money.isEntered(cents)) { if (existing) Spine.set('oneOffs', [], 'No one-off'); return; }
+    var existing = Schema.oneOffEntry(h());
+    var dir = ctl('oneOffDir').value;
     var m = ctl('oneOffMonth').value;
     var now = new Date();
     var year = m && Number(m) < now.getMonth() + 1 ? now.getFullYear() + 1 : now.getFullYear();
-    Spine.set('oneOffs', [Schema.createOneOff({ id: existing ? existing.id : undefined, label: ctl('oneOffDir').value === 'out' ? 'Something going out' : 'Something coming in',
-      cents: cents, direction: ctl('oneOffDir').value, on: m ? year + '-' + (m.length === 1 ? '0' + m : m) : null })], 'One-off ' + Money.formatCents(cents));
+    var on = m ? year + '-' + (m.length === 1 ? '0' + m : m) : (now.getFullYear() + '-' + (now.getMonth() + 1 < 10 ? '0' : '') + (now.getMonth() + 1));
+    var same = existing && existing.where !== 'legacy' && existing.cents === cents && existing.direction === dir && existing.on === on;
+    if (same) return;
+    Spine.batch(Money.isEntered(cents) ? 'One-off ' + Money.formatCents(cents) : 'No one-off', function () {
+      if (existing && existing.where === 'ledger') Spine.removeIncomeEntry(Schema.ONE_OFF_IN);
+      if (existing && existing.where === 'log') Spine.removeExpenseEntry(Schema.ONE_OFF_OUT);
+      if (existing && existing.where === 'legacy') Spine.set('oneOffs', []);
+      if (!Money.isEntered(cents)) return;
+      if (dir === 'in') {
+        var person = Spine.ensurePrimaryPerson('You');
+        Spine.upsertIncomeEntry(Schema.createIncomeEntry({ id: Schema.ONE_OFF_IN, personId: person.id, kind: 'other', label: 'Something coming in', amountCents: cents,
+          frequency: 'once', receivedOn: on + '-01', dateKind: 'estimated', source: 'onepager' }));
+      } else {
+        Spine.upsertExpenseEntry(Schema.createExpenseEntry({ id: Schema.ONE_OFF_OUT, categoryId: 'other', amountCents: cents, period: 'once',
+          date: on + '-01', dateKind: 'estimated', descriptor: 'Something going out', source: 'log' }));
+      }
+    });
   }
   function writeDependents(count, agesText) {
     var current = Array.isArray(h().dependents) ? h().dependents : [];
@@ -618,7 +637,7 @@
     var second = sourceById(x, SECOND_JOB_ID);
     setSelect('secondBasis', second && second.frequency ? second.frequency : 'annual');
     setMoney('secondJob', second && Money.isEntered(second.rateCents) ? second.rateCents : (second ? second.grossAnnualIncomeCents : null));
-    var one = (x.oneOffs || [])[0];
+    var one = Schema.oneOffEntry(x);
     setMoney('oneOff', one ? one.cents : null);
     setSelect('oneOffDir', one ? one.direction : 'in');
     setSelect('oneOffMonth', one && one.on ? String(parseInt(one.on.slice(5, 7), 10)) : '');

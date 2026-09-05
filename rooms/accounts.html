@@ -84,6 +84,7 @@
     </p>
     <div class="setup-grid">
       <div class="slaf-field" style="margin:0" id="contribution-chip"></div>
+      <p class="slaf-hint" style="margin:var(--space-1) 0 0" id="plan-na"></p>
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Your marginal tax rate</span>
         <span class="slaf-input-shell">
         <input type="text" inputmode="decimal" data-setup="marginalRate" placeholder="e.g. 22" aria-label="Marginal tax rate"/>
@@ -94,7 +95,7 @@
         <span class="slaf-input-shell"><span class="slaf-affix">$</span>
         <input type="text" inputmode="decimal" data-setup="rothContributedCents" placeholder="e.g. 3000" aria-label="Roth contributed so far"/></span>
       </label>
-      <label class="slaf-field" style="margin:0"><span class="slaf-label">HSA so far this year</span>
+      <label class="slaf-field" style="margin:0" id="hsa-field"><span class="slaf-label">HSA so far this year</span>
         <span class="slaf-input-shell"><span class="slaf-affix">$</span>
         <input type="text" inputmode="decimal" data-setup="hsaContributedCents" placeholder="e.g. 0" aria-label="HSA contributed so far"/></span>
       </label>
@@ -106,6 +107,7 @@
       <label class="setup-toggle"><input type="checkbox" data-setup="hsaFamilyPlan" aria-label="Family HSA coverage"/>
         <span>Family HSA coverage rather than self-only</span></label>
     </div>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0" id="hsa-na-row">No HSA for you at all, whatever the plan? <span id="hsa-na"></span></p>
   </section>
 <section class="slaf-card" id="compare">
     <span class="slaf-eyebrow">Roth vs. Traditional vs. taxable</span>
@@ -422,6 +424,13 @@
        reads it as a chip that links back to the question. */
     var chip = el('contribution-chip');
     if (chip) chip.innerHTML = Ownership.chip('contributionPercent', Spine.getProfile(), ROOM_ID);
+    /* Structural options the household can mark Not applicable (D-130):
+       no workplace plan, no HSA. Out of every live figure until lifted. */
+    var hh = Spine.getProfile();
+    var na = hh.notApplicable || {};
+    if (el('plan-na')) el('plan-na').innerHTML = 'No workplace plan at all? ' + Ownership.naButton('contributionPercent', hh, { off: 'No plan — N/A', on: 'No plan ✓' });
+    if (el('hsa-na')) el('hsa-na').innerHTML = Ownership.naButton('hsaContributed', hh, { off: 'N/A', on: 'N/A ✓' });
+    if (el('hsa-field')) el('hsa-field').classList.toggle('slaf-na-off', na.hsaContributed === true);
     document.querySelectorAll('[data-setup]').forEach(function (node) {
       if (node === document.activeElement) return;
       var key = node.getAttribute('data-setup');
@@ -519,6 +528,13 @@
   Spine.registerRoom(ROOM_ID);
 
   SLAF.Progress.mount(ROOM_ID);
+  document.addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-na-field]');
+    if (!b) return;
+    var id = b.getAttribute('data-na-field');
+    Spine.setNotApplicable(id, b.getAttribute('aria-pressed') !== 'true');
+    paintSetup();
+  });
   Spine.onChange(render);
 
   Reference.load().then(function (tables) {

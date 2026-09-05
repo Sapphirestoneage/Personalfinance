@@ -459,8 +459,15 @@
       read: function (h) { var v = (h.kids || {}).tuitionMonthlyCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['tuitionMonthlyCents']); },
       format: function (v) { return money(v) + '/mo'; }
     },
+    /* One rent (D-130): what you pay is Cash Flow's housing line; Housing
+       Decision's own field is a place you would rent instead. */
     rentMonthly: {
-      label: 'Rent, a month', owner: 'housing', anchor: 'inputs',
+      label: 'Rent or mortgage, a month', owner: 'cash-flow', anchor: 'spending',
+      read: function (h) { var r = Schema.rentMonthlyCents(h); return r.source === 'cash-flow' ? Money.ok(r.cents) : Money.incomplete('No housing line in Cash Flow yet.', ['housing']); },
+      format: function (v) { return money(v) + '/mo'; }
+    },
+    rentAlternative: {
+      label: 'A place you would rent instead, a month', owner: 'housing', anchor: 'inputs',
       read: function (h) { var v = (h.housing || {}).rentMonthlyCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['rentMonthlyCents']); },
       format: function (v) { return money(v) + '/mo'; }
     },
@@ -508,6 +515,11 @@
       label: 'Buffer, months', owner: 'variable-income', anchor: 'inputs',
       read: function (h) { var v = (h.variableIncome || {}).bufferMonths; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['bufferMonths']); },
       format: function (v) { return v + ' mo'; }
+    },
+    variableWindow: {
+      label: 'Rolling window', owner: 'variable-income', anchor: 'inputs',
+      read: function (h) { var v = (h.variableIncome || {}).windowMonths; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Three months until chosen.', ['windowMonths']); },
+      format: function (v) { return v + ' months'; }
     },
 
     /* ---- The third wave: the LATER.md rooms (D-101). ---- */
@@ -580,6 +592,29 @@
       label: 'Pay-later due this month', owner: 'calendar', anchor: 'inputs',
       read: function (h) { var ps = ((h.calendar || {}).payLater || []).filter(function (b) { return Money.isEntered(b.cents); }); return ps.length ? Money.ok(ps.reduce(function (t, b) { return t + b.cents; }, 0), { count: ps.length }) : Money.incomplete('None listed.', ['payLater']); },
       format: money
+    },
+    /* The ledger (D-128): what Income logs as landing each month, and
+       what the Budget has closed. */
+    ledgerIncome: {
+      label: 'Income logged, a month', owner: 'income', anchor: 'log',
+      read: function (h) {
+        var list = ((h.ledger || {}).income || []).filter(function (e) { return e && e.active !== false && e.frequency !== 'once' && Money.isEntered(e.amountCents); });
+        if (!list.length) return Money.incomplete('Nothing recurring logged yet.', ['ledgerIncome']);
+        var Income = (typeof self !== 'undefined' && self.SLAF && self.SLAF.Income) || (typeof require === 'function' ? require('../engines/income.js') : null);
+        var total = 0;
+        list.forEach(function (e) { var b = Income && Income.basisById(e.frequency); total += b && Money.isEntered(b.periods) ? Math.round(e.amountCents * b.periods / 12) : 0; });
+        return Money.ok(total, { count: list.length });
+      },
+      format: function (v) { return money(v) + '/mo'; }
+    },
+    monthsClosed: {
+      label: 'Months closed', owner: 'budget', anchor: 'close',
+      read: function (h) { var n = ((h.ledger || {}).months || []).length; return n ? Money.ok(n) : Money.incomplete('No month closed yet.', ['monthsClosed']); },
+      format: function (v) { return v + (v === 1 ? ' month' : ' months'); },
+      /* Until a month is closed there is nothing to read back, and no path
+         should wait on it: the reading room says so itself. */
+      applies: function (h) { return ((h.ledger || {}).months || []).length > 0; },
+      notApplicableBecause: 'No month closed yet — close one on the Budget.'
     },
     historyCompareTo: {
       label: 'Comparing against', owner: 'history', anchor: 'inputs',
@@ -729,6 +764,24 @@
       read: function (h) { return Schema.monthlyExpensesCents(h); },
       format: function (v) { return money(v) + '/mo'; }
     },
+    /* The Skill Tree's one write and the exercise library's log (D-131):
+       only done is stored; every other state is derived. */
+    skillsDone: {
+      label: 'Skills done', owner: 'skill-tree', anchor: 'board',
+      read: function (h) {
+        var n = Object.keys((h.skillTree && h.skillTree.state) || {}).length;
+        return n ? Money.ok(n) : Money.incomplete('No skill marked done yet.', ['skillTree']);
+      },
+      format: function (v) { return v + (v === 1 ? ' skill' : ' skills'); }
+    },
+    exercisesDone: {
+      label: 'Exercises done', owner: 'exercises', anchor: 'list',
+      read: function (h) {
+        var n = Object.keys((h.exercises && h.exercises.done) || {}).length;
+        return n ? Money.ok(n) : Money.incomplete('No exercise completed yet.', ['exercises']);
+      },
+      format: function (v) { return v + (v === 1 ? ' exercise' : ' exercises'); }
+    },
     /* The practice ledger: every logged day's worth, summed. Written one
        row at a time by the Skill Stacker and by nothing else. D-090. */
     practiceLedger: {
@@ -797,14 +850,21 @@
          not applicable, which is a different thing and must never be counted
          as an outstanding task. Fields with no applies() always apply.
          DECISIONS.md D-055. */
-      applies: f.applies ? !!f.applies(household || {}) : true,
-      notApplicableBecause: f.notApplicableBecause || null,
+      applies: userSaysNa(household, fieldId) ? false : (f.applies ? !!f.applies(household || {}) : true),
+      notApplicableBecause: userSaysNa(household, fieldId) ? 'You marked this not applicable.' : (f.notApplicableBecause || null),
+      /* Marked N/A by the household itself, in the Budget room (D-129):
+         a structural option that does not exist for them, as opposed
+         to one the situation rules out. */
+      userNotApplicable: userSaysNa(household, fieldId),
       /* How old the figure is. null-safe: without staleness.js loaded the
          age is still computed from the stamp, just never judged. D-057. */
       age: isSet ? ageOf(household, fieldId) : null
     };
   }
 
+  function userSaysNa(household, fieldId) {
+    return !!(household && household.notApplicable && household.notApplicable[fieldId] === true);
+  }
   function confidenceOf(household, fieldId, ownerId) {
     var m = (household && household.meta) || {};
     if (m.guessed && m.guessed[fieldId]) return 'guess';
@@ -853,9 +913,27 @@
    * A value that isn't set yet says so and still links, so the way to fix it
    * is always one tap away.
    */
+  /** A small N/A toggle for a structural option, for its owner room to set
+   *  beside the input (D-130). The room wires the click to
+   *  Spine.setNotApplicable(fieldId, on). */
+  function naButton(fieldId, household, words) {
+    var on = userSaysNa(household, fieldId);
+    var w = words || {};
+    return '<button type="button" class="slaf-na" data-na-field="' + escapeHtml(fieldId) + '" aria-pressed="' + on + '" title="' + (on ? 'Marked not applicable — tap to say it applies after all' : 'Not applicable to me — drops it from every live figure') + '">'
+      + escapeHtml(on ? (w.on || 'Not applicable ✓') : (w.off || 'N/A')) + '</button>';
+  }
+
   function chip(fieldId, household, currentRoomId) {
     var d = describe(fieldId, household, currentRoomId);
     if (!d) return '';
+    /* Marked not applicable by the household (D-130): say so, not "add it". */
+    if (d.userNotApplicable) {
+      return '<a class="slaf-owned slaf-owned--na" href="' + d.href + '">'
+        + '<span class="slaf-owned-label">' + escapeHtml(d.label) + '</span>'
+        + '<span class="slaf-owned-value">n/a</span>'
+        + '<span class="slaf-owned-from">' + escapeHtml(d.notApplicableBecause || 'Not applicable.') + '</span>'
+        + '</a>';
+    }
     if (d.isSet) {
       var age = d.age && d.age.label
         ? ' · <span class="slaf-owned-age' + (d.age.stale === true ? ' is-stale' : '') + '">'
@@ -929,6 +1007,7 @@
     describe: describe,
     chip: chip,
     inlineChip: inlineChip,
+    naButton: naButton,
     ownedBy: ownedBy
   };
 });

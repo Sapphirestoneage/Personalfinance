@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Your Data · SPARKS</title>
+<meta name="description" content="Every way numbers get in or out of this browser: a file, a share link, or a pasted statement sorted into the debt, account, expense or income it is."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. A UTILITY, off the path like Refresh (D-057).
+  DECISIONS.md D-125.
+
+  1. READS   The whole household, to export it; the snapshot list, to
+             carry it; a pasted text or a loaded file, to sort it.
+  2. WRITES  It OWNS nothing. A pasted line becomes a record in the list
+             it belongs to — a debt (Debt Payoff's list), an asset (The
+             Statement's), a monthly expense line (Cash Flow's), an income
+             source (Start Here's) — through the same spine helpers those
+             rooms use, in one batch with one undo. A loaded file either
+             REPLACES the household (Spine.importJSON, D-059) or is ADDED
+             to it (Spine.mergeImport): the person chooses which, and is
+             told what each does before it happens.
+  3. CALLS   shared/importer.js — classify, plan, apply, merge. Nothing
+             here parses a line itself.
+  4. EMPTY   With nothing entered the export still works (an empty
+             household is a valid file), paste shows its preview, and the
+             start-over button says there is nothing to clear.
+  5. CONFIG  data/import_keywords.json (which word places a line where);
+             data/expense_categories.json (the category keywords).
+
+  LIVE-FORM: built once. The paste box and the buttons are markup. The
+  preview's selects are built when "Sort it out" is tapped — a rebuild the
+  person asked for — and are only read after that, never rebuilt on change.
+  THEMING: none this pass.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+  .card-gap { margin-top: var(--space-4); }
+  .data-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-top: var(--space-3); }
+  .data-note { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  .data-note.is-error { color: var(--color-critical); }
+  .data-note.is-good { color: var(--color-positive); }
+  .share-out { width: 100%; margin-top: var(--space-3); font-family: var(--font-mono, monospace); font-size: var(--text-xs); color: var(--color-text-muted); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2); resize: vertical; box-sizing: border-box; }
+  textarea.paste { width: 100%; min-height: 120px; font: inherit; font-size: var(--text-sm); padding: var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); color: var(--color-text); box-sizing: border-box; margin-top: var(--space-3); }
+  .file-say { font-size: var(--text-sm); margin-top: var(--space-3); }
+  .file-say b { display: block; font-family: var(--font-display); font-size: var(--text-md); }
+  ul.preview { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ul.preview li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); align-items: center; }
+  ul.preview li:first-child { border-top: none; }
+  ul.preview .pl-line { font-size: var(--text-sm); }
+  ul.preview .pl-amt { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  ul.preview .pl-why { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-faint); }
+  ul.preview .pl-ctl { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+  ul.preview li.is-skip .pl-line, ul.preview li.is-skip .pl-amt { color: var(--color-text-faint); }
+  .tally { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-3); }
+  .danger { border-color: var(--color-critical); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../index.html">← Home</a>
+  <h1>Your Data</h1>
+  <p class="room-lede">It lives in this browser. This is every way it comes in or goes out: a file, a link, or a pasted statement sorted into the right places.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="out">
+    <span class="slaf-eyebrow">Take it with you</span>
+    <h2 style="margin:var(--space-2) 0 0">A file, or a link</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">There is no account and no server. A share link keeps everything after the <code>#</code>, which a browser never sends to any site.</p>
+    <div class="data-actions">
+      <button type="button" class="slaf-btn" id="btn-export">Download a file</button>
+      <button type="button" class="slaf-btn" id="btn-share">Copy a share link</button>
+    </div>
+    <p class="data-note" id="out-note" hidden></p>
+    <textarea id="share-out" class="share-out" rows="3" readonly hidden aria-label="Share link"></textarea>
+  </section>
+
+  <section class="slaf-card card-gap" id="file">
+    <span class="slaf-eyebrow">Load a file</span>
+    <h2 style="margin:var(--space-2) 0 0">Replace what is here, or add to it</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">A file this app downloaded, from this browser or another. <strong>Replace</strong> makes it the household. <strong>Add</strong> keeps everything entered here and brings in what the file has that this does not — new accounts, debts, lines, people — without overwriting a number.</p>
+    <div class="data-actions">
+      <label class="slaf-btn" for="file-import" style="cursor:pointer">Choose a file…</label>
+      <input type="file" id="file-import" accept="application/json,.json" hidden/>
+    </div>
+    <div class="file-say" id="file-say" hidden></div>
+    <div class="data-actions" id="file-actions" hidden>
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-merge">Add it to what is here</button>
+      <button type="button" class="slaf-btn" id="btn-replace">Replace everything</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-file-cancel">Never mind</button>
+    </div>
+    <p class="data-note" id="file-note" hidden></p>
+  </section>
+
+  <section class="slaf-card card-gap" id="paste">
+    <span class="slaf-eyebrow">Paste in new numbers</span>
+    <h2 style="margin:var(--space-2) 0 0">A line each, sorted into where it belongs</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">A statement, a note to yourself, a CSV. Each line with an amount is placed as a debt, an account, a monthly expense, or pay — and you can change any placement before it is taken. One undo takes the whole lot back.</p>
+    <textarea id="paste-text" class="paste" aria-label="Numbers to import, one a line" placeholder="Chase Visa 2,300&#10;checking 4,120&#10;401k 31k&#10;rent 1,500/mo&#10;car loan 12,400&#10;owe mom 2,000&#10;salary 62,000"></textarea>
+    <div class="data-actions">
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-sort">Sort it out</button>
+      <label class="slaf-btn" for="paste-photo" id="photo-label">Read a screenshot</label>
+      <input type="file" id="paste-photo" accept="image/*" hidden/>
+    </div>
+    <p class="tally" id="paste-tally" hidden></p>
+    <ul class="preview" id="preview"></ul>
+    <div class="data-actions" id="paste-actions" hidden>
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-take">Add them</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-paste-cancel">Clear the list</button>
+    </div>
+    <p class="data-note" id="paste-note" hidden></p>
+  </section>
+
+  <section class="slaf-card card-gap" id="reset">
+    <span class="slaf-eyebrow">Start over</span>
+    <h2 style="margin:var(--space-2) 0 0">Clear this browser</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Removes the household from this browser. Download a file first if you might want it back; snapshots stay unless you clear them too.</p>
+    <div class="data-actions">
+      <button type="button" class="slaf-btn danger" id="btn-reset">Clear the household</button>
+      <label class="slaf-hint" style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" id="reset-snaps"/> and the snapshots</label>
+    </div>
+    <p class="data-note" id="reset-note" hidden></p>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Nothing here links to a bank; every number was typed or pasted by you, and stays in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../shared/importer.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference,
+      Ownership = SLAF.Ownership, Importer = SLAF.Importer;
+  var ROOM_ID = 'data';
+  var TABLES = null;
+  var rows = [];          /* the classified lines, as the person leaves them */
+  var pendingFile = null; /* { name, text, check } */
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function note(id, text, cls) { var n = el(id); n.hidden = !text; n.textContent = text || ''; n.className = 'data-note' + (cls ? ' ' + cls : ''); }
+  function shortDate(iso) { var d = new Date(iso); return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+
+  /* ---- Out: a file, a link (the dashboard's own code, D-059) ------------ */
+  el('btn-export').addEventListener('click', function () {
+    var blob = new Blob([Spine.exportJSON()], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = Spine.exportFilename();
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    note('out-note', 'Downloaded ' + Spine.exportFilename() + '. Keep it somewhere you would keep a bank statement.', 'is-good');
+  });
+  el('btn-share').addEventListener('click', function () {
+    Spine.shareFragment().then(function (frag) {
+      var link = location.origin + location.pathname.replace(/rooms\/[^/]*$/, '') + frag;
+      var out = el('share-out');
+      out.hidden = false; out.value = link;
+      var copied = navigator.clipboard && navigator.clipboard.writeText
+        ? navigator.clipboard.writeText(link).then(function () { return true; }, function () { return false; })
+        : Promise.resolve(false);
+      copied.then(function (yes) { note('out-note', (yes ? 'Copied. ' : '') + 'Everything after the # stays on the device that opens it — ' + link.length + ' characters, nothing sent anywhere.', 'is-good'); });
+    }).catch(function (err) { note('out-note', err.message, 'is-error'); });
+  });
+
+  /* ---- A file: replace, or add ------------------------------------------ */
+  function describeFile(check) {
+    var h = Schema.createHousehold(check.household);
+    var who = (Schema.primaryPerson(h) || {}).label || 'a household';
+    var bits = [];
+    var n = function (list) { return (list || []).length; };
+    if (n(h.people)) bits.push(n(h.people) + (n(h.people) === 1 ? ' person' : ' people'));
+    if (n(h.assets)) bits.push(n(h.assets) + (n(h.assets) === 1 ? ' asset' : ' assets'));
+    if (n(h.debts)) bits.push(n(h.debts) + (n(h.debts) === 1 ? ' debt' : ' debts'));
+    if (n(h.expenses && h.expenses.entries)) bits.push(n(h.expenses.entries) + ' expense lines');
+    if (n(check.snapshots)) bits.push(n(check.snapshots) + (n(check.snapshots) === 1 ? ' snapshot' : ' snapshots'));
+    return '<b>' + esc(who) + (check.exportedAt ? ', saved ' + esc(shortDate(check.exportedAt)) : '') + '</b>' + (bits.length ? esc(bits.join(' · ')) : 'Nothing much in it.');
+  }
+  el('file-import').addEventListener('change', function () {
+    var file = el('file-import').files && el('file-import').files[0];
+    if (!file) return;
+    file.text().then(function (text) {
+      var check = Spine.inspectImport(text);
+      if (!check.ok) { note('file-note', check.reason, 'is-error'); el('file-say').hidden = true; el('file-actions').hidden = true; pendingFile = null; return; }
+      pendingFile = { name: file.name, text: text, check: check };
+      el('file-say').hidden = false;
+      el('file-say').innerHTML = describeFile(check) + '<span class="slaf-hint">From ' + esc(file.name) + '. Which way?</span>';
+      el('file-actions').hidden = false;
+      note('file-note', '');
+      el('file-import').value = '';
+    });
+  });
+  el('btn-file-cancel').addEventListener('click', function () { pendingFile = null; el('file-say').hidden = true; el('file-actions').hidden = true; });
+  el('btn-merge').addEventListener('click', function () {
+    if (!pendingFile) return;
+    var r = Spine.mergeImport(pendingFile.text, Importer);
+    if (!r.ok) { note('file-note', r.reason, 'is-error'); return; }
+    var a = r.added;
+    var parts = [];
+    if (a.people) parts.push(a.people + (a.people === 1 ? ' person' : ' people'));
+    if (a.incomeSources) parts.push(a.incomeSources + ' income source' + (a.incomeSources === 1 ? '' : 's'));
+    if (a.assets) parts.push(a.assets + (a.assets === 1 ? ' asset' : ' assets'));
+    if (a.debts) parts.push(a.debts + (a.debts === 1 ? ' debt' : ' debts'));
+    if (a.expenses) parts.push(a.expenses + ' expense line' + (a.expenses === 1 ? '' : 's'));
+    if (a.other) parts.push(a.other + ' other record' + (a.other === 1 ? '' : 's'));
+    if (a.scalars) parts.push(a.scalars + ' blank' + (a.scalars === 1 ? '' : 's') + ' filled');
+    if (r.snapshotsAdded) parts.push(r.snapshotsAdded + ' snapshot' + (r.snapshotsAdded === 1 ? '' : 's'));
+    note('file-note', a.total || r.snapshotsAdded ? 'Added ' + parts.join(', ') + '. Nothing already entered changed; one undo takes it back.' : 'Nothing in that file that this browser did not already have.', 'is-good');
+    pendingFile = null; el('file-say').hidden = true; el('file-actions').hidden = true;
+  });
+  el('btn-replace').addEventListener('click', function () {
+    if (!pendingFile) return;
+    var who = (Schema.primaryPerson(pendingFile.check.household) || {}).label || 'a household';
+    if (!window.confirm('Load ' + who + ' from ' + pendingFile.name + '? This replaces everything entered in this browser.')) return;
+    var r = Spine.importJSON(pendingFile.text);
+    note('file-note', r.ok ? 'Loaded. ' + pendingFile.check.snapshots.length + ' snapshot' + (pendingFile.check.snapshots.length === 1 ? '' : 's') + ' came with it.' : r.reason, r.ok ? 'is-good' : 'is-error');
+    pendingFile = null; el('file-say').hidden = true; el('file-actions').hidden = true;
+  });
+
+  /* ---- Paste: classify, preview, take ------------------------------------ */
+  var KIND_LABEL = { debt: 'A debt', asset: 'An account or asset', expense: 'A monthly expense', income: 'Pay coming in', skip: 'Leave it out' };
+  var DEBT_TYPES = [['credit_card', 'Credit card'], ['student_loan', 'Student loan'], ['auto', 'Car loan'], ['mortgage', 'Mortgage'], ['personal', 'Personal loan'], ['family', 'From family or a friend'], ['medical', 'Medical'], ['other', 'Other']];
+  var ASSET_CATS = [['cash', 'Cash & savings'], ['retirement', 'Retirement account'], ['investment', 'Investments'], ['real_estate', 'Property'], ['vehicle', 'Vehicle'], ['other', 'Other']];
+  var BASES = [['annual', 'a year'], ['monthly', 'a month'], ['semimonthly', 'twice a month'], ['fortnightly', 'every two weeks'], ['weekly', 'a week']];
+
+  function subOptions(kind) {
+    if (kind === 'debt') return DEBT_TYPES;
+    if (kind === 'asset') return ASSET_CATS;
+    if (kind === 'income') return BASES;
+    if (kind === 'expense') return (TABLES.expenseCategories.categories || []).filter(function (c) { return !c.derivedFrom; }).map(function (c) { return [c.id, c.label]; });
+    return [];
+  }
+  function select(name, i, options, value) {
+    return '<select data-row="' + i + '" data-ctl="' + name + '" aria-label="' + name + '">' + options.map(function (o) {
+      return '<option value="' + esc(o[0]) + '"' + (o[0] === value ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
+    }).join('') + '</select>';
+  }
+  function renderPreview() {
+    var list = el('preview');
+    list.innerHTML = rows.map(function (r, i) {
+      var subs = subOptions(r.kind);
+      return '<li class="' + (r.kind === 'skip' ? 'is-skip' : '') + '" data-li="' + i + '">'
+        + '<span class="pl-line">' + esc(r.label || r.line) + '</span>'
+        + '<span class="pl-amt">' + (Money.isEntered(r.cents) ? esc(Money.formatCents(r.cents)) + (r.monthly ? '/mo' : '') : '—') + '</span>'
+        + '<span class="pl-why">' + esc(r.line) + (r.why ? ' · ' + esc(r.why) : '') + '</span>'
+        + (Money.isEntered(r.cents)
+            ? '<span class="pl-ctl">' + select('kind', i, Object.keys(KIND_LABEL).map(function (k) { return [k, KIND_LABEL[k]]; }), r.kind)
+              + '<span data-sub="' + i + '">' + (subs.length ? select('sub', i, subs, r.sub) : '') + '</span></span>'
+            : '')
+        + '</li>';
+    }).join('');
+    var taking = rows.filter(function (r) { return r.kind !== 'skip' && Money.isEntered(r.cents); }).length;
+    el('paste-actions').hidden = rows.length === 0;
+    el('btn-take').disabled = taking === 0;
+    el('btn-take').textContent = taking ? 'Add ' + taking + (taking === 1 ? ' item' : ' items') : 'Nothing to add';
+    el('paste-tally').hidden = rows.length === 0;
+    el('paste-tally').textContent = rows.length ? taking + ' of ' + rows.length + ' lines placed. Change any placement below, then add them.' : '';
+  }
+  el('preview').addEventListener('change', function (evt) {
+    var node = evt.target;
+    var i = Number(node.getAttribute('data-row'));
+    var r = rows[i];
+    if (!r) return;
+    if (node.getAttribute('data-ctl') === 'kind') {
+      r.kind = node.value;
+      var subs = subOptions(r.kind);
+      r.sub = subs.length ? (subs.some(function (o) { return o[0] === r.sub; }) ? r.sub : subs[0][0]) : null;
+      if (r.kind === 'income' && r.monthly) r.sub = 'monthly';
+      /* Only the detail box changes — the kind select the finger is on stays. */
+      var host = document.querySelector('[data-sub="' + i + '"]');
+      if (host) host.innerHTML = subs.length ? select('sub', i, subs, r.sub) : '';
+      var li = document.querySelector('[data-li="' + i + '"]');
+      if (li) li.className = r.kind === 'skip' ? 'is-skip' : '';
+    } else {
+      r.sub = node.value;
+    }
+    var taking = rows.filter(function (x) { return x.kind !== 'skip' && Money.isEntered(x.cents); }).length;
+    el('btn-take').disabled = taking === 0;
+    el('btn-take').textContent = taking ? 'Add ' + taking + (taking === 1 ? ' item' : ' items') : 'Nothing to add';
+  });
+  function sortOut(text) {
+    if (!TABLES) return;
+    var c = Importer.classify(text, TABLES);
+    rows = c.rows;
+    note('paste-note', rows.length ? '' : 'Nothing there I could read as a line with an amount on it.', rows.length ? '' : 'is-error');
+    renderPreview();
+  }
+  el('btn-sort').addEventListener('click', function () { sortOut(el('paste-text').value); });
+  el('btn-paste-cancel').addEventListener('click', function () { rows = []; renderPreview(); note('paste-note', ''); });
+  el('btn-take').addEventListener('click', function () {
+    var p = Importer.plan(rows, Spine.getProfile());
+    if (!p.count) return;
+    var n = Importer.apply(p, Spine);
+    var where = [];
+    if (p.debts.length) where.push(p.debts.length + (p.debts.length === 1 ? ' debt' : ' debts') + ' → <a href="' + Ownership.linkTo('debt-payoff', 'debts') + '">Debt Payoff</a>');
+    if (p.assets.length) where.push(p.assets.length + (p.assets.length === 1 ? ' account' : ' accounts') + ' → <a href="' + Ownership.linkTo('statement') + '">The Statement</a>');
+    if (p.expenses.length) where.push(p.expenses.length + ' expense line' + (p.expenses.length === 1 ? '' : 's') + ' → <a href="' + Ownership.linkTo('cash-flow', 'spending') + '">Cash Flow</a>');
+    if (p.income.length) where.push('pay → <a href="' + Ownership.linkTo('start', 'q-income') + '">Start Here</a>');
+    el('paste-note').hidden = false;
+    el('paste-note').className = 'data-note is-good';
+    el('paste-note').innerHTML = 'Added ' + n + (n === 1 ? ' item' : ' items') + ': ' + where.join(' · ') + '. One undo takes it all back.';
+    rows = []; el('paste-text').value = ''; renderPreview();
+  });
+  el('paste-photo').addEventListener('change', function () {
+    var file = this.files && this.files[0];
+    if (!file) return;
+    if (typeof window.TextDetector !== 'function') { note('paste-note', 'This browser cannot read text out of a picture. Copy the text from the screenshot and paste it above instead.', 'is-error'); return; }
+    createImageBitmap(file).then(function (bmp) { return new window.TextDetector().detect(bmp); }).then(function (found) {
+      el('paste-text').value = found.map(function (t) { return t.rawValue; }).join('\n');
+      sortOut(el('paste-text').value);
+    }).catch(function (e) { note('paste-note', 'Couldn’t read that picture (' + e.message + '). Paste the text instead.', 'is-error'); });
+    this.value = '';
+  });
+  if (typeof window.TextDetector !== 'function') el('photo-label').title = 'Needs a browser that can read text in pictures; otherwise paste the text.';
+
+  /* ---- Start over ------------------------------------------------------- */
+  el('btn-reset').addEventListener('click', function () {
+    var h = Spine.getProfile();
+    var empty = !(h.people || []).length && !(h.assets || []).length && !(h.debts || []).length;
+    if (empty && !el('reset-snaps').checked) { note('reset-note', 'There is nothing entered to clear.', ''); return; }
+    if (!window.confirm('Clear the household from this browser' + (el('reset-snaps').checked ? ', and every snapshot' : '') + '? Download a file first if you might want it back.')) return;
+    Spine.reset();
+    if (el('reset-snaps').checked) { try { localStorage.removeItem('slaf.snapshots.v1'); } catch (e) { /* fine */ } }
+    note('reset-note', 'Cleared. Start Here is the way back in.', 'is-good');
+  });
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Reference.load(['importKeywords', 'expenseCategories']).then(function (tables) {
+    TABLES = tables;
+    jumpToHash();
+  }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error';
+    n.textContent = 'Couldn’t load the tables in data/ (' + err.message + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+  });
+})();
+</script>
+</body>
+</html>

@@ -133,9 +133,16 @@
    * Roll the household's expense entries up by category and by bucket.
    * Returns a Result; an empty store is incomplete, not a pile of zeroes.
    */
-  function summarise(household, catalog) {
+  function summarise(household, catalog, opts) {
     var entries = (household && household.expenses && household.expenses.entries) || [];
+    var includeLog = !!(opts && opts.includeLog);
     var usable = entries.filter(function (e) {
+      /* The log's dated occurrences (D-128) are actuals for the budget,
+         not the typical month: they are left out here unless asked for,
+         so a receipt logged does not double a line already typed. An
+         income cost is never part of the household's month either. */
+      if (!includeLog && (e.source === 'log' || e.linkedIncomeId)) return false;
+      if (e.active === false) return false;
       return Money.isEntered(e.amountCents) && e.categoryId;
     });
 
@@ -498,9 +505,101 @@
     });
   }
 
+  /* ---- The expense log (D-128) --------------------------------------------
+     Dated occurrences: a receipt, a bill paid, a transfer made. A logged
+     entry with period 'monthly' repeats on its day each month from its
+     date on; 'once' lands on its date. Archived entries never count. */
+  function groupOf(catalog, categoryId) {
+    var c = categoryById(catalog, categoryId);
+    return c && c.group ? c.group : 'other';
+  }
+  function groupById(catalog, groupId) {
+    var list = (catalog && catalog.groups) || [];
+    for (var i = 0; i < list.length; i++) { if (list[i].id === groupId) return list[i]; }
+    return null;
+  }
+  function logEntries(household) {
+    return ((household && household.expenses && household.expenses.entries) || []).filter(function (e) { return e && e.source === 'log'; });
+  }
+  function ym(date) { return typeof date === 'string' && date.length >= 7 ? date.slice(0, 7) : null; }
+  function logOccurrences(entry, month) {
+    if (!entry || !Money.isEntered(entry.amountCents) || !entry.date || !/^\d{4}-\d{2}$/.test(month || '')) return [];
+    var kind = Schema.DATE_KINDS && Schema.DATE_KINDS.indexOf(entry.dateKind) >= 0 ? entry.dateKind : 'exact';
+    var stamp = function (o) { o.dateKind = kind; if (kind === 'potential') o.potential = true; if (kind !== 'exact') o.estimated = true; return o; };
+    if (entry.period !== 'monthly') return ym(entry.date) === month ? [stamp({ date: entry.date, cents: entry.amountCents })] : [];
+    if (ym(entry.date) > month) return [];
+    var y = +month.slice(0, 4), m = +month.slice(5, 7) - 1;
+    var dim = new Date(y, m + 1, 0).getDate();
+    var day = Math.min(+entry.date.slice(8, 10) || 1, dim);
+    return [stamp({ date: month + '-' + (day < 10 ? '0' : '') + day, cents: entry.amountCents })];
+  }
+  /**
+   * logInMonth(household, catalog, 'YYYY-MM') — every active logged
+   * occurrence in the month with its group, and the totals: by group, by
+   * budget bucket, personal against income costs, deductible.
+   */
+  function logInMonth(household, catalog, month) {
+    var rows = [], byGroup = {}, byBucket = { expenses: 0, savings: 0, investments: 0, debt: 0, income_costs: 0 };
+    var personal = 0, costs = 0, deductible = 0, pendingReimb = 0, reimbursed = 0, potentialRows = [], potential = 0;
+    logEntries(household).forEach(function (e) {
+      if (e.active === false) return;
+      var reimb = e.produced === 'reimbursable';
+      logOccurrences(e, month).forEach(function (o) {
+        var g = groupOf(catalog, e.categoryId);
+        var gr = groupById(catalog, g);
+        var bucket = e.linkedIncomeId ? 'income_costs' : ((gr && gr.bucketOf) || 'expenses');
+        /* A potential date is drawn, never counted (D-130). */
+        if (o.potential) {
+          potentialRows.push({ id: e.id, entryId: e.id, date: o.date, cents: o.cents, categoryId: e.categoryId, group: g, bucket: bucket, descriptor: e.descriptor || null, recurring: e.period === 'monthly', hidden: e.hidden === true, dateKind: 'potential', potential: true });
+          potential += o.cents;
+          return;
+        }
+        rows.push({ id: e.id, entryId: e.id, date: o.date, cents: o.cents, categoryId: e.categoryId, group: g, bucket: bucket,
+          descriptor: e.descriptor || null, linkedIncomeId: e.linkedIncomeId || null, deductible: e.deductible === true, recurring: e.period === 'monthly', hidden: e.hidden === true,
+          dateKind: o.dateKind || 'exact', estimated: o.estimated === true,
+          produced: e.produced || (e.linkedIncomeId ? 'linked' : 'personal'),
+          reimbursableFrom: reimb ? e.reimbursableFrom || null : null, reimbursementStatus: reimb ? e.reimbursementStatus : null, expectedAmountCents: reimb ? e.expectedAmountCents : null });
+        byGroup[g] = (byGroup[g] || 0) + o.cents;
+        byBucket[bucket] = (byBucket[bucket] || 0) + o.cents;
+        if (e.linkedIncomeId) { costs += o.cents; if (e.deductible === true) deductible += o.cents; } else personal += o.cents;
+        if (reimb && e.reimbursementStatus !== 'received') pendingReimb += o.cents;
+      });
+      /* A reimbursement received lands as a credit in the month it came,
+         against the bucket the expense sat in — never back in the month
+         of the expense (D-129). The expense itself stayed in full above. */
+      if (reimb && e.reimbursementStatus === 'received' && e.dateReceived && e.dateReceived.slice(0, 7) === month) {
+        var back = Money.isEntered(e.receivedAmountCents) ? e.receivedAmountCents : (Money.isEntered(e.expectedAmountCents) ? e.expectedAmountCents : e.amountCents);
+        if (!Money.isEntered(back) || back === 0) return;
+        var g2 = groupOf(catalog, e.categoryId);
+        var gr2 = groupById(catalog, g2);
+        var bucket2 = (gr2 && gr2.bucketOf) || 'expenses';
+        rows.push({ id: e.id + ':credit', entryId: e.id, date: e.dateReceived, cents: -back, categoryId: e.categoryId, group: g2, bucket: bucket2,
+          descriptor: e.descriptor || null, linkedIncomeId: null, deductible: false, recurring: false, hidden: e.hidden === true,
+          produced: 'reimbursable', credit: true, reimbursableFrom: e.reimbursableFrom || null, reimbursementStatus: 'received', expectedAmountCents: e.expectedAmountCents });
+        byGroup[g2] = (byGroup[g2] || 0) - back;
+        byBucket[bucket2] = (byBucket[bucket2] || 0) - back;
+        personal -= back; reimbursed += back;
+      }
+    });
+    rows.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+    potentialRows.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+    return { month: month, rows: rows, byGroup: byGroup, byBucket: byBucket, personalCents: personal, incomeCostsCents: costs, deductibleCents: deductible,
+      pendingReimbursementCents: pendingReimb, reimbursedCents: reimbursed, count: rows.length, potentialRows: potentialRows, potentialCents: potential };
+  }
+  /** Reimbursable expenses still waiting to be paid back, whatever the month. */
+  function pendingReimbursements(household) {
+    return logEntries(household).filter(function (e) { return e.active !== false && e.produced === 'reimbursable' && e.reimbursementStatus !== 'received'; });
+  }
+
   return {
     categoryById: categoryById,
     categorise: categorise,
+    groupOf: groupOf,
+    groupById: groupById,
+    logEntries: logEntries,
+    logOccurrences: logOccurrences,
+    logInMonth: logInMonth,
+    pendingReimbursements: pendingReimbursements,
     normaliseToMonthly: normaliseToMonthly,
     summarise: summarise,
     netMonthlyIncomeCents: netMonthlyIncomeCents,

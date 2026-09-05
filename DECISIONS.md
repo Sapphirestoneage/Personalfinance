@@ -5861,6 +5861,705 @@ the room it came from, every room the same shape.
 
 ---
 
+## D-123 — Freeze says what it did, and every ratio explains itself
+
+Two things the phone showed. **Freeze today's numbers** saved a snapshot
+and changed nothing on the screen, so it read as broken: the dashboard's
+age line now says how many snapshots there are and when the last was
+taken, turns green with "just now" after the tap, and links to History.
+And a ratio was a name and a coloured figure with nothing behind it:
+every ratio row — the dashboard's radar legend and weather list, and
+Every Ratio — now carries a ⓘ that opens what it is, why it matters, what
+moves it, the formula, the band in words, and a chip for each field it
+looks at that links to the room owning that number (`shared/explain.js`
+over `data/ratio_explainers.json`; `Ratios.all` attaches the entry to
+each row as `explain`). The name on the dashboard links to the row in
+Every Ratio. A ratio without an explainer fails the suite.
+
+**Invested share.** "Investment to net worth" read 195% for a household
+with $70,000 invested and $41,110 of debt — arithmetic nobody can act on.
+It is now `investedShare`, investments over total assets, which cannot
+pass 100% and means what its label says. `data/ratio_benchmarks.json`
+1.4 and `data/health_score.json` follow the rename.
+
+### Compatibility note
+
+Stored shape: nothing. A snapshot's `computedOutputs` holds ratios by id
+only through the instruments, none of which is this one, so no stored
+delta breaks. Rooms updated: `index.html`, `rooms/ratios.html`.
+
+---
+
+## D-124 — A debt from family, no interest, set aside, and two dates
+
+A car bought with money from a parent had no way in: it needed "an
+interest rate and a minimum payment", and a rate typed as 0 on a card
+opened the promo fields. Four changes to the debt record, all in
+`Schema.createDebt`:
+
+- `type` admits **`family`** — borrowed from family or a friend. Choosing
+  it with nothing said about the rate ticks no-interest and stores a 0.
+- **`interestFree`** — true means no interest, ever; the rate is stored
+  as 0 alongside so a reader that only knows `rate` agrees
+  (`Debt.effectiveRate`). Unticking a 0 that only came from the tick
+  puts the rate back to "not entered", so the row asks again.
+- **`archived`** — set aside: paid off, or on hold. Kept for the record
+  in a drawer, restorable, read by nothing that adds up or plans
+  (`Schema.aggregatableDebts` excludes it; `Schema.archivedDebts` lists
+  it).
+- **`borrowedOn`** and **`dueOn`** on every debt. On a family loan with no
+  monthly amount, the minimum is the balance over the months until
+  `dueOn` — a new rule, `balance_over_months_to_due`, in
+  `data/debt_rules.json` 1.1; a typed amount still wins.
+
+The row's warning and its type-dependent blocks (the card's limit and
+promo fields, the family hint) are painted live on every write without
+rebuilding the row (`paintLive`), because the deferred rebuild
+(`shared/liveform.js`) left a stale "needs an interest rate" under a car
+loan for as long as a finger stayed in the form — which on a phone is
+the whole time.
+
+### Compatibility note
+
+Stored shape: `debt` gains `interestFree` (null), `archived` (false),
+`borrowedOn` (null), `dueOn` (null); `debt.type` gains `family`. A debt
+saved before this reads with the defaults through `createDebt` on load;
+nothing migrates. Rooms updated: `rooms/debt-payoff.html`. A future room
+reading `household.debts` should filter `archived !== true` — or read
+`Schema.aggregatableDebts`, which does — and treat `interestFree === true`
+as a 0 rate.
+
+---
+
+## D-125 — Your Data: a file added or replacing, and a pasted statement sorted
+
+Export lived in a folded drawer on the dashboard, a loaded file could
+only replace everything, and the one-pager's paste answered its own ten
+questions and nothing else. `rooms/data.html` is every way numbers get in
+or out, in one place:
+
+- **A file, added.** `Spine.mergeImport` brings in what a file has that
+  this browser lacks — records by id, people and their income sources,
+  expense entries, blank scalars, snapshots — and changes nothing already
+  entered; one command-log entry, one undo. Replace is still
+  `Spine.importJSON` (D-059), and the person is told which is which
+  before either happens. The merge is `Importer.merge`, pure, so the
+  suite can check it record by record.
+- **A pasted statement, sorted.** `Importer.classify` places each line
+  with an amount, by a word in `data/import_keywords.json`, as a debt of
+  a type, an asset of a category, a monthly expense in a category
+  (through the catalogue's own keywords too), or pay on a basis; a line
+  no word matches is shown as skipped, never guessed. Every placement is
+  shown with a kind and a detail select before "Add" writes the lot in
+  one batch through the same spine helpers the owner rooms use
+  (`Importer.plan` → `Importer.apply`). A monthly expense line for a
+  category that already has one replaces it rather than doubling; a
+  single income source is updated, not duplicated; a family loan comes in
+  interest-free.
+
+Your Data owns no field. Like Refresh (D-057) and the one-pager's paste
+(D-095) it is a write path into records other rooms own, and each record
+lands where its owner will show it. It is a utility, off the path.
+
+### Compatibility note
+
+Stored shape: nothing new. Rooms updated: `index.html` (the data drawer
+links here). `data/import_keywords.json` is config: a word that places a
+line is a data edit.
+
+---
+
+## D-126 — Cash Flow: the month at a glance, the common lines open, a per aid
+
+The page opened on nineteen boxes. It now opens on three tiles — comes
+in (take-home, Tier 0's one tax lookup), goes out (the lines, savings
+excluded because that money has not left), left — each saying what it
+needs when it cannot show a figure, with the floor (D-082) beneath. The
+lines most months have are open; the rest fold under "N more lines" per
+bucket, and a folded line that holds a value opens itself, so nothing
+typed is ever hidden. Beside each amount a **per** select — a month, a
+week, every two weeks, a year — turns what was typed into the month that
+is stored, through the same `BASES` `engines/income.js` annualises pay
+with, and a hint under the line says what was kept. The select applies to
+the number just typed and returns to "a month".
+
+**The stored shape is deliberately unchanged.** The earlier ask — a date
+on every expenditure and incoming amount, estimated and potential dates,
+an incoming-money list — is the Income and Expenses data model that
+`MONEY-MAP.md` exists to settle first (its Task 3 and open questions 1, 5
+and 13). Building it here would have designed it twice.
+
+### Compatibility note
+
+Stored shape: nothing. Rooms updated: `rooms/cash-flow.html`; the
+registry row gains the `glance` subsection.
+
+---
+
+## D-127 — Money Calendar: the month as a calendar
+
+Under the balance line, the same 31 days as a grid — rows of seven from
+Sunday, the first row padded so a day sits under its weekday, a cell a
+day with the payday and each bill or pay-later instalment on the day it
+lands, the cash at the end of the day, the low point outlined, days under
+zero and the tight stretch shaded (`Calendar.weeks`, drawn from the one
+month the engine already runs). Nothing new is stored; when the Money
+Map's dated entries land (D-126, `MONEY-MAP.md` Q5), this grid is where
+they show.
+
+---
+
+## D-128 — The ledger: income entries, the expense log, the reflected budget, the month closed
+
+*(The build spec for Income / Expenses / Budget / Estimated-vs-Actual, built
+directly against; `MONEY-MAP.md` was the discovery pass before it.)* Nine
+build items, one commit each.
+
+**Two records, not one.** An income **entry** is a dated event — this
+paycheque, this invoice paid, this gift — in `household.ledger.income[]`:
+kind (w2, se, bonus, gift, side, dividend, rental, other), amount,
+frequency (once, weekly, fortnightly, monthly, annual), received-on,
+taxable and the tax method (w2 withholding, se on the net of costs, none),
+and for se / side / rental the costs of producing it on the entry itself
+(mileage, home office, equipment, contractor fees, licensing, platform
+fees). An income **source** stays what it was: Start Here's annualised
+description of a job, the figure every ratio reads. The two coexist on
+purpose — retrofitting every reader onto dated events would have been the
+rewrite SPEC.md §3 warns against — and the Tax room reads the ledger's
+year by method when entries recur, its sources otherwise
+(`engines/taxroom.js splitIncome`).
+
+**One tax engine for entries.** `engines/ledger.js netOf`: a gift nets
+nothing; W-2 pay is withheld at the year's blended effective rate (Tier
+0's lookup, read at the household's annual gross); 1099, side and rental
+income pay self-employment tax on the profit net of costs through
+`engines/selfemployed.js` — W-2 wages counted against the wage base — plus
+income tax at the rate less the FICA share, the arithmetic
+`quarterlyEstimated` already does. The same $2,000 nets three different
+ways and the suite checks each by hand. Rental is netted as
+self-employment because the spec asked; the room says a return treats it
+differently. `occurrences` lands a recurring entry from the month it was
+first received, never before; `month` nets every active landing.
+
+**The expense log lives in Cash Flow.** One store, one owner (D-017): a
+logged occurrence is an `expenses.entries[]` row with `source: 'log'`, a
+date, a category in one of nine groups (`group` on every category in
+`data/expense_categories.json` 1.2, plus savings, investments and
+income_costs), optionally the income entry it produced
+(`linkedIncomeId`) and a deduction. **The hard rule is in the
+constructor**: `deductible` is stored true only when `linkedIncomeId` is
+set, and every spine write goes back through the constructor, so a
+personal expense can never reduce taxable income whatever a form sends.
+The typical-month lines and every ratio ignore the log; the budget reads
+it as actuals (`CashFlow.logInMonth`).
+
+**The budget is a reflection.** `engines/budget.js`: Estimated per bucket
+is a hand-set figure for the month, else the last closed month's actual,
+else what Start Here and Cash Flow already hold (take-home; the lines by
+group; the workplace contribution; the debt minimums) — the one-pager is
+the onboarding. Actual is the ledger's income netted of tax and the log by
+bucket; the cost of earning an income entry sits under income and in
+neither bucket. `rooms/budget.html` has no input, select or textarea; Add
+carries the month and a way back (`?for=budget&month=…`) to Income or the
+log with the bucket's category picked, and the return lands on the row
+that changed, lit once. **Close** freezes both columns into a
+`MonthRecord` in `household.ledger.months[]` (`Spine.closeMonth`, refused
+a second time, append-only, sorted); an entry logged into a closed month
+afterwards moves only `actualRevised` (`Budget.syncRevised`), never the
+record. The record lives in the household, not the snapshot store, so it
+exports, merges and undoes with everything else.
+
+**Estimated vs Actual** (`rooms/variance.html`, `engines/variance.js`)
+reads records only: one month with the miss that hurts marked, the trend
+across closed months, per bucket the average miss and whether it is off
+the same way every month. Its one write is a button — the last three
+months' average as the next open month's estimate through
+`Spine.setBudgetEstimate` — and nothing moves until it is tapped.
+
+**Hide and set aside** (`shared/manage.js`): hidden is cosmetic and still
+counts; set aside (`active: false`) stops counting from now on and leaves
+closed months as they were. After a one-time entry's month closes, a
+dismissible prompt asks whether it was a one-off (`ledger.dismissed`
+remembers a no). **Where it flows**: `Charts.sankey`, drawn in Cash Flow
+from the live entries on every render, never a saved dataset. **Variable
+Income** reads the ledger's 1099, side and bonus entries as a filtered
+view with a rolling three-, six- or twelve-month average
+(`variableIncome.windowMonths`); when they exist the observed low, high
+and average stand in for the typed ones; it adds no income.
+
+**Rooms and the path.** Income (`income`), Budget (`budget`) and
+Estimated vs Actual (`variance`) are registered after Cash Flow as
+about-you / read rooms so the four-room core (D-051) stays four.
+`monthsClosed` is not applicable until a month exists, so no path waits
+on it.
+
+**The end-to-end check the spec set** — a W-2 paycheque and a 1099 gig
+with $200 of mileage in one month; the budget's income actual as the
+combined net-of-tax figure; a personal expense and one linked to the gig
+with only the linked one moving the tax base; the month closed once,
+locked, and read in Estimated vs Actual; the gig set aside with next
+month no longer expecting it and the closed month keeping it in full —
+runs through the pages on a phone browser and passes with no console
+error.
+
+### Compatibility note
+
+Stored shape: `household.ledger` (`income[]`, `months[]`, `dismissed[]`)
+and `household.budget.estimated` are new branches, empty by default;
+`expenses.entries[]` rows gain `linkedIncomeId` (null), `deductible`
+(false), `hidden` (false), `active` (true), and `source` admits `'log'`;
+`household.variableIncome` gains `windowMonths` (null). A household saved
+before this reads through the constructors with the defaults; nothing
+migrates. Rooms updated: `rooms/cash-flow.html` (the log, the flow,
+Manage), `rooms/variable-income.html`, `rooms/tax.html` (loads the
+ledger). New: `rooms/income.html`, `rooms/budget.html`,
+`rooms/variance.html`. A future room reading `expenses.entries` must skip
+`source === 'log'` unless it wants occurrences, and skip
+`active === false` always — or call `CashFlow.summarise` /
+`CashFlow.logInMonth`, which do.
+
+## D-129 — The ledger, revised: four ways to be taxed, three things an expense can produce, a budget of cards with presets, N/A and the what-if
+
+*(The revised build spec for Income / Expenses / Budget / Estimated-vs-
+Actual: eleven build items, one commit each, built directly against it
+on top of D-128. Items 8–11 — the analysis room, hide and set aside, the
+Sankey, Variable Income — were already what the revision asked for and
+were re-verified rather than rebuilt.)*
+
+**Nine kinds of income, and exactly four ways to be taxed.** Income
+entries gain `unemployment`, and `taxMethod` is now exactly `w2`
+(withheld before it arrives), `se` (owed later, with self-employment
+tax), `unemployment` (taxable as income, nothing withheld, no
+self-employment tax) and `none`. `engines/ledger.js netOf` nets the same
+$2,000 four genuinely different ways and every result now says what was
+withheld, what is still owed and what cash actually landed
+(`withheldCents`, `owedCents`, `cashReceivedCents`), so a benefit cheque
+never reads as fully spendable. The year by method keeps unemployment
+out of wages (`annualByMethod.unemploymentCents`); `Tax.estimate` takes
+it as `otherOrdinaryCents` — ordinary income with no payroll tax on it —
+and the Tax room passes the ledger's figure through. Calls made:
+`taxMethod: 'none'` with no `taxable` given reads as not taxable, so a
+form that only asks Taxed How stays consistent; a gift still forces
+`none`.
+
+**Three things an expense can produce, decided in the constructor.**
+`expenses.entries[].produced` is `personal`, `linked` or `reimbursable`,
+exclusive. Personal can never be deductible. Linked (`linkedIncomeId`)
+is the only path that can. Reimbursable records who owes it back
+(`reimbursableFrom`), what is expected (`expectedAmountCents`, default
+the amount), `reimbursementStatus` pending → received, and when it did
+(`dateReceived`, `receivedAmountCents`); it is never deductible, it
+carries no link, and it **counts in full in Actual while pending**. When
+it is paid back — `Spine.markReimbursed`, the "Paid back" action on the
+log line — `CashFlow.logInMonth` lands a credit row in the month of
+`dateReceived`, against the bucket the expense sat in, **never back in
+the month of the expense**, so a closed month never moves and the
+Estimated-vs-Actual record stays honest. The Sankey draws a repayment as
+an inflow to the pool, not a negative outgoing. A spine patch that adds a
+link or a payer switches the path rather than being pinned by the stored
+one.
+
+**The budget is five cards with one bar each.** The grid sheet became
+five bucket cards. Each carries a horizontal Estimated-vs-Actual
+comparison bar in the Every Ratio room's bar language (`.slaf-bars`):
+the estimate as a faint zone with a marker at its edge, the actual as the
+fill — green within, red over, amber for income that came in short. A
+card opens to its lines and its Add button lives inside; the Add still
+routes to Income or the expense log with the way back (D-128). Still
+zero input fields on the page; the Estimated, Actual, Close and
+late-entry rules did not change.
+
+**Presets, read through the function that owns each.**
+`engines/presets.js`: **Rule of Five** calls `QuickMath.ruleOfFive` on
+the Big Purchase room's price and spreads the shortfall to five of it
+over the months until the purchase (a year when no date is set, and it
+says so); it is not a second formula. **Max the IRA** and **Max the
+401(k)** read `data/irs_limits_2026.json`, a twelfth a month, with the
+catch-up from exactly 50 by the spine's date of birth (no date of birth:
+the base limit, and a nudge to add one). Max 401(k) is **absent, not
+disabled**, until an employer 401(k) is indicated — `retirement.has401k`,
+asked once in the Investments card with two buttons, and not asked of
+the self-employed. Presets stack into the bucket's Estimated
+(`household.budget.presets[month][bucket]`): on top of a hand-set figure,
+or **in place of** the last-closed / onboarding fallback — those already
+hold what was put in, and stacking a limit on top would count it twice.
+A preset that can no longer be read (the 401(k) answered no) drops out of
+the live figure; the stored list is left alone so it comes back when it
+can.
+
+**Not applicable is the household's word, and a what-if is not a
+write.** A structural preset gains an N/A button:
+`household.notApplicable[key] = true` drops it from every live figure,
+and `shared/ownership.js` reads the same map, so a field marked there is
+**not applicable, never an outstanding task** (D-055's distinction), and
+the row says it was you who said so (`userNotApplicable`). "Applies
+after all" lifts the mark. The Budget room's **Hypothetical** view is
+visually its own thing — dashed amber edge, amber banner, Add and Close
+gone — and holds its what-ifs (presets stacked, the 401(k) answer, the
+N/A marks lifted) in the page's memory only. It calls nothing on the
+spine; the browser check confirms localStorage is byte-identical before,
+during and after. Switching it off drops the overlay and the real budget
+is exactly as it was: D-052's rule, what-ifs get thrown away, kept.
+
+**The seven-step check the revised spec set** — a W-2 paycheque, a 1099
+gig with $200 of mileage and an unemployment benefit in one month treated
+three ways; Income Actual as a card with a bar, the combined net figure;
+a personal, a linked and a reimbursable expense with only the linked one
+moving the tax base; Rule of Five and Max 401(k) stacking, and the 401(k)
+disappearing without employer access; N/A dropping it from live and
+Hypothetical bringing it back without a write; the month closed once and
+read in Estimated vs Actual; the gig set aside with next month no longer
+expecting it and the closed month keeping it — runs through the pages on
+a phone browser and passes with no console error.
+
+### Compatibility note
+
+Stored shape: `ledger.income[].kind` admits `'unemployment'` and
+`taxMethod` admits `'unemployment'` (the constructor maps the kind to
+the method); `expenses.entries[]` rows gain `produced` (`'personal'`
+unless a link or a payer says otherwise), `reimbursableFrom` (null),
+`expectedAmountCents` (null), `reimbursementStatus` (null),
+`dateReceived` (null), `receivedAmountCents` (null); `retirement` gains
+`has401k` (null = not asked); `household.budget` gains `presets` ({});
+`household` gains `notApplicable` ({}). A household saved before this
+reads through the constructors with the defaults; nothing migrates, and
+an older row with a `linkedIncomeId` reads as `produced: 'linked'`.
+Rooms updated: `rooms/income.html`, `rooms/cash-flow.html`,
+`rooms/budget.html`, `engines/taxroom.js` (reads the unemployment
+figure). A future room reading `expenses.entries` must treat a
+`reimbursable` row as personal spending until `reimbursementStatus` is
+`'received'`, and then credit `receivedAmountCents` (else
+`expectedAmountCents`, else the amount) in the month of `dateReceived` —
+or call `CashFlow.logInMonth`, which does. A future room offering a
+structural option should check `household.notApplicable[key]` first, or
+read the field through `Ownership.describe`, which does.
+
+## D-130 — What was pushed off, built: dates that are only estimated or potential, the calendar from the ledger, one month of spending, one rent, what the log moved, N/A in its owner room, an emergency-fund preset
+
+*(The open items LATER.md carried after D-128 and D-129 — the Money
+Map's Q5, Q8, Q10 and Q11, `dateKind`, and the three "still open after
+D-129" lines — each built and verified, one commit each.)*
+
+**How sure a date is.** Income entries and log entries carry
+`dateKind`: `exact` (it landed, or it is due), `estimated` (about then)
+or `potential` (may not happen at all); unknown reads as exact, the way
+every older row was meant. Every landing carries its kind. **Actual
+counts exact and estimated; a potential one is never counted** — the
+ledger's month and the log's month list it apart (`potentialRows`,
+`potentialCents`) so a calendar can draw it and the budget never does.
+Both forms ask "The date is" beside the date; the log lists a potential
+row greyed with "maybe" and an estimated one with "about".
+
+**The calendar is drawn from the ledger and the log (Q5).** When
+Income has entries landing in the window, *they* are the paydays, each
+on its day for the cash it brings net of what was withheld
+(`cashReceivedCents`), and the cadence is not needed; with no ledger the
+cadence and next-payday day still draw the month as before. Every dated
+entry in the expense log is drawn on its day as a bill, a recurring one
+each month, and what the log lists in the month comes off the spread;
+an estimated date is drawn and counted, a potential one drawn and never
+counted, a reimbursement comes back in on the day it came. The room's
+own bill and pay-later inputs are gone — bills are logged in Cash Flow,
+which is their one owner — and the bills and instalments saved on the
+calendar before this are still drawn, so no household loses a day it
+had. **Start Here's one-off is a dated entry now**: coming in, an income
+entry (`oneoff_in`, kind other, source onepager); going out, a log entry
+(`oneoff_out`, category other); the 1st of its month, date estimated.
+`Schema.oneOffEntry` reads it back for the one-pager and the dashboard,
+and still reads the legacy `oneOffs[0]` for a household saved before.
+
+**A month of spending is the closed months' average (Q10).**
+`Schema.monthlyExpensesCents` prefers the average of the last three
+closed months' expenses actual (source `closed`, naming the months) to
+the tracked figure and the estimate; a closed month with nothing logged
+does not count. Every room that reads "a month of spending" — Runway,
+Savings Rate, FIRE, the ratios, the calendar, the presets — gains the
+truer figure with no change of its own, and Runway and Savings Rate say
+where it came from. Three months is the trailing window because one
+closed month is a sample and twelve is a year of drift; it is a
+constant in the schema, `CLOSED_AVERAGE_MONTHS`, not a table entry, as
+it is arithmetic rather than reference data.
+
+**One rent (Q11).** `Schema.rentMonthlyCents` reads Cash Flow's housing
+line — the typical-month line, or failing that a recurring rent logged
+on its day — as what you pay; the Housing Decision room's own field is
+only *a place you would rent instead*, used when typed (the room's
+what-if) or when there is no line. `Housing.compare` and
+`Calendar.rentCents` both go through it and say which they used. In the
+ownership map `rentMonthly` is Cash Flow's; `rentAlternative` is
+Housing's — two fields because they are two numbers, the fact and the
+hypothesis, which is D-052's line.
+
+**What the log moved since cash was confirmed (Q8).**
+`Budget.cashMovedSince` adds up income actually received and takes off
+every logged outgoing from the day the cash figure was confirmed
+(`meta.confirmedAt.cashSavings`), potential dates never counted. The
+Statement sets it beside the cash balance as a hint and **applies
+nothing**: entries inform the balance, they never move it, so the
+person's confirmation stays the one fact and the Statement never
+disagrees with the bank statement it was typed from. The alternative —
+letting entries move balances — would make every logged coffee a write
+to an asset another room owns, and D-017's one-owner rule was the
+reason to stop.
+
+**Not applicable, in the owner room too.** `Ownership.naButton` renders
+the N/A toggle for a structural option; Where It Goes sets one beside
+the workplace-contribution chip ("No plan") and under the HSA toggles,
+through `Spine.setNotApplicable`. `Ownership.chip` shows a field marked
+N/A as "n/a — you marked this not applicable" everywhere instead of
+asking for it. The remaining situation gates (between jobs, a partner,
+dependents, debt) are answered by facts Start Here already asks, so they
+need no toggle.
+
+**An emergency-fund preset for Savings.** `engines/presets.js` gains
+`emergencyFund`: the gap between cash and N months of spending, spread
+over a horizon, both from `data/savings_presets.json` (three months
+over twelve, a stated convention). It stacks with Rule of Five. **The
+Rule of Five keeps reading Big Purchase's price** rather than taking one
+of its own: a price box on the budget page would be its first input
+field, and zero inputs there (D-129) is the rule that wins.
+
+### Compatibility note
+
+Stored shape: `ledger.income[]` and `expenses.entries[]` rows gain
+`dateKind` (`'exact'`); `household.calendar.bills[]` and `payLater[]`
+are no longer written by any room but are still read and drawn;
+`household.oneOffs[]` is no longer written by any room and is read only
+when neither `oneoff_in` nor `oneoff_out` exists; `retirement`,
+`budget`, `notApplicable` are as D-129 left them. A household saved
+before this reads through the constructors with the defaults; nothing
+migrates. Rooms updated: `rooms/income.html`, `rooms/cash-flow.html`
+(the date kind), `rooms/calendar.html` (drawn from the ledger and the
+log, two inputs), `rooms/start.html` and `index.html` (the one-off as an
+entry), `rooms/housing.html` (the alternative rent), `rooms/statement.html`
+(the cash-moved hint, loads the ledger and budget engines),
+`rooms/accounts.html` (N/A), `rooms/runway.html` and
+`rooms/savings-rate.html` (the source words). A future room reading
+occurrences must skip `potential` ones from any total (`Ledger.month`
+and `CashFlow.logInMonth` already do); one reading "the rent" must call
+`Schema.rentMonthlyCents`, never `housing.rentMonthlyCents` alone; one
+reading "a month of spending" gets the closed average for free through
+`Schema.monthlyExpensesCents` and should say so when it names its
+source (`.source === 'closed'`, `.months`).
+
+## D-131 — The Skill Tree and the Exercise Library, as rooms: two ladders, one game
+
+*(The Skill Tree spec: Civ VI's two trees that cross unlock, the FOO
+ladder as the technology tree and the skill tree as the civics tree;
+four states plus fog; boosts that open and never award; warps that
+reveal and never award; the exercise library in five kinds; versioning
+house wide. Built in the spec's order, one commit a step.)*
+
+**The file gap, and what was built against it.** The spec brings in
+FI-Skill-Tree-v6.3 (625 skills, ~280 links, 125 micro actions), and
+says its step 1 has to be written against the file's real internals.
+The file is not in this repo, on this machine, or reachable from this
+session. So `scripts/extract-v63.mjs` is written to the SHAPE it must
+emit — three stamped tables — and exits with that shape and a plain
+message until the file is dropped at the root (or `$SKILL_TREE_V63`);
+its extraction body is a stub that throws once the file is found, to
+be written against what is really there. Everything downstream is built
+against the shape and runs today on a **seed**: `scripts/seed-skill-tree.mjs`
+turns the Stacker's 26 catalogue skills (D-090) plus the skills the spec
+names for its cross links, warps and fog into `data/skill_tree.json`
+(five bands, six trees, 40 skills, five warps) and `data/skill_links.json`
+(28 cross links, the ladder both ways); `scripts/seed-exercises.mjs`
+writes `data/exercises.json` (the twelve runs, the thirteen canon
+exercises, one micro per seed skill; quests and dares wait for the v6.3
+content). Both are deterministic. When the file arrives, step 1 is
+"write the mapping, regenerate, verify the counts", and nothing else
+moves.
+
+**Two ladders, cross unlocked.** `engines/skilltree.js` is a pure
+function: household and tables in, every skill's state and reason out,
+the standard Result. A skill can carry `gate.foo` (it opens at that
+ladder step; the reason says "Opens at FOO step 8. You are on step 2."
+or "You are not placed on the ladder yet", linking the ladder) and the
+links table carries `fooRequires[step]` (skills a step needs; the tree
+reports `ladderNeeds` and the fortress line prints them under the
+rung). Both directions are in the seed: reading the plan's summary is
+needed by step 3; tax loss harvesting opens at step 8.
+
+**Four states, a fifth for the board, and not-yours.** `done` is the
+only state ever stored (`household.skillTree.state[id] = { state,
+on, by: proof | self }`); `open`, `locked`, `bypassed` and `fogged` are
+derived on every call, so the tree can never disagree with the facts.
+**Locked always says why**, in one of three shapes — a skill prerequisite
+("Locked. Needs: Enter the facts."), a ladder gate, a household threshold
+("Locked. Needs one closed month in the ledger. You have 0.") — each
+with a link to the thing that unlocks it, and the tests hold that no
+locked skill is unreachable. A skill whose `appliesWhen` fails the
+situation is **not yours**: absent, never counted (D-055's line). Fog:
+the band you are in renders in full, the next half lit (names, no
+chips), the rest silhouettes with a count; the engine blanks a fogged
+skill's name so no room can print it. A band that comes into view is
+announced once.
+
+**Boosts open, never award.** Something the household did in the app —
+a month closed, thirty dated expenses, a debt paid off, a snapshot
+frozen, an exercise completed, a fact the ownership map already holds —
+moves a locked skill to open, with provenance `boost` and a partly
+filled bar. Done still needs the skill's own proof: the card's "I can
+do this: mark it done", or a fact that proves it (below). The app never
+awards mastery for using the app.
+
+**Warps reveal, never award.** A warp's proof is a held balance (eight
+months of spending in cash), a count (twelve closed months), a fact
+answered (a will and named beneficiaries, a house owned outright) —
+never a box saying "I know this". An active warp puts its branch in
+`bypassed`: counts as satisfied for what it gated, drawn dashed with
+"skipped", reopenable forever, and a stored done still wins over it.
+
+**The Stacker reads the tree.** Done moved out of the Skill Stacker's
+own storage (D-090): `Skills.state` reads `skillTree.state` first,
+`markDone` and `verifyOnce` write the tree (by `self` and by `proof`),
+and the Stacker record keeps only its practice states and provenance
+(`verifiedBy`, `dueOn`). A household saved before this still reads its
+Stacker done through the tree engine. Dashboard block 3 sets the next
+open skill beside "the next thing to learn / unlearn", read from the
+same engine; nothing is stored there.
+
+**The exercise library.** `engines/exercises.js` and `rooms/exercises.html`:
+one shape, five kinds. A `run` is computed through the engine that owns
+the calculation (fire, statement, decumulation, cashflow, projection)
+and stays locked, naming the field and the room to add it in, until it
+can — no silent zero. A `canon` exercise credits its work and author and
+is described in this app's words; `origin` is attribution, never a
+quotation. Completing any exercise boosts its skill; a run keeps its
+result to compare later (`household.exercises`).
+
+**Versioning, house wide.** `version.json` at the root, `major.minor`
+only: the major is the shape, the minor a pass. Money Rooms is **2.0,
+"The Ledger era"** — spine v2, registry-driven, now 57 rooms.
+`Schema.APP_VERSION` carries the same string (a test holds the two
+together), every export and share code is stamped `appVersion`, and the
+progress strip prints "Money Rooms v2.0" in every room's footer. The
+D&D side is vendored, so it follows.
+
+**Calls made.** The two rooms are `about-you` (each owns a field), not
+`explore`, because the house rule is that an explore room owns nothing.
+The extractor's target files are `data/skill_tree.json` (not the spec's
+`data/skills.json`, which is the Stacker's catalogue, vendored under
+`dnd/data/`), `data/skill_links.json`, `data/exercises.json`. The tree
+engine is `engines/skilltree.js`, beside the Stacker's `engines/skills.js`,
+rather than replacing it: the Stacker's practice engine stays, reading
+the tree. The board keeps the spec's grammar and geometry (148 × 56
+nodes, 212 pitch, 76 row, orthogonal wires with 8px turns, a 3px boost
+bar, an 80px fog wash) in the house tokens, since a room may not carry
+its own hex values.
+
+### Compatibility note
+
+Stored shape: `household.skillTree` ({ state: {} }) and
+`household.exercises` ({ done: {}, results: {} }) are new branches,
+empty by default; the Stacker's `skills[id].state` no longer takes the
+value `done` for a once-skill (its `verifiedOn` / `verifiedBy` stay).
+A household saved before this reads through the constructors; a Stacker
+`done` it holds is read as done by the tree engine, so nothing is lost
+and nothing migrates. Exports gain `appVersion`. Rooms updated:
+`rooms/stacker.html` (writes the tree on verification), `index.html`
+(block 3 reads the tree), `shared/progress.js` (the footer). New:
+`rooms/skill-tree.html`, `rooms/exercises.html`. A future room that
+wants to say a skill is done calls `Spine.setSkillDone`; one that wants
+a skill's state calls `SkillTree.stateOf` and never reads
+`household.skills[id].state` for done.
+
+## D-132 — Debt Payoff: reasons to keep it, and a hold-back the household flips itself
+
+**Decision.** A debt row now answers two questions, not one. `emotionalTag`
+("Feels like") stays exactly as it was; beside it sits `keepReasons`, a
+multi-select of the rational reasons a debt is worth keeping: low interest
+rate, tax-favourable interest, backed by an appreciating asset, building
+credit on purpose, employer-subsidised or promotional rate. The default is
+None, which is an empty list, and nothing is ever pre-selected. Separately,
+`excludeFromAggressive` is a per-debt checkbox — "Exclude from aggressive
+payoff suggestions" — that the household ticks itself.
+
+**The reasons never move the money.** A tag is a note about why a balance is
+being carried; it changes no rate, no minimum, no order and no total. Only
+the checkbox changes the plan, and only because someone ticked it. The room
+says so in the row, in those words, so nobody has to infer it: *"Reasons on
+their own change nothing about the payoff order."* The unit suite proves it
+by running the same household twice, tagged and untagged, and comparing the
+whole plan object byte for byte.
+
+**What the checkbox does.** `Debt.orderDebts` runs the chosen strategy over
+every debt as before, then moves the held ones to the tail, keeping their
+relative order. A held debt still receives its minimum every month — it is
+being paid, just never targeted by the extra — so the plan still finishes.
+This is a stable partition after the sort rather than a term inside it, so
+every strategy behaves the same way and no strategy's own logic had to learn
+about the flag. The room then prints what the decision costs: it re-runs the
+plan with nothing held, and shows the interest difference. That re-run is a
+what-if and is never written (D-052).
+
+**The suggestion, at entry time only.** When a debt has no reasons yet,
+`Debt.suggestedKeepReasons(debt, rules)` reads that debt's own Type and Rate
+and offers the ones that fit, rendered muted and dashed with a "Keep these"
+chip and a dismiss, under the line *"nothing is saved until you say so"*
+(D-060). It never runs in the background, never classifies a debt that
+already carries reasons, and stores nothing until the household confirms. A
+dismissal lives for the visit and is not stored either: a dismissed
+suggestion is not an answer.
+
+Two guards inside the suggestion are worth naming. A 0% card that reverts to
+24.99% is offered "employer-subsidised or promotional rate" and *not* "low
+interest rate" — a promo rate is a deadline, not a cheap loan (D-053) — while
+a promo that stays cheap after it ends is offered both. And an expired promo
+is not a reason to keep anything, so it is judged on its real rate alone.
+
+**The chips are painted, never rebuilt.** They sit inside `debt-list`,
+which is guarded (D-034), so a tap must not rebuild the row it landed in.
+The first build relied on `render()` to redraw the chips and it did not: the
+guard correctly refused, so after "Keep these" the reasons were stored but
+the chips still read as suggestions and "None" still read as the answer,
+which is the worst possible outcome for a control whose entire job is to say
+what is stored. `paintKeep(d)` now runs inside `paintLive()` and writes the
+pressed state, the suggested class, the label, the suggestion line's
+visibility and the hint text onto the nodes already on the page. The
+suggestion line is therefore always rendered and hidden when empty, rather
+than conditionally built.
+
+**Where the tags show.** Inline, in the payoff prioritisation view itself,
+never on a separate screen: each row of the plan chart and each entry in the
+timeline carries its reasons as small chips, and a held debt is labelled
+"held back on purpose" in the same line. The prioritisation is where someone
+is deciding, so that is where the reasons have to be.
+
+**The convention, not a threshold.** `data/debt_rules.json` gains a
+`keepReasons` block holding the five tags, their labels and hints, and their
+`suggestWhen` conditions. `lowRateCeiling` is 0.06 and is used *only* to
+decide whether to offer the low-rate tag. No calculation reads it: the
+avalanche still sorts on the real rate, to the cent. It is written down in
+the table with that note attached so a later reader does not mistake it for
+a maths constant.
+
+`keepReasons` and `excludeFromAggressive` get no `shared/ownership.js` rows,
+for the same reason `emotionalTag` has none: the ownership map holds the
+household's shared figures, and these are per-row attributes of a debt that
+only Debt Payoff ever reads or writes.
+
+### Compatibility note
+
+Stored shape: `Schema.createDebt` gains two fields on every debt —
+`keepReasons` (an array of ids from `Schema.KEEP_REASONS`, empty by default)
+and `excludeFromAggressive` (a boolean, `false` by default). Both are
+cleaned by the constructor: an unknown id is dropped, a repeat is kept once,
+and anything that is not an array reads as None, so a hand-edited or
+imported file cannot put a debt into a state the engine has not seen. A
+household saved before this entry reads through the constructor and comes
+back with `keepReasons: []` and `excludeFromAggressive: false`, which is
+exactly the old behaviour: nothing is held back, the plan is unchanged, and
+no migration runs. `Spine.upsertDebt` accepts both. `FIELDS` gains
+`debt.keepReasons[]` and `debt.excludeFromAggressive`. Rooms updated:
+`rooms/debt-payoff.html` only. A future room that renders a debt should read
+its reasons through `Debt.keepReasonLabels(debt, rules)` rather than mapping
+the ids itself, must not treat a tag as a reason to reorder anything, and
+must not write `keepReasons` from a rule of its own — the only writer is the
+household, through this room.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

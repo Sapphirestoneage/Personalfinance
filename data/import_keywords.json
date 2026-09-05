@@ -1,0 +1,387 @@
+{
+  "id": "import_keywords",
+  "version": "1.0",
+  "asOf": "2026-09-05",
+  "source": "Words that place a pasted line — 'Chase Visa 2,300', 'checking 4,120', 'rent 1,500/mo', 'salary 62,000' — into the household list it belongs in: a debt of a type, an asset of a category, a monthly expense line, or an income. Written for this app from how people name these things on a statement or in a note to themselves.",
+  "confidence": "convention",
+  "confidenceNote": "A word list, not a model. Every match is shown before it is taken, with the kind and the detail changeable, and a line no word matches is shown as skipped rather than guessed. First match wins in the order listed; 'mortgage' with a monthly amount is a housing expense, without one it is the loan.",
+  "note": "Config, not code (SPEC.md §7). shared/importer.js reads this; the Your Data room shows the result and writes it in one batch. Expense lines also use the keywords on each category in data/expense_categories.json. `monthlyMeansExpense` maps a debt type to the expense category its monthly payment line belongs in, or null to keep it a debt with that minimum.",
+  "debt": [
+    {
+      "type": "credit_card",
+      "words": [
+        "credit card",
+        "visa",
+        "mastercard",
+        "amex",
+        "american express",
+        "discover",
+        "capital one",
+        "card balance",
+        "cc balance"
+      ]
+    },
+    {
+      "type": "student_loan",
+      "words": [
+        "student loan",
+        "student loans",
+        "sallie",
+        "navient",
+        "nelnet",
+        "mohela",
+        "great lakes",
+        "stafford"
+      ]
+    },
+    {
+      "type": "auto",
+      "words": [
+        "car loan",
+        "auto loan",
+        "car payment",
+        "car note",
+        "truck loan",
+        "vehicle loan"
+      ]
+    },
+    {
+      "type": "mortgage",
+      "words": [
+        "mortgage",
+        "home loan",
+        "heloc"
+      ]
+    },
+    {
+      "type": "family",
+      "words": [
+        "owe mom",
+        "owe dad",
+        "owe my",
+        "borrowed from",
+        "from mom",
+        "from dad",
+        "from my parents",
+        "parents lent",
+        "family loan",
+        "loan from",
+        "owed to family",
+        "friend lent"
+      ]
+    },
+    {
+      "type": "medical",
+      "words": [
+        "medical bill",
+        "hospital bill",
+        "medical debt",
+        "dental bill"
+      ]
+    },
+    {
+      "type": "personal",
+      "words": [
+        "personal loan",
+        "sofi",
+        "lending club",
+        "upstart",
+        "affirm",
+        "klarna",
+        "afterpay",
+        "pay later",
+        "bnpl"
+      ]
+    },
+    {
+      "type": "other",
+      "words": [
+        "loan",
+        "debt",
+        "owe",
+        "owed",
+        "balance owed",
+        "line of credit",
+        "overdraft"
+      ]
+    }
+  ],
+  "monthlyMeansExpense": {
+    "mortgage": "housing",
+    "auto": null,
+    "credit_card": null,
+    "student_loan": null,
+    "personal": null,
+    "family": null,
+    "medical": null,
+    "other": null
+  },
+  "asset": [
+    {
+      "category": "cash",
+      "liquid": true,
+      "words": [
+        "checking",
+        "chequing",
+        "savings",
+        "saving",
+        "hysa",
+        "high yield",
+        "money market",
+        "cash",
+        "emergency fund",
+        "current account",
+        "bank",
+        "certificate of deposit"
+      ]
+    },
+    {
+      "category": "retirement",
+      "liquid": false,
+      "words": [
+        "401",
+        "403",
+        "457",
+        "ira",
+        "roth",
+        "tsp",
+        "pension",
+        "retirement",
+        "sep",
+        "hsa"
+      ]
+    },
+    {
+      "category": "investment",
+      "liquid": false,
+      "words": [
+        "brokerage",
+        "index fund",
+        "etf",
+        "stocks",
+        "shares",
+        "investment",
+        "investments",
+        "invested",
+        "vanguard",
+        "fidelity",
+        "schwab",
+        "robinhood",
+        "crypto",
+        "bitcoin",
+        "bonds",
+        "mutual fund",
+        "portfolio"
+      ]
+    },
+    {
+      "category": "real_estate",
+      "liquid": false,
+      "words": [
+        "house value",
+        "home value",
+        "property",
+        "condo",
+        "house worth",
+        "home worth",
+        "real estate",
+        "land"
+      ]
+    },
+    {
+      "category": "vehicle",
+      "liquid": false,
+      "words": [
+        "car value",
+        "car worth",
+        "vehicle",
+        "truck value",
+        "motorcycle",
+        "boat"
+      ]
+    }
+  ],
+  "income": [
+    {
+      "words": [
+        "salary",
+        "income",
+        "wage",
+        "wages",
+        "gross",
+        "paycheck",
+        "paycheque",
+        "earn",
+        "earnings",
+        "take home",
+        "take-home",
+        "stipend",
+        "social security"
+      ]
+    }
+  ],
+  "expenseExtra": [
+    {
+      "categoryId": "housing",
+      "words": [
+        "rent",
+        "hoa",
+        "housing"
+      ]
+    },
+    {
+      "categoryId": "utilities",
+      "words": [
+        "utilities",
+        "electric",
+        "power bill",
+        "gas bill",
+        "water bill",
+        "internet",
+        "phone",
+        "cell",
+        "wifi"
+      ]
+    },
+    {
+      "categoryId": "groceries",
+      "words": [
+        "groceries",
+        "grocery",
+        "food"
+      ]
+    },
+    {
+      "categoryId": "transportation",
+      "words": [
+        "fuel",
+        "transit",
+        "parking",
+        "uber",
+        "lyft",
+        "bus pass",
+        "train",
+        "commute",
+        "petrol",
+        "gasoline"
+      ]
+    },
+    {
+      "categoryId": "insurance",
+      "words": [
+        "insurance",
+        "premium"
+      ]
+    },
+    {
+      "categoryId": "healthcare",
+      "words": [
+        "doctor",
+        "pharmacy",
+        "prescription",
+        "therapy",
+        "dental",
+        "copay"
+      ]
+    },
+    {
+      "categoryId": "childcare",
+      "words": [
+        "daycare",
+        "childcare",
+        "nanny",
+        "preschool",
+        "babysit"
+      ]
+    },
+    {
+      "categoryId": "dining_out",
+      "words": [
+        "eating out",
+        "dining",
+        "restaurant",
+        "takeout",
+        "coffee",
+        "lunch"
+      ]
+    },
+    {
+      "categoryId": "entertainment",
+      "words": [
+        "entertainment",
+        "movies",
+        "concert",
+        "games",
+        "hobbies",
+        "hobby"
+      ]
+    },
+    {
+      "categoryId": "subscriptions",
+      "words": [
+        "subscription",
+        "subscriptions",
+        "netflix",
+        "spotify",
+        "streaming",
+        "gym",
+        "membership"
+      ]
+    },
+    {
+      "categoryId": "shopping",
+      "words": [
+        "shopping",
+        "clothes",
+        "clothing",
+        "amazon"
+      ]
+    },
+    {
+      "categoryId": "travel",
+      "words": [
+        "travel",
+        "flights",
+        "vacation",
+        "holiday",
+        "hotel"
+      ]
+    },
+    {
+      "categoryId": "personal_care",
+      "words": [
+        "haircut",
+        "personal care",
+        "beauty",
+        "salon"
+      ]
+    },
+    {
+      "categoryId": "gifts",
+      "words": [
+        "gifts",
+        "gift",
+        "giving",
+        "donation",
+        "donations",
+        "charity",
+        "tithe"
+      ]
+    },
+    {
+      "categoryId": "retirement",
+      "words": [
+        "401k contribution",
+        "retirement contribution"
+      ]
+    },
+    {
+      "categoryId": "emergency_savings",
+      "words": [
+        "into savings",
+        "to savings",
+        "save each month"
+      ]
+    }
+  ]
+}

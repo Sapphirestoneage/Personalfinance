@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Exercises · SPARKS</title>
+<meta name="description" content="Every doable thing in one place, fifteen minutes or less by default: the first fifteen minutes of a skill, a named exercise from the FI canon, or a calculation the app runs on your own numbers. Completing one opens the skill it belongs to."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-131 (the exercise library).
+
+  1. READS   data/exercises.json through engines/exercises.js, the Skill
+             Tree's state for each exercise's skill, and the household for
+             the `run` kind (through the engine that owns each calculation).
+  2. WRITES  It OWNS household.exercises: the day an exercise was completed
+             and, for a run, what it computed. Nothing else.
+  3. CALLS   engines/exercises.js (the list, the runs), engines/skilltree.js.
+  4. EMPTY   With nothing entered every micro and canon exercise is doable;
+             every run is locked and names the field it needs and the room
+             to add it in.
+  5. CONFIG  data/exercises.json, data/skill_tree.json.
+
+  LIVE-FORM: built once. Two selects (kind, time) built once at load;
+  everything else is buttons and links. The list is repainted whole and
+  holds no input.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+  .card-gap { margin-top: var(--space-4); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  .pill { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-accent-hover); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; text-decoration: none; }
+  .pill:hover { border-color: var(--color-accent); }
+  .pill.is-quiet { color: var(--color-text-faint); }
+  .tools { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; margin-top: var(--space-3); }
+  .tools label { font-size: var(--text-xs); color: var(--color-text-faint); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); }
+  .tools select { font: inherit; font-size: var(--text-sm); background: var(--color-surface-raised); color: var(--color-text); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 4px var(--space-2); }
+  .counts { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-2); }
+  ul.ex { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ul.ex li { display: grid; grid-template-columns: 28px 1fr auto; gap: var(--space-2) var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); align-items: start; }
+  ul.ex li:first-child { border-top: none; }
+  ul.ex .k { width: 28px; height: 28px; border-radius: 6px; background: var(--color-surface-active); display: flex; align-items: center; justify-content: center; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-subtle); }
+  ul.ex .k.is-run { color: var(--color-accent-hover); }
+  ul.ex .k.is-canon { color: var(--color-caution); }
+  ul.ex .t { font-weight: 600; color: var(--color-text); }
+  ul.ex .m { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 2px; }
+  ul.ex .m a { color: var(--color-accent-hover); }
+  ul.ex li.is-done .t { color: var(--color-text-muted); }
+  ul.ex li.is-done .k { color: var(--color-positive); }
+  ul.ex li.is-locked .t { color: var(--color-text-faint); }
+  ul.ex .r { display: block; margin-top: 4px; color: var(--color-text-muted); }
+  ul.ex .acts { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../index.html">← Home</a>
+  <h1>Exercises</h1>
+  <p class="room-lede">Every doable thing in one place, fifteen minutes or less by default. The first fifteen minutes of a skill, a named exercise from the books credited to its author, or a calculation run on your own numbers. Completing one opens the skill it belongs to; only that skill's own proof marks it done.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="list">
+    <span class="slaf-eyebrow">What applies to you</span>
+    <h2 style="margin:var(--space-2) 0 0">Sorted from the band you are in</h2>
+    <div class="tools">
+      <label for="pick-kind">Kind</label>
+      <select id="pick-kind" aria-label="Which kind of exercise">
+        <option value="">All kinds</option><option value="micro">First fifteen minutes</option><option value="canon">From the canon</option><option value="run">A calculation on your numbers</option><option value="dare">Dares</option><option value="quest">Quests</option>
+      </select>
+      <label for="pick-time">Time</label>
+      <select id="pick-time" aria-label="How long">
+        <option value="15">15 minutes or less</option><option value="60">An hour or less</option><option value="">Any length</option>
+      </select>
+    </div>
+    <div class="counts" id="counts"></div>
+    <ul class="ex" id="rows"></ul>
+    <p class="why">A run stays locked until the number it needs is entered, and says which. A canon exercise is described here in our own words and credits the book; nothing from the book is reproduced.</p>
+  </section>
+
+  <section class="slaf-card card-gap" id="runs">
+    <span class="slaf-eyebrow">What the runs found</span>
+    <h2 style="margin:var(--space-2) 0 0">Results kept, to compare later</h2>
+    <ul class="ex" id="results"></ul>
+  </section>
+
+  <section class="slaf-card card-gap" id="reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Each canon exercise is credited to its author and described in this app's own words. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/skilltree.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../engines/statement.js"></script>
+<script src="../engines/vpw.js"></script>
+<script src="../engines/decumulation.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/events.js"></script>
+<script src="../engines/exercises.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Registry = SLAF.Registry, Ownership = SLAF.Ownership, Exercises = SLAF.Exercises;
+  var ROOM_ID = 'exercises';
+  var TABLES = null;
+  var kind = '', maxMinutes = 15, built = false;
+  var KIND_WORDS = { micro: '15m', canon: 'book', run: 'run', dare: 'dare', quest: 'quest' };
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function roomTitle(id) { var r = Registry.byId(id); return r ? r.title : id; }
+  function opts() { return { kind: kind || null, maxMinutes: maxMinutes, snapshots: Spine.listSnapshots().length }; }
+
+  function build() {
+    if (built) return;
+    built = true;
+    el('pick-kind').addEventListener('change', function () { kind = el('pick-kind').value; render(); });
+    el('pick-time').addEventListener('change', function () { var v = el('pick-time').value; maxMinutes = v === '' ? null : Number(v); render(); });
+  }
+
+  function rowHtml(r) {
+    var meta = [];
+    if (r.kind === 'canon' && r.origin) meta.push('after <em>' + esc(r.origin.work) + '</em>, ' + esc(r.origin.author));
+    meta.push(r.minutes + ' min');
+    if (r.skill) meta.push('opens <a href="skill-tree.html#skill-' + esc(r.skill.id) + '">' + esc(r.skill.name) + '</a> (' + esc(r.skill.state) + ')');
+    var reasons = r.locked ? '<span class="r">' + r.reasons.map(function (x) { return esc(x.text) + ' <a href="' + esc(x.href) + '">Add it →</a>'; }).join(' ') + '</span>' : '';
+    var result = r.done && r.result && r.result.summary ? '<span class="r">' + esc(r.result.summary) + '</span>' : '';
+    var acts = r.done
+      ? '<span class="slaf-hint">done ' + esc(r.done) + '</span><button type="button" class="pill is-quiet" data-undo="' + esc(r.id) + '">Undo</button>'
+      : r.locked ? '<span class="slaf-hint">locked</span>'
+      : (r.kind === 'run' ? '<button type="button" class="pill" data-run="' + esc(r.id) + '">Run it on my numbers</button>' : '<button type="button" class="pill" data-complete="' + esc(r.id) + '">Did it</button>')
+        + '<a class="pill is-quiet" href="' + esc(r.room) + '">Open the room →</a>';
+    return '<li class="' + (r.done ? 'is-done' : r.locked ? 'is-locked' : '') + '"><span class="k is-' + esc(r.kind) + '">' + esc(KIND_WORDS[r.kind] || r.kind) + '</span>'
+      + '<span><span class="t">' + esc(r.title) + '</span><span class="m">' + meta.join(' · ') + '</span>' + reasons + result + '</span>'
+      + '<span class="acts">' + acts + '</span></li>';
+  }
+
+  function render() {
+    if (!TABLES) return;
+    build();
+    var h = Spine.getProfile();
+    var l = Exercises.list(h, TABLES, opts());
+    el('counts').textContent = l.counts.all + ' apply to you' + (l.currentBand ? ', from ' + l.currentBand + ' first' : '') + ' · ' + l.counts.done + ' done · ' + l.counts.locked + ' locked' + (l.counts.run ? ' · ' + l.counts.run + ' runs' : '') + (l.counts.canon ? ' · ' + l.counts.canon + ' from the canon' : '');
+    el('rows').innerHTML = l.rows.map(rowHtml).join('') || '<li><span class="slaf-hint" style="grid-column:1/-1">Nothing of that kind applies at that length.</span></li>';
+    var done = Exercises.list(h, TABLES, { kind: 'run', maxMinutes: null, snapshots: opts().snapshots }).rows.filter(function (r) { return r.done && r.result; });
+    el('results').innerHTML = done.length ? done.map(function (r) { return '<li class="is-done"><span class="k is-run">run</span><span><span class="t">' + esc(r.title) + '</span><span class="m">' + esc(r.done) + '</span><span class="r">' + esc(r.result.summary || '') + '</span></span><span class="acts"><button type="button" class="pill" data-run="' + esc(r.id) + '">Run again</button></span></li>'; }).join('')
+      : '<li><span class="slaf-hint" style="grid-column:1/-1">No run kept yet. Run one above and its result stays here to compare against next time.</span></li>';
+    el('reading-list').innerHTML = ['monthlyExpenses', 'grossAnnualIncome', 'investments', 'cashSavings'].map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+
+  document.addEventListener('click', function (evt) {
+    var c = evt.target.closest('[data-complete]');
+    if (c) { Spine.markExercise(c.getAttribute('data-complete')); return; }
+    var u = evt.target.closest('[data-undo]');
+    if (u) { Spine.markExercise(u.getAttribute('data-undo'), false); return; }
+    var r = evt.target.closest('[data-run]');
+    if (r) {
+      var id = r.getAttribute('data-run');
+      var res = Exercises.compute(Spine.getProfile(), TABLES, id);
+      if (!Money.isOk(res)) { r.textContent = res.reason; return; }
+      Spine.markExercise(id, undefined, { summary: res.summary, figures: res.figures, value: res.value, on: new Date().toISOString().slice(0, 10) }, 'Ran: ' + id);
+    }
+  });
+
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+  Reference.load().then(function (tables) { TABLES = tables; render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error';
+    n.textContent = 'Couldn’t load the tables in data/ (' + err.message + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+  });
+})();
+</script>
+</body>
+</html>

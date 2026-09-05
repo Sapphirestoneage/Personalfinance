@@ -130,6 +130,7 @@
 
   .age-line { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2) var(--space-3); font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-3); }
   .age-line .stale { color: var(--color-caution); }
+  .age-line .froze { color: var(--color-positive); }
   .age-line a { color: var(--color-accent-hover); }
   .age-line button { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; }
   .age-line button:hover { border-color: var(--color-border-active); color: var(--color-text); }
@@ -161,6 +162,10 @@
   ul.heat .v.is-good { color: var(--color-positive); }
   ul.heat .v.is-out { color: var(--color-critical); }
   ul.heat .meta { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-muted); }
+  ul.heat .xp, ol.legend .xp { grid-column: 1 / -1; }
+  ul.heat .xp:empty, ol.legend .xp:empty { display: none; }
+  a.rname { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--color-border-strong); }
+  a.rname:hover { color: var(--color-accent-hover); }
 
   ul.goals { list-style: none; margin: var(--space-4) 0 0; padding: 0; }
   ul.goals li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
@@ -252,6 +257,7 @@
       <p class="headline" id="learn-headline"></p>
       <p class="say" id="learn-say"></p>
       <a class="go" id="learn-go" href="#"></a>
+      <p class="say" id="learn-skill" style="margin-top:var(--space-3);padding-top:var(--space-2);border-top:1px solid var(--color-border)"></p>
     </div>
   </section>
 
@@ -340,7 +346,7 @@
   </details>
 
   <details class="drawer" id="your-data-drawer">
-    <summary>Your data <small>Download a file, copy a share link, load one, or start over. And how money reads by default.</small></summary>
+    <summary>Your data <small>Download a file, copy a share link, load one, or start over. And how money reads by default. Pasting a statement in, or adding a file to what is here, is on <a href="rooms/data.html">Your Data →</a></small></summary>
     <div class="slaf-card" id="display-unit">
       <span class="slaf-eyebrow">Read money as, by default</span>
       <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">The lens on every page starts here. A tap on a page's own toggle wins for that session.</p>
@@ -406,14 +412,16 @@
 <script src="engines/runway.js"></script>
 <script src="engines/betweenjobs.js"></script>
 <script src="shared/charts.js"></script>
+<script src="shared/explain.js"></script>
 <script src="shared/gate.js"></script>
+<script src="engines/skilltree.js"></script>
 <script src="shared/lens.js"></script>
 <script src="engines/advice.js"></script>
 <script src="shared/instruments.js"></script>
 <script>
 (function () {
   'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Explain = SLAF.Explain,
       Reference = SLAF.Reference, Ownership = SLAF.Ownership,
       Tier0 = SLAF.Tier0, Foo = SLAF.Foo, Ratios = SLAF.Ratios, Goals = SLAF.Goals,
       Staleness = SLAF.Staleness, Instruments = SLAF.Instruments,
@@ -498,11 +506,30 @@
 
     el('radar').innerHTML = parts.join('');
 
+    /* Each spoke: the name links to its row in Every Ratio, and the ⓘ opens
+       what it is, why it matters, what moves it, and the numbers it reads,
+       each linked to the room that owns it. shared/explain.js. */
+    var h = Spine.getProfile();
     el('radar-legend').innerHTML = pts.map(function (p, i) {
+      var row = p.row;
       return '<li><span class="n">' + (i + 1) + '</span>'
-        + '<span>' + esc(p.label) + '</span>'
-        + '<span class="v is-' + p.zone + '">' + esc(showRatio(p)) + '</span></li>';
+        + '<span><a class="rname" href="' + Ownership.linkTo('ratios', 'r-' + p.id) + '">' + esc(p.label) + '</a>' + Explain.button(p.id) + '</span>'
+        + '<span class="v is-' + p.zone + '">' + esc(showRatio(p)) + '</span>'
+        + (row ? '<span class="xp">' + Explain.panel(row, h, 'dashboard', { band: bandWords(row) }) + '</span>' : '')
+        + '</li>';
     }).join('');
+    Explain.bind(el('radar-legend'));
+  }
+
+  /* The band in the figure's own unit, for the ⓘ. */
+  function bandWords(row) {
+    var b = row.verdict && row.verdict.band;
+    if (!b || b.good === null) return b && b.note ? b.note : '';
+    function u(v) {
+      return row.unit === 'rate' ? Money.formatRate(v, { decimals: 0 })
+        : row.unit === 'months' ? v + ' months' : row.unit === 'multiple' ? v + 'x' : String(v);
+    }
+    return (b.direction === 'lower' ? 'Comfortable at or below ' : 'Comfortable at or above ') + u(b.good) + '. ' + (b.note || '');
   }
 
   /* ---- The six instruments -------------------------------------------------
@@ -726,6 +753,19 @@
     go.href = room ? Ownership.linkTo(it.room, it.anchor) : Ownership.linkTo('start', null);
     go.textContent = (room ? 'Open ' + room.title : 'Start Here') + ' →';
     box.className = 'learn' + (it.kind === 'unlearn' ? ' is-unlearn' : '');
+    renderNextSkill(h);
+  }
+  /* The one skill beside it (D-131): the next open skill on the tree, the
+     hour's counterpart to the ladder's next dollar. Reads the same state
+     the tree writes; nothing is stored here. */
+  function renderNextSkill(h) {
+    var node = el('learn-skill');
+    if (!node || !SLAF.SkillTree) return;
+    var r;
+    try { r = SLAF.SkillTree.evaluate(h, TABLES, { snapshots: Spine.listSnapshots().length, roomTitle: function (id) { var rr = Registry.byId(id); return rr ? rr.title : id; } }); } catch (e) { node.textContent = ''; return; }
+    var s = r.nextOpen[0];
+    if (!s) { node.innerHTML = 'The next skill: nothing is open yet. <a href="rooms/skill-tree.html">The tree says what would open one →</a>'; return; }
+    node.innerHTML = 'The next skill: <strong>' + esc(s.name) + '</strong> · ' + esc(s.minutes) + (s.firstAction ? ' · first, ' + esc(s.firstAction.title.replace(/^The first fifteen minutes: /, '').toLowerCase()) : '') + '. <a href="rooms/skill-tree.html#skill-' + esc(s.id) + '">Open the tree →</a>';
   }
 
   /* ---- Block 4: the date it points to, and the lens --------------------------- */
@@ -774,8 +814,8 @@
     var rows = [];
     if (Money.isOk(spend)) rows.push(['A month of spending', spend.value, 'cash-flow', 'spending']);
     if (Money.isOk(basis) && basis.annualSavingsCents > 0 && Gate.exists(h, 'savingsRate')) rows.push(['A year of saving', basis.annualSavingsCents, 'savings-rate', 'rate']);
-    var one = (h.oneOffs || [])[0];
-    if (one && Money.isEntered(one.cents)) rows.push([one.direction === 'out' ? 'The one-off going out' : 'The one-off coming in', one.cents, 'start', 'q-fine-tune']);
+    var one = Schema.oneOffEntry(h);
+    if (one) rows.push([one.direction === 'out' ? 'The one-off going out' : 'The one-off coming in', one.cents, 'start', 'q-fine-tune']);
     el('date-lensed').innerHTML = rows.map(function (r) {
       var shown = mode === '$' ? Money.formatCents(r[1]) : Lens.format(r[1], mode, h, TABLES);
       return '<li><a href="' + Ownership.linkTo(r[2], r[3]) + '">' + esc(r[0]) + '</a><span>' + esc(shown) + '</span></li>';
@@ -810,14 +850,29 @@
       ? 'Last confirmed: ' + parts.join(' · ')
         + (s.anyUnknown ? ' · <span>(a figure not dated was saved before this app kept dates)</span>' : '')
       : 'Nothing dated yet.';
+    /* What freezing did. A snapshot is invisible until something moves, so
+       the line says how many there are and when the last one was taken —
+       and, right after the tap, that it happened. Without this the button
+       looked broken on a phone: a tap, and nothing on the screen changed. */
+    var snaps = Spine.listSnapshots();
+    var last = snaps.length ? snaps[snaps.length - 1] : null;
+    var frozen = last
+      ? snaps.length + (snaps.length === 1 ? ' snapshot' : ' snapshots') + ', last '
+        + (justFroze ? 'just now' : shortDate(last.timestamp))
+        + ' · <a href="' + Ownership.linkTo('history') + '">History →</a>'
+      : 'Not frozen yet. Freeze once and the panel can say what moved.';
     el('age-line').innerHTML = '<span>' + left + '</span>'
+      + '<span class="' + (justFroze ? 'froze' : '') + '" id="freeze-say">' + frozen + '</span>'
       + '<span><a href="' + Ownership.linkTo('refresh') + '">Refresh the three that move →</a> '
       + '<button type="button" id="btn-freeze" title="Take a snapshot so the panel can say what changed">Freeze today\u2019s numbers</button></span>';
     el('btn-freeze').addEventListener('click', function () {
       Instruments.snapshot(Spine.getProfile(), TABLES);
+      justFroze = true;
       renderNow();
+      justFroze = false;
     });
   }
+  var justFroze = false;
 
   function renderAltitude(h) {
     var Charts = SLAF.Charts;
@@ -1024,6 +1079,7 @@
 
     /* radar */
     var r = Ratios.radar(h, TABLES, { snapshots: Spine.listSnapshots() });
+    if (Money.isOk(r)) r.points.forEach(function (p) { p.row = all.rows.filter(function (x) { return x.id === p.id; })[0] || null; });
     el('radar-body').hidden = !Money.isOk(r);
     if (Money.isOk(r)) {
       renderRadar(r);
@@ -1159,7 +1215,7 @@
   var WEATHER = [
     ['realEstateConcentration', 'How much of your net worth is one building.'],
     ['liquidToIlliquid', 'How much you could reach quickly against how much you could not.'],
-    ['investmentToNetWorth', 'How much of what you own is actually invested.'],
+    ['investedShare', 'How much of what you own is actually invested.'],
     ['cashDrag', 'How much is sitting in cash beyond what a cushion needs.'],
     ['incomeConcentration', 'How much of the household\u2019s income is one paycheque.'],
     ['worstPlausibleYearCoverage', 'How much of everything going wrong at once the cash would carry.']
@@ -1171,14 +1227,17 @@
       return row ? { row: row, blurb: spec[1] } : null;
     }).filter(Boolean);
 
+    var h = Spine.getProfile();
     el('weather-list').innerHTML = rows.map(function (r) {
       var zone = r.row.verdict.zone;
       var cls = zone === 'good' ? ' is-good' : zone === 'out' ? ' is-out' : '';
-      return '<li><span class="nm">' + esc(r.row.label) + '</span>'
+      return '<li><span class="nm"><a class="rname" href="' + Ownership.linkTo('ratios', 'r-' + r.row.id) + '">' + esc(r.row.label) + '</a>' + Explain.button(r.row.id) + '</span>'
         + '<span class="v' + cls + '">' + showRatio(r.row) + '</span>'
         + '<span class="meta">' + esc(r.blurb)
-        + (r.row.ok ? '' : ' · ' + esc(r.row.result.reason)) + '</span></li>';
+        + (r.row.ok ? '' : ' · ' + esc(r.row.result.reason)) + '</span>'
+        + '<span class="xp">' + Explain.panel(r.row, h, 'dashboard', { band: bandWords(r.row) }) + '</span></li>';
     }).join('');
+    Explain.bind(el('weather-list'));
 
     el('weather-blind').innerHTML = '<strong>Two risks this panel deliberately '
       + 'leaves blank, and one it prices piece by piece.</strong> Sequence-of-returns risk needs a return distribution to '

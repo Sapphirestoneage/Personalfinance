@@ -75,7 +75,7 @@
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
   <h1>Every Ratio</h1>
-  <p class="room-lede">Thirty ratios people actually quote, computed from what you have already entered — with the two this app refuses to guess at named as such.</p>
+  <p class="room-lede">Every ratio people actually quote, computed from what you have already entered. Tap the ⓘ on any of them for what it is, why it matters, what moves it, and where each number it reads comes from.</p>
 </header>
 
 <main class="slaf-wrap">
@@ -167,11 +167,12 @@
 <script src="../engines/benchmarks.js"></script>
 <script src="../engines/ratios.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/explain.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference,
-      Ownership = SLAF.Ownership, Ratios = SLAF.Ratios, Charts = SLAF.Charts;
+      Ownership = SLAF.Ownership, Ratios = SLAF.Ratios, Charts = SLAF.Charts, Explain = SLAF.Explain;
 
   var ROOM_ID = 'ratios';
   var TABLES = null;
@@ -226,19 +227,26 @@
     return aim + '. ' + (b.note || '');
   }
 
+  /* Each row: the name with its ⓘ, the figure, the formula, and — behind
+     the button — what it is, why it matters, what moves it, and a link to
+     every number it reads (shared/explain.js). The row's id is the ratio's,
+     so the dashboard can deep-link to it. */
   function renderList(nodeId, rows) {
+    var h = Spine.getProfile();
     el(nodeId).innerHTML = rows.map(function (r) {
       var zone = r.ok ? r.verdict.zone : 'blank';
-      return '<li><div class="r-head">'
-        + '<span class="r-name">' + esc(r.label) + '</span>'
+      return '<li id="r-' + esc(r.id) + '"><div class="r-head">'
+        + '<span class="r-name">' + esc(r.label) + Explain.button(r.id) + '</span>'
         + '<span class="r-val is-' + zone + '">' + esc(show(r)) + '</span>'
         + '</div>'
         + '<div class="r-formula">' + esc(r.formula) + '</div>'
         + (!r.ok ? '<div class="r-note">' + esc(r.result.reason || '') + '</div>' : '')
         + (r.note ? '<div class="r-note">' + esc(r.note) + '</div>' : '')
         + (r.ok && bandText(r) ? '<div class="r-band">' + esc(bandText(r)) + '</div>' : '')
+        + Explain.panel(r, h, ROOM_ID, { band: bandText(r) })
         + '</li>';
     }).join('');
+    Explain.bind(el(nodeId));
   }
 
   /* ---- The bars ----------------------------------------------------------
@@ -347,17 +355,24 @@
     renderBars('bars-lending', lending);
     renderBars('bars-safety', safety);
     renderBars('bars-wealth', wealth);
+    var open = {};
+    Array.prototype.forEach.call(document.querySelectorAll('[data-explain-panel]:not([hidden])'), function (p) { open[p.getAttribute('data-explain-panel')] = true; });
     renderList('list-lending', lending);
     renderList('list-safety', safety);
     renderList('list-wealth', wealth);
     renderList('list-blocked', blocked);
+    Object.keys(open).forEach(function (id) {
+      var p = document.querySelector('[data-explain-panel="' + id + '"]'), b = document.querySelector('[data-explain="' + id + '"]');
+      if (p) p.hidden = false;
+      if (b) { b.setAttribute('aria-expanded', 'true'); b.classList.add('is-open'); }
+    });
 
     el('reading-list').innerHTML =
       ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt', 'monthlyDebtPayments']
         .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
 
     el('provenance').innerHTML = Reference.provenance(TABLES,
-      ['ratioBenchmarks', 'effectiveTaxRates', 'retirementMilestones'])
+      ['ratioBenchmarks', 'ratioExplainers', 'effectiveTaxRates', 'retirementMilestones'])
       .map(function (p) {
         return '<strong>' + p.id + '</strong> v' + p.version + ' — ' + p.label + '. ' + p.note;
       }).join('<br/>');

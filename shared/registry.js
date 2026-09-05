@@ -72,6 +72,55 @@
       ]
     },
     {
+      id: 'income',
+      kind: 'about-you',
+      needs: [],
+      order: 3.2,
+      title: 'Income',
+      blurb: 'Everything coming in, logged as it lands — a paycheque, a gig, a gift, a dividend, the rent — each netted the way it is actually taxed.',
+      href: 'rooms/income.html',
+      tier: 1,
+      tags: ['income'],
+      subsections: [
+        { id: 'month', label: 'This month' },
+        { id: 'log',   label: 'Every entry' },
+        { id: 'add',   label: 'Add an entry' },
+        { id: 'costs', label: 'The costs of earning it' }
+      ]
+    },
+    {
+      id: 'budget',
+      kind: 'about-you',
+      needs: [],
+      order: 3.4,
+      title: 'Budget',
+      blurb: 'Five buckets, estimated beside actual, read from what Income and Cash Flow logged \u2014 never typed here \u2014 and closed at the end of the month.',
+      href: 'rooms/budget.html',
+      tier: 1,
+      tags: ['income', 'cashflow', 'debt'],
+      subsections: [
+        { id: 'sheet',  label: 'The sheet' },
+        { id: 'close',  label: 'Month-end' },
+        { id: 'months', label: 'Closed months' }
+      ]
+    },
+    {
+      id: 'variance',
+      kind: 'read',
+      needs: ['monthsClosed'],
+      order: 3.5,
+      title: 'Estimated vs Actual',
+      blurb: 'Every closed month read back: what you expected against what happened, bucket by bucket, and whether the guesses are getting better.',
+      href: 'rooms/variance.html',
+      tier: 1,
+      tags: ['income', 'cashflow'],
+      subsections: [
+        { id: 'month',   label: 'One month' },
+        { id: 'trend',   label: 'Month over month' },
+        { id: 'buckets', label: 'Bucket by bucket' }
+      ]
+    },
+    {
       id: 'cash-flow',
       kind: 'core',
       needs: ['monthlyExpenses'],
@@ -82,7 +131,10 @@
       tier: 1,
       tags: ['cashflow', 'income'],
       subsections: [
+        { id: 'glance',          label: 'At a glance' },
         { id: 'spending',        label: 'A typical month' },
+        { id: 'log',             label: 'The expense log' },
+        { id: 'flow',            label: 'Where it flows' },
         { id: 'out-summary',     label: 'Monthly spending' },
         { id: 'out-net-flow',    label: 'What’s left' },
         { id: 'out-template',    label: 'Against a budget' },
@@ -431,6 +483,42 @@
         { id: 'browse',  label: 'Every skill' },
         { id: 'stacks',  label: 'The stacks' },
         { id: 'curves',  label: 'Three curves' },
+        { id: 'reading', label: 'Reading from elsewhere' }
+      ]
+    },
+    /* The Skill Tree and the Exercise Library (D-131): what the next hour
+       does, beside the ladder's what the next dollar does. */
+    {
+      id: 'skill-tree',
+      kind: 'about-you',
+      needs: [],
+      order: 20.2,
+      title: 'The Skill Tree',
+      blurb: 'What the next hour does: every money skill in five bands, open, locked with the reason, done, or skipped because you are already past it. The ladder runs above it and the two unlock each other.',
+      href: 'rooms/skill-tree.html',
+      tier: 2,
+      tags: ['cashflow'],
+      subsections: [
+        { id: 'next',    label: 'What opens next' },
+        { id: 'ladder',  label: 'The fortress line' },
+        { id: 'board',   label: 'The board' },
+        { id: 'warps',   label: 'Warps' },
+        { id: 'reading', label: 'Reading from elsewhere' }
+      ]
+    },
+    {
+      id: 'exercises',
+      kind: 'about-you',
+      needs: [],
+      order: 20.4,
+      title: 'Exercises',
+      blurb: 'Every doable thing in one place, fifteen minutes or less by default: the first fifteen minutes of a skill, a named exercise from the canon credited to its author, or a calculation run on your own numbers. Completing one opens the skill it belongs to.',
+      href: 'rooms/exercises.html',
+      tier: 2,
+      tags: ['cashflow'],
+      subsections: [
+        { id: 'list',    label: 'What applies to you' },
+        { id: 'runs',    label: 'What the runs found' },
         { id: 'reading', label: 'Reading from elsewhere' }
       ]
     },
@@ -1043,6 +1131,29 @@
         { id: 'assumptions', label: 'Assumptions' },
         { id: 'reading',     label: 'What this reads' }
       ]
+  });
+
+  /* Your Data: every way numbers get in or out of this browser — a file, a
+     share link, a pasted statement sorted into the right lists — in one
+     place. Writes through the same spine helpers the owner rooms use; owns
+     no field (D-125). A utility, off the path like Refresh (D-057). */
+  ROOMS.push({
+    id: 'data',
+    kind: 'core',
+    utility: true,
+    needs: [],
+    order: 98,
+    title: 'Your Data',
+    blurb: 'Download a file, copy a share link, load one — replacing or adding to what is here — or paste in a statement and have every line sorted into the debt, account, expense or income it is.',
+    href: 'rooms/data.html',
+    tier: 0,
+    tags: ['income', 'cashflow', 'debt'],
+    subsections: [
+      { id: 'out',   label: 'Take it with you' },
+      { id: 'file',  label: 'Load a file' },
+      { id: 'paste', label: 'Paste in new numbers' },
+      { id: 'reset', label: 'Start over' }
+    ]
   });
 
   /* Where every room's out-of-scope line points (D-097). Reads the gate for

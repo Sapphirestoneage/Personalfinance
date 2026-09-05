@@ -1,0 +1,425 @@
+{
+  "id": "ratio_explainers",
+  "version": "1.0",
+  "asOf": "2026-09-05",
+  "source": "Plain-language explanations of each ratio in engines/ratios.js: what it reads, why it matters, what moves it, and which household fields it looks at. Written for this app; the conventions quoted (28/36, 30% utilisation, 3-6 months, 4%) are the ones data/ratio_benchmarks.json cites.",
+  "confidence": "convention",
+  "confidenceNote": "Explanations, not findings. 'Improve' says which direction the band calls healthier and what moves the figure; whether that is right for a particular life is the reader's call, and several bands are wrong for particular lives by design.",
+  "note": "One entry per ratio id. `looksAt` lists shared/ownership.js field ids; a page renders each as a link to the room that owns it, which is how every term on a ratio links to the number it is reading. A ratio missing here is a test failure (test/run.js), so a new ratio must come with its explanation.",
+  "ratios": {
+    "debtToIncome": {
+      "what": "Every required debt payment in a month, as a share of what you earn before tax that month.",
+      "why": "It is the first number a lender reads, and it says how much of each paycheque is already spoken for before you buy anything.",
+      "improve": "Lower it by clearing a balance outright (Debt Payoff shows which one ends a payment soonest) or by raising gross pay. Extra payments do not move it until an account closes.",
+      "looksAt": [
+        "monthlyDebtPayments",
+        "grossAnnualIncome"
+      ]
+    },
+    "housingRatio": {
+      "what": "Housing plus utilities, as a share of gross monthly income.",
+      "why": "The 28% rule underwriters use. Above it, housing crowds out saving and every other line, whatever the rest looks like.",
+      "improve": "Only two levers: a cheaper place, or more income. Housing Decision compares rent against buying on the same footing.",
+      "looksAt": [
+        "monthlyExpenses",
+        "grossAnnualIncome"
+      ]
+    },
+    "backEndRatio": {
+      "what": "Housing plus every other debt payment, as a share of gross monthly income.",
+      "why": "The 36% rule, and the 43% ceiling for a qualified mortgage. It is the number that decides whether a lender says yes.",
+      "improve": "Clear the smallest payment that is not the mortgage; each closed account drops the ratio by its whole payment.",
+      "looksAt": [
+        "monthlyExpenses",
+        "monthlyDebtPayments",
+        "grossAnnualIncome"
+      ]
+    },
+    "savingsRate": {
+      "what": "What is left of gross pay after a year of spending and an estimate of tax, as a share of gross.",
+      "why": "The single number that sets how many years to financial independence. Twice the rate is roughly half the time.",
+      "improve": "Raise it from either side: spend less on the biggest lines (Cash Flow), or capture the employer match and automate the rest (Savings Rate).",
+      "looksAt": [
+        "grossAnnualIncome",
+        "monthlyExpenses",
+        "filingStatus"
+      ]
+    },
+    "emergencyFundMonths": {
+      "what": "Cash and savings divided by a month of spending: how many months the cash alone would carry you.",
+      "why": "It is the cushion between a surprise and a credit card. Three to six months is the convention; Runway tests it against your own worst month.",
+      "improve": "Build cash first, before extra debt payments or investing, until it reaches the months you chose in Sleep At Night.",
+      "looksAt": [
+        "cashSavings",
+        "monthlyExpenses"
+      ]
+    },
+    "creditUtilization": {
+      "what": "Card balances as a share of the credit limits on those cards.",
+      "why": "Scoring models are believed to read anything above 30% as strain, and under 10% as excellent. It moves a credit score faster than almost anything else.",
+      "improve": "Pay a card down below 30% of its limit before its statement date, or ask for a higher limit and leave it unused.",
+      "looksAt": [
+        "totalDebt"
+      ]
+    },
+    "netWorthToIncome": {
+      "what": "Net worth divided by a year of gross income.",
+      "why": "It says how many years of pay you have turned into wealth. The useful benchmark is by age, which is the retirement multiple below.",
+      "improve": "Anything that grows net worth: saving more, paying debt down, or letting investments compound.",
+      "looksAt": [
+        "netWorth",
+        "grossAnnualIncome"
+      ]
+    },
+    "liquidityRatio": {
+      "what": "Everything you could turn into cash quickly, divided by a month of spending.",
+      "why": "A wider net than the emergency fund: it counts a brokerage account too. It is how long you could go before selling anything hard to sell.",
+      "improve": "Mark which assets are liquid on The Statement, and hold the emergency fund in cash rather than in things that take weeks to sell.",
+      "looksAt": [
+        "cashSavings",
+        "investments",
+        "monthlyExpenses"
+      ]
+    },
+    "solvencyRatio": {
+      "what": "Net worth as a share of everything you own.",
+      "why": "Below zero, you owe more than you have. It says how much of what you own is actually yours.",
+      "improve": "Pay debt down; every dollar of principal cleared raises it. Adding an asset bought with a loan does not.",
+      "looksAt": [
+        "netWorth",
+        "otherAssets"
+      ]
+    },
+    "currentRatio": {
+      "what": "Liquid assets divided by a year of required debt payments.",
+      "why": "Under 1×, a year of minimums is more than you could lay hands on. It is a stress test for a bad year.",
+      "improve": "Grow cash or clear a payment. Either side moves it.",
+      "looksAt": [
+        "cashSavings",
+        "monthlyDebtPayments"
+      ]
+    },
+    "retirementMultiple": {
+      "what": "Investments as a multiple of gross income, against a benchmark for your age.",
+      "why": "The common milestones: one year of pay by 30, three by 40, six by 50. It says whether retirement saving is on pace for your age.",
+      "improve": "Raise the contribution rate; the FIRE room shows what one more percent does over the years left.",
+      "looksAt": [
+        "investments",
+        "grossAnnualIncome",
+        "dob"
+      ]
+    },
+    "lifeInsuranceMultiple": {
+      "what": "Life cover as a multiple of gross income, against a ten-times rule of thumb.",
+      "why": "If people depend on your income, the cover replaces it. Ten times income is a convention, not a finding.",
+      "improve": "Enter your term life cover in Sleep At Night; the Coverage Checkup reads it against what it would have to carry.",
+      "looksAt": [
+        "termLife",
+        "grossAnnualIncome"
+      ]
+    },
+    "carPaymentToIncome": {
+      "what": "Car loan payments as a share of gross monthly income.",
+      "why": "The 10 to 15% guidance. A car payment is the commonest way a good income ends up with nothing left.",
+      "improve": "Keep the car longer, or refinance a high-rate loan. Debt Payoff shows what an extra payment does to the term.",
+      "looksAt": [
+        "monthlyDebtPayments",
+        "grossAnnualIncome"
+      ]
+    },
+    "investedShare": {
+      "what": "Investments as a share of everything you own. It cannot exceed 100%.",
+      "why": "It says how much of what you own is working, against how much sits in cash, a car, or a home. Right for a renter, different for a homeowner.",
+      "improve": "Move cash beyond the cushion into investments; Sleep At Night says how much cushion that is.",
+      "looksAt": [
+        "investments",
+        "cashSavings",
+        "otherAssets"
+      ]
+    },
+    "fiRatio": {
+      "what": "What investments would pay at your safe withdrawal rate, as a share of a year of spending.",
+      "why": "At 1.0 the portfolio covers the year and work is optional. It is FIRE progress in one number.",
+      "improve": "Both levers: more invested, or less spending. A dollar less of yearly spending needs 25 dollars less invested.",
+      "looksAt": [
+        "investments",
+        "monthlyExpenses"
+      ]
+    },
+    "debtToAsset": {
+      "what": "Total debt as a share of everything you own.",
+      "why": "Above 1 you are insolvent on paper. It is the balance-sheet view of how leveraged the household is.",
+      "improve": "Pay principal down, or let assets grow. Borrowing to buy an asset leaves it roughly unchanged.",
+      "looksAt": [
+        "totalDebt",
+        "otherAssets"
+      ]
+    },
+    "personalCashFlowRatio": {
+      "what": "Take-home pay less everything that goes out, as a share of gross income.",
+      "why": "It is the margin the month runs on. Under 5% one surprise is a debt.",
+      "improve": "Cash Flow shows every line; the biggest ones move it most.",
+      "looksAt": [
+        "grossAnnualIncome",
+        "monthlyExpenses"
+      ]
+    },
+    "ruleOf72": {
+      "what": "72 divided by the expected return, in percent: roughly how many years money takes to double.",
+      "why": "A shortcut for feeling compounding. At 7% money doubles every ten years, so a dollar at 25 is eight at 55.",
+      "improve": "Not a thing to improve. The expected return is an assumption in the FIRE room.",
+      "looksAt": [
+        "investments"
+      ]
+    },
+    "safeWithdrawalRate": {
+      "what": "The share of investments drawn each year that a portfolio is assumed to sustain.",
+      "why": "It sets the FI number: a year of spending divided by this rate. 4% is the convention from the Trinity study.",
+      "improve": "It is an assumption, adjustable in the FIRE room, not a figure about you.",
+      "looksAt": [
+        "investments"
+      ]
+    },
+    "loanToValue": {
+      "what": "Mortgage balance as a share of the property's value.",
+      "why": "Under 80% mortgage insurance usually drops off; over 95% there is no equity to fall back on.",
+      "improve": "Principal payments and time. Housing Decision reads the property value from The Statement.",
+      "looksAt": [
+        "totalDebt",
+        "otherAssets"
+      ]
+    },
+    "homeEquityRatio": {
+      "what": "Property value less the mortgage, as a share of the property value.",
+      "why": "The mirror of loan-to-value: how much of the house is yours.",
+      "improve": "Pay principal down; a rising market does the rest, or the reverse.",
+      "looksAt": [
+        "totalDebt",
+        "otherAssets"
+      ]
+    },
+    "debtPayoffVelocity": {
+      "what": "A year of debt payments as a share of total debt, before interest.",
+      "why": "It says how fast the minimums alone would clear what you owe. A low figure means the balance is mostly interest.",
+      "improve": "Extra payments toward the highest rate; Debt Payoff shows the months saved.",
+      "looksAt": [
+        "monthlyDebtPayments",
+        "totalDebt"
+      ]
+    },
+    "burnRateCents": {
+      "what": "What leaves each month.",
+      "why": "Every runway number divides cash by this. It is the number to know before any other.",
+      "improve": "Cash Flow, line by line. The fixed lines are the floor; everything above it is cuttable.",
+      "looksAt": [
+        "monthlyExpenses"
+      ]
+    },
+    "runwayMonths": {
+      "what": "Cash divided by monthly spending: the months the cash lasts with nothing coming in.",
+      "why": "The same arithmetic as the emergency fund, named the way people ask for it between jobs.",
+      "improve": "More cash, or a lower floor. Runway shows the months at the floor rather than at today's spending.",
+      "looksAt": [
+        "cashSavings",
+        "monthlyExpenses"
+      ]
+    },
+    "liquidToIlliquid": {
+      "what": "Liquid assets divided by everything else you own.",
+      "why": "It says whether wealth is reachable or locked in a house and a retirement account. There is no right number.",
+      "improve": "Rate each asset's liquidity on The Statement so the figure reads what you actually hold.",
+      "looksAt": [
+        "cashSavings",
+        "investments",
+        "otherAssets"
+      ]
+    },
+    "cashDrag": {
+      "what": "Cash as a share of everything you own.",
+      "why": "Cash beyond the cushion earns less than inflation. Whether it is too much depends entirely on why it is there.",
+      "improve": "Decide the cushion in Sleep At Night; invest what sits above it.",
+      "looksAt": [
+        "cashSavings",
+        "otherAssets"
+      ]
+    },
+    "revolvingShare": {
+      "what": "Card balances as a share of total debt.",
+      "why": "Card debt is the expensive kind. A high share says the debt is costing the most it can.",
+      "improve": "Clear cards first, whatever the strategy. Debt Payoff shows the interest each order costs.",
+      "looksAt": [
+        "totalDebt"
+      ]
+    },
+    "needsToWants": {
+      "what": "Essential spending divided by discretionary spending.",
+      "why": "A split, not a score. It shows how much of the month is choice and how much is obligation.",
+      "improve": "Nothing to fix by itself. The 50/30/20 split in Cash Flow is one convention to read it against.",
+      "looksAt": [
+        "monthlyExpenses"
+      ]
+    },
+    "discretionaryIncomeRatio": {
+      "what": "Discretionary spending as a share of gross monthly income.",
+      "why": "The room to cut if a month goes wrong, and the room to enjoy if it does not.",
+      "improve": "The Rerank ranks each line by what it gives you against what it costs.",
+      "looksAt": [
+        "monthlyExpenses",
+        "grossAnnualIncome"
+      ]
+    },
+    "realEstateConcentration": {
+      "what": "Property value as a share of everything you own.",
+      "why": "Normal to be high for a homeowner. It says how much of your wealth is one building in one place.",
+      "improve": "Grow the other assets around it; there is no reason to sell a home you want.",
+      "looksAt": [
+        "otherAssets"
+      ]
+    },
+    "incomeConcentration": {
+      "what": "The largest income source as a share of household income.",
+      "why": "One paycheque reads 100%. It is how much of the household's income one employer decides.",
+      "improve": "A second earner, a side income, or an income-producing asset each lower it. Side Hustle prices the second.",
+      "looksAt": [
+        "grossAnnualIncome"
+      ]
+    },
+    "confidenceWeightedNetWorth": {
+      "what": "Each asset weighted by how sure its value is, less debts.",
+      "why": "A brokerage balance is certain; a private business or a collectible is not. This is the net worth you could count on.",
+      "improve": "Rate each asset's confidence on The Statement; nothing else moves it honestly.",
+      "looksAt": [
+        "confidenceWeightedNetWorth",
+        "netWorth"
+      ]
+    },
+    "liquidityLadder": {
+      "what": "Assets reachable within a year as a share of all assets.",
+      "why": "The four rungs: today, this month, this year, not without a penalty. It is the answer to 'how much could I actually get at'.",
+      "improve": "Rate each asset's liquidity on The Statement, and keep the emergency fund on the top rung.",
+      "looksAt": [
+        "cashSavings",
+        "investments",
+        "otherAssets"
+      ]
+    },
+    "shadowRunway": {
+      "what": "Cash plus Roth contributions plus home equity at a haircut, divided by monthly spending.",
+      "why": "The runway if you were willing to raid the Roth and sell the house. Longer than the plain runway, and it costs more to use.",
+      "improve": "The same as runway: cash first. Roth basis is read from The Statement.",
+      "looksAt": [
+        "cashSavings",
+        "rothContributed",
+        "otherAssets",
+        "monthlyExpenses"
+      ]
+    },
+    "worstPlausibleYearCoverage": {
+      "what": "Cash divided by a year in which everything goes wrong at once: job loss, the deductible, the essentials, net of the benefit.",
+      "why": "1× means the cash would carry that year. It replaces the vague 3 to 6 months once the inputs exist.",
+      "improve": "Cash, a lower deductible, or a lower floor of essentials. Sleep At Night shows the pieces.",
+      "looksAt": [
+        "cashSavings",
+        "highestDeductible",
+        "monthlyExpenses",
+        "state"
+      ]
+    },
+    "automationRatio": {
+      "what": "Savings that happen without you, as a share of all savings.",
+      "why": "Automated saving is the saving that actually happens. What you have to remember to do, you sometimes do not.",
+      "improve": "The Skill Stacker asks which contributions run on their own; set up the ones that do not.",
+      "looksAt": [
+        "contributionPercent"
+      ]
+    },
+    "givingRate": {
+      "what": "Gifts as a share of take-home pay, monthly.",
+      "why": "A figure, not a score: the tithe is a religious convention, not a financial one.",
+      "improve": "Giving sets a target and shows what a percentage of take-home is in dollars.",
+      "looksAt": [
+        "givingPct",
+        "grossAnnualIncome"
+      ]
+    },
+    "netWorthInYears": {
+      "what": "Net worth divided by a year of spending.",
+      "why": "How long what you own would last at what you spend, before growth. It reads like the FI ratio, in years.",
+      "improve": "Both levers: a higher net worth, or a lower year of spending.",
+      "looksAt": [
+        "netWorth",
+        "monthlyExpenses"
+      ]
+    },
+    "humanToFinancialCapital": {
+      "what": "The present value of your pay to the stop age, divided by cash plus investments.",
+      "why": "High early in a career, falling toward zero as pay becomes assets. It says how much of your wealth is still in the future.",
+      "improve": "It falls on its own as you save. Protecting the income, with disability and life cover, is the point while it is high.",
+      "looksAt": [
+        "grossAnnualIncome",
+        "dob",
+        "retireAge",
+        "cashSavings",
+        "investments"
+      ]
+    },
+    "bracketRoom": {
+      "what": "The top of the current federal bracket less taxable income.",
+      "why": "How much more you could earn or convert before the next dollar is taxed higher. A planning figure for Roth conversions and raises.",
+      "improve": "Not a thing to improve; Tax shows what a conversion inside the room costs.",
+      "looksAt": [
+        "grossAnnualIncome",
+        "filingStatus"
+      ]
+    },
+    "bridgeGapYears": {
+      "what": "Years between the age FI arrives and 59½, when retirement accounts open.",
+      "why": "Those years have to be funded from taxable money and Roth basis. Zero means no bridge is needed.",
+      "improve": "Save the bridge years in taxable accounts; The Statement shows what is reachable before 59½.",
+      "looksAt": [
+        "dob",
+        "monthlyExpenses",
+        "investments"
+      ]
+    },
+    "lifestyleInflation": {
+      "what": "The rise in yearly spending divided by the rise in income since a snapshot a year ago.",
+      "why": "Below 50% most of a raise was kept. Above 100% spending rose faster than pay. Needs time to exist before it can say anything.",
+      "improve": "Freeze a snapshot now; when the next raise lands, put half of it somewhere automatic before the month absorbs it.",
+      "looksAt": [
+        "historyCompareTo",
+        "grossAnnualIncome",
+        "monthlyExpenses"
+      ]
+    },
+    "netWorthGrowthRate": {
+      "what": "Net worth now against a year ago, annualised.",
+      "why": "Progress in one number. It is what a snapshot is for.",
+      "improve": "Freeze today's numbers, then again in a year. History draws the line between them.",
+      "looksAt": [
+        "historyCompareTo",
+        "netWorth"
+      ]
+    },
+    "withdrawalRate": {
+      "what": "Spending not covered by income, as a share of investments, each year.",
+      "why": "The number a retiree lives by. Under 4% is the convention that lasts thirty years; over 5% is the watch line.",
+      "improve": "Less drawn, more income, or a larger portfolio. Decumulation shows how long the money lasts at each.",
+      "looksAt": [
+        "monthlyExpenses",
+        "grossAnnualIncome",
+        "investments"
+      ]
+    },
+    "fiDate": {
+      "what": "Today plus the years to FI at the current pace.",
+      "why": "The same projection as the FI year on the dashboard, to the month. It is the date the savings rate is buying.",
+      "improve": "The savings rate moves it more than anything. The lens on every page reads a dollar as days off this date.",
+      "looksAt": [
+        "monthlyExpenses",
+        "investments",
+        "grossAnnualIncome"
+      ]
+    }
+  }
+}

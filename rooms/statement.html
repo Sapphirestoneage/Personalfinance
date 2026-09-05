@@ -232,6 +232,12 @@
 <script src="../engines/selfemployed.js"></script>
 <script src="../engines/tax.js"></script>
 <script src="../engines/statement.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/ledger.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/quickmath.js"></script>
+<script src="../engines/presets.js"></script>
+<script src="../engines/budget.js"></script>
 <script src="../shared/charts.js"></script>
 <script>
 (function () {
@@ -281,6 +287,17 @@
 
   /* ---- Assets: every one rated, the itemised ones fully editable ------------ */
 
+  /* What the ledger and the log say has moved through cash since the
+     figure was confirmed — set beside it, never applied to it (D-130). */
+  function cashMovedHint(h) {
+    if (!TABLES || !SLAF.Budget) return '';
+    var since = Spine.confirmedAt('cashSavings');
+    var r = SLAF.Budget.cashMovedSince(h, TABLES, TABLES.expenseCategories, since);
+    if (!Money.isOk(r) || !r.count) return '';
+    var d = new Date(r.since + 'T00:00:00');
+    var when = isNaN(d.getTime()) ? r.since : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return '<span class="slaf-hint" data-cash-moved style="display:block;margin-top:4px">Since you confirmed this on ' + esc(when) + ', the ledger and the log show ' + esc(fmt(r.inCents)) + ' in and ' + esc(fmt(r.outCents)) + ' out — about ' + esc((r.value < 0 ? '−' : '+') + fmt(Math.abs(r.value))) + '. The balance here is yours to confirm; nothing moves it for you.</span>';
+  }
   function renderAssets(h) {
     var list = el('asset-list');
     var rules = TABLES && TABLES.accessRules;
@@ -301,7 +318,7 @@
         : '<div class="slaf-field" style="margin:0"><span class="slaf-label">What it\'s worth</span>'
           + '<a class="slaf-owned slaf-owned--field" href="' + Ownership.linkTo('start', a.category === 'cash' ? 'q-cash' : 'q-investments') + '">'
           + '<span class="slaf-owned-value">' + (Money.isEntered(a.valueCents) ? fmt(a.valueCents) : Money.EM_DASH) + '</span>'
-          + '<span class="slaf-owned-from">Start Here →</span></a></div>';
+          + '<span class="slaf-owned-from">Start Here →</span></a>' + (a.category === 'cash' ? cashMovedHint(h) : '') + '</div>';
       var typeCell = mine
         ? '<label class="slaf-field" style="margin:0"><span class="slaf-label">Type</span>'
           + '<span class="slaf-input-shell"><select data-asset="' + a.id + '" data-field="category">'

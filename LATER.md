@@ -44,3 +44,57 @@ frozen template (D-097); the stash is superseded and dropped.
 
 And the brief's own last step, **History** — every snapshot and what
 moved between them. `rooms/history.html`, D-122.
+
+## From the Money Map — built (D-128)
+
+- **A date on every expenditure and incoming amount** and an
+  **incoming-money list** — the expense log in Cash Flow and the Income
+  room's entries. D-128.
+- **The revision (D-129)**: Unemployment as a kind and exactly four ways
+  to be taxed; an expense that is personal, linked or reimbursable, with
+  the repayment a credit in the month it came; the budget as five cards
+  with one comparison bar each; Rule of Five, Max IRA and Max 401(k)
+  presets stacked into the estimate; Not applicable, and a Hypothetical
+  view that never writes.
+- **What was pushed off, built (D-130)**: `dateKind` — a date that is
+  exact, estimated or potential, the last drawn but never counted; the
+  Money Calendar drawn from the ledger's landings and the log's dated
+  entries, its own bill inputs retired, Start Here's one-off a dated
+  entry (Q5); a month of spending as the closed months' average once
+  months close (Q10); one rent, Cash Flow's housing line, with Housing's
+  field the alternative (Q11); what the log moved since cash was
+  confirmed, set beside the balance and never applied (Q8); N/A beside
+  the workplace plan and the HSA in Where It Goes, and the chip that
+  says so everywhere; an emergency-fund preset for Savings.
+- Decided against, and why (D-130): a Rule of Five preset with a price
+  of its own — it would be the budget page's first input field; entries
+  moving asset balances — every logged coffee would write to an asset
+  another room owns.
+
+## The Skill Tree (D-131)
+
+- **Built on a seed**: the engine, the board, the fog, the warps, the
+  fortress line, the exercise library, the Stacker and dashboard wiring,
+  versioning. D-131.
+- **Waiting on one file**: FI-Skill-Tree-v6.3.html is not in the repo.
+  Drop it at the root and write the body of `scripts/extract-v63.mjs`
+  against its real internals; the three data files regenerate and the
+  counts (625 / ~280 / 125) become the tests' expectations. Quests and
+  dares arrive with it.
+- Still open after that: the Profile Facts (31 yes/no) mapped to the
+  skills they prove, beyond the ownership facts the seed already reads;
+  a Triple D run bound to a chosen life event in the Exercises room; a
+  band's cutscene as its own screen rather than a card.
+
+## Reasons to keep a debt (D-132)
+
+- **Built**: the five reasons, the multi-select, the suggestion at entry
+  time, the hold-back toggle, the tags inline in the payoff order, the
+  interest cost of holding one back. D-132.
+- Still open: the reasons are per debt and go no further. A household-level
+  read of them — "you are carrying $X on purpose, at $Y a year" across every
+  held debt at once — would belong on the Statement or the dashboard, not in
+  Debt Payoff, and would need an owner deciding before it is built. Tax
+  favourability is a tag someone ticks, not a calculation: nothing checks
+  whether the interest is actually deductible at their income, and doing so
+  needs the Tax room to own a figure it does not own yet.

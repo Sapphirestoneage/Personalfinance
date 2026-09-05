@@ -168,7 +168,7 @@
   Room.mount({
     id: 'housing',
     tables: ['housingConventions', 'priceToRent', 'mortgageRates', 'ratioBenchmarks', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
-    reads: ['monthlyExpenses', 'grossAnnualIncome', 'cashSavings', 'state'],
+    reads: ['rentMonthly', 'monthlyExpenses', 'grossAnnualIncome', 'cashSavings', 'state'],
 
     number: function (h, T) {
       var r = Housing.compare(h, T);
@@ -177,7 +177,7 @@
       var value = (diff >= 0 ? '+' : '−') + money(Math.abs(diff)) + ' a month to ' + (diff >= 0 ? 'own' : 'rent');
       var bits = [];
       bits.push('own <strong>' + money(r.ownCents) + '</strong> (of which ' + money(r.unrecoverableCents) + ' unrecoverable)');
-      bits.push(r.rentIsNone ? 'rent <strong>no rent</strong>' : 'rent <strong>' + money(r.rentCents) + '</strong>');
+      bits.push(r.rentIsNone ? 'rent <strong>no rent</strong>' : 'rent <strong>' + money(r.rentCents) + '</strong>' + (r.rentSource === 'cash-flow' ? ' (the housing line in Cash Flow)' : r.rentSource === 'housing' ? ' (typed here)' : ''));
       if (r.priceToRent !== null) bits.push('price-to-rent ' + (Math.round(r.priceToRent * 10) / 10) + ' (' + ptrWords(r.priceToRentBand) + ')');
       if (r.housingRatio !== null) bits.push(Money.formatRate(r.housingRatio, { decimals: 0 }) + ' of gross');
       var downBit = money(r.downCents) + ' down';
@@ -219,10 +219,10 @@
     },
 
     inputs: [
-      { ctl: 'rent', label: 'Rent, a month', kind: 'money', placeholder: 'e.g. 1,900', hint: 'What renting costs, or would cost. Blank with a "no rent" answer in Start Here means no rent.',
+      { ctl: 'rent', label: 'A place you would rent instead, a month', kind: 'money', placeholder: 'e.g. 1,900', hint: 'The rent you pay is the housing line in Cash Flow, read here on its own. Type a figure only to weigh the place against a different rent. Blank with a "no rent" answer in Start Here means no rent.',
         read: function (h) { return plan(h).rentMonthlyCents; },
         write: function (v) { Spine.set('housing.rentMonthlyCents', v); },
-        propose: function (h) { return rentGuess(h); } },
+        propose: function (h) { var r = Schema.rentMonthlyCents(h); return r.source === 'cash-flow' ? { value: r.cents, source: 'the housing line in Cash Flow (what you pay now)' } : rentGuess(h); } },
       { ctl: 'price', label: 'The place, its price', kind: 'money', placeholder: 'e.g. 300,000',
         read: function (h) { return plan(h).priceCents; },
         write: function (v) { Spine.set('housing.priceCents', v); },

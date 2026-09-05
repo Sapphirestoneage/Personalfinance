@@ -34,6 +34,11 @@
   'use strict';
 
   var SCHEMA_VERSION = 2;
+  /* The product version, major.minor: the major is the shape, the minor a
+     pass. version.json at the root carries the same string (a test holds
+     them together); every export and share code is stamped with it and
+     every room footer prints it. D-131. */
+  var APP_VERSION = '2.0';
 
   /* ======================================================================
      System assumption defaults — SPEC.md §12.2 (RESOLVED: 7% return, 4% SWR)
@@ -85,16 +90,17 @@
     'assumptions.returnReal':                    { class: 'assumption', unit: 'rate',    default: 0.05, note: 'the real return the lens and the plan use. D-094' },
     'assumptions.inflation':                     { class: 'assumption', unit: 'rate',    default: 0.03, note: 'D-094' },
     'meta.undoStack':                            { class: 'raw',        unit: 'list',    note: 'the command log: { label, ts, changes[{ path, before, after }] }, capped at 100; redoStack likewise. D-094' },
-    'household.oneOffs[].cents':                 { class: 'raw',        unit: 'cents',   note: 'a one-off coming, in (direction in) or out; `on` is the month. From the one-pager. D-094' },
+    'household.oneOffs[].cents':                 { class: 'raw',        unit: 'cents',   note: 'a one-off coming, in (direction in) or out; `on` is the month. From the one-pager. D-094. Retired in D-130: the one-pager now writes a dated income entry (id oneoff_in) or a dated log entry (id oneoff_out), date estimated; this list is read only when neither exists (Schema.oneOffEntry)' },
     'person.unemployment.expectedSearchMonths':  { class: 'raw',        unit: 'months',  note: 'how long you expect the search to take; floorMonthlyCents is the bare-minimum month. Owned by Between Jobs. D-098' },
     'household.decumulation.stockShare':         { class: 'raw',        unit: 'ratio',   note: 'share of investments in stocks, for the VPW table; with plannedAnnualDrawCents and socialSecurityAt. Owned by Decumulation. D-098' },
     'household.tax.otherPreTaxAnnualCents':      { class: 'raw',        unit: 'cents',   note: 'pre-tax money beyond the workplace plan (HSA, traditional IRA), a year; withheldAnnualCents is what has been withheld. Owned by Tax. D-098' },
     'household.career.offer.grossAnnualCents':   { class: 'raw',        unit: 'cents',   note: 'an offer being weighed: with hoursPerWeek, commuteHoursPerWeek, workCostsMonthlyCents, signOnCents. Owned by Career Move. D-099' },
     'household.partner.splitMode':               { class: 'raw',        unit: 'enum',    values: ['equal', 'proportional', 'pooled'], note: 'how shared costs are split; sharedMonthlyCents is the shared month. Owned by Partner. D-099' },
     'household.kids.tuitionTargetCents':         { class: 'raw',        unit: 'cents',   note: 'a tuition target per child; tuitionSavedCents so far, tuitionMonthlyCents going in. Owned by Kids and Tuition. D-099' },
-    'household.housing.priceCents':              { class: 'raw',        unit: 'cents',   note: 'a place being weighed: with rentMonthlyCents (what renting costs), downPct (0–1), rate (mortgage, decimal). Owned by Housing Decision. D-099' },
+    'household.housing.priceCents':              { class: 'raw',        unit: 'cents',   note: 'a place being weighed: with rentMonthlyCents (a place you would rent INSTEAD — the rent you pay is Cash Flow\'s housing line, read through Schema.rentMonthlyCents, D-130), downPct (0–1), rate (mortgage, decimal). Owned by Housing Decision. D-099' },
     'household.purchase.priceCents':             { class: 'raw',        unit: 'cents',   note: 'a big purchase: with monthsAway, financeRate (decimal, null = cash), label. Owned by Big Purchase. D-099' },
     'household.variableIncome.bufferMonths':     { class: 'raw',        unit: 'months',  note: 'months of the low-to-average gap held as a buffer. Owned by Variable Income. D-099' },
+    'household.variableIncome.windowMonths':     { class: 'raw',        unit: 'months',  values: [3, 6, 12], note: 'the rolling window the room averages the ledger\'s variable months over. Owned by Variable Income. D-128' },
     'household.enough.monthlyCents':             { class: 'raw',        unit: 'cents',   note: 'what you would live on by choice, a month; source curve|entered. Owned by Enough. D-101' },
     'household.designedWeek.blocks[].hours':     { class: 'raw',        unit: 'hours',   note: 'a block of the designed week; costCents a week; categoryId the expense line. Owned by Designed Week. D-101' },
     'household.timeBuckets[].decade':            { class: 'raw',        unit: 'age',     note: 'a decade (30 = your thirties) with experiences[] {label, costCents, year}. Owned by Time Buckets. D-101' },
@@ -130,6 +136,7 @@
     'retirement.hsaContributedCents':            { class: 'raw',        unit: 'cents',   period: 'annual', note: 'into an HSA so far this year' },
     'retirement.onHdhp':                         { class: 'raw',        unit: 'bool',    note: 'high-deductible plan, so HSA-eligible' },
     'retirement.hsaFamilyPlan':                  { class: 'raw',        unit: 'bool',    note: 'family HSA coverage, which changes the limit' },
+    'retirement.has401k':                        { class: 'raw',        unit: 'bool',    note: 'does an employer 401(k) exist to contribute to. null = not asked; the Max 401(k) preset is absent, not disabled, unless true. Asked once, by Budget. D-129' },
     'insurance.highestDeductibleCents':          { class: 'raw',        unit: 'cents',   note: 'the largest single deductible a cash cushion has to cover. Owned by Sleep At Night' },
     'assumptions.marginalRate':                  { class: 'assumption', unit: 'rate',    default: null, note: 'NO default \u2014 asked once, never derived from the effective-rate table' },
     'incomeSource.type':                         { class: 'raw',        unit: 'enum',    values: ['w2', '1099'] },
@@ -163,7 +170,13 @@
     'debt.balanceCents':                         { class: 'raw',        unit: 'cents' },
     'debt.rate':                                 { class: 'raw',        unit: 'rate',    period: 'annual' },
     'debt.minPaymentCents':                      { class: 'raw',        unit: 'cents',   period: 'monthly' },
-    'debt.type':                                 { class: 'raw',        unit: 'enum',    values: ['credit_card', 'student_loan', 'auto', 'mortgage', 'personal', 'medical', 'other'] },
+    'debt.type':                                 { class: 'raw',        unit: 'enum',    values: ['credit_card', 'student_loan', 'auto', 'mortgage', 'personal', 'family', 'medical', 'other'], note: 'family = borrowed from family or a friend, usually interest-free and due by a date. D-124' },
+    'debt.interestFree':                         { class: 'raw',        unit: 'bool',    note: 'true = no interest is charged, ever; the rate is stored as 0 alongside so every reader agrees. null not asked. D-124' },
+    'debt.archived':                             { class: 'raw',        unit: 'bool',    note: 'true = paid off or set aside; kept for the record, read by nothing that aggregates or plans. Restorable. D-124' },
+    'debt.borrowedOn':                           { class: 'raw',        unit: 'iso-date', note: 'when the money was borrowed. Null means not asked' },
+    'debt.dueOn':                                { class: 'raw',        unit: 'iso-date', note: 'when it is due back in full. On a family loan with no monthly amount, the minimum is the balance over the months left. D-124' },
+    'debt.keepReasons[]':                        { class: 'raw',        unit: 'enum',    values: ['low_rate', 'tax_favoured', 'appreciating', 'building_credit', 'subsidised'], note: 'why this debt might be fine to carry on purpose - the rational axis, independent of emotionalTag. A list: more than one can apply, and an empty list is "no particular reason to keep it". Suggested from the debt\'s own type and rate at entry time, stored only when confirmed. Never changes the payoff order by itself. Owned by Debt Payoff. D-132' },
+    'debt.excludeFromAggressive':                { class: 'raw',        unit: 'bool',    note: 'the household\'s decision that this debt is kept on purpose: the payoff plan orders it last and sends it only its minimum. The keep reasons inform this and never set it. Owned by Debt Payoff. D-132' },
     'debt.creditLimitCents':                     { class: 'raw',        unit: 'cents',   note: 'revolving debt only \u2014 the limit the balance is a share of. Owned by Debt Payoff. DECISIONS.md D-045' },
     'debt.promoEndsOn':                          { class: 'raw',        unit: 'iso-date', note: 'when a 0%/promotional rate ends. Null means the rate is not promotional' },
     'debt.postPromoRate':                        { class: 'raw',        unit: 'rate',    period: 'annual', note: 'the rate the balance reverts to when the promo ends' },
@@ -173,7 +186,26 @@
     'expenses.entries[].categoryId':             { class: 'raw',        unit: 'enum',    note: 'an id from data/expense_categories.json' },
     'expenses.entries[].amountCents':            { class: 'raw',        unit: 'cents' },
     'expenses.entries[].period':                 { class: 'raw',        unit: 'enum',    values: ['monthly', 'once'] },
-    'expenses.entries[].source':                 { class: 'raw',        unit: 'enum',    values: ['manual', 'imported', 'rerank'], note: 'SPEC.md §12.5; rerank = a custom cost line typed on The Rerank, D-085' },
+    'expenses.entries[].source':                 { class: 'raw',        unit: 'enum',    values: ['manual', 'imported', 'rerank', 'log'], note: 'SPEC.md §12.5; rerank = a custom cost line typed on The Rerank, D-085; log = a dated occurrence logged in the Expenses section, counted by the budget as an actual and never as the typical month, D-128' },
+    'expenses.entries[].linkedIncomeId':         { class: 'raw',        unit: 'id',      note: 'the ledger income entry this expense produces; null = personal. D-128' },
+    'expenses.entries[].deductible':             { class: 'raw',        unit: 'bool',    note: 'true only when linkedIncomeId is set — enforced by createExpenseEntry, so a personal expense can never reduce taxable income. D-128' },
+    'expenses.entries[].hidden':                 { class: 'raw',        unit: 'bool',    note: 'off the default list, still counted. D-128' },
+    'expenses.entries[].active':                 { class: 'raw',        unit: 'bool',    note: 'false = archived: stops counting toward new estimates and actuals; closed months are untouched. D-128' },
+    'household.ledger.income[].kind':            { class: 'raw',        unit: 'enum',    values: ['w2', 'se', 'bonus', 'gift', 'side', 'dividend', 'rental', 'other'], note: 'a dated income entry: amountCents, frequency (once, weekly, fortnightly, monthly, annual), receivedOn, taxable, taxMethod (w2, se, none), costs[] for se/side/rental, hidden, active. Owned by Income. D-128' },
+    'household.ledger.income[].dateKind':        { class: 'raw',        unit: 'enum',    values: ['exact', 'estimated', 'potential'], note: 'how sure the date is — the same three as an expense: potential income (a bonus that may not come) is drawn, never counted. D-130' },
+    'household.ledger.income[].taxMethod':       { class: 'raw',        unit: 'enum',    values: ['w2', 'se', 'unemployment', 'none'], note: 'taxed how: withheld at the source; owed with self-employment tax on the net of costs; owed as ordinary income with no SE tax (unemployment); or not taxable. Four, no catch-all. D-128, D-129' },
+    'expenses.entries[].dateKind':               { class: 'raw',        unit: 'enum',    values: ['exact', 'estimated', 'potential'], note: 'how sure the date is: exact (it happened / it is due), estimated (about then), potential (might not happen at all). Actual counts exact and estimated; potential is drawn on the calendar and reported apart, never counted. D-130' },
+    'expenses.entries[].produced':               { class: 'raw',        unit: 'enum',    values: ['personal', 'linked', 'reimbursable'], note: 'what the expense produced: nothing (personal, never deductible); an income entry (linkedIncomeId, the only deductible path); or a repayment expected from someone (reimbursable: never deductible, counts in full while pending, a credit in the month received). D-129' },
+    'expenses.entries[].reimbursableFrom':       { class: 'raw',        unit: 'text',    note: 'who is paying it back. D-129' },
+    'expenses.entries[].expectedAmountCents':    { class: 'raw',        unit: 'cents',   note: 'what is expected back; defaults to the amount. D-129' },
+    'expenses.entries[].reimbursementStatus':    { class: 'raw',        unit: 'enum',    values: ['pending', 'received'], note: 'pending counts in full; received posts a credit dated dateReceived, never into the original month. D-129' },
+    'expenses.entries[].dateReceived':           { class: 'raw',        unit: 'iso-date', note: 'the day the repayment landed; the credit sits in that month. D-129' },
+    'expenses.entries[].receivedAmountCents':    { class: 'raw',        unit: 'cents',   note: 'what actually came back; defaults to expectedAmountCents. D-129' },
+    'household.ledger.income[].costs[].category': { class: 'raw',       unit: 'enum',    values: ['mileage', 'home_office', 'equipment', 'contractor_fees', 'licensing', 'platform_fees', 'other'], note: 'the costs of producing this income, on the entry itself; each with amountCents, date, deductible. D-128' },
+    'household.ledger.months[].id':              { class: 'raw',        unit: 'id',      note: 'a MonthRecord, YYYY-MM: status closed, estimated and actual per bucket (income, expenses, savings, investments, debt), actualRevised for late entries, closedAt. Append-only; closing twice is refused. Owned by Budget. D-128' },
+    'household.budget.estimated':                { class: 'raw',        unit: 'object',  note: 'YYYY-MM → bucket → cents: an open month\'s estimate set by hand (the Estimated-vs-Actual room\'s one write). Absent = last closed month\'s actual, else the onboarding figures. Owned by Budget. D-128' },
+    'household.notApplicable':                   { class: 'raw',        unit: 'object',  note: 'key → true: a structural option the household marked Not applicable (a preset id such as max401k or maxIra, or an ownership field id). Excluded from every live figure; ownership rows read it as not applicable, never as missing. Still reachable in the Budget room\'s Hypothetical mode, which never writes. Owned by Budget. D-129' },
+    'household.budget.presets':                  { class: 'raw',        unit: 'object',  note: 'YYYY-MM → bucket → [preset id]: the Savings / Investments presets stacked into that month\'s Estimated (ruleOfFive, emergencyFund, maxIra, max401k — engines/presets.js). They stack on a hand-set figure and replace the fallback ones. Owned by Budget. D-129' },
     'rerank.rows[].id':                          { class: 'raw',        unit: 'id',      note: 'a categoryId, or an expense entry id for a custom line. D-085' },
     'rerank.rows[].miss':                        { class: 'raw',        unit: 'enum',    values: ['yes', 'some', 'no'], note: 'would you miss it? null = not asked' },
     'rerank.rows[].who':                         { class: 'raw',        unit: 'enum',    values: ['me', 'both', 'show'], note: 'who is it really for: me, both of us, or for show' },
@@ -185,6 +217,9 @@
     'skills[id].automated':                      { class: 'raw',        unit: 'bool',    note: 'runs without you — the automation ratio counts these. D-090' },
     'skills[id].dueOn':                          { class: 'raw',        unit: 'date',    note: 'periodic skills: lastDone + everyDays' },
     'skills[id].verifiedBy':                     { class: 'raw',        unit: 'enum',    values: ['household', 'self'], note: 'household = marked done from a fact the model already holds, and un-marked if the fact stops holding' },
+    'skillTree.state[id].state':                 { class: 'raw',        unit: 'enum',    values: ['done'], note: 'the Skill Tree\'s standing per skill: only done is stored, with `on` (ISO day) and `by` (proof | self); open, locked, bypassed, fogged and not-yours are derived by engines/skilltree.js every time and never written. Owned by the Skill Tree. D-131' },
+    'exercises.done[id]':                        { class: 'raw',        unit: 'date',    note: 'ISO day an exercise was completed; completing one boosts its skill to Open, never to Done. Owned by Exercises. D-131' },
+    'exercises.results[id]':                     { class: 'raw',        unit: 'object',  note: 'what a `run` exercise computed when it was completed, kept so it can be compared later. Owned by Exercises. D-131' },
     'practiceLedger[].cents':                    { class: 'raw',        unit: 'cents',   note: 'one row per skill per logged day: what that day\'s practice is worth. Feedback, not points. D-090' },
     'expenses.entries[].fixed':                  { class: 'raw',        unit: 'bool',    note: 'null not asked; true = could not be cut next month. Feeds the minimum viable month and cuttability. D-082' },
     'goals[].targetDate':                        { class: 'raw',        unit: 'iso-date' },
@@ -667,6 +702,27 @@
       verifiedBy: f.verifiedBy === undefined ? null : f.verifiedBy
     };
   }
+  /* The Skill Tree stores only `done` (D-131): every other state is
+     derived from the household by engines/skilltree.js, so the tree can
+     never disagree with the facts. */
+  var SKILL_TREE_BY = ['proof', 'self'];
+  function createSkillTree(fields) {
+    var f = fields || {};
+    var state = {};
+    Object.keys(f.state || {}).forEach(function (id) {
+      var v = f.state[id];
+      if (!v || v.state !== 'done') return;
+      state[id] = { state: 'done', on: typeof v.on === 'string' && v.on ? v.on : null, by: SKILL_TREE_BY.indexOf(v.by) >= 0 ? v.by : 'self' };
+    });
+    return { state: state };
+  }
+  function createExercisesLog(fields) {
+    var f = fields || {};
+    var done = {}, results = {};
+    Object.keys(f.done || {}).forEach(function (id) { if (typeof f.done[id] === 'string' && f.done[id]) done[id] = f.done[id]; });
+    Object.keys(f.results || {}).forEach(function (id) { if (f.results[id] && typeof f.results[id] === 'object') results[id] = f.results[id]; });
+    return { done: done, results: results };
+  }
   function createSkills(fields) {
     var out = {};
     var src = fields || {};
@@ -757,7 +813,9 @@
   }
   function createVariableIncomePlan(fields) {
     var f = fields || {};
-    return { bufferMonths: Money.isEntered(f.bufferMonths) ? f.bufferMonths : null };
+    return { bufferMonths: Money.isEntered(f.bufferMonths) ? f.bufferMonths : null,
+      /* The rolling window the room smooths the ledger's months over: 3, 6 or 12. D-128. */
+      windowMonths: [3, 6, 12].indexOf(f.windowMonths) >= 0 ? f.windowMonths : null };
   }
   /* The third wave (D-101 scaffolding): the LATER.md rooms — the T8
      shapes (D-093 draft, now built), the loan decision, the calendar,
@@ -870,6 +928,16 @@
     { id: 'taxable', label: 'Taxable',  hint: 'brokerage, anything with no tax wrapper' }
   ];
 
+  /* The ids data/debt_rules.json defines; the constructor keeps the list
+     honest without reading the table, which loads later than the schema. */
+  var KEEP_REASONS = ['low_rate', 'tax_favoured', 'appreciating', 'building_credit', 'subsidised'];
+  function keepReasonList(v) {
+    if (!Array.isArray(v)) return [];
+    var out = [];
+    v.forEach(function (id) { if (KEEP_REASONS.indexOf(id) >= 0 && out.indexOf(id) < 0) out.push(id); });
+    return out;
+  }
+
   function createDebt(fields) {
     var f = fields || {};
     return {
@@ -892,6 +960,26 @@
       promoEndsOn: f.promoEndsOn === undefined ? null : f.promoEndsOn,
       postPromoRate: f.postPromoRate === undefined ? null : f.postPromoRate,
       emotionalTag: f.emotionalTag === undefined ? null : f.emotionalTag,
+      /* The rational counterpart to emotionalTag, and a separate axis from
+         it: why this debt might be fine to carry on purpose. A list, since
+         more than one can be true of the same debt; an empty list is
+         "None - no particular reason to keep it". Unknown ids are dropped
+         and each is kept once. Setting one never touches the other. D-132. */
+      keepReasons: keepReasonList(f.keepReasons),
+      /* The household's own decision, which the reasons inform and never
+         trigger: this debt is kept on purpose, so the payoff plan stops
+         aiming the extra at it. Reasons alone change nothing. D-132. */
+      excludeFromAggressive: f.excludeFromAggressive === true,
+      /* Money borrowed from family or a friend usually carries no interest
+         and a date it is due back, not a rate and a statement minimum. A
+         debt that is interest-free says so here AND stores rate 0, so a
+         reader that only knows about `rate` still gets the right number.
+         Archived debts are kept for the record and read by nothing that
+         adds up or plans. D-124. */
+      interestFree: f.interestFree === undefined ? null : f.interestFree,
+      archived: f.archived === true,
+      borrowedOn: f.borrowedOn === undefined ? null : f.borrowedOn,
+      dueOn: f.dueOn === undefined ? null : f.dueOn,
       ownerIds: f.ownerIds || []
     };
   }
@@ -916,21 +1004,195 @@
    * The roll-up in engines/cashflow.js normalises both to a monthly figure,
    * so adding import later changes no aggregation code — SPEC.md §12.5.
    */
+  var PRODUCED = ['personal', 'linked', 'reimbursable'];
+  /* How sure a date is (D-130): exact, estimated (about then), potential
+     (might not happen). Unknown reads as exact, the way every older row
+     was meant. */
+  var DATE_KINDS = ['exact', 'estimated', 'potential'];
+  function dateKindOf(v) { return DATE_KINDS.indexOf(v) >= 0 ? v : 'exact'; }
   function createExpenseEntry(fields) {
     var f = fields || {};
+    var linked = typeof f.linkedIncomeId === 'string' && f.linkedIncomeId ? f.linkedIncomeId : null;
+    /* Three paths, exclusive (D-129). Asked for outright by `produced`, or
+       read off the fields: a link makes it linked, a reimbursement makes
+       it reimbursable, otherwise personal. A reimbursable expense carries
+       no link, so it can never be deductible by the rule below. */
+    var produced = PRODUCED.indexOf(f.produced) >= 0 ? f.produced
+      : linked ? 'linked'
+      : (f.reimbursableFrom || f.reimbursementStatus || f.reimbursable === true) ? 'reimbursable' : 'personal';
+    if (produced !== 'linked') linked = null;
+    var reimb = produced === 'reimbursable';
+    var status = reimb ? (f.reimbursementStatus === 'received' ? 'received' : 'pending') : null;
     return {
       id: f.id || newId('e'),
       categoryId: f.categoryId || null,
       amountCents: f.amountCents === undefined ? null : f.amountCents,
       period: f.period || 'monthly',            // 'monthly' | 'once'
       date: f.date === undefined ? null : f.date,        // ISO, dated entries only
+      dateKind: dateKindOf(f.dateKind),
       descriptor: f.descriptor === undefined ? null : f.descriptor,
-      source: f.source || 'manual',             // 'manual' | 'imported'
+      source: f.source || 'manual',             // 'manual' | 'imported' | 'rerank' | 'log'
       categorizedBy: f.categorizedBy === undefined ? null : f.categorizedBy,
       /* Could this line be cut next month? null = not asked; true = fixed
          (rent, insurance, a minimum); false = cuttable. D-082. */
-      fixed: f.fixed === undefined ? null : f.fixed
+      fixed: f.fixed === undefined ? null : f.fixed,
+      /* The ledger (D-128). An expense either is personal, or it produces
+         one income entry; only the second kind can ever be deductible,
+         and that is decided HERE, not in a form — a personal expense
+         handed deductible: true is stored as false. */
+      produced: produced,
+      linkedIncomeId: linked,
+      deductible: !!(linked && f.deductible === true),
+      reimbursableFrom: reimb && typeof f.reimbursableFrom === 'string' && f.reimbursableFrom ? f.reimbursableFrom : null,
+      expectedAmountCents: reimb ? (Money.isEntered(f.expectedAmountCents) ? f.expectedAmountCents : (Money.isEntered(f.amountCents) ? f.amountCents : null)) : null,
+      reimbursementStatus: status,
+      dateReceived: reimb && status === 'received' && typeof f.dateReceived === 'string' && f.dateReceived ? f.dateReceived : null,
+      receivedAmountCents: reimb && status === 'received' && Money.isEntered(f.receivedAmountCents) ? f.receivedAmountCents : null,
+      hidden: f.hidden === true,
+      active: f.active === undefined ? true : f.active !== false
     };
+  }
+
+  /* ---- The ledger: dated money in, and the months closed on it (D-128) ----
+     An income ENTRY is a dated event — this paycheque, this invoice paid,
+     this gift — which is a different thing from an income SOURCE (the
+     description of a job, annualised, that every ratio reads). The two
+     coexist: the source is the profile, the entry is the record. */
+  var INCOME_KINDS = ['w2', 'se', 'bonus', 'gift', 'side', 'dividend', 'rental', 'unemployment', 'other'];
+  var INCOME_FREQUENCIES = ['once', 'weekly', 'fortnightly', 'monthly', 'annual'];
+  /* Taxed how — exactly four, no catch-all (D-129):
+       w2            withheld at the source
+       se            owed, not withheld, and subject to self-employment tax
+       unemployment  owed, not withheld, ordinary income, NO self-employment tax
+       none          not taxable */
+  var TAX_METHODS = ['w2', 'se', 'unemployment', 'none'];
+  var INCOME_COST_CATEGORIES = ['mileage', 'home_office', 'equipment', 'contractor_fees', 'licensing', 'platform_fees', 'other'];
+  /* Which kinds carry the costs of producing them, and how each is netted
+     by default. A gift is never taxable; everything else is until unticked. */
+  var INCOME_KIND_RULES = {
+    w2:       { label: 'W-2 salary or wages',      method: 'w2',   taxable: true,  costs: false },
+    se:       { label: '1099 / self-employment',   method: 'se',   taxable: true,  costs: true },
+    bonus:    { label: 'Bonus',                    method: 'w2',   taxable: true,  costs: false },
+    gift:     { label: 'Gift',                     method: 'none', taxable: false, costs: false },
+    side:     { label: 'Side income (cash, not 1099)', method: 'se', taxable: true, costs: true },
+    dividend: { label: 'Dividends or interest',    method: 'w2',   taxable: true,  costs: false },
+    rental:   { label: 'Rental income',            method: 'se',   taxable: true,  costs: true },
+    unemployment: { label: 'Unemployment benefit', method: 'unemployment', taxable: true, costs: false },
+    other:    { label: 'Other',                    method: 'w2',   taxable: true,  costs: false }
+  };
+  function costsAllowed(kind) { return !!(INCOME_KIND_RULES[kind] && INCOME_KIND_RULES[kind].costs); }
+
+  function createIncomeCost(fields) {
+    var f = fields || {};
+    return {
+      id: f.id || newId('ic'),
+      label: f.label === undefined ? null : f.label,
+      amountCents: Money.isEntered(f.amountCents) ? f.amountCents : null,
+      category: INCOME_COST_CATEGORIES.indexOf(f.category) >= 0 ? f.category : 'other',
+      date: typeof f.date === 'string' && f.date ? f.date : null,
+      deductible: f.deductible === undefined ? true : f.deductible !== false
+    };
+  }
+
+  function createIncomeEntry(fields) {
+    var f = fields || {};
+    var kind = INCOME_KINDS.indexOf(f.kind) >= 0 ? f.kind : 'other';
+    var rule = INCOME_KIND_RULES[kind];
+    var taxable = kind === 'gift' ? false : (f.taxable === undefined ? rule.taxable : f.taxable !== false);
+    var method = !taxable ? 'none' : (TAX_METHODS.indexOf(f.taxMethod) >= 0 && f.taxMethod !== 'none' ? f.taxMethod : rule.method);
+    /* 'none' as the method IS "not taxable": the two fields agree either way. */
+    if (f.taxMethod === 'none' && f.taxable === undefined) { taxable = false; method = 'none'; }
+    return {
+      id: f.id || newId('in'),
+      personId: f.personId || null,
+      label: f.label === undefined ? null : f.label,
+      kind: kind,
+      amountCents: Money.isEntered(f.amountCents) ? f.amountCents : null,
+      frequency: INCOME_FREQUENCIES.indexOf(f.frequency) >= 0 ? f.frequency : 'once',
+      receivedOn: typeof f.receivedOn === 'string' && f.receivedOn ? f.receivedOn : null,
+      dateKind: dateKindOf(f.dateKind),
+      taxable: taxable,
+      taxMethod: method,
+      /* The costs of producing it live on the entry, so they are always
+         traceable to the income they support. Kinds without costs keep
+         an empty list, never a hidden one. */
+      costs: rule.costs ? (f.costs || []).map(createIncomeCost) : [],
+      hidden: f.hidden === true,
+      active: f.active === undefined ? true : f.active !== false,
+      source: f.source || 'manual',
+      note: f.note === undefined ? null : f.note
+    };
+  }
+
+  var BUDGET_BUCKETS = ['income', 'expenses', 'savings', 'investments', 'debt'];
+  function bucketCents(o) {
+    var out = {};
+    BUDGET_BUCKETS.forEach(function (b) { out[b] = o && Money.isEntered(o[b]) ? o[b] : null; });
+    return out;
+  }
+  function monthLabel(ym) {
+    var m = /^(\d{4})-(\d{2})$/.exec(ym || '');
+    if (!m) return ym || null;
+    return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][+m[2] - 1] + ' ' + m[1];
+  }
+  /* A MonthRecord: one closed month, estimated and actual side by side,
+     never merged; late entries go to actualRevised and nothing else. */
+  function createMonthRecord(fields) {
+    var f = fields || {};
+    var month = /^\d{4}-\d{2}$/.test(f.month || f.id || '') ? (f.month || f.id) : null;
+    return {
+      id: month,
+      month: month,
+      label: f.label || monthLabel(month),
+      status: 'closed',
+      closedAt: typeof f.closedAt === 'string' ? f.closedAt : null,
+      estimated: bucketCents(f.estimated),
+      actual: bucketCents(f.actual),
+      actualRevised: f.actualRevised ? bucketCents(f.actualRevised) : null,
+      lines: f.lines && typeof f.lines === 'object' ? f.lines : {},
+      sources: f.sources && typeof f.sources === 'object' ? f.sources : { income: [], expenses: [] },
+      note: f.note === undefined ? null : f.note
+    };
+  }
+  function createLedger(fields) {
+    var f = fields || {};
+    return {
+      income: (f.income || []).map(createIncomeEntry),
+      months: (f.months || []).map(createMonthRecord).filter(function (m) { return m.id; }),
+      /* Archive prompts the person waved away, by entry id. D-128 (7). */
+      dismissed: Array.isArray(f.dismissed) ? f.dismissed.slice() : []
+    };
+  }
+  function createBudget(fields) {
+    var f = fields || {};
+    var est = {};
+    Object.keys(f.estimated || {}).forEach(function (ym) {
+      if (!/^\d{4}-\d{2}$/.test(ym)) return;
+      var row = {};
+      BUDGET_BUCKETS.forEach(function (b) { if (Money.isEntered((f.estimated[ym] || {})[b])) row[b] = f.estimated[ym][b]; });
+      if (Object.keys(row).length) est[ym] = row;
+    });
+    /* The presets stacked into a month's Estimated, by bucket (D-129). */
+    var presets = {};
+    Object.keys(f.presets || {}).forEach(function (ym) {
+      if (!/^\d{4}-\d{2}$/.test(ym)) return;
+      var row = {};
+      BUDGET_BUCKETS.forEach(function (b) {
+        var ids = (f.presets[ym] || {})[b];
+        if (!Array.isArray(ids)) return;
+        var keep = ids.filter(function (id, i) { return BUDGET_PRESETS.indexOf(id) >= 0 && ids.indexOf(id) === i; });
+        if (keep.length) row[b] = keep;
+      });
+      if (Object.keys(row).length) presets[ym] = row;
+    });
+    return { estimated: est, presets: presets };
+  }
+  var BUDGET_PRESETS = ['ruleOfFive', 'emergencyFund', 'maxIra', 'max401k'];
+  /** Only the keys marked true survive; anything else is "applies". */
+  function createNotApplicable(fields) {
+    var out = {};
+    Object.keys(fields || {}).forEach(function (k) { if (fields[k] === true && /^[A-Za-z0-9_:.-]+$/.test(k)) out[k] = true; });
+    return out;
   }
 
   /**
@@ -1078,7 +1340,9 @@
       hsaContributedCents: f.hsaContributedCents === undefined ? null : f.hsaContributedCents,
       /* Eligibility facts, not amounts: they change which limit applies. */
       onHdhp: f.onHdhp === undefined ? null : !!f.onHdhp,
-      hsaFamilyPlan: f.hsaFamilyPlan === undefined ? null : !!f.hsaFamilyPlan
+      hsaFamilyPlan: f.hsaFamilyPlan === undefined ? null : !!f.hsaFamilyPlan,
+      /* An employer 401(k) to contribute to? null = not asked (D-129). */
+      has401k: f.has401k === undefined || f.has401k === null ? null : !!f.has401k
     };
   }
 
@@ -1189,9 +1453,17 @@
       studentLoans: createStudentLoanPlan(f.studentLoans),
       calendar: createCalendar(f.calendar),
       history: createHistoryPlan(f.history),
+      /* The ledger and the budget's hand-set estimates (D-128). */
+      ledger: createLedger(f.ledger),
+      budget: createBudget(f.budget),
+      /* What the household said does not apply to them (D-129). */
+      notApplicable: createNotApplicable(f.notApplicable),
       /* The Skill Stacker's standing per skill, keyed by catalogue id, and
          the practice ledger it writes a row to each logged day. D-090. */
       skills: createSkills(f.skills),
+      /* The Skill Tree's standing and the exercise library's log (D-131). */
+      skillTree: createSkillTree(f.skillTree),
+      exercises: createExercisesLog(f.exercises),
       practiceLedger: (f.practiceLedger || []).map(createPracticeEntry).filter(function (e) { return e.on && e.skill; }),
       assumptions: Object.assign({}, ASSUMPTION_DEFAULTS, f.assumptions || {}),
       /* User overrides persist SEPARATELY from the defaults so "reset to
@@ -1329,8 +1601,13 @@
 
   function aggregatableDebts(household) {
     return ((household && household.debts) || []).filter(function (d) {
-      return isAggregatable(d, household);
+      return d && d.archived !== true && isAggregatable(d, household);
     });
+  }
+
+  /** The debts set aside: paid off or on hold, kept for the record. D-124. */
+  function archivedDebts(household) {
+    return ((household && household.debts) || []).filter(function (d) { return d && d.archived === true; });
   }
 
   /** Every income source across every adult. Children's income is excluded. */
@@ -1445,8 +1722,68 @@
      forever, divergence is its own computed field.                       */
 
   /** The figure any calculator should use as "monthly expenses" today. */
+  /* The closed months' average (D-130, MONEY-MAP.md Q10): the expenses
+     bucket's actual over the last few closed months — truer than one
+     categorised month once a month has actually been closed. */
+  var CLOSED_AVERAGE_MONTHS = 3;
+  function closedAverageExpensesCents(household) {
+    var months = ((household && household.ledger && household.ledger.months) || [])
+      .filter(function (m) { return m && m.actual && Money.isEntered(m.actual.expenses) && m.actual.expenses > 0; })
+      .sort(function (a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; })
+      .slice(-CLOSED_AVERAGE_MONTHS);
+    if (!months.length) return null;
+    var total = months.reduce(function (t, m) { return t + m.actual.expenses; }, 0);
+    return { cents: Math.round(total / months.length), months: months.map(function (m) { return m.id; }) };
+  }
+  /**
+   * The rent a month, one number (D-130, MONEY-MAP.md Q11). Cash Flow's
+   * housing line — a monthly expense entry in the `housing` category, the
+   * typical-month line or a recurring one logged on its day — is the
+   * fact; the Housing Decision room's
+   * own field is only a place you would rent INSTEAD, read when there is
+   * no line. Returns { cents, source: 'cash-flow' | 'housing' | 'none',
+   * entryId } — never a guess; the rooms that guess say so themselves.
+   */
+  function rentMonthlyCents(household) {
+    var h = household || {};
+    var all = ((h.expenses && h.expenses.entries) || []).filter(function (e) {
+      return e && e.active !== false && e.categoryId === 'housing' && e.period !== 'once' && Money.isEntered(e.amountCents) && e.amountCents > 0;
+    });
+    /* The typical-month line first; failing that, a recurring rent logged
+       on its day in the expense log (D-130, Q5) — never both. */
+    var lines = all.filter(function (e) { return e.source !== 'log'; });
+    if (!lines.length) lines = all.filter(function (e) { return e.source === 'log'; });
+    if (lines.length) {
+      var total = lines.reduce(function (t, e) { return t + e.amountCents; }, 0);
+      return { cents: total, source: 'cash-flow', entryId: lines[0].id, count: lines.length, logged: lines[0].source === 'log' };
+    }
+    var own = (h.housing || {}).rentMonthlyCents;
+    if (Money.isEntered(own) && own > 0) return { cents: own, source: 'housing', entryId: null, count: 0 };
+    return { cents: null, source: 'none', entryId: null, count: 0 };
+  }
+
+  /**
+   * The one-pager's one-off, wherever it lives (D-130, MONEY-MAP.md Q5):
+   * a dated income entry (`oneoff_in`) or a dated log entry (`oneoff_out`)
+   * since D-130, else the legacy `household.oneOffs[0]`. Returns
+   * { cents, direction, on: 'YYYY-MM', where: 'ledger'|'log'|'legacy' } or null.
+   */
+  var ONE_OFF_IN = 'oneoff_in', ONE_OFF_OUT = 'oneoff_out';
+  function oneOffEntry(household) {
+    var h = household || {};
+    var inc = ((h.ledger && h.ledger.income) || []).filter(function (e) { return e && e.id === ONE_OFF_IN && e.active !== false; })[0];
+    if (inc && Money.isEntered(inc.amountCents)) return { cents: inc.amountCents, direction: 'in', on: inc.receivedOn ? inc.receivedOn.slice(0, 7) : null, where: 'ledger', id: inc.id };
+    var out = ((h.expenses && h.expenses.entries) || []).filter(function (e) { return e && e.id === ONE_OFF_OUT && e.active !== false; })[0];
+    if (out && Money.isEntered(out.amountCents)) return { cents: out.amountCents, direction: 'out', on: out.date ? out.date.slice(0, 7) : null, where: 'log', id: out.id };
+    var legacy = (h.oneOffs || [])[0];
+    if (legacy && Money.isEntered(legacy.cents)) return { cents: legacy.cents, direction: legacy.direction === 'in' ? 'in' : 'out', on: legacy.on || null, where: 'legacy', id: legacy.id };
+    return null;
+  }
+
   function monthlyExpensesCents(household) {
     var e = (household && household.expenses && household.expenses.monthlyEssential) || {};
+    var closed = closedAverageExpensesCents(household);
+    if (closed) return Money.ok(closed.cents, { source: 'closed', months: closed.months });
     if (Money.isEntered(e.trackedValueCents)) {
       return Money.ok(e.trackedValueCents, { source: 'tracked' });
     }
@@ -1602,6 +1939,21 @@
     createIncomeSource: createIncomeSource,
     createEstimatedTrackedPair: createEstimatedTrackedPair,
     createExpenseEntry: createExpenseEntry,
+    createIncomeEntry: createIncomeEntry,
+    createIncomeCost: createIncomeCost,
+    createMonthRecord: createMonthRecord,
+    createLedger: createLedger,
+    createBudget: createBudget,
+    INCOME_KINDS: INCOME_KINDS,
+    INCOME_FREQUENCIES: INCOME_FREQUENCIES,
+    INCOME_KIND_RULES: INCOME_KIND_RULES,
+    INCOME_COST_CATEGORIES: INCOME_COST_CATEGORIES,
+    TAX_METHODS: TAX_METHODS,
+    PRODUCED: PRODUCED,
+    DATE_KINDS: DATE_KINDS,
+    BUDGET_BUCKETS: BUDGET_BUCKETS,
+    costsAllowed: costsAllowed,
+    monthLabel: monthLabel,
     createGoal: createGoal,
     createGoalLineItem: createGoalLineItem,
     createSwanTarget: createSwanTarget,
@@ -1629,6 +1981,13 @@
     createKidsPlan: createKidsPlan,
     createHousingPlan: createHousingPlan,
     createPurchasePlan: createPurchasePlan,
+    BUDGET_PRESETS: BUDGET_PRESETS,
+    createNotApplicable: createNotApplicable,
+    KEEP_REASONS: KEEP_REASONS,
+    keepReasonList: keepReasonList,
+    createSkillTree: createSkillTree,
+    APP_VERSION: APP_VERSION,
+    createExercisesLog: createExercisesLog,
     createVariableIncomePlan: createVariableIncomePlan,
     SPLIT_MODES: SPLIT_MODES,
     createEnough: createEnough,
@@ -1667,6 +2026,7 @@
     ownedBy: ownedBy,
     aggregatableAssets: aggregatableAssets,
     aggregatableDebts: aggregatableDebts,
+    archivedDebts: archivedDebts,
     allIncomeSources: allIncomeSources,
     totalAssetsCents: totalAssetsCents,
     otherAssetsCents: otherAssetsCents,
@@ -1679,6 +2039,12 @@
     grossAnnualIncomeCents: grossAnnualIncomeCents,
     employerMatchCents: employerMatchCents,
     monthlyExpensesCents: monthlyExpensesCents,
+    rentMonthlyCents: rentMonthlyCents,
+    oneOffEntry: oneOffEntry,
+    ONE_OFF_IN: ONE_OFF_IN,
+    ONE_OFF_OUT: ONE_OFF_OUT,
+    closedAverageExpensesCents: closedAverageExpensesCents,
+    CLOSED_AVERAGE_MONTHS: CLOSED_AVERAGE_MONTHS,
     expenseDivergenceCents: expenseDivergenceCents,
     MAX_PLAUSIBLE_AGE: MAX_PLAUSIBLE_AGE,
     ageFromDob: ageFromDob,

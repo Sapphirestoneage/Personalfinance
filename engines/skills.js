@@ -129,8 +129,22 @@
   function stored(household, id) {
     return (household && household.skills && household.skills[id]) || null;
   }
+  /* Done lives in the Skill Tree (household.skillTree.state), the one
+     place a skill is marked mastered, so the Stacker and the tree can never
+     disagree (D-131). The Stacker keeps only its practice states here. */
+  function treeDone(household, id) {
+    var t = household && household.skillTree && household.skillTree.state && household.skillTree.state[id];
+    return !!(t && t.state === 'done');
+  }
+  function treePatch(household, id, on, by) {
+    var next = Schema.createSkillTree(household.skillTree || {});
+    if (on === false) delete next.state[id];
+    else next.state[id] = { state: 'done', on: on, by: by === 'proof' ? 'proof' : 'self' };
+    return next;
+  }
 
   function satisfied(household, id) {
+    if (treeDone(household, id)) return true;
     var s = stored(household, id);
     return !!s && SATISFIES_PREREQ.indexOf(s.state) >= 0;
   }
@@ -143,8 +157,9 @@
       state wins once the skill has been touched; before that it is locked
       until every prerequisite is met, else available. */
   function state(household, skill) {
+    if (treeDone(household, skill.id)) return 'done';
     var s = stored(household, skill.id);
-    if (s && s.state && s.state !== 'locked' && s.state !== 'available') return s.state;
+    if (s && s.state && s.state !== 'locked' && s.state !== 'available' && s.state !== 'done') return s.state;
     return unmetPrereqs(household, skill).length ? 'locked' : 'available';
   }
 
@@ -235,23 +250,27 @@
   function verifyOnce(household, tables, today) {
     var day = dayISO(today);
     var next = Schema.createSkills(household.skills);
+    var tree = Schema.createSkillTree(household.skillTree || {});
     var verified = [], reverted = [];
     catalogue(tables).forEach(function (s) {
       if (s.kind !== 'once' || !s.verify) return;
       var cur = next[s.id];
+      var t = tree.state[s.id];
       var holds = verifies(household, s);
-      if (holds && (!cur || cur.state !== 'done')) {
+      if (holds && !t) {
         next[s.id] = Schema.createSkillState(Object.assign({}, cur || {}, {
-          state: 'done', kind: 'once', verifiedOn: day, verifiedBy: 'household',
+          state: 'available', kind: 'once', verifiedOn: day, verifiedBy: 'household',
           startedOn: (cur && cur.startedOn) || day
         }));
+        tree.state[s.id] = { state: 'done', on: day, by: 'proof' };
         verified.push(s.id);
-      } else if (!holds && cur && cur.state === 'done' && cur.verifiedBy === 'household') {
-        next[s.id] = Schema.createSkillState(Object.assign({}, cur, { state: 'available', verifiedOn: null, verifiedBy: null }));
+      } else if (!holds && t && t.by === 'proof') {
+        if (cur) next[s.id] = Schema.createSkillState(Object.assign({}, cur, { state: 'available', verifiedOn: null, verifiedBy: null }));
+        delete tree.state[s.id];
         reverted.push(s.id);
       }
     });
-    return { skills: next, verified: verified, reverted: reverted };
+    return { skills: next, skillTree: tree, verified: verified, reverted: reverted };
   }
 
   /* ---- 5. Moving a skill ------------------------------------------------------ */
@@ -306,11 +325,13 @@
     var day = dayISO(today);
     var cur = stored(household, skillId) || {};
     var next = Schema.createSkills(household.skills);
-    var patch = { state: 'done', kind: skill.kind, startedOn: cur.startedOn || day };
+    /* Done is the tree's (D-131): a once-skill keeps only its provenance
+       here; a periodic one keeps its practice state so it can come due. */
+    var patch = { state: skill.kind === 'once' ? 'available' : 'done', kind: skill.kind, startedOn: cur.startedOn || day };
     if (skill.kind === 'once') { patch.verifiedOn = day; patch.verifiedBy = 'self'; }
     if (skill.kind === 'periodic') { patch.lastDone = day; patch.dueOn = addDays(day, skill.everyDays || rules(tables).windowDays); }
     next[skillId] = Schema.createSkillState(Object.assign({}, cur, patch));
-    return Money.ok({ skills: next }, { dueOn: next[skillId].dueOn });
+    return Money.ok({ skills: next, skillTree: treePatch(household, skillId, day, 'self') }, { dueOn: next[skillId].dueOn });
   }
 
   function setAutomated(household, skillId, automated) {
@@ -627,6 +648,7 @@
     rules: rules,
     catalogue: catalogue,
     byId: byId,
+    treeDone: treeDone,
     state: state,
     isActive: isActive,
     unmetPrereqs: unmetPrereqs,

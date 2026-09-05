@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Estimated vs Actual · SPARKS</title>
+<meta name="description" content="Every closed month read back: what you expected against what happened, bucket by bucket, and whether the guesses are getting better."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-128 (the closed months read back).
+
+  1. READS   household.ledger.months[] — every MonthRecord the Budget
+             closed: label, estimated and actual per bucket, revised where a
+             late entry moved it. Never the live month.
+  2. WRITES  One thing, on a tap: "use as next month's estimate" writes
+             household.budget.estimated[next open month][bucket] through
+             Spine.setBudgetEstimate. Nothing is written until tapped.
+  3. CALLS   engines/variance.js.
+  4. EMPTY   No closed month: says so and points at the Budget. One: the
+             single view only. Two: the trend appears. Three or more: the
+             per-bucket pattern.
+  5. CONFIG  none.
+
+  LIVE-FORM: built once. The month picker is a row of buttons; the only
+  select on the page is built once in markup and only ever read.
+  THEMING: none this pass.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+  .card-gap { margin-top: var(--space-4); }
+  .picker { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+  .pill { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 3px var(--space-2); cursor: pointer; white-space: nowrap; }
+  .pill[aria-pressed="true"] { border-color: var(--color-accent); color: var(--color-accent-hover); }
+  .pill.act { color: var(--color-accent-hover); }
+  .grid-head, .v-row { display: grid; grid-template-columns: 1fr 80px 80px 96px; gap: var(--space-1) var(--space-2); align-items: baseline; }
+  .grid-head { margin-top: var(--space-3); font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); padding-bottom: var(--space-1); border-bottom: 1px solid var(--color-border); }
+  .grid-head span:not(:first-child), .v-row .n { text-align: right; }
+  .v-row { padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); font-size: var(--text-sm); }
+  .v-row .n { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .v-row .n small { display: block; font-family: var(--font-body); font-size: var(--text-xs); color: var(--color-text-faint); }
+  .v-row .n.is-bad { color: var(--color-critical); }
+  .v-row .n.is-good { color: var(--color-positive); }
+  .v-row .acts { grid-column: 1 / -1; }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  .say { font-size: var(--text-sm); color: var(--color-positive); margin: var(--space-2) 0 0; }
+  .flag { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-xs); color: var(--color-text-muted); cursor: pointer; }
+  .flag input { margin: 0; width: 14px; height: 14px; accent-color: var(--color-accent); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  @media (max-width: 420px) { .grid-head, .v-row { grid-template-columns: 1fr 64px 64px 80px; } }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../index.html">← Home</a>
+  <h1>Estimated vs Actual</h1>
+  <p class="room-lede">Every closed month read back: what you expected against what happened, bucket by bucket — and whether the guesses are getting better.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="month">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-3);flex-wrap:wrap">
+      <span class="slaf-eyebrow">One month</span>
+      <label class="flag"><input type="checkbox" id="use-revised"/> count late entries</label>
+    </div>
+    <div class="picker" id="picker"></div>
+    <div id="single"></div>
+    <p class="why" id="single-why"></p>
+  </section>
+
+  <section class="slaf-card card-gap" id="trend">
+    <span class="slaf-eyebrow">Month over month</span>
+    <div class="picker" id="trend-picker"></div>
+    <div id="trend-chart"></div>
+    <p class="why" id="trend-why"></p>
+  </section>
+
+  <section class="slaf-card card-gap" id="buckets">
+    <span class="slaf-eyebrow">Bucket by bucket</span>
+    <h2 style="margin:var(--space-2) 0 0">Which guesses are off the same way every month</h2>
+    <div class="grid-head"><span>Bucket</span><span>Avg miss</span><span>Steady?</span><span>Last actual</span></div>
+    <div id="per-bucket"></div>
+    <p class="why" id="bucket-why"></p>
+    <p class="say" id="bucket-say" hidden></p>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Nothing here changes a closed month. The one write is the button that sets next month’s estimate, and only when tapped. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/ledger.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/budget.js"></script>
+<script src="../engines/variance.js"></script>
+<script src="../shared/charts.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Variance = SLAF.Variance, Budget = SLAF.Budget, Charts = SLAF.Charts;
+  var ROOM_ID = 'variance';
+  var picked = null;       /* the month shown in the single view */
+  var trendBucket = 'expenses';
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function money(c) { return Money.formatCents(c); }
+  function pct(x) { return (x > 0 ? '+' : x < 0 ? '−' : '') + Math.round(Math.abs(x) * 100) + '%'; }
+  function signed(c) { return (c > 0 ? '+' : c < 0 ? '−' : '') + money(Math.abs(c)); }
+  function revised() { return el('use-revised').checked; }
+
+  function renderSingle(h) {
+    var all = Variance.months(h);
+    if (!all.length) {
+      el('picker').innerHTML = '';
+      el('single').innerHTML = '';
+      el('single-why').innerHTML = 'No month closed yet. Close one on the <a href="budget.html#close">Budget</a> and it appears here, estimated beside actual.';
+      return;
+    }
+    if (!picked || !all.some(function (m) { return m.id === picked; })) picked = all[all.length - 1].id;
+    el('picker').innerHTML = all.map(function (m) { return '<button type="button" class="pill" data-pick="' + m.id + '" aria-pressed="' + (m.id === picked) + '">' + esc(m.label) + '</button>'; }).join('');
+    var rec = all.filter(function (m) { return m.id === picked; })[0];
+    var s = Variance.single(rec, { revised: revised() });
+    el('single').innerHTML = '<div class="grid-head"><span>Bucket</span><span>Estimated</span><span>Actual</span><span>Difference</span></div>'
+      + s.rows.map(function (r) {
+        var cls = r.differenceCents === null ? '' : r.hurts ? ' is-bad' : r.differenceCents === 0 ? '' : ' is-good';
+        return '<div class="v-row"><span>' + esc(r.label) + (r.revised ? ' <small style="color:var(--color-caution)">revised</small>' : '') + '</span>'
+          + '<span class="n">' + (r.estimatedCents === null ? '—' : esc(money(r.estimatedCents))) + '</span>'
+          + '<span class="n">' + (r.actualCents === null ? '—' : esc(money(r.actualCents))) + '</span>'
+          + '<span class="n' + cls + '">' + (r.differenceCents === null ? '—' : esc(signed(r.differenceCents)) + (r.share !== null ? '<small>' + esc(pct(r.share)) + '</small>' : '')) + '</span></div>';
+      }).join('');
+    el('single-why').textContent = s.value === 0 ? 'Every bucket landed on or inside its estimate.'
+      : s.value + (s.value === 1 ? ' bucket missed' : ' buckets missed') + ' the way that hurts' + (s.worst ? ' — the biggest by share was ' + s.worst.label.toLowerCase() + ', ' + pct(s.worst.share) + '.' : '.')
+        + (s.hasRevised && !revised() ? ' Late entries exist; tick “count late entries” to read them in.' : '');
+  }
+  el('picker').addEventListener('click', function (evt) { var b = evt.target.closest('[data-pick]'); if (!b) return; picked = b.getAttribute('data-pick'); render(); });
+  el('use-revised').addEventListener('change', render);
+
+  function renderTrend(h) {
+    var t = Variance.trend(h, { revised: revised() });
+    el('trend-picker').innerHTML = Variance.BUCKETS.map(function (b) { return '<button type="button" class="pill" data-bucket="' + b + '" aria-pressed="' + (b === trendBucket) + '">' + esc(Variance.LABELS[b]) + '</button>'; }).join('');
+    if (!Money.isOk(t)) { el('trend-chart').innerHTML = ''; el('trend-why').textContent = t.reason; return; }
+    var s = t.series[trendBucket];
+    var clean = function (pts) { return pts.filter(function (p) { return Money.isEntered(p[1]); }); };
+    el('trend-chart').innerHTML = Charts.area({
+      title: Variance.LABELS[trendBucket] + ', estimated and actual, month by month',
+      series: [
+        { label: 'Actual', color: Charts.COLORS.growth, fill: true, points: clean(s.actual) },
+        { label: 'Estimated', color: Charts.COLORS.target, fill: false, dash: true, points: clean(s.estimated) }
+      ],
+      x: { label: 'month', format: function (v) { var m = t.months[Math.round(v)]; return m && m.label ? m.label.slice(0, 3) + ' ’' + m.id.slice(2, 4) : ''; } },
+      y: { min: 0 }
+    });
+    var misses = s.variance.filter(function (v) { return v.share !== null; });
+    var last = misses[misses.length - 1], first = misses[0];
+    el('trend-why').textContent = misses.length < 2 ? 'Two months with both columns are needed to say whether the guess is closing in.'
+      : 'Across ' + t.value + ' months the ' + Variance.LABELS[trendBucket].toLowerCase() + ' miss went from ' + pct(first.share) + ' to ' + pct(last.share)
+        + (Math.abs(last.share) < Math.abs(first.share) ? ' — the guesses are getting closer.' : Math.abs(last.share) > Math.abs(first.share) ? ' — further off than at the start.' : ' — no closer, no further.');
+  }
+  el('trend-picker').addEventListener('click', function (evt) { var b = evt.target.closest('[data-bucket]'); if (!b) return; trendBucket = b.getAttribute('data-bucket'); render(); });
+
+  function renderBuckets(h) {
+    var p = Variance.perBucket(h, { revised: revised() });
+    if (!Money.isOk(p)) { el('per-bucket').innerHTML = ''; el('bucket-why').textContent = p.reason; return; }
+    var next = Budget.nextOpenMonth(h);
+    el('per-bucket').innerHTML = p.rows.map(function (r) {
+      var prop = Variance.proposal(h, r.bucket, 3, { revised: revised() });
+      return '<div class="v-row"><span>' + esc(r.label) + '<small style="display:block;color:var(--color-text-faint);font-size:var(--text-xs)">' + r.months + (r.months === 1 ? ' month' : ' months') + '</small></span>'
+        + '<span class="n' + (r.averageShare !== null && ((r.bucket === 'income' && r.averageShare < 0) || (r.bucket !== 'income' && r.averageShare > 0)) ? ' is-bad' : '') + '">' + (r.averageCents === null ? '—' : esc(signed(r.averageCents)) + '<small>' + (r.averageShare !== null ? esc(pct(r.averageShare)) : '') + '</small>') + '</span>'
+        + '<span class="n"><small style="font-size:var(--text-sm);color:inherit">' + (r.sameWay ? esc(r.sameWay) + ' every month' : r.spread === null ? '—' : r.spread < 0.1 ? 'steady' : 'varies') + '</small></span>'
+        + '<span class="n">' + (r.lastActualCents === null ? '—' : esc(money(r.lastActualCents))) + '</span>'
+        + (Money.isOk(prop) ? '<span class="acts"><button type="button" class="pill act" data-use="' + r.bucket + '" data-cents="' + prop.value + '">Use ' + esc(money(prop.value)) + ' as ' + esc(Schema.monthLabel(next)) + '’s estimate <small>(' + prop.count + (prop.count === 1 ? ' month’s' : ' months’') + ' average)</small></button></span>' : '')
+        + '</div>';
+    }).join('');
+    el('bucket-why').textContent = p.value < 3 ? 'With ' + p.value + (p.value === 1 ? ' month' : ' months') + ' closed this is early; three make a pattern.' : 'A bucket off the same way three months running is not bad luck — it is the estimate.';
+  }
+  el('per-bucket').addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-use]');
+    if (!b) return;
+    var h = Spine.getProfile();
+    var next = Budget.nextOpenMonth(h);
+    var bucket = b.getAttribute('data-use'), cents = Number(b.getAttribute('data-cents'));
+    Spine.setBudgetEstimate(next, bucket, cents, Schema.monthLabel(next) + '’s ' + Variance.LABELS[bucket].toLowerCase() + ' estimate ← the closed months’ average');
+    var say = el('bucket-say');
+    say.hidden = false;
+    say.innerHTML = esc(Schema.monthLabel(next)) + '’s ' + esc(Variance.LABELS[bucket].toLowerCase()) + ' estimate is now ' + esc(money(cents)) + '. See it on the <a href="budget.html?month=' + next + '#bucket-' + bucket + '">Budget</a>; one undo takes it back.';
+  });
+
+  function render() {
+    var h = Spine.getProfile();
+    renderSingle(h);
+    renderTrend(h);
+    renderBuckets(h);
+  }
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+  render();
+  jumpToHash();
+})();
+</script>
+</body>
+</html>

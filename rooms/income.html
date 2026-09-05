@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Income · SPARKS</title>
+<meta name="description" content="Everything coming in, logged as it lands: paycheques, gigs, gifts, dividends, rent — each netted the way it is actually taxed."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-128 (the ledger).
+
+  1. READS   filingStatus and the annual gross (Start Here) to place each
+             entry in its tax band; the expense log, for what was logged
+             against an income entry.
+  2. WRITES  It OWNS household.ledger.income[] — every dated income entry
+             and the costs of producing it, on the entry. Nothing else
+             edits those; it edits nothing else. Income SOURCES (Start
+             Here's annualised profile) are not touched here.
+  3. CALLS   engines/ledger.js for every net figure and for the month —
+             one tax engine for entries, shared with the Tax room.
+  4. EMPTY   No entries: the month says so and the form is the whole page.
+             An entry with no amount is listed and asks for one.
+  5. CONFIG  data/effective_tax_rates_2026.json, data/se_tax_2026.json.
+
+  LIVE-FORM: built once. The two forms — the entry, and a cost on it — are
+  markup, built once, and only ever have .value set. The lists rebuild
+  freely: they hold buttons, never a text field.
+  THEMING: none this pass.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+  .card-gap { margin-top: var(--space-4); }
+  .return-chip { display: inline-block; margin-bottom: var(--space-3); font-size: var(--text-sm); color: var(--color-accent-hover); border: 1px dashed var(--color-border-active); border-radius: var(--radius-pill); padding: 4px var(--space-3); text-decoration: none; }
+  .month-figure { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); }
+  .month-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-1); }
+  ul.entries { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ul.entries li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); align-items: baseline; }
+  ul.entries li:first-child { border-top: none; }
+  ul.entries li.is-editing { background: rgba(46,111,232,.06); }
+  ul.entries .e-name { font-weight: 600; }
+  ul.entries .e-kind { display: block; font-size: var(--text-xs); color: var(--color-text-faint); font-weight: 400; }
+  ul.entries .e-amt { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+  ul.entries .e-net { display: block; font-size: var(--text-xs); color: var(--color-text-muted); font-family: var(--font-body); }
+  ul.entries .e-acts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .pill { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; }
+  .pill:hover { border-color: var(--color-border-active); color: var(--color-text); }
+  .pill.is-on { border-color: var(--color-accent); color: var(--color-accent-hover); }
+  .pill.danger:hover { border-color: var(--color-critical); color: var(--color-critical); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3); margin-top: var(--space-3); }
+  .form-grid .wide { grid-column: 1 / -1; }
+  .flag { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--color-text-muted); cursor: pointer; }
+  .flag input { margin: 0; width: 16px; height: 16px; accent-color: var(--color-accent); }
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-top: var(--space-3); }
+  .say { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  .say.is-good { color: var(--color-positive); }
+  .say.is-error { color: var(--color-critical); }
+  .net-line { display: grid; grid-template-columns: auto 1fr; gap: var(--space-1) var(--space-3); font-size: var(--text-sm); margin-top: var(--space-2); }
+  .net-line dt { color: var(--color-text-faint); }
+  .net-line dd { margin: 0; font-variant-numeric: tabular-nums; }
+  ul.costs { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ul.costs li { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); align-items: center; }
+  ul.costs li:first-child { border-top: none; }
+  ul.costs small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  @media (max-width: 420px) { .form-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../index.html">← Home</a>
+  <h1>Income</h1>
+  <p class="room-lede">Everything coming in, logged as it lands — a paycheque, a gig, a gift, a dividend, the rent — each netted the way it is actually taxed.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+  <a class="return-chip" id="return-chip" href="budget.html#bucket-income" hidden>← Back to the budget</a>
+
+  <section class="slaf-card" id="month">
+    <span class="slaf-eyebrow" id="month-cap">This month</span>
+    <div class="month-figure" id="month-figure">—</div>
+    <p class="month-sub" id="month-sub"></p>
+  </section>
+
+  <section class="slaf-card card-gap" id="log">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-3)">
+      <span class="slaf-eyebrow">What comes in</span>
+      <button type="button" class="slaf-manage-toggle" id="btn-manage" aria-pressed="false" title="Hide, set aside, restore">⚙ Manage sources</button>
+    </div>
+    <h2 style="margin:var(--space-2) 0 0">Every entry</h2>
+    <div id="archive-prompts"></div>
+    <div class="slaf-manage" id="manage" hidden></div>
+    <p class="slaf-hint" id="log-hint" style="margin:var(--space-2) 0 0">Nothing logged yet. Add the first one below.</p>
+    <ul class="entries" id="entries"></ul>
+  </section>
+
+  <section class="slaf-card card-gap" id="add">
+    <span class="slaf-eyebrow" id="form-cap">Add an entry</span>
+    <div class="form-grid" id="add-form">
+      <label class="slaf-field wide"><span class="slaf-label">What kind of money</span>
+        <span class="slaf-input-shell"><select id="f-kind" aria-label="Kind of income"></select></span></label>
+      <label class="slaf-field wide"><span class="slaf-label">Call it</span>
+        <span class="slaf-input-shell"><input type="text" id="f-label" placeholder="e.g. Day job, Etsy shop, Mum" aria-label="Name"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Amount</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="f-amount" placeholder="e.g. 2,400" aria-label="Amount"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">How often</span>
+        <span class="slaf-input-shell"><select id="f-frequency" aria-label="How often">
+          <option value="once">One time</option><option value="weekly">Every week</option><option value="fortnightly">Every two weeks</option><option value="monthly">Monthly</option><option value="annual">Once a year</option>
+        </select></span></label>
+      <label class="slaf-field"><span class="slaf-label" id="f-date-label">Received on</span>
+        <span class="slaf-input-shell"><input type="date" id="f-date" aria-label="Date received"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">The date is</span>
+        <span class="slaf-input-shell"><select id="f-datekind" aria-label="How sure the date is">
+          <option value="exact">Exact — it landed, or it is due</option><option value="estimated">Estimated — about then</option><option value="potential">Potential — it may not come at all</option>
+        </select></span></label>
+      <label class="slaf-field" data-for="taxable"><span class="slaf-label">Taxed how</span>
+        <span class="slaf-input-shell"><select id="f-method" aria-label="Tax method">
+          <option value="w2">W-2 — tax withheld before it arrives</option><option value="se">1099 — owed later, with self-employment tax</option><option value="unemployment">Unemployment — taxable, nothing withheld, no self-employment tax</option><option value="none">Not taxable</option>
+        </select></span></label>
+      <p class="slaf-hint wide" id="kind-hint" style="margin:0"></p>
+    </div>
+    <div class="actions">
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-save">Save</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-new" hidden>Start a new one</button>
+    </div>
+    <p class="say" id="form-say" hidden></p>
+  </section>
+
+  <section class="slaf-card card-gap" id="costs" hidden>
+    <span class="slaf-eyebrow">The costs of earning it</span>
+    <h2 style="margin:var(--space-2) 0 0" id="costs-title"></h2>
+    <dl class="net-line" id="costs-net"></dl>
+    <ul class="costs" id="costs-list"></ul>
+    <div class="form-grid" id="cost-form">
+      <label class="slaf-field wide"><span class="slaf-label">What it was</span>
+        <span class="slaf-input-shell"><input type="text" id="c-label" placeholder="e.g. 180 miles to the client" aria-label="Cost description"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Amount</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="c-amount" placeholder="e.g. 120" aria-label="Cost amount"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Kind of cost</span>
+        <span class="slaf-input-shell"><select id="c-category" aria-label="Kind of cost">
+          <option value="mileage">Mileage</option><option value="home_office">Home office</option><option value="equipment">Equipment</option><option value="contractor_fees">Contractor fees</option><option value="licensing">Licensing</option><option value="platform_fees">Platform fees</option><option value="other">Other</option>
+        </select></span></label>
+      <label class="slaf-field"><span class="slaf-label">Date</span>
+        <span class="slaf-input-shell"><input type="date" id="c-date" aria-label="Cost date"/></span></label>
+      <label class="flag" style="align-self:end"><input type="checkbox" id="c-deductible" checked/> Reduces the tax on it</label>
+    </div>
+    <div class="actions">
+      <button type="button" class="slaf-btn" id="btn-cost">Add this cost</button>
+    </div>
+    <h3 style="margin:var(--space-4) 0 0;font-size:var(--text-base)">Expenses logged against it</h3>
+    <p class="slaf-hint" style="margin:var(--space-1) 0 0">Logged in <a href="cash-flow.html#log">Cash Flow’s expense log</a> with this entry picked as what it produced. Only the ones ticked deductible reduce the tax.</p>
+    <ul class="costs" id="linked-list"></ul>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Withholding is the year’s blended rate (federal plus the employee half of FICA, an unverified table); self-employment tax is computed in named steps. Rental income is netted here the way the spec asked — as self-employment — which is not how a return treats it. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/ledger.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/budget.js"></script>
+<script src="../shared/manage.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Ledger = SLAF.Ledger, Manage = SLAF.Manage, Budget = SLAF.Budget;
+  var manageOpen = false, manageState = 'active';
+  var ROOM_ID = 'income';
+  var TABLES = null;
+  var editingId = null;     /* the entry the form holds, or null for a new one */
+  var detailId = null;      /* the entry whose costs are open */
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function say(id, text, cls) { var n = el(id); n.hidden = !text; n.textContent = text || ''; n.className = 'say' + (cls ? ' ' + cls : ''); }
+  var KINDS = Schema.INCOME_KIND_RULES;
+  var FREQ_WORDS = { once: 'one time', weekly: 'a week', fortnightly: 'every two weeks', monthly: 'a month', annual: 'a year' };
+  var METHOD_WORDS = { w2: 'W-2, withheld', se: '1099, owed with SE tax', unemployment: 'unemployment, owed, no SE tax', none: 'not taxable' };
+  var KIND_HINTS = {
+    w2: 'A paycheque. Withheld at the year’s blended rate; the employer match and pre-tax deferral stay on Start Here.',
+    se: 'Contract or freelance pay, a 1099. Self-employment tax on what is left after the costs of earning it — add those below once it is saved.',
+    bonus: 'A one-off from an employer. Withheld like wages.',
+    gift: 'Money given to you. Not income to you, so nothing is taken off it.',
+    side: 'Cash work with no 1099. Taxed as self-employment; its costs come off first.',
+    dividend: 'Dividends or interest. Withheld like wages here — a return treats qualified dividends more kindly.',
+    rental: 'Rent from a place you own. Netted here as self-employment, as the spec asked; a return treats it as ordinary income with its own costs.',
+    unemployment: 'A benefit cheque. Taxed as income, but with no Social Security or Medicare on it, and nothing is withheld unless you asked — so some of it is owed at tax time.',
+    other: 'Anything else. Say whether it is taxed.'
+  };
+
+  /* ---- The form: kind decides which fields show --------------------------- */
+  function buildKinds() {
+    el('f-kind').innerHTML = Schema.INCOME_KINDS.map(function (k) { return '<option value="' + k + '">' + esc(KINDS[k].label) + '</option>'; }).join('');
+  }
+  function showForKind(kind) {
+    var rule = KINDS[kind] || KINDS.other;
+    var taxRow = document.querySelector('[data-for="taxable"]');
+    taxRow.hidden = kind === 'gift';
+    if (kind === 'gift') el('f-method').value = 'none';
+    else if (el('f-method').value === 'none' && rule.taxable) el('f-method').value = rule.method;
+    el('kind-hint').textContent = KIND_HINTS[kind] || '';
+    el('f-date-label').textContent = el('f-frequency').value === 'once' ? 'Received on' : 'First received on';
+  }
+  el('f-kind').addEventListener('change', function () {
+    var rule = KINDS[el('f-kind').value] || KINDS.other;
+    if (!editingId) el('f-method').value = rule.taxable ? rule.method : 'none';
+    showForKind(el('f-kind').value);
+  });
+  el('f-frequency').addEventListener('change', function () { showForKind(el('f-kind').value); });
+
+  function fillForm(e) {
+    editingId = e ? e.id : null;
+    el('f-kind').value = e ? e.kind : 'w2';
+    el('f-label').value = e && e.label ? e.label : '';
+    el('f-amount').value = e && Money.isEntered(e.amountCents) ? Money.formatCents(e.amountCents) : '';
+    el('f-frequency').value = e ? e.frequency : 'once';
+    el('f-date').value = e && e.receivedOn ? e.receivedOn : '';
+    el('f-datekind').value = e && e.dateKind ? e.dateKind : 'exact';
+    el('f-method').value = e ? (e.taxable === false ? 'none' : e.taxMethod) : 'w2';
+    showForKind(el('f-kind').value);
+    el('form-cap').textContent = e ? 'Editing ' + (e.label || KINDS[e.kind].label) : 'Add an entry';
+    el('btn-save').textContent = e ? 'Save changes' : 'Save';
+    el('btn-new').hidden = !e;
+  }
+  el('f-amount').addEventListener('focus', function () {
+    var c = Money.parseMoney(el('f-amount').value);
+    el('f-amount').value = Money.isEntered(c) ? String(c / 100) : '';
+    el('f-amount').select();
+  });
+  el('f-amount').addEventListener('blur', function () {
+    var c = Money.parseMoney(el('f-amount').value);
+    el('f-amount').value = Money.isEntered(c) ? Money.formatCents(c, { decimals: c % 100 ? 2 : 0 }) : '';
+  });
+  el('add-form').addEventListener('keydown', function (evt) { if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') { evt.preventDefault(); el('btn-save').click(); } });
+
+  el('btn-save').addEventListener('click', function () {
+    var cents = Money.parseMoney(el('f-amount').value);
+    if (!Money.isEntered(cents)) { say('form-say', 'An amount is the one thing an entry needs.', 'is-error'); el('f-amount').focus(); return; }
+    var kind = el('f-kind').value;
+    var method = el('f-method').value;
+    var person = Spine.ensurePrimaryPerson('You');
+    var existing = editingId ? Ledger.byId(Spine.getProfile(), editingId) : null;
+    var entry = Schema.createIncomeEntry(Object.assign({}, existing || {}, {
+      id: editingId || undefined, personId: existing ? existing.personId : person.id,
+      kind: kind, label: el('f-label').value.trim() || null, amountCents: cents,
+      frequency: el('f-frequency').value, receivedOn: el('f-date').value || null, dateKind: el('f-datekind').value,
+      taxable: kind === 'gift' ? false : method !== 'none', taxMethod: kind === 'gift' ? 'none' : method,
+      costs: existing ? existing.costs : []
+    }));
+    var saved = Spine.upsertIncomeEntry(entry);
+    var net = Ledger.netOf(saved, Spine.getProfile(), TABLES);
+    say('form-say', (existing ? 'Saved. ' : 'Added. ') + (saved.label || KINDS[saved.kind].label) + ' ' + Money.formatCents(saved.amountCents) + ' ' + FREQ_WORDS[saved.frequency]
+      + (Money.isOk(net) ? ' nets ' + Money.formatCents(net.value) + ' after ' + Money.formatCents(net.taxCents) + ' of tax' + (net.owedCents > 0 ? ', none of it withheld — set it aside for tax time.' : '.') : '.')
+      + (Schema.costsAllowed(saved.kind) ? ' Add the costs of earning it below.' : ''), 'is-good');
+    if (Schema.costsAllowed(saved.kind)) detailId = saved.id;
+    fillForm(null);
+    render();
+    if (Schema.costsAllowed(saved.kind)) el('costs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  el('btn-new').addEventListener('click', function () { fillForm(null); say('form-say', ''); render(); });
+
+  /* ---- The list ------------------------------------------------------------ */
+  function renderList(h) {
+    var list = Ledger.entries(h).filter(function (e) { return e.active !== false && !e.hidden; });
+    el('log-hint').hidden = list.length > 0;
+    el('entries').innerHTML = list.map(function (e) {
+      var net = Ledger.netOf(e, h, TABLES);
+      var netOfCosts = Ledger.netOfCostsCents(e, h);
+      var costsLine = Schema.costsAllowed(e.kind) && Money.isEntered(netOfCosts) && netOfCosts !== e.amountCents ? Money.formatCents(netOfCosts) + ' after costs · ' : '';
+      return '<li' + (e.id === editingId ? ' class="is-editing"' : '') + '>'
+        + '<span><span class="e-name">' + esc(e.label || KINDS[e.kind].label) + '</span>'
+        + '<span class="e-kind">' + esc(KINDS[e.kind].label) + ' · ' + esc(FREQ_WORDS[e.frequency]) + (e.receivedOn ? ' · ' + esc(e.receivedOn) + (e.dateKind === 'estimated' ? ' (about then)' : e.dateKind === 'potential' ? ' (potential — not counted)' : '') : '') + ' · ' + esc(METHOD_WORDS[e.taxable === false ? 'none' : e.taxMethod]) + '</span></span>'
+        + '<span class="e-amt">' + (Money.isEntered(e.amountCents) ? esc(Money.formatCents(e.amountCents)) : '—')
+        + '<span class="e-net">' + costsLine + (Money.isOk(net) ? 'nets ' + esc(Money.formatCents(net.value)) + (net.owedCents > 0 ? ' · ' + esc(Money.formatCents(net.owedCents)) + ' owed at tax time' : '') : esc(net.reason || '')) + '</span></span>'
+        + '<span class="e-acts">'
+        + '<button type="button" class="pill" data-edit="' + e.id + '">Edit</button>'
+        + (Schema.costsAllowed(e.kind) ? '<button type="button" class="pill' + (e.id === detailId ? ' is-on' : '') + '" data-detail="' + e.id + '">Costs' + (e.costs.length ? ' (' + e.costs.length + ')' : '') + '</button>' : '')
+        + '<button type="button" class="pill danger" data-remove="' + e.id + '">Remove</button>'
+        + '</span></li>';
+    }).join('');
+  }
+  el('entries').addEventListener('click', function (evt) {
+    var b = evt.target.closest('button');
+    if (!b) return;
+    var h = Spine.getProfile();
+    if (b.hasAttribute('data-edit')) { fillForm(Ledger.byId(h, b.getAttribute('data-edit'))); render(); el('add').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    else if (b.hasAttribute('data-detail')) { detailId = detailId === b.getAttribute('data-detail') ? null : b.getAttribute('data-detail'); render(); if (detailId) el('costs').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    else if (b.hasAttribute('data-remove')) {
+      var e = Ledger.byId(h, b.getAttribute('data-remove'));
+      if (!window.confirm('Remove ' + (e && e.label ? e.label : 'this entry') + '? Set it aside instead if it was real and is just over.')) return;
+      Spine.removeIncomeEntry(b.getAttribute('data-remove'));
+      if (detailId === b.getAttribute('data-remove')) detailId = null;
+      if (editingId === b.getAttribute('data-remove')) fillForm(null);
+      render();
+    }
+  });
+
+  /* ---- Manage sources: hide, set aside, restore (D-128) ------------------- */
+  function manageItems(h) {
+    return Ledger.entries(h).map(function (e) {
+      return { id: e.id, label: e.label || KINDS[e.kind].label, meta: KINDS[e.kind].label + ' · ' + (Money.isEntered(e.amountCents) ? Money.formatCents(e.amountCents) + ' ' + FREQ_WORDS[e.frequency] : 'no amount'),
+        hidden: e.hidden === true, active: e.active !== false, once: e.frequency === 'once', month: e.receivedOn ? e.receivedOn.slice(0, 7) : null };
+    });
+  }
+  function renderManage(h) {
+    el('manage').hidden = !manageOpen;
+    el('btn-manage').setAttribute('aria-pressed', String(manageOpen));
+    if (manageOpen) el('manage').innerHTML = Manage.panel(manageItems(h), manageState);
+    /* A one-time entry whose month has closed: was it a one-off? */
+    var closed = function (m) { return Budget.isClosed(h, m); };
+    var due = Manage.suggestArchive(manageItems(h), closed, (h.ledger || {}).dismissed);
+    el('archive-prompts').innerHTML = due.map(function (it) {
+      return '<div class="slaf-archive-prompt"><span>' + esc(it.label) + ' was a one-time entry and its month is closed.<small>Set it aside? It stays in that month’s record; it stops counting from now on.</small></span>'
+        + '<span class="slaf-manage-acts"><button type="button" class="slaf-manage-act" data-prompt="archive" data-id="' + esc(it.id) + '">Set aside</button><button type="button" class="slaf-manage-act" data-prompt="dismiss" data-id="' + esc(it.id) + '">Not now</button></span></div>';
+    }).join('');
+  }
+  el('btn-manage').addEventListener('click', function () { manageOpen = !manageOpen; render(); });
+  Manage.bind(el('manage'), function (state) { manageState = state; render(); }, function (act, id) {
+    if (act === 'hide') Spine.upsertIncomeEntry({ id: id, hidden: true });
+    else if (act === 'show') Spine.upsertIncomeEntry({ id: id, hidden: false });
+    else if (act === 'archive') Spine.upsertIncomeEntry({ id: id, active: false });
+    else if (act === 'restore') Spine.upsertIncomeEntry({ id: id, active: true, hidden: false });
+    render();
+  });
+  el('archive-prompts').addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-prompt]');
+    if (!b) return;
+    var id = b.getAttribute('data-id');
+    if (b.getAttribute('data-prompt') === 'archive') Spine.upsertIncomeEntry({ id: id, active: false });
+    else Spine.set('ledger.dismissed', ((Spine.getProfile().ledger || {}).dismissed || []).concat([id]), 'Kept ' + id);
+    render();
+  });
+
+  /* ---- This month ---------------------------------------------------------- */
+  function renderMonth(h) {
+    var m = Ledger.month(h, TABLES, Ledger.thisMonth());
+    el('month-cap').textContent = m.label;
+    if (!m.count) { el('month-figure').textContent = '—'; el('month-sub').textContent = 'Nothing lands this month yet. A recurring entry lands on its days; a one-time one on its date.'; return; }
+    el('month-figure').textContent = Money.formatCents(m.netCents) + ' net';
+    el('month-sub').textContent = Money.formatCents(m.grossCents) + ' gross across ' + m.count + (m.count === 1 ? ' entry' : ' entries') + ', ' + Money.formatCents(m.taxCents) + ' of tax' + (m.costsCents ? ' and ' + Money.formatCents(m.costsCents) + ' of costs' : '') + ' taken off.'
+      + (m.incomplete.length ? ' ' + m.incomplete.length + ' could not be netted: ' + m.incomplete.map(function (x) { return x.reason; }).join(' ') : '')
+      + (m.potentialCents ? ' Not counted: ' + Money.formatCents(m.potentialCents) + ' that may not come.' : '');
+  }
+
+  /* ---- The costs of earning it -------------------------------------------- */
+  function renderCosts(h) {
+    var e = detailId ? Ledger.byId(h, detailId) : null;
+    el('costs').hidden = !e || !Schema.costsAllowed(e.kind);
+    if (!e || !Schema.costsAllowed(e.kind)) return;
+    var c = Ledger.costs(e, h);
+    var net = Ledger.netOf(e, h, TABLES);
+    el('costs-title').textContent = e.label || KINDS[e.kind].label;
+    el('costs-net').innerHTML = '<dt>Gross</dt><dd>' + esc(Money.formatCents(e.amountCents)) + '</dd>'
+      + '<dt>Costs</dt><dd>' + esc(Money.formatCents(c.allCents)) + (c.deductibleCents !== c.allCents ? ' (' + esc(Money.formatCents(c.deductibleCents)) + ' reduces the tax)' : '') + '</dd>'
+      + '<dt>Net of costs</dt><dd>' + esc(Money.formatCents(Ledger.netOfCostsCents(e, h))) + '</dd>'
+      + (Money.isOk(net) ? '<dt>Tax</dt><dd>' + esc(Money.formatCents(net.taxCents)) + (net.pieces.seTaxCents !== undefined ? ' (' + esc(Money.formatCents(net.pieces.seTaxCents)) + ' self-employment, ' + esc(Money.formatCents(net.pieces.incomeTaxCents)) + ' income)' : '') + '</dd><dt>Nets</dt><dd>' + esc(Money.formatCents(net.value)) + '</dd>' : '<dt>Tax</dt><dd>' + esc(net.reason) + '</dd>');
+    el('costs-list').innerHTML = (e.costs || []).map(function (x) {
+      return '<li><span>' + esc(x.label || x.category.replace('_', ' ')) + '<small>' + esc(x.category.replace('_', ' ')) + (x.date ? ' · ' + esc(x.date) : '') + (x.deductible === false ? ' · does not reduce the tax' : '') + '</small></span>'
+        + '<span>' + esc(Money.formatCents(x.amountCents)) + ' <button type="button" class="pill danger" data-remove-cost="' + x.id + '">✕</button></span></li>';
+    }).join('') || '<li><span class="slaf-hint">No costs yet. Mileage, a home office, equipment, fees — each comes off before the tax.</span></li>';
+    var linked = Ledger.linkedExpenses(h, e.id);
+    el('linked-list').innerHTML = linked.map(function (x) {
+      return '<li><span>' + esc(x.descriptor || x.categoryId) + '<small>' + esc(x.date || '') + (x.deductible ? ' · reduces the tax' : ' · not deductible') + '</small></span><span>' + esc(Money.formatCents(x.amountCents)) + '</span></li>';
+    }).join('') || '<li><span class="slaf-hint">Nothing logged against it yet.</span></li>';
+  }
+  el('c-amount').addEventListener('focus', function () { var c = Money.parseMoney(el('c-amount').value); el('c-amount').value = Money.isEntered(c) ? String(c / 100) : ''; el('c-amount').select(); });
+  el('c-amount').addEventListener('blur', function () { var c = Money.parseMoney(el('c-amount').value); el('c-amount').value = Money.isEntered(c) ? Money.formatCents(c, { decimals: c % 100 ? 2 : 0 }) : ''; });
+  el('cost-form').addEventListener('keydown', function (evt) { if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') { evt.preventDefault(); el('btn-cost').click(); } });
+  el('btn-cost').addEventListener('click', function () {
+    if (!detailId) return;
+    var cents = Money.parseMoney(el('c-amount').value);
+    if (!Money.isEntered(cents)) { el('c-amount').focus(); return; }
+    Spine.upsertIncomeCost(detailId, { label: el('c-label').value.trim() || null, amountCents: cents, category: el('c-category').value, date: el('c-date').value || null, deductible: el('c-deductible').checked });
+    el('c-label').value = ''; el('c-amount').value = ''; el('c-date').value = ''; el('c-deductible').checked = true;
+    render();
+  });
+  el('costs-list').addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-remove-cost]');
+    if (!b || !detailId) return;
+    Spine.removeIncomeCost(detailId, b.getAttribute('data-remove-cost'));
+    render();
+  });
+
+  /* ---- The budget's return chip (D-128, the Add flow) ---------------------- */
+  (function returnChip() {
+    var q = /[?&]for=budget/.test(location.search);
+    if (!q) return;
+    var m = /[?&]month=(\d{4}-\d{2})/.exec(location.search);
+    var chip = el('return-chip');
+    chip.hidden = false;
+    chip.href = 'budget.html' + (m ? '?month=' + m[1] : '') + '#bucket-income';
+    chip.textContent = '← Back to the budget' + (m ? ' for ' + Schema.monthLabel(m[1]) : '');
+  })();
+
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    renderMonth(h);
+    renderList(h);
+    renderManage(h);
+    renderCosts(h);
+  }
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+  buildKinds();
+  fillForm(null);
+  Reference.load(['effectiveTaxRates', 'seTax']).then(function (tables) {
+    TABLES = tables;
+    render();
+    jumpToHash();
+  }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error';
+    n.textContent = 'Couldn’t load the tax tables in data/ (' + err.message + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+  });
+})();
+</script>
+</body>
+</html>

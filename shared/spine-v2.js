@@ -419,7 +419,8 @@
     retirement: 'the retirement plan', targets: 'a target', meta: 'a setting', oneOffs: 'a one-off', ratings: 'a rating', rerank: 'the rerank',
     skills: 'a skill', scenarios: 'a scenario', properties: 'a property', futureIncome: 'future income', values: 'your values', community: 'community',
     estate: 'estate basics', giving: 'giving', decumulation: 'the drawdown', tax: 'tax facts', career: 'the offer', partner: 'the split', kids: 'the kids',
-    housing: 'the place', purchase: 'the purchase', variableIncome: 'the buffer', dependents: 'who depends on you', assumptions: 'an assumption', assumptionOverrides: 'an assumption' };
+    housing: 'the place', purchase: 'the purchase', variableIncome: 'the buffer', dependents: 'who depends on you', assumptions: 'an assumption', assumptionOverrides: 'an assumption',
+    ledger: 'the ledger', budget: 'the budget' };
   function record(changes, label) {
     if (!changes.length) return;
     cache.meta.undoStack = cache.meta.undoStack || [];
@@ -781,9 +782,172 @@
   function upsertExpenseEntry(entry) {
     var h = load();
     h.expenses.entries = h.expenses.entries || [];
-    var result = upsertIn(h.expenses.entries, entry);
+    /* The merged record goes back through the constructor, so the rule
+       "deductible only when linked to an income entry" holds whatever a
+       form sends (D-128). */
+    /* A patch that adds a link, or a payer, is a change of path: the
+       stored `produced` must not pin the old one (D-129). */
+    var e = entry || {};
+    if (e.produced === undefined) {
+      if (typeof e.linkedIncomeId === 'string' && e.linkedIncomeId) e = Object.assign({}, e, { produced: 'linked' });
+      else if (e.reimbursableFrom || e.reimbursable === true) e = Object.assign({}, e, { produced: 'reimbursable' });
+    }
+    var merged = upsertIn(h.expenses.entries, e);
+    var normalised = Schema.createExpenseEntry(merged);
+    Object.keys(merged).forEach(function (k) { delete merged[k]; });
+    Object.keys(normalised).forEach(function (k) { merged[k] = normalised[k]; });
     save(); notify();
-    return result;
+    return merged;
+  }
+
+  /** A reimbursable expense paid back: the credit lands on the day it came,
+   *  never in the original month. D-129. */
+  function markReimbursed(id, when) {
+    var w = when || {};
+    var h = load();
+    var e = (h.expenses.entries || []).filter(function (x) { return x.id === id; })[0];
+    if (!e || e.produced !== 'reimbursable') return null;
+    var today = new Date();
+    var iso = today.getFullYear() + '-' + (today.getMonth() + 1 < 10 ? '0' : '') + (today.getMonth() + 1) + '-' + (today.getDate() < 10 ? '0' : '') + today.getDate();
+    pendingLabel = 'Paid back: ' + (e.descriptor || e.categoryId);
+    return upsertExpenseEntry({ id: id, reimbursementStatus: 'received', dateReceived: typeof w.dateReceived === 'string' && w.dateReceived ? w.dateReceived : iso,
+      receivedAmountCents: Money.isEntered(w.receivedAmountCents) ? w.receivedAmountCents : (Money.isEntered(e.expectedAmountCents) ? e.expectedAmountCents : e.amountCents) });
+  }
+
+  /* ---- The ledger (D-128) ------------------------------------------------ */
+
+  function upsertIncomeEntry(entry) {
+    var h = load();
+    h.ledger = h.ledger || Schema.createLedger({});
+    var merged = upsertIn(h.ledger.income, entry);
+    var normalised = Schema.createIncomeEntry(merged);
+    Object.keys(merged).forEach(function (k) { delete merged[k]; });
+    Object.keys(normalised).forEach(function (k) { merged[k] = normalised[k]; });
+    save(); notify();
+    return merged;
+  }
+  function removeIncomeEntry(id) {
+    var h = load();
+    var list = (h.ledger && h.ledger.income) || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) { list.splice(i, 1); save(); notify(); return true; }
+    }
+    return false;
+  }
+  function upsertIncomeCost(entryId, cost) {
+    var h = load();
+    var entry = ((h.ledger && h.ledger.income) || []).filter(function (e) { return e.id === entryId; })[0];
+    if (!entry || !Schema.costsAllowed(entry.kind)) return null;
+    entry.costs = entry.costs || [];
+    var merged = upsertIn(entry.costs, cost);
+    var normalised = Schema.createIncomeCost(merged);
+    Object.keys(merged).forEach(function (k) { delete merged[k]; });
+    Object.keys(normalised).forEach(function (k) { merged[k] = normalised[k]; });
+    save(); notify();
+    return merged;
+  }
+  function removeIncomeCost(entryId, costId) {
+    var h = load();
+    var entry = ((h.ledger && h.ledger.income) || []).filter(function (e) { return e.id === entryId; })[0];
+    if (!entry) return false;
+    for (var i = 0; i < (entry.costs || []).length; i++) {
+      if (entry.costs[i].id === costId) { entry.costs.splice(i, 1); save(); notify(); return true; }
+    }
+    return false;
+  }
+  /** Close a month: append its record once. A second close is refused. */
+  function closeMonth(record) {
+    var h = load();
+    h.ledger = h.ledger || Schema.createLedger({});
+    var r = Schema.createMonthRecord(record);
+    if (!r.id) return { ok: false, reason: 'A month record needs a YYYY-MM month.' };
+    if (h.ledger.months.some(function (m) { return m.id === r.id; })) return { ok: false, reason: r.label + ' is already closed.' };
+    if (!r.closedAt) r.closedAt = new Date().toISOString();
+    h.ledger.months.push(r);
+    h.ledger.months.sort(function (a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; });
+    pendingLabel = 'Closed ' + r.label;
+    save(); notify();
+    return { ok: true, reason: null, record: JSON.parse(JSON.stringify(r)) };
+  }
+  /** A late entry against a closed month: only actualRevised moves. */
+  function reviseMonth(monthId, actualRevised) {
+    var h = load();
+    var m = ((h.ledger && h.ledger.months) || []).filter(function (x) { return x.id === monthId; })[0];
+    if (!m) return { ok: false, reason: 'No closed month ' + monthId + '.' };
+    var next = {};
+    Schema.BUDGET_BUCKETS.forEach(function (b) { next[b] = actualRevised && Money.isEntered(actualRevised[b]) ? actualRevised[b] : m.actual[b]; });
+    m.actualRevised = next;
+    save({ record: false }); notify();
+    return { ok: true, reason: null };
+  }
+  function setBudgetEstimate(month, bucket, cents, label) {
+    var h = load();
+    h.budget = h.budget || Schema.createBudget({});
+    h.budget.estimated = h.budget.estimated || {};
+    h.budget.estimated[month] = h.budget.estimated[month] || {};
+    if (Money.isEntered(cents)) h.budget.estimated[month][bucket] = cents; else delete h.budget.estimated[month][bucket];
+    if (!Object.keys(h.budget.estimated[month]).length) delete h.budget.estimated[month];
+    pendingLabel = label || ('Expected ' + bucket + ' for ' + Schema.monthLabel(month));
+    save(); notify();
+    return h.budget.estimated[month] ? h.budget.estimated[month][bucket] : null;
+  }
+
+  /** Stack a preset into, or take it out of, a month's bucket. D-129. */
+  function togglePreset(month, bucket, id, on, label) {
+    var h = load();
+    h.budget = Schema.createBudget(h.budget || {});
+    h.budget.presets[month] = h.budget.presets[month] || {};
+    var ids = (h.budget.presets[month][bucket] || []).slice();
+    var has = ids.indexOf(id) >= 0;
+    var want = on === undefined ? !has : !!on;
+    if (want && !has) ids.push(id); else if (!want && has) ids.splice(ids.indexOf(id), 1);
+    if (ids.length) h.budget.presets[month][bucket] = ids; else delete h.budget.presets[month][bucket];
+    if (!Object.keys(h.budget.presets[month]).length) delete h.budget.presets[month];
+    pendingLabel = label || ((want ? 'Added ' : 'Removed ') + id + ' preset, ' + Schema.monthLabel(month));
+    save(); notify();
+    return want;
+  }
+  /** Mark a structural option as not applicable, or applicable again. D-129. */
+  function setNotApplicable(key, on, label) {
+    var h = load();
+    var next = Object.assign({}, h.notApplicable || {});
+    if (on === false) delete next[key]; else next[key] = true;
+    h.notApplicable = Schema.createNotApplicable(next);
+    pendingLabel = label || ((on === false ? 'Applies again: ' : 'Not applicable: ') + key);
+    save(); notify();
+    return h.notApplicable[key] === true;
+  }
+  /** The Skill Tree's one write: a skill done (with the day and how), or
+   *  reopened. Nothing else about a skill is ever stored. D-131. */
+  function setSkillDone(id, on, by, label) {
+    var h = load();
+    h.skillTree = Schema.createSkillTree(h.skillTree || {});
+    if (on === false || on === null) delete h.skillTree.state[id];
+    else h.skillTree.state[id] = { state: 'done', on: typeof on === 'string' && on ? on : new Date().toISOString().slice(0, 10), by: by === 'proof' ? 'proof' : 'self' };
+    pendingLabel = label || ((on === false || on === null ? 'Reopened skill: ' : 'Skill done: ') + id);
+    save(); notify();
+    return h.skillTree.state[id] || null;
+  }
+  /** An exercise completed (or un-completed), with what a run computed. D-131. */
+  function markExercise(id, done, result, label) {
+    var h = load();
+    h.exercises = Schema.createExercisesLog(h.exercises || {});
+    if (done === false) { delete h.exercises.done[id]; delete h.exercises.results[id]; }
+    else {
+      h.exercises.done[id] = typeof done === 'string' && done ? done : new Date().toISOString().slice(0, 10);
+      if (result && typeof result === 'object') h.exercises.results[id] = result;
+    }
+    pendingLabel = label || ((done === false ? 'Undid exercise: ' : 'Exercise done: ') + id);
+    save(); notify();
+    return h.exercises.done[id] || null;
+  }
+  /** The one-time answer: is there an employer 401(k)? D-129. */
+  function setHas401k(value) {
+    var h = load();
+    h.retirement = Schema.createRetirement(Object.assign({}, h.retirement || {}, { has401k: value === null || value === undefined ? null : !!value }));
+    pendingLabel = value === null || value === undefined ? 'Unanswered: an employer 401(k)' : (value ? 'Has an employer 401(k)' : 'No employer 401(k)');
+    save(); notify();
+    return h.retirement.has401k;
   }
 
   function removeExpenseEntry(id) {
@@ -1044,6 +1208,7 @@
       format: EXPORT_FORMAT,
       exportVersion: EXPORT_VERSION,
       schemaVersion: Schema.SCHEMA_VERSION,
+      appVersion: Schema.APP_VERSION,
       exportedAt: new Date().toISOString(),
       household: withoutHistory(getProfile()),
       snapshots: listSnapshots()
@@ -1098,6 +1263,33 @@
    * caller shows the confirm; this does the write. Older schemas migrate
    * on the reload that follows, through the same path a stored blob takes.
    */
+  /**
+   * mergeImport(text) — ADDS a file to the household here instead of
+   * replacing it: records the lists lack, blank scalars, snapshots not
+   * already held. shared/importer.js decides what "adds" means; this is
+   * the write. One command-log entry, so one undo takes it back. D-125.
+   */
+  function mergeImport(text, Importer) {
+    var check = inspectImport(text);
+    if (!check.ok) return check;
+    if (!Importer || typeof Importer.merge !== 'function') return { ok: false, reason: 'The importer is not loaded.' };
+    var merged = Importer.merge(getProfile(), Schema.createHousehold(check.household));
+    var h = load();
+    var keep = { undoStack: h.meta.undoStack || [], redoStack: h.meta.redoStack || [], visitedRooms: h.meta.visitedRooms || [] };
+    var next = Schema.createHousehold(merged.household);
+    Object.keys(h).forEach(function (k) { delete h[k]; });
+    Object.keys(next).forEach(function (k) { h[k] = next[k]; });
+    h.meta = h.meta || {};
+    h.meta.undoStack = keep.undoStack; h.meta.redoStack = keep.redoStack; h.meta.visitedRooms = keep.visitedRooms;
+    pendingLabel = 'Added ' + merged.added.total + (merged.added.total === 1 ? ' thing' : ' things') + ' from a file';
+    save(); notify();
+    var have = {};
+    listSnapshots().forEach(function (s) { have[s.id] = true; });
+    var newSnaps = (check.snapshots || []).filter(function (s) { return s && s.id && !have[s.id]; });
+    if (newSnaps.length) writeRaw(SNAPSHOT_KEY, JSON.stringify(listSnapshots().concat(newSnaps).sort(function (a, b) { return String(a.timestamp).localeCompare(String(b.timestamp)); })));
+    return { ok: true, reason: null, added: merged.added, snapshotsAdded: newSnaps.length, household: getProfile() };
+  }
+
   function importJSON(text) {
     var check = inspectImport(text);
     if (!check.ok) return check;
@@ -1237,6 +1429,19 @@
     removeGoal: removeGoal,
     upsertExpenseEntry: upsertExpenseEntry,
     removeExpenseEntry: removeExpenseEntry,
+    markReimbursed: markReimbursed,
+    togglePreset: togglePreset,
+    setNotApplicable: setNotApplicable,
+    setSkillDone: setSkillDone,
+    markExercise: markExercise,
+    setHas401k: setHas401k,
+    upsertIncomeEntry: upsertIncomeEntry,
+    removeIncomeEntry: removeIncomeEntry,
+    upsertIncomeCost: upsertIncomeCost,
+    removeIncomeCost: removeIncomeCost,
+    closeMonth: closeMonth,
+    reviseMonth: reviseMonth,
+    setBudgetEstimate: setBudgetEstimate,
     setAssumptionOverride: setAssumptionOverride,
     setSwanTarget: setSwanTarget,
     storageState: storageState,
@@ -1270,6 +1475,7 @@
     exportFilename: exportFilename,
     inspectImport: inspectImport,
     importJSON: importJSON,
+    mergeImport: mergeImport,
     toShareCode: toShareCode,
     fromShareCode: fromShareCode,
     shareFragment: shareFragment,

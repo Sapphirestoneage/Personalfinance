@@ -33,17 +33,64 @@
 (function (root, factory) {
   var deps;
   if (typeof module === 'object' && module.exports) {
-    deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'), Ownership: require('../shared/ownership.js'),
+    deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'), Ownership: require('../shared/ownership.js'), Ledger: require('./ledger.js'),
              Gate: require('../shared/gate.js'), SelfEmployed: require('./selfemployed.js') };
   } else {
     var S = root.SLAF || {};
-    deps = { Money: S.Money, Schema: S.Schema, Ownership: S.Ownership, Gate: S.Gate, SelfEmployed: S.SelfEmployed };
+    deps = { Money: S.Money, Schema: S.Schema, Ownership: S.Ownership, Ledger: S.Ledger || null, Gate: S.Gate, SelfEmployed: S.SelfEmployed };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Ownership, deps.Gate, deps.SelfEmployed);
+  var api = factory(deps.Money, deps.Schema, deps.Ownership, deps.Gate, deps.SelfEmployed, deps.Ledger);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.VariableIncome = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Ownership, Gate, SelfEmployed) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Ownership, Gate, SelfEmployed, Ledger) {
   'use strict';
+
+  /* ---- The ledger's variable months (D-128, build 9) ---------------------------
+     Variable Income is a filtered view over the Income room's entries — the
+     kinds that vary: 1099 (se), side income and bonuses — with a rolling
+     average over the last 3, 6 or 12 months. Nothing is added from here.
+     fromEntries(h, opts) → { months: [{ id, label, cents }], rolling: [...],
+     lowCents, highCents, averageCents, window, count } or null when no
+     variable entry exists. Archived entries never count; hidden ones do. */
+  var VARIABLE_KINDS = ['se', 'side', 'bonus'];
+  var WINDOWS = [3, 6, 12];
+  function variableEntries(h) {
+    if (!Ledger) return [];
+    return Ledger.activeEntries(h).filter(function (e) { return VARIABLE_KINDS.indexOf(e.kind) >= 0 && Money.isEntered(e.amountCents); });
+  }
+  function fromEntries(h, opts) {
+    var o = opts || {};
+    var list = variableEntries(h);
+    if (!list.length) return null;
+    var win = WINDOWS.indexOf(o.window) >= 0 ? o.window : (h.variableIncome && WINDOWS.indexOf(h.variableIncome.windowMonths) >= 0 ? h.variableIncome.windowMonths : 3);
+    var span = Money.isEntered(o.span) ? o.span : 12;
+    var cur = Ledger.thisMonth(o.now);
+    var months = [];
+    for (var i = span - 1; i >= 0; i--) {
+      var y = +cur.slice(0, 4), m = +cur.slice(5, 7) - 1 - i;
+      var d = new Date(y, m, 1);
+      var id = d.getFullYear() + '-' + (d.getMonth() + 1 < 10 ? '0' : '') + (d.getMonth() + 1);
+      var total = 0, any = false;
+      list.forEach(function (e) { Ledger.occurrences(e, id).forEach(function (occ) { total += occ.cents; any = true; }); });
+      months.push({ id: id, label: Schema.monthLabel(id), cents: total, any: any });
+    }
+    /* Months before the first landing are not zero months; they are not there. */
+    var first = -1;
+    months.forEach(function (mo, i) { if (first < 0 && mo.any) first = i; });
+    if (first > 0) months = months.slice(first);
+    var rolling = months.map(function (mo, i) {
+      var from = Math.max(0, i - win + 1), n = i - from + 1;
+      var sum = 0; for (var k = from; k <= i; k++) sum += months[k].cents;
+      return { id: mo.id, cents: Math.round(sum / n), over: n };
+    });
+    var vals = months.map(function (mo) { return mo.cents; });
+    return {
+      months: months, rolling: rolling, window: win, count: months.length, entries: list.length,
+      lowCents: Math.min.apply(null, vals), highCents: Math.max.apply(null, vals),
+      averageCents: rolling.length ? rolling[rolling.length - 1].cents : null,
+      overallAverageCents: Math.round(vals.reduce(function (t, v) { return t + v; }, 0) / vals.length)
+    };
+  }
 
   var MONTHS = 12;
   var MONTHS_PER_QUARTER = 3;
@@ -124,6 +171,12 @@
 
     var low = source && Money.isEntered(source.variableLowCents) ? source.variableLowCents : null;
     var high = source && Money.isEntered(source.variableHighCents) ? source.variableHighCents : null;
+    /* The ledger wins: when variable entries exist, the low, high and
+       average are observed from the months they landed in, and the typed
+       figures stand aside. D-128. */
+    var fe = o.entries === false ? null : fromEntries(h, { now: o.now, window: o.window });
+    var observed = !!(fe && fe.count >= 1);
+    if (observed) { low = fe.lowCents; high = fe.highCents; averageCents = fe.averageCents; }
     var spendingR = Schema.monthlyExpensesCents(h);
     var spending = Money.isOk(spendingR) ? spendingR.value : null;
     var cashR = Schema.cashCents(h);
@@ -167,7 +220,9 @@
       sourceId: source ? source.id : null,
       sourceIsOwnWork: isOwnWork(source),
       averageMonthCents: averageCents,
-      averageBasis: avg.basis,
+      averageBasis: observed ? 'entries' : avg.basis,
+      observed: observed,
+      entries: fe,
       grossAnnualIncomeCents: Money.isEntered(avg.grossAnnualIncomeCents) ? avg.grossAnnualIncomeCents : null,
       lowCents: low,
       highCents: high,
@@ -214,5 +269,5 @@
     };
   }
 
-  return { plan: plan, propose: propose, averageMonth: averageMonth, taxSetAside: taxSetAside, conventions: conventions, isOwnWork: isOwnWork, MONTHS: MONTHS, LOW_MONTHS_FLOOR: LOW_MONTHS_FLOOR };
+  return { plan: plan, propose: propose, fromEntries: fromEntries, variableEntries: variableEntries, VARIABLE_KINDS: VARIABLE_KINDS, WINDOWS: WINDOWS, averageMonth: averageMonth, taxSetAside: taxSetAside, conventions: conventions, isOwnWork: isOwnWork, MONTHS: MONTHS, LOW_MONTHS_FLOOR: LOW_MONTHS_FLOOR };
 });

@@ -103,14 +103,21 @@
     if (!c) return Money.incomplete('The housing conventions table (data/housing_conventions.json) is not loaded.', ['housingConventions']);
 
     var noRent = !!(h.meta && h.meta.noRent === true);
-    var price = plan.priceCents, down = plan.downPct, rate = plan.rate, rent = plan.rentMonthlyCents;
+    /* One rent (D-130): the housing line in Cash Flow is what you pay; the
+       room's own field is a place you would rent instead, used when typed
+       — it is this room's what-if — else when there is no line. */
+    var rentRead = Schema.rentMonthlyCents(h);
+    var ownRent = Money.isEntered(plan.rentMonthlyCents) && plan.rentMonthlyCents > 0 ? plan.rentMonthlyCents : null;
+    var rent = ownRent !== null ? ownRent : rentRead.cents;
+    var rentSource = ownRent !== null ? 'housing' : rentRead.source;
+    var price = plan.priceCents, down = plan.downPct, rate = plan.rate;
     var missing = [];
     if (!Money.isEntered(price)) missing.push('priceCents');
     if (!Money.isEntered(down)) missing.push('downPct');
     if (!Money.isEntered(rate)) missing.push('rate');
     if (!Money.isEntered(rent) && !noRent) missing.push('rentMonthlyCents');
     if (missing.length) {
-      var words = { priceCents: 'the place’s price', downPct: 'the down payment share', rate: 'the mortgage rate', rentMonthlyCents: 'what renting costs a month' };
+      var words = { priceCents: 'the place’s price', downPct: 'the down payment share', rate: 'the mortgage rate', rentMonthlyCents: 'what renting costs a month (the housing line in Cash Flow, or a rent typed here)' };
       return Money.incomplete('Enter ' + missing.map(function (k) { return words[k]; }).join(', ') + ' to compare.', missing);
     }
     if (price <= 0) return Money.incomplete('A price of zero is not a place to weigh.', ['priceCents']);
@@ -173,6 +180,7 @@
     return Money.ok(ownCents - rentUsed, {
       ownCents: ownCents,
       rentCents: rentUsed,
+      rentSource: rentIsNone ? 'none' : rentSource,
       rentIsNone: rentIsNone,
       noRent: noRent,
       unrecoverableCents: unrecoverableCents,

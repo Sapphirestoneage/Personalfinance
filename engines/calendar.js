@@ -26,6 +26,16 @@
                   spending → nothing left to spread, and a flag.
      the window   31 days, today included.
 
+   The ledger and the log (D-130, MONEY-MAP.md Q5): when Income has
+   entries landing in the window, THEY are the paydays — each landing
+   drawn on its day for the cash it actually brings (net of what was
+   withheld) — and the cadence above is not needed. Every dated entry
+   in the expense log is drawn on its day as a bill; a recurring one on
+   its day each month. A date that is only estimated is drawn and
+   counted; one that is only potential is drawn, never counted. Bills
+   and pay-later instalments saved on the calendar before D-130 are
+   still drawn; new ones are logged in Cash Flow.
+
    The number is the low point: the lowest balance in the window and the
    day it lands. Below zero on any day → "out", naming the first such day;
    under a week of spending → "watch"; otherwise good. The tight stretch is
@@ -37,15 +47,16 @@
 (function (root, factory) {
   var deps;
   if (typeof module === 'object' && module.exports) {
-    deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'), Tier0: require('./tier0.js') };
+    deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'), Tier0: require('./tier0.js'),
+             Ledger: require('./ledger.js'), CashFlow: require('./cashflow.js') };
   } else {
     var S = root.SLAF || {};
-    deps = { Money: S.Money, Schema: S.Schema, Tier0: S.Tier0 };
+    deps = { Money: S.Money, Schema: S.Schema, Tier0: S.Tier0, Ledger: S.Ledger, CashFlow: S.CashFlow };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Tier0);
+  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.Ledger, deps.CashFlow);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Calendar = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, Ledger, CashFlow) {
   'use strict';
 
   var MONTHS = 12;
@@ -81,8 +92,10 @@
   function rentCents(household) {
     var h = household || {};
     if (h.meta && h.meta.noRent === true) return { cents: null, source: 'none', reason: 'Start Here says there is no rent to pay.' };
-    var housing = h.housing || {};
-    if (Money.isEntered(housing.rentMonthlyCents)) return { cents: housing.rentMonthlyCents, source: 'housing', reason: null };
+    /* One rent (D-130): Cash Flow's housing line first, then a rent typed
+       in Housing Decision as the place you would rent instead. */
+    var r = Schema.rentMonthlyCents(h);
+    if (Money.isEntered(r.cents)) return { cents: r.cents, source: r.source, reason: null };
     var gross = Schema.grossAnnualIncomeCents(h);
     if (Money.isOk(gross) && gross.value > 0) return { cents: Math.round(gross.value / MONTHS * RENT_SHARE_OF_GROSS), source: 'guess', reason: null };
     return { cents: null, source: 'none', reason: 'No rent from Housing Decision and no income to guess it from.' };
@@ -126,32 +139,6 @@
     if (!conv || !conv.cadences) return Money.incomplete('The calendar conventions table is not loaded.', ['calendarConventions']);
 
     var cal = h.calendar || {};
-    var cadence = conv.cadences[cal.cadence] ? cal.cadence : null;
-    if (!cadence) return Money.incomplete('How often are you paid?', ['cadence']);
-    if (!validDay(cal.nextPaydayDay)) return Money.incomplete('Which day of the month is the next payday?', ['nextPaydayDay']);
-    var nextDay = Math.round(cal.nextPaydayDay);
-
-    var cash = Schema.cashCents(h);
-    if (!Money.isOk(cash)) return Money.incomplete('Add your cash & savings in Start Here — today’s cash is where the month starts.', cash.missing || ['cashSavings']);
-    var spend = Schema.monthlyExpensesCents(h);
-    if (!Money.isOk(spend)) return Money.incomplete(spend.reason, spend.missing);
-    var takeHome = Tier0.takeHomeMonthlyCents(h, tables);
-    if (!Money.isOk(takeHome)) return Money.incomplete('Add your income in Start Here to place the paydays: ' + (takeHome.reason || ''), takeHome.missing);
-
-    var paydaysPerMonth = conv.cadences[cadence].paydaysPerMonth;
-    var perPayday = Math.round(takeHome.value / paydaysPerMonth);
-
-    var bills = (cal.bills || []).filter(function (b) { return b && Money.isEntered(b.cents) && b.cents > 0 && validDay(b.day); })
-      .map(function (b) { return { id: b.id, label: b.label || 'A bill', cents: b.cents, day: Math.round(b.day), kind: 'bill' }; });
-    var payLater = (cal.payLater || []).filter(function (p) { return p && Money.isEntered(p.cents) && p.cents > 0 && validDay(p.dueDay) && p.instalmentsLeft !== 0; })
-      .map(function (p) { return { id: p.id, label: p.label || 'Pay-later', cents: p.cents, day: Math.round(p.dueDay), kind: 'payLater', instalmentsLeft: Money.isEntered(p.instalmentsLeft) ? p.instalmentsLeft : null }; });
-    var billsCents = bills.reduce(function (t, b) { return t + b.cents; }, 0);
-    var payLaterCents = payLater.reduce(function (t, p) { return t + p.cents; }, 0);
-    var listed = billsCents + payLaterCents;
-    var rest = spend.value - listed;
-    var billsExceedSpending = rest < 0;
-    if (billsExceedSpending) rest = 0;
-
     var horizon = Money.isEntered(conv.horizonDays) && conv.horizonDays > 0 ? conv.horizonDays : HORIZON_DAYS;
     var start = startOf(o.now);
     var dates = [], i;
@@ -159,16 +146,105 @@
       var d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
       dates.push({ index: i, date: iso(d), dom: d.getDate(), dim: daysInMonth(d), month: d.getMonth(), year: d.getFullYear() });
     }
+    var indexOfDate = {};
+    dates.forEach(function (dt) { indexOfDate[dt.date] = dt.index; });
+    var months = [];
+    dates.forEach(function (dt) { var ym = dt.date.slice(0, 7); if (months.indexOf(ym) < 0) months.push(ym); });
+
+    /* The ledger's landings in the window (D-130). */
+    var incomeHits = [], potentialIn = 0;
+    if (Ledger) {
+      months.forEach(function (ym) {
+        var inc = Ledger.month(h, tables, ym);
+        if (!Money.isOk(inc)) return;
+        inc.rows.forEach(function (r) {
+          var per = r.net && Money.isEntered(r.net.cashReceivedCents) ? r.net.cashReceivedCents : (r.occurrences.length ? Math.round(r.grossCents / r.occurrences.length) : 0);
+          r.occurrences.forEach(function (occ) {
+            if (indexOfDate[occ.date] === undefined) return;
+            incomeHits.push({ id: r.entry.id, label: r.entry.label || (Schema.INCOME_KIND_RULES[r.entry.kind] || {}).label || 'Income', cents: per, index: indexOfDate[occ.date], date: occ.date, dom: dates[indexOfDate[occ.date]].dom, kind: 'income', dateKind: occ.dateKind || 'exact', potential: false });
+          });
+        });
+        (inc.potentialRows || []).forEach(function (r) {
+          r.occurrences.forEach(function (occ) {
+            if (indexOfDate[occ.date] === undefined) return;
+            incomeHits.push({ id: r.entry.id, label: r.entry.label || (Schema.INCOME_KIND_RULES[r.entry.kind] || {}).label || 'Income', cents: occ.cents, index: indexOfDate[occ.date], date: occ.date, dom: dates[indexOfDate[occ.date]].dom, kind: 'income', dateKind: 'potential', potential: true });
+            potentialIn += occ.cents;
+          });
+        });
+      });
+    }
+    incomeHits.sort(function (a, b) { return a.index - b.index; });
+    var ledgerDrives = incomeHits.some(function (x) { return !x.potential; });
+
+    var cadence = conv.cadences[cal.cadence] ? cal.cadence : null;
+    if (!ledgerDrives) {
+      if (!cadence) return Money.incomplete('How often are you paid? (Or add a dated entry in Income and its landings draw the paydays.)', ['cadence']);
+      if (!validDay(cal.nextPaydayDay)) return Money.incomplete('Which day of the month is the next payday?', ['nextPaydayDay']);
+    }
+    var nextDay = validDay(cal.nextPaydayDay) ? Math.round(cal.nextPaydayDay) : null;
+
+    var cash = Schema.cashCents(h);
+    if (!Money.isOk(cash)) return Money.incomplete('Add your cash & savings in Start Here — today’s cash is where the month starts.', cash.missing || ['cashSavings']);
+    var spend = Schema.monthlyExpensesCents(h);
+    if (!Money.isOk(spend)) return Money.incomplete(spend.reason, spend.missing);
+    var takeHome = Tier0.takeHomeMonthlyCents(h, tables);
+    if (!ledgerDrives && !Money.isOk(takeHome)) return Money.incomplete('Add your income in Start Here to place the paydays: ' + (takeHome.reason || ''), takeHome.missing);
+
+    var paydaysPerMonth = cadence ? conv.cadences[cadence].paydaysPerMonth : null;
+    var perPayday = !ledgerDrives && cadence ? Math.round(takeHome.value / paydaysPerMonth) : 0;
+
+    /* The log's dated entries in the window (D-130): a bill on its day. */
+    var catalog = tables && tables.expenseCategories;
+    var logHits = [], potentialOut = 0, logMonthlyCents = 0;
+    if (CashFlow) {
+      var startYm = dates[0].date.slice(0, 7);
+      CashFlow.logEntries(h).forEach(function (e) {
+        if (e.active === false) return;
+        var cat = catalog ? CashFlow.categoryById(catalog, e.categoryId) : null;
+        var label = e.descriptor || (cat ? cat.label : e.categoryId) || 'Logged';
+        months.forEach(function (ym) {
+          CashFlow.logOccurrences(e, ym).forEach(function (occ) {
+            if (indexOfDate[occ.date] === undefined) return;
+            var hit = { id: e.id, label: label, cents: occ.cents, index: indexOfDate[occ.date], date: occ.date, dom: dates[indexOfDate[occ.date]].dom, kind: 'log', dateKind: occ.dateKind || 'exact', potential: occ.potential === true, recurring: e.period === 'monthly' };
+            logHits.push(hit);
+            if (hit.potential) potentialOut += occ.cents;
+            else if (ym === startYm) logMonthlyCents += occ.cents;
+          });
+        });
+        /* A reimbursement received in the window comes back in on its day. */
+        if (e.produced === 'reimbursable' && e.reimbursementStatus === 'received' && e.dateReceived && indexOfDate[e.dateReceived] !== undefined) {
+          var back = Money.isEntered(e.receivedAmountCents) ? e.receivedAmountCents : (Money.isEntered(e.expectedAmountCents) ? e.expectedAmountCents : e.amountCents);
+          if (Money.isEntered(back) && back > 0) incomeHits.push({ id: e.id + ':credit', label: 'Paid back: ' + label, cents: back, index: indexOfDate[e.dateReceived], date: e.dateReceived, dom: dates[indexOfDate[e.dateReceived]].dom, kind: 'credit', dateKind: 'exact', potential: false });
+        }
+      });
+    }
+
+    var bills = (cal.bills || []).filter(function (b) { return b && Money.isEntered(b.cents) && b.cents > 0 && validDay(b.day); })
+      .map(function (b) { return { id: b.id, label: b.label || 'A bill', cents: b.cents, day: Math.round(b.day), kind: 'bill' }; });
+    var payLater = (cal.payLater || []).filter(function (p) { return p && Money.isEntered(p.cents) && p.cents > 0 && validDay(p.dueDay) && p.instalmentsLeft !== 0; })
+      .map(function (p) { return { id: p.id, label: p.label || 'Pay-later', cents: p.cents, day: Math.round(p.dueDay), kind: 'payLater', instalmentsLeft: Money.isEntered(p.instalmentsLeft) ? p.instalmentsLeft : null }; });
+    logHits.sort(function (a, b) { return a.index - b.index; });
+    var billsCents = bills.reduce(function (t, b) { return t + b.cents; }, 0);
+    var payLaterCents = payLater.reduce(function (t, p) { return t + p.cents; }, 0);
+    var listed = billsCents + payLaterCents + logMonthlyCents;
+    var rest = spend.value - listed;
+    var billsExceedSpending = rest < 0;
+    if (billsExceedSpending) rest = 0;
+
     var paydayAt = {};
-    paydayIndices(cadence, nextDay, dates, conv).forEach(function (idx) { paydayAt[idx] = true; });
+    if (!ledgerDrives && cadence && nextDay !== null) paydayIndices(cadence, nextDay, dates, conv).forEach(function (idx) { paydayAt[idx] = true; });
+    var inAt = {};
+    incomeHits.forEach(function (x) { if (!x.potential) inAt[x.index] = (inAt[x.index] || 0) + x.cents; });
+    var logAt = {};
+    logHits.forEach(function (x) { if (!x.potential) logAt[x.index] = (logAt[x.index] || 0) + x.cents; });
 
     var balance = cash.value;
     var days = [], paydays = [], billHits = [], payLaterHits = [];
     var lowIndex = 0, lowCents = null, firstBelow = -1;
     for (i = 0; i < dates.length; i++) {
       var dt = dates[i];
-      var pay = paydayAt[i] ? perPayday : 0;
-      var out = 0, plOut = 0;
+      var pay = (paydayAt[i] ? perPayday : 0) + (inAt[i] || 0);
+      var out = logAt[i] || 0, plOut = 0;
       bills.forEach(function (b) {
         if (clampDay(b.day, dt.dim) !== dt.dom) return;
         out += b.cents;
@@ -182,7 +258,7 @@
       var spread = Math.round(rest / dt.dim);
       balance += pay - out - plOut - spread;
       if (pay) paydays.push({ index: i, dom: dt.dom, date: dt.date, cents: pay, balanceCents: balance });
-      days.push({ index: i, date: dt.date, dom: dt.dom, balanceCents: balance, paydayCents: pay, billsCents: out, payLaterCents: plOut, spreadCents: spread });
+      days.push({ index: i, date: dt.date, dom: dt.dom, balanceCents: balance, paydayCents: pay, billsCents: out, payLaterCents: plOut, spreadCents: spread, logCents: logAt[i] || 0, incomeCents: inAt[i] || 0 });
       if (lowCents === null || balance < lowCents) { lowCents = balance; lowIndex = i; }
       if (firstBelow < 0 && balance < 0) firstBelow = i;
     }
@@ -210,15 +286,54 @@
       slackCents: Math.max(0, lowCents), shortfallCents: Math.max(0, -lowCents),
       weekCents: weekCents, tightWeekDays: tightDays, zone: zone, tight: tight,
       days: days, paydays: paydays, perPaydayCents: perPayday, paydaysPerMonth: paydaysPerMonth,
-      cadence: cadence, cadenceLabel: conv.cadences[cadence].label, nextPaydayDay: nextDay,
+      cadence: cadence, cadenceLabel: cadence ? conv.cadences[cadence].label : null, nextPaydayDay: nextDay,
+      paydaySource: ledgerDrives ? 'ledger' : 'cadence',
+      incomeHits: incomeHits, logHits: logHits, logMonthlyCents: logMonthlyCents,
+      potentialInCents: potentialIn, potentialOutCents: potentialOut,
       bills: bills.map(function (x) { var hit = firstHitOf(x.id, billHits); return { id: x.id, label: x.label, cents: x.cents, day: x.day, firstDom: hit ? hit.dom : null, firstDate: hit ? hit.date : null, firstIndex: hit ? hit.index : null }; }),
       payLater: payLater.map(function (x) { var hit = firstHitOf(x.id, payLaterHits); return { id: x.id, label: x.label, cents: x.cents, day: x.day, instalmentsLeft: x.instalmentsLeft, firstDom: hit ? hit.dom : null, firstDate: hit ? hit.date : null, firstIndex: hit ? hit.index : null }; }),
       billHits: billHits, payLaterHits: payLaterHits,
       biggestBill: biggest ? { id: biggest.id, label: biggest.label, cents: biggest.cents, day: biggest.day } : null,
       billsCents: billsCents, payLaterCents: payLaterCents, listedCents: listed, restCents: rest, billsExceedSpending: billsExceedSpending,
-      startCents: cash.value, spendCents: spend.value, takeHomeCents: takeHome.value, effectiveRate: takeHome.effectiveRate, referenceVersion: takeHome.referenceVersion,
+      startCents: cash.value, spendCents: spend.value, takeHomeCents: Money.isOk(takeHome) ? takeHome.value : null, effectiveRate: Money.isOk(takeHome) ? takeHome.effectiveRate : null, referenceVersion: Money.isOk(takeHome) ? takeHome.referenceVersion : null,
       horizonDays: horizon, startDate: dates[0].date, endDate: dates[dates.length - 1].date
     });
+  }
+
+  /* The month as a grid: the window's days in rows of seven, each row
+     starting on Sunday, the first row padded with blanks so a day sits
+     under its weekday. Each cell carries what the day does — a payday,
+     the bills and pay-later instalments drawn, the spread — and where the
+     balance stands, so a page can draw a calendar rather than a line. */
+  var WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  function weeks(result) {
+    if (!Money.isOk(result)) return [];
+    var first = startOf(result.startDate);
+    var pad = first.getDay();
+    var rows = [], row = [], i;
+    for (i = 0; i < pad; i++) row.push(null);
+    result.days.forEach(function (d) {
+      var when = startOf(d.date);
+      row.push({
+        index: d.index, date: d.date, dom: d.dom, weekday: WEEKDAYS[when.getDay()],
+        firstOfMonth: d.dom === 1, month: when.toLocaleDateString('en-US', { month: 'short' }),
+        balanceCents: d.balanceCents, paydayCents: d.paydayCents, billsCents: d.billsCents, payLaterCents: d.payLaterCents, spreadCents: d.spreadCents,
+        inCents: d.paydayCents, outCents: d.billsCents + d.payLaterCents,
+        /* What comes in that day: a cadence payday, or the ledger's landings
+           and any repayment (D-130); a potential one is drawn, not counted. */
+        ins: (d.paydayCents > 0 && result.paydaySource === 'cadence' && result.paydays.some(function (p) { return p.index === d.index; }) ? [{ label: 'Payday', cents: result.perPaydayCents, kind: 'payday', dateKind: 'exact', potential: false }] : [])
+          .concat((result.incomeHits || []).filter(function (x) { return x.index === d.index; }).map(function (x) { return { label: x.label, cents: x.cents, kind: x.kind, dateKind: x.dateKind, potential: x.potential }; })),
+        bills: result.billHits.filter(function (b) { return b.index === d.index; }).map(function (b) { return { label: b.label, cents: b.cents, kind: 'bill', dateKind: 'exact', potential: false }; })
+          .concat(result.payLaterHits.filter(function (b) { return b.index === d.index; }).map(function (b) { return { label: b.label, cents: b.cents, kind: 'payLater', dateKind: 'exact', potential: false }; }))
+          .concat((result.logHits || []).filter(function (x) { return x.index === d.index; }).map(function (x) { return { label: x.label, cents: x.cents, kind: 'log', dateKind: x.dateKind, potential: x.potential, recurring: x.recurring }; })),
+        isLow: d.index === result.lowIndex, belowZero: d.balanceCents < 0,
+        tight: !!(result.tight && d.index >= result.tight.fromIndex && d.index <= result.tight.toIndex),
+        today: d.index === 0
+      });
+      if (row.length === 7) { rows.push(row); row = []; }
+    });
+    if (row.length) { while (row.length < 7) row.push(null); rows.push(row); }
+    return rows;
   }
 
   /* The chart's points: [[day index, balance], …]. */
@@ -230,6 +345,8 @@
   return {
     month: month,
     balancePoints: balancePoints,
+    weeks: weeks,
+    WEEKDAYS: WEEKDAYS,
     rentCents: rentCents,
     semimonthlyPair: semimonthlyPair,
     paydayIndices: paydayIndices,

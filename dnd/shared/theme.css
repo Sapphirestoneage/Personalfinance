@@ -605,6 +605,18 @@ h3 { font-size: var(--text-md); }
 .slaf-bars.has-negative .track:before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--color-border-strong); }
 .slaf-bars .val { font-size: var(--text-sm); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 
+/* The version line every room's footer prints (D-131). */
+.slaf-version { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; margin: var(--space-3) 0 0; letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
+
+/* Marked not applicable by the household (D-130): dashed, amber, and it
+   says so rather than asking for the figure. The toggle sits in the
+   owner room beside the input. */
+.slaf-owned--na { border-left-style: dashed; border-left-color: var(--color-caution); opacity: .85; }
+.slaf-owned--na .slaf-owned-value { color: var(--color-caution); }
+.slaf-na { background: none; border: 1px dashed var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-faint); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; }
+.slaf-na[aria-pressed="true"] { border-style: solid; color: var(--color-caution); border-color: var(--color-caution); }
+.slaf-na-off { opacity: .45; }
+
 /* A figure the one-pager filled in as a guess and nobody has typed over yet:
    dashed, and it says so. D-094. */
 .slaf-owned--guess { border-left-style: dashed; border-left-color: var(--color-caution); }
@@ -669,3 +681,40 @@ details.room-drawer summary small { display: block; font-family: var(--font-body
 .slaf-chart.is-animated .track > i, .slaf-chart.is-animated .track.is-stack > i { transform-origin: left; animation: slaf-grow .7s cubic-bezier(.2,.8,.2,1) both; }
 .slaf-chart.is-animated svg path, .slaf-chart.is-animated svg circle, .slaf-chart.is-animated svg polygon, .slaf-chart.is-animated svg rect:not(.panel) { animation: slaf-rise .6s ease-out both; }
 @media (prefers-reduced-motion: reduce) { .slaf-chart.is-animated * { animation: none !important; } }
+
+/* ---- The ⓘ on a ratio (shared/explain.js) --------------------------------- */
+.slaf-info { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-muted); font: italic 700 12px/1 var(--font-display); cursor: pointer; margin-left: var(--space-2); vertical-align: middle; flex: 0 0 auto; padding: 0; }
+.slaf-info:hover, .slaf-info.is-open { border-color: var(--color-accent); color: var(--color-accent-hover); }
+.slaf-explain { margin: var(--space-2) 0 0; padding: var(--space-3); border: 1px solid var(--color-border); border-left: 3px solid var(--color-accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: rgba(46,111,232,.06); font-size: var(--text-sm); color: var(--color-text); text-align: left; }
+.slaf-explain-row { display: grid; grid-template-columns: 92px 1fr; gap: var(--space-2) var(--space-3); padding: var(--space-1) 0; align-items: baseline; }
+.slaf-explain-k { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
+.slaf-explain-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.slaf-explain-chip { display: inline-block; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 2px var(--space-2); font-size: var(--text-xs); color: var(--color-text); text-decoration: none; }
+a.slaf-explain-chip:hover { border-color: var(--color-accent); }
+.slaf-explain-chip.is-empty { color: var(--color-text-faint); border-style: dashed; }
+.slaf-explain-chip small { color: var(--color-accent-hover); }
+@media (max-width: 420px) { .slaf-explain-row { grid-template-columns: 1fr; gap: 2px; } }
+
+/* ---- Manage sources: hide, set aside, restore (shared/manage.js) ---------- */
+.slaf-manage-toggle { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 3px var(--space-2); cursor: pointer; }
+.slaf-manage-toggle[aria-pressed="true"], .slaf-manage-toggle:hover { border-color: var(--color-accent); color: var(--color-accent-hover); }
+.slaf-manage { margin-top: var(--space-3); border: 1px dashed var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-3); }
+.slaf-manage-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.slaf-manage-chip { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 3px var(--space-2); cursor: pointer; }
+.slaf-manage-chip[aria-pressed="true"] { border-color: var(--color-accent); color: var(--color-accent-hover); }
+.slaf-manage-chip small { color: var(--color-text-faint); }
+.slaf-manage-note { margin: var(--space-2) 0 0; }
+.slaf-manage-list { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
+.slaf-manage-list li { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+.slaf-manage-list li:first-child { border-top: none; }
+.slaf-manage-list b { font-weight: 600; }
+.slaf-manage-list small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+.slaf-manage-acts { display: flex; gap: var(--space-1); flex-shrink: 0; }
+.slaf-manage-act { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-accent-hover); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; }
+.slaf-manage-act:hover { border-color: var(--color-accent); }
+.slaf-archive-prompt { margin-top: var(--space-3); border-left: 3px solid var(--color-caution); background: rgba(232,184,75,.08); padding: var(--space-2) var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; justify-content: space-between; }
+.slaf-archive-prompt span small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+.slaf-sankey .flow { opacity: .55; }
+.slaf-sankey .flow:hover { opacity: .85; }
+.slaf-sankey .node { stroke: var(--navy-950); stroke-width: .6; }
+.slaf-sankey .tick.small { fill: rgba(147, 197, 253, 0.6); font-size: 8.5px; }

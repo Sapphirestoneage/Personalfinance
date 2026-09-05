@@ -177,6 +177,21 @@ module.exports = function (t) {
   const room = Registry.byId('housing');
   checkTrue('the registry row exists', !!room && room.href === 'rooms/housing.html');
   check('… appears for everyone', Gate.SITUATIONS.filter(s => Registry.applies(room, household({ status: s.status }))).map(s => s.id).join(','), Gate.SITUATIONS.map(s => s.id).join(','));
-  check('… the four writes are owned here', ['rentMonthly', 'homePrice', 'downPct', 'mortgageRate'].map(f => Ownership.field(f).owner).join(','), 'housing,housing,housing,housing');
-  check('… anchored on the inputs', ['rentMonthly', 'homePrice', 'downPct', 'mortgageRate'].map(f => Ownership.field(f).anchor).join(','), 'inputs,inputs,inputs,inputs');
+  check('… the four writes are owned here', ['rentAlternative', 'homePrice', 'downPct', 'mortgageRate'].map(f => Ownership.field(f).owner).join(','), 'housing,housing,housing,housing');
+  check('… anchored on the inputs', ['rentAlternative', 'homePrice', 'downPct', 'mortgageRate'].map(f => Ownership.field(f).anchor).join(','), 'inputs,inputs,inputs,inputs');
+
+  /* One rent (D-130, Q11): Cash Flow's housing line is what you pay. */
+  const withLine = household({ gross: 9000000, spend: 350000, cash: 2000000, housing: { priceCents: 30000000, downPct: 0.2, rate: 0.065 } });
+  withLine.expenses.entries = [Schema.createExpenseEntry({ id: 'rent', categoryId: 'housing', amountCents: 190000, period: 'monthly' })];
+  const rl = Housing.compare(withLine, T);
+  check('with no rent typed here, the housing line in Cash Flow is the rent', rl.rentCents + '/' + rl.rentSource, '190000/cash-flow');
+  check('… and the number matches the worked case', rl.value, 26696, 100);
+  withLine.housing.rentMonthlyCents = 210000;
+  check('a rent typed here is a place you would rent instead, and wins', Housing.compare(withLine, T).rentCents + '/' + Housing.compare(withLine, T).rentSource, '210000/housing');
+  check('Schema.rentMonthlyCents reads the line first', Schema.rentMonthlyCents(withLine).cents + '/' + Schema.rentMonthlyCents(withLine).source, '190000/cash-flow');
+  withLine.expenses.entries = [];
+  check('… then the room’s own field', Schema.rentMonthlyCents(withLine).source, 'housing');
+  check('… and a logged occurrence in the housing category is not the line', (function () { const x = household({}); x.expenses.entries = [Schema.createExpenseEntry({ categoryId: 'housing', amountCents: 5000, period: 'once', date: '2026-09-01', source: 'log' })]; return Schema.rentMonthlyCents(x).source; })(), 'none');
+  const Own = require(path.join(ROOT, 'shared/ownership.js'));
+  check('the rent you pay is owned by Cash Flow; the alternative by Housing', Own.FIELDS.rentMonthly.owner + '/' + Own.FIELDS.rentAlternative.owner, 'cash-flow/housing');
 };

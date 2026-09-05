@@ -32,15 +32,15 @@
   var deps;
   if (typeof module === 'object' && module.exports) {
     deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'), Reference: require('../shared/reference.js'),
-             Tax: require('./tax.js'), Tier0: require('./tier0.js') };
+             Tax: require('./tax.js'), Tier0: require('./tier0.js'), Ledger: require('./ledger.js') };
   } else {
     var S = root.SLAF || {};
-    deps = { Money: S.Money, Schema: S.Schema, Reference: S.Reference, Tax: S.Tax, Tier0: S.Tier0 };
+    deps = { Money: S.Money, Schema: S.Schema, Reference: S.Reference, Tax: S.Tax, Tier0: S.Tier0, Ledger: S.Ledger || null };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Reference, deps.Tax, deps.Tier0);
+  var api = factory(deps.Money, deps.Schema, deps.Reference, deps.Tax, deps.Tier0, deps.Ledger);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.TaxRoom = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Reference, Tax, Tier0) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Reference, Tax, Tier0, Ledger) {
   'use strict';
 
   var MONTHS = 12;
@@ -55,6 +55,16 @@
     var sources = Schema.allIncomeSources(h);
     var row = Schema.householdEmployment(h);
     var status = row ? row.id : null;
+    /* The ledger first (D-128): when dated income entries exist and
+       recur, the year is theirs — wages by withholding, self-employment
+       profit net of the costs logged against it — read through the one
+       tax engine for entries, engines/ledger.js. Households without a
+       ledger read their sources exactly as before. */
+    if (Ledger && Ledger.hasRecurring(h)) {
+      var y = Ledger.annualByMethod(h);
+      return { wagesCents: y.wagesCents, selfEmploymentCents: y.selfEmploymentCents, unemploymentCents: y.unemploymentCents, counted: y.counted, status: status,
+        mixedWithoutOwnWork: false, fromLedger: true, untaxedCents: y.untaxedCents };
+    }
     var wages = 0, se = 0, counted = 0;
     sources.forEach(function (s) {
       if (!Money.isEntered(s.grossAnnualIncomeCents)) return;
@@ -62,7 +72,7 @@
       if (status === 'selfEmployed' || (status === 'both' && s.type === '1099')) se += s.grossAnnualIncomeCents;
       else wages += s.grossAnnualIncomeCents;
     });
-    return { wagesCents: wages, selfEmploymentCents: se, counted: counted, status: status,
+    return { wagesCents: wages, selfEmploymentCents: se, unemploymentCents: 0, counted: counted, status: status,
       mixedWithoutOwnWork: status === 'both' && se === 0 && counted > 0 };
   }
 
@@ -102,7 +112,7 @@
     var other = otherKnown ? Math.max(0, facts.otherPreTaxAnnualCents) : 0;
     var preTax = Math.min(gross.value, workplace + other);
 
-    var est = Tax.estimate(h, T, { wagesCents: split.wagesCents, selfEmploymentCents: split.selfEmploymentCents, deferralCents: preTax });
+    var est = Tax.estimate(h, T, { wagesCents: split.wagesCents, selfEmploymentCents: split.selfEmploymentCents, otherOrdinaryCents: split.unemploymentCents, deferralCents: preTax });
     if (!Money.isOk(est)) return est;
 
     var ord = est.components.ordinary;
@@ -136,6 +146,7 @@
       grossCents: g,
       wagesCents: split.wagesCents,
       selfEmploymentCents: split.selfEmploymentCents,
+      unemploymentCents: split.unemploymentCents,
       employment: split.status,
       mixedWithoutOwnWork: split.mixedWithoutOwnWork,
       workplacePercent: workplaceKnown ? pct : null,

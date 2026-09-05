@@ -73,15 +73,85 @@ module.exports = function (t) {
   checkTrue('… and none when Start Here says no rent', Cal.rentCents(hh({ meta: { noRent: true } })).cents === null);
   check('the chart points are one a day', Cal.balancePoints(r).length, 31);
 
+  /* The month as a grid (D-127): rows of seven from Sunday, padded so a
+     day sits under its weekday; each cell says what lands and where the
+     cash stands. 2026-09-01 is a Tuesday: two blanks first. */
+  const w = Cal.weeks(r);
+  check('the grid has five rows for 31 days from a Tuesday', w.length, 5);
+  check('the first row is padded to the weekday', w[0].slice(0, 2).join(','), ',');
+  check('the first day is the 1st, a Tuesday', w[0][2].dom + '/' + w[0][2].weekday, '1/Tue');
+  check('every row is seven wide', w.every(row => row.length === 7), true);
+  check('the last row is padded at the end', w[4].filter(c => c === null).length, 7 - ((31 + 2) % 7 || 7));
+  const day1 = w[0][2], day5 = w[0][6];
+  check('day 1 carries the rent as a bill', day1.bills.length + '/' + day1.bills[0].label + '/' + day1.outCents, '1/Rent/90000');
+  check('day 1 is the first of its month and today', day1.firstOfMonth + '/' + day1.today, 'true/true');
+  check('day 5 is a payday', day5.inCents, per);
+  check('the low point is marked once', w.flat().filter(c => c && c.isLow).map(c => c.dom).join(','), '4');
+  checkTrue('days under zero are marked', w.flat().filter(c => c && c.belowZero).length > 0);
+  check('the cells carry the balance the day ends on', day1.balanceCents, r.days[0].balanceCents);
+  check('an incomplete month has no grid', Cal.weeks(Money.incomplete('x', [])).length, 0);
+
+
   /* The table, the page, the map. */
   const conv = T.calendarConventions;
   check('four cadences', Object.keys(conv.cadences).length, 4);
   check('fortnightly is 26 ÷ 12 paydays a month', Math.round(conv.cadences.fortnightly.paydaysPerMonth * 1000) / 1000, Math.round(26 / 12 * 1000) / 1000);
   const page = fs.readFileSync(path.join(ROOT, 'rooms/calendar.html'), 'utf8');
+  checkTrue('the page draws the grid under the line', /cal-grid/.test(page) && /Cal\.weeks\(/.test(page));
   checkTrue('the page mounts the template as calendar', /Room\.mount\(\{/.test(page) && /id: 'calendar'/.test(page));
   ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list'].forEach(id => checkTrue(`… has #${id}`, new RegExp('id="' + id + '"').test(page)));
-  checkTrue('… five inputs and two folded', ['cadence', 'nextPaydayDay', 'rentDay', 'bigCents', 'bigDay', 'plCents', 'plDay'].every(c => new RegExp("ctl: '" + c + "'").test(page)));
+  check('… two inputs, the cadence and the next payday; bills and pay-later are the log’s now (D-130)', (page.match(/ctl: '/g) || []).length, 2);
   checkTrue('… writes only calendar.*', (page.match(/Spine\.set\('([a-zA-Z.]+)'/g) || []).every(m => /calendar\./.test(m)));
   check('the cadence is owned here', Ownership.field('payCadence').owner, 'calendar');
   checkTrue('the room is for everyone', Registry.requires('calendar').length === 0);
+
+  /* The ledger and the log draw the month (D-130, Q5). */
+  section('Money Calendar from the ledger and the log (D-130)');
+  const hl = hh({ calendar: { cadence: null, nextPaydayDay: null, bills: [] } });
+  hl.ledger.income = [
+    Schema.createIncomeEntry({ id: 'pay', kind: 'w2', label: 'Day job', amountCents: 120000, frequency: 'fortnightly', receivedOn: '2026-09-04' }),
+    Schema.createIncomeEntry({ id: 'maybe', kind: 'bonus', label: 'Bonus?', amountCents: 500000, frequency: 'once', receivedOn: '2026-09-15', dateKind: 'potential' })
+  ];
+  hl.expenses.entries = [
+    Schema.createExpenseEntry({ id: 'rentline', categoryId: 'housing', amountCents: 90000, period: 'monthly', date: '2026-08-01', source: 'log', descriptor: 'Rent' }),
+    Schema.createExpenseEntry({ id: 'tyres', categoryId: 'transport', amountCents: 40000, period: 'once', date: '2026-09-20', source: 'log', dateKind: 'potential', descriptor: 'Tyres?' }),
+    Schema.createExpenseEntry({ id: 'phone', categoryId: 'utilities', amountCents: 6000, period: 'once', date: '2026-09-12', source: 'log', dateKind: 'estimated', descriptor: 'Phone' })
+  ];
+  const rl = Cal.month(hl, T, { now: NOW });
+  checkTrue('with no cadence at all the month still draws, from the ledger', Money.isOk(rl), rl.reason);
+  check('the paydays are the fortnightly landings', rl.paydaySource + '/' + rl.paydays.map(p => p.dom).join(','), 'ledger/4,18');
+  const Ledger = require(path.join(ROOT, 'engines/ledger.js'));
+  const perCash = Ledger.netOf(hl.ledger.income[0], hl, T).cashReceivedCents;
+  check('… each for the cash it brings, net of withholding', rl.paydays[0].cents, perCash);
+  check('the recurring rent line lands on the 1st (and again on the window’s last day, October 1st), the phone on the 12th', rl.logHits.filter(x => !x.potential).map(x => x.dom + ':' + x.cents).join(','), '1:90000,12:6000,1:90000');
+  check('the rest to spread is spending less what the log lists this month', rl.restCents, 180000 - 96000);
+  check('day 1: 500 − 900 rent − the spread', rl.days[0].balanceCents, 50000 - 90000 - Math.round(rl.restCents / 30));
+  check('the potential bonus and the potential tyres are drawn, not counted', rl.potentialInCents + '/' + rl.potentialOutCents + '/' + rl.days[14].incomeCents + '/' + rl.days[19].logCents, '500000/40000/0/0');
+  const wk = Cal.weeks(rl);
+  const cellOf = dom => wk.flat().filter(c => c && c.dom === dom)[0];
+  check('the grid carries what comes in with its kind', cellOf(4).ins.map(x => x.label + ':' + x.kind).join(','), 'Day job:income');
+  check('… and marks a potential landing as such', cellOf(15).ins.map(x => x.label + ':' + x.potential).join(','), 'Bonus?:true');
+  check('… and an estimated bill as estimated', cellOf(12).bills.map(x => x.label + ':' + x.dateKind).join(','), 'Phone:estimated');
+  const rc = Cal.month(hh(), T, { now: NOW });
+  check('with no ledger the cadence still rules, as before', rc.paydaySource + '/' + rc.paydays.map(p => p.dom).join(','), 'cadence/5,20');
+  check('… and a cadence payday shows in the grid as one', Cal.weeks(rc).flat().filter(c => c && c.dom === 5)[0].ins.map(x => x.kind).join(','), 'payday');
+  check('rent comes through Schema.rentMonthlyCents now', Cal.rentCents(hl).cents + '/' + Cal.rentCents(hl).source, '90000/cash-flow');
+
+  /* The one-pager's one-off is a dated entry (D-130). */
+  const SpineC = require(path.join(ROOT, 'shared/spine-v2.js'));
+  SpineC.reset();
+  SpineC.ensurePrimaryPerson('You');
+  SpineC.upsertIncomeEntry(Schema.createIncomeEntry({ id: Schema.ONE_OFF_IN, kind: 'other', label: 'Something coming in', amountCents: 500000, frequency: 'once', receivedOn: '2026-11-01', dateKind: 'estimated', source: 'onepager' }));
+  const oo = Schema.oneOffEntry(SpineC.getProfile());
+  check('a one-off coming in is an income entry, dated and estimated', oo.direction + '/' + oo.cents + '/' + oo.on + '/' + oo.where, 'in/500000/2026-11/ledger');
+  SpineC.removeIncomeEntry(Schema.ONE_OFF_IN);
+  SpineC.upsertExpenseEntry(Schema.createExpenseEntry({ id: Schema.ONE_OFF_OUT, categoryId: 'other', amountCents: 120000, period: 'once', date: '2026-12-01', dateKind: 'estimated', source: 'log' }));
+  const oo2 = Schema.oneOffEntry(SpineC.getProfile());
+  check('… going out, a log entry', oo2.direction + '/' + oo2.cents + '/' + oo2.on + '/' + oo2.where, 'out/120000/2026-12/log');
+  check('… and a household saved before still reads its legacy list', Schema.oneOffEntry(Schema.createHousehold({ oneOffs: [{ cents: 7000, direction: 'in', on: '2026-10' }] })).where, 'legacy');
+  SpineC.reset();
+  const startPage = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
+  checkTrue('Start Here writes the one-off as an entry and reads it back through the helper', /Schema\.ONE_OFF_IN/.test(startPage) && /Schema\.ONE_OFF_OUT/.test(startPage) && /Schema\.oneOffEntry\(x\)/.test(startPage) && !/Spine\.set\('oneOffs', \[Schema\.createOneOff/.test(startPage));
+  const calPage = fs.readFileSync(path.join(ROOT, 'rooms/calendar.html'), 'utf8');
+  checkTrue('the calendar room no longer types bills; it points at the log', !/ctl: 'rentDay'/.test(calPage) && !/ctl: 'plCents'/.test(calPage) && /cash-flow\.html#log/.test(calPage) && /engines\/ledger\.js/.test(calPage));
 };
