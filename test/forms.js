@@ -715,6 +715,29 @@ const CASES = [
     }
   },
   {
+    /* The Income room's entry form: built once, saved on a tap. */
+    room: '/rooms/income.html',
+    container: '#add-form',
+    seed: 'demo',
+    fields: [
+      { sel: '#f-label', type: 'Day job' },
+      { sel: '#f-amount', type: '2400' }
+    ],
+    expect: async (page) => {
+      await page.selectOption('#f-frequency', 'fortnightly');
+      await page.tap('#btn-save');
+      await page.waitForTimeout(300);
+      const e = await page.evaluate(() => ((JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).ledger || {}).income[0]);
+      const listed = await page.evaluate(() => document.querySelectorAll('#entries li').length);
+      return [
+        ['the entry was saved', e && e.label, 'Day job'],
+        ['with its amount', e && e.amountCents, 240000],
+        ['every two weeks', e && e.frequency, 'fortnightly'],
+        ['and is listed at once', listed, 1]
+      ];
+    }
+  },
+  {
     room: '/rooms/cash-flow.html',
     container: '#buckets',
     seed: 'demo',

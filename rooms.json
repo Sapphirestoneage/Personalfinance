@@ -74,6 +74,18 @@
       "order": 3
     },
     {
+      "id": "income",
+      "title": "Income",
+      "file": "rooms/income.html",
+      "reads": [],
+      "writes": [
+        "ledgerIncome"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 3.2
+    },
+    {
       "id": "financial-snapshot",
       "title": "Financial Snapshot",
       "file": "rooms/financial-snapshot.html",

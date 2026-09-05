@@ -581,6 +581,20 @@
       read: function (h) { var ps = ((h.calendar || {}).payLater || []).filter(function (b) { return Money.isEntered(b.cents); }); return ps.length ? Money.ok(ps.reduce(function (t, b) { return t + b.cents; }, 0), { count: ps.length }) : Money.incomplete('None listed.', ['payLater']); },
       format: money
     },
+    /* The ledger (D-128): what Income logs as landing each month, and
+       what the Budget has closed. */
+    ledgerIncome: {
+      label: 'Income logged, a month', owner: 'income', anchor: 'log',
+      read: function (h) {
+        var list = ((h.ledger || {}).income || []).filter(function (e) { return e && e.active !== false && e.frequency !== 'once' && Money.isEntered(e.amountCents); });
+        if (!list.length) return Money.incomplete('Nothing recurring logged yet.', ['ledgerIncome']);
+        var Income = (typeof self !== 'undefined' && self.SLAF && self.SLAF.Income) || (typeof require === 'function' ? require('../engines/income.js') : null);
+        var total = 0;
+        list.forEach(function (e) { var b = Income && Income.basisById(e.frequency); total += b && Money.isEntered(b.periods) ? Math.round(e.amountCents * b.periods / 12) : 0; });
+        return Money.ok(total, { count: list.length });
+      },
+      format: function (v) { return money(v) + '/mo'; }
+    },
     historyCompareTo: {
       label: 'Comparing against', owner: 'history', anchor: 'inputs',
       read: function (h) { var v = (h.history || {}).compareTo; return v ? Money.ok(v) : Money.incomplete('The first snapshot, until you pick one.', ['compareTo']); },

@@ -72,6 +72,23 @@
       ]
     },
     {
+      id: 'income',
+      kind: 'about-you',
+      needs: [],
+      order: 3.2,
+      title: 'Income',
+      blurb: 'Everything coming in, logged as it lands — a paycheque, a gig, a gift, a dividend, the rent — each netted the way it is actually taxed.',
+      href: 'rooms/income.html',
+      tier: 1,
+      tags: ['income'],
+      subsections: [
+        { id: 'month', label: 'This month' },
+        { id: 'log',   label: 'Every entry' },
+        { id: 'add',   label: 'Add an entry' },
+        { id: 'costs', label: 'The costs of earning it' }
+      ]
+    },
+    {
       id: 'cash-flow',
       kind: 'core',
       needs: ['monthlyExpenses'],
