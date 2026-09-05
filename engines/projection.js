@@ -67,6 +67,10 @@
   /**
    * Years until `startCents` reaches `targetCents`, contributing annually.
    * Returns an incomplete Result — never a number — when it never gets there.
+   * Whole years by default (the first year-end at or past the target);
+   * `fractional: true` interpolates inside the crossing year so a small
+   * change in the start moves the answer by a small amount instead of not
+   * at all — the lens's "months bought / pushed" needs that resolution.
    */
   function yearsToTargetCents(opts) {
     var o = opts || {};
@@ -91,9 +95,14 @@
 
     var balance = o.startCents;
     for (var year = 1; year <= maxYears; year++) {
+      var before = balance;
       balance = balance * (1 + rate) + contribution;
       if (balance >= o.targetCents) {
-        return Money.ok(year, {
+        var years = year;
+        if (o.fractional && balance > before) {
+          years = (year - 1) + (o.targetCents - before) / (balance - before);
+        }
+        return Money.ok(years, {
           annualRate: rate,
           annualContributionCents: contribution,
           projectedBalanceCents: Math.round(balance)

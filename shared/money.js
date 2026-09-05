@@ -159,6 +159,17 @@
     return (dollars < 0 ? '-$' : '$') + body;
   }
 
+  /** Integer cents at a wage in cents an hour -> "45 min" / "12.5 h" / "1,240 h". */
+  function formatAsTime(cents, wageCents, opts) {
+    var o = opts || {};
+    if (!isEntered(cents) || !isEntered(wageCents) || wageCents <= 0) return o.placeholder || EM_DASH;
+    var hours = cents / wageCents;
+    var abs = Math.abs(hours), sign = hours < 0 ? '-' : '';
+    if (abs < 1) return sign + Math.round(abs * 60) + ' min';
+    if (abs < 100) return sign + (Math.round(abs * 10) / 10).toLocaleString('en-US', { maximumFractionDigits: 1 }) + ' h';
+    return sign + Math.round(abs).toLocaleString('en-US') + ' h';
+  }
+
   /** Decimal rate -> "7%" / "7.5%". Not-entered -> em dash. */
   function formatRate(rate, opts) {
     var o = opts || {};
@@ -203,6 +214,7 @@
     sumCents: sumCents,
     safeDivide: safeDivide,
     formatCents: formatCents,
+    formatAsTime: formatAsTime,
     formatRate: formatRate,
     formatMonths: formatMonths,
     formatMultiple: formatMultiple,
