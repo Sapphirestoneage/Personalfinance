@@ -40,8 +40,8 @@ Twenty-five rooms are live. Against this document's own tiers:
 | **T6** — Life events + Triple D | — | One engine, one room, templates as data |
 | **T7** — Skill Stacker | — | New room, reads the `dnd/` catalogue |
 | **T8** — FI-losophy rooms | — | Designed Week, Enough, Unlearning, Time Buckets, Dreamline, time-denominated display |
-| **T9** — Dungeons & Dividends (`dnd/`) | **shipped — 11 of 11** | 9.1 the sheet is the form (D-052, D&D block) · 9.3 the encounter engine: CR→DC ladder, three blocker states, natural-predator radar, encounter log (D-064) · 9.6 the free page runs the predator engine on the three saves it can score, and says the other three are blank not bad (D-065) · 9.4 tiers of play: what each stage is for, tierProgress() that refuses to place an unplaced character, the tier filter (D-073) · 9.7 conditions: eight declared statuses, and an exhaustion ladder derived from runway that subtracts from every save (D-074) · 9.8 rests and pace: one conversion through the cost of a week, a long-rest DC that rises with exhaustion, negative surpluses said plainly (D-075) · 9.2 the share card: drawn on canvas, sized to its content, showing only what scored (D-076) · 9.5 provenance on every export, so an importer knows what it may store, plus an import so a character can come home (D-077) · 9.9 DM mode: compose an encounter for someone else, the scenario in the URL, never touching your own character (D-078) · 9.10 bestiary expansion: 29 creatures, every attack type reachable, extensions marked (D-072) · 9.11 SRD attribution and the non-affiliation line. |
-| **T10** — Attack-type chart | **shipped** | `types.html`: six types derived from the bestiary — what each comes at, what stops it, and which work on you — plus what has actually landed, from the encounter log. `attackType`/`tier` now genuinely stored and back-filled for older rows (D-084) |
+| **T9** — Dungeons & Dividends (`dnd/`) | **shipped — 11 of 11** | 9.1 the sheet is the form (DD-007) · 9.3 the encounter engine: CR→DC ladder, three blocker states, natural-predator radar, encounter log (DD-008) · 9.6 the free page runs the predator engine on the three saves it can score, and says the other three are blank not bad (DD-009) · 9.4 tiers of play: what each stage is for, tierProgress() that refuses to place an unplaced character, the tier filter (DD-011) · 9.7 conditions: eight declared statuses, and an exhaustion ladder derived from runway that subtracts from every save (DD-012) · 9.8 rests and pace: one conversion through the cost of a week, a long-rest DC that rises with exhaustion, negative surpluses said plainly (DD-013) · 9.2 the share card: drawn on canvas, sized to its content, showing only what scored (DD-014) · 9.5 provenance on every export, so an importer knows what it may store, plus an import so a character can come home (DD-015) · 9.9 DM mode: compose an encounter for someone else, the scenario in the URL, never touching your own character (DD-016) · 9.10 bestiary expansion: 29 creatures, every attack type reachable, extensions marked (DD-010) · 9.11 SRD attribution and the non-affiliation line. |
+| **T10** — Attack-type chart | **shipped** | `types.html`: six types derived from the bestiary — what each comes at, what stops it, and which work on you — plus what has actually landed, from the encounter log. `attackType`/`tier` now genuinely stored and back-filled for older rows (DD-017) |
 
 Wedding and Dream Calculator are one Goal Costing Engine with two templates,
 per `SPEC.md` §8. Credit Card calc is a filtered view of the Debt Calculator,
@@ -72,11 +72,11 @@ adding them up happens, with its weighting on the page (D-043).
 One Tier 5 idea has been built, and it is **a separate product living in this
 repo** — **Dungeons & Dividends**, in `dnd/`, served at
 `sapphirestoneage.github.io/Personalfinance/dnd/`. It was going to be its own
-repository and is not; see D-049 and D-050 for why it moved into a folder
+repository and is not; see DD-004 and DD-005 for why it moved into a folder
 instead. It is still not a room: it is not in `shared/registry.js`, it never
 appears on the Map, and it has its own front door, built to be handed to
 someone who has never opened SPARKS. See the D&D block of `DECISIONS.md`
-(D-046 onward, below the divider) for the mechanics settled while building it
+(DD-001 onward, below the divider) for the mechanics settled while building it
 — HP measured in weeks, the scoring calibration, why the class count is seven
 and not ten, and how the sheet stays typeable on a phone.
 
@@ -377,7 +377,7 @@ Everything below this line is the owner's document, kept as written.
 - [x] ✅ MBTI-for-Finance
 - [x] ✅ Astrology-for-Finance
 - [x] ✅ Financial Enneagram (solo version)
-- [x] ✅ DND Character Sheet — **BUILT, as a separate product** that lives in this repo under `dnd/`. Not a room here. D&D block of `DECISIONS.md`, D-046 onward
+- [x] ✅ DND Character Sheet — **BUILT, as a separate product** that lives in this repo under `dnd/`. Not a room here. D&D block of `DECISIONS.md`, DD-001 onward
 - [x] ✅ Harry Potter House / Divergent Faction
 - [x] ✅ League of Legends / Smite Character System (individualized financial avatars)
 - [x] ✅ Maslow's Hierarchy applied to finance

@@ -68,6 +68,28 @@ in the stored shape, which rooms were updated to match, and what a future
 room needs to know before calling `getProfile()` / `updateProfile()` for the
 first time.
 
+## Two decision sequences
+
+`DECISIONS.md` holds two logs separated by a divider, and they do not share
+numbers:
+
+- **`D-001` onward — SPARKS / SLAF**, above the divider. A new one goes
+  immediately *above* the divider.
+- **`DD-001` onward — Dungeons & Dividends** (`dnd/`), below it. A new one
+  goes at the *end* of the file.
+
+Take the next free number in whichever sequence you are writing in. They cannot
+collide, which is the point: the D&D entries used to restart at D-046 and clash
+head-on with the SPARKS entries of the same numbers, and parallel sessions kept
+having to renumber on merge.
+
+`dnd/shared/*.js` are byte-identical vendored copies of the SPARKS files, so the
+`D-0xx` references inside them are SPARKS numbers. Leave them alone —
+renumbering them breaks the vendored-copy guard. `test/run.js` enforces all of
+this: prefixes by side of the divider, uniqueness within each sequence, that
+every `DD-` reference in the repo resolves, and that no vendored copy carries
+one.
+
 ## Workflow
 
 - One commit per room; brand/systemic passes get their own commit, separate

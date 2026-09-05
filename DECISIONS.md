@@ -4123,43 +4123,124 @@ Weather rows, the levels strip and the benchmarks card; the page sweep;
 
 ---
 
-# The Dungeons & Dividends entries
+## D-085 — Two decision sequences, so they can stop colliding
 
-Everything below this line is about the `dnd/` tool. **The numbers D-046
-through D-052 appear twice in this file** — once above for SPARKS and once
-below for D&D — because these entries were written while the D&D tool was
-going to be its own repository (D-049, D-050). In a reference like
-"DECISIONS.md D-046", the one that is meant is the one on the same side of
-this line as the file doing the referencing: `shared/suggest.js` means the
-SPARKS D-046, `dnd/engines/character.js` means the D&D one. The exception is
-`dnd/shared/*.js`, which are byte-identical vendored copies of the SPARKS
-files and therefore carry SPARKS numbers.
+The D&D entries were written while that tool was going to be its own repository
+(DD-004, DD-005), so they restarted their numbering at D-046 — head-on into the
+SPARKS entries D-046 through D-052, which already existed. Seven numbers meant
+two different decisions each, and which one a reference meant depended on which
+file was doing the referencing. `shared/suggest.js` saying "D-046" meant the
+scroll-and-tap bug; `dnd/engines/character.js` saying "D-046" meant HP being
+measured in weeks.
 
-**From here on the log is one sequence.** A new entry — for either side —
-takes the highest number in the whole file plus one, which is why the next
-D&D entry after D-052 is D-064. A new SPARKS entry goes immediately *above*
-this divider; a new D&D entry goes at the end of the file. Renumbering the
-seven duplicates properly is a documentation pass of its own and has not
-been done.
+That was survivable. What was not was the knock-on: parallel sessions kept
+reaching for the same next free number, and one side had to renumber on merge
+**four times in two days** — SPARKS T3 moved past the D&D T9 entries, then the
+D&D T9 entries moved past those, then SPARKS T4, then the D&D type chart. Each
+was cheap. Together they were a standing tax on every merge, and every one of
+them rewrote numbers that other commit messages already referenced.
 
-Twice now two sessions have reached for the same next number and one has
-renumbered on merge: the SPARKS T3 entries moved past the D&D D-064/D-065 to
-become D-066–D-071, and the D&D T9 entries then moved past those to become
-D-072–D-078. **The rule that settles it: whichever side is still unpushed
-renumbers.** It applied a third time: the SPARKS T4 entries, written as
-D-072–D-076 while the D&D T9 entries took those numbers on main, became
-D-079–D-083 on merge, and a fourth: the D&D T10 entry, written as D-079 while
-the T4 entries took that number, became D-084. From D-064 on, every number in
-this file is unique.
+### What changed
 
-That this keeps happening is the argument for renumbering the seven duplicates
-and being done with it. It has not been worth interrupting feature work for so
-far — but four collisions in two days is the point at which it starts costing
-more than the pass would.
+The D&D log now has its own sequence. Seventeen entries renumbered in place, in
+the order they were written:
+
+    D-046 … D-052   →  DD-001 … DD-007
+    D-064, D-065    →  DD-008, DD-009
+    D-072 … D-078   →  DD-010 … DD-016
+    D-084           →  DD-017
+
+**The SPARKS side is byte-identical to what it was.** That was the constraint
+worth holding: seventy-four entries, referenced from dozens of files, none of
+them touched. Verified by diffing the two halves of the file before and after
+rather than by reading it.
+
+Going forward: a SPARKS entry takes the next `D-` and goes immediately above the
+divider; a D&D entry takes the next `DD-` and goes at the end of the file. Two
+sessions can now write at once without either having to know what the other is
+doing.
+
+### What did not change, deliberately
+
+`dnd/shared/*.js` are byte-identical vendored copies of the SPARKS files, so the
+`D-0xx` references inside them are SPARKS numbers and stay exactly as they are.
+Renumbering them would have broken the vendored-copy guard — which is precisely
+what that guard is for, but a test now says so out loud before anyone tries.
+
+### The guard
+
+`test/run.js` gained a section that enforces the split four ways: every heading
+above the divider uses `D-` and every one below uses `DD-`; no number repeats
+within a sequence; every `DD-` reference anywhere in the repo resolves to a real
+entry; and no vendored copy carries a `DD-` reference. Each was verified by
+breaking it on purpose — a `D-` heading below the divider, a duplicated number, a
+reference pointing at an entry number that does not exist, and a `DD-` snuck into
+`dnd/shared/schema.js` — and watching the right check fail each time.
+
+(The dangling-reference test is why this paragraph describes that case rather
+than naming an example number: writing one here would make this entry itself a
+dangling reference, and the guard catches that too.)
+
+### One number deliberately skipped
+
+This entry is **D-085, not D-084**, even though D-084 is now free. D-084 was the
+type-chart entry for about an hour and is referenced by that name in a pushed
+commit message. Reusing it for something else would make that commit message
+point at the wrong decision, which is the exact failure this whole pass exists to
+remove.
+
+### Compatibility note
+
+**Stored shape:** nothing. This is documentation.
+
+**Rooms updated:** `DECISIONS.md` (17 headings and their cross-references, plus
+the divider text, which now describes a scheme rather than apologising for a
+collision), `ROADMAP.md` (five D&D-facing lines), `CLAUDE.md` (the convention,
+so the next session reads it before writing an entry), `test/run.js` (the guard
+and one D&D reference), and the `dnd/` files that cite D&D decisions:
+`bestiary.html`, `engines/character.js`, `test/run.js`, `test/parity.js` and
+three data-file notes.
+
+**Before writing any of these from a new room:** check which side of the divider
+you are on before picking a number, and never renumber a `D-` reference inside
+`dnd/shared/*.js`.
 
 ---
 
-## D-046 — HP is measured in weeks, which is what makes §3A stop contradicting itself
+# The Dungeons & Dividends entries
+
+Everything below this line is about the `dnd/` tool, and **these entries have
+their own sequence: `DD-001` onward.**
+
+They did not always. The D&D entries were written while that tool was going to
+be its own repository (DD-004, DD-005), so they restarted at DD-001 and collided
+head-on with the SPARKS entries of the same numbers — "DECISIONS.md DD-001"
+meant two different decisions depending on which file was doing the
+referencing. Worse, two sessions working in parallel kept reaching for the same
+next number and one of them had to renumber on merge; that happened four times
+in two days.
+
+So the two products now have two sequences that cannot contend:
+
+    D-001 …    SPARKS / SLAF, above this line
+    DD-001 …   Dungeons & Dividends, below it
+
+**A new SPARKS entry takes the next `D-` number and goes immediately above this
+divider. A new D&D entry takes the next `DD-` number and goes at the end of the
+file.** Neither can collide with the other, whoever is writing and whenever
+they merge.
+
+One exception worth knowing: `dnd/shared/*.js` are byte-identical vendored
+copies of the SPARKS files, so the `D-0xx` references inside them are SPARKS
+numbers and must stay that way — changing them would break the vendored-copy
+guard, which is the point of that guard.
+
+`test/run.js` enforces the split: every heading above this line matches `D-`,
+every heading below matches `DD-`, and no number appears twice in either
+sequence.
+---
+
+## DD-001 — HP is measured in weeks, which is what makes §3A stop contradicting itself
 
 The Dungeons & Dividends rulebook defines Hit Points twice in the same
 section, and the two definitions do not agree.
@@ -4198,7 +4279,7 @@ die pool and the runway as two unrelated numbers would have meant monster
 damage could never be applied to runway, which guts the encounter mechanic
 before it is written.
 
-`engines/character.js` holds this — in the sibling repo, not here (D-049):
+`engines/character.js` holds this — in the sibling repo, not here (DD-004):
 `maxHp()` returns `{ weeks, reducedByDebt }`, `currentHp()` returns a measured
 Result. `WEEKS_PER_YEAR = 52`.
 
@@ -4213,7 +4294,7 @@ someone who has filled in their money but not yet answered the quiz.
 
 ---
 
-## D-047 — The eighteen scoring formulas, and why "average" means the median American
+## DD-002 — The eighteen scoring formulas, and why "average" means the median American
 
 The rulebook's own §13 lists what it had not settled:
 
@@ -4298,7 +4379,7 @@ are different answers and are now different options.
 
 ---
 
-## D-048 — Seven classes, not ten
+## DD-003 — Seven classes, not ten
 
 §4 of the rulebook gives seven levers and §8A–8G give seven complete Level
 1–20 tables. But §7, describing the Epic Boon layer, says:
@@ -4324,9 +4405,9 @@ just is not a class.
 
 ---
 
-## D-049 — The character sheet is a sibling, not a room
+## DD-004 — The character sheet is a sibling, not a room
 
-D-046 through D-048 were written while building the Dungeons & Dividends
+DD-001 through DD-003 were written while building the Dungeons & Dividends
 character sheet as two rooms in this suite — `rooms/character-sheet.html` and
 `rooms/dnd-reference.html`, registered in `shared/registry.js`, on the Map,
 with their own engine and three reference tables in `data/`.
@@ -4379,7 +4460,7 @@ never complete.
 
 Nothing but the record. No room, no registry entry, no engine, no `data/dnd_*`
 tables, no tests. `ROADMAP.md` keeps one line under Tier 5 saying the idea was
-built and where it went, and D-046 through D-048 stay exactly as written —
+built and where it went, and DD-001 through DD-003 stay exactly as written —
 they document mechanics that are still true, and this log is the answer to
 "where did that come from", which is the one thing this repo should still be
 able to answer.
@@ -4401,22 +4482,22 @@ has not been built.
 
 ---
 
-## D-050 — The character sheet lives here after all, in a folder
+## DD-005 — The character sheet lives here after all, in a folder
 
-D-049 moved the Dungeons & Dividends sheet out of this repo and into its own.
+DD-004 moved the Dungeons & Dividends sheet out of this repo and into its own.
 That was the right shape and the wrong cost: creating and configuring a second
 repository is GitHub work, and the owner is new to GitHub and does not write
 code. A correct architecture nobody can operate is not correct.
 
 **Decision: it lives in `dnd/`, as a folder in this repository.** Everything
-D-049 says about *what it is* still holds — it is not a room, it is not in
+DD-004 says about *what it is* still holds — it is not a room, it is not in
 `shared/registry.js`, it never appears on the Map, it has its own front door
 at `dnd/index.html` and its own browser storage under `dnd.character.v1`. It
 shares an address, and nothing else.
 
 ### The folder is built to leave
 
-The point of D-049 was that this thing should be able to stand alone, and that
+The point of DD-004 was that this thing should be able to stand alone, and that
 is preserved literally: `dnd/` carries its own copy of `money.js`, `schema.js`,
 `reference.js`, `projection.js` and `tier0.js`, its own `theme.css`, fonts and
 favicon. Moving it into its own repository later is `git mv` and nothing else
@@ -4454,7 +4535,7 @@ one that keeps working if the folder ever does move out.
 
 ---
 
-## D-051 — The D&D tool's licence posture, and what "parody" actually constrains
+## DD-006 — The D&D tool's licence posture, and what "parody" actually constrains
 
 The Dungeons & Dividends audit (BRIEF.md §T9) requires an SRD 5.1 CC-BY-4.0
 attribution and a non-affiliation line **in the first commit**, and sets the
@@ -4492,7 +4573,7 @@ edit the list.
 
 ---
 
-## D-052 — The D&D sheet is the form, and how that survives D-034
+## DD-007 — The D&D sheet is the form, and how that survives D-034
 
 BRIEF.md §9.1 asks for the Tier 2 page to be inverted: no intake form, the five
 numbers typed into the boxes they actually feed. Income sits in Strength, cash
@@ -4560,7 +4641,7 @@ names the offending string.
 
 ---
 
-## D-064 — A monster's danger is a property of the meeting, not of the monster
+## DD-008 — A monster's danger is a property of the meeting, not of the monster
 
 BRIEF.md §9.3 asks for an encounter engine: pick a creature from the bestiary,
 run it at the sheet, and get back what actually happens. The design question it
@@ -4639,7 +4720,7 @@ numbers. They *can* be immune by holding a `negate` blocker, which is the point
 — the Payday Loan Wraith cannot touch you at all if you have three months of
 reserve, and no Wisdom score achieves that.
 
-Damage is already in weeks, because HP is weeks (D-046). Rulebook §3A's Massive
+Damage is already in weeks, because HP is weeks (DD-001). Rulebook §3A's Massive
 Damage rule then falls out for free: a single hit at or above Max HP skips the
 death saves and goes straight to insolvency, and the engine flags it.
 
@@ -4691,7 +4772,7 @@ character, not a play history.
 
 ---
 
-## D-065 — The free page tells you what hunts you, and is careful about what it cannot see
+## DD-009 — The free page tells you what hunts you, and is careful about what it cannot see
 
 The Tier 1 page asks for no money at all. That is the whole point of it: it is
 the thing you send to someone who has never thought about a savings rate. But it
@@ -4801,7 +4882,7 @@ the last three. It ranks only scored saves. If you call it, do not print its
 
 ---
 
-## D-072 — Fifteen more creatures, and a mark saying which are ours
+## DD-010 — Fifteen more creatures, and a mark saying which are ours
 
 BRIEF §9.10. The bestiary had fourteen creatures from the rulebook. Three things
 were wrong with that as a set, and none of them was "too few".
@@ -4875,7 +4956,7 @@ parses; `"0"` is a legitimate value meaning no hit-point damage.
 
 ---
 
-## D-073 — Four tiers of play, and a function that refuses to place you
+## DD-011 — Four tiers of play, and a function that refuses to place you
 
 BRIEF §9.4. The sheet could tell you your Level and the encounter room could
 tell you what hunts you, but nothing told you what part of the game you were in
@@ -4948,7 +5029,7 @@ if you add a tier, those are the checks that will tell you what you broke.
 
 ---
 
-## D-074 — Exhaustion is derived, statuses are declared, and both change the game
+## DD-012 — Exhaustion is derived, statuses are declared, and both change the game
 
 BRIEF §9.7. Two different kinds of condition, and the whole entry is about why
 they are treated differently.
@@ -5042,7 +5123,7 @@ never having been asked.
 
 ---
 
-## D-075 — Rests and pace, in the only unit HP has
+## DD-013 — Rests and pace, in the only unit HP has
 
 BRIEF §9.8, which the build-status table had marked as blocked on T7. It was not.
 T7's Skill Stacker would supply *skill* XP; the Experience this sheet already has
@@ -5062,7 +5143,7 @@ All three recoveries convert through the same figure: **what a week of runway
 costs, which is a week of expenses.** A short rest is the monthly surplus divided
 by that. A potion is a windfall divided by that. A long rest is the deficit
 divided by the short-rest rate. Nothing new was invented to make them commensurable
-— D-046 already did that work.
+— DD-001 already did that work.
 
 The demo persona: expenses of $3,150 a month make a week of HP cost **$727**, the
 surplus restores **2.4 weeks a month**, and the 5-week deficit closes in **2.1
@@ -5131,7 +5212,7 @@ incomplete, which is more often than you would expect.
 
 ---
 
-## D-076 — The card is the product, so it is drawn rather than laid out
+## DD-014 — The card is the product, so it is drawn rather than laid out
 
 BRIEF §9.2. This tool is a lead magnet, and what actually travels is not the
 page — it is the thing someone pastes into a group chat. `card.html` builds it.
@@ -5201,7 +5282,7 @@ theme-class checks — that is deliberate.
 
 ---
 
-## D-077 — The file says which of itself may be believed, and a character can come home
+## DD-015 — The file says which of itself may be believed, and a character can come home
 
 BRIEF §9.5, which the build-status table had marked as blocked on T2's suggested
 state. It was blocked on the wrong thing. T2 gives SPARKS somewhere to *put* a
@@ -5287,7 +5368,7 @@ self-report.
 
 ---
 
-## D-078 — DM mode: the scenario is the URL, and it never touches your character
+## DD-016 — DM mode: the scenario is the URL, and it never touches your character
 
 BRIEF §9.9, the last of T9. The encounter room answers *what does this do to
 me*. `dm.html` answers *what would this do to someone like this* — a different
@@ -5374,7 +5455,7 @@ has to know about specific blockers, and it is the one place to check.
 
 ---
 
-## D-084 — Six types, derived from the bestiary, and a log field I said existed and did not
+## DD-017 — Six types, derived from the bestiary, and a log field I said existed and did not
 
 T10. §9.3 gave every creature an `attackType` and nothing ever read them
 sideways. This does: not *what is this monster* but **what kind of thing works on
@@ -5426,9 +5507,9 @@ unstated runway not being rested, applied a fourth time.
 Exhaustion (§9.7) is folded in, and the raw save and the effective one are both
 reported, so a row that moved says why.
 
-### A correction: D-064 described a log that did not exist
+### A correction: DD-008 described a log that did not exist
 
-D-064's compatibility note said the encounter log's shape was
+DD-008's compatibility note said the encounter log's shape was
 `{at, monster, attackType, tier, targetSave, dc, hitChance, damageWeeks,
 hpBefore, hpAfter, mode}`. **It was not.** `logEncounter` wrote
 `{on, monsterId, outcome, reason, damageWeeks, source}` and never carried

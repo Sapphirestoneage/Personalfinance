@@ -23,7 +23,7 @@
    cover". At 1 HP = 1 week the two finally agree in scale — a Level 1 d6 class
    is ~6 weeks of runway, a Level 20 d12 with good CON is ~4 years — so Max HP
    is the die formula (capacity) and Current HP is measured runway, in the same
-   unit. DECISIONS.md D-046.
+   unit. DECISIONS.md DD-001.
    ========================================================================== */
 (function (root, factory) {
   var deps;
@@ -520,7 +520,7 @@
          max, contingent on a CON save.
        Potion (a windfall) — heals a fixed amount immediately.
 
-     HP is weeks (D-046), so all three convert through one number: what a week
+     HP is weeks (DD-001), so all three convert through one number: what a week
      of runway costs, which is a week of expenses. Nothing here invents a
      threshold; the only judgement call is the Long Rest's save DC, which is in
      data and marked as an extension.                                        */

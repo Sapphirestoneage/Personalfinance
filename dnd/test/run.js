@@ -77,7 +77,7 @@ section('Dungeons & Dividends — the schema holds');
 
   /* -- Section 4 says seven levers. Section 7 says "ten classes", which is a
         leftover from an earlier draft; seven is what the tables actually
-        contain and what this build follows. D-048. ------------------------ */
+        contain and what this build follows. DD-003. ------------------------ */
   check('seven classes', C.classes.length, 7);
   C.classes.forEach(function (k) {
     check(`${k.id} has a full 1-20 table`, k.levels.length, 20);
@@ -201,7 +201,7 @@ section('Dungeons & Dividends — level, HP and AC');
   check('past 100% stays 20', L(4.00), 20);
 
   /* Max HP is in WEEKS — the ruling that reconciles Section 3A's two
-     incompatible definitions of HP. D-046. */
+     incompatible definitions of HP. DD-001. */
   check('d8 at level 1 with CON +0', Character.maxHp(8, 1, 0, 0, TABLES).weeks, 8);
   check('d8 at level 5 with CON +2', Character.maxHp(8, 5, 2, 0, TABLES).weeks, 38);
   check('d12 at level 20 with CON +3', Character.maxHp(12, 20, 3, 0, TABLES).weeks, 205);
@@ -1072,7 +1072,7 @@ section('Dungeons & Dividends — rests and pace');
   const rich = household(7200000, 315000, 1000000, 4800000);
 
   /* Short rest: surplus per cycle, converted to runway at one week of expenses
-     per week of HP. The conversion is the whole point — HP is weeks (D-046). */
+     per week of HP. The conversion is the whole point — HP is weeks (DD-001). */
   const sr = Character.shortRest(rich, TABLES);
   checkTrue('a short rest scores for a complete household', Money.isOk(sr));
   check('a week of HP costs a week of expenses',

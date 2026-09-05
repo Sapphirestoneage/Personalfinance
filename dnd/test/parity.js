@@ -77,7 +77,7 @@ console.log('\n[HP units: weeks on the box, months on the sub-line]');
   /* And the round trip: months back to weeks lands on the same integer. */
   check('months converts back to the same week count',
     Math.round(monthsShown * WEEKS_PER_MONTH), weeks);
-  /* Max HP is a capacity in the SAME unit — mixing them is the D-046 trap. */
+  /* Max HP is a capacity in the SAME unit — mixing them is the DD-001 trap. */
   check('max HP is in weeks too, so the bar is meaningful',
     s.maxHp.weeks >= weeks || s.maxHp.reducedByDebt, true);
 })();

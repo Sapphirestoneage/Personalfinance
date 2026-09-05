@@ -909,7 +909,7 @@
   "quizNote": "Two questions per declared sub-stat, each worth 0-6 points, summed onto a base of 8 — which lands exactly on the 8-20 scale with no rescaling. Every question is BEHAVIOURAL: it asks what you did or would do, not whether you can recall a definition. There is no arithmetic and nothing to revise for, because a quiz that makes someone feel stupid is a quiz they close. The zero-point option is always a real thing real people do, phrased so that picking it costs no dignity. `order` drives display sequence: the two questions for a sub-stat sit far apart, and the driest topics (tax, instruments) come last, once someone is already invested in the run.",
   "hp": {
     "unitWeeks": true,
-    "note": "1 HP = one week of expenses covered by liquid assets. Agreed with the owner 2026-09-04 to resolve the two incompatible HP definitions in rulebook §3A. See DECISIONS.md D-046.",
+    "note": "1 HP = one week of expenses covered by liquid assets. Agreed with the owner 2026-09-04 to resolve the two incompatible HP definitions in rulebook §3A. See DECISIONS.md DD-001.",
     "minGainPerLevel": 1,
     "debtBurdenMaxHpPenalty": {
       "level": 2,
