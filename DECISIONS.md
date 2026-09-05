@@ -4352,6 +4352,17 @@ exceeds the hours you said — the demo's $72,000 needs 57 billable hours
 at the rate that matches a 40-hour job), and the ramp length. Templates
 may now carry `derived` figures.
 
+**6 · Moving somewhere else.** Forty cities in `data/col_index.json`, a
+hand-curated cost-of-living index recalled from the composite
+publishers and marked unverified, with the state each city is in; the
+move itself from `data/moving_cost.json` in three bands. The month is
+scaled by the index ratio; the state income tax on each side comes from
+`engines/tax.js` through a new `stateTaxAnnual` engine call with the
+state swapped, and the difference lands on the month. Lines: the ratio,
+the same month there, the state tax here and there, the move. Raleigh to
+Austin on the demo: a month a fifteenth dearer, $2,375.75 of NC tax
+gone.
+
 **Verified.** `node test/run.js`: for each, month 1 and month 12 of the
 default run on the demo by longhand — the child's first year at $3,150 +
 $1,200 + $1,000 + $250 a month with the $3,000 birth in month 1; a parent

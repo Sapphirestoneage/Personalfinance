@@ -1,0 +1,600 @@
+{
+  "id": "move",
+  "title": "Moving somewhere else",
+  "blurb": "A city's cost of living against where you are, the state-tax line each side, and what the move itself costs.",
+  "version": "1.0",
+  "asOf": "2026-01-01",
+  "confidence": "unverified",
+  "drawsOn": [
+    "monthlyExpenses",
+    "grossAnnualIncome",
+    "state",
+    "filingStatus",
+    "cashSavings"
+  ],
+  "questions": [
+    {
+      "id": "fromCity",
+      "ask": "Where you are (nearest listed city)",
+      "choices": [
+        {
+          "id": "national",
+          "label": "Not listed — national average"
+        },
+        {
+          "id": "new_york",
+          "label": "New York, NY"
+        },
+        {
+          "id": "san_francisco",
+          "label": "San Francisco, CA"
+        },
+        {
+          "id": "san_jose",
+          "label": "San Jose, CA"
+        },
+        {
+          "id": "honolulu",
+          "label": "Honolulu, HI"
+        },
+        {
+          "id": "boston",
+          "label": "Boston, MA"
+        },
+        {
+          "id": "washington_dc",
+          "label": "Washington, DC"
+        },
+        {
+          "id": "los_angeles",
+          "label": "Los Angeles, CA"
+        },
+        {
+          "id": "seattle",
+          "label": "Seattle, WA"
+        },
+        {
+          "id": "san_diego",
+          "label": "San Diego, CA"
+        },
+        {
+          "id": "oakland",
+          "label": "Oakland, CA"
+        },
+        {
+          "id": "miami",
+          "label": "Miami, FL"
+        },
+        {
+          "id": "portland",
+          "label": "Portland, OR"
+        },
+        {
+          "id": "denver",
+          "label": "Denver, CO"
+        },
+        {
+          "id": "chicago",
+          "label": "Chicago, IL"
+        },
+        {
+          "id": "sacramento",
+          "label": "Sacramento, CA"
+        },
+        {
+          "id": "philadelphia",
+          "label": "Philadelphia, PA"
+        },
+        {
+          "id": "austin",
+          "label": "Austin, TX"
+        },
+        {
+          "id": "minneapolis",
+          "label": "Minneapolis, MN"
+        },
+        {
+          "id": "baltimore",
+          "label": "Baltimore, MD"
+        },
+        {
+          "id": "las_vegas",
+          "label": "Las Vegas, NV"
+        },
+        {
+          "id": "nashville",
+          "label": "Nashville, TN"
+        },
+        {
+          "id": "phoenix",
+          "label": "Phoenix, AZ"
+        },
+        {
+          "id": "raleigh",
+          "label": "Raleigh, NC"
+        },
+        {
+          "id": "charlotte",
+          "label": "Charlotte, NC"
+        },
+        {
+          "id": "atlanta",
+          "label": "Atlanta, GA"
+        },
+        {
+          "id": "salt_lake_city",
+          "label": "Salt Lake City, UT"
+        },
+        {
+          "id": "dallas",
+          "label": "Dallas, TX"
+        },
+        {
+          "id": "tampa",
+          "label": "Tampa, FL"
+        },
+        {
+          "id": "pittsburgh",
+          "label": "Pittsburgh, PA"
+        },
+        {
+          "id": "columbus",
+          "label": "Columbus, OH"
+        },
+        {
+          "id": "houston",
+          "label": "Houston, TX"
+        },
+        {
+          "id": "kansas_city",
+          "label": "Kansas City, MO"
+        },
+        {
+          "id": "detroit",
+          "label": "Detroit, MI"
+        },
+        {
+          "id": "st_louis",
+          "label": "St. Louis, MO"
+        },
+        {
+          "id": "indianapolis",
+          "label": "Indianapolis, IN"
+        },
+        {
+          "id": "cincinnati",
+          "label": "Cincinnati, OH"
+        },
+        {
+          "id": "cleveland",
+          "label": "Cleveland, OH"
+        },
+        {
+          "id": "memphis",
+          "label": "Memphis, TN"
+        },
+        {
+          "id": "oklahoma_city",
+          "label": "Oklahoma City, OK"
+        },
+        {
+          "id": "el_paso",
+          "label": "El Paso, TX"
+        }
+      ],
+      "default": "national"
+    },
+    {
+      "id": "toCity",
+      "ask": "Where you would go",
+      "choices": [
+        {
+          "id": "new_york",
+          "label": "New York, NY"
+        },
+        {
+          "id": "san_francisco",
+          "label": "San Francisco, CA"
+        },
+        {
+          "id": "san_jose",
+          "label": "San Jose, CA"
+        },
+        {
+          "id": "honolulu",
+          "label": "Honolulu, HI"
+        },
+        {
+          "id": "boston",
+          "label": "Boston, MA"
+        },
+        {
+          "id": "washington_dc",
+          "label": "Washington, DC"
+        },
+        {
+          "id": "los_angeles",
+          "label": "Los Angeles, CA"
+        },
+        {
+          "id": "seattle",
+          "label": "Seattle, WA"
+        },
+        {
+          "id": "san_diego",
+          "label": "San Diego, CA"
+        },
+        {
+          "id": "oakland",
+          "label": "Oakland, CA"
+        },
+        {
+          "id": "miami",
+          "label": "Miami, FL"
+        },
+        {
+          "id": "portland",
+          "label": "Portland, OR"
+        },
+        {
+          "id": "denver",
+          "label": "Denver, CO"
+        },
+        {
+          "id": "chicago",
+          "label": "Chicago, IL"
+        },
+        {
+          "id": "sacramento",
+          "label": "Sacramento, CA"
+        },
+        {
+          "id": "philadelphia",
+          "label": "Philadelphia, PA"
+        },
+        {
+          "id": "austin",
+          "label": "Austin, TX"
+        },
+        {
+          "id": "minneapolis",
+          "label": "Minneapolis, MN"
+        },
+        {
+          "id": "baltimore",
+          "label": "Baltimore, MD"
+        },
+        {
+          "id": "las_vegas",
+          "label": "Las Vegas, NV"
+        },
+        {
+          "id": "nashville",
+          "label": "Nashville, TN"
+        },
+        {
+          "id": "phoenix",
+          "label": "Phoenix, AZ"
+        },
+        {
+          "id": "raleigh",
+          "label": "Raleigh, NC"
+        },
+        {
+          "id": "charlotte",
+          "label": "Charlotte, NC"
+        },
+        {
+          "id": "atlanta",
+          "label": "Atlanta, GA"
+        },
+        {
+          "id": "salt_lake_city",
+          "label": "Salt Lake City, UT"
+        },
+        {
+          "id": "dallas",
+          "label": "Dallas, TX"
+        },
+        {
+          "id": "tampa",
+          "label": "Tampa, FL"
+        },
+        {
+          "id": "pittsburgh",
+          "label": "Pittsburgh, PA"
+        },
+        {
+          "id": "columbus",
+          "label": "Columbus, OH"
+        },
+        {
+          "id": "houston",
+          "label": "Houston, TX"
+        },
+        {
+          "id": "kansas_city",
+          "label": "Kansas City, MO"
+        },
+        {
+          "id": "detroit",
+          "label": "Detroit, MI"
+        },
+        {
+          "id": "st_louis",
+          "label": "St. Louis, MO"
+        },
+        {
+          "id": "indianapolis",
+          "label": "Indianapolis, IN"
+        },
+        {
+          "id": "cincinnati",
+          "label": "Cincinnati, OH"
+        },
+        {
+          "id": "cleveland",
+          "label": "Cleveland, OH"
+        },
+        {
+          "id": "memphis",
+          "label": "Memphis, TN"
+        },
+        {
+          "id": "oklahoma_city",
+          "label": "Oklahoma City, OK"
+        },
+        {
+          "id": "el_paso",
+          "label": "El Paso, TX"
+        }
+      ],
+      "default": "raleigh"
+    },
+    {
+      "id": "band",
+      "ask": "How far",
+      "choices": [
+        {
+          "id": "local",
+          "label": "Across town"
+        },
+        {
+          "id": "regional",
+          "label": "Within the region"
+        },
+        {
+          "id": "crossCountry",
+          "label": "Across the country"
+        }
+      ],
+      "default": "regional"
+    },
+    {
+      "id": "startsOn",
+      "ask": "Moving in how many months?",
+      "unit": "months",
+      "default": 3,
+      "min": 0,
+      "max": 36
+    }
+  ],
+  "startsOn": "@startsOn",
+  "gapMonths": 0,
+  "diff": {
+    "income": [],
+    "expenses": [
+      {
+        "label": "A month scaled by the cost-of-living ratio",
+        "from": 0,
+        "months": null,
+        "multiplier": {
+          "/": [
+            {
+              "table": "colIndex",
+              "path": [
+                "cities",
+                "@toCity",
+                "index"
+              ]
+            },
+            {
+              "coalesce": [
+                {
+                  "table": "colIndex",
+                  "path": [
+                    "cities",
+                    "@fromCity",
+                    "index"
+                  ]
+                },
+                {
+                  "table": "colIndex",
+                  "path": [
+                    "national"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "label": "State income tax, the difference a month",
+        "from": 0,
+        "months": null,
+        "addCents": {
+          "round": {
+            "/": [
+              {
+                "-": [
+                  {
+                    "fn": "stateTaxAnnual",
+                    "args": {
+                      "state": {
+                        "table": "colIndex",
+                        "path": [
+                          "cities",
+                          "@toCity",
+                          "state"
+                        ]
+                      },
+                      "grossAnnualCents": "$grossAnnualCents"
+                    }
+                  },
+                  {
+                    "fn": "stateTaxAnnual",
+                    "args": {
+                      "state": "$state",
+                      "grossAnnualCents": "$grossAnnualCents"
+                    }
+                  }
+                ]
+              },
+              12
+            ]
+          }
+        }
+      }
+    ],
+    "oneTime": [
+      {
+        "label": "The move itself",
+        "when": 0,
+        "cents": {
+          "table": "movingCost",
+          "path": [
+            "bands",
+            "@band",
+            "cents"
+          ]
+        }
+      }
+    ],
+    "assets": []
+  },
+  "lines": [
+    {
+      "id": "ratio",
+      "label": "Cost of living there, against here",
+      "unit": "percent",
+      "value": {
+        "-": [
+          {
+            "/": [
+              {
+                "table": "colIndex",
+                "path": [
+                  "cities",
+                  "@toCity",
+                  "index"
+                ]
+              },
+              {
+                "coalesce": [
+                  {
+                    "table": "colIndex",
+                    "path": [
+                      "cities",
+                      "@fromCity",
+                      "index"
+                    ]
+                  },
+                  {
+                    "table": "colIndex",
+                    "path": [
+                      "national"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          1
+        ]
+      },
+      "note": "The index ratio less one: +20% means a month costs a fifth more."
+    },
+    {
+      "id": "monthDelta",
+      "label": "The same month, there",
+      "unit": "dollarsMonthly",
+      "value": {
+        "round": {
+          "*": [
+            "$monthlyExpensesCents",
+            {
+              "+": [
+                1,
+                "^ratio"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "stateNow",
+      "label": "State income tax here, a year",
+      "unit": "dollars",
+      "value": {
+        "fn": "stateTaxAnnual",
+        "args": {
+          "state": "$state",
+          "grossAnnualCents": "$grossAnnualCents"
+        }
+      }
+    },
+    {
+      "id": "stateThere",
+      "label": "State income tax there, a year",
+      "unit": "dollars",
+      "value": {
+        "fn": "stateTaxAnnual",
+        "args": {
+          "state": {
+            "table": "colIndex",
+            "path": [
+              "cities",
+              "@toCity",
+              "state"
+            ]
+          },
+          "grossAnnualCents": "$grossAnnualCents"
+        }
+      }
+    },
+    {
+      "id": "moveCost",
+      "label": "The move",
+      "unit": "dollars",
+      "value": {
+        "table": "movingCost",
+        "path": [
+          "bands",
+          "@band",
+          "cents"
+        ]
+      }
+    }
+  ],
+  "protect": [
+    "The job, or an offer in hand before the lease is signed",
+    "The cushion after the move"
+  ],
+  "cut": [],
+  "tripleD": {},
+  "outputs": [
+    "netWorthAtEndCents",
+    "fiDateShiftMonths"
+  ],
+  "horizonMonths": 120,
+  "sources": [
+    "data/col_index.json",
+    "data/moving_cost.json",
+    "data/state_brackets_2026.json",
+    "data/federal_brackets_2026.json",
+    "data/triple_d.json",
+    "data/return_bands.json"
+  ]
+}

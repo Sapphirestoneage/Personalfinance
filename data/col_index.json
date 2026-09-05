@@ -1,0 +1,212 @@
+{
+  "id": "col_index",
+  "version": "1.0",
+  "asOf": "2025-12-31",
+  "source": "A hand-curated cost-of-living index for forty US cities, national average = 100, in the region of the C2ER / Numbeo composite indices for 2025 \u2014 housing weighted heavily, as those indices do.",
+  "confidence": "unverified",
+  "confidenceNote": "Recalled, rounded, and curated by hand; not copied from any one publisher. Use the ratio between two cities as a rough scale on a whole month of spending, and change the answer when you know better. Rent is the line that moves most and is not split out.",
+  "note": "index: national average 100. state: for the state-tax line. `from` defaults to the national average when the current city is not chosen. D-087.",
+  "national": 100,
+  "cities": {
+    "new_york": {
+      "label": "New York, NY",
+      "state": "NY",
+      "index": 187
+    },
+    "san_francisco": {
+      "label": "San Francisco, CA",
+      "state": "CA",
+      "index": 179
+    },
+    "san_jose": {
+      "label": "San Jose, CA",
+      "state": "CA",
+      "index": 171
+    },
+    "honolulu": {
+      "label": "Honolulu, HI",
+      "state": "HI",
+      "index": 166
+    },
+    "boston": {
+      "label": "Boston, MA",
+      "state": "MA",
+      "index": 148
+    },
+    "washington_dc": {
+      "label": "Washington, DC",
+      "state": "DC",
+      "index": 147
+    },
+    "los_angeles": {
+      "label": "Los Angeles, CA",
+      "state": "CA",
+      "index": 146
+    },
+    "seattle": {
+      "label": "Seattle, WA",
+      "state": "WA",
+      "index": 145
+    },
+    "san_diego": {
+      "label": "San Diego, CA",
+      "state": "CA",
+      "index": 143
+    },
+    "oakland": {
+      "label": "Oakland, CA",
+      "state": "CA",
+      "index": 140
+    },
+    "miami": {
+      "label": "Miami, FL",
+      "state": "FL",
+      "index": 122
+    },
+    "portland": {
+      "label": "Portland, OR",
+      "state": "OR",
+      "index": 121
+    },
+    "denver": {
+      "label": "Denver, CO",
+      "state": "CO",
+      "index": 118
+    },
+    "chicago": {
+      "label": "Chicago, IL",
+      "state": "IL",
+      "index": 116
+    },
+    "sacramento": {
+      "label": "Sacramento, CA",
+      "state": "CA",
+      "index": 116
+    },
+    "philadelphia": {
+      "label": "Philadelphia, PA",
+      "state": "PA",
+      "index": 112
+    },
+    "austin": {
+      "label": "Austin, TX",
+      "state": "TX",
+      "index": 110
+    },
+    "minneapolis": {
+      "label": "Minneapolis, MN",
+      "state": "MN",
+      "index": 108
+    },
+    "baltimore": {
+      "label": "Baltimore, MD",
+      "state": "MD",
+      "index": 107
+    },
+    "las_vegas": {
+      "label": "Las Vegas, NV",
+      "state": "NV",
+      "index": 106
+    },
+    "nashville": {
+      "label": "Nashville, TN",
+      "state": "TN",
+      "index": 105
+    },
+    "phoenix": {
+      "label": "Phoenix, AZ",
+      "state": "AZ",
+      "index": 105
+    },
+    "raleigh": {
+      "label": "Raleigh, NC",
+      "state": "NC",
+      "index": 103
+    },
+    "charlotte": {
+      "label": "Charlotte, NC",
+      "state": "NC",
+      "index": 102
+    },
+    "atlanta": {
+      "label": "Atlanta, GA",
+      "state": "GA",
+      "index": 102
+    },
+    "salt_lake_city": {
+      "label": "Salt Lake City, UT",
+      "state": "UT",
+      "index": 102
+    },
+    "dallas": {
+      "label": "Dallas, TX",
+      "state": "TX",
+      "index": 101
+    },
+    "tampa": {
+      "label": "Tampa, FL",
+      "state": "FL",
+      "index": 100
+    },
+    "pittsburgh": {
+      "label": "Pittsburgh, PA",
+      "state": "PA",
+      "index": 98
+    },
+    "columbus": {
+      "label": "Columbus, OH",
+      "state": "OH",
+      "index": 96
+    },
+    "houston": {
+      "label": "Houston, TX",
+      "state": "TX",
+      "index": 95
+    },
+    "kansas_city": {
+      "label": "Kansas City, MO",
+      "state": "MO",
+      "index": 94
+    },
+    "detroit": {
+      "label": "Detroit, MI",
+      "state": "MI",
+      "index": 93
+    },
+    "st_louis": {
+      "label": "St. Louis, MO",
+      "state": "MO",
+      "index": 92
+    },
+    "indianapolis": {
+      "label": "Indianapolis, IN",
+      "state": "IN",
+      "index": 92
+    },
+    "cincinnati": {
+      "label": "Cincinnati, OH",
+      "state": "OH",
+      "index": 92
+    },
+    "cleveland": {
+      "label": "Cleveland, OH",
+      "state": "OH",
+      "index": 91
+    },
+    "memphis": {
+      "label": "Memphis, TN",
+      "state": "TN",
+      "index": 89
+    },
+    "oklahoma_city": {
+      "label": "Oklahoma City, OK",
+      "state": "OK",
+      "index": 87
+    },
+    "el_paso": {
+      "label": "El Paso, TX",
+      "state": "TX",
+      "index": 85
+    }
+  }
+}

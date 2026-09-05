@@ -60,6 +60,8 @@
     housingConventions: 'housing_conventions.json',
     priceToRent: 'price_to_rent.json',
     mortgageRates: 'mortgage_rates.json',
+    colIndex: 'col_index.json',
+    movingCost: 'moving_cost.json',
     accessRules: 'access_rules.json',
     confidenceWeights: 'confidence_weights.json',
     uiBenefits: 'ui_benefits.json',

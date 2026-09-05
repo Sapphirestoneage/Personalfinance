@@ -6831,6 +6831,38 @@ section('Life events: going freelance, on the demo');
   check('and no COBRA', part.monthly[0].expensesCents, 315000);
 })();
 
+section('Life events: moving, on the demo');
+
+(function () {
+  const E = require(path.join(ROOT, 'engines/events.js'));
+  const Tax = require(path.join(ROOT, 'engines/tax.js'));
+  const T = Object.assign({}, TABLES, {
+    commonCosts: require(path.join(ROOT, 'data/common_costs.json')),
+    tripleD: require(path.join(ROOT, 'data/triple_d.json')),
+    returnBands: require(path.join(ROOT, 'data/return_bands.json')),
+    colIndex: require(path.join(ROOT, 'data/col_index.json')),
+    movingCost: require(path.join(ROOT, 'data/moving_cost.json')),
+    stateBrackets: require(path.join(ROOT, 'data/state_brackets_2026.json'))
+  });
+  const tpl = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/move.json'), 'utf8'));
+  const h = Demo.build();
+  check('forty cities, and every one has a state', Object.keys(T.colIndex.cities).length === 40 && Object.values(T.colIndex.cities).every(c => /^[A-Z]{2}$/.test(c.state)), true);
+  /* Raleigh to Austin: 103 → 110, NC's 4.25% flat tax to none. */
+  const r = E.run(h, tpl, { startsOn: 0, fromCity: 'raleigh', toCity: 'austin', band: 'crossCountry' }, { tables: T, d: 'default' });
+  const by = {}; r.lines.forEach(l => { by[l.id] = l; });
+  check('the ratio: 110 over 103, less one', by.ratio.value, 110 / 103 - 1, 1e-12);
+  const ncTax = Tax.estimate(h, T).stateCents;
+  check('state tax here from the one tax engine: NC on the demo', by.stateNow.value, ncTax);
+  check('and $2,375.75 it is', ncTax, 237575);
+  check('state tax there: Texas has none', by.stateThere.value, 0);
+  check('month 1 spending: the month scaled by 110/103, less a twelfth of the NC tax', r.monthly[0].expensesCents, Math.round(315000 * 110 / 103) + Math.round(-ncTax / 12));
+  check('the move itself, across the country, in month 1', r.monthly[0].cashCents, 950000 + (486000 - 24000) - (Math.round(315000 * 110 / 103) + Math.round(-ncTax / 12)) - 900000);
+  check('month 12 cash', r.monthly[11].cashCents, 950000 - 900000 + 12 * ((486000 - 24000) - (Math.round(315000 * 110 / 103) + Math.round(-ncTax / 12))));
+  const dflt = E.run(h, tpl, { startsOn: 0 }, { tables: T, d: 'default' });
+  check('from "not listed": the national average is the base', dflt.lines.filter(l => l.id === 'ratio')[0].value, 103 / 100 - 1, 1e-12);
+  check('staying in the same state changes no tax', dflt.lines.filter(l => l.id === 'stateThere')[0].value, ncTax);
+})();
+
 section('The D&D folder\'s vendored copies');
 
 (function () {

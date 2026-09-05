@@ -1,0 +1,23 @@
+{
+  "id": "moving_cost",
+  "version": "1.0",
+  "asOf": "2025-12-31",
+  "source": "Bands for a household move, in the region of industry surveys (AMSA / moving.com): a local move around $1,500\u20132,500, an in-region move around $4,000, a cross-country move with movers around $8,000\u201310,000.",
+  "confidence": "convention",
+  "confidenceNote": "Bands, not quotes; a self-drive truck is a fraction of these and a full-service move with packing is more. A proposal for the move template.",
+  "note": "Cents, one-time. D-087.",
+  "bands": {
+    "local": {
+      "label": "Across town",
+      "cents": 200000
+    },
+    "regional": {
+      "label": "Within the region",
+      "cents": 400000
+    },
+    "crossCountry": {
+      "label": "Across the country",
+      "cents": 900000
+    }
+  }
+}
