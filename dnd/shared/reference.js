@@ -40,6 +40,8 @@
     dndClasses: 'dnd_classes.json',
     dndScoring: 'dnd_scoring.json',
     dndAlignments: 'dnd_alignments.json',
+    /* The campaign's scenario bank. */
+    dndScenarios: 'dnd_scenarios.json',
     /* The Skill Stacker's catalogue, authored here (D-090). */
     skills: 'skills.json',
     stacks: 'stacks.json',
