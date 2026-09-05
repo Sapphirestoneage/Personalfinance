@@ -10,6 +10,11 @@
                                 spread over the months until the purchase.
      maxIra       investments   the year's IRA limit, catch-up from age 50,
                                 age from the spine's date of birth.
+     emergencyFund savings      the gap to N months of spending in cash,
+                                spread over a horizon — both from
+                                data/savings_presets.json; spending is
+                                Schema.monthlyExpensesCents, cash is
+                                Schema.cashCents.
      max401k      investments   the year's elective 401(k) limit with its
                                 catch-up — only when an employer 401(k) is
                                 indicated (retirement.has401k === true).
@@ -38,6 +43,8 @@
   var DEFS = {
     ruleOfFive: { id: 'ruleOfFive', bucket: 'savings', label: 'Rule of Five', structural: false,
       short: 'Save toward five of the thing you are eyeing', owner: { room: 'big-purchase', label: 'Big Purchase' } },
+    emergencyFund: { id: 'emergencyFund', bucket: 'savings', label: 'Emergency fund', structural: false,
+      short: 'Close the gap to a few months of spending in cash, over a year', owner: { room: 'start', label: 'Start Here' } },
     maxIra: { id: 'maxIra', bucket: 'investments', label: 'Max the IRA', structural: true,
       short: 'A twelfth of the year’s IRA limit, catch-up from 50', owner: { room: 'start', label: 'Start Here' } },
     max401k: { id: 'max401k', bucket: 'investments', label: 'Max the 401(k)', structural: true,
@@ -68,6 +75,20 @@
     var d = new Date(now);
     return isNaN(d.getTime()) ? undefined : d.toISOString().slice(0, 10);
   }
+  function emergencyFund(h, T) {
+    var P = T && T.savingsPresets && T.savingsPresets.emergencyFund;
+    if (!P) return Money.incomplete('The savings presets table is not loaded.', ['savingsPresets']);
+    var spend = Schema.monthlyExpensesCents(h);
+    if (!Money.isOk(spend)) return Money.incomplete('Add a month of spending in Start Here and this reads it.', ['monthlyExpenses']);
+    var cash = Schema.cashCents(h);
+    if (!Money.isOk(cash)) return Money.incomplete('Add your cash in Start Here and this reads it.', ['cashSavings']);
+    var target = spend.value * P.targetMonths;
+    var gap = Math.max(0, target - cash.value);
+    var monthly = Math.ceil(gap / P.horizonMonths);
+    return Money.ok(monthly, { targetCents: target, targetMonths: P.targetMonths, horizonMonths: P.horizonMonths, cashCents: cash.value, gapCents: gap, spendCents: spend.value, spendSource: spend.source, referenceVersion: T.savingsPresets.version,
+      why: gap === 0 ? 'You already hold ' + P.targetMonths + ' months of spending in cash.'
+        : Money.formatCents(gap) + ' short of ' + P.targetMonths + ' months of spending (' + Money.formatCents(target) + '), over ' + P.horizonMonths + ' months.' });
+  }
   function catchUp(h, now) {
     var age = Schema.primaryAge(h, isoDay(now));
     return { age: age, applies: Money.isEntered(age) && age >= CATCH_UP_AGE, unknown: !Money.isEntered(age) };
@@ -92,7 +113,7 @@
       referenceVersion: T.irsLimits.version,
       why: Money.formatCents(annual) + ' a year of your own deferral' + (c.applies ? ' with the catch-up from ' + CATCH_UP_AGE : '') + ', a twelfth each month; the employer match is on top.' });
   }
-  var COMPUTE = { ruleOfFive: ruleOfFive, maxIra: maxIra, max401k: max401k };
+  var COMPUTE = { ruleOfFive: ruleOfFive, emergencyFund: emergencyFund, maxIra: maxIra, max401k: max401k };
 
   /**
    * Is the Max 401(k) question still to be asked? True when nobody has
@@ -157,6 +178,7 @@
     CATCH_UP_AGE: CATCH_UP_AGE,
     DEFAULT_MONTHS_AWAY: DEFAULT_MONTHS_AWAY,
     ruleOfFive: ruleOfFive,
+    emergencyFund: emergencyFund,
     maxIra: maxIra,
     max401k: max401k,
     ask401k: ask401k,

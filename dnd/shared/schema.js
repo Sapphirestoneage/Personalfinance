@@ -198,7 +198,7 @@
     'household.ledger.months[].id':              { class: 'raw',        unit: 'id',      note: 'a MonthRecord, YYYY-MM: status closed, estimated and actual per bucket (income, expenses, savings, investments, debt), actualRevised for late entries, closedAt. Append-only; closing twice is refused. Owned by Budget. D-128' },
     'household.budget.estimated':                { class: 'raw',        unit: 'object',  note: 'YYYY-MM → bucket → cents: an open month\'s estimate set by hand (the Estimated-vs-Actual room\'s one write). Absent = last closed month\'s actual, else the onboarding figures. Owned by Budget. D-128' },
     'household.notApplicable':                   { class: 'raw',        unit: 'object',  note: 'key → true: a structural option the household marked Not applicable (a preset id such as max401k or maxIra, or an ownership field id). Excluded from every live figure; ownership rows read it as not applicable, never as missing. Still reachable in the Budget room\'s Hypothetical mode, which never writes. Owned by Budget. D-129' },
-    'household.budget.presets':                  { class: 'raw',        unit: 'object',  note: 'YYYY-MM → bucket → [preset id]: the Savings / Investments presets stacked into that month\'s Estimated (ruleOfFive, maxIra, max401k — engines/presets.js). They stack on a hand-set figure and replace the fallback ones. Owned by Budget. D-129' },
+    'household.budget.presets':                  { class: 'raw',        unit: 'object',  note: 'YYYY-MM → bucket → [preset id]: the Savings / Investments presets stacked into that month\'s Estimated (ruleOfFive, emergencyFund, maxIra, max401k — engines/presets.js). They stack on a hand-set figure and replace the fallback ones. Owned by Budget. D-129' },
     'rerank.rows[].id':                          { class: 'raw',        unit: 'id',      note: 'a categoryId, or an expense entry id for a custom line. D-085' },
     'rerank.rows[].miss':                        { class: 'raw',        unit: 'enum',    values: ['yes', 'some', 'no'], note: 'would you miss it? null = not asked' },
     'rerank.rows[].who':                         { class: 'raw',        unit: 'enum',    values: ['me', 'both', 'show'], note: 'who is it really for: me, both of us, or for show' },
@@ -1136,7 +1136,7 @@
     });
     return { estimated: est, presets: presets };
   }
-  var BUDGET_PRESETS = ['ruleOfFive', 'maxIra', 'max401k'];
+  var BUDGET_PRESETS = ['ruleOfFive', 'emergencyFund', 'maxIra', 'max401k'];
   /** Only the keys marked true survive; anything else is "applies". */
   function createNotApplicable(fields) {
     var out = {};

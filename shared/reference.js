@@ -30,6 +30,7 @@
     retirementMilestones: 'retirement_milestones.json',
     netWorthPercentiles: 'net_worth_percentiles_scf_2022.json',
     irsLimits: 'irs_limits_2026.json',
+    savingsPresets: 'savings_presets.json',
     fooRules: 'foo_rules.json',
     expenseCategories: 'expense_categories.json',
     budgetTemplates: 'budget_templates.json',

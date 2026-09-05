@@ -7,7 +7,7 @@ module.exports = function (t) {
   const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
   section('Presets (D-129): Rule of Five, Max IRA, Max 401(k), stacked into the estimate');
 
-  const T = { irsLimits: TABLES.irsLimits, effectiveTaxRates: TABLES.effectiveTaxRates, seTax: TABLES.seTax, expenseCategories: TABLES.expenseCategories };
+  const T = { irsLimits: TABLES.irsLimits, savingsPresets: TABLES.savingsPresets, effectiveTaxRates: TABLES.effectiveTaxRates, seTax: TABLES.seTax, expenseCategories: TABLES.expenseCategories };
   const L = TABLES.irsLimits.limits;
   const NOW = Date.parse('2026-09-15T12:00:00');
   const hh = (extra) => Schema.createHousehold(Object.assign({ filingStatus: 'single', state: 'NC',
@@ -46,6 +46,16 @@ module.exports = function (t) {
   check('… no date: a year, and it says so', Presets.ruleOfFive(hh({ purchase: { priceCents: 200000 } }), T).monthsAssumed + '/' + Presets.ruleOfFive(hh({ purchase: { priceCents: 200000 } }), T).value, 'true/' + Math.ceil(q.shortfallCents / 12));
   check('… already passing: nothing more', Presets.ruleOfFive(hh({ purchase: { priceCents: 50000 } }), T).value, 0);
 
+  /* Emergency fund (D-130): the gap to N months of spending, over the horizon, from the table. */
+  const SP = TABLES.savingsPresets.emergencyFund;
+  const he = hh({ expenses: { monthlyEssential: { estimatedValueCents: 250000 } } });
+  const ef = Presets.emergencyFund(he, T);
+  check('the table says three months over a year', SP.targetMonths + '/' + SP.horizonMonths, '3/12');
+  check('$4,000 in cash against 3 × $2,500: $3,500 short, over 12 months', ef.value + '/' + ef.gapCents + '/' + ef.targetCents, Math.ceil(350000 / 12) + '/350000/750000');
+  check('… already there: nothing more', Presets.emergencyFund(hh({ expenses: { monthlyEssential: { estimatedValueCents: 100000 } } }), T).value, 0);
+  check('… no spending figure: it asks', Presets.emergencyFund(hh(), T).status, 'incomplete');
+  checkTrue('… offered in Savings, not structural', Presets.available(he, T, { now: NOW }).some(p => p.id === 'emergencyFund' && p.bucket === 'savings' && p.offered && !p.structural));
+
   /* Stacking into the estimate. */
   const hs = hh({ retirement: { has401k: true }, purchase: { priceCents: 200000, monthsAway: 10 }, budget: { presets: { '2026-09': { investments: ['maxIra', 'max401k'], savings: ['ruleOfFive'] } } } });
   const st = Presets.stacked(hs, T, '2026-09', { now: NOW });
@@ -59,6 +69,8 @@ module.exports = function (t) {
   hs.retirement.has401k = false;
   check('take the 401(k) away and it drops out of the live figure, the IRA stays', Budget.month(hs, T, T.expenseCategories, '2026-09', NOW).rows.filter(r => r.bucket === 'investments')[0].estimatedCents, ira.value);
   check('the constructor keeps only known presets, once each', Schema.createBudget({ presets: { '2026-09': { investments: ['maxIra', 'maxIra', 'nope'], income: [] }, bad: { savings: ['ruleOfFive'] } } }).presets['2026-09'].investments.join(',') + '/' + Object.keys(Schema.createBudget({ presets: { bad: { savings: ['ruleOfFive'] } } }).presets).length, 'maxIra/0');
+  const hs2 = hh({ expenses: { monthlyEssential: { estimatedValueCents: 250000 } }, purchase: { priceCents: 200000, monthsAway: 10 }, budget: { presets: { '2026-09': { savings: ['ruleOfFive', 'emergencyFund'] } } } });
+  check('two Savings presets stack', Presets.stacked(hs2, T, '2026-09', { now: NOW }).savings.cents, r5.value + ef.value);
 
   /* The spine: toggle, and the one-time 401(k) answer. */
   Spine.reset();

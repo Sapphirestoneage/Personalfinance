@@ -465,7 +465,7 @@
   Spine.registerRoom(ROOM_ID);
   SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(render);
-  Reference.load(['effectiveTaxRates', 'seTax', 'expenseCategories', 'budgetTemplates', 'irsLimits']).then(function (tables) {
+  Reference.load(['effectiveTaxRates', 'seTax', 'expenseCategories', 'budgetTemplates', 'irsLimits', 'savingsPresets']).then(function (tables) {
     TABLES = tables;
     render();
     if (!justAdded) jumpToHash();

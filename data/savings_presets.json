@@ -1,0 +1,13 @@
+{
+  "id": "savings_presets",
+  "version": "2026.1",
+  "asOf": "2026-09-05",
+  "source": "Conventions, not law: the emergency-fund target of three months of spending is the low end of the 3–6 months the FOO ladder's step names (data/foo_rules.json); the twelve-month horizon is the same 'over a year' the Rule of Five preset assumes when no date is set. Both are starting points the household can change by changing what it saves.",
+  "confidence": "convention",
+  "confidenceNote": "A rule of thumb. The right number of months depends on how steady the income is; Variable Income's buffer is the place that reasons about that.",
+  "note": "Read by engines/presets.js for the Savings presets. Never inline these in a calculator.",
+  "emergencyFund": {
+    "targetMonths": 3,
+    "horizonMonths": 12
+  }
+}
