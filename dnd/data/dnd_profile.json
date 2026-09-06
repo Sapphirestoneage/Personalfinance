@@ -49,7 +49,35 @@
       },
       "weakTo": {
         "monster": "Lifestyle-Creep Hydra",
-        "why": "It does not attack your income — it grows to match it. Every raise feeds it, and you never notice because nothing ever gets worse."
+        "why": "It does not attack your income — it grows to match it. Every raise feeds it, and you never notice because nothing ever gets worse.",
+        "people": [
+          {
+            "who": "The manager who says “we’ll revisit it” and genuinely means to",
+            "why": "Unkindness you could fight. Warmth makes you wait, and waiting is the whole cost."
+          },
+          {
+            "who": "Somebody your age who is visibly further ahead",
+            "why": "You do not get faster. You get less careful, and you buy something to feel level."
+          },
+          {
+            "who": "A recruiter who calls in a bad week",
+            "why": "You will take the call in the mood rather than in the plan, and the mood is always cheaper than you are."
+          }
+        ],
+        "circumstances": [
+          {
+            "when": "The month a raise actually lands",
+            "why": "It is committed before it clears. You have had four raises and the same amount of money."
+          },
+          {
+            "when": "A new title with no number attached to it",
+            "why": "It feels like the win and it postpones the win, and you will not notice for eighteen months."
+          },
+          {
+            "when": "Being the best-paid person in a small room",
+            "why": "You stop asking, because you have won a league you did not mean to enter."
+          }
+        ]
       },
       "origins": [
         {
@@ -68,7 +96,55 @@
           "detail": "You are determined not to be the person who was loyal and quietly left behind."
         }
       ],
-      "needsToHear": "You are allowed to stop climbing for a year and keep what you have already got. That is not laziness — it is the only way any of this becomes money rather than income."
+      "needsToHear": "You are allowed to stop climbing for a year and keep what you have already got. That is not laziness — it is the only way any of this becomes money rather than income.",
+      "sign": {
+        "name": "The Forge",
+        "glyph": "⚒",
+        "element": "Fire",
+        "modality": "Cardinal",
+        "ruledBy": "Mars, who has never once waited",
+        "hour": "Monday, ten past nine",
+        "metal": "Iron",
+        "stone": "Carnelian",
+        "card": "The Chariot, upright and moving",
+        "season": "The fortnight before a review"
+      },
+      "alignment": "Chaotic Ambitious",
+      "patron": {
+        "name": "The Ledger That Reads Back",
+        "pact": "It shows you what everyone else is paid. It will not tell you whether you are happy, and it has never been asked."
+      },
+      "curse": "You will always know, to the pound, what you are worth — and never once feel it.",
+      "resistances": [
+        "Being told to be patient",
+        "Long hours",
+        "Awkward conversations about money"
+      ],
+      "vulnerabilities": [
+        "Praise offered instead of a number",
+        "Comparison",
+        "Any raise, in the month it lands"
+      ],
+      "bane": "The word 'soon'.",
+      "omens": {
+        "good": [
+          "You said a number out loud and did not immediately apologise for it",
+          "Somebody else asked for more because they watched you do it",
+          "A month where your income rose and your spending did not"
+        ],
+        "ill": [
+          "Three years of the same job title",
+          "A raise you have already spent",
+          "Being the best-paid person in a very small room"
+        ]
+      },
+      "reading": "Mars is loud in your chart and has been for years, which is why you keep moving and why you are tired. This is a season for consolidation rather than conquest: the thing you are chasing has already been caught twice and set down again without being noticed. Somebody will offer you recognition in place of money. Recognise it, thank them, and ask again anyway.",
+      "roles": {
+        "first": "Effort is your main instrument. More money arriving is your answer to almost every question, and it is a genuinely good answer — it is simply the one you reach for before you have checked whether the question was about arriving or about leaving.",
+        "second": "Underneath whatever you present as, you privately believe you could out-earn the problem. It is what you reach for at two in the morning, and it is why you find being stuck unbearable rather than merely annoying.",
+        "third": "It is what people meet first — the drive, the plans, the sense that you are going somewhere. Some of it is real and some of it is a coat you put on in rooms, and you cannot always tell which.",
+        "shadow": "You almost never pull this lever. Everything gets solved by cutting or by investing, and the largest number on your page has sat unnegotiated for years. Watch for: a decade of quiet excellence, a salary that moved with inflation and not a step further, and the sense that you did everything right."
+      }
     },
     "keeper": {
       "headline": "You find money by removing things.",
@@ -111,7 +187,35 @@
       },
       "weakTo": {
         "monster": "Wage-Stagnation Wraith",
-        "why": "It cannot touch anyone who asks. You do not ask, so it feeds for years while you are busy being excellent at not spending."
+        "why": "It cannot touch anyone who asks. You do not ask, so it feeds for years while you are busy being excellent at not spending.",
+        "people": [
+          {
+            "who": "Anyone who calls you tight, lightly, in front of others",
+            "why": "It lands far harder than they will ever know, and you will overspend within the fortnight to prove something to nobody."
+          },
+          {
+            "who": "A salesperson offering a discount you did not ask for",
+            "why": "The saving is real, which is exactly the problem. You will buy a thing you did not want at a price you cannot fault."
+          },
+          {
+            "who": "The friend who never checks a price and seems fine",
+            "why": "You will conclude the checking was the mistake rather than that they earn more."
+          }
+        ],
+        "circumstances": [
+          {
+            "when": "A sale with a deadline on it",
+            "why": "Your whole defence is deliberation and the deadline is designed to remove it."
+          },
+          {
+            "when": "A pay review you do not prepare for",
+            "why": "You will accept the first number, having spent the year saving a fraction of what you just left behind."
+          },
+          {
+            "when": "Any decision where the cheapest option is genuinely worse",
+            "why": "You are excellent at price and untrained at cost, and here they point in opposite directions."
+          }
+        ]
       },
       "origins": [
         {
@@ -130,7 +234,55 @@
           "detail": "Thrift was not a strategy there, it was a virtue — and virtues are much harder to put down when they stop working."
         }
       ],
-      "needsToHear": "You have already won the hard half. The half you are avoiding is one conversation long, and you are the person best equipped to keep what it produces."
+      "needsToHear": "You have already won the hard half. The half you are avoiding is one conversation long, and you are the person best equipped to keep what it produces.",
+      "sign": {
+        "name": "The Sieve",
+        "glyph": "⌗",
+        "element": "Earth",
+        "modality": "Mutable",
+        "ruledBy": "Mercury, keeper of small print",
+        "hour": "Sunday, just before eight",
+        "metal": "Tin",
+        "stone": "Jet",
+        "card": "The Hermit, lamp lowered",
+        "season": "The last three days of the month"
+      },
+      "alignment": "Lawful Frugal",
+      "patron": {
+        "name": "The Unopened Envelope",
+        "pact": "Nothing gets past you. In exchange, you will never be able to leave a bill unread, including on holiday."
+      },
+      "curse": "You will find the leak every time and never once look at the size of the tap.",
+      "resistances": [
+        "Marketing",
+        "A downturn",
+        "Being sold to by anyone at all"
+      ],
+      "vulnerabilities": [
+        "A genuine discount",
+        "Being called tight",
+        "Any saving that costs an hour to make"
+      ],
+      "bane": "A subscription that renews annually.",
+      "omens": {
+        "good": [
+          "You cancelled something and did not miss it once",
+          "A month where the fixed costs went down and the life did not",
+          "You negotiated something without rehearsing it first"
+        ],
+        "ill": [
+          "Forty minutes spent saving four pounds",
+          "A pay review you did not attend",
+          "Somebody else in the house hiding a purchase from you"
+        ]
+      },
+      "reading": "Mercury governs you and Mercury is interested in detail rather than scale, which is both your gift and the whole problem. You have swept every corner of a room you did not choose the size of. There is a conversation available to you this season that is worth more than a decade of the work you are currently doing, and you will find nine reasons to have it later.",
+      "roles": {
+        "first": "You run your life on what leaves rather than what arrives, and it works — you keep more of every pound than almost anyone. The cost is that you can spend a year sanding a floor and never once look at the ceiling.",
+        "second": "It is your fallback when things tighten. The first instinct in a bad month is to cut, and you are good at it, which is exactly why you sometimes cut when you should have asked.",
+        "third": "People read you as careful, and mostly mean it as a compliment. It is also why nobody tells you about anything expensive until it is decided.",
+        "shadow": "Almost nothing leaves your attention. Money arrives, money goes, and the gap is a feeling rather than a figure. Watch for: an income that has doubled, a life that feels the same, and no honest answer to where the difference went."
+      }
     },
     "builder": {
       "headline": "You see a business where other people see an offer.",
@@ -173,7 +325,35 @@
       },
       "weakTo": {
         "monster": "MLM Cultist",
-        "why": "It is built for you specifically. Be your own boss, own your time, unlimited ceiling — every word of the pitch is aimed at the thing you already want."
+        "why": "It is built for you specifically. Be your own boss, own your time, unlimited ceiling — every word of the pitch is aimed at the thing you already want.",
+        "people": [
+          {
+            "who": "Anyone who says “you should sell that”",
+            "why": "You will start a fourth thing that evening. It is the nicest sentence in the world and it costs you a year."
+          },
+          {
+            "who": "A first customer who wants it slightly different",
+            "why": "You will rebuild it for them, for free, and call it product-market fit."
+          },
+          {
+            "who": "Somebody successful who says your idea is nearly right",
+            "why": "Nearly is the hook. You will spend six months chasing their version of it rather than shipping yours."
+          }
+        ],
+        "circumstances": [
+          {
+            "when": "The week something almost works",
+            "why": "Almost is more addictive than working. Working is quiet; almost is electric and it never ends."
+          },
+          {
+            "when": "A quiet month at the day job",
+            "why": "The energy has to go somewhere and it will go into starting rather than finishing."
+          },
+          {
+            "when": "Being asked what you do, at a party",
+            "why": "You will describe the newest thing, out loud, and having described it you will owe it your next three months."
+          }
+        ]
       },
       "origins": [
         {
@@ -192,7 +372,55 @@
           "detail": "You learned what it feels like when your life turns on somebody else's mood. You have been building away from that ever since."
         }
       ],
-      "needsToHear": "Finish one. Not the best one — any one. A finished small thing teaches you more than four brilliant unfinished ones, and it is the only thing that ever compounds."
+      "needsToHear": "Finish one. Not the best one — any one. A finished small thing teaches you more than four brilliant unfinished ones, and it is the only thing that ever compounds.",
+      "sign": {
+        "name": "The Workshop",
+        "glyph": "✳",
+        "element": "Fire",
+        "modality": "Mutable",
+        "ruledBy": "An unnamed star, catalogued twice and lost both times",
+        "hour": "Two in the morning",
+        "metal": "Brass",
+        "stone": "Pyrite — and you know why",
+        "card": "The Magician, tools laid out, none picked up",
+        "season": "Any week something almost works"
+      },
+      "alignment": "Chaotic Self-Employed",
+      "patron": {
+        "name": "The Door You Built Yourself",
+        "pact": "It opens onto anywhere. It does not lock, it has no walls attached, and you must keep building it forever or it is simply a door in a field."
+      },
+      "curse": "Everything you start is yours. So is everything you do not finish.",
+      "resistances": [
+        "Redundancy",
+        "Being managed",
+        "A single point of failure"
+      ],
+      "vulnerabilities": [
+        "A new idea",
+        "Encouragement",
+        "Being asked what you do at a party"
+      ],
+      "bane": "The eightieth per cent.",
+      "omens": {
+        "good": [
+          "Somebody paid you, once, for anything",
+          "A thing you built ran for a week without you touching it",
+          "You said no to a good idea because you were finishing a better one"
+        ],
+        "ill": [
+          "Four projects, all at seventy per cent",
+          "A domain name bought at midnight",
+          "Explaining optionality to somebody who did not ask"
+        ]
+      },
+      "reading": "Your ruling star is uncatalogued, which suits you and explains the difficulty. Fire in mutable season means enormous ignition and very little containment. The work this month is not a new fire — it is a lid. Somebody will show you an opportunity that is genuinely good and it is still, this season, a trap, because it is the fourth one.",
+      "roles": {
+        "first": "You make money by making things. It is the lever with no ceiling and the worst hourly rate for the first two years, and you are constitutionally unable to stop reaching for it.",
+        "second": "It runs underneath the day job as a permanent private plan. Half your good ideas arrive while you are being paid to think about something else.",
+        "third": "People assume you have something on the side, and they are usually right. It makes you interesting at parties and slightly unreliable on a Wednesday.",
+        "shadow": "Every pound you receive comes from exactly one place, and one person's decision could end it. Watch for: a job you would not choose being the only thing you have, and no answer at all to the question of what you would do on Monday."
+      }
     },
     "compounder": {
       "headline": "You would rather your money did the work.",
@@ -235,7 +463,35 @@
       },
       "weakTo": {
         "monster": "Day-Trading Leech",
-        "why": "It does not need you to be reckless. It only needs you to be bored, competent, and convinced you could do slightly better than the index."
+        "why": "It does not need you to be reckless. It only needs you to be bored, competent, and convinced you could do slightly better than the index.",
+        "people": [
+          {
+            "who": "The friend up three hundred per cent who mentions it lightly",
+            "why": "Lightly is the load-bearing word. You will not copy them; you will just start looking, which is the same thing eleven months later."
+          },
+          {
+            "who": "Anyone with a slightly better spreadsheet",
+            "why": "You will rebuild yours instead of raising the amount going into it."
+          },
+          {
+            "who": "Somebody who retired early and will not say quite how",
+            "why": "The gap in the story is where you put your own worst guess."
+          }
+        ],
+        "circumstances": [
+          {
+            "when": "A flat year",
+            "why": "Nothing has gone wrong, which your temperament reads as nothing working, and you will fix a machine that is not broken."
+          },
+          {
+            "when": "An afternoon with the fund documents and no plans",
+            "why": "You will find a nine-basis-point improvement and spend a weekend on it while your salary sits unnegotiated for a fourth year."
+          },
+          {
+            "when": "A fall that lasts longer than four months",
+            "why": "You are built for the crash and not for the grind. It is month seven, not week one, that gets people like you."
+          }
+        ]
       },
       "origins": [
         {
@@ -254,7 +510,55 @@
           "detail": "Patience actually paid off for you as a child, which is rarer than it sounds and is most of why you can do this at all."
         }
       ],
-      "needsToHear": "The spreadsheet is finished. It has been finished for a while. The thing you are avoiding is the conversation about your salary, and it is worth more than every optimisation in it."
+      "needsToHear": "The spreadsheet is finished. It has been finished for a while. The thing you are avoiding is the conversation about your salary, and it is worth more than every optimisation in it.",
+      "sign": {
+        "name": "The Long Orbit",
+        "glyph": "◎",
+        "element": "Air",
+        "modality": "Fixed",
+        "ruledBy": "Jupiter, who is in no hurry and never has been",
+        "hour": "Any Tuesday; they are all the same Tuesday",
+        "metal": "Silver",
+        "stone": "Moonstone",
+        "card": "The Wheel of Fortune, turning slowly and away from you",
+        "season": "The eleventh year"
+      },
+      "alignment": "Lawful Patient",
+      "patron": {
+        "name": "The Curve",
+        "pact": "It will make you wealthy and it will take thirty years and it will not be interesting for any of them. You may not skip ahead and it knows when you try."
+      },
+      "curse": "You will be right, and nobody will be watching at the moment you are proved so.",
+      "resistances": [
+        "Crashes",
+        "Hype",
+        "Anybody's hot tip"
+      ],
+      "vulnerabilities": [
+        "Boredom",
+        "A slightly better spreadsheet",
+        "A flat year"
+      ],
+      "bane": "A fee expressed as a percentage.",
+      "omens": {
+        "good": [
+          "A market fell and you did nothing on purpose",
+          "You raised the amount going in rather than rearranging what is already there",
+          "You could not remember your password because you had not logged in"
+        ],
+        "ill": [
+          "Rebalancing twice in a quarter",
+          "Reading about a fund you already rejected",
+          "Explaining compound interest at a dinner nobody invited you to talk at"
+        ]
+      },
+      "reading": "Jupiter is slow in your house and that is the whole reading — everything you want is already arriving and none of it will arrive this year. The temptation this season is motion: a tweak, a switch, a clever little optimisation. The single highest-return act available to you has nothing to do with the portfolio and everything to do with what you are paid, and you have not looked at that in four years.",
+      "roles": {
+        "first": "Your money's own work outweighs yours, or is on its way to. This is the lever that eventually beats every other one, and it is doing almost nothing visible right now, which is correct and which you will still find hard.",
+        "second": "It is the quiet half of your plan — the part that keeps going while you are doing something more interesting, and the reason a bad year is survivable rather than fatal.",
+        "third": "People assume you know about this stuff, and ask you at dinner. Some of that reputation is earned and some of it is that you are willing to say the word 'index' out loud.",
+        "shadow": "Nothing you own is working. Every pound you have is either spent, sitting, or in bricks, and none of it compounds. Watch for: ten years of good saving that ends up worth less than it started, quietly, in real terms, without anything going wrong."
+      }
     },
     "landholder": {
       "headline": "You think in bricks.",
@@ -297,7 +601,35 @@
       },
       "weakTo": {
         "monster": "Concentration Golem",
-        "why": "You built it. Everything you own is one asset, in one place, with one use, and the Golem simply is that fact, standing up."
+        "why": "You built it. Everything you own is one asset, in one place, with one use, and the Golem simply is that fact, standing up.",
+        "people": [
+          {
+            "who": "An agent who says there is a lot of interest",
+            "why": "There may well be. You will not check, because checking would risk losing it, which is the entire mechanism."
+          },
+          {
+            "who": "A relative who bought in 1994 and mentions the price",
+            "why": "They are describing a different country. You will hear a strategy."
+          },
+          {
+            "who": "The tenant who is lovely and always late",
+            "why": "You will not enforce it, for months, because the awkwardness is real and the arrears are only numbers."
+          }
+        ],
+        "circumstances": [
+          {
+            "when": "A viewing on the first sunny day of the year",
+            "why": "You are not looking at a building. You will find this out in November."
+          },
+          {
+            "when": "A fixed rate with under a year left and no plan",
+            "why": "The date arrives whether or not you have thought about it, and thinking about it early is free."
+          },
+          {
+            "when": "One empty month",
+            "why": "Your income from it goes to zero and the mortgage does not. One tenant was never a portfolio."
+          }
+        ]
       },
       "origins": [
         {
@@ -316,7 +648,55 @@
           "detail": "You learned what it costs to build somebody else's asset with your wages, and you swore you would not do it twice."
         }
       ],
-      "needsToHear": "The building is not the risk. The concentration is. You can keep every brick and still stop being one empty month away from a decision you would not choose."
+      "needsToHear": "The building is not the risk. The concentration is. You can keep every brick and still stop being one empty month away from a decision you would not choose.",
+      "sign": {
+        "name": "The Foundation",
+        "glyph": "▣",
+        "element": "Earth",
+        "modality": "Fixed",
+        "ruledBy": "Venus, in her heavier aspect",
+        "hour": "Saturday, midday, in good light",
+        "metal": "Granite, which is not a metal, and you will not be told otherwise",
+        "stone": "Slate",
+        "card": "The Emperor, seated and immovable",
+        "season": "The spring viewing"
+      },
+      "alignment": "Lawful Immovable",
+      "patron": {
+        "name": "The Deed",
+        "pact": "Your name on a page, permanent and notarised. In return you may not move quickly, ever, for any reason, including a good one."
+      },
+      "curse": "You will own something real and be unable to reach a single pound of it in a week.",
+      "resistances": [
+        "Inflation",
+        "Market noise",
+        "Anybody telling you it is only bricks"
+      ],
+      "vulnerabilities": [
+        "A sunny viewing",
+        "One empty month",
+        "A relative who bought in 1994"
+      ],
+      "bane": "A boiler, in February.",
+      "omens": {
+        "good": [
+          "You priced the voids, the repairs and the tax before you priced the yield",
+          "You hold something liquid that is not the building",
+          "A tenant renewed without being chased"
+        ],
+        "ill": [
+          "One tenant described as a portfolio",
+          "A fixed rate with under a year on it and no plan",
+          "Saying 'it always goes up' out loud, to somebody younger"
+        ]
+      },
+      "reading": "Venus in her heavy aspect gives you a genuine gift for permanence, and the bill for it is liquidity. You are standing on something real, which is more than most manage, and you cannot get off it quickly. The work this season is not more bricks. It is the boring liquid thing beside them that means no year, however bad, can ever force your hand.",
+      "roles": {
+        "first": "Your wealth is standing somewhere with a roof on it. Slow, lumpy, leveraged, and it has built more ordinary fortunes than every other lever combined — as long as you are never forced to sell it in a hurry.",
+        "second": "It is the long ambition sitting under the rest of your plan. A part of you is always half-pricing places, even in a year you are not buying.",
+        "third": "People assume you are settled, sensible and probably doing better than you are. Bricks read as wealth even when they are mostly somebody else's.",
+        "shadow": "You have no claim on anything physical and no plan to get one. That is a completely legitimate position, right up until it is not chosen. Watch for: thirty years of rent that rises whether or not you do, and nothing at the end of it to point at."
+      }
     },
     "anchor": {
       "headline": "You buy calm before you buy upside.",
@@ -359,7 +739,35 @@
       },
       "weakTo": {
         "monster": "Whole-Life-Insurance Basilisk",
-        "why": "It sells you safety, which is the one thing you never negotiate about. You will pay a great deal for a guarantee and never once check what it cost."
+        "why": "It sells you safety, which is the one thing you never negotiate about. You will pay a great deal for a guarantee and never once check what it cost.",
+        "people": [
+          {
+            "who": "Anybody who says the word “guaranteed” while wearing a suit",
+            "why": "You negotiate on everything except safety, and they know which one they are selling."
+          },
+          {
+            "who": "Family, asking",
+            "why": "You are the one with the float. Everyone knows it, and you have never once worked out the number at which you would say no."
+          },
+          {
+            "who": "The one doing better who is very relaxed about it",
+            "why": "Their calm makes your carefulness feel like a personality flaw rather than a strategy."
+          }
+        ],
+        "circumstances": [
+          {
+            "when": "The first genuinely good year",
+            "why": "Nothing goes wrong, the floor stops feeling urgent, and the money quietly does nothing for twelve months."
+          },
+          {
+            "when": "Being told, kindly, that you are being silly",
+            "why": "You will not argue. You will go quiet and do the thing anyway, and resent the person for a year."
+          },
+          {
+            "when": "A month where nothing at all goes wrong",
+            "why": "You find it suspicious rather than restful, and you will add to the floor to make the feeling go away."
+          }
+        ]
       },
       "origins": [
         {
@@ -378,7 +786,55 @@
           "detail": "You could feel it was tight and nobody would confirm it, so you learned to prepare for a danger you were not allowed to see."
         }
       ],
-      "needsToHear": "You have built the floor. It is real and it is finished and it is better than most people will ever manage. You are allowed to stand on it now rather than keep making it thicker."
+      "needsToHear": "You have built the floor. It is real and it is finished and it is better than most people will ever manage. You are allowed to stand on it now rather than keep making it thicker.",
+      "sign": {
+        "name": "The Vault",
+        "glyph": "⛨",
+        "element": "Water",
+        "modality": "Fixed",
+        "ruledBy": "Saturn, who arrives on time and stays",
+        "hour": "Four in the morning",
+        "metal": "Lead",
+        "stone": "Onyx",
+        "card": "The Four of Pentacles, held close",
+        "season": "The week after something went wrong"
+      },
+      "alignment": "Lawful Anxious",
+      "patron": {
+        "name": "The Floor",
+        "pact": "You will never fall through. You will also never quite be able to stop building it, and no thickness has ever been the last one."
+      },
+      "curse": "You will be the safest person in the room and, in thirty years, the poorest one in it.",
+      "resistances": [
+        "Panic",
+        "A bad year",
+        "Almost any single disaster"
+      ],
+      "vulnerabilities": [
+        "The word guaranteed",
+        "Family, asking",
+        "A genuinely good year"
+      ],
+      "bane": "Inflation, which never once knocks.",
+      "omens": {
+        "good": [
+          "Money left the safe account on purpose and did not come back",
+          "You said no to somebody and did not spend the week explaining it",
+          "A month where nothing went wrong and you did not find that suspicious"
+        ],
+        "ill": [
+          "A third emergency fund",
+          "Cash sitting past two years untouched",
+          "Buying safety from a person in a suit who used the word guaranteed"
+        ]
+      },
+      "reading": "Saturn is heavy on you and always has been, which is why you are trusted and why you are tired. The floor is finished. It was finished some time ago and you have been adding to it out of habit rather than need. This season asks the hardest thing available to your sign: to leave it exactly as it is and stand on it. Somebody will call this recklessness. They will be wrong, and they will be the one who is frightened.",
+      "roles": {
+        "first": "Your first instinct with money is to make it safe, and it has probably already saved you once. This is the least glamorous lever and the one that decides whether any of the others get to keep running.",
+        "second": "It is the floor under whatever else you are doing — the reason your risks are survivable and your bad months are only months.",
+        "third": "People read you as the steady one. They ring you when it goes wrong, and you have never once said no, and some of them have never noticed.",
+        "shadow": "There is no floor. Everything is deployed, committed, or spent, and a single bad month becomes debt. Watch for: a plan that works perfectly as long as nothing at all happens, and a card balance that appears the first time something does."
+      }
     },
     "speculator": {
       "headline": "You are comfortable being wrong most of the time for one very good day.",
@@ -421,7 +877,35 @@
       },
       "weakTo": {
         "monster": "Crypto Siren",
-        "why": "It does not sell you a return. It sells you the feeling of being early, which is the one thing you have never learned to price."
+        "why": "It does not sell you a return. It sells you the feeling of being early, which is the one thing you have never learned to price.",
+        "people": [
+          {
+            "who": "Anyone who tells you that you are early",
+            "why": "It is the only compliment you cannot put down. Early is not a thesis; it is a feeling with a timestamp."
+          },
+          {
+            "who": "The friend who won last time",
+            "why": "You will size the next one off their result rather than off what you can afford to lose."
+          },
+          {
+            "who": "A confident stranger who is slightly vague on the details",
+            "why": "Vagueness reads as sophistication to you. It almost never is."
+          }
+        ],
+        "circumstances": [
+          {
+            "when": "The three days after a win",
+            "why": "You are not calibrated, you are elated, and you will size the next one like the last one already paid for it."
+          },
+          {
+            "when": "The three days after a loss",
+            "why": "Doubling feels like conviction and is arithmetic doing the opposite of what you think."
+          },
+          {
+            "when": "A Sunday night with nothing to do",
+            "why": "Boredom is the actual entry signal, and it has never once been written down as one."
+          }
+        ]
       },
       "origins": [
         {
@@ -440,7 +924,57 @@
           "detail": "Nothing was wrong, which is its own thing to escape. You are not chasing money so much as evidence of significance."
         }
       ],
-      "needsToHear": "Nobody is asking you to stop. Size it so that being wrong five times in a row leaves you standing, and you can keep doing this for forty years instead of four."
+      "needsToHear": "Nobody is asking you to stop. Size it so that being wrong five times in a row leaves you standing, and you can keep doing this for forty years instead of four.",
+      "sign": {
+        "name": "The Long Odds",
+        "glyph": "✦",
+        "element": "Air",
+        "modality": "Cardinal",
+        "ruledBy": "A comet, on a schedule nobody has written down",
+        "hour": "Last orders",
+        "metal": "Quicksilver",
+        "stone": "Obsidian",
+        "card": "The Fool, mid-step, cheerful",
+        "season": "The three days after a win"
+      },
+      "alignment": "Chaotic Convinced",
+      "patron": {
+        "name": "The One That Comes Off",
+        "pact": "It exists. It is real and it does happen. It will not tell you when, and it charges you a stake every single time you ask."
+      },
+      "curse": "You will be right once, spectacularly, and unable to say afterwards whether you knew.",
+      "resistances": [
+        "Boredom",
+        "Consensus",
+        "Losing, briefly"
+      ],
+      "vulnerabilities": [
+        "A win, immediately after",
+        "The phrase 'you're early'",
+        "A friend who won last time"
+      ],
+      "bane": "Position size.",
+      "omens": {
+        "good": [
+          "You sized it so a total loss changed nothing about your month",
+          "You wrote down why before you put money in",
+          "You were wrong and it was boring rather than devastating"
+        ],
+        "ill": [
+          "Doubling after a loss",
+          "A stake you would not say out loud to somebody who loves you",
+          "Describing a bet as a position and a hope as a thesis"
+        ]
+      },
+      "reading": "Your ruling body is a comet and comets are not lucky, they are simply rare and very hard to plan around. Air in cardinal season is enormous initiative and no ballast at all. The reading is not that you should stop — nobody with this chart ever has. It is that the stake, and only the stake, is what decides whether you are doing this at forty. Halve it. The comet does not mind waiting; it has done nothing else.",
+      "roles": {
+        "first": "You are playing for the outcome rather than the average, and that is a real strategy — the only one with an uncapped top end. It lives or dies entirely on the size of the stake and you find the stake the boring part.",
+        "second": "It is the small allocation that keeps you interested in the whole thing. Kept small, it is what stops you meddling with the serious money.",
+        "third": "People think you are braver than you are. Mostly you just talk about it more than the ones who are actually exposed.",
+        "shadow": "You never take the shot. Every pound is optimised, defended and accounted for, and none of it is ever pointed at anything with a ceiling. Watch for: a perfectly run life with no upside in it, and a resentment about other people's luck that you would not say out loud."
+      }
     }
-  }
+  },
+  "esotericaNote": "The sign, the ruling body, the hour, the metal and the card are invented. They are flavour and they are meant to be enjoyed exactly as much as a star sign is — which is to say properly, and not as information. The people and circumstances are different: those are written from how the lever actually fails, and they are the part worth taking seriously.",
+  "bigThreeNote": "First, second and third are read off the same ranking the rest of the tool uses — where your money actually moves, or if you have not entered any, how the five questions scored. They are not three separate readings: they are one ranking, shown three deep, and the order genuinely changes when your numbers do. The shadow is the lever at the BOTTOM of that ranking — the one you never pull. It is the most useful of the four and the only one nobody enjoys reading."
 }

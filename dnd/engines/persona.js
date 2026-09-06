@@ -106,6 +106,26 @@
       other: (measuredId && instinctId && measuredId !== instinctId) ? t.classes[instinctId] : null,
       otherName: (measuredId && instinctId && measuredId !== instinctId) ? name(tables, instinctId) : null,
 
+      /* THE ESOTERICA IS FLAVOUR AND IS LABELLED AS SUCH.
+         The sign, the ruling body, the hour, the metal and the card are all
+         invented, and the table's own note says so. They are here because a
+         thing like this is more fun when it commits, and because a reader who
+         is told plainly that it is a star sign can enjoy it as one. The people
+         and circumstances under weakTo are the opposite: those are written
+         from how each lever actually fails, and they are the part to take
+         seriously. Both travel together so the page cannot present the fun as
+         findings. */
+      sign: p.sign || null,
+      alignment: p.alignment || null,
+      patron: p.patron || null,
+      curse: p.curse || null,
+      resistances: p.resistances || [],
+      vulnerabilities: p.vulnerabilities || [],
+      bane: p.bane || null,
+      omens: p.omens || { good: [], ill: [] },
+      reading: p.reading || null,
+      esotericaNote: t.esotericaNote || null,
+
       headline: p.headline,
       coreDesire: p.coreDesire,
       coreFear: p.coreFear,
@@ -130,13 +150,105 @@
         why: p.weakTo.why,
         cr: mon ? mon.cr : null,
         save: mon ? (mon.save || mon.targetSave || null) : null,
-        found: !!mon
+        found: !!mon,
+        /* Not a creature — a kind of person, and a kind of afternoon. These
+           are the two that actually get past people, and neither of them
+           rolls initiative. */
+        people: p.weakTo.people || [],
+        circumstances: p.weakTo.circumstances || []
       },
 
       /* Offered, never asserted — and the warning travels with them so it
          cannot be dropped by a room that only wanted the pretty part. */
       origins: p.origins,
       originsWarning: t.originsWarning
+    };
+  }
+
+  /**
+   * bigThree(household, sheet, tables) — first, second, third, and the shadow.
+   *
+   * ONE RANKING, SHOWN FOUR WAYS. This does not run a second derivation: it
+   * reads the same ordering the rest of the tool already uses — cents through
+   * each lever when there is money, the quiz's shares when there is not — so
+   * the profile and the character screen can never disagree about which lever
+   * is on top.
+   *
+   * A lever with nothing moving through it is NOT a second place. If only one
+   * lever carries weight then there is only one, and the room is told that
+   * rather than being handed two levers of zero dressed up as a chart.
+   *
+   * The shadow is the lever at the BOTTOM — the one never pulled. It is the
+   * useful one, and it is the only position that is read off weakness rather
+   * than strength.
+   */
+  var ROLE = [
+    { key: 'first',  title: 'Your first',   sub: 'What your money actually moves through' },
+    { key: 'second', title: 'Your second',  sub: 'What you fall back on when it tightens' },
+    { key: 'third',  title: 'Your third',   sub: 'What people meet first' }
+  ];
+
+  function bigThree(household, sheet, tables) {
+    var t = table(tables);
+    var basis = null, ranked = null;
+
+    /* Money first, because it is the only one of the two that measured
+       anything. Levers with nothing through them are dropped, not ranked. */
+    var sug = sheet && sheet.suggestedClass;
+    if (sug && Money.isOk(sug) && sug.ranked) {
+      var withWeight = sug.ranked.filter(function (r) { return r.cents > 0; });
+      if (withWeight.length) {
+        basis = 'measured';
+        ranked = sug.ranked.map(function (r) {
+          return { classId: r.classId, name: name(tables, r.classId), weight: r.cents, hasWeight: r.cents > 0 };
+        });
+      }
+    }
+    if (!ranked && Journey && tables.dndQuiz5) {
+      var q = Journey.scoreQuiz((household.dndProfile || {}).quiz5 || {}, tables);
+      if (Money.isOk(q)) {
+        basis = 'instinct';
+        ranked = q.ranked.map(function (r) {
+          return { classId: r.classId, name: r.name, weight: r.share, hasWeight: r.share > 0 };
+        });
+      }
+    }
+    if (!ranked) return { ready: false, reason: 'Nothing to rank yet.' };
+
+    var live = ranked.filter(function (r) { return r.hasWeight; });
+    var places = [];
+    for (var i = 0; i < ROLE.length && i < live.length; i++) {
+      var r = live[i];
+      places.push({
+        rank: i + 1, role: ROLE[i].key, title: ROLE[i].title, sub: ROLE[i].sub,
+        classId: r.classId, name: r.name, weight: r.weight,
+        lever: (classOf(tables, r.classId) || {}).lever || null,
+        sign: (t.classes[r.classId] || {}).sign || null,
+        reading: ((t.classes[r.classId] || {}).roles || {})[ROLE[i].key] || null
+      });
+    }
+
+    /* The shadow is the last of the FULL ranking, weight or no weight —
+       a lever with nothing through it is exactly what a shadow is. */
+    var last = ranked[ranked.length - 1];
+    var shadow = last ? {
+      classId: last.classId, name: last.name,
+      lever: (classOf(tables, last.classId) || {}).lever || null,
+      sign: (t.classes[last.classId] || {}).sign || null,
+      reading: ((t.classes[last.classId] || {}).roles || {}).shadow || null,
+      /* Its ordinary vulnerabilities are worth naming too: the lever you never
+         pull is the one whose failure modes you have never had to learn. */
+      unlearned: (t.classes[last.classId] || {}).vulnerabilities || []
+    } : null;
+
+    return {
+      ready: true,
+      basis: basis,
+      places: places,
+      onlyOne: live.length === 1,
+      liveCount: live.length,
+      shadow: shadow,
+      note: t.bigThreeNote || null
     };
   }
 
@@ -174,5 +286,6 @@
     return out;
   }
 
-  return { persona: persona, party: party, classOf: classOf, className: name };
+  return { persona: persona, party: party, bigThree: bigThree,
+           classOf: classOf, className: name };
 });

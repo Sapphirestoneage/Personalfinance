@@ -1863,6 +1863,62 @@ section('Dungeons & Dividends — the long read (DD-027)');
     });
   });
 
+  /* ---- the esoterica, which is invented and says so ---------------------
+     This is the one part of the suite that is deliberately made up. That is
+     fine — a star sign is fun — but it has to be labelled, distinct per class,
+     and never confusable with the measured half of the page. */
+  const ELEMENTS = ['Fire', 'Earth', 'Air', 'Water'];
+  const MODALITIES = ['Cardinal', 'Fixed', 'Mutable'];
+  const seenSign = {}, seenGlyph = {};
+  CLASSES.forEach(function (id) {
+    const p = T.classes[id], g = p.sign;
+    checkTrue(`${id} has a sign`, !!g);
+    ['name', 'glyph', 'element', 'modality', 'ruledBy', 'hour', 'metal', 'stone', 'card', 'season']
+      .forEach(function (k) {
+        checkTrue(`${id}'s sign has a ${k}`, typeof g[k] === 'string' && g[k].length > 0);
+      });
+    checkTrue(`${id}'s element is one of the four`, ELEMENTS.indexOf(g.element) !== -1);
+    checkTrue(`${id}'s modality is one of the three`, MODALITIES.indexOf(g.modality) !== -1);
+    /* Two classes sharing a sign would give two readers the same horoscope,
+       which is the one thing a horoscope must never visibly do. */
+    checkTrue(`${id}'s sign name is its own`, !seenSign[g.name]); seenSign[g.name] = 1;
+    checkTrue(`${id}'s glyph is its own`, !seenGlyph[g.glyph]); seenGlyph[g.glyph] = 1;
+
+    checkTrue(`${id} has an alignment`, !!p.alignment);
+    checkTrue(`${id} has a patron with a pact`, !!p.patron && !!p.patron.name && (p.patron.pact || '').length > 30);
+    checkTrue(`${id} carries a curse`, (p.curse || '').length > 30);
+    checkTrue(`${id} has a bane`, !!p.bane);
+    checkTrue(`${id} resists something`, (p.resistances || []).length >= 2);
+    checkTrue(`${id} is vulnerable to something`, (p.vulnerabilities || []).length >= 2);
+    checkTrue(`${id} has good omens`, (p.omens.good || []).length >= 3);
+    checkTrue(`${id} has ill omens`, (p.omens.ill || []).length >= 3);
+    checkTrue(`${id} has a reading`, (p.reading || '').length > 200);
+  });
+  checkTrue('the table says the esoterica is invented',
+    typeof T.esotericaNote === 'string' && /invented/.test(T.esotericaNote));
+  checkTrue('and separates it from the part worth taking seriously',
+    /worth taking seriously/.test(T.esotericaNote));
+  checkTrue('the page renders that note from the table rather than retyping it',
+    /text\('p-eso-note', P\.esotericaNote/.test(src));
+
+  /* ---- WHAT YOU ARE WEAK TO: people and circumstances -------------------
+     The creature is the joke. These two are the ones that actually get past
+     people, so every class needs three of each and every one needs a reason —
+     an archetype with no mechanism behind it is just a horoscope line. */
+  CLASSES.forEach(function (id) {
+    const w = T.classes[id].weakTo;
+    check(`${id} names three kinds of person`, (w.people || []).length, 3);
+    check(`${id} names three circumstances`, (w.circumstances || []).length, 3);
+    (w.people || []).forEach(function (x) {
+      checkTrue(`${id} says who`, (x.who || '').length > 10);
+      checkTrue(`${id} says why they get through`, (x.why || '').length > 30);
+    });
+    (w.circumstances || []).forEach(function (x) {
+      checkTrue(`${id} says when`, (x.when || '').length > 8);
+      checkTrue(`${id} says why it undoes them`, (x.why || '').length > 30);
+    });
+  });
+
   /* ---- nobody gets a blank page of relationships ------------------------ */
   const named = {};
   CLASSES.forEach(function (c) { named[c] = 0; });
@@ -1920,6 +1976,10 @@ section('Dungeons & Dividends — the long read (DD-027)');
   checkTrue('every long-read field is filled', !!per.lie && !!per.truth && !!per.atWorst && !!per.needsToHear);
   checkTrue('the warning travels with the stories', !!per.originsWarning && per.origins.length === 3);
   checkTrue('the creature it names is resolved from the bestiary', per.weakTo.found);
+  check('and the engine hands over three kinds of person', per.weakTo.people.length, 3);
+  check('and three circumstances', per.weakTo.circumstances.length, 3);
+  checkTrue('the esoterica reaches the page', !!per.sign && !!per.reading && !!per.patron);
+  checkTrue('and its "this is invented" note travels with it', !!per.esotericaNote);
   checkTrue('with its CR and the save it comes at',
     per.weakTo.cr !== null && !!per.weakTo.save);
 
@@ -1946,6 +2006,62 @@ section('Dungeons & Dividends — the long read (DD-027)');
   check('no character means no profile rather than a guessed one', perN.ready, false);
   checkTrue('and it says why', !!perN.reason);
 
+  /* ---- first, second, third, and the shadow ------------------------------
+     One ranking shown four ways. The point of the shadow is that it is read
+     off WEAKNESS: the lever at the bottom, which is the only position here
+     that can be occupied by something with nothing moving through it. */
+  CLASSES.forEach(function (id) {
+    const r = T.classes[id].roles;
+    ['first', 'second', 'third', 'shadow'].forEach(function (k) {
+      checkTrue(`${id} reads differently as a ${k}`, typeof r[k] === 'string' && r[k].length > 80);
+    });
+    /* Four positions, four distinct readings — the same paragraph in two
+       slots would make the whole idea decorative. */
+    const seen = {};
+    ['first', 'second', 'third', 'shadow'].forEach(function (k) {
+      checkTrue(`${id}'s ${k} reading is its own`, !seen[r[k]]); seen[r[k]] = 1;
+    });
+    checkTrue(`${id} as a shadow says what to look out for`, /Watch for:/.test(r.shadow));
+  });
+  checkTrue('the table explains where the ranking comes from',
+    typeof T.bigThreeNote === 'string' && /same ranking/.test(T.bigThreeNote));
+
+  const b3 = Persona.bigThree(h, sheet, TABLES);
+  checkTrue('a character with money gets a ranking', b3.ready);
+  check('read off the money, not the quiz', b3.basis, 'measured');
+  checkTrue('it fills up to three places', b3.places.length > 0 && b3.places.length <= 3);
+  check('the first place is the class the rest of the page shows',
+    b3.places[0].classId, sheet.klass.id);
+  checkTrue('every place carries its own reading and its sign',
+    b3.places.every(function (x) { return !!x.reading && !!x.sign; }));
+  checkTrue('places are ordered by weight',
+    b3.places.every(function (x, i) { return i === 0 || b3.places[i - 1].weight >= x.weight; }));
+  checkTrue('each place uses the reading for the position it is in',
+    b3.places.every(function (x) { return x.reading === T.classes[x.classId].roles[x.role]; }));
+
+  /* The shadow comes off the bottom of the FULL ranking, so a lever with
+     nothing through it is eligible — that is precisely what a shadow is. */
+  checkTrue('there is a shadow', !!b3.shadow);
+  checkTrue('and it is not one of the three', b3.places.every(function (x) {
+    return x.classId !== b3.shadow.classId; }));
+  check('and it uses the shadow reading', b3.shadow.reading, T.classes[b3.shadow.classId].roles.shadow);
+  checkTrue('and it names what it never had to learn to handle', b3.shadow.unlearned.length > 0);
+
+  /* Quiz-only: same shape, honestly labelled, no money involved. */
+  const b3q = Persona.bigThree(quizOnly, Character.sheet(quizOnly, TABLES), TABLES);
+  checkTrue('five answers alone still produce a ranking', b3q.ready);
+  check('labelled as instinct', b3q.basis, 'instinct');
+  checkTrue('with a shadow of its own', !!b3q.shadow);
+
+  /* Nothing at all: no ranking rather than a made-up one. */
+  check('an empty character gets no ranking',
+    Persona.bigThree(nobody, Character.sheet(nobody, TABLES), TABLES).ready, false);
+
+  checkTrue('the page renders the ranking and the shadow',
+    /id="p-bigthree"/.test(src) && /id="p-shadow"/.test(src));
+  checkTrue('and the shadow section says what to look out for',
+    /What to be on the lookout for/.test(src));
+
   /* ---- the party view is other people's opinion, not your own ------------ */
   CLASSES.forEach(function (id) {
     const pa = Persona.party(id, TABLES);
@@ -1966,6 +2082,12 @@ section('Dungeons & Dividends — the long read (DD-027)');
   checkTrue('it loads the persona engine', /engines\/persona\.js/.test(src));
   checkTrue('it says up front that this is characterisation',
     /characterisation, not measurement/i.test(src));
+  ['p-sign', 'p-reading', 'p-patron', 'p-omen-good', 'p-omen-ill', 'p-people', 'p-circumstances']
+    .forEach(function (id) {
+      checkTrue(`the page renders ${id}`, new RegExp('id="' + id + '"').test(src));
+    });
+  checkTrue('the almanac is followed immediately by the note saying it is invented',
+    src.indexOf('id="p-reading"') < src.indexOf('id="p-eso-note"'));
   checkTrue('it has no text inputs to lose a keyboard on', !/<input/.test(src));
   checkTrue('the run through links to it',
     /href="profile\.html"/.test(fs.readFileSync(path.join(ROOT, 'campaign.html'), 'utf8')));

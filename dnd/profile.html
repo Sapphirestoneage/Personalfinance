@@ -68,6 +68,46 @@
 
   .warnbox { border: 1px solid var(--color-critical); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-3); font-size: var(--text-sm); line-height: var(--leading-normal); }
   .quote { font-family: var(--font-display); font-size: var(--text-lg); line-height: var(--leading-tight); }
+  .glyph { font-size: 3rem; line-height: 1; color: var(--color-accent-hover); }
+  .signname { font-family: var(--font-display); font-size: var(--text-lg); letter-spacing: .02em; }
+  .almanac { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--color-border);
+             border: 1px solid var(--color-border); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: var(--space-3); }
+  @media (min-width: 620px) { .almanac { grid-template-columns: repeat(3, 1fr); } }
+  .almanac div { background: var(--color-surface-raised); padding: var(--space-3); }
+  .almanac .k { font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: var(--color-text-subtle); }
+  .almanac .v { font-family: var(--font-display); font-size: var(--text-base); line-height: var(--leading-tight); margin-top: 4px; }
+  .scroll { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md);
+            background: var(--color-surface-raised); padding: var(--space-4); margin-bottom: var(--space-3); }
+  .scroll .cap { font-size: 9px; text-transform: uppercase; letter-spacing: .12em; color: var(--color-text-subtle); }
+  .reading { font-family: var(--font-display); font-size: var(--text-lg); line-height: var(--leading-normal); }
+  .reading::first-letter { font-size: 2.6em; float: left; line-height: .82; padding: 0 .08em 0 0; color: var(--color-accent-hover); }
+  .omens { display: grid; gap: var(--space-3); }
+  @media (min-width: 620px) { .omens { grid-template-columns: 1fr 1fr; } }
+  .omenlist { list-style: none; margin: 0; padding: 0; font-size: var(--text-sm); line-height: var(--leading-normal); }
+  .omenlist li { padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+  .omenlist li:last-child { border-bottom: 0; }
+  .omenlist li::before { content: "☾ "; color: var(--color-accent-hover); }
+  .omenlist.ill li::before { content: "☍ "; color: var(--color-critical); }
+  .tags { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+  .tags span { font-size: var(--text-xs); border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); padding: 2px var(--space-2); }
+  .tags.res span { border-color: var(--color-accent); color: var(--color-accent-hover); }
+  .tags.vul span { border-color: var(--color-critical); color: var(--color-critical); }
+  .peril { border-left: 3px solid var(--color-critical); padding: var(--space-1) 0 var(--space-1) var(--space-3); margin-bottom: var(--space-4); }
+  .peril .who { font-family: var(--font-display); font-size: var(--text-base); }
+  .place { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md);
+           background: var(--color-surface-raised); padding: var(--space-4); margin-bottom: var(--space-2); }
+  .place .top { display: flex; align-items: center; gap: var(--space-3); }
+  .place .gl { font-size: 2rem; line-height: 1; color: var(--color-accent-hover); }
+  .place .rank { font-size: 9px; text-transform: uppercase; letter-spacing: .12em; color: var(--color-text-subtle); }
+  .place .nm { font-family: var(--font-display); font-size: var(--text-lg); line-height: 1.1; }
+  .place .sg { font-size: var(--text-xs); color: var(--color-text-faint); }
+  .place .sub { font-size: var(--text-sm); color: var(--color-accent-hover); margin-top: var(--space-2); }
+  .place.shadow { border-color: var(--color-critical); }
+  .place.shadow .gl { color: var(--color-critical); opacity: .8; }
+  .place.shadow .sub { color: var(--color-critical); }
+  .bar { height: 3px; background: var(--color-surface-active); border-radius: 2px; margin-top: var(--space-3); overflow: hidden; }
+  .bar > span { display: block; height: 100%; background: var(--color-accent); }
+  .rule { border: 0; border-top: 1px solid var(--color-border); margin: var(--space-6) 0 var(--space-4); }
   .foot { margin-top: var(--space-6); text-align: center; font-size: var(--text-sm); }
   .foot a { color: var(--color-accent-hover); }
 </style>
@@ -93,7 +133,25 @@
       <div><span class="basis" id="p-basis"></span></div>
     </div>
 
+    <div id="p-sign"></div>
     <div id="p-split"></div>
+
+    <h2>Your first, second and third</h2>
+    <p class="note" id="p-b3-note"></p>
+    <div id="p-bigthree"></div>
+
+    <h2>Your shadow</h2>
+    <p class="note">The lever at the bottom — the one you never pull. It is the least fun of the four to read
+       and by a distance the most useful, because a lever you never touch is one whose ways of going wrong
+       you have never had to learn.</p>
+    <div id="p-shadow"></div>
+
+    <h2>The reading</h2>
+    <div class="scroll">
+      <div class="cap" id="p-reading-cap"></div>
+      <p class="reading" id="p-reading" style="margin:var(--space-2) 0 0"></p>
+    </div>
+    <p class="note faint" id="p-eso-note"></p>
 
     <h2>What you are actually after</h2>
     <div class="pair">
@@ -145,8 +203,43 @@
        of you and not your guess at it.</p>
     <div id="p-party"></div>
 
+    <hr class="rule"/>
+    <h2>Your pact</h2>
+    <div class="scroll" id="p-patron"></div>
+
+    <h2>What you shrug off, and what gets through</h2>
+    <div class="panel">
+      <div class="cap" style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--color-text-subtle)">Resistant to</div>
+      <div class="tags res" id="p-res"></div>
+      <div class="cap" style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--color-text-subtle);margin-top:var(--space-3)">Vulnerable to</div>
+      <div class="tags vul" id="p-vul"></div>
+      <p class="note" style="margin:var(--space-3) 0 0"><b>Your bane:</b> <span id="p-bane"></span></p>
+    </div>
+
+    <h2>Omens</h2>
+    <div class="omens">
+      <div class="panel"><div class="cap" style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--color-text-subtle)">It is going well when</div>
+        <ul class="omenlist" id="p-omen-good"></ul></div>
+      <div class="panel"><div class="cap" style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--color-text-subtle)">Ill omens</div>
+        <ul class="omenlist ill" id="p-omen-ill"></ul></div>
+    </div>
+
+    <hr class="rule"/>
     <h2>What hunts you</h2>
+    <p class="note">Three kinds of thing, and only one of them is a monster. The other two are the ones that
+       actually get people — they do not roll initiative and they are usually quite pleasant at the time.</p>
+
+    <h3 style="margin-top:var(--space-4)">The creature</h3>
     <div class="panel" id="p-weak"></div>
+
+    <h3 style="margin-top:var(--space-5)">The people</h3>
+    <p class="note">Not villains. Mostly not even doing anything to you on purpose — which is precisely why
+       they get through.</p>
+    <div id="p-people"></div>
+
+    <h3 style="margin-top:var(--space-5)">The circumstances</h3>
+    <p class="note">No person required. These are the afternoons your build loses to on its own.</p>
+    <div id="p-circumstances"></div>
 
     <h2>Where this comes from</h2>
     <div class="warnbox" id="p-origins-warning"></div>
@@ -187,7 +280,7 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Char = SLAF.Character, Store = DND.Store, Persona = DND.Persona;
-  var TABLES = null, P = null;
+  var TABLES = null, P = null, SHEET = null;
   function el(id) { return document.getElementById(id); }
   function esc(s) {
     return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -222,6 +315,95 @@
         + '<p class="note" style="margin:0">The gap is the useful part. It usually means you are working one '
         + 'lever and thinking about another, and the thinking is where the frustration lives.</p></div>'
       : '');
+
+    /* THE ALMANAC. Invented, and labelled as invented directly underneath —
+       the note is rendered from the table rather than retyped here, for the
+       same reason the origins warning is. */
+    var g = P.sign;
+    html('p-sign', !g ? '' :
+      '<div style="text-align:center;margin-bottom:var(--space-3)">'
+      + '<div class="glyph">' + esc(g.glyph) + '</div>'
+      + '<div class="signname">' + esc(g.name) + '</div>'
+      + '<div class="note faint" style="margin-top:4px">' + esc(g.element) + ' &middot; '
+      + esc(g.modality) + ' &middot; ' + esc(P.alignment || '') + '</div></div>'
+      + '<div class="almanac">'
+      + [['Ruled by', g.ruledBy], ['Hour', g.hour], ['Season', g.season],
+         ['Metal', g.metal], ['Stone', g.stone], ['Card', g.card]]
+        .map(function (r) {
+          return '<div><div class="k">' + esc(r[0]) + '</div><div class="v">' + esc(r[1]) + '</div></div>';
+        }).join('')
+      + '</div>');
+
+    /* First, second, third and the shadow — one ranking shown four ways. */
+    var b3 = Persona.bigThree(Store.household(), SHEET, TABLES);
+    if (!b3.ready) {
+      html('p-bigthree', '<p class="note">Nothing to rank yet.</p>');
+      html('p-shadow', '');
+      text('p-b3-note', '');
+    } else {
+      var top = b3.places.length ? b3.places[0].weight : 0;
+      text('p-b3-note', b3.note || '');
+      html('p-bigthree', b3.places.map(function (x) {
+        var pct = top > 0 ? Math.max(4, Math.round((x.weight / top) * 100)) : 0;
+        return '<div class="place"><div class="top">'
+          + '<div class="gl">' + esc(x.sign ? x.sign.glyph : '·') + '</div>'
+          + '<div><div class="rank">' + esc(x.title) + '</div>'
+          + '<div class="nm">' + esc(x.name) + '</div>'
+          + '<div class="sg">' + esc(x.sign ? x.sign.name : '') + (x.lever ? ' &middot; ' + esc(x.lever) : '')
+          + '</div></div></div>'
+          + '<div class="bar"><span style="width:' + pct + '%"></span></div>'
+          + '<div class="sub">' + esc(x.sub) + '</div>'
+          + '<p style="margin:var(--space-2) 0 0">' + esc(x.reading || '') + '</p></div>';
+      }).join('')
+      + (b3.onlyOne
+          ? '<p class="note faint">Only one lever has anything moving through it so far, so there is no '
+            + 'honest second or third yet. They appear as soon as there is something to rank.</p>'
+          : ''));
+
+      var sh = b3.shadow;
+      html('p-shadow', !sh ? '' :
+        '<div class="place shadow"><div class="top">'
+        + '<div class="gl">' + esc(sh.sign ? sh.sign.glyph : '·') + '</div>'
+        + '<div><div class="rank">Never pulled</div>'
+        + '<div class="nm">' + esc(sh.name) + '</div>'
+        + '<div class="sg">' + esc(sh.sign ? sh.sign.name : '') + (sh.lever ? ' &middot; ' + esc(sh.lever) : '')
+        + '</div></div></div>'
+        + '<div class="sub">What to be on the lookout for</div>'
+        + '<p style="margin:var(--space-2) 0 0">' + esc(sh.reading || '') + '</p>'
+        + (sh.unlearned.length
+            ? '<p class="note" style="margin:var(--space-3) 0 0"><b>And because you never pull it, you have '
+              + 'never had to learn what it loses to:</b></p>'
+              + '<div class="tags vul">' + sh.unlearned.map(function (u) {
+                  return '<span>' + esc(u) + '</span>'; }).join('') + '</div>'
+            : '')
+        + '</div>');
+    }
+
+    el('p-reading-cap').textContent = g ? 'Cast for ' + g.name + ', at ' + g.hour : 'Your reading';
+    text('p-reading', P.reading || '');
+    text('p-eso-note', P.esotericaNote || '');
+
+    html('p-patron', !P.patron ? '' :
+      '<div class="cap">You are pledged to</div>'
+      + '<div class="signname" style="margin:var(--space-1) 0 var(--space-2)">' + esc(P.patron.name) + '</div>'
+      + '<p style="margin:0 0 var(--space-3)">' + esc(P.patron.pact) + '</p>'
+      + '<div class="cap">The curse it carries</div>'
+      + '<p style="margin:4px 0 0">' + esc(P.curse || '') + '</p>');
+
+    html('p-res', P.resistances.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join(''));
+    html('p-vul', P.vulnerabilities.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join(''));
+    text('p-bane', P.bane || '');
+    html('p-omen-good', P.omens.good.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join(''));
+    html('p-omen-ill', P.omens.ill.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join(''));
+
+    html('p-people', P.weakTo.people.map(function (x) {
+      return '<div class="peril"><div class="who">' + esc(x.who) + '</div>'
+        + '<p class="note" style="margin-top:4px">' + esc(x.why) + '</p></div>';
+    }).join(''));
+    html('p-circumstances', P.weakTo.circumstances.map(function (x) {
+      return '<div class="peril"><div class="who">' + esc(x.when) + '</div>'
+        + '<p class="note" style="margin-top:4px">' + esc(x.why) + '</p></div>';
+    }).join(''));
 
     text('p-desire', P.coreDesire);
     text('p-fear', P.coreFear);
@@ -318,8 +500,8 @@
     TABLES = tables;
     DND.Skin.mount(el('skin-bar'));
     var h = Store.household();
-    var sheet = Char.sheet(h, tables);
-    P = Persona.persona(h, sheet, tables);
+    SHEET = Char.sheet(h, tables);
+    P = Persona.persona(h, SHEET, tables);
     if (!P.ready) { el('none').hidden = false; return; }
     el('profile').hidden = false;
     wire();
