@@ -9044,3 +9044,38 @@ not by summing weights — raw totals are rigged toward whichever lever appears 
 most answers. A new quiz option must carry a `says` line and lean on at least
 one real class, and a new scenario that trains a thin ability is worth more than
 another one that trains Wisdom.
+
+### What walking the finished thing changed
+
+Everything above was built, then walked end to end on a phone. Seven things
+only showed up that way, and all of them are now fixed and tested:
+
+- **A rolled set of six vanished on reload.** Regenerating them would have
+  handed someone a different character from the one they were halfway through
+  assigning, and let anyone reload until the numbers were nice. The bag and the
+  mode are stored (`dndProfile.buildBag`), and an unfinished assignment resumes.
+- **The "getting better" screen ran to sixteen thousand pixels** — six
+  abilities times nine moves, all open. One compact row each now, weakest open,
+  the rest a tap away, best-value moves first inside each.
+- **The character screen claimed "three measured from your money"** to people
+  who had rolled all six and measured nothing. The split is counted now, and an
+  all-chosen character is told plainly that its numbers cannot surprise it yet.
+- **The share card said "Unnamed" with no class on it** for anyone who had only
+  answered the questions and bought their abilities — the measured class needs
+  money. It falls back to the quiz class, marked "by instinct, not yet
+  measured", and the run through links to it.
+- **There was no name to put on a card.** One optional field on the character
+  screen; blank still falls back to the class.
+- **Three one-way doors**: no way back from the method screen to the five
+  answers, none from the board to the advice screens without abandoning the
+  run, none from the review to training something else. All three exist now,
+  and leaving the board for advice returns to the game rather than throwing the
+  chapter away.
+- **Anyone with a sheet built before this flow** was made to answer five
+  questions to reach their own character. There is a skip, shown only when
+  there are already numbers to skip to.
+
+`dndProfile.buildBag` is **added** — `{ mode, values }` for an in-progress
+array or roll. `characterName` was already stored by the sheet and is unchanged.
+The "you need a character first" view is **removed**: creation happens on this
+page, so nothing could reach it.
