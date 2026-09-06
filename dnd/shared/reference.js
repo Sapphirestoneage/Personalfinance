@@ -45,6 +45,8 @@
     /* The five-question class read, and the moves that raise each sub-stat. */
     dndQuiz5: 'dnd_quiz5.json',
     dndImprove: 'dnd_improve.json',
+    /* The long read: what each class wants, fears, and rubs against. */
+    dndProfile: 'dnd_profile.json',
     /* The Skill Stacker's catalogue, authored here (D-090). */
     skills: 'skills.json',
     stacks: 'stacks.json',

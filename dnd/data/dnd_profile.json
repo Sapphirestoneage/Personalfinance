@@ -1,0 +1,446 @@
+{
+  "id": "dnd_profile",
+  "version": "1.0.0",
+  "asOf": "2026-09",
+  "source": "Authored for Dungeons & Dividends. DD-027.",
+  "confidence": "low",
+  "confidenceNote": "This is characterisation, not measurement, and it is written to be recognised rather than to be true. It reads like an Enneagram or a star sign on purpose: entertaining, occasionally sharp, and no more evidence-based than either. The relationship lines are about levers and how they rub against each other, not about people. Nothing here is advice and nothing here diagnoses anybody.",
+  "note": "Keyed by class id. `origins` are OFFERED, never asserted — see the warning below, which the page is required to print alongside them.",
+  "originsWarning": "Nothing here knows anything about your childhood. Five questions about money cannot see it, and a tool that told you what your parents were like would be making it up. These are the stories people who build this way most often say they recognise. Pick the one that lands, pick none, and know that recognising one says something about you and nothing about whether it happened.",
+  "classes": {
+    "earner": {
+      "headline": "You go at the number directly.",
+      "coreDesire": "To be worth more this year than last, and to have it acknowledged in writing.",
+      "coreFear": "Being quietly underpaid for years by people who like you very much.",
+      "lie": "If I do outstanding work, somebody will notice and fix my salary.",
+      "truth": "They will notice. They will not fix it. It gets fixed when you ask, and almost never otherwise.",
+      "atBest": "You turn capability into leverage without apology, and you make asking normal for everyone around you. You have raised other people's pay just by saying your own number out loud in front of them.",
+      "atWorst": "Your self-worth and your salary become the same number, so a bad review is an identity crisis. You work through every warning sign because stopping feels like losing ground.",
+      "blindSpot": "Earning more and spending more is standing still at speed. You can out-earn almost anything except your own lifestyle.",
+      "growth": {
+        "classId": "keeper",
+        "why": "A pound kept is worth more than a pound earned, because nobody taxes it twice. Learning that one thing turns a good earner into a wealthy one."
+      },
+      "stress": {
+        "classId": "speculator",
+        "why": "When the raise does not come, patience curdles into shortcuts, and the shortcut is always a bet you have not sized."
+      },
+      "relations": {
+        "partner": {
+          "classId": "keeper",
+          "why": "You make it, they keep it, and neither of you can do the other's half. This is the least glamorous and most effective pairing on the list."
+        },
+        "friend": {
+          "classId": "builder",
+          "why": "Same restlessness, different lever. They will talk you into asking for more and you will talk them into finishing something."
+        },
+        "annoying": {
+          "classId": "anchor",
+          "why": "Their caution reads to you as timidity. It is not — it is the floor that would let you take a real swing — but it will still make your teeth itch."
+        },
+        "wary": {
+          "classId": "compounder",
+          "why": "They are doing nothing, slowly, and getting richer than you. Nothing exposes a hustler like somebody winning by waiting."
+        },
+        "triggeredBy": {
+          "classId": "landholder",
+          "why": "They talk about assets in a tone that suggests you should already own some. You will feel behind, and behind makes you buy things."
+        }
+      },
+      "weakTo": {
+        "monster": "Lifestyle-Creep Hydra",
+        "why": "It does not attack your income — it grows to match it. Every raise feeds it, and you never notice because nothing ever gets worse."
+      },
+      "origins": [
+        {
+          "id": "provider",
+          "house": "The house where somebody worked constantly and it was still tight",
+          "detail": "You learned that effort is the lever, because you watched it be the only one available."
+        },
+        {
+          "id": "unspoken",
+          "house": "The house where being good was how you earned your place",
+          "detail": "Achievement and safety got wired together early. Salary is just the adult version of the report card."
+        },
+        {
+          "id": "watched",
+          "house": "The house where somebody was passed over and never got over it",
+          "detail": "You are determined not to be the person who was loyal and quietly left behind."
+        }
+      ],
+      "needsToHear": "You are allowed to stop climbing for a year and keep what you have already got. That is not laziness — it is the only way any of this becomes money rather than income."
+    },
+    "keeper": {
+      "headline": "You find money by removing things.",
+      "coreDesire": "To never be the mug. To never look back and find you were quietly paying for something you did not use.",
+      "coreFear": "Waste. Being taken advantage of by somebody who counted on you not checking.",
+      "lie": "I can cut my way to being comfortable.",
+      "truth": "There is a floor to cutting and no ceiling to earning. You will hit yours and then keep sanding, because sanding feels like progress.",
+      "atBest": "Every pound in your life is doing a job you chose for it. You are the person a recession barely touches, and you are unbothered by things other people find frightening.",
+      "atWorst": "You spend forty minutes saving four pounds and never once ask for a raise. Frugality becomes a personality, and everyone around you has to live inside it.",
+      "blindSpot": "The biggest number on your page is your income, and you have never once negotiated it. You are optimising the small column.",
+      "growth": {
+        "classId": "earner",
+        "why": "One uncomfortable conversation is worth more than a decade of cancelled subscriptions, and you already have the discipline to keep what it brings."
+      },
+      "stress": {
+        "classId": "anchor",
+        "why": "Cutting stops being strategy and becomes flinching. You hoard, you deploy nothing, and you call the fear prudence."
+      },
+      "relations": {
+        "partner": {
+          "classId": "earner",
+          "why": "They raise the ceiling, you defend the floor. Left alone they inflate and you stagnate; together neither happens."
+        },
+        "friend": {
+          "classId": "anchor",
+          "why": "You are the only two who find a spreadsheet soothing. They will never make you justify not spending money."
+        },
+        "annoying": {
+          "classId": "speculator",
+          "why": "They lose in an evening what you saved over a year, and then tell a very good story about it."
+        },
+        "wary": {
+          "classId": "landholder",
+          "why": "They commit to enormous irreversible things with a calm that alarms you. You cannot un-buy a house."
+        },
+        "triggeredBy": {
+          "classId": "speculator",
+          "why": "It is not the risk. It is the swagger about the risk, from somebody who has never read a terms page."
+        }
+      },
+      "weakTo": {
+        "monster": "Wage-Stagnation Wraith",
+        "why": "It cannot touch anyone who asks. You do not ask, so it feeds for years while you are busy being excellent at not spending."
+      },
+      "origins": [
+        {
+          "id": "scarcity",
+          "house": "The house where the bills were opened at the table",
+          "detail": "You knew the state of things before you could read them, and you have been counting ever since."
+        },
+        {
+          "id": "waste",
+          "house": "The house where somebody spent it and somebody else went without",
+          "detail": "You learned that waste is not neutral. Somebody always pays for it, and it was not the person spending."
+        },
+        {
+          "id": "careful",
+          "house": "The house where being careful was the highest compliment available",
+          "detail": "Thrift was not a strategy there, it was a virtue — and virtues are much harder to put down when they stop working."
+        }
+      ],
+      "needsToHear": "You have already won the hard half. The half you are avoiding is one conversation long, and you are the person best equipped to keep what it produces."
+    },
+    "builder": {
+      "headline": "You see a business where other people see an offer.",
+      "coreDesire": "To owe nobody anything, and to have income that does not depend on one person liking you.",
+      "coreFear": "A single point of failure. One employer, one client, one decision-maker who could end it on a Tuesday.",
+      "lie": "Once this thing is mine, I will finally be safe.",
+      "truth": "You can build yourself a job with a worse boss and no sick pay. Ownership is not the same as security, and sometimes it is the opposite.",
+      "atBest": "You make options out of nothing. When something collapses you are the one person in the room who already has three other things running.",
+      "atWorst": "Six half-built projects, none finished, all of them described as optionality. You are avoiding the boring part and calling it strategy.",
+      "blindSpot": "You start things to feel free and end up with more masters than you had before. Every unfinished project is a small debt of attention.",
+      "growth": {
+        "classId": "compounder",
+        "why": "Finishing one thing and letting it run beats starting a fourth. The patience you find dull is the exact skill that would make any of this compound."
+      },
+      "stress": {
+        "classId": "earner",
+        "why": "Money gets tight and you go back for a salary — which is fine — but you do it resentfully, which makes you bad at both."
+      },
+      "relations": {
+        "partner": {
+          "classId": "anchor",
+          "why": "They are the reason you can afford to be wrong. Every good risk-taker has somebody boring holding the floor, and it is not a coincidence."
+        },
+        "friend": {
+          "classId": "speculator",
+          "why": "They believe you before you have proved anything, which is worth more in the first year than any advice."
+        },
+        "annoying": {
+          "classId": "keeper",
+          "why": "You are trying to build something and they want to talk about your broadband bill."
+        },
+        "wary": {
+          "classId": "compounder",
+          "why": "Their patience makes your energy look like flailing, and privately you suspect they might be right."
+        },
+        "triggeredBy": {
+          "classId": "anchor",
+          "why": "Asking what happens if it fails is a reasonable question that will make you defensive every single time."
+        }
+      },
+      "weakTo": {
+        "monster": "MLM Cultist",
+        "why": "It is built for you specifically. Be your own boss, own your time, unlimited ceiling — every word of the pitch is aimed at the thing you already want."
+      },
+      "origins": [
+        {
+          "id": "watched-layoff",
+          "house": "The house where somebody loyal got let go anyway",
+          "detail": "You concluded early that safety through employment is a story, and you have been building an exit ever since."
+        },
+        {
+          "id": "resourceful",
+          "house": "The house where you made your own fun and your own money",
+          "detail": "Nobody was going to hand you anything, so you got very good at making things out of not much."
+        },
+        {
+          "id": "control",
+          "house": "The house where someone else's decisions ran everything",
+          "detail": "You learned what it feels like when your life turns on somebody else's mood. You have been building away from that ever since."
+        }
+      ],
+      "needsToHear": "Finish one. Not the best one — any one. A finished small thing teaches you more than four brilliant unfinished ones, and it is the only thing that ever compounds."
+    },
+    "compounder": {
+      "headline": "You would rather your money did the work.",
+      "coreDesire": "To be right slowly, and to have the arithmetic prove it eventually.",
+      "coreFear": "Being old and poor because you did the sensible thing too late.",
+      "lie": "If I get the allocation right, everything else takes care of itself.",
+      "truth": "For the first decade your savings rate matters far more than your fund choice. You are polishing the small lever with great precision.",
+      "atBest": "You are the calmest person in a crash. Everyone else is selling and you are doing nothing, on purpose, and it is the single most valuable thing anyone does with money.",
+      "atWorst": "You optimise instead of living. The spreadsheet becomes the point, and you are quietly insufferable about other people's decisions.",
+      "blindSpot": "You have modelled thirty years and not asked for a raise in four. The input is bigger than the return, early on, and you find the input boring.",
+      "growth": {
+        "classId": "earner",
+        "why": "Nothing you do to the portfolio in year one matters as much as what you put into it. Raising the input is the highest-return move you have available and you have never tried it."
+      },
+      "stress": {
+        "classId": "speculator",
+        "why": "Patience gets boring, boredom becomes tinkering, and tinkering wearing a spreadsheet is still gambling."
+      },
+      "relations": {
+        "partner": {
+          "classId": "earner",
+          "why": "They produce the input, you handle the machine. Neither of you finds the other's half interesting, which is exactly why it works."
+        },
+        "friend": {
+          "classId": "landholder",
+          "why": "You are the only two who measure in decades. You will disagree permanently about bricks versus screens and neither of you will ever be in a hurry about it."
+        },
+        "annoying": {
+          "classId": "speculator",
+          "why": "They get in three years late, do everything wrong, and occasionally win — and they will tell you about it."
+        },
+        "wary": {
+          "classId": "builder",
+          "why": "You cannot model them. Their returns come from something you have no spreadsheet for, and that is genuinely unsettling."
+        },
+        "triggeredBy": {
+          "classId": "landholder",
+          "why": "Being told that bricks are real and your holdings are just numbers on a screen. You will argue. You will not enjoy it."
+        }
+      },
+      "weakTo": {
+        "monster": "Day-Trading Leech",
+        "why": "It does not need you to be reckless. It only needs you to be bored, competent, and convinced you could do slightly better than the index."
+      },
+      "origins": [
+        {
+          "id": "long-game",
+          "house": "The house where somebody explained interest to you and it stuck",
+          "detail": "You met the idea early that time does the heavy lifting, and it reorganised how you see almost everything."
+        },
+        {
+          "id": "watched-panic",
+          "house": "The house where somebody sold at the bottom",
+          "detail": "You saw fear cost real money once, and you decided very young that you would be the one who did not flinch."
+        },
+        {
+          "id": "delayed",
+          "house": "The house where waiting was rewarded",
+          "detail": "Patience actually paid off for you as a child, which is rarer than it sounds and is most of why you can do this at all."
+        }
+      ],
+      "needsToHear": "The spreadsheet is finished. It has been finished for a while. The thing you are avoiding is the conversation about your salary, and it is worth more than every optimisation in it."
+    },
+    "landholder": {
+      "headline": "You think in bricks.",
+      "coreDesire": "To own something real — something that exists when the screen is off and the market is closed.",
+      "coreFear": "Paying somebody else's mortgage for thirty years and having nothing at the end to point at.",
+      "lie": "Property always goes up.",
+      "truth": "It is leveraged, illiquid, occasionally underwater, and it has a boiler. It has made a great many ordinary people wealthy and bankrupted a few of them too.",
+      "atBest": "You tolerate slow, lumpy, unglamorous things that other people abandon, and that tolerance is the whole skill. It is why this lever has built more ordinary wealth than any other.",
+      "atWorst": "House-poor and entirely concentrated, with a mortgage you call an asset and one tenant you call a portfolio.",
+      "blindSpot": "One property is not diversification, and one tenant is not income. When they leave, the whole thing earns zero and the mortgage does not care.",
+      "growth": {
+        "classId": "compounder",
+        "why": "Learning liquidity and spread would let you keep the bricks and stop being one bad year from a forced sale."
+      },
+      "stress": {
+        "classId": "keeper",
+        "why": "When it is tight, you start nickel-and-diming your own life to feed a building. The house ends up owning you, quietly and by increments."
+      },
+      "relations": {
+        "partner": {
+          "classId": "compounder",
+          "why": "They hold what you cannot — liquid, spread, sellable on a Tuesday. Between you there is almost nothing that could force a sale."
+        },
+        "friend": {
+          "classId": "earner",
+          "why": "They understand wanting a bigger number and they will never tell you property is a scam."
+        },
+        "annoying": {
+          "classId": "speculator",
+          "why": "They want returns this quarter. You are on a twenty-year clock and their impatience reads as unseriousness."
+        },
+        "wary": {
+          "classId": "builder",
+          "why": "They can pick up and move countries in a fortnight. You cannot move at all, and some part of you envies that badly."
+        },
+        "triggeredBy": {
+          "classId": "compounder",
+          "why": "\"Renting is cheaper when you run the numbers.\" It sometimes is. You will still want to leave the room."
+        }
+      },
+      "weakTo": {
+        "monster": "Concentration Golem",
+        "why": "You built it. Everything you own is one asset, in one place, with one use, and the Golem simply is that fact, standing up."
+      },
+      "origins": [
+        {
+          "id": "moved",
+          "house": "The house you had to leave",
+          "detail": "Somebody else decided when you moved, and you have been buying the ability to say no to that ever since."
+        },
+        {
+          "id": "family-bricks",
+          "house": "The house where property was how the family got out",
+          "detail": "You inherited a story about bricks that is older than you, and it is a good story — it is just not the only one."
+        },
+        {
+          "id": "rent-forever",
+          "house": "The house where rent went up every year and nothing was ever yours",
+          "detail": "You learned what it costs to build somebody else's asset with your wages, and you swore you would not do it twice."
+        }
+      ],
+      "needsToHear": "The building is not the risk. The concentration is. You can keep every brick and still stop being one empty month away from a decision you would not choose."
+    },
+    "anchor": {
+      "headline": "You buy calm before you buy upside.",
+      "coreDesire": "To never be caught short. To be the one person in the family nobody has to worry about.",
+      "coreFear": "The drop. The phone call. Needing money you do not have, in front of people.",
+      "lie": "I will start investing once I feel safe.",
+      "truth": "You will not feel safe. The feeling is not a threshold you cross — it is a setting, and it will move up to meet whatever you have.",
+      "atBest": "You are who everyone rings when it goes wrong, and you can absorb a year that would end other people. That is not nothing. That is most of it.",
+      "atWorst": "Inflation eats you slowly while you feel responsible about it. You will be the safest person in the room and the poorest one in thirty years.",
+      "blindSpot": "Cash feels like safety and behaves like a slow leak. Doing nothing is a decision with a cost; it just never sends you a bill.",
+      "growth": {
+        "classId": "compounder",
+        "why": "You already have the temperament — patience, no panic, no need for excitement. You are three decisions away from being extremely good at this and you have made none of them."
+      },
+      "stress": {
+        "classId": "keeper",
+        "why": "Fear stops being a floor and becomes a habit. You cut things you can easily afford, and it does not make you feel any safer, so you cut more."
+      },
+      "relations": {
+        "partner": {
+          "classId": "builder",
+          "why": "You are why they can afford to be wrong, and they are why your safety eventually goes somewhere. Apart you stall and they crash."
+        },
+        "friend": {
+          "classId": "keeper",
+          "why": "Neither of you will ever make the other justify not spending money, and that is a rarer comfort than it sounds."
+        },
+        "annoying": {
+          "classId": "earner",
+          "why": "Their appetite for the next number makes your enough look like a lack of ambition, and sooner or later one of them says so out loud."
+        },
+        "wary": {
+          "classId": "speculator",
+          "why": "Not because they are reckless. Because a small part of you wonders whether they are living more than you are."
+        },
+        "triggeredBy": {
+          "classId": "compounder",
+          "why": "\"You are leaving money on the table.\" You know. You have known for years. Being told does not help and you will not say so."
+        }
+      },
+      "weakTo": {
+        "monster": "Whole-Life-Insurance Basilisk",
+        "why": "It sells you safety, which is the one thing you never negotiate about. You will pay a great deal for a guarantee and never once check what it cost."
+      },
+      "origins": [
+        {
+          "id": "sudden",
+          "house": "The house where money was there and then suddenly was not",
+          "detail": "You learned that the floor can go without warning, and no amount of floor has felt like enough since."
+        },
+        {
+          "id": "responsible",
+          "house": "The house where you were the reliable one before you were old enough for it",
+          "detail": "Somebody had to hold things steady. You did, and you never really put it down."
+        },
+        {
+          "id": "silent",
+          "house": "The house where the number was never said out loud",
+          "detail": "You could feel it was tight and nobody would confirm it, so you learned to prepare for a danger you were not allowed to see."
+        }
+      ],
+      "needsToHear": "You have built the floor. It is real and it is finished and it is better than most people will ever manage. You are allowed to stand on it now rather than keep making it thicker."
+    },
+    "speculator": {
+      "headline": "You are comfortable being wrong most of the time for one very good day.",
+      "coreDesire": "The bet that changes the shape of your life, not just the size of it.",
+      "coreFear": "An ordinary, average, entirely reasonable life that nobody would ever tell a story about.",
+      "lie": "I only need to be right once.",
+      "truth": "You need to survive being wrong, repeatedly, with enough left to still be at the table. Position size is the whole game and it is the part you find boring.",
+      "atBest": "You take the shot nobody else will, sized so that losing it costs you nothing you cannot replace. Done properly this is not gambling — it is the only lever with a genuinely uncapped top end.",
+      "atWorst": "Gambling, with a strategy vocabulary. You cannot tell conviction from adrenaline and you have stopped trying.",
+      "blindSpot": "You size by excitement rather than by what you could lose. The bet was never the problem — the amount was.",
+      "growth": {
+        "classId": "anchor",
+        "why": "A floor does not blunt you, it is what lets you swing properly. Every good risk-taker is boring somewhere, and this is where."
+      },
+      "stress": {
+        "classId": "earner",
+        "why": "When it goes, you have to go back and earn it again — and you will do it fast, badly, and angrily."
+      },
+      "relations": {
+        "partner": {
+          "classId": "anchor",
+          "why": "They are the reason a bad bet is a bad month rather than a bad decade. You will find them frustrating and you will need them enormously."
+        },
+        "friend": {
+          "classId": "builder",
+          "why": "They take real risks too, and they will never make you feel stupid for wanting something bigger than a salary."
+        },
+        "annoying": {
+          "classId": "keeper",
+          "why": "They cannot see the upside and they want to talk about your subscriptions while you are trying to describe an asymmetry."
+        },
+        "wary": {
+          "classId": "anchor",
+          "why": "They ask what happens if it fails, calmly, and you never have a good answer, and you both notice."
+        },
+        "triggeredBy": {
+          "classId": "compounder",
+          "why": "Being told that eight percent a year for thirty years beats you. It might. That is not the objection and you will struggle to say what is."
+        }
+      },
+      "weakTo": {
+        "monster": "Crypto Siren",
+        "why": "It does not sell you a return. It sells you the feeling of being early, which is the one thing you have never learned to price."
+      },
+      "origins": [
+        {
+          "id": "nothing-to-lose",
+          "house": "The house where playing it safe did not work either",
+          "detail": "You watched caution fail to protect somebody, and concluded that if both roads are risky you may as well take the one with a ceiling."
+        },
+        {
+          "id": "big-story",
+          "house": "The house with one story about somebody who made it",
+          "detail": "There was a relative, a deal, a moment. It got told often, and it set your idea of what money is for."
+        },
+        {
+          "id": "invisible",
+          "house": "The house where you were fine and unremarkable",
+          "detail": "Nothing was wrong, which is its own thing to escape. You are not chasing money so much as evidence of significance."
+        }
+      ],
+      "needsToHear": "Nobody is asking you to stop. Size it so that being wrong five times in a row leaves you standing, and you can keep doing this for forty years instead of four."
+    }
+  }
+}

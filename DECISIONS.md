@@ -9079,3 +9079,111 @@ only showed up that way, and all of them are now fixed and tested:
 array or roll. `characterName` was already stored by the sheet and is unchanged.
 The "you need a character first" view is **removed**: creation happens on this
 page, so nothing could reach it.
+
+---
+
+## DD-027 — The long read: an Enneagram-shaped profile, and the one thing it refuses to do
+
+The ask was a big personality profile off the back of the character: who you
+are weak to, who you partner well with, who to be friends with, who you will
+find annoying, who you are scared of, what triggers you — *"what your traumas
+were growing up, what your parents were like, etc. Build like a huge profile
+based off these assumptions."*
+
+`dnd/profile.html`, `dnd/engines/persona.js`, `dnd/data/dnd_profile.json`.
+
+Seven classes, each with a core desire, a core fear, the lie it tells itself
+and the truth underneath, at-best and at-worst, a blind spot, an integration
+direction and a disintegration direction, five named relationships, the
+creature it is weak to, and the one thing it needs to hear.
+
+### It says what it is, at the top rather than in the small print
+
+Everywhere else in this suite, a number that cannot be derived is left **blank**
+rather than guessed at. That is the whole voice. Here the entire output is a
+guess, so the honesty has to come from labelling instead of arithmetic:
+
+- The header carries a badge — **measured from your numbers**, or **from your
+  five answers, not measured** — so a reader always knows which kind of claim
+  they are looking at.
+- The table's own `confidenceNote` says it plainly: *written to be recognised
+  rather than to be true, and no more evidence-based than a star sign.*
+- Where the quiz class and the measured class disagree, the page shows **both**
+  rather than resolving them into a tidy single answer. "There are two of you"
+  is the most interesting thing on the page and it only exists because nothing
+  overwrites anything.
+
+### What it will not do, and what it does instead
+
+**It will not tell you what your parents were like.** Five questions about
+money cannot see a childhood, and a tool that announced one would simply be
+making it up — to a reader who, because this genre works by the Barnum effect,
+would probably believe it. That is the one place this thing could do actual
+harm, and "it's only a bit of fun" does not survive contact with somebody
+reading that their parents were withholding.
+
+So the origin stories are **offered, never asserted**. Three doors per class —
+*"The house where money was there and then suddenly was not"*, *"The house
+where you were the reliable one before you were old enough for it"* — plus a
+**None of these** that is treated as a perfectly ordinary answer. Picking one
+is recorded as `originPicked` and the page says, in as many words, that this is
+**your recognition and not its finding, and that nothing here scores it**.
+
+This is better than the assertion would have been, not a lesser version of it.
+A verdict is something to agree or disagree with; a door is something to walk
+through, and the walking is the part that tells you anything.
+
+Four things enforce it, because a warning that can be quietly dropped is not a
+control:
+
+1. `persona()` returns `originsWarning` **alongside** `origins`, so a room
+   cannot take the interesting half and leave the honest half behind.
+2. A test asserts the warning exists, says the tool cannot see a childhood, and
+   says it would be making it up.
+3. A test asserts the page prints it **above** the doors, by source position.
+4. A test asserts the page renders it from the table rather than retyping its
+   own softer version.
+
+Each of the four was broken on purpose and each one failed as intended.
+
+### The relationships are about levers, not people
+
+"Who will find you annoying" is read from **everyone else's profile**, not from
+your own — so it is genuinely their opinion of you rather than your guess at
+it, and two classes are allowed to find each other annoying. A test asserts
+every line in the party view is traceable to the other class's own words.
+
+Two content gaps showed up only once that view existed: **nobody found the
+Earner annoying** (implausible for the relentless-hustle build) and the
+**Landholder was nobody's friend**. The Anchor now finds the Earner annoying,
+and the Compounder and Landholder are friends — they are the only two on the
+list who measure in decades. A test now insists every class is named by at
+least three others, so nobody opens this page to a blank section.
+
+### What hunts you comes from the bestiary
+
+Each class's weakness is a real creature with a real CR and a real save: the
+Anchor is weak to the **Whole-Life-Insurance Basilisk**, because it sells
+safety and safety is the one thing an Anchor never negotiates about. The
+Builder is weak to the **MLM Cultist**, whose entire pitch — be your own boss,
+own your time — is aimed at exactly what a Builder already wants. A test
+asserts every named creature exists, so the page never sends a reader to look
+up something that is not there.
+
+### Compatibility note
+
+**Stored shape:** `dndProfile.originPicked` is **added** — the id of a chosen
+origin story, the string `'none'`, or absent. It is **flavour only**: nothing
+reads it into a score, and nothing should. It is not evidence of anything and
+must never be treated as a fact about the person.
+
+**Rooms updated:** `dnd/profile.html` (new), `dnd/engines/persona.js` (new),
+`dnd/data/dnd_profile.json` (new), `dnd/shared/reference.js` (table
+registered), `dnd/campaign.html` (links to it), `dnd/test/run.js`.
+
+**Before writing any of these from a new room:** never render `origins` without
+`originsWarning`, and never above it. Never let `originPicked` reach a score, a
+class, or an ability — it is a reader recognising a story, not a measurement,
+and the moment it feeds arithmetic this page starts inventing biography. And
+never present a profile without its `basis`: a characterisation shown as a
+measurement is the only genuinely dishonest thing this suite could do.
