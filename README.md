@@ -90,7 +90,7 @@ shared/             The spine everything depends on
   charts.js           the one way a number becomes a picture: area, donut, bars
   progress.js         what each room still needs, and where to go fill it
   demo-persona.js     the one demo household used by every "try an example"
-  gate.js             the one gate: which branches exist for whom, the cards, the guesses (D-094)
+  gate.js             the one gate: which branches exist for whom, the cards, the guesses (D-094), and WHY each branch does not apply, in a sentence a reader can read (D-142). Every room that loads progress.js loads this too — that is what folds a room your situation has no use for.
   lens.js             dollars, hours, FI bought, FI pushed — the toggle every room has
   undo.js             the undo/redo pair on every page, over the spine's command log
   room.js             the one shape every room has (D-097) — number, chart, lens, inputs, drawer

@@ -7321,6 +7321,26 @@ loaded `shared/gate.js`**, so `SLAF.Gate` was undefined and the check
 returned "no opinion". The gate is part of the shared baseline now and is
 loaded wherever progress is.
 
+### The fold has to follow the household, not the page load
+
+The phone-tap suite caught the version of this I shipped first. It navigates
+to Between Jobs, *then* sets the household's status to unemployed, and taps.
+The fold had been painted once at mount, so the room stayed folded against a
+household it now applied to, and the inputs were never reachable — the test
+timed out.
+
+The test was right and the implementation was wrong, in a way that matters
+outside the test: a household whose situation arrives after the page does —
+a share link, a late table load, another tab — kept a fold that no longer
+applied, and anyone changing their situation had to reload to see a room
+open. `mountSituation` now re-checks on every `Spine.onChange`, folding and
+unfolding both ways, and re-writes the reason when the situation changes
+under it. Verified in a browser: folded while employed, open the moment the
+status changes with no reload, folded again on changing back.
+
+**"Show it anyway" survives all of it.** Once you have opened a room, no
+later change to the household folds it under you again for that visit.
+
 ### Two things this turned up that I did not change
 
 - **Between Jobs, Partner and Kids are absent before you say anything.**

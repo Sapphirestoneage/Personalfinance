@@ -504,13 +504,44 @@
   }
   function hrefOf(room, fromRoomId) { return href(room.href, fromRoomId); }
 
-  /** Fold the room away behind the notice, and let one tap unfold it. */
+  /**
+   * Fold the room away behind the notice, and let one tap unfold it.
+   *
+   * Re-checked on every change to the household, not just at load. Painting
+   * it once was wrong twice over: a household whose situation arrives after
+   * the page does (a share link, a late table load, another tab) kept a fold
+   * that no longer applied, and someone changing their situation had to
+   * reload to see the room open. The phone-tap suite caught it — it sets a
+   * room's situation after navigating, and the stale fold hid the inputs.
+   * D-142.
+   */
   function mountSituation(roomId) {
     if (typeof document === 'undefined') return null;
-    var notApply = situationNoticeHtml(roomId);
-    if (!notApply) return null;
     var host = document.querySelector('main') || document.querySelector('.wrap') || document.getElementById('root');
     if (!host) return null;
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    var Spine = g && g.SLAF && g.SLAF.Spine;
+    var shownAnyway = false;          /* this visit only, never stored (D-052) */
+
+    function sync() {
+      var want = shownAnyway ? null : situationNoticeHtml(roomId);
+      var have = document.getElementById('slaf-notapply');
+      if (!want) {
+        if (have) { have.parentNode.removeChild(have); host.classList.remove('slaf-folded'); }
+        return null;
+      }
+      if (have) {                     /* already folded — the reason may have changed */
+        var fresh = document.createElement('div');
+        fresh.innerHTML = want.html;
+        have.parentNode.replaceChild(fresh.firstChild, have);
+        wire(document.getElementById('slaf-notapply'), want);
+        return document.getElementById('slaf-notapply');
+      }
+      return paint(want);
+    }
+    if (Spine && Spine.onChange) Spine.onChange(sync);
+
+    function paint(notApply) {
     var wrap = document.createElement('div');
     wrap.innerHTML = notApply.html;
     var notice = wrap.firstChild;
@@ -523,15 +554,24 @@
        which room you are looking at and how to leave it. */
     host.insertBefore(notice, host.firstChild);
     host.classList.add('slaf-folded');
-    var open = notice.querySelector('#slaf-showanyway');
-    open.addEventListener('click', function () {
-      host.classList.remove('slaf-folded');
-      open.remove();
-      notice.insertAdjacentHTML('beforeend',
-        '<p class="slaf-hint">Shown anyway. Anything you type here still saves — it just may not mean much while you are '
-        + escapeHtml(notApply.label) + '.</p>');
-    });
+    wire(notice, notApply);
     return notice;
+    }
+
+    function wire(notice, notApply) {
+      var open = notice.querySelector('#slaf-showanyway');
+      if (!open) return;
+      open.addEventListener('click', function () {
+        shownAnyway = true;
+        host.classList.remove('slaf-folded');
+        open.remove();
+        notice.insertAdjacentHTML('beforeend',
+          '<p class="slaf-hint">Shown anyway. Anything you type here still saves — it just may not mean much while you are '
+          + escapeHtml(notApply.label) + '.</p>');
+      });
+    }
+
+    return sync();
   }
 
   function mountHeader(roomId) {
