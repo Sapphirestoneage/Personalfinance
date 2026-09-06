@@ -950,6 +950,74 @@
     return h.retirement.has401k;
   }
 
+  /* ---- The Walk-Through (D-149) -----------------------------------------
+     Three writes, all of them into meta.walk, none of them touching a single
+     figure. Marking a step is a statement about the PERSON's progress, not
+     about the data, which is why it lives here and not in any room's own
+     fields: nothing downstream may read these to decide whether a number is
+     usable. Every one goes through save()/notify() like any other command,
+     so undo works on them and the log shows them in plain words. */
+
+  function walkState() {
+    var h = load();
+    h.meta = h.meta || {};
+    h.meta.walk = Schema.createWalk(h.meta.walk);
+    return h;
+  }
+
+  /** Begin the walk (or note that it was already begun). Idempotent. */
+  function startWalk() {
+    var h = walkState();
+    if (!h.meta.walk.startedAt) {
+      h.meta.walk.startedAt = new Date().toISOString();
+      pendingLabel = 'Started the walk-through';
+      save(); notify();
+    }
+    return h.meta.walk.startedAt;
+  }
+
+  /**
+   * Mark one step. `state` is 'done', 'skipped', or null to un-mark it.
+   * A room is never in both maps — Schema.createWalk enforces that, and so
+   * does this, deliberately in both places: the schema for anything that
+   * arrives from storage or an import, here for anything this session does.
+   */
+  function markWalkStep(roomId, state) {
+    if (!roomId) return null;
+    var h = walkState();
+    var w = h.meta.walk;
+    delete w.done[roomId];
+    delete w.skipped[roomId];
+    var now = new Date().toISOString();
+    if (state === 'done') w.done[roomId] = now;
+    else if (state === 'skipped') w.skipped[roomId] = now;
+    if (!w.startedAt && state) w.startedAt = now;
+    pendingLabel = state === 'done' ? 'Finished a walk-through step'
+      : state === 'skipped' ? 'Set a walk-through step aside'
+      : 'Reopened a walk-through step';
+    save(); notify();
+    return state || null;
+  }
+
+  /** Stamp the walk finished, or clear that stamp. */
+  function setWalkFinished(on) {
+    var h = walkState();
+    h.meta.walk.finishedAt = on ? new Date().toISOString() : null;
+    pendingLabel = on ? 'Finished the walk-through' : 'Reopened the walk-through';
+    save(); notify();
+    return h.meta.walk.finishedAt;
+  }
+
+  /** Clear every mark and start again. The FIGURES are untouched — this
+   *  resets the checklist, never the household. */
+  function resetWalk() {
+    var h = walkState();
+    h.meta.walk = Schema.createWalk(null);
+    pendingLabel = 'Cleared the walk-through checklist';
+    save(); notify();
+    return h.meta.walk;
+  }
+
   function removeExpenseEntry(id) {
     var h = load();
     var list = h.expenses.entries || [];
@@ -1435,6 +1503,10 @@
     setSkillDone: setSkillDone,
     markExercise: markExercise,
     setHas401k: setHas401k,
+    startWalk: startWalk,
+    markWalkStep: markWalkStep,
+    setWalkFinished: setWalkFinished,
+    resetWalk: resetWalk,
     upsertIncomeEntry: upsertIncomeEntry,
     removeIncomeEntry: removeIncomeEntry,
     upsertIncomeCost: upsertIncomeCost,

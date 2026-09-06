@@ -795,6 +795,27 @@
     ]
   });
 
+  /* The Walk-Through — the short, finishable route through the suite
+     (D-149). `utility: true` for the same reason Refresh is: it is a way of
+     moving through the rooms, not a room with a number in it, so it stays
+     off the numbered path and out of the four-room core cap (D-051). */
+  ROOMS.push({
+    id: 'walk',
+    kind: 'core',
+    utility: true,
+    needs: [],
+    order: 97,   /* ahead of Your Data (98) and Refresh (99), both utilities */
+    title: 'The Walk-Through',
+    blurb: 'The short route through this app: five sets of steps, only the ones that are for you, with somewhere to say when each is done.',
+    href: 'rooms/walk.html',
+    tier: 0,
+    tags: ['income', 'cashflow', 'debt'],
+    subsections: [
+      { id: 'out-top',    label: 'Where you are' },
+      { id: 'out-stages', label: 'The five sets' }
+    ]
+  });
+
   /* Between Jobs — the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'between-jobs',

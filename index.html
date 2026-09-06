@@ -52,6 +52,18 @@
   flip `hidden` on a node that is in the HTML.
 -->
 <style>
+  /* The walk-through strip (D-149). Deliberately NOT a .slaf-card: the
+     dashboard is four blocks and stays four blocks. Same slim shape the
+     strip has inside every room, so it reads as the same thing in both
+     places. min-width: 0 on the flex children so a long room title in
+     "Next is ..." wraps instead of pushing the page sideways. */
+  .walk-strip { max-width: var(--measure); margin: 0 auto var(--space-4);
+    padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md); background: var(--color-surface-raised);
+    display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+  .walk-strip > * { min-width: 0; }
+  .walk-say { flex: 1 1 220px; margin: 0; font-size: var(--text-sm);
+    line-height: var(--leading-loose); }
   .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
   .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
   .room-back:hover { text-decoration: underline; }
@@ -253,6 +265,19 @@
     </div>
   </section>
 
+  <!-- The Walk-Through's one line on the dashboard (D-149). Offered once the
+       panel is ready, and never before: someone who has not answered Start
+       Here does not need a second route through the app, they need the first
+       one. `dash` so it hides with the rest of the panel.
+
+       A STRIP, NOT A BLOCK. The dashboard is four blocks and the test holds
+       it to exactly those four (D-096) — a guard worth more than the
+       convenience of adding a fifth card, because "one screen, four blocks"
+       stops being true the first time something slips in beside them. This
+       is navigation, not a reading, so it takes the same slim shape the
+       walk strip has inside every room and stays out of the count. -->
+  <div class="dash walk-strip" id="walk-card" hidden></div>
+
   <!-- ONE SCREEN, FOUR BLOCKS (D-096). Every number opens the room it came from. -->
   <div class="blocks">
   <section class="slaf-card dash block" id="where">
@@ -412,6 +437,7 @@
 <script src="shared/spine-v2.js"></script>
 <script src="shared/staleness.js"></script>
 <script src="shared/ownership.js"></script>
+<script src="shared/guide.js"></script>
 <script src="shared/progress.js"></script>
 <script src="shared/undo.js"></script>
 <script src="shared/demo-persona.js"></script>
@@ -1102,6 +1128,36 @@
     });
   });
 
+  /* The Walk-Through's one line here (D-149). Three states and no more:
+     never offered, part-way, finished. It is an OFFER — the dashboard is
+     complete without it, and nothing on this page waits on it. */
+  function renderWalkCard(h) {
+    var card = el('walk-card');
+    if (!card || !SLAF.Guide) return;
+    var G = SLAF.Guide;
+    var p = G.progress(h, TABLES);
+    if (!p.total) { card.hidden = true; return; }
+    card.hidden = false;
+    var next = G.nextStep(h, TABLES);
+    if (!G.hasStarted(h)) {
+      card.innerHTML = '<p class="walk-say">A lot of rooms. <strong>The walk-through</strong> is the short way round — '
+        + p.total + ' steps in five sets, only the ones for your situation. Nothing is locked behind it.</p>'
+        + '<a class="slaf-btn slaf-btn--primary" href="rooms/walk.html">Take the walk-through →</a>';
+      return;
+    }
+    if (p.open === 0) {
+      card.innerHTML = '<p class="walk-say">Walk-through: all ' + p.total + ' steps done'
+        + (p.skipped ? ' (' + p.skipped + ' set aside)' : '') + '. '
+        + 'Come back to <a href="rooms/refresh.html">Refresh</a> when the numbers move.</p>'
+        + '<a class="slaf-btn" href="rooms/walk.html">See the list →</a>';
+      return;
+    }
+    card.innerHTML = '<p class="walk-say">Walk-through: <strong>' + (p.done + p.skipped) + ' of ' + p.total
+      + '</strong> behind you. Next is ' + esc(next.title) + '.</p>'
+      + '<a class="slaf-btn slaf-btn--primary" href="' + next.href + '">Continue →</a>'
+      + '<a class="slaf-btn" href="rooms/walk.html">All ' + p.total + '</a>';
+  }
+
   function renderNow() {
     if (!TABLES) return;
     var h = Spine.getProfile();
@@ -1115,6 +1171,7 @@
     renderDate(h, c);
     renderDisplayUnit(h);
     renderAgeLine(h);
+    renderWalkCard(h);
 
     /* radar */
     /* Ask the gate which of these mean anything for this household. A

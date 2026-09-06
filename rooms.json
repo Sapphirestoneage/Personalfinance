@@ -941,6 +941,16 @@
       "order": 51
     },
     {
+      "id": "walk",
+      "title": "The Walk-Through",
+      "file": "rooms/walk.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 97
+    },
+    {
       "id": "data",
       "title": "Your Data",
       "file": "rooms/data.html",

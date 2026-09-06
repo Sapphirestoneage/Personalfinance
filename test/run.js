@@ -8488,6 +8488,168 @@ section('The D&D folder\'s vendored copies');
 })();
 
 /* ==========================================================================
+   The Walk-Through (D-149)
+   --------------------------------------------------------------------------
+   The walk has to do two things and no more: be short enough to finish, and
+   never claim you have finished something you have not. Everything below is
+   one of those two.
+   ========================================================================== */
+section('The Walk-Through — a route with an end');
+(function () {
+  const Guide = require(path.join(ROOT, 'shared/guide.js'));
+  const Schema = require(path.join(ROOT, 'shared/schema.js'));
+  const Registry = require(path.join(ROOT, 'shared/registry.js'));
+  const stagesTable = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/walk_stages.json'), 'utf8'));
+  const T = { walkStages: stagesTable };
+
+  function person(status) {
+    return Schema.createHousehold({ people: [{ id: 'p1', role: 'adult', employmentStatus: status }] });
+  }
+  const STATUSES = ['employed', 'selfEmployed', 'unemployed', 'student', 'retired', 'both'];
+
+  /* -- the data file itself ---------------------------------------------- */
+  const listed = stagesTable.stages.reduce((a, s) => a.concat(s.rooms), []);
+  checkTrue('every room named in walk_stages.json is a real room',
+    listed.every(id => !!Registry.byId(id)),
+    'missing: ' + listed.filter(id => !Registry.byId(id)).join(', '));
+  checkTrue('no room appears on the walk twice',
+    listed.length === new Set(listed).size,
+    'a step listed in two sets would be counted twice and could never be finished once');
+  checkTrue('every stage has a title and a plain-language goal',
+    stagesTable.stages.every(s => s.id && s.title && s.goal && s.goal.length > 30));
+  check('the walk has five sets', stagesTable.stages.length, 5);
+  checkTrue('walk_stages.json carries its provenance like every other table',
+    !!(stagesTable.version && stagesTable.asOf && stagesTable.source && stagesTable.confidence));
+
+  /* -- it is short enough to finish -------------------------------------- */
+  STATUSES.forEach(function (status) {
+    const h = person(status);
+    const n = Guide.steps(h, T).length;
+    /* The whole point. Fifty-nine rooms is a library; a walk anyone finishes
+       is well under half of that. If a future room pushes one of these over
+       25 the walk has stopped being a walk, and this should fail loudly
+       rather than quietly getting longer. */
+    checkTrue(`${status}: the walk is between 10 and 25 steps (got ${n})`, n >= 10 && n <= 25);
+  });
+
+  /* -- it never invents a step ------------------------------------------- */
+  STATUSES.forEach(function (status) {
+    const h = person(status);
+    checkTrue(`${status}: every step on the walk applies to this situation`,
+      Guide.steps(h, T).every(x => Registry.applies(Registry.byId(x.id), h)),
+      'a step that is not for your situation is not a step you skipped — it is not a step');
+    checkTrue(`${status}: no set is shown empty`,
+      Guide.stages(h, T).every(s => s.steps.length > 0),
+      'an empty set with a tick beside it reads as an achievement and is not one');
+  });
+
+  /* -- it never claims you finished something -------------------------- */
+  (function () {
+    /* The demo persona has a figure in nearly every box. Not one step is
+       done, because being full of numbers is not the same fact as having
+       been dealt with, and only the person can say the second one. */
+    const demo = require(path.join(ROOT, 'shared/demo-persona.js')).build();
+    const p = Guide.progress(demo, T);
+    check('a fully-filled household still has zero steps done', p.done, 0);
+    check('...and zero set aside', p.skipped, 0);
+    checkTrue('...and has not started the walk', !Guide.hasStarted(demo));
+    checkTrue('...and shows no walk strip anywhere (nothing to mount)',
+      !Guide.hasStarted(demo));
+  })();
+
+  /* -- marking, and the two maps that cannot disagree -------------------- */
+  (function () {
+    const h = person('employed');
+    const first = Guide.nextStep(h, T);
+    check('the walk starts at Start Here', first.id, 'start');
+    h.meta.walk = { done: { start: 'x' }, skipped: {} };
+    check('a marked step is not offered again', Guide.nextStep(h, T).id !== 'start', true);
+    check('marking one step moves the count', Guide.progress(h, T).done, 1);
+
+    /* Schema.createWalk is the guard: a shape claiming a room is both done
+       and set aside cannot survive being loaded. Done wins — it is the
+       stronger statement and the one you had to reach the room to make. */
+    const both = Schema.createHousehold({ meta: { walk: { done: { tax: 'a' }, skipped: { tax: 'b' } } } });
+    check('a room cannot be both done and set aside', both.meta.walk.skipped.tax, undefined);
+    check('...and done is the one that survives', both.meta.walk.done.tax, 'a');
+  })();
+
+  /* -- setting a step aside counts as dealing with it -------------------- */
+  (function () {
+    const h = person('employed');
+    const ids = Guide.steps(h, T).map(x => x.id);
+    h.meta.walk = { done: {}, skipped: {} };
+    ids.forEach(id => { h.meta.walk.skipped[id] = 'x'; });
+    checkTrue('a walk entirely set aside is finished', Guide.isFinished(h, T));
+    check('...and the bar is full', Guide.progress(h, T).pct, 100);
+    checkTrue('...but no set is called an achievement',
+      Guide.stages(h, T).every(s => s.complete && s.allSkipped),
+      'complete says "nothing open"; allSkipped is what stops the page congratulating you for it');
+  })();
+
+  /* -- position on the walk ---------------------------------------------- */
+  (function () {
+    const h = person('employed');
+    const at = Guide.stepOf(h, T, 'statement');
+    checkTrue('a step knows its place, its set and its neighbours',
+      !!(at && at.step > 0 && at.total > at.step && at.stage && at.stage.title && at.next));
+    checkTrue('a room that is not on the walk says so plainly',
+      Guide.stepOf(h, T, 'ratios') === null);
+    /* stepOf builds the flat list from ONE call to stages(). Building it
+       from two would give two sets of objects, and looking a step up by
+       identity inside the other would find nothing — which is exactly what
+       happened the first time this ran. */
+    checkTrue('a step found by stepOf carries the set it is actually in',
+      Guide.stages(h, T).some(s => s.title === at.stage.title && s.steps.some(x => x.id === 'statement')));
+  })();
+
+  /* -- it degrades to nothing without its table -------------------------- */
+  (function () {
+    const h = person('employed');
+    check('no table means no walk, not a crash', Guide.stages(h, {}).length, 0);
+    check('...and no next step', Guide.nextStep(h, {}), null);
+    check('...and a zero total rather than a full bar', Guide.progress(h, {}).total, 0);
+    checkTrue('...and not "finished"', !Guide.isFinished(h, {}));
+  })();
+
+  /* -- the room, and the strip ------------------------------------------- */
+  (function () {
+    const html = fs.readFileSync(path.join(ROOT, 'rooms/walk.html'), 'utf8');
+    checkTrue('rooms/walk.html declares the live-form rule (D-034)',
+      /LIVE-FORM: built once/.test(html));
+    checkTrue('rooms/walk.html has no text input at all',
+      !/<input(?![^>]*type="(?:checkbox|radio|file)")/i.test(html) && !/<textarea/i.test(html),
+      'the page rebuilds its list wholesale on every change; a text field there would lose focus');
+    checkTrue('rooms/walk.html loads shared/guide.js', /shared\/guide\.js/.test(html));
+
+    const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+    checkTrue('the strip is mounted from the one place every room reaches',
+      /mountWalk\(roomId, nav\)/.test(prog),
+      'mountHeader is the single mount point — 22 rooms reach it through Room.mount and the rest call it directly');
+
+    /* Every page that mounts the header needs the module the strip reads. */
+    const pages = fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f))
+      .map(f => 'rooms/' + f).concat(['index.html', 'map.html', 'foo-ladder.html'])
+      .filter(f => fs.existsSync(path.join(ROOT, f)));
+    const gap = pages.filter(f => {
+      const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+      return /shared\/progress\.js/.test(src) && !/shared\/guide\.js/.test(src);
+    });
+    checkTrue('every page loading progress.js also loads guide.js',
+      gap.length === 0, 'missing in: ' + gap.join(', '));
+  })();
+
+  /* -- the walk is a suggestion, never a lock ---------------------------- */
+  checkTrue('nothing in the registry is gated on the walk',
+    !/meta\.walk/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')),
+    'every room stays reachable from the map in any order, walk or no walk');
+  checkTrue('no engine reads the walk marks',
+    fs.readdirSync(path.join(ROOT, 'engines')).filter(f => /\.js$/.test(f))
+      .every(f => !/meta\.walk|Guide\./.test(fs.readFileSync(path.join(ROOT, 'engines', f), 'utf8'))),
+    'a mark is a statement about the person, never about whether a number is usable');
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 

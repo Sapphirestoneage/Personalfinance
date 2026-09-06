@@ -1361,6 +1361,35 @@
     };
   }
 
+  /**
+   * The Walk-Through's ledger (D-149). Both maps are roomId -> ISO string,
+   * and a room appears in at most one of them: marking a step done clears
+   * any skip and the other way round, so "have they dealt with this?" is
+   * one lookup and can never disagree with itself.
+   */
+  function createWalk(w) {
+    var src = w || {};
+    function stamps(o) {
+      var out = {};
+      Object.keys(o || {}).forEach(function (k) {
+        if (typeof o[k] === 'string' && o[k]) out[k] = o[k];
+      });
+      return out;
+    }
+    var done = stamps(src.done);
+    var skipped = stamps(src.skipped);
+    /* A room in both maps is a shape that should not exist. Done wins:
+       finishing is the stronger statement, and it is the one the person
+       had to reach the room to make. */
+    Object.keys(done).forEach(function (k) { delete skipped[k]; });
+    return {
+      startedAt: typeof src.startedAt === 'string' ? src.startedAt : null,
+      finishedAt: typeof src.finishedAt === 'string' ? src.finishedAt : null,
+      done: done,
+      skipped: skipped
+    };
+  }
+
   function createHousehold(fields) {
     var f = fields || {};
     return {
@@ -1498,8 +1527,23 @@
         displayUnit: null,
         /* "I don't pay rent" — living with family, or a paid-off place;
            lowers the spending guess and nothing else. D-094. */
-        noRent: null
-      }, f.meta || {})
+        noRent: null,
+        /* The Walk-Through's ledger — D-149. Which steps the person has
+           said they are finished with, and which they have waved off.
+           Deliberately NOT derived from visits or from how full a room is:
+           a person deciding "I am done with this one" is a different fact
+           from a room having numbers in it, and only they can say it.
+           { startedAt: ISO|null, finishedAt: ISO|null,
+             done: { roomId: ISO }, skipped: { roomId: ISO } } */
+        walk: null
+      }, f.meta || {}, {
+        /* Normalised AFTER the spread, not inside the defaults: a raw
+           `f.meta.walk` would otherwise win the Object.assign and land in
+           the household unchecked — which is how a shape from an old export
+           gets in. Every other meta key is a scalar and does not have this
+           problem. D-149. */
+        walk: createWalk(f.meta && f.meta.walk)
+      })
     };
   }
 
@@ -1986,6 +2030,7 @@
     KEEP_REASONS: KEEP_REASONS,
     keepReasonList: keepReasonList,
     createSkillTree: createSkillTree,
+    createWalk: createWalk,
     APP_VERSION: APP_VERSION,
     createExercisesLog: createExercisesLog,
     createVariableIncomePlan: createVariableIncomePlan,

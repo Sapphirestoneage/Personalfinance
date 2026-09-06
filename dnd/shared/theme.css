@@ -982,3 +982,36 @@ a:hover { color: var(--sapphire-100); }
 .slaf-notapply p { margin: var(--space-2) 0 0; color: var(--color-text-muted); }
 .slaf-notapply .slaf-notapply-go { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
 .slaf-notapply #slaf-showanyway { margin-top: var(--space-3); }
+
+/* ---- The Walk-Through (D-149) --------------------------------------------
+   A strip under the header hops on every room that is a step, once the walk
+   has begun — and on nothing at all before that. It holds buttons only, no
+   inputs, so it is free to repaint on every change without going near the
+   live-form rule (D-034). */
+.slaf-walk { max-width: var(--measure); margin: 0 auto var(--space-4);
+  padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md); background: var(--color-surface-raised); }
+.slaf-walk.is-dealt { border-color: var(--color-positive); }
+.slaf-walk-line { display: flex; flex-wrap: wrap; align-items: baseline;
+  justify-content: space-between; gap: var(--space-2); }
+.slaf-walk-where { font-size: var(--text-sm); font-weight: 600; }
+.slaf-walk-stage { display: block; font-weight: normal; color: var(--color-text-muted);
+  font-size: var(--text-xs); }
+.slaf-walk-hub { font-size: var(--text-xs); color: var(--color-accent-hover);
+  text-decoration: none; white-space: nowrap; display: inline-block;
+  min-height: 32px; line-height: 32px; }
+.slaf-walk-track { height: 6px; margin: var(--space-2) 0; border-radius: 999px;
+  background: var(--color-border); overflow: hidden; }
+.slaf-walk-track i { display: block; height: 100%; background: var(--color-accent);
+  border-radius: 999px; transition: width .3s ease; }
+.slaf-walk.is-dealt .slaf-walk-track i { background: var(--color-positive); }
+.slaf-walk-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+/* min-width: 0 so a long room title in "Next: ..." wraps inside the strip
+   instead of pushing the page sideways. A flex item will not shrink below
+   its content without it — the same trap that cost 26px in D-146. */
+.slaf-walk-acts > * { min-width: 0; }
+.slaf-walk-said { font-size: var(--text-sm); color: var(--color-positive); font-weight: 600; }
+@media (max-width: 480px) {
+  .slaf-walk-acts { flex-direction: column; align-items: stretch; }
+  .slaf-walk-acts > .slaf-btn { text-align: center; }
+}

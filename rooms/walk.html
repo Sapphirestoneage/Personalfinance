@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>The Walk-Through · SPARKS</title>
+<meta name="description" content="A short, finishable route through this app: five sets of steps, in order, with a place to say when each one is done."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. THE WALK-THROUGH. DECISIONS.md D-149.
+
+  1. READS   data/walk_stages.json for the five sets and which rooms are in
+             them; shared/registry.js for each room's real title and blurb;
+             shared/gate.js (through Registry.applies) to drop the steps that
+             are not for this situation; meta.walk for what has been marked.
+             It reads no figure of any kind and computes nothing.
+  2. WRITES  meta.walk ONLY — Spine.markWalkStep, startWalk, resetWalk. Not
+             one household number. Marking a step is a statement about the
+             person, never about the data, and nothing downstream may read
+             these marks to decide whether a number is usable.
+  3. SHOWS   the five sets in order, each with only its applicable steps,
+             each step's state, and one button that takes you to the first
+             thing still open. A set with no applicable steps is absent, not
+             empty — an empty set with a tick beside it reads as an
+             achievement and it is not one.
+  4. FEEDS   the strip that shared/progress.js puts on every room that is a
+             step, once the walk has begun.
+  5. DEMO    none. There is nothing to demonstrate with numbers here.
+
+  NOT A GATE. Nothing is locked behind this. Every room stays reachable from
+  the map at any time, in any order, walk or no walk. This is a suggested
+  route with a checklist on it, and the checklist belongs to the person.
+
+  LIVE-FORM: built once — and in the strictest sense: this page has no text
+  input anywhere. Every control is a button or a link, so repainting the list
+  on every change cannot close a soft keyboard (D-034).
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-3); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+
+  .top { text-align: center; }
+  .top .big { font-family: var(--font-display); font-size: var(--text-3xl); line-height: 1.1; }
+  .top .sub { color: var(--color-text-muted); font-size: var(--text-sm); margin-top: var(--space-1); }
+  .track { height: 10px; margin: var(--space-3) 0; border-radius: 999px; background: var(--color-border); overflow: hidden; }
+  .track i { display: block; height: 100%; background: var(--color-accent); border-radius: 999px; transition: width .4s ease; }
+  .track.is-done i { background: var(--color-positive); }
+  .top-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: center; }
+  .top-acts > * { min-width: 0; }
+
+  .stage { margin-top: var(--space-4); }
+  .stage-head { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
+  .stage-num { font-family: var(--font-display); font-size: var(--text-sm); color: var(--color-text-faint);
+    border: 1px solid var(--color-border); border-radius: 999px; min-width: 26px; text-align: center; padding: 1px 6px; }
+  .stage-title { font-family: var(--font-display); font-size: var(--text-lg); margin: 0; }
+  .stage-count { margin-left: auto; font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+  .stage.is-complete .stage-count { color: var(--color-positive); }
+  .stage-goal { color: var(--color-text-muted); font-size: var(--text-sm); margin: var(--space-2) 0 0;
+    line-height: var(--leading-loose); }
+
+  .steps { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  .steps li { border-top: 1px solid var(--color-border); padding: var(--space-3) 0; }
+  .step-head { display: flex; align-items: baseline; gap: var(--space-2); }
+  /* The mark is a status, not a control: the buttons below it are the
+     control. Making it a button too would give the same action two places
+     to live and two states to keep in step. */
+  .mark { flex: 0 0 auto; width: 1.6em; font-size: var(--text-sm); }
+  .mark.is-done { color: var(--color-positive); }
+  .mark.is-skipped { color: var(--color-text-faint); }
+  .step-link { font-weight: 600; text-decoration: none; color: var(--color-text); }
+  .step-link:hover { color: var(--color-accent-hover); }
+  li.is-dealt .step-link { color: var(--color-text-muted); font-weight: normal; }
+  .step-blurb { margin: var(--space-1) 0 0 1.6em; font-size: var(--text-sm);
+    color: var(--color-text-muted); line-height: var(--leading-loose); }
+  .step-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-2) 0 0 1.6em; }
+  .step-acts > * { min-width: 0; }
+  .step-said { font-size: var(--text-xs); color: var(--color-text-faint); align-self: center; }
+
+  .finished { border-color: var(--color-positive); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../index.html">← Home</a>
+  <h1>The Walk-Through</h1>
+  <p class="room-lede">This app has a lot of rooms. This is the short route through the ones that matter for you — five sets, in order, with an end.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card top" id="out-top"></section>
+  <div id="out-stages"></div>
+
+  <details class="drawer" style="margin-top:var(--space-4)">
+    <summary>What this checklist is, and is not</summary>
+    <div>
+      <p>Nothing in this app is locked behind this list. Every room is open
+      from the map at any time, in any order, whether you use this or not.
+      This is a suggested route with somewhere to tick things off.</p>
+      <p>A step is done when <em>you</em> say it is — not when the room has a
+      number in every box. Those are different things. A room can be full of
+      figures you do not trust yet, and a room can be finished the moment you
+      have decided it does not change anything.</p>
+      <p><strong>“Not for me” is a real answer.</strong> It counts as dealt
+      with, it moves the bar, and it is not held against you anywhere. You
+      can change your mind on any step later.</p>
+      <p>Clearing the list clears the ticks and nothing else. Every figure
+      you have entered stays exactly where it is.</p>
+      <p id="reset-line"></p>
+    </div>
+  </details>
+
+  <p class="disclaimer">
+    Not financial advice. This page holds no figures at all — it is a list of
+    rooms and a record of which ones you have finished with. Everything stays
+    in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/undo.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Spine = SLAF.Spine, Guide = SLAF.Guide, Reference = SLAF.Reference,
+      Progress = SLAF.Progress;
+
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  /* Registry hrefs are written from the site root; this page lives in rooms/. */
+  function from(href) {
+    return href.indexOf('rooms/') === 0 ? href.slice('rooms/'.length) : '../' + href;
+  }
+
+  var TABLES = null;
+
+  function topHtml(h) {
+    var p = Guide.progress(h, TABLES);
+    var next = Guide.nextStep(h, TABLES);
+    var started = Guide.hasStarted(h);
+    var out = [];
+
+    if (!p.total) {
+      return '<p class="say">The walk could not be built — <code>data/walk_stages.json</code> '
+        + 'did not load. Every room is still reachable from the map.</p>';
+    }
+    if (!started) {
+      out.push('<div class="big">' + p.total + ' steps</div>');
+      out.push('<p class="sub">In five short sets. Most people do a set at a sitting, not all of it at once.</p>');
+      out.push('<div class="top-acts" style="margin-top:var(--space-3)">'
+        + '<a class="slaf-btn slaf-btn--primary" href="' + from(next.href) + '" id="btn-begin">Start with ' + esc(next.title) + ' →</a>'
+        + '</div>');
+      return out.join('');
+    }
+    if (p.open === 0) {
+      out.push('<div class="big">All ' + p.total + ' done</div>');
+      out.push('<p class="sub">' + p.done + ' finished'
+        + (p.skipped ? ', ' + p.skipped + ' set aside' : '')
+        + '. Nothing here is ever really finished — but this part is. Come back to <a href="refresh.html">Refresh</a> when the numbers move.</p>');
+      out.push('<div class="track is-done"><i style="width:100%"></i></div>');
+      out.push('<div class="top-acts">'
+        + '<a class="slaf-btn slaf-btn--primary" href="../index.html">See the dashboard →</a></div>');
+      return out.join('');
+    }
+    out.push('<div class="big">' + (p.done + p.skipped) + ' of ' + p.total + '</div>');
+    out.push('<p class="sub">' + p.open + (p.open === 1 ? ' step left' : ' steps left')
+      + (p.skipped ? ' · ' + p.skipped + ' set aside' : '') + '</p>');
+    out.push('<div class="track"><i style="width:' + p.pct + '%"></i></div>');
+    out.push('<div class="top-acts">'
+      + '<a class="slaf-btn slaf-btn--primary" href="' + from(next.href) + '">Continue: ' + esc(next.title) + ' →</a>'
+      + '</div>');
+    return out.join('');
+  }
+
+  function stagesHtml(h) {
+    var list = Guide.stages(h, TABLES);
+    if (!list.length) return '';
+    var out = [];
+    list.forEach(function (s, i) {
+      var cls = 'slaf-card stage' + (s.complete ? ' is-complete' : '') + (s.complete && !s.allSkipped ? ' finished' : '');
+      out.push('<section class="' + cls + '" style="margin-top:var(--space-4)">');
+      out.push('<div class="stage-head">'
+        + '<span class="stage-num">' + (i + 1) + '</span>'
+        + '<h2 class="stage-title">' + esc(s.title) + '</h2>'
+        + '<span class="stage-count">' + (s.done + s.skipped) + ' / ' + s.total
+        + (s.complete ? ' ✓' : '') + '</span>'
+        + '</div>');
+      out.push('<p class="stage-goal">' + esc(s.goal) + '</p>');
+      out.push('<ul class="steps">');
+      s.steps.forEach(function (x) {
+        var dealt = x.state !== 'open';
+        out.push('<li class="' + (dealt ? 'is-dealt' : '') + '">');
+        out.push('<div class="step-head">'
+          + '<span class="mark ' + (x.state === 'done' ? 'is-done' : x.state === 'skipped' ? 'is-skipped' : '') + '" aria-hidden="true">'
+          + (x.state === 'done' ? '✓' : x.state === 'skipped' ? '–' : '')
+          + '</span>'
+          + '<a class="step-link" href="' + from(x.href) + '">' + x.n + '. ' + esc(x.title) + '</a>'
+          + '</div>');
+        if (!dealt) out.push('<p class="step-blurb">' + esc(x.blurb) + '</p>');
+        out.push('<div class="step-acts">');
+        if (dealt) {
+          out.push('<span class="step-said">'
+            + (x.state === 'done' ? 'Done.' : 'Not for you.') + '</span>');
+          out.push('<button type="button" class="slaf-btn slaf-btn--quiet" data-step="' + x.id + '" data-want="open">Undo</button>');
+        } else {
+          out.push('<a class="slaf-btn slaf-btn--primary" href="' + from(x.href) + '">Open →</a>');
+          out.push('<button type="button" class="slaf-btn slaf-btn--quiet" data-step="' + x.id + '" data-want="done">Done</button>');
+          out.push('<button type="button" class="slaf-btn slaf-btn--quiet" data-step="' + x.id + '" data-want="skipped">Not for me</button>');
+        }
+        out.push('</div></li>');
+      });
+      out.push('</ul></section>');
+    });
+    return out.join('');
+  }
+
+  /* One delegated listener on a container that is rebuilt whole. Rebuilding
+     is safe here in a way it would not be in a room with inputs: there is not
+     a single text field on this page, so nothing can lose focus and no soft
+     keyboard can close (D-034). */
+  function paint() {
+    var h = Spine.getProfile();
+    document.getElementById('out-top').innerHTML = topHtml(h);
+    document.getElementById('out-stages').innerHTML = stagesHtml(h);
+    var line = document.getElementById('reset-line');
+    if (line) {
+      line.innerHTML = Guide.hasStarted(h)
+        ? '<button type="button" class="slaf-btn slaf-btn--quiet" id="btn-reset">Clear the ticks and start the list again</button>'
+        : '<span class="slaf-hint">Nothing ticked yet, so there is nothing to clear.</span>';
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('[data-step]') : null;
+    if (b) {
+      var want = b.getAttribute('data-want');
+      Spine.markWalkStep(b.getAttribute('data-step'), want === 'open' ? null : want);
+      return;
+    }
+    if (e.target.id === 'btn-reset') Spine.resetWalk();
+    /* Opening the first step IS starting the walk — that is what makes the
+       strip appear on the room you land on. */
+    if (e.target.id === 'btn-begin') Spine.startWalk();
+  });
+
+  Spine.registerRoom('walk');
+  Spine.onChange(function () { if (TABLES) paint(); });
+  Progress.mountHeader('walk');
+  Progress.mount('walk');
+
+  Reference.load([Guide.TABLE], '../data/').then(function (T) {
+    TABLES = T;
+    paint();
+  }).catch(function (err) {
+    var n = document.getElementById('load-notice');
+    n.hidden = false;
+    n.textContent = 'The list of steps could not be loaded. Every room is still reachable from the map. (' + err + ')';
+  });
+})();
+</script>
+</body>
+</html>

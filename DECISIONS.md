@@ -7894,6 +7894,143 @@ reads it.
 
 ---
 
+## D-149 — The Walk-Through: fifty-nine rooms, and a route with an end
+
+The ask was "complete sets of approval and things from start to finish… incredibly
+simple and intuitive to use." The obstacle was arithmetic. This app has **fifty-nine
+rooms**. That is a library. A library is the one thing a person opening this for the
+first time cannot use, because a library has no order and no end, and the honest
+answer to "have I done this?" in a library is always no.
+
+So the walk is a **short route with a finish line**, and everything in it exists to
+protect one of those two words.
+
+### Short: how the list got to eighteen
+
+Filtering by situation is not enough on its own. Run the gate over the whole registry
+and an employed person still has **33 rooms** that ask them for something. Nobody
+finishes 33 rooms.
+
+`data/walk_stages.json` picks instead. A room is on the walk only if it **asks for a
+fact the rest of the app needs**, or **holds a decision worth making once**. Everything
+else stays in the suite, reachable from the map, and is simply not homework. Then the
+gate filters what is left, which is why the same five sets come out different lengths:
+
+| Situation | The five sets | Total |
+|---|---|---|
+| Employed | 5 + 3 + 4 + 3 + 3 | **18** |
+| Self-employed | 7 + 3 + 3 + 3 + 3 | **19** |
+| Between jobs | 6 + 3 + 1 + 3 + 2 | **15** |
+| Student | 5 + 2 + 3 + 3 + 3 | **16** |
+| Retired | 5 + 3 + 2 + 3 + 3 | **16** |
+| Mixed | 7 + 3 + 4 + 3 + 3 | **20** |
+
+Between-jobs gets a set of **one** under "Where the money goes", and that is the right
+answer rather than a bug to pad out: someone with no income has less to route, and a
+set inflated to look substantial would be a lie about their situation. A set with
+*nothing* in it is dropped from the page entirely — an empty set with a tick beside it
+reads as an achievement and it is not one.
+
+`test/run.js` now holds every situation between **10 and 25 steps**. If a future room
+pushes one over 25 the walk has stopped being a walk, and that should fail loudly
+rather than quietly getting longer.
+
+### Finished: the thing this refuses to infer
+
+**A step is done because the person said so.** Not because the room has a number in
+every box. Those are two different facts, and the app already answers the first one —
+`shared/progress.js` has counted filled fields since D-050.
+
+The test that pins this down: run the **demo persona**, which has a figure in nearly
+every box in the app, and **zero steps are done**. A room can be full of figures you
+do not trust yet, and a room can be finished the moment you have decided it changes
+nothing. Only the person knows which.
+
+So the state lives in `meta.walk` and nowhere else, written only by
+`Spine.markWalkStep` / `startWalk` / `resetWalk`, and **no engine may read it** —
+there is a test for that too. A mark is a statement about the person, never about
+whether a number is usable.
+
+**"Not for me" is a real answer.** It counts as dealt with, it moves the bar, and it
+is not held against you anywhere. A checklist that will not let you say "this one is
+not mine" is a checklist nobody finishes. The engine keeps `complete` (nothing open)
+and `allSkipped` separate so the page can stop short of congratulating someone for
+waving a whole set away.
+
+### Not a gate, and the guard that keeps it that way
+
+Nothing is locked behind the walk. Every room is open from the map at any time, in any
+order, walk or no walk. Two tests hold that: nothing in the registry reads `meta.walk`,
+and no engine mentions it. This is a suggested route with a checklist on it, and the
+checklist belongs to the person, not to the software.
+
+It is also **invisible until asked for**. `Guide.hasStarted()` is false for a household
+that never began, and the strip mounts on nothing at all in that state. Someone who
+never wanted a guided path never sees a trace of one.
+
+### Where it lives
+
+- **`shared/guide.js`** — pure. No storage, no DOM, no dates. `stages` · `steps` ·
+  `progress` · `nextStep` · `stepOf` · `isFinished` · `hasStarted`.
+- **`rooms/walk.html`** — the hub. Five sets, each step's state, one button to the
+  first thing still open. `utility: true` at order 97, like Refresh and Your Data, so
+  it stays off the numbered path and out of D-051's four-room core cap.
+- **The strip**, mounted from `Progress.mountHeader` — the one place every room
+  reaches (22 through `Room.mount`, the rest directly), which is the same lever the
+  situation sweep used in D-142. It shows where you are, the two answers a step can
+  have, and the next one.
+- **The dashboard** gets one line, and it is a **strip, not a fifth card**. `test/run.js`
+  asserts the dashboard is exactly four blocks (D-096) and refused the section I first
+  wrote. The guard was right: "one screen, four blocks" stops being true the first time
+  something slips in beside them. This is navigation rather than a reading, so it takes
+  the same slim shape it has inside every room and stays out of the count.
+
+### Two bugs this shape had, both worth recording
+
+**`stepOf` looked a step up in the wrong array.** It called `stages()` and `steps()`
+separately, which builds the step objects twice, so finding a step by identity inside
+the other array found nothing and every step reported a null set. Fixed by deriving
+the flat list from the one `stages()` call. There is a test that would catch it again.
+
+**`Object.assign` put the raw stored shape straight into the household.** `createWalk`
+was in the defaults object, which is the *first* argument — so `f.meta.walk` won the
+spread and landed unnormalised, exactly the route by which a shape from an old export
+gets in. It now runs in a third argument, after the spread. Every other `meta` key is a
+scalar and never had this problem, which is why it had not bitten before.
+
+### Compatibility note
+
+**Stored shape: `meta.walk` is new.**
+
+```
+meta.walk = {
+  startedAt:  ISO string | null,
+  finishedAt: ISO string | null,
+  done:       { roomId: ISO },
+  skipped:    { roomId: ISO }
+}
+```
+
+`Schema.createWalk()` normalises it and is the single definition of the shape. A room
+can be in **at most one** of the two maps — marking done clears any skip and the other
+way round — enforced in the schema (for anything arriving from storage or an import)
+*and* in `Spine.markWalkStep` (for anything this session does), deliberately in both
+places. If a shape ever claims both, **done wins**: it is the stronger statement, and
+the one you had to reach the room to make.
+
+**What a future room needs to know before calling `getProfile()`:** `meta.walk` is
+always present and always normalised, so it is safe to read without a guard. **Do not
+read it to decide anything about a number.** It records what a person has dealt with,
+not what the data contains — treating a done mark as "this figure is trustworthy" is
+exactly the inference this whole entry exists to prevent. Nothing else changed:
+`getProfile()` / `updateProfile()` are untouched, every existing field reads the same,
+and an export written before today loads with an empty walk and no marks.
+
+New files: `shared/guide.js`, `rooms/walk.html`, `data/walk_stages.json` (registered as
+`TABLES.walkStages`). `dnd/shared/schema.js` re-copied byte-identical.
+
+---
+
 ## D-150 — The Account You Left Behind: four futures, one trap, one sum
 
 A workplace retirement plan does not follow you out of the building, and the
