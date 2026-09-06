@@ -7206,6 +7206,61 @@ node box. Run it.
 
 ---
 
+## D-141 — The card says what the curriculum says
+
+The v6.3.1 source writes four things about every one of its 625 skills:
+**what it is**, **what it does for you**, **where it fits**, and the
+**check** that levels it. `data/skill_tree.json` has carried all four since
+D-139. The room was showing one — "Done when" — and dropping the other
+three on the floor between the table and the card.
+
+So the card now reads:
+
+> **Capture the full 401(k) match** · Tier S
+> **What it is:** Contribute to the match threshold
+> **What it does for you:** Guaranteed 50–100% instant return
+> **Where it fits:** Before all other investing; feeds L6 waterfall
+> **Done when:** Match verified on an actual paystub
+
+Three rules hold it honest:
+
+- **A line that is not there is not printed.** This app's own forty skills
+  were written with a proof and no prose; their cards show what they have
+  and say nothing where they have nothing, rather than printing an empty
+  label.
+- **The fog covers all four**, the same way it covers the name and the
+  proof. A skill you cannot see yet tells you nothing about itself.
+- **The tier says what it is on the badge.** S / A / B / C is the
+  curriculum author's ranking of leverage — which is exactly why
+  `data/skill_tree.json` is stamped `confidence: convention` — and the badge
+  carries that sentence rather than leaving a letter to be guessed at.
+
+**Two names fixed while I was in there.** The line under a skill's name read
+`· main-path · foundation` — a raw id, a raw band key, and a separator
+hanging off an empty slot because the curriculum does not say how long its
+skills take. It now reads
+`⭐ MAIN PATH: Accounts & Investing · Foundation`: the tree's own label, the
+band's own label, and a part that is missing simply left out rather than
+printed as a gap with punctuation around it.
+
+### Compatibility note
+
+Stored shape: **unchanged**; nothing new is written and no field moved.
+
+`engines/skilltree.js` **adds four fields to each row it returns** —
+`what`, `does`, `fits`, `tier` — beside the `proof` it already returned, and
+nulls them in the fog like the rest. Purely additive: `evaluate()` keeps its
+signature and every existing key. Rooms updated: `rooms/skill-tree.html`
+only. `rooms/stacker.html`, `rooms/exercises.html` and dashboard block 3
+read the same rows and are unaffected by four keys they do not ask for.
+
+A future room that wants to show a skill should read these from the engine's
+row rather than reaching into `TABLES.skillTree` itself — the fog rule lives
+in the engine, and a room that reads the table directly walks straight
+through it.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

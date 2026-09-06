@@ -67,6 +67,13 @@ module.exports = function (t) {
   /* Fog. */
   check('Foundation is in full, Optimization half lit, the rest fogged', r.bands.map(b => b.visibility).join(','), 'full,dim,fogged,fogged,fogged');
   checkTrue('a fogged skill carries no name, no proof, no chips', r.skills.filter(s => s.state === 'fogged').every(s => s.name === null && s.proof === null && s.unlocks.length === 0));
+  /* The curriculum says four things about a skill and the room shows all of
+     them now (D-141) — under the same fog rule as the name. */
+  checkTrue('… and none of what it is, what it does, where it fits, or its tier',
+    r.skills.filter(s => s.state === 'fogged').every(s => s.what === null && s.does === null && s.fits === null && s.tier === null));
+  checkTrue('a curriculum skill out of the fog carries all four',
+    r.skills.filter(s => s.state !== 'fogged' && ST.byId(T, s.id) && ST.byId(T, s.id).what)
+      .every(s => s.what && s.does && s.fits && s.tier));
   checkTrue('a half-lit skill has its name but no chips', r.skills.filter(s => s.dim).every(s => s.name && s.unlocks.length === 0));
   /* Only this app's own skills map to a room or a household number; the
      curriculum carries no such mapping and honestly shows no chips. So the

@@ -137,6 +137,9 @@
   .tcard .t-reason a { color: var(--color-accent-hover); }
   .tcard .t-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
   .tcard .t-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+  .tcard .t-line { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .tcard .t-line strong { color: var(--color-text); font-weight: 600; }
+  .tcard .t-tier { display: inline-block; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); padding: 2px var(--space-2); border-radius: var(--radius-pill); border: 1px solid var(--color-border); color: var(--color-text-faint); margin: 0 0 var(--space-2) var(--space-2); }
   .tcard .t-proof { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   .tcard .t-boost { height: 6px; border-radius: 3px; background: var(--color-surface); margin-top: var(--space-2); overflow: hidden; }
   .tcard .t-boost i { display: block; height: 100%; background: var(--color-accent); }
@@ -261,6 +264,7 @@
   var COL_W = 184, GUTTER = 56, PITCH = 240, ROW = 90, NODE_H = 72, HEAD = 40;
   var BAND_COLS = 5;          /* the curriculum's rhythm: five rungs a band */
   var SKILL_LEVEL = {};       /* id → rung, from the catalogue (not the engine) */
+  var TREE_LABEL = {}, BAND_LABEL = {};   /* id → the name a reader should see */
   var CHIP_MAX = 4;
   var SEEN_KEY = 'slaf.skilltree.seen';
 
@@ -349,6 +353,17 @@
       .sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
   }
   function levelOf(id) { var s = SKILL_LEVEL[id]; return s === undefined ? 0 : s; }
+  /* The tree's own name, not its id. `main-path` is a key; "⭐ MAIN PATH:
+     Accounts & Investing" is what the card should say. */
+  function treeLabel(id) { return TREE_LABEL[id] || id; }
+  /* The line under a skill's name: how long it takes, which tree, which
+     band. The curriculum does not say how long its skills take, so that
+     part is left out rather than printed as an empty slot with a
+     separator hanging off it. */
+  function metaLine(s) {
+    return [s.minutes, treeLabel(s.tree), bandLabel(s.band)].filter(Boolean).join(' · ');
+  }
+  function bandLabel(id) { return BAND_LABEL[id] || id; }
 
   /* One connector. Forward (the target is to the right) gets the orthogonal
      elbow a tech tree is drawn with; a lane that runs backwards gets a curve
@@ -472,13 +487,26 @@
     var reasons = s.state === 'locked' ? '<ul>' + s.reasons.map(function (x) { return '<li class="t-reason">' + esc(x.text) + ' <a href="' + esc(x.href) + '"' + (x.kind === 'skill' ? ' data-pick="' + esc(x.skill) + '"' : '') + '>' + (x.kind === 'skill' ? 'Show it' : x.kind === 'ladder' ? 'The ladder' : 'Go there') + ' →</a></li>'; }).join('') + '</ul>' : '';
     var chips = s.unlocks.length ? '<div class="t-chips">' + s.unlocks.map(function (c) { return '<a class="pill is-quiet" href="' + esc(c.href) + '">' + esc(c.label) + ' →</a>'; }).join('') + '</div>' : '';
     var boost = s.state !== 'done' && s.boost.of ? '<div class="t-boost" title="Boosted by what you did in the app"><i style="width:' + Math.round(s.boost.fraction * 100) + '%"></i></div><p class="slaf-hint" style="margin:4px 0 0">' + (s.boost.met.length ? 'Boosted by: ' + s.boost.met.map(function (m) { return m.replace('fact:', 'the fact ').replace('exercise:', 'the exercise ').replace('monthClosed', 'a month closed').replace('log30', 'thirty logged expenses').replace('debtPaid', 'a debt paid off').replace('snapshot', 'a snapshot frozen'); }).join(', ') + '.' : 'Boosted by: ' + s.boost.of + ' thing' + (s.boost.of === 1 ? '' : 's') + ' you can do in the app; none yet.') + '</p>' : '';
+    /* What the curriculum actually says about this skill. Three lines, in
+       the order they answer a reader's questions: what it is, what it buys
+       you, where it sits relative to everything else. Absent lines are
+       dropped rather than printed empty — this app's own forty skills carry
+       none of them and say so by not saying anything. D-141. */
+    var detail = [['What it is', s.what], ['What it does for you', s.does], ['Where it fits', s.fits]]
+      .filter(function (d) { return d[1]; })
+      .map(function (d) { return '<p class="t-line"><strong>' + d[0] + ':</strong> ' + esc(d[1]) + '</p>'; }).join('');
+    /* The tier is the curriculum author's ranking of leverage, which is a
+       convention and not a measurement (it is why data/skill_tree.json is
+       stamped `confidence: convention`). Said on the badge, so a letter
+       never has to be guessed at. */
+    var tier = s.tier ? '<span class="t-tier" title="The curriculum ranks this skill S, A, B or C for leverage. That is its author\'s judgement, not a claim about your life.">Tier ' + esc(s.tier) + '</span>' : '';
     var acts = '<div class="t-acts">'
       + (s.state === 'done' ? '<button type="button" class="pill" data-reopen="' + esc(s.id) + '">Reopen</button>' : '<button type="button" class="pill" data-done="' + esc(s.id) + '">I can do this: mark it done</button>')
       + (s.firstAction ? '<a class="pill is-quiet" href="' + esc(s.firstAction.room) + '">' + esc(s.firstAction.title) + ' →</a>' : '')
       + '<a class="pill is-quiet" href="exercises.html">Exercises →</a></div>';
-    host.innerHTML = '<div class="tcard" id="card"><span class="t-state is-' + s.state + '">' + esc(stateWord(s.state)) + (s.state === 'done' && s.doneOn ? ' · ' + esc(s.doneOn) + (s.provenance === 'proof' ? ' · from a fact you hold' : '') : '') + (s.state === 'bypassed' ? ' · ' + esc(s.warpLabel) : '') + (s.provenance === 'boost' ? ' · by a boost' : '') + '</span>'
-      + '<h3>' + esc(s.name) + '</h3><p class="slaf-hint" style="margin:4px 0 0">' + esc(s.minutes) + ' · ' + esc(s.tree) + ' · ' + esc(s.band) + '</p>'
-      + reasons + '<p class="t-proof"><strong>Done when:</strong> ' + esc(s.proof || '') + '</p>' + chips + boost + acts + '</div>';
+    host.innerHTML = '<div class="tcard" id="card"><span class="t-state is-' + s.state + '">' + esc(stateWord(s.state)) + (s.state === 'done' && s.doneOn ? ' · ' + esc(s.doneOn) + (s.provenance === 'proof' ? ' · from a fact you hold' : '') : '') + (s.state === 'bypassed' ? ' · ' + esc(s.warpLabel) : '') + (s.provenance === 'boost' ? ' · by a boost' : '') + '</span>' + tier
+      + '<h3>' + esc(s.name) + '</h3><p class="slaf-hint" style="margin:4px 0 0">' + esc(metaLine(s)) + '</p>'
+      + detail + reasons + '<p class="t-proof"><strong>Done when:</strong> ' + esc(s.proof || '') + '</p>' + chips + boost + acts + '</div>';
   }
 
   /* ---- Warps ---------------------------------------------------------------- */
@@ -548,6 +576,8 @@
        household, so it comes from the table rather than through the engine —
        the engine's job is what state a skill is in, not where it is drawn. */
     ((tables.skillTree || {}).skills || []).forEach(function (s) { SKILL_LEVEL[s.id] = s.level || 0; });
+    ((tables.skillTree || {}).trees || []).forEach(function (t) { TREE_LABEL[t.id] = t.label || t.id; });
+    ((tables.skillTree || {}).bands || []).forEach(function (b) { BAND_LABEL[b.id] = b.label || b.id; });
     /* The phone defaults to one tree: the one with the most open skills in the band you are in. */
     if (window.innerWidth <= 700) {
       var r0 = tree();

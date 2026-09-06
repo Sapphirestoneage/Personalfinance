@@ -277,6 +277,11 @@
         state: state, provenance: st.provenance || null, doneOn: st.doneOn || null, warp: st.warp || null, warpLabel: st.warpLabel || null,
         reasons: fog ? [] : st.reasons, boost: st.boost || { fraction: 0, met: [], of: 0 },
         prereqs: s.prereqs || [], gate: s.gate || null, proof: fog ? null : s.proof,
+        /* The curriculum says four things about every skill and the room
+           was showing one of them. Carried through with the same fog rule
+           as the name and the proof: in the fog you get nothing (D-141). */
+        what: fog ? null : (s.what || null), does: fog ? null : (s.does || null),
+        fits: fog ? null : (s.fits || null), tier: fog ? null : (s.tier || null),
         unlocks: fog || dim ? [] : chips(s, o.roomTitle), firstAction: fog || dim ? null : firstActionOf(s.id),
         unlocksSkills: yours.filter(function (x) { return (x.prereqs || []).indexOf(s.id) >= 0; }).map(function (x) { return x.id; }),
         stackerId: s.stackerId || null, dim: dim
