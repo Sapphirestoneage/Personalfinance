@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FIRE Lab · SPARKS</title>
+<meta name="description" content="Every FIRE calculation on one screen, drawn: the number, how far along you are, the six flavours side by side, the milestones, the path, and what a different withdrawal rate does to all of it."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11.
+
+  1. READS   expenses.monthlyEssential, investments, dob, income,
+             filingStatus. Reads only; every figure has an owner elsewhere.
+  2. WRITES  Nothing at all. It owns no field and stores no preview. The
+             withdrawal-rate slider is a local override for this view
+             (SPEC.md §12.2) and is gone on reload.
+  3. CALLS   engines/fire.js for every target and every progress figure,
+             engines/projection.js for the path, engines/tier0.js for the
+             savings rate that drives it. No formula is written here — this
+             room draws what those engines already return (SPEC.md §8).
+  4. EMPTY   Each panel names the field it is waiting on and links to the
+             room that owns it. A missing figure never becomes a zero, and a
+             panel that cannot compute is never drawn as an empty chart.
+  5. CONFIG  data/fire_variants.json, data/assumptions.json.
+
+  LIVE-FORM: built once — the only input is the withdrawal-rate range, which
+  is created once and never rebuilt; every repaint writes text and chart
+  markup into containers that hold no inputs (D-034).
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  /* The headline pairing: one figure, one ring. On a phone they stack. */
+  .headline { display: grid; grid-template-columns: 1fr auto; gap: var(--space-4); align-items: center; }
+  @media (max-width: 460px) { .headline { grid-template-columns: 1fr; } }
+  .headline-ring { width: 148px; justify-self: center; }
+  .big { font-family: var(--font-display); font-size: var(--text-2xl); line-height: 1.05; }
+  .big-sub { color: var(--color-text-muted); font-size: var(--text-sm); margin-top: var(--space-2); }
+
+  /* Every figure on one rail with its meaning beside it — the pattern from
+     Debt Payoff (D-133), which is where numbers read best. */
+  .facts { display: grid; grid-template-columns: minmax(0, auto) 10ch 1fr; margin-top: var(--space-3); font-size: var(--text-sm); }
+  .facts dt { color: var(--color-text-muted); padding: var(--space-2) var(--space-3) var(--space-2) 0; border-top: 1px solid var(--color-border); white-space: nowrap; }
+  .facts dd { margin: 0; text-align: right; font-family: var(--font-display); font-variant-numeric: tabular-nums; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); white-space: nowrap; }
+  .facts .why { color: var(--color-text-faint); font-size: var(--text-xs); padding: var(--space-2) 0 var(--space-2) var(--space-3); border-top: 1px solid var(--color-border); }
+  .facts > :nth-child(-n+3) { border-top: none; }
+  @media (max-width: 460px) {
+    .facts { grid-template-columns: minmax(0, 1fr) auto; }
+    .facts dt, .facts dd { padding-bottom: 0; }
+    .facts .why { grid-column: 1 / -1; border-top: none; padding: 2px 0 var(--space-2); }
+    .facts > :nth-child(3n+1):not(:nth-child(-n+3)), .facts > :nth-child(3n+2):not(:nth-child(-n+3)) { border-top: 1px solid var(--color-border); }
+  }
+
+  .swr { display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); align-items: center; }
+  .swr input[type="range"] { width: 100%; accent-color: var(--color-accent); }
+  .swr-read { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* The sensitivity grid: a real table, because that is what it is. */
+  .grid-wrap { overflow-x: auto; margin-top: var(--space-3); }
+  table.grid { border-collapse: collapse; width: 100%; font-size: var(--text-xs); font-variant-numeric: tabular-nums; }
+  table.grid th, table.grid td { padding: var(--space-2); text-align: right; white-space: nowrap; border: 1px solid var(--color-border); }
+  table.grid th { color: var(--color-text-subtle); font-weight: 600; text-align: center; }
+  table.grid th[scope="row"] { text-align: right; }
+  table.grid td.is-base { background: var(--color-surface-active); border-color: var(--color-border-active); color: var(--color-text); font-weight: 600; }
+  .grid-key { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-2); }
+
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>FIRE Lab</h1>
+  <p class="room-lede">Every FIRE calculation on one screen, drawn rather than listed. Nothing here is stored — move the withdrawal rate and watch all of it move.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="number">
+    <span class="slaf-eyebrow">The number, and how far along you are</span>
+    <div class="headline" style="margin-top:var(--space-3)">
+      <div>
+        <div class="big" id="fire-figure">—</div>
+        <p class="big-sub" id="fire-say"></p>
+      </div>
+      <div class="headline-ring" id="progress-ring"></div>
+    </div>
+    <dl class="facts" id="facts"></dl>
+  </section>
+
+  <section class="slaf-card" id="swr">
+    <span class="slaf-eyebrow">The one assumption that moves everything</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Withdrawal rate</h2>
+    <div class="swr">
+      <input type="range" id="swr-range" min="250" max="500" step="10" aria-label="Safe withdrawal rate"/>
+      <span class="swr-read" id="swr-read">—</span>
+    </div>
+    <p class="slaf-hint" id="swr-say" style="margin-top:var(--space-2)"></p>
+  </section>
+
+  <section class="slaf-card" id="flavours">
+    <span class="slaf-eyebrow">Six ways to answer the same question</span>
+    <h2 style="margin:var(--space-2) 0 0">The flavours, side by side</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">One formula, six sets of parameters. A flavour that needs a figure you have not given says so instead of guessing.</p>
+    <div id="variant-chart"></div>
+  </section>
+
+  <section class="slaf-card" id="split">
+    <span class="slaf-eyebrow">Where the number comes from</span>
+    <h2 style="margin:var(--space-2) 0 0">A year of spending, by kind</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The FIRE number is this year, divided by the withdrawal rate. Cutting any slice cuts the number by twenty-five times the saving.</p>
+    <div id="spend-donut"></div>
+  </section>
+
+  <section class="slaf-card" id="milestones">
+    <span class="slaf-eyebrow">Quarter, half, three quarters, done</span>
+    <h2 style="margin:var(--space-2) 0 0">Milestones</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The gaps get shorter as compounding does more of the work. The first quarter is the long one.</p>
+    <div id="milestone-chart"></div>
+  </section>
+
+  <section class="slaf-card" id="path">
+    <span class="slaf-eyebrow">The path</span>
+    <h2 style="margin:var(--space-2) 0 0">Portfolio, year by year</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">What you hold now, plus what you add, compounding at your assumed return, against the line you are aiming at.</p>
+    <div id="path-chart"></div>
+  </section>
+
+  <section class="slaf-card" id="sensitivity">
+    <span class="slaf-eyebrow">If the assumptions are wrong</span>
+    <h2 style="margin:var(--space-2) 0 0">The number at every rate and every lifestyle</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Down the side, the withdrawal rate. Across the top, a year of spending as a share of today's. Your square is lit.</p>
+    <div class="grid-wrap" id="grid"></div>
+    <p class="grid-key">A lower withdrawal rate is a more cautious plan and a bigger number. There is no correct square — there is the one you can live with.</p>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Every figure here is a projection from
+    assumptions you can change, not a forecast. Real returns are not smooth and no
+    sequence repeats. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../shared/charts.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership,
+      Fire = SLAF.Fire, Tier0 = SLAF.Tier0, Projection = SLAF.Projection,
+      CashFlow = SLAF.CashFlow,
+      Charts = SLAF.Charts;
+
+  var ROOM_ID = 'fire-lab';
+  var TABLES = null;
+  /* A local override for this view only, never written (SPEC.md §12.2). */
+  var swrPreview = null;
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]; }); }
+  function opts() { return swrPreview === null ? {} : { localOverrides: { swrRate: swrPreview } }; }
+
+  /* A figure, what it is worth, and what it means — the three-column rail. */
+  function facts(rows) {
+    return rows.map(function (r) {
+      return '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd><span class="why">' + esc(r[2] || '') + '</span>';
+    }).join('');
+  }
+
+  /* An incomplete panel says which field it wants and where that field is
+     entered. Never a zero, never an empty chart. */
+  function waiting(result) {
+    var reason = (result && result.reason) || 'Not enough entered yet.';
+    var links = ((result && result.missing) || []).map(function (f) {
+      var chip = Ownership.linkTo ? Ownership.linkTo(f, ROOM_ID) : null;
+      return chip || null;
+    }).filter(Boolean);
+    return '<p class="slaf-reason">' + esc(reason) + (links.length ? ' ' + links.join(' ') : '') + '</p>';
+  }
+
+  function yearsLabel(y) {
+    if (!Money.isEntered(y)) return Money.EM_DASH;
+    if (y <= 0) return 'now';
+    var whole = Math.floor(y), months = Math.round((y - whole) * 12);
+    if (whole === 0) return months + ' mo';
+    return whole + ' yr' + (whole === 1 ? '' : 's') + (months ? ' ' + months + ' mo' : '');
+  }
+
+  render.pending = false;
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+
+    /* ---- The number and the ring ---------------------------------------- */
+    var target = Fire.calculateFIRE(h, TABLES, opts());
+    var prog = Fire.progressToward(h, TABLES, opts());
+
+    el('fire-figure').textContent = Money.isOk(target) ? Money.formatCents(target.value) : Money.EM_DASH;
+    el('fire-say').innerHTML = Money.isOk(target)
+      ? 'A year of spending, divided by the withdrawal rate.'
+      : waiting(target);
+
+    if (Money.isOk(prog)) {
+      var share = Math.max(0, Math.min(1, prog.value));
+      var gap = Math.max(0, prog.targetCents - prog.investmentsCents);
+      el('progress-ring').innerHTML = Charts.donut({
+        title: 'Progress toward the FIRE number',
+        centre: Math.round(share * 100) + '%',
+        centreLabel: 'of the way',
+        slices: [
+          { label: 'Invested', value: prog.investmentsCents, color: Charts.COLORS.growth },
+          { label: 'Still to go', value: gap, color: Charts.COLORS.muted }
+        ]
+      });
+      var rows = [
+        ['Invested now', Money.formatCents(prog.investmentsCents), 'What is already working for you.'],
+        ['Still to go', Money.formatCents(gap), 'The gap between here and the number.']
+      ];
+      if (Money.isOk(prog.yearsAway)) {
+        rows.push(['Time to get there', yearsLabel(prog.yearsAway.value),
+          'At your current saving and assumed return.']);
+      }
+      el('facts').innerHTML = facts(rows);
+    } else {
+      el('progress-ring').innerHTML = '';
+      el('facts').innerHTML = '';
+    }
+
+    /* ---- The withdrawal rate -------------------------------------------- */
+    var a = Schema.resolveAssumptions(h, opts().localOverrides);
+    var rate = a.swrRate;
+    el('swr-read').textContent = Money.formatRate(rate, { decimals: 2 });
+    if (!el('swr-range').matches(':active')) el('swr-range').value = Math.round(rate * 10000);
+    el('swr-say').textContent = swrPreview === null
+      ? 'Your stored assumption. Move it to see the whole page move; nothing is saved.'
+      : 'Previewing ' + Money.formatRate(rate, { decimals: 2 }) + '. Your stored assumption is untouched — reload to return to it.';
+
+    /* ---- The six flavours ------------------------------------------------ */
+    var all = Fire.allVariants(h, TABLES, opts());
+    var vrows = Object.keys(all).map(function (id) {
+      var v = all[id];
+      var ok = Money.isOk(v.target);
+      return {
+        label: v.variant.label,
+        value: ok ? v.target.value : null,
+        color: id === 'standard' ? Charts.COLORS.growth : Charts.COLORS.muted,
+        note: ok ? (Money.isOk(v.progress) && Money.isOk(v.progress.yearsAway)
+              ? yearsLabel(v.progress.yearsAway.value) + ' away' : null)
+            : (v.target.reason || 'needs more')
+      };
+    });
+    el('variant-chart').innerHTML = vrows.length
+      ? Charts.bars({ title: 'The FIRE number for each flavour', rows: vrows })
+      : waiting(target);
+
+    /* ---- Where the number comes from ------------------------------------ */
+    var monthly = Schema.monthlyExpensesCents(h);
+    if (Money.isOk(monthly) && Money.isOk(target)) {
+      /* The categorised split when Cash Flow has one. A donut of a single
+         100% slice is not a chart, so when nothing has been categorised the
+         room says what is missing and where to enter it instead of drawing
+         a circle that tells you nothing. */
+      var sum = (CashFlow && TABLES.expenseCategories)
+        ? CashFlow.summarise(h, TABLES.expenseCategories) : null;
+      var cats = (sum && Money.isOk(sum) ? (sum.categories || []) : [])
+        .filter(function (c) { return c.monthlyCents > 0; });
+      if (cats.length > 1) {
+        el('spend-donut').innerHTML = Charts.donut({
+          title: 'A year of spending, by kind',
+          centre: Money.formatCents(monthly.value * 12),
+          centreLabel: 'a year',
+          slices: cats.map(function (c) {
+            return { label: c.label, value: Math.round(c.monthlyCents * 12) };
+          })
+        });
+      } else {
+        el('spend-donut').innerHTML =
+          '<p class="slaf-reason">A year of spending is ' + esc(Money.formatCents(monthly.value * 12))
+          + ', which is what the number divides. Categorise a month in '
+          + (Ownership.linkTo ? Ownership.linkTo('monthlyExpenses', ROOM_ID) : 'Cash Flow')
+          + ' to see which slices it is made of.</p>';
+      }
+    } else {
+      el('spend-donut').innerHTML = waiting(monthly);
+    }
+
+    /* ---- Milestones ------------------------------------------------------ */
+    if (Money.isOk(prog)) {
+      var rates = Tier0.savingsRate(h, TABLES);
+      var basis = Money.isOk(rates.includingMatch) ? rates.includingMatch : rates.excludingMatch;
+      if (Money.isOk(basis)) {
+        var mrows = [0.25, 0.5, 0.75, 1].map(function (m) {
+          var reached = prog.investmentsCents >= prog.targetCents * m;
+          var y = Projection.yearsToTargetCents({
+            startCents: prog.investmentsCents,
+            targetCents: Math.round(prog.targetCents * m),
+            annualRate: a.expectedReturnRate,
+            annualContributionCents: basis.annualSavingsCents
+          });
+          return {
+            label: Math.round(m * 100) + '% · ' + Money.formatCents(Math.round(prog.targetCents * m)),
+            value: reached ? 0 : (Money.isOk(y) ? Math.max(0, y.value) : null),
+            color: reached ? Charts.COLORS.growth : Charts.COLORS.muted,
+            note: reached ? 'reached' : (Money.isOk(y) ? yearsLabel(y.value) : 'not reachable at this rate')
+          };
+        });
+        el('milestone-chart').innerHTML = Charts.bars({ title: 'Years to each milestone', rows: mrows, format: yearsLabel });
+      } else {
+        el('milestone-chart').innerHTML = waiting(basis);
+      }
+    } else {
+      el('milestone-chart').innerHTML = waiting(prog);
+    }
+
+    /* ---- The path -------------------------------------------------------- */
+    if (Money.isOk(prog)) {
+      var r2 = Tier0.savingsRate(h, TABLES);
+      var b2 = Money.isOk(r2.includingMatch) ? r2.includingMatch : r2.excludingMatch;
+      if (Money.isOk(b2)) {
+        /* Charts.area takes [x, y] pairs, not {x, y} objects, and formats
+           the x axis through x.format. */
+        var pts = [], line = [], bal = prog.investmentsCents;
+        /* Stop at the year the line is crossed, plus a little, so the chart
+           is about the journey rather than forty years of flat afterwards. */
+        var years = 40, crossed = null;
+        for (var i = 0; i <= years; i++) {
+          pts.push([i, Math.round(bal)]);
+          line.push([i, prog.targetCents]);
+          if (crossed === null && bal >= prog.targetCents) crossed = i;
+          bal = bal * (1 + a.expectedReturnRate) + b2.annualSavingsCents;
+        }
+        if (crossed !== null) {
+          var stop = Math.min(years, crossed + 3);
+          pts = pts.slice(0, stop + 1);
+          line = line.slice(0, stop + 1);
+        }
+        el('path-chart').innerHTML = Charts.area({
+          title: 'Portfolio against the FIRE number, year by year',
+          series: [
+            { label: 'What you would hold', color: Charts.COLORS.growth, points: pts, fill: true, width: 2 },
+            { label: 'The number', color: Charts.COLORS.debt, points: line, fill: false, width: 1 }
+          ],
+          x: { format: function (v) { return v === 0 ? 'now' : '+' + Math.round(v) + 'y'; } }
+        });
+      } else {
+        el('path-chart').innerHTML = waiting(b2);
+      }
+    } else {
+      el('path-chart').innerHTML = waiting(prog);
+    }
+
+    /* ---- The sensitivity grid -------------------------------------------- */
+    var SWRS = [0.03, 0.035, 0.04, 0.045];
+    var FACTORS = [0.7, 0.85, 1, 1.15, 1.3];
+    var cells = [], okGrid = true;
+    SWRS.forEach(function (s) {
+      var row = [];
+      FACTORS.forEach(function (f) {
+        var r = Fire.calculateFIRE(h, TABLES, { expenseFactor: f, localOverrides: { swrRate: s } });
+        if (!Money.isOk(r)) { okGrid = false; row.push(null); return; }
+        row.push(r.value);
+      });
+      cells.push(row);
+    });
+    if (okGrid) {
+      var head = '<tr><th scope="col"></th>' + FACTORS.map(function (f) {
+        return '<th scope="col">' + Math.round(f * 100) + '%</th>';
+      }).join('') + '</tr>';
+      var body = SWRS.map(function (s, i) {
+        return '<tr><th scope="row">' + Money.formatRate(s, { decimals: 1 }) + '</th>'
+          + cells[i].map(function (v, j) {
+              var isBase = Math.abs(s - rate) < 0.0001 && FACTORS[j] === 1;
+              return '<td' + (isBase ? ' class="is-base"' : '') + '>' + Money.formatCents(v) + '</td>';
+            }).join('') + '</tr>';
+      }).join('');
+      el('grid').innerHTML = '<table class="grid"><caption class="slaf-sr-only">The FIRE number at four withdrawal rates and five lifestyle levels</caption><thead>' + head + '</thead><tbody>' + body + '</tbody></table>';
+    } else {
+      el('grid').innerHTML = waiting(target);
+    }
+  }
+
+  /* The range is created once in the markup and only ever read, so the live
+     form rule has nothing to guard here (D-034). */
+  el('swr-range').addEventListener('input', function (e) {
+    swrPreview = Number(e.target.value) / 10000;
+    render();
+  });
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    render();
+    jumpToHash();
+  }).catch(function (err) {
+    var n = el('load-notice');
+    n.hidden = false; n.className = 'notice is-error';
+    n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message
+      + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+  });
+})();
+</script>
+</body>
+</html>

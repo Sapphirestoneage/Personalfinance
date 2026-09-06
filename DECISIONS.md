@@ -6893,6 +6893,69 @@ list rather than shipping something that snaps while everything around it
 moves. Do not add `transition: all` anywhere — `test/rooms/motion.js`
 fails the build if it appears outside a comment.
 
+## D-138 — The FIRE Lab: every calculation on one screen, drawn
+
+The FIRE maths was all there and almost none of it was visible. Twelve runs
+sat in `engines/exercises.js` behind an exercise list, each computing
+through an engine that already owned its formula, and each returning a
+figure and a sentence. A sentence is not what a sensitivity grid or a
+milestone ladder wants to be.
+
+`rooms/fire-lab.html` draws them. Seven panels, all reading the same
+household, all recomputing together:
+
+- **The number and the ring.** The FIRE number beside a donut of how much of
+  it is already invested, with the gap and the time to close it on a rail
+  underneath, each figure carrying what it means (the pattern from D-133).
+- **The withdrawal rate.** One range control. Move it and every panel on the
+  page moves with it.
+- **The six flavours**, as bars: FIRE, Lean, Chubby, Fat, Coast and Barista,
+  each with how far away it is. One that cannot be computed says which
+  figure it wants rather than being dropped or drawn as zero.
+- **Where the number comes from**, as a donut of a year's spending by kind.
+- **Milestones** at 25 / 50 / 75 / 100%, as bars of years, with the ones
+  already reached marked rather than shown as a gap.
+- **The path**: portfolio compounding year by year against the flat line of
+  the number, stopping a few years after the crossing rather than running a
+  flat forty.
+- **The sensitivity grid**: four withdrawal rates by five lifestyle levels,
+  with the square you are actually standing on lit.
+
+**It owns no formula and writes nothing.** Every figure comes from
+`Fire.calculateFIRE`, `Fire.progressToward`, `Fire.allVariants`,
+`Tier0.savingsRate` and `Projection`. The withdrawal-rate control is a
+local override for the view (SPEC.md §12.2) and is gone on reload — the
+stored assumption is never touched, which the browser walk confirms by
+reading it back after moving the slider.
+
+**A donut of one slice is not a chart.** When Cash Flow has a categorised
+month the spending donut draws it; when it does not, the room says what a
+year of spending is and links to where to categorise it, rather than
+drawing a circle that is 100% "spending" and tells you nothing. Both
+branches are exercised — four real slices with categories, the sentence
+without.
+
+Two bugs found by running it rather than reading it. `Charts.area` takes
+`[x, y]` pairs; feeding it `{x, y}` objects produced `NaN` in every path
+attribute and ten SVG errors on the console, with the chart silently blank
+apart from its legend. And the spending summary hangs off
+`TABLES.expenseCategories`, not `spendingCategories` — the wrong key made
+`summarise` return null and a `&&` chain then called `.filter` on it. Both
+are the kind of thing a unit test on a static file cannot see.
+
+### Compatibility note
+
+Stored shape: unchanged. The room reads `expenses.monthlyEssential`,
+`investments`, `dob`, income and filing status, and writes nothing at all —
+it owns no field in `shared/ownership.js` and calls no `Spine` mutator.
+Rooms updated: none; `rooms/fire.html` keeps its job of choosing and storing
+a variant target, and the Lab is the read-only view over the same engines.
+New: `rooms/fire-lab.html`, a registry row at order 8.5 between FIRE Number
+and Real Hourly Wage, `test/rooms/fire-lab.js`, and a regenerated
+`rooms.json`. A future panel added here must keep the two rules that make
+the room safe: read through the engine that owns the formula, and treat any
+parameter someone can move as a local override rather than a write.
+
 ---
 
 # The Dungeons & Dividends entries
