@@ -110,7 +110,7 @@
   .instruments { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); align-items: stretch; }
   @media (max-width: 520px) { .instruments { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .inst { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; min-width: 0; background: var(--color-surface); }
-  .inst .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .inst .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); line-height: 1.25; overflow-wrap: anywhere; }
   .inst .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .inst .big.is-incomplete { font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text-faint); white-space: normal; }
   .inst .three-d { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; margin-top: var(--space-2); font-size: 10px; color: var(--color-text-faint); }
@@ -260,6 +260,7 @@
       <span class="slaf-eyebrow">Where you are</span>
       <button type="button" class="info-toggle" id="btn-3d" aria-pressed="false" title="Every instrument three ways: dream, default, disaster">3D</button>
     </div>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Six readings, like a cockpit: how much you keep, what you own, how long you could last, what you owe, when work becomes optional, and which step is next. Tap any one to open the room it comes from.</p>
     <div class="instruments" id="instruments"></div>
     <p class="why" id="three-d-why" hidden></p>
   </section>
@@ -305,7 +306,10 @@
     <span class="slaf-eyebrow">All of it at once</span>
     <h2 style="margin:var(--space-2) 0 0">Am I in the green everywhere?</h2>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">
-      One spoke per number that has a healthy range behind it.
+      One spoke per number that has a healthy range behind it. Some are the
+      same arithmetic under the name people usually ask for — emergency fund,
+      runway and liquidity all divide the cash you can reach by a month of
+      spending, so they read the same on purpose.
       <strong>Further out is better.</strong> The dashed circle is the line
       you want to be on or outside; a dot inside it is below the usual range.
       The numbers round the edge match the list below.
@@ -631,7 +635,13 @@
         }
       }
       return '<div class="inst' + (row.isLead ? ' is-lead' : '') + '" id="inst-' + row.id + '"><a href="' + opens(row.id) + '" title="Open ' + esc(row.label) + '">'
-        + '<span class="cap">' + esc(row.cap) + ' · ' + esc(row.label) + '</span>'
+        /* The cap used to read "THRUST · SAVINGS RATE" and, at 390px with
+           nowrap and an ellipsis, four of the six truncated mid-word. The
+           metaphor is also private language: "Savings rate" is the phrase a
+           reader searches for, "Thrust" is not. The cockpit idea now gets
+           said once, in the section's own line, instead of prefixing every
+           tile. D-145. */
+        + '<span class="cap" title="' + esc(row.cap) + '">' + esc(row.label) + '</span>'
         + '<span class="big' + (ok ? zone : ' is-incomplete') + '">'
         + esc(ok ? Instruments.format(row) : (row.result.reason || Money.EM_DASH)) + '</span>'
         + '<span class="delta' + dCls + '">' + esc(dText) + '</span>'
@@ -899,8 +909,15 @@
   function renderAltitude(h) {
     var Charts = SLAF.Charts;
     var nw = Tier0.netWorth(h);
+    /* The slice percentages are shares of assets PLUS debt — a total that
+       appeared nowhere, so three different figures sat in one 300px block
+       and anyone who checked the arithmetic concluded the app was broken.
+       Name the denominator, and say what to do with the red slice. D-145. */
     el('nw-why').textContent = Money.isOk(nw)
-      ? Money.formatCents(nw.totalAssetsCents) + ' owned across the categories in the ring, ' + Money.formatCents(nw.totalDebtCents) + ' owed against it.'
+      ? 'The ring splits ' + Money.formatCents(nw.totalAssetsCents + nw.totalDebtCents)
+        + ' — everything you own (' + Money.formatCents(nw.totalAssetsCents) + ') plus everything you owe ('
+        + Money.formatCents(nw.totalDebtCents) + '). Take the red slice away from the rest and you get the '
+        + Money.formatCents(nw.value) + ' in the middle.'
       : nw.reason || '';
 
     /* The ring: every asset category as a share of what is owned, the net
@@ -950,7 +967,7 @@
         { label: 'Investments', color: Charts.COLORS.growth, fill: true, points: path.years.map(function (r) { return [age + r.year, Math.max(0, r.balanceCents)]; }) },
         { label: 'What you put in', color: Charts.COLORS.contributed, fill: false, points: path.years.map(function (r) { return [age + r.year, Math.max(0, r.contributedCents)]; }) }
       ],
-      hLines: [{ y: fire.value, label: 'FIRE ' + Charts.shortMoney(fire.value), color: Charts.COLORS.target }],
+      hLines: [{ y: fire.value, label: 'Enough to live on: ' + Charts.shortMoney(fire.value), color: Charts.COLORS.target }],
       vLines: stopAge !== null ? [{ x: stopAge, label: 'stop at ' + stopAge }] : [],
       dots: crossed !== null ? [{ x: crossed, y: fire.value }] : [],
       x: { label: 'age', format: function (v) { return String(Math.round(v)); } }

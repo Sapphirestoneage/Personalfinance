@@ -57,4 +57,33 @@ module.exports = function (t) {
     !!rowsWithNoResult && rowsWithNoResult.rows.every(function (r) { return !!r.result && !!r.result.status; }));
   checkTrue('… and a row that could not be worked out says so rather than reading as fine',
     rowsWithNoResult.rows.every(function (r) { return r.ok || !!r.result.reason; }));
+
+  section('The dashboard: an instrument is judged on the figure it shows (D-145)');
+
+  /* The savings-rate tile showed the CONTRIBUTED rate and took its colour
+     from the RESIDUAL rate — a different number that only appears in the
+     panel. So a tile could read 13.8% and be green because 28.5% cleared the
+     floor. */
+  var Instruments = t.Instruments;
+  var h = Demo.build();
+  var c = Instruments.compute(h, TABLES);
+  var sr = c.shown.filter(function (r) { return r.id === 'savingsRate'; })[0]
+        || c.rows.filter(function (r) { return r.id === 'savingsRate'; })[0];
+  checkTrue('the savings-rate tile has a verdict', !!sr && !!sr.verdict);
+  if (sr && sr.verdict && Money.isOk(sr.result)) {
+    var band = sr.verdict.band;
+    var v = sr.result.value;
+    var expect = !band || band.good === null ? 'none'
+      : (band.direction === 'lower' ? (v <= band.good ? 'good' : v <= band.warn ? 'watch' : 'out')
+                                    : (v >= band.good ? 'good' : v >= band.warn ? 'watch' : 'out'));
+    check('… and it is the verdict on its own figure, not another row\'s', sr.verdict.zone, expect);
+  }
+
+  /* Names a stranger can search for. The caps used to be a cockpit metaphor
+     prefixed to every label, and four of six truncated on a phone. */
+  var CAPS = c.rows.map(function (r) { return r.label; });
+  checkTrue('no instrument is named only by a metaphor',
+    CAPS.every(function (l) { return !/^(Thrust|Altitude|Fuel|Load|Distance|Heading)$/.test(l); }));
+  checkTrue('the acronyms are spelled out where they are the whole label',
+    CAPS.every(function (l) { return !/^(FI year|FOO step)$/.test(l); }));
 };

@@ -7570,6 +7570,66 @@ Stored shape: **unchanged**. This is presentation only.
 
 ---
 
+## D-145 — The language pass: names a stranger already knows
+
+The last of the four-way audit. Nothing here is a calculation; all of it is
+what the app *says*, and every item was a thing a first-time reader would
+stop on.
+
+**A tile was coloured by a number it did not show.** The savings-rate
+instrument displays the *contributed* rate — what actually went somewhere —
+and took its verdict wholesale from the *residual* rate's row, a different
+figure that only exists in the panel. So the headline number for an employed
+household could read 13.8% and be green because 28.5% cleared the floor.
+Each instrument is now judged against its band using **the figure on
+screen**.
+
+**The cockpit metaphor was six-sevenths of every caption.** `THRUST ·
+SAVINGS RATE`, `ALTITUDE · NET WORTH`, `LOAD · DEBT-TO-INCOME` — and at
+390px, with `white-space: nowrap` and an ellipsis, four of the six truncated
+mid-word. "Savings rate" is the phrase someone searches for; "Thrust" is
+not. The caption is the name now, wrapping rather than clipping, the
+metaphor lives on the tile's `title`, and the cockpit idea gets said **once**
+in the section's own line instead of prefixed to all six.
+
+**Three acronyms were never spelled out anywhere a reader could reach.**
+`FI year` → **Financial independence year**. `FOO step` → **Step on the
+money ladder**. The chart's target line read `FIRE $945K` → **Enough to live
+on: $945K**. Each also gained a plain sub-line saying what it means.
+
+**The ring's percentages were shares of a number shown nowhere.** The slices
+read 12% / 61% / 27% of $79,100 — assets plus debt — while the middle said
+$35,900 and the caption said $57,500. Three totals in one 300px block, and
+anyone who checked the arithmetic concluded the app was broken. The caption
+names the denominator and says what to do with the red slice: *"The ring
+splits $79,100 — everything you own ($57,500) plus everything you owe
+($21,600). Take the red slice away from the rest and you get the $35,900 in
+the middle."*
+
+**Four rows read "3 months" under four different names.** Emergency fund
+coverage, liquidity ratio, runway and shadow runway are largely the same
+arithmetic under the name people usually ask for. That is defensible and it
+looked like padding, so the radar's hint now says it out loud.
+
+### Compatibility note
+
+Stored shape: **unchanged**. Nothing written, no owned field moved.
+
+- `shared/instruments.js`: each row's **`verdict` is now computed from its
+  own result** rather than copied from `bandRow.verdict`. A caller reading
+  `row.verdict` gets the same shape and a more accurate answer; `bandRow` is
+  still there for anything that wants the other row. Rows also gain
+  **`blurb`**, a plain sentence, which is additive.
+- Four `INSTRUMENTS` **labels changed text**. Nothing keys off a label — the
+  `id` is the identity — so this is display only.
+- `index.html`: `.inst .cap` no longer clips. A future instrument with a long
+  name wraps instead of truncating; there is no length limit to respect.
+- A future instrument should carry its own `sub:` line. The rule this
+  arrived at: **a tile says the name, the number, and what the number means
+  — never a metaphor in place of the name.**
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have
