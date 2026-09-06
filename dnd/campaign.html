@@ -354,13 +354,23 @@
       <div id="pro-levers"></div>
     </div>
     <div class="panel">
-      <h3>Last thing, then we play</h3>
+      <h3 id="pro-head">Last thing, then we play</h3>
       <p class="note">Your six say what you're <i>capable</i> of. They don't say what to do <b>next</b> — and
          next is the whole game. There's an order to money stuff, and doing the right thing at the wrong time
          is how people lose years without ever making an obvious mistake.</p>
-      <p class="note">Your numbers already work out most of where you are. <b>Two answers finish it.</b> These
-         two, because free money from an employer beats almost everything else you could do with a pound —
-         it's a pay rise you've already been offered and just haven't collected.</p>
+      <p class="note" id="pro-blurb"></p>
+
+      <!-- Shown instead of the two questions when there are no numbers at all.
+           Asking somebody who rolled dice about their employer's pension match
+           is nonsense, and telling them "your numbers already work out most of
+           where you are" is simply untrue. -->
+      <div id="pro-nomoney" hidden>
+        <div class="actions">
+          <button type="button" class="btn" id="btn-pro-numbers">Add five numbers — about a minute</button>
+          <button type="button" class="btn ghost" id="btn-pro-example">Use example numbers</button>
+        </div>
+      </div>
+
       <div id="pro-questions">
         <!-- LIVE-FORM: built once, here, and only ever read. -->
         <div style="margin-bottom:var(--space-3)">
@@ -385,10 +395,9 @@
       <p class="note" id="pro-placement" style="margin-top:var(--space-3)"></p>
       <div class="actions">
         <button type="button" class="btn" id="btn-begin" disabled>Begin the campaign</button>
-        <a class="btn ghost" href="sheet.html">Back to the sheet</a>
+        <button type="button" class="btn ghost" id="btn-pro-back">Change my character</button>
       </div>
-      <p class="note faint" style="margin-top:var(--space-3)">Starting a campaign takes a <b>copy</b> of your
-         numbers. Nothing that happens in it is written back to your sheet.</p>
+      <p class="note faint" style="margin-top:var(--space-3)" id="pro-copy"></p>
     </div>
   </section>
 
@@ -485,6 +494,12 @@
   }
   function html(id, s) { el(id).innerHTML = s; }
   function money(cents) { return Money.formatCents(Math.round(cents)); }
+  /* Option labels are written as sentences and some already end in a stop.
+     Joining another one on gives "…anywhere.. Everything here is…" */
+  function punct(s) {
+    var t = String(s === null || s === undefined ? '' : s).trim();
+    return /[.!?]$/.test(t) ? t : t + '.';
+  }
   function signed(cents) { return (cents >= 0 ? '+' : '−') + money(Math.abs(cents)); }
 
   var VIEWS = ['quiz-view', 'quiz-result-view', 'method-view',
@@ -1245,7 +1260,10 @@
           + '<span>' + esc(leverNameOf(r.classId)) + (i === 0 ? ' <span class="badge on">your lever</span>' : '') + '</span></div>';
       }).join(''));
     } else {
-      el('pro-why').textContent = 'Add your numbers on the sheet and the campaign can place you.';
+      el('pro-why').textContent = Store.moneyEntered()
+        ? 'Nothing is moving through any lever your numbers can see yet.'
+        : 'Built from dice and points rather than measured, which is why no lever has anything moving '
+          + 'through it yet.';
       html('pro-levers', '');
     }
     paintPlacementPreview();
@@ -1268,17 +1286,48 @@
   }
 
   function paintPlacementPreview() {
+    var hasMoney = Store.moneyEntered();
     var h = previewHousehold();
     var place = Camp.fooStepOf(h, TABLES);
     var need = Camp.needs(h, TABLES);
-    var ready = !!place;
-    el('btn-begin').disabled = !ready;
+
+    /* NO NUMBERS AT ALL is a completely legitimate way to arrive here — you can
+       roll a character and play. What was not legitimate was the screen
+       pretending otherwise: it asked somebody who had entered nothing about
+       their employer's pension match, and told them "your numbers already work
+       out most of where you are". Both branches below say only what is true of
+       the person reading them. */
+    el('pro-questions').hidden = !hasMoney;
+    el('pro-nomoney').hidden = hasMoney;
+    el('pro-head').textContent = hasMoney ? 'Last thing, then we play' : 'You can play right now';
+    el('pro-copy').textContent = hasMoney
+      ? 'Starting a campaign takes a copy of your numbers. Nothing that happens in it is written back to your sheet.'
+      : 'Nothing that happens in the game is written back to your character either way.';
+
+    if (!hasMoney) {
+      el('pro-blurb').innerHTML = 'You built this one from dice and points rather than from your life, which is '
+        + 'a perfectly good way to play. One warning though: <b>the game can only measure you against the very '
+        + 'first step</b>, so when it tells you what the stronger move would have been, it will be generic '
+        + 'rather than about you.';
+      el('pro-placement').innerHTML = 'Five numbers is what turns this from a quiz into something that knows '
+        + 'where you actually are. It takes about a minute and none of it leaves this browser — or skip it and '
+        + 'play anyway, because the situations are exactly the same.';
+      el('btn-begin').disabled = false;
+      el('btn-begin').textContent = 'Play anyway →';
+      return;
+    }
+
+    el('btn-begin').textContent = 'Begin the campaign';
+    el('btn-begin').disabled = !place;
+    el('pro-blurb').innerHTML = 'Your numbers already work out most of where you are. <b>Two answers finish '
+      + 'it.</b> These two, because free money from an employer beats almost everything else you could do '
+      + 'with a pound — it is a pay rise you have already been offered and just have not collected.';
     el('pro-placement').innerHTML = place
       ? (place.certain
           ? 'You are on <b>step ' + place.step + '</b> — ' + esc(place.label) + '. That is what the game will '
             + 'hold you to, and every choice gets judged against it.'
           : 'You are <b>at least at step ' + place.step + '</b> — ' + esc(place.label) + '. We cannot see '
-            + 'further because ' + esc((place.detail || '').replace(/^Steps? /, 'steps ')) + ' '
+            + 'further yet: ' + esc((place.detail || '').replace(/^Steps? /, 'steps ')) + ' '
             + 'That is still enough to judge your choices against, and the game will say so rather than '
             + 'pretending to know more than it does.')
       : 'Answer both and we can work out where you are.'
@@ -1422,13 +1471,30 @@
       return '<div class="shift"><span class="n faint">' + (x.delta > 0 ? '+' : '') + x.delta + '</span>'
         + '<span class="faint">' + esc(subName(x.subStat)) + ' — ' + x.from + ' → ' + x.to + '</span></div>';
     }).join('');
-    html('rev-shifts', shifts || '<p class="note faint">No ability moved this chapter. Ten rounds is not '
-      + 'always long enough — a sub-stat is built from your numbers, not from intentions.</p>');
+    /* Scores that stopped being bought are not losses and must not be shown
+       beside real movement — the number changed because the game finally had
+       something to measure. */
+    var became = (r.becameReal || []).length
+      ? '<div class="ok-box" style="margin-top:var(--space-2)"><b>'
+        + r.becameReal.map(function (x) { return esc(subName(x.subStat)); }).join(', ')
+        + ' stopped being a number you chose and started being one your money decides.</b><br/>'
+        + 'That is why ' + (r.becameReal.length === 1 ? 'it' : 'they') + ' moved so far in one chapter. '
+        + 'Your rolled score was standing in until the game had something real to measure, and now it does. '
+        + 'Nothing went wrong.</div>'
+      : '';
+    /* "No ability moved" beside two that plainly did is a contradiction, so
+       the empty-state only shows when there is genuinely nothing to report. */
+    var nothing = !shifts && !became
+      ? '<p class="note faint">No ability moved this chapter. Ten rounds is not always long enough — a '
+        + 'sub-stat is built from your numbers, not from intentions.</p>'
+      : '';
+    html('rev-shifts', shifts + nothing + became);
 
     html('rev-order', r.missedFoo.length
       ? r.missedFoo.map(function (m) {
           return '<div class="row"><b>' + esc(m.title) + '</b> — you took <i>' + esc(m.label) + '</i>'
-            + '<br/><span class="faint">Stronger: ' + esc(m.shouldHave.label) + '. ' + esc(m.shouldHave.why) + '</span></div>';
+            + '<br/><span class="faint">Stronger: ' + esc(punct(m.shouldHave.label)) + ' '
+            + esc(m.shouldHave.why) + '</span></div>';
         }).join('')
       : '<div class="ok-box">Every choice this chapter was the one the ladder would have made. That is rarer '
         + 'than it sounds — the whole difficulty of the order is that each individual step looks optional.</div>');
@@ -1590,6 +1656,12 @@
     });
     el('btn-result-back').addEventListener('click', function () { goStep('method'); });
     el('btn-result-next').addEventListener('click', function () { goStep('improve'); });
+    el('btn-pro-numbers').addEventListener('click', function () { goStep('basics'); });
+    el('btn-pro-example').addEventListener('click', function () {
+      goStep('basics');
+      el('btn-basics-example').click();
+    });
+    el('btn-pro-back').addEventListener('click', function () { goStep('result'); });
     el('q-match').addEventListener('change', paintPlacementPreview);
     el('q-capturing').addEventListener('change', paintPlacementPreview);
     el('btn-begin').addEventListener('click', function () {

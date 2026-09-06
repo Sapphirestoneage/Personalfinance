@@ -1751,6 +1751,50 @@ section('Dungeons & Dividends — the campaign (DD-024)');
       dealt.length - new Set(dealt).size, 0);
   })();
 
+  /* A ROLLED SCORE BEING REPLACED IS NOT A LOSS.
+     A character built by roll or point buy carries bought scores for STR, DEX
+     and CON. The first scenario that moves real money hands those abilities
+     over to measurement, and the bought number stops applying — so a rolled 17
+     becomes a measured 8. The review used to print that as "Income Power −9",
+     telling a player who had done nothing wrong that they had lost nine points
+     in a chapter. It is now reported as a change of basis, separately. */
+  (function () {
+    const rolled = household();
+    rolled.dndProfile.declaredMethod = 'roll';
+    rolled.dndProfile.declaredScores = { STR: 17, DEX: 16, CON: 15, INT: 12, WIS: 11, CHA: 9 };
+    /* Nothing measurable yet, so those three are standing in. */
+    delete rolled.people[0].incomeSources;
+    rolled.people[0].incomeSources = [];
+    rolled.assets = [];
+    rolled.expenses = { monthlyEssential: { estimatedValueCents: null, trackedValueCents: null, source: 'estimated' }, entries: [] };
+    const opening = Camp.snapshot(rolled, TABLES);
+    checkTrue('a rolled character starts with bought sub-stats',
+      opening.subBought.incomePower === true);
+
+    let st = Camp.start(rolled, TABLES);
+    /* Any scenario that moves income is enough to flip the basis. */
+    let flipped = false;
+    for (let i = 0; i < R.roundsPerChapter && !flipped; i++) {
+      const b = Camp.board(st, TABLES);
+      if (!b.length) break;
+      const res = Camp.resolve(st, b[0].id, b[0].options[0].id, TABLES);
+      if (!res.ok) break;
+      st = res.state;
+      flipped = Camp.snapshot(st.household, TABLES).subBought.incomePower === false;
+    }
+    if (flipped) {
+      const rev = Camp.chapterReview(st, TABLES);
+      checkTrue('the change of basis is reported as one',
+        rev.becameReal.some(function (x) { return x.subStat === 'incomePower'; }));
+      checkTrue('and never as an ability that fell',
+        !rev.subShifts.some(function (x) { return x.subStat === 'incomePower'; }));
+      checkTrue('and no ability shift is a disguised basis change',
+        rev.statShifts.every(function (x) { return !x.basisChanged; }));
+    }
+    checkTrue('the snapshot records where each score came from',
+      typeof opening.subBought === 'object' && opening.subBought !== null);
+  })();
+
   /* ---- stacking, which is the warning the review exists for -------------- */
   const oneLever = [];
   for (let i = 0; i < 10; i++) oneLever.push({ lever: 'compounder', subStats: { savingsRate: 3 } });
@@ -1786,8 +1830,13 @@ section('Dungeons & Dividends — the campaign (DD-024)');
   checkTrue('it declares LIVE-FORM', /LIVE-FORM: built once/.test(src));
   checkTrue('it loads the campaign engine', /engines\/campaign\.js/.test(src));
   checkTrue('and foo.js, which owns the ladder', /engines\/foo\.js/.test(src));
-  checkTrue('it says the sheet is not written to',
+  /* The promise moved from static markup into the painter, because the
+     wording now differs for somebody who entered numbers and somebody who
+     rolled dice. It still has to be made, in both branches. */
+  checkTrue('it promises the sheet is not written to, for a character with numbers',
     /Nothing that happens in it is written back to your sheet/.test(src));
+  checkTrue('and promises the same to one built from dice',
+    /written back to your character either way/.test(src));
   /* The page now BUILDS a character as well as playing one, so it does write
      real numbers — during creation, and only there. The guarantee is made
      structural rather than textual: every real write goes through one named
