@@ -121,6 +121,9 @@
   .who { color: var(--color-text-faint); }
   .helpline { display: block; margin-top: var(--space-1); font-size: var(--text-sm);
     color: var(--color-text); line-height: var(--leading-loose); overflow-wrap: anywhere; }
+  /* A phone number you can tap. Nothing is fetched; the OS dialler opens. */
+  .dial { color: var(--color-accent); font-weight: 600; white-space: nowrap;
+    display: inline-block; min-height: 32px; line-height: 32px; }
 </style>
 </head>
 <body class="slaf">
@@ -205,6 +208,16 @@
     return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
     });
+  }
+  /* The only clickable thing in this room, and the only external link in the
+     whole suite: a phone number. `tel:` sends no referrer and loads no page —
+     nothing leaves this browser — and on a phone it dials, which is the whole
+     point at the moment someone is reading this. Web addresses stay as plain
+     text on purpose: that would be a real outbound link, and that is a
+     decision about the whole app rather than one this room gets to make.
+     Escape first, then linkify: digits survive escaping unchanged. */
+  function dialable(escaped) {
+    return escaped.replace(/\b211\b/g, '<a class="dial" href="tel:211">211</a>');
   }
   function table(T) { return (T && T.billTriage) || null; }
   function tiers(T) { var t = table(T); return (t && t.tiers) || []; }
@@ -354,7 +367,7 @@
     eachBill(T, function (k) {
       if (!k.callFirst) return;
       rows.push('<li><div class="bill-head"><span class="bill-name">' + esc(k.label) + '</span></div>'
-        + '<p class="bill-ask"><span class="who">Call:</span> ' + esc(k.callFirst) + '</p></li>');
+        + '<p class="bill-ask"><span class="who">Call:</span> ' + dialable(esc(k.callFirst)) + '</p></li>');
     });
     out.push('<ul class="bills">' + rows.join('') + '</ul>');
     return out.join('');
@@ -372,7 +385,7 @@
     eachBill(T, function (k) {
       if (!k.helpLine) return;
       rows.push('<li><div class="bill-head"><span class="bill-name">' + esc(k.label) + '</span></div>'
-        + '<span class="helpline">' + esc(k.helpLine) + '</span></li>');
+        + '<span class="helpline">' + dialable(esc(k.helpLine)) + '</span></li>');
     });
     if (!rows.length) return out.join('');
     out.push('<p class="rule">Free, and none of it is a loan.</p>');

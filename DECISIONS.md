@@ -7851,18 +7851,34 @@ therefore **understates** the gap. That is the safe direction to be wrong in on
 this page, and the drawer says so rather than letting a reader assume the
 figure is complete.
 
-**The help lines are text, not links.** `hud.gov/findacounselor`, `211`,
-`nfcc.org`, `studentaid.gov`, `healthcare.gov`. Every one of them wants to be
-tappable, and none of them is — because **this app contains no external link
-at all.** Across every room and the index: zero. Adding the first one is a
-decision about the whole suite, not one a single room gets to make while
-nobody is looking, and a string painted like a link that does nothing when a
-finger lands on it is worse than plain text on the exact page where a person
-has the least patience. So they are plain, selectable, copyable text, and the
-first `.helpline` rule was changed from accent colour to body colour for
-precisely that reason. **Open, and worth a decision of its own:** if external
-links are allowed, this is the room that should get them first, and the answer
-covers every room after it.
+**Phone numbers dial. Web addresses stay text.** `hud.gov/findacounselor`,
+`211`, `nfcc.org`, `studentaid.gov`, `healthcare.gov`. Every one of them wants
+to be tappable, and until now none of them was, because **this app contained
+no external link at all** — across every room and the index, zero. The builder
+declined to break that on its own and was right to. The line drawn instead
+splits the two cases, because they are not the same kind of thing:
+
+- **`tel:` links, yes.** `211` is now `<a href="tel:211">` in all three places
+  the table says it (`dialable()` in the room, applied after escaping — digits
+  survive escaping unchanged). A `tel:` URL sends no referrer, loads no page
+  and makes no request: **nothing leaves this browser**, which is the promise
+  the whole suite is built on. What it does do is hand the number straight to
+  the dialler on the device someone is holding, at the moment they have the
+  least patience for copying nine characters by hand. The friction removed is
+  real and the privacy cost is zero, so this is not a trade.
+- **`http(s)` links, still no.** Those would be the first genuine outbound
+  link in the suite — a request to someone else's server, carrying a referrer
+  that says which room of a personal-finance app the person was reading when
+  they left. That is a decision about the whole app, and one for the repo
+  owner rather than for a room. They stay plain, selectable, copyable text,
+  and `.helpline` keeps body colour rather than accent colour for exactly
+  that reason: a string painted like a link that does nothing under a finger
+  is worse than one that never claimed to be one.
+
+The `.dial` rule carries `min-height: 32px; line-height: 32px` so the D-136
+tap floor holds; `SLAF_ONLY=cant-pay node test/responsive.js` passes at all
+five widths. **Still open:** the web-address half. If outbound links are ever
+allowed, this room gets them first and the answer covers every room after it.
 
 ### Compatibility note
 
