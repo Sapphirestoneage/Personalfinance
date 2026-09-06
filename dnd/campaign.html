@@ -178,6 +178,7 @@
     </div>
     <div class="actions">
       <button type="button" class="btn ghost" id="btn-q-back">Back</button>
+      <button type="button" class="btn ghost" id="btn-q-skip" hidden>Skip — I already have a character</button>
     </div>
   </section>
 
@@ -283,6 +284,16 @@
        scale — the figure is printed next to it so you can check the working.</p>
     <div id="res-abilities"></div>
     <div id="res-gaps"></div>
+
+    <div class="panel">
+      <!-- LIVE-FORM: built once in the markup, only ever read and written by value. -->
+      <div class="field" style="margin-bottom:0">
+        <label for="c-name">Give them a name (optional)</label>
+        <div class="hint">Only for the card you can share. Leave it blank and the card uses your class,
+           which is arguably the better look anyway.</div>
+        <input id="c-name" type="text" autocomplete="off" maxlength="40" placeholder="Nobody, of Flat 3B"/>
+      </div>
+    </div>
 
     <!-- Optional. LIVE-FORM: built once at boot, only shown and hidden. -->
     <div class="panel" id="res-finish" hidden>
@@ -538,6 +549,9 @@
         + 'data-answer="' + esc(o.id) + '">' + esc(o.label) + '</button>';
     }).join(''));
     el('btn-q-back').hidden = QAT === 0;
+    /* Somebody who built a sheet before this flow existed should not be made
+       to answer five questions to reach their own character. */
+    el('btn-q-skip').hidden = !Store.moneyEntered();
     show('quiz-view');
   }
 
@@ -1063,6 +1077,8 @@
        behind a button someone has to guess at is how an ability stays blank
        forever. After that, the visitor's own toggle is respected. */
     if (thin.length && !FINISH_TOUCHED) el('res-finish').hidden = false;
+    var nameBox = el('c-name');
+    if (document.activeElement !== nameBox) nameBox.value = Store.profile().characterName || '';
     el('btn-finish-toggle').textContent = el('res-finish').hidden
       ? (thin.length ? 'Finish my character →' : 'Change these answers →')
       : 'Hide these';
@@ -1496,6 +1512,7 @@
       if (b) answerQuiz(b.getAttribute('data-answer'));
     });
     el('btn-q-back').addEventListener('click', function () { QAT -= 1; paintQuiz(); });
+    el('btn-q-skip').addEventListener('click', function () { goStep('result'); });
     el('btn-qr-redo').addEventListener('click', function () {
       Store.patchProfile({ quiz5: {} }); QAT = 0; goStep('quiz');
     });
@@ -1559,6 +1576,9 @@
     });
     el('btn-abil-back').addEventListener('click', function () { goStep('basics'); });
     el('btn-abil-next').addEventListener('click', function () { goStep('result'); });
+    el('c-name').addEventListener('input', function () {
+      Store.patchProfile({ characterName: this.value.trim() || null });
+    });
     el('btn-finish-toggle').addEventListener('click', function () {
       FINISH_TOUCHED = true;
       el('res-finish').hidden = !el('res-finish').hidden;

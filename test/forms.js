@@ -63,6 +63,59 @@ const EXECUTABLE = process.env.SLAF_CHROMIUM || '/opt/pw-browsers/chromium';
    walk the fields in order, tapping each one and typing into it. */
 const CASES = [
   {
+    /* THE CHARACTER SCREEN, which repaints on every answer given to it.
+       It holds the optional name box AND the finisher fields, and paintResult()
+       runs on each of them. Static markup plus writing .value is what keeps it
+       safe (D-034) — the moment anything starts rebuilding that container, a
+       finger typing a name loses the keyboard. This is where that shows. */
+    room: '/dnd/campaign.html',
+    container: '#create-result',
+    seed: 'empty',
+    prepare: async (page) => {
+      for (let i = 0; i < 5; i++) {
+        const q = await page.$('#q-options [data-answer]');
+        if (!q) break;
+        await q.tap();
+        await page.waitForTimeout(110);
+      }
+      const on = await page.$('#btn-qr-next');
+      if (on) { await on.tap(); await page.waitForTimeout(200); }
+      const pb = await page.$('[data-route="pointBuy"]');
+      if (pb) { await pb.tap(); await page.waitForTimeout(220); }
+      for (let i = 0; i < 60; i++) {
+        const id = await page.evaluate(() => {
+          const b = [...document.querySelectorAll('#pb-rows [data-pb="up"]')].find(x => !x.disabled);
+          return b ? b.getAttribute('data-abil') : null;
+        });
+        if (!id) break;
+        await page.tap('[data-pb="up"][data-abil="' + id + '"]');
+      }
+      const next = await page.$('#btn-abil-next');
+      if (next) { await next.tap(); await page.waitForTimeout(350); }
+      /* A bought character has all six scored, so the finisher stays shut —
+         correctly. Open it, because its fields are what this case is for. */
+      if (await page.isHidden('#res-finish')) {
+        await page.tap('#btn-finish-toggle');
+        await page.waitForTimeout(250);
+      }
+    },
+    fields: [
+      { sel: '#c-name', type: 'Brenda of Flat 3B' },
+      { sel: '#x-income3', type: '44000' },
+      { sel: '#x-side', type: '0' }
+    ],
+    expect: async (page) => {
+      const p = await page.evaluate(() =>
+        (JSON.parse(localStorage.getItem('dnd.character.v1')) || {}).dndProfile || {});
+      return [
+        ['the name was kept', p.characterName, 'Brenda of Flat 3B'],
+        ['and so was the older income', p.incomeThreeYearsAgoCents, 4400000],
+        /* Zero is an answer here, and it has to survive as zero and not blank. */
+        ['a typed zero stayed zero', p.sideIncomeAnnualCents, 0]
+      ];
+    }
+  },
+  {
     /* The campaign's CREATION step — five money boxes on a phone, typed into
        in order. This is the room's front door now, so it is the one place a
        lost keyboard would cost the most: someone typing their income into a
