@@ -131,10 +131,14 @@
   function snapshot(household, tables) {
     var sheet = Character.sheet(household, tables);
     var nw = Tier0.netWorth(household);
-    var subs = {};
+    /* The score AND where it came from. Without the second half a rolled 17
+       being replaced by a measured 8 is indistinguishable from a real drop of
+       nine — see the bought/measured handling in chapterReview(). */
+    var subs = {}, bought = {};
     Object.keys(sheet.subScores || {}).forEach(function (k) {
       var r = sheet.subScores[k];
       subs[k] = Money.isOk(r) ? r.value : null;
+      bought[k] = Money.isOk(r) ? !!r.bought : null;
     });
     var stats = {};
     Character.STAT_IDS.forEach(function (id) {
@@ -150,7 +154,7 @@
       currentHp: Money.isOk(sheet.currentHp) ? sheet.currentHp.value : null,
       armorClass: Money.isOk(sheet.armorClass) ? sheet.armorClass.value : null,
       classId: sheet.chosenClassId || null,
-      stats: stats, subScores: subs
+      stats: stats, subScores: subs, subBought: bought
     };
   }
 
@@ -489,16 +493,43 @@
     var before = state.chapterOpening;
     var after = snapshot(state.household, tables);
 
+    /* Same for the abilities: one whose sub-stats stopped being bought has
+       changed basis, not fallen. */
+    function abilityBecameReal(id) {
+      var members = tables.dndRules.subStats.filter(function (m) { return m.stat === id; });
+      return members.some(function (m) {
+        return before.subBought && after.subBought
+          && before.subBought[m.id] === true && after.subBought[m.id] === false;
+      });
+    }
     var statShifts = Character.STAT_IDS.map(function (id) {
       return { stat: id, from: before.stats[id], to: after.stats[id],
+               basisChanged: abilityBecameReal(id),
                delta: (before.stats[id] === null || after.stats[id] === null) ? null : after.stats[id] - before.stats[id] };
-    }).filter(function (x) { return x.delta !== null && x.delta !== 0; });
+    }).filter(function (x) { return x.delta !== null && x.delta !== 0 && !x.basisChanged; });
 
+    /* A SCORE THAT STOPPED BEING BOUGHT DID NOT FALL.
+       A character built by roll or point buy holds bought scores for STR, DEX
+       and CON. The moment a scenario moves any real money, boughtFallback
+       hands that ability over to measurement and the bought number stops
+       applying — so a rolled 17 becomes a measured 8. Reporting that as
+       "Income Power −9" told the player they had done something disastrous
+       when all that changed was which of the two numbers counts. These are
+       pulled out of the shifts and reported as what they are. */
+    var becameReal = [];
     var subShifts = Object.keys(after.subScores).map(function (id) {
       var f = before.subScores[id], t = after.subScores[id];
-      return { subStat: id, from: f, to: t, delta: (f === null || t === null) ? null : t - f };
-    }).filter(function (x) { return x.delta !== null && x.delta !== 0; })
-      .sort(function (a, b) { return Math.abs(b.delta) - Math.abs(a.delta); });
+      return {
+        subStat: id, from: f, to: t,
+        wasBought: before.subBought ? before.subBought[id] : null,
+        nowBought: after.subBought ? after.subBought[id] : null,
+        delta: (f === null || t === null) ? null : t - f
+      };
+    }).filter(function (x) {
+      if (x.delta === null || x.delta === 0) return false;
+      if (x.wasBought === true && x.nowBought === false) { becameReal.push(x); return false; }
+      return true;
+    }).sort(function (a, b) { return Math.abs(b.delta) - Math.abs(a.delta); });
 
     var followed = records.filter(function (r) { return r.followedFoo; }).length;
     var missed = records.filter(function (r) { return !r.followedFoo; });
@@ -510,7 +541,7 @@
       fooDelta: (before.fooStep === null || after.fooStep === null) ? null : after.fooStep - before.fooStep,
       netWorthDelta: (before.netWorthCents === null || after.netWorthCents === null)
         ? null : after.netWorthCents - before.netWorthCents,
-      statShifts: statShifts, subShifts: subShifts,
+      statShifts: statShifts, subShifts: subShifts, becameReal: becameReal,
       followedFoo: followed, missedFoo: missed,
       stacking: stacking(records, tables),
       records: records

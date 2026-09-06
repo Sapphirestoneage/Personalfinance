@@ -9896,6 +9896,45 @@ Five guards were broken on purpose to check they bite: duplicate sign, duplicate
 glyph, a softened note, a note that drops the "worth taking seriously" line, and
 a class with fewer than three people. All five failed as intended.
 
+### Playing it cold: what a friend hits
+
+Walked the whole thing as somebody arriving on a shared link who will not type
+their salary — they roll dice instead. It was playable, and three things were
+wrong on the way through.
+
+**The last screen before play was written entirely for the money path.** It
+told a character somebody had just built to *"add your numbers on the sheet"*,
+claimed *"your numbers already work out most of where you are"* to a person who
+had entered none, and asked them two questions about their employer's pension
+match. The prologue now branches: with numbers it is unchanged; without them it
+says plainly that the character was built from dice, that **the game can only
+measure them against the very first step** so its advice will be generic, and
+offers three ways on — add five numbers, use example numbers, or **Play
+anyway**. The pension questions are hidden, because asking somebody who rolled
+dice about their employer's match is nonsense.
+
+**The review told a rolled character they had lost nine points.** A character
+built by roll or point buy carries *bought* scores for STR, DEX and CON. The
+first scenario that moves real money hands those abilities to measurement and
+the bought score stops applying, so a rolled 17 becomes a measured 8 — and the
+chapter review printed *"Income Power −9"* beside the choices they had made, as
+though they had done something disastrous. `snapshot()` now records **where each
+score came from** as well as what it is, and `chapterReview()` separates a
+change of basis from a fall: it comes back as `becameReal` and the room says
+*"Income Power stopped being a number you chose and started being one your money
+decides. Nothing went wrong."* The same rule applies at ability level via
+`basisChanged`.
+
+**And a double full stop**, from joining an option label that already ended in
+one to the sentence after it.
+
+**Stored shape:** `snapshot()` gains `subBought` — a map of sub-stat id to
+whether that score was bought rather than measured, or null where unscored.
+Snapshots taken before this are missing it; every reader treats an absent map as
+"unknown" and falls back to reporting the raw movement, which is the old
+behaviour rather than a crash. `chapterReview()` gains `becameReal`, and each
+entry of `statShifts` gains `basisChanged`.
+
 ### First, second, third — and the shadow
 
 The astrology framing had one more thing in it worth taking: a big three. So
