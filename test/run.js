@@ -6191,11 +6191,28 @@ section('The Statement room');
   check('itemised assets are owned by The Statement', Ownership.field('otherAssets').owner, 'statement');
   check('net worth is owned by The Statement', Ownership.field('netWorth').owner, 'statement');
   check('so is the weighted figure', Ownership.field('confidenceWeightedNetWorth').owner, 'statement');
-  check('and money that is coming', Ownership.field('futureIncome').owner, 'statement');
+  /* Money that is coming MOVED to the Timeline in D-152. The Statement still
+     shows the roll-up — it is part of the picture — but a dated period is
+     edited in the room that draws it on a grid, and in exactly one room
+     (D-017). The Statement must therefore have no editor for it left. */
+  check('money that is coming moved to the Timeline', Ownership.field('futureIncome').owner, 'timeline');
+  checkTrue('...and The Statement no longer edits it',
+    !/data-future="/.test(html) && !/upsertFutureIncome/.test(html),
+    'two editors for one field is the thing D-017 exists to prevent');
+  checkTrue('...but The Statement still shows it, and links to its owner',
+    /futureIncome/.test(html) && /timeline\.html/.test(html));
   checkTrue('cash is still asked in Start Here', Ownership.field('cashSavings').owner === 'start');
+  /* Check each anchor in its OWNER's file, not in this one. The four used to
+     share a room, so reading them all out of statement.html was the same
+     thing; futureIncome moving to the Timeline in D-152 is what made the
+     difference visible. Resolving the owner is what the check meant all
+     along, and it now holds for any field that moves later. */
   ['otherAssets', 'netWorth', 'confidenceWeightedNetWorth', 'futureIncome'].forEach(function (f) {
-    const a = Ownership.field(f).anchor;
-    checkTrue(`${f} links to an anchor that exists`, new RegExp('id="' + a + '"').test(html));
+    const spec = Ownership.field(f);
+    const room = Registry.byId(spec.owner);
+    const src = fs.readFileSync(path.join(ROOT, room.href), 'utf8');
+    checkTrue(`${f} links to an anchor that exists in ${room.href}`,
+      new RegExp('id="' + spec.anchor + '"').test(src));
   });
 
   const h = Demo.build();
@@ -8485,6 +8502,137 @@ section('The D&D folder\'s vendored copies');
   /* And it is not a room: nothing in the registry may point into dnd/. */
   checkTrue('no registry entry points into dnd/',
     Registry.all().every(r => r.href.indexOf('dnd/') !== 0));
+})();
+
+/* ==========================================================================
+   The Timeline (D-152) — jobs and benefits as dated periods that stack
+   --------------------------------------------------------------------------
+   Every case below was worked out on paper first and then checked against
+   the engine, which is the only way a month grid gets caught being one
+   month out.
+   ========================================================================== */
+section('The Timeline — periods that stack');
+(function () {
+  const Timeline = require(path.join(ROOT, 'engines/timeline.js'));
+  const Schema = require(path.join(ROOT, 'shared/schema.js'));
+  const NOW = '2026-09-06T00:00:00Z';
+
+  /* Born March 1994. Contract Jan–Jun 2027 at $5,000. Staff job from April
+     2027 at $7,000, open-ended. A benefit from age 67. One period with no
+     start, one with no amount. */
+  function household() {
+    return Schema.createHousehold({
+      people: [{ id: 'p1', role: 'adult', dob: '1994-03-15', employmentStatus: 'employed' }],
+      futureIncome: [
+        { id: 'a', label: 'Contract',  kind: 'job',     monthlyCents: 500000, startsOn: '2027-01-01', endsOn: '2027-06-30' },
+        { id: 'b', label: 'Staff job', kind: 'job',     monthlyCents: 700000, startsOn: '2027-04-01' },
+        { id: 'c', label: 'Pension',   kind: 'benefit', monthlyCents: 250000, startsAtAge: 67 },
+        { id: 'd', label: 'Someday',   kind: 'other',   monthlyCents: 100000 },
+        { id: 'e', label: 'Unpriced',  kind: 'job',     startsOn: '2028-01-01' }
+      ]
+    });
+  }
+  const H = household();
+  const opts = { now: NOW, years: 45 };
+  const grid = Timeline.months(H, opts);
+  const at = ym => grid.value.filter(r => r.label === ym)[0];
+
+  checkTrue('the grid builds', Money.isOk(grid));
+  check('September 2026: nothing has started', at('2026-09').cents, 0);
+  check('...and it says so with a count, not a guess', at('2026-09').count, 0);
+  check('January 2027: the contract alone', at('2027-01').cents, 500000);
+  /* The whole point of the room: April to June 2027 both run. */
+  check('April 2027: both run, and they add', at('2027-04').cents, 1200000);
+  check('June 2027: still both', at('2027-06').cents, 1200000);
+  check('July 2027: the contract has ended', at('2027-07').cents, 700000);
+  /* Born 1994-03, so age 67 is 1994-03 + 804 months = 2061-03. */
+  check('February 2061: still just the job', at('2061-02').cents, 700000);
+  check('March 2061: the pension starts the month they turn 67', at('2061-03').cents, 950000);
+
+  /* Empty is not zero, in both directions. */
+  const waiting = Timeline.periods(H, opts).filter(p => !p.placeable);
+  check('two periods cannot be placed', waiting.length, 2);
+  checkTrue('a period with no start date says so rather than starting today',
+    waiting.some(p => p.label === 'Someday' && /No start date/.test(p.why.join(' '))));
+  checkTrue('a period with no amount says so rather than counting as zero',
+    waiting.some(p => p.label === 'Unpriced' && /No monthly amount/.test(p.why.join(' '))));
+  checkTrue('neither reaches the grid',
+    grid.value.every(r => r.parts.every(x => x.id !== 'd' && x.id !== 'e')));
+  checkTrue('the grid hands back what it could not place, by name',
+    grid.unplaced.length === 2);
+
+  /* Gaps and overlaps as runs, not counts. */
+  const sum = Timeline.summary(H, opts).value;
+  check('one gap', sum.gaps.length, 1);
+  check('...four months long', sum.gaps[0].length, 4);
+  check('...starting this month', sum.gaps[0].from.label, '2026-09');
+  check('the first overlap is the three-month one', sum.overlaps[0].length, 3);
+  check('...April to June 2027', sum.overlaps[0].from.label + '..' + sum.overlaps[0].to.label, '2027-04..2027-06');
+  check('the next change is January 2027', sum.nextChange.label, '2027-01');
+  check('the best month is the overlap, not the pension', sum.peak.cents, 1200000);
+
+  /* An end before a start is refused rather than drawn backwards. */
+  (function () {
+    const h = Schema.createHousehold({ futureIncome: [
+      { id: 'x', label: 'Backwards', monthlyCents: 100000, startsOn: '2028-01-01', endsOn: '2027-01-01' }
+    ] });
+    const p = Timeline.periods(h, { now: NOW })[0];
+    checkTrue('a period that ends before it starts is not placed', !p.placeable);
+    checkTrue('...and says exactly that', /ends before it starts/.test(p.why.join(' ')));
+  })();
+
+  /* An age with no date of birth to count from. */
+  (function () {
+    const h = Schema.createHousehold({ futureIncome: [
+      { id: 'y', label: 'At 67', monthlyCents: 250000, startsAtAge: 67 }
+    ] });
+    const p = Timeline.periods(h, { now: NOW })[0];
+    checkTrue('an age with no date of birth is not placed', !p.placeable);
+    checkTrue('...and names what is missing', /date of birth/.test(p.why.join(' ')));
+  })();
+
+  /* A date beats an age when both are given: an explicit date is the
+     stronger statement, and quietly preferring the age would move a period
+     the person had pinned. */
+  (function () {
+    const h = Schema.createHousehold({
+      people: [{ id: 'p1', role: 'adult', dob: '1994-03-15' }],
+      futureIncome: [{ id: 'z', monthlyCents: 100, startsOn: '2030-01-01', startsAtAge: 67 }]
+    });
+    check('a date wins over an age', Timeline.label(Timeline.periods(h, { now: NOW })[0].startMonth), '2030-01');
+  })();
+
+  /* Nothing at all, and nothing placeable, are different sentences. */
+  check('an empty household gets no grid',
+    Timeline.months(Schema.createHousehold({}), { now: NOW }).status, 'incomplete');
+  checkTrue('...and says nothing is listed',
+    /Nothing is listed/.test(Timeline.months(Schema.createHousehold({}), { now: NOW }).reason));
+  checkTrue('a household whose periods are all unplaceable is told which problem it has',
+    /missing a date or an amount/.test(Timeline.months(Schema.createHousehold({
+      futureIncome: [{ id: 'q', label: 'No date', monthlyCents: 100 }]
+    }), { now: NOW }).reason));
+
+  /* The horizon is bounded in both directions, so no caller can ask for a
+     million-row grid or a zero-row one. */
+  check('the horizon floors at a year', Timeline.months(H, { now: NOW, years: 0 }).value.length, 13);
+  check('...and caps at sixty', Timeline.months(H, { now: NOW, years: 999 }).value.length, 60 * 12 + 1);
+
+  /* The room. */
+  (function () {
+    const html = fs.readFileSync(path.join(ROOT, 'rooms/timeline.html'), 'utf8');
+    checkTrue('the room guards its live form (D-034)', /LIVE-FORM: guarded/.test(html));
+    checkTrue('...and actually calls request()', /listForm\.request\(\)/.test(html));
+    checkTrue('the room does no arithmetic of its own',
+      !/\bmonthlyCents\s*[+*]/.test(html),
+      'every figure comes from engines/timeline.js; the page formats');
+    checkTrue('the room owns the periods it edits',
+      /upsertFutureIncome/.test(html) && Ownership.field('futureIncome').owner === 'timeline');
+    const kinds = Schema.FUTURE_KINDS;
+    checkTrue('every kind has a label in the room',
+      kinds.every(k => new RegExp(k + ':').test(html)));
+    check('an unknown kind falls back to other', Schema.createFutureIncome({ kind: 'zzz' }).kind, 'other');
+    check('a row written before D-152 keeps its meaning', Schema.createFutureIncome({}).kind, 'other');
+  })();
 })();
 
 /* ==========================================================================

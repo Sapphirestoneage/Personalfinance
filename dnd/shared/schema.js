@@ -600,15 +600,27 @@
     return { value: assetRule(asset, rules).liquidity, rated: false };
   }
 
+  /* Kinds of future period. `other` is the default so every row written
+     before D-152 keeps exactly the meaning it had — a kind was not asked
+     for, so none is asserted. The kind changes nothing arithmetically; it
+     only lets the timeline colour and group what it draws. */
+  var FUTURE_KINDS = ['job', 'benefit', 'other'];
+
   function createFutureIncome(fields) {
     var f = fields || {};
     return {
       id: f.id || newId('fi'),
       label: f.label || null,
+      /* What this period is. See FUTURE_KINDS. D-152. */
+      kind: FUTURE_KINDS.indexOf(f.kind) >= 0 ? f.kind : 'other',
       monthlyCents: f.monthlyCents === undefined ? null : f.monthlyCents,
       startsOn: f.startsOn === undefined ? null : f.startsOn,     /* ISO date, or an age via startsAtAge */
       startsAtAge: f.startsAtAge === undefined ? null : f.startsAtAge,
       endsOn: f.endsOn === undefined ? null : f.endsOn,
+      /* The mirror of startsAtAge: "until I turn 67". Absent means the
+         period runs to the horizon, which is a real answer and is labelled
+         as one — it is never quietly turned into an end date. D-152. */
+      endsAtAge: f.endsAtAge === undefined ? null : f.endsAtAge,
       confidence: f.confidence === undefined ? null : f.confidence,
       inflationAdjusted: f.inflationAdjusted === undefined ? null : !!f.inflationAdjusted,
       ownerIds: f.ownerIds || []
@@ -2029,6 +2041,7 @@
     createNotApplicable: createNotApplicable,
     KEEP_REASONS: KEEP_REASONS,
     keepReasonList: keepReasonList,
+    FUTURE_KINDS: FUTURE_KINDS,
     createSkillTree: createSkillTree,
     createWalk: createWalk,
     APP_VERSION: APP_VERSION,

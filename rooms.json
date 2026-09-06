@@ -140,7 +140,6 @@
       "writes": [
         "otherAssets",
         "confidenceWeightedNetWorth",
-        "futureIncome",
         "netWorth"
       ],
       "requires": [],
@@ -567,6 +566,20 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 28
+    },
+    {
+      "id": "timeline",
+      "title": "What Comes Next",
+      "file": "rooms/timeline.html",
+      "reads": [
+        "dob"
+      ],
+      "writes": [
+        "futureIncome"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 28.5
     },
     {
       "id": "get-help",

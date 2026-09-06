@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>What Comes Next · SPARKS</title>
+<meta name="description" content="Jobs, benefits and anything else that pays, each as a period with a start and an end, laid end to end so you can see the gaps, the overlaps and what any month adds up to."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. THE TIMELINE. DECISIONS.md D-152.
+
+  1. READS   the date of birth (Start Here owns it) to turn "from age 67"
+             into a month, and nothing else it does not own.
+  2. WRITES  it OWNS futureIncome[] — every dated period: its name, kind,
+             monthly amount, start, end, how sure, and whether it rises with
+             inflation. That ownership MOVED here from The Statement in
+             D-152; the Statement now shows the roll-up read-only and links
+             back. One owner per shared number (D-017).
+  3. SHOWS   the months ahead as one line, the periods as a list you can
+             edit, and the gaps and overlaps in words. Every figure comes
+             from engines/timeline.js — the page does no arithmetic of its
+             own beyond formatting.
+  4. FEEDS   The Statement's "money that is coming", and anything later that
+             wants to know what a given month looks like.
+  5. DEMO    none of its own. The dashboard's example numbers include a
+             couple of periods; this room draws whatever is there.
+
+  EMPTY IS NOT ZERO, AND HERE IT MATTERS TWICE OVER (SPEC.md §5):
+    · A period with no amount contributes NOTHING to any month and is
+      listed by name under "waiting on something". It is never $0.
+    · A period with no start date is not a period starting today. It is
+      named and left off the grid until it has somewhere to go.
+    · A month with no live period IS $0 — and that zero is the point. It
+      means nothing you have listed pays you then, which is the gap this
+      room exists to show. That is a computed zero, not a missing input:
+      the missing inputs never reach the grid at all.
+
+  NO END IS A REAL ANSWER. A job with no end date runs to the edge of the
+  chart and says "and onward" rather than pretending you chose to stop.
+
+  LIVE-FORM: guarded — the period list is a container of live inputs and it
+  is rebuilt when the data changes, so it goes through shared/liveform.js
+  and calls request(), exactly as The Statement's asset list does. Replacing
+  an input's DOM node mid-tap closes the soft keyboard on a phone and it
+  does not come back (D-034).
+
+  THEMING: none this pass. Nothing here names a colour outside the tokens.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-3); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  .headline { font-family: var(--font-display); font-size: var(--text-3xl); line-height: 1.05; }
+  .headline-sub { color: var(--color-text-muted); font-size: var(--text-sm); margin: var(--space-2) 0 0;
+    line-height: var(--leading-loose); }
+
+  .facts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-3);
+    margin-top: var(--space-3); }
+  .fact { border-top: 1px solid var(--color-border); padding-top: var(--space-2); }
+  .fact .k { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow);
+    color: var(--color-text-faint); }
+  .fact .v { font-weight: 600; margin-top: 2px; }
+  .fact .n { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 2px;
+    line-height: var(--leading-loose); }
+
+  /* One row per period, drawn as a bar across the same span the chart uses,
+     so the list and the chart agree by construction rather than by luck. */
+  .bars { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  .bars li { padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  .bar-top { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: baseline; font-size: var(--text-sm); }
+  .bar-name { font-weight: 600; }
+  .bar-when { color: var(--color-text-muted); }
+  .bar-amt { margin-left: auto; white-space: nowrap; }
+  .bar-track { position: relative; height: 8px; margin-top: var(--space-1);
+    border-radius: 999px; background: var(--color-border); overflow: hidden; }
+  .bar-track i { position: absolute; top: 0; bottom: 0; border-radius: 999px; background: var(--color-accent); }
+  .bar-track i.is-benefit { background: var(--color-positive); }
+  .bar-track i.is-other { background: var(--color-text-faint); }
+
+  .asset { border: 1px solid var(--color-border); border-radius: var(--radius-md);
+    padding: var(--space-3); margin-bottom: var(--space-3); }
+  .asset-top { display: flex; gap: var(--space-2); align-items: center; }
+  .asset-name { flex: 1 1 auto; min-width: 0; font: inherit; font-weight: 600; color: var(--color-text);
+    background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+    padding: var(--space-2); }
+  .asset-remove { flex: 0 0 auto; min-width: 32px; min-height: 32px; font: inherit;
+    color: var(--color-text-faint); background: none; border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm); cursor: pointer; }
+  /* minmax(0, 1fr), never 1fr: a track's implicit minimum is its content, so
+     a cell holding a select refuses to shrink and pushes the page sideways
+     at 390px with nothing visibly out of place. D-146. */
+  .asset-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-2); margin-top: var(--space-3); }
+  .asset-grid .span { grid-column: 1 / -1; }
+
+  .waiting { border: 1px dashed var(--color-caution); border-radius: var(--radius-md);
+    padding: var(--space-3); margin-top: var(--space-3); }
+  .waiting h3 { margin: 0 0 var(--space-2); font-size: var(--text-sm); color: var(--color-caution); }
+  .waiting ul { margin: 0; padding-left: 1.1em; font-size: var(--text-sm);
+    color: var(--color-text-muted); line-height: var(--leading-loose); }
+
+  .runs { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  .runs li { padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm);
+    line-height: var(--leading-loose); }
+  .runs .tag { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow);
+    border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 1px 6px;
+    margin-right: var(--space-2); white-space: nowrap; }
+  .runs .tag.is-gap { color: var(--color-caution); border-color: var(--color-caution); }
+  .runs .tag.is-over { color: var(--color-positive); border-color: var(--color-positive); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../index.html">← Home</a>
+  <h1>What Comes Next</h1>
+  <p class="room-lede">A job that starts in March. A contract that runs six months. A pension at 67. Put each one down as a period, and see the months they add up to.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="out-months">
+    <span class="slaf-eyebrow">The months ahead</span>
+    <div id="months-body"></div>
+  </section>
+
+  <section class="slaf-card" id="out-periods" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What you have listed</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Each one is a period, not a date</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">A start, and an end if there is one. Leave the end blank
+      for something that carries on — that is a real answer and it is drawn as one. Everything here stays in this
+      browser.</p>
+    <div id="period-list"></div>
+    <button type="button" class="slaf-btn" id="btn-add" style="width:100%">+ Add a period</button>
+    <div id="waiting-body"></div>
+  </section>
+
+  <section class="slaf-card" id="out-gaps" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Gaps and overlaps</span>
+    <div id="gaps-body"></div>
+  </section>
+
+  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Not financial advice, and not a forecast. This is arithmetic on periods
+    you typed: it adds up what you said would be there, and it is exactly as
+    right as those figures are. Nothing here is inflated, discounted or
+    grown — a period's amount is the amount you entered, in every month it
+    runs. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/liveform.js"></script>
+<script src="../shared/charts.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/timeline.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Ownership = SLAF.Ownership, Progress = SLAF.Progress, Charts = SLAF.Charts,
+      Timeline = SLAF.Timeline;
+
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function el(id) { return document.getElementById(id); }
+  function money(c) { return Money.formatCents(c); }
+  function dollars(c) { return Money.isEntered(c) ? String(c / 100) : ''; }
+
+  /* "2027-04" -> "April 2027". The engine works in integer months and hands
+     back its own label; turning that into English happens here and only
+     here, so there is one place to change the wording. */
+  var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
+                     'July', 'August', 'September', 'October', 'November', 'December'];
+  function pretty(lbl) {
+    var m = /^(\d{4})-(\d{2})$/.exec(String(lbl || ''));
+    if (!m) return String(lbl || '');
+    return MONTH_NAMES[Number(m[2]) - 1] + ' ' + m[1];
+  }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+
+  var KIND_LABELS = { job: 'A job', benefit: 'A benefit or pension', other: 'Something else' };
+
+  /* ---- The months ahead ---------------------------------------------------- */
+
+  function monthsHtml(h) {
+    var grid = Timeline.months(h, { years: 30 });
+    if (!Money.isOk(grid)) {
+      return '<p class="headline">—</p><p class="headline-sub">' + esc(grid.reason)
+        + ' Add a period below and this fills in.</p>';
+    }
+    var rows = grid.value;
+    var s = Timeline.summary(h, { years: 30 });
+    var f = Money.isOk(s) ? s.value : null;
+    var out = [];
+
+    var today = rows[0];
+    out.push('<p class="headline">' + esc(money(today.cents)) + '<span style="font-size:var(--text-lg)"> a month</span></p>');
+    out.push('<p class="headline-sub">' + (today.count
+        ? 'Right now, from ' + esc(plural(today.count, 'period', 'periods')) + ' you have listed.'
+        : 'Nothing you have listed pays you this month. The first thing that does is below.')
+      + ' This counts only what is on this page — your current pay lives in '
+      + '<a href="' + esc(Ownership.linkTo('income', 'sources')) + '">Income</a>.</p>');
+
+    out.push(Charts.area({
+      title: 'What lands each month, over the next 30 years',
+      series: [{
+        label: 'A month',
+        points: rows.map(function (r) { return [r.offset, r.cents]; })
+      }],
+      x: {
+        label: 'years from now',
+        format: function (v) { return String(Math.round(v / 12)); }
+      },
+      y: { min: 0, format: function (v) { return Charts.shortMoney ? Charts.shortMoney(v) : money(v); } },
+      empty: 'Nothing placed yet.'
+    }));
+
+    if (f) {
+      out.push('<div class="facts">');
+      out.push('<div class="fact"><div class="k">Next change</div><div class="v">'
+        + (f.nextChange ? esc(pretty(f.nextChange.label)) : 'None in 30 years')
+        + '</div><div class="n">' + (f.nextChange
+          ? 'It goes to ' + esc(money(f.nextChange.cents)) + ' a month.'
+          : 'Nothing you have listed starts or stops between now and then.') + '</div></div>');
+      out.push('<div class="fact"><div class="k">The best month</div><div class="v">'
+        + esc(money(f.peak.cents)) + '</div><div class="n">'
+        + (f.peak.cents === today.cents ? 'Which is this month — nothing later beats it.'
+           : 'From ' + esc(pretty(f.peak.label)) + ', with ' + esc(plural(f.peak.count, 'period', 'periods')) + ' running at once.')
+        + '</div></div>');
+      out.push('</div>');
+    }
+    return out.join('');
+  }
+
+  /* ---- The periods, as bars, above the editor ------------------------------ */
+
+  function barsHtml(h) {
+    var grid = Timeline.months(h, { years: 30 });
+    if (!Money.isOk(grid)) return '';
+    var placed = grid.placed || [];
+    if (!placed.length) return '';
+    var from = grid.from, span = grid.span;
+    var pos = function (m) { return Math.max(0, Math.min(100, ((m - from) / span) * 100)); };
+    var out = ['<ul class="bars">'];
+    placed.forEach(function (p) {
+      var left = pos(p.startMonth);
+      var right = p.endMonth === null ? 100 : pos(p.endMonth);
+      /* A period wholly past the horizon still gets a sliver at the edge
+         rather than a zero-width bar nobody can see. */
+      var width = Math.max(1.5, right - left);
+      var when = pretty(Timeline.label(p.startMonth))
+        + (p.endMonth === null ? ' onward' : ' – ' + pretty(Timeline.label(p.endMonth)));
+      out.push('<li><div class="bar-top">'
+        + '<span class="bar-name">' + esc(p.label || KIND_LABELS[p.kind] || 'Unnamed') + '</span>'
+        + '<span class="bar-when">' + esc(when) + '</span>'
+        + '<span class="bar-amt">' + esc(money(p.monthlyCents)) + '/mo</span>'
+        + '</div>'
+        + '<div class="bar-track"><i class="is-' + esc(p.kind) + '" style="left:' + left.toFixed(2) + '%;width:' + width.toFixed(2) + '%"></i></div>'
+        + '</li>');
+    });
+    out.push('</ul>');
+    return out.join('');
+  }
+
+  /* ---- What could not be placed, and why ----------------------------------- */
+
+  function waitingHtml(h) {
+    var rows = Timeline.periods(h).filter(function (p) { return !p.placeable; });
+    if (!rows.length) return '';
+    var heading = rows.length === 1
+      ? 'One of these is waiting on something'
+      : rows.length + ' of these are waiting on something';
+    return '<div class="waiting"><h3>' + esc(heading) + '</h3><ul>'
+      + rows.map(function (p) {
+          return '<li><strong>' + esc(p.label || KIND_LABELS[p.kind] || 'Unnamed') + '</strong> — '
+            + esc(p.why.join(' ')) + '</li>';
+        }).join('')
+      + '</ul><p class="slaf-hint" style="margin:var(--space-2) 0 0">These are not counted anywhere. '
+      + 'Nothing here is treated as zero or as starting today — it is left off until you say when and how much.</p></div>';
+  }
+
+  /* ---- Gaps and overlaps --------------------------------------------------- */
+
+  function gapsHtml(h) {
+    var s = Timeline.summary(h, { years: 30 });
+    if (!Money.isOk(s)) {
+      return '<p class="slaf-reason">' + esc(s.reason) + '</p>';
+    }
+    var f = s.value;
+    if (!f.gaps.length && !f.overlaps.length) {
+      return '<p class="slaf-hint" style="margin:var(--space-2) 0 0">No gaps and no overlaps in the next 30 years: '
+        + 'exactly one thing is paying you at any moment you have described.</p>';
+    }
+    var out = ['<p class="slaf-hint" style="margin:var(--space-2) 0 0">A gap is a stretch where nothing you have '
+      + 'listed pays you. An overlap is a stretch where more than one does — which is where a plan usually has '
+      + 'its room to move.</p><ul class="runs">'];
+    f.gaps.forEach(function (r) {
+      out.push('<li><span class="tag is-gap">Gap</span> '
+        + esc(plural(r.length, 'month', 'months')) + ' from ' + esc(pretty(r.from.label))
+        + (r.length > 1 ? ' to ' + esc(pretty(r.to.label)) : '')
+        + ' with nothing coming in.</li>');
+    });
+    f.overlaps.forEach(function (r) {
+      out.push('<li><span class="tag is-over">Overlap</span> '
+        + esc(plural(r.length, 'month', 'months')) + ' from ' + esc(pretty(r.from.label))
+        + (r.length > 1 ? ' to ' + esc(pretty(r.to.label)) : '')
+        + ' with ' + esc(String(r.from.count)) + ' running at once — ' + esc(money(r.from.cents)) + ' a month.</li>');
+    });
+    out.push('</ul>');
+    return out.join('');
+  }
+
+  /* ---- The editor ----------------------------------------------------------
+     A container of live inputs, rebuilt when the data changes — so it is
+     guarded and every rebuild goes through request(). D-034. */
+
+  function findRow(h, id) {
+    return (h.futureIncome || []).filter(function (f) { return f.id === id; })[0] || null;
+  }
+
+  function kindOptions(sel) {
+    return Schema.FUTURE_KINDS.map(function (k) {
+      return '<option value="' + k + '"' + (k === sel ? ' selected' : '') + '>' + esc(KIND_LABELS[k]) + '</option>';
+    }).join('');
+  }
+
+  function field(id, name, label, value, placeholder, opts) {
+    var o = opts || {};
+    return '<label class="slaf-field' + (o.span ? ' span' : '') + '" style="margin:0"><span class="slaf-label">' + esc(label) + '</span>'
+      + '<span class="slaf-input-shell">' + (o.affix ? '<span class="slaf-affix">' + esc(o.affix) + '</span>' : '')
+      + '<input type="' + (o.type || 'text') + '"' + (o.inputmode ? ' inputmode="' + o.inputmode + '"' : '')
+      + ' data-row="' + id + '" data-field="' + name + '" value="' + esc(value) + '"'
+      + ' placeholder="' + esc(placeholder) + '" aria-label="' + esc(label) + '"/></span></label>';
+  }
+
+  function renderList(h) {
+    var host = el('period-list');
+    var rows = h.futureIncome || [];
+    if (!rows.length) {
+      host.innerHTML = '<p class="slaf-reason">Nothing listed yet. Add the next thing you know about — a job '
+        + 'starting, a contract ending, a pension at 67 — and the months above fill in.</p>';
+      return;
+    }
+    host.innerHTML = rows.map(function (f) {
+      return '<div class="asset" data-card="' + f.id + '">'
+        + '<div class="asset-top">'
+        + '<input class="asset-name" data-row="' + f.id + '" data-field="label" value="' + esc(f.label || '')
+        + '" placeholder="e.g. The new job" aria-label="What it is"/>'
+        + '<button type="button" class="asset-remove" data-remove="' + f.id + '" aria-label="Remove this period">✕</button>'
+        + '</div>'
+        + '<div class="asset-grid">'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">What kind</span>'
+        + '<span class="slaf-input-shell"><select data-row="' + f.id + '" data-field="kind" aria-label="What kind">'
+        + kindOptions(f.kind) + '</select></span></label>'
+        + field(f.id, 'monthlyCents', 'A month', dollars(f.monthlyCents), 'e.g. 4,200', { inputmode: 'decimal', affix: '$' })
+        + field(f.id, 'startsOn', 'Starts', f.startsOn || '', '', { type: 'month' })
+        + field(f.id, 'endsOn', 'Ends (blank = carries on)', f.endsOn || '', '', { type: 'month' })
+        + field(f.id, 'startsAtAge', 'Or from age', Money.isEntered(f.startsAtAge) ? f.startsAtAge : '', 'e.g. 67', { inputmode: 'decimal' })
+        + field(f.id, 'endsAtAge', 'Or until age', Money.isEntered(f.endsAtAge) ? f.endsAtAge : '', 'e.g. 70', { inputmode: 'decimal' })
+        + '<label class="slaf-field span" style="margin:0"><span class="slaf-label">How sure is this?</span>'
+        + '<span class="slaf-input-shell"><select data-row="' + f.id + '" data-field="confidence" aria-label="How sure">'
+        + '<option value=""' + (f.confidence === null ? ' selected' : '') + '>Not rated</option>'
+        + '<option value="0.9"' + (f.confidence === 0.9 ? ' selected' : '') + '>Signed, or as good as</option>'
+        + '<option value="0.6"' + (f.confidence === 0.6 ? ' selected' : '') + '>Likely</option>'
+        + '<option value="0.3"' + (f.confidence === 0.3 ? ' selected' : '') + '>A maybe</option>'
+        + '</select></span></label>'
+        + '</div>'
+        + '<p class="slaf-hint" style="margin:var(--space-2) 0 0">A date beats an age: if you fill in both, the date is used.</p>'
+        + '</div>';
+    }).join('');
+  }
+
+  var listForm = SLAF.LiveForm.guard(el('period-list'), function () { renderList(Spine.getProfile()); });
+
+  function write(id, name, raw) {
+    var text = String(raw === null || raw === undefined ? '' : raw).trim();
+    var patch = { id: id };
+    if (name === 'label') patch.label = text === '' ? null : text;
+    else if (name === 'kind') patch.kind = text;
+    else if (name === 'monthlyCents') patch.monthlyCents = Money.parseMoney(text);
+    else if (name === 'startsOn' || name === 'endsOn') patch[name] = text === '' ? null : text;
+    else if (name === 'startsAtAge' || name === 'endsAtAge') {
+      var n = text === '' ? null : Number(text);
+      patch[name] = (n === null || isNaN(n)) ? null : n;
+    } else if (name === 'confidence') {
+      var c = text === '' ? null : Number(text);
+      patch.confidence = (c === null || isNaN(c)) ? null : c;
+    } else return;
+    Spine.upsertFutureIncome(patch);
+  }
+
+  el('period-list').addEventListener('focusin', function (e) {
+    var node = e.target, f = node.getAttribute && node.getAttribute('data-field');
+    if (f !== 'monthlyCents') return;
+    var r = findRow(Spine.getProfile(), node.getAttribute('data-row'));
+    node.value = r && Money.isEntered(r.monthlyCents) ? String(r.monthlyCents / 100) : '';
+    node.select();
+  });
+  el('period-list').addEventListener('focusout', function (e) {
+    var node = e.target, id = node.getAttribute && node.getAttribute('data-row'),
+        f = node.getAttribute && node.getAttribute('data-field');
+    if (!id || !f || node.tagName === 'SELECT') return;
+    write(id, f, node.value);
+    if (f === 'monthlyCents') {
+      var r = findRow(Spine.getProfile(), id);
+      if (r) node.value = Money.isEntered(r.monthlyCents) ? money(r.monthlyCents) : '';
+    }
+  });
+  el('period-list').addEventListener('change', function (e) {
+    var node = e.target;
+    if (node.tagName === 'SELECT') { write(node.getAttribute('data-row'), node.getAttribute('data-field'), node.value); return; }
+    /* A month picker fires change, not just blur, and on a phone it is the
+       only event that arrives when the picker is dismissed. */
+    if (node.type === 'month') write(node.getAttribute('data-row'), node.getAttribute('data-field'), node.value);
+  });
+  el('period-list').addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-remove]');
+    if (!btn) return;
+    Spine.removeById('futureIncome', btn.getAttribute('data-remove'));
+    listForm.force(); render();
+  });
+  el('period-list').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); e.target.blur(); }
+  });
+
+  el('btn-add').addEventListener('click', function () {
+    Spine.upsertFutureIncome(Schema.createFutureIncome({ kind: 'job' }));
+    listForm.force(); render();
+    var cards = el('period-list').querySelectorAll('.asset-name');
+    if (cards.length) cards[cards.length - 1].focus();
+  });
+
+  /* ---- Reading from elsewhere ---------------------------------------------- */
+
+  function readingHtml(h) {
+    return Ownership.readOnlyListHtml
+      ? Ownership.readOnlyListHtml(['dob'], h, 'timeline')
+      : (function () {
+          var d = Ownership.describe('dob', h, 'timeline');
+          if (!d) return '';
+          return '<p class="slaf-hint">' + esc(d.label) + ': ' + (d.isSet ? esc(d.display) : 'not entered')
+            + ' — <a href="' + esc(d.href) + '">' + esc(d.ownerTitle) + '</a>. '
+            + 'Only needed to turn “from age 67” into a month.</p>';
+        })();
+  }
+
+  /* ---- Paint ---------------------------------------------------------------
+     Four containers. Three of them hold no inputs and are rewritten freely;
+     the fourth is the guarded editor and goes through request(). */
+
+  function render() {
+    var h = Spine.getProfile();
+    el('months-body').innerHTML = monthsHtml(h) + barsHtml(h);
+    el('waiting-body').innerHTML = waitingHtml(h);
+    el('gaps-body').innerHTML = gapsHtml(h);
+    el('reading-list').innerHTML = readingHtml(h);
+    listForm.request();
+  }
+
+  Spine.registerRoom('timeline');
+  Spine.onChange(render);
+  Progress.mountHeader('timeline');
+  Progress.mount('timeline');
+  renderList(Spine.getProfile());
+  render();
+})();
+</script>
+</body>
+</html>

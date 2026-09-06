@@ -91,6 +91,7 @@ shared/             The spine everything depends on
   progress.js         what each room still needs, and where to go fill it
   demo-persona.js     the one demo household used by every "try an example"
   gate.js             the one gate: which branches exist for whom, the cards, the guesses (D-094), and WHY each branch does not apply, in a sentence a reader can read (D-142). Every room that loads progress.js loads this too — that is what folds a room your situation has no use for.
+  guide.js            the Walk-Through: five sets of steps, only the ones your situation has, and what you have said you are done with (D-149). Loaded wherever progress.js is, because the strip mounts from mountHeader
   lens.js             dollars, hours, FI bought, FI pushed — the toggle every room has
   undo.js             the undo/redo pair on every page, over the spine's command log
   room.js             the one shape every room has (D-097) — number, chart, lens, inputs, drawer
@@ -107,6 +108,7 @@ engines/            Shared calculation engines — one function per concept
                       debt is worth keeping, and the hold-back that orders one last (D-132)
   fire.js             one calculateFIRE(), six variants
   projection.js       compound growth with contributions — the only such loop
+  timeline.js         future income as dated PERIODS on a month grid: what stacks, where the gaps are, what a given month adds up to (D-152). Nothing unpriced or undated ever reaches the grid
   hourly.js           real hourly wage, and prices in hours of life
   quickmath.js        HYSA switch, cost per use, 20/3/8, rule of five, $30k/$90k
   selfemployed.js     SE tax in visible steps, W2 vs 1099, quarterly + safe harbour

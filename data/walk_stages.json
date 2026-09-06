@@ -1,41 +1,69 @@
 {
   "id": "walk_stages",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "asOf": "2026-09-06",
   "source": "The order is the one every mainstream personal-finance sequence agrees on, whatever it calls the steps: know what is true, stop the bleeding, direct what is left, decide what it is for, then look at the long run. It matches the FOO ladder this app already carries (data/foo_steps.json) and the registry's own room order — this file only groups that order into sets small enough to finish.",
   "confidence": "convention",
   "confidenceNote": "A sensible default sequence, not the only one. Every room stays reachable from the map at any time, and any step can be marked 'not for me' without penalty — the walk is a suggestion with a checklist, not a gate on anything.",
-  "note": "Membership is deliberately short. A room is on the walk only if it asks for a fact the rest of the app needs, or holds a decision worth making once. Everything else in the suite is still there; it is just not homework. A step whose room does not apply to your situation (Registry.applies, which reads shared/gate.js) is not shown at all — that is why a stage can have four rooms for one person and one for another.",
+  "note": "Membership is deliberately short. A room is on the walk only if it asks for a fact the rest of the app needs, or holds a decision worth making once. Everything else in the suite is still there; it is just not homework. A step whose room does not apply to your situation (Registry.applies, which reads shared/gate.js) is not shown at all — that is why a stage can have four rooms for one person and one for another. Updated at v1.1.0: What Comes Next joined 'Where it's heading' (D-152) — laying out the periods ahead is the same question as the long run, asked at a different scale.",
   "stages": [
     {
       "id": "true-today",
       "title": "What's true right now",
       "goal": "The handful of numbers everything else is built on. Nothing further in here means much until these are real.",
-      "rooms": ["start", "income", "cash-flow", "statement", "debt-payoff", "between-jobs", "self-employed", "variable-income"]
+      "rooms": [
+        "start",
+        "income",
+        "cash-flow",
+        "statement",
+        "debt-payoff",
+        "between-jobs",
+        "self-employed",
+        "variable-income"
+      ]
     },
     {
       "id": "hard-to-go-backwards",
       "title": "Make it hard to go backwards",
       "goal": "The things that stop one bad month turning into a bad year. This comes before growing anything.",
-      "rooms": ["sleep-at-night", "protection", "credit"]
+      "rooms": [
+        "sleep-at-night",
+        "protection",
+        "credit"
+      ]
     },
     {
       "id": "where-it-goes",
       "title": "Where the money goes",
       "goal": "What leaves, where it lands, and what is taken on the way. This is the machine that moves money while you are not watching.",
-      "rooms": ["accounts", "savings-rate", "tax", "student-loans"]
+      "rooms": [
+        "accounts",
+        "savings-rate",
+        "tax",
+        "student-loans"
+      ]
     },
     {
       "id": "what-its-for",
       "title": "What it's for",
       "goal": "Money is a means. This is the part that says to what — and it is the part people skip, then wonder why the numbers feel hollow.",
-      "rooms": ["values", "goals", "rerank"]
+      "rooms": [
+        "values",
+        "goals",
+        "rerank"
+      ]
     },
     {
       "id": "where-its-heading",
       "title": "Where it's heading",
       "goal": "The long run, and a way to keep all of this true a month from now instead of stale.",
-      "rooms": ["fire", "foo-ladder", "decumulation", "refresh"]
+      "rooms": [
+        "fire",
+        "timeline",
+        "foo-ladder",
+        "decumulation",
+        "refresh"
+      ]
     }
   ]
 }

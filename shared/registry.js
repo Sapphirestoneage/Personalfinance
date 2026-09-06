@@ -795,6 +795,30 @@
     ]
   });
 
+  /* The Timeline — jobs and benefits as dated periods that stack, and the
+     months they add up to (D-152). It OWNS futureIncome[], which used to be
+     edited on The Statement: a dated period belongs in the room that draws
+     it on a grid. Placed after the numbered path because it is a planning
+     room, not a fact-gathering one — you need to know what today is before
+     laying out what comes after it. */
+  ROOMS.push({
+    id: 'timeline',
+    kind: 'about-you',
+    needs: ['dob'],
+    order: 28.5,
+    title: 'What Comes Next',
+    blurb: 'Jobs, benefits and anything else that pays, each as a period with a start and an end — laid end to end so you can see where they overlap, where the gaps are, and what any month between now and then actually adds up to.',
+    href: 'rooms/timeline.html',
+    tier: 0,
+    tags: ['income', 'cashflow'],
+    subsections: [
+      { id: 'out-months',  label: 'The months ahead' },
+      { id: 'out-periods', label: 'What you have listed' },
+      { id: 'out-gaps',    label: 'Gaps and overlaps' },
+      { id: 'reading',     label: 'Reading from elsewhere' }
+    ]
+  });
+
   /* The Walk-Through — the short, finishable route through the suite
      (D-149). `utility: true` for the same reason Refresh is: it is a way of
      moving through the rooms, not a room with a number in it, so it stays

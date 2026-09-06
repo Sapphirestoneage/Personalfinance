@@ -107,6 +107,14 @@
     .slaf-card { border: 1px solid #999; box-shadow: none; break-inside: avoid; }
     a { color: inherit; text-decoration: none; }
   }
+  /* The read-only future list (D-152). Edited in What Comes Next; shown
+     here because it is part of the picture. */
+  .future-read { list-style: none; margin: 0; padding: 0; }
+  .future-read li { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: baseline;
+    padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  .future-read .fr-name { font-weight: 600; min-width: 0; }
+  .future-read .fr-when { color: var(--color-text-muted); min-width: 0; }
+  .future-read .fr-amt { margin-left: auto; white-space: nowrap; }
 </style>
 </head>
 <body class="slaf">
@@ -197,9 +205,9 @@
   <section class="slaf-card" id="future" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">Money that is coming</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">A pension, Social Security, an annuity</h2>
-    <p class="slaf-hint" style="margin:0 0 var(--space-3)">Not net worth, not income yet. Listed so the bridge and the FI date can read it later; nothing here is counted anywhere else.</p>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">Not net worth, not income yet. Listed so the bridge and the FI date can read it later; nothing here is counted anywhere else. Read-only here — these are dated periods, and they are edited in <a href="timeline.html#out-periods">What Comes Next</a>, which draws them on a grid (D-152).</p>
     <div id="future-list"></div>
-    <button type="button" class="slaf-btn" id="btn-add-future" style="width:100%">+ Add something that is coming</button>
+    <a class="slaf-btn" href="timeline.html#out-periods" style="width:100%;display:block;text-align:center;box-sizing:border-box">Add or change a period in What Comes Next →</a>
   </section>
 
   <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
@@ -265,9 +273,6 @@
   }
   function findAsset(h, id) {
     return (h.assets || []).filter(function (a) { return a.id === id; })[0] || null;
-  }
-  function findFuture(h, id) {
-    return (h.futureIncome || []).filter(function (f) { return f.id === id; })[0] || null;
   }
   /* The tax characters a person can pick for an investment they entered as
      one line. Cash, property, business are set by category, not chosen. */
@@ -441,71 +446,43 @@
     assetForm.force(); render();
   });
 
-  /* ---- Future income: its own list ------------------------------------------- */
+  /* ---- Future income: shown here, edited elsewhere ---------------------------
+     The editor for these moved to rooms/timeline.html in D-152 — a dated
+     period belongs in the room that draws it on a grid, and a field is
+     editable in exactly one room (D-017). What is left here is a read-only
+     summary, so the Statement still shows the whole picture without being a
+     second place to change it. No inputs at all now, so no LiveForm guard
+     is needed for this container. */
 
   function renderFuture(h) {
     var list = el('future-list');
     var rows = h.futureIncome || [];
-    if (!rows.length) { list.innerHTML = '<p class="slaf-reason">Nothing listed. That is fine — most people under 55 have nothing here yet.</p>'; return; }
-    var scaleC = TABLES && TABLES.accessRules ? TABLES.accessRules.confidenceScale : [];
-    list.innerHTML = rows.map(function (f) {
-      return '<div class="asset" data-future-card="' + f.id + '">'
-        + '<div class="asset-top"><input class="asset-name" data-future="' + f.id + '" data-field="label" value="' + esc(f.label || '') + '" placeholder="e.g. State pension" aria-label="Name"/>'
-        + '<button type="button" class="asset-remove" data-remove-future="' + f.id + '" aria-label="Remove">✕</button></div>'
-        + '<div class="asset-grid">'
-        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">A month</span><span class="slaf-input-shell"><span class="slaf-affix">$</span>'
-        + '<input type="text" inputmode="decimal" data-future="' + f.id + '" data-field="monthlyCents" value="' + (Money.isEntered(f.monthlyCents) ? fmt(f.monthlyCents) : '') + '" placeholder="e.g. 1200" aria-label="Monthly amount"/></span></label>'
-        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">From age</span><span class="slaf-input-shell">'
-        + '<input type="text" inputmode="decimal" data-future="' + f.id + '" data-field="startsAtAge" value="' + (Money.isEntered(f.startsAtAge) ? f.startsAtAge : '') + '" placeholder="e.g. 67" aria-label="Starts at age"/></span></label>'
-        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">How sure</span><span class="slaf-input-shell"><select data-future="' + f.id + '" data-field="confidence" aria-label="Confidence">'
-        + scaleOptions(scaleC, f.confidence, null, 'Not rated') + '</select></span></label>'
-        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Rises with inflation?</span><span class="slaf-input-shell"><select data-future="' + f.id + '" data-field="inflationAdjusted" aria-label="Inflation adjusted">'
-        + '<option value=""' + (f.inflationAdjusted === null ? ' selected' : '') + '>Not sure</option><option value="yes"' + (f.inflationAdjusted === true ? ' selected' : '') + '>Yes</option><option value="no"' + (f.inflationAdjusted === false ? ' selected' : '') + '>No</option></select></span></label>'
-        + '</div></div>';
-    }).join('');
+    if (!rows.length) {
+      list.innerHTML = '<p class="slaf-reason">Nothing listed. That is fine \u2014 most people under 55 have nothing here yet.</p>';
+      return;
+    }
+    var priced = rows.filter(function (f) { return Money.isEntered(f.monthlyCents); });
+    var total = priced.reduce(function (sum, f) { return sum + f.monthlyCents; }, 0);
+    list.innerHTML = '<ul class="future-read">' + rows.map(function (f) {
+      var when = f.startsOn ? f.startsOn
+        : (Money.isEntered(f.startsAtAge) ? 'from age ' + f.startsAtAge : 'no start date yet');
+      return '<li><span class="fr-name">' + esc(f.label || 'Unnamed') + '</span>'
+        + '<span class="fr-when">' + esc(when) + '</span>'
+        + '<span class="fr-amt">' + (Money.isEntered(f.monthlyCents) ? esc(fmt(f.monthlyCents)) + '/mo' : 'no amount yet') + '</span></li>';
+    }).join('') + '</ul>'
+      /* The roll-up counts only the priced rows, and says so. A row with no
+         amount is not worth zero (SPEC.md \u00a75) \u2014 it is not counted, and the
+         line below names how many were left out. */
+      + '<p class="slaf-hint" style="margin:var(--space-3) 0 0">'
+      + (priced.length
+          ? '<strong>' + esc(fmt(total)) + '</strong> a month once every priced one is running'
+            + (priced.length < rows.length
+                ? ' \u2014 ' + (rows.length - priced.length) + ' of these ' + (rows.length - priced.length === 1 ? 'has' : 'have')
+                  + ' no amount yet and ' + (rows.length - priced.length === 1 ? 'is' : 'are') + ' not counted.'
+                : '.')
+          : 'None of these has an amount yet, so there is nothing to add up.')
+      + '</p>';
   }
-  var futureForm = SLAF.LiveForm.guard(el('future-list'), function () { renderFuture(Spine.getProfile()); });
-
-  el('future-list').addEventListener('focusin', function (evt) {
-    var node = evt.target; var f = node.getAttribute && node.getAttribute('data-field');
-    if (f === 'monthlyCents') { var r = findFuture(Spine.getProfile(), node.getAttribute('data-future')); node.value = r && Money.isEntered(r.monthlyCents) ? String(r.monthlyCents / 100) : ''; node.select(); }
-  });
-  el('future-list').addEventListener('focusout', function (evt) {
-    var node = evt.target; var id = node.getAttribute && node.getAttribute('data-future'); var f = node.getAttribute && node.getAttribute('data-field');
-    if (!id || !f || node.tagName === 'SELECT') return;
-    writeFuture(id, f, node.value);
-    if (f === 'monthlyCents') { var r = findFuture(Spine.getProfile(), id); if (r) node.value = Money.isEntered(r.monthlyCents) ? fmt(r.monthlyCents) : ''; }
-  });
-  el('future-list').addEventListener('change', function (evt) {
-    if (evt.target.tagName !== 'SELECT') return;
-    writeFuture(evt.target.getAttribute('data-future'), evt.target.getAttribute('data-field'), evt.target.value);
-  });
-  el('future-list').addEventListener('click', function (evt) {
-    var btn = evt.target.closest('[data-remove-future]'); if (!btn) return;
-    Spine.removeById('futureIncome', btn.getAttribute('data-remove-future'));
-    futureForm.force(); render();
-  });
-  el('future-list').addEventListener('keydown', function (evt) {
-    if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') { evt.preventDefault(); evt.target.blur(); }
-  });
-  function writeFuture(id, field, raw) {
-    var text = String(raw === null || raw === undefined ? '' : raw).trim();
-    var patch = { id: id };
-    if (field === 'label') patch.label = text === '' ? null : text;
-    else if (field === 'monthlyCents') patch.monthlyCents = Money.parseMoney(text);
-    else if (field === 'startsAtAge') { var n = text === '' ? null : Number(text); patch.startsAtAge = (n === null || isNaN(n)) ? null : n; }
-    else if (field === 'confidence') { var c = text === '' ? null : Number(text); patch.confidence = (c === null || isNaN(c)) ? null : c; }
-    else if (field === 'inflationAdjusted') patch.inflationAdjusted = text === '' ? null : text === 'yes';
-    else return;
-    Spine.upsertFutureIncome(patch);
-    render();
-  }
-  el('btn-add-future').addEventListener('click', function () {
-    var person = Spine.ensurePrimaryPerson('You');
-    Spine.upsertFutureIncome(Schema.createFutureIncome({ ownerIds: [person.id] }));
-    futureForm.force(); render();
-    var names = el('future-list').querySelectorAll('.asset-name'); if (names.length) names[names.length - 1].focus();
-  });
 
   /* ---- The screens ------------------------------------------------------------- */
 
@@ -668,7 +645,7 @@
     var h = Spine.getProfile();
     var all = Statement.all(h, TABLES);
     assetForm.request();
-    futureForm.request();
+    renderFuture(Spine.getProfile());
     renderPortfolios(h, all);
     renderLadder(h, all);
     renderBridge(h, all);

@@ -580,6 +580,32 @@ const CASES = [
     }
   },
   {
+    /* The Timeline's period list. This is the room where a rebuilt container
+       would hurt most: you type a name, then an amount, then a start date,
+       and every write changes the data the list is drawn from — so if the
+       LiveForm guard were not doing its job the keyboard would close between
+       every field. D-034, D-152. */
+    room: '/rooms/timeline.html',
+    container: '#period-list',
+    seed: 'demo',
+    prepare: async (page) => { await page.tap('#btn-add'); await page.waitForTimeout(200); },
+    fields: [
+      { sel: '#period-list .asset:last-child input[data-field="label"]', type: 'The new job', clearFirst: true },
+      { sel: '#period-list .asset:last-child input[data-field="monthlyCents"]', type: '4200' },
+      { sel: '#period-list .asset:last-child input[data-field="startsAtAge"]', type: '40' }
+    ],
+    expect: async (page) => {
+      const f = await page.evaluate(() =>
+        (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).futureIncome.pop());
+      return [
+        ['the name was kept', f.label, 'The new job'],
+        ['the amount was kept as cents', f.monthlyCents, 420000],
+        ['the age was kept', f.startsAtAge, 40],
+        ['and the kind the Add button set', f.kind, 'job']
+      ];
+    }
+  },
+  {
     room: '/rooms/goals.html',
     container: '#goal-list',
     seed: 'demo',

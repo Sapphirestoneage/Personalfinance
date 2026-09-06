@@ -700,8 +700,12 @@
       },
       format: money
     },
+    /* Owner moved from The Statement to the Timeline in D-152. The Statement
+       still SHOWS the roll-up — it is part of the picture — but a dated
+       period is edited in the room that draws it on a grid, and nowhere
+       else. One owner per shared number (D-017). */
     futureIncome: {
-      label: 'Money that is coming', owner: 'statement', anchor: 'future',
+      label: 'Money that is coming', owner: 'timeline', anchor: 'out-periods',
       read: function (h) {
         var rows = (h.futureIncome || []).filter(function (f) { return Money.isEntered(f.monthlyCents); });
         if (!rows.length) return Money.incomplete('Nothing listed.', ['futureIncome']);

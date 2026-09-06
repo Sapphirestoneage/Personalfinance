@@ -8283,6 +8283,123 @@ undo stack is still empty afterwards, one that picks the term.
 fills itself hold no focusable control and are written only when their markup
 actually changes, so typing in one box never re-animates a chart in another.
 
+## D-152 — What Comes Next: a life as periods, and the months they add up to
+
+"Make it also that you can add jobs in the future for periods of time —
+ultimately I want to be able to plan an entire life and stack it all and
+calculate income as things get closer."
+
+Every other room in this app answers a question about **now**. Even the ones
+that look ahead — the FI date, the runway, the projection — take today's
+figures and extrapolate one number forward. None of them can hold the shape a
+real working life actually has: a contract that runs six months, a job that
+starts before the contract ends, a benefit that begins on a birthday
+thirty-five years out, and the four months at the front where nothing is
+coming in at all.
+
+### The data was already there. The room was not.
+
+`futureIncome[]` has carried `startsOn`, `startsAtAge`, `endsOn`,
+`monthlyCents` and `confidence` since the Statement was built (D-064). What it
+never had was anywhere that treated a row as a **period** rather than a line
+item — the Statement listed them, summed the monthly figures, and drew nothing.
+So the work was two-thirds a room and one-third two new fields:
+
+- **`kind`** — `job` / `benefit` / `other`, defaulting to `other` so every row
+  written before today keeps exactly the meaning it had. A kind was never
+  asked for, so none is asserted retroactively. It changes nothing
+  arithmetically; it only lets the bars be coloured and grouped.
+- **`endsAtAge`** — the mirror of `startsAtAge`. "Until I turn 70" was
+  expressible as a start and not as an end, which is a strange asymmetry once
+  you notice it.
+
+### `engines/timeline.js`, and the one rule it exists to keep
+
+A month is an integer: `year * 12 + month`. Every comparison in the grid loop
+is then an integer comparison, and no `Date` is constructed inside it —
+dates appear only at the two edges, parsing in and labelling out. That is
+what makes a 60-year grid cheap enough to rebuild on every keystroke.
+
+The rule the file exists to keep is the app's oldest one, and this room is
+where it is easiest to break:
+
+- **A period you have not priced is not a period worth zero.** It contributes
+  nothing to any month, and it is listed by name under "waiting on something"
+  with the reason in words.
+- **A period with no start date is not a period starting today.** Same
+  treatment. Both of those are one line of code away from silently inventing a
+  future, which is exactly what SPEC.md §5 is about.
+- **A month with no live period IS $0** — and that zero is the entire point of
+  the room. It means nothing you have listed pays you then. It is a *computed*
+  zero, not the `|| 0` the rules forbid: the missing inputs never reach the
+  loop, because `placeable` filtered them out first and named them.
+
+**No end is a real answer.** A job with no end date runs to the edge of the
+chart and the row says "onward" rather than drawing a cliff at an edge the
+person never chose.
+
+**A date beats an age.** When a row carries both `startsOn` and `startsAtAge`,
+the date wins. An explicit date is the stronger statement, and silently
+preferring the age would move a period the person had pinned.
+
+Gaps and overlaps come back as **runs, not counts**: "four months from
+September 2026" is a fact you can act on, and "12 months of gap somewhere in
+the next thirty years" is not.
+
+### The hand-derived case, checked both ways
+
+Born March 1994. A contract January–June 2027 at $5,000. A staff job from
+April 2027 at $7,000, open-ended. A pension from age 67.
+
+| Month | Expected | Why |
+|---|---|---|
+| Sep 2026 | **$0** | Nothing has started. The gap is four months long. |
+| Jan 2027 | **$5,000** | The contract alone. |
+| Apr 2027 | **$12,000** | Both run. This is the room's whole reason to exist. |
+| Jul 2027 | **$7,000** | The contract has ended. |
+| Feb 2061 | **$7,000** | Still just the job. |
+| Mar 2061 | **$9,500** | 1994-03 + 804 months. The pension starts the month they turn 67. |
+
+Each of those is a test, and each was worked out on paper before the engine
+was run — which is the only way a month grid gets caught being one month out.
+
+### Compatibility note — an ownership MOVE
+
+**`futureIncome` moved from `statement` to `timeline`.** This is a change to
+who may write a shared field, so it needs saying precisely:
+
+- **Stored shape:** unchanged except for two new keys on each row, `kind`
+  (defaults to `'other'`) and `endsAtAge` (defaults to `null`). Both are
+  additive. An export written before today loads and behaves identically, and
+  `Schema.createFutureIncome` normalises an unknown `kind` back to `'other'`
+  rather than keeping it.
+- **Rooms updated to match:** `rooms/statement.html` lost its editor
+  entirely — no `data-future` inputs, no `upsertFutureIncome`, no LiveForm
+  guard on that container, since it now holds no inputs at all. It still
+  **shows** the list read-only and links to What Comes Next, because the
+  periods are part of the Statement's picture even though they are not its
+  to change. Its roll-up counts only the rows with an amount and says how many
+  it left out, rather than treating a blank as zero.
+- **What a future room needs to know before calling `getProfile()`:** read
+  `futureIncome` freely; **write it only from the Timeline**. `Ownership.field('futureIncome').owner`
+  is the authority and it now returns `'timeline'`. Two editors for one field
+  is precisely what D-017 exists to prevent.
+
+### One test got better because of this
+
+`test/run.js` checked that each of the Statement's four fields linked to an
+anchor that exists — by looking for the anchor **in `statement.html`**. That
+was the same thing as the right check only for as long as all four lived in
+one room. It now resolves each field's owner through the registry and reads
+that room's file, which is what the check meant all along and which will hold
+for any field that moves later.
+
+New files: `engines/timeline.js`, `rooms/timeline.html` (order 28.5, kind
+`about-you`, `needs: ['dob']` — only to turn "from age 67" into a month).
+`dnd/shared/schema.js` re-copied byte-identical.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have
