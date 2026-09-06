@@ -718,3 +718,82 @@ a.slaf-explain-chip:hover { border-color: var(--color-accent); }
 .slaf-sankey .flow:hover { opacity: .85; }
 .slaf-sankey .node { stroke: var(--navy-950); stroke-width: .6; }
 .slaf-sankey .tick.small { fill: rgba(147, 197, 253, 0.6); font-size: 8.5px; }
+
+/* ==========================================================================
+   The menu (D-135) — upkeep and every room, one pull from anywhere.
+   Injected by shared/progress.js into <body>, so it is never inside a room's
+   live-input container and nothing can clip it.
+   ========================================================================== */
+.slaf-menu-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; margin-bottom: var(--space-2);
+  background: none; border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm); color: var(--color-text-muted); cursor: pointer;
+}
+.slaf-menu-btn:hover { border-color: var(--color-border-active); color: var(--color-text); }
+.slaf-menu-bars { display: block; width: 16px; }
+.slaf-menu-bars i { display: block; height: 2px; background: currentColor; border-radius: 1px; }
+.slaf-menu-bars i + i { margin-top: 3px; }
+
+.slaf-menu-backdrop { position: fixed; inset: 0; background: rgba(2, 8, 23, .62); z-index: 90; }
+
+.slaf-menu {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 91;
+  width: min(272px, 84vw);
+  /* Solid, not the translucent surface token: a drawer you can read the
+     page through is not a drawer. */
+  background: var(--navy-850);
+  border-right: 1px solid var(--color-border-strong);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.slaf-menu-head {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+.slaf-menu-title { font-family: var(--font-display); font-size: var(--text-md); color: var(--color-text); }
+.slaf-menu-x {
+  background: none; border: none; color: var(--color-text-muted); cursor: pointer;
+  font: inherit; font-size: var(--text-md); line-height: 1; padding: var(--space-1) var(--space-2);
+}
+.slaf-menu-x:hover { color: var(--color-text); }
+.slaf-menu-body { overflow-y: auto; padding: var(--space-2) 0 var(--space-4); -webkit-overflow-scrolling: touch; }
+.slaf-menu-cap {
+  font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-text-faint); margin: var(--space-3) 0 var(--space-1); padding: 0 var(--space-3);
+}
+.slaf-menu-body > .slaf-menu-cap:first-child { margin-top: var(--space-1); }
+.slaf-menu-link {
+  display: block; padding: var(--space-2) var(--space-3);
+  color: var(--color-text-muted); text-decoration: none; font-size: var(--text-sm);
+  border-left: 2px solid transparent;
+}
+.slaf-menu-link:hover { background: var(--color-surface-active); color: var(--color-text); }
+.slaf-menu-link.is-here {
+  color: var(--color-text); border-left-color: var(--color-accent);
+  background: var(--color-surface-active); font-weight: 600;
+}
+/* The page behind does not scroll while the drawer is open. */
+html.slaf-menu-open, html.slaf-menu-open body { overflow: hidden; }
+
+/* Wide enough for the menu to simply stay: it pins open as a sidebar, the
+   button and backdrop go away, and the page sits beside it. Narrow, it is
+   the drawer above. shared/progress.js drives the switch on matchMedia,
+   because [hidden] is display:none !important here and a media query
+   fighting that with more !important is worse. D-135. */
+html.slaf-menu-pinned body { padding-left: 272px; }
+html.slaf-menu-pinned .slaf-menu { box-shadow: none; }
+html.slaf-menu-pinned .slaf-menu-x { display: none; }
+html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
+
+/* The rooms are written to one narrow measure because most of them are
+   things you read. On a desktop that leaves a ribbon in a field of navy,
+   so the column grows — still a comfortable line length, just not a
+   phone's. A room that sets its own wider measure keeps it. */
+@media (min-width: 1080px) {
+  :root { --measure: 620px; }
+}
+@media (min-width: 1400px) {
+  :root { --measure: 680px; }
+}

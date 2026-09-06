@@ -128,3 +128,16 @@ moved between them. `rooms/history.html`, D-122.
 - Also open: the room-local width override is a blunt instrument. If more
   editor rooms need it, a second measure token (`--measure-wide`) belongs
   in `shared/theme.css` instead of a media query per room.
+
+## The menu (D-135)
+
+- **Built**: the drawer, the upkeep group, the pinned desktop sidebar, an
+  opaque panel, a desktop measure that is not a phone's. D-135.
+- Still open: the hop strip and the menu now overlap in purpose. The strip
+  is the path, the menu is everything — that is defensible, but on a pinned
+  desktop the strip's "All rooms" link is a third route to the same place
+  and could go.
+- Also open: the desktop pass stopped at width. The rooms still stack one
+  card per row on a 1400px screen where two columns would read better, and
+  the dashboard's instrument grid is the only thing that uses the space
+  properly. That is a per-room layout job, not a token change.

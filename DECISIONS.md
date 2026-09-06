@@ -6699,6 +6699,63 @@ part of a guarded live-input list should copy the two rules that make this
 safe: keep the open set outside the household, and repaint the summary on
 every write so a closed drawer cannot go stale.
 
+## D-135 — The menu: upkeep and every room, one pull from anywhere
+
+**Why.** The header strip walks the path one room at a time and offers the
+map. That answers "what is next" and is useless for "take me to the thing I
+need now". Your Data sits at order 98, so reaching an export meant opening
+the map and scrolling past fifty-seven rooms — which is exactly what
+happened when the household needed moving from a phone to a desktop.
+Upkeep is not a destination on a journey. It is a drawer you pull open from
+wherever you are.
+
+**What.** A menu button beside the hop strip on every page, opening a panel
+that lists *Your data & upkeep* first — Your Data, Refresh, History, Start
+Here, Get Help, then the map — and after that every room grouped by kind.
+The room you are in is marked. It closes on the ✕, the backdrop, or Escape;
+focus moves into it on open and back to the button on close.
+
+Mounted from `mountHeader`, which already replaces the one `.room-back`
+link every page carries, so all fifty-eight pages get it with no per-room
+markup. The panel is appended to `<body>`, which keeps it out of every
+room's live-input container (D-034) and stops any card from clipping it.
+The upkeep list is registry ids, not paths, so a room that is renamed or
+moved is followed and one that does not exist is skipped rather than
+becoming a dead link.
+
+**Two modes, one drawer.** Below 1080px it is a drawer you pull open over
+the page. At 1080px and above there is room for it to simply stay, so it
+pins open as a sidebar: no button, no backdrop, nothing to dismiss, and the
+page sits beside it. Opening is a no-op while pinned, so nothing can leave
+it half-closed. The switch is `matchMedia` in JavaScript rather than a
+media query, because `[hidden]` is `display:none !important` in the theme
+and a media query fighting that with more `!important` is worse than one
+listener.
+
+**Two things the first build got wrong**, both worth recording because they
+are easy to repeat. The panel used `--color-surface-raised`, which is
+`rgba(15, 38, 80, 0.55)` — the surface tokens are translucent by design, so
+the drawer showed the page through itself and was unreadable. It is now a
+solid `--navy-850`. And the whole app is written to `--measure: 480px`,
+which is right for a room you read and leaves a ribbon in a field of navy
+on a desktop; the measure now grows to 620px past 1080px and 680px past
+1400px. A room that sets its own wider measure, as Debt Payoff does
+(D-134), keeps it.
+
+### Compatibility note
+
+Stored shape: unchanged. Nothing here reads or writes the household; the
+menu is chrome. Whether it is open is not stored — below the pin width it
+always opens closed, and at or above it is always open, so there is no
+state to carry and nothing to migrate. Rooms updated: none individually.
+`shared/progress.js` gains `mountMenu`, `menuHtml` and `UPKEEP`, and
+`mountHeader` now calls `mountMenu`, so any page already calling
+`mountHeader` gets the menu with no change. `shared/theme.css` gains the
+menu styles and the wider desktop measure, and `dnd/shared/theme.css` is
+re-copied to stay byte-identical. A future room needs to do nothing to
+appear in the menu beyond being in the registry; to sit in the upkeep group
+instead of its kind group, add its id to `Progress.UPKEEP`.
+
 ---
 
 # The Dungeons & Dividends entries
