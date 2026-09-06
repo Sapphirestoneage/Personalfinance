@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "asOf": "2026-09-06",
+  "source": "Google Drive sync configuration. App config, not reference data, so it sits at the root beside version.json rather than in data/ — data/ is for versioned reference tables and its guard rightly rejected this.",
+  "google": {
+    "clientId": "",
+    "clientIdNote": "Paste the OAuth 2.0 Web application client ID here, ending in .apps.googleusercontent.com. Empty means sync is switched off and the room says so rather than failing.",
+    "scope": "https://www.googleapis.com/auth/drive.file",
+    "scopeNote": "drive.file — this app can only ever see files it created itself. It cannot read anything else in the Drive, and the file stays visible to the owner in their own Drive so it doubles as a backup they can find.",
+    "fileName": "sparks-household.json",
+    "authorisedOrigins": [
+      "https://sapphirestoneage.github.io"
+    ]
+  }
+}
