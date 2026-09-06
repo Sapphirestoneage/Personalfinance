@@ -494,6 +494,28 @@
       "order": 26
     },
     {
+      "id": "credit",
+      "title": "Your Credit File",
+      "file": "rooms/credit.html",
+      "reads": [
+        "totalDebt"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 26.4
+    },
+    {
+      "id": "cant-pay",
+      "title": "When It Won’t All Get Paid",
+      "file": "rooms/cant-pay.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 26.6
+    },
+    {
       "id": "health",
       "title": "The Score",
       "file": "rooms/health.html",

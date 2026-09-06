@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Your Credit File · SPARKS</title>
+<meta name="description" content="What a credit score is made of, which parts of it this app can actually see, and the one that moves fastest. No score here — that comes from a file only the bureaus hold."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). Registry: credit.
+
+  1. READS   Your itemised debts (owned by Debt Payoff) — through them, two
+             ratios from engines/ratios.js: creditUtilization and
+             revolvingShare. Nothing else. It reads no report and no score,
+             because it cannot see either.
+  2. WRITES  Nothing at all. It owns no field in shared/ownership.js and
+             never calls Spine.updateProfile. This is a reading.
+  3. CALLS   engines/ratios.js via Ratios.all() — the same call the
+             dashboard and the Ratio Glossary make, so the utilisation
+             figure here is the one they show, never a second calculation.
+  4. EMPTY   With an empty spine it renders the same page with every figure
+             blank and a reason beside it. It does NOT guess (standalone:
+             false): a made-up utilisation is the one thing this room must
+             never print. Empty is not zero — no revolving debt entered
+             means "not entered", not "0% used".
+  5. CONFIG  data/credit_factors.json (the factors, their published weights,
+             how long things stay, what you are entitled to) and
+             data/ratio_benchmarks.json (the bands on the two ratios).
+
+  THE ONE RULE. This room never shows a score and never shows anything
+  shaped like one — no dial, no gauge, no 300–850. A score is computed by a
+  bureau from a file this app cannot see, so any number here claiming to be
+  one would be invented. Same honesty as the dashboard's radar ("this is a
+  view, not a score") and its weather panel's deliberately blank risks.
+
+  LIVE-FORM: built once. No inputs. There is nothing to type on this page.
+  THEMING: none this pass. A theme is a class on <body> and a palette in
+  shared/theme.css.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+
+  /* The standing statement that this page holds no score. Not a toggle and
+     not a footnote: it is the first thing on the page, because it is the
+     first thing a reader will be looking for. */
+  .no-score { font-size: var(--text-sm); line-height: var(--leading-loose); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .no-score strong { color: var(--color-text); }
+
+  /* One row per thing: a name, a figure or a plain "not here", and the
+     sentence underneath that says what it means. Shared by the factor
+     notes, what this app can see, how long things stay, and your rights. */
+  ul.rows { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ul.rows > li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  ul.rows > li:first-child { border-top: none; }
+  .r-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+  .r-name { font-family: var(--font-display); font-size: var(--text-md); }
+  .r-val { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--color-text); }
+  .r-val.is-good { color: var(--color-positive); }
+  .r-val.is-watch { color: var(--color-caution); }
+  .r-val.is-out { color: var(--color-critical-text); }
+  .r-val.is-blank { color: var(--color-text-faint); }
+  .r-say { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  .r-note { font-size: var(--text-sm); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+  .r-note a { color: var(--color-accent-hover); }
+  .r-where { font-size: var(--text-sm); color: var(--color-text-subtle); margin: var(--space-1) 0 0; word-break: break-word; }
+
+  .lever-say { font-size: var(--text-md); line-height: var(--leading-loose); margin: var(--space-2) 0 0; }
+  .lever-why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../index.html">← Home</a>
+  <h1>Your Credit File</h1>
+  <p class="room-lede">What a credit score is made of, which parts of it this app can actually see, and the one that moves fastest.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+  <div class="room-standalone" id="room-standalone" hidden></div>
+
+  <section class="slaf-card" id="no-score">
+    <span class="slaf-eyebrow">Before anything else</span>
+    <p class="no-score">
+      <strong>There is no score on this page, and there cannot be.</strong>
+      A credit score is worked out by a credit bureau — a company that keeps a
+      file on you — from records this app has never seen: every account in your
+      name, every payment, every time someone checked you out. Nothing here adds
+      up to a number out of 850, and any page that offered you one from what you
+      have typed into it would be making it up. What this room does instead is
+      show what goes into a score, say which two parts of it your own figures
+      already answer, and be plain about the three they do not.
+    </p>
+  </section>
+
+  <section class="slaf-card" id="number">
+    <div class="room-head-row">
+      <span class="slaf-eyebrow">The part that moves fastest</span>
+      <div id="room-lens"></div>
+    </div>
+    <div class="room-number" id="room-number"></div>
+  </section>
+
+  <section class="slaf-card" id="lever">
+    <span class="slaf-eyebrow">What to actually do</span>
+    <p class="lever-say" id="lever-say"></p>
+    <p class="lever-why" id="lever-why"></p>
+  </section>
+
+  <section class="slaf-card" id="out-what">
+    <span class="slaf-eyebrow">What a score is made of</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      The five things the scoring models weigh, and roughly how much each one
+      counts. Blue is a part your own figures say something about; grey is a
+      part only your report knows.
+    </p>
+    <div id="room-chart"></div>
+    <ul class="rows" id="factor-notes"></ul>
+  </section>
+
+  <section class="slaf-card" id="out-yours">
+    <span class="slaf-eyebrow">What this app can actually see</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      Two of the five, from the debts you have listed. A figure left blank
+      below is missing, not zero — it says what it needs.
+    </p>
+    <ul class="rows" id="seen-list"></ul>
+  </section>
+
+  <section class="slaf-card" id="out-stays">
+    <span class="slaf-eyebrow">How long things stay</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      Nothing stays for ever. These are the reporting periods set by the law
+      that governs credit files, not a guess about your own.
+    </p>
+    <ul class="rows" id="stays-list"></ul>
+  </section>
+
+  <section class="slaf-card" id="out-rights">
+    <span class="slaf-eyebrow">What you are entitled to, free</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      Named, not linked. This app sends you nowhere and is paid by nobody —
+      type the address in yourself, and check it is the one written here.
+    </p>
+    <ul class="rows" id="rights-list"></ul>
+  </section>
+
+  <section class="slaf-card" id="amounts">
+    <span class="slaf-eyebrow">Priced in life</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      What is actually owed, behind the percentage above. The toggle up top
+      reads it as dollars, hours of your life, or months of FI bought or
+      pushed.
+    </p>
+    <ul class="room-amounts" id="room-amounts"></ul>
+  </section>
+
+  <details class="room-drawer" id="assumptions">
+    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
+    <div class="room-assumptions-body" id="room-assumptions"></div>
+  </details>
+
+  <p class="room-why" id="room-why" hidden></p>
+  <p class="room-scope" id="room-scope"></p>
+
+  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What this is reading</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. No score is calculated, estimated
+    or implied anywhere on this page. The weights are the ones the scoring
+    company publishes; how a model treats your particular file is not public.
+    Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/suggest.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../engines/statement.js"></script>
+<script src="../engines/benchmarks.js"></script>
+<script src="../engines/ratios.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../shared/charts.js"></script>
+<script src="../shared/room.js"></script>
+<script>
+(function () {
+  'use strict';
+  /* No SLAF.Spine here on purpose: this room reads the household through the
+     template and writes nothing at all, so it never needs the handle. */
+  var Money = SLAF.Money, Schema = SLAF.Schema, Ownership = SLAF.Ownership,
+      Ratios = SLAF.Ratios, Charts = SLAF.Charts, Room = SLAF.Room;
+
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function el(id) { return document.getElementById(id); }
+  function debtLink(text) {
+    return '<a href="' + Ownership.linkTo('debt-payoff', 'debts') + '">' + esc(text) + ' →</a>';
+  }
+
+  /* ---- The table -------------------------------------------------------- */
+  function table(T) { return (T && T.creditFactors) || null; }
+  function factors(T) { var t = table(T); return t ? t.factors : []; }
+  function factorById(T, id) {
+    var f = factors(T).filter(function (x) { return x.id === id; });
+    return f[0] || null;
+  }
+
+  /* ---- The ratios ---------------------------------------------------------
+     One Ratios.all() per paint, not one per callback: the template hands the
+     same household object to every callback in a paint, so that is the key.
+     Utilisation here is the same figure the dashboard and the Ratio Glossary
+     show, because it is the same call. */
+  var memo = { h: null, rows: null };
+  function ratioRows(h, T) {
+    if (memo.h === h && memo.rows) return memo.rows;
+    var a = Ratios.all(h, T, {});
+    memo = { h: h, rows: (a && a.rows) || [] };
+    return memo.rows;
+  }
+  function ratio(h, T, id) {
+    var r = ratioRows(h, T).filter(function (x) { return x.id === id; });
+    return r[0] || null;
+  }
+  function rate(row) { return row && row.ok ? Money.formatRate(row.value, { decimals: 1 }) : Money.EM_DASH; }
+  function zoneOf(row) {
+    if (!row || !row.ok) return 'blank';
+    var z = row.verdict && row.verdict.zone;
+    return z && z !== 'none' ? z : '';
+  }
+
+  /* The band, said in the unit of the figure above it — the wording the
+     Ratio Glossary uses, so the same band reads the same in both rooms. */
+  function bandText(row) {
+    var b = row && row.verdict && row.verdict.band;
+    if (!b) return '';
+    if (b.good === null || b.warn === null) return b.note || '';
+    var aim = b.direction === 'lower'
+      ? 'Comfortable at or below ' + Money.formatRate(b.good, { decimals: 0 })
+      : 'Comfortable at or above ' + Money.formatRate(b.good, { decimals: 0 });
+    return aim + '. ' + (b.note || '');
+  }
+
+  /* ---- Why the other three are not here ----------------------------------
+     Page copy, not reference data: data/credit_factors.json says WHETHER
+     this app can see a factor (`youCanSee`), and this says what would be
+     needed to. Saying nothing would leave three gaps that look like bugs. */
+  var CANNOT_SEE = {
+    paymentHistory: 'Nothing typed into this app records whether a bill was paid on time, or late. Your report is the only place that is written down.',
+    ageOfAccounts: 'This app holds what an account is worth or what it owes, never the date it was opened — so it cannot know how old anything is.',
+    newCredit: 'Applying for credit leaves a mark on your report. It leaves nothing anywhere in here.'
+  };
+  /* And, for the two it can: how close the figure this app holds really is
+     to the thing the models weigh. Utilisation is the same measurement;
+     the credit-mix one is only the nearest shape of it, and says so. */
+  var HOW_CLOSE = {
+    utilisation: 'This is the same measurement the models make: what your cards owe against what they let you borrow. It counts only the cards you have given a limit for, on both sides of the division.',
+    mix: 'Not quite the same thing. The models look at whether you hold both kinds of credit at all; this is how much of what you owe sits on cards rather than in loans. It is the shape of the factor, not the factor.'
+  };
+
+  Room.mount({
+    id: 'credit',
+    /* All of them: engines/ratios.js reads across the reference set to build
+       one context, and the two figures here come out of that same context. */
+    tables: null,
+    reads: ['totalDebt'],
+    /* No guesses, ever. Every other room may fill an empty spine with the
+       intake's estimates and say so; a guessed credit utilisation is exactly
+       the invented number this room exists not to print. */
+    standalone: false,
+
+    number: function (h, T) {
+      var label = 'How much of your card limits you are using';
+      var u = ratio(h, T, 'creditUtilization');
+      if (!u) return { label: label, value: null, reason: 'The ratio engine did not load.' };
+      if (!u.ok) {
+        return {
+          label: label,
+          value: null,
+          reason: u.result.reason,
+          sub: 'Blank is not zero. Nothing here says you are using none of your limit — it says no limit has been '
+            + 'entered to measure against. ' + debtLink('Put a card’s limit in Debt Payoff')
+        };
+      }
+      var e = u.result;
+      var cards = e.cardsCounted === 1 ? '1 card' : e.cardsCounted + ' cards';
+      var sub = '<strong>' + esc(Money.formatCents(e.balanceCents)) + '</strong> owed on ' + esc(cards)
+        + ' against <strong>' + esc(Money.formatCents(e.limitCents)) + '</strong> of limit';
+      if (e.cardsWithoutLimit) {
+        sub += ' · ' + esc(e.cardsWithoutLimit + (e.cardsWithoutLimit === 1 ? ' card is' : ' cards are'))
+          + ' left out of both sides, having no limit entered';
+      }
+      var band = bandText(u);
+      if (band) sub += ' · ' + esc(band);
+      return { label: label, value: rate(u), sub: sub, zone: zoneOf(u) || null, result: u };
+    },
+
+    /* The five factors and their published weights. Colour says whether this
+       app holds anything bearing on the part — blue it can, grey it cannot —
+       so the picture itself carries the honesty rather than a footnote. */
+    chart: function (h, T) {
+      var list = factors(T);
+      if (!list.length) return Charts.bars({ rows: [], empty: 'The credit factors table did not load.' });
+      return Charts.bars({
+        title: 'What a score is made of, by published weight',
+        rows: list.map(function (f) {
+          var seen = f.youCanSee === true;
+          var row = seen && f.ratio ? ratio(h, T, f.ratio) : null;
+          return {
+            label: f.label,
+            value: f.share,
+            color: seen ? Charts.COLORS.contributed : Charts.COLORS.muted,
+            note: !seen ? 'only your report knows this'
+              : row && row.ok ? 'yours: ' + rate(row)
+              : 'this app can see this one — nothing entered yet'
+          };
+        }),
+        max: 1,
+        format: function (v) { return Charts.percent(v); }
+      });
+    },
+
+    /* Only real money goes through the lens. The card balance and the total
+       owed are amounts someone actually owes, so pricing them in hours of
+       life or months of FI says something true. A credit LIMIT is neither
+       owed nor held — reading it as "four months of FI" would be nonsense,
+       so it stays a plain figure in the line under the percentage. */
+    amounts: function (h, T) {
+      var rows = [];
+      var u = ratio(h, T, 'creditUtilization');
+      if (u && u.ok) rows.push({ label: 'On your cards', cents: u.result.balanceCents, href: Ownership.linkTo('debt-payoff', 'debts') });
+      var debt = Schema.totalDebtCents(h);
+      if (Money.isOk(debt)) rows.push({ label: 'Everything you owe', cents: debt.value, href: Ownership.linkTo('debt-payoff', 'debts') });
+      return rows;
+    },
+
+    assumptions: function (h, T) {
+      var t = table(T), bands = T.ratioBenchmarks;
+      var list = factors(T);
+      var seen = list.filter(function (f) { return f.youCanSee === true; });
+      var seenWeight = seen.reduce(function (s, f) { return s + f.share; }, 0);
+      return [
+        { label: 'The five weights',
+          value: list.map(function (f) { return Money.formatRate(f.share, { decimals: 0 }); }).join(' / '),
+          source: 'data/credit_factors.json v' + t.version + ' — ' + t.source + ' (' + t.confidence + ')' },
+        { label: 'Why there is no score',
+          value: 'none is computed',
+          source: t.confidenceNote },
+        { label: 'How much of it is visible here',
+          value: Money.formatRate(seenWeight, { decimals: 0 }) + ' of the weight, ' + seen.length + ' of ' + list.length + ' factors',
+          source: 'The factors marked youCanSee in data/credit_factors.json. The other ' + (list.length - seen.length)
+            + ' are named and left blank rather than estimated.' },
+        { label: 'The two figures',
+          value: 'engines/ratios.js',
+          source: 'The same call the dashboard and the Ratio Glossary make, so one number is calculated in one place. Utilisation counts only the cards with a limit entered, on both sides (D-045).' },
+        { label: 'The bands on them',
+          value: 'comfortable at or below ' + Money.formatRate(bands.bands.creditUtilization.good, { decimals: 0 }),
+          source: 'data/ratio_benchmarks.json v' + bands.version + ' (' + bands.confidence + ') — ' + bands.bands.creditUtilization.note },
+        { label: 'How long things stay',
+          value: t.howLongThingsStay.length + ' reporting periods',
+          source: 'Set by the Fair Credit Reporting Act, not by a scoring model — the periods in data/credit_factors.json v' + t.version + ' (' + t.confidence + ').' }
+      ];
+    },
+
+    why: function (h, T, situation) {
+      return {
+        employed: 'Employed, a credit file mostly matters on the day you borrow — a mortgage, a car, a card. The cheapest time to fix it is the year before that day, not the week of it.',
+        selfEmployed: 'Self-employed, your file often does more work than your income does: a lender who cannot read two years of lumpy earnings will read your payment record instead. The business card counts here too if it reports to your personal file.',
+        mixed: 'With a job and your own work, the file is one file — there is no separate score for each. Every card in your own name, whatever you use it for, is on the same page of it.',
+        student: 'At a student’s stage the file is short, and a short file is a thin one. Nothing here can shortcut that; time is the only thing that lengthens it, so the useful move is to start something small and never miss it.',
+        betweenJobs: 'Between jobs a score does not know you are between jobs — it never sees income at all. What it sees is whether the minimums kept being paid, which is why the minimum is the bill to protect first when a month is short.',
+        retired: 'Retired, the file matters less often and matters a lot when it does — a move, a refinance, a new insurer in some states. A card kept open and lightly used keeps it alive at no cost.'
+      }[situation] || 'A credit file is a record somebody else keeps about how you have borrowed. This room says what is in it and which parts of it your own numbers already answer.';
+    },
+
+    scope: 'This room cannot read your report, cannot see or estimate your score, and cannot dispute anything on your behalf. Errors, collections, and debt that has stopped being a spreadsheet problem need a person —',
+
+    /* Everything that is content rather than calculation. Built on every
+       paint from the table and the two ratios; there is nothing focusable on
+       this page, so redrawing it cannot interrupt anyone. */
+    after: function (h, T) {
+      var t = table(T);
+      if (!t) return;
+
+      /* -- The fastest lever, in the data's own words ---------------------- */
+      var u = factorById(T, 'utilisation');
+      if (u) {
+        el('lever-say').textContent = u.lever;
+        el('lever-why').textContent = u.moves + ' It is ' + Math.round(u.share * 100)
+          + '% of what a score is made of, it is reported again every month, and it carries no memory: '
+          + 'last month’s figure is not held against this month’s. That combination is what makes it the '
+          + 'fastest thing on the list to change.';
+      }
+
+      /* -- What each factor is, and what moves it -------------------------- */
+      el('factor-notes').innerHTML = factors(T).map(function (f) {
+        return '<li><div class="r-head"><span class="r-name">' + esc(f.label) + '</span>'
+          + '<span class="r-val">' + esc(Money.formatRate(f.share, { decimals: 0 })) + '</span></div>'
+          + '<p class="r-say">' + esc(f.what) + '</p>'
+          + '<p class="r-note">' + esc(f.moves) + '</p></li>';
+      }).join('');
+
+      /* -- The two it can see, and the three it cannot --------------------- */
+      el('seen-list').innerHTML = factors(T).map(function (f) {
+        var seen = f.youCanSee === true;
+        if (!seen) {
+          return '<li><div class="r-head"><span class="r-name">' + esc(f.label) + '</span>'
+            + '<span class="r-val is-blank">not here</span></div>'
+            + '<p class="r-say">' + esc(CANNOT_SEE[f.id] || 'This app holds nothing bearing on this part.') + '</p>'
+            + '<p class="r-note">Worth ' + esc(Money.formatRate(f.share, { decimals: 0 }))
+            + ' of a score. Your own report shows it — see what you are entitled to, below.</p></li>';
+        }
+        var row = f.ratio ? ratio(h, T, f.ratio) : null;
+        var band = row && row.ok ? bandText(row) : '';
+        return '<li><div class="r-head"><span class="r-name">' + esc(f.label) + '</span>'
+          + '<span class="r-val is-' + esc(zoneOf(row) || 'none') + '">' + esc(rate(row)) + '</span></div>'
+          + '<p class="r-say">' + esc(HOW_CLOSE[f.id] || f.what) + '</p>'
+          + (row && row.ok
+              ? (band ? '<p class="r-note">' + esc(band) + '</p>' : '')
+              : '<p class="r-note">' + esc(row ? row.result.reason : 'Not worked out.') + ' '
+                + debtLink('Debt Payoff') + '</p>')
+          + '</li>';
+      }).join('');
+
+      /* -- How long things stay -------------------------------------------- */
+      el('stays-list').innerHTML = t.howLongThingsStay.map(function (r) {
+        var years = r.years === 0 ? 'gone once paid'
+          : r.years === 1 ? '1 year' : r.years + ' years';
+        return '<li><div class="r-head"><span class="r-name">' + esc(r.label) + '</span>'
+          + '<span class="r-val">' + esc(years) + '</span></div>'
+          + '<p class="r-say">' + esc(r.note) + '</p></li>';
+      }).join('');
+
+      /* -- What you are entitled to. Named as text, never linked: this app
+            sends you to no site and is paid by nobody (the Get Help
+            precedent — kinds of help, never a referral). -------------------- */
+      el('rights-list').innerHTML = t.yourRights.map(function (r) {
+        return '<li><div class="r-head"><span class="r-name">' + esc(r.what) + '</span></div>'
+          + '<p class="r-where">' + esc(r.where) + '</p></li>';
+      }).join('');
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -7714,6 +7714,114 @@ Stored shape: **unchanged**; this is layout and tooling only.
 
 ---
 
+## D-147 — Your Credit File: the room that refuses to show a score
+
+The most-asked consumer money question had no room. `creditUtilization`
+existed as a ratio and nothing said what a score is, what moves it, how long
+a late payment lingers, or what to do about an error. For most people it
+gates the rent, the car and the mortgage rate.
+
+**The rule that defines the room: there is no score on the page, and there
+cannot be.** A score is computed by a bureau from a file this app has never
+seen. Any page offering one from what you typed into it would be making it
+up. This is the same refusal as the radar's "this is a view, not a score"
+(D-143) and the weather panel's three deliberately blank risks — and it is
+said in the first paragraph rather than in a footnote.
+
+What it does instead:
+
+- **The five factors and their published weights**, drawn as bars. Blue for
+  a factor your own figures say something about; grey for one only the
+  report knows. Three of the five are grey and the room says so.
+- **The two it can see** — utilisation and credit mix — read through
+  `engines/ratios.js`, with the household's real figure and its band.
+- **The fastest lever, first.** Utilisation is 30% of the score, re-reports
+  every month, and carries no memory: last month's figure is not held
+  against this month's. That combination is what makes it the thing to move,
+  and the room leads with the one action that moves it — pay before the
+  *statement* date, not the due date.
+- **How long things stay**, from the reporting periods in the law.
+- **What you are entitled to, free** — and the addresses are **named, not
+  linked**. The room sends you nowhere and is paid by nobody; you type the
+  address in and check it against the one written down. That is the
+  precedent Get Help set and it matters more here, where the surrounding
+  industry is full of paid "repair" that sells you what the law gives you.
+
+**Empty is not zero, and it is load-bearing here.** With no card limit
+entered the room says *"This needs the credit limit on at least one card.
+Add it in Debt Payoff — guessing a limit would produce a number people act
+on"*, and then, separately: *"Blank is not zero. Nothing here says you are
+using none of your limit."*
+
+### Compatibility note
+
+Stored shape: **unchanged**. The room writes nothing, owns no field in
+`shared/ownership.js`, and never calls `Spine.updateProfile` — verified in a
+browser by reading the profile back after a visit.
+
+New: `data/credit_factors.json` (registered as `TABLES.creditFactors`),
+`rooms/credit.html`, a registry row at order 26.4, kind `read`.
+
+---
+
+## D-148 — When It Won't All Get Paid
+
+Between Jobs assumed job loss specifically. Nothing covered the far more
+common moment: the month is short, and not everything can be paid. No
+triage — which bill to protect, what is negotiable, what has a grace period,
+what damages a credit file and what quietly does not. LATER.md called it the
+highest-stress money moment there is, and the app was silent on it.
+
+**The ordering rule, said once at the top:** the list is not in order of
+size. It is in order of what a missed bill takes away and whether you can get
+it back. *A smaller bill you can never undo comes before a bigger one you
+can.* Losing the roof, the heat, or the car you get to work in costs far
+more than a late fee and a mark on a file, however much larger the fee feels
+today.
+
+Twelve bills across three tiers in `data/bill_triage.json`, each with what it
+costs you, who to call, and the free help that exists. Then the calls worth
+making — led by the one that matters most, **call before you miss it, not
+after**, because almost every hardship programme is easier to get while the
+account is current.
+
+**Three things it refuses to do.**
+
+- **It will not guess at the shortfall.** With nothing entered it says *"Not
+  known yet, and not guessed"*, names the three missing figures with a link
+  to the room that owns each, and then: *"Everything below works without
+  them. The order to pay in, the calls and the free help are the point of
+  this page; the number is not."* A made-up shortfall on this page would be
+  cruel, not merely wrong.
+- **It never tells anyone to borrow.** A card at 29% is cheaper than a
+  payday loan at 400%, and missing a card payment is cheaper than both.
+- **It does not pretend to be advice.** Consequences vary by state and by
+  contract, and the room says so where a reader will see it rather than in
+  small print. Where the data says to call, calling *is* the advice — it
+  does not know their terms.
+
+### Why it is not a core room
+
+I made it `kind: 'core'` and `test/run.js` refused: D-051 caps the core at
+four. The suite was right. A crisis room is not a step on the main path —
+it is a door you need to be able to find, which is a different problem.
+Both new rooms went in at 26.4 and 26.6, **after** the numbered path rather
+than into it, so the walk a household with no debt takes is unchanged. The
+check that caught it now says why.
+
+### Compatibility note
+
+Stored shape: **unchanged**. Writes nothing, owns nothing, no inputs at all —
+`LIVE-FORM: built once` with nothing to build.
+
+New: `data/bill_triage.json` (registered as `TABLES.billTriage`),
+`rooms/cant-pay.html`, a registry row at order 26.6, kind `explore`.
+`data/debt_rules.json` also gains **`kindNotes`** — how medical, family and
+federal student debt behave unlike the rest — which is data only until a room
+reads it.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>When It Won’t All Get Paid · SPARKS</title>
+<meta name="description" content="A short month, and not everything can be paid. Which bill to protect first, what a phone call is worth, and who helps for free."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. Built on the frozen template (D-097). D-148.
+
+  1. READS   Take-home pay a month (engines/cashflow.js, which uses the same
+             effective-rate tax lookup as everything else) and what goes out
+             a month (Schema.monthlyExpensesCents, or the categorised month
+             where one has been tracked). Debt minimums come along inside
+             the categorised month, as a derived category owned by Debt
+             Payoff. Read only — nothing here is editable.
+  2. WRITES  Nothing about the household. This room owns no field in
+             shared/ownership.js and never calls Spine.updateProfile — the
+             only trace it leaves is the visit every room records through
+             Spine.registerRoom(). Someone opening it is having the worst
+             money day of their year; it does not also ask them to fill in
+             a form.
+  3. CALLS   engines/cashflow.js — monthlySurplusCents(), which is already
+             the one place in this app that asks "what is actually free each
+             month", and netMonthlyIncomeCents() for the money-in side. The
+             gap is that surplus with the sign turned round. No second
+             definition of "left over" is invented here (SPEC.md §8).
+  4. EMPTY   The important case. With a COMPLETELY empty household the gap
+             section says which two figures are missing and links to the
+             rooms that own them — and nothing else changes. The order to
+             pay in, the calls and the free help are the content of this
+             room and they do not need a single number to be useful. A
+             made-up shortfall on this page would be cruel (SPEC.md §5), so
+             there is no guess, no `|| 0`, and no fallback figure anywhere.
+  5. CONFIG  data/bill_triage.json (TABLES.billTriage) is the whole of the
+             advice: the three tiers, every bill's `why`, every `callFirst`,
+             every `helpLine`, and the three `beforeAnythingElse` entries.
+             Nothing on this page is written in the markup.
+
+  NOT ADVICE. The table's own confidenceNote says consequences vary by state
+  and by contract, and that is surfaced at the top of the order — not buried
+  in the drawer. Where the data says to call, the advice IS to call: this
+  room does not know anyone's lease, loan terms or state rules.
+
+  NEVER BORROW. data/bill_triage.json carries an explicit `neverBorrow`
+  entry and it is rendered, in full, at the point where the temptation
+  actually lands — under the gap.
+
+  THE SHAPE (shared/room.js, frozen): one number, the four sections the
+  registry names as anchors, the assumptions drawer with sources, why this
+  matters at your stage, one out-of-scope line to Get Help. The ids below
+  are the deep links: out-gap, out-order, out-calls, out-help, reading.
+
+  LIVE-FORM: built once — and there is nothing to build. This room has no
+  form controls of any kind. It reads the household and writes nothing, so
+  there is no container of live controls to rebuild and no soft keyboard to
+  close. If a control is ever added here it must be built once from a spec
+  and only ever have its .value set (shared/room.js already does exactly
+  that), or its container must be guarded with shared/liveform.js. D-034.
+
+  THEMING: none this pass. A theme is a class on <body> and a palette in
+  shared/theme.css; nothing here names a colour.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+
+  /* The gap, and what it is made of. Two lines, never a chart: there is
+     nothing here a picture would say faster than a sentence. */
+  .gap-lines { list-style: none; margin: var(--space-4) 0 0; padding: 0; }
+  .gap-lines li { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: space-between;
+    align-items: baseline; padding: var(--space-2) 0; border-top: 1px solid var(--color-border);
+    font-size: var(--text-sm); color: var(--color-text-muted); }
+  .gap-lines b { color: var(--color-text); font-variant-numeric: tabular-nums; font-weight: 600; }
+  .gap-missing { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  .gap-missing li { padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  .gap-missing a { color: var(--color-accent-hover); }
+  .gap-note { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; line-height: var(--leading-loose); }
+
+  /* A stated caution, or a stated instruction, that should not be skimmed. */
+  .callout { border: 1px solid var(--color-border); border-left: 3px solid var(--color-caution);
+    border-radius: var(--radius-sm); padding: var(--space-3); margin-top: var(--space-4);
+    background: var(--color-surface-raised); }
+  .callout--first { border-left-color: var(--color-accent); }
+  .callout h3 { margin: 0; font-size: var(--text-md); line-height: var(--leading-tight); }
+  .callout p { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--color-text-muted);
+    line-height: var(--leading-loose); }
+
+  .rule { font-size: var(--text-sm); line-height: var(--leading-loose); color: var(--color-text-muted);
+    margin: var(--space-2) 0 0; }
+  .rule strong { color: var(--color-text); }
+
+  /* The three tiers. Each one is a heading and a list of bills; the tag on
+     each bill says whether missing it can be undone, which is the whole
+     reason for the ordering. */
+  .tier { margin-top: var(--space-5); }
+  .tier:first-of-type { margin-top: var(--space-4); }
+  .tier-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); }
+  .tier-num { font-family: var(--font-display); font-size: var(--text-lg); color: var(--color-text-faint);
+    font-variant-numeric: tabular-nums; }
+  .tier-label { font-family: var(--font-display); font-size: var(--text-md); line-height: var(--leading-tight); margin: 0; }
+  .bills { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  .bills li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  .bill-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); }
+  .bill-name { font-weight: 600; }
+  .tag { font-size: var(--text-xs); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase;
+    color: var(--color-text-faint); border: 1px solid var(--color-border); border-radius: var(--radius-pill);
+    padding: 2px var(--space-2); white-space: nowrap; }
+  .tag.is-hard { color: var(--color-critical-text); border-color: var(--color-critical); }
+  .bill-why { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--color-text-muted);
+    line-height: var(--leading-loose); }
+  .bill-ask { margin: var(--space-2) 0 0; font-size: var(--text-sm); line-height: var(--leading-loose); }
+  .who { color: var(--color-text-faint); }
+  .helpline { display: block; margin-top: var(--space-1); font-size: var(--text-sm);
+    color: var(--color-accent-hover); overflow-wrap: anywhere; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../index.html">← Home</a>
+  <h1>When It Won’t All Get Paid</h1>
+  <p class="room-lede">A short month, and not everything can be paid. Which bill to protect first, what is worth a phone call, and who helps for free.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+  <div class="room-standalone" id="room-standalone" hidden></div>
+
+  <section class="slaf-card" id="out-gap">
+    <span class="slaf-eyebrow">What the gap is</span>
+    <div class="room-number" id="room-number"></div>
+    <div id="gap-detail"></div>
+  </section>
+
+  <section class="slaf-card" id="out-order" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The order to pay in</span>
+    <div id="order-body"></div>
+  </section>
+
+  <section class="slaf-card" id="out-calls" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The calls worth making</span>
+    <div id="calls-body"></div>
+  </section>
+
+  <section class="slaf-card" id="out-help" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Free help</span>
+    <div id="help-body"></div>
+  </section>
+
+  <details class="room-drawer" id="assumptions">
+    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
+    <div class="room-assumptions-body" id="room-assumptions"></div>
+  </details>
+
+  <p class="room-why" id="room-why" hidden></p>
+  <p class="room-scope" id="room-scope"></p>
+
+  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What this is reading</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool. This is not legal advice, debt advice or financial
+    advice, and it is not about your situation: it is a general ordering,
+    and what actually happens when a bill is missed depends on your state,
+    your lease and your contract. Where it says to call, calling is the
+    advice — the people on the other end are the ones who know your terms.
+    There is nothing to type here and nothing to fill in: the room reads what
+    the rest of the app already knows, changes none of it, and adds no figure
+    of its own. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/suggest.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../shared/room.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Ownership = SLAF.Ownership,
+      Reference = SLAF.Reference, CashFlow = SLAF.CashFlow, Room = SLAF.Room;
+
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function table(T) { return (T && T.billTriage) || null; }
+  function tiers(T) { var t = table(T); return (t && t.tiers) || []; }
+  function eachBill(T, fn) {
+    tiers(T).forEach(function (tier) { (tier.kinds || []).forEach(function (k) { fn(k, tier); }); });
+  }
+  function before(T, id) {
+    var list = (table(T) && table(T).beforeAnythingElse) || [];
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) return list[i]; }
+    return null;
+  }
+
+  /* Whether missing this bill can be undone, said in words rather than in a
+     code. The ordering exists BECAUSE of this column, so it is on the face
+     of every row and not in a legend. */
+  var RECOVERABLE = {
+    hard:   { label: 'Very hard to undo', hard: true },
+    medium: { label: 'Costly to undo',    hard: false },
+    yes:    { label: 'Can be undone',     hard: false }
+  };
+
+  /* ---- The gap ------------------------------------------------------------
+     ONE definition, and it is not a new one. CashFlow.monthlySurplusCents()
+     is already the single place this app asks what is free each month; a
+     shortfall is that number below zero. Money in comes from the same
+     engine. Neither is guessed and neither is defaulted: if either is
+     missing the room says which and links to the room that owns it.
+     SPEC.md §5, and it matters more here than anywhere.                    */
+  function gapOf(h, T) {
+    var moneyIn = CashFlow.netMonthlyIncomeCents(h, T);
+    var surplus = CashFlow.monthlySurplusCents(h, T && T.expenseCategories, T);
+    if (!Money.isOk(moneyIn) || !Money.isOk(surplus)) {
+      return { known: false, missing: missingFor(h) };
+    }
+    return {
+      known: true,
+      inCents: moneyIn.value,
+      /* What has to go out is money in less what is left over — so the two
+         sides always agree with the one number, whichever basis it used. */
+      outCents: moneyIn.value - surplus.value,
+      surplusCents: surplus.value,
+      shortCents: surplus.value < 0 ? -surplus.value : 0,
+      basis: surplus.basis || null,
+      note: surplus.note || null,
+      effectiveRate: moneyIn.effectiveRate,
+      referenceVersion: moneyIn.referenceVersion
+    };
+  }
+
+  /* The figures the gap is built from, and who owns each. Nothing is
+     invented for a missing one — it is named, and linked. */
+  var NEEDED = ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'];
+  function missingFor(h) {
+    return NEEDED.map(function (f) { return Ownership.describe(f, h, 'cant-pay'); })
+      .filter(function (d) { return d && !d.isSet; });
+  }
+
+  /* ---- The four sections --------------------------------------------------
+     Everything below reads data/bill_triage.json. None of the advice is
+     written in this file, which is SPEC.md §7 and also the only way the
+     wording can be corrected without touching a room.                      */
+
+  function gapHtml(h, T) {
+    var g = gapOf(h, T);
+    var out = [];
+
+    if (g.known) {
+      out.push('<ul class="gap-lines">'
+        + '<li><span>Coming in, a month, after tax</span><b>' + esc(Money.formatCents(g.inCents)) + '</b></li>'
+        + '<li><span>Going out, a month</span><b>' + esc(Money.formatCents(g.outCents)) + '</b></li>'
+        + '</ul>');
+      out.push('<p class="gap-note">Both figures are the ones already in this app for a <em>typical</em> month'
+        + (g.basis === 'monthlyTotal'
+          ? ', and the month going out counts the essentials you have entered only — anything else you spend is on top of it.'
+          : ', built from the spending you have categorised, debt minimums included.')
+        + ' A month with something unusual in it is not a typical month, so treat this as a starting point and not as your balance.</p>');
+    } else {
+      out.push('<p class="gap-note">This room will not guess at a shortfall. '
+        + (g.missing.length === 1 ? 'One figure is missing:' : 'These are missing:') + '</p>');
+      out.push('<ul class="gap-missing">' + g.missing.map(function (d) {
+        return '<li>' + esc(d.label) + ' — <a href="' + esc(d.href) + '">'
+          + esc(d.ownerTitle) + ' owns this →</a></li>';
+      }).join('') + '</ul>');
+      out.push('<p class="gap-note">Everything below works without them. The order to pay in, the calls '
+        + 'and the free help are the point of this page; the number is not.</p>');
+    }
+
+    /* The one thing not to do, at the point where the temptation lands. */
+    var nb = before(T, 'neverBorrow');
+    if (nb) {
+      var last = tiers(T)[tiers(T).length - 1];
+      var names = last ? (last.kinds || []).map(function (k) { return k.label.toLowerCase(); }).join(', ') : '';
+      out.push('<div class="callout"><h3>' + esc(nb.what) + '</h3><p>' + esc(nb.why)
+        + (names ? ' <span class="who">Tier 3 is the last group below: ' + esc(names) + '.</span>' : '')
+        + '</p></div>');
+    }
+    return out.join('');
+  }
+
+  function orderHtml(h, T) {
+    var t = table(T);
+    if (!t) return '';
+    var out = [];
+    out.push('<p class="rule">The list is not in order of size. It is in order of what a missed bill '
+      + '<strong>takes away, and whether you can get it back</strong>. A smaller bill you can never undo '
+      + 'comes before a bigger one you can: losing the roof, the heat, or the car you get to work in costs '
+      + 'far more than a late fee and a mark on your file, however much larger the fee feels today.</p>');
+    if (t.confidenceNote) {
+      out.push('<div class="callout"><h3>What actually happens depends on where you live and what you signed.</h3>'
+        + '<p>' + esc(t.confidenceNote) + '</p></div>');
+    }
+    tiers(T).forEach(function (tier) {
+      out.push('<div class="tier"><div class="tier-head">'
+        + '<span class="tier-num">' + esc(tier.tier) + '</span>'
+        + '<h2 class="tier-label">' + esc(tier.label) + '</h2></div>'
+        + '<ul class="bills">' + (tier.kinds || []).map(function (k) {
+          var r = RECOVERABLE[k.recoverable] || { label: k.recoverable, hard: false };
+          return '<li><div class="bill-head"><span class="bill-name">' + esc(k.label) + '</span>'
+            + '<span class="tag' + (r.hard ? ' is-hard' : '') + '">' + esc(r.label) + '</span></div>'
+            + '<p class="bill-why">' + esc(k.why) + '</p></li>';
+        }).join('') + '</ul></div>');
+    });
+    return out.join('');
+  }
+
+  function callsHtml(h, T) {
+    if (!table(T)) return '';
+    var out = [];
+    var first = before(T, 'callFirst');
+    if (first) {
+      out.push('<div class="callout callout--first"><h3>' + esc(first.what) + '</h3>'
+        + '<p>' + esc(first.why) + '</p></div>');
+    }
+    out.push('<p class="rule">Who to ring, and what to ask for, in the same order. Nothing here knows your '
+      + 'contract — that is exactly why the answer is a call and not a rule.</p>');
+    var rows = [];
+    eachBill(T, function (k) {
+      if (!k.callFirst) return;
+      rows.push('<li><div class="bill-head"><span class="bill-name">' + esc(k.label) + '</span></div>'
+        + '<p class="bill-ask"><span class="who">Call:</span> ' + esc(k.callFirst) + '</p></li>');
+    });
+    out.push('<ul class="bills">' + rows.join('') + '</ul>');
+    return out.join('');
+  }
+
+  function helpHtml(h, T) {
+    if (!table(T)) return '';
+    var out = [];
+    var na = before(T, 'notAlone');
+    if (na) {
+      out.push('<div class="callout callout--first"><h3>' + esc(na.what) + '</h3>'
+        + '<p>' + esc(na.why) + '</p></div>');
+    }
+    var rows = [];
+    eachBill(T, function (k) {
+      if (!k.helpLine) return;
+      rows.push('<li><div class="bill-head"><span class="bill-name">' + esc(k.label) + '</span></div>'
+        + '<span class="helpline">' + esc(k.helpLine) + '</span></li>');
+    });
+    if (!rows.length) return out.join('');
+    out.push('<p class="rule">Free, and none of it is a loan.</p>');
+    out.push('<ul class="bills">' + rows.join('') + '</ul>');
+    return out.join('');
+  }
+
+  /* Paint each section only when its markup actually changes. Three of the
+     four never change at all — they are the table — so after the first
+     render this is four string comparisons and no DOM work. */
+  var lastHtml = {};
+  function put(id, html) {
+    if (lastHtml[id] === html) return;
+    lastHtml[id] = html;
+    var host = document.getElementById(id);
+    if (host) host.innerHTML = html;
+  }
+
+  Room.mount({
+    id: 'cant-pay',
+    tables: ['billTriage', 'expenseCategories', 'effectiveTaxRates'],
+    reads: ['grossAnnualIncome', 'monthlyExpenses', 'monthlyDebtPayments', 'cashSavings'],
+
+    /* No inputs. Nothing on this page is editable, and the room owns no
+       field in shared/ownership.js. */
+
+    number: function (h, T) {
+      var g = gapOf(h, T);
+      if (!g.known) {
+        return {
+          label: 'The gap this month',
+          value: null,
+          reason: g.missing.length === 1
+            ? 'Not known — ' + g.missing[0].label.toLowerCase() + ' is missing.'
+            : 'Not known yet, and not guessed.'
+        };
+      }
+      if (g.shortCents > 0) {
+        return {
+          label: 'The gap this month',
+          value: Money.formatCents(g.shortCents) + ' short',
+          zone: 'out',
+          sub: '<strong>' + esc(Money.formatCents(g.inCents)) + '</strong> comes in and <strong>'
+            + esc(Money.formatCents(g.outCents)) + '</strong> has to go out, on a typical month. '
+            + 'That is the size of the decision below.'
+        };
+      }
+      return {
+        label: 'The gap this month',
+        value: 'No gap',
+        zone: 'good',
+        sub: '<strong>' + esc(Money.formatCents(g.inCents)) + '</strong> comes in and <strong>'
+          + esc(Money.formatCents(g.outCents)) + '</strong> goes out on a typical month, leaving <strong>'
+          + esc(Money.formatCents(g.surplusCents)) + '</strong>. If this month is not a typical one, that '
+          + 'is the first place to look. The order below is the same either way.'
+      };
+    },
+
+    assumptions: function (h, T) {
+      var g = gapOf(h, T);
+      var p = Reference.provenanceOf(table(T));
+      var count = 0;
+      eachBill(T, function () { count++; });
+      var rows = [
+        { label: 'The order to pay in',
+          value: p ? tiers(T).length + ' tiers, ' + count + ' kinds of bill' : 'not loaded',
+          source: p ? 'data/bill_triage.json v' + p.version + ' (' + p.asOf + ') — ' + p.source + ' — ' + p.label : '' },
+        { label: 'How much it varies',
+          value: 'By state, and by contract',
+          source: p && p.note ? p.note : 'consequences differ by where you live and what you signed' },
+        { label: 'What “can be undone” means',
+          value: 'Not that it is fine',
+          source: (table(T) && table(T).note) || '' },
+        { label: 'Coming in, a month',
+          value: g.known ? Money.formatCents(g.inCents) + ' after tax' : 'not known, and not guessed',
+          source: g.known
+            ? 'gross pay less a flat effective-rate tax estimate, over twelve — the same lookup the rest of '
+              + 'the app uses, never a second one (engines/cashflow.js, data/effective_tax_rates_2026.json v'
+              + g.referenceVersion + ', ' + Math.round(g.effectiveRate * 1000) / 10 + '% effective)'
+            : 'add your pay and filing status in Start Here and this fills itself in' },
+        { label: 'Going out, a month',
+          value: g.known ? Money.formatCents(g.outCents) : 'not known, and not guessed',
+          source: !g.known ? 'add a month of spending in Cash Flow and this fills itself in'
+            : g.basis === 'categorised'
+              ? 'every category you have entered, with debt minimums pulled in from Debt Payoff as a derived '
+                + 'line rather than a second copy (engines/cashflow.js)'
+              : 'your monthly essentials estimate; discretionary spending is not in it, so the real month is '
+                + 'bigger than this and the gap is, if anything, understated (engines/cashflow.js)' },
+        { label: 'What is not counted',
+          value: 'Arrears, one-offs, this month’s surprises',
+          source: 'this room reads a typical month. Money already owed from previous months, and anything '
+            + 'unusual in this one, are not in either figure — you know those and this app does not' },
+        { label: 'What this room stores',
+          value: 'Nothing',
+          source: 'it owns no field in shared/ownership.js and never writes to the household; there is nothing '
+            + 'to type here on purpose' }
+      ];
+      return rows;
+    },
+
+    why: function (h, T, situation) {
+      var common = 'Nothing on this page is about the long run. Retirement, the savings rate and the FI date '
+        + 'all keep. This month is about the order things get paid in, and the calls that are still worth '
+        + 'making while an account is current.';
+      return {
+        betweenJobs: 'Between jobs, the gap is expected rather than surprising — which makes the calls more '
+          + 'useful, not less: a hardship programme agreed in the first short month is a different '
+          + 'conversation from one asked for in the fourth. ' + common,
+        selfEmployed: 'On your own work a short month is a cash-flow event, not a catastrophe, and the same '
+          + 'order applies. Set aside tax separately from this; missed tax is not on the list below and '
+          + 'behaves differently from every bill that is. ' + common,
+        student: 'Federal student loans are the most flexible debt on the list below — an income-driven '
+          + 'payment can legitimately be zero, and zero counts as paid. That is the first call, not the last. '
+          + common,
+        retired: 'On a fixed income the gap is rarely about one month; it is about the draw. Protect the same '
+          + 'things in the same order, then take the question of the withdrawal rate somewhere calmer than '
+          + 'this page. ' + common,
+        employed: common,
+        mixed: common
+      }[situation] || common;
+    },
+
+    scope: 'This room does not know your lease, your loan terms or your state’s rules; it cannot call anyone '
+      + 'for you, negotiate a bill, or tell you whether bankruptcy is the right answer. For those, and for '
+      + 'anything that has reached a court or a collector:',
+
+    after: function (h, T) {
+      put('gap-detail', gapHtml(h, T));
+      put('order-body', orderHtml(h, T));
+      put('calls-body', callsHtml(h, T));
+      put('help-body', helpHtml(h, T));
+    }
+  });
+})();
+</script>
+</body>
+</html>

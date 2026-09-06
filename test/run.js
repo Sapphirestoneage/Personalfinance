@@ -4925,7 +4925,23 @@ section('Eleven cards');
     checkTrue('the demo says it has debt', h.meta.hasDebt === true);
     checkTrue('Debt Payoff is on its path', Registry.nextAfter('start', [], h).id === 'debt-payoff');
     const none = Demo.build(); none.meta.hasDebt = false; none.debts = [];
+    /* What the room after Start Here happens to be is a fact about the
+       running order, and it moves when a room is inserted. Your Credit File
+       and When It Won't All Get Paid went in after the numbered path
+       (26.4 and 26.6) rather than into it, precisely so this stays put —
+       the core is four rooms and D-051 means it. What this check is
+       actually about is that Debt Payoff is never offered to someone who
+       owes nothing, so the whole path is walked below rather than only its
+       first step. */
     check('with no debt the path skips Debt Payoff', Registry.nextAfter('start', [], none).id, 'cash-flow');
+    {
+      const walked = [];
+      let at = Registry.nextAfter('start', [], none);
+      while (at && walked.indexOf(at.id) === -1) { walked.push(at.id); at = Registry.nextAfter(at.id, walked, none); }
+      checkTrue('and it is nowhere else on the path either', walked.indexOf('debt-payoff') === -1);
+      checkTrue('while a household that does owe still gets it',
+        Registry.inOrder().some(r => r.id === 'debt-payoff') && Registry.nextAfter('start', [], h).id === 'debt-payoff');
+    }
     checkTrue('and total debt stops applying', !Ownership.describe('totalDebt', none, 'map').applies);
     checkTrue('and so do the payments', !Ownership.describe('monthlyDebtPayments', none, 'map').applies);
     checkTrue('so the dashboard is complete for a debt-free household', Progress.forRoom('dashboard', none).complete);

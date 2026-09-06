@@ -121,6 +121,50 @@
       ]
     },
     {
+      /* The most-asked consumer money question, and the app had no room for
+         it (D-147). It computes NO score — it cannot see the file — so it
+         shows what it can see, says what moves one, and stops. */
+      id: 'credit',
+      kind: 'read',
+      /* It reads the itemised debts, which is where a card's balance and its
+         limit live — the two figures the utilisation and credit-mix rows are
+         made of. It writes nothing and owns nothing. */
+      needs: ['totalDebt'],
+      order: 26.4,
+      title: 'Your Credit File',
+      blurb: 'What a score is made of, which parts this app can actually see, and the one that moves fastest. No score here \u2014 that comes from a file only the bureaus hold.',
+      href: 'rooms/credit.html',
+      tier: 1,
+      tags: ['debt'],
+      subsections: [
+        { id: 'out-what',     label: 'What it is made of' },
+        { id: 'out-yours',    label: 'What this app can see' },
+        { id: 'out-stays',    label: 'How long things stay' },
+        { id: 'out-rights',   label: 'What you are entitled to' },
+        { id: 'reading',      label: 'Reading from elsewhere' }
+      ]
+    },
+    {
+      /* The highest-stress money moment there is, and Between Jobs was the
+         nearest thing — which assumes job loss specifically (D-148). */
+      id: 'cant-pay',
+      kind: 'explore',
+      needs: [],
+      order: 26.6,
+      title: 'When It Won\u2019t All Get Paid',
+      blurb: 'A short month, and not everything can be paid. Which bill to protect first, what is negotiable, what a phone call is worth, and who helps for free.',
+      href: 'rooms/cant-pay.html',
+      tier: 0,
+      tags: ['cashflow', 'debt'],
+      subsections: [
+        { id: 'out-gap',     label: 'What the gap is' },
+        { id: 'out-order',   label: 'The order to pay in' },
+        { id: 'out-calls',   label: 'The calls worth making' },
+        { id: 'out-help',    label: 'Free help' },
+        { id: 'reading',     label: 'Reading from elsewhere' }
+      ]
+    },
+    {
       id: 'cash-flow',
       kind: 'core',
       needs: ['monthlyExpenses'],

@@ -152,5 +152,46 @@
         }
       }
     ]
-  }
+  },
+  "kindNotes": [
+    {
+      "id": "medical",
+      "appliesToTypes": [
+        "medical"
+      ],
+      "headline": "Medical debt does not behave like the others",
+      "points": [
+        "It is the most negotiable debt most people ever hold. Ask the billing office for an itemised bill first, then for financial assistance — non-profit hospitals are required to have a charity-care policy, and most do not mention it unless asked by name.",
+        "It is frequently wrong. Duplicate lines, services never given, and charges an insurer should have paid are ordinary rather than rare. The itemised bill is how you find them.",
+        "Once paid, a medical collection comes off your credit report entirely — unlike every other kind. Unpaid medical collections under $500 are no longer reported at all.",
+        "It almost never carries interest while it sits with the provider. Moving it onto a credit card to 'deal with it' turns the cheapest debt you have into one of the most expensive."
+      ],
+      "doNot": "Do not put a medical bill on a credit card to clear it. That converts a 0%, negotiable, report-free debt into an interest-bearing one that is none of those things."
+    },
+    {
+      "id": "family",
+      "appliesToTypes": [
+        "family"
+      ],
+      "headline": "Money from family is a relationship first",
+      "points": [
+        "There is no statement, no rate and no collections process — which is why this app asks for a pay-back date instead of a minimum (D-124).",
+        "The cost of paying it late is not measured in interest. It is worth saying out loud what the plan is, to the person, before the plan slips."
+      ],
+      "doNot": null
+    },
+    {
+      "id": "federalStudent",
+      "appliesToTypes": [
+        "student_loan"
+      ],
+      "headline": "A federal student loan is the most flexible debt on this list",
+      "points": [
+        "An income-driven repayment plan can legitimately set the payment at zero when income is low, and zero still counts as paid — a forbearance does not do the same thing.",
+        "It is the one debt where paying the minimum during a hard year is a plan rather than a failure.",
+        "Private student loans are not the same and carry none of this. Check which you have before assuming."
+      ],
+      "doNot": "Do not refinance a federal loan privately to shave the rate without first checking what protections you are giving up — they do not come back."
+    }
+  ]
 }
