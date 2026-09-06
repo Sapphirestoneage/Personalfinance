@@ -2006,6 +2006,62 @@ section('Dungeons & Dividends — the long read (DD-027)');
   check('no character means no profile rather than a guessed one', perN.ready, false);
   checkTrue('and it says why', !!perN.reason);
 
+  /* ---- first, second, third, and the shadow ------------------------------
+     One ranking shown four ways. The point of the shadow is that it is read
+     off WEAKNESS: the lever at the bottom, which is the only position here
+     that can be occupied by something with nothing moving through it. */
+  CLASSES.forEach(function (id) {
+    const r = T.classes[id].roles;
+    ['first', 'second', 'third', 'shadow'].forEach(function (k) {
+      checkTrue(`${id} reads differently as a ${k}`, typeof r[k] === 'string' && r[k].length > 80);
+    });
+    /* Four positions, four distinct readings — the same paragraph in two
+       slots would make the whole idea decorative. */
+    const seen = {};
+    ['first', 'second', 'third', 'shadow'].forEach(function (k) {
+      checkTrue(`${id}'s ${k} reading is its own`, !seen[r[k]]); seen[r[k]] = 1;
+    });
+    checkTrue(`${id} as a shadow says what to look out for`, /Watch for:/.test(r.shadow));
+  });
+  checkTrue('the table explains where the ranking comes from',
+    typeof T.bigThreeNote === 'string' && /same ranking/.test(T.bigThreeNote));
+
+  const b3 = Persona.bigThree(h, sheet, TABLES);
+  checkTrue('a character with money gets a ranking', b3.ready);
+  check('read off the money, not the quiz', b3.basis, 'measured');
+  checkTrue('it fills up to three places', b3.places.length > 0 && b3.places.length <= 3);
+  check('the first place is the class the rest of the page shows',
+    b3.places[0].classId, sheet.klass.id);
+  checkTrue('every place carries its own reading and its sign',
+    b3.places.every(function (x) { return !!x.reading && !!x.sign; }));
+  checkTrue('places are ordered by weight',
+    b3.places.every(function (x, i) { return i === 0 || b3.places[i - 1].weight >= x.weight; }));
+  checkTrue('each place uses the reading for the position it is in',
+    b3.places.every(function (x) { return x.reading === T.classes[x.classId].roles[x.role]; }));
+
+  /* The shadow comes off the bottom of the FULL ranking, so a lever with
+     nothing through it is eligible — that is precisely what a shadow is. */
+  checkTrue('there is a shadow', !!b3.shadow);
+  checkTrue('and it is not one of the three', b3.places.every(function (x) {
+    return x.classId !== b3.shadow.classId; }));
+  check('and it uses the shadow reading', b3.shadow.reading, T.classes[b3.shadow.classId].roles.shadow);
+  checkTrue('and it names what it never had to learn to handle', b3.shadow.unlearned.length > 0);
+
+  /* Quiz-only: same shape, honestly labelled, no money involved. */
+  const b3q = Persona.bigThree(quizOnly, Character.sheet(quizOnly, TABLES), TABLES);
+  checkTrue('five answers alone still produce a ranking', b3q.ready);
+  check('labelled as instinct', b3q.basis, 'instinct');
+  checkTrue('with a shadow of its own', !!b3q.shadow);
+
+  /* Nothing at all: no ranking rather than a made-up one. */
+  check('an empty character gets no ranking',
+    Persona.bigThree(nobody, Character.sheet(nobody, TABLES), TABLES).ready, false);
+
+  checkTrue('the page renders the ranking and the shadow',
+    /id="p-bigthree"/.test(src) && /id="p-shadow"/.test(src));
+  checkTrue('and the shadow section says what to look out for',
+    /What to be on the lookout for/.test(src));
+
   /* ---- the party view is other people's opinion, not your own ------------ */
   CLASSES.forEach(function (id) {
     const pa = Persona.party(id, TABLES);

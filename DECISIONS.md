@@ -9527,7 +9527,47 @@ Five guards were broken on purpose to check they bite: duplicate sign, duplicate
 glyph, a softened note, a note that drops the "worth taking seriously" line, and
 a class with fewer than three people. All five failed as intended.
 
-**Before writing any of these from a new room:** never render `origins` without
+### First, second, third — and the shadow
+
+The astrology framing had one more thing in it worth taking: a big three. So
+the profile now opens with **your first, your second and your third**, each
+reading differently:
+
+- **First** — what your money actually moves through.
+- **Second** — what you fall back on when it tightens.
+- **Third** — what people meet first.
+
+Every class has a separate paragraph for each position, because the same lever
+means a different thing in each slot: The Keeper as your first is a life run on
+what leaves; as your third it is *"people read you as careful, and mostly mean
+it as a compliment — it is also why nobody tells you about anything expensive
+until it is decided."* A test asserts all four readings per class are distinct,
+because the same paragraph in two slots would make the whole idea decorative.
+
+**It is one ranking, not three readings.** `bigThree()` reads the ordering the
+rest of the tool already uses — cents through each lever where there is money,
+the quiz's shares where there is not — so the profile and the character screen
+can never disagree about which lever is on top. A test asserts the first place
+is the same class the rest of the page is showing. A lever with nothing moving
+through it is **not** a second place; where only one lever is live, the room
+says so rather than presenting two levers of zero as a chart.
+
+**The shadow is the useful one.** It is the lever at the bottom of the full
+ranking — the one never pulled — and it is the only position here read off
+weakness rather than strength. Every class has a shadow paragraph ending in
+*Watch for:*, which a test enforces. The Landholder as a shadow: *"You have no
+claim on anything physical and no plan to get one. That is a completely
+legitimate position, right up until it is not chosen. Watch for: thirty years
+of rent that rises whether or not you do, and nothing at the end of it to point
+at."*
+
+It also lists what that lever loses to, on the grounds that the failure modes
+you have never had to learn are the ones that will surprise you.
+
+**Before writing any of these from a new room:** the big three must come from
+`bigThree()` and never from a second ranking of your own — two derivations of
+the same ordering is how a page ends up contradicting itself one screen later.
+Never render `origins` without
 `originsWarning`, and never above it. Never render the almanac without
 `esotericaNote` — the sign is invented and a reader who is not told that is
 being misled by omission. Never let `originPicked` reach a score, a

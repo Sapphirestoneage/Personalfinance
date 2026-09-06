@@ -138,7 +138,13 @@
           "Being the best-paid person in a very small room"
         ]
       },
-      "reading": "Mars is loud in your chart and has been for years, which is why you keep moving and why you are tired. This is a season for consolidation rather than conquest: the thing you are chasing has already been caught twice and set down again without being noticed. Somebody will offer you recognition in place of money. Recognise it, thank them, and ask again anyway."
+      "reading": "Mars is loud in your chart and has been for years, which is why you keep moving and why you are tired. This is a season for consolidation rather than conquest: the thing you are chasing has already been caught twice and set down again without being noticed. Somebody will offer you recognition in place of money. Recognise it, thank them, and ask again anyway.",
+      "roles": {
+        "first": "Effort is your main instrument. More money arriving is your answer to almost every question, and it is a genuinely good answer — it is simply the one you reach for before you have checked whether the question was about arriving or about leaving.",
+        "second": "Underneath whatever you present as, you privately believe you could out-earn the problem. It is what you reach for at two in the morning, and it is why you find being stuck unbearable rather than merely annoying.",
+        "third": "It is what people meet first — the drive, the plans, the sense that you are going somewhere. Some of it is real and some of it is a coat you put on in rooms, and you cannot always tell which.",
+        "shadow": "You almost never pull this lever. Everything gets solved by cutting or by investing, and the largest number on your page has sat unnegotiated for years. Watch for: a decade of quiet excellence, a salary that moved with inflation and not a step further, and the sense that you did everything right."
+      }
     },
     "keeper": {
       "headline": "You find money by removing things.",
@@ -270,7 +276,13 @@
           "Somebody else in the house hiding a purchase from you"
         ]
       },
-      "reading": "Mercury governs you and Mercury is interested in detail rather than scale, which is both your gift and the whole problem. You have swept every corner of a room you did not choose the size of. There is a conversation available to you this season that is worth more than a decade of the work you are currently doing, and you will find nine reasons to have it later."
+      "reading": "Mercury governs you and Mercury is interested in detail rather than scale, which is both your gift and the whole problem. You have swept every corner of a room you did not choose the size of. There is a conversation available to you this season that is worth more than a decade of the work you are currently doing, and you will find nine reasons to have it later.",
+      "roles": {
+        "first": "You run your life on what leaves rather than what arrives, and it works — you keep more of every pound than almost anyone. The cost is that you can spend a year sanding a floor and never once look at the ceiling.",
+        "second": "It is your fallback when things tighten. The first instinct in a bad month is to cut, and you are good at it, which is exactly why you sometimes cut when you should have asked.",
+        "third": "People read you as careful, and mostly mean it as a compliment. It is also why nobody tells you about anything expensive until it is decided.",
+        "shadow": "Almost nothing leaves your attention. Money arrives, money goes, and the gap is a feeling rather than a figure. Watch for: an income that has doubled, a life that feels the same, and no honest answer to where the difference went."
+      }
     },
     "builder": {
       "headline": "You see a business where other people see an offer.",
@@ -402,7 +414,13 @@
           "Explaining optionality to somebody who did not ask"
         ]
       },
-      "reading": "Your ruling star is uncatalogued, which suits you and explains the difficulty. Fire in mutable season means enormous ignition and very little containment. The work this month is not a new fire — it is a lid. Somebody will show you an opportunity that is genuinely good and it is still, this season, a trap, because it is the fourth one."
+      "reading": "Your ruling star is uncatalogued, which suits you and explains the difficulty. Fire in mutable season means enormous ignition and very little containment. The work this month is not a new fire — it is a lid. Somebody will show you an opportunity that is genuinely good and it is still, this season, a trap, because it is the fourth one.",
+      "roles": {
+        "first": "You make money by making things. It is the lever with no ceiling and the worst hourly rate for the first two years, and you are constitutionally unable to stop reaching for it.",
+        "second": "It runs underneath the day job as a permanent private plan. Half your good ideas arrive while you are being paid to think about something else.",
+        "third": "People assume you have something on the side, and they are usually right. It makes you interesting at parties and slightly unreliable on a Wednesday.",
+        "shadow": "Every pound you receive comes from exactly one place, and one person's decision could end it. Watch for: a job you would not choose being the only thing you have, and no answer at all to the question of what you would do on Monday."
+      }
     },
     "compounder": {
       "headline": "You would rather your money did the work.",
@@ -534,7 +552,13 @@
           "Explaining compound interest at a dinner nobody invited you to talk at"
         ]
       },
-      "reading": "Jupiter is slow in your house and that is the whole reading — everything you want is already arriving and none of it will arrive this year. The temptation this season is motion: a tweak, a switch, a clever little optimisation. The single highest-return act available to you has nothing to do with the portfolio and everything to do with what you are paid, and you have not looked at that in four years."
+      "reading": "Jupiter is slow in your house and that is the whole reading — everything you want is already arriving and none of it will arrive this year. The temptation this season is motion: a tweak, a switch, a clever little optimisation. The single highest-return act available to you has nothing to do with the portfolio and everything to do with what you are paid, and you have not looked at that in four years.",
+      "roles": {
+        "first": "Your money's own work outweighs yours, or is on its way to. This is the lever that eventually beats every other one, and it is doing almost nothing visible right now, which is correct and which you will still find hard.",
+        "second": "It is the quiet half of your plan — the part that keeps going while you are doing something more interesting, and the reason a bad year is survivable rather than fatal.",
+        "third": "People assume you know about this stuff, and ask you at dinner. Some of that reputation is earned and some of it is that you are willing to say the word 'index' out loud.",
+        "shadow": "Nothing you own is working. Every pound you have is either spent, sitting, or in bricks, and none of it compounds. Watch for: ten years of good saving that ends up worth less than it started, quietly, in real terms, without anything going wrong."
+      }
     },
     "landholder": {
       "headline": "You think in bricks.",
@@ -666,7 +690,13 @@
           "Saying 'it always goes up' out loud, to somebody younger"
         ]
       },
-      "reading": "Venus in her heavy aspect gives you a genuine gift for permanence, and the bill for it is liquidity. You are standing on something real, which is more than most manage, and you cannot get off it quickly. The work this season is not more bricks. It is the boring liquid thing beside them that means no year, however bad, can ever force your hand."
+      "reading": "Venus in her heavy aspect gives you a genuine gift for permanence, and the bill for it is liquidity. You are standing on something real, which is more than most manage, and you cannot get off it quickly. The work this season is not more bricks. It is the boring liquid thing beside them that means no year, however bad, can ever force your hand.",
+      "roles": {
+        "first": "Your wealth is standing somewhere with a roof on it. Slow, lumpy, leveraged, and it has built more ordinary fortunes than every other lever combined — as long as you are never forced to sell it in a hurry.",
+        "second": "It is the long ambition sitting under the rest of your plan. A part of you is always half-pricing places, even in a year you are not buying.",
+        "third": "People assume you are settled, sensible and probably doing better than you are. Bricks read as wealth even when they are mostly somebody else's.",
+        "shadow": "You have no claim on anything physical and no plan to get one. That is a completely legitimate position, right up until it is not chosen. Watch for: thirty years of rent that rises whether or not you do, and nothing at the end of it to point at."
+      }
     },
     "anchor": {
       "headline": "You buy calm before you buy upside.",
@@ -798,7 +828,13 @@
           "Buying safety from a person in a suit who used the word guaranteed"
         ]
       },
-      "reading": "Saturn is heavy on you and always has been, which is why you are trusted and why you are tired. The floor is finished. It was finished some time ago and you have been adding to it out of habit rather than need. This season asks the hardest thing available to your sign: to leave it exactly as it is and stand on it. Somebody will call this recklessness. They will be wrong, and they will be the one who is frightened."
+      "reading": "Saturn is heavy on you and always has been, which is why you are trusted and why you are tired. The floor is finished. It was finished some time ago and you have been adding to it out of habit rather than need. This season asks the hardest thing available to your sign: to leave it exactly as it is and stand on it. Somebody will call this recklessness. They will be wrong, and they will be the one who is frightened.",
+      "roles": {
+        "first": "Your first instinct with money is to make it safe, and it has probably already saved you once. This is the least glamorous lever and the one that decides whether any of the others get to keep running.",
+        "second": "It is the floor under whatever else you are doing — the reason your risks are survivable and your bad months are only months.",
+        "third": "People read you as the steady one. They ring you when it goes wrong, and you have never once said no, and some of them have never noticed.",
+        "shadow": "There is no floor. Everything is deployed, committed, or spent, and a single bad month becomes debt. Watch for: a plan that works perfectly as long as nothing at all happens, and a card balance that appears the first time something does."
+      }
     },
     "speculator": {
       "headline": "You are comfortable being wrong most of the time for one very good day.",
@@ -930,8 +966,15 @@
           "Describing a bet as a position and a hope as a thesis"
         ]
       },
-      "reading": "Your ruling body is a comet and comets are not lucky, they are simply rare and very hard to plan around. Air in cardinal season is enormous initiative and no ballast at all. The reading is not that you should stop — nobody with this chart ever has. It is that the stake, and only the stake, is what decides whether you are doing this at forty. Halve it. The comet does not mind waiting; it has done nothing else."
+      "reading": "Your ruling body is a comet and comets are not lucky, they are simply rare and very hard to plan around. Air in cardinal season is enormous initiative and no ballast at all. The reading is not that you should stop — nobody with this chart ever has. It is that the stake, and only the stake, is what decides whether you are doing this at forty. Halve it. The comet does not mind waiting; it has done nothing else.",
+      "roles": {
+        "first": "You are playing for the outcome rather than the average, and that is a real strategy — the only one with an uncapped top end. It lives or dies entirely on the size of the stake and you find the stake the boring part.",
+        "second": "It is the small allocation that keeps you interested in the whole thing. Kept small, it is what stops you meddling with the serious money.",
+        "third": "People think you are braver than you are. Mostly you just talk about it more than the ones who are actually exposed.",
+        "shadow": "You never take the shot. Every pound is optimised, defended and accounted for, and none of it is ever pointed at anything with a ceiling. Watch for: a perfectly run life with no upside in it, and a resentment about other people's luck that you would not say out loud."
+      }
     }
   },
-  "esotericaNote": "The sign, the ruling body, the hour, the metal and the card are invented. They are flavour and they are meant to be enjoyed exactly as much as a star sign is — which is to say properly, and not as information. The people and circumstances are different: those are written from how the lever actually fails, and they are the part worth taking seriously."
+  "esotericaNote": "The sign, the ruling body, the hour, the metal and the card are invented. They are flavour and they are meant to be enjoyed exactly as much as a star sign is — which is to say properly, and not as information. The people and circumstances are different: those are written from how the lever actually fails, and they are the part worth taking seriously.",
+  "bigThreeNote": "First, second and third are read off the same ranking the rest of the tool uses — where your money actually moves, or if you have not entered any, how the five questions scored. They are not three separate readings: they are one ranking, shown three deep, and the order genuinely changes when your numbers do. The shadow is the lever at the BOTTOM of that ranking — the one you never pull. It is the most useful of the four and the only one nobody enjoys reading."
 }
