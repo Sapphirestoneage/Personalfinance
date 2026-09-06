@@ -6641,6 +6641,321 @@ adding a mode field — `interestFree` first, then `promoEndsOn`, then a
 plain rate — and must keep treating a promo with no end date as a
 fixed-rate debt, never as free money.
 
+## D-134 — Debt Payoff: one debt, one screen
+
+A single debt row filled a whole phone screen. Name, balance, minimum,
+type, the interest block, the feeling, five reason chips with a suggestion
+line and a hold-back tick, two dates, a credit limit and its three-line
+hint — all of it open, all of it at once. A household with three debts
+could not be read at all: the payoff plan, the thing the room exists for,
+was several screens below the fold.
+
+**Four facts stay up.** A debt can be planned once the room knows what it
+is called, what is owed, what the minimum is, what type it is, and how
+interest works. That is the row now. Everything else is set once when the
+debt is entered and then almost never touched, so it folds behind a caret:
+
+- **Why you're keeping it** — the feeling (D-124) and the reasons to keep
+  it (D-132). Both are about attitude to the debt and neither changes the
+  arithmetic, so they belong together and they belong closed.
+- **Dates & limit** — borrowed on, due back by, the credit limit and its
+  hint (D-045, D-124).
+
+**A closed drawer says what is inside it.** Each summary is live: "3
+reasons · one I'd rather not think about · held back", or "due April 2029 ·
+limit $15,000", or plainly "nothing set". Folding something away must never
+make it invisible, only quiet, and a summary that goes stale would be worse
+than no summary at all — so it is repainted on every write like every other
+read-only line in the guarded list (D-034).
+
+**Open or closed survives a rebuild.** `<details>` is native, so the caret
+costs no JavaScript and works without it. But the list does get rebuilt,
+and without carrying the state across, a drawer would snap shut mid-edit —
+on a phone, with a finger inside it. The open set is therefore kept for the
+visit in `openDrawers`, keyed by debt and drawer, and never stored on the
+household: it is how you are looking at the room, not a fact about your
+money. The `toggle` event does not bubble, so the listener captures.
+
+**The room is wider than the shared measure.** `--measure` is 480px and
+that is right for a room you read. This one is an editor: a debt is a row
+of facts, and at 480px those facts stack into a column a screen tall. The
+override is local to this room — 720px past 760px wide, 980px past 1040px —
+so every reading room keeps the canonical column. Below 560px the three
+facts drop to two columns rather than squeezing money values into thirds.
+
+Folding is presentation only. Every field inside a drawer is the same input
+writing the same key it wrote before, and the alignment check follows the
+`.debt-meta` row into the drawer rather than being dropped.
+
+### Compatibility note
+
+Stored shape: unchanged. No field is added, removed, renamed or written
+differently; this entry moves controls and adds no household state. Which
+drawers are open is per-visit UI state in a module variable, never written
+to the household and never exported. Rooms updated:
+`rooms/debt-payoff.html` only; `test/alignment.js` now checks
+`.fold-body .debt-meta` where that row now lives. A future room that folds
+part of a guarded live-input list should copy the two rules that make this
+safe: keep the open set outside the household, and repaint the summary on
+every write so a closed drawer cannot go stale.
+
+## D-135 — The menu: upkeep and every room, one pull from anywhere
+
+**Why.** The header strip walks the path one room at a time and offers the
+map. That answers "what is next" and is useless for "take me to the thing I
+need now". Your Data sits at order 98, so reaching an export meant opening
+the map and scrolling past fifty-seven rooms — which is exactly what
+happened when the household needed moving from a phone to a desktop.
+Upkeep is not a destination on a journey. It is a drawer you pull open from
+wherever you are.
+
+**What.** A menu button beside the hop strip on every page, opening a panel
+that lists *Your data & upkeep* first — Your Data, Refresh, History, Start
+Here, Get Help, then the map — and after that every room grouped by kind.
+The room you are in is marked. It closes on the ✕, the backdrop, or Escape;
+focus moves into it on open and back to the button on close.
+
+Mounted from `mountHeader`, which already replaces the one `.room-back`
+link every page carries, so all fifty-eight pages get it with no per-room
+markup. The panel is appended to `<body>`, which keeps it out of every
+room's live-input container (D-034) and stops any card from clipping it.
+The upkeep list is registry ids, not paths, so a room that is renamed or
+moved is followed and one that does not exist is skipped rather than
+becoming a dead link.
+
+**Two modes, one drawer.** Below 1080px it is a drawer you pull open over
+the page. At 1080px and above there is room for it to simply stay, so it
+pins open as a sidebar: no button, no backdrop, nothing to dismiss, and the
+page sits beside it. Opening is a no-op while pinned, so nothing can leave
+it half-closed. The switch is `matchMedia` in JavaScript rather than a
+media query, because `[hidden]` is `display:none !important` in the theme
+and a media query fighting that with more `!important` is worse than one
+listener.
+
+**Two things the first build got wrong**, both worth recording because they
+are easy to repeat. The panel used `--color-surface-raised`, which is
+`rgba(15, 38, 80, 0.55)` — the surface tokens are translucent by design, so
+the drawer showed the page through itself and was unreadable. It is now a
+solid `--navy-850`. And the whole app is written to `--measure: 480px`,
+which is right for a room you read and leaves a ribbon in a field of navy
+on a desktop; the measure now grows to 620px past 1080px and 680px past
+1400px. A room that sets its own wider measure, as Debt Payoff does
+(D-134), keeps it.
+
+### Compatibility note
+
+Stored shape: unchanged. Nothing here reads or writes the household; the
+menu is chrome. Whether it is open is not stored — below the pin width it
+always opens closed, and at or above it is always open, so there is no
+state to carry and nothing to migrate. Rooms updated: none individually.
+`shared/progress.js` gains `mountMenu`, `menuHtml` and `UPKEEP`, and
+`mountHeader` now calls `mountMenu`, so any page already calling
+`mountHeader` gets the menu with no change. `shared/theme.css` gains the
+menu styles and the wider desktop measure, and `dnd/shared/theme.css` is
+re-copied to stay byte-identical. A future room needs to do nothing to
+appear in the menu beyond being in the registry; to sit in the upkeep group
+instead of its kind group, add its id to `Progress.UPKEEP`.
+
+## D-136 — Phone and desktop, measured rather than eyeballed
+
+Every room was loaded at 412px and at 1440px and checked for four things:
+does the page scroll sideways, is anything wider than the screen, how many
+controls are under 32px tall, and how much of a monitor the content
+actually uses. The fixes below are what that found. Each one is a shared
+class or a bare element, so none of it is a fifty-seven room edit.
+
+**The sideways scroll.** `rooms/ratios.html` scrolled 69px horizontally on
+a phone. A bar row's third cell is a figure, so `.slaf-bars .val` is
+`white-space: nowrap` — correct for `$2,888`. But a row with no figure
+carries a *reason* in that cell instead ("needs monthly debt payments,
+gross annual income"), and nowrap made a sentence one very long line that
+pushed the page open. A reason now wraps and reads left; a figure still
+never wraps.
+
+**Touch targets, only where there is a finger.** The suggestion chip was
+19px tall, a tick 16px, a summary 25px, the exercise chips 23px with
+eighty-eight of them on one screen, and the ⓘ 20px on a page whose own lede
+says to tap it — forty-five times. All of these are now at least 32px under
+`@media (pointer: coarse)`, so a mouse keeps the compact controls they were
+designed as.
+
+Two things are worth writing down. Rooms style their ticks as `.flag input`,
+which ties on specificity with a bare `input[type="checkbox"]` and wins on
+source order, so the shared rule names `label input[type="checkbox"]` to sit
+above every room following that pattern. And the ⓘ was first given an
+invisible `::after` hit area, the usual trick for keeping a small circle
+small; a tap five pixels above it still missed, so that was abandoned for
+growing the button itself to 30px on a coarse pointer. The trick was not
+verified to work here and is not in the code.
+
+**Inline links in prose are deliberately left small.** Sixty-two of the
+remaining under-32px elements in the Exercises room are links inside
+sentences. Padding those to a thumb's height would tear the paragraphs
+apart, and they are never the primary control on a page.
+
+**Desktop.** The measure steps 480 → 620 at 1080px → 680 at 1400px → 720 at
+1600px, and stops there. Past roughly seventy-five characters a line gets
+harder to read, not easier, so the answer to a big monitor is not an
+ever-wider paragraph — which is why the average screen width used stays
+near half and that is the right answer for a column of prose. Where the
+content is not prose the space is taken: `map.html` lists fifty-seven
+equivalent, independent cards, and those flow two-up past 1080px instead of
+running down one long column.
+
+What this pass did **not** do is give each room a desktop layout of its
+own. Most rooms are a vertical stack of cards whose order carries meaning —
+the figure, then the chart, then the inputs — and flowing those into columns
+blind would break the reading order that makes them legible. That is a
+per-room job and is recorded in `LATER.md` rather than guessed at here.
+
+### Compatibility note
+
+Stored shape: unchanged. Nothing in this entry reads or writes the
+household; it is all presentation. Rooms updated: `map.html` (a two-column
+grid past 1080px) and `rooms/exercises.html` (its chips grow on a coarse
+pointer); everything else is `shared/theme.css`, with
+`dnd/shared/theme.css` re-copied to stay byte-identical. A future room
+inherits all of it by using the shared classes: `.slaf-bars` rows,
+`.slaf-info`, `.slaf-use-this`, and ticks inside a `<label>`. A room that
+invents its own small control should add it to the coarse-pointer block
+rather than sizing it for a mouse and leaving a phone to cope.
+
+## D-137 — The interaction layer: nothing snaps, every word fits
+
+The app was described as feeling amateurish. Rather than argue about taste,
+every room was measured. Two numbers came back and both were damning:
+
+- **4,558 of 4,844 links and buttons had no transition at all** — 94%.
+  Every hover, press and open snapped instantly.
+- **Eight rooms were clipping text**, all of them the hop links, showing
+  "Where It Goes & how it's" and stopping mid-word.
+
+Nothing was broken. That is the point: a control that changes state
+instantly reads as a picture of a control rather than one you are touching,
+and a name cut off mid-word reads as a bug even when the layout is doing
+exactly what it was told.
+
+**One easing, two durations, for the whole app.** `--ease` settles rather
+than bounces — quick out, soft landing — with `--dur-fast` for colour and
+`--dur` for shadow. Applied to links, buttons, summaries, inputs, cards,
+chips, the menu and the ⓘ. Never `transition: all`: that animates layout
+too, so any reflow makes the page lurch, which is worse than no motion at
+all. The layer names the six properties it changes.
+
+A press moves 1px — enough to read as a button going down, small enough
+never to shift what is around it. A card that is a link lifts on hover; a
+card that is not does not pretend to. Disabled controls get no hover, no
+press and a not-allowed cursor, so the app never invites a tap it will
+refuse.
+
+The `prefers-reduced-motion` block already cut every duration to 0.01ms, so
+this entire layer costs a person who asked for stillness exactly nothing.
+That was checked, not assumed.
+
+**Every word in the box.** `.slaf-hop` was `white-space: nowrap` with an
+ellipsis. A room name is the entire content of that link, so truncating it
+removes the only thing it says. It now wraps to two lines and clamps beyond
+that. Clipped rooms went from eight to zero.
+
+**Contrast.** Every text node in every room was then measured against WCAG
+AA. 57 failed, and 33 of those were a single bug: the theme never gave a
+bare `<a>` a colour, so any link a component did not style itself fell back
+to the browser default `#0000EE` — pure blue on navy, 1.88:1, invisible.
+"Load it below", "Your Data →" and "The Score" were all unreadable on the
+front page. One default rule fixes all 33 and stops it recurring.
+
+The primary button was next: a dark label on `--color-accent` measured
+4.04:1. Lightening the fill to `--sapphire-300` rather than touching the
+label takes it to 7.6:1 and makes the primary action read as primary.
+`--color-accent` itself is untouched, because it is a border and chip
+colour in a hundred places where it carries no text.
+
+One mistake there is worth recording. The first attempt added
+`.slaf-btn { color: var(--color-text); }` at the end of this file. That
+ties on specificity with `.slaf-btn--primary` and wins on source order, so
+it silently repainted the primary label near-white on the new light blue
+and took it to 2.34:1 — worse than before. A variant's colour is set where
+the variant is defined, never in a later blanket rule.
+
+After: 0 of 5,123 interactive elements without a transition, 0 rooms
+clipping text, and contrast failures down from 57 to 10. The remaining ten
+are room-local `<button>` elements at ~4.1:1 that do not use the shared
+class; they are listed here rather than quietly claimed as fixed.
+
+### Compatibility note
+
+Stored shape: unchanged. Nothing here reads or writes the household. Rooms
+updated: none individually — all of it is `shared/theme.css`, with
+`dnd/shared/theme.css` re-copied to stay byte-identical, so all 59 pages
+inherit it. A future room gets the motion by using the shared element and
+class names; one that invents a control should add it to the transition
+list rather than shipping something that snaps while everything around it
+moves. Do not add `transition: all` anywhere — `test/rooms/motion.js`
+fails the build if it appears outside a comment.
+
+## D-138 — The FIRE Lab: every calculation on one screen, drawn
+
+The FIRE maths was all there and almost none of it was visible. Twelve runs
+sat in `engines/exercises.js` behind an exercise list, each computing
+through an engine that already owned its formula, and each returning a
+figure and a sentence. A sentence is not what a sensitivity grid or a
+milestone ladder wants to be.
+
+`rooms/fire-lab.html` draws them. Seven panels, all reading the same
+household, all recomputing together:
+
+- **The number and the ring.** The FIRE number beside a donut of how much of
+  it is already invested, with the gap and the time to close it on a rail
+  underneath, each figure carrying what it means (the pattern from D-133).
+- **The withdrawal rate.** One range control. Move it and every panel on the
+  page moves with it.
+- **The six flavours**, as bars: FIRE, Lean, Chubby, Fat, Coast and Barista,
+  each with how far away it is. One that cannot be computed says which
+  figure it wants rather than being dropped or drawn as zero.
+- **Where the number comes from**, as a donut of a year's spending by kind.
+- **Milestones** at 25 / 50 / 75 / 100%, as bars of years, with the ones
+  already reached marked rather than shown as a gap.
+- **The path**: portfolio compounding year by year against the flat line of
+  the number, stopping a few years after the crossing rather than running a
+  flat forty.
+- **The sensitivity grid**: four withdrawal rates by five lifestyle levels,
+  with the square you are actually standing on lit.
+
+**It owns no formula and writes nothing.** Every figure comes from
+`Fire.calculateFIRE`, `Fire.progressToward`, `Fire.allVariants`,
+`Tier0.savingsRate` and `Projection`. The withdrawal-rate control is a
+local override for the view (SPEC.md §12.2) and is gone on reload — the
+stored assumption is never touched, which the browser walk confirms by
+reading it back after moving the slider.
+
+**A donut of one slice is not a chart.** When Cash Flow has a categorised
+month the spending donut draws it; when it does not, the room says what a
+year of spending is and links to where to categorise it, rather than
+drawing a circle that is 100% "spending" and tells you nothing. Both
+branches are exercised — four real slices with categories, the sentence
+without.
+
+Two bugs found by running it rather than reading it. `Charts.area` takes
+`[x, y]` pairs; feeding it `{x, y}` objects produced `NaN` in every path
+attribute and ten SVG errors on the console, with the chart silently blank
+apart from its legend. And the spending summary hangs off
+`TABLES.expenseCategories`, not `spendingCategories` — the wrong key made
+`summarise` return null and a `&&` chain then called `.filter` on it. Both
+are the kind of thing a unit test on a static file cannot see.
+
+### Compatibility note
+
+Stored shape: unchanged. The room reads `expenses.monthlyEssential`,
+`investments`, `dob`, income and filing status, and writes nothing at all —
+it owns no field in `shared/ownership.js` and calls no `Spine` mutator.
+Rooms updated: none; `rooms/fire.html` keeps its job of choosing and storing
+a variant target, and the Lab is the read-only view over the same engines.
+New: `rooms/fire-lab.html`, a registry row at order 8.5 between FIRE Number
+and Real Hourly Wage, `test/rooms/fire-lab.js`, and a regenerated
+`rooms.json`. A future panel added here must keep the two rules that make
+the room safe: read through the engine that owns the formula, and treat any
+parameter someone can move as a local override rather than a write.
+
 ---
 
 # The Dungeons & Dividends entries

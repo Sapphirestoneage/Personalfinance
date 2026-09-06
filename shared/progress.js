@@ -305,6 +305,152 @@
       + '</nav>';
   }
 
+  /* ---- The menu ----------------------------------------------------------
+     The header strip walks the path one room at a time and offers the map.
+     That is fine for "what is next" and useless for "take me to the thing
+     I need now" — Your Data sits at order 98, so reaching an export meant
+     opening the map and scrolling to the end of fifty-seven rooms. Upkeep
+     is not a destination on a journey; it is a drawer you pull open from
+     wherever you are (D-135).
+
+     Built here rather than per room for the same reason the hop strip is:
+     every page already loads this file and already has the one element it
+     hangs off. */
+
+  /* Upkeep first, because that is what a menu is reached for. Each is a
+     registry id, so a room that is renamed or moved is followed, and one
+     that does not exist is simply skipped rather than becoming a dead link. */
+  var UPKEEP = ['data', 'refresh', 'history', 'start', 'get-help'];
+
+  var GROUPS = [
+    ['core', 'The path'],
+    ['about-you', 'About you'],
+    ['read', 'What it means'],
+    ['explore', 'Explore']
+  ];
+
+  function menuLink(room, roomId, current) {
+    var here = room.id === current;
+    return '<a class="slaf-menu-link' + (here ? ' is-here' : '') + '" href="'
+      + escapeHtml(href(room.href, roomId)) + '"' + (here ? ' aria-current="page"' : '') + '>'
+      + escapeHtml(room.title) + '</a>';
+  }
+
+  function menuHtml(roomId) {
+    var all = Registry.inOrder();
+    var byId = {};
+    all.forEach(function (r) { byId[r.id] = r; });
+
+    var upkeep = UPKEEP.map(function (id) { return byId[id]; })
+      .filter(Boolean)
+      .map(function (r) { return menuLink(r, roomId, roomId); }).join('');
+
+    var seen = {};
+    UPKEEP.forEach(function (id) { seen[id] = true; });
+    var groups = GROUPS.map(function (g) {
+      var rooms = all.filter(function (r) { return r.kind === g[0] && !seen[r.id]; });
+      if (!rooms.length) return '';
+      return '<p class="slaf-menu-cap">' + escapeHtml(g[1]) + '</p>'
+        + rooms.map(function (r) { return menuLink(r, roomId, roomId); }).join('');
+    }).join('');
+
+    return '<div class="slaf-menu-head">'
+      + '<span class="slaf-menu-title">Money Rooms</span>'
+      + '<button type="button" class="slaf-menu-x" data-menu-close aria-label="Close the menu">\u2715</button>'
+      + '</div>'
+      + '<nav class="slaf-menu-body" aria-label="All rooms">'
+      + '<p class="slaf-menu-cap">Your data &amp; upkeep</p>' + upkeep
+      + '<a class="slaf-menu-link" href="' + ((atRoot(roomId) ? '' : '../')) + 'map.html">Every room, on one page</a>'
+      + groups
+      + '</nav>';
+  }
+
+  /**
+   * mountMenu(roomId) — the button, the drawer and the backdrop, appended to
+   * <body> so nothing clips it and so it is never inside a room's live-input
+   * container (D-034). Returns the button.
+   */
+  function mountMenu(roomId, host) {
+    if (typeof document === 'undefined') return null;
+    if (document.getElementById('slaf-menu')) return null;
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'slaf-menu-btn';
+    btn.id = 'slaf-menu-btn';
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-controls', 'slaf-menu');
+    btn.setAttribute('aria-label', 'Menu');
+    btn.innerHTML = '<span class="slaf-menu-bars" aria-hidden="true"><i></i><i></i><i></i></span>';
+
+    var back = document.createElement('div');
+    back.className = 'slaf-menu-backdrop';
+    back.hidden = true;
+
+    var panel = document.createElement('aside');
+    panel.id = 'slaf-menu';
+    panel.className = 'slaf-menu';
+    panel.hidden = true;
+    panel.innerHTML = menuHtml(roomId);
+
+    document.body.appendChild(back);
+    document.body.appendChild(panel);
+    if (host && host.parentNode) host.parentNode.insertBefore(btn, host);
+    else document.body.appendChild(btn);
+
+    /* Two modes from one drawer. Narrow: a panel you pull open over the
+       page and dismiss. Wide: there is room for it to simply stay, so it
+       does — no button, no backdrop, no dismissing, and the page sits
+       beside it. Pinning is done here rather than in CSS because [hidden]
+       is display:none !important in the theme, and a media query fighting
+       that with more !important is worse than one matchMedia. */
+    var wide = window.matchMedia('(min-width: 1080px)');
+
+    function pinned() { return wide.matches; }
+
+    function setOpen(open) {
+      if (pinned()) return;
+      panel.hidden = !open;
+      back.hidden = !open;
+      btn.setAttribute('aria-expanded', String(open));
+      document.documentElement.classList.toggle('slaf-menu-open', open);
+      if (open) {
+        var first = panel.querySelector('.slaf-menu-link');
+        if (first) first.focus();
+      } else {
+        btn.focus();
+      }
+    }
+
+    function applyMode() {
+      var root = document.documentElement;
+      if (pinned()) {
+        panel.hidden = false; back.hidden = true; btn.hidden = true;
+        btn.setAttribute('aria-expanded', 'true');
+        root.classList.add('slaf-menu-pinned');
+        root.classList.remove('slaf-menu-open');
+      } else {
+        panel.hidden = true; back.hidden = true; btn.hidden = false;
+        btn.setAttribute('aria-expanded', 'false');
+        root.classList.remove('slaf-menu-pinned', 'slaf-menu-open');
+      }
+    }
+    applyMode();
+    if (wide.addEventListener) wide.addEventListener('change', applyMode);
+    else if (wide.addListener) wide.addListener(applyMode);
+
+    btn.addEventListener('click', function () { setOpen(panel.hidden); });
+    back.addEventListener('click', function () { setOpen(false); });
+    panel.addEventListener('click', function (e) {
+      if (e.target.closest('[data-menu-close]')) setOpen(false);
+    });
+    /* Escape closes from anywhere, including from inside the drawer. */
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !panel.hidden) { e.preventDefault(); setOpen(false); }
+    });
+    return btn;
+  }
+
   /**
    * mountHeader(roomId) — upgrade the room's single "← All rooms" link into
    * that three-way nav, in place. Every room already has one, so this needs
@@ -318,6 +464,7 @@
     nav.className = 'slaf-hops-host';
     nav.innerHTML = headerNavHtml(roomId);
     back.parentNode.replaceChild(nav, back);
+    mountMenu(roomId, nav);
     return nav;
   }
 
@@ -389,6 +536,9 @@
   return {
     mount: mount,
     mountHeader: mountHeader,
+    mountMenu: mountMenu,
+    menuHtml: menuHtml,
+    UPKEEP: UPKEEP,
     headerNavHtml: headerNavHtml,
     forRoom: forRoom,
     all: all,

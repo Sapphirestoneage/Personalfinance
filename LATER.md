@@ -114,3 +114,45 @@ moved between them. `rooms/history.html`, D-122.
   fixed-rate debt to every engine, which is honest but silent. A nudge on
   the plan card naming those debts would be better than a sentence only
   visible inside the row.
+
+## One debt, one screen (D-134)
+
+- **Built**: four facts up, two drawers with live summaries, open state
+  that survives a rebuild, a wider measure for this room. D-134.
+- Still open: the same problem exists in every room that edits a list of
+  things. Cash Flow's expense log and the Statement's asset list both put
+  every field of every row on screen at once. The drawer helper here is
+  room-local; if a second room needs it, it should move to `shared/` rather
+  than be copied, and the open-state rule (per visit, never stored,
+  repainted on every write) should move with it.
+- Also open: the room-local width override is a blunt instrument. If more
+  editor rooms need it, a second measure token (`--measure-wide`) belongs
+  in `shared/theme.css` instead of a media query per room.
+
+## The menu (D-135)
+
+- **Built**: the drawer, the upkeep group, the pinned desktop sidebar, an
+  opaque panel, a desktop measure that is not a phone's. D-135.
+- Still open: the hop strip and the menu now overlap in purpose. The strip
+  is the path, the menu is everything — that is defensible, but on a pinned
+  desktop the strip's "All rooms" link is a third route to the same place
+  and could go.
+- Also open: the desktop pass stopped at width. The rooms still stack one
+  card per row on a 1400px screen where two columns would read better, and
+  the dashboard's instrument grid is the only thing that uses the space
+  properly. That is a per-room layout job, not a token change.
+
+## Phone and desktop, measured (D-136)
+
+- **Built**: the ratios sideways scroll, coarse-pointer touch targets, the
+  stepped measure, the map two-up. D-136.
+- Still open, and the real desktop work: **a layout per room**. Most rooms
+  are a vertical stack of cards whose order carries meaning — the figure,
+  then the chart, then the inputs — so they cannot be flowed into columns
+  blind. Each room needs someone to say which of its cards are independent
+  and may sit side by side. The dashboard's instrument grid and the map are
+  the only two that use a monitor properly today.
+- Also open: the audit script itself (`scratchpad/audit.js` in the session
+  that wrote D-136) is worth keeping as `test/responsive.js` — it walks
+  every room at two widths and reports overflow, small targets and width
+  used. It is currently rebuilt by hand each time the question comes up.

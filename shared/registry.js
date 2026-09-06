@@ -221,6 +221,26 @@
       ]
     },
     {
+      id: 'fire-lab',
+      kind: 'read',
+      needs: ['monthlyExpenses', 'investments'],
+      order: 8.5,
+      title: 'FIRE Lab',
+      blurb: 'Every FIRE calculation on one screen and drawn: the number, how far along you are, the six flavours side by side, the milestones, the path, and what a different withdrawal rate does to all of it.',
+      href: 'rooms/fire-lab.html',
+      tier: 1,
+      tags: ['income', 'cashflow'],
+      subsections: [
+        { id: 'number',      label: 'The number' },
+        { id: 'swr',         label: 'Withdrawal rate' },
+        { id: 'flavours',    label: 'The flavours' },
+        { id: 'split',       label: 'Where it comes from' },
+        { id: 'milestones',  label: 'Milestones' },
+        { id: 'path',        label: 'The path' },
+        { id: 'sensitivity', label: 'If the assumptions are wrong' }
+      ]
+    },
+    {
       id: 'fire',
       kind: 'read',
       needs: ['monthlyExpenses', 'investments', 'dob'],

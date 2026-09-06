@@ -86,6 +86,12 @@
   --space-7: 48px;
 
   --radius-sm: 8px;
+  /* Motion (D-137). One easing and two durations for the whole app, so
+     nothing invents its own timing and everything feels like one product.
+     The curve settles rather than bouncing: quick out, soft landing. */
+  --ease: cubic-bezier(.2, .7, .3, 1);
+  --dur-fast: 110ms;
+  --dur: 180ms;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-pill: 999px;
@@ -304,13 +310,18 @@ h3 { font-size: var(--text-md); }
 .slaf-btn:hover { border-color: var(--color-border-active); }
 
 .slaf-btn--primary {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
+  /* Dark label on --color-accent measured 4.04:1, under the 4.5 AA floor.
+     Lightening the fill rather than the text takes it to 7.6:1 and makes the
+     primary action read as primary, which is its job. --color-accent itself
+     is untouched: it is a border and chip colour in a hundred places where
+     it is not carrying text. D-137. */
+  background: var(--sapphire-300);
+  border-color: var(--sapphire-300);
   color: var(--color-accent-contrast);
   font-weight: 600;
 }
 
-.slaf-btn--primary:hover { background: var(--color-accent-hover); }
+.slaf-btn--primary:hover { background: var(--sapphire-200); border-color: var(--sapphire-200); }
 
 .slaf-btn--quiet {
   background: transparent;
@@ -539,7 +550,10 @@ h3 { font-size: var(--text-md); }
    so it is the same three destinations wherever you are.                   */
 .slaf-hops-host { max-width: var(--measure); margin: 0 auto; }
 .slaf-hops { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-3); }
-.slaf-hop { font-size: var(--text-sm); color: var(--color-accent-hover); text-decoration: none; padding: var(--space-2) 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A room name is the whole point of the link, so it wraps rather than
+   truncating: eight rooms were showing "Where It Goes & how it’s" and
+   stopping there. Two lines, then ellipsis if a name is truly enormous. */
+.slaf-hop { font-size: var(--text-sm); color: var(--color-accent-hover); text-decoration: none; padding: var(--space-2) 0; min-width: 0; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow-wrap: break-word; }
 .slaf-hop:hover { text-decoration: underline; }
 .slaf-hop--prev { text-align: left; flex: 1 1 0; }
 .slaf-hop--next { text-align: right; flex: 1 1 0; }
@@ -718,3 +732,198 @@ a.slaf-explain-chip:hover { border-color: var(--color-accent); }
 .slaf-sankey .flow:hover { opacity: .85; }
 .slaf-sankey .node { stroke: var(--navy-950); stroke-width: .6; }
 .slaf-sankey .tick.small { fill: rgba(147, 197, 253, 0.6); font-size: 8.5px; }
+
+/* ==========================================================================
+   The menu (D-135) — upkeep and every room, one pull from anywhere.
+   Injected by shared/progress.js into <body>, so it is never inside a room's
+   live-input container and nothing can clip it.
+   ========================================================================== */
+.slaf-menu-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; margin-bottom: var(--space-2);
+  background: none; border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm); color: var(--color-text-muted); cursor: pointer;
+}
+.slaf-menu-btn:hover { border-color: var(--color-border-active); color: var(--color-text); }
+.slaf-menu-bars { display: block; width: 16px; }
+.slaf-menu-bars i { display: block; height: 2px; background: currentColor; border-radius: 1px; }
+.slaf-menu-bars i + i { margin-top: 3px; }
+
+.slaf-menu-backdrop { position: fixed; inset: 0; background: rgba(2, 8, 23, .62); z-index: 90; }
+
+.slaf-menu {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 91;
+  width: min(272px, 84vw);
+  /* Solid, not the translucent surface token: a drawer you can read the
+     page through is not a drawer. */
+  background: var(--navy-850);
+  border-right: 1px solid var(--color-border-strong);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.slaf-menu-head {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+.slaf-menu-title { font-family: var(--font-display); font-size: var(--text-md); color: var(--color-text); }
+.slaf-menu-x {
+  background: none; border: none; color: var(--color-text-muted); cursor: pointer;
+  font: inherit; font-size: var(--text-md); line-height: 1; padding: var(--space-1) var(--space-2);
+}
+.slaf-menu-x:hover { color: var(--color-text); }
+.slaf-menu-body { overflow-y: auto; padding: var(--space-2) 0 var(--space-4); -webkit-overflow-scrolling: touch; }
+.slaf-menu-cap {
+  font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-text-faint); margin: var(--space-3) 0 var(--space-1); padding: 0 var(--space-3);
+}
+.slaf-menu-body > .slaf-menu-cap:first-child { margin-top: var(--space-1); }
+.slaf-menu-link {
+  display: block; padding: var(--space-2) var(--space-3);
+  color: var(--color-text-muted); text-decoration: none; font-size: var(--text-sm);
+  border-left: 2px solid transparent;
+}
+.slaf-menu-link:hover { background: var(--color-surface-active); color: var(--color-text); }
+.slaf-menu-link.is-here {
+  color: var(--color-text); border-left-color: var(--color-accent);
+  background: var(--color-surface-active); font-weight: 600;
+}
+/* The page behind does not scroll while the drawer is open. */
+html.slaf-menu-open, html.slaf-menu-open body { overflow: hidden; }
+
+/* Wide enough for the menu to simply stay: it pins open as a sidebar, the
+   button and backdrop go away, and the page sits beside it. Narrow, it is
+   the drawer above. shared/progress.js drives the switch on matchMedia,
+   because [hidden] is display:none !important here and a media query
+   fighting that with more !important is worse. D-135. */
+html.slaf-menu-pinned body { padding-left: 272px; }
+html.slaf-menu-pinned .slaf-menu { box-shadow: none; }
+html.slaf-menu-pinned .slaf-menu-x { display: none; }
+html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
+
+/* The rooms are written to one narrow measure because most of them are
+   things you read. On a desktop that leaves a ribbon in a field of navy,
+   so the column grows — still a comfortable line length, just not a
+   phone's. A room that sets its own wider measure keeps it. */
+@media (min-width: 1080px) {
+  :root { --measure: 620px; }
+}
+@media (min-width: 1400px) {
+  :root { --measure: 680px; }
+}
+
+/* ==========================================================================
+   Phone and desktop, measured (D-136).
+   ========================================================================== */
+
+/* A bar row's third column is a figure, so it never wraps. When the row has
+   no figure it carries a REASON instead — "needs monthly debt payments,
+   gross annual income" — and nowrap pushed that 69px past the right edge of
+   a phone, scrolling the whole page sideways. A reason is a sentence and
+   wraps like one; a figure is still a figure. */
+.slaf-bars .row > * { min-width: 0; }
+.slaf-bars .row.is-empty .val { white-space: normal; overflow-wrap: break-word; text-align: left; }
+
+/* Touch targets. A finger is not a cursor: the suggestion chip was 19px
+   tall, a checkbox 16px, a summary 25px. Only on a coarse pointer, so a
+   mouse keeps the compact controls these were designed as. Inline links
+   inside a sentence are deliberately left alone — padding them to 36px
+   would tear paragraphs apart, and they are not the primary control. */
+@media (pointer: coarse) {
+  .slaf-use-this,
+  .slaf-chip,
+  .slaf-na-btn {
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+  }
+  /* Rooms style their own ticks as `.flag input`, which ties on specificity
+     with a bare element selector and wins on order. Naming the label lifts
+     this above every room following that pattern. */
+  input[type="checkbox"], input[type="radio"],
+  label input[type="checkbox"], label input[type="radio"] { width: 20px; height: 20px; }
+  /* The ⓘ is a 20px circle and the room tells you to tap it, 45 times on the
+     ratios page. An invisible ::after hit area was tried first and did not
+     actually take the tap — something paints over it — so the button itself
+     grows on a coarse pointer. A mouse keeps the 20px circle. */
+  .slaf-info { width: 30px; height: 30px; font-size: 14px; }
+  .slaf-manage-toggle { min-height: 32px; display: inline-flex; align-items: center; }
+  summary { min-height: 32px; display: flex; align-items: center; }
+  /* The label a checkbox sits in is the real target, so give it the height. */
+  label:has(> input[type="checkbox"]) { min-height: 32px; display: inline-flex; align-items: center; gap: 8px; }
+}
+
+/* Very wide: a little more column, but not much. Past roughly 75 characters
+   a line gets harder to read, not easier, so the answer to a big monitor is
+   not an ever-wider paragraph. */
+@media (min-width: 1600px) {
+  :root { --measure: 720px; }
+}
+
+/* ==========================================================================
+   The interaction layer (D-137).
+   Before this, 4,558 of the app's 4,844 links and buttons had no transition
+   at all: every hover, press and open snapped. Nothing was broken and the
+   whole thing felt cheap, because a control that changes instantly reads as
+   a picture of a control rather than one you are touching.
+
+   One easing, two durations, applied to the properties that actually change.
+   Never `transition: all` — that animates layout too and makes a page lurch.
+   The reduced-motion block above already cuts every duration to nothing, so
+   this costs a person who asked for stillness exactly nothing.
+   ========================================================================== */
+a, button, summary, select, input, textarea,
+.slaf-card, .slaf-chip, .slaf-hop, .slaf-menu-link, .slaf-info, .slaf-use-this {
+  transition:
+    color var(--dur-fast) var(--ease),
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    opacity var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+/* A press should be felt. 1px is enough to read as a button going down and
+   small enough never to shift what is around it. */
+.slaf-btn:active:not(:disabled),
+.slaf-chip:active,
+.slaf-info:active,
+.slaf-use-this:active { transform: translateY(1px); }
+
+/* A card you can click lifts; a card you cannot does not pretend to. */
+a.slaf-card:hover, .slaf-card a:hover { text-decoration: none; }
+a.slaf-card:hover, button.slaf-card:hover {
+  border-color: var(--color-border-active);
+  box-shadow: 0 2px 14px rgba(2, 8, 23, .35);
+}
+
+/* Inputs say they are ready before they are typed in. */
+.slaf-input-shell:hover { border-color: var(--color-border-active); }
+
+/* A link in prose underlines on hover rather than living underlined, so a
+   paragraph stays readable and the link still announces itself. */
+.slaf-menu-link:hover { padding-left: calc(var(--space-3) + 2px); }
+
+/* Disabled means disabled: no hover, no press, no pointer. */
+:disabled, [aria-disabled="true"] { cursor: not-allowed; }
+:disabled:hover, [aria-disabled="true"]:hover { transform: none; }
+
+/* ==========================================================================
+   Contrast (D-137).
+   Measured every text node in every room against WCAG AA. 57 failed, and 33
+   of those were one bug: the theme never gave a bare <a> a colour, so any
+   link a component did not style itself fell back to the browser default
+   #0000EE — pure blue on navy, 1.88:1, effectively invisible. "Load it
+   below", "Your Data →" and "The Score" were all unreadable on the front
+   page. A default link colour costs one rule and can never happen again.
+   ========================================================================== */
+a { color: var(--color-accent-hover); }
+a:hover { color: var(--sapphire-100); }
+
+/* The $ / % affixes measured 4.04:1 and move one step up the ramp. The
+   button labels are handled at .slaf-btn--primary above, NOT here: a
+   `.slaf-btn { color }` rule at the end of this file ties on specificity
+   with the primary variant and wins on order, so it silently repainted the
+   primary label near-white on light blue and took it to 2.34:1. Variants
+   are set where the variant is defined, never in a later blanket rule. */
+.slaf-input-shell > .slaf-affix { color: var(--sapphire-100); }

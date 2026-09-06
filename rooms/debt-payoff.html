@@ -46,9 +46,34 @@
   .debt-name { flex: 1; min-width: 0; background: transparent; border: none; border-bottom: 1px solid var(--color-border-strong); color: var(--color-text); font-family: var(--font-body); font-size: var(--text-base); padding: 2px 0; outline: none; }
   .debt-name:focus { border-bottom-color: var(--color-border-active); }
   .debt-remove { background: none; border: none; color: var(--color-accent); cursor: pointer; font-size: var(--text-md); padding: 0 var(--space-1); }
+  /* This room is an editor, not prose: one debt is a row of facts, and at
+     480px they stack into a column a screen tall. Wider here only, so the
+     shared measure stays what it is for every reading room. D-134. */
+  @media (min-width: 760px) {
+    .slaf-wrap, .room-head { max-width: 720px; }
+  }
+  @media (min-width: 1040px) {
+    .slaf-wrap, .room-head { max-width: 980px; }
+  }
+
+  /* The folded parts of a row. */
+  .fold { border-top: 1px solid var(--color-border); margin-top: var(--space-3); }
+  .fold > summary { display: flex; align-items: baseline; gap: var(--space-2); cursor: pointer; list-style: none; padding: var(--space-2) 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+  .fold > summary::-webkit-details-marker { display: none; }
+  .fold > summary::before { content: '▸'; color: var(--color-text-faint); font-size: 11px; line-height: 1.4; transition: transform .12s ease; }
+  .fold[open] > summary::before { transform: rotate(90deg); }
+  .fold > summary:hover { color: var(--color-text); }
+  .fold-title { font-weight: 600; }
+  .fold-sum { color: var(--color-text-faint); font-size: var(--text-xs); margin-left: auto; text-align: right; min-width: 0; }
+  .fold-body { padding-bottom: var(--space-2); }
+
   .debt-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-2); align-items: end; }
   .debt-grid--2 { grid-template-columns: 1fr 1fr; }
   .debt-grid--3 { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 560px) {
+    .debt-grid--3 { grid-template-columns: 1fr 1fr; }
+    .debt-grid--3 > *:nth-child(3) { grid-column: 1 / -1; }
+  }
   .debt-grid > * { min-width: 0; }
   .debt-meta { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); align-items: stretch; margin-top: var(--space-2); }
   .debt-warn { font-size: var(--text-xs); color: var(--color-caution); margin: var(--space-2) 0 0; }
@@ -331,46 +356,51 @@
         + '<button type="button" class="debt-archive" data-archive="' + d.id + '" title="Paid off or on hold — keep it, stop counting it">Set aside</button>'
         + '<button type="button" class="debt-remove" data-remove="' + d.id + '" aria-label="Remove">✕</button>'
         + '</div>'
-        + '<div class="debt-grid debt-grid--2">'
+        + '<div class="debt-grid debt-grid--3">'
         + field(d, 'balanceCents', 'Balance', '$', null, 'e.g. 3200')
         + field(d, 'minPaymentCents', 'Min /mo', '$', null, d.type === 'family' ? 'or a due date' : 'e.g. 95')
-        + '</div>'
-        + interestBlock(d)
-        + '<div class="debt-meta">'
         + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Type</span>'
         + '<span class="slaf-input-shell"><select data-debt="' + d.id + '" data-field="type">'
         + DEBT_TYPES.map(function (t) {
             return '<option value="' + t[0] + '"' + (d.type === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
           }).join('')
         + '</select></span></label>'
-        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Feels like</span>'
-        + '<span class="slaf-input-shell"><select data-debt="' + d.id + '" data-field="emotionalTag">'
-        + '<option value="">Neutral</option>'
-        + tags.map(function (t) {
-            return '<option value="' + t.id + '"' + (d.emotionalTag === t.id ? ' selected' : '') + '>' + t.label + '</option>';
-          }).join('')
-        + '</select></span></label>'
         + '</div>'
-        + keepBlock(d)
+        + interestBlock(d)
+        /* Everything past this point is set once and then rarely touched,
+           so it folds away. A whole screen per debt made a three-debt
+           household unreadable on a phone (D-134). The summaries carry a
+           live count, so a closed drawer is never a black box. */
+        + drawer(d, 'why', 'Why you’re keeping it', whySummary(d),
+            '<div class="debt-meta">'
+            + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Feels like</span>'
+            + '<span class="slaf-input-shell"><select data-debt="' + d.id + '" data-field="emotionalTag">'
+            + '<option value="">Neutral</option>'
+            + tags.map(function (t) {
+                return '<option value="' + t.id + '"' + (d.emotionalTag === t.id ? ' selected' : '') + '>' + t.label + '</option>';
+              }).join('')
+            + '</select></span></label>'
+            + '</div>'
+            + keepBlock(d))
         /* Two dates on every debt: when it started, and when it is due
            back in full. On a family loan the due date is what the minimum
-           comes from when no monthly amount was agreed. D-124. */
-        + '<div class="debt-dates">'
-        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Borrowed on</span>'
-        + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id + '" data-field="borrowedOn" value="' + (d.borrowedOn || '') + '" aria-label="Date borrowed"/></span></label>'
-        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Due back by</span>'
-        + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id + '" data-field="dueOn" value="' + (d.dueOn || '') + '" aria-label="Date due back in full"/></span></label>'
-        + '</div>'
-        + '<p class="debt-hint" data-family-hint="' + d.id + '"' + (d.type === 'family' ? '' : ' hidden') + '>With a due date and no monthly amount, the minimum is the balance spread over the months left.</p>'
-        /* The limit only means something on revolving debt — a mortgage has
-           no limit for the balance to be a share of — so the block is shown
-           only for cards. Built for every row and hidden by type, so a
-           change of type never rebuilds the row under a finger. D-045. */
-        + '<div class="debt-limit" data-cardonly="' + d.id + '"' + (d.type === 'credit_card' ? '' : ' hidden') + '>'
-        + field(d, 'creditLimitCents', 'Credit limit', '$', null, 'e.g. 10000')
-        + '<p class="debt-hint">Optional, and only used for credit utilisation — '
-        + 'balance against limit, where 30% is the usual ceiling. Blank means the '
-        + 'ratio stays unavailable rather than guessed.</p></div>'
+           comes from when no monthly amount was agreed. D-124. The limit
+           only means something on revolving debt — a mortgage has no limit
+           for the balance to be a share of — so it is built for every row
+           and hidden by type, never rebuilt on a change of type. D-045. */
+        + drawer(d, 'extras', 'Dates & limit', extrasSummary(d),
+            '<div class="debt-dates">'
+            + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Borrowed on</span>'
+            + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id + '" data-field="borrowedOn" value="' + (d.borrowedOn || '') + '" aria-label="Date borrowed"/></span></label>'
+            + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Due back by</span>'
+            + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id + '" data-field="dueOn" value="' + (d.dueOn || '') + '" aria-label="Date due back in full"/></span></label>'
+            + '</div>'
+            + '<p class="debt-hint" data-family-hint="' + d.id + '"' + (d.type === 'family' ? '' : ' hidden') + '>With a due date and no monthly amount, the minimum is the balance spread over the months left.</p>'
+            + '<div class="debt-limit" data-cardonly="' + d.id + '"' + (d.type === 'credit_card' ? '' : ' hidden') + '>'
+            + field(d, 'creditLimitCents', 'Credit limit', '$', null, 'e.g. 10000')
+            + '<p class="debt-hint">Optional, and only used for credit utilisation — '
+            + 'balance against limit, where 30% is the usual ceiling. Blank means the '
+            + 'ratio stays unavailable rather than guessed.</p></div>')
         + '<p class="debt-warn" data-warn="' + d.id + '"></p>'
         + '</div>';
     }).join('');
@@ -419,8 +449,18 @@
       if (box) box.checked = d.interestFree === true;
       paintKeep(d);
       paintInterest(d);
+      paintFoldSummary(d);
     });
     paintPromos();
+  }
+
+  /* A closed drawer still has to say what is inside it, so its summary is
+     repainted on every write like everything else in the guarded list. */
+  function paintFoldSummary(d) {
+    var why = document.querySelector('[data-fold-sum="' + drawerKey(d.id, 'why') + '"]');
+    if (why) why.innerHTML = whySummary(d);
+    var ex = document.querySelector('[data-fold-sum="' + drawerKey(d.id, 'extras') + '"]');
+    if (ex) ex.innerHTML = extrasSummary(d);
   }
 
   /* The interest block, painted rather than rebuilt: which mode is on,
@@ -616,6 +656,13 @@
     if (DATE_FIELDS[key]) writeField(node.getAttribute('data-debt'), key, node.value);
   });
 
+  /* `toggle` does not bubble, so it is captured. */
+  el('debt-list').addEventListener('toggle', function (evt) {
+    var det = evt.target;
+    if (!det || !det.getAttribute || !det.getAttribute('data-fold')) return;
+    openDrawers[drawerKey(det.getAttribute('data-for'), det.getAttribute('data-fold'))] = det.open;
+  }, true);
+
   function onListClick(evt) {
     /* Reasons to keep it (D-132): a chip toggles one, "None" clears them,
        and the suggestion is confirmed or dismissed as a whole. */
@@ -656,6 +703,50 @@
     var list = h.debts || [];
     for (var i = 0; i < list.length; i++) { if (list[i].id === id) return list[i]; }
     return null;
+  }
+
+  /* ---- The folded parts of a row -----------------------------------------
+     A debt needs four facts to be planned: what it is, what is owed, the
+     minimum, and how interest works. Everything else — the feeling, the
+     reasons to keep it, the two dates, the credit limit — is set once and
+     then rarely touched, so it folds behind a caret. Before this, one debt
+     filled a phone screen and a household with three of them could not be
+     read at all (D-134).
+
+     Open/closed is UI state for the visit and is never stored, but it does
+     have to survive a rebuild of the list, or a drawer would snap shut
+     while someone was working inside it. */
+  var openDrawers = {};
+
+  function drawerKey(id, name) { return id + '|' + name; }
+
+  function drawer(d, name, title, summary, body) {
+    var open = openDrawers[drawerKey(d.id, name)] === true;
+    return '<details class="fold" data-fold="' + name + '" data-for="' + d.id + '"' + (open ? ' open' : '') + '>'
+      + '<summary><span class="fold-title">' + title + '</span>'
+      + '<span class="fold-sum" data-fold-sum="' + drawerKey(d.id, name) + '">' + summary + '</span></summary>'
+      + '<div class="fold-body">' + body + '</div></details>';
+  }
+
+  /** What a closed drawer says about itself, so nothing hides silently. */
+  function whySummary(d) {
+    var bits = [];
+    var n = (d.keepReasons || []).length;
+    if (n) bits.push(n + (n === 1 ? ' reason' : ' reasons'));
+    if (d.emotionalTag) {
+      var tag = (RULES.emotionalPriority.tags || []).filter(function (t) { return t.id === d.emotionalTag; })[0];
+      if (tag) bits.push(tag.label.toLowerCase());
+    }
+    if (Debt.isExcluded(d)) bits.push('held back');
+    return bits.length ? esc(bits.join(' · ')) : 'nothing set';
+  }
+
+  function extrasSummary(d) {
+    var bits = [];
+    if (d.borrowedOn) bits.push('borrowed ' + isoMonth(d.borrowedOn));
+    if (d.dueOn) bits.push('due ' + isoMonth(d.dueOn));
+    if (Money.isEntered(d.creditLimitCents)) bits.push('limit ' + Money.formatCents(d.creditLimitCents));
+    return bits.length ? esc(bits.join(' · ')) : 'nothing set';
   }
 
   /* ---- How interest works on this debt -----------------------------------

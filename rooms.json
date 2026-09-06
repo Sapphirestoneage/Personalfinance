@@ -201,6 +201,19 @@
       "order": 8
     },
     {
+      "id": "fire-lab",
+      "title": "FIRE Lab",
+      "file": "rooms/fire-lab.html",
+      "reads": [
+        "monthlyExpenses",
+        "investments"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 8.5
+    },
+    {
       "id": "real-hourly-wage",
       "title": "Real Hourly Wage",
       "file": "rooms/real-hourly-wage.html",
