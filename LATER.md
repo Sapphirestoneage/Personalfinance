@@ -114,3 +114,17 @@ moved between them. `rooms/history.html`, D-122.
   fixed-rate debt to every engine, which is honest but silent. A nudge on
   the plan card naming those debts would be better than a sentence only
   visible inside the row.
+
+## One debt, one screen (D-134)
+
+- **Built**: four facts up, two drawers with live summaries, open state
+  that survives a rebuild, a wider measure for this room. D-134.
+- Still open: the same problem exists in every room that edits a list of
+  things. Cash Flow's expense log and the Statement's asset list both put
+  every field of every row on screen at once. The drawer helper here is
+  room-local; if a second room needs it, it should move to `shared/` rather
+  than be copied, and the open-state rule (per visit, never stored,
+  repainted on every write) should move with it.
+- Also open: the room-local width override is a blunt instrument. If more
+  editor rooms need it, a second measure token (`--measure-wide`) belongs
+  in `shared/theme.css` instead of a media query per room.

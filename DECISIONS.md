@@ -6641,6 +6641,64 @@ adding a mode field — `interestFree` first, then `promoEndsOn`, then a
 plain rate — and must keep treating a promo with no end date as a
 fixed-rate debt, never as free money.
 
+## D-134 — Debt Payoff: one debt, one screen
+
+A single debt row filled a whole phone screen. Name, balance, minimum,
+type, the interest block, the feeling, five reason chips with a suggestion
+line and a hold-back tick, two dates, a credit limit and its three-line
+hint — all of it open, all of it at once. A household with three debts
+could not be read at all: the payoff plan, the thing the room exists for,
+was several screens below the fold.
+
+**Four facts stay up.** A debt can be planned once the room knows what it
+is called, what is owed, what the minimum is, what type it is, and how
+interest works. That is the row now. Everything else is set once when the
+debt is entered and then almost never touched, so it folds behind a caret:
+
+- **Why you're keeping it** — the feeling (D-124) and the reasons to keep
+  it (D-132). Both are about attitude to the debt and neither changes the
+  arithmetic, so they belong together and they belong closed.
+- **Dates & limit** — borrowed on, due back by, the credit limit and its
+  hint (D-045, D-124).
+
+**A closed drawer says what is inside it.** Each summary is live: "3
+reasons · one I'd rather not think about · held back", or "due April 2029 ·
+limit $15,000", or plainly "nothing set". Folding something away must never
+make it invisible, only quiet, and a summary that goes stale would be worse
+than no summary at all — so it is repainted on every write like every other
+read-only line in the guarded list (D-034).
+
+**Open or closed survives a rebuild.** `<details>` is native, so the caret
+costs no JavaScript and works without it. But the list does get rebuilt,
+and without carrying the state across, a drawer would snap shut mid-edit —
+on a phone, with a finger inside it. The open set is therefore kept for the
+visit in `openDrawers`, keyed by debt and drawer, and never stored on the
+household: it is how you are looking at the room, not a fact about your
+money. The `toggle` event does not bubble, so the listener captures.
+
+**The room is wider than the shared measure.** `--measure` is 480px and
+that is right for a room you read. This one is an editor: a debt is a row
+of facts, and at 480px those facts stack into a column a screen tall. The
+override is local to this room — 720px past 760px wide, 980px past 1040px —
+so every reading room keeps the canonical column. Below 560px the three
+facts drop to two columns rather than squeezing money values into thirds.
+
+Folding is presentation only. Every field inside a drawer is the same input
+writing the same key it wrote before, and the alignment check follows the
+`.debt-meta` row into the drawer rather than being dropped.
+
+### Compatibility note
+
+Stored shape: unchanged. No field is added, removed, renamed or written
+differently; this entry moves controls and adds no household state. Which
+drawers are open is per-visit UI state in a module variable, never written
+to the household and never exported. Rooms updated:
+`rooms/debt-payoff.html` only; `test/alignment.js` now checks
+`.fold-body .debt-meta` where that row now lives. A future room that folds
+part of a guarded live-input list should copy the two rules that make this
+safe: keep the open set outside the household, and repaint the summary on
+every write so a closed drawer cannot go stale.
+
 ---
 
 # The Dungeons & Dividends entries
