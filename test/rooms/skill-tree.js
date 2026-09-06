@@ -13,7 +13,32 @@ module.exports = function (t) {
   checkTrue('the seed holds the skills the spec names for the cross links', ['read-plan-summary', 'tax-loss-harvesting', 'close-a-month'].every(id => ST.byId(T, id)));
   const ids = new Set(tree.skills.map(s => s.id));
   checkTrue('every prerequisite names a skill that exists', tree.skills.every(s => (s.prereqs || []).every(p => ids.has(p))));
-  checkTrue('every skill has an unlock row: a node with an empty one fails the build', tree.skills.every(s => (s.unlocks || []).length > 0));
+  /* Order is said in exactly two places and this checks both (D-139).
+     Up a tree: `level` runs 1..n with no gap, and every rung but the first
+     takes the one below it as its prerequisite — that is what the board
+     draws as a row. Across trees: every lane endpoint resolves. It is NOT
+     said a third time in `unlocks`, which is the card's chip row and means
+     "the room or number this improves"; a skill id there drew a chip with
+     no label pointing nowhere, so the check below refuses one. */
+  checkTrue('every tree says where it came from', tree.trees.every(t => t.source === 'v6.3.1' || t.source === 'app'));
+  tree.trees.forEach(t => {
+    const inTree = tree.skills.filter(s => s.tree === t.id);
+    checkTrue(t.id + ': levels run 1..' + inTree.length + ' with no gap',
+      inTree.every((s, i) => s.level === i + 1));
+    /* Only a curriculum tree is a ladder. This app's own six were authored
+       as a graph — "close a month" does not stand on "enter the facts" in a
+       straight line — so requiring a chain there would mean inventing edges
+       that are not true. Their prerequisites are checked above, against the
+       whole catalogue. */
+    if (t.source !== 'v6.3.1') return;
+    checkTrue(t.id + ': every rung but the first stands on the one below it',
+      inTree.every((s, i) => i === 0 || (s.prereqs || []).indexOf(inTree[i - 1].id) >= 0));
+  });
+  checkTrue('every lane joins two skills that exist', (links.links || []).every(l => ids.has(l.from) && ids.has(l.to)));
+  checkTrue('a lane never joins a tree to itself — that is what levels are for',
+    (links.links || []).every(l => ST.byId(T, l.from).tree !== ST.byId(T, l.to).tree));
+  checkTrue('no unlock is a bare skill id: the chip row names a room or a number',
+    tree.skills.every(s => (s.unlocks || []).every(u => u.room || u.number)));
   checkTrue('every exercise advances a skill that exists, and every micro has a room', ex.exercises.every(e => e.advances.length && e.advances.every(id => ids.has(id))) && ex.exercises.filter(e => e.kind === 'micro').every(e => e.room));
   checkTrue('every canon exercise credits a work and an author', ex.exercises.filter(e => e.kind === 'canon').every(e => e.origin && e.origin.work && e.origin.author));
   check('the twelve runs and the thirteen canon exercises are there', ex.exercises.filter(e => e.kind === 'run').length + '/' + ex.exercises.filter(e => e.kind === 'canon').length, '12/13');
@@ -43,7 +68,12 @@ module.exports = function (t) {
   check('Foundation is in full, Optimization half lit, the rest fogged', r.bands.map(b => b.visibility).join(','), 'full,dim,fogged,fogged,fogged');
   checkTrue('a fogged skill carries no name, no proof, no chips', r.skills.filter(s => s.state === 'fogged').every(s => s.name === null && s.proof === null && s.unlocks.length === 0));
   checkTrue('a half-lit skill has its name but no chips', r.skills.filter(s => s.dim).every(s => s.name && s.unlocks.length === 0));
-  checkTrue('a full-band skill has chips with hrefs', r.skills.filter(s => s.band === 'foundation').every(s => s.unlocks.length > 0 && s.unlocks.every(c => c.href)));
+  /* Only this app's own skills map to a room or a household number; the
+     curriculum carries no such mapping and honestly shows no chips. So the
+     check is that a chip, where there is one, is a real link — and that the
+     skills written with unlocks still produce them. */
+  checkTrue('every chip on a full-band card is a real link', r.skills.filter(s => s.band === 'foundation').every(s => s.unlocks.every(c => c.href && c.label && c.id)));
+  checkTrue('… and the app\'s own skills still carry theirs', r.byId['enter-the-facts'].unlocks.length > 0);
   checkTrue('… and its first fifteen minutes', r.byId['enter-the-facts'].firstAction && r.byId['enter-the-facts'].firstAction.minutes === 15);
 
   /* Boosts: something the household did moves a skill to open, never to done. */

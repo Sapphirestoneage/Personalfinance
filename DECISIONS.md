@@ -6958,6 +6958,254 @@ parameter someone can move as a local override rather than a write.
 
 ---
 
+## D-139 — The Skill Tree gets its real curriculum: 625 skills, 25 trees, 312 lanes
+
+D-131 shipped the Skill Tree room against a seed of twenty-six skills and
+said so plainly: the real catalogue lived in a file called
+`FI-Skill-Tree-v6.3.x` that nobody in the session had, and
+`scripts/extract-v63.mjs` was a stub that documented the target shape and
+exited rather than inventing a curriculum. The file arrived. This entry is
+the unblock.
+
+**What the source is.** One HTML page whose `<script>` declares three plain
+data literals: `DATA` — 25 trees of 25 skills, each row
+`[name, what, does, fits, check, tier]`; `BANDS` — the five bands the page's
+own legend names FOUNDATION through ENDGAME; and `LINKS` — 312 cross-tree
+shortcut lanes as `[fromTree, fromLevel, toTree, toLevel]`, all
+zero-indexed.
+
+**How it is read.** Not by running it — the page wants a canvas and a DOM.
+The extractor finds each declaration and balances brackets from there, with
+a string-aware scan so a brace inside a sentence cannot fool it. The one
+thing that caught me out: the source declares `const DATA=[...],LINKS=[...]`
+as a single continuation, so anchoring on the `const` keyword found `DATA`
+and never found `LINKS`. Anchoring on a token boundary finds both.
+
+**What the mapping asserts, and on what evidence.** Levels 1–25 land on the
+five bands five at a time, because that is what the source's own band legend
+describes. Within a tree, each level takes the one before it as its
+prerequisite, because the source is written as a ladder and says so in its
+own copy ("Builds on L1", "After L3"). A lane means finishing one skill
+opens a skill in another tree without walking that tree's ladder up to it —
+which is the whole point of a lane, and why both ends are resolved to ids in
+the extractor so nothing downstream has to know about index pairs.
+
+**The app's own forty skills are not thrown away.** Entering your facts,
+closing a month, freezing a snapshot — a general FI curriculum has no reason
+to contain those, and the exercises, the FOO cross-links and the Skill
+Stacker all point at them by id. They are preserved in
+`scripts/skill_tree_app.json` and merged in. They live beside the extractor
+rather than in `data/` because `data/` is for tables a room loads at
+runtime and no room loads this one: it is an input to the build, not an
+output of it, which is also why re-running the extractor can never destroy
+them. `test/run.js` was right to reject it from `Reference.TABLE_FILES`;
+the fix was to move the file, not to widen the guard.
+
+The result: **31 trees, 665 skills, 312 lanes** — the 25 curriculum trees
+plus the app's six (keeper, anchor, compounder, earner, ledger, planning).
+
+**The source page itself is not in the repo.** The extracted data is. Keep a
+copy of the v6.3.1 file if you want to re-run
+`node scripts/extract-v63.mjs <path>`; the committed JSON is the artefact
+the app reads.
+
+### `unlocks` is the chip row, not the edge list
+
+The first pass wrote the next rung of each tree into every skill's
+`unlocks`, on the reasoning that a node with nothing in `unlocks` draws a
+dead end. That was wrong, and the room showed it: `unlocks` is what the
+engine's `chips()` turns into the little links on a card, and it understands
+exactly two kinds of entry — `{room}` and `{number}`. A `{skill}` fell
+through to the number branch and produced a chip labelled `undefined`
+pointing at `ratios.html#r-undefined`, on all 625 curriculum cards. It
+looked like a link. It was not one.
+
+Order is already said twice, in the right places: **up a tree by `prereqs`**,
+**across trees by the lanes** in `data/skill_links.json`. It does not need a
+third home. So the curriculum's `unlocks` are empty and its cards show no
+chip row, which is the truth — the v6.3.1 source carries no room or number
+mapping, and inventing one would be fiction. The forty app skills keep
+theirs, because theirs are real.
+
+Two things hardened off the back of it:
+
+- `chips()` now **drops an entry it cannot address** instead of drawing it.
+  A chip that cannot be clicked should not exist.
+- The test that let this through said "every skill that is not a capstone
+  says what it opens" — which the bad data satisfied. It is replaced by
+  checks that can only pass on true data: levels run 1..n with no gap; every
+  rung of a curriculum tree stands on the one below it; every lane joins two
+  skills that exist, in two different trees; and **no `unlocks` entry is a
+  bare skill id**.
+
+### A curriculum tree is a ladder; this app's own trees are not
+
+Scoping that ladder check turned up the distinction. The v6.3.1 trees are
+25 rungs each, in order. This app's six — keeper, anchor, compounder,
+earner, ledger, planning — were authored as a graph: "close a month" does
+not stand on "enter the facts" in a straight line. Requiring a chain there
+would have meant inventing edges. So each tree now carries **`source`**,
+`'v6.3.1'` or `'app'`, the ladder check applies only to the first, and both
+are still checked against the whole catalogue for prerequisites that
+resolve. The app's skills also predate the `level` field and are numbered
+within their own tree by the extractor, so every node on the board knows
+which rung it is.
+
+### Words in their boxes
+
+At twenty-six skills the board had room. At 665 it does not: the cards are a
+fixed size on an absolute grid, so a name longer than its box does not push
+the layout — it silently spills or clips, and no unit test on a static file
+can see it. Measured and fixed:
+
+- The card is **184 × 72** (was 148 × 56), the name clamps to **three lines**
+  at 12px, and it wraps inside a word when a word is longer than the line.
+  Three lines at that width holds the longest name in the catalogue (49
+  characters) with room to spare, and the p95 name (30 characters) sits on
+  two.
+- The state badge — the lock, the done date, the "skipped" tag — moved from
+  the **top** right to the **bottom** right. At the top it sat on the name's
+  first line. The bottom right was empty, because the unlock chips are
+  bottom left.
+- The name's own area is padded clear of the chip row, so a three-line name
+  and four chips cannot collide.
+
+`test/alignment.js` now measures this in a real browser, at desktop width
+because the board is hidden below 700px in favour of the phone serpentine:
+no name clipped by the clamp, no text box drawn outside its card, no name
+overlapping the chips or the badge. It measures the nodes the board actually
+drew, and then puts **every** name in `data/skill_tree.json` through a real
+node box — otherwise the longest names, which live in the endgame bands,
+would go unmeasured until someone reached them.
+
+**`scripts/seed-skill-tree.mjs` is deleted.** Its own header said it would
+be "replaced wholesale by `scripts/extract-v63.mjs` once the file is in the
+repo", and leaving it there would have been a loaded gun: running it now
+overwrites `data/skill_tree.json` with forty skills and throws the
+curriculum away. Its output is preserved as `scripts/skill_tree_app.json`,
+which is now hand-edited source rather than a generated file. Git has the
+generator if anyone ever wants to see how the seed was made.
+
+### What "quests and dares" turned out to be
+
+LATER.md had them arriving with the file. They do not, and reading the
+source says why: a 90-day quest there is a **skill you pick** — the page
+stores `{ti, lv, t}`, an index into the same `DATA` plus a timestamp — and
+"dare" appears only inside skill prose. There is no catalogue to parse. It
+is a feature to build over the catalogue we now have, and LATER.md has been
+re-scoped to say so rather than to keep waiting for a file that would never
+contain it.
+
+### Compatibility note
+
+Stored shape: **unchanged**. Nothing about `household.skillTree` moved —
+`state`, `provenance`, `bypassed` and the exercise records all read and
+write exactly as D-131 left them. What changed is the reference data those
+ids point into.
+
+- `data/skill_tree.json` and `data/skill_links.json` go to **version
+  3.0.0**. Every id the app already stored still resolves: the forty app
+  skills kept their ids byte for byte, which is the reason
+  `scripts/skill_tree_app.json` exists as a preserved seed rather than
+  being regenerated.
+- **Trees gain `source`** (`'v6.3.1'` or `'app'`) and every skill carries
+  `level`. Both are additive; nothing reads a field that went away.
+- The 625 new ids are namespaced `<tree>-<slug-of-name>`, with a numeric
+  suffix on a collision. A stored id that is not in the catalogue is already
+  handled: the room reports it as "not yours" rather than failing, which is
+  what the "664 skills are yours, 1 is not" line on the board is showing.
+- Rooms updated: none needed changing. `rooms/skill-tree.html`,
+  `rooms/exercises.html`, `rooms/stacker.html` and dashboard block 3 all
+  read through `engines/skilltree.js`, which was written against the schema
+  and not against the seed's size.
+- Before adding to the catalogue: add curriculum skills by re-running the
+  extractor against a newer source, and app skills by editing
+  `scripts/skill_tree_app.json` — never by hand-editing `data/skill_tree.json`,
+  which is generated and will be overwritten. If you add a name longer than
+  49 characters, widen `COL_W` and the clamp together and re-run
+  `test/alignment.js`, which measures exactly that.
+
+---
+
+## D-140 — The board, redrawn as a tech tree
+
+D-139 landed 665 skills on a board built for 26 of them, and the shape gave
+out. The old board made each of the five **bands** a column and stacked
+every skill in that band down it. At 26 skills that is a diagram. At 665 it
+is five columns and 133 rows — **1,200 × 13,184 pixels**, a mile of scrolling
+with no line to follow, in which nothing shows you that a skill has a before
+and an after.
+
+**Rows are trees now, and columns are rungs.** One row per tree, one column
+per level, the five bands as column groups labelled across the top. A row
+reads left to right the way a tech tree does: rung 1, then rung 2, arrow by
+arrow, all the way to the capstone. **6,000 × 2,838 pixels**, and every one
+of the 31 trees is a line you can follow.
+
+- **The tree names sit in a rail that does not scroll.** The board is
+  6,000px wide and no screen is; a name that scrolls away leaves 31
+  anonymous rows. The rail is a fixed column beside the scroller, with the
+  rung count under each name and the row you have selected marked.
+- **The 312 shortcut lanes are drawn**, faint and dashed, under the rungs —
+  they are what makes this a tree rather than 25 separate ladders. Pick a
+  node and the lanes touching it light up, so one tap shows what a skill
+  reaches across the board. A lane running backwards is drawn as a curve
+  rather than an elbow, because an elbow that goes right and then left reads
+  as a mistake.
+- **The room takes the whole window**, and the sections that are prose keep
+  the shared measure and line up on its left. Same move as D-134 in Debt
+  Payoff and for the same reason: this room is a board, not something you
+  read. Everywhere else the measure is untouched.
+
+### The column rule, and what it costs
+
+**Column = rung − 1, for every tree.** Five columns to a band, which is the
+curriculum's own rhythm, so a curriculum node always lands under its own
+band header.
+
+This app's own six trees were not written to that rhythm — "close a month"
+is a Foundation skill at rung 3, "plan the handover" an Endgame skill at
+rung 3 — so on those six rows the band header above is the curriculum's
+ruler and not a claim about them. That is the cost, and it is small and
+contained: each card states its own band, and a node's **state**, not its
+x, is what decides whether it is fogged. The alternative was to widen a band
+so the widest tree fit — one tree has eight Foundation skills — which put
+three empty columns through all thirty-one rows. Three columns of nothing
+across the whole board is worse than a header that is exact for 25 rows out
+of 31.
+
+### Two things fixed on the way
+
+- **Tree order.** The app's six trees carried `order` 1–6, the same numbers
+  as the first six curriculum trees. Sorting rows by `order` interleaved
+  them, so the board opened on "Keeping it" and "The anchor" rather than
+  Main Path. The extractor now renumbers them 26–31, continuing the
+  curriculum rather than colliding with it.
+- **The rung a skill sits on comes from the catalogue, not the engine.**
+  `engines/skilltree.js` says what state a skill is in; where it is drawn is
+  a property of `data/skill_tree.json`. The room reads `level` straight from
+  the table, and the engine's contract is unchanged.
+
+### Compatibility note
+
+Stored shape: **unchanged**, and no engine signature moved. This is a
+rendering change inside `rooms/skill-tree.html`: `renderBoard` and the
+board's markup and CSS. `renderSerp` — the phone's serpentine, which is what
+runs below 700px — is untouched, and the phone still opens on a single tree.
+
+`data/skill_tree.json` changes in one way a future reader should know
+about: **`trees[].order` for this app's own six trees is now 26–31 rather
+than 1–6.** Anything that sorts trees by `order` gets the curriculum first
+and this app's own last, which is the intent. Nothing reads `order` as an
+identity — the id is the identity — so no stored value is affected.
+
+Before changing the board again: the rail's width and the node's width are
+the same 148/184px pair the layout is built on, and `test/alignment.js`
+measures both the drawn nodes and every name in the catalogue against a real
+node box. Run it.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

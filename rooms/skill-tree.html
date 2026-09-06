@@ -35,6 +35,16 @@
 -->
 <style>
   .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  /* This room is a board, not prose. The tech tree is thousands of pixels
+     wide, and a 620px measure shows the rail and two rungs of it. So the
+     page takes the whole window here, and every section that IS prose keeps
+     the measure and lines up on the left beside it. Wider on this room
+     only, so the shared measure stays what it is everywhere else (the same
+     move as D-134 in Debt Payoff, for the same reason). D-140. */
+  @media (min-width: 900px) {
+    .slaf-wrap { max-width: 1800px; }
+    .room-head, .slaf-wrap > section:not(#board) { max-width: var(--measure); margin-left: 0; margin-right: 0; }
+  }
   .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
   .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   section[id] { scroll-margin-top: var(--space-4); }
@@ -69,23 +79,40 @@
   .board-tools { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-top: var(--space-3); }
   .board-tools label { font-size: var(--text-xs); color: var(--color-text-faint); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); }
   .board-tools select { font: inherit; font-size: var(--text-sm); background: var(--color-surface-raised); color: var(--color-text); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 4px var(--space-2); }
-  .board-wrap { position: relative; overflow-x: auto; margin-top: var(--space-3); padding-bottom: var(--space-3); }
+  /* The board is a tech tree: one row per tree, one column per rung, the
+     five bands as column groups across the top. It is far wider than any
+     screen, so the tree names sit in a rail that does NOT scroll and the
+     columns scroll under the band headers beside it. */
+  .board-wrap { position: relative; display: flex; align-items: flex-start; margin-top: var(--space-3); padding-bottom: var(--space-3); }
+  .board-rail { flex: 0 0 156px; position: relative; }
+  .board-rail .r-tree { position: absolute; left: 0; width: 148px; height: 72px; box-sizing: border-box; padding: 5px 8px 5px 9px; border-left: 3px solid var(--color-border); font-size: 10px; line-height: 1.2; color: var(--color-text-faint); overflow: hidden; }
+  .board-rail .r-tree b { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-family: var(--font-display); font-size: 11px; font-weight: 600; line-height: 1.25; color: var(--color-text-muted); overflow-wrap: anywhere; margin-bottom: 2px; }
+  .board-rail .r-tree.is-here { border-left-color: var(--color-accent); }
+  .board-rail .r-tree.is-here b { color: var(--color-text); }
+  .board-scroll { flex: 1 1 auto; min-width: 0; overflow-x: auto; position: relative; }
   .board { position: relative; }
   .board svg.wires { position: absolute; left: 0; top: 0; pointer-events: none; }
   .band-head { position: absolute; top: 0; height: 28px; font-size: 11px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); white-space: nowrap; }
   .band-head small { color: var(--color-text-faint); text-transform: none; letter-spacing: 0; margin-left: 6px; }
   .band-rule { position: absolute; top: 0; bottom: 0; width: 0; border-right: 1px dashed var(--color-border); }
+  .row-rule { position: absolute; left: 0; height: 0; border-top: 1px solid var(--color-border); opacity: .5; }
   .fog { position: absolute; top: 0; bottom: 0; width: 80px; background: linear-gradient(90deg, transparent, var(--color-bg)); pointer-events: none; }
-  .node { position: absolute; width: 148px; height: 56px; border-radius: 10px; box-sizing: border-box; padding: 6px 8px 6px 40px; font-family: var(--font-body); font-size: 13px; font-weight: 500; line-height: 1.2; color: var(--color-text); cursor: pointer; text-align: left; border: 1.5px solid; overflow: hidden; }
-  .node .n-icon { position: absolute; left: 12px; top: 16px; width: 24px; height: 24px; border-radius: 6px; background: var(--color-surface-active); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--color-accent-hover); }
-  .node .n-name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .node .n-chips { position: absolute; left: 40px; bottom: 5px; display: flex; gap: 6px; }
-  .node .n-chips i { width: 16px; height: 16px; border-radius: 4px; background: var(--color-surface-active); font-style: normal; font-size: 9px; line-height: 16px; text-align: center; color: var(--color-text-subtle); }
+  /* The box is sized for the longest name in data/skill_tree.json (49
+     characters) at three lines, so a name is never cut off and never leaves
+     its box. The name owns the top of the card; the chips own the bottom
+     left and the state badge the bottom right, so nothing overlaps the
+     words. If the reference data ever grows longer names, widen COL_W and
+     the clamp together — test/alignment.js measures it. */
+  .node { position: absolute; width: 184px; height: 72px; border-radius: 10px; box-sizing: border-box; padding: 7px 9px 22px 42px; font-family: var(--font-body); font-size: 12px; font-weight: 500; line-height: 1.25; color: var(--color-text); cursor: pointer; text-align: left; border: 1.5px solid; overflow: hidden; }
+  .node .n-icon { position: absolute; left: 11px; top: 8px; width: 24px; height: 24px; border-radius: 6px; background: var(--color-surface-active); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--color-accent-hover); }
+  .node .n-name { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; hyphens: auto; }
+  .node .n-chips { position: absolute; left: 42px; bottom: 4px; display: flex; gap: 5px; }
+  .node .n-chips i { width: 15px; height: 15px; border-radius: 4px; background: var(--color-surface-active); font-style: normal; font-size: 9px; line-height: 15px; text-align: center; color: var(--color-text-subtle); }
   .node .n-chips i.more { background: none; color: var(--color-text-faint); }
   .node .n-boost { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--color-accent); }
-  .node .n-lock { position: absolute; right: 8px; top: 6px; font-size: 12px; color: var(--color-text-faint); }
-  .node .n-date { position: absolute; right: 8px; top: 6px; font-size: 10px; color: var(--color-text-subtle); font-weight: 400; }
-  .node .n-tag { position: absolute; right: 8px; top: 6px; font-size: 10px; color: var(--color-text-subtle); font-weight: 400; }
+  .node .n-lock { position: absolute; right: 8px; bottom: 4px; font-size: 11px; line-height: 15px; color: var(--color-text-faint); }
+  .node .n-date { position: absolute; right: 8px; bottom: 4px; font-size: 10px; line-height: 15px; color: var(--color-text-subtle); font-weight: 400; }
+  .node .n-tag { position: absolute; right: 8px; bottom: 4px; font-size: 10px; line-height: 15px; color: var(--color-text-subtle); font-weight: 400; }
   .node.is-done { background: var(--color-surface-active); border-color: var(--color-accent-hover); }
   .node.is-open { background: none; border-color: var(--color-text-subtle); }
   .node.is-open .n-name { color: var(--color-text); }
@@ -135,8 +162,8 @@
     .serp .s-band-head { font-size: 11px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); position: sticky; top: 0; background: var(--color-bg); padding: 6px 0; z-index: 2; }
     .serp .s-band-head small { color: var(--color-text-faint); text-transform: none; letter-spacing: 0; margin-left: 6px; }
     .serp .s-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 24px; position: relative; padding: 6px 0; }
-    .serp .s-grid .node { position: relative; width: auto; height: 52px; padding-left: 36px; }
-    .serp .s-grid .node .n-icon { width: 20px; height: 20px; left: 10px; top: 16px; font-size: 11px; }
+    .serp .s-grid .node { position: relative; width: auto; height: 68px; padding-left: 36px; }
+    .serp .s-grid .node .n-icon { width: 20px; height: 20px; left: 10px; top: 8px; font-size: 11px; }
     .serp .s-grid .node .n-chips { left: 36px; }
     .serp .s-grid .node .n-chips i:nth-child(n+3):not(.more) { display: none; }
     .serp .s-grid > .node:nth-child(4n+3) { grid-column: 2; }
@@ -177,13 +204,16 @@
 
   <section class="slaf-card card-gap" id="board">
     <span class="slaf-eyebrow">The board</span>
-    <h2 style="margin:var(--space-2) 0 0">Five bands, and the trees that hang off the ladder</h2>
+    <h2 style="margin:var(--space-2) 0 0">Every tree, rung by rung, left to right</h2>
     <div class="board-tools">
       <label for="pick-tree">Tree</label>
       <select id="pick-tree" aria-label="Which tree to show"></select>
       <span class="slaf-hint" id="board-hint"></span>
     </div>
-    <div class="board-wrap"><div class="board" id="board-canvas"></div></div>
+    <div class="board-wrap">
+      <div class="board-rail" id="board-rail" aria-hidden="true"></div>
+      <div class="board-scroll" id="board-scroll"><div class="board" id="board-canvas"></div></div>
+    </div>
     <div class="serp" id="serp"></div>
     <div id="card-host"></div>
     <p class="why">Tap a node for what it unlocks, what boosts it, and how long it takes. A boost from something you did in the app opens a skill; only its own proof marks it done. A skip you earned is drawn dashed and stays reopenable.</p>
@@ -228,7 +258,9 @@
   var picked = null;          /* the node whose card is open */
   var treeFilter = 'all';
   var built = false;
-  var COL_W = 148, GUTTER = 64, PITCH = 212, ROW = 76, NODE_H = 56, HEAD = 36;
+  var COL_W = 184, GUTTER = 56, PITCH = 240, ROW = 90, NODE_H = 72, HEAD = 40;
+  var BAND_COLS = 5;          /* the curriculum's rhythm: five rungs a band */
+  var SKILL_LEVEL = {};       /* id → rung, from the catalogue (not the engine) */
   var CHIP_MAX = 4;
   var SEEN_KEY = 'slaf.skilltree.seen';
 
@@ -296,53 +328,103 @@
       + '<span class="n-icon">' + icon(s) + '</span>' + (s.state === 'fogged' ? '' : '<span class="n-name">' + esc(s.name) + '</span>') + right
       + (s.state === 'fogged' || s.dim ? '' : '<span class="n-chips">' + chips + '</span>') + boost + '</button>';
   }
+  /* Where a skill sits. Row = its tree, column = its rung — level minus
+     one, for every tree. The five bands are five columns each, which is the
+     curriculum's own rhythm, so a curriculum node always lands under its own
+     band header.
+
+     This app's own six trees are shorter and were not written to that
+     rhythm: `close a month` is a Foundation skill at rung 3, `plan the
+     handover` an Endgame skill at rung 3. Their rungs are still drawn at
+     their own numbers, so those rows read left to right like any other, and
+     the band header above them is the curriculum's ruler rather than a claim
+     about them — each card states its own band, and a node's state, not its
+     x, decides whether it is in the fog. The alternative, widening a band to
+     fit the one tree with eight Foundation skills, put three empty columns
+     through all thirty-one rows. */
+  function boardTrees(list) {
+    var have = {};
+    list.forEach(function (s) { have[s.tree] = true; });
+    return ((TABLES.skillTree || {}).trees || []).filter(function (t) { return have[t.id]; })
+      .sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
+  }
+  function levelOf(id) { var s = SKILL_LEVEL[id]; return s === undefined ? 0 : s; }
+
+  /* One connector. Forward (the target is to the right) gets the orthogonal
+     elbow a tech tree is drawn with; a lane that runs backwards gets a curve
+     instead, because an elbow going right-then-left reads as a mistake. */
+  function connector(a, b, color, width, dash, opacity) {
+    var x1 = a.col * PITCH + COL_W, y1 = HEAD + a.row * ROW + NODE_H / 2;
+    var x2 = b.col * PITCH, y2 = HEAD + b.row * ROW + NODE_H / 2;
+    var attrs = ' fill="none" stroke="' + color + '" stroke-width="' + width + '"'
+      + (dash ? ' stroke-dasharray="' + dash + '"' : '') + ' opacity="' + opacity + '"';
+    if (x2 > x1) {
+      var mid = x1 + Math.min(GUTTER / 2, (x2 - x1) / 2);
+      var dy = y2 > y1 ? 8 : y2 < y1 ? -8 : 0;
+      var d = 'M' + x1 + ' ' + y1 + ' H' + (mid - 8) + (dy
+        ? ' Q' + mid + ' ' + y1 + ' ' + mid + ' ' + (y1 + dy) + ' V' + (y2 - dy) + ' Q' + mid + ' ' + y2 + ' ' + (mid + 8) + ' ' + y2
+        : ' H' + (mid + 8)) + ' H' + (x2 - 6);
+      return '<path d="' + d + '"' + attrs + '/>'
+        + '<path d="M' + (x2 - 6) + ' ' + (y2 - 4) + ' L' + x2 + ' ' + y2 + ' L' + (x2 - 6) + ' ' + (y2 + 4) + ' Z" fill="' + color + '" opacity="' + opacity + '"/>';
+    }
+    var bx = b.col * PITCH + COL_W, sweep = (y2 > y1 ? 1 : -1) * Math.max(24, Math.abs(y2 - y1) / 2);
+    var d2 = 'M' + x1 + ' ' + y1 + ' C' + (x1 + 60) + ' ' + (y1 + sweep) + ' ' + (bx + 60) + ' ' + (y2 - sweep) + ' ' + (bx + 6) + ' ' + y2;
+    return '<path d="' + d2 + '"' + attrs + '/>'
+      + '<path d="M' + (bx + 6) + ' ' + (y2 - 4) + ' L' + bx + ' ' + y2 + ' L' + (bx + 6) + ' ' + (y2 + 4) + ' Z" fill="' + color + '" opacity="' + opacity + '"/>';
+  }
+
   function renderBoard(r) {
-    var bands = r.bands;
     var list = visibleSkills(r);
-    var pos = {};
-    var rowsPerBand = {};
-    bands.forEach(function (b, col) {
-      var mine = list.filter(function (s) { return s.band === b.id; }).sort(function (a, c) { return a.tree.localeCompare(c.tree) || (a.name || '').localeCompare(c.name || ''); });
-      mine.forEach(function (s, row) { pos[s.id] = { col: col, row: row, s: s }; });
-      rowsPerBand[b.id] = mine.length;
+    var trees = boardTrees(list);
+    var pos = {}, rowIndex = {}, totalCols = 1;
+    trees.forEach(function (t, row) { rowIndex[t.id] = row; });
+    list.forEach(function (s) {
+      var row = rowIndex[s.tree];
+      if (row === undefined) return;
+      var col = Math.max(0, levelOf(s.id) - 1);
+      pos[s.id] = { col: col, row: row, s: s };
+      if (col + 1 > totalCols) totalCols = col + 1;
     });
-    var maxRows = Math.max.apply(null, bands.map(function (b) { return rowsPerBand[b.id]; }).concat([1]));
-    var width = bands.length * PITCH, height = HEAD + maxRows * ROW + 8;
+    var bandStart = {};
+    r.bands.forEach(function (b, i) { bandStart[b.id] = i * BAND_COLS; });
+    var width = totalCols * PITCH;
+    var height = HEAD + trees.length * ROW + 8;
+
     var html = '';
-    bands.forEach(function (b, col) {
-      html += '<div class="band-head" style="left:' + (col * PITCH) + 'px">' + esc(b.label) + '<small>' + (b.visibility === 'fogged' ? b.count + ' skills' : b.done + ' of ' + b.count + ' done') + '</small></div>';
-      html += '<div class="band-rule" style="left:' + (col * PITCH + COL_W + GUTTER / 2) + 'px;top:' + HEAD + 'px"></div>';
+    r.bands.forEach(function (b) {
+      if (bandStart[b.id] >= totalCols) return;
+      html += '<div class="band-head" style="left:' + (bandStart[b.id] * PITCH) + 'px">' + esc(b.label) + '<small>' + (b.visibility === 'fogged' ? b.count + ' skills' : b.done + ' of ' + b.count + ' done') + '</small></div>';
+      html += '<div class="band-rule" style="left:' + ((bandStart[b.id] + BAND_COLS) * PITCH - GUTTER / 2) + 'px;top:' + HEAD + 'px"></div>';
     });
-    var firstFog = bands.filter(function (b) { return b.visibility === 'fogged'; })[0];
-    if (firstFog) html += '<div class="fog" style="left:' + (bands.indexOf(firstFog) * PITCH - 80) + 'px;top:' + HEAD + 'px"></div>';
-    /* Wires first, under the nodes. */
+    trees.forEach(function (t, row) {
+      if (row) html += '<div class="row-rule" style="top:' + (HEAD + row * ROW - 9) + 'px;width:' + width + 'px"></div>';
+    });
+    var firstFog = r.bands.filter(function (b) { return b.visibility === 'fogged'; })[0];
+    if (firstFog) html += '<div class="fog" style="left:' + (bandStart[firstFog.id] * PITCH - 80) + 'px;top:' + HEAD + 'px"></div>';
+
+    /* The lanes first and faintest: 312 shortcuts between trees, the thing
+       that makes this a tree rather than 25 ladders. A lane touching the
+       node you picked is drawn in full, so one tap shows you what a skill
+       reaches across the board. */
     var wires = '';
+    ((TABLES.skillLinks || {}).links || []).forEach(function (l) {
+      var a = pos[l.from], b = pos[l.to];
+      if (!a || !b || a.s.state === 'fogged' || b.s.state === 'fogged') return;
+      var lit = picked === l.from || picked === l.to;
+      wires += connector(a, b, lit ? 'var(--color-accent)' : 'var(--color-border-strong)', lit ? 1.5 : 1, lit ? '' : '3 4', lit ? 0.9 : 0.4);
+    });
+    /* Then the rungs: what actually stands on what. */
     list.forEach(function (s) {
       if (s.state === 'fogged') return;
-      (s.prereqs || []).forEach(function (p) {
-        var a = pos[p], b = pos[s.id];
+      (s.prereqs || []).forEach(function (id) {
+        var a = pos[id], b = pos[s.id];
         if (!a || !b || a.s.state === 'fogged') return;
         var live = (a.s.state === 'done' || a.s.state === 'bypassed' || a.s.state === 'open') && s.state !== 'locked';
-        var color = live ? 'var(--color-accent)' : 'var(--color-border-strong)';
-        var x1 = a.col * PITCH + COL_W, y1 = HEAD + a.row * ROW + NODE_H / 2;
-        var y2 = HEAD + b.row * ROW + NODE_H / 2;
-        var d;
-        if (b.col > a.col) {
-          var x2 = b.col * PITCH;
-          var mid = x1 + GUTTER / 2;
-          d = 'M' + x1 + ' ' + y1 + ' H' + (mid - 8) + ' Q' + mid + ' ' + y1 + ' ' + mid + ' ' + (y1 + (y2 > y1 ? 8 : y2 < y1 ? -8 : 0)) + ' V' + (y2 - (y2 > y1 ? 8 : y2 < y1 ? -8 : 0)) + ' Q' + mid + ' ' + y2 + ' ' + (mid + 8) + ' ' + y2 + ' H' + (x2 - 6);
-          wires += '<path d="' + d + '" fill="none" stroke="' + color + '" stroke-width="1.5" opacity="' + (live ? 0.6 : 1) + '"/>';
-          wires += '<path d="M' + (x2 - 6) + ' ' + (y2 - 4) + ' L' + x2 + ' ' + y2 + ' L' + (x2 - 6) + ' ' + (y2 + 4) + ' Z" fill="' + color + '"/>';
-        } else {
-          /* Same column: out the right edge, down the gutter, back in from the right. */
-          var mid2 = x1 + 16;
-          d = 'M' + x1 + ' ' + y1 + ' H' + (mid2 - 8) + ' Q' + mid2 + ' ' + y1 + ' ' + mid2 + ' ' + (y1 + 8) + ' V' + (y2 - 8) + ' Q' + mid2 + ' ' + y2 + ' ' + (mid2 - 8) + ' ' + y2 + ' H' + (x1 + 6);
-          wires += '<path d="' + d + '" fill="none" stroke="' + color + '" stroke-width="1.5"/>';
-          wires += '<path d="M' + (x1 + 6) + ' ' + (y2 - 4) + ' L' + x1 + ' ' + y2 + ' L' + (x1 + 6) + ' ' + (y2 + 4) + ' Z" fill="' + color + '"/>';
-        }
+        wires += connector(a, b, live ? 'var(--color-accent)' : 'var(--color-border-strong)', 1.5, '', live ? 0.6 : 1);
       });
     });
     html = '<svg class="wires" width="' + width + '" height="' + height + '" aria-hidden="true">' + wires + '</svg>' + html;
+
     Object.keys(pos).forEach(function (id) {
       var p = pos[id];
       html += nodeHtml(p.s, ' at').replace('class="node', 'style="left:' + (p.col * PITCH) + 'px;top:' + (HEAD + p.row * ROW) + 'px" class="node');
@@ -350,7 +432,22 @@
     var canvas = el('board-canvas');
     canvas.style.width = width + 'px'; canvas.style.height = height + 'px';
     canvas.innerHTML = html;
-    el('board-hint').textContent = treeFilter === 'all' ? 'Every tree. Pick one to thin the board.' : 'One tree. Arrows from other trees show as "needs" on the card.';
+
+    /* The rail sits outside the scroller, so the tree names stay put while
+       the rungs scroll past them. */
+    var rail = '';
+    trees.forEach(function (t, row) {
+      var here = picked && pos[picked] && pos[picked].row === row;
+      rail += '<div class="r-tree' + (here ? ' is-here' : '') + '" style="top:' + (HEAD + row * ROW) + 'px"><b>' + esc(t.label) + '</b>'
+        + list.filter(function (s) { return s.tree === t.id; }).length + ' rungs</div>';
+    });
+    var railHost = el('board-rail');
+    railHost.style.height = height + 'px';
+    railHost.innerHTML = rail;
+
+    el('board-hint').textContent = treeFilter === 'all'
+      ? trees.length + ' trees, ' + totalCols + ' rungs wide. Scroll sideways; pick a tree to walk one line.'
+      : 'One tree, rung by rung. Dashed lines are shortcuts from other trees — pick All trees to see them.';
   }
 
   /* ---- The phone: the serpentine ------------------------------------------ */
@@ -447,6 +544,10 @@
   Spine.onChange(render);
   Reference.load().then(function (tables) {
     TABLES = tables;
+    /* The rung a skill sits on is a property of the catalogue, not of a
+       household, so it comes from the table rather than through the engine —
+       the engine's job is what state a skill is in, not where it is drawn. */
+    ((tables.skillTree || {}).skills || []).forEach(function (s) { SKILL_LEVEL[s.id] = s.level || 0; });
     /* The phone defaults to one tree: the one with the most open skills in the band you are in. */
     if (window.innerWidth <= 700) {
       var r0 = tree();
