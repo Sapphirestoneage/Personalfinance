@@ -161,6 +161,12 @@
      that answer owns. Replaces a Rate box, a "no interest" tick and a
      promo pair that sat in three different places (D-133). */
   .interest { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3) var(--space-3); margin: var(--space-3) 0 0; min-width: 0; }
+  /* Only some debt types have one, so it takes no space when absent. */
+  .kind-note { border: 1px dashed var(--color-border-strong); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); margin: 0 0 var(--space-3); }
+  .kind-note > summary { font-size: var(--text-sm); color: var(--color-accent-hover); cursor: pointer; }
+  .kind-note ul { margin: var(--space-2) 0 0; padding-left: 18px; font-size: var(--text-sm); color: var(--color-text-muted); }
+  .kind-note li { margin-top: var(--space-1); }
+  .kind-note .kind-dont { font-size: var(--text-sm); color: var(--color-caution); margin: var(--space-2) 0 0; }
   .interest-cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); padding: 0 var(--space-2); margin-left: calc(var(--space-2) * -1); }
   .imodes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: var(--space-3); }
   .imode { font-family: var(--font-body); font-size: var(--text-xs); line-height: 1.25; border: none; border-left: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-muted); padding: var(--space-2) var(--space-1); cursor: pointer; text-align: center; min-width: 0; display: flex; align-items: center; justify-content: center; text-wrap: balance; }
@@ -449,6 +455,7 @@
       var box = document.querySelector('input[data-debt="' + d.id + '"][data-field="interestFree"]');
       if (box) box.checked = d.interestFree === true;
       paintKeep(d);
+      paintKindNote(d);
       paintInterest(d);
       paintFoldSummary(d);
     });
@@ -457,6 +464,39 @@
 
   /* A closed drawer still has to say what is inside it, so its summary is
      repainted on every write like everything else in the guarded list. */
+  /* Some debts do not behave like the rest, and the difference is worth
+     real money. Medical is the strongest case: it is the most negotiable
+     debt most people hold, it is frequently wrong, and paying it off takes
+     it off a credit report entirely — none of which is true of anything
+     else on this page. The notes live in data/debt_rules.json under
+     `kindNotes` so the room states them rather than knowing them. D-151. */
+  function kindNote(d) {
+    var notes = (RULES && RULES.kindNotes) || [];
+    for (var i = 0; i < notes.length; i++) {
+      if ((notes[i].appliesToTypes || []).indexOf(d.type) >= 0) return notes[i];
+    }
+    return null;
+  }
+  function kindNoteHtml(d) {
+    var n = kindNote(d);
+    if (!n) return '';
+    return '<details class="kind-note"><summary>' + esc(n.headline) + '</summary>'
+      + '<ul>' + n.points.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>'
+      + (n.doNot ? '<p class="kind-dont"><strong>Careful:</strong> ' + esc(n.doNot) + '</p>' : '')
+      + '</details>';
+  }
+  function paintKindNote(d) {
+    var host = document.querySelector('[data-kindnote="' + d.id + '"]');
+    if (!host) return;
+    var want = kindNoteHtml(d);
+    /* Repaint in place only when the debt's type actually changed, so an
+       open note does not snap shut while it is being read (D-034's rule,
+       applied to a disclosure rather than an input). */
+    if (host.getAttribute('data-for') === (d.type || '')) return;
+    host.setAttribute('data-for', d.type || '');
+    host.innerHTML = want;
+  }
+
   function paintFoldSummary(d) {
     var why = document.querySelector('[data-fold-sum="' + drawerKey(d.id, 'why') + '"]');
     if (why) why.innerHTML = whySummary(d);
@@ -803,7 +843,8 @@
     /* Each input is built exactly once and then shown or hidden by mode.
        Two inputs for the same field would give paintLive() and the change
        handler two nodes to disagree about. */
-    return '<fieldset class="interest" data-interest="' + d.id + '">'
+    return '<div class="kindnote-host" data-kindnote="' + d.id + '" data-for=""></div>'
+      + '<fieldset class="interest" data-interest="' + d.id + '">'
       + '<legend class="interest-cap">How interest works</legend>'
       + '<div class="imodes" role="group" aria-label="How interest is charged on this debt">' + seg + '</div>'
       + '<div class="igrid" data-igrid="' + d.id + '">'

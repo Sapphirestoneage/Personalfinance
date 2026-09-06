@@ -494,6 +494,18 @@
       "order": 26
     },
     {
+      "id": "car",
+      "title": "What A Car Costs",
+      "file": "rooms/car.html",
+      "reads": [
+        "grossAnnualIncome"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 26.2
+    },
+    {
       "id": "credit",
       "title": "Your Credit File",
       "file": "rooms/credit.html",
@@ -514,6 +526,16 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 26.6
+    },
+    {
+      "id": "rollover",
+      "title": "The Account You Left Behind",
+      "file": "rooms/rollover.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 26.8
     },
     {
       "id": "health",

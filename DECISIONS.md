@@ -7753,11 +7753,38 @@ Add it in Debt Payoff — guessing a limit would produce a number people act
 on"*, and then, separately: *"Blank is not zero. Nothing here says you are
 using none of your limit."*
 
+Four judgement calls made while building it, so a later room does not have
+to re-make them:
+
+- **The three grey factors get a sentence each, not a gap.** Why this app
+  cannot see them is page copy in `rooms/credit.html`, not a field in
+  `data/credit_factors.json`: the table says *whether* a factor is visible
+  (`youCanSee`), and the room says what would be needed to see it. Three
+  silent gaps read as a bug; three named absences read as honesty.
+- **The credit-mix figure is a proxy and says so.** Utilisation is the same
+  measurement the models make. `revolvingShare` is not — the models look at
+  whether you hold both kinds of credit at all, and this is how much of what
+  you owe sits on cards. The row says *"It is the shape of the factor, not
+  the factor"* rather than quietly passing one off as the other.
+- **Only money actually owed goes through the lens.** The card balance and
+  the total owed are amounts; a credit *limit* is neither owed nor held, and
+  reading it as "four months of FI" would be nonsense. The limit stays a
+  plain dollar figure in the line under the percentage.
+- **It reads `totalDebt` and never guesses.** The registry row declares
+  `needs: ['totalDebt']` — a reading has to read something, and the itemised
+  debts are where a card's balance and its limit live. The room passes
+  `standalone: false` to `Room.mount`, so unlike every other room it does
+  **not** fill an empty spine with the intake's estimates: a guessed credit
+  utilisation is precisely the invented number this room exists not to print.
+
 ### Compatibility note
 
 Stored shape: **unchanged**. The room writes nothing, owns no field in
 `shared/ownership.js`, and never calls `Spine.updateProfile` — verified in a
-browser by reading the profile back after a visit.
+browser by diffing the whole profile before and after a visit that opened
+the drawer and cycled every lens. The only key that moved was
+`meta.visitedRooms`, which `Spine.registerRoom()` records for every room in
+the suite; no household figure changed.
 
 New: `data/credit_factors.json` (registered as `TABLES.creditFactors`),
 `rooms/credit.html`, a registry row at order 26.4, kind `read`.
@@ -7809,10 +7836,39 @@ Both new rooms went in at 26.4 and 26.6, **after** the numbered path rather
 than into it, so the walk a household with no debt takes is unchanged. The
 check that caught it now says why.
 
+### Two smaller decisions inside it
+
+**The gap is not a new formula.** `CashFlow.monthlySurplusCents()` is already
+the one place this app asks what is actually free each month, and a shortfall
+is that number with the sign turned round; money-in is
+`CashFlow.netMonthlyIncomeCents()` from the same engine. Nothing here defines
+"left over" a second time (SPEC.md §8). What the room adds is saying *which
+basis* the engine used, because the two are not interchangeable: with a month
+tracked it is every category entered, debt minimums pulled in from Debt Payoff
+as a derived line rather than a second copy; without one it is the
+monthly-essentials estimate, which leaves discretionary spending out and
+therefore **understates** the gap. That is the safe direction to be wrong in on
+this page, and the drawer says so rather than letting a reader assume the
+figure is complete.
+
+**The help lines are text, not links.** `hud.gov/findacounselor`, `211`,
+`nfcc.org`, `studentaid.gov`, `healthcare.gov`. Every one of them wants to be
+tappable, and none of them is — because **this app contains no external link
+at all.** Across every room and the index: zero. Adding the first one is a
+decision about the whole suite, not one a single room gets to make while
+nobody is looking, and a string painted like a link that does nothing when a
+finger lands on it is worse than plain text on the exact page where a person
+has the least patience. So they are plain, selectable, copyable text, and the
+first `.helpline` rule was changed from accent colour to body colour for
+precisely that reason. **Open, and worth a decision of its own:** if external
+links are allowed, this is the room that should get them first, and the answer
+covers every room after it.
+
 ### Compatibility note
 
 Stored shape: **unchanged**. Writes nothing, owns nothing, no inputs at all —
-`LIVE-FORM: built once` with nothing to build.
+`LIVE-FORM: built once` with nothing to build. The one trace it leaves is the
+visit `Spine.registerRoom()` records, which every room does.
 
 New: `data/bill_triage.json` (registered as `TABLES.billTriage`),
 `rooms/cant-pay.html`, a registry row at order 26.6, kind `explore`.
