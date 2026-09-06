@@ -9172,7 +9172,8 @@ up something that is not there.
 
 ### Compatibility note
 
-**Stored shape:** `dndProfile.originPicked` is **added** — the id of a chosen
+**Stored shape:** nothing is added by the almanac pass — it is all read-only
+table content. `dndProfile.originPicked` is **added** — the id of a chosen
 origin story, the string `'none'`, or absent. It is **flavour only**: nothing
 reads it into a score, and nothing should. It is not evidence of anything and
 must never be treated as a fact about the person.
@@ -9181,8 +9182,52 @@ must never be treated as a fact about the person.
 `dnd/data/dnd_profile.json` (new), `dnd/shared/reference.js` (table
 registered), `dnd/campaign.html` (links to it), `dnd/test/run.js`.
 
+### The almanac, and the two perils that are not creatures
+
+A later pass took the brief further: *"make it more dndesque but also like
+astrology and just very esoteric, give people or circumstances each are weak
+to."*
+
+**The almanac.** Every class now has a sign — The Vault, The Forge, The Long
+Odds — with a glyph, an element, a modality, a ruling body, an hour, a season,
+a metal, a stone and a tarot card, plus a D&D layer: an alignment (*Lawful
+Anxious*, *Chaotic Self-Employed*), a warlock-style patron and the pact it
+carries, a curse, resistances and vulnerabilities, a bane, good and ill omens,
+and a horoscope-voice reading with a drop cap.
+
+**All of it is invented, and the page says so directly underneath rather than
+in a footer.** `esotericaNote` is rendered from the table, not retyped in the
+page, for the same reason `originsWarning` is: a softer local copy is exactly
+how a caveat erodes. Signs and glyphs are asserted unique per class, because
+two readers being handed the same horoscope is the one thing a horoscope must
+never visibly do.
+
+**The two perils.** `weakTo` used to be a single creature, which was the joke
+rather than the substance. It now also names **three kinds of person** and
+**three circumstances**, and these are the part written from how each lever
+actually fails:
+
+> **Anybody who says the word "guaranteed" while wearing a suit** — you
+> negotiate on everything except safety, and they know which one they are
+> selling.
+> **Family, asking** — you are the one with the float, everyone knows it, and
+> you have never once worked out the number at which you would say no.
+> **A month where nothing at all goes wrong** — you find it suspicious rather
+> than restful, and you will add to the floor to make the feeling go away.
+
+Every one carries a mechanism, and a test enforces that: an archetype with no
+reason behind it is just another horoscope line. The note draws the boundary
+explicitly — the almanac is flavour and meant to be enjoyed as one; the people
+and circumstances are the part worth taking seriously.
+
+Five guards were broken on purpose to check they bite: duplicate sign, duplicate
+glyph, a softened note, a note that drops the "worth taking seriously" line, and
+a class with fewer than three people. All five failed as intended.
+
 **Before writing any of these from a new room:** never render `origins` without
-`originsWarning`, and never above it. Never let `originPicked` reach a score, a
+`originsWarning`, and never above it. Never render the almanac without
+`esotericaNote` — the sign is invented and a reader who is not told that is
+being misled by omission. Never let `originPicked` reach a score, a
 class, or an ability — it is a reader recognising a story, not a measurement,
 and the moment it feeds arithmetic this page starts inventing biography. And
 never present a profile without its `basis`: a characterisation shown as a

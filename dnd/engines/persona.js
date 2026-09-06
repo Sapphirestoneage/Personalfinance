@@ -106,6 +106,26 @@
       other: (measuredId && instinctId && measuredId !== instinctId) ? t.classes[instinctId] : null,
       otherName: (measuredId && instinctId && measuredId !== instinctId) ? name(tables, instinctId) : null,
 
+      /* THE ESOTERICA IS FLAVOUR AND IS LABELLED AS SUCH.
+         The sign, the ruling body, the hour, the metal and the card are all
+         invented, and the table's own note says so. They are here because a
+         thing like this is more fun when it commits, and because a reader who
+         is told plainly that it is a star sign can enjoy it as one. The people
+         and circumstances under weakTo are the opposite: those are written
+         from how each lever actually fails, and they are the part to take
+         seriously. Both travel together so the page cannot present the fun as
+         findings. */
+      sign: p.sign || null,
+      alignment: p.alignment || null,
+      patron: p.patron || null,
+      curse: p.curse || null,
+      resistances: p.resistances || [],
+      vulnerabilities: p.vulnerabilities || [],
+      bane: p.bane || null,
+      omens: p.omens || { good: [], ill: [] },
+      reading: p.reading || null,
+      esotericaNote: t.esotericaNote || null,
+
       headline: p.headline,
       coreDesire: p.coreDesire,
       coreFear: p.coreFear,
@@ -130,7 +150,12 @@
         why: p.weakTo.why,
         cr: mon ? mon.cr : null,
         save: mon ? (mon.save || mon.targetSave || null) : null,
-        found: !!mon
+        found: !!mon,
+        /* Not a creature — a kind of person, and a kind of afternoon. These
+           are the two that actually get past people, and neither of them
+           rolls initiative. */
+        people: p.weakTo.people || [],
+        circumstances: p.weakTo.circumstances || []
       },
 
       /* Offered, never asserted — and the warning travels with them so it
