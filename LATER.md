@@ -163,3 +163,59 @@ moved between them. `rooms/history.html`, D-122.
   that wrote D-136) is worth keeping as `test/responsive.js` — it walks
   every room at two widths and reports overflow, small targets and width
   used. It is currently rebuilt by hand each time the question comes up.
+
+## What people ask about that this does not answer (the coverage gap)
+
+Checked against the code, not guessed at — each line below was grepped
+across `rooms/`, `engines/` and `data/` before being written down. Ordered
+by how often the question actually gets asked, not by how hard it is.
+
+**Nothing covers these at all:**
+
+- **A credit score.** The most-asked consumer money question, and there is
+  no room. `creditUtilization` exists as a ratio; nothing says what a score
+  is, what moves it, how long a late payment lingers, or what to do about
+  an error on a report. For most people it gates the rent, the car and the
+  mortgage rate.
+- **"I can't pay this month."** Between Jobs assumes job loss specifically.
+  There is no triage: which bill to miss first, what is negotiable, what has
+  a grace period, what damages a credit file and what quietly does not.
+  This is the highest-stress money moment there is.
+- **Health insurance before 65.** Protection covers whether cover is
+  adequate. What is missing is the loop that decides whether early
+  retirement works in the US at all: the withdrawal rate sets MAGI, MAGI
+  sets the ACA subsidy, the subsidy changes spending, spending changes the
+  withdrawal rate. `data/events/sabbatical.json` has `cobra_aca_2024` in it
+  and nothing closes the loop.
+- **Aging parents and long-term care.** There is Kids and Tuition facing one
+  direction and nothing facing the other.
+- **"I left my job — what happens to my 401(k)?"** Leave it, roll to an IRA,
+  roll to the new employer, cash out and eat the penalty. Accounts covers
+  Roth vs Traditional, not this.
+- **Which fund to actually buy.** Accounts covers the wrapper and Where It
+  Goes covers the split; no room mentions an index fund, an expense ratio or
+  a target-date fund. That is the step between "save 20%" and doing it.
+- **A car.** It is on the Statement as an asset; there is no room for the
+  decision — depreciation, new vs used vs lease, total cost of ownership,
+  the seven-year note. Real Hourly Wage asks for commuting costs with
+  nowhere to price the car causing them.
+- **Bankruptcy and debt settlement.** A Get Help referral only. The payoff
+  engine will build a forty-year avalanche for someone who should be talking
+  to a lawyer.
+
+**Tagged but not explained:**
+
+- **Medical debt** is a `kind` in `data/debt_rules.json`, so it can be
+  labelled — but nothing says it behaves unlike any other debt: negotiable,
+  frequently wrong, subject to hospital charity-care obligations, and off
+  the report once paid.
+
+**Checked and already covered** (recorded so nobody rebuilds it): **Social
+Security timing** — `engines/ss.js` is wired into Decumulation, What If Life
+and the dashboard, and it is referenced across eleven rooms.
+
+**The pattern worth naming.** This app is deepest for someone with a steady
+job and a surplus to allocate, and thinnest exactly where money stress is
+highest — no income, a medical crisis, a month that will not close. That is
+the inverse of where help is most needed, and it is the strongest argument
+for what to build next.
