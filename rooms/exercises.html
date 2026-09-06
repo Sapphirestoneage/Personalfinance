@@ -33,7 +33,10 @@
   section[id] { scroll-margin-top: var(--space-4); }
   .card-gap { margin-top: var(--space-4); }
   .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
-  .pill { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-accent-hover); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; text-decoration: none; }
+  .pill { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-accent-hover); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; }
+  /* 88 of these on a phone at 23px tall was a row of targets a finger
+     could not hit. A mouse keeps the compact chip. D-136. */
+  @media (pointer: coarse) { .pill { min-height: 32px; padding: 4px var(--space-3); } }
   .pill:hover { border-color: var(--color-accent); }
   .pill.is-quiet { color: var(--color-text-faint); }
   .tools { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; margin-top: var(--space-3); }

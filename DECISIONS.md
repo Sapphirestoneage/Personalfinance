@@ -6756,6 +6756,70 @@ re-copied to stay byte-identical. A future room needs to do nothing to
 appear in the menu beyond being in the registry; to sit in the upkeep group
 instead of its kind group, add its id to `Progress.UPKEEP`.
 
+## D-136 — Phone and desktop, measured rather than eyeballed
+
+Every room was loaded at 412px and at 1440px and checked for four things:
+does the page scroll sideways, is anything wider than the screen, how many
+controls are under 32px tall, and how much of a monitor the content
+actually uses. The fixes below are what that found. Each one is a shared
+class or a bare element, so none of it is a fifty-seven room edit.
+
+**The sideways scroll.** `rooms/ratios.html` scrolled 69px horizontally on
+a phone. A bar row's third cell is a figure, so `.slaf-bars .val` is
+`white-space: nowrap` — correct for `$2,888`. But a row with no figure
+carries a *reason* in that cell instead ("needs monthly debt payments,
+gross annual income"), and nowrap made a sentence one very long line that
+pushed the page open. A reason now wraps and reads left; a figure still
+never wraps.
+
+**Touch targets, only where there is a finger.** The suggestion chip was
+19px tall, a tick 16px, a summary 25px, the exercise chips 23px with
+eighty-eight of them on one screen, and the ⓘ 20px on a page whose own lede
+says to tap it — forty-five times. All of these are now at least 32px under
+`@media (pointer: coarse)`, so a mouse keeps the compact controls they were
+designed as.
+
+Two things are worth writing down. Rooms style their ticks as `.flag input`,
+which ties on specificity with a bare `input[type="checkbox"]` and wins on
+source order, so the shared rule names `label input[type="checkbox"]` to sit
+above every room following that pattern. And the ⓘ was first given an
+invisible `::after` hit area, the usual trick for keeping a small circle
+small; a tap five pixels above it still missed, so that was abandoned for
+growing the button itself to 30px on a coarse pointer. The trick was not
+verified to work here and is not in the code.
+
+**Inline links in prose are deliberately left small.** Sixty-two of the
+remaining under-32px elements in the Exercises room are links inside
+sentences. Padding those to a thumb's height would tear the paragraphs
+apart, and they are never the primary control on a page.
+
+**Desktop.** The measure steps 480 → 620 at 1080px → 680 at 1400px → 720 at
+1600px, and stops there. Past roughly seventy-five characters a line gets
+harder to read, not easier, so the answer to a big monitor is not an
+ever-wider paragraph — which is why the average screen width used stays
+near half and that is the right answer for a column of prose. Where the
+content is not prose the space is taken: `map.html` lists fifty-seven
+equivalent, independent cards, and those flow two-up past 1080px instead of
+running down one long column.
+
+What this pass did **not** do is give each room a desktop layout of its
+own. Most rooms are a vertical stack of cards whose order carries meaning —
+the figure, then the chart, then the inputs — and flowing those into columns
+blind would break the reading order that makes them legible. That is a
+per-room job and is recorded in `LATER.md` rather than guessed at here.
+
+### Compatibility note
+
+Stored shape: unchanged. Nothing in this entry reads or writes the
+household; it is all presentation. Rooms updated: `map.html` (a two-column
+grid past 1080px) and `rooms/exercises.html` (its chips grow on a coarse
+pointer); everything else is `shared/theme.css`, with
+`dnd/shared/theme.css` re-copied to stay byte-identical. A future room
+inherits all of it by using the shared classes: `.slaf-bars` rows,
+`.slaf-info`, `.slaf-use-this`, and ticks inside a `<label>`. A room that
+invents its own small control should add it to the coarse-pointer block
+rather than sizing it for a mouse and leaving a phone to cope.
+
 ---
 
 # The Dungeons & Dividends entries

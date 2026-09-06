@@ -141,3 +141,18 @@ moved between them. `rooms/history.html`, D-122.
   card per row on a 1400px screen where two columns would read better, and
   the dashboard's instrument grid is the only thing that uses the space
   properly. That is a per-room layout job, not a token change.
+
+## Phone and desktop, measured (D-136)
+
+- **Built**: the ratios sideways scroll, coarse-pointer touch targets, the
+  stepped measure, the map two-up. D-136.
+- Still open, and the real desktop work: **a layout per room**. Most rooms
+  are a vertical stack of cards whose order carries meaning — the figure,
+  then the chart, then the inputs — so they cannot be flowed into columns
+  blind. Each room needs someone to say which of its cards are independent
+  and may sit side by side. The dashboard's instrument grid and the map are
+  the only two that use a monitor properly today.
+- Also open: the audit script itself (`scratchpad/audit.js` in the session
+  that wrote D-136) is worth keeping as `test/responsive.js` — it walks
+  every room at two widths and reports overflow, small targets and width
+  used. It is currently rebuilt by hand each time the question comes up.

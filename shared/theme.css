@@ -797,3 +797,51 @@ html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
 @media (min-width: 1400px) {
   :root { --measure: 680px; }
 }
+
+/* ==========================================================================
+   Phone and desktop, measured (D-136).
+   ========================================================================== */
+
+/* A bar row's third column is a figure, so it never wraps. When the row has
+   no figure it carries a REASON instead — "needs monthly debt payments,
+   gross annual income" — and nowrap pushed that 69px past the right edge of
+   a phone, scrolling the whole page sideways. A reason is a sentence and
+   wraps like one; a figure is still a figure. */
+.slaf-bars .row > * { min-width: 0; }
+.slaf-bars .row.is-empty .val { white-space: normal; overflow-wrap: break-word; text-align: left; }
+
+/* Touch targets. A finger is not a cursor: the suggestion chip was 19px
+   tall, a checkbox 16px, a summary 25px. Only on a coarse pointer, so a
+   mouse keeps the compact controls these were designed as. Inline links
+   inside a sentence are deliberately left alone — padding them to 36px
+   would tear paragraphs apart, and they are not the primary control. */
+@media (pointer: coarse) {
+  .slaf-use-this,
+  .slaf-chip,
+  .slaf-na-btn {
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+  }
+  /* Rooms style their own ticks as `.flag input`, which ties on specificity
+     with a bare element selector and wins on order. Naming the label lifts
+     this above every room following that pattern. */
+  input[type="checkbox"], input[type="radio"],
+  label input[type="checkbox"], label input[type="radio"] { width: 20px; height: 20px; }
+  /* The ⓘ is a 20px circle and the room tells you to tap it, 45 times on the
+     ratios page. An invisible ::after hit area was tried first and did not
+     actually take the tap — something paints over it — so the button itself
+     grows on a coarse pointer. A mouse keeps the 20px circle. */
+  .slaf-info { width: 30px; height: 30px; font-size: 14px; }
+  .slaf-manage-toggle { min-height: 32px; display: inline-flex; align-items: center; }
+  summary { min-height: 32px; display: flex; align-items: center; }
+  /* The label a checkbox sits in is the real target, so give it the height. */
+  label:has(> input[type="checkbox"]) { min-height: 32px; display: inline-flex; align-items: center; gap: 8px; }
+}
+
+/* Very wide: a little more column, but not much. Past roughly 75 characters
+   a line gets harder to read, not easier, so the answer to a big monitor is
+   not an ever-wider paragraph. */
+@media (min-width: 1600px) {
+  :root { --measure: 720px; }
+}
