@@ -6857,8 +6857,30 @@ ellipsis. A room name is the entire content of that link, so truncating it
 removes the only thing it says. It now wraps to two lines and clamps beyond
 that. Clipped rooms went from eight to zero.
 
+**Contrast.** Every text node in every room was then measured against WCAG
+AA. 57 failed, and 33 of those were a single bug: the theme never gave a
+bare `<a>` a colour, so any link a component did not style itself fell back
+to the browser default `#0000EE` — pure blue on navy, 1.88:1, invisible.
+"Load it below", "Your Data →" and "The Score" were all unreadable on the
+front page. One default rule fixes all 33 and stops it recurring.
+
+The primary button was next: a dark label on `--color-accent` measured
+4.04:1. Lightening the fill to `--sapphire-300` rather than touching the
+label takes it to 7.6:1 and makes the primary action read as primary.
+`--color-accent` itself is untouched, because it is a border and chip
+colour in a hundred places where it carries no text.
+
+One mistake there is worth recording. The first attempt added
+`.slaf-btn { color: var(--color-text); }` at the end of this file. That
+ties on specificity with `.slaf-btn--primary` and wins on source order, so
+it silently repainted the primary label near-white on the new light blue
+and took it to 2.34:1 — worse than before. A variant's colour is set where
+the variant is defined, never in a later blanket rule.
+
 After: 0 of 5,123 interactive elements without a transition, 0 rooms
-clipping text.
+clipping text, and contrast failures down from 57 to 10. The remaining ten
+are room-local `<button>` elements at ~4.1:1 that do not use the shared
+class; they are listed here rather than quietly claimed as fixed.
 
 ### Compatibility note
 

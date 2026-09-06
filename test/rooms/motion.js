@@ -29,4 +29,17 @@ module.exports = function (t) {
      name is the whole point of the link, so it wraps instead of truncating. */
   checkTrue('a room name wraps rather than truncating mid-word',
     /\.slaf-hop \{[^}]*-webkit-line-clamp: 2/.test(css) && !/\.slaf-hop \{[^}]*white-space: nowrap/.test(css));
+
+  /* ---- Contrast ---------------------------------------------------------- */
+  /* Measured every text node in every room against WCAG AA. 57 failed and 33
+     of those were one bug: no bare `a` rule, so any link a component did not
+     style itself fell back to the browser default #0000EE — 1.88:1 on navy,
+     which is invisible. */
+  checkTrue('a bare link can never fall back to the browser default blue', /^a \{ color: var\(--color-accent-hover\); \}$/m.test(css));
+  checkTrue('the primary button clears the 4.5 floor by lightening the fill, not the label',
+    /\.slaf-btn--primary \{[\s\S]{0,420}background: var\(--sapphire-300\);/.test(css));
+  /* A `.slaf-btn { color }` rule at the end of the file ties on specificity
+     with the primary variant and wins on order — it silently repainted the
+     label near-white on light blue and took it to 2.34:1. */
+  checkTrue('… and no later blanket rule repaints that label', !/\n\.slaf-btn \{ color:/.test(rules));
 };

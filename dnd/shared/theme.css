@@ -310,13 +310,18 @@ h3 { font-size: var(--text-md); }
 .slaf-btn:hover { border-color: var(--color-border-active); }
 
 .slaf-btn--primary {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
+  /* Dark label on --color-accent measured 4.04:1, under the 4.5 AA floor.
+     Lightening the fill rather than the text takes it to 7.6:1 and makes the
+     primary action read as primary, which is its job. --color-accent itself
+     is untouched: it is a border and chip colour in a hundred places where
+     it is not carrying text. D-137. */
+  background: var(--sapphire-300);
+  border-color: var(--sapphire-300);
   color: var(--color-accent-contrast);
   font-weight: 600;
 }
 
-.slaf-btn--primary:hover { background: var(--color-accent-hover); }
+.slaf-btn--primary:hover { background: var(--sapphire-200); border-color: var(--sapphire-200); }
 
 .slaf-btn--quiet {
   background: transparent;
@@ -902,3 +907,23 @@ a.slaf-card:hover, button.slaf-card:hover {
 /* Disabled means disabled: no hover, no press, no pointer. */
 :disabled, [aria-disabled="true"] { cursor: not-allowed; }
 :disabled:hover, [aria-disabled="true"]:hover { transform: none; }
+
+/* ==========================================================================
+   Contrast (D-137).
+   Measured every text node in every room against WCAG AA. 57 failed, and 33
+   of those were one bug: the theme never gave a bare <a> a colour, so any
+   link a component did not style itself fell back to the browser default
+   #0000EE — pure blue on navy, 1.88:1, effectively invisible. "Load it
+   below", "Your Data →" and "The Score" were all unreadable on the front
+   page. A default link colour costs one rule and can never happen again.
+   ========================================================================== */
+a { color: var(--color-accent-hover); }
+a:hover { color: var(--sapphire-100); }
+
+/* The $ / % affixes measured 4.04:1 and move one step up the ramp. The
+   button labels are handled at .slaf-btn--primary above, NOT here: a
+   `.slaf-btn { color }` rule at the end of this file ties on specificity
+   with the primary variant and wins on order, so it silently repainted the
+   primary label near-white on light blue and took it to 2.34:1. Variants
+   are set where the variant is defined, never in a later blanket rule. */
+.slaf-input-shell > .slaf-affix { color: var(--sapphire-100); }
