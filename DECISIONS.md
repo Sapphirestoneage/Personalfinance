@@ -7894,6 +7894,258 @@ reads it.
 
 ---
 
+## D-150 — The Account You Left Behind: four futures, one trap, one sum
+
+A workplace retirement plan does not follow you out of the building, and the
+app had nothing to say about it. **Where It Goes** covers Roth versus
+Traditional — which wrapper new money goes into — and that is a different
+question from what to do with a wrapper you already have at an employer you
+have already left. Coverage gap, wave two, alongside What A Car Costs.
+
+`rooms/rollover.html`, on the frozen template (D-097), registry `rollover`,
+order 26.8, kind `explore`.
+
+### It does not pick a winner, and that is the room
+
+`data/rollover_options.json` says it in its own `confidenceNote`: the rules
+are real and federal; **which one is best for you is not a rule at all.** It
+turns on the old plan's fees, its fund menu, your state's creditor law, and
+whether you use a backdoor Roth — four things this app cannot see. So the
+room lists the four options in the data's order (by how often each is right,
+not how often it is taken, which is why cashing out is last), gives each its
+`good` and `bad` lists, and stops.
+
+**Two trade-offs are lifted out of the bullets and given their own blocks**,
+because they decide the whole question for the people they touch and would
+be read straight past in a list:
+
+- **The age-55 rule.** Leave a job in or after the calendar year you turn 55
+  and you can draw from *that plan* without the 10% penalty — years before
+  59½. Roll it to an IRA and the door shuts.
+- **The pro-rata rule.** A pre-tax balance in an IRA makes every backdoor
+  Roth conversion a blend of taxed and untaxed money. Rolling into the *new
+  employer's* plan keeps it clean. Irrelevant to anyone who has never done
+  one, and the block says so rather than alarming everybody.
+
+The wording of those two is page copy in `rooms/rollover.html`; the substance
+is the table's. Same split as D-147's three grey credit factors.
+
+### The trap gets the words, not a summary
+
+Asking for a cheque instead of a transfer means the plan **must** withhold
+20%, and you then have 60 days to deposit the **full original amount,
+including the fifth they kept**. The fix is not a concept, it is a sentence
+to say out loud, so the page prints it as the largest line in its own
+bordered block: **"Ask for a direct, trustee-to-trustee rollover, in those
+words."** Split out of the table's `instead` at its first full stop, so the
+phrase is the big line and the reassurance is the small one under it.
+
+### The one place it computes, and whose formula it is
+
+Cashing out is the only part that is arithmetic, and **none of the formulas
+are written here**:
+
+- **Income tax — `engines/tax.js`.** `Tax.estimate` is run **twice**: the
+  year as it stands, and the same year with the withdrawal stacked on top
+  through `otherOrdinaryCents` (D-129's door — ordinary income with no
+  payroll tax on it, which is exactly what a plan distribution is). The
+  difference is the tax on the withdrawal. That is what "at your marginal
+  rate" means once the withdrawal is allowed to climb a bracket, which one
+  multiplication would quietly miss. The baseline goes through
+  `TaxRoom.splitIncome` so wages and self-employed profit are divided
+  exactly as the Tax room divides them — same input, same engine, same
+  answer.
+- **Compounding — `engines/projection.js`.** `futureValueCents` at
+  `assumptions.returnReal` (D-094), a **real** return, so "what it would
+  have been" is in today's money and comparable to the dollars beside it.
+  To `targets.retireAge` when one is set, otherwise to the 65 in
+  `data/fire_variants.json` — labelled as the stand-in it is, with a link to
+  FIRE Number.
+- **The 10% penalty and the 20% withholding** are not formulas, they are
+  rates, and they now live in `data/rollover_options.json` under `rates`
+  rather than inline in the page (SPEC.md §7). **59½ is deliberately not
+  among them**: it is already `data/access_rules.json`
+  `byTaxCharacter.pretax.accessAge`, which the Statement's buckets and
+  Decumulation read, and a second copy is how two numbers drift apart.
+
+**The 20% withheld is shown on its own line as a cash-flow fact, not as a
+cost.** It is a payment on account: it comes off the bill, and the row says
+what the cheque would actually be and what April would then settle. That gap
+— plan around the cheque, be surprised by the rest — is the whole reason the
+line exists.
+
+### The penalty question has three certain answers and one honest "it depends"
+
+This is where the room's second input earns its place:
+
+| Where you are | Answer |
+|---|---|
+| Past 59½ | No penalty, whatever happened at the old job |
+| Under 55 today | Penalty applies — you *cannot* have left in or after the year you turned 55 if you have not turned 55 |
+| 55 to 59½, box answered | The answer decides it |
+| 55 to 59½, box blank | **Unknown.** Not assumed either way |
+
+So the box — *the age you turned in the year you left that job* — is asked of
+everyone but only changes anything in the one band where it is the deciding
+fact, and the room says which band that is. Under 55 the question is
+logically closed, which is why the common case needs no second answer.
+
+### Nothing is written, and nothing is guessed
+
+**`Spine.set` and `Spine.updateProfile` appear nowhere in the file.** A
+balance in an old plan is a hypothesis about an account this app has never
+seen; D-052 says a hypothesis is thrown away. Both boxes live in one closure
+and are gone on reload, and **the page says so in its first card** rather
+than only in a comment — the same placement as D-147's "there is no score
+here". `test/forms.js` asserts it from the other side: after typing $40,000
+the household blob does not contain `4000000` and the undo stack names
+neither box.
+
+**`standalone: false`.** With no income entered the room refuses rather than
+filling in the intake's guess: an invented income is an invented bracket is a
+believable wrong cost of cashing out, and this is a number someone might act
+on that afternoon. It names the missing figure and links to its owner. Blank
+is not zero anywhere — an unanswered income box would put the whole
+withdrawal in the bottom bracket, and the guard says exactly that.
+
+The state is the one place a zero is *added*, and it is flagged rather than
+hidden: with no state schedule applied, the total is labelled federal and
+penalty only and the row reads **"not counted"**, never "$0".
+
+### Verified against
+
+Demo persona — 32, single, North Carolina, $72,000 — cashing out $40,000:
+$8,800 federal (taxable goes 55,900 → 95,900, all inside the 22% bracket),
+$1,700 North Carolina (flat 4.25%), $4,000 penalty; **$14,500, 36.3% of it**,
+keeping $25,500. Withheld $8,000, so a $32,000 cheque and $6,500 still owed
+in April. Left alone: $200,128 at 65, 33 years at 5% real. Re-derived by hand
+and outside the browser, and pinned in `test/forms.js`.
+
+### Compatibility note
+
+Stored shape: **unchanged**. The room owns no field in `shared/ownership.js`,
+writes nothing, and never calls `Spine.updateProfile` — a future room calling
+`getProfile()` / `updateProfile()` needs to know nothing new about it. The
+only trace it leaves is the visit `Spine.registerRoom()` records, as every
+room does.
+
+`data/rollover_options.json` gains a `rates` block
+(`earlyWithdrawalPenalty`, `mandatoryWithholding`, `indirectRolloverDays`,
+`ruleOfFiftyFiveAge`). Additive: nothing read the file before this room.
+
+New: `rooms/rollover.html` and one case in `test/forms.js`.
+
+`LIVE-FORM: built once` — both controls are built from the spec by
+`shared/room.js` on load and only ever have `.value` set. Everything else the
+page fills itself is text and holds nothing focusable, so redrawing it cannot
+interrupt a tap.
+
+---
+
+## D-151 — What A Car Costs: the payment is the least informative number
+
+A car is shopped for on the monthly payment, and the monthly payment is the
+one number in the deal that can be made to say anything. Stretch the term and
+it falls; nothing else about the car changes. `rooms/car.html` exists to put
+the four things it hides in front of it, in the order they cost money.
+
+**What it loses.** The depreciation curve from `data/car_costs.json`, drawn
+with `Charts.area`. Year one is 20% of the price, which makes buying at one
+year old the single biggest lever on the page — bigger than the rate, bigger
+than haggling, bigger than the term. With a price typed in the curve is in
+dollars and a second dashed line shows the mirror of it, what you have lost;
+with no price it is in share of the price, because the shape is true whatever
+you pay and the dollars are not.
+
+**What it costs to run.** The AAA shares as a donut. Fuel is 24% of it — the
+cost everybody shops on, and under a quarter of the total. Insurance is the
+biggest slice at 25% and is decided by the driver, not the car. Shares only,
+never dollars: nothing on the page knows anyone's mileage or premium, so a
+dollar total would be invented.
+
+**Whether the loan fits.** The 20/3/8 test, computed by
+`QuickMath.carRule2038` against the household's real gross income — the same
+call Quick Math and Big Purchase already make, so the rule is calculated in
+one place. On the demo persona's $72,000 the cap is $480 a month and the
+rule's ceiling is about $19,723 of car; a $30,000 car with 20% down over
+three years at 6% passes two legs of three and misses the payment cap by
+$250 a month.
+
+**Lease, new, or a year old.** Three cards, each with what it suits and what
+it costs, straight from the table. **No winner is declared.** The data says
+used "suits almost everyone on the arithmetic" and that is as far as this
+room goes.
+
+### The two curves, and the function that crosses them
+
+`carCosts.underwater` explains the concrete harm of a long term in words. A
+room that only quoted those words would be leaving the actual answer on the
+table, because both curves already exist here: the loan balance from the
+amortisation in `engines/projection.js`, and the value from the depreciation
+table. **`QuickMath.carUnderwater(opts, curve)`** walks the loan month by
+month and reports where they cross — how long you would owe more than the car
+is worth, when it clears, and the worst gap. Hand-checked: a $30,000 car with
+nothing down over seven years at 6% is underwater for 39 months, clears in
+month 40, and peaks at $2,444 more owed than the car is worth in month 12.
+The same car with 20% down over three years is never underwater at all, which
+is the whole argument for both.
+
+It lives in `engines/quickmath.js` rather than on the page because that file
+already owns the car rules, and the curve is **passed in** rather than copied
+into it — reference data stays in `data/` (SPEC.md §7).
+`QuickMath.retainedShareAt(curve, years)` is exported alongside it: straight
+line between the years the table lists, flat past the last, so a room asking
+what a car is worth in month 29 gets one answer.
+
+### The assumption that now has a name
+
+`carRule2038` was checking the rule at 6% whenever nobody gave a rate, with
+the literal `0.06` written twice inside it and stated nowhere. It is now
+`CAR_RULE.assumedRate`, used by both call sites and by `carUnderwater`, and
+the room prints it wherever it is in play. Same for a blank deposit: the
+engine reads it as nothing down — it always did — and the room now says so
+beside every figure that reading affects. Neither is a silent `|| 0`; both
+are a stated reading of a blank box.
+
+### Where the room refuses
+
+**Nothing is written.** The price, the deposit, the rate and the term are
+page state and die with the tab. A car someone is considering is a what-if,
+not a fact about them (D-052), and the room says so on the page rather than
+only in a comment.
+
+**Nothing is guessed** (`standalone: false`). With no income the 20/3/8 test
+does not run: it names the figure it needs and links to Start Here, because
+an invented income quietly turns a fail into a pass. **No term is assumed**
+either, even though the engine would default to 36 months — the term is
+precisely the leg of the test a monthly payment hides, and assuming one here
+would hide it a second time. With no price the page still draws the curve,
+the shares and the rule; it just refuses to put a dollar sign on anyone's
+car.
+
+### Compatibility note
+
+Stored shape: **unchanged**. The room owns no field in `shared/ownership.js`,
+writes nothing, and never calls `Spine.updateProfile` — a future room calling
+`getProfile()` / `updateProfile()` needs to know nothing new. The only trace
+it leaves is the visit `Spine.registerRoom()` records, as every room does.
+
+`engines/quickmath.js` gains two exports (`retainedShareAt`,
+`carUnderwater`) and one key on the existing `CAR_RULE` object
+(`assumedRate: 0.06`). Both are additive: every existing caller of
+`carRule2038` and of `CAR_RULE` behaves exactly as before, and the two 6%
+literals it replaces were already that value.
+
+New: `rooms/car.html`, `data/car_costs.json` (registered as
+`TABLES.carCosts`), a registry row at order 26.2, kind `explore`, and two
+cases in `test/forms.js` — one that types into three boxes and asserts the
+undo stack is still empty afterwards, one that picks the term.
+
+`LIVE-FORM: built once` — the four controls are built from the spec by
+`shared/room.js` on load and only ever have `.value` set. The panels the page
+fills itself hold no focusable control and are written only when their markup
+actually changes, so typing in one box never re-animates a chart in another.
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

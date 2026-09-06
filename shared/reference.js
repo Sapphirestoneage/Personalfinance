@@ -40,6 +40,10 @@
        bill to keep when the month will not close (D-147, D-148). */
     creditFactors: 'credit_factors.json',
     billTriage: 'bill_triage.json',
+    /* Wave two of the coverage gap: what a car actually costs, and what to do
+       with a workplace plan after leaving a job (D-149, D-150). */
+    carCosts: 'car_costs.json',
+    rolloverOptions: 'rollover_options.json',
     expenseCategories: 'expense_categories.json',
     budgetTemplates: 'budget_templates.json',
     debtRules: 'debt_rules.json',

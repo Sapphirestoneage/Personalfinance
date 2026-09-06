@@ -121,6 +121,45 @@
       ]
     },
     {
+      /* For most households the second-largest purchase and the most
+         frequent large one, and Big Purchase is generic (D-149). */
+      id: 'car',
+      kind: 'explore',
+      needs: ['grossAnnualIncome'],
+      order: 26.2,
+      title: 'What A Car Costs',
+      blurb: 'The sticker price is the smallest part. Depreciation, the running costs, and whether the loan fits \u2014 against the one test that says if the car fits your life.',
+      href: 'rooms/car.html',
+      tier: 2,
+      tags: ['cashflow', 'debt'],
+      subsections: [
+        { id: 'out-drop',   label: 'What it loses' },
+        { id: 'out-run',    label: 'What it costs to run' },
+        { id: 'out-loan',   label: 'Whether the loan fits' },
+        { id: 'out-ways',   label: 'Lease, new, or a year old' },
+        { id: 'reading',    label: 'Reading from elsewhere' }
+      ]
+    },
+    {
+      /* "I left my job — what happens to my 401(k)?" Accounts covers Roth
+         vs Traditional, not this (D-150). */
+      id: 'rollover',
+      kind: 'explore',
+      needs: [],
+      order: 26.8,
+      title: 'The Account You Left Behind',
+      blurb: 'A workplace plan at an old job has four possible futures, and one of them is much worse than the others. What each costs you, and the paperwork trap in the middle.',
+      href: 'rooms/rollover.html',
+      tier: 2,
+      tags: ['income'],
+      subsections: [
+        { id: 'out-four',   label: 'The four things you can do' },
+        { id: 'out-trap',   label: 'The trap in the middle' },
+        { id: 'out-cost',   label: 'What cashing out costs' },
+        { id: 'reading',    label: 'Reading from elsewhere' }
+      ]
+    },
+    {
       /* The most-asked consumer money question, and the app had no room for
          it (D-147). It computes NO score — it cannot see the file — so it
          shows what it can see, says what moves one, and stops. */

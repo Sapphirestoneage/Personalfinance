@@ -680,6 +680,39 @@ const CASES = [
     }
   },
   {
+    /* What A Car Costs stores nothing at all — every box is page state,
+       because a car someone is considering is a what-if, not a fact about
+       them (D-052). So the check is that what was typed is still in the box
+       after the room has recomputed around it, and that the household is
+       untouched. */
+    room: '/rooms/car.html',
+    container: '#room-inputs',
+    seed: 'demo',
+    fields: [
+      { sel: '[data-ctl="price"]', type: '30000' },
+      { sel: '[data-ctl="down"]', type: '6000' },
+      { sel: '[data-ctl="rate"]', type: '6' }
+    ],
+    expect: async (page) => {
+      const v = await page.evaluate(() => {
+        const g = k => (document.querySelector(`[data-ctl="${k}"]`) || {}).value;
+        return { price: g('price'), down: g('down'), rate: g('rate'),
+                 undo: SLAF.Spine.historySize().undo,
+                 number: document.getElementById('room-number').innerText,
+                 verdict: document.getElementById('loan-verdict').textContent };
+      });
+      return [
+        ['the price was kept and formatted', v.price, '$30,000'],
+        ['the deposit was kept', v.down, '$6,000'],
+        ['the rate was kept', v.rate, '6'],
+        ['and nothing reached the household', v.undo, 0],
+        /* $30,000 still worth 0.60 of it after three years is $18,000. */
+        ['the loss follows from the price', v.number.indexOf('$12,000') !== -1, true],
+        ['and no term is assumed for you', v.verdict, 'Pick how long the loan runs.']
+      ];
+    }
+  },
+  {
     /* The Windfall stores nothing — every input is page-local. So the check
        is that what you typed is still in the box after the page has
        recomputed around it, which is the failure the guard exists for. */
@@ -904,6 +937,37 @@ const CASES = [
         ['eating out was kept', cents.dining, 26000]
       ];
     }
+  },
+  {
+    /* The Account You Left Behind. Two boxes on the template that are
+       deliberately NOT owned by anybody: an old plan's balance and the age
+       you turned in the year you left. Both are what-ifs, so as well as the
+       usual "did the tapped node survive", this asserts the opposite of
+       every other case here — that nothing reached the household (D-052).
+       The pinned $14,500 is the demo persona's cash-out cost: $8,800 federal
+       at 22%, $1,700 North Carolina at 4.25%, $4,000 penalty on $40,000. */
+    room: '/rooms/rollover.html',
+    container: '#room-inputs',
+    seed: 'demo',
+    fields: [
+      { sel: '[data-ctl="balance"]', type: '40000' },
+      { sel: '[data-ctl="leftAtAge"]', type: '56' }
+    ],
+    expect: async (page) => {
+      const r = await page.evaluate(() => ({
+        number: document.getElementById('room-number').innerText,
+        rows: document.getElementById('cost-rows').innerText,
+        blob: localStorage.getItem('slaf.household.v2') || ''
+      }));
+      const undo = (JSON.parse(r.blob).meta.undoStack || []).map(e => e.label).join(' | ');
+      return [
+        ['the cash-out cost is worked out', r.number.indexOf('$14,500') !== -1, true],
+        ['the 20% withheld is shown apart from it', r.rows.indexOf('$8,000') !== -1, true],
+        ['and what the balance would have been, left alone', r.rows.indexOf('left alone') !== -1, true],
+        ['the what-if balance reached no stored field', r.blob.indexOf('4000000') !== -1, false],
+        ['and left no undo entry behind', /old plan|year you left/.test(undo), false]
+      ];
+    }
   }
 ];
 
@@ -1027,6 +1091,23 @@ const SELECT_CASES = [
       canBegin: document.querySelector('#btn-begin').disabled === false
     }),
     also: (stored) => [['answering both unlocks the campaign', stored.canBegin, true]]
+  },
+  {
+    /* What A Car Costs. The term select has no default on purpose (the term
+       is the leg of 20/3/8 a monthly payment hides), so this also checks that
+       choosing one lands and the room notices. */
+    room: '/rooms/car.html',
+    container: '#room-inputs',
+    seed: 'demo',
+    picks: [
+      ['select[data-ctl="term"]', '60']
+    ],
+    read: () => ({
+      term: document.querySelector('select[data-ctl="term"]').value,
+      verdict: document.getElementById('loan-verdict').textContent
+    }),
+    also: (stored) => [['picking a term stops the room asking for one',
+      stored.verdict.indexOf('Pick how long') === -1, true]]
   },
   {
     room: '/rooms/hassle.html',

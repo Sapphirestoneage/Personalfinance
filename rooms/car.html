@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>What A Car Costs · SPARKS</title>
+<meta name="description" content="The monthly payment is the least informative number in a car deal. What the car loses, what it costs to run, whether the loan fits, and how leasing, new and a year old actually compare."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). Registry: car.
+
+  1. READS   Gross annual income (owned by Start Here), through
+             Schema.grossAnnualIncomeCents, and nothing else from the
+             household. Everything else on the page is typed here and thrown
+             away.
+  2. WRITES  NOTHING. It owns no field in shared/ownership.js and never calls
+             Spine.updateProfile. A car someone is thinking about is a
+             what-if, not a fact about them, and a what-if is never written
+             (D-052). The price, the deposit, the term and the rate are page
+             state that dies with the tab, and the room says so on the page.
+  3. CALLS   engines/quickmath.js — carRule2038 for the 20/3/8 test (the same
+             call Quick Math and Big Purchase make, so one rule is computed
+             in one place), retainedShareAt for the depreciation curve, and
+             carUnderwater for where the balance curve and the value curve
+             cross. Charts come from shared/charts.js. No arithmetic is
+             written inline on this page.
+  4. EMPTY   With nothing typed it draws the SHAPE and invents no number: the
+             curve in percent of the price rather than dollars, the running
+             costs as shares, and the 20/3/8 test as its rule with the
+             household's own ceiling beside it. With no income it does not
+             assume one — it names the figure it needs and links to its
+             owner. No term chosen means no term is assumed, because the term
+             is exactly the leg of the test a monthly payment hides.
+  5. CONFIG  data/car_costs.json (TABLES.carCosts) — the depreciation curve,
+             the running-cost shares, the 20/3/8 guidance, the underwater
+             explanation and the three ways to buy. Every word of content on
+             this page that is not a calculation comes from there.
+
+  LIVE-FORM: built once — shared/room.js builds the four controls from the
+  spec on load and only ever sets their .value, never under focus. The panels
+  this page fills itself hold no focusable control, and each is written only
+  when its markup actually changes.
+  THEMING: none this pass. A theme is a class on <body> and a palette in
+  shared/theme.css.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+
+  /* The room writes nothing. Said once, plainly, where the typing happens. */
+  .kept-nowhere { font-size: var(--text-sm); line-height: var(--leading-loose); color: var(--color-text-muted); border-left: 3px solid var(--color-border-strong); padding: var(--space-2) var(--space-3); margin: var(--space-3) 0 0; }
+  .kept-nowhere strong { color: var(--color-text); }
+
+  /* One row per thing: a name, a figure, and the line that says what it
+     means. Shared by the depreciation table and the three loan checks. */
+  ul.rows { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ul.rows > li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  ul.rows > li:first-child { border-top: none; }
+  .r-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+  .r-name { font-family: var(--font-display); font-size: var(--text-md); }
+  .r-val { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--color-text); }
+  .r-val.is-good { color: var(--color-positive); }
+  .r-val.is-watch { color: var(--color-caution); }
+  .r-val.is-out { color: var(--color-critical-text); }
+  .r-val.is-blank { color: var(--color-text-faint); }
+  .r-say { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  .r-note { font-size: var(--text-sm); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+  .r-note a { color: var(--color-accent-hover); }
+
+  /* The verdict on the loan, and the underwater stretch under it. */
+  .verdict { font-family: var(--font-display); font-size: var(--text-lg, 1.25rem); line-height: 1.25; margin: var(--space-2) 0 0; }
+  .verdict.is-good { color: var(--color-positive); }
+  .verdict.is-watch { color: var(--color-caution); }
+  .verdict.is-out { color: var(--color-critical-text); }
+  .verdict.is-blank { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-base); }
+  .verdict-say { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-loose); }
+  .verdict-say a { color: var(--color-accent-hover); }
+  .under { border-left: 3px solid var(--color-caution); background: rgba(232,184,75,.07); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: var(--space-3); margin-top: var(--space-4); }
+  .under h3 { font-family: var(--font-display); font-size: var(--text-md); margin: 0; }
+  .under p { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-loose); }
+  .under .figure { color: var(--color-text); font-variant-numeric: tabular-nums; }
+
+  /* Lease / new / a year old, side by side where there is room for it. */
+  .ways { display: grid; gap: var(--space-3); margin-top: var(--space-3); }
+  @media (min-width: 760px) { .ways { grid-template-columns: repeat(3, 1fr); } }
+  .way { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); padding: var(--space-3); }
+  .way h3 { font-family: var(--font-display); font-size: var(--text-md); margin: 0 0 var(--space-2); }
+  .way dt { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); margin-top: var(--space-2); }
+  .way dd { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; line-height: var(--leading-loose); }
+  .way .arith { font-size: var(--text-sm); color: var(--color-text); margin: var(--space-3) 0 0; padding-top: var(--space-2); border-top: 1px solid var(--color-border); font-variant-numeric: tabular-nums; }
+
+  /* The term picker is a select like the rest, so it lines up with them; it
+     just has no answer until somebody gives it one. */
+  #room-inputs .room-grid { align-items: end; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../index.html">← Home</a>
+  <h1>What A Car Costs</h1>
+  <p class="room-lede">The monthly payment is the least informative number in the whole deal. Here is what sits underneath it.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+  <div class="room-standalone" id="room-standalone" hidden></div>
+
+  <section class="slaf-card" id="number">
+    <div class="room-head-row">
+      <span class="slaf-eyebrow">The number the payment hides</span>
+      <div id="room-lens"></div>
+    </div>
+    <div class="room-number" id="room-number"></div>
+  </section>
+
+  <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The car you are thinking about</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      Every box is optional. Leave them all empty and the page still shows you
+      the shape of the thing — it just will not put a dollar sign on your car.
+    </p>
+    <div id="room-inputs"></div>
+    <p class="kept-nowhere">
+      <strong>None of this is saved.</strong> A car you are considering is not
+      a fact about you, so nothing typed here is written to your household or
+      kept when you close the tab. The only figure this page reads from you is
+      what you earn, and that stays where it already lives.
+    </p>
+  </section>
+
+  <section class="slaf-card" id="out-drop" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What it loses</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      Depreciation is the largest cost of owning a car and the only one that
+      never sends a bill. The steepest part of it is over before the first
+      service.
+    </p>
+    <div id="room-chart"></div>
+    <ul class="rows" id="drop-rows"></ul>
+    <p class="r-note" id="drop-source"></p>
+  </section>
+
+  <section class="slaf-card" id="out-run" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What it costs to run</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      Shares of a year of running costs, not dollars — what a car costs to run
+      depends on you, your postcode and your mileage, and this page knows none
+      of those. The order is the point.
+    </p>
+    <div id="run-chart"></div>
+    <p class="verdict-say" id="run-say"></p>
+    <ul class="rows" id="run-rows"></ul>
+  </section>
+
+  <section class="slaf-card" id="out-loan" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Whether the loan fits</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)" id="loan-what"></p>
+    <p class="verdict" id="loan-verdict"></p>
+    <p class="verdict-say" id="loan-say"></p>
+    <ul class="rows" id="loan-rows"></ul>
+    <div class="under" id="loan-under"></div>
+  </section>
+
+  <section class="slaf-card" id="out-ways" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Lease, new, or a year old</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      Three ways to end up in the same car. No winner is declared here: what
+      each one suits and what each one costs is the whole of the answer.
+    </p>
+    <div class="ways" id="ways-cards"></div>
+  </section>
+
+  <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Priced in life</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      The parts of this deal that are real money leaving you. The toggle up
+      top reads them as dollars, hours of your life, or months of FI pushed.
+    </p>
+    <ul class="room-amounts" id="room-amounts"></ul>
+  </section>
+
+  <details class="room-drawer" id="assumptions">
+    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
+    <div class="room-assumptions-body" id="room-assumptions"></div>
+  </details>
+
+  <p class="room-why" id="room-why" hidden></p>
+  <p class="room-scope" id="room-scope"></p>
+
+  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What this is reading</span>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Depreciation depends on the model,
+    the mileage and the year you sell; insurance depends on you. Nothing here
+    values a particular car or quotes a rate. Your numbers stay in this
+    browser, and the ones typed on this page are not even kept there.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/suggest.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../engines/quickmath.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../shared/charts.js"></script>
+<script src="../shared/room.js"></script>
+<script>
+(function () {
+  'use strict';
+  /* No SLAF.Spine handle on purpose: this room reads the household through
+     the template and writes nothing at all, so it never needs one. */
+  var Money = SLAF.Money, Schema = SLAF.Schema, Ownership = SLAF.Ownership,
+      QuickMath = SLAF.QuickMath, Charts = SLAF.Charts, Room = SLAF.Room;
+
+  var MONTHS = 12;
+  /* The horizon the headline uses. Three years is not a preference: it is the
+     longest term the 20/3/8 rule allows, so the loss it shows is the loss
+     over a loan the rule would actually pass. */
+  var HEADLINE_YEARS = 3;
+
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function el(id) { return document.getElementById(id); }
+  function incomeLink(text) {
+    return '<a href="' + Ownership.linkTo('start', 'q-income') + '">' + esc(text) + ' →</a>';
+  }
+
+  /* ---- The car being considered ------------------------------------------
+     Page state, never the household (D-052). Empty is empty: a box nobody
+     has filled in is null, and null never becomes a zero on the way into a
+     calculation. Where a calculation cannot proceed without a figure, the
+     page says which one rather than inventing it; the two places that DO
+     fall back — a missing rate and a missing deposit — say so out loud
+     wherever their answer is shown. */
+  var car = { priceCents: null, downCents: null, termMonths: null, rate: null };
+  function opts() {
+    return {
+      carPriceCents: car.priceCents, priceCents: car.priceCents,
+      downPaymentCents: car.downCents,
+      termMonths: car.termMonths,
+      loanRate: car.rate
+    };
+  }
+
+  /* ---- The table ---------------------------------------------------------- */
+  function table(T) { return (T && T.carCosts) || null; }
+  function curve(T) { var t = table(T); return t ? t.depreciation : []; }
+  function share(T, years) { return QuickMath.retainedShareAt(curve(T), years); }
+  function worthAt(T, years) {
+    var s = share(T, years);
+    return Money.isEntered(car.priceCents) && Money.isEntered(s)
+      ? Math.round(car.priceCents * s) : null;
+  }
+  function lostBy(T, years) {
+    var w = worthAt(T, years);
+    return w === null ? null : car.priceCents - w;
+  }
+  function months(n) {
+    if (!Money.isEntered(n)) return Money.EM_DASH;
+    var y = Math.floor(n / MONTHS), m = n % MONTHS;
+    var parts = [];
+    if (y) parts.push(y + (y === 1 ? ' year' : ' years'));
+    if (m) parts.push(m + (m === 1 ? ' month' : ' months'));
+    return parts.length ? parts.join(' and ') : '0 months';
+  }
+
+  /* Write a panel only when its markup has actually changed, so a panel
+     never re-animates because somebody typed in a different box. */
+  var painted = {};
+  function setHtml(id, html) {
+    if (painted[id] === html) return;
+    painted[id] = html;
+    var host = el(id);
+    if (!host) return;
+    host.innerHTML = html;
+    var c = host.querySelector('.slaf-chart');
+    if (c) c.classList.add('is-animated');
+  }
+  function setText(id, text) {
+    var host = el(id);
+    if (host && host.textContent !== text) host.textContent = text;
+  }
+
+  Room.mount({
+    id: 'car',
+    tables: ['carCosts', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones',
+             'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    reads: ['grossAnnualIncome'],
+    /* No guesses. This room's own figures are typed here and its one borrowed
+       figure is income, which the 20/3/8 test must never invent — a guessed
+       income turns a fail into a pass. */
+    standalone: false,
+
+    /* -- The four boxes. Built once by the template, only ever .value'd. --- */
+    inputs: [
+      { ctl: 'price', kind: 'money', label: 'What the car costs',
+        placeholder: '30,000', hint: 'The drive-away price, not the payment.',
+        read: function () { return car.priceCents; },
+        write: function (v) { car.priceCents = v; } },
+      { ctl: 'down', kind: 'money', label: 'What you would put down',
+        placeholder: '6,000', hint: 'Left empty, this is read as nothing down.',
+        read: function () { return car.downCents; },
+        write: function (v) { car.downCents = v; } },
+      { ctl: 'rate', kind: 'pct', label: 'The loan rate',
+        placeholder: '6', hint: 'Left empty, the test uses 6%.',
+        read: function () { return car.rate; },
+        write: function (v) { car.rate = v; } },
+      { ctl: 'term', kind: 'select', label: 'How long the loan runs',
+        options: [['', 'Not chosen yet'], ['36', '3 years'], ['48', '4 years'],
+                  ['60', '5 years'], ['72', '6 years'], ['84', '7 years']],
+        read: function () { return car.termMonths; },
+        write: function (v) { car.termMonths = v === null ? null : Number(v); } }
+    ],
+
+    /* -- What it loses while you own it, in dollars a month ---------------- */
+    number: function (h, T) {
+      var label = 'What it loses in the first three years';
+      if (!table(T)) return { label: label, value: null, reason: 'The car costs table did not load.' };
+      var lost = lostBy(T, HEADLINE_YEARS), worth = worthAt(T, HEADLINE_YEARS);
+      var retained = share(T, HEADLINE_YEARS);
+      if (lost === null) {
+        return {
+          label: label,
+          value: null,
+          reason: 'Type what the car costs, below.',
+          sub: 'Blank is not zero — nothing here says a car loses nothing. It says no price has been '
+            + 'entered to take the share off. The curve below is the shape whatever you pay: about '
+            + '<strong>' + esc(Charts.percent(1 - retained)) + '</strong> of the price gone by year three, '
+            + 'and <strong>' + esc(Charts.percent(1 - share(T, 1))) + '</strong> of it gone in year one alone.'
+        };
+      }
+      var perMonth = Math.round(lost / (HEADLINE_YEARS * MONTHS));
+      var sub = '<strong>' + esc(Money.formatCents(car.priceCents)) + '</strong> now, about '
+        + '<strong>' + esc(Money.formatCents(worth)) + '</strong> then — '
+        + '<strong>' + esc(Money.formatCents(perMonth)) + '</strong> a month of value, before a drop of '
+        + 'fuel, a day of insurance or a single repair.';
+      var u = QuickMath.carUnderwater(opts(), curve(T));
+      if (Money.isOk(u)) {
+        sub += ' The payment on this loan would be <strong>' + esc(Money.formatCents(u.monthlyPaymentCents))
+          + '</strong> a month, which is the smaller of the two figures and the only one anybody quotes.';
+      }
+      return { label: label, value: Money.formatCents(lost), sub: sub, zone: null };
+    },
+
+    /* -- The curve. In dollars once there is a price, in share of the price
+          until then — the shape is true either way, the dollars are not. --- */
+    chart: function (h, T) {
+      var rows = curve(T);
+      if (!rows.length) return Charts.area({ series: [], empty: 'The depreciation curve did not load.' });
+      var year = function (v) { return String(v); };
+      if (!Money.isEntered(car.priceCents)) {
+        return Charts.area({
+          title: 'What share of the price a car is still worth',
+          series: [{ id: 'share', label: 'Share of the price it is still worth',
+                     color: Charts.COLORS.contributed,
+                     points: rows.map(function (r) { return [r.year, r.retainedShare * 100]; }) }],
+          hLines: [{ y: 100, label: 'what you paid', color: Charts.COLORS.spend }],
+          vLines: [{ x: 1, label: 'year one' }],
+          x: { label: 'years owned', format: year },
+          y: { format: function (v) { return v + '%'; }, min: 0, max: 100 }
+        });
+      }
+      var P = car.priceCents;
+      return Charts.area({
+        title: 'What the car is worth, and what you have lost, year by year',
+        series: [
+          { id: 'worth', label: 'What it is still worth', color: Charts.COLORS.contributed, fill: true,
+            points: rows.map(function (r) { return [r.year, Math.round(P * r.retainedShare)]; }) },
+          { id: 'lost', label: 'What you have lost', color: Charts.COLORS.debt, fill: false, dash: true,
+            points: rows.map(function (r) { return [r.year, P - Math.round(P * r.retainedShare)]; }) }
+        ],
+        hLines: [{ y: P, label: 'what you paid', color: Charts.COLORS.spend }],
+        vLines: [{ x: 1, label: 'year one' }],
+        x: { label: 'years owned', format: year },
+        y: { min: 0 }
+      });
+    },
+
+    /* -- Only money that actually leaves you goes through the lens. A share
+          of a price is not spent, so it stays out of this list. ----------- */
+    amounts: function (h, T) {
+      var rows = [];
+      if (!table(T) || !Money.isEntered(car.priceCents)) return rows;
+      rows.push({ label: 'Three years of depreciation', cents: lostBy(T, HEADLINE_YEARS) });
+      rows.push({ label: 'A 20% deposit on this car',
+        cents: Math.round(car.priceCents * table(T).loanGuidance.downPaymentShare) });
+      var u = QuickMath.carUnderwater(opts(), curve(T));
+      if (Money.isOk(u)) {
+        rows.push({ label: 'Interest over the whole term', cents: u.totalInterestCents });
+        rows.push({ label: 'Everything paid to the lender', cents: u.loanCents + u.totalInterestCents });
+      }
+      return rows;
+    },
+
+    assumptions: function (h, T) {
+      var t = table(T);
+      if (!t) return [];
+      var g = t.loanGuidance, rule = QuickMath.CAR_RULE;
+      var one = t.depreciation.filter(function (r) { return r.year === 1; })[0];
+      return [
+        { label: 'The depreciation curve',
+          value: t.depreciation.length + ' points, ' + Charts.percent(1 - one.retainedShare) + ' gone by year one',
+          source: 'data/car_costs.json v' + t.version + ' — ' + t.source + ' (' + t.confidence + '). '
+            + t.note },
+        { label: 'Years the table does not list',
+          value: 'straight line between the ones it does',
+          source: 'The curve is drawn only at the years in the table. Anything between them — month 29, say — '
+            + 'is a straight line from the year before to the year after, and past the last row it is held '
+            + 'flat rather than extrapolated.' },
+        { label: 'The running-cost shares',
+          value: t.runningCosts.map(function (r) { return Money.formatRate(r.share, { decimals: 0 }); }).join(' / '),
+          source: 'The AAA "Your Driving Costs" breakdown, as shares of a year of ownership. Shares only: '
+            + 'no dollar total is shown, because nothing on this page knows your mileage or your premium.' },
+        { label: 'The 20/3/8 test',
+          value: g.what,
+          source: 'data/car_costs.json v' + t.version + ' (' + t.confidence + '). ' + g.why },
+        { label: 'Where the test is computed',
+          value: 'engines/quickmath.js — carRule2038',
+          source: 'The same call Quick Math and Big Purchase make, so the rule is calculated in one place '
+            + 'and cannot drift between rooms.' },
+        { label: 'The rate, when you have not given one',
+          value: Money.formatRate(rule.assumedRate, { decimals: 0 }) + ' a year',
+          source: 'Used only to work the test and the payment; it is stated wherever it is used, and typing '
+            + 'a real quote replaces it everywhere on the page.' },
+        { label: 'The deposit, when you have not given one',
+          value: 'read as nothing down',
+          source: 'Not an assumption about you — a reading of a blank box that the page states beside every '
+            + 'figure it affects. Type 0 and you get the same answer, said on purpose.' },
+        { label: 'What this page keeps',
+          value: 'nothing',
+          source: 'The price, the deposit, the rate and the term are page state and are gone when the tab '
+            + 'closes. A car you are considering is a what-if, and a what-if is never written (D-052).' }
+      ];
+    },
+
+    why: function (h, T, situation) {
+      return {
+        employed: 'On a salary the payment looks affordable because it is compared with one month of pay. The car is not compared with one month of anything — it is a five- to seven-year commitment made in an afternoon, which is why the term is the leg of the test worth arguing about.',
+        selfEmployed: 'Self-employed, a fixed payment is the part that hurts in a thin quarter, and the term decides how many thin quarters you have to survive with it. A shorter loan on a cheaper car buys back the flexibility your income needs.',
+        mixed: 'With a job and your own work, the steady pay makes the payment feel safe and the variable part carries the risk. Size the car against the steady half only, and the lumpy half stays yours.',
+        student: 'A car is often the first big loan anybody is offered, and the first place a seven-year term is presented as a kindness. The cheapest car you can rely on, bought at a few years old, is the single largest financial decision available at this stage.',
+        betweenJobs: 'Between jobs the 20/3/8 test has no income to check against, and that is the answer rather than a gap: a car bought now is a fixed cost added to a month with no fixed income. If the car is what gets you to the next job, buy the cheapest reliable one and skip the loan.',
+        retired: 'Retired, the loan question mostly goes away and the depreciation question does not. Buying at two or three years old and keeping it a decade puts you on the flat part of the curve for almost the whole time you own it.'
+      }[situation] || 'A car is bought on the monthly payment and paid for in depreciation, insurance, fuel and interest. This room lays out all four, and one test for whether the whole thing fits.';
+    },
+
+    scope: 'This room cannot value a particular car, quote you a rate, or price insurance for your postcode and your record — those come from the seller, the lender and the insurer. A car you cannot get to work without, on a budget that will not carry one, has stopped being an arithmetic problem —',
+
+    /* -- Everything that is content rather than the headline. Rebuilt only
+          when it changes; none of it holds a focusable control. ---------- */
+    after: function (h, T) {
+      var t = table(T);
+      if (!t) return;
+      var priced = Money.isEntered(car.priceCents);
+
+      /* ---- What it loses, year by year --------------------------------- */
+      setHtml('drop-rows', t.depreciation.map(function (r) {
+        var worth = priced ? Math.round(car.priceCents * r.retainedShare) : null;
+        var lost = priced ? car.priceCents - worth : null;
+        var name = r.year === 0 ? 'The day you buy it'
+          : r.year === 1 ? 'After one year' : 'After ' + r.year + ' years';
+        var val = priced
+          ? Money.formatCents(worth) + ' · ' + Money.formatCents(lost) + ' lost'
+          : Money.formatRate(r.retainedShare, { decimals: 0 }) + ' of the price';
+        return '<li><div class="r-head"><span class="r-name">' + esc(name) + '</span>'
+          + '<span class="r-val' + (r.year === 1 ? ' is-out' : '') + '">' + esc(val) + '</span></div>'
+          + (r.note ? '<p class="r-say">' + esc(r.note) + '</p>' : '')
+          + (priced ? '' : '<p class="r-note">Worth in dollars once there is a price above.</p>')
+          + '</li>';
+      }).join(''));
+      setText('drop-source', t.confidenceNote);
+
+      /* ---- What it costs to run ---------------------------------------- */
+      var biggest = t.runningCosts.slice().sort(function (a, b) { return b.share - a.share; })[0];
+      var fuel = t.runningCosts.filter(function (r) { return r.id === 'fuel'; })[0];
+      setHtml('run-chart', Charts.donut({
+        title: 'Where a year of running costs goes',
+        slices: t.runningCosts.map(function (r) { return { label: r.label, value: r.share, note: r.note || '' }; }),
+        format: function (v) { return Charts.percent(v); },
+        center: { big: Charts.percent(fuel.share), small: 'is fuel' }
+      }));
+      setHtml('run-say',
+        'Fuel is <strong>' + esc(Charts.percent(fuel.share)) + '</strong> of it — the cost everybody shops on, '
+        + 'and under a quarter of the total. The biggest slice is <strong>' + esc(biggest.label.toLowerCase())
+        + '</strong> at <strong>' + esc(Charts.percent(biggest.share)) + '</strong>, and it is decided by you '
+        + 'and your postcode more than by the car. The one slice on this list you can set to zero is the '
+        + 'interest, and the way to set it to zero is to not borrow.');
+      setHtml('run-rows', t.runningCosts.map(function (r) {
+        return '<li><div class="r-head"><span class="r-name">' + esc(r.label) + '</span>'
+          + '<span class="r-val">' + esc(Money.formatRate(r.share, { decimals: 0 })) + '</span></div>'
+          + (r.note ? '<p class="r-say">' + esc(r.note) + '</p>' : '') + '</li>';
+      }).join(''));
+
+      /* ---- Whether the loan fits --------------------------------------- */
+      var g = t.loanGuidance;
+      setText('loan-what', g.what + ' ' + g.why);
+
+      var rule = QuickMath.carRule2038(h, opts());
+      var verdict, verdictZone, say = '', rows = '';
+
+      if (!Money.isOk(rule)) {
+        /* No income: name the figure and link to its owner. Never assume it —
+           an invented income turns a fail into a pass. */
+        verdict = 'This test needs what you earn.';
+        verdictZone = 'blank';
+        say = esc(rule.reason) + ' The 8% leg is 8% of a month of your gross pay, so without that figure '
+          + 'there is no cap to measure a payment against — and a made-up one would quietly pass a car '
+          + 'that does not fit. ' + incomeLink('Add your income in Start Here');
+      } else {
+        var ceiling = 'On what you earn, the rule’s ceiling is about <strong>'
+          + esc(Money.formatCents(rule.maxAffordablePriceCents)) + '</strong> of car — that is 20% down, '
+          + 'three years, at ' + esc(Money.formatRate(QuickMath.CAR_RULE.assumedRate, { decimals: 0 }))
+          + ', with the payment landing on the cap of <strong>'
+          + esc(Money.formatCents(rule.paymentCapCents)) + '</strong> a month.';
+
+        if (!priced) {
+          verdict = 'Nothing priced yet.';
+          verdictZone = 'blank';
+          say = ceiling + ' Type a price above and the three legs get checked against it.';
+        } else if (!Money.isEntered(car.termMonths)) {
+          verdict = 'Pick how long the loan runs.';
+          verdictZone = 'blank';
+          say = 'No term is assumed for you, on purpose: the term is the leg of this test that a monthly '
+            + 'payment hides completely, and assuming one here would hide it again. ' + ceiling;
+        } else {
+          var passes = rule.value;
+          verdict = rule.passesAll ? 'This car passes all three.'
+            : passes === 0 ? 'This car fails all three legs.'
+            : 'This car passes ' + passes + ' of the three.';
+          verdictZone = rule.passesAll ? 'good' : passes >= 2 ? 'watch' : 'out';
+          say = ceiling;
+          if (!Money.isEntered(car.downCents)) {
+            say += ' Nothing is entered in the deposit box, so this is checked as putting nothing down.';
+          }
+          if (!Money.isEntered(car.rate)) {
+            say += ' No rate is entered, so it is checked at '
+              + esc(Money.formatRate(QuickMath.CAR_RULE.assumedRate, { decimals: 0 })) + '.';
+          }
+          rows = rule.checks.map(function (c) {
+            var detail;
+            if (c.key === 'down') {
+              detail = Money.formatRate(c.actual, { decimals: 0 }) + ' down'
+                + (c.pass ? '' : ' — ' + Money.formatCents(c.shortfallCents) + ' short of 20%');
+            } else if (c.key === 'term') {
+              detail = months(c.actual) + (c.pass ? '' : ' — ' + months(c.actual - c.target) + ' past the limit');
+            } else {
+              detail = Money.formatCents(c.actual) + ' a month against a cap of ' + Money.formatCents(c.target)
+                + (c.pass ? '' : ' — over by ' + Money.formatCents(c.overByCents) + ' a month');
+            }
+            return '<li><div class="r-head"><span class="r-name">' + esc(c.label) + '</span>'
+              + '<span class="r-val ' + (c.pass ? 'is-good' : 'is-out') + '">'
+              + (c.pass ? 'Passes' : 'Fails') + '</span></div>'
+              + '<p class="r-say">' + esc(detail) + '</p></li>';
+          }).join('');
+          rows += '<li><div class="r-head"><span class="r-name">What the lender is paid</span>'
+            + '<span class="r-val">' + esc(Money.formatCents(rule.loanCents + rule.totalInterestCents))
+            + '</span></div><p class="r-say">'
+            + esc(Money.formatCents(rule.loanCents)) + ' borrowed and '
+            + esc(Money.formatCents(rule.totalInterestCents)) + ' of interest over '
+            + esc(months(car.termMonths)) + '.</p></li>';
+        }
+      }
+      setText('loan-verdict', verdict);
+      el('loan-verdict').className = 'verdict is-' + verdictZone;
+      setHtml('loan-say', say);
+      setHtml('loan-rows', rows);
+
+      /* ---- Underwater: the concrete harm a monthly payment hides -------- */
+      var uw = t.underwater;
+      var head = '<h3>' + esc(uw.what) + '</h3><p>' + esc(uw.why) + '</p><p>' + esc(uw.note) + '</p>';
+      var u = QuickMath.carUnderwater(opts(), curve(T));
+      var trace;
+      if (!Money.isOk(u)) {
+        trace = '<p>' + esc(u.reason) + ' Until then this is the general shape rather than your stretch: '
+          + 'the longer the term, the later the two curves cross.</p>';
+      } else if (!u.everUnderwater) {
+        trace = '<p>On these numbers you are never underwater. The balance starts below what the car is '
+          + 'worth and stays there for all <span class="figure">' + esc(months(u.termMonths))
+          + '</span> — which is what a real deposit over a short term buys you, and it is the whole '
+          + 'argument for both.</p>';
+      } else {
+        trace = '<p>On these numbers you would owe more than the car is worth for '
+          + '<span class="figure">' + esc(months(u.value)) + '</span>'
+          + (u.neverClears
+              ? ' — the whole term. The loan never catches the car up before it ends.'
+              : ', clearing in month <span class="figure">' + u.clearsAtMonth + '</span> of '
+                + esc(months(u.termMonths)) + '.')
+          + ' At the worst of it, in month <span class="figure">' + u.worstMonth
+          + '</span>, you would owe <span class="figure">' + esc(Money.formatCents(u.worstGapCents))
+          + '</span> more than it is worth. Sell it or write it off in that stretch and that gap is a '
+          + 'cheque you have to write.</p>';
+        if (u.rateAssumed || u.depositAssumed) {
+          trace += '<p>Traced at ' + esc(Money.formatRate(u.rate, { decimals: 1 })) + ''
+            + (u.depositAssumed ? ' with nothing down' : '') + ', because '
+            + (u.rateAssumed && u.depositAssumed ? 'neither box is filled in'
+               : u.rateAssumed ? 'no rate is entered' : 'no deposit is entered') + '.</p>';
+        }
+      }
+      setHtml('loan-under', head + trace);
+
+      /* ---- Lease, new, or a year old ----------------------------------- */
+      var oneYear = share(T, 1);
+      setHtml('ways-cards', t.leaseVsBuy.map(function (w) {
+        var arith = '';
+        if (priced && w.id === 'buyUsed' && Money.isEntered(oneYear)) {
+          arith = '<p class="arith">The same car a year old: about '
+            + esc(Money.formatCents(Math.round(car.priceCents * oneYear))) + ', which is '
+            + esc(Money.formatCents(car.priceCents - Math.round(car.priceCents * oneYear)))
+            + ' you never spend.</p>';
+        } else if (priced && w.id === 'buyNew') {
+          arith = '<p class="arith">Year one on this car: '
+            + esc(Money.formatCents(lostBy(T, 1))) + ' of value, gone.</p>';
+        }
+        return '<div class="way"><h3>' + esc(w.label) + '</h3>'
+          + '<dl><dt>Suits</dt><dd>' + esc(w.suits) + '</dd>'
+          + '<dt>Costs</dt><dd>' + esc(w.costs) + '</dd></dl>' + arith + '</div>';
+      }).join(''));
+    }
+  });
+})();
+</script>
+</body>
+</html>
