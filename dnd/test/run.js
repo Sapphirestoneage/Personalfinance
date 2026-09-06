@@ -49,7 +49,8 @@ const TABLES = {
   /* The campaign's scenario bank (DD-024). */
   dndScenarios: table('dnd_scenarios.json'),
   dndQuiz5: table('dnd_quiz5.json'),
-  dndImprove: table('dnd_improve.json')
+  dndImprove: table('dnd_improve.json'),
+  dndProfile: table('dnd_profile.json')
 };
 
 let passed = 0;
@@ -1813,6 +1814,161 @@ section('Dungeons & Dividends — the campaign (DD-024)');
   checkTrue('the sheet links to it', /href="campaign\.html"/.test(fs.readFileSync(path.join(ROOT, 'sheet.html'), 'utf8')));
   checkTrue('reference.js registers the scenario bank',
     /dndScenarios/.test(fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8')));
+})();
+
+section('Dungeons & Dividends — the long read (DD-027)');
+
+(function () {
+  const Persona = require(path.join(ROOT, 'engines/persona.js'));
+  const T = TABLES.dndProfile;
+  const CLASSES = TABLES.dndClasses.classes.map(function (c) { return c.id; });
+  const MONSTERS = (TABLES.dndRules.monsters || []).map(function (m) { return m.name; });
+  const KINDS = ['partner', 'friend', 'annoying', 'wary', 'triggeredBy'];
+  const src = fs.readFileSync(path.join(ROOT, 'profile.html'), 'utf8');
+
+  /* ---- the table is complete and points at real things ------------------- */
+  check('every class has a profile', Object.keys(T.classes).length, CLASSES.length);
+  CLASSES.forEach(function (id) {
+    const p = T.classes[id];
+    checkTrue(`${id} has a profile`, !!p);
+    /* The headline is a punchline and is allowed to be short — "You think in
+       bricks." is twenty characters and is the best line in the file. Only
+       the prose fields get a length floor. */
+    checkTrue(`${id} has a headline`,
+      typeof p.headline === 'string' && p.headline.trim() === p.headline && p.headline.length > 0);
+    ['coreDesire', 'coreFear', 'lie', 'truth', 'atBest', 'atWorst',
+     'blindSpot', 'needsToHear'].forEach(function (k) {
+      checkTrue(`${id} has a ${k}`, typeof p[k] === 'string' && p[k].trim().length > 20);
+    });
+    /* Growth and stress are the Enneagram bit: a direction each way, and
+       neither of them can be yourself. */
+    [['growth', p.growth], ['stress', p.stress]].forEach(function (pair) {
+      checkTrue(`${id} ${pair[0]} points at a real class`, CLASSES.indexOf(pair[1].classId) !== -1);
+      checkTrue(`${id} ${pair[0]} is not itself`, pair[1].classId !== id);
+      checkTrue(`${id} ${pair[0]} says why`, (pair[1].why || '').length > 20);
+    });
+    KINDS.forEach(function (k) {
+      const r = p.relations[k];
+      checkTrue(`${id}/${k} points at a real class`, CLASSES.indexOf(r.classId) !== -1);
+      checkTrue(`${id}/${k} is not itself`, r.classId !== id);
+      checkTrue(`${id}/${k} says why`, (r.why || '').length > 20);
+    });
+    /* What hunts you has to be something the bestiary actually contains, or
+       the page sends the reader to look up a creature that is not there. */
+    checkTrue(`${id} is weak to a creature that exists (${p.weakTo.monster})`,
+      MONSTERS.indexOf(p.weakTo.monster) !== -1);
+    check(`${id} offers three origin stories`, p.origins.length, 3);
+    p.origins.forEach(function (o) {
+      checkTrue(`${id} origin ${o.id} has a house and a detail`, !!o.house && !!o.detail);
+    });
+  });
+
+  /* ---- nobody gets a blank page of relationships ------------------------ */
+  const named = {};
+  CLASSES.forEach(function (c) { named[c] = 0; });
+  CLASSES.forEach(function (from) {
+    KINDS.forEach(function (k) { named[T.classes[from].relations[k].classId] += 1; });
+  });
+  CLASSES.forEach(function (c) {
+    checkTrue(`${c} is named by other classes (${named[c]}), so its party view is not empty`,
+      named[c] >= 3);
+  });
+
+  /* ---- THE ORIGIN STORIES MAY NEVER TRAVEL WITHOUT THEIR WARNING --------
+     This is the one place in the suite that outputs something it cannot check,
+     and telling somebody what their parents were like is the exact failure it
+     is guarding against. The warning is returned by the engine ALONGSIDE the
+     stories so a room cannot take the interesting half and drop the honest
+     half, and the page has to print it. */
+  checkTrue('the table carries a warning about the origin stories',
+    typeof T.originsWarning === 'string' && T.originsWarning.length > 80);
+  checkTrue('and the warning says the tool cannot see a childhood',
+    /knows anything about your childhood/.test(T.originsWarning));
+  checkTrue('and that it would be making it up',
+    /making it up/.test(T.originsWarning));
+  checkTrue('the page prints the warning ABOVE the doors',
+    src.indexOf('p-origins-warning') < src.indexOf('id="p-origins"'));
+  checkTrue('the page renders the warning from the table, not its own copy',
+    /text\('p-origins-warning', P\.originsWarning\)/.test(src));
+  checkTrue('picking a door is recorded as the reader’s recognition, not a finding',
+    /your recognition, not the page/.test(src));
+  checkTrue('and the page says it changes nothing', /nothing here scores it/.test(src));
+
+  /* ---- the engine -------------------------------------------------------- */
+  function household(opts) {
+    const o = opts || {};
+    const h = Schema.createHousehold(); h.filingStatus = 'single';
+    const p = Schema.createPerson({ id: 'dnd_person', role: 'adult' });
+    p.incomeSources = [Schema.createIncomeSource({ id: 'dnd_income', personId: 'dnd_person',
+      grossAnnualIncomeCents: 7200000, type: 'w2' })];
+    h.people = [p];
+    h.assets = [Schema.createAsset({ id: 'dnd_asset_cash', category: 'cash', valueCents: 950000, liquid: true }),
+                Schema.createAsset({ id: 'dnd_asset_investments', category: 'investment', valueCents: 4800000, liquid: false })];
+    h.debts = [Schema.createDebt({ id: 'dnd_debt_total', balanceCents: 2160000, rate: 0.22, type: 'credit_card' })];
+    h.expenses = { monthlyEssential: { estimatedValueCents: 315000, trackedValueCents: null, source: 'estimated' }, entries: [] };
+    h.dndProfile = { fixedCostShare: 0.55, yearsSustained: 4, disruptionSurvived: true, healthCoverage: 2,
+      automatedSaving: 'most', quiz5: o.quiz || null };
+    return h;
+  }
+  const QUIZ_ANCHOR = { windfall: 'save', boss: 'money', sunday: 'cancel', mate: 'out', hurt: 'job' };
+
+  const h = household({ quiz: QUIZ_ANCHOR });
+  const sheet = Character.sheet(h, TABLES);
+  const per = Persona.persona(h, sheet, TABLES);
+  checkTrue('a character with money gets a profile', per.ready);
+  check('and it is labelled as measured', per.basis, 'measured');
+  checkTrue('every long-read field is filled', !!per.lie && !!per.truth && !!per.atWorst && !!per.needsToHear);
+  checkTrue('the warning travels with the stories', !!per.originsWarning && per.origins.length === 3);
+  checkTrue('the creature it names is resolved from the bestiary', per.weakTo.found);
+  checkTrue('with its CR and the save it comes at',
+    per.weakTo.cr !== null && !!per.weakTo.save);
+
+  /* Quiz-only: no money, so the class can only be an instinct. */
+  const quizOnly = Schema.createHousehold();
+  quizOnly.dndProfile = { quiz5: QUIZ_ANCHOR };
+  const perQ = Persona.persona(quizOnly, Character.sheet(quizOnly, TABLES), TABLES);
+  checkTrue('five answers alone are enough for a profile', perQ.ready);
+  check('and it is honestly labelled as instinct', perQ.basis, 'instinct');
+  check('with nothing measured to report', perQ.measured, null);
+  check('and no split, because there is only one of them', perQ.split, false);
+
+  /* The split — the whole reason both classes are kept. */
+  checkTrue('a character whose money disagrees with its answers is marked split',
+    per.split === (per.measured.classId !== per.instinct.classId));
+  if (per.split) {
+    checkTrue('and the other one is named', !!per.otherName);
+    checkTrue('and the profile shown is the measured one', per.classId === per.measured.classId);
+  }
+
+  /* Nothing at all. */
+  const nobody = Schema.createHousehold();
+  const perN = Persona.persona(nobody, Character.sheet(nobody, TABLES), TABLES);
+  check('no character means no profile rather than a guessed one', perN.ready, false);
+  checkTrue('and it says why', !!perN.reason);
+
+  /* ---- the party view is other people's opinion, not your own ------------ */
+  CLASSES.forEach(function (id) {
+    const pa = Persona.party(id, TABLES);
+    const all = pa.worksWith.concat(pa.findsYouAnnoying, pa.waryOfYou, pa.triggeredByYou);
+    checkTrue(`${id}'s party view is not empty`, all.length > 0);
+    checkTrue(`${id} never appears in its own party view`,
+      all.every(function (x) { return x.classId !== id; }));
+    /* Every line has to be traceable back to the other class's own profile. */
+    checkTrue(`${id}'s party view quotes the other class's own reasons`,
+      all.every(function (x) {
+        const r = T.classes[x.classId].relations;
+        return KINDS.some(function (k) { return r[k].why === x.why; });
+      }));
+  });
+
+  /* ---- and the page ------------------------------------------------------ */
+  checkTrue('the profile page exists', /<body class="slaf">/.test(src));
+  checkTrue('it loads the persona engine', /engines\/persona\.js/.test(src));
+  checkTrue('it says up front that this is characterisation',
+    /characterisation, not measurement/i.test(src));
+  checkTrue('it has no text inputs to lose a keyboard on', !/<input/.test(src));
+  checkTrue('the run through links to it',
+    /href="profile\.html"/.test(fs.readFileSync(path.join(ROOT, 'campaign.html'), 'utf8')));
 })();
 
 section('Dungeons & Dividends — five questions, and what to do about the answer (DD-026)');

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Your profile — Dungeons &amp; Dividends</title>
+<meta name="description" content="The long read on your character: what you want, what you are afraid of, who you work with, who winds you up, and what hunts you."/>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="shared/skin.css"/>
+<!--
+  THE LONG READ — DD-027.
+
+  This page is CHARACTERISATION, not measurement, and it says so at the top
+  rather than in the small print. Everywhere else in this suite a number that
+  cannot be derived is left blank; here the whole output is a guess, so the
+  honesty has to come from labelling.
+
+  THE ORIGIN STORIES ARE OFFERED, NEVER ASSERTED. Nothing here knows anything
+  about anybody's childhood. A tool that told you what your parents were like
+  would be making it up, and people believe this sort of thing. So they are
+  three doors you may walk through or not, the warning is printed above them
+  and not below, and picking one is recorded as YOUR recognition rather than
+  the page's finding.
+
+  No live text inputs on this page at all — everything is a button — so the
+  D-034 rebuild rule has nothing to bite on.
+-->
+<style>
+  .wrap { max-width: 780px; margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-7); }
+  h1 { font-family: var(--font-display); font-size: var(--text-xl); margin: 0 0 var(--space-2); }
+  h2 { font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-6) 0 var(--space-2); }
+  h3 { font-family: var(--font-display); font-size: var(--text-base); margin: 0 0 var(--space-1); }
+  p { line-height: var(--leading-normal); }
+  .note { color: var(--color-text-muted); font-size: var(--text-sm); line-height: var(--leading-normal); margin: 0 0 var(--space-3); }
+  .faint { color: var(--color-text-faint); }
+  .notice { padding: var(--space-3); border-radius: var(--radius-sm); margin: var(--space-3) 0; font-size: var(--text-sm); border: 1px solid var(--color-critical); color: var(--color-critical); }
+  .btn { font-family: var(--font-body); font-size: var(--text-base); background: var(--color-accent); color: var(--color-accent-contrast); border: 0; border-radius: var(--radius-sm); padding: 0 var(--space-4); height: var(--control-height); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+  .btn.ghost { background: transparent; color: var(--color-accent-hover); border: 1px solid var(--color-border-strong); }
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+
+  .hero { text-align: center; padding: var(--space-5) 0 var(--space-4); }
+  .hero .lead { font-size: var(--text-sm); color: var(--color-text-faint); text-transform: uppercase; letter-spacing: .08em; }
+  .hero .cls { font-family: var(--font-display); font-size: 2.4rem; line-height: 1.05; margin: var(--space-2) 0; }
+  .hero .head { font-size: var(--text-lg); color: var(--color-accent-hover); }
+  .basis { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); padding: 2px var(--space-2); color: var(--color-text-subtle); margin-top: var(--space-3); }
+  .basis.measured { border-color: var(--color-accent); color: var(--color-accent-hover); }
+
+  .panel { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-4); margin-bottom: var(--space-3); }
+  .pair { display: grid; gap: var(--space-3); }
+  @media (min-width: 640px) { .pair { grid-template-columns: 1fr 1fr; } }
+  .pair .half { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); }
+  .pair .half .k { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-subtle); margin-bottom: 4px; }
+
+  .rel { border-left: 3px solid var(--color-border-strong); padding: var(--space-1) 0 var(--space-1) var(--space-3); margin-bottom: var(--space-4); }
+  .rel .k { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-subtle); }
+  .rel .who { font-family: var(--font-display); font-size: var(--text-lg); }
+  .rel .lev { font-size: var(--text-xs); color: var(--color-accent-hover); }
+  .rel.good { border-left-color: var(--color-accent); }
+  .rel.bad { border-left-color: var(--color-critical); }
+
+  .door { display: block; width: 100%; text-align: left; font-family: var(--font-body); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface); padding: var(--space-3); cursor: pointer; margin-bottom: var(--space-2); line-height: var(--leading-normal); }
+  .door:hover { border-color: var(--color-accent); }
+  .door.picked { border-color: var(--color-accent); background: var(--color-surface-active); }
+  .door .h { font-family: var(--font-display); font-size: var(--text-base); display: block; }
+  .door .d { font-size: var(--text-sm); color: var(--color-text-muted); display: block; margin-top: 4px; }
+
+  .warnbox { border: 1px solid var(--color-critical); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-3); font-size: var(--text-sm); line-height: var(--leading-normal); }
+  .quote { font-family: var(--font-display); font-size: var(--text-lg); line-height: var(--leading-tight); }
+  .foot { margin-top: var(--space-6); text-align: center; font-size: var(--text-sm); }
+  .foot a { color: var(--color-accent-hover); }
+</style>
+</head>
+<body class="slaf">
+<script src="shared/skin.js"></script>
+<script>DND.Skin.init();</script>
+<div class="wrap">
+  <div class="skin-bar" id="skin-bar"></div>
+  <div id="load-notice" class="notice" hidden></div>
+
+  <section id="none" hidden>
+    <h1>No character yet</h1>
+    <p class="note">This is the long read on a character you have not built. It takes about five minutes.</p>
+    <a class="btn" href="campaign.html">Start with five questions →</a>
+  </section>
+
+  <section id="profile" hidden>
+    <div class="hero">
+      <div class="lead">Your profile</div>
+      <div class="cls" id="p-class"></div>
+      <div class="head" id="p-headline"></div>
+      <div><span class="basis" id="p-basis"></span></div>
+    </div>
+
+    <div id="p-split"></div>
+
+    <h2>What you are actually after</h2>
+    <div class="pair">
+      <div class="half"><div class="k">You want</div><p id="p-desire" style="margin:0"></p></div>
+      <div class="half"><div class="k">You are afraid of</div><p id="p-fear" style="margin:0"></p></div>
+    </div>
+
+    <h2>The thing you tell yourself</h2>
+    <div class="panel">
+      <p class="quote" id="p-lie" style="margin:0 0 var(--space-3)"></p>
+      <div class="k faint" style="font-size:10px;text-transform:uppercase;letter-spacing:.06em">And the awkward bit</div>
+      <p id="p-truth" style="margin:4px 0 0"></p>
+    </div>
+
+    <h2>At your best, and at your worst</h2>
+    <div class="pair">
+      <div class="half"><div class="k">At your best</div><p id="p-best" style="margin:0"></p></div>
+      <div class="half"><div class="k">At your worst</div><p id="p-worst" style="margin:0"></p></div>
+    </div>
+    <div class="panel" style="margin-top:var(--space-3)">
+      <h3>Your blind spot</h3>
+      <p id="p-blind" style="margin:0"></p>
+    </div>
+
+    <h2>Which way you move</h2>
+    <p class="note">Every build has a direction it grows in and a different one it falls into when things get
+       hard. Knowing both is most of the value of a thing like this.</p>
+    <div class="rel good">
+      <div class="k">When you grow, you borrow from</div>
+      <div class="who" id="g-who"></div>
+      <div class="lev" id="g-lev"></div>
+      <p class="note" id="g-why" style="margin-top:4px"></p>
+    </div>
+    <div class="rel bad">
+      <div class="k">Under stress, you slide toward</div>
+      <div class="who" id="s-who"></div>
+      <div class="lev" id="s-lev"></div>
+      <p class="note" id="s-why" style="margin-top:4px"></p>
+    </div>
+
+    <h2>Your party</h2>
+    <p class="note">Who to build with, who to drink with, and who will make you grind your teeth. This is about
+       levers rubbing against each other, not about people — a lovely person on the wrong lever is still
+       going to irritate you at a certain point in a Sunday afternoon.</p>
+    <div id="p-relations"></div>
+
+    <h2>How the rest of the table sees you</h2>
+    <p class="note">Read from everyone else's profile rather than your own, so this is genuinely their opinion
+       of you and not your guess at it.</p>
+    <div id="p-party"></div>
+
+    <h2>What hunts you</h2>
+    <div class="panel" id="p-weak"></div>
+
+    <h2>Where this comes from</h2>
+    <div class="warnbox" id="p-origins-warning"></div>
+    <p class="note">Three doors. Walk through whichever one you recognise, or none of them — and note that the
+       page learns nothing either way. It cannot check, and it will not pretend it did.</p>
+    <div id="p-origins"></div>
+    <p class="note faint" id="p-origin-echo" hidden></p>
+
+    <h2>The one thing worth hearing</h2>
+    <div class="panel">
+      <p class="quote" id="p-needs" style="margin:0"></p>
+    </div>
+
+    <div class="actions">
+      <a class="btn" href="campaign.html">Back to the game</a>
+      <a class="btn ghost" href="card.html">Make a card to share</a>
+      <a class="btn ghost" href="sheet.html">Your sheet</a>
+    </div>
+  </section>
+
+  <p class="foot"><a href="campaign.html">The game</a> &nbsp;·&nbsp; <a href="sheet.html">Your sheet</a>
+     &nbsp;·&nbsp; <a href="bestiary.html">Bestiary</a></p>
+  <p class="foot faint" style="font-size:var(--text-xs)">An independent parody. Not affiliated with or endorsed by Wizards of the Coast. <a href="bestiary.html#attribution">Licence &amp; attribution</a>.</p>
+</div>
+
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/store.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/tier0.js"></script>
+<script src="engines/foo.js"></script>
+<script src="engines/character.js"></script>
+<script src="engines/encounter.js"></script>
+<script src="engines/journey.js"></script>
+<script src="engines/persona.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Char = SLAF.Character, Store = DND.Store, Persona = DND.Persona;
+  var TABLES = null, P = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function html(id, s) { el(id).innerHTML = s; }
+  function text(id, s) { el(id).textContent = s; }
+
+  var LABELS = {
+    partner:     ['Build with', 'good'],
+    friend:      ['Be friends with', 'good'],
+    annoying:    ['You will find them annoying', 'bad'],
+    wary:        ['You are quietly wary of', 'bad'],
+    triggeredBy: ['They will wind you up', 'bad']
+  };
+
+  function paint() {
+    text('p-class', P.name);
+    text('p-headline', P.headline);
+    el('p-basis').textContent = P.basis === 'measured'
+      ? 'Measured from your numbers'
+      : 'From your five answers — not measured';
+    el('p-basis').className = 'basis' + (P.basis === 'measured' ? ' measured' : '');
+
+    /* The split, which is the most interesting thing this page can say. */
+    html('p-split', P.split
+      ? '<div class="panel"><h3>There are two of you</h3>'
+        + '<p style="margin:0 0 var(--space-2)">Your answers say you play like <b>' + esc(P.otherName)
+        + '</b>. Your money says you are <b>' + esc(P.name) + '</b>. Everything below describes the second one, '
+        + 'because that is the lever actually moving — but the first one is why some of it will feel wrong.</p>'
+        + '<p class="note" style="margin:0">The gap is the useful part. It usually means you are working one '
+        + 'lever and thinking about another, and the thinking is where the frustration lives.</p></div>'
+      : '');
+
+    text('p-desire', P.coreDesire);
+    text('p-fear', P.coreFear);
+    text('p-lie', '“' + P.lie + '”');
+    text('p-truth', P.truth);
+    text('p-best', P.atBest);
+    text('p-worst', P.atWorst);
+    text('p-blind', P.blindSpot);
+
+    text('g-who', P.growth.name); text('g-lev', P.growth.lever || ''); text('g-why', P.growth.why);
+    text('s-who', P.stress.name); text('s-lev', P.stress.lever || ''); text('s-why', P.stress.why);
+
+    html('p-relations', Object.keys(LABELS).map(function (k) {
+      var r = P.relations[k];
+      if (!r) return '';
+      return '<div class="rel ' + LABELS[k][1] + '"><div class="k">' + esc(LABELS[k][0]) + '</div>'
+        + '<div class="who">' + esc(r.name) + '</div>'
+        + '<div class="lev">' + esc(r.lever || '') + '</div>'
+        + '<p class="note" style="margin-top:4px">' + esc(r.why) + '</p></div>';
+    }).join(''));
+
+    /* How others see you. An empty bucket is said out loud rather than hidden,
+       because "nobody finds you annoying" is itself worth knowing. */
+    var pa = Persona.party(P.classId, TABLES);
+    var groups = [
+      ['They want you on their team', pa.worksWith, 'good',
+       'Nobody on the table names you as the one they want beside them. That is not an insult — it usually means your lever does the same job as somebody else’s.'],
+      ['They find you annoying', pa.findsYouAnnoying, 'bad',
+       'Nobody finds you annoying, which is either a compliment or a sign you are very easy to be around.'],
+      ['They are wary of you', pa.waryOfYou, 'bad',
+       'Nobody is wary of you. You are not threatening anybody’s idea of themselves, which is a restful way to be.'],
+      ['You wind them up', pa.triggeredByYou, 'bad',
+       'You do not get under anybody’s skin. Rarer than you would think.']
+    ];
+    html('p-party', groups.map(function (g) {
+      var title = g[0], list = g[1], tone = g[2], empty = g[3];
+      return '<div class="rel ' + tone + '"><div class="k">' + esc(title) + '</div>'
+        + (list.length
+            ? list.map(function (x) {
+                return '<div class="who" style="font-size:var(--text-base)">' + esc(x.name)
+                  + (x.kind ? ' <span class="lev">as your ' + esc(x.kind) + '</span>' : '') + '</div>'
+                  + '<p class="note" style="margin:2px 0 var(--space-2)">' + esc(x.why) + '</p>';
+              }).join('')
+            : '<p class="note faint" style="margin-top:4px">' + esc(empty) + '</p>')
+        + '</div>';
+    }).join(''));
+
+    html('p-weak', '<h3>' + esc(P.weakTo.monster) + '</h3>'
+      + (P.weakTo.found
+          ? '<p class="note" style="margin:0 0 var(--space-2)">CR ' + esc(P.weakTo.cr)
+            + ' &middot; comes at your <b>' + esc(P.weakTo.save) + '</b> save</p>'
+          : '')
+      + '<p style="margin:0">' + esc(P.weakTo.why) + '</p>'
+      + '<p class="note" style="margin-top:var(--space-3)"><a href="bestiary.html">The rest of the bestiary →</a></p>');
+
+    text('p-origins-warning', P.originsWarning);
+    paintOrigins();
+    text('p-needs', P.needsToHear);
+  }
+
+  function paintOrigins() {
+    var picked = Store.profile().originPicked || null;
+    html('p-origins', P.origins.map(function (o) {
+      return '<button type="button" class="door' + (picked === o.id ? ' picked' : '') + '" '
+        + 'data-origin="' + esc(o.id) + '">'
+        + '<span class="h">' + esc(o.house) + '</span>'
+        + '<span class="d">' + esc(o.detail) + '</span></button>';
+    }).join('')
+    + '<button type="button" class="door' + (picked === 'none' ? ' picked' : '') + '" data-origin="none">'
+    + '<span class="h">None of these</span>'
+    + '<span class="d">Which is a perfectly common answer, and the page will not argue with you about it.</span>'
+    + '</button>');
+    var echo = el('p-origin-echo');
+    if (!picked) { echo.hidden = true; return; }
+    echo.hidden = false;
+    echo.textContent = picked === 'none'
+      ? 'Noted, and left alone. Nothing on this page changes because of it — it was never scoring you.'
+      : 'Noted. That is your recognition, not the page’s finding, and nothing here scores it.';
+  }
+
+  function wire() {
+    el('p-origins').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-origin]');
+      if (!b) return;
+      var id = b.getAttribute('data-origin');
+      /* Tapping the one already chosen puts it back down. */
+      var cur = Store.profile().originPicked || null;
+      Store.patchProfile({ originPicked: cur === id ? null : id });
+      paintOrigins();
+    });
+  }
+
+  SLAF.Reference.load().then(function (tables) {
+    TABLES = tables;
+    DND.Skin.mount(el('skin-bar'));
+    var h = Store.household();
+    var sheet = Char.sheet(h, tables);
+    P = Persona.persona(h, sheet, tables);
+    if (!P.ready) { el('none').hidden = false; return; }
+    el('profile').hidden = false;
+    wire();
+    paint();
+  }).catch(function (err) {
+    var n = el('load-notice');
+    n.hidden = false;
+    n.textContent = 'Couldn’t load the profile data (' + err.message + '). If you opened this file '
+      + 'directly it needs to be served over http — try the published link instead.';
+  });
+})();
+</script>
+</body>
+</html>
