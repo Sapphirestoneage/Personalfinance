@@ -166,15 +166,6 @@
   <div class="hud" id="hud" hidden></div>
   <div class="progress" id="progress" hidden><span style="width:0%"></span></div>
 
-  <!-- no character yet -->
-  <section id="no-character" hidden>
-    <div class="panel">
-      <h3>You need a character first</h3>
-      <p class="note">The campaign plays a character forward. Build one — it takes about two minutes — and come back.</p>
-      <a class="btn" href="index.html">Build a character →</a>
-    </div>
-  </section>
-
   <div class="steps" id="steps" hidden></div>
 
   <!-- FIVE QUESTIONS. Buttons only — no inputs, so these rebuild freely. -->
@@ -219,6 +210,9 @@
          you can switch later without losing anything.</p>
     </div>
     <div id="method-list"></div>
+    <div class="actions">
+      <button type="button" class="btn ghost" id="btn-method-back">Back to my five answers</button>
+    </div>
   </section>
 
   <!-- STANDARD ARRAY / ROLL. Built once at boot. -->
@@ -385,7 +379,10 @@
     <h2 id="board-title">What comes up this month</h2>
     <p class="note" id="board-note"></p>
     <div class="board" id="board"></div>
-    <div class="actions"><button type="button" class="btn ghost" id="btn-abandon">Abandon this campaign</button></div>
+    <div class="actions">
+      <button type="button" class="btn ghost" id="btn-board-improve">How do I get better?</button>
+      <button type="button" class="btn ghost" id="btn-abandon">Abandon this campaign</button>
+    </div>
   </section>
 
   <!-- one scenario -->
@@ -428,6 +425,7 @@
     </div>
     <div class="actions">
       <button type="button" class="btn" id="btn-next-chapter">Begin the next chapter</button>
+      <button type="button" class="btn ghost" id="btn-rev-train">Train something else</button>
       <a class="btn ghost" href="sheet.html">Your real sheet</a>
     </div>
   </section>
@@ -473,8 +471,7 @@
 
   var VIEWS = ['quiz-view', 'quiz-result-view', 'method-view',
                'create-basics', 'create-abilities', 'create-assign', 'create-result',
-               'improve-view', 'focus-view',
-               'no-character', 'prologue', 'board-view', 'scenario-view', 'outcome-view', 'review-view'];
+               'improve-view', 'focus-view', 'prologue', 'board-view', 'scenario-view', 'outcome-view', 'review-view'];
   function show(id) { VIEWS.forEach(function (v) { el(v).hidden = (v !== id); }); }
 
   /* ---- persistence: the campaign lives on the profile, beside the sheet --- */
@@ -638,6 +635,29 @@
       for (var i = 0; i < TABLES.dndScoring.roll.count; i++) BAG.push(rollOne());
       BAG.sort(function (a, b) { return b - a; });
     }
+    saveBag();
+  }
+
+  /* THE ROLL HAS TO SURVIVE A RELOAD.
+     Six numbers you rolled are not reproducible — regenerating them on reload
+     would silently hand someone a different character from the one they were
+     halfway through assigning, and re-rolling until the numbers are nice is
+     exactly what the deterministic board elsewhere refuses to allow. */
+  function saveBag() {
+    Store.patchProfile({ buildBag: { mode: ASSIGN_MODE, values: BAG.slice() } });
+  }
+
+  function restoreBag() {
+    var b = Store.profile().buildBag;
+    if (!b || !b.mode || !b.values || !b.values.length) return false;
+    ASSIGN_MODE = b.mode;
+    BAG = b.values.slice();
+    ASSIGNED = {};
+    var stored = Store.profile().declaredScores || {};
+    TABLES.dndScoring.standardArray.over.forEach(function (id) {
+      if (Money.isEntered(stored[id])) ASSIGNED[id] = stored[id];
+    });
+    return true;
   }
 
   function saveAssigned() {
@@ -716,15 +736,32 @@
       show('improve-view');
       return;
     }
+    /* SIX ABILITIES TIMES NINE MOVES IS A WALL, and a wall is not advice.
+       A screenshot of the first version ran to sixteen thousand pixels on a
+       phone. So: one compact row each, weakest open, the rest a tap away —
+       and inside each, the quickest big wins first, because "moves it a lot"
+       and "takes minutes" together is the whole reason to read on. */
+    var RANK_LIFT = { big: 0, real: 1, small: 2 };
+    var RANK_EFFORT = { minutes: 0, 'a weekend': 1, months: 2 };
+
     html('improve-list', ranked.map(function (a, i) {
-      var moves = Journey.movesForAbility(a.statId, TABLES);
-      return '<div class="panel">'
-        + '<div class="abil-head" style="display:flex;align-items:baseline;gap:var(--space-2);flex-wrap:wrap">'
-        + '<span class="sc" style="font-family:var(--font-display);font-size:var(--text-xl)">' + a.score + '</span>'
-        + '<b>' + esc(a.name) + '</b>'
-        + (i === 0 ? '<span class="badge on">your weakest — start here</span>' : '')
-        + '</div>'
-        + moves.slice(0, 6).map(function (m) {
+      var moves = Journey.movesForAbility(a.statId, TABLES).slice().sort(function (x, y) {
+        return (RANK_LIFT[x.move.lift] - RANK_LIFT[y.move.lift])
+            || (RANK_EFFORT[x.move.effort] - RANK_EFFORT[y.move.effort]);
+      });
+      var open = i === 0;
+      var best = moves[0];
+      return '<div class="panel" style="padding:0">'
+        + '<button type="button" class="statpick" data-open="' + esc(a.statId) + '" '
+        + 'style="border:0;background:transparent;margin:0">'
+        + '<span class="sp">' + a.score + '</span><b>' + esc(a.name) + '</b>'
+        + (i === 0 ? ' <span class="badge on">start here</span>' : '')
+        + '<br/><span class="faint" style="font-size:var(--text-sm)">'
+        + (open ? esc(a.finance || '') : 'Start with: ' + esc(best.move.do))
+        + '</span></button>'
+        + '<div id="imp-' + a.statId + '" style="padding:0 var(--space-3) var(--space-3)"'
+        + (open ? '' : ' hidden') + '>'
+        + moves.map(function (m) {
             return '<div class="move"><div class="md">' + esc(m.move.do) + '</div>'
               + '<div class="mh">' + esc(m.move.how) + '</div>'
               + '<div class="chips">'
@@ -735,7 +772,7 @@
               + esc(EFFORT_WORD[m.move.effort] || m.move.effort) + '</span>'
               + '</div></div>';
           }).join('')
-        + '</div>';
+        + '</div></div>';
     }).join('')
     + (unscored.length
         ? '<div class="warn">' + unscored.map(function (a) { return esc(a.name); }).join(', ')
@@ -1377,6 +1414,9 @@
   /* ---- routing ----------------------------------------------------------- */
   function route() {
     paintHud();
+    /* The opening pitch is for people deciding whether to start. Once they
+       have, it is just a paragraph in the way on every screen. */
+    el('lede').hidden = !!STATE;
     if (!STATE) {
       /* Mid-creation, stay where the visitor is. Otherwise pick the first
          step that is not done yet — so a reload resumes rather than restarts,
@@ -1388,6 +1428,13 @@
          them on the first screen. */
       if (!Money.isOk(Journey.scoreQuiz(quizAnswers(), TABLES))) { goStep('quiz'); return; }
       if (!Store.moneyEntered() && !boughtAnything()) { goStep('method'); return; }
+      /* Half-assigned array or roll: pick it back up rather than starting the
+         choice again with a different set of numbers. */
+      var m = Store.profile().declaredMethod;
+      if ((m === 'standardArray' || m === 'roll') && restoreBag()
+          && Object.keys(ASSIGNED).length < TABLES.dndScoring.standardArray.over.length) {
+        goStep('assign'); return;
+      }
       goStep('result'); return;
     }
     paintSteps(null);
@@ -1418,6 +1465,10 @@
     el('btn-next-chapter').addEventListener('click', function () {
       save(Camp.nextChapter(STATE, TABLES)); route();
     });
+    /* Leaving the board for the advice screens must not throw the run away —
+       STEP is cleared on the way back so route() returns to the game. */
+    el('btn-board-improve').addEventListener('click', function () { goStep('improve'); });
+    el('btn-rev-train').addEventListener('click', function () { goStep('focus'); });
     el('btn-abandon').addEventListener('click', function () {
       if (!window.confirm('Abandon this campaign? Your sheet is untouched either way.')) return;
       Store.patchProfile({ campaign: null }); STATE = null; route();
@@ -1442,12 +1493,22 @@
       if (id === 'pointBuy') { saveBought(); goStep('abilities'); return; }
       newBag(id); goStep('assign');
     });
+    el('btn-method-back').addEventListener('click', function () { goStep('verdict'); });
     el('btn-assign-back').addEventListener('click', function () { goStep('method'); });
     el('btn-assign-next').addEventListener('click', function () { goStep('result'); });
     el('btn-roll').addEventListener('click', function () { newBag('roll'); saveAssigned(); paintAssign(); });
 
     /* getting better, and training one */
-    el('btn-improve-back').addEventListener('click', function () { goStep('result'); });
+    el('improve-list').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-open]');
+      if (!b) return;
+      var body = el('imp-' + b.getAttribute('data-open'));
+      if (body) body.hidden = !body.hidden;
+    });
+    el('btn-improve-back').addEventListener('click', function () {
+      if (STATE) { STEP = null; route(); return; }
+      goStep('result');
+    });
     el('btn-improve-next').addEventListener('click', function () { goStep('focus'); });
     el('btn-focus-back').addEventListener('click', function () { goStep('improve'); });
     el('btn-focus-any').addEventListener('click', function () { FOCUS = null; goStep('play'); });
@@ -1455,6 +1516,16 @@
       var b = e.target.closest('[data-focus]');
       if (!b) return;
       FOCUS = b.getAttribute('data-focus');
+      /* A run already going cannot change what it is aimed at halfway — the
+         board is dealt from what you have already seen. Say so and let the
+         player decide, rather than silently doing nothing or silently
+         throwing their chapter away. */
+      if (STATE) {
+        if (!window.confirm('Starting a run aimed at ' + statMeta(FOCUS).name
+            + ' ends the one you are in. Your real numbers are untouched either way. Carry on?')) return;
+        Store.patchProfile({ campaign: null });
+        STATE = null;
+      }
       goStep('play');
     });
 

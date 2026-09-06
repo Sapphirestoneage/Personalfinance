@@ -2014,6 +2014,18 @@ section('Dungeons & Dividends — five questions, and what to do about the answe
       lead >= 6);
     check(`and training ${st} never repeats a card`, ids.length - new Set(ids).size, 0);
   });
+  /* A ROLL MUST SURVIVE A RELOAD.
+     Six numbers you rolled are not reproducible. Regenerating them would hand
+     someone a different character from the one they were halfway through
+     assigning — and would let anyone reload until the numbers were nice,
+     which is the same thing the deterministic board refuses to allow. */
+  checkTrue('the rolled numbers are stored, not regenerated',
+    /buildBag: \{ mode: ASSIGN_MODE, values: BAG\.slice\(\) \}/.test(
+      fs.readFileSync(path.join(ROOT, 'campaign.html'), 'utf8')));
+  checkTrue('and an unfinished assignment is picked back up',
+    /goStep\('assign'\); return;/.test(
+      fs.readFileSync(path.join(ROOT, 'campaign.html'), 'utf8')));
+
   checkTrue('the room admits when a focus has run out',
     /every situation here that trains/.test(fs.readFileSync(path.join(ROOT, 'campaign.html'), 'utf8')));
 
