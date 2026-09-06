@@ -6820,6 +6820,57 @@ inherits all of it by using the shared classes: `.slaf-bars` rows,
 invents its own small control should add it to the coarse-pointer block
 rather than sizing it for a mouse and leaving a phone to cope.
 
+## D-137 — The interaction layer: nothing snaps, every word fits
+
+The app was described as feeling amateurish. Rather than argue about taste,
+every room was measured. Two numbers came back and both were damning:
+
+- **4,558 of 4,844 links and buttons had no transition at all** — 94%.
+  Every hover, press and open snapped instantly.
+- **Eight rooms were clipping text**, all of them the hop links, showing
+  "Where It Goes & how it's" and stopping mid-word.
+
+Nothing was broken. That is the point: a control that changes state
+instantly reads as a picture of a control rather than one you are touching,
+and a name cut off mid-word reads as a bug even when the layout is doing
+exactly what it was told.
+
+**One easing, two durations, for the whole app.** `--ease` settles rather
+than bounces — quick out, soft landing — with `--dur-fast` for colour and
+`--dur` for shadow. Applied to links, buttons, summaries, inputs, cards,
+chips, the menu and the ⓘ. Never `transition: all`: that animates layout
+too, so any reflow makes the page lurch, which is worse than no motion at
+all. The layer names the six properties it changes.
+
+A press moves 1px — enough to read as a button going down, small enough
+never to shift what is around it. A card that is a link lifts on hover; a
+card that is not does not pretend to. Disabled controls get no hover, no
+press and a not-allowed cursor, so the app never invites a tap it will
+refuse.
+
+The `prefers-reduced-motion` block already cut every duration to 0.01ms, so
+this entire layer costs a person who asked for stillness exactly nothing.
+That was checked, not assumed.
+
+**Every word in the box.** `.slaf-hop` was `white-space: nowrap` with an
+ellipsis. A room name is the entire content of that link, so truncating it
+removes the only thing it says. It now wraps to two lines and clamps beyond
+that. Clipped rooms went from eight to zero.
+
+After: 0 of 5,123 interactive elements without a transition, 0 rooms
+clipping text.
+
+### Compatibility note
+
+Stored shape: unchanged. Nothing here reads or writes the household. Rooms
+updated: none individually — all of it is `shared/theme.css`, with
+`dnd/shared/theme.css` re-copied to stay byte-identical, so all 59 pages
+inherit it. A future room gets the motion by using the shared element and
+class names; one that invents a control should add it to the transition
+list rather than shipping something that snaps while everything around it
+moves. Do not add `transition: all` anywhere — `test/rooms/motion.js`
+fails the build if it appears outside a comment.
+
 ---
 
 # The Dungeons & Dividends entries

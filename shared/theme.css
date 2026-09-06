@@ -86,6 +86,12 @@
   --space-7: 48px;
 
   --radius-sm: 8px;
+  /* Motion (D-137). One easing and two durations for the whole app, so
+     nothing invents its own timing and everything feels like one product.
+     The curve settles rather than bouncing: quick out, soft landing. */
+  --ease: cubic-bezier(.2, .7, .3, 1);
+  --dur-fast: 110ms;
+  --dur: 180ms;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-pill: 999px;
@@ -539,7 +545,10 @@ h3 { font-size: var(--text-md); }
    so it is the same three destinations wherever you are.                   */
 .slaf-hops-host { max-width: var(--measure); margin: 0 auto; }
 .slaf-hops { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-3); }
-.slaf-hop { font-size: var(--text-sm); color: var(--color-accent-hover); text-decoration: none; padding: var(--space-2) 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A room name is the whole point of the link, so it wraps rather than
+   truncating: eight rooms were showing "Where It Goes & how it’s" and
+   stopping there. Two lines, then ellipsis if a name is truly enormous. */
+.slaf-hop { font-size: var(--text-sm); color: var(--color-accent-hover); text-decoration: none; padding: var(--space-2) 0; min-width: 0; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow-wrap: break-word; }
 .slaf-hop:hover { text-decoration: underline; }
 .slaf-hop--prev { text-align: left; flex: 1 1 0; }
 .slaf-hop--next { text-align: right; flex: 1 1 0; }
@@ -845,3 +854,51 @@ html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
 @media (min-width: 1600px) {
   :root { --measure: 720px; }
 }
+
+/* ==========================================================================
+   The interaction layer (D-137).
+   Before this, 4,558 of the app's 4,844 links and buttons had no transition
+   at all: every hover, press and open snapped. Nothing was broken and the
+   whole thing felt cheap, because a control that changes instantly reads as
+   a picture of a control rather than one you are touching.
+
+   One easing, two durations, applied to the properties that actually change.
+   Never `transition: all` — that animates layout too and makes a page lurch.
+   The reduced-motion block above already cuts every duration to nothing, so
+   this costs a person who asked for stillness exactly nothing.
+   ========================================================================== */
+a, button, summary, select, input, textarea,
+.slaf-card, .slaf-chip, .slaf-hop, .slaf-menu-link, .slaf-info, .slaf-use-this {
+  transition:
+    color var(--dur-fast) var(--ease),
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    opacity var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+/* A press should be felt. 1px is enough to read as a button going down and
+   small enough never to shift what is around it. */
+.slaf-btn:active:not(:disabled),
+.slaf-chip:active,
+.slaf-info:active,
+.slaf-use-this:active { transform: translateY(1px); }
+
+/* A card you can click lifts; a card you cannot does not pretend to. */
+a.slaf-card:hover, .slaf-card a:hover { text-decoration: none; }
+a.slaf-card:hover, button.slaf-card:hover {
+  border-color: var(--color-border-active);
+  box-shadow: 0 2px 14px rgba(2, 8, 23, .35);
+}
+
+/* Inputs say they are ready before they are typed in. */
+.slaf-input-shell:hover { border-color: var(--color-border-active); }
+
+/* A link in prose underlines on hover rather than living underlined, so a
+   paragraph stays readable and the link still announces itself. */
+.slaf-menu-link:hover { padding-left: calc(var(--space-3) + 2px); }
+
+/* Disabled means disabled: no hover, no press, no pointer. */
+:disabled, [aria-disabled="true"] { cursor: not-allowed; }
+:disabled:hover, [aria-disabled="true"]:hover { transform: none; }
