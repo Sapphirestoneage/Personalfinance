@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>The campaign — Dungeons &amp; Dividends</title>
-<meta name="description" content="Play your character forward. Six situations a round, one choice, ten rounds to a chapter — and a review that says what you should have done, and what it cost."/>
+<title>Dungeons &amp; Dividends — roll up your finances</title>
+<meta name="description" content="Five questions, a character sheet for your actual money, and a game where every choice is one people really face. Nothing you type leaves your browser."/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="shared/fonts.css"/>
 <link rel="stylesheet" href="shared/theme.css"/>
@@ -78,6 +78,45 @@
   .ok-box { border: 1px solid var(--color-accent); border-radius: var(--radius-sm); padding: var(--space-3); margin-top: var(--space-2); font-size: var(--text-sm); line-height: var(--leading-normal); }
   .progress { height: 4px; background: var(--color-surface-active); border-radius: var(--radius-pill); overflow: hidden; margin-bottom: var(--space-4); }
   .progress > span { display: block; height: 100%; background: var(--color-accent); transition: width 220ms ease; }
+  .qcard { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-4); }
+  .qask { font-family: var(--font-display); font-size: var(--text-lg); line-height: var(--leading-tight); margin: 0 0 var(--space-1); }
+  .qsub { font-size: var(--text-sm); color: var(--color-text-faint); margin: 0 0 var(--space-4); }
+  .qopt { display: block; width: 100%; text-align: left; font-family: var(--font-body); font-size: var(--text-base);
+          color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm);
+          background: var(--color-surface); padding: var(--space-3); cursor: pointer; margin-bottom: var(--space-2);
+          line-height: var(--leading-normal); }
+  .qopt:hover, .qopt:focus-visible { border-color: var(--color-accent); }
+  .qopt.picked { border-color: var(--color-accent); background: var(--color-surface-active); }
+  .qdots { display: flex; gap: 6px; margin-bottom: var(--space-3); }
+  .qdots i { width: 22px; height: 4px; border-radius: 2px; background: var(--color-surface-active); display: block; }
+  .qdots i.on { background: var(--color-accent); }
+  .verdict { text-align: center; padding: var(--space-5) var(--space-3); }
+  .verdict .lead { font-size: var(--text-sm); color: var(--color-text-faint); text-transform: uppercase; letter-spacing: .08em; }
+  .verdict .cls { font-family: var(--font-display); font-size: var(--text-2xl, 2rem); line-height: 1.1; margin: var(--space-2) 0; }
+  .verdict .lev { font-size: var(--text-base); color: var(--color-accent-hover); }
+  .echo { border-left: 2px solid var(--color-border-strong); padding-left: var(--space-3); margin-bottom: var(--space-3); font-size: var(--text-sm); line-height: var(--leading-normal); }
+  .echo b { display: block; font-weight: 600; }
+  .echo span { color: var(--color-text-muted); }
+  .method { display: block; width: 100%; text-align: left; font-family: var(--font-body); color: var(--color-text);
+            border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised);
+            padding: var(--space-4); cursor: pointer; margin-bottom: var(--space-2); line-height: var(--leading-normal); }
+  .method:hover { border-color: var(--color-accent); }
+  .method .mt { font-family: var(--font-display); font-size: var(--text-lg); display: block; }
+  .method .mb { font-size: var(--text-sm); color: var(--color-text-muted); display: block; margin-top: 4px; }
+  .method .mw { font-size: var(--text-xs); color: var(--color-accent-hover); display: block; margin-top: var(--space-2); }
+  .move { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-2); }
+  .move .md { font-size: var(--text-base); }
+  .move .mh { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: 4px; line-height: var(--leading-normal); }
+  .chips { display: flex; gap: var(--space-2); margin-top: var(--space-2); flex-wrap: wrap; }
+  .chip { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; border: 1px solid var(--color-border-strong);
+          border-radius: var(--radius-pill); padding: 1px var(--space-2); color: var(--color-text-subtle); }
+  .chip.big { border-color: var(--color-accent); color: var(--color-accent-hover); }
+  .chip.quick { border-color: var(--color-accent); color: var(--color-accent-hover); }
+  .statpick { display: block; width: 100%; text-align: left; font-family: var(--font-body); color: var(--color-text);
+              border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised);
+              padding: var(--space-3); cursor: pointer; margin-bottom: var(--space-2); }
+  .statpick:hover { border-color: var(--color-accent); }
+  .statpick .sp { font-family: var(--font-display); font-size: var(--text-lg); margin-right: var(--space-2); }
   .steps { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-4); font-size: var(--text-xs); }
   .steps span { color: var(--color-text-faint); }
   .steps span.now { color: var(--color-accent-hover); font-weight: 600; }
@@ -119,22 +158,84 @@
   <div class="skin-bar" id="skin-bar"></div>
   <div id="load-notice" class="notice" hidden></div>
 
-  <h1>The campaign</h1>
-  <p class="note" id="lede">Your sheet says where you are. This is what you do next — and what it costs.</p>
+  <h1>Dungeons &amp; Dividends</h1>
+  <p class="note" id="lede">Five questions, then a character sheet built out of your actual life — and then
+     the interesting part, where you find out what you'd really do. Takes about five minutes. Nothing you
+     type ever leaves this browser.</p>
 
   <div class="hud" id="hud" hidden></div>
   <div class="progress" id="progress" hidden><span style="width:0%"></span></div>
 
-  <!-- no character yet -->
-  <section id="no-character" hidden>
-    <div class="panel">
-      <h3>You need a character first</h3>
-      <p class="note">The campaign plays a character forward. Build one — it takes about two minutes — and come back.</p>
-      <a class="btn" href="index.html">Build a character →</a>
+  <div class="steps" id="steps" hidden></div>
+
+  <!-- FIVE QUESTIONS. Buttons only — no inputs, so these rebuild freely. -->
+  <section id="quiz-view" hidden>
+    <div class="qdots" id="q-dots"></div>
+    <div class="qcard">
+      <p class="qask" id="q-ask"></p>
+      <p class="qsub" id="q-sub"></p>
+      <div id="q-options"></div>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn ghost" id="btn-q-back">Back</button>
+      <button type="button" class="btn ghost" id="btn-q-skip" hidden>Skip — I already have a character</button>
     </div>
   </section>
 
-  <div class="steps" id="steps" hidden></div>
+  <section id="quiz-result-view" hidden>
+    <div class="verdict">
+      <div class="lead">You play like</div>
+      <div class="cls" id="qr-class"></div>
+      <div class="lev" id="qr-lever"></div>
+    </div>
+    <p class="note" id="qr-also"></p>
+    <div class="panel">
+      <h3>Why we said that</h3>
+      <p class="note">Your five answers, and what each one gave away.</p>
+      <div id="qr-echo"></div>
+    </div>
+    <p class="note faint">This is your <b>instinct</b> — the lever you reach for. It is not a measurement, and
+       it might not be where your money actually moves. Finding that out is the next bit, and the two
+       disagreeing is the most useful thing this whole tool can tell you.</p>
+    <div class="actions">
+      <button type="button" class="btn" id="btn-qr-next">Now let's get your stats →</button>
+      <button type="button" class="btn ghost" id="btn-qr-redo">Answer again</button>
+    </div>
+    <p class="note faint" style="margin-top:var(--space-3)">Sending this to someone? The whole thing runs in
+       their browser too — there is no account, no server, and nothing to sign up to.</p>
+  </section>
+
+  <!-- HOW TO BUILD THE SIX -->
+  <section id="method-view" hidden>
+    <div class="panel">
+      <h3>How do you want your six?</h3>
+      <p class="note">Same six abilities either way. The only question is where the numbers come from — and
+         you can switch later without losing anything.</p>
+    </div>
+    <div id="method-list"></div>
+    <div class="actions">
+      <button type="button" class="btn ghost" id="btn-method-back">Back to my five answers</button>
+    </div>
+  </section>
+
+  <!-- STANDARD ARRAY / ROLL. Built once at boot. -->
+  <section id="create-assign" hidden>
+    <div class="panel">
+      <h3 id="assign-title"></h3>
+      <p class="note" id="assign-blurb"></p>
+      <div id="assign-roll" hidden>
+        <div class="pool" id="assign-rolled"></div>
+        <button type="button" class="btn ghost" id="btn-roll">Roll 4d6, drop the lowest</button>
+      </div>
+      <div class="pool" id="assign-pool"></div>
+      <div id="assign-rows"></div>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn" id="btn-assign-next">See my character →</button>
+      <button type="button" class="btn ghost" id="btn-assign-back">Pick a different way</button>
+    </div>
+  </section>
+
 
   <!-- STEP 1 — the five numbers. LIVE-FORM: built once at boot, only .value written. -->
   <section id="create-basics" hidden>
@@ -184,6 +285,16 @@
     <div id="res-abilities"></div>
     <div id="res-gaps"></div>
 
+    <div class="panel">
+      <!-- LIVE-FORM: built once in the markup, only ever read and written by value. -->
+      <div class="field" style="margin-bottom:0">
+        <label for="c-name">Give them a name (optional)</label>
+        <div class="hint">Only for the card you can share. Leave it blank and the card uses your class,
+           which is arguably the better look anyway.</div>
+        <input id="c-name" type="text" autocomplete="off" maxlength="40" placeholder="Nobody, of Flat 3B"/>
+      </div>
+    </div>
+
     <!-- Optional. LIVE-FORM: built once at boot, only shown and hidden. -->
     <div class="panel" id="res-finish" hidden>
       <h3>Finish the three your money measures</h3>
@@ -196,8 +307,38 @@
       <button type="button" class="btn ghost" id="btn-finish-toggle">Finish my character →</button>
     </div>
     <div class="actions">
-      <button type="button" class="btn" id="btn-result-next">Take this into the campaign →</button>
-      <button type="button" class="btn ghost" id="btn-result-back">Change my numbers</button>
+      <button type="button" class="btn" id="btn-result-next">How do I get better? →</button>
+      <a class="btn ghost" href="card.html">Make a card to share</a>
+      <button type="button" class="btn ghost" id="btn-result-back">Change how I built this</button>
+    </div>
+  </section>
+
+  <!-- HOW TO GET BETTER AT EACH ONE -->
+  <section id="improve-view" hidden>
+    <div class="panel">
+      <h3>Right — how do you actually get better?</h3>
+      <p class="note">Every ability has three things underneath it, and every one of those has moves that
+         genuinely shift it. Sorted by <b>your weakest first</b>, because that is where the cheap points are.
+         Nothing here knows your situation and none of it is advice — it is what moves the number.</p>
+    </div>
+    <div id="improve-list"></div>
+    <div class="actions">
+      <button type="button" class="btn" id="btn-improve-next">Train one of these →</button>
+      <button type="button" class="btn ghost" id="btn-improve-back">Back to my stats</button>
+    </div>
+  </section>
+
+  <!-- PICK A STAT AND TRAIN IT -->
+  <section id="focus-view" hidden>
+    <div class="panel">
+      <h3>Pick one to work on</h3>
+      <p class="note">You'll get situations that actually exercise it. Same game, aimed at one thing —
+         and it still tells you afterwards what the sensible move would have been.</p>
+    </div>
+    <div id="focus-list"></div>
+    <div class="actions">
+      <button type="button" class="btn ghost" id="btn-focus-any">Or just play — give me anything</button>
+      <button type="button" class="btn ghost" id="btn-focus-back">Back</button>
     </div>
   </section>
 
@@ -209,14 +350,13 @@
       <div id="pro-levers"></div>
     </div>
     <div class="panel">
-      <h3>Last thing: where the campaign starts you</h3>
-      <p class="note">Your six abilities say what you are <i>capable</i> of. They do not say what you should do
-         <b>next</b> — and next is the whole game. That comes from a different thing entirely: a fixed order of
-         operations, where each step only makes sense once the one before it is done.</p>
-      <p class="note">Your numbers already place you on most of that order. <b>Two answers finish it</b>, and
-         they are these because an unclaimed employer match is the one thing that outranks almost everything
-         else — it is a pay rise you have already been offered. Everything else the ladder needs, it can
-         read from what you have entered.</p>
+      <h3>Last thing, then we play</h3>
+      <p class="note">Your six say what you're <i>capable</i> of. They don't say what to do <b>next</b> — and
+         next is the whole game. There's an order to money stuff, and doing the right thing at the wrong time
+         is how people lose years without ever making an obvious mistake.</p>
+      <p class="note">Your numbers already work out most of where you are. <b>Two answers finish it.</b> These
+         two, because free money from an employer beats almost everything else you could do with a pound —
+         it's a pay rise you've already been offered and just haven't collected.</p>
       <div id="pro-questions">
         <!-- LIVE-FORM: built once, here, and only ever read. -->
         <div style="margin-bottom:var(--space-3)">
@@ -253,7 +393,10 @@
     <h2 id="board-title">What comes up this month</h2>
     <p class="note" id="board-note"></p>
     <div class="board" id="board"></div>
-    <div class="actions"><button type="button" class="btn ghost" id="btn-abandon">Abandon this campaign</button></div>
+    <div class="actions">
+      <button type="button" class="btn ghost" id="btn-board-improve">How do I get better?</button>
+      <button type="button" class="btn ghost" id="btn-abandon">Abandon this campaign</button>
+    </div>
   </section>
 
   <!-- one scenario -->
@@ -296,6 +439,7 @@
     </div>
     <div class="actions">
       <button type="button" class="btn" id="btn-next-chapter">Begin the next chapter</button>
+      <button type="button" class="btn ghost" id="btn-rev-train">Train something else</button>
       <a class="btn ghost" href="sheet.html">Your real sheet</a>
     </div>
   </section>
@@ -316,16 +460,19 @@
 <script src="engines/character.js"></script>
 <script src="engines/encounter.js"></script>
 <script src="engines/campaign.js"></script>
+<script src="engines/journey.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Char = SLAF.Character, Store = DND.Store, Camp = DND.Campaign;
-  var Form = DND.CharForm;
+  var Form = DND.CharForm, Journey = DND.Journey;
   var TABLES = null, STATE = null, LAST = null, OPEN = null;
   /* Where in creation the visitor is. Held in memory, not stored: the numbers
      themselves are stored, so a reload re-derives the step from what exists. */
   var STEP = null;
   var BOUGHT = null;
+  var QAT = 0;        /* which of the five questions is on screen */
+  var FOCUS = null;   /* the stat being trained, or null for anything */
   function el(id) { return document.getElementById(id); }
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -336,8 +483,9 @@
   function money(cents) { return Money.formatCents(Math.round(cents)); }
   function signed(cents) { return (cents >= 0 ? '+' : '−') + money(Math.abs(cents)); }
 
-  var VIEWS = ['create-basics', 'create-abilities', 'create-result',
-               'no-character', 'prologue', 'board-view', 'scenario-view', 'outcome-view', 'review-view'];
+  var VIEWS = ['quiz-view', 'quiz-result-view', 'method-view',
+               'create-basics', 'create-abilities', 'create-assign', 'create-result',
+               'improve-view', 'focus-view', 'prologue', 'board-view', 'scenario-view', 'outcome-view', 'review-view'];
   function show(id) { VIEWS.forEach(function (v) { el(v).hidden = (v !== id); }); }
 
   /* ---- persistence: the campaign lives on the profile, beside the sheet --- */
@@ -354,7 +502,7 @@
     html('hud',
         cell('Chapter', STATE.chapter, 'round ' + Math.min(STATE.round + 1, per) + ' of ' + per)
       + cell('Level', snap.level === null ? '—' : snap.level, snap.classId ? classNameOf(snap.classId) : 'no class yet')
-      + cell('FOO step', place ? place.step : '—',
+      + cell('Next up', place ? 'Step ' + place.step : '—',
              place ? (place.certain ? esc(place.label) : 'at least — ' + esc(place.label)) : 'not placed')
       + cell('Runway', snap.currentHp === null ? '—' : snap.currentHp + ' wk',
              snap.netWorthCents === null ? '' : money(snap.netWorthCents) + ' net'));
@@ -376,6 +524,296 @@
   function subName(id) {
     var m = TABLES.dndRules.subStats.filter(function (x) { return x.id === id; })[0];
     return m ? m.name : id;
+  }
+
+  /* ---- THE FIVE QUESTIONS ------------------------------------------------
+     Buttons, not inputs, so these rebuild freely — D-034 is about live text
+     boxes and there are none here. One question a screen: five at once reads
+     as a form, and a form is the thing this page is trying not to be. */
+
+  function quizAnswers() { return Store.profile().quiz5 || {}; }
+
+  function paintQuiz() {
+    var qs = TABLES.dndQuiz5.questions;
+    if (QAT >= qs.length) QAT = qs.length - 1;
+    if (QAT < 0) QAT = 0;
+    var q = qs[QAT], picked = quizAnswers()[q.id];
+
+    html('q-dots', qs.map(function (x, i) {
+      return '<i class="' + (i <= QAT ? 'on' : '') + '"></i>';
+    }).join(''));
+    el('q-ask').textContent = q.ask;
+    el('q-sub').textContent = q.sub || '';
+    html('q-options', q.options.map(function (o) {
+      return '<button type="button" class="qopt' + (picked === o.id ? ' picked' : '') + '" '
+        + 'data-answer="' + esc(o.id) + '">' + esc(o.label) + '</button>';
+    }).join(''));
+    el('btn-q-back').hidden = QAT === 0;
+    /* Somebody who built a sheet before this flow existed should not be made
+       to answer five questions to reach their own character. */
+    el('btn-q-skip').hidden = !Store.moneyEntered();
+    show('quiz-view');
+  }
+
+  function answerQuiz(optionId) {
+    var qs = TABLES.dndQuiz5.questions, q = qs[QAT];
+    var a = {};
+    var cur = quizAnswers();
+    Object.keys(cur).forEach(function (k) { a[k] = cur[k]; });
+    a[q.id] = optionId;
+    Store.patchProfile({ quiz5: a });
+    if (QAT < qs.length - 1) { QAT += 1; paintQuiz(); return; }
+    goStep('verdict');
+  }
+
+  function paintQuizResult() {
+    var r = Journey.scoreQuiz(quizAnswers(), TABLES);
+    if (!Money.isOk(r)) { QAT = 0; paintQuiz(); return; }
+    var top = r.top, second = r.runnerUp;
+    el('qr-class').textContent = top.name;
+    el('qr-lever').textContent = top.lever;
+    el('qr-also').innerHTML = r.close
+      ? 'Though it was close — there is a good deal of <b>' + esc(second.name) + '</b> in you as well. '
+        + 'Most people are two things, and knowing which two is more useful than a clean answer would be.'
+      : 'Clearly, as it happens. Your runner-up, <b>' + esc(second.name) + '</b>, was some way behind.';
+    html('qr-echo', r.answers.map(function (x) {
+      return '<div class="echo"><b>' + esc(x.label) + '</b><span>' + esc(x.says) + '</span></div>';
+    }).join(''));
+    show('quiz-result-view');
+  }
+
+  /* ---- HOW DO YOU WANT YOUR SIX ------------------------------------------
+     The four routes, with the measured one first because it is the only one
+     that can tell you something you did not already know. */
+  var ROUTES = [
+    { id: 'real', title: 'Use my real numbers',
+      blurb: 'Five figures about your actual life. Strength, Dexterity and Constitution get measured rather than chosen — which means they can surprise you, and the rest of the game has something true to work with.',
+      worth: 'The only route that can tell you something you did not know' },
+    { id: 'pointBuy', title: 'Point buy',
+      blurb: 'Twenty-seven points across the six, exactly as D&D Beyond does it. Everything starts at 8, nothing goes above 15, and going high costs more each step.',
+      worth: 'Full control · about a minute' },
+    { id: 'standardArray', title: 'Standard array',
+      blurb: 'Six fixed numbers — 15, 14, 13, 12, 10 and 8 — and you decide which ability gets which. The quickest honest route when you cannot face questions tonight.',
+      worth: 'Fastest · about thirty seconds' },
+    { id: 'roll', title: 'Roll for it',
+      blurb: '4d6, drop the lowest, six times. You get what you get, exactly like at a table. It cannot reach 19 or 20, and that is the deal.',
+      worth: 'Most fun · least fair' }
+  ];
+
+  function paintMethod() {
+    html('method-list', ROUTES.map(function (r) {
+      return '<button type="button" class="method" data-route="' + esc(r.id) + '">'
+        + '<span class="mt">' + esc(r.title) + '</span>'
+        + '<span class="mb">' + esc(r.blurb) + '</span>'
+        + '<span class="mw">' + esc(r.worth) + '</span></button>';
+    }).join(''));
+    show('method-view');
+  }
+
+  /* ---- STANDARD ARRAY AND ROLL -------------------------------------------
+     One screen for both: a bag of six numbers and six abilities to drop them
+     on. The only difference is where the bag came from. Built once. */
+  var ASSIGN_BUILT = false, ASSIGN_MODE = null, BAG = [], ASSIGNED = {};
+
+  function buildAssign() {
+    if (ASSIGN_BUILT) return;
+    var ids = TABLES.dndScoring.standardArray.over;
+    el('assign-rows').innerHTML = ids.map(function (id) {
+      var meta = statMeta(id);
+      return '<div class="pbrow"><div class="nm"><b>' + esc(meta.name) + '</b><br/>'
+        + '<span class="faint">' + esc(meta.finance || '') + '</span></div>'
+        + '<div></div><select id="as-' + id + '" data-assign="' + id + '"></select><div></div></div>';
+    }).join('');
+    el('assign-rows').addEventListener('change', function (e) {
+      var sel = e.target.closest('[data-assign]');
+      if (!sel) return;
+      ASSIGNED[sel.getAttribute('data-assign')] = sel.value === '' ? null : Number(sel.value);
+      saveAssigned();
+      paintAssign();
+    });
+    ASSIGN_BUILT = true;
+  }
+
+  function rollOne() {
+    var r = TABLES.dndScoring.roll, dice = [];
+    for (var i = 0; i < r.dice; i++) dice.push(1 + Math.floor(Math.random() * r.sides));
+    dice.sort(function (a, b) { return a - b; });
+    var kept = dice.slice(1);
+    return Math.max(r.floor, kept.reduce(function (a, b) { return a + b; }, 0));
+  }
+
+  function newBag(mode) {
+    ASSIGN_MODE = mode;
+    ASSIGNED = {};
+    if (mode === 'standardArray') {
+      BAG = TABLES.dndScoring.standardArray.values.slice();
+    } else {
+      BAG = [];
+      for (var i = 0; i < TABLES.dndScoring.roll.count; i++) BAG.push(rollOne());
+      BAG.sort(function (a, b) { return b - a; });
+    }
+    saveBag();
+  }
+
+  /* THE ROLL HAS TO SURVIVE A RELOAD.
+     Six numbers you rolled are not reproducible — regenerating them on reload
+     would silently hand someone a different character from the one they were
+     halfway through assigning, and re-rolling until the numbers are nice is
+     exactly what the deterministic board elsewhere refuses to allow. */
+  function saveBag() {
+    Store.patchProfile({ buildBag: { mode: ASSIGN_MODE, values: BAG.slice() } });
+  }
+
+  function restoreBag() {
+    var b = Store.profile().buildBag;
+    if (!b || !b.mode || !b.values || !b.values.length) return false;
+    ASSIGN_MODE = b.mode;
+    BAG = b.values.slice();
+    ASSIGNED = {};
+    var stored = Store.profile().declaredScores || {};
+    TABLES.dndScoring.standardArray.over.forEach(function (id) {
+      if (Money.isEntered(stored[id])) ASSIGNED[id] = stored[id];
+    });
+    return true;
+  }
+
+  function saveAssigned() {
+    var out = {};
+    Object.keys(ASSIGNED).forEach(function (k) {
+      if (Money.isEntered(ASSIGNED[k])) out[k] = ASSIGNED[k];
+    });
+    Store.patchProfile({ declaredMethod: ASSIGN_MODE, declaredScores: out });
+  }
+
+  /* Options and text only — the selects themselves are never rebuilt. */
+  function paintAssign() {
+    var ids = TABLES.dndScoring.standardArray.over;
+    var isRoll = ASSIGN_MODE === 'roll';
+    el('assign-title').textContent = isRoll ? 'What you rolled' : 'Your six numbers';
+    el('assign-blurb').textContent = isRoll
+      ? 'Six rolls, lowest die dropped each time. Put them where you want them — you can roll again if you hate them.'
+      : 'The same six numbers everyone gets. Where they go is entirely up to you.';
+    el('assign-roll').hidden = !isRoll;
+    if (isRoll) el('assign-rolled').textContent = 'You rolled: ' + BAG.join(' · ');
+
+    var used = {};
+    ids.forEach(function (id) {
+      if (Money.isEntered(ASSIGNED[id])) {
+        var v = ASSIGNED[id];
+        used[v] = (used[v] || 0) + 1;
+      }
+    });
+    var left = BAG.slice();
+    Object.keys(used).forEach(function (v) {
+      for (var n = 0; n < used[v]; n++) {
+        var at = left.indexOf(Number(v));
+        if (at !== -1) left.splice(at, 1);
+      }
+    });
+    el('assign-pool').textContent = left.length
+      ? 'Still to place: ' + left.join(' · ')
+      : 'All six placed.';
+
+    ids.forEach(function (id) {
+      var sel = el('as-' + id), mine = ASSIGNED[id];
+      if (document.activeElement === sel) return;
+      /* Offer what is left, plus whatever this row already holds. */
+      var offer = left.slice();
+      if (Money.isEntered(mine)) offer.push(mine);
+      offer.sort(function (a, b) { return b - a; });
+      var seen = {}, opts = ['<option value="">—</option>'];
+      offer.forEach(function (v) {
+        if (seen[v]) return;
+        seen[v] = 1;
+        opts.push('<option value="' + v + '">' + v + '</option>');
+      });
+      sel.innerHTML = opts.join('');
+      sel.value = Money.isEntered(mine) ? String(mine) : '';
+    });
+    el('btn-assign-next').disabled = left.length > 0;
+  }
+
+  /* ---- HOW TO GET BETTER -------------------------------------------------
+     Weakest ability first, because that is where the cheap points are. Only
+     abilities that HAVE a score are ranked: an unscored one is not weak, it
+     is unknown, and sending someone to train an unmeasured number would be
+     the tool inventing a problem for them. */
+  var LIFT_WORD = { big: 'moves it a lot', real: 'moves it', small: 'nudges it' };
+  var EFFORT_WORD = { minutes: 'minutes', 'a weekend': 'a weekend', months: 'months' };
+
+  function paintImprove() {
+    var ex = Char.explain(Store.household(), TABLES);
+    var ranked = Journey.weakest(ex, TABLES);
+    var unscored = ex.abilities.filter(function (a) { return a.score === null; });
+
+    if (!ranked.length) {
+      html('improve-list', '<div class="panel"><h3>Nothing is scored yet</h3>'
+        + '<p class="note">There is no honest way to rank what to work on until at least one ability has a '
+        + 'number. Go back, finish your six, and this fills in — weakest first.</p></div>');
+      show('improve-view');
+      return;
+    }
+    /* SIX ABILITIES TIMES NINE MOVES IS A WALL, and a wall is not advice.
+       A screenshot of the first version ran to sixteen thousand pixels on a
+       phone. So: one compact row each, weakest open, the rest a tap away —
+       and inside each, the quickest big wins first, because "moves it a lot"
+       and "takes minutes" together is the whole reason to read on. */
+    var RANK_LIFT = { big: 0, real: 1, small: 2 };
+    var RANK_EFFORT = { minutes: 0, 'a weekend': 1, months: 2 };
+
+    html('improve-list', ranked.map(function (a, i) {
+      var moves = Journey.movesForAbility(a.statId, TABLES).slice().sort(function (x, y) {
+        return (RANK_LIFT[x.move.lift] - RANK_LIFT[y.move.lift])
+            || (RANK_EFFORT[x.move.effort] - RANK_EFFORT[y.move.effort]);
+      });
+      var open = i === 0;
+      var best = moves[0];
+      return '<div class="panel" style="padding:0">'
+        + '<button type="button" class="statpick" data-open="' + esc(a.statId) + '" '
+        + 'style="border:0;background:transparent;margin:0">'
+        + '<span class="sp">' + a.score + '</span><b>' + esc(a.name) + '</b>'
+        + (i === 0 ? ' <span class="badge on">start here</span>' : '')
+        + '<br/><span class="faint" style="font-size:var(--text-sm)">'
+        + (open ? esc(a.finance || '') : 'Start with: ' + esc(best.move.do))
+        + '</span></button>'
+        + '<div id="imp-' + a.statId + '" style="padding:0 var(--space-3) var(--space-3)"'
+        + (open ? '' : ' hidden') + '>'
+        + moves.map(function (m) {
+            return '<div class="move"><div class="md">' + esc(m.move.do) + '</div>'
+              + '<div class="mh">' + esc(m.move.how) + '</div>'
+              + '<div class="chips">'
+              + '<span class="chip">' + esc(m.subStatName) + '</span>'
+              + '<span class="chip' + (m.move.lift === 'big' ? ' big' : '') + '">'
+              + esc(LIFT_WORD[m.move.lift] || m.move.lift) + '</span>'
+              + '<span class="chip' + (m.move.effort === 'minutes' ? ' quick' : '') + '">'
+              + esc(EFFORT_WORD[m.move.effort] || m.move.effort) + '</span>'
+              + '</div></div>';
+          }).join('')
+        + '</div></div>';
+    }).join('')
+    + (unscored.length
+        ? '<div class="warn">' + unscored.map(function (a) { return esc(a.name); }).join(', ')
+          + ' ' + (unscored.length === 1 ? 'is' : 'are') + ' not scored yet, so there is nothing honest to '
+          + 'rank ' + (unscored.length === 1 ? 'it' : 'them') + ' against. Go back and finish '
+          + (unscored.length === 1 ? 'it' : 'them') + ' and they will appear here.</div>'
+        : ''));
+    show('improve-view');
+  }
+
+  /* ---- PICK A STAT AND TRAIN IT ------------------------------------------ */
+  function paintFocus() {
+    var ex = Char.explain(Store.household(), TABLES);
+    var ranked = Journey.weakest(ex, TABLES);
+    html('focus-list', ranked.map(function (a, i) {
+      return '<button type="button" class="statpick" data-focus="' + esc(a.statId) + '">'
+        + '<span class="sp">' + a.score + '</span><b>' + esc(a.name) + '</b>'
+        + (i === 0 ? ' <span class="badge on">weakest</span>' : '')
+        + '<br/><span class="faint" style="font-size:var(--text-sm)">'
+        + a.scenarios + (a.scenarios === 1 ? ' situation exercises' : ' situations exercise')
+        + ' this one</span></button>';
+    }).join('') || '<p class="note">Nothing is scored yet, so there is nothing to aim at. '
+      + 'Finish your six first and this fills in.</p>');
+    show('focus-view');
   }
 
   /* ---- CREATION, step 1: the five numbers -------------------------------
@@ -525,6 +963,14 @@
       row.querySelector('[data-pb="up"]').disabled = !Form.canRaise(rules, BOUGHT, id);
       row.querySelector('[data-pb="down"]').disabled = !Form.canLower(rules, BOUGHT, id);
     });
+    /* Walking past this screen without spending leaves six 8s and a character
+       that cannot be ranked or trained — a silent dead end two screens later.
+       So the way out is closed until the points are gone. */
+    var done = left === 0;
+    el('btn-abil-next').disabled = !done;
+    el('btn-abil-next').textContent = done
+      ? 'Next — see my character →'
+      : 'Spend all ' + rules.pool + ' points to carry on';
   }
 
   /* ---- CREATION, step 3: the character, with its receipts ---------------- */
@@ -536,24 +982,45 @@
     var s = Char.sheet(h, TABLES);
     var ex = Char.explain(h, TABLES);
 
-    el('res-class').textContent = s.klass
-      ? s.klass.name + (Money.isOk(s.level) ? ', level ' + s.level.value : '')
-      : 'Not a class yet';
+    /* THE BEST SCREEN IN THE TOOL, when it fires.
+       The five questions said which lever you REACH FOR. Your money says which
+       one you actually pull. When those differ it is not an error to reconcile
+       — it is the single most useful thing here, and it gets said plainly. */
+    var quizR = Journey.scoreQuiz(quizAnswers(), TABLES);
+    var quizName = Money.isOk(quizR) ? quizR.top.name : null;
+    var measured = s.klass ? s.klass.name : null;
+
+    el('res-class').textContent = measured
+      ? measured + (Money.isOk(s.level) ? ', level ' + s.level.value : '')
+      : (quizName || 'Not a class yet');
 
     if (Money.isOk(s.suggestedClass) && s.suggestedClass.ranked) {
       var ranked = s.suggestedClass.ranked.filter(function (r) { return r.cents > 0; });
-      el('res-why').innerHTML = ranked.length
-        ? 'Because that is where your money actually moves. A class here is <b>a lever you pull</b>, not a '
-          + 'temperament — so it is a ranking of your own figures, and it changes when they do.'
-        : 'No class yet: nothing is moving through any lever the sheet can see. Add your income and '
-          + 'spending and one will appear.';
+      el('res-why').innerHTML = !ranked.length
+        ? 'Nothing is moving through any lever your numbers can see yet. Add what you earn and spend and '
+          + 'a class appears — one that might not be the one you picked.'
+        : (quizName && measured && quizName !== measured)
+          ? 'Here is the interesting bit. You <b>play like ' + esc(quizName) + '</b> — that is the lever you '
+            + 'reach for. But your money moves through <b>' + esc(measured) + '</b>. Neither is wrong. The gap '
+            + 'between the two is where most people lose years: working one lever in their head and a '
+            + 'different one in their bank account.'
+          : (quizName && measured)
+            ? 'And your money agrees. You reach for ' + esc(measured) + ' and that is genuinely where it '
+              + 'moves, which makes you unusually well aligned — most people are pulling one lever and '
+              + 'thinking about another.'
+            : 'Because that is where your money actually moves. A class here is <b>a lever you pull</b>, not a '
+              + 'temperament — a ranking of your own figures, and it changes when they do.';
       html('res-levers', ranked.map(function (r, i) {
         return '<div class="shift"><span class="n">' + (i === 0 ? '<b>' : '') + money(r.cents)
           + (i === 0 ? '</b>' : '') + '</span><span>' + esc(leverNameOf(r.classId))
           + (i === 0 ? ' <span class="badge on">your lever</span>' : '') + '</span></div>';
       }).join(''));
     } else {
-      el('res-why').textContent = 'Add your numbers and the campaign can place you.';
+      el('res-why').innerHTML = quizName
+        ? 'That is your <b>instinct</b>, from the five questions. Whether it is where your money actually '
+          + 'moves is a different question, and it needs your real numbers to answer. Nothing here is '
+          + 'measured yet.'
+        : 'Add your numbers and the campaign can place you.';
       html('res-levers', '');
     }
 
@@ -590,8 +1057,28 @@
         + 'built on it fiction. You can play now and finish '
         + (thin.length === 1 ? 'it' : 'them') + ' whenever — each line above says exactly which figure '
         + 'it is waiting on.</div>'
-      : '<div class="ok-box">All six are scored. Three measured from your money, three you decided — which '
-        + 'is exactly the split the game is built on.</div>');
+      : (function () {
+          /* SAY THE ACTUAL SPLIT. Announcing "three measured from your money"
+             to somebody who rolled all six is simply untrue, and this page's
+             whole claim is that it does not tell you things it cannot see. */
+          var measured = ex.abilities.filter(function (a) { return a.status === 'measured'; }).length;
+          if (measured === 0) {
+            return '<div class="ok-box">All six are scored — and <b>all six are ones you chose</b>. That is a '
+              + 'perfectly good character and the game plays fine. It just cannot surprise you yet: nothing '
+              + 'here came from your actual life. Put your real numbers in and Strength, Dexterity and '
+              + 'Constitution get <i>measured</i> instead, which is where this stops being a quiz.'
+              + '</div>';
+          }
+          return '<div class="ok-box">All six are scored — <b>' + measured + ' measured from your money</b> and '
+            + (6 - measured) + ' you decided. That split is the whole idea: the three nobody can measure for '
+            + 'you stay yours, and the three your money can speak to are not up for negotiation.</div>';
+        })());
+    /* Open it the first time there is something to finish. Hiding the fix
+       behind a button someone has to guess at is how an ability stays blank
+       forever. After that, the visitor's own toggle is respected. */
+    if (thin.length && !FINISH_TOUCHED) el('res-finish').hidden = false;
+    var nameBox = el('c-name');
+    if (document.activeElement !== nameBox) nameBox.value = Store.profile().characterName || '';
     el('btn-finish-toggle').textContent = el('res-finish').hidden
       ? (thin.length ? 'Finish my character →' : 'Change these answers →')
       : 'Hide these';
@@ -603,7 +1090,7 @@
      the label says what each answer buys, because "just fill in these five
      more things" with no stated payoff is how a form gets abandoned.
      LIVE-FORM: built once at boot; shown and hidden with [hidden]. */
-  var FINISH_BUILT = false;
+  var FINISH_BUILT = false, FINISH_TOUCHED = false;
 
   function mobilityChecklist() {
     var a = TABLES.dndScoring.anchors.structuralMobility;
@@ -696,12 +1183,21 @@
   }
 
   /* ---- which creation step to show --------------------------------------- */
-  var STEP_LABELS = [['basics', 'About you'], ['abilities', 'Your six'],
-                     ['result', 'Your character'], ['play', 'The campaign']];
+  /* The whole run through, in the order a first-time visitor meets it. The
+     build steps all report as one, because "how you got your six" is one
+     decision to the person making it however many screens it takes. */
+  var STEP_LABELS = [['quiz', 'Five questions'], ['method', 'Your six'],
+                     ['stats', 'Your character'], ['improve', 'Getting better'],
+                     ['play', 'Play']];
+  var STEP_PHASE = {
+    quiz: 'quiz', verdict: 'quiz',
+    method: 'method', basics: 'method', abilities: 'method', assign: 'method',
+    result: 'stats', improve: 'improve', focus: 'play', play: 'play'
+  };
 
   function paintSteps(now) {
     if (!now) { el('steps').hidden = true; return; }
-    var at = STEP_LABELS.map(function (x) { return x[0]; }).indexOf(now);
+    var at = STEP_LABELS.map(function (x) { return x[0]; }).indexOf(STEP_PHASE[now] || now);
     el('steps').hidden = false;
     html('steps', STEP_LABELS.map(function (x, i) {
       var k = i < at ? 'done' : i === at ? 'now' : '';
@@ -712,9 +1208,15 @@
   function goStep(name) {
     STEP = name;
     paintSteps(name);
+    if (name === 'quiz') { paintQuiz(); }
+    if (name === 'verdict') { paintQuizResult(); }
+    if (name === 'method') { paintMethod(); }
     if (name === 'basics') { fillBasics(); show('create-basics'); }
-    if (name === 'abilities') { paintPointBuy(); show('create-abilities'); }
+    if (name === 'abilities') { saveBought(); paintPointBuy(); show('create-abilities'); }
+    if (name === 'assign') { paintAssign(); show('create-assign'); }
     if (name === 'result') { paintResult(); show('create-result'); }
+    if (name === 'improve') { paintImprove(); }
+    if (name === 'focus') { paintFocus(); }
     if (name === 'play') { paintPrologue(); show('prologue'); }
     el('hud').hidden = true; el('progress').hidden = true;
   }
@@ -769,12 +1271,13 @@
     el('btn-begin').disabled = !ready;
     el('pro-placement').innerHTML = place
       ? (place.certain
-          ? 'The ladder puts you on <b>step ' + place.step + '</b> — ' + esc(place.label) + '. That is what the '
-            + 'campaign will hold you to.'
-          : 'The ladder can see you are <b>at or past step ' + place.step + '</b> — ' + esc(place.label) + '. '
-            + 'It cannot see further because ' + esc((place.detail || '').replace(/^Steps? /, 'steps ')) + ' '
-            + 'The campaign will rank against that frontier and say so.')
-      : 'Answer both and the ladder can place you.'
+          ? 'You are on <b>step ' + place.step + '</b> — ' + esc(place.label) + '. That is what the game will '
+            + 'hold you to, and every choice gets judged against it.'
+          : 'You are <b>at least at step ' + place.step + '</b> — ' + esc(place.label) + '. We cannot see '
+            + 'further because ' + esc((place.detail || '').replace(/^Steps? /, 'steps ')) + ' '
+            + 'That is still enough to judge your choices against, and the game will say so rather than '
+            + 'pretending to know more than it does.')
+      : 'Answer both and we can work out where you are.'
         + (need.detail ? '<br/><span class="faint">' + esc(need.detail) + '</span>' : '');
   }
 
@@ -782,20 +1285,40 @@
   function paintBoard() {
     var place = Camp.fooStepOf(STATE.household, TABLES);
     var per = Camp.rules(TABLES).roundsPerChapter;
-    el('board-title').textContent = 'Round ' + (STATE.round + 1) + ' of ' + per;
-    el('board-note').innerHTML = 'Six things are in front of you. You get to face <b>one</b> — which one you '
-      + 'pick is itself the decision.'
-      + (place ? ' You are on step ' + place.step + (place.certain ? '' : ' or past it') + '.' : '');
+    el('board-title').textContent = 'Round ' + (STATE.round + 1) + ' of ' + per + ' — pick your fight';
     var cards = Camp.board(STATE, TABLES);
+    var training = STATE.focusSubStats && STATE.focusSubStats.length
+      ? (TABLES.dndRules.subStats.filter(function (m) {
+          return m.id === STATE.focusSubStats[0]; })[0] || {}).stat
+      : null;
+    /* Say it when the focus has run dry rather than quietly dealing something
+       else and letting the player think it still counts. */
+    var onTarget = !training ? 0 : cards.filter(function (sc) {
+      return sc.options.some(function (o) {
+        return Object.keys(o.subStats || {}).some(function (k) {
+          return o.subStats[k] > 0 && STATE.focusSubStats.indexOf(k) !== -1;
+        });
+      });
+    }).length;
+    el('board-note').innerHTML = 'Six things are in front of you. You get to face <b>one</b> — and which '
+      + 'one you pick is itself the decision.'
+      + (training
+          ? (onTarget === 0
+              ? ' You have now seen every situation here that trains <b>' + esc(statMeta(training).name)
+                + '</b>, so these are the rest. Still worth playing — just not aimed any more.'
+              : ' ' + onTarget + ' of these train <b>' + esc(statMeta(training).name) + '</b>.')
+          : '')
+      + (place ? ' You are on step ' + place.step + (place.certain ? '' : ' or past it') + '.' : '');
     var tier = Camp.tierOf(STATE.household, TABLES);
     html('board', cards.map(function (s) {
       var on = place && s.fooStep === place.step;
       /* Why THIS card, in front of THIS character. A board of six that never
          explained itself read as a random draw; it is not one. */
       var why = !place ? 'A tier ' + tier + ' situation.'
-        : s.fooStep === place.step ? 'This is a step-' + s.fooStep + ' problem, and step ' + place.step + ' is where you are standing.'
-        : s.fooStep < place.step ? 'A step-' + s.fooStep + ' problem — ground you have already covered. It can still bite.'
-        : 'A step-' + s.fooStep + ' problem, ' + (s.fooStep - place.step) + ' ahead of you. Tempting early is exactly how the order gets broken.';
+        : s.fooStep === place.step ? 'Bang on where you are. This is your fight.'
+        : s.fooStep < place.step ? 'Ground you have already covered — which does not stop it biting.'
+        : 'This one is ' + (s.fooStep - place.step) + ' step' + ((s.fooStep - place.step) === 1 ? '' : 's')
+          + ' ahead of you. Tempting early is exactly how people get out of order.';
       return '<button type="button" class="card" data-scenario="' + esc(s.id) + '">'
         + '<span class="t">' + esc(s.title) + '</span>'
         + '<span class="st">' + esc(s.setup) + '</span>'
@@ -851,10 +1374,10 @@
       : '<p class="note faint">No money moved.</p>');
 
     var verdict = rec.followedFoo
-      ? '<div class="ok-box"><b>That is what the ladder would have picked.</b><br/>' + esc(rec.shouldHave.why) + '</div>'
-      : '<div class="warn"><b>The ladder would have picked: ' + esc(rec.shouldHave.label) + '</b><br/>'
-        + esc(rec.shouldHave.why) + '<br/><span class="faint">Not a scolding — an order. Doing this one later '
-        + 'is usually fine; doing it instead is what costs.</span></div>';
+      ? '<div class="ok-box"><b>Nice. That is the move.</b><br/>' + esc(rec.shouldHave.why) + '</div>'
+      : '<div class="warn"><b>The stronger move was: ' + esc(rec.shouldHave.label) + '</b><br/>'
+        + esc(rec.shouldHave.why) + '<br/><span class="faint">Not a telling-off. It is about order — doing '
+        + 'your choice <i>later</i> is usually fine. Doing it <i>instead</i> is what costs you.</span></div>';
     html('out-verdict', verdict);
 
     html('out-could', rec.couldHave.map(function (c) {
@@ -872,13 +1395,13 @@
   /* ---- the chapter review ------------------------------------------------ */
   function paintReview() {
     var r = Camp.chapterReview(STATE, TABLES);
-    el('rev-title').textContent = 'Chapter ' + r.chapter + ' — ' + r.rounds + ' decisions';
-    el('rev-lede').innerHTML = 'You followed the ladder <b>' + r.followedFoo + ' times out of ' + r.rounds
-      + '</b>. Everything below is what that did.';
+    el('rev-title').textContent = 'Chapter ' + r.chapter + ' — how it went';
+    el('rev-lede').innerHTML = 'You made the strongest move <b>' + r.followedFoo + ' times out of '
+      + r.rounds + '</b>. Here is what that did to you.';
 
     var moves = [];
     if (r.levelDelta !== null) moves.push(['Level', r.before.level + ' → ' + r.after.level, r.levelDelta]);
-    if (r.fooDelta !== null) moves.push(['FOO step', r.before.fooStep + ' → ' + r.after.fooStep, r.fooDelta]);
+    if (r.fooDelta !== null) moves.push(['Position', 'step ' + r.before.fooStep + ' → step ' + r.after.fooStep, r.fooDelta]);
     if (r.netWorthDelta !== null) moves.push(['Net worth', money(r.before.netWorthCents) + ' → ' + money(r.after.netWorthCents), r.netWorthDelta]);
     if (r.before.currentHp !== null && r.after.currentHp !== null) {
       moves.push(['Runway', r.before.currentHp + ' → ' + r.after.currentHp + ' wk', r.after.currentHp - r.before.currentHp]);
@@ -901,7 +1424,7 @@
     html('rev-order', r.missedFoo.length
       ? r.missedFoo.map(function (m) {
           return '<div class="row"><b>' + esc(m.title) + '</b> — you took <i>' + esc(m.label) + '</i>'
-            + '<br/><span class="faint">The ladder said: ' + esc(m.shouldHave.label) + '. ' + esc(m.shouldHave.why) + '</span></div>';
+            + '<br/><span class="faint">Stronger: ' + esc(m.shouldHave.label) + '. ' + esc(m.shouldHave.why) + '</span></div>';
         }).join('')
       : '<div class="ok-box">Every choice this chapter was the one the ladder would have made. That is rarer '
         + 'than it sounds — the whole difficulty of the order is that each individual step looks optional.</div>');
@@ -910,7 +1433,7 @@
     var body = st.warnings.map(function (w) { return '<div class="warn">' + esc(w.text) + '</div>'; }).join('');
     if (!body) {
       body = '<div class="ok-box">No single lever ran away with the chapter. That is what you want — the '
-        + 'creatures in the bestiary hunt whichever save you never trained.</div>';
+        + 'things that come for you go straight at whatever you never practised.</div>';
     }
     if (st.untouchedLevers.length) {
       body += '<p class="note faint" style="margin-top:var(--space-2)">Never pulled this chapter: '
@@ -924,13 +1447,27 @@
   /* ---- routing ----------------------------------------------------------- */
   function route() {
     paintHud();
+    /* The opening pitch is for people deciding whether to start. Once they
+       have, it is just a paragraph in the way on every screen. */
+    el('lede').hidden = !!STATE;
     if (!STATE) {
       /* Mid-creation, stay where the visitor is. Otherwise pick the first
          step that is not done yet — so a reload resumes rather than restarts,
          and someone who already has a character skips straight to playing. */
       if (STEP) { goStep(STEP); return; }
-      if (!Store.moneyEntered()) { goStep('basics'); return; }
-      if (!Camp.fooStepOf(Store.household(), TABLES) && !boughtAnything()) { goStep('abilities'); return; }
+      /* Resume where the visitor got to. The five questions come first
+         because they cost nothing and give something back immediately —
+         asking for someone's income before they know why is how you lose
+         them on the first screen. */
+      if (!Money.isOk(Journey.scoreQuiz(quizAnswers(), TABLES))) { goStep('quiz'); return; }
+      if (!Store.moneyEntered() && !boughtAnything()) { goStep('method'); return; }
+      /* Half-assigned array or roll: pick it back up rather than starting the
+         choice again with a different set of numbers. */
+      var m = Store.profile().declaredMethod;
+      if ((m === 'standardArray' || m === 'roll') && restoreBag()
+          && Object.keys(ASSIGNED).length < TABLES.dndScoring.standardArray.over.length) {
+        goStep('assign'); return;
+      }
       goStep('result'); return;
     }
     paintSteps(null);
@@ -961,10 +1498,71 @@
     el('btn-next-chapter').addEventListener('click', function () {
       save(Camp.nextChapter(STATE, TABLES)); route();
     });
+    /* Leaving the board for the advice screens must not throw the run away —
+       STEP is cleared on the way back so route() returns to the game. */
+    el('btn-board-improve').addEventListener('click', function () { goStep('improve'); });
+    el('btn-rev-train').addEventListener('click', function () { goStep('focus'); });
     el('btn-abandon').addEventListener('click', function () {
       if (!window.confirm('Abandon this campaign? Your sheet is untouched either way.')) return;
       Store.patchProfile({ campaign: null }); STATE = null; route();
     });
+    /* the five questions */
+    el('q-options').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-answer]');
+      if (b) answerQuiz(b.getAttribute('data-answer'));
+    });
+    el('btn-q-back').addEventListener('click', function () { QAT -= 1; paintQuiz(); });
+    el('btn-q-skip').addEventListener('click', function () { goStep('result'); });
+    el('btn-qr-redo').addEventListener('click', function () {
+      Store.patchProfile({ quiz5: {} }); QAT = 0; goStep('quiz');
+    });
+    el('btn-qr-next').addEventListener('click', function () { goStep('method'); });
+
+    /* how you want your six */
+    el('method-list').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-route]');
+      if (!b) return;
+      var id = b.getAttribute('data-route');
+      if (id === 'real') { goStep('basics'); return; }
+      if (id === 'pointBuy') { saveBought(); goStep('abilities'); return; }
+      newBag(id); goStep('assign');
+    });
+    el('btn-method-back').addEventListener('click', function () { goStep('verdict'); });
+    el('btn-assign-back').addEventListener('click', function () { goStep('method'); });
+    el('btn-assign-next').addEventListener('click', function () { goStep('result'); });
+    el('btn-roll').addEventListener('click', function () { newBag('roll'); saveAssigned(); paintAssign(); });
+
+    /* getting better, and training one */
+    el('improve-list').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-open]');
+      if (!b) return;
+      var body = el('imp-' + b.getAttribute('data-open'));
+      if (body) body.hidden = !body.hidden;
+    });
+    el('btn-improve-back').addEventListener('click', function () {
+      if (STATE) { STEP = null; route(); return; }
+      goStep('result');
+    });
+    el('btn-improve-next').addEventListener('click', function () { goStep('focus'); });
+    el('btn-focus-back').addEventListener('click', function () { goStep('improve'); });
+    el('btn-focus-any').addEventListener('click', function () { FOCUS = null; goStep('play'); });
+    el('focus-list').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-focus]');
+      if (!b) return;
+      FOCUS = b.getAttribute('data-focus');
+      /* A run already going cannot change what it is aimed at halfway — the
+         board is dealt from what you have already seen. Say so and let the
+         player decide, rather than silently doing nothing or silently
+         throwing their chapter away. */
+      if (STATE) {
+        if (!window.confirm('Starting a run aimed at ' + statMeta(FOCUS).name
+            + ' ends the one you are in. Your real numbers are untouched either way. Carry on?')) return;
+        Store.patchProfile({ campaign: null });
+        STATE = null;
+      }
+      goStep('play');
+    });
+
     el('btn-basics-next').addEventListener('click', function () { goStep('abilities'); });
     el('btn-basics-example').addEventListener('click', function () {
       /* Public repo: the ONLY numbers this tool ever puts in a box are these,
@@ -978,16 +1576,24 @@
     });
     el('btn-abil-back').addEventListener('click', function () { goStep('basics'); });
     el('btn-abil-next').addEventListener('click', function () { goStep('result'); });
+    el('c-name').addEventListener('input', function () {
+      Store.patchProfile({ characterName: this.value.trim() || null });
+    });
     el('btn-finish-toggle').addEventListener('click', function () {
+      FINISH_TOUCHED = true;
       el('res-finish').hidden = !el('res-finish').hidden;
       paintResult();
     });
-    el('btn-result-back').addEventListener('click', function () { goStep('basics'); });
-    el('btn-result-next').addEventListener('click', function () { goStep('play'); });
+    el('btn-result-back').addEventListener('click', function () { goStep('method'); });
+    el('btn-result-next').addEventListener('click', function () { goStep('improve'); });
     el('q-match').addEventListener('change', paintPlacementPreview);
     el('q-capturing').addEventListener('change', paintPlacementPreview);
     el('btn-begin').addEventListener('click', function () {
-      save(Camp.start(previewHousehold(), TABLES));
+      var subs = FOCUS
+        ? TABLES.dndRules.subStats.filter(function (m) { return m.stat === FOCUS; })
+            .map(function (m) { return m.id; })
+        : null;
+      save(Camp.start(previewHousehold(), TABLES, subs));
       route();
     });
   }
@@ -1004,6 +1610,7 @@
     });
     buildBasics();
     buildPointBuy();
+    buildAssign();
     buildFinish();
     wire();
     route();

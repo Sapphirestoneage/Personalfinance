@@ -1,0 +1,115 @@
+{
+  "id": "dnd_quiz5",
+  "version": "1.0.0",
+  "asOf": "2026-09",
+  "source": "Authored for Dungeons & Dividends. DD-026.",
+  "confidence": "low",
+  "confidenceNote": "This is a temperament read, not a measurement. It picks the lever you REACH FOR, which is a real and useful thing to know about yourself — but it is not where your money actually moves. That comes later, from your numbers, and the two disagreeing is the interesting part rather than an error.",
+  "note": "Five questions, no maths, no jargon, and no answer that makes you look daft. Each option leans on one or more of the seven class levers; the highest total wins and the runner-up is shown, because almost nobody is one pure thing.",
+  "questions": [
+    {
+      "id": "windfall",
+      "ask": "A thousand pounds just landed in your account. Nobody wants it back.",
+      "sub": "Be honest. Not what you'd tell your accountant.",
+      "options": [
+        { "id": "save", "label": "Straight into savings. I sleep better knowing it's sat there.",
+          "says": "You buy calm before you buy upside. That is a whole strategy, not a lack of one.",
+          "weights": { "anchor": 3, "keeper": 1 } },
+        { "id": "invest", "label": "Into the investments, with everything else.",
+          "says": "You'd rather your money did the work. You are playing a long game on purpose.",
+          "weights": { "compounder": 3 } },
+        { "id": "seed", "label": "That's the seed money for the thing I keep meaning to start.",
+          "says": "You back yourself over the market. Expensive when it's wrong, enormous when it isn't.",
+          "weights": { "builder": 3, "earner": 1 } },
+        { "id": "punt", "label": "I've got a punt in mind. Small odds, silly number.",
+          "says": "You're comfortable being wrong most of the time for one very good day.",
+          "weights": { "speculator": 3 } },
+        { "id": "debt", "label": "Onto the card. It's been annoying me for months.",
+          "says": "You clear the noise first. Unglamorous and almost always correct.",
+          "weights": { "keeper": 3, "anchor": 1 } }
+      ]
+    },
+    {
+      "id": "boss",
+      "ask": "Your boss says there's room for exactly one thing this year.",
+      "sub": "One. Choose.",
+      "options": [
+        { "id": "money", "label": "More money. Obviously more money.",
+          "says": "You go at the number directly. The most reliable lever there is, and the least used.",
+          "weights": { "earner": 3 } },
+        { "id": "title", "label": "A better title. The money follows the title.",
+          "says": "You play two moves ahead. Slower this year, larger by the third.",
+          "weights": { "earner": 2, "builder": 1 } },
+        { "id": "remote", "label": "Fully remote. Permanently, in writing.",
+          "says": "You're buying the ability to leave. That is worth more than most raises.",
+          "weights": { "builder": 2, "anchor": 1, "landholder": 1 } },
+        { "id": "skill", "label": "Training in something I could sell on my own later.",
+          "says": "You're using their budget to build your exit. Cheeky, and correct.",
+          "weights": { "builder": 3, "earner": 1 } }
+      ]
+    },
+    {
+      "id": "sunday",
+      "ask": "Sunday, eight in the evening. A free hour and a faint nagging feeling about money.",
+      "sub": "What do you actually end up doing?",
+      "options": [
+        { "id": "cancel", "label": "Going through every subscription and cancelling with real menace.",
+          "says": "You find money by removing things. It compounds quietly and nobody claps.",
+          "weights": { "keeper": 3 } },
+        { "id": "read", "label": "Reading about something I might buy into.",
+          "says": "You enjoy the machinery. That curiosity is worth actual money over thirty years.",
+          "weights": { "compounder": 3 } },
+        { "id": "houses", "label": "Looking at what places near me went for.",
+          "says": "You think in bricks. Slow, lumpy, and it has made more ordinary people wealthy than anything else.",
+          "weights": { "landholder": 3 } },
+        { "id": "cv", "label": "Quietly updating my CV. No reason.",
+          "says": "You keep an exit warm. People who do this get paid more, mostly by leaving.",
+          "weights": { "earner": 2, "anchor": 1 } },
+        { "id": "close", "label": "Checking the balance, feeling broadly fine, closing the app.",
+          "says": "Nothing wrong with this. It is only a problem if the feeling is doing the checking for you.",
+          "weights": { "anchor": 2 } }
+      ]
+    },
+    {
+      "id": "mate",
+      "ask": "A mate has a thing. He describes it as can't-lose.",
+      "sub": "Your first thought, before politeness kicks in.",
+      "options": [
+        { "id": "downside", "label": "How much can I lose, and could I take it?",
+          "says": "You size the hole before the prize. This is the single best habit on this page.",
+          "weights": { "speculator": 2, "anchor": 2 } },
+        { "id": "numbers", "label": "What's the actual return once everything's paid?",
+          "says": "You go straight past the story to the arithmetic. Good. The story is the sales pitch.",
+          "weights": { "compounder": 2, "keeper": 1 } },
+        { "id": "out", "label": "Nothing is can't-lose. I'm out.",
+          "says": "You'll miss a few good ones. You'll also still be here in ten years, which is the game.",
+          "weights": { "anchor": 3 } },
+        { "id": "in", "label": "In. Life's short and he's usually right.",
+          "says": "You move fast. Make sure the amount is one you can genuinely shrug at.",
+          "weights": { "speculator": 3 } },
+        { "id": "myself", "label": "Could I just do that myself, without him?",
+          "says": "You see a business where others see an offer. That instinct is rare and it pays.",
+          "weights": { "builder": 3 } }
+      ]
+    },
+    {
+      "id": "hurt",
+      "ask": "Which of these would genuinely ruin your month?",
+      "sub": "Last one. Then we'll tell you what you are.",
+      "options": [
+        { "id": "job", "label": "Losing the job tomorrow morning.",
+          "says": "Your instinct is to want a floor under you. Everything else is easier once it's there.",
+          "weights": { "anchor": 3, "earner": 1 } },
+        { "id": "crash", "label": "The market falling a third in the year I needed the money.",
+          "says": "You already think in timing, not just returns. Most people learn that the hard way.",
+          "weights": { "compounder": 2, "anchor": 2 } },
+        { "id": "stuck", "label": "Being stuck — a city, a lease, a role I can't get out of.",
+          "says": "You price freedom highly. Keep your fixed costs low and you'll always have it.",
+          "weights": { "landholder": 2, "builder": 2 } },
+        { "id": "overpaying", "label": "Finding out I've been quietly overpaying for years.",
+          "says": "Waste offends you more than risk does. That is a genuinely useful thing to be.",
+          "weights": { "keeper": 3 } }
+      ]
+    }
+  ]
+}

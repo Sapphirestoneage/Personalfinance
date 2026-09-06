@@ -47,7 +47,9 @@ const TABLES = {
      is the engine behaving correctly and a test harness behaving badly. */
   effectiveTaxRates: table('effective_tax_rates_2026.json'),
   /* The campaign's scenario bank (DD-024). */
-  dndScenarios: table('dnd_scenarios.json')
+  dndScenarios: table('dnd_scenarios.json'),
+  dndQuiz5: table('dnd_quiz5.json'),
+  dndImprove: table('dnd_improve.json')
 };
 
 let passed = 0;
@@ -1813,6 +1815,279 @@ section('Dungeons & Dividends — the campaign (DD-024)');
     /dndScenarios/.test(fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8')));
 })();
 
+section('Dungeons & Dividends — five questions, and what to do about the answer (DD-026)');
+
+(function () {
+  const J = require(path.join(ROOT, 'engines/journey.js'));
+  const Camp = require(path.join(ROOT, 'engines/campaign.js'));
+  const Q = TABLES.dndQuiz5, CLASSES = TABLES.dndClasses.classes.map(c => c.id);
+  const SUBS = TABLES.dndRules.subStats;
+
+  /* ---- the quiz is well formed ------------------------------------------ */
+  check('there are five questions', Q.questions.length, 5);
+  const qids = {};
+  Q.questions.forEach(function (q) {
+    checkTrue(`${q.id} is unique`, !qids[q.id]); qids[q.id] = 1;
+    checkTrue(`${q.id} asks something`, typeof q.ask === 'string' && q.ask.trim() === q.ask && q.ask.length > 0);
+    checkTrue(`${q.id} offers a real choice`, q.options.length >= 3);
+    const oids = {};
+    q.options.forEach(function (o) {
+      checkTrue(`${q.id}/${o.id} is unique`, !oids[o.id]); oids[o.id] = 1;
+      checkTrue(`${q.id}/${o.id} has a label`, !!o.label);
+      /* Every answer tells you something back. An option that scores in
+         silence is a question the reader gets nothing for answering. */
+      checkTrue(`${q.id}/${o.id} says something back`, typeof o.says === 'string' && o.says.length > 0);
+      checkTrue(`${q.id}/${o.id} leans on at least one lever`,
+        Object.keys(o.weights || {}).length > 0);
+      Object.keys(o.weights).forEach(function (k) {
+        checkTrue(`${q.id}/${o.id} leans on a real class (${k})`, CLASSES.indexOf(k) !== -1);
+      });
+    });
+  });
+
+  /* ---- and it is not rigged ---------------------------------------------
+     The options are written to sound like people, not to balance a
+     spreadsheet, so raw totals would hand nearly everyone the same class.
+     Scoring is a share of each class's own ceiling instead. This walks ALL
+     2,000 possible answer sets and insists every class is winnable and none
+     runs away with it. */
+  const ceil = J.ceilings(TABLES);
+  CLASSES.forEach(function (c) {
+    checkTrue(`${c} can be reached at all`, ceil[c] > 0);
+  });
+  const wins = {};
+  CLASSES.forEach(function (c) { wins[c] = 0; });
+  let total = 0, closeCount = 0;
+  (function walk(i, acc) {
+    if (i === Q.questions.length) {
+      const r = J.scoreQuiz(acc, TABLES);
+      wins[r.value] += 1; total += 1; if (r.close) closeCount += 1;
+      return;
+    }
+    Q.questions[i].options.forEach(function (o) {
+      const n = Object.assign({}, acc); n[Q.questions[i].id] = o.id; walk(i + 1, n);
+    });
+  })(0, {});
+  check('every answer set produces a class', total, 2000);
+  CLASSES.forEach(function (c) {
+    checkTrue(`${c} wins for somebody (${(100 * wins[c] / total).toFixed(1)}%)`, wins[c] > 0);
+    /* Even would be 14.3%. Anything past 25% means one class is eating the
+       quiz and the other six are decoration. */
+    checkTrue(`${c} does not run away with it`, wins[c] / total < 0.25);
+  });
+  checkTrue(`"you're also a bit of X" stays meaningful (${(100 * closeCount / total).toFixed(0)}%)`,
+    closeCount / total < 0.35);
+
+  /* ---- a half-finished quiz gets no verdict ------------------------------ */
+  const partial = {}; partial[Q.questions[0].id] = Q.questions[0].options[0].id;
+  const half = J.scoreQuiz(partial, TABLES);
+  checkTrue('four unanswered questions is incomplete, not a guess', !Money.isOk(half));
+  check('and it names how many are left', half.missing.length, 4);
+  check('no answers at all is also incomplete', Money.isOk(J.scoreQuiz({}, TABLES)), false);
+
+  const full = {};
+  Q.questions.forEach(function (q) { full[q.id] = q.options[0].id; });
+  const done = J.scoreQuiz(full, TABLES);
+  checkTrue('a full set scores', Money.isOk(done));
+  check('and echoes all five answers back', done.answers.length, 5);
+  check('ranking covers every class', done.ranked.length, CLASSES.length);
+  checkTrue('ranked highest-share first',
+    done.ranked.every(function (r, i) { return i === 0 || done.ranked[i - 1].share >= r.share; }));
+  checkTrue('the winner is the top of the ranking', done.value === done.top.classId);
+  checkTrue('a runner-up is always offered', !!done.runnerUp);
+
+  /* ---- how to improve --------------------------------------------------- */
+  const moveIds = Object.keys(TABLES.dndImprove.moves);
+  SUBS.forEach(function (m) {
+    checkTrue(`${m.id} has moves that raise it`, J.movesFor(m.id, TABLES).length > 0);
+  });
+  moveIds.forEach(function (k) {
+    checkTrue(`improve entry ${k} is a real sub-stat`,
+      SUBS.some(function (m) { return m.id === k; }));
+    TABLES.dndImprove.moves[k].forEach(function (mv) {
+      checkTrue(`${k} move says what to do`, !!mv.do && !!mv.how);
+      checkTrue(`${k} move declares how much it lifts`,
+        ['small', 'real', 'big'].indexOf(mv.lift) !== -1);
+      checkTrue(`${k} move declares what it costs you`,
+        ['minutes', 'a weekend', 'months'].indexOf(mv.effort) !== -1);
+    });
+  });
+  ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'].forEach(function (st) {
+    checkTrue(`${st} has moves across its three sub-stats`,
+      J.movesForAbility(st, TABLES).length >= 3);
+  });
+
+  /* ---- the focused game -------------------------------------------------
+     Offering "train your Strength" and then dealing cards that do not touch
+     it is worse than not offering it. Every ability needs a real bank. */
+  const R = TABLES.dndScenarios.rules;
+  ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'].forEach(function (st) {
+    const pool = J.scenariosForStat(st, TABLES);
+    checkTrue(`${st} has enough situations to deal a board (${pool.length})`, pool.length >= R.boardSize);
+    const subs = SUBS.filter(function (m) { return m.stat === st; }).map(function (m) { return m.id; });
+    checkTrue(`and every one of them actually trains ${st}`,
+      pool.every(function (sc) {
+        return J.trainedBy(sc).some(function (k) { return subs.indexOf(k) !== -1; });
+      }));
+  });
+  SUBS.forEach(function (m) {
+    checkTrue(`${m.id} is trained by at least one situation`,
+      J.scenariosForSubStat(m.id, TABLES).length > 0);
+  });
+
+  /* A focused run deals only cards that train the thing. */
+  function household() {
+    const h = Schema.createHousehold(); h.filingStatus = 'single';
+    const p = Schema.createPerson({ id: 'dnd_person', role: 'adult' });
+    p.incomeSources = [Schema.createIncomeSource({ id: 'dnd_income', personId: 'dnd_person',
+      grossAnnualIncomeCents: 7200000, type: 'w2' })];
+    h.people = [p];
+    h.assets = [Schema.createAsset({ id: 'dnd_asset_cash', category: 'cash', valueCents: 950000, liquid: true }),
+                Schema.createAsset({ id: 'dnd_asset_investments', category: 'investment', valueCents: 4800000, liquid: false })];
+    h.debts = [Schema.createDebt({ id: 'dnd_debt_total', balanceCents: 2160000, rate: 0.22, type: 'credit_card' })];
+    h.expenses = { monthlyEssential: { estimatedValueCents: 315000, trackedValueCents: null, source: 'estimated' }, entries: [] };
+    h.dndProfile = { fixedCostShare: 0.55, yearsSustained: 4, disruptionSurvived: true, healthCoverage: 2,
+      automatedSaving: 'most' };
+    return h;
+  }
+  const intSubs = SUBS.filter(function (m) { return m.stat === 'INT'; }).map(function (m) { return m.id; });
+  const focused = Camp.start(household(), TABLES, intSubs);
+  check('a focused run records what it is training', focused.focusSubStats.length, 3);
+  const dealt = Camp.board(focused, TABLES);
+  check('and still deals a full board', dealt.length, R.boardSize);
+  checkTrue('every card on a focused board trains the chosen ability',
+    dealt.every(function (sc) {
+      return J.trainedBy(sc).some(function (k) { return intSubs.indexOf(k) !== -1; });
+    }));
+  /* A FOCUSED CHAPTER MUST NOT REPEAT EITHER.
+     The first version narrowed the pool outright and dealt four repeats in
+     ten rounds — a tier's worth of cards that train one ability is smaller
+     than a tier, and the deal starts reoffering played cards the moment
+     fewer than a board's worth are left. Only a full ten-round walk showed
+     it; six rounds would have looked fine. */
+  (function () {
+    let st = Camp.start(household(), TABLES, intSubs);
+    const played = [], boards = [];
+    for (let i = 0; i < R.roundsPerChapter; i++) {
+      const b = Camp.board(st, TABLES);
+      if (b.length !== R.boardSize) break;
+      boards.push(b.filter(function (sc) {
+        return J.trainedBy(sc).some(function (k) { return intSubs.indexOf(k) !== -1; });
+      }).length);
+      played.push(b[0].id);
+      const res = Camp.resolve(st, b[0].id, b[0].options[0].id, TABLES);
+      if (!res.ok) break;
+      st = res.state;
+    }
+    check('a focused chapter runs its full length', played.length, R.roundsPerChapter);
+    check('and never deals the same card twice', played.length - new Set(played).size, 0);
+    /* Every card the player actually chose from should have trained the
+       target — the top-up only fills seats the focus could not. */
+    checkTrue('the focused cards lead every board',
+      boards.every(function (n, i) { return n > 0 || i >= R.roundsPerChapter - 1; }));
+    checkTrue('and the first card dealt trains it',
+      played.every(function (id) {
+        const sc = Camp.scenarioById(TABLES, id);
+        return J.trainedBy(sc).some(function (k) { return intSubs.indexOf(k) !== -1; });
+      }));
+  })();
+
+  /* HOW LONG A FOCUS ACTUALLY HOLDS.
+     Offering "train your Strength" and running out after three rounds is a
+     broken promise. Every ability must lead the board for most of a chapter;
+     Strength is the thinnest and sets the floor. When it runs out the room
+     says so rather than dealing something else and letting it pass. */
+  ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'].forEach(function (st) {
+    const subs = SUBS.filter(function (m) { return m.stat === st; }).map(function (m) { return m.id; });
+    let s2 = Camp.start(household(), TABLES, subs), lead = 0;
+    const ids = [];
+    for (let i = 0; i < R.roundsPerChapter; i++) {
+      const b = Camp.board(s2, TABLES);
+      if (!b.length) break;
+      if (J.trainedBy(b[0]).some(function (k) { return subs.indexOf(k) !== -1; })) lead += 1;
+      ids.push(b[0].id);
+      const res = Camp.resolve(s2, b[0].id, b[0].options[0].id, TABLES);
+      if (!res.ok) break;
+      s2 = res.state;
+    }
+    checkTrue(`training ${st} leads most of a chapter (${lead}/${R.roundsPerChapter})`,
+      lead >= 6);
+    check(`and training ${st} never repeats a card`, ids.length - new Set(ids).size, 0);
+  });
+  /* A ROLL MUST SURVIVE A RELOAD.
+     Six numbers you rolled are not reproducible. Regenerating them would hand
+     someone a different character from the one they were halfway through
+     assigning — and would let anyone reload until the numbers were nice,
+     which is the same thing the deterministic board refuses to allow. */
+  checkTrue('the rolled numbers are stored, not regenerated',
+    /buildBag: \{ mode: ASSIGN_MODE, values: BAG\.slice\(\) \}/.test(
+      fs.readFileSync(path.join(ROOT, 'campaign.html'), 'utf8')));
+  checkTrue('and an unfinished assignment is picked back up',
+    /goStep\('assign'\); return;/.test(
+      fs.readFileSync(path.join(ROOT, 'campaign.html'), 'utf8')));
+
+  /* THE SHARE CARD IS THE VIRAL SURFACE, and it was rendering "Unnamed" with
+     no class at all for anyone who had only answered the five questions and
+     bought their abilities — the measured class needs money. The quiz class
+     fills it, marked as instinct so a card never implies a measurement that
+     was not taken. */
+  (function () {
+    const card = fs.readFileSync(path.join(ROOT, 'card.html'), 'utf8');
+    checkTrue('the card can read the five questions', /engines\/journey\.js/.test(card));
+    checkTrue('and falls back to the quiz class when nothing is measured',
+      /klass: s\.klass \? s\.klass\.name : quizClass/.test(card));
+    checkTrue('and says which kind of class it is showing',
+      /by instinct/.test(card) && /classIsInstinct/.test(card));
+  })();
+
+  checkTrue('the room admits when a focus has run out',
+    /every situation here that trains/.test(fs.readFileSync(path.join(ROOT, 'campaign.html'), 'utf8')));
+
+  /* An unfocused run is unchanged. */
+  const open = Camp.start(household(), TABLES);
+  check('an unfocused run records no focus', open.focusSubStats, null);
+  check('and deals a full board too', Camp.board(open, TABLES).length, R.boardSize);
+  /* A focus too narrow to fill a board is dropped rather than faked. */
+  const impossible = Camp.start(household(), TABLES, ['notARealSubStat']);
+  check('an unfillable focus still deals six', Camp.board(impossible, TABLES).length, R.boardSize);
+
+  /* ---- weakest-first, and never inventing a weakness --------------------- */
+  const ex = Character.explain(household(), TABLES);
+  const rank = J.weakest(ex, TABLES);
+  checkTrue('only scored abilities are ranked',
+    rank.every(function (a) { return a.score !== null; }));
+  checkTrue('and weakest comes first',
+    rank.every(function (a, i) { return i === 0 || rank[i - 1].score <= a.score; }));
+  check('an empty character has nothing to rank',
+    J.weakest(Character.explain(Schema.createHousehold(), TABLES), TABLES).length, 0);
+
+  /* ---- the page ---------------------------------------------------------- */
+  const src = fs.readFileSync(path.join(ROOT, 'campaign.html'), 'utf8');
+  ['quiz-view', 'quiz-result-view', 'method-view', 'create-assign', 'improve-view', 'focus-view']
+    .forEach(function (id) {
+      checkTrue(`the page has ${id}`, new RegExp('id="' + id + '"').test(src));
+    });
+  checkTrue('all four ways to build are offered',
+    /data-route="real"/.test(src) === false || /'real'/.test(src));
+  ['real', 'pointBuy', 'standardArray', 'roll'].forEach(function (r) {
+    checkTrue(`the ${r} route exists`, new RegExp("id: '" + r + "'").test(src));
+  });
+  checkTrue('point buy cannot be walked past with points unspent',
+    /Spend all ' \+ rules\.pool \+ ' points to carry on/.test(src));
+  /* The split is stated as a fact, so it has to be counted, not assumed.
+     A rolled character has nothing measured; telling them "three measured from
+     your money" is exactly the kind of thing this page claims not to do. */
+  checkTrue('the measured/chosen split is counted rather than hardcoded',
+    /a\.status === 'measured'; \}\)\.length/.test(src));
+  checkTrue('and an all-chosen character is told so plainly',
+    /all six are ones you chose/.test(src));
+  checkTrue('the instinct-versus-money contrast is on the page',
+    /play like/.test(src) && /moves through/.test(src));
+  /* The acronym may live in a code comment. It may not reach a screen. */
+  checkTrue('no acronym reaches a label the player reads',
+    !/cell\('FOO/.test(src) && !/\['FOO step'/.test(src));
+})();
+
 section('Dungeons & Dividends — creation, and why you got what you got (DD-025)');
 
 (function () {
@@ -1950,7 +2225,7 @@ section('Dungeons & Dividends — creation, and why you got what you got (DD-025
   checkTrue('the options say what they train before you pick',
     /Practises/.test(src));
   checkTrue('the board says why each card is in front of you',
-    /is where you are standing/.test(src));
+    /Bang on where you are/.test(src) && /ahead of you/.test(src));
   checkTrue('example numbers are behind an explicit action',
     /Try with example numbers/.test(src));
   checkTrue('and nothing else on the page hardcodes a figure into a box',

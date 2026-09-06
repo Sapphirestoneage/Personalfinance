@@ -1,0 +1,101 @@
+{
+  "id": "dnd_improve",
+  "version": "1.0.0",
+  "asOf": "2026-09",
+  "source": "Authored for Dungeons & Dividends. DD-026.",
+  "confidence": "medium",
+  "confidenceNote": "These are the moves that actually shift each sub-stat, written plainly. They are directionally sound and deliberately not personalised — nothing here knows your situation, and none of it is advice. The effort and lift labels are honest rough estimates, not measurements.",
+  "note": "Keyed by sub-stat id. `lift` is how much the move typically moves that one sub-stat: small, real, or big. `effort` is what it costs you: minutes, a weekend, or months. A move that is big AND minutes is rare and always listed first.",
+  "moves": {
+    "incomePower": [
+      { "do": "Find out what your job actually pays elsewhere", "how": "Three job ads and one honest conversation with someone who left. Most people are wrong about their own market rate, and always in the same direction.", "lift": "big", "effort": "minutes" },
+      { "do": "Ask for the number, once, out loud", "how": "The single most reliable way to raise this. It is uncomfortable for about ninety seconds and then it is done.", "lift": "big", "effort": "minutes" },
+      { "do": "Leave", "how": "Changing employer still moves pay more than staying and being excellent does. Unfair, well documented, worth knowing.", "lift": "big", "effort": "months" }
+    ],
+    "incomeTrajectory": [
+      { "do": "Get the next title, not the next raise", "how": "Titles reset the band you are paid inside. A raise moves you within it.", "lift": "big", "effort": "months" },
+      { "do": "Pick one skill your industry is short of and get visibly good at it", "how": "Visibly is the load-bearing word. Nobody pays for a skill they cannot see.", "lift": "real", "effort": "months" },
+      { "do": "Stop accepting below-inflation rises quietly", "how": "Two of those in a row is a pay cut wearing a nice hat.", "lift": "real", "effort": "minutes" }
+    ],
+    "hustleCapacity": [
+      { "do": "Earn one pound outside your job", "how": "Genuinely one. The gap between zero and one is the whole thing; everything after is volume.", "lift": "big", "effort": "a weekend" },
+      { "do": "Name the thing you would do if the job vanished on Friday", "how": "Having an answer is most of the score. Not having one is the risk.", "lift": "real", "effort": "minutes" },
+      { "do": "Turn something you already do for free into something someone pays for", "how": "Lowest-friction second income there is: no new skill, just an invoice.", "lift": "real", "effort": "a weekend" }
+    ],
+    "liquidityAgility": [
+      { "do": "Move some of it somewhere you can actually reach", "how": "Money locked behind a penalty is not available in the week you need it, which is the only week that counts.", "lift": "big", "effort": "minutes" },
+      { "do": "Open a separate account and stop looking at it", "how": "Separation beats willpower. It also stops your buffer being spent by accident.", "lift": "real", "effort": "minutes" },
+      { "do": "Check what your investments cost to sell in a hurry", "how": "Some are same-day. Some are not. Find out on a calm afternoon, not on a bad Tuesday.", "lift": "small", "effort": "minutes" }
+    ],
+    "structuralMobility": [
+      { "do": "Get remote in writing", "how": "A verbal arrangement is worth nothing the day your manager changes.", "lift": "big", "effort": "minutes" },
+      { "do": "Do not sign a longer lease than you need", "how": "Every extra month is a month you cannot take a better offer somewhere else.", "lift": "real", "effort": "minutes" },
+      { "do": "Work out what it would actually cost to move", "how": "Usually far less than the imagination says, and knowing the number makes the option real.", "lift": "real", "effort": "a weekend" }
+    ],
+    "obligationFlex": [
+      { "do": "List every payment that leaves whether you like it or not", "how": "Write them down. The list is always longer than the memory of it.", "lift": "real", "effort": "minutes" },
+      { "do": "Kill the largest fixed cost you can live without", "how": "One big cut beats six small ones and you only have to be brave once.", "lift": "big", "effort": "a weekend" },
+      { "do": "Refinance anything above about seven percent", "how": "The rate is the wound. The balance is only the size of it.", "lift": "big", "effort": "a weekend" }
+    ],
+    "savingsRate": [
+      { "do": "Automate it on payday, before you see it", "how": "You cannot spend what never arrived. This one move does more than every budgeting app combined.", "lift": "big", "effort": "minutes" },
+      { "do": "Save the whole of your next raise", "how": "You are already living without it, so it costs nothing to lose and it compounds forever.", "lift": "big", "effort": "minutes" },
+      { "do": "Raise it by one percent", "how": "One percent is invisible in a month and enormous over twenty years. Then do it again next year.", "lift": "real", "effort": "minutes" }
+    ],
+    "consistency": [
+      { "do": "Make it boring", "how": "Consistency is not discipline, it is automation plus time. Set it up once and let the calendar do the work.", "lift": "big", "effort": "minutes" },
+      { "do": "Pick a rate you can hold in a bad month, not a good one", "how": "A rate you abandon in March scores worse than a smaller one you never break.", "lift": "real", "effort": "minutes" },
+      { "do": "Keep going through one genuinely rough patch", "how": "This is the only way this score gets past its cap. It cannot be bought or hurried.", "lift": "big", "effort": "months" }
+    ],
+    "reserveDepth": [
+      { "do": "Get to one month of spending, then stop worrying about the rest for now", "how": "The first month removes most of the panic. Everything after is refinement.", "lift": "big", "effort": "months" },
+      { "do": "Work out what one month of your life actually costs", "how": "Most people guess low by a third, which makes their buffer a third too small.", "lift": "real", "effort": "minutes" },
+      { "do": "Point one windfall at it and finish the job", "how": "A bonus, a refund, a birthday. This is the one thing a windfall is unambiguously good at.", "lift": "big", "effort": "minutes" }
+    ],
+    "taxLiteracy": [
+      { "do": "Find out your actual effective rate", "how": "Not the top band — the real share of everything you earned. Almost everyone is surprised.", "lift": "real", "effort": "minutes" },
+      { "do": "Learn the accounts your country lets you use, and their limits", "how": "There is a short list. Knowing it is worth more per hour than almost anything else on this page.", "lift": "big", "effort": "a weekend" },
+      { "do": "Check whether you are leaving an allowance unused this year", "how": "Most allowances do not roll over. They expire quietly and nobody writes to tell you.", "lift": "big", "effort": "minutes" }
+    ],
+    "marketLiteracy": [
+      { "do": "Look up what happened in 2000, 2008 and 2020", "how": "Not to predict anything. So that the next one feels like weather rather than the end of the world.", "lift": "big", "effort": "a weekend" },
+      { "do": "Learn the difference between an index and a fund that tracks one", "how": "This single distinction saves people more money than any stock pick ever made them.", "lift": "real", "effort": "minutes" },
+      { "do": "Find out what you are paying in fees, as a number", "how": "A percent sounds small. Say it as pounds a year over thirty years and it stops sounding small.", "lift": "big", "effort": "minutes" }
+    ],
+    "instrumentLiteracy": [
+      { "do": "Be able to say what each thing you own actually is", "how": "Out loud, in one sentence, without looking. Anything that fails this test is worth an hour.", "lift": "big", "effort": "a weekend" },
+      { "do": "Read one page of the terms on your largest holding", "how": "Just one. Usually the fees page. It is the one they hope you skip.", "lift": "real", "effort": "minutes" },
+      { "do": "Learn what happens to each of them if you need the money in a hurry", "how": "Penalty, delay, or loss. Three very different answers and most people do not know which is which.", "lift": "real", "effort": "a weekend" }
+    ],
+    "scenarioForesight": [
+      { "do": "Write down what you would do if your income stopped on Friday", "how": "Three lines. The writing is the exercise — a plan you have never said out loud is not a plan.", "lift": "big", "effort": "minutes" },
+      { "do": "Price the thing you are quietly dreading", "how": "Dread survives on vagueness. A number is almost always less frightening than the fog was.", "lift": "real", "effort": "minutes" },
+      { "do": "Ask what has to be true for this to go wrong, before you commit", "how": "Cheaper to ask beforehand. Considerably.", "lift": "real", "effort": "minutes" }
+    ],
+    "selfAwareness": [
+      { "do": "Read your last month of spending without defending any of it", "how": "The defending is the part that stops it working. Just look.", "lift": "big", "effort": "a weekend" },
+      { "do": "Name the one purchase you always regret", "how": "Everyone has exactly one pattern. Naming it removes most of its power.", "lift": "big", "effort": "minutes" },
+      { "do": "Notice which feeling comes before the spending", "how": "It is nearly always the same one, and it is nearly never about money.", "lift": "real", "effort": "months" }
+    ],
+    "threatDetection": [
+      { "do": "Learn the two or three shapes a scam takes", "how": "Urgency, secrecy, and a guaranteed return. Almost all of them are one of these wearing a costume.", "lift": "big", "effort": "minutes" },
+      { "do": "Add a rule that nothing gets decided the same day it is pitched", "how": "Time is the one thing every bad offer cannot survive.", "lift": "big", "effort": "minutes" },
+      { "do": "Check what would actually happen if your details leaked tomorrow", "how": "Knowing your own blast radius is most of the defence.", "lift": "real", "effort": "a weekend" }
+    ],
+    "negotiation": [
+      { "do": "Ask one company for a better rate this week", "how": "Insurance, broadband, anything. Practise on something small so the big one is not your first attempt.", "lift": "big", "effort": "minutes" },
+      { "do": "Say the number and then stop talking", "how": "The silence after is the whole technique. Most people fill it and negotiate against themselves.", "lift": "big", "effort": "minutes" },
+      { "do": "Find out what the other side actually needs", "how": "Often it is not money. Often it is something you can give away cheaply.", "lift": "real", "effort": "a weekend" }
+    ],
+    "network": [
+      { "do": "Message one person you have not spoken to in a year", "how": "No agenda. Almost every well-paid opportunity arrives through a weak tie rather than a close one.", "lift": "big", "effort": "minutes" },
+      { "do": "Be publicly findable for the thing you are good at", "how": "One page, one profile, one sentence. Opportunity cannot reach a person it cannot see.", "lift": "real", "effort": "a weekend" },
+      { "do": "Help someone with no expectation of return", "how": "The most reliable long-run investment on this entire page, and the only one with no downside.", "lift": "real", "effort": "months" }
+    ],
+    "personability": [
+      { "do": "Ask more questions than you answer, once, deliberately", "how": "People decide how they feel about you by how they felt talking to you.", "lift": "real", "effort": "minutes" },
+      { "do": "Follow up when you said you would", "how": "Almost nobody does. The bar is on the floor and stepping over it is remembered for years.", "lift": "big", "effort": "minutes" },
+      { "do": "Learn to say the awkward thing kindly and early", "how": "Every difficult conversation gets more expensive the longer it is left.", "lift": "real", "effort": "months" }
+    ]
+  }
+}

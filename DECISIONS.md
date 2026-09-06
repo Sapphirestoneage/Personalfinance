@@ -9163,3 +9163,167 @@ its rate is load-bearing. And a new room that wants to edit these fields must
 render from `shared/charform.js` rather than inventing its own labels or units,
 or the two rooms will drift and there is no longer a single answer to what a
 field means.
+
+---
+
+## DD-026 — The whole run through: five questions, a build, your six, and what to do about them
+
+The repo owner's brief, in their words: *"get the link, input 5 qs to find out
+what kinda character they are, get the character, get asked how to build
+character — whether IRL stats, point buy or the other items discussed — then it
+shows them their stats, then it starts talking about how to improve each stat,
+then you can focus on each stat via the question game. And the game should be
+way less technical, way more fun."*
+
+That is now one page, start to finish: **Five questions → Your six → Your
+character → Getting better → Play.**
+
+### The five questions are a read of temperament, not a measurement
+
+They pick which lever you *reach for*. Nothing about them is measured, and the
+file says so in its own confidence note. They exist because asking for
+someone's income on the first screen is how you lose them — five questions cost
+nothing and give something back immediately.
+
+**And they are not rigged.** The options are written to sound like real people
+rather than to balance a spreadsheet, so some levers appear in far more answers
+than others — Anchor can reach 12 points across the five, Landholder only 6.
+Scoring on raw totals would have handed nearly everyone the same two classes.
+Each class is therefore scored as a **share of its own ceiling**, so leaning
+hard on a rarely-offered lever counts for as much as leaning hard on a common
+one. A test walks all **2,000** possible answer sets and insists every class
+wins for somebody and none takes more than 25% (even would be 14.3%; the actual
+spread is 11.2%–18.1%).
+
+The "you're also a bit of X" line fires when first and second are within 0.05.
+Not a rounder number: the median gap is 0.12, so at 0.15 it fired on 56% of all
+answer sets and became wallpaper. At 0.05 it fires on 23%.
+
+### The best screen in the tool
+
+When the quiz class and the measured class differ, the page says so plainly:
+
+> *Here is the interesting bit. You **play like The Compounder** — that is the
+> lever you reach for. But your money moves through **The Earner**. Neither is
+> wrong. The gap between the two is where most people lose years: working one
+> lever in their head and a different one in their bank account.*
+
+This is why the quiz class is stored separately and never overwrites the
+measured one. Reconciling them would have thrown away the only thing here that
+nothing else can tell you.
+
+### Four ways to build, with the measured one first
+
+Real numbers, point buy, standard array, or roll — the same four a table
+offers, plus the one a table cannot. The measured route leads because it is the
+only one that can tell you something you did not already know.
+
+**Point buy can no longer be walked past.** Passing through without spending
+left six 8s, a character that could not be ranked or trained, and a silent dead
+end two screens later. The way out is now closed until the points are gone.
+
+### How to improve, weakest first
+
+`dnd_improve.json` — 54 moves across all 18 sub-stats, each with what to do,
+how, how much it lifts (nudges it / moves it / moves it a lot) and what it
+costs you (minutes / a weekend / months). Sorted weakest-ability-first, because
+that is where the cheap points are. **Only scored abilities are ranked**: an
+unscored one is not weak, it is unknown, and sending someone to train a number
+nobody has measured would be the tool inventing a problem for them.
+
+### The focused game, and the two bugs a full walk found
+
+Pick an ability and the board deals situations that exercise it — read off the
+scenario bank, never a second hand-kept list.
+
+**Strength had one scenario.** The bank was entirely about spending, saving and
+investing; not one card was about *earning*. "Train your Strength" would have
+dealt nothing. Twenty-four new scenarios were written — pay reviews, counter
+offers, day rates, the first pound earned outside a job, notice periods, leases,
+liquidity — bringing every ability to at least 16 and every tier to at least 21.
+
+**A focused chapter dealt four repeats in ten rounds.** Narrowing the pool to
+the focus looked right: a tier's worth of cards that train one ability is
+smaller than a tier, so the moment fewer than a board's worth remain unseen, the
+deal starts reoffering cards already played. Focus is now a **preference, not a
+filter** — every unseen card that trains the target first, then other unseen
+cards, and a seen card only when nothing unseen is left. Six rounds would have
+looked fine; only a full ten-round walk showed it.
+
+Focus now leads the board for 6/10 rounds at worst (Strength, the thinnest) and
+10/10 for four of the six. When it does run out the room **says so** rather than
+dealing something else and letting the player think it still counts.
+
+### Less technical, more fun
+
+The acronym is gone from every label a player reads — a test enforces it.
+"FOO step" is "Next up". "The ladder would have picked" is "The stronger move
+was". "Chapter 1 — 10 decisions" is "Chapter 1 — how it went". The round header
+is "pick your fight". The order-of-operations idea is now explained in one plain
+sentence — *there's an order to money stuff, and doing the right thing at the
+wrong time is how people lose years without ever making an obvious mistake* —
+rather than named.
+
+The voice is deliberately unchanged: dry, specific, and never pretending to know
+more than it does. "Less technical" meant dropping internal vocabulary, not
+dropping precision.
+
+### Compatibility note
+
+**Stored shape:** `dndProfile.quiz5` is **added** — `{ questionId: optionId }`
+for the five questions. Absent means not taken. The resulting class is **not**
+stored: it is re-derived from the answers every time, so it cannot drift from
+them. `campaign.focusSubStats` is **added** to the campaign state — an array of
+sub-stat ids, or null for an unfocused run. `Camp.start()` takes an optional
+third argument for it; existing two-argument calls are unaffected.
+`dnd_scenarios.json` gains 24 scenarios and no shape change.
+
+**Rooms updated:** `dnd/campaign.html` (five new phases and the tone pass),
+`dnd/engines/journey.js` (new), `dnd/data/dnd_quiz5.json` (new),
+`dnd/data/dnd_improve.json` (new), `dnd/data/dnd_scenarios.json` (+24),
+`dnd/engines/campaign.js` (focus as a preference in `board()`),
+`dnd/shared/reference.js` (two tables registered), `dnd/index.html` (leads
+into the run through), `dnd/test/run.js`.
+
+**Before writing any of these from a new room:** the quiz class is a
+temperament read and must never be shown as measured, or written over the class
+`suggestClass()` derives from money. Score it through `Journey.scoreQuiz()` and
+not by summing weights — raw totals are rigged toward whichever lever appears in
+most answers. A new quiz option must carry a `says` line and lean on at least
+one real class, and a new scenario that trains a thin ability is worth more than
+another one that trains Wisdom.
+
+### What walking the finished thing changed
+
+Everything above was built, then walked end to end on a phone. Seven things
+only showed up that way, and all of them are now fixed and tested:
+
+- **A rolled set of six vanished on reload.** Regenerating them would have
+  handed someone a different character from the one they were halfway through
+  assigning, and let anyone reload until the numbers were nice. The bag and the
+  mode are stored (`dndProfile.buildBag`), and an unfinished assignment resumes.
+- **The "getting better" screen ran to sixteen thousand pixels** — six
+  abilities times nine moves, all open. One compact row each now, weakest open,
+  the rest a tap away, best-value moves first inside each.
+- **The character screen claimed "three measured from your money"** to people
+  who had rolled all six and measured nothing. The split is counted now, and an
+  all-chosen character is told plainly that its numbers cannot surprise it yet.
+- **The share card said "Unnamed" with no class on it** for anyone who had only
+  answered the questions and bought their abilities — the measured class needs
+  money. It falls back to the quiz class, marked "by instinct, not yet
+  measured", and the run through links to it.
+- **There was no name to put on a card.** One optional field on the character
+  screen; blank still falls back to the class.
+- **Three one-way doors**: no way back from the method screen to the five
+  answers, none from the board to the advice screens without abandoning the
+  run, none from the review to training something else. All three exist now,
+  and leaving the board for advice returns to the game rather than throwing the
+  chapter away.
+- **Anyone with a sheet built before this flow** was made to answer five
+  questions to reach their own character. There is a skip, shown only when
+  there are already numbers to skip to.
+
+`dndProfile.buildBag` is **added** — `{ mode, values }` for an in-progress
+array or roll. `characterName` was already stored by the sheet and is unchanged.
+The "you need a character first" view is **removed**: creation happens on this
+page, so nothing could reach it.

@@ -42,6 +42,9 @@
     dndAlignments: 'dnd_alignments.json',
     /* The campaign's scenario bank. */
     dndScenarios: 'dnd_scenarios.json',
+    /* The five-question class read, and the moves that raise each sub-stat. */
+    dndQuiz5: 'dnd_quiz5.json',
+    dndImprove: 'dnd_improve.json',
     /* The Skill Stacker's catalogue, authored here (D-090). */
     skills: 'skills.json',
     stacks: 'stacks.json',

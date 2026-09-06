@@ -81,6 +81,7 @@
 <script src="engines/tier0.js"></script>
 <script src="engines/character.js"></script>
 <script src="engines/encounter.js"></script>
+<script src="engines/journey.js"></script>
 <script>
 (function () {
   'use strict';
@@ -145,11 +146,24 @@
       : [];
 
     var tp = Enc.tierProgress(s.level, TABLES);
+
+    /* A CARD WITH NO CLASS ON IT IS NOT WORTH SENDING TO ANYBODY.
+       The measured class needs money; someone who has only answered the five
+       questions and bought their abilities has none, and the card was reading
+       "Unnamed" with no class line at all. The quiz class fills that gap —
+       marked as instinct, never dressed up as a measurement. DD-026. */
+    var quizClass = null, quizLever = null;
+    if (DND.Journey && TABLES.dndQuiz5) {
+      var qr = DND.Journey.scoreQuiz(p.quiz5 || {}, TABLES);
+      if (Money.isOk(qr)) { quizClass = qr.top.name; quizLever = qr.top.lever; }
+    }
+
     return {
       name: p.characterName || null,
-      klass: s.klass ? s.klass.name : null,
+      klass: s.klass ? s.klass.name : quizClass,
+      classIsInstinct: !s.klass && !!quizClass,
       level: Money.isOk(s.level) ? s.level.value : null,
-      lever: s.klass ? s.klass.lever : null,
+      lever: s.klass ? s.klass.lever : quizLever,
       alignment: al || null,
       stats: stats,
       hp: Money.isOk(s.currentHp) ? s.currentHp.value : null,
@@ -226,6 +240,9 @@
       var sub = d.name
         ? d.klass + (d.level !== null ? ', level ' + d.level : '')
         : (d.level !== null ? 'Level ' + d.level : '');
+      /* Say which kind of class this is, so a shared card never implies a
+         measurement that was never taken. */
+      if (d.classIsInstinct) sub = sub ? sub + ' · by instinct' : 'By instinct, not yet measured';
       if (sub) { ctx.fillText(sub, M, y + 30); y += 44; }
       if (d.lever) {
         ctx.fillStyle = sk.accent;
