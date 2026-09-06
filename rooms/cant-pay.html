@@ -120,7 +120,7 @@
   .bill-ask { margin: var(--space-2) 0 0; font-size: var(--text-sm); line-height: var(--leading-loose); }
   .who { color: var(--color-text-faint); }
   .helpline { display: block; margin-top: var(--space-1); font-size: var(--text-sm);
-    color: var(--color-accent-hover); overflow-wrap: anywhere; }
+    color: var(--color-text); line-height: var(--leading-loose); overflow-wrap: anywhere; }
 </style>
 </head>
 <body class="slaf">
@@ -198,7 +198,7 @@
 <script>
 (function () {
   'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Ownership = SLAF.Ownership,
+  var Money = SLAF.Money, Ownership = SLAF.Ownership,
       Reference = SLAF.Reference, CashFlow = SLAF.CashFlow, Room = SLAF.Room;
 
   function esc(s) {
@@ -237,7 +237,15 @@
     var moneyIn = CashFlow.netMonthlyIncomeCents(h, T);
     var surplus = CashFlow.monthlySurplusCents(h, T && T.expenseCategories, T);
     if (!Money.isOk(moneyIn) || !Money.isOk(surplus)) {
-      return { known: false, missing: missingFor(h) };
+      /* The engine's own words are the fallback, for the case where every
+         field this room knows to name is set and it is still incomplete for
+         a reason further down. Better a sentence that is true than a list
+         that is empty. */
+      return {
+        known: false,
+        missing: missingFor(h),
+        reason: (Money.isOk(moneyIn) ? surplus.reason : moneyIn.reason) || null
+      };
     }
     return {
       known: true,
@@ -248,7 +256,6 @@
       surplusCents: surplus.value,
       shortCents: surplus.value < 0 ? -surplus.value : 0,
       basis: surplus.basis || null,
-      note: surplus.note || null,
       effectiveRate: moneyIn.effectiveRate,
       referenceVersion: moneyIn.referenceVersion
     };
@@ -281,6 +288,9 @@
           ? ', and the month going out counts the essentials you have entered only — anything else you spend is on top of it.'
           : ', built from the spending you have categorised, debt minimums included.')
         + ' A month with something unusual in it is not a typical month, so treat this as a starting point and not as your balance.</p>');
+    } else if (!g.missing.length) {
+      out.push('<p class="gap-note">This room will not guess at a shortfall, and it cannot work this one out: '
+        + esc(g.reason || 'something it needs is not there yet') + '</p>');
     } else {
       out.push('<p class="gap-note">This room will not guess at a shortfall. '
         + (g.missing.length === 1 ? 'One figure is missing:' : 'These are missing:') + '</p>');
@@ -393,7 +403,7 @@
       var g = gapOf(h, T);
       if (!g.known) {
         return {
-          label: 'The gap this month',
+          label: 'On the figures already in this app',
           value: null,
           reason: g.missing.length === 1
             ? 'Not known — ' + g.missing[0].label.toLowerCase() + ' is missing.'
@@ -402,7 +412,7 @@
       }
       if (g.shortCents > 0) {
         return {
-          label: 'The gap this month',
+          label: 'On the figures already in this app',
           value: Money.formatCents(g.shortCents) + ' short',
           zone: 'out',
           sub: '<strong>' + esc(Money.formatCents(g.inCents)) + '</strong> comes in and <strong>'
@@ -411,7 +421,7 @@
         };
       }
       return {
-        label: 'The gap this month',
+        label: 'On the figures already in this app',
         value: 'No gap',
         zone: 'good',
         sub: '<strong>' + esc(Money.formatCents(g.inCents)) + '</strong> comes in and <strong>'
@@ -433,9 +443,10 @@
         { label: 'How much it varies',
           value: 'By state, and by contract',
           source: p && p.note ? p.note : 'consequences differ by where you live and what you signed' },
-        { label: 'What “can be undone” means',
-          value: 'Not that it is fine',
-          source: (table(T) && table(T).note) || '' },
+        { label: 'Why the order is the order',
+          value: 'What you lose, not what it costs',
+          source: 'an unrecoverable loss outranks a larger recoverable one — that single rule is what puts '
+            + 'the rent above the card however much bigger the card bill is (data/bill_triage.json)' },
         { label: 'Coming in, a month',
           value: g.known ? Money.formatCents(g.inCents) + ' after tax' : 'not known, and not guessed',
           source: g.known
@@ -456,9 +467,10 @@
           source: 'this room reads a typical month. Money already owed from previous months, and anything '
             + 'unusual in this one, are not in either figure — you know those and this app does not' },
         { label: 'What this room stores',
-          value: 'Nothing',
-          source: 'it owns no field in shared/ownership.js and never writes to the household; there is nothing '
-            + 'to type here on purpose' }
+          value: 'Nothing of yours',
+          source: 'it owns no field in shared/ownership.js and changes no figure in your household. The only '
+            + 'thing it records is that you opened it, which every room does. There is nothing to type here, '
+            + 'on purpose' }
       ];
       return rows;
     },
