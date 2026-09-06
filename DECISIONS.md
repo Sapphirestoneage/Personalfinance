@@ -7261,6 +7261,100 @@ through it.
 
 ---
 
+## D-142 — A room does not ask a question your situation has no answer to
+
+Someone between jobs opened Real Hourly Wage and was asked for their paid
+hours a week, their unpaid overtime, their commute, and their costs of
+working. The chart above it read "A year of pay per $46,935" over a bar one
+hour long. Thirteen other rooms did the same thing: a contract rate, a
+401(k), a side hustle, a partner's income, a child's tuition — asked of
+someone with no job, no partner and no children.
+
+**None of this was an undecided question.** `Gate.exists` has known which
+rooms belong to which situation since D-094, and `Registry.applies` has read
+it the whole time. But only the map and the menu ever asked. A room reached
+by a link, a bookmark, the header hops or the menu drew its whole body
+regardless — and the menu lists every room, so the app was handing out the
+door it had decided to close.
+
+Measured before and after, in a browser, across all six situations and every
+room: **342 room-situation pairs**. Before: 14 wrong for someone between
+jobs, 14 for a retiree, 8 for a student, 6 for someone employed. After: 0.
+
+### One place, because every room already goes through it
+
+`Progress.mountHeader(roomId)` is the one function every room reaches — 22
+through `Room.mount`, the rest by calling it directly. The check goes there,
+so no room carries markup or logic of its own for this, and a room built
+tomorrow gets it by existing.
+
+**The room is folded, not blanked.** The notice says which situation you
+said you were in, gives the reason in one plain sentence, offers the next
+rooms that *do* apply, and ends with **Show it anyway**, which opens
+everything. Nothing is taken away — the app declines to ask, and says so.
+
+**"Show it anyway" is not stored.** It lasts the visit. A view is not a fact
+about the household (D-052), and a household that looked once at Kids and
+Tuition has not thereby acquired children.
+
+### The gate had to learn to say why
+
+`exists` returned a boolean, which is enough to hide something and not
+enough to explain it — and a room that folds itself with no reason given is
+worse than one asking the wrong question. So `shared/gate.js` gains **`WHY`**,
+one plain sentence per branch, and **`why(household, keys)`**, which returns
+the first reason that applies or `null`. They live next to `BRANCHES` on
+purpose: a branch added without a sentence is a room that hides in silence,
+and `test/rooms/situation.js` fails the build for it.
+
+The sentences describe **the room**, never the reader. "This one prices the
+hours a job takes. There is no job to price yet" is true whether you are
+retired, a student or between jobs; the situation is named once, by the
+notice, from `Gate.situationOf`. A test enforces this too — a sentence
+saying "you are…" would be wrong somewhere.
+
+### The gate was loaded in 26 rooms out of 57
+
+The first fix worked in seven rooms and did nothing in the other seven, and
+the reason was not logic: **31 rooms load `shared/progress.js` and never
+loaded `shared/gate.js`**, so `SLAF.Gate` was undefined and the check
+returned "no opinion". The gate is part of the shared baseline now and is
+loaded wherever progress is.
+
+### Two things this turned up that I did not change
+
+- **Between Jobs, Partner and Kids are absent before you say anything.**
+  `test/run.js` asserts this deliberately — they need a *fact* (a status, a
+  second adult, a named dependent), not a situation. I "fixed" it, two
+  existing checks failed, and they were right; reverted.
+- **`tax` and `fire` are off between jobs**, because `income` and
+  `savingsRate` are. Defensible — there is no income to tax and no rate to
+  take a share of — but someone between jobs still has questions about the
+  tax on unemployment pay, and still has a FIRE number. Worth revisiting on
+  its own, not silently inside a rendering change.
+
+### Compatibility note
+
+Stored shape: **unchanged**. Nothing is written, nothing is read that was
+not read before, and no owned field moved. "Show it anyway" is a variable in
+one page's memory and never reaches the spine.
+
+- `shared/gate.js` gains `WHY` and `why()`. Additive; `exists`, `branches`,
+  `situationOf` and every other export keep their signature and behaviour.
+- `shared/progress.js` gains `mountSituation()` and `situationNoticeHtml()`,
+  and `mountHeader()` now calls the first. A room that does not want this
+  cannot opt out and should not want to — but note that the check is a
+  no-op when the situation is unanswered, so the intake is unaffected.
+- **31 rooms gained one script tag** (`shared/gate.js`, immediately before
+  `shared/progress.js`). A new room must load it too; the suite checks that
+  every room loading progress also loads the gate.
+- A future room that should switch off for some situations adds its branch
+  to `REQUIRES` in `shared/registry.js` and needs no code of its own. If it
+  adds a *new* branch to `BRANCHES`, it must add the sentence to `WHY` in
+  the same commit or the build fails.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

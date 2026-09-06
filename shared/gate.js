@@ -78,6 +78,44 @@
     debt:          function (h) { return !(h.meta && h.meta.hasDebt === false); },
     studentLoans:  function (h, s) { return (s === null || s === 'student') && BRANCHES.debt(h); }
   };
+  /* ---- why(h, key): the sentence a room says when it does not apply -------
+     `exists` decides; this says it out loud. The two live together on
+     purpose: a branch added here without a sentence would leave a room
+     hiding itself for no stated reason, which is the thing this app is not
+     allowed to do. Written to be true of any situation the branch is false
+     in, and the situation is named separately by the caller. D-142. */
+  var WHY = {
+    income:         'There is nothing coming in yet to work from.',
+    retirement:     'This one is about a workplace retirement plan. There is no employer here to run one.',
+    employerMatch:  'A match comes from an employer. There is no employer here.',
+    payroll:        'This one reads a payslip. There is no payroll here.',
+    ownWork:        'This one is about work you do for yourself.',
+    variableIncome: 'This one smooths income that changes month to month. There is no such income here.',
+    quarterlyTax:   'Quarterly tax is something you set aside on your own work.',
+    unemployment:   'This one is about the money that comes in between jobs.',
+    pension:        'This one is about drawing a pension.',
+    stipend:        'This one is about a student stipend.',
+    partner:        'This one is about two adults sharing a household. There is only one adult here.',
+    hours:          'This one prices the hours a job takes. There is no job to price yet.',
+    realHourlyWage: 'This one prices the hours a job takes. There is no job to price yet.',
+    career:         'This one is about moving a career forward from inside a job.',
+    savingsRate:    'A savings rate is a share of what comes in. There is nothing coming in to take a share of.',
+    decumulation:   'This one is about drawing down what you built, which comes after work.',
+    protection:     'This one is about insuring an income and the people who depend on it.',
+    dependents:     'This one is about children or others who depend on you. You have not named any.',
+    childcare:      'This one is about childcare for a child under five.',
+    daySchool:      'This one is about day-school fees.',
+    debt:           'You said there is nothing owed.',
+    studentLoans:   'This one is about student loans.'
+  };
+  /** The first reason this room does not apply, or null if it does. */
+  function why(household, keys) {
+    var list = [].concat(keys || []);
+    for (var i = 0; i < list.length; i++) {
+      if (!exists(household, list[i])) return WHY[list[i]] || 'This one does not apply to your situation.';
+    }
+    return null;
+  }
   function exists(household, key) {
     var h = household || {};
     var fn = BRANCHES[key];
@@ -359,6 +397,8 @@
     byId: byId,
     byStatus: byStatus,
     situationOf: situationOf,
+    WHY: WHY,
+    why: why,
     hasPartner: hasPartner,
     fieldsFor: fieldsFor,
     allCards: allCards,

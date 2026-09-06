@@ -456,6 +456,84 @@
    * that three-way nav, in place. Every room already has one, so this needs
    * no per-room markup.
    */
+  /* ---- A room that does not apply says so, instead of asking -------------
+     `Gate.exists` has always known which rooms belong to which situation,
+     and `Registry.applies` has always read it — but only the map and the
+     menu listened. A room reached from a link, a bookmark, the header hops
+     or the menu drew its whole body regardless, so someone between jobs was
+     asked for their commute, their contract rate, their 401(k) and their
+     children's tuition. Fourteen rooms did it.
+
+     This is the one place to fix it, because every room reaches this
+     function: 22 through `Room.mount`, the rest by calling it directly.
+
+     What it does NOT do: decide for you. The room is folded away with the
+     reason said out loud and a way back to what does apply, and "Show it
+     anyway" opens it. That choice is for this visit only and is never
+     stored — a view is not a fact about the household (D-052). D-142. */
+  function situationNoticeHtml(roomId) {
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    var S = g && g.SLAF; if (!S || !S.Gate || !S.Spine || !S.Registry) return null;
+    var h = S.Spine.getProfile();
+    var sit = S.Gate.situationOf(h);
+    if (!sit) return null;                       /* situation unanswered: everything applies */
+    var reason = S.Gate.why(h, S.Registry.requires(roomId));
+    if (!reason) return null;                    /* it applies */
+    var label = String((S.Gate.byId(sit) || {}).label || sit).replace(/\s+[—-].*$/, '').toLowerCase();
+    /* The way out is a step forward, not just a door back — so point at the
+       rooms that DO apply and still want something from this household,
+       most-wanted first. Falling back to path order only when everything
+       that applies is already answered. */
+    var live = S.Registry.forHousehold(h).filter(function (r) { return r.id !== roomId && !r.utility; });
+    var byNeed = live.map(function (r) { return { room: r, missing: (forRoom(r.id, h) || {}).missing || [] }; })
+      .filter(function (x) { return x.missing.length; })
+      .sort(function (a, b) { return b.missing.length - a.missing.length; });
+    var pick = (byNeed.length ? byNeed.map(function (x) { return x.room; }) : live).slice(0, 3);
+    var onward = pick.map(function (r) {
+      return '<a class="slaf-btn slaf-btn--quiet" href="' + escapeHtml(hrefOf(r, roomId)) + '">' + escapeHtml(r.title) + ' →</a>';
+    }).join('');
+    return { label: label, html: '<section class="slaf-card slaf-notapply" id="slaf-notapply" role="status">'
+      + '<span class="slaf-eyebrow">Not for you right now</span>'
+      + '<h2>You said you are <strong>' + escapeHtml(label) + '</strong>.</h2>'
+      + '<p>' + escapeHtml(reason) + '</p>'
+      + '<p class="slaf-hint">Nothing here is wrong — it just is not about you today. Change your situation in '
+      + '<a href="' + escapeHtml(href('rooms/start.html', roomId)) + '#q-employment">Start Here</a> and this opens on its own.</p>'
+      + (onward ? '<div class="slaf-notapply-go">' + onward + '</div>' : '')
+      + '<button type="button" class="slaf-btn slaf-btn--quiet" id="slaf-showanyway">Show it anyway</button>'
+      + '</section>' };
+  }
+  function hrefOf(room, fromRoomId) { return href(room.href, fromRoomId); }
+
+  /** Fold the room away behind the notice, and let one tap unfold it. */
+  function mountSituation(roomId) {
+    if (typeof document === 'undefined') return null;
+    var notApply = situationNoticeHtml(roomId);
+    if (!notApply) return null;
+    var host = document.querySelector('main') || document.querySelector('.wrap') || document.getElementById('root');
+    if (!host) return null;
+    var wrap = document.createElement('div');
+    wrap.innerHTML = notApply.html;
+    var notice = wrap.firstChild;
+    /* Fold by putting a class on the container, not by hiding the children
+       that happen to exist right now: a room built through `Room.mount`
+       fills itself in AFTER the tables load, and a one-off pass over
+       `host.children` missed everything that arrived later — which showed up
+       as one stray card sitting under the notice. The CSS rule keeps the
+       header hops and the room's own title visible, so you always know
+       which room you are looking at and how to leave it. */
+    host.insertBefore(notice, host.firstChild);
+    host.classList.add('slaf-folded');
+    var open = notice.querySelector('#slaf-showanyway');
+    open.addEventListener('click', function () {
+      host.classList.remove('slaf-folded');
+      open.remove();
+      notice.insertAdjacentHTML('beforeend',
+        '<p class="slaf-hint">Shown anyway. Anything you type here still saves — it just may not mean much while you are '
+        + escapeHtml(notApply.label) + '.</p>');
+    });
+    return notice;
+  }
+
   function mountHeader(roomId) {
     if (typeof document === 'undefined') return null;
     var back = document.querySelector('.room-back, .back');
@@ -465,6 +543,7 @@
     nav.innerHTML = headerNavHtml(roomId);
     back.parentNode.replaceChild(nav, back);
     mountMenu(roomId, nav);
+    mountSituation(roomId);
     return nav;
   }
 
@@ -536,6 +615,8 @@
   return {
     mount: mount,
     mountHeader: mountHeader,
+    mountSituation: mountSituation,
+    situationNoticeHtml: situationNoticeHtml,
     mountMenu: mountMenu,
     menuHtml: menuHtml,
     UPKEEP: UPKEEP,

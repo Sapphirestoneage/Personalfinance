@@ -927,3 +927,19 @@ a:hover { color: var(--sapphire-100); }
    primary label near-white on light blue and took it to 2.34:1. Variants
    are set where the variant is defined, never in a later blanket rule. */
 .slaf-input-shell > .slaf-affix { color: var(--sapphire-100); }
+
+/* ---- A room that does not apply to your situation (D-142) ---------------
+   Quiet, not alarming: this is not an error, it is the app declining to ask
+   a question that has no answer for you today. Bordered rather than filled
+   so it reads as a note about the room, not a warning about you. */
+.slaf-notapply { border: 1px dashed var(--color-border-strong); background: none; }
+/* The fold itself. A class on the container rather than `hidden` on each
+   child, because a room fills itself in after its tables load and anything
+   built later has to be covered too. The room's title and the header hops
+   stay: you should always know where you are and how to leave. */
+.slaf-folded > *:not(#slaf-notapply):not(.slaf-hops-host):not(.room-head) { display: none !important; }
+.slaf-notapply h2 { margin: var(--space-2) 0 0; font-size: var(--text-lg); }
+.slaf-notapply h2 strong { color: var(--color-accent-hover); font-weight: 600; }
+.slaf-notapply p { margin: var(--space-2) 0 0; color: var(--color-text-muted); }
+.slaf-notapply .slaf-notapply-go { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+.slaf-notapply #slaf-showanyway { margin-top: var(--space-3); }
