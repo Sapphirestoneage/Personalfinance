@@ -200,6 +200,8 @@
       <button type="button" class="btn" id="btn-qr-next">Now let's get your stats →</button>
       <button type="button" class="btn ghost" id="btn-qr-redo">Answer again</button>
     </div>
+    <p class="note faint" style="margin-top:var(--space-3)">Sending this to someone? The whole thing runs in
+       their browser too — there is no account, no server, and nothing to sign up to.</p>
   </section>
 
   <!-- HOW TO BUILD THE SIX -->
@@ -295,6 +297,7 @@
     </div>
     <div class="actions">
       <button type="button" class="btn" id="btn-result-next">How do I get better? →</button>
+      <a class="btn ghost" href="card.html">Make a card to share</a>
       <button type="button" class="btn ghost" id="btn-result-back">Change how I built this</button>
     </div>
   </section>
@@ -1040,8 +1043,22 @@
         + 'built on it fiction. You can play now and finish '
         + (thin.length === 1 ? 'it' : 'them') + ' whenever — each line above says exactly which figure '
         + 'it is waiting on.</div>'
-      : '<div class="ok-box">All six are scored. Three measured from your money, three you decided — which '
-        + 'is exactly the split the game is built on.</div>');
+      : (function () {
+          /* SAY THE ACTUAL SPLIT. Announcing "three measured from your money"
+             to somebody who rolled all six is simply untrue, and this page's
+             whole claim is that it does not tell you things it cannot see. */
+          var measured = ex.abilities.filter(function (a) { return a.status === 'measured'; }).length;
+          if (measured === 0) {
+            return '<div class="ok-box">All six are scored — and <b>all six are ones you chose</b>. That is a '
+              + 'perfectly good character and the game plays fine. It just cannot surprise you yet: nothing '
+              + 'here came from your actual life. Put your real numbers in and Strength, Dexterity and '
+              + 'Constitution get <i>measured</i> instead, which is where this stops being a quiz.'
+              + '</div>';
+          }
+          return '<div class="ok-box">All six are scored — <b>' + measured + ' measured from your money</b> and '
+            + (6 - measured) + ' you decided. That split is the whole idea: the three nobody can measure for '
+            + 'you stay yours, and the three your money can speak to are not up for negotiation.</div>';
+        })());
     /* Open it the first time there is something to finish. Hiding the fix
        behind a button someone has to guess at is how an ability stays blank
        forever. After that, the visitor's own toggle is respected. */

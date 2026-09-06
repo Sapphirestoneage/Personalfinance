@@ -2026,6 +2026,20 @@ section('Dungeons & Dividends — five questions, and what to do about the answe
     /goStep\('assign'\); return;/.test(
       fs.readFileSync(path.join(ROOT, 'campaign.html'), 'utf8')));
 
+  /* THE SHARE CARD IS THE VIRAL SURFACE, and it was rendering "Unnamed" with
+     no class at all for anyone who had only answered the five questions and
+     bought their abilities — the measured class needs money. The quiz class
+     fills it, marked as instinct so a card never implies a measurement that
+     was not taken. */
+  (function () {
+    const card = fs.readFileSync(path.join(ROOT, 'card.html'), 'utf8');
+    checkTrue('the card can read the five questions', /engines\/journey\.js/.test(card));
+    checkTrue('and falls back to the quiz class when nothing is measured',
+      /klass: s\.klass \? s\.klass\.name : quizClass/.test(card));
+    checkTrue('and says which kind of class it is showing',
+      /by instinct/.test(card) && /classIsInstinct/.test(card));
+  })();
+
   checkTrue('the room admits when a focus has run out',
     /every situation here that trains/.test(fs.readFileSync(path.join(ROOT, 'campaign.html'), 'utf8')));
 
@@ -2060,6 +2074,13 @@ section('Dungeons & Dividends — five questions, and what to do about the answe
   });
   checkTrue('point buy cannot be walked past with points unspent',
     /Spend all ' \+ rules\.pool \+ ' points to carry on/.test(src));
+  /* The split is stated as a fact, so it has to be counted, not assumed.
+     A rolled character has nothing measured; telling them "three measured from
+     your money" is exactly the kind of thing this page claims not to do. */
+  checkTrue('the measured/chosen split is counted rather than hardcoded',
+    /a\.status === 'measured'; \}\)\.length/.test(src));
+  checkTrue('and an all-chosen character is told so plainly',
+    /all six are ones you chose/.test(src));
   checkTrue('the instinct-versus-money contrast is on the page',
     /play like/.test(src) && /moves through/.test(src));
   /* The acronym may live in a code comment. It may not reach a screen. */
