@@ -153,7 +153,13 @@
       return Money.incomplete('Add your investment balance to see progress.', ['investments']);
     }
     if (target.value === 0) {
-      return Money.ok(1, { targetCents: 0, investmentsCents: investments.value, coversEverything: true });
+      /* A target of zero means a month of spending is zero — you need
+         nothing to stop working, so you are already there. It still has to
+         carry `yearsAway`: every caller reads it, and leaving it undefined
+         propagated a non-Result through bridgeGap into Ratios.all and took
+         the whole dashboard down (D-143). */
+      return Money.ok(1, { targetCents: 0, investmentsCents: investments.value, coversEverything: true,
+        yearsAway: Money.ok(0, { alreadyThere: true }) });
     }
 
     var rates = Tier0.savingsRate(household, tables);

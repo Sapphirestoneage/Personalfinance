@@ -186,7 +186,14 @@
     var progress = Fire.progressToward(household, tables, { variantId: 'standard' });
     if (!Money.isOk(progress)) return progress;
     var years = progress.yearsAway;
-    if (!Money.isOk(years)) return years;
+    /* `return years` used to hand on whatever this was. When it was not a
+       Result at all, the undefined travelled two more frames before anything
+       noticed (D-143). A relay says so in its own words instead. */
+    if (!Money.isOk(years)) {
+      return Money.isOk(years) || (years && years.status)
+        ? years
+        : Money.incomplete('Could not work out how far off financial independence is, so the bridge cannot be sized.', ['monthlyExpenses']);
+    }
     var fiAge = age + years.value;
     var gapYears = Math.max(0, ACCESS_AGE_DEFAULT - fiAge);
     var annualSpend = spend.value * 12;

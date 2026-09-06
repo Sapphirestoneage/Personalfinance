@@ -7355,6 +7355,113 @@ one page's memory and never reaches the spine.
 
 ---
 
+## D-143 — The panel audit: the crash, and the things it said that were not true
+
+Four reviewers audited the dashboard's full panel — one on plain language,
+one on information architecture, one on partial data and correctness, one on
+layout and accessibility, each measuring in a real browser rather than
+reading. This entry is the correctness half of what came back.
+
+### Typing zero for a month of spending took the whole dashboard down
+
+The worst of it. A person types `0` in monthly spending — an affirmative
+answer, and the exact case the first non-negotiable in `CLAUDE.md` exists to
+protect — and **every panel on the dashboard rendered empty** under a red
+banner reading *"Couldn't load the reference tables in data/"*. The tables
+had loaded perfectly. At the bottom of the same blank page the progress
+strip said "This room has everything it needs."
+
+Four failures in a line, each fixed where it belongs:
+
+1. **`engines/fire.js`** — `progressToward` has an early return for a FIRE
+   target of zero (spend nothing, need nothing) that omitted `yearsAway`.
+   Every caller reads it. It now carries `Money.ok(0)`, which is also true:
+   if the target is zero you are already there.
+2. **`engines/statement.js`** — `bridgeGap` did `if (!Money.isOk(years))
+   return years;`, handing on an `undefined` as though it were a Result. A
+   relay now says so in its own words instead of passing the problem along.
+3. **`engines/ratios.js`** — `all()` read `result.unavailable` on whatever
+   each compute returned and threw on the one that was not a Result, losing
+   the twenty-one that were fine. A row that breaks its contract is now one
+   unavailable row, named, and the page keeps its head.
+4. **`index.html`** — the `.catch` reported *every* failure as a data-file
+   problem, including exceptions thrown while rendering with the data
+   loaded. It now distinguishes the two and, for a render error, says the
+   household's numbers are stored separately and are safe.
+
+### Things the panel said that were not true
+
+- **"Every banded ratio sits at or inside the comfortable edge."** Three
+  errors in nine words. *Inside* is the **below-range** side — the hint two
+  inches above it says so, and the hint was right. It counted only the red
+  rows, so seven amber ones were reported as fine. And "every banded ratio"
+  claimed all 22 bands when only the ones that could be computed are drawn.
+  It now names the reds, counts the ambers, and says how many more have a
+  band but are still waiting on something you have not entered.
+- **The green tint was painted on the bad region.** `.ring-good` filled the
+  inner disc — the below-range side — pale green, under a heading reading
+  "Am I in the green everywhere?". A shape sitting deep in the bad zone
+  looked like a pass. The fill is gone; the dashed ring is the line and the
+  dots say which side they are on.
+- **A goal you had never funded read `$0 of $30,000 · 0%`**, identical to
+  one you had told it was zero — `Money.isEntered(x) ? x : 0`, the one
+  `? : 0` in the panel and a straight breach of Empty ≠ zero. It now says
+  "add what you have put aside →" and links to Goals.
+- **"Every goal with a date and a contribution arrives on time"** was said
+  over a set of goals with nothing going into any of them, because the
+  counter counted every goal whose plan computed. Funded goals are counted
+  separately and the sentence now matches.
+- **The goal bar floored at 1%**, drawing a sliver of progress where there
+  was none, while the percentage capped at 100 and the two figures beside it
+  did not — so "$2,500 of $1,000 · 100%" was possible. The bar and the
+  numbers now agree, and an overshoot is marked rather than hidden.
+- **"ⓘ Three risks left blank on purpose"** opened a panel beginning "Two
+  risks this panel deliberately leaves blank". One tap, and the count
+  changed.
+- **The only link to The Score was a 404.** `href="health.html"` from the
+  repo root; the room is at `rooms/health.html`. It was the panel's one
+  pointer to the room that answers the question the radar's own heading asks.
+
+### The panel had never once asked the gate
+
+D-142 fixed this for rooms. The panel had the same disease and worse
+symptoms: a **retired** household was shown their **FI ratio in red**, their
+savings rate beside it, and an accumulation ladder — the numbers that have
+stopped meaning anything for them. `Gate.exists` appears exactly once in
+`index.html`, and that once is above the fold.
+
+`engines/ratios.js` now tags eleven ratios with the gate branch they belong
+to, **as data**: the engine names a branch and never imports
+`shared/gate.js`, so it stays pure. `radar()` takes an `opts.applies(branch)`
+predicate; the dashboard hands it the gate. A retiree loses savings rate, FI
+ratio and personal cash flow, and gains withdrawal rate.
+
+`radar()` also returns **`bandedTotal`**, **`notYours`** and **`notYet`**,
+because the caption could not be honest about a denominator the engine never
+told it.
+
+### Compatibility note
+
+Stored shape: **unchanged**. Nothing is written and no owned field moved.
+
+- `engines/ratios.js`: each row gains **`gate`** (a branch name or `null`),
+  and `radar()`'s result gains **`bandedTotal`**, **`notYours`**, `notYet`.
+  `radar()` accepts a new `opts.applies` predicate; **omitting it keeps the
+  old behaviour**, so `rooms/ratios.html` and every other caller is
+  unaffected until it chooses to pass one.
+- `engines/fire.js`: `progressToward`'s zero-target branch now includes
+  `yearsAway`. Purely additive — a key that used to be missing is present.
+- `engines/statement.js`: `bridgeGap` returns a Result on every path. It
+  always claimed to; now it does.
+- A future ratio that only applies in some situations sets `gate` on its own
+  row and needs no code elsewhere. A future caller of `radar()` that wants
+  the filtering passes `applies`; one that does not, does not.
+
+The remaining findings — the language, the running order, and the measured
+contrast and tap-target failures — are D-144 and D-145.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

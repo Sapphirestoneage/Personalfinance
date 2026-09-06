@@ -60,7 +60,12 @@
 
   .radar { width: 100%; height: auto; display: block; margin-top: var(--space-3); overflow: visible; }
   .radar .ring { fill: none; stroke: var(--color-border); stroke-width: .6; }
-  .radar .ring-good { fill: rgba(48,164,108,.10); stroke: var(--color-positive); stroke-width: .8; stroke-dasharray: 2 2; }
+  /* The dashed ring is the healthy line and FURTHER OUT IS BETTER, so the
+     inner disc is the below-range region. It used to be tinted green, under
+     a heading reading "Am I in the green everywhere?" — a shape sitting deep
+     inside the bad zone looked like a pass. No fill now: the ring is the
+     line, the dots say which side they are on. D-143. */
+  .radar .ring-good { fill: none; stroke: var(--color-positive); stroke-width: .8; stroke-dasharray: 2 2; }
   .radar .spoke { stroke: var(--color-border); stroke-width: .4; }
   .radar .shape { fill: rgba(46,111,232,.28); stroke: var(--color-accent); stroke-width: 1.2; }
   .radar .dot { stroke: var(--navy-850); stroke-width: .5; }
@@ -175,6 +180,13 @@
   ul.goals .track { position: relative; height: 8px; border-radius: var(--radius-pill); background: rgba(0,0,0,.22); box-shadow: inset 0 0 0 1px var(--color-border); margin-top: var(--space-2); overflow: hidden; }
   ul.goals .fill { position: absolute; inset: 0 auto 0 0; border-radius: var(--radius-pill); background: var(--color-accent); }
   ul.goals .fill.is-late { background: var(--color-critical); }
+  /* Past the target. The bar stops at 100% because that is what the numbers
+     beside it say; this marks the overshoot rather than pretending the bar
+     could be longer than itself. D-143. */
+  ul.goals .track .over { position: absolute; inset: 0 0 0 auto; width: 4px; background: var(--color-positive); }
+  ul.goals .pc a { color: var(--color-accent-hover); white-space: nowrap; }
+  .dim { color: var(--color-text-muted); }
+  .dim a { color: var(--color-accent-hover); }
   ul.goals .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-2); }
 
   .gauge { height: 10px; border-radius: var(--radius-pill); background: rgba(30,58,138,.4); overflow: hidden; margin-top: var(--space-2); position: relative; }
@@ -284,9 +296,10 @@
     <span class="slaf-eyebrow">All of it at once</span>
     <h2 style="margin:var(--space-2) 0 0">Am I in the green everywhere?</h2>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">
-      One spoke per ratio that has a threshold behind it. The dashed ring is
-      the comfortable edge — inside it is outside the usual range. Numbers on
-      the spokes match the list below.
+      One spoke per number that has a healthy range behind it.
+      <strong>Further out is better.</strong> The dashed circle is the line
+      you want to be on or outside; a dot inside it is below the usual range.
+      The numbers round the edge match the list below.
     </p>
     <div id="radar-body" hidden>
       <svg class="radar" id="radar" viewBox="0 0 120 120" role="img" aria-labelledby="radar-desc"></svg>
@@ -299,7 +312,7 @@
       band, and nothing here adds them together. Adding them up is a different
       question with a different answer — it needs weights, the weights depend on
       your age, and every one of them is a judgement call. That lives in
-      <a href="health.html">The Score</a>, which shows its weighting rather than
+      <a href="rooms/health.html">The Score</a>, which shows its weighting rather than
       hiding it. Picking weights here to make a tidier shape would be answering
       that question by accident.
     </div>
@@ -323,7 +336,7 @@
       reach quickly.
     </p>
     <ul class="heat" id="weather-list"></ul>
-    <button type="button" class="info-toggle" data-info="weather-blind" aria-expanded="false">ⓘ Three risks left blank on purpose</button>
+    <button type="button" class="info-toggle" data-info="weather-blind" aria-expanded="false">ⓘ Three risks this panel will not guess at</button>
     <div class="flag" id="weather-blind" hidden></div>
   </section>
 
@@ -1078,17 +1091,41 @@
     renderAgeLine(h);
 
     /* radar */
-    var r = Ratios.radar(h, TABLES, { snapshots: Spine.listSnapshots() });
+    /* Ask the gate which of these mean anything for this household. A
+       retiree was being shown their FI ratio in red and their savings rate
+       beside it — the two numbers that have stopped applying to them. The
+       engine stays pure; it takes the predicate. D-143. */
+    var r = Ratios.radar(h, TABLES, {
+      snapshots: Spine.listSnapshots(),
+      applies: function (branch) { return Gate.exists(h, branch); }
+    });
     if (Money.isOk(r)) r.points.forEach(function (p) { p.row = all.rows.filter(function (x) { return x.id === p.id; })[0] || null; });
     el('radar-body').hidden = !Money.isOk(r);
     if (Money.isOk(r)) {
       renderRadar(r);
       var out = r.points.filter(function (p) { return p.zone === 'out'; });
-      el('radar-desc').textContent = out.length === 0
-        ? 'Every banded ratio sits at or inside the comfortable edge.'
-        : out.length + ' of ' + r.points.length + (out.length === 1 ? ' sits' : ' sit')
-          + ' outside the usual range: '
-          + out.map(function (p) { return p.label; }).join(', ') + '.';
+      /* Three things were wrong with the sentence this replaces (D-143).
+         It said "inside the comfortable edge" is good, while the hint above
+         the chart says inside is BELOW the usual range — and the hint was
+         right. It counted only the red ones, so seven amber rows were
+         reported as fine. And "every banded ratio" was a claim about all 22
+         bands when only the ones that could be worked out are drawn. */
+      var watch = r.points.filter(function (p) { return p.zone === 'watch'; });
+      var drawn = r.points.length;
+      var parts = [];
+      if (out.length) parts.push('<strong>' + out.length + ' ' + (out.length === 1 ? 'is' : 'are')
+        + ' below the healthy range</strong> (' + out.map(function (p) { return esc(p.label); }).join(', ') + ')');
+      if (watch.length) parts.push(watch.length + ' ' + (watch.length === 1 ? 'is' : 'are') + ' close to the line ('
+        + watch.map(function (p) { return esc(p.label); }).join(', ') + ')');
+      var fine = drawn - out.length - watch.length;
+      if (fine > 0) parts.push(fine === drawn ? 'all ' + fine + ' are comfortable' : fine + ' ' + (fine === 1 ? 'is' : 'are') + ' comfortable');
+      var tail = '';
+      if (r.notYet && r.notYet.length) {
+        tail = ' <span class="dim">' + r.notYet.length + ' more ' + (r.notYet.length === 1 ? 'has a healthy range but is' : 'have a healthy range but are')
+          + ' waiting on something you have not entered — <a href="rooms/ratios.html">see which →</a></span>';
+      }
+      el('radar-desc').innerHTML = 'Of the <strong>' + drawn + '</strong> that could be worked out from what you have entered, '
+        + parts.join('; ') + '.' + tail;
     } else {
       el('radar-desc').textContent = r.reason;
       el('radar-legend').innerHTML = '';
@@ -1154,20 +1191,26 @@
         + '">Start one →</a>';
       return;
     }
-    var late = 0, planned = 0;
+    var late = 0, planned = 0, funded = 0;
     list.innerHTML = goals.map(function (goal) {
       var p = Goals.plan(h, goal, TABLES, {});
       var total = Goals.goalTotalCents(goal);
-      var saved = Money.isEntered(goal.savedCents) ? goal.savedCents : 0;
+      /* Empty is not zero. `savedCents` untouched means "you have not told
+         us what you have put aside"; `0` means you told us it is nothing.
+         These used to render identically — "$0 of $30,000 · 0%" for both —
+         which is the first non-negotiable in CLAUDE.md, broken. D-143. */
+      var savedKnown = Money.isEntered(goal.savedCents);
+      var saved = savedKnown ? goal.savedCents : null;
       /* The funding ratio is what is already saved against what it costs.
          It exists even when the plan does not — a goal with no date still
-         has a total and a balance. */
-      var share = (Money.isOk(total) && total.value > 0)
-        ? Math.min(1, saved / total.value) : null;
+         has a total and a balance — but not before the balance is known. */
+      var share = (savedKnown && Money.isOk(total) && total.value > 0)
+        ? saved / total.value : null;
 
       var sub, lateClass = '';
       if (Money.isOk(p)) {
         planned++;
+        if (Money.isEntered(p.contributingMonthlyCents) && p.contributingMonthlyCents > 0) funded++;
         if (p.alreadyThere) {
           sub = 'Funded.';
         } else if (p.arrivesLate) {
@@ -1190,19 +1233,37 @@
 
       return '<li><div class="top"><span class="nm">' + esc(goal.name || 'Untitled goal')
         + '</span><span class="pc">'
-        + (share === null ? Money.EM_DASH
-            : Money.formatCents(saved) + ' of ' + Money.formatCents(total.value)
-              + ' · ' + Math.round(share * 100) + '%')
+        + (!savedKnown
+            ? '<a href="rooms/goals.html">add what you have put aside →</a>'
+            : share === null
+              ? Money.formatCents(saved) + ' put aside'
+              : Money.formatCents(saved) + ' of ' + Money.formatCents(total.value)
+                + ' · ' + Math.round(share * 100) + '%')
         + '</span></div>'
+        /* The bar used to floor at 1%, drawing a sliver of progress on a
+           goal with nothing in it, and the percentage beside it was capped
+           at 100 while the two figures it sat between were not — so
+           "$2,500 of $1,000 · 100%" was possible. Both now say the same
+           thing as the numbers. D-143. */
         + '<div class="track"><div class="fill' + lateClass + '" style="width:'
-        + (share === null ? 0 : Math.max(1, Math.round(share * 100))) + '%"></div></div>'
+        + (share === null ? 0 : Math.min(100, Math.round(share * 100))) + '%"></div>'
+        + (share !== null && share > 1 ? '<div class="over" title="More than the target"></div>' : '') + '</div>'
         + '<div class="sub">' + esc(sub) + '</div></li>';
     }).join('');
 
-    why.textContent = late === 0
-      ? (planned ? 'Every goal with a date and a contribution arrives on time.' : '')
-      : late + ' of ' + goals.length + ' arrive' + (late === 1 ? 's' : '')
-        + ' after the date you set. The bar turns red rather than the goal quietly slipping.';
+    /* `planned` counted every goal whose plan computed, including ones with
+       nothing going in — so a set of entirely unfunded goals was reported as
+       "arrives on time". Count the funded ones separately and say which
+       sentence is true. D-143. */
+    why.textContent = late > 0
+      ? late + ' of ' + goals.length + ' arrive' + (late === 1 ? 's' : '')
+        + ' after the date you set. The bar turns red rather than the goal quietly slipping.'
+      : funded > 0
+        ? (funded === 1 ? 'The one goal with a date and money going in arrives on time.'
+                        : 'All ' + funded + ' goals with a date and money going in arrive on time.')
+        : planned > 0
+          ? 'Nothing is going into any of these yet, so there is no date to keep or miss.'
+          : '';
   }
 
   /* ---- Weather, and what it cannot see -----------------------------------
@@ -1282,10 +1343,17 @@
     renderNow();
     jumpToHash();
   }).catch(function (err) {
+    /* This used to report every failure as "couldn't load the reference
+       tables in data/", including exceptions thrown while RENDERING with the
+       tables loaded perfectly well — so one broken ratio blanked the whole
+       dashboard and blamed the wrong thing, on a page that otherwise had
+       everything it needed. Say which of the two it was. D-143. */
     var notice = el('load-notice');
     notice.hidden = false;
     notice.className = 'notice is-error';
-    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+    notice.textContent = TABLES
+      ? 'Something went wrong drawing this page (' + err.message + '). Your numbers are safe — they are stored separately. Reloading usually clears it.'
+      : 'Couldn’t load the reference tables in data/ (' + err.message + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
   });
 })();
 </script>

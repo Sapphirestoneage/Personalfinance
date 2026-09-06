@@ -242,7 +242,7 @@
         return over(c.housingMonthly + nonMortgage, c.monthlyGross, { denominatorName: 'grossAnnualIncome' });
       } },
 
-    { id: 'savingsRate', label: 'Savings rate', tier: 18,
+    { id: 'savingsRate', gate: 'savingsRate', label: 'Savings rate', tier: 18,
       formula: '(gross − expenses×12 − estimated tax) ÷ gross',
       unit: 'rate', needs: 'your income, expenses and filing status',
       note: 'Your money only. The including-match variant lives in the Savings Rate room.',
@@ -313,12 +313,12 @@
         });
       } },
 
-    { id: 'retirementMultiple', label: 'Retirement savings multiple', tier: 18,
+    { id: 'retirementMultiple', gate: 'savingsRate', label: 'Retirement savings multiple', tier: 18,
       formula: 'investments ÷ gross annual income, against an age benchmark',
       unit: 'multiple', needs: 'your investments, income and date of birth',
       compute: function (c) { return Tier0.retirementBenchmark(c.household, c.tables); } },
 
-    { id: 'lifeInsuranceMultiple', label: 'Life insurance needs multiple', tier: 18,
+    { id: 'lifeInsuranceMultiple', gate: 'protection', label: 'Life insurance needs multiple', tier: 18,
       formula: 'coverage ÷ gross annual income, against a 10× rule of thumb',
       unit: 'multiple', needs: 'your current life cover',
       note: 'Not computed: your existing coverage is not something this app holds.',
@@ -347,7 +347,7 @@
       note: 'How much of what you own is working. Right for a renter, different for someone whose wealth is a paid-off house.',
       compute: function (c) { return over(c.investments, c.totalAssets, { denominatorName: 'totalAssets' }); } },
 
-    { id: 'fiRatio', label: 'FI ratio', tier: 18,
+    { id: 'fiRatio', gate: 'savingsRate', label: 'FI ratio', tier: 18,
       formula: '(investments × safe withdrawal rate) ÷ annual expenses',
       unit: 'rate', needs: 'your investments and your monthly expenses',
       note: 'Portfolio income at your safe withdrawal rate, against a year of spending. 1.0 is financial independence.',
@@ -363,7 +363,7 @@
       unit: 'rate', needs: 'your assets and debts',
       compute: function (c) { return over(c.totalDebt, c.totalAssets, { denominatorName: 'totalAssets' }); } },
 
-    { id: 'personalCashFlowRatio', label: 'Personal cash flow ratio', tier: 18,
+    { id: 'personalCashFlowRatio', gate: 'savingsRate', label: 'Personal cash flow ratio', tier: 18,
       formula: '(income − everything out) ÷ income',
       unit: 'rate', needs: 'your income and expenses',
       compute: function (c) {
@@ -382,7 +382,7 @@
       } },
 
     /* --- Tier 19, the ones computable from what the household holds ------- */
-    { id: 'safeWithdrawalRate', label: 'Safe withdrawal rate', tier: 19,
+    { id: 'safeWithdrawalRate', gate: 'decumulation', label: 'Safe withdrawal rate', tier: 19,
       formula: 'your assumption, adjustable in the FIRE room',
       unit: 'rate', needs: 'nothing — it is an assumption',
       compute: function (c) { return Money.ok(c.assumptions.swrRate); } },
@@ -472,7 +472,7 @@
         });
       } },
 
-    { id: 'discretionaryIncomeRatio', label: 'Discretionary income ratio', tier: 19,
+    { id: 'discretionaryIncomeRatio', gate: 'savingsRate', label: 'Discretionary income ratio', tier: 19,
       formula: 'discretionary spending ÷ gross monthly income',
       unit: 'rate', needs: 'a categorised month and your income',
       compute: function (c) {
@@ -577,7 +577,7 @@
         return Benchmarks.netWorthInYears(c.household);
       } },
 
-    { id: 'humanToFinancialCapital', label: 'Human to financial capital', tier: 21,
+    { id: 'humanToFinancialCapital', gate: 'career', label: 'Human to financial capital', tier: 21,
       formula: 'present value of pay to the stop age ÷ (cash + investments)',
       unit: 'multiple', needs: 'your income, age, stop age (FIRE Number) and financial assets',
       note: 'High early in a career, falling toward zero as pay is converted into assets. No convention.',
@@ -605,7 +605,7 @@
         return Money.ok(Math.round(b.roomBeforeNextBracketDollars * 100), { marginalRate: b.value, nextRate: b.nextRate });
       } },
 
-    { id: 'bridgeGapYears', label: 'Bridge to 59½', tier: 21,
+    { id: 'bridgeGapYears', gate: 'savingsRate', label: 'Bridge to 59½', tier: 21,
       formula: '59½ − the age FI arrives at the current pace',
       unit: 'years', needs: 'your date of birth, spending, investments and savings rate',
       note: 'Years between stopping and the retirement accounts opening. Zero if FI lands after 59½.',
@@ -651,7 +651,7 @@
        spending not covered by what comes in (pension, Social Security, a
        part-time wage). Nothing drawn is a zero, not a blank. The 4%/5%
        band is the convention the Decumulation room reads too. D-096. */
-    { id: 'withdrawalRate', label: 'Withdrawal rate', tier: 21,
+    { id: 'withdrawalRate', gate: 'decumulation', label: 'Withdrawal rate', tier: 21,
       formula: '(spending × 12 − income) ÷ investments',
       unit: 'rate', needs: 'your spending, income and investments',
       note: 'The share of investments drawn each year to cover what income does not.',
@@ -666,7 +666,7 @@
         return Money.ok(draw / c.investments, { annualDrawCents: Math.round(draw), covered: false });
       } },
 
-    { id: 'fiDate', label: 'FI date', tier: 21,
+    { id: 'fiDate', gate: 'savingsRate', label: 'FI date', tier: 21,
       formula: 'today + years to FI at the current pace',
       unit: 'date', needs: 'your spending, investments and savings rate',
       note: 'The same projection as the FI year on the dashboard, to the month.',
@@ -747,10 +747,25 @@
    * The spokes for the radar: every ratio that computed AND has a band.
    * Anything without a band is left off rather than given an invented axis.
    */
+  /**
+   * radar(household, tables, opts) — the banded ratios as a shape.
+   *
+   * `opts.applies(branch)` decides whether a ratio that belongs to a gate
+   * branch is drawn at all. Without it the radar plotted a retiree's FI
+   * ratio in red and their savings rate beside it — two numbers that have
+   * stopped meaning anything for them (D-143). The engine stays pure: it
+   * asks the predicate it is handed and never imports shared/gate.js.
+   *
+   * The result also carries `bandedTotal` and `omitted`, because the caption
+   * used to say "every banded ratio" about however many happened to compute.
+   */
   function radar(household, tables, opts) {
     var a = all(household, tables, opts);
-    var points = a.rows.filter(function (r) {
-      return r.ok && r.verdict.band && r.verdict.band.good !== null;
+    var applies = (opts && typeof opts.applies === 'function') ? opts.applies : function () { return true; };
+    var banded = a.rows.filter(function (r) { return r.verdict.band && r.verdict.band.good !== null; });
+    var forYou = banded.filter(function (r) { return !r.gate || applies(r.gate); });
+    var points = forYou.filter(function (r) {
+      return r.ok;
     }).map(function (r) {
       return {
         id: r.id, label: r.label, unit: r.unit, value: r.value,
@@ -758,6 +773,11 @@
         position: position(r.value, r.verdict.band)
       };
     }).filter(function (p) { return p.position !== null; });
+    /* What is not on the chart, and why — so the caption can stop implying
+       the drawn set is the whole set. */
+    var notYours = banded.length - forYou.length;
+    var notYet = forYou.filter(function (r) { return !r.ok; })
+      .map(function (r) { return { id: r.id, label: r.label, reason: r.result.reason, missing: r.result.missing || [] }; });
 
     if (points.length < 3) {
       return Money.incomplete(
@@ -766,6 +786,9 @@
     }
     return Money.ok(points.length, {
       points: points,
+      bandedTotal: banded.length,
+      notYours: notYours,
+      notYet: notYet,
       ceiling: RADAR_CEILING,
       /* Where the comfortable edge sits on every axis, by construction. */
       goodRing: 1,
@@ -783,10 +806,25 @@
     var bands = tables && tables.ratioBenchmarks;
     var explainers = tables && tables.ratioExplainers;
     var rows = RATIOS.map(function (r) {
+      /* Every compute is supposed to return a Result. One that does not used
+         to throw here on `result.unavailable`, and the dashboard's own catch
+         reported it as "couldn't load the reference tables in data/" — so a
+         single broken ratio blanked every panel and blamed the wrong thing.
+         Twenty-one other ratios were fine. A row that breaks its contract is
+         now one unavailable row, named, and the page keeps its head. D-143. */
       var result = r.compute(c);
+      if (!result || !result.status) {
+        result = Money.incomplete('This one could not be worked out from what is entered.', [r.id]);
+        result.unavailable = true;
+      }
       var v = Money.isOk(result) ? result.value : null;
       return {
         id: r.id, label: r.label, tier: r.tier, formula: r.formula,
+        /* The gate branch this ratio belongs to, or null for one that means
+           the same thing in every situation. Named as data, so this engine
+           stays pure and never imports shared/gate.js — the caller asks the
+           gate. A retiree was being shown an FI ratio in red. D-143. */
+        gate: r.gate || null,
         unit: r.unit, note: r.note || null, needs: r.needs,
         /* What it is, why it matters, what moves it, and which owned
            fields it reads — data/ratio_explainers.json, when loaded. */
