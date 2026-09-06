@@ -98,7 +98,10 @@
   function area(opts) {
     var o = opts || {};
     var W = o.width || 360, H = o.height || 220;
-    var PL = 46, PR = 12, PT = 14, PB = 26;
+    /* The x-axis label used to be drawn at the same x as the last tick and
+       only 3 units below it, so "80" and "age" ran together in the corner of
+       every chart that passes x.label. Give the label its own band. D-144. */
+    var PL = 46, PR = 12, PT = 14, PB = (o.x && o.x.label) ? 36 : 26;
     var series = (o.series || []).filter(function (s) { return s.points && s.points.length; });
     if (!series.length) return '<div class="slaf-chart is-empty"><p class="slaf-reason">' + esc(o.empty || 'Nothing to draw yet.') + '</p></div>';
     var xs = [], ys = [];
@@ -131,7 +134,7 @@
     });
     var zero = yMin < 0 && yMax > 0 ? sy(0) : sy(yMin);
     parts.push('<line class="axis" x1="' + PL + '" y1="' + zero.toFixed(1) + '" x2="' + (W - PR) + '" y2="' + zero.toFixed(1) + '"/>');
-    if (o.x && o.x.label) parts.push('<text class="tick axis-label" x="' + (W - PR) + '" y="' + (H - 3) + '" text-anchor="end">' + esc(o.x.label) + '</text>');
+    if (o.x && o.x.label) parts.push('<text class="tick axis-label" x="' + (W - PR) + '" y="' + (H - 4) + '" text-anchor="end">' + esc(o.x.label) + '</text>');
 
     (o.vLines || []).forEach(function (l) {
       var px = sx(l.x).toFixed(1);

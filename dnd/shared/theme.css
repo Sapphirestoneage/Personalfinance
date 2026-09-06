@@ -10,6 +10,9 @@
    ========================================================================== */
 
 :root {
+  /* Dark by construction. Without this the UA paints its light-mode
+     scrollbar, selection, details marker and file input on a navy page. */
+  color-scheme: dark;
   /* ---- Core navy scale ------------------------------------------------ */
   --navy-950: #050F22;
   --navy-900: #081833;
@@ -42,7 +45,16 @@
   --color-text: var(--sapphire-050);
   --color-text-muted: var(--sapphire-100);
   --color-text-subtle: rgba(147, 197, 253, 0.80);
-  --color-text-faint: rgba(96, 165, 250, 0.50);
+  /* Was 0.50, which composites to 2.63:1 on .slaf-owned, 2.66:1 on a card
+     and 2.70:1 on the drawer — ten AA failures in the dashboard panel alone,
+     including the radar's spoke numbers and both ⓘ buttons. 0.75 still
+     misses; 0.80 clears 4.5:1 on all three grounds (4.61 / 4.74 / 4.90).
+     D-144. */
+  --color-text-faint: rgba(96, 165, 250, 0.80);
+  /* #E5484D measures 4.31:1 as 13px text on a card — it fails AA exactly
+     where it matters most, on the one figure that is out of range. The
+     border and arc uses of --color-critical carry no text and keep it. */
+  --color-critical-text: #FF6369;
 
   /* ---- Interactive ----------------------------------------------------- */
   --color-accent: var(--sapphire-500);
@@ -829,6 +841,13 @@ html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
    mouse keeps the compact controls these were designed as. Inline links
    inside a sentence are deliberately left alone — padding them to 36px
    would tear paragraphs apart, and they are not the primary control. */
+/* The undo/redo pair is fixed to the bottom-right, which is where every
+   value in the dashboard panel scrolls past. Measured at 320px it covered
+   the FI ratio figure completely. The left gutter is labels. D-144. */
+@media (max-width: 640px) {
+  .slaf-undo { left: 12px; right: auto; }
+}
+
 @media (pointer: coarse) {
   .slaf-use-this,
   .slaf-chip,
@@ -848,7 +867,10 @@ html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
      grows on a coarse pointer. A mouse keeps the 20px circle. */
   .slaf-info { width: 30px; height: 30px; font-size: 14px; }
   .slaf-manage-toggle { min-height: 32px; display: inline-flex; align-items: center; }
-  summary { min-height: 32px; display: flex; align-items: center; }
+  /* NOT display:flex — that drops `list-item` and Chromium then paints no
+     ::marker at all, so on a phone the drawer lost its triangle entirely.
+     Take the height from padding instead. */
+  summary { min-height: 44px; display: list-item; padding-block: var(--space-2); }
   /* The label a checkbox sits in is the real target, so give it the height. */
   label:has(> input[type="checkbox"]) { min-height: 32px; display: inline-flex; align-items: center; gap: 8px; }
 }

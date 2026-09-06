@@ -7462,6 +7462,94 @@ contrast and tap-target failures — are D-144 and D-145.
 
 ---
 
+## D-144 — The panel audit: contrast, tap targets and the missing triangle
+
+The measured half of the four-way audit (D-143 was the correctness half).
+Every number here was taken in a browser at 320 / 390 / 768 / 1080 / 1440,
+not eyeballed.
+
+**Fifteen AA contrast failures inside the panel, and ten of them were one
+token.** `--color-text-faint` was `rgba(96,165,250,0.50)`, which composites
+to **2.63:1** on `.slaf-owned`, **2.66:1** on a card and **2.70:1** on the
+drawer. It paints the radar's spoke numbers, the legend indices, both ⓘ
+buttons, the donut percentages, the step chips, the drawer's own subtitle and
+the "Last confirmed" line. D-137 fixed bare links and the primary button and
+left this alone. `0.75` still misses; **`0.80`** clears 4.5:1 on all three
+grounds (4.61 / 4.74 / 4.90).
+
+The rest, each with its measurement:
+
+- **`--color-critical` as text: 4.31:1.** `#E5484D` at 13px on a card — and
+  it is used for the one figure that is out of range, which is the number the
+  section exists to surface. A new **`--color-critical-text: #FF6369`**
+  (5.82:1) carries the text; the border and arc uses keep the original,
+  because they carry no text.
+- **The reached step chips: 4.11:1.** `--color-accent-contrast` on
+  `--color-accent`. This is byte-for-byte the bug D-137 fixed on
+  `.slaf-btn--primary` by lightening the fill, and the chips were not in that
+  pass. `--sapphire-300` takes it to 7.46:1.
+- **The radar's own rings and spokes: 1.26:1.** They are the chart's frame —
+  without them the polygon has nothing to be read against — so 1.4.11's 3:1
+  applies. `--color-border-active` measures 3.4:1.
+
+**On a phone the drawer had no disclosure triangle at all.** D-136 set
+`summary { display: flex }` to give it a 32px height, and `flex` overrides
+the UA's `list-item`, which is the only display Chromium paints a `::marker`
+on. Measured: text indent 16.9px with a fine pointer, **0px** with a coarse
+one. So on touch, "The full panel" — the door to five of the page's seven
+sections — was a heading with nothing saying it opened. It takes its height
+from padding now and keeps `list-item`.
+
+**Three sets of controls under the 32px floor**, all defined inside
+`index.html` and therefore invisible to D-136's shared-CSS pass: the two ⓘ
+toggles at **16.5px**, `#btn-freeze` at **22.5px** with its sibling link at
+**14px**, and the twenty ratio-name links at **18px**. The ⓘ toggles are the
+only way to reach "why this is not a score" and the three blank risks;
+freezing is what makes every delta on the first screen exist.
+
+**The undo/redo pair sat on top of the value column.** It is fixed to the
+bottom right at ≤640px, and every figure in the panel scrolls past that
+corner — measured at 320px it covered the FI-ratio value completely. The left
+gutter of every row here is a label, so it moves left.
+
+**The page told the browser it was light.** No `color-scheme` anywhere, so
+the scrollbar, the details marker, text selection and the file input were all
+drawn from the light UA palette on a navy page. The app is dark by
+construction — checked across all nine combinations of `prefers-color-scheme`
+and `data-theme`, the body is the same colour in every one — so
+`:root { color-scheme: dark }` is simply the truth.
+
+**And a library bug that fires in every room.** `shared/charts.js` drew the
+x-axis label at the same x as the last tick and 3 units below it, so "80" and
+"age" overlapped by 4.2px at 320 and 10.7px at 1440. The label gets its own
+band when there is one.
+
+Measured after: **0 contrast failures inside the panel**, down from 15. The
+controls still under 32px are the ⓘ circles at the 30px D-136 chose for them
+deliberately.
+
+### Compatibility note
+
+Stored shape: **unchanged**. This is presentation only.
+
+- `shared/theme.css` gains `color-scheme: dark` and
+  **`--color-critical-text`**, and changes `--color-text-faint` from 0.50 to
+  0.80 alpha. That token is used in 40-odd places across the app, so **every
+  room gets lighter faint text**, which is the point — the failures were not
+  confined to the panel. `summary` keeps `display: list-item`; a room that
+  was relying on `display: flex` there would need to say so, and none does.
+- `dnd/shared/theme.css` is the byte-identical vendored copy and was
+  refreshed in the same commit, as the guard requires.
+- `shared/charts.js`: `PB` is now 36 rather than 26 **when `x.label` is
+  passed**, so a chart with an axis label is 10px shorter in its plot area
+  and one without is unchanged. Every room drawing an area or bar chart with
+  a label gets the extra room automatically.
+- A future variant colour that carries text should follow
+  `--color-critical-text`: set the text token separately rather than reusing
+  the fill, which is the rule D-137 arrived at and this extends.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have
