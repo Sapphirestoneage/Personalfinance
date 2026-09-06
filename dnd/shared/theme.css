@@ -600,7 +600,11 @@ h3 { font-size: var(--text-md); }
 .slaf-legend.is-table .lbl { color: var(--color-text); font-size: var(--text-sm); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .slaf-legend.is-table .lbl small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); white-space: normal; }
 .slaf-legend.is-table .val { font-variant-numeric: tabular-nums; color: var(--color-text); text-align: right; }
-.slaf-legend.is-table .pct { font-variant-numeric: tabular-nums; color: var(--color-text-faint); text-align: right; min-width: 3em; }
+/* `min-width: 3em` on a right-hand column, inside a flex row whose left
+   column already fills the space, is 4px of sideways page scroll at 1080 in
+   the FIRE Lab — small, and the page still moves. The column keeps its
+   alignment and gives up the floor. D-146. */
+.slaf-legend.is-table .pct { font-variant-numeric: tabular-nums; color: var(--color-text-faint); text-align: right; flex: 0 0 auto; }
 
 /* Donut: the ring beside its table on a wide screen, above it on a phone. */
 .slaf-donut { display: grid; grid-template-columns: 150px 1fr; gap: var(--space-3); align-items: center; }

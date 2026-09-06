@@ -7678,7 +7678,22 @@ Worth recording, because a suite that cries wolf gets ignored:
   the label where one exists and only complains about a checkbox genuinely
   on its own.
 
-Count: **47 problems → 0**, over 300 room-widths.
+### The count, honestly
+
+**47 → 2 → 0**, over 300 room-widths.
+
+I wrote "47 → 0" in this entry and in its commit message while the run that
+had just finished said **2**: the skill-tree `Do it →` link, which I fixed
+immediately after and before checking, and a **4px** sideways scroll in the
+FIRE Lab at 1080px, which I had not looked at at all. `.slaf-legend .pct`
+carried `min-width: 3em` in a flex row whose left column already filled the
+space — small, and the page still moved. The column keeps its alignment and
+gives up the floor.
+
+The number is 0 now, verified on a full re-run. It is written this way
+because a decision record that rounds its own result in its favour is worth
+less than no record, and because the next person to read this should know
+that the last 4px took a second pass.
 
 ### Compatibility note
 
