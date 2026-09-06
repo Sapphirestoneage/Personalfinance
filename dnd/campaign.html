@@ -78,6 +78,36 @@
   .ok-box { border: 1px solid var(--color-accent); border-radius: var(--radius-sm); padding: var(--space-3); margin-top: var(--space-2); font-size: var(--text-sm); line-height: var(--leading-normal); }
   .progress { height: 4px; background: var(--color-surface-active); border-radius: var(--radius-pill); overflow: hidden; margin-bottom: var(--space-4); }
   .progress > span { display: block; height: 100%; background: var(--color-accent); transition: width 220ms ease; }
+  .steps { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-4); font-size: var(--text-xs); }
+  .steps span { color: var(--color-text-faint); }
+  .steps span.now { color: var(--color-accent-hover); font-weight: 600; }
+  .steps span.done { color: var(--color-text-muted); }
+  .field { margin-bottom: var(--space-4); }
+  .field label { font-size: var(--text-base); margin-bottom: 2px; }
+  .field .hint { font-size: var(--text-sm); color: var(--color-text-faint); margin-bottom: var(--space-2); line-height: var(--leading-normal); }
+  .field .box { display: flex; align-items: center; gap: var(--space-2); }
+  .field input { height: var(--control-height); font-family: var(--font-body); font-size: var(--text-base); background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: 0 var(--space-2); width: 160px; }
+  .field .unit { font-size: var(--text-sm); color: var(--color-text-faint); }
+  .pbrow { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: var(--space-2); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+  .pbrow:last-child { border-bottom: 0; }
+  .pbrow .nm { font-size: var(--text-sm); }
+  .pbrow .nm b { font-family: var(--font-display); font-size: var(--text-base); }
+  .pbrow .sc { font-family: var(--font-display); font-size: var(--text-lg); min-width: 2.2em; text-align: center; font-variant-numeric: tabular-nums; }
+  .step-btn { width: 38px; height: 38px; font-size: var(--text-lg); line-height: 1; background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); cursor: pointer; }
+  .step-btn:disabled { opacity: .35; cursor: not-allowed; }
+  .pool { font-family: var(--font-display); font-size: var(--text-base); margin-bottom: var(--space-2); }
+  .abil { border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-2); }
+  .abil .top { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
+  .abil .sc { font-family: var(--font-display); font-size: var(--text-xl); }
+  .abil .md { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .abil .what { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 var(--space-2); line-height: var(--leading-normal); }
+  .abil .part { font-size: var(--text-sm); padding: 3px 0; line-height: var(--leading-normal); }
+  .abil .part .n { font-variant-numeric: tabular-nums; display: inline-block; min-width: 2.4em; }
+  .tag { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); padding: 1px var(--space-2); color: var(--color-text-subtle); }
+  .tag.measured { border-color: var(--color-accent); color: var(--color-accent-hover); }
+  .tag.partial { border-color: var(--color-critical); color: var(--color-critical); }
+  .trains { margin-top: var(--space-2); font-size: var(--text-xs); color: var(--color-text-faint); }
+  .trains b { color: var(--color-accent-hover); font-weight: 600; }
   .foot { margin-top: var(--space-6); text-align: center; font-size: var(--text-sm); }
   .foot a { color: var(--color-accent-hover); }
 </style>
@@ -104,6 +134,73 @@
     </div>
   </section>
 
+  <div class="steps" id="steps" hidden></div>
+
+  <!-- STEP 1 — the five numbers. LIVE-FORM: built once at boot, only .value written. -->
+  <section id="create-basics" hidden>
+    <div class="panel">
+      <h3>About you</h3>
+      <p class="note">Five numbers. They are what turn three of your six abilities from a guess into a
+         measurement — and none of them leaves this browser. Rough is fine; you can change any of them later.
+         <b>Leave one blank if you do not know it</b> — blank and zero are different answers and the sheet
+         treats them differently.</p>
+      <div id="basics-fields"></div>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn" id="btn-basics-next">Next — the three you decide →</button>
+      <button type="button" class="btn ghost" id="btn-basics-example">Try with example numbers</button>
+    </div>
+  </section>
+
+  <!-- STEP 2 — point buy over the six, exactly as D&D Beyond does it. Built once. -->
+  <section id="create-abilities" hidden>
+    <div class="panel">
+      <h3>Your six abilities</h3>
+      <p class="note">Twenty-seven points, every ability starting at 8, nothing above 15 — D&amp;D Beyond's
+         point buy, unchanged. <b>Spend them on the three nobody can measure for you</b>: Intelligence,
+         Wisdom and Charisma. Spend on Strength, Dexterity or Constitution too if you like, but the moment
+         your money can measure one of those it takes over, and the next screen will show you it happening.</p>
+      <div class="pool" id="pb-pool"></div>
+      <div id="pb-rows"></div>
+      <p class="note faint" id="pb-ladder" style="margin-top:var(--space-3)"></p>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn" id="btn-abil-next">Next — see my character →</button>
+      <button type="button" class="btn ghost" id="btn-abil-back">Back</button>
+    </div>
+  </section>
+
+  <!-- STEP 3 — the character, with its receipts. No inputs: rebuilt freely. -->
+  <section id="create-result" hidden>
+    <div class="panel">
+      <div class="note faint" style="margin-bottom:2px">You are</div>
+      <h3 id="res-class" style="font-size:var(--text-xl)"></h3>
+      <p class="note" id="res-why"></p>
+      <div id="res-levers"></div>
+    </div>
+    <h2>Your six, and where each one came from</h2>
+    <p class="note">Nothing here is a personality test. Every measured number is your own figure put on a
+       scale — the figure is printed next to it so you can check the working.</p>
+    <div id="res-abilities"></div>
+    <div id="res-gaps"></div>
+
+    <!-- Optional. LIVE-FORM: built once at boot, only shown and hidden. -->
+    <div class="panel" id="res-finish" hidden>
+      <h3>Finish the three your money measures</h3>
+      <p class="note">Each answer completes one named sub-stat and nothing else — the page says which. None of
+         it is required to play, and you can come back at any point.</p>
+      <div id="finish-fields"></div>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn ghost" id="btn-finish-toggle">Finish my character →</button>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn" id="btn-result-next">Take this into the campaign →</button>
+      <button type="button" class="btn ghost" id="btn-result-back">Change my numbers</button>
+    </div>
+  </section>
+
   <!-- the prologue: your character, why, and the two questions the ladder needs -->
   <section id="prologue" hidden>
     <div class="panel">
@@ -112,10 +209,14 @@
       <div id="pro-levers"></div>
     </div>
     <div class="panel">
-      <h3>Two questions that sharpen this</h3>
-      <p class="note">The campaign's whole point is <b>order</b> — doing the right thing at the right time. The
-         ladder can often see roughly where you are without help; these two are what turn "at least step N"
-         into "step N". They are the only things it is missing, so they are the only things asked.</p>
+      <h3>Last thing: where the campaign starts you</h3>
+      <p class="note">Your six abilities say what you are <i>capable</i> of. They do not say what you should do
+         <b>next</b> — and next is the whole game. That comes from a different thing entirely: a fixed order of
+         operations, where each step only makes sense once the one before it is done.</p>
+      <p class="note">Your numbers already place you on most of that order. <b>Two answers finish it</b>, and
+         they are these because an unclaimed employer match is the one thing that outranks almost everything
+         else — it is a pay rise you have already been offered. Everything else the ladder needs, it can
+         read from what you have entered.</p>
       <div id="pro-questions">
         <!-- LIVE-FORM: built once, here, and only ever read. -->
         <div style="margin-bottom:var(--space-3)">
@@ -208,6 +309,7 @@
 <script src="shared/schema.js"></script>
 <script src="shared/reference.js"></script>
 <script src="shared/store.js"></script>
+<script src="shared/charform.js"></script>
 <script src="engines/projection.js"></script>
 <script src="engines/tier0.js"></script>
 <script src="engines/foo.js"></script>
@@ -218,7 +320,12 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Char = SLAF.Character, Store = DND.Store, Camp = DND.Campaign;
+  var Form = DND.CharForm;
   var TABLES = null, STATE = null, LAST = null, OPEN = null;
+  /* Where in creation the visitor is. Held in memory, not stored: the numbers
+     themselves are stored, so a reload re-derives the step from what exists. */
+  var STEP = null;
+  var BOUGHT = null;
   function el(id) { return document.getElementById(id); }
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -229,7 +336,8 @@
   function money(cents) { return Money.formatCents(Math.round(cents)); }
   function signed(cents) { return (cents >= 0 ? '+' : '−') + money(Math.abs(cents)); }
 
-  var VIEWS = ['no-character', 'prologue', 'board-view', 'scenario-view', 'outcome-view', 'review-view'];
+  var VIEWS = ['create-basics', 'create-abilities', 'create-result',
+               'no-character', 'prologue', 'board-view', 'scenario-view', 'outcome-view', 'review-view'];
   function show(id) { VIEWS.forEach(function (v) { el(v).hidden = (v !== id); }); }
 
   /* ---- persistence: the campaign lives on the profile, beside the sheet --- */
@@ -268,6 +376,347 @@
   function subName(id) {
     var m = TABLES.dndRules.subStats.filter(function (x) { return x.id === id; })[0];
     return m ? m.name : id;
+  }
+
+  /* ---- CREATION, step 1: the five numbers -------------------------------
+     LIVE-FORM: built once. buildBasics() runs exactly once at boot; after
+     that only .value is ever written, so a node is never replaced under a
+     finger and the soft keyboard never closes on a phone (D-034). */
+  /* THE ONLY PLACE THIS PAGE WRITES A REAL NUMBER.
+     Creation calls it. The play loop must never call it — everything a
+     scenario does lands on the campaign's fork, and a test asserts that this
+     is the single call site so the rule cannot quietly erode. */
+  function writeBasic(f, cents) {
+    if (f.writer === 'filing') { Store.setFilingStatus(el('c-filing').value || null); return; }
+    if (f.writer === 'debt') { Store.setDebt(cents, el('c-debtrate').value === 'yes'); return; }
+    Store.setMoney(f.field, cents);
+  }
+
+  var BASICS_BUILT = false;
+  function buildBasics() {
+    if (BASICS_BUILT) return;
+    el('basics-fields').innerHTML = Form.CONTEXT.map(function (f) {
+      return '<div class="field"><label for="c-' + f.id + '">' + esc(f.label) + '</label>'
+        + '<div class="hint">' + esc(f.hint) + '</div>'
+        + '<select id="c-' + f.id + '"><option value="">—</option>'
+        + f.choices.map(function (c) {
+            return '<option value="' + esc(c[0]) + '">' + esc(c[1]) + '</option>'; }).join('')
+        + '</select></div>';
+    }).join('') + Form.MONEY.map(function (f) {
+      return '<div class="field"><label for="c-' + f.id + '">' + esc(f.label) + '</label>'
+        + '<div class="hint">' + esc(f.hint) + '</div>'
+        + '<div class="box"><input id="c-' + f.id + '" type="text" inputmode="decimal" '
+        + 'autocomplete="off" placeholder="' + esc(f.placeholder) + '"/>'
+        + '<span class="unit">per ' + esc(f.unit) + '</span></div>'
+        + (f.follow
+            ? '<div style="margin-top:var(--space-2)"><label for="c-' + f.follow.id + '">'
+              + esc(f.follow.label) + '</label><div class="hint">' + esc(f.follow.hint) + '</div>'
+              + '<select id="c-' + f.follow.id + '"><option value="">—</option>'
+              + f.follow.choices.map(function (c) {
+                  return '<option value="' + esc(c[0]) + '">' + esc(c[1]) + '</option>'; }).join('')
+              + '</select></div>'
+            : '')
+        + '</div>';
+    }).join('');
+    Form.CONTEXT.forEach(function (f) {
+      el('c-' + f.id).addEventListener('change', function () { writeBasic(f, null); });
+    });
+    Form.MONEY.forEach(function (f) {
+      el('c-' + f.id).addEventListener('input', function () {
+        writeBasic(f, Form.parseDollars(this.value));
+      });
+      /* The follow-up changes the same record, so it re-writes through the
+         same call rather than reaching into the store on its own. */
+      if (f.follow) {
+        el('c-' + f.follow.id).addEventListener('change', function () {
+          writeBasic(f, Form.parseDollars(el('c-' + f.id).value));
+        });
+      }
+    });
+    BASICS_BUILT = true;
+  }
+
+  /* Only ever writes .value — never rebuilds. */
+  function fillBasics() {
+    var h = Store.household();
+    var read = {
+      income: firstIncomeCents(h), expenses: monthlyExpensesCents(h),
+      cash: assetCents(h, 'cash'), investments: assetCents(h, 'investment'),
+      debt: debtCents(h)
+    };
+    Form.MONEY.forEach(function (f) {
+      var node = el('c-' + f.id), v = read[f.id];
+      var want = Money.isEntered(v) ? String(Math.round(v) / 100) : '';
+      if (node.value !== want && document.activeElement !== node) node.value = want;
+    });
+    if (document.activeElement !== el('c-filing')) el('c-filing').value = h.filingStatus || '';
+    var d = (h.debts || [])[0];
+    if (d && document.activeElement !== el('c-debtrate')) {
+      el('c-debtrate').value = Money.isEntered(d.rate) ? (d.rate >= 0.075 ? 'yes' : 'no') : '';
+    }
+  }
+
+  /* Reading the household back out. Store owns the writes; these are the
+     matching reads, and they return null — not 0 — for "never entered". */
+  function firstIncomeCents(h) {
+    var p = (h.people || [])[0], src = p && (p.incomeSources || [])[0];
+    return src ? src.grossAnnualIncomeCents : null;
+  }
+  function monthlyExpensesCents(h) {
+    var m = h.expenses && h.expenses.monthlyEssential;
+    return m ? m.estimatedValueCents : null;
+  }
+  function assetCents(h, category) {
+    var a = (h.assets || []).filter(function (x) { return x.category === category; })[0];
+    return a ? a.valueCents : null;
+  }
+  function debtCents(h) {
+    var d = (h.debts || [])[0];
+    return d ? d.balanceCents : null;
+  }
+
+  /* ---- CREATION, step 2: point buy -------------------------------------- */
+  var PB_BUILT = false;
+  function buildPointBuy() {
+    if (PB_BUILT) return;
+    var rules = Form.pointBuyRules(TABLES);
+    el('pb-rows').innerHTML = rules.over.map(function (id) {
+      var meta = statMeta(id);
+      return '<div class="pbrow"><div class="nm"><b>' + esc(meta.name) + '</b><br/>'
+        + '<span class="faint">' + esc(meta.finance || '') + '</span></div>'
+        + '<button type="button" class="step-btn" data-pb="down" data-abil="' + id + '">−</button>'
+        + '<div class="sc" id="pb-' + id + '">' + rules.min + '</div>'
+        + '<button type="button" class="step-btn" data-pb="up" data-abil="' + id + '">+</button></div>';
+    }).join('');
+    el('pb-ladder').textContent = 'What a score costs: '
+      + Form.ladder(rules).map(function (r) { return r.score + ' costs ' + r.cost; }).join(' · ')
+      + '. Going from 13 to 14 costs two points, not one — that is 5e’s table, not ours.';
+    el('pb-rows').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-pb]');
+      if (!b) return;
+      var id = b.getAttribute('data-abil'), dir = b.getAttribute('data-pb');
+      var r = Form.pointBuyRules(TABLES);
+      if (dir === 'up' && Form.canRaise(r, BOUGHT, id)) BOUGHT[id] += 1;
+      if (dir === 'down' && Form.canLower(r, BOUGHT, id)) BOUGHT[id] -= 1;
+      saveBought();
+      paintPointBuy();
+    });
+    PB_BUILT = true;
+  }
+
+  function statMeta(id) {
+    return (TABLES.dndRules.stats || []).filter(function (m) { return m.id === id; })[0] || { id: id, name: id };
+  }
+
+  function saveBought() {
+    Store.patchProfile({ declaredMethod: 'pointBuy', declaredScores: BOUGHT });
+  }
+
+  /* Text and disabled flags only — the rows themselves are never rebuilt. */
+  function paintPointBuy() {
+    var rules = Form.pointBuyRules(TABLES);
+    var left = Form.remaining(rules, BOUGHT);
+    el('pb-pool').innerHTML = left === 0
+      ? 'All ' + rules.pool + ' points spent.'
+      : '<b>' + left + '</b> of ' + rules.pool + ' points left to spend.';
+    rules.over.forEach(function (id) {
+      el('pb-' + id).textContent = BOUGHT[id];
+      var row = el('pb-' + id).parentNode;
+      row.querySelector('[data-pb="up"]').disabled = !Form.canRaise(rules, BOUGHT, id);
+      row.querySelector('[data-pb="down"]').disabled = !Form.canLower(rules, BOUGHT, id);
+    });
+  }
+
+  /* ---- CREATION, step 3: the character, with its receipts ---------------- */
+  var STATUS_WORD = { measured: 'measured from your numbers', chosen: 'you chose this',
+                      bought: 'you chose this', partial: 'partly measured', blank: 'nothing yet' };
+
+  function paintResult() {
+    var h = Store.household();
+    var s = Char.sheet(h, TABLES);
+    var ex = Char.explain(h, TABLES);
+
+    el('res-class').textContent = s.klass
+      ? s.klass.name + (Money.isOk(s.level) ? ', level ' + s.level.value : '')
+      : 'Not a class yet';
+
+    if (Money.isOk(s.suggestedClass) && s.suggestedClass.ranked) {
+      var ranked = s.suggestedClass.ranked.filter(function (r) { return r.cents > 0; });
+      el('res-why').innerHTML = ranked.length
+        ? 'Because that is where your money actually moves. A class here is <b>a lever you pull</b>, not a '
+          + 'temperament — so it is a ranking of your own figures, and it changes when they do.'
+        : 'No class yet: nothing is moving through any lever the sheet can see. Add your income and '
+          + 'spending and one will appear.';
+      html('res-levers', ranked.map(function (r, i) {
+        return '<div class="shift"><span class="n">' + (i === 0 ? '<b>' : '') + money(r.cents)
+          + (i === 0 ? '</b>' : '') + '</span><span>' + esc(leverNameOf(r.classId))
+          + (i === 0 ? ' <span class="badge on">your lever</span>' : '') + '</span></div>';
+      }).join(''));
+    } else {
+      el('res-why').textContent = 'Add your numbers and the campaign can place you.';
+      html('res-levers', '');
+    }
+
+    html('res-abilities', ex.abilities.map(function (a) {
+      var cls = a.status === 'measured' ? 'measured' : a.status === 'partial' || a.status === 'blank' ? 'partial' : '';
+      return '<div class="abil">'
+        + '<div class="top"><span class="sc">' + (a.score === null ? '—' : a.score) + '</span>'
+        + '<b>' + esc(a.name) + '</b>'
+        + (a.modifier === null ? '' : '<span class="md">' + (a.modifier >= 0 ? '+' : '') + a.modifier + '</span>')
+        + '<span class="tag ' + cls + '">' + esc(STATUS_WORD[a.status] || a.status) + '</span></div>'
+        + '<div class="what">' + esc(a.finance || '') + (a.measures ? ' — ' + esc(a.measures) : '') + '</div>'
+        + a.parts.map(function (pt) {
+            if (pt.score === null) {
+              return '<div class="part"><span class="n faint">—</span> <span class="faint">'
+                + esc(pt.name) + ': ' + esc(pt.reason) + '</span></div>';
+            }
+            return '<div class="part"><span class="n"><b>' + pt.score + '</b></span> ' + esc(pt.name)
+              + (pt.from ? ' <span class="faint">— from ' + esc(pt.from) + '</span>'
+                         : pt.status === 'bought' ? ' <span class="faint">— a score you bought, standing in '
+                           + 'until your money can measure it</span>'
+                         : ' <span class="faint">— you decided this</span>')
+              + '</div>';
+          }).join('')
+        + '</div>';
+    }).join(''));
+
+    /* Say plainly what is still thin, and never pretend it is finished. */
+    var thin = ex.abilities.filter(function (a) { return a.score === null; });
+    html('res-gaps', thin.length
+      ? '<div class="warn"><b>' + thin.length + ' of your six ' + (thin.length === 1 ? 'is' : 'are')
+        + ' not scored yet: ' + thin.map(function (a) { return esc(a.name); }).join(', ') + '.</b><br/>'
+        + (thin.length === 1 ? 'It is' : 'They are')
+        + ' shown as blank rather than guessed at, because a made-up ability would make everything '
+        + 'built on it fiction. You can play now and finish '
+        + (thin.length === 1 ? 'it' : 'them') + ' whenever — each line above says exactly which figure '
+        + 'it is waiting on.</div>'
+      : '<div class="ok-box">All six are scored. Three measured from your money, three you decided — which '
+        + 'is exactly the split the game is built on.</div>');
+    el('btn-finish-toggle').textContent = el('res-finish').hidden
+      ? (thin.length ? 'Finish my character →' : 'Change these answers →')
+      : 'Hide these';
+    fillFinish();
+  }
+
+  /* ---- the optional finisher --------------------------------------------
+     Everything here completes ONE named sub-stat. Nothing is required, and
+     the label says what each answer buys, because "just fill in these five
+     more things" with no stated payoff is how a form gets abandoned.
+     LIVE-FORM: built once at boot; shown and hidden with [hidden]. */
+  var FINISH_BUILT = false;
+
+  function mobilityChecklist() {
+    var a = TABLES.dndScoring.anchors.structuralMobility;
+    return (a && a.checklist) || [];
+  }
+
+  function buildFinish() {
+    if (FINISH_BUILT) return;
+    var parts = Form.EXTRAS.map(function (f) {
+      var control = f.choices
+        ? '<select id="x-' + f.id + '"><option value="">—</option>'
+          + f.choices.map(function (c) {
+              return '<option value="' + esc(c[0]) + '">' + esc(c[1]) + '</option>'; }).join('')
+          + '</select>'
+        : '<input id="x-' + f.id + '" type="text" inputmode="decimal" autocomplete="off" placeholder="'
+          + esc(f.placeholder || '') + '"/>';
+      return '<div class="field"><label for="x-' + f.id + '">' + esc(f.label) + '</label>'
+        + '<div class="hint">' + (f.hint ? esc(f.hint) + ' ' : '')
+        + '<b>Completes ' + esc(f.completes) + '.</b></div>' + control + '</div>';
+    });
+    parts.push('<div class="field"><label>Four questions about how easily you could move</label>'
+      + '<div class="hint"><b>Completes Structural Mobility.</b> Dexterity is about getting out of the '
+      + 'way of a hit, and how stuck you are is most of it.</div>'
+      + mobilityChecklist().map(function (q) {
+          return '<div style="margin-bottom:var(--space-2)"><label for="x-mob-' + q.id + '">'
+            + esc(q.question) + '</label><select id="x-mob-' + q.id + '"><option value="">—</option>'
+            + q.options.map(function (o, i) {
+                return '<option value="' + i + '">' + esc(o.label) + '</option>'; }).join('')
+            + '</select></div>';
+        }).join('') + '</div>');
+    el('finish-fields').innerHTML = parts.join('');
+
+    Form.EXTRAS.forEach(function (f) {
+      var node = el('x-' + f.id);
+      node.addEventListener(f.choices ? 'change' : 'input', function () { writeExtra(f, this.value); });
+    });
+    mobilityChecklist().forEach(function (q) {
+      el('x-mob-' + q.id).addEventListener('change', function () { writeMobility(q, this.value); });
+    });
+    FINISH_BUILT = true;
+  }
+
+  /* THE ONLY PLACE CREATION WRITES A PROFILE FIELD. */
+  function writeExtra(f, raw) {
+    var v = null;
+    if (raw !== '') {
+      if (f.kind === 'money') v = Form.parseDollars(raw);
+      else if (f.kind === 'fraction' || f.kind === 'number') v = Number(raw);
+      else if (f.kind === 'boolean') v = (raw === 'yes');
+    }
+    var patch = {};
+    patch[f.writes] = v;
+    Store.patchProfile(patch);
+    paintResult();
+  }
+
+  /* STORE THE INDEX, NOT THE POINTS.
+     checklistScore() does `item.options[picked]` — the stored number is a
+     position in the option list, and the points are looked up from the table.
+     Writing points here instead scores silently and wrongly: a 3-point answer
+     to a three-option question becomes index 3, which does not exist. */
+  function writeMobility(q, raw) {
+    var mob = {};
+    var cur = Store.profile().mobility || {};
+    Object.keys(cur).forEach(function (k) { mob[k] = cur[k]; });
+    mob[q.id] = raw === '' ? null : Number(raw);
+    Store.patchProfile({ mobility: mob });
+    paintResult();
+  }
+
+  /* Only ever writes .value — never rebuilds (D-034). */
+  function fillFinish() {
+    var p = Store.profile();
+    Form.EXTRAS.forEach(function (f) {
+      var node = el('x-' + f.id);
+      if (document.activeElement === node) return;
+      var v = p[f.writes];
+      if (!Money.isEntered(v)) { node.value = ''; return; }
+      node.value = f.kind === 'money' ? String(Math.round(v) / 100)
+                 : f.kind === 'boolean' ? (v ? 'yes' : 'no')
+                 : String(v);
+    });
+    var mob = p.mobility || {};
+    mobilityChecklist().forEach(function (q) {
+      var node = el('x-mob-' + q.id);
+      if (document.activeElement === node) return;
+      var idx = mob[q.id];
+      node.value = Money.isEntered(idx) && q.options[idx] ? String(idx) : '';
+    });
+  }
+
+  /* ---- which creation step to show --------------------------------------- */
+  var STEP_LABELS = [['basics', 'About you'], ['abilities', 'Your six'],
+                     ['result', 'Your character'], ['play', 'The campaign']];
+
+  function paintSteps(now) {
+    if (!now) { el('steps').hidden = true; return; }
+    var at = STEP_LABELS.map(function (x) { return x[0]; }).indexOf(now);
+    el('steps').hidden = false;
+    html('steps', STEP_LABELS.map(function (x, i) {
+      var k = i < at ? 'done' : i === at ? 'now' : '';
+      return '<span class="' + k + '">' + (i + 1) + '. ' + esc(x[1]) + '</span>';
+    }).join('<span class="faint">›</span>'));
+  }
+
+  function goStep(name) {
+    STEP = name;
+    paintSteps(name);
+    if (name === 'basics') { fillBasics(); show('create-basics'); }
+    if (name === 'abilities') { paintPointBuy(); show('create-abilities'); }
+    if (name === 'result') { paintResult(); show('create-result'); }
+    if (name === 'play') { paintPrologue(); show('prologue'); }
+    el('hud').hidden = true; el('progress').hidden = true;
   }
 
   /* ---- the prologue ------------------------------------------------------ */
@@ -338,11 +787,19 @@
       + 'pick is itself the decision.'
       + (place ? ' You are on step ' + place.step + (place.certain ? '' : ' or past it') + '.' : '');
     var cards = Camp.board(STATE, TABLES);
+    var tier = Camp.tierOf(STATE.household, TABLES);
     html('board', cards.map(function (s) {
       var on = place && s.fooStep === place.step;
+      /* Why THIS card, in front of THIS character. A board of six that never
+         explained itself read as a random draw; it is not one. */
+      var why = !place ? 'A tier ' + tier + ' situation.'
+        : s.fooStep === place.step ? 'This is a step-' + s.fooStep + ' problem, and step ' + place.step + ' is where you are standing.'
+        : s.fooStep < place.step ? 'A step-' + s.fooStep + ' problem — ground you have already covered. It can still bite.'
+        : 'A step-' + s.fooStep + ' problem, ' + (s.fooStep - place.step) + ' ahead of you. Tempting early is exactly how the order gets broken.';
       return '<button type="button" class="card" data-scenario="' + esc(s.id) + '">'
         + '<span class="t">' + esc(s.title) + '</span>'
         + '<span class="st">' + esc(s.setup) + '</span>'
+        + '<span class="st faint">' + esc(why) + '</span>'
         + '<span class="badge' + (on ? ' on' : '') + '">step ' + s.fooStep
         + (on ? ' · your step' : '') + '</span></button>';
     }).join(''));
@@ -355,8 +812,21 @@
     el('sc-title').textContent = s.title;
     el('sc-setup').textContent = s.setup;
     el('sc-prompt').textContent = s.prompt;
+    /* WHAT EACH CHOICE TRAINS, SHOWN BEFORE YOU PICK.
+       Hiding this made the board feel arbitrary: you were choosing between
+       three sentences with no visible consequence. It gives nothing away —
+       which ability a move exercises is not the same as whether it is the
+       right move now, and the ladder's verdict still waits until after. */
     html('sc-options', s.options.map(function (o) {
-      return '<button type="button" class="opt" data-option="' + esc(o.id) + '">' + esc(o.label) + '</button>';
+      var subs = Object.keys(o.subStats || {}).filter(function (k) { return o.subStats[k] > 0; });
+      var trains = subs.map(function (k) {
+        return '<b>' + esc(subName(k)) + '</b> +' + o.subStats[k];
+      });
+      if (o.lever) trains.push('pulls ' + esc(classNameOf(o.lever)) + '’s lever');
+      return '<button type="button" class="opt" data-option="' + esc(o.id) + '">' + esc(o.label)
+        + (trains.length ? '<div class="trains">Practises ' + trains.join(' · ') + '</div>'
+                         : '<div class="trains faint">Practises nothing — it is a way of not deciding</div>')
+        + '</button>';
     }).join(''));
     show('scenario-view');
   }
@@ -455,11 +925,22 @@
   function route() {
     paintHud();
     if (!STATE) {
-      if (!Store.moneyEntered()) { show('no-character'); el('hud').hidden = true; el('progress').hidden = true; return; }
-      paintPrologue(); show('prologue'); el('hud').hidden = true; el('progress').hidden = true; return;
+      /* Mid-creation, stay where the visitor is. Otherwise pick the first
+         step that is not done yet — so a reload resumes rather than restarts,
+         and someone who already has a character skips straight to playing. */
+      if (STEP) { goStep(STEP); return; }
+      if (!Store.moneyEntered()) { goStep('basics'); return; }
+      if (!Camp.fooStepOf(Store.household(), TABLES) && !boughtAnything()) { goStep('abilities'); return; }
+      goStep('result'); return;
     }
+    paintSteps(null);
     if (STATE.round >= Camp.rules(TABLES).roundsPerChapter) { paintReview(); return; }
     paintBoard(); show('board-view');
+  }
+
+  function boughtAnything() {
+    var d = Store.profile().declaredScores || {};
+    return Object.keys(d).length > 0;
   }
 
   function wire() {
@@ -484,6 +965,25 @@
       if (!window.confirm('Abandon this campaign? Your sheet is untouched either way.')) return;
       Store.patchProfile({ campaign: null }); STATE = null; route();
     });
+    el('btn-basics-next').addEventListener('click', function () { goStep('abilities'); });
+    el('btn-basics-example').addEventListener('click', function () {
+      /* Public repo: the ONLY numbers this tool ever puts in a box are these,
+         and only when someone asks for them by name. */
+      var demo = { income: 5200000, expenses: 280000, cash: 600000, investments: 1500000, debt: 340000 };
+      el('c-debtrate').value = 'yes';
+      el('c-filing').value = 'single';
+      Form.CONTEXT.forEach(function (f) { writeBasic(f, null); });
+      Form.MONEY.forEach(function (f) { writeBasic(f, demo[f.id]); });
+      fillBasics();
+    });
+    el('btn-abil-back').addEventListener('click', function () { goStep('basics'); });
+    el('btn-abil-next').addEventListener('click', function () { goStep('result'); });
+    el('btn-finish-toggle').addEventListener('click', function () {
+      el('res-finish').hidden = !el('res-finish').hidden;
+      paintResult();
+    });
+    el('btn-result-back').addEventListener('click', function () { goStep('basics'); });
+    el('btn-result-next').addEventListener('click', function () { goStep('play'); });
     el('q-match').addEventListener('change', paintPlacementPreview);
     el('q-capturing').addEventListener('change', paintPlacementPreview);
     el('btn-begin').addEventListener('click', function () {
@@ -496,6 +996,15 @@
     TABLES = tables;
     DND.Skin.mount(el('skin-bar'));
     STATE = load();
+    /* Built ONCE, before anything can route to them (D-034). */
+    var stored = Store.profile().declaredScores || {};
+    BOUGHT = Form.startingScores(Form.pointBuyRules(TABLES));
+    Object.keys(BOUGHT).forEach(function (k) {
+      if (Money.isEntered(stored[k])) BOUGHT[k] = stored[k];
+    });
+    buildBasics();
+    buildPointBuy();
+    buildFinish();
     wire();
     route();
   }).catch(function (err) {

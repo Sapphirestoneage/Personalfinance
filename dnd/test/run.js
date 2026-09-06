@@ -1785,11 +1785,176 @@ section('Dungeons & Dividends — the campaign (DD-024)');
   checkTrue('and foo.js, which owns the ladder', /engines\/foo\.js/.test(src));
   checkTrue('it says the sheet is not written to',
     /Nothing that happens in it is written back to your sheet/.test(src));
-  checkTrue('it never calls the money writers on the real household',
-    !/Store\.setMoney|Store\.setDebt|Store\.setFilingStatus/.test(src));
+  /* The page now BUILDS a character as well as playing one, so it does write
+     real numbers — during creation, and only there. The guarantee is made
+     structural rather than textual: every real write goes through one named
+     function, so "the play loop never writes" is a thing that can be checked
+     instead of a thing that is hoped. DD-025. */
+  const WRITERS = ['Store\\.setMoney', 'Store\\.setDebt', 'Store\\.setFilingStatus'];
+  WRITERS.forEach(function (w) {
+    check(`there is exactly one call to ${w.replace(/\\/g, '')}`,
+      (src.match(new RegExp(w, 'g')) || []).length, 1);
+  });
+  const wb = src.indexOf('function writeBasic');
+  const wbEnd = src.indexOf('\n  }', wb);
+  checkTrue('writeBasic() exists', wb > 0 && wbEnd > wb);
+  WRITERS.forEach(function (w) {
+    checkTrue(`and ${w.replace(/\\/g, '')} is called inside it`,
+      new RegExp(w).test(src.slice(wb, wbEnd)));
+  });
+  /* The play loop — everything from the board onward — must not write. */
+  const playFrom = src.indexOf('/* ---- the board ---');
+  const wireFrom = src.indexOf('function wire()');
+  checkTrue('the play-loop painters exist to be checked', playFrom > 0 && wireFrom > playFrom);
+  checkTrue('no play-loop painter writes a real number',
+    src.slice(playFrom, wireFrom).indexOf('writeBasic') === -1);
   checkTrue('the sheet links to it', /href="campaign\.html"/.test(fs.readFileSync(path.join(ROOT, 'sheet.html'), 'utf8')));
   checkTrue('reference.js registers the scenario bank',
     /dndScenarios/.test(fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8')));
+})();
+
+section('Dungeons & Dividends — creation, and why you got what you got (DD-025)');
+
+(function () {
+  const Form = require(path.join(ROOT, 'shared/charform.js'));
+  const Char = Character;
+  const src = fs.readFileSync(path.join(ROOT, 'campaign.html'), 'utf8');
+
+  /* The same demo character the campaign section uses, built through Schema
+     so every reader sees it exactly as it sees one the sheet wrote. */
+  function household() {
+    const h = Schema.createHousehold(); h.filingStatus = 'single';
+    const p = Schema.createPerson({ id: 'dnd_person', role: 'adult' });
+    p.incomeSources = [Schema.createIncomeSource({ id: 'dnd_income', personId: 'dnd_person',
+      grossAnnualIncomeCents: 7200000, type: 'w2' })];
+    h.people = [p];
+    h.assets = [Schema.createAsset({ id: 'dnd_asset_cash', category: 'cash', valueCents: 950000, liquid: true }),
+                Schema.createAsset({ id: 'dnd_asset_investments', category: 'investment', valueCents: 4800000, liquid: false })];
+    h.debts = [Schema.createDebt({ id: 'dnd_debt_total', balanceCents: 2160000, rate: 0.22, type: 'credit_card' })];
+    h.expenses = { monthlyEssential: { estimatedValueCents: 315000, trackedValueCents: null, source: 'estimated' }, entries: [] };
+    h.dndProfile = { fixedCostShare: 0.55, yearsSustained: 4, disruptionSurvived: true, healthCoverage: 2,
+      automatedSaving: 'most' };
+    return h;
+  }
+
+  /* ---- the field declarations, which two rooms now share ----------------- */
+  checkTrue('every money field names the Store writer it uses',
+    Form.MONEY.every(function (f) { return f.writer === 'money' || f.writer === 'debt'; }));
+  checkTrue('every field carries a format-only placeholder, never a default',
+    Form.MONEY.every(function (f) { return typeof f.placeholder === 'string'; }));
+  checkTrue('debt is the one that does not go through setMoney',
+    Form.MONEY.filter(function (f) { return f.writer === 'debt'; }).length === 1);
+  checkTrue('and it asks the rate, because Debt Burden keys off it',
+    !!Form.MONEY.filter(function (f) { return f.id === 'debt'; })[0].follow);
+  checkTrue('filing status is asked, or Constitution can never score',
+    Form.CONTEXT.some(function (f) { return f.writer === 'filing'; }));
+  checkTrue('every extra says which sub-stat it completes',
+    Form.EXTRAS.every(function (f) { return typeof f.completes === 'string' && f.completes.length > 0; }));
+
+  /* Blank is not zero, and never becomes zero on the way in. */
+  check('a blank box parses to null, not 0', Form.parseDollars(''), null);
+  check('a typed zero parses to 0', Form.parseDollars('0'), 0);
+  check('commas and dollar signs survive', Form.parseDollars('$1,200.50'), 120050);
+  check('nonsense is null rather than NaN', Form.parseDollars('abc'), null);
+
+  /* ---- point buy is D&D Beyond's, read from data ------------------------- */
+  const pb = Form.pointBuyRules(TABLES);
+  const start = Form.startingScores(pb);
+  check('everyone starts at the floor', start.STR, pb.min);
+  check('with the whole pool unspent', Form.remaining(pb, start), pb.pool);
+  checkTrue('the cost table is 5e’s — 14 costs two more than 13',
+    Form.costOf(pb, 14) - Form.costOf(pb, 13) === 2);
+  const maxed = Form.startingScores(pb);
+  maxed.STR = pb.max;
+  checkTrue('nothing may go above the cap', !Form.canRaise(pb, maxed, 'STR'));
+  checkTrue('and nothing below the floor', !Form.canLower(pb, start, 'STR'));
+  const broke = Form.startingScores(pb);
+  ['STR', 'DEX', 'CON', 'INT'].forEach(function (k) { broke[k] = 15; });
+  checkTrue('you cannot raise past the pool', Form.remaining(pb, broke) < 0
+    || !Form.canRaise(pb, broke, 'WIS'));
+
+  /* ---- THE MOBILITY TRAP ------------------------------------------------
+     checklistScore() does options[stored], so the stored number is an INDEX.
+     Writing the option's POINTS instead scores silently and wrongly — a
+     3-point answer to a three-option question becomes index 3, which does not
+     exist. A phone walk caught it; this keeps it caught. */
+  const mob = TABLES.dndScoring.anchors.structuralMobility.checklist;
+  const byIndex = {};
+  mob.forEach(function (q) { byIndex[q.id] = 0; });
+  const hIdx = household(); hIdx.dndProfile.mobility = byIndex;
+  const sub = Char.explain(hIdx, TABLES).abilities.filter(function (a) { return a.id === 'DEX'; })[0]
+    .parts.filter(function (p) { return p.id === 'structuralMobility'; })[0];
+  checkTrue('a full set of option indices scores Structural Mobility', sub.score !== null);
+  /* Points would be out of range for any question with fewer options than points. */
+  const byPoints = {};
+  mob.forEach(function (q) { byPoints[q.id] = q.options[0].points; });
+  const hPts = household(); hPts.dndProfile.mobility = byPoints;
+  const subPts = Char.explain(hPts, TABLES).abilities.filter(function (a) { return a.id === 'DEX'; })[0]
+    .parts.filter(function (p) { return p.id === 'structuralMobility'; })[0];
+  const anyOutOfRange = mob.some(function (q) { return !q.options[q.options[0].points]; });
+  checkTrue('the checklist has a question where points are not a valid index', anyOutOfRange);
+  checkTrue('so storing points instead of indices fails to score', subPts.score === null);
+  checkTrue('the page stores the index', /mob\[q\.id\] = raw === '' \? null : Number\(raw\)/.test(src));
+
+  /* ---- explain(): the receipts ------------------------------------------ */
+  const h = household();
+  const ex = Char.explain(h, TABLES);
+  check('it explains all six abilities', ex.abilities.length, 6);
+  checkTrue('every ability names what it means in money terms',
+    ex.abilities.every(function (a) { return typeof a.finance === 'string' && a.finance.length > 0; }));
+  checkTrue('every ability has exactly three sub-stats',
+    ex.abilities.every(function (a) { return a.parts.length === 3; }));
+  checkTrue('every status is one of the four honest ones',
+    ex.abilities.every(function (a) {
+      return ['measured', 'chosen', 'partial', 'blank'].indexOf(a.status) !== -1; }));
+
+  const str = ex.abilities.filter(function (a) { return a.id === 'STR'; })[0];
+  const power = str.parts.filter(function (p) { return p.id === 'incomePower'; })[0];
+  checkTrue('a measured sub-stat quotes the figure that produced it', !!power.from);
+  checkTrue('and it is the reader’s own number, not a re-derivation',
+    power.from.indexOf('72,000') !== -1);
+
+  /* An unscored sub-stat never invents a figure — it says what it needs. */
+  const blank = Schema.createHousehold();
+  const exBlank = Char.explain(blank, TABLES);
+  checkTrue('nothing is scored for an empty character',
+    exBlank.abilities.every(function (a) { return a.score === null; }));
+  checkTrue('and no unscored sub-stat pretends to a figure',
+    exBlank.abilities.every(function (a) {
+      return a.parts.every(function (p) { return p.score !== null || p.from === null; }); }));
+  checkTrue('every unscored sub-stat says why',
+    exBlank.abilities.every(function (a) {
+      return a.parts.every(function (p) { return p.score !== null || !!p.reason; }); }));
+  check('an empty character is not complete', exBlank.complete, false);
+  checkTrue('and it says what to ask for next', exBlank.nextUp.length > 0);
+
+  /* A bought score is never dressed up as a measurement. */
+  const hBought = Schema.createHousehold();
+  hBought.dndProfile = { declaredMethod: 'pointBuy',
+    declaredScores: { STR: 15, DEX: 12, CON: 13, INT: 14, WIS: 10, CHA: 8 } };
+  const exB = Char.explain(hBought, TABLES);
+  const strB = exB.abilities.filter(function (a) { return a.id === 'STR'; })[0];
+  check('a bought ability reads as chosen, not measured', strB.status, 'chosen');
+  checkTrue('and every part of it is marked bought',
+    strB.parts.every(function (p) { return p.status === 'bought'; }));
+  checkTrue('a bought part never claims a figure produced it',
+    strB.parts.every(function (p) { return p.from === null; }));
+
+  /* ---- the page ---------------------------------------------------------- */
+  checkTrue('the creation flow is four signposted steps',
+    /1\. About you/.test(src) === false || /STEP_LABELS/.test(src));
+  ['create-basics', 'create-abilities', 'create-result'].forEach(function (id) {
+    checkTrue(`the page has the ${id} step`, new RegExp('id="' + id + '"').test(src));
+  });
+  checkTrue('the creation controls are built once', /BASICS_BUILT|PB_BUILT|FINISH_BUILT/.test(src));
+  checkTrue('the options say what they train before you pick',
+    /Practises/.test(src));
+  checkTrue('the board says why each card is in front of you',
+    /is where you are standing/.test(src));
+  checkTrue('example numbers are behind an explicit action',
+    /Try with example numbers/.test(src));
+  checkTrue('and nothing else on the page hardcodes a figure into a box',
+    (src.match(/btn-basics-example/g) || []).length >= 1);
 })();
 
 section('Dungeons & Dividends — ASIs and feats that do something (DD-023)');

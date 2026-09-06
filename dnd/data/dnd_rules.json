@@ -100,63 +100,99 @@
       "stat": "STR",
       "name": "Income Power",
       "measures": "Raw earning capacity relative to your role/market right now",
-      "kind": "computed"
+      "kind": "computed",
+      "reads": {
+        "kind": "dollars",
+        "phrase": "your gross income of {v} a year"
+      }
     },
     {
       "id": "incomeTrajectory",
       "stat": "STR",
       "name": "Income Trajectory",
       "measures": "Growth trend — raises, promotions, career capital compounding over time",
-      "kind": "computed"
+      "kind": "computed",
+      "reads": {
+        "kind": "percent",
+        "phrase": "income growth of {v} a year over three years"
+      }
     },
     {
       "id": "hustleCapacity",
       "stat": "STR",
       "name": "Hustle Capacity",
       "measures": "Ability to stand up additional income on demand",
-      "kind": "computed"
+      "kind": "computed",
+      "reads": {
+        "kind": "percent",
+        "phrase": "side income worth {v} of your main income"
+      }
     },
     {
       "id": "liquidityAgility",
       "stat": "DEX",
       "name": "Liquidity Agility",
       "measures": "How fast you can get to usable cash without a penalty",
-      "kind": "computed"
+      "kind": "computed",
+      "reads": {
+        "kind": "percent",
+        "phrase": "{v} of everything you own being reachable in a week"
+      }
     },
     {
       "id": "structuralMobility",
       "stat": "DEX",
       "name": "Structural Mobility",
       "measures": "Housing and geographic flexibility — rent vs own, remote portability, willingness to move",
-      "kind": "computed"
+      "kind": "computed",
+      "reads": {
+        "kind": "checklist",
+        "phrase": "your housing, remote-work and willingness-to-move answers"
+      }
     },
     {
       "id": "obligationFlex",
       "stat": "DEX",
       "name": "Obligation Flexibility",
       "measures": "How easily your fixed costs and debts can be restructured or shed",
-      "kind": "computed"
+      "kind": "computed",
+      "reads": {
+        "kind": "percent",
+        "phrase": "{v} of your monthly spending being fixed"
+      }
     },
     {
       "id": "savingsRate",
       "stat": "CON",
       "name": "Savings Rate",
       "measures": "Current percentage of income saved",
-      "kind": "computed"
+      "kind": "computed",
+      "reads": {
+        "kind": "percent",
+        "phrase": "a savings rate of {v}"
+      }
     },
     {
       "id": "consistency",
       "stat": "CON",
       "name": "Consistency",
       "measures": "Track record of sustaining that rate through disruption, not just in a good year",
-      "kind": "computed"
+      "kind": "computed",
+      "reads": {
+        "kind": "years",
+        "phrase": "holding that rate for {v}"
+      }
     },
     {
       "id": "reserveDepth",
       "stat": "CON",
       "name": "Reserve Depth",
       "measures": "Actual buffer size — emergency fund months, cushion beyond the bare minimum",
-      "kind": "computed"
+      "kind": "computed",
+      "reads": {
+        "kind": "months",
+        "phrase": "an emergency fund worth {v}"
+      }
     },
     {
       "id": "taxLiteracy",
