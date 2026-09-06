@@ -7630,6 +7630,75 @@ Stored shape: **unchanged**. Nothing written, no owned field moved.
 
 ---
 
+## D-146 — The responsive audit, kept
+
+D-136 fixed the sideways scroll, the small tap targets and the wasted
+monitor by writing an audit script, running it, and throwing it away. It has
+been rebuilt by hand every time the question came up since — which means the
+answer kept being re-derived instead of kept. LATER.md said so. It is
+`test/responsive.js` now: every room at 320 / 390 / 768 / 1080 / 1440,
+checking the page for sideways scroll, controls against the 32px floor, text
+clipped by its own box, and the share of the window actually used.
+
+**It found things on its first run, and one of them was serious.**
+
+`rooms/start.html` — the intake page, the first thing anyone opens —
+**scrolled 142px sideways at 390px**. No element's right edge was past the
+viewport, which is why it had survived this long: the cause was
+`grid-template-columns: 1fr 1fr`, where a track's implicit minimum is its
+content, so a cell holding a `select` with long option text refused to
+shrink and pushed the whole grid past its card. `minmax(0, 1fr)` fixes it.
+`rooms/what-if-life.html` had the same shape, and the confidence badge in
+Start Here was `white-space: nowrap` beside a label that already filled its
+column — 49px of overflow at 320px from a badge four characters long.
+
+**44 controls under the 32px floor, across 18 rooms** — segmented filters at
+17px, a remove button at 20px, preset rows at 17px, an `<a class="pill">`
+at 20px. Fixed at the floor rather than one room at a time.
+
+### The suite caught me breaking something, on the next run
+
+The first attempt at the tap-target floor was
+`button, .pill { display: inline-flex; align-items: center; }`. A flex item
+will not shrink below its content, so a button in a 152px grid track grew to
+178px and pushed What If, Life **26px sideways at 320px** — a room that had
+been clean an hour earlier. Reverted to `min-height` alone, which is all the
+floor ever needed. This is the argument for keeping the script: it is the
+only reason that regression lived for one run instead of a month.
+
+### Two of the failures were the suite being wrong
+
+Worth recording, because a suite that cries wolf gets ignored:
+
+- **The ⓘ at 30px.** D-136 grew it from 20 and stopped at 30 deliberately —
+  it appears 45 times on the ratios page and a 44px circle there is a wall
+  of buttons. Exempted by name.
+- **Checkboxes at 20px.** Also deliberate: the theme gives the *label*
+  around them 32px, and the label is what a finger hits. The suite measures
+  the label where one exists and only complains about a checkbox genuinely
+  on its own.
+
+Count: **47 problems → 0**, over 300 room-widths.
+
+### Compatibility note
+
+Stored shape: **unchanged**; this is layout and tooling only.
+
+- `shared/theme.css` gains one rule — `button, select, .pill, [role="button"]
+  { min-height: 32px }` inside the existing `@media (pointer: coarse)` block,
+  with `.slaf-info` opting back out. Every room gets it; no room needs to ask.
+  `dnd/shared/theme.css` refreshed to stay byte-identical.
+- Two rooms changed `1fr` to `minmax(0, 1fr)`. **A new room using a `1fr`
+  grid should do the same** — it is the difference between a grid that fits
+  a phone and one that does not, and it is invisible until measured.
+- `test/responsive.js` skips cleanly when Playwright is absent, like
+  `test/alignment.js` and `test/forms.js`. It takes `SLAF_ONLY=room-id` to
+  check one room, which is what a room build should run before reporting.
+- The 32px floor lives in one constant, `TAP_FLOOR`. If it ever rises to 44,
+  it rises there and the suite says which rooms owe work.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

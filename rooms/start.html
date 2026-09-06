@@ -63,10 +63,15 @@
   .card { margin-top: var(--space-3); }
   .card .q-text { font-family: var(--font-display); font-size: var(--text-lg); margin: 0 0 var(--space-1); }
   .card .q-help { color: var(--color-text-muted); font-size: var(--text-sm); margin: 0 0 var(--space-3); }
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); align-items: end; }
-  .row.three { grid-template-columns: 1fr 1fr 1fr; }
+  /* minmax(0, 1fr), not 1fr: a grid track's implicit minimum is its content,
+     so a cell holding a select with long option text refuses to shrink and
+     pushes the whole grid past its container. That is what made this page —
+     the first one anyone opens — scroll 142px sideways at 390px, with no
+     single element visibly out of place. D-146. */
+  .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-2); align-items: end; }
+  .row.three { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); }
   .row .span { grid-column: 1 / -1; }
-  @media (max-width: 380px) { .row.three { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 380px) { .row.three { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
   .slaf-field { margin: 0 0 var(--space-2); }
   .field-note { font-size: var(--text-xs); color: var(--color-text-faint); margin: -2px 0 var(--space-2); }
   .field-note.is-warn { color: var(--color-caution); }
@@ -74,7 +79,11 @@
 
   /* The confidence badge: one per box, after the label. */
   .slaf-label { display: flex; align-items: baseline; gap: 6px; }
-  .conf { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; border-radius: var(--radius-pill); padding: 1px 6px; border: 1px solid var(--color-border); color: var(--color-text-faint); white-space: nowrap; }
+  /* `white-space: nowrap` on a badge beside a label that already fills the
+     column is how a 358px card ended up 49px wider than a 320px phone. The
+     badge is short; letting it wrap costs nothing and stops the page moving
+     sideways. D-146. */
+  .conf { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; border-radius: var(--radius-pill); padding: 1px 6px; border: 1px solid var(--color-border); color: var(--color-text-faint); overflow-wrap: anywhere; max-width: 100%; }
   .conf:empty { display: none; }
   .conf.is-guess { border-color: var(--color-caution); color: var(--color-caution); }
   .conf.is-entered { border-color: var(--color-positive, #3fa66b); color: var(--color-positive, #3fa66b); }

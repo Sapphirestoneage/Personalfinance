@@ -159,10 +159,12 @@ moved between them. `rooms/history.html`, D-122.
   blind. Each room needs someone to say which of its cards are independent
   and may sit side by side. The dashboard's instrument grid and the map are
   the only two that use a monitor properly today.
-- Also open: the audit script itself (`scratchpad/audit.js` in the session
-  that wrote D-136) is worth keeping as `test/responsive.js` — it walks
-  every room at two widths and reports overflow, small targets and width
-  used. It is currently rebuilt by hand each time the question comes up.
+- **~~Also open: the audit script~~ — done (D-146).** It is
+  `test/responsive.js`: every room at five widths, checking sideways scroll,
+  the 32px floor, clipped text and width used. Its first run found the
+  intake page scrolling 142px sideways at 390px and 44 controls under the
+  floor; its second caught a regression I had introduced an hour earlier.
+  47 problems → 0. `SLAF_ONLY=room-id` checks one room.
 
 ## What people ask about that this does not answer (the coverage gap)
 

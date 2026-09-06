@@ -867,6 +867,19 @@ html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
      grows on a coarse pointer. A mouse keeps the 20px circle. */
   .slaf-info { width: 30px; height: 30px; font-size: 14px; }
   .slaf-manage-toggle { min-height: 32px; display: inline-flex; align-items: center; }
+  /* The floor, applied to the controls rather than to a list of class names
+     one room at a time. test/responsive.js found 44 targets under it across
+     18 rooms — segmented filters at 17px, a remove button at 20px, preset
+     rows at 17px — every one of them a thing a finger has to hit. The ⓘ is
+     the one deliberate exception at 30px (D-136) and names itself. D-146. */
+  button, select, .pill, [role="button"] { min-height: 32px; }
+  /* `min-height` alone, NOT `display: inline-flex`. Making every button a
+     flex box was the first attempt and it broke What If, Life: a flex item
+     will not shrink below its content, so a button in a 152px grid track
+     grew to 178px and pushed the page 26px sideways at 320. The suite caught
+     it on the very next run, which is the argument for having the suite.
+     Buttons that need centring say so themselves. */
+  .slaf-info { min-height: 0; }
   /* NOT display:flex — that drops `list-item` and Chromium then paints no
      ::marker at all, so on a phone the drawer lost its triangle entirely.
      Take the height from padding instead. */

@@ -35,7 +35,7 @@
   .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   section[id] { scroll-margin-top: var(--space-4); }
 
-  .events { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+  .events { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-2); }
   .events button { text-align: left; font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; }
   .events button[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-accent); color: var(--color-accent-contrast); }
   .events button small { display: block; font-size: var(--text-xs); opacity: .8; margin-top: 2px; }

@@ -53,6 +53,13 @@
   .say { font-size: var(--text-sm); margin: var(--space-3) 0 0; color: var(--color-text-muted); }
   .say.is-good { color: var(--color-positive); }
   .pill { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-accent-hover); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; text-decoration: none; }
+  /* "Do it →" is an <a>, so the shared coarse-pointer floor for buttons and
+     .pill elements never reached it: at 320px it measured 20px tall against
+     a 32px minimum, on the one control that leaves this room for the thing
+     you are meant to go and do. D-146. */
+  @media (pointer: coarse) {
+    a.pill { display: inline-flex; align-items: center; min-height: 32px; }
+  }
   .pill:hover { border-color: var(--color-accent); }
   .pill.is-quiet { color: var(--color-text-faint); }
   .counts { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-2); }
