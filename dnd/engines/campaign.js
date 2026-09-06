@@ -318,29 +318,64 @@
       return s.tiers.indexOf(tier) !== -1
         && s.options.every(function (o) { return resolveMoney(o, h) !== null; });
     });
+
+    /* A FOCUSED RUN. state.focusSubStats names the sub-stats the player asked
+       to train; a card counts as training one if any of its options moves it,
+       read off the bank rather than a second hand-kept list. */
+    var want = (state.focusSubStats && state.focusSubStats.length) ? state.focusSubStats : null;
+    function trains(s) {
+      if (!want) return false;
+      return s.options.some(function (o) {
+        return Object.keys(o.subStats || {}).some(function (k) {
+          return o.subStats[k] > 0 && want.indexOf(k) !== -1;
+        });
+      });
+    }
+
     var fresh = pool.filter(function (s) { return seen.indexOf(s.id) === -1; });
-    /* Run out of fresh ones and the campaign repeats rather than stopping —
-       but only after everything unseen has been offered. */
-    var usable = fresh.length >= size ? fresh : fresh.concat(pool.filter(function (s) {
-      return fresh.indexOf(s) === -1;
-    }));
+
+    /* PREFERENCE, NOT A FILTER — and this ordering is the whole point.
+       Narrowing the pool to the focus outright looked right and dealt repeats
+       within a single chapter: a tier's worth of cards that train one ability
+       is smaller than a tier, and the moment fewer than a board's worth are
+       left the deal starts reoffering cards already played. Being shown a
+       situation you have just answered is worse than being shown a fresh one
+       that trains something else, so a focused board takes every unseen card
+       that trains the target FIRST, then tops up with other unseen cards, and
+       only reaches for a seen card when nothing unseen is left at all. */
+    var usable;
+    if (want) {
+      var focused = fresh.filter(trains);
+      var rest = fresh.filter(function (s) { return focused.indexOf(s) === -1; });
+      usable = focused.concat(rest);
+    } else {
+      usable = fresh;
+    }
+    if (usable.length < size) {
+      usable = usable.concat(pool.filter(function (s) { return usable.indexOf(s) === -1; }));
+    }
 
     var r = rng(hash(String(state.seed) + ':' + state.chapter + ':' + state.round));
     return usable.map(function (s) {
       var distance = step === null ? 0 : Math.abs(s.fooStep - step);
-      return { s: s, k: distance * 10 + r() * 9 };   /* relevance, then jitter */
+      /* On a focused run, training the thing you asked to train outranks
+         being near your step — otherwise the top-up cards, which are often
+         closer to your position, crowd out the ones you came for. */
+      var miss = (want && !trains(s)) ? 1000 : 0;
+      return { s: s, k: miss + distance * 10 + r() * 9 };   /* relevance, then jitter */
     }).sort(function (a, b) { return a.k - b.k; })
       .slice(0, size).map(function (x) { return x.s; });
   }
 
   /* ---- running a round --------------------------------------------------- */
 
-  function start(household, tables) {
+  function start(household, tables, focusSubStats) {
     var fork = clone(household || {});
     return {
       startedAt: new Date().toISOString(),
       seed: hash(JSON.stringify(fork).slice(0, 400) + Date.now()),
       chapter: 1, round: 0,
+      focusSubStats: (focusSubStats && focusSubStats.length) ? focusSubStats.slice() : null,
       seen: [], history: [],
       household: fork,
       opening: snapshot(fork, tables),

@@ -71,6 +71,21 @@ const CASES = [
     room: '/dnd/campaign.html',
     container: '#basics-fields',
     seed: 'empty',
+    prepare: async (page) => {
+      /* The run through opens on five questions now, so the money boxes are
+         several taps deeper. Walk in the way a person does — reaching past
+         the front of a flow is how a test stops testing the real thing. */
+      for (let i = 0; i < 5; i++) {
+        const q = await page.$('#q-options [data-answer]');
+        if (!q) break;
+        await q.tap();
+        await page.waitForTimeout(120);
+      }
+      const next = await page.$('#btn-qr-next');
+      if (next) { await next.tap(); await page.waitForTimeout(200); }
+      const real = await page.$('[data-route="real"]');
+      if (real) { await real.tap(); await page.waitForTimeout(200); }
+    },
     fields: [
       { sel: '#c-income', type: '52000' },
       { sel: '#c-expenses', type: '2800' },
@@ -88,7 +103,8 @@ const CASES = [
         ['cash landed as a liquid asset', asset('cash').valueCents, 600000],
         ['investments landed', asset('investment').valueCents, 1500000],
         /* Debt has its own writer; getting it through setMoney would throw. */
-        ['debt landed through setDebt', (d.debts || [])[0].balanceCents, 340000]
+        ['debt landed through setDebt', (d.debts || [])[0].balanceCents, 340000],
+        ['and the five answers were kept', Object.keys(d.dndProfile.quiz5 || {}).length, 5]
       ];
     }
   },
@@ -916,11 +932,36 @@ const SELECT_CASES = [
         JSON.stringify(DND_CHARACTER));
       await page.reload({ waitUntil: 'networkidle' });
       await page.waitForTimeout(400);
-      /* Creation now fronts this room, so a character with numbers already in
-         it lands on "Your character", not the prologue. Walk the last step the
-         way a person does rather than reaching past it. */
-      const next = await page.$('#btn-result-next');
-      if (next) { await next.tap(); await page.waitForTimeout(300); }
+      /* The prologue is now the LAST screen of a five-phase run through, so a
+         seeded character still has to be walked all the way to it. */
+      for (let i = 0; i < 5; i++) {
+        const q = await page.$('#q-options [data-answer]');
+        if (!q) break;
+        await q.tap();
+        await page.waitForTimeout(120);
+      }
+      const toMethod = await page.$('#btn-qr-next');
+      if (toMethod) { await toMethod.tap(); await page.waitForTimeout(200); }
+      const real = await page.$('[data-route="real"]');
+      if (real) { await real.tap(); await page.waitForTimeout(200); }
+      const onward = await page.$('#btn-basics-next');
+      if (onward) { await onward.tap(); await page.waitForTimeout(200); }
+      for (let i = 0; i < 60; i++) {
+        const id = await page.evaluate(() => {
+          const b = [...document.querySelectorAll('#pb-rows [data-pb="up"]')].find(x => !x.disabled);
+          return b ? b.getAttribute('data-abil') : null;
+        });
+        if (!id) break;
+        await page.tap('[data-pb="up"][data-abil="' + id + '"]');
+      }
+      const toStats = await page.$('#btn-abil-next');
+      if (toStats) { await toStats.tap(); await page.waitForTimeout(300); }
+      const toImprove = await page.$('#btn-result-next');
+      if (toImprove) { await toImprove.tap(); await page.waitForTimeout(250); }
+      const toFocus = await page.$('#btn-improve-next');
+      if (toFocus) { await toFocus.tap(); await page.waitForTimeout(250); }
+      const anyStat = await page.$('#btn-focus-any');
+      if (anyStat) { await anyStat.tap(); await page.waitForTimeout(300); }
     },
     picks: [
       ['#q-match', 'half6'],

@@ -2253,6 +2253,1394 @@
           "note": "This is the fixed-cost share creeping up — the number Constitution is built out of."
         }
       ]
+    },
+    {
+      "id": "the-review",
+      "title": "The review",
+      "setup": "Good ratings, warm words, and no number mentioned anywhere in forty minutes.",
+      "prompt": "Do you raise it?",
+      "fooStep": 1,
+      "tiers": [
+        "I",
+        "II",
+        "III"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "ask",
+          "label": "Ask for a number, out loud, before you leave the room",
+          "outcome": "Ninety uncomfortable seconds. They say they will look into it, and because you asked, they do. Nobody has ever been given a raise for being obviously excellent and silent.",
+          "serves": 1,
+          "lever": "earner",
+          "subStats": {
+            "negotiation": 2,
+            "incomePower": 2,
+            "personability": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.05
+            }
+          }
+        },
+        {
+          "id": "market",
+          "label": "Find out what the job pays elsewhere first, then ask",
+          "outcome": "Three ads and one honest coffee. You go in with a figure rather than a feeling, and the figure is higher than the one you would have asked for.",
+          "serves": 1,
+          "lever": "earner",
+          "subStats": {
+            "negotiation": 2,
+            "incomePower": 3,
+            "network": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.08
+            }
+          }
+        },
+        {
+          "id": "wait",
+          "label": "Wait for the pay round. It's only a few months.",
+          "outcome": "The pay round applies a percentage to the number you already have. You have just agreed to be raised from the wrong starting point.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.02
+            }
+          },
+          "note": "Waiting is a decision. It is usually the expensive one."
+        }
+      ]
+    },
+    {
+      "id": "the-other-offer",
+      "title": "Someone else is offering",
+      "setup": "A recruiter you did not chase. The number is meaningfully higher and you like your team.",
+      "prompt": "What do you do with it?",
+      "fooStep": 1,
+      "tiers": [
+        "II",
+        "III"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "take",
+          "label": "Take it",
+          "outcome": "Changing employer still moves pay more than being excellent where you are. Unfair, thoroughly documented, and true.",
+          "serves": 1,
+          "lever": "earner",
+          "subStats": {
+            "incomePower": 3,
+            "incomeTrajectory": 2,
+            "structuralMobility": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.15
+            }
+          }
+        },
+        {
+          "id": "counter",
+          "label": "Show your boss and ask them to match",
+          "outcome": "They match about half of it. You keep the team, and you are now the person who has one foot out — which cuts both ways for years.",
+          "serves": 1,
+          "lever": "earner",
+          "subStats": {
+            "negotiation": 3,
+            "incomePower": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.07
+            }
+          }
+        },
+        {
+          "id": "decline",
+          "label": "Turn it down quietly and say nothing",
+          "outcome": "Loyalty is lovely and it is not a financial instrument. You have priced yourself and told nobody, including yourself.",
+          "serves": null,
+          "lever": null,
+          "subStats": {
+            "selfAwareness": 1
+          },
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-first-pound",
+      "title": "The first pound",
+      "setup": "You have a skill people ask you about for free. Regularly.",
+      "prompt": "Does anyone ever pay for it?",
+      "fooStep": 1,
+      "tiers": [
+        "I",
+        "II"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "charge",
+          "label": "Charge someone. Anything. Once.",
+          "outcome": "The gap between nothing and one pound is the entire distance. Everything after that is volume, and volume is the easy part.",
+          "serves": 1,
+          "lever": "builder",
+          "subStats": {
+            "hustleCapacity": 3,
+            "incomeTrajectory": 1,
+            "personability": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "cents": 120000
+            }
+          }
+        },
+        {
+          "id": "package",
+          "label": "Spend a weekend making it into something you can actually sell",
+          "outcome": "A page, a price, a way to pay. Slower off the line and it keeps earning while you are asleep.",
+          "serves": 1,
+          "lever": "builder",
+          "subStats": {
+            "hustleCapacity": 2,
+            "instrumentLiteracy": 1,
+            "network": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "cents": 300000
+            }
+          }
+        },
+        {
+          "id": "free",
+          "label": "Keep doing it for free. It's only ever a favour.",
+          "outcome": "Genuinely fine. Just know that you now have no answer to the question of what you would do if the job stopped on Friday.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {},
+          "note": "Hustle Capacity is not about the money. It is about having an answer."
+        }
+      ]
+    },
+    {
+      "id": "the-title",
+      "title": "Money or the title",
+      "setup": "They will give you one of the two this year and they are being unusually honest about it.",
+      "prompt": "Which?",
+      "fooStep": 2,
+      "tiers": [
+        "II",
+        "III"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "title",
+          "label": "The title",
+          "outcome": "A title resets the band you get paid inside. A raise moves you within the one you are already in. This is slower this year and larger by the third.",
+          "serves": 2,
+          "lever": "earner",
+          "subStats": {
+            "incomeTrajectory": 3,
+            "network": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.03
+            }
+          }
+        },
+        {
+          "id": "cash",
+          "label": "The money, now",
+          "outcome": "Real, spendable, and it compounds from today. It also leaves you in the same band next year, asking the same question.",
+          "serves": 2,
+          "lever": "earner",
+          "subStats": {
+            "incomePower": 2
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.09
+            }
+          }
+        },
+        {
+          "id": "both",
+          "label": "Ask for the title now and the money at the next review, in writing",
+          "outcome": "They say yes more often than people expect, because it costs them nothing this quarter. In writing is the load-bearing part.",
+          "serves": 2,
+          "lever": "earner",
+          "subStats": {
+            "negotiation": 3,
+            "incomeTrajectory": 2
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.06
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-quiet-years",
+      "title": "Three quiet years",
+      "setup": "You look back and your pay has moved about two percent a year. Inflation did not.",
+      "prompt": "What is that, exactly?",
+      "fooStep": 1,
+      "tiers": [
+        "II",
+        "III"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "name-it",
+          "label": "Call it what it is — a pay cut — and plan to fix it this year",
+          "outcome": "Two below-inflation years in a row is a pay cut wearing a nice hat. Naming it is what makes it a problem you can act on.",
+          "serves": 1,
+          "lever": "earner",
+          "subStats": {
+            "incomeTrajectory": 3,
+            "selfAwareness": 2
+          },
+          "money": {}
+        },
+        {
+          "id": "skill",
+          "label": "Pick one thing your industry is short of and get visibly good at it",
+          "outcome": "Visibly is doing the work in that sentence. Nobody has ever paid more for a skill they could not see.",
+          "serves": 1,
+          "lever": "builder",
+          "subStats": {
+            "incomeTrajectory": 2,
+            "hustleCapacity": 1,
+            "network": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.04
+            }
+          }
+        },
+        {
+          "id": "shrug",
+          "label": "It's a tough market. Everyone's the same.",
+          "outcome": "Some of them are. The ones who moved are not, and in ten years the gap between you is not recoverable by working harder.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-side-hours",
+      "title": "Six hours a week",
+      "setup": "You have found six hours. Genuinely found them, not imagined them.",
+      "prompt": "What goes in them?",
+      "fooStep": 2,
+      "tiers": [
+        "I",
+        "II",
+        "III"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "second-income",
+          "label": "Something that pays, however badly at first",
+          "outcome": "A second income is not really about the money at this size. It is about no longer having exactly one thing between you and nothing.",
+          "serves": 2,
+          "lever": "builder",
+          "subStats": {
+            "hustleCapacity": 3,
+            "incomeTrajectory": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "cents": 480000
+            }
+          }
+        },
+        {
+          "id": "better-paid",
+          "label": "Getting better at the thing that already pays you",
+          "outcome": "Lower variance, and it raises the number that is already the biggest one you have. Boring and frequently correct.",
+          "serves": 2,
+          "lever": "earner",
+          "subStats": {
+            "incomePower": 2,
+            "incomeTrajectory": 2
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.05
+            }
+          }
+        },
+        {
+          "id": "rest",
+          "label": "Rest. Actually rest.",
+          "outcome": "Not a wrong answer. Burnout has ended more earning careers than bad investing ever has, and this game cannot score that.",
+          "serves": null,
+          "lever": null,
+          "subStats": {
+            "selfAwareness": 2
+          },
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-freelance-rate",
+      "title": "Naming your rate",
+      "setup": "They ask what you charge. There is a pause and it is your turn to fill it.",
+      "prompt": "What comes out of your mouth?",
+      "fooStep": 2,
+      "tiers": [
+        "II",
+        "III",
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "high-then-quiet",
+          "label": "A number higher than feels comfortable — then say nothing",
+          "outcome": "The silence afterwards is the entire technique. Most people fill it and negotiate against themselves before the other side has spoken.",
+          "serves": 2,
+          "lever": "builder",
+          "subStats": {
+            "negotiation": 3,
+            "hustleCapacity": 2,
+            "incomePower": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "cents": 600000
+            }
+          }
+        },
+        {
+          "id": "ask-budget",
+          "label": "Ask what they had budgeted",
+          "outcome": "Sometimes a gift, sometimes an anchor dropped on your foot. Worth asking once — never worth accepting immediately.",
+          "serves": 2,
+          "lever": "builder",
+          "subStats": {
+            "negotiation": 2,
+            "personability": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "cents": 420000
+            }
+          }
+        },
+        {
+          "id": "low",
+          "label": "Something safe. You want the work.",
+          "outcome": "You get the work, and the rate you name first becomes the rate they expect forever. Raising it later is a much harder conversation than naming it now.",
+          "serves": null,
+          "lever": "builder",
+          "subStats": {
+            "hustleCapacity": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "cents": 240000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-redundancy-whisper",
+      "title": "The reorganisation",
+      "setup": "Nothing announced. But the good projects have stopped arriving and you have noticed.",
+      "prompt": "Six weeks of warning. What do you do with it?",
+      "fooStep": 1,
+      "tiers": [
+        "II",
+        "III"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "market-self",
+          "label": "Start talking to people now, while you still have a job",
+          "outcome": "You negotiate far better from inside a job than outside one, and everybody on the other side of the table knows it.",
+          "serves": 1,
+          "lever": "earner",
+          "subStats": {
+            "network": 3,
+            "incomePower": 2,
+            "threatDetection": 2
+          },
+          "money": {}
+        },
+        {
+          "id": "buffer",
+          "label": "Cut hard and get another month of cash in the account",
+          "outcome": "It buys you the ability to say no to the first offer, which is usually worth more than the month itself.",
+          "serves": 1,
+          "lever": "anchor",
+          "subStats": {
+            "reserveDepth": 2,
+            "threatDetection": 2,
+            "obligationFlex": 1
+          },
+          "money": {
+            "cash": {
+              "months": 0.6
+            },
+            "monthlyExpenses": {
+              "months": -0.08
+            }
+          }
+        },
+        {
+          "id": "head-down",
+          "label": "Work harder and hope it passes",
+          "outcome": "Sometimes it does. It is not a plan, it is a wish with overtime attached.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-locked-money",
+      "title": "Money you cannot reach",
+      "setup": "Most of what you have saved is somewhere with a penalty attached to leaving early.",
+      "prompt": "Does that matter?",
+      "fooStep": 1,
+      "tiers": [
+        "II",
+        "III"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "move-some",
+          "label": "Move a month of it somewhere you can actually get to",
+          "outcome": "Money behind a penalty is not available in the week you need it, and the week you need it is the only week that counts.",
+          "serves": 1,
+          "lever": "anchor",
+          "subStats": {
+            "liquidityAgility": 3,
+            "reserveDepth": 1
+          },
+          "money": {}
+        },
+        {
+          "id": "find-out",
+          "label": "Find out what it actually costs to get at, on a calm afternoon",
+          "outcome": "Same-day, three days, or a penalty. Three very different answers, and the worst time to learn which is the bad Tuesday.",
+          "serves": 1,
+          "lever": "anchor",
+          "subStats": {
+            "liquidityAgility": 2,
+            "instrumentLiteracy": 2,
+            "scenarioForesight": 1
+          },
+          "money": {}
+        },
+        {
+          "id": "leave",
+          "label": "Leave it. It's earning more where it is.",
+          "outcome": "It is. Until the day it has to be sold at whatever price the morning offers, which is precisely the day you did not plan for.",
+          "serves": null,
+          "lever": "compounder",
+          "subStats": {},
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-lease",
+      "title": "Twelve months or twenty-four",
+      "setup": "The longer one is cheaper per month. Meaningfully cheaper.",
+      "prompt": "Which do you sign?",
+      "fooStep": 1,
+      "tiers": [
+        "I",
+        "II"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "short",
+          "label": "Twelve. Pay the difference for the option to leave.",
+          "outcome": "Every extra month locked in is a month you cannot take a better offer somewhere else. That option has a price and this is it.",
+          "serves": 1,
+          "lever": "anchor",
+          "subStats": {
+            "structuralMobility": 3,
+            "obligationFlex": 2
+          },
+          "money": {
+            "monthlyExpenses": {
+              "cents": 6000
+            }
+          }
+        },
+        {
+          "id": "long",
+          "label": "Twenty-four. The saving is real and I'm not going anywhere.",
+          "outcome": "Defensible if it is true. The trouble is that the offer worth moving for never arrives during a month you had planned for it.",
+          "serves": 1,
+          "lever": "keeper",
+          "subStats": {
+            "savingsRate": 1
+          },
+          "money": {
+            "monthlyExpenses": {
+              "cents": -6000
+            }
+          }
+        },
+        {
+          "id": "negotiate-break",
+          "label": "Sign the long one, but ask for a break clause",
+          "outcome": "They often say yes because it costs them nothing today. You get the lower rate and keep the door.",
+          "serves": 1,
+          "lever": "anchor",
+          "subStats": {
+            "negotiation": 3,
+            "structuralMobility": 2,
+            "obligationFlex": 1
+          },
+          "money": {
+            "monthlyExpenses": {
+              "cents": -4000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-fixed-list",
+      "title": "What leaves whether you like it or not",
+      "setup": "You sit down and write out every payment that goes out automatically.",
+      "prompt": "What do you do with the list?",
+      "fooStep": 1,
+      "tiers": [
+        "I",
+        "II"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "kill-biggest",
+          "label": "Kill the single biggest one you could live without",
+          "outcome": "One big cut beats six small ones, and you only have to be brave the once. The list is always longer than the memory of it.",
+          "serves": 1,
+          "lever": "keeper",
+          "subStats": {
+            "obligationFlex": 3,
+            "selfAwareness": 1
+          },
+          "money": {
+            "monthlyExpenses": {
+              "months": -0.09
+            }
+          }
+        },
+        {
+          "id": "refinance",
+          "label": "Refinance everything above about seven percent",
+          "outcome": "The rate is the wound; the balance is only how big it is. Same debt, materially less bleeding.",
+          "serves": 1,
+          "lever": "keeper",
+          "subStats": {
+            "obligationFlex": 2,
+            "instrumentLiteracy": 2,
+            "negotiation": 1
+          },
+          "money": {
+            "monthlyExpenses": {
+              "cents": -7000
+            }
+          }
+        },
+        {
+          "id": "filed",
+          "label": "Feel briefly alarmed, then file it",
+          "outcome": "The list does not shrink from being looked at. It was never the looking that was the hard part.",
+          "serves": null,
+          "lever": null,
+          "subStats": {
+            "selfAwareness": 1
+          },
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-remote-handshake",
+      "title": "Remote, but only verbally",
+      "setup": "You work from anywhere. It has never been written down and your manager is leaving.",
+      "prompt": "Do you push?",
+      "fooStep": 2,
+      "tiers": [
+        "II",
+        "III"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "in-writing",
+          "label": "Get it in the contract before they go",
+          "outcome": "A verbal arrangement is worth exactly nothing the day the person who agreed it walks out. This costs one awkward email.",
+          "serves": 2,
+          "lever": "earner",
+          "subStats": {
+            "structuralMobility": 3,
+            "negotiation": 2,
+            "scenarioForesight": 1
+          },
+          "money": {}
+        },
+        {
+          "id": "quiet",
+          "label": "Say nothing and hope the new one is relaxed about it",
+          "outcome": "They might be. You have made your ability to live where you live somebody else's decision, and you will not be told when it changes.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {}
+        },
+        {
+          "id": "plan-b",
+          "label": "Price what it would cost to be in the office three days a week",
+          "outcome": "Commute, time, childcare, the lot. Knowing the number turns a vague dread into a thing you could negotiate about.",
+          "serves": 2,
+          "lever": "anchor",
+          "subStats": {
+            "scenarioForesight": 2,
+            "structuralMobility": 1,
+            "obligationFlex": 1
+          },
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-car-decision",
+      "title": "The car is dying",
+      "setup": "Another repair, and the next one is not far behind it.",
+      "prompt": "What replaces it?",
+      "fooStep": 1,
+      "tiers": [
+        "I",
+        "II"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "cheap-cash",
+          "label": "Something dull, paid for outright",
+          "outcome": "No monthly payment is a permanent raise you gave yourself, and it cannot be repossessed when a bad year arrives.",
+          "serves": 1,
+          "lever": "keeper",
+          "subStats": {
+            "obligationFlex": 3,
+            "liquidityAgility": 1
+          },
+          "money": {
+            "cash": {
+              "months": -1.5
+            }
+          }
+        },
+        {
+          "id": "finance",
+          "label": "Finance something newer. The monthly is manageable.",
+          "outcome": "Manageable is doing a lot of work there. You have converted a one-off problem into a fixed cost that outlives your interest in the car.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {
+            "monthlyExpenses": {
+              "cents": 24000
+            },
+            "debt": {
+              "months": 4
+            }
+          }
+        },
+        {
+          "id": "no-car",
+          "label": "Work out whether you need one at all",
+          "outcome": "Sometimes the answer is genuinely no, and it is the largest single cut available to most households.",
+          "serves": 1,
+          "lever": "keeper",
+          "subStats": {
+            "obligationFlex": 3,
+            "structuralMobility": 2,
+            "selfAwareness": 1
+          },
+          "money": {
+            "monthlyExpenses": {
+              "months": -0.12
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-move",
+      "title": "Somewhere cheaper",
+      "setup": "The same life, forty minutes further out, for four hundred less a month.",
+      "prompt": "Would you?",
+      "fooStep": 2,
+      "tiers": [
+        "II",
+        "III"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "go",
+          "label": "Go. Four hundred a month is four hundred a month.",
+          "outcome": "Housing is the largest lever most people will ever have and the one they touch least. Moved once, it stays moved.",
+          "serves": 2,
+          "lever": "anchor",
+          "subStats": {
+            "structuralMobility": 3,
+            "obligationFlex": 2,
+            "savingsRate": 1
+          },
+          "money": {
+            "monthlyExpenses": {
+              "cents": -40000
+            },
+            "cash": {
+              "cents": -150000
+            }
+          }
+        },
+        {
+          "id": "price-it",
+          "label": "Price the whole thing first — commute, time, what you'd lose",
+          "outcome": "Forty minutes each way is roughly a working day a week. Sometimes the saving survives that and sometimes it does not.",
+          "serves": 2,
+          "lever": "keeper",
+          "subStats": {
+            "scenarioForesight": 3,
+            "selfAwareness": 1,
+            "obligationFlex": 1
+          },
+          "money": {}
+        },
+        {
+          "id": "stay",
+          "label": "Stay. There's more to life than the rent.",
+          "outcome": "Completely true, and worth being deliberate about rather than default about. You are buying something with that four hundred — make sure you know what.",
+          "serves": null,
+          "lever": null,
+          "subStats": {
+            "selfAwareness": 1
+          },
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-first-job-offer",
+      "title": "They've made you an offer",
+      "setup": "Your first proper one. The number is written down and you are trying not to look too pleased.",
+      "prompt": "Do you say yes straight away?",
+      "fooStep": 0,
+      "tiers": [
+        "I",
+        "II"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "ask-more",
+          "label": "Ask for a bit more. Politely, once.",
+          "outcome": "They expected you to. Almost nobody does at this stage, and the number you start on follows you through every percentage rise for a decade.",
+          "serves": 0,
+          "lever": "earner",
+          "subStats": {
+            "negotiation": 3,
+            "incomePower": 2
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.06
+            }
+          }
+        },
+        {
+          "id": "ask-other",
+          "label": "Ask about the things that aren't salary",
+          "outcome": "Pension match, holiday, the training budget. Cheaper for them to say yes to, and the match in particular is money you would otherwise simply not be given.",
+          "serves": 0,
+          "lever": "earner",
+          "subStats": {
+            "negotiation": 2,
+            "taxLiteracy": 2,
+            "instrumentLiteracy": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.03
+            }
+          }
+        },
+        {
+          "id": "yes",
+          "label": "Say yes. Obviously yes.",
+          "outcome": "Fair enough — and every rise you ever get here is a percentage of this number. Starting low is the most quietly expensive thing on this page.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {},
+          "note": "Your starting salary is the base every future rise is calculated from."
+        }
+      ]
+    },
+    {
+      "id": "the-extra-shift",
+      "title": "Overtime, if you want it",
+      "setup": "Two extra shifts a week are going spare. Not forever, but for a while.",
+      "prompt": "Take them?",
+      "fooStep": 1,
+      "tiers": [
+        "I"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "take-and-ringfence",
+          "label": "Take them, and send every penny straight to the buffer",
+          "outcome": "Temporary money aimed at a permanent problem. The shifts end; the month of breathing room does not.",
+          "serves": 1,
+          "lever": "earner",
+          "subStats": {
+            "hustleCapacity": 2,
+            "savingsRate": 2,
+            "reserveDepth": 2
+          },
+          "money": {
+            "cash": {
+              "months": 0.8
+            },
+            "incomeAnnual": {
+              "cents": 260000
+            }
+          }
+        },
+        {
+          "id": "take-and-live",
+          "label": "Take them and enjoy the extra",
+          "outcome": "Entirely allowed. Just notice that your spending will quietly rise to meet it and will not fall back when the shifts stop.",
+          "serves": null,
+          "lever": "earner",
+          "subStats": {
+            "incomePower": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "cents": 260000
+            },
+            "monthlyExpenses": {
+              "cents": 9000
+            }
+          }
+        },
+        {
+          "id": "decline",
+          "label": "No. The time is worth more than the money right now.",
+          "outcome": "Often the right call and almost never said out loud. Exhaustion has ended more earning careers than bad investing ever has.",
+          "serves": null,
+          "lever": null,
+          "subStats": {
+            "selfAwareness": 2
+          },
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-certificate",
+      "title": "The course",
+      "setup": "Six weekends and about four hundred pounds. People with it earn visibly more.",
+      "prompt": "Worth it?",
+      "fooStep": 1,
+      "tiers": [
+        "I",
+        "II"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "check-first",
+          "label": "Check three job ads that ask for it before paying anything",
+          "outcome": "Five minutes that decides whether four hundred pounds is an investment or a hobby. Most courses fail this test.",
+          "serves": 1,
+          "lever": "builder",
+          "subStats": {
+            "incomeTrajectory": 2,
+            "scenarioForesight": 2,
+            "instrumentLiteracy": 1
+          },
+          "money": {}
+        },
+        {
+          "id": "do-it",
+          "label": "Do it. It pays for itself in two months if it works.",
+          "outcome": "One of the few things that reliably lifts the biggest number you have. It is also six weekends you do not get back.",
+          "serves": 1,
+          "lever": "builder",
+          "subStats": {
+            "incomeTrajectory": 3,
+            "incomePower": 2
+          },
+          "money": {
+            "cash": {
+              "cents": -40000
+            },
+            "incomeAnnual": {
+              "pctIncome": 0.07
+            }
+          }
+        },
+        {
+          "id": "employer-pays",
+          "label": "Ask work to pay for it",
+          "outcome": "They often will, because it is cheap for them and looks good. You have just used their budget to raise your own market rate.",
+          "serves": 1,
+          "lever": "earner",
+          "subStats": {
+            "negotiation": 3,
+            "incomeTrajectory": 2,
+            "network": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.06
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-day-rate",
+      "title": "What you're worth a day",
+      "setup": "You have been quietly charging the same for three years and you are busier than ever.",
+      "prompt": "What happens to the rate?",
+      "fooStep": 9,
+      "tiers": [
+        "III",
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "raise-all",
+          "label": "Raise it for everyone, with a date and no apology",
+          "outcome": "Fully booked at a rate you have not moved in three years is not success, it is a pricing error you have been paying for.",
+          "serves": 9,
+          "lever": "builder",
+          "subStats": {
+            "negotiation": 3,
+            "incomePower": 3,
+            "hustleCapacity": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.2
+            }
+          }
+        },
+        {
+          "id": "raise-new",
+          "label": "Raise it for new clients only",
+          "outcome": "Painless, slower, and it works. Within a year the old rate is a small and shrinking part of your income.",
+          "serves": 9,
+          "lever": "builder",
+          "subStats": {
+            "negotiation": 2,
+            "incomePower": 2
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.08
+            }
+          }
+        },
+        {
+          "id": "hold",
+          "label": "Hold it. They've been loyal.",
+          "outcome": "Loyalty runs both ways and they are not offering you a rise unprompted. Being fully booked is the market telling you the price is too low.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-equity-offer",
+      "title": "Salary or equity",
+      "setup": "They will pay you well, or slightly less and a slice of the thing.",
+      "prompt": "Which slice do you take?",
+      "fooStep": 8,
+      "tiers": [
+        "III",
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "salary",
+          "label": "Take the salary. Equity in most companies is worth nothing.",
+          "outcome": "Statistically hard to argue with. Certain money now beats a lottery ticket you cannot sell, and you can invest the difference yourself.",
+          "serves": 8,
+          "lever": "earner",
+          "subStats": {
+            "incomePower": 2,
+            "marketLiteracy": 1,
+            "threatDetection": 2
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.12
+            }
+          }
+        },
+        {
+          "id": "both",
+          "label": "Take the salary and negotiate the equity separately",
+          "outcome": "They are two different conversations and treating them as one is how people give away the first to win the second.",
+          "serves": 8,
+          "lever": "earner",
+          "subStats": {
+            "negotiation": 3,
+            "instrumentLiteracy": 2,
+            "incomePower": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": 0.08
+            }
+          }
+        },
+        {
+          "id": "equity",
+          "label": "Take the equity. This one's different.",
+          "outcome": "It might be. Make sure the salary you accept is one you could live on for years, because that is the actual bet you just made.",
+          "serves": null,
+          "lever": "speculator",
+          "subStats": {
+            "marketLiteracy": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "pctIncome": -0.06
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-board-seat",
+      "title": "They'd like you on the board",
+      "setup": "A day a month, a fee that is not life-changing, and a room you have never been in.",
+      "prompt": "Do you take it?",
+      "fooStep": 9,
+      "tiers": [
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "take",
+          "label": "Take it. The room is the point, not the fee.",
+          "outcome": "The fee is incidental. The people in that room are where the next three opportunities come from, and you cannot meet them any other way.",
+          "serves": 9,
+          "lever": "builder",
+          "subStats": {
+            "network": 3,
+            "incomeTrajectory": 2,
+            "personability": 1
+          },
+          "money": {
+            "incomeAnnual": {
+              "cents": 900000
+            }
+          }
+        },
+        {
+          "id": "diligence",
+          "label": "Find out what you'd be liable for first",
+          "outcome": "Directors carry duties that do not vanish because it was a favour. One afternoon of reading, before rather than after.",
+          "serves": 9,
+          "lever": "anchor",
+          "subStats": {
+            "threatDetection": 3,
+            "instrumentLiteracy": 2,
+            "scenarioForesight": 1
+          },
+          "money": {}
+        },
+        {
+          "id": "decline",
+          "label": "No. A day a month is a day a month.",
+          "outcome": "Reasonable. Time is the thing you have least of at this stage and the only one you cannot buy back.",
+          "serves": null,
+          "lever": null,
+          "subStats": {
+            "selfAwareness": 1
+          },
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-deposit-trap",
+      "title": "Everything you have is the deposit",
+      "setup": "You have saved hard. All of it is earmarked for one flat.",
+      "prompt": "Is that all of it?",
+      "fooStep": 1,
+      "tiers": [
+        "I",
+        "II"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "hold-back",
+          "label": "Hold a month of expenses back, outside the deposit",
+          "outcome": "Completing on a flat with nothing left is how a boiler becomes a credit card. The month you keep is what stops that.",
+          "serves": 1,
+          "lever": "anchor",
+          "subStats": {
+            "liquidityAgility": 3,
+            "reserveDepth": 2,
+            "scenarioForesight": 1
+          },
+          "money": {}
+        },
+        {
+          "id": "all-in",
+          "label": "All of it. A bigger deposit is a smaller mortgage.",
+          "outcome": "True, and it leaves you owning something illiquid with no cash at all. The first surprise after moving in goes on a card at twenty-odd percent.",
+          "serves": null,
+          "lever": "landholder",
+          "subStats": {},
+          "money": {}
+        },
+        {
+          "id": "wait",
+          "label": "Wait three months and go in with both",
+          "outcome": "Three months of slightly worse timing buys a permanently better position. Boring, and it is what people who never get into trouble do.",
+          "serves": 1,
+          "lever": "anchor",
+          "subStats": {
+            "liquidityAgility": 2,
+            "reserveDepth": 2,
+            "consistency": 1
+          },
+          "money": {
+            "cash": {
+              "months": 1.5
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-notice-period",
+      "title": "Six months' notice",
+      "setup": "The new contract is good. The notice period is twice what you have ever had.",
+      "prompt": "Does that matter?",
+      "fooStep": 1,
+      "tiers": [
+        "I",
+        "II"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "negotiate-down",
+          "label": "Ask for three. It is almost always negotiable.",
+          "outcome": "A long notice period is a lock on your own front door held by somebody else. They will usually trade it, because it costs them nothing today.",
+          "serves": 1,
+          "lever": "earner",
+          "subStats": {
+            "structuralMobility": 3,
+            "negotiation": 2,
+            "obligationFlex": 1
+          },
+          "money": {}
+        },
+        {
+          "id": "price-it",
+          "label": "Work out what it costs you to be stuck for six months",
+          "outcome": "One missed offer. That is the price, and it is not small — but at least you will have chosen it rather than skimmed past it.",
+          "serves": 1,
+          "lever": "anchor",
+          "subStats": {
+            "scenarioForesight": 3,
+            "structuralMobility": 1
+          },
+          "money": {}
+        },
+        {
+          "id": "sign",
+          "label": "Sign it. It's standard.",
+          "outcome": "It is standard, and it is still six months in which the best thing you will be offered all year cannot be accepted.",
+          "serves": null,
+          "lever": null,
+          "subStats": {},
+          "money": {}
+        }
+      ]
+    },
+    {
+      "id": "the-illiquid-pile",
+      "title": "Most of it is in one thing",
+      "setup": "The bulk of what you own is a single holding you cannot sell quickly or quietly.",
+      "prompt": "What do you do about it?",
+      "fooStep": 9,
+      "tiers": [
+        "III",
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "ladder-out",
+          "label": "Sell it down slowly, on a schedule you set in advance",
+          "outcome": "A schedule decided in a calm month is worth enormously more than a decision made in a bad one. Set it, automate it, stop watching.",
+          "serves": 9,
+          "lever": "compounder",
+          "subStats": {
+            "liquidityAgility": 3,
+            "instrumentLiteracy": 2,
+            "consistency": 2
+          },
+          "money": {
+            "investments": {
+              "months": -6
+            },
+            "cash": {
+              "months": 6
+            }
+          }
+        },
+        {
+          "id": "borrow-against",
+          "label": "Borrow against it rather than sell",
+          "outcome": "Keeps the position and adds a lender to your life who can call at the worst possible moment. Occasionally clever, frequently how people get wiped out.",
+          "serves": null,
+          "lever": "speculator",
+          "subStats": {
+            "instrumentLiteracy": 1
+          },
+          "money": {
+            "debt": {
+              "months": 8
+            },
+            "cash": {
+              "months": 8
+            }
+          }
+        },
+        {
+          "id": "cash-floor",
+          "label": "Just build a cash floor beside it and leave it alone",
+          "outcome": "You are not trying to be optimal. You are trying to never be forced to sell it on a Tuesday you did not choose.",
+          "serves": 9,
+          "lever": "anchor",
+          "subStats": {
+            "liquidityAgility": 2,
+            "reserveDepth": 3,
+            "obligationFlex": 1
+          },
+          "money": {
+            "cash": {
+              "months": 9
+            },
+            "investments": {
+              "months": -9
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the-second-home-costs",
+      "title": "The place you barely use",
+      "setup": "It is lovely. It is also insured, heated, maintained and standing empty most of the year.",
+      "prompt": "What is it actually costing?",
+      "fooStep": 9,
+      "tiers": [
+        "IV"
+      ],
+      "weight": 1,
+      "options": [
+        {
+          "id": "total-it",
+          "label": "Add up every pound it costs a year, including the ones you forget",
+          "outcome": "Standing charges, insurance, maintenance, the tax. The honest total is usually about double the number people carry in their heads.",
+          "serves": 9,
+          "lever": "landholder",
+          "subStats": {
+            "obligationFlex": 2,
+            "scenarioForesight": 2,
+            "selfAwareness": 2
+          },
+          "money": {}
+        },
+        {
+          "id": "let-it",
+          "label": "Let it out for the months you are not there",
+          "outcome": "Turns a fixed cost into something that partly pays for itself, at the price of it no longer being entirely yours.",
+          "serves": 9,
+          "lever": "landholder",
+          "subStats": {
+            "obligationFlex": 3,
+            "hustleCapacity": 2
+          },
+          "money": {
+            "incomeAnnual": {
+              "cents": 800000
+            }
+          }
+        },
+        {
+          "id": "keep",
+          "label": "Keep it exactly as it is. That is what the money was for.",
+          "outcome": "A completely legitimate answer, and the only one on this page that requires you to have decided it on purpose rather than by default.",
+          "serves": null,
+          "lever": null,
+          "subStats": {
+            "selfAwareness": 1
+          },
+          "money": {}
+        }
+      ]
     }
   ]
 }
