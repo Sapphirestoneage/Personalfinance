@@ -181,7 +181,72 @@ const EQUAL_HEIGHT = [
     }
     await ctx.close();
   }
+
+  /* ---- Words inside their boxes ------------------------------------------
+     The Skill Tree draws 665 fixed-size cards on one board, so a name longer
+     than the box does not push the layout — it silently spills or clips, and
+     no unit test can see it. Measure the text against the box in a desktop
+     context, because the board is hidden below 700px in favour of the phone
+     serpentine. */
+  {
+    const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } });
+    const p = await ctx.newPage();
+    p.on('dialog', d => d.accept());
+    await p.goto(BASE + '/rooms/skill-tree.html', { waitUntil: 'networkidle' });
+    await p.waitForTimeout(1200);
+    const fit = await p.evaluate(() => {
+      const out = { total: 0, clipped: [], spilled: [], overlapped: [] };
+      document.querySelectorAll('.board .node').forEach(n => {
+        const name = n.querySelector('.n-name');
+        if (!name) return;
+        out.total++;
+        const box = n.getBoundingClientRect(), t = name.getBoundingClientRect();
+        /* Clipped: the line clamp cut the name off. */
+        if (name.scrollHeight > name.clientHeight + 1) out.clipped.push(name.textContent);
+        /* Spilled: the text box is drawn outside its card. */
+        if (t.bottom > box.bottom + 0.5 || t.right > box.right + 0.5 || t.top < box.top - 0.5) out.spilled.push(name.textContent);
+        /* Overlapped: the name runs under the chips or the state badge. */
+        n.querySelectorAll('.n-chips, .n-lock, .n-date, .n-tag').forEach(o => {
+          const r = o.getBoundingClientRect();
+          if (t.bottom > r.top + 0.5 && t.top < r.bottom - 0.5 && t.right > r.left + 0.5 && t.left < r.right - 0.5) out.overlapped.push(name.textContent);
+        });
+      });
+      return out;
+    });
+    if (!fit.total) { bad++; console.log('  ✗ skill-tree board drew no nodes — check the seeding in this file'); }
+    /* The board only draws a name on a node that is out of the fog, so the
+       pass above sees a few hundred of the 665. Put every name in the
+       catalogue through a real node box as well, so the longest one in the
+       endgame bands is measured today rather than the day someone reaches
+       it. */
+    const all = await p.evaluate(async () => {
+      const probe = document.querySelector('.board .node .n-name');
+      if (!probe) return null;
+      const data = await fetch('/data/skill_tree.json').then(r => r.json());
+      const names = data.skills.map(s => s.name);
+      const was = probe.textContent, tooTall = [];
+      for (const n of names) {
+        probe.textContent = n;
+        if (probe.scrollHeight > probe.clientHeight + 1) tooTall.push(n);
+      }
+      probe.textContent = was;
+      return { count: names.length, tooTall };
+    });
+    if (!all) { bad++; console.log('  ✗ skill-tree: no node box to measure names against'); }
+    else {
+      const ok = all.tooTall.length === 0;
+      if (!ok) bad++;
+      console.log((ok ? '  ✓' : '  ✗') + ` every name in data/skill_tree.json fits a node box: ${all.count - all.tooTall.length}/${all.count}${all.tooTall.length ? ' — e.g. ' + JSON.stringify(all.tooTall.slice(0, 3)) : ''}`);
+    }
+    [['clipped by the line clamp', fit.clipped], ['drawn outside its card', fit.spilled], ['overlapping the chips or badge', fit.overlapped]].forEach(([what, list]) => {
+      const ok = list.length === 0;
+      if (!ok) bad++;
+      console.log((ok ? '  ✓' : '  ✗') + ` skill-tree node names ${what}: ${list.length}${list.length ? ' — e.g. ' + JSON.stringify(list.slice(0, 3)) : ''} (of ${fit.total})`);
+    });
+    await ctx.close();
+  }
+
   await b.close();
-  console.log(bad ? `\n✗ ${bad} misaligned row(s)` : '\n✓ every multi-cell row is aligned at every width');
+  console.log(bad ? `\n✗ ${bad} layout problem(s)` : '\n✓ every multi-cell row is aligned at every width, and every skill name fits its box');
   process.exit(bad ? 1 : 0);
 })();

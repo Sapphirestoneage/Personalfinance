@@ -76,11 +76,18 @@ moved between them. `rooms/history.html`, D-122.
 - **Built on a seed**: the engine, the board, the fog, the warps, the
   fortress line, the exercise library, the Stacker and dashboard wiring,
   versioning. D-131.
-- **Waiting on one file**: FI-Skill-Tree-v6.3.html is not in the repo.
-  Drop it at the root and write the body of `scripts/extract-v63.mjs`
-  against its real internals; the three data files regenerate and the
-  counts (625 / ~280 / 125) become the tests' expectations. Quests and
-  dares arrive with it.
+- **~~Waiting on one file~~ — done (D-139).** FI-Skill-Tree-v6.3.1
+  arrived, `scripts/extract-v63.mjs` was written against its real
+  internals, and the data files regenerated: **31 trees, 665 skills, 312
+  lanes**. The source page itself is not in the repo; the extracted JSON
+  is. To re-run against a newer source:
+  `node scripts/extract-v63.mjs <path-to-FISkillTree.html>`.
+- **Quests and dares, re-scoped by reading the source.** There is no quest
+  or dare catalogue in v6.3.1 to extract. A "90-day quest" there is a skill
+  you pick — the page stores `{ti, lv, t}`, an index into the same `DATA`
+  and a timestamp — and "dare" appears only inside skill prose. So this is
+  a feature to build over the catalogue we now have (pick a skill, start a
+  90-day clock, show the days left), not a file to parse.
 - Still open after that: the Profile Facts (31 yes/no) mapped to the
   skills they prove, beyond the ownership facts the seed already reads;
   a Triple D run bound to a chosen life event in the Exercises room; a

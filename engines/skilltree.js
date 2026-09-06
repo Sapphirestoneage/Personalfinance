@@ -164,11 +164,16 @@
 
   /* ---- Unlock chips: what a skill improves, as links ----------------------- */
   var NUMBER_WORDS = { savingsRate: 'Savings rate', monthlyExpenses: 'A month of spending', emergencyFundMonths: 'Runway', grossAnnualIncome: 'Income', safeWithdrawalRate: 'Safe withdrawal rate', bridgeGapYears: 'Bridge to 59½', worstPlausibleYearCoverage: 'Worst-year coverage' };
+  /* An `unlocks` entry names a room or a household number this skill
+     improves. Anything else is dropped rather than drawn: an entry the chip
+     row cannot address became a chip reading "#" with no label pointing at
+     `ratios.html#r-undefined`, which looks like a link and is not one. */
   function chips(skill, roomTitle) {
     return (skill.unlocks || []).map(function (u) {
       if (u.room) return { kind: 'room', id: u.room, label: roomTitle ? roomTitle(u.room) : u.room, href: u.room + '.html' };
-      return { kind: 'number', id: u.number, label: NUMBER_WORDS[u.number] || u.number, href: 'ratios.html#r-' + u.number };
-    });
+      if (u.number) return { kind: 'number', id: u.number, label: NUMBER_WORDS[u.number] || u.number, href: 'ratios.html#r-' + u.number };
+      return null;
+    }).filter(Boolean);
   }
 
   /**
@@ -272,6 +277,11 @@
         state: state, provenance: st.provenance || null, doneOn: st.doneOn || null, warp: st.warp || null, warpLabel: st.warpLabel || null,
         reasons: fog ? [] : st.reasons, boost: st.boost || { fraction: 0, met: [], of: 0 },
         prereqs: s.prereqs || [], gate: s.gate || null, proof: fog ? null : s.proof,
+        /* The curriculum says four things about every skill and the room
+           was showing one of them. Carried through with the same fog rule
+           as the name and the proof: in the fog you get nothing (D-141). */
+        what: fog ? null : (s.what || null), does: fog ? null : (s.does || null),
+        fits: fog ? null : (s.fits || null), tier: fog ? null : (s.tier || null),
         unlocks: fog || dim ? [] : chips(s, o.roomTitle), firstAction: fog || dim ? null : firstActionOf(s.id),
         unlocksSkills: yours.filter(function (x) { return (x.prereqs || []).indexOf(s.id) >= 0; }).map(function (x) { return x.id; }),
         stackerId: s.stackerId || null, dim: dim
