@@ -389,6 +389,69 @@
   }
 
   /**
+   * recognition(marks, tables) — what the creatures you picked have in common.
+   *
+   * A THIRD KIND OF KNOWING, AND IT IS THE WEAKEST ONE. Elsewhere this suite
+   * distinguishes `measured` (your money says so) from `instinct` (five
+   * questions say so). This is `recognised`: you looked at a list and said
+   * "yes, that one". It is a self-report about events, which is better input
+   * than a self-rating — but it is still not a measurement, and it NEVER
+   * writes a score, a sub-stat or a class. Every caller must label it.
+   *
+   * It is also structurally biased and the room must say so: you cannot
+   * recognise the creature you never noticed, so slow erosion is
+   * under-reported by design and the loud disasters are over-reported.
+   */
+  function recognition(marks, tables) {
+    var names = (marks || []).map(function (m) { return m.name; });
+    var all = allCreatures(tables);
+    var picked = all.filter(function (c) { return names.indexOf(c.name) !== -1; });
+    if (!picked.length) {
+      return { ready: false, basis: 'recognised', count: 0, reason: 'Nothing marked yet.' };
+    }
+
+    /* Which door they came at. */
+    var saveCount = {};
+    picked.forEach(function (c) {
+      var k = c.saveAbility || c.save;
+      if (!k) return;
+      saveCount[k] = (saveCount[k] || 0) + 1;
+    });
+    var saves = Object.keys(saveCount).sort(function (a, b) { return saveCount[b] - saveCount[a]; });
+
+    /* What would have stopped them — read off each creature's own blockedBy,
+       never a second list. */
+    var blockCount = {};
+    picked.forEach(function (c) {
+      (c.blockedBy || []).forEach(function (b) {
+        if (!b || !b.id) return;
+        blockCount[b.id] = (blockCount[b.id] || 0) + 1;
+      });
+    });
+    var blockers = Object.keys(blockCount).sort(function (a, b) { return blockCount[b] - blockCount[a]; });
+
+    var types = {};
+    picked.forEach(function (c) {
+      if (c.attackType) types[c.attackType] = (types[c.attackType] || 0) + 1;
+    });
+
+    return {
+      ready: true,
+      basis: 'recognised',
+      count: picked.length,
+      creatures: picked,
+      saves: saves.map(function (k) { return { ability: k, n: saveCount[k] }; }),
+      topSave: saves.length ? saves[0] : null,
+      sharedSave: saves.length === 1 ? saves[0] : null,
+      blockers: blockers.map(function (k) { return { id: k, n: blockCount[k] }; }),
+      types: Object.keys(types).map(function (k) { return { type: k, n: types[k] }; })
+        .sort(function (a, b) { return b.n - a.n; }),
+      /* The unmarked ones, which read as a forecast rather than a record. */
+      notYet: all.filter(function (c) { return names.indexOf(c.name) === -1; })
+    };
+  }
+
+  /**
    * The two saves you are thinnest on, and the creatures that hunt there at
    * your current tier. Unscored saves are excluded rather than treated as
    * terrible — a blank is not a weakness, it is a blank.
@@ -613,6 +676,7 @@
     resolveBlockers: resolveBlockers,
     targetSave: targetSave,
     allCreatures: allCreatures,
+    recognition: recognition,
     predators: predators,
     run: run
   };

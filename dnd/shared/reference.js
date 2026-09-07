@@ -47,6 +47,8 @@
     dndImprove: 'dnd_improve.json',
     /* The long read: what each class wants, fears, and rubs against. */
     dndProfile: 'dnd_profile.json',
+    /* Ready-made characters, in this tool's own export shape. */
+    dndPregens: 'dnd_pregens.json',
     /* The Skill Stacker's catalogue, authored here (D-090). */
     skills: 'skills.json',
     stacks: 'stacks.json',

@@ -159,6 +159,9 @@
     }
 
     return {
+      /* A shared card built on a pregen must say so on the card itself —
+         it is the one artefact that travels away from the tool. */
+      pregenName: (p.pregen && p.pregen.name) || null,
       name: p.characterName || null,
       klass: s.klass ? s.klass.name : quizClass,
       classIsInstinct: !s.klass && !!quizClass,
@@ -243,6 +246,7 @@
       /* Say which kind of class this is, so a shared card never implies a
          measurement that was never taken. */
       if (d.classIsInstinct) sub = sub ? sub + ' · by instinct' : 'By instinct, not yet measured';
+      if (d.pregenName) sub = d.pregenName + ' · a ready-made character';
       if (sub) { ctx.fillText(sub, M, y + 30); y += 44; }
       if (d.lever) {
         ctx.fillStyle = sk.accent;

@@ -307,6 +307,28 @@
     return { ok: true, applied: applied };
   }
 
+  /**
+   * Mark a creature as one that has actually happened to you.
+   *
+   * DELIBERATELY NOT THE ENCOUNTER LOG. `encounters` means "this was run
+   * against my sheet and these are the numbers it produced"; `types.html`
+   * prints it as exactly that. A mark is a person saying "yes, that one" —
+   * a self-report, not a measurement — so it gets its own key and its own
+   * sentence, and it must never reach declaredScores or a class. DD-028.
+   */
+  function markMet(name) {
+    var p = profile();
+    var list = (p.metCreatures || []).slice();
+    var at = -1;
+    for (var i = 0; i < list.length; i++) { if (list[i].name === name) { at = i; break; } }
+    if (at === -1) list.push({ name: name, on: new Date().toISOString() });
+    else list.splice(at, 1);          /* tapping it again puts it back down */
+    patchProfile({ metCreatures: list });
+    return list;
+  }
+
+  function metCreatures() { return (profile().metCreatures || []).slice(); }
+
   function reset() {
     state = blank();
     try { self.localStorage.removeItem(KEY); } catch (e) { /* private mode */ }
@@ -320,6 +342,7 @@
   setFilingStatus: setFilingStatus,
     moneyEntered: moneyEntered, quizComplete: quizComplete, tier: tier,
     logEncounter: logEncounter, encounters: encounters,
+    markMet: markMet, metCreatures: metCreatures,
     importCharacter: importCharacter,
     reset: reset, save: save
   };

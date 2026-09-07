@@ -305,6 +305,13 @@
       ? 'Measured from your numbers'
       : 'From your five answers — not measured';
     el('p-basis').className = 'basis' + (P.basis === 'measured' ? ' measured' : '');
+    /* A profile read off borrowed numbers is a profile of somebody invented,
+       and saying "measured from your numbers" over it would be a lie. */
+    var pg = Store.profile().pregen;
+    if (pg) {
+      el('p-basis').textContent = 'From ' + pg.name + ' — a ready-made character, not you';
+      el('p-basis').className = 'basis';
+    }
 
     /* The split, which is the most interesting thing this page can say. */
     html('p-split', P.split

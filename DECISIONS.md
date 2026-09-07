@@ -9923,3 +9923,130 @@ class, or an ability — it is a reader recognising a story, not a measurement,
 and the moment it feeds arithmetic this page starts inventing biography. And
 never present a profile without its `basis`: a characterisation shown as a
 measurement is the only genuinely dishonest thing this suite could do.
+
+---
+
+## DD-028 — Four ways in, because one front door was asking before it gave
+
+A panel of five designers each took a different lens at the same question:
+how does a new person get into this thing? They arrived independently at the
+same diagnosis, which is the finding worth recording. **The tool asked before
+it gave.** Every route demanded a character before it showed anything, and the
+best content in the repo — twenty-nine named creatures with their lairs, damage
+and counters — was unreachable unless you already knew it existed.
+
+One claim from the panel was checkable and turned out to be true, and worse
+than stated: **point buy, the standard array and the dice all produce six
+numbers and nothing else.** No class, no Level, no runway — because those are
+derived from money and there is none. Three of the four build routes could not
+show a new arrival a finished character at all. (A related claim, that a
+character with all five numbers also had no HP, was mine and was wrong: my
+probe had the tax-table key misspelled. With five numbers HP is fine.)
+
+Three doors were built. Two more were designed and are recorded below unbuilt.
+
+### The Descent — `dnd/descent.html`
+
+One question. You answer it and it pays before anything else is asked.
+
+> **$750,000.** That is your number — what you would need invested to cover this
+> month, repeated forever, without working again. It is set by what you spend,
+> not by what you earn.
+
+That is **one input**: monthly spending. Then cash buys your HP in weeks, income
+buys your Strength against the population ladder, and filing status buys your
+savings rate. Four rungs, each paid for before the next appears, each naming the
+assumption it rests on — the 4% withdrawal rate is called an assumption in the
+sentence that uses it.
+
+**The keyboard trap this page is built to avoid.** One-question-at-a-time is
+exactly the shape that tempts a re-render per step, and re-rendering a live
+input kills the phone keyboard permanently (D-034). So every rung exists from
+boot, hidden; advancing only sets `hidden = false`; and the payoff paragraph is
+a **sibling** of its input, never an ancestor, so no payoff re-render can reach
+an input node. A browser test tags every input, edits rung one, and asserts all
+three nodes are still the same nodes.
+
+### The Starting Six — `dnd/data/dnd_pregens.json`
+
+Four finished characters, playable in one tap: **The Glass Cannon** (Level 7,
+one week of runway), **The Fortress** (Level 2, eighty-one weeks), **The
+Millstone** (good income, debt burden 2), **Level One**.
+
+A pregen is a household in this tool's own export shape, so loading one is
+`Store.importCharacter()` and nothing else — no second write path, no parallel
+scoring, and every number on the picker card is **derived** by the same engines
+that read a character somebody typed. The class is never written into the file.
+
+Two guards. **The gate:** loading over numbers somebody entered asks first.
+**The badge:** `dndProfile.pregen` is stored and every surface that renders a
+character says whose numbers these are — the campaign banner, the profile's
+basis line, and the share card, which is the one artefact that travels away from
+the tool. Under a pregen the ability labels change from *"measured from your
+numbers"* to *"measured from these numbers"*, because the first is false and
+sitting one paragraph under a banner that says so.
+
+And the test asserts **the lesson, not the file**: a retuned scoring anchor could
+quietly stop The Glass Cannon being a glass cannon while the file still
+validated. `expect` on each pregen is what it is *for*, and it is checked.
+
+### The Menagerie — `dnd/menagerie.html`
+
+Twenty-nine creatures as the front door, each with what it attacks, what it
+does and what stops it. One button per cage: **"This one got me."** At three
+marks it names what they had in common.
+
+> They nearly all came at the same door: **Wisdom**. The thing that would have
+> stopped the most of them is **Threat Detection 14+** — it blocks 3 of your 3.
+
+**A third kind of knowing, and the weakest one.** This suite already separates
+`measured` (your money says so) from `instinct` (five questions say so).
+Marking a creature is `recognised`: a self-report about *events*, which is
+better input than a self-rating — and still not a measurement. So the page
+**never writes a score, a sub-stat or a class**, `metCreatures` is its own
+store key and deliberately not the encounter log, and a test asserts the page
+contains no call that could write one. The read says in as many words: *"We have
+not measured any of this."*
+
+It also prints its own bias, which is structural rather than incidental: **you
+cannot recognise the creature you never noticed.** Slow erosion is
+under-reported here by construction and the loud disasters are over-reported,
+and a read that did not say so would be quietly misleading.
+
+### Designed and not built
+
+**The Fellowship** — a party roster carried in a growing URL, so a group can see
+which lever nobody has. It stalled on a decision that is not mine: the token
+would carry six ability modifiers, and DEX is runway while STR is an income
+band. That is a real, if coarse, disclosure about somebody's money in a link
+that is forwardable forever. It needs the repo owner to choose, and there is a
+class-only variant that gives up the ability floor and keeps the party read.
+
+**Table Mode** — a printable session kit, because `Encounter.run()` already
+derives a DC and never rolls the d20; the engine has been a tabletop referee
+waiting for a physical die. Its smallest version is `print.css` plus a rules
+card and a player card. Deferred only for scope.
+
+### Compatibility note
+
+**Stored shape:** two keys are **added** to `dndProfile`. `pregen` is
+`{ id, name, at }` or absent, and means the household came from a ready-made
+character — any room rendering a character must check it and say so rather than
+presenting borrowed numbers as the reader's. `metCreatures` is
+`[{ name, on }]` — creatures a person said had happened to them. It is a
+**self-report and must never reach `declaredScores`, a sub-stat or a class**;
+it is not the encounter log and must not be merged into it.
+
+**Rooms updated:** `dnd/descent.html` (new), `dnd/menagerie.html` (new),
+`dnd/data/dnd_pregens.json` (new), `dnd/shared/store.js` (`markMet`,
+`metCreatures`), `dnd/engines/encounter.js` (`recognition`),
+`dnd/shared/reference.js`, `dnd/campaign.html` (the pregen route, the badge,
+the `#pregen` deep link), `dnd/index.html` (four doors), `dnd/card.html`,
+`dnd/profile.html`, `dnd/test/run.js`.
+
+**Before writing any of these from a new room:** never render a character
+carrying `dndProfile.pregen` without saying whose numbers they are — the share
+card is the one that matters, because it leaves. Never let `metCreatures` reach
+a score; if you want a measurement, ask for the money. And a new pregen must
+declare in `expect` what it is for, or the set drifts into four characters that
+all teach the same thing.

@@ -50,7 +50,8 @@ const TABLES = {
   dndScenarios: table('dnd_scenarios.json'),
   dndQuiz5: table('dnd_quiz5.json'),
   dndImprove: table('dnd_improve.json'),
-  dndProfile: table('dnd_profile.json')
+  dndProfile: table('dnd_profile.json'),
+  dndPregens: table('dnd_pregens.json')
 };
 
 let passed = 0;
@@ -1863,6 +1864,146 @@ section('Dungeons & Dividends — the campaign (DD-024)');
   checkTrue('the sheet links to it', /href="campaign\.html"/.test(fs.readFileSync(path.join(ROOT, 'sheet.html'), 'utf8')));
   checkTrue('reference.js registers the scenario bank',
     /dndScenarios/.test(fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8')));
+})();
+
+section('Dungeons & Dividends — four ways in (DD-028)');
+
+(function () {
+  const Enc = require(path.join(ROOT, 'engines/encounter.js'));
+  const P = TABLES.dndPregens;
+  const Export = require(path.join(ROOT, 'shared/export.js'));
+
+  /* ---- ready-made characters -------------------------------------------
+     A pregen is a household in this tool's own export shape, so the whole
+     point is that it goes through the SAME import path and the SAME engines.
+     If any of that stops being true the picker becomes a second, unvalidated
+     way to assert numbers. */
+  checkTrue('there are ready-made characters', P.pregens.length >= 3);
+  const seenPre = {};
+  P.pregens.forEach(function (pg) {
+    checkTrue(`${pg.id} is unique`, !seenPre[pg.id]); seenPre[pg.id] = 1;
+    checkTrue(`${pg.id} has a name and a tagline`, !!pg.name && !!pg.tagline);
+    checkTrue(`${pg.id} says what it teaches`, (pg.teaches || '').length > 40);
+    /* It must validate as a real export, or importCharacter would refuse it. */
+    const v = Export.validate(pg.envelope);
+    checkTrue(`${pg.id} is a valid character export`, v.ok);
+
+    /* And it must produce a COMPLETE character — that is the entire reason
+       this route exists, because point buy, the array and the dice cannot. */
+    const h = pg.envelope.household;
+    const sheet = Character.sheet(h, TABLES);
+    checkTrue(`${pg.id} has a class`, !!sheet.klass);
+    checkTrue(`${pg.id} has a Level`, Money.isOk(sheet.level));
+    checkTrue(`${pg.id} has a runway`, Money.isOk(sheet.currentHp));
+    checkTrue(`${pg.id} has an AC`, Money.isOk(sheet.armorClass));
+    const ex = Character.explain(h, TABLES);
+    checkTrue(`${pg.id} has all six abilities scored`,
+      ex.abilities.every(function (a) { return a.score !== null; }));
+
+    /* THE LESSON, not just the validity. A retuned scoring table could quietly
+       stop The Glass Cannon being a glass cannon, and the picker would go on
+       promising it. */
+    const lvl = sheet.level.value, run = sheet.currentHp.value;
+    const burden = Money.isOk(sheet.debtBurden) ? sheet.debtBurden.value : null;
+    const e = pg.expect || {};
+    if (Money.isEntered(e.levelMin)) {
+      checkTrue(`${pg.id} still teaches its Level (${lvl} >= ${e.levelMin})`, lvl >= e.levelMin);
+    }
+    if (Money.isEntered(e.runwayMax)) {
+      checkTrue(`${pg.id} still teaches its thin runway (${run} <= ${e.runwayMax})`, run <= e.runwayMax);
+    }
+    if (Money.isEntered(e.runwayMin)) {
+      checkTrue(`${pg.id} still teaches its deep runway (${run} >= ${e.runwayMin})`, run >= e.runwayMin);
+    }
+    if (Money.isEntered(e.burdenMin)) {
+      checkTrue(`${pg.id} still teaches its debt burden (${burden} >= ${e.burdenMin})`, burden >= e.burdenMin);
+    }
+    if (Money.isEntered(e.burdenMax)) {
+      checkTrue(`${pg.id} still teaches its lack of debt (${burden} <= ${e.burdenMax})`, burden <= e.burdenMax);
+    }
+    /* The class is DERIVED, never written into the file — otherwise a pregen
+       becomes a place where a class gets asserted rather than computed. */
+    checkTrue(`${pg.id} does not write a class into the file`,
+      !h.dndProfile.classOverride);
+  });
+  /* The set has to be worth having: the same character four times teaches once. */
+  const classes = P.pregens.map(function (pg) {
+    const sh = Character.sheet(pg.envelope.household, TABLES);
+    return sh.klass ? sh.klass.id : null;
+  });
+  checkTrue('the ready-made set covers more than one class',
+    new Set(classes).size >= 2);
+  const runways = P.pregens.map(function (pg) {
+    return Character.sheet(pg.envelope.household, TABLES).currentHp.value;
+  });
+  checkTrue('and more than one kind of runway',
+    Math.max.apply(null, runways) - Math.min.apply(null, runways) >= 20);
+
+  const camp = fs.readFileSync(path.join(ROOT, 'campaign.html'), 'utf8');
+  checkTrue('the picker loads through the ordinary import path',
+    /Store\.importCharacter\(pg\.envelope\)/.test(camp));
+  checkTrue('a borrowed character is badged', /pregen: \{ id: pg\.id/.test(camp));
+  checkTrue('and the badge is painted on every step, not just the game',
+    /function goStep\(name\) \{\s*STEP = name;\s*paintBorrowed\(\);/.test(camp));
+  checkTrue('and the labels stop saying "your numbers" under one',
+    /BORROWED_WORD/.test(camp) && /measured from these numbers/.test(camp));
+  checkTrue('the share card says when it is a ready-made one',
+    /a ready-made character/.test(fs.readFileSync(path.join(ROOT, 'card.html'), 'utf8')));
+  checkTrue('and so does the profile',
+    /a ready-made character, not you/.test(fs.readFileSync(path.join(ROOT, 'profile.html'), 'utf8')));
+
+  /* ---- the descent ------------------------------------------------------ */
+  const desc = fs.readFileSync(path.join(ROOT, 'descent.html'), 'utf8');
+  checkTrue('the descent exists', /<body class="slaf">/.test(desc));
+  checkTrue('it declares the built-once rule', /LIVE-FORM: built once/.test(desc));
+  /* THE WHOLE RISK OF THIS PAGE. One question at a time is exactly the shape
+     that tempts a re-render per step, which kills the phone keyboard. Every
+     rung must exist from boot and only be revealed. */
+  checkTrue('every rung is built at boot and only revealed',
+    /hidden = false/.test(desc) && /if \(BUILT\) return;/.test(desc));
+  checkTrue('the payoff is a sibling of the input, never its ancestor',
+    /class="payoff" id="pay-/.test(desc));
+  checkTrue('it names the assumption behind the FIRE number',
+    /4% withdrawal rate/.test(desc) && /an assumption rather than a fact/.test(desc));
+  checkTrue('it offers a way out for people who will not type numbers',
+    /Roll one instead/.test(desc));
+
+  /* ---- the menagerie: recognition, and never a score --------------------- */
+  const men = fs.readFileSync(path.join(ROOT, 'menagerie.html'), 'utf8');
+  checkTrue('the menagerie exists', /<body class="slaf">/.test(men));
+  /* THE RULE THIS PAGE LIVES UNDER. A self-report must never become a score. */
+  checkTrue('it never writes an ability score',
+    !/declaredScores/.test(men) && !/classOverride/.test(men) && !/setMoney/.test(men));
+  checkTrue('it says plainly that nothing was measured',
+    /We have not measured any of this/.test(men));
+  checkTrue('and it admits its own bias',
+    /only recognise the creature you/.test(men));
+  checkTrue('it has no text inputs at all', !/<input/.test(men));
+
+  const marks = [{ name: 'Subscription Slime' }, { name: 'Free-Trial Snare' },
+                 { name: 'Timeshare Charm-Caster' }];
+  const rec = Enc.recognition(marks, TABLES);
+  checkTrue('recognition reads three marks', rec.ready && rec.count === 3);
+  check('and labels itself as recognised, not measured', rec.basis, 'recognised');
+  checkTrue('it finds the door they share', rec.topSave === 'WIS');
+  checkTrue('and what would have stopped them', rec.blockers.length > 0);
+  checkTrue('every creature it names is a real one',
+    rec.creatures.every(function (c) {
+      return Enc.allCreatures(TABLES).some(function (a) { return a.name === c.name; }); }));
+  check('nothing marked is not a read', Enc.recognition([], TABLES).ready, false);
+  checkTrue('unmarked creatures come back as a forecast', rec.notYet.length > 0);
+  check('and the two lists together are the whole bestiary',
+    rec.count + rec.notYet.length, Enc.allCreatures(TABLES).length);
+
+  /* ---- the doorway ------------------------------------------------------- */
+  const idx = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  ['descent.html', 'menagerie.html', 'campaign.html#pregen', 'campaign.html'].forEach(function (href) {
+    checkTrue(`the front page offers ${href}`, idx.indexOf('href="' + href + '"') !== -1);
+  });
+  checkTrue('and every door says what it costs', (idx.match(/class="dw"/g) || []).length >= 4);
+  checkTrue('the pregen deep link is honoured', /location\.hash === '#pregen'/.test(camp));
+  checkTrue('but never over numbers somebody already entered',
+    /location\.hash === '#pregen' && !Store\.moneyEntered\(\)/.test(camp));
 })();
 
 section('Dungeons & Dividends — the long read (DD-027)');

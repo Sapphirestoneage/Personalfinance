@@ -157,6 +157,9 @@
 <div class="wrap">
   <div class="skin-bar" id="skin-bar"></div>
   <div id="load-notice" class="notice" hidden></div>
+  <!-- Borrowed numbers say so on every screen, or the tool is asserting a
+       character that is not the reader's. -->
+  <div id="borrowed" class="warn" hidden style="margin-bottom:var(--space-3)"></div>
 
   <h1>Dungeons &amp; Dividends</h1>
   <p class="note" id="lede">Five questions, then a character sheet built out of your actual life — and then
@@ -218,6 +221,22 @@
     <div id="method-list"></div>
     <div class="actions">
       <button type="button" class="btn ghost" id="btn-method-back">Back to my five answers</button>
+    </div>
+  </section>
+
+  <!-- READY-MADE CHARACTERS. Buttons only, so nothing to rebuild under a finger. -->
+  <section id="pregen-view" hidden>
+    <div class="panel">
+      <h3>Take a ready-made one</h3>
+      <p class="note">Four finished characters. Each is a whole person with a Level, a runway, a class and a
+         debt burden, and each one is built to show you a single thing. Play one for as long as you like —
+         and swap in your own numbers whenever you want, one at a time.</p>
+      <p class="note faint">These are invented people. Nothing about them is data about anybody, and the game
+         will keep telling you whose numbers you are wearing.</p>
+    </div>
+    <div id="pregen-list"></div>
+    <div class="actions">
+      <button type="button" class="btn ghost" id="btn-pregen-back">Build one myself instead</button>
     </div>
   </section>
 
@@ -502,7 +521,7 @@
   }
   function signed(cents) { return (cents >= 0 ? '+' : '−') + money(Math.abs(cents)); }
 
-  var VIEWS = ['quiz-view', 'quiz-result-view', 'method-view',
+  var VIEWS = ['quiz-view', 'quiz-result-view', 'method-view', 'pregen-view',
                'create-basics', 'create-abilities', 'create-assign', 'create-result',
                'improve-view', 'focus-view', 'prologue', 'board-view', 'scenario-view', 'outcome-view', 'review-view'];
   function show(id) { VIEWS.forEach(function (v) { el(v).hidden = (v !== id); }); }
@@ -605,6 +624,12 @@
      The four routes, with the measured one first because it is the only one
      that can tell you something you did not already know. */
   var ROUTES = [
+    /* FIRST ON PURPOSE. Every other route hands back six numbers and nothing
+       else; this is the only one that shows a new arrival what the tool
+       actually makes before it asks them for anything. */
+    { id: 'pregen', title: 'Play a ready-made one',
+      blurb: 'Somebody else’s numbers, complete and playable in one tap — a real Level, real runway, a real class. Borrowed, labelled as borrowed, and swappable for your own whenever you like.',
+      worth: 'Instant · the only one that shows you a finished character' },
     { id: 'real', title: 'Use my real numbers',
       blurb: 'Five figures about your actual life. Strength, Dexterity and Constitution get measured rather than chosen — which means they can surprise you, and the rest of the game has something true to work with.',
       worth: 'The only route that can tell you something you did not know' },
@@ -750,6 +775,54 @@
       sel.value = Money.isEntered(mine) ? String(mine) : '';
     });
     el('btn-assign-next').disabled = left.length > 0;
+  }
+
+  /* ---- READY-MADE CHARACTERS ---------------------------------------------
+     A pregen is a household in this tool's own export shape, so loading one is
+     Store.importCharacter() and nothing else — no second write path, no
+     parallel scoring. Everything on the card below is DERIVED by the same
+     engines that read a character somebody typed; none of it is written into
+     the file. That is what stops a pregen quietly becoming a place where
+     numbers get asserted. */
+  function pregenList() { return (TABLES.dndPregens || {}).pregens || []; }
+
+  function paintPregens() {
+    html('pregen-list', pregenList().map(function (pg) {
+      /* Read the real sheet so the card cannot claim anything the engines
+         would not also say. */
+      var h = pg.envelope.household;
+      var sheet = Char.sheet(h, TABLES);
+      var lvl = Money.isOk(sheet.level) ? sheet.level.value : null;
+      var run = Money.isOk(sheet.currentHp) ? sheet.currentHp.value : null;
+      var burden = Money.isOk(sheet.debtBurden) ? sheet.debtBurden.value : null;
+      return '<button type="button" class="method" data-pregen="' + esc(pg.id) + '">'
+        + '<span class="mt">' + esc(pg.name) + '</span>'
+        + '<span class="mb">' + esc(pg.tagline) + '</span>'
+        + '<span class="chips" style="margin-top:var(--space-2)">'
+        + '<span class="chip' + (lvl !== null && lvl >= 5 ? ' big' : '') + '">Level '
+        + (lvl === null ? '—' : lvl) + '</span>'
+        + '<span class="chip' + (run !== null && run <= 4 ? ' partial' : '') + '">'
+        + (run === null ? '—' : run + ' wk runway') + '</span>'
+        + '<span class="chip">' + esc(sheet.klass ? sheet.klass.name : 'no class') + '</span>'
+        + (burden ? '<span class="chip partial">Debt burden ' + burden + '</span>' : '')
+        + '</span>'
+        + '<span class="mw">' + esc(pg.teaches) + '</span></button>';
+    }).join(''));
+  }
+
+  function loadPregen(id) {
+    var pg = pregenList().filter(function (x) { return x.id === id; })[0];
+    if (!pg) return;
+    /* THE GATE. A pregen must never land on top of numbers somebody typed. */
+    if (Store.moneyEntered()) {
+      if (!window.confirm('You already have numbers of your own. Loading a ready-made character replaces '
+          + 'them. Carry on?')) return;
+    }
+    var res = Store.importCharacter(pg.envelope);
+    if (!res || !res.ok) { window.alert('That character could not be loaded.'); return; }
+    /* The badge is what keeps this honest everywhere downstream. */
+    Store.patchProfile({ pregen: { id: pg.id, name: pg.name, at: new Date().toISOString() } });
+    goStep('result');
   }
 
   /* ---- HOW TO GET BETTER -------------------------------------------------
@@ -995,6 +1068,16 @@
   /* ---- CREATION, step 3: the character, with its receipts ---------------- */
   var STATUS_WORD = { measured: 'measured from your numbers', chosen: 'you chose this',
                       bought: 'you chose this', partial: 'partly measured', blank: 'nothing yet' };
+  /* Under a borrowed character "measured from YOUR numbers" is false on every
+     line. The banner above says whose they are; the labels must not contradict
+     it one paragraph later. */
+  var BORROWED_WORD = { measured: 'measured from these numbers', chosen: 'chosen for this character',
+                        bought: 'chosen for this character', partial: 'partly measured',
+                        blank: 'nothing yet' };
+  function statusWord(status) {
+    var map = Store.profile().pregen ? BORROWED_WORD : STATUS_WORD;
+    return map[status] || status;
+  }
 
   function paintResult() {
     var h = Store.household();
@@ -1049,7 +1132,7 @@
         + '<div class="top"><span class="sc">' + (a.score === null ? '—' : a.score) + '</span>'
         + '<b>' + esc(a.name) + '</b>'
         + (a.modifier === null ? '' : '<span class="md">' + (a.modifier >= 0 ? '+' : '') + a.modifier + '</span>')
-        + '<span class="tag ' + cls + '">' + esc(STATUS_WORD[a.status] || a.status) + '</span></div>'
+        + '<span class="tag ' + cls + '">' + esc(statusWord(a.status)) + '</span></div>'
         + '<div class="what">' + esc(a.finance || '') + (a.measures ? ' — ' + esc(a.measures) : '') + '</div>'
         + a.parts.map(function (pt) {
             if (pt.score === null) {
@@ -1210,7 +1293,7 @@
                      ['play', 'Play']];
   var STEP_PHASE = {
     quiz: 'quiz', verdict: 'quiz',
-    method: 'method', basics: 'method', abilities: 'method', assign: 'method',
+    method: 'method', basics: 'method', abilities: 'method', assign: 'method', pregen: 'method',
     result: 'stats', improve: 'improve', focus: 'play', play: 'play'
   };
 
@@ -1226,6 +1309,7 @@
 
   function goStep(name) {
     STEP = name;
+    paintBorrowed();
     paintSteps(name);
     if (name === 'quiz') { paintQuiz(); }
     if (name === 'verdict') { paintQuizResult(); }
@@ -1233,6 +1317,7 @@
     if (name === 'basics') { fillBasics(); show('create-basics'); }
     if (name === 'abilities') { saveBought(); paintPointBuy(); show('create-abilities'); }
     if (name === 'assign') { paintAssign(); show('create-assign'); }
+    if (name === 'pregen') { paintPregens(); show('pregen-view'); }
     if (name === 'result') { paintResult(); show('create-result'); }
     if (name === 'improve') { paintImprove(); }
     if (name === 'focus') { paintFocus(); }
@@ -1515,7 +1600,19 @@
   }
 
   /* ---- routing ----------------------------------------------------------- */
+  function paintBorrowed() {
+    var pg = Store.profile().pregen;
+    var box = el('borrowed');
+    if (!pg) { box.hidden = true; return; }
+    box.hidden = false;
+    box.innerHTML = '<b>You are playing ' + esc(pg.name) + ' — these are not your numbers.</b> '
+      + 'Everything below is derived from an invented person. '
+      + '<button type="button" class="btn ghost" id="btn-unborrow" style="margin-top:var(--space-2)">'
+      + 'Put my own numbers in instead</button>';
+  }
+
   function route() {
+    paintBorrowed();
     paintHud();
     /* The opening pitch is for people deciding whether to start. Once they
        have, it is just a paragraph in the way on every screen. */
@@ -1529,6 +1626,9 @@
          because they cost nothing and give something back immediately —
          asking for someone's income before they know why is how you lose
          them on the first screen. */
+      /* A door on the front page can ask for a specific step. Only honoured
+         when there is nothing to overwrite. */
+      if (location.hash === '#pregen' && !Store.moneyEntered()) { goStep('pregen'); return; }
       if (!Money.isOk(Journey.scoreQuiz(quizAnswers(), TABLES))) { goStep('quiz'); return; }
       if (!Store.moneyEntered() && !boughtAnything()) { goStep('method'); return; }
       /* Half-assigned array or roll: pick it back up rather than starting the
@@ -1593,11 +1693,29 @@
       var b = e.target.closest('[data-route]');
       if (!b) return;
       var id = b.getAttribute('data-route');
+      if (id === 'pregen') { goStep('pregen'); return; }
       if (id === 'real') { goStep('basics'); return; }
       if (id === 'pointBuy') { saveBought(); goStep('abilities'); return; }
       newBag(id); goStep('assign');
     });
     el('btn-method-back').addEventListener('click', function () { goStep('verdict'); });
+    el('pregen-list').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-pregen]');
+      if (b) loadPregen(b.getAttribute('data-pregen'));
+    });
+    el('btn-pregen-back').addEventListener('click', function () { goStep('method'); });
+    /* Swapping out of a pregen wipes the borrowed numbers rather than letting
+       somebody edit one figure and end up with a half-invented character. */
+    el('borrowed').addEventListener('click', function (e) {
+      if (!e.target.closest('#btn-unborrow')) return;
+      if (!window.confirm('This clears the ready-made numbers so you can enter your own. Your five answers '
+          + 'and your abilities are kept. Carry on?')) return;
+      Form.MONEY.forEach(function (f) { writeBasic(f, null); });
+      Store.patchProfile({ pregen: null });
+      STATE = null;
+      Store.patchProfile({ campaign: null });
+      goStep('basics');
+    });
     el('btn-assign-back').addEventListener('click', function () { goStep('method'); });
     el('btn-assign-next').addEventListener('click', function () { goStep('result'); });
     el('btn-roll').addEventListener('click', function () { newBag('roll'); saveAssigned(); paintAssign(); });

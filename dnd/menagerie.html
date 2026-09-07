@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>The Menagerie — Dungeons &amp; Dividends</title>
+<meta name="description" content="Twenty-nine things that come for people's money, each with what it does and what stops it. Tap the ones that have happened to you."/>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="shared/skin.css"/>
+<!--
+  THE MENAGERIE — DD-028.
+
+  The front door for people who will not fill in a form for a stranger's
+  website but will absolutely read a bestiary. No inputs anywhere; every
+  control is a button, so D-034 has nothing to bite on.
+
+  THE HONESTY RULE THIS PAGE EXISTS UNDER. Tapping "this one got me" is a
+  SELF-REPORT. It is better input than a self-rating, because it reports an
+  event rather than an opinion of yourself — but it is not a measurement, and
+  this page never writes a score, a sub-stat or a class. Everything derived
+  from marks sits under one heading that says so, and the read admits its own
+  bias: you cannot recognise the creature you never noticed, so slow erosion
+  is under-reported here by construction.
+-->
+<style>
+  .wrap { max-width: 900px; margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-7); }
+  h1 { font-family: var(--font-display); font-size: var(--text-xl); margin: 0 0 var(--space-2); }
+  h2 { font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-6) 0 var(--space-2); }
+  .note { color: var(--color-text-muted); font-size: var(--text-sm); line-height: var(--leading-normal); margin: 0 0 var(--space-3); }
+  .faint { color: var(--color-text-faint); }
+  .notice { padding: var(--space-3); border-radius: var(--radius-sm); margin: var(--space-3) 0; font-size: var(--text-sm); border: 1px solid var(--color-critical); color: var(--color-critical); }
+  .btn { font-family: var(--font-body); font-size: var(--text-base); background: var(--color-accent); color: var(--color-accent-contrast); border: 0; border-radius: var(--radius-sm); padding: 0 var(--space-4); height: var(--control-height); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+  .btn.ghost { background: transparent; color: var(--color-accent-hover); border: 1px solid var(--color-border-strong); }
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+
+  .cages { display: grid; gap: var(--space-3); }
+  @media (min-width: 700px) { .cages { grid-template-columns: 1fr 1fr; } }
+  .cage { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md);
+          background: var(--color-surface-raised); padding: var(--space-4); display: flex;
+          flex-direction: column; }
+  .cage.marked { border-color: var(--color-critical); }
+  .cage .nm { font-family: var(--font-display); font-size: var(--text-lg); line-height: 1.1; }
+  .cage .meta { font-size: var(--text-xs); color: var(--color-text-subtle); text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; }
+  .cage .desc { font-size: var(--text-sm); color: var(--color-text-muted); line-height: var(--leading-normal); margin: var(--space-2) 0; flex: 1; }
+  .cage .stops { font-size: var(--text-xs); color: var(--color-text-faint); margin-bottom: var(--space-3); line-height: var(--leading-normal); }
+  .mark { font-family: var(--font-body); font-size: var(--text-sm); background: transparent;
+          color: var(--color-accent-hover); border: 1px solid var(--color-border-strong);
+          border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); cursor: pointer; text-align: left; }
+  .mark:hover { border-color: var(--color-accent); }
+  .cage.marked .mark { border-color: var(--color-critical); color: var(--color-critical); }
+
+  .read { border: 1px solid var(--color-accent); border-radius: var(--radius-md); padding: var(--space-4);
+          background: var(--color-surface-raised); margin-bottom: var(--space-4); }
+  .read .cap { font-size: 9px; text-transform: uppercase; letter-spacing: .12em; color: var(--color-text-subtle); }
+  .read .big { font-family: var(--font-display); font-size: var(--text-xl); line-height: 1.15; margin: var(--space-2) 0; }
+  .caveat { border: 1px solid var(--color-critical); border-radius: var(--radius-sm); padding: var(--space-3);
+            font-size: var(--text-sm); line-height: var(--leading-normal); margin-bottom: var(--space-3); }
+  .bar { position: sticky; bottom: 0; background: var(--color-surface); border-top: 1px solid var(--color-border-strong);
+         padding: var(--space-3) var(--space-4); margin: 0 calc(-1 * var(--space-4)); display: flex;
+         gap: var(--space-3); align-items: center; flex-wrap: wrap; }
+  .foot { margin-top: var(--space-6); text-align: center; font-size: var(--text-sm); }
+  .foot a { color: var(--color-accent-hover); }
+</style>
+</head>
+<body class="slaf">
+<script src="shared/skin.js"></script>
+<script>DND.Skin.init();</script>
+<div class="wrap">
+  <div class="skin-bar" id="skin-bar"></div>
+  <div id="load-notice" class="notice" hidden></div>
+
+  <h1>The Menagerie</h1>
+  <p class="note">Twenty-nine things that come for people's money. Each one has a save it attacks, damage it
+     does, and something specific that stops it. <b>Tap the ones that have actually happened to you</b> —
+     nothing is stored anywhere but this browser, and there is no form on this page at all.</p>
+
+  <div id="read"></div>
+  <div class="cages" id="cages"></div>
+
+  <div class="bar">
+    <span id="count" class="note" style="margin:0"></span>
+    <span style="flex:1"></span>
+    <a class="btn" href="campaign.html" id="btn-build">Build a character →</a>
+  </div>
+
+  <p class="foot"><a href="campaign.html">The game</a> &nbsp;·&nbsp; <a href="bestiary.html">The full tables</a>
+     &nbsp;·&nbsp; <a href="types.html">Type chart</a></p>
+  <p class="foot faint" style="font-size:var(--text-xs)">An independent parody. Not affiliated with or endorsed by Wizards of the Coast. <a href="bestiary.html#attribution">Licence &amp; attribution</a>.</p>
+</div>
+
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/store.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/tier0.js"></script>
+<script src="engines/character.js"></script>
+<script src="engines/encounter.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Enc = DND.Encounter, Store = DND.Store;
+  var TABLES = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function html(id, s) { el(id).innerHTML = s; }
+
+  var ABILITY = { STR: 'Strength', DEX: 'Dexterity', CON: 'Constitution',
+                  INT: 'Intelligence', WIS: 'Wisdom', CHA: 'Charisma' };
+
+  function blockerName(id) {
+    var b = (TABLES.dndRules.blockers || {})[id];
+    return b && b.label ? b.label : id;
+  }
+
+  function marked() {
+    var m = {};
+    Store.metCreatures().forEach(function (x) { m[x.name] = true; });
+    return m;
+  }
+
+  function paintCages() {
+    var m = marked();
+    var all = Enc.allCreatures(TABLES).slice().sort(function (a, b) {
+      return (Enc.crToNumber(a.cr) || 0) - (Enc.crToNumber(b.cr) || 0);
+    });
+    html('cages', all.map(function (c) {
+      var stops = (c.blockedBy || []).map(function (b) { return blockerName(b.id); });
+      return '<div class="cage' + (m[c.name] ? ' marked' : '') + '">'
+        + '<div class="nm">' + esc(c.name) + '</div>'
+        + '<div class="meta">CR ' + esc(c.cr) + ' &middot; goes at your '
+        + esc(ABILITY[c.saveAbility || c.save] || c.save || '—') + ' &middot; ' + esc(c.damage || '') + '</div>'
+        + '<div class="desc">' + esc(c.note || '') + '</div>'
+        + (stops.length
+            ? '<div class="stops"><b>Stopped by:</b> ' + esc(stops.join(', ')) + '</div>'
+            : '<div class="stops faint">Nothing on the sheet stops this one outright.</div>')
+        + '<button type="button" class="mark" data-mark="' + esc(c.name) + '">'
+        + (m[c.name] ? '✓ This one got me' : 'This one got me') + '</button>'
+        + '</div>';
+    }).join(''));
+  }
+
+  function paintRead() {
+    var marks = Store.metCreatures();
+    el('count').textContent = marks.length
+      ? marks.length + (marks.length === 1 ? ' marked' : ' marked')
+      : 'Nothing marked yet';
+
+    var r = Enc.recognition(marks, TABLES);
+    if (!r.ready || r.count < 3) {
+      html('read', r.count > 0
+        ? '<p class="note faint">' + r.count + ' marked. At three the page will tell you what they had in '
+          + 'common — which is worth more than any single one of them.</p>'
+        : '');
+      return;
+    }
+
+    var top = r.saves[0];
+    var sameDoor = r.saves.length === 1
+      || (r.saves.length > 1 && top.n > r.saves[1].n);
+    var blockLine = r.blockers.length
+      ? 'The thing that would have stopped the most of them is <b>' + esc(blockerName(r.blockers[0].id))
+        + '</b>' + (r.blockers[0].n > 1 ? ' — it blocks ' + r.blockers[0].n + ' of your ' + r.count + '.' : '.')
+      : '';
+
+    html('read',
+      '<div class="read">'
+      + '<div class="cap">What your ' + r.count + ' have in common</div>'
+      + '<div class="big">'
+      + (sameDoor
+          ? 'They nearly all came at the same door: <b>' + esc(ABILITY[top.ability] || top.ability) + '</b>.'
+          : 'They came at different doors — ' + r.saves.map(function (s) {
+              return esc(ABILITY[s.ability] || s.ability); }).join(', ') + '.')
+      + '</div>'
+      + '<p class="note" style="margin-bottom:var(--space-2)">'
+      + esc(r.creatures.map(function (c) { return c.name; }).join(' · ')) + '</p>'
+      + (blockLine ? '<p style="margin:0 0 var(--space-3)">' + blockLine + '</p>' : '')
+      + '<p style="margin:0"><b>We have not measured any of this.</b> You told us these happened; that is a '
+      + 'different thing from your ' + esc(ABILITY[top.ability] || top.ability) + ' being thin, and this page '
+      + 'cannot tell the difference. A character would.</p>'
+      + '</div>'
+      + '<div class="caveat"><b>And one bias worth knowing about.</b> You can only recognise the creature you '
+      + 'noticed. The loud ones — the boiler, the layoff — get marked far more than the quiet ones, and the '
+      + 'quiet ones are where most money actually goes. Whatever this says about you, it says nothing at all '
+      + 'about the things you did not spot.</div>');
+  }
+
+  function paint() { paintRead(); paintCages(); }
+
+  SLAF.Reference.load().then(function (tables) {
+    TABLES = tables;
+    DND.Skin.mount(el('skin-bar'));
+    el('cages').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-mark]');
+      if (!b) return;
+      Store.markMet(b.getAttribute('data-mark'));
+      paint();
+    });
+    paint();
+  }).catch(function (err) {
+    var n = el('load-notice');
+    n.hidden = false;
+    n.textContent = 'Couldn’t load the bestiary (' + err.message + '). If you opened this file directly it '
+      + 'needs to be served over http — try the published link instead.';
+  });
+})();
+</script>
+</body>
+</html>

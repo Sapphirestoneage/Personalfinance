@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>One number — Dungeons &amp; Dividends</title>
+<meta name="description" content="Answer one question about your money and get one true sentence back. Then another. Nothing you type leaves this browser."/>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="shared/skin.css"/>
+<!--
+  THE DESCENT — DD-028.
+
+  One question on screen. You answer it, and the answer pays immediately with
+  something true about your actual life. Then the next rung appears underneath.
+  Nothing is ever asked before the previous answer has been paid for.
+
+  LIVE-FORM: built once. This is the room where that rule matters most, because
+  a one-question-at-a-time flow is exactly the shape that tempts you to re-render
+  the question each step — which on a phone kills the keyboard for good (D-034).
+  So: EVERY rung is built once at boot, all of them, hidden. Advancing only sets
+  `hidden = false`. The payoff paragraph is a SIBLING of the input, never an
+  ancestor, so re-rendering a payoff can never touch an input node. Editing an
+  earlier rung re-renders every payoff below it and still touches no input.
+
+  Nothing here invents a number. Every sentence comes from an engine that
+  already refuses to guess, and each one names the assumption it rests on.
+-->
+<style>
+  .wrap { max-width: 620px; margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-7); }
+  h1 { font-family: var(--font-display); font-size: var(--text-xl); margin: 0 0 var(--space-2); }
+  .note { color: var(--color-text-muted); font-size: var(--text-sm); line-height: var(--leading-normal); margin: 0 0 var(--space-3); }
+  .faint { color: var(--color-text-faint); }
+  .notice { padding: var(--space-3); border-radius: var(--radius-sm); margin: var(--space-3) 0; font-size: var(--text-sm); border: 1px solid var(--color-critical); color: var(--color-critical); }
+  .btn { font-family: var(--font-body); font-size: var(--text-base); background: var(--color-accent); color: var(--color-accent-contrast); border: 0; border-radius: var(--radius-sm); padding: 0 var(--space-4); height: var(--control-height); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+  .btn.ghost { background: transparent; color: var(--color-accent-hover); border: 1px solid var(--color-border-strong); }
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+
+  .rung { margin-bottom: var(--space-6); }
+  .rung .ask { font-family: var(--font-display); font-size: var(--text-lg); line-height: var(--leading-tight); margin-bottom: var(--space-1); }
+  .rung .hint { font-size: var(--text-sm); color: var(--color-text-faint); margin-bottom: var(--space-3); line-height: var(--leading-normal); }
+  .rung .box { display: flex; align-items: center; gap: var(--space-2); }
+  .rung input { height: var(--control-height); font-family: var(--font-display); font-size: var(--text-xl);
+                background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border-strong);
+                border-radius: var(--radius-sm); padding: 0 var(--space-3); width: 190px; }
+  .rung .unit { font-size: var(--text-sm); color: var(--color-text-faint); }
+  .rung select { height: var(--control-height); font-family: var(--font-body); font-size: var(--text-base);
+                 background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border-strong);
+                 border-radius: var(--radius-sm); padding: 0 var(--space-2); max-width: 320px; }
+  .payoff { margin-top: var(--space-4); border-left: 3px solid var(--color-accent); padding-left: var(--space-3); }
+  .payoff .big { font-family: var(--font-display); font-size: 2.1rem; line-height: 1.05; display: block; margin-bottom: var(--space-2); }
+  .payoff p { margin: 0 0 var(--space-2); line-height: var(--leading-normal); }
+  .payoff .why { font-size: var(--text-xs); color: var(--color-text-faint); }
+  .payoff.thin { border-left-color: var(--color-border-strong); }
+  .next { margin-top: var(--space-3); }
+  .esc { margin-top: var(--space-6); padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
+  .foot { margin-top: var(--space-6); text-align: center; font-size: var(--text-sm); }
+  .foot a { color: var(--color-accent-hover); }
+</style>
+</head>
+<body class="slaf">
+<script src="shared/skin.js"></script>
+<script>DND.Skin.init();</script>
+<div class="wrap">
+  <div class="skin-bar" id="skin-bar"></div>
+  <div id="load-notice" class="notice" hidden></div>
+
+  <h1>One number at a time</h1>
+  <p class="note">No form, no sign-up, no account. Every question pays for itself before the next one turns
+     up, and nothing you type ever leaves this browser.</p>
+
+  <div id="rungs"></div>
+
+  <div class="esc">
+    <p class="note faint">Would rather not put real numbers in? That is completely fine — you can roll a
+       character or take a ready-made one instead, and play the whole game.</p>
+    <div class="actions">
+      <a class="btn ghost" href="campaign.html">Roll one instead →</a>
+    </div>
+  </div>
+
+  <p class="foot"><a href="campaign.html">The game</a> &nbsp;·&nbsp; <a href="bestiary.html">Bestiary</a></p>
+  <p class="foot faint" style="font-size:var(--text-xs)">An independent parody. Not affiliated with or endorsed by Wizards of the Coast.</p>
+</div>
+
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/charform.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/tier0.js"></script>
+<script src="engines/foo.js"></script>
+<script src="engines/character.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Tier0 = SLAF.Tier0, Char = SLAF.Character;
+  var Store = DND.Store, Form = DND.CharForm;
+  var TABLES = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function money(c) { return Money.formatCents(Math.round(c)); }
+
+  /* ---- the rungs ---------------------------------------------------------
+     Each one: an ask, the Store field it writes, and a payoff that reads an
+     engine. `pays` returns null when it genuinely cannot say anything yet —
+     never a guess, never a zero. */
+  var RUNGS = [
+    {
+      id: 'spend', kind: 'money', field: 'monthlyExpensesCents',
+      ask: 'What do you spend in a normal month?',
+      hint: 'Rent or mortgage, food, transport, bills. Roughly is fine — you can change it in a second.',
+      placeholder: '2,500', unit: 'a month',
+      pays: function (h) {
+        var fire = Tier0.fireNumber(h, TABLES);
+        if (!Money.isOk(fire)) return null;
+        var spend = Schema.monthlyExpensesCents(h);
+        return {
+          big: money(fire.value),
+          body: 'That is your number — what you would need invested to cover this month, repeated forever, '
+              + 'without working again. It is set by <b>what you spend</b>, not by what you earn. Which is why '
+              + 'a raise moves it <i>up</i> rather than down, unless you keep the raise.',
+          why: 'From ' + money(spend.value) + ' a month at a 4% withdrawal rate — the standard assumption, '
+             + 'and an assumption rather than a fact.'
+        };
+      }
+    },
+    {
+      id: 'cash', kind: 'money', field: 'cashCents',
+      ask: 'How much could you get your hands on this week?',
+      hint: 'Current account, savings, anything you could actually spend by Friday.',
+      placeholder: '5,000', unit: 'in total',
+      pays: function (h) {
+        var hp = Char.currentHp(h);
+        if (!Money.isOk(hp)) return null;
+        var weeks = hp.value;
+        var ex = TABLES.dndRules.exhaustion || {};
+        var band = null;
+        (ex.bands || []).forEach(function (b) {
+          if (band) return;
+          if (!Money.isEntered(b.maxWeeks) || weeks <= b.maxWeeks) band = b;
+        });
+        return {
+          big: weeks + (weeks === 1 ? ' week' : ' weeks'),
+          body: 'That is your hit points. In this game 1 HP is one week you could go with no income at all — '
+              + 'cash divided by a week of your spending.'
+              + (band && band.level > 0
+                  ? ' At ' + weeks + ', the rules here call you <b>' + esc(band.name || 'worn') + '</b>: every '
+                    + 'saving throw is worse, which is not a mood — it is what a thin buffer actually costs you '
+                    + 'in offers you cannot afford to turn down.'
+                  : ' That is enough to say no to something, which is most of what a buffer is for.'),
+          why: 'Cash ÷ (monthly spending ÷ 4.33).'
+        };
+      }
+    },
+    {
+      id: 'income', kind: 'money', field: 'grossAnnualIncomeCents',
+      ask: 'And what do you earn a year, before tax?',
+      hint: 'Everything you are paid, gross. Your best honest average if it moves around.',
+      placeholder: '50,000', unit: 'a year',
+      pays: function (h) {
+        /* Income alone, against the population ladder. Deliberately NOT the
+           savings rate: that needs a tax estimate, which needs a filing
+           status, which is the next rung. Paying with what this one number can
+           honestly buy beats holding the payoff back until two are in. */
+        var subs = Char.allSubStats ? Char.allSubStats(h, TABLES) : null;
+        var ip = subs && subs.incomePower;
+        if (!ip || !Money.isOk(ip)) return null;
+        var gross = Schema.grossAnnualIncomeCents(h);
+        return {
+          big: 'Strength ' + ip.value,
+          body: 'That is your earning power on this game’s scale, where <b>10 is roughly the median '
+              + 'full-time worker</b>. It is one of three numbers under Strength, so it is not the whole '
+              + 'ability yet — but it is the one that moves it most.',
+          why: 'From ' + money(gross.value) + ' a year, placed on a published earnings ladder.'
+        };
+      }
+    },
+    {
+      id: 'filing', kind: 'choice', field: 'filingStatus',
+      ask: 'Last one — how do you file your taxes?',
+      hint: 'One tap. It is what turns everything above into a savings rate, and without it the tool will not guess.',
+      choices: [['single', 'Single'], ['married_joint', 'Married, filing jointly'],
+                ['married_separate', 'Married, filing separately'], ['head_of_household', 'Head of household']],
+      pays: function (h) {
+        var years = Tier0.yearsToFire(h, TABLES);
+        var rate = Tier0.savingsRate(h, TABLES);
+        var r = rate && (Money.isOk(rate.includingMatch) ? rate.includingMatch
+                       : (Money.isOk(rate.excludingMatch) ? rate.excludingMatch : null));
+        if (!r) return null;
+        var pct = Math.round(r.value * 100);
+        return {
+          big: pct + '% saved',
+          body: 'That is the share of what you keep that you are not spending — and it is the single number '
+              + 'that decides how long this takes. '
+              + (Money.isOk(years)
+                  ? 'At this rate you reach the number at the top in about <b>' + Math.round(years.value)
+                    + ' years</b>. That figure barely cares what you earn: it is almost entirely the gap.'
+                  : 'It is not yet enough to put a finish line on, which the tool says rather than guesses at.'),
+          why: 'Take-home minus spending, over take-home. Tax estimated from a published effective-rate table '
+             + 'rather than your actual return.'
+        };
+      }
+    }
+  ];
+
+  /* ---- built once, every rung, hidden ------------------------------------
+     The whole column exists from boot. Advancing reveals; it never creates.
+     The payoff is a sibling of the input, so no payoff re-render can ever
+     replace an input node under a finger. */
+  var BUILT = false;
+  function build() {
+    if (BUILT) return;
+    el('rungs').innerHTML = RUNGS.map(function (r, i) {
+      return '<div class="rung" id="rung-' + r.id + '"' + (i === 0 ? '' : ' hidden') + '>'
+        + '<label class="ask" for="in-' + r.id + '">' + esc(r.ask) + '</label>'
+        + '<div class="hint">' + esc(r.hint) + '</div>'
+        + '<div class="box">'
+        + (r.kind === 'choice'
+            ? '<select id="in-' + r.id + '"><option value="">—</option>'
+              + r.choices.map(function (c) {
+                  return '<option value="' + esc(c[0]) + '">' + esc(c[1]) + '</option>'; }).join('')
+              + '</select>'
+            : '<input id="in-' + r.id + '" type="text" inputmode="decimal" autocomplete="off" '
+              + 'placeholder="' + esc(r.placeholder) + '"/><span class="unit">' + esc(r.unit) + '</span>')
+        + '</div>'
+        + '<div class="payoff" id="pay-' + r.id + '" hidden></div>'
+        + '<div class="next" id="next-' + r.id + '" hidden></div>'
+        + '</div>';
+    }).join('')
+    + '<div id="done" hidden></div>';
+
+    RUNGS.forEach(function (r) {
+      var node = el('in-' + r.id);
+      if (r.kind === 'choice') {
+        node.addEventListener('change', function () {
+          Store.setFilingStatus(this.value || null);
+          paintAll();
+        });
+        return;
+      }
+      node.addEventListener('input', function () {
+        Store.setMoney(r.field, Form.parseDollars(this.value));
+        paintAll();
+      });
+    });
+    BUILT = true;
+  }
+
+  /* Only ever writes .value, and never to the box being typed in. */
+  function fill() {
+    var h = Store.household();
+    var read = {
+      spend: (h.expenses && h.expenses.monthlyEssential) ? h.expenses.monthlyEssential.estimatedValueCents : null,
+      cash: (function () {
+        var a = (h.assets || []).filter(function (x) { return x.category === 'cash'; })[0];
+        return a ? a.valueCents : null;
+      })(),
+      income: (function () {
+        var p = (h.people || [])[0], src = p && (p.incomeSources || [])[0];
+        return src ? src.grossAnnualIncomeCents : null;
+      })()
+    };
+    RUNGS.forEach(function (r) {
+      var node = el('in-' + r.id);
+      if (document.activeElement === node) return;
+      if (r.kind === 'choice') { node.value = h.filingStatus || ''; return; }
+      var v = read[r.id];
+      node.value = Money.isEntered(v) ? String(Math.round(v) / 100) : '';
+    });
+  }
+
+  function paintAll() {
+    var h = Store.household();
+    var openNext = true;
+    RUNGS.forEach(function (r, i) {
+      var paid = r.pays(h);
+      var pay = el('pay-' + r.id), next = el('next-' + r.id);
+      if (!paid) {
+        pay.hidden = true;
+        next.hidden = true;
+        openNext = false;
+        return;
+      }
+      pay.hidden = false;
+      pay.innerHTML = '<span class="big">' + paid.big + '</span><p>' + paid.body + '</p>'
+        + '<p class="why">' + esc(paid.why) + '</p>';
+      /* Reveal the next rung only once this one has actually paid. */
+      var after = RUNGS[i + 1];
+      if (after && openNext) {
+        el('rung-' + after.id).hidden = false;
+        next.hidden = true;
+      }
+      if (!after) {
+        next.hidden = false;
+        next.innerHTML = '<div class="actions">'
+          + '<a class="btn" href="campaign.html">Five quick questions, then your character →</a></div>'
+          + '<p class="note faint" style="margin-top:var(--space-2)">That is enough for a Level, a class, '
+          + 'a runway and a place in the order of operations. The rest of the game adds the three things '
+          + 'nobody can measure for you.</p>';
+      }
+    });
+  }
+
+  SLAF.Reference.load().then(function (tables) {
+    TABLES = tables;
+    DND.Skin.mount(el('skin-bar'));
+    build();
+    fill();
+    paintAll();
+  }).catch(function (err) {
+    var n = el('load-notice');
+    n.hidden = false;
+    n.textContent = 'Couldn’t load the reference data (' + err.message + '). If you opened this file '
+      + 'directly it needs to be served over http — try the published link instead.';
+  });
+})();
+</script>
+</body>
+</html>

@@ -63,6 +63,36 @@ const EXECUTABLE = process.env.SLAF_CHROMIUM || '/opt/pw-browsers/chromium';
    walk the fields in order, tapping each one and typing into it. */
 const CASES = [
   {
+    /* THE DESCENT — one question at a time, which is the exact shape that
+       tempts a re-render per step and kills the phone keyboard for good.
+       Every rung is built at boot and only revealed, and the payoff is a
+       sibling of the input rather than its ancestor. This case types into
+       all three boxes in order; if any payoff render ever starts replacing
+       an input node, the tapped box comes back untagged here. */
+    room: '/dnd/descent.html',
+    container: '#rungs',
+    seed: 'empty',
+    fields: [
+      { sel: '#in-spend', type: '2500' },
+      { sel: '#in-cash', type: '5000' },
+      { sel: '#in-income', type: '50000' }
+    ],
+    expect: async (page) => {
+      const d = await page.evaluate(() =>
+        JSON.parse(localStorage.getItem('dnd.character.v1')) || {});
+      const cash = (d.assets || []).find(a => a.category === 'cash') || {};
+      const paid = await page.evaluate(() =>
+        [...document.querySelectorAll('.payoff')].filter(p => !p.hidden).length);
+      return [
+        ['spending landed', d.expenses.monthlyEssential.estimatedValueCents, 250000],
+        ['cash landed', cash.valueCents, 500000],
+        ['income landed', d.people[0].incomeSources[0].grossAnnualIncomeCents, 5000000],
+        /* Each answer must have actually paid, or the rhythm is broken. */
+        ['all three rungs paid out', paid, 3]
+      ];
+    }
+  },
+  {
     /* THE CHARACTER SCREEN, which repaints on every answer given to it.
        It holds the optional name box AND the finisher fields, and paintResult()
        runs on each of them. Static markup plus writing .value is what keeps it

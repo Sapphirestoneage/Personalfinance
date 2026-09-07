@@ -1,0 +1,1371 @@
+{
+  "id": "dnd_pregens",
+  "version": "1.0.0",
+  "asOf": "2026-09",
+  "source": "Authored for Dungeons & Dividends. DD-028.",
+  "confidence": "high",
+  "confidenceNote": "These are invented people, not data about anybody. The figures are chosen to teach one thing each and are internally consistent — every score you see on a pregen is derived by the same engines that read a real character, never written into the file.",
+  "note": "Each pregen is a household in the shape shared/export.js emits, so loading one is Store.importCharacter() and nothing else. `expect` is what the pregen is FOR: the test asserts the lesson still lands after any change to the scoring tables, because a retuned anchor could quietly stop making The Glass Cannon a glass cannon.",
+  "pregens": [
+    {
+      "id": "glass-cannon",
+      "name": "The Glass Cannon",
+      "tagline": "Rich on paper. One week from trouble.",
+      "teaches": "Level and HP measure different things. You can be most of the way to financial independence and still unable to survive a broken boiler.",
+      "expect": {
+        "levelMin": 5,
+        "runwayMax": 4
+      },
+      "envelope": {
+        "format": "dungeons-and-dividends/character",
+        "formatVersion": 1,
+        "schemaVersion": 2,
+        "source": {
+          "tool": "Dungeons & Dividends pregen",
+          "url": ""
+        },
+        "contains": [
+          "people",
+          "assets",
+          "debts",
+          "expenses",
+          "filingStatus",
+          "capturingFullMatch",
+          "dndProfile"
+        ],
+        "partial": true,
+        "household": {
+          "schemaVersion": 2,
+          "people": [
+            {
+              "id": "dnd_person",
+              "label": null,
+              "role": "adult",
+              "dob": null,
+              "employmentStatus": null,
+              "unemployment": {
+                "since": null,
+                "benefitStatus": null,
+                "benefitWeeklyCents": null,
+                "benefitWeeksLeft": null,
+                "severanceCents": null,
+                "lastGrossAnnualCents": null,
+                "expectedSearchMonths": null,
+                "floorMonthlyCents": null
+              },
+              "incomeSources": [
+                {
+                  "id": "dnd_income",
+                  "personId": "dnd_person",
+                  "source": "Day job",
+                  "grossAnnualIncomeCents": 14200000,
+                  "frequency": "annual",
+                  "rateCents": null,
+                  "hoursPerWeek": null,
+                  "monthsWorked": null,
+                  "ongoing": true,
+                  "variableLowCents": null,
+                  "variableHighCents": null,
+                  "type": "w2",
+                  "hassle": null,
+                  "employerMatch": {
+                    "matchPercent": 0.5,
+                    "matchCapPercentOfSalary": 0.06
+                  }
+                }
+              ],
+              "work": {
+                "contractedHoursPerWeek": null,
+                "unpaidOvertimeHoursPerWeek": null,
+                "commuteHoursPerWeek": null,
+                "prepHoursPerWeek": null,
+                "decompressHoursPerWeek": null,
+                "workCostsMonthlyCents": null,
+                "weeksPerYear": 48
+              }
+            }
+          ],
+          "filingStatus": "single",
+          "state": null,
+          "capturingFullMatch": false,
+          "dependents": null,
+          "community": {
+            "daySchool": null
+          },
+          "assets": [
+            {
+              "id": "dnd_asset_cash",
+              "label": "Cash & savings",
+              "category": "cash",
+              "valueCents": 190000,
+              "liquid": true,
+              "ownerIds": [],
+              "taxCharacter": null,
+              "liquidity": null,
+              "confidence": null,
+              "costBasisCents": null,
+              "hassle": null,
+              "cashFlowMonthlyCents": null,
+              "accessAgeOverride": null
+            },
+            {
+              "id": "dnd_asset_investments",
+              "label": "Investments + retirement",
+              "category": "investment",
+              "valueCents": 38000000,
+              "liquid": false,
+              "ownerIds": [],
+              "taxCharacter": null,
+              "liquidity": null,
+              "confidence": null,
+              "costBasisCents": null,
+              "hassle": null,
+              "cashFlowMonthlyCents": null,
+              "accessAgeOverride": null
+            }
+          ],
+          "debts": [
+            {
+              "id": "dnd_debt_total",
+              "label": "Total debt",
+              "balanceCents": 1900000,
+              "rate": 0.21,
+              "minPaymentCents": null,
+              "type": "credit_card",
+              "creditLimitCents": null,
+              "promoEndsOn": null,
+              "postPromoRate": null,
+              "emotionalTag": null,
+              "keepReasons": [],
+              "excludeFromAggressive": false,
+              "interestFree": null,
+              "archived": false,
+              "borrowedOn": null,
+              "dueOn": null,
+              "ownerIds": []
+            }
+          ],
+          "expenses": {
+            "monthlyEssential": {
+              "estimatedValueCents": 780000,
+              "trackedValueCents": null,
+              "source": "estimated"
+            },
+            "entries": []
+          },
+          "incomeBasis": "earned",
+          "retirement": {
+            "contributionPercent": null,
+            "rothContributedCents": null,
+            "hsaContributedCents": null,
+            "onHdhp": null,
+            "hsaFamilyPlan": null,
+            "has401k": null
+          },
+          "insurance": {
+            "highestDeductibleCents": null,
+            "oopMaxCents": null,
+            "termLifeCents": null,
+            "disabilityMonthlyCents": null,
+            "umbrella": null,
+            "health": {
+              "type": null,
+              "monthlyCents": null
+            }
+          },
+          "worthChecks": [],
+          "ratings": {},
+          "valuesProfile": {
+            "stated": [],
+            "assignments": {}
+          },
+          "swan": {
+            "basis": null,
+            "targetCents": null,
+            "targetMonths": null,
+            "note": null,
+            "setAt": null
+          },
+          "goals": [],
+          "futureIncome": [],
+          "property": [],
+          "allocation": {
+            "stocks": null,
+            "bonds": null,
+            "cash": null,
+            "rebalanceBand": null
+          },
+          "rerank": {
+            "rows": []
+          },
+          "targets": {
+            "retireAge": null,
+            "coastAge": null
+          },
+          "scenarios": [],
+          "oneOffs": [],
+          "estate": {
+            "beneficiariesSet": null,
+            "willExists": null,
+            "poaExists": null
+          },
+          "giving": {
+            "pctOfIncome": null,
+            "annualTargetCents": null
+          },
+          "decumulation": {
+            "stockShare": null,
+            "plannedAnnualDrawCents": null,
+            "socialSecurityAt": null
+          },
+          "tax": {
+            "otherPreTaxAnnualCents": null,
+            "withheldAnnualCents": null
+          },
+          "career": {
+            "offer": {
+              "grossAnnualCents": null,
+              "hoursPerWeek": null,
+              "commuteHoursPerWeek": null,
+              "workCostsMonthlyCents": null,
+              "signOnCents": null
+            }
+          },
+          "partner": {
+            "splitMode": null,
+            "sharedMonthlyCents": null
+          },
+          "kids": {
+            "tuitionTargetCents": null,
+            "tuitionSavedCents": null,
+            "tuitionMonthlyCents": null
+          },
+          "housing": {
+            "rentMonthlyCents": null,
+            "priceCents": null,
+            "downPct": null,
+            "rate": null
+          },
+          "purchase": {
+            "priceCents": null,
+            "monthsAway": null,
+            "financeRate": null,
+            "label": null
+          },
+          "variableIncome": {
+            "bufferMonths": null,
+            "windowMonths": null
+          },
+          "enough": {
+            "monthlyCents": null,
+            "source": null
+          },
+          "designedWeek": {
+            "blocks": []
+          },
+          "timeBuckets": [],
+          "dreams": [],
+          "reversibility": {
+            "decisionId": null,
+            "given": {}
+          },
+          "unlearning": {
+            "dropped": []
+          },
+          "studentLoans": {
+            "plan": null,
+            "extraMonthlyCents": null,
+            "idrShare": null,
+            "forgivenessYears": null
+          },
+          "calendar": {
+            "cadence": null,
+            "nextPaydayDay": null,
+            "bills": [],
+            "payLater": []
+          },
+          "history": {
+            "compareTo": null
+          },
+          "ledger": {
+            "income": [],
+            "months": [],
+            "dismissed": []
+          },
+          "budget": {
+            "estimated": {},
+            "presets": {}
+          },
+          "notApplicable": {},
+          "skills": {},
+          "skillTree": {
+            "state": {}
+          },
+          "exercises": {
+            "done": {},
+            "results": {}
+          },
+          "practiceLedger": [],
+          "assumptions": {
+            "returnReal": 0.05,
+            "inflation": 0.03,
+            "expectedReturnRate": 0.07,
+            "swrRate": 0.04,
+            "humanCapitalDiscountRate": 0.02,
+            "homeEquityHaircut": 0.8,
+            "marginalRate": null
+          },
+          "assumptionOverrides": {},
+          "meta": {
+            "visitedRooms": [],
+            "createdAt": null,
+            "updatedAt": null,
+            "confirmedAt": {},
+            "hasDebt": null,
+            "undoStack": [],
+            "redoStack": [],
+            "guessed": {},
+            "source": {},
+            "displayUnit": null,
+            "noRent": null
+          },
+          "dndProfile": {
+            "fixedCostShare": 0.8,
+            "yearsSustained": 1,
+            "disruptionSurvived": false,
+            "healthCoverage": 2,
+            "automatedSaving": "some",
+            "incomeThreeYearsAgoCents": 9800000,
+            "sideIncomeAnnualCents": 0,
+            "hustleReadiness": "none",
+            "mobility": {
+              "housing": 2,
+              "remote": 1,
+              "willing": 2,
+              "ties": 1
+            },
+            "declaredMethod": "pointBuy",
+            "declaredScores": {
+              "STR": 15,
+              "DEX": 10,
+              "CON": 8,
+              "INT": 13,
+              "WIS": 10,
+              "CHA": 14
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "the-fortress",
+      "name": "The Fortress",
+      "tagline": "Not wealthy. Completely unshakeable.",
+      "teaches": "A modest income with a deep buffer beats a large one with none. Almost nothing that happens to this character is an emergency.",
+      "expect": {
+        "runwayMin": 40,
+        "burdenMax": 0
+      },
+      "envelope": {
+        "format": "dungeons-and-dividends/character",
+        "formatVersion": 1,
+        "schemaVersion": 2,
+        "source": {
+          "tool": "Dungeons & Dividends pregen",
+          "url": ""
+        },
+        "contains": [
+          "people",
+          "assets",
+          "debts",
+          "expenses",
+          "filingStatus",
+          "capturingFullMatch",
+          "dndProfile"
+        ],
+        "partial": true,
+        "household": {
+          "schemaVersion": 2,
+          "people": [
+            {
+              "id": "dnd_person",
+              "label": null,
+              "role": "adult",
+              "dob": null,
+              "employmentStatus": null,
+              "unemployment": {
+                "since": null,
+                "benefitStatus": null,
+                "benefitWeeklyCents": null,
+                "benefitWeeksLeft": null,
+                "severanceCents": null,
+                "lastGrossAnnualCents": null,
+                "expectedSearchMonths": null,
+                "floorMonthlyCents": null
+              },
+              "incomeSources": [
+                {
+                  "id": "dnd_income",
+                  "personId": "dnd_person",
+                  "source": "Day job",
+                  "grossAnnualIncomeCents": 4200000,
+                  "frequency": "annual",
+                  "rateCents": null,
+                  "hoursPerWeek": null,
+                  "monthsWorked": null,
+                  "ongoing": true,
+                  "variableLowCents": null,
+                  "variableHighCents": null,
+                  "type": "w2",
+                  "hassle": null,
+                  "employerMatch": {
+                    "matchPercent": 0.5,
+                    "matchCapPercentOfSalary": 0.06
+                  }
+                }
+              ],
+              "work": {
+                "contractedHoursPerWeek": null,
+                "unpaidOvertimeHoursPerWeek": null,
+                "commuteHoursPerWeek": null,
+                "prepHoursPerWeek": null,
+                "decompressHoursPerWeek": null,
+                "workCostsMonthlyCents": null,
+                "weeksPerYear": 48
+              }
+            }
+          ],
+          "filingStatus": "single",
+          "state": null,
+          "capturingFullMatch": true,
+          "dependents": null,
+          "community": {
+            "daySchool": null
+          },
+          "assets": [
+            {
+              "id": "dnd_asset_cash",
+              "label": "Cash & savings",
+              "category": "cash",
+              "valueCents": 4600000,
+              "liquid": true,
+              "ownerIds": [],
+              "taxCharacter": null,
+              "liquidity": null,
+              "confidence": null,
+              "costBasisCents": null,
+              "hassle": null,
+              "cashFlowMonthlyCents": null,
+              "accessAgeOverride": null
+            },
+            {
+              "id": "dnd_asset_investments",
+              "label": "Investments + retirement",
+              "category": "investment",
+              "valueCents": 1500000,
+              "liquid": false,
+              "ownerIds": [],
+              "taxCharacter": null,
+              "liquidity": null,
+              "confidence": null,
+              "costBasisCents": null,
+              "hassle": null,
+              "cashFlowMonthlyCents": null,
+              "accessAgeOverride": null
+            }
+          ],
+          "debts": [],
+          "expenses": {
+            "monthlyEssential": {
+              "estimatedValueCents": 245000,
+              "trackedValueCents": null,
+              "source": "estimated"
+            },
+            "entries": []
+          },
+          "incomeBasis": "earned",
+          "retirement": {
+            "contributionPercent": null,
+            "rothContributedCents": null,
+            "hsaContributedCents": null,
+            "onHdhp": null,
+            "hsaFamilyPlan": null,
+            "has401k": null
+          },
+          "insurance": {
+            "highestDeductibleCents": null,
+            "oopMaxCents": null,
+            "termLifeCents": null,
+            "disabilityMonthlyCents": null,
+            "umbrella": null,
+            "health": {
+              "type": null,
+              "monthlyCents": null
+            }
+          },
+          "worthChecks": [],
+          "ratings": {},
+          "valuesProfile": {
+            "stated": [],
+            "assignments": {}
+          },
+          "swan": {
+            "basis": null,
+            "targetCents": null,
+            "targetMonths": null,
+            "note": null,
+            "setAt": null
+          },
+          "goals": [],
+          "futureIncome": [],
+          "property": [],
+          "allocation": {
+            "stocks": null,
+            "bonds": null,
+            "cash": null,
+            "rebalanceBand": null
+          },
+          "rerank": {
+            "rows": []
+          },
+          "targets": {
+            "retireAge": null,
+            "coastAge": null
+          },
+          "scenarios": [],
+          "oneOffs": [],
+          "estate": {
+            "beneficiariesSet": null,
+            "willExists": null,
+            "poaExists": null
+          },
+          "giving": {
+            "pctOfIncome": null,
+            "annualTargetCents": null
+          },
+          "decumulation": {
+            "stockShare": null,
+            "plannedAnnualDrawCents": null,
+            "socialSecurityAt": null
+          },
+          "tax": {
+            "otherPreTaxAnnualCents": null,
+            "withheldAnnualCents": null
+          },
+          "career": {
+            "offer": {
+              "grossAnnualCents": null,
+              "hoursPerWeek": null,
+              "commuteHoursPerWeek": null,
+              "workCostsMonthlyCents": null,
+              "signOnCents": null
+            }
+          },
+          "partner": {
+            "splitMode": null,
+            "sharedMonthlyCents": null
+          },
+          "kids": {
+            "tuitionTargetCents": null,
+            "tuitionSavedCents": null,
+            "tuitionMonthlyCents": null
+          },
+          "housing": {
+            "rentMonthlyCents": null,
+            "priceCents": null,
+            "downPct": null,
+            "rate": null
+          },
+          "purchase": {
+            "priceCents": null,
+            "monthsAway": null,
+            "financeRate": null,
+            "label": null
+          },
+          "variableIncome": {
+            "bufferMonths": null,
+            "windowMonths": null
+          },
+          "enough": {
+            "monthlyCents": null,
+            "source": null
+          },
+          "designedWeek": {
+            "blocks": []
+          },
+          "timeBuckets": [],
+          "dreams": [],
+          "reversibility": {
+            "decisionId": null,
+            "given": {}
+          },
+          "unlearning": {
+            "dropped": []
+          },
+          "studentLoans": {
+            "plan": null,
+            "extraMonthlyCents": null,
+            "idrShare": null,
+            "forgivenessYears": null
+          },
+          "calendar": {
+            "cadence": null,
+            "nextPaydayDay": null,
+            "bills": [],
+            "payLater": []
+          },
+          "history": {
+            "compareTo": null
+          },
+          "ledger": {
+            "income": [],
+            "months": [],
+            "dismissed": []
+          },
+          "budget": {
+            "estimated": {},
+            "presets": {}
+          },
+          "notApplicable": {},
+          "skills": {},
+          "skillTree": {
+            "state": {}
+          },
+          "exercises": {
+            "done": {},
+            "results": {}
+          },
+          "practiceLedger": [],
+          "assumptions": {
+            "returnReal": 0.05,
+            "inflation": 0.03,
+            "expectedReturnRate": 0.07,
+            "swrRate": 0.04,
+            "humanCapitalDiscountRate": 0.02,
+            "homeEquityHaircut": 0.8,
+            "marginalRate": null
+          },
+          "assumptionOverrides": {},
+          "meta": {
+            "visitedRooms": [],
+            "createdAt": null,
+            "updatedAt": null,
+            "confirmedAt": {},
+            "hasDebt": null,
+            "undoStack": [],
+            "redoStack": [],
+            "guessed": {},
+            "source": {},
+            "displayUnit": null,
+            "noRent": null
+          },
+          "dndProfile": {
+            "fixedCostShare": 0.42,
+            "yearsSustained": 5,
+            "disruptionSurvived": true,
+            "healthCoverage": 2,
+            "automatedSaving": "most",
+            "incomeThreeYearsAgoCents": 3900000,
+            "sideIncomeAnnualCents": 0,
+            "hustleReadiness": "none",
+            "mobility": {
+              "housing": 0,
+              "remote": 0,
+              "willing": 1,
+              "ties": 1
+            },
+            "declaredMethod": "pointBuy",
+            "declaredScores": {
+              "STR": 10,
+              "DEX": 14,
+              "CON": 15,
+              "INT": 12,
+              "WIS": 13,
+              "CHA": 8
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "the-millstone",
+      "name": "The Millstone",
+      "tagline": "Good money. All of it already spoken for.",
+      "teaches": "The rate is the wound, not the balance. A high income does not outrun a debt burden, it just makes the payments look affordable.",
+      "expect": {
+        "burdenMin": 2,
+        "runwayMax": 6
+      },
+      "envelope": {
+        "format": "dungeons-and-dividends/character",
+        "formatVersion": 1,
+        "schemaVersion": 2,
+        "source": {
+          "tool": "Dungeons & Dividends pregen",
+          "url": ""
+        },
+        "contains": [
+          "people",
+          "assets",
+          "debts",
+          "expenses",
+          "filingStatus",
+          "capturingFullMatch",
+          "dndProfile"
+        ],
+        "partial": true,
+        "household": {
+          "schemaVersion": 2,
+          "people": [
+            {
+              "id": "dnd_person",
+              "label": null,
+              "role": "adult",
+              "dob": null,
+              "employmentStatus": null,
+              "unemployment": {
+                "since": null,
+                "benefitStatus": null,
+                "benefitWeeklyCents": null,
+                "benefitWeeksLeft": null,
+                "severanceCents": null,
+                "lastGrossAnnualCents": null,
+                "expectedSearchMonths": null,
+                "floorMonthlyCents": null
+              },
+              "incomeSources": [
+                {
+                  "id": "dnd_income",
+                  "personId": "dnd_person",
+                  "source": "Day job",
+                  "grossAnnualIncomeCents": 9600000,
+                  "frequency": "annual",
+                  "rateCents": null,
+                  "hoursPerWeek": null,
+                  "monthsWorked": null,
+                  "ongoing": true,
+                  "variableLowCents": null,
+                  "variableHighCents": null,
+                  "type": "w2",
+                  "hassle": null,
+                  "employerMatch": {
+                    "matchPercent": 0.5,
+                    "matchCapPercentOfSalary": 0.06
+                  }
+                }
+              ],
+              "work": {
+                "contractedHoursPerWeek": null,
+                "unpaidOvertimeHoursPerWeek": null,
+                "commuteHoursPerWeek": null,
+                "prepHoursPerWeek": null,
+                "decompressHoursPerWeek": null,
+                "workCostsMonthlyCents": null,
+                "weeksPerYear": 48
+              }
+            }
+          ],
+          "filingStatus": "single",
+          "state": null,
+          "capturingFullMatch": false,
+          "dependents": null,
+          "community": {
+            "daySchool": null
+          },
+          "assets": [
+            {
+              "id": "dnd_asset_cash",
+              "label": "Cash & savings",
+              "category": "cash",
+              "valueCents": 300000,
+              "liquid": true,
+              "ownerIds": [],
+              "taxCharacter": null,
+              "liquidity": null,
+              "confidence": null,
+              "costBasisCents": null,
+              "hassle": null,
+              "cashFlowMonthlyCents": null,
+              "accessAgeOverride": null
+            },
+            {
+              "id": "dnd_asset_investments",
+              "label": "Investments + retirement",
+              "category": "investment",
+              "valueCents": 800000,
+              "liquid": false,
+              "ownerIds": [],
+              "taxCharacter": null,
+              "liquidity": null,
+              "confidence": null,
+              "costBasisCents": null,
+              "hassle": null,
+              "cashFlowMonthlyCents": null,
+              "accessAgeOverride": null
+            }
+          ],
+          "debts": [
+            {
+              "id": "dnd_debt_total",
+              "label": "Total debt",
+              "balanceCents": 4100000,
+              "rate": 0.19,
+              "minPaymentCents": null,
+              "type": "credit_card",
+              "creditLimitCents": null,
+              "promoEndsOn": null,
+              "postPromoRate": null,
+              "emotionalTag": null,
+              "keepReasons": [],
+              "excludeFromAggressive": false,
+              "interestFree": null,
+              "archived": false,
+              "borrowedOn": null,
+              "dueOn": null,
+              "ownerIds": []
+            }
+          ],
+          "expenses": {
+            "monthlyEssential": {
+              "estimatedValueCents": 640000,
+              "trackedValueCents": null,
+              "source": "estimated"
+            },
+            "entries": []
+          },
+          "incomeBasis": "earned",
+          "retirement": {
+            "contributionPercent": null,
+            "rothContributedCents": null,
+            "hsaContributedCents": null,
+            "onHdhp": null,
+            "hsaFamilyPlan": null,
+            "has401k": null
+          },
+          "insurance": {
+            "highestDeductibleCents": null,
+            "oopMaxCents": null,
+            "termLifeCents": null,
+            "disabilityMonthlyCents": null,
+            "umbrella": null,
+            "health": {
+              "type": null,
+              "monthlyCents": null
+            }
+          },
+          "worthChecks": [],
+          "ratings": {},
+          "valuesProfile": {
+            "stated": [],
+            "assignments": {}
+          },
+          "swan": {
+            "basis": null,
+            "targetCents": null,
+            "targetMonths": null,
+            "note": null,
+            "setAt": null
+          },
+          "goals": [],
+          "futureIncome": [],
+          "property": [],
+          "allocation": {
+            "stocks": null,
+            "bonds": null,
+            "cash": null,
+            "rebalanceBand": null
+          },
+          "rerank": {
+            "rows": []
+          },
+          "targets": {
+            "retireAge": null,
+            "coastAge": null
+          },
+          "scenarios": [],
+          "oneOffs": [],
+          "estate": {
+            "beneficiariesSet": null,
+            "willExists": null,
+            "poaExists": null
+          },
+          "giving": {
+            "pctOfIncome": null,
+            "annualTargetCents": null
+          },
+          "decumulation": {
+            "stockShare": null,
+            "plannedAnnualDrawCents": null,
+            "socialSecurityAt": null
+          },
+          "tax": {
+            "otherPreTaxAnnualCents": null,
+            "withheldAnnualCents": null
+          },
+          "career": {
+            "offer": {
+              "grossAnnualCents": null,
+              "hoursPerWeek": null,
+              "commuteHoursPerWeek": null,
+              "workCostsMonthlyCents": null,
+              "signOnCents": null
+            }
+          },
+          "partner": {
+            "splitMode": null,
+            "sharedMonthlyCents": null
+          },
+          "kids": {
+            "tuitionTargetCents": null,
+            "tuitionSavedCents": null,
+            "tuitionMonthlyCents": null
+          },
+          "housing": {
+            "rentMonthlyCents": null,
+            "priceCents": null,
+            "downPct": null,
+            "rate": null
+          },
+          "purchase": {
+            "priceCents": null,
+            "monthsAway": null,
+            "financeRate": null,
+            "label": null
+          },
+          "variableIncome": {
+            "bufferMonths": null,
+            "windowMonths": null
+          },
+          "enough": {
+            "monthlyCents": null,
+            "source": null
+          },
+          "designedWeek": {
+            "blocks": []
+          },
+          "timeBuckets": [],
+          "dreams": [],
+          "reversibility": {
+            "decisionId": null,
+            "given": {}
+          },
+          "unlearning": {
+            "dropped": []
+          },
+          "studentLoans": {
+            "plan": null,
+            "extraMonthlyCents": null,
+            "idrShare": null,
+            "forgivenessYears": null
+          },
+          "calendar": {
+            "cadence": null,
+            "nextPaydayDay": null,
+            "bills": [],
+            "payLater": []
+          },
+          "history": {
+            "compareTo": null
+          },
+          "ledger": {
+            "income": [],
+            "months": [],
+            "dismissed": []
+          },
+          "budget": {
+            "estimated": {},
+            "presets": {}
+          },
+          "notApplicable": {},
+          "skills": {},
+          "skillTree": {
+            "state": {}
+          },
+          "exercises": {
+            "done": {},
+            "results": {}
+          },
+          "practiceLedger": [],
+          "assumptions": {
+            "returnReal": 0.05,
+            "inflation": 0.03,
+            "expectedReturnRate": 0.07,
+            "swrRate": 0.04,
+            "humanCapitalDiscountRate": 0.02,
+            "homeEquityHaircut": 0.8,
+            "marginalRate": null
+          },
+          "assumptionOverrides": {},
+          "meta": {
+            "visitedRooms": [],
+            "createdAt": null,
+            "updatedAt": null,
+            "confirmedAt": {},
+            "hasDebt": null,
+            "undoStack": [],
+            "redoStack": [],
+            "guessed": {},
+            "source": {},
+            "displayUnit": null,
+            "noRent": null
+          },
+          "dndProfile": {
+            "fixedCostShare": 0.78,
+            "yearsSustained": 2,
+            "disruptionSurvived": false,
+            "healthCoverage": 2,
+            "automatedSaving": "none",
+            "incomeThreeYearsAgoCents": 8800000,
+            "sideIncomeAnnualCents": 0,
+            "hustleReadiness": "none",
+            "mobility": {
+              "housing": 1,
+              "remote": 2,
+              "willing": 2,
+              "ties": 2
+            },
+            "declaredMethod": "pointBuy",
+            "declaredScores": {
+              "STR": 14,
+              "DEX": 9,
+              "CON": 9,
+              "INT": 11,
+              "WIS": 10,
+              "CHA": 13
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "level-one",
+      "name": "Level One",
+      "tagline": "Early, tidy, and further along than it feels.",
+      "teaches": "Almost nothing invested and a small income, but no debt and two months of cover — which is a stronger position than most people believe it is.",
+      "expect": {
+        "burdenMax": 0,
+        "runwayMin": 5
+      },
+      "envelope": {
+        "format": "dungeons-and-dividends/character",
+        "formatVersion": 1,
+        "schemaVersion": 2,
+        "source": {
+          "tool": "Dungeons & Dividends pregen",
+          "url": ""
+        },
+        "contains": [
+          "people",
+          "assets",
+          "debts",
+          "expenses",
+          "filingStatus",
+          "capturingFullMatch",
+          "dndProfile"
+        ],
+        "partial": true,
+        "household": {
+          "schemaVersion": 2,
+          "people": [
+            {
+              "id": "dnd_person",
+              "label": null,
+              "role": "adult",
+              "dob": null,
+              "employmentStatus": null,
+              "unemployment": {
+                "since": null,
+                "benefitStatus": null,
+                "benefitWeeklyCents": null,
+                "benefitWeeksLeft": null,
+                "severanceCents": null,
+                "lastGrossAnnualCents": null,
+                "expectedSearchMonths": null,
+                "floorMonthlyCents": null
+              },
+              "incomeSources": [
+                {
+                  "id": "dnd_income",
+                  "personId": "dnd_person",
+                  "source": "Day job",
+                  "grossAnnualIncomeCents": 2900000,
+                  "frequency": "annual",
+                  "rateCents": null,
+                  "hoursPerWeek": null,
+                  "monthsWorked": null,
+                  "ongoing": true,
+                  "variableLowCents": null,
+                  "variableHighCents": null,
+                  "type": "w2",
+                  "hassle": null,
+                  "employerMatch": {
+                    "matchPercent": 0.5,
+                    "matchCapPercentOfSalary": 0.06
+                  }
+                }
+              ],
+              "work": {
+                "contractedHoursPerWeek": null,
+                "unpaidOvertimeHoursPerWeek": null,
+                "commuteHoursPerWeek": null,
+                "prepHoursPerWeek": null,
+                "decompressHoursPerWeek": null,
+                "workCostsMonthlyCents": null,
+                "weeksPerYear": 48
+              }
+            }
+          ],
+          "filingStatus": "single",
+          "state": null,
+          "capturingFullMatch": false,
+          "dependents": null,
+          "community": {
+            "daySchool": null
+          },
+          "assets": [
+            {
+              "id": "dnd_asset_cash",
+              "label": "Cash & savings",
+              "category": "cash",
+              "valueCents": 250000,
+              "liquid": true,
+              "ownerIds": [],
+              "taxCharacter": null,
+              "liquidity": null,
+              "confidence": null,
+              "costBasisCents": null,
+              "hassle": null,
+              "cashFlowMonthlyCents": null,
+              "accessAgeOverride": null
+            },
+            {
+              "id": "dnd_asset_investments",
+              "label": "Investments + retirement",
+              "category": "investment",
+              "valueCents": 0,
+              "liquid": false,
+              "ownerIds": [],
+              "taxCharacter": null,
+              "liquidity": null,
+              "confidence": null,
+              "costBasisCents": null,
+              "hassle": null,
+              "cashFlowMonthlyCents": null,
+              "accessAgeOverride": null
+            }
+          ],
+          "debts": [],
+          "expenses": {
+            "monthlyEssential": {
+              "estimatedValueCents": 135000,
+              "trackedValueCents": null,
+              "source": "estimated"
+            },
+            "entries": []
+          },
+          "incomeBasis": "earned",
+          "retirement": {
+            "contributionPercent": null,
+            "rothContributedCents": null,
+            "hsaContributedCents": null,
+            "onHdhp": null,
+            "hsaFamilyPlan": null,
+            "has401k": null
+          },
+          "insurance": {
+            "highestDeductibleCents": null,
+            "oopMaxCents": null,
+            "termLifeCents": null,
+            "disabilityMonthlyCents": null,
+            "umbrella": null,
+            "health": {
+              "type": null,
+              "monthlyCents": null
+            }
+          },
+          "worthChecks": [],
+          "ratings": {},
+          "valuesProfile": {
+            "stated": [],
+            "assignments": {}
+          },
+          "swan": {
+            "basis": null,
+            "targetCents": null,
+            "targetMonths": null,
+            "note": null,
+            "setAt": null
+          },
+          "goals": [],
+          "futureIncome": [],
+          "property": [],
+          "allocation": {
+            "stocks": null,
+            "bonds": null,
+            "cash": null,
+            "rebalanceBand": null
+          },
+          "rerank": {
+            "rows": []
+          },
+          "targets": {
+            "retireAge": null,
+            "coastAge": null
+          },
+          "scenarios": [],
+          "oneOffs": [],
+          "estate": {
+            "beneficiariesSet": null,
+            "willExists": null,
+            "poaExists": null
+          },
+          "giving": {
+            "pctOfIncome": null,
+            "annualTargetCents": null
+          },
+          "decumulation": {
+            "stockShare": null,
+            "plannedAnnualDrawCents": null,
+            "socialSecurityAt": null
+          },
+          "tax": {
+            "otherPreTaxAnnualCents": null,
+            "withheldAnnualCents": null
+          },
+          "career": {
+            "offer": {
+              "grossAnnualCents": null,
+              "hoursPerWeek": null,
+              "commuteHoursPerWeek": null,
+              "workCostsMonthlyCents": null,
+              "signOnCents": null
+            }
+          },
+          "partner": {
+            "splitMode": null,
+            "sharedMonthlyCents": null
+          },
+          "kids": {
+            "tuitionTargetCents": null,
+            "tuitionSavedCents": null,
+            "tuitionMonthlyCents": null
+          },
+          "housing": {
+            "rentMonthlyCents": null,
+            "priceCents": null,
+            "downPct": null,
+            "rate": null
+          },
+          "purchase": {
+            "priceCents": null,
+            "monthsAway": null,
+            "financeRate": null,
+            "label": null
+          },
+          "variableIncome": {
+            "bufferMonths": null,
+            "windowMonths": null
+          },
+          "enough": {
+            "monthlyCents": null,
+            "source": null
+          },
+          "designedWeek": {
+            "blocks": []
+          },
+          "timeBuckets": [],
+          "dreams": [],
+          "reversibility": {
+            "decisionId": null,
+            "given": {}
+          },
+          "unlearning": {
+            "dropped": []
+          },
+          "studentLoans": {
+            "plan": null,
+            "extraMonthlyCents": null,
+            "idrShare": null,
+            "forgivenessYears": null
+          },
+          "calendar": {
+            "cadence": null,
+            "nextPaydayDay": null,
+            "bills": [],
+            "payLater": []
+          },
+          "history": {
+            "compareTo": null
+          },
+          "ledger": {
+            "income": [],
+            "months": [],
+            "dismissed": []
+          },
+          "budget": {
+            "estimated": {},
+            "presets": {}
+          },
+          "notApplicable": {},
+          "skills": {},
+          "skillTree": {
+            "state": {}
+          },
+          "exercises": {
+            "done": {},
+            "results": {}
+          },
+          "practiceLedger": [],
+          "assumptions": {
+            "returnReal": 0.05,
+            "inflation": 0.03,
+            "expectedReturnRate": 0.07,
+            "swrRate": 0.04,
+            "humanCapitalDiscountRate": 0.02,
+            "homeEquityHaircut": 0.8,
+            "marginalRate": null
+          },
+          "assumptionOverrides": {},
+          "meta": {
+            "visitedRooms": [],
+            "createdAt": null,
+            "updatedAt": null,
+            "confirmedAt": {},
+            "hasDebt": null,
+            "undoStack": [],
+            "redoStack": [],
+            "guessed": {},
+            "source": {},
+            "displayUnit": null,
+            "noRent": null
+          },
+          "dndProfile": {
+            "fixedCostShare": 0.6,
+            "yearsSustained": 1,
+            "disruptionSurvived": false,
+            "healthCoverage": 2,
+            "automatedSaving": "some",
+            "incomeThreeYearsAgoCents": 2600000,
+            "sideIncomeAnnualCents": 0,
+            "hustleReadiness": "none",
+            "mobility": {
+              "housing": 0,
+              "remote": 2,
+              "willing": 0,
+              "ties": 0
+            },
+            "declaredMethod": "pointBuy",
+            "declaredScores": {
+              "STR": 11,
+              "DEX": 14,
+              "CON": 12,
+              "INT": 12,
+              "WIS": 12,
+              "CHA": 13
+            }
+          }
+        }
+      }
+    }
+  ]
+}

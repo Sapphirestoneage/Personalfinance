@@ -147,6 +147,17 @@
   .foot { margin-top: var(--space-6); text-align: center; font-size: var(--text-sm); }
   .foot a { color: var(--color-accent-hover); }
   .notice { padding: var(--space-3); border-radius: var(--radius-sm); margin: var(--space-3) 0; font-size: var(--text-sm); border: 1px solid var(--color-critical); color: var(--color-critical); }
+  .doorgrid { display: grid; gap: var(--space-3); text-align: left; }
+  @media (min-width: 720px) { .doorgrid { grid-template-columns: 1fr 1fr; } }
+  .door { display: block; border: 1px solid var(--color-border-strong); border-radius: var(--radius-md);
+          background: var(--color-surface-raised); padding: var(--space-4); text-decoration: none;
+          color: var(--color-text); }
+  .door:hover { border-color: var(--color-accent); }
+  .door .dt { font-family: var(--font-display); font-size: var(--text-lg); display: block; }
+  .door .db { font-size: var(--text-sm); color: var(--color-text-muted); display: block; margin-top: var(--space-2);
+              line-height: var(--leading-normal); }
+  .door .dw { font-size: var(--text-xs); color: var(--color-accent-hover); display: block; margin-top: var(--space-2); }
+  #doors { max-width: 860px; margin: 0 auto; padding: 0 var(--space-4) var(--space-6); }
 </style>
 </head>
 <body class="slaf">
@@ -164,10 +175,52 @@
     <p>A character sheet for your actual money. No dollar amounts to start, no
        sign-up, nothing to revise for — build it however you like, the same way
        you'd roll one up at a table.</p>
-    <a class="btn" href="campaign.html">Start — five questions →</a>
-    <p style="margin:var(--space-3) 0 0"><button type="button" class="btn ghost" id="btn-start">Or build the abilities only, no numbers</button></p>
     <p class="privacy">Runs entirely in your browser. Nothing you type is sent anywhere,
        because there is nowhere for it to go — this is a static page with no server behind it.</p>
+  </section>
+
+  <!-- FOUR DOORS, AND THEY ARE GENUINELY DIFFERENT.
+       Everything here used to sit behind one button that asked for five
+       questions before it gave anything back. These four ask for different
+       things and pay differently, and each one says which. -->
+  <section id="doors">
+    <h2 style="font-family:var(--font-display);font-size:var(--text-lg);margin:0 0 var(--space-2)">Four ways in</h2>
+    <p class="note" style="color:var(--color-text-muted);font-size:var(--text-sm);margin:0 0 var(--space-4)">
+       Pick whichever suits your mood. They all land in the same place and none of them needs an account.</p>
+
+    <div class="doorgrid">
+      <a class="door" href="descent.html">
+        <span class="dt">One number at a time</span>
+        <span class="db">Answer one question about your money and get one true thing back before you are asked
+           for anything else. The first number alone tells you what you would need to never work again.</span>
+        <span class="dw">Fastest to something real · about 30 seconds</span>
+      </a>
+
+      <a class="door" href="campaign.html#pregen">
+        <span class="dt">Play a ready-made character</span>
+        <span class="db">Four finished people, complete with a Level, a runway and a class. Pick one and you
+           are playing immediately, with nothing of your own entered — clearly labelled as borrowed the
+           whole time.</span>
+        <span class="dw">No numbers at all · instant</span>
+      </a>
+
+      <a class="door" href="menagerie.html">
+        <span class="dt">Read the bestiary first</span>
+        <span class="db">Twenty-nine things that come for people's money, each with what it does and what
+           stops it. Tap the ones that have happened to you and it will tell you what they had in common.
+           There is no form on that page.</span>
+        <span class="dw">No form · read as long as you like</span>
+      </a>
+
+      <a class="door" href="campaign.html">
+        <span class="dt">The full run-through</span>
+        <span class="db">Five questions about what you would actually do, then your six abilities however you
+           want to build them, then a character, then a game of situations people really face.</span>
+        <span class="dw">The whole thing · about five minutes</span>
+      </a>
+    </div>
+
+    <p style="margin:var(--space-4) 0 0"><button type="button" class="btn ghost" id="btn-start">Or just build the six abilities, no numbers →</button></p>
   </section>
 
   <section id="choose" hidden>
