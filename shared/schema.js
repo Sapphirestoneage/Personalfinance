@@ -600,15 +600,27 @@
     return { value: assetRule(asset, rules).liquidity, rated: false };
   }
 
+  /* Kinds of future period. `other` is the default so every row written
+     before D-152 keeps exactly the meaning it had — a kind was not asked
+     for, so none is asserted. The kind changes nothing arithmetically; it
+     only lets the timeline colour and group what it draws. */
+  var FUTURE_KINDS = ['job', 'benefit', 'other'];
+
   function createFutureIncome(fields) {
     var f = fields || {};
     return {
       id: f.id || newId('fi'),
       label: f.label || null,
+      /* What this period is. See FUTURE_KINDS. D-152. */
+      kind: FUTURE_KINDS.indexOf(f.kind) >= 0 ? f.kind : 'other',
       monthlyCents: f.monthlyCents === undefined ? null : f.monthlyCents,
       startsOn: f.startsOn === undefined ? null : f.startsOn,     /* ISO date, or an age via startsAtAge */
       startsAtAge: f.startsAtAge === undefined ? null : f.startsAtAge,
       endsOn: f.endsOn === undefined ? null : f.endsOn,
+      /* The mirror of startsAtAge: "until I turn 67". Absent means the
+         period runs to the horizon, which is a real answer and is labelled
+         as one — it is never quietly turned into an end date. D-152. */
+      endsAtAge: f.endsAtAge === undefined ? null : f.endsAtAge,
       confidence: f.confidence === undefined ? null : f.confidence,
       inflationAdjusted: f.inflationAdjusted === undefined ? null : !!f.inflationAdjusted,
       ownerIds: f.ownerIds || []
@@ -1361,6 +1373,35 @@
     };
   }
 
+  /**
+   * The Walk-Through's ledger (D-149). Both maps are roomId -> ISO string,
+   * and a room appears in at most one of them: marking a step done clears
+   * any skip and the other way round, so "have they dealt with this?" is
+   * one lookup and can never disagree with itself.
+   */
+  function createWalk(w) {
+    var src = w || {};
+    function stamps(o) {
+      var out = {};
+      Object.keys(o || {}).forEach(function (k) {
+        if (typeof o[k] === 'string' && o[k]) out[k] = o[k];
+      });
+      return out;
+    }
+    var done = stamps(src.done);
+    var skipped = stamps(src.skipped);
+    /* A room in both maps is a shape that should not exist. Done wins:
+       finishing is the stronger statement, and it is the one the person
+       had to reach the room to make. */
+    Object.keys(done).forEach(function (k) { delete skipped[k]; });
+    return {
+      startedAt: typeof src.startedAt === 'string' ? src.startedAt : null,
+      finishedAt: typeof src.finishedAt === 'string' ? src.finishedAt : null,
+      done: done,
+      skipped: skipped
+    };
+  }
+
   function createHousehold(fields) {
     var f = fields || {};
     return {
@@ -1498,8 +1539,29 @@
         displayUnit: null,
         /* "I don't pay rent" — living with family, or a paid-off place;
            lowers the spending guess and nothing else. D-094. */
-        noRent: null
-      }, f.meta || {})
+        noRent: null,
+        /* The Walk-Through's ledger — D-149. Which steps the person has
+           said they are finished with, and which they have waved off.
+           Deliberately NOT derived from visits or from how full a room is:
+           a person deciding "I am done with this one" is a different fact
+           from a room having numbers in it, and only they can say it.
+           { startedAt: ISO|null, finishedAt: ISO|null,
+             done: { roomId: ISO }, skipped: { roomId: ISO } } */
+        walk: null,
+        /* Which arrangement of the rooms this person chose to browse by —
+           a layout id from data/layouts.json, or null for the order the app
+           ships (D-153). A VIEW, never a fact: nothing may read this to
+           decide what a room needs, what applies, or what anything is worth.
+           It changes the shelves and nothing else. */
+        frontDoor: null
+      }, f.meta || {}, {
+        /* Normalised AFTER the spread, not inside the defaults: a raw
+           `f.meta.walk` would otherwise win the Object.assign and land in
+           the household unchecked — which is how a shape from an old export
+           gets in. Every other meta key is a scalar and does not have this
+           problem. D-149. */
+        walk: createWalk(f.meta && f.meta.walk)
+      })
     };
   }
 
@@ -1985,7 +2047,9 @@
     createNotApplicable: createNotApplicable,
     KEEP_REASONS: KEEP_REASONS,
     keepReasonList: keepReasonList,
+    FUTURE_KINDS: FUTURE_KINDS,
     createSkillTree: createSkillTree,
+    createWalk: createWalk,
     APP_VERSION: APP_VERSION,
     createExercisesLog: createExercisesLog,
     createVariableIncomePlan: createVariableIncomePlan,

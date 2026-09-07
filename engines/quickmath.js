@@ -116,7 +116,11 @@
      income. Each leg is reported separately, because failing one is a very
      different situation from failing all three.                          */
 
-  var CAR_RULE = { downPaymentShare: 0.20, maxTermMonths: 36, maxPaymentShareOfGross: 0.08 };
+  /* `assumedRate` is not part of the rule. It is the rate the rule gets
+     checked AT when nobody has said what they would actually be charged,
+     kept here so the one place that assumes a rate is the one place that
+     states it — and so a room can name the assumption out loud. */
+  var CAR_RULE = { downPaymentShare: 0.20, maxTermMonths: 36, maxPaymentShareOfGross: 0.08, assumedRate: 0.06 };
 
   function carRule2038(household, opts) {
     var o = opts || {};
@@ -130,7 +134,7 @@
     /* What the rule says you could afford, working backwards from the cap. */
     var maxLoan = Projection.principalForPaymentCents({
       paymentCents: paymentCap,
-      annualRate: Money.isEntered(o.loanRate) ? o.loanRate : 0.06,
+      annualRate: Money.isEntered(o.loanRate) ? o.loanRate : CAR_RULE.assumedRate,
       months: CAR_RULE.maxTermMonths
     });
     var maxPrice = Money.isOk(maxLoan)
@@ -146,7 +150,7 @@
 
     var down = Money.isEntered(o.downPaymentCents) ? o.downPaymentCents : 0;
     var term = Money.isEntered(o.termMonths) ? o.termMonths : CAR_RULE.maxTermMonths;
-    var rate = Money.isEntered(o.loanRate) ? o.loanRate : 0.06;
+    var rate = Money.isEntered(o.loanRate) ? o.loanRate : CAR_RULE.assumedRate;
     var loan = Math.max(0, o.carPriceCents - down);
     var payment = Projection.levelPaymentCents({
       principalCents: loan, annualRate: rate, months: term
@@ -176,6 +180,92 @@
       paymentCapCents: paymentCap,
       monthlyGrossCents: Math.round(monthlyGross),
       maxAffordablePriceCents: maxPrice
+    });
+  }
+
+  /* ---- Underwater: where the two curves cross -----------------------------
+     A monthly payment hides one thing completely. For a stretch of a long
+     loan the balance owed sits ABOVE what the car is worth, so it cannot be
+     sold without writing a cheque, and an insurer paying out a write-off
+     pays the car's value rather than the balance. That stretch is not a rule
+     of thumb: it is where two curves cross, and both curves already exist
+     here — the loan balance from the amortisation in engines/projection.js,
+     and the value from the depreciation curve in data/car_costs.json, which
+     is passed in rather than copied into this file (SPEC.md §7).          */
+
+  /**
+   * The share of the purchase price a car is still worth `years` in.
+   * Straight-line between the years the table lists; flat past the last one,
+   * because the table stops where the curve stops being informative.
+   */
+  function retainedShareAt(curve, years) {
+    if (!curve || !curve.length || !Money.isEntered(years)) return null;
+    var rows = curve.slice().sort(function (a, b) { return a.year - b.year; });
+    if (years <= rows[0].year) return rows[0].retainedShare;
+    for (var i = 1; i < rows.length; i++) {
+      if (years <= rows[i].year) {
+        var a = rows[i - 1], b = rows[i], span = b.year - a.year;
+        if (!(span > 0)) return b.retainedShare;
+        return a.retainedShare + (b.retainedShare - a.retainedShare) * ((years - a.year) / span);
+      }
+    }
+    return rows[rows.length - 1].retainedShare;
+  }
+
+  /**
+   * How long a car loan leaves you owing more than the car is worth.
+   *   opts:  { priceCents, downPaymentCents, termMonths, loanRate }
+   *   curve: data/car_costs.json `depreciation`
+   * value = whole months spent underwater over the life of the loan.
+   * A missing rate falls back to CAR_RULE.assumedRate and SAYS so through
+   * `rateAssumed`; a missing deposit is read as nothing down and says so
+   * through `depositAssumed`. Neither is silently a zero.
+   */
+  function carUnderwater(opts, curve) {
+    var o = opts || {};
+    var missing = Money.missingFrom({ priceCents: o.priceCents, termMonths: o.termMonths });
+    if (missing.length) {
+      return Money.incomplete('Need a price and a term to trace the two curves.', missing);
+    }
+    if (!curve || !curve.length) {
+      return Money.incomplete('The depreciation curve is not loaded.', ['depreciation']);
+    }
+    if (o.termMonths <= 0) return Money.incomplete('A term needs to be at least a month.', ['termMonths']);
+
+    var rate = Money.isEntered(o.loanRate) ? o.loanRate : CAR_RULE.assumedRate;
+    var down = Money.isEntered(o.downPaymentCents) ? o.downPaymentCents : 0;
+    var loan = Math.max(0, o.priceCents - down);
+    var pay = Projection.levelPaymentCents({
+      principalCents: loan, annualRate: rate, months: o.termMonths
+    });
+    if (!Money.isOk(pay)) return pay;
+
+    var r = rate / MONTHS_PER_YEAR;
+    var balance = loan, monthsUnder = 0, clearAt = null, worstGap = 0, worstMonth = null;
+    for (var m = 1; m <= o.termMonths; m++) {
+      balance = Math.max(0, balance - (pay.value - balance * r));
+      var worth = o.priceCents * retainedShareAt(curve, m / MONTHS_PER_YEAR);
+      var gap = balance - worth;
+      if (gap > 0) {
+        monthsUnder++;
+        if (gap > worstGap) { worstGap = gap; worstMonth = m; }
+      } else if (clearAt === null) {
+        clearAt = m;
+      }
+    }
+    return Money.ok(monthsUnder, {
+      loanCents: loan,
+      monthlyPaymentCents: pay.value,
+      totalInterestCents: pay.totalInterestCents,
+      termMonths: o.termMonths,
+      clearsAtMonth: clearAt,
+      neverClears: clearAt === null && monthsUnder > 0,
+      everUnderwater: monthsUnder > 0,
+      worstGapCents: worstGap > 0 ? Math.round(worstGap) : 0,
+      worstMonth: worstMonth,
+      rate: rate,
+      rateAssumed: !Money.isEntered(o.loanRate),
+      depositAssumed: !Money.isEntered(o.downPaymentCents)
     });
   }
 
@@ -299,6 +389,8 @@
     costPerUse: costPerUse,
     usesToReach: usesToReach,
     carRule2038: carRule2038,
+    retainedShareAt: retainedShareAt,
+    carUnderwater: carUnderwater,
     ruleOfFive: ruleOfFive
   };
 });

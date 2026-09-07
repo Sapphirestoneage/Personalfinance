@@ -4925,7 +4925,23 @@ section('Eleven cards');
     checkTrue('the demo says it has debt', h.meta.hasDebt === true);
     checkTrue('Debt Payoff is on its path', Registry.nextAfter('start', [], h).id === 'debt-payoff');
     const none = Demo.build(); none.meta.hasDebt = false; none.debts = [];
+    /* What the room after Start Here happens to be is a fact about the
+       running order, and it moves when a room is inserted. Your Credit File
+       and When It Won't All Get Paid went in after the numbered path
+       (26.4 and 26.6) rather than into it, precisely so this stays put —
+       the core is four rooms and D-051 means it. What this check is
+       actually about is that Debt Payoff is never offered to someone who
+       owes nothing, so the whole path is walked below rather than only its
+       first step. */
     check('with no debt the path skips Debt Payoff', Registry.nextAfter('start', [], none).id, 'cash-flow');
+    {
+      const walked = [];
+      let at = Registry.nextAfter('start', [], none);
+      while (at && walked.indexOf(at.id) === -1) { walked.push(at.id); at = Registry.nextAfter(at.id, walked, none); }
+      checkTrue('and it is nowhere else on the path either', walked.indexOf('debt-payoff') === -1);
+      checkTrue('while a household that does owe still gets it',
+        Registry.inOrder().some(r => r.id === 'debt-payoff') && Registry.nextAfter('start', [], h).id === 'debt-payoff');
+    }
     checkTrue('and total debt stops applying', !Ownership.describe('totalDebt', none, 'map').applies);
     checkTrue('and so do the payments', !Ownership.describe('monthlyDebtPayments', none, 'map').applies);
     checkTrue('so the dashboard is complete for a debt-free household', Progress.forRoom('dashboard', none).complete);
@@ -6175,11 +6191,28 @@ section('The Statement room');
   check('itemised assets are owned by The Statement', Ownership.field('otherAssets').owner, 'statement');
   check('net worth is owned by The Statement', Ownership.field('netWorth').owner, 'statement');
   check('so is the weighted figure', Ownership.field('confidenceWeightedNetWorth').owner, 'statement');
-  check('and money that is coming', Ownership.field('futureIncome').owner, 'statement');
+  /* Money that is coming MOVED to the Timeline in D-152. The Statement still
+     shows the roll-up — it is part of the picture — but a dated period is
+     edited in the room that draws it on a grid, and in exactly one room
+     (D-017). The Statement must therefore have no editor for it left. */
+  check('money that is coming moved to the Timeline', Ownership.field('futureIncome').owner, 'timeline');
+  checkTrue('...and The Statement no longer edits it',
+    !/data-future="/.test(html) && !/upsertFutureIncome/.test(html),
+    'two editors for one field is the thing D-017 exists to prevent');
+  checkTrue('...but The Statement still shows it, and links to its owner',
+    /futureIncome/.test(html) && /timeline\.html/.test(html));
   checkTrue('cash is still asked in Start Here', Ownership.field('cashSavings').owner === 'start');
+  /* Check each anchor in its OWNER's file, not in this one. The four used to
+     share a room, so reading them all out of statement.html was the same
+     thing; futureIncome moving to the Timeline in D-152 is what made the
+     difference visible. Resolving the owner is what the check meant all
+     along, and it now holds for any field that moves later. */
   ['otherAssets', 'netWorth', 'confidenceWeightedNetWorth', 'futureIncome'].forEach(function (f) {
-    const a = Ownership.field(f).anchor;
-    checkTrue(`${f} links to an anchor that exists`, new RegExp('id="' + a + '"').test(html));
+    const spec = Ownership.field(f);
+    const room = Registry.byId(spec.owner);
+    const src = fs.readFileSync(path.join(ROOT, room.href), 'utf8');
+    checkTrue(`${f} links to an anchor that exists in ${room.href}`,
+      new RegExp('id="' + spec.anchor + '"').test(src));
   });
 
   const h = Demo.build();
@@ -8469,6 +8502,413 @@ section('The D&D folder\'s vendored copies');
   /* And it is not a room: nothing in the registry may point into dnd/. */
   checkTrue('no registry entry points into dnd/',
     Registry.all().every(r => r.href.indexOf('dnd/') !== 0));
+})();
+
+/* ==========================================================================
+   Front Doors (D-153) — the same rooms, arranged twenty ways
+   --------------------------------------------------------------------------
+   The danger with twenty arrangements is that one of them quietly loses a
+   room. Everything below exists to make that impossible to ship.
+   ========================================================================== */
+section('Front Doors — twenty arrangements, no room lost');
+(function () {
+  const Layouts = require(path.join(ROOT, 'engines/layouts.js'));
+  const Schema = require(path.join(ROOT, 'shared/schema.js'));
+  const Registry = require(path.join(ROOT, 'shared/registry.js'));
+  const table = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8'));
+  const T = { layouts: table };
+  const STATUSES = ['employed', 'selfEmployed', 'unemployed', 'student', 'retired', 'both'];
+  const person = st => Schema.createHousehold({ people: [{ id: 'p1', role: 'adult', employmentStatus: st }] });
+
+  check('twenty arrangements', table.layouts.length, 20);
+  checkTrue('layouts.json carries its provenance', !!(table.version && table.asOf && table.source && table.confidence));
+  checkTrue('...and says out loud that the groupings are opinions',
+    /judgement call|opinion/i.test(table.source + ' ' + table.confidenceNote));
+
+  const ids = table.layouts.map(l => l.id);
+  checkTrue('every layout id is unique', ids.length === new Set(ids).size);
+  checkTrue('every layout id is url-safe (they are deep links)', ids.every(i => /^[a-z0-9-]+$/.test(i)));
+  checkTrue('every room named in every layout is a real room',
+    table.layouts.every(l => l.groups.every(g => g.rooms.every(r => !!Registry.byId(r)))),
+    'a renamed room would leave a dead shelf entry');
+  checkTrue('every layout has a premise, a good and a cost',
+    table.layouts.every(l => l.premise && l.readsWell && l.costs));
+
+  /* THE ONE THAT MATTERS. Every arrangement, for every situation, must reach
+     every room that applies to that person. This is the check that caught
+     Front Doors itself being missing from all twenty on the first run. */
+  STATUSES.forEach(function (st) {
+    const h = person(st);
+    const broken = table.layouts.filter(l => {
+      const c = Layouts.coverage(h, T, l.id);
+      return c.missing.length || c.doubled.length;
+    });
+    checkTrue(`${st}: all twenty arrangements reach every applicable room`,
+      broken.length === 0,
+      broken.map(l => l.id + ' misses ' + Layouts.coverage(person(st), T, l.id).missing.join('/')).join('; '));
+  });
+
+  /* A layout never filters — the gate does. */
+  (function () {
+    const h = person('retired');
+    const b = Layouts.build(h, T, 'question');
+    checkTrue('no bay contains a room the gate excluded',
+      b.groups.every(g => g.rooms.every(r => Registry.applies(Registry.byId(r.id), h))));
+    checkTrue('a bay the gate emptied is dropped, not shown empty',
+      b.groups.every(g => g.rooms.length > 0),
+      'an empty shelf reads as "nothing here for you"; the truth is none of it was ever yours');
+    const withDrops = b.groups.filter(g => g.droppedCount > 0);
+    checkTrue('a bay that lost rooms to the gate says how many', withDrops.every(g => g.droppedCount > 0));
+  })();
+
+  /* The safety net: a room no layout knows about is surfaced, not lost. */
+  (function () {
+    const h = person('employed');
+    const T2 = { layouts: JSON.parse(JSON.stringify(table)) };
+    T2.layouts.layouts[0].groups.forEach(g => { g.rooms = g.rooms.filter(r => r !== 'fire'); });
+    const b = Layouts.build(h, T2, 'path');
+    const net = b.groups[b.groups.length - 1];
+    check('an unshelved room still appears', net.rooms.some(r => r.id === 'fire'), true);
+    checkTrue('...in a bay that says so plainly', /Not shelved/.test(net.name));
+    checkTrue('...and coverage still reports the gap rather than hiding it',
+      b.coverage.missing.indexOf('fire') !== -1,
+      'the net exists so nothing is unreachable, NOT so the data stops being fixed');
+  })();
+
+  /* A layout is a view. It may never become a fact. */
+  checkTrue('no engine but layouts.js reads the layouts table',
+    fs.readdirSync(path.join(ROOT, 'engines')).filter(f => /\.js$/.test(f) && f !== 'layouts.js')
+      .every(f => !/layouts|frontDoor/.test(fs.readFileSync(path.join(ROOT, 'engines', f), 'utf8'))),
+    'which shelf a room sits on must never reach a calculation');
+  checkTrue('the registry does not read the front-door choice',
+    !/frontDoor/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
+  checkTrue('ownership does not read it either',
+    !/frontDoor/.test(fs.readFileSync(path.join(ROOT, 'shared/ownership.js'), 'utf8')));
+
+  /* Modes, and the room. */
+  (function () {
+    const modes = {};
+    table.layouts.forEach(l => { modes[l.mode] = (modes[l.mode] || 0) + 1; });
+    checkTrue('every layout declares a mode the room can render',
+      Object.keys(modes).every(m => ['bays', 'hub', 'tree', 'flow', 'search'].indexOf(m) !== -1),
+      'got: ' + Object.keys(modes).join(','));
+    const b = Layouts.build(person('employed'), T, 'three');
+    check('tree mode resolves exactly three parents', Layouts.parents(b).length, 3);
+    checkTrue('tree parents come from the group names, not a second list',
+      b.groups.filter(g => g.parent).every(g => g.fullName.indexOf(g.parent + ' › ') === 0));
+
+    const html = fs.readFileSync(path.join(ROOT, 'rooms/doors.html'), 'utf8');
+    checkTrue('the room declares its live-form policy', /LIVE-FORM: built once/.test(html));
+    checkTrue('the search box is written into the markup, never generated',
+      /<input type="search" id="q"/.test(html) && !/id=.q./.test(html.split('<script>')[1] || ''),
+      'a regenerated search box loses focus and closes the soft keyboard mid-word');
+    checkTrue('typing rewrites only the results',
+      /el\('q'\)\.addEventListener\('input'[\s\S]{0,200}lay-body/.test(html));
+    checkTrue('the room writes nothing but the front-door choice',
+      !/upsert|setMonthlyExpenses|removeById/.test(html) && /setFrontDoor/.test(html));
+    checkTrue('the room is a utility, off the numbered path (D-051)',
+      Registry.byId('doors').utility === true && Registry.byId('doors').order > 90);
+  })();
+
+  /* The stored choice. */
+  (function () {
+    check('a fresh household has no front door chosen', Schema.createHousehold({}).meta.frontDoor, null);
+    check('a stored choice survives normalising',
+      Schema.createHousehold({ meta: { frontDoor: 'house' } }).meta.frontDoor, 'house');
+  })();
+})();
+
+/* ==========================================================================
+   The Timeline (D-152) — jobs and benefits as dated periods that stack
+   --------------------------------------------------------------------------
+   Every case below was worked out on paper first and then checked against
+   the engine, which is the only way a month grid gets caught being one
+   month out.
+   ========================================================================== */
+section('The Timeline — periods that stack');
+(function () {
+  const Timeline = require(path.join(ROOT, 'engines/timeline.js'));
+  const Schema = require(path.join(ROOT, 'shared/schema.js'));
+  const NOW = '2026-09-06T00:00:00Z';
+
+  /* Born March 1994. Contract Jan–Jun 2027 at $5,000. Staff job from April
+     2027 at $7,000, open-ended. A benefit from age 67. One period with no
+     start, one with no amount. */
+  function household() {
+    return Schema.createHousehold({
+      people: [{ id: 'p1', role: 'adult', dob: '1994-03-15', employmentStatus: 'employed' }],
+      futureIncome: [
+        { id: 'a', label: 'Contract',  kind: 'job',     monthlyCents: 500000, startsOn: '2027-01-01', endsOn: '2027-06-30' },
+        { id: 'b', label: 'Staff job', kind: 'job',     monthlyCents: 700000, startsOn: '2027-04-01' },
+        { id: 'c', label: 'Pension',   kind: 'benefit', monthlyCents: 250000, startsAtAge: 67 },
+        { id: 'd', label: 'Someday',   kind: 'other',   monthlyCents: 100000 },
+        { id: 'e', label: 'Unpriced',  kind: 'job',     startsOn: '2028-01-01' }
+      ]
+    });
+  }
+  const H = household();
+  const opts = { now: NOW, years: 45 };
+  const grid = Timeline.months(H, opts);
+  const at = ym => grid.value.filter(r => r.label === ym)[0];
+
+  checkTrue('the grid builds', Money.isOk(grid));
+  check('September 2026: nothing has started', at('2026-09').cents, 0);
+  check('...and it says so with a count, not a guess', at('2026-09').count, 0);
+  check('January 2027: the contract alone', at('2027-01').cents, 500000);
+  /* The whole point of the room: April to June 2027 both run. */
+  check('April 2027: both run, and they add', at('2027-04').cents, 1200000);
+  check('June 2027: still both', at('2027-06').cents, 1200000);
+  check('July 2027: the contract has ended', at('2027-07').cents, 700000);
+  /* Born 1994-03, so age 67 is 1994-03 + 804 months = 2061-03. */
+  check('February 2061: still just the job', at('2061-02').cents, 700000);
+  check('March 2061: the pension starts the month they turn 67', at('2061-03').cents, 950000);
+
+  /* Empty is not zero, in both directions. */
+  const waiting = Timeline.periods(H, opts).filter(p => !p.placeable);
+  check('two periods cannot be placed', waiting.length, 2);
+  checkTrue('a period with no start date says so rather than starting today',
+    waiting.some(p => p.label === 'Someday' && /No start date/.test(p.why.join(' '))));
+  checkTrue('a period with no amount says so rather than counting as zero',
+    waiting.some(p => p.label === 'Unpriced' && /No monthly amount/.test(p.why.join(' '))));
+  checkTrue('neither reaches the grid',
+    grid.value.every(r => r.parts.every(x => x.id !== 'd' && x.id !== 'e')));
+  checkTrue('the grid hands back what it could not place, by name',
+    grid.unplaced.length === 2);
+
+  /* Gaps and overlaps as runs, not counts. */
+  const sum = Timeline.summary(H, opts).value;
+  check('one gap', sum.gaps.length, 1);
+  check('...four months long', sum.gaps[0].length, 4);
+  check('...starting this month', sum.gaps[0].from.label, '2026-09');
+  check('the first overlap is the three-month one', sum.overlaps[0].length, 3);
+  check('...April to June 2027', sum.overlaps[0].from.label + '..' + sum.overlaps[0].to.label, '2027-04..2027-06');
+  check('the next change is January 2027', sum.nextChange.label, '2027-01');
+  check('the best month is the overlap, not the pension', sum.peak.cents, 1200000);
+
+  /* An end before a start is refused rather than drawn backwards. */
+  (function () {
+    const h = Schema.createHousehold({ futureIncome: [
+      { id: 'x', label: 'Backwards', monthlyCents: 100000, startsOn: '2028-01-01', endsOn: '2027-01-01' }
+    ] });
+    const p = Timeline.periods(h, { now: NOW })[0];
+    checkTrue('a period that ends before it starts is not placed', !p.placeable);
+    checkTrue('...and says exactly that', /ends before it starts/.test(p.why.join(' ')));
+  })();
+
+  /* An age with no date of birth to count from. */
+  (function () {
+    const h = Schema.createHousehold({ futureIncome: [
+      { id: 'y', label: 'At 67', monthlyCents: 250000, startsAtAge: 67 }
+    ] });
+    const p = Timeline.periods(h, { now: NOW })[0];
+    checkTrue('an age with no date of birth is not placed', !p.placeable);
+    checkTrue('...and names what is missing', /date of birth/.test(p.why.join(' ')));
+  })();
+
+  /* A date beats an age when both are given: an explicit date is the
+     stronger statement, and quietly preferring the age would move a period
+     the person had pinned. */
+  (function () {
+    const h = Schema.createHousehold({
+      people: [{ id: 'p1', role: 'adult', dob: '1994-03-15' }],
+      futureIncome: [{ id: 'z', monthlyCents: 100, startsOn: '2030-01-01', startsAtAge: 67 }]
+    });
+    check('a date wins over an age', Timeline.label(Timeline.periods(h, { now: NOW })[0].startMonth), '2030-01');
+  })();
+
+  /* Nothing at all, and nothing placeable, are different sentences. */
+  check('an empty household gets no grid',
+    Timeline.months(Schema.createHousehold({}), { now: NOW }).status, 'incomplete');
+  checkTrue('...and says nothing is listed',
+    /Nothing is listed/.test(Timeline.months(Schema.createHousehold({}), { now: NOW }).reason));
+  checkTrue('a household whose periods are all unplaceable is told which problem it has',
+    /missing a date or an amount/.test(Timeline.months(Schema.createHousehold({
+      futureIncome: [{ id: 'q', label: 'No date', monthlyCents: 100 }]
+    }), { now: NOW }).reason));
+
+  /* The horizon is bounded in both directions, so no caller can ask for a
+     million-row grid or a zero-row one. */
+  check('the horizon floors at a year', Timeline.months(H, { now: NOW, years: 0 }).value.length, 13);
+  check('...and caps at sixty', Timeline.months(H, { now: NOW, years: 999 }).value.length, 60 * 12 + 1);
+
+  /* The room. */
+  (function () {
+    const html = fs.readFileSync(path.join(ROOT, 'rooms/timeline.html'), 'utf8');
+    checkTrue('the room guards its live form (D-034)', /LIVE-FORM: guarded/.test(html));
+    checkTrue('...and actually calls request()', /listForm\.request\(\)/.test(html));
+    checkTrue('the room does no arithmetic of its own',
+      !/\bmonthlyCents\s*[+*]/.test(html),
+      'every figure comes from engines/timeline.js; the page formats');
+    checkTrue('the room owns the periods it edits',
+      /upsertFutureIncome/.test(html) && Ownership.field('futureIncome').owner === 'timeline');
+    const kinds = Schema.FUTURE_KINDS;
+    checkTrue('every kind has a label in the room',
+      kinds.every(k => new RegExp(k + ':').test(html)));
+    check('an unknown kind falls back to other', Schema.createFutureIncome({ kind: 'zzz' }).kind, 'other');
+    check('a row written before D-152 keeps its meaning', Schema.createFutureIncome({}).kind, 'other');
+  })();
+})();
+
+/* ==========================================================================
+   The Walk-Through (D-149)
+   --------------------------------------------------------------------------
+   The walk has to do two things and no more: be short enough to finish, and
+   never claim you have finished something you have not. Everything below is
+   one of those two.
+   ========================================================================== */
+section('The Walk-Through — a route with an end');
+(function () {
+  const Guide = require(path.join(ROOT, 'shared/guide.js'));
+  const Schema = require(path.join(ROOT, 'shared/schema.js'));
+  const Registry = require(path.join(ROOT, 'shared/registry.js'));
+  const stagesTable = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/walk_stages.json'), 'utf8'));
+  const T = { walkStages: stagesTable };
+
+  function person(status) {
+    return Schema.createHousehold({ people: [{ id: 'p1', role: 'adult', employmentStatus: status }] });
+  }
+  const STATUSES = ['employed', 'selfEmployed', 'unemployed', 'student', 'retired', 'both'];
+
+  /* -- the data file itself ---------------------------------------------- */
+  const listed = stagesTable.stages.reduce((a, s) => a.concat(s.rooms), []);
+  checkTrue('every room named in walk_stages.json is a real room',
+    listed.every(id => !!Registry.byId(id)),
+    'missing: ' + listed.filter(id => !Registry.byId(id)).join(', '));
+  checkTrue('no room appears on the walk twice',
+    listed.length === new Set(listed).size,
+    'a step listed in two sets would be counted twice and could never be finished once');
+  checkTrue('every stage has a title and a plain-language goal',
+    stagesTable.stages.every(s => s.id && s.title && s.goal && s.goal.length > 30));
+  check('the walk has five sets', stagesTable.stages.length, 5);
+  checkTrue('walk_stages.json carries its provenance like every other table',
+    !!(stagesTable.version && stagesTable.asOf && stagesTable.source && stagesTable.confidence));
+
+  /* -- it is short enough to finish -------------------------------------- */
+  STATUSES.forEach(function (status) {
+    const h = person(status);
+    const n = Guide.steps(h, T).length;
+    /* The whole point. Fifty-nine rooms is a library; a walk anyone finishes
+       is well under half of that. If a future room pushes one of these over
+       25 the walk has stopped being a walk, and this should fail loudly
+       rather than quietly getting longer. */
+    checkTrue(`${status}: the walk is between 10 and 25 steps (got ${n})`, n >= 10 && n <= 25);
+  });
+
+  /* -- it never invents a step ------------------------------------------- */
+  STATUSES.forEach(function (status) {
+    const h = person(status);
+    checkTrue(`${status}: every step on the walk applies to this situation`,
+      Guide.steps(h, T).every(x => Registry.applies(Registry.byId(x.id), h)),
+      'a step that is not for your situation is not a step you skipped — it is not a step');
+    checkTrue(`${status}: no set is shown empty`,
+      Guide.stages(h, T).every(s => s.steps.length > 0),
+      'an empty set with a tick beside it reads as an achievement and is not one');
+  });
+
+  /* -- it never claims you finished something -------------------------- */
+  (function () {
+    /* The demo persona has a figure in nearly every box. Not one step is
+       done, because being full of numbers is not the same fact as having
+       been dealt with, and only the person can say the second one. */
+    const demo = require(path.join(ROOT, 'shared/demo-persona.js')).build();
+    const p = Guide.progress(demo, T);
+    check('a fully-filled household still has zero steps done', p.done, 0);
+    check('...and zero set aside', p.skipped, 0);
+    checkTrue('...and has not started the walk', !Guide.hasStarted(demo));
+    checkTrue('...and shows no walk strip anywhere (nothing to mount)',
+      !Guide.hasStarted(demo));
+  })();
+
+  /* -- marking, and the two maps that cannot disagree -------------------- */
+  (function () {
+    const h = person('employed');
+    const first = Guide.nextStep(h, T);
+    check('the walk starts at Start Here', first.id, 'start');
+    h.meta.walk = { done: { start: 'x' }, skipped: {} };
+    check('a marked step is not offered again', Guide.nextStep(h, T).id !== 'start', true);
+    check('marking one step moves the count', Guide.progress(h, T).done, 1);
+
+    /* Schema.createWalk is the guard: a shape claiming a room is both done
+       and set aside cannot survive being loaded. Done wins — it is the
+       stronger statement and the one you had to reach the room to make. */
+    const both = Schema.createHousehold({ meta: { walk: { done: { tax: 'a' }, skipped: { tax: 'b' } } } });
+    check('a room cannot be both done and set aside', both.meta.walk.skipped.tax, undefined);
+    check('...and done is the one that survives', both.meta.walk.done.tax, 'a');
+  })();
+
+  /* -- setting a step aside counts as dealing with it -------------------- */
+  (function () {
+    const h = person('employed');
+    const ids = Guide.steps(h, T).map(x => x.id);
+    h.meta.walk = { done: {}, skipped: {} };
+    ids.forEach(id => { h.meta.walk.skipped[id] = 'x'; });
+    checkTrue('a walk entirely set aside is finished', Guide.isFinished(h, T));
+    check('...and the bar is full', Guide.progress(h, T).pct, 100);
+    checkTrue('...but no set is called an achievement',
+      Guide.stages(h, T).every(s => s.complete && s.allSkipped),
+      'complete says "nothing open"; allSkipped is what stops the page congratulating you for it');
+  })();
+
+  /* -- position on the walk ---------------------------------------------- */
+  (function () {
+    const h = person('employed');
+    const at = Guide.stepOf(h, T, 'statement');
+    checkTrue('a step knows its place, its set and its neighbours',
+      !!(at && at.step > 0 && at.total > at.step && at.stage && at.stage.title && at.next));
+    checkTrue('a room that is not on the walk says so plainly',
+      Guide.stepOf(h, T, 'ratios') === null);
+    /* stepOf builds the flat list from ONE call to stages(). Building it
+       from two would give two sets of objects, and looking a step up by
+       identity inside the other would find nothing — which is exactly what
+       happened the first time this ran. */
+    checkTrue('a step found by stepOf carries the set it is actually in',
+      Guide.stages(h, T).some(s => s.title === at.stage.title && s.steps.some(x => x.id === 'statement')));
+  })();
+
+  /* -- it degrades to nothing without its table -------------------------- */
+  (function () {
+    const h = person('employed');
+    check('no table means no walk, not a crash', Guide.stages(h, {}).length, 0);
+    check('...and no next step', Guide.nextStep(h, {}), null);
+    check('...and a zero total rather than a full bar', Guide.progress(h, {}).total, 0);
+    checkTrue('...and not "finished"', !Guide.isFinished(h, {}));
+  })();
+
+  /* -- the room, and the strip ------------------------------------------- */
+  (function () {
+    const html = fs.readFileSync(path.join(ROOT, 'rooms/walk.html'), 'utf8');
+    checkTrue('rooms/walk.html declares the live-form rule (D-034)',
+      /LIVE-FORM: built once/.test(html));
+    checkTrue('rooms/walk.html has no text input at all',
+      !/<input(?![^>]*type="(?:checkbox|radio|file)")/i.test(html) && !/<textarea/i.test(html),
+      'the page rebuilds its list wholesale on every change; a text field there would lose focus');
+    checkTrue('rooms/walk.html loads shared/guide.js', /shared\/guide\.js/.test(html));
+
+    const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+    checkTrue('the strip is mounted from the one place every room reaches',
+      /mountWalk\(roomId, nav\)/.test(prog),
+      'mountHeader is the single mount point — 22 rooms reach it through Room.mount and the rest call it directly');
+
+    /* Every page that mounts the header needs the module the strip reads. */
+    const pages = fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f))
+      .map(f => 'rooms/' + f).concat(['index.html', 'map.html', 'foo-ladder.html'])
+      .filter(f => fs.existsSync(path.join(ROOT, f)));
+    const gap = pages.filter(f => {
+      const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+      return /shared\/progress\.js/.test(src) && !/shared\/guide\.js/.test(src);
+    });
+    checkTrue('every page loading progress.js also loads guide.js',
+      gap.length === 0, 'missing in: ' + gap.join(', '));
+  })();
+
+  /* -- the walk is a suggestion, never a lock ---------------------------- */
+  checkTrue('nothing in the registry is gated on the walk',
+    !/meta\.walk/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')),
+    'every room stays reachable from the map in any order, walk or no walk');
+  checkTrue('no engine reads the walk marks',
+    fs.readdirSync(path.join(ROOT, 'engines')).filter(f => /\.js$/.test(f))
+      .every(f => !/meta\.walk|Guide\./.test(fs.readFileSync(path.join(ROOT, 'engines', f), 'utf8'))),
+    'a mark is a statement about the person, never about whether a number is usable');
 })();
 
 /* ==========================================================================

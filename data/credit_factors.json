@@ -1,0 +1,69 @@
+{
+  "id": "credit_factors",
+  "version": "1.0.0",
+  "asOf": "2026-09-06",
+  "source": "The factor weights FICO publishes for its general-purpose scores, and the reporting periods set by the Fair Credit Reporting Act. Weights are FICO's own published shares; the VantageScore models weigh the same material differently.",
+  "confidence": "convention",
+  "confidenceNote": "A score is computed by a bureau from a file this app cannot see. Nothing here produces a number. These are the factors, their published weights, and how long things stay — enough to know what moves a score and roughly how much, and not enough to pretend to one.",
+  "note": "Ordered by weight. `youCanSee` says whether this app holds anything bearing on the factor; where it is false the room says so rather than guessing.",
+  "factors": [
+    {
+      "id": "paymentHistory",
+      "label": "Paying on time",
+      "share": 0.35,
+      "youCanSee": false,
+      "what": "Whether you have paid at least the minimum, by the due date, on every account.",
+      "moves": "One payment 30 days late is the single most damaging ordinary event. Under 30 days late is usually a fee, not a report — lenders generally do not report until 30 days.",
+      "lever": "Autopay the minimum on everything, then pay more by hand. The minimum is what protects the file; the extra is what clears the debt."
+    },
+    {
+      "id": "utilisation",
+      "label": "How much of your limit you are using",
+      "share": 0.30,
+      "youCanSee": true,
+      "ratio": "creditUtilization",
+      "what": "Revolving balances against revolving limits — your cards, not your loans.",
+      "moves": "It is measured on the day the issuer reports, usually the statement date, not the due date. A card paid in full every month can still report high if you spend most of the limit before the statement closes.",
+      "lever": "Pay part of the balance BEFORE the statement date, not just before the due date. It is the fastest thing on this list to change: it re-reports monthly and carries no memory."
+    },
+    {
+      "id": "ageOfAccounts",
+      "label": "How long you have had credit",
+      "share": 0.15,
+      "youCanSee": false,
+      "what": "The age of your oldest account and the average age of all of them.",
+      "moves": "Closing an old card you no longer use shortens the average and removes its limit, which pushes utilisation up at the same time. Two harms from one tidy-up.",
+      "lever": "Keep the oldest no-fee card open and put one small recurring charge on it."
+    },
+    {
+      "id": "mix",
+      "label": "The kinds of credit you hold",
+      "share": 0.10,
+      "youCanSee": true,
+      "ratio": "revolvingShare",
+      "what": "Whether you have both revolving accounts (cards) and instalment accounts (loans).",
+      "moves": "The smallest ordinary factor. It is not worth taking on a loan you do not need.",
+      "lever": "Nothing to do. It fills in on its own as life happens."
+    },
+    {
+      "id": "newCredit",
+      "label": "Recent applications",
+      "share": 0.10,
+      "youCanSee": false,
+      "what": "Hard enquiries from applying, and how many accounts you have opened lately.",
+      "moves": "Rate-shopping for one mortgage, car or student loan counts once if the enquiries fall inside the same short window — the models are built for it. Applying for four cards in a month does not.",
+      "lever": "Do your rate shopping in one fortnight, not spread over a season."
+    }
+  ],
+  "howLongThingsStay": [
+    { "id": "lateOrCollection", "label": "A late payment or a collection", "years": 7, "note": "From the date of the first missed payment that led to it — not from the date it was paid." },
+    { "id": "paidMedical", "label": "A PAID medical collection", "years": 0, "note": "Removed from consumer reports once paid. Unpaid medical collections under $500 are no longer reported at all." },
+    { "id": "chapter7", "label": "A Chapter 7 bankruptcy", "years": 10, "note": "Chapter 13 comes off after seven." },
+    { "id": "hardEnquiry", "label": "A hard enquiry", "years": 2, "note": "Stops affecting most scores after about one." }
+  ],
+  "yourRights": [
+    { "id": "freeReports", "what": "Your report from each of the three bureaus, free, weekly", "where": "annualcreditreport.com — the only site the law names. It is a report, not a score." },
+    { "id": "dispute", "what": "A dispute the bureau must investigate, usually within 30 days", "where": "Free, directly with the bureau. Nothing a repair firm can do for a fee is unavailable to you at no cost." },
+    { "id": "freeze", "what": "A freeze and an unfreeze, free, at any time", "where": "Each bureau separately. It stops new credit being opened in your name and does not affect your score." }
+  ]
+}

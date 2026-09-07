@@ -600,7 +600,11 @@ h3 { font-size: var(--text-md); }
 .slaf-legend.is-table .lbl { color: var(--color-text); font-size: var(--text-sm); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .slaf-legend.is-table .lbl small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); white-space: normal; }
 .slaf-legend.is-table .val { font-variant-numeric: tabular-nums; color: var(--color-text); text-align: right; }
-.slaf-legend.is-table .pct { font-variant-numeric: tabular-nums; color: var(--color-text-faint); text-align: right; min-width: 3em; }
+/* `min-width: 3em` on a right-hand column, inside a flex row whose left
+   column already fills the space, is 4px of sideways page scroll at 1080 in
+   the FIRE Lab — small, and the page still moves. The column keeps its
+   alignment and gives up the floor. D-146. */
+.slaf-legend.is-table .pct { font-variant-numeric: tabular-nums; color: var(--color-text-faint); text-align: right; flex: 0 0 auto; }
 
 /* Donut: the ring beside its table on a wide screen, above it on a phone. */
 .slaf-donut { display: grid; grid-template-columns: 150px 1fr; gap: var(--space-3); align-items: center; }
@@ -867,6 +871,19 @@ html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
      grows on a coarse pointer. A mouse keeps the 20px circle. */
   .slaf-info { width: 30px; height: 30px; font-size: 14px; }
   .slaf-manage-toggle { min-height: 32px; display: inline-flex; align-items: center; }
+  /* The floor, applied to the controls rather than to a list of class names
+     one room at a time. test/responsive.js found 44 targets under it across
+     18 rooms — segmented filters at 17px, a remove button at 20px, preset
+     rows at 17px — every one of them a thing a finger has to hit. The ⓘ is
+     the one deliberate exception at 30px (D-136) and names itself. D-146. */
+  button, select, .pill, [role="button"] { min-height: 32px; }
+  /* `min-height` alone, NOT `display: inline-flex`. Making every button a
+     flex box was the first attempt and it broke What If, Life: a flex item
+     will not shrink below its content, so a button in a 152px grid track
+     grew to 178px and pushed the page 26px sideways at 320. The suite caught
+     it on the very next run, which is the argument for having the suite.
+     Buttons that need centring say so themselves. */
+  .slaf-info { min-height: 0; }
   /* NOT display:flex — that drops `list-item` and Chromium then paints no
      ::marker at all, so on a phone the drawer lost its triangle entirely.
      Take the height from padding instead. */
@@ -965,3 +982,36 @@ a:hover { color: var(--sapphire-100); }
 .slaf-notapply p { margin: var(--space-2) 0 0; color: var(--color-text-muted); }
 .slaf-notapply .slaf-notapply-go { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
 .slaf-notapply #slaf-showanyway { margin-top: var(--space-3); }
+
+/* ---- The Walk-Through (D-149) --------------------------------------------
+   A strip under the header hops on every room that is a step, once the walk
+   has begun — and on nothing at all before that. It holds buttons only, no
+   inputs, so it is free to repaint on every change without going near the
+   live-form rule (D-034). */
+.slaf-walk { max-width: var(--measure); margin: 0 auto var(--space-4);
+  padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md); background: var(--color-surface-raised); }
+.slaf-walk.is-dealt { border-color: var(--color-positive); }
+.slaf-walk-line { display: flex; flex-wrap: wrap; align-items: baseline;
+  justify-content: space-between; gap: var(--space-2); }
+.slaf-walk-where { font-size: var(--text-sm); font-weight: 600; }
+.slaf-walk-stage { display: block; font-weight: normal; color: var(--color-text-muted);
+  font-size: var(--text-xs); }
+.slaf-walk-hub { font-size: var(--text-xs); color: var(--color-accent-hover);
+  text-decoration: none; white-space: nowrap; display: inline-block;
+  min-height: 32px; line-height: 32px; }
+.slaf-walk-track { height: 6px; margin: var(--space-2) 0; border-radius: 999px;
+  background: var(--color-border); overflow: hidden; }
+.slaf-walk-track i { display: block; height: 100%; background: var(--color-accent);
+  border-radius: 999px; transition: width .3s ease; }
+.slaf-walk.is-dealt .slaf-walk-track i { background: var(--color-positive); }
+.slaf-walk-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+/* min-width: 0 so a long room title in "Next: ..." wraps inside the strip
+   instead of pushing the page sideways. A flex item will not shrink below
+   its content without it — the same trap that cost 26px in D-146. */
+.slaf-walk-acts > * { min-width: 0; }
+.slaf-walk-said { font-size: var(--text-sm); color: var(--color-positive); font-weight: 600; }
+@media (max-width: 480px) {
+  .slaf-walk-acts { flex-direction: column; align-items: stretch; }
+  .slaf-walk-acts > .slaf-btn { text-align: center; }
+}

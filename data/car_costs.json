@@ -1,0 +1,46 @@
+{
+  "id": "car_costs",
+  "version": "1.0.0",
+  "asOf": "2026-09-06",
+  "source": "Depreciation curves follow the shape every major used-car guide publishes: steepest in year one, flattening after year five. The ownership-cost shares follow the AAA 'Your Driving Costs' breakdown. The 20/3/8 guidance is a lender-and-counsellor convention, not a law.",
+  "confidence": "convention",
+  "confidenceNote": "Every figure here is a shape, not a prediction about a particular car. Depreciation depends on the model, the mileage and the year you sell; insurance depends on you. Treat the totals as an order of magnitude — the point is that the sticker price is not the cost.",
+  "note": "`retainedShare` is the fraction of the purchase price a typical car is still worth after that many years. The gap between two rows is the depreciation you paid to own it over that stretch.",
+  "depreciation": [
+    { "year": 0, "retainedShare": 1.00, "note": "What you paid." },
+    { "year": 1, "retainedShare": 0.80, "note": "The steepest year by far. Buying at one year old is the single biggest lever on the whole page." },
+    { "year": 2, "retainedShare": 0.69 },
+    { "year": 3, "retainedShare": 0.60 },
+    { "year": 4, "retainedShare": 0.53 },
+    { "year": 5, "retainedShare": 0.47, "note": "Roughly half. The curve is much flatter from here." },
+    { "year": 7, "retainedShare": 0.37 },
+    { "year": 10, "retainedShare": 0.25 }
+  ],
+  "runningCosts": [
+    { "id": "insurance",   "label": "Insurance",              "share": 0.25, "note": "Varies more by driver and postcode than by car." },
+    { "id": "fuel",        "label": "Fuel or charging",       "share": 0.24, "note": "The one most people think of first, and it is under a quarter." },
+    { "id": "maintenance", "label": "Maintenance and tyres",  "share": 0.20, "note": "Low and predictable early, then not." },
+    { "id": "fees",        "label": "Registration, tax, fees","share": 0.13 },
+    { "id": "finance",     "label": "Interest on the loan",   "share": 0.18, "note": "Zero if you did not borrow. This is the part a longer term inflates." }
+  ],
+  "loanGuidance": {
+    "id": "20_3_8",
+    "label": "20 / 3 / 8",
+    "downPaymentShare": 0.20,
+    "maxTermYears": 3,
+    "maxShareOfGrossMonthly": 0.08,
+    "what": "Put 20% down, borrow for no more than three years, and keep the payment under 8% of what you earn in a month before tax.",
+    "why": "It is not a rule about cars. It is a test of whether the car fits the life: if you cannot pass it, the car is more expensive than the household can carry, whatever the monthly figure says.",
+    "note": "Seven- and eight-year loans are now ordinary. They pass no version of this test — they make the monthly figure small by keeping you in debt past the point the car is worth what you owe."
+  },
+  "underwater": {
+    "what": "Owing more than the car is worth",
+    "why": "Depreciation is fastest in year one and a long loan pays the principal down slowly, so the two curves cross late. Until they do you cannot sell without writing a cheque, and an insurer paying out a write-off pays the car's value, not your balance.",
+    "note": "This is the concrete harm of a long term, and it is the one a monthly payment hides completely."
+  },
+  "leaseVsBuy": [
+    { "id": "lease", "label": "Leasing", "suits": "A short, known period; a fixed monthly cost; no interest in what it is worth at the end.", "costs": "You pay the steepest part of the depreciation curve and own nothing at the end of it. Mileage caps and wear charges are real money." },
+    { "id": "buyNew", "label": "Buying new", "suits": "Keeping a car a long time — past year seven the early depreciation stops mattering much.", "costs": "You buy the whole first-year drop, which is the most expensive year a car ever has." },
+    { "id": "buyUsed", "label": "Buying at one to three years old", "suits": "Almost everyone, on the arithmetic.", "costs": "Someone else has taken the first-year hit. You take a shorter warranty and an unknown history, which an inspection is for." }
+  ]
+}

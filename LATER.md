@@ -159,7 +159,81 @@ moved between them. `rooms/history.html`, D-122.
   blind. Each room needs someone to say which of its cards are independent
   and may sit side by side. The dashboard's instrument grid and the map are
   the only two that use a monitor properly today.
-- Also open: the audit script itself (`scratchpad/audit.js` in the session
-  that wrote D-136) is worth keeping as `test/responsive.js` — it walks
-  every room at two widths and reports overflow, small targets and width
-  used. It is currently rebuilt by hand each time the question comes up.
+- **~~Also open: the audit script~~ — done (D-146).** It is
+  `test/responsive.js`: every room at five widths, checking sideways scroll,
+  the 32px floor, clipped text and width used. Its first run found the
+  intake page scrolling 142px sideways at 390px and 44 controls under the
+  floor; its second caught a regression I had introduced an hour earlier.
+  47 problems → 0. `SLAF_ONLY=room-id` checks one room.
+
+## What people ask about that this does not answer (the coverage gap)
+
+Checked against the code, not guessed at — each line below was grepped
+across `rooms/`, `engines/` and `data/` before being written down. Ordered
+by how often the question actually gets asked, not by how hard it is.
+
+**Built since this list was written** (D-147, D-148, D-150, D-151) — kept
+here rather than deleted, so the shape of what was missing stays legible:
+
+- ~~**A credit score.**~~ → `rooms/credit.html`. It never shows a score,
+  because it cannot know one and a made-up one would be worse than none. It
+  shows the five factors, what each weighs, which of them you can see from
+  here and which you cannot.
+- ~~**"I can't pay this month."**~~ → `rooms/cant-pay.html`. Twelve bills in
+  three tiers ordered by how recoverable missing each one is, what a phone
+  call is worth, and free help. No inputs at all: it refuses to guess a
+  shortfall.
+- ~~**"I left my job — what happens to my 401(k)?"**~~ →
+  `rooms/rollover.html`. Four options, no winner declared, and the 60-day
+  indirect-rollover trap with its 20% withholding as the largest line on
+  the page.
+- ~~**A car.**~~ → `rooms/car.html`. Depreciation, running costs as shares,
+  20/3/8 with its three legs separate, and how long a long term leaves you
+  underwater.
+
+**Nothing covers these at all:**
+
+- **Health insurance before 65.** Protection covers whether cover is
+  adequate. What is missing is the loop that decides whether early
+  retirement works in the US at all: the withdrawal rate sets MAGI, MAGI
+  sets the ACA subsidy, the subsidy changes spending, spending changes the
+  withdrawal rate. `data/events/sabbatical.json` has `cobra_aca_2024` in it
+  and nothing closes the loop.
+- **Aging parents and long-term care.** There is Kids and Tuition facing one
+  direction and nothing facing the other.
+- **Which fund to actually buy.** Accounts covers the wrapper and Where It
+  Goes covers the split; no room mentions an index fund, an expense ratio or
+  a target-date fund. That is the step between "save 20%" and doing it.
+- **Bankruptcy and debt settlement.** A Get Help referral only. The payoff
+  engine will build a forty-year avalanche for someone who should be talking
+  to a lawyer.
+
+**Tagged but not explained:**
+
+- ~~**Medical debt**~~ — now explained. `data/debt_rules.json` gained
+  `kindNotes` and Debt Payoff prints the note beside the debt: medical is
+  negotiable, frequently wrong, subject to hospital charity-care
+  obligations, and off the report once paid. Family loans and federal
+  student loans got the same treatment.
+
+**Checked and already covered** (recorded so nobody rebuilds it): **Social
+Security timing** — `engines/ss.js` is wired into Decumulation, What If Life
+and the dashboard, and it is referenced across eleven rooms.
+
+**The pattern worth naming.** This app was deepest for someone with a steady
+job and a surplus to allocate, and thinnest exactly where money stress is
+highest — no income, a medical crisis, a month that will not close. That was
+the inverse of where help is most needed, and it was the strongest argument
+for what to build next.
+
+Four of the six rooms built since are on that thin side, which was the point.
+The two that remain — **health cover before 65** and **aging parents** — are
+both loops rather than rooms: each has a figure that feeds a second figure
+that changes the first, and neither can be answered by a page that only adds
+up. They are the next thing, and they are harder than what came before them.
+
+**And a route through it all.** Fifty-nine rooms is a library, which is the
+one thing a newcomer cannot use. `rooms/walk.html` (D-149) is the short way
+round: five sets, only the steps that apply to your situation, 15–20 of them
+depending on who you are, with somewhere to say when each is done. Nothing is
+locked behind it.

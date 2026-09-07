@@ -1,0 +1,83 @@
+{
+  "id": "rollover_options",
+  "version": "1.0.0",
+  "asOf": "2026-09-06",
+  "source": "The four things you can do with a workplace retirement account after leaving, and the rules that distinguish them: the age-55 rule of separation, the 60-day indirect-rollover trap and its mandatory 20% withholding, the pro-rata rule on backdoor Roth contributions, and the small-balance force-out thresholds.",
+  "confidence": "convention",
+  "confidenceNote": "The rules are real and federal; which one is best for you is not a rule at all. Creditor protection, fees and fund choice differ by plan and by state, and the pro-rata interaction only matters if you use a backdoor Roth. This names the trade-offs rather than picking for you.",
+  "note": "Ordered by how often each is the right answer, not by how often it is taken. Cashing out is last on purpose.",
+  "rates": {
+    "earlyWithdrawalPenalty": 0.1,
+    "mandatoryWithholding": 0.2,
+    "indirectRolloverDays": 60,
+    "ruleOfFiftyFiveAge": 55,
+    "note": "The rates the prose below names, as numbers, so no calculator has to hold them inline (SPEC.md \u00a77). The penalty-free age itself \u2014 59\u00bd \u2014 is NOT repeated here: it is data/access_rules.json byTaxCharacter.pretax.accessAge, so there is one copy of it in the repo. ruleOfFiftyFiveAge is the age you must TURN in the calendar year you leave, not the age on the day you leave."
+  },
+  "options": [
+    {
+      "id": "leaveIt",
+      "label": "Leave it where it is",
+      "allowedWhen": "Most plans let you stay above a balance threshold; below it they can force you out.",
+      "good": [
+        "Nothing to do, and nothing to get wrong.",
+        "Workplace plans often have institutional fund pricing an individual cannot buy.",
+        "Strong federal creditor protection, which an IRA does not always match.",
+        "Keeps the age-55 rule alive: leave a job in or after the year you turn 55 and you can draw from THAT plan without the 10% penalty. Roll it to an IRA and you lose that until 59½."
+      ],
+      "bad": [
+        "One more account to track, and old accounts get forgotten.",
+        "You are stuck with that plan's fund menu and its administrative fee.",
+        "No new contributions."
+      ]
+    },
+    {
+      "id": "rollToIra",
+      "label": "Roll it to an IRA",
+      "allowedWhen": "Always, as a direct trustee-to-trustee transfer.",
+      "good": [
+        "Any investment you like, usually at a lower cost than a small plan's menu.",
+        "One account instead of several as jobs accumulate.",
+        "You control it; no former employer changes the terms."
+      ],
+      "bad": [
+        "Loses the age-55 rule if you are near it.",
+        "Creditor protection under state law rather than federal, and states differ.",
+        "A pre-tax balance in an IRA makes the pro-rata rule apply to any backdoor Roth contribution — if you do those, this can be the deciding factor."
+      ]
+    },
+    {
+      "id": "rollToNew",
+      "label": "Roll it into the new employer's plan",
+      "allowedWhen": "If the new plan accepts incoming rollovers — most do.",
+      "good": [
+        "One account, and it keeps the federal creditor protection.",
+        "Keeps pre-tax money out of an IRA, so a backdoor Roth stays clean.",
+        "Plan loans, if that plan allows them."
+      ],
+      "bad": [
+        "You inherit the new plan's fund menu and fees, which may be worse.",
+        "Waiting periods are common; nothing moves the week you start."
+      ]
+    },
+    {
+      "id": "cashOut",
+      "label": "Cash it out",
+      "allowedWhen": "Always — and it is the one to be slowest about.",
+      "good": [
+        "Money now, when money now is the actual problem."
+      ],
+      "bad": [
+        "Income tax on the whole amount, in a year you may already have earned.",
+        "A further 10% penalty before 59½ unless an exception applies.",
+        "The plan must withhold 20% up front, so you receive less than you asked for and may still owe more in April.",
+        "The balance stops compounding permanently. This is the cost nobody feels on the day."
+      ]
+    }
+  ],
+  "theTrap": {
+    "id": "indirect60Day",
+    "what": "Ask for a cheque instead of a direct transfer",
+    "why": "The plan must withhold 20%, and you then have 60 days to deposit the FULL original amount — including the fifth they kept — or the shortfall is a taxable distribution with a penalty. You get the withheld part back at tax time, if you found the cash to cover it in the meantime.",
+    "instead": "Ask for a direct, trustee-to-trustee rollover, in those words. Nothing is withheld and no clock starts."
+  }
+}

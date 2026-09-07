@@ -121,6 +121,89 @@
       ]
     },
     {
+      /* For most households the second-largest purchase and the most
+         frequent large one, and Big Purchase is generic (D-149). */
+      id: 'car',
+      kind: 'explore',
+      needs: ['grossAnnualIncome'],
+      order: 26.2,
+      title: 'What A Car Costs',
+      blurb: 'The sticker price is the smallest part. Depreciation, the running costs, and whether the loan fits \u2014 against the one test that says if the car fits your life.',
+      href: 'rooms/car.html',
+      tier: 2,
+      tags: ['cashflow', 'debt'],
+      subsections: [
+        { id: 'out-drop',   label: 'What it loses' },
+        { id: 'out-run',    label: 'What it costs to run' },
+        { id: 'out-loan',   label: 'Whether the loan fits' },
+        { id: 'out-ways',   label: 'Lease, new, or a year old' },
+        { id: 'reading',    label: 'Reading from elsewhere' }
+      ]
+    },
+    {
+      /* "I left my job — what happens to my 401(k)?" Accounts covers Roth
+         vs Traditional, not this (D-150). */
+      id: 'rollover',
+      kind: 'explore',
+      needs: [],
+      order: 26.8,
+      title: 'The Account You Left Behind',
+      blurb: 'A workplace plan at an old job has four possible futures, and one of them is much worse than the others. What each costs you, and the paperwork trap in the middle.',
+      href: 'rooms/rollover.html',
+      tier: 2,
+      tags: ['income'],
+      subsections: [
+        { id: 'out-four',   label: 'The four things you can do' },
+        { id: 'out-trap',   label: 'The trap in the middle' },
+        { id: 'out-cost',   label: 'What cashing out costs' },
+        { id: 'reading',    label: 'Reading from elsewhere' }
+      ]
+    },
+    {
+      /* The most-asked consumer money question, and the app had no room for
+         it (D-147). It computes NO score — it cannot see the file — so it
+         shows what it can see, says what moves one, and stops. */
+      id: 'credit',
+      kind: 'read',
+      /* It reads the itemised debts, which is where a card's balance and its
+         limit live — the two figures the utilisation and credit-mix rows are
+         made of. It writes nothing and owns nothing. */
+      needs: ['totalDebt'],
+      order: 26.4,
+      title: 'Your Credit File',
+      blurb: 'What a score is made of, which parts this app can actually see, and the one that moves fastest. No score here \u2014 that comes from a file only the bureaus hold.',
+      href: 'rooms/credit.html',
+      tier: 1,
+      tags: ['debt'],
+      subsections: [
+        { id: 'out-what',     label: 'What it is made of' },
+        { id: 'out-yours',    label: 'What this app can see' },
+        { id: 'out-stays',    label: 'How long things stay' },
+        { id: 'out-rights',   label: 'What you are entitled to' },
+        { id: 'reading',      label: 'Reading from elsewhere' }
+      ]
+    },
+    {
+      /* The highest-stress money moment there is, and Between Jobs was the
+         nearest thing — which assumes job loss specifically (D-148). */
+      id: 'cant-pay',
+      kind: 'explore',
+      needs: [],
+      order: 26.6,
+      title: 'When It Won\u2019t All Get Paid',
+      blurb: 'A short month, and not everything can be paid. Which bill to protect first, what is negotiable, what a phone call is worth, and who helps for free.',
+      href: 'rooms/cant-pay.html',
+      tier: 0,
+      tags: ['cashflow', 'debt'],
+      subsections: [
+        { id: 'out-gap',     label: 'What the gap is' },
+        { id: 'out-order',   label: 'The order to pay in' },
+        { id: 'out-calls',   label: 'The calls worth making' },
+        { id: 'out-help',    label: 'Free help' },
+        { id: 'reading',     label: 'Reading from elsewhere' }
+      ]
+    },
+    {
       id: 'cash-flow',
       kind: 'core',
       needs: ['monthlyExpenses'],
@@ -709,6 +792,73 @@
     subsections: [
       { id: 'fields', label: 'The three that move' },
       { id: 'done',   label: 'Snapshot' }
+    ]
+  });
+
+  /* The Timeline — jobs and benefits as dated periods that stack, and the
+     months they add up to (D-152). It OWNS futureIncome[], which used to be
+     edited on The Statement: a dated period belongs in the room that draws
+     it on a grid. Placed after the numbered path because it is a planning
+     room, not a fact-gathering one — you need to know what today is before
+     laying out what comes after it. */
+  ROOMS.push({
+    id: 'timeline',
+    kind: 'about-you',
+    needs: ['dob'],
+    order: 28.5,
+    title: 'What Comes Next',
+    blurb: 'Jobs, benefits and anything else that pays, each as a period with a start and an end — laid end to end so you can see where they overlap, where the gaps are, and what any month between now and then actually adds up to.',
+    href: 'rooms/timeline.html',
+    tier: 0,
+    tags: ['income', 'cashflow'],
+    subsections: [
+      { id: 'out-months',  label: 'The months ahead' },
+      { id: 'out-periods', label: 'What you have listed' },
+      { id: 'out-gaps',    label: 'Gaps and overlaps' },
+      { id: 'reading',     label: 'Reading from elsewhere' }
+    ]
+  });
+
+  /* Front Doors — the same rooms, arranged twenty different ways (D-153).
+     A utility like Refresh and Your Data: it is a way of MOVING through the
+     rooms, not a room with a number in it, so it stays off the numbered path
+     and out of D-051's four-room core cap. */
+  ROOMS.push({
+    id: 'doors',
+    kind: 'core',
+    utility: true,
+    needs: [],
+    order: 96,
+    title: 'Front Doors',
+    blurb: 'Twenty ways into the same rooms — by the question you came with, by what could go wrong, by how long it takes, by how often you would open it. The rooms never change; only the shelves.',
+    href: 'rooms/doors.html',
+    tier: 0,
+    tags: ['income', 'cashflow', 'debt'],
+    subsections: [
+      { id: 'out-pick', label: 'Choose an arrangement' },
+      { id: 'out-door', label: 'The rooms' },
+      { id: 'out-why',  label: 'Why this one' }
+    ]
+  });
+
+  /* The Walk-Through — the short, finishable route through the suite
+     (D-149). `utility: true` for the same reason Refresh is: it is a way of
+     moving through the rooms, not a room with a number in it, so it stays
+     off the numbered path and out of the four-room core cap (D-051). */
+  ROOMS.push({
+    id: 'walk',
+    kind: 'core',
+    utility: true,
+    needs: [],
+    order: 97,   /* ahead of Your Data (98) and Refresh (99), both utilities */
+    title: 'The Walk-Through',
+    blurb: 'The short route through this app: five sets of steps, only the ones that are for you, with somewhere to say when each is done.',
+    href: 'rooms/walk.html',
+    tier: 0,
+    tags: ['income', 'cashflow', 'debt'],
+    subsections: [
+      { id: 'out-top',    label: 'Where you are' },
+      { id: 'out-stages', label: 'The five sets' }
     ]
   });
 

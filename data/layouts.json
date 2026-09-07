@@ -1,0 +1,2317 @@
+{
+  "id": "layouts",
+  "version": "1.0.1",
+  "asOf": "2026-09-07",
+  "source": "Twenty arrangements of the same room set, drawn as a comparison set before any was built. Seventeen are editorial proposals — the grouping of rooms into bays is a judgement call, not a measurement. Three are not: \"path\" is the registry order the app already ships, \"situation\" is what shared/gate.js already computes, and \"depends\" is the dependency graph read out of shared/registry.js needs plus shared/ownership.js owners.",
+  "confidence": "unverified",
+  "confidenceNote": "Every bay membership here is an opinion about where a room belongs, held by one author on one day. Nothing downstream may treat a layout as a fact about a room — a room’s real relationships live in the registry (needs, tags, order) and in shared/ownership.js. Changing a layout must never change a number.",
+  "note": "A layout NEVER filters on its own: rooms are dropped only by Registry.applies, the same gate every other part of the app uses (D-142). So a bay can come out shorter for one person than another, and a bay whose every room is gated away is not shown at all. Modes: bays (a flat set of groups), hub (each group has a landmark room), tree (group names carry a parent with a › separator), flow (groups are numbered turns in a conversation), search (surfaces rather than shelves — the overlay flag marks a group that deliberately repeats rooms listed elsewhere). A room added to the registry after this file was written will not be on any shelf here — engines/layouts.js catches that and puts it in a stated \"not shelved in this arrangement\" bay rather than losing it, and coverage() still reports it so the gap gets fixed rather than hidden.",
+  "layouts": [
+    {
+      "id": "path",
+      "code": "S-1",
+      "volume": 1,
+      "name": "The Path",
+      "by": null,
+      "live": true,
+      "mode": "bays",
+      "premise": "One numbered sequence, first room to last, with a map drawer holding all 64. This is what is live today.",
+      "readsWell": "Order carries real information — you genuinely cannot do FIRE Number before Cash Flow. Nothing needs categorising, so nothing can be miscategorised.",
+      "costs": "A 60-item list is not browsable. Someone arriving with a question has to already know which number their question is, and the map drawer is where discovery goes to die.",
+      "groups": [
+        {
+          "name": "The numbered path",
+          "rooms": [
+            "start",
+            "debt-payoff",
+            "cash-flow",
+            "income",
+            "budget",
+            "variance",
+            "financial-snapshot",
+            "statement",
+            "savings-rate",
+            "sleep-at-night",
+            "fire",
+            "fire-lab",
+            "real-hourly-wage",
+            "hassle",
+            "quick-math",
+            "self-employed",
+            "side-hustle",
+            "ratios",
+            "dashboard",
+            "credential",
+            "accounts",
+            "fulfillment",
+            "rerank",
+            "stacker",
+            "skill-tree",
+            "exercises",
+            "values",
+            "goals",
+            "foo-ladder",
+            "worth",
+            "windfall",
+            "runway",
+            "car",
+            "credit",
+            "cant-pay",
+            "rollover",
+            "health",
+            "what-if-life",
+            "timeline",
+            "between-jobs",
+            "protection",
+            "decumulation",
+            "tax",
+            "estate",
+            "giving",
+            "career-move",
+            "partner",
+            "kids",
+            "housing",
+            "big-purchase",
+            "variable-income",
+            "enough",
+            "week",
+            "buckets",
+            "dreamline",
+            "reversibility",
+            "unlearning",
+            "student-loans",
+            "calendar",
+            "history"
+          ],
+          "note": "Registry order 1–51 — the sequence a person is meant to walk."
+        },
+        {
+          "name": "Off the path",
+          "rooms": [
+            "get-help",
+            "walk",
+            "data",
+            "refresh",
+            "doors"
+          ],
+          "note": "Utilities at orders 29 and 97–99 — reachable any time, never a step."
+        }
+      ]
+    },
+    {
+      "id": "situation",
+      "code": "S-2",
+      "volume": 1,
+      "name": "By your situation",
+      "by": null,
+      "live": true,
+      "mode": "bays",
+      "premise": "Ask the one gate question first, then show only the rooms that exist for that answer. Partly live — shared/gate.js already does the filtering.",
+      "readsWell": "The first screen already earns its place — one tap and a retiree stops being shown savings-rate rooms. It is the only plan here that makes the app smaller rather than rearranging it.",
+      "costs": "It removes 8–19 rooms out of 64. The other 43 still need an order, so this cannot be the whole structure — it is a filter sitting on top of one.",
+      "groups": [
+        {
+          "name": "Applies to everyone",
+          "rooms": [
+            "start",
+            "debt-payoff",
+            "cash-flow",
+            "income",
+            "budget",
+            "variance",
+            "financial-snapshot",
+            "statement",
+            "sleep-at-night",
+            "fire-lab",
+            "quick-math",
+            "ratios",
+            "dashboard",
+            "fulfillment",
+            "rerank",
+            "stacker",
+            "skill-tree",
+            "exercises",
+            "values",
+            "goals",
+            "foo-ladder",
+            "worth",
+            "windfall",
+            "runway",
+            "car",
+            "credit",
+            "cant-pay",
+            "rollover",
+            "health",
+            "what-if-life",
+            "timeline",
+            "protection",
+            "estate",
+            "giving",
+            "housing",
+            "big-purchase",
+            "enough",
+            "week",
+            "buckets",
+            "reversibility",
+            "unlearning",
+            "calendar",
+            "history"
+          ],
+          "note": "The same 43 rooms show up whichever answer you give."
+        },
+        {
+          "name": "Appears for some situations only",
+          "rooms": [
+            "savings-rate",
+            "fire",
+            "real-hourly-wage",
+            "hassle",
+            "self-employed",
+            "side-hustle",
+            "credential",
+            "accounts",
+            "between-jobs",
+            "decumulation",
+            "tax",
+            "career-move",
+            "partner",
+            "kids",
+            "variable-income",
+            "dreamline",
+            "student-loans"
+          ],
+          "note": "What the gate actually moves — between 8 and 19 rooms."
+        },
+        {
+          "name": "Always available",
+          "rooms": [
+            "get-help",
+            "walk",
+            "data",
+            "refresh",
+            "doors"
+          ],
+          "note": "Utilities the gate never touches."
+        }
+      ]
+    },
+    {
+      "id": "question",
+      "code": "S-3",
+      "volume": 1,
+      "name": "By the question you came with",
+      "by": null,
+      "live": false,
+      "mode": "bays",
+      "premise": "The front door is a list of questions in the words a person would actually use. Rooms are the answers.",
+      "readsWell": "Matches how people actually arrive. Nobody wakes up wanting step 17 — they wake up wondering whether they are okay. It also gives the crisis rooms a door of their own instead of burying them at order 26.",
+      "costs": "Questions overlap and you have to pick one home per room — Sleep At Night is arguably three of these. And a room can only be found by someone who phrases the question your way.",
+      "groups": [
+        {
+          "name": "Am I okay?",
+          "rooms": [
+            "dashboard",
+            "financial-snapshot",
+            "health",
+            "ratios",
+            "runway",
+            "savings-rate",
+            "statement",
+            "credit"
+          ]
+        },
+        {
+          "name": "Where does it all go?",
+          "rooms": [
+            "cash-flow",
+            "budget",
+            "income",
+            "variance",
+            "accounts",
+            "calendar",
+            "rerank",
+            "real-hourly-wage"
+          ]
+        },
+        {
+          "name": "What do I do next?",
+          "rooms": [
+            "foo-ladder",
+            "walk",
+            "goals",
+            "debt-payoff",
+            "refresh",
+            "start",
+            "doors"
+          ]
+        },
+        {
+          "name": "Can I afford this?",
+          "rooms": [
+            "big-purchase",
+            "car",
+            "housing",
+            "kids",
+            "quick-math",
+            "hassle",
+            "worth",
+            "student-loans"
+          ]
+        },
+        {
+          "name": "What if I…?",
+          "rooms": [
+            "what-if-life",
+            "fire-lab",
+            "timeline",
+            "career-move",
+            "self-employed",
+            "side-hustle",
+            "credential",
+            "dreamline",
+            "reversibility",
+            "windfall"
+          ]
+        },
+        {
+          "name": "Something’s gone wrong",
+          "rooms": [
+            "cant-pay",
+            "between-jobs",
+            "get-help",
+            "variable-income",
+            "sleep-at-night"
+          ],
+          "note": "The rooms someone opens on their worst day. Worth being one tap from the front door."
+        },
+        {
+          "name": "What’s it all for?",
+          "rooms": [
+            "values",
+            "fulfillment",
+            "enough",
+            "week",
+            "buckets",
+            "giving",
+            "unlearning"
+          ]
+        },
+        {
+          "name": "The long run",
+          "rooms": [
+            "fire",
+            "decumulation",
+            "estate",
+            "protection",
+            "tax",
+            "rollover",
+            "partner"
+          ]
+        },
+        {
+          "name": "Keeping it going",
+          "rooms": [
+            "data",
+            "history",
+            "stacker",
+            "skill-tree",
+            "exercises"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "verb",
+      "code": "S-4",
+      "volume": 1,
+      "name": "By what money does",
+      "by": null,
+      "live": false,
+      "mode": "bays",
+      "premise": "Nine verbs. Earn, spend, owe, keep, grow, protect, give, decide, learn — plus the housekeeping that is none of them.",
+      "readsWell": "Even bays — nothing is bigger than ten. The labels are one word each and need no explaining, which makes it the easiest of these to build a tab bar or an icon row from.",
+      "costs": "Verbs describe the tool, not the moment. Giving and What Matters land under the same verb as a tax deduction, and eight rooms have no verb at all.",
+      "groups": [
+        {
+          "name": "Earn",
+          "rooms": [
+            "income",
+            "real-hourly-wage",
+            "side-hustle",
+            "self-employed",
+            "career-move",
+            "variable-income",
+            "hassle",
+            "credential",
+            "timeline",
+            "between-jobs"
+          ]
+        },
+        {
+          "name": "Spend",
+          "rooms": [
+            "cash-flow",
+            "budget",
+            "variance",
+            "rerank",
+            "calendar",
+            "big-purchase",
+            "car",
+            "housing"
+          ]
+        },
+        {
+          "name": "Owe",
+          "rooms": [
+            "debt-payoff",
+            "student-loans",
+            "credit",
+            "cant-pay"
+          ]
+        },
+        {
+          "name": "Keep",
+          "rooms": [
+            "sleep-at-night",
+            "runway",
+            "savings-rate",
+            "accounts",
+            "statement",
+            "windfall"
+          ]
+        },
+        {
+          "name": "Grow",
+          "rooms": [
+            "fire",
+            "fire-lab",
+            "foo-ladder",
+            "rollover",
+            "what-if-life",
+            "ratios"
+          ]
+        },
+        {
+          "name": "Protect",
+          "rooms": [
+            "protection",
+            "estate",
+            "decumulation",
+            "tax",
+            "partner",
+            "kids"
+          ]
+        },
+        {
+          "name": "Give",
+          "rooms": [
+            "giving",
+            "values",
+            "fulfillment",
+            "enough"
+          ]
+        },
+        {
+          "name": "Decide",
+          "rooms": [
+            "worth",
+            "quick-math",
+            "reversibility",
+            "goals",
+            "dreamline",
+            "week",
+            "buckets"
+          ]
+        },
+        {
+          "name": "Learn",
+          "rooms": [
+            "stacker",
+            "skill-tree",
+            "exercises",
+            "unlearning",
+            "health"
+          ]
+        },
+        {
+          "name": "None of the above",
+          "rooms": [
+            "start",
+            "dashboard",
+            "walk",
+            "refresh",
+            "data",
+            "history",
+            "get-help",
+            "financial-snapshot",
+            "doors"
+          ],
+          "note": "The verbs have no home for the rooms that are about the app rather than about money.",
+          "warn": true
+        }
+      ]
+    },
+    {
+      "id": "urgency",
+      "code": "S-5",
+      "volume": 1,
+      "name": "By how soon it matters",
+      "by": null,
+      "live": false,
+      "mode": "bays",
+      "premise": "Five horizons, from the floor moving under you to the shape of a whole life.",
+      "readsWell": "The only plan that puts the worst day at the top. Someone whose rent is due this week is three words from the right room, instead of scrolling past FIRE Lab to reach it.",
+      "costs": "Urgency is personal, not structural — Estate Basics is “this life” until a diagnosis makes it this week. And 14 rooms belong to no horizon.",
+      "groups": [
+        {
+          "name": "Right now",
+          "rooms": [
+            "cant-pay",
+            "between-jobs",
+            "runway",
+            "get-help",
+            "credit"
+          ],
+          "note": "The floor is moving. Five rooms, one tap from the front door."
+        },
+        {
+          "name": "This month",
+          "rooms": [
+            "cash-flow",
+            "budget",
+            "calendar",
+            "variance",
+            "income",
+            "debt-payoff",
+            "refresh",
+            "financial-snapshot"
+          ]
+        },
+        {
+          "name": "This year",
+          "rooms": [
+            "sleep-at-night",
+            "savings-rate",
+            "accounts",
+            "tax",
+            "protection",
+            "goals",
+            "rerank",
+            "car",
+            "big-purchase",
+            "student-loans",
+            "rollover",
+            "career-move",
+            "credential",
+            "variable-income"
+          ]
+        },
+        {
+          "name": "This decade",
+          "rooms": [
+            "fire",
+            "fire-lab",
+            "statement",
+            "housing",
+            "kids",
+            "partner",
+            "timeline",
+            "what-if-life",
+            "self-employed",
+            "side-hustle",
+            "windfall"
+          ]
+        },
+        {
+          "name": "This life",
+          "rooms": [
+            "values",
+            "fulfillment",
+            "enough",
+            "dreamline",
+            "week",
+            "buckets",
+            "estate",
+            "giving",
+            "decumulation",
+            "unlearning",
+            "reversibility",
+            "worth"
+          ]
+        },
+        {
+          "name": "Any time",
+          "rooms": [
+            "dashboard",
+            "walk",
+            "start",
+            "ratios",
+            "health",
+            "quick-math",
+            "data",
+            "history",
+            "stacker",
+            "skill-tree",
+            "exercises",
+            "hassle",
+            "real-hourly-wage",
+            "foo-ladder",
+            "doors"
+          ],
+          "note": "The bay that catches everything that is not time-bound — nearly a quarter of the app.",
+          "warn": true
+        }
+      ]
+    },
+    {
+      "id": "foo",
+      "code": "S-6",
+      "volume": 1,
+      "name": "By the FOO ladder",
+      "by": null,
+      "live": false,
+      "mode": "bays",
+      "premise": "The Financial Order of Operations, which the app already carries as a room. Nine rungs, in order, and you work up them.",
+      "readsWell": "The one plan with an outside authority behind it. There is a right answer to “what next”, it is defensible, and the app already computes which rung you are on.",
+      "costs": "Fatal as a whole-app structure: 34 of 64 rooms have no rung. The FOO is a plan for money, and half of this app is about work, time and what any of it is for.",
+      "groups": [
+        {
+          "name": "Before the ladder",
+          "rooms": [
+            "start",
+            "cash-flow",
+            "income",
+            "budget",
+            "variance",
+            "calendar",
+            "financial-snapshot",
+            "dashboard"
+          ],
+          "note": "You cannot start until these are entered."
+        },
+        {
+          "name": "1 · Deductibles covered",
+          "rooms": [
+            "sleep-at-night",
+            "protection"
+          ]
+        },
+        {
+          "name": "2 · Employer match",
+          "rooms": [
+            "accounts"
+          ]
+        },
+        {
+          "name": "3 · High-interest debt",
+          "rooms": [
+            "debt-payoff",
+            "credit",
+            "cant-pay"
+          ]
+        },
+        {
+          "name": "4 · Emergency reserves",
+          "rooms": [
+            "runway",
+            "savings-rate"
+          ]
+        },
+        {
+          "name": "5 · Roth & HSA",
+          "rooms": [
+            "tax",
+            "rollover"
+          ]
+        },
+        {
+          "name": "6 · Max retirement",
+          "rooms": [
+            "fire",
+            "foo-ladder"
+          ]
+        },
+        {
+          "name": "7 · Hyper-accumulation",
+          "rooms": [
+            "statement",
+            "fire-lab",
+            "ratios",
+            "health"
+          ]
+        },
+        {
+          "name": "8 · Prepaid future expenses",
+          "rooms": [
+            "kids",
+            "goals",
+            "student-loans",
+            "big-purchase",
+            "car",
+            "housing"
+          ]
+        },
+        {
+          "name": "Beside the ladder — no rung fits",
+          "rooms": [
+            "values",
+            "fulfillment",
+            "enough",
+            "week",
+            "buckets",
+            "dreamline",
+            "unlearning",
+            "worth",
+            "reversibility",
+            "rerank",
+            "quick-math",
+            "hassle",
+            "real-hourly-wage",
+            "stacker",
+            "skill-tree",
+            "exercises",
+            "credential",
+            "career-move",
+            "side-hustle",
+            "self-employed",
+            "variable-income",
+            "timeline",
+            "what-if-life",
+            "windfall",
+            "between-jobs",
+            "partner",
+            "estate",
+            "giving",
+            "decumulation",
+            "get-help",
+            "walk",
+            "data",
+            "history",
+            "refresh",
+            "doors"
+          ],
+          "note": "Everything about time, meaning, skill, work and the end of life. The FOO has nothing to say about any of it.",
+          "warn": true
+        }
+      ]
+    },
+    {
+      "id": "tabs",
+      "code": "S-7",
+      "volume": 1,
+      "name": "Five tabs",
+      "by": null,
+      "live": false,
+      "mode": "bays",
+      "premise": "The shape a normal phone app takes. Five words along the bottom, everything behind one of them.",
+      "readsWell": "Nobody needs it explained. Five persistent words mean you are never more than two taps from anywhere, and the thumb reaches all of them.",
+      "costs": "Twenty rooms behind “Plan”, which means a second level of menu the moment you tap it — you have moved the long list, not removed it. And “You” becomes the drawer for whatever did not fit.",
+      "groups": [
+        {
+          "name": "Home",
+          "rooms": [
+            "dashboard",
+            "financial-snapshot",
+            "walk",
+            "refresh",
+            "start",
+            "health",
+            "doors"
+          ]
+        },
+        {
+          "name": "Money",
+          "rooms": [
+            "cash-flow",
+            "income",
+            "budget",
+            "variance",
+            "calendar",
+            "debt-payoff",
+            "statement",
+            "accounts",
+            "savings-rate",
+            "credit",
+            "runway",
+            "cant-pay",
+            "student-loans",
+            "rollover",
+            "tax"
+          ]
+        },
+        {
+          "name": "Plan",
+          "rooms": [
+            "fire",
+            "fire-lab",
+            "timeline",
+            "goals",
+            "what-if-life",
+            "foo-ladder",
+            "big-purchase",
+            "car",
+            "housing",
+            "kids",
+            "career-move",
+            "decumulation",
+            "estate",
+            "protection",
+            "partner",
+            "windfall",
+            "self-employed",
+            "side-hustle",
+            "variable-income",
+            "between-jobs"
+          ],
+          "note": "A third of the app behind one word — the price of a tidy tab bar.",
+          "warn": true
+        },
+        {
+          "name": "Learn",
+          "rooms": [
+            "stacker",
+            "skill-tree",
+            "exercises",
+            "ratios",
+            "unlearning",
+            "quick-math",
+            "credential",
+            "hassle",
+            "real-hourly-wage"
+          ]
+        },
+        {
+          "name": "You",
+          "rooms": [
+            "values",
+            "fulfillment",
+            "enough",
+            "rerank",
+            "week",
+            "buckets",
+            "dreamline",
+            "reversibility",
+            "worth",
+            "giving",
+            "sleep-at-night",
+            "data",
+            "history",
+            "get-help"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "search",
+      "code": "S-8",
+      "volume": 1,
+      "name": "No shelves at all",
+      "by": null,
+      "live": false,
+      "mode": "search",
+      "premise": "Refuse to categorise. One search box, what you had open last, what the app thinks you need now, and an A–Z for everything else.",
+      "readsWell": "Zero learning curve and no wrong shelf, because there are no shelves. Search is how people use a big app once they know it, and it scales to room 200 without a redesign.",
+      "costs": "Useless to a newcomer, which is most of the point of this app. You cannot search for a room whose existence you do not suspect — and discovery is exactly what 64 rooms need.",
+      "groups": [
+        {
+          "name": "The four surfaces",
+          "rooms": [],
+          "note": "Not categories — ways in. The taxonomy problem is simply declined."
+        },
+        {
+          "name": "Where you left off",
+          "rooms": [],
+          "note": "Your own last four rooms, whatever they were."
+        },
+        {
+          "name": "Right for you now",
+          "rooms": [
+            "cant-pay",
+            "runway",
+            "debt-payoff",
+            "sleep-at-night"
+          ],
+          "note": "Driven by the gate and the FOO rung — the app’s own opinion, three or four rooms. A surface, not a shelf: these also sit in the A–Z below.",
+          "overlay": true
+        },
+        {
+          "name": "Everything, A–Z",
+          "rooms": [
+            "between-jobs",
+            "big-purchase",
+            "budget",
+            "career-move",
+            "cash-flow",
+            "debt-payoff",
+            "decumulation",
+            "week",
+            "dreamline",
+            "enough",
+            "fulfillment",
+            "estate",
+            "variance",
+            "ratios",
+            "exercises",
+            "financial-snapshot",
+            "fire-lab",
+            "fire",
+            "foo-ladder",
+            "get-help",
+            "giving",
+            "goals",
+            "self-employed",
+            "history",
+            "housing",
+            "income",
+            "kids",
+            "calendar",
+            "partner",
+            "protection",
+            "quick-math",
+            "real-hourly-wage",
+            "refresh",
+            "reversibility",
+            "savings-rate",
+            "side-hustle",
+            "sleep-at-night",
+            "start",
+            "student-loans",
+            "tax",
+            "rollover",
+            "dashboard",
+            "rerank",
+            "runway",
+            "health",
+            "stacker",
+            "skill-tree",
+            "statement",
+            "walk",
+            "windfall",
+            "buckets",
+            "unlearning",
+            "variable-income",
+            "car",
+            "timeline",
+            "what-if-life",
+            "values",
+            "cant-pay",
+            "accounts",
+            "worth",
+            "credential",
+            "hassle",
+            "credit",
+            "data",
+            "doors"
+          ],
+          "note": "One flat alphabetical list. No hierarchy to learn and none to get wrong."
+        }
+      ]
+    },
+    {
+      "id": "house",
+      "code": "S-9",
+      "volume": 2,
+      "name": "The house",
+      "by": null,
+      "live": false,
+      "mode": "bays",
+      "premise": "Take the metaphor literally. They are already called rooms — so give them a building, and let people walk it.",
+      "readsWell": "The only plan here that is memorable. You remember where a room is in a house without being told twice, and “it’s in the bedroom” is a sentence people can say to each other. It also gives the frightening rooms a soft place to sit.",
+      "costs": "Charm is not findability. A newcomer has to learn your house before they can use it, the metaphor strains at the edges — is a pension the attic or the study? — and it does not survive translation to a search box.",
+      "groups": [
+        {
+          "name": "The hall",
+          "rooms": [
+            "start",
+            "dashboard",
+            "walk",
+            "financial-snapshot",
+            "doors"
+          ],
+          "note": "Where you come in and hang your coat."
+        },
+        {
+          "name": "The kitchen",
+          "rooms": [
+            "cash-flow",
+            "budget",
+            "income",
+            "variance",
+            "calendar",
+            "refresh"
+          ],
+          "note": "Where the daily work happens and the mess accumulates."
+        },
+        {
+          "name": "The bedroom",
+          "rooms": [
+            "sleep-at-night",
+            "runway",
+            "protection",
+            "cant-pay",
+            "credit",
+            "between-jobs"
+          ],
+          "note": "What you lie awake about."
+        },
+        {
+          "name": "The study",
+          "rooms": [
+            "statement",
+            "savings-rate",
+            "accounts",
+            "tax",
+            "ratios",
+            "health",
+            "fire",
+            "fire-lab",
+            "foo-ladder"
+          ]
+        },
+        {
+          "name": "The garage",
+          "rooms": [
+            "car",
+            "big-purchase",
+            "housing",
+            "rollover",
+            "student-loans",
+            "debt-payoff"
+          ],
+          "note": "Big, expensive, wheeled or mortgaged."
+        },
+        {
+          "name": "The workshop",
+          "rooms": [
+            "stacker",
+            "skill-tree",
+            "exercises",
+            "credential",
+            "career-move",
+            "side-hustle",
+            "self-employed",
+            "variable-income",
+            "real-hourly-wage",
+            "hassle"
+          ],
+          "note": "What you can do, and what it is worth."
+        },
+        {
+          "name": "The living room",
+          "rooms": [
+            "partner",
+            "kids",
+            "giving",
+            "values"
+          ]
+        },
+        {
+          "name": "The window",
+          "rooms": [
+            "what-if-life",
+            "timeline",
+            "goals",
+            "dreamline",
+            "windfall",
+            "reversibility",
+            "worth",
+            "quick-math"
+          ],
+          "note": "Looking out at what has not happened yet."
+        },
+        {
+          "name": "The attic",
+          "rooms": [
+            "estate",
+            "decumulation",
+            "history"
+          ]
+        },
+        {
+          "name": "The garden",
+          "rooms": [
+            "fulfillment",
+            "enough",
+            "week",
+            "buckets",
+            "rerank",
+            "unlearning"
+          ],
+          "note": "The part that is not about money at all."
+        },
+        {
+          "name": "The cupboard under the stairs",
+          "rooms": [
+            "data",
+            "get-help"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cadence",
+      "code": "S-10",
+      "volume": 2,
+      "name": "By how often you’d open it",
+      "by": null,
+      "live": false,
+      "mode": "bays",
+      "premise": "Not urgency — rhythm. Some rooms are a weekly habit, some are once a year, and most are opened on a day something happens.",
+      "readsWell": "It answers the question a returning user actually has — “what should I be doing today?” — which no other plan here answers. It also makes the app honest about how little of it needs opening twice.",
+      "costs": "Twenty-one rooms are event-driven and cannot be scheduled at all, so the biggest bay is the one the structure cannot help with. And rhythm is a habit you have not formed yet on day one.",
+      "groups": [
+        {
+          "name": "This week",
+          "rooms": [
+            "cash-flow",
+            "calendar",
+            "budget",
+            "stacker",
+            "exercises"
+          ]
+        },
+        {
+          "name": "At month end",
+          "rooms": [
+            "variance",
+            "income",
+            "refresh",
+            "debt-payoff",
+            "financial-snapshot"
+          ]
+        },
+        {
+          "name": "Each quarter",
+          "rooms": [
+            "statement",
+            "savings-rate",
+            "runway",
+            "credit",
+            "ratios",
+            "health",
+            "sleep-at-night"
+          ]
+        },
+        {
+          "name": "Once a year",
+          "rooms": [
+            "tax",
+            "accounts",
+            "protection",
+            "goals",
+            "rerank",
+            "fire",
+            "foo-ladder",
+            "dashboard",
+            "walk",
+            "doors"
+          ]
+        },
+        {
+          "name": "Once, then rarely",
+          "rooms": [
+            "values",
+            "estate",
+            "partner",
+            "decumulation",
+            "enough",
+            "fulfillment",
+            "week",
+            "buckets",
+            "dreamline",
+            "unlearning",
+            "reversibility",
+            "worth",
+            "giving"
+          ]
+        },
+        {
+          "name": "When something happens",
+          "rooms": [
+            "between-jobs",
+            "cant-pay",
+            "career-move",
+            "housing",
+            "big-purchase",
+            "car",
+            "kids",
+            "student-loans",
+            "rollover",
+            "windfall",
+            "self-employed",
+            "side-hustle",
+            "variable-income",
+            "timeline",
+            "what-if-life",
+            "fire-lab",
+            "credential",
+            "hassle",
+            "real-hourly-wage",
+            "quick-math",
+            "get-help"
+          ],
+          "note": "A third of the app, and none of it can be put in a diary. This is the bay that argues for S-3 or S-5 instead.",
+          "warn": true
+        },
+        {
+          "name": "Set up once",
+          "rooms": [
+            "start",
+            "skill-tree",
+            "data",
+            "history"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "output",
+      "code": "S-11",
+      "volume": 2,
+      "name": "By what you get back",
+      "by": null,
+      "live": false,
+      "mode": "bays",
+      "premise": "Sort by the output, not the topic. Some rooms hand you a number, some hand you a decision, some hand you a different way of seeing it.",
+      "readsWell": "It sells each room on its promise rather than its subject, which is the difference between “Tax” and “a decision, made”. Bays come out even, and it is the only plan that separates “gives you a number” from “changes your mind” — two very different moods to be in.",
+      "costs": "You have to know what you want before you can navigate, and most people arrive knowing only that something feels wrong. Several rooms honestly deliver two of these.",
+      "groups": [
+        {
+          "name": "A number you didn’t have",
+          "rooms": [
+            "real-hourly-wage",
+            "savings-rate",
+            "fire",
+            "runway",
+            "credit",
+            "health",
+            "ratios",
+            "statement",
+            "financial-snapshot",
+            "variance",
+            "quick-math"
+          ]
+        },
+        {
+          "name": "A decision, made",
+          "rooms": [
+            "worth",
+            "hassle",
+            "big-purchase",
+            "housing",
+            "car",
+            "student-loans",
+            "rollover",
+            "career-move",
+            "credential",
+            "reversibility",
+            "self-employed",
+            "side-hustle"
+          ]
+        },
+        {
+          "name": "A plan you can follow",
+          "rooms": [
+            "foo-ladder",
+            "goals",
+            "debt-payoff",
+            "walk",
+            "timeline",
+            "accounts",
+            "tax",
+            "protection",
+            "estate",
+            "decumulation",
+            "doors"
+          ]
+        },
+        {
+          "name": "A habit",
+          "rooms": [
+            "cash-flow",
+            "budget",
+            "calendar",
+            "income",
+            "refresh",
+            "stacker",
+            "skill-tree",
+            "exercises",
+            "dashboard"
+          ]
+        },
+        {
+          "name": "A different way of seeing it",
+          "rooms": [
+            "values",
+            "fulfillment",
+            "enough",
+            "rerank",
+            "week",
+            "buckets",
+            "dreamline",
+            "unlearning",
+            "giving",
+            "what-if-life",
+            "fire-lab",
+            "windfall"
+          ]
+        },
+        {
+          "name": "Somewhere to stand when it’s bad",
+          "rooms": [
+            "cant-pay",
+            "between-jobs",
+            "sleep-at-night",
+            "get-help",
+            "variable-income",
+            "partner",
+            "kids"
+          ]
+        },
+        {
+          "name": "The app itself",
+          "rooms": [
+            "start",
+            "data",
+            "history"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "risk",
+      "code": "S-12",
+      "volume": 2,
+      "name": "By what could go wrong",
+      "by": null,
+      "live": false,
+      "mode": "bays",
+      "premise": "Organise around failure. Each bay is a way a financial life comes apart, and the rooms in it are what you do about that.",
+      "readsWell": "Motivating in a way no verb or tab is. It puts “thirty years on the wrong thing” beside “running out this month” as a real risk, which is a genuinely unusual thing for a money app to say and is the truest thing about this one.",
+      "costs": "Fear as a front door. Someone doing fine opens it and is handed seven ways their life could fall apart — that is a reason to close the app, and the tone would have to be handled very carefully.",
+      "groups": [
+        {
+          "name": "Running out this month",
+          "rooms": [
+            "cant-pay",
+            "cash-flow",
+            "calendar",
+            "budget",
+            "runway",
+            "credit"
+          ]
+        },
+        {
+          "name": "The income stopping",
+          "rooms": [
+            "between-jobs",
+            "sleep-at-night",
+            "variable-income",
+            "self-employed",
+            "side-hustle",
+            "career-move",
+            "timeline"
+          ]
+        },
+        {
+          "name": "The debt outrunning you",
+          "rooms": [
+            "debt-payoff",
+            "student-loans",
+            "rollover",
+            "big-purchase",
+            "car"
+          ]
+        },
+        {
+          "name": "Something happening to you",
+          "rooms": [
+            "protection",
+            "estate",
+            "partner",
+            "kids",
+            "decumulation"
+          ]
+        },
+        {
+          "name": "Thirty years on the wrong thing",
+          "rooms": [
+            "values",
+            "fulfillment",
+            "enough",
+            "rerank",
+            "week",
+            "buckets",
+            "dreamline",
+            "unlearning",
+            "worth",
+            "reversibility",
+            "giving"
+          ],
+          "note": "The failure nobody insures against, and the one this app is unusually good at."
+        },
+        {
+          "name": "Arriving at 65 short",
+          "rooms": [
+            "fire",
+            "fire-lab",
+            "savings-rate",
+            "accounts",
+            "tax",
+            "statement",
+            "foo-ladder",
+            "goals",
+            "what-if-life",
+            "housing",
+            "financial-snapshot",
+            "ratios",
+            "health"
+          ]
+        },
+        {
+          "name": "Never finding out",
+          "rooms": [
+            "start",
+            "dashboard",
+            "walk",
+            "refresh",
+            "variance",
+            "income",
+            "data",
+            "history",
+            "get-help",
+            "quick-math",
+            "real-hourly-wage",
+            "hassle",
+            "credential",
+            "stacker",
+            "skill-tree",
+            "exercises",
+            "windfall",
+            "doors"
+          ],
+          "note": "The risk of not measuring. Everything here exists so the other six bays are not a surprise."
+        }
+      ]
+    },
+    {
+      "id": "company",
+      "code": "S-13",
+      "volume": 2,
+      "name": "By who else is in it",
+      "by": null,
+      "live": false,
+      "mode": "bays",
+      "premise": "Money is rarely solitary. Sort by the other party — a partner, an employer, a lender, the government, the market, or nobody at all.",
+      "readsWell": "It quietly teaches something true: sixteen of these rooms are nobody’s business but yours, and a different sixteen involve a counterparty who has their own interests. That is a useful thing to feel while using a money app.",
+      "costs": "An unusual way to think, so it needs explaining — and the bays do not map to any task anyone has ever set out to do. Nobody opens an app thinking “today I deal with a lender”.",
+      "groups": [
+        {
+          "name": "Just you",
+          "rooms": [
+            "real-hourly-wage",
+            "hassle",
+            "values",
+            "fulfillment",
+            "enough",
+            "week",
+            "buckets",
+            "dreamline",
+            "unlearning",
+            "worth",
+            "reversibility",
+            "rerank",
+            "quick-math",
+            "stacker",
+            "skill-tree",
+            "exercises"
+          ]
+        },
+        {
+          "name": "Someone you love",
+          "rooms": [
+            "partner",
+            "kids",
+            "giving",
+            "estate",
+            "housing"
+          ]
+        },
+        {
+          "name": "An employer",
+          "rooms": [
+            "accounts",
+            "career-move",
+            "credential",
+            "between-jobs",
+            "side-hustle",
+            "self-employed",
+            "variable-income",
+            "income",
+            "rollover",
+            "timeline"
+          ]
+        },
+        {
+          "name": "A lender",
+          "rooms": [
+            "debt-payoff",
+            "credit",
+            "student-loans",
+            "car",
+            "big-purchase",
+            "cant-pay"
+          ]
+        },
+        {
+          "name": "The government",
+          "rooms": [
+            "tax",
+            "protection",
+            "decumulation",
+            "fire"
+          ]
+        },
+        {
+          "name": "The market",
+          "rooms": [
+            "statement",
+            "fire-lab",
+            "savings-rate",
+            "runway",
+            "what-if-life",
+            "windfall",
+            "goals",
+            "foo-ladder",
+            "ratios",
+            "health"
+          ]
+        },
+        {
+          "name": "Nobody — just the numbers",
+          "rooms": [
+            "start",
+            "dashboard",
+            "cash-flow",
+            "budget",
+            "variance",
+            "calendar",
+            "financial-snapshot",
+            "sleep-at-night",
+            "refresh",
+            "walk",
+            "data",
+            "history",
+            "get-help",
+            "doors"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "depends",
+      "code": "S-14",
+      "volume": 2,
+      "name": "What actually depends on what",
+      "by": null,
+      "live": false,
+      "mode": "bays",
+      "premise": "Not a proposal — a measurement. Every room declares the fields it needs; this is that graph, computed from shared/registry.js and shared/ownership.js.",
+      "readsWell": "The only sheet here that is measured rather than argued. It settles what is genuinely ordered — Start Here and Cash Flow, and almost nothing else — and it updates itself as the registry changes.",
+      "costs": "Four layers, one of them holding 37 rooms, is not a navigation structure. Its value is as evidence: it says the app is far flatter than the numbered path implies, which is a finding, not a front door.",
+      "groups": [
+        {
+          "name": "Layer 0 — need nothing from another room",
+          "rooms": [
+            "debt-payoff",
+            "cash-flow",
+            "income",
+            "budget",
+            "quick-math",
+            "stacker",
+            "skill-tree",
+            "exercises",
+            "windfall",
+            "cant-pay",
+            "rollover",
+            "estate"
+          ],
+          "note": "You could open any of these first, today, cold."
+        },
+        {
+          "name": "Layer 1",
+          "rooms": [
+            "start",
+            "variance",
+            "fulfillment",
+            "rerank",
+            "values",
+            "goals",
+            "credit",
+            "kids",
+            "week",
+            "unlearning"
+          ],
+          "note": "Start Here is in this layer, not layer 0 — the front door has a prerequisite."
+        },
+        {
+          "name": "Layer 2",
+          "rooms": [
+            "financial-snapshot",
+            "statement",
+            "savings-rate",
+            "sleep-at-night",
+            "fire",
+            "fire-lab",
+            "real-hourly-wage",
+            "hassle",
+            "self-employed",
+            "side-hustle",
+            "ratios",
+            "dashboard",
+            "credential",
+            "accounts",
+            "worth",
+            "runway",
+            "car",
+            "health",
+            "what-if-life",
+            "timeline",
+            "between-jobs",
+            "protection",
+            "decumulation",
+            "tax",
+            "giving",
+            "career-move",
+            "partner",
+            "housing",
+            "big-purchase",
+            "variable-income",
+            "enough",
+            "buckets",
+            "dreamline",
+            "reversibility",
+            "student-loans",
+            "calendar",
+            "history"
+          ],
+          "note": "37 rooms sit at exactly the same depth. There is no sequence among them — the numbered path invents one.",
+          "warn": true
+        },
+        {
+          "name": "Layer 3",
+          "rooms": [
+            "foo-ladder"
+          ],
+          "note": "The deepest room in the whole app is three hops from the door."
+        },
+        {
+          "name": "Outside the graph",
+          "rooms": [
+            "get-help",
+            "walk",
+            "data",
+            "refresh",
+            "doors"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ask",
+      "code": "S-15",
+      "volume": 2,
+      "name": "One question at a time",
+      "by": null,
+      "live": false,
+      "mode": "flow",
+      "premise": "No navigation at all. The app asks; you answer; it decides what to show you next and what to skip.",
+      "readsWell": "No structure to learn, because there is no structure. It is the gentlest possible front door and it fits what the app already does — the gate, the Walk-Through and the FOO rung are three-quarters of this engine already built.",
+      "costs": "You cannot get back to a room you liked, browse, or skip ahead, and a wrong turn on question 2 hides things forever. It needs an escape hatch, and the moment you add one you have rebuilt S-8 underneath it.",
+      "groups": [
+        {
+          "name": "1 · “What’s happening?”",
+          "rooms": [
+            "cant-pay",
+            "between-jobs",
+            "runway",
+            "get-help",
+            "cash-flow"
+          ]
+        },
+        {
+          "name": "2 · “What comes in?”",
+          "rooms": [
+            "income",
+            "variable-income",
+            "self-employed",
+            "side-hustle",
+            "real-hourly-wage",
+            "hassle",
+            "career-move",
+            "credential",
+            "timeline"
+          ]
+        },
+        {
+          "name": "3 · “What goes out?”",
+          "rooms": [
+            "budget",
+            "variance",
+            "calendar",
+            "rerank",
+            "big-purchase",
+            "car",
+            "housing",
+            "student-loans"
+          ]
+        },
+        {
+          "name": "4 · “What do you hold?”",
+          "rooms": [
+            "statement",
+            "accounts",
+            "savings-rate",
+            "credit",
+            "debt-payoff",
+            "rollover",
+            "tax"
+          ]
+        },
+        {
+          "name": "5 · “What are you afraid of?”",
+          "rooms": [
+            "sleep-at-night",
+            "protection",
+            "estate",
+            "partner",
+            "kids",
+            "decumulation"
+          ]
+        },
+        {
+          "name": "6 · “What’s it for?”",
+          "rooms": [
+            "values",
+            "fulfillment",
+            "enough",
+            "week",
+            "buckets",
+            "dreamline",
+            "giving",
+            "unlearning",
+            "worth",
+            "reversibility"
+          ]
+        },
+        {
+          "name": "7 · “So where does that land you?”",
+          "rooms": [
+            "fire",
+            "fire-lab",
+            "foo-ladder",
+            "goals",
+            "what-if-life",
+            "windfall",
+            "ratios",
+            "health",
+            "financial-snapshot",
+            "dashboard"
+          ]
+        },
+        {
+          "name": "Never asked about, always reachable",
+          "rooms": [
+            "start",
+            "walk",
+            "refresh",
+            "data",
+            "history",
+            "quick-math",
+            "stacker",
+            "skill-tree",
+            "exercises",
+            "doors"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "effort",
+      "code": "S-16",
+      "volume": 2,
+      "name": "By how much work it is",
+      "by": null,
+      "live": false,
+      "mode": "bays",
+      "premise": "Sort by the size of the ask. A minute, five minutes, one sitting, one evening, or a habit you keep.",
+      "readsWell": "The most practical sheet here. It matches the constraint people actually have — time — and it makes the nine one-minute rooms findable, which is what someone standing at a bus stop can use. Nothing else here does that.",
+      "costs": "It says nothing about what a room is for, so it only works once you already know the app. And these estimates are mine — the app does not measure them, so they would rot quietly.",
+      "groups": [
+        {
+          "name": "Under a minute",
+          "rooms": [
+            "quick-math",
+            "refresh",
+            "financial-snapshot",
+            "dashboard",
+            "health",
+            "credit",
+            "ratios",
+            "savings-rate",
+            "runway"
+          ],
+          "note": "Everything already computed. You are reading, not typing."
+        },
+        {
+          "name": "Five minutes",
+          "rooms": [
+            "real-hourly-wage",
+            "hassle",
+            "worth",
+            "car",
+            "windfall",
+            "reversibility",
+            "sleep-at-night",
+            "cant-pay",
+            "get-help",
+            "rollover",
+            "student-loans"
+          ]
+        },
+        {
+          "name": "One sitting",
+          "rooms": [
+            "start",
+            "cash-flow",
+            "income",
+            "budget",
+            "statement",
+            "debt-payoff",
+            "accounts",
+            "goals",
+            "tax",
+            "protection",
+            "fire",
+            "timeline",
+            "big-purchase",
+            "housing",
+            "between-jobs"
+          ]
+        },
+        {
+          "name": "An evening, and worth it",
+          "rooms": [
+            "rerank",
+            "values",
+            "fulfillment",
+            "enough",
+            "week",
+            "buckets",
+            "dreamline",
+            "unlearning",
+            "what-if-life",
+            "fire-lab",
+            "estate",
+            "partner",
+            "kids",
+            "career-move",
+            "self-employed",
+            "side-hustle",
+            "variable-income",
+            "decumulation",
+            "giving",
+            "foo-ladder",
+            "walk",
+            "doors"
+          ],
+          "note": "A third of the app asks for a real evening. Worth knowing before you open one on a Tuesday.",
+          "warn": true
+        },
+        {
+          "name": "Ongoing, never done",
+          "rooms": [
+            "calendar",
+            "variance",
+            "stacker",
+            "skill-tree",
+            "exercises",
+            "credential",
+            "history",
+            "data"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "jargon",
+      "code": "S-17",
+      "volume": 3,
+      "name": "By how much you have to already know",
+      "by": "The plain-language reviewer",
+      "live": false,
+      "mode": "bays",
+      "premise": "Sort by vocabulary debt, not by topic. Bay one is understood by a stranger; bay four is understood only by someone who has read this app’s documentation.",
+      "readsWell": "It is the only sheet that treats the NAMES as the problem rather than the arrangement, and on that it is right — no shelf saves a room called “Decumulation”. Sorted this way the jargon debt is a number you can watch go down.",
+      "costs": "Not a navigation structure at all. Nobody browses by reading difficulty. Its honest home is a rename list and a glossary, not a front door — and two rooms already share the name “Enough”, which no amount of shelving fixes.",
+      "groups": [
+        {
+          "name": "Needs nothing explained",
+          "rooms": [
+            "start",
+            "income",
+            "budget",
+            "cash-flow",
+            "goals",
+            "protection",
+            "tax",
+            "giving",
+            "partner",
+            "credit",
+            "calendar",
+            "history",
+            "exercises",
+            "refresh",
+            "data",
+            "get-help",
+            "housing",
+            "car",
+            "big-purchase",
+            "kids",
+            "between-jobs",
+            "career-move",
+            "side-hustle",
+            "self-employed",
+            "student-loans",
+            "debt-payoff",
+            "savings-rate",
+            "statement",
+            "financial-snapshot",
+            "variable-income",
+            "variance",
+            "quick-math",
+            "cant-pay",
+            "walk",
+            "dashboard",
+            "estate",
+            "doors"
+          ],
+          "note": "The title is the thing. A stranger reads it and knows."
+        },
+        {
+          "name": "One word to learn",
+          "rooms": [
+            "fire",
+            "fire-lab",
+            "runway",
+            "rollover",
+            "accounts",
+            "health",
+            "windfall",
+            "ratios",
+            "sleep-at-night",
+            "timeline"
+          ],
+          "note": "Fine once, annoying if nobody ever defines it."
+        },
+        {
+          "name": "A whole idea to hold",
+          "rooms": [
+            "real-hourly-wage",
+            "hassle",
+            "worth",
+            "credential",
+            "reversibility",
+            "week",
+            "values",
+            "enough",
+            "fulfillment",
+            "stacker",
+            "skill-tree",
+            "what-if-life"
+          ],
+          "note": "Not a word — a concept. These need a sentence before the room makes sense."
+        },
+        {
+          "name": "Only this app says it like this",
+          "rooms": [
+            "foo-ladder",
+            "rerank",
+            "dreamline",
+            "decumulation",
+            "buckets",
+            "unlearning"
+          ],
+          "note": "Invented or borrowed vocabulary a stranger cannot decode from the words. Six rooms are effectively unnamed until you have been told what they are.",
+          "warn": true
+        }
+      ]
+    },
+    {
+      "id": "hubs",
+      "code": "S-18",
+      "volume": 3,
+      "name": "Six hubs, nothing more than one hop",
+      "by": "The information-architecture reviewer",
+      "live": false,
+      "mode": "hub",
+      "premise": "The problem is not categories, it is that nothing tells you where you are. Pick six rooms as landmarks; every other room is “the one off X”, and no room is ever two hops from a landmark.",
+      "readsWell": "It gives the app what it most obviously lacks: a sense of place. “The one off Cash Flow” is a location a person can remember and describe, and six landmarks is genuinely holdable. It also survives the flat dependency graph, because hubs are chosen for memorability, not for prerequisites.",
+      "costs": "Six hubs is six arbitrary decisions, and two of them — Dashboard and What Matters — are carrying twelve spokes each, which is a list again. Rooms that honestly belong to two hubs have to be assigned to one and become unfindable from the other.",
+      "groups": [
+        {
+          "name": "Hub · Start Here",
+          "rooms": [
+            "start",
+            "timeline",
+            "partner",
+            "kids",
+            "between-jobs",
+            "variable-income",
+            "self-employed",
+            "side-hustle",
+            "career-move",
+            "credential"
+          ],
+          "note": "Who you are and what is changing. Nine spokes.",
+          "hub": "start"
+        },
+        {
+          "name": "Hub · Cash Flow",
+          "rooms": [
+            "cash-flow",
+            "income",
+            "budget",
+            "variance",
+            "calendar",
+            "rerank",
+            "refresh",
+            "real-hourly-wage",
+            "hassle",
+            "quick-math"
+          ],
+          "note": "The month as it actually happens. Nine spokes.",
+          "hub": "cash-flow"
+        },
+        {
+          "name": "Hub · The Statement",
+          "rooms": [
+            "statement",
+            "accounts",
+            "savings-rate",
+            "runway",
+            "sleep-at-night",
+            "rollover",
+            "tax",
+            "protection",
+            "estate",
+            "decumulation",
+            "windfall"
+          ],
+          "note": "What you hold and what protects it. Ten spokes.",
+          "hub": "statement"
+        },
+        {
+          "name": "Hub · Debt Payoff",
+          "rooms": [
+            "debt-payoff",
+            "credit",
+            "student-loans",
+            "cant-pay",
+            "car",
+            "big-purchase",
+            "housing"
+          ],
+          "note": "What you owe and what you are about to owe. Six spokes.",
+          "hub": "debt-payoff"
+        },
+        {
+          "name": "Hub · The Dashboard",
+          "rooms": [
+            "dashboard",
+            "financial-snapshot",
+            "ratios",
+            "health",
+            "fire",
+            "fire-lab",
+            "foo-ladder",
+            "goals",
+            "what-if-life",
+            "walk",
+            "history",
+            "data",
+            "get-help",
+            "doors"
+          ],
+          "note": "How it is going and where it lands. Twelve spokes.",
+          "hub": "dashboard"
+        },
+        {
+          "name": "Hub · What Matters",
+          "rooms": [
+            "values",
+            "fulfillment",
+            "enough",
+            "week",
+            "buckets",
+            "dreamline",
+            "unlearning",
+            "worth",
+            "reversibility",
+            "giving",
+            "stacker",
+            "skill-tree",
+            "exercises"
+          ],
+          "note": "What any of it is for. Twelve spokes.",
+          "hub": "values"
+        }
+      ]
+    },
+    {
+      "id": "provenance",
+      "code": "S-19",
+      "volume": 3,
+      "name": "By how much of it is actually yours",
+      "by": "The correctness reviewer",
+      "live": false,
+      "mode": "bays",
+      "premise": "Sort by provenance. Where does each room’s number come from — your own figures, an assumption, a reference table, or nobody at all? Measured, where it can be.",
+      "readsWell": "The only arrangement that tells a person which numbers to trust — which for a money app is arguably the most useful thing a shelf could say. It also turns table confidence into something visible instead of buried in an assumptions drawer, and it would make the 17 unverified tables impossible to ignore.",
+      "costs": "It organises by how the app works, not by what a person wants, which is the classic mistake it is otherwise good at catching. Nobody has ever opened an app looking for the “plus one assumption” shelf. Better as a badge on every room than as the shelving itself.",
+      "groups": [
+        {
+          "name": "Your figures, nothing added",
+          "rooms": [
+            "cash-flow",
+            "income",
+            "budget",
+            "variance",
+            "statement",
+            "debt-payoff",
+            "calendar",
+            "savings-rate",
+            "financial-snapshot",
+            "credit",
+            "runway",
+            "accounts"
+          ],
+          "note": "Arithmetic on what you typed. If it is wrong, you typed it wrong."
+        },
+        {
+          "name": "Yours, plus one stated assumption",
+          "rooms": [
+            "fire",
+            "fire-lab",
+            "foo-ladder",
+            "goals",
+            "timeline",
+            "what-if-life",
+            "decumulation",
+            "big-purchase",
+            "housing",
+            "car",
+            "student-loans",
+            "rollover",
+            "kids"
+          ],
+          "note": "A return rate, an inflation figure, a withdrawal rate. The assumption is named in the drawer and can be changed."
+        },
+        {
+          "name": "Yours, plus a reference table",
+          "rooms": [
+            "tax",
+            "protection",
+            "health",
+            "ratios",
+            "dashboard",
+            "real-hourly-wage",
+            "hassle",
+            "quick-math",
+            "credential",
+            "worth",
+            "sleep-at-night",
+            "windfall",
+            "rerank"
+          ],
+          "note": "These lean on data/*.json. Only 4 of the 72 tables are marked sourced; 17 are marked unverified. The rooms here are exactly as good as those files.",
+          "warn": true
+        },
+        {
+          "name": "No figure at all — writing",
+          "rooms": [
+            "cant-pay",
+            "get-help",
+            "unlearning",
+            "reversibility",
+            "values",
+            "week",
+            "buckets",
+            "enough",
+            "fulfillment",
+            "dreamline",
+            "giving",
+            "estate",
+            "partner"
+          ],
+          "note": "Nothing to be wrong about arithmetically. Judge these as advice, not as sums."
+        },
+        {
+          "name": "Nothing yet, and it says so",
+          "rooms": [
+            "between-jobs",
+            "variable-income",
+            "self-employed",
+            "side-hustle",
+            "career-move"
+          ],
+          "note": "Rooms that refuse to compute until you enter something, rather than guessing. The behaviour this whole app is built around."
+        },
+        {
+          "name": "About the app, not about your money",
+          "rooms": [
+            "start",
+            "walk",
+            "refresh",
+            "data",
+            "history",
+            "stacker",
+            "skill-tree",
+            "exercises",
+            "doors"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "three",
+      "code": "S-20",
+      "volume": 3,
+      "name": "Never more than three",
+      "by": "The accessibility reviewer",
+      "live": false,
+      "mode": "tree",
+      "premise": "Budget the choosing, not the content. Someone stressed, tired, on a phone, or using a screen reader can hold about three options — so no screen ever offers more than three, all the way down.",
+      "readsWell": "The only sheet designed for the state people are actually in when money is the problem — frightened, tired, one-handed, or listening rather than looking. Three choices reads aloud in about six seconds. It is also the only plan where the deepest room is four taps and every screen fits above the fold.",
+      "costs": "Four taps to everything, every time, including the room you use weekly — depth traded for width, and power users will hate it. And the ninth bay holds ten rooms, so the rule breaks at the bottom exactly where it was supposed to hold.",
+      "groups": [
+        {
+          "name": "Wrong right now › Money is short",
+          "rooms": [
+            "cant-pay",
+            "runway",
+            "sleep-at-night",
+            "credit",
+            "calendar"
+          ]
+        },
+        {
+          "name": "Wrong right now › Work changed",
+          "rooms": [
+            "between-jobs",
+            "career-move",
+            "self-employed",
+            "side-hustle",
+            "variable-income",
+            "timeline",
+            "rollover"
+          ]
+        },
+        {
+          "name": "Wrong right now › I need a person",
+          "rooms": [
+            "get-help",
+            "partner",
+            "kids",
+            "giving",
+            "estate"
+          ]
+        },
+        {
+          "name": "Regular › The month",
+          "rooms": [
+            "cash-flow",
+            "income",
+            "budget",
+            "variance",
+            "refresh",
+            "dashboard",
+            "financial-snapshot"
+          ]
+        },
+        {
+          "name": "Regular › What I hold",
+          "rooms": [
+            "statement",
+            "accounts",
+            "savings-rate",
+            "tax",
+            "protection",
+            "windfall"
+          ]
+        },
+        {
+          "name": "Regular › What I owe",
+          "rooms": [
+            "debt-payoff",
+            "student-loans",
+            "car",
+            "big-purchase",
+            "housing"
+          ]
+        },
+        {
+          "name": "Bigger picture › Where it ends up",
+          "rooms": [
+            "fire",
+            "fire-lab",
+            "foo-ladder",
+            "goals",
+            "what-if-life",
+            "decumulation",
+            "ratios",
+            "health"
+          ]
+        },
+        {
+          "name": "Bigger picture › What it’s for",
+          "rooms": [
+            "values",
+            "fulfillment",
+            "enough",
+            "week",
+            "buckets",
+            "dreamline",
+            "unlearning",
+            "rerank",
+            "worth",
+            "reversibility"
+          ]
+        },
+        {
+          "name": "Bigger picture › What I can do",
+          "rooms": [
+            "stacker",
+            "skill-tree",
+            "exercises",
+            "credential",
+            "real-hourly-wage",
+            "hassle",
+            "quick-math"
+          ]
+        },
+        {
+          "name": "Always there, never in the way",
+          "rooms": [
+            "start",
+            "walk",
+            "data",
+            "history",
+            "doors"
+          ],
+          "note": "Reachable from every screen without being one of the three."
+        }
+      ]
+    }
+  ]
+}

@@ -140,7 +140,6 @@
       "writes": [
         "otherAssets",
         "confidenceWeightedNetWorth",
-        "futureIncome",
         "netWorth"
       ],
       "requires": [],
@@ -494,6 +493,50 @@
       "order": 26
     },
     {
+      "id": "car",
+      "title": "What A Car Costs",
+      "file": "rooms/car.html",
+      "reads": [
+        "grossAnnualIncome"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 26.2
+    },
+    {
+      "id": "credit",
+      "title": "Your Credit File",
+      "file": "rooms/credit.html",
+      "reads": [
+        "totalDebt"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 26.4
+    },
+    {
+      "id": "cant-pay",
+      "title": "When It Won’t All Get Paid",
+      "file": "rooms/cant-pay.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 26.6
+    },
+    {
+      "id": "rollover",
+      "title": "The Account You Left Behind",
+      "file": "rooms/rollover.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 26.8
+    },
+    {
       "id": "health",
       "title": "The Score",
       "file": "rooms/health.html",
@@ -523,6 +566,20 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 28
+    },
+    {
+      "id": "timeline",
+      "title": "What Comes Next",
+      "file": "rooms/timeline.html",
+      "reads": [
+        "dob"
+      ],
+      "writes": [
+        "futureIncome"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 28.5
     },
     {
       "id": "get-help",
@@ -895,6 +952,26 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 51
+    },
+    {
+      "id": "doors",
+      "title": "Front Doors",
+      "file": "rooms/doors.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 96
+    },
+    {
+      "id": "walk",
+      "title": "The Walk-Through",
+      "file": "rooms/walk.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 97
     },
     {
       "id": "data",

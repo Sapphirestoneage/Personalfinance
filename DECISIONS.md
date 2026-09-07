@@ -7570,6 +7570,939 @@ Stored shape: **unchanged**. This is presentation only.
 
 ---
 
+## D-145 — The language pass: names a stranger already knows
+
+The last of the four-way audit. Nothing here is a calculation; all of it is
+what the app *says*, and every item was a thing a first-time reader would
+stop on.
+
+**A tile was coloured by a number it did not show.** The savings-rate
+instrument displays the *contributed* rate — what actually went somewhere —
+and took its verdict wholesale from the *residual* rate's row, a different
+figure that only exists in the panel. So the headline number for an employed
+household could read 13.8% and be green because 28.5% cleared the floor.
+Each instrument is now judged against its band using **the figure on
+screen**.
+
+**The cockpit metaphor was six-sevenths of every caption.** `THRUST ·
+SAVINGS RATE`, `ALTITUDE · NET WORTH`, `LOAD · DEBT-TO-INCOME` — and at
+390px, with `white-space: nowrap` and an ellipsis, four of the six truncated
+mid-word. "Savings rate" is the phrase someone searches for; "Thrust" is
+not. The caption is the name now, wrapping rather than clipping, the
+metaphor lives on the tile's `title`, and the cockpit idea gets said **once**
+in the section's own line instead of prefixed to all six.
+
+**Three acronyms were never spelled out anywhere a reader could reach.**
+`FI year` → **Financial independence year**. `FOO step` → **Step on the
+money ladder**. The chart's target line read `FIRE $945K` → **Enough to live
+on: $945K**. Each also gained a plain sub-line saying what it means.
+
+**The ring's percentages were shares of a number shown nowhere.** The slices
+read 12% / 61% / 27% of $79,100 — assets plus debt — while the middle said
+$35,900 and the caption said $57,500. Three totals in one 300px block, and
+anyone who checked the arithmetic concluded the app was broken. The caption
+names the denominator and says what to do with the red slice: *"The ring
+splits $79,100 — everything you own ($57,500) plus everything you owe
+($21,600). Take the red slice away from the rest and you get the $35,900 in
+the middle."*
+
+**Four rows read "3 months" under four different names.** Emergency fund
+coverage, liquidity ratio, runway and shadow runway are largely the same
+arithmetic under the name people usually ask for. That is defensible and it
+looked like padding, so the radar's hint now says it out loud.
+
+### Compatibility note
+
+Stored shape: **unchanged**. Nothing written, no owned field moved.
+
+- `shared/instruments.js`: each row's **`verdict` is now computed from its
+  own result** rather than copied from `bandRow.verdict`. A caller reading
+  `row.verdict` gets the same shape and a more accurate answer; `bandRow` is
+  still there for anything that wants the other row. Rows also gain
+  **`blurb`**, a plain sentence, which is additive.
+- Four `INSTRUMENTS` **labels changed text**. Nothing keys off a label — the
+  `id` is the identity — so this is display only.
+- `index.html`: `.inst .cap` no longer clips. A future instrument with a long
+  name wraps instead of truncating; there is no length limit to respect.
+- A future instrument should carry its own `sub:` line. The rule this
+  arrived at: **a tile says the name, the number, and what the number means
+  — never a metaphor in place of the name.**
+
+---
+
+## D-146 — The responsive audit, kept
+
+D-136 fixed the sideways scroll, the small tap targets and the wasted
+monitor by writing an audit script, running it, and throwing it away. It has
+been rebuilt by hand every time the question came up since — which means the
+answer kept being re-derived instead of kept. LATER.md said so. It is
+`test/responsive.js` now: every room at 320 / 390 / 768 / 1080 / 1440,
+checking the page for sideways scroll, controls against the 32px floor, text
+clipped by its own box, and the share of the window actually used.
+
+**It found things on its first run, and one of them was serious.**
+
+`rooms/start.html` — the intake page, the first thing anyone opens —
+**scrolled 142px sideways at 390px**. No element's right edge was past the
+viewport, which is why it had survived this long: the cause was
+`grid-template-columns: 1fr 1fr`, where a track's implicit minimum is its
+content, so a cell holding a `select` with long option text refused to
+shrink and pushed the whole grid past its card. `minmax(0, 1fr)` fixes it.
+`rooms/what-if-life.html` had the same shape, and the confidence badge in
+Start Here was `white-space: nowrap` beside a label that already filled its
+column — 49px of overflow at 320px from a badge four characters long.
+
+**44 controls under the 32px floor, across 18 rooms** — segmented filters at
+17px, a remove button at 20px, preset rows at 17px, an `<a class="pill">`
+at 20px. Fixed at the floor rather than one room at a time.
+
+### The suite caught me breaking something, on the next run
+
+The first attempt at the tap-target floor was
+`button, .pill { display: inline-flex; align-items: center; }`. A flex item
+will not shrink below its content, so a button in a 152px grid track grew to
+178px and pushed What If, Life **26px sideways at 320px** — a room that had
+been clean an hour earlier. Reverted to `min-height` alone, which is all the
+floor ever needed. This is the argument for keeping the script: it is the
+only reason that regression lived for one run instead of a month.
+
+### Two of the failures were the suite being wrong
+
+Worth recording, because a suite that cries wolf gets ignored:
+
+- **The ⓘ at 30px.** D-136 grew it from 20 and stopped at 30 deliberately —
+  it appears 45 times on the ratios page and a 44px circle there is a wall
+  of buttons. Exempted by name.
+- **Checkboxes at 20px.** Also deliberate: the theme gives the *label*
+  around them 32px, and the label is what a finger hits. The suite measures
+  the label where one exists and only complains about a checkbox genuinely
+  on its own.
+
+### The count, honestly
+
+**47 → 2 → 0**, over 300 room-widths.
+
+I wrote "47 → 0" in this entry and in its commit message while the run that
+had just finished said **2**: the skill-tree `Do it →` link, which I fixed
+immediately after and before checking, and a **4px** sideways scroll in the
+FIRE Lab at 1080px, which I had not looked at at all. `.slaf-legend .pct`
+carried `min-width: 3em` in a flex row whose left column already filled the
+space — small, and the page still moved. The column keeps its alignment and
+gives up the floor.
+
+The number is 0 now, verified on a full re-run. It is written this way
+because a decision record that rounds its own result in its favour is worth
+less than no record, and because the next person to read this should know
+that the last 4px took a second pass.
+
+### Compatibility note
+
+Stored shape: **unchanged**; this is layout and tooling only.
+
+- `shared/theme.css` gains one rule — `button, select, .pill, [role="button"]
+  { min-height: 32px }` inside the existing `@media (pointer: coarse)` block,
+  with `.slaf-info` opting back out. Every room gets it; no room needs to ask.
+  `dnd/shared/theme.css` refreshed to stay byte-identical.
+- Two rooms changed `1fr` to `minmax(0, 1fr)`. **A new room using a `1fr`
+  grid should do the same** — it is the difference between a grid that fits
+  a phone and one that does not, and it is invisible until measured.
+- `test/responsive.js` skips cleanly when Playwright is absent, like
+  `test/alignment.js` and `test/forms.js`. It takes `SLAF_ONLY=room-id` to
+  check one room, which is what a room build should run before reporting.
+- The 32px floor lives in one constant, `TAP_FLOOR`. If it ever rises to 44,
+  it rises there and the suite says which rooms owe work.
+
+---
+
+## D-147 — Your Credit File: the room that refuses to show a score
+
+The most-asked consumer money question had no room. `creditUtilization`
+existed as a ratio and nothing said what a score is, what moves it, how long
+a late payment lingers, or what to do about an error. For most people it
+gates the rent, the car and the mortgage rate.
+
+**The rule that defines the room: there is no score on the page, and there
+cannot be.** A score is computed by a bureau from a file this app has never
+seen. Any page offering one from what you typed into it would be making it
+up. This is the same refusal as the radar's "this is a view, not a score"
+(D-143) and the weather panel's three deliberately blank risks — and it is
+said in the first paragraph rather than in a footnote.
+
+What it does instead:
+
+- **The five factors and their published weights**, drawn as bars. Blue for
+  a factor your own figures say something about; grey for one only the
+  report knows. Three of the five are grey and the room says so.
+- **The two it can see** — utilisation and credit mix — read through
+  `engines/ratios.js`, with the household's real figure and its band.
+- **The fastest lever, first.** Utilisation is 30% of the score, re-reports
+  every month, and carries no memory: last month's figure is not held
+  against this month's. That combination is what makes it the thing to move,
+  and the room leads with the one action that moves it — pay before the
+  *statement* date, not the due date.
+- **How long things stay**, from the reporting periods in the law.
+- **What you are entitled to, free** — and the addresses are **named, not
+  linked**. The room sends you nowhere and is paid by nobody; you type the
+  address in and check it against the one written down. That is the
+  precedent Get Help set and it matters more here, where the surrounding
+  industry is full of paid "repair" that sells you what the law gives you.
+
+**Empty is not zero, and it is load-bearing here.** With no card limit
+entered the room says *"This needs the credit limit on at least one card.
+Add it in Debt Payoff — guessing a limit would produce a number people act
+on"*, and then, separately: *"Blank is not zero. Nothing here says you are
+using none of your limit."*
+
+Four judgement calls made while building it, so a later room does not have
+to re-make them:
+
+- **The three grey factors get a sentence each, not a gap.** Why this app
+  cannot see them is page copy in `rooms/credit.html`, not a field in
+  `data/credit_factors.json`: the table says *whether* a factor is visible
+  (`youCanSee`), and the room says what would be needed to see it. Three
+  silent gaps read as a bug; three named absences read as honesty.
+- **The credit-mix figure is a proxy and says so.** Utilisation is the same
+  measurement the models make. `revolvingShare` is not — the models look at
+  whether you hold both kinds of credit at all, and this is how much of what
+  you owe sits on cards. The row says *"It is the shape of the factor, not
+  the factor"* rather than quietly passing one off as the other.
+- **Only money actually owed goes through the lens.** The card balance and
+  the total owed are amounts; a credit *limit* is neither owed nor held, and
+  reading it as "four months of FI" would be nonsense. The limit stays a
+  plain dollar figure in the line under the percentage.
+- **It reads `totalDebt` and never guesses.** The registry row declares
+  `needs: ['totalDebt']` — a reading has to read something, and the itemised
+  debts are where a card's balance and its limit live. The room passes
+  `standalone: false` to `Room.mount`, so unlike every other room it does
+  **not** fill an empty spine with the intake's estimates: a guessed credit
+  utilisation is precisely the invented number this room exists not to print.
+
+### Compatibility note
+
+Stored shape: **unchanged**. The room writes nothing, owns no field in
+`shared/ownership.js`, and never calls `Spine.updateProfile` — verified in a
+browser by diffing the whole profile before and after a visit that opened
+the drawer and cycled every lens. The only key that moved was
+`meta.visitedRooms`, which `Spine.registerRoom()` records for every room in
+the suite; no household figure changed.
+
+New: `data/credit_factors.json` (registered as `TABLES.creditFactors`),
+`rooms/credit.html`, a registry row at order 26.4, kind `read`.
+
+---
+
+## D-148 — When It Won't All Get Paid
+
+Between Jobs assumed job loss specifically. Nothing covered the far more
+common moment: the month is short, and not everything can be paid. No
+triage — which bill to protect, what is negotiable, what has a grace period,
+what damages a credit file and what quietly does not. LATER.md called it the
+highest-stress money moment there is, and the app was silent on it.
+
+**The ordering rule, said once at the top:** the list is not in order of
+size. It is in order of what a missed bill takes away and whether you can get
+it back. *A smaller bill you can never undo comes before a bigger one you
+can.* Losing the roof, the heat, or the car you get to work in costs far
+more than a late fee and a mark on a file, however much larger the fee feels
+today.
+
+Twelve bills across three tiers in `data/bill_triage.json`, each with what it
+costs you, who to call, and the free help that exists. Then the calls worth
+making — led by the one that matters most, **call before you miss it, not
+after**, because almost every hardship programme is easier to get while the
+account is current.
+
+**Three things it refuses to do.**
+
+- **It will not guess at the shortfall.** With nothing entered it says *"Not
+  known yet, and not guessed"*, names the three missing figures with a link
+  to the room that owns each, and then: *"Everything below works without
+  them. The order to pay in, the calls and the free help are the point of
+  this page; the number is not."* A made-up shortfall on this page would be
+  cruel, not merely wrong.
+- **It never tells anyone to borrow.** A card at 29% is cheaper than a
+  payday loan at 400%, and missing a card payment is cheaper than both.
+- **It does not pretend to be advice.** Consequences vary by state and by
+  contract, and the room says so where a reader will see it rather than in
+  small print. Where the data says to call, calling *is* the advice — it
+  does not know their terms.
+
+### Why it is not a core room
+
+I made it `kind: 'core'` and `test/run.js` refused: D-051 caps the core at
+four. The suite was right. A crisis room is not a step on the main path —
+it is a door you need to be able to find, which is a different problem.
+Both new rooms went in at 26.4 and 26.6, **after** the numbered path rather
+than into it, so the walk a household with no debt takes is unchanged. The
+check that caught it now says why.
+
+### Two smaller decisions inside it
+
+**The gap is not a new formula.** `CashFlow.monthlySurplusCents()` is already
+the one place this app asks what is actually free each month, and a shortfall
+is that number with the sign turned round; money-in is
+`CashFlow.netMonthlyIncomeCents()` from the same engine. Nothing here defines
+"left over" a second time (SPEC.md §8). What the room adds is saying *which
+basis* the engine used, because the two are not interchangeable: with a month
+tracked it is every category entered, debt minimums pulled in from Debt Payoff
+as a derived line rather than a second copy; without one it is the
+monthly-essentials estimate, which leaves discretionary spending out and
+therefore **understates** the gap. That is the safe direction to be wrong in on
+this page, and the drawer says so rather than letting a reader assume the
+figure is complete.
+
+**Phone numbers dial. Web addresses stay text.** `hud.gov/findacounselor`,
+`211`, `nfcc.org`, `studentaid.gov`, `healthcare.gov`. Every one of them wants
+to be tappable, and until now none of them was, because **this app contained
+no external link at all** — across every room and the index, zero. The builder
+declined to break that on its own and was right to. The line drawn instead
+splits the two cases, because they are not the same kind of thing:
+
+- **`tel:` links, yes.** `211` is now `<a href="tel:211">` in all three places
+  the table says it (`dialable()` in the room, applied after escaping — digits
+  survive escaping unchanged). A `tel:` URL sends no referrer, loads no page
+  and makes no request: **nothing leaves this browser**, which is the promise
+  the whole suite is built on. What it does do is hand the number straight to
+  the dialler on the device someone is holding, at the moment they have the
+  least patience for copying nine characters by hand. The friction removed is
+  real and the privacy cost is zero, so this is not a trade.
+- **`http(s)` links, still no.** Those would be the first genuine outbound
+  link in the suite — a request to someone else's server, carrying a referrer
+  that says which room of a personal-finance app the person was reading when
+  they left. That is a decision about the whole app, and one for the repo
+  owner rather than for a room. They stay plain, selectable, copyable text,
+  and `.helpline` keeps body colour rather than accent colour for exactly
+  that reason: a string painted like a link that does nothing under a finger
+  is worse than one that never claimed to be one.
+
+The `.dial` rule carries `min-height: 32px; line-height: 32px` so the D-136
+tap floor holds; `SLAF_ONLY=cant-pay node test/responsive.js` passes at all
+five widths. **Still open:** the web-address half. If outbound links are ever
+allowed, this room gets them first and the answer covers every room after it.
+
+### Compatibility note
+
+Stored shape: **unchanged**. Writes nothing, owns nothing, no inputs at all —
+`LIVE-FORM: built once` with nothing to build. The one trace it leaves is the
+visit `Spine.registerRoom()` records, which every room does.
+
+New: `data/bill_triage.json` (registered as `TABLES.billTriage`),
+`rooms/cant-pay.html`, a registry row at order 26.6, kind `explore`.
+`data/debt_rules.json` also gains **`kindNotes`** — how medical, family and
+federal student debt behave unlike the rest — which is data only until a room
+reads it.
+
+---
+
+## D-149 — The Walk-Through: fifty-nine rooms, and a route with an end
+
+The ask was "complete sets of approval and things from start to finish… incredibly
+simple and intuitive to use." The obstacle was arithmetic. This app has **fifty-nine
+rooms**. That is a library. A library is the one thing a person opening this for the
+first time cannot use, because a library has no order and no end, and the honest
+answer to "have I done this?" in a library is always no.
+
+So the walk is a **short route with a finish line**, and everything in it exists to
+protect one of those two words.
+
+### Short: how the list got to eighteen
+
+Filtering by situation is not enough on its own. Run the gate over the whole registry
+and an employed person still has **33 rooms** that ask them for something. Nobody
+finishes 33 rooms.
+
+`data/walk_stages.json` picks instead. A room is on the walk only if it **asks for a
+fact the rest of the app needs**, or **holds a decision worth making once**. Everything
+else stays in the suite, reachable from the map, and is simply not homework. Then the
+gate filters what is left, which is why the same five sets come out different lengths:
+
+| Situation | The five sets | Total |
+|---|---|---|
+| Employed | 5 + 3 + 4 + 3 + 3 | **18** |
+| Self-employed | 7 + 3 + 3 + 3 + 3 | **19** |
+| Between jobs | 6 + 3 + 1 + 3 + 2 | **15** |
+| Student | 5 + 2 + 3 + 3 + 3 | **16** |
+| Retired | 5 + 3 + 2 + 3 + 3 | **16** |
+| Mixed | 7 + 3 + 4 + 3 + 3 | **20** |
+
+Between-jobs gets a set of **one** under "Where the money goes", and that is the right
+answer rather than a bug to pad out: someone with no income has less to route, and a
+set inflated to look substantial would be a lie about their situation. A set with
+*nothing* in it is dropped from the page entirely — an empty set with a tick beside it
+reads as an achievement and it is not one.
+
+`test/run.js` now holds every situation between **10 and 25 steps**. If a future room
+pushes one over 25 the walk has stopped being a walk, and that should fail loudly
+rather than quietly getting longer.
+
+### Finished: the thing this refuses to infer
+
+**A step is done because the person said so.** Not because the room has a number in
+every box. Those are two different facts, and the app already answers the first one —
+`shared/progress.js` has counted filled fields since D-050.
+
+The test that pins this down: run the **demo persona**, which has a figure in nearly
+every box in the app, and **zero steps are done**. A room can be full of figures you
+do not trust yet, and a room can be finished the moment you have decided it changes
+nothing. Only the person knows which.
+
+So the state lives in `meta.walk` and nowhere else, written only by
+`Spine.markWalkStep` / `startWalk` / `resetWalk`, and **no engine may read it** —
+there is a test for that too. A mark is a statement about the person, never about
+whether a number is usable.
+
+**"Not for me" is a real answer.** It counts as dealt with, it moves the bar, and it
+is not held against you anywhere. A checklist that will not let you say "this one is
+not mine" is a checklist nobody finishes. The engine keeps `complete` (nothing open)
+and `allSkipped` separate so the page can stop short of congratulating someone for
+waving a whole set away.
+
+### Not a gate, and the guard that keeps it that way
+
+Nothing is locked behind the walk. Every room is open from the map at any time, in any
+order, walk or no walk. Two tests hold that: nothing in the registry reads `meta.walk`,
+and no engine mentions it. This is a suggested route with a checklist on it, and the
+checklist belongs to the person, not to the software.
+
+It is also **invisible until asked for**. `Guide.hasStarted()` is false for a household
+that never began, and the strip mounts on nothing at all in that state. Someone who
+never wanted a guided path never sees a trace of one.
+
+### Where it lives
+
+- **`shared/guide.js`** — pure. No storage, no DOM, no dates. `stages` · `steps` ·
+  `progress` · `nextStep` · `stepOf` · `isFinished` · `hasStarted`.
+- **`rooms/walk.html`** — the hub. Five sets, each step's state, one button to the
+  first thing still open. `utility: true` at order 97, like Refresh and Your Data, so
+  it stays off the numbered path and out of D-051's four-room core cap.
+- **The strip**, mounted from `Progress.mountHeader` — the one place every room
+  reaches (22 through `Room.mount`, the rest directly), which is the same lever the
+  situation sweep used in D-142. It shows where you are, the two answers a step can
+  have, and the next one.
+- **The dashboard** gets one line, and it is a **strip, not a fifth card**. `test/run.js`
+  asserts the dashboard is exactly four blocks (D-096) and refused the section I first
+  wrote. The guard was right: "one screen, four blocks" stops being true the first time
+  something slips in beside them. This is navigation rather than a reading, so it takes
+  the same slim shape it has inside every room and stays out of the count.
+
+### Two bugs this shape had, both worth recording
+
+**`stepOf` looked a step up in the wrong array.** It called `stages()` and `steps()`
+separately, which builds the step objects twice, so finding a step by identity inside
+the other array found nothing and every step reported a null set. Fixed by deriving
+the flat list from the one `stages()` call. There is a test that would catch it again.
+
+**`Object.assign` put the raw stored shape straight into the household.** `createWalk`
+was in the defaults object, which is the *first* argument — so `f.meta.walk` won the
+spread and landed unnormalised, exactly the route by which a shape from an old export
+gets in. It now runs in a third argument, after the spread. Every other `meta` key is a
+scalar and never had this problem, which is why it had not bitten before.
+
+### Compatibility note
+
+**Stored shape: `meta.walk` is new.**
+
+```
+meta.walk = {
+  startedAt:  ISO string | null,
+  finishedAt: ISO string | null,
+  done:       { roomId: ISO },
+  skipped:    { roomId: ISO }
+}
+```
+
+`Schema.createWalk()` normalises it and is the single definition of the shape. A room
+can be in **at most one** of the two maps — marking done clears any skip and the other
+way round — enforced in the schema (for anything arriving from storage or an import)
+*and* in `Spine.markWalkStep` (for anything this session does), deliberately in both
+places. If a shape ever claims both, **done wins**: it is the stronger statement, and
+the one you had to reach the room to make.
+
+**What a future room needs to know before calling `getProfile()`:** `meta.walk` is
+always present and always normalised, so it is safe to read without a guard. **Do not
+read it to decide anything about a number.** It records what a person has dealt with,
+not what the data contains — treating a done mark as "this figure is trustworthy" is
+exactly the inference this whole entry exists to prevent. Nothing else changed:
+`getProfile()` / `updateProfile()` are untouched, every existing field reads the same,
+and an export written before today loads with an empty walk and no marks.
+
+New files: `shared/guide.js`, `rooms/walk.html`, `data/walk_stages.json` (registered as
+`TABLES.walkStages`). `dnd/shared/schema.js` re-copied byte-identical.
+
+---
+
+## D-150 — The Account You Left Behind: four futures, one trap, one sum
+
+A workplace retirement plan does not follow you out of the building, and the
+app had nothing to say about it. **Where It Goes** covers Roth versus
+Traditional — which wrapper new money goes into — and that is a different
+question from what to do with a wrapper you already have at an employer you
+have already left. Coverage gap, wave two, alongside What A Car Costs.
+
+`rooms/rollover.html`, on the frozen template (D-097), registry `rollover`,
+order 26.8, kind `explore`.
+
+### It does not pick a winner, and that is the room
+
+`data/rollover_options.json` says it in its own `confidenceNote`: the rules
+are real and federal; **which one is best for you is not a rule at all.** It
+turns on the old plan's fees, its fund menu, your state's creditor law, and
+whether you use a backdoor Roth — four things this app cannot see. So the
+room lists the four options in the data's order (by how often each is right,
+not how often it is taken, which is why cashing out is last), gives each its
+`good` and `bad` lists, and stops.
+
+**Two trade-offs are lifted out of the bullets and given their own blocks**,
+because they decide the whole question for the people they touch and would
+be read straight past in a list:
+
+- **The age-55 rule.** Leave a job in or after the calendar year you turn 55
+  and you can draw from *that plan* without the 10% penalty — years before
+  59½. Roll it to an IRA and the door shuts.
+- **The pro-rata rule.** A pre-tax balance in an IRA makes every backdoor
+  Roth conversion a blend of taxed and untaxed money. Rolling into the *new
+  employer's* plan keeps it clean. Irrelevant to anyone who has never done
+  one, and the block says so rather than alarming everybody.
+
+The wording of those two is page copy in `rooms/rollover.html`; the substance
+is the table's. Same split as D-147's three grey credit factors.
+
+### The trap gets the words, not a summary
+
+Asking for a cheque instead of a transfer means the plan **must** withhold
+20%, and you then have 60 days to deposit the **full original amount,
+including the fifth they kept**. The fix is not a concept, it is a sentence
+to say out loud, so the page prints it as the largest line in its own
+bordered block: **"Ask for a direct, trustee-to-trustee rollover, in those
+words."** Split out of the table's `instead` at its first full stop, so the
+phrase is the big line and the reassurance is the small one under it.
+
+### The one place it computes, and whose formula it is
+
+Cashing out is the only part that is arithmetic, and **none of the formulas
+are written here**:
+
+- **Income tax — `engines/tax.js`.** `Tax.estimate` is run **twice**: the
+  year as it stands, and the same year with the withdrawal stacked on top
+  through `otherOrdinaryCents` (D-129's door — ordinary income with no
+  payroll tax on it, which is exactly what a plan distribution is). The
+  difference is the tax on the withdrawal. That is what "at your marginal
+  rate" means once the withdrawal is allowed to climb a bracket, which one
+  multiplication would quietly miss. The baseline goes through
+  `TaxRoom.splitIncome` so wages and self-employed profit are divided
+  exactly as the Tax room divides them — same input, same engine, same
+  answer.
+- **Compounding — `engines/projection.js`.** `futureValueCents` at
+  `assumptions.returnReal` (D-094), a **real** return, so "what it would
+  have been" is in today's money and comparable to the dollars beside it.
+  To `targets.retireAge` when one is set, otherwise to the 65 in
+  `data/fire_variants.json` — labelled as the stand-in it is, with a link to
+  FIRE Number.
+- **The 10% penalty and the 20% withholding** are not formulas, they are
+  rates, and they now live in `data/rollover_options.json` under `rates`
+  rather than inline in the page (SPEC.md §7). **59½ is deliberately not
+  among them**: it is already `data/access_rules.json`
+  `byTaxCharacter.pretax.accessAge`, which the Statement's buckets and
+  Decumulation read, and a second copy is how two numbers drift apart.
+
+**The 20% withheld is shown on its own line as a cash-flow fact, not as a
+cost.** It is a payment on account: it comes off the bill, and the row says
+what the cheque would actually be and what April would then settle. That gap
+— plan around the cheque, be surprised by the rest — is the whole reason the
+line exists.
+
+### The penalty question has three certain answers and one honest "it depends"
+
+This is where the room's second input earns its place:
+
+| Where you are | Answer |
+|---|---|
+| Past 59½ | No penalty, whatever happened at the old job |
+| Under 55 today | Penalty applies — you *cannot* have left in or after the year you turned 55 if you have not turned 55 |
+| 55 to 59½, box answered | The answer decides it |
+| 55 to 59½, box blank | **Unknown.** Not assumed either way |
+
+So the box — *the age you turned in the year you left that job* — is asked of
+everyone but only changes anything in the one band where it is the deciding
+fact, and the room says which band that is. Under 55 the question is
+logically closed, which is why the common case needs no second answer.
+
+### Nothing is written, and nothing is guessed
+
+**`Spine.set` and `Spine.updateProfile` appear nowhere in the file.** A
+balance in an old plan is a hypothesis about an account this app has never
+seen; D-052 says a hypothesis is thrown away. Both boxes live in one closure
+and are gone on reload, and **the page says so in its first card** rather
+than only in a comment — the same placement as D-147's "there is no score
+here". `test/forms.js` asserts it from the other side: after typing $40,000
+the household blob does not contain `4000000` and the undo stack names
+neither box.
+
+**`standalone: false`.** With no income entered the room refuses rather than
+filling in the intake's guess: an invented income is an invented bracket is a
+believable wrong cost of cashing out, and this is a number someone might act
+on that afternoon. It names the missing figure and links to its owner. Blank
+is not zero anywhere — an unanswered income box would put the whole
+withdrawal in the bottom bracket, and the guard says exactly that.
+
+The state is the one place a zero is *added*, and it is flagged rather than
+hidden: with no state schedule applied, the total is labelled federal and
+penalty only and the row reads **"not counted"**, never "$0".
+
+### Verified against
+
+Demo persona — 32, single, North Carolina, $72,000 — cashing out $40,000:
+$8,800 federal (taxable goes 55,900 → 95,900, all inside the 22% bracket),
+$1,700 North Carolina (flat 4.25%), $4,000 penalty; **$14,500, 36.3% of it**,
+keeping $25,500. Withheld $8,000, so a $32,000 cheque and $6,500 still owed
+in April. Left alone: $200,128 at 65, 33 years at 5% real. Re-derived by hand
+and outside the browser, and pinned in `test/forms.js`.
+
+### Compatibility note
+
+Stored shape: **unchanged**. The room owns no field in `shared/ownership.js`,
+writes nothing, and never calls `Spine.updateProfile` — a future room calling
+`getProfile()` / `updateProfile()` needs to know nothing new about it. The
+only trace it leaves is the visit `Spine.registerRoom()` records, as every
+room does.
+
+`data/rollover_options.json` gains a `rates` block
+(`earlyWithdrawalPenalty`, `mandatoryWithholding`, `indirectRolloverDays`,
+`ruleOfFiftyFiveAge`). Additive: nothing read the file before this room.
+
+New: `rooms/rollover.html` and one case in `test/forms.js`.
+
+`LIVE-FORM: built once` — both controls are built from the spec by
+`shared/room.js` on load and only ever have `.value` set. Everything else the
+page fills itself is text and holds nothing focusable, so redrawing it cannot
+interrupt a tap.
+
+---
+
+## D-151 — What A Car Costs: the payment is the least informative number
+
+A car is shopped for on the monthly payment, and the monthly payment is the
+one number in the deal that can be made to say anything. Stretch the term and
+it falls; nothing else about the car changes. `rooms/car.html` exists to put
+the four things it hides in front of it, in the order they cost money.
+
+**What it loses.** The depreciation curve from `data/car_costs.json`, drawn
+with `Charts.area`. Year one is 20% of the price, which makes buying at one
+year old the single biggest lever on the page — bigger than the rate, bigger
+than haggling, bigger than the term. With a price typed in the curve is in
+dollars and a second dashed line shows the mirror of it, what you have lost;
+with no price it is in share of the price, because the shape is true whatever
+you pay and the dollars are not.
+
+**What it costs to run.** The AAA shares as a donut. Fuel is 24% of it — the
+cost everybody shops on, and under a quarter of the total. Insurance is the
+biggest slice at 25% and is decided by the driver, not the car. Shares only,
+never dollars: nothing on the page knows anyone's mileage or premium, so a
+dollar total would be invented.
+
+**Whether the loan fits.** The 20/3/8 test, computed by
+`QuickMath.carRule2038` against the household's real gross income — the same
+call Quick Math and Big Purchase already make, so the rule is calculated in
+one place. On the demo persona's $72,000 the cap is $480 a month and the
+rule's ceiling is about $19,723 of car; a $30,000 car with 20% down over
+three years at 6% passes two legs of three and misses the payment cap by
+$250 a month.
+
+**Lease, new, or a year old.** Three cards, each with what it suits and what
+it costs, straight from the table. **No winner is declared.** The data says
+used "suits almost everyone on the arithmetic" and that is as far as this
+room goes.
+
+### The two curves, and the function that crosses them
+
+`carCosts.underwater` explains the concrete harm of a long term in words. A
+room that only quoted those words would be leaving the actual answer on the
+table, because both curves already exist here: the loan balance from the
+amortisation in `engines/projection.js`, and the value from the depreciation
+table. **`QuickMath.carUnderwater(opts, curve)`** walks the loan month by
+month and reports where they cross — how long you would owe more than the car
+is worth, when it clears, and the worst gap. Hand-checked: a $30,000 car with
+nothing down over seven years at 6% is underwater for 39 months, clears in
+month 40, and peaks at $2,444 more owed than the car is worth in month 12.
+The same car with 20% down over three years is never underwater at all, which
+is the whole argument for both.
+
+It lives in `engines/quickmath.js` rather than on the page because that file
+already owns the car rules, and the curve is **passed in** rather than copied
+into it — reference data stays in `data/` (SPEC.md §7).
+`QuickMath.retainedShareAt(curve, years)` is exported alongside it: straight
+line between the years the table lists, flat past the last, so a room asking
+what a car is worth in month 29 gets one answer.
+
+### The assumption that now has a name
+
+`carRule2038` was checking the rule at 6% whenever nobody gave a rate, with
+the literal `0.06` written twice inside it and stated nowhere. It is now
+`CAR_RULE.assumedRate`, used by both call sites and by `carUnderwater`, and
+the room prints it wherever it is in play. Same for a blank deposit: the
+engine reads it as nothing down — it always did — and the room now says so
+beside every figure that reading affects. Neither is a silent `|| 0`; both
+are a stated reading of a blank box.
+
+### Where the room refuses
+
+**Nothing is written.** The price, the deposit, the rate and the term are
+page state and die with the tab. A car someone is considering is a what-if,
+not a fact about them (D-052), and the room says so on the page rather than
+only in a comment.
+
+**Nothing is guessed** (`standalone: false`). With no income the 20/3/8 test
+does not run: it names the figure it needs and links to Start Here, because
+an invented income quietly turns a fail into a pass. **No term is assumed**
+either, even though the engine would default to 36 months — the term is
+precisely the leg of the test a monthly payment hides, and assuming one here
+would hide it a second time. With no price the page still draws the curve,
+the shares and the rule; it just refuses to put a dollar sign on anyone's
+car.
+
+### Compatibility note
+
+Stored shape: **unchanged**. The room owns no field in `shared/ownership.js`,
+writes nothing, and never calls `Spine.updateProfile` — a future room calling
+`getProfile()` / `updateProfile()` needs to know nothing new. The only trace
+it leaves is the visit `Spine.registerRoom()` records, as every room does.
+
+`engines/quickmath.js` gains two exports (`retainedShareAt`,
+`carUnderwater`) and one key on the existing `CAR_RULE` object
+(`assumedRate: 0.06`). Both are additive: every existing caller of
+`carRule2038` and of `CAR_RULE` behaves exactly as before, and the two 6%
+literals it replaces were already that value.
+
+New: `rooms/car.html`, `data/car_costs.json` (registered as
+`TABLES.carCosts`), a registry row at order 26.2, kind `explore`, and two
+cases in `test/forms.js` — one that types into three boxes and asserts the
+undo stack is still empty afterwards, one that picks the term.
+
+`LIVE-FORM: built once` — the four controls are built from the spec by
+`shared/room.js` on load and only ever have `.value` set. The panels the page
+fills itself hold no focusable control and are written only when their markup
+actually changes, so typing in one box never re-animates a chart in another.
+
+## D-152 — What Comes Next: a life as periods, and the months they add up to
+
+"Make it also that you can add jobs in the future for periods of time —
+ultimately I want to be able to plan an entire life and stack it all and
+calculate income as things get closer."
+
+Every other room in this app answers a question about **now**. Even the ones
+that look ahead — the FI date, the runway, the projection — take today's
+figures and extrapolate one number forward. None of them can hold the shape a
+real working life actually has: a contract that runs six months, a job that
+starts before the contract ends, a benefit that begins on a birthday
+thirty-five years out, and the four months at the front where nothing is
+coming in at all.
+
+### The data was already there. The room was not.
+
+`futureIncome[]` has carried `startsOn`, `startsAtAge`, `endsOn`,
+`monthlyCents` and `confidence` since the Statement was built (D-064). What it
+never had was anywhere that treated a row as a **period** rather than a line
+item — the Statement listed them, summed the monthly figures, and drew nothing.
+So the work was two-thirds a room and one-third two new fields:
+
+- **`kind`** — `job` / `benefit` / `other`, defaulting to `other` so every row
+  written before today keeps exactly the meaning it had. A kind was never
+  asked for, so none is asserted retroactively. It changes nothing
+  arithmetically; it only lets the bars be coloured and grouped.
+- **`endsAtAge`** — the mirror of `startsAtAge`. "Until I turn 70" was
+  expressible as a start and not as an end, which is a strange asymmetry once
+  you notice it.
+
+### `engines/timeline.js`, and the one rule it exists to keep
+
+A month is an integer: `year * 12 + month`. Every comparison in the grid loop
+is then an integer comparison, and no `Date` is constructed inside it —
+dates appear only at the two edges, parsing in and labelling out. That is
+what makes a 60-year grid cheap enough to rebuild on every keystroke.
+
+The rule the file exists to keep is the app's oldest one, and this room is
+where it is easiest to break:
+
+- **A period you have not priced is not a period worth zero.** It contributes
+  nothing to any month, and it is listed by name under "waiting on something"
+  with the reason in words.
+- **A period with no start date is not a period starting today.** Same
+  treatment. Both of those are one line of code away from silently inventing a
+  future, which is exactly what SPEC.md §5 is about.
+- **A month with no live period IS $0** — and that zero is the entire point of
+  the room. It means nothing you have listed pays you then. It is a *computed*
+  zero, not the `|| 0` the rules forbid: the missing inputs never reach the
+  loop, because `placeable` filtered them out first and named them.
+
+**No end is a real answer.** A job with no end date runs to the edge of the
+chart and the row says "onward" rather than drawing a cliff at an edge the
+person never chose.
+
+**A date beats an age.** When a row carries both `startsOn` and `startsAtAge`,
+the date wins. An explicit date is the stronger statement, and silently
+preferring the age would move a period the person had pinned.
+
+Gaps and overlaps come back as **runs, not counts**: "four months from
+September 2026" is a fact you can act on, and "12 months of gap somewhere in
+the next thirty years" is not.
+
+### The hand-derived case, checked both ways
+
+Born March 1994. A contract January–June 2027 at $5,000. A staff job from
+April 2027 at $7,000, open-ended. A pension from age 67.
+
+| Month | Expected | Why |
+|---|---|---|
+| Sep 2026 | **$0** | Nothing has started. The gap is four months long. |
+| Jan 2027 | **$5,000** | The contract alone. |
+| Apr 2027 | **$12,000** | Both run. This is the room's whole reason to exist. |
+| Jul 2027 | **$7,000** | The contract has ended. |
+| Feb 2061 | **$7,000** | Still just the job. |
+| Mar 2061 | **$9,500** | 1994-03 + 804 months. The pension starts the month they turn 67. |
+
+Each of those is a test, and each was worked out on paper before the engine
+was run — which is the only way a month grid gets caught being one month out.
+
+### Compatibility note — an ownership MOVE
+
+**`futureIncome` moved from `statement` to `timeline`.** This is a change to
+who may write a shared field, so it needs saying precisely:
+
+- **Stored shape:** unchanged except for two new keys on each row, `kind`
+  (defaults to `'other'`) and `endsAtAge` (defaults to `null`). Both are
+  additive. An export written before today loads and behaves identically, and
+  `Schema.createFutureIncome` normalises an unknown `kind` back to `'other'`
+  rather than keeping it.
+- **Rooms updated to match:** `rooms/statement.html` lost its editor
+  entirely — no `data-future` inputs, no `upsertFutureIncome`, no LiveForm
+  guard on that container, since it now holds no inputs at all. It still
+  **shows** the list read-only and links to What Comes Next, because the
+  periods are part of the Statement's picture even though they are not its
+  to change. Its roll-up counts only the rows with an amount and says how many
+  it left out, rather than treating a blank as zero.
+- **What a future room needs to know before calling `getProfile()`:** read
+  `futureIncome` freely; **write it only from the Timeline**. `Ownership.field('futureIncome').owner`
+  is the authority and it now returns `'timeline'`. Two editors for one field
+  is precisely what D-017 exists to prevent.
+
+### One test got better because of this
+
+`test/run.js` checked that each of the Statement's four fields linked to an
+anchor that exists — by looking for the anchor **in `statement.html`**. That
+was the same thing as the right check only for as long as all four lived in
+one room. It now resolves each field's owner through the registry and reads
+that room's file, which is what the check meant all along and which will hold
+for any field that moves later.
+
+New files: `engines/timeline.js`, `rooms/timeline.html` (order 28.5, kind
+`about-you`, `needs: ['dob']` — only to turn "from age 67" into a month).
+`dnd/shared/schema.js` re-copied byte-identical.
+
+---
+
+## D-153 — Front Doors: twenty arrangements, one engine, no room lost
+
+Twenty ways of organising the same sixty-five rooms were drawn as a comparison
+set before any was built. Then: "build each and every one of them."
+
+### What "each and every one" means, and what it deliberately does not
+
+It does **not** mean twenty HTML files. Twenty near-identical pages differing
+only in their shelf labels would be the exact thing `SPEC.md` §8 forbids — one
+formula copied nineteen times with small edits — and the first room added
+afterwards would need editing in twenty places, which is to say it would be
+edited in about four.
+
+So the arrangements are **data**, and one room renders any of them:
+
+- **`data/layouts.json`** — twenty layouts, each a list of bays and the rooms
+  in them, with its premise and its stated cost.
+- **`engines/layouts.js`** — pure. Resolves a layout for a household.
+- **`rooms/doors.html`** — one page, five render modes, a picker.
+
+Every layout is genuinely live: you choose one, it persists, the whole set of
+rooms rearranges, and you can switch back. That is each of them built.
+
+### A layout is a view. It may never become a fact.
+
+Which shelf a room sits on is an editorial opinion held in a data file on one
+day by one author. What a room **needs**, who it **applies to**, and what
+anything is **worth** live in the registry, the gate and the engines — and none
+of them may read the layouts table. Three tests hold that line: no other engine
+mentions layouts, `shared/registry.js` does not read `meta.frontDoor`, and
+neither does `shared/ownership.js`. **Changing your front door must never
+change a number.**
+
+A layout also never filters. Rooms are dropped only by `Registry.applies` —
+the same gate the map, the walk and the situation sweep all use (D-142) — which
+is why a bay is nine rooms for one person and four for another. And a bay the
+gate emptied is **dropped, not drawn empty**: an empty shelf with a heading
+says "nothing here for you", when the truth is that none of it was ever yours.
+
+### The bug this design has, and the two things that catch it
+
+On the first browser run, all twenty arrangements reported a missing room. The
+counter was right and the data was wrong: **`doors` itself was missing from all
+twenty**, because it did not exist when the drawing set was drawn. That is the
+permanent hazard of this shape — *a room added to the registry is on no shelf
+in any layout, and silently unreachable in every one of them*.
+
+Two things now catch it, and both were needed:
+
+1. **A test.** Every layout, for every one of the six situations, must reach
+   every room that applies to that person. It fails loudly with the room named.
+2. **A safety net in the engine.** Anything unplaced is appended to a bay
+   called *"Not shelved in this arrangement"*, which says plainly that the
+   layout was written before the room existed. Coverage **still** counts it as
+   missing, so the net stops a room being lost without letting the data quietly
+   stay wrong.
+
+The net alone would have hidden the problem. The test alone would have blocked
+the commit but left a released version reachable-by-luck. Both.
+
+### The five modes
+
+Sixteen layouts are a flat set of bays. Four are not, and flattening them would
+have thrown away the whole point of the sheet:
+
+- **`hub`** — each bay has a landmark room, badged as one.
+- **`tree`** — group names carry `Parent › Child`; the page shows three
+  choices, then three, then rooms. Four taps to anything.
+- **`flow`** — bays are numbered turns; one question on screen at a time.
+- **`search`** — a box and surfaces rather than shelves. `overlay: true` marks
+  a group that deliberately repeats rooms listed elsewhere, so a "right for you
+  now" shortcut does not register as double-filing.
+
+**The search box is the only text input in the room, and it is written into the
+markup rather than generated.** Typing rewrites only the results — which hold
+no inputs — so focus and the soft keyboard survive every keystroke (D-034).
+Verified on a phone-shaped browser with touch: after typing, `document.activeElement`
+is still the box and the text is intact.
+
+### Compatibility note
+
+**Stored shape: `meta.frontDoor` is new.** A layout id string from
+`data/layouts.json`, or `null` for the order the app ships. Additive; an export
+written before today loads with `null` and behaves exactly as before.
+
+**What a future room needs to know before calling `getProfile()`:** read it
+freely to render navigation; **never read it to decide anything else**. It
+records a preference about shelving, not a fact about the household. Treating a
+front-door choice as information about a person is precisely the inference this
+entry exists to prevent.
+
+`data/layouts.json` is registered as `TABLES.layouts`, marked `confidence:
+"unverified"` on purpose — seventeen of the twenty groupings are opinions. The
+three that are not say so in `source`: `path` is the registry's own order,
+`situation` is what the gate already computes, and `depends` is the dependency
+graph read out of `needs` plus `shared/ownership.js`.
+
+New files: `data/layouts.json`, `engines/layouts.js`, `rooms/doors.html`
+(utility, order 96, off the numbered path and out of D-051's core cap).
+`dnd/shared/schema.js` re-copied byte-identical.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

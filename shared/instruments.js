@@ -48,11 +48,11 @@
      dashboard can put the situation's number first. D-096. */
   var INSTRUMENTS = [
     { id: 'netWorth',            cap: 'Altitude', label: 'Net worth',    unit: 'cents',  band: null,  requires: null },
-    { id: 'savingsRate',         cap: 'Thrust',   label: 'Savings rate', unit: 'rate',   band: 'savingsRate', requires: 'savingsRate', lead: 'savingsRate' },
+    { id: 'savingsRate',         cap: 'Thrust',   label: 'Savings rate', sub: 'of everything you earn, going into savings and investments', unit: 'rate',   band: 'savingsRate', requires: 'savingsRate', lead: 'savingsRate' },
     { id: 'emergencyFundMonths', cap: 'Fuel',     label: 'Runway',       unit: 'months', band: 'emergencyFundMonths', requires: null },
-    { id: 'debtToIncome',        cap: 'Load',     label: 'Debt-to-income', unit: 'rate', band: 'debtToIncome', requires: 'debt' },
-    { id: 'fiEtaYear',           cap: 'Distance', label: 'FI year',      unit: 'year',   band: null,  requires: 'savingsRate' },
-    { id: 'fooStep',             cap: 'Heading',  label: 'FOO step',     unit: 'step',   band: null,  requires: null },
+    { id: 'debtToIncome',        cap: 'Load',     label: 'Debt-to-income', sub: 'what share of your pay is already promised to debt', unit: 'rate', band: 'debtToIncome', requires: 'debt' },
+    { id: 'fiEtaYear',           cap: 'Distance', label: 'Financial independence year', sub: 'the year work could become optional', unit: 'year',   band: null,  requires: 'savingsRate' },
+    { id: 'fooStep',             cap: 'Heading',  label: 'Step on the money ladder', sub: 'which of the nine steps your next dollar belongs to', unit: 'step',   band: null,  requires: null },
     /* The situation leads: one each for self-employed, between jobs, a
        student and a retiree. Absent for everyone else. */
     { id: 'ownersPay',           cap: 'Pay',      label: 'Owner\u2019s pay, a month', unit: 'cents', band: null, requires: 'ownWork', lead: 'ownersPay' },
@@ -181,11 +181,22 @@
       if (betweenJobs && !Money.isOk(result) && (result.missing || []).some(function (m) { return /income/i.test(m); })) {
         result = Money.incomplete('Between jobs \u2014 nothing to measure against an income yet.', result.missing);
       }
+      /* The verdict used to be borrowed wholesale from the ratio row named
+         in `band` — so the savings-rate instrument showed the CONTRIBUTED
+         rate (13.8%) and coloured it green from the RESIDUAL rate (28.5%),
+         a number that only appears in the panel. Judge the figure actually
+         on screen against the same thresholds. D-145. */
+      var ownVerdict = null;
+      if (spec.band) {
+        ownVerdict = Money.isOk(result)
+          ? Ratios.verdict(spec.band, result.value, tables && tables.ratioBenchmarks)
+          : (band ? { zone: 'none', band: band.verdict ? band.verdict.band : null } : null);
+      }
       var row = {
-        id: spec.id, cap: spec.cap, label: spec.label, unit: spec.unit,
+        id: spec.id, cap: spec.cap, label: spec.label, blurb: spec.sub || null, unit: spec.unit,
         result: result,
         ok: Money.isOk(result),
-        verdict: band ? band.verdict : null,
+        verdict: ownVerdict,
         bandRow: band,
         /* Does this instrument exist for this household? The dashboard
            shows only the ones that do; a snapshot freezes them all. */

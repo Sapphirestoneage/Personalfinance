@@ -610,6 +610,70 @@ const CASES = [
     }
   },
   {
+    /* Front Doors' search box — the one text input in the room, and the one
+       place a careless rebuild would close the keyboard mid-word. The results
+       under it are rewritten on every keystroke, so if the box itself were
+       ever regenerated this case would catch it. D-034, D-153. */
+    room: '/rooms/doors.html',
+    container: '#search-host',
+    seed: 'demo',
+    prepare: async (page) => {
+      await page.tap('[data-layout="search"]');
+      await page.waitForTimeout(250);
+      /* Stamp the node. If any keystroke rebuilt the box, the stamp goes with
+         the old node and the check below fails. Node IDENTITY is the real
+         D-034 property here — focus cannot be asserted after the fact,
+         because the harness deliberately blurs before expect() runs so that
+         every other room's focusout commit fires (see the blur below). */
+      await page.evaluate(() => { document.getElementById('q').__stamp = 'before-typing'; });
+    },
+    fields: [
+      { sel: '#q', type: 'rent' }
+    ],
+    expect: async (page) => {
+      const r = await page.evaluate(() => ({
+        value: document.getElementById('q').value,
+        stamp: document.getElementById('q').__stamp || '(node was replaced)',
+        hits: document.querySelectorAll('.door').length,
+        all: document.querySelectorAll('#search-host input').length,
+        wrote: (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).meta.frontDoor
+      }));
+      return [
+        ['the typed text survives', r.value, 'rent'],
+        ['the box is the same node it was before typing', r.stamp, 'before-typing'],
+        ['and there is still exactly one of it', r.all, 1],
+        ['it actually filtered', r.hits > 0 && r.hits < 60, true],
+        ['choosing a layout is the only thing written', r.wrote, 'search']
+      ];
+    }
+  },
+  {
+    /* The Timeline's period list. This is the room where a rebuilt container
+       would hurt most: you type a name, then an amount, then a start date,
+       and every write changes the data the list is drawn from — so if the
+       LiveForm guard were not doing its job the keyboard would close between
+       every field. D-034, D-152. */
+    room: '/rooms/timeline.html',
+    container: '#period-list',
+    seed: 'demo',
+    prepare: async (page) => { await page.tap('#btn-add'); await page.waitForTimeout(200); },
+    fields: [
+      { sel: '#period-list .asset:last-child input[data-field="label"]', type: 'The new job', clearFirst: true },
+      { sel: '#period-list .asset:last-child input[data-field="monthlyCents"]', type: '4200' },
+      { sel: '#period-list .asset:last-child input[data-field="startsAtAge"]', type: '40' }
+    ],
+    expect: async (page) => {
+      const f = await page.evaluate(() =>
+        (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).futureIncome.pop());
+      return [
+        ['the name was kept', f.label, 'The new job'],
+        ['the amount was kept as cents', f.monthlyCents, 420000],
+        ['the age was kept', f.startsAtAge, 40],
+        ['and the kind the Add button set', f.kind, 'job']
+      ];
+    }
+  },
+  {
     room: '/rooms/goals.html',
     container: '#goal-list',
     seed: 'demo',
@@ -706,6 +770,39 @@ const CASES = [
         ['the price was kept, in cents', w.costCents, 200000],
         ['the hours were kept', w.hoursSpent, 20],
         ['and nothing invented a rating', w.actualRating, null]
+      ];
+    }
+  },
+  {
+    /* What A Car Costs stores nothing at all — every box is page state,
+       because a car someone is considering is a what-if, not a fact about
+       them (D-052). So the check is that what was typed is still in the box
+       after the room has recomputed around it, and that the household is
+       untouched. */
+    room: '/rooms/car.html',
+    container: '#room-inputs',
+    seed: 'demo',
+    fields: [
+      { sel: '[data-ctl="price"]', type: '30000' },
+      { sel: '[data-ctl="down"]', type: '6000' },
+      { sel: '[data-ctl="rate"]', type: '6' }
+    ],
+    expect: async (page) => {
+      const v = await page.evaluate(() => {
+        const g = k => (document.querySelector(`[data-ctl="${k}"]`) || {}).value;
+        return { price: g('price'), down: g('down'), rate: g('rate'),
+                 undo: SLAF.Spine.historySize().undo,
+                 number: document.getElementById('room-number').innerText,
+                 verdict: document.getElementById('loan-verdict').textContent };
+      });
+      return [
+        ['the price was kept and formatted', v.price, '$30,000'],
+        ['the deposit was kept', v.down, '$6,000'],
+        ['the rate was kept', v.rate, '6'],
+        ['and nothing reached the household', v.undo, 0],
+        /* $30,000 still worth 0.60 of it after three years is $18,000. */
+        ['the loss follows from the price', v.number.indexOf('$12,000') !== -1, true],
+        ['and no term is assumed for you', v.verdict, 'Pick how long the loan runs.']
       ];
     }
   },
@@ -934,6 +1031,37 @@ const CASES = [
         ['eating out was kept', cents.dining, 26000]
       ];
     }
+  },
+  {
+    /* The Account You Left Behind. Two boxes on the template that are
+       deliberately NOT owned by anybody: an old plan's balance and the age
+       you turned in the year you left. Both are what-ifs, so as well as the
+       usual "did the tapped node survive", this asserts the opposite of
+       every other case here — that nothing reached the household (D-052).
+       The pinned $14,500 is the demo persona's cash-out cost: $8,800 federal
+       at 22%, $1,700 North Carolina at 4.25%, $4,000 penalty on $40,000. */
+    room: '/rooms/rollover.html',
+    container: '#room-inputs',
+    seed: 'demo',
+    fields: [
+      { sel: '[data-ctl="balance"]', type: '40000' },
+      { sel: '[data-ctl="leftAtAge"]', type: '56' }
+    ],
+    expect: async (page) => {
+      const r = await page.evaluate(() => ({
+        number: document.getElementById('room-number').innerText,
+        rows: document.getElementById('cost-rows').innerText,
+        blob: localStorage.getItem('slaf.household.v2') || ''
+      }));
+      const undo = (JSON.parse(r.blob).meta.undoStack || []).map(e => e.label).join(' | ');
+      return [
+        ['the cash-out cost is worked out', r.number.indexOf('$14,500') !== -1, true],
+        ['the 20% withheld is shown apart from it', r.rows.indexOf('$8,000') !== -1, true],
+        ['and what the balance would have been, left alone', r.rows.indexOf('left alone') !== -1, true],
+        ['the what-if balance reached no stored field', r.blob.indexOf('4000000') !== -1, false],
+        ['and left no undo entry behind', /old plan|year you left/.test(undo), false]
+      ];
+    }
   }
 ];
 
@@ -1057,6 +1185,23 @@ const SELECT_CASES = [
       canBegin: document.querySelector('#btn-begin').disabled === false
     }),
     also: (stored) => [['answering both unlocks the campaign', stored.canBegin, true]]
+  },
+  {
+    /* What A Car Costs. The term select has no default on purpose (the term
+       is the leg of 20/3/8 a monthly payment hides), so this also checks that
+       choosing one lands and the room notices. */
+    room: '/rooms/car.html',
+    container: '#room-inputs',
+    seed: 'demo',
+    picks: [
+      ['select[data-ctl="term"]', '60']
+    ],
+    read: () => ({
+      term: document.querySelector('select[data-ctl="term"]').value,
+      verdict: document.getElementById('loan-verdict').textContent
+    }),
+    also: (stored) => [['picking a term stops the room asking for one',
+      stored.verdict.indexOf('Pick how long') === -1, true]]
   },
   {
     room: '/rooms/hassle.html',

@@ -1,0 +1,46 @@
+{
+  "id": "bill_triage",
+  "version": "1.0.0",
+  "asOf": "2026-09-06",
+  "source": "The ordering follows the consequence of missing each kind of bill: what you lose, how fast, and whether it can be undone. It is the sequence non-profit credit counsellors and legal-aid guides teach — keep the roof, the heat, the car you work from, and the food, before the debts.",
+  "confidence": "convention",
+  "confidenceNote": "A general ordering, not advice about your situation. Consequences vary by state and by contract — some states bar winter utility shut-offs, some leases have grace periods, some lenders repossess faster than others. Where a step says to call, calling is the advice; this file does not know your terms.",
+  "note": "`tier` 1 is what you protect first. `recoverable` says whether missing it can be undone, which is the whole reason for the ordering: an unrecoverable loss outranks a larger recoverable one.",
+  "tiers": [
+    {
+      "tier": 1,
+      "label": "Keep first — losing these costs far more than they cost",
+      "kinds": [
+        { "id": "housing", "label": "Rent or the mortgage", "recoverable": "hard", "why": "Eviction and foreclosure are slow to start and very hard to reverse, and they follow you into the next tenancy.", "callFirst": "Your landlord or servicer, before you miss it. A payment plan agreed in advance is a different thing from a missed payment explained afterwards.", "helpLine": "A HUD-approved housing counsellor is free — hud.gov/findacounselor." },
+        { "id": "utilitiesHeat", "label": "Power, heat, water", "recoverable": "medium", "why": "Reconnection charges and a deposit often cost more than the arrears. Some states bar shut-offs in winter.", "callFirst": "The utility. Ask for a payment arrangement, a budget-billing plan, and whether you qualify for LIHEAP.", "helpLine": "LIHEAP energy assistance — call 211." },
+        { "id": "food", "label": "Food", "recoverable": "hard", "why": "There is no arrangement to make with hunger, and a food bank is not a debt.", "callFirst": "211, or your state's SNAP office. Using a food bank while you are short is what it is for.", "helpLine": "Dial 211 or feedingamerica.org." },
+        { "id": "childcare", "label": "Childcare you need in order to work", "recoverable": "hard", "why": "Losing the place usually means losing the job, and the waiting list is longer than the arrears.", "callFirst": "The provider. Many hold a place for a partial payment.", "helpLine": null }
+      ]
+    },
+    {
+      "tier": 2,
+      "label": "Protect next — these take something away",
+      "kinds": [
+        { "id": "carLoan", "label": "The car payment, if you drive to work", "recoverable": "medium", "why": "Repossession can be quick and does not need a court in most states. If the car is how you earn, it belongs above the cards.", "callFirst": "The lender. Ask about deferring a payment to the end of the loan — many will do it once.", "helpLine": null },
+        { "id": "insuranceAuto", "label": "Car insurance", "recoverable": "medium", "why": "A lapse is illegal to drive on, and the policy costs more when you restart it.", "callFirst": "The insurer. Ask to change the payment date or raise the deductible rather than lapse.", "helpLine": null },
+        { "id": "insuranceHealth", "label": "Health cover", "recoverable": "medium", "why": "A lapse turns an ordinary illness into the thing that ends the plan. Marketplace plans have a grace period if you get a subsidy.", "callFirst": "The marketplace — a change of income may cut the premium sharply, and that is a change you can report today.", "helpLine": "healthcare.gov, or your state marketplace." },
+        { "id": "childSupport", "label": "Child support", "recoverable": "hard", "why": "Arrears are not dischargeable and enforcement is severe. The order can be modified; the arrears cannot.", "callFirst": "The court that issued it, to ask for a modification. Do it while you are behind, not after.", "helpLine": null }
+      ]
+    },
+    {
+      "tier": 3,
+      "label": "Last — painful, but recoverable",
+      "kinds": [
+        { "id": "creditCards", "label": "Credit cards", "recoverable": "yes", "why": "The consequence is a fee, then a report at 30 days, then collections. Serious, and slower and more reversible than any of the above.", "callFirst": "The issuer, and ask by name for their hardship programme. Most have one and none advertise it.", "helpLine": "A non-profit credit counsellor — nfcc.org." },
+        { "id": "medicalBills", "label": "Medical bills", "recoverable": "yes", "why": "These are the most negotiable debt most people ever hold, they are frequently wrong, and paid medical collections come off your report entirely.", "callFirst": "The hospital's billing office. Ask for an itemised bill, then for charity care or financial assistance — non-profit hospitals are required to have a policy.", "helpLine": "Ask for the financial assistance policy by that name." },
+        { "id": "personalLoans", "label": "Personal and instalment loans", "recoverable": "yes", "why": "Unsecured: there is nothing to take back. It damages the file rather than the household.", "callFirst": "The lender's hardship line.", "helpLine": null },
+        { "id": "federalStudent", "label": "Federal student loans", "recoverable": "yes", "why": "The most flexible debt on this list. An income-driven plan can put the payment at zero, legitimately, and zero counts as paid.", "callFirst": "Your servicer — ask for an income-driven repayment plan, not a forbearance.", "helpLine": "studentaid.gov" }
+      ]
+    }
+  ],
+  "beforeAnythingElse": [
+    { "id": "callFirst", "what": "Call before you miss it, not after", "why": "Almost every hardship programme on this page is easier to get while the account is current. The call is free and the worst answer is no." },
+    { "id": "neverBorrow", "what": "Do not borrow at payday rates to pay a tier-3 bill", "why": "A card at 29% is cheaper than a payday loan at 400%. Missing a card payment is cheaper than both." },
+    { "id": "notAlone", "what": "A non-profit counsellor is free", "why": "nfcc.org member agencies do not charge for the first session and cannot charge for a debt management plan you do not take." }
+  ]
+}

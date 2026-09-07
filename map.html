@@ -9,6 +9,11 @@
 <link rel="stylesheet" href="shared/fonts.css"/>
 <link rel="stylesheet" href="shared/theme.css"/>
 <style>
+  /* One quiet line: the map is a list, and not everyone wants a list. */
+  .alt-doors { margin-top: var(--space-3); font-size: var(--text-sm); }
+  .alt-doors a { color: var(--color-accent-hover); text-decoration: none;
+    display: inline-block; min-height: 32px; line-height: 32px; }
+  .alt-doors a:hover { text-decoration: underline; }
   .hero { max-width: var(--measure); margin: 0 auto; padding: var(--space-7) var(--space-4) var(--space-5); text-align: center; }
   .hero h1 { font-size: var(--text-2xl); }
   .hero p { color: var(--color-text-muted); margin: var(--space-3) 0 0; }
@@ -73,6 +78,10 @@
 <header class="hero">
   <h1>Money rooms</h1>
   <p>Small, sharp tools that share one set of numbers. Fill something in once; it follows you into the next room.</p>
+  <!-- The map is one arrangement of these rooms. Front Doors holds twenty
+       (D-153), so the offer belongs exactly here, where someone is already
+       looking at a long list and may not want a list. -->
+  <p class="alt-doors"><a href="rooms/doors.html">This is one way to arrange these rooms — there are twenty →</a></p>
 </header>
 
 <section class="progress" aria-label="Progress">
@@ -100,6 +109,7 @@
 <script src="shared/registry.js"></script>
 <script src="shared/spine-v2.js"></script>
 <script src="shared/ownership.js"></script>
+<script src="shared/guide.js"></script>
 <script src="shared/progress.js"></script>
 <script src="shared/undo.js"></script>
 <script>

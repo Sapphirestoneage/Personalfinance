@@ -574,6 +574,114 @@
     return sync();
   }
 
+  /* ---- The Walk-Through bar (D-149) --------------------------------------
+     One strip under the header hops, on the rooms that are steps, once the
+     walk has begun. It says where you are, gives you the two answers a step
+     can have — done, or not for me — and then points at the next one.
+
+     It is a container of BUTTONS, never inputs, so repainting it on every
+     Spine change is outside the live-form rule entirely (D-034): there is no
+     text field here to lose focus, and no soft keyboard to close.
+
+     It appears on NOTHING unless the person started the walk. Someone who
+     never wanted a guided path never sees a trace of one. */
+
+  function walkBarHtml(roomId, tables) {
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    var Guide = g && g.SLAF && g.SLAF.Guide;
+    var Spine = g && g.SLAF && g.SLAF.Spine;
+    if (!Guide || !Spine || !tables) return null;
+    var h = Spine.getProfile();
+    if (!Guide.hasStarted(h)) return null;
+    var at = Guide.stepOf(h, tables, roomId);
+    if (!at) return null;
+
+    var p = Guide.progress(h, tables);
+    var hub = (atRoot(roomId) ? 'rooms/' : '') + 'walk.html';
+    var dealt = at.state !== 'open';
+    var out = [];
+
+    out.push('<div class="slaf-walk' + (dealt ? ' is-dealt' : '') + '" id="slaf-walk">');
+    out.push('<div class="slaf-walk-line">');
+    out.push('<span class="slaf-walk-where">Step ' + at.step + ' of ' + at.total
+      + ' <span class="slaf-walk-stage">' + escapeHtml(at.stage ? at.stage.title : '') + '</span></span>');
+    out.push('<a class="slaf-walk-hub" href="' + hub + '">All ' + p.total + ' steps</a>');
+    out.push('</div>');
+
+    /* The bar. role="img" with a label, because a bare div of colour tells a
+       screen reader nothing and the number beside it is the real content. */
+    out.push('<div class="slaf-walk-track" role="img" aria-label="'
+      + (p.done + p.skipped) + ' of ' + p.total + ' steps behind you">'
+      + '<i style="width:' + p.pct + '%"></i></div>');
+
+    out.push('<div class="slaf-walk-acts">');
+    if (!dealt) {
+      out.push('<button type="button" class="slaf-btn slaf-btn--primary" data-walk="done">I’m done with this one</button>');
+      out.push('<button type="button" class="slaf-btn slaf-btn--quiet" data-walk="skipped">Not for me</button>');
+    } else {
+      out.push('<span class="slaf-walk-said">'
+        + (at.state === 'done' ? '✓ You marked this one done.' : 'Set aside — not for you.')
+        + '</span>');
+      out.push('<button type="button" class="slaf-btn slaf-btn--quiet" data-walk="open">Undo</button>');
+    }
+    if (at.next) {
+      out.push('<a class="slaf-btn' + (dealt ? ' slaf-btn--primary' : ' slaf-btn--quiet') + '" href="'
+        + hrefFrom(roomId, at.next.href) + '">Next: ' + escapeHtml(at.next.title) + ' →</a>');
+    } else if (dealt) {
+      out.push('<a class="slaf-btn slaf-btn--primary" href="' + hub + '">That was the last one →</a>');
+    }
+    out.push('</div>');
+    out.push('</div>');
+    return out.join('');
+  }
+
+  /* A room's registry href is written from the site root ("rooms/x.html").
+     From inside rooms/ that needs the "../" stripped off the front. */
+  function hrefFrom(roomId, href) {
+    if (atRoot(roomId)) return href;
+    return href.indexOf('rooms/') === 0 ? href.slice('rooms/'.length) : '../' + href;
+  }
+
+  function mountWalk(roomId, nav) {
+    if (typeof document === 'undefined') return null;
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    var Spine = g && g.SLAF && g.SLAF.Spine;
+    var Reference = g && g.SLAF && g.SLAF.Reference;
+    if (!Spine || !Reference || !nav || !nav.parentNode) return null;
+    var tables = null;
+
+    function sync() {
+      var want = walkBarHtml(roomId, tables);
+      var have = document.getElementById('slaf-walk');
+      if (!want) { if (have) have.parentNode.removeChild(have); return null; }
+      var box = document.createElement('div');
+      box.innerHTML = want;
+      var fresh = box.firstChild;
+      if (have) have.parentNode.replaceChild(fresh, have);
+      else nav.parentNode.insertBefore(fresh, nav.nextSibling);
+      wire(fresh);
+      return fresh;
+    }
+
+    function wire(bar) {
+      var btns = bar.querySelectorAll('button[data-walk]');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].addEventListener('click', function (e) {
+          var want = e.currentTarget.getAttribute('data-walk');
+          Spine.markWalkStep(roomId, want === 'open' ? null : want);
+          /* Spine.onChange repaints; nothing to do here. */
+        });
+      }
+    }
+
+    Spine.onChange(sync);
+    Reference.load([ (g.SLAF.Guide && g.SLAF.Guide.TABLE) || 'walkStages' ],
+      atRoot(roomId) ? 'data/' : '../data/')
+      .then(function (T) { tables = T; sync(); })
+      .catch(function () { /* no table, no bar. The room is unaffected. */ });
+    return null;
+  }
+
   function mountHeader(roomId) {
     if (typeof document === 'undefined') return null;
     var back = document.querySelector('.room-back, .back');
@@ -584,6 +692,7 @@
     back.parentNode.replaceChild(nav, back);
     mountMenu(roomId, nav);
     mountSituation(roomId);
+    mountWalk(roomId, nav);
     return nav;
   }
 
@@ -657,6 +766,8 @@
     mountHeader: mountHeader,
     mountSituation: mountSituation,
     situationNoticeHtml: situationNoticeHtml,
+    mountWalk: mountWalk,
+    walkBarHtml: walkBarHtml,
     mountMenu: mountMenu,
     menuHtml: menuHtml,
     UPKEEP: UPKEEP,

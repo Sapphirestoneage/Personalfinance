@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>The Account You Left Behind · SPARKS</title>
+<meta name="description" content="A workplace retirement plan at an old job has four possible futures. What each one trades away, the paperwork trap in the middle that costs a fifth of the balance, and what cashing it out actually costs."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). Registry: rollover.
+
+  1. READS   Age (from the date of birth Start Here owns), gross income,
+             filing status and state — the four things a tax estimate needs
+             — and the stop age FIRE owns, for the projection. All of them
+             read-only, each linking to the room that owns it.
+  2. WRITES  NOTHING. It owns no field in shared/ownership.js and never
+             calls Spine.updateProfile or Spine.set. The balance someone
+             types here is a what-if about an account this app has never
+             seen, and D-052 says a what-if is thrown away, not stored. It
+             lives in one closure variable and is gone on reload — which is
+             said on the page, not just here.
+  3. CALLS   engines/tax.js (Tax.estimate) for the income tax, through
+             engines/taxroom.js's splitIncome so the baseline is the SAME
+             picture the Tax room draws; engines/projection.js
+             (futureValueCents) for the compounding. Neither formula is
+             re-derived here — SPEC.md §8.
+  4. EMPTY   With an empty spine it renders the four options and the trap in
+             full, because those are the content and they are true for
+             everyone. It does NOT guess (standalone: false): the cost of
+             cashing out depends on a bracket, and a guessed bracket is a
+             believable wrong answer someone might act on. Every figure it
+             cannot reach says which figure it wants and links to its owner.
+             Blank is not zero anywhere: no balance typed is "not entered",
+             never "$0".
+  5. CONFIG  data/rollover_options.json (the four options, the trap, and the
+             10% / 20% / 60-day / age-55 rates), data/access_rules.json (the
+             penalty-free age, 59½ — held in ONE place in the repo),
+             data/federal_brackets_2026.json + data/state_brackets_2026.json
+             + data/se_tax_2026.json through the tax engine, and
+             data/fire_variants.json for the stop age when none is set.
+
+  THE ONE RULE. This room does not pick a winner. The reference data's own
+  confidenceNote says which option is best is not a rule at all — it turns
+  on fees, on a fund menu, on state creditor law and on whether you use a
+  backdoor Roth, none of which this app can see. So it names the trade-offs
+  and computes only the one thing that IS arithmetic: what cashing out costs.
+
+  LIVE-FORM: built once — shared/room.js builds the two inputs from the spec
+  on load and only ever sets .value, never under focus. Everything else on
+  the page is text and holds nothing focusable, so redrawing it cannot
+  interrupt a tap.
+  THEMING: none this pass. A theme is a class on <body> and a palette in
+  shared/theme.css; nothing here names a colour.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+
+  /* The standing statement that nothing typed here is kept. First on the
+     page, because someone about to type a retirement balance into a web
+     page deserves to know that before they type it, not after. */
+  .no-write { font-size: var(--text-sm); line-height: var(--leading-loose); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .no-write strong { color: var(--color-text); }
+
+  /* One option: a name, when it is even available, and two lists. */
+  ul.opts { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ul.opts > li { padding: var(--space-4) 0; border-top: 1px solid var(--color-border); }
+  ul.opts > li:first-child { border-top: none; }
+  .o-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+  .o-name { font-family: var(--font-display); font-size: var(--text-md); }
+  .o-rank { font-size: var(--text-xs); color: var(--color-text-faint); text-transform: uppercase; letter-spacing: .08em; white-space: nowrap; }
+  .o-when { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  .o-cols { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
+  @media (max-width: 560px) { .o-cols { grid-template-columns: 1fr; } }
+  .o-col h4 { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; margin: 0 0 var(--space-2); color: var(--color-text-faint); }
+  .o-col.is-good h4 { color: var(--color-positive); }
+  .o-col.is-bad h4 { color: var(--color-critical-text); }
+  .o-col ul { list-style: none; margin: 0; padding: 0; }
+  .o-col li { font-size: var(--text-sm); line-height: var(--leading-loose); color: var(--color-text-muted); padding: var(--space-1) 0 var(--space-1) var(--space-3); position: relative; }
+  .o-col li::before { content: "·"; position: absolute; left: var(--space-1); color: var(--color-text-faint); }
+
+  /* The two trade-offs people do not know they are making. */
+  .tradeoff { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-3); margin-top: var(--space-3); }
+  .tradeoff h3 { font-family: var(--font-display); font-size: var(--text-md); margin: 0; }
+  .tradeoff p { font-size: var(--text-sm); line-height: var(--leading-loose); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .tradeoff p strong { color: var(--color-text); }
+  .tradeoff .who { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-2); }
+
+  /* The trap, and the sentence that avoids it. */
+  .trap-why { font-size: var(--text-md); line-height: var(--leading-loose); margin: var(--space-2) 0 0; }
+  .trap-say { margin-top: var(--space-4); border: 1px solid var(--color-positive); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); background: rgba(76,195,138,.08); }
+  .trap-say .lbl { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  .trap-say .words { display: block; font-family: var(--font-display); font-size: var(--text-lg, 1.25rem); line-height: 1.25; margin-top: var(--space-2); }
+  .trap-say .after { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+
+  /* The cost breakdown: a name, a figure or a plain reason, a sentence. */
+  ul.rows { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ul.rows > li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  ul.rows > li:first-child { border-top: none; }
+  ul.rows > li.is-total { border-top: 2px solid var(--color-border-strong); }
+  .r-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+  .r-name { font-family: var(--font-display); font-size: var(--text-md); }
+  .r-val { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--color-text); }
+  .r-val.is-good { color: var(--color-positive); }
+  .r-val.is-out { color: var(--color-critical-text); }
+  .r-val.is-blank { color: var(--color-text-faint); }
+  .r-say { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; line-height: var(--leading-loose); }
+  .r-say a { color: var(--color-accent-hover); }
+
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../index.html">← Home</a>
+  <h1>The Account You Left Behind</h1>
+  <p class="room-lede">You left a job and the retirement plan stayed there. There are four things you can do with it, one of them is much worse than the others, and there is a piece of paperwork in the middle that costs a fifth of the balance if you get it wrong.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+  <div class="room-standalone" id="room-standalone" hidden></div>
+
+  <section class="slaf-card" id="no-write">
+    <span class="slaf-eyebrow">Before anything else</span>
+    <p class="no-write">
+      <strong>Nothing you type on this page is saved.</strong>
+      The balance below is a what-if about an account this app has never seen
+      and cannot see. It is used to work out one figure, it stays in this
+      browser tab, and reloading the page forgets it. No other room will ever
+      read it, and your household record is not touched. The figures that
+      <em>are</em> yours — your age, your income, your filing status, your
+      state — are read here and never written, and each one links to the room
+      that owns it at the bottom of the page.
+    </p>
+  </section>
+
+  <section class="slaf-card" id="number">
+    <div class="room-head-row">
+      <span class="slaf-eyebrow">The one thing here that is arithmetic</span>
+      <div id="room-lens"></div>
+    </div>
+    <div class="room-number" id="room-number"></div>
+  </section>
+
+  <section class="slaf-card" id="out-four" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The four things you can do</span>
+    <p class="slaf-hint" id="four-note" style="margin:var(--space-2) 0 var(--space-3)"></p>
+    <div id="tradeoffs"></div>
+    <ul class="opts" id="option-list"></ul>
+    <p class="slaf-reason" id="four-confidence" style="margin-top:var(--space-4)"></p>
+  </section>
+
+  <section class="slaf-card" id="out-trap" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The trap in the middle</span>
+    <h2 style="margin:var(--space-2) 0 0" id="trap-what"></h2>
+    <p class="trap-why" id="trap-why"></p>
+    <div class="trap-say">
+      <span class="lbl">Say this instead — these words, to whoever holds the old plan</span>
+      <span class="words" id="trap-words"></span>
+      <p class="after" id="trap-after"></p>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="out-cost" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What cashing out costs</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      The one place this room computes rather than explains. Type the balance
+      sitting in the old plan; leave it blank and nothing here is guessed at.
+    </p>
+    <div id="room-inputs"></div>
+
+    <ul class="rows" id="cost-rows" style="margin-top:var(--space-4)"></ul>
+
+    <div id="room-chart" style="margin-top:var(--space-4)"></div>
+    <p class="slaf-hint" id="chart-note" style="margin:var(--space-3) 0 0"></p>
+  </section>
+
+  <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Priced in life</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      The money in and out of the cash-out, read as dollars, as hours of your
+      life, or as months of financial independence — the toggle up top. Only
+      amounts that are really money go through it; a balance projected
+      decades out is left as a plain figure above, because reading it as
+      hours worked today would be nonsense.
+    </p>
+    <ul class="room-amounts" id="room-amounts"></ul>
+  </section>
+
+  <details class="room-drawer" id="assumptions">
+    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
+    <div class="room-assumptions-body" id="room-assumptions"></div>
+  </details>
+
+  <p class="room-why" id="room-why" hidden></p>
+  <p class="room-scope" id="room-scope"></p>
+
+  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Read here, editable in the room that owns each one. This room writes
+      none of them.
+    </p>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. The tax figure is an estimate
+    from bracket tables that have not been checked line by line against the
+    text the Internal Revenue Service publishes, it is federal plus a flat or graduated state schedule only, and
+    it models no credits, no phase-outs and no local tax. It is not a return,
+    and a plan administrator is not bound by it. Your numbers stay in this
+    browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/suggest.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/ledger.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../engines/taxroom.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../shared/charts.js"></script>
+<script src="../shared/room.js"></script>
+<script>
+(function () {
+  'use strict';
+  /* No SLAF.Spine handle here on purpose: this room reads the household
+     through the template and writes nothing at all, so it never needs one. */
+  var Money = SLAF.Money, Schema = SLAF.Schema, Ownership = SLAF.Ownership,
+      Tax = SLAF.Tax, TaxRoom = SLAF.TaxRoom, Projection = SLAF.Projection,
+      Charts = SLAF.Charts, Room = SLAF.Room;
+
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function el(id) { return document.getElementById(id); }
+  function startLink(anchor, text) {
+    return '<a href="' + Ownership.linkTo('start', anchor) + '">' + esc(text) + ' →</a>';
+  }
+  /* An incomplete Result names the fields it wanted. Turn the first one this
+     app actually owns into a link to the room that owns it, so a blank figure
+     is always one tap from the place that fills it. */
+  var FIX = {
+    grossAnnualIncome: ['grossAnnualIncome', 'Add what you earn in Start Here'],
+    filingStatus:      ['filingStatus',      'Choose a filing status in Start Here'],
+    state:             ['state',             'Set your state in Start Here'],
+    dob:               ['dob',               'Add your date of birth in Start Here'],
+    retireAge:         ['retireAge',         'Set the age you stop in FIRE Number']
+  };
+  function fixLink(result) {
+    var names = (result && result.missing) || [];
+    for (var i = 0; i < names.length; i++) {
+      var fix = FIX[names[i]];
+      if (!fix) continue;
+      var d = Ownership.describe(fix[0], {}, 'rollover');
+      if (d) return '<a href="' + d.href + '">' + esc(fix[1]) + ' →</a>';
+    }
+    return '';
+  }
+
+  /* ---- The what-if ---------------------------------------------------------
+     D-052: a value is either a fact about you or a hypothesis, and the two
+     get opposite treatment. An old plan's balance is a hypothesis as far as
+     this app is concerned — the app has never seen the account, holds no
+     field for it, and would be inventing a household number by storing one.
+     So both boxes live HERE, in one closure, and are gone on reload. There
+     is no Spine.set anywhere in this file, deliberately. */
+  var whatIf = { balanceCents: null, leftAtAge: null };
+
+  /* ---- The tables ----------------------------------------------------------- */
+  function table(T) { return (T && T.rolloverOptions) || null; }
+  function rates(T) { var t = table(T); return (t && t.rates) || null; }
+  /* 59½ is NOT in this room's own table: it is the pre-tax access age in
+     data/access_rules.json, which the Statement's buckets and the
+     Decumulation room already read. One copy of it, read from there. */
+  function penaltyFreeAge(T) {
+    var r = T && T.accessRules && T.accessRules.byTaxCharacter && T.accessRules.byTaxCharacter.pretax;
+    return r && Money.isEntered(r.accessAge) ? r.accessAge : null;
+  }
+  function ageLabel(a) {
+    if (!Money.isEntered(a)) return Money.EM_DASH;
+    if (a - Math.floor(a) === 0.5) return Math.floor(a) + '½';
+    return String(a);
+  }
+
+  /* ---- Does the 10% penalty apply? -----------------------------------------
+     Three certain answers and one honest "it depends", and the difference
+     is the whole reason the second box exists:
+
+       past 59½                → no penalty, whatever happened at the old job
+       under 55 today          → the age-55 rule CANNOT apply (you cannot have
+                                 left in or after the year you turned 55 if you
+                                 have not turned 55), so the penalty applies
+       55 to 59½, box answered → the answer decides it
+       55 to 59½, box blank    → unknown. Not assumed either way. */
+  function penaltyStatus(h, T) {
+    var free = penaltyFreeAge(T), r = rates(T);
+    if (!Money.isEntered(free) || !r) {
+      return { applies: null, missing: ['accessRules'], why: 'The access-age table did not load, so the penalty question cannot be answered.' };
+    }
+    var age = Schema.primaryAge(h);
+    if (!Money.isEntered(age)) {
+      return { applies: null, missing: ['dob'], needs: 'dob',
+        why: 'The 10% penalty turns on your age and no date of birth is set, so this is not guessed at.' };
+    }
+    if (age >= free) {
+      return { applies: false, certain: true,
+        why: 'You are ' + age + ', past ' + ageLabel(free) + '. There is no early-withdrawal penalty on any of it — income tax is the whole of the bill.' };
+    }
+    if (age < r.ruleOfFiftyFiveAge) {
+      return { applies: true, certain: true,
+        why: 'You are ' + age + ', under ' + ageLabel(free) + '. The age-' + r.ruleOfFiftyFiveAge
+          + ' rule cannot help here: it needs you to have left the job in or after the calendar year you turned '
+          + r.ruleOfFiftyFiveAge + ', and you have not turned ' + r.ruleOfFiftyFiveAge + ' yet.' };
+    }
+    if (!Money.isEntered(whatIf.leftAtAge)) {
+      return { applies: null, missing: ['leftAtAge'], needs: 'leftAtAge',
+        why: 'You are ' + age + ' — between ' + r.ruleOfFiftyFiveAge + ' and ' + ageLabel(free)
+          + ', the one band where the answer depends on when you left. Fill in the age you turned in the year you left that job, above.' };
+    }
+    if (whatIf.leftAtAge >= r.ruleOfFiftyFiveAge) {
+      return { applies: false, certain: true,
+        why: 'You turned ' + whatIf.leftAtAge + ' in the year you left, which is ' + r.ruleOfFiftyFiveAge
+          + ' or over — so the age-' + r.ruleOfFiftyFiveAge + ' rule applies and there is no penalty on a withdrawal from THAT plan. '
+          + 'It would come back if the money were rolled to an IRA first.' };
+    }
+    return { applies: true, certain: true,
+      why: 'You turned ' + whatIf.leftAtAge + ' in the year you left, under ' + r.ruleOfFiftyFiveAge
+        + ', so the age-' + r.ruleOfFiftyFiveAge + ' rule does not reach this plan and the penalty applies until ' + ageLabel(free) + '.' };
+  }
+
+  /* ---- What cashing out costs ----------------------------------------------
+     The tax is NOT re-derived here. engines/tax.js owns the bracket ladder,
+     the state schedule and the payroll rules; this runs its estimate twice —
+     the year as it stands, and the same year with the distribution stacked on
+     top as ordinary income with no payroll tax on it (the `otherOrdinaryCents`
+     door, D-129) — and takes the difference. That is what "at your marginal
+     rate" means once a big withdrawal is allowed to climb into the next
+     bracket, which multiplying by one rate would quietly miss.
+
+     The baseline goes through TaxRoom.splitIncome so wages and self-employed
+     profit are divided exactly as the Tax room divides them. Same input,
+     same engine, same answer. */
+  function estimateWith(h, T, split, extraCents) {
+    return Tax.estimate(h, T, {
+      wagesCents: split.wagesCents,
+      selfEmploymentCents: split.selfEmploymentCents,
+      otherOrdinaryCents: split.unemploymentCents + extraCents
+    });
+  }
+
+  function costOf(h, T) {
+    var bal = whatIf.balanceCents;
+    if (!Money.isEntered(bal)) {
+      return Money.incomplete('Type the balance sitting in the old plan to see what cashing it out would cost.', ['balance']);
+    }
+    if (bal <= 0) {
+      return Money.incomplete('A balance of nothing has nothing to cash out.', ['balance']);
+    }
+    var r = rates(T);
+    if (!r) return Money.incomplete('The rollover table did not load.', ['rolloverOptions']);
+    if (!T.federalBrackets || !T.seTax) return Money.incomplete('The tax tables did not load.', ['federalBrackets', 'seTax']);
+
+    /* The two guards the Tax room makes, made here for the same reason: a
+       withdrawal is taxed on top of the income you already have, so with no
+       income entered there is nothing to stack it on. Blank is not zero —
+       treating an unanswered income box as $0 would put the whole withdrawal
+       in the bottom bracket and understate the bill, which is exactly the
+       believable wrong number this app refuses to print. */
+    var gross = Schema.grossAnnualIncomeCents(h);
+    if (!Money.isOk(gross)) {
+      return Money.incomplete('The tax on a withdrawal depends on the income it lands on top of, and none is entered. A blank income box is not a zero one, so this is not guessed at.', ['grossAnnualIncome']);
+    }
+    if (!h.filingStatus) {
+      return Money.incomplete('The brackets differ by filing status, and none is set.', ['filingStatus']);
+    }
+
+    var split = TaxRoom.splitIncome(h);
+    var base = estimateWith(h, T, split, 0);
+    if (!Money.isOk(base)) return base;
+    var withIt = estimateWith(h, T, split, bal);
+    if (!Money.isOk(withIt)) return withIt;
+
+    var pen = penaltyStatus(h, T);
+    if (pen.applies === null) return Money.incomplete(pen.why, pen.missing || []);
+
+    var federalCents = withIt.federalIncomeTaxCents - base.federalIncomeTaxCents;
+    /* State is IN only when a schedule was actually applied on both runs.
+       When it was not, nothing is added and the room says the state bill is
+       missing from the total — it is not silently treated as zero. */
+    var stateIncluded = !!(base.stateIncluded && withIt.stateIncluded);
+    var stateCents = stateIncluded ? withIt.stateCents - base.stateCents : null;
+    var penaltyCents = pen.applies ? Math.round(bal * r.earlyWithdrawalPenalty) : 0;
+    var withheldCents = Math.round(bal * r.mandatoryWithholding);
+
+    var total = federalCents + (stateIncluded ? stateCents : 0) + penaltyCents;
+    return Money.ok(total, {
+      balanceCents: bal,
+      federalCents: federalCents,
+      stateCents: stateCents,
+      stateIncluded: stateIncluded,
+      stateCode: h.state || null,
+      penaltyCents: penaltyCents,
+      penaltyApplies: pen.applies,
+      penaltyWhy: pen.why,
+      penaltyRate: r.earlyWithdrawalPenalty,
+      withheldCents: withheldCents,
+      withholdingRate: r.mandatoryWithholding,
+      /* The cheque you are handed on the day, and what the return then
+         settles. Positive = still to pay in April; negative = coming back. */
+      chequeCents: bal - withheldCents,
+      settleCents: total - withheldCents,
+      keptCents: bal - total,
+      share: total / bal,
+      marginalRateBefore: base.marginalRate,
+      marginalRateAfter: withIt.marginalRate,
+      taxableBeforeCents: base.taxableIncomeCents,
+      taxableAfterCents: withIt.taxableIncomeCents,
+      confidence: withIt.confidence,
+      notModelled: withIt.notModelled
+    });
+  }
+
+  /* ---- And what it would have been, left alone -----------------------------
+     engines/projection.js owns compounding. A REAL return, so the answer is
+     in today's money rather than a nominal figure that looks bigger than it
+     buys — the same rate the lens and every other projection in the app use
+     (assumptions.returnReal, D-094). */
+  function leftAlone(h, T) {
+    var bal = whatIf.balanceCents;
+    if (!Money.isEntered(bal) || bal <= 0) {
+      return Money.incomplete('Type the balance to see what it becomes if you leave it alone.', ['balance']);
+    }
+    var age = Schema.primaryAge(h);
+    if (!Money.isEntered(age)) {
+      return Money.incomplete('This needs your age, and no date of birth is set.', ['dob']);
+    }
+    var own = h.targets && Money.isEntered(h.targets.retireAge) ? h.targets.retireAge : null;
+    var stand = T.fireVariants && T.fireVariants.defaults ? T.fireVariants.defaults.coastTargetAge : null;
+    var toAge = own !== null ? own : stand;
+    if (!Money.isEntered(toAge)) return Money.incomplete('No age to project to.', ['retireAge']);
+    var years = toAge - age;
+    if (years <= 0) {
+      return Money.incomplete('You are already at or past ' + toAge + ', the age this projects to.', ['retireAge']);
+    }
+    var a = Schema.resolveAssumptions(h);
+    var fv = Projection.futureValueCents({ startCents: bal, annualRate: a.returnReal, years: years });
+    if (!Money.isOk(fv)) return fv;
+    return Money.ok(fv.value, { years: years, toAge: toAge, rate: a.returnReal, fromYourTarget: own !== null, age: age });
+  }
+
+  /* ---- Page copy that is not in the table ----------------------------------
+     data/rollover_options.json carries the trade-offs inside each option's
+     good/bad lists, which is right — they belong to the option. But two of
+     them decide the whole question for the people they touch and would be
+     read straight past in a bullet list, so they are also lifted out here.
+     The wording is this page's; the substance is the table's. */
+  var TRADEOFFS = [
+    { id: 'age55', title: 'If you left at 55 or later, leaving it put keeps a door open',
+      body: 'Leave a job in or after the calendar year you turn <strong>55</strong> and you can draw from <strong>that plan</strong> without the 10% early-withdrawal penalty — years before the usual age of 59½. Roll the same money into an <strong>IRA</strong> — an Individual Retirement Account you open and hold yourself, rather than one an employer runs — and that door shuts: you wait for 59½ like everybody else. It is the one argument for leaving a balance where it is that nobody mentions, and it only matters if you are near it.',
+      who: 'Decides between “leave it where it is” and “roll it to an IRA” for anyone in their late fifties.' },
+    { id: 'proRata', title: 'If you do a backdoor Roth, an IRA is the expensive place to put it',
+      body: 'A “backdoor Roth” is what people do when their income is too high to pay into a Roth account directly: money goes into a traditional IRA and is converted straight over. That only stays clean while you hold <strong>no</strong> pre-tax money in any IRA. Move an old plan into an IRA and the <strong>pro-rata rule</strong> starts treating every conversion as a blend of taxed and untaxed money, and each one produces a tax bill. Rolling into the <strong>new employer’s plan</strong> instead keeps the pre-tax money out of the way and the backdoor clean.',
+      who: 'Decides between “roll it to an IRA” and “roll it into the new employer’s plan” — but only for people who actually do backdoor Roths. If you have never done one, ignore this entirely.' }
+  ];
+
+  /* ---- The room ------------------------------------------------------------ */
+  Room.mount({
+    id: 'rollover',
+    /* All of them: the tax engine reads three tables, the lens reads more,
+       and the page's own content reads two. */
+    tables: null,
+    reads: ['age', 'grossAnnualIncome', 'filingStatus', 'state', 'retireAge'],
+    /* No guesses. Every other room may fill an empty spine with the intake's
+       estimates and say so; a guessed income here would produce a guessed
+       tax bracket and therefore a believable, wrong cost of cashing out —
+       exactly the number someone might act on. Blank, with a reason. */
+    standalone: false,
+
+    number: function (h, T) {
+      var label = 'What cashing it out would cost';
+      var c = costOf(h, T);
+      if (!Money.isOk(c)) {
+        var fix = fixLink(c);
+        return { label: label, value: null, reason: c.reason,
+          sub: (fix ? fix + ' ' : '')
+            + 'Everything else on this page is true whether or not you fill that in — '
+            + 'the four options and the trap are below, in full.' };
+      }
+      var sub = '<strong>' + esc(Money.formatRate(c.share, { decimals: 1 })) + '</strong> of the '
+        + '<strong>' + esc(Money.formatCents(c.balanceCents)) + '</strong> you asked for. '
+        + 'You would keep <strong>' + esc(Money.formatCents(c.keptCents)) + '</strong>'
+        + (c.stateIncluded ? '' : ', before whatever your state takes')
+        + ' — and the balance stops compounding for good.';
+      return {
+        label: label,
+        value: Money.formatCents(c.value),
+        sub: sub,
+        zone: c.penaltyApplies ? 'out' : 'watch',
+        result: c
+      };
+    },
+
+    /* Two bars, one scale: what reaches your hand today against what the
+       same balance is worth at the age you stop, in today's money. This is
+       the whole argument of the room in one picture. */
+    chart: function (h, T) {
+      var c = costOf(h, T), fv = leftAlone(h, T);
+      if (!Money.isOk(c) && !Money.isOk(fv)) {
+        return Charts.bars({ rows: [], empty: 'Type a balance above and this draws what you would keep against what it would have been.' });
+      }
+      var rows = [];
+      rows.push(Money.isOk(c)
+        ? { label: 'Cashed out, in your hand', value: c.keptCents, color: Charts.COLORS.spend,
+            note: 'after tax' + (c.penaltyApplies ? ' and the penalty' : '') + ', today' }
+        : { label: 'Cashed out, in your hand', value: null, empty: 'needs the figures above' });
+      rows.push(Money.isOk(fv)
+        ? { label: 'Left alone, at ' + fv.toAge, value: fv.value, color: Charts.COLORS.growth,
+            note: fv.years + ' years at ' + Money.formatRate(fv.rate, { decimals: 0 }) + ' real, in today’s money' }
+        : { label: 'Left alone, at retirement', value: null, empty: 'needs your date of birth' });
+      return Charts.bars({ rows: rows, format: function (v) { return Money.formatCents(v); } });
+    },
+
+    /* Two boxes. Neither is written anywhere — see whatIf above. */
+    inputs: [
+      { ctl: 'balance', label: 'What is in the old plan', kind: 'money', placeholder: 'e.g. 40,000',
+        hint: 'Not saved, not shared, gone on reload.',
+        read: function () { return whatIf.balanceCents; },
+        write: function (v) { whatIf.balanceCents = Money.isEntered(v) && v >= 0 ? v : null; } },
+      { ctl: 'leftAtAge', label: 'The age you turned in the year you left', kind: 'number', placeholder: 'e.g. 56', affix: 'yrs',
+        hint: 'Only changes the answer if you are 55 or over now — that is the band where the age-55 rule decides the penalty.',
+        read: function () { return whatIf.leftAtAge; },
+        write: function (v) { whatIf.leftAtAge = Money.isEntered(v) && v >= 0 && v <= 120 ? Math.round(v) : null; } }
+    ],
+
+    /* Only amounts that are really money go through the lens. The balance,
+       the bill and what is left are all real dollars moving on a real day.
+       The projected balance is not: pricing a figure forty years out in
+       hours worked at today's wage would read as precision that is not
+       there, so it stays a plain figure in the breakdown and the chart. */
+    amounts: function (h, T) {
+      var c = costOf(h, T);
+      if (!Money.isOk(c)) return [];
+      var rows = [
+        { label: 'The balance you would ask for', cents: c.balanceCents, href: '#out-cost' },
+        { label: 'What cashing out costs', cents: c.value, href: '#out-cost' },
+        { label: 'What you would keep', cents: c.keptCents, href: '#out-cost' }
+      ];
+      return rows;
+    },
+
+    assumptions: function (h, T) {
+      var t = table(T), r = rates(T), acc = T.accessRules, fed = T.federalBrackets, fire = T.fireVariants;
+      var c = costOf(h, T), fv = leftAlone(h, T);
+      var a = Schema.resolveAssumptions(h);
+      var free = penaltyFreeAge(T);
+      var rows = [
+        { label: 'The four options and the trap',
+          value: t.options.length + ' options, ordered by how often each is right',
+          source: 'data/rollover_options.json v' + t.version + ' (' + t.confidence + ') — ' + t.note },
+        { label: 'Which one is best',
+          value: 'not decided here',
+          source: t.confidenceNote },
+        { label: 'The penalty and the withholding',
+          value: Money.formatRate(r.earlyWithdrawalPenalty, { decimals: 0 }) + ' penalty · '
+            + Money.formatRate(r.mandatoryWithholding, { decimals: 0 }) + ' withheld · '
+            + r.indirectRolloverDays + ' days · age ' + r.ruleOfFiftyFiveAge,
+          source: 'data/rollover_options.json v' + t.version + ' rates (' + t.confidence + ')' },
+        { label: 'The penalty-free age',
+          value: ageLabel(free),
+          source: 'data/access_rules.json v' + acc.version + ' (' + acc.confidence + '), byTaxCharacter.pretax.accessAge — the same figure the Statement’s buckets and Decumulation read, held once' },
+        { label: 'The income tax on the distribution',
+          value: Money.isOk(c) ? Money.formatCents(c.federalCents) + ' federal' : 'not worked out',
+          source: 'engines/tax.js, run twice — your year as it stands, and the same year with the withdrawal stacked on top as ordinary income — and the difference taken. That is your marginal rate with room for the withdrawal to climb a bracket, which one multiplication would miss. Brackets from data/federal_brackets_2026.json v'
+            + fed.version + ' (' + fed.confidence + ').' },
+        { label: 'State income tax',
+          value: Money.isOk(c) ? (c.stateIncluded ? Money.formatCents(c.stateCents) + ' (' + c.stateCode + ')' : 'not in the total') : 'not worked out',
+          source: Money.isOk(c) && c.stateIncluded
+            ? 'data/state_brackets_2026.json v' + T.stateBrackets.version + ' (' + T.stateBrackets.confidence + '), applied to federal taxable income as a stand-in for state taxable income. No local tax, no state credits.'
+            : 'No state schedule was applied, so the total above is federal and penalty only. Set your state in Start Here and it joins the figure.' },
+        { label: 'The 20% withheld',
+          value: Money.isOk(c) ? Money.formatCents(c.withheldCents) : 'not worked out',
+          source: 'A payment on account, not an extra cost: it comes off the bill above and the difference settles on your return. Shown on its own line because it is the reason the cheque is smaller than people expect.' },
+        { label: 'Left alone, projected at',
+          value: Money.formatRate(a.returnReal, { decimals: 0 }) + ' real'
+            + (Money.isOk(fv) ? ', to age ' + fv.toAge + ' (' + fv.years + ' years)' : ''),
+          source: 'engines/projection.js, the one compounding loop in the app. assumptions.returnReal (D-094) is a REAL return, so the figure is in today’s money. '
+            + (Money.isOk(fv) && fv.fromYourTarget
+                ? 'The age is the one you set in FIRE Number.'
+                : 'No stop age is set, so this uses ' + ((fire && fire.defaults && fire.defaults.coastTargetAge) || '—')
+                  + ' from data/fire_variants.json v' + (fire ? fire.version : '?') + ' (' + (fire ? fire.confidence : '?') + '). Set your own in FIRE Number and it follows that instead.') },
+        { label: 'What this room stores',
+          value: 'nothing',
+          source: 'It owns no field in shared/ownership.js and never writes the household. The balance is a what-if and D-052 says a what-if is thrown away.' }
+      ];
+      if (Money.isOk(c)) {
+        rows.push({ label: 'What the tax figure does not model',
+          value: c.notModelled.length + ' things, deliberately',
+          source: c.notModelled.join('; ') + '. Also not modelled: the withdrawal’s effect on anything income-tested — a marketplace health subsidy, a student-aid figure, a state credit.' });
+      }
+      return rows;
+    },
+
+    why: function (h, T, situation) {
+      return {
+        employed: 'In a new job with its own plan, the quiet default is the best one available to you: ask the new plan whether it takes an incoming rollover, and if it does, one direct transfer ends the question for good. The old plan will not chase you, which is exactly why these accounts get forgotten.',
+        selfEmployed: 'Working for yourself there is no new employer plan to roll into, so the choice narrows to leaving it, an IRA, or a solo plan of your own. If you use a backdoor Roth — and self-employed people at this income often do — read the pro-rata note above before you move anything into an IRA, because that order is hard to undo.',
+        mixed: 'With a job and your own work you may have both doors open: the employer plan will usually take an incoming rollover, and an IRA always will. That is the one situation where the pro-rata note above actually decides it.',
+        student: 'A balance left in a plan from a job you have already left is easy to lose track of, and small ones do not sit still — under a threshold the plan can force the money out, sometimes into an account you never opened. Whatever else you decide, know where it is.',
+        betweenJobs: 'Between jobs is when this money looks most like the answer, and it is the moment the cost is highest — a distribution lands as income in a year you may still have earned in, on top of a penalty. If a low-income year is genuinely ahead, that is an argument for a Roth conversion later, not for cashing out now. Look at the runway first.',
+        retired: 'Retired, the penalty question is probably behind you and income tax is the whole of the bill — which makes the timing, not the decision, the thing worth thinking about. A large withdrawal in one year can push part of itself into a higher bracket and can move anything else that is income-tested; spreading it does not.'
+      }[situation] || 'A workplace retirement plan does not follow you out of the building. It sits at the old employer until you tell it otherwise, and the four things you can tell it are below.';
+    },
+
+    scope: 'This room cannot see the old plan. It does not know its fees, its fund menu, whether it will force out a small balance, whether the new plan takes incoming rollovers, or how your state protects an IRA from creditors — the plan’s summary description and its administrator answer those. Company stock with net unrealised appreciation, a Roth conversion on the way through, an outstanding plan loan, and an inherited account all follow different rules and none of them are handled here —',
+
+    /* Everything that is content rather than headline. Rebuilt on every
+       paint from the table and the two computations; nothing in these
+       containers is focusable, so redrawing them cannot interrupt a tap.
+       The two live boxes live in #room-inputs, which the template built
+       once and only writes .value into. */
+    after: function (h, T) {
+      var t = table(T);
+      if (!t) return;
+
+      /* -- The four options ------------------------------------------------ */
+      el('four-note').textContent = t.note;
+      el('four-confidence').textContent = t.confidenceNote;
+
+      el('tradeoffs').innerHTML = TRADEOFFS.map(function (x) {
+        return '<div class="tradeoff"><h3>' + esc(x.title) + '</h3>'
+          + '<p>' + x.body + '</p>'
+          + '<p class="who">' + esc(x.who) + '</p></div>';
+      }).join('');
+
+      el('option-list').innerHTML = t.options.map(function (o, i) {
+        function list(items) {
+          return '<ul>' + items.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>';
+        }
+        return '<li><div class="o-head"><span class="o-name">' + esc(o.label) + '</span>'
+          + '<span class="o-rank">' + (i + 1) + ' of ' + t.options.length + '</span></div>'
+          + '<p class="o-when">' + esc(o.allowedWhen) + '</p>'
+          + '<div class="o-cols">'
+          + '<div class="o-col is-good"><h4>What it gives you</h4>' + list(o.good) + '</div>'
+          + '<div class="o-col is-bad"><h4>What it costs you</h4>' + list(o.bad) + '</div>'
+          + '</div></li>';
+      }).join('');
+
+      /* -- The trap -------------------------------------------------------- */
+      el('trap-what').textContent = t.theTrap.what;
+      el('trap-why').textContent = t.theTrap.why;
+      /* The fix, in the words to actually use. Split so the phrase itself is
+         the big line and the reassurance is the small one under it. */
+      var instead = t.theTrap.instead;
+      var cut = instead.indexOf('. ');
+      el('trap-words').textContent = cut === -1 ? instead : instead.slice(0, cut + 1);
+      el('trap-after').textContent = cut === -1 ? '' : instead.slice(cut + 2);
+
+      /* -- What cashing out costs ------------------------------------------ */
+      var c = costOf(h, T), fv = leftAlone(h, T), r = rates(T);
+      var rows = [];
+
+      function row(name, valueHtml, cls, say, extraCls) {
+        return '<li' + (extraCls ? ' class="' + extraCls + '"' : '') + '>'
+          + '<div class="r-head"><span class="r-name">' + esc(name) + '</span>'
+          + '<span class="r-val ' + (cls || '') + '">' + valueHtml + '</span></div>'
+          + (say ? '<p class="r-say">' + say + '</p>' : '') + '</li>';
+      }
+
+      if (!Money.isOk(c)) {
+        rows.push(row('The cost of cashing out', esc(Money.EM_DASH), 'is-blank',
+          esc(c.reason) + ' ' + fixLink(c)));
+      } else {
+        rows.push(row('Federal income tax', esc(Money.formatCents(c.federalCents)), 'is-out',
+          'The whole balance lands as ordinary income on top of what you already earn. At your figures that is '
+          + esc(Money.formatRate(c.federalCents / c.balanceCents, { decimals: 1 })) + ' of it'
+          + (c.marginalRateAfter !== c.marginalRateBefore
+              ? ' — the withdrawal pushes you from the ' + esc(Money.formatRate(c.marginalRateBefore, { decimals: 0 }))
+                + ' bracket into the ' + esc(Money.formatRate(c.marginalRateAfter, { decimals: 0 })) + ' one, so part of it is taxed higher than the rest'
+              : ', your ' + esc(Money.formatRate(c.marginalRateAfter, { decimals: 0 })) + ' bracket, which it stays inside')
+          + '.'));
+
+        rows.push(c.stateIncluded
+          ? row('State income tax (' + c.stateCode + ')', esc(Money.formatCents(c.stateCents)), 'is-out',
+              'Your state schedule, applied to the same taxable income. Local taxes and state credits are not in it.')
+          : row('State income tax', 'not counted', 'is-blank',
+              'No state is set, so the total below is federal and penalty only — it is not a claim that your state takes nothing. '
+              + startLink('q-about', 'Set your state in Start Here')));
+
+        rows.push(c.penaltyApplies
+          ? row('The ' + esc(Money.formatRate(c.penaltyRate, { decimals: 0 })) + ' early-withdrawal penalty',
+              esc(Money.formatCents(c.penaltyCents)), 'is-out', esc(c.penaltyWhy))
+          : row('The ' + esc(Money.formatRate(c.penaltyRate, { decimals: 0 })) + ' early-withdrawal penalty',
+              'does not apply', 'is-good', esc(c.penaltyWhy)));
+
+        rows.push(row('What cashing out costs', esc(Money.formatCents(c.value)), 'is-out',
+          'Tax plus penalty — ' + esc(Money.formatRate(c.share, { decimals: 1 })) + ' of the balance. '
+          + 'You would keep <strong>' + esc(Money.formatCents(c.keptCents)) + '</strong>.', 'is-total'));
+
+        rows.push(row('Withheld before you see it — ' + esc(Money.formatRate(c.withholdingRate, { decimals: 0 })),
+          esc(Money.formatCents(c.withheldCents)), '',
+          '<strong>Not an extra cost.</strong> It is a down-payment on the bill above, held back by the plan. '
+          + 'The cheque would be ' + esc(Money.formatCents(c.chequeCents)) + ', and at tax time you would '
+          + (c.settleCents > 0
+              ? 'owe another <strong>' + esc(Money.formatCents(c.settleCents)) + '</strong>'
+              : c.settleCents < 0
+                ? 'get <strong>' + esc(Money.formatCents(-c.settleCents)) + '</strong> back'
+                : 'be square')
+          + '. People plan around the cheque and are surprised in April by the rest.'));
+      }
+
+      rows.push(Money.isOk(fv)
+        ? row('What it would have been at ' + fv.toAge + ', left alone', esc(Money.formatCents(fv.value)), 'is-good',
+            'The same balance, untouched, for ' + fv.years + ' years at a '
+            + esc(Money.formatRate(fv.rate, { decimals: 0 })) + ' real return — in today’s money, so it is comparable to the figures above. '
+            + 'It is still pre-tax: you would owe income tax as you drew it, and none of this is a promise about the market. '
+            + 'This is the cost nobody feels on the day.')
+        : row('What it would have been at retirement, left alone', esc(Money.EM_DASH), 'is-blank',
+            esc(fv.reason) + ' ' + fixLink(fv)));
+
+      el('cost-rows').innerHTML = rows.join('');
+
+      el('chart-note').textContent = Money.isOk(c) && Money.isOk(fv)
+        ? 'Both bars are today’s money. The left one is spendable now; the right one is pre-tax and decades away, and no return is guaranteed.'
+        : 'The picture fills in once there is a balance to draw and an age to draw it to.';
+    }
+  });
+})();
+</script>
+</body>
+</html>
