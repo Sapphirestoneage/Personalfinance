@@ -819,6 +819,28 @@
     ]
   });
 
+  /* Front Doors — the same rooms, arranged twenty different ways (D-153).
+     A utility like Refresh and Your Data: it is a way of MOVING through the
+     rooms, not a room with a number in it, so it stays off the numbered path
+     and out of D-051's four-room core cap. */
+  ROOMS.push({
+    id: 'doors',
+    kind: 'core',
+    utility: true,
+    needs: [],
+    order: 96,
+    title: 'Front Doors',
+    blurb: 'Twenty ways into the same rooms — by the question you came with, by what could go wrong, by how long it takes, by how often you would open it. The rooms never change; only the shelves.',
+    href: 'rooms/doors.html',
+    tier: 0,
+    tags: ['income', 'cashflow', 'debt'],
+    subsections: [
+      { id: 'out-pick', label: 'Choose an arrangement' },
+      { id: 'out-door', label: 'The rooms' },
+      { id: 'out-why',  label: 'Why this one' }
+    ]
+  });
+
   /* The Walk-Through — the short, finishable route through the suite
      (D-149). `utility: true` for the same reason Refresh is: it is a way of
      moving through the rooms, not a room with a number in it, so it stays

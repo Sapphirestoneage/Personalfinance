@@ -580,6 +580,33 @@ const CASES = [
     }
   },
   {
+    /* Front Doors' search box — the one text input in the room, and the one
+       place a careless rebuild would close the keyboard mid-word. The results
+       under it are rewritten on every keystroke, so if the box itself were
+       ever regenerated this case would catch it. D-034, D-153. */
+    room: '/rooms/doors.html',
+    container: '#search-host',
+    seed: 'demo',
+    prepare: async (page) => { await page.tap('[data-layout="search"]'); await page.waitForTimeout(250); },
+    fields: [
+      { sel: '#q', type: 'rent' }
+    ],
+    expect: async (page) => {
+      const r = await page.evaluate(() => ({
+        value: document.getElementById('q').value,
+        focused: document.activeElement && document.activeElement.id,
+        hits: document.querySelectorAll('.door').length,
+        wrote: (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).meta.frontDoor
+      }));
+      return [
+        ['the typed text survives', r.value, 'rent'],
+        ['the box still has focus after every keystroke', r.focused, 'q'],
+        ['and it actually filtered', r.hits > 0 && r.hits < 60, true],
+        ['choosing a layout is the only thing written', r.wrote, 'search']
+      ];
+    }
+  },
+  {
     /* The Timeline's period list. This is the room where a rebuilt container
        would hurt most: you type a name, then an amount, then a start date,
        and every write changes the data the list is drawn from — so if the

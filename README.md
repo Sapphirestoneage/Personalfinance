@@ -108,6 +108,7 @@ engines/            Shared calculation engines — one function per concept
                       debt is worth keeping, and the hold-back that orders one last (D-132)
   fire.js             one calculateFIRE(), six variants
   projection.js       compound growth with contributions — the only such loop
+  layouts.js          the same rooms shelved twenty different ways (D-153) — a VIEW, never a fact: no other engine may read it, and changing your front door never changes a number
   timeline.js         future income as dated PERIODS on a month grid: what stacks, where the gaps are, what a given month adds up to (D-152). Nothing unpriced or undated ever reaches the grid
   hourly.js           real hourly wage, and prices in hours of life
   quickmath.js        HYSA switch, cost per use, 20/3/8, rule of five, $30k/$90k

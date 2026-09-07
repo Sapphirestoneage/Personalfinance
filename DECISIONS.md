@@ -8400,6 +8400,109 @@ New files: `engines/timeline.js`, `rooms/timeline.html` (order 28.5, kind
 
 ---
 
+## D-153 — Front Doors: twenty arrangements, one engine, no room lost
+
+Twenty ways of organising the same sixty-five rooms were drawn as a comparison
+set before any was built. Then: "build each and every one of them."
+
+### What "each and every one" means, and what it deliberately does not
+
+It does **not** mean twenty HTML files. Twenty near-identical pages differing
+only in their shelf labels would be the exact thing `SPEC.md` §8 forbids — one
+formula copied nineteen times with small edits — and the first room added
+afterwards would need editing in twenty places, which is to say it would be
+edited in about four.
+
+So the arrangements are **data**, and one room renders any of them:
+
+- **`data/layouts.json`** — twenty layouts, each a list of bays and the rooms
+  in them, with its premise and its stated cost.
+- **`engines/layouts.js`** — pure. Resolves a layout for a household.
+- **`rooms/doors.html`** — one page, five render modes, a picker.
+
+Every layout is genuinely live: you choose one, it persists, the whole set of
+rooms rearranges, and you can switch back. That is each of them built.
+
+### A layout is a view. It may never become a fact.
+
+Which shelf a room sits on is an editorial opinion held in a data file on one
+day by one author. What a room **needs**, who it **applies to**, and what
+anything is **worth** live in the registry, the gate and the engines — and none
+of them may read the layouts table. Three tests hold that line: no other engine
+mentions layouts, `shared/registry.js` does not read `meta.frontDoor`, and
+neither does `shared/ownership.js`. **Changing your front door must never
+change a number.**
+
+A layout also never filters. Rooms are dropped only by `Registry.applies` —
+the same gate the map, the walk and the situation sweep all use (D-142) — which
+is why a bay is nine rooms for one person and four for another. And a bay the
+gate emptied is **dropped, not drawn empty**: an empty shelf with a heading
+says "nothing here for you", when the truth is that none of it was ever yours.
+
+### The bug this design has, and the two things that catch it
+
+On the first browser run, all twenty arrangements reported a missing room. The
+counter was right and the data was wrong: **`doors` itself was missing from all
+twenty**, because it did not exist when the drawing set was drawn. That is the
+permanent hazard of this shape — *a room added to the registry is on no shelf
+in any layout, and silently unreachable in every one of them*.
+
+Two things now catch it, and both were needed:
+
+1. **A test.** Every layout, for every one of the six situations, must reach
+   every room that applies to that person. It fails loudly with the room named.
+2. **A safety net in the engine.** Anything unplaced is appended to a bay
+   called *"Not shelved in this arrangement"*, which says plainly that the
+   layout was written before the room existed. Coverage **still** counts it as
+   missing, so the net stops a room being lost without letting the data quietly
+   stay wrong.
+
+The net alone would have hidden the problem. The test alone would have blocked
+the commit but left a released version reachable-by-luck. Both.
+
+### The five modes
+
+Sixteen layouts are a flat set of bays. Four are not, and flattening them would
+have thrown away the whole point of the sheet:
+
+- **`hub`** — each bay has a landmark room, badged as one.
+- **`tree`** — group names carry `Parent › Child`; the page shows three
+  choices, then three, then rooms. Four taps to anything.
+- **`flow`** — bays are numbered turns; one question on screen at a time.
+- **`search`** — a box and surfaces rather than shelves. `overlay: true` marks
+  a group that deliberately repeats rooms listed elsewhere, so a "right for you
+  now" shortcut does not register as double-filing.
+
+**The search box is the only text input in the room, and it is written into the
+markup rather than generated.** Typing rewrites only the results — which hold
+no inputs — so focus and the soft keyboard survive every keystroke (D-034).
+Verified on a phone-shaped browser with touch: after typing, `document.activeElement`
+is still the box and the text is intact.
+
+### Compatibility note
+
+**Stored shape: `meta.frontDoor` is new.** A layout id string from
+`data/layouts.json`, or `null` for the order the app ships. Additive; an export
+written before today loads with `null` and behaves exactly as before.
+
+**What a future room needs to know before calling `getProfile()`:** read it
+freely to render navigation; **never read it to decide anything else**. It
+records a preference about shelving, not a fact about the household. Treating a
+front-door choice as information about a person is precisely the inference this
+entry exists to prevent.
+
+`data/layouts.json` is registered as `TABLES.layouts`, marked `confidence:
+"unverified"` on purpose — seventeen of the twenty groupings are opinions. The
+three that are not say so in `source`: `path` is the registry's own order,
+`situation` is what the gate already computes, and `depends` is the dependency
+graph read out of `needs` plus `shared/ownership.js`.
+
+New files: `data/layouts.json`, `engines/layouts.js`, `rooms/doors.html`
+(utility, order 96, off the numbered path and out of D-051's core cap).
+`dnd/shared/schema.js` re-copied byte-identical.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

@@ -59,6 +59,7 @@
     healthScore: 'health_score.json',
     staleness: 'staleness.json',
     walkStages: 'walk_stages.json',
+    layouts: 'layouts.json',
     states: 'states.json',
     matchDefaults: 'match_defaults.json',
     federalBrackets: 'federal_brackets_2026.json',

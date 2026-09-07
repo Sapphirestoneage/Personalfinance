@@ -1018,6 +1018,23 @@
     return h.meta.walk;
   }
 
+  /**
+   * Choose which arrangement of the rooms to browse by (D-153). A layout id
+   * from data/layouts.json, or null to go back to the order the app ships.
+   * This is the only write the front-door room makes, and it touches no
+   * figure — it is a preference about shelves.
+   */
+  function setFrontDoor(id) {
+    var h = load();
+    h.meta = h.meta || {};
+    var next = (typeof id === 'string' && id) ? id : null;
+    if (h.meta.frontDoor === next) return next;
+    h.meta.frontDoor = next;
+    pendingLabel = next ? 'Changed how the rooms are arranged' : 'Went back to the usual order';
+    save(); notify();
+    return next;
+  }
+
   function removeExpenseEntry(id) {
     var h = load();
     var list = h.expenses.entries || [];
@@ -1503,6 +1520,7 @@
     setSkillDone: setSkillDone,
     markExercise: markExercise,
     setHas401k: setHas401k,
+    setFrontDoor: setFrontDoor,
     startWalk: startWalk,
     markWalkStep: markWalkStep,
     setWalkFinished: setWalkFinished,

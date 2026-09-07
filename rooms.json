@@ -954,6 +954,16 @@
       "order": 51
     },
     {
+      "id": "doors",
+      "title": "Front Doors",
+      "file": "rooms/doors.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 96
+    },
+    {
       "id": "walk",
       "title": "The Walk-Through",
       "file": "rooms/walk.html",

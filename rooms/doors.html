@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Front Doors · SPARKS</title>
+<meta name="description" content="Twenty ways into the same rooms. Pick the one that suits how you think — the rooms never change, only the shelves."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. FRONT DOORS. DECISIONS.md D-153.
+
+  1. READS   data/layouts.json (TABLES.layouts) for the twenty arrangements,
+             shared/registry.js for every room's real title and blurb, and
+             shared/gate.js — through Registry.applies — to drop the rooms
+             that are not for this situation (D-142). It reads no figure of
+             any kind and computes nothing about money.
+  2. WRITES  meta.frontDoor ONLY, through Spine.setFrontDoor: which
+             arrangement you chose. Not one household number. Nothing
+             downstream may read it to decide anything but shelving.
+  3. SHOWS   one arrangement at a time, rendered in its own mode, with every
+             applicable room reachable — and a coverage line that is computed,
+             so a layout that loses a room says so instead of hiding it.
+  4. FEEDS   nothing. It is a way in, not a source.
+  5. DEMO    none. It shows the real room list whatever is entered.
+
+  A LAYOUT IS A VIEW, NEVER A FACT. Which shelf a room sits on is an
+  editorial opinion held in a data file. What a room NEEDS, who it applies
+  to, and what it is worth all live in the registry, the gate and the
+  engines, and none of them may read this table. Changing your front door
+  must never change a number.
+
+  EMPTY IS NOT ZERO, EVEN HERE: a bay whose every room the gate removed is
+  not drawn as an empty shelf. An empty shelf with a heading says "nothing
+  here for you"; the truth is that none of it was ever yours.
+
+  LIVE-FORM: built once — the only text input on the page is the search box
+  in `search` mode. It is written into the markup below, never generated, and
+  never replaced: switching modes hides its container rather than rebuilding
+  it, and typing only ever rewrites the RESULTS, which hold no inputs. That
+  is what stops the soft keyboard closing mid-word on a phone (D-034).
+
+  THEMING: none this pass. Nothing here names a colour outside the tokens.
+-->
+<style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-3); }
+  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  section[id] { scroll-margin-top: var(--space-4); }
+
+  /* ---- The picker ------------------------------------------------------- */
+  .picker { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+  .pick {
+    font: inherit; font-size: var(--text-sm); color: var(--color-text);
+    background: var(--color-surface-raised); border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-pill); padding: var(--space-2) var(--space-3);
+    cursor: pointer; min-height: 32px; text-align: left;
+  }
+  .pick:hover { border-color: var(--color-accent); }
+  .pick[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent);
+    color: var(--color-accent-contrast); font-weight: 600; }
+  .pick .code { font-size: var(--text-xs); opacity: .7; margin-right: 4px; }
+  .vol-h { flex-basis: 100%; font-size: var(--text-xs); text-transform: uppercase;
+    letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); margin-top: var(--space-2); }
+
+  /* ---- The arrangement -------------------------------------------------- */
+  .lay-head h2 { font-family: var(--font-display); font-size: var(--text-2xl); margin: 0; }
+  .lay-by { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow);
+    color: var(--color-accent-hover); margin: var(--space-1) 0 0; }
+  .lay-premise { color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-loose); }
+  .lay-meta { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); margin-top: var(--space-3);
+    align-items: center; font-size: var(--text-xs); color: var(--color-text-faint); }
+  .lay-meta .ok { color: var(--color-positive); }
+  .lay-meta .bad { color: var(--color-critical-text); }
+
+  .bay { border: 1px solid var(--color-border); border-radius: var(--radius-md);
+    margin-top: var(--space-3); overflow: hidden; }
+  .bay.is-warn { border-color: var(--color-caution); }
+  .bay-h { padding: var(--space-3); border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface-raised); }
+  .bay-h .nm { font-family: var(--font-display); font-weight: 600; font-size: var(--text-base); }
+  .bay-h .ct { font-size: var(--text-xs); color: var(--color-text-faint); margin-left: var(--space-2); }
+  .bay-h .nt { display: block; font-size: var(--text-sm); color: var(--color-text-muted);
+    margin-top: var(--space-1); line-height: var(--leading-loose); }
+  .bay-h .dropped { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1); }
+
+  .doors { list-style: none; margin: 0; padding: 0; }
+  .doors li { border-top: 1px solid var(--color-border); }
+  .doors li:first-child { border-top: 0; }
+  .door { display: block; padding: var(--space-3); text-decoration: none; color: var(--color-text); }
+  .door:hover { background: var(--color-surface-raised); }
+  .door .t { font-weight: 600; font-size: var(--text-sm); }
+  .door .t .hub { font-size: var(--text-xs); font-weight: normal; color: var(--color-accent-hover);
+    border: 1px solid currentColor; border-radius: var(--radius-pill); padding: 0 5px; margin-left: var(--space-2); }
+  .door .b { display: block; font-size: var(--text-xs); color: var(--color-text-muted);
+    margin-top: 2px; line-height: var(--leading-loose); }
+
+  /* ---- Tree mode -------------------------------------------------------- */
+  .three { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
+  .big-choice { font: inherit; text-align: left; cursor: pointer; color: var(--color-text);
+    background: var(--color-surface-raised); border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md); padding: var(--space-4); min-height: 64px; }
+  .big-choice:hover { border-color: var(--color-accent); }
+  .big-choice .t { font-family: var(--font-display); font-size: var(--text-lg); font-weight: 600; }
+  .big-choice .s { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-top: 2px; }
+  .crumb { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center;
+    margin-top: var(--space-3); font-size: var(--text-sm); }
+  .crumb button { font: inherit; font-size: var(--text-sm); color: var(--color-accent-hover);
+    background: none; border: 0; cursor: pointer; padding: 0; min-height: 32px; text-decoration: underline; }
+
+  /* ---- Search mode ------------------------------------------------------ */
+  /* Written into the markup, hidden when unused — NEVER regenerated (D-034). */
+  #search-host { margin-top: var(--space-3); }
+  #search-host input { width: 100%; font: inherit; padding: var(--space-3);
+    background: var(--color-surface); color: var(--color-text);
+    border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); }
+  .hits { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; }
+
+  /* ---- Flow mode -------------------------------------------------------- */
+  .flow-nav { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+  .flow-nav > * { min-width: 0; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../index.html">← Home</a>
+  <h1>Front Doors</h1>
+  <p class="room-lede">Twenty ways into the same rooms. The rooms never change — only the shelves. Pick whichever matches how you actually think about money; you can change it back any time.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="out-pick">
+    <span class="slaf-eyebrow">How would you like these arranged?</span>
+    <div class="picker" id="picker"></div>
+  </section>
+
+  <section class="slaf-card" id="out-door" style="margin-top:var(--space-4)">
+    <div class="lay-head" id="lay-head"></div>
+    <div id="search-host" hidden>
+      <input type="search" id="q" autocomplete="off" placeholder="Type anything — rent, retire, car, behind on bills" aria-label="Search every room"/>
+      <p class="hits" id="hits"></p>
+    </div>
+    <div id="lay-body"></div>
+  </section>
+
+  <details class="drawer" id="out-why" style="margin-top:var(--space-4)">
+    <summary>Why this arrangement, and what it costs</summary>
+    <div id="why-body"></div>
+  </details>
+
+  <p class="disclaimer">
+    Not financial advice, and not a calculation of any kind — this page holds
+    no figures at all. It is a list of the same rooms, shelved differently.
+    Rooms your situation has no use for are left out of every arrangement, by
+    the same rule the rest of the app uses. Everything stays in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/layouts.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Spine = SLAF.Spine, Reference = SLAF.Reference, Progress = SLAF.Progress,
+      Layouts = SLAF.Layouts;
+
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function el(id) { return document.getElementById(id); }
+  /* Registry hrefs are written from the site root; this page lives in rooms/. */
+  function from(href) { return href.indexOf('rooms/') === 0 ? href.slice(6) : '../' + href; }
+
+  var TABLES = null;
+  var current = null;      /* the built layout */
+  var branch = null;       /* tree mode: which parent is open */
+  var turn = 0;            /* flow mode: which question we are on */
+
+  /* Which layout: the hash wins (a shared link), then the stored choice,
+     then the order the app ships. */
+  function wantedId() {
+    var m = /(?:^|[#&])l=([a-z0-9-]+)/.exec(location.hash || '');
+    if (m) return m[1];
+    var h = Spine.getProfile();
+    return (h.meta && h.meta.frontDoor) || Layouts.DEFAULT_ID;
+  }
+
+  function doorHtml(r) {
+    return '<li><a class="door" href="' + esc(from(r.href)) + '">'
+      + '<span class="t">' + esc(r.title)
+      + (r.isHub ? '<span class="hub">landmark</span>' : '') + '</span>'
+      + (r.blurb ? '<span class="b">' + esc(r.blurb) + '</span>' : '')
+      + '</a></li>';
+  }
+
+  function bayHtml(g) {
+    var out = ['<div class="bay' + (g.warn ? ' is-warn' : '') + '">'];
+    out.push('<div class="bay-h"><span class="nm">' + esc(g.name) + '</span>'
+      + '<span class="ct">' + g.rooms.length + '</span>');
+    if (g.note) out.push('<span class="nt">' + esc(g.note) + '</span>');
+    if (g.droppedCount) {
+      out.push('<span class="dropped">' + g.droppedCount
+        + (g.droppedCount === 1 ? ' room here is' : ' rooms here are')
+        + ' not for your situation, so ' + (g.droppedCount === 1 ? 'it is' : 'they are') + ' left out.</span>');
+    }
+    out.push('</div><ul class="doors">' + g.rooms.map(doorHtml).join('') + '</ul></div>');
+    return out.join('');
+  }
+
+  /* ---- Modes ---------------------------------------------------------------
+     Every mode renders the SAME built layout — they differ only in how much
+     of it is on screen at once. */
+
+  function renderBays() { return current.groups.map(bayHtml).join(''); }
+
+  function renderTree() {
+    var parents = Layouts.parents(current);
+    var loose = current.groups.filter(function (g) { return !g.parent; });
+    var out = [];
+    if (!branch) {
+      out.push('<div class="three">');
+      parents.forEach(function (p) {
+        var kids = current.groups.filter(function (g) { return g.parent === p; });
+        var n = kids.reduce(function (s, g) { return s + g.rooms.length; }, 0);
+        out.push('<button type="button" class="big-choice" data-branch="' + esc(p) + '">'
+          + '<span class="t">' + esc(p) + '</span>'
+          + '<span class="s">' + kids.length + ' choices · ' + n + ' rooms behind them</span></button>');
+      });
+      out.push('</div>');
+      loose.forEach(function (g) { out.push(bayHtml(g)); });
+      return out.join('');
+    }
+    out.push('<div class="crumb"><button type="button" data-branch="">← All three</button>'
+      + '<span>' + esc(branch) + '</span></div>');
+    current.groups.filter(function (g) { return g.parent === branch; })
+      .forEach(function (g) { out.push(bayHtml(g)); });
+    return out.join('');
+  }
+
+  function renderFlow() {
+    var qs = current.groups;
+    if (turn >= qs.length) turn = qs.length - 1;
+    if (turn < 0) turn = 0;
+    var g = qs[turn];
+    var out = ['<p class="slaf-hint" style="margin:var(--space-3) 0 0">Question ' + (turn + 1)
+      + ' of ' + qs.length + '. Nothing is hidden — you can walk the whole thing.</p>'];
+    out.push(bayHtml(g));
+    out.push('<div class="flow-nav">');
+    if (turn > 0) out.push('<button type="button" class="slaf-btn slaf-btn--quiet" data-turn="' + (turn - 1) + '">← Back</button>');
+    if (turn < qs.length - 1) out.push('<button type="button" class="slaf-btn slaf-btn--primary" data-turn="' + (turn + 1) + '">Next question →</button>');
+    else out.push('<button type="button" class="slaf-btn slaf-btn--quiet" data-turn="0">Start again</button>');
+    out.push('</div>');
+    return out.join('');
+  }
+
+  function renderSearch(q) {
+    var all = [];
+    current.groups.forEach(function (g) {
+      if (g.overlay) return;
+      g.rooms.forEach(function (r) { all.push(r); });
+    });
+    var seen = {}, uniq = [];
+    all.forEach(function (r) { if (!seen[r.id]) { seen[r.id] = true; uniq.push(r); } });
+    var term = String(q || '').trim().toLowerCase();
+    var hits = !term ? uniq : uniq.filter(function (r) {
+      return (r.title + ' ' + (r.blurb || '')).toLowerCase().indexOf(term) !== -1;
+    });
+    el('hits').textContent = term
+      ? hits.length + (hits.length === 1 ? ' room matches' : ' rooms match') + ' “' + term + '”'
+      : uniq.length + ' rooms. Type to narrow, or browse the surfaces below.';
+    if (term) {
+      if (!hits.length) {
+        return '<p class="slaf-reason" style="margin-top:var(--space-3)">Nothing matches that. '
+          + 'Try a plainer word — “rent”, “car”, “behind”, “retire” — or clear the box to see everything.</p>';
+      }
+      return '<div class="bay"><div class="bay-h"><span class="nm">Matches</span>'
+        + '<span class="ct">' + hits.length + '</span></div>'
+        + '<ul class="doors">' + hits.map(doorHtml).join('') + '</ul></div>';
+    }
+    return current.groups.map(bayHtml).join('');
+  }
+
+  /* ---- Paint ---------------------------------------------------------------
+     Head, body and drawer are containers of links and buttons — no inputs —
+     so they are rewritten freely. The search box is NOT in any of them. */
+
+  function paint() {
+    var h = Spine.getProfile();
+    var id = wantedId();
+    current = Layouts.build(h, TABLES, id);
+    if (!current) {
+      el('lay-body').innerHTML = '<p class="slaf-reason">That arrangement could not be loaded.</p>';
+      return;
+    }
+    if (current.id !== id) branch = null;      /* fell back — reset the drill */
+
+    Array.prototype.forEach.call(el('picker').querySelectorAll('[data-layout]'), function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-layout') === current.id ? 'true' : 'false');
+    });
+
+    var c = current.coverage;
+    var head = ['<h2>' + esc(current.name) + '</h2>'];
+    if (current.by) head.push('<p class="lay-by">Designed by ' + esc(current.by) + '</p>');
+    head.push('<p class="lay-premise">' + esc(current.premise) + '</p>');
+    head.push('<div class="lay-meta">');
+    head.push('<span>' + current.groups.length + (current.groups.length === 1 ? ' group' : ' groups') + '</span>');
+    head.push(c.missing.length
+      ? '<span class="bad">⚠ ' + c.missing.length + ' of your rooms are not on any shelf here</span>'
+      : '<span class="ok">✓ all ' + c.total + ' of your rooms are reachable</span>');
+    if (current.live) head.push('<span>· this is the order the app ships</span>');
+    head.push('</div>');
+    el('lay-head').innerHTML = head.join('');
+
+    var mode = current.mode;
+    el('search-host').hidden = mode !== 'search';
+    el('lay-body').innerHTML =
+        mode === 'tree'   ? renderTree()
+      : mode === 'flow'   ? renderFlow()
+      : mode === 'search' ? renderSearch(el('q').value)
+      : renderBays();
+
+    el('why-body').innerHTML =
+      '<p><strong>Reads well.</strong> ' + esc(current.readsWell) + '</p>'
+      + '<p><strong>What it costs.</strong> ' + esc(current.costs) + '</p>'
+      + '<p class="slaf-hint">Sheet ' + esc(current.code) + ' of the drawing set. '
+      + 'Which shelf a room sits on is an opinion in <code>data/layouts.json</code> — '
+      + 'it changes nothing about what any room says or computes.</p>';
+  }
+
+  /* ---- Wiring -------------------------------------------------------------- */
+
+  el('picker').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-layout]');
+    if (!b) return;
+    branch = null; turn = 0;
+    var id = b.getAttribute('data-layout');
+    /* Clear the hash so the stored choice is what wins from here on. */
+    if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+    Spine.setFrontDoor(id === Layouts.DEFAULT_ID ? null : id);
+    paint();
+  });
+
+  el('lay-body').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-branch]');
+    if (b) { branch = b.getAttribute('data-branch') || null; paint(); return; }
+    var t = e.target.closest('[data-turn]');
+    if (t) { turn = Number(t.getAttribute('data-turn')) || 0; paint(); }
+  });
+
+  /* Only the RESULTS are rewritten as you type — the box itself is untouched,
+     so focus and the soft keyboard survive every keystroke (D-034). */
+  el('q').addEventListener('input', function () {
+    if (current && current.mode === 'search') el('lay-body').innerHTML = renderSearch(el('q').value);
+  });
+
+  window.addEventListener('hashchange', function () { branch = null; turn = 0; paint(); });
+
+  function buildPicker() {
+    var rows = Layouts.list(TABLES);
+    var out = [], vol = null;
+    var LABEL = { 1: 'The obvious eight', 2: 'The less obvious eight', 3: 'One from each reviewer' };
+    rows.forEach(function (l) {
+      if (l.volume !== vol) {
+        vol = l.volume;
+        out.push('<div class="vol-h">' + esc(LABEL[vol] || ('Volume ' + vol)) + '</div>');
+      }
+      out.push('<button type="button" class="pick" data-layout="' + esc(l.id) + '" aria-pressed="false">'
+        + '<span class="code">' + esc(l.code) + '</span>' + esc(l.name) + '</button>');
+    });
+    el('picker').innerHTML = out.join('');
+  }
+
+  Spine.registerRoom('doors');
+  Spine.onChange(function () { if (TABLES) paint(); });
+  Progress.mountHeader('doors');
+  Progress.mount('doors');
+
+  Reference.load([Layouts.TABLE], '../data/').then(function (T) {
+    TABLES = T;
+    buildPicker();
+    paint();
+  }).catch(function (err) {
+    var n = el('load-notice');
+    n.hidden = false;
+    n.className = 'notice is-error';
+    n.textContent = 'The arrangements could not be loaded (' + err.message + '). '
+      + 'Every room is still reachable from the map.';
+  });
+})();
+</script>
+</body>
+</html>

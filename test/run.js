@@ -8505,6 +8505,120 @@ section('The D&D folder\'s vendored copies');
 })();
 
 /* ==========================================================================
+   Front Doors (D-153) — the same rooms, arranged twenty ways
+   --------------------------------------------------------------------------
+   The danger with twenty arrangements is that one of them quietly loses a
+   room. Everything below exists to make that impossible to ship.
+   ========================================================================== */
+section('Front Doors — twenty arrangements, no room lost');
+(function () {
+  const Layouts = require(path.join(ROOT, 'engines/layouts.js'));
+  const Schema = require(path.join(ROOT, 'shared/schema.js'));
+  const Registry = require(path.join(ROOT, 'shared/registry.js'));
+  const table = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8'));
+  const T = { layouts: table };
+  const STATUSES = ['employed', 'selfEmployed', 'unemployed', 'student', 'retired', 'both'];
+  const person = st => Schema.createHousehold({ people: [{ id: 'p1', role: 'adult', employmentStatus: st }] });
+
+  check('twenty arrangements', table.layouts.length, 20);
+  checkTrue('layouts.json carries its provenance', !!(table.version && table.asOf && table.source && table.confidence));
+  checkTrue('...and says out loud that the groupings are opinions',
+    /judgement call|opinion/i.test(table.source + ' ' + table.confidenceNote));
+
+  const ids = table.layouts.map(l => l.id);
+  checkTrue('every layout id is unique', ids.length === new Set(ids).size);
+  checkTrue('every layout id is url-safe (they are deep links)', ids.every(i => /^[a-z0-9-]+$/.test(i)));
+  checkTrue('every room named in every layout is a real room',
+    table.layouts.every(l => l.groups.every(g => g.rooms.every(r => !!Registry.byId(r)))),
+    'a renamed room would leave a dead shelf entry');
+  checkTrue('every layout has a premise, a good and a cost',
+    table.layouts.every(l => l.premise && l.readsWell && l.costs));
+
+  /* THE ONE THAT MATTERS. Every arrangement, for every situation, must reach
+     every room that applies to that person. This is the check that caught
+     Front Doors itself being missing from all twenty on the first run. */
+  STATUSES.forEach(function (st) {
+    const h = person(st);
+    const broken = table.layouts.filter(l => {
+      const c = Layouts.coverage(h, T, l.id);
+      return c.missing.length || c.doubled.length;
+    });
+    checkTrue(`${st}: all twenty arrangements reach every applicable room`,
+      broken.length === 0,
+      broken.map(l => l.id + ' misses ' + Layouts.coverage(person(st), T, l.id).missing.join('/')).join('; '));
+  });
+
+  /* A layout never filters — the gate does. */
+  (function () {
+    const h = person('retired');
+    const b = Layouts.build(h, T, 'question');
+    checkTrue('no bay contains a room the gate excluded',
+      b.groups.every(g => g.rooms.every(r => Registry.applies(Registry.byId(r.id), h))));
+    checkTrue('a bay the gate emptied is dropped, not shown empty',
+      b.groups.every(g => g.rooms.length > 0),
+      'an empty shelf reads as "nothing here for you"; the truth is none of it was ever yours');
+    const withDrops = b.groups.filter(g => g.droppedCount > 0);
+    checkTrue('a bay that lost rooms to the gate says how many', withDrops.every(g => g.droppedCount > 0));
+  })();
+
+  /* The safety net: a room no layout knows about is surfaced, not lost. */
+  (function () {
+    const h = person('employed');
+    const T2 = { layouts: JSON.parse(JSON.stringify(table)) };
+    T2.layouts.layouts[0].groups.forEach(g => { g.rooms = g.rooms.filter(r => r !== 'fire'); });
+    const b = Layouts.build(h, T2, 'path');
+    const net = b.groups[b.groups.length - 1];
+    check('an unshelved room still appears', net.rooms.some(r => r.id === 'fire'), true);
+    checkTrue('...in a bay that says so plainly', /Not shelved/.test(net.name));
+    checkTrue('...and coverage still reports the gap rather than hiding it',
+      b.coverage.missing.indexOf('fire') !== -1,
+      'the net exists so nothing is unreachable, NOT so the data stops being fixed');
+  })();
+
+  /* A layout is a view. It may never become a fact. */
+  checkTrue('no engine but layouts.js reads the layouts table',
+    fs.readdirSync(path.join(ROOT, 'engines')).filter(f => /\.js$/.test(f) && f !== 'layouts.js')
+      .every(f => !/layouts|frontDoor/.test(fs.readFileSync(path.join(ROOT, 'engines', f), 'utf8'))),
+    'which shelf a room sits on must never reach a calculation');
+  checkTrue('the registry does not read the front-door choice',
+    !/frontDoor/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
+  checkTrue('ownership does not read it either',
+    !/frontDoor/.test(fs.readFileSync(path.join(ROOT, 'shared/ownership.js'), 'utf8')));
+
+  /* Modes, and the room. */
+  (function () {
+    const modes = {};
+    table.layouts.forEach(l => { modes[l.mode] = (modes[l.mode] || 0) + 1; });
+    checkTrue('every layout declares a mode the room can render',
+      Object.keys(modes).every(m => ['bays', 'hub', 'tree', 'flow', 'search'].indexOf(m) !== -1),
+      'got: ' + Object.keys(modes).join(','));
+    const b = Layouts.build(person('employed'), T, 'three');
+    check('tree mode resolves exactly three parents', Layouts.parents(b).length, 3);
+    checkTrue('tree parents come from the group names, not a second list',
+      b.groups.filter(g => g.parent).every(g => g.fullName.indexOf(g.parent + ' › ') === 0));
+
+    const html = fs.readFileSync(path.join(ROOT, 'rooms/doors.html'), 'utf8');
+    checkTrue('the room declares its live-form policy', /LIVE-FORM: built once/.test(html));
+    checkTrue('the search box is written into the markup, never generated',
+      /<input type="search" id="q"/.test(html) && !/id=.q./.test(html.split('<script>')[1] || ''),
+      'a regenerated search box loses focus and closes the soft keyboard mid-word');
+    checkTrue('typing rewrites only the results',
+      /el\('q'\)\.addEventListener\('input'[\s\S]{0,200}lay-body/.test(html));
+    checkTrue('the room writes nothing but the front-door choice',
+      !/upsert|setMonthlyExpenses|removeById/.test(html) && /setFrontDoor/.test(html));
+    checkTrue('the room is a utility, off the numbered path (D-051)',
+      Registry.byId('doors').utility === true && Registry.byId('doors').order > 90);
+  })();
+
+  /* The stored choice. */
+  (function () {
+    check('a fresh household has no front door chosen', Schema.createHousehold({}).meta.frontDoor, null);
+    check('a stored choice survives normalising',
+      Schema.createHousehold({ meta: { frontDoor: 'house' } }).meta.frontDoor, 'house');
+  })();
+})();
+
+/* ==========================================================================
    The Timeline (D-152) — jobs and benefits as dated periods that stack
    --------------------------------------------------------------------------
    Every case below was worked out on paper first and then checked against

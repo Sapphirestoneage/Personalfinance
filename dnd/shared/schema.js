@@ -1547,7 +1547,13 @@
            from a room having numbers in it, and only they can say it.
            { startedAt: ISO|null, finishedAt: ISO|null,
              done: { roomId: ISO }, skipped: { roomId: ISO } } */
-        walk: null
+        walk: null,
+        /* Which arrangement of the rooms this person chose to browse by —
+           a layout id from data/layouts.json, or null for the order the app
+           ships (D-153). A VIEW, never a fact: nothing may read this to
+           decide what a room needs, what applies, or what anything is worth.
+           It changes the shelves and nothing else. */
+        frontDoor: null
       }, f.meta || {}, {
         /* Normalised AFTER the spread, not inside the defaults: a raw
            `f.meta.walk` would otherwise win the Object.assign and land in
