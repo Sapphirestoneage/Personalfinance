@@ -587,21 +587,32 @@ const CASES = [
     room: '/rooms/doors.html',
     container: '#search-host',
     seed: 'demo',
-    prepare: async (page) => { await page.tap('[data-layout="search"]'); await page.waitForTimeout(250); },
+    prepare: async (page) => {
+      await page.tap('[data-layout="search"]');
+      await page.waitForTimeout(250);
+      /* Stamp the node. If any keystroke rebuilt the box, the stamp goes with
+         the old node and the check below fails. Node IDENTITY is the real
+         D-034 property here — focus cannot be asserted after the fact,
+         because the harness deliberately blurs before expect() runs so that
+         every other room's focusout commit fires (see the blur below). */
+      await page.evaluate(() => { document.getElementById('q').__stamp = 'before-typing'; });
+    },
     fields: [
       { sel: '#q', type: 'rent' }
     ],
     expect: async (page) => {
       const r = await page.evaluate(() => ({
         value: document.getElementById('q').value,
-        focused: document.activeElement && document.activeElement.id,
+        stamp: document.getElementById('q').__stamp || '(node was replaced)',
         hits: document.querySelectorAll('.door').length,
+        all: document.querySelectorAll('#search-host input').length,
         wrote: (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).meta.frontDoor
       }));
       return [
         ['the typed text survives', r.value, 'rent'],
-        ['the box still has focus after every keystroke', r.focused, 'q'],
-        ['and it actually filtered', r.hits > 0 && r.hits < 60, true],
+        ['the box is the same node it was before typing', r.stamp, 'before-typing'],
+        ['and there is still exactly one of it', r.all, 1],
+        ['it actually filtered', r.hits > 0 && r.hits < 60, true],
         ['choosing a layout is the only thing written', r.wrote, 'search']
       ];
     }
