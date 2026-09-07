@@ -1993,6 +1993,7 @@
     capturingQuestionApplies: capturingQuestionApplies,
     capturingFullMatchDerived: capturingFullMatchDerived,
     hasDebtAnswered: hasDebtAnswered,
+    saidNoDebt: saidNoDebt,
     TAX_CHARACTERS: TAX_CHARACTERS,
     createWorkProfile: createWorkProfile,
     WORK_DEFAULTS: WORK_DEFAULTS,

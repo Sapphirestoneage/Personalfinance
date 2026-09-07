@@ -8583,6 +8583,50 @@ section('No CSS variable is used without being defined');
 })();
 
 /* ==========================================================================
+   An empty debt list is not "no debt" (D-158)
+   --------------------------------------------------------------------------
+   FOO steps 3 and 9 were declared `needs: [true]` — always scoreable — and
+   scored `high.length === 0 ? 100 : 0`. With nobody's debts entered yet, that
+   is a full green bar under the words "No debts entered.", which is the
+   Empty-≠-zero non-negotiable broken in the one place it is most expensive:
+   the room that tells you what to do next.
+
+   `meta.hasDebt === false` IS an answer and reads as a real zero. Unanswered,
+   an empty list is incomplete. Schema.totalDebtCents() already worked this
+   way; the ladder is the outlier being brought into line.
+   ========================================================================== */
+section('An empty debt list is not "no debt"');
+(function () {
+  const bare = Schema.createHousehold();
+  checkTrue('unanswered, an empty list is not a declared zero', !Schema.saidNoDebt(bare));
+  const said = Schema.createHousehold(); said.meta.hasDebt = false;
+  checkTrue('answering "no debt" is', Schema.saidNoDebt(said));
+  const yes = Schema.createHousehold(); yes.meta.hasDebt = true;
+  checkTrue('and answering "yes, debt" is not', !Schema.saidNoDebt(yes));
+
+  /* The same rule, already honoured by the totals — the precedent the ladder
+     was out of step with. */
+  check('total debt is incomplete when unanswered', Schema.totalDebtCents(bare).status, 'incomplete');
+  check('and a real zero once answered', Schema.totalDebtCents(said).status, 'ok');
+  check('...worth zero', Schema.totalDebtCents(said).value, 0);
+
+  const foo = fs.readFileSync(path.join(ROOT, 'foo-ladder.js'), 'utf8');
+  checkTrue('the ladder asks the schema rather than counting rows',
+    foo.indexOf('Schema.saidNoDebt(h0)') !== -1);
+  /* Assert the PROPERTY — that neither debt step is unconditionally
+     scoreable — rather than the exact expression, so a future rewrite that
+     keeps the behaviour keeps passing. */
+  const debtSteps = (foo.match(/\{ n: (?:3|9), title: '[^']*debt[^']*'[^\n]*/gi) || []);
+  check('both debt steps found in the source', debtSteps.length, 2);
+  debtSteps.forEach(line => {
+    checkTrue('step is not unconditionally scoreable: ' + line.slice(0, 46),
+      /needs: \[(?!true\])/.test(line), line);
+    checkTrue('...and it gates on the answer, not the row count',
+      line.indexOf('d.saidNoDebt') !== -1, line);
+  });
+})();
+
+/* ==========================================================================
    The statements, and the per-room export (D-154 · D-155 · D-156)
    ========================================================================== */
 section('Statements and per-room export');

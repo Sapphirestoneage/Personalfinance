@@ -144,6 +144,11 @@
     d.hasEmployer = Schema.couldHaveEmployerMatch(h0);
     if (!d.hasEmployer && !entered(d.matchCapPct)) d.matchCapPct = 0;
     if (!d.hasEmployer && !entered(state.contribPct)) state.contribPct = 0;
+    /* An empty debt list is not "no debt". `meta.hasDebt === false` is an
+       answer and reads as a real zero; unanswered, the list being empty only
+       means nobody has told us yet, and steps 3 and 9 cannot be scored. This
+       is the rule Schema.totalDebtCents() already applies. D-158. */
+    d.saidNoDebt = Schema.saidNoDebt(h0);
     d.debts = Schema.aggregatableDebts(h0)
       .filter(function (x) { return entered(x.balanceCents) && x.balanceCents > 0; })
       .map(function (x, i) {
@@ -355,10 +360,12 @@
           pct: d.matchCapPct === 0 ? 100 : clamp((st.contribPct / d.matchCapPct) * 100, 0, 100),
           act: s2gapMo > 0 ? 'Set payroll deferral to ' + d.matchCapPct + '%.' : 'Keep it flowing every paycheck.' }; } },
 
-      { n: 3, title: 'High-interest debt', needs: [true], missing: '',
+      { n: 3, title: 'High-interest debt', needs: [d.debts.length > 0 || d.saidNoDebt],
+        missing: 'your debts, or say "no debt" in Start Here,',
         why: 'Paying 23% APR off is a guaranteed 23% return. Destroy this before investing further.',
         build: function () { return {
-          sub: d.debts.length === 0 ? 'No debts entered.' : high.length === 0 ? 'No high-interest debt. Clear.'
+          sub: d.saidNoDebt && d.debts.length === 0 ? 'No debt. Clear.'
+            : high.length === 0 ? 'No high-interest debt. Clear.'
             : fmt(high.reduce(function (s, x) { return s + x.balance; }, 0)) + ' above 6% APR — highest '
               + Math.max.apply(null, high.map(function (x) { return x.apr; })).toFixed(1) + '%.',
           pct: high.length === 0 ? 100 : 0,
@@ -412,10 +419,12 @@
           pct: clamp((st.prepaidBal / Math.max(1, st.prepaidTarget)) * 100, 0, 100),
           act: '529s gain state tax perks in most states.' }; } },
 
-      { n: 9, title: 'Low-interest debt prepayment', needs: [true], missing: '',
+      { n: 9, title: 'Low-interest debt prepayment', needs: [d.debts.length > 0 || d.saidNoDebt],
+        missing: 'your debts, or say "no debt" in Start Here,',
         why: "Math says low-rate debt can wait — but a paid-off house is peace the spreadsheet can't price.",
         build: function () { return {
-          sub: d.debts.length === 0 ? 'No debts entered.' : low.length === 0 ? 'No low-interest debt remains.'
+          sub: d.saidNoDebt && d.debts.length === 0 ? 'No debt. Clear.'
+            : low.length === 0 ? 'No low-interest debt remains.'
             : fmt(low.reduce(function (s, x) { return s + x.balance; }, 0)) + ' at 6% or below — mortgage-tier debt, last on purpose.',
           pct: low.length === 0 ? 100 : 0,
           act: 'Extra principal payments until free.' }; } }

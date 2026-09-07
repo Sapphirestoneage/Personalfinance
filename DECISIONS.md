@@ -8758,6 +8758,78 @@ copy byte-identical.
 
 No stored shape changed. `getProfile()` / `updateProfile()` are untouched.
 
+## D-158 — An empty debt list is not "no debt"
+
+Found while screenshotting the FOO ladder to check the D-157 token fix had
+not broken the gem. Steps 3 and 9 were showing a **full blue progress bar**
+directly above the words *"No debts entered."*
+
+Both steps were declared `needs: [true]` — always scoreable, no inputs
+required — and scored:
+
+    pct: high.length === 0 ? 100 : 0
+
+With nobody's debts entered, `high.length` is `0`, so the step read as
+complete. The room's own copy contradicted the bar it was drawing: the
+sentence knew the difference between "no debts entered" and "no high-interest
+debt. Clear.", and the bar did not.
+
+This is the **Empty ≠ zero** non-negotiable, broken in the most expensive
+place it could be — the room whose entire job is telling someone what to do
+next. A person who has not yet reached Debt Payoff was being told two of the
+nine steps were already behind them.
+
+### The rule was already written down
+
+`shared/schema.js` has had it right the whole time:
+
+    /* "No debt" (meta.hasDebt === false, D-061) is an answer: with nothing
+       listed it reads as zero owed and zero a month, not as a blank. Left
+       unanswered, an empty list is still incomplete — empty is not zero. */
+    function saidNoDebt(household) { ... }
+
+`totalDebtCents()` consults it and returns `incomplete` when unanswered. The
+ladder simply never asked. `saidNoDebt` was a private function inside the
+module, which is presumably why: it was not reachable. It is now exported,
+which is the whole change to the schema — no stored shape moved, nothing
+reads or writes differently, so no compatibility note is owed.
+
+### What the three states do now
+
+| State | Step 3 / 9 |
+|---|---|
+| nothing entered | not scoreable — no bar, *"Add your debts, or say "no debt" in Start Here, to see this."* |
+| `meta.hasDebt === false` | scoreable, 100% — *"No debt. Clear."* |
+| debts entered | scored as before, from the rows |
+
+Verified in Chromium at 412×915: with an empty profile both bars are hidden
+and the fill width is unset; after setting `meta.hasDebt = false` both render
+at `100%`.
+
+The gem is unaffected — it only scores once the whole projection is ready, and
+it was already showing `—` in this state.
+
+### The test
+
+`test/run.js` gains **"An empty debt list is not 'no debt'"**, which checks
+`Schema.saidNoDebt` across all three answers, re-asserts that
+`totalDebtCents()` still distinguishes them, and then guards the ladder itself
+by the *property* rather than the expression: neither debt step may be
+declared `needs: [true]`, and each must reference `d.saidNoDebt`. Reverting
+either step to `needs: [true]` fails it four times.
+
+This is the third instrument this session written to assert a property rather
+than a mechanism (after the button's contrast and the drawer's opacity), and
+the reason is the same each time: a test that names the current implementation
+passes right up until the moment it should have spoken.
+
+### Worth checking elsewhere
+
+The pattern to look for is a count of rows standing in for an answer —
+`x.length === 0` treated as "none" rather than "not yet told". The ladder was
+the only place a sweep found it, but a new room that scores a list should ask
+whether the empty case is a zero or a blank, and say which.
+
 ---
 
 # The Dungeons & Dividends entries
