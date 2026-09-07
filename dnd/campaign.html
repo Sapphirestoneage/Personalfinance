@@ -32,6 +32,15 @@
   the outcome and the review hold no inputs at all, so they rebuild freely.
 -->
 <style>
+  /* Dungeons & Dividends keeps the characterful faces the shared theme gave
+     up in D-154. A game wants a display serif; a financial statement does
+     not. theme.css stays byte-identical to the SPARKS copy — this override
+     lives here, in the pages that want it. */
+  :root {
+    --font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+    --font-body: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
   .wrap { max-width: 860px; margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-7); }
   h1 { font-family: var(--font-display); font-size: var(--text-xl); margin: 0 0 var(--space-2); }
   h2 { font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-5) 0 var(--space-2); }

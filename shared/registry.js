@@ -819,6 +819,26 @@
     ]
   });
 
+  /* Your Statements — the three documents a company files, for a household,
+     plus the period in words (D-156). A `read` room: it owns nothing, writes
+     nothing, and every figure on it belongs to another room. */
+  ROOMS.push({
+    id: 'statements',
+    kind: 'read',
+    needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
+    order: 4.5,
+    title: 'Your Statements',
+    blurb: 'An income statement, a cash flow statement and a balance sheet — the three documents a company produces every quarter, for a household. Plus the same period written out in sentences.',
+    href: 'rooms/statements.html',
+    tier: 0,
+    tags: ['income', 'cashflow', 'debt'],
+    subsections: [
+      { id: 'out-basis', label: 'What these are built from' },
+      { id: 'out-doc',   label: 'The statements' },
+      { id: 'out-how',   label: 'How each line is worked out' }
+    ]
+  });
+
   /* Front Doors — the same rooms, arranged twenty different ways (D-153).
      A utility like Refresh and Your Data: it is a way of MOVING through the
      rooms, not a room with a number in it, so it stays off the numbered path

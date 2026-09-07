@@ -5,117 +5,135 @@
    Rooms must reference these custom properties. Never hardcode a hex value
    in a room file — see SPEC.md Section 0.5 and DECISIONS.md entry D-002.
 
-   Type: Fraunces (display), Space Grotesk (body/UI).
-   Both are loaded by shared/fonts.css so a room includes one line, not two.
+   Type: the platform's own UI face, at two weights, with tabular figures.
+   No display serif (D-154). shared/fonts.css still ships Fraunces and Space
+   Grotesk because dnd/ overrides these tokens back to them — the game wants
+   character; a financial statement wants none.
    ========================================================================== */
 
 :root {
   /* Dark by construction. Without this the UA paints its light-mode
      scrollbar, selection, details marker and file input on a navy page. */
   color-scheme: dark;
-  /* ---- Core navy scale ------------------------------------------------ */
-  --navy-950: #050F22;
-  --navy-900: #081833;
-  --navy-850: #0A1E44;
-  --navy-800: #0B2249;
-  --navy-750: #0F2650;
-  --navy-700: #16305E;
-  --navy-600: #1E3A8A;
+  /* ---- Ground -----------------------------------------------------------
+     Graphite with a cool cast, not saturated navy. The old ground was
+     #081833 — blue enough that every surface, border and line of text sat
+     in the same hue, which is what made a page of figures read as a
+     children's chart rather than a statement. Colour is now something the
+     page spends, not something it is made of. D-154. */
+  --ink-1000: #07090C;
+  --ink-950:  #0A0C10;
+  --ink-900:  #0E1116;
+  --ink-850:  #12151B;
+  --ink-800:  #171B22;
+  --ink-700:  #1D222B;
 
   /* ---- Sapphire scale ------------------------------------------------- */
   --sapphire-600: #1D4ED8;
-  --sapphire-500: #2E6FE8;
-  --sapphire-400: #3B82F6;
-  --sapphire-300: #60A5FA;
-  --sapphire-200: #7FB0FF;
-  --sapphire-100: #93C5FD;
-  --sapphire-050: #EFF6FF;
+  --sapphire-500: #2F6BE0;
+  --sapphire-400: #4A85F0;
+  --sapphire-300: #6AA0FF;
+  --sapphire-200: #8FB8FF;
+  --sapphire-100: #B6D0FF;
+  --sapphire-050: #E8F0FF;
 
-  /* ---- Semantic surfaces ---------------------------------------------- */
-  --color-bg: var(--navy-900);
-  --color-bg-gradient: linear-gradient(180deg, #081833 0%, #0B2249 45%, #081833 100%);
-  --color-surface: rgba(15, 38, 80, 0.30);
-  --color-surface-raised: rgba(15, 38, 80, 0.55);
-  --color-surface-active: rgba(37, 99, 235, 0.15);
-  --color-border: rgba(30, 64, 175, 0.40);
-  --color-border-strong: rgba(30, 64, 175, 0.60);
-  --color-border-active: rgba(96, 165, 250, 0.70);
+  /* ---- Semantic surfaces ----------------------------------------------
+     Tints are neutral (a cool grey lifted over the ground), so a card does
+     not add hue every time it nests inside another card. */
+  --color-bg: var(--ink-950);
+  --color-bg-gradient: none;
+  --color-surface: rgba(124, 140, 166, 0.06);
+  --color-surface-raised: rgba(124, 140, 166, 0.10);
+  --color-surface-active: rgba(47, 107, 224, 0.16);
+  --color-border: rgba(255, 255, 255, 0.09);
+  --color-border-strong: rgba(255, 255, 255, 0.16);
+  --color-border-active: rgba(106, 160, 255, 0.65);
 
-  /* ---- Semantic text --------------------------------------------------- */
-  --color-text: var(--sapphire-050);
-  --color-text-muted: var(--sapphire-100);
-  --color-text-subtle: rgba(147, 197, 253, 0.80);
-  /* Was 0.50, which composites to 2.63:1 on .slaf-owned, 2.66:1 on a card
-     and 2.70:1 on the drawer — ten AA failures in the dashboard panel alone,
-     including the radar's spoke numbers and both ⓘ buttons. 0.75 still
-     misses; 0.80 clears 4.5:1 on all three grounds (4.61 / 4.74 / 4.90).
-     D-144. */
-  --color-text-faint: rgba(96, 165, 250, 0.80);
-  /* #E5484D measures 4.31:1 as 13px text on a card — it fails AA exactly
-     where it matters most, on the one figure that is out of range. The
-     border and arc uses of --color-critical carry no text and keep it. */
-  --color-critical-text: #FF6369;
+  /* ---- Semantic text ---------------------------------------------------
+     Neutral, not blue. Every value below was measured against the three
+     grounds it can sit on (bg, surface, raised) and clears AA 4.5:1 with
+     margin — the weakest is --color-text-faint at 5.25:1 on a raised card.
+     That keeps the D-144 commitment while dropping the blue cast. */
+  --color-text: #E6E9EE;
+  --color-text-muted: #A6B0BD;
+  --color-text-subtle: #929CAA;
+  --color-text-faint: #838D9B;
+  --color-critical-text: #FF7A80;
 
   /* ---- Interactive ----------------------------------------------------- */
   --color-accent: var(--sapphire-500);
-  --color-accent-hover: var(--sapphire-400);
-  --color-accent-contrast: #051025;
-  --color-focus-ring: var(--sapphire-200);
+  --color-accent-hover: var(--sapphire-300);
+  --color-accent-contrast: #FFFFFF;
+  --color-focus-ring: var(--sapphire-300);
 
-  /* ---- Status ---------------------------------------------------------- */
-  /* Status hues sit outside the brand scale on purpose: they must read as
-     signal, not decoration. Kept deliberately desaturated so they don't
-     fight the navy ground. */
-  --color-positive: #4CC38A;
-  --color-caution: #E8B84B;
-  --color-critical: #E5484D;
-  --color-neutral: var(--sapphire-100);
+  /* ---- Status ----------------------------------------------------------
+     Signal, not decoration, and deliberately muted: on the old palette a
+     six-tile grid could show red, amber, green and blue at full saturation
+     at once, which reads as a game board. */
+  --color-positive: #3FB27F;
+  --color-caution: #D8A63F;
+  --color-critical: #E2565B;
+  --color-neutral: var(--color-text-muted);
 
-  /* ---- Typography ------------------------------------------------------ */
-  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
-  --font-body: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
+  /* ---- Typography ------------------------------------------------------
+     One family, differentiated by weight and tracking rather than by a
+     second typeface. The platform UI face is what a person's banking app,
+     brokerage and spreadsheet already use, so figures here look like
+     figures rather than like a headline. --font-mono is for ledgers and
+     statements, where columns must align character for character. */
+  --font-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
 
   --text-xs: 0.6875rem;   /* 11px — eyebrow / meta */
   --text-sm: 0.8125rem;   /* 13px — secondary */
   --text-base: 0.875rem;  /* 14px — body / UI default */
   --text-md: 1rem;        /* 16px */
-  --text-lg: 1.25rem;     /* 20px */
-  --text-xl: 1.625rem;    /* 26px */
-  --text-2xl: 2.25rem;    /* 36px — hero figure */
+  --text-lg: 1.1875rem;   /* 19px */
+  --text-xl: 1.5rem;      /* 24px */
+  --text-2xl: 2rem;       /* 32px — hero figure */
 
   --leading-tight: 1.15;
-  --leading-normal: 1.5;
-  --leading-loose: 1.65;
-  --tracking-eyebrow: 0.08em;
+  --leading-normal: 1.45;
+  --leading-loose: 1.55;
+  --tracking-eyebrow: 0.09em;
+  --tracking-figure: -0.02em;   /* big numbers set tight, the way data does */
 
   /* ---- Space / shape --------------------------------------------------- */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  --space-7: 48px;
+  --space-5: 22px;
+  --space-6: 30px;
+  --space-7: 44px;
 
-  --radius-sm: 8px;
+  /* Small radii. 8/12/16 made every element read as a bubble; a statement
+     is made of rules and boxes, not lozenges. The pill survives for chips
+     and toggles, where it is doing real work. */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-pill: 999px;
+
   /* Motion (D-137). One easing and two durations for the whole app, so
      nothing invents its own timing and everything feels like one product.
      The curve settles rather than bouncing: quick out, soft landing. */
   --ease: cubic-bezier(.2, .7, .3, 1);
   --dur-fast: 110ms;
   --dur: 180ms;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-pill: 999px;
 
-  --shadow-card: 0 1px 2px rgba(5, 15, 34, 0.4);
-  --shadow-raised: 0 8px 24px rgba(5, 15, 34, 0.45);
+  --shadow-card: none;
+  --shadow-raised: 0 6px 20px rgba(0, 0, 0, 0.45);
 
   --measure: 480px;   /* canonical room column width */
 
   /* Every interactive control in a field row is exactly this tall, so an
      input and a borrowed-value chip can sit side by side and line up. */
-  --control-height: 39px;
+  --control-height: 38px;
 }
 
 /* ==========================================================================
@@ -128,7 +146,11 @@ body.slaf {
   margin: 0;
   min-height: 100vh;
   background: var(--color-bg);
-  background-image: var(--color-bg-gradient);
+  /* Tabular figures for the whole app. Money in a column that does not line
+     up is the single clearest tell that a page was not built for numbers,
+     and it costs nothing in prose. D-154. */
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
   color: var(--color-text);
   font-family: var(--font-body);
   font-size: var(--text-base);
@@ -144,14 +166,33 @@ body.slaf {
 
 h1, h2, h3, .slaf-display {
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 650;
   line-height: var(--leading-tight);
+  /* One family means weight and tracking carry the hierarchy instead of a
+     second typeface. Headings set tight; that is what makes them read as
+     headings rather than as decoration. D-154. */
+  letter-spacing: -0.015em;
   margin: 0;
 }
 
-h1 { font-size: var(--text-xl); }
+h1 { font-size: var(--text-xl); letter-spacing: -0.022em; }
 h2 { font-size: var(--text-lg); }
 h3 { font-size: var(--text-md); }
+
+/* The one figure a room leads with. Set tight, tabular, and heavier than the
+   text around it — the way a terminal or a brokerage sets a headline number. */
+.room-number, .slaf-figure, .headline-figure {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-figure);
+  font-weight: 620;
+}
+
+/* Ledgers, statements and any column of money. */
+.slaf-ledger, .slaf-ledger td, .slaf-ledger th, .slaf-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-sm);
+}
 
 .slaf-eyebrow {
   font-size: var(--text-xs);
@@ -322,18 +363,25 @@ h3 { font-size: var(--text-md); }
 .slaf-btn:hover { border-color: var(--color-border-active); }
 
 .slaf-btn--primary {
-  /* Dark label on --color-accent measured 4.04:1, under the 4.5 AA floor.
-     Lightening the fill rather than the text takes it to 7.6:1 and makes the
-     primary action read as primary, which is its job. --color-accent itself
-     is untouched: it is a border and chip colour in a hundred places where
-     it is not carrying text. D-137. */
-  background: var(--sapphire-300);
-  border-color: var(--sapphire-300);
+  /* D-137 solved a contrast failure by LIGHTENING the fill and keeping a
+     dark label — correct then, but it made the primary action a bright pill,
+     which is most of why the app read as a toy. D-154 goes the other way:
+     a deep, solid blue with a white label. White on --sapphire-600 measures
+     6.70:1, and on the hover fill 4.88:1, so both clear AA — and a saturated
+     rectangle reads as a button in a financial product rather than a sticker.
+     --color-accent itself is untouched: it is a border and chip colour in a
+     hundred places where it carries no text. */
+  background: var(--sapphire-600);
+  border-color: var(--sapphire-600);
   color: var(--color-accent-contrast);
   font-weight: 600;
+  /* A button is not a link. The underline came from the anchor rules and
+     made every call to action look like body copy someone had highlighted. */
+  text-decoration: none;
 }
 
-.slaf-btn--primary:hover { background: var(--sapphire-200); border-color: var(--sapphire-200); }
+.slaf-btn--primary:hover { background: var(--sapphire-500); border-color: var(--sapphire-500); }
+a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 
 .slaf-btn--quiet {
   background: transparent;
@@ -1014,4 +1062,29 @@ a:hover { color: var(--sapphire-100); }
 @media (max-width: 480px) {
   .slaf-walk-acts { flex-direction: column; align-items: stretch; }
   .slaf-walk-acts > .slaf-btn { text-align: center; }
+}
+
+/* ---- Per-room export (D-155) ---------------------------------------------
+   Quiet by design: it sits under the progress strip in every room's footer,
+   and it is the last thing on the page rather than a call to action. */
+.slaf-export { margin-top: var(--space-4); padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border); }
+.slaf-export-h { display: block; font-size: var(--text-xs); text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
+.slaf-export-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+.slaf-export-acts > * { min-width: 0; }
+.slaf-export-note { font-size: var(--text-xs); color: var(--color-text-faint);
+  margin: var(--space-2) 0 0; line-height: var(--leading-loose); }
+
+/* Print is an export too. On paper nobody needs the navigation, the undo
+   pair or the export buttons themselves — they need the figures. */
+@media print {
+  body.slaf { background: #fff; color: #111; }
+  .slaf-hops-host, .slaf-menu, .slaf-undo, .slaf-export, .slaf-walk,
+  .room-back, #slaf-notapply { display: none !important; }
+  .slaf-card, .bay, .drawer { border-color: #bbb !important; break-inside: avoid; }
+  a { color: #111 !important; text-decoration: none; }
+  details { open: true; }
+  details > summary { display: none; }
+  details > *:not(summary) { display: block !important; }
 }

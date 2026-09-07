@@ -8505,6 +8505,128 @@ section('The D&D folder\'s vendored copies');
 })();
 
 /* ==========================================================================
+   The statements, and the per-room export (D-154 · D-155 · D-156)
+   ========================================================================== */
+section('Statements and per-room export');
+(function () {
+  const St = require(path.join(ROOT, 'engines/statements.js'));
+  const X = require(path.join(ROOT, 'shared/roomexport.js'));
+  const Schema = require(path.join(ROOT, 'shared/schema.js'));
+  const demo = Demo.build();
+
+  /* -- the statements agree with the rooms they came from ----------------- */
+  const bal = St.balanceSheet(demo, {});
+  checkTrue('the balance sheet builds', Money.isOk(bal));
+  /* The dashboard's net worth and the balance sheet's must be the same
+     number, because they are the same number. This caught the first draft
+     summing three asset lines itself and refusing when one was blank, while
+     Schema.totalAssetsCents was answering happily. */
+  check('net worth matches Schema.totalAssets − totalDebt',
+    bal.value.netWorth,
+    Schema.totalAssetsCents(demo).value - Schema.totalDebtCents(demo).value);
+  check('...which on the demo persona is $35,900', bal.value.netWorth, 3590000);
+
+  const inc = St.incomeStatement(demo, {});
+  check('what came in is gross plus the match',
+    inc.value.revenueTotal.cents,
+    Schema.grossAnnualIncomeCents(demo).value + Schema.employerMatchCents(demo).value);
+
+  const cf = St.cashFlowStatement(demo, {});
+  /* contributionPercent is a PERCENT. Reading it as a fraction put the demo
+     persona's contributions at $432,000 on a $72,000 salary — 100x out and
+     visible only because the total was absurd. 4% of $72,000 = $2,880. */
+  const put = cf.value.investing[0];
+  check('contributions are read as a percent, not a fraction', put.cents, 288000);
+  checkTrue('...which is exactly 4% of gross',
+    put.cents === Math.round(Schema.grossAnnualIncomeCents(demo).value * 4 / 100));
+
+  /* -- the basis is never silently a record ------------------------------- */
+  check('with no closed months the basis is an estimate', St.period(demo).basis, 'standing');
+  checkTrue('...and the review says so out loud', !!St.review(demo, {}).value.caveat);
+  (function () {
+    const h = Demo.build();
+    h.ledger = { months: [{ month: '2026-01', actual: { expenses: 100000 } }] };
+    check('one closed month makes it a record', St.period(h).basis, 'recorded');
+    check('...and the caveat goes away', St.review(h, {}).value.caveat, null);
+  })();
+
+  /* -- empty is not zero, in a statement most of all ---------------------- */
+  (function () {
+    const empty = Schema.createHousehold({});
+    check('no income means no income statement', St.incomeStatement(empty, {}).status, 'incomplete');
+    const b = St.balanceSheet(empty, {});
+    checkTrue('an empty balance sheet refuses rather than showing zero net worth',
+      !Money.isOk(b) || b.value.netWorth === null);
+    const partial = Schema.createHousehold({ assets: [Schema.createAsset({ category: 'cash', valueCents: 500000 })] });
+    const pb = St.balanceSheet(partial, {});
+    checkTrue('a half-filled balance sheet names what it is waiting on',
+      !pb.value.netWorthComplete && pb.value.liabilitiesTotal.missing.length > 0,
+      'a total that sums around a blank states the wrong thing, not a smaller thing');
+  })();
+
+  /* -- the export ---------------------------------------------------------- */
+  (function () {
+    const rows = X.rows('statement', demo);
+    checkTrue('a room exports the figures it reads', rows.length >= 3);
+    checkTrue('every row carries a status', rows.every(r => r.status));
+    checkTrue('an entered figure carries machine-readable cents',
+      rows.filter(r => r.status === 'entered').every(r => Money.isEntered(r.cents)),
+      'a blank cents column is the reason this was worth checking');
+
+    const blank = X.rows('statement', Schema.createHousehold({}));
+    checkTrue('an unentered figure exports as EMPTY, never as 0',
+      blank.every(r => r.cents === null && r.value === ''),
+      'a spreadsheet that reads a blank as zero and averages it is the harm here');
+    check('...and says which it is', blank[0].status, 'not entered');
+
+    const csv = X.csv('statement', Schema.createHousehold({}), { version: '1.0', on: '2026-01-01' });
+    checkTrue('the CSV warns that blank is not zero in its own header',
+      /NOT ENTERED\. It does not mean zero/.test(csv));
+    checkTrue('...and never writes a bare 0 for a missing figure',
+      !/,0,/.test(csv.split('\n').slice(4).join('\n')));
+
+    const parsed = JSON.parse(X.json('statement', demo, { version: '1.0' }));
+    check('the JSON names its room', parsed.room.id, 'statement');
+    checkTrue('...and carries the same warning', /does not mean zero/.test(parsed.note));
+
+    /* Every room gets one, from the one mount point. */
+    const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+    checkTrue('the export mounts from the shared room footer',
+      /RoomExport\.mount\(roomId, box\)/.test(prog));
+    const pages = fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f))
+      .map(f => 'rooms/' + f).concat(['index.html', 'map.html']);
+    const gap = pages.filter(f => {
+      const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+      return /shared\/progress\.js/.test(src) && !/shared\/roomexport\.js/.test(src);
+    });
+    checkTrue('every page with a footer can export itself', gap.length === 0, 'missing: ' + gap.join(', '));
+  })();
+
+  /* -- the look (D-154) ---------------------------------------------------- */
+  (function () {
+    const css = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+    checkTrue('the shared theme no longer sets a display serif',
+      !/--font-display:[^;]*Fraunces/.test(css),
+      'a decorative serif carrying every figure is what made this read as a toy');
+    checkTrue('figures are tabular across the whole app',
+      /font-variant-numeric: tabular-nums/.test(css));
+    checkTrue('radii are small enough to read as boxes, not lozenges',
+      /--radius-md:\s*6px/.test(css) && /--radius-sm:\s*4px/.test(css));
+    /* D&D wants the character the shared theme gave up — and gets it back in
+       its own pages, so theme.css can stay byte-identical. */
+    const dndPages = fs.readdirSync(path.join(ROOT, 'dnd')).filter(f => /\.html$/.test(f));
+    checkTrue('every D&D page restores its own typefaces',
+      dndPages.every(f => /--font-display:\s*'Fraunces'/.test(
+        fs.readFileSync(path.join(ROOT, 'dnd', f), 'utf8'))),
+      'the game keeps its serif; the statements do not');
+    const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+    checkTrue('the dashboard band rides on the tile, not the figure',
+      /\.inst\.is-good \{ border-left-color/.test(html) && !/\.inst \.big\.is-good/.test(html),
+      'six differently-coloured numbers in one grid read as a game board');
+  })();
+})();
+
+/* ==========================================================================
    Front Doors (D-153) — the same rooms, arranged twenty ways
    --------------------------------------------------------------------------
    The danger with twenty arrangements is that one of them quietly loses a

@@ -123,15 +123,27 @@
   @media (max-width: 520px) { .instruments { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .inst { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; min-width: 0; background: var(--color-surface); }
   .inst .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); line-height: 1.25; overflow-wrap: anywhere; }
-  .inst .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .inst .big { font-family: var(--font-display); font-size: var(--text-xl); font-weight: 620; letter-spacing: var(--tracking-figure); font-variant-numeric: tabular-nums; margin-top: var(--space-2); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .inst .big.is-incomplete { font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text-faint); white-space: normal; }
   .inst .three-d { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; margin-top: var(--space-2); font-size: 10px; color: var(--color-text-faint); }
   .inst .three-d b { display: block; font-weight: 600; color: var(--color-text); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .inst .three-d span:first-child b { color: var(--sapphire-200); }
   .inst .three-d span:last-child b { color: #e4b04a; }
-  .inst .big.is-good { color: var(--color-positive); }
-  .inst .big.is-watch { color: var(--color-caution); }
-  .inst .big.is-out { color: var(--color-critical-text); }
+  /* THE FIGURE STAYS NEUTRAL. Colouring the number itself put red, amber,
+     green and blue in one six-tile grid, which reads as a game board rather
+     than a panel of readings — and it spends the loudest thing on the page
+     (a big number) on a signal that a 3px rule carries perfectly well. The
+     band now shows as a rule down the left edge of the tile, so the grid
+     scans in one pass and the figures stay comparable. D-154. */
+  .inst { border-left-width: 3px; border-left-color: var(--color-border); }
+  .inst.is-good { border-left-color: var(--color-positive); }
+  .inst.is-watch { border-left-color: var(--color-caution); }
+  .inst.is-out { border-left-color: var(--color-critical); }
+  .inst .band { font-size: var(--text-xs); letter-spacing: .06em; text-transform: uppercase;
+    margin-top: var(--space-1); }
+  .inst.is-good .band { color: var(--color-positive); }
+  .inst.is-watch .band { color: var(--color-caution); }
+  .inst.is-out .band { color: var(--color-critical-text); }
   .inst .delta { font-size: var(--text-xs); font-variant-numeric: tabular-nums; color: var(--color-text-faint); margin-top: var(--space-1); min-height: 1.2em; }
   .inst .delta.is-up { color: var(--color-positive); }
   .inst .delta.is-down { color: var(--color-critical); }
@@ -439,6 +451,7 @@
 <script src="shared/ownership.js"></script>
 <script src="shared/guide.js"></script>
 <script src="shared/progress.js"></script>
+<script src="shared/roomexport.js"></script>
 <script src="shared/undo.js"></script>
 <script src="shared/demo-persona.js"></script>
 <script src="engines/projection.js"></script>
@@ -660,7 +673,11 @@
           dText = 'no change' + since;
         }
       }
-      return '<div class="inst' + (row.isLead ? ' is-lead' : '') + '" id="inst-' + row.id + '"><a href="' + opens(row.id) + '" title="Open ' + esc(row.label) + '">'
+      /* The band rides on the TILE, not on the figure (D-154): a 3px rule
+         down the edge says the same thing as a coloured number without
+         spending the page's loudest element on it, and it leaves all six
+         figures the same colour so they can be compared at a glance. */
+      return '<div class="inst' + (row.isLead ? ' is-lead' : '') + (ok ? zone : '') + '" id="inst-' + row.id + '"><a href="' + opens(row.id) + '" title="Open ' + esc(row.label) + '">'
         /* The cap used to read "THRUST · SAVINGS RATE" and, at 390px with
            nowrap and an ellipsis, four of the six truncated mid-word. The
            metaphor is also private language: "Savings rate" is the phrase a
@@ -668,7 +685,7 @@
            said once, in the section's own line, instead of prefixing every
            tile. D-145. */
         + '<span class="cap" title="' + esc(row.cap) + '">' + esc(row.label) + '</span>'
-        + '<span class="big' + (ok ? zone : ' is-incomplete') + '">'
+        + '<span class="big' + (ok ? '' : ' is-incomplete') + '">'
         + esc(ok ? Instruments.format(row) : (row.result.reason || Money.EM_DASH)) + '</span>'
         + '<span class="delta' + dCls + '">' + esc(dText) + '</span>'
         + '<span class="sub">' + esc(ok && SUB[row.id] ? SUB[row.id](row.result, c) : '') + '</span>'

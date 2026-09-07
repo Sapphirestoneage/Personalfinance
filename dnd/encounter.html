@@ -36,6 +36,15 @@
   for T10's type chart but nothing reads it as a type yet.
 -->
 <style>
+  /* Dungeons & Dividends keeps the characterful faces the shared theme gave
+     up in D-154. A game wants a display serif; a financial statement does
+     not. theme.css stays byte-identical to the SPARKS copy — this override
+     lives here, in the pages that want it. */
+  :root {
+    --font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+    --font-body: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
   .wrap { max-width: 1080px; margin: 0 auto; padding: var(--space-3) var(--space-3) var(--space-7); }
   .topbar { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); }
   .back { color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); }

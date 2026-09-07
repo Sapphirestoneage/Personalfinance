@@ -8503,6 +8503,162 @@ New files: `data/layouts.json`, `engines/layouts.js`, `rooms/doors.html`
 
 ---
 
+## D-154 — It looked like a toy, and here is exactly why
+
+"I don't love the visuals — it feels almost babyish compared to what real
+financial apps look like."
+
+Fair, and diagnosable rather than vague. Six specific things were doing it:
+
+1. **A decorative serif was carrying every figure.** `--font-display` was
+   Fraunces, so `6.1%`, `$35,900`, `3 months` and `Step 2` were all set in a
+   soft, wobbly display face. This was the single biggest offender: no amount
+   of layout survives numbers that look like a storybook.
+2. **The body face was Space Grotesk** — quirky and geometric, which reads
+   friendly rather than serious.
+3. **Four saturated hues in one six-tile grid.** The instrument figures were
+   coloured by band, so red, amber, green and blue appeared side by side.
+   That is a game board.
+4. **Everything was blue.** `--color-text` was `--sapphire-050`, the ground
+   was `#081833`, the borders were blue — every surface added hue.
+5. **8 / 12 / 16px radii,** so every element read as a lozenge.
+6. **No tabular figures,** so no column of money ever lined up.
+
+### What replaced them
+
+**One typeface, the platform's own.** No display serif at all. Hierarchy now
+comes from weight and tracking, which is what serious financial products do —
+and it costs nothing to load. `--font-mono` joins for ledgers.
+
+**Tabular figures on `body.slaf`.** Money in a column that does not line up is
+the clearest possible tell that a page was not built for numbers.
+
+**A neutral graphite ground** with tints that are grey rather than blue, so a
+card nested in a card does not accumulate hue. Every text colour was measured
+against all three grounds it can sit on; the weakest is `--color-text-faint`
+at **5.25:1**, so the D-144 AA commitment survives the change with margin.
+
+**Small radii** — 4 / 6 / 10 — and `--shadow-card: none`.
+
+**The band moved off the figure and onto the tile.** A 3px rule down the left
+edge says exactly what a coloured number said, without spending the loudest
+element on the page on it, and it leaves all six figures the same colour so
+they can actually be compared.
+
+### Two things this broke, and both were caught
+
+**I introduced a contrast failure.** Setting `--color-accent-contrast` to
+white while the primary button still filled with `--sapphire-300` gave white
+on light blue: **2.60:1**. The fix went the other way from D-137 — a deep
+`--sapphire-600` fill with a white label, **6.70:1** at rest and **4.88:1** on
+hover. D-137 solved the same problem by lightening the fill and keeping a dark
+label; that was right then and it is what made the primary action a bright
+pill, which is most of why the app read as a toy.
+
+**A test failed for the wrong reason, and it was the test.**
+`test/rooms/motion.js` asserted the *mechanism* — that the fill was
+`--sapphire-300` — so it failed even though contrast had gone **up**. It now
+parses whatever the rule actually sets, resolves the tokens and computes the
+ratio, which is what it always meant. Verified it can still fail: putting the
+old pairing back reports `#FFFFFF on #6AA0FF`.
+
+**D&D keeps its own voice.** `dnd/shared/theme.css` must stay byte-identical,
+so the override lives in the eleven `dnd/*.html` pages, which restore Fraunces
+and Space Grotesk for themselves. A game wants a display serif. A balance
+sheet does not.
+
+Verified: **335 room-widths** clean after the change — nothing scrolls
+sideways, no tap target under 32px, no clipped text.
+
+---
+
+## D-155 — Every room, on its own, as a file
+
+Your Data exports the whole household. That is right for a backup and wrong
+for everything else: nobody wants to send an accountant their entire life to
+ask about one figure. So `shared/roomexport.js` gives every room CSV, JSON and
+Print — mounted from `Progress.mount`, the same single lever the walk strip
+and the situation notice use, so no room can be forgotten and none needed
+editing.
+
+**What an export may contain:** only what the room already shows. An export is
+not a back door to figures a room does not display.
+
+**Empty is not zero, in the file too — and this is where it matters most.** A
+CSV is the easiest place in the world for a blank to become a `0` and then get
+averaged. Every unentered figure exports as an **empty cell** with a `status`
+of `not entered`, the header says so in plain words, and a test asserts no
+bare `0` is ever written for a missing figure. The four states a spreadsheet
+cell cannot express on its own — entered, guessed, not entered, not
+applicable — get their own column.
+
+One bug worth recording: the machine-readable amount lives on
+`describe().result.value`, not on a `raw` key. Reading the key that was never
+there left the entire cents column silently blank — the exact failure mode the
+module exists to prevent, in the module itself.
+
+`@media print` is part of this: on paper the navigation, undo pair and export
+buttons are hidden, drawers are forced open, and the page goes to ink on white.
+
+---
+
+## D-156 — Your Statements: the three documents, and the basis printed on them
+
+An income statement, a cash flow statement and a balance sheet, plus the same
+period written out in sentences. `engines/statements.js` **arranges** — it
+does not calculate anything twice. Income comes from Income, spending from
+Cash Flow, assets and debts from The Statement and Debt Payoff, contributions
+from the same line Savings Rate uses.
+
+### The basis is part of the answer, printed at the top
+
+- **`recorded`** — built from months actually closed in Budget. A record.
+- **`standing`** — annualised from the figures you keep current. An
+  **estimate of a typical year, not a record of one**, and the page says so in
+  the same size as the heading, not in a footnote. A company would not file it.
+
+### Two bugs found by reading my own output
+
+**Contributions were 100× too large.** `contributionPercent` is stored as a
+percent (4 means 4%). Writing `gross × percent` instead of
+`gross × percent / 100` put the demo persona at **$432,000** of contributions
+on a $72,000 salary. `engines/cashflow.js:416` is the one place that
+conversion belongs and the fix matches it exactly. 4% of $72,000 = **$2,880**.
+
+**The balance sheet refused when nothing else was owned.** Summing three asset
+lines myself meant an unentered "everything else owned" made the whole assets
+side incomplete and net worth refuse — while the dashboard, reading
+`Schema.totalAssetsCents`, showed $35,900 quite happily. "Nothing else owned"
+is a real answer, not a missing one. The total now comes from that same
+function and the itemised lines are a breakdown of it. Net worth is
+**$35,900**, and a test pins it to `totalAssets − totalDebt` so the two can
+never drift.
+
+### What the layout is doing
+
+Negatives in parentheses, figures right-aligned and tabular, a rule under each
+subtotal and a double rule under the grand total — accounting conventions,
+used because they are genuinely the clearest way to show this, not as costume.
+A missing figure prints an em dash and **takes its total with it**: the
+subtotal says which line it is waiting on rather than summing around a blank.
+A balance sheet that treats an unentered debt as zero does not understate a
+number, it states the wrong thing.
+
+### Compatibility note
+
+**Stored shape: unchanged.** `rooms/statements.html` writes nothing at all —
+no input on the page. `meta.frontDoor` and `meta.walk` are untouched. The room
+is `kind: 'read'` at order 4.5 and owns no field, so `shared/ownership.js` is
+unchanged too. A future room may read `engines/statements.js` freely; it must
+not treat a `standing` basis as a record of a period.
+
+New files: `engines/statements.js`, `rooms/statements.html`,
+`shared/roomexport.js`. `data/layouts.json` → v1.0.2, placing the new room in
+all twenty arrangements — the D-153 test caught it missing from every one of
+them the moment the registry row landed, which is exactly what it is for.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

@@ -1,6 +1,6 @@
 {
   "id": "layouts",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "asOf": "2026-09-07",
   "source": "Twenty arrangements of the same room set, drawn as a comparison set before any was built. Seventeen are editorial proposals — the grouping of rooms into bays is a judgement call, not a measurement. Three are not: \"path\" is the registry order the app already ships, \"situation\" is what shared/gate.js already computes, and \"depends\" is the dependency graph read out of shared/registry.js needs plus shared/ownership.js owners.",
   "confidence": "unverified",
@@ -29,6 +29,7 @@
             "budget",
             "variance",
             "financial-snapshot",
+            "statements",
             "statement",
             "savings-rate",
             "sleep-at-night",
@@ -120,6 +121,7 @@
             "budget",
             "variance",
             "financial-snapshot",
+            "statements",
             "statement",
             "sleep-at-night",
             "fire-lab",
@@ -212,6 +214,7 @@
           "rooms": [
             "dashboard",
             "financial-snapshot",
+            "statements",
             "health",
             "ratios",
             "runway",
@@ -444,6 +447,7 @@
             "history",
             "get-help",
             "financial-snapshot",
+            "statements",
             "doors"
           ],
           "note": "The verbs have no home for the rooms that are about the app rather than about money.",
@@ -484,7 +488,8 @@
             "income",
             "debt-payoff",
             "refresh",
-            "financial-snapshot"
+            "financial-snapshot",
+            "statements"
           ]
         },
         {
@@ -585,6 +590,7 @@
             "variance",
             "calendar",
             "financial-snapshot",
+            "statements",
             "dashboard"
           ],
           "note": "You cannot start until these are entered."
@@ -712,6 +718,7 @@
           "rooms": [
             "dashboard",
             "financial-snapshot",
+            "statements",
             "walk",
             "refresh",
             "start",
@@ -853,6 +860,7 @@
             "ratios",
             "exercises",
             "financial-snapshot",
+            "statements",
             "fire-lab",
             "fire",
             "foo-ladder",
@@ -926,6 +934,7 @@
             "dashboard",
             "walk",
             "financial-snapshot",
+            "statements",
             "doors"
           ],
           "note": "Where you come in and hang your coat."
@@ -1077,7 +1086,8 @@
             "income",
             "refresh",
             "debt-payoff",
-            "financial-snapshot"
+            "financial-snapshot",
+            "statements"
           ]
         },
         {
@@ -1188,6 +1198,7 @@
             "ratios",
             "statement",
             "financial-snapshot",
+            "statements",
             "variance",
             "quick-math"
           ]
@@ -1364,6 +1375,7 @@
             "what-if-life",
             "housing",
             "financial-snapshot",
+            "statements",
             "ratios",
             "health"
           ]
@@ -1497,6 +1509,7 @@
             "variance",
             "calendar",
             "financial-snapshot",
+            "statements",
             "sleep-at-night",
             "refresh",
             "walk",
@@ -1558,6 +1571,7 @@
           "name": "Layer 2",
           "rooms": [
             "financial-snapshot",
+            "statements",
             "statement",
             "savings-rate",
             "sleep-at-night",
@@ -1716,6 +1730,7 @@
             "ratios",
             "health",
             "financial-snapshot",
+            "statements",
             "dashboard"
           ]
         },
@@ -1754,6 +1769,7 @@
             "quick-math",
             "refresh",
             "financial-snapshot",
+            "statements",
             "dashboard",
             "health",
             "credit",
@@ -1887,6 +1903,7 @@
             "savings-rate",
             "statement",
             "financial-snapshot",
+            "statements",
             "variable-income",
             "variance",
             "quick-math",
@@ -2030,6 +2047,7 @@
           "rooms": [
             "dashboard",
             "financial-snapshot",
+            "statements",
             "ratios",
             "health",
             "fire",
@@ -2092,6 +2110,7 @@
             "calendar",
             "savings-rate",
             "financial-snapshot",
+            "statements",
             "credit",
             "runway",
             "accounts"
@@ -2236,7 +2255,8 @@
             "variance",
             "refresh",
             "dashboard",
-            "financial-snapshot"
+            "financial-snapshot",
+            "statements"
           ]
         },
         {

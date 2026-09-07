@@ -129,6 +129,22 @@
       "order": 4
     },
     {
+      "id": "statements",
+      "title": "Your Statements",
+      "file": "rooms/statements.html",
+      "reads": [
+        "grossAnnualIncome",
+        "monthlyExpenses",
+        "cashSavings",
+        "investments",
+        "totalDebt"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 4.5
+    },
+    {
       "id": "statement",
       "title": "The Statement",
       "file": "rooms/statement.html",
