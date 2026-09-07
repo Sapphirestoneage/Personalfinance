@@ -58,7 +58,11 @@ module.exports = function (t) {
   /* ---- It has to be readable ------------------------------------------- */
   /* The surface tokens are translucent by design; a drawer using one shows
      the page through itself, which is what the first build did. */
-  checkTrue('the panel is opaque, not a translucent surface token', /\.slaf-menu \{[\s\S]{0,400}background: var\(--navy-850\);/.test(css));
+  /* Named the token rather than the property, so it kept passing right up
+     until the token was deleted — and then failed for the wrong reason. The
+     opacity check now lives in test/run.js, where it resolves whatever token
+     the rule actually names. D-157. */
+  checkTrue('the panel names a solid background', /\.slaf-menu \{[\s\S]{0,500}background: var\(--color-panel\);/.test(css));
   checkTrue('the page behind does not scroll while the drawer is open', /html\.slaf-menu-open, html\.slaf-menu-open body \{ overflow: hidden; \}/.test(css));
   checkTrue('the column grows on a desktop rather than staying a phone ribbon', /@media \(min-width: 1080px\)[\s\S]{0,80}--measure: 620px/.test(css));
 };

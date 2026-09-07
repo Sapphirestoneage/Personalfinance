@@ -8657,6 +8657,107 @@ New files: `engines/statements.js`, `rooms/statements.html`,
 all twenty arrangements — the D-153 test caught it missing from every one of
 them the moment the registry row landed, which is exactly what it is for.
 
+## D-157 — The menu you could read the page through
+
+The repo owner opened the menu on a phone and sent a photograph of it: the
+drawer's twenty-odd room names sitting directly on top of the dashboard's
+headline, both legible, neither readable. It looked like a compositing bug. It
+was a deleted variable.
+
+`.slaf-menu` had said `background: var(--navy-850)` since the drawer was built,
+with a comment above it explaining that a translucent surface token would let
+the page show through. D-154 replaced the navy scale with the ink scale and did
+not replace that reference. **An undefined custom property resolves to nothing** —
+not to a fallback, not to an error, not to a warning in the console. The
+declaration became `background:` with no value, the drawer inherited
+`transparent`, and every automated check in this repo passed.
+
+That last part is the actual finding. It is valid CSS. It throws nothing. It
+renders. `test/run.js`, `test/forms.js` and `test/responsive.js` all went green
+across the change, and the only instrument that caught it was a person looking
+at a screen.
+
+### What was actually broken
+
+Fourteen `var(--navy-*)` references survived D-154:
+
+| File | References | What it broke |
+|---|---|---|
+| `shared/theme.css` | 5 | the menu drawer; `<select>` popup options; chart panel, dot and Sankey node strokes |
+| `foo-ladder.js` | 6 | unlit gem facets, the gem core, the toggle's off track |
+| `rooms/statement.html` | 1 | the "never" bar in the tax ladder |
+| `index.html` | 1 | the radar dot outline |
+
+Only the drawer was catastrophic; the others were strokes and fills that fell
+back to nothing and merely looked wrong. All fourteen now point at ink-scale
+tokens.
+
+### `--color-panel`, and the distinction it exists to make
+
+The surface tokens are deliberately translucent — `--color-surface` is
+`rgba(124, 140, 166, 0.06)` so a card picks up the page beneath it and the
+whole screen reads as one material. That is right for a surface **on** the
+page and wrong for a surface **over** it. There was no token for the second
+case, which is why the drawer had a hardcoded navy and a comment apologising
+for it.
+
+    --color-panel: #12151B;   /* opaque */
+
+Anything that floats over content — the menu drawer, a native select's popup,
+a chart panel — takes `--color-panel`. Anything that sits in the flow takes a
+surface token. A new overlay that reaches for `--color-surface` is a bug, and
+the comment in `shared/theme.css` says so at the definition.
+
+### Two more things the fix turned up
+
+`--text-3xl` was **used and never defined**. The Timeline and the Walk-Through
+each lead with a single large figure, and both were rendering it at the
+browser's default 16px — I wrote the rooms and never noticed, because I checked
+them in a window where 16px did not look obviously wrong beside the copy. It is
+now `2.5rem`, matching the `--text-2xl: 2rem` step.
+
+And `test/rooms/menu.js` had asserted `background: var(--navy-850)` — the token
+*name*, not the property. It kept passing while the drawer was correct, then
+failed for the wrong reason once the token vanished, telling me a string had
+changed rather than that the menu was see-through. This is the second time in
+two sessions a test named a mechanism instead of a property (the first was the
+primary button's contrast, D-154). Both are rewritten to assert the thing that
+matters.
+
+### The check that would have caught it
+
+`test/run.js` gains **"No CSS variable is used without being defined"**: it
+walks every `.css`, `.html` and `.js` file in the repo, collects every
+`--token:` definition from `shared/theme.css` plus whatever the file declares
+itself, and fails on any `var(--x)` that resolves to nothing.
+
+Two things are explicitly *not* orphans, because a check that cries wolf gets
+switched off:
+
+- `var(--leading-snug, 1.35)` — a fallback **is** a definition at the use site.
+- a token named inside a comment — that is prose, not CSS. Block and line
+  comments are stripped before matching.
+
+It found `--text-3xl` on its first run. Re-adding `--navy-850` to `index.html`
+makes it fail with `index.html uses --navy-850`, so it bites.
+
+Alongside it, a second check resolves `.slaf-menu`'s background *through*
+whatever token it names and asserts the resolved value is opaque — so the
+drawer stays solid no matter which token a future change points it at. Setting
+`--color-panel` to `rgba(18, 21, 27, 0.5)` fails it with the resolved value
+printed.
+
+### Verified
+
+Chromium at 412×915 with touch, drawer opened by tap on `index.html` and
+`rooms/statement.html`: computed background `rgb(18, 21, 27)`, opacity `1`, no
+console errors, and the screenshot shows the dashboard fully hidden. The D&D
+rooms do not render a `.slaf-menu` at all — only the vendored stylesheet
+carries the rule — so there was nothing to fix on that side beyond keeping the
+copy byte-identical.
+
+No stored shape changed. `getProfile()` / `updateProfile()` are untouched.
+
 ---
 
 # The Dungeons & Dividends entries

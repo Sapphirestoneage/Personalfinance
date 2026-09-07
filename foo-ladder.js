@@ -447,13 +447,13 @@
          + ' L' + (cx + rOuter * Math.cos(a2)) + ',' + (cy + rOuter * Math.sin(a2))
          + ' L' + (cx + rInner * Math.cos(a2)) + ',' + (cy + rInner * Math.sin(a2))
          + ' L' + (cx + rInner * Math.cos(a1)) + ',' + (cy + rInner * Math.sin(a1)) + ' Z',
-        stroke: 'var(--navy-850)', 'stroke-width': '1.5',
+        stroke: 'var(--ink-950)', 'stroke-width': '1.5',
         style: { transition: 'fill 500ms ease' }
       });
       ui.facets.push(p);
       svg.appendChild(p);
     }
-    ui.gemCore = h('circle', { cx: cx, cy: cy, r: rInner, stroke: 'var(--navy-850)',
+    ui.gemCore = h('circle', { cx: cx, cy: cy, r: rInner, stroke: 'var(--ink-950)',
       'stroke-width': '1.5', style: { transition: 'fill 500ms ease' } });
     ui.gemText = h('text', { x: cx, y: cy + 5, 'text-anchor': 'middle', 'font-size': '15',
       'font-weight': '600', 'font-family': 'var(--font-body)' });
@@ -726,11 +726,11 @@
     /* gem */
     var lit = completed === null ? 0 : completed;
     ui.facets.forEach(function (p, i) {
-      p.setAttribute('fill', i < lit ? 'var(--sapphire-500)' : 'var(--navy-700)');
+      p.setAttribute('fill', i < lit ? 'var(--sapphire-500)' : 'var(--ink-700)');
       p.setAttribute('opacity', i < lit ? '1' : '0.55');
     });
-    ui.gemCore.setAttribute('fill', lit === 9 ? 'var(--sapphire-200)' : 'var(--navy-750)');
-    ui.gemText.setAttribute('fill', lit === 9 ? 'var(--navy-850)' : 'var(--sapphire-200)');
+    ui.gemCore.setAttribute('fill', lit === 9 ? 'var(--sapphire-200)' : 'var(--ink-800)');
+    ui.gemText.setAttribute('fill', lit === 9 ? 'var(--ink-950)' : 'var(--sapphire-200)');
     ui.gemText.textContent = completed === null ? '—' : lit + '/9';
     ui.gem.setAttribute('aria-label', completed === null
       ? 'Not enough entered to score the ladder' : lit + ' of 9 steps complete');
@@ -758,7 +758,7 @@
     /* toggles */
     ui.toggles.forEach(function (t) {
       var on = t.get();
-      t.track.style.background = on ? 'var(--color-accent)' : 'var(--navy-600)';
+      t.track.style.background = on ? 'var(--color-accent)' : 'var(--ink-700)';
       t.knob.style.left = on ? '18px' : '2px';
       t.btn.setAttribute('aria-pressed', String(on));
     });

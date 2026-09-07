@@ -45,6 +45,12 @@
   --color-surface: rgba(124, 140, 166, 0.06);
   --color-surface-raised: rgba(124, 140, 166, 0.10);
   --color-surface-active: rgba(47, 107, 224, 0.16);
+  /* OPAQUE. Anything that floats over the page — the menu drawer, a native
+     select's popup, a chart panel — must be solid, because a tint composites
+     the content behind it and you end up reading two screens at once. The
+     surface tokens above are for surfaces ON the page; this one is for
+     surfaces OVER it. D-157. */
+  --color-panel: #12151B;
   --color-border: rgba(255, 255, 255, 0.09);
   --color-border-strong: rgba(255, 255, 255, 0.16);
   --color-border-active: rgba(106, 160, 255, 0.65);
@@ -95,6 +101,7 @@
   --text-lg: 1.1875rem;   /* 19px */
   --text-xl: 1.5rem;      /* 24px */
   --text-2xl: 2rem;       /* 32px — hero figure */
+  --text-3xl: 2.5rem;     /* 40px — the one number a room leads with */
 
   --leading-tight: 1.15;
   --leading-normal: 1.45;
@@ -277,7 +284,7 @@ h3 { font-size: var(--text-md); }
 }
 
 .slaf-input-shell > select { color: var(--color-text); }
-.slaf-input-shell > select option { background: var(--navy-800); color: var(--color-text); }
+.slaf-input-shell > select option { background: var(--color-panel); color: var(--color-text); }
 
 .slaf-input-shell > input::placeholder { color: var(--color-text-faint); }
 
@@ -625,7 +632,7 @@ a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
    that matters and a legend that says what each colour is. D-091.        */
 .slaf-chart { margin-top: var(--space-3); }
 .slaf-chart svg { width: 100%; height: auto; display: block; }
-.slaf-chart .panel { fill: var(--navy-950); stroke: var(--color-border-strong); stroke-width: 1; }
+.slaf-chart .panel { fill: var(--ink-900); stroke: var(--color-border-strong); stroke-width: 1; }
 .slaf-chart .grid { stroke: rgba(96, 165, 250, 0.14); stroke-width: 0.6; }
 .slaf-chart .axis { stroke: rgba(147, 197, 253, 0.55); stroke-width: 0.8; }
 .slaf-chart .tick { font-family: var(--font-body); font-size: 9.5px; fill: rgba(191, 219, 254, 0.85); }
@@ -637,7 +644,7 @@ a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 .slaf-chart .hline-label { font-weight: 600; }
 .slaf-chart .mark { stroke: rgba(191, 219, 254, 0.5); stroke-width: 0.8; stroke-dasharray: 2 3; }
 .slaf-chart .mark-label { fill: rgba(191, 219, 254, 0.7); }
-.slaf-chart .dot { stroke: var(--navy-950); stroke-width: 1.5; }
+.slaf-chart .dot { stroke: var(--ink-950); stroke-width: 1.5; }
 .slaf-chart.is-empty .slaf-reason { margin: 0; }
 .slaf-legend { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-size: var(--text-xs); color: var(--color-text-muted); }
 .slaf-legend li { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
@@ -794,7 +801,7 @@ a.slaf-explain-chip:hover { border-color: var(--color-accent); }
 .slaf-archive-prompt span small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
 .slaf-sankey .flow { opacity: .55; }
 .slaf-sankey .flow:hover { opacity: .85; }
-.slaf-sankey .node { stroke: var(--navy-950); stroke-width: .6; }
+.slaf-sankey .node { stroke: var(--ink-950); stroke-width: .6; }
 .slaf-sankey .tick.small { fill: rgba(147, 197, 253, 0.6); font-size: 8.5px; }
 
 /* ==========================================================================
@@ -818,9 +825,11 @@ a.slaf-explain-chip:hover { border-color: var(--color-accent); }
 .slaf-menu {
   position: fixed; top: 0; left: 0; bottom: 0; z-index: 91;
   width: min(272px, 84vw);
-  /* Solid, not the translucent surface token: a drawer you can read the
-     page through is not a drawer. */
-  background: var(--navy-850);
+  /* Solid, not a translucent surface token: a drawer you can read the page
+     through is not a drawer. This pointed at --navy-850 until D-154 deleted
+     the navy scale, and an undefined var resolves to nothing — which is
+     exactly how the menu became see-through on a real phone. */
+  background: var(--color-panel);
   border-right: 1px solid var(--color-border-strong);
   display: flex; flex-direction: column;
   overflow: hidden;

@@ -8505,6 +8505,84 @@ section('The D&D folder\'s vendored copies');
 })();
 
 /* ==========================================================================
+   Orphaned CSS variables (D-157)
+   --------------------------------------------------------------------------
+   D-154 replaced the navy scale with an ink scale and left fourteen
+   `var(--navy-*)` references behind. An undefined custom property resolves
+   to NOTHING — so `background: var(--navy-850)` on the menu drawer silently
+   became no background at all, and on a real phone the menu rendered
+   transparent over the dashboard. Nothing caught it: it is valid CSS, it
+   throws no error, and it only shows on a screen someone is looking at.
+
+   This walks every stylesheet, every <style> block and every inline
+   `var(--x)` in JS, and fails if a token is used that nothing defines.
+   ========================================================================== */
+section('No CSS variable is used without being defined');
+(function () {
+  const files = [];
+  function walk(dir, depth) {
+    if (depth > 2) return;
+    fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true }).forEach(e => {
+      const rel = dir ? dir + '/' + e.name : e.name;
+      if (e.isDirectory()) {
+        if (['node_modules', '.git', 'vendor', 'test'].indexOf(e.name) !== -1) return;
+        walk(rel, depth + 1);
+      } else if (/\.(css|html|js)$/.test(e.name)) {
+        files.push(rel);
+      }
+    });
+  }
+  walk('', 0);
+
+  /* Definitions come from the shared theme plus whatever the file itself
+     declares — dnd/ pages legitimately define their own --font-display. */
+  const themeCss = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  const globalDefs = new Set((themeCss.match(/^\s*(--[a-z0-9-]+)\s*:/gim) || [])
+    .map(m => m.trim().replace(/\s*:$/, '')));
+  checkTrue('the shared theme defines a healthy number of tokens', globalDefs.size > 40,
+    'found ' + globalDefs.size);
+
+  const orphans = [];
+  files.forEach(f => {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    const local = new Set((src.match(/(--[a-z0-9-]+)\s*:/gi) || [])
+      .map(m => m.replace(/\s*:$/, '')));
+    /* Two things are NOT orphans and must not be reported as such, or the
+       check cries wolf and gets ignored:
+         · `var(--x, 1.35)` — a fallback IS a definition at the use site.
+         · a token named inside a comment — that is prose, not CSS. */
+    const code = src
+      .replace(/\/\*[\s\S]*?\*\//g, ' ')      /* CSS and JS block comments */
+      .replace(/^\s*\/\/.*$/gm, ' ');          /* JS line comments */
+    const used = new Set((code.match(/var\(\s*(--[a-z0-9-]+)\s*\)/gi) || [])
+      .map(m => m.replace(/var\(\s*/i, '').replace(/\s*\)$/, '')));
+    used.forEach(t => {
+      if (globalDefs.has(t) || local.has(t)) return;
+      orphans.push(f + ' uses ' + t);
+    });
+  });
+  checkTrue('every var(--token) resolves to a definition',
+    orphans.length === 0,
+    orphans.slice(0, 12).join(' · ') + (orphans.length > 12 ? ' …and ' + (orphans.length - 12) + ' more' : ''));
+
+  /* The specific failure this came from, asserted as a PROPERTY rather than
+     a token name — the same lesson as the primary-button contrast test. */
+  const menu = /\.slaf-menu \{([\s\S]*?)\}/.exec(themeCss);
+  const bg = menu && (/background:\s*([^;]+);/.exec(menu[1]) || [])[1];
+  checkTrue('the menu drawer names a background at all', !!bg);
+  if (bg) {
+    const resolved = /var\((--[a-z0-9-]+)\)/.exec(bg);
+    const token = resolved ? resolved[1] : null;
+    const value = token
+      ? (new RegExp('(?:^|[^a-z0-9-])' + token + ':\\s*([^;]+);', 'im').exec(themeCss) || [])[1]
+      : bg;
+    checkTrue('...and it is opaque, not a translucent tint (' + String(value).trim() + ')',
+      !!value && !/rgba\([^)]*,\s*0?\.\d+\s*\)/.test(value) && !/transparent|none/.test(value),
+      'a drawer you can read the page through is not a drawer');
+  }
+})();
+
+/* ==========================================================================
    The statements, and the per-room export (D-154 · D-155 · D-156)
    ========================================================================== */
 section('Statements and per-room export');
