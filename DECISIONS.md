@@ -8899,6 +8899,77 @@ Verified in Chromium at 412x915 with touch: card order is
 hidden on load, and $8,000 against $3,000 a month reads 2.7 months with the
 right band. 21,394 + 5,614 + 25 + 448 + 340 checks pass.
 
+## D-160 — The ledger: five states, and how many rooms are waiting
+
+Start Here said `2 of 8 answered`. True, and not much use: it does not say which
+two, why the other six matter, or that three of the questions on the page do not
+apply to you at all. The repo owner asked for categories — what is filled, what
+is not, what does not need filling, what was computed — plus "a relevancy kinda
+thing".
+
+A sticky rail beside the cards now groups every field the page could ask into
+five states, and orders the unanswered ones by how much they unblock.
+
+### The app already knew all five
+
+Nothing new was measured. `Ownership.describe()` has returned all of it for a
+long time:
+
+| Group | Test |
+|---|---|
+| Still to answer | `applies && !isSet` |
+| Filled with a guess | `isSet && guessed` |
+| You answered | `isSet`, source is this room or the owner |
+| Came from another room | `isSet && confidence === 'room'`, named |
+| Does not apply to you | `!applies`, with `notApplicableBecause` verbatim |
+
+The last one is the one no other finance app shows. D-055 established that a
+field which cannot apply is *not* an outstanding task — "Between jobs · You are
+working." is an answer, and the rail says so rather than leaving a permanent
+gap in a progress count.
+
+### Relevance is the only new idea
+
+The rail counts, for each field, how many of the sixty-six rooms name it in
+their registry `needs`, and sorts the unanswered by that count:
+
+    Gross annual income        27 rooms waiting
+    Investments + retirement   15 rooms waiting
+    Total debt                 10 rooms waiting
+    Filing status               7 rooms waiting
+    ...
+    Monthly debt payments       1 room waiting
+
+That turns a list into a priority order, and it is measured from the registry
+rather than asserted by me. The number that unblocks twenty-seven rooms is a
+different proposition from the one that unblocks one, and until now the page
+presented them as equals.
+
+### One bug this shipped with, briefly
+
+`confidenceOf()` returns `'room'` whenever the writer is not the field's owner.
+Start Here writes the *estimate* of `monthlyExpenses`, which Cash Flow owns
+(D-159) — so a figure typed on this very page was filed under "Came from
+another room". Corrected: only a source that is some *other* room counts as
+carried. Source ids are rendered through `Registry.byId().title`, so a row says
+"from Cash Flow", never "from cash-flow".
+
+### Layout, and what it does not disturb
+
+Wide screens get a 300px sticky rail beside the cards; narrow ones stack it
+under them. The menu pins open as a sidebar past 1080px (D-135) and puts
+`padding-left: 272px` on the body, so the grid sits inside that — checked, not
+assumed: `test/responsive.js` passes 340 room-widths with no sideways scroll.
+
+The rail holds no input of its own, so it is outside the LIVE-FORM contract
+(D-034); only its markup is rewritten, never a control being typed in. A row
+scrolls to its card and deliberately does **not** focus the input — a
+programmatic focus opens no keyboard on a phone and would steal the caret from
+whatever the person was already in the middle of typing.
+
+21,464 + 5,614 + 25 + 448 + 340 checks pass. No stored shape changed and
+`shared/ownership.js` is untouched, so no compatibility note is owed.
+
 ---
 
 # The Dungeons & Dividends entries
