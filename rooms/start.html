@@ -42,6 +42,15 @@
   second palette in shared/theme.css; nothing here names a colour.
 -->
 <style>
+  .runway { max-width: var(--measure); margin: 0 auto var(--space-4); padding: var(--space-4);
+    background: var(--color-surface); border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-lg); }
+  .runway-lab { display: block; font-size: var(--text-xs); text-transform: uppercase;
+    letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); }
+  .runway-num { display: block; font-family: var(--font-display); font-size: var(--text-3xl);
+    line-height: 1.1; margin-top: var(--space-2); font-variant-numeric: tabular-nums; }
+  .runway-num small { font-size: var(--text-md); color: var(--color-text-muted); margin-left: 6px; }
+  .runway-say { margin: var(--space-2) 0 0; color: var(--color-text-muted); font-size: var(--text-sm); }
   .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-3); }
   .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
   .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
@@ -122,6 +131,15 @@
     <p class="q-help" style="color:var(--color-text-muted);font-size:var(--text-sm);margin:var(--space-1) 0 0">This decides which questions exist. Nothing below depends on you saying yes to anything.</p>
     <div class="gate" id="gate" role="group" aria-label="Your situation"></div>
   </section>
+
+  <!-- Two boxes buy this, and it appears the moment both are in. Not built
+       from Gate.CARDS and holds no input, so it is outside the LIVE-FORM
+       contract: only its text is ever written. D-159. -->
+  <div class="runway" id="runway" hidden aria-live="polite">
+    <span class="runway-lab">If your income stopped today</span>
+    <span class="runway-num" id="runway-num"></span>
+    <p class="runway-say" id="runway-say"></p>
+  </div>
 
   <div id="cards"></div>
 
@@ -534,12 +552,36 @@
     });
   }
 
+  /* Cash over spending. Both must be real figures: a blank is not a zero, and
+     a zero month would divide by nothing, so either one absent means no number
+     rather than a wrong one. D-159. */
+  function paintRunway(x) {
+    var box = el('runway');
+    var cash = Schema.cashCents(x), spend = Schema.monthlyExpensesCents(x);
+    if (!Money.isOk(cash) || !Money.isOk(spend) || spend.value <= 0) { box.hidden = true; return; }
+    var months = cash.value / spend.value;
+    el('runway-num').innerHTML = (months >= 12 ? '12+' : months.toFixed(1))
+      + '<small>' + (months === 1 ? 'month' : 'months') + ' of cover</small>';
+    el('runway-say').textContent = months < 1
+        ? 'A missed payday would land straight on a bill. The first $500 put by is the thing that changes that, not three months.'
+      : months < 3
+        ? 'A few weeks of room. Three months is the usual first marker, and you are inside reach of it.'
+      : months < 6
+        ? 'You could lose your income and still pay the bills for a season. Three to six months is what most guidance aims at.'
+      : months < 12
+        ? 'You could lose your income and take your time about what comes next.'
+        : 'Income stopping would be an inconvenience rather than a crisis.';
+    box.hidden = false;
+  }
+
   var stateBuilt = false;
   function paint() {
     var x = h();
     var s = situation();
     var g = s && TABLES ? Gate.guesses(s, x, TABLES) : {};
     Array.prototype.forEach.call(el('gate').querySelectorAll('.choice'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-situation') === s)); });
+
+    paintRunway(x);
 
     var live = situationCards();
     placeCards(live);

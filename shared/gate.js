@@ -182,13 +182,19 @@
   /* The order per situation. Ten at most, with the partner card only when
      there are two of you — it is the one card that appears on an answer
      given on this page. */
+  /* Spending and cash come first, ahead of everything, because together they
+     are the only two answers that buy a number back straight away: cash over
+     spending is your runway, and the page shows it the moment both are in.
+     Everything else on this page feeds rooms further on and gives nothing
+     back on its own, so it waits. Someone who stops after two boxes still
+     leaves with the one figure that says whether they are all right. D-159. */
   var ORDER = {
-    employed:     ['about', 'pay', 'partnerPay', 'spending', 'cash', 'investments', 'plan', 'debt'],
-    selfEmployed: ['about', 'pay', 'partnerPay', 'spending', 'cash', 'investments', 'debt'],
-    betweenJobs:  ['about', 'betweenJobs', 'partnerPay', 'spending', 'cash', 'investments', 'debt'],
-    student:      ['about', 'studentPay', 'partnerPay', 'spending', 'cash', 'investments', 'debt'],
-    retired:      ['about', 'retiredPay', 'partnerPay', 'spending', 'cash', 'investments', 'debt'],
-    mixed:        ['about', 'pay', 'ownWork', 'partnerPay', 'spending', 'cash', 'investments', 'plan', 'debt']
+    employed:     ['spending', 'cash', 'about', 'pay', 'partnerPay', 'investments', 'plan', 'debt'],
+    selfEmployed: ['spending', 'cash', 'about', 'pay', 'partnerPay', 'investments', 'debt'],
+    betweenJobs:  ['spending', 'cash', 'about', 'betweenJobs', 'partnerPay', 'investments', 'debt'],
+    student:      ['spending', 'cash', 'about', 'studentPay', 'partnerPay', 'investments', 'debt'],
+    retired:      ['spending', 'cash', 'about', 'retiredPay', 'partnerPay', 'investments', 'debt'],
+    mixed:        ['spending', 'cash', 'about', 'pay', 'ownWork', 'partnerPay', 'investments', 'plan', 'debt']
   };
 
   /** The cards that exist for a situation and this household, in order. */

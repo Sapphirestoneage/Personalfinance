@@ -8830,6 +8830,75 @@ The pattern to look for is a count of rows standing in for an answer —
 the only place a sweep found it, but a new room that scores a list should ask
 whether the empty case is a zero or a blank, and say which.
 
+## D-159 — Two boxes buy a number, and the other seven wait
+
+Start Here opened with nine controls and gave nothing back until every one of
+them was answered. The repo owner's read was that this overwhelms a beginner,
+and the count bears it out: eight `<input>` and one `<select>` before the page
+says anything at all.
+
+The fix is ordering, not new content. `spending` and `cash` now come first in
+every one of the six situation orders in `shared/gate.js`, and the page shows
+the runway the moment both are in.
+
+### Why those two and no others
+
+They are the only pair on the page that buys a figure back on its own. Cash
+over monthly spending is your runway; nothing else here computes without
+reaching for a table, a filing status or a second question. Every other card
+on this page exists to **seed the rooms further on** — it feeds and gives
+nothing back where it stands. So the two that pay immediately go first, and the
+seven that pay later wait their turn.
+
+Someone who fills two boxes and leaves still leaves with the one number that
+says whether they are all right. That is the whole point.
+
+### Ownership did not move, and could not
+
+The obvious build was a new front-door room. It was wrong: the front door has
+to write `monthlyExpenses` and `cashSavings`, and those have different owners —
+`cash-flow` and `start` respectively (`shared/ownership.js`). A new room
+writing both would break D-017 head-on.
+
+Start Here already writes exactly these two and has all along:
+
+    /* rooms/start.html */
+    spending: function (v) { ... Spine.setMonthlyExpenses(c, 'estimated'); },
+    cash:     function (v) { ... Ownership.write('cashSavings', c); },
+
+and `shared/gate.js` fills the same estimate in a batch. The split is that
+Start Here owns the **estimate** and Cash Flow owns the **tracked detail** —
+`expenses.monthlyEssential` holds `estimatedValueCents` and `trackedValueCents`
+side by side for precisely this reason. So the room that should ask first was
+already the room allowed to. Nothing in `shared/ownership.js` changed, no
+stored shape moved, and no compatibility note is owed.
+
+### The readout, and what it refuses to do
+
+`#runway` sits above the cards so it is on screen while the first two boxes are
+being filled. It is not built from `Gate.CARDS` and holds no input, so it is
+outside the LIVE-FORM contract (D-034) — only its text is ever written, never
+its structure. `test/forms.js` still passes on all 448 checks.
+
+It computes from `Schema.cashCents` and `Schema.monthlyExpensesCents` and shows
+nothing unless **both** are `ok` and spending is above zero. A blank is not a
+zero, and a zero month would divide by nothing; either one absent means no
+number rather than a wrong one. Five bands of copy, each stating the fact and
+what it means, none of them congratulating anyone.
+
+### What this does not do
+
+It does not collapse the remaining seven cards behind a reveal. That was the
+other half of the idea and it is the riskier half — hiding a container of live
+inputs wants its own pass and its own proof against `test/forms.js`. The
+reorder plus the instant number is the part that carries the value, so it ships
+alone.
+
+Verified in Chromium at 412x915 with touch: card order is
+`spending → cash → about → pay → investments → plan → debt`, the panel is
+hidden on load, and $8,000 against $3,000 a month reads 2.7 months with the
+right band. 21,394 + 5,614 + 25 + 448 + 340 checks pass.
+
 ---
 
 # The Dungeons & Dividends entries
