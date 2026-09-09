@@ -8644,7 +8644,8 @@ section('Four ways through five years');
 (function () {
   const Adventure = require(path.join(ROOT, 'engines/adventure.js'));
   const TABLES = { adventurePaths: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/adventure_paths.json'), 'utf8')),
-    effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')), returnBands: require(path.join(ROOT, 'data/return_bands.json')) };
+    effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')), returnBands: require(path.join(ROOT, 'data/return_bands.json')),
+    levers: require(path.join(ROOT, 'data/levers.json')) };
   const demo = Demo.build();
 
   /* Empty is not zero: a projection built on an assumed nought is a confident lie. */
@@ -8705,8 +8706,40 @@ section('Four ways through five years');
 
   const t = TABLES.adventurePaths;
   check('the paths are marked unverified, because nobody measured them', t.confidence, 'unverified');
-  checkTrue('every path states its assumption on the record',
-    t.paths.every(p => typeof p.assumption === 'string' && p.assumption.length > 10));
+  checkTrue('every path states its assumption, written from its levers (D-174)',
+    t.paths.every(p => typeof Adventure.describe(p, TABLES) === 'string' && Adventure.describe(p, TABLES).length > 10));
+
+  /* D-174: the paths are lever compositions. No figure lives in the path
+     table or the engine; the walk is re-derived here from levers.json. */
+  const LV = TABLES.levers.levers;
+  checkTrue('no path carries an inline figure',
+    t.paths.every(p => ['annualRaiseReal', 'annualExtraIncomeCents', 'housingCutShare', 'raiseKeptShare', 'assumption'].every(k => !(k in p))));
+  checkTrue('every path is a list of levers the library knows',
+    t.paths.every(p => Array.isArray(p.levers) && p.levers.length && p.levers.every(x => LV[x.id])));
+  check('the levers the four ways pull', Adventure.leversUsed(TABLES).map(l => l.id).join(','), 'steady,hustle,househack');
+  const takeHome = 7200000 - 1368000;
+  const raiseShare = LV.steady.moves['income.grossAnnualCents'];
+  check('Steady: the raise is the steady lever\'s', steady.rows[0].incomeCents, takeHome + Math.round(takeHome * raiseShare));
+  checkTrue('...and a raise kept whole leaves spending alone', steady.rows.every(r => r.spendCents === 3780000));
+  const hustle = Adventure.run(demo, TABLES, { pathId: 'hustle' }).value;
+  const extra = LV.hustle.moves['income.extraMonthlyCents'] * 12;
+  check('Side Hustle: half the hustle in year one', hustle.rows[0].incomeCents, steady.rows[0].incomeCents + Math.round(extra / 2));
+  check('...and all of it from year two', hustle.rows[1].incomeCents, steady.rows[1].incomeCents + extra);
+  checkTrue('...said in the assumption, in dollars', hustle.assumption.indexOf('$500 a month') > -1 && hustle.assumption.indexOf('3% real raise') > -1);
+  check('...and the run names its levers', hustle.levers.map(x => x.id).join(','), 'hustle,steady');
+  const combo = Adventure.run(demo, TABLES, { pathId: 'combo' }).value;
+  check('Both, Smaller: half a hustle', combo.rows[1].incomeCents, steady.rows[1].incomeCents + extra / 2);
+  check('...and half a house hack, off the real rent line', combo.rows[0].spendCents, 3780000 - Math.round(150000 * 12 * 0.40 * 0.5));
+  checkTrue('...said at half size', combo.assumption.indexOf('$250 a month') > -1 && combo.assumption.indexOf('down 20%') > -1);
+  const drifted = Adventure.run(demo, { ...TABLES, adventurePaths: { ...t, paths: [{ id: 'drift', label: 'Drift', line: '', levers: [{ id: 'drift' }] }] } }, { pathId: 'drift' }).value;
+  check('a raise not kept is spent: Drift\'s spending rises by the raise', drifted.rows[0].spendCents, 3780000 + Math.round(takeHome * raiseShare));
+  check('...and its pot ends below Steady\'s', drifted.portfolioCents < steady.portfolioCents, true);
+  const unknown = Adventure.run(demo, { ...TABLES, adventurePaths: { ...t, paths: [{ id: 'x', label: 'x', line: '', levers: [{ id: 'nope' }] }] } }, { pathId: 'x' });
+  check('a path pulling a lever the library lacks is incomplete, not zero', unknown.status, 'incomplete');
+  checkTrue('...and names it', (unknown.missing || []).indexOf('lever:nope') > -1);
+  const engineSrc = fs.readFileSync(path.join(ROOT, 'engines/adventure.js'), 'utf8');
+  checkTrue('the engine holds no lever figure of its own',
+    !/annualRaiseReal\s*[:=]\s*0|600000|50000|0\.40?\b|0\.03\b|year === 1 \? 0\.5/.test(engineSrc.replace(/\/\*[\s\S]*?\*\//g, '')));
   check('the return matches the app\'s own median band', t.returnRateReal, 0.05);
 })();
 
@@ -9687,6 +9720,98 @@ section('DRAFTT: seven shares against seven bands (D-173)');
   checkTrue('no chart in the scorecard', !/Charts\.[a-z]+\([^)]*draftt/i.test(page) && page.indexOf("el('draftt-rows')") !== -1);
   checkTrue('the pick is a button, not a box', /data-src="' \+ row\.id/.test(page) && !/<input[^>]*draftt/.test(page));
   checkTrue('the bands table is a registered reference table', /bands: 'bands\.json'/.test(fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8')));
+})();
+
+section('The lever library: get, applies, apply (D-174)');
+(function () {
+  const Levers = require(path.join(ROOT, 'shared/levers.js'));
+  const table = require(path.join(ROOT, 'data/levers.json'));
+  Levers.use(table);
+  const IDS = ['hustle', 'househack', 'relocate', 'careermove', 'steady', 'drift'];
+  const demo = Demo.build();
+  const before = JSON.stringify(demo);
+
+  /* The table: six levers, exactly, each one line with the six facts. */
+  check('six levers, in the brief\'s order', Object.keys(table.levers).join(','), IDS.join(','));
+  check('the table is unverified, because nobody measured a lever', table.confidence, 'unverified');
+  checkTrue('every lever states what it moves, its hours, whether it survives a job loss, its flex and when it applies',
+    IDS.every(id => { const L = table.levers[id]; return typeof L.label === 'string' && L.moves && Object.keys(L.moves).length === 1
+      && Money.isEntered(L.hoursPerWeek) && typeof L.survivesJobLoss === 'boolean' && typeof L.flex === 'string' && typeof L.appliesWhen === 'string'; }));
+  check('the hustle: $500 a month, net', table.levers.hustle.moves['income.extraMonthlyCents'], 50000);
+  check('the house hack: 40% off the accommodation line', table.levers.househack.moves['expenses.needs.accommodation'], -0.40);
+  check('the move: a quarter off every needs line', table.levers.relocate.moves['expenses.needs.*'], -0.25);
+  check('the job change: 20% more gross', table.levers.careermove.moves['income.grossAnnualCents'], 0.20);
+  check('steady keeps the whole raise', table.levers.steady.raiseKeptShare, 1.0);
+  check('drift keeps none of it', table.levers.drift.raiseKeptShare, 0.0);
+  checkTrue('the library is a registered reference table', /levers: 'levers\.json'/.test(fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8')));
+
+  /* get and all */
+  check('get returns the lever with its id', Levers.get('hustle').id, 'hustle');
+  check('an unknown id is null, not a throw', Levers.get('teleport'), null);
+  check('all lists the six', Levers.all().length, 6);
+
+  /* applies: the phrases, read by hand against the household */
+  check('the hustle always applies', Levers.applies('hustle', demo), true);
+  check('the job change applies to someone working', Levers.applies('careermove', demo), true);
+  const retired = Demo.build(); Schema.primaryPerson(retired).employmentStatus = 'retired';
+  check('...and not to someone retired', Levers.applies('careermove', retired), false);
+  check('the house hack needs a property or a priced home', Levers.applies('househack', demo), false);
+  const owner = Demo.build(); owner.property = [{ id: 'p1', valueCents: 30000000 }];
+  check('...a property does it', Levers.applies('househack', owner), true);
+  const buyer = Demo.build(); buyer.housing = Object.assign({}, buyer.housing, { priceCents: 40000000 });
+  check('...so does a price typed in Housing Decision', Levers.applies('househack', buyer), true);
+  check('the move needs remote work, which no room asks yet', Levers.applies('relocate', demo), false);
+  const remote = Demo.build(); remote.meta = Object.assign({}, remote.meta, { remoteOk: true });
+  check('...a stored fact would say yes', Levers.applies('relocate', remote), true);
+  check('an unknown lever never applies', Levers.applies('teleport', demo), false);
+  checkTrue('appliesWhen is read, never evaluated', fs.readFileSync(path.join(ROOT, 'shared/levers.js'), 'utf8').indexOf('eval(') === -1
+    && fs.readFileSync(path.join(ROOT, 'shared/levers.js'), 'utf8').indexOf('new Function') === -1);
+
+  /* apply: a new household, the original untouched */
+  const hustled = Levers.apply('hustle', demo);
+  check('apply never mutates', JSON.stringify(demo), before);
+  const src = Schema.primaryPerson(hustled).incomeSources.filter(s => s.lever === 'hustle')[0];
+  checkTrue('the hustle arrives as its own income source, net of tax', src && src.grossAnnualIncomeCents === 600000 && src.netOfTax === true);
+  check('...and records the pull', JSON.stringify(hustled.meta.leversApplied), JSON.stringify([{ id: 'hustle', scale: 1 }]));
+  check('applying twice does not stack two hustles', Schema.primaryPerson(Levers.apply('hustle', hustled)).incomeSources.filter(s => s.lever === 'hustle').length, 1);
+  const moved = Levers.apply('careermove', demo);
+  check('the job change scales every gross source by a fifth', Schema.grossAnnualIncomeCents(moved).value, 7200000 * 1.2);
+  const hacked = Levers.apply('househack', demo);
+  check('the house hack cuts the accommodation line by 40%', hacked.expenses.needs.accommodation.monthlyCents, 90000);
+  check('...at half scale, by 20%', Levers.apply('househack', demo, { scale: 0.5 }).expenses.needs.accommodation.monthlyCents, 120000);
+  const relocated = Levers.apply('relocate', demo);
+  check('the move cuts every needs line by a quarter', [relocated.expenses.needs.food.monthlyCents, relocated.expenses.needs.accommodation.monthlyCents, relocated.expenses.needs.transportation.monthlyCents].join(','),
+    [Math.round(demo.expenses.needs.food.monthlyCents * 0.75), 112500, Math.round(demo.expenses.needs.transportation.monthlyCents * 0.75)].join(','));
+  const blank = Levers.apply('househack', Schema.createHousehold());
+  check('a blank line stays blank: empty is not zero', blank.expenses.needs.accommodation.monthlyCents, null);
+  check('an unknown lever returns the household unchanged', JSON.stringify(Schema.createHousehold(Levers.apply('teleport', demo))), JSON.stringify(Schema.createHousehold(JSON.parse(before))));
+
+  /* what a lever is worth, a month and an hour: monthly gain ÷ (hours × 4.33) */
+  check('the hustle is worth $500 a month', Levers.monthlyGainCents('hustle', demo).value, 50000);
+  check('...and about $7.70 an hour at fifteen hours a week', Levers.impliedHourlyCents('hustle', demo).value, Math.round(50000 / (15 * 4.33)));
+  check('the house hack is worth 40% of the rent line', Levers.monthlyGainCents('househack', demo).value, 60000);
+  check('...about $27.71 an hour at five hours a week', Levers.impliedHourlyCents('househack', demo).value, Math.round(60000 / (5 * 4.33)));
+  check('the job change is worth a fifth of gross, a month', Levers.monthlyGainCents('careermove', demo).value, Math.round(7200000 * 0.2 / 12));
+  check('...and has no hourly figure, because it costs no hours', Levers.impliedHourlyCents('careermove', demo).status, 'incomplete');
+  const noRent = Demo.build(); noRent.expenses.needs.accommodation.monthlyCents = null;
+  check('a blank rent line makes the house hack unpriced, not zero', Levers.monthlyGainCents('househack', noRent).status, 'incomplete');
+  checkTrue('...naming the line', Levers.monthlyGainCents('househack', noRent).missing.indexOf('accommodationMonthly') > -1);
+  check('no income, no job-change figure', Levers.monthlyGainCents('careermove', Schema.createHousehold()).status, 'incomplete');
+
+  /* No room inlines a lever figure again: the three that offer one read the library. */
+  const adv = fs.readFileSync(path.join(ROOT, 'rooms/adventure.html'), 'utf8');
+  const housing = fs.readFileSync(path.join(ROOT, 'rooms/housing.html'), 'utf8');
+  const career = fs.readFileSync(path.join(ROOT, 'rooms/career-move.html'), 'utf8');
+  checkTrue('the adventure loads the levers and hands them to the library', /'levers'\]/.test(adv) && adv.indexOf('SLAF.Levers.use(tables.levers)') > -1);
+  checkTrue('...and writes each card\'s assumption from them', adv.indexOf('Adventure.describe(p, TABLES)') > -1 && adv.indexOf('p.assumption') === -1);
+  checkTrue('...and its drawer prices every lever an hour', adv.indexOf('Levers.impliedHourlyCents') > -1);
+  checkTrue('Housing Decision reads the house hack from the library', /'levers'\]/.test(housing) && housing.indexOf("Levers.get('househack')") > -1);
+  checkTrue('Career Move proposes the offer from the job-change lever', /'levers'\]/.test(career) && career.indexOf("Levers.get('careermove')") > -1 && career.indexOf('propose: function (h, T) { return leverOffer(h, T); }') > -1);
+  checkTrue('no room or engine writes 40%, $500 or 20% of its own for a lever',
+    ![adv, housing, career].some(s => /househack[^\n]*0\.4|hustle[^\n]*50000|careermove[^\n]*0\.2\b/.test(s)));
+  const paths = fs.readFileSync(path.join(ROOT, 'data/adventure_paths.json'), 'utf8');
+  checkTrue('data/adventure_paths.json carries no lever figure', !/annualRaiseReal|annualExtraIncomeCents|housingCutShare|raiseKeptShare/.test(paths));
+  checkTrue('no engine reads those keys either', !fs.readdirSync(path.join(ROOT, 'engines')).some(f => /annualRaiseReal|annualExtraIncomeCents|housingCutShare/.test(fs.readFileSync(path.join(ROOT, 'engines', f), 'utf8'))));
 })();
 
 /* ==========================================================================

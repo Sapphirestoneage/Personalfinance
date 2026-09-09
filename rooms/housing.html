@@ -108,6 +108,7 @@
 <script src="../shared/schema.js"></script>
 <script src="../shared/registry.js"></script>
 <script src="../shared/reference.js"></script>
+<script src="../shared/levers.js"></script>
 <script src="../shared/spine-v2.js"></script>
 <script src="../shared/ownership.js"></script>
 <script src="../shared/suggest.js"></script>
@@ -163,9 +164,30 @@
     return r + (r === 1 ? ' year' : ' years') + ' away';
   }
 
+  /* The house-hack lever, read from data/levers.json through the library:
+     its figure, what that is worth on THIS rent line, and the hours it
+     costs. Nothing is inlined here; the row says when it does not apply.
+     D-174. */
+  function leverRow(h, T) {
+    if (!T.levers || !SLAF.Levers) return [];
+    SLAF.Levers.use(T.levers);
+    var L = SLAF.Levers.get('househack');
+    if (!L) return [];
+    var share = Money.formatRate(Math.abs(L.moves['expenses.needs.accommodation']), { decimals: 0 });
+    var src = 'data/levers.json v' + T.levers.version + ' (' + (T.levers.confidence || 'unverified') + ')';
+    if (!SLAF.Levers.applies('househack', h)) {
+      return [{ label: 'The house hack', value: 'housing down ' + share + ' — not weighed yet', source: 'a lever for a place you own or a price you have typed above; ' + src }];
+    }
+    var gain = SLAF.Levers.monthlyGainCents('househack', h);
+    var hourly = SLAF.Levers.impliedHourlyCents('househack', h);
+    return [{ label: 'The house hack', value: 'housing down ' + share + (Money.isOk(gain) ? ', about ' + Money.formatCents(gain.value) + ' a month on your line' : ''),
+      source: (Money.isOk(hourly) ? 'about ' + Money.formatCents(hourly.value, { decimals: 2 }) + ' an hour for the ' + L.hoursPerWeek + ' hours a week it takes; ' : Money.isOk(gain) ? '' : gain.reason + ' ')
+        + 'a housemate, a smaller place or a cheaper town — ' + src }];
+  }
+
   Room.mount({
     id: 'housing',
-    tables: ['housingConventions', 'priceToRent', 'mortgageRates', 'ratioBenchmarks', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    tables: ['housingConventions', 'priceToRent', 'mortgageRates', 'ratioBenchmarks', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states', 'levers'],
     reads: ['rentMonthly', 'monthlyExpenses', 'grossAnnualIncome', 'cashSavings', 'state'],
 
     number: function (h, T) {
@@ -276,7 +298,7 @@
         { label: 'The cash floor', value: c.guardrails ? c.guardrails.emergencyFundMonths + ' months of spending' : '—', source: 'the emergency-fund floor after closing (' + src + ')' },
         { label: 'Years to the down payment', value: 'shortfall ÷ a year of savings', source: 'a year of savings is the lens’s basis (engines/tier0.js savingsRate, the match counted when known); no growth on the cash, no rise in the price' },
         { label: 'Prices and rents', value: 'held still', source: 'the price does not change and the rent does not rise — this is one month, weighed today, not a forecast' }
-      ];
+      ].concat(leverRow(h, T));
     },
 
     why: function (h, T, situation) {

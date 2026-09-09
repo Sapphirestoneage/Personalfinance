@@ -1,0 +1,18 @@
+{
+  "id": "levers",
+  "version": "1.0",
+  "asOf": "2026-09-09",
+  "source": "The single source for every \"what if I did X\" in the app: one line a lever, the size of each move stated as a plain assumption. A side hustle netting $500 a month, a house hack cutting the rent line by 40%, a move somewhere a quarter cheaper, a job change worth 20% more, a 3% real raise kept or spent. Illustrative starting points chosen to be arguable, not measured averages; every room that offers a lever prints its figure beside the number it moves and lets it be changed.",
+  "confidence": "unverified",
+  "confidenceNote": "Teaching devices. No study says a house hack cuts housing by 40% for you; it says it can. The figures are the defaults a room starts from, never findings.",
+  "note": "Read by shared/levers.js. No room may inline a lever figure again (D-174). `moves` values: absolute cents when the key ends in `Cents`, otherwise a share of the current figure, positive or negative. `appliesWhen` is one of a few fixed phrases the library knows how to read; it is not evaluated as code. Implied hourly wage = monthly gain ÷ (hoursPerWeek × 4.33), computed in the library.",
+  "hoursPerMonthFactor": 4.33,
+  "levers": {
+    "hustle":     { "label": "Side hustle",             "moves": { "income.extraMonthlyCents": 50000 },        "rampYears": 1,   "hoursPerWeek": 15, "survivesJobLoss": true,  "flex": "portable",           "appliesWhen": "always" },
+    "househack":  { "label": "House hack",              "moves": { "expenses.needs.accommodation": -0.40 },   "hoursPerWeek": 5,  "survivesJobLoss": true,  "flex": "tied to a property", "appliesWhen": "assets.property.length > 0 || intent.buy" },
+    "relocate":   { "label": "Move somewhere cheaper",  "moves": { "expenses.needs.*": -0.25 },                "hoursPerWeek": 0,  "survivesJobLoss": true,  "flex": "needs remote work",  "appliesWhen": "income.remoteOk" },
+    "careermove": { "label": "Change jobs",             "moves": { "income.grossAnnualCents": 0.20 },          "hoursPerWeek": 0,  "survivesJobLoss": false, "flex": "new location likely","appliesWhen": "situation != retired" },
+    "steady":     { "label": "Steady",                  "moves": { "income.grossAnnualCents": 0.03 },          "raiseKeptShare": 1.0, "hoursPerWeek": 0, "survivesJobLoss": false, "flex": "unchanged",      "appliesWhen": "always" },
+    "drift":      { "label": "Drift",                   "moves": { "income.grossAnnualCents": 0.03 },          "raiseKeptShare": 0.0, "hoursPerWeek": 0, "survivesJobLoss": false, "flex": "unchanged",      "appliesWhen": "always" }
+  }
+}

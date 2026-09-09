@@ -140,6 +140,7 @@
 <script src="../shared/schema.js"></script>
 <script src="../shared/registry.js"></script>
 <script src="../shared/reference.js"></script>
+<script src="../shared/levers.js"></script>
 <script src="../shared/spine-v2.js"></script>
 <script src="../shared/liveform.js"></script>
 <script src="../shared/staleness.js"></script>
@@ -210,7 +211,7 @@
     el('pathlist').innerHTML = Adventure.paths(TABLES).map(function (p) {
       return '<button type="button" class="pathcard" data-path="' + esc(p.id) + '"'
         + ' aria-pressed="' + (state.pathId === p.id) + '"><b>' + esc(p.label) + '</b>'
-        + '<span>' + esc(p.line) + '</span><em>Assumes: ' + esc(p.assumption) + '</em></button>';
+        + '<span>' + esc(p.line) + '</span><em>Assumes: ' + esc(Adventure.describe(p, TABLES)) + '</em></button>';
     }).join('');
     el('to-journey').disabled = !state.pathId;
   }
@@ -330,7 +331,27 @@
       + '<li>The target: a year of spending divided by '
       + (t.withdrawalRate * 100).toFixed(0) + '%, the same arithmetic the FIRE room uses.</li>'
       + '<li>The house hack cuts your rent or mortgage line from Cash Flow. ' + esc(t.accommodationShareFallbackNote) + '</li>'
-      + '<li>Everything is in today’s money, so a dollar in year five means what it means now.</li></ul>';
+      + '<li>Everything is in today’s money, so a dollar in year five means what it means now.</li></ul>'
+      + paintLevers();
+  }
+  /* The levers the four ways pull, each with its figure, its hours and what
+     that makes an hour worth for THIS household. Every figure comes from
+     data/levers.json through the library; none is written here. D-174. */
+  function paintLevers() {
+    var L = TABLES && TABLES.levers;
+    if (!L) return '';
+    var rows = Adventure.leversUsed(TABLES).map(function (lv) {
+      var hourly = SLAF.Levers.impliedHourlyCents(lv.id, h());
+      var gain = SLAF.Levers.monthlyGainCents(lv.id, h());
+      var worth = Money.isOk(hourly)
+        ? 'Worth about <strong>' + esc(Money.formatCents(hourly.value, { decimals: 2 })) + ' an hour</strong> for you, at ' + lv.hoursPerWeek + ' hours a week'
+        : Money.isOk(gain) ? 'Worth about <strong>' + esc(Money.formatCents(gain.value)) + ' a month</strong> for you, no extra hours'
+        : esc(hourly.reason || gain.reason || '');
+      return '<li><strong>' + esc(lv.label) + '.</strong> ' + esc(Adventure.leverSentence(lv)) + ' '
+        + worth + '. ' + (lv.survivesJobLoss ? 'Keeps paying if the job goes' : 'Stops with the job') + '; ' + esc(lv.flex) + '.</li>';
+    }).join('');
+    return '<p class="slaf-note"><strong>The levers.</strong> ' + esc(L.source) + ' data/levers.json v' + esc(L.version) + ' (' + esc(L.confidence) + ').</p>'
+      + '<ul class="slaf-note">' + rows + '</ul>';
   }
 
   /* ---- Wiring ------------------------------------------------------------ */
@@ -351,9 +372,10 @@
      the table left a dead end with no menu and nothing said. D-168. */
   if (SLAF.Progress) SLAF.Progress.mount(ROOM_ID);
 
-  Reference.load(['adventurePaths', 'returnBands', 'effectiveTaxRates']).then(function (tables) {
-    if (!tables || !tables.adventurePaths) throw new Error('no adventurePaths table');
+  Reference.load(['adventurePaths', 'returnBands', 'effectiveTaxRates', 'levers']).then(function (tables) {
+    if (!tables || !tables.adventurePaths || !tables.levers) throw new Error('no adventurePaths or levers table');
     TABLES = tables;
+    SLAF.Levers.use(tables.levers);
     paintBaseline();
     paintAssumptions();
     /* The side-by-side is painted at load as well, so its three-way line

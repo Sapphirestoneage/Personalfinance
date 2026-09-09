@@ -9904,6 +9904,111 @@ demo, a pick changes the band alone and survives a reload.
 
 ---
 
+## D-174 — The lever library: six levers in one file, three verbs, and an hourly figure
+
+### What it is
+
+Every "what if I did X" in the app now comes from one table,
+`data/levers.json`, read through one small library, `shared/levers.js`.
+A lever is one line: what it moves, by how much, the hours it costs, whether
+it keeps paying through a job loss, one flexibility word, and when it
+applies. There are six, exactly as the brief lists them, and no more:
+
+| id | moves | hours a week | survives a job loss | applies when |
+|---|---|---|---|---|
+| hustle | +$500 a month, net | 15 | yes | always |
+| househack | accommodation line −40% | 5 | yes | a property, or a priced home |
+| relocate | every needs line −25% | 0 | yes | remote work is a stored fact |
+| careermove | gross +20% | 0 | no | not retired |
+| steady | gross +3% a year, all of it kept | 0 | no | always |
+| drift | gross +3% a year, none of it kept | 0 | no | always |
+
+The library offers three verbs and one figure. `get(id)` returns the line.
+`applies(id, household)` reads the `appliesWhen` phrase against the house:
+a few fixed phrases read by hand, never evaluated as code. `apply(id,
+household, { scale })` returns a NEW household with the moves written onto
+DAITE paths (an extra-income lever arrives as its own income source tagged
+`lever` and `netOfTax`; a gross lever scales every source; a needs lever
+scales the FAT line) and never mutates the one it was given; `scale` halves
+a lever for a "half of each" combination. `impliedHourlyCents(id,
+household)` is the monthly gain divided by hours a week × 4.33, so a room
+offering a lever can say what an hour of it is worth for this household.
+No categories, no weights, no plugin system.
+
+### What moved out of the rooms
+
+`data/adventure_paths.json` carried its own copies of the figures — a 2%
+raise here, a 3% there, $500 a month, a 40% housing cut — as
+`annualRaiseReal`, `annualExtraIncomeCents`, `housingCutShare` and
+`raiseKeptShare` on each path, plus a hand-written assumption sentence. All
+of that is deleted. A path is now a composition, `levers: [{ id, scale }]`:
+Steady pulls `steady`; Side Hustle pulls `hustle` and `steady`; House Hack
+pulls `househack` and `steady`; Both, Smaller pulls half a `hustle`, half a
+`househack` and `steady`. `engines/adventure.js` composes the raise, the
+ramp, the extra income and the housing cut from the levers and WRITES each
+path's assumption sentence from their figures (`Adventure.describe`), so the
+card on screen and the number it moves cannot disagree. The assumptions
+drawer lists every lever the four ways pull with its figure, its hours, and
+what that makes an hour worth for you.
+
+Housing Decision reads the house-hack lever into its assumptions drawer:
+the share, what it is worth on your rent line, and the hourly figure — or
+"not weighed yet" for someone with no property and no price typed. Career
+Move proposes the offer from the job-change lever (20% more than you earn
+now) as a suggestion beside the empty field, tap "Use" or type your own,
+and says so in its drawer. Neither room gained a field.
+
+### What changed on screen, deliberately
+
+The Side Hustle and Both, Smaller paths used to assume a 2% and a 2.5% raise
+beside the hustle, a figure with no home anywhere else in the app. They now
+carry the steady lever's 3%, the same raise Steady itself assumes, so the
+four ways differ only by the lever they add. The demo's five-year pots move
+a little because of it; every other figure in the room is unchanged, and
+the house hack still reads the real accommodation line (D-172) with the 30%
+fallback only when that line is blank. `raiseKeptShare` now does something:
+Drift's spending rises by the raise it does not keep. No adventure path
+pulls Drift yet.
+
+### What the relocate lever waits for
+
+`income.remoteOk` is a phrase the library reads against `meta.remoteOk`,
+and no room writes that field, so the move lever applies to nobody today.
+That is the rule at work — a lever waits for a fact rather than adding a
+question — and the brief forbids a new typed field without a decision here.
+This entry records the wait, not a field. When a room has a real reason to
+know, the answer will be one toggle owned by that room.
+
+### Gates
+
+`test/run.js` "The lever library" checks the six levers and their figures,
+`applies` against a working, a retired, a property-owning, a home-pricing
+and a remote household, `apply` for immutability, the tagged income source,
+the scaled gross, the cut lines and blank-stays-blank, the hourly figure
+by hand ($500 ÷ (15 × 4.33) ≈ $7.70; $600 ÷ (5 × 4.33) ≈ $27.71), and a
+grep gate: no `annualRaiseReal`, `annualExtraIncomeCents` or
+`housingCutShare` anywhere in `data/adventure_paths.json` or `engines/`,
+no lever figure in the adventure engine's code, and the three rooms read
+the library rather than a number. The adventure section re-derives every
+path from the levers by hand — the half-hustle in year one, the full one
+from year two, the half house hack off the real rent line — and checks
+that a path pulling a lever the library lacks is incomplete, naming it,
+never a zero. Unit 23695 · dnd 5614 · export 25 · render, features and
+forms on the three rooms touched.
+
+### Compatibility
+
+The stored household shape is unchanged. `apply` may add an income source
+with `lever` and `netOfTax` on it and a `meta.leversApplied` list, on the
+COPY it returns; nothing writes such a copy back to the store in this
+section. `data/adventure_paths.json` is v1.2: a room reading `paths[].
+assumption` or the four figure keys must call `Adventure.describe(path,
+tables)` and `Adventure.compose(path, tables)` instead, and must load
+`levers` alongside `adventurePaths`. `levers` is registered in
+`Reference.TABLE_FILES`.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

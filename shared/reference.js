@@ -70,6 +70,7 @@
     tripleD: 'triple_d.json',
     returnBands: 'return_bands.json',
     bands: 'bands.json',
+    levers: 'levers.json',
     events: 'events/index.json',
     cobraAca: 'cobra_aca_2024.json',
     travelBands: 'travel_bands.json',

@@ -103,6 +103,7 @@
 <script src="../shared/schema.js"></script>
 <script src="../shared/registry.js"></script>
 <script src="../shared/reference.js"></script>
+<script src="../shared/levers.js"></script>
 <script src="../shared/spine-v2.js"></script>
 <script src="../shared/ownership.js"></script>
 <script src="../shared/suggest.js"></script>
@@ -131,9 +132,36 @@
   function signed(cents) { return (cents > 0 ? '+' : '') + perHour(cents); }
   function rhwLink() { return Ownership.linkTo('real-hourly-wage', 'inputs'); }
 
+  /* The offer this room proposes when none is typed: the Change jobs lever
+     from data/levers.json, applied to what you earn now. Read through the
+     library, never inlined; nothing is proposed for someone it does not
+     apply to. D-174. */
+  function leverOffer(h, T) {
+    if (!T || !T.levers || !SLAF.Levers) return null;
+    SLAF.Levers.use(T.levers);
+    var L = SLAF.Levers.get('careermove');
+    if (!L || !SLAF.Levers.applies('careermove', h)) return null;
+    var g = Schema.grossAnnualIncomeCents(h);
+    if (!Money.isOk(g) || g.value <= 0) return null;
+    var share = L.moves['income.grossAnnualCents'];
+    return { value: Math.round(g.value * (1 + share)), source: 'the Change jobs lever: ' + Money.formatRate(share, { decimals: 0 }) + ' more than you earn now (data/levers.json)' };
+  }
+  function leverRow(h, T) {
+    if (!T.levers || !SLAF.Levers) return [];
+    SLAF.Levers.use(T.levers);
+    var L = SLAF.Levers.get('careermove');
+    if (!L) return [];
+    var share = Money.formatRate(L.moves['income.grossAnnualCents'], { decimals: 0 });
+    var src = 'data/levers.json v' + T.levers.version + ' (' + (T.levers.confidence || 'unverified') + ')';
+    var typed = Money.isEntered(offer(h).grossAnnualCents);
+    var gain = SLAF.Levers.monthlyGainCents('careermove', h);
+    return [{ label: 'The offer proposed', value: typed ? 'yours, typed above' : share + ' more than now' + (Money.isOk(gain) ? ', about ' + Money.formatCents(gain.value) + ' a month before tax' : ''),
+      source: 'the Change jobs lever, a starting point for an offer you have not seen yet; ' + (L.survivesJobLoss ? '' : 'it stops with the job; ') + L.flex + ' — ' + src }];
+  }
+
   Room.mount({
     id: 'career-move',
-    tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states', 'levers'],
     reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses', 'investments'],
 
     number: function (h, T) {
@@ -184,7 +212,8 @@
 
     inputs: [
       { ctl: 'grossAnnualCents', label: 'The offer, a year', kind: 'money', placeholder: 'e.g. 80,000', hint: 'Base pay before tax. Bonuses and equity are not weighed here.',
-        read: function (h) { return offer(h).grossAnnualCents; }, write: function (v) { Spine.set('career.offer.grossAnnualCents', v); } },
+        read: function (h) { return offer(h).grossAnnualCents; }, write: function (v) { Spine.set('career.offer.grossAnnualCents', v); },
+        propose: function (h, T) { return leverOffer(h, T); } },
       { ctl: 'hoursPerWeek', label: 'Its hours a week', kind: 'number', placeholder: 'e.g. 40', affix: 'h',
         read: function (h) { return offer(h).hoursPerWeek; }, write: function (v) { Spine.set('career.offer.hoursPerWeek', v === null || v <= 0 ? null : v); },
         propose: function (h) {
@@ -237,7 +266,7 @@
       rows.push({ label: 'Unpaid hours around the job', value: carried.length ? carried.join(', ') + ' a week' : 'none', source: 'carried over from your current job (Real Hourly Wage); the offer is assumed to take the same' });
       rows.push({ label: 'Weeks a year', value: String(Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear), source: Money.isEntered(work.weeksPerYear) && work.weeksPerYear !== Schema.WORK_DEFAULTS.weeksPerYear ? 'yours, on both jobs' : 'the default: 52 less four weeks of leave and holidays (convention), on both jobs' });
       rows.push({ label: 'Real return, for the FI move', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' });
-      return rows;
+      return rows.concat(leverRow(h, T));
     },
 
     why: function (h, T, situation) {
