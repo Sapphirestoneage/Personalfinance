@@ -37,11 +37,7 @@
              data/effective_tax_rates_2026.json (take-home).
 -->
 <style>
-  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
-  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
   .room-back:hover { text-decoration: underline; }
-  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
-
   section[id] { scroll-margin-top: var(--space-4); }
   .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
 
@@ -116,8 +112,6 @@
   .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
   .out-detail dt { color: var(--color-text-faint); }
   .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
-
-  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
   .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
@@ -142,13 +136,17 @@
   <section class="slaf-card" id="spending" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">A typical month</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">What goes out, a line at a time</h2>
-    <p class="bucket-note">
-      Type each line in whatever you know it as — a week, every two weeks, a
+    <!-- Fifty-two words of instruction used to sit here, before the first
+         box. The boxes are self-explanatory; the rules are for when you
+         wonder. Folded, so the page opens on the thing to do. D-169. -->
+    <details class="drawer bucket-note">
+      <summary>How to fill this in <small>Any period, blank means blank, and what <em>fixed</em> means.</small></summary>
+      <p>Type each line in whatever you know it as — a week, every two weeks, a
       year — and pick that beside it; it is stored as a month. Leave anything
       blank that doesn't apply: blank is "not entered", never zero. Tick
       <em>fixed</em> on a line you could not cut next month. Debt minimums come
-      from your actual debts, so tap that figure to change them there.
-    </p>
+      from your actual debts, so tap that figure to change them there.</p>
+    </details>
     <div id="buckets"></div>
     <p class="slaf-hint" data-suggest-note style="margin:var(--space-3) 0 0"></p>
     <div class="slaf-field-row" id="propose-row" hidden style="margin-top:var(--space-3)">

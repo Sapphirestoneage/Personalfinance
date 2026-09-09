@@ -55,11 +55,7 @@
   shared/theme.css; nothing here names a colour.
 -->
 <style>
-  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
-  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
-  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   section[id] { scroll-margin-top: var(--space-4); }
-  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
   /* The standing statement that nothing typed here is kept. First on the
@@ -593,7 +589,7 @@
           source: 'data/rollover_options.json v' + t.version + ' rates (' + t.confidence + ')' },
         { label: 'The penalty-free age',
           value: ageLabel(free),
-          source: 'data/access_rules.json v' + acc.version + ' (' + acc.confidence + '), byTaxCharacter.pretax.accessAge — the same figure the Statement’s buckets and Decumulation read, held once' },
+          source: 'data/access_rules.json v' + acc.version + ' (' + acc.confidence + '), byTaxCharacter.pretax.accessAge — the same figure the Statement’s buckets and Drawing It Down read, held once' },
         { label: 'The income tax on the distribution',
           value: Money.isOk(c) ? Money.formatCents(c.federalCents) + ' federal' : 'not worked out',
           source: 'engines/tax.js, run twice — your year as it stands, and the same year with the withdrawal stacked on top as ordinary income — and the difference taken. That is your marginal rate with room for the withdrawal to climb a bracket, which one multiplication would miss. Brackets from data/federal_brackets_2026.json v'

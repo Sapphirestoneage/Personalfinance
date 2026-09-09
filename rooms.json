@@ -647,7 +647,7 @@
     },
     {
       "id": "decumulation",
-      "title": "Decumulation",
+      "title": "Drawing It Down",
       "file": "rooms/decumulation.html",
       "reads": [
         "investments",
@@ -885,7 +885,7 @@
     },
     {
       "id": "dreamline",
-      "title": "Dreamline",
+      "title": "Price the Dream",
       "file": "rooms/dreamline.html",
       "reads": [
         "monthlyExpenses",
@@ -902,7 +902,7 @@
     },
     {
       "id": "reversibility",
-      "title": "Reversibility",
+      "title": "Can It Be Undone",
       "file": "rooms/reversibility.html",
       "reads": [
         "cashSavings",

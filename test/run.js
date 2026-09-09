@@ -5629,6 +5629,16 @@ section('What is finished');
     const path = Registry.inOrder();
     path.forEach(function (room) {
       const nav = Progress.headerNavHtml(room.id);
+      /* The dashboard is the front door, not a step on the path: it carries no
+         prev/next (D-169), and "never a dead end" is met there by the
+         walk-through button and the menu instead - asserted below. */
+      if (room.id === 'dashboard') {
+        check('the front door carries no prev/next', nav, '');
+        /* `path` is the room list in this block, not the module. */
+        const idx = fs.readFileSync(ROOT + '/index.html', 'utf8');
+        checkTrue('...but it still offers a way on: the walk-through', /walk\.html/.test(idx));
+        return;
+      }
       const prev = /slaf-hop--prev[^>]*href="([^"]+)"/.exec(nav);
       const next = /slaf-hop--next[^>]*href="([^"]+)"/.exec(nav);
       checkTrue(`${room.id} offers a way back`, !!prev);
@@ -8504,6 +8514,46 @@ section('The D&D folder\'s vendored copies');
   /* And it is not a room: nothing in the registry may point into dnd/. */
   checkTrue('no registry entry points into dnd/',
     Registry.all().every(r => r.href.indexOf('dnd/') !== 0));
+})();
+
+/* ==========================================================================
+   Room furniture is defined once (D-169)
+   --------------------------------------------------------------------------
+   `.room-head`, `.room-lede`, `.room-back` and `.notice` were copied into
+   sixty-odd room files, byte for byte, and the one room that forgot them
+   rendered with its heading against the edge (D-168). They live in
+   shared/theme.css now. A room may still define a genuinely different
+   variant (a wider head, a coloured notice); what it may not do is carry a
+   copy of the shared rule, because that is how the next drift starts.
+   ========================================================================== */
+section('Room furniture is defined once, in the shared theme');
+(function () {
+  const themeCss = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  const RULES = ['.room-head', '.room-lede', '.room-back', '.notice'];
+  const norm = body => body.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, '').replace(/;$/, '');
+  function blocks(src, sel) {
+    const out = [];
+    const re = new RegExp('(^|[}\\s])' + sel.replace('.', '\\.') + '\\s*\\{([^}]*)\\}', 'g');
+    let m;
+    while ((m = re.exec(src))) out.push(norm(m[2]));
+    return out;
+  }
+  const shared = {};
+  RULES.forEach(sel => {
+    const b = blocks(themeCss, sel);
+    checkTrue('shared/theme.css defines ' + sel + ' exactly once', b.length === 1, 'found ' + b.length);
+    shared[sel] = b[0];
+  });
+  const copies = [];
+  fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).forEach(f => {
+    const src = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
+    RULES.forEach(sel => {
+      blocks(src, sel).forEach(b => { if (b === shared[sel]) copies.push(f + ' ' + sel); });
+    });
+  });
+  checkTrue('no room carries a verbatim copy of a shared furniture rule',
+    copies.length === 0,
+    copies.slice(0, 8).join(' · ') + (copies.length > 8 ? ' …and ' + (copies.length - 8) + ' more' : ''));
 })();
 
 /* ==========================================================================

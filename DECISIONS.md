@@ -9450,6 +9450,76 @@ question. Cards now count themselves 1..N of N.
 
 ---
 
+## D-169 — The audit after the feedback: what was measured, what moved
+
+The owner's standing brief, gathered from a week of feedback: efficient,
+simple, enjoyable, effortless, professional. Before touching anything, the
+whole app was measured against the specific complaints that had already come
+in — dead buttons, dead ends, prose in the way, a page that looked broken,
+titles nobody would type. What follows is what the numbers said and what
+changed because of them.
+
+### Measured
+
+- **Room furniture copied 240 times.** `.room-head` was defined in 65 room
+  files, `.room-lede` in 64, `.room-back` in 64, `.notice` in 48 — the same
+  four rules, byte for byte, in every room. The Long Way Round shipped without
+  them (D-168) and its heading sat flush against the edge. That is the cost of
+  copying: the sixty-fifth room forgets.
+- **Words before the first thing you can do:** 91 on average across the
+  rooms; 39 of 68 rooms open with a paragraph of forty words or more. Worst
+  among the rooms that take typed input: the Statement at 227, The Joy Curve
+  at 220, FIRE at 151, Cash Flow at 138.
+- **The front door carried "← Every Ratio | Worth Learning →".** Two
+  arbitrary neighbours of a page that is not on the walking path, dressed as
+  instructions.
+- **Three titles that are jargon:** Decumulation, Dreamline, Reversibility.
+  Nobody arriving from the menu knows what the first means, the second is a
+  book's coinage, the third is a property, not a question.
+- **Checked and clean:** 0 fields with two writers (`shared/ownership.js`
+  holds), 179 inputs across 62 menu rooms, every menu room reachable from
+  the map and the walk.
+
+### Moved
+
+1. **The four rules live once**, in `shared/theme.css` (`.room-head`,
+   `.room-lede`, `.room-back`, `.notice`), and the 240 copies are gone from
+   the rooms. Five rooms keep a genuinely different variant (a wider head, a
+   coloured notice) and those stay local, because they are not copies. The
+   vendored `dnd/shared/theme.css` moved with it, byte-identical.
+2. **The dashboard shows no previous/next.** `Progress.headerNavHtml`
+   returns nothing for `dashboard`; the menu and Walk Me Through are the ways
+   in from the front door. `test/run.js`'s "never a dead end" block exempts
+   the dashboard on the condition that `index.html` links to `walk.html` —
+   so the exemption holds only while a real way on exists.
+3. **Three renames**, registry and page together: Decumulation → **Drawing
+   It Down**, Dreamline → **Price the Dream**, Reversibility → **Can It Be
+   Undone**. Ids, files, engines and stored keys are untouched; the dashboard's
+   "Open Decumulation →" and one source note in Rollover follow the new
+   names. `rooms.json` regenerated.
+4. **Prose folded, not deleted.** Cash Flow's how-to-fill-this-in paragraph
+   is a closed `<details>` with a one-line summary; The Joy Curve's hint is
+   one sentence. The words are still there for whoever wants them, and the
+   first input is on screen without scrolling.
+
+### Not moved, on purpose
+
+The 62-room menu is the biggest single source of "where do I even start", and
+shortening it is a design decision about what the app *is*, not a cleanup.
+Deferred, and flagged. The Statement and FIRE still open long; both are
+rooms where the paragraph does real work and a fold would hide the terms the
+inputs use, so they wait for a per-room pass rather than a blanket cut.
+
+### Guards
+
+- `test/run.js` fails if a room redefines one of the four shared rules
+  verbatim (the orphan-CSS check from D-157 already caught undefined tokens;
+  this is its mirror — a token defined twice).
+- `test/render.js` (D-168) ran on every room after the strip: header
+  mounted, nothing thrown, real content, empty and demo profiles.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

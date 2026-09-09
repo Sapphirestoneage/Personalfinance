@@ -319,6 +319,12 @@
    * every room really does have a back and a next. DECISIONS.md D-054.
    */
   function headerNavHtml(roomId) {
+    /* The front door has no "previous room". Walking the path one room at a
+       time makes sense from inside it; on the dashboard "<- Every Ratio" and
+       "Worth Learning ->" are two arbitrary neighbours of a page that is not
+       on the path at all, and they read as instructions. The menu and the
+       walk-through are the ways in from here. D-169. */
+    if (roomId === 'dashboard') return '';
     var nb = neighbours(roomId);
     var mapHref = (atRoot(roomId) ? '' : '../') + 'map.html';
 

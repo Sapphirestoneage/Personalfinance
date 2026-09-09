@@ -809,6 +809,19 @@ a.slaf-explain-chip:hover { border-color: var(--color-accent); }
    Injected by shared/progress.js into <body>, so it is never inside a room's
    live-input container and nothing can clip it.
    ========================================================================== */
+/* ==========================================================================
+   Room furniture (D-169)
+   --------------------------------------------------------------------------
+   Every room used to carry its own copy of these four rules - sixty-five
+   copies of .room-head, sixty-four of .room-lede and .room-back, forty-eight
+   of .notice, all but a handful byte-identical. A room that forgot one shipped
+   with a flush-left heading (The Long Way Round, D-168). One definition, here.
+   ========================================================================== */
+.room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+.room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+.room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+.notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+
 /* The way back from a link you followed to fill something in. Sits above the
    hop strip because it is the more specific promise: the hops walk the path,
    this returns to the room that sent you. D-161. */
