@@ -8585,6 +8585,36 @@ section('No CSS variable is used without being defined');
 })();
 
 /* ==========================================================================
+   Saying that it saved (D-165)
+   ========================================================================== */
+section('The app confirms what it did');
+(function () {
+  const u = fs.readFileSync(path.join(ROOT, 'shared/undo.js'), 'utf8');
+
+  checkTrue('there is a live region at all', /aria-live/.test(u));
+  checkTrue('...announced politely, not assertively', /aria-live'?,?\s*'polite'/.test(u));
+  checkTrue('the toast carries an Undo, not just a notice', /slaf-toast-undo/.test(u));
+  checkTrue('it reuses the undo stack\'s own words rather than inventing a message',
+    /peekUndo\(\)[\s\S]{0,120}showToast\(u\.label/.test(u));
+  checkTrue('an undo is announced too, so the reversal is not silent', /'Undone'/.test(u));
+  checkTrue('the first paint is not announced as news', /first paint is not news|lastDepth === null/.test(u));
+  checkTrue('depth decides, so a repaint says nothing',
+    /historySize\(\)[\s\S]{0,400}size\.undo > lastDepth/.test(u));
+  checkTrue('it dismisses itself rather than sitting over the next thing typed',
+    /setTimeout\(hideToast/.test(u));
+
+  const css = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('the Undo in the toast clears the 32px tap floor',
+    /\.slaf-toast-undo \{[\s\S]{0,220}min-height: 32px/.test(css));
+  checkTrue('and so does its dismiss',
+    /\.slaf-toast-x \{[\s\S]{0,220}min-height: 32px/.test(css));
+  checkTrue('the toast is opaque, being a thing that floats over the page',
+    /\.slaf-toast \{[\s\S]{0,420}background: var\(--color-panel\)/.test(css));
+  checkTrue('it sits above the undo pills rather than under them',
+    /\.slaf-toast \{[\s\S]{0,300}z-index: 95/.test(css));
+})();
+
+/* ==========================================================================
    The dead spot is the door (D-163)
    ========================================================================== */
 section('The dead spot is the door');

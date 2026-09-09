@@ -814,6 +814,34 @@ a.slaf-explain-chip:hover { border-color: var(--color-accent); }
    this returns to the room that sent you. D-161. */
 /* The way out of a dead spot, sitting directly under the words that named it.
    D-163. */
+/* The toast that says it saved, and offers to take it back. Sits above the
+   undo pills and clear of the soft keyboard's usual reach. D-165. */
+.slaf-toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: 62px; z-index: 95;
+  width: min(440px, calc(100vw - 24px));
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: 10px 10px 10px 14px;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border-strong); border-radius: var(--radius-md);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, .45);
+  font-size: var(--text-sm); color: var(--color-text);
+}
+.slaf-toast-text { flex: 1; min-width: 0; line-height: 1.4; }
+.slaf-toast-undo {
+  flex: none; min-height: 32px; padding: 0 12px; border-radius: var(--radius-pill);
+  background: var(--sapphire-600); border: 1px solid var(--sapphire-600); color: #fff;
+  font-size: var(--text-sm); font-weight: 600; cursor: pointer;
+}
+.slaf-toast-undo:hover { background: var(--sapphire-500); border-color: var(--sapphire-500); }
+.slaf-toast-x {
+  flex: none; min-height: 32px; min-width: 32px; border: 0; background: transparent;
+  color: var(--color-text-subtle); font-size: 18px; line-height: 1; cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.slaf-toast-x:hover { color: var(--color-text); }
+@media (min-width: 641px) { .slaf-toast { bottom: 20px; } }
+
 .slaf-go { display: inline-flex; align-items: center; min-height: 32px; margin-top: var(--space-2);
   color: var(--color-accent-hover); font-size: var(--text-sm); text-decoration: none; }
 .slaf-go:hover { text-decoration: underline; }

@@ -9163,6 +9163,66 @@ registry.
 
 21,734 + 5,614 + 25 + 448 + 340 checks pass.
 
+## D-165 — Saying that it saved
+
+Nothing in this app has ever confirmed anything. A search for `aria-live`
+across `shared/` returned zero. You typed a number, tapped away, and the only
+signal it had stuck was a 33px button in the corner changing opacity.
+
+On a phone that button is worse than subtle. `theme.css` hides its label under
+640px, so it is a bare `↶`, and the thing that makes undo safe — its genuinely
+good label, *"Undo: Rent or mortgage, a month — → $2,750/mo"* — lives in a
+`title` attribute, which a touch device never shows. The person least able to
+find out what undo would do was the one holding the phone.
+
+### One widget, both problems
+
+A toast at the point of action answers "did that save?" and "how do I take it
+back?" together, and it is the same sentence for both:
+
+> Rent or mortgage, a month — → $2,750/mo   **[Undo]**
+
+It reuses `Spine.peekUndo().label` rather than inventing a message, so the
+toast and the corner button can never disagree about what happened. The corner
+pills stay: they are still the way to undo something from two rooms ago, and
+they carry Cmd/Ctrl-Z.
+
+It lives in `shared/undo.js`, which is already loaded by all sixty-five real
+rooms — so this is one file, not sixty-five.
+
+### Telling a save from an undo
+
+`Spine.historySize()` gives the depth of both stacks. Grown means something
+happened; shrunk means it was taken back and the toast says "Undone"; anything
+else — a load, a room repainting, a lens toggle — moves neither and says
+nothing. The very first paint is skipped, because arriving on a page with
+history is not news.
+
+### The first live region in the app
+
+`role="status"` with `aria-live="polite"`. Polite rather than assertive: a
+saved number is worth hearing at the next pause, not worth interrupting
+someone mid-sentence for.
+
+### What it must not do
+
+Sit over the thing being typed next. It dismisses itself after seven seconds —
+long enough to read and reach for Undo, short enough to be gone before the next
+field matters — and it can be dismissed by hand. Both its buttons clear the
+32px floor (D-136), and it is painted on `--color-panel`, the opaque token,
+because it floats over content (D-157).
+
+The risk this carried was a fixed element intercepting taps in the rooms below
+it; `test/forms.js` taps through every form in every room on a phone-shaped
+browser and passes all 448 checks unchanged.
+
+### Verified
+
+Chromium at 412x915 with touch: hidden at rest; after typing a rent it reads
+"Rent or mortgage, a month — → $2,750/mo" with a 32px Undo,
+`role="status"`, `aria-live="polite"`; tapping Undo restores the field and the
+toast then says "Undone". 21,771 + 5,614 + 25 + 448 + 340 checks pass.
+
 ---
 
 # The Dungeons & Dividends entries
