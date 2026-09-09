@@ -1,0 +1,357 @@
+{
+  "id": "lenses",
+  "version": "1.0",
+  "asOf": "2026-09-09",
+  "source": "Thirty-three ways to read the same numbers, each a published rule of thumb or one of Eli's own, stated as a rule, a band and three sentences. 50/30/20 (Elizabeth Warren), the Money Guy Show's 25% and rate-by-age, Ramit Sethi's conscious spending, Your Money or Your Life (Robin and Dominguez), Die With Zero (Bill Perkins), the Bogleheads three-fund portfolio, the bucket strategy, the 20/3/8 car rule, Mr. Money Mustache's Shockingly Simple Math, the FOO (the Money Guy Show's Financial Order of Operations) and the DRAFTT letters. Each lens re-reads DAITE numbers already in the household; no lens adds a field.",
+  "confidence": "convention",
+  "confidenceNote": "Rules of thumb, not findings. A lens says what a well-known framework would say about your numbers, in one sentence, and then says who it is for and who it is not for. The second pair is the advice translator: a lens without it does not ship.",
+  "note": "Read by shared/lenses.js (SLAF.Lenses — the name Lens is the four-way $ / hours / bought / pushed toggle, D-094). Each domain shows its `default` lens; the rest render only behind the \"More ways to look at this\" toggle, off by default. `band` is on the measure's own basis (the `measure` note says which); null means the lens states a number and has one verdict sentence. `verdict` is [under, in, over] for a banded lens, [sentence] for the rest; {tokens} are filled by the library from the measure. `plain` is the header when the showFrameworkNames preference is off. D-175.",
+  "domains": [
+    { "id": "budgeting",      "label": "Budgeting",      "default": "fatwants" },
+    { "id": "debt",           "label": "Debt",           "default": "avalanche" },
+    { "id": "investments",    "label": "Investments",    "default": "foo" },
+    { "id": "transportation", "label": "Transportation", "default": "tco" },
+    { "id": "accommodation",  "label": "Accommodation",  "default": "twentyfive" },
+    { "id": "income",         "label": "Income",         "default": "takehome" },
+    { "id": "taxes",          "label": "Taxes",          "default": "effmarg" }
+  ],
+  "lenses": [
+    {
+      "id": "fatwants", "domain": "budgeting", "name": "FAT and wants", "plain": "Needs inside half of take-home",
+      "rule": "Food, a roof and getting around inside half of take-home; the rest is wants and saving.",
+      "reads": ["expenses.needs.food", "expenses.needs.accommodation", "expenses.needs.transportation", "income.takeHome"],
+      "measure": "needs, a share of take-home a month", "band": { "low": 0, "high": 0.50 },
+      "verdict": ["Needs take {share} of take-home — under half, with room to spare.", "Needs take {share} of take-home: {amount} a month on food, a roof and getting around, inside half.", "Needs take {share} of take-home, over half: the three lines leave little for wants or saving."],
+      "forWhom": "Anyone with take-home pay and the three needs lines filled in.",
+      "notForWhom": "Between jobs, with no take-home to divide: read the runway instead.",
+      "source": "Eli's default (D-172)"
+    },
+    {
+      "id": "fiftythirty", "domain": "budgeting", "name": "50/30/20", "plain": "A fifth of take-home saved",
+      "rule": "Half of take-home to needs, three-tenths to wants, a fifth saved or paid down.",
+      "reads": ["income.takeHome", "expenses.monthly"],
+      "measure": "what is left of take-home after spending, a share of take-home", "band": { "low": 0.20, "high": 1 },
+      "verdict": ["{share} of take-home is left after spending, under the 20 the rule wants.", "{share} of take-home is left after spending — the 20 is met.", "{share} of take-home is left after spending, well past the 20."],
+      "forWhom": "Someone starting out who wants three numbers and no spreadsheet.",
+      "notForWhom": "High earners in expensive cities: the 50 for needs is often impossible on rent alone, and the 20 is too little.",
+      "source": "Elizabeth Warren, All Your Worth"
+    },
+    {
+      "id": "moneyguy25", "domain": "budgeting", "name": "Money Guy 25%", "plain": "Save a quarter of what you earn",
+      "rule": "Save 25% of gross for retirement.",
+      "reads": ["income.grossAnnualCents", "assets.contributions"],
+      "measure": "retirement contributions, a share of gross", "band": { "low": 0.25, "high": 1 },
+      "verdict": ["Under. You're at {share} of gross.", "There: {share} of gross.", "Above, good: {share} of gross."],
+      "forWhom": "Anyone with a job and no high-interest debt.",
+      "notForWhom": "Carrying credit card debt: clear it first, this comes later.",
+      "source": "The Money Guy Show"
+    },
+    {
+      "id": "conscious", "domain": "budgeting", "name": "Conscious spending", "plain": "One rich-life line, ruthless on the rest",
+      "rule": "Spend without guilt on the one thing you love; be ruthless on everything else. Guilt-free spending runs 20 to 35% of take-home.",
+      "reads": ["expenses.wants", "income.takeHome"],
+      "measure": "wants, a share of take-home a month", "band": { "low": 0.20, "high": 0.35 },
+      "verdict": ["Wants are {share} of take-home: under the 20 Ramit says to spend on purpose — the plan may be too tight to keep.", "Wants are {share} of take-home, inside the 20 to 35 the plan allows.", "Wants are {share} of take-home, over the 35: pick the one line that is your rich life and be ruthless on the rest."],
+      "forWhom": "Someone who hates budgets and wants one line to protect.",
+      "notForWhom": "A month that does not close: the ruthless part comes before the guilt-free part.",
+      "source": "Ramit Sethi, I Will Teach You to Be Rich"
+    },
+    {
+      "id": "ymoyl", "domain": "budgeting", "name": "Your Money or Your Life", "plain": "A month of spending, in hours of your life",
+      "rule": "Every dollar is life energy: price each line in the hours of work it costs at your real hourly wage.",
+      "reads": ["expenses.monthly", "income.realHourlyWage"],
+      "measure": "hours of life a month of spending costs", "band": null,
+      "verdict": ["A month of spending is {hours} hours of your life at {wage} an hour — about {hoursWeek} hours a week of work."],
+      "forWhom": "Anyone who has filled in Real Hourly Wage and wonders whether a line is worth it.",
+      "notForWhom": "Retired or between jobs: with no wage there are no hours to price in.",
+      "source": "Vicki Robin and Joe Dominguez"
+    },
+    {
+      "id": "diewithzero", "domain": "budgeting", "name": "Die With Zero", "plain": "Spend when you can use it",
+      "rule": "Net worth should peak somewhere between 45 and 60 and be spent down after: experiences pay a memory dividend, and a pile at the end is life unspent.",
+      "reads": ["you.age"],
+      "measure": "your age against the peak window", "band": { "low": 45, "high": 60 },
+      "verdict": ["At {age}, these are the building years: spend on experiences that pay memory dividends now, while they are cheap and you are able.", "At {age}, Die With Zero says net worth should be peaking about now and spending should start to climb.", "At {age}, the pile should be shrinking on purpose: spending it is the plan, not a failure of it."],
+      "forWhom": "Anyone with a date of birth entered and a fear of dying rich.",
+      "notForWhom": "A household with no cushion yet: the book assumes the basics are covered before the spending curve starts.",
+      "source": "Bill Perkins, Die With Zero"
+    },
+
+    {
+      "id": "avalanche", "domain": "debt", "name": "Avalanche", "plain": "Highest rate first",
+      "rule": "Every spare dollar to the highest rate; minimums on the rest. Cheapest in interest.",
+      "reads": ["debts[].rate", "debts[].balanceCents"],
+      "measure": "the highest rate you carry, against the high-interest line", "band": { "low": 0, "high": 0.075 },
+      "verdict": ["No debt above the line.", "Nothing above {threshold}: minimums and invest — the avalanche has no target here.", "{top} at {rate} first: it is above the {threshold} line, and every spare dollar there saves the most interest."],
+      "forWhom": "Anyone who can keep paying a plan without seeing a balance disappear.",
+      "notForWhom": "Someone who needs an early win to keep going: see the snowball.",
+      "source": "convention"
+    },
+    {
+      "id": "snowball", "domain": "debt", "name": "Snowball", "plain": "Smallest balance first",
+      "rule": "Smallest balance first, whatever its rate, for the win that keeps you going.",
+      "reads": ["debts[].balanceCents", "debts[].minPaymentCents"],
+      "measure": "the smallest balance and how fast its minimum clears it", "band": null,
+      "verdict": ["Smallest first: {label} at {balance} — about {months} at its minimum alone, sooner with anything extra. Its rate is {rate}, so it costs {costNote}."],
+      "forWhom": "Someone with several debts who needs one gone to believe the rest can go.",
+      "notForWhom": "One big debt at a high rate: there is nothing to snowball; see the avalanche.",
+      "source": "Dave Ramsey"
+    },
+    {
+      "id": "moneyguyage", "domain": "debt", "name": "Money Guy rate by age", "plain": "Pay it off or invest, by your decade",
+      "rule": "Pay off a debt above the threshold for your decade; invest instead of prepaying the rest.",
+      "reads": ["debts[].rate", "you.age"],
+      "measure": "the highest rate you carry, against your decade's threshold", "band": { "low": 0, "high": 0.06 },
+      "verdict": ["No debt to weigh.", "Nothing above {threshold}, the line for your {decade}: invest rather than prepay.", "{top} at {rate} is above {threshold}, the line for your {decade}: pay it off before investing more."],
+      "forWhom": "Someone with a low-rate loan wondering whether to prepay it or invest.",
+      "notForWhom": "Credit card debt at any age: that is always above the line.",
+      "source": "The Money Guy Show",
+      "thresholdsByDecade": { "20": 0.06, "30": 0.05, "40": 0.04, "50": 0.03, "60": 0.03 }
+    },
+    {
+      "id": "crossover", "domain": "debt", "name": "Payoff-vs-invest crossover", "plain": "The rate where investing wins",
+      "rule": "Below the return you assume on investments, investing wins on paper; above it, paying off is the guaranteed win.",
+      "reads": ["debts[].rate", "assumptions.returnReal"],
+      "measure": "the highest rate you carry, against your assumed real return", "band": { "low": 0, "high": 0.05 },
+      "verdict": ["No debt to weigh.", "Every rate you carry is under {crossover}, the real return you assume: investing wins on paper, with more risk.", "{top} at {rate} beats the {crossover} you assume on investments: paying it off is the sure thing. {aboveCount} of your {count} debts are above the line."],
+      "forWhom": "Anyone choosing between an extra payment and an extra contribution.",
+      "notForWhom": "Someone without an emergency fund: neither wins until the cushion exists.",
+      "source": "convention"
+    },
+    {
+      "id": "drafttD", "domain": "debt", "name": "DRAFTT D", "plain": "Debt payments, a share of take-home",
+      "rule": "Non-mortgage minimums under a tenth of take-home.",
+      "reads": ["debts[].minPaymentCents", "income.takeHome"],
+      "measure": "non-mortgage minimums, a share of take-home", "band": { "low": 0, "high": 0.10 },
+      "verdict": ["Under.", "Minimums are {share} of take-home, inside the band.", "Minimums are {share} of take-home, over the band: the month is carrying yesterday's spending."],
+      "forWhom": "Anyone with debts entered and a take-home figure.",
+      "notForWhom": "A mortgage only: it sits in A, not here.",
+      "source": "Eli's default (D-173)"
+    },
+
+    {
+      "id": "foo", "domain": "investments", "name": "FOO position", "plain": "The next thing money should do",
+      "rule": "Money has an order: basics, starter fund, the match, high-interest debt, the full fund, HSA, Roth, the rest of the tax-advantaged space, then everything else.",
+      "reads": ["assets", "debts", "retirement", "income"],
+      "measure": "the first step not yet met", "band": null,
+      "verdict": ["Step {step}: {label}."],
+      "forWhom": "Anyone unsure what the next dollar should do.",
+      "notForWhom": "Retired: the ladder is for building, not drawing down.",
+      "source": "The Money Guy Show"
+    },
+    {
+      "id": "threefund", "domain": "investments", "name": "Three-fund check", "plain": "Stocks, world stocks, bonds — and roughly how much bond",
+      "rule": "A total-market fund, an international fund and a bond fund, with bonds somewhere between a tenth and four-tenths while you are still earning.",
+      "reads": ["allocation.bonds", "allocation.stocks"],
+      "measure": "bonds, a share of the target mix", "band": { "low": 0.10, "high": 0.40 },
+      "verdict": ["Bonds at {share}: lighter than most three-fund mixes — fine if you can sit through a fall without selling.", "Bonds at {share}, in the usual range; stocks at {stocks}.", "Bonds at {share}: heavier than most three-fund mixes for someone still earning."],
+      "forWhom": "Anyone with a target mix in Where It Goes.",
+      "notForWhom": "Money you need in under five years: it is not in stocks or bonds at all.",
+      "source": "Bogleheads"
+    },
+    {
+      "id": "bucket", "domain": "investments", "name": "Bucket strategy", "plain": "Years of spending in cash",
+      "rule": "One to three years of spending in cash, the next several in bonds, the rest in stocks, so a bad year never forces a sale.",
+      "reads": ["assets.cash", "expenses.monthly"],
+      "measure": "years of spending held in cash", "band": { "low": 1, "high": 3 },
+      "verdict": ["{years} of spending in cash: under a year, so a bad market and a bad year at work would hit at once.", "{years} of spending in cash, inside the first bucket.", "{years} of spending in cash: more than three years, which is safety paid for in growth."],
+      "forWhom": "Someone near or in retirement, or anyone who wants to know how long the cash lasts.",
+      "notForWhom": "Someone still on the starter emergency fund: one bucket first.",
+      "source": "convention (Harold Evensky)"
+    },
+    {
+      "id": "assetlocation", "domain": "investments", "name": "Asset location", "plain": "Pre-tax, Roth or taxable, by your bracket",
+      "rule": "In a higher bracket now than later, pre-tax first; in a lower one, Roth first; taxable takes what is left.",
+      "reads": ["assets[].taxCharacter", "taxes.marginalRate"],
+      "measure": "pre-tax, a share of retirement money, read against your marginal rate", "band": { "low": 0, "high": 1 },
+      "verdict": ["At a {marginal} marginal rate, pre-tax is {share} of your retirement money ({roth} Roth, {taxable} taxable): light for the bracket — pre-tax would take the deduction now.", "At a {marginal} marginal rate, pre-tax is {share} of your retirement money, Roth {roth}, taxable {taxable}: a reasonable mix for the bracket.", "At a {marginal} marginal rate, pre-tax is {share} of your retirement money ({roth} Roth, {taxable} taxable): heavy for the bracket — Roth would lock in today's lower rate."],
+      "forWhom": "Anyone whose accounts say how they are taxed, in the Statement.",
+      "notForWhom": "An account entered as one total: say how it is taxed first.",
+      "source": "convention"
+    },
+    {
+      "id": "glidepath", "domain": "investments", "name": "Glide path by FI stage", "plain": "How much in stocks, by how far along you are",
+      "rule": "Start near 90% stocks and glide to about 60% as the target comes into view: the closer you are, the less a fall may cost.",
+      "reads": ["progress.fire", "allocation.stocks"],
+      "measure": "stocks, a share of the target mix, against the share the stage suggests", "band": { "low": 0.6, "high": 0.9 },
+      "verdict": ["Stocks at {share}: {progress} of the way to the target suggests about {suggested} — you are lighter than that.", "Stocks at {share}: {progress} of the way to the target suggests about {suggested}, and you are near it.", "Stocks at {share}: {progress} of the way to the target suggests about {suggested} — a fall now would cost more than it needs to."],
+      "forWhom": "Anyone with a FIRE number, an investment balance and a target mix.",
+      "notForWhom": "Money with a date on it: a glide path is for the long pot only.",
+      "source": "convention"
+    },
+    {
+      "id": "coastfi", "domain": "investments", "name": "Coast FI check", "plain": "Enough invested to stop adding",
+      "rule": "Once what you have would grow to the full number by your target age on its own, contributions become optional.",
+      "reads": ["assets.investments", "targets.coastAge", "you.age", "assumptions.returnReal"],
+      "measure": "what you have, a share of the coast number", "band": { "low": 1, "high": 100 },
+      "verdict": ["{invested} of the {coast} coast number: {share} of the way. Not at coast yet — contributions still do the work until {target}.", "Past coast: what you have grows to the full number by {target} on its own.", "Past coast: what you have grows to the full number by {target} on its own."],
+      "forWhom": "Anyone who wants to know when saving becomes optional.",
+      "notForWhom": "Retired: coast is a milestone on the way, not a way to draw down.",
+      "source": "convention"
+    },
+
+    {
+      "id": "tco", "domain": "transportation", "name": "Total cost of ownership", "plain": "Getting around, a month",
+      "rule": "The whole line — payment, fuel, insurance, upkeep, parking, transit — under a tenth of take-home.",
+      "reads": ["expenses.needs.transportation", "income.takeHome"],
+      "measure": "getting around, a share of take-home a month", "band": { "low": 0, "high": 0.10 },
+      "verdict": ["Under.", "Getting around costs {amount} a month, {share} of take-home, inside a tenth.", "Getting around costs {amount} a month, {share} of take-home, over a tenth: the second-biggest line to attack after housing."],
+      "forWhom": "Anyone with the transportation line filled in.",
+      "notForWhom": "A household with no vehicle and no transit cost: the line is legitimately near zero.",
+      "source": "Eli's default (D-173)"
+    },
+    {
+      "id": "twentythreeeight", "domain": "transportation", "name": "20/3/8", "plain": "A car payment under 8% of gross",
+      "rule": "20% down, a loan no longer than three years, and the payment under 8% of gross monthly income.",
+      "reads": ["expenses.needs.transportation", "income.grossAnnualCents"],
+      "measure": "the whole getting-around line, a share of gross a month — strict by design, since the rule is for the payment alone", "band": { "low": 0, "high": 0.08 },
+      "verdict": ["Under.", "Getting around is {share} of gross, inside the 8: at your income the rule allows a car of about {maxPrice} on a three-year loan.", "Getting around is {share} of gross, over the 8 — and that is the whole line, not just a payment. The rule allows about {maxPrice} of car."],
+      "forWhom": "Anyone about to finance a car.",
+      "notForWhom": "Someone paying cash for a car they will keep ten years: the rule is about loans.",
+      "source": "The Money Guy Show"
+    },
+    {
+      "id": "carnetworth", "domain": "transportation", "name": "Car as a share of net worth", "plain": "What your cars are worth, against everything",
+      "rule": "Vehicles under about 15% of net worth: they lose value every year and the rest of the sheet should not.",
+      "reads": ["assets[].category", "netWorth"],
+      "measure": "vehicles, a share of net worth", "band": { "low": 0, "high": 0.15 },
+      "verdict": ["Under.", "Your vehicles are {amount}, {share} of net worth, inside the band.", "Your vehicles are {amount}, {share} of net worth: a large slice of what you own is losing value every year."],
+      "forWhom": "Anyone who has entered a vehicle in the Statement.",
+      "notForWhom": "A negative net worth: the share has no meaning; read the debt lenses first.",
+      "source": "convention"
+    },
+    {
+      "id": "returnonhassle", "domain": "transportation", "name": "Return on Hassle", "plain": "Is the cheaper way worth your hours?",
+      "rule": "A cheaper option that costs you hours must save more than those hours earn at your real hourly wage.",
+      "reads": ["income.realHourlyWage"],
+      "measure": "the bar any hassle has to clear: your real hourly wage", "band": null,
+      "verdict": ["An hour of your life earns {wage} after tax and the costs of working. A cheaper way to get around that costs you an hour a week must save more than {weekly} a week — about {monthly} a month — to be worth it."],
+      "forWhom": "Anyone weighing the bus, a longer drive, a cheaper car or fixing it yourself.",
+      "notForWhom": "No wage yet: the bar is not set until Real Hourly Wage is.",
+      "source": "Eli's framework (Return on Hassle)"
+    },
+
+    {
+      "id": "twentyfive", "domain": "accommodation", "name": "25% of gross", "plain": "Housing under a quarter of what you earn",
+      "rule": "Rent or mortgage, tax and insurance under a quarter of gross.",
+      "reads": ["expenses.needs.accommodation", "income.grossAnnualCents"],
+      "measure": "the accommodation line, a share of gross a month", "band": { "low": 0, "high": 0.25 },
+      "verdict": ["Under.", "Housing is {amount} a month, {share} of gross, inside the quarter.", "Housing is {amount} a month, {share} of gross, over the quarter: the biggest line, and the one that moves everything else."],
+      "forWhom": "Anyone with a rent or mortgage line.",
+      "notForWhom": "A paid-off home: the line is tax and insurance only, and the quarter does not apply.",
+      "source": "The Money Guy Show"
+    },
+    {
+      "id": "rentbuy", "domain": "accommodation", "name": "Rent-vs-buy breakeven", "plain": "How many years before buying wins",
+      "rule": "Buying wins once the years of unrecoverable-cost savings pay back the closing costs; under that, renting wins.",
+      "reads": ["housing.priceCents", "housing.rentMonthlyCents", "expenses.needs.accommodation"],
+      "measure": "years until owning's savings repay the closing costs", "band": { "low": 0, "high": 5 },
+      "verdict": ["Owning pays back its closing costs at once.", "Owning breaks even in about {years}: stay longer than that and buying wins on the unrecoverable costs alone.", "Breakeven is {years} away: renting wins unless you stay longer than that."],
+      "forWhom": "Anyone with a price and a rent typed into Housing Decision.",
+      "notForWhom": "Someone who may move in under five years: see the 5-year rule.",
+      "source": "convention"
+    },
+    {
+      "id": "househack", "domain": "accommodation", "name": "House hack", "plain": "Cut the biggest line by sharing it",
+      "rule": "A housemate, a smaller place or a cheaper town cuts the accommodation line by 40% — the lever's figure, read from the lever library.",
+      "reads": ["expenses.needs.accommodation", "assets.property", "housing.priceCents"],
+      "measure": "what the house-hack lever is worth on your line, a month and an hour", "band": null,
+      "verdict": ["The house hack would take about {gain} a month off your {line} line — about {hourly} an hour for the {hours} hours a week it costs. {applies}"],
+      "forWhom": "Anyone with a property, or a price typed in Housing Decision.",
+      "notForWhom": "A lease with no room to share and no move in sight: the lever does not apply yet.",
+      "source": "data/levers.json (D-174)"
+    },
+    {
+      "id": "fiveyear", "domain": "accommodation", "name": "5-year rule", "plain": "Do not buy if you may move within five years",
+      "rule": "Closing costs on the way in and selling costs on the way out together run near a tenth of the price; under five years they rarely come back.",
+      "reads": ["housing.priceCents"],
+      "measure": "the round trip: buying and selling costs on the price you are weighing", "band": null,
+      "verdict": ["On {price}, the round trip — closing costs in, agent and closing costs out — is about {roundTrip}. Under five years, appreciation rarely covers it; rent if a move is likely."],
+      "forWhom": "Anyone weighing a price in Housing Decision.",
+      "notForWhom": "Someone who has already owned the place for years: the costs are sunk.",
+      "source": "convention"
+    },
+    {
+      "id": "drafttA", "domain": "accommodation", "name": "DRAFTT A", "plain": "Rent or mortgage, a share of take-home",
+      "rule": "One number, a month, under a quarter of take-home.",
+      "reads": ["expenses.needs.accommodation", "income.takeHome"],
+      "measure": "the accommodation line, a share of take-home", "band": { "low": 0, "high": 0.25 },
+      "verdict": ["Under.", "Housing is {share} of take-home, inside the band.", "Housing is {share} of take-home, over the band."],
+      "forWhom": "Anyone with a rent or mortgage line and take-home pay.",
+      "notForWhom": "A paid-off home.",
+      "source": "Eli's default (D-173)"
+    },
+
+    {
+      "id": "takehome", "domain": "income", "name": "Take-home", "plain": "What you keep of what you earn",
+      "rule": "Gross is the headline; take-home is what the month is actually made of.",
+      "reads": ["income.grossAnnualCents", "income.takeHome", "taxes.estimated"],
+      "measure": "take-home, a share of gross", "band": null,
+      "verdict": ["You keep {share} of what you earn: {takeHome} a month from {gross}, after about {tax} a year of tax. Every share in this room is of the {takeHome}."],
+      "forWhom": "Everyone with an income and a filing status.",
+      "notForWhom": "Nobody — but self-employed take-home here is before quarterly estimates you set aside yourself.",
+      "source": "data/effective_tax_rates_2026.json"
+    },
+    {
+      "id": "rhw", "domain": "income", "name": "Real Hourly Wage", "plain": "What an hour of your life really earns",
+      "rule": "Pay after tax and the costs of working, over every hour the job takes — commute, prep and unwinding included.",
+      "reads": ["income.realHourlyWage"],
+      "measure": "your real hourly wage against the one on paper", "band": null,
+      "verdict": ["{real} an hour, really, against {nominal} on paper: the job takes {hours} hours a week once the commute and the rest are counted."],
+      "forWhom": "Anyone with a job and a commute.",
+      "notForWhom": "Retired or between jobs: there is no wage to correct.",
+      "source": "Vicki Robin and Joe Dominguez"
+    },
+    {
+      "id": "savingsrate", "domain": "income", "name": "Savings rate", "plain": "What you save of what you earn",
+      "rule": "Take-home less spending, over gross. The one number that sets the FI date.",
+      "reads": ["income.takeHome", "expenses.monthly", "income.grossAnnualCents"],
+      "measure": "what is saved, a share of gross", "band": { "low": 0.15, "high": 1 },
+      "verdict": ["You save {share} of gross, under 15: the FI date is far, and the rate — not the return — is what moves it.", "You save {share} of gross: past 15, and every point moves the date.", "You save {share} of gross: past 15, and every point moves the date."],
+      "forWhom": "Anyone with income, spending and a filing status entered.",
+      "notForWhom": "Variable income: read the rolling average first, then this.",
+      "source": "convention"
+    },
+    {
+      "id": "simplemath", "domain": "income", "name": "Shockingly Simple Math", "plain": "Years to FI from the savings rate alone",
+      "rule": "Your savings rate, and nothing else, sets the years to FI: from zero, at the real return you assume, until 25 years of spending is in the pot.",
+      "reads": ["income.savingsRate", "assumptions.returnReal"],
+      "measure": "years to FI from zero at your savings rate", "band": null,
+      "verdict": ["At {share} saved, {years} years to FI from zero at {returnRate} real. Ten points more makes it {yearsPlus}."],
+      "forWhom": "Anyone who wants the one lever that matters most.",
+      "notForWhom": "Someone already holding a pot: the FIRE room counts what you have; this starts from nothing on purpose.",
+      "source": "Mr. Money Mustache"
+    },
+
+    {
+      "id": "effmarg", "domain": "taxes", "name": "Effective vs marginal", "plain": "Your average rate and your next-dollar rate",
+      "rule": "The average rate is what your life is taxed at; the marginal rate is what a raise is taxed at. They are different numbers and people mix them up.",
+      "reads": ["taxes.estimated", "taxes.marginalRate"],
+      "measure": "the effective rate, with the marginal beside it", "band": null,
+      "verdict": ["Your average rate is about {effective}; the next dollar is taxed at {marginal}. A raise is taxed at the second, your life at the first."],
+      "forWhom": "Everyone with an income and a filing status.",
+      "notForWhom": "Nobody — but a self-employed picture adds the self-employment tax the table already includes.",
+      "source": "data/federal_brackets_2026.json"
+    },
+    {
+      "id": "fourbuckets", "domain": "taxes", "name": "The four buckets", "plain": "Pre-tax, Roth, taxable, HSA — which is empty",
+      "rule": "Four places to hold money, taxed four ways. Most people have one; the flexibility later comes from having several.",
+      "reads": ["assets[].taxCharacter", "retirement.contributionPercent", "retirement.rothContributedCents", "retirement.hsaContributedCents"],
+      "measure": "how many of the four buckets hold something or receive something", "band": { "low": 3, "high": 4 },
+      "verdict": ["{filled} of four in use: {filledList}. Empty: {emptyList}. Each empty one is a tax rate you cannot choose later.", "{filled} of four in use: {filledList}. Empty: {emptyList}.", "All four in use: {filledList}."],
+      "forWhom": "Anyone whose accounts say how they are taxed.",
+      "notForWhom": "No HSA eligibility: three buckets is the full set for you.",
+      "source": "convention"
+    },
+    {
+      "id": "headroom", "domain": "taxes", "name": "Bracket headroom", "plain": "How much more fits in your bracket",
+      "rule": "The room left before the next bracket: what a Roth conversion, a bonus or a side income can add at today's marginal rate.",
+      "reads": ["income.grossAnnualCents", "taxes.marginalRate"],
+      "measure": "income that fits before the next bracket", "band": null,
+      "verdict": ["About {room} more taxable income fits in the {marginal} bracket before the {next} one starts."],
+      "forWhom": "Anyone weighing a Roth conversion, a bonus or extra work this year.",
+      "notForWhom": "The top bracket: there is no next one.",
+      "source": "data/federal_brackets_2026.json"
+    }
+  ]
+}

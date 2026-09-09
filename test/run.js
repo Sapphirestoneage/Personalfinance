@@ -9722,6 +9722,107 @@ section('DRAFTT: seven shares against seven bands (D-173)');
   checkTrue('the bands table is a registered reference table', /bands: 'bands\.json'/.test(fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8')));
 })();
 
+section('Lenses: a rule re-reads the numbers and returns a verdict (D-175)');
+(function () {
+  const Lenses = require(path.join(ROOT, 'shared/lenses.js'));
+  const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
+  const table = require(path.join(ROOT, 'data/lenses.json'));
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  Lenses.use(table);
+  const T = {};
+  Object.keys(Reference.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) { /* dnd-side tables */ } });
+  const demo = Demo.build();
+  const ids = table.lenses.map(l => l.id);
+
+  /* The table: every lens whole, the pair that makes it an advice translator mandatory. */
+  check('seven domains', table.domains.length, 7);
+  checkTrue('thirty-three lenses, ids unique', ids.length === 33 && new Set(ids).size === 33);
+  checkTrue('every lens has a non-empty forWhom AND notForWhom — a lens without them does not ship',
+    table.lenses.every(l => typeof l.forWhom === 'string' && l.forWhom.trim().length > 10 && typeof l.notForWhom === 'string' && l.notForWhom.trim().length > 10));
+  checkTrue('every lens has id, domain, name, plain, rule, reads, verdict, source',
+    table.lenses.every(l => ['id', 'domain', 'name', 'plain', 'rule', 'source'].every(k => typeof l[k] === 'string' && l[k]) && Array.isArray(l.reads) && l.reads.length && Array.isArray(l.verdict) && l.verdict.length));
+  checkTrue('a banded lens carries three sentences; an unbanded one carries one',
+    table.lenses.every(l => l.band ? l.verdict.length === 3 : l.verdict.length === 1));
+  checkTrue('every domain is a known domain', table.lenses.every(l => table.domains.some(d => d.id === l.domain)));
+  checkTrue('every domain has a default that is one of its own lenses',
+    table.domains.every(d => { const L = Lenses.get(d.default); return L && L.domain === d.id; }));
+  check('the defaults the brief names', table.domains.map(d => d.default).join(','), 'fatwants,avalanche,foo,tco,twentyfive,takehome,effmarg');
+  checkTrue('every lens has a measure in the library', ids.every(id => typeof Lenses.MEASURES[id] === 'function'));
+  checkTrue('the lenses table is a registered reference table', /lenses: 'lenses\.json'/.test(fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8')));
+  checkTrue('no lens reads a field that is not already in DAITE vocabulary (no new field)',
+    table.lenses.every(l => l.reads.every(r => /^(expenses|income|assets|debts|allocation|you|taxes|housing|progress|targets|assumptions|retirement|netWorth)/.test(r))));
+
+  /* Every lens runs on the demo without throwing, and each reads or says what is missing. */
+  let okCount = 0;
+  ids.forEach(id => {
+    const m = Lenses.measure(id, demo, T);
+    checkTrue(id + ' returns a Result', m && (m.status === 'ok' || m.status === 'incomplete'));
+    if (m.status === 'ok') okCount++;
+    else checkTrue(id + ' incomplete says why', typeof m.reason === 'string' && m.reason.length > 10);
+    const v = Lenses.verdictFor(Lenses.get(id), m);
+    checkTrue(id + ' has a verdict sentence with no unfilled token', typeof v.text === 'string' && v.text.length > 5 && !/\{\w+\}/.test(v.text));
+    const html = Lenses.render(id, demo, T);
+    checkTrue(id + ' renders a card carrying its forWhom and notForWhom', html.indexOf('lens-card') > -1 && html.indexOf('For:') > -1 && html.indexOf('Not for:') > -1);
+  });
+  check('the demo reads 27 of 33; the other six say honestly what is not entered', okCount, 27);
+
+  /* A few re-derived by hand on the demo. */
+  const takeHome = 486000;
+  check('FAT and wants: needs ÷ take-home', Lenses.measure('fatwants', demo, T).value, (71000 + 150000 + 22000) / takeHome);
+  check('50/30/20: what is left ÷ take-home', Lenses.measure('fiftythirty', demo, T).value, (takeHome - 315000) / takeHome);
+  check('25% of gross: accommodation ÷ gross a month', Lenses.measure('twentyfive', demo, T).value, 150000 / 600000);
+  check('take-home share of gross', Lenses.measure('takehome', demo, T).value, (7200000 - 1368000) / 7200000);
+  check('bucket: cash ÷ a year of spending', Lenses.measure('bucket', demo, T).value, 950000 / (315000 * 12));
+  check('the avalanche names the highest rate', Lenses.measure('avalanche', demo, T).top, 'Credit card');
+  check('...and reads the FOO high-interest line', Lenses.measure('avalanche', demo, T).band.high, 0.075);
+  check('rate by age: a 32-year-old reads the thirties line', Lenses.measure('moneyguyage', demo, T).band.high, 0.05);
+  check('the crossover is the assumed real return', Lenses.measure('crossover', demo, T).band.high, 0.05);
+  check('Die With Zero reads the age', Lenses.measure('diewithzero', demo, T).value, 32);
+  check('Shockingly Simple Math: from zero at 28.5% saved, 5% real', Math.round(Lenses.yearsFromRate(0.285, 0.05)), 29);
+  check('...at a 50% rate, about 17 years', Math.round(Lenses.yearsFromRate(0.5, 0.05)), 17);
+  check('...at 100% saved, zero years', Lenses.yearsFromRate(1, 0.05), 0);
+  check('...at nothing saved, never', Lenses.yearsFromRate(0, 0.05), null);
+  check('four buckets on the demo: pre-tax and Roth in use', Lenses.measure('fourbuckets', demo, T).filledList, 'pre-tax, Roth');
+  check('the house-hack lens reads the lever library, 40% of the rent line', Lenses.measure('househack', demo, T).value, 60000);
+
+  /* Verdicts pick the sentence by band. */
+  const L = { band: { low: 0.2, high: 0.4 }, verdict: ['u {share}', 'i {share}', 'o {share}'] };
+  check('under', Lenses.verdictFor(L, Money.ok(0.1, { share: '10%' })).text, 'u 10%');
+  check('in', Lenses.verdictFor(L, Money.ok(0.3, { share: '30%' })).text, 'i 30%');
+  check('over', Lenses.verdictFor(L, Money.ok(0.5, { share: '50%' })).text, 'o 50%');
+  check('a measure may carry its own band', Lenses.verdictFor(L, Money.ok(0.5, { share: '50%', band: { low: 0, high: 1 } })).zone, 'in');
+  check('incomplete carries the reason', Lenses.verdictFor(L, Money.incomplete('needs x', ['x'])).text, 'needs x');
+  check('an unfilled token never prints as a brace', Lenses.verdictFor({ band: null, verdict: ['a {nope} b'] }, Money.ok(1, {})).text, 'a — b');
+
+  /* Empty is not zero: a blank household reads nothing as a number. */
+  const blank = Schema.createHousehold();
+  checkTrue('a blank household makes every lens incomplete, never a zero', ids.every(id => Lenses.measure(id, blank, T).status === 'incomplete'));
+
+  /* The toggle: off leaves exactly one card per domain; on shows all. */
+  const one = Lenses.renderAll(demo, T, { more: false });
+  check('More ways off: exactly seven cards, one a domain', (one.match(/class="lens-card/g) || []).length, 7);
+  checkTrue('...and each is its domain\'s default', table.domains.every(d => one.indexOf('data-lens="' + d.default + '"') > -1));
+  check('More ways on: all thirty-three', (Lenses.renderAll(demo, T, { more: true }).match(/class="lens-card/g) || []).length, 33);
+
+  /* Framework names are a preference, never a household fact. */
+  Prefs.reset();
+  check('names show by default (no door chosen)', Lenses.frameworkNames(), true);
+  Prefs.set('door', 'beginner');
+  check('the beginner door hides them', Lenses.frameworkNames(), false);
+  Prefs.set('showFrameworkNames', true);
+  check('an explicit preference wins', Lenses.frameworkNames(), true);
+  checkTrue('with names off the header is the plain phrase', (function () { Prefs.set('showFrameworkNames', false); return Lenses.render('moneyguy25', demo, T).indexOf('Save a quarter of what you earn') > -1 && Lenses.render('moneyguy25', demo, T).indexOf('Money Guy 25%') === -1; })());
+  checkTrue('with names on the header is the framework', (function () { Prefs.set('showFrameworkNames', true); return Lenses.render('moneyguy25', demo, T).indexOf('Money Guy 25%') > -1; })());
+  Prefs.reset();
+
+  /* Rooms never write lens logic: the Snapshot mounts the section and nothing else. */
+  const snap = fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8');
+  checkTrue('the Snapshot has a lenses section after DRAFTT', snap.indexOf('id="lenses"') > snap.indexOf('id="draftt"') && snap.indexOf('id="lenses"') < snap.indexOf('id="inputs"'));
+  checkTrue('...mounted through the library', snap.indexOf("SLAF.Lenses.mount('lenses-host'") > -1);
+  checkTrue('...with no lens rule of its own', !/forWhom|notForWhom|lens-card/.test(snap));
+  checkTrue('the library never evaluates a rule as code', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/lenses.js'), 'utf8')));
+})();
+
 section('The lever library: get, applies, apply (D-174)');
 (function () {
   const Levers = require(path.join(ROOT, 'shared/levers.js'));

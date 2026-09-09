@@ -9993,7 +9993,7 @@ the library rather than a number. The adventure section re-derives every
 path from the levers by hand — the half-hustle in year one, the full one
 from year two, the half house hack off the real rent line — and checks
 that a path pulling a lever the library lacks is incomplete, naming it,
-never a zero. Unit 23695 · dnd 5614 · export 25 · render, features and
+never a zero. Unit 23801 · dnd 5614 · export 25 · render, features and
 forms on the three rooms touched.
 
 ### Compatibility
@@ -10006,6 +10006,99 @@ assumption` or the four figure keys must call `Adventure.describe(path,
 tables)` and `Adventure.compose(path, tables)` instead, and must load
 `levers` alongside `adventurePaths`. `levers` is registered in
 `Reference.TABLE_FILES`.
+
+---
+
+## D-175 — Lenses: thirty-three ways to read the same numbers, one card a domain until asked
+
+### What it is
+
+A lens is a rule that re-reads DAITE numbers and returns a verdict. It
+never adds a field. `data/lenses.json` holds thirty-three of them across
+seven domains — budgeting, debt, investments, transportation,
+accommodation, income, taxes — each one line: the rule in plain words, what
+it reads, its band, three verdict sentences (under · in · over, or one
+sentence for a lens that states a number), who it is for, who it is not
+for, and its source. The for / not-for pair is mandatory; `test/run.js`
+refuses a lens without it. Each domain names a default: FAT and wants,
+avalanche, FOO position, total cost of ownership, 25% of gross, take-home,
+effective-vs-marginal.
+
+`shared/lenses.js` (SLAF.Lenses — plural, because SLAF.Lens is the four-way
+$ / hours / bought / pushed toggle of D-094 and the brief's `Lens.render`
+would have overwritten it) has one small measure per lens id, each a few
+lines that call the engine that already computes the figure: Tier0 for the
+savings rate and FIRE progress, CashFlow for the contributed rate, Hourly
+for the real hourly wage, Fire for coast, Foo for the ladder, TaxRoom for
+the effective and marginal rates and the bracket headroom, Housing for the
+rent-vs-buy arithmetic, QuickMath for 20/3/8, Draftt for the D and A
+letters, Levers for the house hack. One formula, one function: no lens
+recomputes anything a room already shows. `measure(id, household, tables)`
+returns a Result with the tokens its sentences need; `verdictFor` picks the
+sentence by band; `render(id, household, tables)` is the card; `renderAll`
+and `mount` are the section. Rooms never write lens logic.
+
+The cards live on the Financial Snapshot, a new `#lenses` section straight
+after DRAFTT: seven cards by default, one a domain. "More ways to look at
+this" opens the other twenty-six and is off by default, stored under
+`lenses.more` in prefs, so the page cannot get busier unless the person
+asks. "Show framework names" is the `showFrameworkNames` preference the
+brief asks for: on, the header reads "Money Guy 25%" with its source; off,
+it reads the plain phrase ("Save a quarter of what you earn"). With no
+explicit preference the beginner door hides the names and every other door
+shows them; nothing today writes a `door` preference, so the names show
+until the onboarding split does.
+
+### What was ambiguous, and how it was resolved
+
+- **Where the cards live.** The brief names no room. They sit in one place,
+  the Snapshot, beside DRAFTT, rather than one domain per owner room: one
+  section to gate, one toggle, and the whole set readable in a minute.
+- **Lenses that name a figure nobody has entered.** Three-fund, glide path,
+  asset location, car-as-share-of-net-worth, rent-vs-buy and the 5-year
+  rule read fields that exist (allocation, tax character, a vehicle, a
+  price) but that the demo has not filled; each says so and names the room,
+  never a zero. The 5-year rule has no "years you expect to stay" field and
+  gets none: it prices the round trip — closing costs in, selling costs out,
+  from `housing_conventions.json` — on the price being weighed, and leaves
+  the "will you move" judgment to the reader.
+- **Return on Hassle without a chore picked.** It states the bar: the real
+  hourly wage, and what an hour a week must save to clear it.
+- **Money Guy rate-by-age** thresholds by decade sit on the lens itself
+  (`thresholdsByDecade`), reference data in `data/`, not in code.
+- **Shockingly Simple Math** starts from zero on purpose and says so; the
+  FIRE room counts what is held. The arithmetic is the closed form
+  `ln(1 + 25(1−s)·r/s) / ln(1+r)`, re-derived by hand in the tests (28.5%
+  at 5% real → 29 years; 50% → 17).
+- **Asset location's band** turns on the marginal rate: at 22% and above
+  the band is the pre-tax half, below it the Roth half. A reading of the
+  convention, stated on the card.
+
+### Gates
+
+`test/run.js` "Lenses": the table whole (33 ids, 7 domains, defaults the
+brief names, for / not-for on every one, three sentences when banded and
+one when not), every lens a Result on the demo with a filled sentence and
+a card, six hand re-derivations, the band picker, blank-household-reads-
+nothing, seven cards with More ways off and thirty-three on, the names
+preference. `test/lenses.js` (Playwright, phone-shaped): the Snapshot with
+the demo shows seven cards, one a domain and each its default; the toggle
+shows all thirty-three with for / not-for on screen and no unfilled token;
+off again leaves seven, and the preference survives a reload; the names
+toggle swaps a header; no console errors. Unit 23962 · lenses gate 109 ·
+render and features on the Snapshot.
+
+### Compatibility
+
+The household shape is unchanged; a lens writes nothing. Two preferences
+join `slaf.prefs.v1`: `lenses.more` (boolean, default off) and
+`showFrameworkNames` (boolean; unset means "by door"). `lenses` is
+registered in `Reference.TABLE_FILES`; the Snapshot loads every table and
+now also `engines/tax.js`, `income.js`, `ledger.js`, `taxroom.js`,
+`fire.js`, `housing.js`, `quickmath.js`, `shared/levers.js` and
+`shared/lenses.js`. A future room wanting a lens calls
+`SLAF.Lenses.render(id, household, tables)` after `Reference.load` and
+`SLAF.Lenses.use(tables.lenses)`, and adds nothing of its own.
 
 ---
 

@@ -721,6 +721,28 @@ a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 .slaf-lens-btn { border: none; background: transparent; color: var(--color-text-muted); font-size: var(--text-xs); min-height: 32px; padding: 0 12px; cursor: pointer; }
 .slaf-lens-btn[aria-pressed="true"] { background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
 
+/* ---- Lens cards (shared/lenses.js). D-175. ---- */
+.lens-toggles { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-3) 0; }
+.lens-toggles .slaf-btn[aria-pressed="true"] { background: var(--color-accent); color: var(--color-accent-contrast); border-color: var(--color-accent); }
+.lens-domain { margin-top: var(--space-4); }
+.lens-domain h3 { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); margin: 0 0 var(--space-2); }
+.lens-card { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-2); background: var(--color-surface); }
+.lens-card header { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-2); }
+.lens-card header b { font-size: var(--text-sm); }
+.lens-card header small { font-size: var(--text-xs); color: var(--color-text-faint); }
+.lens-card .lens-rule { margin: var(--space-1) 0 0; font-size: var(--text-xs); color: var(--color-text-muted); }
+.lens-card .lens-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); margin-top: var(--space-2); }
+.lens-card .lens-figure { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
+.lens-card .lens-band { font-size: var(--text-xs); color: var(--color-text-faint); }
+.lens-card .lens-verdict { margin: var(--space-2) 0 0; font-size: var(--text-sm); }
+.lens-card .lens-verdict em { font-style: normal; text-transform: uppercase; letter-spacing: .06em; font-size: var(--text-xs); font-weight: 600; margin-right: 4px; }
+.lens-card.is-in .lens-verdict em { color: var(--color-positive); }
+.lens-card.is-over .lens-verdict em { color: var(--color-critical-text); }
+.lens-card.is-under .lens-verdict em { color: var(--color-caution); }
+.lens-card.is-incomplete .lens-figure { font-family: var(--font-body); font-size: var(--text-xs); color: var(--color-text-faint); }
+.lens-card .lens-who { margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--color-text-faint); display: flex; flex-direction: column; gap: 2px; }
+.lens-card .lens-who b { font-weight: 600; color: var(--color-text-muted); }
+
 /* ---- The room template (shared/room.js). D-097. ---- */
 .room-number { display: flex; flex-direction: column; }
 .room-number .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }

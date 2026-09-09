@@ -60,6 +60,7 @@
       daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: [] },
       subsections: [
         { id: 'draftt',               label: 'DRAFTT' },
+        { id: 'lenses',               label: 'Lenses' },
         { id: 'inputs',               label: 'Your numbers' },
         { id: 'out-net-worth',        label: 'Net worth' },
         { id: 'out-savings-rate',     label: 'Savings rate' },

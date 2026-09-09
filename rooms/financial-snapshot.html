@@ -136,6 +136,15 @@
     <ol class="draftt" id="draftt-rows"></ol>
   </section>
 
+  <!-- Lenses (D-175): the same numbers read the way a framework would read
+       them, one card a domain until you ask for more. No field is added. -->
+  <section class="slaf-card" id="lenses">
+    <span class="slaf-eyebrow">Lenses — more ways to read the same numbers</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-2)">What the well-known rules say about your numbers</h2>
+    <p class="slaf-hint" style="margin:0">Each card is one rule of thumb: what it says, where you sit, and who it is for and not for. Seven cards to start; “More ways to look at this” opens the rest. Nothing here asks you to type anything.</p>
+    <div id="lenses-host"></div>
+  </section>
+
   <!-- ================= INPUTS ================= -->
   <section class="slaf-card" id="inputs">
     <span class="slaf-eyebrow">Your numbers</span>
@@ -283,6 +292,16 @@
 <script src="../shared/prefs.js"></script>
 <script src="../engines/draftt.js"></script>
 <script src="../engines/hourly.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/ledger.js"></script>
+<script src="../engines/taxroom.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../engines/housing.js"></script>
+<script src="../engines/quickmath.js"></script>
+<script src="../shared/levers.js"></script>
+<script src="../shared/lenses.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/bands.js"></script>
 <script src="../shared/charts.js"></script>
@@ -721,6 +740,7 @@
     var all = Tier0.computeAll(h, TABLES);
 
     renderDraftt(h);
+    if (lenses) lenses.paint();
     renderNetWorth(all.netWorth, h);
     renderSavingsRate({
       excludingMatch: all.savingsRateExcludingMatch,
@@ -804,8 +824,11 @@
   Spine.onChange(render);
   render();
 
+  var lenses = null;
   Reference.load().then(function (tables) {
     TABLES = tables;
+    SLAF.Lenses.use(tables.lenses);
+    lenses = SLAF.Lenses.mount('lenses-host', function () { return Spine.getProfile(); }, function () { return TABLES; });
     SLAF.Lens.mountStrip('fp-lens', function (h) {
       var r = Tier0.fireProgress(h, TABLES);
       if (!Money.isOk(r)) return [];
