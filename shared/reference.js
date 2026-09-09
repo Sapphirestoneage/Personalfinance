@@ -72,6 +72,9 @@
     bands: 'bands.json',
     levers: 'levers.json',
     lenses: 'lenses.json',
+    /* Scenario blocks: one expansion table a type (D-178). */
+    blockHome: 'blocks/home.json', blockCar: 'blocks/car.json', blockKid: 'blocks/kid.json', blockJobchange: 'blocks/jobchange.json',
+    blockSabbatical: 'blocks/sabbatical.json', blockGeo: 'blocks/geo.json', blockHustle: 'blocks/hustle.json', blockInheritance: 'blocks/inheritance.json', blockMarriage: 'blocks/marriage.json',
     events: 'events/index.json',
     cobraAca: 'cobra_aca_2024.json',
     travelBands: 'travel_bands.json',

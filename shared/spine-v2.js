@@ -528,6 +528,30 @@
     return JSON.parse(JSON.stringify(load()));
   }
 
+  /**
+   * The household with every active scenario block whose dates cover
+   * `date` applied (D-178). Blocks live beside the household, never in it;
+   * this is the only way one reaches a room. opts.blocks overrides the
+   * store's active set (a test, or a planner toggling). Never a write.
+   */
+  function householdAt(date, opts) {
+    var h = getProfile();
+    var B = blocksModule();
+    if (!B) return h;
+    var list = opts && opts.blocks ? opts.blocks : (scenariosModule() ? scenariosModule().activeBlocks() : []);
+    return B.applyAll(h, list, date);
+  }
+  function blocksModule() {
+    if (typeof module === 'object' && module.exports) { try { return require('./blocks.js'); } catch (e) { return null; } }
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    return g && g.SLAF && g.SLAF.Blocks ? g.SLAF.Blocks : null;
+  }
+  function scenariosModule() {
+    if (typeof module === 'object' && module.exports) { try { return require('./scenarios.js'); } catch (e) { return null; } }
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    return g && g.SLAF && g.SLAF.Scenarios ? g.SLAF.Scenarios : null;
+  }
+
   /* ---- Public write ----------------------------------------------------- */
 
   var COMPUTED_GUARD = ['netWorth', 'netWorthCents', 'savingsRate', 'fireNumber',
@@ -1542,6 +1566,7 @@
     STORAGE_KEY: STORAGE_KEY,
     SNAPSHOT_KEY: SNAPSHOT_KEY,
     getProfile: getProfile,
+    householdAt: householdAt,
     updateProfile: updateProfile,
     onChange: onChange,
     registerRoom: registerRoom,

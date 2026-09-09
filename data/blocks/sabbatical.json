@@ -1,0 +1,81 @@
+{
+  "id": "block_sabbatical",
+  "version": "1.0",
+  "asOf": "2026-09-09",
+  "type": "sabbatical",
+  "label": "Sabbatical",
+  "source": "Time off as the lines it adds, for the months it lasts: the job's pay stops, any income during it comes in, and health cover has to be bought (data/cobra_aca_2024.json, the single COBRA figure).",
+  "confidence": "convention",
+  "confidenceNote": "COBRA is the employer plan at full price; a marketplace plan can be far cheaper with a subsidy. The figure here is the cautious one.",
+  "note": "Read by shared/blocks.js (D-178). `questions` are the block's four answers at most. Each `lines[]` entry is a DAITE delta: `path` must resolve under debt / assets / income / taxes / expenses; `delta` is an expression in the shared language (shared/expr.js): @answer, $household figure, {table} lookups. `when` (optional) is a condition that must hold for the line to exist. `source` is national unless `stateSource` resolves to a value for the answer's state, then state; `user` when the figure is the household's own. No expansion logic lives in a room.",
+  "questions": [
+    {
+      "id": "months",
+      "ask": "How long, in months",
+      "kind": "months"
+    },
+    {
+      "id": "when",
+      "ask": "When",
+      "kind": "month"
+    },
+    {
+      "id": "incomeDuring",
+      "ask": "Income during it, a month",
+      "kind": "money",
+      "hint": "Blank is none."
+    }
+  ],
+  "endsAfterMonths": "@months",
+  "lines": [
+    {
+      "id": "payStops",
+      "label": "Pay stops",
+      "path": "income.grossAnnualCents",
+      "kind": "annual",
+      "delta": {
+        "neg": {
+          "coalesce": [
+            "$grossAnnualCents",
+            0
+          ]
+        }
+      },
+      "source": "user",
+      "confidence": "user",
+      "note": "Your gross comes off for the months away."
+    },
+    {
+      "id": "during",
+      "label": "Income during it",
+      "path": "income.netMonthlyCents",
+      "kind": "monthly",
+      "delta": "@incomeDuring",
+      "source": "user",
+      "confidence": "user",
+      "note": "What comes in while you are away, taken as net.",
+      "when": {
+        "gt": [
+          "@incomeDuring",
+          0
+        ]
+      }
+    },
+    {
+      "id": "cover",
+      "label": "Health cover, a month",
+      "path": "expenses.applied",
+      "kind": "monthly",
+      "delta": {
+        "table": "cobraAca",
+        "path": [
+          "monthly",
+          "cobraSingleCents"
+        ]
+      },
+      "source": "national",
+      "confidence": "convention",
+      "note": "COBRA at the single rate, the cautious figure."
+    }
+  ]
+}

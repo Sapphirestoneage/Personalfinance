@@ -10006,6 +10006,134 @@ section('Pinned scenarios live beside the household, never in it (D-176)');
   Scenarios.reset();
 })();
 
+section('Blocks: a hypothetical laid on the household, never in it (D-178)');
+(function () {
+  const Blocks = require(path.join(ROOT, 'shared/blocks.js'));
+  const Scenarios = require(path.join(ROOT, 'shared/scenarios.js'));
+  const Expr = require(path.join(ROOT, 'shared/expr.js'));
+  const demo = Demo.build();
+  const before = JSON.stringify(demo);
+  Scenarios.reset();
+
+  /* One expression language, shared with the events engine. */
+  check('the events engine evaluates through shared/expr.js', require(path.join(ROOT, 'engines/events.js')).evaluate({ '*': [2, '@x'] }, { answers: { x: 21 }, ctx: {}, tables: {} }), 42);
+  checkTrue('...and keeps no evaluator of its own', !/case '\*': v = all\(args\)/.test(fs.readFileSync(path.join(ROOT, 'engines/events.js'), 'utf8')));
+  check('and / or', Expr.evaluate({ and: [{ eq: [1, 1] }, { gt: [2, 1] }] }, {}) + '/' + Expr.evaluate({ or: [{ eq: [1, 2] }, false] }, {}), 'true/false');
+
+  /* The nine types, each with a table of four questions at most and DAITE-only lines. */
+  const TYPES = ['home', 'car', 'kid', 'jobchange', 'sabbatical', 'geo', 'hustle', 'inheritance', 'marriage'];
+  check('nine block types, no more', Scenarios.TYPES.map(t => t.id).join(','), TYPES.join(','));
+  TYPES.forEach(type => {
+    const t = Blocks.table(type);
+    checkTrue(type + ' has an expansion table in data/blocks/', !!t && t.type === type && typeof t.source === 'string' && typeof t.confidence === 'string');
+    checkTrue(type + ' asks four questions at most, none free text', t.questions.length <= 4 && t.questions.every(q => ['money', 'month', 'state', 'yesno', 'choice', 'number', 'months'].indexOf(q.kind) > -1));
+    checkTrue(type + ' lines all resolve under debt / assets / income / taxes / expenses', t.lines.every(l => /^(debt|assets|income|taxes|expenses)(\.|$)/.test(l.path)));
+    checkTrue(type + ' lines each carry a note naming where the default comes from', t.lines.every(l => typeof l.note === 'string' && l.note.length > 10));
+    checkTrue(type + ' is a registered reference table', /block/.test(Object.keys(require(path.join(ROOT, 'shared/reference.js')).TABLE_FILES).filter(k => require(path.join(ROOT, 'shared/reference.js')).TABLE_FILES[k] === 'blocks/' + type + '.json').join('')));
+  });
+  checkTrue('no room holds expansion logic', !fs.readdirSync(path.join(ROOT, 'rooms')).some(f => /propertyTaxByState|colIndexByState|runningCostShareOfPrice/.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8'))));
+
+  /* Each table on a known answer set, re-derived by hand. */
+  const home = Blocks.build('home', { price: 40000000, down: 8000000, when: '2028-04', state: 'IL' }, demo).value;
+  const L = id => home.lines.filter(l => l.id === id)[0];
+  check('home: the down payment leaves cash', L('down').delta, -8000000);
+  check('...closing costs at 3%', L('closing').delta, -1200000);
+  check('...the mortgage is price less down', L('mortgage').delta, 32000000);
+  check('...at the table\'s 30-year rate', L('mortgage').extra.rate, 0.065);
+  check('...with the level payment as its minimum: $320,000 at 6.5% over 360 months', L('mortgage').extra.minPaymentCents, require(path.join(ROOT, 'engines/projection.js')).levelPaymentCents({ principalCents: 32000000, annualRate: 0.065, months: 360 }).value);
+  check('...rent stops: the demo\'s $1,500 line comes off', L('rentStops').delta, -150000);
+  check('...and says it is the household\'s own figure', L('rentStops').source, 'user');
+  check('...property tax at Illinois\'s 2.08%, a twelfth a month', L('propertyTax').delta, Math.round(40000000 * 0.0208 / 12));
+  check('...marked as a state figure', L('propertyTax').source, 'state');
+  check('...insurance at the national 0.5%', L('insurance').delta, Math.round(40000000 * 0.005 / 12));
+  const homeNoState = Blocks.build('home', { price: 40000000, down: 8000000, when: '2028-04', state: null }, demo).value;
+  check('with no state, property tax falls back to the national rate and says so', homeNoState.lines.filter(l => l.id === 'propertyTax')[0].source, 'national');
+  check('...at 1.1%', homeNoState.lines.filter(l => l.id === 'propertyTax')[0].delta, Math.round(40000000 * 0.011 / 12));
+  checkTrue('every line keeps its first figure as the estimate', home.lines.every(l => l.estimate === l.delta));
+
+  const car = Blocks.build('car', { price: 2500000, condition: 'used', pay: 'loan', when: '2027-01' }, demo).value;
+  check('car on a loan: a fifth down', car.lines.filter(l => l.id === 'down')[0].delta, -500000);
+  check('...four-fifths borrowed', car.lines.filter(l => l.id === 'loan')[0].delta, 2000000);
+  check('...running costs at 12% of price a year, used', car.lines.filter(l => l.id === 'running')[0].delta, Math.round(2500000 * 0.12 / 12));
+  const carCash = Blocks.build('car', { price: 2500000, condition: 'new', pay: 'cash', when: '2027-01' }, demo).value;
+  check('car in cash: the whole price leaves cash and there is no loan line', carCash.lines.map(l => l.id).join(','), 'cashPaid,vehicle,running');
+  const kid = Blocks.build('kid', { when: '2029-06', childcare: true, state: 'NC' }, demo).value;
+  check('kid: the 0-to-2 band a month', kid.lines.filter(l => l.id === 'everyday')[0].delta, 120000);
+  check('...childcare at the state figure', kid.lines.filter(l => l.id === 'childcare')[0].source, 'state');
+  check('...no childcare line when not wanted', Blocks.build('kid', { when: '2029-06', childcare: false, state: 'NC' }, demo).value.lines.some(l => l.id === 'childcare'), false);
+  const job = Blocks.build('jobchange', { gross: 9000000, remote: true, when: '2027-03' }, demo).value;
+  check('job change: the difference from the demo\'s $72,000', job.lines.filter(l => l.id === 'gross')[0].delta, 1800000);
+  check('...remote: half the getting-around line', job.lines.filter(l => l.id === 'commute')[0].delta, -11000);
+  const sab = Blocks.build('sabbatical', { months: 6, when: '2028-01', incomeDuring: 100000 }, demo).value;
+  check('sabbatical: dated for its months', JSON.stringify(sab.dates), JSON.stringify([{ start: '2028-01', end: '2028-07' }]));
+  check('...pay stops', sab.lines.filter(l => l.id === 'payStops')[0].delta, -7200000);
+  check('...cover at the COBRA single rate', sab.lines.filter(l => l.id === 'cover')[0].delta, 76100);
+  const geo = Blocks.build('geo', { state: 'TX', remote: true, when: '2027-09' }, demo).value;
+  check('move: the state changes', geo.lines[0].extra.state, 'TX');
+  check('...every needs line scales by TX 93 over NC 96, less one', geo.lines[1].delta, Math.round((93 / 96 - 1) * 10000) / 10000);
+  check('hustle: one net line', Blocks.build('hustle', { net: 60000, hours: 10, when: '2027-01' }, demo).value.lines.map(l => l.path).join(','), 'income.netMonthlyCents');
+  const inh = Blocks.build('inheritance', { amount: 5000000, when: '2030-01', into: 'retirement' }, demo).value;
+  check('inheritance into retirement: pre-tax', inh.lines[0].extra.taxCharacter + '/' + inh.lines[0].extra.category, 'pretax/retirement');
+  const mar = Blocks.build('marriage', { gross: 6000000, debt: 1000000, when: '2028-06', combine: true }, demo).value;
+  check('marriage, combining: income and debt arrive', mar.lines.map(l => l.id).join(','), 'income,debt');
+  check('...the debt\'s minimum is 2% of the balance', mar.lines[1].extra.minPaymentCents, 20000);
+  const marNo = Blocks.build('marriage', { gross: 6000000, debt: 1000000, when: '2028-06', combine: false }, demo).value;
+  check('marriage, not combining: nothing moves, and it says so', marNo.lines.length + '|' + marNo.note, '0|Not combining finances: nothing moves in your numbers.');
+  check('an unknown type is incomplete, not a throw', Blocks.build('yacht', {}, demo).status, 'incomplete');
+  check('and the household was never touched', JSON.stringify(demo), before);
+
+  /* The store: labels, validation, the estimate kept forever, duplicate, replaces. */
+  const b1 = Scenarios.addBlock(car);
+  const b2 = Scenarios.addBlock(car);
+  check('two unlabelled cars read Car 1, Car 2', b1.label + '|' + b2.label, 'Car 1|Car 2');
+  checkTrue('a line outside DAITE is rejected at write', (() => { try { Scenarios.addBlock({ type: 'car', lines: [{ path: 'you.dob', delta: 1, kind: 'oneoff' }] }); return false; } catch (e) { return /not under debt/.test(e.message); } })());
+  checkTrue('...and so is a line with no kind', (() => { try { Scenarios.addBlock({ type: 'car', lines: [{ path: 'assets.cashCents', delta: 1 }] }); return false; } catch (e) { return true; } })());
+  const edited = Scenarios.updateBlock(b1.id, { lines: b1.lines.map(l => l.id === 'running' ? Object.assign({}, l, { delta: 30000 }) : l) });
+  check('overwriting a delta keeps the original estimate beside it', edited.lines.filter(l => l.id === 'running')[0].estimate, 25000);
+  check('...and the new figure', edited.lines.filter(l => l.id === 'running')[0].delta, 30000);
+  const dup = Scenarios.duplicateBlock(b1.id, { replacing: true });
+  check('a duplicate takes the next label', dup.label, 'Car 3');
+  check('...blank dates', dup.dates.length, 0);
+  check('...and replaces the original when asked', dup.replaces, b1.id);
+  const gone = Scenarios.removeBlock(dup.id);
+  check('delete returns the block for undo', gone.id, dup.id);
+  Scenarios.restoreBlock(gone);
+  check('...and restore puts it back', Scenarios.blockById(dup.id).label, 'Car 3');
+  Scenarios.removeBlock(dup.id);
+
+  /* householdAt: two overlapping cars add; replaces cuts the old one at the new start. */
+  const carA = Object.assign({}, Scenarios.addBlock(Blocks.build('car', { price: 2000000, condition: 'used', pay: 'cash', when: '2027-01' }, demo).value));
+  const carB = Object.assign({}, Scenarios.addBlock(Blocks.build('car', { price: 3000000, condition: 'new', pay: 'cash', when: '2030-01' }, demo).value));
+  const base = Schema.fat(demo).transportation.value;
+  const both = Blocks.applyAll(demo, [carA, carB], '2031-06');
+  check('two overlapping car blocks add both running-cost lines', Schema.fat(both).transportation.value, base + Math.round(2000000 * 0.12 / 12) + Math.round(3000000 * 0.10 / 12));
+  check('...and both vehicles', both.assets.filter(a => a.category === 'vehicle').length, 2);
+  const carB2 = Object.assign({}, carB, { replaces: carA.id });
+  const replaced = Blocks.applyAll(demo, [carA, carB2], '2031-06');
+  check('with replaces set, the old car\'s lines stop at the new start', Schema.fat(replaced).transportation.value, base + Math.round(3000000 * 0.10 / 12));
+  check('...before the new start the old car still runs', Schema.fat(Blocks.applyAll(demo, [carA, carB2], '2028-06')).transportation.value, base + Math.round(2000000 * 0.12 / 12));
+  check('...the window says what cut it', Blocks.windowsAt(carA, [carA, carB2])[0].end, '2030-01');
+  check('before either starts, nothing applies', Schema.fat(Blocks.applyAll(demo, [carA, carB2], '2026-01')).transportation.value, base);
+  check('a switched-off block does nothing', Schema.fat(Blocks.applyAll(demo, [Object.assign({}, carA, { active: false })], '2028-01')).transportation.value, base);
+  const homeBlock = Scenarios.addBlock(home);
+  const withHome = Blocks.applyAll(demo, [homeBlock], '2028-06');
+  check('a home: rent off, payment on', Schema.fat(withHome).accommodation.value, 150000 - 150000 + L('payment').delta);
+  check('...tax, insurance and upkeep listed apart as applied lines', Schema.fat(withHome).applied.lines.length, 3);
+  check('...and counted in the month', Schema.fat(withHome).totalCents.value, Schema.fat(demo).totalCents.value - 150000 + L('payment').delta + L('propertyTax').delta + L('insurance').delta + L('upkeep').delta);
+  check('...the mortgage is a debt', withHome.debts.filter(d => d.type === 'mortgage').length, 1);
+  check('...the place is property', withHome.assets.filter(a => a.category === 'real_estate')[0].valueCents, 40000000);
+  check('...and cash is what is left, even below zero, so the planner can say so', Schema.cashCents(withHome).value, 950000 - 8000000 - 1200000);
+  const sabBlock = Scenarios.addBlock(sab);
+  check('a dated window: inside it the pay is gone', Schema.grossAnnualIncomeCents(Blocks.applyAll(demo, [sabBlock], '2028-03')).value, 0 + 100000 * 12);
+  check('...after it the pay is back', Schema.grossAnnualIncomeCents(Blocks.applyAll(demo, [sabBlock], '2028-09')).value, 7200000);
+  const geoBlock = Scenarios.addBlock(geo);
+  check('a move changes the state', Blocks.applyAll(demo, [geoBlock], '2028-01').state, 'TX');
+  const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
+  checkTrue('Spine.householdAt exists and never writes', typeof Spine.householdAt === 'function' && !/save\(\)/.test(Spine.householdAt.toString()));
+  checkTrue('the store lives beside the household, never in it', !('blocks' in Schema.createHousehold()) && !('scenarioBlocks' in Schema.createHousehold()) && Scenarios.KEY !== 'slaf.household.v2');
+  Scenarios.reset();
+})();
+
 section('The lever library: get, applies, apply (D-174)');
 (function () {
   const Levers = require(path.join(ROOT, 'shared/levers.js'));

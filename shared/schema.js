@@ -1111,7 +1111,12 @@
       therapy: e.wants.therapy ? r(e.wants.therapy.monthlyCents, null, 'therapyMonthly', 'Therapy') : null,
       therapyTracked: !!e.wants.therapy
     };
-    var parts = [out.food, out.accommodation, out.transportation, out.wants].concat(out.therapy ? [out.therapy] : []);
+    /* Lines a scenario block laid on the month (D-178) - never stored,
+       present only on the household Spine.householdAt returns. They join
+       the total and are listed apart, so a reader can see them. */
+    var applied = (household && household.expenses && Array.isArray(household.expenses.applied)) ? household.expenses.applied.filter(function (l) { return l && Money.isEntered(l.monthlyCents); }) : [];
+    out.applied = applied.length ? Money.ok(applied.reduce(function (t, l) { return t + l.monthlyCents; }, 0), { source: 'blocks', lines: applied.slice() }) : null;
+    var parts = [out.food, out.accommodation, out.transportation, out.wants].concat(out.therapy ? [out.therapy] : []).concat(out.applied ? [out.applied] : []);
     var entered = parts.filter(function (x) { return Money.isOk(x); });
     out.totalCents = entered.length
       ? Money.ok(entered.reduce(function (t, x) { return t + x.value; }, 0), { entered: entered.length, of: parts.length, source: 'fat' })

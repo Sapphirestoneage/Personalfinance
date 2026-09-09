@@ -1,0 +1,175 @@
+{
+  "id": "block_geo",
+  "version": "1.0",
+  "asOf": "2026-09-09",
+  "type": "geo",
+  "label": "Move",
+  "source": "A move as the lines it adds: the state changes (so the state tax does), every needs line scales by the cost-of-living index of the destination against where you are, and the move itself leaves cash once (data/moving_cost.json, the regional band). The state index is a reading of MERIC's cost-of-living index by state, national = 100, rounded.",
+  "confidence": "unverified",
+  "confidenceNote": "A state index hides the city inside it; a move from one city to another in the same state can swing more than the state figure. A real rent quote beats the index every time.",
+  "note": "Read by shared/blocks.js (D-178). `questions` are the block's four answers at most. Each `lines[]` entry is a DAITE delta: `path` must resolve under debt / assets / income / taxes / expenses; `delta` is an expression in the shared language (shared/expr.js): @answer, $household figure, {table} lookups. `when` (optional) is a condition that must hold for the line to exist. `source` is national unless `stateSource` resolves to a value for the answer's state, then state; `user` when the figure is the household's own. No expansion logic lives in a room.",
+  "colIndexByState": {
+    "HI": 180,
+    "DC": 150,
+    "MA": 148,
+    "CA": 138,
+    "NY": 125,
+    "AK": 125,
+    "MD": 117,
+    "WA": 116,
+    "OR": 115,
+    "NJ": 114,
+    "VT": 114,
+    "CT": 113,
+    "NH": 113,
+    "RI": 112,
+    "ME": 110,
+    "AZ": 108,
+    "CO": 105,
+    "UT": 103,
+    "MT": 103,
+    "DE": 102,
+    "VA": 102,
+    "FL": 102,
+    "ID": 102,
+    "NV": 101,
+    "PA": 98,
+    "SC": 96,
+    "NC": 96,
+    "MN": 95,
+    "WI": 95,
+    "NM": 94,
+    "OH": 94,
+    "TX": 93,
+    "KY": 93,
+    "ND": 93,
+    "WY": 93,
+    "IL": 92,
+    "LA": 92,
+    "SD": 92,
+    "NE": 92,
+    "GA": 91,
+    "MI": 91,
+    "IN": 91,
+    "TN": 90,
+    "IA": 90,
+    "MO": 89,
+    "AR": 89,
+    "KS": 88,
+    "WV": 88,
+    "AL": 88,
+    "OK": 86,
+    "MS": 85
+  },
+  "national": 100,
+  "questions": [
+    {
+      "id": "state",
+      "ask": "Destination state",
+      "kind": "state"
+    },
+    {
+      "id": "remote",
+      "ask": "Remote",
+      "kind": "yesno"
+    },
+    {
+      "id": "when",
+      "ask": "When",
+      "kind": "month"
+    }
+  ],
+  "lines": [
+    {
+      "id": "state",
+      "label": "The state changes",
+      "path": "taxes.state",
+      "kind": "oneoff",
+      "delta": null,
+      "source": "user",
+      "confidence": "user",
+      "note": "State income tax follows the new state.",
+      "extra": {
+        "state": "@state"
+      }
+    },
+    {
+      "id": "col",
+      "label": "Every needs line scales",
+      "path": "expenses.needs.*",
+      "kind": "monthly",
+      "delta": {
+        "-": [
+          {
+            "/": [
+              {
+                "coalesce": [
+                  {
+                    "table": "blockGeo",
+                    "path": [
+                      "colIndexByState",
+                      "@state"
+                    ]
+                  },
+                  {
+                    "table": "blockGeo",
+                    "path": [
+                      "national"
+                    ]
+                  }
+                ]
+              },
+              {
+                "coalesce": [
+                  {
+                    "table": "blockGeo",
+                    "path": [
+                      "colIndexByState",
+                      "$state"
+                    ]
+                  },
+                  {
+                    "table": "blockGeo",
+                    "path": [
+                      "national"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          1
+        ]
+      },
+      "source": "national",
+      "confidence": "unverified",
+      "note": "Destination index over your state's, less one: a share on each needs line.",
+      "stateSource": {
+        "table": "blockGeo",
+        "path": [
+          "colIndexByState",
+          "@state"
+        ]
+      }
+    },
+    {
+      "id": "moving",
+      "label": "The move leaves cash",
+      "path": "assets.cashCents",
+      "kind": "oneoff",
+      "delta": {
+        "neg": {
+          "table": "movingCost",
+          "path": [
+            "bands",
+            "regional",
+            "cents"
+          ]
+        }
+      },
+      "source": "national",
+      "confidence": "convention",
+      "note": "A regional move (moving_cost.json)."
+    }
+  ]
+}

@@ -10323,6 +10323,130 @@ sidebar; `Progress.UPKEEP` remains for the map. `rooms.json` is unchanged
 
 ---
 
+## D-178 — The block model: a hypothetical laid on the household, never in it
+
+### What it is
+
+A block is a life decision as the money lines it adds — a home, a car, a
+kid, a job change, a sabbatical, a move, a side hustle, an inheritance, a
+marriage — layered on the real household and never dissolved into it.
+Blocks live in the scenarios store (`shared/scenarios.js`, key
+`slaf.scenarios.v1`, the sibling of the household that D-176's pinned ways
+already use), under `blocks[]`:
+
+    id · type · label ("<Type> n" by default, so two unlabelled cars read
+    Car 1, Car 2) · status (considering | planned | happened) · active ·
+    dates[] { start: "2028-04", end: null | "2033-04" } · replaces (null or
+    a block id) · answers (four at most) · lines[] { path, delta, kind
+    (oneoff | monthly | annual), source (national | state | user),
+    confidence, note, estimate, extra } · note
+
+Rules, enforced in code: a line's `path` must resolve under debt / assets
+/ income / taxes / expenses, or `addBlock` and `updateBlock` throw — a
+line on `you.dob` never reaches the store. A line's first figure is kept
+as `estimate` forever once a person overwrites `delta`. Blocks stack
+additively; the only interaction is `replaces`: a 2030 car replacing the
+2027 car ends the old block's windows on the new block's first start
+(`Blocks.windowsAt` says what cut it). A block with several dates is
+several windows. Delete returns the block and `restoreBlock` puts it back;
+`duplicateBlock(id, { replacing })` copies it with the next label number,
+blank dates and `replaces` set when asked.
+
+`Spine.householdAt(date, { blocks })` is the only way a block reaches a
+room: a copy of the household with every active block whose window covers
+the date laid on — monthly and annual lines while a window is open, one-offs
+once a window has started. `getProfile()` is untouched; nothing here
+writes.
+
+### How a line lands (`shared/blocks.js`)
+
+- `expenses.needs.<line>` adds to that FAT bucket (a blank bucket takes the
+  delta as its whole); `expenses.needs.*` is a share on every needs line;
+  `expenses.wants` adds to wants; `expenses.applied` (property tax,
+  insurance, upkeep, childcare, a small child, health cover) is a list the
+  household carries only on the copy, which `Schema.fat` now lists apart as
+  `applied` and counts in the month.
+- `income.grossAnnualCents` moves the primary person's largest source;
+  `income.netMonthlyCents` arrives as its own source tagged `netOfTax`, the
+  way a lever's side income does (D-174).
+- `debt.items` adds a debt with the `extra` rate, term and minimum;
+  `assets.cashCents` moves the first cash asset (and may go below zero,
+  which the planner will say rather than hide); `assets.invested`,
+  `assets.property`, `assets.vehicles` add an asset; `taxes.state` sets
+  the state. A family path this file cannot lay on is recorded under
+  `meta.unappliedBlockLines`, never dropped in silence.
+
+### The expansion tables (`data/blocks/<type>.json`)
+
+One table a type: the questions (four at most, kinds money · month · state
+· yesno · choice · number · months, never free text) and the lines, each
+with a `note` naming where its default comes from and, where it matters, a
+per-state override (`stateSource`) that marks the line `state` when it
+resolves and `national` when it falls back. The line arithmetic is written
+in the shared expression language: `shared/expr.js`, the evaluator pulled
+out of `engines/events.js` (which now delegates to it and keeps no copy),
+with `and` / `or` added.
+
+| type | questions | lines |
+|---|---|---|
+| home | price · down · when · state | down and closing costs off cash; the mortgage as a debt at the 30-year rate with its level payment; the place as property; rent stops; the payment; property tax by state (Tax Foundation effective rates, a new table inside home.json); insurance; upkeep |
+| car | price · new/used · loan/cash · when | cash or a fifth down; the loan over five years at a stated 7%; the vehicle; the payment; running costs at 10% (new) / 12% (used) of price a year |
+| kid | when · childcare · state | the birth out of pocket; the 0-to-2 band a month; childcare by state (childcare_by_state.json) when wanted |
+| jobchange | new gross · remote · when | the difference from your gross; remote, half the getting-around line |
+| sabbatical | months · when · income during | dated for its months; pay stops; income during; COBRA single a month |
+| geo | state · remote · when | the state changes; every needs line scales by a state cost-of-living index (a reading of MERIC, inside geo.json, confidence unverified); a regional move off cash |
+| hustle | net · hours · when | one net line |
+| inheritance | amount · when · into | arrives invested, pre-tax or taxable |
+| marriage | partner gross · partner debt · when · combining | combining: income joins, debt arrives at 7% with a 2% minimum; not combining: no lines, and the block says so |
+
+### What was ambiguous, and how it was resolved
+
+- **"Store: `scenarios` in spine v2, a sibling of the household."** D-176
+  already made that sibling for pinned ways; blocks join it rather than
+  opening a second store. The old in-household `scenarios[]` (D-086 events)
+  is untouched and unrelated.
+- **Where a generic monthly cost lands.** FAT has three needs lines and a
+  wants line; childcare and property tax are neither. `expenses.applied` is
+  a list on the copy, not a fifth stored bucket — the stored household shape
+  does not change.
+- **State figures with no table.** Property tax by state and cost of living
+  by state had no reference data; both are now inside their block table,
+  rounded readings with the source named and confidence stated. A county or
+  a city can sit far from its state; a real quote beats either.
+- **Cash below zero.** A down payment the demo cannot afford leaves cash at
+  −$82,500 on the copy. That is the honest answer and the planner's job to
+  say (D-179); rounding it to zero would hide the whole point.
+
+### Gates
+
+`test/run.js` "Blocks": the shared evaluator (events delegates, no copy);
+nine tables, four questions at most, DAITE-only paths, a note on every
+line, registered as reference tables, no expansion logic in a room; each
+table on a known answer set re-derived by hand (the mortgage minimum
+through `Projection.levelPaymentCents`, Illinois property tax, the national
+fallback, the cash car, childcare on and off, the sabbatical window, the
+Texas-over-North-Carolina share); the store (Car 1 / Car 2, rejection at
+write, the estimate kept, duplicate and replaces, delete and restore);
+`householdAt` with two overlapping cars adding both, `replaces` stopping
+the old car at the new start, a switched-off block doing nothing, the home
+block's rent-off-payment-on and its applied lines counted in the month, a
+dated sabbatical window, a move changing the state; and that the household
+is never written. Unit · dnd (vendored schema re-copied).
+
+### Compatibility
+
+The stored household shape is unchanged; `expenses.applied` and
+`meta.blocksApplied` / `meta.blocksAt` / `meta.unappliedBlockLines` exist
+only on the copy `householdAt` returns. `Schema.fat` gains `applied`
+(null unless the copy carries lines) and counts it in `totalCents`. The
+scenarios store gains `blocks[]` beside `items[]`. `Reference.TABLE_FILES`
+gains `blockHome … blockMarriage`. A room wanting blocks applied calls
+`Spine.householdAt(date)` instead of `getProfile()`, after loading
+`shared/expr.js`, `shared/scenarios.js` and `shared/blocks.js`; rooms under
+Your Numbers never do (D-179).
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

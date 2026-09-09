@@ -1,0 +1,295 @@
+{
+  "id": "block_car",
+  "version": "1.0",
+  "asOf": "2026-09-09",
+  "type": "car",
+  "label": "Car",
+  "source": "A car as the lines it adds: the price (or the down payment) leaves cash, a loan arrives as a debt with a five-year level payment, the car arrives as a vehicle, and running costs — insurance, fuel, upkeep, fees — join the getting-around line. Running costs as a share of price a year are a reading of the AAA 'Your Driving Costs' totals; the loan rate is a stated assumption.",
+  "confidence": "convention",
+  "confidenceNote": "Running costs vary more by driver, postcode and mileage than by car; the shares are averages.",
+  "note": "Read by shared/blocks.js (D-178). `questions` are the block's four answers at most. Each `lines[]` entry is a DAITE delta: `path` must resolve under debt / assets / income / taxes / expenses; `delta` is an expression in the shared language (shared/expr.js): @answer, $household figure, {table} lookups. `when` (optional) is a condition that must hold for the line to exist. `source` is national unless `stateSource` resolves to a value for the answer's state, then state; `user` when the figure is the household's own. No expansion logic lives in a room.",
+  "runningCostShareOfPrice": {
+    "new": 0.1,
+    "used": 0.12
+  },
+  "loanRate": 0.07,
+  "loanMonths": 60,
+  "downShare": 0.2,
+  "questions": [
+    {
+      "id": "price",
+      "ask": "Price",
+      "kind": "money"
+    },
+    {
+      "id": "condition",
+      "ask": "New or used",
+      "kind": "choice",
+      "options": [
+        {
+          "id": "new",
+          "label": "New"
+        },
+        {
+          "id": "used",
+          "label": "Used"
+        }
+      ]
+    },
+    {
+      "id": "pay",
+      "ask": "Loan or cash",
+      "kind": "choice",
+      "options": [
+        {
+          "id": "loan",
+          "label": "A loan"
+        },
+        {
+          "id": "cash",
+          "label": "Cash"
+        }
+      ]
+    },
+    {
+      "id": "when",
+      "ask": "When",
+      "kind": "month"
+    }
+  ],
+  "lines": [
+    {
+      "id": "cashPaid",
+      "label": "Paid in cash",
+      "path": "assets.cashCents",
+      "kind": "oneoff",
+      "delta": {
+        "neg": "@price"
+      },
+      "source": "user",
+      "confidence": "user",
+      "note": "The whole price out of cash on the day.",
+      "when": {
+        "eq": [
+          "@pay",
+          "cash"
+        ]
+      }
+    },
+    {
+      "id": "down",
+      "label": "The down payment leaves cash",
+      "path": "assets.cashCents",
+      "kind": "oneoff",
+      "delta": {
+        "neg": {
+          "round": {
+            "*": [
+              "@price",
+              {
+                "table": "blockCar",
+                "path": [
+                  "downShare"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "source": "national",
+      "confidence": "convention",
+      "note": "A fifth down, the 20/3/8 convention.",
+      "when": {
+        "eq": [
+          "@pay",
+          "loan"
+        ]
+      }
+    },
+    {
+      "id": "loan",
+      "label": "The car loan arrives as a debt",
+      "path": "debt.items",
+      "kind": "oneoff",
+      "delta": {
+        "round": {
+          "*": [
+            "@price",
+            {
+              "-": [
+                1,
+                {
+                  "table": "blockCar",
+                  "path": [
+                    "downShare"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "source": "national",
+      "confidence": "convention",
+      "note": "Four-fifths of the price over five years at a stated 7%.",
+      "when": {
+        "eq": [
+          "@pay",
+          "loan"
+        ]
+      },
+      "extra": {
+        "type": "auto",
+        "rate": {
+          "table": "blockCar",
+          "path": [
+            "loanRate"
+          ]
+        },
+        "months": {
+          "table": "blockCar",
+          "path": [
+            "loanMonths"
+          ]
+        },
+        "minPaymentCents": {
+          "fn": "levelPayment",
+          "args": {
+            "principalCents": {
+              "round": {
+                "*": [
+                  "@price",
+                  {
+                    "-": [
+                      1,
+                      {
+                        "table": "blockCar",
+                        "path": [
+                          "downShare"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "annualRate": {
+              "table": "blockCar",
+              "path": [
+                "loanRate"
+              ]
+            },
+            "months": {
+              "table": "blockCar",
+              "path": [
+                "loanMonths"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "vehicle",
+      "label": "The car arrives as a vehicle",
+      "path": "assets.vehicles",
+      "kind": "oneoff",
+      "delta": "@price",
+      "source": "national",
+      "confidence": "convention",
+      "note": "Carried at the price paid; it loses value every year and this line does not chase it.",
+      "extra": {
+        "category": "vehicle"
+      }
+    },
+    {
+      "id": "payment",
+      "label": "The loan payment, a month",
+      "path": "expenses.needs.transportation",
+      "kind": "monthly",
+      "delta": {
+        "fn": "levelPayment",
+        "args": {
+          "principalCents": {
+            "round": {
+              "*": [
+                "@price",
+                {
+                  "-": [
+                    1,
+                    {
+                      "table": "blockCar",
+                      "path": [
+                        "downShare"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "annualRate": {
+            "table": "blockCar",
+            "path": [
+              "loanRate"
+            ]
+          },
+          "months": {
+            "table": "blockCar",
+            "path": [
+              "loanMonths"
+            ]
+          }
+        }
+      },
+      "source": "national",
+      "confidence": "convention",
+      "note": "Level payment over five years.",
+      "when": {
+        "eq": [
+          "@pay",
+          "loan"
+        ]
+      }
+    },
+    {
+      "id": "running",
+      "label": "Running costs, a month",
+      "path": "expenses.needs.transportation",
+      "kind": "monthly",
+      "delta": {
+        "round": {
+          "/": [
+            {
+              "*": [
+                "@price",
+                {
+                  "coalesce": [
+                    {
+                      "table": "blockCar",
+                      "path": [
+                        "runningCostShareOfPrice",
+                        "@condition"
+                      ]
+                    },
+                    {
+                      "table": "blockCar",
+                      "path": [
+                        "runningCostShareOfPrice",
+                        "used"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            12
+          ]
+        }
+      },
+      "source": "national",
+      "confidence": "convention",
+      "note": "Insurance, fuel, upkeep and fees as a share of the price a year: a tenth new, more used."
+    }
+  ]
+}

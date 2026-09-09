@@ -1,0 +1,340 @@
+{
+  "id": "block_home",
+  "version": "1.0",
+  "asOf": "2026-09-09",
+  "type": "home",
+  "label": "Home",
+  "source": "A purchase as the lines it adds: the down payment and closing costs leave cash, the mortgage arrives as a debt with its level payment, the place arrives as property, the rent line stops, and property tax, insurance and upkeep join the month. Rates from data/housing_conventions.json and data/mortgage_rates.json; property tax by state from the Tax Foundation's effective rates on owner-occupied housing (2023), rounded.",
+  "confidence": "convention",
+  "confidenceNote": "The state property-tax rates are effective averages and a county can sit at double or half of them; the national rate is the fallback. The mortgage rate is the table's 30-year figure on its asOf date.",
+  "note": "Read by shared/blocks.js (D-178). `questions` are the block's four answers at most. Each `lines[]` entry is a DAITE delta: `path` must resolve under debt / assets / income / taxes / expenses; `delta` is an expression in the shared language (shared/expr.js): @answer, $household figure, {table} lookups. `when` (optional) is a condition that must hold for the line to exist. `source` is national unless `stateSource` resolves to a value for the answer's state, then state; `user` when the figure is the household's own. No expansion logic lives in a room.",
+  "questions": [
+    {
+      "id": "price",
+      "ask": "Price",
+      "kind": "money"
+    },
+    {
+      "id": "down",
+      "ask": "Down payment",
+      "kind": "money"
+    },
+    {
+      "id": "when",
+      "ask": "When",
+      "kind": "month"
+    },
+    {
+      "id": "state",
+      "ask": "State",
+      "kind": "state"
+    }
+  ],
+  "propertyTaxByState": {
+    "NJ": 0.0223,
+    "IL": 0.0208,
+    "NH": 0.0193,
+    "VT": 0.0183,
+    "CT": 0.0179,
+    "TX": 0.0168,
+    "NE": 0.0163,
+    "WI": 0.0161,
+    "OH": 0.0159,
+    "IA": 0.0152,
+    "PA": 0.0149,
+    "NY": 0.014,
+    "RI": 0.014,
+    "MI": 0.0138,
+    "KS": 0.0134,
+    "ME": 0.0124,
+    "SD": 0.0117,
+    "MA": 0.0114,
+    "MN": 0.0111,
+    "AK": 0.0107,
+    "MD": 0.0105,
+    "MO": 0.0098,
+    "ND": 0.0098,
+    "OR": 0.0093,
+    "GA": 0.0092,
+    "OK": 0.0089,
+    "WA": 0.0087,
+    "VA": 0.0087,
+    "FL": 0.0086,
+    "IN": 0.0084,
+    "KY": 0.0083,
+    "NC": 0.008,
+    "MS": 0.0075,
+    "CA": 0.0075,
+    "MT": 0.0074,
+    "NM": 0.0067,
+    "TN": 0.0067,
+    "ID": 0.0063,
+    "AR": 0.0062,
+    "AZ": 0.0062,
+    "DE": 0.0061,
+    "UT": 0.0057,
+    "WV": 0.0057,
+    "SC": 0.0057,
+    "DC": 0.0057,
+    "LA": 0.0056,
+    "WY": 0.0056,
+    "NV": 0.0055,
+    "CO": 0.0055,
+    "AL": 0.004,
+    "HI": 0.0032
+  },
+  "lines": [
+    {
+      "id": "down",
+      "label": "The down payment leaves cash",
+      "path": "assets.cashCents",
+      "kind": "oneoff",
+      "delta": {
+        "neg": "@down"
+      },
+      "source": "user",
+      "confidence": "user",
+      "note": "What you put down comes out of cash on the day."
+    },
+    {
+      "id": "closing",
+      "label": "Closing costs leave cash",
+      "path": "assets.cashCents",
+      "kind": "oneoff",
+      "delta": {
+        "neg": {
+          "round": {
+            "*": [
+              "@price",
+              {
+                "table": "housingConventions",
+                "path": [
+                  "closingCostRate"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "source": "national",
+      "confidence": "convention",
+      "note": "About 3% of the price to buy (housing_conventions.json)."
+    },
+    {
+      "id": "mortgage",
+      "label": "The mortgage arrives as a debt",
+      "path": "debt.items",
+      "kind": "oneoff",
+      "delta": {
+        "round": {
+          "-": [
+            "@price",
+            "@down"
+          ]
+        }
+      },
+      "source": "national",
+      "confidence": "convention",
+      "note": "Price less the down payment, at the 30-year rate on the table's date, with its level payment as the minimum.",
+      "extra": {
+        "type": "mortgage",
+        "rate": {
+          "table": "mortgageRates",
+          "path": [
+            "thirtyYearFixed"
+          ]
+        },
+        "months": {
+          "table": "housingConventions",
+          "path": [
+            "termMonths"
+          ]
+        },
+        "minPaymentCents": {
+          "fn": "levelPayment",
+          "args": {
+            "principalCents": {
+              "-": [
+                "@price",
+                "@down"
+              ]
+            },
+            "annualRate": {
+              "table": "mortgageRates",
+              "path": [
+                "thirtyYearFixed"
+              ]
+            },
+            "months": {
+              "table": "housingConventions",
+              "path": [
+                "termMonths"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "property",
+      "label": "The place arrives as property",
+      "path": "assets.property",
+      "kind": "oneoff",
+      "delta": "@price",
+      "source": "national",
+      "confidence": "convention",
+      "note": "Carried at the price paid; no appreciation is assumed.",
+      "extra": {
+        "category": "real_estate"
+      }
+    },
+    {
+      "id": "rentStops",
+      "label": "Rent stops",
+      "path": "expenses.needs.accommodation",
+      "kind": "monthly",
+      "delta": {
+        "neg": {
+          "coalesce": [
+            "$rentMonthlyCents",
+            0
+          ]
+        }
+      },
+      "source": "user",
+      "confidence": "user",
+      "note": "Your current rent or mortgage line comes off; blank if none is entered."
+    },
+    {
+      "id": "payment",
+      "label": "The mortgage payment, a month",
+      "path": "expenses.needs.accommodation",
+      "kind": "monthly",
+      "delta": {
+        "fn": "levelPayment",
+        "args": {
+          "principalCents": {
+            "-": [
+              "@price",
+              "@down"
+            ]
+          },
+          "annualRate": {
+            "table": "mortgageRates",
+            "path": [
+              "thirtyYearFixed"
+            ]
+          },
+          "months": {
+            "table": "housingConventions",
+            "path": [
+              "termMonths"
+            ]
+          }
+        }
+      },
+      "source": "national",
+      "confidence": "convention",
+      "note": "Principal and interest on a 30-year fixed at the table's rate."
+    },
+    {
+      "id": "propertyTax",
+      "label": "Property tax, a month",
+      "path": "expenses.applied",
+      "kind": "monthly",
+      "delta": {
+        "round": {
+          "/": [
+            {
+              "*": [
+                "@price",
+                {
+                  "coalesce": [
+                    {
+                      "table": "blockHome",
+                      "path": [
+                        "propertyTaxByState",
+                        "@state"
+                      ]
+                    },
+                    {
+                      "table": "housingConventions",
+                      "path": [
+                        "propertyTaxRate"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            12
+          ]
+        }
+      },
+      "source": "national",
+      "confidence": "convention",
+      "note": "The state's effective rate on the price, a twelfth a month; the national rate when the state is not set.",
+      "stateSource": {
+        "table": "blockHome",
+        "path": [
+          "propertyTaxByState",
+          "@state"
+        ]
+      }
+    },
+    {
+      "id": "insurance",
+      "label": "Home insurance, a month",
+      "path": "expenses.applied",
+      "kind": "monthly",
+      "delta": {
+        "round": {
+          "/": [
+            {
+              "*": [
+                "@price",
+                {
+                  "table": "housingConventions",
+                  "path": [
+                    "insuranceRate"
+                  ]
+                }
+              ]
+            },
+            12
+          ]
+        }
+      },
+      "source": "national",
+      "confidence": "convention",
+      "note": "A national rule of thumb, a share of the price a year."
+    },
+    {
+      "id": "upkeep",
+      "label": "Upkeep, a month",
+      "path": "expenses.applied",
+      "kind": "monthly",
+      "delta": {
+        "round": {
+          "/": [
+            {
+              "*": [
+                "@price",
+                {
+                  "table": "housingConventions",
+                  "path": [
+                    "maintenanceRate"
+                  ]
+                }
+              ]
+            },
+            12
+          ]
+        }
+      },
+      "source": "national",
+      "confidence": "convention",
+      "note": "The 1% rule: a share of the price a year for what breaks."
+    }
+  ]
+}

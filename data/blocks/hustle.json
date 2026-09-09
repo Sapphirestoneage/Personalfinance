@@ -1,0 +1,40 @@
+{
+  "id": "block_hustle",
+  "version": "1.0",
+  "asOf": "2026-09-09",
+  "type": "hustle",
+  "label": "Side hustle",
+  "source": "A side income as the one line it adds: what it nets a month, from when it starts. The hours are kept on the block for the hourly figure and cost nothing in money.",
+  "confidence": "convention",
+  "confidenceNote": "Your own figure; the block prices nothing itself.",
+  "note": "Read by shared/blocks.js (D-178). `questions` are the block's four answers at most. Each `lines[]` entry is a DAITE delta: `path` must resolve under debt / assets / income / taxes / expenses; `delta` is an expression in the shared language (shared/expr.js): @answer, $household figure, {table} lookups. `when` (optional) is a condition that must hold for the line to exist. `source` is national unless `stateSource` resolves to a value for the answer's state, then state; `user` when the figure is the household's own. No expansion logic lives in a room.",
+  "questions": [
+    {
+      "id": "net",
+      "ask": "What it nets, a month",
+      "kind": "money"
+    },
+    {
+      "id": "hours",
+      "ask": "Hours a week",
+      "kind": "number"
+    },
+    {
+      "id": "when",
+      "ask": "When it starts",
+      "kind": "month"
+    }
+  ],
+  "lines": [
+    {
+      "id": "net",
+      "label": "Side income, a month, net",
+      "path": "income.netMonthlyCents",
+      "kind": "monthly",
+      "delta": "@net",
+      "source": "user",
+      "confidence": "user",
+      "note": "Taken as after tax and its own costs."
+    }
+  ]
+}

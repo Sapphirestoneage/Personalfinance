@@ -1,0 +1,101 @@
+{
+  "id": "block_marriage",
+  "version": "1.0",
+  "asOf": "2026-09-09",
+  "type": "marriage",
+  "label": "Marriage",
+  "source": "A partner as the lines they add when finances are combined: their gross income joins yours, and their debt arrives as one debt at a stated rate with a minimum of 2% of the balance a month. Not combining: nothing moves in your numbers, and the block says so.",
+  "confidence": "convention",
+  "confidenceNote": "One debt at 7% stands in for whatever the real mix is; the partner's own spending is not asked and not added.",
+  "note": "Read by shared/blocks.js (D-178). `questions` are the block's four answers at most. Each `lines[]` entry is a DAITE delta: `path` must resolve under debt / assets / income / taxes / expenses; `delta` is an expression in the shared language (shared/expr.js): @answer, $household figure, {table} lookups. `when` (optional) is a condition that must hold for the line to exist. `source` is national unless `stateSource` resolves to a value for the answer's state, then state; `user` when the figure is the household's own. No expansion logic lives in a room.",
+  "debtRate": 0.07,
+  "minimumShare": 0.02,
+  "questions": [
+    {
+      "id": "gross",
+      "ask": "Partner's gross income, a year",
+      "kind": "money"
+    },
+    {
+      "id": "debt",
+      "ask": "Partner's debt, total",
+      "kind": "money"
+    },
+    {
+      "id": "when",
+      "ask": "When",
+      "kind": "month"
+    },
+    {
+      "id": "combine",
+      "ask": "Combining finances",
+      "kind": "yesno"
+    }
+  ],
+  "lines": [
+    {
+      "id": "income",
+      "label": "Their income joins yours",
+      "path": "income.grossAnnualCents",
+      "kind": "annual",
+      "delta": "@gross",
+      "source": "user",
+      "confidence": "user",
+      "note": "Gross, a year.",
+      "when": {
+        "eq": [
+          "@combine",
+          true
+        ]
+      }
+    },
+    {
+      "id": "debt",
+      "label": "Their debt arrives",
+      "path": "debt.items",
+      "kind": "oneoff",
+      "delta": "@debt",
+      "source": "national",
+      "confidence": "convention",
+      "note": "One debt at a stated 7%, minimum 2% of the balance a month.",
+      "when": {
+        "and": [
+          {
+            "eq": [
+              "@combine",
+              true
+            ]
+          },
+          {
+            "gt": [
+              "@debt",
+              0
+            ]
+          }
+        ]
+      },
+      "extra": {
+        "type": "other",
+        "rate": {
+          "table": "blockMarriage",
+          "path": [
+            "debtRate"
+          ]
+        },
+        "minPaymentCents": {
+          "round": {
+            "*": [
+              "@debt",
+              {
+                "table": "blockMarriage",
+                "path": [
+                  "minimumShare"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
