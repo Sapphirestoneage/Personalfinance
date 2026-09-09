@@ -368,7 +368,7 @@
     },
     {
       "id": "fulfillment",
-      "title": "Enough",
+      "title": "The Joy Curve",
       "file": "rooms/fulfillment.html",
       "reads": [
         "monthlyExpenses"

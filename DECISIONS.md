@@ -9139,6 +9139,30 @@ Here; following the FIRE door lands on
 `cash-flow.html?from=fire#spending` and the header offers "↩ Back to FIRE
 Number". 21,677 + 5,614 + 25 + 448 + 340 checks pass.
 
+## D-164 — Two rooms called Enough
+
+`fulfillment` (order 18) and `enough` (order 43) both carried the title
+"Enough". In the menu, on the map, in the Walk-Through and in all twenty Front
+Doors arrangements, picking one was a coin toss — and they are not near
+neighbours in subject:
+
+- **order 43** is the real Enough: *"the monthly figure you would live on by
+  choice, and the second FI number it makes"*. It keeps the name.
+- **order 18** is *"what each thing costs a month, against what it is actually
+  worth to you"* — the cost-against-worth curve.
+
+The new name is not invented. The Enough room's own copy already refers to this
+one's output as **the joy curve** ("typed, or proposed from the joy curve"), so
+the app had a name for it and simply was not using it on the door. `fulfillment`
+is now **The Joy Curve**, in the registry, the `<title>` and the `<h1>`.
+
+The room id is untouched, so every deep link, layout entry, walk step and
+`rooms.json` row still resolves — a title is a label, and renaming one must not
+break a link. `test/run.js` now passes with no duplicate titles anywhere in the
+registry.
+
+21,734 + 5,614 + 25 + 448 + 340 checks pass.
+
 ---
 
 # The Dungeons & Dividends entries

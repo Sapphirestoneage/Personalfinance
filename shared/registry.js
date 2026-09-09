@@ -540,7 +540,12 @@
       kind: 'about-you',
       needs: ['monthlyExpenses'],
       order: 18,
-      title: 'Enough',
+      /* Was also called "Enough", which the room at order 43 is actually about
+         — the monthly figure you would live on by choice. Two rooms under one
+         name in the menu, the map and all twenty Front Doors layouts is a
+         coin toss every time. "The Joy Curve" is not invented here: it is what
+         the Enough room's own copy already calls this one's output. D-164. */
+      title: 'The Joy Curve',
       blurb: 'What each thing costs a month, against what it is actually worth to you \u2014 and the four places that lands.',
       href: 'rooms/fulfillment.html',
       tier: 1,
