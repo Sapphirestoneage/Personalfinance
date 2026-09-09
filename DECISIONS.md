@@ -10102,6 +10102,129 @@ now also `engines/tax.js`, `income.js`, `ledger.js`, `taxroom.js`,
 
 ---
 
+## D-176 — The Long Way Round v2: every way on a card, one chart, a link that keeps
+
+### What it is
+
+`rooms/adventure.html` rebuilt on the spine, the levers and the bands.
+Two screens instead of five. Screen one: three baseline numbers, "You'd
+need $X to stop working: 25 years of what you spend" in plain text, and one
+card a way — Drift first, the baseline, every other card already showing
+the pot after five years, the years to FI after that, the hours a week it
+costs, what an hour of the extra earns, one flexibility tag, and its delta
+against Drift ("3 years sooner, +$84,000"). No winner is marked; the sort
+is a toggle (FI date · hours · dollars), FI date by default. Screen two,
+after a tap: one chart with every way on one axis, the chosen way bold, the
+target as a rule, the Triple D band shaded behind the chosen way, shock
+markers on the years they hit; headwind and tailwind toggles under it,
+each rewriting the delta sentence at the top ("Markets fall 30% plus six
+months without work puts the finish line back 2 years. Without them, 12
+years sooner than Drift, and +$68,959 after five years."); the savings
+rate on that way with a link to Shockingly Simple Math on the Snapshot;
+steppers for the lever figures ($500 ± $100, 40% ± 10%, hours ± 5),
+buttons only; the year-by-year walk folded below, each row carrying the
+event that hit it and the runway. No text input anywhere in the room.
+
+### The engine (engines/adventure.js)
+
+- Saving is take-home minus spending, never gross (D-171).
+- The baseline splits `cashCents` and `investedCents`; an unknown balance is
+  null, never zero. A crash hits the invested pot only. A job loss draws
+  the monthly gap from cash first and reports `runwayMonths`; when the cash
+  runs out the row says `borrowingFromMonth` N and the invested pot is
+  never drawn below zero; the working half of the year repays what was
+  borrowed first. On the demo: cash covers three of the six months, then
+  borrowing from month four.
+- A lever with `survivesJobLoss: true` keeps paying through the loss: the
+  hustle narrows the monthly gap from $3,150 to $2,650.
+- `raiseKeptShare` is applied: Drift's spending rises by the raise it does
+  not keep, and the target rises with it.
+- The accommodation cut reads the real line (D-172), the 30% fallback only
+  when it is blank, said beside the number.
+- Returns run three ways from `data/return_bands.json` through
+  `Bands.threeWays` (`Adventure.threeWays`); the likely line is the
+  headline, the band is drawn behind it.
+- Paths are `drift` (baseline), `steady`, `hustle`, `househack`, `combo`
+  (half of each, composed from the two levers, not a separate entry), and
+  `relocate` and `careermove` offered only when their lever's `appliesWhen`
+  passes (`onlyIf` in `data/adventure_paths.json` v1.3). On the demo,
+  Change Jobs applies (employed) and Move Somewhere Cheaper does not (no
+  remote-work fact), so the demo shows six cards.
+- Shocks carry `kind`: crash, job loss and lifestyle creep are headwinds,
+  the real raise a tailwind. Same mechanics, separate lists.
+- The applies-to-you gate: `Adventure.gate` reads the FOO placement through
+  `engines/foo.js`; at or below the high-interest-debt step it says so in
+  one sentence and routes side income to that debt in the model
+  (`debtPaidCents` on the row; the pot gets what is left). The demo sits
+  at step 2 with a $3,200 card, so the first two years' hustle income clears
+  it before joining the pot.
+- Steppers pass `overrides` (`hustleMonthlyCents`, `housingShare`,
+  `hustleHoursPerWeek`) through `compose`; the table is never touched, and
+  the assumption sentence is written from the figures in play.
+- `Adventure.cards` is screen one in one call: every way, its figures, its
+  delta against Drift, sorted. `impliedHourlyCents` comes from
+  `Levers.hourlyFor`, now the ONE hourly formula (`impliedHourlyCents`
+  calls it), so a card and a lever card cannot disagree.
+
+### State and sharing
+
+The whole screen is the URL: `?path=househack&shocks=crash,jobloss&returns=low&hustle=600&housing=30&hours=20&sort=hours`
+(`hours` and `sort` join the brief's five so a link reproduces the sort
+and the hours stepper too). `history.replaceState` on every change;
+loading the link reproduces the screen. "Copy link to this scenario" copies
+it. "Pin this way" saves the label and the query to `shared/scenarios.js`
+under its own key `slaf.scenarios.v1` — a DAITE context (`scenarios`),
+never a household fact, never exported, never in a share link. Capped at
+ten: the oldest drops with a toast and Undo (`restore`), which puts it back
+and drops the newest instead. The room writes nothing to the household;
+`test/run.js` greps it for a write and for a text input and finds neither.
+
+### What was ambiguous, and how it was resolved
+
+- **"Five cards."** The brief's gate says five; with Change Jobs applying
+  to anyone working, the demo shows six. The gate asserts at least five,
+  Drift first, a delta on every other. Fewer cards would mean hiding a way
+  the rule offers.
+- **Rows for years with "no event and no change".** A 3% raise changes
+  every year, so every year gets a row; the rule is applied literally
+  (event, or income or spending moved) rather than inventing a threshold.
+- **Where new saving goes.** Positive saving joins the invested pot; cash
+  stays where it is as the cushion; borrowing is repaid from saving before
+  anything is invested. Stated in the drawer.
+- **The chart.** `Charts.area` gained `opts.bands` (a shaded low–high
+  range drawn behind the lines) rather than a second chart library.
+- **Screen one's three-way line and lens strip** show the leading card's
+  pot three ways, so the room keeps the D-170 promises on both screens.
+
+### Gates
+
+`test/run.js` adventure section: the split baseline, Drift first and the
+gated ways, the cards' figures and sort, Drift's spent raise, headwinds and
+tailwinds, the FOO gate and the routed debt ($3,000 then $200), the crash
+on invested only, the job-loss runway (3 months, borrowing from month 4,
+$9,450 borrowed and repaid), the surviving hustle, three ways, the
+steppers, the pot identity on every row; plus the scenarios store (cap,
+drop, undo, remove). `test/adventure.js` (Playwright, phone-shaped): the
+brief's script — cards with deltas, tap House Hack, toggle crash and job
+loss, delta sentence and URL change, a stepper rewrites both, reload
+reproduces the screen, pin lands in the store with the household's facts
+untouched. Unit 24127 · adventure gate 36 · features and render on the
+room · dnd 5614 · export 25.
+
+### Compatibility
+
+The household shape is unchanged. `data/adventure_paths.json` is v1.3:
+paths gained `drift` (`baseline: true`), `relocate` and `careermove`
+(`onlyIf`); contingencies gained `kind`. `Adventure.paths(tables,
+household)` filters by the household when given one; `compare` and
+`cards` do. `run` rows carry `investedCents`, `cashCents`,
+`borrowedCents`, `borrowedInYearCents`, `debtPaidCents`, `events`,
+`runwayMonths`, `borrowingFromMonth`; `portfolioCents` is invested plus
+cash less borrowed. The registry's adventure subsections are now
+`s-stand`, `s-ways`, `s-way`. A new localStorage key, `slaf.scenarios.v1`.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

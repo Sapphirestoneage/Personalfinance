@@ -8700,7 +8700,7 @@ section('Four ways through five years');
   check('nothing saved and no growth never arrives', Adventure.yearsFrom(100, 1000000, 0, 0), null);
   check('already past the target is zero years', Adventure.yearsFrom(1000000, 100, 0, 0.05), 0);
 
-  check('all four paths run', Adventure.compare(demo, TABLES).length, 4);
+  check('every way the demo is offered runs: Drift, the four, and Change Jobs (D-176)', Adventure.compare(demo, TABLES).length, 6);
   checkTrue('the room writes nothing',
     fs.readFileSync(path.join(ROOT, 'rooms/adventure.html'), 'utf8').indexOf('Ownership.write') === -1);
 
@@ -8716,7 +8716,7 @@ section('Four ways through five years');
     t.paths.every(p => ['annualRaiseReal', 'annualExtraIncomeCents', 'housingCutShare', 'raiseKeptShare', 'assumption'].every(k => !(k in p))));
   checkTrue('every path is a list of levers the library knows',
     t.paths.every(p => Array.isArray(p.levers) && p.levers.length && p.levers.every(x => LV[x.id])));
-  check('the levers the four ways pull', Adventure.leversUsed(TABLES).map(l => l.id).join(','), 'steady,hustle,househack');
+  check('the levers the ways pull', Adventure.leversUsed(TABLES).map(l => l.id).join(','), 'drift,steady,hustle,househack,relocate,careermove');
   const takeHome = 7200000 - 1368000;
   const raiseShare = LV.steady.moves['income.grossAnnualCents'];
   check('Steady: the raise is the steady lever\'s', steady.rows[0].incomeCents, takeHome + Math.round(takeHome * raiseShare));
@@ -8740,6 +8740,107 @@ section('Four ways through five years');
   const engineSrc = fs.readFileSync(path.join(ROOT, 'engines/adventure.js'), 'utf8');
   checkTrue('the engine holds no lever figure of its own',
     !/annualRaiseReal\s*[:=]\s*0|600000|50000|0\.40?\b|0\.03\b|year === 1 \? 0\.5/.test(engineSrc.replace(/\/\*[\s\S]*?\*\//g, '')));
+
+  /* ---- v2 (D-176): the mechanics the brief names, each re-derived by hand. */
+  const T2 = { ...TABLES, fooRules: require(path.join(ROOT, 'data/foo_rules.json')), irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json')), matchDefaults: require(path.join(ROOT, 'data/match_defaults.json')) };
+  const b2 = Adventure.baseline(demo, T2).value;
+  check('the baseline splits cash from what is invested', [b2.cashCents, b2.investedCents].join(','), '950000,4800000');
+  check('...and states the target as years of spending', b2.targetYears, 25);
+  check('...25 years of what you spend', b2.targetCents, 3780000 * 25);
+  const noCash = Demo.build(); noCash.assets = noCash.assets.filter(a => a.category !== 'cash');
+  check('cash not entered is null, never zero', Adventure.baseline(noCash, T2).value.cashCents, null);
+
+  /* Drift is the baseline; the delta on every other card is against it. */
+  const ways = Adventure.paths(T2, demo).map(p => p.id);
+  check('Drift leads, and Change Jobs is offered because its lever applies', ways.join(','), 'drift,steady,hustle,househack,combo,careermove');
+  const retired = Demo.build(); Schema.primaryPerson(retired).employmentStatus = 'retired';
+  checkTrue('...but not to someone retired', Adventure.paths(T2, retired).map(p => p.id).indexOf('careermove') === -1);
+  checkTrue('...and Move Somewhere Cheaper waits for a remote-work fact', ways.indexOf('relocate') === -1);
+  const remote = Demo.build(); remote.meta = Object.assign({}, remote.meta, { remoteOk: true });
+  checkTrue('...which, once stored, offers it', Adventure.paths(T2, remote).map(p => p.id).indexOf('relocate') > -1);
+  const C = Adventure.cards(demo, T2, {});
+  check('cards: Drift first', C[0].pathId, 'drift');
+  check('...with no delta of its own', C[0].delta, null);
+  checkTrue('...and every other card carries its delta against Drift, in years and dollars',
+    C.slice(1).every(c => c.delta && typeof c.delta.potCents === 'number' && c.delta.years !== undefined));
+  checkTrue('...sorted by FI date by default', C.slice(1).every((c, i, a) => i === 0 || (a[i - 1].yearsToFI === null ? 1e9 : a[i - 1].yearsToFI) <= (c.yearsToFI === null ? 1e9 : c.yearsToFI)));
+  checkTrue('...or by hours', Adventure.cards(demo, T2, { sort: 'hours' }).slice(1).every((c, i, a) => i === 0 || a[i - 1].hoursPerWeek <= c.hoursPerWeek));
+  checkTrue('...or by dollars', Adventure.cards(demo, T2, { sort: 'dollars' }).slice(1).every((c, i, a) => i === 0 || a[i - 1].potCents >= c.potCents));
+  const hustleCard = C.filter(c => c.pathId === 'hustle')[0];
+  check('the hustle card costs the lever\'s hours', hustleCard.hoursPerWeek, 15);
+  check('...and prices the extra an hour through the one hourly formula', hustleCard.impliedHourlyCents, Math.round(50000 / (15 * 4.33)));
+  check('...with the lever\'s flexibility tag', hustleCard.flex, 'portable');
+  const comboCard = C.filter(c => c.pathId === 'combo')[0];
+  check('half a hustle costs half the hours', comboCard.hoursPerWeek, 10);
+  check('...and its hourly counts the housing cut too: ($250 + $300) ÷ (10 × 4.33)', comboCard.impliedHourlyCents, Math.round((25000 + 30000) / (10 * 4.33)));
+
+  /* Drift: the raise is spent, so the target moves. */
+  const drift = Adventure.run(demo, T2, { pathId: 'drift', routeToDebt: false }).value;
+  check('Drift spends the raise: spending rises by it', drift.rows[0].spendCents, 3780000 + Math.round(5832000 * 0.03));
+  checkTrue('...so its target rises too', drift.rows[0].targetCents > 3780000 * 25);
+
+  /* Headwinds and tailwinds: same mechanics, separate lists. */
+  check('headwinds', Adventure.headwinds(T2).map(c => c.id).join(','), 'crash,jobloss,inflation');
+  check('tailwinds', Adventure.tailwinds(T2).map(c => c.id).join(','), 'raise');
+
+  /* The FOO gate: the demo sits at step 2, before the debt step. */
+  const g = Adventure.gate(demo, T2);
+  checkTrue('the demo is gated: FOO step 2, before the high-interest-debt step', g.blocked && g.step === 2);
+  check('...and the gate prices the high-interest debt it routes to', g.debtCents, 320000);
+  checkTrue('...in one sentence', /step 2/.test(g.sentence) && /\$3,200/.test(g.sentence));
+  const routed = Adventure.run(demo, T2, { pathId: 'hustle' }).value;
+  check('side income pays the debt first: year one sends the half-ramped $3,000 to it', routed.rows[0].debtPaidCents, 300000);
+  check('...year two clears the last $200', routed.rows[1].debtPaidCents, 20000);
+  checkTrue('...and says so on the row', routed.rows[1].events.indexOf('high-interest debt cleared') > -1);
+  const unrouted = Adventure.run(demo, T2, { pathId: 'hustle', routeToDebt: false }).value;
+  checkTrue('...which costs the pot exactly the debt, no more', unrouted.rows[1].investedCents - routed.rows[1].investedCents === Math.round(300000 * 1.05) + 20000);
+  const clean = Demo.build(); clean.debts = clean.debts.filter(d => d.type !== 'credit_card'); clean.retirement.contributionPercent = 6;
+  checkTrue('a household past the step (match taken, no high-interest debt) is not gated', !Adventure.gate(clean, T2).blocked);
+
+  /* A crash hits what is invested only. */
+  const crashed = Adventure.run(demo, T2, { pathId: 'steady', shockIds: ['crash'] }).value;
+  const steady2 = Adventure.run(demo, T2, { pathId: 'steady' }).value;
+  check('a crash leaves the cash alone', crashed.rows[1].cashCents, 950000);
+  check('...and takes 30% of the invested pot in year 2', crashed.rows[1].investedCents, Math.round(steady2.rows[1].investedCents * 0.7));
+
+  /* A job loss draws on cash first, month by month, and reports the runway. */
+  const lost = Adventure.run(demo, T2, { pathId: 'steady', shockIds: ['jobloss'] }).value;
+  const y3 = lost.rows[2];
+  check('six months without work in year 3', y3.lostMonths, 6);
+  check('...cash covers three of them: $9,500 ÷ $3,150', y3.runwayMonths, Math.floor(950000 / 315000));
+  check('...and the row says borrowing starts in month 4', y3.borrowingFromMonth, 4);
+  check('...for the three uncovered months of spending', y3.borrowedInYearCents, 315000 * 3);
+  check('...the cash is down to what three months left', y3.cashCents, 950000 - 315000 * 3);
+  checkTrue('...and the invested pot is never drawn below zero', lost.rows.every(r => r.investedCents >= 0));
+  checkTrue('...the working half of the year repays what was borrowed', y3.borrowedCents === 0);
+  const broke = Demo.build(); broke.assets = broke.assets.map(a => a.category === 'cash' ? Object.assign({}, a, { valueCents: 0 }) : a);
+  check('with no cash at all, borrowing from month 1', Adventure.run(broke, T2, { pathId: 'steady', shockIds: ['jobloss'] }).value.rows[2].borrowingFromMonth, 1);
+
+  /* A lever that survives a job loss keeps paying through it. */
+  const lostHustle = Adventure.run(demo, T2, { pathId: 'hustle', shockIds: ['jobloss'], routeToDebt: false }).value;
+  checkTrue('the hustle keeps paying through the lost months: the runway is never shorter than Steady\'s', lostHustle.rows[2].runwayMonths >= y3.runwayMonths);
+  checkTrue('...and its year-three saving is higher by the surviving income', lostHustle.rows[2].savedCents > y3.savedCents);
+  check('...at $2,650 a month of gap instead of $3,150: 3 months still, but $1,500 less borrowed', lostHustle.rows[2].borrowedInYearCents, (315000 - 50000) * 3);
+
+  /* Returns run three ways from the app's own band. */
+  const tw = Adventure.threeWays(demo, T2, { pathId: 'househack' });
+  checkTrue('three ways, low under likely under high', tw.low.value.portfolioCents < tw.likely.value.portfolioCents && tw.likely.value.portfolioCents < tw.high.value.portfolioCents);
+  check('...the likely line is the table\'s median band', tw.rates.likely, 0.05);
+
+  /* The steppers move the lever figures without touching the table. */
+  const stepped = Adventure.run(demo, T2, { pathId: 'hustle', routeToDebt: false, overrides: { hustleMonthlyCents: 60000, hustleHoursPerWeek: 20 } }).value;
+  check('a $600 hustle: year two carries $7,200 extra', stepped.rows[1].incomeCents, unrouted.rows[1].incomeCents + 120000);
+  checkTrue('...and the sentence says $600 and 20 hours', /\$600 a month/.test(stepped.assumption) && /20 hours a week/.test(stepped.assumption));
+  check('...and the hourly follows: $600 ÷ (20 × 4.33)', stepped.impliedHourlyCents, Math.round(60000 / (20 * 4.33)));
+  const hacked30 = Adventure.run(demo, T2, { pathId: 'househack', overrides: { housingShare: 0.30 } }).value;
+  check('a 30% housing cut off the real rent line', hacked30.rows[0].spendCents, 3780000 - Math.round(150000 * 0.30) * 12);
+  checkTrue('the table itself is untouched', TABLES.levers.levers.hustle.moves['income.extraMonthlyCents'] === 50000);
+
+  /* Every row carries its events and the walk still adds up. */
+  const shocked = Adventure.run(demo, T2, { pathId: 'hustle', shockIds: ['crash', 'jobloss', 'inflation', 'raise'] }).value;
+  checkTrue('year 2 names the crash and the raise', shocked.rows[1].events.indexOf('Markets fall 30%') > -1 && shocked.rows[1].events.indexOf('A real raise') > -1);
+  checkTrue('year 3 names the job loss', shocked.rows[2].events.indexOf('Six months without work') > -1);
+  checkTrue('the pot is invested plus cash less borrowed, every year', shocked.rows.every(r => r.portfolioCents === r.investedCents + (r.cashCents === null ? 0 : r.cashCents) - r.borrowedCents));
   check('the return matches the app\'s own median band', t.returnRateReal, 0.05);
 })();
 
@@ -9823,6 +9924,35 @@ section('Lenses: a rule re-reads the numbers and returns a verdict (D-175)');
   checkTrue('the library never evaluates a rule as code', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/lenses.js'), 'utf8')));
 })();
 
+section('Pinned scenarios live beside the household, never in it (D-176)');
+(function () {
+  const Scenarios = require(path.join(ROOT, 'shared/scenarios.js'));
+  Scenarios.reset();
+  check('empty to start', Scenarios.all().length, 0);
+  const first = Scenarios.pin({ room: 'adventure', label: 'House Hack · crash', query: 'path=househack&shocks=crash' });
+  check('a pin returns the item', first.item.label, 'House Hack · crash');
+  check('...and nothing dropped', first.dropped, null);
+  check('it is listed', Scenarios.all()[0].query, 'path=househack&shocks=crash');
+  let dropped = null;
+  for (let i = 0; i < Scenarios.CAP; i++) { const r = Scenarios.pin({ room: 'adventure', label: 'way ' + i, query: 'path=steady&n=' + i }); if (r.dropped) dropped = r.dropped; }
+  check('capped at ten', Scenarios.all().length, Scenarios.CAP);
+  check('...the oldest dropped off', dropped && dropped.label, 'House Hack · crash');
+  const back = Scenarios.restore(dropped);
+  check('undo puts it back', Scenarios.all().some(s => s.id === dropped.id), true);
+  check('...and the newest over the cap goes instead', back.pushedOut && back.pushedOut.label, 'way 9');
+  check('still ten', Scenarios.all().length, Scenarios.CAP);
+  const gone = Scenarios.remove(dropped.id);
+  check('remove returns the item', gone.id, dropped.id);
+  check('...and it is gone', Scenarios.all().some(s => s.id === dropped.id), false);
+  check('remove of a stranger is null', Scenarios.remove('nope'), null);
+  checkTrue('the key is its own, not the household\'s', Scenarios.KEY !== 'slaf.prefs.v1' && /scenarios/.test(Scenarios.KEY));
+  const Daite = require(path.join(ROOT, 'shared/daite.js'));
+  checkTrue('scenarios is a DAITE context, not a family', Daite.CONTEXT.indexOf('scenarios') > -1 && !Daite.FAMILIES.some(f => (f.id || f) === 'scenarios'));
+  checkTrue('the adventure room writes nothing to the household', !/Spine\.(set|updateProfile|setFat|setMonthlyExpenses)\(/.test(fs.readFileSync(path.join(ROOT, 'rooms/adventure.html'), 'utf8')));
+  checkTrue('...has no text input', !/<input|<textarea|contenteditable/.test(fs.readFileSync(path.join(ROOT, 'rooms/adventure.html'), 'utf8')));
+  Scenarios.reset();
+})();
+
 section('The lever library: get, applies, apply (D-174)');
 (function () {
   const Levers = require(path.join(ROOT, 'shared/levers.js'));
@@ -9903,8 +10033,8 @@ section('The lever library: get, applies, apply (D-174)');
   const adv = fs.readFileSync(path.join(ROOT, 'rooms/adventure.html'), 'utf8');
   const housing = fs.readFileSync(path.join(ROOT, 'rooms/housing.html'), 'utf8');
   const career = fs.readFileSync(path.join(ROOT, 'rooms/career-move.html'), 'utf8');
-  checkTrue('the adventure loads the levers and hands them to the library', /'levers'\]/.test(adv) && adv.indexOf('SLAF.Levers.use(tables.levers)') > -1);
-  checkTrue('...and writes each card\'s assumption from them', adv.indexOf('Adventure.describe(p, TABLES)') > -1 && adv.indexOf('p.assumption') === -1);
+  checkTrue('the adventure loads the levers and hands them to the library', /'levers'/.test(adv) && adv.indexOf('SLAF.Levers.use(tables.levers)') > -1);
+  checkTrue('...and takes each card\'s assumption from the engine, never its own', adv.indexOf('Adventure.cards(') > -1 && !/assumption\s*:/.test(adv) && adv.indexOf('p.assumption') === -1);
   checkTrue('...and its drawer prices every lever an hour', adv.indexOf('Levers.impliedHourlyCents') > -1);
   checkTrue('Housing Decision reads the house hack from the library', /'levers'\]/.test(housing) && housing.indexOf("Levers.get('househack')") > -1);
   checkTrue('Career Move proposes the offer from the job-change lever', /'levers'\]/.test(career) && career.indexOf("Levers.get('careermove')") > -1 && career.indexOf('propose: function (h, T) { return leverOffer(h, T); }') > -1);

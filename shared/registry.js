@@ -1226,18 +1226,16 @@
     needs: ['grossAnnualIncome', 'monthlyExpenses', 'investments'],
     order: 43.5,
     title: 'The Long Way Round',
-    blurb: 'Four ways through the next five years, walked a year at a time \u2014 and what a crash, a lost job or a creeping lifestyle does to the finish line.',
+    blurb: 'Every way through the next five years on one card each, measured against drifting \u2014 then one chart, the headwinds and tailwinds, and a link you can keep.',
     href: 'rooms/adventure.html',
     tier: 2,
     tags: ['cashflow'],
-    daite: { reads: ['assets.invested', 'expenses', 'income.grossAnnualCents'], writes: [] },
+    daite: { reads: ['assets.invested', 'assets.cashCents', 'expenses', 'income.grossAnnualCents', 'debt.items'], writes: [] },
     utility: false,
     subsections: [
-      { id: 's-base',    label: 'Where you stand' },
-      { id: 's-paths',   label: 'Four ways through' },
-      { id: 's-journey', label: 'The five years' },
-      { id: 's-compare', label: 'All four side by side' },
-      { id: 's-shocks',  label: 'What if it goes wrong' }
+      { id: 's-stand', label: 'Where you stand' },
+      { id: 's-ways',  label: 'The ways through' },
+      { id: 's-way',   label: 'The chosen way' }
     ]
   });
 

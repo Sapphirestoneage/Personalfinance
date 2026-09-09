@@ -1,16 +1,27 @@
 {
   "id": "adventure_paths",
-  "version": "1.2",
+  "version": "1.3",
   "asOf": "2026-09-09",
-  "source": "Not findings. Four strategies people actually describe using to reach financial independence. Each is a composition of levers from data/levers.json — the side hustle, the house hack, the steady raise — and every figure lives THERE, not here; this file only says which levers a path pulls and how hard. Every one of them is stated on screen next to the number it moves.",
+  "source": "Not findings. The ways people actually describe using to reach financial independence, each a composition of levers from data/levers.json — the side hustle, the house hack, the steady raise, a cheaper town, a better job — with Drift, the raise spent, as the baseline everything is measured against. Every figure lives in the lever library, not here; this file only says which levers a way pulls and how hard, and which ways wait for a fact (a remote job, a working life) before they show.",
   "confidence": "unverified",
   "confidenceNote": "The paths are a teaching device. No study says a house hack cuts housing by 40% for you; it says it can, and the room lets you change the figure rather than pretending the default is a finding.",
-  "note": "Read by engines/adventure.js. Never inline a lever figure in a room or in this file: a path is `levers: [{ id, scale }]`, the id a key in data/levers.json and the scale a share of the lever (1 when omitted). The engine composes the raise, the extra income and the housing cut from the levers, and writes each path's assumption sentence from their figures. The house hack reads the real accommodation line (D-172); the share below is a fallback, not a fact. D-174.",
+  "note": "Read by engines/adventure.js. Never inline a lever figure in a room or in this file: a path is `levers: [{ id, scale }]`, the id a key in data/levers.json and the scale a share of the lever (1 when omitted). `onlyIf` names a lever whose appliesWhen must pass before the path is offered. `baseline: true` marks Drift, the way every other way's delta is measured against. The engine composes the raise, the extra income and the housing cut from the levers and writes each path's assumption sentence from their figures. The house hack reads the real accommodation line (D-172); the share below is a fallback, not a fact. Contingencies are headwinds or tailwinds: same mechanics, separate lists. D-174, D-176.",
   "returnRateReal": 0.05,
   "returnRateSource": "The median real return band in data/return_bands.json, so this room and the rest of the app agree.",
   "withdrawalRate": 0.04,
   "years": 5,
   "paths": [
+    {
+      "id": "drift",
+      "label": "Drift",
+      "line": "Nothing changes. The raises get spent. This is what every other way is measured against.",
+      "levers": [
+        {
+          "id": "drift"
+        }
+      ],
+      "baseline": true
+    },
     {
       "id": "steady",
       "label": "Steady",
@@ -64,6 +75,34 @@
           "id": "steady"
         }
       ]
+    },
+    {
+      "id": "relocate",
+      "label": "Move Somewhere Cheaper",
+      "line": "Keep the job, work remote, and take a quarter off every needs line.",
+      "levers": [
+        {
+          "id": "relocate"
+        },
+        {
+          "id": "steady"
+        }
+      ],
+      "onlyIf": "relocate"
+    },
+    {
+      "id": "careermove",
+      "label": "Change Jobs",
+      "line": "A better-paid job from year one, and the same discipline after it.",
+      "levers": [
+        {
+          "id": "careermove"
+        },
+        {
+          "id": "steady"
+        }
+      ],
+      "onlyIf": "careermove"
     }
   ],
   "contingencies": [
@@ -72,27 +111,31 @@
       "label": "Markets fall 30%",
       "line": "A 30% drop in year 2, then the usual return resumes.",
       "portfolioShockShare": -0.3,
-      "shockYear": 2
+      "shockYear": 2,
+      "kind": "headwind"
     },
     {
       "id": "jobloss",
       "label": "Six months without work",
-      "line": "Income stops for half of year 3. Spending continues.",
+      "line": "Income stops for half of year 3. Spending continues, paid from cash first; anything a side income earns keeps coming.",
       "incomeLostShareOfYear": 0.5,
-      "shockYear": 3
+      "shockYear": 3,
+      "kind": "headwind"
     },
     {
       "id": "inflation",
       "label": "Lifestyle creeps up",
       "line": "Spending rises 4% a year in real terms on top of everything else.",
-      "spendingDriftReal": 0.04
+      "spendingDriftReal": 0.04,
+      "kind": "headwind"
     },
     {
       "id": "raise",
       "label": "A real raise",
       "line": "A 15% rise in year 2 that you keep saving rather than spending.",
       "incomeJumpShare": 0.15,
-      "shockYear": 2
+      "shockYear": 2,
+      "kind": "tailwind"
     }
   ],
   "accommodationShareFallback": 0.3,

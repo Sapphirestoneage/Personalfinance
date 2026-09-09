@@ -144,17 +144,30 @@
     if (missing.length) return Money.incomplete('This lever needs ' + missing.join(', ') + ' to be priced.', missing);
     return Money.ok(total, { leverId: id });
   }
-  function impliedHourlyCents(id, household) {
+  /** THE hourly formula: a month's gain over the hours a month it costs.
+      Every room that prices a lever an hour comes through here. */
+  function hourlyFor(monthlyGainCents, hoursPerWeek) {
+    if (!Money.isEntered(hoursPerWeek) || hoursPerWeek <= 0) {
+      return Money.incomplete('This costs no hours, so there is no hourly figure.', ['hoursPerWeek']);
+    }
+    if (!Money.isEntered(monthlyGainCents)) return Money.incomplete('No monthly gain to price.', ['monthlyGainCents']);
+    var hoursPerMonth = hoursPerWeek * factor();
+    return Money.ok(Math.round(monthlyGainCents / hoursPerMonth), { monthlyGainCents: monthlyGainCents, hoursPerMonth: hoursPerMonth, hoursPerWeek: hoursPerWeek });
+  }
+  /** opts.monthlyGainCents / opts.hoursPerWeek override the lever's own
+      figures — the adventure's steppers move them (D-176). */
+  function impliedHourlyCents(id, household, opts) {
     var L = get(id);
     if (!L) return Money.incomplete('No such lever.', ['lever']);
-    var gain = monthlyGainCents(id, household);
+    var o = opts || {};
+    var gain = Money.isEntered(o.monthlyGainCents) ? Money.ok(o.monthlyGainCents) : monthlyGainCents(id, household);
     if (!Money.isOk(gain)) return gain;
-    if (!Money.isEntered(L.hoursPerWeek) || L.hoursPerWeek <= 0) {
+    var hours = Money.isEntered(o.hoursPerWeek) ? o.hoursPerWeek : L.hoursPerWeek;
+    if (!Money.isEntered(hours) || hours <= 0) {
       return Money.incomplete('This lever costs no hours, so there is no hourly figure.', ['hoursPerWeek']);
     }
-    var hoursPerMonth = L.hoursPerWeek * factor();
-    return Money.ok(Math.round(gain.value / hoursPerMonth), { monthlyGainCents: gain.value, hoursPerMonth: hoursPerMonth, hoursPerWeek: L.hoursPerWeek });
+    return hourlyFor(gain.value, hours);
   }
 
-  return { use: use, get: get, all: all, applies: applies, apply: apply, monthlyGainCents: monthlyGainCents, impliedHourlyCents: impliedHourlyCents, situationOf: situationOf };
+  return { use: use, get: get, all: all, applies: applies, apply: apply, monthlyGainCents: monthlyGainCents, impliedHourlyCents: impliedHourlyCents, hourlyFor: hourlyFor, factor: factor, situationOf: situationOf };
 });

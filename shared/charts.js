@@ -92,6 +92,8 @@
    *                 one the chart is about.
    * opts.x: { label, format }   opts.y: { format, min, max }
    * opts.hLines: [{ y, label, color }]   opts.vLines: [{ x, label }]
+   * opts.bands: [{ points: [[x, low, high], …], color }] — a shaded range
+   *              drawn BEHIND the lines (the Triple D band, D-176).
    * opts.width/height: the viewBox (default 360 × 220).
    * Returns HTML: a .slaf-chart with the svg and a legend.
    */
@@ -106,6 +108,8 @@
     if (!series.length) return '<div class="slaf-chart is-empty"><p class="slaf-reason">' + esc(o.empty || 'Nothing to draw yet.') + '</p></div>';
     var xs = [], ys = [];
     series.forEach(function (s) { s.points.forEach(function (p) { xs.push(p[0]); ys.push(p[1]); }); });
+    var bands = (o.bands || []).filter(function (b) { return b.points && b.points.length; });
+    bands.forEach(function (b) { b.points.forEach(function (p) { xs.push(p[0]); ys.push(p[1]); ys.push(p[2]); }); });
     (o.hLines || []).forEach(function (l) { if (num(l.y)) ys.push(l.y); });
     var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
     var yLo = Math.min.apply(null, ys), yHi = Math.max.apply(null, ys);
@@ -136,6 +140,11 @@
     parts.push('<line class="axis" x1="' + PL + '" y1="' + zero.toFixed(1) + '" x2="' + (W - PR) + '" y2="' + zero.toFixed(1) + '"/>');
     if (o.x && o.x.label) parts.push('<text class="tick axis-label" x="' + (W - PR) + '" y="' + (H - 4) + '" text-anchor="end">' + esc(o.x.label) + '</text>');
 
+    bands.forEach(function (b) {
+      var fwd = b.points.map(function (p, i) { return (i ? 'L' : 'M') + sx(p[0]).toFixed(1) + ',' + sy(p[1]).toFixed(1); }).join('');
+      var back = b.points.slice().reverse().map(function (p) { return 'L' + sx(p[0]).toFixed(1) + ',' + sy(p[2]).toFixed(1); }).join('');
+      parts.push('<path class="band" d="' + fwd + back + 'Z" fill="' + (b.color || COLORS.series[0]) + '" fill-opacity="0.16" stroke="none"/>');
+    });
     (o.vLines || []).forEach(function (l) {
       var px = sx(l.x).toFixed(1);
       parts.push('<line class="mark" x1="' + px + '" y1="' + PT + '" x2="' + px + '" y2="' + (H - PB) + '"/>');
