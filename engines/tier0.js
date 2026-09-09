@@ -67,22 +67,10 @@
   /* ------------------------------------------------------- Estimated taxes
      Flat effective-rate lookup, never inline math. SPEC.md §10.           */
 
+  /* One place: shared/schema.js (D-171). Kept on Tier0 so every caller
+     still finds it here. */
   function estimatedAnnualTaxCents(household, tables) {
-    var gross = Schema.grossAnnualIncomeCents(household);
-    if (!Money.isOk(gross)) return gross;
-
-    var rate = Reference.lookupEffectiveTaxRate(
-      tables && tables.effectiveTaxRates,
-      gross.value / 100,
-      household && household.filingStatus
-    );
-    if (!Money.isOk(rate)) return rate;
-
-    return Money.ok(Math.round(gross.value * rate.value), {
-      effectiveRate: rate.value,
-      referenceVersion: rate.referenceVersion,
-      precision: rate.precision
-    });
+    return Schema.estimatedAnnualTaxCents(household, tables);
   }
 
   /* ------------------------------------------------------ Take-home pay
@@ -94,20 +82,12 @@
      second lookup.                                                        */
 
   function takeHomeMonthlyCents(household, tables) {
-    var gross = Schema.grossAnnualIncomeCents(household);
-    if (!Money.isOk(gross)) return gross;
-    var tax = estimatedAnnualTaxCents(household, tables);
-    if (!Money.isOk(tax)) return tax;
-    return Money.ok(Math.round((gross.value - tax.value) / MONTHS_PER_YEAR), {
-      grossAnnualIncomeCents: gross.value,
-      estimatedTaxCents: tax.value,
-      effectiveRate: tax.effectiveRate,
-      referenceVersion: tax.referenceVersion
-    });
+    return Schema.takeHomeMonthlyCents(household, tables);
   }
 
   /* ------------------------------------------------------- 2. Savings rate
-     (gross − annual expenses − estimated taxes) / gross.
+     (take-home − annual expenses) / gross, take-home being gross less the
+     estimated tax from the one place it is computed (Schema, D-171).
 
      SPEC.md §12.1 (RESOLVED: build both). One numerator, two variants — the
      including-match figure is the same numerator plus employer match
@@ -128,20 +108,23 @@
     if (!Money.isOk(monthlyExpenses)) {
       return { excludingMatch: monthlyExpenses, includingMatch: monthlyExpenses };
     }
-    var tax = estimatedAnnualTaxCents(household, tables);
-    if (!Money.isOk(tax)) {
-      return { excludingMatch: tax, includingMatch: tax };
+    /* Take-home minus spending - never gross minus spending. The one
+       take-home figure is shared/schema.js's (D-171). */
+    var takeHome = Schema.takeHomeAnnualCents(household, tables);
+    if (!Money.isOk(takeHome)) {
+      return { excludingMatch: takeHome, includingMatch: takeHome };
     }
 
     var annualExpenses = monthlyExpenses.value * MONTHS_PER_YEAR;
-    var savedExcludingMatch = gross.value - annualExpenses - tax.value;
+    var savedExcludingMatch = takeHome.value - annualExpenses;
 
     var shared = {
       grossAnnualIncomeCents: gross.value,
+      takeHomeAnnualCents: takeHome.value,
       annualExpensesCents: annualExpenses,
-      estimatedTaxCents: tax.value,
-      effectiveRate: tax.effectiveRate,
-      referenceVersion: tax.referenceVersion,
+      estimatedTaxCents: takeHome.estimatedTaxCents,
+      effectiveRate: takeHome.effectiveRate,
+      referenceVersion: takeHome.referenceVersion,
       expenseSource: monthlyExpenses.source
     };
 

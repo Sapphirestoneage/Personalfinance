@@ -9620,6 +9620,104 @@ render 402 · forms 448 · responsive 345.
 
 ---
 
+## D-171 — DAITE is the spine: five families, one vocabulary, storage unmoved
+
+### The ask, and what "restructure" was taken to mean
+
+Section 1 of the brief: the household root has exactly five families —
+debt, assets, income, taxes, expenses — every room declares what it reads
+and writes as those letters plus a child path, ownership derives from the
+declaration, take-home is computed in one place, and the dashboard opens on
+five tiles.
+
+The stored household (D-017, `shared/schema.js`) has fifty-odd subtrees and
+sixty-seven rooms read it through the Schema accessors. Rewriting the
+storage shape to five keys would break every room and every saved file for
+a change no one can see. So DAITE is landed as **the one vocabulary and the
+one view**, and storage stays where it is:
+
+- `shared/daite.js` — `FAMILIES` (D A I T E), `PATHS` (every ownership
+  field → its declared path), `familyOf`, `isMoney`, and `view(h, tables)`,
+  which reads the household as the five families, Results throughout, so a
+  blank stays incomplete and never becomes a zero.
+- Every registry entry now carries `daite: { reads: [...], writes: [...] }`
+  — `reads` derived from its `needs`, `writes` from the ownership map plus
+  the few things a room writes that the map does not name (a plan, a
+  preference, the import). 67 rooms, all declared.
+- `Ownership.ownerOf(fieldId)` returns the map's owner **and** whether the
+  registry agrees; `Ownership.write` refuses when they disagree. The test
+  holds all 93 fields to it.
+- The brief's phrase "any room needing a number outside this tree is a
+  design error" is enforced by the test that every declared path is under
+  one of the five families **or one of four named context families**, below.
+
+Compatibility: **nothing changed in the stored shape.** `getProfile()` and
+`updateProfile()` are what they were; no room was migrated; no saved file
+needs re-reading. A future room reads DAITE through `Daite.view` or the
+Schema accessors, both of which read the same bytes.
+
+### The ambiguous mappings, and how each was resolved
+
+The brief itself puts `prefs` and `scenarios` outside DAITE. Following that
+precedent, four context families are declared beside the five, each for
+things that are not money numbers:
+
+| Family | Holds | Examples |
+|---|---|---|
+| `you` | who the household is | date of birth, situation, dependents, insurance cover, estate facts |
+| `plans` | a decision being weighed or a target aimed at | an offer's gross, a home price, tuition target, retire age, dreams, the Rerank cuts |
+| `prefs` | how to show things, per user | the History comparison, the front door |
+| `progress` | what has been learned or walked | skills, exercises, the practice ledger, the walk |
+
+Calls that could have gone either way, and where they went:
+
+- **Insurance premiums** (`healthMonthly`) are an outflow → `expenses.insurance`; the **cover itself** (deductible, out-of-pocket max, term life, disability, umbrella) is a fact about protection, not a flow → `you.cover`.
+- **Variable income** bounds and buffer → `income.variable`: they describe the income, not a plan.
+- **Student-loan plan choices** (plan, extra, IDR share, forgiveness years) → `debt.items[].plan`: attributes of a debt.
+- **Tuition saved** is a 529 balance → `assets.invested`; the target and monthly are a plan → `plans.kids`.
+- **Giving** is an outflow → `expenses.giving`.
+- **Allocation and rebalance band, the retiree's stock share** → `assets.allocation`.
+- **Contribution percent, Roth and HSA contributed** → `assets.contributions.*`, the path the brief's own lens example uses; the employer match is a property of the income source → `income.sources[].employerMatch`.
+- **"No debt"** (D-158) → `debt.none`: an answer about debt, kept beside the items.
+- **Pay cadence and next payday** → `income.cadence`; the calendar's bills and pay-later → `expenses.log`.
+
+### Take-home in one place
+
+`Schema.estimatedAnnualTaxCents(h, tables)` and `Schema.takeHomeAnnualCents`
+/ `takeHomeMonthlyCents` now live in `shared/schema.js`; `Tier0` keeps the
+same names and delegates. The savings rate is **take-home minus spending**
+over gross — the same number as before (gross − spending − tax), stated the
+right way round. The Long Way Round's baseline was the real bug: it took
+gross as income and saved gross minus spending, so every path was
+overstated by the tax. It now takes take-home and says so on screen ("You
+take home $58,320 a year, after $13,680 of tax"). The demo's savings rate is
+unchanged at 28.5%; the demo's five-year pots move down, correctly.
+
+### The gates
+
+- `test/run.js` "DAITE is the spine": every entry declares; every path is
+  under a family; every need is a declared read; every owner is a declared
+  writer, and a planted disagreement is refused; take-home equals gross
+  less the estimated tax and is incomplete without the table; the view
+  reads the five families off the demo and reads incomplete off an empty
+  household; and the **grep gate** — no file under `engines/`, `shared/`,
+  `rooms/` or `index.html` subtracts spending from gross income (`gross… −
+  …expenses|spend`, and `saved = …grossAnnual… −`). Two prose hits were
+  reworded to say take-home, which is what they meant.
+
+### The dashboard
+
+"Where you are" opens on five tiles — D · A · I · T · E — one number each
+(what you owe, what you own, take-home a year, the effective rate, a
+month's spending), one status word (entered · a guess · missing · none) and
+a link to the room that owns it. The six cockpit instruments and the 3D
+toggle moved into the full panel unchanged. Still four blocks (D-096).
+
+Unit 23,083 · dnd 5,611 · export 25 · render 402 · forms 448 · responsive 345
+· features (dashboard) 6.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

@@ -903,10 +903,40 @@
    * write(fieldId, value) — set a field through its owner's own write path.
    * Only fields that declare one; everything else is written by its room.
    */
+  /* ---- DAITE (D-171): ownership is checked against the registry ----------
+     A field's owner must be a room whose registry entry declares it writes
+     the field's DAITE path; the test suite holds every field to it, and a
+     shared write refuses when the map and the registry disagree. */
+  function daiteModule() {
+    if (typeof module === 'object' && module.exports) { try { return require('./daite.js'); } catch (e) { return null; } }
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    return g && g.SLAF && g.SLAF.Daite ? g.SLAF.Daite : null;
+  }
+  function pathOf(fieldId) {
+    var D = daiteModule();
+    return D ? D.pathOf(fieldId) : null;
+  }
+  /** The rooms the registry says may write this field's path. */
+  function declaredWriters(fieldId) {
+    var p = pathOf(fieldId);
+    return p && Registry.writersOf ? Registry.writersOf(p) : [];
+  }
+  /** The owner, and whether the registry agrees. */
+  function ownerOf(fieldId) {
+    var f = field(fieldId);
+    if (!f) return null;
+    var writers = declaredWriters(fieldId);
+    return { owner: f.owner, path: pathOf(fieldId), declared: writers, agrees: writers.length === 0 ? null : writers.indexOf(f.owner) !== -1 };
+  }
+
   function write(fieldId, value) {
     var f = field(fieldId);
     if (!f || typeof f.write !== 'function') {
       throw new Error('No shared write path for ' + fieldId + ' — write it in its owner room');
+    }
+    var o = ownerOf(fieldId);
+    if (o && o.agrees === false) {
+      throw new Error('The registry does not list ' + f.owner + ' as a writer of ' + o.path + ' — fix shared/registry.js before writing ' + fieldId);
     }
     return f.write(value);
   }
@@ -1014,6 +1044,8 @@
     FILING_LABELS: FILING_LABELS,
     readings: readings,
     write: write,
+    ownerOf: ownerOf,
+    declaredWriters: declaredWriters,
     writable: writable,
     field: field,
     linkTo: linkTo,

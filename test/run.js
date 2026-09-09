@@ -8640,19 +8640,22 @@ section('No CSS variable is used without being defined');
 section('Four ways through five years');
 (function () {
   const Adventure = require(path.join(ROOT, 'engines/adventure.js'));
-  const TABLES = { adventurePaths: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/adventure_paths.json'), 'utf8')) };
+  const TABLES = { adventurePaths: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/adventure_paths.json'), 'utf8')),
+    effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')), returnBands: require(path.join(ROOT, 'data/return_bands.json')) };
   const demo = Demo.build();
 
   /* Empty is not zero: a projection built on an assumed nought is a confident lie. */
-  const bare = Adventure.baseline(Schema.createHousehold());
+  const bare = Adventure.baseline(Schema.createHousehold(), TABLES);
   check('nothing entered, nothing projected', bare.status, 'incomplete');
   checkTrue('and it names what is absent', (bare.missing || []).indexOf('grossAnnualIncome') > -1);
   check('a run refuses too', Adventure.run(Schema.createHousehold(), TABLES, { pathId: 'steady' }).status, 'incomplete');
   check('so does a run with no path chosen', Adventure.run(demo, TABLES, {}).status, 'incomplete');
 
-  const base = Adventure.baseline(demo);
+  const base = Adventure.baseline(demo, TABLES);
   check('the demo has a baseline', base.status, 'ok');
-  check('...income read from its owner', base.value.annualIncomeCents, 7200000);
+  check('...income is TAKE-HOME, gross less the estimated tax (D-171)', base.value.annualIncomeCents, 7200000 - 1368000);
+  check('...and says what the gross was', base.value.grossAnnualIncomeCents, 7200000);
+  check('without the tax table the baseline is incomplete, never gross', Adventure.baseline(demo, { adventurePaths: TABLES.adventurePaths }).status, 'incomplete');
   check('...spending annualised from the month', base.value.annualSpendCents, 315000 * 12);
 
   /* The target is a year of spending over the withdrawal rate - the same
@@ -9408,6 +9411,96 @@ section('The Walk-Through — a route with an end');
     fs.readdirSync(path.join(ROOT, 'engines')).filter(f => /\.js$/.test(f))
       .every(f => !/meta\.walk|Guide\./.test(fs.readFileSync(path.join(ROOT, 'engines', f), 'utf8'))),
     'a mark is a statement about the person, never about whether a number is usable');
+})();
+
+/* ==========================================================================
+   DAITE is the spine (D-171)
+   --------------------------------------------------------------------------
+   Five families - debt, assets, income, taxes, expenses - and four declared
+   context families beside them. Every room says which paths it reads and
+   writes; ownership is checked against the declaration; take-home is
+   computed once; nothing subtracts spending from GROSS income anywhere.
+   ========================================================================== */
+section('DAITE is the spine (D-171)');
+(function () {
+  const Daite = require(path.join(ROOT, 'shared/daite.js'));
+  const known = Daite.FAMILY_IDS.concat(Daite.CONTEXT);
+
+  /* 1. Every registry entry declares, and every path is under a family. */
+  Registry.all().forEach(function (room) {
+    const d = room.daite;
+    checkTrue(`${room.id} declares daite reads and writes`, d && Array.isArray(d.reads) && Array.isArray(d.writes));
+    if (!d) return;
+    d.reads.concat(d.writes).forEach(function (p) {
+      checkTrue(`${room.id} path ${p} is under a declared family`, known.indexOf(Daite.familyOf(p)) !== -1, 'family: ' + Daite.familyOf(p));
+    });
+    /* A room that reads via `needs` reads through DAITE too. */
+    (room.needs || []).forEach(function (f) {
+      checkTrue(`${room.id} need ${f} is declared as a read`, d.reads.indexOf(Daite.pathOf(f)) !== -1);
+    });
+  });
+  checkTrue('the five families are D A I T E', Daite.FAMILIES.map(f => f.letter).join('') === 'DAITE');
+
+  /* 2. Ownership derives from the declarations: every owner is a declared writer. */
+  Object.keys(Ownership.FIELDS).forEach(function (f) {
+    const o = Ownership.ownerOf(f);
+    checkTrue(`${f} has a DAITE path`, !!o.path);
+    checkTrue(`${f}: its owner ${o.owner} declares it writes ${o.path}`, o.agrees === true, 'declared: ' + o.declared.join(','));
+  });
+  /* ...and the guard bites: a field whose owner is not a declared writer refuses. */
+  const FIELDS = Ownership.FIELDS;
+  const savedOwner = FIELDS.cashSavings.owner;
+  FIELDS.cashSavings.owner = 'giving';
+  let refused = false;
+  try { Ownership.write('cashSavings', 1); } catch (e) { refused = /does not list giving/.test(e.message); }
+  FIELDS.cashSavings.owner = savedOwner;
+  checkTrue('a write refuses when the map and the registry disagree', refused);
+
+  /* 3. Take-home in one place, and savings from it. */
+  const demo = Demo.build();
+  const take = Schema.takeHomeAnnualCents(demo, TABLES);
+  const tax = Schema.estimatedAnnualTaxCents(demo, TABLES);
+  check('take-home is gross less the estimated tax', take.value, Schema.grossAnnualIncomeCents(demo).value - tax.value);
+  check('the same tax figure Tier0 reports', Tier0.estimatedAnnualTaxCents(demo, TABLES).value, tax.value);
+  check('take-home a month is the annual over twelve', Schema.takeHomeMonthlyCents(demo, TABLES).value, Math.round(take.value / 12));
+  const sr = Tier0.savingsRate(demo, TABLES).excludingMatch;
+  check('the savings rate starts from take-home', sr.takeHomeAnnualCents, take.value);
+  check('...and its numerator is take-home less spending', sr.annualSavingsCents, take.value - Schema.monthlyExpensesCents(demo).value * 12);
+  check('without the tax table, take-home is incomplete, never gross', Schema.takeHomeAnnualCents(demo, {}).status, 'incomplete');
+
+  /* 4. The grep gate: gross income minus spending appears nowhere. */
+  const files = [];
+  ['engines', 'shared', 'rooms'].forEach(function (dir) {
+    fs.readdirSync(path.join(ROOT, dir)).filter(f => /\.(js|html)$/.test(f)).forEach(f => files.push(dir + '/' + f));
+  });
+  files.push('index.html');
+  const GROSS_MINUS_SPEND = /\b(gross[A-Za-z]*)(\.value)?\s*[-−]\s*[A-Za-z.]*(expens|spend)/i;
+  const SAVED_FROM_GROSS = /\bsaved?[A-Za-z]*\s*=\s*[^;\n]*\bgrossAnnual[A-Za-z]*(\.value)?\s*[-−]/;
+  files.forEach(function (f) {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    checkTrue(`${f} never subtracts spending from gross income`, !GROSS_MINUS_SPEND.test(src) && !SAVED_FROM_GROSS.test(src));
+  });
+
+  /* 5. The view: the five families read off the household, Results throughout. */
+  const v = Daite.view(demo, TABLES);
+  check('D: the debts', v.debt.items.length, demo.debts.length);
+  check('D: the total is the schema total', v.debt.totalCents.value, Schema.totalDebtCents(demo).value);
+  check('A: cash', v.assets.cashCents.value, Schema.cashCents(demo).value);
+  checkTrue('A: every invested item carries an orientation', v.assets.invested.every(a => ['pretax', 'roth', 'taxable'].indexOf(a.orientation) !== -1));
+  check('I: take-home', v.income.takeHomeAnnualCents.value, take.value);
+  check('T: the effective rate', v.taxes.effectiveRate.value, tax.effectiveRate);
+  check('E: a month', v.expenses.monthlyCents.value, Schema.monthlyExpensesCents(demo).value);
+  const empty = Daite.view(Schema.createHousehold(), TABLES);
+  check('an empty household reads incomplete, not zero', empty.income.grossAnnualCents.status, 'incomplete');
+  check('...for every family', [empty.debt.totalCents, empty.assets.cashCents, empty.taxes.effectiveRate, empty.expenses.monthlyCents].filter(r => r.status === 'incomplete').length, 4);
+
+  /* 6. The dashboard: five tiles, one a letter, each opening its owner. */
+  const page = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  checkTrue('the front door loads the DAITE module', page.indexOf('<script src="shared/daite.js">') !== -1);
+  check('five tiles, in DAITE order', (page.match(/\{ id: '(debt|assets|income|taxes|expenses)',\s+field:/g) || []).map(m => m.replace(/.*id: '/, '').replace(/'.*/, '')).join(','), 'debt,assets,income,taxes,expenses');
+  checkTrue('the tiles sit in the first block', page.indexOf('id="daite"') < page.indexOf('id="full-panel"'));
+  checkTrue('the six instruments moved into the panel', page.indexOf('id="instruments"') > page.indexOf('id="full-panel"'));
+  checkTrue('every tile opens a room', /Ownership\.linkTo\(t\.owner\[0\], t\.owner\[1\], ROOM_ID\) : \(d && d\.href\)/.test(page));
 })();
 
 /* ==========================================================================

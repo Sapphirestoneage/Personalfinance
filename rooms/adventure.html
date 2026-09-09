@@ -180,7 +180,7 @@
 
   /* ---- 1. Where you stand ------------------------------------------------ */
   function paintBaseline() {
-    var b = Adventure.baseline(h());
+    var b = Adventure.baseline(h(), TABLES);
     if (!Money.isOk(b)) {
       el('blocked').hidden = false;
       el('blocked').textContent = b.reason;
@@ -192,7 +192,7 @@
     el('to-paths').disabled = false;
     var v = b.value;
     var cells = [
-      ['You earn', fmt(v.annualIncomeCents) + ' a year', 'grossAnnualIncome'],
+      ['You take home', fmt(v.annualIncomeCents) + ' a year, after ' + fmt(v.estimatedTaxCents) + ' of tax', 'grossAnnualIncome'],
       ['You spend', fmt(v.annualSpendCents) + ' a year', 'monthlyExpenses'],
       ['You have', fmt(v.portfolioCents), 'investments']
     ];
@@ -350,7 +350,7 @@
      the table left a dead end with no menu and nothing said. D-168. */
   if (SLAF.Progress) SLAF.Progress.mount(ROOM_ID);
 
-  Reference.load(['adventurePaths', 'returnBands']).then(function (tables) {
+  Reference.load(['adventurePaths', 'returnBands', 'effectiveTaxRates']).then(function (tables) {
     if (!tables || !tables.adventurePaths) throw new Error('no adventurePaths table');
     TABLES = tables;
     paintBaseline();

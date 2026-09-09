@@ -30,6 +30,7 @@
       href: 'rooms/start.html',
       tier: 0,
       tags: ['income', 'cashflow', 'debt'],
+      daite: { reads: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'debt.none', 'expenses', 'income.grossAnnualCents', 'income.sources[].benefit', 'income.sources[].employerMatch', 'taxes.filingStatus', 'taxes.state', 'you.cover', 'you.dob', 'you.situation'], writes: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'debt.none', 'income.grossAnnualCents', 'income.sources[].benefit', 'income.sources[].employerMatch', 'taxes.filingStatus', 'taxes.state', 'you.cover', 'you.dependents', 'you.dob', 'you.situation'] },
       subsections: [
         { id: 'q-employment',  label: 'Your situation' },
         { id: 'q-about',       label: 'About you' },
@@ -56,6 +57,7 @@
       href: 'rooms/financial-snapshot.html',
       tier: 0,
       tags: ['income', 'cashflow', 'debt'],
+      daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: [] },
       subsections: [
         { id: 'inputs',               label: 'Your numbers' },
         { id: 'out-net-worth',        label: 'Net worth' },
@@ -81,6 +83,7 @@
       href: 'rooms/income.html',
       tier: 1,
       tags: ['income'],
+      daite: { reads: [], writes: ['income.costs', 'income.ledger'] },
       subsections: [
         { id: 'month', label: 'This month' },
         { id: 'log',   label: 'Every entry' },
@@ -98,6 +101,7 @@
       href: 'rooms/budget.html',
       tier: 1,
       tags: ['income', 'cashflow', 'debt'],
+      daite: { reads: [], writes: ['expenses.budget', 'expenses.months'] },
       subsections: [
         { id: 'sheet',  label: 'The sheet' },
         { id: 'close',  label: 'Month-end' },
@@ -114,6 +118,7 @@
       href: 'rooms/variance.html',
       tier: 1,
       tags: ['income', 'cashflow'],
+      daite: { reads: ['expenses.months'], writes: [] },
       subsections: [
         { id: 'month',   label: 'One month' },
         { id: 'trend',   label: 'Month over month' },
@@ -132,6 +137,7 @@
       href: 'rooms/car.html',
       tier: 2,
       tags: ['cashflow', 'debt'],
+      daite: { reads: ['income.grossAnnualCents'], writes: [] },
       subsections: [
         { id: 'out-drop',   label: 'What it loses' },
         { id: 'out-run',    label: 'What it costs to run' },
@@ -152,6 +158,7 @@
       href: 'rooms/rollover.html',
       tier: 2,
       tags: ['income'],
+      daite: { reads: [], writes: [] },
       subsections: [
         { id: 'out-four',   label: 'The four things you can do' },
         { id: 'out-trap',   label: 'The trap in the middle' },
@@ -175,6 +182,7 @@
       href: 'rooms/credit.html',
       tier: 1,
       tags: ['debt'],
+      daite: { reads: ['debt.items'], writes: [] },
       subsections: [
         { id: 'out-what',     label: 'What it is made of' },
         { id: 'out-yours',    label: 'What this app can see' },
@@ -195,6 +203,7 @@
       href: 'rooms/cant-pay.html',
       tier: 0,
       tags: ['cashflow', 'debt'],
+      daite: { reads: [], writes: [] },
       subsections: [
         { id: 'out-gap',     label: 'What the gap is' },
         { id: 'out-order',   label: 'The order to pay in' },
@@ -213,6 +222,7 @@
       href: 'rooms/cash-flow.html',
       tier: 1,
       tags: ['cashflow', 'income'],
+      daite: { reads: ['expenses'], writes: ['expenses', 'expenses.log', 'expenses.needs.accommodation'] },
       subsections: [
         { id: 'glance',          label: 'At a glance' },
         { id: 'spending',        label: 'A typical month' },
@@ -234,6 +244,7 @@
       href: 'rooms/debt-payoff.html',
       tier: 1,
       tags: ['debt'],
+      daite: { reads: ['debt.items', 'debt.items[].minimumCents'], writes: ['debt.items', 'debt.items[].minimumCents'] },
       subsections: [
         { id: 'debts',           label: 'What you owe' },
         { id: 'extra',           label: 'Beyond the minimums' },
@@ -253,6 +264,7 @@
       href: 'rooms/statement.html',
       tier: 1,
       tags: ['debt'],
+      daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['assets', 'assets.property'] },
       /* Replaces Net Worth (D-069); rooms/net-worth.html redirects here. */
       subsections: [
         { id: 'portfolios', label: 'Three portfolios' },
@@ -275,6 +287,7 @@
       href: 'rooms/savings-rate.html',
       tier: 0,
       tags: ['income', 'cashflow'],
+      daite: { reads: ['expenses', 'income.grossAnnualCents'], writes: [] },
       subsections: [
         { id: 'out-rate',      label: 'Your rate' },
         { id: 'breakdown',     label: 'Where it comes from' },
@@ -293,6 +306,7 @@
       href: 'rooms/sleep-at-night.html',
       tier: 1,
       tags: ['cashflow'],
+      daite: { reads: ['assets.cashCents', 'expenses'], writes: ['plans.swan', 'you.cover'] },
       subsections: [
         { id: 'number',        label: 'Your number' },
         { id: 'deductible',    label: 'Your highest deductible' },
@@ -313,6 +327,7 @@
       href: 'rooms/fire-lab.html',
       tier: 1,
       tags: ['income', 'cashflow'],
+      daite: { reads: ['assets.invested', 'expenses'], writes: [] },
       subsections: [
         { id: 'number',      label: 'The number' },
         { id: 'swr',         label: 'Withdrawal rate' },
@@ -333,6 +348,7 @@
       href: 'rooms/fire.html',
       tier: 1,
       tags: ['income', 'cashflow'],
+      daite: { reads: ['assets.invested', 'expenses', 'you.dob'], writes: ['plans.targets'] },
       subsections: [
         { id: 'reading',    label: 'What this reads' },
         { id: 'out-target', label: 'Your number' },
@@ -351,6 +367,7 @@
       href: 'rooms/real-hourly-wage.html',
       tier: 1,
       tags: ['income'],
+      daite: { reads: ['income.grossAnnualCents'], writes: [] },
       /* The template room (D-097): the same six ids every room on the
          template has, so a deep link means the same thing everywhere. */
       subsections: [
@@ -372,6 +389,7 @@
       href: 'rooms/hassle.html',
       tier: 1,
       tags: ['income', 'cashflow'],
+      daite: { reads: ['income.grossAnnualCents'], writes: [] },
       subsections: [
         { id: 'chore',     label: 'The chore' },
         { id: 'out-rate',  label: 'What it pays an hour' },
@@ -390,6 +408,7 @@
       href: 'rooms/quick-math.html',
       tier: 1,
       tags: ['cashflow'],
+      daite: { reads: [], writes: [] },
       subsections: [
         { id: 'hysa',    label: 'Switching savings accounts' },
         { id: 'peruse',  label: 'Cost per use' },
@@ -409,6 +428,7 @@
       href: 'rooms/self-employed.html',
       tier: 1,
       tags: ['income'],
+      daite: { reads: ['income.grossAnnualCents', 'taxes.filingStatus', 'taxes.state'], writes: [] },
       subsections: [
         { id: 'compare',   label: 'Salary vs. contract' },
         { id: 'setax',     label: 'Self-employment tax' },
@@ -426,6 +446,7 @@
       href: 'rooms/side-hustle.html',
       tier: 2,
       tags: ['income'],
+      daite: { reads: ['income.grossAnnualCents', 'taxes.filingStatus'], writes: [] },
       subsections: [
         { id: 'hustle',      label: 'The hustle' },
         { id: 'out-net',     label: 'What you keep' },
@@ -446,6 +467,7 @@
       href: 'index.html',
       tier: 1,
       tags: ['income', 'cashflow', 'debt'],
+      daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses', 'income.grossAnnualCents'], writes: [] },
       subsections: [
         { id: 'where',        label: 'Where you are' },
         { id: 'next',         label: 'The next thing money should do' },
@@ -472,6 +494,7 @@
       href: 'rooms/accounts.html',
       tier: 2,
       tags: ['income'],
+      daite: { reads: ['income.grossAnnualCents', 'taxes.filingStatus'], writes: ['assets.allocation', 'assets.contributions.hsa', 'assets.contributions.roth', 'taxes.marginalRate'] },
       subsections: [
         { id: 'setup',   label: 'Your retirement setup' },
         { id: 'compare', label: 'Roth vs. Traditional vs. taxable' },
@@ -490,6 +513,7 @@
       href: 'rooms/values.html',
       tier: 2,
       tags: ['cashflow'],
+      daite: { reads: ['expenses'], writes: ['plans.values'] },
       subsections: [
         { id: 'stated',      label: 'What matters to you' },
         { id: 'spending',    label: 'What the money serves' },
@@ -508,6 +532,7 @@
       href: 'rooms/ratios.html',
       tier: 1,
       tags: ['income', 'cashflow', 'debt'],
+      daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses', 'income.grossAnnualCents'], writes: [] },
       subsections: [
         { id: 'summary',     label: 'How many are answerable' },
         { id: 'out-lending', label: 'What a lender looks at' },
@@ -527,6 +552,7 @@
       href: 'rooms/credential.html',
       tier: 2,
       tags: ['income'],
+      daite: { reads: ['income.grossAnnualCents'], writes: [] },
       subsections: [
         { id: 'what',        label: 'What you are weighing' },
         { id: 'out-payback', label: 'When it pays back' },
@@ -550,6 +576,7 @@
       href: 'rooms/fulfillment.html',
       tier: 1,
       tags: ['cashflow'],
+      daite: { reads: ['expenses'], writes: ['plans.ratings'] },
       subsections: [
         { id: 'rate',        label: 'Rate what you spend on' },
         { id: 'out-curve',   label: 'Where it all falls' },
@@ -568,6 +595,7 @@
       href: 'rooms/rerank.html',
       tier: 1,
       tags: ['cashflow'],
+      daite: { reads: ['expenses'], writes: ['expenses.log', 'plans.rerank'] },
       subsections: [
         { id: 'costs',   label: '1 \u00b7 What it costs' },
         { id: 'rate',    label: '2 \u00b7 What it gives you' },
@@ -586,6 +614,7 @@
       href: 'rooms/stacker.html',
       tier: 2,
       tags: ['cashflow'],
+      daite: { reads: [], writes: ['progress.learning'] },
       subsections: [
         { id: 'today',   label: 'Today' },
         { id: 'browse',  label: 'Every skill' },
@@ -606,6 +635,7 @@
       href: 'rooms/skill-tree.html',
       tier: 2,
       tags: ['cashflow'],
+      daite: { reads: [], writes: ['progress.learning'] },
       subsections: [
         { id: 'next',    label: 'What opens next' },
         { id: 'ladder',  label: 'The fortress line' },
@@ -624,6 +654,7 @@
       href: 'rooms/exercises.html',
       tier: 2,
       tags: ['cashflow'],
+      daite: { reads: [], writes: ['progress.learning'] },
       subsections: [
         { id: 'list',    label: 'What applies to you' },
         { id: 'runs',    label: 'What the runs found' },
@@ -640,6 +671,7 @@
       href: 'rooms/goals.html',
       tier: 2,
       tags: ['cashflow'],
+      daite: { reads: ['expenses'], writes: ['plans.goals'] },
       subsections: [
         { id: 'out-together', label: 'All of it together' },
         { id: 'add',          label: 'Start something' }
@@ -655,6 +687,7 @@
       href: 'rooms/worth.html',
       tier: 1,
       tags: ['cashflow'],
+      daite: { reads: ['income.grossAnnualCents'], writes: ['plans.worth'] },
       subsections: [
         { id: 'things',      label: 'The things' },
         { id: 'out-each',    label: 'The arithmetic on each' },
@@ -673,6 +706,7 @@
       href: 'rooms/windfall.html',
       tier: 1,
       tags: ['income'],
+      daite: { reads: [], writes: [] },
       subsections: [
         { id: 'the-money',      label: 'The decision' },
         { id: 'out-when',       label: 'When spreading it wins' },
@@ -691,6 +725,7 @@
       href: 'rooms/runway.html',
       tier: 2,
       tags: ['income', 'cashflow'],
+      daite: { reads: ['assets.cashCents', 'expenses'], writes: [] },
       subsections: [
         { id: 'the-plan',    label: 'The situation' },
         { id: 'out-runway',  label: 'How long the money lasts' },
@@ -710,6 +745,7 @@
       href: 'rooms/health.html',
       tier: 1,
       tags: ['income', 'cashflow', 'debt'],
+      daite: { reads: ['assets.cashCents', 'assets.invested', 'expenses', 'income.grossAnnualCents', 'you.dob'], writes: [] },
       subsections: [
         { id: 'out-score',    label: 'Everything, at once' },
         { id: 'out-pillars',  label: 'What it is made of' },
@@ -734,6 +770,7 @@
       href: 'rooms/foo-ladder.html',
       tier: 0,
       tags: ['cashflow', 'debt'],
+      daite: { reads: ['assets.cashCents', 'assets.contributions.hsa', 'assets.contributions.pretax', 'assets.contributions.roth', 'expenses', 'income.grossAnnualCents', 'income.sources[].employerMatch', 'taxes.filingStatus', 'you.cover', 'you.dob'], writes: [] },
       /* The FOO calculator sat at the repo root until D-058, so this href
          is relative to map.html, which also lives at the root. A
          single-view app with no stable section anchors yet; declaring none
@@ -750,6 +787,7 @@
       href: 'rooms/what-if-life.html',
       tier: 2,
       tags: ['cashflow', 'income'],
+      daite: { reads: ['assets.cashCents', 'assets.invested', 'expenses', 'income.grossAnnualCents'], writes: ['scenarios'] },
       subsections: [
         { id: 'pick',     label: 'Pick an event' },
         { id: 'answers',  label: 'Its questions' },
@@ -794,6 +832,7 @@
     href: 'rooms/refresh.html',
     tier: 0,
     tags: ['cashflow', 'debt'],
+    daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['assets.cashCents', 'assets.invested', 'debt.items'] },
     subsections: [
       { id: 'fields', label: 'The three that move' },
       { id: 'done',   label: 'Snapshot' }
@@ -816,6 +855,7 @@
     href: 'rooms/timeline.html',
     tier: 0,
     tags: ['income', 'cashflow'],
+    daite: { reads: ['you.dob'], writes: ['income.future', 'you.periods'] },
     subsections: [
       { id: 'out-months',  label: 'The months ahead' },
       { id: 'out-periods', label: 'What you have listed' },
@@ -837,6 +877,7 @@
     href: 'rooms/statements.html',
     tier: 0,
     tags: ['income', 'cashflow', 'debt'],
+    daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses', 'income.grossAnnualCents'], writes: [] },
     subsections: [
       { id: 'out-basis', label: 'What these are built from' },
       { id: 'out-doc',   label: 'The statements' },
@@ -859,6 +900,7 @@
     href: 'rooms/doors.html',
     tier: 0,
     tags: ['income', 'cashflow', 'debt'],
+    daite: { reads: [], writes: ['prefs.door'] },
     subsections: [
       { id: 'out-pick', label: 'Choose an arrangement' },
       { id: 'out-door', label: 'The rooms' },
@@ -881,6 +923,7 @@
     href: 'rooms/walk.html',
     tier: 0,
     tags: ['income', 'cashflow', 'debt'],
+    daite: { reads: [], writes: ['progress.walk'] },
     subsections: [
       { id: 'out-top',    label: 'Where you are' },
       { id: 'out-stages', label: 'The five sets' }
@@ -898,6 +941,7 @@
     href: 'rooms/between-jobs.html',
     tier: 2,
     tags: ['cashflow'],
+    daite: { reads: ['assets.cashCents', 'expenses', 'income.sources[].benefit'], writes: ['expenses.floor', 'plans.betweenJobs'] },
       subsections: [
         { id: 'number',      label: 'The day the cash runs out' },
         { id: 'chart',       label: 'Cash, month by month' },
@@ -919,6 +963,7 @@
     href: 'rooms/protection.html',
     tier: 2,
     tags: ['cashflow'],
+    daite: { reads: ['assets.cashCents', 'expenses', 'income.grossAnnualCents'], writes: ['expenses.insurance', 'you.cover'] },
       subsections: [
         { id: 'number',      label: 'The biggest gap' },
         { id: 'chart',       label: 'Need against held' },
@@ -940,6 +985,7 @@
     href: 'rooms/decumulation.html',
     tier: 2,
     tags: ['income'],
+    daite: { reads: ['assets.invested', 'expenses', 'income.grossAnnualCents'], writes: ['assets.allocation', 'plans.decumulation'] },
       subsections: [
         { id: 'number',      label: 'The age the money lasts to' },
         { id: 'chart',       label: 'The balance, year by year' },
@@ -961,6 +1007,7 @@
     href: 'rooms/tax.html',
     tier: 2,
     tags: ['income'],
+    daite: { reads: ['income.grossAnnualCents', 'taxes.filingStatus', 'taxes.state'], writes: ['taxes.otherPreTax', 'taxes.withheld'] },
       subsections: [
         { id: 'number',      label: 'Your effective rate' },
         { id: 'chart',       label: 'Where a dollar of pay goes' },
@@ -982,6 +1029,7 @@
     href: 'rooms/estate.html',
     tier: 2,
     tags: ['cashflow'],
+    daite: { reads: [], writes: ['you.estate'] },
       subsections: [
         { id: 'number',      label: 'In place' },
         { id: 'chart',       label: 'What passes how' },
@@ -1003,6 +1051,7 @@
     href: 'rooms/giving.html',
     tier: 2,
     tags: ['income'],
+    daite: { reads: ['income.grossAnnualCents'], writes: ['expenses.giving'] },
       subsections: [
         { id: 'number',      label: 'Given, a year' },
         { id: 'chart',       label: 'Three shares of income' },
@@ -1024,6 +1073,7 @@
     href: 'rooms/career-move.html',
     tier: 2,
     tags: ['income'],
+    daite: { reads: ['income.grossAnnualCents'], writes: ['plans.careerMove'] },
       subsections: [
         { id: 'number',      label: 'The real difference an hour' },
         { id: 'chart',       label: 'Now against the offer' },
@@ -1045,6 +1095,7 @@
     href: 'rooms/partner.html',
     tier: 2,
     tags: ['income', 'cashflow'],
+    daite: { reads: ['expenses', 'income.grossAnnualCents'], writes: ['expenses.shared'] },
       subsections: [
         { id: 'number',      label: 'Each share of the shared month' },
         { id: 'chart',       label: 'The shared month, split' },
@@ -1066,6 +1117,7 @@
     href: 'rooms/kids.html',
     tier: 2,
     tags: ['cashflow'],
+    daite: { reads: ['expenses'], writes: ['assets.invested', 'plans.kids'] },
       subsections: [
         { id: 'number',      label: 'What the kids cost a year' },
         { id: 'chart',       label: 'By child, a month' },
@@ -1087,6 +1139,7 @@
     href: 'rooms/housing.html',
     tier: 2,
     tags: ['cashflow'],
+    daite: { reads: ['assets.cashCents', 'expenses', 'income.grossAnnualCents'], writes: ['plans.housing'] },
       subsections: [
         { id: 'number',      label: 'Own against rent, a month' },
         { id: 'chart',       label: 'Rent against own' },
@@ -1108,6 +1161,7 @@
     href: 'rooms/big-purchase.html',
     tier: 2,
     tags: ['cashflow'],
+    daite: { reads: ['assets.cashCents', 'expenses'], writes: ['plans.purchase'] },
       subsections: [
         { id: 'number',      label: 'What it costs in life' },
         { id: 'chart',       label: 'Cash before and after' },
@@ -1129,6 +1183,7 @@
     href: 'rooms/variable-income.html',
     tier: 2,
     tags: ['income'],
+    daite: { reads: ['expenses', 'income.grossAnnualCents'], writes: ['income.variable'] },
       subsections: [
         { id: 'number',      label: 'The salary to pay yourself' },
         { id: 'chart',       label: 'Low, average, high' },
@@ -1150,6 +1205,7 @@
     href: 'rooms/enough.html',
     tier: 2,
     tags: ['cashflow'],
+    daite: { reads: ['assets.invested', 'expenses'], writes: ['plans.enough'] },
       subsections: [
         { id: 'number',      label: 'Enough, a month' },
         { id: 'chart',       label: 'Two FI numbers' },
@@ -1172,6 +1228,7 @@
     href: 'rooms/adventure.html',
     tier: 2,
     tags: ['cashflow'],
+    daite: { reads: ['assets.invested', 'expenses', 'income.grossAnnualCents'], writes: [] },
     utility: false,
     subsections: [
       { id: 's-base',    label: 'Where you stand' },
@@ -1193,6 +1250,7 @@
     href: 'rooms/week.html',
     tier: 2,
     tags: ['cashflow'],
+    daite: { reads: ['expenses'], writes: ['plans.week'] },
       subsections: [
         { id: 'number',      label: 'The designed week, a month' },
         { id: 'chart',       label: 'Where the hours go' },
@@ -1214,6 +1272,7 @@
     href: 'rooms/buckets.html',
     tier: 2,
     tags: ['cashflow'],
+    daite: { reads: ['assets.invested', 'expenses'], writes: ['plans.buckets'] },
       subsections: [
         { id: 'number',      label: 'Planned, all decades' },
         { id: 'chart',       label: 'By decade' },
@@ -1235,6 +1294,7 @@
     href: 'rooms/dreamline.html',
     tier: 2,
     tags: ['income'],
+    daite: { reads: ['expenses', 'income.grossAnnualCents'], writes: ['plans.dreams'] },
       subsections: [
         { id: 'number',      label: 'Target monthly income' },
         { id: 'chart',       label: 'Dreams against the month' },
@@ -1256,6 +1316,7 @@
     href: 'rooms/reversibility.html',
     tier: 2,
     tags: ['cashflow'],
+    daite: { reads: ['assets.cashCents', 'expenses'], writes: ['plans.reversibility'] },
       subsections: [
         { id: 'number',      label: 'What undoing costs' },
         { id: 'chart',       label: 'Cost and months to undo' },
@@ -1277,6 +1338,7 @@
     href: 'rooms/unlearning.html',
     tier: 2,
     tags: ['cashflow'],
+    daite: { reads: ['expenses'], writes: ['plans.unlearning'] },
       subsections: [
         { id: 'number',      label: 'Rules that no longer apply' },
         { id: 'chart',       label: 'Applies, past it, not yet' },
@@ -1298,6 +1360,7 @@
     href: 'rooms/student-loans.html',
     tier: 2,
     tags: ['debt'],
+    daite: { reads: ['debt.items', 'income.grossAnnualCents'], writes: ['debt.items[].plan'] },
       subsections: [
         { id: 'number',      label: 'The plan that clears them' },
         { id: 'chart',       label: 'Three plans, side by side' },
@@ -1319,6 +1382,7 @@
     href: 'rooms/calendar.html',
     tier: 2,
     tags: ['cashflow'],
+    daite: { reads: ['assets.cashCents', 'expenses'], writes: ['expenses.log', 'income.cadence'] },
       subsections: [
         { id: 'number',      label: 'The low point this month' },
         { id: 'chart',       label: 'Cash across the month' },
@@ -1340,6 +1404,7 @@
     href: 'rooms/history.html',
     tier: 2,
     tags: ['cashflow'],
+    daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['prefs.history'] },
       subsections: [
         { id: 'number',      label: 'Since the first snapshot' },
         { id: 'chart',       label: 'Net worth over time' },
@@ -1365,6 +1430,7 @@
     href: 'rooms/data.html',
     tier: 0,
     tags: ['income', 'cashflow', 'debt'],
+    daite: { reads: [], writes: ['assets', 'debt', 'expenses', 'income', 'plans', 'taxes', 'you'] },
     subsections: [
       { id: 'out',   label: 'Take it with you' },
       { id: 'file',  label: 'Load a file' },
@@ -1386,6 +1452,7 @@
     href: 'rooms/get-help.html',
     tier: 0,
     tags: ['income', 'cashflow', 'debt'],
+    daite: { reads: [], writes: [] },
     subsections: [
       { id: 'not-here', label: 'What these rooms do not do' },
       { id: 'who',      label: 'Who answers them' },
@@ -1436,6 +1503,17 @@
     return g && g.SLAF && g.SLAF.Gate ? g.SLAF.Gate : null;
   }
   function requires(roomId) { return REQUIRES[roomId] || []; }
+  /* The DAITE declaration a room carries (D-171): the paths it reads and
+     the paths it writes, as family plus child path. Ownership checks
+     itself against `writes`; the tests fail on an undeclared family. */
+  function daite(roomId) {
+    var r = byId(roomId);
+    return (r && r.daite) ? { reads: r.daite.reads.slice(), writes: r.daite.writes.slice() } : { reads: [], writes: [] };
+  }
+  /** Every room that declares it writes this path. */
+  function writersOf(path) {
+    return ROOMS.filter(function (r) { return r.daite && r.daite.writes.indexOf(path) !== -1; }).map(function (r) { return r.id; });
+  }
   function applies(room, household) {
     var G = gate();
     if (!G || !household) return true;
@@ -1478,6 +1556,8 @@
   function total() { return ROOMS.length; }
 
   return {
+    daite: daite,
+    writersOf: writersOf,
     FILTER_TAGS: FILTER_TAGS,
     ROOMS: ROOMS,
     all: all,

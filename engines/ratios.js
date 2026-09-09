@@ -243,7 +243,7 @@
       } },
 
     { id: 'savingsRate', gate: 'savingsRate', label: 'Savings rate', tier: 18,
-      formula: '(gross − expenses×12 − estimated tax) ÷ gross',
+      formula: '(take-home − expenses×12) ÷ gross, take-home being gross less the estimated tax',
       unit: 'rate', needs: 'your income, expenses and filing status',
       note: 'Your money only. The including-match variant lives in the Savings Rate room.',
       compute: function (c) { return Tier0.savingsRate(c.household, c.tables).excludingMatch; } },

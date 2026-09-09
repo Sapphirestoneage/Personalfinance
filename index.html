@@ -118,7 +118,16 @@
   .inst.is-lead { border-color: var(--color-border-active); background: var(--color-surface-active); }
   .inst.is-lead .big { font-size: var(--text-2xl, 2rem); }
 
-  /* The first screen: six instruments in a fixed 3×2 grid, 2×3 on a phone. */
+  /* The first screen: five tiles, one a letter (D-171); the six instruments
+     keep their 3×2 grid inside the panel. */
+  .instruments.daite { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  @media (max-width: 720px) { .instruments.daite { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 420px) { .instruments.daite { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .daite .letter { font-family: var(--font-display); font-size: var(--text-xs); font-weight: 700; color: var(--color-accent-hover); letter-spacing: .1em; }
+  .daite .status { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .06em; margin-top: var(--space-1); color: var(--color-text-faint); }
+  .daite .status.is-entered { color: var(--color-positive); }
+  .daite .status.is-guess { color: var(--color-caution); }
+  .daite .status.is-missing { color: var(--color-critical-text); }
   .instruments { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); align-items: stretch; }
   @media (max-width: 520px) { .instruments { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .inst { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; min-width: 0; background: var(--color-surface); }
@@ -295,11 +304,13 @@
   <section class="slaf-card dash block" id="where">
     <div class="block-head">
       <span class="slaf-eyebrow">Where you are</span>
-      <button type="button" class="info-toggle" id="btn-3d" aria-pressed="false" title="Every instrument three ways: dream, default, disaster">3D</button>
     </div>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Six readings, like a cockpit: how much you keep, what you own, how long you could last, what you owe, when work becomes optional, and which step is next. Tap any one to open the room it comes from.</p>
-    <div class="instruments" id="instruments"></div>
-    <p class="why" id="three-d-why" hidden></p>
+    <!-- Five tiles, one a letter (D-171): debt, assets, income, taxes,
+         expenses. One number and one status word each; every tile opens the
+         room that owns the number. The six cockpit instruments live in the
+         full panel below. -->
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Five numbers that every room reads: what you owe, own, earn, pay in tax and spend. Tap one to change it where it lives.</p>
+    <div class="instruments daite" id="daite"></div>
   </section>
 
   <section class="slaf-card dash block" id="next">
@@ -339,6 +350,15 @@
   <details class="drawer dash" id="full-panel">
     <summary>The full panel <small>The radar, the ring and the climb, the weather, the flight plan, the goals.</small></summary>
     <div class="age-line" id="age-line"></div>
+  <section class="slaf-card dash" id="out-instruments">
+    <div class="block-head">
+      <span class="slaf-eyebrow">The six readings</span>
+      <button type="button" class="info-toggle" id="btn-3d" aria-pressed="false" title="Every instrument three ways: dream, default, disaster">3D</button>
+    </div>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Like a cockpit: how much you keep, what you own, how long you could last, what you owe, when work becomes optional, and which step is next. Tap any one to open the room it comes from.</p>
+    <div class="instruments" id="instruments"></div>
+    <p class="why" id="three-d-why" hidden></p>
+  </section>
   <section class="slaf-card dash" id="out-radar">
     <span class="slaf-eyebrow">All of it at once</span>
     <h2 style="margin:var(--space-2) 0 0">Am I in the green everywhere?</h2>
@@ -444,6 +464,7 @@
 
 <script src="shared/money.js"></script>
 <script src="shared/schema.js"></script>
+<script src="shared/daite.js"></script>
 <script src="shared/registry.js"></script>
 <script src="shared/reference.js"></script>
 <script src="shared/spine-v2.js"></script>
@@ -1175,6 +1196,41 @@
       + '<a class="slaf-btn" href="rooms/walk.html">All ' + p.total + '</a>';
   }
 
+  /* ---- The five tiles (D-171) ----------------------------------------------
+     One number a letter, one status word, and the room that owns it. The
+     status is the ownership map's word for the figure: entered, a guess
+     (the intake's default, not yet confirmed), or missing. */
+  var DAITE_TILES = [
+    { id: 'debt',     field: 'totalDebt',         read: function (h) { return Schema.totalDebtCents(h); },       fmt: Money.formatCents, sub: 'owed' },
+    { id: 'assets',   field: 'investments',       read: function (h) { return Schema.totalAssetsCents(h); },     fmt: Money.formatCents, sub: 'owned', owner: ['statement', 'portfolios'] },
+    { id: 'income',   field: 'grossAnnualIncome', read: function (h) { return Schema.takeHomeAnnualCents(h, TABLES); }, fmt: Money.formatCents, sub: 'take-home a year' },
+    { id: 'taxes',    field: 'filingStatus',      read: function (h) { var t = Schema.estimatedAnnualTaxCents(h, TABLES); return Money.isOk(t) ? Money.ok(t.effectiveRate) : t; }, fmt: function (v) { return Money.formatRate(v, { decimals: 0 }); }, sub: 'of gross, estimated', owner: ['tax', 'number'] },
+    { id: 'expenses', field: 'monthlyExpenses',   read: function (h) { return Schema.monthlyExpensesCents(h); }, fmt: Money.formatCents, sub: 'a month' }
+  ];
+  function renderDaite(h) {
+    var host = el('daite');
+    if (!host) return;
+    host.innerHTML = DAITE_TILES.map(function (t) {
+      var fam = SLAF.Daite.FAMILIES.filter(function (f) { return f.id === t.id; })[0];
+      var d = Ownership.describe(t.field, h, ROOM_ID);
+      var r = t.read(h);
+      var ok = Money.isOk(r);
+      var word, cls;
+      if (t.id === 'debt' && ok && r.none) { word = 'none'; cls = 'is-entered'; }
+      else if (!ok) { word = 'missing'; cls = 'is-missing'; }
+      else if (d && d.confidence === 'guess') { word = 'a guess'; cls = 'is-guess'; }
+      else { word = 'entered'; cls = 'is-entered'; }
+      var href = t.owner ? Ownership.linkTo(t.owner[0], t.owner[1], ROOM_ID) : (d && d.href) || '#';
+      return '<div class="inst" id="daite-' + t.id + '"><a href="' + esc(href) + '" title="Open ' + esc(fam.label) + '">'
+        + '<span class="letter">' + fam.letter + '</span>'
+        + '<span class="cap">' + esc(fam.label) + '</span>'
+        + '<span class="big' + (ok ? '' : ' is-incomplete') + '">' + esc(ok ? t.fmt(r.value) : Money.EM_DASH) + '</span>'
+        + '<span class="status ' + cls + '">' + word + '</span>'
+        + '<span class="sub">' + esc(ok ? t.sub : (r.reason || '')) + '</span>'
+        + '</a></div>';
+    }).join('');
+  }
+
   function renderNow() {
     if (!TABLES) return;
     var h = Spine.getProfile();
@@ -1182,6 +1238,7 @@
     var all = Ratios.all(h, TABLES, { snapshots: Spine.listSnapshots() });
 
     /* the four blocks */
+    renderDaite(h);
     var c = renderInstruments(h);
     renderNextAction(h, c);
     renderLearn(h);

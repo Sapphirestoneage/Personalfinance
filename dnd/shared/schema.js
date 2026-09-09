@@ -1855,6 +1855,46 @@
     return Money.incomplete('Add your monthly expenses to see this.', ['monthlyExpenses']);
   }
 
+  /* ---- Taxes and take-home: ONE place (D-171) ---------------------------
+     Gross minus the estimated tax is the money that can be pointed at
+     anything. It used to live in engines/tier0.js and be re-derived in
+     rooms as gross minus spending, which forgets the tax entirely. Every
+     savings figure now starts here. The lookup needs the effective-rate
+     table, so `tables` is passed in; the Reference module is reached at
+     call time because it loads after this file. */
+  function referenceModule() {
+    if (typeof module === 'object' && module.exports) { try { return require('./reference.js'); } catch (e) { return null; } }
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    return g && g.SLAF && g.SLAF.Reference ? g.SLAF.Reference : null;
+  }
+  function estimatedAnnualTaxCents(household, tables) {
+    var gross = grossAnnualIncomeCents(household);
+    if (!Money.isOk(gross)) return gross;
+    var R = referenceModule();
+    if (!R) return Money.incomplete('Tax reference table is not loaded.', ['effectiveTaxRates']);
+    var rate = R.lookupEffectiveTaxRate(tables && tables.effectiveTaxRates, gross.value / 100, household && household.filingStatus);
+    if (!Money.isOk(rate)) return rate;
+    return Money.ok(Math.round(gross.value * rate.value), {
+      effectiveRate: rate.value, referenceVersion: rate.referenceVersion, precision: rate.precision, grossAnnualIncomeCents: gross.value
+    });
+  }
+  function takeHomeAnnualCents(household, tables) {
+    var gross = grossAnnualIncomeCents(household);
+    if (!Money.isOk(gross)) return gross;
+    var tax = estimatedAnnualTaxCents(household, tables);
+    if (!Money.isOk(tax)) return tax;
+    return Money.ok(gross.value - tax.value, {
+      grossAnnualIncomeCents: gross.value, estimatedTaxCents: tax.value, effectiveRate: tax.effectiveRate, referenceVersion: tax.referenceVersion
+    });
+  }
+  function takeHomeMonthlyCents(household, tables) {
+    var t = takeHomeAnnualCents(household, tables);
+    if (!Money.isOk(t)) return t;
+    return Money.ok(Math.round(t.value / 12), {
+      grossAnnualIncomeCents: t.grossAnnualIncomeCents, estimatedTaxCents: t.estimatedTaxCents, effectiveRate: t.effectiveRate, referenceVersion: t.referenceVersion
+    });
+  }
+
   /** tracked − estimated. Incomplete until both exist. */
   function expenseDivergenceCents(household) {
     var e = (household && household.expenses && household.expenses.monthlyEssential) || {};
@@ -2102,6 +2142,9 @@
     totalDebtCents: totalDebtCents,
     monthlyDebtPaymentsCents: monthlyDebtPaymentsCents,
     grossAnnualIncomeCents: grossAnnualIncomeCents,
+    estimatedAnnualTaxCents: estimatedAnnualTaxCents,
+    takeHomeAnnualCents: takeHomeAnnualCents,
+    takeHomeMonthlyCents: takeHomeMonthlyCents,
     employerMatchCents: employerMatchCents,
     monthlyExpensesCents: monthlyExpensesCents,
     rentMonthlyCents: rentMonthlyCents,

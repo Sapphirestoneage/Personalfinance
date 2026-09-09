@@ -34,14 +34,16 @@
    * Where the household stands today, as the run's opening position.
    * Incomplete unless income, spending and a portfolio are all really known.
    */
-  function baseline(household) {
-    var income = Schema.grossAnnualIncomeCents(household);
+  function baseline(household, tables) {
+    /* Take-home, never gross: saving is what is left after tax AND
+       spending, and the tax is estimated in one place (Schema, D-171). */
+    var income = Schema.takeHomeAnnualCents(household, tables);
     var monthly = Schema.monthlyExpensesCents(household);
     var invested = Schema.investmentsCents(household);
     var cash = Schema.cashCents(household);
 
     var missing = [];
-    if (!Money.isOk(income)) missing.push('grossAnnualIncome');
+    if (!Money.isOk(income)) missing = missing.concat(income.missing && income.missing.length ? income.missing : ['grossAnnualIncome']);
     if (!Money.isOk(monthly)) missing.push('monthlyExpenses');
     if (!Money.isOk(invested) && !Money.isOk(cash)) missing.push('investments');
     if (missing.length) {
@@ -52,6 +54,8 @@
     var pot = (Money.isOk(invested) ? invested.value : 0) + (Money.isOk(cash) ? cash.value : 0);
     return Money.ok({
       annualIncomeCents: income.value,
+      grossAnnualIncomeCents: income.grossAnnualIncomeCents,
+      estimatedTaxCents: income.estimatedTaxCents,
       annualSpendCents: monthly.value * 12,
       portfolioCents: pot
     });
@@ -70,7 +74,7 @@
     var t = table(tables);
     if (!t) return Money.incomplete('The strategy table is not loaded.', ['adventurePaths']);
     var o = opts || {};
-    var base = baseline(household);
+    var base = baseline(household, tables);
     if (!Money.isOk(base)) return base;
 
     var path = pathById(tables, o.pathId);
