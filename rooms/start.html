@@ -794,7 +794,11 @@
     var live = situationCards();
     placeCards(live);
     paintFold(live);
-    live.forEach(function (c, i) { CARD_NODES[c.key].querySelector('[data-step]').textContent = (i + 2) + ' of ' + (live.length + 1); });
+    /* Cards count themselves, 1..N. They used to start at 2 of N+1, silently
+       counting the situation question as card one while never numbering it -
+       so the first card you could see said "2 of 7" and looked like you had
+       missed one. D-168. */
+    live.forEach(function (c, i) { CARD_NODES[c.key].querySelector('[data-step]').textContent = (i + 1) + ' of ' + live.length; });
     el('q-fine-tune').hidden = !s;
     el('q-import').hidden = !s;
     if (!s) { paintStatus(0, 0); return; }

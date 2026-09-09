@@ -9363,6 +9363,91 @@ reason; the demo household reads $72,000 / $37,800 / $57,500; four paths offer;
 five years walk; four rows compare; and the lifestyle shock reports "puts the
 finish line back 3 years". 21,945 + 5,614 + 25 + 448 + 345 checks pass.
 
+## D-168 — A room that renders nothing, quietly
+
+The repo owner opened The Long Way Round the moment it shipped and got a
+heading, a sentence, two buttons and nothing else. No menu. No paths. The
+carat opened onto an empty drawer. "It won't let me click next", because there
+was nothing to pick.
+
+Reproduced by serving the strategy table as a 404:
+
+    page errors : Could not load adventure_paths.json (404)
+    header      : not mounted
+    paths       : 0
+    told to you : NOTHING
+
+Three faults, and the third is the one that matters.
+
+### 1. No `.catch()`
+
+    Reference.load([...]).then(function (tables) { ... });
+
+One missing file rejected the promise, everything after it never ran, and the
+rejection went nowhere. On GitHub Pages the window between a push and the file
+being served is real, and that is exactly when it was opened.
+
+### 2. The header went up last
+
+`Progress.mount()` was the final line of the `.then()`, so a throw anywhere
+before it left a page with **no menu and no way out** — worse than an empty
+room, because you cannot leave it. It now mounts *first*, before anything that
+can fail.
+
+### 3. It said nothing
+
+The unforgivable one. A page that renders its furniture, none of its content,
+and no explanation is the worst thing this app can do — it reads as "your
+numbers are wrong" when the fault is entirely mine. There is now a plain
+message that says so, and the buttons disable rather than lying about being
+usable.
+
+Also fixed: `.room-head` had no padding, because sixty-four rooms define that
+rule themselves and this one forgot — hence the flush-left heading in the
+screenshot.
+
+### The guard: test/render.js
+
+The owner asked for something that stops this recurring, and they were right
+to. **My console-error sweep passed on this room.** No errors were logged
+locally, because locally the file loads. "No console errors" is not "the page
+works", and I had been treating them as the same thing.
+
+So the new suite asserts what a person actually checks:
+
+1. **The header mounted.** `Progress.mount()` is the last thing every room's
+   init does, which makes a missing menu the canary for init having thrown
+   halfway. This is the check that catches the whole class.
+2. **Nothing threw.**
+3. **The room said more than twenty-five words** — it is not a heading over
+   blank space.
+
+Every room, twice: once on an empty profile and once on the demo household,
+because "works once you have data" is not the same as "works".
+
+Proved by mutation. With the original code and the table missing:
+
+    ✗ adventure (empty) throws nothing — 404 <adventure_paths.json>
+    ✗ adventure (empty) mounts its header — no menu or hop strip
+                                            init probably threw before Progress.mount()
+
+With the fix and the same missing file, only the honest 404 remains: the header
+mounts and the message appears.
+
+The guard also caught its own blind spot on its first run — the browser's
+`/favicon.ico` probe is reported with the URL in `location()`, not in the
+message text, so a text filter for "favicon" never matched and every room
+failed. Fixed before the suite was trusted.
+
+### And the numbering
+
+Separately reported: the first card on Start Here said **"2 of 7"**. It was
+counting the situation question as card one while never numbering it, so every
+card read one higher than its position and the page looked like it had lost a
+question. Cards now count themselves 1..N of N.
+
+22,029 + 402 + 5,614 + 25 + 448 + 345 checks pass.
+
 ---
 
 # The Dungeons & Dividends entries

@@ -23,6 +23,7 @@
   can eat a keystroke because nothing here takes one.
 -->
 <style>
+  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-3); }
   .stage { display: none; }
   .stage.on { display: block; }
   .baseline { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-3); }
@@ -308,7 +309,8 @@
 
   /* ---- Assumptions, said once, in full ----------------------------------- */
   function paintAssumptions() {
-    var t = TABLES.adventurePaths;
+    var t = TABLES && TABLES.adventurePaths;
+    if (!t) return;
     el('assumptions').innerHTML =
       '<p class="slaf-note">' + esc(t.source) + '</p>'
       + '<p class="slaf-note"><strong>Confidence: ' + esc(t.confidence) + '.</strong> '
@@ -331,13 +333,30 @@
   el('back-compare').addEventListener('click', function () { paintCompare(); show('s-compare'); });
 
   Spine.registerRoom(ROOM_ID);
+
+  /* The header goes up BEFORE anything that can fail. It carries the menu, the
+     way back and the hop strip, and a room you cannot navigate out of is worse
+     than a room that is merely empty. This page shipped without it: one 404 on
+     the table left a dead end with no menu and nothing said. D-168. */
+  if (SLAF.Progress) SLAF.Progress.mount(ROOM_ID);
+
   Reference.load(['adventurePaths']).then(function (tables) {
+    if (!tables || !tables.adventurePaths) throw new Error('no adventurePaths table');
     TABLES = tables;
     paintBaseline();
     paintAssumptions();
-    if (SLAF.Progress) SLAF.Progress.mount(ROOM_ID);
+  }).catch(function (err) {
+    /* Say so. A page that renders its furniture and none of its content, with
+       no explanation, is the worst thing this app can do. */
+    el('blocked').hidden = false;
+    el('blocked').textContent = 'The strategy table did not load, so there is nothing to walk through yet. '
+      + 'Reload the page — and if it keeps happening, it is a fault here, not with your numbers.';
+    ['to-paths', 'to-journey', 'to-compare', 'to-shocks'].forEach(function (id) {
+      var b = el(id); if (b) b.disabled = true;
+    });
+    if (window.console && console.warn) console.warn('adventure: ' + err.message);
   });
-  Spine.onChange(paintBaseline);
+  Spine.onChange(function () { if (TABLES) paintBaseline(); });
 })();
 </script>
 </body>
