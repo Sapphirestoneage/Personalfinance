@@ -9821,6 +9821,87 @@ dashboard contain no `monthlyEssential`; no `housingShareOfSpending`
 survives in `data/` or `engines/`. `test/forms.js` taps the four boxes on a
 phone and reads them back; a blank stays null.
 
+Unit 23,411 · dnd 5,614 · export 25 · render 402 · forms 460 · responsive
+345 · features 584.
+
+---
+
+## D-173 — DRAFTT: seven shares against seven bands, and whose band it is
+
+### What it is
+
+The measuring stick. Each letter is a share of take-home pay against a
+healthy band, one verdict word a row, the owner room a tap away, no chart:
+
+| Letter | Share | Of | From |
+|---|---|---|---|
+| D | debt payments — non-mortgage minimums | take-home | `debt.items` (D-017) |
+| R | retirement saving — contributions | **gross** | the contributed savings rate (D-073) |
+| A | rent or mortgage | take-home | `expenses.needs.accommodation` (D-172) |
+| F | food | take-home | `expenses.needs.food` |
+| T | getting around | take-home | `expenses.needs.transportation` |
+| T | taxes — the effective rate | **gross** | `Schema.estimatedAnnualTaxCents` (D-171) |
+| (T) | therapy | take-home | only while the toggle is on |
+
+`engines/draftt.js` computes it; `data/bands.json` holds the bands. It
+lives on the Financial Snapshot as its first section (`#draftt`) — the
+"one pager out" — rather than a new room (section 7: no new rooms). The
+Part 2 sidebar's "DRAFTT" entry will point there.
+
+### The bands, and whose they are
+
+`data/bands.json` carries four sources per letter — `slaf`, `trench`,
+`moneyguy`, `fiftythirty` — each with `low`, `high`, an optional
+`basis: "gross"`, and a `note` that says where the number comes from. The
+`slaf` figures are **Eli's own defaults, stated opinions, to be overwritten
+in that file**, and every entry says so. The other three are readings of a
+published rule of thumb; where a source states no figure for a letter (Set
+for Life has no food line; nobody states a tax share), the entry shows
+Eli's default and its note says exactly that. Nothing here claims a study.
+
+Basis is take-home unless the source says gross. The engine converts on
+the fly — a band stated on gross, read on the take-home row, is widened by
+gross ÷ take-home; a take-home band on a gross row is narrowed by the same
+— so a row always compares like with like, and the screen prints "(25% of
+gross, converted)" beside any band it moved. Retirement and taxes are
+measured on gross, as the brief says; their own bands are stated on gross
+and need no conversion.
+
+### The pick is a preference, not a fact
+
+Whose band each row reads is chosen with buttons (no typing) and stored per
+user under **`prefs`**, a new store outside DAITE and outside the household
+(`shared/prefs.js`, key `slaf.prefs.v1`, memory fallback): it is not
+exported, does not travel in a share link, and the test holds the household
+export free of it. Section 5's `showFrameworkNames` and Part 2's sidebar
+state will use the same store.
+
+### Found on the way
+
+The Snapshot's `Reference.load().then(render).catch(notice)` turns any
+error thrown while rendering into "Couldn't load the reference tables" —
+which is how a missing `esc()` helper in the new section showed up as a
+data problem. render.js cannot see that (nothing threw at the page level);
+the features gate did, because the three-way line it looks for was never
+painted. Fixed; the pattern is noted for section 6's rebuild.
+
+### Gates
+
+`test/run.js` "DRAFTT": the table has seven letters, four sources each, a
+default of `slaf` everywhere and a note on every source; a household with
+known numbers produces the expected share for every row (D excludes the
+mortgage; R and taxes are of gross; therapy appears only while tracked);
+**switching source changes only the band, never the share**, for all four
+sources on all seven rows; the gross↔take-home conversion is exactly the
+ratio; verdicts at and beyond the edges; a blank household has no share
+anywhere and every row names what it wants; "no debt" is a zero, not a
+blank; prefs store and fall back and never reach the export; the Snapshot
+opens on the scorecard, draws no chart in it, and picks by button.
+
+Unit 23,616 · dnd 5,614 · export 25 · render 402 · responsive 345 ·
+features (Snapshot) 11; the Snapshot driven on a phone — six rows on the
+demo, a pick changes the band alone and survives a reload.
+
 ---
 
 # The Dungeons & Dividends entries

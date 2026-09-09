@@ -9595,6 +9595,101 @@ section('Expenses are four numbers (D-172)');
 })();
 
 /* ==========================================================================
+   DRAFTT scorecard and bands (D-173)
+   ========================================================================== */
+section('DRAFTT: seven shares against seven bands (D-173)');
+(function () {
+  const Draftt = require(path.join(ROOT, 'engines/draftt.js'));
+  const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
+  const bands = require(path.join(ROOT, 'data/bands.json'));
+  const T = { effectiveTaxRates: TABLES.effectiveTaxRates, expenseCategories: TABLES.expenseCategories, bands: bands };
+  const SOURCES = ['slaf', 'trench', 'moneyguy', 'fiftythirty'];
+
+  /* The table: every letter has the four sources, a default, a note on each. */
+  check('seven letters', Object.keys(bands.letters).join(','), 'debt,retirement,accommodation,food,transportation,taxes,therapy');
+  Object.keys(bands.letters).forEach(function (id) {
+    const L = bands.letters[id];
+    checkTrue(`${id} has the four sources`, SOURCES.every(s => L.sources[s]));
+    check(`${id} defaults to Eli's`, L['default'], 'slaf');
+    checkTrue(`${id}: every source says where its number comes from`, SOURCES.every(s => typeof L.sources[s].note === 'string' && L.sources[s].note.length > 20));
+    checkTrue(`${id}: bands are shares`, SOURCES.every(s => L.sources[s].low >= 0 && L.sources[s].high <= 1 && L.sources[s].low <= L.sources[s].high));
+  });
+  check('the table is marked convention, not finding', bands.confidence, 'convention');
+
+  /* A household with known numbers. */
+  const h = Schema.createHousehold({ filingStatus: 'single', state: 'CA',
+    people: [Schema.createPerson({ id: 'p', label: 'You', role: 'adult', employmentStatus: 'employed',
+      incomeSources: [Schema.createIncomeSource({ personId: 'p', grossAnnualIncomeCents: 6000000 })] })],
+    debts: [Schema.createDebt({ label: 'Card', balanceCents: 300000, rate: 0.2, minPaymentCents: 10000, type: 'credit_card' }),
+            Schema.createDebt({ label: 'Mortgage', balanceCents: 30000000, rate: 0.06, minPaymentCents: 120000, type: 'mortgage' })],
+    retirement: { contributionPercent: 10 },
+    expenses: { needs: { food: { monthlyCents: 50000 }, accommodation: { monthlyCents: 120000 }, transportation: { monthlyCents: 20000 } }, wants: { totalCents: 80000, therapy: { monthlyCents: 15000 } } } });
+  const take = Schema.takeHomeMonthlyCents(h, T);
+  checkTrue('the test household has a take-home', Money.isOk(take));
+  const r = Draftt.rows(h, T, {});
+  const by = {}; r.rows.forEach(x => by[x.id] = x);
+  check('seven rows with therapy on', r.rows.length, 7);
+  check('...in DRAFTT order', r.rows.map(x => x.letter).join(''), 'DRAFTTT');
+  check('D: non-mortgage minimums only', by.debt.amountCents, 10000);
+  check('D: share of take-home', by.debt.share.value, 10000 / take.value);
+  check('R: contributions, of gross', by.retirement.share.value, 0.10);
+  check('R: measured on gross', by.retirement.measure, 'gross');
+  check('A: rent of take-home', by.accommodation.share.value, 120000 / take.value);
+  check('F: food of take-home', by.food.share.value, 50000 / take.value);
+  check('T: getting around of take-home', by.transportation.share.value, 20000 / take.value);
+  check('T: taxes are the effective rate of gross', by.taxes.share.value, Schema.estimatedAnnualTaxCents(h, T).effectiveRate);
+  check('(T): therapy of take-home', by.therapy.share.value, 15000 / take.value);
+  checkTrue('every row links to its owner', r.rows.every(x => x.owner && Registry.byId(x.owner[0])));
+
+  /* Switching source changes the band only, never the share. */
+  SOURCES.forEach(function (src) {
+    const prefs = {}; Draftt.ORDER.forEach(id => prefs[id] = src);
+    const rs = Draftt.rows(h, T, prefs);
+    rs.rows.forEach(function (row) {
+      check(`${src}: ${row.id} share unchanged`, row.share.value, by[row.id].share.value);
+      check(`${src}: ${row.id} band is that source`, row.band.sourceId, src);
+    });
+  });
+  /* Basis conversion: a band stated on gross, read on take-home, widens by gross ÷ take-home. */
+  const mg = Draftt.bandFor(T, 'accommodation', 'moneyguy', r.ratio);
+  check('Money Guy\'s 25% of gross on the take-home row is 25% × gross/take-home', Math.round(mg.high * 1e6), Math.round(0.25 * r.ratio * 1e6));
+  checkTrue('...and says it was converted', mg.converted && mg.statedBasis === 'gross' && mg.basis === 'takeHome');
+  const tr = Draftt.bandFor(T, 'retirement', 'trench', r.ratio);
+  check('Set for Life\'s half of take-home on the gross row narrows by the same ratio', Math.round(tr.low * 1e6), Math.round(0.5 / r.ratio * 1e6));
+  check('Eli\'s 15% of gross on the gross row is not converted', Draftt.bandFor(T, 'retirement', 'slaf', r.ratio).converted, false);
+
+  /* Verdicts. */
+  check('under', Draftt.verdict(0.05, { low: 0.15, high: 1 }), 'under');
+  check('in', Draftt.verdict(0.20, { low: 0.15, high: 1 }), 'in');
+  check('over', Draftt.verdict(0.30, { low: 0, high: 0.25 }), 'over');
+  check('on the edge is in', Draftt.verdict(0.25, { low: 0, high: 0.25 }), 'in');
+
+  /* Therapy off: six rows. Empty is not zero. */
+  const off = Schema.createHousehold(JSON.parse(JSON.stringify(h))); off.expenses.wants.therapy = null;
+  check('therapy off: six rows', Draftt.rows(off, T, {}).rows.length, 6);
+  const blank = Schema.createHousehold({});
+  const rb = Draftt.rows(blank, T, {});
+  checkTrue('a blank household has no share anywhere, and every row names what it wants', rb.rows.every(x => !Money.isOk(x.share) && x.missing.length > 0));
+  const noDebt = Schema.createHousehold(JSON.parse(JSON.stringify(h))); noDebt.debts = []; noDebt.meta.hasDebt = false;
+  check('"no debt" is a zero share, not a blank', Draftt.rows(noDebt, T, {}).rows[0].share.value, 0);
+
+  /* Prefs: per user, outside the household. */
+  Prefs.reset();
+  check('a pref falls back', Prefs.get('draftt.debt', 'slaf'), 'slaf');
+  Prefs.set('draftt.debt', 'trench');
+  check('...and stores', Prefs.get('draftt.debt', 'slaf'), 'trench');
+  checkTrue('the household export carries no prefs', JSON.stringify(Demo.build()).indexOf('draftt') === -1);
+  Prefs.reset();
+
+  /* The screen: one section, seven rows max, no chart, the pick is buttons. */
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8');
+  checkTrue('the Snapshot opens on DRAFTT', page.indexOf('id="draftt"') < page.indexOf('id="inputs"'));
+  checkTrue('no chart in the scorecard', !/Charts\.[a-z]+\([^)]*draftt/i.test(page) && page.indexOf("el('draftt-rows')") !== -1);
+  checkTrue('the pick is a button, not a box', /data-src="' \+ row\.id/.test(page) && !/<input[^>]*draftt/.test(page));
+  checkTrue('the bands table is a registered reference table', /bands: 'bands\.json'/.test(fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8')));
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 

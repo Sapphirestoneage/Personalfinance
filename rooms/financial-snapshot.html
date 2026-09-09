@@ -51,6 +51,27 @@
   .stack-key { display: flex; gap: var(--space-4); margin-top: var(--space-2); font-size: var(--text-xs); color: var(--color-text-subtle); }
   .stack-key span::before { content: '●'; margin-right: 6px; }
 
+  /* DRAFTT (D-173): seven rows, no chart. letter · label · share · band · verdict · owner */
+  .draftt { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  .draftt .dr { display: grid; grid-template-columns: 2em minmax(0, 1fr) auto auto auto; gap: var(--space-1) var(--space-3); align-items: baseline; padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  .draftt .dr:first-child { border-top: none; }
+  .draftt .dr-letter { font-family: var(--font-display); font-weight: 700; color: var(--color-accent-hover); }
+  .draftt .dr-label { font-size: var(--text-sm); }
+  .draftt .dr-label small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  .draftt .dr-share { font-family: var(--font-display); font-size: var(--text-md); font-variant-numeric: tabular-nums; }
+  .draftt .dr-share.is-incomplete { font-family: var(--font-body); font-size: var(--text-xs); color: var(--color-text-faint); max-width: 12em; }
+  .draftt .dr-band { font-size: var(--text-xs); color: var(--color-text-muted); white-space: nowrap; }
+  .draftt .dr-verdict { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; white-space: nowrap; }
+  .draftt .is-in .dr-verdict { color: var(--color-positive); }
+  .draftt .is-over .dr-verdict { color: var(--color-critical-text); }
+  .draftt .is-under .dr-verdict { color: var(--color-caution); }
+  .draftt .dr-foot { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; font-size: var(--text-xs); color: var(--color-text-faint); }
+  .draftt .dr-foot a { color: var(--color-accent-hover); text-decoration: none; }
+  .draftt .dr-foot .slaf-lens-btn { min-height: 28px; padding: 0 8px; }
+  @media (max-width: 520px) {
+    .draftt .dr { grid-template-columns: 2em minmax(0, 1fr) auto; }
+    .draftt .dr-band, .draftt .dr-verdict { grid-column: 2 / -1; }
+  }
   .ladder { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
   .ladder li { display: flex; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
   .ladder li:first-child { border-top: none; }
@@ -104,6 +125,16 @@
     <strong>Start Here — a few short questions</strong>
     <span>Answer them once and every number on this page fills itself in.</span>
   </a>
+
+  <!-- DRAFTT (D-173): the one pager out. Seven shares against seven bands,
+       one verdict word each, the owner a tap away. No chart. -->
+  <section class="slaf-card" id="draftt">
+    <span class="slaf-eyebrow">DRAFTT — the measuring stick</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-2)">Seven shares of your pay, each against a healthy band</h2>
+    <p class="slaf-hint" style="margin:0">Debt · Retirement · Accommodation · Food · Transportation · Taxes — and Therapy while you track it. Shares are of take-home pay unless the row says gross. Pick whose band each row reads; the pick is remembered on this device, not in your numbers.</p>
+    <p class="slaf-hint" id="draftt-basis" style="margin:var(--space-2) 0 0"></p>
+    <ol class="draftt" id="draftt-rows"></ol>
+  </section>
 
   <!-- ================= INPUTS ================= -->
   <section class="slaf-card" id="inputs">
@@ -249,6 +280,8 @@
 <script src="../engines/cashflow.js"></script>
 <script src="../engines/benchmarks.js"></script>
 <script src="../engines/swan.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../engines/draftt.js"></script>
 <script src="../engines/hourly.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/bands.js"></script>
@@ -290,6 +323,56 @@
     'cashSavings', 'investments', 'totalDebt', 'monthlyDebtPayments',
     'dob', 'state', 'employerMatch', 'capturingFullMatch'
   ];
+
+  /* ---------- DRAFTT (D-173) ---------------------------------------------
+     Rows from engines/draftt.js; the source pick per row is a preference
+     (shared/prefs.js), never a household fact. Buttons only, no typing. */
+  var Draftt = SLAF.Draftt, Prefs = SLAF.Prefs;
+  function draftPrefs() {
+    var p = {};
+    Draftt.ORDER.forEach(function (id) { var v = Prefs.get('draftt.' + id, null); if (v) p[id] = v; });
+    return p;
+  }
+  function pct(v, d) { return Money.formatRate(v, { decimals: d === undefined ? 1 : d }); }
+  function bandText(b) {
+    if (!b) return '';
+    if (b.low > 0 && b.high >= 1) return 'at least ' + pct(b.low, 0);
+    if (b.low <= 0) return 'under ' + pct(b.high, 0);
+    return pct(b.low, 0) + ' to ' + pct(b.high, 0);
+  }
+  function renderDraftt(h) {
+    if (!TABLES || !TABLES.bands) return;
+    var r = Draftt.rows(h, TABLES, draftPrefs());
+    el('draftt-basis').textContent = Money.isOk(r.takeHomeMonthlyCents)
+      ? 'Take-home ' + Money.formatCents(r.takeHomeMonthlyCents.value) + ' a month, gross ' + Money.formatCents(r.grossMonthlyCents.value) + '. A band stated on gross is shown here converted to take-home, and says so.'
+      : 'Add your income and filing status in Start Here and the shares appear.';
+    el('draftt-rows').innerHTML = r.rows.map(function (row) {
+      var ok = Money.isOk(row.share);
+      var srcs = Draftt.sourcesFor(TABLES, row.id);
+      var href = Ownership.linkTo(row.owner[0], row.owner[1], ROOM_ID);
+      var ownerTitle = (SLAF.Registry.byId(row.owner[0]) || {}).title || row.owner[0];
+      return '<li class="dr' + (row.verdict ? ' is-' + row.verdict : '') + '" id="dr-' + row.id + '">'
+        + '<span class="dr-letter">' + row.letter + '</span>'
+        + '<span class="dr-label">' + esc(row.label) + '<small>' + esc(row.sub) + (row.amountCents !== null ? ' · ' + Money.formatCents(row.amountCents) : '') + '</small></span>'
+        + '<span class="dr-share' + (ok ? '' : ' is-incomplete') + '">' + (ok ? pct(row.share.value) : esc(row.share.reason || Money.EM_DASH)) + '</span>'
+        + '<span class="dr-band">' + esc(bandText(row.band)) + (row.band && row.band.converted ? ' <em>(' + pct(row.band.statedHigh >= 1 ? row.band.statedLow : row.band.statedHigh, 0) + ' of ' + (row.band.statedBasis === 'gross' ? 'gross' : 'take-home') + ', converted)</em>' : '') + '</span>'
+        + '<span class="dr-verdict">' + (row.verdict || '') + '</span>'
+        + '<span class="dr-foot">'
+        + '<span class="slaf-lens" role="group" aria-label="Whose band for ' + esc(row.label) + '">' + srcs.map(function (s) {
+            return '<button type="button" class="slaf-lens-btn" data-src="' + row.id + ':' + s.id + '" aria-pressed="' + (s.id === row.sourceId) + '" title="' + esc(s.note) + '">' + esc(s.label) + '</button>';
+          }).join('') + '</span>'
+        + '<span>' + esc(row.band ? row.band.note : '') + '</span>'
+        + '<a href="' + esc(href) + '">→ ' + esc(ownerTitle) + '</a>'
+        + '</span></li>';
+    }).join('');
+  }
+  el('draftt-rows').addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-src]');
+    if (!b) return;
+    var parts = b.getAttribute('data-src').split(':');
+    Prefs.set('draftt.' + parts[0], parts[1]);
+    renderDraftt(Spine.getProfile());
+  });
 
   function renderInputs(h) {
     el('inputs-list').innerHTML = SHOWS.map(function (fieldId) {
@@ -335,6 +418,7 @@
     }
   }
 
+  function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function dl(rows) {
     return '<dl>' + rows.map(function (r) {
       return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
@@ -636,6 +720,7 @@
 
     var all = Tier0.computeAll(h, TABLES);
 
+    renderDraftt(h);
     renderNetWorth(all.netWorth, h);
     renderSavingsRate({
       excludingMatch: all.savingsRateExcludingMatch,

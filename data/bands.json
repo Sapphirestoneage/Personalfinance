@@ -1,0 +1,109 @@
+{
+  "id": "draftt_bands",
+  "version": "1.0",
+  "asOf": "2026-09-09",
+  "source": "DRAFTT is the measuring stick: each letter is a share of take-home pay against a healthy band. The `slaf` figures are Eli's own defaults, stated opinions to be overwritten in this file; the other three sources are readings of a published rule of thumb, and each note says which and how faithfully. No number here is a measured finding.",
+  "confidence": "convention",
+  "confidenceNote": "Rules of thumb, not findings. A share outside a band is a prompt to look, never a verdict on a life. Where a source states no figure for a letter, the entry says so and shows Eli's default in its place.",
+  "note": "Read by engines/draftt.js. Basis is take-home unless the source says `basis: gross`; the engine converts on the fly so the row always compares like with like and prints which basis is in use. `default` is the source shown until the person picks another; the pick is stored per user under prefs, never in the household. D-173.",
+  "basisDefault": "takeHome",
+  "sourceLabels": {
+    "slaf": "Eli's default",
+    "trench": "Set for Life",
+    "moneyguy": "Money Guy",
+    "fiftythirty": "50/30/20"
+  },
+  "letters": {
+    "debt": {
+      "letter": "D",
+      "label": "Debt payments",
+      "sub": "non-mortgage minimums, a month",
+      "measure": "takeHome",
+      "default": "slaf",
+      "sources": {
+        "slaf":        { "low": 0, "high": 0.10, "note": "Eli's default: minimums on anything but the mortgage under a tenth of take-home. A stated opinion." },
+        "trench":      { "low": 0, "high": 0.05, "note": "Scott Trench, Set for Life: consumer debt is the first thing to clear, so any lasting share is a fire. 5% is a reading of that stance, not a figure the book states." },
+        "moneyguy":    { "low": 0, "high": 0.35, "basis": "gross", "note": "The Money Guy Show's guideline that total debt payments stay under 35% of gross income, mortgage included. Applied to non-mortgage minimums it is generous by design." },
+        "fiftythirty": { "low": 0, "high": 0.20, "note": "50/30/20 has no debt line: minimums sit inside the 50, extra payments inside the 20. 20% of take-home is the ceiling that leaves the rest of the 50 intact — a reading, not a rule from the book." }
+      }
+    },
+    "retirement": {
+      "letter": "R",
+      "label": "Retirement saving",
+      "sub": "contributions, a share of gross",
+      "measure": "gross",
+      "default": "slaf",
+      "sources": {
+        "slaf":        { "low": 0.15, "high": 1, "basis": "gross", "note": "Eli's default: at least 15% of gross into retirement. A stated opinion." },
+        "trench":      { "low": 0.50, "high": 1, "basis": "takeHome", "note": "Set for Life's premise: save half of what you take home early on. A reading of the book's central idea." },
+        "moneyguy":    { "low": 0.25, "high": 1, "basis": "gross", "note": "The Money Guy Show: 25% of gross toward retirement." },
+        "fiftythirty": { "low": 0.20, "high": 1, "basis": "takeHome", "note": "50/30/20: the 20 is savings and debt paydown together, of take-home. Retirement alone is a reading of it." }
+      }
+    },
+    "accommodation": {
+      "letter": "A",
+      "label": "Rent or mortgage",
+      "sub": "one number, a month",
+      "measure": "takeHome",
+      "default": "slaf",
+      "sources": {
+        "slaf":        { "low": 0, "high": 0.25, "note": "Eli's default: under a quarter of take-home. A stated opinion." },
+        "trench":      { "low": 0, "high": 0.25, "note": "Scott Trench, Set for Life: housing is the biggest line and the one to attack; a quarter of take-home is a reading of where he draws it." },
+        "moneyguy":    { "low": 0, "high": 0.25, "basis": "gross", "note": "The Money Guy Show: housing at or under 25% of gross." },
+        "fiftythirty": { "low": 0, "high": 0.30, "note": "50/30/20: housing inside the 50 for needs; 30% of take-home is a reading of how much of the 50 it can take before food and transport are squeezed." }
+      }
+    },
+    "food": {
+      "letter": "F",
+      "label": "Food",
+      "sub": "groceries and eating out, a month",
+      "measure": "takeHome",
+      "default": "slaf",
+      "sources": {
+        "slaf":        { "low": 0, "high": 0.12, "note": "Eli's default: food under 12% of take-home. A stated opinion." },
+        "trench":      { "low": 0, "high": 0.12, "note": "Set for Life states no food figure. Eli's default is shown in its place, and this note says so." },
+        "moneyguy":    { "low": 0, "high": 0.12, "note": "The Money Guy Show states no food figure. Eli's default is shown in its place, and this note says so." },
+        "fiftythirty": { "low": 0, "high": 0.15, "note": "50/30/20: food inside the 50 for needs; 15% of take-home is a reading of a fair share of it." }
+      }
+    },
+    "transportation": {
+      "letter": "T",
+      "label": "Getting around",
+      "sub": "car, fuel, transit, a month",
+      "measure": "takeHome",
+      "default": "slaf",
+      "sources": {
+        "slaf":        { "low": 0, "high": 0.10, "note": "Eli's default: getting around under a tenth of take-home. A stated opinion." },
+        "trench":      { "low": 0, "high": 0.10, "note": "Set for Life: the car is the second line to attack after housing; a tenth of take-home is a reading of that, not a figure the book states." },
+        "moneyguy":    { "low": 0, "high": 0.08, "basis": "gross", "note": "The Money Guy Show's 20/3/8 rule: car payments under 8% of gross. Applied here to all of getting around, so it is strict by design." },
+        "fiftythirty": { "low": 0, "high": 0.10, "note": "50/30/20: transport inside the 50 for needs; a tenth of take-home is a reading of a fair share of it." }
+      }
+    },
+    "taxes": {
+      "letter": "T",
+      "label": "Taxes",
+      "sub": "the effective rate, of gross",
+      "measure": "gross",
+      "default": "slaf",
+      "sources": {
+        "slaf":        { "low": 0, "high": 0.30, "basis": "gross", "note": "Not a target — tax is what it is. Eli's default draws the line at 30% of gross so the row has a colour like the others; above it, the Tax room's levers are worth a look. A stated opinion." },
+        "trench":      { "low": 0, "high": 0.30, "basis": "gross", "note": "Set for Life states no tax share. Eli's default is shown in its place, and this note says so." },
+        "moneyguy":    { "low": 0, "high": 0.30, "basis": "gross", "note": "The Money Guy Show states no tax share. Eli's default is shown in its place, and this note says so." },
+        "fiftythirty": { "low": 0, "high": 0.30, "basis": "gross", "note": "50/30/20 is a split of take-home and says nothing about tax. Eli's default is shown in its place, and this note says so." }
+      }
+    },
+    "therapy": {
+      "letter": "T",
+      "label": "Therapy",
+      "sub": "only while tracked separately",
+      "measure": "takeHome",
+      "default": "slaf",
+      "sources": {
+        "slaf":        { "low": 0, "high": 0.05, "note": "Eli's default: under 5% of take-home, and worth every dollar under it. A stated opinion." },
+        "trench":      { "low": 0, "high": 0.05, "note": "Set for Life states no figure for this. Eli's default is shown in its place, and this note says so." },
+        "moneyguy":    { "low": 0, "high": 0.05, "note": "The Money Guy Show states no figure for this. Eli's default is shown in its place, and this note says so." },
+        "fiftythirty": { "low": 0, "high": 0.05, "note": "50/30/20 states no figure for this. Eli's default is shown in its place, and this note says so." }
+      }
+    }
+  }
+}
