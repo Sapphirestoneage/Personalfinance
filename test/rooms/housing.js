@@ -36,7 +36,7 @@ module.exports = function (t) {
       people: [person],
       filingStatus: 'single',
       assets: Money.isEntered(opts.cash) ? [Schema.createAsset({ id: 'c', category: 'cash', liquid: true, valueCents: opts.cash })] : [],
-      expenses: { monthlyEssential: { estimatedValueCents: Money.isEntered(opts.spend) ? opts.spend : null } },
+      expenses: { wants: { totalCents: Money.isEntered(opts.spend) ? opts.spend : null } },
       housing: opts.housing || {},
       meta: opts.meta || {}
     });

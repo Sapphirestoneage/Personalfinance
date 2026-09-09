@@ -55,7 +55,7 @@ module.exports = function (t) {
   /* Completing one boosts its skill to open, never to done. */
   const h = Schema.createHousehold({ filingStatus: 'single', state: 'NC',
     people: [Schema.createPerson({ id: 'P', role: 'adult', employmentStatus: 'employed', incomeSources: [Schema.createIncomeSource({ id: 'i', personId: 'P', grossAnnualIncomeCents: 7200000 })] })],
-    assets: [Schema.createAsset({ id: 'a', category: 'cash', valueCents: 400000 })], expenses: { monthlyEssential: { estimatedValueCents: 250000 } } });
+    assets: [Schema.createAsset({ id: 'a', category: 'cash', valueCents: 400000 })], expenses: { wants: { totalCents: 250000 } } });
   check('before: the ladder skill is locked', ST.evaluate(h, T).byId['close-a-month'].state, 'locked');
   h.exercises = { done: { 'mx-close-a-month': '2026-09-04' }, results: {} };
   const after = ST.evaluate(h, T).byId['close-a-month'];

@@ -74,7 +74,9 @@
     filingStatus: 'taxes.filingStatus', state: 'taxes.state', marginalRate: 'taxes.marginalRate',
     otherPreTax: 'taxes.otherPreTax', withheld: 'taxes.withheld',
     /* E */
-    monthlyExpenses: 'expenses', rentMonthly: 'expenses.needs.accommodation', billsMonthly: 'expenses.log', payLaterDue: 'expenses.log',
+    monthlyExpenses: 'expenses', rentMonthly: 'expenses.needs.accommodation',
+    foodMonthly: 'expenses.needs.food', accommodationMonthly: 'expenses.needs.accommodation', transportationMonthly: 'expenses.needs.transportation',
+    wantsMonthly: 'expenses.wants', therapyMonthly: 'expenses.wants.therapy', billsMonthly: 'expenses.log', payLaterDue: 'expenses.log',
     monthsClosed: 'expenses.months', givingPct: 'expenses.giving', givingTarget: 'expenses.giving', floorMonthly: 'expenses.floor',
     sharedMonthly: 'expenses.shared', splitMode: 'expenses.shared', healthMonthly: 'expenses.insurance',
     /* you */
@@ -161,9 +163,14 @@
         marginalRate: Money.isEntered(assumptions.marginalRate) ? Money.ok(assumptions.marginalRate) : Money.incomplete('Not asked yet.', ['marginalRate']),
         estimatedAnnualCents: tax
       },
-      expenses: {
-        monthlyCents: Schema.monthlyExpensesCents(h)
-      }
+      expenses: (function () {
+        var f = Schema.fat ? Schema.fat(h) : null;
+        return {
+          needs: f ? { food: f.food, accommodation: f.accommodation, transportation: f.transportation } : null,
+          wants: f ? { totalCents: f.wants, therapy: f.therapy } : null,
+          monthlyCents: Schema.monthlyExpensesCents(h)
+        };
+      })()
     };
   }
 

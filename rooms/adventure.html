@@ -230,7 +230,7 @@
     if (!Money.isOk(r)) return;
     var v = r.value;
     el('journey-head').textContent = v.label + ' — five years';
-    el('journey-assume').textContent = 'Assumes: ' + v.assumption;
+    el('journey-assume').textContent = 'Assumes: ' + v.assumption + (v.accommodationNote ? ' (' + v.accommodationNote + ')' : '');
 
     el('yearlist').innerHTML = v.rows.slice(0, state.yearsLived).map(function (row) {
       var pct = Math.max(0, Math.min(100, (row.shareOfTarget || 0) * 100));
@@ -329,6 +329,7 @@
       + '% a year after inflation. ' + esc(t.returnRateSource) + '</li>'
       + '<li>The target: a year of spending divided by '
       + (t.withdrawalRate * 100).toFixed(0) + '%, the same arithmetic the FIRE room uses.</li>'
+      + '<li>The house hack cuts your rent or mortgage line from Cash Flow. ' + esc(t.accommodationShareFallbackNote) + '</li>'
       + '<li>Everything is in today’s money, so a dollar in year five means what it means now.</li></ul>';
   }
 

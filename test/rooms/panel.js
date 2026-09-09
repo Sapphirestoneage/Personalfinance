@@ -20,7 +20,7 @@ module.exports = function (t) {
   function zeroSpending() {
     var h = Demo.build();
     h.expenses = h.expenses || {};
-    h.expenses.monthlyEssential = { estimatedValueCents: 0, source: 'typed' };
+    h.expenses.needs = { food: { monthlyCents: null }, accommodation: { monthlyCents: null }, transportation: { monthlyCents: null } }; h.expenses.wants = { totalCents: 0, therapy: null };
     return h;
   }
 

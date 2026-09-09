@@ -285,7 +285,7 @@ section('Zero denominators and negative values');
   /* Expenses affirmatively zero: emergency fund coverage must not be
      Infinity, and the FIRE number must not be $0. */
   const z = Demo.build();
-  z.expenses.monthlyEssential.estimatedValueCents = 0;
+  z.expenses = Schema.withMonthlySpend(z, 0).expenses;
 
   const efz = Tier0.emergencyFundMonths(z);
   checkTrue('EF coverage with zero expenses is not Infinity',
@@ -374,19 +374,20 @@ section('Assumptions');
 section('Estimated vs tracked');
 
 (function () {
+  /* D-172: the month is the four numbers; the lines are a split of it. */
   const t = Demo.build();
-  t.expenses.monthlyEssential.trackedValueCents = 340000; // $3,400 actually spent
+  t.expenses.wants.totalCents += 25000;                     // $250 more of everything else
   const current = Schema.monthlyExpensesCents(t);
-  check('tracked wins as the current figure', current.value, 340000);
-  check('current figure is labelled tracked', current.source, 'tracked');
-  check('the original estimate survives',
-    t.expenses.monthlyEssential.estimatedValueCents, 315000);
-  /* divergence = tracked - estimated = 3,400 - 3,150 = $250 over */
-  check('divergence cents', Schema.expenseDivergenceCents(t).value, 25000);
+  check('the four numbers are the current figure', current.value, 340000);
+  check('current figure is labelled fat', current.source, 'fat');
+  check('...four of four filled in', current.entered + '/' + current.of, '4/4');
+  /* the lines add to $2,895 of spending against $3,400 typed: -$505 */
+  t.expenses.entries = Demo.buildSpending();
+  check('divergence cents', Schema.expenseDivergenceCents(t).value, 289500 - 340000);
 
-  const estOnly = Demo.build();
-  check('divergence is incomplete with no tracked figure',
-    Schema.expenseDivergenceCents(estOnly).status, 'incomplete');
+  const noLines = Demo.build();
+  check('divergence is incomplete with no lines',
+    Schema.expenseDivergenceCents(noLines).status, 'incomplete');
 })();
 
 /* ==========================================================================
@@ -591,15 +592,21 @@ const SPEND = Demo.VALUES.monthlySpending;
 
   const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
   Spine.reset();
-  Spine.setMonthlyExpenses(315000, 'estimated');   // Robin guessed $3,150
-  Spine.setMonthlyExpenses(tracked.value, 'tracked'); // reality was $2,805
+  Spine.setMonthlyExpenses(315000);                 // Robin's one number: $3,150
+  check('one number lands in everything else', Spine.getProfile().expenses.wants.totalCents, 315000);
+  Spine.updateProfile({ expenses: { entries: hh.expenses.entries } });
+  /* the lines add to $2,895 of spending: -$255 against the one number */
+  check('divergence cents', Schema.expenseDivergenceCents(Spine.getProfile()).value, -25500);
+  /* "Use the lines as my month" - the one deliberate write from lines to buckets */
+  const lines = Spine.setFatFromLines();
   const after = Spine.getProfile();
-  check('the original estimate survives being tracked over',
-    after.expenses.monthlyEssential.estimatedValueCents, 315000);
-  check('the tracked figure is stored', after.expenses.monthlyEssential.trackedValueCents, 280500);
-  check('tracked becomes the current figure', Schema.monthlyExpensesCents(after).source, 'tracked');
-  /* divergence = tracked - estimated = 2,805 - 3,150 = -$345 */
-  check('divergence cents', Schema.expenseDivergenceCents(after).value, -34500);
+  check('food is groceries plus eating out', after.expenses.needs.food.monthlyCents, 45000 + 26000);
+  check('rent is the housing line', after.expenses.needs.accommodation.monthlyCents, 150000);
+  check('getting around is the transportation line', after.expenses.needs.transportation.monthlyCents, 22000);
+  check('everything else is the rest of the spending lines', after.expenses.wants.totalCents, 18000 + 15000 + 4500 + 9000);
+  check('savings lines are not spending', lines.wants, 46500);
+  check('the four now agree with the lines', Schema.expenseDivergenceCents(after).value, 0);
+  check('the month reads off the four', Schema.monthlyExpensesCents(after).value, 289500);
   Spine.reset();
 })();
 
@@ -1701,14 +1708,10 @@ section('Savings Rate');
 
   /* The delta lands on whichever figure monthlyExpensesCents actually reads,
      so the hypothetical answers the same question the real one does. */
-  const tracked = Demo.build();
-  tracked.expenses.monthlyEssential.trackedValueCents = 300000;
-  const trackedCut = Schema.withMonthlyExpensesDeltaCents(tracked, -6000);
-  check('with a tracked month, the delta moves the tracked figure',
-    trackedCut.expenses.monthlyEssential.trackedValueCents, 294000);
-  check('and leaves the estimate where it was',
-    trackedCut.expenses.monthlyEssential.estimatedValueCents,
-    tracked.expenses.monthlyEssential.estimatedValueCents);
+  const typed = Demo.build();
+  const typedCut = Schema.withMonthlyExpensesDeltaCents(typed, -6000);
+  check('the delta lands on everything else', typedCut.expenses.wants.totalCents, 72000 - 6000);
+  check('and leaves the needs where they were', typedCut.expenses.needs.food.monthlyCents, typed.expenses.needs.food.monthlyCents);
 
   /* -- Cutting spending always brings the date closer, never further ----- */
   const baseYears = Tier0.yearsToFire(h, TABLES);
@@ -4345,7 +4348,7 @@ section('Not earning');
         h.people[0].incomeSources.push(
           Schema.createIncomeSource({ grossAnnualIncomeCents: income }));
       }
-      h.expenses.monthlyEssential.estimatedValueCents = 200000;
+      h.expenses = Schema.withMonthlySpend(h, 200000).expenses;
       h.assets.push(Schema.createAsset({ category: 'cash', valueCents: 500000, liquid: true }));
       h.assets.push(Schema.createAsset({ category: 'investment', valueCents: 4800000 }));
       h.debts.push(Schema.createDebt({ type: 'credit_card', balanceCents: 300000,
@@ -4443,20 +4446,20 @@ section('Not earning');
     const cases = {
       'no income at all': bare(h => {
         h.people[0].incomeSources.push(Schema.createIncomeSource({ grossAnnualIncomeCents: 0 }));
-        h.expenses.monthlyEssential.estimatedValueCents = 200000;
+        h.expenses = Schema.withMonthlySpend(h, 200000).expenses;
         h.assets.push(Schema.createAsset({ category: 'cash', valueCents: 500000, liquid: true }));
       }),
       'no expenses': bare(h => {
         h.people[0].incomeSources.push(Schema.createIncomeSource({ grossAnnualIncomeCents: 7200000 }));
-        h.expenses.monthlyEssential.estimatedValueCents = 0;
+        h.expenses = Schema.withMonthlySpend(h, 0).expenses;
       }),
       'everything zero': bare(h => {
         h.people[0].incomeSources.push(Schema.createIncomeSource({ grossAnnualIncomeCents: 0 }));
-        h.expenses.monthlyEssential.estimatedValueCents = 0;
+        h.expenses = Schema.withMonthlySpend(h, 0).expenses;
       }),
       'debt exceeds everything': bare(h => {
         h.people[0].incomeSources.push(Schema.createIncomeSource({ grossAnnualIncomeCents: 5000000 }));
-        h.expenses.monthlyEssential.estimatedValueCents = 300000;
+        h.expenses = Schema.withMonthlySpend(h, 300000).expenses;
         h.assets.push(Schema.createAsset({ category: 'cash', valueCents: 100000, liquid: true }));
         h.debts.push(Schema.createDebt({ type: 'student_loan', balanceCents: 9000000,
           rate: 0.06, minPaymentCents: 60000 }));
@@ -4571,7 +4574,7 @@ section('Whether there is an employer at all');
     done.filingStatus = 'single';
     done.meta.hasDebt = false;
     done.insurance.highestDeductibleCents = 250000;
-    done.expenses.monthlyEssential.estimatedValueCents = 315000;
+    done.expenses = Schema.withMonthlySpend(done, 315000).expenses;
     done.dependents = false;
     done.assets.push(Schema.createAsset({ category: 'investment', valueCents: 4800000 }));
     const row = Progress.forRoom('start', done);
@@ -6673,7 +6676,7 @@ section('The Rerank');
   const room = Registry.byId('rerank');
   checkTrue('The Rerank is registered, about you, after Enough', room && room.kind === 'about-you' && room.order === Registry.byId('fulfillment').order + 1);
   check('what it would cut is owned by the room', Ownership.field('rerankCut').owner, 'rerank');
-  const cutRead = Ownership.field('rerankCut').read(Object.assign(Demo.build(), { expenses: { monthlyEssential: Demo.build().expenses.monthlyEssential, entries: Demo.buildSpending() } }));
+  const cutRead = Ownership.field('rerankCut').read(Object.assign(Demo.build(), { expenses: Object.assign({}, Demo.build().expenses, { entries: Demo.buildSpending() }) }));
   check('and reads the flagged year', cutRead.value, 180500 * 12);
   check('formatted per year', Ownership.field('rerankCut').format(2166000), '$21,660/yr');
   const html = fs.readFileSync(path.join(ROOT, 'rooms/rerank.html'), 'utf8');
@@ -7536,7 +7539,7 @@ section('Between jobs: the unemployed sequence');
     return Schema.createHousehold(Object.assign({ people: [p], filingStatus: 'single', state: 'NC',
       assets: [Schema.createAsset({ id: 'a', category: 'cash', valueCents: 600000, liquid: true, ownerIds: ['p'] }),
                Schema.createAsset({ id: 'b', category: 'investment', valueCents: 1000000, ownerIds: ['p'] })],
-      expenses: { monthlyEssential: { estimatedValueCents: 300000, trackedValueCents: null }, entries: [] },
+      expenses: { wants: { totalCents: 300000 }, entries: [] },
       insurance: { highestDeductibleCents: 0 }, meta: { hasDebt: false } }, extra || {}));
   }
   const h = household(u);
@@ -8058,7 +8061,7 @@ section('The dashboard (D-096): four blocks, the leads, the translator');
     const h = Schema.createHousehold(Object.assign({ state: 'NC', filingStatus: 'single', meta: { hasDebt: false, noRent: false },
       people: [Schema.createPerson({ role: 'adult', employmentStatus: status, dob: '1990-06-01', incomeSources: [Schema.createIncomeSource({ id: 'intake_income', grossAnnualIncomeCents: 6000000 })] })],
       assets: [Schema.createAsset({ category: 'cash', valueCents: 600000 }), Schema.createAsset({ category: 'investment', valueCents: 4000000 })] }, extra || {}));
-    h.expenses.monthlyEssential.estimatedValueCents = 300000;
+    h.expenses = Schema.withMonthlySpend(h, 300000).expenses;
     return h;
   }
 
@@ -8066,12 +8069,12 @@ section('The dashboard (D-096): four blocks, the leads, the translator');
      $420,000 = 3.14%. Income covering spending draws nothing. */
   const ret = hh('retired', { people: [Schema.createPerson({ role: 'adult', employmentStatus: 'retired', dob: '1958-03-01', incomeSources: [Schema.createIncomeSource({ grossAnnualIncomeCents: 2400000 })] })],
     assets: [Schema.createAsset({ category: 'cash', valueCents: 1800000 }), Schema.createAsset({ category: 'investment', valueCents: 42000000 })] });
-  ret.expenses.monthlyEssential.estimatedValueCents = 310000;
+  ret.expenses = Schema.withMonthlySpend(ret, 310000).expenses;
   const wr = Ratios.all(ret, T).rows.filter(r => r.id === 'withdrawalRate')[0];
   check('withdrawal rate = (spending × 12 − income) ÷ investments', Math.round(wr.value * 10000) / 10000, Math.round(1320000 / 42000000 * 10000) / 10000);
   check('… drawing $13,200 a year', wr.result.annualDrawCents, 1320000);
   check('… inside the 4% band', wr.verdict.zone, 'good');
-  const covered = hh('retired'); covered.expenses.monthlyEssential.estimatedValueCents = 200000;
+  const covered = hh('retired'); covered.expenses = Schema.withMonthlySpend(covered, 200000).expenses;
   check('income covering spending draws nothing — a zero, not a blank', Ratios.all(covered, T).rows.filter(r => r.id === 'withdrawalRate')[0].result.value, 0);
   checkTrue('… and says it is covered', Ratios.all(covered, T).rows.filter(r => r.id === 'withdrawalRate')[0].result.covered === true);
   checkTrue('an employed household has no withdrawal rate', !Ratios.all(hh('employed'), T).rows.filter(r => r.id === 'withdrawalRate')[0].ok);
@@ -8674,8 +8677,13 @@ section('Four ways through five years');
   checkTrue('the house hack lowers the target itself',
     hack.targetCents < steady.targetCents,
     hack.targetCents + ' vs ' + steady.targetCents);
-  check('...by the stated 30% housing share times a 40% cut',
-    hack.rows[0].spendCents, Math.round(3780000 * (1 - 0.30 * 0.40)));
+  check('...by 40% of the REAL rent line, twelve months of it (D-172)',
+    hack.rows[0].spendCents, 3780000 - Math.round(150000 * 12 * 0.40));
+  check('...and says which basis it used', hack.housingBasis, 'accommodation');
+  const noRent = Demo.build(); noRent.expenses.needs.accommodation.monthlyCents = null;
+  const hackNoRent = Adventure.run(noRent, TABLES, { pathId: 'househack' }).value;
+  check('with no rent line, it falls back to the stated share', hackNoRent.housingBasis, 'assumed');
+  check('...and prints why', hackNoRent.accommodationNote, 'assumed 30% of spending because accommodation is not filled in');
 
   /* Every shock must move the answer, or it is decoration. */
   ['crash', 'jobloss', 'inflation', 'raise'].forEach(id => {
@@ -8784,7 +8792,7 @@ section('Every room says what is waiting on it');
   const guessed = Schema.createHousehold();
   guessed.meta = guessed.meta || {};
   guessed.meta.guessed = { monthlyExpenses: true };
-  guessed.expenses.monthlyEssential.estimatedValueCents = 315000;
+  guessed.expenses = Schema.withMonthlySpend(guessed, 315000).expenses;
   const row = Progress.forRoom('fire', guessed);
   const g = row.filled.filter(f => f.guessed);
   check('a filled-by-guess field lands in filled, flagged', g.length, 1);
@@ -9501,6 +9509,89 @@ section('DAITE is the spine (D-171)');
   checkTrue('the tiles sit in the first block', page.indexOf('id="daite"') < page.indexOf('id="full-panel"'));
   checkTrue('the six instruments moved into the panel', page.indexOf('id="instruments"') > page.indexOf('id="full-panel"'));
   checkTrue('every tile opens a room', /Ownership\.linkTo\(t\.owner\[0\], t\.owner\[1\], ROOM_ID\) : \(d && d\.href\)/.test(page));
+})();
+
+/* ==========================================================================
+   FAT, wants, and one optional line (D-172)
+   ========================================================================== */
+section('Expenses are four numbers (D-172)');
+(function () {
+  const catalog = require(path.join(ROOT, 'data/expense_categories.json'));
+  /* Every category lands somewhere on purpose. */
+  catalog.categories.forEach(c => checkTrue(`category ${c.id} is mapped to a bucket`, Object.prototype.hasOwnProperty.call(Schema.FAT_CATEGORY_MAP, c.id)));
+  check('the map names no category the catalogue lacks',
+    Object.keys(Schema.FAT_CATEGORY_MAP).filter(id => !catalog.categories.some(c => c.id === id)).join(','), '');
+  check('debt minimums are not expenses', Schema.fatBucketOf('debt_minimums'), 'debt');
+  check('savings has not left', Schema.fatBucketOf('retirement'), 'savings');
+
+  /* The shape. */
+  const h = Schema.createHousehold({});
+  check('needs are three lines', Object.keys(h.expenses.needs).join(','), 'food,accommodation,transportation');
+  check('wants is one number', h.expenses.wants.totalCents, null);
+  check('therapy is absent until asked for', h.expenses.wants.therapy, null);
+  checkTrue('no legacy pair on a fresh household', !('monthlyEssential' in h.expenses));
+
+  /* Empty is not zero. */
+  const f = Schema.fat(h);
+  check('a blank month is incomplete', f.totalCents.status, 'incomplete');
+  check('a blank bucket names itself', f.accommodation.missing[0], 'accommodationMonthly');
+  h.expenses.needs.food.monthlyCents = 60000;
+  check('one bucket typed is a month of one bucket', Schema.fat(h).totalCents.value, 60000);
+  check('...and says how many are in', Schema.fat(h).totalCents.entered + '/' + Schema.fat(h).totalCents.of, '1/4');
+
+  /* Therapy: a fifth line only while the toggle is on, subtracted from wants. */
+  const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
+  Spine.reset();
+  Spine.setFat({ food: 60000, accommodation: 150000, transportation: 20000, wants: 90000 });
+  check('the four write', Schema.monthlyExpensesCents(Spine.getProfile()).value, 320000);
+  check('therapy is off', Schema.fat(Spine.getProfile()).therapyTracked, false);
+  check('...so it is not in the shape', Spine.getProfile().expenses.wants.therapy, null);
+  Spine.setTherapyTracked(true);
+  check('on: the line exists, blank', JSON.stringify(Spine.getProfile().expenses.wants.therapy), '{"monthlyCents":null}');
+  check('...and the month does not change until it is typed', Schema.monthlyExpensesCents(Spine.getProfile()).value, 320000);
+  Spine.setFat({ therapy: 20000 });
+  check('typed, it is its own line in the month', Schema.monthlyExpensesCents(Spine.getProfile()).value, 340000);
+  check('...five of five', Schema.fat(Spine.getProfile()).totalCents.of, 5);
+  Spine.setTherapyTracked(false);
+  check('off again: gone from the shape', Spine.getProfile().expenses.wants.therapy, null);
+  check('...and out of the month', Schema.monthlyExpensesCents(Spine.getProfile()).value, 320000);
+  /* One number for the month is what is not split out. */
+  Spine.setMonthlyExpenses(350000);
+  check('a total with needs typed lands the remainder in everything else', Spine.getProfile().expenses.wants.totalCents, 350000 - 230000);
+  Spine.reset();
+
+  /* Migration: a saved household from before the buckets. */
+  const legacyPair = Schema.createHousehold({ expenses: { monthlyEssential: { estimatedValueCents: 315000, trackedValueCents: 300000 } } });
+  check('a legacy tracked figure becomes everything else', legacyPair.expenses.wants.totalCents, 300000);
+  check('...and reads as the month', Schema.monthlyExpensesCents(legacyPair).value, 300000);
+  const legacyLines = Schema.createHousehold({ expenses: { monthlyEssential: { estimatedValueCents: 315000 }, entries: Demo.buildSpending() } });
+  check('legacy lines win over the legacy figure: food', legacyLines.expenses.needs.food.monthlyCents, 71000);
+  check('...rent', legacyLines.expenses.needs.accommodation.monthlyCents, 150000);
+  check('...everything else, without savings', legacyLines.expenses.wants.totalCents, 46500);
+  check('the lines stay as the split', legacyLines.expenses.entries.length, Demo.buildSpending().length);
+  const typedWins = Schema.createHousehold({ expenses: { needs: { food: { monthlyCents: 1 } }, monthlyEssential: { estimatedValueCents: 315000 } } });
+  check('a typed bucket is never overwritten by migration', typedWins.expenses.wants.totalCents, null);
+
+  /* The rent line is the accommodation bucket. */
+  const demo = Demo.build();
+  check('rent reads the accommodation bucket', Schema.rentMonthlyCents(demo).cents, 150000);
+  check('...from Cash Flow', Schema.rentMonthlyCents(demo).source, 'cash-flow');
+  check('the demo month is unchanged at $3,150', Schema.monthlyExpensesCents(demo).value, 315000);
+
+  /* The gate: the rooms that read expenses read the new shape and nothing else. */
+  ['engines/cashflow.js', 'engines/fire.js', 'engines/adventure.js', 'engines/hourly.js', 'engines/tier0.js',
+   'rooms/cash-flow.html', 'rooms/fire.html', 'rooms/savings-rate.html', 'rooms/real-hourly-wage.html', 'rooms/adventure.html',
+   'shared/gate.js', 'shared/importer.js', 'engines/enough.js', 'engines/week.js', 'index.html'].forEach(function (f) {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/<!--[\s\S]*?-->/g, '');
+    checkTrue(`${f} reads the four numbers, not the legacy pair`, src.indexOf('monthlyEssential') === -1);
+  });
+  checkTrue('no hard-coded housing share of spending survives in data/ or engines/',
+    !/housingShareOfSpending/.test(fs.readFileSync(path.join(ROOT, 'data/adventure_paths.json'), 'utf8'))
+    && fs.readdirSync(path.join(ROOT, 'engines')).every(f => !/housingShareOfSpending/.test(fs.readFileSync(path.join(ROOT, 'engines', f), 'utf8'))));
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
+  check('Cash Flow asks the four numbers', (page.match(/data-fat="(food|accommodation|transportation|wants)"/g) || []).length, 4);
+  checkTrue('...with the toggle labelled plainly', page.indexOf('Track mental health spending separately') !== -1);
+  checkTrue('...and the split folded', /<details class="drawer" id="split-more">/.test(page));
 })();
 
 /* ==========================================================================

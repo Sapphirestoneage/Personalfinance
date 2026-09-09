@@ -101,9 +101,7 @@
      number prices Enough with the one formula and the one withdrawal rate.
      A view, never a write: the spine is untouched. */
   function withMonth(household, monthlyCents) {
-    var h = household || {};
-    return Object.assign({}, h, { expenses: Object.assign({}, h.expenses || {}, {
-      monthlyEssential: { trackedValueCents: monthlyCents, estimatedValueCents: null } }) });
+    return Schema.withMonthlySpend(household, monthlyCents);
   }
 
   /* Years to a target at this year's savings and the real return — the

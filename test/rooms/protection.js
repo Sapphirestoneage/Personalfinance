@@ -22,7 +22,7 @@ module.exports = function (t) {
     return Schema.createHousehold({
       people: [person],
       assets: Money.isEntered(opts.cash) ? [Schema.createAsset({ id: 'c', category: 'cash', liquid: true, valueCents: opts.cash })] : [],
-      expenses: { monthlyEssential: { estimatedValueCents: Money.isEntered(opts.spend) ? opts.spend : null } },
+      expenses: { wants: { totalCents: Money.isEntered(opts.spend) ? opts.spend : null } },
       dependents: opts.dependents === undefined ? null : opts.dependents,
       insurance: Object.assign({ highestDeductibleCents: 150000 }, opts.insurance || {})
     });

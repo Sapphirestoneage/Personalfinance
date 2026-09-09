@@ -94,10 +94,20 @@
        band line runs the same walk at the low and high returns. D-170. */
     var rate = Money.isEntered(o.returnRate) ? o.returnRate : t.returnRateReal;
 
-    /* The house hack cuts housing, and housing is a stated share of spending -
-       the share is an assumption and it is named on screen beside the result. */
+    /* The house hack cuts the REAL accommodation line (D-172). Only when
+       that line is blank does it fall back to the table's share of
+       spending, and then it says so beside the number. */
+    var housingBasis = null, assumedShare = null;
     if (path.housingCutShare) {
-      spend = Math.round(spend * (1 - (path.housingShareOfSpending * path.housingCutShare)));
+      var acc = Schema.fat(household).accommodation;
+      if (Money.isOk(acc)) {
+        spend = Math.max(0, spend - Math.round(acc.value * 12 * path.housingCutShare));
+        housingBasis = 'accommodation';
+      } else {
+        assumedShare = t.accommodationShareFallback;
+        spend = Math.round(spend * (1 - (assumedShare * path.housingCutShare)));
+        housingBasis = 'assumed';
+      }
     }
 
     var rows = [];
@@ -143,6 +153,10 @@
       pathId: path.id,
       label: path.label,
       assumption: path.assumption,
+      housingBasis: housingBasis,
+      assumedAccommodationShare: assumedShare,
+      accommodationNote: housingBasis === 'assumed'
+        ? 'assumed ' + Math.round(assumedShare * 100) + '% of spending because accommodation is not filled in' : null,
       rows: rows,
       portfolioCents: last.portfolioCents,
       targetCents: last.targetCents,

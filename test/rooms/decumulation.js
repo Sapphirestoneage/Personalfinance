@@ -17,7 +17,7 @@ module.exports = function (t) {
       people: [Schema.createPerson({ role: 'adult', employmentStatus: 'retired', dob: '1958-03-01',
         incomeSources: [Schema.createIncomeSource({ grossAnnualIncomeCents: 2400000 })] })],
       assets: [Schema.createAsset({ category: 'cash', valueCents: 1800000 }), Schema.createAsset({ category: 'investment', valueCents: 42000000 })] }, extra || {}));
-    h.expenses.monthlyEssential.estimatedValueCents = 310000;
+    h.expenses.needs = { food: { monthlyCents: null }, accommodation: { monthlyCents: null }, transportation: { monthlyCents: null } }; h.expenses.wants = { totalCents: 310000, therapy: null };
     return h;
   }
 
@@ -77,7 +77,7 @@ module.exports = function (t) {
 
   /* ---- Edge cases ------------------------------------------------------------- */
   /* Income covers spending: spending $2,000 × 12 = $24,000 = income → draw 0, rate 0, never. */
-  const covered = retiree(); covered.expenses.monthlyEssential.estimatedValueCents = 200000;
+  const covered = retiree(); covered.expenses.needs = { food: { monthlyCents: null }, accommodation: { monthlyCents: null }, transportation: { monthlyCents: null } }; covered.expenses.wants = { totalCents: 200000, therapy: null };
   const pc = Decumulation.plan(covered, TABLES, OPTS);
   check('income covering spending draws nothing', pc.drawCents, 0);
   check('… rate zero, not blank', pc.withdrawalRate, 0);

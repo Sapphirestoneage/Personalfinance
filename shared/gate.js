@@ -369,8 +369,9 @@
       filled.push('grossAnnualIncome');
     }
     if (!Money.isOk(Schema.monthlyExpensesCents(h)) && g.spending) {
-      h.expenses = h.expenses || {}; h.expenses.monthlyEssential = h.expenses.monthlyEssential || {};
-      h.expenses.monthlyEssential.estimatedValueCents = g.spending.value; filled.push('monthlyExpenses');
+      /* One guessed number is a month not yet split out: "everything else" (D-172). */
+      h.expenses = Schema.createExpenses(h.expenses);
+      h.expenses.wants.totalCents = g.spending.value; filled.push('monthlyExpenses');
     }
     if (!Money.isOk(Schema.cashCents(h)) && g.cash) {
       h.assets = (h.assets || []).concat([Schema.createAsset({ id: 'guess_cash', category: 'cash', liquid: true, valueCents: g.cash.value })]); filled.push('cashSavings');

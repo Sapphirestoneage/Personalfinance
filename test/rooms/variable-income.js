@@ -30,7 +30,7 @@ module.exports = function (t) {
       assets: o.cash === null ? [] : [Schema.createAsset({ id: 'c', category: 'cash', liquid: true, valueCents: o.cash === undefined ? 900000 : o.cash })],
       variableIncome: { bufferMonths: o.buffer === undefined ? 3 : o.buffer }
     });
-    if (o.spending !== null) h.expenses.monthlyEssential.estimatedValueCents = o.spending === undefined ? 300000 : o.spending;
+    if (o.spending !== null) h.expenses.needs = { food: { monthlyCents: null }, accommodation: { monthlyCents: null }, transportation: { monthlyCents: null } }; h.expenses.wants = { totalCents: o.spending === undefined ? 300000 : o.spending, therapy: null };
     return h;
   }
 

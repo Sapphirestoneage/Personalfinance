@@ -57,7 +57,7 @@ module.exports = function (t) {
         incomeSources: [Schema.createIncomeSource({ id: 'pay', personId: 'you', type: 'w2', grossAnnualIncomeCents: 7200000,
           employerMatch: { matchPercent: 0.5, matchCapPercentOfSalary: 0.06, capturingFullMatch: false }, contributionPercent: 4 })] })],
       assets: o.investments === null ? [] : [Schema.createAsset({ id: 'inv', category: 'investment', valueCents: o.investments === undefined ? 4800000 : o.investments })] });
-    h.expenses.monthlyEssential.estimatedValueCents = o.spend === undefined ? 315000 : o.spend;
+    h.expenses.needs = { food: { monthlyCents: null }, accommodation: { monthlyCents: null }, transportation: { monthlyCents: null } }; h.expenses.wants = { totalCents: o.spend === undefined ? 315000 : o.spend, therapy: null };
     if (o.enough !== undefined) h.enough = { monthlyCents: o.enough, source: o.source || 'entered' };
     return h;
   }

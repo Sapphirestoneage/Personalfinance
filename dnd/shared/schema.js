@@ -111,6 +111,11 @@
     'household.calendar.cadence':                { class: 'raw',        unit: 'enum',    values: ['weekly', 'fortnightly', 'semimonthly', 'monthly'], note: 'with nextPaydayDay (1–31), bills[] {label, cents, day}, payLater[] {label, cents, dueDay, instalmentsLeft}. Owned by Money Calendar. D-101' },
     'household.history.compareTo':               { class: 'raw',        unit: 'id',      note: 'the snapshot History compares today against. Owned by History. D-101' },
     'meta.guessed':                              { class: 'raw',        unit: 'map',     note: '{ fieldId: true } for figures the one-pager committed as guesses; cleared per field the moment a real number is written. D-094' },
+    'household.expenses.needs.food.monthlyCents':          { class: 'raw', unit: 'cents', note: 'FAT: food a month. Owned by Cash Flow. D-172' },
+    'household.expenses.needs.accommodation.monthlyCents': { class: 'raw', unit: 'cents', note: 'FAT: rent, or mortgage plus tax plus insurance, one number a month. Owned by Cash Flow. D-172' },
+    'household.expenses.needs.transportation.monthlyCents':{ class: 'raw', unit: 'cents', note: 'FAT: getting around, a month. Owned by Cash Flow. D-172' },
+    'household.expenses.wants.totalCents':                 { class: 'raw', unit: 'cents', note: 'everything else a month, one number - whatever has not been split out. Owned by Cash Flow. D-172' },
+    'household.expenses.wants.therapy':                    { class: 'raw', unit: 'cents', note: 'OPTIONAL: { monthlyCents } only while "track mental health spending separately" is on; null (absent) when off. Owned by Cash Flow. D-172' },
     'meta.noRent':                               { class: 'raw',        unit: 'bool',    note: 'no rent to pay; lowers the spending guess. D-094' },
     'person.unemployment.benefitStatus':         { class: 'raw',        unit: 'enum',    values: ['receiving', 'applied', 'notApplied', 'ineligible'], note: 'between jobs: whether unemployment is coming. With benefitWeeklyCents, benefitWeeksLeft, severanceCents, lastGrossAnnualCents and since. Owned by Start Here. D-092' },
     'person.dob':                                { class: 'raw',        unit: 'iso-date' },
@@ -998,6 +1003,132 @@
 
   /** An estimated/tracked pair. SPEC.md §12.3: tracked NEVER overwrites
    *  estimated. Both persist; the divergence between them is a feature. */
+  /* ---- Expenses: FAT, wants, and one optional line (D-172) --------------
+     Four numbers are the whole budget input: food, accommodation (rent, or
+     mortgage plus tax plus insurance, one figure), transportation, and
+     everything else. Therapy is a fifth line only while the toggle is on;
+     off, it does not exist here. The dated log and the optional category
+     breakdown still live in `entries`; they are detail, never a second
+     copy of the month. Debt minimums are not expenses - they live under
+     debt (D-017) and DRAFTT's D share reads them there. */
+  var FAT_NEEDS = ['food', 'accommodation', 'transportation'];
+  /* Every category in data/expense_categories.json lands in exactly one
+     bucket, or is deliberately not spending: debt payments live under
+     debt, savings has not left, an income cost belongs to its entry. */
+  var FAT_CATEGORY_MAP = {
+    groceries: 'food', dining_out: 'food',
+    housing: 'accommodation',
+    transportation: 'transportation',
+    utilities: 'wants', insurance: 'wants', healthcare: 'wants', childcare: 'wants',
+    entertainment: 'wants', subscriptions: 'wants', shopping: 'wants', travel: 'wants',
+    personal_care: 'wants', gifts: 'wants', other: 'wants',
+    debt_minimums: 'debt', extra_debt_payment: 'savings',
+    retirement: 'savings', investments: 'savings', emergency_savings: 'savings',
+    mileage: 'costs', home_office: 'costs', equipment: 'costs', contractor_fees: 'costs',
+    licensing: 'costs', platform_fees: 'costs'
+  };
+  function fatBucketOf(categoryId) { return FAT_CATEGORY_MAP[categoryId] || 'wants'; }
+
+  function centsOrNull(v) { return v === undefined ? null : v; }
+  function fatLine(fields) { var f = fields || {}; return { monthlyCents: centsOrNull(f.monthlyCents) }; }
+
+  /** The four buckets read off the typical-month lines, when someone has
+   *  split the month that far. A bucket with no line is null, not zero. */
+  function fatFromLines(entries) {
+    var out = { food: null, accommodation: null, transportation: null, wants: null };
+    (entries || []).forEach(function (e) {
+      if (!e || e.active === false || e.source === 'log' || e.linkedIncomeId) return;
+      if (e.period !== 'monthly' || !Money.isEntered(e.amountCents)) return;
+      var b = fatBucketOf(e.categoryId);
+      if (!Object.prototype.hasOwnProperty.call(out, b)) return;
+      out[b] = (out[b] || 0) + e.amountCents;
+    });
+    return out;
+  }
+
+  function createExpenses(fields) {
+    var f = fields || {};
+    var needs = f.needs || {};
+    var wants = f.wants || {};
+    var entries = f.entries || f.categories || [];
+    var out = {
+      needs: { food: fatLine(needs.food), accommodation: fatLine(needs.accommodation), transportation: fatLine(needs.transportation) },
+      wants: { totalCents: centsOrNull(wants.totalCents), therapy: wants.therapy ? fatLine(wants.therapy) : null },
+      /* Cash Flow's dated log and its optional breakdown. ONE store,
+         transaction-shaped (SPEC.md §12.5). See createExpenseEntry(). */
+      entries: entries
+    };
+    /* Migration (D-172): a household saved before the four buckets existed
+       carried one monthly figure - tracked over estimated - and maybe a
+       month split by category. Lines win when there are any, because they
+       are the split the person actually made; else the one figure becomes
+       "everything else", which is exactly what an unsplit month is. The
+       legacy pair is kept on the record for round-trip only; nothing reads
+       it any more. */
+    var blank = FAT_NEEDS.every(function (k) { return !Money.isEntered(out.needs[k].monthlyCents); }) && !Money.isEntered(out.wants.totalCents);
+    if (blank) {
+      var pair = f.monthlyEssential || {};
+      var fromLines = fatFromLines(entries);
+      var anyLine = Object.keys(fromLines).some(function (k) { return fromLines[k] !== null; });
+      if (anyLine) {
+        FAT_NEEDS.forEach(function (k) { out.needs[k].monthlyCents = fromLines[k]; });
+        out.wants.totalCents = fromLines.wants;
+      } else if (Money.isEntered(pair.trackedValueCents)) {
+        out.wants.totalCents = pair.trackedValueCents;
+      } else if (Money.isEntered(pair.estimatedValueCents)) {
+        out.wants.totalCents = pair.estimatedValueCents;
+      }
+    }
+    if (f.monthlyEssential) out.monthlyEssential = createEstimatedTrackedPair(f.monthlyEssential);
+    return out;
+  }
+
+  /**
+   * The four numbers, and the total, as Results. A blank bucket is
+   * incomplete and says so; the TOTAL is the sum of what is entered, since
+   * "everything else" is by definition whatever has not been split out -
+   * it is incomplete only when nothing at all is entered.
+   */
+  function fat(household) {
+    var e = createExpenses(household && household.expenses);
+    /* The typed numbers are the month. Only when NONE is typed does the
+       split's lines stand in, bucket by bucket - the same rule the
+       migration applies, live - and each says so with source 'lines'. Never
+       a mix: a typed "everything else" is the whole of what is not split
+       out, so adding line-derived needs to it would count twice. */
+    var typedAny = FAT_NEEDS.some(function (k) { return Money.isEntered(e.needs[k].monthlyCents); }) || Money.isEntered(e.wants.totalCents);
+    var lines = typedAny ? null : fatFromLines(e.entries);
+    function r(v, k, id, what) {
+      if (Money.isEntered(v)) return Money.ok(v, { source: 'typed' });
+      if (k && lines && lines[k] !== null) return Money.ok(lines[k], { source: 'lines' });
+      return Money.incomplete(what + ' is not filled in.', [id]);
+    }
+    var out = {
+      food: r(e.needs.food.monthlyCents, 'food', 'foodMonthly', 'Food'),
+      accommodation: r(e.needs.accommodation.monthlyCents, 'accommodation', 'accommodationMonthly', 'Rent or mortgage'),
+      transportation: r(e.needs.transportation.monthlyCents, 'transportation', 'transportationMonthly', 'Getting around'),
+      wants: r(e.wants.totalCents, 'wants', 'wantsMonthly', 'Everything else'),
+      therapy: e.wants.therapy ? r(e.wants.therapy.monthlyCents, null, 'therapyMonthly', 'Therapy') : null,
+      therapyTracked: !!e.wants.therapy
+    };
+    var parts = [out.food, out.accommodation, out.transportation, out.wants].concat(out.therapy ? [out.therapy] : []);
+    var entered = parts.filter(function (x) { return Money.isOk(x); });
+    out.totalCents = entered.length
+      ? Money.ok(entered.reduce(function (t, x) { return t + x.value; }, 0), { entered: entered.length, of: parts.length, source: 'fat' })
+      : Money.incomplete('Add what goes out a month to see this.', ['monthlyExpenses']);
+    return out;
+  }
+
+  /** A view of the household whose month is `monthlyCents`, for an engine
+   *  pricing a different month with the same formulas. Never a write. */
+  function withMonthlySpend(household, monthlyCents) {
+    var h = household || {};
+    return Object.assign({}, h, { expenses: Object.assign({}, h.expenses || {}, {
+      needs: { food: { monthlyCents: null }, accommodation: { monthlyCents: null }, transportation: { monthlyCents: null } },
+      wants: { totalCents: monthlyCents, therapy: null }
+    }) });
+  }
+
   function createEstimatedTrackedPair(fields) {
     var f = fields || {};
     return {
@@ -1422,17 +1553,7 @@
       community: { daySchool: f.community && typeof f.community.daySchool === 'boolean' ? f.community.daySchool : null },
       assets: f.assets || [],
       debts: f.debts || [],
-      expenses: {
-        monthlyEssential: createEstimatedTrackedPair(
-          (f.expenses && f.expenses.monthlyEssential) || {}
-        ),
-        /* Cash Flow calc (Tier 1) fills this. ONE store, transaction-shaped
-           from day one — SPEC.md §12.5. A hand-typed monthly total and an
-           imported transaction are the same record with different fields
-           filled in, so the categoriser and the roll-up never need a second
-           code path when import lands. See createExpenseEntry(). */
-        entries: (f.expenses && (f.expenses.entries || f.expenses.categories)) || []
-      },
+      expenses: createExpenses(f.expenses),
       /* Which annual income figure feeds everything else: what was actually
          earned across the year, or the current job annualised. They differ
          only when a job changed mid-year. DECISIONS.md D-047. */
@@ -1579,16 +1700,19 @@
    */
   function withMonthlyExpensesDeltaCents(household, deltaCents) {
     var copy = JSON.parse(JSON.stringify(household || {}));
-    copy.expenses = copy.expenses || {};
-    var pair = copy.expenses.monthlyEssential = createEstimatedTrackedPair(
-      copy.expenses.monthlyEssential || {});
+    copy.expenses = createExpenses(copy.expenses);
     if (!Money.isEntered(deltaCents)) return copy;
-
-    var key = Money.isEntered(pair.trackedValueCents) ? 'trackedValueCents'
-      : Money.isEntered(pair.estimatedValueCents) ? 'estimatedValueCents'
-      : null;
-    if (!key) return copy;                       // nothing entered to move
-    pair[key] = Math.max(0, pair[key] + deltaCents);
+    /* The delta lands on "everything else" when it is typed, else on the
+       first bucket that is - a blank month has nothing to move. D-172. */
+    var w = copy.expenses.wants;
+    var left = deltaCents;
+    var slots = [w].concat(FAT_NEEDS.map(function (k) { return copy.expenses.needs[k]; }));
+    for (var i = 0; i < slots.length && left !== 0; i++) {
+      var key = slots[i] === w ? 'totalCents' : 'monthlyCents';
+      if (!Money.isEntered(slots[i][key])) continue;
+      if (left > 0) { slots[i][key] += left; left = 0; }
+      else { var cut = Math.min(slots[i][key], -left); slots[i][key] -= cut; left += cut; }
+    }
     return copy;
   }
 
@@ -1808,17 +1932,21 @@
    */
   function rentMonthlyCents(household) {
     var h = household || {};
-    var all = ((h.expenses && h.expenses.entries) || []).filter(function (e) {
-      return e && e.active !== false && e.categoryId === 'housing' && e.period !== 'once' && Money.isEntered(e.amountCents) && e.amountCents > 0;
+    /* The accommodation bucket IS the rent or mortgage a month (D-172).
+       Housing Decision's own field is a place you would rent INSTEAD, read
+       only when the bucket is blank. */
+    var acc = fat(h).accommodation;
+    if (Money.isOk(acc) && acc.value > 0) return { cents: acc.value, source: 'cash-flow', entryId: null, count: 1, from: acc.source };
+    /* One rent (D-130): with the bucket blank, a housing line in Cash
+       Flow's split is still what is paid - the same room's own, more
+       specific figure. */
+    var fromLine = fatFromLines((h.expenses || {}).entries).accommodation;
+    if (fromLine !== null && fromLine > 0) return { cents: fromLine, source: 'cash-flow', entryId: null, count: 1, from: 'lines' };
+    /* ...or a recurring rent logged on its day (D-130, Q5). */
+    var logged = ((h.expenses || {}).entries || []).filter(function (e) {
+      return e && e.active !== false && e.source === 'log' && e.categoryId === 'housing' && e.period !== 'once' && Money.isEntered(e.amountCents) && e.amountCents > 0;
     });
-    /* The typical-month line first; failing that, a recurring rent logged
-       on its day in the expense log (D-130, Q5) — never both. */
-    var lines = all.filter(function (e) { return e.source !== 'log'; });
-    if (!lines.length) lines = all.filter(function (e) { return e.source === 'log'; });
-    if (lines.length) {
-      var total = lines.reduce(function (t, e) { return t + e.amountCents; }, 0);
-      return { cents: total, source: 'cash-flow', entryId: lines[0].id, count: lines.length, logged: lines[0].source === 'log' };
-    }
+    if (logged.length) return { cents: logged.reduce(function (t, e) { return t + e.amountCents; }, 0), source: 'cash-flow', entryId: logged[0].id, count: logged.length, from: 'log', logged: true };
     var own = (h.housing || {}).rentMonthlyCents;
     if (Money.isEntered(own) && own > 0) return { cents: own, source: 'housing', entryId: null, count: 0 };
     return { cents: null, source: 'none', entryId: null, count: 0 };
@@ -1843,15 +1971,12 @@
   }
 
   function monthlyExpensesCents(household) {
-    var e = (household && household.expenses && household.expenses.monthlyEssential) || {};
+    /* Closed months are actuals and beat any typed month (D-130); else the
+       four buckets (D-172). Nothing else - the legacy pair is not read. */
     var closed = closedAverageExpensesCents(household);
     if (closed) return Money.ok(closed.cents, { source: 'closed', months: closed.months });
-    if (Money.isEntered(e.trackedValueCents)) {
-      return Money.ok(e.trackedValueCents, { source: 'tracked' });
-    }
-    if (Money.isEntered(e.estimatedValueCents)) {
-      return Money.ok(e.estimatedValueCents, { source: 'estimated' });
-    }
+    var f = fat(household);
+    if (Money.isOk(f.totalCents)) return Money.ok(f.totalCents.value, { source: 'fat', entered: f.totalCents.entered, of: f.totalCents.of });
     return Money.incomplete('Add your monthly expenses to see this.', ['monthlyExpenses']);
   }
 
@@ -1895,14 +2020,18 @@
     });
   }
 
-  /** tracked − estimated. Incomplete until both exist. */
+  /** The category lines' month against the four typed numbers - what the
+   *  split says minus what was typed. Incomplete until both exist. */
   function expenseDivergenceCents(household) {
-    var e = (household && household.expenses && household.expenses.monthlyEssential) || {};
-    if (!Money.isEntered(e.trackedValueCents) || !Money.isEntered(e.estimatedValueCents)) {
-      return Money.incomplete('Track a month of spending to compare it against your estimate.',
-        ['trackedValue', 'estimatedValue']);
+    var h = household || {};
+    var typed = fat(h).totalCents;
+    var lines = fatFromLines((h.expenses || {}).entries);
+    var keys = Object.keys(lines).filter(function (k) { return lines[k] !== null; });
+    if (!keys.length || !Money.isOk(typed)) {
+      return Money.incomplete('Split a month into lines to compare it against the four numbers.', ['expenseEntries', 'monthlyExpenses']);
     }
-    return Money.ok(e.trackedValueCents - e.estimatedValueCents);
+    var sum = keys.reduce(function (t, k) { return t + lines[k]; }, 0);
+    return Money.ok(sum - typed.value, { linesCents: sum, typedCents: typed.value });
   }
 
   /* ======================================================================
@@ -2147,6 +2276,13 @@
     takeHomeMonthlyCents: takeHomeMonthlyCents,
     employerMatchCents: employerMatchCents,
     monthlyExpensesCents: monthlyExpensesCents,
+    FAT_NEEDS: FAT_NEEDS,
+    FAT_CATEGORY_MAP: FAT_CATEGORY_MAP,
+    fatBucketOf: fatBucketOf,
+    fatFromLines: fatFromLines,
+    createExpenses: createExpenses,
+    fat: fat,
+    withMonthlySpend: withMonthlySpend,
     rentMonthlyCents: rentMonthlyCents,
     oneOffEntry: oneOffEntry,
     ONE_OFF_IN: ONE_OFF_IN,

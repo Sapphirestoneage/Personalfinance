@@ -861,8 +861,9 @@
       if (Money.isEntered(u.lastGrossAnnualCents)) setMoney('lastPay', u.lastGrossAnnualCents); else { setMoney('lastPay', null); propose('lastPay', g.lastPay, function (c) { WRITE.lastPay(c / 100); render(); }); }
     }
     /* spending */
-    var ex = x.expenses && x.expenses.monthlyEssential;
-    if (ex && Money.isEntered(ex.estimatedValueCents)) setMoney('spending', ex.estimatedValueCents); else { setMoney('spending', null); propose('spending', g.spending, function (c) { WRITE.spending(c / 100); render(); }); }
+    /* The one box is the month: the four buckets' total (D-172). */
+    var ft = Schema.fat(x).totalCents;
+    if (Money.isOk(ft)) setMoney('spending', ft.value); else { setMoney('spending', null); propose('spending', g.spending, function (c) { WRITE.spending(c / 100); render(); }); }
     press('noRent', x.meta.noRent === true ? 'yes' : x.meta.noRent === false ? 'no' : null, 'no');
     /* cash, deductible, investments */
     var cash = Schema.cashCents(x);

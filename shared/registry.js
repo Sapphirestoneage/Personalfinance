@@ -222,7 +222,7 @@
       href: 'rooms/cash-flow.html',
       tier: 1,
       tags: ['cashflow', 'income'],
-      daite: { reads: ['expenses'], writes: ['expenses', 'expenses.log', 'expenses.needs.accommodation'] },
+      daite: { reads: ['expenses'], writes: ['expenses', 'expenses.log', 'expenses.needs.accommodation', 'expenses.needs.food', 'expenses.needs.transportation', 'expenses.wants', 'expenses.wants.therapy'] },
       subsections: [
         { id: 'glance',          label: 'At a glance' },
         { id: 'spending',        label: 'A typical month' },

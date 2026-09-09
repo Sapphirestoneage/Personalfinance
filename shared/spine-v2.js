@@ -559,9 +559,17 @@
     Object.keys(p).forEach(function (key) {
       if (key === 'schemaVersion') return;
       if (key === 'expenses') {
-        next.expenses.monthlyEssential = Object.assign({}, next.expenses.monthlyEssential,
-          (p.expenses && p.expenses.monthlyEssential) || {});
-        if (p.expenses && p.expenses.entries) next.expenses.entries = p.expenses.entries;
+        /* The four buckets merge a key at a time (D-172); the lines replace
+           whole; the legacy pair, if a caller still sends one, is kept on
+           the record and not read. */
+        var px = p.expenses || {};
+        if (px.needs) Schema.FAT_NEEDS.forEach(function (k) { if (px.needs[k] && px.needs[k].monthlyCents !== undefined) next.expenses.needs[k].monthlyCents = px.needs[k].monthlyCents; });
+        if (px.wants) {
+          if (px.wants.totalCents !== undefined) next.expenses.wants.totalCents = px.wants.totalCents;
+          if (px.wants.therapy !== undefined) next.expenses.wants.therapy = px.wants.therapy ? { monthlyCents: px.wants.therapy.monthlyCents === undefined ? null : px.wants.therapy.monthlyCents } : null;
+        }
+        if (px.monthlyEssential) next.expenses.monthlyEssential = Object.assign({}, next.expenses.monthlyEssential || {}, px.monthlyEssential);
+        if (px.entries) next.expenses.entries = px.entries;
         return;
       }
       if (key === 'goals') { next.goals = p.goals; return; }
@@ -742,18 +750,56 @@
    * SPEC.md §12.3 — a tracked figure NEVER overwrites the estimate. Both are
    * stored; `source` records which one is current.
    */
-  function setMonthlyExpenses(cents, kind) {
+  /* ---- Expenses: FAT, wants, therapy (D-172) ---------------------------
+     setFat(patch)            write any of { food, accommodation,
+                              transportation, wants, therapy } as cents;
+                              a key left out is untouched, null clears
+     setTherapyTracked(on)    the toggle: on creates the line (blank), off
+                              removes it from the shape entirely
+     setFatFromLines()        roll the typical-month lines into the four
+                              buckets - Cash Flow's "use the lines as my
+                              month" button, never automatic
+     setMonthlyExpenses(c)    one number for the month: what is not split
+                              out. With needs typed, the total less the
+                              needs; else the whole of it. Kept for Start
+                              Here's single box and older callers; the
+                              second argument is ignored. */
+  function setFat(patch) {
     var h = load();
-    var pair = h.expenses.monthlyEssential;
-    if (kind === 'tracked') {
-      pair.trackedValueCents = cents;
-      pair.source = 'tracked';
-    } else {
-      pair.estimatedValueCents = cents;
-      if (!Money.isEntered(pair.trackedValueCents)) pair.source = 'estimated';
+    var p = patch || {};
+    var e = h.expenses;
+    Schema.FAT_NEEDS.forEach(function (k) { if (p[k] !== undefined) e.needs[k].monthlyCents = p[k]; });
+    if (p.wants !== undefined) e.wants.totalCents = p.wants;
+    if (p.therapy !== undefined) {
+      if (p.therapy === null && !e.wants.therapy) { /* off stays off */ }
+      else e.wants.therapy = { monthlyCents: p.therapy };
     }
     save(); notify();
-    return JSON.parse(JSON.stringify(pair));
+    return JSON.parse(JSON.stringify(e));
+  }
+  function setTherapyTracked(on) {
+    var h = load();
+    h.expenses.wants.therapy = on ? (h.expenses.wants.therapy || { monthlyCents: null }) : null;
+    save(); notify();
+    return !!h.expenses.wants.therapy;
+  }
+  function setFatFromLines() {
+    var h = load();
+    var lines = Schema.fatFromLines(h.expenses.entries);
+    Schema.FAT_NEEDS.forEach(function (k) { if (lines[k] !== null) h.expenses.needs[k].monthlyCents = lines[k]; });
+    if (lines.wants !== null) h.expenses.wants.totalCents = lines.wants;
+    save(); notify();
+    return lines;
+  }
+  function setMonthlyExpenses(cents) {
+    var h = load();
+    var e = h.expenses;
+    var needs = 0;
+    Schema.FAT_NEEDS.forEach(function (k) { if (Money.isEntered(e.needs[k].monthlyCents)) needs += e.needs[k].monthlyCents; });
+    if (e.wants.therapy && Money.isEntered(e.wants.therapy.monthlyCents)) needs += e.wants.therapy.monthlyCents;
+    e.wants.totalCents = Money.isEntered(cents) ? Math.max(0, cents - needs) : null;
+    save(); notify();
+    return JSON.parse(JSON.stringify(e));
   }
 
   /* ---- Goals ------------------------------------------------------------ */
@@ -1510,6 +1556,9 @@
     upsertScenario: upsertScenario,
     removeById: removeById,
     setMonthlyExpenses: setMonthlyExpenses,
+    setFat: setFat,
+    setTherapyTracked: setTherapyTracked,
+    setFatFromLines: setFatFromLines,
     upsertGoal: upsertGoal,
     removeGoal: removeGoal,
     upsertExpenseEntry: upsertExpenseEntry,

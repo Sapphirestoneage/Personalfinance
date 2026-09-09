@@ -68,7 +68,12 @@
       ],
       "writes": [
         "rentMonthly",
-        "monthlyExpenses"
+        "monthlyExpenses",
+        "foodMonthly",
+        "accommodationMonthly",
+        "transportationMonthly",
+        "wantsMonthly",
+        "therapyMonthly"
       ],
       "requires": [],
       "dashboardNumber": null,

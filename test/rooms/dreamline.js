@@ -143,7 +143,7 @@ module.exports = function (t) {
      target is not. */
   const noIncome = Schema.createHousehold({
     people: [Schema.createPerson({ id: 'p', role: 'adult', employmentStatus: 'employed' })],
-    expenses: { monthlyEssential: { estimatedValueCents: 315000 } },
+    expenses: { wants: { totalCents: 315000 } },
     dreams: two
   });
   const ni = D.picture(noIncome, TABLES);

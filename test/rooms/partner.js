@@ -25,7 +25,7 @@ module.exports = function (t) {
     return Schema.createHousehold({
       people: opts.solo ? [you] : [you, them],
       filingStatus: opts.filing === undefined ? 'married_joint' : opts.filing,
-      expenses: { monthlyEssential: { estimatedValueCents: opts.spend === undefined ? null : opts.spend } },
+      expenses: { wants: { totalCents: opts.spend === undefined ? null : opts.spend } },
       partner: { splitMode: opts.mode || null, sharedMonthlyCents: opts.shared === undefined ? null : opts.shared }
     });
   }

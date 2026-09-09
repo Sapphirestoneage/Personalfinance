@@ -15,7 +15,7 @@ module.exports = function (t) {
     if (Money.isEntered(opts.inv)) assets.push(Schema.createAsset({ id: 'v', category: 'investment', valueCents: opts.inv }));
     return Schema.createHousehold({
       people: [person], assets: assets, filingStatus: opts.filing || null,
-      expenses: { monthlyEssential: { estimatedValueCents: Money.isEntered(opts.spend) ? opts.spend : null } },
+      expenses: { wants: { totalCents: Money.isEntered(opts.spend) ? opts.spend : null } },
       purchase: opts.purchase || null
     });
   }

@@ -9718,6 +9718,111 @@ Unit 23,083 · dnd 5,611 · export 25 · render 402 · forms 448 · responsive 3
 
 ---
 
+## D-172 — Expenses are four numbers: FAT, wants, and one optional line
+
+### The shape
+
+```
+expenses
+  needs
+    food            { monthlyCents }
+    accommodation   { monthlyCents }   rent, or mortgage + tax + insurance, one number
+    transportation  { monthlyCents }
+  wants
+    totalCents                         everything else, one number
+    therapy         null | { monthlyCents }   only while the toggle is on
+  entries[]                            the dated log, and the optional split by category
+```
+
+Cash Flow's entry is now **four boxes** — Food · Rent or mortgage · Getting
+around · Everything else — and one plainly labelled toggle, "Track mental
+health spending separately". On, therapy is a fifth line and "everything
+else" is glossed *not counting therapy*; off, the line is `null` and does not
+exist in the shape at all. `Schema.fat(h)` reads the five as Results; the
+month (`Schema.monthlyExpensesCents`) is the closed months' actual when there
+is one (D-130) and otherwise **the sum of what is entered**, because
+"everything else" is by definition whatever has not been split out — a blank
+bucket sits inside it. The total is incomplete only when nothing at all is
+typed; a blank bucket is incomplete on its own (DRAFTT's row says "not filled
+in") without blanking the month.
+
+**Debt minimums are not expenses.** They live under debt (D-017) and DRAFTT's
+D share reads them there. Cash Flow's "goes out" tile shows the four numbers
+*plus* the minimums, labelled as such, because they do leave the account.
+
+### What happened to the old pair, and to the category lines
+
+`expenses.monthlyEssential { estimatedValueCents, trackedValueCents }` is
+**no longer read by anything.** Migration runs in `createExpenses` on every
+load: a saved household with blank buckets takes its month from its category
+lines when it has any (food = groceries + eating out, rent = housing, getting
+around = transportation, everything else = the other spending lines; savings,
+debt minimums and income costs are not spending), else from the tracked
+figure, else the estimate. The pair is kept on the record for round-trip only.
+A typed bucket is never overwritten by migration.
+
+The category lines survive as **the split** — folded under "Split it further
+(optional)", still feeding the chart, the fixed-line floor (D-082), the Rerank
+and the budget templates. The rule between the two: **the typed numbers are
+the month; only when none is typed do the lines stand in, bucket by bucket**
+(source `lines`), and never a mix — a typed "everything else" is the whole of
+what is not split out, so adding line-derived needs to it would count twice.
+Lines never write the buckets on their own. Cash Flow's "The lines vs the four
+numbers" card shows the gap and its one button, "Use the lines as my month",
+is the single deliberate write from lines to buckets (`Spine.setFatFromLines`).
+
+`Schema.rentMonthlyCents` is the accommodation bucket — typed, or from the
+split's housing line, or a recurring rent logged on its day (D-130), else
+Housing Decision's *place you would rent instead*.
+
+### Compatibility note
+
+Stored shape changed: `expenses` gains `needs` and `wants`; `monthlyEssential`
+is legacy and unread. Rooms updated: Cash Flow (owner: writes the five via
+`Spine.setFat` / `setTherapyTracked`), Start Here (its one "what goes out"
+box is the month: `Spine.setMonthlyExpenses(cents)` puts the remainder after
+any typed needs into everything else), the gate's guess (lands in everything
+else), the importer (merges the buckets; a legacy pair in a file migrates on
+read), Enough and Designed Week (`Schema.withMonthlySpend` for their shadow
+month), The Long Way Round (below). Every other reader already went through
+`Schema.monthlyExpensesCents` and did not change. A future room reads
+`Schema.fat(h)` for the buckets and `Schema.monthlyExpensesCents` for the
+month; it never touches `monthlyEssential`.
+
+### Housing share of spending
+
+`housingShareOfSpending` is gone from `data/adventure_paths.json` and from
+`engines/adventure.js`. The house hack now cuts the **real accommodation
+line**, twelve months of it. Only when that line is blank does it fall back
+to `accommodationShareFallback` (0.30, stated in the table with its note) —
+and then the run carries `housingBasis: 'assumed'` and the sentence
+"assumed 30% of spending because accommodation is not filled in", printed
+beside the path's assumption. The Money Calendar's and Housing Decision's
+30%-of-gross rent proposals now say "assumed 30% of gross because
+accommodation is not filled in" wherever they are used.
+
+### The demo
+
+Robin's month is the four numbers explicitly — $710 · $1,500 · $220 · $720 —
+summing to the same $3,150 as before, so nothing downstream moved. The
+category lines ($2,895 of spending) are deliberately a split Robin did not
+finish, and the card shows the −$255 gap.
+
+### Gates
+
+`test/run.js` "Expenses are four numbers": every category in the catalogue
+maps to a bucket and the map names nothing the catalogue lacks; the shape;
+empty is not zero; therapy on/off; one number lands the remainder in
+everything else; migration from the pair and from lines; a typed bucket is
+never overwritten; rent reads the bucket; and the reader gate — Cash Flow,
+FIRE, The Long Way Round, Savings Rate, Real Hourly Wage, the tier-0 and
+cash-flow engines, the gate, the importer, Enough, Designed Week and the
+dashboard contain no `monthlyEssential`; no `housingShareOfSpending`
+survives in `data/` or `engines/`. `test/forms.js` taps the four boxes on a
+phone and reads them back; a blank stays null.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

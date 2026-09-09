@@ -50,7 +50,7 @@ const DND_CHARACTER = (() => {
     Schema.createAsset({ id: 'dnd_asset_investments', category: 'investment', valueCents: 4800000, liquid: false })
   ];
   h.debts = [Schema.createDebt({ id: 'dnd_debt_total', balanceCents: 2160000, rate: 0.22, type: 'credit_card' })];
-  h.expenses = { monthlyEssential: { estimatedValueCents: 315000, trackedValueCents: null, source: 'estimated' }, entries: [] };
+  h.expenses = { wants: { totalCents: 315000 }, entries: [] };
   h.dndProfile = { fixedCostShare: 0.55, yearsSustained: 4, disruptionSurvived: true,
     healthCoverage: 2, automatedSaving: 'most' };
   return h;
@@ -990,6 +990,26 @@ const CASES = [
     }
   },
   {
+    /* The four numbers (D-172): typed, kept, and the month follows. */
+    room: '/rooms/cash-flow.html',
+    container: '#fat',
+    seed: 'empty',
+    fields: [
+      { sel: '#fat input[data-fat="food"]', type: '600' },
+      { sel: '#fat input[data-fat="accommodation"]', type: '1500' },
+      { sel: '#fat input[data-fat="wants"]', type: '900' }
+    ],
+    expect: async (page) => {
+      const e = await page.evaluate(() => (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).expenses);
+      return [
+        ['food was kept', e && e.needs.food.monthlyCents, 60000],
+        ['rent was kept', e && e.needs.accommodation.monthlyCents, 150000],
+        ['everything else was kept', e && e.wants.totalCents, 90000],
+        ['getting around stayed blank, not zero', e && e.needs.transportation.monthlyCents, null]
+      ];
+    }
+  },
+  {
     /* The expense log's form on the same page: built once, saved on a tap. */
     room: '/rooms/cash-flow.html',
     container: '#log-form',
@@ -1014,6 +1034,7 @@ const CASES = [
     room: '/rooms/cash-flow.html',
     container: '#buckets',
     seed: 'demo',
+    prepare: async (page) => { await page.evaluate(() => { document.getElementById('split-more').open = true; }); },
     fields: [
       { sel: '#buckets input[data-cat="housing"]', type: '1500' },
       { sel: '#buckets input[data-cat="groceries"]', type: '450' },

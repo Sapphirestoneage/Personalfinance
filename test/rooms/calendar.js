@@ -12,7 +12,7 @@ module.exports = function (t) {
       people: [Schema.createPerson({ id: 'p1', role: 'adult', employmentStatus: 'employed', incomeSources: [Schema.createIncomeSource({ id: 'i1', personId: 'p1', grossAnnualIncomeCents: 3000000 })] })],
       assets: [Schema.createAsset({ id: 'a1', category: 'cash', valueCents: 50000, liquid: true })],
       calendar: { cadence: 'semimonthly', nextPaydayDay: 5, bills: [{ id: 'rent', label: 'Rent', cents: 90000, day: 1 }] } }, extra || {}));
-    h.expenses.monthlyEssential.estimatedValueCents = 180000;
+    h.expenses.needs = { food: { monthlyCents: null }, accommodation: { monthlyCents: null }, transportation: { monthlyCents: null } }; h.expenses.wants = { totalCents: 180000, therapy: null };
     return h;
   }
   const h = hh();

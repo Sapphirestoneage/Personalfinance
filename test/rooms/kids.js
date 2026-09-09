@@ -27,7 +27,7 @@ module.exports = function (t) {
       dependents: opts.dependents === undefined ? null : opts.dependents,
       community: { daySchool: opts.daySchool === undefined ? null : opts.daySchool },
       kids: opts.kids || {},
-      expenses: { monthlyEssential: { estimatedValueCents: 400000 } }
+      expenses: { wants: { totalCents: 400000 } }
     });
   }
 

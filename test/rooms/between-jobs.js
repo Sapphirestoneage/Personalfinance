@@ -31,7 +31,7 @@ module.exports = function (t) {
     const h = Schema.createHousehold({ state: 'NC', filingStatus: 'single', meta: { hasDebt: false },
       people: [Schema.createPerson({ id: 'you', role: 'adult', employmentStatus: 'unemployed', dob: '1990-06-01', unemployment: u })],
       assets: [Schema.createAsset({ category: 'cash', valueCents: (over && over.cash) !== undefined ? over.cash : 600000 })] });
-    h.expenses.monthlyEssential.estimatedValueCents = (over && over.spend) !== undefined ? over.spend : 300000;
+    h.expenses.needs = { food: { monthlyCents: null }, accommodation: { monthlyCents: null }, transportation: { monthlyCents: null } }; h.expenses.wants = { totalCents: (over && over.spend) !== undefined ? over.spend : 300000, therapy: null };
     return h;
   }
 
@@ -196,7 +196,7 @@ module.exports = function (t) {
     check('vouched for as between jobs, it still needs the cash', vouched.status, 'incomplete');
     checkTrue('and says so', /saved/.test(vouched.reason));
     const noSpend = household({ spend: null });
-    noSpend.expenses.monthlyEssential.estimatedValueCents = null;
+    noSpend.expenses.needs = { food: { monthlyCents: null }, accommodation: { monthlyCents: null }, transportation: { monthlyCents: null } }; noSpend.expenses.wants = { totalCents: null, therapy: null };
     const q = BetweenJobs.plan(noSpend, TABLES, { now: NOW });
     check('no spending: incomplete', q.status, 'incomplete');
     checkTrue('naming the expenses', q.missing.indexOf('monthlyExpenses') >= 0);

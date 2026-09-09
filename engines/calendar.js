@@ -97,7 +97,7 @@
     var r = Schema.rentMonthlyCents(h);
     if (Money.isEntered(r.cents)) return { cents: r.cents, source: r.source, reason: null };
     var gross = Schema.grossAnnualIncomeCents(h);
-    if (Money.isOk(gross) && gross.value > 0) return { cents: Math.round(gross.value / MONTHS * RENT_SHARE_OF_GROSS), source: 'guess', reason: null };
+    if (Money.isOk(gross) && gross.value > 0) return { cents: Math.round(gross.value / MONTHS * RENT_SHARE_OF_GROSS), source: 'guess', reason: 'assumed 30% of gross because accommodation is not filled in' };
     return { cents: null, source: 'none', reason: 'No rent from Housing Decision and no income to guess it from.' };
   }
 

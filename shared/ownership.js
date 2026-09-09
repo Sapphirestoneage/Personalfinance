@@ -768,6 +768,31 @@
       read: function (h) { return Schema.monthlyExpensesCents(h); },
       format: function (v) { return money(v) + '/mo'; }
     },
+    /* The four numbers, and the optional fifth (D-172). Each reads its own
+       bucket; a blank bucket is incomplete, never a zero. */
+    foodMonthly: {
+      label: 'Food, a month', owner: 'cash-flow', anchor: 'spending',
+      read: function (h) { return Schema.fat(h).food; }, format: function (v) { return money(v) + '/mo'; }
+    },
+    accommodationMonthly: {
+      label: 'Rent or mortgage, a month', owner: 'cash-flow', anchor: 'spending',
+      read: function (h) { return Schema.fat(h).accommodation; }, format: function (v) { return money(v) + '/mo'; }
+    },
+    transportationMonthly: {
+      label: 'Getting around, a month', owner: 'cash-flow', anchor: 'spending',
+      read: function (h) { return Schema.fat(h).transportation; }, format: function (v) { return money(v) + '/mo'; }
+    },
+    wantsMonthly: {
+      label: 'Everything else, a month', owner: 'cash-flow', anchor: 'spending',
+      read: function (h) { return Schema.fat(h).wants; }, format: function (v) { return money(v) + '/mo'; }
+    },
+    therapyMonthly: {
+      label: 'Therapy, a month', owner: 'cash-flow', anchor: 'spending',
+      read: function (h) { var f = Schema.fat(h); return f.therapy || Money.incomplete('Not tracked separately.', ['therapyMonthly']); },
+      format: function (v) { return money(v) + '/mo'; },
+      applies: function (h) { return Schema.fat(h).therapyTracked; },
+      notApplicableBecause: 'Mental health spending is not tracked separately; turn that on in Cash Flow.'
+    },
     /* The Skill Tree's one write and the exercise library's log (D-131):
        only done is stored; every other state is derived. */
     skillsDone: {

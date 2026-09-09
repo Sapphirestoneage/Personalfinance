@@ -31,7 +31,7 @@ module.exports = function (t) {
       work: opts.work || {} });
     return Schema.createHousehold({
       people: [person], filingStatus: 'single',
-      expenses: { monthlyEssential: { estimatedValueCents: Money.isEntered(opts.spend) ? opts.spend : null }, entries: opts.entries || [] },
+      expenses: { wants: { totalCents: Money.isEntered(opts.spend) ? opts.spend : null }, entries: opts.entries || [] },
       designedWeek: { blocks: opts.blocks || [] }
     });
   }
@@ -64,7 +64,7 @@ module.exports = function (t) {
   check('… $182,001 at 4%', fi.value, 18200100);
   check('… at the household’s withdrawal rate', fi.swrRate, 0.04);
   checkTrue('… and is Tier0.fireNumber fed the designed month, not a second formula',
-    fi.value === Tier0.fireNumber(Object.assign({}, base, { expenses: { monthlyEssential: { estimatedValueCents: 60667 } } })).value);
+    fi.value === Tier0.fireNumber(Object.assign({}, base, { expenses: { wants: { totalCents: 60667 } } })).value);
   const fi3 = Week.fiNumber(Object.assign({}, base, { assumptions: { swrRate: 0.035 } }), T);
   check('… a different withdrawal rate changes it: 728,004 ÷ 0.035', fi3.value, 20800114);
 
@@ -162,7 +162,7 @@ module.exports = function (t) {
   demo.designedWeek = Schema.createDesignedWeek({ blocks: worked });
   const dd = Week.design(demo, T);
   checkTrue('the demo persona with the worked week computes', Money.isOk(dd) && dd.value === 60667 && dd.hoursOfItself !== null, dd.reason);
-  check('… against Robin’s month', dd.nowMonthlyCents, Money.toCents(Demo.VALUES.monthlyEssentialExpenses));
+  check('… against Robin’s month', dd.nowMonthlyCents, 315000);
   demo.expenses.entries = Demo.buildSpending();
   const dt = Week.design(demo, T);
   checkTrue('… and with the tracked month, a groceries block would be $103.85 a week', Week.proposeCost(demo, T, { categoryId: 'groceries' }) === 10385 && dt.tracked === true);

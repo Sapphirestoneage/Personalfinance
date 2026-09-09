@@ -36,7 +36,7 @@ module.exports = function (t) {
       people: [Schema.createPerson({ id: 'p1', role: 'adult', employmentStatus: 'employed', dob: age === null ? null : dobAt(age),
         incomeSources: [Schema.createIncomeSource({ id: 'i1', personId: 'p1', type: 'w2', grossAnnualIncomeCents: 7200000 })] })],
       assets: [Schema.createAsset({ id: 'a1', category: 'investment', label: 'Index funds', valueCents: 4800000, liquid: false, ownerIds: ['p1'] })],
-      expenses: { monthlyEssential: { estimatedValueCents: 315000 } }
+      expenses: { wants: { totalCents: 315000 } }
     }, extra || {}));
   }
   const h32 = person(32);

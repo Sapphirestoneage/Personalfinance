@@ -59,7 +59,13 @@
       { label: 'Credit card',  balance: 3200,  rate: 0.229, minPayment: 95,  type: 'credit_card' }
     ],
 
-    monthlyEssentialExpenses: 3150,
+    /* The month as the four numbers (D-172): food, rent, getting around,
+       everything else. They sum to $3,150 - the same month the demo has
+       always had - so every figure downstream is unchanged. Deliberately
+       NOT the sum of the category lines below ($2,805 of spending): the
+       lines are a split Robin started and did not finish, and Cash Flow's
+       "lines vs the four numbers" card shows the -$345 gap. */
+    fat: { food: 710, accommodation: 1500, transportation: 220, wants: 720 },
 
     /* What the job actually takes, beyond the paycheque. 40 paid hours plus
        13 unpaid ones a week, and $400/mo of costs that only exist because
@@ -160,10 +166,12 @@
         });
       }),
       expenses: {
-        monthlyEssential: {
-          estimatedValueCents: Money.toCents(VALUES.monthlyEssentialExpenses),
-          trackedValueCents: null
+        needs: {
+          food: { monthlyCents: Money.toCents(VALUES.fat.food) },
+          accommodation: { monthlyCents: Money.toCents(VALUES.fat.accommodation) },
+          transportation: { monthlyCents: Money.toCents(VALUES.fat.transportation) }
         },
+        wants: { totalCents: Money.toCents(VALUES.fat.wants), therapy: null },
         /* Left empty here on purpose. The categorised breakdown is the Cash
            Flow room's example, loaded by buildSpending() when that room asks
            for it — so every other room's demo still opens on the estimate,

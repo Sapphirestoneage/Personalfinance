@@ -148,7 +148,7 @@
   function rentGuess(h) {
     if (noRent(h)) return null;
     var gm = grossMonthly(h);
-    return gm === null ? null : { value: Math.round(gm * RENT_SHARE_OF_GROSS), source: 'the 30% rule (convention)' };
+    return gm === null ? null : { value: Math.round(gm * RENT_SHARE_OF_GROSS), source: 'assumed 30% of gross because accommodation is not filled in (a convention)' };
   }
 
   function money(c) { return Money.formatCents(c); }

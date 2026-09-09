@@ -46,7 +46,7 @@ module.exports = function (t) {
   /* A bare employed household: nothing done, some open, the rest locked with a reason. */
   const employed = () => Schema.createHousehold({ filingStatus: 'single', state: 'NC',
     people: [Schema.createPerson({ id: 'P', role: 'adult', employmentStatus: 'employed', incomeSources: [Schema.createIncomeSource({ id: 'i', personId: 'P', grossAnnualIncomeCents: 7200000 })] })],
-    assets: [Schema.createAsset({ id: 'a', category: 'cash', valueCents: 400000 })], expenses: { monthlyEssential: { estimatedValueCents: 250000 } } });
+    assets: [Schema.createAsset({ id: 'a', category: 'cash', valueCents: 400000 })], expenses: { wants: { totalCents: 250000 } } });
   const r = ST.evaluate(employed(), T, { snapshots: 0 });
   checkTrue('the tree always evaluates', Money.isOk(r));
   check('a W-2 household never sees the self-employment skill, in any count', r.byId['quarterly-estimates'] + '/' + r.counts.notYours, 'undefined/1');
