@@ -9223,6 +9223,63 @@ Chromium at 412x915 with touch: hidden at rest; after typing a rent it reads
 `role="status"`, `aria-live="polite"`; tapping Undo restores the field and the
 toast then says "Undone". 21,771 + 5,614 + 25 + 448 + 340 checks pass.
 
+## D-166 — The other five questions, folded
+
+D-159 put spending and cash first and deferred the other half: hiding the
+remaining cards until asked for. Deferred because hiding a container of live
+inputs is exactly what D-034 exists to warn about. It is done now, and the way
+it is done is the point.
+
+### Folded by rule, not by moving anything
+
+    #cards.is-folded > *:nth-child(n+3) { display: none; }
+
+No node is detached, reparented or rebuilt. `placeCards()` still owns every
+child of `#cards` exactly as before, so the LIVE-FORM contract is untouched —
+and a hidden card cannot take focus, so nothing can steal the caret either.
+A wrapper element around "the rest" would have broken `placeCards()`, which
+reconciles `#cards.children` by index.
+
+### Folded for a stranger, open for someone coming back
+
+The decision is made once per load, from whether anything past the first two
+cards has a real answer — a **guess does not count**, or the one-pager's own
+prepopulation would hold the page open for everyone and the fold would never
+happen. Someone returning to numbers they gave last week sees them all;
+hiding a person's own answers to look tidy is a worse sin than a long page.
+
+Once per load, not per paint: re-deciding on every repaint would slam the page
+shut the moment the second box was filled.
+
+### The bug this nearly shipped with
+
+`test/forms.js` failed on a `<select>` it could no longer reach, and chasing
+that surfaced something worse than a test problem. The doors added in D-163 and
+the ledger's own rows point at anchors like `#q-cash` — and **half this room's
+cards are now folded on arrival**, so a link from another room would have
+landed on nothing at all. I built the trap in D-163 and the fold sprang it.
+
+A hash that names a card in this room now opens the page, checked both at paint
+and on `hashchange` — the second because a hash can change with no repaint at
+all: a deep link followed from another room, or the browser's own back and
+forward buttons. The first fix only covered paint and the test still failed,
+which is how I found the second half.
+
+`test/forms.js` also gained `revealFolded()`, which opens the page before
+tapping, since a person would: otherwise the suite tests a page no user ever
+sees and five real controls go unchecked.
+
+### Verified
+
+Chromium at 412x915 with touch. Fresh: 2 cards, offering "The other 5 questions
+— they feed the rooms after this one". Typing into both leaves it at 2, so the
+fold does not move under the finger. Revealing shows all 7 and the button goes.
+Returning with an answer past the first two: unfolded, all 7. Arriving at
+`start.html?from=fire#q-cash`: the card is visible and the header still offers
+"↩ Back to FIRE Number".
+
+21,832 + 5,614 + 25 + 448 + 340 checks pass.
+
 ---
 
 # The Dungeons & Dividends entries

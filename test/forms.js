@@ -1223,6 +1223,16 @@ function check(name, actual, expected) {
   console.log('  ✗ ' + name + `  (expected ${expected}, got ${actual})`);
 }
 
+async function revealFolded(page) {
+  try {
+    const btn = await page.$('#showrest');
+    if (btn && !(await btn.evaluate(n => n.hidden))) {
+      await btn.tap();
+      await page.waitForTimeout(250);
+    }
+  } catch (e) { /* room has no fold: nothing to open */ }
+}
+
 async function seed(page, kind) {
   await page.evaluate((k) => { localStorage.removeItem('slaf.household.v2'); }, kind);
   if (kind === 'empty') return;
@@ -1286,7 +1296,15 @@ async function tagFields(page, container) {
     await seed(page, c.seed);
     await page.reload({ waitUntil: 'networkidle' });
     await page.waitForTimeout(400);
+    /* Start Here folds everything past the first two questions for a new
+       arrival (D-166). A person opens it to reach the rest, so the harness
+       does the same before it starts tapping - otherwise it tests a page no
+       user ever sees and five real controls go unchecked. */
+    await revealFolded(page);
     if (c.prepare) { await c.prepare(page); await page.waitForTimeout(400); }
+    /* Again after prepare: several cases navigate, which lands on a freshly
+       folded page. */
+    await revealFolded(page);
 
     await tagFields(page, c.container);
 
@@ -1352,7 +1370,15 @@ async function tagFields(page, container) {
     await seed(page, c.seed);
     await page.reload({ waitUntil: 'networkidle' });
     await page.waitForTimeout(400);
+    /* Start Here folds everything past the first two questions for a new
+       arrival (D-166). A person opens it to reach the rest, so the harness
+       does the same before it starts tapping - otherwise it tests a page no
+       user ever sees and five real controls go unchecked. */
+    await revealFolded(page);
     if (c.prepare) { await c.prepare(page); await page.waitForTimeout(400); }
+    /* Again after prepare: several cases navigate, which lands on a freshly
+       folded page. */
+    await revealFolded(page);
 
     await tagFields(page, c.container);
 

@@ -42,6 +42,17 @@
   second palette in shared/theme.css; nothing here names a colour.
 -->
 <style>
+  /* Folding by CSS rule rather than by moving nodes: placeCards() still owns
+     every child of #cards, nothing is detached, and no input is rebuilt - so
+     the LIVE-FORM contract holds. A hidden card cannot take focus either, so
+     nothing can steal the caret. D-166. */
+  #cards.is-folded > *:nth-child(n+3) { display: none; }
+  .showrest { display: block; width: 100%; margin-top: var(--space-3);
+    background: transparent; border: 1px dashed var(--color-border-strong);
+    border-radius: var(--radius-md); color: var(--color-text-muted);
+    font-size: var(--text-sm); min-height: 44px; padding: var(--space-2) var(--space-3);
+    cursor: pointer; }
+  .showrest:hover { border-color: var(--color-accent-hover); color: var(--color-text); }
   .workspace { max-width: var(--measure); margin: 0 auto; }
   .ledger { margin-top: var(--space-4); }
   @media (min-width: 1080px) {
@@ -171,6 +182,8 @@
 
   <div class="workspace">
     <div id="cards"></div>
+
+    <button type="button" class="showrest" id="showrest" hidden></button>
 
     <!-- What is answered, what is not, what does not apply, and what a number
          is waiting on. Holds no input of its own, so it is outside the
@@ -681,6 +694,25 @@
   /* A row is a way back to its question. Scroll only - never focus the input,
      because a programmatic focus on a phone opens nothing and steals the
      caret from whatever the person was already typing in. D-034. */
+  /* A hash can change without a repaint - a deep link followed from another
+     room, or the browser's own back and forward - so the fold listens for it
+     directly rather than waiting for the next paint. D-166. */
+  function unfoldForHash() {
+    var box = el('cards');
+    if (!box || !location.hash || location.hash.length < 2) return;
+    var target = document.getElementById(location.hash.slice(1));
+    if (target && box.contains(target)) {
+      box.classList.remove('is-folded');
+      var btn = el('showrest'); if (btn) btn.hidden = true;
+    }
+  }
+  window.addEventListener('hashchange', unfoldForHash);
+
+  el('showrest').addEventListener('click', function () {
+    el('cards').classList.remove('is-folded');
+    this.hidden = true;
+  });
+
   el('ledger').addEventListener('click', function (evt) {
     var b = evt.target.closest('[data-jump]');
     if (!b) return;
@@ -710,6 +742,45 @@
     box.hidden = false;
   }
 
+  /* Folded for someone arriving with nothing, open for someone coming back to
+     numbers they already gave: hiding a person's own answers to look tidy
+     would be a worse sin than a long page. Decided once per load - re-deciding
+     on every paint would slam the page shut again the moment the second box
+     was filled. D-166. */
+  var foldDecided = false;
+  function paintFold(live) {
+    var box = el('cards'), btn = el('showrest');
+    if (!box || !btn) return;
+    var extra = Math.max(0, live.length - 2);
+    if (!foldDecided && live.length) {
+      foldDecided = true;
+      var x = h();
+      var answeredLater = live.slice(2).some(function (card) {
+        return (card.fields || []).some(function (f) {
+          var d = Ownership.describe(f, x, ROOM_ID);
+          /* A guess is not an answer - it must not hold the page open. */
+          return d && d.applies && d.isSet && !d.guessed;
+        });
+      });
+      if (extra > 0 && !answeredLater) box.classList.add('is-folded');
+    }
+    /* A deep link wins over the fold. The doors added in D-163 and the ledger's
+       own rows point at anchors like #q-cash, and half this room's cards are
+       folded on arrival - so a link that lands on a folded card lands on
+       nothing. Whenever the URL names a card, the page opens. Re-checked every
+       paint rather than once, because the hash changes without a reload. */
+    if (location.hash && location.hash.length > 1) {
+      var target = document.getElementById(location.hash.slice(1));
+      if (target && box.contains(target)) box.classList.remove('is-folded');
+    }
+    var folded = box.classList.contains('is-folded');
+    btn.hidden = !folded || extra === 0;
+    if (folded) {
+      btn.textContent = 'The other ' + extra + ' question' + (extra === 1 ? '' : 's')
+        + ' \u2014 they feed the rooms after this one';
+    }
+  }
+
   var stateBuilt = false;
   function paint() {
     var x = h();
@@ -722,6 +793,7 @@
 
     var live = situationCards();
     placeCards(live);
+    paintFold(live);
     live.forEach(function (c, i) { CARD_NODES[c.key].querySelector('[data-step]').textContent = (i + 2) + ' of ' + (live.length + 1); });
     el('q-fine-tune').hidden = !s;
     el('q-import').hidden = !s;
