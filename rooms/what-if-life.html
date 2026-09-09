@@ -94,12 +94,13 @@
     <p class="why" id="answers-why"></p>
   </section>
 
-  <section class="slaf-card" id="three" style="margin-top:var(--space-4)">
+  <section class="slaf-card" id="three" style="margin-top:var(--space-4)" data-bands>
     <span class="slaf-eyebrow">Dream · default · disaster</span>
     <h2 style="margin:var(--space-2) 0 0">The same event, three ways</h2>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0" id="three-hint"></p>
     <div id="worth-chart"></div>
     <p class="why" id="worth-why"></p>
+    <div id="three-lens"></div>
     <div class="cols" id="cols"></div>
     <div id="cash-chart"></div>
     <p class="why" id="plot-why"></p>
@@ -159,6 +160,8 @@
 <script src="../engines/vpw.js"></script>
 <script src="../engines/ss.js"></script>
 <script src="../engines/events.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../shared/bands.js"></script>
 <script src="../shared/charts.js"></script>
 <script>
 (function () {
@@ -168,7 +171,7 @@
       Charts = SLAF.Charts;
 
   var ROOM_ID = 'what-if-life';
-  var TABLES = null, EVENTS = null;
+  var TABLES = null, EVENTS = null, lastThree = null;
   /* Page-local. An event you are thinking about is not a fact about your
      household; only "Save this scenario" writes. */
   var state = { templateId: null, answers: {}, disasterLine: '' };
@@ -312,6 +315,7 @@
     var cols = el('cols');
     if (!t) { cols.innerHTML = ''; clearPlots(); el('three-hint').textContent = 'Pick an event to run it.'; el('three-why').textContent = ''; return null; }
     var all = Events.runAll(Spine.getProfile(), t, state.answers, opts());
+    lastThree = all;
     var order = TABLES.tripleD.order;
     var bad = order.filter(function (d) { return !Money.isOk(all[d]); });
     if (bad.length) {
@@ -517,6 +521,12 @@
     renderPick();
     questionForm.force();
     renderNow();
+    SLAF.Lens.mountStrip('three-lens', function () {
+      var d = lastThree && lastThree['default'];
+      if (!d || !Money.isOk(d)) return [];
+      return [{ label: d.vsBaselineCents < 0 ? 'Behind doing nothing by' : 'Ahead of doing nothing by', cents: Math.abs(d.vsBaselineCents) },
+              { label: 'Net worth then', cents: d.netWorthAtEndCents }];
+    }, function () { return TABLES; });
     jumpToHash();
   }).catch(function (err) {
     var notice = el('load-notice');

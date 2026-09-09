@@ -78,6 +78,7 @@
     <p class="slaf-reason" data-reason></p>
     <div class="slaf-bar" style="margin-top:var(--space-3)"><span id="progress-bar" style="width:0"></span></div>
     <div data-detail></div>
+    <div id="fire-lens"></div>
     <div id="out-path"></div>
     <p class="why slaf-hint" id="path-why" style="margin:var(--space-2) 0 0"></p>
   </section>
@@ -155,6 +156,9 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/fire.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../shared/bands.js"></script>
 <script src="../shared/charts.js"></script>
 <script>
 (function () {
@@ -252,6 +256,17 @@
     return '';
   }
 
+  /* Years away three ways - low, likely, high real return from the one band
+     table - so the headline never pretends one rate is a fact. D-170. */
+  function bandsLine(h) {
+    var o = optsFor(variantId, h);
+    if (o.variantId && Fire.variantById(TABLES.fireVariants, o.variantId) && Fire.variantById(TABLES.fireVariants, o.variantId).mode === 'coast') return '';
+    return SLAF.Bands.lineHtml(TABLES, function (rate) {
+      var p = Fire.progressToward(h, TABLES, Object.assign({}, o, { localOverrides: Object.assign({}, o.localOverrides, { expectedReturnRate: rate }) }));
+      return Money.isOk(p) ? p.yearsAway : p;
+    }, function (v) { return v === 0 ? 'already there' : v + ' yrs'; }, { lead: 'Years away, three ways' });
+  }
+
   function renderTarget(h) {
     var section = el('out-target');
     var figure = section.querySelector('[data-figure]');
@@ -297,6 +312,7 @@
     detail.className = 'out-detail';
     detail.innerHTML = dl(rows)
       + '<p class="slaf-reason">' + (Money.isOk(prog) ? yearsLabel(prog.yearsAway) : prog.reason || '') + '</p>'
+      + bandsLine(h)
       + (target.variant.mode === 'coast'
           ? '<p class="slaf-reason">Coast doesn’t mean stop working — it means stop <em>saving</em>. You still cover your own costs until then.</p>'
           : '')
@@ -460,6 +476,14 @@
   Reference.load().then(function (tables) {
     TABLES = tables;
     render();
+    SLAF.Lens.mountStrip('fire-lens', function (h) {
+      var t = Fire.calculateFIRE(h, TABLES, optsFor(variantId, h));
+      var p = Fire.progressToward(h, TABLES, optsFor(variantId, h));
+      var rows = [];
+      if (Money.isOk(t)) { rows.push({ label: 'Your number', cents: t.value }); rows.push({ label: 'A year of spending', cents: t.annualExpensesCents, href: Ownership.linkTo('cash-flow', 'spending', ROOM_ID) }); }
+      if (Money.isOk(p)) rows.push({ label: 'Still to go', cents: Math.max(0, p.targetCents - p.investmentsCents) });
+      return rows;
+    }, function () { return TABLES; });
     jumpToHash();
   }).catch(function (err) {
     var notice = el('load-notice');

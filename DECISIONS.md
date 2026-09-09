@@ -9520,6 +9520,106 @@ inputs use, so they wait for a per-room pass rather than a blanket cut.
 
 ---
 
+## D-170 — Section 0: the eight promises, verified, and what was half-built
+
+The brief for this pass opens with a list of things earlier sessions had
+specified and asks that each be confirmed end to end, by a visible selector,
+on every room, before anything new is built. Here is what the audit found and
+what it took to make every line true.
+
+### What was already true
+
+- **The situation gate** (`shared/gate.js`, D-142): a card that does not
+  apply is absent from Start Here's DOM, not hidden, and a room that is not
+  for the situation folds itself behind a notice that says why.
+- **Undo and redo** (`shared/undo.js`, D-165): the pair and the toast are on
+  all 68 pages.
+- **The save toast with undo**: the same file.
+- **The field-status ledger** with relevancy: Start Here's rail (D-166).
+- **Three toggle modes, folds, deep links and Triple D** — true on the 26
+  rooms built on the template (D-097) and on Start Here and the dashboard.
+  **Not true on the 40 older rooms.** FIRE, Savings Rate, The Windfall, Quick
+  Math, the Snapshot, Where It Goes, Fire Lab and The Long Way Round each
+  projected a number forward at one rate with no lens toggle and no band;
+  51 rooms had no progressive fold; no room but Start Here wrote its place
+  back to the address bar.
+
+### What was built, once, for every room
+
+All of it hangs off `Progress.mountHeader`, the one mount point every room
+reaches — the same lever as the walk strip, the situation notice and the
+export (D-142, D-149, D-155) — so no room can be forgotten and none had to be
+edited for it.
+
+1. **Header first.** `shared/progress.js` mounts the header at
+   `DOMContentLoaded`, before any table has loaded and before a room's own
+   init can throw; the room's later call is a no-op. A page that dies halfway
+   still has its menu and a way out (the D-168 failure, closed at the root).
+2. **The tail fold.** A room is its first four sections; the rest fold
+   behind one button that names what it holds ("Show the rest · Strategies
+   · Rewards · Timeline"). Folding is a class on `<main>` and a class on each
+   folded section — nothing detached, no input rebuilt, so D-034 holds — and
+   the fold opens itself when the hash points inside it, at load and on
+   every `hashchange`, so no deep link lands on a hidden target. 51 rooms
+   fold; 14 are short enough not to; Start Here and the dashboard fold on
+   their own terms and say so with `data-fold="own"`. A section not
+   displayed at mount (a wizard's later stage, a hidden branch) is not part
+   of the room yet and is left alone.
+3. **The URL follows you.** As a section reaches the top of the screen its
+   id becomes the hash, written with `replaceState` — nothing added to
+   history, nothing re-scrolled. Copy the address at any moment and it lands
+   here. Armed on the first scroll so a `?from=` return link is never
+   clobbered at load.
+4. **Triple D everywhere a return appears.** New `shared/bands.js`:
+   `Bands.lineHtml(tables, fn, fmt)` runs any projection three ways at the
+   low, likely and high *real* return from `data/return_bands.json` (2% ·
+   5% · 8%, the 25th/50th/75th percentile of ten-year outcomes) and renders
+   one line — "Years away, three ways: 14 yrs if returns run low (2%) · 9
+   yrs likely (5%) · 7 yrs if they run high (8%)". The likely figure is the
+   headline everywhere else on the page; the other two say how wide "about"
+   is. Added to FIRE (years away per variant), Fire Lab, Savings Rate (the
+   date), The Windfall (what waiting costs), Quick Math (the habit invested
+   instead), the Snapshot (FI progress), Where It Goes (the winner after
+   tax) and The Long Way Round (the leader's pot; its engine takes a
+   `returnRate` option). What If, Life already ran dream/default/disaster
+   from the same table and is marked `data-bands`.
+5. **The three toggle modes** on those same rooms: `Lens.mountStrip(host,
+   amounts, tables)` mounts the existing $/hours/bought/pushed toggle with
+   the room's two or three key amounts under the headline. Same
+   `shared/lens.js`, same session-scoped mode, no new logic.
+
+### The gate: test/features.js
+
+Every room, on a phone-sized touch browser, against the demo household:
+header at `DOMContentLoaded`; nothing thrown; undo, redo and the toast
+present; a long room folds and one tap opens it; projection rooms carry the
+toggle and exactly three band figures; the last subsection is a visible
+deep-link target; scrolling to the bottom writes a section id to the hash;
+Start Here carries the ledger; and the gate itself — the 401(k) card exists
+for the employed demo and is absent from the DOM once the person is retired.
+A one-off calculator (Where It Goes, The Windfall) is given a figure first,
+because it projects nothing until it has one.
+
+### Also audited on the way: every button
+
+A script tapped every visible button in every room once (928 taps) and
+flagged 33 that changed nothing on screen. All 33 are explained, none is a
+dead button: CSV/JSON/Print start a download the DOM cannot see; the lens
+toggle on a room with no amounts to re-read swaps two `aria-pressed` states;
+"Use" writes a suggestion into an input's value; and an "Undo" of another
+room's change undoes it in the household, not on that page. The two real
+dead buttons of the week (D-168) are what render.js now guards.
+
+### Not changed
+
+The 26 template rooms already had every one of the eight; they are
+untouched except for the shared fold and URL sync they inherit.
+
+Gate: 584 checks across 67 rooms. Unit 22,288 · dnd 5,614 · export 25 ·
+render 402 · forms 448 · responsive 345.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

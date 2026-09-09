@@ -130,6 +130,8 @@
     </div>
     <div class="verdict" id="a-verdict">—</div>
     <p class="why" id="a-why"></p>
+    <div id="a-bands"></div>
+    <div id="a-lens"></div>
     <ol class="ranked" id="a-ranked"></ol>
   </section>
 
@@ -202,6 +204,11 @@
 <script src="../shared/undo.js"></script>
 <script src="../engines/selfemployed.js"></script>
 <script src="../engines/accounts.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../shared/bands.js"></script>
 <script>
 (function () {
   'use strict';
@@ -277,10 +284,18 @@
       verdict.className = 'verdict is-incomplete';
       el('a-why').textContent = '';
       el('a-ranked').innerHTML = '';
+      el('a-bands').innerHTML = '';
       return;
     }
     verdict.className = 'verdict';
     var best = r.byKey[r.bestKey];
+    /* The winner's after-tax pot three ways - low, likely, high real return -
+       so the comparison carries its own width. D-170. */
+    el('a-bands').innerHTML = SLAF.Bands.lineHtml(TABLES, function (rate) {
+      var x = Accounts.compareAccounts({ pretaxCents: v['a-amount'], currentTaxRate: assumptions.marginalRate, futureTaxRate: v['a-later'],
+        annualReturn: rate, years: v['a-years'], capitalGainsRate: v['a-cg'] });
+      return Money.isOk(x) ? Money.ok(x.byKey[x.bestKey].afterTaxCents) : x;
+    }, Money.formatCents, { lead: best.label + ' after tax, three ways' });
     verdict.textContent = r.ratesEqual
       ? 'Roth and Traditional tie'
       : best.label + ' wins by ' + Money.formatCents(r.marginOverNextCents);
@@ -538,6 +553,15 @@
 
   Reference.load().then(function (tables) {
     TABLES = tables;
+    SLAF.Lens.mountStrip('a-lens', function (h) {
+      var a = Schema.resolveAssumptions(h);
+      var r = Accounts.compareAccounts({ pretaxCents: v['a-amount'], currentTaxRate: a.marginalRate, futureTaxRate: v['a-later'],
+        annualReturn: Money.isEntered(v['a-return']) ? v['a-return'] : a.expectedReturnRate, years: v['a-years'], capitalGainsRate: v['a-cg'] });
+      var rows = [];
+      if (Money.isEntered(v['a-amount'])) rows.push({ label: 'Put in, pre-tax', cents: v['a-amount'] });
+      if (Money.isOk(r)) rows.push({ label: r.byKey[r.bestKey].label + ' after tax', cents: r.byKey[r.bestKey].afterTaxCents });
+      return rows;
+    }, function () { return TABLES; });
     paintSetup();
     render();
     jumpToHash();

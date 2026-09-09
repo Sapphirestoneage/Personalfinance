@@ -91,6 +91,8 @@
       <div class="headline-ring" id="progress-ring"></div>
     </div>
     <dl class="facts" id="facts"></dl>
+    <div id="lab-bands"></div>
+    <div id="lab-lens"></div>
   </section>
 
   <section class="slaf-card" id="swr">
@@ -161,6 +163,9 @@
 <script src="../engines/tier0.js"></script>
 <script src="../engines/cashflow.js"></script>
 <script src="../engines/fire.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../shared/bands.js"></script>
 <script src="../shared/charts.js"></script>
 <script>
 (function () {
@@ -241,9 +246,17 @@
           'At your current saving and assumed return.']);
       }
       el('facts').innerHTML = facts(rows);
+      /* Three ways (D-170): the same arithmetic at the low, likely and high
+         real return, so "time to get there" carries its own width. */
+      el('lab-bands').innerHTML = SLAF.Bands.lineHtml(TABLES, function (rate) {
+        var o = opts();
+        var p = Fire.progressToward(h, TABLES, Object.assign({}, o, { localOverrides: Object.assign({}, o.localOverrides || {}, { expectedReturnRate: rate }) }));
+        return Money.isOk(p) ? p.yearsAway : p;
+      }, function (v) { return yearsLabel(v); }, { lead: 'Time to get there, three ways' });
     } else {
       el('progress-ring').innerHTML = '';
       el('facts').innerHTML = '';
+      el('lab-bands').innerHTML = '';
     }
 
     /* ---- The withdrawal rate -------------------------------------------- */
@@ -419,6 +432,12 @@
 
   Reference.load().then(function (tables) {
     TABLES = tables;
+    SLAF.Lens.mountStrip('lab-lens', function (h) {
+      var p = Fire.progressToward(h, TABLES, opts());
+      if (!Money.isOk(p)) return [];
+      return [{ label: 'The number', cents: p.targetCents }, { label: 'Invested now', cents: p.investmentsCents, href: Ownership.linkTo('statement', 'portfolios', ROOM_ID) },
+              { label: 'Still to go', cents: Math.max(0, p.targetCents - p.investmentsCents) }];
+    }, function () { return TABLES; });
     render();
     jumpToHash();
   }).catch(function (err) {

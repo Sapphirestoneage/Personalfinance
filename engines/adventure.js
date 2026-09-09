@@ -86,7 +86,9 @@
     var income = b.annualIncomeCents;
     var spend = b.annualSpendCents;
     var pot = b.portfolioCents;
-    var rate = t.returnRateReal;
+    /* The table's rate unless the caller asks for another - the three-way
+       band line runs the same walk at the low and high returns. D-170. */
+    var rate = Money.isEntered(o.returnRate) ? o.returnRate : t.returnRateReal;
 
     /* The house hack cuts housing, and housing is a stated share of spending -
        the share is an assumption and it is named on screen beside the result. */

@@ -1161,3 +1161,22 @@ a:hover { color: var(--sapphire-100); }
   details > summary { display: none; }
   details > *:not(summary) { display: block !important; }
 }
+
+/* ---- D-170: the tail fold, the band line, the lens strip ------------------- */
+.slaf-tail-folded > section.slaf-tail { display: none !important; }
+.slaf-showrest { display: block; width: 100%; max-width: var(--measure); margin: var(--space-3) auto 0;
+  background: transparent; border: 1px dashed var(--color-border-strong); border-radius: var(--radius-md);
+  color: var(--color-text-muted); font-size: var(--text-sm); min-height: 44px; padding: var(--space-2) var(--space-3);
+  cursor: pointer; text-align: left; }
+.slaf-showrest b { color: var(--color-text); font-weight: 600; margin-right: var(--space-2); }
+.slaf-showrest small { font-size: var(--text-xs); }
+.slaf-showrest:hover { border-color: var(--color-accent-hover); color: var(--color-text); }
+.slaf-bands { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: 1.6; }
+.slaf-bands-lead { font-weight: 600; color: var(--color-text); }
+.slaf-band b { color: var(--color-text); font-variant-numeric: tabular-nums; }
+.slaf-band--likely b { color: var(--color-accent-hover); }
+.slaf-band small, .slaf-bands-note { font-size: var(--text-xs); }
+.slaf-lens-strip { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; margin: var(--space-3) 0 0; }
+.slaf-lens-amounts { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-size: var(--text-sm); }
+.slaf-lens-amounts li { display: inline-flex; gap: var(--space-1); align-items: baseline; color: var(--color-text-muted); }
+.slaf-lens-amounts li span { color: var(--color-text); font-weight: 600; font-variant-numeric: tabular-nums; }

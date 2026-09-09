@@ -800,6 +800,11 @@
 
   function mountHeader(roomId) {
     if (typeof document === 'undefined') return null;
+    /* Mounted once. The header goes up at DOMContentLoaded (see the listener
+       at the bottom of this file) so it is on screen before any table has
+       loaded; the room's own later call is then a no-op. D-170. */
+    var have = document.querySelector('.slaf-hops-host');
+    if (have) return have;
     var back = document.querySelector('.room-back, .back');
     if (!back) return null;
     var nav = document.createElement('div');
@@ -810,7 +815,128 @@
     mountSituation(roomId);
     mountWalk(roomId, nav);
     mountDoors(roomId);
+    mountFold(roomId);
+    mountSectionSync(roomId);
     return nav;
+  }
+
+  /* ---- Progressive disclosure: the tail of a long room folds (D-170) -----
+     A room is its first few sections; the rest sit behind one button that
+     names what it holds. Folding is a class on <main> plus a class on each
+     folded section — nothing is detached and no input is rebuilt, so the
+     live-form rule (D-034) holds and a deep link into a folded section still
+     resolves: the fold opens itself when the hash points inside it, at load
+     and on every hashchange. Rooms that fold on their own terms (Start
+     Here's cards, the dashboard's panel) say so with data-fold="own". */
+  var FOLD_KEEP = 4;
+  function roomSections(host) {
+    /* The situation notice folds the whole room (D-142) with a class on the
+       host; lift it for the measurement so the room's own sections are seen
+       as they will be once "show it anyway" is tapped. Synchronous, so no
+       frame is painted in between. */
+    var lifted = host.classList.contains('slaf-folded');
+    if (lifted) host.classList.remove('slaf-folded');
+    var out = Array.prototype.filter.call(host.children, function (n) {
+      /* A section that is not displayed at mount - a wizard stage, a
+         hidden branch - is not part of the room yet, so it neither folds
+         nor writes itself to the URL. */
+      return n.tagName === 'SECTION' && n.id && !n.hidden
+        && n.id !== 'slaf-progress' && n.id !== 'slaf-notapply'
+        && (typeof getComputedStyle !== 'function' || getComputedStyle(n).display !== 'none');
+    });
+    if (lifted) host.classList.add('slaf-folded');
+    return out;
+  }
+  function sectionName(roomId, sec) {
+    var room = Registry.byId(roomId);
+    var sub = room && (room.subsections || []).filter(function (x) { return x.id === sec.id; })[0];
+    if (sub) return sub.label;
+    var h = sec.querySelector('h2, .slaf-eyebrow, h3');
+    return h ? (h.textContent || '').trim().replace(/\s+/g, ' ') : sec.id;
+  }
+  function mountFold(roomId) {
+    if (typeof document === 'undefined') return null;
+    var host = document.querySelector('main') || document.querySelector('.wrap');
+    if (!host || host.getAttribute('data-fold') === 'own') return null;
+    if (document.getElementById('showrest')) return null;
+    var secs = roomSections(host);
+    if (secs.length <= FOLD_KEEP) return null;
+    var folded = secs.slice(FOLD_KEEP);
+    folded.forEach(function (sec) { sec.classList.add('slaf-tail'); });
+    host.classList.add('slaf-tail-folded');
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'showrest';
+    btn.className = 'slaf-showrest';
+    var names = folded.map(function (sec) { return sectionName(roomId, sec); });
+    btn.innerHTML = '<b>Show the rest</b> <small>' + escapeHtml(names.join(' · ')) + '</small>';
+    secs[FOLD_KEEP - 1].parentNode.insertBefore(btn, secs[FOLD_KEEP - 1].nextSibling);
+
+    function unfold() {
+      host.classList.remove('slaf-tail-folded');
+      if (btn.parentNode) btn.parentNode.removeChild(btn);
+      window.removeEventListener('hashchange', check);
+    }
+    btn.addEventListener('click', unfold);
+    function check() {
+      var id = (location.hash || '').slice(1);
+      if (!id) return;
+      var target = document.getElementById(id);
+      if (!target) return;
+      var inside = folded.some(function (sec) { return sec === target || sec.contains(target); });
+      if (!inside) return;
+      unfold();
+      target.scrollIntoView({ block: 'start' });
+    }
+    window.addEventListener('hashchange', check);
+    check();
+    return btn;
+  }
+
+  /* ---- The URL follows you (D-170) -------------------------------------
+     As a section reaches the top of the screen its id becomes the hash,
+     written with replaceState so nothing is added to history and nothing
+     re-scrolls. Copy the address at any moment and it lands here. */
+  function mountSectionSync(roomId) {
+    if (typeof document === 'undefined' || typeof window === 'undefined') return null;
+    var host = document.querySelector('main') || document.querySelector('.wrap');
+    if (!host) return null;
+    var secs = roomSections(host);
+    if (secs.length < 2) return null;
+    var queued = false;
+    function current() {
+      /* The last section whose top has passed the upper third of the
+         screen; at the very bottom, the last section on the page. */
+      var line = window.innerHeight * 0.35, hit = null;
+      var atEnd = window.innerHeight + window.pageYOffset >= document.documentElement.scrollHeight - 2;
+      secs.forEach(function (sec) {
+        if (sec.hidden || getComputedStyle(sec).display === 'none') return;
+        var top = sec.getBoundingClientRect().top;
+        if (top <= line || (atEnd && top < window.innerHeight)) hit = sec;
+      });
+      return hit;
+    }
+    function sync() {
+      queued = false;
+      var sec = current();
+      if (!sec || location.hash === '#' + sec.id) return;
+      try { history.replaceState(history.state, '', location.pathname + location.search + '#' + sec.id); } catch (err) { /* fine */ }
+    }
+    window.addEventListener('scroll', function () {
+      if (queued) return;
+      queued = true;
+      (window.requestAnimationFrame || setTimeout)(sync);
+    }, { passive: true });
+    return { sync: sync };
+  }
+
+  /** The room this page is, from its path — for the header-first mount. */
+  function roomIdFromLocation() {
+    if (typeof location === 'undefined') return null;
+    var file = (location.pathname.split('/').pop() || 'index.html');
+    var hit = Registry.all().filter(function (r) { return r.href.split('/').pop() === file; })[0];
+    return hit ? hit.id : null;
   }
 
   /**
@@ -883,9 +1009,21 @@
     return { repaint: paint, el: box };
   }
 
+  /* Header first: before any table loads, before the room's init can throw.
+     A room that dies halfway still has its menu and its way out. D-170. */
+  if (typeof document !== 'undefined' && typeof location !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', function () {
+      var id = roomIdFromLocation();
+      if (id && !document.querySelector('.slaf-hops-host')) mountHeader(id);
+    });
+  }
+
   return {
     mount: mount,
     mountHeader: mountHeader,
+    mountFold: mountFold,
+    mountSectionSync: mountSectionSync,
+    roomIdFromLocation: roomIdFromLocation,
     mountSituation: mountSituation,
     situationNoticeHtml: situationNoticeHtml,
     mountWalk: mountWalk,

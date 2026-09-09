@@ -139,5 +139,39 @@
     }).join('') + '</div>';
   }
 
-  return { MODES: MODES, STORE_KEY: STORE_KEY, wage: wage, available: available, fiInputs: fiInputs, apply: apply, format: format, formatMonths: formatMonths, mode: mode, setMode: setMode, setDefault: setDefault, defaultMode: defaultMode, toggleHtml: toggleHtml };
+  /* ---- The strip: toggle plus the amounts it reads, for rooms not on the
+     template (D-170). `amountsFn(h, tables)` returns [{ label, cents, href }];
+     the strip repaints when the mode or the household changes and never
+     holds an input, so it is free to rebuild. ------------------------------- */
+  function mountStrip(hostId, amountsFn, getTables) {
+    if (typeof document === 'undefined') return null;
+    var host = document.getElementById(hostId);
+    if (!host) return null;
+    var S = spine();
+    function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    function paint() {
+      var h = S ? S.getProfile() : {};
+      var tables = typeof getTables === 'function' ? getTables() : getTables;
+      var cur = mode();
+      var rows = (amountsFn && amountsFn(h, tables)) || [];
+      host.innerHTML = '<div class="slaf-lens-strip">' + toggleHtml(h, tables, hostId + '-lens')
+        + '<ul class="slaf-lens-amounts">' + rows.map(function (r) {
+            if (!Money.isEntered(r.cents)) return '';
+            var text = cur === '$' ? Money.formatCents(r.cents) : format(r.cents, cur, h, tables);
+            var label = r.href ? '<a href="' + esc(r.href) + '">' + esc(r.label) + '</a>' : esc(r.label);
+            return '<li>' + label + '<span>' + esc(text) + '</span></li>';
+          }).join('') + '</ul></div>';
+    }
+    host.addEventListener('click', function (evt) {
+      var b = evt.target.closest('[data-lens]');
+      if (!b) return;
+      setMode(b.getAttribute('data-lens'));
+      paint();
+    });
+    if (S && S.onChange) S.onChange(paint);
+    paint();
+    return { repaint: paint };
+  }
+
+  return { MODES: MODES, mountStrip: mountStrip, STORE_KEY: STORE_KEY, wage: wage, available: available, fiInputs: fiInputs, apply: apply, format: format, formatMonths: formatMonths, mode: mode, setMode: setMode, setDefault: setDefault, defaultMode: defaultMode, toggleHtml: toggleHtml };
 });

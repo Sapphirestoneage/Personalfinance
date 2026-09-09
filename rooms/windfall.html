@@ -124,6 +124,8 @@
     <h2 style="margin:var(--space-2) 0 0">If the market does what you assumed</h2>
     <div class="slaf-figure" data-figure>—</div>
     <p class="slaf-reason" data-reason></p>
+    <div id="cost-bands"></div>
+    <div id="cost-lens"></div>
     <div id="path-body" hidden>
       <div id="path"></div>
       <p id="path-desc" class="why"></p>
@@ -169,6 +171,11 @@
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
 <script src="../engines/windfall.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../shared/bands.js"></script>
 <script src="../shared/charts.js"></script>
 <script>
 (function () {
@@ -198,6 +205,7 @@
     r.hidden = !why;
   }
 
+  var TABLES = null;
   function assumedReturn() {
     if (Money.isEntered(state.returnRate)) return state.returnRate;
     return Schema.resolveAssumptions(Spine.getProfile()).expectedReturnRate;
@@ -319,6 +327,14 @@
   /* ---- What it costs, and the path -------------------------------------- */
 
   function renderCost(r) {
+    /* The gap three ways (D-170): the low, likely and high real return from
+       the one band table, beside the single rate the figure assumes. */
+    el('cost-bands').innerHTML = (Money.isOk(r) && !r.degenerate)
+      ? SLAF.Bands.lineHtml(TABLES, function (rate) {
+          var x = Windfall.compare(Object.assign(opts(), { annualRate: rate }));
+          return Money.isOk(x) && !x.degenerate ? Money.ok(x.gapCents) : Money.incomplete('No answer at this rate.', []);
+        }, function (v) { return (v >= 0 ? 'costs ' : 'gains ') + Money.formatCents(Math.abs(v)); }, { lead: 'Waiting, three ways' })
+      : '';
     if (!Money.isOk(r) || r.degenerate) {
       setFigure('out-cost', null, Money.isOk(r) ? '' : r.reason);
       el('path-body').hidden = true;
@@ -435,8 +451,16 @@
   SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(render);
 
-  Reference.load().then(function () {
+  Reference.load().then(function (tables) {
+    TABLES = tables;
     renderNow();
+    SLAF.Lens.mountStrip('cost-lens', function () {
+      var r = Windfall.compare(opts());
+      var rows = [];
+      if (Money.isEntered(state.amountCents)) rows.push({ label: 'The money', cents: state.amountCents });
+      if (Money.isOk(r) && !r.degenerate) rows.push({ label: r.gapCents >= 0 ? 'What waiting costs' : 'What waiting gains', cents: Math.abs(r.gapCents) });
+      return rows;
+    }, function () { return TABLES; });
     jumpToHash();
   }).catch(function (err) {
     var notice = el('load-notice');

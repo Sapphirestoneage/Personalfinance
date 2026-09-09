@@ -181,6 +181,7 @@
     <div class="slaf-bar" style="margin-top:var(--space-3)"><span id="fire-bar" style="width:0"></span></div>
     <p class="slaf-reason" data-reason></p>
     <div data-detail></div>
+    <div id="fp-lens"></div>
   </section>
 
   <section class="slaf-card" id="out-percentile">
@@ -248,6 +249,9 @@
 <script src="../engines/cashflow.js"></script>
 <script src="../engines/benchmarks.js"></script>
 <script src="../engines/swan.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../shared/bands.js"></script>
 <script src="../shared/charts.js"></script>
 <script>
 (function () {
@@ -445,7 +449,10 @@
               + Money.formatCents(eta.annualContributionCents) + '/yr invested'
               + (eta.contributionBasis === 'includingMatch' ? ', employer match included.' : '.')
             : '')
-        + '</p>';
+        + '</p>'
+        /* The date three ways - low, likely, high real return. D-170. */
+        + SLAF.Bands.lineHtml(TABLES, function (rate) { return Tier0.yearsToFire(Spine.getProfile(), TABLES, { expectedReturnRate: rate }); },
+            function (v) { return v === 0 ? 'already there' : v + ' yr' + (v === 1 ? '' : 's'); }, { lead: 'Years away, three ways' });
     }
     el('fire-bar').style.width = (Money.isOk(r) ? Math.min(100, Math.max(0, r.value * 100)) : 0) + '%';
     setCard('out-fire-progress', r, function (v) {
@@ -714,6 +721,12 @@
 
   Reference.load().then(function (tables) {
     TABLES = tables;
+    SLAF.Lens.mountStrip('fp-lens', function (h) {
+      var r = Tier0.fireProgress(h, TABLES);
+      if (!Money.isOk(r)) return [];
+      return [{ label: 'Invested', cents: r.investmentsCents, href: Ownership.linkTo('statement', 'portfolios', ROOM_ID) }, { label: 'Target', cents: r.fireNumberCents, href: 'fire.html#out-target' },
+              { label: 'Still to go', cents: Math.max(0, r.fireNumberCents - r.investmentsCents) }];
+    }, function () { return TABLES; });
     render();
     jumpToHash();
   }).catch(function (err) {

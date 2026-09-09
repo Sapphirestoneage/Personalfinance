@@ -113,6 +113,8 @@
     <h2 class="slaf-eyebrow">All four, same five years</h2>
     <p class="slaf-note">Where each leaves you, and how long after that until the money covers a year of spending.</p>
     <div style="overflow-x:auto"><table class="cmp" id="cmptable"></table></div>
+    <div id="cmp-bands"></div>
+    <div id="cmp-lens"></div>
     <div class="navrow">
       <button class="slaf-btn" id="back-journey">← Back to the walk</button>
       <button class="slaf-btn slaf-btn--primary" id="to-shocks">Now break it →</button>
@@ -149,6 +151,10 @@
 <script src="../shared/undo.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/adventure.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../shared/bands.js"></script>
 <script>
 (function () {
   'use strict';
@@ -268,6 +274,11 @@
             + '<td>' + ((v.shareOfTarget || 0) * 100).toFixed(0) + '%</td>'
             + '<td>' + esc(after) + '</td></tr>';
         }).join('') + '</tbody>';
+    /* The leader's pot three ways - low, likely, high real return. D-170. */
+    el('cmp-bands').innerHTML = SLAF.Bands.lineHtml(TABLES, function (rate) {
+      var x = Adventure.run(h(), TABLES, { pathId: best.pathId, shockIds: state.shocks, returnRate: rate });
+      return Money.isOk(x) ? Money.ok(x.value.portfolioCents) : x;
+    }, fmt, { lead: best.label + ' after five years, three ways' });
   }
 
   /* ---- 6. Break it ------------------------------------------------------- */
@@ -339,11 +350,20 @@
      the table left a dead end with no menu and nothing said. D-168. */
   if (SLAF.Progress) SLAF.Progress.mount(ROOM_ID);
 
-  Reference.load(['adventurePaths']).then(function (tables) {
+  Reference.load(['adventurePaths', 'returnBands']).then(function (tables) {
     if (!tables || !tables.adventurePaths) throw new Error('no adventurePaths table');
     TABLES = tables;
     paintBaseline();
     paintAssumptions();
+    /* The side-by-side is painted at load as well, so its three-way line
+       exists before the walk reaches it. D-170. */
+    paintCompare();
+    SLAF.Lens.mountStrip('cmp-lens', function () {
+      var rows = Adventure.compare(h(), TABLES, state.shocks).filter(function (c) { return Money.isOk(c.result); });
+      if (!rows.length) return [];
+      var best = rows.reduce(function (a, b) { return b.result.value.shareOfTarget > a.result.value.shareOfTarget ? b : a; });
+      return [{ label: best.label + ' after five years', cents: best.result.value.portfolioCents }, { label: 'The target', cents: best.result.value.targetCents }];
+    }, function () { return TABLES; });
   }).catch(function (err) {
     /* Say so. A page that renders its furniture and none of its content, with
        no explanation, is the worst thing this app can do. */

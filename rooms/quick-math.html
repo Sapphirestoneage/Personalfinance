@@ -157,6 +157,8 @@
     </div>
     <div class="answer" id="habit-answer">—</div>
     <div class="out-detail" id="habit-detail"></div>
+    <div id="habit-bands"></div>
+    <div id="habit-lens"></div>
   </section>
 
   <section class="slaf-card" id="reading">
@@ -186,6 +188,10 @@
 <script src="../shared/undo.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/quickmath.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../shared/bands.js"></script>
 <script>
 (function () {
   'use strict';
@@ -365,9 +371,15 @@
       ends.hidden = true;
       setAnswer('habit-answer', r, '');
       el('habit-detail').innerHTML = '';
+      el('habit-bands').innerHTML = '';
       return;
     }
     ends.hidden = false;
+    /* The invested figure three ways - low, likely, high real return. D-170. */
+    el('habit-bands').innerHTML = SLAF.Bands.lineHtml(TABLES, function (rate) {
+      var x = Q.recurringHabit(h, TABLES, { monthlyAmountCents: v['b-amount'], years: v['b-years'], localOverrides: { expectedReturnRate: rate } });
+      return Money.isOk(x) ? Money.ok(x.investedInsteadCents) : x;
+    }, Money.formatCents, { lead: 'Invested instead, three ways' });
     el('habit-fire').textContent = Money.formatCents(r.fireNumberAdditionCents);
     el('habit-invested').textContent = Money.formatCents(r.investedInsteadCents);
     el('habit-invested-sub').textContent = 'over ' + Math.round(r.years) + ' years';
@@ -412,6 +424,18 @@
   Spine.onChange(render);
   render();
   jumpToHash();
+  /* The band table is the only table this room reads; nothing else here
+     waits on a fetch, so the page paints first and the three-way line
+     arrives when it does. D-170. */
+  SLAF.Reference.load(['returnBands']).then(function (tables) {
+    TABLES = tables;
+    render();
+    SLAF.Lens.mountStrip('habit-lens', function (h) {
+      var r = Q.recurringHabit(h, TABLES, { monthlyAmountCents: v['b-amount'], years: v['b-years'] });
+      if (!Money.isOk(r)) return [];
+      return [{ label: 'A year of it', cents: r.annualCostCents }, { label: 'Invested instead', cents: r.investedInsteadCents }];
+    }, function () { return TABLES; });
+  }).catch(function (err) { if (window.console && console.warn) console.warn('quick-math: ' + err.message); });
 })();
 </script>
 </body>
