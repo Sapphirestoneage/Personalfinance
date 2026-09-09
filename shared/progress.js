@@ -361,52 +361,148 @@
      every page already loads this file and already has the one element it
      hangs off. */
 
-  /* Upkeep first, because that is what a menu is reached for. Each is a
-     registry id, so a room that is renamed or moved is followed, and one
-     that does not exist is simply skipped rather than becoming a dead link. */
+  /* ---- The sidebar (D-177) ----------------------------------------------
+     Grouped by purpose, not by kind: Home, Your Numbers, Scorecard,
+     Decisions, What Matters, Level Up, Upkeep — the groups and every room's
+     place in them are data in shared/registry.js, rendered here once for
+     every page. Groups collapse; only the current room's group opens on
+     load, and what a person opens or closes is remembered in prefs. A search
+     box filters by title and alias. A Recent strip sits under Home. A status
+     dot marks each Your Numbers room filled, partly or empty from the
+     field ledger; read-only rooms and calculators carry none. A room whose
+     appliesWhen fails for this situation is absent, not greyed. */
+
+  /* Upkeep, kept as a named list for the pages that ask for it directly
+     (the map, the tests): the rooms a person reaches for from anywhere. */
   var UPKEEP = ['data', 'refresh', 'history', 'start', 'get-help'];
 
-  var GROUPS = [
-    ['core', 'The path'],
-    ['about-you', 'About you'],
-    ['read', 'What it means'],
-    ['explore', 'Explore']
-  ];
+  function globals() { return (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null; }
+  function prefs() { var g = globals(); return g && g.SLAF && g.SLAF.Prefs ? g.SLAF.Prefs : null; }
+  function spine() { var g = globals(); return g && g.SLAF && g.SLAF.Spine ? g.SLAF.Spine : null; }
+  function gateOf() { var g = globals(); return g && g.SLAF && g.SLAF.Gate ? g.SLAF.Gate : null; }
 
-  function menuLink(room, roomId, current) {
+  function situationNow() {
+    var S = spine(), G = gateOf();
+    if (!S || !G) return null;
+    try { return G.situationOf(S.getProfile()); } catch (e) { return null; }
+  }
+
+  /** filled · partly · empty for a Your Numbers room, from the fields it owns. */
+  function roomStatus(roomId, readings) {
+    if (!Ownership || !Ownership.ownedBy || !readings) return null;
+    var fields = Ownership.ownedBy(roomId);
+    if (!fields.length) return null;
+    var filled = fields.filter(function (f) { return readings[f] !== null && readings[f] !== undefined; }).length;
+    return filled === 0 ? 'empty' : filled === fields.length ? 'filled' : 'partly';
+  }
+  function readingsNow() {
+    var S = spine();
+    if (!S || !Ownership || !Ownership.readings) return null;
+    try { return Ownership.readings(S.getProfile()); } catch (e) { return null; }
+  }
+
+  function menuLink(room, roomId, current, status) {
     var here = room.id === current;
+    var search = (room.title + ' ' + (room.aliases || []).join(' ')).toLowerCase();
     return '<a class="slaf-menu-link' + (here ? ' is-here' : '') + '" href="'
-      + escapeHtml(href(room.href, roomId)) + '"' + (here ? ' aria-current="page"' : '') + '>'
-      + escapeHtml(room.title) + '</a>';
+      + escapeHtml(href(room.href, roomId)) + '"' + (here ? ' aria-current="page"' : '')
+      + ' data-room="' + escapeHtml(room.id) + '" data-search="' + escapeHtml(search) + '">'
+      + escapeHtml(room.title)
+      + (status ? '<i class="slaf-dot is-' + status + '" title="' + status + '" aria-label="' + status + '"></i>' : '')
+      + '</a>';
+  }
+  function extraLink(l, roomId) {
+    var search = (l.title + ' ' + (l.aliases || []).join(' ')).toLowerCase();
+    var to = l.href.indexOf('http') === 0 ? l.href : href(l.href, roomId);
+    return '<a class="slaf-menu-link is-extra" href="' + escapeHtml(to) + '" data-search="' + escapeHtml(search) + '">' + escapeHtml(l.title) + '</a>';
+  }
+
+  function recentIds(roomId) {
+    var P = prefs();
+    var list = P ? P.get('recent', []) : [];
+    if (!Array.isArray(list)) list = [];
+    return list.filter(function (id) { return id !== roomId && Registry.byId(id); }).slice(0, 3);
+  }
+  function rememberVisit(roomId) {
+    var P = prefs();
+    if (!P || !roomId || !Registry.byId(roomId)) return;
+    var list = P.get('recent', []);
+    if (!Array.isArray(list)) list = [];
+    list = [roomId].concat(list.filter(function (id) { return id !== roomId; })).slice(0, 6);
+    P.set('recent', list);
+  }
+
+  function groupOpen(groupId, currentGroup) {
+    var P = prefs();
+    var stored = P ? P.get('sidebar.open', {}) : {};
+    if (groupId === currentGroup) return true;
+    return !!(stored && stored[groupId]);
+  }
+
+  /** The nav body only: rebuilt when the household's situation changes.
+      The search box lives above it and is built once. */
+  function menuBodyHtml(roomId) {
+    var current = Registry.byId(roomId);
+    var currentGroup = current ? current.group : null;
+    var sit = situationNow();
+    var readings = readingsNow();
+    return Registry.groups().map(function (g) {
+      var rooms = Registry.inGroup(g.id, sit);
+      var links = (g.links || []);
+      var byAfter = {};
+      links.forEach(function (l) { byAfter[l.after || '__end'] = (byAfter[l.after || '__end'] || []).concat([l]); });
+      var out = [];
+      var lastSub = null;
+      rooms.forEach(function (r) {
+        if (g.subgroups && r.subgroup && r.subgroup !== lastSub) {
+          var sg = g.subgroups.filter(function (x) { return x.id === r.subgroup; })[0];
+          out.push('<p class="slaf-menu-sub" data-subgroup="' + escapeHtml(r.subgroup) + '">' + escapeHtml(sg ? sg.label : r.subgroup) + '</p>');
+          lastSub = r.subgroup;
+        }
+        out.push(menuLink(r, roomId, roomId, g.id === 'numbers' ? roomStatus(r.id, readings) : null));
+        (byAfter[r.id] || []).forEach(function (l) { out.push(extraLink(l, roomId)); });
+      });
+      (byAfter.__end || []).forEach(function (l) { out.push(extraLink(l, roomId)); });
+      if (g.id === 'home') {
+        var recent = recentIds(roomId).map(function (id) { return Registry.byId(id); }).filter(Boolean);
+        if (recent.length) {
+          out.push('<p class="slaf-menu-sub">Recent</p>');
+          recent.forEach(function (r) { out.push(menuLink(r, roomId, roomId, null).replace('slaf-menu-link', 'slaf-menu-link is-recent')); });
+        }
+      }
+      if (!out.length) return '';
+      return '<details class="slaf-menu-group" data-group="' + escapeHtml(g.id) + '"' + (groupOpen(g.id, currentGroup) ? ' open' : '') + '>'
+        + '<summary><span>' + escapeHtml(g.label) + '</span>' + (g.note ? '<small>' + escapeHtml(g.note) + '</small>' : '') + '</summary>'
+        + '<div class="slaf-menu-groupbody">' + out.join('') + '</div></details>';
+    }).join('');
   }
 
   function menuHtml(roomId) {
-    var all = Registry.inOrder();
-    var byId = {};
-    all.forEach(function (r) { byId[r.id] = r; });
-
-    var upkeep = UPKEEP.map(function (id) { return byId[id]; })
-      .filter(Boolean)
-      .map(function (r) { return menuLink(r, roomId, roomId); }).join('');
-
-    var seen = {};
-    UPKEEP.forEach(function (id) { seen[id] = true; });
-    var groups = GROUPS.map(function (g) {
-      var rooms = all.filter(function (r) { return r.kind === g[0] && !seen[r.id]; });
-      if (!rooms.length) return '';
-      return '<p class="slaf-menu-cap">' + escapeHtml(g[1]) + '</p>'
-        + rooms.map(function (r) { return menuLink(r, roomId, roomId); }).join('');
-    }).join('');
-
     return '<div class="slaf-menu-head">'
       + '<span class="slaf-menu-title">Money Rooms</span>'
-      + '<button type="button" class="slaf-menu-x" data-menu-close aria-label="Close the menu">\u2715</button>'
+      + '<button type="button" class="slaf-menu-x" data-menu-close aria-label="Close the menu">✕</button>'
       + '</div>'
-      + '<nav class="slaf-menu-body" aria-label="All rooms">'
-      + '<p class="slaf-menu-cap">Your data &amp; upkeep</p>' + upkeep
-      + '<a class="slaf-menu-link" href="' + ((atRoot(roomId) ? '' : '../')) + 'map.html">Every room, on one page</a>'
-      + groups
-      + '</nav>';
+      + '<div class="slaf-menu-search"><input type="search" id="slaf-menu-q" placeholder="Find a room" aria-label="Find a room" autocomplete="off"></div>'
+      + '<nav class="slaf-menu-body" aria-label="All rooms">' + menuBodyHtml(roomId) + '</nav>';
+  }
+
+  /** The search: hide links that do not match, then groups with nothing
+      left; while a query is in, matching groups open without being saved. */
+  function applySearch(panel, query) {
+    var q = String(query || '').trim().toLowerCase();
+    panel.querySelectorAll('.slaf-menu-group').forEach(function (d) {
+      var any = false, lastSub = null;
+      d.querySelectorAll('.slaf-menu-link, .slaf-menu-sub').forEach(function (n) {
+        if (n.classList.contains('slaf-menu-sub')) { n.hidden = !!q; lastSub = n; return; }
+        var hit = !q || (n.getAttribute('data-search') || '').indexOf(q) !== -1;
+        n.hidden = !hit;
+        if (hit) { any = true; if (q === '' && lastSub) lastSub.hidden = false; }
+      });
+      if (!q) { d.querySelectorAll('.slaf-menu-sub').forEach(function (n) { n.hidden = false; }); }
+      d.hidden = !any;
+      if (q && any) d.open = true;
+      else if (!q) d.open = d.getAttribute('data-was-open') === 'true';
+    });
   }
 
   /**
@@ -435,10 +531,45 @@
     panel.id = 'slaf-menu';
     panel.className = 'slaf-menu';
     panel.hidden = true;
+    rememberVisit(roomId);
     panel.innerHTML = menuHtml(roomId);
 
     document.body.appendChild(back);
     document.body.appendChild(panel);
+
+    /* Groups: remember what was opened or closed, per person, in prefs. */
+    function noteOpen() {
+      panel.querySelectorAll('.slaf-menu-group').forEach(function (d) { d.setAttribute('data-was-open', String(d.open)); });
+    }
+    noteOpen();
+    panel.addEventListener('toggle', function (e) {
+      var d = e.target;
+      if (!d.classList || !d.classList.contains('slaf-menu-group')) return;
+      var q = panel.querySelector('#slaf-menu-q');
+      if (q && q.value.trim()) return;               /* a search opening a group is not a preference */
+      d.setAttribute('data-was-open', String(d.open));
+      var P = prefs();
+      if (!P) return;
+      var stored = P.get('sidebar.open', {});
+      if (!stored || typeof stored !== 'object') stored = {};
+      stored[d.getAttribute('data-group')] = d.open;
+      P.set('sidebar.open', stored);
+    }, true);
+    var q = panel.querySelector('#slaf-menu-q');
+    if (q) q.addEventListener('input', function () { applySearch(panel, q.value); });
+
+    /* The situation and the dots can change under the page: rebuild the
+       body only, never the search box (a live input, D-034). */
+    var S = spine();
+    if (S && S.onChange) {
+      S.onChange(function () {
+        var body = panel.querySelector('.slaf-menu-body');
+        if (!body) return;
+        body.innerHTML = menuBodyHtml(roomId);
+        noteOpen();
+        if (q && q.value.trim()) applySearch(panel, q.value);
+      });
+    }
     if (host && host.parentNode) host.parentNode.insertBefore(btn, host);
     else document.body.appendChild(btn);
 
@@ -1030,6 +1161,8 @@
     walkBarHtml: walkBarHtml,
     mountMenu: mountMenu,
     menuHtml: menuHtml,
+    menuBodyHtml: menuBodyHtml,
+    roomStatus: roomStatus,
     UPKEEP: UPKEEP,
     headerNavHtml: headerNavHtml,
     forRoom: forRoom,

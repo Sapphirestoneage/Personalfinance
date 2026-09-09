@@ -9924,6 +9924,59 @@ section('Lenses: a rule re-reads the numbers and returns a verdict (D-175)');
   checkTrue('the library never evaluates a rule as code', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/lenses.js'), 'utf8')));
 })();
 
+section('The sidebar: grouped by purpose, not by kind (D-177)');
+(function () {
+  const Progress = require(path.join(ROOT, 'shared/progress.js'));
+  const ids = Registry.groups().map(g => g.id);
+  check('seven groups, in the brief\'s order', ids.join(','), 'home,numbers,scorecard,decisions,matters,levelup,upkeep');
+  checkTrue('every room names a group the sidebar knows', Registry.all().every(r => ids.indexOf(r.group) > -1));
+  checkTrue('...and a subgroup only where its group has them', Registry.all().every(r => {
+    const g = Registry.groupById(r.group);
+    return r.subgroup ? (g.subgroups || []).some(x => x.id === r.subgroup) : !(g.subgroups && g.subgroups.length && r.group !== 'home');
+  }));
+  checkTrue('every room appears in exactly one group', Registry.all().every(r => ids.filter(g => Registry.inGroup(g, null).some(x => x.id === r.id)).length === 1));
+  check('...and every room appears', ids.reduce((n, g) => n + Registry.inGroup(g, null).length, 0), Registry.all().length);
+  checkTrue('kind is still a property, no longer a heading', Registry.all().every(r => typeof r.kind === 'string') && !/'The path'|'About you'|'What it means'/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
+  check('Home: the Dashboard and Start Here', Registry.inGroup('home', null).map(r => r.id).join(','), 'dashboard,start');
+  check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
+  check('...fifteen of them', Registry.inGroup('numbers', null).length, 15);
+  checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses)\b/.test(w))));
+  check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,savings-rate,ratios,health,foo-ladder,fire,fire-lab,statements');
+  checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
+  check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
+  check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree,stacker,exercises');
+  check('Upkeep, with Front Doors and the Walk-Through kept apart (not merged this pass)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,refresh,history,get-help,doors,walk');
+  checkTrue('every room has aliases to search by', Registry.all().every(r => Array.isArray(r.aliases) && r.aliases.length >= 2));
+  checkTrue('"car" finds What A Car Costs', Registry.matches(Registry.byId('car'), 'car') && Registry.matches(Registry.byId('car'), 'VEHICLE'));
+  checkTrue('...and not FIRE', !Registry.matches(Registry.byId('fire'), 'car'));
+
+  /* The situation gate: absent, not greyed. */
+  check('retired: no Work subgroup at all', Registry.inGroup('decisions', 'retired').filter(r => r.subgroup === 'work').length, 0);
+  checkTrue('...no Career Move, no Between Jobs', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move' || r.id === 'between-jobs'));
+  checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
+  checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 22);
+  checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
+
+  /* The one shared sidebar. */
+  const html = Progress.menuHtml('car');
+  check('seven collapsible groups', (html.match(/class="slaf-menu-group"/g) || []).length, 7);
+  check('every room is a link in it', (html.match(/data-room="/g) || []).length, Registry.all().length);
+  checkTrue('subgroup names are labels, not links', /<p class="slaf-menu-sub" data-subgroup="work">Work<\/p>/.test(html));
+  checkTrue('DRAFTT rides as a link after the Snapshot', /financial-snapshot\.html#draftt/.test(html) && html.indexOf('#draftt') > html.indexOf('data-room="financial-snapshot"'));
+  checkTrue('a search box at the top', /<input type="search" id="slaf-menu-q"/.test(html) && html.indexOf('slaf-menu-q') < html.indexOf('slaf-menu-body'));
+  checkTrue('only the current room\'s group is open on load', /data-group="decisions" open/.test(html) && !/data-group="numbers" open/.test(html) && !/data-group="home" open/.test(html));
+  checkTrue('every link carries its search text', (html.match(/data-search="/g) || []).length >= Registry.all().length);
+  checkTrue('no room hand-writes its nav', !fs.readdirSync(path.join(ROOT, 'rooms')).some(f => /slaf-menu-group|slaf-menu-sub/.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8'))));
+  checkTrue('prefs.js loads on every page that has the sidebar', fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /shared\/progress\.js/.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8'))).every(f => /shared\/prefs\.js/.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8'))));
+  const demo = Demo.build();
+  const readings = Ownership.readings(demo);
+  check('a status dot: Debt Payoff filled on the demo', Progress.roomStatus('debt-payoff', readings), 'filled');
+  check('...the Calendar empty', Progress.roomStatus('calendar', readings), 'empty');
+  check('...Cash Flow partly (therapy untracked)', Progress.roomStatus('cash-flow', readings), 'partly');
+  check('...a room that owns nothing has no dot', Progress.roomStatus('ratios', readings), null);
+})();
+
 section('Pinned scenarios live beside the household, never in it (D-176)');
 (function () {
   const Scenarios = require(path.join(ROOT, 'shared/scenarios.js'));

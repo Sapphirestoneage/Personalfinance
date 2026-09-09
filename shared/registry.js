@@ -21,6 +21,7 @@
   var ROOMS = [
     {
       id: 'start',
+      group: 'home', aliases: ['begin', 'setup', 'one-pager', 'situation', 'intake'],
       kind: 'core',
       needs: ['employmentStatus', 'unemployment', 'dob', 'state', 'filingStatus', 'grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments',
               'employerMatch', 'contributionPercent', 'capturingFullMatch', 'highestDeductible', 'hasDebt'],
@@ -49,6 +50,7 @@
     },
     {
       id: 'financial-snapshot',
+      group: 'scorecard', aliases: ['snapshot', 'draftt', 'lenses', 'scorecard', 'nine numbers'],
       kind: 'read',
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt', 'dob', 'filingStatus'],
       order: 4,
@@ -77,6 +79,7 @@
     },
     {
       id: 'income',
+      group: 'numbers', subgroup: 'income', aliases: ['pay', 'salary', 'paycheck', 'sources'],
       kind: 'about-you',
       needs: [],
       order: 3.2,
@@ -95,6 +98,7 @@
     },
     {
       id: 'budget',
+      group: 'numbers', subgroup: 'expenses', aliases: ['budget', 'buckets', 'estimate', 'plan the month'],
       kind: 'about-you',
       needs: [],
       order: 3.4,
@@ -112,6 +116,7 @@
     },
     {
       id: 'variance',
+      group: 'numbers', subgroup: 'expenses', aliases: ['estimated', 'actual', 'over', 'under'],
       kind: 'read',
       needs: ['monthsClosed'],
       order: 3.5,
@@ -131,6 +136,7 @@
       /* For most households the second-largest purchase and the most
          frequent large one, and Big Purchase is generic (D-149). */
       id: 'car',
+      group: 'decisions', subgroup: 'home', aliases: ['car', 'vehicle', 'auto', 'lease', '20/3/8'],
       kind: 'explore',
       needs: ['grossAnnualIncome'],
       order: 26.2,
@@ -152,6 +158,7 @@
       /* "I left my job — what happens to my 401(k)?" Accounts covers Roth
          vs Traditional, not this (D-150). */
       id: 'rollover',
+      group: 'numbers', subgroup: 'assets', aliases: ['old 401k', 'rollover', 'left behind'],
       kind: 'explore',
       needs: [],
       order: 26.8,
@@ -173,6 +180,7 @@
          it (D-147). It computes NO score — it cannot see the file — so it
          shows what it can see, says what moves one, and stops. */
       id: 'credit',
+      group: 'numbers', subgroup: 'debt', aliases: ['credit score', 'report', 'file'],
       kind: 'read',
       /* It reads the itemised debts, which is where a card's balance and its
          limit live — the two figures the utilisation and credit-mix rows are
@@ -197,6 +205,7 @@
       /* The highest-stress money moment there is, and Between Jobs was the
          nearest thing — which assumes job loss specifically (D-148). */
       id: 'cant-pay',
+      group: 'numbers', subgroup: 'debt', aliases: ['bills', 'triage', 'late', 'behind'],
       kind: 'explore',
       needs: [],
       order: 26.6,
@@ -216,6 +225,7 @@
     },
     {
       id: 'cash-flow',
+      group: 'numbers', subgroup: 'expenses', aliases: ['spending', 'expenses', 'rent', 'food', 'FAT', 'wants', 'month'],
       kind: 'core',
       needs: ['monthlyExpenses'],
       order: 3,
@@ -238,6 +248,7 @@
     },
     {
       id: 'debt-payoff',
+      group: 'numbers', subgroup: 'debt', aliases: ['loans', 'credit card', 'avalanche', 'snowball', 'minimums'],
       kind: 'core',
       needs: ['totalDebt', 'monthlyDebtPayments'],
       order: 2,
@@ -258,6 +269,7 @@
     },
     {
       id: 'statement',
+      group: 'numbers', subgroup: 'assets', aliases: ['net worth', 'balance sheet', 'accounts', 'property', 'what you own'],
       kind: 'core',
       needs: ['cashSavings', 'investments', 'totalDebt'],
       order: 5,
@@ -281,6 +293,7 @@
     },
     {
       id: 'savings-rate',
+      group: 'scorecard', aliases: ['savings rate', 'how much saved'],
       kind: 'read',
       needs: ['grossAnnualIncome', 'monthlyExpenses'],
       order: 6,
@@ -300,6 +313,7 @@
     },
     {
       id: 'sleep-at-night',
+      group: 'matters', aliases: ['sleep', 'risk', 'coverage checkup', 'worry'],
       kind: 'about-you',
       needs: ['monthlyExpenses', 'cashSavings'],
       order: 7,
@@ -321,6 +335,7 @@
     },
     {
       id: 'fire-lab',
+      group: 'scorecard', aliases: ['lab', 'variants', 'lean', 'fat', 'coast', 'barista'],
       kind: 'read',
       needs: ['monthlyExpenses', 'investments'],
       order: 8.5,
@@ -342,6 +357,7 @@
     },
     {
       id: 'fire',
+      group: 'scorecard', aliases: ['fire', 'financial independence', 'retire early', 'number'],
       kind: 'read',
       needs: ['monthlyExpenses', 'investments', 'dob'],
       order: 8,
@@ -361,6 +377,7 @@
     },
     {
       id: 'real-hourly-wage',
+      group: 'numbers', subgroup: 'income', aliases: ['hourly', 'wage', 'commute', 'hours', 'ymoyl'],
       kind: 'about-you',
       needs: ['grossAnnualIncome'],
       order: 9,
@@ -383,6 +400,7 @@
     },
     {
       id: 'hassle',
+      group: 'decisions', subgroup: 'home', aliases: ['hassle', 'diy', 'chores', 'cheaper option'],
       kind: 'about-you',
       needs: ['grossAnnualIncome'],
       order: 10,
@@ -402,6 +420,7 @@
     },
     {
       id: 'quick-math',
+      group: 'decisions', subgroup: 'moves', aliases: ['quick', 'rule of thumb', 'car rule', 'back of envelope'],
       kind: 'explore',
       needs: [],
       order: 11,
@@ -422,6 +441,7 @@
     },
     {
       id: 'self-employed',
+      group: 'decisions', subgroup: 'work', aliases: ['self-employed', 'freelance', '1099', 'own business'], appliesWhen: 'situation != retired',
       kind: 'explore',
       needs: ['grossAnnualIncome', 'filingStatus', 'state'],
       order: 12,
@@ -440,6 +460,7 @@
     },
     {
       id: 'side-hustle',
+      group: 'decisions', subgroup: 'work', aliases: ['hustle', 'side income', 'gig'], appliesWhen: 'situation != retired',
       kind: 'explore',
       needs: ['grossAnnualIncome', 'filingStatus'],
       order: 13,
@@ -459,6 +480,7 @@
     },
     {
       id: 'dashboard',
+      group: 'home', aliases: ['home', 'overview', 'tiles'],
       kind: 'read',
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
       order: 15,
@@ -485,6 +507,7 @@
     },
     {
       id: 'accounts',
+      group: 'numbers', subgroup: 'assets', aliases: ['401k', 'ira', 'roth', 'hsa', 'allocation', 'contributions', 'match'],
       /* Not a what-if: it holds facts about your retirement setup that other
          rooms read. An explore room owns nothing anybody waits on, and this
          one owns four things. DECISIONS.md D-052. */
@@ -507,6 +530,7 @@
     },
     {
       id: 'values',
+      group: 'matters', aliases: ['values', 'what matters', 'priorities'],
       kind: 'about-you',
       needs: ['monthlyExpenses'],
       order: 21,
@@ -526,6 +550,7 @@
     },
     {
       id: 'ratios',
+      group: 'scorecard', aliases: ['ratios', 'dti', 'emergency fund', 'benchmarks'],
       kind: 'read',
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
       order: 14,
@@ -546,6 +571,7 @@
     },
     {
       id: 'credential',
+      group: 'decisions', subgroup: 'work', aliases: ['degree', 'course', 'certification', 'learning', 'school'], appliesWhen: 'situation != retired',
       kind: 'explore',
       needs: ['grossAnnualIncome'],
       order: 16,
@@ -565,6 +591,7 @@
     },
         {
       id: 'fulfillment',
+      group: 'matters', aliases: ['joy', 'fulfillment curve', 'satisfaction'],
       kind: 'about-you',
       needs: ['monthlyExpenses'],
       order: 18,
@@ -589,6 +616,7 @@
     },
     {
       id: 'rerank',
+      group: 'matters', aliases: ['rerank', 'cut', 'keep', 'value rank'],
       kind: 'about-you',
       needs: ['monthlyExpenses'],
       order: 19,
@@ -608,6 +636,7 @@
     },
     {
       id: 'stacker',
+      group: 'levelup', aliases: ['skills', 'stack', 'earn more'],
       kind: 'about-you',
       needs: [],
       order: 20,
@@ -629,6 +658,7 @@
        does, beside the ladder's what the next dollar does. */
     {
       id: 'skill-tree',
+      group: 'levelup', aliases: ['skill tree', 'tech tree', 'curriculum'],
       kind: 'about-you',
       needs: [],
       order: 20.2,
@@ -648,6 +678,7 @@
     },
     {
       id: 'exercises',
+      group: 'levelup', aliases: ['exercises', 'practice', 'drills'],
       kind: 'about-you',
       needs: [],
       order: 20.4,
@@ -665,6 +696,7 @@
     },
     {
       id: 'goals',
+      group: 'matters', aliases: ['goals', 'targets', 'wedding', 'dream'],
       kind: 'about-you',
       needs: ['monthlyExpenses'],
       order: 22,
@@ -681,6 +713,7 @@
     },
     {
       id: 'worth',
+      group: 'decisions', subgroup: 'home', aliases: ['worth it', 'purchase', 'joy per dollar'],
       kind: 'about-you',
       needs: ['grossAnnualIncome'],
       order: 24,
@@ -700,6 +733,7 @@
     },
     {
       id: 'windfall',
+      group: 'decisions', subgroup: 'moves', aliases: ['windfall', 'bonus', 'inheritance', 'lump sum'],
       kind: 'explore',
       needs: [],
       order: 25,
@@ -719,6 +753,7 @@
     },
     {
       id: 'runway',
+      group: 'decisions', subgroup: 'moves', aliases: ['runway', 'months of cash', 'how long'],
       kind: 'explore',
       needs: ['cashSavings', 'monthlyExpenses'],
       order: 26,
@@ -739,6 +774,7 @@
     },
     {
       id: 'health',
+      group: 'scorecard', aliases: ['score', 'health', 'grade'],
       kind: 'read',
       needs: ['dob', 'grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments'],
       order: 27,
@@ -759,6 +795,7 @@
     },
     {
       id: 'foo-ladder',
+      group: 'scorecard', aliases: ['foo', 'order of operations', 'next dollar', 'ladder'],
       kind: 'read',
       /* Every shared figure the month-by-month timeline reads, so the
          footer and the timeline cannot disagree about what is missing.
@@ -781,6 +818,7 @@
     },
     {
       id: 'what-if-life',
+      group: 'decisions', subgroup: 'years', aliases: ['what if', 'sabbatical', 'life event', 'triple d'],
       kind: 'explore',
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments'],
       order: 28,
@@ -825,6 +863,7 @@
      second editor of a second copy. DECISIONS.md D-057. */
   ROOMS.push({
     id: 'refresh',
+    group: 'upkeep', aliases: ['refresh', 'stale', 'update numbers', 'confirm'],
     kind: 'core',
     utility: true,
     needs: ['cashSavings', 'investments', 'totalDebt'],
@@ -849,6 +888,7 @@
      laying out what comes after it. */
   ROOMS.push({
     id: 'timeline',
+    group: 'decisions', subgroup: 'years', aliases: ['timeline', 'jobs', 'what comes next', 'life'],
     kind: 'about-you',
     needs: ['dob'],
     order: 28.5,
@@ -871,6 +911,7 @@
      nothing, and every figure on it belongs to another room. */
   ROOMS.push({
     id: 'statements',
+    group: 'scorecard', aliases: ['statements', 'history of net worth', 'monthly statement'],
     kind: 'read',
     needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
     order: 4.5,
@@ -893,6 +934,7 @@
      and out of D-051's four-room core cap. */
   ROOMS.push({
     id: 'doors',
+    group: 'upkeep', aliases: ['front doors', 'arrangements', 'ways in'],
     kind: 'core',
     utility: true,
     needs: [],
@@ -916,6 +958,7 @@
      off the numbered path and out of the four-room core cap (D-051). */
   ROOMS.push({
     id: 'walk',
+    group: 'upkeep', aliases: ['walk-through', 'guided', 'tour'],
     kind: 'core',
     utility: true,
     needs: [],
@@ -935,6 +978,7 @@
   /* Between Jobs — the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'between-jobs',
+    group: 'decisions', subgroup: 'work', aliases: ['unemployed', 'laid off', 'job loss', 'runway', 'cobra'], appliesWhen: 'situation != retired',
     kind: 'about-you',
     needs: ['unemployment', 'monthlyExpenses', 'cashSavings'],
     order: 31,
@@ -957,6 +1001,7 @@
   /* Protection — the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'protection',
+    group: 'decisions', subgroup: 'family', aliases: ['insurance', 'life insurance', 'disability', 'coverage'],
     kind: 'about-you',
     needs: ['monthlyExpenses', 'cashSavings', 'grossAnnualIncome'],
     order: 32,
@@ -979,6 +1024,7 @@
   /* Decumulation — the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'decumulation',
+    group: 'decisions', subgroup: 'moves', aliases: ['retirement withdrawals', 'draw down', '4%', 'vpw', 'social security'], appliesWhen: 'situation != student',
     kind: 'about-you',
     needs: ['investments', 'monthlyExpenses', 'grossAnnualIncome'],
     order: 33,
@@ -1001,6 +1047,7 @@
   /* Tax — the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'tax',
+    group: 'numbers', subgroup: 'taxes', aliases: ['taxes', 'bracket', 'marginal', 'effective', 'refund', 'withholding'],
     kind: 'about-you',
     needs: ['grossAnnualIncome', 'filingStatus', 'state'],
     order: 34,
@@ -1023,6 +1070,7 @@
   /* Estate Basics — the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'estate',
+    group: 'decisions', subgroup: 'family', aliases: ['will', 'estate', 'beneficiary', 'power of attorney'],
     kind: 'about-you',
     needs: [],
     order: 35,
@@ -1045,6 +1093,7 @@
   /* Giving — the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'giving',
+    group: 'decisions', subgroup: 'family', aliases: ['giving', 'charity', 'donate', 'tithe', 'daf'],
     kind: 'about-you',
     needs: ['grossAnnualIncome'],
     order: 36,
@@ -1067,6 +1116,7 @@
   /* Career Move — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'career-move',
+    group: 'decisions', subgroup: 'work', aliases: ['job offer', 'new job', 'raise', 'offer'], appliesWhen: 'situation != retired',
     kind: 'about-you',
     needs: ['grossAnnualIncome'],
     order: 37,
@@ -1089,6 +1139,7 @@
   /* Partner — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'partner',
+    group: 'decisions', subgroup: 'family', aliases: ['partner', 'marriage', 'combine', 'spouse'],
     kind: 'about-you',
     needs: ['grossAnnualIncome', 'monthlyExpenses'],
     order: 38,
@@ -1111,6 +1162,7 @@
   /* Kids and Tuition — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'kids',
+    group: 'decisions', subgroup: 'family', aliases: ['kids', 'children', 'childcare', 'tuition', '529'],
     kind: 'about-you',
     needs: ['monthlyExpenses'],
     order: 39,
@@ -1133,6 +1185,7 @@
   /* Housing Decision — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'housing',
+    group: 'decisions', subgroup: 'home', aliases: ['house', 'buy', 'rent', 'mortgage', 'home'],
     kind: 'about-you',
     needs: ['monthlyExpenses', 'grossAnnualIncome', 'cashSavings'],
     order: 40,
@@ -1155,6 +1208,7 @@
   /* Big Purchase — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'big-purchase',
+    group: 'decisions', subgroup: 'home', aliases: ['purchase', 'buy something', 'save up'],
     kind: 'about-you',
     needs: ['cashSavings', 'monthlyExpenses'],
     order: 41,
@@ -1177,6 +1231,7 @@
   /* Variable Income — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'variable-income',
+    group: 'numbers', subgroup: 'income', aliases: ['freelance', 'commission', 'irregular', 'rolling average'],
     kind: 'about-you',
     needs: ['grossAnnualIncome', 'monthlyExpenses'],
     order: 42,
@@ -1199,6 +1254,7 @@
   /* Enough — the LATER.md rooms (D-101). */
   ROOMS.push({
     id: 'enough',
+    group: 'matters', aliases: ['enough', 'contentment', 'fi two'],
     kind: 'about-you',
     needs: ['monthlyExpenses', 'investments'],
     order: 43,
@@ -1222,6 +1278,7 @@
      Enough because both ask what the money is for, not just how much. */
   ROOMS.push({
     id: 'adventure',
+    group: 'decisions', subgroup: 'years', aliases: ['five years', 'long way', 'paths', 'scenario', 'shocks'],
     kind: 'explore',
     needs: ['grossAnnualIncome', 'monthlyExpenses', 'investments'],
     order: 43.5,
@@ -1242,6 +1299,7 @@
   /* Designed Week — the LATER.md rooms (D-101). */
   ROOMS.push({
     id: 'week',
+    group: 'matters', aliases: ['week', 'hours', 'designed week', 'time'],
     kind: 'about-you',
     needs: ['monthlyExpenses'],
     order: 44,
@@ -1264,6 +1322,7 @@
   /* Time Buckets — the LATER.md rooms (D-101). */
   ROOMS.push({
     id: 'buckets',
+    group: 'matters', aliases: ['time buckets', 'decades', 'experiences', 'die with zero'],
     kind: 'about-you',
     needs: ['investments', 'monthlyExpenses'],
     order: 45,
@@ -1286,6 +1345,7 @@
   /* Dreamline — the LATER.md rooms (D-101). */
   ROOMS.push({
     id: 'dreamline',
+    group: 'matters', aliases: ['dream', 'price the dream', 'dreamline'],
     kind: 'about-you',
     needs: ['monthlyExpenses', 'grossAnnualIncome'],
     order: 46,
@@ -1308,6 +1368,7 @@
   /* Reversibility — the LATER.md rooms (D-101). */
   ROOMS.push({
     id: 'reversibility',
+    group: 'matters', aliases: ['undo', 'reversible', 'one-way door'],
     kind: 'about-you',
     needs: ['cashSavings', 'monthlyExpenses'],
     order: 47,
@@ -1330,6 +1391,7 @@
   /* Unlearning — the LATER.md rooms (D-101). */
   ROOMS.push({
     id: 'unlearning',
+    group: 'matters', aliases: ['unlearn', 'myths', 'advice'],
     kind: 'about-you',
     needs: ['monthlyExpenses'],
     order: 48,
@@ -1352,6 +1414,7 @@
   /* Student Loan Decision — the LATER.md rooms (D-101). */
   ROOMS.push({
     id: 'student-loans',
+    group: 'numbers', subgroup: 'debt', aliases: ['college', 'loan forgiveness', 'idr'],
     kind: 'about-you',
     needs: ['totalDebt', 'grossAnnualIncome'],
     order: 49,
@@ -1374,6 +1437,7 @@
   /* Money Calendar & Pay-Later — the LATER.md rooms (D-101). */
   ROOMS.push({
     id: 'calendar',
+    group: 'numbers', subgroup: 'expenses', aliases: ['calendar', 'bills', 'due', 'pay later', 'dates'],
     kind: 'about-you',
     needs: ['monthlyExpenses', 'cashSavings'],
     order: 50,
@@ -1396,6 +1460,7 @@
   /* History — the LATER.md rooms (D-101). */
   ROOMS.push({
     id: 'history',
+    group: 'upkeep', aliases: ['history', 'changes', 'log'],
     kind: 'read',
     needs: ['cashSavings', 'investments', 'totalDebt'],
     order: 51,
@@ -1421,6 +1486,7 @@
      no field (D-125). A utility, off the path like Refresh (D-057). */
   ROOMS.push({
     id: 'data',
+    group: 'upkeep', aliases: ['export', 'import', 'backup', 'json', 'csv', 'your data'],
     kind: 'core',
     utility: true,
     needs: [],
@@ -1443,6 +1509,7 @@
      a line per stage; owns nothing; optional by definition. */
   ROOMS.push({
     id: 'get-help',
+    group: 'upkeep', aliases: ['help', 'advisor', 'counsellor', 'crisis'],
     kind: 'explore',
     utility: true,
     needs: [],
@@ -1468,6 +1535,70 @@
 
   /* The path, in the order a person should walk it (SPEC.md §12.6 keeps the
      tag filter; this adds the sequence the filter sits on top of). */
+  /* ---- The sidebar's groups (D-177). Purpose, not kind: kind stays a
+     property for ownership rules and is no longer a heading. Subgroups are
+     labels, never links. DRAFTT and the map are links into pages that are
+     not rooms; they ride in `links`. ---- */
+  var GROUPS = [
+    { id: 'home',      label: 'Home' },
+    { id: 'numbers',   label: 'Your Numbers', note: 'the owners; everything else reads from here',
+      subgroups: [{ id: 'debt', label: 'Debt' }, { id: 'assets', label: 'Assets' }, { id: 'income', label: 'Income' }, { id: 'taxes', label: 'Taxes' }, { id: 'expenses', label: 'Expenses' }] },
+    { id: 'scorecard', label: 'Scorecard', note: 'read-only',
+      links: [{ after: 'financial-snapshot', title: 'DRAFTT', href: 'rooms/financial-snapshot.html#draftt', aliases: ['draftt', 'measuring stick', 'bands'] }] },
+    { id: 'decisions', label: 'Decisions', note: 'calculators',
+      subgroups: [{ id: 'work', label: 'Work' }, { id: 'home', label: 'Home & things' }, { id: 'family', label: 'Family' }, { id: 'moves', label: 'Money moves' }, { id: 'years', label: 'Years out' }] },
+    { id: 'matters',   label: 'What Matters' },
+    { id: 'levelup',   label: 'Level Up' },
+    { id: 'upkeep',    label: 'Upkeep',
+      links: [{ after: 'history', title: 'Every room, on one page', href: 'map.html', aliases: ['map', 'all rooms', 'every room'] }] }
+  ];
+  /* The order the brief lists rooms within a group, where it differs from
+     path order. Anything not named falls in after, in path order. */
+  var GROUP_ORDER = {
+    home: ['dashboard', 'planner', 'start'],
+    numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'variable-income', 'real-hourly-wage', 'tax', 'budget', 'cash-flow', 'variance', 'calendar'],
+    scorecard: ['financial-snapshot', 'savings-rate', 'ratios', 'health', 'foo-ladder', 'fire', 'fire-lab', 'statements'],
+    decisions: ['career-move', 'self-employed', 'side-hustle', 'between-jobs', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'kids', 'protection', 'estate', 'giving', 'windfall', 'runway', 'decumulation', 'quick-math', 'adventure', 'what-if-life', 'timeline'],
+    matters: ['sleep-at-night', 'values', 'goals', 'enough', 'fulfillment', 'rerank', 'dreamline', 'week', 'buckets', 'reversibility', 'unlearning'],
+    levelup: ['skill-tree', 'stacker', 'exercises'],
+    upkeep: ['data', 'refresh', 'history', 'get-help', 'doors', 'walk']
+  };
+  function groups() { return GROUPS.slice(); }
+  function groupById(id) { return GROUPS.filter(function (g) { return g.id === id; })[0] || null; }
+  /** A room's appliesWhen, read against a situation id — a few fixed
+      phrases, never evaluated as code (the levers use the same idiom). */
+  function appliesToSituation(room, situationId) {
+    var w = room && room.appliesWhen;
+    if (!w) return true;
+    if (!situationId) return true;                /* situation unanswered: everything applies */
+    return String(w).split('||').every(function (c) {
+      c = c.trim();
+      var m = /^situation\s*(!=|==)\s*([a-zA-Z]+)$/.exec(c);
+      if (!m) return true;
+      return m[1] === '!=' ? situationId !== m[2] : situationId === m[2];
+    });
+  }
+  /** The rooms of one group in the brief's order, absent when their
+      appliesWhen fails for this household's situation. */
+  function inGroup(groupId, situationId) {
+    var order = GROUP_ORDER[groupId] || [];
+    var rooms = ROOMS.filter(function (r) { return r.group === groupId && appliesToSituation(r, situationId); });
+    return rooms.sort(function (a, b) {
+      var ia = order.indexOf(a.id), ib = order.indexOf(b.id);
+      if (ia === -1 && ib === -1) return (a.order || 99) - (b.order || 99);
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+  }
+  /** Does a query match this room? Title, or any alias, case-blind. */
+  function matches(room, query) {
+    var q = String(query || '').trim().toLowerCase();
+    if (!q) return true;
+    if (String(room.title || '').toLowerCase().indexOf(q) !== -1) return true;
+    return (room.aliases || []).some(function (a) { return String(a).toLowerCase().indexOf(q) !== -1; });
+  }
+
   function inOrder() {
     return ROOMS.slice().sort(function (a, b) { return (a.order || 99) - (b.order || 99); });
   }
@@ -1556,6 +1687,12 @@
   function total() { return ROOMS.length; }
 
   return {
+    GROUPS: GROUPS,
+    groups: groups,
+    groupById: groupById,
+    inGroup: inGroup,
+    appliesToSituation: appliesToSituation,
+    matches: matches,
     daite: daite,
     writersOf: writersOf,
     FILTER_TAGS: FILTER_TAGS,

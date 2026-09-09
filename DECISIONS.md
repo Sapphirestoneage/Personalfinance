@@ -10225,6 +10225,104 @@ cash less borrowed. The registry's adventure subsections are now
 
 ---
 
+## D-177 — The sidebar, grouped by purpose: seven groups, one component, absent not greyed
+
+### What it is
+
+The menu no longer groups rooms by kind (core / read / about-you /
+explore). `kind` stays a registry property for ownership rules; it is no
+longer a heading. Every room now carries `group`, `subgroup`, `aliases` and
+(where it matters) `appliesWhen` in `shared/registry.js`, and one shared
+sidebar in `shared/progress.js` renders them on every page:
+
+- **Home** — The Dashboard, Start Here (the Scenario Planner joins in
+  D-179 when it exists).
+- **Your Numbers** — the DAITE owners: Debt (Debt Payoff, Student Loan
+  Decision, When It Won't All Get Paid, Your Credit File), Assets (The
+  Statement, Where It Goes, The Account You Left Behind), Income (Income,
+  Variable Income, Real Hourly Wage), Taxes (Tax), Expenses (Budget, Cash
+  Flow, Estimated vs Actual, Money Calendar).
+- **Scorecard** — read-only: Financial Snapshot, DRAFTT (a link into the
+  Snapshot's section), Savings Rate, Every Ratio, The Score, FOO Ladder,
+  FIRE Number, FIRE Lab, Your Statements.
+- **Decisions** — Work, Home & things, Family, Money moves, Years out.
+- **What Matters**, **Level Up**, **Upkeep** (Your Data, Refresh, History,
+  Every room on one page, Get Help — and, kept apart, Front Doors and The
+  Walk-Through).
+
+Subgroup names are labels, never links. Groups are `<details>` that
+collapse; only the current room's group is open on load, and what a person
+opens or closes is remembered under `sidebar.open` in prefs. A search box at
+the top filters by title and by alias (`Registry.matches`); typing hides the
+links that do not match and then the groups with nothing left, and opens the
+groups that match without saving that as a preference. A Recent strip under
+Home lists the last three rooms visited (`recent` in prefs, written on
+every mount). A status dot on each Your Numbers room that owns a field
+reads filled · partly · empty from the ledger (`Ownership.ownedBy` against
+`Ownership.readings`); read-only rooms, calculators and an owner room with
+nothing to own carry none. A room whose `appliesWhen` fails for the
+household's situation is absent from the sidebar, not greyed: retired, the
+whole Work subgroup goes (Career Move, Between Jobs, and the other three
+work decisions with them, so the subgroup itself disappears as the gate
+asks); student, Drawing It Down goes. The nav body is rebuilt when the
+household changes; the search box, a live input, is built once (D-034).
+
+`prefs.js` now loads before `progress.js` on every page, since the sidebar
+remembers things.
+
+### What was ambiguous, and how it was resolved
+
+- **"No Work subgroup" for the retired.** The brief names only Career
+  Move and Between Jobs, then asserts the whole subgroup is gone. Going
+  Self-Employed, Side Hustle and Worth Learning are work decisions too and
+  got the same `situation != retired`.
+- **Substring search.** "car" also finds Money Calendar and Kids and
+  Tuition (childcare). That is what a substring search does and it is
+  honest; the gate checks presence and the hiding of Level Up, not an exact
+  list.
+- **A Your Numbers room that owns nothing** (When It Won't All Get Paid,
+  Your Credit File, The Account You Left Behind, Real Hourly Wage,
+  Estimated vs Actual) shows no dot: there is nothing for the ledger to
+  read.
+- **Cash Flow reads "partly" on the demo** because the optional therapy
+  line is untracked; a dot never lies about a blank.
+
+### Candidate logged, not acted on
+
+Start Here, Front Doors and The Walk-Through are three ways in. The brief
+asks that they not be merged in this section; they sit in Home (Start
+Here) and Upkeep (the other two) for now. Candidate: one front door that
+offers the three arrangements as tabs, with the Walk's progress and the
+Doors' shelves as views of the same registry. Not this pass.
+
+### Gates
+
+`test/run.js` "The sidebar": the seven groups, every room in exactly one,
+the subgroup orders, Scorecard writes nothing, aliases on every room,
+`matches`, the situation gate (retired · student · unanswered), the
+rendered sidebar (seven groups, every room, labels not links, DRAFTT after
+the Snapshot, the search box, one open group, no room hand-writes its nav,
+prefs on every page), the dot states on the demo. `test/sidebar.js`
+(Playwright, phone-shaped): walks every room and asserts it appears in
+exactly one group (or is absent for the employed demo when its appliesWhen
+says so); search "car" shows What A Car Costs and hides Level Up; a closed
+group is remembered and the current room's group opens; Recent shows the
+room just left; a retired household has no Work subgroup, a student no
+Drawing It Down. Unit · sidebar gate 90 · features, render and forms on
+every room.
+
+### Compatibility
+
+The household shape is unchanged. Prefs gains `sidebar.open` (object of
+group id → boolean) and `recent` (room ids, newest first). Registry rooms
+gain `group`, `subgroup`, `aliases`, `appliesWhen`; `Registry.groups /
+groupById / inGroup(groupId, situationId) / appliesToSituation / matches`
+are new. `Progress.menuHtml` keeps its name and now returns the grouped
+sidebar; `Progress.UPKEEP` remains for the map. `rooms.json` is unchanged
+(the generator does not emit groups).
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have
