@@ -9032,6 +9032,57 @@ Chromium at 412x915 with touch: `?from=fire` renders "↩ Back to FIRE Number" a
 both render nothing. 21,545 + 5,614 + 25 + 448 + 340 checks pass. No stored
 shape changed.
 
+## D-162 — The ledger, everywhere, without building a second one
+
+The plan was "put the D-160 ledger on every room". Reading the code first
+saved most of the work: `shared/progress.js` has rendered a room-scoped version
+in every footer since D-142 — the missing fields with links, "this room has
+everything it needs", "this room stands on its own", and the D-055 not-asked
+note with its reason. Four of the five states were already there and shipped.
+
+So rather than bolt a second ledger beside the first, the existing one gained
+the two things it lacked.
+
+### A guess is filled but not answered
+
+`forRoom()` sorted every field into set or missing. A number the one-pager
+guessed for you counted as set — so a room could read "has everything it
+needs" while resting entirely on figures nobody confirmed. `entry.guessed`
+now carries `describe().guessed` through, and the strip says:
+
+> **2 of these are still a guess** — Monthly expenses, Date of birth. Good
+> enough to compute with, worth fixing when you know.
+
+Which is the honest position. The room genuinely can compute; the numbers are
+genuinely not yours yet. Both facts, neither hidden.
+
+### Relevance, counted rather than asserted
+
+Each missing field now carries how many of the rooms name it in their own
+registry `needs`, and the missing list is sorted by it. On FIRE Number:
+
+    Monthly expenses          33 rooms want this
+    Investments + retirement  15 rooms want this
+    Date of birth              6 rooms want this
+
+Derived from `Registry.all()` at first use and memoised, so it cannot drift
+from what the rooms actually ask for — a test re-counts it by hand and compares.
+Shown only above one, because "1 room wants this" is noise on the room you are
+standing in.
+
+### The footer links got the round trip for free
+
+`forRoom()` already called `Ownership.describe(fieldId, household, roomId)`,
+passing the asking room. D-161 made `describe()` thread that into the href, so
+every "N things left" link in all sixty-six rooms now carries `?from=` and
+offers a way back, with no change here at all. That is the payoff of a single
+choke point.
+
+### Verified
+
+21,617 + 5,614 + 25 + 448 + 340 checks pass. No stored shape changed; the only
+new field on the `forRoom()` row is derived at read time.
+
 ---
 
 # The Dungeons & Dividends entries

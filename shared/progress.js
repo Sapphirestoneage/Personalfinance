@@ -61,6 +61,22 @@
    * `complete: true` with `needs: 0`. It is not "done", it is never
    * blocked, and `standalone` says which.
    */
+  /* How many of the rooms name each field in their own `needs`. It turns the
+     missing list into a priority order: the number that unblocks twenty-seven
+     rooms is a different proposition from the one that unblocks one. Counted
+     from the registry, so it cannot drift from what the rooms actually ask
+     for. D-162. */
+  var WAITING = null;
+  function waitingOn(fieldId) {
+    if (!WAITING) {
+      WAITING = {};
+      Registry.all().forEach(function (r) {
+        (r.needs || []).forEach(function (f) { WAITING[f] = (WAITING[f] || 0) + 1; });
+      });
+    }
+    return WAITING[fieldId] || 0;
+  }
+
   function forRoom(roomId, household) {
     var room = Registry.byId(roomId);
     if (!room) return null;
@@ -85,11 +101,17 @@
         ownerId: d.ownerId,
         ownerTitle: d.ownerTitle,
         ownHere: d.isOwnHere,
-        display: d.display
+        display: d.display,
+        /* A guess is filled but not answered. It counts towards the room being
+           able to compute, and it is still something you might want to fix, so
+           it is named rather than folded silently into "done". D-162. */
+        guessed: !!d.guessed,
+        waits: waitingOn(fieldId)
       };
       (d.isSet ? filled : missing).push(entry);
     });
 
+    missing.sort(function (a, b) { return b.waits - a.waits; });
     var total = filled.length + missing.length;
     return {
       roomId: room.id,
@@ -226,10 +248,15 @@
         + ' thing' + (row.missing.length === 1 ? '' : 's') + ' left</strong> before this room '
         + 'can show you everything — each one links straight to the question.</p>');
       out.push('<ul class="slaf-progress-list">' + row.missing.map(function (f) {
+        /* Most-waited-on first, and say so: it is the difference between a
+           list and a priority order. D-162. */
+        var waits = f.waits > 1
+          ? '<span class="slaf-progress-waits">' + f.waits + ' rooms want this</span>' : '';
         return '<li><a href="' + escapeHtml(href(f.href.replace(/^\.\.\//, ''), roomId)) + '">'
           + escapeHtml(f.label) + '</a>'
           + '<span class="slaf-progress-where">'
-          + (f.ownHere ? 'on this page' : 'in ' + escapeHtml(f.ownerTitle)) + '</span></li>';
+          + (f.ownHere ? 'on this page' : 'in ' + escapeHtml(f.ownerTitle)) + '</span>'
+          + waits + '</li>';
       }).join('') + '</ul>');
     } else if (!row.standalone) {
       out.push('<p class="slaf-progress-head"><strong>This room has everything it needs.</strong> '
@@ -238,6 +265,17 @@
     } else {
       out.push('<p class="slaf-progress-head"><strong>This room stands on its own.</strong> '
         + 'It works from the numbers you type here, so there is nothing to fill in first.</p>');
+    }
+
+    /* Filled with a guess is not the same as answered. A room can compute from
+       guesses and still be resting on numbers nobody confirmed, so they are
+       named here rather than counted quietly as done. D-162. */
+    var guesses = (row.filled || []).filter(function (f) { return f.guessed; });
+    if (guesses.length) {
+      out.push('<p class="slaf-progress-note"><strong>' + guesses.length + ' of these '
+        + (guesses.length === 1 ? 'is' : 'are') + ' still a guess</strong> \u2014 '
+        + guesses.map(function (f) { return escapeHtml(f.label); }).join(', ')
+        + '. Good enough to compute with, worth fixing when you know.</p>');
     }
 
     /* Questions that stopped applying are said out loud once, so a room that

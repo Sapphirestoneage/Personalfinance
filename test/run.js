@@ -8585,6 +8585,44 @@ section('No CSS variable is used without being defined');
 })();
 
 /* ==========================================================================
+   Relevancy and guesses in every room's footer (D-162)
+   ========================================================================== */
+section('Every room says what is waiting on it');
+(function () {
+  const bare = Schema.createHousehold();
+  const fire = Progress.forRoom('fire', bare);
+
+  checkTrue('each missing field carries how many rooms want it',
+    fire.missing.every(f => typeof f.waits === 'number'));
+  checkTrue('the most-wanted number comes first',
+    fire.missing.length > 1 && fire.missing[0].waits >= fire.missing[1].waits,
+    fire.missing.map(f => f.label + ':' + f.waits).join(', '));
+  check('monthly expenses is the most-wanted number in the app',
+    fire.missing[0].fieldId, 'monthlyExpenses');
+
+  /* Counted from the registry, so it cannot drift from what rooms ask for. */
+  const byHand = Registry.all().filter(r => (r.needs || []).indexOf('monthlyExpenses') > -1).length;
+  check('the count matches the registry itself', fire.missing[0].waits, byHand);
+
+  /* A guess is filled but not answered, and must not be counted as done. */
+  const guessed = Schema.createHousehold();
+  guessed.meta = guessed.meta || {};
+  guessed.meta.guessed = { monthlyExpenses: true };
+  guessed.expenses.monthlyEssential.estimatedValueCents = 315000;
+  const row = Progress.forRoom('fire', guessed);
+  const g = row.filled.filter(f => f.guessed);
+  check('a filled-by-guess field lands in filled, flagged', g.length, 1);
+  check('...and it is the one we guessed', g[0].fieldId, 'monthlyExpenses');
+  checkTrue('the strip says so rather than reading as finished',
+    Progress.stripHtml('fire', guessed).indexOf('still a guess') > -1);
+
+  const src = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  checkTrue('guesses are named, not folded into done', /still a guess/.test(src));
+  checkTrue('the waiting count is derived, never hardcoded',
+    /Registry\.all\(\)[\s\S]{0,200}needs[\s\S]{0,120}WAITING/.test(src));
+})();
+
+/* ==========================================================================
    The round trip (D-161)
    --------------------------------------------------------------------------
    One owner per number means the app is forever sending someone to another
