@@ -8585,6 +8585,71 @@ section('No CSS variable is used without being defined');
 })();
 
 /* ==========================================================================
+   The Long Way Round (D-167)
+   ========================================================================== */
+section('Four ways through five years');
+(function () {
+  const Adventure = require(path.join(ROOT, 'engines/adventure.js'));
+  const TABLES = { adventurePaths: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/adventure_paths.json'), 'utf8')) };
+  const demo = Demo.build();
+
+  /* Empty is not zero: a projection built on an assumed nought is a confident lie. */
+  const bare = Adventure.baseline(Schema.createHousehold());
+  check('nothing entered, nothing projected', bare.status, 'incomplete');
+  checkTrue('and it names what is absent', (bare.missing || []).indexOf('grossAnnualIncome') > -1);
+  check('a run refuses too', Adventure.run(Schema.createHousehold(), TABLES, { pathId: 'steady' }).status, 'incomplete');
+  check('so does a run with no path chosen', Adventure.run(demo, TABLES, {}).status, 'incomplete');
+
+  const base = Adventure.baseline(demo);
+  check('the demo has a baseline', base.status, 'ok');
+  check('...income read from its owner', base.value.annualIncomeCents, 7200000);
+  check('...spending annualised from the month', base.value.annualSpendCents, 315000 * 12);
+
+  /* The target is a year of spending over the withdrawal rate - the same
+     arithmetic the FIRE room uses, re-derived here by hand. */
+  check('the target is 25x a year of spending',
+    Adventure.targetCents(3780000, 0.04), 94500000);
+
+  const steady = Adventure.run(demo, TABLES, { pathId: 'steady' }).value;
+  check('five years is five rows', steady.rows.length, 5);
+  checkTrue('the pot grows each year', steady.rows.every((r, i) =>
+    i === 0 || r.portfolioCents > steady.rows[i - 1].portfolioCents));
+
+  /* The house hack cuts spending, so it moves the finish line as well as the
+     saving - which is the whole point of the path and easy to get wrong. */
+  const hack = Adventure.run(demo, TABLES, { pathId: 'househack' }).value;
+  checkTrue('the house hack lowers the target itself',
+    hack.targetCents < steady.targetCents,
+    hack.targetCents + ' vs ' + steady.targetCents);
+  check('...by the stated 30% housing share times a 40% cut',
+    hack.rows[0].spendCents, Math.round(3780000 * (1 - 0.30 * 0.40)));
+
+  /* Every shock must move the answer, or it is decoration. */
+  ['crash', 'jobloss', 'inflation', 'raise'].forEach(id => {
+    const hit = Adventure.run(demo, TABLES, { pathId: 'steady', shockIds: [id] }).value;
+    checkTrue(id + ' changes where you land', hit.portfolioCents !== steady.portfolioCents);
+  });
+  const raise = Adventure.run(demo, TABLES, { pathId: 'steady', shockIds: ['raise'] }).value;
+  checkTrue('a raise helps', raise.portfolioCents > steady.portfolioCents);
+  const crash = Adventure.run(demo, TABLES, { pathId: 'steady', shockIds: ['crash'] }).value;
+  checkTrue('a crash hurts', crash.portfolioCents < steady.portfolioCents);
+
+  /* Never Infinity and never a cheerful large number when it never arrives. */
+  check('nothing saved and no growth never arrives', Adventure.yearsFrom(100, 1000000, 0, 0), null);
+  check('already past the target is zero years', Adventure.yearsFrom(1000000, 100, 0, 0.05), 0);
+
+  check('all four paths run', Adventure.compare(demo, TABLES).length, 4);
+  checkTrue('the room writes nothing',
+    fs.readFileSync(path.join(ROOT, 'rooms/adventure.html'), 'utf8').indexOf('Ownership.write') === -1);
+
+  const t = TABLES.adventurePaths;
+  check('the paths are marked unverified, because nobody measured them', t.confidence, 'unverified');
+  checkTrue('every path states its assumption on the record',
+    t.paths.every(p => typeof p.assumption === 'string' && p.assumption.length > 10));
+  check('the return matches the app\'s own median band', t.returnRateReal, 0.05);
+})();
+
+/* ==========================================================================
    Saying that it saved (D-165)
    ========================================================================== */
 section('The app confirms what it did');

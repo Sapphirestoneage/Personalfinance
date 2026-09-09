@@ -9280,6 +9280,89 @@ Returning with an answer past the first two: unfolded, all 7. Arriving at
 
 21,832 + 5,614 + 25 + 448 + 340 checks pass.
 
+## D-167 — The Long Way Round, and what the spec asked for instead
+
+A specification arrived for an "FI Choose Your Own Adventure": set a baseline,
+pick one of four strategies, walk five years, then test contingencies. It
+specified React, Recharts, Tailwind and a `/src` tree.
+
+This repo has no `src/`, no `package.json` and no build step, and "static HTML
++ vanilla JS, no build step" is a non-negotiable in `CLAUDE.md`. The spec also
+describes itself as integrating with SPARKS — keeping the radar, the rooms and
+localStorage — so the stack was the part to drop, not the idea. Built as a
+room.
+
+### It writes nothing, and that is what makes it free
+
+`kind: 'explore'`, and there is no field here for another room to fight over.
+A strategy you are *considering* is not a fact about your household, so the
+D-017 ownership question never arises: the room reads what you earn, spend and
+hold from the rooms that own them, and every one of those three is shown with a
+link back to its owner rather than a box to retype it in.
+
+That is also why it needed no schema change and owes no compatibility note.
+
+### The paths are stated, not asserted
+
+`data/adventure_paths.json` carries `confidence: 'unverified'` and says why:
+
+> No study says a house hack cuts housing by 40% for you; it says it can, and
+> the room lets you change the figure rather than pretending the default is a
+> finding.
+
+Every path prints its assumption beside the number it moves — "$500 a month net
+of its own costs", "housing falls by 40%, and housing is taken as 30% of what
+you spend". The return is 5% real, taken from the median band already in
+`data/return_bands.json` so this room and the rest of the app agree rather than
+each carrying a private figure.
+
+### The house hack moves the finish line, not just the pace
+
+The interesting mechanic, and the one a naive build gets wrong: cutting spending
+lowers **the target as well as the saving**. On the demo household the target
+falls from $945,000 to $831,600 while the pot rises — so the path wins twice,
+and the test re-derives that number by hand rather than trusting the engine.
+
+### The most useful thing it says
+
+Running the four contingencies against the same walk:
+
+| Shock | Cost |
+|---|---|
+| Markets fall 30% | 1 year |
+| Six months without work | 1 year |
+| Lifestyle creeps up 4% a year | **4 years** |
+| A 15% raise, saved | 2 years earlier |
+
+A creeping lifestyle costs four times what a market crash does. That is not a
+claim I brought to the room; it is what the arithmetic says, and it is the sort
+of thing this app exists to show.
+
+### Refusals kept
+
+`yearsFrom()` returns **null** — never `Infinity`, never a cheerful large
+number — when nothing is being saved and the target never arrives. A baseline
+missing any of income, spending or a portfolio returns incomplete naming the
+absent fields, because a five-year projection built on an assumed nought is a
+lie told confidently.
+
+### What the registry taught me, twice
+
+The row went into the `ROOMS` array literal when it belonged in a `ROOMS.push()`
+further down; orders must ascend in registration order, and mine sat at 43.5
+among rooms of order 18. Then `FILTER_TAGS` is exactly `income · cashflow ·
+debt`, so `['fire', 'scenarios']` was not a tag set at all. Both were caught by
+tests, not by me. The D-153 layout guard then refused the room until it appeared
+in all twenty Front Doors arrangements — the third time that check has earned
+its keep.
+
+### Verified
+
+Chromium at 412x915 with touch: an empty profile is refused with a named
+reason; the demo household reads $72,000 / $37,800 / $57,500; four paths offer;
+five years walk; four rows compare; and the lifestyle shock reports "puts the
+finish line back 3 years". 21,945 + 5,614 + 25 + 448 + 345 checks pass.
+
 ---
 
 # The Dungeons & Dividends entries

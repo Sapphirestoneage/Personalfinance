@@ -535,7 +535,7 @@
         { id: 'reading',     label: 'Reading from elsewhere' }
       ]
     },
-    {
+        {
       id: 'fulfillment',
       kind: 'about-you',
       needs: ['monthlyExpenses'],
@@ -1158,6 +1158,28 @@
         { id: 'assumptions', label: 'Assumptions' },
         { id: 'reading',     label: 'What this reads' }
       ]
+  });
+
+  /* The Long Way Round — four strategies over five years (D-167). Sits beside
+     Enough because both ask what the money is for, not just how much. */
+  ROOMS.push({
+    id: 'adventure',
+    kind: 'explore',
+    needs: ['grossAnnualIncome', 'monthlyExpenses', 'investments'],
+    order: 43.5,
+    title: 'The Long Way Round',
+    blurb: 'Four ways through the next five years, walked a year at a time \u2014 and what a crash, a lost job or a creeping lifestyle does to the finish line.',
+    href: 'rooms/adventure.html',
+    tier: 2,
+    tags: ['cashflow'],
+    utility: false,
+    subsections: [
+      { id: 's-base',    label: 'Where you stand' },
+      { id: 's-paths',   label: 'Four ways through' },
+      { id: 's-journey', label: 'The five years' },
+      { id: 's-compare', label: 'All four side by side' },
+      { id: 's-shocks',  label: 'What if it goes wrong' }
+    ]
   });
 
   /* Designed Week — the LATER.md rooms (D-101). */

@@ -1,0 +1,63 @@
+{
+  "id": "adventure_paths",
+  "version": "1.0",
+  "asOf": "2026-09-09",
+  "source": "Not findings. Four strategies people actually describe using to reach financial independence, and the size of each move stated as a plain assumption: a side hustle netting $500 a month, a house hack cutting housing by 40%, a 3% real raise. The figures are illustrative starting points chosen to be arguable, not measured averages, and every one of them is stated on screen next to the number it moves.",
+  "confidence": "unverified",
+  "confidenceNote": "The paths are a teaching device. No study says a house hack cuts housing by 40% for you; it says it can, and the room lets you change the figure rather than pretending the default is a finding.",
+  "note": "Read by engines/adventure.js. Never inline these in a room.",
+  "returnRateReal": 0.05,
+  "returnRateSource": "The median real return band in data/return_bands.json, so this room and the rest of the app agree.",
+  "withdrawalRate": 0.04,
+  "years": 5,
+  "paths": [
+    {
+      "id": "steady",
+      "label": "Steady",
+      "line": "One job, rising slowly. Save the difference and let it compound.",
+      "assumption": "A 3% real raise a year, and every raise saved rather than spent.",
+      "annualRaiseReal": 0.03,
+      "annualExtraIncomeCents": 0,
+      "housingCutShare": 0,
+      "raiseKeptShare": 1
+    },
+    {
+      "id": "hustle",
+      "label": "Side Hustle",
+      "line": "Keep the job, add work of your own on the side.",
+      "assumption": "$500 a month net of its own costs and tax, ramping over the first two years.",
+      "annualRaiseReal": 0.02,
+      "annualExtraIncomeCents": 600000,
+      "housingCutShare": 0,
+      "raiseKeptShare": 1
+    },
+    {
+      "id": "househack",
+      "label": "House Hack",
+      "line": "Attack the largest line instead of the income. Housemate, smaller place, cheaper town.",
+      "assumption": "Housing falls by 40%, and housing is taken as 30% of what you spend.",
+      "annualRaiseReal": 0.02,
+      "annualExtraIncomeCents": 0,
+      "housingCutShare": 0.40,
+      "housingShareOfSpending": 0.30,
+      "raiseKeptShare": 1
+    },
+    {
+      "id": "combo",
+      "label": "Both, Smaller",
+      "line": "Half a hustle and half a house hack, because doing two things properly is harder than doing one.",
+      "assumption": "Half of each: $250 a month, housing down 20%.",
+      "annualRaiseReal": 0.025,
+      "annualExtraIncomeCents": 300000,
+      "housingCutShare": 0.20,
+      "housingShareOfSpending": 0.30,
+      "raiseKeptShare": 1
+    }
+  ],
+  "contingencies": [
+    { "id": "crash",     "label": "Markets fall 30%",       "line": "A 30% drop in year 2, then the usual return resumes.",              "portfolioShockShare": -0.30, "shockYear": 2 },
+    { "id": "jobloss",   "label": "Six months without work","line": "Income stops for half of year 3. Spending continues.",              "incomeLostShareOfYear": 0.5, "shockYear": 3 },
+    { "id": "inflation", "label": "Lifestyle creeps up",    "line": "Spending rises 4% a year in real terms on top of everything else.", "spendingDriftReal": 0.04 },
+    { "id": "raise",     "label": "A real raise",           "line": "A 15% rise in year 2 that you keep saving rather than spending.",   "incomeJumpShare": 0.15, "shockYear": 2 }
+  ]
+}

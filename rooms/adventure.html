@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Long Way Round · SPARKS</title>
+<link rel="stylesheet" href="../shared/fonts.css">
+<link rel="stylesheet" href="../shared/theme.css">
+<!--
+  THE LONG WAY ROUND — four ways through five years.
+
+  1. READS  what you earn, what you spend and what you have, from the rooms
+            that own them. It asks for nothing and WRITES NOTHING: a path you
+            are thinking about is not a fact about your household.
+  2. PATHS  live in data/adventure_paths.json with confidence 'unverified',
+            because nobody measured that a house hack cuts housing by 40%.
+            Every assumption is printed beside the number it moves.
+  3. SHOCKS are four contingencies, each applied to the same walk so the
+            difference is the answer.
+
+  LIVE-FORM: built once — this room has no text input at all. Every control is
+  a button, and the page only ever rewrites its own read-only panels. Nothing
+  can eat a keystroke because nothing here takes one.
+-->
+<style>
+  .stage { display: none; }
+  .stage.on { display: block; }
+  .baseline { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-3); }
+  .bcell { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); }
+  .bcell .k { display: block; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); }
+  .bcell .v { display: block; font-family: var(--font-display); font-size: var(--text-xl); margin-top: var(--space-1); font-variant-numeric: tabular-nums; }
+  .bcell a { font-size: var(--text-xs); }
+
+  .paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-3); }
+  .pathcard { background: var(--color-surface); border: 1px solid var(--color-border-strong); border-radius: var(--radius-md);
+    padding: var(--space-3); text-align: left; cursor: pointer; min-height: 44px; }
+  .pathcard:hover { border-color: var(--color-accent-hover); }
+  .pathcard[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-surface-active); }
+  .pathcard b { display: block; font-size: var(--text-md); }
+  .pathcard span { display: block; color: var(--color-text-muted); font-size: var(--text-sm); margin-top: 4px; line-height: 1.45; }
+  .pathcard em { display: block; color: var(--color-text-faint); font-size: var(--text-xs); margin-top: var(--space-2); font-style: normal; }
+
+  .years { display: flex; flex-direction: column; gap: var(--space-2); }
+  .yearrow { display: grid; grid-template-columns: 54px minmax(0,1fr) auto; gap: var(--space-3); align-items: center;
+    padding: var(--space-3); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+  .yearrow.is-next { border-color: var(--color-accent); }
+  .yearrow .yr { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-text-subtle); }
+  .yearrow .bar { height: 8px; border-radius: 3px; background: var(--color-surface-raised); box-shadow: inset 0 0 0 1px var(--color-border); overflow: hidden; }
+  .yearrow .bar i { display: block; height: 100%; background: var(--color-accent); }
+  .yearrow .num { font-family: var(--font-mono); font-size: var(--text-sm); text-align: right; white-space: nowrap; }
+  .yearrow small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); margin-top: 3px; }
+
+  .cmp { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+  .cmp th, .cmp td { text-align: right; padding: var(--space-2) var(--space-1); border-top: 1px solid var(--color-border); font-variant-numeric: tabular-nums; }
+  .cmp th:first-child, .cmp td:first-child { text-align: left; }
+  .cmp tr.best td { color: var(--color-positive); }
+
+  .shocks { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: var(--space-2); }
+  .shock { background: var(--color-surface); border: 1px solid var(--color-border-strong); border-radius: var(--radius-md);
+    padding: var(--space-3); text-align: left; cursor: pointer; min-height: 44px; }
+  .shock[aria-pressed="true"] { border-color: var(--color-warning, #D9A441); background: color-mix(in srgb, #D9A441 12%, transparent); }
+  .shock b { display: block; font-size: var(--text-sm); }
+  .shock span { display: block; color: var(--color-text-muted); font-size: var(--text-xs); margin-top: 3px; line-height: 1.45; }
+  .verdict { background: var(--color-surface); border: 1px solid var(--color-border-strong); border-radius: var(--radius-md);
+    padding: var(--space-4); margin-top: var(--space-3); }
+  .verdict .big { font-family: var(--font-display); font-size: var(--text-2xl); display: block; }
+  .navrow { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-4); }
+</style>
+</head>
+<body class="slaf">
+<header class="room-head">
+  <a class="room-back" href="../index.html">← Home</a>
+  <h1>The Long Way Round</h1>
+  <p class="room-lede">Four ways through the next five years, walked one year at a time — then what a crash, a lost job or a creeping lifestyle does to where you land.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="slaf-reason" id="blocked" hidden></div>
+
+  <!-- 1 -->
+  <section class="stage on" id="s-base">
+    <h2 class="slaf-eyebrow">Where you stand</h2>
+    <p class="slaf-note">Taken from the rooms that own these numbers. Nothing to type here.</p>
+    <div class="baseline" id="baseline"></div>
+    <div class="navrow"><button class="slaf-btn slaf-btn--primary" id="to-paths">Pick a way through →</button></div>
+  </section>
+
+  <!-- 2 -->
+  <section class="stage" id="s-paths">
+    <h2 class="slaf-eyebrow">Four ways through</h2>
+    <p class="slaf-note">None of these is the right answer. They cost different things.</p>
+    <div class="paths" id="pathlist"></div>
+    <div class="navrow">
+      <button class="slaf-btn" id="back-base">← Back</button>
+      <button class="slaf-btn slaf-btn--primary" id="to-journey" disabled>Walk the five years →</button>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="stage" id="s-journey">
+    <h2 class="slaf-eyebrow" id="journey-head">Five years</h2>
+    <p class="slaf-note" id="journey-assume"></p>
+    <div class="years" id="yearlist"></div>
+    <div class="navrow">
+      <button class="slaf-btn" id="back-paths">← Change the way</button>
+      <button class="slaf-btn slaf-btn--primary" id="next-year">Live the next year →</button>
+      <button class="slaf-btn" id="to-compare" hidden>See all four →</button>
+    </div>
+  </section>
+
+  <!-- 4 + 5 -->
+  <section class="stage" id="s-compare">
+    <h2 class="slaf-eyebrow">All four, same five years</h2>
+    <p class="slaf-note">Where each leaves you, and how long after that until the money covers a year of spending.</p>
+    <div style="overflow-x:auto"><table class="cmp" id="cmptable"></table></div>
+    <div class="navrow">
+      <button class="slaf-btn" id="back-journey">← Back to the walk</button>
+      <button class="slaf-btn slaf-btn--primary" id="to-shocks">Now break it →</button>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="stage" id="s-shocks">
+    <h2 class="slaf-eyebrow">What if it goes wrong</h2>
+    <p class="slaf-note">Tap any of these to apply them to your chosen way. They stack.</p>
+    <div class="shocks" id="shocklist"></div>
+    <div class="verdict" id="verdict"></div>
+    <div class="navrow"><button class="slaf-btn" id="back-compare">← Back</button></div>
+  </section>
+
+  <details class="drawer">
+    <summary>What this assumes <small>All of it, in one place.</small></summary>
+    <div id="assumptions"></div>
+  </details>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/liveform.js"></script>
+<script src="../shared/staleness.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/adventure.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference,
+      Ownership = SLAF.Ownership, Adventure = SLAF.Adventure;
+
+  var ROOM_ID = 'adventure';
+  var TABLES = null;
+  /* Page-local. A path you are considering is not a fact about your household. */
+  var state = { pathId: null, yearsLived: 0, shocks: [] };
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s)
+    .replace(/[&<>"]/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]; }); }
+  function fmt(c) { return Money.formatCents(c); }
+  function h() { return Spine.getProfile(); }
+  function show(id) {
+    ['s-base','s-paths','s-journey','s-compare','s-shocks'].forEach(function (x) {
+      el(x).classList.toggle('on', x === id);
+    });
+    window.scrollTo(0, 0);
+  }
+
+  /* ---- 1. Where you stand ------------------------------------------------ */
+  function paintBaseline() {
+    var b = Adventure.baseline(h());
+    if (!Money.isOk(b)) {
+      el('blocked').hidden = false;
+      el('blocked').textContent = b.reason;
+      el('to-paths').disabled = true;
+      el('baseline').innerHTML = '';
+      return false;
+    }
+    el('blocked').hidden = true;
+    el('to-paths').disabled = false;
+    var v = b.value;
+    var cells = [
+      ['You earn', fmt(v.annualIncomeCents) + ' a year', 'grossAnnualIncome'],
+      ['You spend', fmt(v.annualSpendCents) + ' a year', 'monthlyExpenses'],
+      ['You have', fmt(v.portfolioCents), 'investments']
+    ];
+    el('baseline').innerHTML = cells.map(function (c) {
+      var d = Ownership.describe(c[2], h(), ROOM_ID);
+      var where = d ? '<a href="' + esc(d.href) + '">Change it in ' + esc(d.ownerTitle) + ' →</a>' : '';
+      return '<div class="bcell"><span class="k">' + esc(c[0]) + '</span>'
+        + '<span class="v">' + esc(c[1]) + '</span>' + where + '</div>';
+    }).join('');
+    return true;
+  }
+
+  /* ---- 2. Four ways ------------------------------------------------------ */
+  function paintPaths() {
+    el('pathlist').innerHTML = Adventure.paths(TABLES).map(function (p) {
+      return '<button type="button" class="pathcard" data-path="' + esc(p.id) + '"'
+        + ' aria-pressed="' + (state.pathId === p.id) + '"><b>' + esc(p.label) + '</b>'
+        + '<span>' + esc(p.line) + '</span><em>Assumes: ' + esc(p.assumption) + '</em></button>';
+    }).join('');
+    el('to-journey').disabled = !state.pathId;
+  }
+  el('pathlist').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-path]'); if (!b) return;
+    state.pathId = b.getAttribute('data-path');
+    state.yearsLived = 0;
+    paintPaths();
+  });
+
+  /* ---- 3. The walk ------------------------------------------------------- */
+  function currentRun() {
+    return Adventure.run(h(), TABLES, { pathId: state.pathId, shockIds: state.shocks });
+  }
+  function paintJourney() {
+    var r = currentRun();
+    if (!Money.isOk(r)) return;
+    var v = r.value;
+    el('journey-head').textContent = v.label + ' — five years';
+    el('journey-assume').textContent = 'Assumes: ' + v.assumption;
+
+    el('yearlist').innerHTML = v.rows.slice(0, state.yearsLived).map(function (row) {
+      var pct = Math.max(0, Math.min(100, (row.shareOfTarget || 0) * 100));
+      return '<div class="yearrow"><span class="yr">Year ' + row.year + '</span>'
+        + '<span><span class="bar"><i style="width:' + pct.toFixed(1) + '%"></i></span>'
+        + '<small>' + esc(fmt(row.savedCents)) + ' saved &middot; spending '
+        + esc(fmt(row.spendCents)) + '</small></span>'
+        + '<span class="num">' + esc(fmt(row.portfolioCents)) + '<small>'
+        + pct.toFixed(0) + '% of ' + esc(fmt(row.targetCents)) + '</small></span></div>';
+    }).join('');
+
+    var done = state.yearsLived >= v.rows.length;
+    el('next-year').hidden = done;
+    el('to-compare').hidden = !done;
+    if (!done) {
+      el('next-year').textContent = state.yearsLived === 0
+        ? 'Live year 1 →' : 'Live year ' + (state.yearsLived + 1) + ' →';
+    }
+  }
+  el('next-year').addEventListener('click', function () {
+    state.yearsLived++; paintJourney();
+  });
+
+  /* ---- 4/5. All four ----------------------------------------------------- */
+  function paintCompare() {
+    var rows = Adventure.compare(h(), TABLES, state.shocks)
+      .filter(function (c) { return Money.isOk(c.result); });
+    if (!rows.length) return;
+    var best = rows.reduce(function (a, b) {
+      var av = a.result.value.shareOfTarget, bv = b.result.value.shareOfTarget;
+      return bv > av ? b : a;
+    });
+    el('cmptable').innerHTML =
+      '<thead><tr><th>Way through</th><th>After 5 years</th><th>Of the target</th><th>Then how long</th></tr></thead><tbody>'
+      + rows.map(function (c) {
+          var v = c.result.value;
+          var after = v.yearsAfter === null ? 'never at this rate'
+            : v.yearsAfter === 0 ? 'already there' : v.yearsAfter + ' more years';
+          return '<tr' + (c.pathId === best.pathId ? ' class="best"' : '') + '>'
+            + '<td>' + esc(c.label) + '</td><td>' + esc(fmt(v.portfolioCents)) + '</td>'
+            + '<td>' + ((v.shareOfTarget || 0) * 100).toFixed(0) + '%</td>'
+            + '<td>' + esc(after) + '</td></tr>';
+        }).join('') + '</tbody>';
+  }
+
+  /* ---- 6. Break it ------------------------------------------------------- */
+  function paintShocks() {
+    el('shocklist').innerHTML = Adventure.contingencies(TABLES).map(function (c) {
+      return '<button type="button" class="shock" data-shock="' + esc(c.id) + '"'
+        + ' aria-pressed="' + (state.shocks.indexOf(c.id) > -1) + '"><b>' + esc(c.label) + '</b>'
+        + '<span>' + esc(c.line) + '</span></button>';
+    }).join('');
+    paintVerdict();
+  }
+  function paintVerdict() {
+    var clean = Adventure.run(h(), TABLES, { pathId: state.pathId, shockIds: [] });
+    var hit = currentRun();
+    if (!Money.isOk(clean) || !Money.isOk(hit)) return;
+    var a = clean.value, b = hit.value;
+    var say;
+    if (!state.shocks.length) {
+      say = 'Nothing applied. ' + esc(a.label) + ' leaves you at ' + esc(fmt(a.portfolioCents)) + '.';
+    } else if (a.yearsAfter === null || b.yearsAfter === null) {
+      say = 'At this saving rate the target does not arrive on its own.';
+    } else {
+      var d = b.yearsAfter - a.yearsAfter;
+      say = d === 0 ? 'Costs you nothing you can see in five years.'
+        : d > 0 ? 'Puts the finish line back <b>' + d + ' year' + (d === 1 ? '' : 's') + '</b>.'
+                : 'Brings the finish line forward <b>' + Math.abs(d) + ' year' + (d === -1 ? '' : 's') + '</b>.';
+    }
+    el('verdict').innerHTML = '<span class="big">' + esc(fmt(b.portfolioCents)) + '</span>'
+      + '<p class="slaf-note">' + say + ' Without them it was ' + esc(fmt(a.portfolioCents)) + '.</p>';
+  }
+  el('shocklist').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-shock]'); if (!b) return;
+    var id = b.getAttribute('data-shock');
+    var i = state.shocks.indexOf(id);
+    if (i > -1) state.shocks.splice(i, 1); else state.shocks.push(id);
+    paintShocks(); paintJourney(); paintCompare();
+  });
+
+  /* ---- Assumptions, said once, in full ----------------------------------- */
+  function paintAssumptions() {
+    var t = TABLES.adventurePaths;
+    el('assumptions').innerHTML =
+      '<p class="slaf-note">' + esc(t.source) + '</p>'
+      + '<p class="slaf-note"><strong>Confidence: ' + esc(t.confidence) + '.</strong> '
+      + esc(t.confidenceNote) + '</p>'
+      + '<ul class="slaf-note"><li>Returns: ' + (t.returnRateReal * 100).toFixed(0)
+      + '% a year after inflation. ' + esc(t.returnRateSource) + '</li>'
+      + '<li>The target: a year of spending divided by '
+      + (t.withdrawalRate * 100).toFixed(0) + '%, the same arithmetic the FIRE room uses.</li>'
+      + '<li>Everything is in today’s money, so a dollar in year five means what it means now.</li></ul>';
+  }
+
+  /* ---- Wiring ------------------------------------------------------------ */
+  el('to-paths').addEventListener('click', function () { paintPaths(); show('s-paths'); });
+  el('back-base').addEventListener('click', function () { show('s-base'); });
+  el('to-journey').addEventListener('click', function () { state.yearsLived = 0; paintJourney(); show('s-journey'); });
+  el('back-paths').addEventListener('click', function () { show('s-paths'); });
+  el('to-compare').addEventListener('click', function () { paintCompare(); show('s-compare'); });
+  el('back-journey').addEventListener('click', function () { show('s-journey'); });
+  el('to-shocks').addEventListener('click', function () { paintShocks(); show('s-shocks'); });
+  el('back-compare').addEventListener('click', function () { paintCompare(); show('s-compare'); });
+
+  Spine.registerRoom(ROOM_ID);
+  Reference.load(['adventurePaths']).then(function (tables) {
+    TABLES = tables;
+    paintBaseline();
+    paintAssumptions();
+    if (SLAF.Progress) SLAF.Progress.mount(ROOM_ID);
+  });
+  Spine.onChange(paintBaseline);
+})();
+</script>
+</body>
+</html>

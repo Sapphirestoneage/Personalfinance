@@ -841,6 +841,20 @@
       "order": 43
     },
     {
+      "id": "adventure",
+      "title": "The Long Way Round",
+      "file": "rooms/adventure.html",
+      "reads": [
+        "grossAnnualIncome",
+        "monthlyExpenses",
+        "investments"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 43.5
+    },
+    {
       "id": "week",
       "title": "Designed Week",
       "file": "rooms/week.html",
