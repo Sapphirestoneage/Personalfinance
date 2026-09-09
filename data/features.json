@@ -1,0 +1,179 @@
+{
+  "id": "features",
+  "version": "1.0",
+  "asOf": "2026-09-09",
+  "source": "Every switch the master build prompt names (sections 15 and 16). The schema always carries the shape; a switch decides whether a room renders it, asks for it, or an engine applies it. A user-scope switch lives under prefs and is toggled from Settings; a situation-scope switch is set by the situation gate and is not toggleable.",
+  "confidence": "convention",
+  "confidenceNote": "Defaults are the prompt's: the beginner path starts with only the default-on set; the FI path starts with Accuracy and Horizon all on.",
+  "note": "Read by shared/features.js (D-180). Features.on(id, household) is the only way an engine or room checks a switch; no room reads this file directly. Flipping any switch on and off leaves the household byte-identical: switches change rendering and engines, never stored facts. `group` is the Settings heading: Accuracy (what makes numbers more honest), Household (who is in it), Horizon (age and time), Advanced (what a beginner should not see). `situationWhen` is one of a few fixed phrases the library reads for a situation-scope switch.",
+  "groups": [
+    {
+      "id": "accuracy",
+      "label": "Accuracy",
+      "line": "The phenomena that make the numbers more honest."
+    },
+    {
+      "id": "household",
+      "label": "Household",
+      "line": "Who is in it."
+    },
+    {
+      "id": "horizon",
+      "label": "Horizon",
+      "line": "Age and time."
+    },
+    {
+      "id": "advanced",
+      "label": "Advanced",
+      "line": "What a beginner should not have to see."
+    }
+  ],
+  "features": {
+    "afterTaxNetWorth": {
+      "default": "on",
+      "scope": "user",
+      "group": "accuracy",
+      "section": "15.3",
+      "label": "Show net worth after deferred tax",
+      "gloss": "A 401(k) dollar is not a whole dollar. Show what's left after the tax you'll owe on it."
+    },
+    "showNominal": {
+      "default": "off",
+      "scope": "user",
+      "group": "horizon",
+      "section": "15.2",
+      "label": "Show projections in future dollars too",
+      "gloss": "Every projection is in today's money. This adds the future-dollar figure beside it, converted at the inflation assumption."
+    },
+    "annualLines": {
+      "default": "on",
+      "scope": "user",
+      "group": "accuracy",
+      "section": "15.5",
+      "label": "Also once a year",
+      "gloss": "Insurance, gifts, registration: named yearly costs that sit inside their bucket and are spread over the month everywhere but the calendar."
+    },
+    "showMilestones": {
+      "default": "on",
+      "scope": "user",
+      "group": "horizon",
+      "section": "15.9",
+      "label": "Show the age milestones on timelines",
+      "gloss": "50, 55, 59 and a half, 62, 65, 67, 70, 73: faint markers where a rule changes, with the rule on hover."
+    },
+    "sequenceRisk": {
+      "default": "off",
+      "scope": "user",
+      "group": "accuracy",
+      "section": "16.1",
+      "label": "Order-of-returns risk",
+      "gloss": "The order returns arrive in matters once you're spending from the pot. A bad first five years can sink a plan that averages fine."
+    },
+    "preMedicare": {
+      "default": "on",
+      "scope": "user",
+      "group": "horizon",
+      "section": "16.2",
+      "label": "Health cover before 65",
+      "gloss": "Between leaving work and 65, health cover is a real line, and its cost depends on what you report as income."
+    },
+    "incomeFloor": {
+      "default": "on",
+      "scope": "user",
+      "group": "horizon",
+      "section": "16.3",
+      "label": "Social Security and pensions as a floor",
+      "gloss": "Money that arrives whether or not the market does. It lowers how much the pot has to cover."
+    },
+    "equityComp": {
+      "default": "off",
+      "scope": "situation",
+      "group": "advanced",
+      "section": "16.4",
+      "situationWhen": "income type includes equity",
+      "label": "Equity compensation",
+      "gloss": "Shares you're promised aren't shares you have yet. Show what's vested, what's coming, and what the tax will be."
+    },
+    "matchVesting": {
+      "default": "on",
+      "scope": "user",
+      "group": "accuracy",
+      "section": "16.5",
+      "label": "Employer match and vesting",
+      "gloss": "Match money isn't yours until it vests. Leaving early can cost you part of it."
+    },
+    "homeDetail": {
+      "default": "on",
+      "scope": "user",
+      "group": "accuracy",
+      "section": "16.6",
+      "label": "Home ownership specifics",
+      "gloss": "A house costs more than the mortgage, and it's worth less than the listing when you sell."
+    },
+    "inheritanceRules": {
+      "default": "off",
+      "scope": "situation",
+      "group": "advanced",
+      "section": "16.7",
+      "situationWhen": "an inheritance block exists",
+      "label": "Inheritance rules",
+      "gloss": "What you inherit, and how, changes what tax you owe and how fast you must take it."
+    },
+    "studentLoanPaths": {
+      "default": "off",
+      "scope": "situation",
+      "group": "accuracy",
+      "section": "16.8",
+      "situationWhen": "a federal student loan exists",
+      "label": "Student loan paths",
+      "gloss": "Federal loans have payment plans tied to what you earn, and some jobs erase the balance after ten years."
+    },
+    "jobLossCushions": {
+      "default": "on",
+      "scope": "user",
+      "group": "accuracy",
+      "section": "16.9",
+      "label": "Job-loss cushions",
+      "gloss": "Losing a job usually comes with something: severance, unemployment, and the option to keep health cover for a while."
+    },
+    "agingParents": {
+      "default": "off",
+      "scope": "user",
+      "group": "household",
+      "section": "16.10",
+      "label": "Aging parents",
+      "gloss": "Helping a parent is a line most plans leave out until it's already happening."
+    },
+    "givingVehicles": {
+      "default": "off",
+      "scope": "user",
+      "group": "advanced",
+      "section": "16.11",
+      "label": "Charitable vehicles",
+      "gloss": "There are ways to give that lower your tax bill more than writing a cheque."
+    },
+    "timeBudget": {
+      "default": "off",
+      "scope": "user",
+      "group": "advanced",
+      "section": "16.12",
+      "label": "Time and energy as a budget",
+      "gloss": "Hours are the other thing you spend. Every plan that needs your time should show the bill."
+    }
+  },
+  "paths": {
+    "beginner": {
+      "label": "Beginner",
+      "line": "Starts with only the switches that are on by default.",
+      "on": "defaults"
+    },
+    "fi": {
+      "label": "FI",
+      "line": "Starts with Accuracy and Horizon all on.",
+      "on": [
+        "accuracy",
+        "horizon"
+      ]
+    }
+  }
+}

@@ -9945,7 +9945,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
   check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
   check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree,stacker,exercises');
-  check('Upkeep, with Front Doors and the Walk-Through kept apart (not merged this pass)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,refresh,history,get-help,doors,walk');
+  check('Upkeep, with Front Doors and the Walk-Through kept apart (not merged this pass)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,refresh,history,settings,get-help,doors,walk');
   checkTrue('every room has aliases to search by', Registry.all().every(r => Array.isArray(r.aliases) && r.aliases.length >= 2));
   checkTrue('"car" finds What A Car Costs', Registry.matches(Registry.byId('car'), 'car') && Registry.matches(Registry.byId('car'), 'VEHICLE'));
   checkTrue('...and not FIRE', !Registry.matches(Registry.byId('fire'), 'car'));
@@ -10004,6 +10004,71 @@ section('Pinned scenarios live beside the household, never in it (D-176)');
   checkTrue('the adventure room writes nothing to the household', !/Spine\.(set|updateProfile|setFat|setMonthlyExpenses)\(/.test(fs.readFileSync(path.join(ROOT, 'rooms/adventure.html'), 'utf8')));
   checkTrue('...has no text input', !/<input|<textarea|contenteditable/.test(fs.readFileSync(path.join(ROOT, 'rooms/adventure.html'), 'utf8')));
   Scenarios.reset();
+})();
+
+section('Feature switches: rendering and engines, never stored facts (D-180)');
+(function () {
+  const Features = require(path.join(ROOT, 'shared/features.js'));
+  const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
+  const table = require(path.join(ROOT, 'data/features.json'));
+  const ids = Object.keys(table.features);
+  Prefs.reset();
+
+  check('sixteen switches: the ten shapes\' four and the twelve phenomena', ids.length, 16);
+  checkTrue('every switch has a default, a scope, a group, a label and a gloss', ids.every(id => { const f = table.features[id]; return ['on', 'off'].indexOf(f.default) > -1 && ['user', 'situation'].indexOf(f.scope) > -1 && table.groups.some(g => g.id === f.group) && f.label && f.gloss; }));
+  checkTrue('a situation switch names what sets it', ids.filter(id => table.features[id].scope === 'situation').every(id => typeof table.features[id].situationWhen === 'string'));
+  check('the four groups, in the prompt\'s order', table.groups.map(g => g.id).join(','), 'accuracy,household,horizon,advanced');
+  checkTrue('no gloss carries an em-dash', ids.every(id => table.features[id].gloss.indexOf('\u2014') === -1 && table.features[id].label.indexOf('\u2014') === -1));
+  checkTrue('every switch id appears in at least one room\'s features list', ids.every(id => Features.rooms(id).length >= 1), ids.filter(id => !Features.rooms(id).length).join(','));
+  checkTrue('...and every room\'s features list names only real switches', Registry.all().every(r => (r.features || []).every(f => ids.indexOf(f) > -1)));
+  checkTrue('the table is a registered reference table', /features: 'features\.json'/.test(fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8')));
+  checkTrue('no room reads features.json directly', !fs.readdirSync(path.join(ROOT, 'rooms')).some(f => /features\.json/.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8'))) && !fs.readdirSync(path.join(ROOT, 'engines')).some(f => /features\.json/.test(fs.readFileSync(path.join(ROOT, 'engines', f), 'utf8'))));
+
+  /* on(): the pref, else the default; situation scope from the household. */
+  const demo = Demo.build();
+  check('a default-on switch is on', Features.on('afterTaxNetWorth', demo), true);
+  check('a default-off switch is off', Features.on('sequenceRisk', demo), false);
+  check('an unknown switch is off, never a throw', Features.on('teleport', demo), false);
+  Features.set('sequenceRisk', true);
+  check('set turns it on for this person', Features.on('sequenceRisk', demo), true);
+  check('...and the pref says so', Prefs.get('features.sequenceRisk', null), true);
+  Features.set('sequenceRisk', null);
+  check('null goes back to the default', Features.on('sequenceRisk', demo), false);
+  check('a situation switch ignores prefs', (Features.set('equityComp', true), Features.on('equityComp', demo)), false);
+  const equity = Demo.build(); Schema.primaryPerson(equity).incomeSources.push(Schema.createIncomeSource({ personId: Schema.primaryPerson(equity).id, source: 'RSUs', type: 'equity', grossAnnualIncomeCents: 1000000 }));
+  check('...and reads the household: an equity source turns equityComp on', Features.on('equityComp', equity), true);
+  check('a federal student loan turns studentLoanPaths on (the demo has one)', Features.on('studentLoanPaths', demo), true);
+  const noLoan = Demo.build(); noLoan.debts = noLoan.debts.filter(d => d.type !== 'student_loan');
+  check('...and off without one', Features.on('studentLoanPaths', noLoan), false);
+  checkTrue('situationWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/features.js'), 'utf8')));
+
+  /* Flipping every switch on then off leaves the household byte-identical. */
+  const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
+  const before = JSON.stringify(Spine.getProfile());
+  const userIds = ids.filter(id => table.features[id].scope === 'user');
+  userIds.forEach(id => Features.set(id, true));
+  checkTrue('all on', userIds.every(id => Features.on(id)));
+  userIds.forEach(id => Features.set(id, false));
+  checkTrue('all off', userIds.every(id => !Features.on(id)));
+  check('...and the household hash is unchanged', JSON.stringify(Spine.getProfile()), before);
+  userIds.forEach(id => Features.set(id, null));
+
+  /* The two starting sets. */
+  Features.applyPath('beginner');
+  checkTrue('Beginner: only the default-on set', userIds.every(id => Features.on(id) === (table.features[id].default === 'on')));
+  check('...and the door is remembered', Prefs.get('door', null), 'beginner');
+  Features.applyPath('fi');
+  checkTrue('FI: Accuracy and Horizon all on', userIds.every(id => Features.on(id) === (['accuracy', 'horizon'].indexOf(table.features[id].group) > -1 || table.features[id].default === 'on')));
+  checkTrue('...Advanced still off unless on by default', userIds.filter(id => table.features[id].group === 'advanced').every(id => Features.on(id) === (table.features[id].default === 'on')));
+  check('...and the household still unchanged', JSON.stringify(Spine.getProfile()), before);
+  Prefs.reset();
+
+  /* The Settings room. */
+  const room = fs.readFileSync(path.join(ROOT, 'rooms/settings.html'), 'utf8');
+  checkTrue('Settings is a registered room under Upkeep', Registry.byId('settings') && Registry.byId('settings').group === 'upkeep' && Registry.inGroup('upkeep', null).some(r => r.id === 'settings'));
+  checkTrue('...that writes only prefs', JSON.stringify(Registry.daite('settings').writes) === JSON.stringify(['prefs.features']));
+  checkTrue('...with buttons, no text input', !/<input|<textarea/.test(room) && /role="switch"/.test(room));
+  checkTrue('...reading the switches through the library', /Features\.(all|on|set|rooms|applyPath)\(/.test(room) && !/features\.json/.test(room));
 })();
 
 section('Blocks: a hypothetical laid on the household, never in it (D-178)');

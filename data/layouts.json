@@ -94,6 +94,7 @@
       "walk",
       "data",
       "refresh",
+      "settings",
       "doors"
      ],
      "note": "Utilities at orders 29 and 97–99 — reachable any time, never a step."
@@ -193,6 +194,7 @@
       "walk",
       "data",
       "refresh",
+      "settings",
       "doors"
      ],
      "note": "Utilities the gate never touches."
@@ -246,6 +248,7 @@
       "goals",
       "debt-payoff",
       "refresh",
+      "settings",
       "start",
       "doors"
      ]
@@ -447,6 +450,7 @@
       "dashboard",
       "walk",
       "refresh",
+      "settings",
       "data",
       "history",
       "get-help",
@@ -492,6 +496,7 @@
       "income",
       "debt-payoff",
       "refresh",
+      "settings",
       "financial-snapshot",
       "statements"
      ]
@@ -700,6 +705,7 @@
       "data",
       "history",
       "refresh",
+      "settings",
       "doors"
      ],
      "note": "Everything about time, meaning, skill, work and the end of life. The FOO has nothing to say about any of it.",
@@ -727,6 +733,7 @@
       "statements",
       "walk",
       "refresh",
+      "settings",
       "start",
       "health",
       "doors"
@@ -885,6 +892,7 @@
       "quick-math",
       "real-hourly-wage",
       "refresh",
+      "settings",
       "reversibility",
       "savings-rate",
       "side-hustle",
@@ -955,7 +963,8 @@
       "income",
       "variance",
       "calendar",
-      "refresh"
+      "refresh",
+      "settings"
      ],
      "note": "Where the daily work happens and the mess accumulates."
     },
@@ -1094,6 +1103,7 @@
       "variance",
       "income",
       "refresh",
+      "settings",
       "debt-payoff",
       "financial-snapshot",
       "statements"
@@ -1254,6 +1264,7 @@
       "calendar",
       "income",
       "refresh",
+      "settings",
       "stacker",
       "skill-tree",
       "exercises",
@@ -1399,6 +1410,7 @@
       "dashboard",
       "walk",
       "refresh",
+      "settings",
       "variance",
       "income",
       "data",
@@ -1525,6 +1537,7 @@
       "statements",
       "sleep-at-night",
       "refresh",
+      "settings",
       "walk",
       "data",
       "history",
@@ -1640,6 +1653,7 @@
       "walk",
       "data",
       "refresh",
+      "settings",
       "doors"
      ]
     }
@@ -1755,6 +1769,7 @@
       "start",
       "walk",
       "refresh",
+      "settings",
       "data",
       "history",
       "quick-math",
@@ -1783,6 +1798,7 @@
      "rooms": [
       "quick-math",
       "refresh",
+      "settings",
       "financial-snapshot",
       "statements",
       "dashboard",
@@ -1904,6 +1920,7 @@
       "history",
       "exercises",
       "refresh",
+      "settings",
       "data",
       "get-help",
       "housing",
@@ -2020,6 +2037,7 @@
       "calendar",
       "rerank",
       "refresh",
+      "settings",
       "real-hourly-wage",
       "hassle",
       "quick-math"
@@ -2211,6 +2229,7 @@
       "start",
       "walk",
       "refresh",
+      "settings",
       "data",
       "history",
       "stacker",
@@ -2273,6 +2292,7 @@
       "budget",
       "variance",
       "refresh",
+      "settings",
       "dashboard",
       "financial-snapshot",
       "statements"

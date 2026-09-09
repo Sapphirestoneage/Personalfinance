@@ -1019,6 +1019,16 @@
       "order": 98
     },
     {
+      "id": "settings",
+      "title": "Settings",
+      "file": "rooms/settings.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 98.5
+    },
+    {
       "id": "refresh",
       "title": "Refresh",
       "file": "rooms/refresh.html",

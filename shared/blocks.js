@@ -21,7 +21,7 @@
      apply(household, block, date)       one block onto a copy of the household
      applyAll(household, blocks, date)   every active block that covers the date
    No expansion logic in a room; no interaction rules between blocks beyond
-   addition and `replaces` (D-180 is the hook for more).
+   addition and `replaces` (section 12 is the hook for more).
    ========================================================================== */
 (function (root, factory) {
   var node = typeof module === 'object' && module.exports;

@@ -10415,7 +10415,7 @@ with `and` / `or` added.
   a city can sit far from its state; a real quote beats either.
 - **Cash below zero.** A down payment the demo cannot afford leaves cash at
   −$82,500 on the copy. That is the honest answer and the planner's job to
-  say (D-179); rounding it to zero would hide the whole point.
+  say (section 11); rounding it to zero would hide the whole point.
 
 ### Gates
 
@@ -10443,7 +10443,177 @@ scenarios store gains `blocks[]` beside `items[]`. `Reference.TABLE_FILES`
 gains `blockHome … blockMarriage`. A room wanting blocks applied calls
 `Spine.householdAt(date)` instead of `getProfile()`, after loading
 `shared/expr.js`, `shared/scenarios.js` and `shared/blocks.js`; rooms under
-Your Numbers never do (D-179).
+Your Numbers never do (section 11).
+
+---
+
+## D-179 — The master build prompt: the phase order against what already exists, and Phase A's removal list
+
+### What arrived
+
+Eli's master prompt ("SPARKS Money Rooms: the master build prompt") landed
+while section 10 was at its gate. It is one plan in six phases and says the
+phase table wins where it disagrees with section order: A (0, 14, 1 with
+15, 2, 3) · B (18, 19, 20, 9) · C (4, 5, 6) · D (10, 11, 12) · E (16.1 to
+16.12) · F (21). Its rule for a contradiction with the code's reality is
+to follow the intent, log the mapping, and keep going. This entry is that
+mapping.
+
+### What is already built, against the phase table
+
+| section | state | entry |
+|---|---|---|
+| 0, 1, 2, 3 | done | D-170 to D-173 |
+| 4, 5, 6 (Phase C) | done | D-174 to D-176 |
+| 9 (in Phase B) | done | D-177 |
+| 10 (in Phase D) | done | D-178 |
+| 14, 15 (Phase A) | not started | this entry, then D-180 on |
+| 18, 19, 20 (Phase B) | not started | |
+| 11, 12 (Phase D) | not started | |
+| 16.x (Phase E), 21 (Phase F) | not started | |
+
+Sections 14 and 15 amend section 1 and were meant to land before section
+2; sections 2 and 3 are already in. The intent holds: 15's shapes will be
+applied to the DAITE families as they now stand (FAT, DRAFTT, the block
+store) rather than re-doing 2 and 3. Phase order from here: **14, 15**
+(finish A), then **18, 19, 20** (B), then **11, 12** (D), then E one
+feature a session, then F. Sections 9 and 10 stay as landed; the Ledger
+(18.7) will later remove Start Here, Front Doors and The Walk-Through from
+the sidebar, which 9 deliberately left in and logged.
+
+The pinned-ways store of D-176 and the block store of D-178 are the
+`scenarios` sibling the prompt names; they are not redone.
+
+### Phase A's removal and replacement list (grep, before code)
+
+Written before touching code, as the method asks:
+
+- **`shared/schema.js` ASSUMPTION_DEFAULTS** carries `returnReal 0.05`,
+  `inflation 0.03`, `expectedReturnRate 0.07`. 15.2: inflation and real
+  wage growth become declared assumptions editable in Settings only; the
+  return bands come from `data/return_bands.json` and no engine keeps its
+  own rate. `expectedReturnRate` (nominal 7%) is the one to retire; every
+  reader moves to the real band.
+- **`shared/staleness.js`** reads `meta.confirmedAt[fieldId]`, the spine's
+  own stamps (D-056). 15.1: every leaf carries `asOf`; staleness reads it
+  and the stamps go.
+- **`asset.taxCharacter`** (pretax · roth · taxable · hsa · 529 · daf …)
+  is 15.3's `orientation` under another name: kept as the stored key,
+  aliased in `Schema.get`, logged as the mapping rather than renamed across
+  fifty files.
+- **`asset.liquidity` 1 to 4 and `data/access_rules.json`** are 15.8's
+  tier by another scale: `tier: cash | taxable | retirement | property |
+  other` is derived from category and tax character, and the Statement's
+  ladder becomes a view of it.
+- **`household.partner`** (D-099: splitMode, sharedMonthlyCents) is a data
+  island; 15.7 makes `people[1]` the partner and the Partner room its
+  editor. Migration maps the island onto the second person.
+- **`retirement_milestones.json`** holds savings multiples by age, not the
+  inflection dates; 15.9's `data/milestones.json` is new and distinct.
+- **`data/states.json`** holds code and name only; 15.6 adds tax type,
+  property tax, childcare, auto insurance and cost of living per state —
+  the two tables D-178 put inside `blocks/home.json` and `blocks/geo.json`
+  move there and the block tables point at them.
+- **Income sources** carry `type` loosely (`other` for a lever's side
+  income); 15.4 fixes the set to `w2 | 1099 | passive | benefit | pension |
+  socialSecurity` with per-source take-home and `survivesJobLoss`.
+- **Expense entries** carry `frequency`; 15.5's `cadence: monthly | annual
+  | oneoff` is the same fact under the prompt's name, with `monthDue` and
+  `date` added.
+- **181 `<input>`/`<select>` elements across 50 rooms write to the spine.**
+  That is section 18's removal list, not Phase A's; counted here so the
+  Phase F delta has its start.
+
+### The walkthrough counts, before Phase A (the Phase A baseline)
+
+Played from a blank browser on the tree as of D-178. Alexis: 9 taps to
+the dashboard by way of Start Here's "Try with example numbers", 14 with
+her own four numbers; she stopped once, at the filing-status question
+("what is head of household?"). Tom: 2 wrong numbers — The Statement's
+net worth counts a pre-tax dollar as a whole dollar, and FIRE Lab's
+nominal 7% sits beside the real 5% band with no label saying which is
+which. Riley: 6 screens to a shareable scenario (Start Here → dashboard →
+The Long Way Round → a card → shocks → copy link). These three counts are
+the numbers Phase F is measured against.
+
+---
+
+## D-180 — Feature switches: rendering and engines, never stored facts
+
+### What it is
+
+`data/features.json` holds every switch the master prompt names — the
+four from section 15 (`afterTaxNetWorth`, `showNominal`, `annualLines`,
+`showMilestones`) and the twelve phenomena of section 16 — each with its
+default, its scope (`user` or `situation`), its Settings group (Accuracy ·
+Household · Horizon · Advanced), its label, its gloss and the section it
+comes from. `shared/features.js` is the one way anything checks a switch:
+`Features.on(id, household)` reads the person's pref for a user-scope
+switch (else the default) and reads the household for a situation-scope
+one; `Features.set` writes prefs only; `Features.applyPath('beginner' |
+'fi')` sets the onboarding split's starting set (beginner: only the
+default-on set; FI: Accuracy and Horizon all on) and remembers the door
+for the lenses (D-175); `Features.rooms(id)` lists the rooms whose
+registry entry names the switch under `features`. No room or engine reads
+the file directly; a grep test says so.
+
+The schema always carries a shape; the switch decides whether a room
+renders it, asks for it, or an engine applies it. Nothing here writes a
+stored fact: flipping every user switch on and then off leaves the
+household byte-identical, in the unit suite and in the browser.
+
+**Settings** (`rooms/settings.html`, Upkeep, before Refresh so Refresh
+stays last on the path) is one screen: the two starting sets as buttons,
+then one row a switch under its group — label, gloss, on/off as a
+`role="switch"` button, "the default" or "yours", and "Shows up in" with
+the rooms as links. A situation-scope switch shows its state read-only
+with what sets it ("income type includes equity", "a federal student loan
+exists", "an inheritance block exists"). Buttons only, no text input.
+
+Every room's registry entry that will render a switch lists it under
+`features` (twenty-five rooms, sixteen switches, every switch in at least
+one room); the sidebar, the Front Doors arrangements (all twenty) and
+`rooms.json` carry the new room.
+
+### What was ambiguous, and how it was resolved
+
+- **Situation switches and the `default` field.** A situation switch has
+  no meaningful default; the field is kept as `off` so the table has one
+  shape, and `on()` never reads it for that scope.
+- **The situation predicates** are fixed phrases read by hand (the
+  levers' and the sidebar's idiom), never evaluated. The equity and
+  inheritance ones read shapes that section 16 will add (`type: 'equity'`
+  on a source; an inheritance block) and are already true when those
+  exist; the student-loan one reads today's `type: 'student_loan'` and
+  16.8's `kind: studentFederal` alike.
+- **Which rooms list which switch** was drawn from each phenomenon's
+  "shows in" line. `planner` and the tree map are not rooms yet; they will
+  add themselves in sections 11 and 19.
+
+### Gates
+
+`test/run.js` "Feature switches": sixteen switches with every field, the
+four groups, no em-dash in a gloss, every switch in at least one room and
+every room's list real, the table registered, no direct read of the file;
+`on()` on defaults, prefs, unknown ids and situation reads (an equity
+source, the demo's student loan); the on-then-off loop leaving the
+household hash unchanged; both starting sets; the Settings room registered
+under Upkeep writing only prefs, buttons only, through the library.
+`test/settings.js` (Playwright, phone-shaped): every switch a row with
+label, gloss, control and rooms; situation rows read-only; flip all on and
+all off with the household byte-identical and the prefs holding the
+picks; Beginner and FI set their sets; Settings in the sidebar; no console
+errors. Unit 24787 · settings gate 15 · sidebar 91 · render and features on the room · dnd · export.
+
+### Compatibility
+
+The household shape is unchanged. Prefs gains `features.<id>` (boolean,
+absent means the default). `features` is registered in
+`Reference.TABLE_FILES`; the Settings room loads it. Registry rooms gain
+`features: [...]`. A future room or engine checks a switch with
+`SLAF.Features.on(id, household)` after loading `shared/features.js`
+(which wants `prefs.js` and `registry.js` first; `scenarios.js` when the
+inheritance predicate matters).
 
 ---
 

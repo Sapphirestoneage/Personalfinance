@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Settings · SPARKS</title>
+<meta name="description" content="Every switch on one screen: what makes the numbers more honest, who is in the household, how far ahead to look, and what a beginner can skip."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  SETTINGS — the feature switches (D-180).
+
+  1. READS   the switch table through shared/features.js, and the
+             household only to say what the situation gate has decided.
+  2. WRITES  prefs.features.<id>, per person, never the household. Flipping
+             any switch on and off leaves the household byte-identical.
+  3. SHOWS   one row a switch: label, gloss, on/off, and where it shows up
+             (the rooms whose registry entry lists it). Grouped: Accuracy,
+             Household, Horizon, Advanced. A situation-scope switch is shown
+             read-only with what set it.
+
+  LIVE-FORM: built once — buttons only, no text input.
+-->
+<style>
+  .sw { list-style: none; margin: 0; padding: 0; }
+  .sw li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2) var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); align-items: start; }
+  .sw li:first-child { border-top: none; }
+  .sw b { display: block; font-size: var(--text-sm); }
+  .sw .gloss { display: block; font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 2px; line-height: 1.45; }
+  .sw .where { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1); }
+  .sw .where a { color: var(--color-accent-hover); text-decoration: none; }
+  .sw .state { font-size: var(--text-xs); color: var(--color-text-faint); text-align: right; margin-top: 4px; }
+  .paths { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-2); }
+</style>
+</head>
+<body class="slaf">
+<header class="room-head">
+  <a class="room-back" href="../index.html">← Home</a>
+  <h1>Settings</h1>
+  <p class="room-lede">Every switch, on one screen. A switch changes what a room shows and what an engine applies. It never changes a number you entered.</p>
+</header>
+
+<main class="slaf-wrap">
+  <section class="slaf-card" id="path">
+    <span class="slaf-eyebrow">A starting set</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Two ways in. Beginner starts with only the switches that are on by default. FI starts with Accuracy and Horizon all on. Either way, every switch below is yours to change.</p>
+    <div class="paths" id="paths"></div>
+  </section>
+  <section class="slaf-card" id="accuracy" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Accuracy</span><p class="slaf-hint" id="accuracy-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="accuracy-list"></ul></section>
+  <section class="slaf-card" id="household" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Household</span><p class="slaf-hint" id="household-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="household-list"></ul></section>
+  <section class="slaf-card" id="horizon" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Horizon</span><p class="slaf-hint" id="horizon-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="horizon-list"></ul></section>
+  <section class="slaf-card" id="advanced" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Advanced</span><p class="slaf-hint" id="advanced-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="advanced-list"></ul></section>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/scenarios.js"></script>
+<script src="../shared/features.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../shared/gate.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Spine = SLAF.Spine, Features = SLAF.Features, Prefs = SLAF.Prefs, Reference = SLAF.Reference;
+  var ROOM_ID = 'settings';
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function h() { return Spine.getProfile(); }
+
+  function row(f) {
+    var on = Features.on(f.id, h());
+    var rooms = Features.rooms(f.id);
+    var where = rooms.length
+      ? 'Shows up in ' + rooms.map(function (r) { return '<a href="../' + esc(r.href) + '">' + esc(r.title) + '</a>'; }).join(', ') + '.'
+      : 'Not shown anywhere yet.';
+    var control = f.scope === 'situation'
+      ? '<span class="slaf-seed-btn" aria-disabled="true" data-feature="' + esc(f.id) + '" data-scope="situation">' + (on ? 'On' : 'Off') + '</span><span class="state">Set by your situation: ' + esc(f.situationWhen) + '.</span>'
+      : '<button type="button" class="slaf-seed-btn" role="switch" aria-checked="' + on + '" data-feature="' + esc(f.id) + '" aria-label="' + esc(f.label) + '">' + (on ? 'On' : 'Off') + '</button>'
+        + '<span class="state">' + (Features.isDefault(f.id) ? 'the default' : 'yours') + '</span>';
+    return '<li data-row="' + esc(f.id) + '"><div><b>' + esc(f.label) + '</b><span class="gloss">' + esc(f.gloss) + '</span><span class="where">' + where + '</span></div><div>' + control + '</div></li>';
+  }
+  function paint() {
+    Features.groups().forEach(function (g) {
+      el(g.id + '-line').textContent = g.line;
+      el(g.id + '-list').innerHTML = Features.all().filter(function (f) { return f.group === g.id; }).map(row).join('');
+    });
+    var door = Prefs.get('door', null);
+    el('paths').innerHTML = ['beginner', 'fi'].map(function (p) {
+      return '<button type="button" class="slaf-seed-btn" data-path="' + p + '" aria-pressed="' + (door === p) + '">' + (p === 'fi' ? 'FI' : 'Beginner') + '</button>';
+    }).join('');
+  }
+  document.querySelector('main').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-feature]');
+    if (b) { Features.set(b.getAttribute('data-feature'), !Features.on(b.getAttribute('data-feature'), h())); paint(); return; }
+    var p = e.target.closest('button[data-path]');
+    if (p) { Features.applyPath(p.getAttribute('data-path')); paint(); }
+  });
+
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Reference.load(['features']).then(function (tables) {
+    Features.use(tables.features);
+    paint();
+    Spine.onChange(paint);
+  }).catch(function (e) {
+    document.querySelector('main').insertAdjacentHTML('afterbegin', '<p class="slaf-reason">The switch table did not load: ' + esc(e && e.message ? e.message : e) + '</p>');
+  });
+})();
+</script>
+</body>
+</html>

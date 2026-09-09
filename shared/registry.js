@@ -50,6 +50,7 @@
     },
     {
       id: 'financial-snapshot',
+      features: ['afterTaxNetWorth', 'homeDetail', 'agingParents'],
       group: 'scorecard', aliases: ['snapshot', 'draftt', 'lenses', 'scorecard', 'nine numbers'],
       kind: 'read',
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt', 'dob', 'filingStatus'],
@@ -79,6 +80,7 @@
     },
     {
       id: 'income',
+      features: ['equityComp', 'matchVesting'],
       group: 'numbers', subgroup: 'income', aliases: ['pay', 'salary', 'paycheck', 'sources'],
       kind: 'about-you',
       needs: [],
@@ -98,6 +100,7 @@
     },
     {
       id: 'budget',
+      features: ['annualLines'],
       group: 'numbers', subgroup: 'expenses', aliases: ['budget', 'buckets', 'estimate', 'plan the month'],
       kind: 'about-you',
       needs: [],
@@ -225,6 +228,7 @@
     },
     {
       id: 'cash-flow',
+      features: ['annualLines', 'agingParents'],
       group: 'numbers', subgroup: 'expenses', aliases: ['spending', 'expenses', 'rent', 'food', 'FAT', 'wants', 'month'],
       kind: 'core',
       needs: ['monthlyExpenses'],
@@ -248,6 +252,7 @@
     },
     {
       id: 'debt-payoff',
+      features: ['studentLoanPaths'],
       group: 'numbers', subgroup: 'debt', aliases: ['loans', 'credit card', 'avalanche', 'snowball', 'minimums'],
       kind: 'core',
       needs: ['totalDebt', 'monthlyDebtPayments'],
@@ -269,6 +274,7 @@
     },
     {
       id: 'statement',
+      features: ['afterTaxNetWorth', 'incomeFloor', 'equityComp', 'homeDetail'],
       group: 'numbers', subgroup: 'assets', aliases: ['net worth', 'balance sheet', 'accounts', 'property', 'what you own'],
       kind: 'core',
       needs: ['cashSavings', 'investments', 'totalDebt'],
@@ -335,6 +341,7 @@
     },
     {
       id: 'fire-lab',
+      features: ['showNominal', 'sequenceRisk'],
       group: 'scorecard', aliases: ['lab', 'variants', 'lean', 'fat', 'coast', 'barista'],
       kind: 'read',
       needs: ['monthlyExpenses', 'investments'],
@@ -357,6 +364,7 @@
     },
     {
       id: 'fire',
+      features: ['afterTaxNetWorth', 'showNominal', 'preMedicare', 'incomeFloor'],
       group: 'scorecard', aliases: ['fire', 'financial independence', 'retire early', 'number'],
       kind: 'read',
       needs: ['monthlyExpenses', 'investments', 'dob'],
@@ -480,6 +488,7 @@
     },
     {
       id: 'dashboard',
+      features: ['afterTaxNetWorth'],
       group: 'home', aliases: ['home', 'overview', 'tiles'],
       kind: 'read',
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
@@ -753,6 +762,7 @@
     },
     {
       id: 'runway',
+      features: ['jobLossCushions'],
       group: 'decisions', subgroup: 'moves', aliases: ['runway', 'months of cash', 'how long'],
       kind: 'explore',
       needs: ['cashSavings', 'monthlyExpenses'],
@@ -795,6 +805,7 @@
     },
     {
       id: 'foo-ladder',
+      features: ['matchVesting'],
       group: 'scorecard', aliases: ['foo', 'order of operations', 'next dollar', 'ladder'],
       kind: 'read',
       /* Every shared figure the month-by-month timeline reads, so the
@@ -818,6 +829,7 @@
     },
     {
       id: 'what-if-life',
+      features: ['showNominal'],
       group: 'decisions', subgroup: 'years', aliases: ['what if', 'sabbatical', 'life event', 'triple d'],
       kind: 'explore',
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments'],
@@ -888,6 +900,7 @@
      laying out what comes after it. */
   ROOMS.push({
     id: 'timeline',
+    features: ['showMilestones'],
     group: 'decisions', subgroup: 'years', aliases: ['timeline', 'jobs', 'what comes next', 'life'],
     kind: 'about-you',
     needs: ['dob'],
@@ -952,6 +965,28 @@
     ]
   });
 
+  /* Settings — every user-scope feature switch on one screen (D-180). */
+  ROOMS.push({
+    id: 'settings',
+    group: 'upkeep', aliases: ['settings', 'switches', 'features', 'preferences', 'toggles'],
+    kind: 'core',
+    utility: true,
+    needs: [],
+    order: 98.5,
+    title: 'Settings',
+    blurb: 'Every switch, on one screen: what makes the numbers more honest, who is in the household, how far ahead to look, and what a beginner can skip. Nothing here changes a stored number.',
+    href: 'rooms/settings.html',
+    tier: 0,
+    tags: ['income', 'cashflow', 'debt'],
+    daite: { reads: [], writes: ['prefs.features'] },
+    subsections: [
+      { id: 'accuracy',  label: 'Accuracy' },
+      { id: 'household', label: 'Household' },
+      { id: 'horizon',   label: 'Horizon' },
+      { id: 'advanced',  label: 'Advanced' }
+    ]
+  });
+
   /* The Walk-Through — the short, finishable route through the suite
      (D-149). `utility: true` for the same reason Refresh is: it is a way of
      moving through the rooms, not a room with a number in it, so it stays
@@ -978,6 +1013,7 @@
   /* Between Jobs — the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'between-jobs',
+    features: ['preMedicare', 'jobLossCushions'],
     group: 'decisions', subgroup: 'work', aliases: ['unemployed', 'laid off', 'job loss', 'runway', 'cobra'], appliesWhen: 'situation != retired',
     kind: 'about-you',
     needs: ['unemployment', 'monthlyExpenses', 'cashSavings'],
@@ -1001,6 +1037,7 @@
   /* Protection — the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'protection',
+    features: ['agingParents'],
     group: 'decisions', subgroup: 'family', aliases: ['insurance', 'life insurance', 'disability', 'coverage'],
     kind: 'about-you',
     needs: ['monthlyExpenses', 'cashSavings', 'grossAnnualIncome'],
@@ -1024,6 +1061,7 @@
   /* Decumulation — the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'decumulation',
+    features: ['showNominal', 'showMilestones', 'sequenceRisk', 'preMedicare', 'incomeFloor', 'inheritanceRules'],
     group: 'decisions', subgroup: 'moves', aliases: ['retirement withdrawals', 'draw down', '4%', 'vpw', 'social security'], appliesWhen: 'situation != student',
     kind: 'about-you',
     needs: ['investments', 'monthlyExpenses', 'grossAnnualIncome'],
@@ -1047,6 +1085,7 @@
   /* Tax — the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'tax',
+    features: ['equityComp', 'inheritanceRules', 'givingVehicles'],
     group: 'numbers', subgroup: 'taxes', aliases: ['taxes', 'bracket', 'marginal', 'effective', 'refund', 'withholding'],
     kind: 'about-you',
     needs: ['grossAnnualIncome', 'filingStatus', 'state'],
@@ -1093,6 +1132,7 @@
   /* Giving — the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'giving',
+    features: ['givingVehicles'],
     group: 'decisions', subgroup: 'family', aliases: ['giving', 'charity', 'donate', 'tithe', 'daf'],
     kind: 'about-you',
     needs: ['grossAnnualIncome'],
@@ -1116,6 +1156,7 @@
   /* Career Move — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'career-move',
+    features: ['matchVesting', 'studentLoanPaths'],
     group: 'decisions', subgroup: 'work', aliases: ['job offer', 'new job', 'raise', 'offer'], appliesWhen: 'situation != retired',
     kind: 'about-you',
     needs: ['grossAnnualIncome'],
@@ -1185,6 +1226,7 @@
   /* Housing Decision — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'housing',
+    features: ['homeDetail'],
     group: 'decisions', subgroup: 'home', aliases: ['house', 'buy', 'rent', 'mortgage', 'home'],
     kind: 'about-you',
     needs: ['monthlyExpenses', 'grossAnnualIncome', 'cashSavings'],
@@ -1278,6 +1320,7 @@
      Enough because both ask what the money is for, not just how much. */
   ROOMS.push({
     id: 'adventure',
+    features: ['showNominal', 'showMilestones', 'sequenceRisk', 'jobLossCushions', 'timeBudget'],
     group: 'decisions', subgroup: 'years', aliases: ['five years', 'long way', 'paths', 'scenario', 'shocks'],
     kind: 'explore',
     needs: ['grossAnnualIncome', 'monthlyExpenses', 'investments'],
@@ -1299,6 +1342,7 @@
   /* Designed Week — the LATER.md rooms (D-101). */
   ROOMS.push({
     id: 'week',
+    features: ['timeBudget'],
     group: 'matters', aliases: ['week', 'hours', 'designed week', 'time'],
     kind: 'about-you',
     needs: ['monthlyExpenses'],
@@ -1322,6 +1366,7 @@
   /* Time Buckets — the LATER.md rooms (D-101). */
   ROOMS.push({
     id: 'buckets',
+    features: ['timeBudget'],
     group: 'matters', aliases: ['time buckets', 'decades', 'experiences', 'die with zero'],
     kind: 'about-you',
     needs: ['investments', 'monthlyExpenses'],
@@ -1414,6 +1459,7 @@
   /* Student Loan Decision — the LATER.md rooms (D-101). */
   ROOMS.push({
     id: 'student-loans',
+    features: ['studentLoanPaths'],
     group: 'numbers', subgroup: 'debt', aliases: ['college', 'loan forgiveness', 'idr'],
     kind: 'about-you',
     needs: ['totalDebt', 'grossAnnualIncome'],
@@ -1437,6 +1483,7 @@
   /* Money Calendar & Pay-Later — the LATER.md rooms (D-101). */
   ROOMS.push({
     id: 'calendar',
+    features: ['annualLines'],
     group: 'numbers', subgroup: 'expenses', aliases: ['calendar', 'bills', 'due', 'pay later', 'dates'],
     kind: 'about-you',
     needs: ['monthlyExpenses', 'cashSavings'],
@@ -1561,7 +1608,7 @@
     decisions: ['career-move', 'self-employed', 'side-hustle', 'between-jobs', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'kids', 'protection', 'estate', 'giving', 'windfall', 'runway', 'decumulation', 'quick-math', 'adventure', 'what-if-life', 'timeline'],
     matters: ['sleep-at-night', 'values', 'goals', 'enough', 'fulfillment', 'rerank', 'dreamline', 'week', 'buckets', 'reversibility', 'unlearning'],
     levelup: ['skill-tree', 'stacker', 'exercises'],
-    upkeep: ['data', 'refresh', 'history', 'get-help', 'doors', 'walk']
+    upkeep: ['data', 'refresh', 'history', 'settings', 'get-help', 'doors', 'walk']
   };
   function groups() { return GROUPS.slice(); }
   function groupById(id) { return GROUPS.filter(function (g) { return g.id === id; })[0] || null; }
