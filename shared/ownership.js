@@ -811,10 +811,19 @@
     return typeof location !== 'undefined' && location.pathname.indexOf('/rooms/') !== -1;
   }
 
-  function linkTo(roomId, anchor) {
+  /* One owner per number (D-017) means this app is forever sending people to
+     another room to fill something in. Until now nothing brought them back:
+     you tapped through and were stranded wherever you landed. Every
+     cross-room link now carries where it came from, and the header on the
+     far side offers the way back. The query string sits before the anchor,
+     which is the only order a browser honours. D-161. */
+  function linkTo(roomId, anchor, fromRoomId) {
     var room = Registry.byId(roomId);
     if (!room) return '#';
     var href = (isInRoomsDir() ? '../' : '') + room.href;
+    if (fromRoomId && fromRoomId !== roomId && Registry.byId(fromRoomId)) {
+      href += (href.indexOf('?') === -1 ? '?' : '&') + 'from=' + encodeURIComponent(fromRoomId);
+    }
     return anchor ? href + '#' + anchor : href;
   }
 
@@ -835,7 +844,7 @@
       label: f.label,
       ownerId: f.owner,
       ownerTitle: owner ? owner.title : f.owner,
-      href: linkTo(f.owner, f.anchor),
+      href: linkTo(f.owner, f.anchor, currentRoomId),
       result: result,
       isSet: isSet,
       display: isSet ? f.format(result.value) : Money.EM_DASH,

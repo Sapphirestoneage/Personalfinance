@@ -8970,6 +8970,68 @@ whatever the person was already in the middle of typing.
 21,464 + 5,614 + 25 + 448 + 340 checks pass. No stored shape changed and
 `shared/ownership.js` is untouched, so no compatibility note is owed.
 
+## D-161 — The way back
+
+One owner per number (D-017) is the best idea in this app and it has an unpaid
+debt: it sends people away constantly. A room says "add your debts in Debt
+Payoff", you go, and then you are stranded in a sixty-six room app trying to
+remember what you were doing. `returnTo`, `?from=`, anything of the sort —
+none of it existed anywhere in the repo.
+
+The D-160 ledger sharpened this into a real problem rather than a theoretical
+one, because it puts a dozen links on the page whose whole job is to fire you
+off somewhere else.
+
+### One choke point, so it is not sixty-six changes
+
+Every cross-room link in the app comes out of `Ownership.linkTo()`, and
+`describe()` already knew which room was asking — it takes `currentRoomId` so
+it can tell "yours" from "borrowed". So the caller was already in scope and
+simply was not being used:
+
+    href: linkTo(f.owner, f.anchor, currentRoomId)
+
+`linkTo` appends `?from=<roomId>` when there is a caller, it is not the target,
+and the registry recognises it. The far side is `shared/progress.js`, whose
+`mountHeader()` is the one mount point every room reaches (D-142, D-149,
+D-155), so the pill costs one change rather than sixty-six.
+
+The query string goes **before** the anchor. The other order puts it inside the
+fragment, where `location.search` never sees it.
+
+### Why the URL and not history.back()
+
+They are different promises. Back retraces your last step, whatever it was.
+This returns to the room whose number you left to go and fill in, however many
+taps ago that was and whatever you did in between. A person who goes Cash Flow
+→ two other rooms → back wants Cash Flow, not the room before this one.
+
+It also survives a reload, and it makes a link shareable: paste someone the URL
+and they get the same trip.
+
+### Refusing to trust the string
+
+`?from=` is user-editable text in a URL bar. It is resolved through
+`Registry.byId()` and rendered only if that returns a real room; an unknown id,
+a malformed escape, or the room's own id all produce nothing at all rather than
+a link to nowhere. `decodeURIComponent` is wrapped, because a lone `%` throws.
+
+### Three tests were asserting the mechanism again
+
+`/fire\.html#targets$/` and two others broke — not because linking home
+stopped working, but because they pinned the exact character sequence of a URL
+and a query string now sits in it. Rewritten to `(\?[^#]*)?` so they assert the
+property: it points at the owner's page and anchor. That is the fourth time
+this session a test named the implementation instead of the behaviour, and the
+fourth time it failed for the wrong reason.
+
+### Verified
+
+Chromium at 412x915 with touch: `?from=fire` renders "↩ Back to FIRE Number" at
+32px and lands on `fire.html` when tapped; `?from=not-a-room` and a bare URL
+both render nothing. 21,545 + 5,614 + 25 + 448 + 340 checks pass. No stored
+shape changed.
+
 ---
 
 # The Dungeons & Dividends entries

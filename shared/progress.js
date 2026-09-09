@@ -682,13 +682,33 @@
     return null;
   }
 
+  /* The way back. A cross-room link carries ?from=<roomId> (D-161); if this
+     page was reached by one, the first thing in the header is the way back to
+     the room that sent you. Read from the URL rather than history.back(),
+     because the browser's back button and this are different promises: back
+     retraces steps, this returns to the room whose number you left to fill in,
+     however many taps ago that was. Unknown or malformed ids resolve to
+     nothing and the pill simply does not appear. */
+  function returnHtml(roomId) {
+    if (typeof location === 'undefined') return '';
+    var m = /[?&]from=([^&#]+)/.exec(location.search);
+    if (!m) return '';
+    var fromId;
+    try { fromId = decodeURIComponent(m[1]); } catch (e) { return ''; }
+    if (fromId === roomId) return '';
+    var room = Registry.byId(fromId);
+    if (!room) return '';
+    return '<a class="slaf-return" href="' + escapeHtml(href(room.href, roomId)) + '">'
+      + '\u21A9 Back to ' + escapeHtml(room.title) + '</a>';
+  }
+
   function mountHeader(roomId) {
     if (typeof document === 'undefined') return null;
     var back = document.querySelector('.room-back, .back');
     if (!back) return null;
     var nav = document.createElement('div');
     nav.className = 'slaf-hops-host';
-    nav.innerHTML = headerNavHtml(roomId);
+    nav.innerHTML = returnHtml(roomId) + headerNavHtml(roomId);
     back.parentNode.replaceChild(nav, back);
     mountMenu(roomId, nav);
     mountSituation(roomId);

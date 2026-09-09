@@ -5666,7 +5666,9 @@ section('What is finished');
     const h = partial();
     const strip = Progress.stripHtml('fire', h);
     checkTrue('the strip says how many are left', /2 things left/.test(strip));
-    checkTrue('it links to the owning room', /start\.html#q-investments/.test(strip));
+    /* Tolerant of the ?from= return trip (D-161): the property is that it points
+       at the owner's page and anchor, not the exact character sequence. */
+    checkTrue('it links to the owning room', /start\.html(\?[^#"']*)?#q-investments/.test(strip));
     checkTrue('it offers a way back', /← /.test(strip));
     checkTrue('and a way forward', /Next unfinished/.test(strip));
 
@@ -6249,7 +6251,7 @@ section('Targets, owned by FIRE');
   check('a decided stop age reads back', Ownership.field('retireAge').read(h).value, 55);
   check('formatted as an age', Ownership.field('retireAge').format(55), 'age 55');
   const chip = Ownership.describe('coastAge', h, 'statement');
-  checkTrue('elsewhere it is read-only and links home', !chip.mine && /fire\.html#targets$/.test(chip.href));
+  checkTrue('elsewhere it is read-only and links home', !chip.mine && /fire\.html(\?[^#]*)?#targets$/.test(chip.href));
 
   /* The coast variant reads the stored age instead of a knob. */
   const fireT = Object.assign({}, TABLES);
@@ -6291,7 +6293,7 @@ section('The Coverage Checkup, and how it is split');
   h.insurance.disabilityMonthlyCents = 300000;
   check('a monthly benefit is formatted per month', Ownership.field('disabilityMonthly').format(300000), '$3,000/mo');
   const elsewhere = Ownership.describe('oopMax', Object.assign(h, { insurance: Object.assign(h.insurance, { oopMaxCents: 800000 }) }), 'statement');
-  checkTrue('elsewhere it is a read-only chip linking home', !elsewhere.mine && /sleep-at-night\.html#coverage$/.test(elsewhere.href));
+  checkTrue('elsewhere it is a read-only chip linking home', !elsewhere.mine && /sleep-at-night\.html(\?[^#]*)?#coverage$/.test(elsewhere.href));
 
   /* The mix, checked by one function. */
   check('no mix: incomplete', Schema.allocationStatus(h).status, 'incomplete');
@@ -8580,6 +8582,48 @@ section('No CSS variable is used without being defined');
       !!value && !/rgba\([^)]*,\s*0?\.\d+\s*\)/.test(value) && !/transparent|none/.test(value),
       'a drawer you can read the page through is not a drawer');
   }
+})();
+
+/* ==========================================================================
+   The round trip (D-161)
+   --------------------------------------------------------------------------
+   One owner per number means the app is forever sending someone to another
+   room to fill something in, and until now nothing brought them back. Every
+   cross-room link carries where it came from; the header on the far side
+   offers the way back.
+   ========================================================================== */
+section('The round trip');
+(function () {
+  const h = Schema.createHousehold();
+
+  const away = Ownership.describe('monthlyExpenses', h, 'fire');
+  checkTrue('a link out of a room says where it came from', /[?&]from=fire/.test(away.href), away.href);
+  checkTrue('...and still lands on the owner with its anchor',
+    /cash-flow\.html/.test(away.href) && /#spending$/.test(away.href), away.href);
+
+  /* The owner linking to itself has nowhere to send you back to. */
+  const home = Ownership.describe('monthlyExpenses', h, 'cash-flow');
+  checkTrue('the owning room does not tag its own link', away.href !== home.href
+    && home.href.indexOf('from=') === -1, home.href);
+
+  const none = Ownership.describe('monthlyExpenses', h);
+  checkTrue('no calling room, no tag', none.href.indexOf('from=') === -1, none.href);
+
+  /* A made-up id must not become a link to nowhere. */
+  checkTrue('an unknown caller is dropped rather than trusted',
+    Ownership.linkTo('cash-flow', null, 'no-such-room').indexOf('from=') === -1);
+
+  /* The query string has to precede the anchor or the browser keeps it in
+     the fragment and location.search never sees it. */
+  const q = away.href.indexOf('?'), a = away.href.indexOf('#');
+  checkTrue('the query comes before the anchor', q > -1 && a > -1 && q < a, away.href);
+
+  const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  checkTrue('the header reads it back off the URL', /[?&]from=/.test(prog));
+  checkTrue('...and resolves it through the registry, not the raw string',
+    /returnHtml[\s\S]{0,700}Registry\.byId\(fromId\)/.test(prog));
+  const css = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('the pill clears the 32px tap floor', /\.slaf-return \{[\s\S]{0,260}min-height: 32px/.test(css));
 })();
 
 /* ==========================================================================
