@@ -8585,6 +8585,34 @@ section('No CSS variable is used without being defined');
 })();
 
 /* ==========================================================================
+   The dead spot is the door (D-163)
+   ========================================================================== */
+section('The dead spot is the door');
+(function () {
+  const src = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  checkTrue('doors are stamped so a repaint cannot double them', /data-door/.test(src));
+  checkTrue('a reason that already links out is left alone',
+    /querySelector\('a'\)[\s\S]{0,40}continue/.test(src));
+  checkTrue('it appends beside the words, never rewrites them',
+    /insertAdjacentHTML\('afterend'/.test(src) && src.indexOf('.slaf-reason') > -1);
+  checkTrue('it reads the stored profile, not the guess-filled copy',
+    /doorHtml[\s\S]{0,320}getProfile\(\)/.test(src));
+
+  /* The door names the most-wanted missing field, and carries the way home. */
+  const row = Progress.forRoom('fire', Schema.createHousehold());
+  check('FIRE Number is blocked on the most-wanted number first',
+    row.missing[0].fieldId, 'monthlyExpenses');
+  checkTrue('and that link carries the round trip',
+    /[?&]from=fire/.test(row.missing[0].href), row.missing[0].href);
+  checkTrue('...pointing at the owner, not back at itself',
+    /cash-flow\.html/.test(row.missing[0].href));
+
+  const css = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('the door clears the 32px tap floor',
+    /\.slaf-go \{[\s\S]{0,200}min-height: 32px/.test(css));
+})();
+
+/* ==========================================================================
    Relevancy and guesses in every room's footer (D-162)
    ========================================================================== */
 section('Every room says what is waiting on it');

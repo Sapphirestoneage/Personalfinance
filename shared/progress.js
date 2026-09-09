@@ -740,6 +740,58 @@
       + '\u21A9 Back to ' + escapeHtml(room.title) + '</a>';
   }
 
+  /* ---- The dead spot is the door (D-163) ----------------------------------
+     Thirty-four places in the app print "Add your debts to see this" exactly
+     where a number should be. The sentence names what is missing and the app
+     knows which room owns it, so the words should also be the way there.
+
+     Done at the DOM rather than in each of the twenty-one rooms that render
+     their own `.slaf-reason`: they repaint on every change, so a one-shot pass
+     at mount would be undone the first time anything moved. The observer is
+     idempotent (a door is stamped `data-door`) and only ever APPENDS to a
+     reason that has no link of its own - it never rewrites a room's words and
+     never touches a control, so it stays clear of LIVE-FORM (D-034).
+
+     The field named is the one the most rooms are waiting on, taken from the
+     stored profile rather than the room's guess-filled copy: a guess makes a
+     room able to compute, which is not the same as the number being known. */
+  function doorHtml(roomId) {
+    var row = forRoom(roomId, Spine() ? Spine().getProfile() : null);
+    if (!row || !row.missing.length) return '';
+    var f = row.missing[0];
+    if (f.ownHere) return '';
+    return '<a class="slaf-go" data-door href="' + escapeHtml(href(f.href.replace(/^\.\.\//, ''), roomId))
+      + '">' + escapeHtml(f.label) + ' is in ' + escapeHtml(f.ownerTitle) + ' \u2192</a>';
+  }
+
+  function Spine() {
+    var S = (typeof self !== 'undefined' ? self : this).SLAF;
+    return S && S.Spine;
+  }
+
+  function mountDoors(roomId) {
+    if (typeof document === 'undefined' || typeof MutationObserver === 'undefined') return;
+    if (!Spine()) return;
+    var queued = false;
+    function pass() {
+      queued = false;
+      var html = doorHtml(roomId);
+      if (!html) return;
+      var list = document.querySelectorAll('.slaf-reason');
+      for (var i = 0; i < list.length; i++) {
+        var el = list[i];
+        if (el.querySelector('a')) continue;            /* the room already links out */
+        if (el.nextElementSibling && el.nextElementSibling.hasAttribute
+            && el.nextElementSibling.hasAttribute('data-door')) continue;
+        el.insertAdjacentHTML('afterend', html);
+      }
+    }
+    function schedule() { if (queued) return; queued = true;
+      (window.requestAnimationFrame || setTimeout)(pass, 0); }
+    schedule();
+    new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true });
+  }
+
   function mountHeader(roomId) {
     if (typeof document === 'undefined') return null;
     var back = document.querySelector('.room-back, .back');
@@ -751,6 +803,7 @@
     mountMenu(roomId, nav);
     mountSituation(roomId);
     mountWalk(roomId, nav);
+    mountDoors(roomId);
     return nav;
   }
 

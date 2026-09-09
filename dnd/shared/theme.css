@@ -812,6 +812,12 @@ a.slaf-explain-chip:hover { border-color: var(--color-accent); }
 /* The way back from a link you followed to fill something in. Sits above the
    hop strip because it is the more specific promise: the hops walk the path,
    this returns to the room that sent you. D-161. */
+/* The way out of a dead spot, sitting directly under the words that named it.
+   D-163. */
+.slaf-go { display: inline-flex; align-items: center; min-height: 32px; margin-top: var(--space-2);
+  color: var(--color-accent-hover); font-size: var(--text-sm); text-decoration: none; }
+.slaf-go:hover { text-decoration: underline; }
+
 .slaf-progress-waits { display: block; font-family: var(--font-mono); font-size: var(--text-xs);
   color: var(--color-text-subtle); }
 

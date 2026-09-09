@@ -139,6 +139,24 @@
         node.value = display(c, raw);
       });
     }
+    /* The dead spot is the door. Where the number should be, an incomplete room
+       prints the words "Add your debts to see this" - and the app knows exactly
+       which room owns that number, so the sentence should also take you there.
+       The link carries the way back (D-161), so the trip is a round one.
+       Only the first outstanding field is offered: a stack of links at the
+       point of failure is a menu, not a next step. D-163. */
+    function goHtml(h) {
+      var room = Registry.byId(ROOM_ID);
+      var needs = (room && room.needs) || [];
+      for (var i = 0; i < needs.length; i++) {
+        var d = Ownership.describe(needs[i], h, ROOM_ID);
+        if (!d || !d.applies || d.isSet || d.isOwnHere) continue;
+        return '<a class="slaf-go" href="' + esc(d.href) + '">'
+          + esc(d.label) + ' is in ' + esc(d.ownerTitle) + ' \u2192</a>';
+      }
+      return '';
+    }
+
     function paintNumber(h) {
       var host = el('room-number');
       if (!host || !spec.number) return;
@@ -146,6 +164,7 @@
       var ok = n.value !== null && n.value !== undefined && n.value !== '';
       host.innerHTML = '<span class="cap">' + esc(n.label || '') + '</span>'
         + '<span class="big' + (ok ? (n.zone ? ' is-' + n.zone : '') : ' is-incomplete') + '">' + esc(ok ? n.value : (n.reason || Money.EM_DASH)) + '</span>'
+        + (ok ? '' : goHtml(h))
         + (n.sub ? '<span class="sub">' + n.sub + '</span>' : '');
     }
     function paintChart(h) {

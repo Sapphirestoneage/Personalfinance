@@ -9083,6 +9083,62 @@ choke point.
 21,617 + 5,614 + 25 + 448 + 340 checks pass. No stored shape changed; the only
 new field on the `forRoom()` row is derived at read time.
 
+## D-163 — The dead spot is the door
+
+Thirty-four places in the app print a sentence like "Add your debts to see
+this" in exactly the spot a number should be. The sentence names what is
+missing; `shared/ownership.js` knows which room owns it; and the two facts had
+never been introduced. The links existed only in the footer, a screen away from
+the thing the person was actually looking at.
+
+Now the words are followed by the way there:
+
+> Add your monthly expenses to see this.
+> **Monthly expenses is in Cash Flow →**
+
+and the link carries `?from=` (D-161), so the far side offers "↩ Back to FIRE
+Number" and the trip is a round one.
+
+### Built at the DOM, and why that is the right place here
+
+The first attempt put it in `shared/room.js` beside the headline number. It was
+nearly dead code, and the reason is worth recording: **the room template paints
+from a guess-filled household**, so a template room is almost never blocked by
+another room's field — it computes from the guess and shows a number. The real
+dead spots live in the twenty-one rooms that render their own `.slaf-reason`.
+
+Twenty-one rooms is too many to edit by hand, and they repaint on every change,
+so a one-shot pass at mount would be wiped the first time anything moved. So
+`Progress.mountDoors()` observes the document and appends a door to any
+`.slaf-reason` that has no link of its own. It is:
+
+- **idempotent** — each door is stamped `data-door` and the pass skips a reason
+  that already has one, so repaints cannot multiply them (checked: five forced
+  repaints, still one door);
+- **additive** — it only ever `insertAdjacentHTML('afterend')`, never rewrites
+  a room's own words, and never touches a control, so it stays clear of the
+  LIVE-FORM contract (D-034);
+- **deferential** — a reason the room already made into a link is left alone.
+
+The room.js version is kept. It is correct where it fires, and it puts the door
+inside the number block rather than after it, which reads better there.
+
+### Which field it names
+
+The one the most rooms are waiting on (D-162's count), taken from
+`Spine.getProfile()` rather than the room's guess-filled copy. A guess makes a
+room *able to compute*, which is not the same as the number being *known*, and
+the door is about the second. Only the first outstanding field is offered — a
+stack of links at the point of failure is a menu, not a next step.
+
+### Verified
+
+Chromium at 412x915 with touch, on a blank profile: FIRE Number and The Runway
+each show one door to Cash Flow, The Statement and Worth It two each to Start
+Here; following the FIRE door lands on
+`cash-flow.html?from=fire#spending` and the header offers "↩ Back to FIRE
+Number". 21,677 + 5,614 + 25 + 448 + 340 checks pass.
+
 ---
 
 # The Dungeons & Dividends entries
