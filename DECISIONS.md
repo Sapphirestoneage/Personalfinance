@@ -10692,6 +10692,85 @@ copy of today's shape.
 
 ---
 
+## L-2 - Lane 2, section 2: property tests on every engine
+
+### What it is
+
+`tests/properties/<engine>.test.js`, one per file under `engines/` (64),
+plus `levers.test.js` and `blocks.test.js` for the two shared modules the
+invariants name, on fast-check 4 (`tests/package.json`; `npm ci` in
+`tests/`). `_harness.js` builds random valid households through
+`Schema.createHousehold` from a compact spec in dollars, so a shrunk
+counterexample is a spec a person can read; `run.js` runs every file with
+seed 20260910 and 100 cases per property, writes
+`tests/reports/properties.json`, and `tests/tools/findings.js` renders
+`docs/lane2-findings.md` from that report and the corpus report together.
+The whole suite runs in about fifteen seconds.
+
+Every engine is held to four generic properties: no throw and no NaN or
+Infinity on any valid household; the same output for the same input
+twice; the household passed in byte-identical afterwards; and no field
+ending in `Cents` carrying a fraction. Twenty-two files add the
+invariants the lane prompt lists: savings never above take-home and
+take-home never above gross (tier0); FI target rising with spending and
+the FI date never earlier when spending rises or income falls (tier0,
+fire); runway blind to property and vehicles, falling with cash, whole
+months within the horizon (runway); confidence-weighted net worth never
+above plain, and portfolios adding up to every valued asset (statement);
+future value and years-to-target monotone, a level payment repaying its
+principal (projection, housing); avalanche never dearer than snowball and
+extra never slower (debt); tax monotone and bounded (tax, selfemployed);
+a headwind never ending with a bigger pot net of borrowing (adventure);
+lump beating spread when the market rate is at least the cash rate
+(windfall); PIA and claiming factors monotone (ss); VPW percentages in
+(0, 1] and rising with age (vpw); a lever leaving its input untouched and
+scale 0 changing nothing (levers); two additive blocks equal to the sum
+of each alone and no blocks changing nothing (blocks).
+
+### What it found
+
+Six failing properties, each with its shrunk spec in the findings file:
+
+- `Tier0.debtToIncome` reports `monthlyGrossIncomeCents` as gross / 12
+  unrounded; `ratios.all` carries the same figure. `skills.available`
+  reports `returnOnEffortCents` with a fraction.
+- `Projection.levelPaymentCents` rounds the payment to the cent, so on a
+  tiny principal (100 cents over 41 months at 0%) the total paid falls
+  short and `totalInterestCents` goes negative.
+- `Blocks.applyAll` on a household with no income source creates the
+  source it needs with a random `Schema.newId`, so two applications differ
+  in an id; every number matches.
+- The Long Way Round's job-loss shock on a household already in deficit
+  borrows less in the shock year than the shortfall, so the headwind ends
+  with more net than no headwind. Small figures in the shrunk case, wrong
+  sign.
+
+None is fixed here: the engines are the master build's files.
+
+### What could not be held yet
+
+After-tax value of a holding and rounding by confidence wait for section
+15's shapes; sequence of returns waits for an engine that takes a return
+path (every one today takes a constant rate). Each is a note in the
+findings file and in the engine's property file, so the property is
+written the day the shape lands. `ratios.context()` reads `Date.now()`
+when `opts.now` is absent; the suite passes a fixed clock and says so.
+
+### Decisions taken conservatively (DECIDE: for Eli)
+
+- A failing property writes to the findings file and does not fail the
+  run unless `CORPUS_STRICT=1`, the same choice as L-1. A missing property
+  file, or a run over two minutes, always fails.
+- The seed is fixed so the report is reproducible and diffable; `FC_SEED`
+  and `FC_RUNS` override it for a wider search.
+
+### Compatibility
+
+Nothing stored changed. `tests/reports/*.json` are committed as the
+record the findings file is rendered from.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have
