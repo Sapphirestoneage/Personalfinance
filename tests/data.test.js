@@ -40,7 +40,7 @@ function check(name, cond, detail) { if (cond) ok(); else failures.push(name + (
 function load(name) { return JSON.parse(fs.readFileSync(path.join(DATA, name), 'utf8')); }
 
 /* Five of the eight live under data/lane2/ until shared/reference.js registers them (docs/lane2-proposals.md P-5). */
-const FILES = ['states.json', 'lane2/milestones.json', 'lane2/aca.json', 'lane2/studentloans.json', 'lane2/contribution_limits.json', 'lane2/tax_brackets.json', 'return_bands.json', 'bands.json'];
+const FILES = ['states.json', 'milestones.json', 'lane2/aca.json', 'lane2/studentloans.json', 'lane2/contribution_limits.json', 'lane2/tax_brackets.json', 'return_bands.json', 'bands.json'];
 const isUrl = (s) => typeof s === 'string' && /^https?:\/\/\S+$/.test(s);
 const isDate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s));
 
@@ -220,7 +220,7 @@ if (stale) notes.push(stale + ' cells are older than 18 months and say so (`stal
 
 /* ---- 6. Milestones and student loans hold their shape ---------------------------------- */
 (function () {
-  const m = tables['lane2/milestones.json'];
+  const m = tables['milestones.json'];
   if (m) {
     const ids = m.milestones.map((x) => x.id);
     ['catchup50', 'ruleOf55', 'penaltyFree', 'ssEarly', 'medicare', 'fullRetirementAge', 'ssDelayed', 'rmd'].forEach((id) => check('milestone ' + id + ' present', ids.indexOf(id) >= 0));

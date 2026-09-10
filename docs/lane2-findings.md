@@ -169,7 +169,7 @@ None.
 ### Notes
 
 - states.json: 408 cells
-- lane2/milestones.json: 10 cells
+- milestones.json: 10 cells
 - lane2/aca.json: 15 cells
 - lane2/studentloans.json: 40 cells
 - lane2/contribution_limits.json: 46 cells

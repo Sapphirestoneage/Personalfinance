@@ -65,6 +65,16 @@
     var c = String(text).trim();
     if (c === 'always') return true;
     if (c === 'situation != retired') return situationOf(h) !== 'retired';
+    /* 18.2 (D-183): the Ledger rows use the same reader, a few more phrases. */
+    var m = /^situation (==|!=) (\w+)$/.exec(c);
+    if (m) return (situationOf(h) === m[2]) === (m[1] === '==');
+    if (c === 'household.two') return !!(Schema.householdOfTwo && Schema.householdOfTwo(h));
+    if (c === 'dependents.any') return !!(h && Array.isArray(h.dependents) && h.dependents.length);
+    if (c === 'debt.any') return !!(h && (h.debts || []).length);
+    if (c === 'debt.studentLoan') return !!(h && (h.debts || []).some(function (d) { return d.type === 'student_loan'; }));
+    if (c === 'income.variable') { var so = situationOf(h); return so === 'selfEmployed' || so === 'mixed' || !!(h && h.variableIncome && (Money.isEntered(h.variableIncome.bufferMonths) || Money.isEntered(h.variableIncome.windowMonths))); }
+    if (c === 'cover.hsa') return !!(h && (h.assets || []).some(function (a) { return a.taxCharacter === 'hsa'; })) || !!(h && h.retirement && Money.isEntered(h.retirement.hsaContributedCents));
+    if (c === 'asset.invested') return true;
     if (c === 'assets.property.length > 0') return ((h && h.property) || []).length > 0;
     /* A priced home in Housing Decision is the intent to buy. */
     if (c === 'intent.buy') return !!(h && h.housing && Money.isEntered(h.housing.priceCents) && h.housing.priceCents > 0);
@@ -73,10 +83,14 @@
     if (c === 'income.remoteOk') return !!(h && h.meta && h.meta.remoteOk === true);
     return false;
   }
+  /** A bare appliesWhen phrase against a household (18.2 shares it). */
+  function appliesWhen(text, household) {
+    return String(text || 'always').split('||').some(function (c) { return clause(c, household || {}); });
+  }
   function applies(id, household) {
     var L = get(id);
     if (!L) return false;
-    return String(L.appliesWhen || 'always').split('||').some(function (c) { return clause(c, household || {}); });
+    return appliesWhen(L.appliesWhen, household);
   }
 
   /* ---- apply: a new household, the moves written onto DAITE paths ------- */
@@ -169,5 +183,5 @@
     return hourlyFor(gain.value, hours);
   }
 
-  return { use: use, get: get, all: all, applies: applies, apply: apply, monthlyGainCents: monthlyGainCents, impliedHourlyCents: impliedHourlyCents, hourlyFor: hourlyFor, factor: factor, situationOf: situationOf };
+  return { use: use, get: get, all: all, applies: applies, appliesWhen: appliesWhen, apply: apply, monthlyGainCents: monthlyGainCents, impliedHourlyCents: impliedHourlyCents, hourlyFor: hourlyFor, factor: factor, situationOf: situationOf };
 });

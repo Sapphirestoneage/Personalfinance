@@ -11664,6 +11664,67 @@ is section 21's.
 Gate for this commit: unit 26426; dnd 5614; export 25; the five lane 2
 suites above.
 
+## D-183 — The Ledger, 18.2: every number the app can hold is one row, of one of three kinds
+
+**Decision.** Section 18 (Phase B) is built one subsection a commit, in
+the brief's order, starting with the registry the room, the dump box, the
+nag and the sidebar all read. `data/ledger-rows.json` lists every number
+the app can hold: 79 rows, each with its `path`, `letter`, `label`,
+`kind`, `pass`, `appliesWhen`, `unit` and `minutes`; a lookup row carries
+its `where` sentence and a `roughly` hint; a computed row names its
+`engine` and its `inputs` (by row id). `shared/ledger-rows.js`
+(`SLAF.LedgerRows`; the brief's `Ledger` is taken by the D-128
+dated-income engine, so the reader is `LedgerRows`) is the one reader:
+which rows apply, what state each is in, what is next.
+
+- **Rows are ownership fields.** A row's `id` is the ownership field id,
+  so it reads and will write through the one map every room already uses
+  (D-017); `aliases` names a second field on the same path (`rentMonthly`
+  is `accommodationMonthly`). The per-item rows (a debt's balance, rate
+  and minimum; an asset's value, pile and basis; a source's type and
+  whether it survives a job loss; the periods ahead; the yearly lines)
+  are `repeat` rows: one line per item, the row's value the count, its
+  items the lines. Every money or situation path DAITE declares has a row
+  and every row path is unique (the first 18.8 gate, in unit form).
+- **Three kinds, from the brief.** `know` (in your head), `lookup`
+  (fetched; the `where` sentence is lane 2's where lane 2 wrote one, L-4,
+  and the rest are written to the same rule: one sentence naming the
+  document and the line), `computed` (never typed; the engine's answer
+  with its inputs named, each a link to that input's row). A computed row
+  is never given a `where`; the unit test resolves every `engine` string
+  to a real function.
+- **What is not a row.** Plans, preferences and progress paths
+  (`plans.*`, `progress.*`): a decision room's what-if (an offer, a
+  purchase, a housing price) is not a fact about the household and stays
+  in its room; `prefs.*` has one row, the path choice (beginner or FI),
+  which 18.7 makes the very first row and which reads from Prefs, never
+  the household.
+- **Order.** `pass` is the walk-through's order (`data/walk_stages.json`):
+  1 what is true right now (the six situation rows first: the path,
+  birth, state, dependents, working situation, filing), 2 make it hard to
+  go backwards, 3 the rest. Within a pass, file order, which 18.4 will
+  replace with the sphere order once `data/spheres.json` exists (19.1).
+- **appliesWhen** reuses the levers' phrase reader (`Levers.appliesWhen`,
+  D-174), which gains `situation == x`, `household.two`,
+  `dependents.any`, `debt.any`, `debt.studentLoan`, `income.variable`,
+  `cover.hsa`. A failing row is absent, not greyed. An unknown phrase
+  never applies.
+- **State.** `computed`; `missing` (nothing entered); `sure`; `roughly`
+  (entered but never confirmed, which is every figure whose meta says
+  `roughly`, `unsure` or `unknown`, 15.10); `stale` (sure but past the
+  staleness window for its field, D-056). `next()` returns exactly one
+  row, the first missing or rough non-computed row of the lowest pass,
+  with the minutes left; `roughRows()` feeds the nag (18.6);
+  `readersOf()` lists the rooms whose registry entry needs the field or
+  reads its DAITE path, the tap targets of 18.5.
+- **Compatibility note.** No stored shape changes. `Reference.TABLE_FILES`
+  gains `ledgerRows`. Nothing reads the module yet; the room is 18.4.
+
+Gate for this commit: unit 26536 (a new section of 60 checks: the
+registry's shape, the DAITE coverage and uniqueness, the engines, the
+phrases, the states on the demo and on nothing, next, the readers, the
+inputs, the summary); dnd 5614; export 25.
+
 ---
 
 # The Dungeons & Dividends entries

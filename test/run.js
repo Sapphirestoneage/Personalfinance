@@ -11230,6 +11230,103 @@ section('Section 15 gate: every shape has its tests, and a saved household migra
 })();
 
 /* ==========================================================================
+   18.2 — the Ledger's row registry (D-183)
+   ========================================================================== */
+section('18.2: every number the app can hold is one Ledger row, of one of three kinds (D-183)');
+(function () {
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Levers = require(path.join(ROOT, 'shared/levers.js'));
+  const Daite = require(path.join(ROOT, 'shared/daite.js'));
+  const Ownership = require(path.join(ROOT, 'shared/ownership.js'));
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
+  const T = LR.table();
+  const rows = LR.all();
+  checkTrue('the registry is a registered table', Reference.TABLE_FILES.ledgerRows === 'ledger-rows.json');
+  checkTrue('three kinds, and every row is one of them', T.kinds.join(',') === 'know,lookup,computed' && rows.every(r => T.kinds.indexOf(r.kind) >= 0));
+  checkTrue('every row has a path, a label, a kind, a pass, a unit, an appliesWhen and minutes', rows.every(r => r.path && r.label && r.kind && [1, 2, 3].indexOf(r.pass) >= 0 && r.unit && r.appliesWhen && Money.isEntered(r.minutes)));
+  checkTrue('every path appears in exactly one row', new Set(rows.map(r => r.path)).size === rows.length);
+  checkTrue('every id appears once', new Set(rows.map(r => r.id)).size === rows.length);
+  checkTrue('every lookup row has a where sentence and a roughly hint', rows.filter(r => r.kind === 'lookup').every(r => r.where && r.roughly));
+  checkTrue('...one sentence, no em dash', rows.filter(r => r.kind === 'lookup').every(r => r.where.indexOf('—') === -1 && r.where.length < 260));
+  checkTrue('every computed row names its engine and its inputs, and the inputs are rows', rows.filter(r => r.kind === 'computed').every(r => r.engine && Array.isArray(r.inputs) && r.inputs.every(id => LR.byId(id))));
+  const engines = { Schema: Schema, Tier0: Tier0, Statement: require(path.join(ROOT, 'engines/statement.js')), Ledger: require(path.join(ROOT, 'engines/ledger.js')), Calendar: require(path.join(ROOT, 'engines/calendar.js')), Budget: require(path.join(ROOT, 'engines/budget.js')) };
+  checkTrue('...and every engine named is a real function', rows.filter(r => r.kind === 'computed').every(r => { const [m, f] = r.engine.split('.'); return engines[m] && typeof engines[m][f] === 'function'; }), rows.filter(r => r.kind === 'computed').map(r => r.engine).join(','));
+  checkTrue('a computed row is never given a where sentence', rows.filter(r => r.kind === 'computed').every(r => !r.where));
+  checkTrue('every non-preference, non-repeat row is an ownership field, so it reads and writes through the one map', rows.filter(r => !/^prefs\./.test(r.path) && !r.repeat).every(r => Ownership.FIELDS[r.id]), rows.filter(r => !/^prefs\./.test(r.path) && !r.repeat && !Ownership.FIELDS[r.id]).map(r => r.id).join(','));
+  checkTrue('a repeat row names what it repeats over', rows.filter(r => r.repeat).every(r => ['debts', 'assets', 'incomeSources', 'futureIncome', 'annualLines'].indexOf(r.repeat) >= 0));
+  checkTrue('every alias is an ownership field on the same path', rows.every(r => (r.aliases || []).every(a => Ownership.FIELDS[a] && Daite.PATHS[a] === Daite.PATHS[r.id])));
+  /* Every money and situation path in DAITE is covered by a row. */
+  const declared = Object.keys(Daite.PATHS).filter(id => /^(debt|assets|income|taxes|expenses|you)\./.test(Daite.PATHS[id]));
+  const covered = declared.filter(id => LR.byId(id));
+  checkTrue('every DAITE money or situation field has a row', covered.length === declared.length, declared.filter(id => !LR.byId(id)).join(','));
+  checkTrue('plans, preferences and progress are not rows (they are what-ifs, not facts)', rows.every(r => !/^(plans|progress)\./.test(r.path)) && rows.filter(r => /^prefs\./.test(r.path)).length === 1);
+  checkTrue('the six situation rows come first: the path, birth, state, dependents, working situation, filing', rows.slice(0, 6).map(r => r.id).join(',') === 'pathChoice,dob,state,dependents,employmentStatus,filingStatus');
+  checkTrue('the situation rows carry no letter', rows.filter(r => r.family === 'you').every(r => r.letter === null));
+  checkTrue('every money row carries its letter', rows.filter(r => r.family !== 'you').every(r => 'DAITE'.indexOf(r.letter) >= 0));
+  checkTrue('the where sentences came from lane 2 where lane 2 had one', /minimum payment due/.test(LR.byId('debtMinPayment').where) && /studentaid\.gov/.test(LR.byId('loanPlan').where));
+
+  /* appliesWhen: the levers' reader, a few more phrases. */
+  const h = Demo.build();
+  checkTrue('always applies', Levers.appliesWhen('always', h));
+  checkTrue('situation == employed on the demo', Levers.appliesWhen('situation == employed', h) && !Levers.appliesWhen('situation == retired', h));
+  checkTrue('debt.any on the demo, debt.studentLoan too', Levers.appliesWhen('debt.any', h) && Levers.appliesWhen('debt.studentLoan', h));
+  const two = Demo.build(); two.people.push(Schema.createPerson({ label: 'Sam' }));
+  checkTrue('household.two only with two adults', Levers.appliesWhen('household.two', two) && !Levers.appliesWhen('household.two', h));
+  checkTrue('an unknown phrase never applies', !Levers.appliesWhen('moon.phase == full', h));
+  checkTrue('the partner rows are absent for one adult', !LR.rows(h, {}).some(r => r.id === 'partnerName') && LR.rows(two, {}).some(r => r.id === 'partnerName'));
+  checkTrue('the between-jobs rows are absent for the employed', !LR.rows(h, {}).some(r => r.id === 'floorMonthly'));
+
+  /* Status, on the demo and on nothing. */
+  Prefs.reset();
+  const list = LR.rows(h, {});
+  checkTrue('rows come back in pass order', list.every((r, i) => i === 0 || r.pass >= list[i - 1].pass));
+  check('the demo\'s cash reads as entered', LR.status(h, LR.byId('cashSavings')).value.value, 950000);
+  checkTrue('...and as roughly, since nothing about it was ever confirmed', LR.status(h, LR.byId('cashSavings')).state === 'roughly');
+  const sure = Demo.build(); sure.meta.fields = { cashSavings: { asOf: new Date().toISOString(), source: 'typed', confidence: 'sure', room: 'ledger' } };
+  check('a confirmed figure reads as sure', LR.status(sure, LR.byId('cashSavings')).state, 'sure');
+  const old = Demo.build(); old.meta.fields = { cashSavings: { asOf: '2020-01-01T00:00:00Z', source: 'typed', confidence: 'sure', room: 'ledger' } };
+  check('a sure figure past its window reads as stale', LR.status(old, LR.byId('cashSavings')).state, 'stale');
+  check('a computed row is computed', LR.status(h, LR.byId('netWorth')).state, 'computed');
+  check('nothing entered is missing', LR.status(Schema.createHousehold({}), LR.byId('cashSavings')).state, 'missing');
+  check('a repeat row with no items is missing', LR.status(Schema.createHousehold({}), LR.byId('debtBalance')).state, 'missing');
+  check('...and lists the demo\'s debts', LR.items(h, LR.byId('debtBalance')).length, h.debts.length);
+  check('...as the row\'s value', LR.status(h, LR.byId('debtBalance')).value.value, h.debts.length);
+  check('the preference row reads from Prefs, not the household', LR.status(h, LR.byId('pathChoice')).state, 'missing');
+  Prefs.set('path', 'fi');
+  check('...and is sure once chosen', LR.status(h, LR.byId('pathChoice')).state, 'sure');
+  Prefs.reset();
+
+  /* next: exactly one row. */
+  const n = LR.next(h, {});
+  checkTrue('next is the first open row of the lowest pass', n && n.id === 'pathChoice' && n.pass === 1);
+  checkTrue('...with the minutes left and the open count', Money.isEntered(n.minutesLeft) && n.openCount > 0);
+  Prefs.set('path', 'beginner');
+  const n2 = LR.next(h, {});
+  checkTrue('choosing the path moves next to the next row', n2 && n2.id !== 'pathChoice' && n2.pass === 1, n2 && n2.id);
+  Prefs.reset();
+  const done = Demo.build(); done.meta.fields = {}; LR.rows(done, {}).forEach(r => { if (r.kind !== 'computed') done.meta.fields[r.id] = { asOf: new Date().toISOString(), source: 'typed', confidence: 'sure', room: 'ledger' }; });
+  Prefs.set('path', 'fi');
+  const nDone = LR.next(done, {});
+  checkTrue('with every entered row sure, next is a missing row, never a computed one', !nDone || nDone.kind !== 'computed');
+  Prefs.reset();
+  checkTrue('a computed row is never next', !LR.next(h, {}) || LR.next(h, {}).kind !== 'computed');
+
+  /* the readers, the inputs, the summary */
+  checkTrue('the Statement reads the cash row', LR.readersOf(LR.byId('cashSavings')).some(r => r.id === 'statement'));
+  const inputs = LR.inputsOf(LR.byId('netWorth'), h, {});
+  check('net worth names its four inputs', inputs.map(i => i.id).join(','), 'cashSavings,investments,otherAssets,totalDebt');
+  checkTrue('...none missing on the demo; the property sum is incomplete, not missing', inputs.every(i => !i.missing) && inputs.filter(i => i.id === 'otherAssets')[0].incomplete === true);
+  checkTrue('...cash missing on nothing', LR.inputsOf(LR.byId('netWorth'), Schema.createHousehold({}), {}).filter(i => i.id === 'cashSavings')[0].missing);
+  const sum = LR.summary(h, {});
+  checkTrue('the summary counts every row once', sum.total === Object.keys(sum.by).reduce((t, k) => t + sum.by[k], 0));
+  checkTrue('roughRows are the roughly and stale ones', LR.roughRows(h, {}).every(r => r.status === 'roughly' || r.status === 'stale'));
+  check('minutes sum to the half minute', LR.minutes([{ minutes: 0.5 }, { minutes: 2 }, { minutes: 0.25 }]), 3);
+  checkTrue('a search filters by label', LR.rows(h, {}, { query: 'rent' }).every(r => /rent/i.test(r.label)) && LR.rows(h, {}, { query: 'rent' }).length >= 1);
+  checkTrue('the D&D copy does not carry this module (it is SPARKS-only)', !fs.existsSync(path.join(ROOT, 'dnd/shared/ledger-rows.js')));
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 
