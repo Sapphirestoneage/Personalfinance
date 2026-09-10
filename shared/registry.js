@@ -243,11 +243,10 @@
       daite: { reads: ['expenses'], writes: ['expenses', 'expenses.needs.accommodation', 'expenses.needs.food', 'expenses.needs.transportation', 'expenses.wants', 'expenses.wants.therapy'] },
       subsections: [
         { id: 'picture',         label: 'At a glance' },
-        { id: 'spending',        label: 'The four numbers' },
-        { id: 'lines',           label: 'Subscriptions and lines' },
-        { id: 'out-summary',     label: 'By category' },
-        { id: 'out-template',    label: 'Against a budget' },
-        { id: 'out-divergence',  label: 'Lines vs. the four' }
+        { id: 'spending',        label: '1 · The essentials' },
+        { id: 'lines',           label: '2 · Everything else' },
+        { id: 'month',           label: '3 · Your month' },
+        { id: 'more',            label: 'More' }
       ]
     },
     {

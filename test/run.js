@@ -825,14 +825,15 @@ const RULES = TABLES.debtRules;
   checkTrue('the picture sits above the four numbers, the lines under them, the readings last', at('picture') < at('spending') && at('spending') < at('lines') && at('lines') < at('out-summary'));
   checkTrue('the ring and the bars are drawn from the engine, never typed', /Charts\.donut\(\{\s*title: 'The month, by bucket'/.test(page) && /CashFlow\.logByFatBucket\(h, TABLES\.expenseCategories, m\)/.test(page));
   checkTrue('the bars carry a legend and both figures', /class="eva-legend"/.test(page) && /<small>of ' \+ \(hasEst/.test(page));
-  checkTrue('a form for a named line: what, how much, every, which bucket', /id="line-form"/.test(page) && /id="n-every"/.test(page) && /data-value="subscriptions" aria-pressed="true"/.test(page) && /value="fortnightly"/.test(page));
+  checkTrue('a form for a named line: what, how much, every, which kind', /id="line-form"/.test(page) && /id="n-every"/.test(page) && /<option value="subscriptions">Subscription<\/option>/.test(page) && /value="fortnightly"/.test(page));
   checkTrue('...written through the spine as a month, remembering how it was known', /everyCents: amount/.test(page) && /amountCents: monthly, period: 'monthly', source: 'manual'/.test(page) && /Spine\.upsertExpenseEntry\(Schema\.createExpenseEntry\(\{\s*id: 'ln_'/.test(page));
   checkTrue('subscriptions have their own list, totalled a month and a year', /id="subs-list"/.test(page) && /' a year' : ''/.test(page));
   checkTrue('the category boxes ignore named lines, so nothing counts twice', /&& !e\.descriptor && e\.active !== false\) return e;/.test(page));
   check('one line under each of F, A and T says what its lines add up to', (page.match(/<span class="bucket-lines" data-bucket-hint="/g) || []).length, 3);
   checkTrue('...offering to make the number match on a tap, never silently', /data-use-bucket=/.test(page) && /Spine\.setFat\(patch\)/.test(page));
   checkTrue('the per aid and the form share one formula', /Schema\.monthlyFromEvery\(cents, per\)/.test(page));
-  check('the registry names the three bands', Registry.byId('expenses').subsections.map(x => x.id).slice(0, 3).join(','), 'picture,spending,lines');
+  check('the registry names the steps (D-198)', Registry.byId('expenses').subsections.map(x => x.id).join(','), 'picture,spending,lines,month,more');
+  checkTrue('...the readings sit inside one More fold that a deep link opens', /<details class="slaf-card more-card" id="more"/.test(page) && /if \(p\.tagName === 'DETAILS'\) p\.open = true/.test(page));
 })();
 
 /* -- The stop line (D-191) ------------------------------------------------- */

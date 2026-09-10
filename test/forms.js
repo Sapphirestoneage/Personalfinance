@@ -1036,7 +1036,7 @@ const CASES = [
     room: '/rooms/expenses.html',
     container: '#annual-form',
     seed: 'demo',
-    prepare: async (page) => { await page.evaluate(() => { document.getElementById('annual-fold').open = true; }); },
+    prepare: async (page) => { await page.evaluate(() => { document.getElementById('more').open = true; document.getElementById('annual-fold').open = true; }); },
     fields: [
       { sel: '#y-label', type: 'Car insurance' },
       { sel: '#y-amount', type: '1200' }
@@ -1109,7 +1109,7 @@ const CASES = [
     room: '/rooms/expenses.html',
     container: '#buckets',
     seed: 'demo',
-    prepare: async (page) => { await page.evaluate(() => { document.getElementById('split-more').open = true; }); },
+    prepare: async (page) => { await page.evaluate(() => { document.getElementById('more').open = true; document.getElementById('split-more').open = true; }); },
     fields: [
       { sel: '#buckets input[data-cat="housing"]', type: '1500' },
       { sel: '#buckets input[data-cat="groceries"]', type: '450' },

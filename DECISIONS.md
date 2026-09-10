@@ -12458,6 +12458,32 @@ Expenses and render on FIRE Number; a phone walk typing the three and
 reading the FAT total, the lean number and everything else from a named
 subscription.
 
+## D-198 — Expenses in three steps and one fold
+
+**Why.** The owner, on the FAT rework (D-197): "expenses is confusing.
+Make it simpler and more intuitive and make the sections clearer." Nine
+blocks on one page, sums in two places, a picture that said nothing
+until numbers existed, and folds inside sections inside folds.
+
+**Decision.** The room is five things, in order, each one card:
+**Your month at a glance** (the ring and the estimated-vs-actual bars,
+or one sentence saying to type the three numbers until there is
+anything to draw); **1 · The essentials** (F, A, T, and one line under
+them: FAT a month and the Lean FI number); **2 · Everything else** (the
+form, subscriptions, anything else, one total line, and the therapy
+toggle at its foot); **3 · Your month** (the one figure, and a sentence
+saying what it is made of and that the debt minimums leave on top);
+and **More**, a single fold holding the yearly costs, the finer split by
+category and the three comparisons, which a deep link opens on its way
+in. The "kind" of a named line is a select, subscription by default,
+rather than five pills. The bucket hints under F, A, T stay, since they
+only speak when the lines say more than the number. Nothing stored
+changes; the registry's subsections for the room are the five cards.
+
+Gate for this commit: unit suite; render, forms and features on the
+room; a phone screenshot of the empty page and of the example with a
+subscription, and a deep link into a folded comparison landing open.
+
 ---
 
 # The Dungeons & Dividends entries

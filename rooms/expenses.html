@@ -87,16 +87,26 @@
   @media (max-width: 720px) { .fat-grid, .fat-grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 480px) { .fat-grid--3 { grid-template-columns: 1fr; } }
   .fat-letter { display: inline-block; font-family: var(--font-display); font-size: var(--text-lg); line-height: 1; color: var(--color-accent-hover); margin-right: 2px; }
-  /* The sums under the three (D-197): FAT, the lean number it implies,
-     everything else from the lines, and the month. */
-  .fat-sum { margin-top: var(--space-4); border-top: 1px solid var(--color-border); }
-  .fat-sum-row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); font-size: var(--text-sm); }
-  .fat-sum-row span small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
-  .fat-sum-row b { font-family: var(--font-display); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; font-size: var(--text-md); text-align: right; }
-  .fat-sum-row b small { display: block; font-family: var(--font-body); font-weight: normal; font-size: var(--text-xs); color: var(--color-text-muted); white-space: normal; }
-  .fat-sum-row.is-lean b { color: var(--color-positive); }
-  .fat-sum-row.is-month b { font-weight: 600; }
-  .fat-sum-row b.is-waiting { color: var(--color-text-faint); font-weight: normal; font-size: var(--text-sm); white-space: normal; text-align: right; }
+  /* One line under the three (D-197, D-198): FAT and the lean number. */
+  .fat-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-2); margin: var(--space-4) 0 0; padding-top: var(--space-3); border-top: 1px solid var(--color-border); font-size: var(--text-sm); color: var(--color-text-muted); }
+  .fat-line b { font-family: var(--font-display); font-weight: 500; font-variant-numeric: tabular-nums; color: var(--color-text); font-size: var(--text-md); }
+  .fat-line b small { font-family: var(--font-body); font-weight: normal; font-size: var(--text-xs); color: var(--color-text-muted); }
+  .fat-line #lean-fi { color: var(--color-positive); }
+  .fat-line .fat-sep { color: var(--color-text-faint); }
+  .fat-line .is-waiting { font-family: var(--font-body); font-weight: normal; font-size: var(--text-sm); color: var(--color-text-faint); }
+  .else-line { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); margin: var(--space-4) 0 0; padding-top: var(--space-3); border-top: 1px solid var(--color-border); font-size: var(--text-sm); color: var(--color-text-muted); }
+  .else-line b { font-family: var(--font-display); font-weight: 500; font-variant-numeric: tabular-nums; color: var(--color-text); font-size: var(--text-md); }
+  .else-line b small { display: block; font-family: var(--font-body); font-weight: normal; font-size: var(--text-xs); color: var(--color-text-muted); text-align: right; }
+  .else-line .is-waiting { font-family: var(--font-body); font-weight: normal; font-size: var(--text-sm); color: var(--color-text-faint); }
+  .month-how { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+  .month-how b { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  details.more-card > summary { list-style: none; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+  details.more-card > summary::-webkit-details-marker { display: none; }
+  details.more-card > summary .more-what { font-size: var(--text-sm); color: var(--color-text-muted); }
+  details.more-card > summary::after { content: 'Open'; font-size: var(--text-xs); color: var(--color-accent-hover); }
+  details.more-card[open] > summary::after { content: 'Close'; }
+  details.more-card > section, details.more-card > details { margin-top: var(--space-4); }
+  details.more-card > section { border-top: 1px solid var(--color-border); padding-top: var(--space-4); }
   .fat-grid .slaf-field { margin: 0; }
   .fat-grid .slaf-hint { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 4px; }
   .annual-list { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
@@ -166,11 +176,12 @@
 
   <section class="slaf-card" id="picture">
     <span class="slaf-eyebrow">Your month at a glance</span>
-    <div class="picture-grid">
+    <p class="slaf-reason" id="picture-empty" hidden>Type the three numbers in step 1 and your month draws here.</p>
+    <div class="picture-grid" id="picture-grid">
       <div id="fat-donut"></div>
       <div class="eva">
         <h3 class="eva-title">Estimated vs actual <small id="eva-month"></small></h3>
-        <div class="eva-legend"><span><i style="background:var(--color-text-muted)"></i>estimated, F A T and the lines you named</span><span><i style="background:var(--color-positive)"></i>actual, logged so far</span></div>
+        <div class="eva-legend"><span><i style="background:var(--color-text-muted)"></i>what you expect</span><span><i style="background:var(--color-positive)"></i>logged so far this month</span></div>
         <div id="eva-bars"></div>
         <p class="slaf-hint" id="eva-why" style="margin:var(--space-2) 0 0"></p>
       </div>
@@ -178,8 +189,9 @@
   </section>
 
   <section class="slaf-card" id="spending" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">F · A · T</span>
-    <h2 style="margin:var(--space-2) 0 var(--space-3)">Food, accommodation, transportation: the lean month</h2>
+    <span class="slaf-eyebrow">1 · The essentials</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-1)">F, A, T: food, accommodation, transportation</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">Three numbers, a month each. Together they are the least you could live on.</p>
     <!-- The whole budget input (D-172): food, rent or mortgage, getting
          around, everything else. Built once; only .value is ever written.
          LIVE-FORM: built once. -->
@@ -195,27 +207,15 @@
           <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-fat="transportation" placeholder="e.g. 250" aria-label="Getting around, a month"/></span>
           <span class="slaf-hint">car, fuel, transit, a month</span><span class="bucket-lines" data-bucket-hint="transportation"></span></label>
       </div>
-      <div class="fat-sum" id="fat-sum">
-        <div class="fat-sum-row"><span>FAT, a month</span><b id="fat-total"></b></div>
-        <div class="fat-sum-row is-lean"><span>Lean FI number <small>the essentials, covered for good</small></span><b id="lean-fi"></b></div>
-        <p class="slaf-hint" id="lean-why" style="margin:var(--space-1) 0 0"></p>
-        <div class="fat-sum-row is-else"><span>Everything else <small>the lines you name below</small></span><b id="else-total"></b></div>
-        <div class="fat-sum-row is-month"><span>The month</span><b id="month-total"></b></div>
-      </div>
-      <label class="fat-toggle"><input type="checkbox" id="fat-therapy-on" aria-label="Track mental health spending separately"/>Track mental health spending separately</label>
-      <div class="fat-grid" id="fat-therapy-row" hidden style="margin-top:var(--space-2)">
-        <label class="slaf-field"><span class="slaf-label">Therapy</span>
-          <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-fat="therapy" placeholder="e.g. 200" aria-label="Therapy, a month"/></span>
-          <span class="slaf-hint">its own line, not counted in everything else</span></label>
-      </div>
+      <p class="fat-line"><span>FAT, a month</span> <b id="fat-total"></b> <span class="fat-sep">·</span> <span>Lean FI</span> <b id="lean-fi"></b></p>
+      <p class="slaf-hint" id="lean-why" style="margin:var(--space-1) 0 0"></p>
     </div>
-
   </section>
 
   <section class="slaf-card" id="lines" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Lines you want to keep an eye on</span>
-    <h2 style="margin:var(--space-2) 0 var(--space-3)">Subscriptions, and anything else, as often as it comes</h2>
-    <p class="slaf-hint" style="margin:0 0 var(--space-3)">Name it, say what it costs and how often, and it lands as a month: under F, A or T, or in everything else, which is only what you name here. Subscriptions get their own list. A receipt on its date is not a line: log it in <a href="cash-flow.html#log">Cash Flow</a>.</p>
+    <span class="slaf-eyebrow">2 · Everything else</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-1)">Subscriptions, and anything else you pay for</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">Name it, what it costs, how often. Everything else is only what you name here.</p>
     <!-- Built once; only values are written. The lists under it hold a
          remove button per row and nothing typed, so they rebuild freely. -->
     <div class="form-grid" id="line-form">
@@ -225,14 +225,8 @@
         <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="n-amount" placeholder="e.g. 15.99" aria-label="What it costs"/></span></label>
       <label class="slaf-field"><span class="slaf-label">Every</span>
         <span class="slaf-input-shell"><select id="n-every" aria-label="How often it repeats"><option value="monthly">month</option><option value="weekly">week</option><option value="fortnightly">two weeks</option><option value="quarterly">three months</option><option value="annual">year</option></select></span></label>
-      <div class="slaf-field wide"><span class="slaf-label">Goes under</span>
-        <div class="choices" id="n-bucket" data-choices="n-bucket">
-          <button type="button" class="choice" data-value="subscriptions" aria-pressed="true">Subscriptions</button>
-          <button type="button" class="choice" data-value="wants">Everything else</button>
-          <button type="button" class="choice" data-value="food">F · Food</button>
-          <button type="button" class="choice" data-value="accommodation">A · Accommodation</button>
-          <button type="button" class="choice" data-value="transportation">T · Transportation</button>
-        </div></div>
+      <label class="slaf-field"><span class="slaf-label">Kind</span>
+        <span class="slaf-input-shell"><select id="n-bucket" aria-label="What kind of line"><option value="subscriptions">Subscription</option><option value="wants">Something else</option><option value="food">Part of F · Food</option><option value="accommodation">Part of A · Accommodation</option><option value="transportation">Part of T · Transportation</option></select></span></label>
       <div class="slaf-field wide"><button type="button" class="slaf-btn slaf-btn--primary" id="btn-line-add">Add the line</button> <span class="slaf-hint" id="line-say"></span></div>
     </div>
     <div class="line-group" id="subs">
@@ -240,10 +234,27 @@
       <ul class="line-list" id="subs-list"></ul>
     </div>
     <div class="line-group" id="named">
-      <div class="line-head"><h3>Other lines you named</h3><span id="named-sum"></span></div>
+      <div class="line-head"><h3>Anything else</h3><span id="named-sum"></span></div>
       <ul class="line-list" id="named-list"></ul>
     </div>
+    <p class="else-line"><span>Everything else, a month</span> <b id="else-total"></b></p>
+      <label class="fat-toggle" style="margin-top:var(--space-3)"><input type="checkbox" id="fat-therapy-on" aria-label="Track mental health spending separately"/>Track mental health spending separately</label>
+      <div class="fat-grid" id="fat-therapy-row" hidden style="margin-top:var(--space-2)">
+        <label class="slaf-field"><span class="slaf-label">Therapy</span>
+          <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-fat="therapy" placeholder="e.g. 200" aria-label="Therapy, a month"/></span>
+          <span class="slaf-hint">its own line, not counted in everything else</span></label>
+      </div>
 
+  </section>
+
+  <section class="slaf-card" id="month" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">3 · Your month</span>
+    <div class="slaf-figure" id="month-total">—</div>
+    <p class="month-how" id="month-how"></p>
+  </section>
+
+  <details class="slaf-card more-card" id="more" style="margin-top:var(--space-4)">
+    <summary><span class="slaf-eyebrow">More</span><span class="more-what">Yearly costs · a finer split by category · how the month compares</span></summary>
     <!-- 15.5: named yearly costs that sit inside their bucket (D-181). The
          form is built once and only its values are ever written; the list
          holds a remove button per row and nothing typed, so it rebuilds
@@ -293,8 +304,6 @@
       <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Clear</button>
     </div>
     </details>
-  </section>
-
   <section class="slaf-card" id="out-summary">
     <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-3)">
       <span class="slaf-eyebrow">Monthly spending</span>
@@ -325,6 +334,8 @@
     </div>
     <p class="slaf-hint" id="track-note" style="margin-top:var(--space-2)"></p>
   </section>
+
+  </details>
 
   <p class="disclaimer">
     Educational tool, not financial advice. Your numbers stay in this browser.
@@ -549,7 +560,7 @@
       ? SLAF.Fire.calculateFIRE(h, TABLES, { variantId: 'lean' }) : null;
     if (lean && Money.isOk(lean) && lean.expenseSource === 'fat') {
       el('lean-fi').innerHTML = '<a href="fire.html#lean" style="color:inherit">' + Money.formatCents(lean.value) + '</a>';
-      el('lean-why').textContent = 'FAT times twelve, ' + Money.formatCents(lean.annualExpensesCents) + ' a year, at a ' + Money.formatRate(lean.swrRate, { decimals: 1 }) + ' draw. Invested, that covers the essentials without a job. FIRE Number has the other flavours.';
+      el('lean-why').textContent = 'Lean FI is the essentials covered for good: ' + Money.formatCents(lean.annualExpensesCents) + ' a year at a ' + Money.formatRate(lean.swrRate, { decimals: 1 }) + ' draw. FIRE Number has the other flavours.';
     } else {
       el('lean-fi').innerHTML = waiting('needs all three');
       el('lean-why').textContent = '';
@@ -557,13 +568,22 @@
     var elseR = f.wants;
     el('else-total').innerHTML = Money.isOk(elseR)
       ? Money.formatCents(elseR.value)
-        + (elseR.source === 'typed' ? ' <small>the part of the month not split into F, A, T, from Start Here; name lines below and they take over</small>' : '')
-        + (f.therapyTracked && f.therapy && Money.isOk(f.therapy) ? ' <small>+ ' + Money.formatCents(f.therapy.value) + ' therapy</small>' : '')
-      : waiting('nothing named below yet');
-    el('month-total').innerHTML = Money.isOk(f.totalCents)
-      ? Money.formatCents(f.totalCents.value)
-        + (Money.isOk(mins) && mins.value > 0 ? ' <small>+ ' + Money.formatCents(mins.value) + ' debt minimums, in <a href="' + esc(Ownership.linkTo('debt-payoff', 'debts', ROOM_ID)) + '">Debt Payoff</a></small>' : '')
-      : waiting('type any of the three and the month appears');
+        + (elseR.source === 'typed' ? '<small>from Start Here, the part of the month not split into F, A, T; name lines above and they take over</small>' : '')
+      : waiting('nothing named yet');
+    var monthNode = el('month-total'), how = el('month-how');
+    if (Money.isOk(f.totalCents)) {
+      monthNode.textContent = Money.formatCents(f.totalCents.value) + ' a month';
+      monthNode.classList.remove('slaf-figure--incomplete');
+      how.innerHTML = 'FAT <b>' + (Money.isOk(needs) ? Money.formatCents(needs.value) : Money.formatCents(f.totalCents.value - (Money.isOk(elseR) ? elseR.value : 0))) + '</b>'
+        + (Money.isOk(elseR) ? ' + everything else <b>' + Money.formatCents(elseR.value) + '</b>' : '')
+        + (f.therapyTracked && f.therapy && Money.isOk(f.therapy) ? ' + therapy <b>' + Money.formatCents(f.therapy.value) + '</b>' : '')
+        + (Money.isOk(mins) && mins.value > 0 ? '. On top of that, <b>' + Money.formatCents(mins.value) + '</b> of debt minimums leave the account too, from <a href="' + esc(Ownership.linkTo('debt-payoff', 'debts', ROOM_ID)) + '">Debt Payoff</a>.' : '.')
+        + ' Every other room reads this month.';
+    } else {
+      monthNode.textContent = Money.EM_DASH;
+      monthNode.classList.add('slaf-figure--incomplete');
+      how.textContent = 'Type any of the three in step 1 and the month appears here.';
+    }
   }
   /* Under each of the four: what the lines in that bucket add up to (the
      category boxes, the named lines, the subscriptions). When they come to
@@ -659,18 +679,13 @@
     el('named-sum').textContent = rest.length ? Money.formatCents(restTotal) + ' a month' : '';
   }
   function wireLines() {
-    el('n-bucket').addEventListener('click', function (evt) {
-      var b = evt.target.closest('.choice'); if (!b) return;
-      Array.prototype.forEach.call(el('n-bucket').querySelectorAll('.choice'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
-    });
     el('btn-line-add').addEventListener('click', function () {
       var amount = Money.parseMoney(el('n-amount').value);
       var label = el('n-label').value.trim();
       if (!label) { el('line-say').textContent = 'Name it first.'; el('n-label').focus(); return; }
       if (!Money.isEntered(amount) || amount <= 0) { el('line-say').textContent = 'What does it cost?'; el('n-amount').focus(); return; }
       var every = el('n-every').value || 'monthly';
-      var pressed = el('n-bucket').querySelector('.choice[aria-pressed="true"]');
-      var bucket = pressed ? pressed.getAttribute('data-value') : 'subscriptions';
+      var bucket = el('n-bucket').value || 'subscriptions';
       var monthly = toMonthlyCents(amount, every);
       Spine.upsertExpenseEntry(Schema.createExpenseEntry({
         id: 'ln_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -678,7 +693,7 @@
         descriptor: label, every: every, everyCents: amount
       }));
       el('line-say').textContent = 'Added ' + label + ', ' + Money.formatCents(monthly) + ' a month.';
-      el('n-label').value = ''; el('n-amount').value = ''; el('n-every').value = 'monthly';
+      el('n-label').value = ''; el('n-amount').value = ''; el('n-every').value = 'monthly'; el('n-bucket').value = 'subscriptions';
       render();
     });
     el('line-form').addEventListener('keydown', function (evt) {
@@ -702,6 +717,10 @@
   function thisMonth() { var d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1 < 10 ? '0' : '') + (d.getMonth() + 1); }
   function paintPicture(h) {
     var f = Schema.fat(h);
+    var nothing = !Money.isOk(f.totalCents);
+    el('picture-empty').hidden = !nothing;
+    el('picture-grid').hidden = nothing;
+    if (nothing) return;
     var C = Charts.COLORS.series;
     var slices = FAT_ORDER.map(function (p, i) {
       var r = f[p[0]];
@@ -1121,7 +1140,11 @@
   function jumpToHash() {
     if (!location.hash) return;
     var target = document.getElementById(location.hash.slice(1));
-    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!target) return;
+    /* A section inside the More fold opens the fold on its way in. */
+    var p = target.parentElement;
+    while (p) { if (p.tagName === 'DETAILS') p.open = true; p = p.parentElement; }
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   window.addEventListener('hashchange', jumpToHash);
 
