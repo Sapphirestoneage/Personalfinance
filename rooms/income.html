@@ -63,9 +63,29 @@
   .pic-h { margin: var(--space-4) 0 0; font-size: var(--text-base); font-family: var(--font-display); font-weight: 600; }
   .pic-h:first-of-type { margin-top: var(--space-2); }
   .pic-h small { display: block; font-family: var(--font-body); font-weight: 400; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 2px; }
+  /* D-195: the year reads as a sentence first, then as what has come in
+     and what is only assumed; the assumed half is faded. */
+  .pic-sum { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-loose); }
+  .pic-sum b { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  .pic-part { margin-top: var(--space-3); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
+  .pic-part small { text-transform: none; letter-spacing: 0; }
+  .pic-past .slaf-legend { display: none; }
+  .pic-ahead .slaf-bars .track i { opacity: .5; }
+  .pic-nudge { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; justify-content: space-between; font-size: var(--text-sm); color: var(--color-text-muted); border-left: 3px solid var(--color-caution); background: rgba(232,184,75,.08); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: var(--space-2) var(--space-3); margin-top: var(--space-3); }
+  .pic-nudge b { color: var(--color-text); }
   .return-chip { display: inline-block; margin-bottom: var(--space-3); font-size: var(--text-sm); color: var(--color-accent-hover); border: 1px dashed var(--color-border-active); border-radius: var(--radius-pill); padding: 4px var(--space-3); text-decoration: none; }
   .month-figure { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); }
   .month-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-1); }
+  /* D-195: how the month was worked out, entry by entry, behind a line. */
+  .month-how { margin-top: var(--space-2); }
+  .month-how > summary { list-style: none; cursor: pointer; font-size: var(--text-sm); color: var(--color-accent-hover); padding: var(--space-1) 0; }
+  .month-how > summary::-webkit-details-marker { display: none; }
+  .month-how > summary::before { content: '▸ '; font-size: 10px; }
+  .month-how[open] > summary::before { content: '▾ '; }
+  ul.how { list-style: none; margin: var(--space-2) 0 0; padding: 0; font-size: var(--text-sm); }
+  ul.how li { padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  ul.how b { font-variant-numeric: tabular-nums; }
+  ul.how small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); margin-top: 2px; line-height: var(--leading-loose); }
   ul.entries { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
   ul.entries li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); align-items: baseline; }
   ul.entries li:first-child { border-top: none; }
@@ -114,12 +134,22 @@
     <span class="slaf-eyebrow" id="month-cap">This month</span>
     <div class="month-figure" id="month-figure">—</div>
     <p class="month-sub" id="month-sub"></p>
+    <details class="month-how" id="month-how" hidden>
+      <summary>How this was worked out</summary>
+      <ul class="how" id="month-how-list"></ul>
+      <p class="slaf-hint" style="margin:var(--space-2) 0 0">The rate is a blended estimate by income band, federal plus the employee share of payroll tax, from an unverified table. A figure typed off the stub always beats it. The band comes from the income in <a href="start.html#q-income">Start Here</a> when there is one, otherwise from the entries here, annualised.</p>
+    </details>
   </section>
 
   <section class="slaf-card card-gap" id="picture" hidden>
     <span class="slaf-eyebrow">The picture</span>
-    <h3 class="pic-h">A year of it, month by month <small>Six months back and six ahead, gross, by the kind of money. An entry with a last date stops where it stops.</small></h3>
-    <div id="pic-months"></div>
+    <h3 class="pic-h">A year of it, month by month <small>What has come in, then what is expected if nothing changes: gross, by the kind of money. An entry with a last date stops there.</small></h3>
+    <p class="pic-sum" id="pic-sum"></p>
+    <div id="pic-nudges"></div>
+    <div class="pic-part" id="pic-past-cap">So far</div>
+    <div class="pic-past" id="pic-past"></div>
+    <div class="pic-part" id="pic-ahead-cap">Ahead <small>— assumed, not yet received</small></div>
+    <div class="pic-ahead" id="pic-ahead"></div>
     <h3 class="pic-h">Where this month's gross goes <small>What you keep, what was taken off before it arrived, what is owed at tax time, and what it cost to earn.</small></h3>
     <div id="pic-goes"></div>
     <h3 class="pic-h">Source by source <small>Each entry's share of the same twelve months.</small></h3>
@@ -407,6 +437,15 @@
     if (Schema.costsAllowed(saved.kind)) el('costs').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
   el('btn-cancel').addEventListener('click', function () { fillForm(null); say('form-say', ''); closeForm(); render(); });
+  el('pic-nudges').addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-ends]');
+    if (!b) return;
+    fillForm(Ledger.byId(Spine.getProfile(), b.getAttribute('data-ends')));
+    el('form-more').open = true;
+    openForm(false);
+    render();
+    el('f-ends-row').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
 
   /* ---- The list ------------------------------------------------------------ */
   function renderList(h) {
@@ -519,18 +558,39 @@
         parts: Schema.INCOME_KINDS.filter(function (k) { return byKind[k]; }).map(function (k) { return { label: KINDS[k].label, value: byKind[k], color: KIND_COLOR[k] }; })
       };
     });
-    el('pic-months').innerHTML = Charts.stacked({ rows: rows, empty: 'Nothing lands in these twelve months. Add a date to an entry and it appears here.' });
+    /* D-195: so far, then ahead. One scale across both halves, the ahead
+       half faded, and the whole thing said in a sentence first. */
+    var totals = rows.map(function (r) { return r.parts.reduce(function (t, p) { return t + p.value; }, 0); });
+    var scale = Math.max.apply(null, totals) || 1;
+    var past = rows.slice(0, 7), ahead = rows.slice(7);
+    var firstIn = -1;
+    totals.slice(0, 7).forEach(function (t, i) { if (t > 0 && firstIn < 0) firstIn = i; });
+    var soFar = totals.slice(0, 7).reduce(function (t, v) { return t + v; }, 0);
+    var aheadTotals = totals.slice(7);
+    var aheadSame = aheadTotals.every(function (t) { return t === aheadTotals[0]; });
+    var nextNet = Ledger.month(h, TABLES, months[7]);
+    var sum = '';
+    if (soFar > 0) sum += 'Since ' + shortMonth(months[firstIn], true) + ': <b>' + esc(Money.formatCents(soFar)) + '</b> gross has come in. ';
+    if (aheadTotals[0] > 0 || !aheadSame) {
+      sum += 'Ahead, if nothing changes: ' + (aheadSame ? '<b>' + esc(Money.formatCents(aheadTotals[0])) + '</b> a month' : 'between <b>' + esc(Money.formatCents(Math.min.apply(null, aheadTotals))) + '</b> and <b>' + esc(Money.formatCents(Math.max.apply(null, aheadTotals))) + '</b> a month')
+        + (Money.isOk(nextNet) && nextNet.count && aheadSame ? ', <b>' + esc(Money.formatCents(nextNet.netCents)) + '</b> after tax' : '') + '.';
+    } else if (soFar > 0) sum += 'Nothing is expected ahead: every entry has ended or was one time.';
+    el('pic-sum').innerHTML = sum || 'Nothing has landed yet. Add a date to an entry and it appears here.';
+    el('pic-past').innerHTML = Charts.stacked({ rows: past, max: scale, empty: 'Nothing in the last six months.' });
+    el('pic-ahead').innerHTML = Charts.stacked({ rows: ahead, max: scale, empty: 'Nothing expected in the next five months.' });
+    /* The assumption worth questioning: a benefit with no last date is
+       drawn as if it never ends, and it does. Ask. */
+    el('pic-nudges').innerHTML = active.filter(function (e) { return e.frequency !== 'once' && !e.endsOn && e.kind === 'unemployment'; }).map(function (e) {
+      return '<div class="pic-nudge"><span><b>' + esc(e.label || KINDS[e.kind].label) + '</b> has no last date, so it is drawn as if it keeps coming. Unemployment usually runs about 26 weeks.</span>'
+        + '<button type="button" class="pill" data-ends="' + esc(e.id) + '">When does it end?</button></div>';
+    }).join('');
 
     /* Where this month's gross goes. Per landing, times the landings;
        costs once, as the engine counts them. */
     var t = Ledger.month(h, TABLES, now);
-    var withheld = 0, owed = 0, kept = 0, costs = 0, gross = 0;
-    t.rows.forEach(function (x) {
-      if (!x.net) return;
-      var n = x.occurrences.length;
-      withheld += x.net.withheldCents * n; owed += x.net.owedCents * n; costs += x.net.allCostsCents; gross += x.grossCents;
-    });
-    kept = gross - withheld - owed - costs;
+    var withheld = t.withheldCents, owed = t.owedCents, costs = t.costsCents;
+    var gross = t.rows.filter(function (x) { return x.net; }).reduce(function (a, x) { return a + x.grossCents; }, 0);
+    var kept = gross - withheld - owed - costs;
     el('pic-goes').innerHTML = Charts.donut({
       title: 'Where this month’s gross goes',
       slices: [
@@ -567,9 +627,31 @@
     el('month-cap').textContent = m.label;
     if (!m.count) { el('month-figure').textContent = '—'; el('month-sub').textContent = 'Nothing lands this month yet. A recurring entry lands on its days; a one-time one on its date.'; return; }
     el('month-figure').textContent = Money.formatCents(m.netCents) + ' net';
-    el('month-sub').textContent = Money.formatCents(m.grossCents) + ' gross across ' + m.count + (m.count === 1 ? ' entry' : ' entries') + ', ' + Money.formatCents(m.taxCents) + ' of tax' + (m.costsCents ? ' and ' + Money.formatCents(m.costsCents) + ' of costs' : '') + ' taken off.'
+    /* D-195: say the tax the way it is felt — taken off before it arrived,
+       or owed at tax time — never "taken off" for money that arrived whole. */
+    var taxWords = m.taxCents === 0 ? 'no tax on it'
+      : (m.withheldCents ? Money.formatCents(m.withheldCents) + ' of tax taken off before it arrived' : '')
+        + (m.withheldCents && m.owedCents ? ' and ' : '')
+        + (m.owedCents ? Money.formatCents(m.owedCents) + ' of tax owed at tax time' : '');
+    el('month-sub').textContent = Money.formatCents(m.grossCents) + ' gross across ' + m.count + (m.count === 1 ? ' entry' : ' entries') + ': ' + taxWords + (m.costsCents ? ', and ' + Money.formatCents(m.costsCents) + ' of costs to earn it' : '') + '.'
       + (m.incomplete.length ? ' ' + m.incomplete.length + ' could not be netted: ' + m.incomplete.map(function (x) { return x.reason; }).join(' ') : '')
       + (m.potentialCents ? ' Not counted: ' + Money.formatCents(m.potentialCents) + ' that may not come.' : '');
+    el('month-how').hidden = false;
+    el('month-how-list').innerHTML = m.rows.map(function (x) {
+      var e = x.entry, n = x.net, count = x.occurrences.length;
+      var head = '<b>' + esc(e.label || KINDS[e.kind].label) + '</b> — ' + esc(Money.formatCents(x.grossCents)) + ' gross' + (count > 1 ? ' (' + count + ' landings of ' + esc(Money.formatCents(e.amountCents)) + ')' : '');
+      if (!n) return '<li>' + head + '<small>' + esc(x.reason || '') + '</small></li>';
+      var pc = function (r) { return (Math.round(r * 1000) / 10) + '%'; };
+      var basis = n.pieces.basis === 'sources' ? 'the income in Start Here' : n.pieces.basis === 'ledger' ? 'the entries here, annualised' : 'this entry alone, annualised';
+      var why;
+      if (n.method === 'none') why = n.pieces.why || 'Not taxable.';
+      else if (n.pieces.typedWithholding && n.method === 'w2') why = 'Tax as typed off the stub, ' + Money.formatCents(n.withheldCents) + ' a landing. Nothing owed later.';
+      else if (n.method === 'w2') why = 'Withheld at ' + pc(n.pieces.rate) + ', the blended rate for ' + Money.formatCents(n.pieces.annualGrossCents) + ' a year, banded on ' + basis + '. Nothing owed later.';
+      else if (n.method === 'unemployment') why = 'Taxed at ' + pc(n.pieces.incomeRate) + ': the blended rate of ' + pc(n.pieces.rate) + ' for ' + Money.formatCents(n.pieces.annualGrossCents) + ' a year (banded on ' + basis + ') less the 7.65% payroll share, which benefits do not carry.'
+        + (n.pieces.typedWithholding ? ' ' + Money.formatCents(n.withheldCents) + ' a landing was held back, as typed; the rest is owed.' : ' Nothing withheld, so all of it is owed at tax time.');
+      else why = 'Self-employment: ' + Money.formatCents(n.pieces.seTaxCents || 0) + ' of self-employment tax and ' + Money.formatCents(n.pieces.incomeTaxCents || 0) + ' of income tax on the profit after costs, banded on ' + basis + '. All of it owed at tax time.';
+      return '<li>' + head + ' → ' + esc(Money.formatCents(x.taxCents)) + ' tax → <b>' + esc(Money.formatCents(x.netCents)) + '</b> net<small>' + esc(why) + '</small></li>';
+    }).join('');
   }
 
   /* ---- The costs of earning it -------------------------------------------- */

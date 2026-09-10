@@ -8577,6 +8577,13 @@ section('D-194: an entry knows when it ends and what the stub took off');
   h.ledger = Schema.createLedger({ income: [job] });
   check('the month after the end nets nothing from it', Ledger.month(h, T, '2026-10').count, 0);
   check('the month it ends in nets it off the stub', Ledger.month(h, T, '2026-09').netCents, 252000);
+  /* D-195: the month says what was taken off and what is owed. */
+  const sep = Ledger.month(h, T, '2026-09');
+  check('a W-2 month: all of the tax was taken off, none owed', sep.withheldCents + '/' + sep.owedCents, '48000/0');
+  h.ledger = Schema.createLedger({ income: [Schema.createIncomeEntry({ kind: 'unemployment', amountCents: 60000, frequency: 'weekly', receivedOn: '2026-09-04', withheldCents: 3000 })] });
+  const ueMonth = Ledger.month(h, T, '2026-09');
+  check('an unemployment month: the split sums to the tax', ueMonth.withheldCents + ueMonth.owedCents, ueMonth.taxCents);
+  check('with what was held back counted per landing', ueMonth.withheldCents, 3000 * 4);
 })();
 
 section('Two decision sequences that cannot collide');

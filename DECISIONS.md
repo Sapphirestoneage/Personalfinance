@@ -12296,6 +12296,60 @@ the withheld figure through the More fold; a phone walk with the demo
 persona plus a job, a gig with costs and a gift, reading the three
 charts and the fourth with a second adult.
 
+## D-195 — Income: the year reads as what came in, then what is assumed
+
+**Why.** The owner, on the live page with their own numbers: a benefit
+and a monthly gift, so D-194's year chart was twelve identical bars
+and "make the income thing make more sense." Three things were wrong
+with it. It said nothing a sentence could not say better. It drew the
+months already received and the months merely assumed in the same ink,
+so a projection looked like a record. And it drew an unemployment
+benefit to the horizon, which is the one thing a benefit never does.
+
+**Decision.** The year chart becomes three things in order:
+
+- **A sentence.** "Since Mar ’26: $26,612 gross has come in. Ahead, if
+  nothing changes: $4,016 a month, $3,589 after tax." The first half is
+  the past months with a landing summed; the second is the months
+  ahead, one figure when they are all the same, a range when not, with
+  next month's net beside it. When everything has ended it says so.
+- **So far, then Ahead.** The same stacked bars, split at this month,
+  on one shared scale, the *Ahead* half faded and captioned "assumed,
+  not yet received". The legend appears once, under the ahead half.
+- **A nudge.** A recurring unemployment benefit with no last date gets
+  a line above the chart: it is drawn as if it keeps coming, benefits
+  usually run about 26 weeks, *When does it end?* The button opens the
+  entry with the *More* fold open and scrolls to *Last one on*; saving
+  a date drops it from the months ahead and the nudge goes. Only
+  unemployment gets the nudge for now — it is the one kind whose end
+  is a rule rather than a choice.
+
+And the month card, because the owner's next message was "I think the
+numbers are off" over a line reading "$73 of tax taken off" on a
+benefit. Nothing is taken off a benefit. `Ledger.month` now returns the
+tax split the way it is felt, `withheldCents` and `owedCents`, summing
+to `taxCents`; the card says "taken off before it arrived" and "owed at
+tax time" as separate figures and never "taken off" for money that
+arrived whole. Under it, *How this was worked out* opens one line per
+entry: gross, the tax, the net, and in small type the rate used, the
+yearly income it was banded on and where that income came from (Start
+Here, the entries here annualised, or the entry alone), whether a
+typed stub figure overrode the table, and why nothing or everything is
+owed. The hint under the list names the table for what it is, an
+unverified blended estimate, and links to Start Here, since the band
+is the thing most likely to be wrong. The donut reads the same split.
+
+Nothing stored changes. Hand-checked with the owner's shape: a $3,766
+benefit from March and a $250 gift from September give $26,612 so far
+and $4,016 a month ahead; an end date of 30 September leaves $250 a
+month ahead. The month's split: a W-2 job with $480 typed shows $480
+taken off and $0 owed; a weekly benefit with $30 held back shows $120
+taken off across four landings and the rest owed.
+
+Gate for this commit: unit suite; forms on the Income room; a phone
+walk with that household, tapping the nudge through to a saved end
+date.
+
 ---
 
 # The Dungeons & Dividends entries

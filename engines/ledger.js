@@ -278,15 +278,16 @@
 
   /**
    * month(household, tables, 'YYYY-MM') — every active entry's landings in
-   * the month, each netted: { grossCents, netCents, taxCents, costsCents,
-   * rows: [{ entry, occurrences, grossCents, netCents, taxCents }] }.
+   * the month, each netted: { grossCents, netCents, taxCents, withheldCents,
+   * owedCents, costsCents, rows: [{ entry, occurrences, grossCents,
+   * netCents, taxCents, net }] }.
    * Archived entries never count; hidden ones always do. An entry whose
    * date is only potential (D-130) is never counted: it is listed apart
    * in `potentialRows` with `potentialCents`, so a calendar can draw it.
    */
   function month(household, tables, monthId) {
     var m = monthId || thisMonth();
-    var rows = [], gross = 0, net = 0, tax = 0, costsTotal = 0, takeHome = 0, incomplete = [], potentialRows = [], potential = 0;
+    var rows = [], gross = 0, net = 0, tax = 0, costsTotal = 0, takeHome = 0, incomplete = [], potentialRows = [], potential = 0, withheld = 0, owed = 0;
     activeEntries(household).forEach(function (e) {
       var occ = occurrences(e, m);
       if (!occ.length) return;
@@ -305,10 +306,13 @@
       var t = one.taxCents * count;
       rows.push({ entry: e, occurrences: occ, grossCents: g, netCents: n, taxCents: t, takeHomeCents: one.takeHomeCents * count, costsCents: one.allCostsCents, net: one });
       gross += g; net += n; tax += t; costsTotal += one.allCostsCents; takeHome += one.takeHomeCents * count;
+      withheld += one.withheldCents * count; owed += one.owedCents * count;
     });
     /* takeHomeCents is gross less tax — what the budget's Income bucket
        counts; the costs of earning it are the expense side's business. */
-    return Money.ok(net, { month: m, label: Schema.monthLabel(m), grossCents: gross, netCents: net, takeHomeCents: takeHome, taxCents: tax, costsCents: costsTotal, rows: rows, incomplete: incomplete, count: rows.length,
+    /* The tax split the way it is felt (D-195): taken off before it
+       arrived, and owed at tax time. They sum to taxCents. */
+    return Money.ok(net, { month: m, label: Schema.monthLabel(m), grossCents: gross, netCents: net, takeHomeCents: takeHome, taxCents: tax, withheldCents: withheld, owedCents: owed, costsCents: costsTotal, rows: rows, incomplete: incomplete, count: rows.length,
       potentialRows: potentialRows, potentialCents: potential });
   }
 
