@@ -52,6 +52,7 @@
   <section class="slaf-card" id="horizon" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Horizon</span><p class="slaf-hint" id="horizon-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="horizon-list"></ul></section>
   <section class="slaf-card" id="assumptions" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Assumptions</span><p class="slaf-hint" style="margin:var(--space-1) 0 var(--space-2)">Declared once, here, and read by every projection. Every engine works in today’s money, so the return is real (over inflation) and comes from the return bands table; the two rates below are yours to step.</p><ul class="sw" id="assumptions-list"></ul></section>
   <section class="slaf-card" id="advanced" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Advanced</span><p class="slaf-hint" id="advanced-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="advanced-list"></ul></section>
+  <section class="slaf-card" id="backup" style="margin-top:var(--space-4)" aria-label="Backup"></section>
 </main>
 
 <script src="../shared/money.js"></script>
@@ -68,6 +69,7 @@
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
 <script src="../shared/gate.js"></script>
+<script src="../shared/backup.js"></script>
 <script>
 (function () {
   'use strict';
@@ -160,6 +162,7 @@
 
   Spine.registerRoom(ROOM_ID);
   SLAF.Progress.mount(ROOM_ID);
+  SLAF.Backup.mount('#backup');
   Reference.load(['features', 'returnBands']).then(function (tables) {
     TABLES = tables;
     Features.use(tables.features);

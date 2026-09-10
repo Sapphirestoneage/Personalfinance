@@ -1195,6 +1195,20 @@ a:hover { color: var(--sapphire-100); }
 .slaf-export-note { font-size: var(--text-xs); color: var(--color-text-faint);
   margin: var(--space-2) 0 0; line-height: var(--leading-loose); }
 
+/* ---- Backup (D-202) -------------------------------------------------------
+   Two buttons and a status line, on the Ledger and in Settings. Quiet on
+   purpose: it is a drawer you open twice a year, not a warning. */
+.slaf-backup { margin-top: var(--space-4); padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border); }
+.slaf-backup-lede { font-size: var(--text-sm); color: var(--color-text-muted);
+  margin: var(--space-1) 0 0; line-height: var(--leading-loose); }
+.slaf-backup-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); align-items: center; }
+.slaf-backup-acts > * { min-width: 0; }
+.slaf-backup-status { font-size: var(--text-xs); color: var(--color-text-faint);
+  margin: var(--space-2) 0 0; line-height: var(--leading-loose); min-height: 1em; }
+.slaf-backup-status.is-good { color: var(--color-text-muted); }
+.slaf-backup-status.is-error { color: var(--color-critical); }
+
 /* Print is an export too. On paper nobody needs the navigation, the undo
    pair or the export buttons themselves — they need the figures. */
 @media print {

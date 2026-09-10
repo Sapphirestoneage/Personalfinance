@@ -11742,6 +11742,320 @@ section('18.4 and 18.5: the Ledger room, the target and one line per row (D-185)
 })();
 
 /* ==========================================================================
+   Backup: everything this browser holds, as one file (D-202)
+   ========================================================================== */
+
+section('Backup: one file for every key (D-202)');
+
+(function () {
+  const backupPath = path.join(ROOT, 'shared/backup.js');
+  const spinePath = path.join(ROOT, 'shared/spine-v2.js');
+
+  /* A localStorage with the full Storage surface: the module walks it by
+     index, which the spine's stub does not need. */
+  function fakeStorage(seed) {
+    const store = Object.assign({}, seed || {});
+    const s = {
+      getItem: (k) => (k in store ? store[k] : null),
+      setItem: (k, v) => { if (s.quota !== undefined && String(v).length > s.quota) throw new Error('QuotaExceededError'); store[k] = String(v); },
+      removeItem: (k) => { delete store[k]; },
+      key: (i) => Object.keys(store)[i] === undefined ? null : Object.keys(store)[i],
+      get length() { return Object.keys(store).length; },
+      store
+    };
+    return s;
+  }
+  function fresh(seed) {
+    const s = fakeStorage(seed);
+    global.localStorage = s;
+    global.SLAF = { Schema: Schema };
+    delete require.cache[require.resolve(spinePath)];
+    global.SLAF.Spine = require(spinePath);
+    delete require.cache[require.resolve(backupPath)];
+    const Backup = require(backupPath);
+    return { s, Backup, Spine: global.SLAF.Spine };
+  }
+  function done() { delete global.localStorage; delete global.SLAF; delete require.cache[require.resolve(spinePath)]; delete require.cache[require.resolve(backupPath)]; }
+
+  /* ---- Step 1's list, held here so a missing prefix cannot go quiet ---- */
+  const src = fs.readFileSync(backupPath, 'utf8');
+  checkTrue('the module is dependency-free and UMD', !/require\(['"][^.]/.test(src) && /root\.SLAF\.Backup = api/.test(src));
+  {
+    const { Backup } = fresh({});
+    check('the prefixes are exactly slaf. and dnd.', Backup.PREFIXES.join(','), 'slaf.,dnd.');
+    checkTrue('the undo stash key is under a prefix and never carried', /^slaf\./.test(Backup.UNDO_KEY) && Backup.keys().indexOf(Backup.UNDO_KEY) === -1);
+    done();
+  }
+
+  /* Every key the app writes, statically: a room writing outside the
+     prefixes has data no backup carries, so this fails before it ships. */
+  {
+    const { Backup } = fresh({});
+    const files = [];
+    function walk(dir) {
+      fs.readdirSync(dir).forEach(f => {
+        const p = path.join(dir, f);
+        if (f === 'node_modules' || f === 'vendor' || f === '.git') return;
+        if (fs.statSync(p).isDirectory()) walk(p); else if (/\.(js|html)$/.test(f)) files.push(p);
+      });
+    }
+    ['index.html', 'map.html', 'foo-ladder.js'].forEach(f => { if (fs.existsSync(path.join(ROOT, f))) files.push(path.join(ROOT, f)); });
+    ['rooms', 'shared', 'engines', 'dnd'].forEach(d => { if (fs.existsSync(path.join(ROOT, d))) walk(path.join(ROOT, d)); });
+    const stray = [], unresolved = [];
+    const okKey = (k) => Backup.PREFIXES.some(p => k.indexOf(p) === 0) || k === '__slaf_probe__';
+    files.forEach(p => {
+      const text = fs.readFileSync(p, 'utf8');
+      const rel = path.relative(ROOT, p);
+      const re = /localStorage\.setItem\(\s*([^,]+?)\s*,/g;
+      let m;
+      while ((m = re.exec(text))) {
+        const arg = m[1].trim();
+        let key = null;
+        const lit = arg.match(/^['"]([^'"]+)['"]$/);
+        if (lit) key = lit[1];
+        else if (/^[A-Za-z_$][\w$]*$/.test(arg)) {
+          const def = text.match(new RegExp('\\b(?:var|const|let)\\s+' + arg.replace(/\$/g, '\\$') + '\\s*=\\s*[\'"]([^\'"]+)[\'"]'));
+          if (def) key = def[1];
+        } else if (/^[A-Za-z_$][\w$]*\s*\+/.test(arg)) {
+          const name = arg.split('+')[0].trim();
+          const def = text.match(new RegExp('\\b(?:var|const|let)\\s+' + name + '\\s*=\\s*[\'"]([^\'"]+)[\'"]'));
+          if (def) key = def[1];
+        }
+        if (key === null) {
+          /* A wrapper: function writeRaw(key, value) { localStorage.setItem(key, value) }.
+             Resolve every call of the wrapper instead. */
+          const head = text.slice(0, m.index);
+          const heads = /function\s+([A-Za-z_$][\w$]*)\s*\(\s*([A-Za-z_$][\w$]*)[^)]*\)\s*\{/g;
+          let fn = null, hm;
+          while ((hm = heads.exec(head))) fn = hm;        /* the nearest function above the write */
+          if (fn && fn[2] === arg) {
+            const calls = new RegExp('\\b' + fn[1] + '\\(\\s*([^,)]+?)\\s*[,)]', 'g');
+            let c, any = false;
+            while ((c = calls.exec(text))) {
+              if (c.index === fn.index) continue;
+              const a = c[1].trim();
+              if (a === fn[2]) continue;               /* the definition itself */
+              any = true;
+              const l2 = a.match(/^['"]([^'"]+)['"]$/);
+              let k2 = l2 ? l2[1] : null;
+              if (!k2 && /^[A-Za-z_$][\w$]*$/.test(a)) {
+                const d2 = text.match(new RegExp('\\b(?:var|const|let)\\s+' + a.replace(/\$/g, '\\$') + '\\s*=\\s*[\'"]([^\'"]+)[\'"]'));
+                if (d2) k2 = d2[1];
+              }
+              if (!k2 && /^[A-Za-z_$][\w$]*\s*\[/.test(a)) {
+                /* LEGACY_KEYS[i]: an array of literals */
+                const name = a.split('[')[0].trim();
+                const d3 = text.match(new RegExp('\\b(?:var|const|let)\\s+' + name + '\\s*=\\s*\\[([^\\]]*)\\]'));
+                if (d3) { (d3[1].match(/['"]([^'"]+)['"]/g) || []).forEach(q => { const kk = q.slice(1, -1); if (!okKey(kk)) stray.push(rel + ': ' + kk); }); k2 = 'resolved'; }
+              }
+              if (k2 === null) unresolved.push(rel + ': ' + fn[1] + '(' + a + ')');
+              else if (k2 !== 'resolved' && !okKey(k2)) stray.push(rel + ': ' + k2);
+            }
+            if (!any) unresolved.push(rel + ': ' + arg);
+          } else unresolved.push(rel + ': ' + arg);
+        }
+        else if (!okKey(key)) stray.push(rel + ': ' + key);
+      }
+    });
+    checkTrue('every localStorage.setItem in the repo resolves to a known key', unresolved.length === 0, unresolved.join('; '));
+    checkTrue('every stored key starts with a backed-up prefix (the static drift guard)', stray.length === 0, stray.join('; '));
+    /* The audit's list, pinned: a key that appears here for the first time
+       is a key the backup now carries, and this says so out loud. */
+    const known = ['slaf.household.v2', 'slaf.snapshots.v1', 'slaf.household.unreadable', 'slaf.prefs.v1', 'slaf.scenarios.v1', 'slaf.skilltree.seen', 'slaf.backup.undo.v1', 'dnd.character.v1', 'dnd.skin.v1'];
+    const seen = new Set();
+    files.forEach(p => {
+      const text = fs.readFileSync(p, 'utf8');
+      (text.match(/['"](?:slaf|dnd)\.[a-zA-Z0-9_.-]+['"]/g) || []).forEach(k => {
+        const key = k.slice(1, -1);
+        if (/localStorage/.test(text)) seen.add(key);
+      });
+    });
+    const persistent = ['slaf.lens', 'slaf.seed.', 'slaf.budget.return', 'slaf.dash.3d', 'slaf.profile', 'slaf.profile.v1', 'sparks.profile'];
+    const unknown = Array.from(seen).filter(k => known.indexOf(k) === -1 && persistent.indexOf(k) === -1);
+    checkTrue('no localStorage key literal outside the audited list (add it to `known` on purpose)', unknown.length === 0, unknown.join(', '));
+    done();
+  }
+
+  /* ---- Save ------------------------------------------------------------ */
+  {
+    const h = Schema.createHousehold({});
+    h.people.push(Schema.createPerson({ label: 'You', role: 'adult' }));
+    const seed = {
+      'slaf.household.v2': JSON.stringify(h),
+      'slaf.snapshots.v1': '[]',
+      'slaf.prefs.v1': '{"sidebar.open":true}',
+      'slaf.scenarios.v1': '{"pinned":[]}',
+      'slaf.skilltree.seen': '{"a":1}',
+      'dnd.character.v1': '{"name":"Rook"}',
+      'dnd.skin.v1': 'parchment',
+      'slaf.backup.undo.v1': '{"at":"x","keys":{}}',
+      '__slaf_probe__': '1',
+      'somebody.else': 'not ours'
+    };
+    const { Backup } = fresh(seed);
+    check('keys() lists the seven owned keys, sorted, and nothing else', Backup.keys().join(','), 'dnd.character.v1,dnd.skin.v1,slaf.household.v2,slaf.prefs.v1,slaf.scenarios.v1,slaf.skilltree.seen,slaf.snapshots.v1');
+    const b = Backup.build('2026-09-10T12:00:00Z');
+    check('format', b.format, 'money-rooms-backup');
+    check('backupVersion', b.backupVersion, 1);
+    check('appVersion carries the version and the build stamp', b.appVersion, Schema.APP_VERSION + ' (' + Schema.BUILD + ')');
+    check('schemaVersion', b.schemaVersion, Schema.SCHEMA_VERSION);
+    check('savedAt', b.savedAt, '2026-09-10T12:00:00.000Z');
+    check('every owned key is in the file', Object.keys(b.keys).length, 7);
+    checkTrue('a JSON value is carried as json', b.keys['slaf.prefs.v1'].json['sidebar.open'] === true);
+    checkTrue('a plain string is carried as text, unchanged', b.keys['dnd.skin.v1'].text === 'parchment');
+    checkTrue('the undo stash, the probe and a stranger key are not in the file', !b.keys['slaf.backup.undo.v1'] && !b.keys.__slaf_probe__ && !b.keys['somebody.else']);
+    check('filename', Backup.filename('2026-09-10T12:00:00Z'), 'money-rooms-backup-2026-09-10.json');
+    checkTrue('toJSON is the file, pretty', /^\{\n  "format": "money-rooms-backup"/.test(Backup.toJSON()));
+    check('drift() names only the stranger key', Backup.drift().join(','), 'somebody.else');
+    checkTrue('the drift guard is silent off a dev host', Backup.isDev() === false && Backup.driftGuard().length === 0);
+    global.location = { protocol: 'http:', hostname: 'localhost' };
+    let warned = '';
+    const w = console.warn; console.warn = (m) => { warned = m; };
+    const stray = Backup.driftGuard();
+    console.warn = w; delete global.location;
+    check('on a dev host the guard returns the stray key', stray.join(','), 'somebody.else');
+    checkTrue('and says which, and what to do', /somebody\.else/.test(warned) && /in no backup/.test(warned));
+    done();
+  }
+
+  /* ---- Load: counts, apply, undo --------------------------------------- */
+  {
+    const h = Schema.createHousehold({});
+    h.people.push(Schema.createPerson({ label: 'You', role: 'adult' }));
+    const source = fresh({
+      'slaf.household.v2': JSON.stringify(h), 'slaf.snapshots.v1': '[]', 'slaf.prefs.v1': '{"a":1}', 'dnd.skin.v1': 'parchment'
+    });
+    const file = source.Backup.toJSON('2026-09-10T12:00:00Z');
+    done();
+
+    /* The second device: one key the same, one different, one missing, one extra. */
+    const target = fresh({ 'slaf.prefs.v1': '{"a":1}', 'dnd.skin.v1': 'ink', 'slaf.scenarios.v1': '{"pinned":[1]}', 'slaf.backup.undo.v1': 'stale' });
+    const B = target.Backup, S = target.s;
+    const check1 = B.inspect(file);
+    checkTrue('inspect ok', check1.ok, check1.reason);
+    check('kind', check1.kind, 'backup');
+    check('counts: 2 added (household, snapshots), 1 replaced (skin), 1 same (prefs), 1 removed (scenarios)', JSON.stringify(check1.counts), '{"add":2,"overwrite":1,"same":1,"remove":1}');
+    check('savedAt read back', check1.savedAt, '2026-09-10T12:00:00.000Z');
+    check('the sentence', B.countsSentence(check1.counts), 'It adds 2 things, replaces 1 thing and removes 1 thing, and leaves 1 thing as they are.');
+    checkTrue('inspect touched nothing', S.store['dnd.skin.v1'] === 'ink' && S.store['slaf.scenarios.v1'] === '{"pinned":[1]}');
+
+    const r = B.apply(file);
+    checkTrue('apply ok', r.ok, r.reason);
+    check('storage now matches the file: skin', S.store['dnd.skin.v1'], 'parchment');
+    check('storage now matches the file: household', S.store['slaf.household.v2'], JSON.stringify(h));
+    checkTrue('the key the file lacked is gone', !('slaf.scenarios.v1' in S.store));
+    check('every owned key equals the source', B.keys().join(','), 'dnd.skin.v1,slaf.household.v2,slaf.prefs.v1,slaf.snapshots.v1');
+    const u = B.undoAvailable();
+    checkTrue('an undo is available with the count of what was there', !!u && u.count === 3);
+    const back = B.undo();
+    checkTrue('undo ok', back.ok, back.reason);
+    check('undo put the old skin back', S.store['dnd.skin.v1'], 'ink');
+    check('undo put the removed key back', S.store['slaf.scenarios.v1'], '{"pinned":[1]}');
+    checkTrue('undo removed what the load added', !('slaf.household.v2' in S.store) && !('slaf.snapshots.v1' in S.store));
+    checkTrue('and there is nothing left to undo', B.undoAvailable() === null && B.undo().ok === false);
+    checkTrue('a stale stash reads as nothing to undo', (S.store['slaf.backup.undo.v1'] = 'stale', B.undoAvailable() === null));
+    delete S.store['slaf.backup.undo.v1'];
+
+    /* Round trip: load, then save, is the same file body. */
+    B.apply(file);
+    const again = JSON.parse(B.toJSON('2026-09-10T12:00:00Z'));
+    check('save after load reproduces the file byte for byte', JSON.stringify(again.keys), JSON.stringify(JSON.parse(file).keys));
+    done();
+  }
+
+  /* ---- Refusals: a readable sentence, storage untouched ----------------- */
+  {
+    const seed = { 'slaf.prefs.v1': '{"a":1}', 'dnd.skin.v1': 'ink' };
+    const { Backup: B, s: S } = fresh(Object.assign({}, seed));
+    const before = JSON.stringify(S.store);
+    const good = (function () { const t = fresh({ 'slaf.prefs.v1': '{"b":2}' }); const f = t.Backup.toJSON(); done(); return f; })();
+    global.localStorage = S; global.SLAF = { Schema: Schema };
+    const cases = [
+      ['', 'empty', /empty/],
+      [good.slice(0, Math.floor(good.length / 2)), 'truncated', /not readable/],
+      ['{"weather":"fine","rows":[1,2,3]}', 'random JSON', /not a Money Rooms backup/],
+      ['[1,2,3]', 'a JSON array', /not a Money Rooms backup/],
+      ['"just a string"', 'a JSON string', /not a Money Rooms backup/],
+      [JSON.stringify({ format: 'money-rooms-backup', backupVersion: 99, keys: {} }), 'a newer backup format', /newer build/],
+      [JSON.stringify({ format: 'money-rooms-backup', backupVersion: 1, schemaVersion: Schema.SCHEMA_VERSION + 1, keys: {} }), 'a newer schema', /newer build/],
+      [JSON.stringify({ format: 'money-rooms-backup', backupVersion: 1, keys: { 'evil.key': { text: 'x' } } }), 'a key outside the prefixes', /does not own/],
+      [JSON.stringify({ format: 'money-rooms-backup', backupVersion: 1, keys: { 'slaf.prefs.v1': 5 } }), 'an entry that is neither json nor text', /does not read/],
+      [JSON.stringify({ format: 'money-rooms-backup', backupVersion: 1 }), 'no keys at all', /no data/]
+    ];
+    cases.forEach(([text, name, re]) => {
+      const r = B.inspect(text);
+      checkTrue('refuses ' + name + ' with a sentence', !r.ok && re.test(r.reason) && /Nothing was changed|empty/.test(r.reason), r.reason);
+      const a = B.apply(text);
+      checkTrue('apply refuses ' + name + ' too', !a.ok);
+    });
+    check('storage untouched by every refusal', JSON.stringify(S.store), before);
+    checkTrue('a refusal leaves no undo behind', B.undoAvailable() === null);
+    done();
+  }
+
+  /* ---- A quota failure puts everything back ----------------------------- */
+  {
+    const t = fresh({ 'slaf.prefs.v1': '{"a":1}', 'dnd.skin.v1': 'ink' });
+    const big = JSON.stringify({ format: 'money-rooms-backup', backupVersion: 1, keys: { 'slaf.prefs.v1': { json: { a: 1 } }, 'slaf.household.v2': { text: 'x'.repeat(200) } } });
+    t.s.quota = 150;
+    const r = t.Backup.apply(big);
+    checkTrue('a write that does not fit fails the load with a sentence', !r.ok && /ran out of room/.test(r.reason), r.reason);
+    check('and storage is as it was', JSON.stringify(Object.keys(t.s.store).sort()), '["dnd.skin.v1","slaf.prefs.v1"]');
+    done();
+  }
+
+  /* ---- A household file from Your Data still loads ---------------------- */
+  {
+    const src = fresh({});
+    const h = Schema.createHousehold({});
+    h.people.push(Schema.createPerson({ label: 'Sam', role: 'adult' }));
+    src.Spine.replaceProfile ? src.Spine.replaceProfile(h) : src.s.setItem('slaf.household.v2', JSON.stringify(h));
+    delete require.cache[require.resolve(spinePath)]; global.SLAF.Spine = require(spinePath);
+    const hfile = global.SLAF.Spine.exportJSON();
+    done();
+    const t = fresh({ 'slaf.prefs.v1': '{"keep":true}', 'slaf.household.v2': '{"people":[]}' });
+    const c = t.Backup.inspect(hfile);
+    checkTrue('a household file is recognised', c.ok && c.kind === 'household', c.reason);
+    check('its counts cover the two keys it carries', JSON.stringify(c.counts), '{"add":1,"overwrite":1,"same":0,"remove":0}');
+    const r = t.Backup.apply(hfile);
+    checkTrue('and it loads through the spine', r.ok && r.kind === 'household', r.reason);
+    checkTrue('the household arrived', /Sam/.test(t.s.store['slaf.household.v2']));
+    check('the preferences were left alone', t.s.store['slaf.prefs.v1'], '{"keep":true}');
+    checkTrue('with an undo', t.Backup.undoAvailable() !== null);
+    const back = t.Backup.undo();
+    checkTrue('that puts the old household back', back.ok && t.s.store['slaf.household.v2'] === '{"people":[]}');
+    done();
+  }
+
+  /* ---- The two mount points, and nowhere else --------------------------- */
+  {
+    const rooms = fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => f.endsWith('.html'));
+    const mounted = rooms.filter(f => /SLAF\.Backup\.mount\(/.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8')));
+    check('the widget is on the Ledger and in Settings, nowhere else', mounted.sort().join(','), 'ledger.html,settings.html');
+    mounted.forEach(f => {
+      const html = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
+      checkTrue(f + ' loads backup.js after the spine', html.indexOf('shared/backup.js') > html.indexOf('shared/spine-v2.js'));
+      checkTrue(f + ' has a #backup host', /id="backup"/.test(html));
+    });
+    checkTrue('the widget: two buttons, an undo that hides, a status line', /Save a copy/.test(src) && /Load a copy/.test(src) && /data-backup="undo" hidden/.test(src) && /role="status"/.test(src));
+    checkTrue('it asks before loading, with the counts', /countsSentence\(check\.counts\)/.test(src) && /confirm/.test(src));
+    checkTrue('LIVE-FORM declared', /LIVE-FORM: built once/.test(src));
+    checkTrue('no em dash on screen', !/—/.test(src.split('function mount(host')[1] || ''));
+    checkTrue('the styles are in the theme, and vendored', /\.slaf-backup-status\.is-error/.test(fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8')));
+  }
+
+  /* ---- The build stamp ------------------------------------------------- */
+  {
+    const v = JSON.parse(fs.readFileSync(path.join(ROOT, 'version.json'), 'utf8'));
+    check('version.json version matches Schema.APP_VERSION', v.version, Schema.APP_VERSION);
+    checkTrue('Schema.BUILD is a date', /^\d{4}-\d{2}-\d{2}$/.test(Schema.BUILD));
+    check('version.json build matches Schema.BUILD', v.build, Schema.BUILD);
+    checkTrue('every footer prints the version and the build', /' · build ' \+ g\.SLAF\.Schema\.BUILD/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
+    checkTrue('the stamp tool exists and writes both files', /var BUILD = /.test(fs.readFileSync(path.join(ROOT, 'tools/stamp-build.js'), 'utf8')) && /version\.json/.test(fs.readFileSync(path.join(ROOT, 'tools/stamp-build.js'), 'utf8')));
+  }
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 

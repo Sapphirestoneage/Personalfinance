@@ -557,7 +557,8 @@
       daite: { reads: ["assets","assets.allocation","assets.cashCents","assets.contributions.hsa","assets.contributions.pretax","assets.contributions.roth","assets.invested","assets.property","debt.items","debt.items[].minimumCents","debt.items[].plan","debt.none","expenses","expenses.floor","expenses.giving","expenses.insurance","expenses.log","expenses.months","expenses.needs.accommodation","expenses.needs.food","expenses.needs.transportation","expenses.shared","expenses.wants","expenses.wants.therapy","income.cadence","income.future","income.grossAnnualCents","income.ledger","income.sources[].benefit","income.sources[].employerMatch","income.variable","taxes.filingStatus","taxes.marginalRate","taxes.otherPreTax","taxes.state","taxes.withheld","taxes.zip","you.cover","you.dependents","you.dob","you.estate","you.partner","you.situation"], writes: [] },
       subsections: [
         { id: 'target-wrap', label: 'The target' },
-        { id: 'spheres',     label: 'The rows, by sphere' }
+        { id: 'spheres',     label: 'The rows, by sphere' },
+        { id: 'backup',      label: 'Backup' }
       ]
     },
     {
@@ -1014,7 +1015,7 @@
   /* Settings — every user-scope feature switch on one screen (D-180). */
   ROOMS.push({
     id: 'settings',
-    group: 'upkeep', aliases: ['settings', 'switches', 'features', 'preferences', 'toggles'],
+    group: 'upkeep', aliases: ['settings', 'switches', 'features', 'preferences', 'toggles', 'backup'],
     kind: 'core',
     utility: true,
     needs: [],
@@ -1029,7 +1030,8 @@
       { id: 'accuracy',  label: 'Accuracy' },
       { id: 'household', label: 'Household' },
       { id: 'horizon',   label: 'Horizon' },
-      { id: 'advanced',  label: 'Advanced' }
+      { id: 'advanced',  label: 'Advanced' },
+      { id: 'backup',    label: 'Backup' }
     ]
   });
 

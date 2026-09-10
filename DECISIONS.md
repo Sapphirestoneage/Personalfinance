@@ -12616,6 +12616,76 @@ loaded only by Your Data.
 Gate for this commit: the QR suite; unit and export suites; render and
 features on Your Data; a phone walk showing the code and its note.
 
+## D-202 — One backup file for everything this browser holds
+
+**Why.** The owner: "i want the backup to be uniform and simple and to
+work." Every figure lives in localStorage: one browser, one device, one
+"clear browsing data" from gone. Your Data's file carries the household
+and the snapshots, which is right for a share link and wrong for a
+backup: the preferences, the pinned scenarios, the Skill Tree's seen
+marks and the D&D character were in no file at all, and the file still
+looked complete. No sync, no account, no server: one device is the true
+copy at a time and the file moves the truth.
+
+**The audit.** Every localStorage write in the repo goes through four
+wrappers (the spine, Prefs, Scenarios, the D&D store) plus two one-offs
+(the Skill Tree's seen marks, the D&D skin). The keys, all of them:
+`slaf.household.v2`, `slaf.snapshots.v1`, `slaf.household.unreadable`,
+`slaf.prefs.v1`, `slaf.scenarios.v1`, `slaf.skilltree.seen`,
+`dnd.character.v1`, `dnd.skin.v1`. Two prefixes, `slaf.` and `dnd.`.
+Session-only keys (`slaf.lens`, `slaf.seed.<room>`, `slaf.budget.return`,
+`slaf.dash.3d`) live in sessionStorage and are not a backup's business.
+The spine's storage probe is written and removed in the same tick.
+
+**Decision.** `shared/backup.js` carries every key under the two prefixes,
+uniformly: each key's stored string, as `{json}` where it parses and
+`{text}` where it does not, so the file is readable and a plain-string
+key (the skin) survives unchanged. Nothing is reshaped, so a new room's
+key is carried the day it is written with no wiring here. The file:
+`{format:'money-rooms-backup', backupVersion:1, appVersion, schemaVersion,
+savedAt, keys}`, named `money-rooms-backup-YYYY-MM-DD.json`.
+
+Loading makes storage under the prefixes MATCH the file: keys the file has
+are written, keys it lacks are removed. A backup is a copy of a device,
+not a merge; the merge stays in Your Data. Before the first write the
+current state is stashed under `slaf.backup.undo.v1`, so the load is one
+click reversible until the next load; the stash is in no backup and the
+guard does not count it. A write that does not fit puts everything back.
+A file from a newer build (backup format or schema version ahead of this
+one) is refused with the reason, since the migrations run forward only.
+A household file from Your Data still loads here, through the spine, so a
+phone that saved one is not a dead end.
+
+The widget is two buttons and a status line, on the Ledger and in
+Settings and nowhere else: Save a copy, Load a copy, and Undo last load
+while a stash exists. Before a load, one confirm names the file, its date
+and build, and what it adds, replaces and removes. After a load or an undo
+the page reloads, so every module that caches (the spine, Prefs,
+Scenarios) reads the new state; that is simpler and more honest than
+teaching each cache to drop itself.
+
+**The drift guard, twice.** On a dev host (localhost, a LAN address, a
+file: URL) the widget warns in the console about any stored key outside
+the prefixes; on the live site it is silent. That runs where the module
+is loaded, the Ledger and Settings. The gate that actually stops a new
+room shipping outside the prefixes is static: `test/run.js` resolves
+every `localStorage.setItem` in the repo, through the wrappers, to a key
+and fails on one outside the prefixes or one it cannot resolve, and pins
+the audited list so a new key is a deliberate edit.
+
+**The build stamp.** `Schema.BUILD`, a date, printed beside the version in
+every footer ("Money Rooms v2.0 · build 2026-09-10") and in every backup,
+so a phone showing an old page can be told from a bug. There is no build
+step, so `node tools/stamp-build.js` sets it in schema.js (and the
+vendored copy) and version.json; the test holds the three together.
+
+**Not done, on purpose.** No storage abstraction under the rooms, no
+merging of two devices, no sync. The Your Data file is unchanged, so every
+share link and QR code still works.
+
+**Compatibility.** No stored shape or key changed. One new key,
+`slaf.backup.undo.v1`, written only by a load and removed by an undo.
+
 ---
 
 # The Dungeons & Dividends entries

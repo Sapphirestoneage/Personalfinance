@@ -72,13 +72,14 @@ foo-ladder.js       The FOO ladder's logic (shell at rooms/foo-ladder.html): bui
 map.html            Room directory: next-unfinished first, then the groups, tag filter
 MONEY-MAP.md        The discovery map that preceded the ledger build (D-128, revised in D-129); where it and the build spec differ, the decisions are what shipped
 DESIGN-AUDIT.md     The design-audit brief: everything the app is and does, for a reviewer who has never seen the repo
-version.json        The product version, major.minor; Schema.APP_VERSION matches, every export is stamped, every footer prints it (D-131)
+version.json        The product version, major.minor; Schema.APP_VERSION matches, every export is stamped, every footer prints it (D-131). `build` is the date of the last change, printed beside it; `node tools/stamp-build.js` sets it (D-202)
 scripts/            extract-v63.mjs — the Skill Tree's data port: run it against an FI-Skill-Tree-v6.3.x page and it regenerates data/skill_tree.json and data/skill_links.json (31 trees, 665 skills, 312 lanes), merging skill_tree_app.json, this app's own 40 skills, which the exercises and the Stacker point at by id and which is edited by hand, never generated (D-139). seed-exercises.mjs seeds the exercise library. seed-skill-tree.mjs, which made the old 40-skill seed, is gone — running it would have overwritten the curriculum
 favicon.svg         Sapphire mark
 rooms/              One HTML file per room
 vendor/fonts/       Self-hosted typefaces (no CDN, no other vendored code)
 shared/             The spine everything depends on
   qr.js               a QR code of the share link, drawn from the standard's tables, no library (D-201)
+  backup.js           everything this browser holds as one file: every slaf. and dnd. key, save, load with a confirm and an undo, and the drift guard that warns on a dev host when a room writes outside those prefixes (D-202). On the Ledger and in Settings
   theme.css           navy-sapphire design tokens (colour + type)
   fonts.css           Fraunces + Space Grotesk
   money.js            integer cents, decimal rates, safe divide, Result type

@@ -91,6 +91,8 @@
 
   <p class="empyrean" id="empyrean">Beyond the nine: What Matters. No numbers there.</p>
 
+  <section id="backup" aria-label="Backup"></section>
+
   <p class="disclaimer">Not financial advice. Nothing here is sent anywhere; every figure stays in this browser.</p>
 </main>
 
@@ -116,6 +118,7 @@
 <script src="../engines/rerank.js"></script>
 <script src="../shared/ledger-rows.js"></script>
 <script src="../shared/spheres.js"></script>
+<script src="../shared/backup.js"></script>
 <script>
 (function () {
   var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Registry = SLAF.Registry, Progress = SLAF.Progress,
@@ -264,6 +267,7 @@
   Spine.onChange(render);
   Progress.mountHeader('ledger');
   Progress.mount('ledger');
+  SLAF.Backup.mount('#backup');
   Reference.load(['ledgerRows', 'spheres', 'staleness']).then(function (t) {
     TABLES = t || {};
     LedgerRows.use(TABLES.ledgerRows);
