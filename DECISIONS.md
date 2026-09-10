@@ -12349,6 +12349,55 @@ taken off across four landings and the rest owed.
 Gate for this commit: unit suite; forms on the Income room; a phone
 walk with that household, tapping the nudge through to a saved end
 date.
+## D-196 — Expenses: the picture first, then the four numbers, then the lines you name
+
+**Why.** The owner, the day the room was split out (D-192): "make the
+expenses way more optimized. I still need a way to add expenses I want,
+a subscriptions area and a way to say how often it repeats. All the
+things for expenses should be there, like I don't see estimates vs
+actual anywhere. Data visualizations up top and then editing the data
+below. Focus on FAT." The room had the four numbers and a category
+split, and nothing that said how the month was going.
+
+**Decision.** The room is now three bands. **At a glance** at the top:
+a ring of the month by FAT bucket (food, rent or mortgage, getting
+around, everything else, therapy when tracked, in a fixed colour order)
+and, beside it, estimated against actual per bucket and in total: the
+estimate is the four numbers as they stand, the actual is what has been
+logged in Cash Flow this month (`CashFlow.logByFatBucket`, each receipt
+landing in the bucket its category maps to), with the closed months'
+average named under it once any month is closed. **The four numbers**
+next, unchanged, with one line under each saying what the lines in that
+bucket add up to; when the lines come to more than the number typed, it
+says so and offers to make the number match, one tap, the same one
+deliberate write D-172 allows. **Lines you name** last: a form for a
+line as it is known (what, how much, every week / two weeks / month /
+three months / year, and which bucket, subscriptions by default),
+listed with subscriptions in their own area totalled a month and a
+year; the yearly costs and the category split fold under it. The three
+readings (by category, against a budget, lines against the four) sit at
+the bottom.
+
+A named line is an expense entry with a `descriptor`, kept as a month
+in `amountCents` like every line, plus two new optional fields: `every`
+and `everyCents`, the cadence and the amount as typed, so $120 a year
+reads back as $120 a year. `Schema.monthlyFromEvery` is the one place
+that turns a cadence into a month; the category boxes' "per" aid uses
+it too. The category boxes ignore named lines (`entryFor` skips any
+entry with a descriptor), so a $16 subscription and a $45 "subscriptions"
+category total can coexist and both count once. The demo persona's
+spending lines are untouched, since the suite pins their totals.
+
+**Compatibility note.** Two optional fields join an expense entry,
+`every` (enum) and `everyCents` (cents), both null unless a line was
+added through the Expenses form; every reader of `amountCents` is
+unchanged. The room's own subsections changed (`picture`, `spending`,
+`lines`, then the three readings). Nothing else stored changes.
+
+Gate for this commit: unit suite with pins on the cadence, the entry
+fields, the log by bucket and the page order; render, forms (a yearly
+subscription landing as a month) and features on the room; a phone walk
+reading the ring, the bars and the subscriptions list on the example.
 
 ## D-196 — Income: the year is columns, counts only what landed on a date, and folds
 

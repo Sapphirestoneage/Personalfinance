@@ -242,10 +242,12 @@
       tags: ['cashflow'],
       daite: { reads: ['expenses'], writes: ['expenses', 'expenses.needs.accommodation', 'expenses.needs.food', 'expenses.needs.transportation', 'expenses.wants', 'expenses.wants.therapy'] },
       subsections: [
-        { id: 'spending',        label: 'A typical month' },
-        { id: 'out-summary',     label: 'Monthly spending' },
+        { id: 'picture',         label: 'At a glance' },
+        { id: 'spending',        label: 'The four numbers' },
+        { id: 'lines',           label: 'Subscriptions and lines' },
+        { id: 'out-summary',     label: 'By category' },
         { id: 'out-template',    label: 'Against a budget' },
-        { id: 'out-divergence',  label: 'Guess vs. reality' }
+        { id: 'out-divergence',  label: 'Lines vs. the four' }
       ]
     },
     {
