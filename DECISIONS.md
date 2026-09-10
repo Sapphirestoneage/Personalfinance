@@ -11884,6 +11884,10 @@ controls; the disclaimer line. The rest of section 21 (the removal list,
 the language pass on every room) is still ahead and will be done the
 same way: walk it on a phone first, cut what a stranger stumbles on.
 
+**The eighth promise moved.** D-170's gate checked that Start Here carried
+the field-status ledger; it now checks that the Ledger room does, one line
+per number with its state, and that Start Here no longer does.
+
 **Compatibility note.** No stored shape changes. `Progress.stripHtml` no
 longer reads `nextUnfinished` (the function stays, the Walk-Through and
 the walk card use it); `RoomExport.mount` renders a `<details>` instead

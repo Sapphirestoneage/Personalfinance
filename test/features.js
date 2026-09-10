@@ -11,7 +11,7 @@
      5. deep links — a room loads from its URL and writes its place back
      6. Triple D bands wherever a return assumption appears
      7. the save toast with undo
-     8. the field-status ledger with relevancy
+     8. the field-status ledger with relevancy (in the Ledger room since D-186)
 
    Plus the two render.js already holds: the header is up BEFORE any data
    load, and nothing throws. This visits every room on a phone-sized touch
@@ -98,7 +98,7 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
         lens: !!document.querySelector('.slaf-lens [data-lens]'),
         bands: !!document.querySelector('.slaf-bands, [data-bands]'),
         bandsThree: document.querySelectorAll('.slaf-bands .slaf-band').length,
-        ledger: !!document.querySelector('.ledger'),
+        ledger: !!document.querySelector('.ledger, #spheres .row'),
         header: !!document.querySelector('.slaf-hops, .slaf-menu-btn')
       };
     }, FOLD_KEEP);
@@ -164,8 +164,10 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
       check(`${tag} writes the section back to the URL as you scroll`, seen.sections.indexOf(hash) !== -1, 'hash=' + (hash || '(none)'));
     }
 
-    /* 8: the ledger lives on Start Here. */
-    if (room.id === 'start') check('start carries the field-status ledger', seen.ledger);
+    /* 8: the field-status ledger lived on Start Here until D-186 moved it
+       to the Ledger room, one line per number with its state. */
+    if (room.id === 'ledger') check('the Ledger room carries the field-status ledger', seen.ledger);
+    if (room.id === 'start') check('Start Here no longer carries it (D-186)', !seen.ledger);
   }
 
   /* 1: the situation gate — fields that do not apply are absent, not hidden.
