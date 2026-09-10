@@ -86,3 +86,35 @@ and in `shared/reference.js` `TABLE_FILES`:
 ```
 
 then the same five path edits in `tests/tools/build-data-tables.js` (`IN_ROOT`), `tests/data.test.js` (`FILES`), `docs/data-refresh-calendar.md` and `docs/lane2-log.md`. Until then nothing loads them; `tests/data.test.js` is their only reader. DECIDE: master build, with P-3.
+
+## P-6: wire the glossary hover into every room (section 4, L-4)
+
+`shared/glossary.js` and `shared/glossary.json` exist and are tested; nothing loads them. The change, in the master build's files:
+
+1. In every room, after `shared/reference.js` in the script list:
+   ```html
+   <script src="../shared/glossary.js"></script>
+   ```
+2. In `shared/room.js`, at the end of `mount()` once the first render has run (and again after any re-render that replaces text), one call:
+   ```js
+   if (SLAF.Glossary) SLAF.Glossary.load('../shared/').then(function (G) { G.mark(document.querySelector('main'), { max: 40 }); });
+   ```
+   `mark()` wraps the first occurrence of each term in `<abbr class="slaf-gloss" title="…" tabindex="0">`; it skips links, inputs, buttons, code and anything with `data-no-gloss`, and a second call is harmless. `max: 40` keeps a long page from turning into a field of dotted words; DECIDE: the number.
+3. In `shared/theme.css` (and the vendored `dnd/shared/theme.css`, byte-identical):
+   ```css
+   abbr.slaf-gloss { text-decoration: underline dotted; text-underline-offset: 0.15em; cursor: help; }
+   abbr.slaf-gloss:focus { outline: 2px solid var(--slaf-accent, #4a7); outline-offset: 2px; }
+   ```
+   The browser's native `title` tooltip is the hover; on a phone a long press shows it, and `tabindex="0"` makes it reachable by keyboard. A custom popover is a later choice.
+4. `test/run.js`: a grep that every room loads `glossary.js` after `reference.js`, the way it checks the other shared scripts; and `test/render.js` counts at least one `abbr.slaf-gloss` on every room whose copy uses a glossary term.
+
+Dependencies: none. `shared/glossary.js` requires nothing and writes nothing. DECIDE: master build.
+
+## P-7: read the lens copy from `data/lane2/lenses.copy.json` (section 4, L-4)
+
+`data/lenses.json` already carries `forWhom`, `notForWhom` and a one-line `source` per lens (D-175). Section 4 wrote `data/lane2/lenses.copy.json` with the same pair rewritten without hedging words and a structured source (kind, title, author, url, where). Either:
+
+- (a) copy the four rewritten sentences back into `data/lenses.json` (`fiftythirty.notForWhom`, `twentythreeeight.forWhom`, `twentythreeeight.notForWhom`, `rentbuy.notForWhom`) and add a `sourceDetail` object per lens from the copy file, then retire the copy file; or
+- (b) register `lensesCopy` in `TABLE_FILES` and have `shared/lenses.js` read `forWhom`, `notForWhom` and `source` from it when present.
+
+(a) keeps one file and is the conservative choice. `tests/glossary.test.js` keeps the two files in step either way (every lens has a row, no hedge word, no em dash). DECIDE: master build.

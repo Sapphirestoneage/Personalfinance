@@ -10862,6 +10862,62 @@ Nothing an engine reads changed value.
 
 ---
 
+## L-4 - Lane 2, section 4: the gloss dictionary and the lookup sentences
+
+### What it is
+
+`shared/glossary.json`: 258 terms the rooms and engines put on screen,
+each with `term`, `also` (other spellings and the long form), `domain`
+and `plain`, one sentence a reader with no finance background can
+follow. The list came from grepping `rooms/*.html` and `engines/*.js`
+for acronyms and capitalised phrases, plus the words a coaching client
+has to ask about. `shared/glossary.js` (`SLAF.Glossary`) is the one way
+anything reads it: `get(term)` matches the term or any alias without
+regard to case; `find(text)` lists the terms a piece of text uses;
+`terms()`; `load(basePath)` fetches the JSON in a browser; and
+`mark(root, opts)` wraps the first occurrence of each term inside a root
+element in `<abbr class="slaf-gloss" title="…" tabindex="0">`, skipping
+links, inputs, buttons, code and anything marked `data-no-gloss`, so a
+hover (a long press on a phone) shows the sentence. Nothing loads it: P-6
+in `docs/lane2-proposals.md` gives the script tag, the `room.js` call
+and the two lines of CSS.
+
+`data/lane2/ledger-rows.where.json`: 41 lookup-kind rows in the section
+18.2 shape (`path`, `letter`, `label`, `kind`) with a `where` sentence
+(the document or screen and the line), an `ifMissing` (what to do when
+it is not there) and a `roughly` (what to type for now), written to be
+followed on a phone. `data/lane2/lenses.copy.json`: for all 33 lenses,
+`forWhom` and `notForWhom` with no hedging word (four of the master
+build's sentences rewritten, the rest copied) and a structured source
+(kind, title, author, url, where).
+
+`tests/glossary.test.js` (3061 checks): at least 150 entries; no
+definition contains its own term or an alias as a whole word; one
+sentence, under 40 words, no em dash; the file's Flesch-Kincaid grade at
+or under 8 (7.2 measured); every term and alias resolves through `get`;
+`find` sees terms and not substrings; `mark` wraps once per term and
+leaves links alone, on a small DOM stand-in; every lookup row the lane
+lists has a `where`; every lens has both sentences, no hedge word, a
+sourced URL.
+
+### Decisions taken conservatively (DECIDE: for Eli)
+
+- The glossary is not wired into any room; P-6 is the exact change.
+- `data/lenses.json` is untouched; the dehedged sentences live in the
+  copy file and P-7 offers two ways to reconcile them.
+- Three aliases collide across entries (cliff, FAT, percentile); `get`
+  returns the first and the test reports it rather than failing, since
+  each is right in its own context.
+- The two data files sit under `data/lane2/` for the registration
+  reason in L-3 (P-5).
+
+### Compatibility
+
+Two new files under `shared/` that nothing loads yet; `shared/glossary.js`
+requires nothing and writes nothing. No stored shape changed.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

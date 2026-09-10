@@ -115,10 +115,28 @@ function dataSection(r) {
   return L;
 }
 
+function glossarySection(r) {
+  const L = [];
+  L.push('## Section 4: the gloss dictionary and the lookup sentences');
+  L.push('');
+  L.push(r.entries + ' glossary entries, ' + r.passed + ' checks. Source: `tests/glossary.test.js`.');
+  L.push('');
+  L.push('### Failures');
+  L.push('');
+  if (!r.failures.length) L.push('None.'); else r.failures.forEach((f) => L.push('- ' + f.replace(/\n\s*/g, ' ')));
+  L.push('');
+  L.push('### Notes');
+  L.push('');
+  r.notes.forEach((n) => L.push('- ' + n));
+  L.push('');
+  return L;
+}
+
 function render() {
   const corpus = read('corpus');
   const properties = read('properties');
   const data = read('data');
+  const glossary = read('glossary');
   const L = [];
   L.push('# Lane 2 findings');
   L.push('');
@@ -127,6 +145,7 @@ function render() {
   if (corpus) L.push.apply(L, corpusSection(corpus));
   if (properties) L.push.apply(L, propertiesSection(properties));
   if (data) L.push.apply(L, dataSection(data));
+  if (glossary) L.push.apply(L, glossarySection(glossary));
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, L.join('\n') + '\n');
   return OUT;

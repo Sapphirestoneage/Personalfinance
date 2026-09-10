@@ -1,0 +1,11 @@
+{
+  "entries": 258,
+  "passed": 3061,
+  "failures": [],
+  "notes": [
+    "\"cliff\" is listed under both \"cliff vesting\" and \"subsidy cliff\"; get() returns the first",
+    "\"FAT\" is listed under both \"Fat FIRE\" and \"FAT\"; get() returns the first",
+    "\"percentile\" is listed under both \"net worth percentile\" and \"percentile\"; get() returns the first",
+    "glossary reading level: Flesch-Kincaid grade 7.2 (16.7 words a sentence, 1.38 syllables a word) over 258 definitions"
+  ]
+}

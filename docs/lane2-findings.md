@@ -183,3 +183,18 @@ None.
 - 2026 top applicable percentage: aca.json says 0.0996 (Rev. Proc. 2025-25), aca_2026.json says 0.0866. DECIDE: which the engine reads.
 - 2026 annualAdditions415c: contribution_limits.json says 72000 (IRS Notice 2025-67 as read from search), irs_limits_2026.json says 70000 (carried from the FOO room). DECIDE: which the engine reads.
 
+## Section 4: the gloss dictionary and the lookup sentences
+
+258 glossary entries, 3061 checks. Source: `tests/glossary.test.js`.
+
+### Failures
+
+None.
+
+### Notes
+
+- "cliff" is listed under both "cliff vesting" and "subsidy cliff"; get() returns the first
+- "FAT" is listed under both "Fat FIRE" and "FAT"; get() returns the first
+- "percentile" is listed under both "net worth percentile" and "percentile"; get() returns the first
+- glossary reading level: Flesch-Kincaid grade 7.2 (16.7 words a sentence, 1.38 syllables a word) over 258 definitions
+
