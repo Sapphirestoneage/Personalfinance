@@ -682,6 +682,61 @@ const RULES = TABLES.debtRules;
   checkTrue('and costs less interest', faster.totalInterestCents < sim.totalInterestCents);
 })();
 
+/* -- Avalanche ranks by the rate a debt will carry (D-188) ------------------- */
+(function () {
+  const end = new Date(); end.setMonth(end.getMonth() + 6); const iso = end.toISOString().slice(0, 10);
+  const hh = Schema.createHousehold({
+    people: [Schema.createPerson({ id: 'P', role: 'adult' })],
+    debts: [
+      Schema.createDebt({ id: 'promo', label: 'Promo card', balanceCents: 300000, rate: 0, promoEndsOn: iso, postPromoRate: 0.2499, minPaymentCents: 6000, type: 'credit_card', ownerIds: ['P'] }),
+      Schema.createDebt({ id: 'loan', label: 'Loan', balanceCents: 500000, rate: 0.08, minPaymentCents: 15000, type: 'personal', ownerIds: ['P'] })
+    ]
+  });
+  const av = Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 20000 });
+  const sn = Debt.simulate(hh, RULES, { strategyId: 'snowball', extraMonthlyCents: 20000 });
+  checkTrue('a 0% card that becomes 24.99% ranks by the 24.99% in Avalanche', Debt.rankRate(hh.debts[0], 1) === 0.2499 && Debt.rankRate(hh.debts[1], 1) === 0.08);
+  checkTrue('...so Avalanche is never dearer than Snowball on it', av.totalInterestCents <= sn.totalInterestCents, av.totalInterestCents + ' vs ' + sn.totalInterestCents);
+  checkTrue('...and clears the promo card first', av.payoffs[0].debtId === 'promo');
+  check('a plain debt ranks by its own rate', Debt.rankRate(hh.debts[1], 1), 0.08);
+  const expired = Schema.createDebt({ id: 'x', balanceCents: 1000, rate: 0.05, promoEndsOn: '2020-01-01', postPromoRate: 0.30, minPaymentCents: 100 });
+  check('an expired promo ranks at the rate it already reverted to', Debt.rankRate(expired, 1), 0.30);
+  const unknown = Schema.createDebt({ id: 'u', balanceCents: 1000, rate: 0, promoEndsOn: iso, postPromoRate: null, minPaymentCents: 100 });
+  check('a promo with no go-to rate ranks at the rate it has (D-053: the plan cannot invent one)', Debt.rankRate(unknown, 1), 0);
+})();
+
+/* -- Three finish lines (D-188) -------------------------------------------- */
+(function () {
+  const hh = (function () {
+    return Schema.createHousehold({
+      people: [Schema.createPerson({ id: 'P', role: 'adult' })],
+      debts: [
+        Schema.createDebt({ id: 'loan',  label: 'Student loan', balanceCents: 1840000, rate: 0.055, minPaymentCents: 21000, type: 'student_loan', ownerIds: ['P'] }),
+        Schema.createDebt({ id: 'card',  label: 'Credit card',  balanceCents: 320000,  rate: 0.229, minPaymentCents: 9500,  type: 'credit_card',  ownerIds: ['P'] }),
+        Schema.createDebt({ id: 'small', label: 'Personal loan', balanceCents: 90000,  rate: 0.06,  minPaymentCents: 3000,  type: 'personal',     ownerIds: ['P'] })
+      ]
+    });
+  })();
+  const plan = Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 10000 });
+  const ms = Debt.milestones(plan, hh, RULES, { highInterestRate: TABLES.fooRules.thresholds.highInterestDebtRate });
+  const cardMonth = plan.payoffs.filter(p => p.debtId === 'card')[0].month;
+  check('the cards line is the last card\'s payoff month', ms.cards.month, cardMonth);
+  check('...one card counted', ms.cards.count, 1);
+  check('the high-interest line is read at the FOO ladder\'s figure', ms.highInterest.threshold, 0.075);
+  check('...and with 22.9% the only rate above 7.5%, it is the card\'s month', ms.highInterest.month, cardMonth);
+  check('everything gone is the plan itself', ms.all.month, plan.value);
+  checkTrue('...and later than the cards', ms.all.month > ms.cards.month);
+  const noCards = Schema.createHousehold({ people: hh.people, debts: hh.debts.filter(d => d.type !== 'credit_card') });
+  const planNC = Debt.simulate(noCards, RULES, { strategyId: 'avalanche', extraMonthlyCents: 0 });
+  const msNC = Debt.milestones(planNC, noCards, RULES, { highInterestRate: 0.075 });
+  checkTrue('no cards: count 0 and no month, never month 0', msNC.cards.count === 0 && msNC.cards.month === null);
+  checkTrue('nothing above the line: the same', msNC.highInterest.count === 0 && msNC.highInterest.month === null);
+  check('no threshold given: no high-interest line at all', Debt.milestones(planNC, noCards, RULES, {}).highInterest, null);
+  check('an incomplete plan gives nothing', Debt.milestones(Debt.simulate(Schema.createHousehold(), RULES, {}), hh, RULES, {}), null);
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
+  checkTrue('the room works the extra out from pay, spending and the minimums when the box is blank', /function computedExtraCents\(h\)/.test(page) && /take\.value - spend\.value - mins\.value/.test(page) && /effectiveExtraCents/.test(page));
+  checkTrue('the room shows the three lines above the figures, from the FOO table', /Debt\.milestones\(plan, h, RULES, \{ highInterestRate: FOO && FOO\.thresholds/.test(page) && /Credit cards gone/.test(page) && /Everything gone/.test(page) && /load\(\['debtRules', 'fooRules', 'effectiveTaxRates'\]\)/.test(page));
+})();
+
 /* -- Strategy ordering ---------------------------------------------------- */
 
 function threeDebtHousehold() {

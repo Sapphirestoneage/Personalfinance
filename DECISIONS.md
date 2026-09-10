@@ -11950,6 +11950,57 @@ Gate for this commit: unit 26966; the three debt room tests; render
 on the room empty and with the demo; the phone forms gate (a debt typed
 in, four fields kept); a phone walk with the example debts.
 
+## D-188 — Debt Payoff: three finish lines, Avalanche ranks by the rate a debt will carry, the extra is worked out
+
+**Why.** Three things the owner said after D-187, each fixed here.
+
+**Three finish lines.** "Credit cards gone", "Anything above 7.5% gone",
+"Everything gone", read off the one simulation (`Debt.milestones`): each
+is the last payoff month of the debts in that class; a class with no
+debt says so ("no cards listed") and one the plan never clears says "not
+at this payment"; the last line is the headline again, so the three read
+as one ladder. The high-interest line is the FOO ladder's figure
+(`data/foo_rules.json`, `thresholds.highInterestDebtRate`, 7.5%), read
+from the table, not a second copy.
+
+**Snowball was beating Avalanche.** On a household with a 0% card that
+becomes 24.99% in six months, Avalanche cost $982 of interest and
+Snowball $571, because every ordering sorted on `rate`, the rate stored
+today, and a promo card at 0% went last in Avalanche and stayed last
+after its rate jumped. `Debt.rankRate(debt, month)` is now the ordering
+key everywhere: the rate in force this month, or the rate a promo
+reverts to when that is higher and the promo has not ended. An expired
+promo ranks at the rate it already reverted to; a promo with no go-to
+rate ranks at the rate it has (D-053: the plan cannot invent one). On
+that household Avalanche now clears the promo card first and is no
+dearer than Snowball; lane 2's property "the cheapest strategy really is
+the cheapest" still holds.
+
+**The extra is worked out, not asked.** When the box is blank the plan
+uses what the household's pay leaves free each month: take-home
+(`Schema.takeHomeMonthlyCents`) less spending
+(`Schema.monthlyExpensesCents`) less every minimum
+(`Schema.monthlyDebtPaymentsCents`), floored at zero, and the hint says
+so with the figure. A typed figure wins and the hint says what clearing
+it would use. With any of the three missing the box means what it did:
+the minimums alone, and the hint points at Start Here. Nothing is
+stored: the extra stays this room's own what-if (D-052).
+
+**Closer.** The rows are tighter: less padding on a line, a shorter name
+box, the "More" summary on the line's own baseline, the finish lines at
+four pixels.
+
+**Compatibility note.** No stored shape changes. `Debt.orderDebts` takes
+the month and the as-of date; `Debt.milestones` and `Debt.rankRate` are
+new; the room loads `fooRules` and `effectiveTaxRates` beside
+`debtRules`.
+
+Gate for this commit: unit 27036 (the promo household by hand, the
+rank of an expired and an unknown promo, the three lines on the
+three-debt household and on one with no cards, the room's wiring); the
+three debt room tests; lane 2's debt properties; render and the phone
+forms gate on the room; a phone walk with the example debts.
+
 ---
 
 # The Dungeons & Dividends entries

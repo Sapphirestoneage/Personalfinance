@@ -235,18 +235,34 @@
    * Ordering is recomputed each month, because a hybrid's "small enough to
    * finish quickly" test depends on the balance as it stands now.
    */
-  function orderDebts(debts, strategy, rules) {
+  /**
+   * The rate a debt will cost you, for ordering (D-188): the rate in force
+   * this month, or the rate a promo reverts to when that is higher and
+   * the promo has not ended yet. Sorting on today's rate alone put a 0%
+   * card that becomes 24.99% last in Avalanche, so Snowball beat it.
+   */
+  function rankRate(debt, month, asOf) {
+    var now = rateInMonth(debt, month || 1, asOf);
+    if (!Money.isEntered(now)) now = Money.isEntered(debt.rate) ? debt.rate : 0;
+    var promo = promoStatus(debt, asOf);
+    if (promo && !promo.expired && promo.knowsAfter && promo.postRate > now) return promo.postRate;
+    return now;
+  }
+
+  function orderDebts(debts, strategy, rules, month, asOf) {
     var live = debts.filter(function (d) { return d.balanceCents > 0; });
     var sorted = live.slice();
+    var rate = {};
+    live.forEach(function (d) { rate[d.id] = rankRate(d, month, asOf); });
 
     if (strategy.orderBy === 'rate') {
-      sorted.sort(function (a, b) { return b.rate - a.rate || a.balanceCents - b.balanceCents; });
+      sorted.sort(function (a, b) { return rate[b.id] - rate[a.id] || a.balanceCents - b.balanceCents; });
     } else if (strategy.orderBy === 'balance') {
-      sorted.sort(function (a, b) { return a.balanceCents - b.balanceCents || b.rate - a.rate; });
+      sorted.sort(function (a, b) { return a.balanceCents - b.balanceCents || rate[b.id] - rate[a.id]; });
     } else if (strategy.orderBy === 'emotionalPriority') {
       sorted.sort(function (a, b) {
         var pa = emotionalPriority(a, rules), pb = emotionalPriority(b, rules);
-        return pb - pa || b.rate - a.rate;
+        return pb - pa || rate[b.id] - rate[a.id];
       });
     } else if (strategy.orderBy === 'hybrid') {
       var threshold = Math.round((strategy.quickWinBelowDollars || 0) * 100);
@@ -256,7 +272,7 @@
         /* Quick wins first, smallest of those first; then highest rate. */
         if (qa !== qb) return qb - qa;
         if (qa === 1) return a.balanceCents - b.balanceCents;
-        return b.rate - a.rate;
+        return rate[b.id] - rate[a.id];
       });
     }
     if (strategy.direction === 'asc' && strategy.orderBy === 'rate') sorted.reverse();
@@ -389,7 +405,7 @@
       }
 
       /* 3. Everything left goes at the target, in strategy order. */
-      var ordered = orderDebts(debts, strategy, rules);
+      var ordered = orderDebts(debts, strategy, rules, month, o.asOf);
       for (var i = 0; i < ordered.length && pot > 0; i++) {
         var target = ordered[i];
         if (target.balanceCents <= 0) continue;
@@ -449,6 +465,31 @@
    * This is the whole point of having four: avalanche always wins on total
    * interest, and it is not always the one someone will stick to.
    */
+  /**
+   * milestones(plan, household, rules, opts) — three finish lines read off
+   * one simulation (D-188): the credit cards gone, everything above the
+   * high-interest line gone (opts.highInterestRate, the FOO ladder's
+   * figure; null when none is given), everything gone. A class with no
+   * debt in it has count 0 and month null, never a zero month; a class
+   * whose debts the plan never clears has month null too.
+   */
+  function milestones(plan, household, rules, opts) {
+    if (!plan || !Money.isOk(plan)) return null;
+    var o = opts || {};
+    var threshold = Money.isEntered(o.highInterestRate) ? o.highInterestRate : null;
+    var debts = ((household && household.debts) || []).filter(function (d) { return d.archived !== true; });
+    function last(pred) {
+      var ids = debts.filter(pred).map(function (d) { return d.id; });
+      if (!ids.length) return { count: 0, month: null };
+      var months = (plan.payoffs || []).filter(function (p) { return ids.indexOf(p.debtId) >= 0; }).map(function (p) { return p.month; });
+      return { count: ids.length, month: months.length === ids.length ? Math.max.apply(null, months) : null };
+    }
+    var cards = last(function (d) { return d.type === 'credit_card'; });
+    var high = threshold === null ? null : last(function (d) { var r = effectiveRate(d); return Money.isEntered(r) && r >= threshold; });
+    if (high) high.threshold = threshold;
+    return { cards: cards, highInterest: high, all: { count: debts.length, month: plan.value } };
+  }
+
   function compareStrategies(household, rules, opts) {
     var o = opts || {};
     var results = {}, ok = [];
@@ -549,6 +590,8 @@
     prepare: prepare,
     simulate: simulate,
     compareStrategies: compareStrategies,
+    milestones: milestones,
+    rankRate: rankRate,
     creditCardsOnly: creditCardsOnly,
     rewardsVsCarrying: rewardsVsCarrying,
     minimumsOnly: minimumsOnly

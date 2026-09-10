@@ -42,15 +42,15 @@
   /* One line per debt (D-187): name, owed, rate, minimum, and a caret for
      the rest. Ten debts are ten lines on a wide screen and twenty on a
      phone, where the name takes a line of its own. */
-  .debt { border-top: 1px solid var(--color-border); padding: var(--space-2) 0 var(--space-1); }
+  .debt { border-top: 1px solid var(--color-border); padding: var(--space-1) 0 0; }
   .debt:first-child { border-top: none; }
   .debt-cols { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr 0.8fr 1fr 1.6em; gap: var(--space-2); font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); padding: 0 0 var(--space-1); }
   .debt-line { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr 0.8fr 1fr 1.6em; gap: var(--space-2); align-items: center; }
   .debt-line > * { min-width: 0; }
-  .debt-line .slaf-input-shell { min-height: 36px; }
+  .debt-line .slaf-input-shell { min-height: 32px; }
   .debt-line input { font-size: var(--text-sm); width: 100%; min-width: 0; }
   .debt-line .slaf-affix { font-size: var(--text-xs); }
-  .debt-name { min-width: 0; width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--color-border-strong); color: var(--color-text); font-family: var(--font-body); font-size: var(--text-sm); padding: 6px 0; }
+  .debt-name { min-width: 0; width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--color-border-strong); color: var(--color-text); font-family: var(--font-body); font-size: var(--text-sm); padding: 3px 0; }
   .debt-name:focus { border-bottom-color: var(--color-border-active); }
   .debt-more { background: none; border: none; color: var(--color-text-faint); cursor: pointer; font-size: 12px; padding: 0; text-align: center; }
   .debt-more[aria-expanded="true"] { color: var(--color-accent); }
@@ -65,7 +65,7 @@
     .debt-line .debt-name-cell { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--space-2); }
     .debt-line .debt-more { margin-left: auto; }
     .debt-line .slaf-input-shell::before { content: attr(data-col); font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-faint); position: absolute; top: -12px; left: 0; }
-    .debt-line .slaf-input-shell { position: relative; margin-top: 12px; }
+    .debt-line .slaf-input-shell { position: relative; margin-top: 11px; }
   }
   @media (min-width: 561px) { .debt-line .debt-more { grid-column: 5; } }
   .extra-field { margin-top: var(--space-4); }
@@ -86,7 +86,8 @@
 
   /* The folded parts of a row. */
   .fold { border-top: 1px solid var(--color-border); margin-top: var(--space-2); }
-  .fold.is-more { border-top: none; margin-top: var(--space-1); }
+  .fold.is-more { border-top: none; margin-top: 0; }
+  .fold.is-more > summary { padding: 2px 0 var(--space-1); }
   .fold.is-more > .fold-body { padding: var(--space-2) var(--space-3) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); margin: var(--space-2) 0 var(--space-2); }
   .fold > summary { display: flex; align-items: baseline; gap: var(--space-2); cursor: pointer; list-style: none; padding: var(--space-2) 0; font-size: var(--text-sm); color: var(--color-text-muted); }
   .fold > summary::-webkit-details-marker { display: none; }
@@ -165,6 +166,12 @@
   /* Every figure on one rail, with what it means beside it. The value
      column is fixed so the digits line up down the card however long the
      label is; the meaning sits in its own column and never pushes them. */
+  ol.finish { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ol.finish li { display: flex; justify-content: space-between; gap: var(--space-3); padding: 4px 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  ol.finish li:first-child { border-top: none; }
+  ol.finish li:last-child { font-weight: 600; }
+  ol.finish b { font-family: var(--font-display); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  ol.finish .fin-none { color: var(--color-text-faint); font-weight: normal; }
   .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
   .out-detail dl { display: grid; grid-template-columns: minmax(0, auto) 9.5ch 1fr; gap: 0; margin: 0; align-items: baseline; }
   .out-detail dt { color: var(--color-text-muted); padding: var(--space-2) var(--space-3) var(--space-2) 0; border-top: 1px solid var(--color-border); grid-column: 1; white-space: nowrap; }
@@ -236,10 +243,10 @@
     <div id="debt-list"></div>
     <button type="button" class="slaf-btn" id="btn-add" style="width:100%">+ Add a debt</button>
     <label class="slaf-field extra-field" id="extra">
-      <span class="slaf-label">Extra you can put at debt each month</span>
+      <span class="slaf-label">Extra at the debts each month</span>
       <span class="slaf-input-shell"><span class="slaf-affix">$</span>
         <input type="text" inputmode="decimal" id="f-extra" placeholder="e.g. 200"/></span>
-      <span class="slaf-hint">Blank shows what the minimums alone do.</span>
+      <span class="slaf-hint" id="extra-hint">Blank shows what the minimums alone do.</span>
     </label>
     <details class="archived" id="archived" hidden>
       <summary>Set aside <small id="archived-count"></small></summary>
@@ -314,6 +321,8 @@
 
   var ROOM_ID = 'debt-payoff';
   var RULES = null;
+  var FOO = null;   /* data/foo_rules.json, for the high-interest line (D-188) */
+  var TABLES = null;
   var strategyId = 'avalanche';
   var extraCents = null;
   /* SPEC.md §13: the Credit Card calc is a FILTERED VIEW of this calculator,
@@ -1080,6 +1089,24 @@
     }).join('') + '</dl>';
   }
 
+  /* The three finish lines. A class with nothing in it says so; one the
+     plan never clears says that; the last line is the headline again, so
+     the three read as one ladder. */
+  function finishLines(ms) {
+    if (!ms) return '';
+    function when(x, noneWord) {
+      if (!x || !x.count) return '<span class="fin-none">' + noneWord + '</span>';
+      if (x.month === null) return '<span class="fin-none">not at this payment</span>';
+      return x.month === 0 ? 'already' : monthsLabel(x.month);
+    }
+    var high = ms.highInterest;
+    return '<ol class="finish">'
+      + '<li><span>Credit cards gone</span><b>' + when(ms.cards, 'no cards listed') + '</b></li>'
+      + (high ? '<li><span>Anything above ' + Money.formatRate(high.threshold, { decimals: 1 }) + ' gone</span><b>' + when(high, 'nothing that high') + '</b></li>' : '')
+      + '<li><span>Everything gone</span><b>' + when(ms.all, 'nothing listed') + '</b></li>'
+      + '</ol>';
+  }
+
   function monthsLabel(months) {
     if (months < 12) return months + (months === 1 ? ' month' : ' months');
     var y = Math.floor(months / 12), m = months % 12;
@@ -1091,8 +1118,41 @@
     return Money.formatRate(rate, { decimals: 2 }).replace(/\.?0+%$/, '%');
   }
 
+  /* What is free each month, worked out rather than asked (D-188):
+     take-home less spending less every minimum. It stands in for the
+     extra whenever the box is blank, and the hint says where it came
+     from; a typed figure wins. Null when any of the three is missing. */
+  function computedExtraCents(h) {
+    if (!TABLES) return null;
+    var take = Schema.takeHomeMonthlyCents(h, TABLES);
+    var spend = Schema.monthlyExpensesCents(h);
+    var mins = Schema.monthlyDebtPaymentsCents(h);
+    if (!Money.isOk(take) || !Money.isOk(spend) || !Money.isOk(mins)) return null;
+    return Math.max(0, take.value - spend.value - mins.value);
+  }
+  function effectiveExtraCents(h) {
+    if (Money.isEntered(extraCents)) return extraCents;
+    var c = computedExtraCents(h);
+    return c === null ? null : c;
+  }
+  function paintExtraHint(h) {
+    var hint = el('extra-hint'); if (!hint) return;
+    var c = computedExtraCents(h);
+    if (Money.isEntered(extraCents)) {
+      hint.textContent = c === null ? 'Your figure. Clear it to see the minimums alone.'
+        : 'Your figure. Clear it to use what your pay leaves free, ' + Money.formatCents(c) + ' a month.';
+    } else if (c !== null) {
+      hint.textContent = 'Blank, so the plan uses what your pay leaves after spending and the minimums: ' + Money.formatCents(c) + ' a month. Type a figure to override.';
+      el('f-extra').placeholder = Money.formatCents(c);
+    } else {
+      hint.textContent = 'Blank shows what the minimums alone do. Add your pay and spending in Start Here and this fills itself in.';
+    }
+  }
+
   function renderPlan(h, cmp) {
     h = scoped(h);
+    paintExtraHint(h);
+    var extraCents = effectiveExtraCents(h);
     var plan = Debt.simulate(h, RULES, { strategyId: strategyId, extraMonthlyCents: extraCents });
     var detail = '';
     /* Every balance on one scale. Drawn only once the plan is complete, so
@@ -1112,6 +1172,9 @@
     });
     if (Money.isOk(plan)) {
       var baseline = Debt.simulate(h, RULES, { strategyId: strategyId, extraMonthlyCents: 0 });
+      /* Three finish lines before the figures (D-188): the cards, the
+         high-interest debt, everything. Each is read off this plan. */
+      detail += finishLines(Debt.milestones(plan, h, RULES, { highInterestRate: FOO && FOO.thresholds ? FOO.thresholds.highInterestDebtRate : null }));
       var rows = [
         ['Interest you’ll pay', Money.formatCents(plan.totalInterestCents),
          'The cost of borrowing, on top of what you actually owe.'],
@@ -1127,7 +1190,7 @@
         rows.push(['Sooner by', monthsLabel(baseline.value - plan.value),
           'How much earlier the extra gets you to zero.']);
       }
-      detail = dl(rows);
+      detail += dl(rows);
 
       /* If this ordering isn't the cheapest, say what choosing it costs.
          That is the honest way to present the Convenience Method: it is a
@@ -1342,7 +1405,7 @@
     debtForm.request();
     renderArchived(h);
     /* Every ordering is run once here and shared by the three outputs. */
-    var cmp = Debt.compareStrategies(scoped(h), RULES, { extraMonthlyCents: extraCents });
+    var cmp = Debt.compareStrategies(scoped(h), RULES, { extraMonthlyCents: effectiveExtraCents(scoped(h)) });
     var plan = renderPlan(h, cmp);
     renderStrategies(h, cmp);
     renderTimeline(plan, cmp);
@@ -1477,8 +1540,10 @@
 
   SLAF.Progress.mount(ROOM_ID);
 
-  Reference.load(['debtRules']).then(function (tables) {
+  Reference.load(['debtRules', 'fooRules', 'effectiveTaxRates']).then(function (tables) {
+    TABLES = tables;
     RULES = tables.debtRules;
+    FOO = tables.fooRules || null;
     renderNow();
     jumpToHash();
   }).catch(function (err) {
