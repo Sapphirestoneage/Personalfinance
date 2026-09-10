@@ -1,0 +1,15 @@
+{
+  "name": "sparks-lane2-tests",
+  "version": "1.0.0",
+  "description": "Lane 2 test harness: synthetic household corpus, property tests, data table checks, migration corpus. No build step; run each file with node.",
+  "scripts": {
+    "test": "node corpus.test.js",
+    "corpus": "node corpus.test.js",
+    "build-fixtures": "node tools/build-households.js"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "fast-check": "^4.9.0"
+  },
+  "private": true
+}

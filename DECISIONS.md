@@ -10617,6 +10617,81 @@ inheritance predicate matters).
 
 ---
 
+## L-1 - Lane 2, section 1: the synthetic household corpus
+
+### What it is
+
+The second lane (branch `lane2`) runs beside the master build and touches
+only `tests/`, `data/`, `docs/`, `fixtures/` and the glossary. Its entries
+are the L-series so they never collide with the D-series; `test/run.js`
+checks only `D-`/`DD-` headings, so an `L-` heading above the divider is
+not a malformed entry. This is the first.
+
+`fixtures/households/` holds 24 archetype households and, under `edge/`,
+six edge cases, every one in the current spine v2 shape because every one
+is generated through `Schema.createHousehold` by
+`tests/tools/build-households.js`. Nothing in a fixture is typed by hand
+except the spec it came from, and the spec is in that file with the
+figures in dollars. Each fixture's `meta` carries `name`, `story`, a
+guessed `sphere`, and `known`: gross, the effective band read by eye from
+`data/effective_tax_rates_2026.json`, estimated tax, take-home a year and
+a month, monthly spending, the savings rate excluding match, the FI target
+at 4%, runway in months (cash over spending, both fractional and whole),
+net worth, and `working`, the arithmetic written out line by line so a
+reviewer can check it with a pencil.
+
+`tests/corpus.test.js` loads every fixture, checks the schema version and
+the meta, then sweeps every exported engine function whose first
+parameter is `household` (226 functions across 62 engines, 6780 calls),
+supplying tables by parameter name and recording a throw as a failure
+only when every argument was real. It walks every result for NaN and
+Infinity, asserts no negative tax, spending, asset total, debt total,
+emergency-fund months, DTI, FI number, years to FI or runway, and
+compares the ten known values within 1% (or the same incompleteness).
+Disagreements go to `docs/lane2-findings.md`, which the test regenerates
+on every run; a fixture is never edited to match an engine.
+
+### Why
+
+The engines had unit tests written by the same hands that wrote the
+formulas, against one demo persona. A corpus of thirty households with
+independently computed expectations is the cheapest way to find a formula
+that agrees with itself and not with arithmetic, and the sweep finds the
+crash a room would only hit on a household nobody had tried.
+
+### What it found
+
+Nothing, on the first run: every known value agrees with the engine and
+no household-first function throws, returns NaN, or returns a forbidden
+negative. The one throw on the way was the harness passing debt rules to
+`statement.portfolios`, which takes access rules. Twelve functions need a
+skill, a goal, an offer or a block and are listed in the findings file
+for section 2 to feed. Three tables `test/run.js` loads by hand are not in
+`Reference.TABLE_FILES`; that is P-2 in `docs/lane2-proposals.md`.
+
+### Decisions taken conservatively (DECIDE: for Eli)
+
+- Known-value disagreements write to the findings file and do not fail
+  the run unless `CORPUS_STRICT=1`: the other lane should not go red on a
+  list it has not read. Throws, NaN and negatives always fail.
+- The `sphere` on each fixture is a guess against section 19 of the
+  master prompt; spheres.json does not exist yet.
+- The repo has no CI, so "runs in CI" is a workflow proposal (P-1), not a
+  workflow.
+- `tests/package.json` is un-ignored by `tests/.gitignore` because the
+  root `.gitignore` hides every package.json; fast-check is for section
+  2 and `node tests/corpus.test.js` needs nothing installed.
+
+### Compatibility
+
+No stored shape changed. The fixtures are read by tests only; no room
+loads them. A future section that changes the shape (the master build's
+section 15) regenerates the corpus with `node tests/tools/build-households.js`
+after updating the builder, and the migration corpus (section 5) keeps a
+copy of today's shape.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

@@ -1,0 +1,358 @@
+{
+  "schemaVersion": 2,
+  "people": [
+    {
+      "id": "p_doc",
+      "label": "Avery",
+      "role": "adult",
+      "dob": "1987-08-14",
+      "employmentStatus": "employed",
+      "unemployment": {
+        "since": null,
+        "benefitStatus": null,
+        "benefitWeeklyCents": null,
+        "benefitWeeksLeft": null,
+        "severanceCents": null,
+        "lastGrossAnnualCents": null,
+        "expectedSearchMonths": null,
+        "floorMonthlyCents": null
+      },
+      "incomeSources": [
+        {
+          "id": "p_doc_inc0",
+          "personId": "p_doc",
+          "source": "Hospitalist",
+          "grossAnnualIncomeCents": 31000000,
+          "frequency": "annual",
+          "rateCents": null,
+          "hoursPerWeek": null,
+          "monthsWorked": null,
+          "ongoing": true,
+          "variableLowCents": null,
+          "variableHighCents": null,
+          "type": "w2",
+          "hassle": null,
+          "employerMatch": {
+            "matchPercent": 1,
+            "matchCapPercentOfSalary": 0.04
+          }
+        }
+      ],
+      "work": {
+        "contractedHoursPerWeek": null,
+        "unpaidOvertimeHoursPerWeek": null,
+        "commuteHoursPerWeek": null,
+        "prepHoursPerWeek": null,
+        "decompressHoursPerWeek": null,
+        "workCostsMonthlyCents": null,
+        "weeksPerYear": 48
+      }
+    }
+  ],
+  "filingStatus": "single",
+  "state": "MD",
+  "capturingFullMatch": true,
+  "dependents": null,
+  "community": {
+    "daySchool": null
+  },
+  "assets": [
+    {
+      "id": "a_0",
+      "label": "Savings",
+      "category": "cash",
+      "valueCents": 3000000,
+      "liquid": true,
+      "ownerIds": [],
+      "taxCharacter": null,
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null
+    },
+    {
+      "id": "a_1",
+      "label": "Brokerage",
+      "category": "investment",
+      "valueCents": 4000000,
+      "liquid": false,
+      "ownerIds": [],
+      "taxCharacter": "taxable",
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null
+    },
+    {
+      "id": "a_2",
+      "label": "403(b)",
+      "category": "retirement",
+      "valueCents": 12000000,
+      "liquid": false,
+      "ownerIds": [],
+      "taxCharacter": "pretax",
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null
+    }
+  ],
+  "debts": [
+    {
+      "id": "d_0",
+      "label": "Medical school loans",
+      "balanceCents": 28000000,
+      "rate": 0.068,
+      "minPaymentCents": 322000,
+      "type": "student_loan",
+      "creditLimitCents": null,
+      "promoEndsOn": null,
+      "postPromoRate": null,
+      "emotionalTag": null,
+      "keepReasons": [],
+      "excludeFromAggressive": false,
+      "interestFree": null,
+      "archived": false,
+      "borrowedOn": null,
+      "dueOn": null,
+      "ownerIds": []
+    }
+  ],
+  "expenses": {
+    "needs": {
+      "food": {
+        "monthlyCents": 100000
+      },
+      "accommodation": {
+        "monthlyCents": 350000
+      },
+      "transportation": {
+        "monthlyCents": 70000
+      }
+    },
+    "wants": {
+      "totalCents": 300000,
+      "therapy": null
+    },
+    "entries": []
+  },
+  "incomeBasis": "earned",
+  "retirement": {
+    "contributionPercent": null,
+    "rothContributedCents": null,
+    "hsaContributedCents": null,
+    "onHdhp": null,
+    "hsaFamilyPlan": null,
+    "has401k": null
+  },
+  "insurance": {
+    "highestDeductibleCents": null,
+    "oopMaxCents": null,
+    "termLifeCents": null,
+    "disabilityMonthlyCents": null,
+    "umbrella": null,
+    "health": {
+      "type": null,
+      "monthlyCents": null
+    }
+  },
+  "worthChecks": [],
+  "ratings": {},
+  "valuesProfile": {
+    "stated": [],
+    "assignments": {}
+  },
+  "swan": {
+    "basis": null,
+    "targetCents": null,
+    "targetMonths": null,
+    "note": null,
+    "setAt": null
+  },
+  "goals": [],
+  "futureIncome": [],
+  "property": [],
+  "allocation": {
+    "stocks": null,
+    "bonds": null,
+    "cash": null,
+    "rebalanceBand": null
+  },
+  "rerank": {
+    "rows": []
+  },
+  "targets": {
+    "retireAge": null,
+    "coastAge": null
+  },
+  "scenarios": [],
+  "oneOffs": [],
+  "estate": {
+    "beneficiariesSet": null,
+    "willExists": null,
+    "poaExists": null
+  },
+  "giving": {
+    "pctOfIncome": null,
+    "annualTargetCents": null
+  },
+  "decumulation": {
+    "stockShare": null,
+    "plannedAnnualDrawCents": null,
+    "socialSecurityAt": null
+  },
+  "tax": {
+    "otherPreTaxAnnualCents": null,
+    "withheldAnnualCents": null
+  },
+  "career": {
+    "offer": {
+      "grossAnnualCents": null,
+      "hoursPerWeek": null,
+      "commuteHoursPerWeek": null,
+      "workCostsMonthlyCents": null,
+      "signOnCents": null
+    }
+  },
+  "partner": {
+    "splitMode": null,
+    "sharedMonthlyCents": null
+  },
+  "kids": {
+    "tuitionTargetCents": null,
+    "tuitionSavedCents": null,
+    "tuitionMonthlyCents": null
+  },
+  "housing": {
+    "rentMonthlyCents": null,
+    "priceCents": null,
+    "downPct": null,
+    "rate": null
+  },
+  "purchase": {
+    "priceCents": null,
+    "monthsAway": null,
+    "financeRate": null,
+    "label": null
+  },
+  "variableIncome": {
+    "bufferMonths": null,
+    "windowMonths": null
+  },
+  "enough": {
+    "monthlyCents": null,
+    "source": null
+  },
+  "designedWeek": {
+    "blocks": []
+  },
+  "timeBuckets": [],
+  "dreams": [],
+  "reversibility": {
+    "decisionId": null,
+    "given": {}
+  },
+  "unlearning": {
+    "dropped": []
+  },
+  "studentLoans": {
+    "plan": "aggressive",
+    "extraMonthlyCents": 150000,
+    "idrShare": null,
+    "forgivenessYears": null
+  },
+  "calendar": {
+    "cadence": null,
+    "nextPaydayDay": null,
+    "bills": [],
+    "payLater": []
+  },
+  "history": {
+    "compareTo": null
+  },
+  "ledger": {
+    "income": [],
+    "months": [],
+    "dismissed": []
+  },
+  "budget": {
+    "estimated": {},
+    "presets": {}
+  },
+  "notApplicable": {},
+  "skills": {},
+  "skillTree": {
+    "state": {}
+  },
+  "exercises": {
+    "done": {},
+    "results": {}
+  },
+  "practiceLedger": [],
+  "assumptions": {
+    "returnReal": 0.05,
+    "inflation": 0.03,
+    "expectedReturnRate": 0.07,
+    "swrRate": 0.04,
+    "humanCapitalDiscountRate": 0.02,
+    "homeEquityHaircut": 0.8,
+    "marginalRate": null
+  },
+  "assumptionOverrides": {},
+  "meta": {
+    "visitedRooms": [],
+    "createdAt": null,
+    "updatedAt": null,
+    "confirmedAt": {},
+    "hasDebt": true,
+    "undoStack": [],
+    "redoStack": [],
+    "guessed": {},
+    "source": {},
+    "displayUnit": null,
+    "noRent": null,
+    "walk": {
+      "startedAt": null,
+      "finishedAt": null,
+      "done": {},
+      "skipped": {}
+    },
+    "frontDoor": null,
+    "isDemo": true,
+    "name": "High debt, high income",
+    "story": "39, physician at $310k, $280k of student loans at 6.8%.",
+    "sphere": 5,
+    "sphereNote": "DECIDE: the sphere is a guess at the depth these rows reach under section 19 of the master prompt; spheres.json does not exist yet.",
+    "lane": "lane2 section 1 (L-1)",
+    "known": {
+      "asOf": "2026-09-10",
+      "tolerance": 0.01,
+      "monthlySpendingCents": 820000,
+      "fiTargetCents": 246000000,
+      "grossAnnualCents": 31000000,
+      "effectiveRate": 0.33,
+      "estimatedTaxCents": 10230000,
+      "takeHomeAnnualCents": 20770000,
+      "takeHomeMonthlyCents": 1730833,
+      "savingsRate": 0.35258064516129034,
+      "runwayMonths": 3.658536585365854,
+      "runwayWholeMonths": 3,
+      "netWorthCents": -9000000,
+      "working": [
+        "monthly spending = food $1,000 + accommodation $3,500 + transportation $700 + everything else $3,000 = $8,200",
+        "FI target = $8,200 x 12 / 0.04 = $98,400 / 0.04 = $2,460,000",
+        "gross $310,000 single: band single up to $500,000 -> effective rate 0.33",
+        "estimated tax = $310,000 x 0.33 = $102,300; take-home = $310,000 - $102,300 = $207,700 a year, $17,308.33 a month",
+        "savings rate (excluding match) = ($207,700 - $98,400) / $310,000 = $109,300 / $310,000 = 0.3526",
+        "runway = cash $30,000 / $8,200 a month = 3.6585 months (3 whole months; Runway.project stops at 60)",
+        "net worth = $30,000 + $40,000 + $120,000 - $280,000 = -$90,000"
+      ]
+    }
+  }
+}
