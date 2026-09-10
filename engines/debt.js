@@ -342,8 +342,15 @@
   }
 
   /**
-   * simulate(household, rules, { strategyId, extraMonthlyCents })
+   * simulate(household, rules, { strategyId, extraMonthlyCents, stopAfter, highInterestRate, asOf })
    * Returns a Result whose value is the number of months to clear everything.
+   * stopAfter (D-191): 'cards' or 'highInterest'. Once nothing of that class
+   * is live, the extra stops and the freed minimums stop rolling: from
+   * that month every remaining debt gets its own minimum and nothing
+   * more. The result carries stopMonth (the first month run that way,
+   * null when the stop never came or none was asked for) and
+   * monthlyBudgetAfterStopCents. A stop whose class was empty from the
+   * start stops in month 1: minimums alone, and the room says so.
    */
   function simulate(household, rules, opts) {
     var o = opts || {};
@@ -356,6 +363,8 @@
     var debts = ready.value.map(function (d) { return Object.assign({}, d); });
     var extra = Money.isEntered(o.extraMonthlyCents) ? o.extraMonthlyCents : 0;
     var maxMonths = (rules.limits && rules.limits.maxMonths) || 600;
+    var stopAfter = STOP_CLASSES.indexOf(o.stopAfter) >= 0 ? o.stopAfter : null;
+    var stopMonth = null, budgetAfterStop = null;
 
     /* The total the household puts at debt each month stays constant: every
        minimum plus the extra. A cleared debt frees its minimum for the next
@@ -386,8 +395,15 @@
       });
       totalInterest += interestThisMonth;
 
+      /* The stop line (D-191): nothing of the named class left, so from
+         here it is each debt's own minimum and no more. */
+      if (stopAfter && stopMonth === null && !live.some(function (d) { return inClass(d, stopAfter, o.highInterestRate); })) {
+        stopMonth = month;
+        budgetAfterStop = live.reduce(function (s, d) { return s + Math.min(d.minPaymentCents, d.balanceCents); }, 0);
+      }
+
       /* 2. Minimums, capped at what is actually owed. */
-      var pot = monthlyBudget;
+      var pot = stopMonth !== null ? live.reduce(function (s, d) { return s + d.minPaymentCents; }, 0) : monthlyBudget;
       var paidThisMonth = 0;
       live.forEach(function (d) {
         var pay = Math.min(d.minPaymentCents, d.balanceCents, pot);
@@ -453,6 +469,12 @@
       startingBalances: ready.value.reduce(function (m, d) { m[d.id] = d.balanceCents; return m; }, {}),
       debtLabels: ready.value.reduce(function (m, d) { m[d.id] = d.label; return m; }, {}),
       monthlyBudgetCents: monthlyBudget,
+      stopAfter: stopAfter,
+      stopMonth: stopMonth,
+      monthlyBudgetAfterStopCents: budgetAfterStop,
+      minimumsCents: monthlyBudget - extra,
+      extraMonthlyCents: extra,
+      derivedMinimums: ready.value.filter(function (d) { return d.minimumDerived; }).map(function (d) { return d.id; }),
       extraMonthlyCents: extra,
       payoffs: payoffs.sort(function (a, b) { return a.month - b.month; }),
       schedule: schedule,
@@ -473,6 +495,21 @@
    * debt in it has count 0 and month null, never a zero month; a class
    * whose debts the plan never clears has month null too.
    */
+  /* The two classes a finish line or a stop line can name (D-188, D-191):
+     the cards, and anything at or above the high-interest rate. One
+     predicate, so the line that says "cards gone" and the stop that says
+     "stop when the cards are gone" can never disagree. */
+  var STOP_CLASSES = ['cards', 'highInterest'];
+  function inClass(debt, cls, threshold) {
+    if (cls === 'cards') return debt.type === 'credit_card';
+    if (cls === 'highInterest') {
+      if (!Money.isEntered(threshold)) return false;
+      var r = effectiveRate(debt);
+      return Money.isEntered(r) && r >= threshold;
+    }
+    return false;
+  }
+
   function milestones(plan, household, rules, opts) {
     if (!plan || !Money.isOk(plan)) return null;
     var o = opts || {};
@@ -484,8 +521,8 @@
       var months = (plan.payoffs || []).filter(function (p) { return ids.indexOf(p.debtId) >= 0; }).map(function (p) { return p.month; });
       return { count: ids.length, month: months.length === ids.length ? Math.max.apply(null, months) : null };
     }
-    var cards = last(function (d) { return d.type === 'credit_card'; });
-    var high = threshold === null ? null : last(function (d) { var r = effectiveRate(d); return Money.isEntered(r) && r >= threshold; });
+    var cards = last(function (d) { return inClass(d, 'cards'); });
+    var high = threshold === null ? null : last(function (d) { return inClass(d, 'highInterest', threshold); });
     if (high) high.threshold = threshold;
     return { cards: cards, highInterest: high, all: { count: debts.length, month: plan.value } };
   }
@@ -495,7 +532,8 @@
     var results = {}, ok = [];
     (rules.strategies || []).forEach(function (s) {
       var r = simulate(household, rules, {
-        strategyId: s.id, extraMonthlyCents: o.extraMonthlyCents
+        strategyId: s.id, extraMonthlyCents: o.extraMonthlyCents,
+        stopAfter: o.stopAfter, highInterestRate: o.highInterestRate, asOf: o.asOf
       });
       results[s.id] = r;
       if (Money.isOk(r)) ok.push(r);
@@ -674,6 +712,8 @@
     simulate: simulate,
     compareStrategies: compareStrategies,
     milestones: milestones,
+    inClass: inClass,
+    STOP_CLASSES: STOP_CLASSES,
     rankRate: rankRate,
     freeMonthlyCents: freeMonthlyCents,
     realizedFreeMonthlyCents: realizedFreeMonthlyCents,

@@ -12077,6 +12077,59 @@ walk with three households (debts only, the demo persona, the persona
 with three closed months) reading the two rows, the hint, the
 placeholder and both rings, and a typed figure taking over.
 
+## D-191 — Debt Payoff: a stop line, and the payment says what it is built from
+
+**Why.** The owner: "once I only have student loans I don't really plan
+on paying that off any time soon, I'd just stick with minimums due to
+the low interest rate. Build a stop gap thing." And, of the extra box:
+"does 1000 mean above minimums? That system needs to be clearer." And a
+screenshot showing the box reading "$ $1,000".
+
+**Decision.** The plan card gains one select, "Keep the extra going
+until": everything is gone (as before), the cards are gone, or anything
+at the FOO high-interest rate or more is gone. Once nothing of the chosen
+class is live, `Debt.simulate` stops the extra AND stops rolling freed
+minimums on: from that month each remaining debt gets its own minimum and
+no more, which is what "just stick with minimums" means. The result
+carries `stopMonth` and `monthlyBudgetAfterStopCents`; the card reads
+"Per month $1,710, then $210", says when the stop comes and when the rest
+is gone, and the interest ring over the plan counts the long tail. The
+class predicate (`Debt.inClass`) is the one the finish lines use, so the
+line that says "cards gone" and the stop that says "when the cards are
+gone" cannot disagree. A stop whose class is empty from the start stops
+in month 1, minimums alone, and the card says so. Against minimums alone
+a stopped plan can be cheaper and later at once, so that row says both
+and the "sooner by" row is never a negative. The comparison and the
+held-back check run with the same options (`simOpts`), so every figure
+in the room is the same plan. The choice is a preference
+(`Prefs` key `debt.stopAfter`), not household data: it is how this
+person reads the plan, and it survives a reload.
+
+The extra box is labelled "Extra each month, on top of the minimums";
+the hints say "on top of the minimums" and name them; the Per month row's
+note spells out the sum every time: the minimums as typed on each line
+(and how many the card rule worked out), plus the extra and where it
+came from. A typed extra shows digits only, since the shell's affix
+already carries the dollar sign. The estimate row, when short, says to
+take debt payments out of spending in Cash Flow if they were counted
+there, whether or not a figure is typed.
+
+Hand check on the example: the card falls in month 3 either way; with
+the stop, $18,400 at 5.5% on its $210 minimum is gone in 8 years 8
+months, interest $4,540 against $782 for the full plan and $6,639 for
+minimums alone; 11 months later than minimums alone, because the card's
+freed $95 no longer rolls on.
+
+**Compatibility note.** Nothing stored on the household changes. The
+plan result gains `stopAfter`, `stopMonth`, `monthlyBudgetAfterStopCents`,
+`minimumsCents`, `extraMonthlyCents` and `derivedMinimums`; a caller
+that never passes `stopAfter` sees `stopMonth` null and the same
+numbers as before.
+
+Gate for this commit: unit 27157; render, forms and features on the
+room; a phone walk picking each stop, reloading to find it kept, typing
+an extra and reading the digits-only box and the on-top hint.
+
 ---
 
 # The Dungeons & Dividends entries

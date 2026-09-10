@@ -787,6 +787,45 @@ const RULES = TABLES.debtRules;
   checkTrue('spending past the pay: the plan gets zero and the shortfall is named, never a negative extra', capTight.cents === 0 && capTight.shortCents > 0 && capTight.estimate.value < 0);
 })();
 
+/* -- The stop line (D-191) ------------------------------------------------- */
+(function () {
+  section('Debt: the extra stops once the dear debt is gone (D-191)');
+  const RULES = TABLES.debtRules;
+  const hh = Demo.build();
+  const full = Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 100000 });
+  const stop = Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 100000, stopAfter: 'cards' });
+  const mins = Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 0 });
+  checkTrue('no stop asked for: nothing changes', full.stopMonth === null && full.stopAfter === null && full.monthlyBudgetAfterStopCents === null);
+  const cardMonth = full.payoffs.filter(p => p.label === 'Credit card')[0].month;
+  check('the card falls in the same month either way', stop.payoffs.filter(p => p.label === 'Credit card')[0].month, cardMonth);
+  check('the stop is the month after the last card', stop.stopMonth, cardMonth + 1);
+  check('...and from then the budget is the loan\'s own minimum', stop.monthlyBudgetAfterStopCents, hh.debts.filter(d => d.type === 'student_loan')[0].minPaymentCents);
+  checkTrue('the rest takes longer than the full plan', stop.value > full.value);
+  checkTrue('...and longer than minimums alone, because the freed minimum no longer rolls on', stop.value > mins.value);
+  checkTrue('interest sits between the full plan and minimums alone', stop.totalInterestCents > full.totalInterestCents && stop.totalInterestCents < mins.totalInterestCents);
+  /* Hand check: $18,400 at 5.5% on $210 a month after four months of
+     minimums clears in about 105 months; the loop says the same. */
+  checkTrue('hand check: the loan on its minimum is gone in eight to nine years', stop.value >= 100 && stop.value <= 110);
+  const noCards = Schema.createHousehold({ people: hh.people, debts: hh.debts.filter(d => d.type !== 'credit_card') });
+  const none = Debt.simulate(noCards, RULES, { strategyId: 'avalanche', extraMonthlyCents: 100000, stopAfter: 'cards' });
+  check('no cards listed: the stop comes in month 1, minimums alone', none.stopMonth, 1);
+  check('...at the loan\'s minimum', none.monthlyBudgetAfterStopCents, none.minimumsCents);
+  const high = Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 100000, stopAfter: 'highInterest', highInterestRate: 0.075 });
+  check('the high-rate stop uses the same class as the finish line', high.stopMonth, stop.stopMonth);
+  check('...and no threshold means nothing is high-rate: month 1', Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 100000, stopAfter: 'highInterest' }).stopMonth, 1);
+  check('an unknown stop is ignored', Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 100000, stopAfter: 'everything' }).stopMonth, null);
+  checkTrue('inClass is one predicate for both', Debt.inClass(hh.debts[0], 'cards') === (hh.debts[0].type === 'credit_card') && Debt.inClass({ type: 'auto', rate: 0.08 }, 'highInterest', 0.075) && !Debt.inClass({ type: 'auto', rate: 0.05 }, 'highInterest', 0.075));
+  const cmp = Debt.compareStrategies(hh, RULES, { extraMonthlyCents: 100000, stopAfter: 'cards' });
+  checkTrue('the comparison carries the stop through to every ordering', Object.keys(cmp.results).every(id => cmp.results[id].stopMonth !== null));
+  check('the plan says what its minimums and extra were', full.minimumsCents + full.extraMonthlyCents, full.monthlyBudgetCents);
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
+  checkTrue('the room: one select, built once, remembered as a preference', /<select id="f-stop">/.test(page) && /Prefs\.get\('debt\.stopAfter'/.test(page) && /Prefs\.set\('debt\.stopAfter'/.test(page));
+  checkTrue('...every simulation the room runs shares the options, bar the minimums-only baseline', /function simOpts\(extra\)/.test(page) && (page.match(/Debt\.simulate\([^)]*\{ strategyId: strategyId/g) || []).length === 1 && /extraMonthlyCents: 0 \}\);/.test(page) && /compareStrategies\(scoped\(h\), RULES, simOpts\(/.test(page));
+  checkTrue('...and with a stop the room never prints a negative "sooner by"', /plan\.stopMonth === null\) \{\s*rows\.push\(\['Saved vs\. minimums only'/.test(page) && /Against minimums only/.test(page));
+  checkTrue('...the extra is said to sit on top of the minimums, and the per-month figure says what it is built from', /Extra each month, on top of the minimums/.test(page) && /function perMonthNote\(plan, h\)/.test(page) && /the minimums as typed on each line/.test(page));
+  checkTrue('...a typed extra shows digits only, the shell carries the dollar sign', /formatCents\(extraCents\)\.replace\(\/\^\\\$\/, ''\)/.test(page));
+})();
+
 /* -- Strategy ordering ---------------------------------------------------- */
 
 function threeDebtHousehold() {
