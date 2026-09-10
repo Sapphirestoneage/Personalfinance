@@ -203,6 +203,12 @@
     'expenses.monthlyEssential.trackedValueCents':   { class: 'raw',    unit: 'cents',   period: 'monthly', source: 'tracked', note: 'LEGACY, unread since D-172' },
     'expenses.monthlyEssential.divergenceCents':     { class: 'computed', unit: 'cents', period: 'monthly', note: 'now the split’s lines minus the four typed numbers (Schema.expenseDivergenceCents, D-172)' },
     'expenses.entries[].categoryId':             { class: 'raw',        unit: 'enum',    note: 'an id from data/expense_categories.json' },
+    'expenses.entries[].cadence':                { class: 'computed',   unit: 'enum',    values: ['monthly', 'annual', 'oneoff'], note: 'read off period by Schema.cadenceOf, never stored: monthly, or oneoff for a dated one-off. 15.5, D-181' },
+    'expenses.annual[].label':                   { class: 'raw',        unit: 'text',    note: 'a named yearly cost: insurance, gifts, registration. Owned by Cash Flow. 15.5, D-181' },
+    'expenses.annual[].bucket':                  { class: 'raw',        unit: 'enum',    values: ['food', 'accommodation', 'transportation', 'wants'], note: 'the bucket it sits inside; a twelfth joins that bucket every month. 15.5, D-181' },
+    'expenses.annual[].amountCents':             { class: 'raw',        unit: 'cents',   period: 'annual', note: 'a year of it. 15.5, D-181' },
+    'expenses.annual[].monthDue':                { class: 'raw',        unit: 'month',   note: '1 to 12: the month it is paid; the Money Calendar draws it there. null = spread only. 15.5, D-181' },
+    'expenses.annual[].cadence':                 { class: 'raw',        unit: 'enum',    values: ['annual'], note: 'always annual. 15.5, D-181' },
     'expenses.entries[].amountCents':            { class: 'raw',        unit: 'cents' },
     'expenses.entries[].period':                 { class: 'raw',        unit: 'enum',    values: ['monthly', 'once'] },
     'expenses.entries[].source':                 { class: 'raw',        unit: 'enum',    values: ['manual', 'imported', 'rerank', 'log'], note: 'SPEC.md §12.5; rerank = a custom cost line typed on The Rerank, D-085; log = a dated occurrence logged in the Expenses section, counted by the budget as an actual and never as the typical month, D-128' },
@@ -1141,6 +1147,64 @@
   function centsOrNull(v) { return v === undefined ? null : v; }
   function fatLine(fields) { var f = fields || {}; return { monthlyCents: centsOrNull(f.monthlyCents) }; }
 
+  /* ---- 15.5: cadence, and the named yearly lines (D-181) ------------------
+     Every line has a cadence: monthly, annual or oneoff. For the four
+     buckets and the log it is READ off what is already stored (a monthly
+     bucket, a logged entry's period), never stored twice. The one new
+     store is `expenses.annual[]`: named yearly costs (insurance, gifts,
+     registration) that sit inside the bucket they belong to and are
+     pro-rated into the month everywhere but the Money Calendar, which
+     draws each on its month. The switch `annualLines` (default on) folds
+     them away: off, they count nowhere. */
+  var CADENCES = ['monthly', 'annual', 'oneoff'];
+  var ANNUAL_BUCKETS = ['food', 'accommodation', 'transportation', 'wants'];
+  function createAnnualLine(fields) {
+    var f = fields || {};
+    var month = Money.isEntered(f.monthDue) ? Math.round(f.monthDue) : null;
+    return {
+      id: f.id || newId('yr'),
+      label: typeof f.label === 'string' && f.label ? f.label : null,
+      bucket: ANNUAL_BUCKETS.indexOf(f.bucket) >= 0 ? f.bucket : 'wants',
+      amountCents: Money.isEntered(f.amountCents) ? f.amountCents : null,
+      monthDue: month !== null && month >= 1 && month <= 12 ? month : null,
+      cadence: 'annual'
+    };
+  }
+  /** The cadence of any line: a bucket or a monthly entry is monthly, a
+      yearly line is annual, a dated one-off is oneoff. Read, never stored. */
+  function cadenceOf(record) {
+    var r = record || {};
+    if (r.cadence && CADENCES.indexOf(r.cadence) >= 0) return r.cadence;
+    if (r.period === 'once' || r.frequency === 'once') return 'oneoff';
+    return 'monthly';
+  }
+  function featuresModule() {
+    if (typeof module === 'object' && module.exports) { try { return require('./features.js'); } catch (e) { return null; } }
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    return g && g.SLAF && g.SLAF.Features ? g.SLAF.Features : null;
+  }
+  function annualLinesOn(household) {
+    var F = featuresModule();
+    /* No switch table yet (a room that never loaded it) reads as the
+       default, on; a loaded table is the person's answer. */
+    if (!F || typeof F.on !== 'function' || typeof F.get !== 'function' || !F.get('annualLines')) return true;
+    return !!F.on('annualLines', household);
+  }
+  function annualLines(household) {
+    var e = household && household.expenses;
+    return ((e && e.annual) || []).map(createAnnualLine).filter(function (l) { return Money.isEntered(l.amountCents) && l.amountCents > 0; });
+  }
+  /** The yearly lines as a month: the sum over twelve, by bucket. */
+  function annualMonthlyCents(household) {
+    var on = annualLinesOn(household);
+    var lines = on ? annualLines(household) : [];
+    var byBucket = {}; ANNUAL_BUCKETS.forEach(function (b) { byBucket[b] = 0; });
+    var total = 0;
+    lines.forEach(function (l) { byBucket[l.bucket] += l.amountCents; total += l.amountCents; });
+    var monthly = {}; ANNUAL_BUCKETS.forEach(function (b) { monthly[b] = Math.round(byBucket[b] / 12); });
+    return { on: on, lines: lines, count: lines.length, annualCents: total, monthlyCents: Math.round(total / 12), byBucketAnnualCents: byBucket, byBucketMonthlyCents: monthly };
+  }
+
   /** The four buckets read off the typical-month lines, when someone has
    *  split the month that far. A bucket with no line is null, not zero. */
   function fatFromLines(entries) {
@@ -1165,7 +1229,9 @@
       wants: { totalCents: centsOrNull(wants.totalCents), therapy: wants.therapy ? fatLine(wants.therapy) : null },
       /* Cash Flow's dated log and its optional breakdown. ONE store,
          transaction-shaped (SPEC.md §12.5). See createExpenseEntry(). */
-      entries: entries
+      entries: entries,
+      /* Named yearly lines (15.5). See createAnnualLine(). */
+      annual: (f.annual || []).map(createAnnualLine)
     };
     /* Migration (D-172): a household saved before the four buckets existed
        carried one monthly figure - tracked over estimated - and maybe a
@@ -1220,6 +1286,20 @@
       therapy: e.wants.therapy ? r(e.wants.therapy.monthlyCents, null, 'therapyMonthly', 'Therapy') : null,
       therapyTracked: !!e.wants.therapy
     };
+    /* 15.5: the yearly lines sit inside their bucket, a twelfth each month.
+       A bucket with only a yearly line is that twelfth, source 'annual'. */
+    var yr = annualMonthlyCents(household);
+    out.annual = yr;
+    if (yr.on && yr.count) {
+      ANNUAL_BUCKETS.forEach(function (k) {
+        var share = yr.byBucketMonthlyCents[k];
+        if (!share) return;
+        var cur = out[k];
+        out[k] = Money.isOk(cur)
+          ? Money.ok(cur.value + share, { source: cur.source, monthlyTypedCents: cur.value, annualMonthlyCents: share })
+          : Money.ok(share, { source: 'annual', monthlyTypedCents: null, annualMonthlyCents: share });
+      });
+    }
     /* Lines a scenario block laid on the month (D-178) - never stored,
        present only on the household Spine.householdAt returns. They join
        the total and are listed apart, so a reader can see them. */
@@ -2481,6 +2561,13 @@
     INTAKE_ASSET_CATEGORIES: INTAKE_ASSET_CATEGORIES,
     ORIENTATIONS: ORIENTATIONS,
     INCOME_TYPES: INCOME_TYPES,
+    CADENCES: CADENCES,
+    ANNUAL_BUCKETS: ANNUAL_BUCKETS,
+    createAnnualLine: createAnnualLine,
+    cadenceOf: cadenceOf,
+    annualLines: annualLines,
+    annualLinesOn: annualLinesOn,
+    annualMonthlyCents: annualMonthlyCents,
     INCOME_TYPE_LABELS: INCOME_TYPE_LABELS,
     survivesJobLoss: survivesJobLoss,
     survivingIncomeSources: survivingIncomeSources,

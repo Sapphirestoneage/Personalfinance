@@ -112,6 +112,14 @@
       var s = shareOf(total, takeHomeMonthly(h, T), 'takeHome');
       return Money.isOk(s) ? Money.ok(s.value, { share: pct(s.value), amount: money(total) }) : s;
     },
+    /* 15.5: the sinking fund. The yearly lines over twelve: set that much
+       aside each month and nothing surprises you. */
+    sinkingfund: function (h) {
+      var yr = Schema.annualMonthlyCents(h);
+      if (!yr.on) return Money.incomplete('The "Also once a year" switch is off in Settings.', ['annualLines']);
+      if (!yr.count) return Money.incomplete('Add a yearly cost in Cash Flow (insurance, gifts, registration) to see this.', ['annualLines']);
+      return Money.ok(yr.monthlyCents, { amount: money(yr.monthlyCents), total: money(yr.annualCents), count: yr.count + (yr.count === 1 ? ' yearly cost' : ' yearly costs') });
+    },
     fiftythirty: function (h, T) {
       var th = takeHomeMonthly(h, T), spend = Schema.monthlyExpensesCents(h);
       if (!Money.isOk(th)) return th;
@@ -433,7 +441,7 @@
       case 'ymoyl': return m.hours + ' h';
       case 'bucket': case 'rentbuy': return m.years;
       case 'simplemath': return m.years + ' years';
-      case 'snowball': case 'househack': case 'fiveyear': case 'headroom': return money(m.value);
+      case 'snowball': case 'househack': case 'fiveyear': case 'headroom': case 'sinkingfund': return money(m.value);
       case 'rhw': case 'returnonhassle': return Money.formatCents(m.value, { decimals: 2 }) + '/h';
       case 'fourbuckets': return m.filled + ' of 4';
       default: return pct(m.value);

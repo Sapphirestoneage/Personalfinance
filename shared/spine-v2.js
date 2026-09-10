@@ -871,6 +871,22 @@
     save(); notify();
     return JSON.parse(JSON.stringify(e));
   }
+  /* 15.5: the named yearly lines. Owned by Cash Flow. */
+  function upsertAnnualLine(line) {
+    var h = load();
+    h.expenses.annual = h.expenses.annual || [];
+    var merged = upsertIn(h.expenses.annual, Schema.createAnnualLine(line));
+    save(); notify();
+    return merged;
+  }
+  function removeAnnualLine(id) {
+    var h = load();
+    var list = h.expenses.annual || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) { list.splice(i, 1); save(); notify(); return true; }
+    }
+    return false;
+  }
   function setTherapyTracked(on) {
     var h = load();
     h.expenses.wants.therapy = on ? (h.expenses.wants.therapy || { monthlyCents: null }) : null;
@@ -1666,6 +1682,8 @@
     removeById: removeById,
     setMonthlyExpenses: setMonthlyExpenses,
     setFat: setFat,
+    upsertAnnualLine: upsertAnnualLine,
+    removeAnnualLine: removeAnnualLine,
     setTherapyTracked: setTherapyTracked,
     setFatFromLines: setFatFromLines,
     upsertGoal: upsertGoal,

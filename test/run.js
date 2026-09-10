@@ -9838,7 +9838,7 @@ section('Lenses: a rule re-reads the numbers and returns a verdict (D-175)');
 
   /* The table: every lens whole, the pair that makes it an advice translator mandatory. */
   check('seven domains', table.domains.length, 7);
-  checkTrue('thirty-three lenses, ids unique', ids.length === 33 && new Set(ids).size === 33);
+  checkTrue('thirty-four lenses, ids unique', ids.length === 34 && new Set(ids).size === 34);
   checkTrue('every lens has a non-empty forWhom AND notForWhom — a lens without them does not ship',
     table.lenses.every(l => typeof l.forWhom === 'string' && l.forWhom.trim().length > 10 && typeof l.notForWhom === 'string' && l.notForWhom.trim().length > 10));
   checkTrue('every lens has id, domain, name, plain, rule, reads, verdict, source',
@@ -9904,7 +9904,7 @@ section('Lenses: a rule re-reads the numbers and returns a verdict (D-175)');
   const one = Lenses.renderAll(demo, T, { more: false });
   check('More ways off: exactly seven cards, one a domain', (one.match(/class="lens-card/g) || []).length, 7);
   checkTrue('...and each is its domain\'s default', table.domains.every(d => one.indexOf('data-lens="' + d.default + '"') > -1));
-  check('More ways on: all thirty-three', (Lenses.renderAll(demo, T, { more: true }).match(/class="lens-card/g) || []).length, 33);
+  check('More ways on: all thirty-four', (Lenses.renderAll(demo, T, { more: true }).match(/class="lens-card/g) || []).length, 34);
 
   /* Framework names are a preference, never a household fact. */
   Prefs.reset();
@@ -10724,6 +10724,84 @@ section('15.4: income by type, take-home per source, what survives a job loss (D
   checkTrue('Real Hourly Wage paints a line per source', rhw.indexOf('perSource') > -1 && rhw.indexOf('id="per-source"') > -1);
   const runway = fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8');
   checkTrue('Runway defaults other income to what survives', runway.indexOf('survivingGrossAnnualIncomeCents') > -1);
+  Spine.reset();
+})();
+
+/* ==========================================================================
+   15.5: recurring, annual and one-off lines (D-181)
+   ========================================================================== */
+section('15.5: cadence on every line, the yearly lines, the calendar and the sinking fund (D-181)');
+(function () {
+  const Spine = SpineMain;
+  const Features = require(path.join(ROOT, 'shared/features.js'));
+  const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
+  const Lenses = require(path.join(ROOT, 'shared/lenses.js'));
+  const Cal = require(path.join(ROOT, 'engines/calendar.js'));
+  Features.use(JSON.parse(fs.readFileSync(path.join(ROOT, 'data/features.json'), 'utf8')));
+  Prefs.reset();
+
+  check('three cadences', Schema.CADENCES.join(','), 'monthly,annual,oneoff');
+  check('a monthly bucket line is monthly', Schema.cadenceOf({ period: 'monthly' }), 'monthly');
+  check('a dated one-off is oneoff', Schema.cadenceOf(Schema.createExpenseEntry({ period: 'once', amountCents: 100 })), 'oneoff');
+  check('a yearly line is annual', Schema.cadenceOf(Schema.createAnnualLine({ amountCents: 100 })), 'annual');
+  check('a one-off income entry is oneoff', Schema.cadenceOf(Schema.createIncomeEntry({ frequency: 'once', amountCents: 100 })), 'oneoff');
+  check('a pay source is monthly', Schema.cadenceOf(Schema.createIncomeSource({ frequency: 'fortnightly' })), 'monthly');
+  const line = Schema.createAnnualLine({ label: 'Car insurance', bucket: 'transportation', amountCents: 120000, monthDue: 3 });
+  check('a yearly line keeps its bucket and month', line.bucket + '/' + line.monthDue + '/' + line.cadence, 'transportation/3/annual');
+  check('an unknown bucket reads as everything else', Schema.createAnnualLine({ amountCents: 1, bucket: 'pets' }).bucket, 'wants');
+  check('a month out of range reads as spread only', Schema.createAnnualLine({ amountCents: 1, monthDue: 14 }).monthDue, null);
+  check('the store is on expenses.annual, empty by default', Schema.createHousehold({}).expenses.annual.length, 0);
+  checkTrue('the lines are catalogued', !!Schema.FIELDS['expenses.annual[].amountCents'] && !!Schema.FIELDS['expenses.annual[].monthDue'] && !!Schema.FIELDS['expenses.entries[].cadence']);
+
+  /* The demo plus two yearly lines: a twelfth joins each bucket. */
+  const h = Demo.build();
+  h.expenses.annual = [line, Schema.createAnnualLine({ label: 'Gifts', bucket: 'wants', amountCents: 60000, monthDue: 12 })];
+  const f = Schema.fat(h);
+  check('getting around: 220 typed + 100 a month of insurance', f.transportation.value, 32000);
+  check('...and says which part is yearly', f.transportation.annualMonthlyCents, 10000);
+  check('everything else: 720 + 50 of gifts', f.wants.value, 77000);
+  check('the month: 3,150 + 150', f.totalCents.value, 330000);
+  check('monthlyExpensesCents carries it everywhere', Schema.monthlyExpensesCents(h).value, 330000);
+  const only = Schema.createHousehold({ expenses: { annual: [{ label: 'Registration', bucket: 'transportation', amountCents: 24000 }] } });
+  check('a bucket with only a yearly line is its twelfth', Schema.fat(only).transportation.value, 2000);
+  check('...source annual', Schema.fat(only).transportation.source, 'annual');
+  check('a line with no amount does not count', Schema.annualLines(Schema.createHousehold({ expenses: { annual: [{ label: 'x' }] } })).length, 0);
+  Features.set('annualLines', false);
+  check('switch off: the lines count nowhere', Schema.fat(h).totalCents.value, 315000);
+  check('...and say so', Schema.annualMonthlyCents(h).on, false);
+  Features.set('annualLines', null);
+
+  /* The calendar: drawn on the 1st of its month, and the twelfth leaves the spread. */
+  const T = Object.assign({}, TABLES, { calendarConventions: require(path.join(ROOT, 'data/calendar_conventions.json')), expenseCategories: require(path.join(ROOT, 'data/expense_categories.json')) });
+  const march = Cal.month(Object.assign({}, h, { calendar: { cadence: 'monthly', nextPaydayDay: 15 } }), T, { now: '2026-02-20' });
+  checkTrue('the window finds the March insurance', Money.isOk(march) && march.annualHits.length === 1 && march.annualHits[0].date === '2026-03-01', Money.isOk(march) ? JSON.stringify(march.annualHits) : march.reason);
+  check('...for the whole year of it', Money.isOk(march) && march.annualHits[0].cents, 120000);
+  check('...and the month spread is the month less the yearly twelfth', Money.isOk(march) && march.spendCents - march.annualMonthlyCents - march.listedCents, Money.isOk(march) && march.restCents);
+  const day = Money.isOk(march) ? march.days.filter(function (d) { return d.date === '2026-03-01'; })[0] : null;
+  check('the 1st of March carries it as a bill', day && day.billsCents, 120000);
+  const weeks = Cal.weeks(march);
+  const cell = weeks.map(function (r) { return r.filter(function (c) { return c && c.date === '2026-03-01'; })[0]; }).filter(Boolean)[0];
+  checkTrue('...drawn as a yearly mark', cell && cell.bills.some(function (b) { return b.kind === 'annual' && /Car insurance/.test(b.label); }));
+  const quiet = Cal.month(Object.assign({}, h, { calendar: { cadence: 'monthly', nextPaydayDay: 15 } }), T, { now: '2026-05-05' });
+  check('a window with no yearly month has no hit', Money.isOk(quiet) && quiet.annualHits.length, 0);
+
+  /* The lens. */
+  const lens = Lenses.get('sinkingfund');
+  checkTrue('the sinking fund is a budgeting lens', lens && lens.domain === 'budgeting');
+  const m = Lenses.measure('sinkingfund', h, T);
+  check('150 a month set aside', m.value, 15000);
+  checkTrue('...with the verdict in plain words', /Set aside \$150 a month so nothing surprises you: 2 yearly costs, \$1,800 a year\./.test(Lenses.verdictFor ? Lenses.verdictFor(lens, m).text : Lenses.render('sinkingfund', h, T)), Lenses.render('sinkingfund', h, T).slice(0, 200));
+  check('no yearly lines: incomplete, saying where to add one', Lenses.measure('sinkingfund', Demo.build(), T).status, 'incomplete');
+
+  /* The rooms. */
+  const cf = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
+  checkTrue('Cash Flow has the fold, built once, with bucket chips', cf.indexOf('id="annual-fold"') > -1 && cf.indexOf('data-choices="y-bucket"') > -1 && /LIVE-FORM: built once\. -->\n    <details class="drawer" id="annual-fold"/.test(cf));
+  checkTrue('...writing through the spine', cf.indexOf('Spine.upsertAnnualLine(') > -1 && cf.indexOf('Spine.removeAnnualLine(') > -1);
+  checkTrue('...and hides behind the switch', cf.indexOf('Schema.annualLinesOn(h)') > -1);
+  const cal = fs.readFileSync(path.join(ROOT, 'rooms/calendar.html'), 'utf8');
+  checkTrue('the calendar draws yearly marks', cal.indexOf('is-annual') > -1);
+  checkTrue('the spine exports the two writers', typeof Spine.upsertAnnualLine === 'function' && typeof Spine.removeAnnualLine === 'function');
+  Prefs.reset();
   Spine.reset();
 })();
 

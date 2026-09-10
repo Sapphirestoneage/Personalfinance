@@ -187,6 +187,21 @@
     if (!Money.isOk(cash)) return Money.incomplete('Add your cash & savings in Start Here — today’s cash is where the month starts.', cash.missing || ['cashSavings']);
     var spend = Schema.monthlyExpensesCents(h);
     if (!Money.isOk(spend)) return Money.incomplete(spend.reason, spend.missing);
+    /* 15.5: the yearly lines are drawn on their month (the 1st), not spread:
+       their twelfth comes out of the month's spread here and nowhere else. */
+    var annual = Schema.annualMonthlyCents(h);
+    var annualHits = [];
+    (annual.lines || []).forEach(function (l) {
+      if (l.monthDue === null) return;
+      months.forEach(function (ym) {
+        if (parseInt(ym.slice(5, 7), 10) !== l.monthDue) return;
+        var date = ym + '-01';
+        if (indexOfDate[date] === undefined) return;
+        annualHits.push({ id: l.id, label: l.label || 'A yearly cost', cents: l.amountCents, index: indexOfDate[date], date: date, dom: 1, kind: 'annual', dateKind: 'estimated', potential: false });
+      });
+    });
+    var annualAt = {};
+    annualHits.forEach(function (x) { annualAt[x.index] = (annualAt[x.index] || 0) + x.cents; });
     var takeHome = Tier0.takeHomeMonthlyCents(h, tables);
     if (!ledgerDrives && !Money.isOk(takeHome)) return Money.incomplete('Add your income in Start Here to place the paydays: ' + (takeHome.reason || ''), takeHome.missing);
 
@@ -227,7 +242,7 @@
     var billsCents = bills.reduce(function (t, b) { return t + b.cents; }, 0);
     var payLaterCents = payLater.reduce(function (t, p) { return t + p.cents; }, 0);
     var listed = billsCents + payLaterCents + logMonthlyCents;
-    var rest = spend.value - listed;
+    var rest = spend.value - annual.monthlyCents - listed;
     var billsExceedSpending = rest < 0;
     if (billsExceedSpending) rest = 0;
 
@@ -244,7 +259,7 @@
     for (i = 0; i < dates.length; i++) {
       var dt = dates[i];
       var pay = (paydayAt[i] ? perPayday : 0) + (inAt[i] || 0);
-      var out = logAt[i] || 0, plOut = 0;
+      var out = (logAt[i] || 0) + (annualAt[i] || 0), plOut = 0;
       bills.forEach(function (b) {
         if (clampDay(b.day, dt.dim) !== dt.dom) return;
         out += b.cents;
@@ -289,6 +304,7 @@
       cadence: cadence, cadenceLabel: cadence ? conv.cadences[cadence].label : null, nextPaydayDay: nextDay,
       paydaySource: ledgerDrives ? 'ledger' : 'cadence',
       incomeHits: incomeHits, logHits: logHits, logMonthlyCents: logMonthlyCents,
+      annualHits: annualHits, annualMonthlyCents: annual.monthlyCents, annualCount: annual.count,
       potentialInCents: potentialIn, potentialOutCents: potentialOut,
       bills: bills.map(function (x) { var hit = firstHitOf(x.id, billHits); return { id: x.id, label: x.label, cents: x.cents, day: x.day, firstDom: hit ? hit.dom : null, firstDate: hit ? hit.date : null, firstIndex: hit ? hit.index : null }; }),
       payLater: payLater.map(function (x) { var hit = firstHitOf(x.id, payLaterHits); return { id: x.id, label: x.label, cents: x.cents, day: x.day, instalmentsLeft: x.instalmentsLeft, firstDom: hit ? hit.dom : null, firstDate: hit ? hit.date : null, firstIndex: hit ? hit.index : null }; }),
@@ -325,7 +341,8 @@
           .concat((result.incomeHits || []).filter(function (x) { return x.index === d.index; }).map(function (x) { return { label: x.label, cents: x.cents, kind: x.kind, dateKind: x.dateKind, potential: x.potential }; })),
         bills: result.billHits.filter(function (b) { return b.index === d.index; }).map(function (b) { return { label: b.label, cents: b.cents, kind: 'bill', dateKind: 'exact', potential: false }; })
           .concat(result.payLaterHits.filter(function (b) { return b.index === d.index; }).map(function (b) { return { label: b.label, cents: b.cents, kind: 'payLater', dateKind: 'exact', potential: false }; }))
-          .concat((result.logHits || []).filter(function (x) { return x.index === d.index; }).map(function (x) { return { label: x.label, cents: x.cents, kind: 'log', dateKind: x.dateKind, potential: x.potential, recurring: x.recurring }; })),
+          .concat((result.logHits || []).filter(function (x) { return x.index === d.index; }).map(function (x) { return { label: x.label, cents: x.cents, kind: 'log', dateKind: x.dateKind, potential: x.potential, recurring: x.recurring }; }))
+          .concat((result.annualHits || []).filter(function (x) { return x.index === d.index; }).map(function (x) { return { label: x.label + ' (yearly)', cents: x.cents, kind: 'annual', dateKind: 'estimated', potential: false }; })),
         isLow: d.index === result.lowIndex, belowZero: d.balanceCents < 0,
         tight: !!(result.tight && d.index >= result.tight.fromIndex && d.index <= result.tight.toIndex),
         today: d.index === 0

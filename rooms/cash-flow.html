@@ -81,6 +81,12 @@
   @media (max-width: 720px) { .fat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .fat-grid .slaf-field { margin: 0; }
   .fat-grid .slaf-hint { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 4px; }
+  .annual-list { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
+  .annual-list li { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); flex-wrap: wrap; }
+  .annual-list li:first-child { border-top: none; }
+  .annual-list small { color: var(--color-text-muted); font-size: var(--text-xs); }
+  .annual-list .amt { font-variant-numeric: tabular-nums; }
+  .choices .choice[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); }
   .fat-toggle { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-3); cursor: pointer; min-height: 32px; }
   .fat-toggle input { width: 18px; height: 18px; margin: 0; accent-color: var(--color-accent); }
   .fat-total { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
@@ -175,6 +181,33 @@
       </div>
       <p class="fat-total" id="fat-total"></p>
     </div>
+
+    <!-- 15.5: named yearly costs that sit inside their bucket (D-181). The
+         form is built once and only its values are ever written; the list
+         holds a remove button per row and nothing typed, so it rebuilds
+         freely. Hidden when the switch `annualLines` is off.
+         LIVE-FORM: built once. -->
+    <details class="drawer" id="annual-fold" hidden>
+      <summary>Also once a year <small>Insurance, gifts, registration: a twelfth joins its bucket each month; the calendar shows it on its month.</small></summary>
+      <ul class="annual-list" id="annual-list"></ul>
+      <p class="slaf-hint" id="annual-sum" style="margin:var(--space-2) 0"></p>
+      <div class="form-grid" id="annual-form">
+        <label class="slaf-field"><span class="slaf-label">What it is</span>
+          <span class="slaf-input-shell"><input type="text" id="y-label" placeholder="e.g. Car insurance" aria-label="What the yearly cost is"/></span></label>
+        <label class="slaf-field"><span class="slaf-label">A year</span>
+          <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="y-amount" placeholder="e.g. 1,200" aria-label="A year of it"/></span></label>
+        <div class="slaf-field wide"><span class="slaf-label">Which bucket</span>
+          <div class="choices" id="y-bucket" data-choices="y-bucket">
+            <button type="button" class="choice" data-value="food">Food</button>
+            <button type="button" class="choice" data-value="accommodation">Rent or mortgage</button>
+            <button type="button" class="choice" data-value="transportation">Getting around</button>
+            <button type="button" class="choice" data-value="wants" aria-pressed="true">Everything else</button>
+          </div></div>
+        <label class="slaf-field"><span class="slaf-label">Paid in</span>
+          <span class="slaf-input-shell"><select id="y-month" aria-label="The month it is paid"><option value="">Spread only</option><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></span></label>
+        <div class="slaf-field"><span class="slaf-label">&nbsp;</span><button type="button" class="slaf-btn" id="btn-annual-add">Add the yearly cost</button></div>
+      </div>
+    </details>
 
     <details class="drawer" id="split-more">
     <summary>Split it further <small>Optional: the month by category, for the chart, the floor and the Rerank.</small></summary>
@@ -308,6 +341,7 @@
 <script src="../shared/gate.js"></script>
 <script src="../shared/guide.js"></script>
 <script src="../shared/prefs.js"></script>
+<script src="../shared/features.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
@@ -537,8 +571,54 @@
     });
   }
 
+  /* ---------- the yearly lines (15.5, D-181) ---------------------------- */
+  var BUCKET_LABEL = { food: 'Food', accommodation: 'Rent or mortgage', transportation: 'Getting around', wants: 'Everything else' };
+  var MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function paintAnnual(h) {
+    var fold = el('annual-fold');
+    if (!fold) return;
+    var on = Schema.annualLinesOn(h);
+    fold.hidden = !on;
+    if (!on) return;
+    var yr = Schema.annualMonthlyCents(h);
+    el('annual-list').innerHTML = yr.lines.map(function (l) {
+      return '<li><span><b>' + esc(l.label || 'A yearly cost') + '</b> <small>' + esc(BUCKET_LABEL[l.bucket]) + (l.monthDue ? ' · ' + MONTH_SHORT[l.monthDue - 1] : '') + '</small></span>'
+        + '<span class="amt">' + Money.formatCents(l.amountCents, { exact: true }) + ' a year <small>' + Money.formatCents(Math.round(l.amountCents / 12), { exact: true }) + '/mo</small></span>'
+        + '<button type="button" class="slaf-btn slaf-btn--quiet" data-annual-remove="' + esc(l.id) + '" aria-label="Remove ' + esc(l.label || 'this yearly cost') + '">Remove</button></li>';
+    }).join('');
+    el('annual-sum').textContent = yr.count
+      ? yr.count + (yr.count === 1 ? ' yearly cost, ' : ' yearly costs, ') + Money.formatCents(yr.annualCents, { exact: true }) + ' a year: ' + Money.formatCents(yr.monthlyCents, { exact: true }) + ' a month set aside means nothing surprises you.'
+      : 'Nothing yearly listed yet. A cost that lands once a year still costs a twelfth every month.';
+  }
+  function wireAnnual() {
+    var fold = el('annual-fold');
+    if (!fold) return;
+    el('y-bucket').addEventListener('click', function (evt) {
+      var b = evt.target.closest('.choice'); if (!b) return;
+      Array.prototype.forEach.call(el('y-bucket').querySelectorAll('.choice'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    });
+    el('btn-annual-add').addEventListener('click', function () {
+      var amount = Money.parseMoney(el('y-amount').value);
+      if (!Money.isEntered(amount) || amount <= 0) { el('y-amount').focus(); return; }
+      var bucket = (el('y-bucket').querySelector('.choice[aria-pressed="true"]') || {}).getAttribute ? el('y-bucket').querySelector('.choice[aria-pressed="true"]').getAttribute('data-value') : 'wants';
+      var month = el('y-month').value ? parseInt(el('y-month').value, 10) : null;
+      Spine.upsertAnnualLine({ label: el('y-label').value.trim() || null, amountCents: amount, bucket: bucket, monthDue: month });
+      el('y-label').value = ''; el('y-amount').value = ''; el('y-month').value = '';
+      render();
+    });
+    el('annual-list').addEventListener('click', function (evt) {
+      var b = evt.target.closest('[data-annual-remove]'); if (!b) return;
+      Spine.removeAnnualLine(b.getAttribute('data-annual-remove'));
+      render();
+    });
+    el('annual-form').addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter' && evt.target.matches('input')) { evt.preventDefault(); el('btn-annual-add').click(); }
+    });
+  }
+
   function paintInputs(h) {
     paintFat(h);
+    paintAnnual(h);
     var derived = document.querySelectorAll('[data-derived]');
     for (var d = 0; d < derived.length; d++) {
       derived[d].innerHTML = Ownership.inlineChip(derived[d].getAttribute('data-derived'), h, ROOM_ID);
@@ -1171,6 +1251,7 @@
   SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(render);
 
+  if (SLAF.Features && SLAF.Features.ready) SLAF.Features.ready().then(function () { render(); });   /* 15.5: the annualLines switch (D-181) */
   Reference.load().then(function (tables) {
     TABLES = tables;
     el('f-template').innerHTML = tables.budgetTemplates.templates.map(function (t) {
@@ -1179,6 +1260,7 @@
     el('f-template').value = templateId;
     buildInputs();
     wireFat();
+    wireAnnual();   /* 15.5 (D-181) */
     /* The split opens on its own when there are lines in it; closed, the
        page is the four numbers. */
     var lines0 = Schema.fatFromLines(Spine.getProfile().expenses.entries);

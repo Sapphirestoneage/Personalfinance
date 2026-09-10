@@ -1010,6 +1010,34 @@ const CASES = [
     }
   },
   {
+    /* 15.5: a yearly cost typed into the fold lands as a line, in its bucket,
+       and a twelfth of it joins the month (D-181). */
+    room: '/rooms/cash-flow.html',
+    container: '#annual-form',
+    seed: 'demo',
+    prepare: async (page) => { await page.evaluate(() => { document.getElementById('annual-fold').open = true; }); },
+    fields: [
+      { sel: '#y-label', type: 'Car insurance' },
+      { sel: '#y-amount', type: '1200' }
+    ],
+    expect: async (page) => {
+      await page.tap('#y-bucket .choice[data-value="transportation"]');
+      await page.selectOption('#y-month', '3');
+      await page.tap('#btn-annual-add');
+      await page.waitForTimeout(300);
+      const r = await page.evaluate(() => { const h = SLAF.Spine.getProfile(); const l = h.expenses.annual[0]; return { n: h.expenses.annual.length, label: l && l.label, cents: l && l.amountCents, bucket: l && l.bucket, month: l && l.monthDue, transport: SLAF.Schema.fat(h).transportation.value, rows: document.querySelectorAll('#annual-list li').length }; });
+      return [
+        ['the yearly line landed', r.n, 1],
+        ['with its name', r.label, 'Car insurance'],
+        ['a year of it, in cents', r.cents, 120000],
+        ['in the bucket tapped', r.bucket, 'transportation'],
+        ['paid in March', r.month, 3],
+        ['a twelfth joined getting around: 220 + 100', r.transport, 32000],
+        ['and it is listed', r.rows, 1]
+      ];
+    }
+  },
+  {
     /* The expense log's form on the same page: built once, saved on a tap. */
     room: '/rooms/cash-flow.html',
     container: '#log-form',

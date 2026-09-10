@@ -10889,6 +10889,60 @@ income, real-hourly-wage, runway, between-jobs and adventure; the phone
 forms gate; a phone-shaped tap walk through the chips in Start Here and the
 tables in the Income and Real Hourly Wage rooms.
 
+### 15.5 Recurring, annual and one-off lines (this commit)
+
+- **Cadence is read, not stored.** Every line already says what it is: a
+  bucket is a month, a logged entry has a `period` (monthly or once), a
+  ledger income entry a `frequency`. `Schema.cadenceOf(record)` reads
+  `monthly | annual | oneoff` off that; the one line that carries the
+  word itself is the new yearly line. A second stored field on every
+  entry would be a copy that can drift (the mapping rationale above).
+- **`expenses.annual[]`: the named yearly costs.** `{ id, label,
+  bucket, amountCents (a year), monthDue (1 to 12, or null = spread
+  only), cadence: 'annual' }`, owned by Cash Flow, written through
+  `Spine.upsertAnnualLine` / `removeAnnualLine`. Kept apart from the log
+  (`entries`) so nothing counts twice, and apart from the four typed
+  numbers so those stay four numbers.
+- **A twelfth joins its bucket everywhere.** `Schema.fat` adds each
+  line's twelfth to the bucket it sits in and says which part is yearly
+  (`annualMonthlyCents`); a bucket with only a yearly line is that
+  twelfth, source `annual`. `monthlyExpensesCents`, the budget, the FIRE
+  number, the runway and every lens read the month through `fat`, so all
+  of them carry it without a line of their own changing.
+- **Everywhere but the Money Calendar.** `Cal.month` draws each line on
+  the 1st of its month, for the whole year of it, marked estimated (the
+  day within the month is not known), and takes the twelfth back out of
+  the month's spread, so the calendar shows the lump and not the lump
+  plus its twelfth. A line with no month is spread only.
+- **The switch `annualLines` (Accuracy, default on)** folds the lines
+  away: off, `Schema.annualMonthlyCents(h).on` is false and nothing
+  counts them. A room that never loaded the switch table reads the
+  default (on); Cash Flow loads it through `Features.ready()`.
+- **The fold in Cash Flow: "Also once a year".** Under the four numbers,
+  a list of the lines (name, bucket, month, a year and a twelfth) with
+  Remove, and one form built once: what it is, a year of it, four bucket
+  chips, the month it is paid, Add. A yearly cost needs a name, so the
+  name is typed; everything else is a tap.
+- **The sinking fund is a lens, not a field.** `sinkingfund` in the
+  budgeting domain: the yearly lines over twelve, "Set aside $150 a
+  month so nothing surprises you: 2 yearly costs, $1,800 a year." No band:
+  it states, it does not judge. Thirty-four lenses now.
+- **Re-derived on the demo.** Car insurance 1,200 a year in March, gifts
+  600 in December: getting around 220 + 100 = 320, everything else 720 +
+  50 = 770, the month 3,150 + 150 = 3,300; a February window finds the
+  insurance on 1 March for 1,200 and spreads 3,300 − 150 less the listed
+  bills; a May window finds nothing; the lens says $150 a month.
+- **Compatibility note.** `expenses.annual` is a new list, empty by
+  default; a household saved before this commit reads as it did. Cash
+  Flow is the only writer.
+
+Gate for this commit: unit 25464 (a new section of 43 checks: cadence on
+every kind of line, the constructor, the buckets with and without a typed
+month, the switch off, the calendar in a month with and without a line,
+the lens, the rooms); dnd 5614; export 25; render on cash-flow, calendar
+and budget; the phone forms gate for Cash Flow with a new case that types
+a yearly cost into the fold and taps its bucket and month.
+
 ---
 
 # The Dungeons & Dividends entries
