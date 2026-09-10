@@ -1043,6 +1043,32 @@ const CASES = [
     }
   },
   {
+    /* A named line (D-193): typed as a year, kept as a month, listed under
+       subscriptions with the year it was known as. */
+    room: '/rooms/expenses.html',
+    container: '#line-form',
+    seed: 'demo',
+    fields: [
+      { sel: '#n-label', type: 'Streaming' },
+      { sel: '#n-amount', type: '120' }
+    ],
+    expect: async (page) => {
+      await page.selectOption('#n-every', 'annual');
+      await page.tap('#btn-line-add');
+      await page.waitForTimeout(300);
+      const r = await page.evaluate(() => { const h = SLAF.Spine.getProfile(); const l = h.expenses.entries.filter(e => e.descriptor === 'Streaming')[0]; return { n: !!l, cents: l && l.amountCents, every: l && l.every, typed: l && l.everyCents, cat: l && l.categoryId, rows: document.querySelectorAll('#subs-list li').length, sum: document.getElementById('subs-sum').textContent }; });
+      return [
+        ['the line landed', r.n, true],
+        ['a year of 120 is 10 a month', r.cents, 1000],
+        ['it remembers it was a year', r.every, 'annual'],
+        ['and the amount as typed', r.typed, 12000],
+        ['under subscriptions', r.cat, 'subscriptions'],
+        ['and it is listed', r.rows, 1],
+        ['with the month and the year', r.sum, '$10 a month · $120 a year']
+      ];
+    }
+  },
+  {
     /* The expense log's form on the same page: built once, saved on a tap. */
     room: '/rooms/cash-flow.html',
     container: '#log-form',

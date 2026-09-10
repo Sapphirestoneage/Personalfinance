@@ -216,6 +216,8 @@
     'expenses.annual[].cadence':                 { class: 'raw',        unit: 'enum',    values: ['annual'], note: 'always annual. 15.5, D-181' },
     'expenses.entries[].amountCents':            { class: 'raw',        unit: 'cents' },
     'expenses.entries[].period':                 { class: 'raw',        unit: 'enum',    values: ['monthly', 'once'] },
+    'expenses.entries[].every':                  { class: 'raw',        unit: 'enum',    values: ['weekly', 'fortnightly', 'monthly', 'quarterly', 'annual'], note: 'how often a named line repeats, as it was known; amountCents is always the month (Schema.monthlyFromEvery). Null on a line typed as a month. D-193' },
+    'expenses.entries[].everyCents':             { class: 'raw',        unit: 'cents',   note: 'the amount as typed, per `every`, read back by Expenses so $120 a year shows as $120 a year and not $10 a month. D-193' },
     'expenses.entries[].source':                 { class: 'raw',        unit: 'enum',    values: ['manual', 'imported', 'rerank', 'log'], note: 'SPEC.md §12.5; rerank = a custom cost line typed on The Rerank, D-085; log = a dated occurrence logged in the Expenses section, counted by the budget as an actual and never as the typical month, D-128' },
     'expenses.entries[].linkedIncomeId':         { class: 'raw',        unit: 'id',      note: 'the ledger income entry this expense produces; null = personal. D-128' },
     'expenses.entries[].deductible':             { class: 'raw',        unit: 'bool',    note: 'true only when linkedIncomeId is set — enforced by createExpenseEntry, so a personal expense can never reduce taxable income. D-128' },
@@ -1601,6 +1603,16 @@
    * so adding import later changes no aggregation code — SPEC.md §12.5.
    */
   var PRODUCED = ['personal', 'linked', 'reimbursable'];
+  /* How often a named line repeats, as it was known (D-193). The stored
+     amount is always the month; this is the one place that turns "$120 a
+     year" or "$12 a week" into it, so no room carries its own table. */
+  var EXPENSE_EVERY = ['weekly', 'fortnightly', 'monthly', 'quarterly', 'annual'];
+  var EVERY_PER_YEAR = { weekly: 52, fortnightly: 26, monthly: 12, quarterly: 4, annual: 1 };
+  function monthlyFromEvery(cents, every) {
+    if (!Money.isEntered(cents)) return null;
+    var n = EVERY_PER_YEAR[every] || 12;
+    return Math.round(cents * n / 12);
+  }
   /* How sure a date is (D-130): exact, estimated (about then), potential
      (might not happen). Unknown reads as exact, the way every older row
      was meant. */
@@ -1624,6 +1636,10 @@
       categoryId: f.categoryId || null,
       amountCents: f.amountCents === undefined ? null : f.amountCents,
       period: f.period || 'monthly',            // 'monthly' | 'once'
+      /* A named line as it was known (D-193): the amount typed and how
+         often it comes. amountCents above is always the month. */
+      every: EXPENSE_EVERY.indexOf(f.every) >= 0 ? f.every : null,
+      everyCents: f.everyCents === undefined || f.everyCents === null ? null : f.everyCents,
       date: f.date === undefined ? null : f.date,        // ISO, dated entries only
       dateKind: dateKindOf(f.dateKind),
       descriptor: f.descriptor === undefined ? null : f.descriptor,
@@ -2983,6 +2999,8 @@
     FAT_NEEDS: FAT_NEEDS,
     FAT_CATEGORY_MAP: FAT_CATEGORY_MAP,
     fatBucketOf: fatBucketOf,
+    EXPENSE_EVERY: EXPENSE_EVERY,
+    monthlyFromEvery: monthlyFromEvery,
     fatFromLines: fatFromLines,
     createExpenses: createExpenses,
     fat: fat,

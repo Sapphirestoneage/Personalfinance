@@ -46,6 +46,41 @@
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3); margin-top: var(--space-3); }
   .form-grid .wide { grid-column: 1 / -1; }
 
+  /* At a glance (D-193): the ring and the estimated-vs-actual bars side by
+     side, stacked on a phone. The bars borrow .slaf-bars from theme.css. */
+  .picture-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--space-4); align-items: start; margin-top: var(--space-3); }
+  @media (max-width: 640px) { .picture-grid { grid-template-columns: 1fr; } }
+  .eva-title { margin: 0 0 var(--space-2); font-size: var(--text-base); }
+  .eva-title small { font-weight: normal; color: var(--color-text-muted); font-size: var(--text-xs); }
+  .eva .slaf-bars .row { grid-template-columns: minmax(88px, 30%) 1fr auto; padding: 3px 0; }
+  .eva .slaf-bars .row.is-total { border-top: 1px solid var(--color-border); margin-top: var(--space-1); padding-top: var(--space-2); font-weight: 600; }
+  .eva .slaf-bars .val { font-size: var(--text-sm); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .eva .slaf-bars .val small { display: block; font-size: var(--text-xs); color: var(--color-text-faint); font-weight: normal; }
+  .eva .slaf-bars .val.is-over { color: var(--color-critical); }
+  .eva .slaf-bars .val.is-under { color: var(--color-positive); }
+  .eva-legend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-size: var(--text-xs); color: var(--color-text-muted); margin: 0 0 var(--space-2); }
+  .eva-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
+  /* What the lines in a bucket add up to, under its box. */
+  .bucket-lines { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 4px; min-height: 0; }
+  .bucket-lines:empty { display: none; }
+  .bucket-lines.is-caution { color: var(--color-caution); }
+  .bucket-lines button { background: none; border: none; padding: 0; margin-left: 4px; font: inherit; color: var(--color-accent-hover); cursor: pointer; text-decoration: underline; min-height: 24px; }
+  /* Named lines and subscriptions (D-193). */
+  .line-group { margin-top: var(--space-4); }
+  .line-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+  .line-head h3 { margin: 0; font-size: var(--text-base); }
+  .line-head span { font-size: var(--text-sm); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+  ul.line-list { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
+  ul.line-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: var(--space-1) var(--space-3); align-items: center; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  ul.line-list li:first-child { border-top: none; }
+  ul.line-list .ln-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  ul.line-list .ln-name small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  ul.line-list .ln-every { color: var(--color-text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  ul.line-list .ln-month { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  ul.line-list .ln-x { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 1px var(--space-2); cursor: pointer; min-height: 28px; }
+  ul.line-list .ln-empty { grid-column: 1 / -1; color: var(--color-text-faint); font-size: var(--text-xs); }
+  @media (max-width: 480px) { ul.line-list li { grid-template-columns: minmax(0, 1fr) auto auto; } ul.line-list .ln-every { grid-column: 1 / 2; } }
+
   /* The four numbers (D-172): one row on a wide screen, two by two on a phone. */
   .fat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
   @media (max-width: 720px) { .fat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -116,9 +151,22 @@
 <main class="slaf-wrap">
   <div class="notice" id="load-notice" hidden></div>
 
-  <section class="slaf-card" id="spending">
-    <span class="slaf-eyebrow">A typical month</span>
-    <h2 style="margin:var(--space-2) 0 var(--space-3)">Four numbers, and you are done</h2>
+  <section class="slaf-card" id="picture">
+    <span class="slaf-eyebrow">Your month at a glance</span>
+    <div class="picture-grid">
+      <div id="fat-donut"></div>
+      <div class="eva">
+        <h3 class="eva-title">Estimated vs actual <small id="eva-month"></small></h3>
+        <div class="eva-legend"><span><i style="background:var(--color-text-muted)"></i>estimated, the four numbers</span><span><i style="background:var(--color-positive)"></i>actual, logged so far</span></div>
+        <div id="eva-bars"></div>
+        <p class="slaf-hint" id="eva-why" style="margin:var(--space-2) 0 0"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="spending" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The four numbers</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">What a month costs, in four numbers</h2>
     <!-- The whole budget input (D-172): food, rent or mortgage, getting
          around, everything else. Built once; only .value is ever written.
          LIVE-FORM: built once. -->
@@ -126,16 +174,16 @@
       <div class="fat-grid">
         <label class="slaf-field"><span class="slaf-label">Food</span>
           <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-fat="food" placeholder="e.g. 600" aria-label="Food, a month"/></span>
-          <span class="slaf-hint">groceries and eating out, a month</span></label>
+          <span class="slaf-hint">groceries and eating out, a month</span><span class="bucket-lines" data-bucket-hint="food"></span></label>
         <label class="slaf-field"><span class="slaf-label">Rent or mortgage</span>
           <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-fat="accommodation" placeholder="e.g. 1500" aria-label="Rent or mortgage, a month"/></span>
-          <span class="slaf-hint">rent, or mortgage plus tax plus insurance, one number</span></label>
+          <span class="slaf-hint">rent, or mortgage plus tax plus insurance, one number</span><span class="bucket-lines" data-bucket-hint="accommodation"></span></label>
         <label class="slaf-field"><span class="slaf-label">Getting around</span>
           <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-fat="transportation" placeholder="e.g. 250" aria-label="Getting around, a month"/></span>
-          <span class="slaf-hint">car, fuel, transit, a month</span></label>
+          <span class="slaf-hint">car, fuel, transit, a month</span><span class="bucket-lines" data-bucket-hint="transportation"></span></label>
         <label class="slaf-field"><span class="slaf-label">Everything else</span>
           <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-fat="wants" placeholder="e.g. 900" aria-label="Everything else, a month"/></span>
-          <span class="slaf-hint" id="fat-wants-hint">whatever is not split out above</span></label>
+          <span class="slaf-hint" id="fat-wants-hint">whatever is not split out above</span><span class="bucket-lines" data-bucket-hint="wants"></span></label>
       </div>
       <label class="fat-toggle"><input type="checkbox" id="fat-therapy-on" aria-label="Track mental health spending separately"/>Track mental health spending separately</label>
       <div class="fat-grid" id="fat-therapy-row" hidden style="margin-top:var(--space-2)">
@@ -144,6 +192,40 @@
           <span class="slaf-hint">its own line, not counted in everything else</span></label>
       </div>
       <p class="fat-total" id="fat-total"></p>
+    </div>
+
+  </section>
+
+  <section class="slaf-card" id="lines" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Lines you want to keep an eye on</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Subscriptions, and anything else, as often as it comes</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">Name it, say what it costs and how often, and it lands in its bucket above as a month. Subscriptions get their own list. A receipt on its date is not a line: log it in <a href="cash-flow.html#log">Cash Flow</a>.</p>
+    <!-- Built once; only values are written. The lists under it hold a
+         remove button per row and nothing typed, so they rebuild freely. -->
+    <div class="form-grid" id="line-form">
+      <label class="slaf-field"><span class="slaf-label">What it is</span>
+        <span class="slaf-input-shell"><input type="text" id="n-label" placeholder="e.g. Streaming" aria-label="What the line is"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Costs</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="n-amount" placeholder="e.g. 15.99" aria-label="What it costs"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Every</span>
+        <span class="slaf-input-shell"><select id="n-every" aria-label="How often it repeats"><option value="monthly">month</option><option value="weekly">week</option><option value="fortnightly">two weeks</option><option value="quarterly">three months</option><option value="annual">year</option></select></span></label>
+      <div class="slaf-field wide"><span class="slaf-label">Goes under</span>
+        <div class="choices" id="n-bucket" data-choices="n-bucket">
+          <button type="button" class="choice" data-value="subscriptions" aria-pressed="true">Subscriptions</button>
+          <button type="button" class="choice" data-value="food">Food</button>
+          <button type="button" class="choice" data-value="accommodation">Rent or mortgage</button>
+          <button type="button" class="choice" data-value="transportation">Getting around</button>
+          <button type="button" class="choice" data-value="wants">Everything else</button>
+        </div></div>
+      <div class="slaf-field wide"><button type="button" class="slaf-btn slaf-btn--primary" id="btn-line-add">Add the line</button> <span class="slaf-hint" id="line-say"></span></div>
+    </div>
+    <div class="line-group" id="subs">
+      <div class="line-head"><h3>Subscriptions</h3><span id="subs-sum"></span></div>
+      <ul class="line-list" id="subs-list"></ul>
+    </div>
+    <div class="line-group" id="named">
+      <div class="line-head"><h3>Other lines you named</h3><span id="named-sum"></span></div>
+      <ul class="line-list" id="named-list"></ul>
     </div>
 
     <!-- 15.5: named yearly costs that sit inside their bucket (D-181). The
@@ -174,7 +256,7 @@
     </details>
 
     <details class="drawer" id="split-more">
-    <summary>Split it further <small>Optional: the month by category, for the chart, the floor and the Rerank.</small></summary>
+    <summary>Split the rest by category <small>Optional: what is left of each bucket once the lines above are named, for the chart, the floor and the Rerank.</small></summary>
     <details class="drawer bucket-note">
       <summary>How to fill this in <small>Any period, blank means blank, and what <em>fixed</em> means.</small></summary>
       <p>Type each line in whatever you know it as — a week, every two weeks, a
@@ -279,7 +361,8 @@
     var list = (h.expenses && h.expenses.entries) || [];
     for (var i = 0; i < list.length; i++) {
       var e = list[i];
-      if (e.categoryId === categoryId && e.period === 'monthly' && e.source === 'manual') return e;
+      /* A named line (D-193) is its own row below, never the category's box. */
+      if (e.categoryId === categoryId && e.period === 'monthly' && e.source === 'manual' && !e.descriptor && e.active !== false) return e;
     }
     return null;
   }
@@ -310,6 +393,8 @@
      one table of periods, not two. */
   var PER = [['monthly', '/mo', 'a month'], ['weekly', '/wk', 'a week'], ['fortnightly', '/2wk', 'every two weeks'], ['annual', '/yr', 'a year']];
   function toMonthlyCents(cents, per) {
+    /* One formula (D-193); the Income bases stand in for a stale schema. */
+    if (typeof Schema.monthlyFromEvery === 'function') return Schema.monthlyFromEvery(cents, per);
     var basis = Income.basisById(per) || Income.basisById('monthly');
     return Math.round(cents * basis.periods / 12);
   }
@@ -444,8 +529,39 @@
         + (Money.isOk(mins) && mins.value > 0 ? ' · plus <b>' + Money.formatCents(mins.value) + '</b> of debt minimums, which live in <a href="' + esc(Ownership.linkTo('debt-payoff', 'debts', ROOM_ID)) + '">Debt Payoff</a>' : '')
       : 'Type any of the four and the month appears here. Blank is blank, never zero.';
   }
+  /* Under each of the four: what the lines in that bucket add up to (the
+     category boxes, the named lines, the subscriptions). When they come to
+     more than the number typed, say so and offer the one deliberate write
+     D-172 allows: make the number match, on a tap. */
+  function paintBucketHints(h) {
+    var lines = Schema.fatFromLines((h.expenses || {}).entries);
+    var f = Schema.fat(h);
+    ['food', 'accommodation', 'transportation', 'wants'].forEach(function (b) {
+      var node = document.querySelector('[data-bucket-hint="' + b + '"]');
+      if (!node) return;
+      var sum = lines[b];
+      node.classList.remove('is-caution');
+      if (sum === null || sum === undefined) { node.innerHTML = ''; return; }
+      var r = f[b];
+      var typed = r && Money.isOk(r) && r.source === 'typed' ? (Money.isEntered(r.monthlyTypedCents) ? r.monthlyTypedCents : r.value) : null;
+      if (typed === null) { node.textContent = 'standing in from your lines: ' + Money.formatCents(sum); return; }
+      if (sum > typed) {
+        node.classList.add('is-caution');
+        node.innerHTML = 'your lines here already come to ' + Money.formatCents(sum) + '<button type="button" data-use-bucket="' + b + '" data-cents="' + sum + '">Use ' + Money.formatCents(sum) + '</button>';
+        return;
+      }
+      node.textContent = 'lines here add up to ' + Money.formatCents(sum) + (sum < typed ? ', inside the ' + Money.formatCents(typed) : '');
+    });
+  }
   function wireFat() {
     var host = el('fat');
+    host.addEventListener('click', function (evt) {
+      var b = evt.target.closest('[data-use-bucket]');
+      if (!b) return;
+      var patch = {}; patch[b.getAttribute('data-use-bucket')] = parseInt(b.getAttribute('data-cents'), 10);
+      Spine.setFat(patch);
+      render();
+    });
     host.addEventListener('focusin', function (evt) {
       var input = evt.target.closest('input[data-fat]');
       if (!input) return;
@@ -469,6 +585,126 @@
       Spine.setTherapyTracked(el('fat-therapy-on').checked);
       render();
     });
+  }
+
+  /* ---------- named lines and subscriptions (D-193) --------------------------
+     A named line is an expense entry with a descriptor: the month in
+     amountCents like every line, plus `every` and `everyCents` so it reads
+     back as it was known. Subscriptions are the ones in that category. */
+  var EVERY_WORD = { weekly: 'a week', fortnightly: 'every two weeks', monthly: 'a month', quarterly: 'every three months', annual: 'a year' };
+  var LINE_CATEGORY = { subscriptions: 'subscriptions', food: 'groceries', accommodation: 'housing', transportation: 'transportation', wants: 'other' };
+  var LINE_BUCKET_WORD = { food: 'Food', accommodation: 'Rent or mortgage', transportation: 'Getting around', wants: 'Everything else' };
+  function namedLines(h) {
+    return ((h.expenses || {}).entries || []).filter(function (e) {
+      return e && e.active !== false && e.source === 'manual' && e.period === 'monthly' && e.descriptor && !e.linkedIncomeId && Money.isEntered(e.amountCents);
+    });
+  }
+  function lineRow(e, sub) {
+    var known = Money.isEntered(e.everyCents) && e.every && e.every !== 'monthly'
+      ? Money.formatCents(e.everyCents, { exact: true, decimals: e.everyCents % 100 ? 2 : 0 }) + ' ' + EVERY_WORD[e.every]
+      : Money.formatCents(e.amountCents, { exact: true, decimals: e.amountCents % 100 ? 2 : 0 }) + ' a month';
+    var bucket = Schema.fatBucketOf(e.categoryId);
+    return '<li><span class="ln-name">' + esc(e.descriptor) + (sub ? '' : '<small>' + esc(LINE_BUCKET_WORD[bucket] || bucket) + '</small>') + '</span>'
+      + '<span class="ln-every">' + esc(known) + '</span>'
+      + '<span class="ln-month">' + Money.formatCents(e.amountCents) + '/mo</span>'
+      + '<button type="button" class="ln-x" data-line-remove="' + esc(e.id) + '" aria-label="Remove ' + esc(e.descriptor) + '">✕</button></li>';
+  }
+  function paintLines(h) {
+    var all = namedLines(h);
+    var subs = all.filter(function (e) { return e.categoryId === 'subscriptions'; });
+    var rest = all.filter(function (e) { return e.categoryId !== 'subscriptions'; });
+    var subTotal = subs.reduce(function (t, e) { return t + e.amountCents; }, 0);
+    el('subs-list').innerHTML = subs.length ? subs.map(function (e) { return lineRow(e, true); }).join('')
+      : '<li><span class="ln-empty">No subscriptions listed yet. Streaming, phone, gym, software: add each as it bills.</span></li>';
+    el('subs-sum').textContent = subs.length ? Money.formatCents(subTotal) + ' a month · ' + Money.formatCents(subTotal * 12) + ' a year' : '';
+    var restTotal = rest.reduce(function (t, e) { return t + e.amountCents; }, 0);
+    el('named-list').innerHTML = rest.length ? rest.map(function (e) { return lineRow(e, false); }).join('')
+      : '<li><span class="ln-empty">Nothing else named yet. A pet, a parking spot, a habit: anything you want to watch on its own.</span></li>';
+    el('named-sum').textContent = rest.length ? Money.formatCents(restTotal) + ' a month' : '';
+  }
+  function wireLines() {
+    el('n-bucket').addEventListener('click', function (evt) {
+      var b = evt.target.closest('.choice'); if (!b) return;
+      Array.prototype.forEach.call(el('n-bucket').querySelectorAll('.choice'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    });
+    el('btn-line-add').addEventListener('click', function () {
+      var amount = Money.parseMoney(el('n-amount').value);
+      var label = el('n-label').value.trim();
+      if (!label) { el('line-say').textContent = 'Name it first.'; el('n-label').focus(); return; }
+      if (!Money.isEntered(amount) || amount <= 0) { el('line-say').textContent = 'What does it cost?'; el('n-amount').focus(); return; }
+      var every = el('n-every').value || 'monthly';
+      var pressed = el('n-bucket').querySelector('.choice[aria-pressed="true"]');
+      var bucket = pressed ? pressed.getAttribute('data-value') : 'subscriptions';
+      var monthly = toMonthlyCents(amount, every);
+      Spine.upsertExpenseEntry(Schema.createExpenseEntry({
+        id: 'ln_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        categoryId: LINE_CATEGORY[bucket] || 'other', amountCents: monthly, period: 'monthly', source: 'manual',
+        descriptor: label, every: every, everyCents: amount
+      }));
+      el('line-say').textContent = 'Added ' + label + ', ' + Money.formatCents(monthly) + ' a month.';
+      el('n-label').value = ''; el('n-amount').value = ''; el('n-every').value = 'monthly';
+      render();
+    });
+    el('line-form').addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter' && evt.target.matches('input')) { evt.preventDefault(); el('btn-line-add').click(); }
+    });
+    ['subs-list', 'named-list'].forEach(function (id) {
+      el(id).addEventListener('click', function (evt) {
+        var b = evt.target.closest('[data-line-remove]'); if (!b) return;
+        Spine.removeExpenseEntry(b.getAttribute('data-line-remove'));
+        render();
+      });
+    });
+  }
+
+  /* ---------- at a glance (D-193) ------------------------------------------
+     The ring is the month by bucket, in a fixed colour order. The bars set
+     the four numbers (the estimate) beside what Cash Flow's log says has
+     actually gone out this month, bucket by bucket, from one engine
+     helper. Nothing here is typed. */
+  var FAT_ORDER = [['food', 'Food'], ['accommodation', 'Rent or mortgage'], ['transportation', 'Getting around'], ['wants', 'Everything else']];
+  function thisMonth() { var d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1 < 10 ? '0' : '') + (d.getMonth() + 1); }
+  function paintPicture(h) {
+    var f = Schema.fat(h);
+    var C = Charts.COLORS.series;
+    var slices = FAT_ORDER.map(function (p, i) {
+      var r = f[p[0]];
+      return { label: p[1], value: r && Money.isOk(r) ? r.value : 0, color: C[i] };
+    });
+    if (f.therapyTracked && f.therapy && Money.isOk(f.therapy)) slices.push({ label: 'Therapy', value: f.therapy.value, color: C[4] });
+    el('fat-donut').innerHTML = Charts.donut({
+      title: 'The month, by bucket',
+      slices: slices,
+      center: { big: Money.isOk(f.totalCents) ? Money.formatCents(f.totalCents.value) : '—', small: 'a month' },
+      empty: 'Type the four numbers below and the month draws here.'
+    });
+
+    var m = thisMonth();
+    el('eva-month').textContent = Schema.monthLabel ? Schema.monthLabel(m) : m;
+    var act = typeof CashFlow.logByFatBucket === 'function' ? CashFlow.logByFatBucket(h, TABLES.expenseCategories, m) : { totalCents: 0, count: 0 };
+    var rows = FAT_ORDER.map(function (p) {
+      var r = f[p[0]];
+      return { label: p[1], est: r && Money.isOk(r) ? r.value : null, act: act.count ? act[p[0]] : null };
+    });
+    rows.push({ label: 'The month', est: Money.isOk(f.totalCents) ? f.totalCents.value : null, act: act.count ? act.totalCents : null, total: true });
+    var max = rows.reduce(function (t, r) { return Math.max(t, r.est || 0, r.act || 0); }, 1);
+    var pct = function (c) { return Math.max(0, Math.min(100, c / max * 100)); };
+    el('eva-bars').innerHTML = '<div class="slaf-chart slaf-bars">' + rows.map(function (r) {
+      var hasEst = Money.isEntered(r.est), hasAct = Money.isEntered(r.act);
+      var state = hasEst && hasAct ? (r.act > r.est ? 'over' : 'under') : 'none';
+      return '<div class="row' + (r.total ? ' is-total' : '') + (hasEst || hasAct ? '' : ' is-empty') + '"><span class="lbl">' + esc(r.label) + '</span><span class="track">'
+        + (hasEst ? '<u style="left:0;width:' + pct(r.est) + '%;background:var(--color-text-muted)"></u>' : '')
+        + (hasAct && r.act > 0 ? '<i style="left:0;width:' + pct(r.act) + '%;background:' + (state === 'over' ? 'var(--color-critical)' : 'var(--color-positive)') + '"></i>' : '')
+        + (hasEst ? '<b style="left:' + pct(r.est) + '%" title="Estimated"></b>' : '')
+        + '</span><span class="val is-' + state + '">' + (hasAct ? Money.formatCents(r.act) : '—') + '<small>of ' + (hasEst ? Money.formatCents(r.est) : '—') + '</small></span></div>';
+    }).join('') + '</div>';
+    var spend = Schema.monthlyExpensesCents(h);
+    var day = new Date().getDate();
+    var why = act.count
+      ? 'From ' + act.count + (act.count === 1 ? ' receipt' : ' receipts') + ' logged in <a href="cash-flow.html#log">Cash Flow</a> this month, ' + day + (day === 1 ? ' day' : ' days') + ' in. The grey bar is the number typed below; the coloured one is what has actually gone out.'
+      : 'Nothing logged this month yet. Log what actually goes out in <a href="cash-flow.html#log">Cash Flow</a> and the actual bars fill in beside the estimate.';
+    if (Money.isOk(spend) && spend.source === 'closed') why += ' Your last ' + spend.months.length + ' closed ' + (spend.months.length === 1 ? 'month' : 'months') + ' averaged ' + Money.formatCents(spend.value) + ', which every other room now reads as the month.';
+    el('eva-why').innerHTML = why;
   }
 
   /* ---------- the yearly lines (15.5, D-181) ---------------------------- */
@@ -518,6 +754,7 @@
 
   function paintInputs(h) {
     paintFat(h);
+    paintBucketHints(h);
     paintAnnual(h);
     var derived = document.querySelectorAll('[data-derived]');
     for (var d = 0; d < derived.length; d++) {
@@ -791,6 +1028,8 @@
     if (!TABLES) return;
     var h = Spine.getProfile();
     paintInputs(h);
+    paintLines(h);
+    paintPicture(h);
     var summary = CashFlow.summarise(h, TABLES.expenseCategories);
     renderSummary(summary);
     renderTemplate(h);
@@ -867,6 +1106,7 @@
     buildInputs();
     wireFat();
     wireAnnual();   /* 15.5 (D-181) */
+    wireLines();    /* D-193 */
     /* The split opens on its own when there are lines in it; closed, the
        page is the four numbers. */
     var lines0 = Schema.fatFromLines(Spine.getProfile().expenses.entries);

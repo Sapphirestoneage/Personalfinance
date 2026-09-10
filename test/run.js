@@ -787,6 +787,54 @@ const RULES = TABLES.debtRules;
   checkTrue('spending past the pay: the plan gets zero and the shortfall is named, never a negative extra', capTight.cents === 0 && capTight.shortCents > 0 && capTight.estimate.value < 0);
 })();
 
+/* -- Expenses: the picture, the four numbers, the lines you name (D-193) ---- */
+(function () {
+  section('Expenses: cadence, named lines, the log by bucket, the page order (D-193)');
+  check('a week to a month: 52 over 12', Schema.monthlyFromEvery(100000, 'weekly'), 433333);
+  check('every two weeks: 26 over 12', Schema.monthlyFromEvery(100000, 'fortnightly'), 216667);
+  check('a month is a month', Schema.monthlyFromEvery(1599, 'monthly'), 1599);
+  check('three months: a third', Schema.monthlyFromEvery(3000, 'quarterly'), 1000);
+  check('a year: a twelfth', Schema.monthlyFromEvery(12000, 'annual'), 1000);
+  check('an unknown cadence reads as a month', Schema.monthlyFromEvery(500, 'daily'), 500);
+  check('blank stays blank, never zero', Schema.monthlyFromEvery(null, 'annual'), null);
+  const e = Schema.createExpenseEntry({ descriptor: 'Streaming', categoryId: 'subscriptions', amountCents: 1000, every: 'annual', everyCents: 12000 });
+  check('an entry keeps how it was known', e.every + '/' + e.everyCents, 'annual/12000');
+  check('...and a plain line carries neither', Schema.createExpenseEntry({ amountCents: 100 }).every + '/' + Schema.createExpenseEntry({ amountCents: 100 }).everyCents, 'null/null');
+  check('...an unknown cadence is dropped', Schema.createExpenseEntry({ every: 'daily' }).every, null);
+  checkTrue('the two fields are documented', !!Schema.FIELDS['expenses.entries[].every'] && !!Schema.FIELDS['expenses.entries[].everyCents']);
+  checkTrue('the D&D copy carries them too', fs.readFileSync(path.join(ROOT, 'dnd/shared/schema.js'), 'utf8') === fs.readFileSync(path.join(ROOT, 'shared/schema.js'), 'utf8'));
+  const h = Schema.createHousehold({ filingStatus: 'single' });
+  h.expenses.entries = [
+    Schema.createExpenseEntry({ id: 'g1', categoryId: 'groceries', amountCents: 6420, period: 'once', date: '2026-09-03', source: 'log' }),
+    Schema.createExpenseEntry({ id: 'g2', categoryId: 'dining_out', amountCents: 3000, period: 'once', date: '2026-09-05', source: 'log' }),
+    Schema.createExpenseEntry({ id: 'u1', categoryId: 'utilities', amountCents: 18000, period: 'once', date: '2026-09-04', source: 'log' }),
+    Schema.createExpenseEntry({ id: 'r1', categoryId: 'housing', amountCents: 150000, period: 'once', date: '2026-09-01', source: 'log' }),
+    Schema.createExpenseEntry({ id: 's1', categoryId: 'emergency_savings', amountCents: 30000, period: 'once', date: '2026-09-02', source: 'log' }),
+    Schema.createExpenseEntry({ id: 'o1', categoryId: 'shopping', amountCents: 5000, period: 'once', date: '2026-10-01', source: 'log' }),
+    Schema.createExpenseEntry({ id: 'cf_groceries', categoryId: 'groceries', amountCents: 45000, period: 'monthly', source: 'manual' })
+  ];
+  const by = CashFlow.logByFatBucket(h, TABLES.expenseCategories, '2026-09');
+  check('groceries and eating out land in food', by.food, 9420);
+  check('rent lands in rent or mortgage', by.accommodation, 150000);
+  check('utilities land in everything else', by.wants, 18000);
+  check('nothing on the road', by.transportation, 0);
+  check('savings is not spending, and October is not September', by.totalCents, 9420 + 150000 + 18000);
+  check('...counting the receipts, not the typed line', by.count, 4);
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8');
+  const at = id => page.indexOf('id="' + id + '"');
+  checkTrue('the picture sits above the four numbers, the lines under them, the readings last', at('picture') < at('spending') && at('spending') < at('lines') && at('lines') < at('out-summary'));
+  checkTrue('the ring and the bars are drawn from the engine, never typed', /Charts\.donut\(\{\s*title: 'The month, by bucket'/.test(page) && /CashFlow\.logByFatBucket\(h, TABLES\.expenseCategories, m\)/.test(page));
+  checkTrue('the bars carry a legend and both figures', /class="eva-legend"/.test(page) && /<small>of ' \+ \(hasEst/.test(page));
+  checkTrue('a form for a named line: what, how much, every, which bucket', /id="line-form"/.test(page) && /id="n-every"/.test(page) && /data-value="subscriptions" aria-pressed="true"/.test(page) && /value="fortnightly"/.test(page));
+  checkTrue('...written through the spine as a month, remembering how it was known', /everyCents: amount/.test(page) && /amountCents: monthly, period: 'monthly', source: 'manual'/.test(page) && /Spine\.upsertExpenseEntry\(Schema\.createExpenseEntry\(\{\s*id: 'ln_'/.test(page));
+  checkTrue('subscriptions have their own list, totalled a month and a year', /id="subs-list"/.test(page) && /' a year' : ''/.test(page));
+  checkTrue('the category boxes ignore named lines, so nothing counts twice', /&& !e\.descriptor && e\.active !== false\) return e;/.test(page));
+  check('one line under each of the four says what its lines add up to', (page.match(/<span class="bucket-lines" data-bucket-hint="/g) || []).length, 4);
+  checkTrue('...offering to make the number match on a tap, never silently', /data-use-bucket=/.test(page) && /Spine\.setFat\(patch\)/.test(page));
+  checkTrue('the per aid and the form share one formula', /Schema\.monthlyFromEvery\(cents, per\)/.test(page));
+  check('the registry names the three bands', Registry.byId('expenses').subsections.map(x => x.id).slice(0, 3).join(','), 'picture,spending,lines');
+})();
+
 /* -- The stop line (D-191) ------------------------------------------------- */
 (function () {
   section('Debt: the extra stops once the dear debt is gone (D-191)');

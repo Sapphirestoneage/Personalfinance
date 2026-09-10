@@ -538,6 +538,23 @@
    * occurrence in the month with its group, and the totals: by group, by
    * budget bucket, personal against income costs, deductible.
    */
+  /* This month's log by FAT bucket (D-193): every logged occurrence in the
+     expenses bucket lands in the bucket its category maps to, a credit
+     paid back included, so Expenses can set actual beside estimated per
+     bucket. Savings, investments, debt and costs of earning are not
+     spending and stay out. */
+  function logByFatBucket(household, catalog, month) {
+    var log = logInMonth(household, catalog, month);
+    var out = { food: 0, accommodation: 0, transportation: 0, wants: 0, totalCents: 0, count: 0 };
+    log.rows.forEach(function (r) {
+      if (r.bucket !== 'expenses') return;
+      var b = Schema.fatBucketOf(r.categoryId);
+      if (['food', 'accommodation', 'transportation', 'wants'].indexOf(b) < 0) return;
+      out[b] += r.cents; out.totalCents += r.cents; out.count++;
+    });
+    return out;
+  }
+
   function logInMonth(household, catalog, month) {
     var rows = [], byGroup = {}, byBucket = { expenses: 0, savings: 0, investments: 0, debt: 0, income_costs: 0 };
     var personal = 0, costs = 0, deductible = 0, pendingReimb = 0, reimbursed = 0, potentialRows = [], potential = 0;
@@ -599,6 +616,7 @@
     logEntries: logEntries,
     logOccurrences: logOccurrences,
     logInMonth: logInMonth,
+    logByFatBucket: logByFatBucket,
     pendingReimbursements: pendingReimbursements,
     normaliseToMonthly: normaliseToMonthly,
     summarise: summarise,
