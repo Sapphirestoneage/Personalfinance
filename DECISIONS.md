@@ -12130,6 +12130,14 @@ Gate for this commit: unit 27157; render, forms and features on the
 room; a phone walk picking each stop, reloading to find it kept, typing
 an extra and reading the digits-only box and the on-top hint.
 
+**Follow-up, same session.** "It should total up the minimums also and
+then be like total amount going to debt." Two sums, both painted as
+text into static markup so the live list is never rebuilt for them: a
+footer under the list (N debts, owed, minimums a month, with any blank
+balance or minimum counted as missing rather than zero), and under the
+extra box the one figure that leaves the account for debt each month,
+minimums plus the extra in use, with where the extra came from.
+
 ---
 
 # The Dungeons & Dividends entries

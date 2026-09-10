@@ -71,6 +71,14 @@
   .plan-charts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
   @media (max-width: 640px) { .plan-charts { grid-template-columns: 1fr; } }
   .extra-field { margin-top: var(--space-4); }
+  /* The sums (D-191): what is owed and the minimums, under the list; the
+     minimums plus the extra, under the box, as the one figure that
+     leaves the account for debt each month. */
+  .debt-total { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); padding: var(--space-2) 0 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); color: var(--color-text-muted); }
+  .debt-total b { font-family: var(--font-display); font-weight: 500; color: var(--color-text); font-variant-numeric: tabular-nums; }
+  .extra-total { display: block; margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--color-border-strong); font-size: var(--text-sm); }
+  .extra-total b { font-family: var(--font-display); font-weight: 600; font-variant-numeric: tabular-nums; font-size: var(--text-lg); }
+  .extra-total .sum-how { display: block; color: var(--color-text-muted); font-size: var(--text-xs); }
   .stop-field { margin-top: var(--space-3); }
   .stop-field select { width: 100%; max-width: 100%; }
   /* The two figures the blank box falls back to (D-190): an estimate from
@@ -266,6 +274,7 @@
     </div>
     <div class="debt-cols" id="debt-cols" hidden><span>Debt</span><span>Owed</span><span>Rate</span><span>Min a month</span></div>
     <div id="debt-list"></div>
+    <div class="debt-total" id="debt-total" hidden></div>
     <button type="button" class="slaf-btn" id="btn-add" style="width:100%">+ Add a debt</button>
     <label class="slaf-field extra-field" id="extra">
       <span class="slaf-label">Extra each month, on top of the minimums</span>
@@ -273,6 +282,7 @@
         <input type="text" inputmode="decimal" id="f-extra" placeholder="e.g. 200"/></span>
       <span class="slaf-hint" id="extra-hint">Blank shows what the minimums alone do.</span>
       <span class="extra-basis" id="extra-basis"></span>
+      <span class="extra-total" id="extra-total"></span>
     </label>
     <details class="archived" id="archived" hidden>
       <summary>Set aside <small id="archived-count"></small></summary>
@@ -407,6 +417,24 @@
     return missing.length ? 'Needs ' + missing.join(' and ') + ' before it can be planned.' : '';
   }
 
+  /* The list's footer: what is owed and the minimums, added up. A debt
+     with a blank balance or minimum is counted as missing, not as zero. */
+  function paintDebtTotal(debts) {
+    var box = el('debt-total'); if (!box) return;
+    box.hidden = !debts.length;
+    if (!debts.length) return;
+    var owed = Money.sumCents(debts.map(function (d) { return d.balanceCents; }));
+    var mins = Money.sumCents(debts.map(function (d) { return d.minPaymentCents; }));
+    var n = debts.length;
+    var gaps = [];
+    if (owed.counted < n) gaps.push((n - owed.counted) + ' without a balance');
+    if (mins.counted < n) gaps.push((n - mins.counted) + ' without a minimum');
+    box.innerHTML = '<span>' + n + (n === 1 ? ' debt' : ' debts') + '</span>'
+      + '<span>owed <b>' + Money.formatCents(owed.total) + '</b></span>'
+      + '<span>minimums <b>' + Money.formatCents(mins.total) + '</b> a month</span>'
+      + (gaps.length ? '<span>(' + gaps.join(', ') + ')</span>' : '');
+  }
+
   function renderDebts(h) {
     var list = el('debt-list');
     var focusedId = document.activeElement && document.activeElement.getAttribute
@@ -415,6 +443,7 @@
       ? document.activeElement.getAttribute('data-field') : null;
 
     var debts = debtsOf(h);
+    paintDebtTotal(debts);
     if (!debts.length) {
       el('debt-cols').hidden = true;
       list.innerHTML = '<p class="slaf-reason">No debts yet. Add one, or load the example.</p>';
@@ -1191,7 +1220,8 @@
       if (c.guessed.length) bits += ' (' + c.guessed.map(function (id) { return id === 'grossAnnualIncome' ? 'pay' : 'spending'; }).join(' and ') + ' guessed, fix it in Start Here)';
       out += est.value > 0
         ? row('Estimate', Money.formatCents(est.value), bits, c.basis === 'estimate')
-        : row('Estimate', '$0', 'your pay is ' + Money.formatCents(-est.value) + ' short of spending and the minimums; ' + bits + '. If your spending already counts these payments, take them out of it in <a href="cash-flow.html">Cash Flow</a>', c.basis === 'estimate');
+        : row('Estimate', '$0', 'your pay is ' + Money.formatCents(-est.value) + ' short of spending and the minimums: ' + bits
+            + '. If you can really pay more than the minimums, one of those is off. The usual two: the spending figure (<a href="cash-flow.html">Cash Flow</a>) already counts these debt payments, or the pay after tax is worked out from your gross with a flat tax rate and your real paycheck is higher (<a href="start.html">Start Here</a>)', c.basis === 'estimate');
     } else {
       out += row('Estimate', 'waiting', (c.estimateReason && /pay|income/i.test(c.estimateReason) ? 'add your pay in ' : 'finish ') + '<a href="start.html">Start Here</a> and this fills in', false, true);
     }
@@ -1205,6 +1235,21 @@
       out += row('Realized', 'waiting', 'close a month in <a href="budget.html">Budget</a> and the real figure shows here', false, true);
     }
     rows.innerHTML = out;
+    /* The one figure that leaves the account for debt each month. */
+    var total = el('extra-total');
+    if (total) {
+      var mins = Schema.monthlyDebtPaymentsCents(h);
+      if (!Money.isOk(mins)) {
+        total.innerHTML = '';
+      } else if (c.cents > 0) {
+        total.innerHTML = 'Going to debt each month: <b>' + Money.formatCents(mins.value + c.cents) + '</b>'
+          + '<span class="sum-how">minimums ' + Money.formatCents(mins.value) + ' + extra ' + Money.formatCents(c.cents)
+          + (c.basis === 'typed' ? ' (your figure)' : c.basis === 'realized' ? ' (realized)' : ' (estimate)') + (stopAfter ? ', until the stop' : '') + '</span>';
+      } else {
+        total.innerHTML = 'Going to debt each month: <b>' + Money.formatCents(mins.value) + '</b>'
+          + '<span class="sum-how">the minimums alone, nothing on top</span>';
+      }
+    }
     var fallback = real ? 'the realized figure' : est ? 'the estimate' : null;
     if (c.basis === 'typed') {
       hint.textContent = 'Your figure, paid on top of the minimums' + (est ? ' (' + Money.formatCents(est.minimumsCents) + ')' : '') + '. Clear it to use ' + (fallback || 'the minimums alone') + '.';

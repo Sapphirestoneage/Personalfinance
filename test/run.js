@@ -824,6 +824,8 @@ const RULES = TABLES.debtRules;
   checkTrue('...and with a stop the room never prints a negative "sooner by"', /plan\.stopMonth === null\) \{\s*rows\.push\(\['Saved vs\. minimums only'/.test(page) && /Against minimums only/.test(page));
   checkTrue('...the extra is said to sit on top of the minimums, and the per-month figure says what it is built from', /Extra each month, on top of the minimums/.test(page) && /function perMonthNote\(plan, h\)/.test(page) && /the minimums as typed on each line/.test(page));
   checkTrue('...a typed extra shows digits only, the shell carries the dollar sign', /formatCents\(extraCents\)\.replace\(\/\^\\\$\/, ''\)/.test(page));
+  checkTrue('the list adds up what is owed and the minimums, counting blanks as missing, not zero', /function paintDebtTotal\(debts\)/.test(page) && /Money\.sumCents\(debts\.map\(function \(d\) \{ return d\.minPaymentCents; \}\)\)/.test(page) && /without a minimum/.test(page));
+  checkTrue('...and under the box the minimums plus the extra read as one figure going to debt', /id="extra-total"/.test(page) && /Going to debt each month: <b>' \+ Money\.formatCents\(mins\.value \+ c\.cents\)/.test(page) && /the minimums alone, nothing on top/.test(page));
 })();
 
 /* -- Strategy ordering ---------------------------------------------------- */
