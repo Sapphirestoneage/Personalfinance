@@ -11725,6 +11725,65 @@ registry's shape, the DAITE coverage and uniqueness, the engines, the
 phrases, the states on the demo and on nothing, next, the readers, the
 inputs, the summary); dnd 5614; export 25.
 
+## D-184 — The nine spheres, 19.1: one file, three faces, the shadow measured and never named
+
+**Decision.** `data/spheres.json` is the brief's table, nine entries in
+order, each with its depth (Ledger row ids from D-183), its shadow (a
+measure, an engine, a sentence) and its virtue (the word on screen), plus
+`unlocks`, `sharpens`, `action` (one room, one filter) and `drawer` (the
+only place the shadow's name appears). `shared/spheres.js`
+(`SLAF.Spheres`) is the one reader; the Ledger rings (18.4), the Dashboard
+tiles (19.2), the tree map's roots and every room's sphere badge (19.3,
+20) read it and nothing keeps a second copy. Built before the Ledger room
+because 18.4 orders the room by it.
+
+- **Depth gates precision, never access.** `Spheres.state(h)` reports
+  every sphere with its rows' status: complete when every applicable
+  non-computed row is at least `roughly`, sharp when every one is `sure`;
+  the household's current sphere is the lowest incomplete one;
+  `completeThrough` and `sharpThrough` are the runs from sphere 1, and
+  the FI date precision (15.10) will follow `sharpThrough`. A computed row
+  never gates. A sphere with no applicable rows is complete or sharp only
+  when everything before it is, so an empty sphere cannot be reached by
+  skipping.
+- **Where the rows went.** Every Ledger row belongs to exactly one sphere
+  (unit-enforced), and `depth.minutes` is the sum of its rows' minutes.
+  Two departures from the brief's row pattern, both in the file's note:
+  the six situation rows sit in sphere 1, because 18.7 makes them the
+  first six rows of the Ledger and nothing else can be placed without
+  them; sphere 9 has no rows until the time budget (16.12) stores hours
+  and the price of a day off, so its measure says "not tracked yet"
+  rather than inventing one. One row was added to the registry for
+  sphere 6: `assetCharacter`, the tax character the Statement already
+  asks (15.3 reads it as orientation, 15.8 as the pile), which the
+  ownership map had no field for.
+- **The shadow is a measurement with a cost.** Nine engines in the
+  module, each a Result: rows never touched with the minutes to enter
+  them; the Joy Curve's lowest line (what The Rerank would cut, a year;
+  the brief's wants-share-against-a-band waits for a band that
+  `data/bands.json` does not carry, since DRAFTT has no wants letter);
+  dreams priced but not dated; the rough rows with the minutes to
+  confirm them; the interest a month on the highest-rate line; cash
+  above the runway need (the sleep-at-night months when set, else six,
+  the full emergency fund of `data/foo_rules.json`, said so); the car as
+  a share of net worth; the gap between last month's estimate and its
+  actual; days off (not tracked yet). The sentence is the file's, with
+  `{n}`, `{minutes}` and `{dollars}` filled, and carries no judgement
+  word (unit-checked). The shadow's name is not in the sentence, the
+  measure text, the action, the tile or either module's source
+  (unit-checked); the drawer is the one place.
+- **The target.** `Spheres.cells(h)` is the 45-cell grid, five letters by
+  nine spheres: full when every row is sure, half when every row is at
+  least rough, empty when nothing is entered, dashed when any row is
+  stale. The situation rows carry no letter and sit outside the wedges.
+- **Compatibility note.** No stored shape changes. `Reference.TABLE_FILES`
+  gains `spheres`. Nothing reads the module yet; the room is next.
+
+Gate for this commit: unit 26658 (a new section of 57 checks: the file's
+shape and rules, every row in one sphere, the state on the demo, on
+nothing, confirmed and rough, the cells, the nine measures and the tile);
+dnd 5614; export 25; the lane 2 data suite.
+
 ---
 
 # The Dungeons & Dividends entries

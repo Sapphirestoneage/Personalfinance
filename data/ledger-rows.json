@@ -387,6 +387,33 @@
       "family": "assets"
     },
     {
+      "id": "assetCharacter",
+      "path": "assets.items[].taxCharacter",
+      "letter": "A",
+      "label": "How it is taxed on the way out",
+      "kind": "know",
+      "unit": "enum",
+      "pass": 2,
+      "appliesWhen": "always",
+      "minutes": 0.5,
+      "repeat": "assets",
+      "values": [
+        "cash",
+        "taxable",
+        "pretax",
+        "roth",
+        "hsa",
+        "529",
+        "daf",
+        "property",
+        "business",
+        "other",
+        "unknown"
+      ],
+      "family": "assets",
+      "note": "The orientation 15.3 and the pile 15.8 read; asked by the Statement today."
+    },
+    {
       "id": "assetTier",
       "path": "assets.items[].tier",
       "letter": "A",

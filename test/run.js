@@ -11327,6 +11327,106 @@ section('18.2: every number the app can hold is one Ledger row, of one of three 
 })();
 
 /* ==========================================================================
+   19.1 — the nine spheres: one file, three faces (D-184)
+   ========================================================================== */
+section('19.1: nine spheres in one file, depth gating precision, the shadow measured and never named (D-184)');
+(function () {
+  const Sp = require(path.join(ROOT, 'shared/spheres.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
+  const T = Sp.table();
+  const list = Sp.all();
+  checkTrue('a registered table', Reference.TABLE_FILES.spheres === 'spheres.json');
+  check('nine entries', list.length, 9);
+  check('...in order, 1 to 9', list.map(s => s.order).join(','), '1,2,3,4,5,6,7,8,9');
+  check('...the brief\'s ids', list.map(s => s.id).join(','), 'moon,mercury,venus,sun,mars,jupiter,saturn,fixedstars,primum');
+  check('...the brief\'s virtues', list.map(s => s.virtue).join(','), 'Showed up,Chosen,Wanted,Known,Steady,Settled,Enough,Kept,Rest');
+  const FIELDS = ['order', 'id', 'sphere', 'virtue', 'virtueLine', 'alreadyGood', 'depth', 'unlocks', 'sharpens', 'shadow', 'action', 'drawer'];
+  checkTrue('every entry carries every field', list.every(s => FIELDS.every(f => s[f] !== undefined)));
+  checkTrue('depth lists rows and minutes', list.every(s => Array.isArray(s.depth.rows) && Money.isEntered(s.depth.minutes)));
+  checkTrue('every depth row is a Ledger row', list.every(s => s.depth.rows.every(id => LR.byId(id))));
+  checkTrue('every Ledger row belongs to exactly one sphere', LR.all().every(r => list.filter(s => s.depth.rows.indexOf(r.id) >= 0).length === 1), LR.all().filter(r => list.filter(s => s.depth.rows.indexOf(r.id) >= 0).length !== 1).map(r => r.id).join(','));
+  checkTrue('depth minutes are the rows\' minutes', list.every(s => Math.abs(s.depth.minutes - LR.minutes(s.depth.rows.map(id => LR.byId(id)))) < 0.01));
+  checkTrue('spheres 1 to 4 are already good; 5 to 9 are not', list.every(s => s.alreadyGood === (s.order <= 4)));
+  const NAMES = list.map(s => s.shadow.name);
+  check('the shadow names, in order', NAMES.join(','), 'Limbo,Gluttony,Envy,Fraud,Wrath,Greed,Pride,Treachery,Sloth');
+  checkTrue('the shadow name is in the drawer and nowhere else in the entry', list.every(s => s.drawer.indexOf(s.shadow.name.toLowerCase()) >= 0 && [s.virtue, s.virtueLine, s.sharpens, s.shadow.sentence, s.shadow.measure, s.action.label].every(t => t.toLowerCase().indexOf(s.shadow.name.toLowerCase()) === -1)));
+  checkTrue('every sentence states a measurement with a cost', list.every(s => /\{(n|minutes|dollars)\}/.test(s.shadow.sentence)));
+  checkTrue('...and no judgement word', list.every(s => !/too much|should|\bbad\b|\bover\b/i.test(s.shadow.sentence)));
+  checkTrue('...and no em dash anywhere on screen', list.every(s => [s.virtue, s.virtueLine, s.sharpens, s.shadow.sentence, s.action.label].every(t => t.indexOf('—') === -1)));
+  checkTrue('every action is one room and one filter', list.every(s => typeof s.action.room === 'string' && s.action.room && ('filter' in s.action)));
+  checkTrue('every shadow engine is a real measure', list.every(s => Sp.ENGINES.indexOf(s.shadow.engine.replace(/^Spheres\./, '')) >= 0));
+  checkTrue('the shadow names never reach a module that renders', ['shared/spheres.js', 'shared/ledger-rows.js'].every(f => { const src = fs.readFileSync(path.join(ROOT, f), 'utf8'); return NAMES.every(n => !new RegExp("'" + n + "'|\"" + n + "\"").test(src)); }));
+  checkTrue('the first six situation rows sit in sphere 1', ['pathChoice', 'dob', 'employmentStatus', 'state'].every(id => Sp.sphereOf(id).order === 1));
+  checkTrue('sphere 9 has no rows yet, and says why in the note', Sp.byOrder(9).depth.rows.length === 0 && /16\.12/.test(T.note));
+
+  /* State on the demo, on nothing, and on a household that has confirmed a sphere. */
+  Prefs.reset();
+  const h = Demo.build();
+  const st = Sp.state(h, {});
+  check('the demo stands at sphere 1: the path row is missing', st.currentOrder, 1);
+  checkTrue('nothing is complete, nothing sharp', st.completeThrough === 0 && st.sharpThrough === 0);
+  checkTrue('every sphere reports its rows and minutes', st.spheres.every(s => Array.isArray(s.rows) && Money.isEntered(s.minutesLeft)));
+  const empty = Schema.createHousehold({});
+  checkTrue('nothing entered: sphere 1 has its rows, all missing', Sp.state(empty, {}).spheres[0].counts.missing === Sp.state(empty, {}).spheres[0].counts.applicable && Sp.state(empty, {}).spheres[0].counts.applicable >= 6);
+  const sure = Demo.build(); sure.meta.fields = {};
+  Prefs.set('path', 'fi');
+  Sp.byOrder(1).depth.rows.forEach(id => { sure.meta.fields[id] = { asOf: new Date().toISOString(), source: 'typed', confidence: 'sure', room: 'ledger' }; });
+  const st1 = Sp.state(sure, {});
+  checkTrue('confirming every sphere 1 row makes it complete and sharp', st1.spheres[0].complete && st1.spheres[0].sharp);
+  check('...so the household stands at sphere 2', st1.currentOrder, 2);
+  check('...complete through 1', st1.completeThrough, 1);
+  check('...sharp through 1', st1.sharpThrough, 1);
+  const rough = Demo.build(); rough.meta.fields = {};
+  Sp.byOrder(1).depth.rows.forEach(id => { rough.meta.fields[id] = { asOf: new Date().toISOString(), source: 'pasted', confidence: 'roughly', room: 'ledger' }; });
+  const st2 = Sp.state(rough, {});
+  checkTrue('roughly on every row is complete but not sharp', st2.spheres[0].complete && !st2.spheres[0].sharp && st2.completeThrough === 1 && st2.sharpThrough === 0);
+  Prefs.reset();
+  checkTrue('a computed row never gates a sphere', Sp.byOrder(1).depth.rows.some(id => LR.byId(id).kind === 'computed') && st.spheres[0].counts.applicable < Sp.byOrder(1).depth.rows.length);
+  checkTrue('an empty sphere is complete only once everything before it is', !Sp.state(h, {}).spheres[8].complete);
+
+  /* The target: 45 cells. */
+  const cells = Sp.cells(h, {});
+  check('five letters by nine spheres', cells.length, 45);
+  checkTrue('every cell says its fill', cells.every(c => ['full', 'half', 'empty', 'dashed', 'none'].indexOf(c.fill) >= 0));
+  checkTrue('the demo\'s sphere 1 cells are half: entered, never confirmed', cells.filter(c => c.order === 1 && c.rows.length).every(c => c.fill === 'half'));
+  checkTrue('an empty household\'s sphere 1 cells are empty', Sp.cells(empty, {}).filter(c => c.order === 1 && c.rows.length).every(c => c.fill === 'empty'));
+  const stale = Demo.build(); stale.meta.fields = { cashSavings: { asOf: '2020-01-01T00:00:00Z', source: 'typed', confidence: 'sure', room: 'ledger' } };
+  checkTrue('a stale row dashes its cell', Sp.cells(stale, {}).filter(c => c.order === 1 && c.letter === 'A')[0].fill === 'dashed');
+
+  /* The measures. */
+  const m1 = Sp.measure(h, {}, 'moon');
+  checkTrue('Limbo\'s measure counts the rows never touched, with minutes', Money.isOk(m1) && m1.n > 0 && Money.isEntered(m1.minutes) && /never touched/.test(m1.sentence));
+  checkTrue('...and never says its name', !/limbo/i.test(m1.sentence));
+  const m4 = Sp.measure(h, {}, 'sun');
+  checkTrue('Fraud\'s measure counts the rough rows', Money.isOk(m4) && m4.n === LR.roughRows(h, {}).length);
+  const m5 = Sp.measure(h, {}, 'mars');
+  checkTrue('Wrath\'s measure is the interest a month on the highest-rate line', Money.isOk(m5) && m5.dollars === Math.round(h.debts.slice().sort((a, b) => b.rate - a.rate)[0].balanceCents * h.debts.slice().sort((a, b) => b.rate - a.rate)[0].rate / 12));
+  const m6 = Sp.measure(h, {}, 'jupiter');
+  checkTrue('Greed\'s measure is cash above six months of spending, zero on the demo', Money.isOk(m6) && m6.dollars === 0 && m6.n === 6);
+  const richCash = Demo.build(); richCash.assets = richCash.assets.map(a => a.category === 'cash' ? Object.assign({}, a, { valueCents: 5000000 }) : a);
+  check('...5,000,000 of cash against 315,000 a month: 3,110,000 idle', Sp.measure(richCash, {}, 'jupiter').dollars, 5000000 - 315000 * 6);
+  checkTrue('Pride waits for a car', !Money.isOk(Sp.measure(h, {}, 'saturn')));
+  const car = Demo.build(); car.assets.push(Schema.createAsset({ category: 'vehicle', valueCents: 1500000 }));
+  const m7 = Sp.measure(car, {}, 'saturn');
+  checkTrue('...and with one prices it as a share of net worth', Money.isOk(m7) && m7.dollars === 1500000 && Money.isEntered(m7.n));
+  checkTrue('Envy waits for a priced dream', !Money.isOk(Sp.measure(h, {}, 'venus')));
+  checkTrue('Treachery waits for a closed month', !Money.isOk(Sp.measure(h, {}, 'fixedstars')));
+  checkTrue('Sloth says days off are not tracked yet', !Money.isOk(Sp.measure(h, {}, 'primum')) && /not tracked/.test(Sp.measure(h, {}, 'primum').reason));
+  checkTrue('every measure result carries the action, never the name', list.every(s => { const m = Sp.measure(h, {}, s.id); return !Money.isOk(m) || (m.action && m.action.room && !new RegExp(s.shadow.name, 'i').test(m.sentence)); }));
+
+  /* The tile. */
+  const t1 = Sp.tile(h, {}, 'moon');
+  checkTrue('an incomplete sphere\'s tile shows the virtue and the minutes, and in the Ledger as its only action', t1.mode === 'minutes' && t1.virtue === 'Showed up' && /minutes in the Ledger/.test(t1.sentence) && t1.action.room === 'ledger');
+  Prefs.set('path', 'fi');
+  const t1c = Sp.tile(sure, {}, 'moon');
+  checkTrue('a complete sphere\'s tile shows the measure and the action', t1c.mode === 'measure' && /never touched/.test(t1c.sentence) && t1c.action.label === 'Look at the five');
+  Prefs.reset();
+  checkTrue('the tile never carries a shadow name', list.every(s => { const t = Sp.tile(sure, {}, s.id); return !new RegExp(s.shadow.name, 'i').test(JSON.stringify(t)); }));
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 

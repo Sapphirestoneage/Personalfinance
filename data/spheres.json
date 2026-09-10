@@ -1,0 +1,367 @@
+{
+  "id": "spheres",
+  "version": "1.0",
+  "asOf": "2026-09-10",
+  "source": "The nine spheres of the Ledger (master build section 19.1): each one object with three faces, depth (which rows you enter, by ledger-rows.json id), shadow (what the numbers reveal, measured by shared/spheres.js and never shown by name outside the drawer) and virtue (the word on screen). The mapping is the brief's table; the row ids are this repo's registry.",
+  "confidence": "convention",
+  "confidenceNote": "An ordering and a set of measurements, not findings. Depth gates precision, never access: every sphere is visible from the start.",
+  "note": "Read by the Ledger rings, the Dashboard tiles, the tree map's roots and every room's sphere badge; no second copy anywhere. depth.minutes is the sum of the rows' minutes in data/ledger-rows.json. shadow.sentence takes {n}, {minutes} and {dollars} and carries no judgement word. The six situation rows sit in sphere 1 (they are the first six rows of the Ledger, 18.7), not sphere 4 as the brief's row pattern lists; sphere 9 has no rows until the time budget (16.12) adds the hours and the day-off price (D-184).",
+  "spheres": [
+    {
+      "order": 1,
+      "id": "moon",
+      "sphere": "Moon",
+      "virtue": "Showed up",
+      "virtueLine": "One number a letter, and who you are.",
+      "alreadyGood": true,
+      "depth": {
+        "rows": [
+          "pathChoice",
+          "dob",
+          "employmentStatus",
+          "state",
+          "grossAnnualIncome",
+          "cashSavings",
+          "hasDebt",
+          "accommodationMonthly",
+          "age",
+          "netWorth",
+          "monthlyExpenses",
+          "totalDebt"
+        ],
+        "minutes": 5.0
+      },
+      "unlocks": [
+        "dashboard",
+        "the five tiles"
+      ],
+      "sharpens": "the FI date to the decade",
+      "shadow": {
+        "name": "Limbo",
+        "measure": "rows never touched",
+        "engine": "Spheres.untouchedRows",
+        "sentence": "{n} numbers you have never touched. About {minutes} minutes to enter them."
+      },
+      "action": {
+        "label": "Look at the five",
+        "room": "ledger",
+        "filter": "missing"
+      },
+      "drawer": "Paradiso, sphere of the Moon: the inconstant. Inferno, circle one: limbo. Same measure, read from two sides."
+    },
+    {
+      "order": 2,
+      "id": "mercury",
+      "sphere": "Mercury",
+      "virtue": "Chosen",
+      "virtueLine": "Needs, wants, each debt, each account, each kind of pay.",
+      "alreadyGood": true,
+      "depth": {
+        "rows": [
+          "foodMonthly",
+          "transportationMonthly",
+          "wantsMonthly",
+          "therapyMonthly",
+          "debtBalance",
+          "debtRate",
+          "debtMinPayment",
+          "monthlyDebtPayments",
+          "investments",
+          "assetValue",
+          "assetTier",
+          "otherAssets",
+          "incomeType",
+          "employerMatch",
+          "contributionPercent",
+          "capturingFullMatch"
+        ],
+        "minutes": 17.0
+      },
+      "unlocks": [
+        "debt-payoff",
+        "statement",
+        "draftt"
+      ],
+      "sharpens": "the FI date to five years",
+      "shadow": {
+        "name": "Gluttony",
+        "measure": "the Joy Curve lowest line: what The Rerank would cut, a year",
+        "engine": "Spheres.joyLowest",
+        "sentence": "{dollars} a year on the line you rated lowest. Pick the one you keep."
+      },
+      "action": {
+        "label": "Pick the one you keep",
+        "room": "rerank",
+        "filter": null
+      },
+      "drawer": "Paradiso, sphere of Mercury: the ambitious. Inferno, circle three: gluttony. Same measure, read from two sides."
+    },
+    {
+      "order": 3,
+      "id": "venus",
+      "sphere": "Venus",
+      "virtue": "Wanted",
+      "virtueLine": "Who is in it, how you file, what you give.",
+      "alreadyGood": true,
+      "depth": {
+        "rows": [
+          "partnerName",
+          "partnerDob",
+          "filingStatus",
+          "dependents",
+          "givingPct",
+          "givingTarget",
+          "splitMode",
+          "sharedMonthly"
+        ],
+        "minutes": 4.0
+      },
+      "unlocks": [
+        "partner",
+        "giving",
+        "kids"
+      ],
+      "sharpens": "the FI date to two years",
+      "shadow": {
+        "name": "Envy",
+        "measure": "dreams priced without a date",
+        "engine": "Spheres.undatedDreams",
+        "sentence": "{n} dreams priced but not dated, {dollars} a month between them. Date one, make it a block."
+      },
+      "action": {
+        "label": "Date it, make it a block",
+        "room": "dreamline",
+        "filter": null
+      },
+      "drawer": "Paradiso, sphere of Venus: the lovers. Inferno, circle two: envy is Purgatorio's; here it is the wanting without a date. Same measure, read from two sides."
+    },
+    {
+      "order": 4,
+      "id": "sun",
+      "sphere": "Sun",
+      "virtue": "Known",
+      "virtueLine": "Rough numbers, named and confirmed; the dates money lands.",
+      "alreadyGood": true,
+      "depth": {
+        "rows": [
+          "zip",
+          "payCadence",
+          "nextPayday",
+          "annualLine",
+          "futureIncome",
+          "incomeLow",
+          "incomeHigh",
+          "bufferMonths",
+          "variableWindow"
+        ],
+        "minutes": 4.5
+      },
+      "unlocks": [
+        "calendar",
+        "runway",
+        "milestones on every timeline"
+      ],
+      "sharpens": "the FI date to the quarter",
+      "shadow": {
+        "name": "Fraud",
+        "measure": "count of rows with confidence roughly or unknown",
+        "engine": "Spheres.roughRows",
+        "sentence": "{n} numbers you have been guessing. About {minutes} minutes to confirm them."
+      },
+      "action": {
+        "label": "Confirm them",
+        "room": "ledger",
+        "filter": "rough"
+      },
+      "drawer": "Paradiso, sphere of the Sun: the wise. Inferno, circle eight: fraud. Same measure, read from two sides."
+    },
+    {
+      "order": 5,
+      "id": "mars",
+      "sphere": "Mars",
+      "virtue": "Steady",
+      "virtueLine": "What holds when a month goes wrong.",
+      "alreadyGood": false,
+      "depth": {
+        "rows": [
+          "floorMonthly",
+          "unemployment",
+          "paySurvives",
+          "healthCover",
+          "healthMonthly",
+          "highestDeductible",
+          "oopMax",
+          "ledgerIncome",
+          "billsMonthly",
+          "payLaterDue"
+        ],
+        "minutes": 9.5
+      },
+      "unlocks": [
+        "sleep-at-night",
+        "protection",
+        "between-jobs"
+      ],
+      "sharpens": "the FI date to the month",
+      "shadow": {
+        "name": "Wrath",
+        "measure": "interest a month on the highest-rate line",
+        "engine": "Spheres.highestRateLine",
+        "sentence": "{dollars} a month of interest on the line at {n}%. One move calms it."
+      },
+      "action": {
+        "label": "The one move that calms it",
+        "room": "debt-payoff",
+        "filter": null
+      },
+      "drawer": "Paradiso, sphere of Mars: the warriors. Inferno, circle five: wrath. Same measure, read from two sides."
+    },
+    {
+      "order": 6,
+      "id": "jupiter",
+      "sphere": "Jupiter",
+      "virtue": "Settled",
+      "virtueLine": "How each account is taxed, what it cost, what the match is worth.",
+      "alreadyGood": false,
+      "depth": {
+        "rows": [
+          "assetCharacter",
+          "assetCostBasis",
+          "rothContributed",
+          "hsaContributed",
+          "allocationStocks",
+          "allocationBonds",
+          "allocationCash",
+          "rebalanceBand",
+          "stockShare"
+        ],
+        "minutes": 9.0
+      },
+      "unlocks": [
+        "accounts",
+        "tax",
+        "after-tax net worth"
+      ],
+      "sharpens": "net worth after tax to the cent",
+      "shadow": {
+        "name": "Greed",
+        "measure": "cash above the runway need",
+        "engine": "Spheres.idleCash",
+        "sentence": "{dollars} of cash above {n} months of spending, earning nothing. Put the idle part to work."
+      },
+      "action": {
+        "label": "Put the idle part to work",
+        "room": "accounts",
+        "filter": null
+      },
+      "drawer": "Paradiso, sphere of Jupiter: the just. Inferno, circle four: greed. Same measure, read from two sides."
+    },
+    {
+      "order": 7,
+      "id": "saturn",
+      "sphere": "Saturn",
+      "virtue": "Enough",
+      "virtueLine": "The loans, the cover, the tax lines: the full cost of the life.",
+      "alreadyGood": false,
+      "depth": {
+        "rows": [
+          "loanPlan",
+          "loanExtra",
+          "idrShare",
+          "forgivenessYears",
+          "termLife",
+          "disabilityMonthly",
+          "umbrella",
+          "marginalRate",
+          "otherPreTax",
+          "withheld"
+        ],
+        "minutes": 15.5
+      },
+      "unlocks": [
+        "student-loans",
+        "enough",
+        "tax"
+      ],
+      "sharpens": "Enough to the dollar",
+      "shadow": {
+        "name": "Pride",
+        "measure": "the car as a share of net worth",
+        "engine": "Spheres.carShare",
+        "sentence": "{dollars} of car, {n}% of what you own. Set the number where you stop."
+      },
+      "action": {
+        "label": "Set the number where you stop",
+        "room": "enough",
+        "filter": null
+      },
+      "drawer": "Paradiso, sphere of Saturn: the contemplatives. Purgatorio, terrace one: pride. Same measure, read from two sides."
+    },
+    {
+      "order": 8,
+      "id": "fixedstars",
+      "sphere": "Fixed stars",
+      "virtue": "Kept",
+      "virtueLine": "What is set aside for later, and who gets it.",
+      "alreadyGood": false,
+      "depth": {
+        "rows": [
+          "tuitionSaved",
+          "beneficiariesSet",
+          "willExists",
+          "poaExists",
+          "confidenceWeightedNetWorth",
+          "monthsClosed"
+        ],
+        "minutes": 3.5
+      },
+      "unlocks": [
+        "estate",
+        "kids",
+        "history"
+      ],
+      "sharpens": "the plan against what actually happened",
+      "shadow": {
+        "name": "Treachery",
+        "measure": "the gap between the estimated month and the actual one",
+        "engine": "Spheres.estimateGap",
+        "sentence": "{dollars} between what you planned for last month and what happened. Re-date one."
+      },
+      "action": {
+        "label": "Re-date one",
+        "room": "variance",
+        "filter": null
+      },
+      "drawer": "Paradiso, sphere of the fixed stars: the triumphant. Inferno, circle nine: treachery. Same measure, read from two sides."
+    },
+    {
+      "order": 9,
+      "id": "primum",
+      "sphere": "Primum Mobile",
+      "virtue": "Rest",
+      "virtueLine": "The hours, and what a day off costs.",
+      "alreadyGood": false,
+      "depth": {
+        "rows": [],
+        "minutes": 0.0
+      },
+      "unlocks": [
+        "week",
+        "hassle"
+      ],
+      "sharpens": "nothing further: the numbers are done",
+      "shadow": {
+        "name": "Sloth",
+        "measure": "days off taken against what the real hourly wage affords",
+        "engine": "Spheres.daysOff",
+        "sentence": "{n} days off this year that you could afford and did not take. Take one, priced."
+      },
+      "action": {
+        "label": "Take one, priced",
+        "room": "week",
+        "filter": null
+      },
+      "drawer": "Paradiso, the Primum Mobile: the angels. Purgatorio, terrace four: sloth. Same measure, read from two sides."
+    }
+  ]
+}
