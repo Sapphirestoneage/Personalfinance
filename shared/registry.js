@@ -227,27 +227,48 @@
       ]
     },
     {
-      id: 'cash-flow',
+      /* WHAT a month costs (D-192): split out of Cash Flow so the four
+         numbers, the yearly costs and the split have one plain home. */
+      id: 'expenses',
       features: ['annualLines', 'agingParents'],
-      group: 'numbers', subgroup: 'expenses', aliases: ['spending', 'expenses', 'rent', 'food', 'FAT', 'wants', 'month'],
+      group: 'numbers', subgroup: 'expenses', aliases: ['spending', 'expenses', 'rent', 'food', 'FAT', 'wants', 'month', 'typical month', 'split', 'categories'],
       kind: 'core',
       needs: ['monthlyExpenses'],
       order: 3,
+      title: 'Expenses',
+      blurb: 'What a month costs you: four numbers, the yearly costs, and an optional split by category, measured against a budget.',
+      href: 'rooms/expenses.html',
+      tier: 1,
+      tags: ['cashflow'],
+      daite: { reads: ['expenses'], writes: ['expenses', 'expenses.needs.accommodation', 'expenses.needs.food', 'expenses.needs.transportation', 'expenses.wants', 'expenses.wants.therapy'] },
+      subsections: [
+        { id: 'spending',        label: 'A typical month' },
+        { id: 'out-summary',     label: 'Monthly spending' },
+        { id: 'out-template',    label: 'Against a budget' },
+        { id: 'out-divergence',  label: 'Guess vs. reality' }
+      ]
+    },
+    {
+      /* WHEN the money moves (D-192): the log on its dates, this month at
+         a glance, and where it flows. It reads the typical month from
+         Expenses and never types it. */
+      id: 'cash-flow',
+      features: [],
+      group: 'numbers', subgroup: 'expenses', aliases: ['log', 'receipts', 'this month', 'flow', 'sankey', 'what is left'],
+      kind: 'about-you',
+      needs: [],
+      order: 3.1,
       title: 'Cash Flow',
-      blurb: 'Where the money actually goes, by category — measured against a budget, and against what you thought you spent.',
+      blurb: 'When the money moves: this month at a glance, every receipt logged on its date, and where it all flows.',
       href: 'rooms/cash-flow.html',
       tier: 1,
       tags: ['cashflow', 'income'],
-      daite: { reads: ['expenses'], writes: ['expenses', 'expenses.log', 'expenses.needs.accommodation', 'expenses.needs.food', 'expenses.needs.transportation', 'expenses.wants', 'expenses.wants.therapy'] },
+      daite: { reads: ['expenses', 'income'], writes: ['expenses.log'] },
       subsections: [
         { id: 'glance',          label: 'At a glance' },
-        { id: 'spending',        label: 'A typical month' },
         { id: 'log',             label: 'The expense log' },
         { id: 'flow',            label: 'Where it flows' },
-        { id: 'out-summary',     label: 'Monthly spending' },
-        { id: 'out-net-flow',    label: 'What’s left' },
-        { id: 'out-template',    label: 'Against a budget' },
-        { id: 'out-divergence',  label: 'Guess vs. reality' }
+        { id: 'out-net-flow',    label: 'What’s left' }
       ]
     },
     {
@@ -1627,7 +1648,7 @@
      path order. Anything not named falls in after, in path order. */
   var GROUP_ORDER = {
     home: ['dashboard', 'planner', 'start'],
-    numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'variable-income', 'real-hourly-wage', 'tax', 'budget', 'cash-flow', 'variance', 'calendar'],
+    numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'variable-income', 'real-hourly-wage', 'tax', 'budget', 'expenses', 'cash-flow', 'variance', 'calendar'],
     scorecard: ['financial-snapshot', 'savings-rate', 'ratios', 'health', 'foo-ladder', 'fire', 'fire-lab', 'statements'],
     decisions: ['career-move', 'self-employed', 'side-hustle', 'between-jobs', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'kids', 'protection', 'estate', 'giving', 'windfall', 'runway', 'decumulation', 'quick-math', 'adventure', 'what-if-life', 'timeline'],
     matters: ['sleep-at-night', 'values', 'goals', 'enough', 'fulfillment', 'rerank', 'dreamline', 'week', 'buckets', 'reversibility', 'unlearning'],

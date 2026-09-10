@@ -758,7 +758,7 @@
     savings_rate_below_benchmark: function (d) {
       return { say: 'You are saving <strong>' + Money.formatRate(d.rate, { decimals: 1 }) + '</strong> of gross; the benchmark floor is '
           + Money.formatRate(d.floor, { decimals: 0 }) + '.',
-        room: 'cash-flow', anchor: 'spending', go: 'Find the gap in Cash Flow →' };
+        room: 'expenses', anchor: 'spending', go: 'Find the gap in Expenses →' };
     },
     high_utilisation_vs_debt_load: function (d) {
       return { say: '<strong>' + Money.formatRate(d.revolvingShare, { decimals: 0 }) + '</strong> of what you owe is revolving credit ('
@@ -922,7 +922,7 @@
     var rates = Tier0.savingsRate(h, TABLES);
     var basis = Money.isOk(rates.includingMatch) ? rates.includingMatch : rates.excludingMatch;
     var rows = [];
-    if (Money.isOk(spend)) rows.push(['A month of spending', spend.value, 'cash-flow', 'spending']);
+    if (Money.isOk(spend)) rows.push(['A month of spending', spend.value, 'expenses', 'spending']);
     if (Money.isOk(basis) && basis.annualSavingsCents > 0 && Gate.exists(h, 'savingsRate')) rows.push(['A year of saving', basis.annualSavingsCents, 'savings-rate', 'rate']);
     var one = Schema.oneOffEntry(h);
     if (one) rows.push([one.direction === 'out' ? 'The one-off going out' : 'The one-off coming in', one.cents, 'start', 'q-fine-tune']);

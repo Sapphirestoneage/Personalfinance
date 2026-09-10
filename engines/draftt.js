@@ -31,8 +31,8 @@
 
   var ORDER = ['debt', 'retirement', 'accommodation', 'food', 'transportation', 'taxes', 'therapy'];
   var OWNER = {
-    debt: ['debt-payoff', 'debts'], retirement: ['start', 'q-plan'], accommodation: ['cash-flow', 'spending'],
-    food: ['cash-flow', 'spending'], transportation: ['cash-flow', 'spending'], taxes: ['tax', 'number'], therapy: ['cash-flow', 'spending']
+    debt: ['debt-payoff', 'debts'], retirement: ['start', 'q-plan'], accommodation: ['expenses', 'spending'],
+    food: ['expenses', 'spending'], transportation: ['expenses', 'spending'], taxes: ['tax', 'number'], therapy: ['expenses', 'spending']
   };
 
   function table(tables) { return (tables && tables.bands) || null; }

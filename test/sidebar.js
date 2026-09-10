@@ -53,7 +53,7 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   check('every Your Numbers room that owns a field carries a status dot', (await page.$$eval('#slaf-menu [data-group="numbers"] [data-room] .slaf-dot', ds => ds.length)) === owners);
   check('...and no other group does', (await page.$$eval('#slaf-menu .slaf-menu-group:not([data-group="numbers"]) .slaf-dot', ds => ds.length)) === 0);
   check('the demo\'s Debt Payoff reads filled', await page.$eval('#slaf-menu [data-room="debt-payoff"] .slaf-dot', d => d.classList.contains('is-filled')));
-  check('...Cash Flow partly (therapy is not tracked)', await page.$eval('#slaf-menu [data-room="cash-flow"] .slaf-dot', d => d.classList.contains('is-partly')));
+  check('...Expenses partly (therapy is not tracked)', await page.$eval('#slaf-menu [data-room="expenses"] .slaf-dot', d => d.classList.contains('is-partly')));
   check('...and the Calendar empty', await page.$eval('#slaf-menu [data-room="calendar"] .slaf-dot', d => d.classList.contains('is-empty')));
   check('DRAFTT and the map ride as links', (await page.$$eval('#slaf-menu .slaf-menu-link.is-extra', ls => ls.map(l => l.textContent).join('|'))) === 'DRAFTT|Every room, on one page');
 

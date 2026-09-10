@@ -12138,6 +12138,55 @@ balance or minimum counted as missing rather than zero), and under the
 extra box the one figure that leaves the account for debt each month,
 minimums plus the extra in use, with where the extra came from.
 
+## D-192 — Expenses is what a month costs; Cash Flow is when the money moves
+
+**Why.** The owner: "I want to have spending be in expenses now. Cash
+Flow is just measuring when that spending happens now." One room had
+been holding two different questions, and the second was burying the
+first: the four numbers everything reads sat above a log, a Sankey and
+three comparisons, and "where do I type what a month costs" had no
+plain answer. It also fed the debt-room confusion of the same day: with
+everyday spending going through the cards, "what I spend" and "what I
+pay the card" need to be typed in different places or they get typed
+twice (D-190, D-191).
+
+**Decision.** Cash Flow is split in two. **Expenses**
+(`rooms/expenses.html`, registry id `expenses`, order 3, core) is what a
+month costs: the four numbers and the therapy toggle, the yearly costs,
+the optional split by category with its proposals, and the three
+readings of that month (spending by category, against a budget split,
+the lines against the four numbers). It takes over as the one owner of
+`monthlyExpenses`, the four buckets, `therapyMonthly` and `rentMonthly`,
+and the DAITE writes for them. **Cash Flow** (order 3.1, about-you) is
+when the money moves: this month at a glance, the expense log on its
+dates with the reimbursable path, where it flows, and what is left. It
+writes the log only (`expenses.log`) and reads the typical month from
+Expenses, saying so wherever it used to invite typing. The core stays
+four rooms: Expenses takes the seat Cash Flow held (D-051). Every layout
+in `data/layouts.json` lists Expenses beside Cash Flow; the walk's first
+stage does too; the exercises, the skill tree, the advice translator,
+the dashboard and every room that pointed at "categorise a month in
+Cash Flow" now point at Expenses, and the ones that mean the log still
+point at Cash Flow. No engine changed a formula.
+
+**Compatibility note.** Nothing stored changes shape: the four numbers,
+the lines, the yearly costs and the log all live where they did, in
+`household.expenses`. Two tags change: `Ownership.FIELDS.*.owner` for the
+spending fields is `expenses` (was `cash-flow`), so `Ownership.linkTo`
+and every door and chip land on the new room; and
+`Schema.rentMonthlyCents(h).source` reads `expenses` (was `cash-flow`)
+when the rent is the housing line, and Housing Decision, the Calendar
+engine and the ownership read were updated to match. A future room
+reading spending calls the same helpers and needs to know nothing new;
+one that wants to link to "where spending is typed" links to
+`expenses.html#spending`, and to "where a receipt is logged" to
+`cash-flow.html#log`.
+
+Gate for this commit: unit, D&D and export suites; render, forms,
+features and sidebar gates with both rooms; the twenty layouts reaching
+every room; a phone walk typing the four numbers in Expenses and logging
+a receipt in Cash Flow, each landing in the stored household.
+
 ---
 
 # The Dungeons & Dividends entries

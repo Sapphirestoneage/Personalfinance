@@ -41,7 +41,7 @@ const TARGETS = [
   ['/rooms/statement.html', '.asset-grid'],
   ['/rooms/statement.html', '.pair'],
   ['/rooms/foo-ladder.html', '.grid2'],
-  ['/rooms/cash-flow.html', '.cat-row'],
+  ['/rooms/expenses.html', '.cat-row'],
   ['/rooms/start.html', '.q-three'],
   ['/rooms/start.html', '.q-about']
 ];

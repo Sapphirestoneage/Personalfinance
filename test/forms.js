@@ -996,7 +996,7 @@ const CASES = [
   },
   {
     /* The four numbers (D-172): typed, kept, and the month follows. */
-    room: '/rooms/cash-flow.html',
+    room: '/rooms/expenses.html',
     container: '#fat',
     seed: 'empty',
     fields: [
@@ -1017,7 +1017,7 @@ const CASES = [
   {
     /* 15.5: a yearly cost typed into the fold lands as a line, in its bucket,
        and a twelfth of it joins the month (D-181). */
-    room: '/rooms/cash-flow.html',
+    room: '/rooms/expenses.html',
     container: '#annual-form',
     seed: 'demo',
     prepare: async (page) => { await page.evaluate(() => { document.getElementById('annual-fold').open = true; }); },
@@ -1064,7 +1064,7 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/cash-flow.html',
+    room: '/rooms/expenses.html',
     container: '#buckets',
     seed: 'demo',
     prepare: async (page) => { await page.evaluate(() => { document.getElementById('split-more').open = true; }); },

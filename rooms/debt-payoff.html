@@ -1221,7 +1221,7 @@
       out += est.value > 0
         ? row('Estimate', Money.formatCents(est.value), bits, c.basis === 'estimate')
         : row('Estimate', '$0', 'your pay is ' + Money.formatCents(-est.value) + ' short of spending and the minimums: ' + bits
-            + '. If you can really pay more than the minimums, one of those is off. The usual two: the spending figure (<a href="cash-flow.html">Cash Flow</a>) already counts these debt payments, or the pay after tax is worked out from your gross with a flat tax rate and your real paycheck is higher (<a href="start.html">Start Here</a>)', c.basis === 'estimate');
+            + '. If you can really pay more than the minimums, one of those is off. The usual two: the spending figure (<a href="expenses.html#spending">Expenses</a>) already counts these debt payments, or the pay after tax is worked out from your gross with a flat tax rate and your real paycheck is higher (<a href="start.html">Start Here</a>)', c.basis === 'estimate');
     } else {
       out += row('Estimate', 'waiting', (c.estimateReason && /pay|income/i.test(c.estimateReason) ? 'add your pay in ' : 'finish ') + '<a href="start.html">Start Here</a> and this fills in', false, true);
     }
@@ -1256,7 +1256,7 @@
     } else if (c.basis && c.cents > 0) {
       hint.textContent = 'Blank, so the plan puts ' + fallback + ', ' + Money.formatCents(c.cents) + ' a month, on top of the minimums. Type a figure to override.';
     } else if (c.basis) {
-      hint.textContent = 'Blank, and ' + fallback + ' leaves nothing free after spending and the minimums, so this is the minimums alone. If your spending already counts these payments, take them out of it in Cash Flow.';
+      hint.textContent = 'Blank, and ' + fallback + ' leaves nothing free after spending and the minimums, so this is the minimums alone. If your spending already counts these payments, take them out of it in Expenses.';
     } else {
       hint.textContent = 'Blank shows what the minimums alone do. Add your pay in Start Here and an estimate appears here.';
     }

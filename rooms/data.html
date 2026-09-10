@@ -315,7 +315,7 @@
     var where = [];
     if (p.debts.length) where.push(p.debts.length + (p.debts.length === 1 ? ' debt' : ' debts') + ' → <a href="' + Ownership.linkTo('debt-payoff', 'debts') + '">Debt Payoff</a>');
     if (p.assets.length) where.push(p.assets.length + (p.assets.length === 1 ? ' account' : ' accounts') + ' → <a href="' + Ownership.linkTo('statement') + '">The Statement</a>');
-    if (p.expenses.length) where.push(p.expenses.length + ' expense line' + (p.expenses.length === 1 ? '' : 's') + ' → <a href="' + Ownership.linkTo('cash-flow', 'spending') + '">Cash Flow</a>');
+    if (p.expenses.length) where.push(p.expenses.length + ' expense line' + (p.expenses.length === 1 ? '' : 's') + ' → <a href="' + Ownership.linkTo('expenses', 'spending') + '">Cash Flow</a>');
     if (p.income.length) where.push('pay → <a href="' + Ownership.linkTo('start', 'q-income') + '">Start Here</a>');
     el('paste-note').hidden = false;
     el('paste-note').className = 'data-note is-good';

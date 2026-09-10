@@ -468,7 +468,7 @@
             : 'add your pay and filing status in Start Here and this fills itself in' },
         { label: 'Going out, a month',
           value: g.known ? Money.formatCents(g.outCents) : 'not known, and not guessed',
-          source: !g.known ? 'add a month of spending in Cash Flow and this fills itself in'
+          source: !g.known ? 'add a month of spending in Expenses and this fills itself in'
             : g.basis === 'categorised'
               ? 'every category you have entered, with debt minimums pulled in from Debt Payoff as a derived '
                 + 'line rather than a second copy (engines/cashflow.js)'

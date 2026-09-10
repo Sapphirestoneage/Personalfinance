@@ -146,7 +146,7 @@
       } else if (m === 'expenses.needs.*') {
         out.push('Every needs line ' + (v < 0 ? 'down' : 'up') + ' ' + pct(v) + '.');
       } else if (m === 'expenses.needs.accommodation') {
-        out.push('Housing ' + (v < 0 ? 'down' : 'up') + ' ' + pct(v) + ' - your rent or mortgage line, read from Cash Flow.');
+        out.push('Housing ' + (v < 0 ? 'down' : 'up') + ' ' + pct(v) + ' - your rent or mortgage line, read from Expenses.');
       } else if (m.indexOf('expenses.needs.') === 0) {
         out.push('The ' + m.slice('expenses.needs.'.length) + ' line ' + (v < 0 ? 'down' : 'up') + ' ' + pct(v) + '.');
       }

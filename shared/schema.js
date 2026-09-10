@@ -127,11 +127,11 @@
     'household.history.compareTo':               { class: 'raw',        unit: 'id',      note: 'the snapshot History compares today against. Owned by History. D-101' },
     'meta.fields':                               { class: 'raw',        unit: 'map',     note: '{ fieldId: { asOf, source, confidence, room } }: when a number was last set or confirmed, how it arrived (typed, pasted, imported, screenshot, migrated, block-default, quote) and how sure the person is (sure, roughly, unsure, unknown). Schema.meta reads it; the spine writes it. D-181' },
     'meta.guessed':                              { class: 'raw',        unit: 'map',     note: '{ fieldId: true } for figures the one-pager committed as guesses; cleared per field the moment a real number is written. D-094' },
-    'household.expenses.needs.food.monthlyCents':          { class: 'raw', unit: 'cents', note: 'FAT: food a month. Owned by Cash Flow. D-172' },
-    'household.expenses.needs.accommodation.monthlyCents': { class: 'raw', unit: 'cents', note: 'FAT: rent, or mortgage plus tax plus insurance, one number a month. Owned by Cash Flow. D-172' },
-    'household.expenses.needs.transportation.monthlyCents':{ class: 'raw', unit: 'cents', note: 'FAT: getting around, a month. Owned by Cash Flow. D-172' },
-    'household.expenses.wants.totalCents':                 { class: 'raw', unit: 'cents', note: 'everything else a month, one number - whatever has not been split out. Owned by Cash Flow. D-172' },
-    'household.expenses.wants.therapy':                    { class: 'raw', unit: 'cents', note: 'OPTIONAL: { monthlyCents } only while "track mental health spending separately" is on; null (absent) when off. Owned by Cash Flow. D-172' },
+    'household.expenses.needs.food.monthlyCents':          { class: 'raw', unit: 'cents', note: 'FAT: food a month. Owned by Expenses (D-192; Cash Flow before it). D-172' },
+    'household.expenses.needs.accommodation.monthlyCents': { class: 'raw', unit: 'cents', note: 'FAT: rent, or mortgage plus tax plus insurance, one number a month. Owned by Expenses (D-192; Cash Flow before it). D-172' },
+    'household.expenses.needs.transportation.monthlyCents':{ class: 'raw', unit: 'cents', note: 'FAT: getting around, a month. Owned by Expenses (D-192; Cash Flow before it). D-172' },
+    'household.expenses.wants.totalCents':                 { class: 'raw', unit: 'cents', note: 'everything else a month, one number - whatever has not been split out. Owned by Expenses (D-192; Cash Flow before it). D-172' },
+    'household.expenses.wants.therapy':                    { class: 'raw', unit: 'cents', note: 'OPTIONAL: { monthlyCents } only while "track mental health spending separately" is on; null (absent) when off. Owned by Expenses (D-192; Cash Flow before it). D-172' },
     'meta.noRent':                               { class: 'raw',        unit: 'bool',    note: 'no rent to pay; lowers the spending guess. D-094' },
     'person.unemployment.benefitStatus':         { class: 'raw',        unit: 'enum',    values: ['receiving', 'applied', 'notApplied', 'ineligible'], note: 'between jobs: whether unemployment is coming. With benefitWeeklyCents, benefitWeeksLeft, severanceCents, lastGrossAnnualCents and since. Owned by Start Here. D-092' },
     'person.dob':                                { class: 'raw',        unit: 'iso-date' },
@@ -2403,7 +2403,7 @@
    * typical-month line or a recurring one logged on its day — is the
    * fact; the Housing Decision room's
    * own field is only a place you would rent INSTEAD, read when there is
-   * no line. Returns { cents, source: 'cash-flow' | 'housing' | 'none',
+   * no line. Returns { cents, source: 'expenses' | 'housing' | 'none',
    * entryId } — never a guess; the rooms that guess say so themselves.
    */
   function rentMonthlyCents(household) {
@@ -2412,17 +2412,17 @@
        Housing Decision's own field is a place you would rent INSTEAD, read
        only when the bucket is blank. */
     var acc = fat(h).accommodation;
-    if (Money.isOk(acc) && acc.value > 0) return { cents: acc.value, source: 'cash-flow', entryId: null, count: 1, from: acc.source };
+    if (Money.isOk(acc) && acc.value > 0) return { cents: acc.value, source: 'expenses', entryId: null, count: 1, from: acc.source };
     /* One rent (D-130): with the bucket blank, a housing line in Cash
        Flow's split is still what is paid - the same room's own, more
        specific figure. */
     var fromLine = fatFromLines((h.expenses || {}).entries).accommodation;
-    if (fromLine !== null && fromLine > 0) return { cents: fromLine, source: 'cash-flow', entryId: null, count: 1, from: 'lines' };
+    if (fromLine !== null && fromLine > 0) return { cents: fromLine, source: 'expenses', entryId: null, count: 1, from: 'lines' };
     /* ...or a recurring rent logged on its day (D-130, Q5). */
     var logged = ((h.expenses || {}).entries || []).filter(function (e) {
       return e && e.active !== false && e.source === 'log' && e.categoryId === 'housing' && e.period !== 'once' && Money.isEntered(e.amountCents) && e.amountCents > 0;
     });
-    if (logged.length) return { cents: logged.reduce(function (t, e) { return t + e.amountCents; }, 0), source: 'cash-flow', entryId: logged[0].id, count: logged.length, from: 'log', logged: true };
+    if (logged.length) return { cents: logged.reduce(function (t, e) { return t + e.amountCents; }, 0), source: 'expenses', entryId: logged[0].id, count: logged.length, from: 'log', logged: true };
     var own = (h.housing || {}).rentMonthlyCents;
     if (Money.isEntered(own) && own > 0) return { cents: own, source: 'housing', entryId: null, count: 0 };
     return { cents: null, source: 'none', entryId: null, count: 0 };

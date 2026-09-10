@@ -174,7 +174,7 @@
       el('rate-list').innerHTML = '';
       el('rate-empty').hidden = false;
       el('rate-empty').innerHTML = esc(r.reason) + ' <a href="'
-        + Ownership.linkTo('cash-flow', 'spending') + '">Categorise a month →</a>';
+        + Ownership.linkTo('expenses', 'spending') + '">Categorise a month →</a>';
       return;
     }
     el('rate-empty').hidden = true;
@@ -318,7 +318,7 @@
       el('curve-body').hidden = true;
       el('curve-why').innerHTML = esc(c.reason)
         + (c.missing.indexOf('expenseEntries') !== -1
-          ? ' <a href="' + Ownership.linkTo('cash-flow', 'spending') + '">Categorise a month →</a>'
+          ? ' <a href="' + Ownership.linkTo('expenses', 'spending') + '">Categorise a month →</a>'
           : '');
       el('quad-list').innerHTML = '';
       el('quad-note').hidden = true;

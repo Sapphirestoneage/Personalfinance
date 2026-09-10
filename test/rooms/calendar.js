@@ -135,7 +135,7 @@ module.exports = function (t) {
   const rc = Cal.month(hh(), T, { now: NOW });
   check('with no ledger the cadence still rules, as before', rc.paydaySource + '/' + rc.paydays.map(p => p.dom).join(','), 'cadence/5,20');
   check('… and a cadence payday shows in the grid as one', Cal.weeks(rc).flat().filter(c => c && c.dom === 5)[0].ins.map(x => x.kind).join(','), 'payday');
-  check('rent comes through Schema.rentMonthlyCents now', Cal.rentCents(hl).cents + '/' + Cal.rentCents(hl).source, '90000/cash-flow');
+  check('rent comes through Schema.rentMonthlyCents now', Cal.rentCents(hl).cents + '/' + Cal.rentCents(hl).source, '90000/expenses');
 
   /* The one-pager's one-off is a dated entry (D-130). */
   const SpineC = require(path.join(ROOT, 'shared/spine-v2.js'));

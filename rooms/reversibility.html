@@ -248,7 +248,7 @@
       var spend = Schema.monthlyExpensesCents(h), cash = Schema.cashCents(h);
       var rows = [];
       if (Money.isOk(r) && Money.isEntered(r.value)) rows.push({ label: 'To undo: ' + r.decision.label.toLowerCase(), cents: r.value, href: Ownership.linkTo('reversibility', 'inputs') });
-      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('cash-flow', 'spending') });
+      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('expenses', 'spending') });
       if (Money.isOk(cash)) rows.push({ label: 'Cash & savings', cents: cash.value, href: Ownership.linkTo('start', 'q-cash') });
       return rows;
     },

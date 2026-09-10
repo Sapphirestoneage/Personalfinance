@@ -108,7 +108,7 @@
       var fat = Schema.fat(h); var keys = Schema.FAT_NEEDS; var missing = [];
       var total = 0;
       keys.forEach(function (k) { if (Money.isOk(fat[k])) total += fat[k].value; else missing.push(k + 'Monthly'); });
-      if (missing.length) return Money.incomplete('Fill in food, accommodation and transportation in Cash Flow to see this.', missing);
+      if (missing.length) return Money.incomplete('Fill in food, accommodation and transportation in Expenses to see this.', missing);
       var s = shareOf(total, takeHomeMonthly(h, T), 'takeHome');
       return Money.isOk(s) ? Money.ok(s.value, { share: pct(s.value), amount: money(total) }) : s;
     },
@@ -117,7 +117,7 @@
     sinkingfund: function (h) {
       var yr = Schema.annualMonthlyCents(h);
       if (!yr.on) return Money.incomplete('The "Also once a year" switch is off in Settings.', ['annualLines']);
-      if (!yr.count) return Money.incomplete('Add a yearly cost in Cash Flow (insurance, gifts, registration) to see this.', ['annualLines']);
+      if (!yr.count) return Money.incomplete('Add a yearly cost in Expenses (insurance, gifts, registration) to see this.', ['annualLines']);
       return Money.ok(yr.monthlyCents, { amount: money(yr.monthlyCents), total: money(yr.annualCents), count: yr.count + (yr.count === 1 ? ' yearly cost' : ' yearly costs') });
     },
     fiftythirty: function (h, T) {
@@ -134,7 +134,7 @@
     },
     conscious: function (h, T) {
       var w = h.expenses && h.expenses.wants && h.expenses.wants.totalCents;
-      if (!Money.isEntered(w)) return Money.incomplete('Add the wants line in Cash Flow to see this.', ['wantsMonthly']);
+      if (!Money.isEntered(w)) return Money.incomplete('Add the wants line in Expenses to see this.', ['wantsMonthly']);
       var s = shareOf(w, takeHomeMonthly(h, T), 'takeHome');
       return Money.isOk(s) ? Money.ok(s.value, { share: pct(s.value), amount: money(w) }) : s;
     },

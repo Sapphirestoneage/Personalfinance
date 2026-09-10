@@ -250,7 +250,7 @@
       }
       if (line.source === 'entered' && !line.custom) {
         return '<div class="line" data-line-id="' + esc(line.id) + '"><span class="nm">' + esc(line.label) + '<small>tracked in Cash Flow</small></span>'
-          + '<a class="amt slaf-owned slaf-owned--field" href="' + Ownership.linkTo('cash-flow', 'spending') + '"><span class="slaf-owned-value">' + fmt(line.monthlyCents) + '</span></a></div>';
+          + '<a class="amt slaf-owned slaf-owned--field" href="' + Ownership.linkTo('expenses', 'spending') + '"><span class="slaf-owned-value">' + fmt(line.monthlyCents) + '</span></a></div>';
       }
       var entry = line.custom ? entryById(h, line.entryId) : null;
       var isCommon = line.source === 'suggested' || (entry && entry.id.indexOf(Rerank.SUGGESTED_ENTRY_PREFIX) === 0);

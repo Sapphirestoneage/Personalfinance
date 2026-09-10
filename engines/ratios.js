@@ -226,7 +226,7 @@
       unit: 'rate', needs: 'a categorised month and your income',
       note: 'The 28% rule. Counts housing and utilities, which is how underwriters read it.',
       compute: function (c) {
-        if (!c.spend) return Money.incomplete('Categorise a month in Cash Flow to split housing out.', ['expenseEntries']);
+        if (!c.spend) return Money.incomplete('Split a month by category in Expenses to split housing out.', ['expenseEntries']);
         return over(c.housingMonthly, c.monthlyGross, { denominatorName: 'grossAnnualIncome' });
       } },
 
@@ -235,7 +235,7 @@
       unit: 'rate', needs: 'a categorised month, your debts and your income',
       note: 'The 36% rule. Housing plus all other debt service.',
       compute: function (c) {
-        if (!c.spend) return Money.incomplete('Categorise a month in Cash Flow to split housing out.', ['expenseEntries']);
+        if (!c.spend) return Money.incomplete('Split a month by category in Expenses to split housing out.', ['expenseEntries']);
         if (!Money.isEntered(c.monthlyDebtPayments)) return Money.incomplete('Add your debts to see this.', ['debts']);
         /* A mortgage payment sits in both halves; count it once. */
         var nonMortgage = c.monthlyDebtPayments - (Money.isEntered(c.mortgagePayment) ? c.mortgagePayment : 0);
@@ -465,7 +465,7 @@
       formula: 'essential spending ÷ discretionary spending',
       unit: 'multiple', needs: 'a categorised month',
       compute: function (c) {
-        if (!c.spend) return Money.incomplete('Categorise a month in Cash Flow to see this.', ['expenseEntries']);
+        if (!c.spend) return Money.incomplete('Split a month by category in Expenses to see this.', ['expenseEntries']);
         return over(c.needsMonthly, c.wantsMonthly, {
           denominatorName: 'wants',
           zeroReason: 'Nothing is categorised as discretionary, so there is no split to report.'
@@ -476,7 +476,7 @@
       formula: 'discretionary spending ÷ gross monthly income',
       unit: 'rate', needs: 'a categorised month and your income',
       compute: function (c) {
-        if (!c.spend) return Money.incomplete('Categorise a month in Cash Flow to see this.', ['expenseEntries']);
+        if (!c.spend) return Money.incomplete('Split a month by category in Expenses to see this.', ['expenseEntries']);
         return over(c.wantsMonthly, c.monthlyGross, { denominatorName: 'grossAnnualIncome' });
       } },
 
@@ -564,7 +564,7 @@
       unit: 'rate', needs: 'a categorised month and your take-home pay',
       note: 'The tithe is a religious convention, not a financial one, so there is no band.',
       compute: function (c) {
-        if (!c.spend) return Money.incomplete('Categorise a month in Cash Flow to see this.', ['expenseEntries']);
+        if (!c.spend) return Money.incomplete('Split a month by category in Expenses to see this.', ['expenseEntries']);
         return over(c.giftsMonthly, c.takeHomeMonthly, { denominatorName: 'takeHome' });
       } },
 

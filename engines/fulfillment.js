@@ -93,7 +93,7 @@
     var summary = CashFlow.summarise(household, catalog);
     if (!Money.isOk(summary)) {
       return Money.incomplete(
-        'Categorise a month in Cash Flow first — this needs to know what each '
+        'Split a month by category in Expenses first — this needs to know what each '
           + 'thing costs before you can say what it is worth.',
         ['expenseEntries']);
     }

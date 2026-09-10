@@ -179,7 +179,7 @@
       "when": [],
       "headline": "“It is never too early, or too late.”",
       "body": "The first number to know is what a month costs you: {spending}. Every other number on this page is measured against it.",
-      "room": "cash-flow",
+      "room": "expenses",
       "anchor": "spending"
     }
   ]
