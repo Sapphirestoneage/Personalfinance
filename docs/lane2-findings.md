@@ -158,3 +158,28 @@ Seed 20260910, 100 cases per property, 66 files for 64 engines, 282 properties, 
 | windfall | investing at once beats spreading it out whenever the market rate is at least the cash rate; the same input gives the same run twice, and every path cell is whole cents |
 | worth | no throw, no NaN or Infinity, on any valid household (4 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction |
 
+## Section 3: sourced data tables
+
+3957 checks over 8 files. Source: `tests/data.test.js`. A note is a disagreement between a lane 2 table and the copy an engine reads today, or a cell the rule had to make an exception for; each carries a DECIDE:.
+
+### Failures
+
+None.
+
+### Notes
+
+- states.json: 408 cells
+- lane2/milestones.json: 10 cells
+- lane2/aca.json: 15 cells
+- lane2/studentloans.json: 40 cells
+- lane2/contribution_limits.json: 46 cells
+- lane2/tax_brackets.json: 38 cells
+- return_bands.json: 1 cells
+- bands.json: 3 cells
+- 45 prior-year cells (2025 rows) are older than 18 months and marked `historical: true`: a closed year is a settled fact, not a stale one. DECIDE: whether the 18-month rule should read that way.
+- 51 cells are older than 18 months and say so (`stale: true` with a DECIDE: note); every one is the childcare column, whose 2024 edition this session could not open. Not a pass: a flag for the May refresh.
+- states.json says OH is flat for 2026; state_brackets_2026.json says brackets (2025 edition): the 2026 change is not yet in the engine table
+- UI benefit cells differ from data/ui_benefits.json (the engine copy) in 27 states; states.json carries the July 2025 DOL edition plus the October 2025 increases, ui_benefits.json a 2025 recollection. DECIDE: which the engine reads.
+- 2026 top applicable percentage: aca.json says 0.0996 (Rev. Proc. 2025-25), aca_2026.json says 0.0866. DECIDE: which the engine reads.
+- 2026 annualAdditions415c: contribution_limits.json says 72000 (IRS Notice 2025-67 as read from search), irs_limits_2026.json says 70000 (carried from the FOO room). DECIDE: which the engine reads.
+

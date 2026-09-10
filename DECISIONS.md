@@ -10509,7 +10509,7 @@ Written before touching code, as the method asks:
   island; 15.7 makes `people[1]` the partner and the Partner room its
   editor. Migration maps the island onto the second person.
 - **`retirement_milestones.json`** holds savings multiples by age, not the
-  inflection dates; 15.9's `data/milestones.json` is new and distinct.
+  inflection dates; 15.9's `data/lane2/milestones.json` is new and distinct.
 - **`data/states.json`** holds code and name only; 15.6 adds tax type,
   property tax, childcare, auto insurance and cost of living per state —
   the two tables D-178 put inside `blocks/home.json` and `blocks/geo.json`
@@ -10768,6 +10768,97 @@ when `opts.now` is absent; the suite passes a fixed clock and says so.
 
 Nothing stored changed. `tests/reports/*.json` are committed as the
 record the findings file is rendered from.
+
+---
+
+## L-3 - Lane 2, section 3: sourced data tables
+
+### What it is
+
+Eight reference tables under `data/`, each cell an object
+`{ value, asOf, source, confidence }` where `source` is a URL and
+`confidence` is `sourced` (read from a search result quoting the primary
+source), `recalled` (from memory of the named edition, rounded, with
+`verify: true`) or `convention`. Each file carries a top-level `refresh`
+note; `docs/data-refresh-calendar.md` is the same information as one
+calendar. The five new files live under `data/lane2/` for now: test/run.js
+requires every `data/*.json` to be registered in `Reference.TABLE_FILES`,
+which is outside this lane, so P-5 asks the master build to move and
+register them (`states.json`, `return_bands.json` and `bands.json` are
+already registered and stay in `data/`). `tests/tools/build-data-tables.js` generates the six new or
+extended files from compact hand-kept tables and annotates the two
+existing ones, so a refresh is one edit in that script and one run.
+
+- `states.json`: the fifty states, DC and `OTHER` (the shape Start Here
+  renders) with seven columns per state: income tax type and top rate
+  (the schedule stays in `state_brackets_2026.json`, one copy), effective
+  property tax rate, infant centre care a month, full-coverage auto
+  insurance a year, cost of living index, UI weekly maximum and maximum
+  weeks, ACA benchmark silver premium for a 40-year-old.
+- `milestones.json`: 50 catch-up, 55 HSA catch-up and rule of 55, 60 to
+  63 higher catch-up, 59 and a half, 62, 65 Medicare, full retirement age
+  by birth year, 70, RMD age by birth year, each with rule text and
+  citation.
+- `aca.json`: 2025 and 2026 poverty guidelines (contiguous, Alaska,
+  Hawaii), the 2025 enhanced and 2026 current-law applicable percentage
+  tables, and the change date (the enhancement expired 2025-12-31).
+- `studentloans.json`: standard, tiered standard, IBR (2009 and 2014),
+  PAYE, ICR, SAVE and RAP with share, poverty multiplier, forgiveness
+  horizon, PSLF eligibility, status as of the 2026-07-01 transition, and
+  the tax treatment of forgiveness (IRC 108(f)(5) sunset).
+- `contribution_limits.json`: 401(k), catch-ups (50+, 60 to 63), 415(c),
+  SIMPLE, IRA, Roth and deduction phase-outs, HSA, gift exclusion and the
+  529 five-year election, 2026 and 2025.
+- `tax_brackets.json`: brackets, standard deductions, capital gains
+  thresholds, NIIT, FICA and SE rates and wage bases, 2026 and 2025.
+- `return_bands.json`: the series and window named (Global Investment
+  Returns Yearbook; Shiller ten-year windows), values unchanged, a
+  DECIDE: on whether to move the median.
+- `bands.json`: chapter-level citations for Set for Life, the Money Guy
+  rules and All Your Worth, and `slafProposed` (the trench figures)
+  beside the live `slaf` values.
+
+`tests/data.test.js` (3957 checks): every cell has a URL and a date; no
+cell older than 18 months unless `historical` (a closed prior year) or
+`stale` with a DECIDE:; every state and every column filled; brackets
+monotonic, state schedules monotonic, capital gains ordered; FPL rising
+with size and year; and agreement with the copies the engines read
+today, reported as notes.
+
+### What it found
+
+The test caught one error in the new table itself (head-of-household
+32% top, $256,200, corrected) and four places the engines' copies are
+behind: the 415(c) limit ($70,000 carried from the FOO room, $72,000 for
+2026), the 2026 top ACA percentage (8.66% vs 9.96% under Rev. Proc.
+2025-25), Ohio's flat tax (the engine schedule is the 2025 edition), and
+27 UI maxima. Each is a row in `docs/lane2-proposals.md` P-3.
+
+### The honest limit
+
+This session could search the web but could not open a page (the egress
+proxy blocks every fetch), so most cells, and nearly every state cell,
+are `recalled` and marked `verify: true`. The sourced cells are the ones
+a search result quoted directly. The first pass through the refresh
+calendar should be a full one.
+
+### Decisions taken conservatively (DECIDE: for Eli)
+
+- `bands.json` `slaf` values are unchanged; the trench copy the lane asked
+  for sits in `slafProposed` because `test/run.js` pins the slaf
+  retirement row (15% of gross, not converted).
+- Prior-year rows are exempt from the 18-month rule as `historical`; the
+  childcare column (2023 edition) is marked `stale` rather than dated
+  falsely (P-4).
+- No engine was pointed at a new table; the old copies stay and the test
+  keeps them honest (P-3).
+
+### Compatibility
+
+`states.json` keeps `states[].code` and `states[].name` exactly as Start
+Here reads them and `OTHER` last; the new per-state fields are objects a
+select ignores. `return_bands.json` and `bands.json` gained keys only.
+Nothing an engine reads changed value.
 
 ---
 

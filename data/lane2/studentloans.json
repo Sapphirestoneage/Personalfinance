@@ -1,0 +1,330 @@
+{
+  "id": "studentloans",
+  "version": "1.0",
+  "asOf": "2026-09-10",
+  "source": "Federal Direct Loan repayment plans as of the 2026-07-01 changes under Pub. L. 119-21 (the FY2025 reconciliation act): each plan's share of discretionary income, poverty multiplier, forgiveness horizon, PSLF eligibility, and the tax treatment of forgiven balances, with the plan's status. Lane 2, section 3 (L-3).",
+  "confidence": "sourced",
+  "confidenceNote": "Plan mechanics read from studentaid.gov, the CRS product on RAP, and reporting on the 2026 transition as returned by search; the parameters themselves (10% and 15% shares, 150% of FPL, 20 and 25 years, 120 PSLF payments) are stable statute. Status lines move with litigation and rulemaking: `status.asOf` is the date to beat.",
+  "note": "data/student_loan_conventions.json holds the SHAPES engines/studentloans.js runs (a level plan, a share-of-discretionary plan, extra on top) with round-number defaults; this file is the current rules those shapes could be fed from. DECIDE: wire the engine to pick a plan here (RAP for loans disbursed from 2026-07-01, IBR before) and keep the conventions file as the fallback.",
+  "refresh": {
+    "month": "July",
+    "against": "studentaid.gov repayment plan pages (plans open to new borrowers on July 1), the Federal Register for RAP regulations, and the IRC 108(f)(5) sunset on the tax treatment of forgiveness."
+  },
+  "pslf": {
+    "paymentsRequired": {
+      "value": 120,
+      "asOf": "2026-07-01",
+      "source": "https://studentaid.gov/manage-loans/repayment/plans",
+      "confidence": "sourced",
+      "citation": "IRC 108(f)(1); 20 U.S.C. 1087e(m)",
+      "note": "120 qualifying monthly payments while employed full time by a qualifying public service employer, on a qualifying plan (any IDR plan, RAP, or the 10-year standard)."
+    },
+    "forgivenessTaxable": {
+      "value": false,
+      "asOf": "2026-07-01",
+      "source": "https://studentaid.gov/manage-loans/repayment/plans",
+      "confidence": "sourced",
+      "note": "PSLF forgiveness is excluded from federal income under IRC 108(f)(1) with no sunset."
+    }
+  },
+  "forgivenessTaxTreatment": {
+    "federal": {
+      "value": "IDR forgiveness (IBR, PAYE, ICR, SAVE) was excluded from federal income for discharges in 2021 through 2025 under ARPA section 9675 (IRC 108(f)(5)); from 2026-01-01 it is taxable income unless Congress extends the exclusion. RAP forgiveness after 30 years is taxable under current law. PSLF stays tax-free.",
+      "asOf": "2026-07-01",
+      "source": "https://www.congress.gov/bill/117th-congress/house-bill/1319/text",
+      "confidence": "sourced",
+      "citation": "IRC 108(f)(5) as added by ARPA section 9675"
+    },
+    "state": {
+      "value": "States that do not conform to IRC 108(f)(5) may tax forgiven balances in any year; check the state.",
+      "asOf": "2026-07-01",
+      "source": "https://studentaid.gov/manage-loans/repayment/plans",
+      "confidence": "convention"
+    }
+  },
+  "plans": [
+    {
+      "id": "standard",
+      "label": "Standard (10-year level)",
+      "status": {
+        "value": "open",
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced",
+        "note": "For loans first disbursed before 2026-07-01. Replaced by the Tiered Standard plan for later loans."
+      },
+      "discretionaryShare": null,
+      "povertyMultiplier": null,
+      "termYears": {
+        "value": 10,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "forgivenessYears": null,
+      "pslfQualifying": {
+        "value": true,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "source": "https://studentaid.gov/manage-loans/repayment/plans"
+    },
+    {
+      "id": "tieredStandard",
+      "label": "Tiered Standard (10 to 25 years by balance)",
+      "status": {
+        "value": "open from 2026-07-01",
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced",
+        "note": "The default for a borrower with any Direct Loan first disbursed on or after 2026-07-01: 10 years under $25,000, 15 years to $50,000, 20 years to $100,000, 25 years above."
+      },
+      "discretionaryShare": null,
+      "povertyMultiplier": null,
+      "termYears": {
+        "value": [
+          10,
+          15,
+          20,
+          25
+        ],
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "forgivenessYears": null,
+      "pslfQualifying": {
+        "value": true,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "source": "https://www.congress.gov/crs-product/IF13075"
+    },
+    {
+      "id": "ibr2009",
+      "label": "Income-Based Repayment (borrowers before 2014-07-01)",
+      "status": {
+        "value": "open",
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced",
+        "note": "The one legacy income-driven plan that stays open to borrowers with loans disbursed before 2026-07-01."
+      },
+      "discretionaryShare": {
+        "value": 0.15,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "povertyMultiplier": {
+        "value": 1.5,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "forgivenessYears": {
+        "value": 25,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "pslfQualifying": {
+        "value": true,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "source": "https://studentaid.gov/manage-loans/repayment/plans/income-driven"
+    },
+    {
+      "id": "ibr2014",
+      "label": "Income-Based Repayment (new borrowers from 2014-07-01)",
+      "status": {
+        "value": "open",
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "discretionaryShare": {
+        "value": 0.1,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "povertyMultiplier": {
+        "value": 1.5,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "forgivenessYears": {
+        "value": 20,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "pslfQualifying": {
+        "value": true,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "source": "https://studentaid.gov/manage-loans/repayment/plans/income-driven"
+    },
+    {
+      "id": "paye",
+      "label": "Pay As You Earn",
+      "status": {
+        "value": "closed to new borrowers from 2026-07-01; ends by 2028-07-01",
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced",
+        "note": "Enrolled borrowers are moved to RAP (if eligible) or IBR at sunset."
+      },
+      "discretionaryShare": {
+        "value": 0.1,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "povertyMultiplier": {
+        "value": 1.5,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "forgivenessYears": {
+        "value": 20,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "pslfQualifying": {
+        "value": true,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "source": "https://studentaid.gov/manage-loans/repayment/plans/income-driven"
+    },
+    {
+      "id": "icr",
+      "label": "Income-Contingent Repayment",
+      "status": {
+        "value": "closed to new borrowers from 2026-07-01; ends by 2028-07-01",
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "discretionaryShare": {
+        "value": 0.2,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "povertyMultiplier": {
+        "value": 1,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "forgivenessYears": {
+        "value": 25,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "pslfQualifying": {
+        "value": true,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "source": "https://studentaid.gov/manage-loans/repayment/plans/income-driven"
+    },
+    {
+      "id": "save",
+      "label": "Saving on a Valuable Education",
+      "status": {
+        "value": "ended",
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced",
+        "note": "Vacated by a federal court on 2026-03-10 and ended by statute (Pub. L. 119-21); borrowers are being moved to other plans."
+      },
+      "discretionaryShare": {
+        "value": 0.1,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced",
+        "note": "5% on undergraduate loans was never implemented."
+      },
+      "povertyMultiplier": {
+        "value": 2.25,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "forgivenessYears": {
+        "value": 20,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "pslfQualifying": {
+        "value": true,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "source": "https://studentaid.gov/manage-loans/repayment/plans/income-driven"
+    },
+    {
+      "id": "rap",
+      "label": "Repayment Assistance Plan",
+      "status": {
+        "value": "open from 2026-07-01",
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced",
+        "note": "The one income-driven plan for loans first disbursed from 2026-07-01; also open to earlier Direct Loans."
+      },
+      "discretionaryShare": {
+        "value": null,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced",
+        "note": "RAP is a share of ADJUSTED GROSS INCOME, not discretionary income: 1% of AGI at $10,001 to $20,000, rising one point per $10,000 of AGI to 10% above $100,000; $10 a month minimum; $50 a month off per dependant. Unpaid interest is waived and up to $50 of principal matched each month."
+      },
+      "agiShare": {
+        "value": {
+          "min": 0.01,
+          "max": 0.1,
+          "stepPerAgi": 10000,
+          "minimumMonthly": 10,
+          "perDependantMonthly": 50
+        },
+        "asOf": "2026-07-01",
+        "source": "https://edfinancial.studentaid.gov/income-driven-repaymentinformation-center/rap",
+        "confidence": "sourced"
+      },
+      "povertyMultiplier": null,
+      "forgivenessYears": {
+        "value": 30,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced",
+        "note": "360 qualifying payments."
+      },
+      "pslfQualifying": {
+        "value": true,
+        "asOf": "2026-07-01",
+        "source": "https://studentaid.gov/manage-loans/repayment/plans",
+        "confidence": "sourced"
+      },
+      "source": "https://www.congress.gov/crs-product/IF13075"
+    }
+  ]
+}

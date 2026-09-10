@@ -98,9 +98,27 @@ function propertiesSection(r) {
   return L;
 }
 
+function dataSection(r) {
+  const L = [];
+  L.push('## Section 3: sourced data tables');
+  L.push('');
+  L.push(r.passed + ' checks over ' + r.files.length + ' files. Source: `tests/data.test.js`. A note is a disagreement between a lane 2 table and the copy an engine reads today, or a cell the rule had to make an exception for; each carries a DECIDE:.');
+  L.push('');
+  L.push('### Failures');
+  L.push('');
+  if (!r.failures.length) L.push('None.'); else r.failures.forEach((f) => L.push('- ' + f.replace(/\n\s*/g, ' ')));
+  L.push('');
+  L.push('### Notes');
+  L.push('');
+  r.notes.forEach((n) => L.push('- ' + n));
+  L.push('');
+  return L;
+}
+
 function render() {
   const corpus = read('corpus');
   const properties = read('properties');
+  const data = read('data');
   const L = [];
   L.push('# Lane 2 findings');
   L.push('');
@@ -108,6 +126,7 @@ function render() {
   L.push('');
   if (corpus) L.push.apply(L, corpusSection(corpus));
   if (properties) L.push.apply(L, propertiesSection(properties));
+  if (data) L.push.apply(L, dataSection(data));
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, L.join('\n') + '\n');
   return OUT;
