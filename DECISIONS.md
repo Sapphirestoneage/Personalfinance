@@ -10509,7 +10509,7 @@ Written before touching code, as the method asks:
   island; 15.7 makes `people[1]` the partner and the Partner room its
   editor. Migration maps the island onto the second person.
 - **`retirement_milestones.json`** holds savings multiples by age, not the
-  inflection dates; 15.9's `data/milestones.json` is new and distinct.
+  inflection dates; 15.9's `data/lane2/milestones.json` is new and distinct.
 - **`data/states.json`** holds code and name only; 15.6 adds tax type,
   property tax, childcare, auto insurance and cost of living per state —
   the two tables D-178 put inside `blocks/home.json` and `blocks/geo.json`
@@ -11205,6 +11205,464 @@ The next commits rebase and merge `lane2` (the corpus, the property
 tests, the sourced tables already consumed by 15.6 and 15.9, the gloss
 dictionary, the migration corpus and the accessibility report), then
 Phase B: sections 18, 19 and 20.
+## L-1 - Lane 2, section 1: the synthetic household corpus
+
+### What it is
+
+The second lane (branch `lane2`) runs beside the master build and touches
+only `tests/`, `data/`, `docs/`, `fixtures/` and the glossary. Its entries
+are the L-series so they never collide with the D-series; `test/run.js`
+checks only `D-`/`DD-` headings, so an `L-` heading above the divider is
+not a malformed entry. This is the first.
+
+`fixtures/households/` holds 24 archetype households and, under `edge/`,
+six edge cases, every one in the current spine v2 shape because every one
+is generated through `Schema.createHousehold` by
+`tests/tools/build-households.js`. Nothing in a fixture is typed by hand
+except the spec it came from, and the spec is in that file with the
+figures in dollars. Each fixture's `meta` carries `name`, `story`, a
+guessed `sphere`, and `known`: gross, the effective band read by eye from
+`data/effective_tax_rates_2026.json`, estimated tax, take-home a year and
+a month, monthly spending, the savings rate excluding match, the FI target
+at 4%, runway in months (cash over spending, both fractional and whole),
+net worth, and `working`, the arithmetic written out line by line so a
+reviewer can check it with a pencil.
+
+`tests/corpus.test.js` loads every fixture, checks the schema version and
+the meta, then sweeps every exported engine function whose first
+parameter is `household` (226 functions across 62 engines, 6780 calls),
+supplying tables by parameter name and recording a throw as a failure
+only when every argument was real. It walks every result for NaN and
+Infinity, asserts no negative tax, spending, asset total, debt total,
+emergency-fund months, DTI, FI number, years to FI or runway, and
+compares the ten known values within 1% (or the same incompleteness).
+Disagreements go to `docs/lane2-findings.md`, which the test regenerates
+on every run; a fixture is never edited to match an engine.
+
+### Why
+
+The engines had unit tests written by the same hands that wrote the
+formulas, against one demo persona. A corpus of thirty households with
+independently computed expectations is the cheapest way to find a formula
+that agrees with itself and not with arithmetic, and the sweep finds the
+crash a room would only hit on a household nobody had tried.
+
+### What it found
+
+Nothing, on the first run: every known value agrees with the engine and
+no household-first function throws, returns NaN, or returns a forbidden
+negative. The one throw on the way was the harness passing debt rules to
+`statement.portfolios`, which takes access rules. Twelve functions need a
+skill, a goal, an offer or a block and are listed in the findings file
+for section 2 to feed. Three tables `test/run.js` loads by hand are not in
+`Reference.TABLE_FILES`; that is P-2 in `docs/lane2-proposals.md`.
+
+### Decisions taken conservatively (DECIDE: for Eli)
+
+- Known-value disagreements write to the findings file and do not fail
+  the run unless `CORPUS_STRICT=1`: the other lane should not go red on a
+  list it has not read. Throws, NaN and negatives always fail.
+- The `sphere` on each fixture is a guess against section 19 of the
+  master prompt; spheres.json does not exist yet.
+- The repo has no CI, so "runs in CI" is a workflow proposal (P-1), not a
+  workflow.
+- `tests/package.json` is un-ignored by `tests/.gitignore` because the
+  root `.gitignore` hides every package.json; fast-check is for section
+  2 and `node tests/corpus.test.js` needs nothing installed.
+
+### Compatibility
+
+No stored shape changed. The fixtures are read by tests only; no room
+loads them. A future section that changes the shape (the master build's
+section 15) regenerates the corpus with `node tests/tools/build-households.js`
+after updating the builder, and the migration corpus (section 5) keeps a
+copy of today's shape.
+
+---
+
+## L-2 - Lane 2, section 2: property tests on every engine
+
+### What it is
+
+`tests/properties/<engine>.test.js`, one per file under `engines/` (64),
+plus `levers.test.js` and `blocks.test.js` for the two shared modules the
+invariants name, on fast-check 4 (`tests/package.json`; `npm ci` in
+`tests/`). `_harness.js` builds random valid households through
+`Schema.createHousehold` from a compact spec in dollars, so a shrunk
+counterexample is a spec a person can read; `run.js` runs every file with
+seed 20260910 and 100 cases per property, writes
+`tests/reports/properties.json`, and `tests/tools/findings.js` renders
+`docs/lane2-findings.md` from that report and the corpus report together.
+The whole suite runs in about fifteen seconds.
+
+Every engine is held to four generic properties: no throw and no NaN or
+Infinity on any valid household; the same output for the same input
+twice; the household passed in byte-identical afterwards; and no field
+ending in `Cents` carrying a fraction. Twenty-two files add the
+invariants the lane prompt lists: savings never above take-home and
+take-home never above gross (tier0); FI target rising with spending and
+the FI date never earlier when spending rises or income falls (tier0,
+fire); runway blind to property and vehicles, falling with cash, whole
+months within the horizon (runway); confidence-weighted net worth never
+above plain, and portfolios adding up to every valued asset (statement);
+future value and years-to-target monotone, a level payment repaying its
+principal (projection, housing); avalanche never dearer than snowball and
+extra never slower (debt); tax monotone and bounded (tax, selfemployed);
+a headwind never ending with a bigger pot net of borrowing (adventure);
+lump beating spread when the market rate is at least the cash rate
+(windfall); PIA and claiming factors monotone (ss); VPW percentages in
+(0, 1] and rising with age (vpw); a lever leaving its input untouched and
+scale 0 changing nothing (levers); two additive blocks equal to the sum
+of each alone and no blocks changing nothing (blocks).
+
+### What it found
+
+Six failing properties, each with its shrunk spec in the findings file:
+
+- `Tier0.debtToIncome` reports `monthlyGrossIncomeCents` as gross / 12
+  unrounded; `ratios.all` carries the same figure. `skills.available`
+  reports `returnOnEffortCents` with a fraction.
+- `Projection.levelPaymentCents` rounds the payment to the cent, so on a
+  tiny principal (100 cents over 41 months at 0%) the total paid falls
+  short and `totalInterestCents` goes negative.
+- `Blocks.applyAll` on a household with no income source creates the
+  source it needs with a random `Schema.newId`, so two applications differ
+  in an id; every number matches.
+- The Long Way Round's job-loss shock on a household already in deficit
+  borrows less in the shock year than the shortfall, so the headwind ends
+  with more net than no headwind. Small figures in the shrunk case, wrong
+  sign.
+
+None is fixed here: the engines are the master build's files.
+
+### What could not be held yet
+
+After-tax value of a holding and rounding by confidence wait for section
+15's shapes; sequence of returns waits for an engine that takes a return
+path (every one today takes a constant rate). Each is a note in the
+findings file and in the engine's property file, so the property is
+written the day the shape lands. `ratios.context()` reads `Date.now()`
+when `opts.now` is absent; the suite passes a fixed clock and says so.
+
+### Decisions taken conservatively (DECIDE: for Eli)
+
+- A failing property writes to the findings file and does not fail the
+  run unless `CORPUS_STRICT=1`, the same choice as L-1. A missing property
+  file, or a run over two minutes, always fails.
+- The seed is fixed so the report is reproducible and diffable; `FC_SEED`
+  and `FC_RUNS` override it for a wider search.
+
+### Compatibility
+
+Nothing stored changed. `tests/reports/*.json` are committed as the
+record the findings file is rendered from.
+
+---
+
+## L-3 - Lane 2, section 3: sourced data tables
+
+### What it is
+
+Eight reference tables under `data/`, each cell an object
+`{ value, asOf, source, confidence }` where `source` is a URL and
+`confidence` is `sourced` (read from a search result quoting the primary
+source), `recalled` (from memory of the named edition, rounded, with
+`verify: true`) or `convention`. Each file carries a top-level `refresh`
+note; `docs/data-refresh-calendar.md` is the same information as one
+calendar. The five new files live under `data/lane2/` for now: test/run.js
+requires every `data/*.json` to be registered in `Reference.TABLE_FILES`,
+which is outside this lane, so P-5 asks the master build to move and
+register them (`states.json`, `return_bands.json` and `bands.json` are
+already registered and stay in `data/`). `tests/tools/build-data-tables.js` generates the six new or
+extended files from compact hand-kept tables and annotates the two
+existing ones, so a refresh is one edit in that script and one run.
+
+- `states.json`: the fifty states, DC and `OTHER` (the shape Start Here
+  renders) with seven columns per state: income tax type and top rate
+  (the schedule stays in `state_brackets_2026.json`, one copy), effective
+  property tax rate, infant centre care a month, full-coverage auto
+  insurance a year, cost of living index, UI weekly maximum and maximum
+  weeks, ACA benchmark silver premium for a 40-year-old.
+- `milestones.json`: 50 catch-up, 55 HSA catch-up and rule of 55, 60 to
+  63 higher catch-up, 59 and a half, 62, 65 Medicare, full retirement age
+  by birth year, 70, RMD age by birth year, each with rule text and
+  citation.
+- `aca.json`: 2025 and 2026 poverty guidelines (contiguous, Alaska,
+  Hawaii), the 2025 enhanced and 2026 current-law applicable percentage
+  tables, and the change date (the enhancement expired 2025-12-31).
+- `studentloans.json`: standard, tiered standard, IBR (2009 and 2014),
+  PAYE, ICR, SAVE and RAP with share, poverty multiplier, forgiveness
+  horizon, PSLF eligibility, status as of the 2026-07-01 transition, and
+  the tax treatment of forgiveness (IRC 108(f)(5) sunset).
+- `contribution_limits.json`: 401(k), catch-ups (50+, 60 to 63), 415(c),
+  SIMPLE, IRA, Roth and deduction phase-outs, HSA, gift exclusion and the
+  529 five-year election, 2026 and 2025.
+- `tax_brackets.json`: brackets, standard deductions, capital gains
+  thresholds, NIIT, FICA and SE rates and wage bases, 2026 and 2025.
+- `return_bands.json`: the series and window named (Global Investment
+  Returns Yearbook; Shiller ten-year windows), values unchanged, a
+  DECIDE: on whether to move the median.
+- `bands.json`: chapter-level citations for Set for Life, the Money Guy
+  rules and All Your Worth, and `slafProposed` (the trench figures)
+  beside the live `slaf` values.
+
+`tests/data.test.js` (3957 checks): every cell has a URL and a date; no
+cell older than 18 months unless `historical` (a closed prior year) or
+`stale` with a DECIDE:; every state and every column filled; brackets
+monotonic, state schedules monotonic, capital gains ordered; FPL rising
+with size and year; and agreement with the copies the engines read
+today, reported as notes.
+
+### What it found
+
+The test caught one error in the new table itself (head-of-household
+32% top, $256,200, corrected) and four places the engines' copies are
+behind: the 415(c) limit ($70,000 carried from the FOO room, $72,000 for
+2026), the 2026 top ACA percentage (8.66% vs 9.96% under Rev. Proc.
+2025-25), Ohio's flat tax (the engine schedule is the 2025 edition), and
+27 UI maxima. Each is a row in `docs/lane2-proposals.md` P-3.
+
+### The honest limit
+
+This session could search the web but could not open a page (the egress
+proxy blocks every fetch), so most cells, and nearly every state cell,
+are `recalled` and marked `verify: true`. The sourced cells are the ones
+a search result quoted directly. The first pass through the refresh
+calendar should be a full one.
+
+### Decisions taken conservatively (DECIDE: for Eli)
+
+- `bands.json` `slaf` values are unchanged; the trench copy the lane asked
+  for sits in `slafProposed` because `test/run.js` pins the slaf
+  retirement row (15% of gross, not converted).
+- Prior-year rows are exempt from the 18-month rule as `historical`; the
+  childcare column (2023 edition) is marked `stale` rather than dated
+  falsely (P-4).
+- No engine was pointed at a new table; the old copies stay and the test
+  keeps them honest (P-3).
+
+### Compatibility
+
+`states.json` keeps `states[].code` and `states[].name` exactly as Start
+Here reads them and `OTHER` last; the new per-state fields are objects a
+select ignores. `return_bands.json` and `bands.json` gained keys only.
+Nothing an engine reads changed value.
+
+---
+
+## L-4 - Lane 2, section 4: the gloss dictionary and the lookup sentences
+
+### What it is
+
+`shared/glossary.json`: 258 terms the rooms and engines put on screen,
+each with `term`, `also` (other spellings and the long form), `domain`
+and `plain`, one sentence a reader with no finance background can
+follow. The list came from grepping `rooms/*.html` and `engines/*.js`
+for acronyms and capitalised phrases, plus the words a coaching client
+has to ask about. `shared/glossary.js` (`SLAF.Glossary`) is the one way
+anything reads it: `get(term)` matches the term or any alias without
+regard to case; `find(text)` lists the terms a piece of text uses;
+`terms()`; `load(basePath)` fetches the JSON in a browser; and
+`mark(root, opts)` wraps the first occurrence of each term inside a root
+element in `<abbr class="slaf-gloss" title="…" tabindex="0">`, skipping
+links, inputs, buttons, code and anything marked `data-no-gloss`, so a
+hover (a long press on a phone) shows the sentence. Nothing loads it: P-6
+in `docs/lane2-proposals.md` gives the script tag, the `room.js` call
+and the two lines of CSS.
+
+`data/lane2/ledger-rows.where.json`: 41 lookup-kind rows in the section
+18.2 shape (`path`, `letter`, `label`, `kind`) with a `where` sentence
+(the document or screen and the line), an `ifMissing` (what to do when
+it is not there) and a `roughly` (what to type for now), written to be
+followed on a phone. `data/lane2/lenses.copy.json`: for all 33 lenses,
+`forWhom` and `notForWhom` with no hedging word (four of the master
+build's sentences rewritten, the rest copied) and a structured source
+(kind, title, author, url, where).
+
+`tests/glossary.test.js` (3061 checks): at least 150 entries; no
+definition contains its own term or an alias as a whole word; one
+sentence, under 40 words, no em dash; the file's Flesch-Kincaid grade at
+or under 8 (7.2 measured); every term and alias resolves through `get`;
+`find` sees terms and not substrings; `mark` wraps once per term and
+leaves links alone, on a small DOM stand-in; every lookup row the lane
+lists has a `where`; every lens has both sentences, no hedge word, a
+sourced URL.
+
+### Decisions taken conservatively (DECIDE: for Eli)
+
+- The glossary is not wired into any room; P-6 is the exact change.
+- `data/lenses.json` is untouched; the dehedged sentences live in the
+  copy file and P-7 offers two ways to reconcile them.
+- Three aliases collide across entries (cliff, FAT, percentile); `get`
+  returns the first and the test reports it rather than failing, since
+  each is right in its own context.
+- The two data files sit under `data/lane2/` for the registration
+  reason in L-3 (P-5).
+
+### Compatibility
+
+Two new files under `shared/` that nothing loads yet; `shared/glossary.js`
+requires nothing and writes nothing. No stored shape changed.
+
+---
+
+## L-5 - Lane 2, section 5: the migration corpus
+
+### What it is
+
+`fixtures/exports/`: one set of files per export format the app has
+produced, rebuilt from git by `tests/tools/build-exports.js`. The script
+lists every commit that touched `shared/spine-v2.js`, `shared/schema.js`
+or `shared/money.js` (64), checks each one's `shared/` and `data/` out
+with `git archive`, and in a child process builds seven of the section 1
+households through THAT version's `Schema.createHousehold` (the builder
+from L-1 takes a schema module), writes them into that version's spine
+with `updateProfile`, and exports with that version's `Spine.exportJSON`
+or, before 2026-09-04 when the export did not exist, the stored
+household blob. A format is kept when the household's shape (its sorted
+key paths, ids and dates ignored) differs from the last one kept: 40
+formats, 70 files, named `<date>-<hash>-<household>.json`, each carrying
+a `lane2` note with the commit, the route (`exportJSON` or
+`storedBlob`) and the hand-computed `known` values. Formats that removed
+or renamed a path, changed the route, or sit at either end of the
+history keep all seven households; a format that only added paths keeps
+one sample. `README.md` and `index.json` there list every format and
+the paths that appeared or vanished between one and the next. The
+pre-spine flat profile (`annualSalary`, `studentLoanBalance`,
+`studentLoanRate`, no `schemaVersion`) is written by hand, since it never
+had an export.
+
+`tests/migration.test.js` (905 checks): every file imports through
+today's `Spine.importJSON` without a throw, comes back at the current
+schema version with a snapshot list, and re-derives gross, tax,
+take-home, monthly spending, savings rate, FI target, runway and net
+worth within 1% of the household's `known`; the flat profile goes
+through `Spine._migrateLegacy` and is checked for its salary, balance
+and rate.
+
+### What it found
+
+Every one of the 39 spine-era formats imports and agrees, including the
+pre-FAT months (a single estimated figure) that D-172's shim folds into
+"everything else", and the categorised-lines format of 6776b58. The one
+finding: the flat profile is refused by the import path ("no household
+in it") because only the localStorage load migrates it; P-8 is the
+four-line change.
+
+### Decisions taken conservatively (DECIDE: for Eli)
+
+- One sample household for addition-only formats keeps the corpus under
+  a megabyte; every household for the formats that removed a path.
+- The schema version has been 2 since the foundation commit, so "the v1
+  spine" is the flat profile and every intermediate is a v2 shape; the
+  corpus is keyed by commit, not by version number.
+- Value disagreements are findings, not failures, unless
+  `CORPUS_STRICT=1` (as in L-1).
+
+### Compatibility
+
+Nothing stored changed. `tests/tools/build-households.js` now exports
+its specs and takes a schema module; `node tests/tools/build-households.js`
+still writes the same thirty fixtures. `tests/.cache/` is git-ignored.
+
+---
+
+## L-6 - Lane 2, section 6: the accessibility audit, report only
+
+### What it is
+
+`tests/a11y-audit.js`: Playwright on a 412 by 915 phone viewport, the
+`dink-highearn` household from L-1 in localStorage, every room in
+`rooms.json`. For each room it injects axe-core 4 and runs the WCAG 2.0
+and 2.1 A and AA rules plus best practices; reads the structure (lang,
+one main, one h1, heading skips, a zoomable viewport, labels on inputs,
+names on buttons and links, alt on images, positive tabindex); and does
+a keyboard pass: Tab up to 45 times, waiting out the theme's 150ms
+transitions, recording each stop, whether it shows a focus ring (an
+outline or shadow on the element, or a change of border, outline,
+shadow or background on the element or its shell against the unfocused
+look recorded first), whether the menu and the first input are
+reachable, whether Escape closes the open menu, and whether focus ever
+stops moving. `docs/a11y-audit.md` is the report: a summary, the rules
+failed with a one-line fix each, the structure and keyboard tables, and
+a section per room. `tests/reports/a11y.json` holds the raw results.
+Nothing under `rooms/` or `shared/` was changed.
+
+### What it found
+
+68 rooms audited. 53 have no axe violation; 12 have a serious one; 8
+distinct rules failed. Eleven of the twelve serious rooms fail
+`color-contrast` on the same kind of element: muted small text (the
+`small` under a situation or event button, an empty row's label, a
+locked skill, a dial-211 link) at 2.6 to 4.0 against the 4.5 required;
+the fix is one token in `shared/theme.css`. Three rooms skip a heading
+level; the dashboard nests an interactive element inside the Your Data
+drawer's summary; one room each has a malformed definition list, an
+aria attribute the role does not allow, an empty table header, and
+content outside any landmark with no main. Keyboard: no trap, the menu
+reachable in every room, Escape closing it in every room, and every
+tab stop showing a ring in 66 of 68 rooms (Return on Hassle's rating
+selects and one input on Refresh do not).
+
+### Decisions taken conservatively (DECIDE: for Eli)
+
+- Report only, as the lane says; the one-line fixes are in the report
+  and the contrast token is the change that clears most of it.
+- One household and one viewport; a desktop pass and the other
+  archetypes are a second run of the same script (`SLAF_SEED`).
+
+### Compatibility
+
+Nothing changed. `axe-core` joins fast-check under `tests/`.
+
+## D-182 — Lane 2 merged after Phase A: what came in, what was already consumed, what stays a proposal
+
+**Decision.** With `PHASE_A_DONE` written (D-181), `lane2` is merged into
+the master build as one merge commit, as D-179 ordered. Lane 2's six
+sections (L-1 to L-6, their entries now sit above this one) came in whole:
+the thirty-household corpus and its sweep, the property files for every
+engine, the sourced tables under `data/lane2/`, the gloss dictionary and
+lookup sentences, the migration corpus of seventy exports, and the
+accessibility report. `DECISIONS.md` was the one conflict (both sides
+appended above the divider) and is resolved by keeping both, D-181 first.
+
+**Already consumed by Phase A, reconciled here.**
+
+- `data/states.json` was lane 2's table since 15.6; the merge changed
+  nothing in it.
+- `data/milestones.json` is lane 2's table since 15.9; the copy under
+  `data/lane2/` is removed, and `tests/data.test.js` and the two docs that
+  named it point at the registered file (the first line of P-5, done).
+- P-2 (register three tables) was already true on master; nothing to do.
+- Lane 2's lens copy gains `sinkingfund`, the lens 15.5 added, so its
+  glossary suite holds again.
+
+**Lane 2's own suites, run on the merged tree (this commit):** data 3957,
+glossary 3069, migration 905 (its one finding is the pre-spine flat
+profile the import path refuses by design, P-8), corpus 7259 with no
+disagreement between the engines and the hand arithmetic, properties 282
+with the same six findings lane 2 logged (fractional cents in three
+engines' meta, a level payment on a tiny principal, block application
+minting an id, and the job-loss shock in a run with nothing to draw on
+borrowing a few dollars less than the shortfall). None of the six is
+Phase A's; each is a finding for the section that owns the engine, and
+the findings file is regenerated by the run. The property runner needs
+`fast-check` under `tests/node_modules`, which stays untracked.
+
+**Still proposals, each a DECIDE for Eli, unchanged by this merge:** P-1
+(a CI workflow), P-3 (point the engines at the section 3 tables: the
+415(c) limit, the ACA top percentage, 27 UI maxima and Ohio's flat tax
+disagree with the copies the engines read), P-4 (the 18-month rule and
+prior-year rows), the rest of P-5 (`aca`, `contribution_limits`,
+`studentloans`, `tax_brackets` stay under `data/lane2/` until the section
+that reads each one lands: 16.2 for the ACA table, the tax room for the
+brackets), P-6 (wire the glossary hover into every room), P-7 (read the
+lens copy from lane 2's file), P-8 (let Your Data import the flat
+profile). The accessibility report's one-token fix (muted text contrast)
+is section 21's.
+
+Gate for this commit: unit 26426; dnd 5614; export 25; the five lane 2
+suites above.
 
 ---
 

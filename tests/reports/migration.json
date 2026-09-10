@@ -1,0 +1,18 @@
+{
+  "files": 70,
+  "formats": 40,
+  "passed": 905,
+  "failures": [],
+  "findings": [
+    {
+      "file": "2026-09-02-pre-spine-flat-profile.json",
+      "field": "importJSON",
+      "expected": "a way in",
+      "actual": "refused: That file has no household in it.",
+      "reason": "the pre-spine flat profile (annualSalary, studentLoanBalance) only migrates from localStorage via _migrateLegacy; a person who saved one as a file cannot import it. DECIDE: whether Your Data should accept it."
+    }
+  ],
+  "notes": [
+    "1 of 70 fixture files disagree with a known value or refuse to import; each row above names the field."
+  ]
+}

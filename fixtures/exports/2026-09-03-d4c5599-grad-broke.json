@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 2,
+  "people": [
+    {
+      "id": "p_grad",
+      "label": "Sam",
+      "role": "adult",
+      "dob": "2002-05-14",
+      "incomeSources": [
+        {
+          "id": "p_grad_inc0",
+          "personId": "p_grad",
+          "source": "First job",
+          "grossAnnualIncomeCents": 4800000,
+          "frequency": "annual",
+          "type": "w2",
+          "employerMatch": {
+            "matchPercent": null,
+            "matchCapPercentOfSalary": null
+          }
+        }
+      ]
+    }
+  ],
+  "filingStatus": "single",
+  "state": "NC",
+  "assets": [
+    {
+      "id": "a_0",
+      "label": "Checking",
+      "category": "cash",
+      "valueCents": 0,
+      "liquid": true,
+      "ownerIds": []
+    }
+  ],
+  "debts": [
+    {
+      "id": "d_0",
+      "label": "Federal student loans",
+      "balanceCents": 3200000,
+      "rate": 0.055,
+      "minPaymentCents": 34000,
+      "type": "student_loan",
+      "emotionalTag": null,
+      "ownerIds": []
+    }
+  ],
+  "expenses": {
+    "monthlyEssential": {
+      "estimatedValueCents": 228000,
+      "trackedValueCents": null,
+      "source": "estimated"
+    },
+    "categories": []
+  },
+  "assumptions": {
+    "expectedReturnRate": 0.07,
+    "swrRate": 0.04
+  },
+  "assumptionOverrides": {},
+  "meta": {
+    "visitedRooms": [],
+    "createdAt": null,
+    "updatedAt": "2026-09-10T01:00:38.047Z",
+    "isDemo": true,
+    "hasDebt": true,
+    "name": "Grad, broke",
+    "story": "24, $48k, $32k of student debt, no savings, renting with roommates.",
+    "sphere": 2,
+    "sphereNote": "DECIDE: the sphere is a guess at the depth these rows reach under section 19 of the master prompt; spheres.json does not exist yet.",
+    "lane": "lane2 section 1 (L-1)",
+    "known": {
+      "asOf": "2026-09-10",
+      "tolerance": 0.01,
+      "monthlySpendingCents": 228000,
+      "fiTargetCents": 68400000,
+      "grossAnnualCents": 4800000,
+      "effectiveRate": 0.16,
+      "estimatedTaxCents": 768000,
+      "takeHomeAnnualCents": 4032000,
+      "takeHomeMonthlyCents": 336000,
+      "savingsRate": 0.27,
+      "runwayMonths": 0,
+      "runwayWholeMonths": 0,
+      "netWorthCents": -3200000,
+      "working": [
+        "monthly spending = food $450 + accommodation $750 + transportation $180 + everything else $900 = $2,280",
+        "FI target = $2,280 x 12 / 0.04 = $27,360 / 0.04 = $684,000",
+        "gross $48,000 single: band single up to $50,000 -> effective rate 0.16",
+        "estimated tax = $48,000 x 0.16 = $7,680; take-home = $48,000 - $7,680 = $40,320 a year, $3,360 a month",
+        "savings rate (excluding match) = ($40,320 - $27,360) / $48,000 = $12,960 / $48,000 = 0.2700",
+        "runway = cash $0 / $2,280 a month = 0.0000 months (0 whole months; Runway.project stops at 60)",
+        "net worth = $0 cash - $32,000 loans = -$32,000"
+      ]
+    }
+  },
+  "lane2": {
+    "section": 5,
+    "commit": "d4c5599",
+    "date": "2026-09-03",
+    "subject": "Build the shared foundation: schema, spine, design system, reference data",
+    "via": "storedBlob",
+    "specId": "grad-broke",
+    "known": {
+      "asOf": "2026-09-10",
+      "tolerance": 0.01,
+      "monthlySpendingCents": 228000,
+      "fiTargetCents": 68400000,
+      "grossAnnualCents": 4800000,
+      "effectiveRate": 0.16,
+      "estimatedTaxCents": 768000,
+      "takeHomeAnnualCents": 4032000,
+      "takeHomeMonthlyCents": 336000,
+      "savingsRate": 0.27,
+      "runwayMonths": 0,
+      "runwayWholeMonths": 0,
+      "netWorthCents": -3200000,
+      "working": [
+        "monthly spending = food $450 + accommodation $750 + transportation $180 + everything else $900 = $2,280",
+        "FI target = $2,280 x 12 / 0.04 = $27,360 / 0.04 = $684,000",
+        "gross $48,000 single: band single up to $50,000 -> effective rate 0.16",
+        "estimated tax = $48,000 x 0.16 = $7,680; take-home = $48,000 - $7,680 = $40,320 a year, $3,360 a month",
+        "savings rate (excluding match) = ($40,320 - $27,360) / $48,000 = $12,960 / $48,000 = 0.2700",
+        "runway = cash $0 / $2,280 a month = 0.0000 months (0 whole months; Runway.project stops at 60)",
+        "net worth = $0 cash - $32,000 loans = -$32,000"
+      ]
+    },
+    "patchFallback": null
+  }
+}

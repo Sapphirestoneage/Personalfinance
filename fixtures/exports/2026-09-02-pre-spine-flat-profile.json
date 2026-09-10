@@ -1,0 +1,23 @@
+{
+  "annualSalary": 62000,
+  "hoursPerWeek": 40,
+  "studentLoanBalance": 22000,
+  "studentLoanRate": 5.3,
+  "visitedRooms": [
+    "real-hourly-wage",
+    "student-loan"
+  ],
+  "lane2": {
+    "section": 5,
+    "commit": null,
+    "date": "2026-09-02",
+    "subject": "The flat profile the pre-spine tools kept under slaf.profile (no schemaVersion); Spine._migrateLegacy reads it",
+    "via": "legacyStorage",
+    "specId": "grad-frugal-like",
+    "known": {
+      "grossAnnualCents": 6200000,
+      "studentLoanBalanceCents": 2200000,
+      "studentLoanRate": 0.053
+    }
+  }
+}
