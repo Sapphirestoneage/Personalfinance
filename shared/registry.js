@@ -519,13 +519,14 @@
        18.1 moves entry here. */
     {
       id: 'ledger',
-      group: 'home', aliases: ['ledger', 'the ledger', 'numbers', 'rows', 'spheres', 'enter'],
-      /* 'about-you', the kind Start Here and What Comes Next carry, until
-         18.1 moves entry here and 18.7 retires Start Here; then it becomes
-         the core room in Start Here's place (D-051). */
+      /* Under Upkeep beside Refresh until 18.1 makes it the place numbers
+         are entered (D-186): three doors side by side under Home was one of
+         the things that lost people. */
+      group: 'upkeep', aliases: ['ledger', 'the ledger', 'rows', 'spheres', 'progress'],
       kind: 'about-you',
+      utility: true,
       needs: [],
-      order: 15.5,
+      order: 98.2,
       title: 'The Ledger',
       blurb: 'Every number the app can hold, one line each, in the order they matter: what is entered, what is rough, what is still to look up, and where each is read.',
       href: 'rooms/ledger.html',

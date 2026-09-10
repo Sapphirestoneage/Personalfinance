@@ -178,21 +178,18 @@
     var room = Registry.byId(roomId);
     if (!room) return null;
 
-    var box = document.createElement('div');
+    /* One folded line (D-186): the three buttons were the same furniture
+       at the foot of every room, and read as something to do. */
+    var box = document.createElement('details');
     box.className = 'slaf-export';
-    box.innerHTML = '<span class="slaf-export-h">Take this room with you</span>'
+    box.innerHTML = '<summary class="slaf-export-h">Save or print this room</summary>'
       + '<div class="slaf-export-acts">'
-      /* The base .slaf-btn, not --quiet: that variant is deliberately
-         borderless (it is the text-link style Undo uses), and three
-         borderless buttons in a row read as a sentence of links rather than
-         as three parallel actions. */
       + '<button type="button" class="slaf-btn" data-x="csv">CSV</button>'
       + '<button type="button" class="slaf-btn" data-x="json">JSON</button>'
       + '<button type="button" class="slaf-btn" data-x="print">Print / PDF</button>'
       + '</div>'
-      + '<p class="slaf-export-note">Just this room, not your whole household — that is in '
-      + '<a href="' + (atRoot(roomId) ? '' : '') + 'data.html">Your Data</a>. '
-      + 'A blank cell means not entered; it never means zero. Nothing is uploaded.</p>';
+      + '<p class="slaf-export-note">This room only; your whole household is in '
+      + '<a href="' + (atRoot(roomId) ? '' : '') + 'data.html">Your Data</a>. Nothing is uploaded.</p>';
     host.appendChild(box);
 
     box.addEventListener('click', function (e) {

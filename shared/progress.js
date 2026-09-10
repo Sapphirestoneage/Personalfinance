@@ -238,33 +238,22 @@
     var row = forRoom(roomId, household);
     if (!row) return '';
     var nb = neighbours(roomId);
-    var next = nextUnfinished(household, roomId);
 
     var out = [];
     out.push('<div class="slaf-progress">');
 
+    /* Simplified on the owner's word (D-186): when something is missing,
+       one short head and the list, without the room counts; when nothing
+       is, nothing at all. Silence is the signal that a room is complete. */
     if (row.missing.length) {
       out.push('<p class="slaf-progress-head"><strong>' + row.missing.length
-        + ' thing' + (row.missing.length === 1 ? '' : 's') + ' left</strong> before this room '
-        + 'can show you everything — each one links straight to the question.</p>');
+        + ' still needed</strong> to finish this room.</p>');
       out.push('<ul class="slaf-progress-list">' + row.missing.map(function (f) {
-        /* Most-waited-on first, and say so: it is the difference between a
-           list and a priority order. D-162. */
-        var waits = f.waits > 1
-          ? '<span class="slaf-progress-waits">' + f.waits + ' rooms want this</span>' : '';
         return '<li><a href="' + escapeHtml(href(f.href.replace(/^\.\.\//, ''), roomId)) + '">'
           + escapeHtml(f.label) + '</a>'
           + '<span class="slaf-progress-where">'
-          + (f.ownHere ? 'on this page' : 'in ' + escapeHtml(f.ownerTitle)) + '</span>'
-          + waits + '</li>';
+          + (f.ownHere ? 'on this page' : 'in ' + escapeHtml(f.ownerTitle)) + '</span></li>';
       }).join('') + '</ul>');
-    } else if (!row.standalone) {
-      out.push('<p class="slaf-progress-head"><strong>This room has everything it needs.</strong> '
-        + 'All ' + row.total + ' figure' + (row.total === 1 ? '' : 's')
-        + ' it reads are filled in.</p>');
-    } else {
-      out.push('<p class="slaf-progress-head"><strong>This room stands on its own.</strong> '
-        + 'It works from the numbers you type here, so there is nothing to fill in first.</p>');
     }
 
     /* Filled with a guess is not the same as answered. A room can compute from
@@ -287,6 +276,9 @@
         + '. ' + escapeHtml(row.notApplicable[0].because || '') + '</p>');
     }
 
+    /* Plain path order at both ends (D-186): a next that jumped to a
+       different room each time you looked was one of the ways people got
+       lost. The Walk-Through keeps the smart "next unfinished". */
     out.push('<div class="slaf-progress-nav">');
     if (nb.prev) {
       out.push('<a class="slaf-progress-btn" href="' + escapeHtml(href(nb.prev.href, roomId))
@@ -294,12 +286,9 @@
     } else {
       out.push('<span></span>');
     }
-    if (next && next.roomId !== roomId) {
-      out.push('<a class="slaf-progress-btn is-next" href="' + escapeHtml(href(next.href, roomId))
-        + '">Next unfinished: ' + escapeHtml(next.title) + ' →</a>');
-    } else if (nb.next) {
+    if (nb.next) {
       out.push('<a class="slaf-progress-btn is-next" href="' + escapeHtml(href(nb.next.href, roomId))
-        + '">' + escapeHtml(nb.next.title) + ' →</a>');
+        + '">Next: ' + escapeHtml(nb.next.title) + ' →</a>');
     } else {
       out.push('<span></span>');
     }

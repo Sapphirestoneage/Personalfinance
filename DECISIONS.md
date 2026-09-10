@@ -11831,6 +11831,73 @@ the fold holding spheres 2 to 9, the search narrowing to the rent row,
 the net worth row naming its four inputs, a lookup row carrying its where
 sentence and its readers), with no console errors.
 
+## D-186 — The simplification pass, first cut: fewer doors, one next, quieter rooms
+
+**Why now.** The owner walked the app and said what it felt like: not
+intuitive, a lot that is extra, the process unclear, "I am not sure what
+to do and when, I keep getting lost." That is the brief's section 21
+(Phase F) pulled forward, on the owner's word, ahead of the rest of
+section 18. A phone walk as a first-time user found the same four things,
+and this entry cuts them; nothing stored changes.
+
+**What a first-time user saw, and what changed.**
+
+- **Start Here showed the same "what is missing" list twice**, below the
+  questions: a status panel ("Still to answer · 14 · 34 rooms waiting",
+  then "Filled with a guess", "You answered", "Came from another room",
+  "Does not apply") and, under it, the room footer's own "12 things left
+  before this room can show you everything", each line with "N rooms
+  want this". Two lists of the same thing, in room-count jargon, before a
+  single number was typed. The status panel is gone (the aside, its five
+  groups, the relevance counts and the jump handler, D-160), and the page
+  is the situation, the numbered questions, Fine-tune, Paste, and one
+  button. The Ledger room (D-185) is now the one place that lists every
+  number and its state, and it is a page you go to, not one that follows
+  you.
+- **Four "next"s on the Dashboard.** A walk-through pitch at the top ("A
+  lot of rooms…"), the next thing money should do, the next thing to
+  learn, the next skill, and at the foot "Next unfinished: Start Here"
+  on a household with everything entered. The pitch is gone: the walk
+  card speaks only mid-walk (the walk stays one tap away in the menu),
+  and the foot of every room now points in plain path order ("Next: The
+  FIRE Room →") instead of jumping to a different room each time, which
+  D-054 had reserved for the bottom strip and which turned out to be one
+  of the ways people got lost.
+- **Every room ended with the same furniture.** "This room has everything
+  it needs. All 5 figures it reads are filled in." (or "stands on its
+  own"), the three export buttons under "Take this room with you" with a
+  two-sentence note, then the hop strip. The complete and standalone
+  sentences are gone: silence is the signal that a room is complete, and
+  the footer speaks only when something is missing ("2 still needed to
+  finish this room", the two links, no room counts). The export buttons
+  fold into one line, "Save or print this room", closed.
+- **Three doors side by side under Home.** The Dashboard, Start Here and
+  The Ledger. Until 18.1 makes the Ledger the place numbers are entered
+  and 18.7 retires Start Here, the Ledger sits under Upkeep beside
+  Refresh, a utility; Home is the Dashboard and Start Here. Every Front
+  Doors arrangement still shelves it.
+
+**What did not change, deliberately.** The Dashboard's four blocks (D-093
+and after) and the five tiles; Start Here's numbered questions and their
+"Use" suggestions; the walk-through itself; the top-of-room back and hop
+controls; the disclaimer line. The rest of section 21 (the removal list,
+the language pass on every room) is still ahead and will be done the
+same way: walk it on a phone first, cut what a stranger stumbles on.
+
+**Compatibility note.** No stored shape changes. `Progress.stripHtml` no
+longer reads `nextUnfinished` (the function stays, the Walk-Through and
+the walk card use it); `RoomExport.mount` renders a `<details>` instead
+of a `<div>`, same class and buttons; `rooms.json` regenerated.
+
+Gate for this commit: unit 26844; render on Start Here, the FIRE room
+and the Ledger; the phone forms gate for Start Here; the sidebar,
+settings and features gates; a phone walk of Start Here after "Employed",
+the Dashboard with the example numbers and a room footer. Start Here after
+"Employed": 3527 to 2615 pixels tall on a phone, one list of what is
+missing instead of two; the Dashboard with the example numbers: 2279 to
+2009 pixels, no walk pitch, the foot reading "Next: Worth Learning";
+the FIRE room's foot: the previous and next room and one folded line.
+
 ---
 
 # The Dungeons & Dividends entries

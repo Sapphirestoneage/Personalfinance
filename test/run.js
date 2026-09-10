@@ -5683,12 +5683,12 @@ section('What is finished');
   {
     const h = partial();
     const strip = Progress.stripHtml('fire', h);
-    checkTrue('the strip says how many are left', /2 things left/.test(strip));
+    checkTrue('the strip says how many are left', /2 still needed/.test(strip));
     /* Tolerant of the ?from= return trip (D-161): the property is that it points
        at the owner's page and anchor, not the exact character sequence. */
     checkTrue('it links to the owning room', /start\.html(\?[^#"']*)?#q-investments/.test(strip));
     checkTrue('it offers a way back', /← /.test(strip));
-    checkTrue('and a way forward', /Next unfinished/.test(strip));
+    checkTrue('and a way forward, in plain path order', /Next: /.test(strip) && !/Next unfinished/.test(strip));
 
     /* From a room, links climb out of rooms/; from the root they must not. */
     checkTrue('links from a room are relative to rooms/',
@@ -5698,9 +5698,9 @@ section('What is finished');
       !/\.\.\//.test(fromRoot), fromRoot.slice(0, 400));
 
     const complete = Progress.stripHtml('fire', Demo.build());
-    checkTrue('a finished room says so', /everything it needs/.test(complete));
-    checkTrue('a standalone room says that instead',
-      /stands on its own/.test(Progress.stripHtml('quick-math', h)));
+    checkTrue('a finished room says nothing about it (D-186)', !/everything it needs/.test(complete) && !/slaf-progress-head/.test(complete));
+    checkTrue('a standalone room says nothing either',
+      !/stands on its own/.test(Progress.stripHtml('quick-math', h)));
     check('an unknown room renders nothing', Progress.stripHtml('nope', h), '');
   }
 })();
@@ -9952,7 +9952,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('every room appears in exactly one group', Registry.all().every(r => ids.filter(g => Registry.inGroup(g, null).some(x => x.id === r.id)).length === 1));
   check('...and every room appears', ids.reduce((n, g) => n + Registry.inGroup(g, null).length, 0), Registry.all().length);
   checkTrue('kind is still a property, no longer a heading', Registry.all().every(r => typeof r.kind === 'string') && !/'The path'|'About you'|'What it means'/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
-  check('Home: the Dashboard, Start Here and the Ledger (18.7 retires Start Here)', Registry.inGroup('home', null).map(r => r.id).join(','), 'dashboard,start,ledger');
+  check('Home: the Dashboard and Start Here (the Ledger waits under Upkeep, D-186)', Registry.inGroup('home', null).map(r => r.id).join(','), 'dashboard,start');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
   check('...fifteen of them', Registry.inGroup('numbers', null).length, 15);
   checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses)\b/.test(w))));
@@ -9960,7 +9960,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
   check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
   check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree,stacker,exercises');
-  check('Upkeep, with Front Doors and the Walk-Through kept apart (not merged this pass)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,refresh,history,settings,get-help,doors,walk');
+  check('Upkeep, with Front Doors and the Walk-Through kept apart (not merged this pass)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,refresh,history,settings,get-help,doors,walk,ledger');
   checkTrue('every room has aliases to search by', Registry.all().every(r => Array.isArray(r.aliases) && r.aliases.length >= 2));
   checkTrue('"car" finds What A Car Costs', Registry.matches(Registry.byId('car'), 'car') && Registry.matches(Registry.byId('car'), 'VEHICLE'));
   checkTrue('...and not FIRE', !Registry.matches(Registry.byId('fire'), 'car'));
@@ -11435,7 +11435,7 @@ section('18.4 and 18.5: the Ledger room, the target and one line per row (D-185)
   const Sp = require(path.join(ROOT, 'shared/spheres.js'));
   const html = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
   const room = Registry.byId('ledger');
-  checkTrue('the Ledger is registered under Home, after the Dashboard', room && room.group === 'home' && room.order > Registry.byId('dashboard').order && room.href === 'rooms/ledger.html');
+  checkTrue('the Ledger is registered under Upkeep for now (D-186), beside Refresh', room && room.group === 'upkeep' && room.utility === true && room.href === 'rooms/ledger.html');
   checkTrue('...reading every DAITE money and situation path and writing nothing yet', room.daite.reads.length > 30 && room.daite.writes.length === 0);
   checkTrue('...and needing nothing, so it opens on an empty household', Array.isArray(room.needs) && room.needs.length === 0);
   const body = html.split('<body')[1];

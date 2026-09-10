@@ -1191,19 +1191,10 @@
     if (!p.total) { card.hidden = true; return; }
     card.hidden = false;
     var next = G.nextStep(h, TABLES);
-    if (!G.hasStarted(h)) {
-      card.innerHTML = '<p class="walk-say">A lot of rooms. <strong>The walk-through</strong> is the short way round — '
-        + p.total + ' steps in five sets, only the ones for your situation. Nothing is locked behind it.</p>'
-        + '<a class="slaf-btn slaf-btn--primary" href="rooms/walk.html">Take the walk-through →</a>';
-      return;
-    }
-    if (p.open === 0) {
-      card.innerHTML = '<p class="walk-say">Walk-through: all ' + p.total + ' steps done'
-        + (p.skipped ? ' (' + p.skipped + ' set aside)' : '') + '. '
-        + 'Come back to <a href="rooms/refresh.html">Refresh</a> when the numbers move.</p>'
-        + '<a class="slaf-btn" href="rooms/walk.html">See the list →</a>';
-      return;
-    }
+    /* Not started, or finished: nothing (D-186). The pitch for the walk
+       was one more "next" on a page that already has one; the walk stays
+       one tap away in the menu, and this card only speaks mid-walk. */
+    if (!G.hasStarted(h) || p.open === 0) { card.hidden = true; return; }
     card.innerHTML = '<p class="walk-say">Walk-through: <strong>' + (p.done + p.skipped) + ' of ' + p.total
       + '</strong> behind you. Next is ' + esc(next.title) + '.</p>'
       + '<a class="slaf-btn slaf-btn--primary" href="' + next.href + '">Continue →</a>'

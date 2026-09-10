@@ -54,33 +54,11 @@
     cursor: pointer; }
   .showrest:hover { border-color: var(--color-accent-hover); color: var(--color-text); }
   .workspace { max-width: var(--measure); margin: 0 auto; }
-  .ledger { margin-top: var(--space-4); }
   @media (min-width: 1080px) {
-    .workspace { max-width: 1040px; display: grid; grid-template-columns: minmax(0, 1fr) 300px;
+    .workspace { max-width: 1040px; display: grid; grid-template-columns: minmax(0, 1fr);
       gap: var(--space-5); align-items: start; }
-    .ledger { margin-top: 0; position: sticky; top: var(--space-3); max-height: calc(100vh - var(--space-5));
-      overflow-y: auto; }
+        overflow-y: auto; }
   }
-  .lgroup { border: 1px solid var(--color-border); border-radius: var(--radius-md);
-    background: var(--color-surface); margin-bottom: var(--space-3); overflow: hidden; }
-  .lgroup > summary { list-style: none; cursor: pointer; padding: var(--space-3);
-    display: flex; align-items: center; gap: var(--space-2); min-height: 44px; }
-  .lgroup > summary::-webkit-details-marker { display: none; }
-  .lgroup .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
-  .lgroup .gname { font-size: var(--text-sm); font-weight: 600; }
-  .lgroup .gnum { margin-left: auto; font-family: var(--font-mono); font-size: var(--text-xs);
-    color: var(--color-text-subtle); }
-  .lgroup ul { list-style: none; margin: 0; padding: 0 var(--space-3) var(--space-3); }
-  .lgroup li { display: flex; gap: var(--space-2); align-items: baseline;
-    padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
-  .lgroup .jump { background: none; border: 0; padding: 0; text-align: left; color: var(--color-accent-hover);
-    font-size: var(--text-sm); cursor: pointer; min-height: 32px; }
-  .lgroup .flabel { font-size: var(--text-sm); color: var(--color-text); }
-  .lgroup .fwhy { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
-  .lgroup .fval { margin-left: auto; font-family: var(--font-mono); font-size: var(--text-xs);
-    color: var(--color-text-muted); white-space: nowrap; }
-  .lgroup .waits { margin-left: auto; font-family: var(--font-mono); font-size: var(--text-xs);
-    color: var(--color-text-subtle); white-space: nowrap; }
   .runway { max-width: var(--measure); margin: 0 auto var(--space-4); padding: var(--space-4);
     background: var(--color-surface); border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-lg); }
@@ -185,7 +163,6 @@
     <!-- What is answered, what is not, what does not apply, and what a number
          is waiting on. Holds no input of its own, so it is outside the
          LIVE-FORM contract. D-160. -->
-    <aside class="ledger" id="ledger" aria-label="What is answered and what is not"></aside>
   </div>
 
   <details class="drawer" id="q-fine-tune">
@@ -614,104 +591,18 @@
       if (box.children[i] !== node) box.insertBefore(node, box.children[i] || null);
     });
   }
-
-  /* ---- The ledger ----------------------------------------------------------
-     Five states, and the app already knew all five: Ownership.describe() says
-     whether a field applies, whether it is set, where the figure came from,
-     and - when it does not apply - why not. The only thing added here is
-     RELEVANCE: how many of the sixty-six rooms are waiting on each number,
-     counted from the registry's own `needs`. That is what makes the list a
-     priority order rather than an inventory. D-160. */
-  var WAITING = (function () {
-    var c = {};
-    Registry.all().forEach(function (r) {
-      (r.needs || []).forEach(function (f) { c[f] = (c[f] || 0) + 1; });
-    });
-    return c;
-  })();
-
-  /* field -> the card that asks it, so a row can jump to its question */
-  var FIELD_CARD = (function () {
-    var m = {};
-    Gate.allCards().forEach(function (card) {
-      (card.fields || []).forEach(function (f) { if (!m[f]) m[f] = card.id; });
-    });
-    return m;
-  })();
-
-  var LGROUPS = [
-    { key: 'todo',    name: 'Still to answer',        colour: 'var(--color-accent)',      open: true },
-    { key: 'guess',   name: 'Filled with a guess',    colour: 'var(--color-warning, #D9A441)', open: true },
-    { key: 'done',    name: 'You answered',           colour: 'var(--color-positive)',    open: false },
-    { key: 'carried', name: 'Came from another room', colour: 'var(--sapphire-300)',      open: false },
-    { key: 'na',      name: 'Does not apply to you',  colour: 'var(--color-text-faint)',  open: false }
-  ];
-
-  function roomName(id) {
-    if (!id) return '';
-    var r = Registry.byId(id);
-    return r ? r.title : id;
-  }
-
-  function paintLedger(x) {
-    var seen = {}, bucket = { todo: [], guess: [], done: [], carried: [], na: [] };
-    Gate.allCards().forEach(function (card) {
-      (card.fields || []).forEach(function (fid) {
-        if (seen[fid]) return; seen[fid] = true;
-        var d = Ownership.describe(fid, x, ROOM_ID);
-        if (!d) return;
-        var row = { id: fid, label: d.label, waits: WAITING[fid] || 0,
-                    why: d.notApplicableBecause || '', display: d.display,
-                    from: roomName(d.sourceId) };
-        if (!d.applies) bucket.na.push(row);
-        else if (!d.isSet) bucket.todo.push(row);
-        else if (d.guessed) bucket.guess.push(row);
-        /* confidenceOf() says 'room' whenever the writer is not the owner - and
-           this page writing the ESTIMATE of a Cash Flow field trips exactly
-           that. A number typed here is answered, not carried, so only a source
-           that is some OTHER room counts as carried. */
-        else if (d.confidence === 'room' && d.sourceId && d.sourceId !== ROOM_ID) bucket.carried.push(row);
-        else bucket.done.push(row);
-      });
-    });
-    /* Most-waited-on first: the number that unblocks thirty-three rooms is a
-       different proposition from the one that unblocks none. */
-    ['todo', 'guess'].forEach(function (k) {
-      bucket[k].sort(function (a, b) { return b.waits - a.waits; });
-    });
-
-    var html = '';
-    LGROUPS.forEach(function (g) {
-      var rows = bucket[g.key];
-      if (!rows.length) return;
-      html += '<details class="lgroup"' + (g.open ? ' open' : '') + '>'
-        + '<summary><span class="dot" style="background:' + g.colour + '"></span>'
-        + '<span class="gname">' + esc(g.name) + '</span>'
-        + '<span class="gnum">' + rows.length + '</span></summary><ul>'
-        + rows.map(function (r) {
-            var right = g.key === 'todo'
-              ? (r.waits ? '<span class="waits">' + r.waits + (r.waits === 1 ? ' room' : ' rooms') + ' waiting</span>' : '')
-              : g.key === 'na' ? ''
-              : '<span class="fval">' + esc(r.display) + '</span>';
-            var main = (g.key === 'todo' || g.key === 'guess')
-              ? '<button type="button" class="jump" data-jump="' + esc(FIELD_CARD[r.id] || '') + '">' + esc(r.label) + '</button>'
-              : '<span class="flabel">' + esc(r.label)
-                + (g.key === 'na' && r.why ? '<span class="fwhy">' + esc(r.why) + '</span>' : '')
-                + (g.key === 'carried' && r.from ? '<span class="fwhy">from ' + esc(r.from) + '</span>' : '')
-                + '</span>';
-            return '<li>' + main + right + '</li>';
-          }).join('')
-        + '</ul></details>';
-    });
-    el('ledger').innerHTML = html;
-  }
-
   /* A row is a way back to its question. Scroll only - never focus the input,
      because a programmatic focus on a phone opens nothing and steals the
      caret from whatever the person was already typing in. D-034. */
   /* A hash can change without a repaint - a deep link followed from another
      room, or the browser's own back and forward - so the fold listens for it
      directly rather than waiting for the next paint. D-166. */
+  function roomName(id) {
+    if (!id) return '';
+    var r = Registry.byId(id);
+    return r ? r.title : id;
+  }
+
   function unfoldForHash() {
     var box = el('cards');
     if (!box || !location.hash || location.hash.length < 2) return;
@@ -728,12 +619,6 @@
     this.hidden = true;
   });
 
-  el('ledger').addEventListener('click', function (evt) {
-    var b = evt.target.closest('[data-jump]');
-    if (!b) return;
-    var card = document.getElementById(b.getAttribute('data-jump'));
-    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  });
 
   /* Cash over spending. Both must be real figures: a blank is not a zero, and
      a zero month would divide by nothing, so either one absent means no number
@@ -804,7 +689,6 @@
     Array.prototype.forEach.call(el('gate').querySelectorAll('.choice'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-situation') === s)); });
 
     paintRunway(x);
-    paintLedger(x);
 
     var live = situationCards();
     placeCards(live);
