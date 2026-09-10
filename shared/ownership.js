@@ -805,7 +805,7 @@
       read: function (h) { return Schema.fat(h).transportation; }, format: function (v) { return money(v) + '/mo'; }
     },
     wantsMonthly: {
-      label: 'Everything else, a month', owner: 'expenses', anchor: 'spending',
+      label: 'Everything else, a month', owner: 'expenses', anchor: 'lines',
       read: function (h) { return Schema.fat(h).wants; }, format: function (v) { return money(v) + '/mo'; }
     },
     therapyMonthly: {

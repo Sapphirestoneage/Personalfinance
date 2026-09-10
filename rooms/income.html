@@ -67,7 +67,7 @@
      and what is only assumed; the assumed half is faded. */
   .pic-sum { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-loose); }
   .pic-sum b { color: var(--color-text); font-variant-numeric: tabular-nums; }
-  /* D-197: the picture folds; its closed face is the sentence. */
+  /* D-198: the picture folds; its closed face is the sentence. */
   #picture.slaf-card { padding: 0; }
   .pic-fold > summary { list-style: none; cursor: pointer; display: flex; gap: var(--space-3); align-items: flex-start; padding: var(--space-4); }
   .pic-fold > summary::-webkit-details-marker { display: none; }
@@ -552,7 +552,7 @@
     var months = [];
     for (var i = -6; i <= 5; i++) months.push(shiftMonth(now, i));
     var perEntry = {}, perPerson = {};
-    /* D-197: what has come in is only what landed on a date. A recurring
+    /* D-198: what has come in is only what landed on a date. A recurring
        entry with no first date is an average, so it is drawn ahead only,
        never as if it had already arrived. */
     var rows = months.map(function (m, idx) {

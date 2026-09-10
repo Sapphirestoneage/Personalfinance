@@ -1016,16 +1016,17 @@ const CASES = [
     seed: 'empty',
     fields: [
       { sel: '#fat input[data-fat="food"]', type: '600' },
-      { sel: '#fat input[data-fat="accommodation"]', type: '1500' },
-      { sel: '#fat input[data-fat="wants"]', type: '900' }
+      { sel: '#fat input[data-fat="accommodation"]', type: '1500' }
     ],
     expect: async (page) => {
       const e = await page.evaluate(() => (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).expenses);
+      const shown = await page.evaluate(() => ({ fat: document.getElementById('fat-total').textContent, lean: document.getElementById('lean-fi').textContent }));
       return [
         ['food was kept', e && e.needs.food.monthlyCents, 60000],
         ['rent was kept', e && e.needs.accommodation.monthlyCents, 150000],
-        ['everything else was kept', e && e.wants.totalCents, 90000],
-        ['getting around stayed blank, not zero', e && e.needs.transportation.monthlyCents, null]
+        ['getting around stayed blank, not zero', e && e.needs.transportation.monthlyCents, null],
+        ['everything else is not a box any more (D-197)', e && e.wants.totalCents, null],
+        ['the FAT total waits on the third number', /getting around/.test(shown.fat), true]
       ];
     }
   },

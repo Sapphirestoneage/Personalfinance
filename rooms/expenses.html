@@ -83,7 +83,20 @@
 
   /* The four numbers (D-172): one row on a wide screen, two by two on a phone. */
   .fat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
-  @media (max-width: 720px) { .fat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .fat-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 720px) { .fat-grid, .fat-grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 480px) { .fat-grid--3 { grid-template-columns: 1fr; } }
+  .fat-letter { display: inline-block; font-family: var(--font-display); font-size: var(--text-lg); line-height: 1; color: var(--color-accent-hover); margin-right: 2px; }
+  /* The sums under the three (D-197): FAT, the lean number it implies,
+     everything else from the lines, and the month. */
+  .fat-sum { margin-top: var(--space-4); border-top: 1px solid var(--color-border); }
+  .fat-sum-row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); font-size: var(--text-sm); }
+  .fat-sum-row span small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  .fat-sum-row b { font-family: var(--font-display); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; font-size: var(--text-md); text-align: right; }
+  .fat-sum-row b small { display: block; font-family: var(--font-body); font-weight: normal; font-size: var(--text-xs); color: var(--color-text-muted); white-space: normal; }
+  .fat-sum-row.is-lean b { color: var(--color-positive); }
+  .fat-sum-row.is-month b { font-weight: 600; }
+  .fat-sum-row b.is-waiting { color: var(--color-text-faint); font-weight: normal; font-size: var(--text-sm); white-space: normal; text-align: right; }
   .fat-grid .slaf-field { margin: 0; }
   .fat-grid .slaf-hint { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 4px; }
   .annual-list { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
@@ -145,7 +158,7 @@
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
   <h1>Expenses</h1>
-  <p class="room-lede">What a month costs you. Four numbers, the yearly costs, and, if you want it, the split by category. Every other room reads this month.</p>
+  <p class="room-lede">What a month costs you. F, A, T: food, accommodation, transportation, the lean month. Everything else is a line you name. Every other room reads this month.</p>
 </header>
 
 <main class="slaf-wrap">
@@ -157,7 +170,7 @@
       <div id="fat-donut"></div>
       <div class="eva">
         <h3 class="eva-title">Estimated vs actual <small id="eva-month"></small></h3>
-        <div class="eva-legend"><span><i style="background:var(--color-text-muted)"></i>estimated, the four numbers</span><span><i style="background:var(--color-positive)"></i>actual, logged so far</span></div>
+        <div class="eva-legend"><span><i style="background:var(--color-text-muted)"></i>estimated, F A T and the lines you named</span><span><i style="background:var(--color-positive)"></i>actual, logged so far</span></div>
         <div id="eva-bars"></div>
         <p class="slaf-hint" id="eva-why" style="margin:var(--space-2) 0 0"></p>
       </div>
@@ -165,25 +178,29 @@
   </section>
 
   <section class="slaf-card" id="spending" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The four numbers</span>
-    <h2 style="margin:var(--space-2) 0 var(--space-3)">What a month costs, in four numbers</h2>
+    <span class="slaf-eyebrow">F · A · T</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Food, accommodation, transportation: the lean month</h2>
     <!-- The whole budget input (D-172): food, rent or mortgage, getting
          around, everything else. Built once; only .value is ever written.
          LIVE-FORM: built once. -->
     <div id="fat">
-      <div class="fat-grid">
-        <label class="slaf-field"><span class="slaf-label">Food</span>
+      <div class="fat-grid fat-grid--3">
+        <label class="slaf-field"><span class="slaf-label"><b class="fat-letter">F</b> Food</span>
           <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-fat="food" placeholder="e.g. 600" aria-label="Food, a month"/></span>
           <span class="slaf-hint">groceries and eating out, a month</span><span class="bucket-lines" data-bucket-hint="food"></span></label>
-        <label class="slaf-field"><span class="slaf-label">Rent or mortgage</span>
+        <label class="slaf-field"><span class="slaf-label"><b class="fat-letter">A</b> Accommodation</span>
           <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-fat="accommodation" placeholder="e.g. 1500" aria-label="Rent or mortgage, a month"/></span>
           <span class="slaf-hint">rent, or mortgage plus tax plus insurance, one number</span><span class="bucket-lines" data-bucket-hint="accommodation"></span></label>
-        <label class="slaf-field"><span class="slaf-label">Getting around</span>
+        <label class="slaf-field"><span class="slaf-label"><b class="fat-letter">T</b> Transportation</span>
           <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-fat="transportation" placeholder="e.g. 250" aria-label="Getting around, a month"/></span>
           <span class="slaf-hint">car, fuel, transit, a month</span><span class="bucket-lines" data-bucket-hint="transportation"></span></label>
-        <label class="slaf-field"><span class="slaf-label">Everything else</span>
-          <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-fat="wants" placeholder="e.g. 900" aria-label="Everything else, a month"/></span>
-          <span class="slaf-hint" id="fat-wants-hint">whatever is not split out above</span><span class="bucket-lines" data-bucket-hint="wants"></span></label>
+      </div>
+      <div class="fat-sum" id="fat-sum">
+        <div class="fat-sum-row"><span>FAT, a month</span><b id="fat-total"></b></div>
+        <div class="fat-sum-row is-lean"><span>Lean FI number <small>the essentials, covered for good</small></span><b id="lean-fi"></b></div>
+        <p class="slaf-hint" id="lean-why" style="margin:var(--space-1) 0 0"></p>
+        <div class="fat-sum-row is-else"><span>Everything else <small>the lines you name below</small></span><b id="else-total"></b></div>
+        <div class="fat-sum-row is-month"><span>The month</span><b id="month-total"></b></div>
       </div>
       <label class="fat-toggle"><input type="checkbox" id="fat-therapy-on" aria-label="Track mental health spending separately"/>Track mental health spending separately</label>
       <div class="fat-grid" id="fat-therapy-row" hidden style="margin-top:var(--space-2)">
@@ -191,7 +208,6 @@
           <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-fat="therapy" placeholder="e.g. 200" aria-label="Therapy, a month"/></span>
           <span class="slaf-hint">its own line, not counted in everything else</span></label>
       </div>
-      <p class="fat-total" id="fat-total"></p>
     </div>
 
   </section>
@@ -199,7 +215,7 @@
   <section class="slaf-card" id="lines" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">Lines you want to keep an eye on</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">Subscriptions, and anything else, as often as it comes</h2>
-    <p class="slaf-hint" style="margin:0 0 var(--space-3)">Name it, say what it costs and how often, and it lands in its bucket above as a month. Subscriptions get their own list. A receipt on its date is not a line: log it in <a href="cash-flow.html#log">Cash Flow</a>.</p>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">Name it, say what it costs and how often, and it lands as a month: under F, A or T, or in everything else, which is only what you name here. Subscriptions get their own list. A receipt on its date is not a line: log it in <a href="cash-flow.html#log">Cash Flow</a>.</p>
     <!-- Built once; only values are written. The lists under it hold a
          remove button per row and nothing typed, so they rebuild freely. -->
     <div class="form-grid" id="line-form">
@@ -212,10 +228,10 @@
       <div class="slaf-field wide"><span class="slaf-label">Goes under</span>
         <div class="choices" id="n-bucket" data-choices="n-bucket">
           <button type="button" class="choice" data-value="subscriptions" aria-pressed="true">Subscriptions</button>
-          <button type="button" class="choice" data-value="food">Food</button>
-          <button type="button" class="choice" data-value="accommodation">Rent or mortgage</button>
-          <button type="button" class="choice" data-value="transportation">Getting around</button>
           <button type="button" class="choice" data-value="wants">Everything else</button>
+          <button type="button" class="choice" data-value="food">F · Food</button>
+          <button type="button" class="choice" data-value="accommodation">A · Accommodation</button>
+          <button type="button" class="choice" data-value="transportation">T · Transportation</button>
         </div></div>
       <div class="slaf-field wide"><button type="button" class="slaf-btn slaf-btn--primary" id="btn-line-add">Add the line</button> <span class="slaf-hint" id="line-say"></span></div>
     </div>
@@ -300,7 +316,7 @@
   </section>
 
   <section class="slaf-card" id="out-divergence">
-    <span class="slaf-eyebrow">The lines vs the four numbers</span>
+    <span class="slaf-eyebrow">The lines vs F, A, T</span>
     <div class="slaf-figure" data-figure>—</div>
     <p class="slaf-reason" data-reason></p>
     <div data-detail></div>
@@ -333,6 +349,7 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/cashflow.js"></script>
+<script src="../engines/fire.js"></script>
 <script src="../engines/income.js"></script>
 <script src="../engines/selfemployed.js"></script>
 <script src="../shared/charts.js"></script>
@@ -521,13 +538,32 @@
     });
     el('fat-therapy-on').checked = f.therapyTracked;
     el('fat-therapy-row').hidden = !f.therapyTracked;
-    el('fat-wants-hint').textContent = f.therapyTracked ? 'whatever is not split out above, not counting therapy' : 'whatever is not split out above';
     var mins = Schema.monthlyDebtPaymentsCents(h);
-    el('fat-total').innerHTML = Money.isOk(f.totalCents)
-      ? 'A month: <b>' + Money.formatCents(f.totalCents.value) + '</b>'
-        + (f.totalCents.entered < f.totalCents.of ? ' <small>(' + f.totalCents.entered + ' of ' + f.totalCents.of + ' filled in - a blank sits inside everything else)</small>' : '')
-        + (Money.isOk(mins) && mins.value > 0 ? ' · plus <b>' + Money.formatCents(mins.value) + '</b> of debt minimums, which live in <a href="' + esc(Ownership.linkTo('debt-payoff', 'debts', ROOM_ID)) + '">Debt Payoff</a>' : '')
-      : 'Type any of the four and the month appears here. Blank is blank, never zero.';
+    /* FAT, and the lean number it implies (D-197). */
+    var needs = Schema.fatNeedsCents(h);
+    var waiting = function (text) { return '<span class="is-waiting">' + text + '</span>'; };
+    el('fat-total').innerHTML = Money.isOk(needs)
+      ? Money.formatCents(needs.value) + ' <small>· ' + Money.formatCents(needs.value * 12) + ' a year</small>'
+      : waiting('type ' + needs.missing.map(function (k) { return { foodMonthly: 'food', accommodationMonthly: 'accommodation', transportationMonthly: 'getting around' }[k] || k; }).join(', '));
+    var lean = (typeof SLAF.Fire === 'object' && SLAF.Fire && typeof SLAF.Fire.calculateFIRE === 'function' && TABLES.fireVariants)
+      ? SLAF.Fire.calculateFIRE(h, TABLES, { variantId: 'lean' }) : null;
+    if (lean && Money.isOk(lean) && lean.expenseSource === 'fat') {
+      el('lean-fi').innerHTML = '<a href="fire.html#lean" style="color:inherit">' + Money.formatCents(lean.value) + '</a>';
+      el('lean-why').textContent = 'FAT times twelve, ' + Money.formatCents(lean.annualExpensesCents) + ' a year, at a ' + Money.formatRate(lean.swrRate, { decimals: 1 }) + ' draw. Invested, that covers the essentials without a job. FIRE Number has the other flavours.';
+    } else {
+      el('lean-fi').innerHTML = waiting('needs all three');
+      el('lean-why').textContent = '';
+    }
+    var elseR = f.wants;
+    el('else-total').innerHTML = Money.isOk(elseR)
+      ? Money.formatCents(elseR.value)
+        + (elseR.source === 'typed' ? ' <small>the part of the month not split into F, A, T, from Start Here; name lines below and they take over</small>' : '')
+        + (f.therapyTracked && f.therapy && Money.isOk(f.therapy) ? ' <small>+ ' + Money.formatCents(f.therapy.value) + ' therapy</small>' : '')
+      : waiting('nothing named below yet');
+    el('month-total').innerHTML = Money.isOk(f.totalCents)
+      ? Money.formatCents(f.totalCents.value)
+        + (Money.isOk(mins) && mins.value > 0 ? ' <small>+ ' + Money.formatCents(mins.value) + ' debt minimums, in <a href="' + esc(Ownership.linkTo('debt-payoff', 'debts', ROOM_ID)) + '">Debt Payoff</a></small>' : '')
+      : waiting('type any of the three and the month appears');
   }
   /* Under each of the four: what the lines in that bucket add up to (the
      category boxes, the named lines, the subscriptions). When they come to
@@ -536,7 +572,7 @@
   function paintBucketHints(h) {
     var lines = Schema.fatFromLines((h.expenses || {}).entries);
     var f = Schema.fat(h);
-    ['food', 'accommodation', 'transportation', 'wants'].forEach(function (b) {
+    ['food', 'accommodation', 'transportation'].forEach(function (b) {
       var node = document.querySelector('[data-bucket-hint="' + b + '"]');
       if (!node) return;
       var sum = lines[b];
@@ -593,7 +629,7 @@
      back as it was known. Subscriptions are the ones in that category. */
   var EVERY_WORD = { weekly: 'a week', fortnightly: 'every two weeks', monthly: 'a month', quarterly: 'every three months', annual: 'a year' };
   var LINE_CATEGORY = { subscriptions: 'subscriptions', food: 'groceries', accommodation: 'housing', transportation: 'transportation', wants: 'other' };
-  var LINE_BUCKET_WORD = { food: 'Food', accommodation: 'Rent or mortgage', transportation: 'Getting around', wants: 'Everything else' };
+  var LINE_BUCKET_WORD = { food: 'F · Food', accommodation: 'A · Accommodation', transportation: 'T · Transportation', wants: 'Everything else' };
   function namedLines(h) {
     return ((h.expenses || {}).entries || []).filter(function (e) {
       return e && e.active !== false && e.source === 'manual' && e.period === 'monthly' && e.descriptor && !e.linkedIncomeId && Money.isEntered(e.amountCents);
@@ -662,7 +698,7 @@
      the four numbers (the estimate) beside what Cash Flow's log says has
      actually gone out this month, bucket by bucket, from one engine
      helper. Nothing here is typed. */
-  var FAT_ORDER = [['food', 'Food'], ['accommodation', 'Rent or mortgage'], ['transportation', 'Getting around'], ['wants', 'Everything else']];
+  var FAT_ORDER = [['food', 'F · Food'], ['accommodation', 'A · Accommodation'], ['transportation', 'T · Transportation'], ['wants', 'Everything else']];
   function thisMonth() { var d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1 < 10 ? '0' : '') + (d.getMonth() + 1); }
   function paintPicture(h) {
     var f = Schema.fat(h);
@@ -676,7 +712,7 @@
       title: 'The month, by bucket',
       slices: slices,
       center: { big: Money.isOk(f.totalCents) ? Money.formatCents(f.totalCents.value) : '—', small: 'a month' },
-      empty: 'Type the four numbers below and the month draws here.'
+      empty: 'Type F, A and T below and the month draws here.'
     });
 
     var m = thisMonth();
@@ -701,7 +737,7 @@
     var spend = Schema.monthlyExpensesCents(h);
     var day = new Date().getDate();
     var why = act.count
-      ? 'From ' + act.count + (act.count === 1 ? ' receipt' : ' receipts') + ' logged in <a href="cash-flow.html#log">Cash Flow</a> this month, ' + day + (day === 1 ? ' day' : ' days') + ' in. The grey bar is the number typed below; the coloured one is what has actually gone out.'
+      ? 'From ' + act.count + (act.count === 1 ? ' receipt' : ' receipts') + ' logged in <a href="cash-flow.html#log">Cash Flow</a> this month, ' + day + (day === 1 ? ' day' : ' days') + ' in. The grey bar is the month as typed and named below; the coloured one is what has actually gone out.'
       : 'Nothing logged this month yet. Log what actually goes out in <a href="cash-flow.html#log">Cash Flow</a> and the actual bars fill in beside the estimate.';
     if (Money.isOk(spend) && spend.source === 'closed') why += ' Your last ' + spend.months.length + ' closed ' + (spend.months.length === 1 ? 'month' : 'months') + ' averaged ' + Money.formatCents(spend.value) + ', which every other room now reads as the month.';
     el('eva-why').innerHTML = why;

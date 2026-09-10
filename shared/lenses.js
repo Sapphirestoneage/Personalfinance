@@ -133,7 +133,7 @@
       return Money.isOk(c) ? Money.ok(c.value, { share: pct(c.value), amount: money(c.annualSavingsCents) }) : c;
     },
     conscious: function (h, T) {
-      var w = h.expenses && h.expenses.wants && h.expenses.wants.totalCents;
+      var wr = Schema.fat(h).wants; var w = Money.isOk(wr) ? wr.value : null;
       if (!Money.isEntered(w)) return Money.incomplete('Add the wants line in Expenses to see this.', ['wantsMonthly']);
       var s = shareOf(w, takeHomeMonthly(h, T), 'takeHome');
       return Money.isOk(s) ? Money.ok(s.value, { share: pct(s.value), amount: money(w) }) : s;

@@ -709,9 +709,33 @@
         },
         {
           "name": "every variant target rises when spending rises",
-          "ok": true,
-          "numRuns": 100,
-          "seed": 20260910
+          "ok": false,
+          "numRuns": 3,
+          "seed": 20260910,
+          "counterexample": [
+            {
+              "year": 1955,
+              "gross": 1,
+              "match": {
+                "pct": 0.5,
+                "cap": 0.03
+              },
+              "filingStatus": "single",
+              "cash": 0,
+              "invested": 0,
+              "retirementValue": 0,
+              "property": null,
+              "vehicle": null,
+              "debts": [],
+              "food": 1,
+              "accommodation": 0,
+              "transportation": 0,
+              "wants": 0
+            },
+            1,
+            "lean"
+          ],
+          "reason": "lean target went 30000 -> 30000 with spending up"
         },
         {
           "name": "lean <= standard <= chubby <= fat",
@@ -2264,5 +2288,5 @@
     }
   ],
   "totalProperties": 282,
-  "failedProperties": 6
+  "failedProperties": 7
 }

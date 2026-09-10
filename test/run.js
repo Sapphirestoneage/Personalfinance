@@ -383,7 +383,7 @@ section('Estimated vs tracked');
   check('...four of four filled in', current.entered + '/' + current.of, '4/4');
   /* the lines add to $2,895 of spending against $3,400 typed: -$505 */
   t.expenses.entries = Demo.buildSpending();
-  check('divergence cents', Schema.expenseDivergenceCents(t).value, 289500 - 340000);
+  check('divergence cents: the needs’ lines equal the three typed, and everything else IS the lines (D-197)', Schema.expenseDivergenceCents(t).value, 0);
 
   const noLines = Demo.build();
   check('divergence is incomplete with no lines',
@@ -829,7 +829,7 @@ const RULES = TABLES.debtRules;
   checkTrue('...written through the spine as a month, remembering how it was known', /everyCents: amount/.test(page) && /amountCents: monthly, period: 'monthly', source: 'manual'/.test(page) && /Spine\.upsertExpenseEntry\(Schema\.createExpenseEntry\(\{\s*id: 'ln_'/.test(page));
   checkTrue('subscriptions have their own list, totalled a month and a year', /id="subs-list"/.test(page) && /' a year' : ''/.test(page));
   checkTrue('the category boxes ignore named lines, so nothing counts twice', /&& !e\.descriptor && e\.active !== false\) return e;/.test(page));
-  check('one line under each of the four says what its lines add up to', (page.match(/<span class="bucket-lines" data-bucket-hint="/g) || []).length, 4);
+  check('one line under each of F, A and T says what its lines add up to', (page.match(/<span class="bucket-lines" data-bucket-hint="/g) || []).length, 3);
   checkTrue('...offering to make the number match on a tap, never silently', /data-use-bucket=/.test(page) && /Spine\.setFat\(patch\)/.test(page));
   checkTrue('the per aid and the form share one formula', /Schema\.monthlyFromEvery\(cents, per\)/.test(page));
   check('the registry names the three bands', Registry.byId('expenses').subsections.map(x => x.id).slice(0, 3).join(','), 'picture,spending,lines');
@@ -1090,7 +1090,7 @@ section('FIRE variants');
   const target = id => Fire.calculateFIRE(h, TABLES, { variantId: id });
 
   check('standard FIRE', target('standard').value, 94500000);
-  check('lean FIRE', target('lean').value, 66150000);
+  check('lean FIRE: the FAT total, 2,430 × 12 ÷ 4% (D-197)', target('lean').value, 72900000);
   check('chubby FIRE', target('chubby').value, 118125000);
   check('fat FIRE', target('fat').value, 141750000);
 
@@ -2940,12 +2940,12 @@ section('Ratios');
   check('payoff velocity is a year of minimums over the balance',
     by.debtPayoffVelocity.value, (305 * 12) / 21600, 1e-12);
   check('the FI ratio is investments at 4% over annual spending',
-    by.fiRatio.value, (48000 * 0.04) / (3150 * 12), 1e-12);
+    by.fiRatio.value, (48000 * 0.04) / (2895 * 12) /* the month with its lines, D-197 */, 1e-12);
   check('net worth to income is 35,900 over 72,000',
     by.netWorthToIncome.value, 35900 / 72000, 1e-12);
   check('rule of 72 at a 5% real return is 14.4 years (15.2)', by.ruleOf72.value, 72 / 5, 1e-12);
   check('burn rate is the monthly expense figure, in cents',
-    by.burnRateCents.value, 315000);
+    by.burnRateCents.value, 289500); /* D-197 */
 
   /* -- Ratios Tier 0 already owns are CALLED, not re-derived -------------- */
   check('DTI matches engines/tier0.js exactly',
@@ -7098,7 +7098,7 @@ section('Life events: buying a place, on the demo');
   check('selling in year two: 11% of the price', by.reversal.value, Math.round(32400000 * 0.11));
 
   /* Month 1 and 12, longhand, with the loan amortising. */
-  const take = 486000, contrib = 24000, match = 12000, spend = 315000, rate = 0.05 / 12;
+  const take = 486000, contrib = 24000, match = 12000, spend = 289500 /* the month with its lines, D-197 */, rate = 0.05 / 12;
   const upkeep = Math.round(32400000 * 0.026 / 12);
   let cash = 950000 - Math.round(32400000 * 0.03) - Math.round(32400000 * 0.2), inv = 4800000, bal = P;
   const rows = [];
@@ -7108,7 +7108,7 @@ section('Life events: buying a place, on the demo');
     const interest = bal * i; bal -= (pmt - interest);
     rows.push({ cash: cash, nw: Math.round(cash + inv + 32400000 - (2160000 + bal)) });
   }
-  check('month 1 spending: 3,150 − 1,500 rent + the payment + 2.6% a year of upkeep, tax and insurance', r.monthly[0].expensesCents, spend - 150000 + pmt + upkeep);
+  check('month 1 spending: 2,895 − 1,500 rent + the payment + 2.6% a year of upkeep, tax and insurance', r.monthly[0].expensesCents, spend - 150000 + pmt + upkeep);
   check('month 1 cash', r.monthly[0].cashCents, rows[0].cash);
   check('month 1 net worth counts the whole building against the loan', r.monthly[0].netWorthCents, rows[0].nw, 2);
   check('month 12 cash', r.monthly[11].cashCents, rows[11].cash);
@@ -7214,10 +7214,10 @@ section('Life events: a debt sprint, on the demo');
   check('months to debt-free at the minimums, from Debt Payoff\'s engine', by.monthsNow.value, now.months);
   check('and with $200 a month more', by.monthsSprint.value, sprint.months);
   check('interest saved is the difference of the two courses', by.interestSaved.value, now.totalInterestCents - sprint.totalInterestCents);
-  check('month 1 spending is $200 lighter', r.monthly[0].expensesCents, 315000 - 20000);
-  check('and cash is exactly the baseline: the $200 went to the debt', r.monthly[0].cashCents, 1097000);
-  check('net worth is $200 better than doing nothing in month 1', r.monthly[0].netWorthCents, 1097000 + Math.round((4800000 + 24000 + 12000) * (1 + 0.05 / 12)) - (2160000 - 20000));
-  check('after six months the sprint stops: month 12 spending is the full month', r.monthly[11].expensesCents, 315000);
+  check('month 1 spending is $200 lighter', r.monthly[0].expensesCents, 289500 - 20000); /* D-197 */
+  check('and cash is exactly the baseline: the $200 went to the debt', r.monthly[0].cashCents, 1122500);
+  check('net worth is $200 better than doing nothing in month 1', r.monthly[0].netWorthCents, 1122500 + Math.round((4800000 + 24000 + 12000) * (1 + 0.05 / 12)) - (2160000 - 20000));
+  check('after six months the sprint stops: month 12 spending is the full month', r.monthly[11].expensesCents, 289500);
   check('month 12 net worth carries six payments of $200', r.monthly[11].netWorthCents - E.baseline(h, { tables: T }).monthly[11].netWorthCents, 6 * 20000);
   const wanted = Demo.build(); wanted.expenses.entries = Demo.buildSpending(); wanted.ratings.rerank.dining_out = 2;
   wanted.expenses.entries.filter(e => e.categoryId === 'dining_out')[0].amountCents = 50000;   /* dear enough to be in the top three by cost */
@@ -7358,16 +7358,16 @@ section('Life events: two households, one, on the demo');
   check('one take-home, filing jointly, on $132,000', by.takeHomeJoint.value, joint);
   check('the filing change is the difference', by.filingDelta.value, joint - apart);
   check('the duplicate line proposed is the tracked housing', r.answers.duplicateLines, 150000);
-  check('the month together: 3,150 + 2,800 − 1,500', by.spendTogether.value, 445000);
-  check('the FI number for two at 4%: 25 × a year of that', by.fiNumberTogether.value, 25 * 12 * 445000);
-  check('the FI ratio for two: (48,000 + 20,000) over it', by.fiRatioTogether.value, 6800000 / (25 * 12 * 445000), 1e-12);
+  check('the month together: 2,895 (D-197) + 2,800 − 1,500', by.spendTogether.value, 419500);
+  check('the FI number for two at 4%: 25 × a year of that', by.fiNumberTogether.value, 25 * 12 * 419500);
+  check('the FI ratio for two: (48,000 + 20,000) over it', by.fiRatioTogether.value, 6800000 / (25 * 12 * 419500), 1e-12);
   /* Month 1: the joint take-home, your plan and match as before, their cash, investments and debt joining. */
   check('month 1 income: the joint take-home less your 4%', r.monthly[0].incomeCents, joint - 24000);
   check('the plan and match continue', r.monthly[0].contributionCents + r.monthly[0].matchCents, 36000);
-  check('month 1 cash: 9,500 + their 5,000 + income − the month together', r.monthly[0].cashCents, 950000 + 500000 + (joint - 24000) - 445000);
+  check('month 1 cash: 9,500 + their 5,000 + income − the month together', r.monthly[0].cashCents, 950000 + 500000 + (joint - 24000) - 419500);
   check('month 1 investments: 48,000 + their 20,000 + 360, grown a month', r.monthly[0].investmentsCents, Math.round((4800000 + 2000000 + 36000) * (1 + 0.05 / 12)));
   check('month 1 net worth carries their $10,000 of debt', r.monthly[0].netWorthCents, r.monthly[0].cashCents + r.monthly[0].investmentsCents - (2160000 + 1000000));
-  let cash = 950000 + 500000; for (let m = 0; m < 12; m++) cash += (joint - 24000) - 445000;
+  let cash = 950000 + 500000; for (let m = 0; m < 12; m++) cash += (joint - 24000) - 419500;
   check('month 12 cash by the longhand', r.monthly[11].cashCents, cash);
   /* Without a partner's figures the event cannot price itself and says so, and changes nothing. */
   const alone = E.run(h, tpl, {}, { tables: T, d: 'default' });
@@ -7666,7 +7666,7 @@ section('Charts: the one way a number becomes a picture');
   checkTrue('… and a legend naming both', /<ul class="slaf-legend">.*>a<\/li>.*FI<\/li>/.test(a));
   checkTrue('no series: says so instead of drawing', /is-empty/.test(Charts.area({ series: [] })));
 
-  /* Columns (D-197): stacked, faded ahead, a divider, values only where they change. */
+  /* Columns (D-198): stacked, faded ahead, a divider, values only where they change. */
   const cols = Charts.columns({ columns: [
     { label: 'Mar', parts: [{ label: 'Benefit', value: 347600, color: '#5AA9FF' }] },
     { label: 'Apr', parts: [{ label: 'Benefit', value: 347600, color: '#5AA9FF' }] },
@@ -8645,7 +8645,7 @@ section('D-194: an entry knows when it ends and what the stub took off');
   const ueMonth = Ledger.month(h, T, '2026-09');
   check('an unemployment month: the split sums to the tax', ueMonth.withheldCents + ueMonth.owedCents, ueMonth.taxCents);
   check('with what was held back counted per landing', ueMonth.withheldCents, 3000 * 4);
-  /* D-197: an undated weekly entry lands as its monthly average, and the
+  /* D-198: an undated weekly entry lands as its monthly average, and the
      tax scales to that average — the gross and the tax agree. */
   h.ledger = Schema.createLedger({ income: [Schema.createIncomeEntry({ id: 'ud', kind: 'unemployment', amountCents: 86900, frequency: 'weekly' })] });
   const avg = Ledger.month(h, T, '2026-09');
@@ -10012,7 +10012,7 @@ section('Expenses are four numbers (D-172)');
     !/housingShareOfSpending/.test(fs.readFileSync(path.join(ROOT, 'data/adventure_paths.json'), 'utf8'))
     && fs.readdirSync(path.join(ROOT, 'engines')).every(f => !/housingShareOfSpending/.test(fs.readFileSync(path.join(ROOT, 'engines', f), 'utf8'))));
   const page = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8');
-  check('Expenses asks the four numbers', (page.match(/data-fat="(food|accommodation|transportation|wants)"/g) || []).length, 4);
+  check('Expenses asks F, A and T; everything else is what is named (D-197)', (page.match(/data-fat="(food|accommodation|transportation|wants)"/g) || []).length, 3);
   checkTrue('...with the toggle labelled plainly', page.indexOf('Track mental health spending separately') !== -1);
   checkTrue('...and the split folded', /<details class="drawer" id="split-more">/.test(page));
 })();
