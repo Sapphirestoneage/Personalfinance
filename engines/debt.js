@@ -567,6 +567,89 @@
     });
   }
 
+  /* ---- What is free a month for the debts (D-190) -------------------------
+     One formula: take-home less spending less every minimum. It is read
+     two ways. The ESTIMATE runs it over what Start Here holds, and over
+     the intake's guesses where a figure is missing (the room hands in
+     that copy as opts.estimateFrom; the engine never guesses on its own).
+     The REALIZED figure runs the same arithmetic over the months closed in
+     Budget: what actually came in less what actually went out, averaged
+     over the last three, less the minimums as they stand today. A typed
+     extra beats both; realized beats the estimate. */
+  var REALIZED_MONTHS = 3;
+
+  function freeMonthlyCents(household, tables) {
+    var take = Schema.takeHomeMonthlyCents(household, tables);
+    if (!Money.isOk(take)) return take;
+    var spend = Schema.monthlyExpensesCents(household);
+    if (!Money.isOk(spend)) return spend;
+    var mins = Schema.monthlyDebtPaymentsCents(household);
+    if (!Money.isOk(mins)) return mins;
+    return Money.ok(take.value - spend.value - mins.value, {
+      takeHomeCents: take.value, spendingCents: spend.value, minimumsCents: mins.value,
+      spendingSource: spend.source || null
+    });
+  }
+
+  function realizedFreeMonthlyCents(household) {
+    var months = (((household || {}).ledger || {}).months || [])
+      .filter(function (m) {
+        return m && m.actual && Money.isEntered(m.actual.income) && m.actual.income > 0 && Money.isEntered(m.actual.expenses);
+      })
+      .sort(function (a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; })
+      .slice(-REALIZED_MONTHS);
+    if (!months.length) return Money.incomplete('No month with income has been closed yet.', ['closedMonths']);
+    var mins = Schema.monthlyDebtPaymentsCents(household);
+    if (!Money.isOk(mins)) return mins;
+    var inc = Math.round(months.reduce(function (t, m) { return t + m.actual.income; }, 0) / months.length);
+    var out = Math.round(months.reduce(function (t, m) { return t + m.actual.expenses; }, 0) / months.length);
+    return Money.ok(inc - out - mins.value, {
+      incomeCents: inc, spendingCents: out, minimumsCents: mins.value,
+      months: months.map(function (m) { return m.id; })
+    });
+  }
+
+  /**
+   * extraCapacity(household, tables, opts) — the extra the plan can count
+   * on when the box is blank, and where it came from.
+   *   opts.estimateFrom  the household with guesses standing in for what is
+   *                      missing (Gate.fillGuesses); defaults to household
+   *   opts.typedCents    a figure typed in the room, which wins outright
+   * Returns { estimate, realized, typed, basis, cents, shortCents, guessed }:
+   * estimate/realized are the two results above (null when incomplete);
+   * basis is 'typed' | 'realized' | 'estimate' | null; cents is the figure
+   * the plan uses, never below zero; shortCents is how far the chosen
+   * figure fell below zero, else 0; guessed names the fields the estimate
+   * leaned on a guess for.
+   */
+  function extraCapacity(household, tables, opts) {
+    var o = opts || {};
+    var from = o.estimateFrom || household;
+    var est = freeMonthlyCents(from, tables);
+    var real = realizedFreeMonthlyCents(household);
+    var guessed = [];
+    var stand = (from && from.meta && from.meta.standalone) || [];
+    var committed = (household && household.meta && household.meta.guessed) || {};
+    ['grossAnnualIncome', 'monthlyExpenses'].forEach(function (id) {
+      if (stand.indexOf(id) >= 0 || committed[id]) guessed.push(id);
+    });
+    var basis = null, use = null;
+    if (Money.isEntered(o.typedCents)) { basis = 'typed'; use = o.typedCents; }
+    else if (Money.isOk(real)) { basis = 'realized'; use = real.value; }
+    else if (Money.isOk(est)) { basis = 'estimate'; use = est.value; }
+    return {
+      estimate: Money.isOk(est) ? est : null,
+      estimateReason: Money.isOk(est) ? null : est.reason,
+      realized: Money.isOk(real) ? real : null,
+      realizedReason: Money.isOk(real) ? null : real.reason,
+      typed: Money.isEntered(o.typedCents) ? o.typedCents : null,
+      basis: basis,
+      cents: use === null ? null : Math.max(0, use),
+      shortCents: use === null ? 0 : Math.max(0, -use),
+      guessed: guessed
+    };
+  }
+
   /** What the current minimums alone would cost — the do-nothing baseline. */
   function minimumsOnly(household, rules) {
     return simulate(household, rules, { strategyId: 'avalanche', extraMonthlyCents: 0 });
@@ -592,6 +675,9 @@
     compareStrategies: compareStrategies,
     milestones: milestones,
     rankRate: rankRate,
+    freeMonthlyCents: freeMonthlyCents,
+    realizedFreeMonthlyCents: realizedFreeMonthlyCents,
+    extraCapacity: extraCapacity,
     creditCardsOnly: creditCardsOnly,
     rewardsVsCarrying: rewardsVsCarrying,
     minimumsOnly: minimumsOnly

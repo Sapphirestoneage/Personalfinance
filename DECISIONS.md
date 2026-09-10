@@ -12028,6 +12028,55 @@ $3,200 at 22.9% is $61, $145 together, the cards 42%.
 Gate for this commit: unit 27038; render on the room; a phone walk with
 the example debts reading the two slices and the line under them.
 
+## D-190 — Debt Payoff: the extra is always a number, estimated then realized
+
+**Why.** The owner, with the room open on their own household: "I don't
+see the number being computed. Even if you have to wait for another room
+it should be an estimate, and then there should be a realized version
+based off other rooms." D-188 worked the extra out only when pay,
+spending and the minimums were all typed, and showed $0 the moment the
+arithmetic went to zero or below, which read as nothing computed at all.
+The same message asked for a second ring: the interest each debt costs
+over the whole plan, not only this month.
+
+**Decision.** One formula, in the engine (`Debt.freeMonthlyCents`):
+take-home less spending less every minimum. It is read two ways and both
+show under the box, each saying what it came from and which is in use:
+
+- **Estimate.** The formula over what Start Here holds, with the intake's
+  own guesses (`Gate.fillGuesses`, D-097) standing in for a missing pay or
+  month of spending. So a household with only its debts typed already
+  sees a figure, marked "pay and spending guessed, fix it in Start Here".
+  The room hands the guessed copy in as `opts.estimateFrom`; the engine
+  never guesses on its own. When the pay falls short, the row reads $0 and
+  says by how much, and the hint says to take the debt payments out of
+  spending if they were counted there.
+- **Realized.** `Debt.realizedFreeMonthlyCents`: the same arithmetic over
+  the months closed in Budget with an income actual, the last three
+  averaged, less the minimums as they stand today. Until a month is
+  closed the row reads "waiting" and links to Budget.
+
+`Debt.extraCapacity` picks the one the plan uses: typed beats realized
+beats estimate, never below zero, the shortfall carried apart. A stale
+engine after a deploy falls back to the typed figure (D-188's guard).
+The plan card gains a second donut beside the monthly one: interest over
+the plan by debt, read off the simulation's payoffs in the same colours,
+with the total in the centre and the cards' share in one line. Loads
+`onepagerDefaults` for the guesses. Hand-checked: the demo persona's
+estimate is $4,860 less $3,150 less $305, $1,405; with three closed
+months at $5,000, $4,800, $5,200 in and $3,000, $3,200, $3,200 out the
+realized figure is $5,000 less $3,133 less $305, $1,562, and it wins.
+
+**Compatibility note.** Nothing stored changes. The engine reads
+`household.ledger.months[].actual.income` and `.expenses` (D-128) and
+writes nothing; a future room wanting "what is free a month" calls
+`Debt.extraCapacity` rather than re-deriving it.
+
+Gate for this commit: unit 27086; render and forms on the room; a phone
+walk with three households (debts only, the demo persona, the persona
+with three closed months) reading the two rows, the hint, the
+placeholder and both rings, and a typed figure taking over.
+
 ---
 
 # The Dungeons & Dividends entries

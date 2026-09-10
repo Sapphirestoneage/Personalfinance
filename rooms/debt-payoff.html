@@ -68,7 +68,21 @@
     .debt-line .slaf-input-shell { position: relative; margin-top: 11px; }
   }
   @media (min-width: 561px) { .debt-line .debt-more { grid-column: 5; } }
+  .plan-charts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+  @media (max-width: 640px) { .plan-charts { grid-template-columns: 1fr; } }
   .extra-field { margin-top: var(--space-4); }
+  /* The two figures the blank box falls back to (D-190): an estimate from
+     what Start Here holds, and the realized one from closed months. The
+     one in use is marked; the other says what it is waiting on. */
+  .extra-basis { display: grid; gap: 2px; margin-top: var(--space-2); font-size: var(--text-sm); }
+  .extra-basis .basis { display: grid; grid-template-columns: auto auto 1fr; gap: 0 var(--space-2); align-items: baseline; padding: 4px 0; border-top: 1px solid var(--color-border); }
+  .extra-basis .basis:first-child { border-top: none; }
+  .extra-basis .basis-name { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); min-width: 5.5em; }
+  .extra-basis b { font-family: var(--font-display); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .extra-basis .basis-tag { font-size: var(--text-xs); color: var(--color-positive); white-space: nowrap; }
+  .extra-basis .basis-note { grid-column: 1 / -1; color: var(--color-text-muted); font-size: var(--text-xs); }
+  .extra-basis .basis.is-used .basis-name { color: var(--color-text); font-weight: 600; }
+  .extra-basis .basis.is-waiting b { color: var(--color-text-faint); font-weight: normal; }
   .fold-card > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
   .fold-card > summary::-webkit-details-marker { display: none; }
   .fold-card > summary::after { content: '▸'; color: var(--color-text-faint); font-size: 12px; transition: transform .12s ease; }
@@ -247,6 +261,7 @@
       <span class="slaf-input-shell"><span class="slaf-affix">$</span>
         <input type="text" inputmode="decimal" id="f-extra" placeholder="e.g. 200"/></span>
       <span class="slaf-hint" id="extra-hint">Blank shows what the minimums alone do.</span>
+      <span class="extra-basis" id="extra-basis"></span>
     </label>
     <details class="archived" id="archived" hidden>
       <summary>Set aside <small id="archived-count"></small></summary>
@@ -1118,40 +1133,66 @@
     return Money.formatRate(rate, { decimals: 2 }).replace(/\.?0+%$/, '%');
   }
 
-  /* What is free each month, worked out rather than asked (D-188):
-     take-home less spending less every minimum. It stands in for the
-     extra whenever the box is blank, and the hint says where it came
-     from; a typed figure wins. Null when any of the three is missing. */
-  function computedExtraCents(h) {
-    if (!TABLES) return null;
-    var take = Schema.takeHomeMonthlyCents(h, TABLES);
-    var spend = Schema.monthlyExpensesCents(h);
-    var mins = Schema.monthlyDebtPaymentsCents(h);
-    if (!Money.isOk(take) || !Money.isOk(spend) || !Money.isOk(mins)) return null;
-    return Math.max(0, take.value - spend.value - mins.value);
+  /* What is free each month, worked out rather than asked (D-188, D-190):
+     take-home less spending less every minimum, read two ways. The
+     ESTIMATE runs over what Start Here holds, with the intake's guesses
+     standing in for anything missing, so there is always a figure once
+     there is a pay. The REALIZED figure runs over the months closed in
+     Budget. A typed figure wins; realized beats the estimate. The engine
+     holds the arithmetic (Debt.extraCapacity); guarded, because a browser
+     can hold an older engine for a few minutes after a deploy. */
+  function capacity(h) {
+    if (!TABLES || typeof Debt.extraCapacity !== 'function') {
+      return { estimate: null, realized: null, typed: extraCents, basis: Money.isEntered(extraCents) ? 'typed' : null,
+        cents: Money.isEntered(extraCents) ? extraCents : null, shortCents: 0, guessed: [], estimateReason: 'Reload the page to see the estimate.', realizedReason: null };
+    }
+    var from = (SLAF.Gate && typeof SLAF.Gate.fillGuesses === 'function') ? SLAF.Gate.fillGuesses(h, TABLES, null) : h;
+    return Debt.extraCapacity(h, TABLES, { estimateFrom: from, typedCents: extraCents });
   }
-  function effectiveExtraCents(h) {
-    if (Money.isEntered(extraCents)) return extraCents;
-    var c = computedExtraCents(h);
-    return c === null ? null : c;
+  function effectiveExtraCents(h) { return capacity(h).cents; }
+  function monthName(ym) {
+    var m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+ym.slice(5, 7) - 1];
+    return m || ym;
   }
   function paintExtraHint(h) {
-    var hint = el('extra-hint'); if (!hint) return;
-    var c = computedExtraCents(h);
-    var box = el('f-extra');
-    if (Money.isEntered(extraCents)) {
-      hint.textContent = c === null || c === 0 ? 'Your figure. Clear it to see the minimums alone.'
-        : 'Your figure. Clear it to use what your pay leaves free, ' + Money.formatCents(c) + ' a month.';
-    } else if (c !== null && c > 0) {
-      hint.textContent = 'Blank, so the plan uses what your pay leaves after spending and the minimums: ' + Money.formatCents(c) + ' a month. Type a figure to override.';
-      box.placeholder = String(Math.round(c / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    } else if (c === 0) {
-      hint.textContent = 'Your pay leaves nothing free after spending and the minimums, so this is the minimums alone. Type a figure to try one.';
-      box.placeholder = 'e.g. 200';
-    } else {
-      hint.textContent = 'Blank shows what the minimums alone do. Add your pay and spending in Start Here and this fills itself in.';
-      box.placeholder = 'e.g. 200';
+    var hint = el('extra-hint'), rows = el('extra-basis'), box = el('f-extra');
+    if (!hint || !rows) return;
+    var c = capacity(h);
+    function row(name, figure, note, used, waiting) {
+      return '<span class="basis' + (used ? ' is-used' : '') + (waiting ? ' is-waiting' : '') + '">'
+        + '<span class="basis-name">' + name + '</span><b>' + figure + '</b><span class="basis-tag">' + (used ? 'in use' : '') + '</span><span class="basis-note">' + note + '</span></span>';
     }
+    var est = c.estimate, real = c.realized, out = '';
+    if (est) {
+      var bits = 'pay after tax ' + Money.formatCents(est.takeHomeCents) + ', less spending ' + Money.formatCents(est.spendingCents) + ', less minimums ' + Money.formatCents(est.minimumsCents);
+      if (c.guessed.length) bits += ' (' + c.guessed.map(function (id) { return id === 'grossAnnualIncome' ? 'pay' : 'spending'; }).join(' and ') + ' guessed, fix it in Start Here)';
+      out += est.value > 0
+        ? row('Estimate', Money.formatCents(est.value), bits, c.basis === 'estimate')
+        : row('Estimate', '$0', 'your pay is ' + Money.formatCents(-est.value) + ' short of spending and the minimums; ' + bits, c.basis === 'estimate');
+    } else {
+      out += row('Estimate', 'waiting', (c.estimateReason && /pay|income/i.test(c.estimateReason) ? 'add your pay in ' : 'finish ') + '<a href="start.html">Start Here</a> and this fills in', false, true);
+    }
+    if (real) {
+      var ms = real.months;
+      out += row('Realized', Money.formatCents(Math.max(0, real.value)),
+        'from ' + ms.length + ' closed month' + (ms.length === 1 ? '' : 's') + ' in Budget, ' + monthName(ms[0]) + (ms.length > 1 ? ' to ' + monthName(ms[ms.length - 1]) : '')
+        + ': ' + Money.formatCents(real.incomeCents) + ' in, ' + Money.formatCents(real.spendingCents) + ' out, less minimums ' + Money.formatCents(real.minimumsCents)
+        + (real.value < 0 ? ' (' + Money.formatCents(-real.value) + ' short)' : ''), c.basis === 'realized');
+    } else {
+      out += row('Realized', 'waiting', 'close a month in <a href="budget.html">Budget</a> and the real figure shows here', false, true);
+    }
+    rows.innerHTML = out;
+    var fallback = real ? 'the realized figure' : est ? 'the estimate' : null;
+    if (c.basis === 'typed') {
+      hint.textContent = 'Your figure. Clear it to use ' + (fallback || 'the minimums alone') + '.';
+    } else if (c.basis && c.cents > 0) {
+      hint.textContent = 'Blank, so the plan uses ' + fallback + ': ' + Money.formatCents(c.cents) + ' a month. Type a figure to override.';
+    } else if (c.basis) {
+      hint.textContent = 'Blank, and ' + fallback + ' leaves nothing free after spending and the minimums, so this is the minimums alone. If your spending already counts these payments, take them out of it in Cash Flow.';
+    } else {
+      hint.textContent = 'Blank shows what the minimums alone do. Add your pay in Start Here and an estimate appears here.';
+    }
+    box.placeholder = c.basis !== 'typed' && c.cents > 0 ? String(Math.round(c.cents / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 'e.g. 200';
   }
 
   function renderPlan(h, cmp) {
@@ -1185,15 +1226,37 @@
     });
     var totalMonthly = slices.reduce(function (t, x) { return t + x.value; }, 0);
     var cardsMonthly = live.reduce(function (t, d, i) { return t + (d.type === 'credit_card' ? slices[i].value : 0); }, 0);
-    el('plan-chart').innerHTML = !Money.isOk(plan) ? '' : Charts.donut({
+    /* ...and over the whole plan (D-190): what each debt costs from now to
+       its last payment, read off the simulation's payoffs, in the same
+       colours, so the two rings answer "which one bleeds me now" and
+       "which one costs most before it is gone" side by side. */
+    var colorOf = {};
+    live.forEach(function (d, i) { colorOf[d.id] = slices[i].color; });
+    var planSlices = Money.isOk(plan) ? (plan.payoffs || []).map(function (p) {
+      return { label: p.label || 'Debt', value: p.interestPaidCents, cents: p.interestPaidCents,
+        note: 'gone in ' + monthsLabel(p.month), color: colorOf[p.debtId] || Charts.COLORS.series[0] };
+    }) : [];
+    var cardsPlan = Money.isOk(plan) ? (plan.payoffs || []).reduce(function (t, p) {
+      var d = live.filter(function (x) { return x.id === p.debtId; })[0];
+      return t + (d && d.type === 'credit_card' ? p.interestPaidCents : 0);
+    }, 0) : 0;
+    el('plan-chart').innerHTML = !Money.isOk(plan) ? '' : '<div class="plan-charts"><div>' + Charts.donut({
       title: 'Interest a month, by debt',
       slices: slices,
       center: { big: Money.formatCents(totalMonthly), small: 'a month in interest' },
       empty: 'Add a rate to each debt to see where the interest goes.'
-    }) + (Money.isOk(plan) && totalMonthly > 0 && cardsMonthly > 0
+    }) + (totalMonthly > 0 && cardsMonthly > 0
       ? '<p class="slaf-hint" style="margin-top:var(--space-2)">The cards are ' + Money.formatCents(cardsMonthly) + ' of that, '
         + Math.round(cardsMonthly / totalMonthly * 100) + '%. Clear them and the rest costs ' + Money.formatCents(totalMonthly - cardsMonthly) + ' a month.</p>'
-      : '');
+      : '') + '</div><div>' + Charts.donut({
+      title: 'Interest over the plan, by debt',
+      slices: planSlices,
+      center: { big: Money.formatCents(plan.totalInterestCents), small: 'until it is all gone' },
+      empty: 'Nothing left to pay interest on.'
+    }) + (plan.totalInterestCents > 0 && cardsPlan > 0
+      ? '<p class="slaf-hint" style="margin-top:var(--space-2)">The cards cost ' + Money.formatCents(cardsPlan) + ' of that, '
+        + Math.round(cardsPlan / plan.totalInterestCents * 100) + '%, before they are gone.</p>'
+      : '') + '</div></div>';
     if (Money.isOk(plan)) {
       var baseline = Debt.simulate(h, RULES, { strategyId: strategyId, extraMonthlyCents: 0 });
       /* Three finish lines before the figures (D-188): the cards, the
@@ -1569,7 +1632,7 @@
 
   SLAF.Progress.mount(ROOM_ID);
 
-  Reference.load(['debtRules', 'fooRules', 'effectiveTaxRates']).then(function (tables) {
+  Reference.load(['debtRules', 'fooRules', 'effectiveTaxRates', 'onepagerDefaults']).then(function (tables) {
     TABLES = tables;
     RULES = tables.debtRules;
     FOO = tables.fooRules || null;

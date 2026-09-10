@@ -734,9 +734,57 @@ const RULES = TABLES.debtRules;
   check('an incomplete plan gives nothing', Debt.milestones(Debt.simulate(Schema.createHousehold(), RULES, {}), hh, RULES, {}), null);
   const page = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
   checkTrue('a stale engine cannot take the room down: the finish lines are guarded', /typeof Debt\.milestones === 'function'/.test(page) && /Part of this room could not draw/.test(page));
-  checkTrue('nothing free reads as the minimums alone, never as $0 extra', /leaves nothing free after spending and the minimums/.test(page));
-  checkTrue('the room works the extra out from pay, spending and the minimums when the box is blank', /function computedExtraCents\(h\)/.test(page) && /take\.value - spend\.value - mins\.value/.test(page) && /effectiveExtraCents/.test(page));
-  checkTrue('the room shows the three lines above the figures, from the FOO table', /Debt\.milestones\(plan, h, RULES, \{ highInterestRate: FOO && FOO\.thresholds/.test(page) && /Credit cards gone/.test(page) && /Everything gone/.test(page) && /load\(\['debtRules', 'fooRules', 'effectiveTaxRates'\]\)/.test(page));
+  checkTrue('nothing free reads as the minimums alone, never as $0 extra', /leaves nothing free after spending and the minimums, so this is the minimums alone/.test(page));
+  checkTrue('the room works the extra out through the engine when the box is blank (D-190)', /Debt\.extraCapacity\(h, TABLES, \{ estimateFrom: from, typedCents: extraCents \}\)/.test(page) && /effectiveExtraCents/.test(page) && !/function computedExtraCents/.test(page));
+  checkTrue('...the estimate leans on the intake guesses, so a pay is enough for a figure', /SLAF\.Gate\.fillGuesses\(h, TABLES, null\)/.test(page));
+  checkTrue('...and the two figures show under the box, each saying what it came from', /id="extra-basis"/.test(page) && /row\('Estimate'/.test(page) && /row\('Realized'/.test(page) && /closed month/.test(page) && /guessed, fix it in Start Here/.test(page));
+  checkTrue('...a stale engine falls back to the typed figure, never a crash', /typeof Debt\.extraCapacity !== 'function'/.test(page));
+  checkTrue('the room shows the three lines above the figures, from the FOO table', /Debt\.milestones\(plan, h, RULES, \{ highInterestRate: FOO && FOO\.thresholds/.test(page) && /Credit cards gone/.test(page) && /Everything gone/.test(page) && /load\(\['debtRules', 'fooRules', 'effectiveTaxRates', 'onepagerDefaults'\]\)/.test(page));
+  checkTrue('a second ring: interest over the whole plan, by debt, from the payoffs (D-190)', /Interest over the plan, by debt/.test(page) && /p\.interestPaidCents/.test(page) && /plan\.totalInterestCents\), small: 'until it is all gone'/.test(page));
+})();
+
+/* -- What is free a month for the debts (D-190) ---------------------------- */
+(function () {
+  section('Debt: the extra, estimated and realized (D-190)');
+  const T = { effectiveTaxRates: TABLES.effectiveTaxRates };
+  const hh = Demo.build();
+  const free = Debt.freeMonthlyCents(hh, T);
+  const take = Schema.takeHomeMonthlyCents(hh, T), spend = Schema.monthlyExpensesCents(hh), mins = Schema.monthlyDebtPaymentsCents(hh);
+  checkTrue('one formula: take-home less spending less every minimum', Money.isOk(free) && free.value === take.value - spend.value - mins.value);
+  check('...and it says what went in', free.takeHomeCents, take.value);
+  const noPay = Schema.createHousehold({ debts: hh.debts, expenses: hh.expenses });
+  checkTrue('no pay: incomplete, naming the pay, never zero', !Money.isOk(Debt.freeMonthlyCents(noPay, T)) && Debt.freeMonthlyCents(noPay, T).missing.indexOf('grossAnnualIncome') >= 0);
+  const Gate190 = require(path.join(ROOT, 'shared/gate.js'));
+  const guessed = Gate190.fillGuesses(noPay, Object.assign({ onepagerDefaults: require(path.join(ROOT, 'data/onepager_defaults.json')) }, T), null);
+  const cap = Debt.extraCapacity(noPay, T, { estimateFrom: guessed });
+  checkTrue('with the intake guess standing in for the pay there is an estimate', cap.estimate !== null && cap.basis === 'estimate');
+  checkTrue('...and the estimate says the pay was guessed', cap.guessed.indexOf('grossAnnualIncome') >= 0);
+  check('nothing closed: no realized figure, and it says why', cap.realized, null);
+  checkTrue('...', /closed/.test(cap.realizedReason));
+  const capReal = Debt.extraCapacity(hh, T, {});
+  check('the demo persona: the estimate is what the room used to work out itself', capReal.cents, Math.max(0, take.value - spend.value - mins.value));
+  check('...nothing guessed', capReal.guessed.length, 0);
+  const closed = Demo.build();
+  closed.ledger = Schema.createLedger({ months: [
+    { month: '2026-05', actual: { income: 500000, expenses: 340000 } },
+    { month: '2026-06', actual: { income: 500000, expenses: 300000 } },
+    { month: '2026-07', actual: { income: 480000, expenses: 320000 } },
+    { month: '2026-08', actual: { income: 520000, expenses: 320000 } }
+  ] });
+  const real = Debt.realizedFreeMonthlyCents(closed);
+  checkTrue('closed months: the last three, averaged, less the minimums as they stand', Money.isOk(real) && real.value === Math.round((500000 + 480000 + 520000) / 3) - Math.round((300000 + 320000 + 320000) / 3) - mins.value);
+  check('...naming the months', real.months.join(','), '2026-06,2026-07,2026-08');
+  const capClosed = Debt.extraCapacity(closed, T, {});
+  check('realized beats the estimate', capClosed.basis, 'realized');
+  check('...and a typed figure beats both', Debt.extraCapacity(closed, T, { typedCents: 12345 }).basis, 'typed');
+  check('...at the typed figure', Debt.extraCapacity(closed, T, { typedCents: 12345 }).cents, 12345);
+  const noIncome = Demo.build();
+  noIncome.ledger = Schema.createLedger({ months: [{ month: '2026-08', actual: { expenses: 320000 } }] });
+  check('a closed month with no income actual does not count as realized', Debt.extraCapacity(noIncome, T, {}).realized, null);
+  const tight = Demo.build();
+  tight.expenses.wants.totalCents = 900000;
+  const capTight = Debt.extraCapacity(tight, T, {});
+  checkTrue('spending past the pay: the plan gets zero and the shortfall is named, never a negative extra', capTight.cents === 0 && capTight.shortCents > 0 && capTight.estimate.value < 0);
 })();
 
 /* -- Strategy ordering ---------------------------------------------------- */
