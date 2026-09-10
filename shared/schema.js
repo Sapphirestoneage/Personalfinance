@@ -39,11 +39,11 @@
      them together); every export and share code is stamped with it and
      every room footer prints it. D-131. */
   var APP_VERSION = '2.0';
-  /* The build stamp, the date the last change to main was made: printed
+  /* The build stamp, the date and minute (UTC) of the last change to main: printed
      beside the version in every footer and in every backup, so a phone
      showing an old page can be told apart from a bug. version.json carries
      the same string; `node tools/stamp-build.js` sets both to today. D-202. */
-  var BUILD = '2026-09-10';
+  var BUILD = '2026-09-10 21:10Z';
 
   /* ======================================================================
      System assumption defaults — SPEC.md §12.2 (RESOLVED: 7% return, 4% SWR)

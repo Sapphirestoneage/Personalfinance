@@ -199,7 +199,7 @@
       if (err && err.blocked) {
         /* Refused, so the file goes the other way that always works. */
         downloadFile();
-        note('out-note', 'This browser would not open the share sheet (a page opened inside another app usually will not), so the file was downloaded instead: ' + Spine.exportFilename() + '. Find it in Downloads and mail or message it from there, or open this page in Chrome or Safari and try Send again.', 'is-error');
+        note('out-note', 'This browser would not open the share sheet, so the file was downloaded instead: ' + Spine.exportFilename() + '. Find it in Downloads and mail or message it from there. On a phone, a page opened inside another app usually refuses the sheet; opening it in Chrome or Safari brings it back.', 'is-good');
         return;
       }
       note('out-note', err.message, 'is-error');

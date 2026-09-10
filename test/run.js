@@ -12048,7 +12048,7 @@ section('Backup: one file for every key (D-202)');
   {
     const v = JSON.parse(fs.readFileSync(path.join(ROOT, 'version.json'), 'utf8'));
     check('version.json version matches Schema.APP_VERSION', v.version, Schema.APP_VERSION);
-    checkTrue('Schema.BUILD is a date', /^\d{4}-\d{2}-\d{2}$/.test(Schema.BUILD));
+    checkTrue('Schema.BUILD is a date and minute, UTC', /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}Z$/.test(Schema.BUILD));
     check('version.json build matches Schema.BUILD', v.build, Schema.BUILD);
     checkTrue('every footer prints the version and the build', /' · build ' \+ g\.SLAF\.Schema\.BUILD/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
     checkTrue('the stamp tool exists and writes both files', /var BUILD = /.test(fs.readFileSync(path.join(ROOT, 'tools/stamp-build.js'), 'utf8')) && /version\.json/.test(fs.readFileSync(path.join(ROOT, 'tools/stamp-build.js'), 'utf8')));
