@@ -236,7 +236,7 @@
       el('assign-list').innerHTML = '';
       el('assign-empty').hidden = false;
       el('assign-empty').innerHTML = esc(rows.reason) + ' <a href="'
-        + Ownership.linkTo('cash-flow', 'spending') + '">Categorise a month →</a>';
+        + Ownership.linkTo('expenses', 'spending') + '">Categorise a month →</a>';
       return;
     }
     el('assign-empty').hidden = true;
@@ -294,7 +294,7 @@
       el('bars').innerHTML = '';
       el('compare-why').innerHTML = stated.length === 0
         ? 'Name what matters above and this fills in.'
-        : esc(a.reason) + ' <a href="' + Ownership.linkTo('cash-flow', 'spending')
+        : esc(a.reason) + ' <a href="' + Ownership.linkTo('expenses', 'spending')
           + '">Categorise a month →</a>';
       el('unclaimed-note').hidden = true;
       el('unclaimed-list').innerHTML = '';

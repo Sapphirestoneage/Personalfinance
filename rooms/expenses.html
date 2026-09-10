@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Expenses · SPARKS</title>
+<meta name="description" content="What a month costs you: four numbers, the yearly costs, and an optional split by category, measured against a budget."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. Split out of Cash Flow in D-192: this room is
+  WHAT a month costs; Cash Flow is WHEN the money moves.
+
+  1. READS   household.expenses.needs / wants (the four numbers, D-172),
+             expenses.entries[] (the typical-month lines, source manual),
+             expenses.annual[], people[].incomeSources[].grossAnnualIncomeCents,
+             filingStatus.
+  2. WRITES  THE FOUR NUMBERS - food, rent or mortgage, getting around,
+             everything else - and the optional therapy line, via
+             Spine.setFat / setTherapyTracked (D-172). This room is their
+             one owner. The yearly lines (15.5, D-181). The optional split
+             by category: expenses.entries[] with source 'manual'. The
+             lines never write the four numbers on their own; "Use the
+             lines as my month" does, once, on purpose. Nothing else. The
+             dated LOG is Cash Flow's, not this room's.
+  3. CALLS   engines/cashflow.js for every figure. Take-home pay comes from
+             engines/tier0.js's effective-tax lookup, not a second tax
+             calculation.
+  4. EMPTY   Nothing typed: the summary, the template comparison and the
+             divergence each say what they need. A category with no amount
+             is skipped, never counted as zero. With take-home known, every
+             empty line is PROPOSED from the chosen split (D-063) - shown
+             dashed, never stored, never counted until tapped.
+             THE SHAPE: the four numbers first, then the yearly costs
+             folded, then the split folded, then what they add up to.
+  5. CONFIG  data/expense_categories.json (categories and buckets),
+             data/budget_templates.json (the splits),
+             data/effective_tax_rates_2026.json (take-home).
+-->
+<style>
+  .room-back:hover { text-decoration: underline; }
+  section[id] { scroll-margin-top: var(--space-4); }
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3); margin-top: var(--space-3); }
+  .form-grid .wide { grid-column: 1 / -1; }
+
+  /* The four numbers (D-172): one row on a wide screen, two by two on a phone. */
+  .fat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
+  @media (max-width: 720px) { .fat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .fat-grid .slaf-field { margin: 0; }
+  .fat-grid .slaf-hint { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 4px; }
+  .annual-list { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
+  .annual-list li { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); flex-wrap: wrap; }
+  .annual-list li:first-child { border-top: none; }
+  .annual-list small { color: var(--color-text-muted); font-size: var(--text-xs); }
+  .annual-list .amt { font-variant-numeric: tabular-nums; }
+  .choices .choice[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); }
+  .fat-toggle { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-3); cursor: pointer; min-height: 32px; }
+  .fat-toggle input { width: 18px; height: 18px; margin: 0; accent-color: var(--color-accent); }
+  .fat-total { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  .fat-total b { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  details#split-more { margin-top: var(--space-4); }
+  .bucket { margin-bottom: var(--space-4); }
+  .bucket:last-child { margin-bottom: 0; }
+  .bucket-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); margin-bottom: var(--space-2); }
+  .bucket-total { font-family: var(--font-display); font-size: var(--text-md); font-variant-numeric: tabular-nums; }
+  .bucket-note { font-size: var(--text-xs); color: var(--color-text-faint); margin: 0 0 var(--space-3); }
+  details.more { margin-top: var(--space-2); }
+  details.more summary { cursor: pointer; font-size: var(--text-xs); color: var(--color-accent-hover); padding: var(--space-1) 0; list-style: none; }
+  details.more summary::-webkit-details-marker { display: none; }
+  details.more summary::before { content: '+ '; }
+  details.more[open] summary::before { content: '− '; }
+
+  .cat-row { display: grid; grid-template-columns: minmax(0, 1fr) 118px 72px 56px; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2); }
+  .cat-row .slaf-input-shell select { padding-left: 4px; padding-right: 4px; }
+  .cat-hint { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-faint); margin: -4px 0 var(--space-1); min-height: 0; }
+  .cat-hint:empty { display: none; }
+  .cat-fixed { display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: var(--text-xs); color: var(--color-text-faint); cursor: pointer; white-space: nowrap; }
+  .cat-fixed input { margin: 0; width: 16px; height: 16px; accent-color: var(--color-accent); }
+  .cat-fixed.is-derived { cursor: default; }
+  .cat-label { font-size: var(--text-sm); color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cat-label small { display: block; font-size: var(--text-xs); color: var(--color-text-faint); white-space: normal; }
+  .cat-derived { display: flex; justify-content: flex-end; align-items: center; font-size: var(--text-sm); grid-column: 2 / -1; }
+  .cat-derived .slaf-owned-from { font-size: 10px; }
+  @media (max-width: 420px) {
+    .cat-row { grid-template-columns: minmax(0, 1fr) 84px 56px; }
+    .cat-row .cat-label { grid-column: 1 / -1; }
+    .cat-row .cat-amount { grid-column: 1 / 2; }
+  }
+
+  table.cmp { width: 100%; border-collapse: collapse; font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+  table.cmp th { text-align: right; font-weight: 400; color: var(--color-text-faint); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); padding-bottom: var(--space-2); }
+  table.cmp th:first-child, table.cmp td:first-child { text-align: left; }
+  table.cmp td { text-align: right; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  .over { color: var(--color-caution); }
+  .under { color: var(--color-positive); }
+
+  .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
+  .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  .out-detail dt { color: var(--color-text-faint); }
+  .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Expenses</h1>
+  <p class="room-lede">What a month costs you. Four numbers, the yearly costs, and, if you want it, the split by category. Every other room reads this month.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="spending">
+    <span class="slaf-eyebrow">A typical month</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Four numbers, and you are done</h2>
+    <!-- The whole budget input (D-172): food, rent or mortgage, getting
+         around, everything else. Built once; only .value is ever written.
+         LIVE-FORM: built once. -->
+    <div id="fat">
+      <div class="fat-grid">
+        <label class="slaf-field"><span class="slaf-label">Food</span>
+          <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-fat="food" placeholder="e.g. 600" aria-label="Food, a month"/></span>
+          <span class="slaf-hint">groceries and eating out, a month</span></label>
+        <label class="slaf-field"><span class="slaf-label">Rent or mortgage</span>
+          <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-fat="accommodation" placeholder="e.g. 1500" aria-label="Rent or mortgage, a month"/></span>
+          <span class="slaf-hint">rent, or mortgage plus tax plus insurance, one number</span></label>
+        <label class="slaf-field"><span class="slaf-label">Getting around</span>
+          <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-fat="transportation" placeholder="e.g. 250" aria-label="Getting around, a month"/></span>
+          <span class="slaf-hint">car, fuel, transit, a month</span></label>
+        <label class="slaf-field"><span class="slaf-label">Everything else</span>
+          <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-fat="wants" placeholder="e.g. 900" aria-label="Everything else, a month"/></span>
+          <span class="slaf-hint" id="fat-wants-hint">whatever is not split out above</span></label>
+      </div>
+      <label class="fat-toggle"><input type="checkbox" id="fat-therapy-on" aria-label="Track mental health spending separately"/>Track mental health spending separately</label>
+      <div class="fat-grid" id="fat-therapy-row" hidden style="margin-top:var(--space-2)">
+        <label class="slaf-field"><span class="slaf-label">Therapy</span>
+          <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-fat="therapy" placeholder="e.g. 200" aria-label="Therapy, a month"/></span>
+          <span class="slaf-hint">its own line, not counted in everything else</span></label>
+      </div>
+      <p class="fat-total" id="fat-total"></p>
+    </div>
+
+    <!-- 15.5: named yearly costs that sit inside their bucket (D-181). The
+         form is built once and only its values are ever written; the list
+         holds a remove button per row and nothing typed, so it rebuilds
+         freely. Hidden when the switch `annualLines` is off.
+         LIVE-FORM: built once. -->
+    <details class="drawer" id="annual-fold" hidden>
+      <summary>Also once a year <small>Insurance, gifts, registration: a twelfth joins its bucket each month; the calendar shows it on its month.</small></summary>
+      <ul class="annual-list" id="annual-list"></ul>
+      <p class="slaf-hint" id="annual-sum" style="margin:var(--space-2) 0"></p>
+      <div class="form-grid" id="annual-form">
+        <label class="slaf-field"><span class="slaf-label">What it is</span>
+          <span class="slaf-input-shell"><input type="text" id="y-label" placeholder="e.g. Car insurance" aria-label="What the yearly cost is"/></span></label>
+        <label class="slaf-field"><span class="slaf-label">A year</span>
+          <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="y-amount" placeholder="e.g. 1,200" aria-label="A year of it"/></span></label>
+        <div class="slaf-field wide"><span class="slaf-label">Which bucket</span>
+          <div class="choices" id="y-bucket" data-choices="y-bucket">
+            <button type="button" class="choice" data-value="food">Food</button>
+            <button type="button" class="choice" data-value="accommodation">Rent or mortgage</button>
+            <button type="button" class="choice" data-value="transportation">Getting around</button>
+            <button type="button" class="choice" data-value="wants" aria-pressed="true">Everything else</button>
+          </div></div>
+        <label class="slaf-field"><span class="slaf-label">Paid in</span>
+          <span class="slaf-input-shell"><select id="y-month" aria-label="The month it is paid"><option value="">Spread only</option><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></span></label>
+        <div class="slaf-field"><span class="slaf-label">&nbsp;</span><button type="button" class="slaf-btn" id="btn-annual-add">Add the yearly cost</button></div>
+      </div>
+    </details>
+
+    <details class="drawer" id="split-more">
+    <summary>Split it further <small>Optional: the month by category, for the chart, the floor and the Rerank.</small></summary>
+    <details class="drawer bucket-note">
+      <summary>How to fill this in <small>Any period, blank means blank, and what <em>fixed</em> means.</small></summary>
+      <p>Type each line in whatever you know it as — a week, every two weeks, a
+      year — and pick that beside it; it is stored as a month. Leave anything
+      blank that doesn't apply: blank is "not entered", never zero. Tick
+      <em>fixed</em> on a line you could not cut next month. Debt minimums come
+      from your actual debts, so tap that figure to change them there. A
+      receipt on its date is not a line here: log it in <a href="cash-flow.html#log">Cash Flow</a>.</p>
+    </details>
+    <div id="buckets"></div>
+    <p class="slaf-hint" data-suggest-note style="margin:var(--space-3) 0 0"></p>
+    <div class="slaf-field-row" id="propose-row" hidden style="margin-top:var(--space-3)">
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-use-all">Use every proposed line</button>
+      <span class="slaf-hint" id="propose-note"></span>
+    </div>
+    <div class="actions">
+      <button type="button" class="slaf-btn" id="btn-demo">Try with example numbers</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Clear</button>
+    </div>
+    </details>
+  </section>
+
+  <section class="slaf-card" id="out-summary">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-3)">
+      <span class="slaf-eyebrow">Monthly spending</span>
+    </div>
+    <div class="slaf-figure" data-figure>—</div>
+    <p class="slaf-reason" data-reason></p>
+    <div id="summary-charts"></div>
+    <div data-detail></div>
+  </section>
+
+  <section class="slaf-card" id="out-template">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);margin-bottom:var(--space-3)">
+      <span class="slaf-eyebrow">Against a budget</span>
+      <span class="slaf-input-shell" style="width:auto">
+        <select id="f-template" aria-label="Budget template"></select>
+      </span>
+    </div>
+    <div id="template-body"><p class="slaf-reason">Add your spending above.</p></div>
+  </section>
+
+  <section class="slaf-card" id="out-divergence">
+    <span class="slaf-eyebrow">The lines vs the four numbers</span>
+    <div class="slaf-figure" data-figure>—</div>
+    <p class="slaf-reason" data-reason></p>
+    <div data-detail></div>
+    <div class="actions" id="track-actions" hidden>
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-track">Use the lines as my month</button>
+    </div>
+    <p class="slaf-hint" id="track-note" style="margin-top:var(--space-2)"></p>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Your numbers stay in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/suggest.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/features.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../shared/demo-persona.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../shared/charts.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Demo = SLAF.DemoPersona, CashFlow = SLAF.CashFlow,
+      Ownership = SLAF.Ownership, Charts = SLAF.Charts, Income = SLAF.Income, Tier0 = SLAF.Tier0;
+
+  var ROOM_ID = 'expenses';
+  var TABLES = null;
+  var templateId = '50_30_20';
+
+  function el(id) { return document.getElementById(id); }
+  function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  /* This room shows one box per category, which represents the manual
+     monthly total for that category. Look it up by CATEGORY, not by an id
+     this room minted — otherwise an entry written by anything else (the
+     example household, or a future importer) is invisible here and cannot
+     be edited or cleared. The id is only used when creating a new one. */
+  function newEntryId(categoryId) { return 'cf_' + categoryId; }
+
+  function entryFor(h, categoryId) {
+    var list = (h.expenses && h.expenses.entries) || [];
+    for (var i = 0; i < list.length; i++) {
+      var e = list[i];
+      if (e.categoryId === categoryId && e.period === 'monthly' && e.source === 'manual') return e;
+    }
+    return null;
+  }
+
+  /* ---------- inputs ---------------------------------------------------- */
+
+  /* LIVE-FORM: built once.
+     Every input on this page is created here, exactly once at boot, and
+     from then on only its .value is written — see paintInputs(), which also
+     skips whatever is focused. Nothing rebuilds #buckets.
+
+     That is the invariant. Breaking it — re-running this on every edit —
+     destroys the input the user is typing in, and on a phone the soft
+     keyboard closes and does not come back, because a programmatic .focus()
+     cannot reopen it. If this ever does need to rebuild, guard the
+     container with shared/liveform.js instead. test/run.js checks that
+     every room declares one of those two patterns, and test/forms.js taps
+     through this page on a mobile browser to prove it holds. */
+  /* The lines most months have, open; the rest folded under "more". A
+     folded line with a value in it is unfolded on paint, so nothing typed
+     is ever hidden. Which are common is a reading of the catalogue's
+     typical shares, not a rule about anyone's life. */
+  var COMMON = { housing: 1, utilities: 1, groceries: 1, transportation: 1, debt_minimums: 1,
+                 dining_out: 1, entertainment: 1, subscriptions: 1, shopping: 1,
+                 retirement: 1, emergency_savings: 1, extra_debt_payment: 1 };
+  /* The "per" aid: the amount is typed as one of these and STORED as a
+     month, through the same bases engines/income.js annualises pay with —
+     one table of periods, not two. */
+  var PER = [['monthly', '/mo', 'a month'], ['weekly', '/wk', 'a week'], ['fortnightly', '/2wk', 'every two weeks'], ['annual', '/yr', 'a year']];
+  function toMonthlyCents(cents, per) {
+    var basis = Income.basisById(per) || Income.basisById('monthly');
+    return Math.round(cents * basis.periods / 12);
+  }
+
+  function buildInputs() {
+    var wrap = el('buckets');
+    wrap.innerHTML = '';
+    TABLES.expenseCategories.buckets.forEach(function (bucket) {
+      var cats = TABLES.expenseCategories.categories.filter(function (c) {
+        return c.bucket === bucket.id;
+      });
+      var section = document.createElement('div');
+      section.className = 'bucket';
+      section.innerHTML =
+        '<div class="bucket-head"><span class="slaf-eyebrow">' + bucket.label + '</span>'
+        + '<span class="bucket-total" data-bucket-total="' + bucket.id + '">—</span></div>'
+        + '<p class="bucket-note">' + bucket.note + '</p>';
+      var more = document.createElement('details');
+      more.className = 'more';
+      more.setAttribute('data-more', bucket.id);
+      var rare = cats.filter(function (c) { return !COMMON[c.id]; });
+      more.innerHTML = '<summary>' + rare.length + ' more line' + (rare.length === 1 ? '' : 's') + ' <small>' + rare.map(function (c) { return c.label.toLowerCase(); }).join(', ') + '</small></summary>';
+
+      cats.forEach(function (cat) {
+        var row = document.createElement('div');
+        row.className = 'cat-row';
+        row.setAttribute('data-row', cat.id);
+        /* A derived category is not typed in here. It shows the figure and
+           links to the room that owns it — see shared/ownership.js. */
+        var valueCell = cat.derivedFrom
+          ? '<span class="cat-derived" data-derived="' + cat.derivedFrom + '"></span>'
+          : '<span class="slaf-input-shell cat-amount"><span class="slaf-affix">$</span>'
+            + '<input type="text" inputmode="decimal" data-cat="' + cat.id
+            + '" placeholder="e.g. 120" aria-label="' + cat.label + '"/></span>'
+            + '<span class="slaf-input-shell"><select data-per="' + cat.id + '" aria-label="' + cat.label + ', typed as">'
+            + PER.map(function (p) { return '<option value="' + p[0] + '">' + p[1] + '</option>'; }).join('') + '</select></span>';
+        /* The third cell: is this line fixed — could it not be cut next
+           month? A savings line is not spending, so it is not asked; a
+           derived line (debt minimums) is fixed by nature. D-082. */
+        var fixedCell = cat.derivedFrom
+          ? ''
+          : bucket.id === 'savings'
+            ? '<span class="cat-fixed is-derived"></span>'
+            : '<label class="cat-fixed" title="Tick if you could not cut this next month"><input type="checkbox" data-fixed="' + cat.id + '" aria-label="' + cat.label + ' is fixed"/>fixed</label>';
+        row.innerHTML =
+          '<span class="cat-label" title="' + cat.label + '">' + cat.label + (cat.derivedFrom ? '<small>from your debts, in Debt Payoff</small>' : '') + '</span>'
+          + valueCell
+          + fixedCell
+          + '<span class="cat-hint" data-hint="' + cat.id + '"></span>';
+        (COMMON[cat.id] ? section : more).appendChild(row);
+      });
+      if (rare.length) section.appendChild(more);
+      wrap.appendChild(section);
+    });
+
+    wrap.addEventListener('change', function (evt) {
+      var box = evt.target.closest('input[data-fixed]');
+      if (!box) return;
+      var existing = entryFor(Spine.getProfile(), box.getAttribute('data-fixed'));
+      if (!existing) {
+        /* A flag needs a line to sit on. */
+        box.checked = false;
+        return;
+      }
+      Spine.upsertExpenseEntry(Object.assign({}, existing, { fixed: box.checked }));
+      render();
+    });
+
+    wrap.addEventListener('focusin', function (evt) {
+      var input = evt.target.closest('input[data-cat]');
+      if (!input) return;
+      var entry = entryFor(Spine.getProfile(), input.getAttribute('data-cat'));
+      input.value = entry && Money.isEntered(entry.amountCents) ? String(entry.amountCents / 100) : '';
+      input.select();
+    });
+
+    wrap.addEventListener('focusout', function (evt) {
+      var input = evt.target.closest('input[data-cat]');
+      if (!input) return;
+      var categoryId = input.getAttribute('data-cat');
+      var existing = entryFor(Spine.getProfile(), categoryId);
+      var typed = Money.parseMoney(SLAF.Suggest.entered(input));
+      var perNode = document.querySelector('select[data-per="' + categoryId + '"]');
+      var per = perNode ? perNode.value : 'monthly';
+      var hint = document.querySelector('[data-hint="' + categoryId + '"]');
+      if (Money.isEntered(typed)) {
+        var cents = toMonthlyCents(typed, per);
+        Spine.upsertExpenseEntry(Schema.createExpenseEntry({
+          id: existing ? existing.id : newEntryId(categoryId),
+          categoryId: categoryId,
+          amountCents: cents, period: 'monthly', source: 'manual',
+          fixed: existing ? existing.fixed : null
+        }));
+        if (hint) hint.textContent = per === 'monthly' ? '' : 'Typed as ' + Money.formatCents(typed) + ' ' + PER.filter(function (p) { return p[0] === per; })[0][2] + ' → ' + Money.formatCents(cents) + ' a month, which is what is kept.';
+      } else if (existing) {
+        /* Clearing a field removes the record. It does not store a zero —
+           "I didn't enter this" and "I spend nothing here" stay different. */
+        Spine.removeExpenseEntry(existing.id);
+        if (hint) hint.textContent = '';
+      }
+      /* The aid applies to the number just typed; the box shows a month. */
+      if (perNode) perNode.value = 'monthly';
+      render();
+    });
+
+    wrap.addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter' && evt.target.matches('input[data-cat]')) {
+        evt.preventDefault(); evt.target.blur();
+      }
+    });
+  }
+
+  /* ---------- the four numbers (D-172) ------------------------------------
+     Read through Schema.fat, written through Spine.setFat; a cleared box
+     stores null, never zero. The therapy row exists only while the toggle
+     is on - off, the line is absent from the household. */
+  function paintFat(h) {
+    var f = Schema.fat(h);
+    Array.prototype.forEach.call(document.querySelectorAll('input[data-fat]'), function (input) {
+      if (input === document.activeElement) return;
+      var r = f[input.getAttribute('data-fat')];
+      /* Digits only: the shell's affix carries the dollar sign (D-192). */
+      input.value = r && Money.isOk(r) ? Money.formatCents(r.value).replace(/^\$/, '') : '';
+    });
+    el('fat-therapy-on').checked = f.therapyTracked;
+    el('fat-therapy-row').hidden = !f.therapyTracked;
+    el('fat-wants-hint').textContent = f.therapyTracked ? 'whatever is not split out above, not counting therapy' : 'whatever is not split out above';
+    var mins = Schema.monthlyDebtPaymentsCents(h);
+    el('fat-total').innerHTML = Money.isOk(f.totalCents)
+      ? 'A month: <b>' + Money.formatCents(f.totalCents.value) + '</b>'
+        + (f.totalCents.entered < f.totalCents.of ? ' <small>(' + f.totalCents.entered + ' of ' + f.totalCents.of + ' filled in - a blank sits inside everything else)</small>' : '')
+        + (Money.isOk(mins) && mins.value > 0 ? ' · plus <b>' + Money.formatCents(mins.value) + '</b> of debt minimums, which live in <a href="' + esc(Ownership.linkTo('debt-payoff', 'debts', ROOM_ID)) + '">Debt Payoff</a>' : '')
+      : 'Type any of the four and the month appears here. Blank is blank, never zero.';
+  }
+  function wireFat() {
+    var host = el('fat');
+    host.addEventListener('focusin', function (evt) {
+      var input = evt.target.closest('input[data-fat]');
+      if (!input) return;
+      var r = Schema.fat(Spine.getProfile())[input.getAttribute('data-fat')];
+      input.value = r && Money.isOk(r) ? String(r.value / 100) : '';
+      input.select();
+    });
+    host.addEventListener('focusout', function (evt) {
+      var input = evt.target.closest('input[data-fat]');
+      if (!input) return;
+      var key = input.getAttribute('data-fat');
+      var typed = Money.parseMoney(input.value);
+      var patch = {}; patch[key] = Money.isEntered(typed) ? typed : null;
+      Spine.setFat(patch);
+      render();
+    });
+    host.addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter' && evt.target.matches('input[data-fat]')) { evt.preventDefault(); evt.target.blur(); }
+    });
+    el('fat-therapy-on').addEventListener('change', function () {
+      Spine.setTherapyTracked(el('fat-therapy-on').checked);
+      render();
+    });
+  }
+
+  /* ---------- the yearly lines (15.5, D-181) ---------------------------- */
+  var BUCKET_LABEL = { food: 'Food', accommodation: 'Rent or mortgage', transportation: 'Getting around', wants: 'Everything else' };
+  var MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function paintAnnual(h) {
+    var fold = el('annual-fold');
+    if (!fold) return;
+    var on = Schema.annualLinesOn(h);
+    fold.hidden = !on;
+    if (!on) return;
+    var yr = Schema.annualMonthlyCents(h);
+    el('annual-list').innerHTML = yr.lines.map(function (l) {
+      return '<li><span><b>' + esc(l.label || 'A yearly cost') + '</b> <small>' + esc(BUCKET_LABEL[l.bucket]) + (l.monthDue ? ' · ' + MONTH_SHORT[l.monthDue - 1] : '') + '</small></span>'
+        + '<span class="amt">' + Money.formatCents(l.amountCents, { exact: true }) + ' a year <small>' + Money.formatCents(Math.round(l.amountCents / 12), { exact: true }) + '/mo</small></span>'
+        + '<button type="button" class="slaf-btn slaf-btn--quiet" data-annual-remove="' + esc(l.id) + '" aria-label="Remove ' + esc(l.label || 'this yearly cost') + '">Remove</button></li>';
+    }).join('');
+    el('annual-sum').textContent = yr.count
+      ? yr.count + (yr.count === 1 ? ' yearly cost, ' : ' yearly costs, ') + Money.formatCents(yr.annualCents, { exact: true }) + ' a year: ' + Money.formatCents(yr.monthlyCents, { exact: true }) + ' a month set aside means nothing surprises you.'
+      : 'Nothing yearly listed yet. A cost that lands once a year still costs a twelfth every month.';
+  }
+  function wireAnnual() {
+    var fold = el('annual-fold');
+    if (!fold) return;
+    el('y-bucket').addEventListener('click', function (evt) {
+      var b = evt.target.closest('.choice'); if (!b) return;
+      Array.prototype.forEach.call(el('y-bucket').querySelectorAll('.choice'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    });
+    el('btn-annual-add').addEventListener('click', function () {
+      var amount = Money.parseMoney(el('y-amount').value);
+      if (!Money.isEntered(amount) || amount <= 0) { el('y-amount').focus(); return; }
+      var bucket = (el('y-bucket').querySelector('.choice[aria-pressed="true"]') || {}).getAttribute ? el('y-bucket').querySelector('.choice[aria-pressed="true"]').getAttribute('data-value') : 'wants';
+      var month = el('y-month').value ? parseInt(el('y-month').value, 10) : null;
+      Spine.upsertAnnualLine({ label: el('y-label').value.trim() || null, amountCents: amount, bucket: bucket, monthDue: month });
+      el('y-label').value = ''; el('y-amount').value = ''; el('y-month').value = '';
+      render();
+    });
+    el('annual-list').addEventListener('click', function (evt) {
+      var b = evt.target.closest('[data-annual-remove]'); if (!b) return;
+      Spine.removeAnnualLine(b.getAttribute('data-annual-remove'));
+      render();
+    });
+    el('annual-form').addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter' && evt.target.matches('input')) { evt.preventDefault(); el('btn-annual-add').click(); }
+    });
+  }
+
+  function paintInputs(h) {
+    paintFat(h);
+    paintAnnual(h);
+    var derived = document.querySelectorAll('[data-derived]');
+    for (var d = 0; d < derived.length; d++) {
+      derived[d].innerHTML = Ownership.inlineChip(derived[d].getAttribute('data-derived'), h, ROOM_ID);
+    }
+    var inputs = document.querySelectorAll('input[data-cat]');
+    for (var i = 0; i < inputs.length; i++) {
+      var input = inputs[i];
+      if (input === document.activeElement) continue;
+      var entry = entryFor(h, input.getAttribute('data-cat'));
+      if (entry && Money.isEntered(entry.amountCents)) {
+        SLAF.Suggest.clear(input);
+        input.value = Money.formatCents(entry.amountCents).replace(/^\$/, '');
+      } else if (!SLAF.Suggest.isSuggested(input)) {
+        input.value = '';
+      }
+    }
+    var boxes = document.querySelectorAll('input[data-fixed]');
+    for (var b = 0; b < boxes.length; b++) {
+      var e = entryFor(h, boxes[b].getAttribute('data-fixed'));
+      boxes[b].checked = !!(e && e.fixed === true);
+      boxes[b].disabled = !e;
+    }
+    /* A folded line that holds a value is opened, never hidden. */
+    Array.prototype.forEach.call(document.querySelectorAll('details.more'), function (more) {
+      var any = Array.prototype.some.call(more.querySelectorAll('input[data-cat]'), function (input) {
+        var en = entryFor(h, input.getAttribute('data-cat'));
+        return !!(en && Money.isEntered(en.amountCents));
+      });
+      if (any) more.open = true;
+    });
+    proposeMonth(h);
+  }
+
+  /* ---------- a first month, proposed ---------------------------------------
+     With take-home known, every empty line is offered a figure: the chosen
+     template's bucket target spread across the bucket's categories by
+     typicalShareOfBucket (data/expense_categories.json — rough BLS CES
+     proportions, unverified, and the source line says so). Shown, never
+     stored (D-060): a line feeds the tracked figure only once it is tapped
+     or typed. "Use every proposed line" accepts them all at once. D-063. */
+  function writeLine(categoryId, cents) {
+    var existing = entryFor(Spine.getProfile(), categoryId);
+    Spine.upsertExpenseEntry(Schema.createExpenseEntry({
+      id: existing ? existing.id : newEntryId(categoryId),
+      categoryId: categoryId, amountCents: cents, period: 'monthly', source: 'manual'
+    }));
+  }
+
+  function proposals(h) {
+    var result = CashFlow.templateTargets(h, TABLES.budgetTemplates, templateId, TABLES);
+    if (!Money.isOk(result) || !result.rows.length) return { rows: [], basis: null, template: null };
+    var byBucket = {};
+    result.rows.forEach(function (r) { byBucket[r.bucketId] = r.targetCents; });
+    var rows = [];
+    TABLES.expenseCategories.categories.forEach(function (cat) {
+      if (cat.derivedFrom || !Money.isEntered(cat.typicalShareOfBucket)) return;
+      if (!Money.isEntered(byBucket[cat.bucket])) return;
+      var entry = entryFor(h, cat.id);
+      if (entry && Money.isEntered(entry.amountCents)) return;
+      rows.push({ id: cat.id, cents: Math.round(byBucket[cat.bucket] * cat.typicalShareOfBucket) });
+    });
+    return { rows: rows, basis: result.basisMonthlyCents, template: result.template };
+  }
+
+  function proposeMonth(h) {
+    var p = proposals(h);
+    var row = el('propose-row');
+    var shown = 0;
+    var source = p.template
+      ? 'the ' + p.template.label + ' split of your ' + Money.formatCents(p.basis) + '/mo take-home, spread by typical shares (BLS CES 2023, unverified)'
+      : '';
+    p.rows.forEach(function (r) {
+      var input = document.querySelector('input[data-cat="' + r.id + '"]');
+      if (!input || r.cents <= 0) return;
+      var ok = SLAF.Suggest.show(input, {
+        value: r.cents, display: Money.formatCents(r.cents), source: source,
+        onUse: function (c) { writeLine(r.id, c); render(); }
+      });
+      if (ok || SLAF.Suggest.isSuggested(input)) shown++;
+    });
+    /* Lines that are no longer proposed (a template change, a figure entered
+       elsewhere) must not keep a stale proposal. */
+    var live = {};
+    p.rows.forEach(function (r) { live[r.id] = true; });
+    Array.prototype.forEach.call(document.querySelectorAll('input[data-cat]'), function (input) {
+      if (SLAF.Suggest.isSuggested(input) && !live[input.getAttribute('data-cat')]) SLAF.Suggest.clear(input);
+    });
+    row.hidden = shown === 0;
+    el('propose-note').textContent = shown ? shown + ' line' + (shown === 1 ? '' : 's') + ' proposed. Tap "Use" on any, type your own, or take them all.' : '';
+  }
+
+  el('btn-use-all').addEventListener('click', function () {
+    var p = proposals(Spine.getProfile());
+    p.rows.forEach(function (r) { if (r.cents > 0) writeLine(r.id, r.cents); });
+    render();
+  });
+
+  /* ---------- outputs --------------------------------------------------- */
+
+  function setCard(sectionId, result, formatter, detailHtml) {
+    var section = el(sectionId);
+    var figure = section.querySelector('[data-figure]');
+    var reason = section.querySelector('[data-reason]');
+    var detail = section.querySelector('[data-detail]');
+    var isOk = Money.isOk(result);
+    if (figure) {
+      figure.textContent = isOk ? formatter(result.value) : Money.EM_DASH;
+      figure.classList.toggle('slaf-figure--incomplete', !isOk);
+      figure.classList.toggle('slaf-figure--negative', isOk && result.value < 0);
+    }
+    if (reason) { reason.textContent = isOk ? '' : (result.reason || ''); reason.hidden = isOk; }
+    if (detail) { detail.innerHTML = isOk && detailHtml ? detailHtml : ''; detail.className = 'out-detail'; }
+  }
+
+  function dl(rows) {
+    return '<dl>' + rows.map(function (r) {
+      return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+    }).join('') + '</dl>';
+  }
+
+  /* The floor: fixed lines plus debt minimums — next month if everything
+     cuttable were cut. Shown once at least one line has been answered. */
+  function floorRows() {
+    var f = CashFlow.minimumViableMonthCents(Spine.getProfile(), TABLES.expenseCategories);
+    if (!Money.isOk(f)) return [];
+    var c = CashFlow.cuttability(Spine.getProfile(), TABLES.expenseCategories);
+    return [['The floor — fixed lines only', Money.formatCents(f.value)],
+            ['Cuttable', Money.isOk(c) ? Money.formatRate(c.value, { decimals: 0 }) + ' of spending' : Money.EM_DASH]];
+  }
+  function floorNote() {
+    var f = CashFlow.minimumViableMonthCents(Spine.getProfile(), TABLES.expenseCategories);
+    if (!Money.isOk(f)) return '<p class="slaf-reason">Tick “fixed” on the lines you could not cut next month and the floor appears here — the month Runway can test against.</p>';
+    return '<p class="slaf-reason">' + (f.unaskedCount ? f.unaskedCount + ' line' + (f.unaskedCount === 1 ? '' : 's') + ' not yet marked either way. ' : '')
+      + 'Runway can run <a href="runway.html#the-plan">at the floor →</a></p>';
+  }
+
+  /* Two pictures of the same month, from the engine's rows and nothing
+     else: a donut of what leaves (savings is a destination, so it is not a
+     slice), and one stacked bar per bucket showing the lines inside it.
+     Each category is given one colour — spending lines first, in the
+     engine's largest-first order, then the savings lines — so it is the
+     same colour in both. The palette has eight steps; a second lap through
+     it is drawn translucent so no two legend chips match. A bucket with
+     nothing entered has no row — it is not a bucket of $0. */
+  function summaryCharts(summary) {
+    var colourOf = {}, palette = Charts.COLORS.series;
+    summary.categories.filter(function (c) { return c.bucket !== 'savings'; })
+      .concat(summary.categories.filter(function (c) { return c.bucket === 'savings'; }))
+      .forEach(function (c, i) {
+        colourOf[c.categoryId] = palette[i % palette.length] + (i >= palette.length ? '99' : '');
+      });
+    function part(c) { return { label: c.label, value: c.monthlyCents, color: colourOf[c.categoryId] }; }
+    var spending = summary.categories.filter(function (c) {
+      return c.bucket !== 'savings' && c.monthlyCents > 0;
+    });
+    var rows = TABLES.expenseCategories.buckets.map(function (b) {
+      return { label: b.label, parts: summary.categories.filter(function (c) {
+        return c.bucket === b.id && c.monthlyCents > 0;
+      }).map(part) };
+    }).filter(function (r) { return r.parts.length; });
+    return Charts.donut({
+      title: 'Spending by category',
+      slices: spending.map(part),
+      center: { big: Money.formatCents(summary.spendMonthlyCents), small: 'a month' },
+      empty: 'Nothing has left yet — every line entered is savings.'
+    }) + Charts.stacked({ title: 'Each bucket, line by line', rows: rows });
+  }
+
+  function renderSummary(summary) {
+    var detail = '';
+    if (Money.isOk(summary)) {
+      el('summary-charts').innerHTML = summaryCharts(summary);
+      detail = dl([
+          ['Essential only', Money.formatCents(summary.essentialMonthlyCents)],
+          ['Into savings', Money.formatCents(summary.savingsMonthlyCents)]
+        ].concat(floorRows()))
+        + '<p class="slaf-reason">Savings isn’t counted as spending — that money hasn’t left.</p>'
+        + floorNote();
+
+      TABLES.expenseCategories.buckets.forEach(function (b) {
+        var node = document.querySelector('[data-bucket-total="' + b.id + '"]');
+        if (node) node.textContent = Money.formatCents(summary.byBucket[b.id] || 0);
+      });
+    } else {
+      el('summary-charts').innerHTML = '';
+      TABLES.expenseCategories.buckets.forEach(function (b) {
+        var node = document.querySelector('[data-bucket-total="' + b.id + '"]');
+        if (node) node.textContent = Money.EM_DASH;
+      });
+    }
+    setCard('out-summary', summary, function (v) { return Money.formatCents(v); }, detail);
+  }
+
+  function renderTemplate(h) {
+    var body = el('template-body');
+    var result = CashFlow.compareToTemplate(h, TABLES.expenseCategories,
+      TABLES.budgetTemplates, templateId, TABLES);
+
+    if (!Money.isOk(result)) {
+      body.innerHTML = '<p class="slaf-reason">' + (result.reason || '') + '</p>';
+      return;
+    }
+    if (result.method === 'zero_based') {
+      var loose = result.unassignedCents;
+      body.innerHTML = '<p style="margin-top:0">' + result.template.blurb + '</p>'
+        + '<div class="slaf-figure' + (result.balanced ? '' : ' slaf-figure--incomplete') + '">'
+        + (Money.isEntered(loose) ? Money.formatCents(loose) : Money.EM_DASH) + '</div>'
+        + '<p class="slaf-reason">'
+        + (result.balanced ? 'Every dollar has a job.'
+           : (loose > 0 ? 'Unassigned each month. Give it a job — savings, debt, or a named goal.'
+                        : 'Assigned beyond your take-home pay.'))
+        + '</p>';
+      return;
+    }
+
+    var rows = result.rows.map(function (r) {
+      var bucket = TABLES.expenseCategories.buckets.filter(function (b) { return b.id === r.bucketId; })[0];
+      var over = r.varianceCents > 0;
+      return '<tr><td>' + (bucket ? bucket.label : r.bucketId) + '</td>'
+        + '<td>' + Money.formatRate(r.targetRate) + '</td>'
+        + '<td>' + Money.formatCents(r.targetCents) + '</td>'
+        + '<td>' + Money.formatCents(r.actualCents) + '</td>'
+        + '<td class="' + (over ? 'over' : 'under') + '">'
+        + (over ? '+' : '−') + Money.formatCents(Math.abs(r.varianceCents)) + '</td></tr>';
+    }).join('');
+
+    body.innerHTML = '<p style="margin-top:0;font-size:var(--text-sm);color:var(--color-text-muted)">'
+      + result.template.blurb + '</p>'
+      + '<table class="cmp"><thead><tr><th></th><th>Target</th><th></th><th>Actual</th><th>Diff</th></tr></thead>'
+      + '<tbody>' + rows + '</tbody></table>'
+      + '<p class="slaf-reason">Measured against take-home pay of '
+      + Money.formatCents(result.basisMonthlyCents) + '/mo, estimated from your gross.</p>';
+  }
+
+  function renderDivergence(h) {
+    /* The split by category against the four typed numbers (D-172). */
+    var d = Schema.expenseDivergenceCents(h);
+    var actions = el('track-actions');
+    var note = el('track-note');
+    if (!Money.isOk(d)) {
+      setCard('out-divergence', d, function (v) { return Money.formatCents(v); }, '');
+      actions.hidden = true; note.textContent = '';
+      return;
+    }
+    var divergence = d.value;
+    setCard('out-divergence', Money.ok(divergence), function (v) {
+      return (v > 0 ? '+' : v < 0 ? '−' : '') + Money.formatCents(Math.abs(v));
+    }, dl([
+      ['The four numbers say', Money.formatCents(d.typedCents)],
+      ['The lines add up to', Money.formatCents(d.linesCents)]
+    ]) + '<p class="slaf-reason">'
+      + (divergence === 0 ? 'They agree exactly.'
+         : divergence > 0 ? 'The split comes to more than the four numbers - something is counted in the lines that is not in the month.'
+                          : 'The split comes to less - the lines are not the whole month yet, or the month is overstated.')
+      + ' The four numbers are what every other room reads.</p>');
+
+    /* A divergence is a direction, not a loss. Spending less than you
+       estimated is good news, so it must not inherit the red that
+       setCard() gives any negative figure. */
+    var figure = el('out-divergence').querySelector('[data-figure]');
+    figure.classList.remove('slaf-figure--negative');
+    figure.style.color = divergence > 0 ? 'var(--color-caution)'
+      : divergence < 0 ? 'var(--color-positive)' : 'var(--color-text)';
+
+    actions.hidden = divergence === 0;
+    note.textContent = divergence === 0 ? '' : 'This rewrites the four numbers from the lines - food from groceries and eating out, rent from housing, and the rest into everything else. Undo is one tap away.';
+  }
+
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    paintInputs(h);
+    var summary = CashFlow.summarise(h, TABLES.expenseCategories);
+    renderSummary(summary);
+    renderTemplate(h);
+    renderDivergence(h);
+  }
+
+  /* ---------- actions --------------------------------------------------- */
+
+  el('btn-demo').addEventListener('click', function () {
+    var h = Spine.getProfile();
+    var hasSpending = ((h.expenses.entries) || []).some(function (e) {
+      return Money.isEntered(e.amountCents);
+    });
+    if (hasSpending && !window.confirm('This replaces the spending you’ve entered with the example. Continue?')) return;
+
+    /* Seed the whole example household when this is the visitor's first room,
+       so the take-home figure and the budget comparison have an income to
+       work from. If they already have their own numbers, only the spending
+       is replaced. */
+    var income = Schema.grossAnnualIncomeCents(h);
+    if (!Money.isOk(income)) {
+      var demo = Demo.build();
+      Spine.updateProfile({
+        people: demo.people, filingStatus: demo.filingStatus, state: demo.state,
+        assets: demo.assets, debts: demo.debts, expenses: demo.expenses,
+        capturingFullMatch: demo.capturingFullMatch
+      });
+    }
+    Spine.updateProfile({ expenses: { entries: Demo.buildSpending() } });
+    render();
+    el('out-summary').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  el('btn-clear').addEventListener('click', function () {
+    if (!window.confirm('Clear the spending you’ve entered?')) return;
+    Spine.updateProfile({ expenses: { entries: [] } });
+    render();
+  });
+
+  el('btn-track').addEventListener('click', function () {
+    /* The one deliberate write from the lines to the four numbers (D-172). */
+    Spine.setFatFromLines();
+    render();
+  });
+
+  el('f-template').addEventListener('change', function (evt) {
+    templateId = evt.target.value;
+    renderTemplate(Spine.getProfile());
+    /* A different split proposes different lines. */
+    proposeMonth(Spine.getProfile());
+  });
+
+  function jumpToHash() {
+    if (!location.hash) return;
+    var target = document.getElementById(location.hash.slice(1));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.addEventListener('hashchange', jumpToHash);
+
+  /* ---------- boot ------------------------------------------------------ */
+
+  Spine.registerRoom(ROOM_ID);
+
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+
+  if (SLAF.Features && SLAF.Features.ready) SLAF.Features.ready().then(function () { render(); });   /* 15.5: the annualLines switch (D-181) */
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    el('f-template').innerHTML = tables.budgetTemplates.templates.map(function (t) {
+      return '<option value="' + t.id + '">' + t.label + '</option>';
+    }).join('');
+    el('f-template').value = templateId;
+    buildInputs();
+    wireFat();
+    wireAnnual();   /* 15.5 (D-181) */
+    /* The split opens on its own when there are lines in it; closed, the
+       page is the four numbers. */
+    var lines0 = Schema.fatFromLines(Spine.getProfile().expenses.entries);
+    if (Object.keys(lines0).some(function (k) { return lines0[k] !== null; })) el('split-more').open = true;
+    render();
+    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message
+      + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+  });
+})();
+</script>
+</body>
+</html>

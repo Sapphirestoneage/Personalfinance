@@ -25,6 +25,7 @@
             "start",
             "ledger",
             "debt-payoff",
+            "expenses",
             "cash-flow",
             "income",
             "budget",
@@ -120,6 +121,7 @@
             "start",
             "ledger",
             "debt-payoff",
+            "expenses",
             "cash-flow",
             "income",
             "budget",
@@ -232,6 +234,7 @@
         {
           "name": "Where does it all go?",
           "rooms": [
+            "expenses",
             "cash-flow",
             "budget",
             "income",
@@ -362,6 +365,7 @@
         {
           "name": "Spend",
           "rooms": [
+            "expenses",
             "cash-flow",
             "budget",
             "variance",
@@ -493,6 +497,7 @@
         {
           "name": "This month",
           "rooms": [
+            "expenses",
             "cash-flow",
             "budget",
             "calendar",
@@ -600,6 +605,7 @@
           "rooms": [
             "start",
             "ledger",
+            "expenses",
             "cash-flow",
             "income",
             "budget",
@@ -749,6 +755,7 @@
         {
           "name": "Money",
           "rooms": [
+            "expenses",
             "cash-flow",
             "income",
             "budget",
@@ -869,6 +876,7 @@
             "big-purchase",
             "budget",
             "career-move",
+            "expenses",
             "cash-flow",
             "debt-payoff",
             "decumulation",
@@ -967,6 +975,7 @@
         {
           "name": "The kitchen",
           "rooms": [
+            "expenses",
             "cash-flow",
             "budget",
             "income",
@@ -1099,6 +1108,7 @@
         {
           "name": "This week",
           "rooms": [
+            "expenses",
             "cash-flow",
             "calendar",
             "budget",
@@ -1269,6 +1279,7 @@
         {
           "name": "A habit",
           "rooms": [
+            "expenses",
             "cash-flow",
             "budget",
             "calendar",
@@ -1338,6 +1349,7 @@
           "name": "Running out this month",
           "rooms": [
             "cant-pay",
+            "expenses",
             "cash-flow",
             "calendar",
             "budget",
@@ -1542,6 +1554,7 @@
             "start",
             "ledger",
             "dashboard",
+            "expenses",
             "cash-flow",
             "budget",
             "variance",
@@ -1576,6 +1589,7 @@
           "name": "Layer 0 — need nothing from another room",
           "rooms": [
             "debt-payoff",
+            "expenses",
             "cash-flow",
             "income",
             "budget",
@@ -1692,6 +1706,7 @@
             "between-jobs",
             "runway",
             "get-help",
+            "expenses",
             "cash-flow"
           ]
         },
@@ -1846,6 +1861,7 @@
           "rooms": [
             "start",
             "ledger",
+            "expenses",
             "cash-flow",
             "income",
             "budget",
@@ -1926,6 +1942,7 @@
             "ledger",
             "income",
             "budget",
+            "expenses",
             "cash-flow",
             "goals",
             "protection",
@@ -2048,6 +2065,7 @@
         {
           "name": "Hub · Cash Flow",
           "rooms": [
+            "expenses",
             "cash-flow",
             "income",
             "budget",
@@ -2155,6 +2173,7 @@
         {
           "name": "Your figures, nothing added",
           "rooms": [
+            "expenses",
             "cash-flow",
             "income",
             "budget",
@@ -2306,6 +2325,7 @@
         {
           "name": "Regular › The month",
           "rooms": [
+            "expenses",
             "cash-flow",
             "income",
             "budget",

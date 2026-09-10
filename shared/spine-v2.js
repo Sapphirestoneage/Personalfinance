@@ -871,7 +871,7 @@
     save(); notify();
     return JSON.parse(JSON.stringify(e));
   }
-  /* 15.5: the named yearly lines. Owned by Cash Flow. */
+  /* 15.5: the named yearly lines. Owned by Expenses (D-192). */
   function upsertAnnualLine(line) {
     var h = load();
     h.expenses.annual = h.expenses.annual || [];

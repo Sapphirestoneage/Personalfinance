@@ -481,11 +481,11 @@
       read: function (h) { var v = (h.kids || {}).tuitionMonthlyCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['tuitionMonthlyCents']); },
       format: function (v) { return money(v) + '/mo'; }
     },
-    /* One rent (D-130): what you pay is Cash Flow's housing line; Housing
+    /* One rent (D-130): what you pay is Expenses' housing line; Housing
        Decision's own field is a place you would rent instead. */
     rentMonthly: {
-      label: 'Rent or mortgage, a month', owner: 'cash-flow', anchor: 'spending',
-      read: function (h) { var r = Schema.rentMonthlyCents(h); return r.source === 'cash-flow' ? Money.ok(r.cents) : Money.incomplete('No housing line in Cash Flow yet.', ['housing']); },
+      label: 'Rent or mortgage, a month', owner: 'expenses', anchor: 'spending',
+      read: function (h) { var r = Schema.rentMonthlyCents(h); return r.source === 'expenses' ? Money.ok(r.cents) : Money.incomplete('No housing line in Expenses yet.', ['housing']); },
       format: function (v) { return money(v) + '/mo'; }
     },
     rentAlternative: {
@@ -747,7 +747,7 @@
       format: money
     },
 
-    /* Cash Flow owns spending. The estimate can be seeded during intake, but
+    /* Expenses owns spending (D-192; Cash Flow before it). The estimate can be seeded during intake, but
        once a month is categorised the tracked figure is what everything uses
        — and that is only editable where the categories live. */
     /* The SWAN Number lives in exactly one room, like every other shared
@@ -786,34 +786,34 @@
     },
 
     monthlyExpenses: {
-      label: 'Monthly expenses', owner: 'cash-flow', anchor: 'spending',
+      label: 'Monthly expenses', owner: 'expenses', anchor: 'spending',
       read: function (h) { return Schema.monthlyExpensesCents(h); },
       format: function (v) { return money(v) + '/mo'; }
     },
     /* The four numbers, and the optional fifth (D-172). Each reads its own
        bucket; a blank bucket is incomplete, never a zero. */
     foodMonthly: {
-      label: 'Food, a month', owner: 'cash-flow', anchor: 'spending',
+      label: 'Food, a month', owner: 'expenses', anchor: 'spending',
       read: function (h) { return Schema.fat(h).food; }, format: function (v) { return money(v) + '/mo'; }
     },
     accommodationMonthly: {
-      label: 'Rent or mortgage, a month', owner: 'cash-flow', anchor: 'spending',
+      label: 'Rent or mortgage, a month', owner: 'expenses', anchor: 'spending',
       read: function (h) { return Schema.fat(h).accommodation; }, format: function (v) { return money(v) + '/mo'; }
     },
     transportationMonthly: {
-      label: 'Getting around, a month', owner: 'cash-flow', anchor: 'spending',
+      label: 'Getting around, a month', owner: 'expenses', anchor: 'spending',
       read: function (h) { return Schema.fat(h).transportation; }, format: function (v) { return money(v) + '/mo'; }
     },
     wantsMonthly: {
-      label: 'Everything else, a month', owner: 'cash-flow', anchor: 'spending',
+      label: 'Everything else, a month', owner: 'expenses', anchor: 'spending',
       read: function (h) { return Schema.fat(h).wants; }, format: function (v) { return money(v) + '/mo'; }
     },
     therapyMonthly: {
-      label: 'Therapy, a month', owner: 'cash-flow', anchor: 'spending',
+      label: 'Therapy, a month', owner: 'expenses', anchor: 'spending',
       read: function (h) { var f = Schema.fat(h); return f.therapy || Money.incomplete('Not tracked separately.', ['therapyMonthly']); },
       format: function (v) { return money(v) + '/mo'; },
       applies: function (h) { return Schema.fat(h).therapyTracked; },
-      notApplicableBecause: 'Mental health spending is not tracked separately; turn that on in Cash Flow.'
+      notApplicableBecause: 'Mental health spending is not tracked separately; turn that on in Expenses.'
     },
     /* The Skill Tree's one write and the exercise library's log (D-131):
        only done is stored; every other state is derived. */

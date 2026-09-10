@@ -289,7 +289,7 @@
     if (sheet.status === 'open') renderPresets(h, sheet);
     var why;
     if (sheet.status === 'closed') why = 'Frozen as it was closed. A late entry logged into this month shows as “revised” beside the actual and changes nothing else. Read it against other months in <a href="variance.html">Estimated vs Actual</a>.';
-    else if (!Budget.closedMonths(h).length) why = 'With no month closed yet, each estimate comes from what Start Here and Cash Flow already hold. Close this month and next month’s estimates start from what actually happened.';
+    else if (!Budget.closedMonths(h).length) why = 'With no month closed yet, each estimate comes from what Start Here and Expenses already hold. Close this month and next month’s estimates start from what actually happened.';
     else why = 'Estimates come from the last closed month’s actuals unless one was set by hand in Estimated vs Actual. Actuals are what Income and the expense log have for this month so far.';
     if (sheet.incomeIncomplete && sheet.incomeIncomplete.length) why += ' ' + sheet.incomeIncomplete.length + ' income ' + (sheet.incomeIncomplete.length === 1 ? 'entry' : 'entries') + ' could not be netted: ' + esc(sheet.incomeIncomplete[0].reason);
     el('sheet-why').innerHTML = why;

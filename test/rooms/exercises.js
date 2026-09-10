@@ -19,7 +19,7 @@ module.exports = function (t) {
   check('a run with an unmet requirement stays locked and names the field', rb.status + '/' + rb.missing.join(','), 'incomplete/monthlyExpenses');
   checkTrue('… the reason says what and where', /Needs: Monthly expenses\./.test(rb.reason));
   const lb = E.list(bare, T, { maxMinutes: null });
-  checkTrue('the list marks it locked with a link to the owner room', lb.rows.filter(r => r.id === 'run-fire-number')[0].locked && /cash-flow\.html/.test(lb.rows.filter(r => r.id === 'run-fire-number')[0].reasons[0].href));
+  checkTrue('the list marks it locked with a link to the owner room', lb.rows.filter(r => r.id === 'run-fire-number')[0].locked && /expenses\.html/.test(lb.rows.filter(r => r.id === 'run-fire-number')[0].reasons[0].href));
   checkTrue('a micro or canon exercise is never locked', lb.rows.filter(r => r.kind !== 'run').every(r => !r.locked));
 
   /* The demo persona: the runs compute through the owning engines. */

@@ -134,7 +134,7 @@ module.exports = function (t) {
     check('85% of 3,150 = 2,677.50', p.value, 267750);
     check('and is named a convention', p.basis, 'convention');
     checkTrue('the source says so', /convention/.test(p.source));
-    checkTrue('and carries the curve’s reason', /Categorise a month/.test(p.curveReason));
+    checkTrue('and carries the curve’s reason', /Split a month by category/.test(p.curveReason));
     const cur = Enough.current(h, TABLES);
     check('so enough is the proposal', cur.value, 267750);
     check('with the convention as its source', cur.source, 'convention');

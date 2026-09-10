@@ -137,7 +137,7 @@
         monthlyCents: minimums.value, need: true, source: 'derived', custom: false, entryId: null });
     }
 
-    if (!out.length) return Money.incomplete('Nothing to rank yet: track a month in Cash Flow, or add a cost here.', ['expenseEntries']);
+    if (!out.length) return Money.incomplete('Nothing to rank yet: split a month by category in Expenses, or add a cost here.', ['expenseEntries']);
     return Money.ok(out.length, { lines: out, basis: basis, scale: out.scale === undefined ? null : out.scale, referenceVersion: tables.commonCosts ? tables.commonCosts.version : null });
   }
 

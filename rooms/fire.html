@@ -343,7 +343,7 @@
           ? '<p class="slaf-reason">Coast doesn’t mean stop working — it means stop <em>saving</em>. You still cover your own costs until then.</p>'
           : '')
       + (target.expenseSource === 'estimated'
-          ? '<p class="slaf-reason">Based on your estimated spending. Track a month in Cash Flow and this sharpens up.</p>'
+          ? '<p class="slaf-reason">Based on your estimated spending. Split a month by category in Expenses and this sharpens up.</p>'
           : '');
   }
 
@@ -510,7 +510,7 @@
       var t = Fire.calculateFIRE(h, TABLES, optsFor(variantId, h));
       var p = Fire.progressToward(h, TABLES, optsFor(variantId, h));
       var rows = [];
-      if (Money.isOk(t)) { rows.push({ label: 'Your number', cents: t.value }); rows.push({ label: 'A year of spending', cents: t.annualExpensesCents, href: Ownership.linkTo('cash-flow', 'spending', ROOM_ID) }); }
+      if (Money.isOk(t)) { rows.push({ label: 'Your number', cents: t.value }); rows.push({ label: 'A year of spending', cents: t.annualExpensesCents, href: Ownership.linkTo('expenses', 'spending', ROOM_ID) }); }
       if (Money.isOk(p)) rows.push({ label: 'Still to go', cents: Math.max(0, p.targetCents - p.investmentsCents) });
       return rows;
     }, function () { return TABLES; });

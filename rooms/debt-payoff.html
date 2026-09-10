@@ -71,6 +71,16 @@
   .plan-charts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
   @media (max-width: 640px) { .plan-charts { grid-template-columns: 1fr; } }
   .extra-field { margin-top: var(--space-4); }
+  /* The sums (D-191): what is owed and the minimums, under the list; the
+     minimums plus the extra, under the box, as the one figure that
+     leaves the account for debt each month. */
+  .debt-total { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); padding: var(--space-2) 0 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); color: var(--color-text-muted); }
+  .debt-total b { font-family: var(--font-display); font-weight: 500; color: var(--color-text); font-variant-numeric: tabular-nums; }
+  .extra-total { display: block; margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--color-border-strong); font-size: var(--text-sm); }
+  .extra-total b { font-family: var(--font-display); font-weight: 600; font-variant-numeric: tabular-nums; font-size: var(--text-lg); }
+  .extra-total .sum-how { display: block; color: var(--color-text-muted); font-size: var(--text-xs); }
+  .stop-field { margin-top: var(--space-3); }
+  .stop-field select { width: 100%; max-width: 100%; }
   /* The two figures the blank box falls back to (D-190): an estimate from
      what Start Here holds, and the realized one from closed months. The
      one in use is marked; the other says what it is waiting on. */
@@ -242,6 +252,15 @@
     <div class="slaf-figure" data-figure>—</div>
     <p class="slaf-reason" data-reason></p>
     <div data-detail></div>
+    <label class="slaf-field stop-field" id="stop">
+      <span class="slaf-label">Keep the extra going until</span>
+      <select id="f-stop">
+        <option value="">everything is gone</option>
+        <option value="cards">the cards are gone, then minimums on the rest</option>
+        <option value="highInterest" id="opt-high">the high-rate debt is gone, then minimums on the rest</option>
+      </select>
+      <span class="slaf-hint" id="stop-hint">A low-rate loan you are happy to carry can run on its minimum once the dear debt is gone.</span>
+    </label>
     <div id="plan-chart"></div>
   </section>
 
@@ -255,13 +274,15 @@
     </div>
     <div class="debt-cols" id="debt-cols" hidden><span>Debt</span><span>Owed</span><span>Rate</span><span>Min a month</span></div>
     <div id="debt-list"></div>
+    <div class="debt-total" id="debt-total" hidden></div>
     <button type="button" class="slaf-btn" id="btn-add" style="width:100%">+ Add a debt</button>
     <label class="slaf-field extra-field" id="extra">
-      <span class="slaf-label">Extra at the debts each month</span>
+      <span class="slaf-label">Extra each month, on top of the minimums</span>
       <span class="slaf-input-shell"><span class="slaf-affix">$</span>
         <input type="text" inputmode="decimal" id="f-extra" placeholder="e.g. 200"/></span>
       <span class="slaf-hint" id="extra-hint">Blank shows what the minimums alone do.</span>
       <span class="extra-basis" id="extra-basis"></span>
+      <span class="extra-total" id="extra-total"></span>
     </label>
     <details class="archived" id="archived" hidden>
       <summary>Set aside <small id="archived-count"></small></summary>
@@ -339,6 +360,17 @@
   var FOO = null;   /* data/foo_rules.json, for the high-interest line (D-188) */
   var TABLES = null;
   var strategyId = 'avalanche';
+  /* Where the extra stops (D-191): '' runs it to the end; 'cards' or
+     'highInterest' drops to minimums once that class is gone. A
+     preference, not household data: it is how this person reads the plan. */
+  var Prefs = SLAF.Prefs;
+  var stopAfter = Prefs ? (Prefs.get('debt.stopAfter', '') || '') : '';
+  function highRate() { return FOO && FOO.thresholds && Money.isEntered(FOO.thresholds.highInterestDebtRate) ? FOO.thresholds.highInterestDebtRate : null; }
+  /* One set of options for every simulation the room runs, so the plan,
+     the comparison, the timeline and the held-back check all agree. */
+  function simOpts(extra) {
+    return { strategyId: strategyId, extraMonthlyCents: extra, stopAfter: stopAfter || null, highInterestRate: highRate() };
+  }
   var extraCents = null;
   /* SPEC.md §13: the Credit Card calc is a FILTERED VIEW of this calculator,
      not a separate build. Switching scope hands a filtered household to the
@@ -385,6 +417,24 @@
     return missing.length ? 'Needs ' + missing.join(' and ') + ' before it can be planned.' : '';
   }
 
+  /* The list's footer: what is owed and the minimums, added up. A debt
+     with a blank balance or minimum is counted as missing, not as zero. */
+  function paintDebtTotal(debts) {
+    var box = el('debt-total'); if (!box) return;
+    box.hidden = !debts.length;
+    if (!debts.length) return;
+    var owed = Money.sumCents(debts.map(function (d) { return d.balanceCents; }));
+    var mins = Money.sumCents(debts.map(function (d) { return d.minPaymentCents; }));
+    var n = debts.length;
+    var gaps = [];
+    if (owed.counted < n) gaps.push((n - owed.counted) + ' without a balance');
+    if (mins.counted < n) gaps.push((n - mins.counted) + ' without a minimum');
+    box.innerHTML = '<span>' + n + (n === 1 ? ' debt' : ' debts') + '</span>'
+      + '<span>owed <b>' + Money.formatCents(owed.total) + '</b></span>'
+      + '<span>minimums <b>' + Money.formatCents(mins.total) + '</b> a month</span>'
+      + (gaps.length ? '<span>(' + gaps.join(', ') + ')</span>' : '');
+  }
+
   function renderDebts(h) {
     var list = el('debt-list');
     var focusedId = document.activeElement && document.activeElement.getAttribute
@@ -393,6 +443,7 @@
       ? document.activeElement.getAttribute('data-field') : null;
 
     var debts = debtsOf(h);
+    paintDebtTotal(debts);
     if (!debts.length) {
       el('debt-cols').hidden = true;
       list.innerHTML = '<p class="slaf-reason">No debts yet. Add one, or load the example.</p>';
@@ -1072,7 +1123,8 @@
   });
   el('f-extra').addEventListener('blur', function () {
     extraCents = Money.parseMoney(el('f-extra').value);
-    el('f-extra').value = Money.isEntered(extraCents) ? Money.formatCents(extraCents) : '';
+    /* Digits only: the shell's affix already carries the dollar sign. */
+    el('f-extra').value = Money.isEntered(extraCents) ? Money.formatCents(extraCents).replace(/^\$/, '') : '';
     render();
   });
   el('f-extra').addEventListener('keydown', function (evt) {
@@ -1168,7 +1220,8 @@
       if (c.guessed.length) bits += ' (' + c.guessed.map(function (id) { return id === 'grossAnnualIncome' ? 'pay' : 'spending'; }).join(' and ') + ' guessed, fix it in Start Here)';
       out += est.value > 0
         ? row('Estimate', Money.formatCents(est.value), bits, c.basis === 'estimate')
-        : row('Estimate', '$0', 'your pay is ' + Money.formatCents(-est.value) + ' short of spending and the minimums; ' + bits, c.basis === 'estimate');
+        : row('Estimate', '$0', 'your pay is ' + Money.formatCents(-est.value) + ' short of spending and the minimums: ' + bits
+            + '. If you can really pay more than the minimums, one of those is off. The usual two: the spending figure (<a href="expenses.html#spending">Expenses</a>) already counts these debt payments, or the pay after tax is worked out from your gross with a flat tax rate and your real paycheck is higher (<a href="start.html">Start Here</a>)', c.basis === 'estimate');
     } else {
       out += row('Estimate', 'waiting', (c.estimateReason && /pay|income/i.test(c.estimateReason) ? 'add your pay in ' : 'finish ') + '<a href="start.html">Start Here</a> and this fills in', false, true);
     }
@@ -1182,24 +1235,64 @@
       out += row('Realized', 'waiting', 'close a month in <a href="budget.html">Budget</a> and the real figure shows here', false, true);
     }
     rows.innerHTML = out;
+    /* The one figure that leaves the account for debt each month. */
+    var total = el('extra-total');
+    if (total) {
+      var mins = Schema.monthlyDebtPaymentsCents(h);
+      if (!Money.isOk(mins)) {
+        total.innerHTML = '';
+      } else if (c.cents > 0) {
+        total.innerHTML = 'Going to debt each month: <b>' + Money.formatCents(mins.value + c.cents) + '</b>'
+          + '<span class="sum-how">minimums ' + Money.formatCents(mins.value) + ' + extra ' + Money.formatCents(c.cents)
+          + (c.basis === 'typed' ? ' (your figure)' : c.basis === 'realized' ? ' (realized)' : ' (estimate)') + (stopAfter ? ', until the stop' : '') + '</span>';
+      } else {
+        total.innerHTML = 'Going to debt each month: <b>' + Money.formatCents(mins.value) + '</b>'
+          + '<span class="sum-how">the minimums alone, nothing on top</span>';
+      }
+    }
     var fallback = real ? 'the realized figure' : est ? 'the estimate' : null;
     if (c.basis === 'typed') {
-      hint.textContent = 'Your figure. Clear it to use ' + (fallback || 'the minimums alone') + '.';
+      hint.textContent = 'Your figure, paid on top of the minimums' + (est ? ' (' + Money.formatCents(est.minimumsCents) + ')' : '') + '. Clear it to use ' + (fallback || 'the minimums alone') + '.';
     } else if (c.basis && c.cents > 0) {
-      hint.textContent = 'Blank, so the plan uses ' + fallback + ': ' + Money.formatCents(c.cents) + ' a month. Type a figure to override.';
+      hint.textContent = 'Blank, so the plan puts ' + fallback + ', ' + Money.formatCents(c.cents) + ' a month, on top of the minimums. Type a figure to override.';
     } else if (c.basis) {
-      hint.textContent = 'Blank, and ' + fallback + ' leaves nothing free after spending and the minimums, so this is the minimums alone. If your spending already counts these payments, take them out of it in Cash Flow.';
+      hint.textContent = 'Blank, and ' + fallback + ' leaves nothing free after spending and the minimums, so this is the minimums alone. If your spending already counts these payments, take them out of it in Expenses.';
     } else {
       hint.textContent = 'Blank shows what the minimums alone do. Add your pay in Start Here and an estimate appears here.';
     }
     box.placeholder = c.basis !== 'typed' && c.cents > 0 ? String(Math.round(c.cents / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 'e.g. 200';
   }
 
+  /* What the monthly figure is built from, in words (D-191): the
+     minimums as typed on each line, any the room worked out itself, and
+     the extra on top with where it came from. The owner asked "does 1000
+     mean above minimums?", so this says so every time. */
+  function perMonthNote(plan, h) {
+    var c = capacity(h);
+    var n = (plan.derivedMinimums || []).length;
+    var mins = 'the minimums as typed on each line, ' + Money.formatCents(plan.minimumsCents)
+      + (n ? ' (' + n + ' worked out by the card rule, 2% or $25, because none was typed)' : '');
+    var from = c.basis === 'typed' ? 'your figure' : c.basis === 'realized' ? 'the realized figure' : c.basis === 'estimate' ? 'the estimate' : 'nothing';
+    var extra = plan.extraMonthlyCents > 0 ? ', plus ' + Money.formatCents(plan.extraMonthlyCents) + ' on top (' + from + ')' : ', with nothing on top';
+    if (plan.stopMonth === 1) return 'Minimums alone from the start: ' + mins + '. Nothing of the kind the stop names is listed.';
+    return mins.charAt(0).toUpperCase() + mins.slice(1) + extra + (plan.stopMonth !== null ? ', until the stop; then each remaining debt gets its own minimum.' : '.');
+  }
+  function stopNote(plan) {
+    var what = plan.stopAfter === 'cards' ? 'the cards' : 'the high-rate debt';
+    if (plan.stopMonth === 1) {
+      return '<p class="slaf-reason">Nothing counts as ' + what + ' here, so the extra never starts: this is the minimums alone, '
+        + Money.formatCents(plan.monthlyBudgetAfterStopCents) + ' a month. Pick "everything is gone" below to aim the extra at what is left.</p>';
+    }
+    return '<p class="slaf-reason">The extra stops once ' + what + (plan.stopAfter === 'cards' ? ' are' : ' is') + ' gone, after ' + monthsLabel(plan.stopMonth - 1)
+      + '. From then on the rest runs on its own minimums, ' + Money.formatCents(plan.monthlyBudgetAfterStopCents)
+      + ' a month, and is gone in ' + monthsLabel(plan.value) + '. Interest over the plan counts that stretch too.</p>';
+  }
+
   function renderPlan(h, cmp) {
     h = scoped(h);
     paintExtraHint(h);
     var extraCents = effectiveExtraCents(h);
-    var plan = Debt.simulate(h, RULES, { strategyId: strategyId, extraMonthlyCents: extraCents });
+    var plan = Debt.simulate(h, RULES, simOpts(extraCents));
     var detail = '';
     /* Every balance on one scale. Drawn only once the plan is complete, so
        a debt that still needs a rate is named in the reason, not pictured
@@ -1258,6 +1351,7 @@
         + Math.round(cardsPlan / plan.totalInterestCents * 100) + '%, before they are gone.</p>'
       : '') + '</div></div>';
     if (Money.isOk(plan)) {
+      /* Minimums alone, no stop: the do-nothing line every plan is read against. */
       var baseline = Debt.simulate(h, RULES, { strategyId: strategyId, extraMonthlyCents: 0 });
       /* Three finish lines before the figures (D-188): the cards, the
          high-interest debt, everything. Each is read off this plan. */
@@ -1272,15 +1366,27 @@
          'The cost of borrowing, on top of what you actually owe.'],
         ['Total you’ll pay', Money.formatCents(plan.totalPaidCents),
          'Every payment added up, balances and interest together.'],
-        ['Per month', Money.formatCents(plan.monthlyBudgetCents),
-         'Every minimum, plus the extra, going out each month.']
+        ['Per month', plan.stopMonth !== null && plan.stopMonth > 1
+           ? Money.formatCents(plan.monthlyBudgetCents) + ', then ' + Money.formatCents(plan.monthlyBudgetAfterStopCents)
+           : Money.formatCents(plan.stopMonth === 1 ? plan.monthlyBudgetAfterStopCents : plan.monthlyBudgetCents),
+         perMonthNote(plan, h)]
       ];
-      if (Money.isOk(baseline) && Money.isEntered(extraCents) && extraCents > 0) {
+      if (plan.stopMonth !== null) detail += stopNote(plan);
+      if (Money.isOk(baseline) && Money.isEntered(extraCents) && extraCents > 0 && plan.stopMonth === null) {
         rows.push(['Saved vs. minimums only',
           Money.formatCents(baseline.totalInterestCents - plan.totalInterestCents),
           'Interest the extra keeps out of the lender’s hands.']);
         rows.push(['Sooner by', monthsLabel(baseline.value - plan.value),
           'How much earlier the extra gets you to zero.']);
+      } else if (Money.isOk(baseline) && plan.stopMonth !== null && plan.stopMonth > 1) {
+        /* With a stop the freed minimums stop rolling on, so against
+           minimums alone this can be cheaper and still later. Say both. */
+        var saved = baseline.totalInterestCents - plan.totalInterestCents;
+        var later = plan.value - baseline.value;
+        rows.push(['Against minimums only',
+          (saved >= 0 ? Money.formatCents(saved) + ' less' : Money.formatCents(-saved) + ' more') + ' interest',
+          (later > 0 ? 'and ' + monthsLabel(later) + ' longer to the end, because a cleared debt\u2019s minimum no longer rolls on to the rest.'
+                     : later < 0 ? 'and ' + monthsLabel(-later) + ' sooner to the end.' : 'and the same finish.')]);
       }
       detail += dl(rows);
 
@@ -1291,7 +1397,7 @@
          letting the number move quietly. The plan is still the user's. */
       var held = debtsOf(h).filter(function (d) { return Debt.isExcluded(d) && Money.isEntered(d.balanceCents) && d.balanceCents > 0; });
       if (held.length) {
-        var freed = Debt.simulate(unheld(h), RULES, { strategyId: strategyId, extraMonthlyCents: extraCents });
+        var freed = Debt.simulate(unheld(h), RULES, simOpts(extraCents));
         var names = held.map(function (d) { return esc(d.label || 'one debt'); }).join(' and ');
         detail += '<p class="slaf-reason">You are keeping ' + names + ' on purpose, so the extra never aims '
           + (held.length === 1 ? 'there' : 'at those') + ' while anything else is live.'
@@ -1497,7 +1603,7 @@
     debtForm.request();
     renderArchived(h);
     /* Every ordering is run once here and shared by the three outputs. */
-    var cmp = Debt.compareStrategies(scoped(h), RULES, { extraMonthlyCents: effectiveExtraCents(scoped(h)) });
+    var cmp = Debt.compareStrategies(scoped(h), RULES, simOpts(effectiveExtraCents(scoped(h))));
     var plan = renderPlan(h, cmp);
     renderStrategies(h, cmp);
     renderTimeline(plan, cmp);
@@ -1582,6 +1688,13 @@
 
   /* ---------- actions ---------------------------------------------------- */
 
+  /* The stop select is static markup, built once; the room only ever
+     writes its .value and one option's text. */
+  el('f-stop').addEventListener('change', function () {
+    stopAfter = el('f-stop').value || '';
+    if (Prefs) Prefs.set('debt.stopAfter', stopAfter || null);
+    renderNow();
+  });
   el('btn-demo').addEventListener('click', function () {
     var h = Spine.getProfile();
     if ((h.debts || []).length
@@ -1636,6 +1749,8 @@
     TABLES = tables;
     RULES = tables.debtRules;
     FOO = tables.fooRules || null;
+    if (highRate() !== null) el('opt-high').textContent = 'anything at ' + Money.formatRate(highRate(), { decimals: 1 }) + ' or more is gone, then minimums on the rest';
+    el('f-stop').value = stopAfter;
     /* A failure here is the room's own, not the table's: say so, and
        leave what did paint on screen. */
     try { renderNow(); jumpToHash(); }

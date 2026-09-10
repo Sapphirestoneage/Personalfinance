@@ -26,14 +26,14 @@
 
   LIVE-FORM: built once. The two forms — the entry, and a cost on it — are
   markup, built once, and only ever have .value set. The entry form sits
-  in a <details> fold (D-191): opening and closing it toggles `open` on
+  in a <details> fold (D-193): opening and closing it toggles `open` on
   the fold and never touches the inputs. The lists rebuild freely: they
   hold buttons, never a text field.
   THEMING: none this pass.
 -->
 <style>
   section[id] { scroll-margin-top: var(--space-4); }
-  /* D-191: the entry form folds behind one line. The card's face is the
+  /* D-193: the entry form folds behind one line. The card's face is the
      summary; the body carries the card padding so the closed card is a
      single tappable row. */
   #add.slaf-card { padding: 0; }
@@ -291,7 +291,7 @@
     el('form-more').open = !!(e && ((e.dateKind && e.dateKind !== 'exact')
       || (e.taxable === false ? e.kind !== 'gift' : e.taxMethod !== rule.method)));
   }
-  /* D-191: the form folds behind one line. Opening and closing only toggle
+  /* D-193: the form folds behind one line. Opening and closing only toggle
      the fold; the inputs are never rebuilt. */
   function openForm(scroll) {
     el('add-fold').open = true;

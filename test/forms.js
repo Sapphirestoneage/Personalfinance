@@ -972,7 +972,7 @@ const CASES = [
     }
   },
   {
-    /* The Income room's entry form: built once, saved on a tap. Since D-191
+    /* The Income room's entry form: built once, saved on a tap. Since D-193
        it folds behind one line, so a real tap on the summary has to open it
        first; the fields it reveals have to survive a tap and typing; and
        Save has to fold it back with the entry in the ledger. */
@@ -1007,7 +1007,7 @@ const CASES = [
   },
   {
     /* The four numbers (D-172): typed, kept, and the month follows. */
-    room: '/rooms/cash-flow.html',
+    room: '/rooms/expenses.html',
     container: '#fat',
     seed: 'empty',
     fields: [
@@ -1028,7 +1028,7 @@ const CASES = [
   {
     /* 15.5: a yearly cost typed into the fold lands as a line, in its bucket,
        and a twelfth of it joins the month (D-181). */
-    room: '/rooms/cash-flow.html',
+    room: '/rooms/expenses.html',
     container: '#annual-form',
     seed: 'demo',
     prepare: async (page) => { await page.evaluate(() => { document.getElementById('annual-fold').open = true; }); },
@@ -1075,7 +1075,7 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/cash-flow.html',
+    room: '/rooms/expenses.html',
     container: '#buckets',
     seed: 'demo',
     prepare: async (page) => { await page.evaluate(() => { document.getElementById('split-more').open = true; }); },

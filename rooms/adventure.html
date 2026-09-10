@@ -560,7 +560,7 @@
       + '<li>Returns: ' + (r ? 'low ' + Money.formatRate(r.low, { decimals: 1 }) + ', likely ' + Money.formatRate(r.likely, { decimals: 1 }) + ', high ' + Money.formatRate(r.high, { decimals: 1 }) + ' a year after inflation, from data/return_bands.json v' + esc(r.version) + '. In play: <strong>' + esc(state.returns) + '</strong>.' : (t.returnRateReal * 100).toFixed(0) + '% a year after inflation.') + '</li>'
       + '<li>Saving is take-home minus spending, never gross. The target: a year of spending divided by ' + (t.withdrawalRate * 100).toFixed(0) + '%, the same arithmetic the FIRE room uses; a raise not kept is spent, which moves it.</li>'
       + '<li>Cash and investments are kept apart. A crash hits what is invested only. A lost job draws on cash first, month by month, then sells taxable investments (net of the gains tax when the rates are known), and only then borrows: the year says “borrowing from month N” and the pot is never quietly drawn below zero. Retirement money is never sold in these five years. Side income that survives a job loss keeps paying through it.</li>'
-      + '<li>The house hack cuts your rent or mortgage line from Cash Flow. ' + esc(t.accommodationShareFallbackNote) + '</li>'
+      + '<li>The house hack cuts your rent or mortgage line from Expenses. ' + esc(t.accommodationShareFallbackNote) + '</li>'
       + '<li>Below the FOO’s high-interest-debt step, side income pays that debt before it joins the pot.</li>'
       + '<li>Everything is in today’s money, so a dollar in year five means what it means now.</li></ul>'
       + paintLevers()

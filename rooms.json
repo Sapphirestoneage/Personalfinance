@@ -61,9 +61,9 @@
       "order": 2
     },
     {
-      "id": "cash-flow",
-      "title": "Cash Flow",
-      "file": "rooms/cash-flow.html",
+      "id": "expenses",
+      "title": "Expenses",
+      "file": "rooms/expenses.html",
       "reads": [
         "monthlyExpenses"
       ],
@@ -79,6 +79,16 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 3
+    },
+    {
+      "id": "cash-flow",
+      "title": "Cash Flow",
+      "file": "rooms/cash-flow.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 3.1
     },
     {
       "id": "income",

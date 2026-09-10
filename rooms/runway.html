@@ -648,9 +648,9 @@
     var floorOpt = el('basis-floor');
     floorOpt.disabled = !Money.isEntered(floor);
     el('basis-hint').textContent = Money.isEntered(floor)
-      ? 'The floor is ' + Money.formatCents(floor) + '/mo — the lines marked fixed in Cash Flow, plus debt minimums.'
+      ? 'The floor is ' + Money.formatCents(floor) + '/mo — the lines marked fixed in Expenses, plus debt minimums.'
         + (state.basis === 'floor' && Money.isEntered(state.expenses) ? ' A typed spending figure overrides it.' : '')
-      : 'Mark fixed lines in Cash Flow to run this at the floor.';
+      : 'Mark fixed lines in Expenses to run this at the floor.';
     var r = Runway.project(h, TABLES, opts());
     renderRunway(r);
 

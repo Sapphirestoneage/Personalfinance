@@ -787,6 +787,47 @@ const RULES = TABLES.debtRules;
   checkTrue('spending past the pay: the plan gets zero and the shortfall is named, never a negative extra', capTight.cents === 0 && capTight.shortCents > 0 && capTight.estimate.value < 0);
 })();
 
+/* -- The stop line (D-191) ------------------------------------------------- */
+(function () {
+  section('Debt: the extra stops once the dear debt is gone (D-191)');
+  const RULES = TABLES.debtRules;
+  const hh = Demo.build();
+  const full = Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 100000 });
+  const stop = Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 100000, stopAfter: 'cards' });
+  const mins = Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 0 });
+  checkTrue('no stop asked for: nothing changes', full.stopMonth === null && full.stopAfter === null && full.monthlyBudgetAfterStopCents === null);
+  const cardMonth = full.payoffs.filter(p => p.label === 'Credit card')[0].month;
+  check('the card falls in the same month either way', stop.payoffs.filter(p => p.label === 'Credit card')[0].month, cardMonth);
+  check('the stop is the month after the last card', stop.stopMonth, cardMonth + 1);
+  check('...and from then the budget is the loan\'s own minimum', stop.monthlyBudgetAfterStopCents, hh.debts.filter(d => d.type === 'student_loan')[0].minPaymentCents);
+  checkTrue('the rest takes longer than the full plan', stop.value > full.value);
+  checkTrue('...and longer than minimums alone, because the freed minimum no longer rolls on', stop.value > mins.value);
+  checkTrue('interest sits between the full plan and minimums alone', stop.totalInterestCents > full.totalInterestCents && stop.totalInterestCents < mins.totalInterestCents);
+  /* Hand check: $18,400 at 5.5% on $210 a month after four months of
+     minimums clears in about 105 months; the loop says the same. */
+  checkTrue('hand check: the loan on its minimum is gone in eight to nine years', stop.value >= 100 && stop.value <= 110);
+  const noCards = Schema.createHousehold({ people: hh.people, debts: hh.debts.filter(d => d.type !== 'credit_card') });
+  const none = Debt.simulate(noCards, RULES, { strategyId: 'avalanche', extraMonthlyCents: 100000, stopAfter: 'cards' });
+  check('no cards listed: the stop comes in month 1, minimums alone', none.stopMonth, 1);
+  check('...at the loan\'s minimum', none.monthlyBudgetAfterStopCents, none.minimumsCents);
+  const high = Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 100000, stopAfter: 'highInterest', highInterestRate: 0.075 });
+  check('the high-rate stop uses the same class as the finish line', high.stopMonth, stop.stopMonth);
+  check('...and no threshold means nothing is high-rate: month 1', Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 100000, stopAfter: 'highInterest' }).stopMonth, 1);
+  check('an unknown stop is ignored', Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 100000, stopAfter: 'everything' }).stopMonth, null);
+  checkTrue('inClass is one predicate for both', Debt.inClass(hh.debts[0], 'cards') === (hh.debts[0].type === 'credit_card') && Debt.inClass({ type: 'auto', rate: 0.08 }, 'highInterest', 0.075) && !Debt.inClass({ type: 'auto', rate: 0.05 }, 'highInterest', 0.075));
+  const cmp = Debt.compareStrategies(hh, RULES, { extraMonthlyCents: 100000, stopAfter: 'cards' });
+  checkTrue('the comparison carries the stop through to every ordering', Object.keys(cmp.results).every(id => cmp.results[id].stopMonth !== null));
+  check('the plan says what its minimums and extra were', full.minimumsCents + full.extraMonthlyCents, full.monthlyBudgetCents);
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
+  checkTrue('the room: one select, built once, remembered as a preference', /<select id="f-stop">/.test(page) && /Prefs\.get\('debt\.stopAfter'/.test(page) && /Prefs\.set\('debt\.stopAfter'/.test(page));
+  checkTrue('...every simulation the room runs shares the options, bar the minimums-only baseline', /function simOpts\(extra\)/.test(page) && (page.match(/Debt\.simulate\([^)]*\{ strategyId: strategyId/g) || []).length === 1 && /extraMonthlyCents: 0 \}\);/.test(page) && /compareStrategies\(scoped\(h\), RULES, simOpts\(/.test(page));
+  checkTrue('...and with a stop the room never prints a negative "sooner by"', /plan\.stopMonth === null\) \{\s*rows\.push\(\['Saved vs\. minimums only'/.test(page) && /Against minimums only/.test(page));
+  checkTrue('...the extra is said to sit on top of the minimums, and the per-month figure says what it is built from', /Extra each month, on top of the minimums/.test(page) && /function perMonthNote\(plan, h\)/.test(page) && /the minimums as typed on each line/.test(page));
+  checkTrue('...a typed extra shows digits only, the shell carries the dollar sign', /formatCents\(extraCents\)\.replace\(\/\^\\\$\/, ''\)/.test(page));
+  checkTrue('the list adds up what is owed and the minimums, counting blanks as missing, not zero', /function paintDebtTotal\(debts\)/.test(page) && /Money\.sumCents\(debts\.map\(function \(d\) \{ return d\.minPaymentCents; \}\)\)/.test(page) && /without a minimum/.test(page));
+  checkTrue('...and under the box the minimums plus the extra read as one figure going to debt', /id="extra-total"/.test(page) && /Going to debt each month: <b>' \+ Money\.formatCents\(mins\.value \+ c\.cents\)/.test(page) && /the minimums alone, nothing on top/.test(page));
+})();
+
 /* -- Strategy ordering ---------------------------------------------------- */
 
 function threeDebtHousehold() {
@@ -5041,7 +5082,7 @@ section('Eleven cards');
        actually about is that Debt Payoff is never offered to someone who
        owes nothing, so the whole path is walked below rather than only its
        first step. */
-    check('with no debt the path skips Debt Payoff', Registry.nextAfter('start', [], none).id, 'cash-flow');
+    check('with no debt the path skips Debt Payoff', Registry.nextAfter('start', [], none).id, 'expenses');
     {
       const walked = [];
       let at = Registry.nextAfter('start', [], none);
@@ -5225,8 +5266,8 @@ section('A first month, proposed');
   const cmp = CashFlow.compareToTemplate(cmpDemo, TABLES.expenseCategories, TABLES.budgetTemplates, '50_30_20', TABLES);
   check('the comparison uses the same needs target', cmp.rows.filter(r => r.bucketId === 'needs')[0].targetCents, 243000);
   check('the shares say what they are worth', cats.typicalShareConfidence, 'unverified');
-  const cf = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
-  checkTrue('Cash Flow proposes through Suggest', cf.indexOf('SLAF.Suggest.show(') !== -1);
+  const cf = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8');
+  checkTrue('Expenses proposes through Suggest', cf.indexOf('SLAF.Suggest.show(') !== -1);
   checkTrue('and reads a box through Suggest.entered on the way out', cf.indexOf('Suggest.entered(input)') !== -1);
   checkTrue('and names the source as unverified', /BLS CES 2023, unverified/.test(cf));
   checkTrue('with a way to take every line at once', cf.indexOf('id="btn-use-all"') !== -1);
@@ -6135,7 +6176,8 @@ function builtCardId(roomId, id) {
      bound to it. This is the check that would have caught debt minimums
      being typeable in Cash Flow while also living in Debt Payoff. */
   const OWNED_INPUT_MARKERS = {
-    'cash-flow': [/data-cat="debt_minimums"/],
+    'cash-flow': [/data-cat="debt_minimums"/, /data-fat=/],
+    'expenses': [/data-cat="debt_minimums"/],
     'financial-snapshot': [/data-field="/, /data-write="/, /input[^>]*id="f-/],
     'start': [/data-cat=/, /data-debt=/]
   };
@@ -6675,8 +6717,8 @@ section('Fixed lines, the floor, and cuttability');
   checkTrue('and the money lasts longer', atFloor.value > now.value);
   const runwayHtml = fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8');
   checkTrue('the Runway room offers the floor as a basis', /data-in="basis"/.test(runwayHtml) && /value="floor"/.test(runwayHtml));
-  const cfHtml = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
-  checkTrue('Cash Flow asks per line', /data-fixed=/.test(cfHtml));
+  const cfHtml = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8');
+  checkTrue('Expenses asks per line', /data-fixed=/.test(cfHtml));
 })();
 
 section('Three benchmarks, and where the new numbers show');
@@ -9015,7 +9057,7 @@ section('The dead spot is the door');
   checkTrue('and that link carries the round trip',
     /[?&]from=fire/.test(row.missing[0].href), row.missing[0].href);
   checkTrue('...pointing at the owner, not back at itself',
-    /cash-flow\.html/.test(row.missing[0].href));
+    /expenses\.html/.test(row.missing[0].href));
 
   const css = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
   checkTrue('the door clears the 32px tap floor',
@@ -9075,10 +9117,10 @@ section('The round trip');
   const away = Ownership.describe('monthlyExpenses', h, 'fire');
   checkTrue('a link out of a room says where it came from', /[?&]from=fire/.test(away.href), away.href);
   checkTrue('...and still lands on the owner with its anchor',
-    /cash-flow\.html/.test(away.href) && /#spending$/.test(away.href), away.href);
+    /expenses\.html/.test(away.href) && /#spending$/.test(away.href), away.href);
 
   /* The owner linking to itself has nowhere to send you back to. */
-  const home = Ownership.describe('monthlyExpenses', h, 'cash-flow');
+  const home = Ownership.describe('monthlyExpenses', h, 'expenses');
   checkTrue('the owning room does not tag its own link', away.href !== home.href
     && home.href.indexOf('from=') === -1, home.href);
 
@@ -9829,12 +9871,12 @@ section('Expenses are four numbers (D-172)');
   /* The rent line is the accommodation bucket. */
   const demo = Demo.build();
   check('rent reads the accommodation bucket', Schema.rentMonthlyCents(demo).cents, 150000);
-  check('...from Cash Flow', Schema.rentMonthlyCents(demo).source, 'cash-flow');
+  check('...from Expenses (D-192)', Schema.rentMonthlyCents(demo).source, 'expenses');
   check('the demo month is unchanged at $3,150', Schema.monthlyExpensesCents(demo).value, 315000);
 
   /* The gate: the rooms that read expenses read the new shape and nothing else. */
   ['engines/cashflow.js', 'engines/fire.js', 'engines/adventure.js', 'engines/hourly.js', 'engines/tier0.js',
-   'rooms/cash-flow.html', 'rooms/fire.html', 'rooms/savings-rate.html', 'rooms/real-hourly-wage.html', 'rooms/adventure.html',
+   'rooms/cash-flow.html', 'rooms/expenses.html', 'rooms/fire.html', 'rooms/savings-rate.html', 'rooms/real-hourly-wage.html', 'rooms/adventure.html',
    'shared/gate.js', 'shared/importer.js', 'engines/enough.js', 'engines/week.js', 'index.html'].forEach(function (f) {
     const src = fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/<!--[\s\S]*?-->/g, '');
     checkTrue(`${f} reads the four numbers, not the legacy pair`, src.indexOf('monthlyEssential') === -1);
@@ -9842,8 +9884,8 @@ section('Expenses are four numbers (D-172)');
   checkTrue('no hard-coded housing share of spending survives in data/ or engines/',
     !/housingShareOfSpending/.test(fs.readFileSync(path.join(ROOT, 'data/adventure_paths.json'), 'utf8'))
     && fs.readdirSync(path.join(ROOT, 'engines')).every(f => !/housingShareOfSpending/.test(fs.readFileSync(path.join(ROOT, 'engines', f), 'utf8'))));
-  const page = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
-  check('Cash Flow asks the four numbers', (page.match(/data-fat="(food|accommodation|transportation|wants)"/g) || []).length, 4);
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8');
+  check('Expenses asks the four numbers', (page.match(/data-fat="(food|accommodation|transportation|wants)"/g) || []).length, 4);
   checkTrue('...with the toggle labelled plainly', page.indexOf('Track mental health spending separately') !== -1);
   checkTrue('...and the split folded', /<details class="drawer" id="split-more">/.test(page));
 })();
@@ -10059,7 +10101,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('kind is still a property, no longer a heading', Registry.all().every(r => typeof r.kind === 'string') && !/'The path'|'About you'|'What it means'/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
   check('Home: the Dashboard and Start Here (the Ledger waits under Upkeep, D-186)', Registry.inGroup('home', null).map(r => r.id).join(','), 'dashboard,start');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
-  check('...fifteen of them', Registry.inGroup('numbers', null).length, 15);
+  check('...sixteen of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 16);
   checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses)\b/.test(w))));
   check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,savings-rate,ratios,health,foo-ladder,fire,fire-lab,statements');
   checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
@@ -10093,7 +10135,8 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   const readings = Ownership.readings(demo);
   check('a status dot: Debt Payoff filled on the demo', Progress.roomStatus('debt-payoff', readings), 'filled');
   check('...the Calendar empty', Progress.roomStatus('calendar', readings), 'empty');
-  check('...Cash Flow partly (therapy untracked)', Progress.roomStatus('cash-flow', readings), 'partly');
+  check('...Expenses partly (therapy untracked)', Progress.roomStatus('expenses', readings), 'partly');
+  check('...Cash Flow, which owns no field since D-192, has no dot', Progress.roomStatus('cash-flow', readings), null);
   check('...a room that owns nothing has no dot', Progress.roomStatus('ratios', readings), null);
 })();
 
@@ -10913,8 +10956,8 @@ section('15.5: cadence on every line, the yearly lines, the calendar and the sin
   check('no yearly lines: incomplete, saying where to add one', Lenses.measure('sinkingfund', Demo.build(), T).status, 'incomplete');
 
   /* The rooms. */
-  const cf = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
-  checkTrue('Cash Flow has the fold, built once, with bucket chips', cf.indexOf('id="annual-fold"') > -1 && cf.indexOf('data-choices="y-bucket"') > -1 && /LIVE-FORM: built once\. -->\n    <details class="drawer" id="annual-fold"/.test(cf));
+  const cf = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8');
+  checkTrue('Expenses has the fold, built once, with bucket chips', cf.indexOf('id="annual-fold"') > -1 && cf.indexOf('data-choices="y-bucket"') > -1 && /LIVE-FORM: built once\. -->\n    <details class="drawer" id="annual-fold"/.test(cf));
   checkTrue('...writing through the spine', cf.indexOf('Spine.upsertAnnualLine(') > -1 && cf.indexOf('Spine.removeAnnualLine(') > -1);
   checkTrue('...and hides behind the switch', cf.indexOf('Schema.annualLinesOn(h)') > -1);
   const cal = fs.readFileSync(path.join(ROOT, 'rooms/calendar.html'), 'utf8');

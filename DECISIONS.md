@@ -12077,7 +12077,117 @@ walk with three households (debts only, the demo persona, the persona
 with three closed months) reading the two rows, the hint, the
 placeholder and both rings, and a typed figure taking over.
 
-## D-191 — Income: the entry form folds behind one line, and shows five things, not seven
+## D-191 — Debt Payoff: a stop line, and the payment says what it is built from
+
+**Why.** The owner: "once I only have student loans I don't really plan
+on paying that off any time soon, I'd just stick with minimums due to
+the low interest rate. Build a stop gap thing." And, of the extra box:
+"does 1000 mean above minimums? That system needs to be clearer." And a
+screenshot showing the box reading "$ $1,000".
+
+**Decision.** The plan card gains one select, "Keep the extra going
+until": everything is gone (as before), the cards are gone, or anything
+at the FOO high-interest rate or more is gone. Once nothing of the chosen
+class is live, `Debt.simulate` stops the extra AND stops rolling freed
+minimums on: from that month each remaining debt gets its own minimum and
+no more, which is what "just stick with minimums" means. The result
+carries `stopMonth` and `monthlyBudgetAfterStopCents`; the card reads
+"Per month $1,710, then $210", says when the stop comes and when the rest
+is gone, and the interest ring over the plan counts the long tail. The
+class predicate (`Debt.inClass`) is the one the finish lines use, so the
+line that says "cards gone" and the stop that says "when the cards are
+gone" cannot disagree. A stop whose class is empty from the start stops
+in month 1, minimums alone, and the card says so. Against minimums alone
+a stopped plan can be cheaper and later at once, so that row says both
+and the "sooner by" row is never a negative. The comparison and the
+held-back check run with the same options (`simOpts`), so every figure
+in the room is the same plan. The choice is a preference
+(`Prefs` key `debt.stopAfter`), not household data: it is how this
+person reads the plan, and it survives a reload.
+
+The extra box is labelled "Extra each month, on top of the minimums";
+the hints say "on top of the minimums" and name them; the Per month row's
+note spells out the sum every time: the minimums as typed on each line
+(and how many the card rule worked out), plus the extra and where it
+came from. A typed extra shows digits only, since the shell's affix
+already carries the dollar sign. The estimate row, when short, says to
+take debt payments out of spending in Cash Flow if they were counted
+there, whether or not a figure is typed.
+
+Hand check on the example: the card falls in month 3 either way; with
+the stop, $18,400 at 5.5% on its $210 minimum is gone in 8 years 8
+months, interest $4,540 against $782 for the full plan and $6,639 for
+minimums alone; 11 months later than minimums alone, because the card's
+freed $95 no longer rolls on.
+
+**Compatibility note.** Nothing stored on the household changes. The
+plan result gains `stopAfter`, `stopMonth`, `monthlyBudgetAfterStopCents`,
+`minimumsCents`, `extraMonthlyCents` and `derivedMinimums`; a caller
+that never passes `stopAfter` sees `stopMonth` null and the same
+numbers as before.
+
+Gate for this commit: unit 27157; render, forms and features on the
+room; a phone walk picking each stop, reloading to find it kept, typing
+an extra and reading the digits-only box and the on-top hint.
+
+**Follow-up, same session.** "It should total up the minimums also and
+then be like total amount going to debt." Two sums, both painted as
+text into static markup so the live list is never rebuilt for them: a
+footer under the list (N debts, owed, minimums a month, with any blank
+balance or minimum counted as missing rather than zero), and under the
+extra box the one figure that leaves the account for debt each month,
+minimums plus the extra in use, with where the extra came from.
+
+## D-192 — Expenses is what a month costs; Cash Flow is when the money moves
+
+**Why.** The owner: "I want to have spending be in expenses now. Cash
+Flow is just measuring when that spending happens now." One room had
+been holding two different questions, and the second was burying the
+first: the four numbers everything reads sat above a log, a Sankey and
+three comparisons, and "where do I type what a month costs" had no
+plain answer. It also fed the debt-room confusion of the same day: with
+everyday spending going through the cards, "what I spend" and "what I
+pay the card" need to be typed in different places or they get typed
+twice (D-190, D-191).
+
+**Decision.** Cash Flow is split in two. **Expenses**
+(`rooms/expenses.html`, registry id `expenses`, order 3, core) is what a
+month costs: the four numbers and the therapy toggle, the yearly costs,
+the optional split by category with its proposals, and the three
+readings of that month (spending by category, against a budget split,
+the lines against the four numbers). It takes over as the one owner of
+`monthlyExpenses`, the four buckets, `therapyMonthly` and `rentMonthly`,
+and the DAITE writes for them. **Cash Flow** (order 3.1, about-you) is
+when the money moves: this month at a glance, the expense log on its
+dates with the reimbursable path, where it flows, and what is left. It
+writes the log only (`expenses.log`) and reads the typical month from
+Expenses, saying so wherever it used to invite typing. The core stays
+four rooms: Expenses takes the seat Cash Flow held (D-051). Every layout
+in `data/layouts.json` lists Expenses beside Cash Flow; the walk's first
+stage does too; the exercises, the skill tree, the advice translator,
+the dashboard and every room that pointed at "categorise a month in
+Cash Flow" now point at Expenses, and the ones that mean the log still
+point at Cash Flow. No engine changed a formula.
+
+**Compatibility note.** Nothing stored changes shape: the four numbers,
+the lines, the yearly costs and the log all live where they did, in
+`household.expenses`. Two tags change: `Ownership.FIELDS.*.owner` for the
+spending fields is `expenses` (was `cash-flow`), so `Ownership.linkTo`
+and every door and chip land on the new room; and
+`Schema.rentMonthlyCents(h).source` reads `expenses` (was `cash-flow`)
+when the rent is the housing line, and Housing Decision, the Calendar
+engine and the ownership read were updated to match. A future room
+reading spending calls the same helpers and needs to know nothing new;
+one that wants to link to "where spending is typed" links to
+`expenses.html#spending`, and to "where a receipt is logged" to
+`cash-flow.html#log`.
+
+Gate for this commit: unit, D&D and export suites; render, forms,
+features and sidebar gates with both rooms; the twenty layouts reaching
+every room; a phone walk typing the four numbers in Expenses and logging
+a receipt in Cash Flow, each landing in the stored household.
+
+## D-193 — Income: the entry form folds behind one line, and shows five things, not seven
 
 **Why.** The owner, on a phone, with the Income room open: the "Add an
 entry" card was seven stacked controls and a hint — a whole screen of

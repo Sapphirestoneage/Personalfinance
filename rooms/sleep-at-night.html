@@ -509,9 +509,9 @@
         + 'and assuming none of it goes anywhere else.'
         + (flow.basis === 'monthlyTotal'
           ? ' That is measured against your essential expenses only — categorise a '
-            + 'month in Cash Flow and this gets sharper, and probably smaller.'
+            + 'month in Expenses and this gets sharper, and probably smaller.'
           : '')
-      : 'This needs what’s left over each month, which comes from Cash Flow.';
+      : 'This needs what’s left over each month, which comes from Expenses.';
 
     el('g-detail').innerHTML = dl([
       ['Your number', Money.formatCents(c.targetCents)],

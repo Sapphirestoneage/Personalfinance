@@ -77,18 +77,18 @@
         byBucket[b] += c.monthlyCents; seen[b] = true;
       });
     }
-    out.expenses = seen.expenses ? { cents: byBucket.expenses, reason: null, from: 'the typical-month lines in Cash Flow' } : (function () {
+    out.expenses = seen.expenses ? { cents: byBucket.expenses, reason: null, from: 'the typical-month lines in Expenses' } : (function () {
       var e = Schema.monthlyExpensesCents(h);
-      return Money.isOk(e) ? { cents: e.value, reason: null, from: 'a month of spending, from Start Here' } : { cents: null, reason: 'Add a month of spending in Start Here or a line in Cash Flow.', from: null };
+      return Money.isOk(e) ? { cents: e.value, reason: null, from: 'a month of spending, from Start Here' } : { cents: null, reason: 'Add a month of spending in Start Here or Expenses.', from: null };
     })();
-    out.savings = seen.savings ? { cents: byBucket.savings, reason: null, from: 'the savings lines in Cash Flow' } : { cents: null, reason: 'Type a savings line in Cash Flow, or log a transfer, and it starts here.', from: null };
-    if (seen.investments) out.investments = { cents: byBucket.investments, reason: null, from: 'the retirement and investment lines in Cash Flow' };
+    out.savings = seen.savings ? { cents: byBucket.savings, reason: null, from: 'the savings lines in Expenses' } : { cents: null, reason: 'Type a savings line in Expenses, or log a transfer in Cash Flow, and it starts here.', from: null };
+    if (seen.investments) out.investments = { cents: byBucket.investments, reason: null, from: 'the retirement and investment lines in Expenses' };
     else {
       var pct = (h.retirement || {}).contributionPercent;
       var gross = Schema.grossAnnualIncomeCents(h);
-      out.investments = Money.isEntered(pct) && Money.isOk(gross) ? { cents: Math.round(gross.value * pct / 100 / MONTHS), reason: null, from: 'the workplace contribution, from Start Here' } : { cents: null, reason: 'Add a contribution rate in Start Here, or an investment line in Cash Flow.', from: null };
+      out.investments = Money.isEntered(pct) && Money.isOk(gross) ? { cents: Math.round(gross.value * pct / 100 / MONTHS), reason: null, from: 'the workplace contribution, from Start Here' } : { cents: null, reason: 'Add a contribution rate in Start Here, or an investment line in Expenses.', from: null };
     }
-    if (seen.debt) out.debt = { cents: byBucket.debt, reason: null, from: 'the debt lines in Cash Flow' };
+    if (seen.debt) out.debt = { cents: byBucket.debt, reason: null, from: 'the debt lines in Expenses' };
     else {
       var mins = Schema.monthlyDebtPaymentsCents(h);
       out.debt = Money.isOk(mins) ? { cents: mins.value, reason: null, from: 'the minimums, from Debt Payoff' } : { cents: null, reason: mins.reason, from: null };

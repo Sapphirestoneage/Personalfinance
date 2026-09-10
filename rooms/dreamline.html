@@ -199,7 +199,7 @@
       if (p.target.pricedCount) rows.push({ label: 'The dreams, a month', cents: p.target.dreamsCents, href: '#inputs' });
       if (Money.isOk(p.gap) && p.gap.value !== 0) rows.push({ label: p.gap.short ? 'Short of the target, a month' : 'Over the target, a month', cents: Math.abs(p.gap.value) });
       if (p.target.pricedCount) rows.push({ label: 'The dreams over ' + p.horizon.months + ' months', cents: p.horizon.dreamsOverHorizonCents });
-      rows.push({ label: 'A month of spending', cents: p.target.expensesCents, href: Ownership.linkTo('cash-flow', 'spending') });
+      rows.push({ label: 'A month of spending', cents: p.target.expensesCents, href: Ownership.linkTo('expenses', 'spending') });
       return rows;
     },
 
