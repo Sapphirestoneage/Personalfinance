@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 2,
+  "people": [
+    {
+      "id": "p_nr_a",
+      "label": "Chris",
+      "role": "adult",
+      "dob": "1965-04-18",
+      "incomeSources": [
+        {
+          "id": "p_nr_a_inc0",
+          "personId": "p_nr_a",
+          "source": "Engineering job",
+          "grossAnnualIncomeCents": 10500000,
+          "frequency": "annual",
+          "type": "w2",
+          "employerMatch": {
+            "matchPercent": 1,
+            "matchCapPercentOfSalary": 0.05
+          }
+        }
+      ]
+    },
+    {
+      "id": "p_nr_b",
+      "label": "Lee",
+      "role": "adult",
+      "dob": "1966-08-03",
+      "incomeSources": []
+    }
+  ],
+  "filingStatus": "married_joint",
+  "state": "PA",
+  "assets": [
+    {
+      "id": "a_0",
+      "label": "Savings",
+      "category": "cash",
+      "valueCents": 4000000,
+      "liquid": true,
+      "ownerIds": []
+    },
+    {
+      "id": "a_1",
+      "label": "Brokerage",
+      "category": "investment",
+      "valueCents": 8000000,
+      "liquid": false,
+      "ownerIds": []
+    },
+    {
+      "id": "a_2",
+      "label": "401(k) + rollover IRA",
+      "category": "retirement",
+      "valueCents": 78000000,
+      "liquid": false,
+      "ownerIds": []
+    }
+  ],
+  "debts": [],
+  "expenses": {
+    "monthlyEssential": {
+      "estimatedValueCents": 485000,
+      "trackedValueCents": null,
+      "source": "estimated"
+    },
+    "categories": []
+  },
+  "assumptions": {
+    "expectedReturnRate": 0.07,
+    "swrRate": 0.04
+  },
+  "assumptionOverrides": {},
+  "meta": {
+    "visitedRooms": [],
+    "createdAt": null,
+    "updatedAt": "2026-09-10T00:55:48.688Z",
+    "isDemo": true,
+    "hasDebt": false,
+    "name": "Near retiree",
+    "story": "61, $900k mostly pretax, a pension at 65, a Social Security estimate at 67.",
+    "sphere": 7,
+    "sphereNote": "DECIDE: the sphere is a guess at the depth these rows reach under section 19 of the master prompt; spheres.json does not exist yet.",
+    "lane": "lane2 section 1 (L-1)",
+    "known": {
+      "asOf": "2026-09-10",
+      "tolerance": 0.01,
+      "monthlySpendingCents": 485000,
+      "fiTargetCents": 145500000,
+      "grossAnnualCents": 10500000,
+      "effectiveRate": 0.17,
+      "estimatedTaxCents": 1785000,
+      "takeHomeAnnualCents": 8715000,
+      "takeHomeMonthlyCents": 726250,
+      "savingsRate": 0.2757142857142857,
+      "runwayMonths": 8.24742268041237,
+      "runwayWholeMonths": 8,
+      "netWorthCents": 90000000,
+      "working": [
+        "monthly spending = food $800 + accommodation $1,900 + transportation $450 + everything else $1,700 = $4,850",
+        "FI target = $4,850 x 12 / 0.04 = $58,200 / 0.04 = $1,455,000",
+        "gross $105,000 married_joint: band married_joint up to $130,000 -> effective rate 0.17",
+        "estimated tax = $105,000 x 0.17 = $17,850; take-home = $105,000 - $17,850 = $87,150 a year, $7,262.5 a month",
+        "savings rate (excluding match) = ($87,150 - $58,200) / $105,000 = $28,950 / $105,000 = 0.2757",
+        "runway = cash $40,000 / $4,850 a month = 8.2474 months (8 whole months; Runway.project stops at 60)",
+        "net worth = $40,000 + $80,000 + $780,000 - $0 = $900,000"
+      ]
+    }
+  },
+  "lane2": {
+    "section": 5,
+    "commit": "d4c5599",
+    "date": "2026-09-03",
+    "subject": "Build the shared foundation: schema, spine, design system, reference data",
+    "via": "storedBlob",
+    "specId": "near-retiree",
+    "known": {
+      "asOf": "2026-09-10",
+      "tolerance": 0.01,
+      "monthlySpendingCents": 485000,
+      "fiTargetCents": 145500000,
+      "grossAnnualCents": 10500000,
+      "effectiveRate": 0.17,
+      "estimatedTaxCents": 1785000,
+      "takeHomeAnnualCents": 8715000,
+      "takeHomeMonthlyCents": 726250,
+      "savingsRate": 0.2757142857142857,
+      "runwayMonths": 8.24742268041237,
+      "runwayWholeMonths": 8,
+      "netWorthCents": 90000000,
+      "working": [
+        "monthly spending = food $800 + accommodation $1,900 + transportation $450 + everything else $1,700 = $4,850",
+        "FI target = $4,850 x 12 / 0.04 = $58,200 / 0.04 = $1,455,000",
+        "gross $105,000 married_joint: band married_joint up to $130,000 -> effective rate 0.17",
+        "estimated tax = $105,000 x 0.17 = $17,850; take-home = $105,000 - $17,850 = $87,150 a year, $7,262.5 a month",
+        "savings rate (excluding match) = ($87,150 - $58,200) / $105,000 = $28,950 / $105,000 = 0.2757",
+        "runway = cash $40,000 / $4,850 a month = 8.2474 months (8 whole months; Runway.project stops at 60)",
+        "net worth = $40,000 + $80,000 + $780,000 - $0 = $900,000"
+      ]
+    },
+    "patchFallback": null
+  }
+}

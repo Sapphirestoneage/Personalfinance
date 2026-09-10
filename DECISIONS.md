@@ -10918,6 +10918,67 @@ requires nothing and writes nothing. No stored shape changed.
 
 ---
 
+## L-5 - Lane 2, section 5: the migration corpus
+
+### What it is
+
+`fixtures/exports/`: one set of files per export format the app has
+produced, rebuilt from git by `tests/tools/build-exports.js`. The script
+lists every commit that touched `shared/spine-v2.js`, `shared/schema.js`
+or `shared/money.js` (64), checks each one's `shared/` and `data/` out
+with `git archive`, and in a child process builds seven of the section 1
+households through THAT version's `Schema.createHousehold` (the builder
+from L-1 takes a schema module), writes them into that version's spine
+with `updateProfile`, and exports with that version's `Spine.exportJSON`
+or, before 2026-09-04 when the export did not exist, the stored
+household blob. A format is kept when the household's shape (its sorted
+key paths, ids and dates ignored) differs from the last one kept: 40
+formats, 70 files, named `<date>-<hash>-<household>.json`, each carrying
+a `lane2` note with the commit, the route (`exportJSON` or
+`storedBlob`) and the hand-computed `known` values. Formats that removed
+or renamed a path, changed the route, or sit at either end of the
+history keep all seven households; a format that only added paths keeps
+one sample. `README.md` and `index.json` there list every format and
+the paths that appeared or vanished between one and the next. The
+pre-spine flat profile (`annualSalary`, `studentLoanBalance`,
+`studentLoanRate`, no `schemaVersion`) is written by hand, since it never
+had an export.
+
+`tests/migration.test.js` (905 checks): every file imports through
+today's `Spine.importJSON` without a throw, comes back at the current
+schema version with a snapshot list, and re-derives gross, tax,
+take-home, monthly spending, savings rate, FI target, runway and net
+worth within 1% of the household's `known`; the flat profile goes
+through `Spine._migrateLegacy` and is checked for its salary, balance
+and rate.
+
+### What it found
+
+Every one of the 39 spine-era formats imports and agrees, including the
+pre-FAT months (a single estimated figure) that D-172's shim folds into
+"everything else", and the categorised-lines format of 6776b58. The one
+finding: the flat profile is refused by the import path ("no household
+in it") because only the localStorage load migrates it; P-8 is the
+four-line change.
+
+### Decisions taken conservatively (DECIDE: for Eli)
+
+- One sample household for addition-only formats keeps the corpus under
+  a megabyte; every household for the formats that removed a path.
+- The schema version has been 2 since the foundation commit, so "the v1
+  spine" is the flat profile and every intermediate is a v2 shape; the
+  corpus is keyed by commit, not by version number.
+- Value disagreements are findings, not failures, unless
+  `CORPUS_STRICT=1` (as in L-1).
+
+### Compatibility
+
+Nothing stored changed. `tests/tools/build-households.js` now exports
+its specs and takes a schema module; `node tests/tools/build-households.js`
+still writes the same thirty fixtures. `tests/.cache/` is git-ignored.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

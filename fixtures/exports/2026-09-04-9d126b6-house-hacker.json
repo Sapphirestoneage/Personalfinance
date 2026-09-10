@@ -1,0 +1,218 @@
+{
+  "format": "slaf-export",
+  "exportVersion": 1,
+  "schemaVersion": 2,
+  "exportedAt": "2026-09-10T00:55:50.052Z",
+  "household": {
+    "schemaVersion": 2,
+    "people": [
+      {
+        "id": "p_hh",
+        "label": "Alex",
+        "role": "adult",
+        "dob": "1997-02-11",
+        "employmentStatus": "both",
+        "incomeSources": [
+          {
+            "id": "p_hh_inc0",
+            "personId": "p_hh",
+            "source": "Day job",
+            "grossAnnualIncomeCents": 7800000,
+            "frequency": "annual",
+            "rateCents": null,
+            "hoursPerWeek": null,
+            "monthsWorked": null,
+            "ongoing": true,
+            "type": "w2",
+            "employerMatch": {
+              "matchPercent": 1,
+              "matchCapPercentOfSalary": 0.03
+            }
+          },
+          {
+            "id": "p_hh_rent",
+            "personId": "p_hh",
+            "source": "Fourplex rents",
+            "grossAnnualIncomeCents": 3000000,
+            "frequency": "annual",
+            "rateCents": null,
+            "hoursPerWeek": null,
+            "monthsWorked": null,
+            "ongoing": true,
+            "type": "1099",
+            "employerMatch": {
+              "matchPercent": null,
+              "matchCapPercentOfSalary": null
+            }
+          }
+        ],
+        "work": {
+          "contractedHoursPerWeek": null,
+          "unpaidOvertimeHoursPerWeek": null,
+          "commuteHoursPerWeek": null,
+          "prepHoursPerWeek": null,
+          "decompressHoursPerWeek": null,
+          "workCostsMonthlyCents": null,
+          "weeksPerYear": 48
+        }
+      }
+    ],
+    "filingStatus": "single",
+    "state": "TX",
+    "capturingFullMatch": true,
+    "assets": [
+      {
+        "id": "a_0",
+        "label": "Checking + reserves",
+        "category": "cash",
+        "valueCents": 1800000,
+        "liquid": true,
+        "ownerIds": [],
+        "taxCharacter": null
+      },
+      {
+        "id": "a_1",
+        "label": "401(k)",
+        "category": "retirement",
+        "valueCents": 4000000,
+        "liquid": false,
+        "ownerIds": [],
+        "taxCharacter": "pretax"
+      },
+      {
+        "id": "a_fourplex",
+        "label": "Fourplex",
+        "category": "real_estate",
+        "valueCents": 52000000,
+        "liquid": false,
+        "ownerIds": [],
+        "taxCharacter": null
+      }
+    ],
+    "debts": [
+      {
+        "id": "d_fourplex",
+        "label": "Fourplex mortgage",
+        "balanceCents": 40000000,
+        "rate": 0.065,
+        "minPaymentCents": 280000,
+        "type": "mortgage",
+        "creditLimitCents": null,
+        "promoEndsOn": null,
+        "postPromoRate": null,
+        "emotionalTag": null,
+        "ownerIds": []
+      }
+    ],
+    "expenses": {
+      "monthlyEssential": {
+        "estimatedValueCents": 460000,
+        "trackedValueCents": null,
+        "source": "estimated"
+      },
+      "entries": []
+    },
+    "incomeBasis": "earned",
+    "retirement": {
+      "contributionPercent": null,
+      "rothContributedCents": null,
+      "hsaContributedCents": null,
+      "onHdhp": null,
+      "hsaFamilyPlan": null
+    },
+    "insurance": {
+      "highestDeductibleCents": null
+    },
+    "worthChecks": [],
+    "ratings": {},
+    "valuesProfile": {
+      "stated": [],
+      "assignments": {}
+    },
+    "swan": {
+      "basis": null,
+      "targetCents": null,
+      "targetMonths": null,
+      "note": null,
+      "setAt": null
+    },
+    "goals": [],
+    "assumptions": {
+      "expectedReturnRate": 0.07,
+      "swrRate": 0.04,
+      "marginalRate": null
+    },
+    "assumptionOverrides": {},
+    "meta": {
+      "visitedRooms": [],
+      "createdAt": null,
+      "updatedAt": "2026-09-10T00:55:50.051Z",
+      "confirmedAt": {},
+      "hasDebt": true,
+      "isDemo": true,
+      "name": "House hacker",
+      "story": "29, owns a fourplex and lives in one unit, three units rented, W-2 plus rental income.",
+      "sphere": 6,
+      "sphereNote": "DECIDE: the sphere is a guess at the depth these rows reach under section 19 of the master prompt; spheres.json does not exist yet.",
+      "lane": "lane2 section 1 (L-1)",
+      "known": {
+        "asOf": "2026-09-10",
+        "tolerance": 0.01,
+        "monthlySpendingCents": 460000,
+        "fiTargetCents": 138000000,
+        "grossAnnualCents": 10800000,
+        "effectiveRate": 0.24,
+        "estimatedTaxCents": 2592000,
+        "takeHomeAnnualCents": 8208000,
+        "takeHomeMonthlyCents": 684000,
+        "savingsRate": 0.24888888888888888,
+        "runwayMonths": 3.9130434782608696,
+        "runwayWholeMonths": 3,
+        "netWorthCents": 17800000,
+        "working": [
+          "monthly spending = food $550 + accommodation $2,800 + transportation $350 + everything else $900 = $4,600",
+          "FI target = $4,600 x 12 / 0.04 = $55,200 / 0.04 = $1,380,000",
+          "gross $108,000 single: band single up to $150,000 -> effective rate 0.24",
+          "estimated tax = $108,000 x 0.24 = $25,920; take-home = $108,000 - $25,920 = $82,080 a year, $6,840 a month",
+          "savings rate (excluding match) = ($82,080 - $55,200) / $108,000 = $26,880 / $108,000 = 0.2489",
+          "runway = cash $18,000 / $4,600 a month = 3.9130 months (3 whole months; Runway.project stops at 60)",
+          "net worth = $18,000 + $40,000 + $520,000 - $400,000 = $178,000"
+        ]
+      }
+    }
+  },
+  "snapshots": [],
+  "lane2": {
+    "section": 5,
+    "commit": "9d126b6",
+    "date": "2026-09-04",
+    "subject": "Rebuild the intake: eleven cards, two people, one answer derived, \"no debt\" as an answer",
+    "via": "exportJSON",
+    "specId": "house-hacker",
+    "known": {
+      "asOf": "2026-09-10",
+      "tolerance": 0.01,
+      "monthlySpendingCents": 460000,
+      "fiTargetCents": 138000000,
+      "grossAnnualCents": 10800000,
+      "effectiveRate": 0.24,
+      "estimatedTaxCents": 2592000,
+      "takeHomeAnnualCents": 8208000,
+      "takeHomeMonthlyCents": 684000,
+      "savingsRate": 0.24888888888888888,
+      "runwayMonths": 3.9130434782608696,
+      "runwayWholeMonths": 3,
+      "netWorthCents": 17800000,
+      "working": [
+        "monthly spending = food $550 + accommodation $2,800 + transportation $350 + everything else $900 = $4,600",
+        "FI target = $4,600 x 12 / 0.04 = $55,200 / 0.04 = $1,380,000",
+        "gross $108,000 single: band single up to $150,000 -> effective rate 0.24",
+        "estimated tax = $108,000 x 0.24 = $25,920; take-home = $108,000 - $25,920 = $82,080 a year, $6,840 a month",
+        "savings rate (excluding match) = ($82,080 - $55,200) / $108,000 = $26,880 / $108,000 = 0.2489",
+        "runway = cash $18,000 / $4,600 a month = 3.9130 months (3 whole months; Runway.project stops at 60)",
+        "net worth = $18,000 + $40,000 + $520,000 - $400,000 = $178,000"
+      ]
+    },
+    "patchFallback": null
+  }
+}

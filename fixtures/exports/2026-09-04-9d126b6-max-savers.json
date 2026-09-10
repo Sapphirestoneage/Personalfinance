@@ -1,0 +1,222 @@
+{
+  "format": "slaf-export",
+  "exportVersion": 1,
+  "schemaVersion": 2,
+  "exportedAt": "2026-09-10T00:55:50.054Z",
+  "household": {
+    "schemaVersion": 2,
+    "people": [
+      {
+        "id": "p_ms_a",
+        "label": "Reese",
+        "role": "adult",
+        "dob": "1981-02-14",
+        "employmentStatus": "employed",
+        "incomeSources": [
+          {
+            "id": "p_ms_a_inc0",
+            "personId": "p_ms_a",
+            "source": "Director",
+            "grossAnnualIncomeCents": 15000000,
+            "frequency": "annual",
+            "rateCents": null,
+            "hoursPerWeek": null,
+            "monthsWorked": null,
+            "ongoing": true,
+            "type": "w2",
+            "employerMatch": {
+              "matchPercent": 1,
+              "matchCapPercentOfSalary": 0.06
+            }
+          }
+        ],
+        "work": {
+          "contractedHoursPerWeek": null,
+          "unpaidOvertimeHoursPerWeek": null,
+          "commuteHoursPerWeek": null,
+          "prepHoursPerWeek": null,
+          "decompressHoursPerWeek": null,
+          "workCostsMonthlyCents": null,
+          "weeksPerYear": 48
+        }
+      },
+      {
+        "id": "p_ms_b",
+        "label": "Val",
+        "role": "adult",
+        "dob": "1982-12-01",
+        "employmentStatus": "employed",
+        "incomeSources": [
+          {
+            "id": "p_ms_b_inc0",
+            "personId": "p_ms_b",
+            "source": "Architect",
+            "grossAnnualIncomeCents": 11000000,
+            "frequency": "annual",
+            "rateCents": null,
+            "hoursPerWeek": null,
+            "monthsWorked": null,
+            "ongoing": true,
+            "type": "w2",
+            "employerMatch": {
+              "matchPercent": 0.5,
+              "matchCapPercentOfSalary": 0.06
+            }
+          }
+        ],
+        "work": {
+          "contractedHoursPerWeek": null,
+          "unpaidOvertimeHoursPerWeek": null,
+          "commuteHoursPerWeek": null,
+          "prepHoursPerWeek": null,
+          "decompressHoursPerWeek": null,
+          "workCostsMonthlyCents": null,
+          "weeksPerYear": 48
+        }
+      }
+    ],
+    "filingStatus": "married_joint",
+    "state": "MA",
+    "capturingFullMatch": true,
+    "assets": [
+      {
+        "id": "a_0",
+        "label": "Savings",
+        "category": "cash",
+        "valueCents": 4500000,
+        "liquid": true,
+        "ownerIds": [],
+        "taxCharacter": null
+      },
+      {
+        "id": "a_1",
+        "label": "Brokerage",
+        "category": "investment",
+        "valueCents": 31000000,
+        "liquid": false,
+        "ownerIds": [],
+        "taxCharacter": "taxable"
+      },
+      {
+        "id": "a_2",
+        "label": "401(k)s + HSA + Roth IRAs",
+        "category": "retirement",
+        "valueCents": 82000000,
+        "liquid": false,
+        "ownerIds": [],
+        "taxCharacter": "pretax"
+      }
+    ],
+    "debts": [],
+    "expenses": {
+      "monthlyEssential": {
+        "estimatedValueCents": 720000,
+        "trackedValueCents": null,
+        "source": "estimated"
+      },
+      "entries": []
+    },
+    "incomeBasis": "earned",
+    "retirement": {
+      "contributionPercent": 16,
+      "rothContributedCents": 1400000,
+      "hsaContributedCents": 875000,
+      "onHdhp": true,
+      "hsaFamilyPlan": true
+    },
+    "insurance": {
+      "highestDeductibleCents": null
+    },
+    "worthChecks": [],
+    "ratings": {},
+    "valuesProfile": {
+      "stated": [],
+      "assignments": {}
+    },
+    "swan": {
+      "basis": null,
+      "targetCents": null,
+      "targetMonths": null,
+      "note": null,
+      "setAt": null
+    },
+    "goals": [],
+    "assumptions": {
+      "expectedReturnRate": 0.07,
+      "swrRate": 0.04,
+      "marginalRate": null
+    },
+    "assumptionOverrides": {},
+    "meta": {
+      "visitedRooms": [],
+      "createdAt": null,
+      "updatedAt": "2026-09-10T00:55:50.054Z",
+      "confirmedAt": {},
+      "hasDebt": false,
+      "isDemo": true,
+      "name": "Max savers",
+      "story": "45 and 44, $260k combined, maxing every bucket: 401(k)s, HSA, backdoor Roth.",
+      "sphere": 7,
+      "sphereNote": "DECIDE: the sphere is a guess at the depth these rows reach under section 19 of the master prompt; spheres.json does not exist yet.",
+      "lane": "lane2 section 1 (L-1)",
+      "known": {
+        "asOf": "2026-09-10",
+        "tolerance": 0.01,
+        "monthlySpendingCents": 720000,
+        "fiTargetCents": 216000000,
+        "grossAnnualCents": 26000000,
+        "effectiveRate": 0.24,
+        "estimatedTaxCents": 6240000,
+        "takeHomeAnnualCents": 19760000,
+        "takeHomeMonthlyCents": 1646667,
+        "savingsRate": 0.4276923076923077,
+        "runwayMonths": 6.25,
+        "runwayWholeMonths": 6,
+        "netWorthCents": 117500000,
+        "working": [
+          "monthly spending = food $1,100 + accommodation $3,200 + transportation $600 + everything else $2,300 = $7,200",
+          "FI target = $7,200 x 12 / 0.04 = $86,400 / 0.04 = $2,160,000",
+          "gross $260,000 married_joint: band married_joint up to $300,000 -> effective rate 0.24",
+          "estimated tax = $260,000 x 0.24 = $62,400; take-home = $260,000 - $62,400 = $197,600 a year, $16,466.67 a month",
+          "savings rate (excluding match) = ($197,600 - $86,400) / $260,000 = $111,200 / $260,000 = 0.4277",
+          "runway = cash $45,000 / $7,200 a month = 6.2500 months (6 whole months; Runway.project stops at 60)",
+          "net worth = $45,000 + $310,000 + $820,000 - $0 = $1,175,000"
+        ]
+      }
+    }
+  },
+  "snapshots": [],
+  "lane2": {
+    "section": 5,
+    "commit": "9d126b6",
+    "date": "2026-09-04",
+    "subject": "Rebuild the intake: eleven cards, two people, one answer derived, \"no debt\" as an answer",
+    "via": "exportJSON",
+    "specId": "max-savers",
+    "known": {
+      "asOf": "2026-09-10",
+      "tolerance": 0.01,
+      "monthlySpendingCents": 720000,
+      "fiTargetCents": 216000000,
+      "grossAnnualCents": 26000000,
+      "effectiveRate": 0.24,
+      "estimatedTaxCents": 6240000,
+      "takeHomeAnnualCents": 19760000,
+      "takeHomeMonthlyCents": 1646667,
+      "savingsRate": 0.4276923076923077,
+      "runwayMonths": 6.25,
+      "runwayWholeMonths": 6,
+      "netWorthCents": 117500000,
+      "working": [
+        "monthly spending = food $1,100 + accommodation $3,200 + transportation $600 + everything else $2,300 = $7,200",
+        "FI target = $7,200 x 12 / 0.04 = $86,400 / 0.04 = $2,160,000",
+        "gross $260,000 married_joint: band married_joint up to $300,000 -> effective rate 0.24",
+        "estimated tax = $260,000 x 0.24 = $62,400; take-home = $260,000 - $62,400 = $197,600 a year, $16,466.67 a month",
+        "savings rate (excluding match) = ($197,600 - $86,400) / $260,000 = $111,200 / $260,000 = 0.4277",
+        "runway = cash $45,000 / $7,200 a month = 6.2500 months (6 whole months; Runway.project stops at 60)",
+        "net worth = $45,000 + $310,000 + $820,000 - $0 = $1,175,000"
+      ]
+    },
+    "patchFallback": null
+  }
+}

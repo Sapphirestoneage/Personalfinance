@@ -1,0 +1,522 @@
+{
+  "schemaVersion": 2,
+  "people": [
+    {
+      "id": "p_e5",
+      "label": "Edge Five",
+      "role": "adult",
+      "dob": "1991-07-07",
+      "incomeSources": [
+        {
+          "id": "p_e5_inc0",
+          "personId": "p_e5",
+          "source": "Job",
+          "grossAnnualIncomeCents": 7500000,
+          "frequency": "annual",
+          "type": "w2",
+          "employerMatch": {
+            "matchPercent": null,
+            "matchCapPercentOfSalary": null
+          }
+        }
+      ]
+    }
+  ],
+  "filingStatus": "single",
+  "state": "UT",
+  "capturingFullMatch": null,
+  "assets": [
+    {
+      "id": "a_0",
+      "label": "Cash",
+      "category": "cash",
+      "valueCents": 250000,
+      "liquid": true,
+      "ownerIds": []
+    }
+  ],
+  "debts": [
+    {
+      "id": "d_01",
+      "label": "Debt 1",
+      "balanceCents": 50000,
+      "rate": 0.03,
+      "minPaymentCents": 2500,
+      "type": "credit_card",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_02",
+      "label": "Debt 2",
+      "balanceCents": 75000,
+      "rate": 0.034999999999999996,
+      "minPaymentCents": 3000,
+      "type": "personal",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_03",
+      "label": "Debt 3",
+      "balanceCents": 100000,
+      "rate": 0.04,
+      "minPaymentCents": 3500,
+      "type": "medical",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_04",
+      "label": "Debt 4",
+      "balanceCents": 125000,
+      "rate": 0.045,
+      "minPaymentCents": 4000,
+      "type": "other",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_05",
+      "label": "Debt 5",
+      "balanceCents": 150000,
+      "rate": 0.05,
+      "minPaymentCents": 4500,
+      "type": "credit_card",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_06",
+      "label": "Debt 6",
+      "balanceCents": 175000,
+      "rate": 0.055,
+      "minPaymentCents": 5000,
+      "type": "personal",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_07",
+      "label": "Debt 7",
+      "balanceCents": 200000,
+      "rate": 0.06,
+      "minPaymentCents": 5500,
+      "type": "medical",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_08",
+      "label": "Debt 8",
+      "balanceCents": 225000,
+      "rate": 0.065,
+      "minPaymentCents": 6000,
+      "type": "other",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_09",
+      "label": "Debt 9",
+      "balanceCents": 250000,
+      "rate": 0.07,
+      "minPaymentCents": 6500,
+      "type": "credit_card",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_10",
+      "label": "Debt 10",
+      "balanceCents": 275000,
+      "rate": 0.075,
+      "minPaymentCents": 7000,
+      "type": "personal",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_11",
+      "label": "Debt 11",
+      "balanceCents": 300000,
+      "rate": 0.08,
+      "minPaymentCents": 7500,
+      "type": "medical",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_12",
+      "label": "Debt 12",
+      "balanceCents": 325000,
+      "rate": 0.08499999999999999,
+      "minPaymentCents": 8000,
+      "type": "other",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_13",
+      "label": "Debt 13",
+      "balanceCents": 350000,
+      "rate": 0.09,
+      "minPaymentCents": 8500,
+      "type": "credit_card",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_14",
+      "label": "Debt 14",
+      "balanceCents": 375000,
+      "rate": 0.095,
+      "minPaymentCents": 9000,
+      "type": "personal",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_15",
+      "label": "Debt 15",
+      "balanceCents": 400000,
+      "rate": 0.1,
+      "minPaymentCents": 9500,
+      "type": "medical",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_16",
+      "label": "Debt 16",
+      "balanceCents": 425000,
+      "rate": 0.105,
+      "minPaymentCents": 10000,
+      "type": "other",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_17",
+      "label": "Debt 17",
+      "balanceCents": 450000,
+      "rate": 0.11,
+      "minPaymentCents": 10500,
+      "type": "credit_card",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_18",
+      "label": "Debt 18",
+      "balanceCents": 475000,
+      "rate": 0.115,
+      "minPaymentCents": 11000,
+      "type": "personal",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_19",
+      "label": "Debt 19",
+      "balanceCents": 500000,
+      "rate": 0.12,
+      "minPaymentCents": 11500,
+      "type": "medical",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_20",
+      "label": "Debt 20",
+      "balanceCents": 525000,
+      "rate": 0.125,
+      "minPaymentCents": 12000,
+      "type": "other",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_21",
+      "label": "Debt 21",
+      "balanceCents": 550000,
+      "rate": 0.13,
+      "minPaymentCents": 12500,
+      "type": "credit_card",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_22",
+      "label": "Debt 22",
+      "balanceCents": 575000,
+      "rate": 0.135,
+      "minPaymentCents": 13000,
+      "type": "personal",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_23",
+      "label": "Debt 23",
+      "balanceCents": 600000,
+      "rate": 0.14,
+      "minPaymentCents": 13500,
+      "type": "medical",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_24",
+      "label": "Debt 24",
+      "balanceCents": 625000,
+      "rate": 0.14500000000000002,
+      "minPaymentCents": 14000,
+      "type": "other",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_25",
+      "label": "Debt 25",
+      "balanceCents": 650000,
+      "rate": 0.15,
+      "minPaymentCents": 14500,
+      "type": "credit_card",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_26",
+      "label": "Debt 26",
+      "balanceCents": 675000,
+      "rate": 0.155,
+      "minPaymentCents": 15000,
+      "type": "personal",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_27",
+      "label": "Debt 27",
+      "balanceCents": 700000,
+      "rate": 0.16,
+      "minPaymentCents": 15500,
+      "type": "medical",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_28",
+      "label": "Debt 28",
+      "balanceCents": 725000,
+      "rate": 0.165,
+      "minPaymentCents": 16000,
+      "type": "other",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_29",
+      "label": "Debt 29",
+      "balanceCents": 750000,
+      "rate": 0.17,
+      "minPaymentCents": 16500,
+      "type": "credit_card",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_30",
+      "label": "Debt 30",
+      "balanceCents": 775000,
+      "rate": 0.175,
+      "minPaymentCents": 17000,
+      "type": "personal",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_31",
+      "label": "Debt 31",
+      "balanceCents": 800000,
+      "rate": 0.18,
+      "minPaymentCents": 17500,
+      "type": "medical",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_32",
+      "label": "Debt 32",
+      "balanceCents": 825000,
+      "rate": 0.185,
+      "minPaymentCents": 18000,
+      "type": "other",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_33",
+      "label": "Debt 33",
+      "balanceCents": 850000,
+      "rate": 0.19,
+      "minPaymentCents": 18500,
+      "type": "credit_card",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_34",
+      "label": "Debt 34",
+      "balanceCents": 875000,
+      "rate": 0.195,
+      "minPaymentCents": 19000,
+      "type": "personal",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_35",
+      "label": "Debt 35",
+      "balanceCents": 900000,
+      "rate": 0.2,
+      "minPaymentCents": 19500,
+      "type": "medical",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_36",
+      "label": "Debt 36",
+      "balanceCents": 925000,
+      "rate": 0.20500000000000002,
+      "minPaymentCents": 20000,
+      "type": "other",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_37",
+      "label": "Debt 37",
+      "balanceCents": 950000,
+      "rate": 0.21,
+      "minPaymentCents": 20500,
+      "type": "credit_card",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_38",
+      "label": "Debt 38",
+      "balanceCents": 975000,
+      "rate": 0.215,
+      "minPaymentCents": 21000,
+      "type": "personal",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_39",
+      "label": "Debt 39",
+      "balanceCents": 1000000,
+      "rate": 0.22,
+      "minPaymentCents": 21500,
+      "type": "medical",
+      "emotionalTag": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_40",
+      "label": "Debt 40",
+      "balanceCents": 1025000,
+      "rate": 0.225,
+      "minPaymentCents": 22000,
+      "type": "other",
+      "emotionalTag": null,
+      "ownerIds": []
+    }
+  ],
+  "expenses": {
+    "monthlyEssential": {
+      "estimatedValueCents": 300000,
+      "trackedValueCents": null,
+      "source": "estimated"
+    },
+    "entries": []
+  },
+  "assumptions": {
+    "expectedReturnRate": 0.07,
+    "swrRate": 0.04
+  },
+  "assumptionOverrides": {},
+  "meta": {
+    "visitedRooms": [],
+    "createdAt": null,
+    "updatedAt": "2026-09-10T00:55:48.818Z",
+    "isDemo": true,
+    "hasDebt": true,
+    "name": "Edge: forty debts",
+    "story": "35, $75k (exactly on a band boundary), forty separate debts from $500 to $10,250.",
+    "sphere": 2,
+    "sphereNote": "DECIDE: the sphere is a guess at the depth these rows reach under section 19 of the master prompt; spheres.json does not exist yet.",
+    "lane": "lane2 section 1 (L-1)",
+    "known": {
+      "asOf": "2026-09-10",
+      "tolerance": 0.01,
+      "monthlySpendingCents": 300000,
+      "fiTargetCents": 90000000,
+      "grossAnnualCents": 7500000,
+      "effectiveRate": 0.19,
+      "estimatedTaxCents": 1425000,
+      "takeHomeAnnualCents": 6075000,
+      "takeHomeMonthlyCents": 506250,
+      "savingsRate": 0.33,
+      "runwayMonths": 0.8333333333333334,
+      "runwayWholeMonths": 0,
+      "netWorthCents": -21250000,
+      "working": [
+        "monthly spending = food $500 + accommodation $1,400 + transportation $300 + everything else $800 = $3,000",
+        "FI target = $3,000 x 12 / 0.04 = $36,000 / 0.04 = $900,000",
+        "gross $75,000 single: band single up to $75,000 (the table rule is gross <= band top, so $75,000 exactly stays in the 0.19 band) -> effective rate 0.19",
+        "estimated tax = $75,000 x 0.19 = $14,250; take-home = $75,000 - $14,250 = $60,750 a year, $5,062.5 a month",
+        "savings rate (excluding match) = ($60,750 - $36,000) / $75,000 = $24,750 / $75,000 = 0.3300",
+        "runway = cash $2,500 / $3,000 a month = 0.8333 months (0 whole months; Runway.project stops at 60)",
+        "net worth = $2,500 - (40 x $500 + $250 x (0+1+...+39)) = $2,500 - ($20,000 + $250 x 780) = $2,500 - $215,000 = -$212,500; minimums = 40 x $25 + $5 x 780 = $4,900 a month"
+      ]
+    }
+  },
+  "lane2": {
+    "section": 5,
+    "commit": "6776b58",
+    "date": "2026-09-03",
+    "subject": "Add the Cash Flow engine — categorised spending, one store, import-ready",
+    "via": "storedBlob",
+    "specId": "forty-debts",
+    "known": {
+      "asOf": "2026-09-10",
+      "tolerance": 0.01,
+      "monthlySpendingCents": 300000,
+      "fiTargetCents": 90000000,
+      "grossAnnualCents": 7500000,
+      "effectiveRate": 0.19,
+      "estimatedTaxCents": 1425000,
+      "takeHomeAnnualCents": 6075000,
+      "takeHomeMonthlyCents": 506250,
+      "savingsRate": 0.33,
+      "runwayMonths": 0.8333333333333334,
+      "runwayWholeMonths": 0,
+      "netWorthCents": -21250000,
+      "working": [
+        "monthly spending = food $500 + accommodation $1,400 + transportation $300 + everything else $800 = $3,000",
+        "FI target = $3,000 x 12 / 0.04 = $36,000 / 0.04 = $900,000",
+        "gross $75,000 single: band single up to $75,000 (the table rule is gross <= band top, so $75,000 exactly stays in the 0.19 band) -> effective rate 0.19",
+        "estimated tax = $75,000 x 0.19 = $14,250; take-home = $75,000 - $14,250 = $60,750 a year, $5,062.5 a month",
+        "savings rate (excluding match) = ($60,750 - $36,000) / $75,000 = $24,750 / $75,000 = 0.3300",
+        "runway = cash $2,500 / $3,000 a month = 0.8333 months (0 whole months; Runway.project stops at 60)",
+        "net worth = $2,500 - (40 x $500 + $250 x (0+1+...+39)) = $2,500 - ($20,000 + $250 x 780) = $2,500 - $215,000 = -$212,500; minimums = 40 x $25 + $5 x 780 = $4,900 a month"
+      ]
+    },
+    "patchFallback": null
+  }
+}

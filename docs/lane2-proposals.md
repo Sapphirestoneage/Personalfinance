@@ -118,3 +118,18 @@ Dependencies: none. `shared/glossary.js` requires nothing and writes nothing. DE
 - (b) register `lensesCopy` in `TABLE_FILES` and have `shared/lenses.js` read `forWhom`, `notForWhom` and `source` from it when present.
 
 (a) keeps one file and is the conservative choice. `tests/glossary.test.js` keeps the two files in step either way (every lens has a row, no hedge word, no em dash). DECIDE: master build.
+
+## P-8: let Your Data import the pre-spine flat profile (section 5, L-5)
+
+`fixtures/exports/2026-09-02-pre-spine-flat-profile.json` is the shape the pre-spine tools kept under `slaf.profile` (`annualSalary`, `hoursPerWeek`, `studentLoanBalance`, `studentLoanRate`, `visitedRooms`, no `schemaVersion`). `Spine._migrateLegacy` turns it into a household, but only when it is found in localStorage at load; `Spine.inspectImport` refuses the same object as a file ("That file has no household in it"). A person who copied that blob out of their browser cannot bring it back in. The change, in `shared/spine-v2.js` `inspectImport`, before the schemaVersion check:
+
+```js
+    /* The pre-spine flat profile (D-… legacy): no schemaVersion, but the
+       four keys the old tools wrote. Migrate it the way load() would. */
+    if (household && typeof household === 'object' && !('schemaVersion' in household)
+        && ('annualSalary' in household || 'studentLoanBalance' in household)) {
+      household = migrateLegacy(household);
+    }
+```
+
+`tests/migration.test.js` already exercises the file both ways and lists the refusal as a finding until this lands. DECIDE: master build; low value, low risk.

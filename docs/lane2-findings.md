@@ -198,3 +198,21 @@ None.
 - "percentile" is listed under both "net worth percentile" and "percentile"; get() returns the first
 - glossary reading level: Flesch-Kincaid grade 7.2 (16.7 words a sentence, 1.38 syllables a word) over 258 definitions
 
+## Section 5: the migration corpus
+
+70 export files across 40 formats, 905 checks. Source: `tests/migration.test.js`; corpus from `tests/tools/build-exports.js` (index in `fixtures/exports/README.md`).
+
+### Files that refuse to import or disagree with a known value
+
+| file | field | expected | got | why |
+|---|---|---|---|---|
+| 2026-09-02-pre-spine-flat-profile.json | importJSON | a way in | refused: That file has no household in it. | the pre-spine flat profile (annualSalary, studentLoanBalance) only migrates from localStorage via _migrateLegacy; a person who saved one as a file cannot import it. DECIDE: whether Your Data should accept it. |
+
+### Throws and unreadable fixtures
+
+None.
+
+### Notes
+
+- 1 of 70 fixture files disagree with a known value or refuse to import; each row above names the field.
+

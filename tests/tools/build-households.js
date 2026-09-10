@@ -22,7 +22,7 @@ const fs = require('fs');
 const path = require('path');
 const ROOT = path.resolve(__dirname, '..', '..');
 const Money = require(path.join(ROOT, 'shared/money.js'));
-const Schema = require(path.join(ROOT, 'shared/schema.js'));
+const DefaultSchema = require(path.join(ROOT, 'shared/schema.js'));
 
 const OUT = path.join(ROOT, 'fixtures', 'households');
 const EDGE = path.join(OUT, 'edge');
@@ -94,7 +94,8 @@ function known(spec) {
 
 /* ---- Builders ------------------------------------------------------------ */
 let seq = 0;
-function person(p) {
+function person(p, Schema) {
+  Schema = Schema || DefaultSchema;
   const id = p.id || ('p_' + (++seq));
   const out = Schema.createPerson({
     id, label: p.label, role: p.role || 'adult', dob: p.dob, employmentStatus: p.status === undefined ? null : p.status,
@@ -110,10 +111,12 @@ function person(p) {
   });
   return out;
 }
-function asset(a, i) {
+function asset(a, i, Schema) {
+  Schema = Schema || DefaultSchema;
   return Schema.createAsset({ id: a.id || ('a_' + i), label: a.label, category: a.category, valueCents: c(a.value), liquid: a.liquid === undefined ? a.category === 'cash' : a.liquid, ownerIds: a.owners || [], taxCharacter: a.taxCharacter === undefined ? null : a.taxCharacter, costBasisCents: a.basis === undefined ? null : c(a.basis) });
 }
-function debt(d, i) {
+function debt(d, i, Schema) {
+  Schema = Schema || DefaultSchema;
   return Schema.createDebt({ id: d.id || ('d_' + i), label: d.label, balanceCents: c(d.balance), rate: d.rate, minPaymentCents: c(d.min), type: d.type, ownerIds: d.owners || [], creditLimitCents: d.limit === undefined ? null : c(d.limit), interestFree: d.interestFree });
 }
 function fatBlock(fat) {
@@ -124,15 +127,16 @@ function fatBlock(fat) {
     entries: []
   };
 }
-function build(spec) {
+function build(spec, SchemaOverride) {
+  const Schema = SchemaOverride || DefaultSchema;
   seq = 0;
-  const people = (spec.people || []).map(person);
+  const people = (spec.people || []).map((p) => person(p, Schema));
   const h = Schema.createHousehold(Object.assign({
     people,
     filingStatus: spec.filingStatus === undefined ? null : spec.filingStatus,
     state: spec.state === undefined ? null : spec.state,
-    assets: (spec.assets || []).map(asset),
-    debts: (spec.debts || []).map(debt),
+    assets: (spec.assets || []).map((a, i) => asset(a, i, Schema)),
+    debts: (spec.debts || []).map((d, i) => debt(d, i, Schema)),
     expenses: fatBlock(spec.fat),
     dependents: spec.dependents === undefined ? null : spec.dependents,
     capturingFullMatch: spec.capturingFullMatch === undefined ? null : spec.capturingFullMatch,
@@ -518,6 +522,12 @@ function write(dir, spec) {
   fs.writeFileSync(file, JSON.stringify(h, null, 2) + '\n');
   return file;
 }
-fs.mkdirSync(EDGE, { recursive: true });
-const written = ARCHETYPES.map((s) => write(OUT, s)).concat(EDGES.map((s) => write(EDGE, s)));
-console.log('wrote ' + written.length + ' fixtures (' + ARCHETYPES.length + ' archetypes, ' + EDGES.length + ' edge cases)');
+/* The specs and the builder are shared with tests/tools/build-exports.js
+   (section 5), which builds the same households through OLDER versions of
+   shared/schema.js: `build(spec, SchemaAtThatCommit)`. */
+module.exports = { ARCHETYPES, EDGES, build, known, AS_OF };
+if (require.main === module) {
+  fs.mkdirSync(EDGE, { recursive: true });
+  const written = ARCHETYPES.map((s) => write(OUT, s)).concat(EDGES.map((s) => write(EDGE, s)));
+  console.log('wrote ' + written.length + ' fixtures (' + ARCHETYPES.length + ' archetypes, ' + EDGES.length + ' edge cases)');
+}

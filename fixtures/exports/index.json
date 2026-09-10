@@ -1,0 +1,515 @@
+{
+  "generatedFrom": "64 commits touching shared/schema.js, shared/spine-v2.js or shared/money.js",
+  "formats": [
+    {
+      "commit": null,
+      "date": "2026-09-02",
+      "subject": "pre-spine flat profile (legacy localStorage shape)",
+      "via": "legacyStorage",
+      "sample": false,
+      "files": [
+        "2026-09-02-pre-spine-flat-profile.json"
+      ],
+      "added": 5,
+      "removed": 0
+    },
+    {
+      "commit": "d4c5599",
+      "date": "2026-09-03",
+      "subject": "Build the shared foundation: schema, spine, design system, reference data",
+      "via": "storedBlob",
+      "sample": false,
+      "files": [
+        "2026-09-03-d4c5599-grad-broke.json",
+        "2026-09-03-d4c5599-dink-highearn.json",
+        "2026-09-03-d4c5599-house-hacker.json",
+        "2026-09-03-d4c5599-near-retiree.json",
+        "2026-09-03-d4c5599-between-jobs.json",
+        "2026-09-03-d4c5599-max-savers.json",
+        "2026-09-03-d4c5599-forty-debts.json"
+      ],
+      "added": 68,
+      "removed": 0
+    },
+    {
+      "commit": "07834e4",
+      "date": "2026-09-03",
+      "subject": "Add the Financial Snapshot room — Tier 0's ten inputs and nine outputs",
+      "via": "storedBlob",
+      "sample": true,
+      "files": [
+        "2026-09-03-07834e4-dink-highearn.json"
+      ],
+      "added": 1,
+      "removed": 0
+    },
+    {
+      "commit": "6776b58",
+      "date": "2026-09-03",
+      "subject": "Add the Cash Flow engine — categorised spending, one store, import-ready",
+      "via": "storedBlob",
+      "sample": false,
+      "files": [
+        "2026-09-03-6776b58-grad-broke.json",
+        "2026-09-03-6776b58-dink-highearn.json",
+        "2026-09-03-6776b58-house-hacker.json",
+        "2026-09-03-6776b58-near-retiree.json",
+        "2026-09-03-6776b58-between-jobs.json",
+        "2026-09-03-6776b58-max-savers.json",
+        "2026-09-03-6776b58-forty-debts.json"
+      ],
+      "added": 2,
+      "removed": 2
+    },
+    {
+      "commit": "7fbfc39",
+      "date": "2026-09-03",
+      "subject": "Add Real Hourly Wage — what the job actually pays",
+      "via": "storedBlob",
+      "sample": true,
+      "files": [
+        "2026-09-03-7fbfc39-dink-highearn.json"
+      ],
+      "added": 8,
+      "removed": 0
+    },
+    {
+      "commit": "0f67cea",
+      "date": "2026-09-03",
+      "subject": "Add the Goal Costing Engine — wedding, deposit and trip from one room",
+      "via": "storedBlob",
+      "sample": true,
+      "files": [
+        "2026-09-03-0f67cea-dink-highearn.json"
+      ],
+      "added": 2,
+      "removed": 0
+    },
+    {
+      "commit": "023bc45",
+      "date": "2026-09-03",
+      "subject": "Add Sleep At Night — the SWAN Number, beside the maths it disagrees with",
+      "via": "storedBlob",
+      "sample": true,
+      "files": [
+        "2026-09-03-023bc45-dink-highearn.json"
+      ],
+      "added": 6,
+      "removed": 0
+    },
+    {
+      "commit": "f567abb",
+      "date": "2026-09-03",
+      "subject": "Add What Matters — stated values against a categorised month, with no score",
+      "via": "storedBlob",
+      "sample": true,
+      "files": [
+        "2026-09-03-f567abb-dink-highearn.json"
+      ],
+      "added": 4,
+      "removed": 0
+    },
+    {
+      "commit": "f955b5e",
+      "date": "2026-09-04",
+      "subject": "Add the one 1-10 rating control, before the four tools that need it",
+      "via": "storedBlob",
+      "sample": true,
+      "files": [
+        "2026-09-04-f955b5e-dink-highearn.json"
+      ],
+      "added": 1,
+      "removed": 0
+    },
+    {
+      "commit": "72dede3",
+      "date": "2026-09-04",
+      "subject": "Add Worth It — before and after are one record, not two",
+      "via": "storedBlob",
+      "sample": true,
+      "files": [
+        "2026-09-04-72dede3-dink-highearn.json"
+      ],
+      "added": 2,
+      "removed": 0
+    },
+    {
+      "commit": "31f6a8c",
+      "date": "2026-09-04",
+      "subject": "Credit utilisation now computes — ask for the limit, and count only the cards that have one",
+      "via": "storedBlob",
+      "sample": true,
+      "files": [
+        "2026-09-04-31f6a8c-dink-highearn.json"
+      ],
+      "added": 1,
+      "removed": 0
+    },
+    {
+      "commit": "00d23b1",
+      "date": "2026-09-04",
+      "subject": "Ask how people are actually paid, and let a year have two jobs in it",
+      "via": "storedBlob",
+      "sample": true,
+      "files": [
+        "2026-09-04-00d23b1-dink-highearn.json"
+      ],
+      "added": 5,
+      "removed": 0
+    },
+    {
+      "commit": "2b7fed7",
+      "date": "2026-09-04",
+      "subject": "Facts get answered once; what-ifs get thrown away",
+      "via": "storedBlob",
+      "sample": true,
+      "files": [
+        "2026-09-04-2b7fed7-dink-highearn.json"
+      ],
+      "added": 9,
+      "removed": 0
+    },
+    {
+      "commit": "63f6852",
+      "date": "2026-09-04",
+      "subject": "A 0% card is a card with a deadline",
+      "via": "storedBlob",
+      "sample": true,
+      "files": [
+        "2026-09-04-63f6852-dink-highearn.json"
+      ],
+      "added": 2,
+      "removed": 0
+    },
+    {
+      "commit": "90bbfa3",
+      "date": "2026-09-04",
+      "subject": "Ask whether there is an employer before asking about the match",
+      "via": "storedBlob",
+      "sample": true,
+      "files": [
+        "2026-09-04-90bbfa3-dink-highearn.json"
+      ],
+      "added": 1,
+      "removed": 0
+    },
+    {
+      "commit": "954b085",
+      "date": "2026-09-04",
+      "subject": "Give every owned field a clock, and read snapshots back",
+      "via": "storedBlob",
+      "sample": true,
+      "files": [
+        "2026-09-04-954b085-dink-highearn.json"
+      ],
+      "added": 1,
+      "removed": 0
+    },
+    {
+      "commit": "9d126b6",
+      "date": "2026-09-04",
+      "subject": "Rebuild the intake: eleven cards, two people, one answer derived, \"no debt\" as an answer",
+      "via": "exportJSON",
+      "sample": false,
+      "files": [
+        "2026-09-04-9d126b6-grad-broke.json",
+        "2026-09-04-9d126b6-dink-highearn.json",
+        "2026-09-04-9d126b6-house-hacker.json",
+        "2026-09-04-9d126b6-near-retiree.json",
+        "2026-09-04-9d126b6-between-jobs.json",
+        "2026-09-04-9d126b6-max-savers.json",
+        "2026-09-04-9d126b6-forty-debts.json"
+      ],
+      "added": 1,
+      "removed": 0
+    },
+    {
+      "commit": "a24ac1d",
+      "date": "2026-09-05",
+      "subject": "Give the household the Statement's shape: liquidity, confidence, access age, future income",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-05-a24ac1d-dink-highearn.json"
+      ],
+      "added": 25,
+      "removed": 0
+    },
+    {
+      "commit": "1846d94",
+      "date": "2026-09-05",
+      "subject": "The benchmarks engine: wealth multiplier, PAW, the five levels, 1% more, human capital",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-05-1846d94-dink-highearn.json"
+      ],
+      "added": 1,
+      "removed": 0
+    },
+    {
+      "commit": "a4e1ea9",
+      "date": "2026-09-05",
+      "subject": "Fourteen more ratios in the one registry, three with bands",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-05-a4e1ea9-dink-highearn.json"
+      ],
+      "added": 1,
+      "removed": 0
+    },
+    {
+      "commit": "c33d764",
+      "date": "2026-09-05",
+      "subject": "The Rerank: cost order against value order, and the lines where they disagree",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-05-c33d764-dink-highearn.json"
+      ],
+      "added": 3,
+      "removed": 0
+    },
+    {
+      "commit": "9d2278f",
+      "date": "2026-09-05",
+      "subject": "The Skill Stacker: three at a time, did or didn't, a ledger of what each day was worth",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-05-9d2278f-dink-highearn.json"
+      ],
+      "added": 3,
+      "removed": 0
+    },
+    {
+      "commit": "2b9c32b",
+      "date": "2026-09-05",
+      "subject": "Unemployed is an answer with a sequence of its own",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-05-2b9c32b-dink-highearn.json"
+      ],
+      "added": 8,
+      "removed": 0
+    },
+    {
+      "commit": "5a1f1b5",
+      "date": "2026-09-05",
+      "subject": "The gate: which branches exist for whom, and which rooms are in the map",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-05-5a1f1b5-dink-highearn.json"
+      ],
+      "added": 20,
+      "removed": 0
+    },
+    {
+      "commit": "daa4f36",
+      "date": "2026-09-05",
+      "subject": "Start Here is one page: the gate, ten cards at most, every box a guess until it is yours",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-05-daa4f36-dink-highearn.json"
+      ],
+      "added": 1,
+      "removed": 0
+    },
+    {
+      "commit": "531498a",
+      "date": "2026-09-05",
+      "subject": "Schema, ownership and registry rows for the first six tranche rooms, with stub pages",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-05-531498a-dink-highearn.json"
+      ],
+      "added": 9,
+      "removed": 0
+    },
+    {
+      "commit": "8b3bacc",
+      "date": "2026-09-05",
+      "subject": "Schema, ownership and registry rows for the second six tranche rooms, with stub pages",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-05-8b3bacc-dink-highearn.json"
+      ],
+      "added": 26,
+      "removed": 0
+    },
+    {
+      "commit": "f9290c7",
+      "date": "2026-09-05",
+      "subject": "The LATER.md items that are not rooms: one log across tabs, worded labels, the default lens, rooms.json",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-05-f9290c7-dink-highearn.json"
+      ],
+      "added": 1,
+      "removed": 0
+    },
+    {
+      "commit": "6cb1773",
+      "date": "2026-09-05",
+      "subject": "Schema, ownership and registry rows for the LATER.md rooms, with stub pages",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-05-6cb1773-dink-highearn.json"
+      ],
+      "added": 30,
+      "removed": 0
+    },
+    {
+      "commit": "06c6135",
+      "date": "2026-09-05",
+      "subject": "Debt Payoff: family loans, no interest, set aside, and two dates on every debt",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-05-06c6135-dink-highearn.json"
+      ],
+      "added": 4,
+      "removed": 0
+    },
+    {
+      "commit": "3aa653c",
+      "date": "2026-09-05",
+      "subject": "Ledger schema: income entries with their costs, the expense log's link and deduction, closed months, hand-set estimates",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-05-3aa653c-dink-highearn.json"
+      ],
+      "added": 9,
+      "removed": 0
+    },
+    {
+      "commit": "bbe7ebc",
+      "date": "2026-09-05",
+      "subject": "Variable Income reads the ledger: a filtered view with a rolling average, no add form",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-05-bbe7ebc-dink-highearn.json"
+      ],
+      "added": 1,
+      "removed": 0
+    },
+    {
+      "commit": "872db6c",
+      "date": "2026-09-05",
+      "subject": "Budget presets: Rule of Five, Max IRA, Max 401(k), stacked into Estimated",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-05-872db6c-dink-highearn.json"
+      ],
+      "added": 2,
+      "removed": 0
+    },
+    {
+      "commit": "0fcef89",
+      "date": "2026-09-05",
+      "subject": "Budget: Not applicable for structural options, and a Hypothetical view that never writes",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-05-0fcef89-dink-highearn.json"
+      ],
+      "added": 1,
+      "removed": 0
+    },
+    {
+      "commit": "2dae6c1",
+      "date": "2026-09-05",
+      "subject": "Skill Tree, step 1: the engine — household in, per-skill state and reason out",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-05-2dae6c1-dink-highearn.json"
+      ],
+      "added": 5,
+      "removed": 0
+    },
+    {
+      "commit": "8be20d2",
+      "date": "2026-09-05",
+      "subject": "Debt Payoff: reasons to keep a debt, and a hold-back the household flips itself",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-05-8be20d2-dink-highearn.json"
+      ],
+      "added": 3,
+      "removed": 0
+    },
+    {
+      "commit": "38e31d5",
+      "date": "2026-09-06",
+      "subject": "The Walk-Through: fifty-nine rooms, and a route with an end",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-06-38e31d5-dink-highearn.json"
+      ],
+      "added": 5,
+      "removed": 0
+    },
+    {
+      "commit": "e4f2508",
+      "date": "2026-09-07",
+      "subject": "Front Doors: twenty arrangements, one engine, no room lost",
+      "via": "exportJSON",
+      "sample": true,
+      "files": [
+        "2026-09-07-e4f2508-dink-highearn.json"
+      ],
+      "added": 1,
+      "removed": 0
+    },
+    {
+      "commit": "0edaa17",
+      "date": "2026-09-09",
+      "subject": "Section 2: expenses are four numbers — FAT, wants, and one optional line (D-172)",
+      "via": "exportJSON",
+      "sample": false,
+      "files": [
+        "2026-09-09-0edaa17-grad-broke.json",
+        "2026-09-09-0edaa17-dink-highearn.json",
+        "2026-09-09-0edaa17-house-hacker.json",
+        "2026-09-09-0edaa17-near-retiree.json",
+        "2026-09-09-0edaa17-between-jobs.json",
+        "2026-09-09-0edaa17-max-savers.json",
+        "2026-09-09-0edaa17-forty-debts.json"
+      ],
+      "added": 10,
+      "removed": 4
+    },
+    {
+      "commit": "72729ae",
+      "date": "2026-09-09",
+      "subject": "Section 10: the block model — a hypothetical laid on the household, never in it (D-178)",
+      "via": "exportJSON",
+      "sample": false,
+      "files": [
+        "2026-09-09-72729ae-grad-broke.json",
+        "2026-09-09-72729ae-dink-highearn.json",
+        "2026-09-09-72729ae-house-hacker.json",
+        "2026-09-09-72729ae-near-retiree.json",
+        "2026-09-09-72729ae-between-jobs.json",
+        "2026-09-09-72729ae-max-savers.json",
+        "2026-09-09-72729ae-forty-debts.json"
+      ],
+      "added": 0,
+      "removed": 0
+    }
+  ]
+}

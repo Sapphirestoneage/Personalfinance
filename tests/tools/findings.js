@@ -132,11 +132,38 @@ function glossarySection(r) {
   return L;
 }
 
+function migrationSection(r) {
+  const L = [];
+  L.push('## Section 5: the migration corpus');
+  L.push('');
+  L.push(r.files + ' export files across ' + r.formats + ' formats, ' + r.passed + ' checks. Source: `tests/migration.test.js`; corpus from `tests/tools/build-exports.js` (index in `fixtures/exports/README.md`).');
+  L.push('');
+  L.push('### Files that refuse to import or disagree with a known value');
+  L.push('');
+  if (!r.findings.length) L.push('None. Every format the app has produced imports through the current path and renders the section 1 numbers within 1%.');
+  else {
+    L.push('| file | field | expected | got | why |');
+    L.push('|---|---|---|---|---|');
+    r.findings.forEach((f) => L.push('| ' + f.file + ' | ' + f.field + ' | ' + String(f.expected) + ' | ' + String(f.actual) + ' | ' + f.reason + ' |'));
+  }
+  L.push('');
+  L.push('### Throws and unreadable fixtures');
+  L.push('');
+  if (!r.failures.length) L.push('None.'); else r.failures.forEach((f) => L.push('- ' + f.replace(/\n\s*/g, ' ')));
+  L.push('');
+  L.push('### Notes');
+  L.push('');
+  r.notes.forEach((n) => L.push('- ' + n));
+  L.push('');
+  return L;
+}
+
 function render() {
   const corpus = read('corpus');
   const properties = read('properties');
   const data = read('data');
   const glossary = read('glossary');
+  const migration = read('migration');
   const L = [];
   L.push('# Lane 2 findings');
   L.push('');
@@ -146,6 +173,7 @@ function render() {
   if (properties) L.push.apply(L, propertiesSection(properties));
   if (data) L.push.apply(L, dataSection(data));
   if (glossary) L.push.apply(L, glossarySection(glossary));
+  if (migration) L.push.apply(L, migrationSection(migration));
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, L.join('\n') + '\n');
   return OUT;

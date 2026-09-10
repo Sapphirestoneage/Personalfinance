@@ -1,0 +1,431 @@
+{
+  "format": "slaf-export",
+  "exportVersion": 1,
+  "schemaVersion": 2,
+  "appVersion": "2.0",
+  "exportedAt": "2026-09-10T00:55:53.106Z",
+  "household": {
+    "schemaVersion": 2,
+    "people": [
+      {
+        "id": "p_nr_a",
+        "label": "Chris",
+        "role": "adult",
+        "dob": "1965-04-18",
+        "employmentStatus": "employed",
+        "unemployment": {
+          "since": null,
+          "benefitStatus": null,
+          "benefitWeeklyCents": null,
+          "benefitWeeksLeft": null,
+          "severanceCents": null,
+          "lastGrossAnnualCents": null,
+          "expectedSearchMonths": null,
+          "floorMonthlyCents": null
+        },
+        "incomeSources": [
+          {
+            "id": "p_nr_a_inc0",
+            "personId": "p_nr_a",
+            "source": "Engineering job",
+            "grossAnnualIncomeCents": 10500000,
+            "frequency": "annual",
+            "rateCents": null,
+            "hoursPerWeek": null,
+            "monthsWorked": null,
+            "ongoing": true,
+            "variableLowCents": null,
+            "variableHighCents": null,
+            "type": "w2",
+            "hassle": null,
+            "employerMatch": {
+              "matchPercent": 1,
+              "matchCapPercentOfSalary": 0.05
+            }
+          }
+        ],
+        "work": {
+          "contractedHoursPerWeek": null,
+          "unpaidOvertimeHoursPerWeek": null,
+          "commuteHoursPerWeek": null,
+          "prepHoursPerWeek": null,
+          "decompressHoursPerWeek": null,
+          "workCostsMonthlyCents": null,
+          "weeksPerYear": 48
+        }
+      },
+      {
+        "id": "p_nr_b",
+        "label": "Lee",
+        "role": "adult",
+        "dob": "1966-08-03",
+        "employmentStatus": "notWorking",
+        "unemployment": {
+          "since": null,
+          "benefitStatus": null,
+          "benefitWeeklyCents": null,
+          "benefitWeeksLeft": null,
+          "severanceCents": null,
+          "lastGrossAnnualCents": null,
+          "expectedSearchMonths": null,
+          "floorMonthlyCents": null
+        },
+        "incomeSources": [],
+        "work": {
+          "contractedHoursPerWeek": null,
+          "unpaidOvertimeHoursPerWeek": null,
+          "commuteHoursPerWeek": null,
+          "prepHoursPerWeek": null,
+          "decompressHoursPerWeek": null,
+          "workCostsMonthlyCents": null,
+          "weeksPerYear": 48
+        }
+      }
+    ],
+    "filingStatus": "married_joint",
+    "state": "PA",
+    "capturingFullMatch": true,
+    "dependents": [],
+    "community": {
+      "daySchool": null
+    },
+    "assets": [
+      {
+        "id": "a_0",
+        "label": "Savings",
+        "category": "cash",
+        "valueCents": 4000000,
+        "liquid": true,
+        "ownerIds": [],
+        "taxCharacter": null,
+        "liquidity": null,
+        "confidence": null,
+        "costBasisCents": null,
+        "hassle": null,
+        "cashFlowMonthlyCents": null,
+        "accessAgeOverride": null
+      },
+      {
+        "id": "a_1",
+        "label": "Brokerage",
+        "category": "investment",
+        "valueCents": 8000000,
+        "liquid": false,
+        "ownerIds": [],
+        "taxCharacter": "taxable",
+        "liquidity": null,
+        "confidence": null,
+        "costBasisCents": null,
+        "hassle": null,
+        "cashFlowMonthlyCents": null,
+        "accessAgeOverride": null
+      },
+      {
+        "id": "a_2",
+        "label": "401(k) + rollover IRA",
+        "category": "retirement",
+        "valueCents": 78000000,
+        "liquid": false,
+        "ownerIds": [],
+        "taxCharacter": "pretax",
+        "liquidity": null,
+        "confidence": null,
+        "costBasisCents": null,
+        "hassle": null,
+        "cashFlowMonthlyCents": null,
+        "accessAgeOverride": null
+      }
+    ],
+    "debts": [],
+    "expenses": {
+      "needs": {
+        "food": {
+          "monthlyCents": 80000
+        },
+        "accommodation": {
+          "monthlyCents": 190000
+        },
+        "transportation": {
+          "monthlyCents": 45000
+        }
+      },
+      "wants": {
+        "totalCents": 170000,
+        "therapy": null
+      },
+      "entries": []
+    },
+    "incomeBasis": "earned",
+    "retirement": {
+      "contributionPercent": 20,
+      "rothContributedCents": 0,
+      "hsaContributedCents": null,
+      "onHdhp": false,
+      "hsaFamilyPlan": null,
+      "has401k": true
+    },
+    "insurance": {
+      "highestDeductibleCents": null,
+      "oopMaxCents": null,
+      "termLifeCents": null,
+      "disabilityMonthlyCents": null,
+      "umbrella": null,
+      "health": {
+        "type": null,
+        "monthlyCents": null
+      }
+    },
+    "worthChecks": [],
+    "ratings": {},
+    "valuesProfile": {
+      "stated": [],
+      "assignments": {}
+    },
+    "swan": {
+      "basis": null,
+      "targetCents": null,
+      "targetMonths": null,
+      "note": null,
+      "setAt": null
+    },
+    "goals": [],
+    "futureIncome": [
+      {
+        "id": "fi_pension",
+        "label": "Pension",
+        "kind": "benefit",
+        "monthlyCents": 180000,
+        "startsOn": null,
+        "startsAtAge": 65,
+        "endsOn": null,
+        "endsAtAge": null,
+        "confidence": null,
+        "inflationAdjusted": null,
+        "ownerIds": []
+      },
+      {
+        "id": "fi_ss",
+        "label": "Social Security (estimate)",
+        "kind": "benefit",
+        "monthlyCents": 260000,
+        "startsOn": null,
+        "startsAtAge": 67,
+        "endsOn": null,
+        "endsAtAge": null,
+        "confidence": null,
+        "inflationAdjusted": null,
+        "ownerIds": []
+      }
+    ],
+    "property": [],
+    "allocation": {
+      "stocks": null,
+      "bonds": null,
+      "cash": null,
+      "rebalanceBand": null
+    },
+    "rerank": {
+      "rows": []
+    },
+    "targets": {
+      "retireAge": 65,
+      "coastAge": null
+    },
+    "scenarios": [],
+    "oneOffs": [],
+    "estate": {
+      "beneficiariesSet": null,
+      "willExists": null,
+      "poaExists": null
+    },
+    "giving": {
+      "pctOfIncome": null,
+      "annualTargetCents": null
+    },
+    "decumulation": {
+      "stockShare": null,
+      "plannedAnnualDrawCents": null,
+      "socialSecurityAt": null
+    },
+    "tax": {
+      "otherPreTaxAnnualCents": null,
+      "withheldAnnualCents": null
+    },
+    "career": {
+      "offer": {
+        "grossAnnualCents": null,
+        "hoursPerWeek": null,
+        "commuteHoursPerWeek": null,
+        "workCostsMonthlyCents": null,
+        "signOnCents": null
+      }
+    },
+    "partner": {
+      "splitMode": null,
+      "sharedMonthlyCents": null
+    },
+    "kids": {
+      "tuitionTargetCents": null,
+      "tuitionSavedCents": null,
+      "tuitionMonthlyCents": null
+    },
+    "housing": {
+      "rentMonthlyCents": null,
+      "priceCents": null,
+      "downPct": null,
+      "rate": null
+    },
+    "purchase": {
+      "priceCents": null,
+      "monthsAway": null,
+      "financeRate": null,
+      "label": null
+    },
+    "variableIncome": {
+      "bufferMonths": null,
+      "windowMonths": null
+    },
+    "enough": {
+      "monthlyCents": null,
+      "source": null
+    },
+    "designedWeek": {
+      "blocks": []
+    },
+    "timeBuckets": [],
+    "dreams": [],
+    "reversibility": {
+      "decisionId": null,
+      "given": {}
+    },
+    "unlearning": {
+      "dropped": []
+    },
+    "studentLoans": {
+      "plan": null,
+      "extraMonthlyCents": null,
+      "idrShare": null,
+      "forgivenessYears": null
+    },
+    "calendar": {
+      "cadence": null,
+      "nextPaydayDay": null,
+      "bills": [],
+      "payLater": []
+    },
+    "history": {
+      "compareTo": null
+    },
+    "ledger": {
+      "income": [],
+      "months": [],
+      "dismissed": []
+    },
+    "budget": {
+      "estimated": {},
+      "presets": {}
+    },
+    "notApplicable": {},
+    "skills": {},
+    "skillTree": {
+      "state": {}
+    },
+    "exercises": {
+      "done": {},
+      "results": {}
+    },
+    "practiceLedger": [],
+    "assumptions": {
+      "returnReal": 0.05,
+      "inflation": 0.03,
+      "expectedReturnRate": 0.07,
+      "swrRate": 0.04,
+      "humanCapitalDiscountRate": 0.02,
+      "homeEquityHaircut": 0.8,
+      "marginalRate": null
+    },
+    "assumptionOverrides": {},
+    "meta": {
+      "visitedRooms": [],
+      "createdAt": null,
+      "updatedAt": "2026-09-10T00:55:53.105Z",
+      "confirmedAt": {},
+      "hasDebt": false,
+      "guessed": {},
+      "source": {},
+      "displayUnit": null,
+      "noRent": null,
+      "walk": {
+        "startedAt": null,
+        "finishedAt": null,
+        "done": {},
+        "skipped": {}
+      },
+      "frontDoor": null,
+      "isDemo": true,
+      "name": "Near retiree",
+      "story": "61, $900k mostly pretax, a pension at 65, a Social Security estimate at 67.",
+      "sphere": 7,
+      "sphereNote": "DECIDE: the sphere is a guess at the depth these rows reach under section 19 of the master prompt; spheres.json does not exist yet.",
+      "lane": "lane2 section 1 (L-1)",
+      "known": {
+        "asOf": "2026-09-10",
+        "tolerance": 0.01,
+        "monthlySpendingCents": 485000,
+        "fiTargetCents": 145500000,
+        "grossAnnualCents": 10500000,
+        "effectiveRate": 0.17,
+        "estimatedTaxCents": 1785000,
+        "takeHomeAnnualCents": 8715000,
+        "takeHomeMonthlyCents": 726250,
+        "savingsRate": 0.2757142857142857,
+        "runwayMonths": 8.24742268041237,
+        "runwayWholeMonths": 8,
+        "netWorthCents": 90000000,
+        "working": [
+          "monthly spending = food $800 + accommodation $1,900 + transportation $450 + everything else $1,700 = $4,850",
+          "FI target = $4,850 x 12 / 0.04 = $58,200 / 0.04 = $1,455,000",
+          "gross $105,000 married_joint: band married_joint up to $130,000 -> effective rate 0.17",
+          "estimated tax = $105,000 x 0.17 = $17,850; take-home = $105,000 - $17,850 = $87,150 a year, $7,262.5 a month",
+          "savings rate (excluding match) = ($87,150 - $58,200) / $105,000 = $28,950 / $105,000 = 0.2757",
+          "runway = cash $40,000 / $4,850 a month = 8.2474 months (8 whole months; Runway.project stops at 60)",
+          "net worth = $40,000 + $80,000 + $780,000 - $0 = $900,000"
+        ]
+      }
+    }
+  },
+  "snapshots": [],
+  "lane2": {
+    "section": 5,
+    "commit": "72729ae",
+    "date": "2026-09-09",
+    "subject": "Section 10: the block model — a hypothetical laid on the household, never in it (D-178)",
+    "via": "exportJSON",
+    "specId": "near-retiree",
+    "known": {
+      "asOf": "2026-09-10",
+      "tolerance": 0.01,
+      "monthlySpendingCents": 485000,
+      "fiTargetCents": 145500000,
+      "grossAnnualCents": 10500000,
+      "effectiveRate": 0.17,
+      "estimatedTaxCents": 1785000,
+      "takeHomeAnnualCents": 8715000,
+      "takeHomeMonthlyCents": 726250,
+      "savingsRate": 0.2757142857142857,
+      "runwayMonths": 8.24742268041237,
+      "runwayWholeMonths": 8,
+      "netWorthCents": 90000000,
+      "working": [
+        "monthly spending = food $800 + accommodation $1,900 + transportation $450 + everything else $1,700 = $4,850",
+        "FI target = $4,850 x 12 / 0.04 = $58,200 / 0.04 = $1,455,000",
+        "gross $105,000 married_joint: band married_joint up to $130,000 -> effective rate 0.17",
+        "estimated tax = $105,000 x 0.17 = $17,850; take-home = $105,000 - $17,850 = $87,150 a year, $7,262.5 a month",
+        "savings rate (excluding match) = ($87,150 - $58,200) / $105,000 = $28,950 / $105,000 = 0.2757",
+        "runway = cash $40,000 / $4,850 a month = 8.2474 months (8 whole months; Runway.project stops at 60)",
+        "net worth = $40,000 + $80,000 + $780,000 - $0 = $900,000"
+      ]
+    },
+    "patchFallback": null
+  }
+}
