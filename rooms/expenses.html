@@ -46,7 +46,7 @@
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3); margin-top: var(--space-3); }
   .form-grid .wide { grid-column: 1 / -1; }
 
-  /* At a glance (D-193): the ring and the estimated-vs-actual bars side by
+  /* At a glance (D-196): the ring and the estimated-vs-actual bars side by
      side, stacked on a phone. The bars borrow .slaf-bars from theme.css. */
   .picture-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--space-4); align-items: start; margin-top: var(--space-3); }
   @media (max-width: 640px) { .picture-grid { grid-template-columns: 1fr; } }
@@ -65,7 +65,7 @@
   .bucket-lines:empty { display: none; }
   .bucket-lines.is-caution { color: var(--color-caution); }
   .bucket-lines button { background: none; border: none; padding: 0; margin-left: 4px; font: inherit; color: var(--color-accent-hover); cursor: pointer; text-decoration: underline; min-height: 24px; }
-  /* Named lines and subscriptions (D-193). */
+  /* Named lines and subscriptions (D-196). */
   .line-group { margin-top: var(--space-4); }
   .line-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
   .line-head h3 { margin: 0; font-size: var(--text-base); }
@@ -361,7 +361,7 @@
     var list = (h.expenses && h.expenses.entries) || [];
     for (var i = 0; i < list.length; i++) {
       var e = list[i];
-      /* A named line (D-193) is its own row below, never the category's box. */
+      /* A named line (D-196) is its own row below, never the category's box. */
       if (e.categoryId === categoryId && e.period === 'monthly' && e.source === 'manual' && !e.descriptor && e.active !== false) return e;
     }
     return null;
@@ -393,7 +393,7 @@
      one table of periods, not two. */
   var PER = [['monthly', '/mo', 'a month'], ['weekly', '/wk', 'a week'], ['fortnightly', '/2wk', 'every two weeks'], ['annual', '/yr', 'a year']];
   function toMonthlyCents(cents, per) {
-    /* One formula (D-193); the Income bases stand in for a stale schema. */
+    /* One formula (D-196); the Income bases stand in for a stale schema. */
     if (typeof Schema.monthlyFromEvery === 'function') return Schema.monthlyFromEvery(cents, per);
     var basis = Income.basisById(per) || Income.basisById('monthly');
     return Math.round(cents * basis.periods / 12);
@@ -587,7 +587,7 @@
     });
   }
 
-  /* ---------- named lines and subscriptions (D-193) --------------------------
+  /* ---------- named lines and subscriptions (D-196) --------------------------
      A named line is an expense entry with a descriptor: the month in
      amountCents like every line, plus `every` and `everyCents` so it reads
      back as it was known. Subscriptions are the ones in that category. */
@@ -657,7 +657,7 @@
     });
   }
 
-  /* ---------- at a glance (D-193) ------------------------------------------
+  /* ---------- at a glance (D-196) ------------------------------------------
      The ring is the month by bucket, in a fixed colour order. The bars set
      the four numbers (the estimate) beside what Cash Flow's log says has
      actually gone out this month, bucket by bucket, from one engine
@@ -1106,7 +1106,7 @@
     buildInputs();
     wireFat();
     wireAnnual();   /* 15.5 (D-181) */
-    wireLines();    /* D-193 */
+    wireLines();    /* D-196 */
     /* The split opens on its own when there are lines in it; closed, the
        page is the four numbers. */
     var lines0 = Schema.fatFromLines(Spine.getProfile().expenses.entries);

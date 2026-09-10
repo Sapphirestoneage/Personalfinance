@@ -1043,7 +1043,7 @@ const CASES = [
     }
   },
   {
-    /* A named line (D-193): typed as a year, kept as a month, listed under
+    /* A named line (D-196): typed as a year, kept as a month, listed under
        subscriptions with the year it was known as. */
     room: '/rooms/expenses.html',
     container: '#line-form',

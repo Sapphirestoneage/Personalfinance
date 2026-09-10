@@ -787,9 +787,9 @@ const RULES = TABLES.debtRules;
   checkTrue('spending past the pay: the plan gets zero and the shortfall is named, never a negative extra', capTight.cents === 0 && capTight.shortCents > 0 && capTight.estimate.value < 0);
 })();
 
-/* -- Expenses: the picture, the four numbers, the lines you name (D-193) ---- */
+/* -- Expenses: the picture, the four numbers, the lines you name (D-196) ---- */
 (function () {
-  section('Expenses: cadence, named lines, the log by bucket, the page order (D-193)');
+  section('Expenses: cadence, named lines, the log by bucket, the page order (D-196)');
   check('a week to a month: 52 over 12', Schema.monthlyFromEvery(100000, 'weekly'), 433333);
   check('every two weeks: 26 over 12', Schema.monthlyFromEvery(100000, 'fortnightly'), 216667);
   check('a month is a month', Schema.monthlyFromEvery(1599, 'monthly'), 1599);

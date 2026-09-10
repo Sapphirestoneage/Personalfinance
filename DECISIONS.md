@@ -12187,7 +12187,7 @@ features and sidebar gates with both rooms; the twenty layouts reaching
 every room; a phone walk typing the four numbers in Expenses and logging
 a receipt in Cash Flow, each landing in the stored household.
 
-## D-193 — Expenses: the picture first, then the four numbers, then the lines you name
+## D-196 — Expenses: the picture first, then the four numbers, then the lines you name
 
 **Why.** The owner, the day the room was split out (D-192): "make the
 expenses way more optimized. I still need a way to add expenses I want,

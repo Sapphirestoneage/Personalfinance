@@ -538,7 +538,7 @@
    * occurrence in the month with its group, and the totals: by group, by
    * budget bucket, personal against income costs, deductible.
    */
-  /* This month's log by FAT bucket (D-193): every logged occurrence in the
+  /* This month's log by FAT bucket (D-196): every logged occurrence in the
      expenses bucket lands in the bucket its category maps to, a credit
      paid back included, so Expenses can set actual beside estimated per
      bucket. Savings, investments, debt and costs of earning are not
