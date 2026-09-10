@@ -197,6 +197,23 @@
     },
 
     inputs: [
+      /* 15.7: the second adult's name and birth year live here, on the
+         person record (people[1]), never in a room of their own. Their pay
+         and working situation stay with Start Here, which owns pay. */
+      { ctl: 'partnerName', label: 'What to call them', kind: 'text', placeholder: 'e.g. Sam',
+        hint: 'Shown beside every figure that is theirs, once there are two of you.',
+        read: function (h) { var p = Schema.adults(h)[1]; return p ? Schema.personName(p, null) : null; },
+        write: function (v) { var p = Schema.adults(Spine.getProfile())[1]; if (p) Spine.upsertPerson({ id: p.id, label: v ? String(v).trim() : 'The other of you' }); } },
+      { ctl: 'partnerBirthYear', label: 'The year they were born', kind: 'number', placeholder: 'e.g. 1993',
+        hint: 'The year is enough: it sets their milestones (catch-up at 50, Medicare at 65, Social Security).',
+        read: function (h) { var p = Schema.adults(h)[1]; return p ? Schema.birthYearOf(p) : null; },
+        write: function (v) {
+          var p = Schema.adults(Spine.getProfile())[1]; if (!p) return;
+          var y = Money.isEntered(v) ? Math.round(v) : null;
+          if (y !== null && (y < 1900 || y > 2100)) return;
+          var keep = /^\d{4}(-\d{2}-\d{2})$/.exec(p.dob || '');
+          Spine.upsertPerson({ id: p.id, dob: y === null ? null : y + (keep ? keep[1] : '-07-01') });
+        } },
       { ctl: 'splitMode', label: 'How you split the shared month', kind: 'choice',
         options: [['equal', 'Equal halves'], ['proportional', 'In proportion to income'], ['pooled', 'One pool']],
         hint: 'Halves, each in proportion to what they earn, or everything into one pool.',

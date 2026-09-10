@@ -429,7 +429,8 @@
     if (!Money.isOk(r)) { host.innerHTML = '<p class="slaf-reason">' + esc(r.reason || '') + '</p>'; return; }
     var rows = r.rows.map(function (x) {
       var name = x.source || Schema.INCOME_TYPE_LABELS[x.type] || 'Pay';
-      return '<tr><td><b>' + esc(name) + '</b><br><small>' + esc(Schema.INCOME_TYPE_LABELS[x.type] || x.type) + ' · ' + esc(x.method) + '</small></td>'
+      var whose = Schema.personTag(Spine.getProfile(), x.personId);   /* 15.7: named when two of you, nothing when one */
+      return '<tr><td><b>' + esc(name) + '</b>' + (whose ? ' <small>' + esc(whose) + '</small>' : '') + '<br><small>' + esc(Schema.INCOME_TYPE_LABELS[x.type] || x.type) + ' · ' + esc(x.method) + '</small></td>'
         + '<td class="num">' + Money.formatCents(x.grossCents) + '</td><td class="num">' + Money.formatCents(x.takeHomeCents) + '<br><small>' + (x.effectiveRate === null ? '' : Math.round(100 * x.effectiveRate) + '% to tax') + '</small></td>'
         + '<td>' + (x.survivesJobLoss ? 'Keeps paying' : 'Stops') + '</td></tr>';
     }).join('');

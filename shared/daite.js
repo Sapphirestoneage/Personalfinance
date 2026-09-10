@@ -80,7 +80,7 @@
     monthsClosed: 'expenses.months', givingPct: 'expenses.giving', givingTarget: 'expenses.giving', floorMonthly: 'expenses.floor',
     sharedMonthly: 'expenses.shared', splitMode: 'expenses.shared', healthMonthly: 'expenses.insurance',
     /* you */
-    dob: 'you.dob', age: 'you.dob', employmentStatus: 'you.situation', dependents: 'you.dependents',
+    dob: 'you.dob', age: 'you.dob', employmentStatus: 'you.situation', dependents: 'you.dependents', partnerName: 'you.partner', partnerDob: 'you.partner',
     highestDeductible: 'you.cover', oopMax: 'you.cover', termLife: 'you.cover', disabilityMonthly: 'you.cover', umbrella: 'you.cover', healthCover: 'you.cover',
     beneficiariesSet: 'you.estate', willExists: 'you.estate', poaExists: 'you.estate',
     /* plans */

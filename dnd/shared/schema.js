@@ -89,7 +89,10 @@
      ====================================================================== */
 
   var FIELDS = {
-    'household.filingStatus':                    { class: 'raw',        unit: 'enum',    values: ['single', 'married_joint', 'married_separate', 'head_of_household'] },
+    'household.filingStatus':                    { class: 'raw',        unit: 'enum',    values: ['single', 'married_joint', 'married_separate', 'head_of_household'], note: 'mfj, mfs and hoh are accepted on the way in and stored as these (Schema.FILING_ALIASES). 15.7, D-181' },
+    'person.label':                              { class: 'raw',        unit: 'text',    note: 'the name (the prompt\'s `name`). Shown beside every per-person figure when two adults exist, nothing when one. Owned by Partner for the second adult. 15.7, D-181' },
+    'person.birthYear':                          { class: 'computed',   unit: 'year',    note: 'read off dob by Schema.birthYearOf; a person given only a year is dated 1 July of it. 15.7, D-181' },
+    'asset.owner':                               { class: 'computed',   unit: 'enum',    note: 'a person id or joint, read off ownerIds by Schema.ownerOf; accepted on the way in. 15.7, D-181' },
     'household.state':                           { class: 'raw',        unit: 'usps',    note: '2-letter state code; keys every column of data/states.json (Schema.stateCell). 15.6, D-181' },
     'household.zip':                             { class: 'raw',        unit: 'text',    note: 'optional five-digit ZIP, asked in Fine-tune; stored for a finer-than-state table, read by nothing yet. 15.6, D-181' },
     'household.capturingFullMatch':              { class: 'raw',        unit: 'bool',    note: 'null = not answered; needed by FOO step 2. DECISIONS.md D-008' },
@@ -592,13 +595,53 @@
     };
   }
 
+  /* ---- 15.7: a household of two, natively (D-181) --------------------------
+     `people[]` holds one or two adults. The prompt's `name` is the stored
+     `label`; its `birthYear` is read off `dob` (Start Here asks month and
+     year, so the date is the finer fact and the year a view of it). Given
+     only a birth year, the date is taken as 1 July of it, the expected
+     midpoint. The prompt's filing words (mfj, mfs, hoh) are accepted and
+     stored as the values the bracket tables key on. */
+  var FILING_ALIASES = { single: 'single', mfj: 'married_joint', married_joint: 'married_joint', mfs: 'married_separate', married_separate: 'married_separate', hoh: 'head_of_household', head_of_household: 'head_of_household' };
+  function filingStatusOf(v) { return v && FILING_ALIASES[v] ? FILING_ALIASES[v] : (v === undefined ? null : v); }
+  function birthYearOf(person) {
+    var m = /^(\d{4})-\d{2}-\d{2}$/.exec((person && person.dob) || '');
+    return m ? parseInt(m[1], 10) : null;
+  }
+  function personName(person, fallback) {
+    return (person && typeof person.label === 'string' && person.label.trim()) ? person.label.trim() : (fallback === undefined ? null : fallback);
+  }
+  function householdOfTwo(household) { return adults(household).length >= 2; }
+  /** The tag beside a per-person figure: the name when two people exist,
+      nothing when one. `person` may be a person or an id. */
+  function personTag(household, person) {
+    if (!householdOfTwo(household)) return '';
+    var p = typeof person === 'string' ? personById(household, person) : person;
+    var a = adults(household);
+    var i = p ? a.map(function (x) { return x.id; }).indexOf(p.id) : -1;
+    return personName(p, i === 0 ? 'You' : i === 1 ? 'The other of you' : '') || '';
+  }
+  /** Who owns an asset or a debt: a person id, or 'joint' (no owner listed,
+      or more than one). Read off ownerIds, never stored twice. */
+  function ownerOf(record) {
+    var ids = (record && record.ownerIds) || [];
+    return ids.length === 1 ? ids[0] : 'joint';
+  }
+  function ownerIdsFrom(f) {
+    if (Array.isArray(f.ownerIds)) return f.ownerIds;
+    if (typeof f.owner === 'string' && f.owner && f.owner !== 'joint') return [f.owner];
+    return [];
+  }
+
   function createPerson(fields) {
     var f = fields || {};
+    var dob = f.dob === undefined || f.dob === null ? null : f.dob;
+    if (dob === null && Money.isEntered(f.birthYear) && f.birthYear >= 1900 && f.birthYear <= 2100) dob = Math.round(f.birthYear) + '-07-01';
     return {
       id: f.id || newId('p'),
-      label: f.label || null,
+      label: (typeof f.label === 'string' && f.label) ? f.label : (typeof f.name === 'string' && f.name ? f.name : null),
       role: f.role || 'adult',
-      dob: f.dob === undefined ? null : f.dob,     // ISO 'YYYY-MM-DD'
+      dob: dob,     // ISO 'YYYY-MM-DD'
       /* Whether there is a job at all, and what kind. This is not derivable
          from the income sources: "no rate entered" means the question was
          skipped, "not earning" is a pay basis, and neither of them tells you
@@ -622,7 +665,7 @@
       category: f.category || 'other',
       valueCents: f.valueCents === undefined ? null : f.valueCents,
       liquid: f.liquid === undefined ? false : f.liquid,
-      ownerIds: f.ownerIds || [],
+      ownerIds: ownerIdsFrom(f),   /* `owner: personId | 'joint'` is accepted (15.7) */
       /* How the money is taxed on the way out. Asked in three boxes by
          Start Here (pre-tax / Roth / taxable); a lump typed as one total is
          'unknown', which is an answer — null is "never asked". D-061. */
@@ -744,7 +787,7 @@
       endsAtAge: f.endsAtAge === undefined ? null : f.endsAtAge,
       confidence: f.confidence === undefined ? null : f.confidence,
       inflationAdjusted: f.inflationAdjusted === undefined ? null : !!f.inflationAdjusted,
-      ownerIds: f.ownerIds || []
+      ownerIds: ownerIdsFrom(f)
     };
   }
 
@@ -1113,7 +1156,7 @@
       archived: f.archived === true,
       borrowedOn: f.borrowedOn === undefined ? null : f.borrowedOn,
       dueOn: f.dueOn === undefined ? null : f.dueOn,
-      ownerIds: f.ownerIds || []
+      ownerIds: ownerIdsFrom(f)
     };
   }
 
@@ -1767,7 +1810,7 @@
     return {
       schemaVersion: SCHEMA_VERSION,
       people: f.people || [],
-      filingStatus: f.filingStatus === undefined ? null : f.filingStatus,
+      filingStatus: filingStatusOf(f.filingStatus),
       state: f.state === undefined ? null : f.state,
       /* 15.6: optional ZIP, five digits, asked in Fine-tune. Nothing reads
          it yet beyond the record; a finer-than-state table would. D-181. */
@@ -2600,6 +2643,13 @@
     ORIENTATIONS: ORIENTATIONS,
     INCOME_TYPES: INCOME_TYPES,
     CADENCES: CADENCES,
+    FILING_ALIASES: FILING_ALIASES,
+    filingStatusOf: filingStatusOf,
+    birthYearOf: birthYearOf,
+    personName: personName,
+    householdOfTwo: householdOfTwo,
+    personTag: personTag,
+    ownerOf: ownerOf,
     stateRow: stateRow,
     stateCell: stateCell,
     statesByCode: statesByCode,

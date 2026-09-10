@@ -1189,7 +1189,7 @@
     href: 'rooms/partner.html',
     tier: 2,
     tags: ['income', 'cashflow'],
-    daite: { reads: ['expenses', 'income.grossAnnualCents'], writes: ['expenses.shared'] },
+    daite: { reads: ['expenses', 'income.grossAnnualCents', 'you.partner'], writes: ['expenses.shared', 'you.partner'] },
       subsections: [
         { id: 'number',      label: 'Each share of the shared month' },
         { id: 'chart',       label: 'The shared month, split' },

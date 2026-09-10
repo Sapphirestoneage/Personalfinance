@@ -19,7 +19,7 @@
        horizon: true           (optional) a projection room: paints the
                                today's-money line and the toggle (15.2)
        inputs: [...]           2–5 controls, each
-                                { ctl, label, kind: money|number|pct|select|choice,
+                                { ctl, label, kind: money|number|pct|select|choice|text,
                                   placeholder, hint, options, read(h) → raw,
                                   write(raw), affix }
        more: [...]             the same, folded (optional)
@@ -70,7 +70,7 @@
         + (spec.options || []).map(function (o) { return '<button type="button" class="choice" data-value="' + esc(o[0]) + '">' + esc(o[1]) + '</button>'; }).join('') + '</div>'
         + (spec.hint ? '<span class="slaf-hint">' + esc(spec.hint) + '</span>' : '') + '</div>';
     }
-    box = '<input type="text" inputmode="decimal" data-ctl="' + esc(spec.ctl) + '" id="' + id + '" placeholder="' + esc(spec.placeholder || '') + '" autocomplete="off" aria-label="' + esc(spec.label) + '"/>';
+    box = '<input type="text"' + (spec.kind === 'text' ? '' : ' inputmode="decimal"') + ' data-ctl="' + esc(spec.ctl) + '" id="' + id + '" placeholder="' + esc(spec.placeholder || '') + '" autocomplete="off" aria-label="' + esc(spec.label) + '"/>';
     return '<label class="slaf-field">' + label + '<span class="slaf-input-shell">' + affix + box + suffix + '</span>'
       + (spec.hint ? '<span class="slaf-hint">' + esc(spec.hint) + '</span>' : '') + '</label>';
   }
@@ -85,6 +85,7 @@
     var t = String(text).trim();
     if (t === '') return null;
     if (spec.kind === 'money') return Money.parseMoney(t);
+    if (spec.kind === 'text') return t;   /* 15.7: a name is words, not a number */
     var n = Number(t.replace(/[^0-9.\-]/g, ''));
     if (!Number.isFinite(n)) return null;
     return spec.kind === 'pct' ? n / 100 : n;

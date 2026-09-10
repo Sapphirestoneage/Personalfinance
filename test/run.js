@@ -10874,6 +10874,69 @@ section('15.6: one sourced state table, read by tax, housing, kids, the car and 
 })();
 
 /* ==========================================================================
+   15.7: a household of two, natively (D-181)
+   ========================================================================== */
+section('15.7: two people, one record each; the Partner room edits the second (D-181)');
+(function () {
+  const Spine = SpineMain;
+  /* name and birthYear are views of label and dob. */
+  check('name is the label', Schema.createPerson({ name: 'Sam' }).label, 'Sam');
+  check('a label wins over a name', Schema.createPerson({ label: 'Sam', name: 'Samuel' }).label, 'Sam');
+  check('birthYear reads off dob', Schema.birthYearOf({ dob: '1993-04-12' }), 1993);
+  check('...null with no date', Schema.birthYearOf({ dob: null }), null);
+  check('only a year given: dated 1 July of it', Schema.createPerson({ birthYear: 1993 }).dob, '1993-07-01');
+  check('a date given wins over a year', Schema.createPerson({ birthYear: 1990, dob: '1993-04-12' }).dob, '1993-04-12');
+  check('personName falls back', Schema.personName({ label: '  ' }, 'You'), 'You');
+  /* filing aliases */
+  check('mfj is stored as married_joint', Schema.createHousehold({ filingStatus: 'mfj' }).filingStatus, 'married_joint');
+  check('hoh is stored as head_of_household', Schema.createHousehold({ filingStatus: 'hoh' }).filingStatus, 'head_of_household');
+  check('mfs is stored as married_separate', Schema.createHousehold({ filingStatus: 'mfs' }).filingStatus, 'married_separate');
+  check('the stored value passes through', Schema.createHousehold({ filingStatus: 'single' }).filingStatus, 'single');
+  check('nothing stays nothing', Schema.createHousehold({}).filingStatus, null);
+  const Tax = require(path.join(ROOT, 'engines/tax.js'));
+  const fb = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/federal_brackets_2026.json'), 'utf8'));
+  check('the tax engine reads the stored value: a joint return keys the joint ladder', Tax.ordinaryTax(fb, 10000000, Schema.createHousehold({ filingStatus: 'mfj' }).filingStatus).deductionCents, fb.standardDeduction.married_joint * 100);
+  /* owner: personId | joint */
+  check('an asset with one owner id is that person\'s', Schema.ownerOf({ ownerIds: ['p1'] }), 'p1');
+  check('...with none, joint', Schema.ownerOf({ ownerIds: [] }), 'joint');
+  check('...with two, joint', Schema.ownerOf({ ownerIds: ['p1', 'p2'] }), 'joint');
+  check('owner: personId is accepted on the way in', Schema.createAsset({ owner: 'p1' }).ownerIds.join(','), 'p1');
+  check('owner: joint is accepted on the way in', Schema.createDebt({ owner: 'joint' }).ownerIds.length, 0);
+  check('ownerIds still wins when given', Schema.createAsset({ owner: 'p1', ownerIds: ['p2'] }).ownerIds.join(','), 'p2');
+  /* one or two */
+  const one = Demo.build();
+  check('the demo is one adult', Schema.householdOfTwo(one), false);
+  check('...so no tag beside a figure', Schema.personTag(one, Schema.primaryPerson(one)), '');
+  const two = Demo.build();
+  two.people.push(Schema.createPerson({ label: 'Sam', role: 'adult', birthYear: 1993 }));
+  check('two adults', Schema.householdOfTwo(two), true);
+  check('...the first is tagged with their name', Schema.personTag(two, Schema.primaryPerson(two)), 'Robin Sparks');
+  check('...the second with theirs', Schema.personTag(two, two.people[1]), 'Sam');
+  check('...by id too', Schema.personTag(two, two.people[1].id), 'Sam');
+  check('...an unnamed second reads as the other of you', Schema.personTag(Object.assign({}, two, { people: [two.people[0], Schema.createPerson({ role: 'adult' })] }), 'x'), '');
+  check('a child is not a second adult', Schema.householdOfTwo(Object.assign({}, one, { people: one.people.concat([Schema.createPerson({ role: 'child' })]) })), false);
+  /* the Partner room is the editor of people[1] */
+  const Ownership = require(path.join(ROOT, 'shared/ownership.js'));
+  check('partnerName is owned by Partner', Ownership.field('partnerName').owner, 'partner');
+  check('partnerDob is owned by Partner', Ownership.field('partnerDob').owner, 'partner');
+  check('...and reads people[1]', Ownership.field('partnerName').read(two).value + '/' + Ownership.field('partnerDob').read(two).value, 'Sam/1993');
+  check('...not applicable with one adult', Ownership.field('partnerName').applies(one), false);
+  const partnerRoom = fs.readFileSync(path.join(ROOT, 'rooms/partner.html'), 'utf8');
+  checkTrue('the Partner room has a name box (text, not a number) and a birth-year box', /ctl: 'partnerName', label: 'What to call them', kind: 'text'/.test(partnerRoom) && /ctl: 'partnerBirthYear'/.test(partnerRoom));
+  checkTrue('...writing the person record, not a room of their own', /Spine\.upsertPerson\(\{ id: p\.id, label:/.test(partnerRoom) && /Spine\.upsertPerson\(\{ id: p\.id, dob:/.test(partnerRoom) && partnerRoom.indexOf("Spine.set('partner.name") === -1);
+  const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
+  checkTrue('Start Here no longer names the second adult; it points at Partner', start.indexOf('data-ctl="partnerLabel"') === -1 && /partner\.html#inputs/.test(start));
+  checkTrue('...but still asks their pay and working situation', start.indexOf("moneyInput('partnerPay'") > -1 && start.indexOf("select('partnerStatus'") > -1);
+  const room = fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8');
+  checkTrue('the room template has a text kind', room.indexOf("if (spec.kind === 'text') return t;") > -1);
+  const income = fs.readFileSync(path.join(ROOT, 'rooms/income.html'), 'utf8');
+  checkTrue('the Income room tags each source with whose it is', income.indexOf('Schema.personTag(') > -1);
+  /* nothing was stored twice */
+  checkTrue('no household.partner.name or birthYear store exists', !/partner\.(name|birthYear)/.test(fs.readFileSync(path.join(ROOT, 'shared/schema.js'), 'utf8')));
+  Spine.reset();
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 

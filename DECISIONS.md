@@ -10991,6 +10991,56 @@ every check passing; not this commit's to chase); export 25;
 render on start, housing, kids and car; the phone
 forms gate for Start Here; a tap walk that types a ZIP into Fine-tune.
 
+### 15.7 A household of two, natively (this commit)
+
+- **`people[]` already was the household.** One or two adults, each with
+  their own income sources, work profile and unemployment record; assets
+  and debts carry `ownerIds`; the Partner room already read
+  `Schema.adults(h)[1]` and the tax engine the household filing status. So
+  15.7 is mostly names for what exists, and one move.
+- **`name` is `label`, `birthYear` is read off `dob`.** `createPerson`
+  accepts `name` and stores `label`; `Schema.birthYearOf(person)` reads
+  the year off the date Start Here asks (month and year), and a person
+  given only a year is dated 1 July of it, the expected midpoint. A second
+  stored year beside the date would drift (the mapping rationale above).
+- **Filing words.** `single | mfj | mfs | hoh` are accepted on the way in
+  and stored as `single | married_joint | married_separate |
+  head_of_household`, the values every bracket table keys on
+  (`Schema.FILING_ALIASES`). The tax engine reads the stored value.
+- **`owner: personId | joint`** is accepted on assets and debts and read
+  back by `Schema.ownerOf`: one id is that person's, none or two is joint.
+  `ownerIds` stays the store.
+- **The Partner room edits `people[1]`.** Two new inputs on the person
+  record, never in a room of their own: "What to call them" (the room
+  template gains a `text` kind, since a name is words) and "The year they
+  were born" (kept to the day when a date already exists). Ownership rows
+  `partnerName` and `partnerDob` (owner Partner, `you.partner` in the
+  DAITE view) apply only when two adults exist. Start Here's partner card
+  loses its name box and points at Partner; it keeps their pay and working
+  situation, which it owns. The old `partner.splitMode` /
+  `sharedMonthlyCents` plan stays where it was: it is a plan for the
+  shared month, not a person.
+- **Labelled when two, unlabelled when one.** `Schema.householdOfTwo(h)`
+  and `Schema.personTag(h, person)`: the name beside a per-person figure
+  once there are two adults, nothing with one. The Income room's
+  source-by-source table tags each row; the Partner engine already
+  labelled its two columns; Real Hourly Wage is per person by design. A
+  single-person household never sees a second person mentioned until Start
+  Here's "Two of us" or the Partner room adds one; the marriage block
+  stays a set of DAITE lines (D-178) and adds no person.
+- **Compatibility note.** No stored key changes. `filingStatus` accepts
+  four more spellings; `createPerson` accepts `name` and `birthYear`;
+  `createAsset` / `createDebt` accept `owner`. The Start Here writer
+  `partnerLabel` is gone; Partner writes the label instead.
+
+Gate for this commit: unit 25662 (a new section of 39 checks: the views,
+the aliases through the tax engine, the owner, one adult against two, the
+Partner room's inputs and writes, Start Here's hand-off, the template's
+text kind); dnd 5611 to 5614; export 25; render on partner, start and
+income; the phone forms gate for Start Here and Partner; a tap walk that
+adds the second of you in Start Here, names them in Partner, and sees the
+name beside their pay in the Income room.
+
 ---
 
 # The Dungeons & Dividends entries

@@ -169,7 +169,7 @@ module.exports = function (t) {
     const at = f => html.indexOf('src="../' + f + '"');
     return at('engines/ratios.js') > -1 && at('engines/ratios.js') < at('engines/partner.js') && at('engines/partner.js') < at('shared/room.js');
   })());
-  checkTrue('… writes only through the two owned paths', (html.match(/Spine\.set\('partner\./g) || []).length === 2 && !/upsertIncomeSource|upsertPerson/.test(html));
+  checkTrue('… writes the plan through its two owned paths, and the second adult through upsertPerson only (15.7)', (html.match(/Spine\.set\('partner\./g) || []).length === 2 && !/upsertIncomeSource/.test(html) && (html.match(/Spine\.upsertPerson\(\{ id: p\.id/g) || []).length === 2);
   checkTrue('… one Charts.stacked, no other chart', (html.match(/Charts\.stacked\(/g) || []).length === 2 && !/Charts\.(area|donut|bars)\(/.test(html));
   checkTrue('… says what it does not do', /scope: 'This room does not decide what is fair/.test(html));
   checkTrue('… declares its live-form policy', /LIVE-FORM: built once/.test(html));

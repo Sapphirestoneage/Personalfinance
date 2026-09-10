@@ -440,6 +440,21 @@
       read: function (h) { var v = (h.career && h.career.offer || {}).signOnCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['offer.signOnCents']); },
       format: money
     },
+    /* 15.7: the second adult is edited in Partner, never a data island. */
+    partnerName: {
+      label: 'The other of you', owner: 'partner', anchor: 'inputs',
+      read: function (h) { var p = Schema.adults(h)[1]; return p ? Money.ok(Schema.personName(p, 'The other of you')) : Money.incomplete('Just you so far.', ['partner']); },
+      format: function (v) { return v; },
+      applies: function (h) { return Schema.householdOfTwo(h); },
+      notApplicableBecause: 'Just you.'
+    },
+    partnerDob: {
+      label: 'Their birth year', owner: 'partner', anchor: 'inputs',
+      read: function (h) { var p = Schema.adults(h)[1]; var y = p ? Schema.birthYearOf(p) : null; return y !== null ? Money.ok(y) : Money.incomplete('Not set yet.', ['partnerDob']); },
+      format: function (v) { return String(v); },
+      applies: function (h) { return Schema.householdOfTwo(h); },
+      notApplicableBecause: 'Just you.'
+    },
     splitMode: {
       label: 'How shared costs are split', owner: 'partner', anchor: 'inputs',
       read: function (h) { var v = (h.partner || {}).splitMode; return v ? Money.ok(v) : Money.incomplete('Not chosen yet.', ['splitMode']); },
