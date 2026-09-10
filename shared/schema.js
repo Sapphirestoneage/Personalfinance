@@ -110,6 +110,7 @@
     'household.studentLoans.plan':               { class: 'raw',        unit: 'enum',    values: ['standard', 'income_driven', 'aggressive'], note: 'with extraMonthlyCents, idrShare (0–1 of discretionary income), forgivenessYears. Owned by Student Loan Decision. D-101' },
     'household.calendar.cadence':                { class: 'raw',        unit: 'enum',    values: ['weekly', 'fortnightly', 'semimonthly', 'monthly'], note: 'with nextPaydayDay (1–31), bills[] {label, cents, day}, payLater[] {label, cents, dueDay, instalmentsLeft}. Owned by Money Calendar. D-101' },
     'household.history.compareTo':               { class: 'raw',        unit: 'id',      note: 'the snapshot History compares today against. Owned by History. D-101' },
+    'meta.fields':                               { class: 'raw',        unit: 'map',     note: '{ fieldId: { asOf, source, confidence, room } }: when a number was last set or confirmed, how it arrived (typed, pasted, imported, screenshot, migrated, block-default, quote) and how sure the person is (sure, roughly, unsure, unknown). Schema.meta reads it; the spine writes it. D-181' },
     'meta.guessed':                              { class: 'raw',        unit: 'map',     note: '{ fieldId: true } for figures the one-pager committed as guesses; cleared per field the moment a real number is written. D-094' },
     'household.expenses.needs.food.monthlyCents':          { class: 'raw', unit: 'cents', note: 'FAT: food a month. Owned by Cash Flow. D-172' },
     'household.expenses.needs.accommodation.monthlyCents': { class: 'raw', unit: 'cents', note: 'FAT: rent, or mortgage plus tax plus insurance, one number a month. Owned by Cash Flow. D-172' },
@@ -1644,6 +1645,10 @@
            re-confirmed. Absent for every field until it is next written,
            which is what "unknown" looks like. DECISIONS.md D-056. */
         confirmedAt: {},
+        /* { fieldId: { asOf, source, confidence, room } } — the three facts
+           about every owned number (15.1, 15.10; D-181). Filled by the
+           spine on every change, by the migration for anything older. */
+        fields: {},
         /* "Any debt?" — null not asked, true yes, false a deliberate no that
            takes Debt Payoff off the path and its figures off every room's
            list of needs. D-061. */
@@ -2147,8 +2152,88 @@
     return a.length ? a[0] : null;
   }
 
+  /* ==== 15.1 / 15.10: every number is as-of a date, from a source, at a
+     confidence (DECISIONS.md D-181). Storage did not move (D-171): the
+     leaf stays a bare cent figure the engines read, and the three facts
+     about it live beside it in meta.fields[fieldId], keyed by the
+     ownership field id whose DAITE path the leaf answers to. Schema.get
+     and Schema.meta are the one pair of accessors; the field map (id ->
+     read, path -> ids) is registered by shared/ownership.js, which loads
+     after this file. */
+  var SOURCES = ['typed', 'pasted', 'imported', 'screenshot', 'migrated', 'block-default', 'quote'];
+  var CONFIDENCES = ['sure', 'roughly', 'unsure', 'unknown'];
+  /* Rounding unit in cents for a figure built on inputs at this confidence:
+     to the cent when sure, to the hundred when roughly or unsure, to the
+     thousand when unknown (15.10). */
+  var ROUNDING = { sure: 1, roughly: 10000, unsure: 10000, unknown: 100000 };
+  var fieldMap = null;   /* { read(h, fieldId) -> Result, ids() -> [ids], pathOf(id) -> path } */
+  function useFieldMap(fn) { fieldMap = fn && typeof fn === 'object' ? fn : null; return fieldMap; }
+  function fieldIdsFor(pathOrId) {
+    if (!fieldMap) return [];
+    var ids = fieldMap.ids();
+    if (ids.indexOf(pathOrId) !== -1) return [pathOrId];
+    return ids.filter(function (id) { var p = null; try { p = fieldMap.pathOf(id); } catch (e) { p = null; } return p === pathOrId; });
+  }
+  /** Schema.get(household, pathOrFieldId): the value, or null when not entered. */
+  function get(household, pathOrId) {
+    var ids = fieldIdsFor(pathOrId);
+    if (!ids.length || !fieldMap) return null;
+    var r = fieldMap.read(household || {}, ids[0]);
+    return r && Money.isOk(r) ? r.value : null;
+  }
+  /** The legacy stamps (D-056, D-094, D-095) read as the three facts. */
+  function legacyMeta(household, fieldId) {
+    var m = (household && household.meta) || {};
+    var at = m.confirmedAt && m.confirmedAt[fieldId];
+    var room = m.source && m.source[fieldId];
+    var guessed = !!(m.guessed && m.guessed[fieldId]);
+    if (!at) return null;
+    return { asOf: at, source: 'typed', confidence: guessed ? 'roughly' : 'sure', room: room || null };
+  }
+  /**
+   * Schema.meta(household, pathOrFieldId) ->
+   *   { fieldId, asOf, source, confidence, room, entered }
+   * asOf null and confidence 'unknown' when nothing is known about the
+   * figure; never a guess at a date.
+   */
+  function meta(household, pathOrId) {
+    var ids = fieldIdsFor(pathOrId);
+    var fieldId = ids.length ? ids[0] : (typeof pathOrId === 'string' ? pathOrId : null);
+    var m = (household && household.meta) || {};
+    var f = (m.fields && m.fields[fieldId]) || legacyMeta(household, fieldId) || {};
+    var entered = fieldMap && ids.length ? get(household, fieldId) !== null : null;
+    return {
+      fieldId: fieldId,
+      asOf: f.asOf || null,
+      source: SOURCES.indexOf(f.source) !== -1 ? f.source : (f.asOf ? 'typed' : null),
+      confidence: CONFIDENCES.indexOf(f.confidence) !== -1 ? f.confidence : 'unknown',
+      room: f.room || null,
+      entered: entered
+    };
+  }
+  function confidenceOf(household, pathOrId) { return meta(household, pathOrId).confidence; }
+  /** The coarsest confidence across several inputs, and the rounding it demands. */
+  function precisionOf(household, pathsOrIds) {
+    var worst = 'sure', named = [];
+    (pathsOrIds || []).forEach(function (p) {
+      var mm = meta(household, p);
+      if (mm.entered === false) return;               /* a blank is incomplete, not imprecise */
+      if (CONFIDENCES.indexOf(mm.confidence) > CONFIDENCES.indexOf(worst)) worst = mm.confidence;
+      if (mm.confidence !== 'sure') named.push(mm.fieldId);
+    });
+    return { confidence: worst, roundToCents: ROUNDING[worst], approximate: worst !== 'sure', fieldIds: named };
+  }
+  /** Round cents to the unit a confidence justifies; null stays null. */
+  function roundForConfidence(cents, confidence) {
+    if (!Money.isEntered(cents)) return cents;
+    var unit = ROUNDING[confidence] || 1;
+    return unit === 1 ? cents : Math.round(cents / unit) * unit;
+  }
+
   return {
     SCHEMA_VERSION: SCHEMA_VERSION,
+    SOURCES: SOURCES, CONFIDENCES: CONFIDENCES, ROUNDING: ROUNDING,
+    useFieldMap: useFieldMap, get: get, meta: meta, confidenceOf: confidenceOf, precisionOf: precisionOf, roundForConfidence: roundForConfidence,
     ASSUMPTION_DEFAULTS: ASSUMPTION_DEFAULTS,
     FIELDS: FIELDS,
     isComputedField: isComputedField,

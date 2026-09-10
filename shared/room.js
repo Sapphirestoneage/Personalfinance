@@ -157,6 +157,29 @@
       return '';
     }
 
+    /* 15.10: the room's inputs (the registry's `needs`, plus anything the
+       spec names in `reads`) decide the precision of every figure on the
+       screen. One line at the top names the rough inputs; the money
+       formatter rounds to match. D-181. */
+    function paintApproximate(h) {
+      var room = Registry.byId(ROOM_ID);
+      var ids = ((room && room.needs) || []).concat(spec.reads || []);
+      var p = Schema.precisionOf(h, ids);
+      Money.setDisplayRounding(p.roundToCents);
+      var host = el('room-approx');
+      if (!host) {
+        var anchor = el('room-number');
+        if (!anchor) return;
+        host = document.createElement('p');
+        host.id = 'room-approx';
+        host.className = 'slaf-approx';
+        anchor.parentNode.insertBefore(host, anchor);
+      }
+      if (!p.approximate) { host.hidden = true; host.textContent = ''; return; }
+      var names = p.fieldIds.map(function (id) { var d = Ownership.describe(id, h, ROOM_ID); return d ? '<a href="' + esc(d.href) + '">' + esc(d.label.toLowerCase()) + '</a>' : esc(id); });
+      host.hidden = false;
+      host.innerHTML = 'Approximate: ' + names.join(', ') + (names.length === 1 ? ' is ' : ' are ') + (p.confidence === 'unknown' ? 'not confirmed yet' : 'rough') + ', so figures here are rounded to the nearest ' + (p.roundToCents >= 100000 ? 'thousand' : 'hundred') + ' dollars.';
+    }
     function paintNumber(h) {
       var host = el('room-number');
       if (!host || !spec.number) return;
@@ -235,6 +258,7 @@
       var real = Spine.getProfile();
       var h = household();
       paintInputs(h);
+      paintApproximate(h);
       paintNumber(h);
       paintChart(h);
       paintLens(h);

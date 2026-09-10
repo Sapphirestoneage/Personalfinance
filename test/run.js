@@ -4784,7 +4784,7 @@ section('Age, and the three that move');
     const d = Ownership.describe('cashSavings', Spine.getProfile(), 'dashboard');
     checkTrue('describe carries an age', !!d.age && d.age.days === 0);
     checkTrue('and the chip prints it', /updated today/.test(Ownership.chip('cashSavings', Spine.getProfile(), 'dashboard')));
-    const old = Spine.getProfile(); old.meta.confirmedAt.cashSavings = '2020-01-01T00:00:00Z';
+    const old = Spine.getProfile(); old.meta.confirmedAt.cashSavings = '2020-01-01T00:00:00Z'; old.meta.fields.cashSavings.asOf = '2020-01-01T00:00:00Z';   /* 15.1: the as-of on the number itself is what staleness reads now (D-181) */
     checkTrue('a stale figure is marked in the chip', /is-stale/.test(Ownership.chip('cashSavings', old, 'dashboard')));
     checkTrue('an unset field has no age', Ownership.describe('investments', Spine.getProfile(), 'dashboard').age === null);
   }
@@ -10289,6 +10289,134 @@ section('The lever library: get, applies, apply (D-174)');
   const paths = fs.readFileSync(path.join(ROOT, 'data/adventure_paths.json'), 'utf8');
   checkTrue('data/adventure_paths.json carries no lever figure', !/annualRaiseReal|annualExtraIncomeCents|housingCutShare|raiseKeptShare/.test(paths));
   checkTrue('no engine reads those keys either', !fs.readdirSync(path.join(ROOT, 'engines')).some(f => /annualRaiseReal|annualExtraIncomeCents|housingCutShare/.test(fs.readFileSync(path.join(ROOT, 'engines', f), 'utf8'))));
+})();
+
+/* ==========================================================================
+   15.1 and 15.10: every number is as-of a date, from a source, at a
+   confidence (D-181). Storage unmoved; the facts live in meta.fields.
+   ========================================================================== */
+
+section('15.1 / 15.10: as-of, source and confidence on every owned number (D-181)');
+(function () {
+  const Spine = SpineMain;
+  const Staleness = require(path.join(ROOT, 'shared/staleness.js'));
+  Money.setDisplayRounding(1);
+  /* The accessors resolve through the field map ownership registered. */
+  Spine.reset();
+  check('a blank field reads null through Schema.get', Schema.get(Spine.getProfile(), 'assets.cashCents'), null);
+  check('...and its meta is unknown with no date', JSON.stringify(Schema.meta(Spine.getProfile(), 'cashSavings')), JSON.stringify({ fieldId: 'cashSavings', asOf: null, source: null, confidence: 'unknown', room: null, entered: false }));
+  Spine.registerRoom('start');
+  Spine.upsertAsset(Schema.createAsset({ id: 'c', category: 'cash', valueCents: 950000, liquid: true }));
+  let h = Spine.getProfile();
+  check('a typed write reads back by DAITE path', Schema.get(h, 'assets.cashCents'), 950000);
+  check('...and by field id', Schema.get(h, 'cashSavings'), 950000);
+  const m = Schema.meta(h, 'assets.cashCents');
+  check('it arrived typed', m.source, 'typed');
+  check('sure', m.confidence, 'sure');
+  check('from the room that wrote it', m.room, 'start');
+  checkTrue('as of now', !!m.asOf && Date.now() - Date.parse(m.asOf) < 5000);
+  check('the field id comes back too', m.fieldId, 'cashSavings');
+  check('the as-of matches the D-056 stamp', m.asOf, Spine.confirmedAt('cashSavings'));
+  /* A tagged write: pasted, roughly, with a statement date. */
+  Spine.tagWrite({ source: 'pasted', confidence: 'roughly', asOf: '2026-08-01T00:00:00Z' });
+  Spine.upsertAsset(Schema.createAsset({ id: 'i', category: 'investment', valueCents: 4800000 }));
+  h = Spine.getProfile();
+  check('a pasted write says pasted', Schema.meta(h, 'investments').source, 'pasted');
+  check('...roughly', Schema.meta(h, 'investments').confidence, 'roughly');
+  check('...as of the statement date', Schema.meta(h, 'investments').asOf, '2026-08-01T00:00:00Z');
+  check('the tag is spent: the next write is typed again', (Spine.upsertDebt(Schema.createDebt({ id: 'd', label: 'Card', balanceCents: 100000, minPaymentCents: 5000, rate: 0.2 })), Schema.meta(Spine.getProfile(), 'totalDebt').source), 'typed');
+  check('an unknown source word falls back to typed', (Spine.tagWrite({ source: 'telepathy', confidence: 'wild' }).source), 'typed');
+  Spine.tagWrite(null);
+  /* Confirm: rough to sure, as of now. */
+  Spine.confirm('investments');
+  h = Spine.getProfile();
+  check('confirm makes it sure', Schema.meta(h, 'investments').confidence, 'sure');
+  checkTrue('...as of now', Date.now() - Date.parse(Schema.meta(h, 'investments').asOf) < 5000);
+  check('...and keeps how it arrived', Schema.meta(h, 'investments').source, 'pasted');
+  /* setFieldMeta: "roughly, for now" without touching the value. */
+  Spine.setFieldMeta('cashSavings', { confidence: 'unsure' });
+  h = Spine.getProfile();
+  check('the value is untouched', Schema.get(h, 'cashSavings'), 950000);
+  check('the confidence moved', Schema.confidenceOf(h, 'cashSavings'), 'unsure');
+  /* Removing the value removes the facts. */
+  Spine.removeById('assets', 'c');
+  check('a removed figure has no facts left', Spine.getProfile().meta.fields.cashSavings, undefined);
+  /* Precision follows the least confident input (15.10). */
+  Spine.upsertAsset(Schema.createAsset({ id: 'c', category: 'cash', valueCents: 951234, liquid: true }));
+  h = Spine.getProfile();
+  check('all sure: no rounding', Schema.precisionOf(h, ['cashSavings', 'investments']).roundToCents, 1);
+  Spine.setFieldMeta('cashSavings', { confidence: 'roughly' });
+  const p = Schema.precisionOf(Spine.getProfile(), ['cashSavings', 'investments']);
+  check('one rough input: hundreds', p.roundToCents, 10000);
+  check('...named', p.fieldIds.join(','), 'cashSavings');
+  checkTrue('...and flagged approximate', p.approximate);
+  Spine.setFieldMeta('investments', { confidence: 'unknown' });
+  check('one unknown input: thousands', Schema.precisionOf(Spine.getProfile(), ['cashSavings', 'investments']).roundToCents, 100000);
+  check('a blank input does not count as imprecise', Schema.precisionOf(Spine.getProfile(), ['grossAnnualIncome']).approximate, false);
+  check('roundForConfidence: sure keeps the cent', Schema.roundForConfidence(951234, 'sure'), 951234);
+  check('...roughly rounds to the hundred', Schema.roundForConfidence(951234, 'roughly'), 950000);
+  check('...unknown to the thousand', Schema.roundForConfidence(951234, 'unknown'), 1000000);
+  check('...null stays null', Schema.roundForConfidence(null, 'unknown'), null);
+  /* The money formatter honours a screen-wide rounding. */
+  Money.setDisplayRounding(10000);
+  check('formatCents rounds to the hundred when the screen says so', Money.formatCents(951234), '$9,500');
+  check('...unless the figure opts out', Money.formatCents(951234, { exact: true }), '$9,512');
+  check('...or names its own unit', Money.formatCents(951234, { roundTo: 100000 }), '$10,000');
+  Money.setDisplayRounding(1);
+  check('back to the cent', Money.formatCents(951234), '$9,512');
+  /* Staleness reads the as-of on the number. */
+  Spine.setFieldMeta('cashSavings', { asOf: '2020-01-01T00:00:00Z' });
+  const st = Staleness.describe(Spine.getProfile(), 'cashSavings');
+  check('staleness reads asOf', st.asOf, '2020-01-01T00:00:00Z');
+  checkTrue('...as an age in days', st.days > 2000);
+  check('...and carries the confidence', st.confidence, 'roughly');
+  /* Ownership's description and chip carry the facts. */
+  const d = Ownership.describe('cashSavings', Spine.getProfile(), 'dashboard');
+  check('describe carries the level', d.level, 'roughly');
+  check('...and a glyph', d.glyph, '◐');
+  checkTrue('the chip marks a rough figure', /slaf-owned--roughly/.test(Ownership.chip('cashSavings', Spine.getProfile(), 'dashboard')));
+  checkTrue('...and says the word', /roughly/.test(Ownership.chip('cashSavings', Spine.getProfile(), 'dashboard')));
+  checkTrue('a sure figure carries no mark', !/slaf-owned-conf/.test(Ownership.chip('totalDebt', Spine.getProfile(), 'dashboard')));
+  /* Migration: a household saved before meta.fields existed. */
+  const old = Demo.build();
+  delete old.meta.fields;
+  old.meta.confirmedAt = { cashSavings: '2026-06-01T00:00:00Z' };
+  old.meta.guessed = { cashSavings: true };
+  old.meta.source = { cashSavings: 'start' };
+  Spine.reset();
+  Spine.updateProfile(old);            /* the write stamps everything it changed as typed and sure... */
+  const fresh = Spine.getProfile();
+  checkTrue('a write stamps every changed field', Object.keys(fresh.meta.fields).length > 5);
+  /* ...so simulate the stored-blob case directly. */
+  const blob = Demo.build(); delete blob.meta.fields; blob.meta.confirmedAt = { cashSavings: '2026-06-01T00:00:00Z' }; blob.meta.guessed = { cashSavings: true }; blob.meta.source = { cashSavings: 'start' };
+  const n = Spine.migrateFieldMeta.call(null);
+  checkTrue('migrateFieldMeta on an already-stamped household adds nothing', n === 0);
+  const mig = JSON.parse(JSON.stringify(blob));
+  /* Run the migration the way load() does: through the readers. */
+  const Spine2 = Spine;
+  const beforeCount = Object.keys(mig.meta.fields || {}).length;
+  check('the blob starts with no facts', beforeCount, 0);
+  Spine2.reset();
+  Spine2.importJSON(JSON.stringify(mig));
+  const imported = Spine2.getProfile();
+  check('an imported bare figure says imported', Schema.meta(imported, 'grossAnnualIncome').source, 'imported');
+  check('...roughly, until confirmed', Schema.meta(imported, 'grossAnnualIncome').confidence, 'roughly');
+  check('a field the old stamps knew keeps its date', Schema.meta(imported, 'cashSavings').asOf, '2026-06-01T00:00:00Z');
+  check('...and a guess reads as roughly', Schema.meta(imported, 'cashSavings').confidence, 'roughly');
+  check('...typed, from its room', Schema.meta(imported, 'cashSavings').source + '/' + Schema.meta(imported, 'cashSavings').room, 'typed/start');
+  checkTrue('the migration is stamped once', !!imported.meta.fieldsMigratedAt);
+  /* The vocabulary is fixed. */
+  check('seven sources', Schema.SOURCES.join(','), 'typed,pasted,imported,screenshot,migrated,block-default,quote');
+  check('four confidences', Schema.CONFIDENCES.join(','), 'sure,roughly,unsure,unknown');
+  checkTrue('meta.fields is catalogued', !!Schema.FIELDS['meta.fields']);
+  checkTrue('the undo log skips the facts', fs.readFileSync(path.join(ROOT, 'shared/spine-v2.js'), 'utf8').indexOf("'meta.fields': true") > -1);
+  /* The room template paints the approximate line. */
+  const room = fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8');
+  checkTrue('the room template rounds to the least confident input', room.indexOf('Schema.precisionOf(h, ids)') > -1 && room.indexOf('Money.setDisplayRounding(p.roundToCents)') > -1);
+  checkTrue('...and names the rough inputs at the top', room.indexOf("'Approximate: '") > -1);
+  const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('the theme styles the line and the mark', theme.indexOf('.slaf-approx') > -1 && theme.indexOf('.slaf-owned-conf') > -1);
+  Spine.reset();
 })();
 
 /* ==========================================================================

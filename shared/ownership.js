@@ -896,10 +896,18 @@
       userNotApplicable: userSaysNa(household, fieldId),
       /* How old the figure is. null-safe: without staleness.js loaded the
          age is still computed from the stamp, just never judged. D-057. */
-      age: isSet ? ageOf(household, fieldId) : null
+      age: isSet ? ageOf(household, fieldId) : null,
+      /* The three facts (15.1, 15.10; D-181): as of when, how it arrived,
+         how sure. `level` is the confidence word; `glyph` its one character
+         for the field-status ledger. */
+      meta: isSet ? Schema.meta(household || {}, fieldId) : null,
+      level: isSet ? Schema.confidenceOf(household || {}, fieldId) : null,
+      glyph: isSet ? CONFIDENCE_GLYPH[Schema.confidenceOf(household || {}, fieldId)] : (userSaysNa(household, fieldId) ? '\u2014' : '\u25CB')
     };
   }
 
+  /* sure · roughly · unsure · unknown, as one character each (15.10). */
+  var CONFIDENCE_GLYPH = { sure: '\u25CF', roughly: '\u25D0', unsure: '\u25D4', unknown: '\u25CC' };
   function userSaysNa(household, fieldId) {
     return !!(household && household.notApplicable && household.notApplicable[fieldId] === true);
   }
@@ -1007,11 +1015,12 @@
         ? ' · <span class="slaf-owned-age' + (d.age.stale === true ? ' is-stale' : '') + '">'
           + escapeHtml(d.age.label) + '</span>'
         : '';
-      return '<a class="slaf-owned' + (d.age && d.age.stale === true ? ' slaf-owned--stale' : '') + (d.guessed ? ' slaf-owned--guess' : '')
-        + '" href="' + d.href + '">'
+      var level = d.level && d.level !== 'sure' ? ' <span class="slaf-owned-conf slaf-owned-conf--' + d.level + '" title="' + escapeHtml(d.level) + '">' + d.glyph + ' ' + escapeHtml(d.level) + '</span>' : '';
+      return '<a class="slaf-owned' + (d.age && d.age.stale === true ? ' slaf-owned--stale' : '') + (d.guessed ? ' slaf-owned--guess' : '') + (d.level && d.level !== 'sure' ? ' slaf-owned--' + d.level : '')
+        + '" href="' + d.href + '" data-confidence="' + escapeHtml(d.level || '') + '">'
         + '<span class="slaf-owned-label">' + escapeHtml(d.label) + '</span>'
         + '<span class="slaf-owned-value">' + escapeHtml(d.display) + '</span>'
-        + '<span class="slaf-owned-from">' + (d.guessed ? 'a guess \u2014 fix it in ' : 'from ') + escapeHtml(d.ownerTitle) + ' →' + age + '</span>'
+        + '<span class="slaf-owned-from">' + (d.guessed ? 'a guess \u2014 fix it in ' : 'from ') + escapeHtml(d.ownerTitle) + ' →' + age + level + '</span>'
         + '</a>';
     }
     return '<a class="slaf-owned slaf-owned--empty" href="' + d.href + '">'
@@ -1053,6 +1062,14 @@
       var out = {};
       Object.keys(FIELDS).forEach(function (id) { out[id] = { label: FIELDS[id].label, format: FIELDS[id].format }; });
       return out;
+    });
+  }
+  /* The field map Schema.get / Schema.meta resolve through (15.1, D-181). */
+  if (Schema && typeof Schema.useFieldMap === 'function') {
+    Schema.useFieldMap({
+      ids: function () { return Object.keys(FIELDS); },
+      read: function (h, id) { return FIELDS[id] ? FIELDS[id].read(h || {}) : null; },
+      pathOf: function (id) { var D = daiteModule(); return D ? D.pathOf(id) : null; }
     });
   }
   if (Spine && typeof Spine.registerFieldReaders === 'function') {

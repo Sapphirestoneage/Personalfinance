@@ -146,9 +146,18 @@
   var EM_DASH = '—';
 
   /** Integer cents -> "$1,234" (or "-$1,234"). Not-entered -> em dash. */
+  /* 15.10: a screen built on rough inputs shows no more precision than
+     they justify. A room sets the unit once (cents: 1, 10000 for hundreds,
+     100000 for thousands) and every figure formatted after that is
+     rounded to it; `opts.exact` opts a single figure out. D-181. */
+  var displayRoundingCents = 1;
+  function setDisplayRounding(unitCents) { displayRoundingCents = isEntered(unitCents) && unitCents > 1 ? unitCents : 1; return displayRoundingCents; }
+  function displayRounding() { return displayRoundingCents; }
   function formatCents(cents, opts) {
     var o = opts || {};
     if (!isEntered(cents)) return o.placeholder || EM_DASH;
+    var unit = o.roundTo !== undefined ? o.roundTo : displayRoundingCents;
+    if (!o.exact && unit > 1) cents = Math.round(cents / unit) * unit;
     var dollars = cents / 100;
     var decimals = o.decimals === undefined ? 0 : o.decimals;
     var abs = Math.abs(dollars);
@@ -201,6 +210,7 @@
   }
 
   return {
+    setDisplayRounding: setDisplayRounding, displayRounding: displayRounding,
     EM_DASH: EM_DASH,
     isEntered: isEntered,
     ok: ok,

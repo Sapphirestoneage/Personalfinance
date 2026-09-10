@@ -1222,3 +1222,12 @@ a:hover { color: var(--sapphire-100); }
 .slaf-lens-amounts { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-size: var(--text-sm); }
 .slaf-lens-amounts li { display: inline-flex; gap: var(--space-1); align-items: baseline; color: var(--color-text-muted); }
 .slaf-lens-amounts li span { color: var(--color-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ---- 15.10: the approximate line and the confidence mark (D-181) ---------
+   One line at the top of a room whose inputs are rough or unconfirmed; a
+   small mark beside an owned value that is not yet sure. Never red: a rough
+   number is a prompt to confirm, not a fault. */
+.slaf-approx { margin: 0 0 var(--space-2); font-size: var(--text-sm); color: var(--color-text-muted); }
+.slaf-approx a { color: inherit; text-decoration: underline dotted; }
+.slaf-owned-conf { font-size: var(--text-xs); color: var(--color-text-muted); white-space: nowrap; }
+.slaf-owned--unknown .slaf-owned-value, .slaf-owned--unsure .slaf-owned-value { font-style: italic; }

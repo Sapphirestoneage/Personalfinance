@@ -1,8 +1,9 @@
 /* ==========================================================================
    shared/staleness.js — how old a figure is, and whether that matters.
    --------------------------------------------------------------------------
-   The spine stamps meta.confirmedAt[fieldId] on every value change
-   (DECISIONS.md D-056). This reads those stamps back as an age in days and,
+   Every number carries its own as-of date in meta.fields[fieldId].asOf
+   (15.1, D-181), with the older meta.confirmedAt stamp (D-056) as the same
+   fact for anything saved before. This reads that back as an age in days and,
    once data/staleness.json has been handed in via use(), says whether that
    age is past the review interval for that field.
 
@@ -69,7 +70,11 @@
   function describe(household, fieldId, now) {
     var meta = (household && household.meta) || {};
     var stamps = meta.confirmedAt || {};
-    var at = parse(stamps[fieldId]);
+    /* 15.1: the as-of date on the number itself wins; the D-056 stamp is
+       the same fact for anything saved before meta.fields existed. */
+    var facts = (meta.fields && meta.fields[fieldId]) || null;
+    var at = parse(facts && facts.asOf) ;
+    if (at === null) at = parse(stamps[fieldId]);
     var perField = at !== null;
     if (!perField) at = parse(meta.updatedAt);
     var nowMs = now === undefined ? Date.now() : (typeof now === 'number' ? now : parse(now));
@@ -83,7 +88,10 @@
       fieldId: fieldId,
       days: days,
       perField: perField,
-      confirmedAt: perField ? stamps[fieldId] : null,
+      confirmedAt: perField ? ((facts && facts.asOf) || stamps[fieldId]) : null,
+      asOf: perField ? ((facts && facts.asOf) || stamps[fieldId]) : null,
+      source: facts ? facts.source : null,
+      confidence: facts ? facts.confidence : (perField ? 'sure' : 'unknown'),
       staleAfterDays: after === undefined ? null : after,
       stale: stale,
       label: label(days, perField)

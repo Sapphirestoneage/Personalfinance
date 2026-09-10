@@ -63,6 +63,13 @@
 <main class="slaf-wrap">
   <div class="notice" id="load-notice" hidden></div>
 
+  <section class="slaf-card" id="rough" hidden>
+    <span class="slaf-eyebrow">First, the numbers you were not sure of</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Rough, unconfirmed, or old</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-2)">Each one was a guess, a paste, an import, or has not been looked at in a while. Confirm it as it stands, or open the room that owns it. (15.10, D-181)</p>
+    <div id="rough-rows"></div>
+  </section>
+
   <section class="slaf-card" id="fields">
     <span class="slaf-eyebrow">The three that move</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">Still true?</h2>
@@ -193,6 +200,48 @@
     debts.forEach(function (d, i) { put('age-debt-' + i, 'totalDebt'); });
   }
 
+  /* 15.10: rough, unsure, unknown and stale figures first, each with its
+     confidence word, its age, a Confirm button and the room that owns it.
+     Buttons and links only, rebuilt on change: no input lives here. */
+  var ORDER = { unknown: 0, unsure: 1, roughly: 2, sure: 3 };
+  function roughRows(h) {
+    var ids = Object.keys(Ownership.FIELDS || {});
+    var rows = [];
+    ids.forEach(function (id) {
+      var d = Ownership.describe(id, h, ROOM_ID);
+      if (!d || !d.isSet || !d.applies) return;
+      var stale = d.age && d.age.stale === true;
+      if (d.level === 'sure' && !stale) return;
+      rows.push({ d: d, stale: stale, rank: ORDER[d.level] === undefined ? 3 : ORDER[d.level] });
+    });
+    rows.sort(function (a, b) { return a.rank - b.rank || (b.stale ? 1 : 0) - (a.stale ? 1 : 0) || a.d.label.localeCompare(b.d.label); });
+    return rows;
+  }
+  function paintRough() {
+    var host = el('rough-rows'), card = el('rough');
+    if (!host || !card) return;
+    var rows = roughRows(Spine.getProfile());
+    card.hidden = rows.length === 0;
+    host.innerHTML = rows.map(function (r) {
+      var d = r.d;
+      var why = d.level !== 'sure' ? (d.meta && d.meta.source ? d.meta.source + ', ' : '') + d.level : 'not looked at in a while';
+      return '<div class="row" data-rough="' + esc(d.fieldId) + '">'
+        + '<div class="top"><span class="nm">' + esc(d.label) + '</span><span class="age' + (r.stale ? ' is-stale' : '') + '">' + esc(d.age && d.age.label ? d.age.label : '') + '</span></div>'
+        + '<div class="slaf-row" style="display:flex;gap:var(--space-2);align-items:center;flex-wrap:wrap">'
+        + '<strong>' + esc(d.display) + '</strong>'
+        + '<span class="slaf-hint" style="margin:0">' + esc(why) + '</span>'
+        + '<button type="button" class="slaf-btn slaf-btn--small" data-confirm="' + esc(d.fieldId) + '">Confirm</button>'
+        + '<a class="slaf-hint" style="margin:0" href="' + esc(d.href) + '">' + esc(d.ownerTitle) + ' →</a>'
+        + '</div></div>';
+    }).join('');
+  }
+  document.addEventListener('click', function (evt) {
+    var b = evt.target && evt.target.closest ? evt.target.closest('[data-confirm]') : null;
+    if (!b) return;
+    Spine.confirm(b.getAttribute('data-confirm'));
+    paintRough();
+  });
+
   function paint() {
     inputs().forEach(function (node) {
       if (node === document.activeElement) return;
@@ -200,6 +249,7 @@
       node.value = Money.isEntered(c) ? Money.formatCents(c) : '';
     });
     paintAges();
+    paintRough();
   }
 
   /* ---- Commit: changed → write; unchanged → confirm; empty → skip -------- */

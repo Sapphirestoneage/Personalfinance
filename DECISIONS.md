@@ -10617,6 +10617,82 @@ inheritance predicate matters).
 
 ---
 
+## D-181 — Section 15: the ten foundation shapes, one commit a shape
+
+### The reading of "every leaf is an object"
+
+15.1 says every leaf value in DAITE is `{ value, asOf, source, confidence }`,
+never a bare number. D-171 kept storage unmoved so sixty engines and
+sixty-nine rooms keep reading `asset.valueCents` as a cent figure; turning
+each leaf into an object would touch every one of them for no gain in
+truth. The intent is that every number carries three facts and one pair of
+accessors reads them. So: the leaf stays a bare cent figure, and the three
+facts live beside it in `meta.fields[fieldId] = { asOf, source, confidence,
+room }`, keyed by the ownership field id whose DAITE path the leaf answers
+to (`shared/daite.js` PATHS). `Schema.get(household, pathOrId)` returns the
+value; `Schema.meta(household, pathOrId)` returns the facts. Ownership
+registers the field map into the schema (`Schema.useFieldMap`), the same
+late binding the spine's clock uses (D-056). Logged here as the mapping the
+prompt allows when the code's reality disagrees with its letter.
+
+### 15.1 and 15.10 (this commit)
+
+- **Vocabulary.** `Schema.SOURCES`: typed, pasted, imported, screenshot,
+  migrated, block-default, quote. `Schema.CONFIDENCES`: sure, roughly,
+  unsure, unknown. Rounding by confidence: to the cent when sure, the
+  hundred when roughly or unsure, the thousand when unknown.
+- **The spine writes the facts.** `save()` already diffed every owned
+  field to stamp `meta.confirmedAt` (D-056) and the writing room (D-095);
+  it now also writes `meta.fields[id]`. An untagged write is typed, sure,
+  as of now. `Spine.tagWrite({ source, confidence, asOf })` marks the NEXT
+  save (a paste, an import, a statement date); the tag is spent by one
+  save. `Spine.confirm(id)` is the Ledger's Confirm: as of now, sure,
+  source kept. `Spine.setFieldMeta(id, patch)` changes the facts without
+  the number ("roughly, for now"). A removed value loses its facts.
+- **Migration.** On load, once ownership has registered the readers, every
+  entered field with no facts gets them: a field the spine stamped since
+  D-056 was typed by the person, so typed and sure (roughly when it was a
+  one-pager guess, D-094) as of that stamp; a bare value from before that
+  is migrated, unknown, as of the migration. `meta.fieldsMigratedAt` says
+  when. A file import stamps imported, roughly, as of the file's own date
+  for anything the file carried no facts about.
+- **Staleness reads asOf** (`shared/staleness.js`): the fact on the number
+  first, the D-056 stamp as the same fact for older saves, then the last
+  save. `describe()` now also returns `asOf`, `source` and `confidence`.
+- **History** already reads the change log (`engines/history.js readLog`
+  over `meta.undoStack`, D-094); nothing new is stored. The facts are
+  skipped by the undo log like the other stamps.
+- **The field-status ledger** (`Ownership.describe`) carries `meta`,
+  `level` and a `glyph` (● sure · ◐ roughly · ◔ unsure · ◌ unknown); the
+  chip marks any figure that is not sure with the word.
+- **Precision follows confidence.** `Schema.precisionOf(h, ids)` gives the
+  coarsest confidence across a screen's inputs and the rounding unit;
+  `Money.setDisplayRounding(unit)` makes every `formatCents` on the screen
+  round to it (`{ exact: true }` opts a figure out). The room template
+  (`shared/room.js`) runs it on every paint over the room's registry
+  `needs` and its `reads`, and prints one line above the number naming the
+  rough inputs, each a link to its row. Rooms off the template keep the
+  cent until the Ledger (18) gives them the same line.
+- **Refresh** lists rough, unsure, unknown and stale figures first, each
+  with its confidence word, age, a Confirm button and its owner room; the
+  `where` sentence arrives with 18.2.
+
+### What changed in stored shape (compatibility note)
+
+`meta.fields` (map) and `meta.fieldsMigratedAt` (ISO) are new on
+`household.meta`; both are filled by the spine, never by a room. Nothing
+else moved. A room that writes through the spine gets the facts for free;
+a room that wants to say how a number arrived calls `Spine.tagWrite`
+before the write. `Schema.meta(h, id).confidence` is `unknown` for
+anything nobody has ever stamped.
+
+Gate for this commit: unit 24926 (a new section of 60 checks: the
+accessors, tagged writes, confirm, setFieldMeta, precision and rounding,
+staleness, the chip, the migration through import); render on refresh,
+real-hourly-wage and the dashboard; dnd 5614; export 25.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

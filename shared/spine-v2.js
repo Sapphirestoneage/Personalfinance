@@ -227,6 +227,7 @@
     /* First reading of every owned field, so the first save() has
        something to compare against. See registerFieldReaders(). */
     if (lastReadings === null) lastReadings = readings();
+    if (fieldReaders && migrateFieldMeta(cache, new Date().toISOString())) save({ record: false });
     return cache;
   }
 
@@ -288,7 +289,10 @@
     /* Registered after the first load: prime from the current state so the
        next save compares against something real rather than stamping
        every field at once. */
-    if (cache && fieldReaders) lastReadings = readings();
+    if (cache && fieldReaders) {
+      lastReadings = readings();
+      if (migrateFieldMeta(cache, new Date().toISOString())) save({ record: false });
+    }
   }
 
   function readings() {
@@ -304,10 +308,25 @@
      field it changes, so the one-pager can say "from The Statement" beside
      a number it did not enter. D-095. */
   var currentRoom = null;
+  /* How the next write arrived (15.1, 15.10; D-181): tagWrite() sets it,
+     the next save() stamps every changed field with it and clears it.
+     Untagged writes are typed, sure, as of now. */
+  var pendingMeta = null;
+  function tagWrite(m) {
+    var t = m || {};
+    pendingMeta = {
+      source: Schema.SOURCES.indexOf(t.source) !== -1 ? t.source : 'typed',
+      confidence: Schema.CONFIDENCES.indexOf(t.confidence) !== -1 ? t.confidence : 'sure',
+      asOf: t.asOf || null
+    };
+    return pendingMeta;
+  }
   function stampChanged(now) {
     if (!cache) return;
     cache.meta.confirmedAt = cache.meta.confirmedAt || {};
     cache.meta.source = cache.meta.source || {};
+    cache.meta.fields = cache.meta.fields || {};
+    var tag = pendingMeta || { source: 'typed', confidence: 'sure', asOf: null };
     var current = readings();
     if (lastReadings !== null) {
       Object.keys(current).forEach(function (id) {
@@ -316,19 +335,67 @@
           if (currentRoom) cache.meta.source[id] = currentRoom;
           /* A real number replaced a guess: it is no longer one. D-094. */
           if (cache.meta.guessed && cache.meta.guessed[id]) delete cache.meta.guessed[id];
+          if (current[id] === null || current[id] === undefined) { delete cache.meta.fields[id]; return; }
+          cache.meta.fields[id] = { asOf: tag.asOf || now, source: tag.source, confidence: tag.confidence, room: currentRoom || null };
         }
       });
     }
+    pendingMeta = null;
     lastReadings = current;
   }
 
-  /** "Yes, still $9,500" — re-stamp a field without changing its value. */
+  /** "Yes, still $9,500" — re-stamp a field without changing its value:
+      as of now, and sure (Confirm, in the Ledger's three verbs). */
   function confirm(fieldId) {
     var h = load();
     h.meta.confirmedAt = h.meta.confirmedAt || {};
-    h.meta.confirmedAt[fieldId] = new Date().toISOString();
+    h.meta.fields = h.meta.fields || {};
+    var now = new Date().toISOString();
+    h.meta.confirmedAt[fieldId] = now;
+    var prev = h.meta.fields[fieldId] || {};
+    h.meta.fields[fieldId] = { asOf: now, source: prev.source || 'typed', confidence: 'sure', room: prev.room || currentRoom || null };
     save(); notify();
     return h.meta.confirmedAt[fieldId];
+  }
+  /** Change the facts about a number without changing the number:
+      "roughly, for now", a statement date, where it came from. */
+  function setFieldMeta(fieldId, patch) {
+    var h = load();
+    h.meta.fields = h.meta.fields || {};
+    var prev = h.meta.fields[fieldId] || Schema.meta(h, fieldId);
+    var p = patch || {};
+    h.meta.fields[fieldId] = {
+      asOf: p.asOf || prev.asOf || new Date().toISOString(),
+      source: Schema.SOURCES.indexOf(p.source) !== -1 ? p.source : (prev.source || 'typed'),
+      confidence: Schema.CONFIDENCES.indexOf(p.confidence) !== -1 ? p.confidence : (prev.confidence || 'sure'),
+      room: p.room || prev.room || null
+    };
+    if (h.meta.fields[fieldId].asOf) { h.meta.confirmedAt = h.meta.confirmedAt || {}; h.meta.confirmedAt[fieldId] = h.meta.fields[fieldId].asOf; }
+    save(); notify();
+    return h.meta.fields[fieldId];
+  }
+  /** The migration (15.1): every entered figure that has no facts about it
+      gets them. A field the spine stamped since D-056 was typed by the
+      person and is sure as of that stamp; a bare value from before is
+      migrated, unknown, as of the migration. Runs once the field map is
+      registered, and again on each load in case a field is new. */
+  function migrateFieldMeta(h, when) {
+    if (!fieldReaders || !h || !h.meta) return 0;
+    h.meta.fields = h.meta.fields || {};
+    var current;
+    try { current = fieldReaders(h) || {}; } catch (e) { return 0; }
+    var n = 0;
+    Object.keys(current).forEach(function (id) {
+      if (current[id] === null || current[id] === undefined || h.meta.fields[id]) return;
+      var at = h.meta.confirmedAt && h.meta.confirmedAt[id];
+      var guessed = !!(h.meta.guessed && h.meta.guessed[id]);
+      h.meta.fields[id] = at
+        ? { asOf: at, source: 'typed', confidence: guessed ? 'roughly' : 'sure', room: (h.meta.source && h.meta.source[id]) || null }
+        : { asOf: when, source: 'migrated', confidence: 'unknown', room: null };
+      n++;
+    });
+    if (n && !h.meta.fieldsMigratedAt) h.meta.fieldsMigratedAt = when;
+    return n;
   }
 
   /** ISO timestamp of the last set/confirm, or null when never stamped —
@@ -345,7 +412,7 @@
      entry for a batch). Undo applies the befores, redo the afters. The
      stacks live in meta so they survive a reload and go with a reset. */
   var HISTORY_CAP = 100;
-  var HISTORY_SKIP = { 'meta.updatedAt': true, 'meta.confirmedAt': true, 'meta.source': true, 'meta.undoStack': true, 'meta.redoStack': true, 'meta.visitedRooms': true, 'meta.createdAt': true };
+  var HISTORY_SKIP = { 'meta.updatedAt': true, 'meta.confirmedAt': true, 'meta.source': true, 'meta.fields': true, 'meta.fieldsMigratedAt': true, 'meta.undoStack': true, 'meta.redoStack': true, 'meta.visitedRooms': true, 'meta.createdAt': true };
   var lastSaved = null;
   var applyingHistory = false;
   var batchDepth = 0, batchChanges = null, batchLabel = null;
@@ -1453,6 +1520,20 @@
     cache = null;
     lastReadings = null;
     load();
+    /* A figure the file carries no facts about arrived by import, as of
+       the file's own date when it has one (15.1). */
+    if (fieldReaders && cache) {
+      var when = check.exportedAt || new Date().toISOString();
+      cache.meta.fields = cache.meta.fields || {};
+      var cur = readings();
+      var touched = 0;
+      Object.keys(cur).forEach(function (id) {
+        if (cur[id] === null || cur[id] === undefined) return;
+        var f = cache.meta.fields[id];
+        if (!f || f.source === 'migrated') { cache.meta.fields[id] = { asOf: when, source: 'imported', confidence: f && f.confidence !== 'unknown' ? f.confidence : 'roughly', room: null }; touched++; }
+      });
+      if (touched) save({ record: false });
+    }
     notify();
     return { ok: true, reason: null, household: getProfile(), snapshots: listSnapshots() };
   }
@@ -1645,6 +1726,7 @@
     shareFragment: shareFragment,
     codeFromFragment: codeFromFragment,
     reset: reset,
+    tagWrite: tagWrite, setFieldMeta: setFieldMeta, migrateFieldMeta: function () { var h = load(); var n = migrateFieldMeta(h, new Date().toISOString()); if (n) save({ record: false }); return n; },
     _reload: _reload,
     _migrateLegacy: migrateLegacy
   };
