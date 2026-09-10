@@ -79,8 +79,8 @@
   .extra-total { display: block; margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--color-border-strong); font-size: var(--text-sm); }
   .extra-total b { font-family: var(--font-display); font-weight: 600; font-variant-numeric: tabular-nums; font-size: var(--text-lg); }
   .extra-total .sum-how { display: block; color: var(--color-text-muted); font-size: var(--text-xs); }
-  .stop-field { margin-top: var(--space-3); }
-  .stop-field select { width: 100%; max-width: 100%; }
+  .stop-field { margin-top: var(--space-3); max-width: 30em; }
+  .stop-field .slaf-input-shell { width: 100%; }
   /* The two figures the blank box falls back to (D-190): an estimate from
      what Start Here holds, and the realized one from closed months. The
      one in use is marked; the other says what it is waiting on. */
@@ -254,11 +254,11 @@
     <div data-detail></div>
     <label class="slaf-field stop-field" id="stop">
       <span class="slaf-label">Keep the extra going until</span>
-      <select id="f-stop">
+      <span class="slaf-input-shell"><select id="f-stop" aria-label="When the extra stops">
         <option value="">everything is gone</option>
         <option value="cards">the cards are gone, then minimums on the rest</option>
         <option value="highInterest" id="opt-high">the high-rate debt is gone, then minimums on the rest</option>
-      </select>
+      </select></span>
       <span class="slaf-hint" id="stop-hint">A low-rate loan you are happy to carry can run on its minimum once the dear debt is gone.</span>
     </label>
     <div id="plan-chart"></div>
@@ -1421,6 +1421,8 @@
       }
     }
     setCard('out-plan', plan, monthsLabel, detail);
+    /* The stop control only means something once there is a plan to stop. */
+    el('stop').hidden = !Money.isOk(plan);
     return plan;
   }
 

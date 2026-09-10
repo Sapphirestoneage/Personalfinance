@@ -1026,7 +1026,7 @@ const CASES = [
         ['rent was kept', e && e.needs.accommodation.monthlyCents, 150000],
         ['getting around stayed blank, not zero', e && e.needs.transportation.monthlyCents, null],
         ['everything else is not a box any more (D-197)', e && e.wants.totalCents, null],
-        ['the FAT total waits on the third number', /getting around/.test(shown.fat), true]
+        ['the FAT total waits on the third number', /transportation/.test(shown.fat), true]
       ];
     }
   },

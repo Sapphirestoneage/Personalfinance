@@ -868,7 +868,7 @@ const RULES = TABLES.debtRules;
   checkTrue('the comparison carries the stop through to every ordering', Object.keys(cmp.results).every(id => cmp.results[id].stopMonth !== null));
   check('the plan says what its minimums and extra were', full.minimumsCents + full.extraMonthlyCents, full.monthlyBudgetCents);
   const page = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
-  checkTrue('the room: one select, built once, remembered as a preference', /<select id="f-stop">/.test(page) && /Prefs\.get\('debt\.stopAfter'/.test(page) && /Prefs\.set\('debt\.stopAfter'/.test(page));
+  checkTrue('the room: one select, built once, remembered as a preference', /<select id="f-stop"/.test(page) && /Prefs\.get\('debt\.stopAfter'/.test(page) && /Prefs\.set\('debt\.stopAfter'/.test(page));
   checkTrue('...every simulation the room runs shares the options, bar the minimums-only baseline', /function simOpts\(extra\)/.test(page) && (page.match(/Debt\.simulate\([^)]*\{ strategyId: strategyId/g) || []).length === 1 && /extraMonthlyCents: 0 \}\);/.test(page) && /compareStrategies\(scoped\(h\), RULES, simOpts\(/.test(page));
   checkTrue('...and with a stop the room never prints a negative "sooner by"', /plan\.stopMonth === null\) \{\s*rows\.push\(\['Saved vs\. minimums only'/.test(page) && /Against minimums only/.test(page));
   checkTrue('...the extra is said to sit on top of the minimums, and the per-month figure says what it is built from', /Extra each month, on top of the minimums/.test(page) && /function perMonthNote\(plan, h\)/.test(page) && /the minimums as typed on each line/.test(page));
