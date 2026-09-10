@@ -160,7 +160,7 @@
     'incomeSource.employerMatch.matchPercent':          { class: 'raw', unit: 'rate',    note: '0.5 === employer matches 50 cents on the dollar' },
     'incomeSource.employerMatch.matchCapPercentOfSalary': { class: 'raw', unit: 'rate',  note: '0.06 === capped at the first 6% of salary' },
     'asset.valueCents':                          { class: 'raw',        unit: 'cents' },
-    'asset.taxCharacter':                        { class: 'raw',        unit: 'enum',    values: ['pretax', 'roth', 'taxable', 'hsa', '529', 'daf', 'cash', 'property', 'business', 'other', 'unknown'], note: 'how the account is taxed. null means not asked; unknown means the person entered only a total. BRIEF §3.1, D-061' },
+    'asset.taxCharacter':                        { class: 'raw',        unit: 'enum',    values: ['pretax', 'roth', 'taxable', 'hsa', '529', 'daf', 'cash', 'property', 'business', 'other', 'unknown'], note: 'how the account is taxed. null means not asked; unknown means the person entered only a total. Its orientation (pretax / roth / taxable / hsa, 15.3) is read from it by Schema.orientationOf, never stored twice. BRIEF §3.1, D-061, D-181' },
     'meta.hasDebt':                              { class: 'raw',        unit: 'bool',    note: 'null not asked; false means "no debt" as an answer, which takes Debt Payoff off the path. D-061' },
     'asset.category':                            { class: 'raw',        unit: 'enum',    values: ['cash', 'investment', 'retirement', 'real_estate', 'vehicle', 'other'] },
     'asset.liquid':                              { class: 'raw',        unit: 'bool',    note: 'reachable this month. Kept for every reader that already uses it; written from `liquidity` when that is set (liquid === liquidity <= 2). D-066' },
@@ -590,6 +590,61 @@
       cashFlowMonthlyCents: f.cashFlowMonthlyCents === undefined ? null : f.cashFlowMonthlyCents,
       accessAgeOverride: f.accessAgeOverride === undefined ? null : f.accessAgeOverride
     };
+  }
+
+  /* ---- 15.3: orientation and the value after deferred tax (D-181) --------
+     Every invested holding has an orientation: pretax, roth, taxable or
+     hsa. It is READ from the tax character the Statement already asks for
+     (and from the category when nobody has said), never stored twice. A
+     holding that is not invested (cash, property, a business, a fund
+     already given away) has no orientation and is worth what it is listed
+     at. `assumed` says when the answer is a guess: an uncharacterised lump
+     is read as taxable, a retirement account with no character as pre-tax,
+     an investment with no character as taxable. */
+  var ORIENTATIONS = ['pretax', 'roth', 'taxable', 'hsa'];
+  var ORIENTATION_BY_CHARACTER = { pretax: 'pretax', roth: 'roth', taxable: 'taxable', hsa: 'hsa', '529': 'roth' };
+  var ORIENTATION_BY_CATEGORY = { retirement: 'pretax', investment: 'taxable' };
+  var TAXABLE_BASIS_SHARE = 0.6;
+  function orientationOf(asset) {
+    var a = asset || {};
+    var tc = a.taxCharacter;
+    if (tc && ORIENTATION_BY_CHARACTER[tc]) return { orientation: ORIENTATION_BY_CHARACTER[tc], assumed: false };
+    if (tc === 'unknown') return { orientation: 'taxable', assumed: true };
+    if (tc) return { orientation: null, assumed: false };
+    if (ORIENTATION_BY_CATEGORY[a.category]) return { orientation: ORIENTATION_BY_CATEGORY[a.category], assumed: true };
+    return { orientation: null, assumed: false };
+  }
+  /**
+   * afterTaxValue(holding, household, rates) → Result
+   *   rates: { withdrawalRate, capitalGainsRate } from engines/tax
+   *   (the marginal bracket at projected FI spending, never today's).
+   *   pretax × (1 − withdrawalRate); roth and hsa × 1; taxable × (1 − the
+   *   gains rate on the unrealized gain share), where the gain needs a cost
+   *   basis and 60% of the value stands in when there is none, flagged.
+   *   Meta: orientation, deferredTaxCents, basisCents, assumed[].
+   */
+  function afterTaxValue(holding, household, rates) {
+    var a = holding || {};
+    if (!Money.isEntered(a.valueCents)) return Money.incomplete('Add an amount to see this.', ['assets']);
+    var o = orientationOf(a);
+    var assumed = o.assumed ? ['orientation'] : [];
+    var deferred = 0, basis = null;
+    if (o.orientation === 'pretax') {
+      if (!rates || !Money.isEntered(rates.withdrawalRate)) return Money.incomplete('The withdrawal rate is not known.', ['withdrawalRate']);
+      deferred = Math.round(a.valueCents * rates.withdrawalRate);
+    } else if (o.orientation === 'taxable') {
+      if (!rates || !Money.isEntered(rates.capitalGainsRate)) return Money.incomplete('The capital gains rate is not known.', ['capitalGainsRate']);
+      if (Money.isEntered(a.costBasisCents)) basis = a.costBasisCents;
+      else { basis = Math.round(a.valueCents * TAXABLE_BASIS_SHARE); assumed.push('basis'); }
+      deferred = Math.round(Math.max(0, a.valueCents - basis) * rates.capitalGainsRate);
+    }
+    return Money.ok(a.valueCents - deferred, {
+      orientation: o.orientation,
+      listedCents: a.valueCents,
+      deferredTaxCents: deferred,
+      basisCents: basis,
+      assumed: assumed
+    });
   }
 
   /**
@@ -2384,6 +2439,9 @@
     totalAssetsCents: totalAssetsCents,
     otherAssetsCents: otherAssetsCents,
     INTAKE_ASSET_CATEGORIES: INTAKE_ASSET_CATEGORIES,
+    ORIENTATIONS: ORIENTATIONS,
+    orientationOf: orientationOf,
+    afterTaxValue: afterTaxValue,
     ITEMISED_ASSET_CATEGORIES: ITEMISED_ASSET_CATEGORIES,
     cashCents: cashCents,
     investmentsCents: investmentsCents,

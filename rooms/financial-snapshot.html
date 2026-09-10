@@ -159,9 +159,10 @@
   <!-- ================= OUTPUTS ================= -->
 
   <section class="slaf-card" id="out-net-worth">
-    <div class="out-head"><span class="slaf-eyebrow">Net worth</span></div>
+    <div class="out-head"><span class="slaf-eyebrow">Net worth</span><span id="nw-basis" hidden></span></div>
     <div class="slaf-figure" data-figure>—</div>
     <p class="slaf-reason" data-reason></p>
+    <p class="slaf-deferred" id="nw-deferred"></p>
     <div data-detail></div>
     <div id="nw-chart"></div>
   </section>
@@ -290,10 +291,12 @@
 <script src="../engines/benchmarks.js"></script>
 <script src="../engines/swan.js"></script>
 <script src="../shared/prefs.js"></script>
+<script src="../shared/features.js"></script>
 <script src="../engines/draftt.js"></script>
 <script src="../engines/hourly.js"></script>
 <script src="../engines/selfemployed.js"></script>
 <script src="../engines/tax.js"></script>
+<script src="../shared/aftertax.js"></script>
 <script src="../engines/income.js"></script>
 <script src="../engines/ledger.js"></script>
 <script src="../engines/taxroom.js"></script>
@@ -445,6 +448,11 @@
   }
 
   function renderNetWorth(r, h) {
+    /* 15.3: the figure is after deferred tax when the switch is on and the
+       control says so; the bars stay what is owned and owed. D-181. */
+    var pk = SLAF.AfterTax.pick(h, TABLES);
+    var shown = pk.basis === 'afterTax' && pk.afterTax && Money.isOk(pk.afterTax) ? pk.afterTax : r;
+    el('nw-deferred').textContent = pk.on ? pk.line : '';
     var detail = '';
     if (Money.isOk(r)) {
       var assets = r.totalAssetsCents, debt = r.totalDebtCents;
@@ -460,8 +468,8 @@
         + '<span style="color:var(--color-critical)">Debt ' + Money.formatCents(debt) + '</span>'
         + '</div>';
     }
-    setCard('out-net-worth', r, function (v) { return Money.formatCents(v); }, detail);
-    el('nw-chart').innerHTML = Money.isOk(r) ? assetsDonut(h, r) : '';
+    setCard('out-net-worth', shown, function (v) { return Money.formatCents(v); }, detail);
+    el('nw-chart').innerHTML = Money.isOk(r) ? assetsDonut(h, shown) : '';
   }
 
   /* What is owned, by category, with the net figure in the middle. The
@@ -821,6 +829,7 @@
   Spine.registerRoom(ROOM_ID);
 
   SLAF.Progress.mount(ROOM_ID);
+  SLAF.AfterTax.mount(el('nw-basis'), { household: function () { return Spine.getProfile(); }, onChange: function () { render(); } });   /* 15.3 (D-181) */
   Spine.onChange(render);
   render();
 

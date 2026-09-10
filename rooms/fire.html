@@ -77,7 +77,9 @@
     <span class="slaf-eyebrow" id="target-label">Your number</span>
     <div class="slaf-figure" data-figure>—</div>
     <p class="slaf-reason" data-reason></p>
+    <div id="nw-basis" hidden style="margin-top:var(--space-2)"></div>
     <div class="slaf-bar" style="margin-top:var(--space-3)"><span id="progress-bar" style="width:0"></span></div>
+    <p class="slaf-deferred" id="progress-basis"></p>
     <div data-detail></div>
     <div id="fire-lens"></div>
     <div id="out-path"></div>
@@ -160,6 +162,9 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/fire.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../shared/aftertax.js"></script>
 <script src="../engines/hourly.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/bands.js"></script>
@@ -186,6 +191,7 @@
 
   function optsFor(id, h) {
     var targets = (h && h.targets) || {};
+    var inv = afterTaxInvestments(h);
     var localOverrides = {};
     if (Money.isEntered(preview.swrRate)) localOverrides.swrRate = preview.swrRate;
     if (Money.isEntered(preview.expectedReturnRate)) localOverrides.expectedReturnRate = preview.expectedReturnRate;
@@ -193,8 +199,18 @@
       variantId: id,
       localOverrides: localOverrides,
       coastTargetAge: Money.isEntered(targets.coastAge) ? targets.coastAge : null,
-      baristaAnnualIncomeCents: preview.baristaAnnualIncomeCents
+      baristaAnnualIncomeCents: preview.baristaAnnualIncomeCents,
+      /* 15.3: progress against the investments after deferred tax when the
+         switch is on and the control says so. The engine takes the figure;
+         only this room reads the switch. D-181. */
+      investmentsCents: inv ? inv.value : null,
+      investmentsBasis: inv ? 'afterTax' : null
     };
+  }
+  function afterTaxInvestments(h) {
+    if (!TABLES || !SLAF.AfterTax || SLAF.AfterTax.basis(h) !== 'afterTax') return null;
+    var inv = SLAF.Tax.afterTaxInvestmentsCents(h, TABLES);
+    return Money.isOk(inv) ? inv : null;
   }
 
   function dl(rows) {
@@ -293,6 +309,10 @@
 
     el('progress-bar').style.width =
       (Money.isOk(prog) ? Math.min(100, Math.max(0, prog.value * 100)) : 0) + '%';
+    var inv = afterTaxInvestments(h);
+    el('progress-basis').textContent = inv
+      ? 'Progress counts your investments after the tax you’ll owe on them: ' + Money.formatCents(inv.value) + ' after tax, ' + Money.formatCents(inv.listedCents) + ' as listed.'
+      : (SLAF.AfterTax.on(h) ? 'Progress counts your investments as listed.' : '');
 
     if (!ok) { detail.innerHTML = ''; el('out-path').innerHTML = ''; el('path-why').textContent = ''; return; }
 
@@ -477,6 +497,7 @@
   Spine.registerRoom(ROOM_ID);
 
   SLAF.Progress.mount(ROOM_ID);
+  SLAF.AfterTax.mount(el('nw-basis'), { household: function () { return Spine.getProfile(); }, onChange: function () { render(); } });   /* 15.3 (D-181) */
 
   SLAF.Horizon.mount(document.getElementById('horizon-line'), { household: function () { return Spine.getProfile(); }, onChange: function () { render(); } });   /* 15.2: today's money, once per screen (D-181) */
   Spine.onChange(render);

@@ -148,7 +148,11 @@
     var target = calculateFIRE(household, tables, opts);
     if (!Money.isOk(target)) return target;
 
-    var investments = Schema.investmentsCents(household);
+    var o = opts || {};
+    /* 15.3: the room may measure progress against the investments AFTER
+       deferred tax (engines/tax afterTaxInvestmentsCents) when the switch is
+       on; the engine takes the figure, never reads the switch. D-181. */
+    var investments = Money.isEntered(o.investmentsCents) ? Money.ok(o.investmentsCents, { basis: o.investmentsBasis || 'given' }) : Schema.investmentsCents(household);
     if (!Money.isOk(investments)) {
       return Money.incomplete('Add your investment balance to see progress.', ['investments']);
     }
@@ -178,6 +182,7 @@
     return Money.ok(investments.value / target.value, {
       targetCents: target.value,
       investmentsCents: investments.value,
+      investmentsBasis: investments.basis || 'listed',
       variant: target.variant,
       yearsAway: eta,
       contributionBasis: Money.isOk(basis) ? basis.variant : null

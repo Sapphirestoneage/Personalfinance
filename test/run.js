@@ -10510,6 +10510,119 @@ section('15.2: assumptions declared once; real by default; nominal at display ti
 })();
 
 /* ==========================================================================
+   15.3: pretax vs after-tax assets (D-181)
+   ========================================================================== */
+section('15.3: orientation, the value after deferred tax, and the two-position control (D-181)');
+(function () {
+  const Spine = SpineMain;
+  const Tax = require(path.join(ROOT, 'engines/tax.js'));
+  const AfterTax = require(path.join(ROOT, 'shared/aftertax.js'));
+  const Features = require(path.join(ROOT, 'shared/features.js'));
+  const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
+  const fb = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/federal_brackets_2026.json'), 'utf8'));
+  Features.use(JSON.parse(fs.readFileSync(path.join(ROOT, 'data/features.json'), 'utf8')));
+  Prefs.reset();
+  const T = { federalBrackets: fb };
+
+  /* Orientation is read from the tax character, then the category. */
+  check('four orientations', Schema.ORIENTATIONS.join(','), 'pretax,roth,taxable,hsa');
+  check('pretax reads as pretax', Schema.orientationOf({ taxCharacter: 'pretax' }).orientation, 'pretax');
+  check('a 529 is tax-free out, like a Roth', Schema.orientationOf({ taxCharacter: '529' }).orientation, 'roth');
+  check('an HSA is its own', Schema.orientationOf({ taxCharacter: 'hsa' }).orientation, 'hsa');
+  checkTrue('one total, not split, is read as taxable and flagged', (function () { const o = Schema.orientationOf({ taxCharacter: 'unknown' }); return o.orientation === 'taxable' && o.assumed; })());
+  checkTrue('a retirement account nobody characterised is pre-tax, flagged', (function () { const o = Schema.orientationOf({ category: 'retirement' }); return o.orientation === 'pretax' && o.assumed; })());
+  checkTrue('an investment nobody characterised is taxable, flagged', (function () { const o = Schema.orientationOf({ category: 'investment' }); return o.orientation === 'taxable' && o.assumed; })());
+  check('cash has no orientation', Schema.orientationOf({ category: 'cash', taxCharacter: 'cash' }).orientation, null);
+  check('a fund already given away has none', Schema.orientationOf({ taxCharacter: 'daf' }).orientation, null);
+  check('property has none', Schema.orientationOf({ category: 'real_estate' }).orientation, null);
+
+  /* The value after deferred tax, per holding, by hand. */
+  const rates = { withdrawalRate: 0.22, capitalGainsRate: 0.15 };
+  const pre = Schema.afterTaxValue({ valueCents: 10000000, taxCharacter: 'pretax' }, {}, rates);
+  check('pretax × (1 − withdrawal rate): 100,000 at 22% keeps 78,000', pre.value, 7800000);
+  check('...and names the bill', pre.deferredTaxCents, 2200000);
+  check('roth × 1', Schema.afterTaxValue({ valueCents: 10000000, taxCharacter: 'roth' }, {}, rates).value, 10000000);
+  check('hsa × 1', Schema.afterTaxValue({ valueCents: 10000000, taxCharacter: 'hsa' }, {}, rates).value, 10000000);
+  const tx = Schema.afterTaxValue({ valueCents: 10000000, taxCharacter: 'taxable', costBasisCents: 4000000 }, {}, rates);
+  check('taxable: the gain (60,000) at 15% is 9,000', tx.deferredTaxCents, 900000);
+  check('...leaving 91,000', tx.value, 9100000);
+  check('...nothing assumed with a basis', tx.assumed.length, 0);
+  const noBasis = Schema.afterTaxValue({ valueCents: 10000000, taxCharacter: 'taxable' }, {}, rates);
+  check('no basis: 60% of value stands in, so the gain is 40,000 and the bill 6,000', noBasis.deferredTaxCents, 600000);
+  check('...and it says the basis was assumed', noBasis.assumed.join(','), 'basis');
+  check('a loss owes nothing', Schema.afterTaxValue({ valueCents: 10000000, taxCharacter: 'taxable', costBasisCents: 12000000 }, {}, rates).deferredTaxCents, 0);
+  check('cash is worth what it is listed at', Schema.afterTaxValue({ valueCents: 500000, category: 'cash' }, {}, rates).value, 500000);
+  check('no value: incomplete', Schema.afterTaxValue({ taxCharacter: 'pretax' }, {}, rates).status, 'incomplete');
+  check('no rate for a pretax holding: incomplete, naming it', Schema.afterTaxValue({ valueCents: 100, taxCharacter: 'pretax' }, {}, null).missing.join(','), 'withdrawalRate');
+
+  /* The rate is the bracket at projected FI spending, not today's. Demo:
+     3,150 a month is 37,800 a year; less the 16,100 standard deduction is
+     21,700 taxable, in the 12% bracket; gains stacked there are at 0%. */
+  const demo = Demo.build();
+  const wr = Tax.withdrawalRates(demo, T);
+  check('the demo withdraws in the 12% bracket', wr.value, 0.12);
+  check('...on 21,700 of taxable income', wr.taxableIncomeCents, 2170000);
+  check('...with gains at 0% there', wr.capitalGainsRate, 0);
+  check('...nothing assumed: the demo files single', wr.assumed.length, 0);
+  checkTrue('today’s bracket is higher (72,000 gross), so this is not today’s', Tax.ordinaryTax(fb, 7200000, 'single').marginalRate > 0.12);
+  const noFs = Demo.build(); noFs.filingStatus = null;
+  check('no filing status: assumed single, and said', Tax.withdrawalRates(noFs, T).assumed.join(','), 'filingStatus');
+  check('no spending: incomplete', Tax.withdrawalRates(Schema.createHousehold({ filingStatus: 'single' }), T).status, 'incomplete');
+
+  /* The demo's one investment line is uncharacterised: taxable, basis
+     assumed, gains at 0%, so nothing is deferred and the two figures agree. */
+  const nw = Tax.afterTaxNetWorth(demo, T);
+  check('demo after-tax net worth equals the listed 35,900', nw.value, 3590000);
+  check('...with nothing deferred', nw.deferredTaxCents, 0);
+  check('...and the assumptions named', nw.assumed.join(','), 'orientation,basis');
+  /* Mark the line pre-tax: 48,000 × 12% = 5,760 owed later. */
+  const pretaxDemo = Demo.build(); pretaxDemo.assets[1].taxCharacter = 'pretax';
+  const nw2 = Tax.afterTaxNetWorth(pretaxDemo, T);
+  check('as pre-tax, 5,760 is owed later', nw2.deferredTaxCents, 576000);
+  check('...so net worth after tax is 30,140', nw2.value, 3014000);
+  check('...beside the listed 35,900', nw2.listedNetWorthCents, 3590000);
+  check('...nothing assumed now', nw2.assumed.length, 0);
+  check('the FI progress basis: investments after tax are 42,240', Tax.afterTaxInvestmentsCents(pretaxDemo, T).value, 4224000);
+  check('...cash is not in that', Tax.afterTaxInvestmentsCents(pretaxDemo, T).listedCents, 4800000);
+  const Fire = require(path.join(ROOT, 'engines/fire.js'));
+  const progListed = Fire.progressToward(pretaxDemo, T_ALL_FOR_FIRE(), { variantId: 'standard' });
+  const progAfter = Fire.progressToward(pretaxDemo, T_ALL_FOR_FIRE(), { variantId: 'standard', investmentsCents: 4224000, investmentsBasis: 'afterTax' });
+  check('progress as listed is 48,000 / 945,000', progListed.value, 48000 / 945000, 1e-12);
+  check('progress after tax is 42,240 / 945,000', progAfter.value, 42240 / 945000, 1e-12);
+  check('...and says which basis it used', progAfter.investmentsBasis + '/' + progListed.investmentsBasis, 'afterTax/listed');
+  function T_ALL_FOR_FIRE() { return TABLES; }
+
+  /* The view: the switch, the position, the line. */
+  check('the switch is on by default', AfterTax.on(demo), true);
+  check('the default position is after tax', AfterTax.basis(demo), 'afterTax');
+  AfterTax.setBasis('listed');
+  check('the position is a preference', AfterTax.basis(demo), 'listed');
+  checkTrue('the household did not change', JSON.stringify(Demo.build()) === JSON.stringify(demo));
+  AfterTax.setBasis('afterTax');
+  const pk = AfterTax.pick(pretaxDemo, T);
+  check('pick shows the after-tax figure', pk.shown.value, 3014000);
+  checkTrue('the line prints the bill', pk.line.indexOf('$5,760 of this is the tax bill you’ll pay later') === 0);
+  checkTrue('the control has two positions and no input', /data-basis="afterTax"/.test(AfterTax.controlHtml(demo)) && /data-basis="listed"/.test(AfterTax.controlHtml(demo)) && AfterTax.controlHtml(demo).indexOf('<input') === -1);
+  Features.set('afterTaxNetWorth', false);
+  check('switch off: always as listed', AfterTax.basis(demo), 'listed');
+  check('...no control', AfterTax.controlHtml(demo), '');
+  check('...pick shows the listed figure', AfterTax.pick(pretaxDemo, T).shown.value, 3590000);
+  Features.set('afterTaxNetWorth', null);
+  checkTrue('the demo line says what was assumed, in words', AfterTax.pick(demo, T).line.indexOf('Assumed:') > -1 && AfterTax.pick(demo, T).line.indexOf('60%') > -1);
+
+  /* The four rooms carry the control and the line. */
+  [['rooms/statement.html', 'nw-basis'], ['index.html', 'nw-basis'], ['rooms/fire.html', 'nw-basis'], ['rooms/financial-snapshot.html', 'nw-basis']].forEach(function (pair) {
+    const src = fs.readFileSync(path.join(ROOT, pair[0]), 'utf8');
+    checkTrue(pair[0] + ' mounts the two-position control', src.indexOf('AfterTax.mount(') > -1 && src.indexOf('id="' + pair[1] + '"') > -1);
+    checkTrue(pair[0] + ' loads the tax engine and the view', src.indexOf('engines/tax.js') > -1 && src.indexOf('shared/aftertax.js') > -1);
+  });
+  checkTrue('FIRE says which basis the bar uses', fs.readFileSync(path.join(ROOT, 'rooms/fire.html'), 'utf8').indexOf("id=\"progress-basis\"") > -1);
+  checkTrue('no room stores an orientation', fs.readdirSync(path.join(ROOT, 'rooms')).every(function (f) { return fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8').indexOf('orientation:') === -1; }));
+  Prefs.reset();
+  Spine.reset();
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 

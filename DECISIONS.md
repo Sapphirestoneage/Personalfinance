@@ -10746,6 +10746,68 @@ on the five projection rooms and Settings; Playwright features, settings
 and adventure gates; a phone-shaped tap walk through the toggle on FIRE,
 Decumulation and the Long Way Round and the steppers in Settings.
 
+### 15.3 Pre-tax and after-tax assets (this commit)
+
+- **Orientation is read, not stored.** The Statement already asks how an
+  account is taxed (`asset.taxCharacter`, D-061: pretax, roth, taxable,
+  hsa, 529, daf, and `unknown` for a lump typed as one total). The
+  prompt's `orientation: pretax | roth | taxable | hsa` is that answer
+  under another name, so `Schema.orientationOf(asset)` derives it: a 529
+  reads as roth (tax-free out), a donor-advised fund, cash, property and a
+  business have no orientation and are worth what they are listed at.
+  Where nobody said, the category answers and the result is flagged
+  `assumed`: a retirement account is pre-tax, an investment is taxable, an
+  uncharacterised lump is taxable (the convention the bridge already used,
+  D-064). A second stored field would let the two disagree; the mapping
+  rationale at the top of this entry applies.
+- **`Schema.afterTaxValue(holding, household, rates)`** is the one formula:
+  pretax × (1 − withdrawal rate); roth and hsa × 1; taxable less the gains
+  rate on the unrealized gain, where the gain needs `costBasisCents` (the
+  Statement's existing box) and 60% of the value stands in when there is
+  none, flagged `basis`. A loss owes nothing. No rate for a pre-tax holding
+  is an incomplete result naming `withdrawalRate`, never a number.
+- **The rate is the bracket at projected FI spending, not today's.**
+  `Tax.withdrawalRates(household, tables)`: a year of spending (15.2:
+  today's money, so today's brackets) less the standard deduction, walked
+  through the federal ladder; the gains rate is the one at the first
+  dollar of gains stacked on that. Filing status missing is assumed single
+  and said so. `Tax.afterTaxNetWorth` and `Tax.afterTaxInvestmentsCents`
+  sum the holdings and carry `listedNetWorthCents`, `deferredTaxCents`,
+  the per-asset rows and the assumptions.
+- **One view module, four screens.** `shared/aftertax.js` holds the
+  switch (`afterTaxNetWorth`, Accuracy, default on), the two-position
+  control ("After deferred tax" / "As listed", a preference, default after
+  tax when the switch is on, always listed when it is off) and the one
+  line: "$X of this is the tax bill you'll pay later, at 12% on pre-tax
+  withdrawals at your spending." followed by what was assumed, in words.
+  The Statement, the front door's altitude tile, the FIRE Number and the
+  Financial Snapshot mount it; the snapshot a person freezes still holds
+  the listed figure, so "since last time" compares like with like.
+- **FI progress on the after-tax basis.** `Fire.progressToward` takes
+  `investmentsCents` and `investmentsBasis` as options and reports the
+  basis; only the FIRE room reads the switch and passes the after-tax
+  investments in. The line under the bar says which it counted and both
+  figures.
+- **Re-derived on the demo.** Spending 3,150 a month is 37,800 a year;
+  less the 16,100 standard deduction is 21,700 taxable, the 12% bracket;
+  gains stacked there are at 0%. The demo's one investment line is
+  uncharacterised, so it reads as taxable with an assumed basis, nothing is
+  deferred and both figures are 35,900 with the assumptions named. Marked
+  pre-tax, 48,000 × 12% = 5,760 is owed later: net worth 30,140 after tax
+  beside 35,900 listed, and FI progress counts 42,240 of investments.
+- **Not a stored-shape change.** Nothing new is written to the household:
+  orientation is derived, the position is a preference, the switch a
+  preference. `Schema.FIELDS['asset.taxCharacter']` says so.
+
+Gate for this commit: unit 25236 (a new section of 63 checks: orientation,
+the value after tax by hand, the rate at FI spending against today's, the
+demo listed and pre-tax, FI progress on both bases, the view and the
+switch, every screen mounts the control, no room stores an orientation);
+dnd 5614; export 25; render on statement, dashboard, fire and
+financial-snapshot; `test/aftertax.js`, a phone-shaped gate that marks the
+demo's investment pre-tax and taps through the control on all four screens
+and switches the feature off.
+
 ---
 
 # The Dungeons & Dividends entries

@@ -1231,6 +1231,12 @@ a:hover { color: var(--sapphire-100); }
 .slaf-horizon.is-nominal { border-left-color: var(--color-caution); }
 .slaf-horizon:empty { display: none; }
 .slaf-horizon-text { flex: 1 1 18rem; }
+.slaf-seg { display: inline-flex; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); overflow: hidden; margin: var(--space-1) 0; }
+.slaf-seg button { font: inherit; font-size: var(--text-xs); color: var(--color-text-muted); background: var(--color-surface-raised); border: 0; padding: 4px var(--space-3); cursor: pointer; min-height: 32px; }
+.slaf-seg button + button { border-left: 1px solid var(--color-border-strong); }
+.slaf-seg button[aria-pressed="true"] { background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+.slaf-deferred { margin: var(--space-1) 0 0; font-size: var(--text-xs); color: var(--color-text-muted); line-height: 1.45; }
+.slaf-deferred:empty { display: none; }
 .slaf-approx { margin: 0 0 var(--space-2); font-size: var(--text-sm); color: var(--color-text-muted); }
 .slaf-approx a { color: inherit; text-decoration: underline dotted; }
 .slaf-owned-conf { font-size: var(--text-xs); color: var(--color-text-muted); white-space: nowrap; }

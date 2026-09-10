@@ -356,7 +356,9 @@
       <button type="button" class="info-toggle" id="btn-3d" aria-pressed="false" title="Every instrument three ways: dream, default, disaster">3D</button>
     </div>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">Like a cockpit: how much you keep, what you own, how long you could last, what you owe, when work becomes optional, and which step is next. Tap any one to open the room it comes from.</p>
+    <div id="nw-basis" hidden></div>
     <div class="instruments" id="instruments"></div>
+    <p class="why slaf-deferred" id="nw-deferred"></p>
     <p class="why" id="three-d-why" hidden></p>
   </section>
   <section class="slaf-card dash" id="out-radar">
@@ -472,6 +474,7 @@
 <script src="shared/ownership.js"></script>
 <script src="shared/guide.js"></script>
 <script src="shared/prefs.js"></script>
+<script src="shared/features.js"></script>
 <script src="shared/progress.js"></script>
 <script src="shared/roomexport.js"></script>
 <script src="shared/undo.js"></script>
@@ -506,6 +509,7 @@
 <script src="shared/lens.js"></script>
 <script src="engines/advice.js"></script>
 <script src="shared/instruments.js"></script>
+<script src="shared/aftertax.js"></script>
 <script>
 (function () {
   'use strict';
@@ -626,7 +630,7 @@
      exists), the change since the last snapshot, and one plain sub-line. */
 
   var SUB = {
-    netWorth: function (r) { return Money.formatCents(r.totalAssetsCents) + ' owned · ' + Money.formatCents(r.totalDebtCents) + ' owed'; },
+    netWorth: function (r) { return (r.afterTaxAssetsCents !== undefined ? Money.formatCents(r.afterTaxAssetsCents) + ' after tax of ' + Money.formatCents(r.totalAssetsCents) + ' owned' : Money.formatCents(r.totalAssetsCents) + ' owned') + ' · ' + Money.formatCents(r.totalDebtCents) + ' owed'; },
     savingsRate: function (r, c) {
       var inc = c.savingsRates.includingMatch;
       return Money.isOk(inc) ? 'incl. match ' + Money.formatRate(inc.value, { decimals: 1 }) + ' · yours ' + Money.formatRate(r.value, { decimals: 1 })
@@ -669,6 +673,14 @@
   function renderInstruments(h) {
     var c = Instruments.compute(h, TABLES);
     var deltas = Instruments.deltas(h, TABLES);
+    /* 15.3: the altitude tile shows net worth after deferred tax when the
+       switch is on and the control says so; the snapshot still freezes the
+       listed figure, so the delta compares like with like. D-181. */
+    var pk = SLAF.AfterTax.pick(h, TABLES);
+    if (pk.basis === 'afterTax' && pk.afterTax && Money.isOk(pk.afterTax)) {
+      c.shown.forEach(function (row) { if (row.id === 'netWorth' && row.ok) row.result = pk.afterTax; });
+    }
+    el('nw-deferred').textContent = pk.on ? pk.line : '';
     var snap = Spine.latestSnapshot();
     var since = snap ? ' since ' + shortDate(snap.timestamp) : '';
     var td = null;
@@ -1494,6 +1506,7 @@
   Spine.registerRoom(ROOM_ID);
 
   SLAF.Progress.mount(ROOM_ID);
+  SLAF.AfterTax.mount(el('nw-basis'), { household: function () { return Spine.getProfile(); }, onChange: function () { renderNow(); } });   /* 15.3 (D-181) */
   Spine.onChange(renderNow);
 
   Reference.load().then(function (tables) {

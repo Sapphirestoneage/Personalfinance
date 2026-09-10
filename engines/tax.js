@@ -270,7 +270,93 @@
     });
   }
 
+  /* ---- 6. Deferred tax on what is owned (15.3, D-181) ---------------------
+     A pre-tax dollar is not a whole dollar. The rate it will be taxed at is
+     the marginal bracket at PROJECTED FI SPENDING (today's money, 15.2),
+     not today's bracket: in retirement the withdrawals are the income.
+     Capital gains stack on top of that ordinary income, so the gains rate
+     is the one at the first dollar of gains above it. Filing status missing
+     is assumed single and said so, because an assumed rate is still a
+     rate and a blank net worth helps nobody. */
+  function withdrawalRates(household, tables) {
+    var t = tables || {};
+    if (!t.federalBrackets) return Money.incomplete('Federal bracket table is not loaded.', ['federalBrackets']);
+    var spend = Schema.monthlyExpensesCents(household);
+    if (!Money.isOk(spend)) return Money.incomplete('Add your monthly spending to see the tax you will owe later.', ['monthlyExpenses']);
+    var assumed = [];
+    var fs = household && household.filingStatus;
+    if (!fs || !t.federalBrackets.brackets[fs]) { fs = 'single'; assumed.push('filingStatus'); }
+    var annual = spend.value * 12;
+    var ord = ordinaryTax(t.federalBrackets, annual, fs);
+    if (!Money.isOk(ord)) return ord;
+    var cg = capitalGainsTax(t.federalBrackets, 100, ord.taxableIncomeCents, fs);
+    return Money.ok(ord.marginalRate, {
+      withdrawalRate: ord.marginalRate,
+      capitalGainsRate: Money.isOk(cg) ? cg.marginalRate : 0,
+      spendingAnnualCents: annual,
+      taxableIncomeCents: ord.taxableIncomeCents,
+      filingStatus: fs,
+      assumed: assumed,
+      referenceVersion: t.federalBrackets.version
+    });
+  }
+
+  /** Every owned thing after the tax still owed on it, and the net worth
+      that leaves. `rows` carry each asset's own answer. */
+  function afterTaxAssets(household, tables, categories) {
+    var rates = withdrawalRates(household, tables);
+    if (!Money.isOk(rates)) return rates;
+    var assumed = rates.assumed.slice();
+    var listed = 0, after = 0, rows = [], counted = 0;
+    Schema.aggregatableAssets(household).forEach(function (a) {
+      if (!Money.isEntered(a.valueCents)) return;
+      if (categories && categories.indexOf(a.category) === -1) return;
+      var r = Schema.afterTaxValue(a, household, rates);
+      if (!Money.isOk(r)) return;
+      counted++;
+      listed += a.valueCents;
+      after += r.value;
+      r.assumed.forEach(function (k) { if (assumed.indexOf(k) === -1) assumed.push(k); });
+      rows.push({ asset: a, result: r });
+    });
+    if (counted === 0) return Money.incomplete('Add an amount to see this.', ['assets']);
+    return Money.ok(after, {
+      listedCents: listed,
+      afterTaxCents: after,
+      deferredTaxCents: listed - after,
+      rows: rows,
+      rates: rates,
+      assumed: assumed
+    });
+  }
+
+  function afterTaxNetWorth(household, tables) {
+    var assets = afterTaxAssets(household, tables, null);
+    if (!Money.isOk(assets)) return assets;
+    var debt = Schema.totalDebtCents(household);
+    if (!Money.isOk(debt)) return Money.incomplete('Add your total debt to see this. Enter 0 if you have none.', ['debts']);
+    return Money.ok(assets.afterTaxCents - debt.value, {
+      listedNetWorthCents: assets.listedCents - debt.value,
+      totalAssetsCents: assets.listedCents,
+      afterTaxAssetsCents: assets.afterTaxCents,
+      totalDebtCents: debt.value,
+      deferredTaxCents: assets.deferredTaxCents,
+      rows: assets.rows,
+      rates: assets.rates,
+      assumed: assets.assumed
+    });
+  }
+
+  /** The investments the FI target is measured against, after deferred tax. */
+  function afterTaxInvestmentsCents(household, tables) {
+    return afterTaxAssets(household, tables, ['investment', 'retirement']);
+  }
+
   return {
+    withdrawalRates: withdrawalRates,
+    afterTaxAssets: afterTaxAssets,
+    afterTaxNetWorth: afterTaxNetWorth,
+    afterTaxInvestmentsCents: afterTaxInvestmentsCents,
     ordinaryTax: ordinaryTax,
     capitalGainsTax: capitalGainsTax,
     fica: fica,
