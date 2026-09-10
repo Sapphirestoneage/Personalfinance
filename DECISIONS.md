@@ -12458,7 +12458,7 @@ Expenses and render on FIRE Number; a phone walk typing the three and
 reading the FAT total, the lean number and everything else from a named
 subscription.
 
-## D-198 — Expenses in three steps and one fold
+## D-199 — Expenses in three steps and one fold
 
 **Why.** The owner, on the FAT rework (D-197): "expenses is confusing.
 Make it simpler and more intuitive and make the sections clearer." Nine

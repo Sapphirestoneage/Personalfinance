@@ -832,7 +832,7 @@ const RULES = TABLES.debtRules;
   check('one line under each of F, A and T says what its lines add up to', (page.match(/<span class="bucket-lines" data-bucket-hint="/g) || []).length, 3);
   checkTrue('...offering to make the number match on a tap, never silently', /data-use-bucket=/.test(page) && /Spine\.setFat\(patch\)/.test(page));
   checkTrue('the per aid and the form share one formula', /Schema\.monthlyFromEvery\(cents, per\)/.test(page));
-  check('the registry names the steps (D-198)', Registry.byId('expenses').subsections.map(x => x.id).join(','), 'picture,spending,lines,month,more');
+  check('the registry names the steps (D-199)', Registry.byId('expenses').subsections.map(x => x.id).join(','), 'picture,spending,lines,month,more');
   checkTrue('...the readings sit inside one More fold that a deep link opens', /<details class="slaf-card more-card" id="more"/.test(page) && /if \(p\.tagName === 'DETAILS'\) p\.open = true/.test(page));
 })();
 
