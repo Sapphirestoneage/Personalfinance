@@ -10979,6 +10979,56 @@ still writes the same thirty fixtures. `tests/.cache/` is git-ignored.
 
 ---
 
+## L-6 - Lane 2, section 6: the accessibility audit, report only
+
+### What it is
+
+`tests/a11y-audit.js`: Playwright on a 412 by 915 phone viewport, the
+`dink-highearn` household from L-1 in localStorage, every room in
+`rooms.json`. For each room it injects axe-core 4 and runs the WCAG 2.0
+and 2.1 A and AA rules plus best practices; reads the structure (lang,
+one main, one h1, heading skips, a zoomable viewport, labels on inputs,
+names on buttons and links, alt on images, positive tabindex); and does
+a keyboard pass: Tab up to 45 times, waiting out the theme's 150ms
+transitions, recording each stop, whether it shows a focus ring (an
+outline or shadow on the element, or a change of border, outline,
+shadow or background on the element or its shell against the unfocused
+look recorded first), whether the menu and the first input are
+reachable, whether Escape closes the open menu, and whether focus ever
+stops moving. `docs/a11y-audit.md` is the report: a summary, the rules
+failed with a one-line fix each, the structure and keyboard tables, and
+a section per room. `tests/reports/a11y.json` holds the raw results.
+Nothing under `rooms/` or `shared/` was changed.
+
+### What it found
+
+68 rooms audited. 53 have no axe violation; 12 have a serious one; 8
+distinct rules failed. Eleven of the twelve serious rooms fail
+`color-contrast` on the same kind of element: muted small text (the
+`small` under a situation or event button, an empty row's label, a
+locked skill, a dial-211 link) at 2.6 to 4.0 against the 4.5 required;
+the fix is one token in `shared/theme.css`. Three rooms skip a heading
+level; the dashboard nests an interactive element inside the Your Data
+drawer's summary; one room each has a malformed definition list, an
+aria attribute the role does not allow, an empty table header, and
+content outside any landmark with no main. Keyboard: no trap, the menu
+reachable in every room, Escape closing it in every room, and every
+tab stop showing a ring in 66 of 68 rooms (Return on Hassle's rating
+selects and one input on Refresh do not).
+
+### Decisions taken conservatively (DECIDE: for Eli)
+
+- Report only, as the lane says; the one-line fixes are in the report
+  and the contrast token is the change that clears most of it.
+- One household and one viewport; a desktop pass and the other
+  archetypes are a second run of the same script (`SLAF_SEED`).
+
+### Compatibility
+
+Nothing changed. `axe-core` joins fast-check under `tests/`.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have
