@@ -352,7 +352,84 @@
     return afterTaxAssets(household, tables, ['investment', 'retirement']);
   }
 
+  /* ---- 7. Take-home, source by source (15.4, D-181) -----------------------
+     Each source gets its own rules: a W-2 job pays FICA and ordinary tax;
+     contract work pays self-employment tax and deducts half of it; passive
+     income is ordinary unless marked qualified, which stacks as gains;
+     a benefit and a pension are ordinary with no payroll tax; Social
+     Security is at most 85% taxable (the higher-income rule; taken as the
+     rule for anyone who still has other income, and said so). The
+     ordinary tax is computed ONCE on the pool and shared out in proportion
+     to what each source put in, so the parts sum to the whole. */
+  var SS_TAXABLE_SHARE = 0.85;
+  function takeHomeBySource(household, tables) {
+    var t = tables || {};
+    var sources = Schema.allIncomeSources(household).filter(function (s) { return Money.isEntered(s.grossAnnualIncomeCents); });
+    if (!sources.length) return Money.incomplete('Add your income to see this.', ['grossAnnualIncome']);
+    if (!t.federalBrackets) return Money.incomplete('Federal bracket table is not loaded.', ['federalBrackets']);
+    var assumed = [];
+    var fs = household && household.filingStatus;
+    if (!fs || !t.federalBrackets.brackets[fs]) { fs = 'single'; assumed.push('filingStatus'); }
+    var wages = 0;
+    sources.forEach(function (s) { if (s.type === 'w2' || s.type === 'equity') wages += s.grossAnnualIncomeCents; });
+    var rows = sources.map(function (s) {
+      var type = s.type || 'w2';
+      var g = s.grossAnnualIncomeCents;
+      var row = { id: s.id, source: s.source, personId: s.personId, type: type, grossCents: g, ordinaryCents: 0, qualifiedCents: 0, payrollCents: 0, seCents: 0, method: '', survivesJobLoss: Schema.survivesJobLoss(s) };
+      if (type === 'w2' || type === 'equity') {
+        var f = fica(t.seTax, g, fs);
+        row.payrollCents = Money.isOk(f) ? f.value : 0;
+        row.ordinaryCents = g;
+        row.method = 'payroll tax and withholding';
+      } else if (type === '1099') {
+        var se = SelfEmployed.selfEmploymentTax(g, fs, t.seTax, { priorWagesCents: wages });
+        row.seCents = Money.isOk(se) ? se.value : 0;
+        row.halfSeCents = Money.isOk(se) ? (se.deductibleHalfCents || 0) : 0;
+        row.ordinaryCents = Math.max(0, g - row.halfSeCents);
+        row.method = 'self-employment tax, half of it deducted';
+      } else if (type === 'passive') {
+        if (s.passiveTreatment === 'qualified') { row.qualifiedCents = g; row.method = 'qualified: taxed as gains'; }
+        else { row.ordinaryCents = g; row.method = 'ordinary income, no payroll tax'; }
+      } else if (type === 'socialSecurity') {
+        row.ordinaryCents = Math.round(g * SS_TAXABLE_SHARE);
+        row.method = 'up to 85% taxable, no payroll tax';
+        if (assumed.indexOf('socialSecurityShare') === -1) assumed.push('socialSecurityShare');
+      } else {
+        row.ordinaryCents = g;
+        row.method = type === 'pension' ? 'ordinary income, no payroll tax' : 'taxable, no payroll tax';
+      }
+      return row;
+    });
+    var pool = 0, qualified = 0;
+    rows.forEach(function (r) { pool += r.ordinaryCents; qualified += r.qualifiedCents; });
+    var ord = ordinaryTax(t.federalBrackets, pool, fs);
+    var ordTax = Money.isOk(ord) ? ord.value : 0;
+    var cg = qualified > 0 && Money.isOk(ord) ? capitalGainsTax(t.federalBrackets, qualified, ord.taxableIncomeCents, fs) : null;
+    var cgTax = cg && Money.isOk(cg) ? cg.value : 0;
+    var totalGross = 0, totalTax = 0;
+    rows.forEach(function (r) {
+      var share = pool > 0 ? r.ordinaryCents / pool : 0;
+      var qshare = qualified > 0 ? r.qualifiedCents / qualified : 0;
+      r.incomeTaxCents = Math.round(ordTax * share + cgTax * qshare);
+      r.taxCents = r.incomeTaxCents + r.payrollCents + r.seCents;
+      r.takeHomeCents = r.grossCents - r.taxCents;
+      r.effectiveRate = r.grossCents > 0 ? r.taxCents / r.grossCents : null;
+      totalGross += r.grossCents; totalTax += r.taxCents;
+    });
+    return Money.ok(totalGross - totalTax, {
+      rows: rows,
+      grossCents: totalGross,
+      taxCents: totalTax,
+      takeHomeCents: totalGross - totalTax,
+      effectiveRate: totalGross > 0 ? totalTax / totalGross : null,
+      filingStatus: fs,
+      assumed: assumed,
+      referenceVersion: t.federalBrackets.version
+    });
+  }
+
   return {
+    takeHomeBySource: takeHomeBySource,
     withdrawalRates: withdrawalRates,
     afterTaxAssets: afterTaxAssets,
     afterTaxNetWorth: afterTaxNetWorth,

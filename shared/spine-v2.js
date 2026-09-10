@@ -377,8 +377,11 @@
   /** The migration (15.1): every entered figure that has no facts about it
       gets them. A field the spine stamped since D-056 was typed by the
       person and is sure as of that stamp; a bare value from before is
-      migrated, unknown, as of the migration. Runs once the field map is
-      registered, and again on each load in case a field is new. */
+      migrated, ROUGHLY, as of the migration: somebody typed it once, so it
+      is rounded to the hundred, not the thousand, and the Refresh room asks
+      them to confirm it (15.4 changed this from unknown, D-181). Runs once
+      the field map is registered, and again on each load in case a field
+      is new. */
   function migrateFieldMeta(h, when) {
     if (!fieldReaders || !h || !h.meta) return 0;
     h.meta.fields = h.meta.fields || {};
@@ -391,7 +394,7 @@
       var guessed = !!(h.meta.guessed && h.meta.guessed[id]);
       h.meta.fields[id] = at
         ? { asOf: at, source: 'typed', confidence: guessed ? 'roughly' : 'sure', room: (h.meta.source && h.meta.source[id]) || null }
-        : { asOf: when, source: 'migrated', confidence: 'unknown', room: null };
+        : { asOf: when, source: 'migrated', confidence: 'roughly', room: null };
       n++;
     });
     if (n && !h.meta.fieldsMigratedAt) h.meta.fieldsMigratedAt = when;

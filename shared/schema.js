@@ -156,7 +156,9 @@
     'retirement.has401k':                        { class: 'raw',        unit: 'bool',    note: 'does an employer 401(k) exist to contribute to. null = not asked; the Max 401(k) preset is absent, not disabled, unless true. Asked once, by Budget. D-129' },
     'insurance.highestDeductibleCents':          { class: 'raw',        unit: 'cents',   note: 'the largest single deductible a cash cushion has to cover. Owned by Sleep At Night' },
     'assumptions.marginalRate':                  { class: 'assumption', unit: 'rate',    default: null, note: 'NO default \u2014 asked once, never derived from the effective-rate table' },
-    'incomeSource.type':                         { class: 'raw',        unit: 'enum',    values: ['w2', '1099'] },
+    'incomeSource.type':                         { class: 'raw',        unit: 'enum',    values: ['w2', '1099', 'passive', 'benefit', 'pension', 'socialSecurity', 'equity'], note: 'what kind of pay it is; decides the tax rules and whether it survives a job loss. 15.4, D-181' },
+    'incomeSource.survivesJobLoss':              { class: 'raw',        unit: 'bool',    note: 'keeps paying if the job goes. null = derived from the type (everything but a W-2 job survives); true/false is the person saying otherwise. Read through Schema.survivesJobLoss. 15.4, D-181' },
+    'incomeSource.passiveTreatment':             { class: 'raw',        unit: 'enum',    values: ['ordinary', 'qualified'], note: 'passive income only: ordinary (rent, interest) or qualified (dividends, long-term gains). null reads as ordinary. 15.4, D-181' },
     'incomeSource.employerMatch.matchPercent':          { class: 'raw', unit: 'rate',    note: '0.5 === employer matches 50 cents on the dollar' },
     'incomeSource.employerMatch.matchCapPercentOfSalary': { class: 'raw', unit: 'rate',  note: '0.06 === capped at the first 6% of salary' },
     'asset.valueCents':                          { class: 'raw',        unit: 'cents' },
@@ -300,6 +302,35 @@
   /* variableLowCents / variableHighCents: a month at the low and high end,
      for self-employed and mixed income (D-094). Owner's pay is read from
      the low end; nothing here averages them into a steady figure. */
+  /* ---- 15.4: income by type (D-181) --------------------------------------
+     Six types. What survives a job loss is derived from the type unless the
+     person says otherwise: a W-2 job stops; contract work, rent and
+     dividends, a benefit, a pension and Social Security keep paying. Every
+     job-loss shock (the Long Way Round, Runway, Between Jobs) zeroes only
+     the sources that do not survive. */
+  /* `equity` (RSUs, stock pay) is the seventh: it is what the situation
+     switch equityComp reads (D-180); it is taxed as wages and stops with
+     the job. */
+  var INCOME_TYPES = ['w2', '1099', 'passive', 'benefit', 'pension', 'socialSecurity', 'equity'];
+  var INCOME_TYPE_LABELS = { w2: 'A job (W-2)', '1099': 'Contract or own work (1099)', passive: 'Rent, dividends, royalties', benefit: 'A benefit', pension: 'A pension', socialSecurity: 'Social Security', equity: 'Stock or equity pay' };
+  function survivesJobLoss(source) {
+    var s = source || {};
+    if (s.survivesJobLoss === true || s.survivesJobLoss === false) return s.survivesJobLoss;
+    var t = s.type || 'w2';
+    return t !== 'w2' && t !== 'equity';
+  }
+  function survivingIncomeSources(household) {
+    return allIncomeSources(household).filter(survivesJobLoss);
+  }
+  /** The gross a year that keeps coming when the job goes: ok(0) when
+      everything stops, incomplete only when no income is known at all. */
+  function survivingGrossAnnualIncomeCents(household) {
+    var all = grossAnnualIncomeCents(household);
+    if (!Money.isOk(all)) return all;
+    var summed = Money.sumCents(survivingIncomeSources(household).map(function (s) { return s.grossAnnualIncomeCents; }));
+    return Money.ok(summed.counted ? summed.total : 0, { grossAnnualIncomeCents: all.value, share: all.value > 0 ? (summed.counted ? summed.total : 0) / all.value : 0 });
+  }
+
   function createIncomeSource(fields) {
     var f = fields || {};
     return {
@@ -325,7 +356,16 @@
       ongoing: f.ongoing === undefined ? true : !!f.ongoing,
       variableLowCents: Money.isEntered(f.variableLowCents) ? f.variableLowCents : null,
       variableHighCents: Money.isEntered(f.variableHighCents) ? f.variableHighCents : null,
-      type: f.type || 'w2',
+      /* 15.4: one of six. A value from before (only w2 and 1099 existed)
+         reads as it was; anything else is a job. D-181. */
+      type: INCOME_TYPES.indexOf(f.type) >= 0 ? f.type : 'w2',
+      /* Keeps paying if the job goes. null means "derived from the type"
+         (everything but a W-2 job survives); true or false is the person
+         saying otherwise. Read through Schema.survivesJobLoss. 15.4. */
+      survivesJobLoss: f.survivesJobLoss === true ? true : f.survivesJobLoss === false ? false : null,
+      /* Passive only: ordinary (rent, interest, royalties) or qualified
+         (dividends, long-term gains) treatment. null = ordinary. 15.4. */
+      passiveTreatment: f.passiveTreatment === 'qualified' ? 'qualified' : f.passiveTreatment === 'ordinary' ? 'ordinary' : null,
       /* Return on Hassle applied to the job: 1 easy · 2 moderate · 3
          annoying. null until rated. D-066. */
       hassle: f.hassle === undefined ? null : f.hassle,
@@ -2440,6 +2480,11 @@
     otherAssetsCents: otherAssetsCents,
     INTAKE_ASSET_CATEGORIES: INTAKE_ASSET_CATEGORIES,
     ORIENTATIONS: ORIENTATIONS,
+    INCOME_TYPES: INCOME_TYPES,
+    INCOME_TYPE_LABELS: INCOME_TYPE_LABELS,
+    survivesJobLoss: survivesJobLoss,
+    survivingIncomeSources: survivingIncomeSources,
+    survivingGrossAnnualIncomeCents: survivingGrossAnnualIncomeCents,
     orientationOf: orientationOf,
     afterTaxValue: afterTaxValue,
     ITEMISED_ASSET_CATEGORIES: ITEMISED_ASSET_CATEGORIES,

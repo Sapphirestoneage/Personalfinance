@@ -10623,6 +10623,111 @@ section('15.3: orientation, the value after deferred tax, and the two-position c
 })();
 
 /* ==========================================================================
+   15.4: income by type (D-181)
+   ========================================================================== */
+section('15.4: income by type, take-home per source, what survives a job loss (D-181)');
+(function () {
+  const Spine = SpineMain;
+  const Tax = require(path.join(ROOT, 'engines/tax.js'));
+  const Hourly = require(path.join(ROOT, 'engines/hourly.js'));
+  const BetweenJobs = require(path.join(ROOT, 'engines/betweenjobs.js'));
+  const Adventure = require(path.join(ROOT, 'engines/adventure.js'));
+  const fb = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/federal_brackets_2026.json'), 'utf8'));
+  const se = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/se_tax_2026.json'), 'utf8'));
+  const T = Object.assign({}, TABLES, { federalBrackets: fb, seTax: se,
+    adventurePaths: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/adventure_paths.json'), 'utf8')), returnBands: require(path.join(ROOT, 'data/return_bands.json')), levers: require(path.join(ROOT, 'data/levers.json')) });
+
+  check('seven types: the six, and equity for the situation switch', Schema.INCOME_TYPES.join(','), 'w2,1099,passive,benefit,pension,socialSecurity,equity');
+  check('an unknown type reads as a job', Schema.createIncomeSource({ type: 'wages' }).type, 'w2');
+  check('a source from before keeps its type', Schema.createIncomeSource({ type: '1099' }).type, '1099');
+  check('survivesJobLoss is null until said', Schema.createIncomeSource({ type: 'w2' }).survivesJobLoss, null);
+  check('a job stops', Schema.survivesJobLoss({ type: 'w2' }), false);
+  check('equity pay stops with the job', Schema.survivesJobLoss({ type: 'equity' }), false);
+  ['1099', 'passive', 'benefit', 'pension', 'socialSecurity'].forEach(function (t) { check(t + ' keeps paying', Schema.survivesJobLoss({ type: t }), true); });
+  check('the person can say otherwise: a job that survives', Schema.survivesJobLoss({ type: 'w2', survivesJobLoss: true }), true);
+  check('...or contract work that stops', Schema.survivesJobLoss({ type: '1099', survivesJobLoss: false }), false);
+  check('passive treatment is ordinary unless qualified', Schema.createIncomeSource({ type: 'passive', passiveTreatment: 'x' }).passiveTreatment, null);
+  checkTrue('the three are catalogued', !!Schema.FIELDS['incomeSource.survivesJobLoss'] && !!Schema.FIELDS['incomeSource.passiveTreatment'] && Schema.FIELDS['incomeSource.type'].values.indexOf('pension') > -1);
+
+  /* The demo has one job: nothing survives. Add rent and a side contract. */
+  const demo = Demo.build();
+  check('the demo: nothing survives a job loss', Schema.survivingGrossAnnualIncomeCents(demo).value, 0);
+  check('...but the answer is a zero, not a blank', Schema.survivingGrossAnnualIncomeCents(demo).status, 'ok');
+  check('no income at all: incomplete', Schema.survivingGrossAnnualIncomeCents(Schema.createHousehold({})).status, 'incomplete');
+  const mixed = Demo.build();
+  const you = Schema.primaryPerson(mixed);
+  you.incomeSources.push(Schema.createIncomeSource({ personId: you.id, source: 'Rent', type: 'passive', grossAnnualIncomeCents: 1200000 }));
+  you.incomeSources.push(Schema.createIncomeSource({ personId: you.id, source: 'Side contract', type: '1099', grossAnnualIncomeCents: 600000, hoursPerWeek: 5 }));
+  const surv = Schema.survivingGrossAnnualIncomeCents(mixed);
+  check('rent and the contract survive: 18,000 of 90,000', surv.value, 1800000);
+  check('...a fifth', surv.share, 0.2, 1e-12);
+
+  /* Take-home per source, by hand. Pool: 72,000 wages + 12,000 rent +
+     (6,000 − half the SE tax). SE: 6,000 × 92.35% × 15.3% = 848, half 424,
+     so 5,576 ordinary. Pool 89,576; less 16,100 is 73,476 taxable:
+     1,240 + 4,560 + 22% × 23,076 = 10,876.72. Shared by what each put in;
+     FICA 7.65% on the wages. */
+  const by = Tax.takeHomeBySource(mixed, T);
+  check('three rows', by.rows.length, 3);
+  const job = by.rows[0], rent = by.rows[1], side = by.rows[2];
+  check('the job: 10,876.72 × 72,000/89,576 + 5,508 FICA, about 14,250.57', job.taxCents, Math.round(1087672 * 7200000 / 8957600 + 550800), 100);
+  check('...method says payroll tax and withholding', job.method, 'payroll tax and withholding');
+  check('...and it stops with the job', job.survivesJobLoss, false);
+  check('rent: 10,876.72 × 12,000/89,576, no payroll tax, about 1,457', rent.taxCents, Math.round(1087672 * 1200000 / 8957600), 100);
+  check('...and keeps paying', rent.survivesJobLoss, true);
+  check('the contract: its share of ordinary tax plus about 848 of SE tax', side.taxCents, Math.round(1087672 * 557600 / 8957600) + 84800, 100);
+  check('...with half the SE tax deducted (423.89)', side.halfSeCents, 42389);
+  check('the parts sum to the whole', by.rows.reduce(function (a, r) { return a + r.taxCents; }, 0), by.taxCents);
+  check('take-home is gross less tax', by.value, by.grossCents - by.taxCents);
+  check('nothing assumed: the demo files single', by.assumed.length, 0);
+  const ss = Schema.createHousehold({ filingStatus: 'single', people: [Schema.createPerson({ incomeSources: [Schema.createIncomeSource({ type: 'socialSecurity', grossAnnualIncomeCents: 2400000 }), Schema.createIncomeSource({ type: 'pension', grossAnnualIncomeCents: 3000000 })] })] });
+  const ssBy = Tax.takeHomeBySource(ss, T);
+  check('Social Security: 85% of it is in the pool', ssBy.rows[0].ordinaryCents, 2040000);
+  check('...and says the share was assumed', ssBy.assumed.join(','), 'socialSecurityShare');
+  check('a pension: ordinary, no payroll tax', ssBy.rows[1].payrollCents + ssBy.rows[1].seCents, 0);
+  const q = Schema.createHousehold({ filingStatus: 'single', people: [Schema.createPerson({ incomeSources: [Schema.createIncomeSource({ type: 'w2', grossAnnualIncomeCents: 7200000 }), Schema.createIncomeSource({ type: 'passive', passiveTreatment: 'qualified', grossAnnualIncomeCents: 1000000 })] })] });
+  const qBy = Tax.takeHomeBySource(q, T);
+  check('qualified passive income stacks as gains: 15% on 10,000 above 55,900 taxable', qBy.rows[1].taxCents, 150000);
+  check('no filing status: assumed single and said', Tax.takeHomeBySource(Object.assign({}, mixed, { filingStatus: null }), T).assumed.join(','), 'filingStatus');
+  check('no income: incomplete', Tax.takeHomeBySource(Schema.createHousehold({}), T).status, 'incomplete');
+
+  /* Job-loss shocks zero only what does not survive. */
+  const bj = BetweenJobs.otherIncome(mixed, T);
+  checkTrue('Between Jobs keeps your rent and contract as other income', bj.cents > 0 && bj.basis === 'takeHome' && bj.grossAnnualCents === 1800000, JSON.stringify(bj));
+  check('...and nothing for the demo, whose one job stops', BetweenJobs.otherIncome(demo, T).cents, 0);
+  const baseMixed = Adventure.baseline(mixed, T), baseDemo = Adventure.baseline(demo, T);
+  check('the Long Way Round baseline carries the surviving take-home: a fifth', baseMixed.value.survivingAnnualIncomeCents, Math.round(baseMixed.value.annualIncomeCents * 0.2));
+  check('...zero for the demo', baseDemo.value.survivingAnnualIncomeCents, 0);
+  const walkMixed = Adventure.run(mixed, T, { pathId: 'steady', shockIds: ['jobloss'] });
+  const walkDemo = Adventure.run(demo, T, { pathId: 'steady', shockIds: ['jobloss'] });
+  const lossYear = walkMixed.value.rows.filter(function (r) { return r.lostMonths; })[0];
+  checkTrue('the job-loss year is marked', !!lossYear, JSON.stringify(walkMixed.value.rows.map(function (r) { return r.lostMonths; })));
+  checkTrue('in the job-loss year the mixed household keeps a larger share of its pay than the demo', Money.isOk(walkMixed) && Money.isOk(walkDemo) && lossYear && walkMixed.value.rows[lossYear.year - 1].incomeCents / baseMixed.value.annualIncomeCents > walkDemo.value.rows[lossYear.year - 1].incomeCents / baseDemo.value.annualIncomeCents, JSON.stringify([walkMixed.status, walkDemo.status]));
+
+  /* Real Hourly Wage: a line per source once there are two with hours. */
+  const one = Hourly.realHourlyWage(demo, T, {});
+  check('one source: no per-source lines', (one.perSource || []).length, 0);
+  Schema.primaryPerson(mixed).work = Object.assign({}, Schema.workProfile(Schema.primaryPerson(mixed)), { contractedHoursPerWeek: 40 });
+  const many = Hourly.realHourlyWage(mixed, T, {});
+  check('three sources: three lines', (many.perSource || []).length, 3);
+  check('the contract: 6,000 over 5 h × the weeks', many.perSource && many.perSource[2].nominalHourlyCents, Math.round(600000 / (5 * many.weeksPerYear)));
+  check('rent has no hours, so no rate', many.perSource && many.perSource[1].nominalHourlyCents, null);
+  check('the main job takes the paid hours from the work profile: 72,000 over 40 h', many.perSource && many.perSource[0].nominalHourlyCents, Math.round(7200000 / (40 * many.weeksPerYear)));
+
+  /* The rooms. */
+  const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
+  checkTrue('Start Here asks the kind of pay with chips, not typing', start.indexOf("choices('payType'") > -1 && start.indexOf("choices('paySurvives'") > -1);
+  checkTrue('...and writes type and survivesJobLoss through the spine', /payType: function \(v\) \{ writeSource\(INCOME_ID, \{ type: v \}\)/.test(start));
+  const income = fs.readFileSync(path.join(ROOT, 'rooms/income.html'), 'utf8');
+  checkTrue('the Income room shows pay source by source', income.indexOf('takeHomeBySource') > -1 && income.indexOf('id="sources"') > -1);
+  const rhw = fs.readFileSync(path.join(ROOT, 'rooms/real-hourly-wage.html'), 'utf8');
+  checkTrue('Real Hourly Wage paints a line per source', rhw.indexOf('perSource') > -1 && rhw.indexOf('id="per-source"') > -1);
+  const runway = fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8');
+  checkTrue('Runway defaults other income to what survives', runway.indexOf('survivingGrossAnnualIncomeCents') > -1);
+  Spine.reset();
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 

@@ -165,7 +165,26 @@
       weeksPerYear: weeks,
       annualPaidHours: hours.paidHoursPerWeek * weeks,
       annualTotalHours: hours.value * weeks,
-      referenceVersion: Money.isOk(tax) ? tax.referenceVersion : null
+      referenceVersion: Money.isOk(tax) ? tax.referenceVersion : null,
+      /* 15.4: with more than one source, each one's own headline rate from
+         its own hours a week; a source with no hours has no rate. D-181. */
+      perSource: perSourceWages(person, weeks, Money.isOk(tax) ? tax.effectiveRate : null, hours.paidHoursPerWeek)
+    });
+  }
+  function perSourceWages(person, weeks, effectiveRate, paidHoursPerWeek) {
+    var sources = (person.incomeSources || []).filter(function (s) { return Money.isEntered(s.grossAnnualIncomeCents) && s.grossAnnualIncomeCents > 0; });
+    if (sources.length < 2) return [];
+    /* The main job's hours are the work profile's paid hours (the room's
+       first input) when the source itself carries none. */
+    var mainId = sources.filter(function (s) { return (s.type || 'w2') === 'w2' && !Money.isEntered(s.hoursPerWeek); }).map(function (s) { return s.id; })[0] || null;
+    return sources.map(function (s) {
+      var hours = Money.isEntered(s.hoursPerWeek) && s.hoursPerWeek > 0 ? s.hoursPerWeek : (s.id === mainId && Money.isEntered(paidHoursPerWeek) && paidHoursPerWeek > 0 ? paidHoursPerWeek : null);
+      var hasHours = hours !== null;
+      s = Object.assign({}, s, { hoursPerWeek: hours });
+      var nominal = hasHours ? Math.round(s.grossAnnualIncomeCents / (s.hoursPerWeek * weeks)) : null;
+      var kept = Money.isEntered(effectiveRate) ? Math.round(s.grossAnnualIncomeCents * (1 - effectiveRate)) : null;
+      return { id: s.id, source: s.source, type: s.type || 'w2', grossAnnualIncomeCents: s.grossAnnualIncomeCents, hoursPerWeek: hasHours ? s.hoursPerWeek : null,
+        nominalHourlyCents: nominal, afterTaxHourlyCents: hasHours && kept !== null ? Math.round(kept / (s.hoursPerWeek * weeks)) : null };
     });
   }
 

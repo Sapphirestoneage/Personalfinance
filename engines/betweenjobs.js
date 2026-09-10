@@ -100,9 +100,14 @@
    */
   function otherIncome(household, tables) {
     var you = Schema.primaryPerson(household);
-    var sources = Schema.allIncomeSources(household).filter(function (s) { return !you || s.personId !== you.id; });
+    /* 15.4: a partner's pay, and your own sources that survive a job loss
+       (rent, a pension, contract work). Only the job stops. D-181. */
+    var sources = Schema.allIncomeSources(household).filter(function (s) { return !you || s.personId !== you.id || Schema.survivesJobLoss(s); });
     if (!sources.length) return { cents: 0, basis: 'none', reason: null };
-    var view = Object.assign({}, household, { people: (household.people || []).filter(function (p) { return !you || p.id !== you.id; }) });
+    var view = Object.assign({}, household, { people: (household.people || []).map(function (p) {
+      if (!you || p.id !== you.id) return p;
+      return Object.assign({}, p, { incomeSources: (p.incomeSources || []).filter(Schema.survivesJobLoss) });
+    }).filter(function (p) { return (p.incomeSources || []).length || !you || p.id !== you.id; }) });
     var take = Tier0.takeHomeMonthlyCents(view, tables);
     if (Money.isOk(take)) return { cents: take.value, basis: 'takeHome', grossAnnualCents: take.grossAnnualIncomeCents, effectiveRate: take.effectiveRate, reason: null };
     var gross = Schema.grossAnnualIncomeCents(view);

@@ -77,7 +77,7 @@
 
   function display(spec, raw) {
     if (!Money.isEntered(raw)) return '';
-    if (spec.kind === 'money') return Money.formatCents(raw);
+    if (spec.kind === 'money') return Money.formatCents(raw, { exact: true });   /* a typed value is shown as typed, never rounded (15.10) */
     if (spec.kind === 'pct') return String(Math.round(raw * 1000) / 10);
     return String(raw);
   }
@@ -291,7 +291,7 @@
 
     /* One undo entry per box, named for it: "Paid hours a week → 40". */
     function labelled(c, raw, fn) {
-      var shown = raw === null || raw === undefined ? '—' : (c.kind === 'money' ? Money.formatCents(raw) : c.kind === 'pct' ? (Math.round(raw * 1000) / 10) + '%' : String(raw));
+      var shown = raw === null || raw === undefined ? '—' : (c.kind === 'money' ? Money.formatCents(raw, { exact: true }) : c.kind === 'pct' ? (Math.round(raw * 1000) / 10) + '%' : String(raw));
       Spine.batch(c.label + ' → ' + shown, fn);
     }
 

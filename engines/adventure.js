@@ -203,6 +203,9 @@
     var cashCents = Money.isOk(cash) ? cash.value : null;
     return Money.ok({
       annualIncomeCents: income.value,
+      /* 15.4: the share of pay that keeps coming when the job goes (rent,
+         a pension, contract work), as take-home. D-181. */
+      survivingAnnualIncomeCents: (function () { var s = Schema.survivingGrossAnnualIncomeCents(household); return Money.isOk(s) ? Math.round(income.value * s.share) : 0; })(),
       grossAnnualIncomeCents: income.grossAnnualIncomeCents,
       estimatedTaxCents: income.estimatedTaxCents,
       annualSpendCents: annualSpend,
@@ -277,6 +280,7 @@
 
     var b = base.value;
     var income = b.annualIncomeCents;
+    var survivingIncome = b.survivingAnnualIncomeCents || 0;
     var spend = b.annualSpendCents;
     var invested = b.investedCents === null ? 0 : b.investedCents;
     var cash = b.cashCents;                  /* null = unknown, never zero */
@@ -346,7 +350,8 @@
         lostMonths = Math.round(MONTHS * shocks.jobloss.incomeLostShareOfYear);
         events.push(shocks.jobloss.label);
         var monthlySpend = spend / MONTHS;
-        var survivingMonthly = L.extraSurvives ? extra / MONTHS : 0;
+        /* 15.4: the sources that survive a job loss keep paying (D-181). */
+        var survivingMonthly = (L.extraSurvives ? extra / MONTHS : 0) + Math.min(income, survivingIncome) / MONTHS;
         var gapMonthly = Math.max(0, monthlySpend - survivingMonthly);
         var workingShare = (MONTHS - lostMonths) / MONTHS;
         var workingSaved = Math.round((income + extra) * workingShare - spend * workingShare);

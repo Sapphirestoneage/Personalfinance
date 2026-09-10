@@ -525,7 +525,7 @@ const CASES = [
       return [
         ['the share landed as a ratio', r.pct, 0.05],
         ['the target landed, in cents', r.target, 120000],
-        ['and the number is the target with the share worked back', r.number.indexOf('$1,200') !== -1 && r.number.indexOf('1.7%') !== -1, true]
+        ['and the number is the target with the share worked back', r.number.indexOf('$1,200') !== -1 && r.number.indexOf('1.7%') !== -1 ? true : r.number, true]
       ];
     }
   },
@@ -1076,7 +1076,7 @@ const CASES = [
       }));
       const undo = (JSON.parse(r.blob).meta.undoStack || []).map(e => e.label).join(' | ');
       return [
-        ['the cash-out cost is worked out', r.number.indexOf('$14,500') !== -1, true],
+        ['the cash-out cost is worked out', r.number.indexOf('$14,500') !== -1 ? true : r.number, true],
         ['the 20% withheld is shown apart from it', r.rows.indexOf('$8,000') !== -1, true],
         ['and what the balance would have been, left alone', r.rows.indexOf('left alone') !== -1, true],
         ['the what-if balance reached no stored field', r.blob.indexOf('4000000') !== -1, false],
@@ -1305,7 +1305,10 @@ async function tagFields(page, container) {
     process.exit(0);
   }
 
+  const ONLY = process.env.SLAF_ONLY ? process.env.SLAF_ONLY.split(',') : null;
+  const wanted = c => !ONLY || ONLY.some(id => c.room.indexOf('/' + id + '.html') > -1);
   for (const c of CASES) {
+    if (!wanted(c)) continue;
     console.log('\n' + c.room + '  ' + c.container);
     const ctx = await browser.newContext(devices['Pixel 7']);
     ctx.setDefaultTimeout(6000);
@@ -1380,6 +1383,7 @@ async function tagFields(page, container) {
   }
 
   for (const c of SELECT_CASES) {
+    if (!wanted(c)) continue;
     console.log('\n' + c.room + '  ' + c.container);
     const ctx = await browser.newContext(devices['Pixel 7']);
     ctx.setDefaultTimeout(6000);

@@ -85,6 +85,12 @@
     <p class="month-sub" id="month-sub"></p>
   </section>
 
+  <section class="slaf-card card-gap" id="sources">
+    <span class="slaf-eyebrow">Your pay, source by source</span>
+    <p class="slaf-hint" style="margin:var(--space-1) 0 var(--space-2)">Each kind of pay is taxed its own way, and only a job stops when the job goes. Set the kind in <a href="start.html#q-income">Start Here</a>.</p>
+    <div id="sources-table"></div>
+  </section>
+
   <section class="slaf-card card-gap" id="log">
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-3)">
       <span class="slaf-eyebrow">What comes in</span>
@@ -174,6 +180,7 @@
 <script src="../shared/undo.js"></script>
 <script src="../engines/income.js"></script>
 <script src="../engines/selfemployed.js"></script>
+<script src="../engines/tax.js"></script>
 <script src="../engines/ledger.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
@@ -412,7 +419,27 @@
     chip.textContent = '← Back to the budget' + (m ? ' for ' + Schema.monthLabel(m[1]) : '');
   })();
 
+  /* 15.4: take-home per source through engines/tax.js takeHomeBySource,
+     with what survives a job loss. Read-only here; the kind is set in
+     Start Here (one owner per shared number). D-181. */
+  function paintSources() {
+    var host = document.getElementById('sources-table');
+    if (!host || !TABLES) return;
+    var r = SLAF.Tax.takeHomeBySource(Spine.getProfile(), TABLES);
+    if (!Money.isOk(r)) { host.innerHTML = '<p class="slaf-reason">' + esc(r.reason || '') + '</p>'; return; }
+    var rows = r.rows.map(function (x) {
+      var name = x.source || Schema.INCOME_TYPE_LABELS[x.type] || 'Pay';
+      return '<tr><td><b>' + esc(name) + '</b><br><small>' + esc(Schema.INCOME_TYPE_LABELS[x.type] || x.type) + ' · ' + esc(x.method) + '</small></td>'
+        + '<td class="num">' + Money.formatCents(x.grossCents) + '</td><td class="num">' + Money.formatCents(x.takeHomeCents) + '<br><small>' + (x.effectiveRate === null ? '' : Math.round(100 * x.effectiveRate) + '% to tax') + '</small></td>'
+        + '<td>' + (x.survivesJobLoss ? 'Keeps paying' : 'Stops') + '</td></tr>';
+    }).join('');
+    var notes = (r.assumed || []).map(function (k) { return k === 'filingStatus' ? 'filing status taken as single' : k === 'socialSecurityShare' ? 'Social Security taken as 85% taxable, the most it can be' : k; });
+    host.innerHTML = '<div style="overflow-x:auto"><table class="slaf-table"><thead><tr><th>Source</th><th class="num">A year, gross</th><th class="num">Take-home</th><th>If the job goes</th></tr></thead><tbody>' + rows
+      + '</tbody><tfoot><tr><td><b>All of it</b></td><td class="num">' + Money.formatCents(r.grossCents) + '</td><td class="num">' + Money.formatCents(r.takeHomeCents) + '</td><td></td></tr></tfoot></table></div>'
+      + (notes.length ? '<p class="slaf-hint" style="margin:var(--space-2) 0 0">Assumed: ' + esc(notes.join('; ')) + '.</p>' : '');
+  }
   function render() {
+    paintSources();
     if (!TABLES) return;
     var h = Spine.getProfile();
     renderMonth(h);
@@ -432,7 +459,7 @@
   Spine.onChange(render);
   buildKinds();
   fillForm(null);
-  Reference.load(['effectiveTaxRates', 'seTax']).then(function (tables) {
+  Reference.load(['effectiveTaxRates', 'seTax', 'federalBrackets']).then(function (tables) {
     TABLES = tables;
     render();
     jumpToHash();

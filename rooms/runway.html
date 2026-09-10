@@ -660,7 +660,14 @@
      written back. D-092. */
   function prefillFromFacts() {
     var h = Spine.getProfile();
-    if (!Schema.isUnemployed(h)) return;
+    /* 15.4: the pay that keeps coming when the job goes (rent, a pension,
+       contract work) is the default other income, as take-home. D-181. */
+    if (!Money.isEntered(state.other)) {
+      var surviving = Schema.survivingGrossAnnualIncomeCents(h);
+      var take = Schema.takeHomeAnnualCents(h, TABLES);
+      if (Money.isOk(surviving) && surviving.value > 0 && Money.isOk(take)) state.other = Math.round(take.value * surviving.share / 12);
+    }
+    if (!Schema.isUnemployed(h)) { paintInputs(); return; }
     var u = Schema.unemploymentOf(h);
     var ben = Schema.benefitMonthlyCents(h);
     state.preset = 'laid_off';

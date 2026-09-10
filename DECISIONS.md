@@ -10808,6 +10808,87 @@ financial-snapshot; `test/aftertax.js`, a phone-shaped gate that marks the
 demo's investment pre-tax and taps through the control on all four screens
 and switches the feature off.
 
+### 15.4 Income by type (this commit)
+
+- **Seven types on the source that already exists.** `income.sources[]`
+  in the prompt is the DAITE view of `people[].incomeSources` (D-171), so
+  the type lives there: `incomeSource.type` grows from two values to
+  `w2 | 1099 | passive | benefit | pension | socialSecurity`, plus
+  `equity` (RSUs, stock pay), which the situation switch `equityComp`
+  already read (D-180) and which is taxed as wages and stops with the
+  job. A value from before reads as it was; anything unknown is a job.
+- **What survives a job loss is derived, and the person can say
+  otherwise.** `Schema.survivesJobLoss(source)`: a W-2 job and equity pay
+  stop; contract work, rent and dividends, a benefit, a pension and Social
+  Security keep paying. `incomeSource.survivesJobLoss` is null until the
+  person taps the other answer in Start Here (tapping the derived answer
+  again clears the override, so the stored field stays "said", never
+  "restated"). `Schema.survivingGrossAnnualIncomeCents(h)` is ok(0) when
+  everything stops and incomplete only when no income is known.
+- **Every job-loss shock zeroes only what does not survive.** The Long
+  Way Round's baseline carries `survivingAnnualIncomeCents` (the
+  surviving share of take-home) and the job-loss year keeps it; Between
+  Jobs keeps your own surviving sources as "other income" beside a
+  partner's pay; Runway defaults its other-income box to the same figure
+  as a month of take-home. `data/levers.json` already said which levers
+  survive (D-174); the sources now say it too.
+- **Take-home per source: `Tax.takeHomeBySource(household, tables)`.** A
+  W-2 job pays FICA and ordinary tax; contract work pays self-employment
+  tax with half deducted; passive income is ordinary unless
+  `passiveTreatment: qualified`, which stacks as gains; a benefit and a
+  pension are ordinary with no payroll tax; Social Security is taken as
+  85% taxable (the most it can be) and said so. The ordinary tax is
+  computed once on the pool and shared out in proportion, so the rows sum
+  to the whole. The Income room shows the table read-only ("Your pay,
+  source by source"); the household take-home that every savings figure
+  starts from (`Schema.takeHomeAnnualCents`, the effective-rate lookup,
+  D-171) is unchanged this commit: switching it to the per-source sum
+  moves every savings-rate figure and is a change to make on its own, with
+  its own re-derivation, not inside this one.
+- **Real Hourly Wage, source by source.** `Hourly.realHourlyWage` returns
+  `perSource[]` once a person has two or more sources: each one's headline
+  and after-tax rate from its own `hoursPerWeek` (the main job borrows the
+  work profile's paid hours; a source with no hours has no rate, and says
+  so). The room paints one line under the number.
+- **Re-derived on the demo plus rent and a side contract.** Pool 72,000 +
+  12,000 + (6,000 less half the SE tax of 847.77) = 89,576.11; less the
+  standard deduction 73,476 taxable; 10,876.74 of ordinary tax shared by
+  what each put in; FICA 5,508 on the wages; SE tax 847.77 on the
+  contract. Rent and the contract are 18,000 of 90,000, a fifth, and that
+  fifth of take-home is what the Long Way Round keeps in the job-loss
+  year.
+- **A bare legacy value now migrates as roughly, not unknown (supersedes
+  the 15.1 wording above).** The phone forms gate seeds a household the
+  way a pre-15.1 save looks (raw JSON, no stamps) and every Room-template
+  figure came back rounded to the thousand: a $14,500 cash-out cost read
+  as $15,000, a $1,200 giving target as $1,000. Somebody typed those
+  numbers once, so `migrateFieldMeta` stamps them `migrated` / `roughly`
+  (rounded to the hundred) and the Refresh room still lists them to
+  confirm; `unknown` is kept for a number nobody typed. One line in
+  `shared/spine-v2.js`; the 15.1 tests already read migrated fields as
+  roughly through the import path.
+- **What the person typed is shown as typed.** The same gate found the
+  Real Hourly Wage undo entry reading "Costs of working, a month → $700"
+  for a typed $650: the room's confidence rounding (15.10) had reached the
+  undo label, the input boxes and the owned-value chips. Those three are
+  records of what was entered, never derived figures, so the room
+  template's input display and undo label and the ownership chip's money
+  format now pass `exact: true`. The headline, the chart and the lens
+  amounts keep rounding to the least confident input, as 15.10 says.
+- **Compatibility note.** Two new keys on an income source,
+  `survivesJobLoss` (null) and `passiveTreatment` (null), both with
+  defaults; `type` accepts five more values. A household saved before this
+  commit reads exactly as it did. Start Here writes the type and the
+  override through `Spine.upsertIncomeSource`; no other room writes them.
+
+Gate for this commit: unit 25370 (a new section of 58 checks: the types,
+what survives, take-home per source by hand, Social Security and
+qualified income, Between Jobs and the Long Way Round in the job-loss
+year, a wage per source, the rooms); dnd 5614; export 25; render on start,
+income, real-hourly-wage, runway, between-jobs and adventure; the phone
+forms gate; a phone-shaped tap walk through the chips in Start Here and the
+tables in the Income and Real Hourly Wage rooms.
+
 ---
 
 # The Dungeons & Dividends entries

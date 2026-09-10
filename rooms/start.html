@@ -298,6 +298,8 @@
       return '<p class="q-help">However you are actually paid. It becomes a year underneath. “Not earning right now” is an answer, and so is “it varies”.</p>'
         + '<div class="row">' + moneyInput('pay', 'You are paid', 'e.g. 62,000', 'What you are paid') + select('basis', 'How often', basisOptions(), 'How often you are paid') + '</div>'
         + '<label class="slaf-field" data-hours hidden><span class="slaf-label">Hours a week</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" data-ctl="hours" placeholder="e.g. 40" aria-label="Hours a week"/></span></label>'
+        + '<div data-paytype style="margin-top:var(--space-2)">' + choices('payType', Schema.INCOME_TYPES.filter(function (t) { return t !== 'equity'; }).map(function (t) { return [t, Schema.INCOME_TYPE_LABELS[t]]; }), 'What kind of pay is this?')
+        + choices('paySurvives', [['no', 'It stops'], ['yes', 'It keeps paying']], 'If the job went, this pay…') + '</div>'
         + '<p class="field-note" data-note="pay"></p>';
     },
     ownWork: function () {
@@ -307,12 +309,16 @@
     retiredPay: function () {
       return '<p class="q-help">Pension, Social Security, an annuity, what you draw down — all of it, together.</p>'
         + '<div class="row">' + moneyInput('pay', 'Coming in', 'e.g. 3,500', 'What comes in') + select('basis', 'How often', basisOptions(), 'How often') + '</div>'
+        + '<div data-paytype style="margin-top:var(--space-2)">' + choices('payType', Schema.INCOME_TYPES.filter(function (t) { return t !== 'equity'; }).map(function (t) { return [t, Schema.INCOME_TYPE_LABELS[t]]; }), 'What kind of pay is this?')
+        + choices('paySurvives', [['no', 'It stops'], ['yes', 'It keeps paying']], 'If the job went, this pay…') + '</div>'
         + '<p class="field-note" data-note="pay"></p>';
     },
     studentPay: function () {
       return '<p class="q-help">A part-time job, a stipend, help from family that arrives like pay. Nothing is an answer too.</p>'
         + '<div class="row">' + moneyInput('pay', 'Coming in', 'e.g. 600', 'What comes in') + select('basis', 'How often', basisOptions(), 'How often') + '</div>'
         + '<label class="slaf-field" data-hours hidden><span class="slaf-label">Hours a week</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" data-ctl="hours" placeholder="e.g. 15" aria-label="Hours a week"/></span></label>'
+        + '<div data-paytype style="margin-top:var(--space-2)">' + choices('payType', Schema.INCOME_TYPES.filter(function (t) { return t !== 'equity'; }).map(function (t) { return [t, Schema.INCOME_TYPE_LABELS[t]]; }), 'What kind of pay is this?')
+        + choices('paySurvives', [['no', 'It stops'], ['yes', 'It keeps paying']], 'If the job went, this pay…') + '</div>'
         + '<p class="field-note" data-note="pay"></p>';
     },
     betweenJobs: function () {
@@ -446,6 +452,15 @@
     filing: function (v) { Spine.set('filingStatus', v || null, 'Filing status'); },
     pay: function (v) { writeSource(INCOME_ID, { rateCents: Money.parseMoney(v), frequency: ctl('basis').value || 'annual' }); },
     basis: function (v) { writeSource(INCOME_ID, { frequency: v }); },
+    /* 15.4: the kind of pay, and whether it survives a job loss. The
+       second is derived from the first unless the person says; tapping the
+       derived answer again clears the override. D-181. */
+    payType: function (v) { writeSource(INCOME_ID, { type: v }); },
+    paySurvives: function (v) {
+      var src = sourceById(h(), INCOME_ID) || primarySource(h()) || {};
+      var derived = Schema.survivesJobLoss(Object.assign({}, src, { survivesJobLoss: null }));
+      writeSource(INCOME_ID, { survivesJobLoss: (v === 'yes') === derived ? null : v === 'yes' });
+    },
     hours: function (v) { var n = String(v).trim() === '' ? null : Number(v); writeSource(INCOME_ID, { hoursPerWeek: n === null || isNaN(n) || n <= 0 ? null : n }); },
     pay2: function (v) { writeSource(OWN_WORK_ID, { rateCents: Money.parseMoney(v), frequency: ctl('basis2').value || 'annual' }); },
     basis2: function (v) { writeSource(OWN_WORK_ID, { frequency: v }); },
@@ -830,6 +845,14 @@
       else if (src && Money.isEntered(src.grossAnnualIncomeCents) && (src.frequency || 'annual') === 'annual') setMoney('pay', src.grossAnnualIncomeCents);
       else { setMoney('pay', null); propose('pay', g.pay, function (c) { WRITE.pay(c / 100); render(); }); }
       var payBox = ctl('pay'); if (payBox) payBox.disabled = !!basis.noPay;
+      /* 15.4: the kind of pay (a guess from the situation until tapped) and
+         whether it keeps paying; the derived answer shows as the guess. */
+      var typeGuess = situation() === 'retired' ? 'pension' : situation() === 'selfEmployed' ? '1099' : 'w2';
+      press('payType', src && src.type ? src.type : null, typeGuess);
+      var srcForSurvive = src || { type: typeGuess };
+      var derived = Schema.survivesJobLoss(Object.assign({}, srcForSurvive, { survivesJobLoss: null }));
+      press('paySurvives', src && (src.survivesJobLoss === true || src.survivesJobLoss === false) ? (src.survivesJobLoss ? 'yes' : 'no') : null, derived ? 'yes' : 'no');
+      var payTypeBox = document.querySelector('#cards [data-paytype]'); if (payTypeBox) payTypeBox.hidden = !!basis.noPay;
       var gross = Schema.grossAnnualIncomeCents(x);
       var payNote = document.querySelector('#cards [data-note="pay"]');
       if (payNote) payNote.textContent = basis.noPay ? 'A deliberate zero — different from leaving it blank.'

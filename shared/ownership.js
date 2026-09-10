@@ -57,7 +57,9 @@
     return out;
   })();
 
-  function money(v) { return Money.formatCents(v); }
+  /* An owned value is what the person typed: shown exactly, never rounded
+     by the room's confidence rounding (15.10). */
+  function money(v) { return Money.formatCents(v, { exact: true }); }
 
   /* Resolved at call time rather than at load, so a page that never loads
      staleness.js still gets a chip (without an age), and script order does
