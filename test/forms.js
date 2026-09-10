@@ -600,12 +600,17 @@ const CASES = [
       { sel: '#asset-list .asset:last-child input[data-field="valueCents"]', type: '5000' }
     ],
     expect: async (page) => {
+      /* 15.8: the pile select stores the override and moves the flag. */
+      await page.selectOption('#asset-list .asset:last-child select[data-field="tier"]', 'taxable');
+      await page.waitForTimeout(400);
       const a = await page.evaluate(() =>
         (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).assets
           .filter(x => x.category === 'real_estate' || x.category === 'vehicle').pop());
       return [
         ['the name was kept', a.label, 'The car'],
-        ['the value was kept', a.valueCents, 500000]
+        ['the value was kept', a.valueCents, 500000],
+        ['the pile was stored', a.tier, 'taxable'],
+        ['and the liquid flag follows it', a.liquid, true]
       ];
     }
   },

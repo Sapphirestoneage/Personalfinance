@@ -5406,7 +5406,11 @@ section('The Statement engine');
     const noAge = rich(); noAge.people[0].dob = null;
     const na = St.liquidityLadder(noAge, T.accessRules);
     checkTrue('with no age the gate cannot be applied and it says so', na.ageKnown === false && na.gatedCents === 0);
-    checkTrue('a rated liquidity overrides the rule', St.liquidityLadder(Object.assign(rich(), { assets: [Schema.createAsset({ category: 'real_estate', valueCents: 100, liquidity: 1 })] }), T.accessRules, { age: 40 }).bands.today === 100);
+    /* 15.8: the ladder is a view of the piles; a stored tier moves the asset. */
+    checkTrue('a stored tier overrides the kind', St.liquidityLadder(Object.assign(rich(), { assets: [Schema.createAsset({ category: 'real_estate', valueCents: 100, tier: 'cash' })] }), T.accessRules, { age: 40 }).bands.today === 100);
+    checkTrue('...and a rated liquidity no longer does: the house stays in the property pile', St.liquidityLadder(Object.assign(rich(), { assets: [Schema.createAsset({ category: 'real_estate', valueCents: 100, liquidity: 1 })] }), T.accessRules, { age: 40 }).bands.never === 100);
+    check('the piles are reported', l.byTier.retirement, 4200000);
+    check('...and the overrides counted', l.overriddenCount, 0);
   }
 
   /* -- The bridge to 59½ ------------------------------------------------------ */
@@ -8809,19 +8813,29 @@ section('Four ways through five years');
   const y3 = lost.rows[2];
   check('six months without work in year 3', y3.lostMonths, 6);
   check('...cash covers three of them: $9,500 ÷ $3,150', y3.runwayMonths, Math.floor(950000 / 315000));
-  check('...and the row says borrowing starts in month 4', y3.borrowingFromMonth, 4);
-  check('...for the three uncovered months of spending', y3.borrowedInYearCents, 315000 * 3);
+  /* 15.8: after the cash, the taxable pile is sold down before anything is
+     borrowed (D-181). The demo lump is uncharacterised, so it is taxable;
+     with no rates passed it sells before tax and the run says so. */
+  check('...then the taxable pile covers the other three: $9,450 sold, before tax', y3.investmentsSoldCents, 315000 * 3);
+  checkTrue('...so nothing is borrowed', y3.borrowingFromMonth === null && y3.borrowedInYearCents === 0);
+  checkTrue('...and the baseline says the sale was before tax', lost.taxableTaxApplied === false);
   check('...the cash is down to what three months left', y3.cashCents, 950000 - 315000 * 3);
   checkTrue('...and the invested pot is never drawn below zero', lost.rows.every(r => r.investedCents >= 0));
   checkTrue('...the working half of the year repays what was borrowed', y3.borrowedCents === 0);
-  const broke = Demo.build(); broke.assets = broke.assets.map(a => a.category === 'cash' ? Object.assign({}, a, { valueCents: 0 }) : a);
-  check('with no cash at all, borrowing from month 1', Adventure.run(broke, T2, { pathId: 'steady', shockIds: ['jobloss'] }).value.rows[2].borrowingFromMonth, 1);
+  const thin = Demo.build(); thin.assets = thin.assets.map(a => a.category === 'cash' ? Object.assign({}, a, { valueCents: 0 }) : a);
+  const thinY3 = Adventure.run(thin, T2, { pathId: 'steady', shockIds: ['jobloss'] }).value.rows[2];
+  checkTrue('with no cash, the taxable pile covers all six months and nothing is borrowed', thinY3.runwayMonths === 0 && thinY3.investmentsSoldCents === 315000 * 6 && thinY3.borrowingFromMonth === null);
+  const locked = Demo.build(); locked.assets = locked.assets.map(a => a.category === 'cash' ? Object.assign({}, a, { valueCents: 0 }) : a.category === 'investment' ? Object.assign({}, a, { taxCharacter: 'pretax' }) : a);
+  const lockedY3 = Adventure.run(locked, T2, { pathId: 'steady', shockIds: ['jobloss'] }).value.rows[2];
+  checkTrue('with no cash and only retirement money, borrowing from month 1: the retirement pile is never sold', lockedY3.borrowingFromMonth === 1 && lockedY3.investmentsSoldCents === 0 && lockedY3.borrowedInYearCents === 315000 * 6);
+  const withRates = Adventure.run(demo, T2, { pathId: 'steady', shockIds: ['jobloss'], rates: { withdrawalRate: 0.22, capitalGainsRate: 0.15 } }).value;
+  checkTrue('with rates, the sale is grossed up for the gains tax on the assumed 60% basis: $9,450 net needs more than $9,450 sold', withRates.rows[2].investmentsSoldCents > 315000 * 3 && withRates.taxableTaxApplied === true);
 
   /* A lever that survives a job loss keeps paying through it. */
   const lostHustle = Adventure.run(demo, T2, { pathId: 'hustle', shockIds: ['jobloss'], routeToDebt: false }).value;
   checkTrue('the hustle keeps paying through the lost months: the runway is never shorter than Steady\'s', lostHustle.rows[2].runwayMonths >= y3.runwayMonths);
   checkTrue('...and its year-three saving is higher by the surviving income', lostHustle.rows[2].savedCents > y3.savedCents);
-  check('...at $2,650 a month of gap instead of $3,150: 3 months still, but $1,500 less borrowed', lostHustle.rows[2].borrowedInYearCents, (315000 - 50000) * 3);
+  check('...at $2,650 a month of gap instead of $3,150: 3 months still, but $1,500 less sold', lostHustle.rows[2].investmentsSoldCents, (315000 - 50000) * 3);
 
   /* Returns run three ways from the app's own band. */
   const tw = Adventure.threeWays(demo, T2, { pathId: 'househack' });
@@ -10934,6 +10948,133 @@ section('15.7: two people, one record each; the Partner room edits the second (D
   /* nothing was stored twice */
   checkTrue('no household.partner.name or birthYear store exists', !/partner\.(name|birthYear)/.test(fs.readFileSync(path.join(ROOT, 'shared/schema.js'), 'utf8')));
   Spine.reset();
+})();
+
+/* ==========================================================================
+   15.8 — five piles, one runway function (D-181)
+   ========================================================================== */
+section('15.8: every asset in one of five piles; one runway draws them in order (D-181)');
+(function () {
+  const T = TABLES;
+  const rules = T.accessRules;
+  /* -- The pile is read, not stored twice ------------------------------- */
+  check('the five piles', Schema.TIERS.join(','), 'cash,taxable,retirement,property,other');
+  check('the default draw order stops before property', Schema.DRAW_ORDER_DEFAULT.join(','), 'cash,taxable,retirement');
+  check('a cash account is cash', Schema.tierOf(Schema.createAsset({ category: 'cash', taxCharacter: 'cash' })).tier, 'cash');
+  check('pre-tax money is retirement', Schema.tierOf(Schema.createAsset({ category: 'investment', taxCharacter: 'pretax' })).tier, 'retirement');
+  check('a Roth is retirement', Schema.tierOf({ taxCharacter: 'roth' }).tier, 'retirement');
+  check('an HSA is retirement', Schema.tierOf({ taxCharacter: 'hsa' }).tier, 'retirement');
+  check('a lump entered as one total is retirement money until split', Schema.tierOf({ category: 'investment', taxCharacter: 'unknown' }).tier, 'retirement');
+  check('a brokerage account is taxable', Schema.tierOf({ taxCharacter: 'taxable' }).tier, 'taxable');
+  check('a 529 and a donor fund are other: not yours to spend', Schema.tierOf({ taxCharacter: '529' }).tier + ',' + Schema.tierOf({ taxCharacter: 'daf' }).tier, 'other,other');
+  check('a business is other', Schema.tierOf({ category: 'other', taxCharacter: 'business' }).tier, 'other');
+  check('with no character the category decides: investment is taxable', Schema.tierOf({ category: 'investment' }).tier, 'taxable');
+  check('...retirement is retirement', Schema.tierOf({ category: 'retirement' }).tier, 'retirement');
+  check('...real estate is property', Schema.tierOf({ category: 'real_estate' }).tier, 'property');
+  check('...a vehicle is other', Schema.tierOf({ category: 'vehicle' }).tier, 'other');
+  check('an other thing flagged liquid draws with the taxable pile', Schema.tierOf({ category: 'other', liquid: true }).tier, 'taxable');
+  checkTrue('...and says the flag decided', Schema.tierOf({ category: 'other', liquid: true }).from === 'liquid');
+  check('a stored pile wins', Schema.tierOf({ category: 'real_estate', tier: 'cash' }).tier, 'cash');
+  checkTrue('...and is not derived', Schema.tierOf({ category: 'real_estate', tier: 'cash' }).derived === false);
+  check('a nonsense stored pile is not stored', Schema.createAsset({ tier: 'gold' }).tier, null);
+  check('createAsset keeps a real one', Schema.createAsset({ tier: 'property' }).tier, 'property');
+  checkTrue('the field is declared', !!Schema.FIELDS['asset.tier'] && Schema.FIELDS['asset.tier'].class === 'raw');
+
+  /* -- The draw: tax and penalty at each step ---------------------------- */
+  const rates = { withdrawalRate: 0.12, capitalGainsRate: 0.15 };
+  const cashDraw = Schema.drawOf({ valueCents: 100000 }, 'cash', { rates: rates });
+  check('cash draws whole', cashDraw.netCents, 100000);
+  const taxableDraw = Schema.drawOf({ valueCents: 100000, costBasisCents: 60000 }, 'taxable', { rates: rates });
+  check('taxable: the gains tax on the gain over the basis: (1,000 − 600) × 15% = 60', taxableDraw.taxCents, 6000);
+  check('...net 940', taxableDraw.netCents, 94000);
+  const noBasis = Schema.drawOf({ valueCents: 100000 }, 'taxable', { rates: rates });
+  check('no basis: 60% of the value stands in, and it says so', noBasis.taxCents, 6000);
+  checkTrue('...flagged', noBasis.assumed.indexOf('basis') > -1);
+  check('no rates: before tax, net is gross', Schema.drawOf({ valueCents: 100000 }, 'taxable', {}).netCents, 100000);
+  const pre = Schema.drawOf({ valueCents: 100000, taxCharacter: 'pretax' }, 'retirement', { rates: rates, rules: rules, age: 40 });
+  check('pre-tax at 40: 12% tax', pre.taxCents, 12000);
+  check('...and the 10% early penalty', pre.penaltyCents, 10000);
+  check('...net 780', pre.netCents, 78000);
+  checkTrue('...gated, at 59.5', pre.gated && pre.accessAge === 59.5);
+  const preOld = Schema.drawOf({ valueCents: 100000, taxCharacter: 'pretax' }, 'retirement', { rates: rates, rules: rules, age: 60 });
+  check('pre-tax at 60: tax, no penalty', preOld.penaltyCents, 0);
+  check('...net 880', preOld.netCents, 88000);
+  const roth = Schema.drawOf({ valueCents: 120000, taxCharacter: 'roth', costBasisCents: 80000 }, 'retirement', { rates: rates, rules: rules, age: 40 });
+  check('Roth at 40: the basis comes out free', roth.basisFreeCents, 80000);
+  check('...the earnings pay 12% tax: 400 × 12% = 48', roth.taxCents, 4800);
+  check('...and the 10% penalty: 40', roth.penaltyCents, 4000);
+  check('...net 1,112', roth.netCents, 111200);
+  const rothOld = Schema.drawOf({ valueCents: 120000, taxCharacter: 'roth', costBasisCents: 80000 }, 'retirement', { rates: rates, rules: rules, age: 60 });
+  check('Roth at 60: qualified, nothing owed', rothOld.netCents, 120000);
+  const hsa = Schema.drawOf({ valueCents: 100000, taxCharacter: 'hsa' }, 'retirement', { rates: rates, rules: rules, age: 40 });
+  check('HSA at 40: 20% penalty on non-medical use', hsa.penaltyCents, 20000);
+  checkTrue('...gated at 65', hsa.accessAge === 65);
+  const noAge = Schema.drawOf({ valueCents: 100000, taxCharacter: 'pretax' }, 'retirement', { rates: rates, rules: rules, age: null });
+  checkTrue('no age: the gate is assumed shut and it says so', noAge.gated && noAge.assumed.indexOf('age') > -1);
+  const noRules = Schema.drawOf({ valueCents: 100000, taxCharacter: 'pretax' }, 'retirement', { rates: rates, age: 40 });
+  check('no access table: the statute default stands in', noRules.accessAge, 59.5);
+  check('an override wins without the table', Schema.drawOf({ valueCents: 100000, taxCharacter: 'pretax', accessAgeOverride: 55 }, 'retirement', { rates: rates, age: 56 }).penaltyCents, 0);
+  check('property draws nothing', Schema.drawOf({ valueCents: 100000 }, 'property', { rates: rates }).netCents, 0);
+
+  /* -- The one runway, on the rich fixture ------------------------------- */
+  function rich() {
+    const h = Demo.build();
+    h.assets = [
+      Schema.createAsset({ id: 'cash', category: 'cash', valueCents: 950000, taxCharacter: 'cash' }),
+      Schema.createAsset({ id: 'k401', category: 'retirement', valueCents: 3000000, taxCharacter: 'pretax' }),
+      Schema.createAsset({ id: 'roth', category: 'retirement', valueCents: 1200000, taxCharacter: 'roth', costBasisCents: 800000 }),
+      Schema.createAsset({ id: 'brok', category: 'investment', valueCents: 600000, taxCharacter: 'taxable' }),
+      Schema.createAsset({ id: 'house', category: 'real_estate', valueCents: 30000000 }),
+      Schema.createAsset({ id: 'biz', category: 'other', valueCents: 5000000, taxCharacter: 'business' })
+    ];
+    return h;
+  }
+  const r = Schema.runwayMonths(rich(), null, { rates: { withdrawalRate: 0.12, capitalGainsRate: 0 }, rules: rules, age: 32, monthlyExpensesCents: 400000 });
+  check('three steps in order', r.steps.map(s => s.tier).join(','), 'cash,taxable,retirement');
+  check('cash: 9,500 over 4,000 a month is 2.4 months', r.steps[0].monthsThis, 2.4);
+  check('taxable: 6,000, no gains tax at this rate, 1.5 more', r.steps[1].monthsThis, 1.5);
+  check('...3.9 at the end of the taxable step', r.steps[1].monthsCumulative, 3.9);
+  /* 401(k) 30,000 × 12% = 3,600 tax + 3,000 penalty; Roth earnings 4,000 × 12% = 480 + 400. */
+  check('retirement: 4,080 of tax', r.steps[2].taxCents, 408000);
+  check('...3,400 of penalty', r.steps[2].penaltyCents, 340000);
+  check('...net 34,520', r.steps[2].netCents, 3452000);
+  check('all of it: 12.5 months', r.value, 12.5);
+  check('the house and the business are never', r.never.grossCents, 35000000);
+  check('...by pile', r.never.byTier.property, 30000000);
+  check('cash months apart', r.cashMonths, 2.4);
+  check('beyond the cash: 10.1 months', r.beyondCashMonths, 10.1);
+  checkTrue('tax was applied and says at what rate', r.taxApplied && r.taxRate === 0.12);
+  checkTrue('the basis was assumed for the brokerage', r.assumed.indexOf('basis') > -1);
+  const drawTwo = Schema.runwayMonths(rich(), ['cash', 'taxable'], { rules: rules, age: 32, monthlyExpensesCents: 400000 });
+  check('a shorter draw order stops there: 3.9 months', drawTwo.value, 3.9);
+  checkTrue('...before tax, and says so', drawTwo.taxApplied === false && drawTwo.taxRate === null);
+  check('property in the order is ignored', Schema.runwayMonths(rich(), ['cash', 'property'], { rules: rules, age: 32, monthlyExpensesCents: 400000 }).steps.length, 1);
+  check('the household spending is the default denominator', Schema.runwayMonths(rich(), ['cash'], { rules: rules, age: 32 }).monthlyExpensesCents, Schema.monthlyExpensesCents(rich()).value);
+  check('no spending, no runway', Schema.runwayMonths(Schema.createHousehold({}), null, {}).status, 'incomplete');
+  check('nothing drawable, no runway, naming cash', Schema.runwayMonths(Schema.createHousehold({}), null, { monthlyExpensesCents: 100 }).missing[0], 'cash');
+  check('zero spending is refused', Schema.runwayMonths(rich(), null, { monthlyExpensesCents: 0 }).status, 'incomplete');
+  check('weeks, for the campaign: 50,020 over 4,000 × 12 ÷ 52', r.weeks, Math.floor(5002000 / (400000 * 12 / 52)));
+
+  /* -- The readers all read it -------------------------------------------- */
+  const run = RunwayEngine.project(rich(), T, { cushionCents: 950000, monthlyExpensesCents: 400000, rates: { withdrawalRate: 0.12, capitalGainsRate: 0 } });
+  checkTrue('Runway carries the piles behind the cushion', Money.isOk(run.tiers) && run.tiers.steps.length === 3);
+  check('...at the same outflow', run.tiers.monthlyExpensesCents, run.monthlyOutflowCents);
+  check('...before tax when the room passes no rates', RunwayEngine.project(rich(), T, { cushionCents: 950000, monthlyExpensesCents: 400000 }).tiers.taxApplied, false);
+  const bjSrc = fs.readFileSync(path.join(ROOT, 'engines/betweenjobs.js'), 'utf8');
+  checkTrue('Between Jobs hands the rates through and exposes beyondCash', /rates: o\.rates/.test(bjSrc) && /beyondCash: base\.tiers/.test(bjSrc));
+  const advSrc = fs.readFileSync(path.join(ROOT, 'engines/adventure.js'), 'utf8');
+  checkTrue('the Long Way Round reads the taxable pile through tierDraws', /Schema\.tierDraws\(household, \['taxable'\]/.test(advSrc));
+  const dndSrc = fs.readFileSync(path.join(ROOT, 'dnd/engines/character.js'), 'utf8');
+  checkTrue('the campaign HP reads runwayMonths for cash and taxable', /Schema\.runwayMonths\(household, HP_DRAW_ORDER/.test(dndSrc) && /HP_DRAW_ORDER = \['cash', 'taxable'\]/.test(dndSrc));
+  const stSrc = fs.readFileSync(path.join(ROOT, 'engines/statement.js'), 'utf8');
+  checkTrue('the ladder is a view of tierOf, not of the liquidity rating', /Schema\.tierOf\(a\)/.test(stSrc) && !/assetLiquidity/.test(stSrc));
+  const room = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
+  checkTrue('the Statement edits the pile, not the liquidity rating', /data-field="tier"/.test(room) && !/data-field="liquidity"/.test(room));
+  ['rooms/runway.html', 'rooms/between-jobs.html'].forEach(f => {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    checkTrue(f + ' loads the tax engine for the rates and says before/after tax', /engines\/tax\.js/.test(src) && /before tax/.test(src));
+  });
+  checkTrue('the campaign says its runway is before tax', /before tax/.test(fs.readFileSync(path.join(ROOT, 'dnd/campaign.html'), 'utf8')));
 })();
 
 /* ==========================================================================

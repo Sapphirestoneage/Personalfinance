@@ -118,6 +118,7 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/hourly.js"></script>
+<script src="../engines/tax.js"></script>
 <script src="../engines/runway.js"></script>
 <script src="../engines/betweenjobs.js"></script>
 <script src="../shared/lens.js"></script>
@@ -143,7 +144,20 @@
      "between jobs" is refused, and the room says nothing else. */
   function planOf(h, T) {
     var guessedPerson = !!(h.meta && h.meta.standalone && h.meta.standalone.indexOf('employmentStatus') >= 0);
-    return BetweenJobs.plan(h, T, { asBetweenJobs: guessedPerson });
+    /* 15.8: the rates for the piles behind the cash. D-181. */
+    var rates = SLAF.Tax && T.federalBrackets ? SLAF.Tax.withdrawalRates(h, T) : null;
+    return BetweenJobs.plan(h, T, { asBetweenJobs: guessedPerson, rates: Money.isOk(rates) ? rates : null });
+  }
+  function beyondCashLine(p) {
+    var t = p.beyondCash;
+    if (!t || !Money.isOk(t)) return '';
+    var steps = t.steps.filter(function (s) { return s.tier !== 'cash' && s.grossCents > 0; });
+    if (!steps.length) return '';
+    return ' Behind the cash: ' + steps.map(function (s) {
+      var how = t.taxApplied ? 'after tax' : 'before tax';
+      if (s.penaltyCents) how += ' and a ' + Money.formatCents(s.penaltyCents) + ' early penalty';
+      return months(s.monthsThis) + ' more from ' + s.label.toLowerCase() + ' (' + Money.formatCents(s.netCents) + ', ' + how + ')';
+    }).join(', then ') + '. Property is never sold for this.';
   }
   function longDate(iso) {
     var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
@@ -161,7 +175,7 @@
 
   Room.mount({
     id: 'between-jobs',
-    tables: ['reentryGap', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    tables: ['reentryGap', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states', 'federalBrackets', 'accessRules'],
     reads: ['unemployment', 'monthlyExpenses', 'cashSavings', 'dependents', 'healthCover', 'healthMonthly'],
 
     number: function (h, T) {
@@ -184,7 +198,7 @@
             : ' Covered, with <strong>' + months(p.gapMonths) + ' to spare</strong>.';
         }
       }
-      sub += ' ' + benefitLine(p);
+      sub += ' ' + benefitLine(p) + beyondCashLine(p);
       return { label: 'Days the money lasts', value: p.sustainable ? 'Covered' : p.value.toLocaleString('en-US') + ' days', sub: sub, zone: p.zone, result: p };
     },
 

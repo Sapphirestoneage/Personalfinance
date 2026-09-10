@@ -193,6 +193,7 @@
     <div class="slaf-figure" data-figure>—</div>
     <p class="slaf-reason" data-reason></p>
     <div class="flag" id="runway-note" hidden></div>
+    <p class="slaf-hint" id="beyond-cash" hidden></p>
   </section>
 
   <section class="slaf-card" id="out-path">
@@ -261,6 +262,7 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/cashflow.js"></script>
+<script src="../engines/tax.js"></script>
 <script src="../engines/runway.js"></script>
 <script src="../engines/swan.js"></script>
 <script src="../shared/charts.js"></script>
@@ -328,8 +330,16 @@
       benefitMonths: state.benefitMonths,
       rampShape: state.rampShape,
       rampTargetMonthlyCents: state.rampTarget,
-      rampMonths: state.rampMonths
+      rampMonths: state.rampMonths,
+      /* 15.8: the rates for the piles behind the cash, when the tax
+         engine and the bracket table are here. D-181. */
+      rates: ratesFor(Spine.getProfile())
     };
+  }
+  function ratesFor(h) {
+    if (!SLAF.Tax || !TABLES || !TABLES.federalBrackets) return null;
+    var r = SLAF.Tax.withdrawalRates(h, TABLES);
+    return Money.isOk(r) ? r : null;
   }
 
   /* ---- Inputs. Built once above; only .value and [hidden] change. ------- */
@@ -439,12 +449,31 @@
 
   /* ---- The headline ------------------------------------------------------ */
 
+  /* 15.8: what sits behind the cushion, from the one runway function —
+     the taxable pile net of the gains tax, then retirement money net of
+     the withdrawal tax and the early penalty, each said on screen. */
+  function beyondCashText(t) {
+    if (!t || !Money.isOk(t)) return '';
+    var steps = t.steps.filter(function (s) { return s.tier !== 'cash' && s.grossCents > 0; });
+    if (!steps.length) return 'Nothing sits behind the cash: no taxable or retirement money is listed on The Statement.';
+    var parts = steps.map(function (s) {
+      var how = s.tier === 'taxable'
+        ? (!t.taxApplied ? 'before tax' : s.taxCents ? 'after ' + Money.formatCents(s.taxCents) + ' of tax on the gain' : 'no tax on the gain at your rate')
+        : (t.taxApplied ? 'after ' + Money.formatCents(s.taxCents) + ' of tax' : 'before tax') + (s.penaltyCents ? ' and a ' + Money.formatCents(s.penaltyCents) + ' early penalty' : '');
+      return Money.formatMonths(s.monthsThis) + ' more from ' + s.label.toLowerCase() + ' (' + Money.formatCents(s.netCents) + ', ' + how + ')';
+    });
+    var tail = t.ageKnown ? '' : ' No date of birth, so the early penalty is assumed on retirement money.';
+    return 'Behind the cash, in the order a runway draws them: ' + parts.join('; ') + '. Property is never sold for this.' + tail;
+  }
   function renderRunway(r) {
     if (!Money.isOk(r)) {
       setFigure('out-runway', null, r.reason);
       el('runway-note').hidden = true;
+      el('beyond-cash').hidden = true;
       return;
     }
+    el('beyond-cash').textContent = beyondCashText(r.tiers);
+    el('beyond-cash').hidden = !el('beyond-cash').textContent;
     if (r.sustainable) {
       setFigure('out-runway', 'It doesn’t run out',
         'What comes in covers what goes out, so the cushion is never the thing that '

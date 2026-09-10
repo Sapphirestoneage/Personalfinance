@@ -552,7 +552,7 @@
       + cell('Next up', place ? 'Step ' + place.step : '—',
              place ? (place.certain ? esc(place.label) : 'at least — ' + esc(place.label)) : 'not placed')
       + cell('Runway', snap.currentHp === null ? '—' : snap.currentHp + ' wk',
-             snap.netWorthCents === null ? '' : money(snap.netWorthCents) + ' net'));
+             (snap.netWorthCents === null ? '' : money(snap.netWorthCents) + ' net · ') + 'cash and taxable, before tax'));
     el('progress').hidden = false;
     el('progress').firstElementChild.style.width = Math.round((STATE.round / per) * 100) + '%';
   }

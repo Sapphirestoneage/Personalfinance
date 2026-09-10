@@ -7,7 +7,7 @@
      portfolios               three portfolios, not one list — liquid
                               financial · illiquid financial · non-financial
      confidenceWeightedNetWorth  Σ value × how sure you are, beside the plain
-     liquidityLadder          reachable today · this month · this year · never,
+     liquidityLadder          the five piles as reachable today · this month · this year · never,
                               with pre-59½ money gated into "never" except
                               the Roth basis
      bridgeGap                the years between your FI date and 59½, and
@@ -120,25 +120,30 @@
   /**
    * liquidityLadder(household, rules, opts)
    *   opts.age  — overrides the primary person's age (tests)
-   * Bands by effective liquidity 1-4. Money behind an access age you have
-   * not reached goes to "never" — except a Roth's basis, which is reachable
-   * at its own liquidity. With no age the gate cannot be applied and the
-   * result says so rather than pretending everything is reachable.
+   * 15.8: a VIEW of the five piles (Schema.tierOf), not its own data.
+   * Cash is reachable today; taxable investments within a month; retirement
+   * money within a year once its access age is reached (a Roth's basis at
+   * any age); property, and the other pile, never. Money behind an access
+   * age you have not reached goes to "never". With no age the gate cannot
+   * be applied and the result says so rather than pretending.
    */
+  var TIER_BAND = { cash: 'today', taxable: 'thisMonth', retirement: 'thisYear', property: 'never', other: 'never' };
   function liquidityLadder(household, rules, opts) {
     if (!rules) return Money.incomplete('Access rules are not loaded.', ['accessRules']);
     var assets = valued(household);
     if (!assets.length) return Money.incomplete('Add something you own to build the ladder.', ['assets']);
     var age = opts && Money.isEntered(opts.age) ? opts.age : Schema.primaryAge(household);
-    var bands = { 1: 0, 2: 0, 3: 0, 4: 0 };
-    var gatedCents = 0, unknownCents = 0, unratedCount = 0, rows = [];
+    var bands = { today: 0, thisMonth: 0, thisYear: 0, never: 0 };
+    var byTier = { cash: 0, taxable: 0, retirement: 0, property: 0, other: 0 };
+    var gatedCents = 0, unknownCents = 0, overriddenCount = 0, rows = [];
     assets.forEach(function (a) {
+      var t = Schema.tierOf(a);
+      byTier[t.tier] += a.valueCents;
+      if (!t.derived) overriddenCount++;
       var rule = Schema.assetRule(a, rules);
-      var liq = Schema.assetLiquidity(a, rules);
-      if (!liq.rated) unratedCount++;
-      var accessAge = Schema.assetAccessAge(a, rules);
+      var accessAge = t.tier === 'retirement' ? Schema.assetAccessAge(a, rules) : null;
       var gated = Money.isEntered(age) && Money.isEntered(accessAge) && age < accessAge;
-      var band = liq.value;
+      var band = TIER_BAND[t.tier];
       var reachable = a.valueCents, locked = 0;
       if (gated) {
         /* Roth: contributions come out any time; only the earnings wait. */
@@ -148,19 +153,18 @@
       }
       if (a.taxCharacter === 'unknown') unknownCents += a.valueCents;
       bands[band] += reachable;
-      bands[4] += locked;
+      if (band !== 'never') bands.never += locked;
       gatedCents += locked;
-      rows.push({ asset: a, band: band, rated: liq.rated, accessAge: accessAge, gated: gated,
+      rows.push({ asset: a, tier: t.tier, derived: t.derived, band: band, accessAge: accessAge, gated: gated,
         reachableCents: reachable, lockedCents: locked });
     });
-    return Money.ok(bands[1] + bands[2] + bands[3], {
-      bands: {
-        today: bands[1], thisMonth: bands[2], thisYear: bands[3], never: bands[4]
-      },
-      cumulative: { today: bands[1], thisMonth: bands[1] + bands[2], thisYear: bands[1] + bands[2] + bands[3] },
+    return Money.ok(bands.today + bands.thisMonth + bands.thisYear, {
+      bands: bands,
+      cumulative: { today: bands.today, thisMonth: bands.today + bands.thisMonth, thisYear: bands.today + bands.thisMonth + bands.thisYear },
+      byTier: byTier,
       gatedCents: gatedCents,
       unknownCents: unknownCents,
-      unratedCount: unratedCount,
+      overriddenCount: overriddenCount,
       ageKnown: Money.isEntered(age),
       age: Money.isEntered(age) ? age : null,
       rows: rows,

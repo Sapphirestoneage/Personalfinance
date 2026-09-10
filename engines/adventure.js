@@ -180,7 +180,7 @@
    * portfolio are all really known. Cash and invested are kept apart: a
    * crash hits one, a job loss draws on the other.
    */
-  function baseline(household, tables) {
+  function baseline(household, tables, opts) {
     /* Take-home, never gross: saving is what is left after tax AND
        spending, and the tax is estimated in one place (Schema, D-171). */
     var income = Schema.takeHomeAnnualCents(household, tables);
@@ -201,7 +201,15 @@
        and the row says which side is unknown. */
     var investedCents = Money.isOk(invested) ? invested.value : null;
     var cashCents = Money.isOk(cash) ? cash.value : null;
+    /* 15.8: the taxable pile a job loss may sell down after the cash, net
+       of the gains tax when the caller passes rates (o.rates); the
+       retirement pile is never sold in a five-year run. D-181. */
+    var taxable = Schema.tierDraws(household, ['taxable'], { rates: (opts && opts.rates) || null });
+    var taxableStep = taxable.steps[0];
     return Money.ok({
+      taxableGrossCents: taxableStep ? taxableStep.grossCents : 0,
+      taxableNetCents: taxableStep ? taxableStep.netCents : 0,
+      taxableTaxApplied: taxable.taxApplied,
       annualIncomeCents: income.value,
       /* 15.4: the share of pay that keeps coming when the job goes (rent,
          a pension, contract work), as take-home. D-181. */
@@ -259,7 +267,7 @@
     var t = table(tables);
     if (!t) return Money.incomplete('The strategy table is not loaded.', ['adventurePaths']);
     var o = opts || {};
-    var base = baseline(household, tables);
+    var base = baseline(household, tables, o);
     if (!Money.isOk(base)) return base;
 
     var path = pathById(tables, o.pathId);
@@ -285,6 +293,13 @@
     var invested = b.investedCents === null ? 0 : b.investedCents;
     var cash = b.cashCents;                  /* null = unknown, never zero */
     var borrowed = 0;
+    /* 15.8: the taxable share of the pot, and what a dollar of it is worth
+       after the gains tax, so a job loss can sell it down before borrowing. */
+    /* The split is today's, held for the run: what the run saves joins the
+       pot in the same proportions, and with nothing invested today the new
+       saving is taxable money (it came out of take-home). */
+    var taxableShare = invested > 0 ? Math.min(1, b.taxableGrossCents / invested) : 1;
+    var taxableNetRatio = b.taxableGrossCents > 0 ? b.taxableNetCents / b.taxableGrossCents : 1;
     var rate = Money.isEntered(o.returnRate) ? o.returnRate : t.returnRateReal;
 
     /* A cut reads the REAL line from FAT (D-172). Only when the
@@ -341,6 +356,7 @@
 
       var earned = income + extra;
       var lostMonths = 0, runwayMonths = null, borrowingFromMonth = null;
+      var investmentMonths = null, investmentsSoldCents = 0;
       var saved;
       if (shocks.jobloss && shocks.jobloss.shockYear === year) {
         /* The job stops for part of the year. Spending continues. Levers
@@ -363,6 +379,19 @@
           cash -= Math.round(gapMonthly * covered);
         } else if (gapMonthly > 0) {
           runwayMonths = 0;
+        }
+        /* Then the taxable pile, net of the gains tax, before borrowing:
+           cash, taxable, then borrow. Retirement money stays where it is. */
+        if (gapMonthly > 0 && covered < lostMonths) {
+          var taxableNet = Math.round(invested * taxableShare * taxableNetRatio);
+          investmentMonths = Math.floor(taxableNet / gapMonthly);
+          var fromInvestments = Math.min(lostMonths - covered, investmentMonths);
+          if (fromInvestments > 0) {
+            var netSold = Math.round(gapMonthly * fromInvestments);
+            investmentsSoldCents = Math.round(netSold / taxableNetRatio);
+            invested -= investmentsSoldCents;
+            covered += fromInvestments;
+          }
         }
         if (gapMonthly > 0 && covered < lostMonths) {
           borrowingFromMonth = covered + 1;
@@ -408,6 +437,8 @@
         events: events,
         lostMonths: lostMonths || null,
         runwayMonths: runwayMonths,
+        investmentMonths: investmentMonths,
+        investmentsSoldCents: investmentsSoldCents,
         borrowingFromMonth: borrowingFromMonth,
         /* Negative saving is a real answer, not an error: it is what a job loss
            or runaway spending actually does, and hiding it would be the lie. */
@@ -437,6 +468,8 @@
       routedToDebt: routeToDebt,
       debtLeftCents: routeToDebt ? debtLeft : null,
       returnRate: rate,
+      /* 15.8: whether the taxable pile a job loss sells was netted of tax. */
+      taxableTaxApplied: b.taxableTaxApplied,
       rows: rows,
       portfolioCents: last.portfolioCents,
       investedCents: last.investedCents,

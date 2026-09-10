@@ -146,14 +146,17 @@
     }
     var map = {
       cashCents: { id: ID.cash, label: 'Cash & savings', category: 'cash', liquid: true },
-      investmentsCents: { id: ID.investments, label: 'Investments + retirement', category: 'investment', liquid: false }
+      /* One total, not split: it sits in the retirement pile until the
+         Statement splits it (SPARKS 15.8, D-181; DD entry below). */
+      investmentsCents: { id: ID.investments, label: 'Investments + retirement', category: 'investment', liquid: false, taxCharacter: 'unknown' }
     };
     if (map[field]) {
       var spec = map[field];
       if (!Money.isEntered(cents)) { removeId(h.assets, spec.id); save(); return; }
       upsert(h.assets, Schema.createAsset({
         id: spec.id, label: spec.label, category: spec.category,
-        valueCents: cents, liquid: spec.liquid, ownerIds: []
+        valueCents: cents, liquid: spec.liquid, ownerIds: [],
+        taxCharacter: spec.taxCharacter === undefined ? null : spec.taxCharacter
       }));
       save(); return;
     }

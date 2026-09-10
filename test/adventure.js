@@ -77,7 +77,8 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   const url = page.url();
   const delta2 = await page.$eval('#delta', e => e.textContent);
   const walkRows = await page.$$eval('#yearlist .yearrow', els => els.map(e => e.textContent));
-  check('the year rows carry the event and the runway', walkRows.some(t => /Six months without work/.test(t) && /borrowing from month/.test(t)), walkRows.join(' | '));
+  /* 15.8: after the cash the taxable pile is sold before anything is borrowed. */
+  check('the year rows carry the event and the runway', walkRows.some(t => /Six months without work/.test(t) && /cash covered/.test(t) && /(sold .* of taxable investments|borrowing from month)/.test(t)), walkRows.join(' | '));
 
   /* Reload the URL: the same screen. */
   await page.goto(url, { waitUntil: 'networkidle' }); await page.waitForTimeout(500);

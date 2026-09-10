@@ -11041,6 +11041,78 @@ income; the phone forms gate for Start Here and Partner; a tap walk that
 adds the second of you in Start Here, names them in Partner, and sees the
 name beside their pay in the Income room.
 
+### 15.8 Liquidity tiers, and one runway function (this commit)
+
+- **Five piles, read off what is already asked.** `cash | taxable |
+  retirement | property | other`. `Schema.tierOf(asset)` reads the pile
+  from the tax character the Statement asks for (pre-tax, Roth, HSA and a
+  lump entered as one total are retirement; a 529 and a donor fund are
+  other, since they are not yours to spend; a business is other), else
+  from the category (investment is taxable, real estate is property, a
+  vehicle is other), and an uncharacterised other thing the owner flagged
+  liquid draws with the taxable pile. A stored `asset.tier` is the
+  override, written only by the Statement's pile select; null means
+  derived. The justification for the one new field: a runway has to know
+  which pile a thing is in, and the tax character alone cannot say that a
+  brokerage account is earmarked, or that a plot of land will be sold.
+- **One draw, one function.** `Schema.runwayMonths(household, drawOrder,
+  opts)` draws the piles in order (default cash, taxable, retirement,
+  never property or other), each step net of what leaves on the way out:
+  taxable pays the gains rate on the unrealized gain (cost basis, or 60% of
+  the value standing in and flagged, as 15.3); retirement pays the
+  withdrawal rate and, below the access age, the statute penalty (10%
+  pre-tax and on Roth earnings, 20% HSA); a Roth's basis comes out free
+  and past the gate a Roth owes nothing. The rates are the marginal
+  bracket at projected FI spending (`Tax.withdrawalRates`, 15.3), passed
+  by the room; with none, the draw is before tax and `taxApplied` says so.
+  No date of birth means the gate is assumed shut and `assumed` carries
+  `age`. `Schema.tierDraws` is the same walk without the spending, for a
+  caller that wants cents, not months.
+- **Every runway reads it.** `Runway.project` carries `meta.tiers` at the
+  scenario's outflow and the room prints one line behind the cushion,
+  each step with its tax and penalty in words ("15 months more from
+  taxable investments ($48,000, no tax on the gain at your rate)").
+  Between Jobs hands the rates through and prints the same line after the
+  benefit. The Long Way Round's job loss now goes cash, then the taxable
+  pile (sold, grossed up for the gains tax when rates are passed; the
+  split between taxable and retirement is today's and held for the run,
+  and with nothing invested today the run's own saving is taxable money),
+  then borrowing; retirement money is never sold in the five years, and
+  the year row says what was sold and whether before or net of tax. The
+  Dungeons & Dividends HP reads `runwayMonths` with the order cash,
+  taxable: the money you can reach without a penalty, before tax, said on
+  the card (DD-029 below).
+- **The Statement's ladder is a view of the piles.** Cash today, taxable
+  within a month, retirement within a year once its access age is
+  reached (a Roth's basis at any age), property and other never. The
+  liquidity rating no longer drives it: `asset.liquidity` stays in the
+  stored shape for compatibility and nothing writes it any more; the
+  select on each asset became the pile, and the `liquid` flag follows the
+  pile so every older reader of the flag agrees. The result keeps its
+  bands and cumulative shape (Every Ratio reads them unchanged) and gains
+  `byTier` and `overriddenCount` in place of `unratedCount`.
+- **Compatibility note.** `createAsset` gains `tier` (null = derived);
+  every asset stored before this commit reads as derived. The Statement no
+  longer writes `asset.liquidity`; the value stays where it is and
+  `Schema.assetLiquidity` still reads it for any room that asks. The D&D
+  store now writes the investments lump with `taxCharacter: 'unknown'`
+  (one total, not split), and the four pregens carry the same, so the
+  lump sits in the retirement pile as it does in SPARKS. `Runway.project`
+  and `BetweenJobs.plan` accept `rates`; `Adventure.run` accepts `rates`
+  and reports `taxableTaxApplied`; the year rows gain `investmentMonths`
+  and `investmentsSoldCents`.
+
+Gate for this commit: unit 25842 (a new section of 77 checks: the pile
+per kind, the draw at each step re-derived by hand on the rich fixture at
+32 and at 60, the one function's steps and its readers; the ladder and
+job-loss tests re-derived for the tier draw); dnd 5611 to 5614; export
+25; render on statement, runway, between-jobs and adventure; the phone
+forms gate for the Statement (the pile select stores the override and
+moves the flag); the adventure gate; a phone walk that reads the line
+behind the cushion in Runway, the same line in Between Jobs as someone
+between jobs, the ladder's four rungs and the pile selects on the
+Statement, with no console errors.
+
 ---
 
 # The Dungeons & Dividends entries
@@ -13523,3 +13595,23 @@ card is the one that matters, because it leaves. Never let `metCreatures` reach
 a score; if you want a measurement, ask for the money. And a new pregen must
 declare in `expect` what it is for, or the set drifts into four characters that
 all teach the same thing.
+
+## DD-029 — HP reads the one runway function; the lump is one total, not split
+
+SPARKS 15.8 (D-181) put every asset in one of five piles and made
+`Schema.runwayMonths(household, drawOrder)` the one runway. HP was already
+"weeks of expenses the liquid assets cover" (DD-001); it now reads that
+function with the draw order cash, taxable — the money you can reach without
+a penalty — instead of its own loop over the `liquid` flag, and the campaign
+card says "cash and taxable, before tax", because the campaign loads no tax
+table and a number that pretends otherwise is the kind DD-001 refused.
+
+The store's "Investments + retirement" lump is one total, not split, so it
+is now written with `taxCharacter: 'unknown'`, which puts it in the
+retirement pile, exactly where SPARKS files the same lump from Start Here;
+the four pregens carry the same. Without that, The Glass Cannon's $380,000
+of investments would have counted as taxable and its four-week runway,
+the whole lesson, would have read as four years. The vendored
+`dnd/shared/schema.js` is the byte-identical copy that carries the piles.
+`liquidAssetsCents` (the DEX pool and the Anchor pool) reads the same two
+piles, so nothing else moved.

@@ -169,7 +169,7 @@
 
     var shared = { preset: 'laid_off', severanceCents: severance,
       benefitMonthlyCents: benefit.monthlyCents, benefitMonths: benefit.months,
-      otherMonthlyIncomeCents: other.cents };
+      otherMonthlyIncomeCents: other.cents, rates: o.rates || null };
     var base = Runway.project(h, tables, shared);
     if (!Money.isOk(base)) return base;
 
@@ -213,6 +213,8 @@
       severanceCents: base.severanceCents,
       startingCents: base.startingCents,
       cushionCents: base.cushionCents,
+      /* 15.8: the piles behind the cash, from the one runway function. */
+      beyondCash: base.tiers,
       since: u.since,
       base: base,
       floorRun: floorRun

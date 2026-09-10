@@ -510,8 +510,8 @@
 
     { id: 'liquidityLadder', label: 'Reachable within a year', tier: 21,
       formula: 'assets reachable within a year ÷ all assets',
-      unit: 'rate', needs: 'your assets, rated on The Statement or at their default liquidity',
-      note: 'The four rungs — today, a month, a year, not without a penalty — come back with the figure.',
+      unit: 'rate', needs: 'your assets, each in its pile (cash, taxable, retirement, property, other) on The Statement',
+      note: 'The four rungs — cash today, taxable within a month, retirement within a year once its age is reached, the rest never — come back with the figure.',
       compute: function (c) {
         if (!Statement) return unavailable('The Statement engine is not loaded.', ['statement']);
         var l = Statement.liquidityLadder(c.household, c.tables.accessRules);

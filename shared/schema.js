@@ -171,6 +171,7 @@
     'asset.category':                            { class: 'raw',        unit: 'enum',    values: ['cash', 'investment', 'retirement', 'real_estate', 'vehicle', 'other'] },
     'asset.liquid':                              { class: 'raw',        unit: 'bool',    note: 'reachable this month. Kept for every reader that already uses it; written from `liquidity` when that is set (liquid === liquidity <= 2). D-066' },
     'asset.liquidity':                           { class: 'raw',        unit: 'enum',    values: [1, 2, 3, 4], note: '1 today · 2 within 30 days · 3 within 12 months · 4 cannot/will not sell. null = not rated; the access_rules default is then PROPOSED, never stored. D-066' },
+    'asset.tier':                                { class: 'raw',        unit: 'enum',    values: ['cash', 'taxable', 'retirement', 'property', 'other'], note: 'which pile it sits in for a runway. null = derived by Schema.tierOf from the tax character, else the category; a stored value is the override the Statement writes. 15.8, D-181' },
     'asset.confidence':                          { class: 'raw',        unit: 'enum',    values: [1, 2, 3, 4], note: '1 guaranteed · 2 85%+ · 3 real but do not count on it · 4 probably zero. null = not rated and excluded from the weighted total. D-066' },
     'asset.costBasisCents':                      { class: 'raw',        unit: 'cents',   note: 'optional; what was paid in. For Roth it is the part reachable before 59½' },
     'asset.hassle':                              { class: 'raw',        unit: 'enum',    values: [1, 2, 3], note: '1 easy · 2 moderate · 3 annoying — for anything income-producing' },
@@ -678,7 +679,11 @@
       costBasisCents: f.costBasisCents === undefined ? null : f.costBasisCents,
       hassle: f.hassle === undefined ? null : f.hassle,
       cashFlowMonthlyCents: f.cashFlowMonthlyCents === undefined ? null : f.cashFlowMonthlyCents,
-      accessAgeOverride: f.accessAgeOverride === undefined ? null : f.accessAgeOverride
+      accessAgeOverride: f.accessAgeOverride === undefined ? null : f.accessAgeOverride,
+      /* 15.8: which pile it sits in for a runway (TIERS). null = derived
+         from the tax character, else the category, by tierOf(); a stored
+         value is the owner's override. D-181. */
+      tier: TIERS.indexOf(f.tier) >= 0 ? f.tier : null
     };
   }
 
@@ -762,6 +767,182 @@
   function assetLiquidity(asset, rules) {
     if (asset && Money.isEntered(asset.liquidity)) return { value: asset.liquidity, rated: true };
     return { value: assetRule(asset, rules).liquidity, rated: false };
+  }
+
+  /* ---- 15.8: liquidity tiers and the one runway function (D-181) --------
+     Every asset sits in one of five piles: cash, taxable, retirement,
+     property, other. The pile is READ from the tax character the Statement
+     asks for (a lump entered as one total is retirement money until split),
+     else from the category, and an owner can override it on the asset
+     (`asset.tier`). A runway draws the piles in order — cash, then taxable
+     (net of the gains tax on the unrealized gain), then retirement (net of
+     the withdrawal tax and the early penalty below the access age) — and
+     never property. Runway, Between Jobs, the Long Way Round job loss and
+     the Dungeons & Dividends HP all read runwayMonths(); the Statement's
+     ladder is a view of the same piles. */
+  var TIERS = ['cash', 'taxable', 'retirement', 'property', 'other'];
+  var TIER_LABELS = { cash: 'Cash', taxable: 'Taxable investments', retirement: 'Retirement accounts', property: 'Property', other: 'Other' };
+  var TIER_BY_CHARACTER = { cash: 'cash', taxable: 'taxable', pretax: 'retirement', roth: 'retirement', hsa: 'retirement', unknown: 'retirement', '529': 'other', daf: 'other', property: 'property', business: 'other', other: 'other' };
+  var TIER_BY_CATEGORY = { cash: 'cash', investment: 'taxable', retirement: 'retirement', real_estate: 'property', vehicle: 'other', other: 'other' };
+  var DRAWABLE_TIERS = ['cash', 'taxable', 'retirement'];
+  var DRAW_ORDER_DEFAULT = ['cash', 'taxable', 'retirement'];
+  /* IRC 72(t): 10% below 59½ on pre-tax and on Roth earnings; an HSA spent
+     on anything but medical care below 65 pays 20%. Statute, stable. */
+  var EARLY_PENALTY = { pretax: 0.10, roth: 0.10, unknown: 0.10, hsa: 0.20 };
+  var ACCESS_AGE_DEFAULT = 59.5;
+  var ACCESS_AGE_BY_CHARACTER = { hsa: 65 };
+
+  /** tierOf(asset) → { tier, derived, from: 'stored' | 'kind' | 'liquid' | 'category' } */
+  function tierOf(asset) {
+    var a = asset || {};
+    if (a.tier && TIERS.indexOf(a.tier) >= 0) return { tier: a.tier, derived: false, from: 'stored' };
+    if (a.taxCharacter && TIER_BY_CHARACTER[a.taxCharacter]) return { tier: TIER_BY_CHARACTER[a.taxCharacter], derived: true, from: 'kind' };
+    var byCat = TIER_BY_CATEGORY[a.category] || 'other';
+    /* An uncharacterised "other" thing the owner flagged as liquid is
+       reachable money, so it draws with the taxable pile. */
+    if (byCat === 'other' && a.liquid === true) return { tier: 'taxable', derived: true, from: 'liquid' };
+    return { tier: byCat, derived: true, from: 'category' };
+  }
+  function tierLabel(tier) { return TIER_LABELS[tier] || tier; }
+
+  /* The retirement character a tier-retirement asset draws as: the stated
+     one, else pre-tax (assumed). */
+  function retirementCharacterOf(asset) {
+    var tc = asset && asset.taxCharacter;
+    if (tc === 'roth' || tc === 'hsa' || tc === 'pretax') return { character: tc, assumed: false };
+    return { character: 'pretax', assumed: tc !== 'unknown' };
+  }
+
+  /**
+   * drawOf(asset, tier, ctx) — what one asset puts into a runway: its gross
+   * value, the tax and penalty on the way out, and the net.
+   *   ctx.rates  { withdrawalRate, capitalGainsRate } or null: with no rates
+   *              the draw is before tax and says so (taxApplied false)
+   *   ctx.rules  access_rules, for the access age; the statute defaults
+   *              stand in when the table is not loaded
+   *   ctx.age    the primary adult's age; unknown = the gate is assumed shut
+   */
+  function drawOf(asset, tier, ctx) {
+    var a = asset || {}, c = ctx || {};
+    var v = a.valueCents, rates = c.rates || null;
+    var out = { grossCents: v, taxCents: 0, penaltyCents: 0, netCents: v, gated: false, accessAge: null, basisFreeCents: 0, assumed: [] };
+    if (tier === 'cash') return out;
+    if (tier === 'taxable') {
+      var basis;
+      if (Money.isEntered(a.costBasisCents)) basis = a.costBasisCents;
+      else { basis = Math.round(v * TAXABLE_BASIS_SHARE); out.assumed.push('basis'); }
+      var gain = Math.max(0, v - basis);
+      if (rates && Money.isEntered(rates.capitalGainsRate)) out.taxCents = Math.round(gain * rates.capitalGainsRate);
+      out.netCents = v - out.taxCents;
+      return out;
+    }
+    if (tier === 'retirement') {
+      var rc = retirementCharacterOf(a);
+      if (rc.assumed) out.assumed.push('orientation');
+      var accessAge = c.rules ? assetAccessAge(a, c.rules)
+        : Money.isEntered(a.accessAgeOverride) ? a.accessAgeOverride
+        : (ACCESS_AGE_BY_CHARACTER[rc.character] || ACCESS_AGE_DEFAULT);
+      out.accessAge = accessAge;
+      var ageKnown = Money.isEntered(c.age);
+      out.gated = Money.isEntered(accessAge) && (!ageKnown || c.age < accessAge);
+      if (!ageKnown && Money.isEntered(accessAge)) out.assumed.push('age');
+      var rate = rates && Money.isEntered(rates.withdrawalRate) ? rates.withdrawalRate : 0;
+      var taxed = v;
+      if (rc.character === 'roth') {
+        /* Contributions come out any time, untaxed; the earnings wait. */
+        var free = Money.isEntered(a.costBasisCents) ? Math.min(a.costBasisCents, v) : 0;
+        if (!Money.isEntered(a.costBasisCents)) out.assumed.push('basis');
+        out.basisFreeCents = free;
+        taxed = v - free;
+        /* Qualified (past the gate) Roth earnings are tax-free too. */
+        if (!out.gated) rate = 0;
+      }
+      out.taxCents = Math.round(taxed * rate);
+      out.penaltyCents = out.gated ? Math.round(taxed * (EARLY_PENALTY[rc.character] || 0)) : 0;
+      out.netCents = v - out.taxCents - out.penaltyCents;
+      return out;
+    }
+    /* property, other: never drawn. */
+    out.netCents = 0;
+    return out;
+  }
+
+  /**
+   * tierDraws(household, drawOrder, opts) — the piles a runway may draw, in
+   * order, each with gross, tax, penalty and net, plus the piles it never
+   * touches. opts: rates, rules, age, asOf. Does not need the spending.
+   */
+  function tierDraws(household, drawOrder, opts) {
+    var h = household || {}, o = opts || {};
+    var order = (Array.isArray(drawOrder) && drawOrder.length ? drawOrder : DRAW_ORDER_DEFAULT)
+      .filter(function (t, i, arr) { return DRAWABLE_TIERS.indexOf(t) >= 0 && arr.indexOf(t) === i; });
+    var age = Money.isEntered(o.age) ? o.age : primaryAge(h, o.asOf);
+    var ctx = { rates: o.rates && Money.isEntered(o.rates.withdrawalRate) ? o.rates : null, rules: o.rules || null, age: age };
+    var steps = {};
+    order.forEach(function (t) { steps[t] = { tier: t, label: tierLabel(t), grossCents: 0, taxCents: 0, penaltyCents: 0, netCents: 0, gatedCents: 0, count: 0, assets: [] }; });
+    var never = { grossCents: 0, byTier: {}, count: 0 };
+    var assumed = [], counted = 0, gross = 0, net = 0, tax = 0, penalty = 0;
+    aggregatableAssets(h).forEach(function (a) {
+      if (!Money.isEntered(a.valueCents)) return;
+      var t = tierOf(a).tier;
+      if (!steps[t]) { never.grossCents += a.valueCents; never.byTier[t] = (never.byTier[t] || 0) + a.valueCents; never.count++; return; }
+      var d = drawOf(a, t, ctx);
+      var s = steps[t];
+      counted++; s.count++;
+      s.grossCents += d.grossCents; s.taxCents += d.taxCents; s.penaltyCents += d.penaltyCents; s.netCents += d.netCents;
+      if (d.gated) s.gatedCents += d.grossCents - d.basisFreeCents;
+      s.assets.push({ asset: a, draw: d });
+      d.assumed.forEach(function (k) { if (assumed.indexOf(k) === -1) assumed.push(k); });
+      gross += d.grossCents; net += d.netCents; tax += d.taxCents; penalty += d.penaltyCents;
+    });
+    return {
+      drawOrder: order,
+      steps: order.map(function (t) { return steps[t]; }),
+      never: never,
+      count: counted,
+      grossCents: gross, taxCents: tax, penaltyCents: penalty, netCents: net,
+      taxApplied: !!ctx.rates,
+      taxRate: ctx.rates ? ctx.rates.withdrawalRate : null,
+      capitalGainsRate: ctx.rates && Money.isEntered(ctx.rates.capitalGainsRate) ? ctx.rates.capitalGainsRate : null,
+      ageKnown: Money.isEntered(age),
+      age: Money.isEntered(age) ? age : null,
+      assumed: assumed
+    };
+  }
+
+  /**
+   * runwayMonths(household, drawOrder, opts) → Result, months
+   *   The one runway: every drawable pile in order, net of tax and penalty,
+   *   over a month's spending. opts.monthlyExpensesCents overrides the
+   *   household's spending (a room's floor, a scenario's outflow); the rest
+   *   is tierDraws' opts. Meta: steps (each with monthsThis and the
+   *   cumulative months at its end), cashMonths, beyondCashMonths,
+   *   beyondCashCents, weeks, and the tax/penalty/age flags to say on screen.
+   */
+  function runwayMonths(household, drawOrder, opts) {
+    var o = opts || {};
+    var spend = Money.isEntered(o.monthlyExpensesCents) ? o.monthlyExpensesCents : null;
+    if (spend === null) { var m = monthlyExpensesCents(household || {}); spend = Money.isOk(m) ? m.value : null; }
+    if (!Money.isEntered(spend)) return Money.incomplete('Add your monthly spending to see how long the money lasts.', ['monthlyExpenses']);
+    if (spend <= 0) return Money.incomplete('Monthly expenses need to be above zero to measure runway.', ['monthlyExpenses']);
+    var d = tierDraws(household, drawOrder, o);
+    if (!d.count) return Money.incomplete('Add what you have saved to see how long it lasts.', ['cash']);
+    var cumulative = 0;
+    d.steps.forEach(function (s) {
+      s.monthsThis = Math.round(s.netCents / spend * 10) / 10;
+      cumulative += s.netCents;
+      s.monthsCumulative = Math.round(cumulative / spend * 10) / 10;
+    });
+    var cashNet = d.steps.length && d.steps[0].tier === 'cash' ? d.steps[0].netCents : 0;
+    var months = Math.round(d.netCents / spend * 10) / 10;
+    return Money.ok(months, Object.assign(d, {
+      months: months,
+      weeks: Math.floor(d.netCents / (spend * 12 / 52)),
+      monthlyExpensesCents: spend,
+      cashMonths: Math.round(cashNet / spend * 10) / 10,
+      beyondCashCents: d.netCents - cashNet,
+      beyondCashMonths: Math.round((d.netCents - cashNet) / spend * 10) / 10
+    }));
   }
 
   /* Kinds of future period. `other` is the default so every row written
@@ -2625,6 +2806,16 @@
     assetRule: assetRule,
     assetAccessAge: assetAccessAge,
     assetLiquidity: assetLiquidity,
+    TIERS: TIERS,
+    TIER_LABELS: TIER_LABELS,
+    DRAW_ORDER_DEFAULT: DRAW_ORDER_DEFAULT,
+    DRAWABLE_TIERS: DRAWABLE_TIERS,
+    EARLY_PENALTY: EARLY_PENALTY,
+    tierOf: tierOf,
+    tierLabel: tierLabel,
+    drawOf: drawOf,
+    tierDraws: tierDraws,
+    runwayMonths: runwayMonths,
     resolveAssumptions: resolveAssumptions,
     withMonthlyExpensesDeltaCents: withMonthlyExpensesDeltaCents,
     personById: personById,

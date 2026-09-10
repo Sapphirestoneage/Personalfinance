@@ -17,7 +17,7 @@
              Night), income, date of birth, state and filing status.
   2. WRITES  It OWNS the itemised assets (property, vehicle, other) — name,
              value, type — exactly as Net Worth did; and for EVERY asset the
-             Statement's own facts: liquidity, confidence, cost basis,
+             Statement's own facts: pile (15.8), confidence, cost basis,
              hassle, monthly cash flow, an access-age override. Cash and
              investment VALUES stay Start Here's and render as chips. It
              also owns futureIncome[]. It writes no debt: Debt Payoff owns
@@ -166,6 +166,7 @@
   <section class="slaf-card" id="ladder" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">The liquidity ladder</span>
     <h2 style="margin:var(--space-2) 0 0">What you could reach, and when</h2>
+    <p class="slaf-hint" style="margin-top:var(--space-2)">A view of the five piles each asset sits in above: cash today, taxable investments within a month, retirement money within a year once its age is reached, property and the rest never. Runway, Between Jobs and the Long Way Round draw the same piles in the same order.</p>
     <ul class="ladder" id="ladder-list"></ul>
     <div id="ladder-chart"></div>
     <p class="why" id="ladder-why"></p>
@@ -286,6 +287,16 @@
     return t ? t.label : (rule ? rule.key : 'unrated');
   }
 
+  /* 15.8: the five piles a runway draws in order. The first option is the
+     pile the kind puts it in; choosing one stores the override. D-181. */
+  function tierOptions(a) {
+    var t = Schema.tierOf(a);
+    var derivedTier = Schema.tierOf(Object.assign({}, a, { tier: null })).tier;
+    var out = '<option value=""' + (t.derived ? ' selected' : '') + '>By kind (' + esc(Schema.tierLabel(derivedTier)) + ')</option>';
+    return out + Schema.TIERS.map(function (k) {
+      return '<option value="' + k + '"' + (!t.derived && t.tier === k ? ' selected' : '') + '>' + esc(Schema.tierLabel(k)) + '</option>';
+    }).join('');
+  }
   function scaleOptions(scale, current, defaultValue, blankLabel) {
     var out = '<option value=""' + (Money.isEntered(current) ? '' : ' selected') + '>'
       + esc(blankLabel) + (Money.isEntered(defaultValue) ? ' (default: ' + esc((scale.filter(function (s) { return s.value === defaultValue; })[0] || {}).label || defaultValue) + ')' : '') + '</option>';
@@ -312,7 +323,6 @@
     var rules = TABLES && TABLES.accessRules;
     var assets = Schema.aggregatableAssets(h);
     if (!assets.length) { list.innerHTML = '<p class="slaf-reason">Nothing owned yet. Cash and investments are asked in Start Here.</p>'; return; }
-    var scaleL = rules ? rules.liquidityScale : [];
     var scaleC = rules ? rules.confidenceScale : [];
     list.innerHTML = assets.map(function (a) {
       var mine = OWNED.indexOf(a.category) !== -1;
@@ -348,9 +358,9 @@
         + (mine ? '<button type="button" class="asset-remove" data-remove="' + a.id + '" aria-label="Remove">✕</button>' : '')
         + '</div>'
         + '<div class="asset-grid">' + valueCell + typeCell
-        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">How fast could you reach it</span>'
-        + '<span class="slaf-input-shell"><select data-asset="' + a.id + '" data-field="liquidity" aria-label="Liquidity">'
-        + scaleOptions(scaleL, a.liquidity, rule ? rule.liquidity : null, 'Not rated') + '</select></span></label>'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Which pile it sits in</span>'
+        + '<span class="slaf-input-shell"><select data-asset="' + a.id + '" data-field="tier" aria-label="Pile">'
+        + tierOptions(a) + '</select></span></label>'
         + '<label class="slaf-field" style="margin:0"><span class="slaf-label">How sure it is worth that</span>'
         + '<span class="slaf-input-shell"><select data-asset="' + a.id + '" data-field="confidence" aria-label="Confidence">'
         + scaleOptions(scaleC, a.confidence, null, 'Not rated') + '</select></span></label>'
@@ -421,11 +431,16 @@
     else if (field === 'category') { if (!mine) return; patch.category = text; patch.liquid = false; }
     else if (field === 'valueCents') { if (!mine) return; patch.valueCents = Money.parseMoney(text); }
     else if (field === 'taxCharacter') { patch.taxCharacter = text === '' ? (existing.taxCharacter === 'unknown' ? 'unknown' : null) : text; }
-    else if (field === 'liquidity' || field === 'confidence' || field === 'hassle') {
+    else if (field === 'tier') {
+      /* 15.8: the pile. Blank = derived from the kind; `liquid` follows the
+         pile so every reader of the flag agrees. D-181. */
+      patch.tier = Schema.TIERS.indexOf(text) >= 0 ? text : null;
+      var eff = Schema.tierOf(Object.assign({}, existing, { tier: patch.tier })).tier;
+      patch.liquid = eff === 'cash' || eff === 'taxable';
+    }
+    else if (field === 'confidence' || field === 'hassle') {
       var n = text === '' ? null : Number(text);
       patch[field] = (n === null || isNaN(n)) ? null : n;
-      /* `liquid` follows the rating so every ratio that reads it agrees. */
-      if (field === 'liquidity' && patch.liquidity !== null) patch.liquid = patch.liquidity <= 2;
     }
     else if (field === 'costBasisCents' || field === 'cashFlowMonthlyCents') { patch[field] = Money.parseMoney(text); }
     else if (field === 'accessAgeOverride') { var age = text === '' ? null : Number(text); patch.accessAgeOverride = (age === null || isNaN(age) || age < 0) ? null : age; }
@@ -572,20 +587,23 @@
     el('ladder-chart').innerHTML = Charts.stacked({
       title: 'How much you could reach, and when',
       rows: [{ label: 'All of it', note: 'by when you could reach it', parts: [
-        { label: 'Today', value: l.bands.today, color: Charts.COLORS.series[0] },
-        { label: 'Within a month', value: l.bands.thisMonth, color: Charts.COLORS.series[1] },
-        { label: 'Within a year', value: l.bands.thisYear, color: Charts.COLORS.series[3] },
+        { label: 'Cash, today', value: l.bands.today, color: Charts.COLORS.series[0] },
+        { label: 'Taxable, within a month', value: l.bands.thisMonth, color: Charts.COLORS.series[1] },
+        { label: 'Retirement you can reach, within a year', value: l.bands.thisYear, color: Charts.COLORS.series[3] },
         { label: 'Not without a penalty, a sale, or a birthday', value: l.bands.never, color: Charts.COLORS.muted }
       ] }]
     });
-    var rows = [['Today', l.bands.today, l.cumulative.today], ['Within a month', l.bands.thisMonth, l.cumulative.thisMonth], ['Within a year', l.bands.thisYear, l.cumulative.thisYear], ['Not without a penalty, a sale, or a birthday', l.bands.never, null]];
+    var rows = [['Cash · today', l.bands.today, l.cumulative.today], ['Taxable investments · within a month', l.bands.thisMonth, l.cumulative.thisMonth], ['Retirement you can reach · within a year', l.bands.thisYear, l.cumulative.thisYear], ['Not without a penalty, a sale, or a birthday', l.bands.never, null]];
     list.innerHTML = rows.map(function (r, i) {
       return '<li' + (i === 3 ? ' class="never"' : '') + '><span>' + r[0] + (r[2] !== null ? ' <span style="color:var(--color-text-faint)">· ' + fmt(r[2]) + ' cumulative</span>' : '') + '</span><span class="amt">' + fmt(r[1]) + '</span>'
         + '<span class="bar"><i style="width:' + (total ? r[1] / total * 100 : 0) + '%"></i></span></li>';
     }).join('');
     var why = [];
     why.push(l.ageKnown ? 'At ' + l.age + ', ' + fmt(l.gatedCents) + ' sits behind an access age you have not reached.' : 'No date of birth, so the age gate could not be applied — everything is shown at its own liquidity.');
-    if (l.unratedCount) why.push(l.unratedCount + ' asset' + (l.unratedCount === 1 ? ' is' : 's are') + ' at the default liquidity for ' + (l.unratedCount === 1 ? 'its' : 'their') + ' kind; rate ' + (l.unratedCount === 1 ? 'it' : 'them') + ' above.');
+    why.push(l.overriddenCount
+      ? l.overriddenCount + ' asset' + (l.overriddenCount === 1 ? ' sits' : 's sit') + ' in a pile you chose; the rest are placed by kind.'
+      : 'Every asset is placed by its kind; change the pile on the asset above if one is wrong.');
+    if (l.byTier.property + l.byTier.other) why.push(fmt(l.byTier.property + l.byTier.other) + ' is property or other things that a runway never sells.');
     if (l.unknownCents) why.push(fmt(l.unknownCents) + ' was entered as one total and is treated as pre-tax until you split it in Start Here.');
     el('ladder-why').textContent = why.join(' ');
   }
