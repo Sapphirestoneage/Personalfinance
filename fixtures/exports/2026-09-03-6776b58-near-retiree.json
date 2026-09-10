@@ -75,7 +75,7 @@
   "meta": {
     "visitedRooms": [],
     "createdAt": null,
-    "updatedAt": "2026-09-10T00:55:48.815Z",
+    "updatedAt": "2026-09-10T01:00:38.211Z",
     "isDemo": true,
     "hasDebt": false,
     "name": "Near retiree",
@@ -112,7 +112,7 @@
     "section": 5,
     "commit": "6776b58",
     "date": "2026-09-03",
-    "subject": "Add the Cash Flow engine — categorised spending, one store, import-ready",
+    "subject": "Add the Cash Flow engine: categorised spending, one store, import-ready",
     "via": "storedBlob",
     "specId": "near-retiree",
     "known": {

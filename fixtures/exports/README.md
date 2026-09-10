@@ -14,13 +14,13 @@ Via `storedBlob`. Files: `2026-09-03-d4c5599-grad-broke.json`, `2026-09-03-d4c55
 
 Paths added (68): `assets`, `assets[]`, `assets[].category`, `assets[].label`, `assets[].liquid`, `assets[].valueCents`, `assumptionOverrides`, `assumptions`, `assumptions.expectedReturnRate`, `assumptions.swrRate`, `debts`, `debts[]`, `debts[].balanceCents`, `debts[].emotionalTag`, `debts[].label`, `debts[].minPaymentCents`, `debts[].rate`, `debts[].type`, `expenses`, `expenses.categories`, `expenses.categories[]`, `expenses.monthlyEssential`, `expenses.monthlyEssential.estimatedValueCents`, `expenses.monthlyEssential.source`, `expenses.monthlyEssential.trackedValueCents`, `filingStatus`, `meta`, `meta.hasDebt`, `meta.isDemo`, `meta.known`, `meta.known.asOf`, `meta.known.effectiveRate`, `meta.known.estimatedTaxCents`, `meta.known.fiTargetCents`, `meta.known.grossAnnualCents`, `meta.known.monthlySpendingCents`, `meta.known.netWorthCents`, `meta.known.runwayMonths`, `meta.known.runwayWholeMonths`, `meta.known.savingsRate`, `meta.known.takeHomeAnnualCents`, `meta.known.takeHomeMonthlyCents`, `meta.known.tolerance`, `meta.known.working`, `meta.known.working[]`, `meta.lane`, `meta.name`, `meta.sphere`, `meta.sphereNote`, `meta.story`, `meta.visitedRooms`, `meta.visitedRooms[]`, `people`, `people[]`, `people[].dob`, `people[].incomeSources`, `people[].incomeSources[]`, `people[].incomeSources[].employerMatch`, `people[].incomeSources[].employerMatch.matchCapPercentOfSalary`, `people[].incomeSources[].employerMatch.matchPercent` and 8 more
 
-## 2026-09-03 `07834e4` Add the Financial Snapshot room — Tier 0's ten inputs and nine outputs
+## 2026-09-03 `07834e4` Add the Financial Snapshot room: Tier 0's ten inputs and nine outputs
 
 Via `storedBlob` (paths were only added, so one sample household). Files: `2026-09-03-07834e4-dink-highearn.json`
 
 Paths added (1): `capturingFullMatch`
 
-## 2026-09-03 `6776b58` Add the Cash Flow engine — categorised spending, one store, import-ready
+## 2026-09-03 `6776b58` Add the Cash Flow engine: categorised spending, one store, import-ready
 
 Via `storedBlob`. Files: `2026-09-03-6776b58-grad-broke.json`, `2026-09-03-6776b58-dink-highearn.json`, `2026-09-03-6776b58-house-hacker.json`, `2026-09-03-6776b58-near-retiree.json`, `2026-09-03-6776b58-between-jobs.json`, `2026-09-03-6776b58-max-savers.json`, `2026-09-03-6776b58-forty-debts.json`
 
@@ -28,25 +28,25 @@ Paths added (2): `expenses.entries`, `expenses.entries[]`
 
 Paths removed (2): `expenses.categories`, `expenses.categories[]`
 
-## 2026-09-03 `7fbfc39` Add Real Hourly Wage — what the job actually pays
+## 2026-09-03 `7fbfc39` Add Real Hourly Wage: what the job actually pays
 
 Via `storedBlob` (paths were only added, so one sample household). Files: `2026-09-03-7fbfc39-dink-highearn.json`
 
 Paths added (8): `people[].work`, `people[].work.commuteHoursPerWeek`, `people[].work.contractedHoursPerWeek`, `people[].work.decompressHoursPerWeek`, `people[].work.prepHoursPerWeek`, `people[].work.unpaidOvertimeHoursPerWeek`, `people[].work.weeksPerYear`, `people[].work.workCostsMonthlyCents`
 
-## 2026-09-03 `0f67cea` Add the Goal Costing Engine — wedding, deposit and trip from one room
+## 2026-09-03 `0f67cea` Add the Goal Costing Engine: wedding, deposit and trip from one room
 
 Via `storedBlob` (paths were only added, so one sample household). Files: `2026-09-03-0f67cea-dink-highearn.json`
 
 Paths added (2): `goals`, `goals[]`
 
-## 2026-09-03 `023bc45` Add Sleep At Night — the SWAN Number, beside the maths it disagrees with
+## 2026-09-03 `023bc45` Add Sleep At Night: the SWAN Number, beside the maths it disagrees with
 
 Via `storedBlob` (paths were only added, so one sample household). Files: `2026-09-03-023bc45-dink-highearn.json`
 
 Paths added (6): `swan`, `swan.basis`, `swan.note`, `swan.setAt`, `swan.targetCents`, `swan.targetMonths`
 
-## 2026-09-03 `f567abb` Add What Matters — stated values against a categorised month, with no score
+## 2026-09-03 `f567abb` Add What Matters: stated values against a categorised month, with no score
 
 Via `storedBlob` (paths were only added, so one sample household). Files: `2026-09-03-f567abb-dink-highearn.json`
 
@@ -58,13 +58,13 @@ Via `storedBlob` (paths were only added, so one sample household). Files: `2026-
 
 Paths added (1): `ratings`
 
-## 2026-09-04 `72dede3` Add Worth It — before and after are one record, not two
+## 2026-09-04 `72dede3` Add Worth It: before and after are one record, not two
 
 Via `storedBlob` (paths were only added, so one sample household). Files: `2026-09-04-72dede3-dink-highearn.json`
 
 Paths added (2): `worthChecks`, `worthChecks[]`
 
-## 2026-09-04 `31f6a8c` Credit utilisation now computes — ask for the limit, and count only the cards that have one
+## 2026-09-04 `31f6a8c` Credit utilisation now computes: ask for the limit, and count only the cards that have one
 
 Via `storedBlob` (paths were only added, so one sample household). Files: `2026-09-04-31f6a8c-dink-highearn.json`
 
@@ -208,7 +208,7 @@ Via `exportJSON` (paths were only added, so one sample household). Files: `2026-
 
 Paths added (1): `notApplicable`
 
-## 2026-09-05 `2dae6c1` Skill Tree, step 1: the engine — household in, per-skill state and reason out
+## 2026-09-05 `2dae6c1` Skill Tree, step 1: the engine: household in, per-skill state and reason out
 
 Via `exportJSON` (paths were only added, so one sample household). Files: `2026-09-05-2dae6c1-dink-highearn.json`
 
@@ -232,7 +232,7 @@ Via `exportJSON` (paths were only added, so one sample household). Files: `2026-
 
 Paths added (1): `meta.frontDoor`
 
-## 2026-09-09 `0edaa17` Section 2: expenses are four numbers — FAT, wants, and one optional line (D-172)
+## 2026-09-09 `0edaa17` Section 2: expenses are four numbers: FAT, wants, and one optional line (D-172)
 
 Via `exportJSON`. Files: `2026-09-09-0edaa17-grad-broke.json`, `2026-09-09-0edaa17-dink-highearn.json`, `2026-09-09-0edaa17-house-hacker.json`, `2026-09-09-0edaa17-near-retiree.json`, `2026-09-09-0edaa17-between-jobs.json`, `2026-09-09-0edaa17-max-savers.json`, `2026-09-09-0edaa17-forty-debts.json`
 
@@ -240,7 +240,7 @@ Paths added (10): `expenses.needs`, `expenses.needs.accommodation`, `expenses.ne
 
 Paths removed (4): `expenses.monthlyEssential`, `expenses.monthlyEssential.estimatedValueCents`, `expenses.monthlyEssential.source`, `expenses.monthlyEssential.trackedValueCents`
 
-## 2026-09-09 `72729ae` Section 10: the block model — a hypothetical laid on the household, never in it (D-178)
+## 2026-09-09 `72729ae` Section 10: the block model: a hypothetical laid on the household, never in it (D-178)
 
 Via `exportJSON`. Files: `2026-09-09-72729ae-grad-broke.json`, `2026-09-09-72729ae-dink-highearn.json`, `2026-09-09-72729ae-house-hacker.json`, `2026-09-09-72729ae-near-retiree.json`, `2026-09-09-72729ae-between-jobs.json`, `2026-09-09-72729ae-max-savers.json`, `2026-09-09-72729ae-forty-debts.json`
 

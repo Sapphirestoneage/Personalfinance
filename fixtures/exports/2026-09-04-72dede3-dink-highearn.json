@@ -120,7 +120,7 @@
   "meta": {
     "visitedRooms": [],
     "createdAt": null,
-    "updatedAt": "2026-09-10T00:55:49.465Z",
+    "updatedAt": "2026-09-10T01:00:38.868Z",
     "isDemo": true,
     "hasDebt": false,
     "name": "Two incomes, no kids, high earners",
@@ -157,7 +157,7 @@
     "section": 5,
     "commit": "72dede3",
     "date": "2026-09-04",
-    "subject": "Add Worth It — before and after are one record, not two",
+    "subject": "Add Worth It: before and after are one record, not two",
     "via": "storedBlob",
     "specId": "dink-highearn",
     "known": {

@@ -107,7 +107,7 @@
   "meta": {
     "visitedRooms": [],
     "createdAt": null,
-    "updatedAt": "2026-09-10T00:55:49.018Z",
+    "updatedAt": "2026-09-10T01:00:38.417Z",
     "isDemo": true,
     "hasDebt": false,
     "name": "Two incomes, no kids, high earners",
@@ -144,7 +144,7 @@
     "section": 5,
     "commit": "0f67cea",
     "date": "2026-09-03",
-    "subject": "Add the Goal Costing Engine — wedding, deposit and trip from one room",
+    "subject": "Add the Goal Costing Engine: wedding, deposit and trip from one room",
     "via": "storedBlob",
     "specId": "dink-highearn",
     "known": {

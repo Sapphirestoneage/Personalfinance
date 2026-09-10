@@ -3,7 +3,7 @@
   "exportVersion": 1,
   "schemaVersion": 2,
   "appVersion": "2.0",
-  "exportedAt": "2026-09-10T00:55:53.098Z",
+  "exportedAt": "2026-09-10T01:00:42.545Z",
   "household": {
     "schemaVersion": 2,
     "people": [
@@ -284,7 +284,7 @@
     "meta": {
       "visitedRooms": [],
       "createdAt": null,
-      "updatedAt": "2026-09-10T00:55:53.096Z",
+      "updatedAt": "2026-09-10T01:00:42.544Z",
       "confirmedAt": {},
       "hasDebt": true,
       "guessed": {},
@@ -335,7 +335,7 @@
     "section": 5,
     "commit": "72729ae",
     "date": "2026-09-09",
-    "subject": "Section 10: the block model — a hypothetical laid on the household, never in it (D-178)",
+    "subject": "Section 10: the block model: a hypothetical laid on the household, never in it (D-178)",
     "via": "exportJSON",
     "specId": "grad-broke",
     "known": {

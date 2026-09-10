@@ -3,7 +3,7 @@
   "exportVersion": 1,
   "schemaVersion": 2,
   "appVersion": "2.0",
-  "exportedAt": "2026-09-10T00:55:52.962Z",
+  "exportedAt": "2026-09-10T01:00:42.412Z",
   "household": {
     "schemaVersion": 2,
     "people": [
@@ -259,7 +259,7 @@
     "meta": {
       "visitedRooms": [],
       "createdAt": null,
-      "updatedAt": "2026-09-10T00:55:52.961Z",
+      "updatedAt": "2026-09-10T01:00:42.411Z",
       "confirmedAt": {},
       "hasDebt": false,
       "guessed": {},
@@ -308,7 +308,7 @@
     "section": 5,
     "commit": "0edaa17",
     "date": "2026-09-09",
-    "subject": "Section 2: expenses are four numbers — FAT, wants, and one optional line (D-172)",
+    "subject": "Section 2: expenses are four numbers: FAT, wants, and one optional line (D-172)",
     "via": "exportJSON",
     "specId": "between-jobs",
     "known": {

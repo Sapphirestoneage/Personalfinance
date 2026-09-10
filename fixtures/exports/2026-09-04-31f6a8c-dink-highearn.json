@@ -120,7 +120,7 @@
   "meta": {
     "visitedRooms": [],
     "createdAt": null,
-    "updatedAt": "2026-09-10T00:55:49.529Z",
+    "updatedAt": "2026-09-10T01:00:38.924Z",
     "isDemo": true,
     "hasDebt": false,
     "name": "Two incomes, no kids, high earners",
@@ -157,7 +157,7 @@
     "section": 5,
     "commit": "31f6a8c",
     "date": "2026-09-04",
-    "subject": "Credit utilisation now computes — ask for the limit, and count only the cards that have one",
+    "subject": "Credit utilisation now computes: ask for the limit, and count only the cards that have one",
     "via": "storedBlob",
     "specId": "dink-highearn",
     "known": {

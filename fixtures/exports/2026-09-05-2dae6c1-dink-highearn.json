@@ -2,7 +2,7 @@
   "format": "slaf-export",
   "exportVersion": 1,
   "schemaVersion": 2,
-  "exportedAt": "2026-09-10T00:55:52.293Z",
+  "exportedAt": "2026-09-10T01:00:41.775Z",
   "household": {
     "schemaVersion": 2,
     "people": [
@@ -330,7 +330,7 @@
     "meta": {
       "visitedRooms": [],
       "createdAt": null,
-      "updatedAt": "2026-09-10T00:55:52.292Z",
+      "updatedAt": "2026-09-10T01:00:41.774Z",
       "confirmedAt": {},
       "hasDebt": false,
       "guessed": {},
@@ -374,7 +374,7 @@
     "section": 5,
     "commit": "2dae6c1",
     "date": "2026-09-05",
-    "subject": "Skill Tree, step 1: the engine — household in, per-skill state and reason out",
+    "subject": "Skill Tree, step 1: the engine: household in, per-skill state and reason out",
     "via": "exportJSON",
     "specId": "dink-highearn",
     "known": {

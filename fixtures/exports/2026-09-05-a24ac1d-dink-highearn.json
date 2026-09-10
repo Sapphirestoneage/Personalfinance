@@ -2,7 +2,7 @@
   "format": "slaf-export",
   "exportVersion": 1,
   "schemaVersion": 2,
-  "exportedAt": "2026-09-10T00:55:50.107Z",
+  "exportedAt": "2026-09-10T01:00:39.548Z",
   "household": {
     "schemaVersion": 2,
     "people": [
@@ -187,7 +187,7 @@
     "meta": {
       "visitedRooms": [],
       "createdAt": null,
-      "updatedAt": "2026-09-10T00:55:50.107Z",
+      "updatedAt": "2026-09-10T01:00:39.548Z",
       "confirmedAt": {},
       "hasDebt": false,
       "isDemo": true,

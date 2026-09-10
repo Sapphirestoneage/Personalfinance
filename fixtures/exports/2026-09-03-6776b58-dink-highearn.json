@@ -88,7 +88,7 @@
   "meta": {
     "visitedRooms": [],
     "createdAt": null,
-    "updatedAt": "2026-09-10T00:55:48.814Z",
+    "updatedAt": "2026-09-10T01:00:38.209Z",
     "isDemo": true,
     "hasDebt": false,
     "name": "Two incomes, no kids, high earners",
@@ -125,7 +125,7 @@
     "section": 5,
     "commit": "6776b58",
     "date": "2026-09-03",
-    "subject": "Add the Cash Flow engine — categorised spending, one store, import-ready",
+    "subject": "Add the Cash Flow engine: categorised spending, one store, import-ready",
     "via": "storedBlob",
     "specId": "dink-highearn",
     "known": {

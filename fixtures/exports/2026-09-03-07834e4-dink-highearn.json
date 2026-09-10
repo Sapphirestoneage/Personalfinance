@@ -88,7 +88,7 @@
   "meta": {
     "visitedRooms": [],
     "createdAt": null,
-    "updatedAt": "2026-09-10T00:55:48.754Z",
+    "updatedAt": "2026-09-10T01:00:38.133Z",
     "isDemo": true,
     "hasDebt": false,
     "name": "Two incomes, no kids, high earners",
@@ -125,7 +125,7 @@
     "section": 5,
     "commit": "07834e4",
     "date": "2026-09-03",
-    "subject": "Add the Financial Snapshot room — Tier 0's ten inputs and nine outputs",
+    "subject": "Add the Financial Snapshot room: Tier 0's ten inputs and nine outputs",
     "via": "storedBlob",
     "specId": "dink-highearn",
     "known": {

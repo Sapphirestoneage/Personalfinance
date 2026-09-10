@@ -114,7 +114,7 @@
   "meta": {
     "visitedRooms": [],
     "createdAt": null,
-    "updatedAt": "2026-09-10T00:55:49.086Z",
+    "updatedAt": "2026-09-10T01:00:38.495Z",
     "isDemo": true,
     "hasDebt": false,
     "name": "Two incomes, no kids, high earners",
@@ -151,7 +151,7 @@
     "section": 5,
     "commit": "023bc45",
     "date": "2026-09-03",
-    "subject": "Add Sleep At Night — the SWAN Number, beside the maths it disagrees with",
+    "subject": "Add Sleep At Night: the SWAN Number, beside the maths it disagrees with",
     "via": "storedBlob",
     "specId": "dink-highearn",
     "known": {
