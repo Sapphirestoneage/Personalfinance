@@ -10943,6 +10943,54 @@ the lens, the rooms); dnd 5614; export 25; render on cash-flow, calendar
 and budget; the phone forms gate for Cash Flow with a new case that types
 a yearly cost into the fold and taps its bucket and month.
 
+### 15.6 State (this commit)
+
+- **One state table, sourced a column at a time.** `data/states.json` is
+  lane 2's section-3 table (L-3), adopted whole: fifty states, DC and one
+  `OTHER` row for outside the US; the five columns the prompt names
+  (income tax type and top rate, effective property tax rate, median
+  infant childcare a month, full-coverage auto insurance a year, the MERIC
+  cost-of-living index) plus the UI weekly cap and weeks and the ACA
+  benchmark premium, each column with its source URL and as-of, each cell
+  `{ value, asOf, source, confidence, verify?, stale? }`. Most cells are
+  recalled from the named source and say `verify: true`; the file as a
+  whole is `unverified` and `docs/data-refresh-calendar.md` (lane 2) says
+  which month to check each column and against what. The childcare column
+  agrees cell for cell with `data/childcare_by_state.json`, which now
+  keeps only the national figure to fall back on.
+- **One reader.** `Schema.stateCell(tables, code, column)` returns the
+  cell with the row's name, or null for no state, no table, or `OTHER`;
+  `Schema.statesByCode(tables)` is the code-keyed view of plain values the
+  block expansions look up. Tax already keyed the brackets file on the
+  state; Housing Decision now takes the state's property tax rate over the
+  national convention and says whose figure it is; Kids and Tuition prices
+  childcare from the table first; What A Car Costs lists the state's
+  insurance average in its assumptions, with "your own quote beats it".
+- **The blocks keep no copy.** `data/blocks/geo.json` carried its own
+  cost-of-living map and `data/blocks/home.json` its own property-tax map,
+  both recalled, and they disagreed with the sourced table in most cells
+  (Illinois 2.08% against 1.95%). Both now look up `statesByCode`, which
+  `shared/blocks.js` derives from the loaded state table; the maps are
+  gone. The home block's Illinois test moves to 1.95%.
+- **ZIP is optional, in Fine-tune.** `household.zip`, five digits or null,
+  asked under Fine-tune in Start Here as "ZIP, if you like", owned by Start
+  Here (`taxes.zip` in the DAITE view). Nothing reads it yet: it is kept
+  for a finer-than-state table, and the note beside the box says so. The
+  state itself was already question three's neighbour, beside the birth
+  date in the first card.
+- **Compatibility note.** `household.zip` is a new nullable key; a
+  household without it reads as before. `data/states.json` changes shape
+  (rows gain sourced cells; `code` and `name` stay), and the one place
+  that read it, Start Here's select, reads only those two.
+
+Gate for this commit: unit 25510 (a new section of 37 checks: the table's
+shape and sourcing, stateCell and the view, housing in a state and with
+none, childcare from the table, the two blocks, the ZIP, the rooms);
+dnd 5611 to 5614 (its count moves by three between runs with nothing changed,
+every check passing; not this commit's to chase); export 25;
+render on start, housing, kids and car; the phone
+forms gate for Start Here; a tap walk that types a ZIP into Fine-tune.
+
 ---
 
 # The Dungeons & Dividends entries

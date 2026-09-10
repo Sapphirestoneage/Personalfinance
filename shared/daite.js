@@ -71,7 +71,7 @@
     variableWindow: 'income.variable', futureIncome: 'income.future', ledgerIncome: 'income.ledger',
     payCadence: 'income.cadence', nextPayday: 'income.cadence',
     /* T */
-    filingStatus: 'taxes.filingStatus', state: 'taxes.state', marginalRate: 'taxes.marginalRate',
+    filingStatus: 'taxes.filingStatus', state: 'taxes.state', zip: 'taxes.zip', marginalRate: 'taxes.marginalRate',
     otherPreTax: 'taxes.otherPreTax', withheld: 'taxes.withheld',
     /* E */
     monthlyExpenses: 'expenses', rentMonthly: 'expenses.needs.accommodation',

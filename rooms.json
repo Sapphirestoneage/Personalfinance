@@ -26,6 +26,7 @@
         "dob",
         "age",
         "state",
+        "zip",
         "filingStatus",
         "grossAnnualIncome",
         "unemployment",

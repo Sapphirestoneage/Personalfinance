@@ -430,6 +430,12 @@
           source: 'The curve is drawn only at the years in the table. Anything between them — month 29, say — '
             + 'is a straight line from the year before to the year after, and past the last row it is held '
             + 'flat rather than extrapolated.' },
+        (function () {
+          var st = Schema.stateCell(T, h.state, 'autoInsuranceFullCoverageAnnualCents');
+          return st
+            ? { label: 'Insurance, full coverage, in ' + st.name, value: Money.formatCents(st.value) + ' a year, the state average', source: 'data/states.json as of ' + st.asOf + ' (' + st.source + '; ' + (st.verify ? 'recalled, to verify' : st.confidence) + '). Your own quote beats it: it depends on the car, the record and the postcode.' }
+            : { label: 'Insurance', value: 'not priced here', source: 'Set your state in Start Here for the state average; your own quote beats it.' };
+        })(),
         { label: 'The running-cost shares',
           value: t.runningCosts.map(function (r) { return Money.formatRate(r.share, { decimals: 0 }); }).join(' / '),
           source: 'The AAA "Your Driving Costs" breakdown, as shares of a year of ownership. Shares only: '

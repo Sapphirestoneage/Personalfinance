@@ -31,7 +31,7 @@
       href: 'rooms/start.html',
       tier: 0,
       tags: ['income', 'cashflow', 'debt'],
-      daite: { reads: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'debt.none', 'expenses', 'income.grossAnnualCents', 'income.sources[].benefit', 'income.sources[].employerMatch', 'taxes.filingStatus', 'taxes.state', 'you.cover', 'you.dob', 'you.situation'], writes: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'debt.none', 'income.grossAnnualCents', 'income.sources[].benefit', 'income.sources[].employerMatch', 'taxes.filingStatus', 'taxes.state', 'you.cover', 'you.dependents', 'you.dob', 'you.situation'] },
+      daite: { reads: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'debt.none', 'expenses', 'income.grossAnnualCents', 'income.sources[].benefit', 'income.sources[].employerMatch', 'taxes.filingStatus', 'taxes.state', 'taxes.zip', 'you.cover', 'you.dob', 'you.situation'], writes: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'debt.none', 'income.grossAnnualCents', 'income.sources[].benefit', 'income.sources[].employerMatch', 'taxes.filingStatus', 'taxes.state', 'taxes.zip', 'you.cover', 'you.dependents', 'you.dob', 'you.situation'] },
       subsections: [
         { id: 'q-employment',  label: 'Your situation' },
         { id: 'q-about',       label: 'About you' },

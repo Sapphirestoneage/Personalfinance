@@ -10109,7 +10109,7 @@ section('Blocks: a hypothetical laid on the household, never in it (D-178)');
   check('...with the level payment as its minimum: $320,000 at 6.5% over 360 months', L('mortgage').extra.minPaymentCents, require(path.join(ROOT, 'engines/projection.js')).levelPaymentCents({ principalCents: 32000000, annualRate: 0.065, months: 360 }).value);
   check('...rent stops: the demo\'s $1,500 line comes off', L('rentStops').delta, -150000);
   check('...and says it is the household\'s own figure', L('rentStops').source, 'user');
-  check('...property tax at Illinois\'s 2.08%, a twelfth a month', L('propertyTax').delta, Math.round(40000000 * 0.0208 / 12));
+  check('...property tax at Illinois\'s 1.95% (data/states.json, 15.6), a twelfth a month', L('propertyTax').delta, Math.round(40000000 * 0.0195 / 12));
   check('...marked as a state figure', L('propertyTax').source, 'state');
   check('...insurance at the national 0.5%', L('insurance').delta, Math.round(40000000 * 0.005 / 12));
   const homeNoState = Blocks.build('home', { price: 40000000, down: 8000000, when: '2028-04', state: null }, demo).value;
@@ -10802,6 +10802,74 @@ section('15.5: cadence on every line, the yearly lines, the calendar and the sin
   checkTrue('the calendar draws yearly marks', cal.indexOf('is-annual') > -1);
   checkTrue('the spine exports the two writers', typeof Spine.upsertAnnualLine === 'function' && typeof Spine.removeAnnualLine === 'function');
   Prefs.reset();
+  Spine.reset();
+})();
+
+/* ==========================================================================
+   15.6: the state table (D-181)
+   ========================================================================== */
+section('15.6: one sourced state table, read by tax, housing, kids, the car and the blocks (D-181)');
+(function () {
+  const Spine = SpineMain;
+  const states = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/states.json'), 'utf8'));
+  const cols = ['incomeTax', 'propertyTaxEffectiveRate', 'childcareInfantCenterMonthlyCents', 'autoInsuranceFullCoverageAnnualCents', 'costOfLivingIndex'];
+  check('fifty states, DC and one row for outside the US', states.states.length, 52);
+  checkTrue('the five columns the prompt names, each with a source and an as-of', cols.every(c => states.columns[c] && /^https?:/.test(states.columns[c].source) && /^\d{4}-\d{2}-\d{2}$/.test(states.columns[c].asOf)));
+  checkTrue('every state cell carries a value, a source and an as-of', states.states.filter(r => r.code !== 'OTHER').every(r => cols.every(c => r[c] && r[c].value !== undefined && r[c].source && r[c].asOf)));
+  checkTrue('income tax type is none, flat or brackets, pointing at the one brackets file', states.states.filter(r => r.code !== 'OTHER').every(r => ['none', 'flat', 'brackets'].indexOf(r.incomeTax.value.type) > -1 && r.incomeTax.value.bracketsFile === 'state_brackets_2026.json'));
+  checkTrue('a recalled cell says verify', states.states.filter(r => r.code !== 'OTHER').every(r => cols.every(c => r[c].confidence !== 'recalled' || r[c].verify === true)));
+  checkTrue('a childcare cell older than eighteen months is marked stale', states.states.filter(r => r.code !== 'OTHER').every(r => r.childcareInfantCenterMonthlyCents.stale === true));
+  const T = { states: states };
+  const nc = Schema.stateCell(T, 'NC', 'propertyTaxEffectiveRate');
+  check('stateCell reads a cell by code and column', nc && nc.value, 0.0063);
+  check('...with its as-of', nc && nc.asOf, '2025-08-01');
+  check('...and the row\'s name', nc && nc.name, 'North Carolina');
+  check('lower case works', Schema.stateCell(T, 'nc', 'costOfLivingIndex').value, 96);
+  check('outside the US: no cell', Schema.stateCell(T, 'OTHER', 'costOfLivingIndex'), null);
+  check('no state: no cell', Schema.stateCell(T, null, 'costOfLivingIndex'), null);
+  check('no table: no cell', Schema.stateCell({}, 'NC', 'costOfLivingIndex'), null);
+  const view = Schema.statesByCode(T);
+  check('the code-keyed view flattens cells to values', view.NC.propertyTaxEffectiveRate, 0.0063);
+  check('...and carries the index base', view.national.costOfLivingIndex, 100);
+  checkTrue('the childcare column agrees with the childcare table it came from', (function () { const c = require(path.join(ROOT, 'data/childcare_by_state.json')); return Object.keys(c.states).every(code => Schema.stateCell(T, code, 'childcareInfantCenterMonthlyCents').value === c.states[code].monthlyCents); })());
+
+  /* Readers. */
+  const Housing = require(path.join(ROOT, 'engines/housing.js'));
+  const HT = Object.assign({}, TABLES, { housingConventions: require(path.join(ROOT, 'data/housing_conventions.json')), priceToRent: require(path.join(ROOT, 'data/price_to_rent.json')), mortgageRates: require(path.join(ROOT, 'data/mortgage_rates.json')), states: states });
+  const plan = { priceCents: 40000000, downPct: 0.2, rate: 0.065, rentMonthlyCents: 150000 };
+  const inNC = Housing.compare(Object.assign({}, Demo.build(), { housing: plan }), HT);
+  check('housing in NC: property tax at the state\'s 0.63%', Money.isOk(inNC) && inNC.propertyTaxRate, 0.0063);
+  check('...a twelfth of it a month on a $400,000 place', Money.isOk(inNC) && inNC.taxCents, Math.round(40000000 * 0.0063 / 12));
+  check('...and says it is the state figure', Money.isOk(inNC) && inNC.propertyTaxSource + '/' + inNC.propertyTaxState, 'state/NC');
+  const noState = Housing.compare(Object.assign({}, Demo.build(), { state: null, housing: plan }), HT);
+  check('no state: the national convention, and says so', Money.isOk(noState) && noState.propertyTaxSource, 'national');
+  check('...at the convention\'s rate', Money.isOk(noState) && noState.propertyTaxRate, HT.housingConventions.propertyTaxRate);
+  const Kids = require(path.join(ROOT, 'engines/kids.js'));
+  const care = require(path.join(ROOT, 'data/childcare_by_state.json'));
+  check('kids: childcare in NC from the state table', Kids.childcareFor(care, 'NC', states).cents, 100000);
+  check('...marked state', Kids.childcareFor(care, 'NC', states).source, 'state');
+  check('...with no state table, the old path still answers', Kids.childcareFor(care, 'NC').cents, 100000);
+  check('...outside the US: the national figure stands in', Kids.childcareFor(care, 'OTHER', states).source, 'national');
+  const Blocks = require(path.join(ROOT, 'shared/blocks.js'));
+  const geo = Blocks.build('geo', { state: 'TX', remote: true, when: '2027-09' }, Demo.build()).value;
+  check('the move block reads the index from the state table: TX 93 over NC 96', geo.lines[1].delta, Math.round((93 / 96 - 1) * 10000) / 10000);
+  const home = Blocks.build('home', { price: 40000000, down: 8000000, when: '2028-04', state: 'IL' }, Demo.build()).value;
+  check('the home block reads Illinois\'s 1.95% from the state table', home.lines.filter(l => l.id === 'propertyTax')[0].delta, Math.round(40000000 * 0.0195 / 12));
+  check('...marked state', home.lines.filter(l => l.id === 'propertyTax')[0].source, 'state');
+  checkTrue('neither block keeps a private copy of a state number', !('colIndexByState' in require(path.join(ROOT, 'data/blocks/geo.json'))) && !('propertyTaxByState' in require(path.join(ROOT, 'data/blocks/home.json'))));
+
+  /* ZIP: optional, five digits, Start Here's. */
+  check('a ZIP is kept when it is five digits', Schema.createHousehold({ zip: '27601' }).zip, '27601');
+  check('...and dropped when it is not', Schema.createHousehold({ zip: '2760' }).zip, null);
+  check('...null by default', Schema.createHousehold({}).zip, null);
+  const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
+  checkTrue('Start Here asks the ZIP in Fine-tune, optional', start.indexOf('data-ctl="zip"') > -1 && start.indexOf('ZIP, if you like') > -1);
+  checkTrue('...and writes it through the spine', /zip: function \(v\) \{[^}]*Spine\.set\('zip'/.test(start));
+  checkTrue('the state is asked in the first card, beside the birth date', /select\('state', 'State'/.test(start));
+  const housingRoom = fs.readFileSync(path.join(ROOT, 'rooms/housing.html'), 'utf8');
+  checkTrue('Housing names the state\'s rate and its source', housingRoom.indexOf("Schema.stateCell(T, h.state, 'propertyTaxEffectiveRate')") > -1);
+  const carRoom = fs.readFileSync(path.join(ROOT, 'rooms/car.html'), 'utf8');
+  checkTrue('What A Car Costs names the state\'s insurance average', carRoom.indexOf("'autoInsuranceFullCoverageAnnualCents'") > -1);
   Spine.reset();
 })();
 

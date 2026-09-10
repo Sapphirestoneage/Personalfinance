@@ -90,7 +90,8 @@
 
   var FIELDS = {
     'household.filingStatus':                    { class: 'raw',        unit: 'enum',    values: ['single', 'married_joint', 'married_separate', 'head_of_household'] },
-    'household.state':                           { class: 'raw',        unit: 'usps',    note: '2-letter state code' },
+    'household.state':                           { class: 'raw',        unit: 'usps',    note: '2-letter state code; keys every column of data/states.json (Schema.stateCell). 15.6, D-181' },
+    'household.zip':                             { class: 'raw',        unit: 'text',    note: 'optional five-digit ZIP, asked in Fine-tune; stored for a finer-than-state table, read by nothing yet. 15.6, D-181' },
     'household.capturingFullMatch':              { class: 'raw',        unit: 'bool',    note: 'null = not answered; needed by FOO step 2. DECISIONS.md D-008' },
     'household.dependents':                      { class: 'raw',        unit: 'list',    note: 'null = not asked; [] = nobody; else [{ age }]. Nobody: term life is not a gap. D-092, D-094' },
     'household.community.daySchool':             { class: 'raw',        unit: 'bool',    note: 'a day school in the picture; asked only when there are dependents. D-094' },
@@ -1147,6 +1148,40 @@
   function centsOrNull(v) { return v === undefined ? null : v; }
   function fatLine(fields) { var f = fields || {}; return { monthlyCents: centsOrNull(f.monthlyCents) }; }
 
+  /* ---- 15.6: the state table (D-181) ---------------------------------------
+     data/states.json carries one row a state and a sourced cell a column:
+     { value, asOf, source, confidence, verify?, stale? }. Every reader
+     goes through stateCell so the row shape lives in one place. `OTHER`
+     (outside the US) carries no cells and reads as null everywhere. */
+  function stateRow(tables, code) {
+    var t = tables && tables.states;
+    if (!t || !Array.isArray(t.states) || !code) return null;
+    var c = String(code).toUpperCase();
+    for (var i = 0; i < t.states.length; i++) if (t.states[i].code === c) return t.states[i];
+    return null;
+  }
+  function stateCell(tables, code, column) {
+    var row = stateRow(tables, code);
+    var cell = row && row[column];
+    if (!cell || cell.value === undefined || cell.value === null) return null;
+    return { value: cell.value, asOf: cell.asOf || null, source: cell.source || null, confidence: cell.confidence || null, verify: cell.verify === true, stale: cell.stale === true, code: row.code, name: row.name };
+  }
+  /** Every state's cells as plain values, keyed by code, for the block
+      expansions' table lookups ({table: 'statesByCode', path: [code, column]}).
+      A view, never stored; `national` carries the index's base. */
+  function statesByCode(tables) {
+    var t = tables && tables.states;
+    var out = { national: { costOfLivingIndex: 100 } };
+    if (!t || !Array.isArray(t.states)) return out;
+    var cols = Object.keys(t.columns || {});
+    t.states.forEach(function (r) {
+      var flat = {};
+      cols.forEach(function (c) { if (r[c] && r[c].value !== undefined && r[c].value !== null) flat[c] = r[c].value; });
+      out[r.code] = flat;
+    });
+    return out;
+  }
+
   /* ---- 15.5: cadence, and the named yearly lines (D-181) ------------------
      Every line has a cadence: monthly, annual or oneoff. For the four
      buckets and the log it is READ off what is already stored (a monthly
@@ -1734,6 +1769,9 @@
       people: f.people || [],
       filingStatus: f.filingStatus === undefined ? null : f.filingStatus,
       state: f.state === undefined ? null : f.state,
+      /* 15.6: optional ZIP, five digits, asked in Fine-tune. Nothing reads
+         it yet beyond the record; a finer-than-state table would. D-181. */
+      zip: typeof f.zip === 'string' && /^\d{5}$/.test(f.zip) ? f.zip : null,
       /* Raw, and nullable in three states: true / false / not answered.
          Needed by FOO step 2, which Tier 0's ten inputs cannot otherwise
          judge. See DECISIONS.md D-008. Listed here rather than only being
@@ -2562,6 +2600,9 @@
     ORIENTATIONS: ORIENTATIONS,
     INCOME_TYPES: INCOME_TYPES,
     CADENCES: CADENCES,
+    stateRow: stateRow,
+    stateCell: stateCell,
+    statesByCode: statesByCode,
     ANNUAL_BUCKETS: ANNUAL_BUCKETS,
     createAnnualLine: createAnnualLine,
     cadenceOf: cadenceOf,

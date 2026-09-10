@@ -145,6 +145,11 @@
       read: function (h) { return h.state ? Money.ok(h.state) : Money.incomplete('Not set yet.', ['state']); },
       format: function (v) { return v; }
     },
+    zip: {
+      label: 'ZIP', owner: 'start', anchor: 'q-about',
+      read: function (h) { return h.zip ? Money.ok(h.zip) : Money.incomplete('Not set: optional.', ['zip']); },
+      format: function (v) { return v; }
+    },
     filingStatus: {
       label: 'Filing status', owner: 'start', anchor: 'q-about',
       read: function (h) {

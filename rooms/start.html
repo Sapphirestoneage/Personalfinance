@@ -247,7 +247,7 @@
   var CTL_FIELD = { month: 'dob', year: 'dob', state: 'state', filing: 'filingStatus', pay: 'grossAnnualIncome', pay2: 'grossAnnualIncome', secondJob: 'grossAnnualIncome',
     partnerPay: 'grossAnnualIncome', spending: 'monthlyExpenses', cash: 'cashSavings', deductible: 'highestDeductible', investments: 'investments',
     matchPercent: 'employerMatch', matchCap: 'employerMatch', contribution: 'contributionPercent', debtBalance: 'totalDebt', debtMinimum: 'monthlyDebtPayments',
-    weekly: 'unemployment', weeks: 'unemployment', severance: 'unemployment', lastPay: 'unemployment', dependents: 'dependents' };
+    weekly: 'unemployment', weeks: 'unemployment', severance: 'unemployment', lastPay: 'unemployment', dependents: 'dependents', zip: 'zip' };
 
   function el(id) { return document.getElementById(id); }
   function esc(s) {
@@ -367,6 +367,8 @@
     return choices('dependents', [['0', 'Nobody'], ['1', 'One person'], ['2', 'Two'], ['3', 'Three or more']], 'Anyone depending on your income?')
       + '<label class="slaf-field" data-ages hidden style="margin-top:var(--space-2)"><span class="slaf-label">Their ages' + badge('ages') + '</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" data-ctl="ages" placeholder="e.g. 4, 9" aria-label="Ages of dependents"/></span></label>'
       + '<p class="field-note">Term life, childcare and the like only come up when someone does.</p>'
+      + '<label class="slaf-field" style="margin-top:var(--space-2)"><span class="slaf-label">ZIP, if you like</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" maxlength="5" data-ctl="zip" placeholder="e.g. 27601" aria-label="ZIP code"/></span></label>'
+      + '<p class="field-note">Your state sets the tax, childcare, property tax and insurance figures; a ZIP is kept for when a finer table exists.</p>'
       + '<span class="sub-label">A second job, or other pay</span>'
       + '<div class="row">' + moneyInput('secondJob', 'It pays', 'e.g. 8,000', 'A second job or other pay') + select('secondBasis', 'How often', basisOptions(), 'How often the second job pays') + '</div>'
       + '<span class="sub-label">Anything big and one-off coming?</span>'
@@ -488,7 +490,8 @@
     severance: function (v) { writeUnemployment({ severanceCents: Money.parseMoney(v) }); },
     lastPay: function (v) { writeUnemployment({ lastGrossAnnualCents: Money.parseMoney(v) }); },
     dependents: function (v) { writeDependents(Number(v), null); },
-    ages: function (v) { writeDependents(null, v); }
+    ages: function (v) { writeDependents(null, v); },
+    zip: function (v) { var z = String(v || '').replace(/\D/g, '').slice(0, 5); Spine.set('zip', z.length === 5 ? z : null, 'ZIP'); }
   };
   function pct(v) { var raw = String(v).replace(/[^0-9.]/g, ''); if (raw === '') return null; var n = Number(raw); return isNaN(n) ? null : n; }
   function dobFrom(m, y) { if (!m || !y) return null; return y + '-' + (m.length === 1 ? '0' + m : m) + '-01'; }
@@ -922,6 +925,7 @@
     press('dependents', deps === null ? null : String(Math.min(deps.length, 3)), '0');
     document.querySelector('[data-ages]').hidden = !(deps && deps.length);
     setText('ages', deps ? deps.map(function (d) { return d.age; }).filter(function (a) { return Money.isEntered(a); }).join(', ') : '');
+    setText('zip', x.zip || '');
     var second = sourceById(x, SECOND_JOB_ID);
     setSelect('secondBasis', second && second.frequency ? second.frequency : 'annual');
     setMoney('secondJob', second && Money.isEntered(second.rateCents) ? second.rateCents : (second ? second.grossAnnualIncomeCents : null));

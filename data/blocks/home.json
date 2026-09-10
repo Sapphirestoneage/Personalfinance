@@ -7,7 +7,7 @@
   "source": "A purchase as the lines it adds: the down payment and closing costs leave cash, the mortgage arrives as a debt with its level payment, the place arrives as property, the rent line stops, and property tax, insurance and upkeep join the month. Rates from data/housing_conventions.json and data/mortgage_rates.json; property tax by state from the Tax Foundation's effective rates on owner-occupied housing (2023), rounded.",
   "confidence": "convention",
   "confidenceNote": "The state property-tax rates are effective averages and a county can sit at double or half of them; the national rate is the fallback. The mortgage rate is the table's 30-year figure on its asOf date.",
-  "note": "Read by shared/blocks.js (D-178). `questions` are the block's four answers at most. Each `lines[]` entry is a DAITE delta: `path` must resolve under debt / assets / income / taxes / expenses; `delta` is an expression in the shared language (shared/expr.js): @answer, $household figure, {table} lookups. `when` (optional) is a condition that must hold for the line to exist. `source` is national unless `stateSource` resolves to a value for the answer's state, then state; `user` when the figure is the household's own. No expansion logic lives in a room.",
+  "note": "Read by shared/blocks.js (D-178). `questions` are the block's four answers at most. Each `lines[]` entry is a DAITE delta: `path` must resolve under debt / assets / income / taxes / expenses; `delta` is an expression in the shared language (shared/expr.js): @answer, $household figure, {table} lookups. `when` (optional) is a condition that must hold for the line to exist. `source` is national unless `stateSource` resolves to a value for the answer's state, then state; `user` when the figure is the household's own. No expansion logic lives in a room. 15.6 (D-181): the state figures come from data/states.json through the statesByCode view; the block keeps no copy.",
   "questions": [
     {
       "id": "price",
@@ -30,59 +30,6 @@
       "kind": "state"
     }
   ],
-  "propertyTaxByState": {
-    "NJ": 0.0223,
-    "IL": 0.0208,
-    "NH": 0.0193,
-    "VT": 0.0183,
-    "CT": 0.0179,
-    "TX": 0.0168,
-    "NE": 0.0163,
-    "WI": 0.0161,
-    "OH": 0.0159,
-    "IA": 0.0152,
-    "PA": 0.0149,
-    "NY": 0.014,
-    "RI": 0.014,
-    "MI": 0.0138,
-    "KS": 0.0134,
-    "ME": 0.0124,
-    "SD": 0.0117,
-    "MA": 0.0114,
-    "MN": 0.0111,
-    "AK": 0.0107,
-    "MD": 0.0105,
-    "MO": 0.0098,
-    "ND": 0.0098,
-    "OR": 0.0093,
-    "GA": 0.0092,
-    "OK": 0.0089,
-    "WA": 0.0087,
-    "VA": 0.0087,
-    "FL": 0.0086,
-    "IN": 0.0084,
-    "KY": 0.0083,
-    "NC": 0.008,
-    "MS": 0.0075,
-    "CA": 0.0075,
-    "MT": 0.0074,
-    "NM": 0.0067,
-    "TN": 0.0067,
-    "ID": 0.0063,
-    "AR": 0.0062,
-    "AZ": 0.0062,
-    "DE": 0.0061,
-    "UT": 0.0057,
-    "WV": 0.0057,
-    "SC": 0.0057,
-    "DC": 0.0057,
-    "LA": 0.0056,
-    "WY": 0.0056,
-    "NV": 0.0055,
-    "CO": 0.0055,
-    "AL": 0.004,
-    "HI": 0.0032
-  },
   "lines": [
     {
       "id": "down",
@@ -251,10 +198,10 @@
                 {
                   "coalesce": [
                     {
-                      "table": "blockHome",
+                      "table": "statesByCode",
                       "path": [
-                        "propertyTaxByState",
-                        "@state"
+                        "@state",
+                        "propertyTaxEffectiveRate"
                       ]
                     },
                     {
@@ -275,10 +222,10 @@
       "confidence": "convention",
       "note": "The state's effective rate on the price, a twelfth a month; the national rate when the state is not set.",
       "stateSource": {
-        "table": "blockHome",
+        "table": "statesByCode",
         "path": [
-          "propertyTaxByState",
-          "@state"
+          "@state",
+          "propertyTaxEffectiveRate"
         ]
       }
     },

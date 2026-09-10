@@ -287,7 +287,12 @@
       var ptrBands = ptr.bands || {};
       var pct = function (v) { return Money.formatRate(v, { decimals: 1 }); };
       return [
-        { label: 'Property tax', value: pct(c.propertyTaxRate) + ' of price a year', source: 'the US average effective rate; by state it runs from under 0.3% to over 2% (' + src + ')' },
+        (function () {
+          var st = Schema.stateCell(T, h.state, 'propertyTaxEffectiveRate');
+          return st
+            ? { label: 'Property tax', value: pct(st.value) + ' of price a year in ' + st.name, source: 'the state\u2019s effective rate on owner-occupied housing, data/states.json as of ' + st.asOf + ' (' + st.source + '; ' + (st.verify ? 'recalled, to verify' : st.confidence) + ')' }
+            : { label: 'Property tax', value: pct(c.propertyTaxRate) + ' of price a year', source: 'the US average effective rate; by state it runs from under 0.3% to over 2% (' + src + '). Set your state in Start Here for the state rate.' };
+        })(),
         { label: 'Insurance', value: pct(c.insuranceRate) + ' of price a year', source: 'a national rule of thumb (' + src + ')' },
         { label: 'Maintenance', value: pct(c.maintenanceRate) + ' of price a year', source: 'the "1% rule" (' + src + ')' },
         { label: 'Closing costs', value: pct(c.closingCostRate) + ' of price', source: 'a national rule of thumb (' + src + ')' },

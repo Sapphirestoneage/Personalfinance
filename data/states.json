@@ -1,215 +1,3476 @@
 {
   "id": "states",
-  "version": "1.0",
-  "asOf": "2026-01-01",
-  "source": "USPS two-letter state abbreviations, the fifty states plus the District of Columbia.",
-  "confidence": "sourced",
-  "confidenceNote": "Names and codes only. Nothing here is a rate or a threshold; a later table keys state tax and cost-of-living by these codes.",
-  "note": "Rendered as a select in Start Here so a state is picked, not typed (BRIEF \u00a72.2). `other` is for anyone outside the fifty-one; rooms that key on state treat it as unknown.",
+  "version": "2.0",
+  "asOf": "2026-09-10",
+  "source": "USPS two-letter codes for the fifty states and DC; seven data columns per state, each cell carrying its own source and asOf (see `columns`). Lane 2, section 3 (L-3).",
+  "confidence": "unverified",
+  "confidenceNote": "Most cells are recalled, so the file as a whole is unverified. Each cell says: `sourced` when read from a search result quoting the named primary source, `recalled` (with `verify: true`) when carried from memory of the named source, rounded. The session that wrote this could search but not open pages, so most state cells are recalled. The refresh calendar (docs/data-refresh-calendar.md) says which month to check each column and against what.",
+  "note": "Rendered as a select in Start Here (code and name only). Rooms that key on state read a column cell as `states[i].<column>.value`; `other` is for anyone outside the fifty-one and carries no columns.",
+  "refresh": {
+    "month": "February",
+    "against": "Tax Foundation 2026 state rates (incomeTax), Tax Foundation property tax data (propertyTaxEffectiveRate), Child Care Aware Price of Care (childcare), Bankrate auto study (autoInsurance), MERIC annual index (costOfLivingIndex), DOL Significant Provisions January edition (ui*), KFF benchmark premiums for the new plan year (aca*)."
+  },
+  "columns": {
+    "incomeTax": {
+      "label": "State individual income tax",
+      "unit": "type and top marginal rate as a decimal fraction",
+      "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+      "asOf": "2026-02-11",
+      "note": "The schedule itself (flat rate or brackets, single filer) is in data/state_brackets_2026.json, the one copy engines/tax.js reads. DECIDE: that file is transcribed from the 2025 edition and says so; the 2026 rate changes this column names (IN, KY, MS, MT, NE, NC, OH, OK) are not yet in it."
+    },
+    "propertyTaxEffectiveRate": {
+      "label": "Effective property tax rate on owner-occupied housing",
+      "unit": "share of home value a year",
+      "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+      "asOf": "2025-08-01",
+      "note": "Tax Foundation 2025 edition, from the Census ACS 2023 five-year estimates (the newest at that date)."
+    },
+    "childcareInfantCenterMonthlyCents": {
+      "label": "Median monthly price of centre-based infant care",
+      "unit": "cents a month",
+      "source": "https://www.childcareaware.org/price-of-care/",
+      "asOf": "2023-12-31",
+      "stale": true,
+      "note": "Copied from data/childcare_by_state.json (Child Care Aware, Price of Care 2023 edition), the copy engines/kids.js reads; the two are asserted equal by tests/data.test.js. STALE: the 2024 edition (published 2025) exists and this session could not open it, so the column is older than 18 months and says so. DECIDE: refresh both copies from the 2024 report, and retire that file in favour of this column or keep both in sync."
+    },
+    "autoInsuranceFullCoverageAnnualCents": {
+      "label": "Average full-coverage auto insurance premium",
+      "unit": "cents a year",
+      "source": "https://www.bankrate.com/insurance/car/states/",
+      "asOf": "2025-06-01",
+      "note": "Bankrate 2025 state study, rounded to $100."
+    },
+    "costOfLivingIndex": {
+      "label": "Cost of living index",
+      "unit": "US average = 100",
+      "source": "https://meric.mo.gov/data/cost-living-data-series",
+      "asOf": "2025-12-31",
+      "note": "MERIC (Missouri Economic Research and Information Center) 2025 annual average."
+    },
+    "uiWeeklyMaxCents": {
+      "label": "State unemployment insurance maximum weekly benefit",
+      "unit": "cents a week, before dependants allowances",
+      "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+      "asOf": "2025-07-01",
+      "note": "DOL Significant Provisions of State UI Laws, July 2025 edition, with the later 2025 increases reported since (MA October, NY October). Benefit formulas differ; this is the cap."
+    },
+    "uiMaxWeeks": {
+      "label": "Maximum weeks of regular unemployment benefits",
+      "unit": "weeks",
+      "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+      "asOf": "2025-07-01",
+      "note": "Variable-duration states carry the current low-unemployment maximum and a note with the range."
+    },
+    "acaBenchmarkSilver40MonthlyCents": {
+      "label": "ACA benchmark silver premium for a 40-year-old",
+      "unit": "cents a month, before any premium tax credit",
+      "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+      "asOf": "2026-01-01",
+      "note": "KFF State Health Facts, 2026 plan year, county figures weighted by plan selections. National average $625."
+    }
+  },
   "states": [
     {
       "code": "AL",
-      "name": "Alabama"
+      "name": "Alabama",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.05,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0036,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 75000,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 215000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 88,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 27500,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Variable 14 to 20 weeks by state unemployment rate"
+      },
+      "uiMaxWeeks": {
+        "value": 14,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Variable 14 to 20 weeks by state unemployment rate"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 62000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "AK",
-      "name": "Alaska"
+      "name": "Alaska",
+      "incomeTax": {
+        "value": {
+          "type": "none",
+          "topRate": 0,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0107,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 116667,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 240000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 125,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 37000,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 105000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "AZ",
-      "name": "Arizona"
+      "name": "Arizona",
+      "incomeTax": {
+        "value": {
+          "type": "flat",
+          "topRate": 0.025,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0045,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 108333,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 250000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 111,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 32000,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "24 weeks while the state rate is under 5%, else 26"
+      },
+      "uiMaxWeeks": {
+        "value": 24,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "24 weeks while the state rate is under 5%, else 26"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 56000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "AR",
-      "name": "Arkansas"
+      "name": "Arkansas",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.039,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0053,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 66667,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 230000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 89,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 45100,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Cut to 12 weeks from 2024"
+      },
+      "uiMaxWeeks": {
+        "value": 12,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Cut to 12 weeks from 2024"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 55000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "CA",
-      "name": "California"
+      "name": "California",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.133,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Top rate is 12.3% plus the 1% mental health services tax above $1 million."
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0068,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 158333,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 270000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 145,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 45000,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 59000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "CO",
-      "name": "Colorado"
+      "name": "Colorado",
+      "incomeTax": {
+        "value": {
+          "type": "flat",
+          "topRate": 0.044,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0045,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 150000,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 290000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 105,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 81200,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 56000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "CT",
-      "name": "Connecticut"
+      "name": "Connecticut",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.0699,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0178,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 150000,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 210000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 113,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 78000,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 72000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "DE",
-      "name": "Delaware"
+      "name": "Delaware",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.066,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0048,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 108333,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 260000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 101,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 45000,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 61000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "DC",
-      "name": "District of Columbia"
+      "name": "District of Columbia",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.1075,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0055,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 208333,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 270000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 141,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 44400,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 56000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "FL",
-      "name": "Florida"
+      "name": "Florida",
+      "incomeTax": {
+        "value": {
+          "type": "none",
+          "topRate": 0,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0071,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 91667,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 390000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 103,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 27500,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Variable 12 to 23 weeks by state unemployment rate"
+      },
+      "uiMaxWeeks": {
+        "value": 12,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Variable 12 to 23 weeks by state unemployment rate"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 62000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "GA",
-      "name": "Georgia"
+      "name": "Georgia",
+      "incomeTax": {
+        "value": {
+          "type": "flat",
+          "topRate": 0.0519,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0072,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 83333,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 270000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 91,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 36500,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Variable 14 to 26 weeks by state unemployment rate"
+      },
+      "uiMaxWeeks": {
+        "value": 14,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Variable 14 to 26 weeks by state unemployment rate"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 59000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "HI",
-      "name": "Hawaii"
+      "name": "Hawaii",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.11,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0027,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 133333,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 150000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 186,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 79600,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 59000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "ID",
-      "name": "Idaho"
+      "name": "Idaho",
+      "incomeTax": {
+        "value": {
+          "type": "flat",
+          "topRate": 0.053,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0047,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 79167,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 130000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 106,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 57300,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Variable 10 to 26 weeks by state unemployment rate"
+      },
+      "uiMaxWeeks": {
+        "value": 20,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Variable 10 to 26 weeks by state unemployment rate"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 54000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "IL",
-      "name": "Illinois"
+      "name": "Illinois",
+      "incomeTax": {
+        "value": {
+          "type": "flat",
+          "topRate": 0.0495,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0195,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 125000,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 220000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 92,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 60500,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Up to about $826 with dependants"
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Up to about $826 with dependants"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 62000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "IN",
-      "name": "Indiana"
+      "name": "Indiana",
+      "incomeTax": {
+        "value": {
+          "type": "flat",
+          "topRate": 0.0295,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0071,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 91667,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 170000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 91,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 39000,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 48000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "IA",
-      "name": "Iowa"
+      "name": "Iowa",
+      "incomeTax": {
+        "value": {
+          "type": "flat",
+          "topRate": 0.038,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.014,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 95833,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 160000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 90,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 65100,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Cut to 16 weeks from 2022"
+      },
+      "uiMaxWeeks": {
+        "value": 16,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Cut to 16 weeks from 2022"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 64000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "KS",
-      "name": "Kansas"
+      "name": "Kansas",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.0558,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0126,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 100000,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 210000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 87,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 64000,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Variable 16 to 26 weeks by state unemployment rate"
+      },
+      "uiMaxWeeks": {
+        "value": 16,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Variable 16 to 26 weeks by state unemployment rate"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 64000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "KY",
-      "name": "Kentucky"
+      "name": "Kentucky",
+      "incomeTax": {
+        "value": {
+          "type": "flat",
+          "topRate": 0.035,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0074,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 75000,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 260000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 93,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 66500,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Variable 12 to 24 weeks by state unemployment rate since 2023"
+      },
+      "uiMaxWeeks": {
+        "value": 12,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Variable 12 to 24 weeks by state unemployment rate since 2023"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 62000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "LA",
-      "name": "Louisiana"
+      "name": "Louisiana",
+      "incomeTax": {
+        "value": {
+          "type": "flat",
+          "topRate": 0.03,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0051,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 70833,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 340000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 91,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 27500,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Variable 12 to 20 weeks by state unemployment rate since 2025"
+      },
+      "uiMaxWeeks": {
+        "value": 12,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Variable 12 to 20 weeks by state unemployment rate since 2025"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 70000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "ME",
-      "name": "Maine"
+      "name": "Maine",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.0715,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0109,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 104167,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 120000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 112,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 64000,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 62000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "MD",
-      "name": "Maryland"
+      "name": "Maryland",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.0575,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0095,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 141667,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 290000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 116,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 43000,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 46000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "MA",
-      "name": "Massachusetts"
+      "name": "Massachusetts",
+      "incomeTax": {
+        "value": {
+          "type": "flat",
+          "topRate": 0.05,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Plus a 4% surtax on income over about $1 million (indexed)."
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0104,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 183333,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 190000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 146,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 110500,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "sourced",
+        "note": "Up to 30 weeks; 26 when a federal extension is on"
+      },
+      "uiMaxWeeks": {
+        "value": 30,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "sourced",
+        "note": "Up to 30 weeks; 26 when a federal extension is on"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 56000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "MI",
-      "name": "Michigan"
+      "name": "Michigan",
+      "incomeTax": {
+        "value": {
+          "type": "flat",
+          "topRate": 0.0425,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0124,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 100000,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 300000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 91,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 61400,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "sourced",
+        "note": "Raised from $362 and 20 weeks in 2025"
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Raised from $362 and 20 weeks in 2025"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 50000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "MN",
-      "name": "Minnesota"
+      "name": "Minnesota",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.0985,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.01,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 150000,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 220000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 95,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 91400,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 46000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "MS",
-      "name": "Mississippi"
+      "name": "Mississippi",
+      "incomeTax": {
+        "value": {
+          "type": "flat",
+          "topRate": 0.04,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0067,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 58333,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 190000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 87,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 23500,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 65000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "MO",
-      "name": "Missouri"
+      "name": "Missouri",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.047,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0088,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 91667,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 260000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 89,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 32000,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 20,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 64000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "MT",
-      "name": "Montana"
+      "name": "Montana",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.0565,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0069,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 91667,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 240000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 104,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 72800,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 28,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "sourced"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 64000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "NE",
-      "name": "Nebraska"
+      "name": "Nebraska",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.052,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0144,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 108333,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 200000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 93,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 54600,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 72000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "NV",
-      "name": "Nevada"
+      "name": "Nevada",
+      "incomeTax": {
+        "value": {
+          "type": "none",
+          "topRate": 0,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0044,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 108333,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 310000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 101,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 58300,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 56000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "NH",
-      "name": "New Hampshire"
+      "name": "New Hampshire",
+      "incomeTax": {
+        "value": {
+          "type": "none",
+          "topRate": 0,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "The interest and dividends tax ended 2025-01-01."
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0161,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 125000,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 150000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 113,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 42700,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 32500,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "sourced",
+        "note": "The lowest benchmark in 2026."
+      }
     },
     {
       "code": "NJ",
-      "name": "New Jersey"
+      "name": "New Jersey",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.1075,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0223,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 133333,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 260000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 114,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 87500,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 62000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "NM",
-      "name": "New Mexico"
+      "name": "New Mexico",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.059,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0067,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 91667,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 220000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 94,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 65300,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 64000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "NY",
-      "name": "New York"
+      "name": "New York",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.109,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.014,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 158333,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 390000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 123,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 86900,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "sourced",
+        "note": "Raised from $504 in October 2025"
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Raised from $504 in October 2025"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 95000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "New York and Vermont community-rate: the premium does not vary by age, so the 40-year-old figure is the adult figure."
+      }
     },
     {
       "code": "NC",
-      "name": "North Carolina"
+      "name": "North Carolina",
+      "incomeTax": {
+        "value": {
+          "type": "flat",
+          "topRate": 0.0399,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0063,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 100000,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 180000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 96,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 35000,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Variable 12 to 20 weeks by state unemployment rate"
+      },
+      "uiMaxWeeks": {
+        "value": 12,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "sourced",
+        "note": "Variable 12 to 20 weeks by state unemployment rate"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 62000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "ND",
-      "name": "North Dakota"
+      "name": "North Dakota",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.025,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0097,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 91667,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 160000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 92,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 74800,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 56000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "OH",
-      "name": "Ohio"
+      "name": "Ohio",
+      "incomeTax": {
+        "value": {
+          "type": "flat",
+          "topRate": 0.0275,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.013,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 95833,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 140000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 94,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 61900,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Up to about $836 with dependants"
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Up to about $836 with dependants"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 60000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "OK",
-      "name": "Oklahoma"
+      "name": "Oklahoma",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.0475,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0076,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 79167,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 260000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 86,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 56100,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 16,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 69000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "OR",
-      "name": "Oregon"
+      "name": "Oregon",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.099,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0077,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 133333,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 200000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 115,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 83600,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 62000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "PA",
-      "name": "Pennsylvania"
+      "name": "Pennsylvania",
+      "incomeTax": {
+        "value": {
+          "type": "flat",
+          "topRate": 0.0307,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0126,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 112500,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 230000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 96,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 60500,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 62000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "RI",
-      "name": "Rhode Island"
+      "name": "Rhode Island",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.0599,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0123,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 116667,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 260000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 112,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 74500,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "sourced",
+        "note": "From July 2025"
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "From July 2025"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 56000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "SC",
-      "name": "South Carolina"
+      "name": "South Carolina",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.062,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0046,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 75000,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 220000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 95,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 32600,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 20,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 65000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "SD",
-      "name": "South Dakota"
+      "name": "South Dakota",
+      "incomeTax": {
+        "value": {
+          "type": "none",
+          "topRate": 0,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0101,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 75000,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 210000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 93,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 54600,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 74000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "TN",
-      "name": "Tennessee"
+      "name": "Tennessee",
+      "incomeTax": {
+        "value": {
+          "type": "none",
+          "topRate": 0,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "No wage tax; the Hall tax on interest and dividends ended in 2021."
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0048,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 79167,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 190000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 90,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 27500,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Variable 12 to 20 weeks by state unemployment rate since 2023"
+      },
+      "uiMaxWeeks": {
+        "value": 12,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Variable 12 to 20 weeks by state unemployment rate since 2023"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 62000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "TX",
-      "name": "Texas"
+      "name": "Texas",
+      "incomeTax": {
+        "value": {
+          "type": "none",
+          "topRate": 0,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0147,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 91667,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 270000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 93,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 59100,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 58000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "UT",
-      "name": "Utah"
+      "name": "Utah",
+      "incomeTax": {
+        "value": {
+          "type": "flat",
+          "topRate": 0.045,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0047,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 95833,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 220000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 104,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 77700,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 56000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "VT",
-      "name": "Vermont"
+      "name": "Vermont",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.0875,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0156,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 116667,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 140000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 115,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 74800,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 127700,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "sourced",
+        "note": "Community-rated; the highest benchmark in 2026."
+      }
     },
     {
       "code": "VA",
-      "name": "Virginia"
+      "name": "Virginia",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.0575,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0072,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 133333,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 190000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 101,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 37800,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Variable 12 to 26 weeks by state unemployment rate"
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "Variable 12 to 26 weeks by state unemployment rate"
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 48000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "WA",
-      "name": "Washington"
+      "name": "Washington",
+      "incomeTax": {
+        "value": {
+          "type": "none",
+          "topRate": 0,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true,
+        "note": "No tax on wages; a 7% tax on long-term capital gains above an indexed threshold (about $270,000) since 2022."
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0076,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 158333,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 190000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 116,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 107900,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "sourced"
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 56000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "WV",
-      "name": "West Virginia"
+      "name": "West Virginia",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.0482,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0049,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 79167,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 200000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 87,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 66200,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 110000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "WI",
-      "name": "Wisconsin"
+      "name": "Wisconsin",
+      "incomeTax": {
+        "value": {
+          "type": "brackets",
+          "topRate": 0.0765,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0138,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 112500,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 160000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 96,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 37000,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 68000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "WY",
-      "name": "Wyoming"
+      "name": "Wyoming",
+      "incomeTax": {
+        "value": {
+          "type": "none",
+          "topRate": 0,
+          "bracketsFile": "state_brackets_2026.json"
+        },
+        "asOf": "2026-02-11",
+        "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "propertyTaxEffectiveRate": {
+        "value": 0.0055,
+        "asOf": "2025-08-01",
+        "source": "https://taxfoundation.org/data/all/state/property-taxes-by-state-county/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "childcareInfantCenterMonthlyCents": {
+        "value": 91667,
+        "asOf": "2023-12-31",
+        "source": "https://www.childcareaware.org/price-of-care/",
+        "confidence": "recalled",
+        "verify": true,
+        "stale": true,
+        "note": "Older than 18 months: 2023 edition, see the column note. DECIDE: refresh from the 2024 report."
+      },
+      "autoInsuranceFullCoverageAnnualCents": {
+        "value": 170000,
+        "asOf": "2025-06-01",
+        "source": "https://www.bankrate.com/insurance/car/states/",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "costOfLivingIndex": {
+        "value": 96,
+        "asOf": "2025-12-31",
+        "source": "https://meric.mo.gov/data/cost-living-data-series",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiWeeklyMaxCents": {
+        "value": 59500,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "uiMaxWeeks": {
+        "value": 26,
+        "asOf": "2025-07-01",
+        "source": "https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf",
+        "confidence": "recalled",
+        "verify": true
+      },
+      "acaBenchmarkSilver40MonthlyCents": {
+        "value": 108000,
+        "asOf": "2026-01-01",
+        "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+        "confidence": "recalled",
+        "verify": true
+      }
     },
     {
       "code": "OTHER",

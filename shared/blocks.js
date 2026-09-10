@@ -40,7 +40,9 @@
   var FILES = { home: 'home', car: 'car', kid: 'kid', jobchange: 'jobchange', sabbatical: 'sabbatical', geo: 'geo', hustle: 'hustle', inheritance: 'inheritance', marriage: 'marriage' };
   var TABLES = null;
 
-  function use(tables) { TABLES = tables || TABLES; return TABLES; }
+  /* 15.6: the state table as a code-keyed view for the expansions (D-181). */
+  function withStates(t) { if (t && t.states && !t.statesByCode) t.statesByCode = Schema.statesByCode(t); return t; }
+  function use(tables) { TABLES = withStates(tables) || TABLES; return TABLES; }
   function tables() {
     if (TABLES) return TABLES;
     if (typeof module === 'object' && module.exports) {
@@ -51,7 +53,7 @@
       Object.keys(R.TABLE_FILES).forEach(function (k) {
         try { out[k] = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', R.TABLE_FILES[k]), 'utf8')); } catch (e) { /* a dnd-side table */ }
       });
-      TABLES = out;
+      TABLES = withStates(out);
     }
     return TABLES || {};
   }

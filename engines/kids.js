@@ -87,9 +87,13 @@
 
   /** Childcare a month for this household's state, or the national figure
    *  when no state is entered. { cents, source, reason } */
-  function childcareFor(table, state) {
-    if (!table) return { cents: null, source: null, reason: 'The childcare table is not loaded.' };
+  function childcareFor(table, state, statesTable) {
+    /* 15.6: the state table is the one sourced copy; the childcare table
+       keeps the national figure to fall back on. D-181. */
     var code = state ? String(state).toUpperCase() : null;
+    var cell = statesTable ? Schema.stateCell({ states: statesTable }, code, 'childcareInfantCenterMonthlyCents') : null;
+    if (cell) return { cents: cell.value, source: 'state', reason: null, asOf: cell.asOf, from: cell.source };
+    if (!table) return { cents: null, source: null, reason: 'The childcare table is not loaded.' };
     if (code && table.states[code] && Money.isEntered(table.states[code].monthlyCents)) {
       return { cents: table.states[code].monthlyCents, source: 'state', reason: null };
     }
@@ -155,7 +159,7 @@
       c.band = { id: band.id, label: band.label, fromMonths: band.fromMonths, monthlyCents: band.monthlyCents };
       c.costCents = band.monthlyCents;
       if (age < CHILDCARE_UNTIL) {
-        var cc = childcareFor(care, state);
+        var cc = childcareFor(care, state, tables && tables.states);
         c.childcareApplies = true;
         c.childcareCents = cc.cents;
         c.childcareSource = cc.source;

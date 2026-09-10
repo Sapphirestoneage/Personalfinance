@@ -207,7 +207,7 @@
       var bandWords = bands.length ? money(bands[0].monthlyCents) + ' a month at 0 to 2, rising to ' + money(bands[bands.length - 1].monthlyCents) + ' at ' + bands[bands.length - 1].label : 'not loaded';
       var careWords = 'not loaded';
       if (care) {
-        var cc = Kids.childcareFor(care, h.state);
+        var cc = Kids.childcareFor(care, h.state, T.states);
         careWords = Money.isEntered(cc.cents) ? perMonth(cc.cents) + (cc.source === 'state' ? ' in ' + h.state : ', the national figure' + (h.state ? '' : ' (no state entered)')) : (cc.reason || 'not priced');
       }
       var rows = [
