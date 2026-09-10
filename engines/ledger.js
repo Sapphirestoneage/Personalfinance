@@ -298,15 +298,23 @@
         return;
       }
       var one = netOf(e, household, tables);
-      var count = occ.length;
       var g = occ.reduce(function (t, o) { return t + o.cents; }, 0);
       if (!Money.isOk(one)) { incomplete.push({ id: e.id, label: e.label, reason: one.reason }); rows.push({ entry: e, occurrences: occ, grossCents: g, netCents: null, taxCents: null, costsCents: null, reason: one.reason }); gross += g; return; }
-      /* Costs are per entry, not per landing: they come off once. */
-      var n = one.takeHomeCents * count - one.allCostsCents;
-      var t = one.taxCents * count;
-      rows.push({ entry: e, occurrences: occ, grossCents: g, netCents: n, taxCents: t, takeHomeCents: one.takeHomeCents * count, costsCents: one.allCostsCents, net: one });
-      gross += g; net += n; tax += t; costsTotal += one.allCostsCents; takeHome += one.takeHomeCents * count;
-      withheld += one.withheldCents * count; owed += one.owedCents * count;
+      /* The tax scales with what landed: netOf is one landing of
+         amountCents, so the month's share is g ÷ amountCents — the count
+         of landings when they are dated, the average's share when the
+         entry is undated and lands as its monthly average (D-198; before
+         this the average was the gross and one landing was the tax, so a
+         weekly entry with no date netted a fraction of itself). Costs are
+         per entry, not per landing: they come off once. */
+      var scale = one.grossCents > 0 ? g / one.grossCents : 0;
+      var t = Math.round(one.taxCents * scale);
+      var th = g - t;
+      var n = th - one.allCostsCents;
+      var w = Math.round(one.withheldCents * scale), o = Math.round(one.owedCents * scale);
+      rows.push({ entry: e, occurrences: occ, grossCents: g, netCents: n, taxCents: t, takeHomeCents: th, withheldCents: w, owedCents: o, costsCents: one.allCostsCents, net: one });
+      gross += g; net += n; tax += t; costsTotal += one.allCostsCents; takeHome += th;
+      withheld += w; owed += o;
     });
     /* takeHomeCents is gross less tax — what the budget's Income bucket
        counts; the costs of earning it are the expense side's business. */

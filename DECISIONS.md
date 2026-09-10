@@ -12458,6 +12458,64 @@ Expenses and render on FIRE Number; a phone walk typing the three and
 reading the FAT total, the lean number and everything else from a named
 subscription.
 
+## D-198 — Income: the year is columns, counts only what landed on a date, and folds
+
+**Why.** The owner, with their own benefit in the room: "these numbers
+do not seem to be based off reality — 869×4 is not 3766 or whatever."
+It was not. The benefit was $869 a week with no first date, and
+`Ledger.occurrences` draws an undated recurring entry as its yearly
+average spread over twelve months, $3,766, on the first of every month,
+past and future alike. So the picture said $26,612 had "come in" since
+March when nothing in the room could know that, and the month card
+netted an average instead of the four or five real landings. Dated, a
+weekly entry lands on its real days: $3,476 in a four-Friday month,
+$4,345 in a five-Friday one. The same message asked for the year drawn
+vertically, to read as progress, and for the whole thing to fold.
+
+**Decision.**
+
+- **Only a dated landing counts as come in.** In the seven months up to
+  and including this one, the picture drops any entry with no first
+  date; ahead, an undated entry still shows as its average, faded like
+  everything ahead. The sentence says "has landed", never "has come
+  in", and when nothing is dated it says so: "Nothing here has a first
+  date yet, so the picture cannot say what has actually come in." A
+  nudge above the chart names each undated recurring entry, says that
+  a weekly amount is being averaged and would land on its real days if
+  dated, and *When did it start?* opens the entry scrolled to the date.
+  The engine is unchanged: Budget and Calendar still take the average
+  for an undated entry, which is the right guess for a bucket and the
+  wrong claim for a record.
+- **Columns.** `Charts.columns` joins `shared/charts.js`: twelve
+  stacked columns left to right, a dashed line between this month and
+  the next captioned *so far* and *ahead, assumed*, the ahead columns
+  at 42% opacity, a value on a column only where the total changes and
+  on this month, a title on every segment, one legend. The two
+  horizontal halves of D-195 go.
+- **The picture folds.** The card is a `<details>`, open by default,
+  whose closed face is the eyebrow and the sentence, so a folded
+  picture still says the one thing worth knowing.
+
+- **The month's tax scales with what landed.** Reading the owner's
+  numbers back found the engine bug behind them: `Ledger.month` took an
+  undated entry's monthly average as the gross but netted one landing
+  of `amountCents`, so $869 a week undated showed $3,766 gross, $73 of
+  tax, and a net a quarter of the gross. The tax, the withheld and the
+  owed now scale by gross ÷ amountCents, which is exactly the count of
+  landings when they are dated (nothing changes there) and the
+  average's share when they are not. The *How this was worked out* row
+  says "a monthly average of $869 a week — no first date, so not real
+  landings" in that case.
+
+Hand-checked: $869 weekly from Friday 6 March 2026 lands four times in
+March, April, June, July and September and five in May and August, and
+September's tax is four landings' worth; undated, the month is $3,766
+with the same rate on all of it, it is dropped from every past column
+and the sentence says nothing has a date.
+
+Gate for this commit: unit suite, the columns chart included; forms on
+the Income room; a phone walk with the undated benefit, tapping the
+nudge, dating it, and reading the columns change.
 ## D-199 — Expenses in three steps and one fold
 
 **Why.** The owner, on the FAT rework (D-197): "expenses is confusing.

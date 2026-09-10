@@ -67,10 +67,15 @@
      and what is only assumed; the assumed half is faded. */
   .pic-sum { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-loose); }
   .pic-sum b { color: var(--color-text); font-variant-numeric: tabular-nums; }
-  .pic-part { margin-top: var(--space-3); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
-  .pic-part small { text-transform: none; letter-spacing: 0; }
-  .pic-past .slaf-legend { display: none; }
-  .pic-ahead .slaf-bars .track i { opacity: .5; }
+  /* D-198: the picture folds; its closed face is the sentence. */
+  #picture.slaf-card { padding: 0; }
+  .pic-fold > summary { list-style: none; cursor: pointer; display: flex; gap: var(--space-3); align-items: flex-start; padding: var(--space-4); }
+  .pic-fold > summary::-webkit-details-marker { display: none; }
+  .pic-fold .pic-caret { flex: none; color: var(--color-text-faint); font-size: 12px; margin-top: 3px; transition: transform .15s; }
+  .pic-fold:not([open]) .pic-caret { transform: rotate(-90deg); }
+  .pic-fold > summary .pic-sum { display: block; margin-top: var(--space-1); }
+  .pic-body { padding: 0 var(--space-4) var(--space-4); }
+  .pic-body .pic-h:first-of-type { margin-top: 0; }
   .pic-nudge { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; justify-content: space-between; font-size: var(--text-sm); color: var(--color-text-muted); border-left: 3px solid var(--color-caution); background: rgba(232,184,75,.08); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: var(--space-2) var(--space-3); margin-top: var(--space-3); }
   .pic-nudge b { color: var(--color-text); }
   .return-chip { display: inline-block; margin-bottom: var(--space-3); font-size: var(--text-sm); color: var(--color-accent-hover); border: 1px dashed var(--color-border-active); border-radius: var(--radius-pill); padding: 4px var(--space-3); text-decoration: none; }
@@ -142,14 +147,15 @@
   </section>
 
   <section class="slaf-card card-gap" id="picture" hidden>
-    <span class="slaf-eyebrow">The picture</span>
-    <h3 class="pic-h">A year of it, month by month <small>What has come in, then what is expected if nothing changes: gross, by the kind of money. An entry with a last date stops there.</small></h3>
-    <p class="pic-sum" id="pic-sum"></p>
+    <details class="pic-fold" id="pic-fold" open>
+      <summary>
+        <span class="pic-caret" aria-hidden="true">▾</span>
+        <span><span class="slaf-eyebrow">The picture</span><span class="pic-sum" id="pic-sum"></span></span>
+      </summary>
+      <div class="pic-body">
     <div id="pic-nudges"></div>
-    <div class="pic-part" id="pic-past-cap">So far</div>
-    <div class="pic-past" id="pic-past"></div>
-    <div class="pic-part" id="pic-ahead-cap">Ahead <small>— assumed, not yet received</small></div>
-    <div class="pic-ahead" id="pic-ahead"></div>
+    <h3 class="pic-h">A year of it, month by month <small>What has actually landed, on its dates, then what is assumed ahead if nothing changes. Gross, by the kind of money. An entry with a last date stops there.</small></h3>
+    <div id="pic-months"></div>
     <h3 class="pic-h">Where this month's gross goes <small>What you keep, what was taken off before it arrived, what is owed at tax time, and what it cost to earn.</small></h3>
     <div id="pic-goes"></div>
     <h3 class="pic-h">Source by source <small>Each entry's share of the same twelve months.</small></h3>
@@ -158,6 +164,8 @@
       <h3 class="pic-h">Yours and theirs <small>The same twelve months, by who it comes to. Set whose an entry is under More when you add it.</small></h3>
       <div id="pic-people"></div>
     </div>
+      </div>
+    </details>
   </section>
 
   <section class="slaf-card card-gap" id="sources">
@@ -438,13 +446,14 @@
   });
   el('btn-cancel').addEventListener('click', function () { fillForm(null); say('form-say', ''); closeForm(); render(); });
   el('pic-nudges').addEventListener('click', function (evt) {
-    var b = evt.target.closest('[data-ends]');
+    var b = evt.target.closest('[data-ends],[data-start]');
     if (!b) return;
-    fillForm(Ledger.byId(Spine.getProfile(), b.getAttribute('data-ends')));
-    el('form-more').open = true;
+    var ends = b.hasAttribute('data-ends');
+    fillForm(Ledger.byId(Spine.getProfile(), b.getAttribute(ends ? 'data-ends' : 'data-start')));
+    if (ends) el('form-more').open = true;
     openForm(false);
     render();
-    el('f-ends-row').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el(ends ? 'f-ends-row' : 'f-date').scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
 
   /* ---- The list ------------------------------------------------------------ */
@@ -543,10 +552,15 @@
     var months = [];
     for (var i = -6; i <= 5; i++) months.push(shiftMonth(now, i));
     var perEntry = {}, perPerson = {};
+    /* D-198: what has come in is only what landed on a date. A recurring
+       entry with no first date is an average, so it is drawn ahead only,
+       never as if it had already arrived. */
     var rows = months.map(function (m, idx) {
       var r = Ledger.month(h, TABLES, m);
+      var past = idx <= 6;
       var byKind = {};
       r.rows.forEach(function (x) {
+        if (past && !x.entry.receivedOn) return;
         byKind[x.entry.kind] = (byKind[x.entry.kind] || 0) + x.grossCents;
         perEntry[x.entry.id] = (perEntry[x.entry.id] || 0) + x.grossCents;
         var pid = x.entry.personId || 'joint';
@@ -554,15 +568,15 @@
       });
       return {
         label: shortMonth(m, idx === 0),
-        note: m === now ? 'this month' : (r.potentialCents ? Money.formatCents(r.potentialCents) + ' more could come' : ''),
+        mark: m === now,
+        faded: !past,
         parts: Schema.INCOME_KINDS.filter(function (k) { return byKind[k]; }).map(function (k) { return { label: KINDS[k].label, value: byKind[k], color: KIND_COLOR[k] }; })
       };
     });
+    var undated = active.filter(function (e) { return e.frequency !== 'once' && !e.receivedOn; });
     /* D-195: so far, then ahead. One scale across both halves, the ahead
        half faded, and the whole thing said in a sentence first. */
     var totals = rows.map(function (r) { return r.parts.reduce(function (t, p) { return t + p.value; }, 0); });
-    var scale = Math.max.apply(null, totals) || 1;
-    var past = rows.slice(0, 7), ahead = rows.slice(7);
     var firstIn = -1;
     totals.slice(0, 7).forEach(function (t, i) { if (t > 0 && firstIn < 0) firstIn = i; });
     var soFar = totals.slice(0, 7).reduce(function (t, v) { return t + v; }, 0);
@@ -570,20 +584,25 @@
     var aheadSame = aheadTotals.every(function (t) { return t === aheadTotals[0]; });
     var nextNet = Ledger.month(h, TABLES, months[7]);
     var sum = '';
-    if (soFar > 0) sum += 'Since ' + shortMonth(months[firstIn], true) + ': <b>' + esc(Money.formatCents(soFar)) + '</b> gross has come in. ';
+    if (soFar > 0) sum += 'Since ' + shortMonth(months[firstIn], true) + ': <b>' + esc(Money.formatCents(soFar)) + '</b> gross has landed. ';
+    else if (undated.length) sum += 'Nothing here has a first date yet, so the picture cannot say what has actually come in. ';
     if (aheadTotals[0] > 0 || !aheadSame) {
       sum += 'Ahead, if nothing changes: ' + (aheadSame ? '<b>' + esc(Money.formatCents(aheadTotals[0])) + '</b> a month' : 'between <b>' + esc(Money.formatCents(Math.min.apply(null, aheadTotals))) + '</b> and <b>' + esc(Money.formatCents(Math.max.apply(null, aheadTotals))) + '</b> a month')
         + (Money.isOk(nextNet) && nextNet.count && aheadSame ? ', <b>' + esc(Money.formatCents(nextNet.netCents)) + '</b> after tax' : '') + '.';
     } else if (soFar > 0) sum += 'Nothing is expected ahead: every entry has ended or was one time.';
     el('pic-sum').innerHTML = sum || 'Nothing has landed yet. Add a date to an entry and it appears here.';
-    el('pic-past').innerHTML = Charts.stacked({ rows: past, max: scale, empty: 'Nothing in the last six months.' });
-    el('pic-ahead').innerHTML = Charts.stacked({ rows: ahead, max: scale, empty: 'Nothing expected in the next five months.' });
-    /* The assumption worth questioning: a benefit with no last date is
-       drawn as if it never ends, and it does. Ask. */
-    el('pic-nudges').innerHTML = active.filter(function (e) { return e.frequency !== 'once' && !e.endsOn && e.kind === 'unemployment'; }).map(function (e) {
+    el('pic-months').innerHTML = Charts.columns({ columns: rows, divider: 7, captions: ['so far', 'ahead, assumed'], title: 'A year of it, month by month',
+      empty: 'Nothing lands in these twelve months. Give an entry a first date and it appears here.' });
+    /* The two assumptions worth questioning. No first date: nothing of it
+       can count as come in, and a weekly amount is being averaged. No last
+       date on a benefit: drawn as if it never ends, and it does. Ask. */
+    el('pic-nudges').innerHTML = undated.map(function (e) {
+      return '<div class="pic-nudge"><span><b>' + esc(e.label || KINDS[e.kind].label) + '</b> has no first date, so none of it counts as come in yet, and ahead it is spread as a monthly average' + (e.frequency === 'weekly' || e.frequency === 'fortnightly' ? ' — dated, it lands on its real days, four or five a month' : '') + '.</span>'
+        + '<button type="button" class="pill" data-start="' + esc(e.id) + '">When did it start?</button></div>';
+    }).concat(active.filter(function (e) { return e.frequency !== 'once' && !e.endsOn && e.kind === 'unemployment'; }).map(function (e) {
       return '<div class="pic-nudge"><span><b>' + esc(e.label || KINDS[e.kind].label) + '</b> has no last date, so it is drawn as if it keeps coming. Unemployment usually runs about 26 weeks.</span>'
         + '<button type="button" class="pill" data-ends="' + esc(e.id) + '">When does it end?</button></div>';
-    }).join('');
+    })).join('');
 
     /* Where this month's gross goes. Per landing, times the landings;
        costs once, as the engine counts them. */
@@ -639,7 +658,9 @@
     el('month-how').hidden = false;
     el('month-how-list').innerHTML = m.rows.map(function (x) {
       var e = x.entry, n = x.net, count = x.occurrences.length;
-      var head = '<b>' + esc(e.label || KINDS[e.kind].label) + '</b> — ' + esc(Money.formatCents(x.grossCents)) + ' gross' + (count > 1 ? ' (' + count + ' landings of ' + esc(Money.formatCents(e.amountCents)) + ')' : '');
+      var averaged = e.frequency !== 'once' && !e.receivedOn;
+      var head = '<b>' + esc(e.label || KINDS[e.kind].label) + '</b> — ' + esc(Money.formatCents(x.grossCents)) + ' gross'
+        + (averaged ? ' (a monthly average of ' + esc(Money.formatCents(e.amountCents)) + ' ' + esc(FREQ_WORDS[e.frequency]) + ' — no first date, so not real landings)' : count > 1 ? ' (' + count + ' landings of ' + esc(Money.formatCents(e.amountCents)) + ')' : '');
       if (!n) return '<li>' + head + '<small>' + esc(x.reason || '') + '</small></li>';
       var pc = function (r) { return (Math.round(r * 1000) / 10) + '%'; };
       var basis = n.pieces.basis === 'sources' ? 'the income in Start Here' : n.pieces.basis === 'ledger' ? 'the entries here, annualised' : 'this entry alone, annualised';
