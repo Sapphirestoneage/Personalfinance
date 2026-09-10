@@ -7666,7 +7666,7 @@ section('Charts: the one way a number becomes a picture');
   checkTrue('… and a legend naming both', /<ul class="slaf-legend">.*>a<\/li>.*FI<\/li>/.test(a));
   checkTrue('no series: says so instead of drawing', /is-empty/.test(Charts.area({ series: [] })));
 
-  /* Columns (D-196): stacked, faded ahead, a divider, values only where they change. */
+  /* Columns (D-197): stacked, faded ahead, a divider, values only where they change. */
   const cols = Charts.columns({ columns: [
     { label: 'Mar', parts: [{ label: 'Benefit', value: 347600, color: '#5AA9FF' }] },
     { label: 'Apr', parts: [{ label: 'Benefit', value: 347600, color: '#5AA9FF' }] },
@@ -8645,7 +8645,7 @@ section('D-194: an entry knows when it ends and what the stub took off');
   const ueMonth = Ledger.month(h, T, '2026-09');
   check('an unemployment month: the split sums to the tax', ueMonth.withheldCents + ueMonth.owedCents, ueMonth.taxCents);
   check('with what was held back counted per landing', ueMonth.withheldCents, 3000 * 4);
-  /* D-196: an undated weekly entry lands as its monthly average, and the
+  /* D-197: an undated weekly entry lands as its monthly average, and the
      tax scales to that average — the gross and the tax agree. */
   h.ledger = Schema.createLedger({ income: [Schema.createIncomeEntry({ id: 'ud', kind: 'unemployment', amountCents: 86900, frequency: 'weekly' })] });
   const avg = Ledger.month(h, T, '2026-09');

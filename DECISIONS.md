@@ -12399,7 +12399,7 @@ fields, the log by bucket and the page order; render, forms (a yearly
 subscription landing as a month) and features on the room; a phone walk
 reading the ring, the bars and the subscriptions list on the example.
 
-## D-196 — Income: the year is columns, counts only what landed on a date, and folds
+## D-197 — Income: the year is columns, counts only what landed on a date, and folds
 
 **Why.** The owner, with their own benefit in the room: "these numbers
 do not seem to be based off reality — 869×4 is not 3766 or whatever."

@@ -4,7 +4,7 @@
    Every chart in the suite is drawn here, as an SVG string, from figures an
    engine already produced: an area chart for anything over time, a donut
    for anything that is a share of a whole, bars for anything compared,
-   columns for a count of months walking left to right (D-196).
+   columns for a count of months walking left to right (D-197).
    Nothing is computed here beyond scales and ticks; a room that wants a
    line hands over the points and gets markup back.
 
@@ -291,7 +291,7 @@
   }
 
   /**
-   * Vertical columns over time, each stacked from parts (D-196). A column
+   * Vertical columns over time, each stacked from parts (D-197). A column
    * may be `faded` (assumed, not yet received) and the chart draws a dashed
    * divider before opts.divider with a caption either side. Values sit on
    * the columns where they change, never on every one.

@@ -303,7 +303,7 @@
       /* The tax scales with what landed: netOf is one landing of
          amountCents, so the month's share is g ÷ amountCents — the count
          of landings when they are dated, the average's share when the
-         entry is undated and lands as its monthly average (D-196; before
+         entry is undated and lands as its monthly average (D-197; before
          this the average was the gross and one landing was the tax, so a
          weekly entry with no date netted a fraction of itself). Costs are
          per entry, not per landing: they come off once. */
