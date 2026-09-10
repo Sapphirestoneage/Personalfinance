@@ -50,6 +50,7 @@
   <section class="slaf-card" id="accuracy" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Accuracy</span><p class="slaf-hint" id="accuracy-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="accuracy-list"></ul></section>
   <section class="slaf-card" id="household" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Household</span><p class="slaf-hint" id="household-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="household-list"></ul></section>
   <section class="slaf-card" id="horizon" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Horizon</span><p class="slaf-hint" id="horizon-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="horizon-list"></ul></section>
+  <section class="slaf-card" id="assumptions" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Assumptions</span><p class="slaf-hint" style="margin:var(--space-1) 0 var(--space-2)">Declared once, here, and read by every projection. Every engine works in today’s money, so the return is real (over inflation) and comes from the return bands table; the two rates below are yours to step.</p><ul class="sw" id="assumptions-list"></ul></section>
   <section class="slaf-card" id="advanced" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Advanced</span><p class="slaf-hint" id="advanced-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="advanced-list"></ul></section>
 </main>
 
@@ -70,7 +71,7 @@
 <script>
 (function () {
   'use strict';
-  var Spine = SLAF.Spine, Features = SLAF.Features, Prefs = SLAF.Prefs, Reference = SLAF.Reference;
+  var Spine = SLAF.Spine, Features = SLAF.Features, Prefs = SLAF.Prefs, Reference = SLAF.Reference, Money = SLAF.Money;
   var ROOM_ID = 'settings';
   function el(id) { return document.getElementById(id); }
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -88,7 +89,48 @@
         + '<span class="state">' + (Features.isDefault(f.id) ? 'the default' : 'yours') + '</span>';
     return '<li data-row="' + esc(f.id) + '"><div><b>' + esc(f.label) + '</b><span class="gloss">' + esc(f.gloss) + '</span><span class="where">' + where + '</span></div><div>' + control + '</div></li>';
   }
+  /* 15.2: the three declared assumptions. Inflation and real wage growth
+     are stepped with buttons (no typing) and written to household.assumptions
+     through the spine; the real return is read-only here: it is the median
+     of the return bands table unless a room overrides it on purpose. D-181. */
+  var STEP = 0.005, RATE_ROWS = [
+    { path: 'assumptions.inflation', label: 'Inflation', gloss: 'How fast prices rise a year. Used only to show future dollars; every projection is in today’s money.', min: 0, max: 0.10 },
+    { path: 'assumptions.realWageGrowth', label: 'Real wage growth', gloss: 'How much pay grows a year over inflation. A raise in a lever is on top of this.', min: -0.05, max: 0.05 }
+  ];
+  function pctText(r) { return (Math.round(r * 1000) / 10) + '%'; }
+  /* The projection rooms that read the three (the ones that carry the
+     today's-money line), linked the same way a switch row links its rooms. */
+  var PROJECTION_ROOMS = ['fire', 'fire-lab', 'adventure', 'what-if-life', 'decumulation'];
+  function whereRead() {
+    var R = SLAF.Registry;
+    var rooms = PROJECTION_ROOMS.map(function (id) { return R && R.byId ? R.byId(id) : null; }).filter(Boolean);
+    return '<span class="where">Read by ' + rooms.map(function (r) { return '<a href="../' + esc(r.href) + '">' + esc(r.title) + '</a>'; }).join(', ') + '.</span>';
+  }
+  function rateRow(r) {
+    var a = h().assumptions || {};
+    var v = a[r.path.split('.')[1]];
+    var isDefault = !Money.isEntered(v) || v === SLAF.Schema.ASSUMPTION_DEFAULTS[r.path.split('.')[1]];
+    var cur = Money.isEntered(v) ? v : SLAF.Schema.ASSUMPTION_DEFAULTS[r.path.split('.')[1]];
+    return '<li data-row="' + esc(r.path) + '"><div><b>' + esc(r.label) + '</b><span class="gloss">' + esc(r.gloss) + '</span>' + whereRead() + '</div>'
+      + '<div class="stepper"><button type="button" class="slaf-seed-btn" data-step="' + esc(r.path) + '" data-dir="-1" aria-label="' + esc(r.label) + ' down"' + (cur - STEP < r.min - 1e-9 ? ' disabled' : '') + '>−</button>'
+      + '<output aria-live="polite">' + pctText(cur) + '</output>'
+      + '<button type="button" class="slaf-seed-btn" data-step="' + esc(r.path) + '" data-dir="1" aria-label="' + esc(r.label) + ' up"' + (cur + STEP > r.max + 1e-9 ? ' disabled' : '') + '>+</button>'
+      + '<span class="state">' + (isDefault ? 'the default' : 'yours') + '</span></div></li>';
+  }
+  function returnRow() {
+    var a = SLAF.Schema.resolveAssumptions(h(), null, TABLES);
+    var bands = TABLES && TABLES.returnBands;
+    var p = bands && bands.percentiles ? bands.percentiles : null;
+    return '<li data-row="assumptions.returnReal"><div><b>Expected real return</b><span class="gloss">The median of the return bands table: the likely case, over inflation. The low and high bands say how wide “about” is.</span>'
+      + (p ? '<span class="where">Low ' + pctText(p.p25) + ' · likely ' + pctText(p.p50) + ' · high ' + pctText(p.p75) + ', as of ' + esc(bands.asOf) + '. A planning convention, not a forecast: ' + esc(bands.source) + '</span>' : '') + whereRead()
+      + '</div><div><output>' + pctText(a.returnReal) + '</output><span class="state">from the table</span></div></li>';
+  }
+  var TABLES = null;
+  function paintAssumptions() {
+    el('assumptions-list').innerHTML = RATE_ROWS.map(rateRow).join('') + returnRow();
+  }
   function paint() {
+    paintAssumptions();
     Features.groups().forEach(function (g) {
       el(g.id + '-line').textContent = g.line;
       el(g.id + '-list').innerHTML = Features.all().filter(function (f) { return f.group === g.id; }).map(row).join('');
@@ -102,12 +144,24 @@
     var b = e.target.closest('button[data-feature]');
     if (b) { Features.set(b.getAttribute('data-feature'), !Features.on(b.getAttribute('data-feature'), h())); paint(); return; }
     var p = e.target.closest('button[data-path]');
-    if (p) { Features.applyPath(p.getAttribute('data-path')); paint(); }
+    if (p) { Features.applyPath(p.getAttribute('data-path')); paint(); return; }
+    var s = e.target.closest('button[data-step]');
+    if (s) {
+      var path = s.getAttribute('data-step'), key = path.split('.')[1];
+      var row = RATE_ROWS.filter(function (r) { return r.path === path; })[0];
+      var a = h().assumptions || {};
+      var cur = Money.isEntered(a[key]) ? a[key] : SLAF.Schema.ASSUMPTION_DEFAULTS[key];
+      var next = Math.round((cur + STEP * Number(s.getAttribute('data-dir'))) * 10000) / 10000;
+      if (next < row.min - 1e-9 || next > row.max + 1e-9) return;
+      Spine.set(path, next, row.label + ' ' + pctText(next));
+      paint();
+    }
   });
 
   Spine.registerRoom(ROOM_ID);
   SLAF.Progress.mount(ROOM_ID);
-  Reference.load(['features']).then(function (tables) {
+  Reference.load(['features', 'returnBands']).then(function (tables) {
+    TABLES = tables;
     Features.use(tables.features);
     paint();
     Spine.onChange(paint);

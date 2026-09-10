@@ -40,7 +40,7 @@ module.exports = function (t) {
   checkTrue('donut, bars and area all come from shared/charts.js',
     /Charts\.donut\(/.test(code) && /Charts\.bars\(/.test(code) && /Charts\.area\(/.test(code));
   /* Charts.area takes [x, y] pairs; objects render as NaN and the SVG throws. */
-  checkTrue('the path feeds area the pair format it expects', /pts\.push\(\[i, Math\.round\(bal\)\]\)/.test(code));
+  checkTrue('the path feeds area the pair format it expects', /pts\.push\(\[i, fut\(Math\.round\(bal\), i\)\]\)/.test(code));
   checkTrue('… and formats its x axis through x.format', /x: \{ format: function/.test(code));
 
   /* ---- The maths it draws ------------------------------------------------ */

@@ -79,6 +79,7 @@
 </header>
 
 <main class="slaf-wrap">
+  <p class="slaf-horizon" id="horizon-line"></p>
   <div class="notice" id="load-notice" hidden></div>
 
   <section class="slaf-card" id="number">
@@ -157,6 +158,8 @@
 <script src="../shared/gate.js"></script>
 <script src="../shared/guide.js"></script>
 <script src="../shared/prefs.js"></script>
+<script src="../shared/features.js"></script>
+<script src="../shared/horizon.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
@@ -204,6 +207,8 @@
     return '<p class="slaf-reason">' + esc(reason) + (links.length ? ' ' + links.join(' ') : '') + '</p>';
   }
 
+  function yrs(x) { return x && Money.isOk(x) ? x.value : (Money.isEntered(x) && typeof x === 'number' ? x : 0); }
+  function fut(c, y) { return SLAF.Horizon.display(Spine.getProfile(), c, y); }   /* 15.2: display-time only; the engines stay real (D-181) */
   function yearsLabel(y) {
     if (!Money.isEntered(y)) return Money.EM_DASH;
     if (y <= 0) return 'now';
@@ -221,7 +226,7 @@
     var target = Fire.calculateFIRE(h, TABLES, opts());
     var prog = Fire.progressToward(h, TABLES, opts());
 
-    el('fire-figure').textContent = Money.isOk(target) ? Money.formatCents(target.value) : Money.EM_DASH;
+    el('fire-figure').textContent = Money.isOk(target) ? Money.formatCents(fut(target.value, yrs(Money.isOk(prog) ? prog.yearsAway : null))) : Money.EM_DASH;
     el('fire-say').innerHTML = Money.isOk(target)
       ? 'A year of spending, divided by the withdrawal rate.'
       : waiting(target);
@@ -358,8 +363,8 @@
            is about the journey rather than forty years of flat afterwards. */
         var years = 40, crossed = null;
         for (var i = 0; i <= years; i++) {
-          pts.push([i, Math.round(bal)]);
-          line.push([i, prog.targetCents]);
+          pts.push([i, fut(Math.round(bal), i)]);
+          line.push([i, fut(prog.targetCents, i)]);
           if (crossed === null && bal >= prog.targetCents) crossed = i;
           bal = bal * (1 + a.expectedReturnRate) + b2.annualSavingsCents;
         }
@@ -429,6 +434,7 @@
 
   Spine.registerRoom(ROOM_ID);
   SLAF.Progress.mount(ROOM_ID);
+  SLAF.Horizon.mount(document.getElementById('horizon-line'), { household: function () { return Spine.getProfile(); }, onChange: function () { render(); } });   /* 15.2: today's money, once per screen (D-181) */
   Spine.onChange(render);
 
   Reference.load().then(function (tables) {

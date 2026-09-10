@@ -109,6 +109,8 @@
 <script src="../shared/suggest.js"></script>
 <script src="../shared/guide.js"></script>
 <script src="../shared/prefs.js"></script>
+<script src="../shared/features.js"></script>
+<script src="../shared/horizon.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
@@ -151,6 +153,7 @@
 
   Room.mount({
     id: 'decumulation',
+    horizon: true,   /* 15.2: today's money, once per screen (D-181) */
     guessAs: 'retired',
     reads: ['investments', 'monthlyExpenses', 'grossAnnualIncome', 'dob'],
 
@@ -179,9 +182,9 @@
       var byAge = p.age !== null;
       var x0 = byAge ? p.age : 0;
       var series = [{ id: 'planned', label: 'Drawing ' + Money.formatCents(p.drawCents) + ' a year', color: Charts.COLORS.growth,
-        points: p.path.map(function (r) { return [x0 + r.year, r.balanceCents]; }) }];
+        points: p.path.map(function (r) { return [x0 + r.year, SLAF.Horizon.display(h, r.balanceCents, r.year)]; }) }];
       if (p.vpwPath) series.push({ id: 'vpw', label: 'VPW: the table’s share each year', color: Charts.COLORS.contributed, fill: false, dash: true,
-        points: p.vpwPath.map(function (r) { return [x0 + r.year, r.balanceCents]; }) });
+        points: p.vpwPath.map(function (r) { return [x0 + r.year, SLAF.Horizon.display(h, r.balanceCents, r.year)]; }) });
       var dots = [];
       if (!p.never && p.yearsUntilEmpty <= p.horizonYears) dots.push({ x: x0 + p.yearsUntilEmpty, y: 0, color: Charts.COLORS.debt });
       var vLines = [];

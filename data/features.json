@@ -43,7 +43,7 @@
       "group": "horizon",
       "section": "15.2",
       "label": "Show projections in future dollars too",
-      "gloss": "Every projection is in today's money. This adds the future-dollar figure beside it, converted at the inflation assumption."
+      "gloss": "Every projection is in today's money. This shows the same figures in future dollars instead, converted at the inflation assumption when they are drawn. The engines stay real and nothing you entered changes."
     },
     "annualLines": {
       "default": "on",

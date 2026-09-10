@@ -89,6 +89,7 @@
 </header>
 
 <main class="slaf-wrap">
+  <p class="slaf-horizon" id="horizon-line"></p>
   <div class="slaf-reason" id="blocked" hidden></div>
 
   <!-- Screen one, part one -->
@@ -170,6 +171,8 @@
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
 <script src="../shared/prefs.js"></script>
+<script src="../shared/features.js"></script>
+<script src="../shared/horizon.js"></script>
 <script src="../shared/scenarios.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
@@ -197,6 +200,7 @@
   function esc(s) { return String(s === null || s === undefined ? '' : s)
     .replace(/[&<>"]/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]; }); }
   function fmt(c) { return Money.formatCents(c); }
+  function fut(c, y) { return SLAF.Horizon.display(Spine.getProfile(), c, y); }   /* 15.2: display-time only; the engines stay real (D-181) */
   function h() { return Spine.getProfile(); }
   function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
 
@@ -300,14 +304,14 @@
         var bits = [];
         if (c.delta.years !== null) bits.push(c.delta.years === 0 ? 'the same year as Drift' : Math.abs(c.delta.years) + (c.delta.years > 0 ? ' years sooner' : ' years later') + ' than Drift');
         else bits.push('FI ' + (c.yearsToFI === null ? 'still out of reach' : 'in reach where Drift never gets there'));
-        bits.push((c.delta.potCents >= 0 ? '+' : '−') + fmt(Math.abs(c.delta.potCents)) + ' after five years');
+        bits.push((c.delta.potCents >= 0 ? '+' : '−') + fmt(fut(Math.abs(c.delta.potCents), 5)) + ' after five years');
         delta = '<span class="delta">' + esc(bits.join(' · ')) + '</span>';
       }
       return '<button type="button" class="pathcard' + (c.baseline ? ' is-baseline' : '') + '" data-path="' + esc(c.pathId) + '">'
         + '<b>' + esc(c.label) + (c.baseline ? ' — the baseline' : '') + '</b>'
         + '<span class="line">' + esc(c.line) + '</span>'
         + '<span class="facts">'
-        + '<span>After 5 years<b>' + esc(fmt(c.potCents)) + '</b></span>'
+        + '<span>After 5 years<b>' + esc(fmt(fut(c.potCents, 5))) + '</b></span>'
         + '<span>FI<b>' + esc(fi) + '</b></span>'
         + '<span>Costs<b>' + (c.hoursPerWeek > 0 ? esc(c.hoursPerWeek + ' h a week') : 'no extra hours') + '</b></span>'
         + '<span>The extra, an hour<b>' + (c.impliedHourlyCents !== null ? esc(Money.formatCents(c.impliedHourlyCents, { decimals: 2 })) : (c.monthlyGainCents > 0 ? esc(fmt(c.monthlyGainCents)) + ' a month, no hours' : '—')) + '</b></span>'
@@ -354,13 +358,13 @@
       }
     }
     if (mine.baseline) {
-      out.push((state.shocks.length ? 'Without them, this' : 'This') + ' is Drift, the baseline: ' + fmt(mineClean.portfolioCents) + ' after five years, FI ' + (mineClean.yearsAfter === null ? 'not at this rate' : 'in ' + yearsWord(5 + mineClean.yearsAfter)) + '.');
+      out.push((state.shocks.length ? 'Without them, this' : 'This') + ' is Drift, the baseline: ' + fmt(fut(mineClean.portfolioCents, 5)) + ' after five years, FI ' + (mineClean.yearsAfter === null ? 'not at this rate' : 'in ' + yearsWord(5 + mineClean.yearsAfter)) + '.');
     } else if (base) {
       var dy = mineClean.yearsAfter === null || base.yearsAfter === null ? null : base.yearsAfter - mineClean.yearsAfter;
       var lead = state.shocks.length ? 'Without them, ' : '';
       var sooner = dy === null ? (mineClean.yearsAfter === null ? 'FI still out of reach' : 'FI in reach where Drift never gets there')
         : dy === 0 ? 'the same FI year as Drift' : yearsWord(dy) + (dy > 0 ? ' sooner' : ' later') + ' than Drift';
-      out.push(lead + sooner + ', and ' + (mineClean.portfolioCents >= base.portfolioCents ? '+' : '−') + fmt(Math.abs(mineClean.portfolioCents - base.portfolioCents)) + ' after five years.');
+      out.push(lead + sooner + ', and ' + (mineClean.portfolioCents >= base.portfolioCents ? '+' : '−') + fmt(fut(Math.abs(mineClean.portfolioCents - base.portfolioCents), 5)) + ' after five years.');
     }
     el('delta').textContent = out.join(' ');
   }
@@ -374,12 +378,12 @@
       if (!Money.isOk(r)) return null;
       var mine = p.id === state.pathId;
       return { id: p.id, label: p.label, color: Charts.COLORS.series[i % Charts.COLORS.series.length],
-        points: [[0, start]].concat(r.value.rows.map(function (row) { return [row.year, row.portfolioCents]; })),
+        points: [[0, start]].concat(r.value.rows.map(function (row) { return [row.year, fut(row.portfolioCents, row.year)]; })),
         fill: false, width: mine ? 3 : 1, dash: !mine };
     }).filter(Boolean);
     var lo = runWay(state.pathId, state.shocks, 'low'), hi = runWay(state.pathId, state.shocks, 'high');
     var bands = Money.isOk(lo) && Money.isOk(hi) ? [{ color: (series.filter(function (s) { return s.id === state.pathId; })[0] || {}).color,
-      points: [[0, start, start]].concat(lo.value.rows.map(function (row, i) { return [row.year, row.portfolioCents, hi.value.rows[i].portfolioCents]; })) }] : [];
+      points: [[0, start, start]].concat(lo.value.rows.map(function (row, i) { return [row.year, fut(row.portfolioCents, row.year), fut(hi.value.rows[i].portfolioCents, row.year)]; })) }] : [];
     var marks = [];
     state.shocks.forEach(function (id) {
       var c = Adventure.contingencies(TABLES).filter(function (x) { return x.id === id; })[0];
@@ -438,7 +442,7 @@
       return '<div class="yearrow"><span class="yr">Year ' + row.year + '</span>'
         + '<span>' + ev + '<small>' + esc(fmt(row.savedCents)) + ' saved · spending ' + esc(fmt(row.spendCents))
         + (runway ? ' · ' + esc(runway) : '') + (debt ? ' · ' + esc(debt) : '') + '</small></span>'
-        + '<span class="num">' + esc(fmt(row.portfolioCents)) + '<small>' + Math.round((row.shareOfTarget || 0) * 100) + '% of ' + esc(fmt(row.targetCents)) + '</small></span></div>';
+        + '<span class="num">' + esc(fmt(fut(row.portfolioCents, row.year))) + '<small>' + Math.round((row.shareOfTarget || 0) * 100) + '% of ' + esc(fmt(fut(row.targetCents, row.year))) + '</small></span></div>';
     }).join('');
   }
 
@@ -587,6 +591,7 @@
      way back and the hop strip, and a room you cannot navigate out of is worse
      than a room that is merely empty. D-168. */
   if (SLAF.Progress) SLAF.Progress.mount(ROOM_ID);
+  SLAF.Horizon.mount(document.getElementById('horizon-line'), { household: function () { return Spine.getProfile(); }, onChange: function () { paintAll(); } });   /* 15.2: today's money, once per screen (D-181) */
 
   function paintAll() {
     if (!TABLES) return;

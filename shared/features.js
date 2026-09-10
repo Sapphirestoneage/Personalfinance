@@ -9,6 +9,7 @@
    of them on and off leaves the household byte-identical. DECISIONS.md D-180.
 
      use(table)                 hand it data/features.json once
+     ready()                    a promise of the table, loading it if needed
      all() · get(id) · groups() the table
      on(id, household)          user scope: the pref, else the default;
                                 situation scope: read from the household
@@ -34,6 +35,19 @@
 
   var TABLE = null;
   function use(table) { TABLE = table || TABLE; return TABLE; }
+  /** The table, loaded if a room has not handed it over yet (15.2): in the
+      browser through Reference, so a room that only asks Features.on() never
+      has to know the file. Resolves to the table, or null when it cannot load. */
+  var READY = null;
+  function ready() {
+    if (TABLE) return Promise.resolve(TABLE);
+    if (READY) return READY;
+    var g = (typeof self !== 'undefined') ? self : null;
+    var Reference = g && g.SLAF && g.SLAF.Reference;
+    if (!Reference || typeof Reference.load !== 'function') return Promise.resolve(table());
+    READY = Reference.load(['features']).then(function (t) { return use(t && t.features); }).catch(function () { return null; });
+    return READY;
+  }
   function table() {
     if (TABLE) return TABLE;
     if (typeof module === 'object' && module.exports) { try { TABLE = require('../data/features.json'); } catch (e) { TABLE = null; } }
@@ -113,5 +127,5 @@
     return Registry.all().filter(function (r) { return (r.features || []).indexOf(id) > -1; }).map(function (r) { return { id: r.id, title: r.title, href: r.href }; });
   }
 
-  return { use: use, all: all, get: get, groups: groups, on: on, set: set, isDefault: isDefault, applyPath: applyPath, rooms: rooms, situationSays: situationSays, prefKey: prefKey };
+  return { use: use, ready: ready, all: all, get: get, groups: groups, on: on, set: set, isDefault: isDefault, applyPath: applyPath, rooms: rooms, situationSays: situationSays, prefKey: prefKey };
 });

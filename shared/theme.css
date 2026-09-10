@@ -1227,6 +1227,10 @@ a:hover { color: var(--sapphire-100); }
    One line at the top of a room whose inputs are rough or unconfirmed; a
    small mark beside an owned value that is not yet sure. Never red: a rough
    number is a prompt to confirm, not a fault. */
+.slaf-horizon { margin: 0 0 var(--space-3); padding: var(--space-2) var(--space-3); font-size: var(--text-sm); color: var(--color-text-muted); border-left: 3px solid var(--color-border); display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.slaf-horizon.is-nominal { border-left-color: var(--color-caution); }
+.slaf-horizon:empty { display: none; }
+.slaf-horizon-text { flex: 1 1 18rem; }
 .slaf-approx { margin: 0 0 var(--space-2); font-size: var(--text-sm); color: var(--color-text-muted); }
 .slaf-approx a { color: inherit; text-decoration: underline dotted; }
 .slaf-owned-conf { font-size: var(--text-xs); color: var(--color-text-muted); white-space: nowrap; }

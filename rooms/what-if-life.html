@@ -71,6 +71,7 @@
 </header>
 
 <main class="slaf-wrap">
+  <p class="slaf-horizon" id="horizon-line"></p>
   <div class="notice" id="load-notice" hidden></div>
 
   <section class="slaf-card" id="pick">
@@ -144,6 +145,8 @@
 <script src="../shared/gate.js"></script>
 <script src="../shared/guide.js"></script>
 <script src="../shared/prefs.js"></script>
+<script src="../shared/features.js"></script>
+<script src="../shared/horizon.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
@@ -185,6 +188,7 @@
     });
   }
   function fmt(c) { return Money.formatCents(c); }
+  function fut(c, y) { return SLAF.Horizon.display(Spine.getProfile(), c, y); }   /* 15.2: display-time only; the engines stay real (D-181) */
   function signed(c) { return (c > 0 ? '+' : c < 0 ? '−' : '') + fmt(Math.abs(c)); }
   function template() { return EVENTS && state.templateId ? EVENTS.byId[state.templateId] : null; }
   function opts() { return { tables: TABLES }; }
@@ -330,10 +334,10 @@
       var r = all[d];
       var cashOut = r.flags.filter(function (f) { return f.key === 'cashOut'; })[0];
       return '<div class="col' + (d === 'default' ? ' is-default' : '') + '"><span class="cap">' + esc(r.bundle.label) + '</span>'
-        + '<span class="big' + (r.vsBaselineCents < 0 ? ' is-bad' : '') + '">' + signed(r.vsBaselineCents) + '</span>'
+        + '<span class="big' + (r.vsBaselineCents < 0 ? ' is-bad' : '') + '">' + signed(fut(r.vsBaselineCents, r.horizonMonths / 12)) + '</span>'
         + '<span class="cap">vs doing nothing, net worth at ' + Math.round(r.horizonMonths / 12) + ' years</span>'
         + '<dl>'
-        + '<dt>Net worth then</dt><dd>' + fmt(r.netWorthAtEndCents) + '</dd>'
+        + '<dt>Net worth then</dt><dd>' + fmt(fut(r.netWorthAtEndCents, r.horizonMonths / 12)) + '</dd>'
         + '<dt>FI date</dt><dd>' + (r.fiDateShiftMonths === null ? '—' : r.fiDateShiftMonths === 0 ? 'unchanged' : Math.abs(r.fiDateShiftMonths) + ' mo ' + (r.fiDateShiftMonths > 0 ? 'later' : 'sooner')) + '</dd>'
         + '<dt>' + (cashOut ? 'Cash runs out' : 'Thinnest month') + '</dt><dd>' + (cashOut ? 'month ' + (cashOut.month + 1) : (r.runwayMinMonths === null ? '—' : r.runwayMinMonths + ' mo of runway')) + '</dd>'
         + (r.lostMatchCents ? '<dt>Match lost</dt><dd>' + fmt(r.lostMatchCents) + '</dd>' : '')
@@ -513,6 +517,7 @@
 
   Spine.registerRoom(ROOM_ID);
   SLAF.Progress.mount(ROOM_ID);
+  SLAF.Horizon.mount(document.getElementById('horizon-line'), { household: function () { return Spine.getProfile(); }, onChange: function () { render(); } });   /* 15.2: today's money, once per screen (D-181) */
   Spine.onChange(render);
 
   Promise.all([Reference.load(), Reference.loadEvents()]).then(function (loaded) {

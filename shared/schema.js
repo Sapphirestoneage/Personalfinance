@@ -53,7 +53,18 @@
        inflation for anything that reads a nominal figure forward. */
     returnReal: 0.05,
     inflation: 0.03,
-    expectedReturnRate: 0.07,   // nominal annual, decimal fraction
+    /* 15.2 (D-181): every engine output is real, today's money. The
+       nominal 7% this key once carried is retired; the key stays because
+       sixteen readers use it, and resolveAssumptions() always hands them
+       the real return (returnReal, the median band). A stored 0.07 from an
+       older save is the old default and reads as the real rate too. */
+    expectedReturnRate: 0.05,
+    LEGACY_NOMINAL_RETURN: 0.07,
+    /* Pay grows this much a year over inflation, so a lever's "3% raise"
+       is real, not nominal. Editable in Settings only. 15.2. */
+    realWageGrowth: 0.01,
+    /* Where the return bands come from. Engines never carry their own. */
+    returnBands: 'return_bands.json',
     swrRate: 0.04,             // safe withdrawal rate, decimal fraction
     /* Real discount rate for human capital — the present value of the pay
        still to come before the stop age. A planning assumption, overridable
@@ -245,7 +256,9 @@
     'worthChecks[].hoursSpent':                  { class: 'raw',        unit: 'hours' },
     'worthChecks[].predictedRating':             { class: 'raw',        unit: 'rating',  note: 'what you thought it would be worth, 1-10, before' },
     'worthChecks[].actualRating':                { class: 'raw',        unit: 'rating',  note: 'what it turned out to be worth, 1-10, after' },
-    'assumptions.expectedReturnRate':            { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.expectedReturnRate },
+    'assumptions.expectedReturnRate':            { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.expectedReturnRate, note: 'real, and always the median return band unless overridden on purpose; the nominal 7% is retired. 15.2, D-181' },
+    'assumptions.realWageGrowth':                { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.realWageGrowth, note: 'pay growth over inflation a year; a lever raise is real. Settings only. 15.2, D-181' },
+    'assumptions.returnBands':                   { class: 'assumption', unit: 'text',    default: ASSUMPTION_DEFAULTS.returnBands, note: 'the file the low / likely / high bands come from; no engine keeps its own rate. 15.2, D-181' },
     'assumptions.swrRate':                       { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.swrRate },
     'assumptions.humanCapitalDiscountRate':      { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.humanCapitalDiscountRate, note: 'real discount on pay still to come, for human capital. D-079' },
     'assumptions.homeEquityHaircut':             { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.homeEquityHaircut, note: 'the fraction of home equity the shadow runway counts. D-081' },
@@ -1633,7 +1646,7 @@
       skillTree: createSkillTree(f.skillTree),
       exercises: createExercisesLog(f.exercises),
       practiceLedger: (f.practiceLedger || []).map(createPracticeEntry).filter(function (e) { return e.on && e.skill; }),
-      assumptions: Object.assign({}, ASSUMPTION_DEFAULTS, f.assumptions || {}),
+      assumptions: normaliseAssumptions(f.assumptions),
       /* User overrides persist SEPARATELY from the defaults so "reset to
          default" is always possible — SPEC.md §3, assumption class. */
       assumptionOverrides: f.assumptionOverrides || {},
@@ -1732,14 +1745,30 @@
      calculator instead of writing it here — SPEC.md §12.2, §6.
      ====================================================================== */
 
-  function resolveAssumptions(household, localOverrides) {
-    return Object.assign(
-      {},
-      ASSUMPTION_DEFAULTS,
-      (household && household.assumptions) || {},
-      (household && household.assumptionOverrides) || {},
-      localOverrides || {}
-    );
+  /* The stored assumptions: the defaults, with a save's own values over
+     them, minus the constant that is not an assumption; a stored 7% is the
+     retired nominal default and becomes the real rate (15.2). */
+  function normaliseAssumptions(stored) {
+    var a = Object.assign({}, ASSUMPTION_DEFAULTS, stored || {});
+    if (a.expectedReturnRate === ASSUMPTION_DEFAULTS.LEGACY_NOMINAL_RETURN) a.expectedReturnRate = a.returnReal;
+    delete a.LEGACY_NOMINAL_RETURN;
+    return a;
+  }
+  function resolveAssumptions(household, localOverrides, tables) {
+    var stored = (household && household.assumptions) || {};
+    var over = (household && household.assumptionOverrides) || {};
+    var local = localOverrides || {};
+    var merged = Object.assign({}, ASSUMPTION_DEFAULTS, stored, over, local);
+    /* 15.2: the real median band is the return, from the one file when it
+       is at hand; the stored/default expected rate is only kept when
+       someone overrode it on purpose (a preview slider, a stored override). */
+    var bands = tables && tables.returnBands && tables.returnBands.percentiles;
+    if (bands && Money.isEntered(bands.p50) && !('returnReal' in over) && !('returnReal' in local)) merged.returnReal = bands.p50;
+    var explicit = ('expectedReturnRate' in local) || ('expectedReturnRate' in over)
+      || (Money.isEntered(stored.expectedReturnRate) && stored.expectedReturnRate !== ASSUMPTION_DEFAULTS.LEGACY_NOMINAL_RETURN && stored.expectedReturnRate !== ASSUMPTION_DEFAULTS.expectedReturnRate);
+    if (!explicit) merged.expectedReturnRate = merged.returnReal;
+    delete merged.LEGACY_NOMINAL_RETURN;
+    return merged;
   }
 
   /* ======================================================================

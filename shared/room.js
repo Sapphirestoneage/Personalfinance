@@ -16,6 +16,8 @@
        reads: ['fieldId'],     owned fields shown as chips (read-only links)
        number(h, T)  → { value, label, sub, zone, result }   the headline
        chart(h, T)   → html | ''                             one Charts.* call
+       horizon: true           (optional) a projection room: paints the
+                               today's-money line and the toggle (15.2)
        inputs: [...]           2–5 controls, each
                                 { ctl, label, kind: money|number|pct|select|choice,
                                   placeholder, hint, options, read(h) → raw,
@@ -161,6 +163,21 @@
        spec names in `reads`) decide the precision of every figure on the
        screen. One line at the top names the rough inputs; the money
        formatter rounds to match. D-181. */
+    /* 15.2: a projection room (spec.horizon) says once, at the top, that
+       every figure is today's money, and carries the future-dollars toggle.
+       Mounted once; the callback repaints the room. D-181. */
+    var horizonMounted = false;
+    function paintHorizon() {
+      if (!spec.horizon || horizonMounted || !root.SLAF.Horizon) return;
+      var anchor = el('room-number');
+      if (!anchor) return;
+      var host = document.createElement('p');
+      host.id = 'room-horizon';
+      host.className = 'slaf-horizon';
+      anchor.parentNode.insertBefore(host, anchor);
+      horizonMounted = true;
+      root.SLAF.Horizon.mount(host, { household: household, onChange: function () { lastChart = null; paint(); } });
+    }
     function paintApproximate(h) {
       var room = Registry.byId(ROOM_ID);
       var ids = ((room && room.needs) || []).concat(spec.reads || []);
@@ -258,6 +275,7 @@
       var real = Spine.getProfile();
       var h = household();
       paintInputs(h);
+      paintHorizon();
       paintApproximate(h);
       paintNumber(h);
       paintChart(h);

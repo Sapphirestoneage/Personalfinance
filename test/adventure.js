@@ -56,7 +56,7 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   check('one chart with every way and the target rule', (await page.$$('#chart svg path.line')).length >= 5 && (await page.$$('#chart svg line.hline')).length === 1);
   check('the band is shaded behind the chosen way', (await page.$$('#chart svg path.band')).length === 1);
   check('headwinds and tailwinds are separate lists', (await page.$$('#headwinds .shock')).length === 3 && (await page.$$('#tailwinds .shock')).length === 1);
-  check('steppers are buttons, no text input', (await page.$$('#steppers button')).length >= 2 && (await page.$$('input, textarea')).length === 0);
+  check('steppers are buttons, no text input', (await page.$$('#steppers button')).length >= 2 && (await page.$$('main input, main textarea')).length === 0);   /* the sidebar's own search box (D-177) is outside main */
   check('savings rate with a link to Shockingly Simple Math', /Savings rate/.test(await page.$eval('#rate-line', e => e.textContent)) && !!(await page.$('#rate-line a[href*="financial-snapshot"]')));
   check('the walk is folded by default', await page.$eval('#walk', e => !e.open));
 

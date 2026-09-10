@@ -10691,6 +10691,61 @@ accessors, tagged writes, confirm, setFieldMeta, precision and rounding,
 staleness, the chip, the migration through import); render on refresh,
 real-hourly-wage and the dashboard; dnd 5614; export 25.
 
+### 15.2 Assumptions declared once; every engine real (this commit)
+
+- **The three live in `household.assumptions` and nowhere else.**
+  `inflation` (3%), `realWageGrowth` (1% over inflation, new) and
+  `returnBands` (the file name `return_bands.json`, new) sit in
+  `Schema.ASSUMPTION_DEFAULTS` beside `returnReal`. Settings is the only
+  room that writes the two rates, with `−` / `+` buttons in half-point
+  steps (no typing; `test/run.js` greps every other room for a write and
+  fails on one). The real return is read-only there: it is the median band
+  from the table, shown with the low and high and the table's as-of.
+- **`expectedReturnRate` is now the real return.** The nominal 7% is retired
+  to a constant, `LEGACY_NOMINAL_RETURN`, that is never stored. Every
+  engine that reads `assumptions.expectedReturnRate` (tier0, fire, quickmath,
+  projection callers) now runs at 5% real without a line of engine code
+  changing, which is the point: one number, declared once. A stored 7% from
+  before this commit is read as "the default", not as a chosen override
+  (`normaliseAssumptions`); a stored 6% or 4% is kept as chosen.
+  `resolveAssumptions(h, local, tables)` takes the loaded tables so the
+  median band drives the rate when the table says something other than
+  the file's 5%.
+- **Every projected figure is today's money, said once per screen.**
+  `shared/horizon.js` paints one line at the top of a projection room
+  (adventure, fire, fire-lab, what-if-life, decumulation) that says every
+  figure below is real, names the wage-growth assumption, and carries the
+  one toggle. The feature switch `showNominal` (Settings, Horizon group,
+  off) turns the line into "future dollars at 3% inflation" and converts
+  at DISPLAY time only: `Horizon.display(h, cents, years)` multiplies by
+  `(1 + inflation) ^ years` on the way to the screen. No engine output
+  changes, nothing is stored, the lens amounts and undo log see real
+  figures. Room-template rooms opt in with `horizon: true` on the spec.
+- **`Features.ready()`.** A room that only asks `Features.on()` never
+  handed the switch table over, so every switch read as its default in
+  every room but Settings. `ready()` loads `data/features.json` through
+  Reference once; Horizon calls it on mount and repaints.
+- **Re-derived on the demo at 5% real:** 22 years to FI (was 19 at 7%
+  nominal), FI at 54, the bridge to 59½ is 5.5 years needing $207,900,
+  rule of 72 gives 14.4 years, and the $100-a-month habit reaches $90,000
+  in 31.3 years. The tests that pinned the 7% figures now pin these,
+  each re-derived outside the engines. On the phone walk, FIRE's $945,000
+  shows as $1,810,718 in future dollars (945,000 × 1.03²²) and the Long
+  Way Round's five-year pot $184,147 as $213,477 (× 1.03⁵).
+- **Not a stored-shape change.** `assumptions.realWageGrowth` and
+  `assumptions.returnBands` are new keys with defaults; a household
+  without them reads the default. A stored `expectedReturnRate` of 0.07
+  is rewritten to 0.05 on load, which every room already reads through
+  `createHousehold`. Nothing else moved.
+
+Gate for this commit: unit 25110 (a new section of 50 checks: defaults,
+legacy normalisation, overrides, the table, Horizon on/off/factor/display,
+every projection room carries the line and converts, Settings steps with
+buttons, prefs before features in every room); dnd 5614; export 25; render
+on the five projection rooms and Settings; Playwright features, settings
+and adventure gates; a phone-shaped tap walk through the toggle on FIRE,
+Decumulation and the Long Way Round and the steppers in Settings.
+
 ---
 
 # The Dungeons & Dividends entries

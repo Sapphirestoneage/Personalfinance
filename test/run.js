@@ -172,11 +172,11 @@ check('fireProgress', prog.value, 48000 / 945000, 1e-12);
 
 /* -- Years to FIRE: recomputed here with an independent loop ------------- */
 (function () {
-  const target = 94500000, r = 0.07, contribution = 2268000;
+  const target = 94500000, r = 0.05, contribution = 2268000;   /* 15.2: the return is real, the median band */
   let balance = 4800000, years = 0;
   while (balance < target && years < 200) { balance = balance * (1 + r) + contribution; years++; }
   check('yearsToFire (independent loop)', prog.timeToFire.value, years);
-  check('yearsToFire is 19 at these assumptions', prog.timeToFire.value, 19);
+  check('yearsToFire is 22 at these assumptions (5% real)', prog.timeToFire.value, 22);
   check('yearsToFire contribution basis', prog.timeToFire.contributionBasis, 'includingMatch');
 })();
 
@@ -356,7 +356,7 @@ section('Household aggregation — joint items and children');
 section('Assumptions');
 
 (function () {
-  check('default return rate', Schema.ASSUMPTION_DEFAULTS.expectedReturnRate, 0.07);
+  check('default return rate is real, the median band (15.2)', Schema.ASSUMPTION_DEFAULTS.expectedReturnRate, 0.05);
   check('default SWR', Schema.ASSUMPTION_DEFAULTS.swrRate, 0.04);
 
   /* A local override changes this view only. */
@@ -918,7 +918,7 @@ section('FIRE variants');
   check('coast names the full target it grows into', coast.fullTargetCents, 94500000);
   const grown = Projection.futureValueCents({
     startCents: coast.value, annualContributionCents: 0,
-    annualRate: 0.07, years: coast.yearsOfGrowth
+    annualRate: 0.05, years: coast.yearsOfGrowth
   });
   checkTrue('coasting from that number lands on the full number',
     Math.abs(grown.value - 94500000) <= 100,
@@ -963,7 +963,7 @@ section('FIRE variants');
   const prog = Fire.progressToward(h, TABLES, { variantId: 'standard' });
   check('progress toward standard', prog.value, 48000 / 945000, 1e-12);
   check('years away matches Tier 0', prog.yearsAway.value, Tier0.fireProgress(h, TABLES).timeToFire.value);
-  check('and that is still 19', prog.yearsAway.value, 19);
+  check('and that is still 22', prog.yearsAway.value, 22);
 
   /* Lean is nearer than standard. */
   const leanProg = Fire.progressToward(h, TABLES, { variantId: 'lean' });
@@ -1148,7 +1148,7 @@ section('Quick math');
   check('and says so', r.horizonBasis, 'to age 65');
 
   /* The canonical pairing, at the horizon that actually produces it. */
-  const canonical = QuickMath.recurringHabit(h, {}, { monthlyAmountCents: 10000, years: 26.3 });
+  const canonical = QuickMath.recurringHabit(h, {}, { monthlyAmountCents: 10000, years: 31.3 });   /* 15.2: at 5% real it takes 31.3 years, not 26.3 at the old 7% */
   check('the $30k half is unchanged by horizon', canonical.fireNumberAdditionCents, 3000000);
   checkTrue('and the other half lands on about $90,000',
     Math.abs(canonical.investedInsteadCents - 9000000) < 100000,
@@ -2749,7 +2749,7 @@ section('Ratios');
     by.fiRatio.value, (48000 * 0.04) / (3150 * 12), 1e-12);
   check('net worth to income is 35,900 over 72,000',
     by.netWorthToIncome.value, 35900 / 72000, 1e-12);
-  check('rule of 72 at a 7% return is 10.3 years', by.ruleOf72.value, 72 / 7, 1e-12);
+  check('rule of 72 at a 5% real return is 14.4 years (15.2)', by.ruleOf72.value, 72 / 5, 1e-12);
   check('burn rate is the monthly expense figure, in cents',
     by.burnRateCents.value, 315000);
 
@@ -5412,13 +5412,14 @@ section('The Statement engine');
   /* -- The bridge to 59½ ------------------------------------------------------ */
   {
     const b = St.bridgeGap(Demo.build(), T);
-    /* Demo: age 32, 19 years to FI → 51; 8.5 years × 37,800 = 321,300 needed;
-       reachable before 59½: cash 9,500 + the uncharacterised lump as taxable 48,000. */
-    check('FI lands at 51', Math.round(b.fiAge), 51);
-    check('the gap is 8.5 years', b.gapYears, 8.5);
-    check('needing 321,300', b.needCents, 32130000);
+    /* Demo: age 32, 22 years to FI at the 5% real median (15.2) → 54;
+       5.5 years × 37,800 = 207,900 needed; reachable before 59½: cash 9,500
+       + the uncharacterised lump as taxable 48,000. */
+    check('FI lands at 54', Math.round(b.fiAge), 54);
+    check('the gap is 5.5 years', b.gapYears, 5.5);
+    check('needing 207,900', b.needCents, 20790000);
     check('with 57,500 reachable', b.availableCents, 5750000);
-    check('so 263,800 short', b.value, 26380000);
+    check('so 150,400 short', b.value, 15040000);
     check('covered years is available over annual spend', b.coveredYears, 1.5);
     const r = St.bridgeGap(rich(), T, { age: 32 });
     check('the Roth basis and the brokerage count, the 401(k) does not', r.availableCents, 950000 + 600000 + 800000);
@@ -6507,9 +6508,9 @@ section('The ratios T3 unlocked');
   checkTrue('which is about 23×', hf.value > 22.5 && hf.value < 23.5);
   check('room in the bracket: $49,800 before 24%', by.bracketRoom.value, 4980000);
   check('and says the next rate', by.bracketRoom.nextRate, 0.24);
-  check('bridge to 59½: 8.5 years for the demo', by.bridgeGapYears.value, 8.5);
-  check('FI date: 19 years of 365.25 days from noon on 5 Sep 2026', by.fiDate.iso, '2045-09-05');
-  check('as a decimal year to the month', by.fiDate.value, 2045 + 8 / 12, 1e-12);
+  check('bridge to 59½: 5.5 years for the demo at 5% real', by.bridgeGapYears.value, 5.5);
+  check('FI date: 22 years of 365.25 days from noon on 5 Sep 2026', by.fiDate.iso, '2048-09-05');
+  check('as a decimal year to the month', by.fiDate.value, 2048 + 8 / 12, 1e-12);
 
   /* The two that need a year to exist. */
   check('lifestyle inflation with no snapshot asks for one', by.lifestyleInflation.missing.join(','), 'snapshots');
@@ -10416,6 +10417,95 @@ section('15.1 / 15.10: as-of, source and confidence on every owned number (D-181
   checkTrue('...and names the rough inputs at the top', room.indexOf("'Approximate: '") > -1);
   const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
   checkTrue('the theme styles the line and the mark', theme.indexOf('.slaf-approx') > -1 && theme.indexOf('.slaf-owned-conf') > -1);
+  Spine.reset();
+})();
+
+/* ==========================================================================
+   15.2: assumptions declared once, every engine real, nominal at display only
+   (D-181)
+   ========================================================================== */
+section('15.2: assumptions declared once; real by default; nominal at display time (D-181)');
+(function () {
+  const Spine = SpineMain;
+  const Features = require(path.join(ROOT, 'shared/features.js'));
+  const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
+  const Horizon = require(path.join(ROOT, 'shared/horizon.js'));
+  const featuresTable = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/features.json'), 'utf8'));
+  const bands = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/return_bands.json'), 'utf8'));
+  Features.use(featuresTable);
+  Prefs.reset();
+
+  /* The defaults: real, and the nominal 7% is retired. */
+  const D = Schema.ASSUMPTION_DEFAULTS;
+  check('the default real return is the median band', D.returnReal, bands.percentiles.p50);
+  check('expectedReturnRate is an alias of the real return', D.expectedReturnRate, D.returnReal);
+  check('inflation is declared once', D.inflation, 0.03);
+  check('real wage growth is declared once', D.realWageGrowth, 0.01);
+  check('the bands come from one file', D.returnBands, 'return_bands.json');
+  check('the retired nominal rate is a constant, not a default', D.LEGACY_NOMINAL_RETURN, 0.07);
+  checkTrue('...and is not stored', !('LEGACY_NOMINAL_RETURN' in Schema.createHousehold({}).assumptions));
+
+  /* A stored 7% from before is read as "the default", not as an override. */
+  const legacy = Schema.createHousehold({ assumptions: { expectedReturnRate: 0.07 } });
+  check('a stored 7% normalises to the real median', legacy.assumptions.expectedReturnRate, 0.05);
+  check('resolve on a legacy household gives the real median', Schema.resolveAssumptions(legacy).expectedReturnRate, 0.05);
+  const chosen = Schema.createHousehold({ assumptions: { expectedReturnRate: 0.06 } });
+  check('a rate chosen on purpose is kept', Schema.resolveAssumptions(chosen).expectedReturnRate, 0.06);
+  check('a local override wins', Schema.resolveAssumptions(legacy, { expectedReturnRate: 0.04 }).expectedReturnRate, 0.04);
+  check('the loaded table sets the median', Schema.resolveAssumptions(legacy, null, { returnBands: { percentiles: { p25: 0.02, p50: 0.055, p75: 0.08 } } }).expectedReturnRate, 0.055);
+  check('...and the real return with it', Schema.resolveAssumptions(legacy, null, { returnBands: { percentiles: { p25: 0.02, p50: 0.055, p75: 0.08 } } }).returnReal, 0.055);
+  checkTrue('the three are catalogued', !!Schema.FIELDS['assumptions.realWageGrowth'] && !!Schema.FIELDS['assumptions.returnBands'] && !!Schema.FIELDS['assumptions.inflation']);
+
+  /* The demo at 5% real: re-derived above (22 years to FI, rule of 72 = 14.4). */
+  const demo = Demo.build();
+  check('the demo runs at the real median', Schema.resolveAssumptions(demo).expectedReturnRate, 0.05);
+
+  /* Horizon: off by default, converts only when on, never stores. */
+  const h = Schema.createHousehold({ assumptions: { inflation: 0.03 } });
+  check('the switch is off by default', Horizon.on(h), false);
+  check('the factor is 1 when off', Horizon.factor(h, 10), 1);
+  check('display leaves cents alone when off', Horizon.display(h, 123456, 10), 123456);
+  checkTrue('the line says today’s money', Horizon.lineHtml(h).indexOf('today’s money') > -1);
+  Features.set('showNominal', true);
+  check('the switch turns on', Horizon.on(h), true);
+  check('the factor is (1 + inflation) ^ years', Horizon.factor(h, 10), Math.pow(1.03, 10), 1e-12);
+  check('display converts at the factor', Horizon.display(h, 100000, 10), Math.round(100000 * Math.pow(1.03, 10)));
+  check('zero years is unchanged', Horizon.display(h, 100000, 0), 100000);
+  check('a missing figure stays missing', Horizon.display(h, null, 10), null);
+  checkTrue('the line says future dollars', Horizon.lineHtml(h).indexOf('future dollars') > -1);
+  checkTrue('...and carries the toggle', Horizon.lineHtml(h).indexOf('data-horizon-toggle') > -1);
+  Features.set('showNominal', null);
+  check('back to today’s money', Horizon.on(h), false);
+  check('the household is untouched by the switch', Schema.createHousehold(h).assumptions.inflation, 0.03);
+
+  /* Every projection room carries the line once, at the top. */
+  ['adventure', 'fire', 'fire-lab', 'what-if-life', 'decumulation'].forEach(function (id) {
+    const src = fs.readFileSync(path.join(ROOT, 'rooms/' + id + '.html'), 'utf8');
+    checkTrue(id + ' loads horizon.js', src.indexOf('shared/horizon.js') > -1);
+    checkTrue(id + ' mounts the line once', (src.match(/Horizon\.mount\(/g) || []).length === 1 || (id === 'decumulation' && /horizon: true/.test(src)));
+    checkTrue(id + ' converts at display time', /Horizon\.display\(/.test(src));
+  });
+  checkTrue('prefs.js loads before features.js wherever a room loads it (the switch reads prefs)', fs.readdirSync(path.join(ROOT, 'rooms')).every(function (f) {
+    const src = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
+    const a = src.indexOf('<script src="../shared/prefs.js">'), b = src.indexOf('<script src="../shared/features.js">');
+    return b === -1 || (a > -1 && a < b);
+  }));
+  const room = fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8');
+  checkTrue('the room template mounts the line for spec.horizon', room.indexOf('spec.horizon') > -1 && room.indexOf('SLAF.Horizon.mount') > -1);
+  const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('the theme styles the line', theme.indexOf('.slaf-horizon') > -1);
+
+  /* Settings: the two rates are stepped with buttons and written to the spine. */
+  const settings = fs.readFileSync(path.join(ROOT, 'rooms/settings.html'), 'utf8');
+  checkTrue('Settings has an Assumptions section', settings.indexOf('id="assumptions"') > -1);
+  checkTrue('...that steps inflation and real wage growth', settings.indexOf("'assumptions.inflation'") > -1 && settings.indexOf("'assumptions.realWageGrowth'") > -1);
+  checkTrue('...with buttons, not typing', settings.indexOf('data-step=') > -1 && settings.indexOf('<input') === -1);
+  checkTrue('...and reads the real return from the bands table', settings.indexOf("'returnBands'") > -1);
+  checkTrue('no room writes the two rates but Settings', fs.readdirSync(path.join(ROOT, 'rooms')).filter(function (f) { return f !== 'settings.html'; }).every(function (f) {
+    const src = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
+    return !/Spine\.set\('assumptions\.(inflation|realWageGrowth)'/.test(src);
+  }));
+  Prefs.reset();
   Spine.reset();
 })();
 

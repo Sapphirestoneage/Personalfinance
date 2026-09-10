@@ -65,6 +65,7 @@
 </header>
 
 <main class="slaf-wrap">
+  <p class="slaf-horizon" id="horizon-line"></p>
   <div class="notice" id="load-notice" hidden></div>
 
   <section class="slaf-card" id="reading">
@@ -151,6 +152,8 @@
 <script src="../shared/gate.js"></script>
 <script src="../shared/guide.js"></script>
 <script src="../shared/prefs.js"></script>
+<script src="../shared/features.js"></script>
+<script src="../shared/horizon.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
@@ -200,6 +203,8 @@
     }).join('') + '</dl>';
   }
 
+  function yrs(x) { return x && Money.isOk(x) ? x.value : (Money.isEntered(x) && typeof x === 'number' ? x : 0); }
+  function fut(c, y) { return SLAF.Horizon.display(Spine.getProfile(), c, y); }   /* 15.2: display-time only; the engines stay real (D-181) */
   function yearsLabel(result) {
     if (!Money.isOk(result)) return result.reason || '';
     if (result.value === 0) return 'You’re already there.';
@@ -227,7 +232,7 @@
         var btn = list.querySelector('[data-variant="' + v.id + '"]');
         btn.setAttribute('aria-pressed', v.id === variantId);
         var fig = btn.querySelector('.variant-figure');
-        fig.textContent = ok ? Money.formatCents(t.value) : Money.EM_DASH;
+        fig.textContent = ok ? Money.formatCents(fut(t.value, yrs(Money.isOk(prog) ? prog.yearsAway : null))) : Money.EM_DASH;
         fig.classList.toggle('is-incomplete', !ok);
         btn.querySelector('.variant-eta').textContent = variantEta(t, prog);
       });
@@ -241,7 +246,7 @@
         + 'aria-pressed="' + (v.id === variantId) + '">'
         + '<span class="variant-head"><span class="variant-name">' + v.label + '</span>'
         + '<span class="variant-figure' + (ok ? '' : ' is-incomplete') + '">'
-        + (ok ? Money.formatCents(t.value) : Money.EM_DASH) + '</span></span>'
+        + (ok ? Money.formatCents(fut(t.value, yrs(Money.isOk(prog) ? prog.yearsAway : null))) : Money.EM_DASH) + '</span></span>'
         + '<p class="variant-blurb">' + v.blurb + '</p>'
         + '<p class="variant-eta">' + variantEta(t, prog) + '</p>'
         + '</button>';
@@ -281,7 +286,7 @@
     var prog = Fire.progressToward(h, TABLES, optsFor(variantId, h));
     var ok = Money.isOk(target);
 
-    figure.textContent = ok ? Money.formatCents(target.value) : Money.EM_DASH;
+    figure.textContent = ok ? Money.formatCents(fut(target.value, yrs(Money.isOk(prog) ? prog.yearsAway : null))) : Money.EM_DASH;
     figure.classList.toggle('slaf-figure--incomplete', !ok);
     reason.textContent = ok ? '' : (target.reason || '');
     reason.hidden = ok;
@@ -296,7 +301,7 @@
       ['At a withdrawal rate of', Money.formatRate(target.swrRate, { decimals: 1 })]
     ];
     if (target.variant.mode === 'coast') {
-      rows.push(['Grows into', Money.formatCents(target.fullTargetCents)]);
+      rows.push(['Grows into', Money.formatCents(fut(target.fullTargetCents, target.yearsOfGrowth))]);
       rows.push(['Over', target.yearsOfGrowth + ' years, to age ' + target.coastTargetAge]);
     }
     if (Money.isEntered(target.baristaAnnualIncomeCents)) {
@@ -351,7 +356,7 @@
     if (!Money.isOk(path)) { host.innerHTML = ''; why.textContent = path.reason; return; }
     /* What you put in is drawn net of withdrawals and floored at zero: once
        the pot is paying you back, the line has nothing left to say. */
-    var pts = function (k) { return path.years.map(function (r) { return [age + r.year, Math.max(0, r[k])]; }); };
+    var pts = function (k) { return path.years.map(function (r) { return [age + r.year, fut(Math.max(0, r[k]), r.year)]; }); };
     var crossed = null;
     path.years.forEach(function (r) { if (crossed === null && r.balanceCents >= target.value) crossed = age + r.year; });
     host.innerHTML = Charts.area({
@@ -472,6 +477,8 @@
   Spine.registerRoom(ROOM_ID);
 
   SLAF.Progress.mount(ROOM_ID);
+
+  SLAF.Horizon.mount(document.getElementById('horizon-line'), { household: function () { return Spine.getProfile(); }, onChange: function () { render(); } });   /* 15.2: today's money, once per screen (D-181) */
   Spine.onChange(render);
 
   Reference.load().then(function (tables) {
