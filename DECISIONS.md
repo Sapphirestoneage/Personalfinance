@@ -11170,6 +11170,42 @@ thirty-year timeline's five, Drawing It Down's seven with its phase
 sentence) and sees them vanish with the switch off, with no console
 errors but the favicon the site has never had.
 
+### The section 15 gate, and PHASE_A_DONE
+
+The ten shapes are in: 15.1 and 15.10 (as-of, source and confidence on
+every owned number), 15.2 (assumptions declared once, real by default),
+15.3 (orientation and the value after deferred tax), 15.4 (income by
+type), 15.5 (cadence, the yearly lines), 15.6 (one state table), 15.7 (a
+household of two), 15.8 (five piles, one runway), 15.9 (the ages where a
+rule changes). The gate the brief asks for, all three parts:
+
+- **Schema tests for each shape**: one named unit section per shape, and
+  the gate section checks they are there by name.
+- **Migration to the cent**: the pre-spine flat profile (lane 2's
+  corpus fixture, `annualSalary` 62,000 and a 22,000 loan at 5.3) comes
+  through `Spine._migrateLegacy` and the dashboard reads 6,200,000 and
+  2,200,000 cents; and a household saved before Phase A (no assumptions,
+  no field meta, no zip, no annual lines, no income types, no piles)
+  read through `Schema.createHousehold` renders every dashboard number
+  (gross, take-home, spending, debt, assets, investments, cash, net
+  worth, savings rate, the FI number, the runway) to the cent the same as
+  the household built today, with the new shapes at their empty meaning.
+- **Playwright**: `test/aftertax.js` taps the two-position control on The
+  Statement and reads net worth change from 30,140 to 35,900 and back;
+  `test/adventure.js` sets a 56-year-old and reads the two milestone marks
+  inside five years on The Long Way Round, each with its rule on hover.
+
+Section 14 (the removal list) was worked through under D-179 and D-180
+before these; nothing on it is left. Unit 26016, dnd 5614, export 25, the
+two Playwright gates above, all green at this commit.
+
+PHASE_A_DONE
+
+The next commits rebase and merge `lane2` (the corpus, the property
+tests, the sourced tables already consumed by 15.6 and 15.9, the gloss
+dictionary, the migration corpus and the accessibility report), then
+Phase B: sections 18, 19 and 20.
+
 ---
 
 # The Dungeons & Dividends entries

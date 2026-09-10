@@ -100,6 +100,14 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   await page.tap('#back-ways'); await page.waitForTimeout(300);
   check('back clears the path from the URL', !/path=/.test(page.url()), page.url());
 
+  /* 15.9: at 56, the age milestones inside the five years sit on the chart
+     as faint marks with the rule on hover (D-181). */
+  await page.evaluate(() => { const h = JSON.parse(localStorage.getItem('slaf.household.v2')); h.people[0].dob = '1970-03-15'; localStorage.setItem('slaf.household.v2', JSON.stringify(h)); });
+  await page.goto(url, { waitUntil: 'networkidle' }); await page.waitForTimeout(700);
+  const marks = await page.$$eval('#chart svg g.milestone', els => els.map(g => ({ label: (g.querySelector('text') || {}).textContent, title: (g.querySelector('title') || {}).textContent })));
+  check('at 56 the Long Way Round draws the milestones inside five years (59½ and 60)', marks.length === 2 && /59/.test(marks[0].label), JSON.stringify(marks));
+  check('...each with its rule on hover', marks.every(m => m.title && m.title.length > 40));
+
   check('no console errors', errors.length === 0, errors.slice(0, 3).join(' | '));
   await browser.close();
 

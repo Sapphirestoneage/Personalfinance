@@ -11169,6 +11169,67 @@ section('15.9: the ages where a rule changes, dated per person and drawn on ever
 })();
 
 /* ==========================================================================
+   Section 15 gate — the ten shapes, migration to the cent (D-181)
+   ========================================================================== */
+section('Section 15 gate: every shape has its tests, and a saved household migrates to the cent (D-181)');
+(function () {
+  const Spine = SpineMain;
+  const src = fs.readFileSync(__filename, 'utf8');
+  /* Schema tests for each shape: the ten sections above, by name. */
+  ['15.1 / 15.10', '15.2', '15.3', '15.4', '15.5', '15.6', '15.7', '15.8', '15.9'].forEach(id => {
+    checkTrue('a test section for ' + id, new RegExp("section\\('" + id.replace(/[.\/ ]/g, m => '\\' + m) + "[:\\s]").test(src));
+  });
+
+  /* A saved v1 household (the pre-spine flat profile, as lane 2's corpus
+     records it) migrates, and the dashboard reads the same cents. */
+  const flat = { annualSalary: 62000, hoursPerWeek: 40, studentLoanBalance: 22000, studentLoanRate: 5.3, visitedRooms: ['real-hourly-wage', 'student-loan'] };
+  const v2 = Schema.createHousehold(JSON.parse(JSON.stringify(Spine._migrateLegacy(flat))));
+  check('v1 salary reads as gross income, to the cent', Schema.grossAnnualIncomeCents(v2).value, 6200000);
+  check('v1 loan reads as the dashboard\'s debt, to the cent', Schema.totalDebtCents(v2).value, 2200000);
+  check('v1 rate 5.3 is 5.3%', v2.debts[0].rate, 0.053);
+  checkTrue('...and the household says where it came from', v2.meta.migratedFrom === 'flat-profile-v1');
+  checkTrue('...and every 15.x shape is present with its empty meaning', v2.assumptions && v2.zip === null && Array.isArray(v2.expenses.annual) && v2.people[0].incomeSources[0].type === 'w2' && v2.debts[0].tier === undefined);
+
+  /* A household saved before Phase A (no assumptions, no field meta, no
+     zip, no annual lines, no income types, no tiers) renders the same
+     dashboard numbers as the same household built today, to the cent. */
+  const now = Demo.build();
+  const before = JSON.parse(JSON.stringify(now));
+  delete before.assumptions; delete before.zip; delete before.meta.fields; delete before.expenses.annual;
+  before.assets.forEach(a => { delete a.tier; });
+  before.people.forEach(p => p.incomeSources.forEach(s => { delete s.type; delete s.survivesJobLoss; delete s.passiveTreatment; }));
+  const back = Schema.createHousehold(before);
+  const T = TABLES;
+  const reads = {
+    grossAnnualIncomeCents: h => Schema.grossAnnualIncomeCents(h).value,
+    takeHomeAnnualCents: h => Schema.takeHomeAnnualCents(h, T).value,
+    monthlyExpensesCents: h => Schema.monthlyExpensesCents(h).value,
+    totalDebtCents: h => Schema.totalDebtCents(h).value,
+    totalAssetsCents: h => Schema.totalAssetsCents(h).value,
+    investmentsCents: h => Schema.investmentsCents(h).value,
+    cashCents: h => Schema.cashCents(h).value,
+    netWorth: h => Tier0.netWorth(h).value,
+    savingsRate: h => Tier0.savingsRate(h, T).value,
+    fireNumber: h => Tier0.fireNumber(h).value,
+    runwayMonths: h => Schema.runwayMonths(h, null, {}).value
+  };
+  Object.keys(reads).forEach(k => {
+    const a = reads[k](now), b = reads[k](back);
+    check('migrated to the cent: ' + k, b, a);
+  });
+  checkTrue('the migrated household carries the assumption defaults', back.assumptions && back.assumptions.returnReal === 0.05 && back.assumptions.inflation === 0.03);
+  /* The store never rewrites a saved row (createHousehold keeps the arrays
+     as they are); the READERS give a pre-Phase-A row its default meaning. */
+  checkTrue('...an untyped income source stops on a job loss, as a w2 does', back.people[0].incomeSources.every(s => s.type === undefined && Schema.survivesJobLoss(s) === false));
+  checkTrue('...every asset without a pile is placed by its kind', back.assets.every(a => a.tier === undefined && Schema.tierOf(a).derived));
+  /* The Playwright half of the gate lives in test/aftertax.js (the toggle on
+     the Statement) and test/adventure.js (the marks on the Long Way Round). */
+  checkTrue('the after-tax toggle gate exists and taps the Statement', /nw-basis/.test(fs.readFileSync(path.join(ROOT, 'test/aftertax.js'), 'utf8')));
+  checkTrue('the Long Way Round gate reads the milestone marks', /g\.milestone/.test(fs.readFileSync(path.join(ROOT, 'test/adventure.js'), 'utf8')));
+  Spine.reset();
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 
