@@ -11823,7 +11823,7 @@ moves yet.
 - **Compatibility note.** No stored shape changes. `data/layouts.json`
   gains the room in all twenty arrangements; `rooms.json` regenerated.
 
-Gate for this commit: unit 26797 (a new section of 18 checks on the
+Gate for this commit: unit 26844 (a new section of 18 checks on the
 registry entry and the room's source); render on the Ledger empty and
 with the demo; a phone walk empty (sphere 1, 8 rows, 17 empty cells) and
 with the demo (sphere 1 with two rows left, cells full, half and empty,

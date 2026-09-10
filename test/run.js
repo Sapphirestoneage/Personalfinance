@@ -11441,7 +11441,7 @@ section('18.4 and 18.5: the Ledger room, the target and one line per row (D-185)
   const body = html.split('<body')[1];
   checkTrue('the room reads the two tables through their modules, never the files', /Reference\.load\(\['ledgerRows', 'spheres', 'staleness'\]\)/.test(body) && !/ledger-rows\.json|spheres\.json/.test(body));
   checkTrue('the target is five wedges by nine rings', /Spheres\.cells\(/.test(html) && /viewBox="0 0 100 100"/.test(html));
-  checkTrue('one line under it: sphere N of 9, the virtue, rows left, minutes', /Sphere ' \+ s\.order \+ ' of 9, /.test(html) && /' row' \+ [^;]* \+ ' left'/.test(html) && /minutesWord/.test(html));
+  checkTrue('one line under it: sphere N of 9, the virtue, rows left, minutes', /Sphere ' \+ s\.order \+ ' of 9, /.test(html) && /' row' \+ [^;]* \+ ' left, about '/.test(html) && /minutesWord/.test(html));
   checkTrue('rows group by sphere then letter, numbered inside the sphere', /LETTER_WORD/.test(html) && /' of ' \+ of/.test(html));
   checkTrue('later spheres sit under a fold, never locked', /<details class="fold" id="later">/.test(html) && !/locked/i.test(html.replace(/Nothing here is locked/, '')));
   checkTrue('spheres 1 to 4 say this is already good', /This is already good\./.test(html) && /alreadyGood/.test(html));
