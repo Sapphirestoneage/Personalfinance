@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>The Ledger · SPARKS</title>
+<meta name="description" content="Every number the app can hold, one row each, in nine spheres. What is entered, what is rough, what is still to look up, and where each number is read."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. THE LEDGER. DECISIONS.md D-185 (18.4, 18.5).
+
+  1. READS   data/ledger-rows.json (every number, one row) and
+             data/spheres.json (the nine spheres, in order) through
+             shared/ledger-rows.js and shared/spheres.js; the household
+             through the ownership map, never a private copy.
+  2. SHOWS   the target: five DAITE wedges by nine rings, 45 cells, filled
+             for sure, half for roughly, empty for missing, dashed for
+             stale; one line under it (sphere N of 9, the virtue, rows
+             left, minutes); then the rows, grouped by sphere then letter,
+             each numbered inside its sphere, later spheres under a fold.
+  3. WRITES  nothing yet. A row's tap target is its owner room's box until
+             18.1 moves entry here; the search box is the only control.
+
+  LIVE-FORM: built once. The search box is in the HTML and only its value
+  is read; every list below it holds no inputs and is rewritten freely.
+-->
+<style>
+  .target-wrap { position: sticky; top: 0; z-index: 3; background: var(--color-bg); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+  .target { display: flex; gap: var(--space-4); align-items: center; flex-wrap: wrap; }
+  .target svg { width: 150px; height: 150px; flex: none; }
+  .target .line { font-size: var(--text-sm); color: var(--color-text-muted); line-height: var(--leading-loose); min-width: 0; }
+  .target .line b { color: var(--color-text); font-family: var(--font-display); font-weight: 500; }
+  .cell { stroke: var(--color-border); stroke-width: 0.6; fill: transparent; }
+  .cell.is-half { fill: var(--color-accent); fill-opacity: 0.35; }
+  .cell.is-full { fill: var(--color-accent); fill-opacity: 0.9; }
+  .cell.is-dashed { fill: var(--color-accent); fill-opacity: 0.35; stroke-dasharray: 2 2; stroke: var(--color-warning, #d97706); }
+  .cell.is-none { fill: transparent; stroke-opacity: 0.35; }
+  .wedge-label { font-size: 8px; fill: var(--color-text-faint); font-family: var(--font-display); }
+  .search { margin-top: var(--space-3); }
+  .sphere { margin-top: var(--space-4); }
+  .sphere-head { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
+  .sphere-num { font-family: var(--font-display); font-size: var(--text-sm); color: var(--color-text-faint); border: 1px solid var(--color-border); border-radius: 999px; min-width: 26px; text-align: center; padding: 1px 6px; }
+  .sphere-title { font-family: var(--font-display); font-size: var(--text-lg); margin: 0; }
+  .sphere-count { margin-left: auto; font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+  .sphere.is-complete .sphere-count { color: var(--color-positive); }
+  .sphere-line { color: var(--color-text-muted); font-size: var(--text-sm); margin: var(--space-1) 0 0; }
+  .good { font-size: var(--text-xs); color: var(--color-positive); margin: var(--space-1) 0 0; }
+  .letter { margin-top: var(--space-3); }
+  .letter-head { font-size: var(--text-xs); color: var(--color-text-faint); letter-spacing: .04em; text-transform: uppercase; }
+  .rows { list-style: none; margin: var(--space-1) 0 0; padding: 0; }
+  .row { display: grid; grid-template-columns: 1.4em minmax(0, 1fr) auto; gap: var(--space-2); align-items: baseline; border-top: 1px solid var(--color-border); padding: var(--space-2) 0; }
+  .row .g { font-family: var(--font-display); color: var(--color-text-muted); }
+  .row.is-sure .g { color: var(--color-positive); }
+  .row.is-stale .g, .row.is-roughly .g { color: var(--color-warning, #d97706); }
+  .row.is-computed { color: var(--color-text-muted); }
+  .row .lab { font-size: var(--text-sm); }
+  .row .lab .num { color: var(--color-text-faint); font-size: var(--text-xs); margin-left: var(--space-1); }
+  .row .val { font-family: var(--font-display); font-size: var(--text-sm); text-align: right; white-space: nowrap; }
+  .row .val a { text-decoration: none; }
+  .row .where, .row .small { grid-column: 2 / span 2; font-size: var(--text-xs); color: var(--color-text-faint); line-height: var(--leading-loose); }
+  .row .where { color: var(--color-text-muted); }
+  .row .reads a { margin-right: var(--space-2); }
+  details.fold > summary { cursor: pointer; font-family: var(--font-display); font-size: var(--text-md); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  .empyrean { margin-top: var(--space-4); color: var(--color-text-muted); font-size: var(--text-sm); }
+</style>
+</head>
+<body class="slaf">
+<main class="slaf-room">
+  <a class="room-back" href="../index.html">← Home</a>
+  <header class="slaf-room-head">
+    <span class="slaf-eyebrow">Home</span>
+    <h1>The Ledger</h1>
+    <p class="slaf-lede">Every number the app can hold, one line each, in the order they matter. Enter, confirm, sharpen. Nothing here is locked; a later sphere is only sharper.</p>
+  </header>
+
+  <section class="target-wrap" id="target-wrap" aria-label="How far along the numbers are">
+    <div class="target">
+      <svg id="target" viewBox="0 0 100 100" role="img" aria-label="Five wedges by nine rings: how much of each family is entered and confirmed"></svg>
+      <div class="line" id="target-line">Loading the rows…</div>
+    </div>
+  </section>
+
+  <div class="search slaf-field">
+    <span class="slaf-label">Find a row</span>
+    <span class="slaf-input-shell"><input type="search" id="q" placeholder="rent, 401(k), state…" aria-label="Find a row by its label"/></span>
+  </div>
+
+  <div id="spheres"></div>
+
+  <p class="empyrean" id="empyrean">Beyond the nine: What Matters. No numbers there.</p>
+
+  <p class="disclaimer">Not financial advice. Nothing here is sent anywhere; every figure stays in this browser.</p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/daite.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/staleness.js"></script>
+<script src="../shared/levers.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/swan.js"></script>
+<script src="../engines/variance.js"></script>
+<script src="../engines/rerank.js"></script>
+<script src="../shared/ledger-rows.js"></script>
+<script src="../shared/spheres.js"></script>
+<script>
+(function () {
+  var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Registry = SLAF.Registry, Progress = SLAF.Progress,
+      LedgerRows = SLAF.LedgerRows, Spheres = SLAF.Spheres, Reference = SLAF.Reference;
+  var TABLES = {};
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var GLYPH = { sure: '●', roughly: '◐', missing: '○', computed: '=', stale: '◌' };
+  var WORD = { sure: 'sure', roughly: 'roughly', missing: 'not entered', computed: 'worked out', stale: 'needs a look' };
+
+  /* ---- The target: five wedges by nine rings ------------------------------ */
+  function polar(r, a) { var t = (a - 90) * Math.PI / 180; return [50 + r * Math.cos(t), 50 + r * Math.sin(t)]; }
+  function cellPath(r0, r1, a0, a1) {
+    var p0 = polar(r1, a0), p1 = polar(r1, a1), p2 = polar(r0, a1), p3 = polar(r0, a0);
+    return 'M' + p0[0].toFixed(2) + ',' + p0[1].toFixed(2) + ' A' + r1 + ',' + r1 + ' 0 0 1 ' + p1[0].toFixed(2) + ',' + p1[1].toFixed(2)
+      + ' L' + p2[0].toFixed(2) + ',' + p2[1].toFixed(2) + ' A' + r0 + ',' + r0 + ' 0 0 0 ' + p3[0].toFixed(2) + ',' + p3[1].toFixed(2) + 'Z';
+  }
+  function paintTarget(h) {
+    var cells = Spheres.cells(h, TABLES);
+    var parts = [];
+    var letters = Spheres.LETTERS, step = 360 / letters.length, inner = 8, outer = 44, ring = (outer - inner) / 9;
+    cells.forEach(function (c) {
+      var li = letters.indexOf(c.letter);
+      var r0 = inner + (c.order - 1) * ring, r1 = r0 + ring - 0.4;
+      var a0 = li * step + 1, a1 = (li + 1) * step - 1;
+      var title = c.letter + ' at sphere ' + c.order + ': ' + (c.rows.length ? c.rows.length + ' row' + (c.rows.length === 1 ? '' : 's') + ', ' + c.fill : 'no rows');
+      parts.push('<path class="cell is-' + c.fill + '" data-cell="' + c.letter + c.order + '" d="' + cellPath(r0, r1, a0, a1) + '"><title>' + esc(title) + '</title></path>');
+    });
+    letters.forEach(function (L, i) {
+      var p = polar(outer + 4, i * step + step / 2);
+      parts.push('<text class="wedge-label" x="' + p[0].toFixed(1) + '" y="' + (p[1] + 3).toFixed(1) + '" text-anchor="middle">' + L + '</text>');
+    });
+    el('target').innerHTML = parts.join('');
+  }
+  function paintLine(st) {
+    var s = st.current;
+    var line;
+    if (!s) {
+      line = '<b>Every sphere is complete.</b> ' + (st.sharpThrough === st.spheres.length ? 'And every number is sure.' : 'Sharpen the rough ones when you have a minute.');
+    } else {
+      var c = s.counts;
+      line = '<b>Sphere ' + s.order + ' of 9, ' + esc(s.virtue) + '.</b> ' + c.open + ' row' + (c.open === 1 ? '' : 's') + ' left, about ' + minutesWord(s.minutesLeft) + '.'
+        + (s.alreadyGood ? ' This is already enough for most people.' : '');
+    }
+    el('target-line').innerHTML = line;
+  }
+  function minutesWord(m) { if (!Money.isEntered(m)) return '?'; if (m < 1) return 'a minute'; var n = Math.round(m); return n + ' minute' + (n === 1 ? '' : 's'); }
+
+  /* ---- The rows ----------------------------------------------------------- */
+  function valueOf(row) {
+    if (row.kind === 'computed') return Money.isOk(row.result) ? Ownership.describe(row.id, Spine.getProfile(), 'ledger').display : (row.result.reason || 'Needs its inputs.');
+    if (row.repeat) return row.entered ? row.result.value + ' listed' : '';
+    if (!row.entered) return '';
+    var d = Ownership.FIELDS[row.id] ? Ownership.describe(row.id, Spine.getProfile(), 'ledger') : null;
+    if (d) return d.display;
+    return Money.isOk(row.result) ? String(row.result.value) : '';
+  }
+  function target(row) {
+    if (/^prefs\./.test(row.path)) return Ownership.linkTo('doors', 'inputs', 'ledger');
+    var f = Ownership.FIELDS[row.id];
+    if (!f) return null;
+    return Ownership.linkTo(f.owner, f.anchor, 'ledger');
+  }
+  function sourceLine(row) {
+    if (!row.entered || !row.meta) return '';
+    var bits = [];
+    if (row.meta.source) bits.push(row.meta.source);
+    if (row.meta.asOf) { var d = new Date(row.meta.asOf); if (!isNaN(d.getTime())) bits.push('as of ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })); }
+    if (row.status === 'stale' && Money.isEntered(row.days)) bits.push(row.days + ' days old');
+    return bits.join(' · ');
+  }
+  function readersLine(row) {
+    var rs = LedgerRows.readersOf(row).filter(function (r) { return r.id !== 'ledger'; }).slice(0, 4);
+    if (!rs.length) return '';
+    return '<span class="reads">Read by ' + rs.map(function (r) { return '<a href="../' + esc(r.href) + '">' + esc(r.title) + '</a>'; }).join('') + '</span>';
+  }
+  function rowHtml(row, n, of) {
+    var st = row.status, val = valueOf(row), href = target(row);
+    var lab = '<span class="lab">' + esc(row.label) + '<span class="num">' + n + ' of ' + of + '</span></span>';
+    var valCell = st === 'computed'
+      ? '<span class="val">' + esc(val) + '</span>'
+      : href
+        ? '<span class="val"><a href="' + esc(href) + '">' + (val ? esc(val) : (row.kind === 'lookup' ? 'Look it up' : 'Enter it')) + '</a></span>'
+        : '<span class="val">' + esc(val) + '</span>';
+    var out = '<li class="row is-' + st + '" data-row="' + esc(row.id) + '" data-status="' + st + '">'
+      + '<span class="g" title="' + esc(WORD[st]) + '">' + GLYPH[st] + '</span>' + lab + valCell;
+    if (st === 'computed') {
+      var inputs = LedgerRows.inputsOf(row, Spine.getProfile(), TABLES);
+      out += '<span class="small">' + esc(row.engine.split('.')[1] === 'netWorth' ? 'What you own less what you owe' : 'Worked out from ') + (row.engine.split('.')[1] === 'netWorth' ? ': ' : '')
+        + inputs.map(function (i) { return i.row ? (i.missing ? '<a href="#row-' + esc(i.id) + '">' + esc(i.row.label) + ' (missing)</a>' : esc(i.row.label)) : esc(i.id); }).join(', ') + '.</span>';
+    } else if (!row.entered && row.kind === 'lookup' && row.where) {
+      out += '<span class="where">' + esc(row.where) + '</span>';
+    } else if (row.entered) {
+      var src = sourceLine(row);
+      if (src) out += '<span class="small">' + esc(src) + '</span>';
+    }
+    var reads = readersLine(row);
+    if (reads) out += '<span class="small">' + reads + '</span>';
+    return out + '</li>';
+  }
+  var LETTER_WORD = { D: 'Debt', A: 'Assets', I: 'Income', T: 'Taxes', E: 'Expenses', you: 'About you' };
+  function sphereHtml(s, query) {
+    var rows = s.rows.filter(function (r) { return !query || r.label.toLowerCase().indexOf(query) >= 0; });
+    if (query && !rows.length) return '';
+    var groups = [];
+    ['you', 'D', 'A', 'I', 'T', 'E'].forEach(function (L) {
+      var mine = rows.filter(function (r) { return (L === 'you' ? r.family === 'you' : r.letter === L); });
+      if (mine.length) groups.push({ L: L, rows: mine });
+    });
+    var n = 0, of = s.rows.length;
+    var body = groups.map(function (g) {
+      return '<div class="letter"><div class="letter-head">' + esc(LETTER_WORD[g.L]) + '</div><ul class="rows">'
+        + g.rows.map(function (r) { n++; return rowHtml(r, s.rows.indexOf(r) + 1, of); }).join('') + '</ul></div>';
+    }).join('');
+    var c = s.counts;
+    var count = c.applicable ? (c.sharp ? 'all sure' : c.complete ? 'all entered, ' + c.roughly + ' rough' : c.open + ' of ' + c.applicable + ' left') : 'no rows yet';
+    return '<section class="sphere' + (s.complete ? ' is-complete' : '') + '" id="sphere-' + esc(s.id) + '" data-sphere="' + esc(s.id) + '">'
+      + '<div class="sphere-head"><span class="sphere-num">' + s.order + '</span><h2 class="sphere-title">' + esc(s.virtue) + '</h2><span class="sphere-count">' + esc(count) + (c.open ? ' · about ' + minutesWord(s.minutesLeft) : '') + '</span></div>'
+      + '<p class="sphere-line">' + esc(s.virtueLine) + '</p>'
+      + (s.alreadyGood ? '<p class="good">This is already good.</p>' : '')
+      + (s.rows.length ? body : '<p class="slaf-hint">Nothing to enter here yet: the time budget adds the hours and the price of a day off.</p>')
+      + '</section>';
+  }
+  function paintSpheres(st) {
+    var query = (el('q').value || '').trim().toLowerCase();
+    var cur = st.currentOrder;
+    var open = st.spheres.filter(function (s) { return query || s.order <= cur; });
+    var later = st.spheres.filter(function (s) { return !query && s.order > cur; });
+    var html = open.map(function (s) { return sphereHtml(s, query); }).join('');
+    if (later.length) {
+      html += '<details class="fold" id="later"><summary>The later spheres, ' + later[0].order + ' to 9: visible now, sharper later</summary>'
+        + later.map(function (s) { return sphereHtml(s, ''); }).join('') + '</details>';
+    }
+    el('spheres').innerHTML = html || '<p class="slaf-reason">No row matches that.</p>';
+  }
+  function render() {
+    var h = Spine.getProfile();
+    var st = Spheres.state(h, TABLES);
+    paintTarget(h);
+    paintLine(st);
+    paintSpheres(st);
+  }
+
+  el('q').addEventListener('input', function () { paintSpheres(Spheres.state(Spine.getProfile(), TABLES)); });
+  Spine.registerRoom('ledger');
+  Spine.onChange(render);
+  Progress.mountHeader('ledger');
+  Progress.mount('ledger');
+  Reference.load(['ledgerRows', 'spheres', 'staleness']).then(function (t) {
+    TABLES = t || {};
+    LedgerRows.use(TABLES.ledgerRows);
+    Spheres.use(TABLES.spheres);
+    if (SLAF.Staleness && TABLES.staleness) SLAF.Staleness.use(TABLES.staleness);
+    render();
+  }).catch(function (err) {
+    el('target-line').textContent = 'The rows could not be loaded. (' + err + ')';
+  });
+})();
+</script>
+</body>
+</html>

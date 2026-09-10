@@ -11784,6 +11784,53 @@ shape and rules, every row in one sphere, the state on the demo, on
 nothing, confirmed and rough, the cells, the nine measures and the tile);
 dnd 5614; export 25; the lane 2 data suite.
 
+## D-185 — The Ledger room, 18.4 and 18.5: the target, and one line per row
+
+**Decision.** `rooms/ledger.html` is the room the registry (D-183) and the
+spheres (D-184) were built for, as a view first: entry moves into it in
+18.1, the dump box in 18.3, the nag in 18.6, the sidebar change in 18.7.
+Until then a row's tap target is its owner room's box, through the one
+link map (`Ownership.linkTo`), so nothing is entered twice and nothing
+moves yet.
+
+- **The target**, pinned while scrolling: five DAITE wedges by nine rings,
+  the 45 cells of `Spheres.cells`, filled for sure, half for roughly,
+  empty for missing, dashed for stale, hollow where a letter has no row
+  at that sphere; each cell's title says which. Under it one line:
+  "Sphere N of 9, Virtue. K rows left, about M minutes. This is already
+  enough for most people." (the last sentence on spheres 1 to 4 only).
+- **The rows**, grouped by sphere, then by letter (About you first, then
+  D A I T E), in the fixed order of `spheres.json`, each numbered "n of
+  N" inside its sphere and never reordered by what is missing. One line
+  each: the status glyph (● sure, ◐ roughly, ○ not entered, = worked
+  out, ◌ needs a look), the label, the value or, for a lookup row not yet
+  entered, its `where` sentence; under it the source and as-of date in
+  small text, and the rooms that read it as tap targets. A computed row
+  is grey, names its inputs in words, and each missing input is a link to
+  that input's row. Spheres past the household's current one sit under
+  one fold, visible from the start. A search box filters rows by label
+  (the room's only control; built once). The Empyrean is one line: "What
+  Matters. No numbers there."
+- **Registry.** Under Home after the Dashboard, `kind: 'about-you'` (the
+  kind Start Here and What Comes Next carry) until 18.7 retires Start
+  Here and it takes the core slot (D-051's four-room check is deliberate
+  and untouched); reads every DAITE money and situation path, writes
+  nothing; needs nothing, so it opens on an empty household. Every Front
+  Doors arrangement shelves it beside Start Here.
+- **A listed debt is a yes.** The "any debt" row carries `impliedBy:
+  'debts'`: the D-061 question is answered by implication once a debt is
+  listed, so the Ledger does not ask again.
+- **Compatibility note.** No stored shape changes. `data/layouts.json`
+  gains the room in all twenty arrangements; `rooms.json` regenerated.
+
+Gate for this commit: unit 26797 (a new section of 18 checks on the
+registry entry and the room's source); render on the Ledger empty and
+with the demo; a phone walk empty (sphere 1, 8 rows, 17 empty cells) and
+with the demo (sphere 1 with two rows left, cells full, half and empty,
+the fold holding spheres 2 to 9, the search narrowing to the rent row,
+the net worth row naming its four inputs, a lookup row carrying its where
+sentence and its readers), with no console errors.
+
 ---
 
 # The Dungeons & Dividends entries

@@ -626,7 +626,9 @@
       "pass": 1,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "debt"
+      "family": "debt",
+      "impliedBy": "debts",
+      "note": "Answered by implication once a debt is listed: a listed debt is a yes."
     },
     {
       "id": "debtBalance",

@@ -514,6 +514,29 @@
         { id: 'reading',      label: 'Reading from elsewhere' }
       ]
     },
+    /* The Ledger (18.4, 18.5; D-185): every number the app can hold, one
+       row each, in nine spheres. Reads everything, writes nothing until
+       18.1 moves entry here. */
+    {
+      id: 'ledger',
+      group: 'home', aliases: ['ledger', 'the ledger', 'numbers', 'rows', 'spheres', 'enter'],
+      /* 'about-you', the kind Start Here and What Comes Next carry, until
+         18.1 moves entry here and 18.7 retires Start Here; then it becomes
+         the core room in Start Here's place (D-051). */
+      kind: 'about-you',
+      needs: [],
+      order: 15.5,
+      title: 'The Ledger',
+      blurb: 'Every number the app can hold, one line each, in the order they matter: what is entered, what is rough, what is still to look up, and where each is read.',
+      href: 'rooms/ledger.html',
+      tier: 0,
+      tags: ['income', 'cashflow', 'debt'],
+      daite: { reads: ["assets","assets.allocation","assets.cashCents","assets.contributions.hsa","assets.contributions.pretax","assets.contributions.roth","assets.invested","assets.property","debt.items","debt.items[].minimumCents","debt.items[].plan","debt.none","expenses","expenses.floor","expenses.giving","expenses.insurance","expenses.log","expenses.months","expenses.needs.accommodation","expenses.needs.food","expenses.needs.transportation","expenses.shared","expenses.wants","expenses.wants.therapy","income.cadence","income.future","income.grossAnnualCents","income.ledger","income.sources[].benefit","income.sources[].employerMatch","income.variable","taxes.filingStatus","taxes.marginalRate","taxes.otherPreTax","taxes.state","taxes.withheld","taxes.zip","you.cover","you.dependents","you.dob","you.estate","you.partner","you.situation"], writes: [] },
+      subsections: [
+        { id: 'target-wrap', label: 'The target' },
+        { id: 'spheres',     label: 'The rows, by sphere' }
+      ]
+    },
     {
       id: 'accounts',
       group: 'numbers', subgroup: 'assets', aliases: ['401k', 'ira', 'roth', 'hsa', 'allocation', 'contributions', 'match'],

@@ -86,6 +86,8 @@
     var h = household || {};
     var f = field(row);
     var value = prefValue(row) || (f && typeof f.read === 'function' ? f.read(h) : Money.incomplete('No reader for this row.', [row.id]));
+    /* A yes-or-no answered by implication: a listed debt is a yes. */
+    if (!Money.isOk(value) && row.impliedBy && items(h, { repeat: row.impliedBy }).length) value = Money.ok(true, { implied: row.impliedBy });
     var entered = Money.isOk(value);
     if (/^prefs\./.test(row.path)) return { state: entered ? 'sure' : 'missing', value: value, entered: entered, meta: null, stale: false, days: null };
     if (row.kind === 'computed') {

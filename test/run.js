@@ -9952,7 +9952,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('every room appears in exactly one group', Registry.all().every(r => ids.filter(g => Registry.inGroup(g, null).some(x => x.id === r.id)).length === 1));
   check('...and every room appears', ids.reduce((n, g) => n + Registry.inGroup(g, null).length, 0), Registry.all().length);
   checkTrue('kind is still a property, no longer a heading', Registry.all().every(r => typeof r.kind === 'string') && !/'The path'|'About you'|'What it means'/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
-  check('Home: the Dashboard and Start Here', Registry.inGroup('home', null).map(r => r.id).join(','), 'dashboard,start');
+  check('Home: the Dashboard, Start Here and the Ledger (18.7 retires Start Here)', Registry.inGroup('home', null).map(r => r.id).join(','), 'dashboard,start,ledger');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
   check('...fifteen of them', Registry.inGroup('numbers', null).length, 15);
   checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses)\b/.test(w))));
@@ -11424,6 +11424,38 @@ section('19.1: nine spheres in one file, depth gating precision, the shadow meas
   checkTrue('a complete sphere\'s tile shows the measure and the action', t1c.mode === 'measure' && /never touched/.test(t1c.sentence) && t1c.action.label === 'Look at the five');
   Prefs.reset();
   checkTrue('the tile never carries a shadow name', list.every(s => { const t = Sp.tile(sure, {}, s.id); return !new RegExp(s.shadow.name, 'i').test(JSON.stringify(t)); }));
+})();
+
+/* ==========================================================================
+   18.4 / 18.5 — the Ledger room: the target, the rows by sphere (D-185)
+   ========================================================================== */
+section('18.4 and 18.5: the Ledger room, the target and one line per row (D-185)');
+(function () {
+  const Registry = require(path.join(ROOT, 'shared/registry.js'));
+  const Sp = require(path.join(ROOT, 'shared/spheres.js'));
+  const html = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  const room = Registry.byId('ledger');
+  checkTrue('the Ledger is registered under Home, after the Dashboard', room && room.group === 'home' && room.order > Registry.byId('dashboard').order && room.href === 'rooms/ledger.html');
+  checkTrue('...reading every DAITE money and situation path and writing nothing yet', room.daite.reads.length > 30 && room.daite.writes.length === 0);
+  checkTrue('...and needing nothing, so it opens on an empty household', Array.isArray(room.needs) && room.needs.length === 0);
+  const body = html.split('<body')[1];
+  checkTrue('the room reads the two tables through their modules, never the files', /Reference\.load\(\['ledgerRows', 'spheres', 'staleness'\]\)/.test(body) && !/ledger-rows\.json|spheres\.json/.test(body));
+  checkTrue('the target is five wedges by nine rings', /Spheres\.cells\(/.test(html) && /viewBox="0 0 100 100"/.test(html));
+  checkTrue('one line under it: sphere N of 9, the virtue, rows left, minutes', /Sphere ' \+ s\.order \+ ' of 9, /.test(html) && /' row' \+ [^;]* \+ ' left'/.test(html) && /minutesWord/.test(html));
+  checkTrue('rows group by sphere then letter, numbered inside the sphere', /LETTER_WORD/.test(html) && /' of ' \+ of/.test(html));
+  checkTrue('later spheres sit under a fold, never locked', /<details class="fold" id="later">/.test(html) && !/locked/i.test(html.replace(/Nothing here is locked/, '')));
+  checkTrue('spheres 1 to 4 say this is already good', /This is already good\./.test(html) && /alreadyGood/.test(html));
+  checkTrue('a computed row is grey with its inputs named, each missing one a link', /is-computed/.test(html) && /LedgerRows\.inputsOf\(/.test(html) && /\(missing\)/.test(html));
+  checkTrue('a lookup row shows its where sentence until entered', /row\.where/.test(html));
+  checkTrue('every row shows the rooms that read it', /LedgerRows\.readersOf\(/.test(html) && /Read by/.test(html));
+  checkTrue('the status glyphs: sure, roughly, missing, computed, stale', /sure: '●', roughly: '◐', missing: '○', computed: '=', stale: '◌'/.test(html));
+  checkTrue('a search box filters by label, built once', /LIVE-FORM: built once/.test(html) && /id="q"/.test(html) && (html.match(/<input/g) || []).length === 1);
+  checkTrue('the Empyrean is one line with no number', /What Matters\. No numbers there\./.test(html));
+  const NAMES = Sp.all().map(s => s.shadow.name);
+  checkTrue('no shadow name appears in the room', NAMES.every(n => !new RegExp('\\b' + n + '\\b').test(html)));
+  checkTrue('no em dash on screen', body.split('<script')[0].indexOf('—') === -1);
+  const layouts = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8'));
+  checkTrue('every Front Doors arrangement shelves the Ledger beside Start Here', layouts.layouts.every(l => l.groups.some(g => g.rooms.indexOf('ledger') >= 0)));
 })();
 
 /* ==========================================================================

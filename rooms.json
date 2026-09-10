@@ -336,6 +336,16 @@
       "order": 15
     },
     {
+      "id": "ledger",
+      "title": "The Ledger",
+      "file": "rooms/ledger.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 15.5
+    },
+    {
       "id": "credential",
       "title": "Worth Learning",
       "file": "rooms/credential.html",
