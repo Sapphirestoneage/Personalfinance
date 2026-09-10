@@ -12077,6 +12077,45 @@ walk with three households (debts only, the demo persona, the persona
 with three closed months) reading the two rows, the hint, the
 placeholder and both rings, and a typed figure taking over.
 
+## D-191 — Income: the entry form folds behind one line, and shows five things, not seven
+
+**Why.** The owner, on a phone, with the Income room open: the "Add an
+entry" card was seven stacked controls and a hint — a whole screen of
+form under a list that is the actual point of the room — and they asked
+for it to collapse and for the room to be "much, much cleaner". The form
+was also the same size whether it was in use or not: every visit scrolled
+past it.
+
+**Decision.** The form is a `<details>` fold, `#add-fold`, inside the
+`#add` card. Closed, the card is one row: a blue "+" and "Add an entry"
+with a sub-line naming what counts. Open, the "+" turns to a cross and
+the form shows **five** controls in the order a person thinks of them:
+the kind, the amount beside how often, what to call it, when it was
+received. The two that have a right default per kind — how sure the date
+is, and how it is taxed — sit under a "More" line and open only when an
+entry being edited holds something other than the kind's own default, so
+the fold never hides a value the person chose. A gift still hides the
+tax row. "Start a new one" is gone; a "Cancel" always sits by Save and
+folds the form back with the fields cleared.
+
+Opening and closing only set `open` on the fold; the inputs are never
+rebuilt (D-034 still holds and the marker still reads *built once*). The
+fold opens itself in three cases: a tap on Edit, an arrival on `#add`
+(the deep link), and the budget's Add flow (`?for=budget`, D-128), which
+sent the person here to add one. Save folds it back, and the confirmation
+line sits under the fold, outside it, so "Added. Day job $2,400 …" is
+visible with the form closed and the new row above it in the list.
+
+**Compatibility note.** Nothing stored changes. The budget's link
+`income.html?for=budget&month=…#add` still lands on an open form.
+
+Gate for this commit: unit 27176; render on the room; the phone form
+case now taps the summary open first, types into the amount and the
+name, saves, and checks the fold closed with the entry in the ledger; a
+Pixel-7 walk through closed, open, "More" open, Cancel, Edit (the fold
+opens, the caption names the entry, "More" stays shut for a default
+entry) and the budget deep link, with no console errors.
+
 ---
 
 # The Dungeons & Dividends entries

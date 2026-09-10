@@ -972,25 +972,36 @@ const CASES = [
     }
   },
   {
-    /* The Income room's entry form: built once, saved on a tap. */
+    /* The Income room's entry form: built once, saved on a tap. Since D-191
+       it folds behind one line, so a real tap on the summary has to open it
+       first; the fields it reveals have to survive a tap and typing; and
+       Save has to fold it back with the entry in the ledger. */
     room: '/rooms/income.html',
     container: '#add-form',
     seed: 'demo',
+    prepare: async (page) => { await page.tap('#add-fold > summary'); },
     fields: [
-      { sel: '#f-label', type: 'Day job' },
-      { sel: '#f-amount', type: '2400' }
+      { sel: '#f-amount', type: '2400' },
+      { sel: '#f-label', type: 'Day job' }
     ],
     expect: async (page) => {
+      const wasOpen = await page.evaluate(() => document.getElementById('add-fold').open);
       await page.selectOption('#f-frequency', 'fortnightly');
       await page.tap('#btn-save');
       await page.waitForTimeout(300);
       const e = await page.evaluate(() => ((JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).ledger || {}).income[0]);
-      const listed = await page.evaluate(() => document.querySelectorAll('#entries li').length);
+      const r = await page.evaluate(() => ({
+        listed: document.querySelectorAll('#entries li').length,
+        open: document.getElementById('add-fold').open,
+        say: document.getElementById('form-say').textContent.slice(0, 6) }));
       return [
+        ['the tap on the summary opened the fold', wasOpen, true],
         ['the entry was saved', e && e.label, 'Day job'],
         ['with its amount', e && e.amountCents, 240000],
         ['every two weeks', e && e.frequency, 'fortnightly'],
-        ['and is listed at once', listed, 1]
+        ['and is listed at once', r.listed, 1],
+        ['Save folded the form back', r.open, false],
+        ['and said so under the fold', r.say, 'Added.']
       ];
     }
   },
