@@ -7618,6 +7618,19 @@ section('Charts: the one way a number becomes a picture');
   checkTrue('… and a legend naming both', /<ul class="slaf-legend">.*>a<\/li>.*FI<\/li>/.test(a));
   checkTrue('no series: says so instead of drawing', /is-empty/.test(Charts.area({ series: [] })));
 
+  /* Columns (D-196): stacked, faded ahead, a divider, values only where they change. */
+  const cols = Charts.columns({ columns: [
+    { label: 'Mar', parts: [{ label: 'Benefit', value: 347600, color: '#5AA9FF' }] },
+    { label: 'Apr', parts: [{ label: 'Benefit', value: 347600, color: '#5AA9FF' }] },
+    { label: 'May', parts: [{ label: 'Benefit', value: 434500, color: '#5AA9FF' }, { label: 'Gift', value: 25000, color: '#E8B84B' }], mark: true },
+    { label: 'Jun', parts: [{ label: 'Benefit', value: 434500, color: '#5AA9FF' }], faded: true }
+  ], divider: 3, captions: ['so far', 'ahead'] });
+  check('columns: one rect per non-empty part', (cols.match(/<rect/g) || []).length, 5);
+  check('the ahead column is faded', (cols.match(/opacity="0\.42"/g) || []).length, 1);
+  checkTrue('a dashed divider with its captions', /stroke-dasharray="3 3"/.test(cols) && /so far/.test(cols) && />ahead</.test(cols));
+  check('values sit only where the total changes, and on the marked month', (cols.match(/font-size:7\.5px/g) || []).length, 3);
+  checkTrue('a legend names both parts once', /Benefit<\/li>/.test(cols) && /Gift<\/li>/.test(cols) && (cols.match(/<li>/g) || []).length === 2);
+  checkTrue('no columns: says so instead of drawing', /is-empty/.test(Charts.columns({ columns: [] })));
   const d = Charts.donut({ slices: [{ label: 'Cash', value: 950000 }, { label: 'Invest', value: 4800000 }, { label: 'Nothing', value: 0 }] });
   checkTrue('a donut is a ring of arcs', (d.match(/<circle class="arc"/g) || []).length === 2);
   checkTrue('… a zero slice is listed, not drawn', /Nothing/.test(d) && (d.match(/<circle class="arc"/g) || []).length === 2);
@@ -8584,6 +8597,20 @@ section('D-194: an entry knows when it ends and what the stub took off');
   const ueMonth = Ledger.month(h, T, '2026-09');
   check('an unemployment month: the split sums to the tax', ueMonth.withheldCents + ueMonth.owedCents, ueMonth.taxCents);
   check('with what was held back counted per landing', ueMonth.withheldCents, 3000 * 4);
+  /* D-196: an undated weekly entry lands as its monthly average, and the
+     tax scales to that average — the gross and the tax agree. */
+  h.ledger = Schema.createLedger({ income: [Schema.createIncomeEntry({ id: 'ud', kind: 'unemployment', amountCents: 86900, frequency: 'weekly' })] });
+  const avg = Ledger.month(h, T, '2026-09');
+  const oneLanding = Ledger.netOf(Ledger.byId(h, 'ud'), h, T);
+  check('undated weekly: the month is the yearly average, 869 × 52 ÷ 12', avg.grossCents, Math.round(86900 * 52 / 12));
+  check('… and the tax is the same rate on that average, not on one landing', avg.taxCents, Math.round(oneLanding.taxCents * avg.grossCents / 86900));
+  check('… so the net is gross less tax', avg.netCents, avg.grossCents - avg.taxCents);
+  checkTrue('… well above one landing’s net, which is what it used to be', avg.netCents > oneLanding.value * 3);
+  h.ledger = Schema.createLedger({ income: [Schema.createIncomeEntry({ id: 'dd', kind: 'unemployment', amountCents: 86900, frequency: 'weekly', receivedOn: '2026-03-06' })] });
+  const sep26 = Ledger.month(h, T, '2026-09'), may26 = Ledger.month(h, T, '2026-05');
+  check('dated weekly from a Friday: four landings in September 2026', sep26.grossCents, 4 * 86900);
+  check('… five in May', may26.grossCents, 5 * 86900);
+  check('… and the tax is per landing times the landings', sep26.taxCents, oneLanding.taxCents * 4);
 })();
 
 section('Two decision sequences that cannot collide');

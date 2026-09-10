@@ -3,7 +3,8 @@
    --------------------------------------------------------------------------
    Every chart in the suite is drawn here, as an SVG string, from figures an
    engine already produced: an area chart for anything over time, a donut
-   for anything that is a share of a whole, bars for anything compared.
+   for anything that is a share of a whole, bars for anything compared,
+   columns for a count of months walking left to right (D-196).
    Nothing is computed here beyond scales and ticks; a room that wants a
    line hands over the points and gets markup back.
 
@@ -289,6 +290,66 @@
     return '<div class="slaf-chart slaf-bars">' + html + '<ul class="slaf-legend">' + legend + '</ul></div>';
   }
 
+  /**
+   * Vertical columns over time, each stacked from parts (D-196). A column
+   * may be `faded` (assumed, not yet received) and the chart draws a dashed
+   * divider before opts.divider with a caption either side. Values sit on
+   * the columns where they change, never on every one.
+   * columns: [{ label, parts: [{ label, value, color }], faded, note }]
+   * opts.divider: index of the first column after the line  opts.captions: [left, right]
+   * opts.format: value → text for the column tops (default shortMoney)
+   */
+  function columns(opts) {
+    var o = opts || {};
+    var cols = (o.columns || []);
+    var totals = cols.map(function (c) { return (c.parts || []).reduce(function (t, p) { return t + Math.max(0, num(p.value) ? p.value : 0); }, 0); });
+    if (!cols.length || !totals.some(function (t) { return t > 0; })) return '<div class="slaf-chart is-empty"><p class="slaf-reason">' + esc(o.empty || 'Nothing to draw yet.') + '</p></div>';
+    var format = o.format || shortMoney;
+    var W = o.width || 360, H = o.height || 200;
+    var PL = 40, PR = 8, PT = o.captions ? 22 : 12, PB = 22;
+    var plotW = W - PL - PR, plotH = H - PT - PB;
+    var yMax = Math.max.apply(null, totals);
+    var yt = ticks(0, yMax, 4);
+    if (yt[yt.length - 1] < yMax) yt.push(yt[yt.length - 1] + (yt[1] - yt[0]));
+    var top = yt[yt.length - 1] || 1;
+    var slot = plotW / cols.length, cw = Math.max(4, slot * 0.62);
+    var y = function (v) { return PT + plotH - v / top * plotH; };
+    var GAP = 1.5, seen = {};
+    var grid = yt.map(function (t) {
+      return '<line class="grid" x1="' + PL + '" x2="' + (W - PR) + '" y1="' + y(t).toFixed(1) + '" y2="' + y(t).toFixed(1) + '"/>'
+        + '<text class="tick" x="' + (PL - 4) + '" y="' + (y(t) + 3).toFixed(1) + '" text-anchor="end">' + esc(format(t)) + '</text>';
+    }).join('');
+    var body = cols.map(function (c, i) {
+      var x = PL + i * slot + (slot - cw) / 2;
+      var acc = 0, segs = '';
+      (c.parts || []).forEach(function (p, j) {
+        var v = Math.max(0, num(p.value) ? p.value : 0);
+        if (!v) return;
+        var color = p.color || COLORS.series[j % COLORS.series.length];
+        seen[p.label] = color;
+        var y1 = y(acc + v), y0 = y(acc);
+        var h = Math.max(0, y0 - y1 - (acc ? GAP : 0));
+        segs += '<rect x="' + x.toFixed(1) + '" y="' + y1.toFixed(1) + '" width="' + cw.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="1.5" fill="' + color + '"' + (c.faded ? ' opacity="0.42"' : '') + '><title>' + esc(c.label + ' · ' + p.label + ' ' + money(p.value)) + '</title></rect>';
+        acc += v;
+      });
+      var show = totals[i] > 0 && (i === 0 || totals[i] !== totals[i - 1] || (o.divider !== undefined && i === o.divider) || c.mark);
+      var val = show ? '<text class="tick" style="font-size:7.5px" x="' + (x + cw / 2).toFixed(1) + '" y="' + (y(totals[i]) - 3).toFixed(1) + '" text-anchor="middle">' + esc(format(totals[i])) + '</text>' : '';
+      var lab = '<text class="tick" x="' + (x + cw / 2).toFixed(1) + '" y="' + (H - PB + 12) + '" text-anchor="middle"' + (c.mark ? ' font-weight="600"' : '') + '>' + esc(c.label) + '</text>';
+      return '<g>' + segs + val + lab + '</g>';
+    }).join('');
+    var divider = '';
+    if (num(o.divider) && o.divider > 0 && o.divider < cols.length) {
+      var dx = PL + o.divider * slot;
+      divider = '<line x1="' + dx.toFixed(1) + '" x2="' + dx.toFixed(1) + '" y1="' + PT + '" y2="' + (PT + plotH) + '" stroke="' + COLORS.axis + '" stroke-width="0.8" stroke-dasharray="3 3"/>';
+      if (o.captions) divider += '<text class="tick axis-label" x="' + (dx - 4).toFixed(1) + '" y="' + (PT - 8) + '" text-anchor="end">' + esc(o.captions[0]) + '</text>'
+        + '<text class="tick axis-label" x="' + (dx + 4).toFixed(1) + '" y="' + (PT - 8) + '">' + esc(o.captions[1]) + '</text>';
+    }
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.title || 'columns over time') + '">'
+      + grid + '<line class="axis" x1="' + PL + '" x2="' + (W - PR) + '" y1="' + (PT + plotH).toFixed(1) + '" y2="' + (PT + plotH).toFixed(1) + '"/>' + body + divider + '</svg>';
+    var legend = Object.keys(seen).map(function (k) { return '<li><i style="background:' + seen[k] + '"></i>' + esc(k) + '</li>'; }).join('');
+    return '<div class="slaf-chart slaf-columns">' + svg + (legend ? '<ul class="slaf-legend">' + legend + '</ul>' : '') + '</div>';
+  }
+
   /* ---- 4. Series helpers a room may need ------------------------------------------ */
 
   /** Yearly points from a monthly list: every 12th row, and the last. */
@@ -364,6 +425,7 @@
     donut: donut,
     bars: bars,
     stacked: stacked,
+    columns: columns,
     yearly: yearly
   };
 });
