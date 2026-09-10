@@ -12399,6 +12399,65 @@ fields, the log by bucket and the page order; render, forms (a yearly
 subscription landing as a month) and features on the room; a phone walk
 reading the ring, the bars and the subscriptions list on the example.
 
+## D-197 — F, A, T are the boxes; everything else is what you name; FAT is the lean month
+
+**Why.** The owner, on the reworked room (D-196): "remove everything
+else, literally arrange it as FAT. Then total FAT and have that be lean
+FI." The fourth box, "everything else", was a catch-all nobody could
+fill honestly: it doubled the lines named under it, and once Start Here
+had guessed a whole unsplit month into it, typing the three real
+numbers beside it counted the month twice.
+
+**Decision.** Expenses asks three numbers, F, A, T: food, accommodation
+(rent, or mortgage plus tax plus insurance), transportation. Their sum
+is the FAT total, shown a month and a year, and it is the **lean
+month**: `Schema.fatNeedsCents` is the one place it is added up, and the
+FIRE engine's lean variant (`basis: 'fat'` in `data/fire_variants.json`)
+reads it at factor 1 whenever all three are typed, falling back to the
+table's 70% of spending until then. The room shows that Lean FI number
+under the total, at the household's withdrawal rate, linking to FIRE
+Number. **Everything else** is no longer typed: once any of F, A, T is
+typed, any line in the wants bucket, subscriptions, named lines, the
+category boxes in the split, a yearly cost's twelfth, IS everything
+else, and the stored total behind it is not read. With no such line the
+stored `wants.totalCents` still counts and the room says where it came
+from: the remainder Start Here left after the three, an import, a
+block's line, or a household saved before the box went. While none of
+the three is typed a stored total is the one unsplit month and the
+lines are only its split, exactly as before. Nothing already entered
+goes dark. The month is F + A + T + everything else (+ therapy when
+tracked), and the room says so on four lines under the boxes. The ring
+and the bars carry the same four rows. "The lines vs F, A, T" compares
+the needs' lines with the three typed numbers once the month is split;
+against one unsplit number it compares every line, as before.
+
+The example household feels this: Robin's stored "everything else" of
+$720 is read until the example lines are loaded, and then the wants
+lines ($465) are everything else and the month with lines reads $2,895,
+not $3,150. The engine fixtures built on that month were re-derived,
+each exactly $255 a month lighter, and their check names say so.
+
+**Compatibility note.** `Schema.fat(h).wants` changes meaning when any
+of the three needs is typed and a wants line exists: it is the wants
+lines' sum with source `lines`, never the stored total; with no wants
+line it is the stored total with source `typed`, as before.
+`Schema.withMonthlyExpensesDeltaCents` lands its delta on the first
+typed need when the stored total is not the one in use. The
+stored field `expenses.wants.totalCents` stays in the shape and is still
+written by Start Here and by "use the lines as my month"; readers that
+want "everything else" call `Schema.fat(h).wants` (the lenses' wants
+measure now does). `Schema.fatNeedsCents(h)` is new. The FIRE result for
+the lean variant carries `expenseSource: 'fat'` and `monthlyBasisCents`
+when it used the FAT total. The ownership field `wantsMonthly` anchors
+at the lines section.
+
+Gate for this commit: unit suite with the lean pins re-derived (the
+demo's FAT is $710 + $1,500 + $220 = $2,430, so lean is $2,430 × 12 ÷ 4%
+= $729,000 rather than 70% of $3,150); render, forms and features on
+Expenses and render on FIRE Number; a phone walk typing the three and
+reading the FAT total, the lean number and everything else from a named
+subscription.
+
 ---
 
 # The Dungeons & Dividends entries

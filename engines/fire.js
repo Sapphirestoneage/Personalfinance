@@ -77,10 +77,18 @@
     }
     var assumptions = Schema.resolveAssumptions(household, o.localOverrides);
     var factor = Money.isEntered(o.expenseFactor) ? o.expenseFactor : variant.expenseFactor;
+    /* Lean is the essentials (D-197): food, a roof, getting around, the
+       FAT total typed in Expenses, at factor 1. Until the three are typed
+       the table's share of spending stands in, as before. */
+    var basis = expenses.value, basisSource = expenses.source;
+    if (variant.basis === 'fat' && !Money.isEntered(o.expenseFactor) && typeof Schema.fatNeedsCents === 'function') {
+      var lean = Schema.fatNeedsCents(household);
+      if (Money.isOk(lean)) { basis = lean.value; basisSource = 'fat'; factor = 1; }
+    }
 
     /* Barista: part-time income covers part of the bill, so the pot only has
        to cover what's left. Nothing else about the formula changes. */
-    var annualExpenses = expenses.value * MONTHS_PER_YEAR * factor;
+    var annualExpenses = basis * MONTHS_PER_YEAR * factor;
     var baristaIncome = null;
     if (variant.mode === 'barista') {
       if (!Money.isEntered(o.baristaAnnualIncomeCents)) {
@@ -110,7 +118,8 @@
       annualExpensesCents: Math.round(annualExpenses),
       swrRate: assumptions.swrRate,
       expectedReturnRate: assumptions.expectedReturnRate,
-      expenseSource: expenses.source,
+      expenseSource: basisSource,
+      monthlyBasisCents: basis,
       baristaAnnualIncomeCents: baristaIncome,
       referenceVersion: table.version
     };

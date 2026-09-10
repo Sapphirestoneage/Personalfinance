@@ -1,6 +1,6 @@
 {
   "id": "fire_variants",
-  "version": "1.0",
+  "version": "1.1",
   "asOf": "2026-01-01",
   "source": "The commonly used FIRE flavours. Expense factors are conventions, not published figures.",
   "confidence": "convention",
@@ -22,9 +22,11 @@
     {
       "id": "lean",
       "label": "Lean FIRE",
-      "blurb": "The same freedom on a deliberately smaller life — roughly 70% of what you spend now.",
+      "blurb": "Only the essentials covered: food, a roof, getting around. Your FAT total from Expenses, or about 70% of what you spend until the three are typed.",
       "mode": "expenses",
-      "expenseFactor": 0.7
+      "expenseFactor": 0.7,
+      "basis": "fat",
+      "note": "basis fat: the F + A + T total from Expenses at factor 1 when all three are typed (D-197); expenseFactor is the fallback share of spending until then."
     },
     {
       "id": "chubby",

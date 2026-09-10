@@ -1532,18 +1532,34 @@
        migration applies, live - and each says so with source 'lines'. Never
        a mix: a typed "everything else" is the whole of what is not split
        out, so adding line-derived needs to it would count twice. */
-    var typedAny = FAT_NEEDS.some(function (k) { return Money.isEntered(e.needs[k].monthlyCents); }) || Money.isEntered(e.wants.totalCents);
-    var lines = typedAny ? null : fatFromLines(e.entries);
+    /* F, A, T are typed; everything else is what is named (D-197). Once
+       any of the three is typed the month has been split, and from then
+       on any line in the wants bucket (a subscription, a named line, a
+       category box, a yearly cost's twelfth) IS everything else: the
+       stored wants total is not read behind it. With no such line the
+       stored total still counts, as the remainder Start Here left after
+       the three, an import, a block's line, or a household saved before
+       the box went, and it says so (source 'typed'). While none of the
+       three is typed, a stored total is the one unsplit month and the
+       lines are only its split, as before. Nothing already entered goes
+       dark. */
+    var fatTyped = FAT_NEEDS.some(function (k) { return Money.isEntered(e.needs[k].monthlyCents); });
+    var typedAny = fatTyped || Money.isEntered(e.wants.totalCents);
+    var allLines = fatFromLines(e.entries);
+    var lines = typedAny ? null : allLines;
     function r(v, k, id, what) {
       if (Money.isEntered(v)) return Money.ok(v, { source: 'typed' });
       if (k && lines && lines[k] !== null) return Money.ok(lines[k], { source: 'lines' });
       return Money.incomplete(what + ' is not filled in.', [id]);
     }
+    var wantsOut = fatTyped && allLines.wants !== null
+      ? Money.ok(allLines.wants, { source: 'lines', named: true })
+      : r(e.wants.totalCents, 'wants', 'wantsMonthly', 'Everything else');
     var out = {
       food: r(e.needs.food.monthlyCents, 'food', 'foodMonthly', 'Food'),
       accommodation: r(e.needs.accommodation.monthlyCents, 'accommodation', 'accommodationMonthly', 'Rent or mortgage'),
       transportation: r(e.needs.transportation.monthlyCents, 'transportation', 'transportationMonthly', 'Getting around'),
-      wants: r(e.wants.totalCents, 'wants', 'wantsMonthly', 'Everything else'),
+      wants: wantsOut,
       therapy: e.wants.therapy ? r(e.wants.therapy.monthlyCents, null, 'therapyMonthly', 'Therapy') : null,
       therapyTracked: !!e.wants.therapy
     };
@@ -1572,6 +1588,17 @@
       ? Money.ok(entered.reduce(function (t, x) { return t + x.value; }, 0), { entered: entered.length, of: parts.length, source: 'fat' })
       : Money.incomplete('Add what goes out a month to see this.', ['monthlyExpenses']);
     return out;
+  }
+
+  /** F plus A plus T (D-197): the essentials, the lean month. Incomplete
+   *  until all three are in, naming the missing ones. Lean FIRE reads it. */
+  function fatNeedsCents(household) {
+    var f = fat(household);
+    var missing = FAT_NEEDS.filter(function (k) { return !Money.isOk(f[k]); });
+    if (missing.length) return Money.incomplete('Type food, rent or mortgage and getting around in Expenses to see this.', missing.map(function (k) { return k + 'Monthly'; }));
+    return Money.ok(f.food.value + f.accommodation.value + f.transportation.value, {
+      foodCents: f.food.value, accommodationCents: f.accommodation.value, transportationCents: f.transportation.value
+    });
   }
 
   /** A view of the household whose month is `monthlyCents`, for an engine
@@ -2186,11 +2213,14 @@
     var copy = JSON.parse(JSON.stringify(household || {}));
     copy.expenses = createExpenses(copy.expenses);
     if (!Money.isEntered(deltaCents)) return copy;
-    /* The delta lands on "everything else" when it is typed, else on the
-       first bucket that is - a blank month has nothing to move. D-172. */
+    /* The delta lands on "everything else" while the stored total is the
+       one in use, else on the first of F, A, T that is typed - a blank
+       month has nothing to move. D-172, D-197 (a wants total behind named
+       lines is not read, so a delta there would vanish). */
     var w = copy.expenses.wants;
     var left = deltaCents;
-    var slots = [w].concat(FAT_NEEDS.map(function (k) { return copy.expenses.needs[k]; }));
+    var wantsInUse = fat(copy).wants.source === 'typed';
+    var slots = (wantsInUse ? [w] : []).concat(FAT_NEEDS.map(function (k) { return copy.expenses.needs[k]; }));
     for (var i = 0; i < slots.length && left !== 0; i++) {
       var key = slots[i] === w ? 'totalCents' : 'monthlyCents';
       if (!Money.isEntered(slots[i][key])) continue;
@@ -2524,14 +2554,22 @@
    *  split says minus what was typed. Incomplete until both exist. */
   function expenseDivergenceCents(household) {
     var h = household || {};
-    var typed = fat(h).totalCents;
+    var f = fat(h);
     var lines = fatFromLines((h.expenses || {}).entries);
-    var keys = Object.keys(lines).filter(function (k) { return lines[k] !== null; });
+    /* With F, A, T typed, everything else is the lines themselves (D-197),
+       so the only honest comparison is the needs' lines against the three
+       numbers; with one unsplit number, every line against it. */
+    var split = FAT_NEEDS.some(function (k) { return f[k] && Money.isOk(f[k]) && f[k].source === 'typed'; });
+    var keys = (split ? FAT_NEEDS : Object.keys(lines)).filter(function (k) { return lines[k] !== null; });
+    var typedKeys = split ? FAT_NEEDS.filter(function (k) { return f[k] && Money.isOk(f[k]) && f[k].source === 'typed'; }) : null;
+    var typed = split
+      ? (typedKeys.length ? Money.ok(typedKeys.reduce(function (t, k) { return t + (Money.isEntered(f[k].monthlyTypedCents) ? f[k].monthlyTypedCents : f[k].value); }, 0)) : Money.incomplete('', []))
+      : f.totalCents;
     if (!keys.length || !Money.isOk(typed)) {
-      return Money.incomplete('Split a month into lines to compare it against the four numbers.', ['expenseEntries', 'monthlyExpenses']);
+      return Money.incomplete('Split a month into lines to compare it against F, A, T.', ['expenseEntries', 'monthlyExpenses']);
     }
-    var sum = keys.reduce(function (t, k) { return t + lines[k]; }, 0);
-    return Money.ok(sum - typed.value, { linesCents: sum, typedCents: typed.value });
+    var sum = keys.filter(function (k) { return !split || typedKeys.indexOf(k) >= 0; }).reduce(function (t, k) { return t + lines[k]; }, 0);
+    return Money.ok(sum - typed.value, { linesCents: sum, typedCents: typed.value, split: split });
   }
 
   /* ======================================================================
@@ -3007,6 +3045,8 @@
     FAT_NEEDS: FAT_NEEDS,
     FAT_CATEGORY_MAP: FAT_CATEGORY_MAP,
     fatBucketOf: fatBucketOf,
+    fatNeedsCents: fatNeedsCents,
+    FAT_NEEDS: FAT_NEEDS,
     EXPENSE_EVERY: EXPENSE_EVERY,
     monthlyFromEvery: monthlyFromEvery,
     fatFromLines: fatFromLines,
