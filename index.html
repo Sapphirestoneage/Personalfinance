@@ -1104,13 +1104,16 @@
     n.className = 'data-note' + (isError ? ' is-error' : '');
   }
 
-  el('btn-export').addEventListener('click', function () {
+  function downloadFile() {
     var blob = new Blob([Spine.exportJSON()], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url; a.download = Spine.exportFilename();
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  el('btn-export').addEventListener('click', function () {
+    downloadFile();
     note('Downloaded ' + Spine.exportFilename() + '. Keep it somewhere you would keep a bank statement.');
   });
 
@@ -1118,7 +1121,15 @@
   el('btn-send').addEventListener('click', function () {
     Spine.sendToDevice().then(function (r) {
       note(r.how === 'file' ? 'Sent as a file. On the other device, open Your Data and choose it under Load a file.' : 'Sent as a link. Open it on the other device and choose Load.');
-    }).catch(function (err) { if (!err || err.name !== 'AbortError') note(err.message, true); });
+    }).catch(function (err) {
+      if (err && err.name === 'AbortError') return;
+      if (err && err.blocked) {
+        downloadFile();
+        note('This browser would not open the share sheet (a page opened inside another app usually will not), so the file was downloaded instead: ' + Spine.exportFilename() + '. Find it in Downloads and mail or message it from there, or open this page in Chrome or Safari and try Send again.', true);
+        return;
+      }
+      note(err.message, true);
+    });
   });
   el('btn-share').addEventListener('click', function () {
     Spine.shareFragment().then(function (frag) {

@@ -97,6 +97,23 @@ function loadDemo() {
   ok('the share sheet helper exists and refuses politely where there is no sheet', typeof Spine.sendToDevice === 'function');
   let noSheet = null; try { await Spine.sendToDevice(); } catch (e) { noSheet = e.message; }
   ok('...saying to use the file or the link', /Download the file or copy the link/.test(noSheet || ''));
+  /* D-203: a browser that has a sheet and refuses it (an in-app browser). */
+  const denied = () => { const e = new Error('Permission denied'); e.name = 'NotAllowedError'; return Promise.reject(e); };
+  const setNav = (v) => Object.defineProperty(global, 'navigator', { value: v, configurable: true, writable: true });
+  const origNav = Object.getOwnPropertyDescriptor(global, 'navigator');
+  setNav({ share: denied, canShare: () => true });
+  global.File = function (parts, name) { this.name = name; };
+  let blocked = null; try { await Spine.sendToDevice(); } catch (e) { blocked = e; }
+  ok('a sheet that refuses twice gives one plain, marked error', !!blocked && blocked.blocked === true && /would not open the share sheet/.test(blocked.message) && /Chrome or Safari/.test(blocked.message), blocked && blocked.message);
+  let calls = 0;
+  setNav({ share: (d) => { calls++; return d.files ? denied() : Promise.resolve(); }, canShare: () => true });
+  const viaLink = await Spine.sendToDevice();
+  ok('a sheet that refuses the file gets the link instead', viaLink.how === 'link' && calls === 2);
+  setNav({ share: () => { const e = new Error('cancel'); e.name = 'AbortError'; return Promise.reject(e); }, canShare: () => true });
+  let cancel = null; try { await Spine.sendToDevice(); } catch (e) { cancel = e; }
+  ok('a cancel is still a cancel, not a refusal', !!cancel && cancel.name === 'AbortError' && !cancel.blocked);
+  if (origNav) Object.defineProperty(global, 'navigator', origNav); else delete global.navigator;
+  delete global.File;
   const sizeBytes = Buffer.byteLength(frag);
   ok('a full household with a snapshot fits well under 8 KB (' + sizeBytes + ' bytes)', sizeBytes < 8192);
 

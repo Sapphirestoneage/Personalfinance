@@ -1651,17 +1651,35 @@
     }
     var title = 'SPARKS: my numbers';
     var text = 'My SPARKS household. On the other device, open Your Data and load this file.';
+    /* A browser that has navigator.share and then refuses it is common: a
+       link opened inside another app (a chat, a mail client) lands in that
+       app's own browser, which says it has a share sheet and answers
+       "Permission denied". The caller gets one plain error, marked
+       `blocked`, so it can hand over the file another way (D-203). */
+    function blocked(err) {
+      var e = new Error('This browser would not open the share sheet. That happens inside another app\u2019s browser: open this page in Chrome or Safari and try again, or download the file and send it from Downloads.');
+      e.name = 'NotAllowedError'; e.blocked = true; e.cause = err;
+      return e;
+    }
+    function isAbort(err) { return err && err.name === 'AbortError'; }
+    function asLink() {
+      return shareFragment().then(function (frag) {
+        return navigator.share({ title: title, url: siteRoot() + frag }).then(function () { return { how: 'link' }; });
+      }).catch(function (err) { if (isAbort(err)) throw err; throw blocked(err); });
+    }
+    var attempt = null;
     try {
       if (typeof File === 'function' && typeof navigator.canShare === 'function') {
         var file = new File([exportJSON()], exportFilename(), { type: 'application/json' });
         if (navigator.canShare({ files: [file] })) {
-          return navigator.share({ files: [file], title: title, text: text }).then(function () { return { how: 'file' }; });
+          attempt = navigator.share({ files: [file], title: title, text: text }).then(function () { return { how: 'file' }; });
         }
       }
-    } catch (e) { /* no file sharing here: the link below */ }
-    return shareFragment().then(function (frag) {
-      return navigator.share({ title: title, url: siteRoot() + frag }).then(function () { return { how: 'link' }; });
-    });
+    } catch (e) { attempt = null; /* no file sharing here: the link below */ }
+    if (!attempt) return asLink();
+    /* The file refused: the link is a second try, since some sheets take a
+       URL and not a file. Refused twice is refused. */
+    return attempt.catch(function (err) { if (isAbort(err)) throw err; return asLink(); });
   }
 
   /** The fragment for a URL: '#h=' + code. */

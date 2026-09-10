@@ -12686,6 +12686,23 @@ share link and QR code still works.
 **Compatibility.** No stored shape or key changed. One new key,
 `slaf.backup.undo.v1`, written only by a load and removed by an undo.
 
+## D-203 — Send, when the browser says it has a share sheet and then refuses it
+
+**Why.** The owner tapped Send on a phone and got "Permission denied" in
+red, and nothing else. The page had been opened from inside another app
+(the X and the chevron in the header are that app's own browser). Those
+browsers report `navigator.share` and then refuse it with
+NotAllowedError. The file path was already synchronous, so it was not a
+lost tap; the browser simply will not open a sheet there.
+
+**Decision.** `Spine.sendToDevice()` falls through: the file, then the
+link (some sheets take a URL and not a file), and only then one plain
+error marked `blocked` that says what happened and what to do. A cancel
+stays a cancel. Your Data and the front door catch a blocked error and
+download the file instead, saying so: find it in Downloads and send it
+from there, or open the page in Chrome or Safari and try Send again.
+"Permission denied" never reaches the screen.
+
 ---
 
 # The Dungeons & Dividends entries
