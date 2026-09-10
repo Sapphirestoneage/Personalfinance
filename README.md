@@ -78,6 +78,7 @@ favicon.svg         Sapphire mark
 rooms/              One HTML file per room
 vendor/fonts/       Self-hosted typefaces (no CDN, no other vendored code)
 shared/             The spine everything depends on
+  qr.js               a QR code of the share link, drawn from the standard's tables, no library (D-201)
   theme.css           navy-sapphire design tokens (colour + type)
   fonts.css           Fraunces + Space Grotesk
   money.js            integer cents, decimal rates, safe divide, Result type

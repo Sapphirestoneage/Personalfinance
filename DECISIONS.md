@@ -12571,6 +12571,51 @@ are new.
 Gate for this commit: the export suite; unit pins on both pages; render
 and features on Your Data and the front door.
 
+## D-201 — A QR code of the share link, drawn here
+
+**Why.** The owner: "can you do a QR code." For the direction Send does
+not cover, computer to phone, or two phones side by side, a camera is
+faster than any link: point it, tap, and the front door offers to load.
+
+**Decision.** Your Data gains **Show a QR code** beside the link. It
+draws the share link as a QR code (byte mode, error-correction L, the
+version chosen to fit, the mask chosen by the standard's four penalty
+rules) in `shared/qr.js`, written here from the standard's own block
+and alignment tables, because D-038 and the README allow no vendored
+code and the CDN is off limits anyway. Black modules on white whatever
+the theme, with the quiet zone, so any camera reads it. One code holds
+2,953 bytes, and that is the catch: the share link is the whole
+household deflated, and even the example household packs to 2,816
+characters before any snapshot or logged month, so a code fits only a
+small household. The button shows only when this household's link fits;
+otherwise one line under the buttons says how long the link is, what a
+code holds, and that Send carries it as a file. The front door's
+offer-before-load is unchanged, so a scanned code never replaces a
+household without a yes. Leaving blanks out of the link would shrink it
+by under half and is not lossless against the constructors as they
+stand; a many-part code needs a scanner on the receiving page, which
+means a decoder, which the no-vendored-code rule makes a project of its
+own. Neither is done here.
+
+The encoder is proved, not trusted. `tests/qr.test.js` reads every
+one of the forty versions and a hundred and twenty random texts back
+with two independent decoders (jsqr and ZXing's port, test dependencies
+only, in `tests/`), plus the share-link shape and the exact capacity
+edge. Each decoder has blind spots on large dense codes that the other
+does not, and each fails the same way on the reference library's own
+grids, so a code both miss is counted and held under five percent, and
+a code that reads as a different text fails outright. Beyond the suite,
+the grids were compared module for module against a reference
+implementation for forty-odd texts, forced to the same mask: identical
+every time.
+
+**Compatibility note.** Nothing stored or shared changes; the code
+carries the same link the copy button does. `SLAF.QR` is new and
+loaded only by Your Data.
+
+Gate for this commit: the QR suite; unit and export suites; render and
+features on Your Data; a phone walk showing the code and its note.
+
 ---
 
 # The Dungeons & Dividends entries

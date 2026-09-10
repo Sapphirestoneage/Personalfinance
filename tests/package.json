@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Lane 2 test harness: synthetic household corpus, property tests, data table checks, migration corpus. No build step; run each file with node.",
   "scripts": {
-    "test": "node corpus.test.js && node properties/run.js && node data.test.js && node glossary.test.js && node migration.test.js",
+    "test": "node corpus.test.js && node properties/run.js && node data.test.js && node glossary.test.js && node migration.test.js && node qr.test.js",
     "corpus": "node corpus.test.js",
     "properties": "node properties/run.js",
     "data": "node data.test.js",
@@ -14,12 +14,15 @@
     "build-lenses-copy": "node tools/build-lenses-copy.js",
     "migration": "node migration.test.js",
     "build-exports": "node tools/build-exports.js",
-    "a11y": "NODE_PATH=/opt/node22/lib/node_modules node a11y-audit.js"
+    "a11y": "NODE_PATH=/opt/node22/lib/node_modules node a11y-audit.js",
+    "qr": "node qr.test.js"
   },
   "license": "ISC",
   "dependencies": {
     "axe-core": "^4.10.0",
-    "fast-check": "^4.9.0"
+    "fast-check": "^4.9.0",
+    "jsqr": "^1.4.0",
+    "@zxing/library": "^0.21.3"
   },
   "private": true
 }

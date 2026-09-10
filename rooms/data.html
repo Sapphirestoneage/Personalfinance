@@ -42,6 +42,8 @@
   .data-note { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
   .data-note.is-error { color: var(--color-critical); }
   .data-note.is-good { color: var(--color-positive); }
+  .qr-out { margin-top: var(--space-3); max-width: 360px; }
+  .qr-out svg { width: 100%; height: auto; display: block; border-radius: var(--radius-sm); }
   .share-out { width: 100%; margin-top: var(--space-3); font-family: var(--font-mono, monospace); font-size: var(--text-xs); color: var(--color-text-muted); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2); resize: vertical; box-sizing: border-box; }
   textarea.paste { width: 100%; min-height: 120px; font: inherit; font-size: var(--text-sm); padding: var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); color: var(--color-text); box-sizing: border-box; margin-top: var(--space-3); }
   .file-say { font-size: var(--text-sm); margin-top: var(--space-3); }
@@ -78,9 +80,13 @@
       <button type="button" class="slaf-btn slaf-btn--primary" id="btn-send" hidden>Send to another device…</button>
       <button type="button" class="slaf-btn" id="btn-export">Download a file</button>
       <button type="button" class="slaf-btn" id="btn-share">Copy a share link</button>
+      <button type="button" class="slaf-btn" id="btn-qr" hidden>Show a QR code</button>
     </div>
+    <p class="slaf-hint" id="qr-why" hidden></p>
     <p class="data-note" id="out-note" hidden></p>
     <textarea id="share-out" class="share-out" rows="3" readonly hidden aria-label="Share link"></textarea>
+    <div class="qr-out" id="qr-out" hidden></div>
+    <p class="slaf-hint" id="qr-note" hidden></p>
   </section>
 
   <section class="slaf-card card-gap" id="file">
@@ -145,6 +151,7 @@
 <script src="../shared/registry.js"></script>
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
+<script src="../shared/qr.js"></script>
 <script src="../shared/ownership.js"></script>
 <script src="../shared/gate.js"></script>
 <script src="../shared/guide.js"></script>
@@ -201,6 +208,37 @@
         var long = link.length > 1900 ? ' That is too long for most chat apps; an email or a note carries it, or use Send for the file.' : '';
         note('out-note', (yes ? 'Copied. ' : '') + 'Everything after the # stays on the device that opens it: ' + link.length + ' characters, nothing sent anywhere.' + long, long ? '' : 'is-good');
       });
+    }).catch(function (err) { note('out-note', err.message, 'is-error'); });
+  });
+  /* A QR code of the share link (D-201): a phone's camera opens it and
+     the front door offers to load. One code holds 2,953 bytes, which is
+     a small household; the button shows only when this one fits, and
+     otherwise one line says why not. Drawn here, no library. */
+  function offerQr() {
+    if (!(SLAF.QR && typeof SLAF.QR.svg === 'function')) return;
+    Spine.shareFragment().then(function (frag) {
+      var n = Spine.siteRoot().length + frag.length;
+      var fits = n <= SLAF.QR.MAX_BYTES;
+      el('btn-qr').hidden = !fits;
+      el('qr-why').hidden = fits;
+      if (!fits) el('qr-why').textContent = 'No QR code for this one: as a link it is ' + n + ' characters and one code holds ' + SLAF.QR.MAX_BYTES + '. Send carries it as a file.';
+    }).catch(function () { el('btn-qr').hidden = true; });
+  }
+  offerQr();
+  Spine.onChange(offerQr);
+  el('btn-qr').addEventListener('click', function () {
+    Spine.shareFragment().then(function (frag) {
+      var link = Spine.siteRoot() + frag;
+      var out = el('qr-out'), noteEl = el('qr-note');
+      if (!(SLAF.QR && typeof SLAF.QR.svg === 'function')) { note('out-note', 'Reload the page to draw the code.', 'is-error'); return; }
+      try {
+        out.innerHTML = SLAF.QR.svg(link, { label: 'A QR code of your share link' });
+        out.hidden = false; noteEl.hidden = false;
+        noteEl.textContent = 'Point the other device\u2019s camera at it. It opens this site with your numbers, and the front door asks before loading them. ' + link.length + ' characters in the code; nothing sent anywhere.';
+      } catch (err) {
+        out.hidden = true; noteEl.hidden = false;
+        noteEl.textContent = 'Too much for one QR code: this link is ' + link.length + ' characters and a code holds about 2,900. Use Send for the file instead.';
+      }
     }).catch(function (err) { note('out-note', err.message, 'is-error'); });
   });
   /* A pasted link reads like a chosen file, then the same two buttons. */
