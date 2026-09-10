@@ -1722,9 +1722,17 @@
       amountCents: Money.isEntered(f.amountCents) ? f.amountCents : null,
       frequency: INCOME_FREQUENCIES.indexOf(f.frequency) >= 0 ? f.frequency : 'once',
       receivedOn: typeof f.receivedOn === 'string' && f.receivedOn ? f.receivedOn : null,
+      /* The last landing of a recurring entry: a contract's end, a job's
+         last pay. Null means it runs on; a one-time entry never has one.
+         The picture stops drawing it after this date. D-194. */
+      endsOn: typeof f.endsOn === 'string' && f.endsOn && f.frequency !== 'once' && INCOME_FREQUENCIES.indexOf(f.frequency) >= 0 ? f.endsOn : null,
       dateKind: dateKindOf(f.dateKind),
       taxable: taxable,
       taxMethod: method,
+      /* Tax actually taken before it arrived, off the stub, when the
+         person has it. Null means "use the year's blended rate". Only a
+         withheld method can carry one. D-194. */
+      withheldCents: Money.isEntered(f.withheldCents) && (method === 'w2' || method === 'unemployment') ? f.withheldCents : null,
       /* The costs of producing it live on the entry, so they are always
          traceable to the income they support. Kinds without costs keep
          an empty list, never a hidden one. */

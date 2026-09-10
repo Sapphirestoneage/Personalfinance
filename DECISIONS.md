@@ -12187,6 +12187,168 @@ features and sidebar gates with both rooms; the twenty layouts reaching
 every room; a phone walk typing the four numbers in Expenses and logging
 a receipt in Cash Flow, each landing in the stored household.
 
+## D-193 — Income: the entry form folds behind one line, and shows five things, not seven
+
+**Why.** The owner, on a phone, with the Income room open: the "Add an
+entry" card was seven stacked controls and a hint — a whole screen of
+form under a list that is the actual point of the room — and they asked
+for it to collapse and for the room to be "much, much cleaner". The form
+was also the same size whether it was in use or not: every visit scrolled
+past it.
+
+**Decision.** The form is a `<details>` fold, `#add-fold`, inside the
+`#add` card. Closed, the card is one row: a blue "+" and "Add an entry"
+with a sub-line naming what counts. Open, the "+" turns to a cross and
+the form shows **five** controls in the order a person thinks of them:
+the kind, the amount beside how often, what to call it, when it was
+received. The two that have a right default per kind — how sure the date
+is, and how it is taxed — sit under a "More" line and open only when an
+entry being edited holds something other than the kind's own default, so
+the fold never hides a value the person chose. A gift still hides the
+tax row. "Start a new one" is gone; a "Cancel" always sits by Save and
+folds the form back with the fields cleared.
+
+Opening and closing only set `open` on the fold; the inputs are never
+rebuilt (D-034 still holds and the marker still reads *built once*). The
+fold opens itself in three cases: a tap on Edit, an arrival on `#add`
+(the deep link), and the budget's Add flow (`?for=budget`, D-128), which
+sent the person here to add one. Save folds it back, and the confirmation
+line sits under the fold, outside it, so "Added. Day job $2,400 …" is
+visible with the form closed and the new row above it in the list.
+
+**Compatibility note.** Nothing stored changes. The budget's link
+`income.html?for=budget&month=…#add` still lands on an open form.
+
+Gate for this commit: unit 27176; render on the room; the phone form
+case now taps the summary open first, types into the amount and the
+name, saves, and checks the fold closed with the entry in the ledger; a
+Pixel-7 walk through closed, open, "More" open, Cancel, Edit (the fold
+opens, the caption names the entry, "More" stays shut for a default
+entry) and the budget deep link, with no console errors.
+
+## D-194 — Income: the picture, and three more questions that feed it
+
+**Why.** The owner, after D-193 landed: "start making some data
+visualizations for income though have it ask more information." The
+room had one figure for the month and a list; nothing showed the year
+taking shape, where a month's gross actually goes, or which source
+carries the household. And the entry knew nothing that would let a
+chart say anything true about the future or about the tax: a job that
+ends kept landing forever, and a paycheque's tax was always the year's
+blended rate even when the stub was in the person's hand.
+
+**Decision.** A card, *The picture*, between the month and the sources,
+hidden until the first active entry exists, drawn by `shared/charts.js`
+from `Ledger.month` alone — one call per month of a twelve-month window,
+six back and six ahead, nothing computed in the room:
+
+- **A year of it, month by month.** One stacked bar per month, gross,
+  split by the kind of money. Colour follows the kind everywhere on the
+  page (the nine kinds in `Schema.INCOME_KINDS` order over the chart
+  palette, *other* in the muted grey), so the same colour means the same
+  thing in every chart. A potential entry is never in the bar; the row's
+  note says how much more could come.
+- **Where this month's gross goes.** A donut: yours to keep, tax taken
+  before it arrived, tax owed later, the costs of earning it. Per
+  landing times the landings, costs once, exactly as `Ledger.month`
+  counts them.
+- **Source by source.** Every active entry's gross over the same twelve
+  months, largest first, in its kind's colour, with whose it is and
+  when it ends in the note. **Yours and theirs** follows only for a
+  household of two, one bar per adult, plus one for anything no one is
+  named on.
+
+Three questions join the *More* fold, each shown only when it can mean
+something, each optional, each feeding the picture:
+
+- **Whose is it** — a household of two only. The entry always had a
+  `personId`; the form never asked. It defaults to the first adult.
+- **Last one on** (`endsOn`) — recurring entries only. `Ledger.occurrences`
+  lands nothing after it: whole months after are empty, and the month it
+  ends in keeps the landings up to that day. Empty means it runs on,
+  which is a real answer and is never turned into a date.
+- **Tax taken off it** (`withheldCents`) — W-2 and unemployment only,
+  off the stub. Empty means the blended rate stands in, as before. Typed
+  on W-2 pay it *is* the tax — the rate was only ever standing in for
+  the stub; typed on unemployment it is what was held back at the
+  person's request, the tax stays the estimate and the rest is owed,
+  never below zero. `netOf` marks the result `pieces.typedWithholding`.
+  A withheld figure larger than the pay is refused at the form.
+
+The entry list says whose, until when, and what came off the stub.
+Hand-checked: a $3,000 monthly job with $480 typed nets $2,520 with
+nothing owed; the same job ending 15 September lands in September and
+not in October; a $600 unemployment cheque with $30 held back owes the
+estimate less $30.
+
+**Compatibility note.** `household.ledger.income[]` entries gain two
+fields, `endsOn` (ISO date or null; always null on a one-time entry) and
+`withheldCents` (integer cents or null; always null unless the method is
+w2 or unemployment). `Schema.createIncomeEntry` fills both on every
+read, so an entry stored before this has them as null and behaves
+exactly as it did. Income is the only writer; the Budget, Calendar and
+Tax rooms read through `Ledger.month` / `Ledger.netOf` and pick the
+change up without edits. A future room that reads an entry directly
+should treat a null `withheldCents` as "estimate", never as zero.
+
+Gate for this commit: unit suite; forms on the Income room, now typing
+the withheld figure through the More fold; a phone walk with the demo
+persona plus a job, a gig with costs and a gift, reading the three
+charts and the fourth with a second adult.
+
+## D-195 — Income: the year reads as what came in, then what is assumed
+
+**Why.** The owner, on the live page with their own numbers: a benefit
+and a monthly gift, so D-194's year chart was twelve identical bars
+and "make the income thing make more sense." Three things were wrong
+with it. It said nothing a sentence could not say better. It drew the
+months already received and the months merely assumed in the same ink,
+so a projection looked like a record. And it drew an unemployment
+benefit to the horizon, which is the one thing a benefit never does.
+
+**Decision.** The year chart becomes three things in order:
+
+- **A sentence.** "Since Mar ’26: $26,612 gross has come in. Ahead, if
+  nothing changes: $4,016 a month, $3,589 after tax." The first half is
+  the past months with a landing summed; the second is the months
+  ahead, one figure when they are all the same, a range when not, with
+  next month's net beside it. When everything has ended it says so.
+- **So far, then Ahead.** The same stacked bars, split at this month,
+  on one shared scale, the *Ahead* half faded and captioned "assumed,
+  not yet received". The legend appears once, under the ahead half.
+- **A nudge.** A recurring unemployment benefit with no last date gets
+  a line above the chart: it is drawn as if it keeps coming, benefits
+  usually run about 26 weeks, *When does it end?* The button opens the
+  entry with the *More* fold open and scrolls to *Last one on*; saving
+  a date drops it from the months ahead and the nudge goes. Only
+  unemployment gets the nudge for now — it is the one kind whose end
+  is a rule rather than a choice.
+
+And the month card, because the owner's next message was "I think the
+numbers are off" over a line reading "$73 of tax taken off" on a
+benefit. Nothing is taken off a benefit. `Ledger.month` now returns the
+tax split the way it is felt, `withheldCents` and `owedCents`, summing
+to `taxCents`; the card says "taken off before it arrived" and "owed at
+tax time" as separate figures and never "taken off" for money that
+arrived whole. Under it, *How this was worked out* opens one line per
+entry: gross, the tax, the net, and in small type the rate used, the
+yearly income it was banded on and where that income came from (Start
+Here, the entries here annualised, or the entry alone), whether a
+typed stub figure overrode the table, and why nothing or everything is
+owed. The hint under the list names the table for what it is, an
+unverified blended estimate, and links to Start Here, since the band
+is the thing most likely to be wrong. The donut reads the same split.
+
+Nothing stored changes. Hand-checked with the owner's shape: a $3,766
+benefit from March and a $250 gift from September give $26,612 so far
+and $4,016 a month ahead; an end date of 30 September leaves $250 a
+month ahead. The month's split: a W-2 job with $480 typed shows $480
+taken off and $0 owed; a weekly benefit with $30 held back shows $120
+taken off across four landings and the rest owed.
+
+Gate for this commit: unit suite; forms on the Income room; a phone
+walk with that household, tapping the nudge through to a saved end
+date.
 ## D-196 — Expenses: the picture first, then the four numbers, then the lines you name
 
 **Why.** The owner, the day the room was split out (D-192): "make the
