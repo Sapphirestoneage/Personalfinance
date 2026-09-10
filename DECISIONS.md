@@ -12226,6 +12226,76 @@ Pixel-7 walk through closed, open, "More" open, Cancel, Edit (the fold
 opens, the caption names the entry, "More" stays shut for a default
 entry) and the budget deep link, with no console errors.
 
+## D-194 — Income: the picture, and three more questions that feed it
+
+**Why.** The owner, after D-193 landed: "start making some data
+visualizations for income though have it ask more information." The
+room had one figure for the month and a list; nothing showed the year
+taking shape, where a month's gross actually goes, or which source
+carries the household. And the entry knew nothing that would let a
+chart say anything true about the future or about the tax: a job that
+ends kept landing forever, and a paycheque's tax was always the year's
+blended rate even when the stub was in the person's hand.
+
+**Decision.** A card, *The picture*, between the month and the sources,
+hidden until the first active entry exists, drawn by `shared/charts.js`
+from `Ledger.month` alone — one call per month of a twelve-month window,
+six back and six ahead, nothing computed in the room:
+
+- **A year of it, month by month.** One stacked bar per month, gross,
+  split by the kind of money. Colour follows the kind everywhere on the
+  page (the nine kinds in `Schema.INCOME_KINDS` order over the chart
+  palette, *other* in the muted grey), so the same colour means the same
+  thing in every chart. A potential entry is never in the bar; the row's
+  note says how much more could come.
+- **Where this month's gross goes.** A donut: yours to keep, tax taken
+  before it arrived, tax owed later, the costs of earning it. Per
+  landing times the landings, costs once, exactly as `Ledger.month`
+  counts them.
+- **Source by source.** Every active entry's gross over the same twelve
+  months, largest first, in its kind's colour, with whose it is and
+  when it ends in the note. **Yours and theirs** follows only for a
+  household of two, one bar per adult, plus one for anything no one is
+  named on.
+
+Three questions join the *More* fold, each shown only when it can mean
+something, each optional, each feeding the picture:
+
+- **Whose is it** — a household of two only. The entry always had a
+  `personId`; the form never asked. It defaults to the first adult.
+- **Last one on** (`endsOn`) — recurring entries only. `Ledger.occurrences`
+  lands nothing after it: whole months after are empty, and the month it
+  ends in keeps the landings up to that day. Empty means it runs on,
+  which is a real answer and is never turned into a date.
+- **Tax taken off it** (`withheldCents`) — W-2 and unemployment only,
+  off the stub. Empty means the blended rate stands in, as before. Typed
+  on W-2 pay it *is* the tax — the rate was only ever standing in for
+  the stub; typed on unemployment it is what was held back at the
+  person's request, the tax stays the estimate and the rest is owed,
+  never below zero. `netOf` marks the result `pieces.typedWithholding`.
+  A withheld figure larger than the pay is refused at the form.
+
+The entry list says whose, until when, and what came off the stub.
+Hand-checked: a $3,000 monthly job with $480 typed nets $2,520 with
+nothing owed; the same job ending 15 September lands in September and
+not in October; a $600 unemployment cheque with $30 held back owes the
+estimate less $30.
+
+**Compatibility note.** `household.ledger.income[]` entries gain two
+fields, `endsOn` (ISO date or null; always null on a one-time entry) and
+`withheldCents` (integer cents or null; always null unless the method is
+w2 or unemployment). `Schema.createIncomeEntry` fills both on every
+read, so an entry stored before this has them as null and behaves
+exactly as it did. Income is the only writer; the Budget, Calendar and
+Tax rooms read through `Ledger.month` / `Ledger.netOf` and pick the
+change up without edits. A future room that reads an entry directly
+should treat a null `withheldCents` as "estimate", never as zero.
+
+Gate for this commit: unit suite; forms on the Income room, now typing
+the withheld figure through the More fold; a phone walk with the demo
+persona plus a job, a gig with costs and a gift, reading the three
+charts and the fourth with a second adult.
+
 ---
 
 # The Dungeons & Dividends entries

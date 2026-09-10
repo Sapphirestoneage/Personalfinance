@@ -19,9 +19,13 @@
              edits those; it edits nothing else. Income SOURCES (Start
              Here's annualised profile) are not touched here.
   3. CALLS   engines/ledger.js for every net figure and for the month —
-             one tax engine for entries, shared with the Tax room.
-  4. EMPTY   No entries: the month says so and the form is the whole page.
-             An entry with no amount is listed and asks for one.
+             one tax engine for entries, shared with the Tax room — and
+             shared/charts.js for the picture (D-194), twelve months of
+             landings by kind, where this month's gross goes, and each
+             source's share; every figure comes off Ledger.month.
+  4. EMPTY   No entries: the month says so, the picture stays hidden and
+             the form is the whole page. An entry with no amount is listed
+             and asks for one.
   5. CONFIG  data/effective_tax_rates_2026.json, data/se_tax_2026.json.
 
   LIVE-FORM: built once. The two forms — the entry, and a cost on it — are
@@ -55,6 +59,10 @@
   .form-more > summary small { color: var(--color-text-faint); }
   .form-more .form-grid { margin-top: 0; }
   .card-gap { margin-top: var(--space-4); }
+  /* D-194: the picture. Three charts in one card, each under its own line. */
+  .pic-h { margin: var(--space-4) 0 0; font-size: var(--text-base); font-family: var(--font-display); font-weight: 600; }
+  .pic-h:first-of-type { margin-top: var(--space-2); }
+  .pic-h small { display: block; font-family: var(--font-body); font-weight: 400; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 2px; }
   .return-chip { display: inline-block; margin-bottom: var(--space-3); font-size: var(--text-sm); color: var(--color-accent-hover); border: 1px dashed var(--color-border-active); border-radius: var(--radius-pill); padding: 4px var(--space-3); text-decoration: none; }
   .month-figure { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); }
   .month-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-1); }
@@ -108,6 +116,20 @@
     <p class="month-sub" id="month-sub"></p>
   </section>
 
+  <section class="slaf-card card-gap" id="picture" hidden>
+    <span class="slaf-eyebrow">The picture</span>
+    <h3 class="pic-h">A year of it, month by month <small>Six months back and six ahead, gross, by the kind of money. An entry with a last date stops where it stops.</small></h3>
+    <div id="pic-months"></div>
+    <h3 class="pic-h">Where this month's gross goes <small>What you keep, what was taken off before it arrived, what is owed at tax time, and what it cost to earn.</small></h3>
+    <div id="pic-goes"></div>
+    <h3 class="pic-h">Source by source <small>Each entry's share of the same twelve months.</small></h3>
+    <div id="pic-sources"></div>
+    <div id="pic-people-wrap" hidden>
+      <h3 class="pic-h">Yours and theirs <small>The same twelve months, by who it comes to. Set whose an entry is under More when you add it.</small></h3>
+      <div id="pic-people"></div>
+    </div>
+  </section>
+
   <section class="slaf-card card-gap" id="sources">
     <span class="slaf-eyebrow">Your pay, source by source</span>
     <p class="slaf-hint" style="margin:var(--space-1) 0 var(--space-2)">Each kind of pay is taxed its own way, and only a job stops when the job goes. Set the kind in <a href="start.html#q-income">Start Here</a>.</p>
@@ -150,8 +172,13 @@
           <label class="slaf-field"><span class="slaf-label" id="f-date-label">Received on</span>
             <span class="slaf-input-shell"><input type="date" id="f-date" aria-label="Date received"/></span></label>
           <details class="form-more" id="form-more">
-            <summary>More <small>— how sure the date is, and how it is taxed</small></summary>
+            <summary>More <small>— whose, until when, how sure the date is, how it is taxed</small></summary>
             <div class="form-grid">
+              <label class="slaf-field wide" id="f-person-row" hidden><span class="slaf-label">Whose is it</span>
+                <span class="slaf-input-shell"><select id="f-person" aria-label="Whose income"></select></span></label>
+              <label class="slaf-field wide" id="f-ends-row" hidden><span class="slaf-label">Last one on</span>
+                <span class="slaf-input-shell"><input type="date" id="f-ends" aria-label="Last date it is received"/></span></label>
+              <p class="slaf-hint wide" id="f-ends-hint" hidden style="margin:0">Leave it empty if it runs on. A contract's end, a job's last pay: the picture stops drawing it there.</p>
               <label class="slaf-field wide"><span class="slaf-label">The date is</span>
                 <span class="slaf-input-shell"><select id="f-datekind" aria-label="How sure the date is">
                   <option value="exact">Exact — it landed, or it is due</option><option value="estimated">Estimated — about then</option><option value="potential">Potential — it may not come at all</option>
@@ -160,6 +187,9 @@
                 <span class="slaf-input-shell"><select id="f-method" aria-label="Tax method">
                   <option value="w2">W-2 — tax withheld before it arrives</option><option value="se">1099 — owed later, with self-employment tax</option><option value="unemployment">Unemployment — taxable, nothing withheld, no self-employment tax</option><option value="none">Not taxable</option>
                 </select></span></label>
+              <label class="slaf-field wide" id="f-withheld-row" hidden><span class="slaf-label">Tax taken off it</span>
+                <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="f-withheld" placeholder="e.g. 480 — off the stub, if you have it" aria-label="Tax withheld"/></span></label>
+              <p class="slaf-hint wide" id="f-withheld-hint" hidden style="margin:0">Empty means the year's blended rate stands in. Typed, it is what came off, and the picture uses it.</p>
             </div>
           </details>
         </div>
@@ -205,6 +235,7 @@
 
 <script src="../shared/money.js"></script>
 <script src="../shared/schema.js"></script>
+<script src="../shared/charts.js"></script>
 <script src="../shared/registry.js"></script>
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
@@ -263,8 +294,27 @@
     if (kind === 'gift') el('f-method').value = 'none';
     else if (el('f-method').value === 'none' && rule.taxable) el('f-method').value = rule.method;
     el('kind-hint').textContent = KIND_HINTS[kind] || '';
-    el('f-date-label').textContent = el('f-frequency').value === 'once' ? 'Received on' : 'First received on';
+    var once = el('f-frequency').value === 'once';
+    el('f-date-label').textContent = once ? 'Received on' : 'First received on';
+    /* D-194: the three extra questions show only when they can mean
+       something — a last date for something recurring, a withheld figure
+       for a withheld method, whose for a household of two. */
+    el('f-ends-row').hidden = once; el('f-ends-hint').hidden = once;
+    var withheldMethod = kind !== 'gift' && (el('f-method').value === 'w2' || el('f-method').value === 'unemployment');
+    el('f-withheld-row').hidden = !withheldMethod; el('f-withheld-hint').hidden = !withheldMethod;
+    el('f-person-row').hidden = !Schema.householdOfTwo(Spine.getProfile());
   }
+  /* The people select: options rebuilt only when the adults change; the
+     select node itself is never replaced. */
+  var peopleKey = '';
+  function buildPeople(h) {
+    var a = Schema.adults(h);
+    var key = a.map(function (p) { return p.id + ':' + (p.label || ''); }).join('|');
+    if (key === peopleKey) return;
+    peopleKey = key;
+    el('f-person').innerHTML = a.map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(Schema.personTag(h, p) || Schema.personName(p, 'You')) + '</option>'; }).join('');
+  }
+  el('f-method').addEventListener('change', function () { showForKind(el('f-kind').value); });
   el('f-kind').addEventListener('change', function () {
     var rule = KINDS[el('f-kind').value] || KINDS.other;
     if (!editingId) el('f-method').value = rule.taxable ? rule.method : 'none';
@@ -281,6 +331,12 @@
     el('f-date').value = e && e.receivedOn ? e.receivedOn : '';
     el('f-datekind').value = e && e.dateKind ? e.dateKind : 'exact';
     el('f-method').value = e ? (e.taxable === false ? 'none' : e.taxMethod) : 'w2';
+    var h0 = Spine.getProfile();
+    buildPeople(h0);
+    var firstAdult = Schema.adults(h0)[0];
+    el('f-person').value = e && e.personId ? e.personId : (firstAdult ? firstAdult.id : '');
+    el('f-ends').value = e && e.endsOn ? e.endsOn : '';
+    el('f-withheld').value = e && Money.isEntered(e.withheldCents) ? Money.formatCents(e.withheldCents, { decimals: e.withheldCents % 100 ? 2 : 0 }) : '';
     showForKind(el('f-kind').value);
     el('form-cap').textContent = e ? 'Editing ' + (e.label || KINDS[e.kind].label) : 'Add an entry';
     el('btn-save').textContent = e ? 'Save changes' : 'Save';
@@ -289,7 +345,9 @@
        value the person chose. */
     var rule = e ? (KINDS[e.kind] || KINDS.other) : null;
     el('form-more').open = !!(e && ((e.dateKind && e.dateKind !== 'exact')
-      || (e.taxable === false ? e.kind !== 'gift' : e.taxMethod !== rule.method)));
+      || (e.taxable === false ? e.kind !== 'gift' : e.taxMethod !== rule.method)
+      || e.endsOn || Money.isEntered(e.withheldCents)
+      || (firstAdult && e.personId && e.personId !== firstAdult.id)));
   }
   /* D-193: the form folds behind one line. Opening and closing only toggle
      the fold; the inputs are never rebuilt. */
@@ -307,6 +365,15 @@
     var c = Money.parseMoney(el('f-amount').value);
     el('f-amount').value = Money.isEntered(c) ? Money.formatCents(c, { decimals: c % 100 ? 2 : 0 }) : '';
   });
+  el('f-withheld').addEventListener('focus', function () {
+    var c = Money.parseMoney(el('f-withheld').value);
+    el('f-withheld').value = Money.isEntered(c) ? String(c / 100) : '';
+    el('f-withheld').select();
+  });
+  el('f-withheld').addEventListener('blur', function () {
+    var c = Money.parseMoney(el('f-withheld').value);
+    el('f-withheld').value = Money.isEntered(c) ? Money.formatCents(c, { decimals: c % 100 ? 2 : 0 }) : '';
+  });
   el('add-form').addEventListener('keydown', function (evt) { if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') { evt.preventDefault(); el('btn-save').click(); } });
 
   el('btn-save').addEventListener('click', function () {
@@ -316,17 +383,22 @@
     var method = el('f-method').value;
     var person = Spine.ensurePrimaryPerson('You');
     var existing = editingId ? Ledger.byId(Spine.getProfile(), editingId) : null;
+    var withheld = el('f-withheld-row').hidden ? null : Money.parseMoney(el('f-withheld').value);
+    if (Money.isEntered(withheld) && withheld > cents) { say('form-say', 'More tax taken off than the pay itself? Check the two amounts.', 'is-error'); el('form-more').open = true; el('f-withheld').focus(); return; }
+    var chosen = el('f-person-row').hidden ? null : el('f-person').value;
     var entry = Schema.createIncomeEntry(Object.assign({}, existing || {}, {
-      id: editingId || undefined, personId: existing ? existing.personId : person.id,
+      id: editingId || undefined, personId: chosen || (existing ? existing.personId : person.id),
       kind: kind, label: el('f-label').value.trim() || null, amountCents: cents,
       frequency: el('f-frequency').value, receivedOn: el('f-date').value || null, dateKind: el('f-datekind').value,
+      endsOn: el('f-frequency').value === 'once' ? null : (el('f-ends').value || null),
       taxable: kind === 'gift' ? false : method !== 'none', taxMethod: kind === 'gift' ? 'none' : method,
+      withheldCents: Money.isEntered(withheld) ? withheld : null,
       costs: existing ? existing.costs : []
     }));
     var saved = Spine.upsertIncomeEntry(entry);
     var net = Ledger.netOf(saved, Spine.getProfile(), TABLES);
     say('form-say', (existing ? 'Saved. ' : 'Added. ') + (saved.label || KINDS[saved.kind].label) + ' ' + Money.formatCents(saved.amountCents) + ' ' + FREQ_WORDS[saved.frequency]
-      + (Money.isOk(net) ? ' nets ' + Money.formatCents(net.value) + ' after ' + Money.formatCents(net.taxCents) + ' of tax' + (net.owedCents > 0 ? ', none of it withheld — set it aside for tax time.' : '.') : '.')
+      + (Money.isOk(net) ? ' nets ' + Money.formatCents(net.value) + ' after ' + Money.formatCents(net.taxCents) + ' of tax' + (net.pieces.typedWithholding ? ' off the stub' : '') + (net.owedCents > 0 ? (net.withheldCents > 0 ? ', ' + Money.formatCents(net.owedCents) + ' of it still owed — set it aside for tax time.' : ', none of it withheld — set it aside for tax time.') : '.') : '.')
       + (Schema.costsAllowed(saved.kind) ? ' Add the costs of earning it below.' : ''), 'is-good');
     if (Schema.costsAllowed(saved.kind)) detailId = saved.id;
     fillForm(null);
@@ -346,7 +418,7 @@
       var costsLine = Schema.costsAllowed(e.kind) && Money.isEntered(netOfCosts) && netOfCosts !== e.amountCents ? Money.formatCents(netOfCosts) + ' after costs · ' : '';
       return '<li' + (e.id === editingId ? ' class="is-editing"' : '') + '>'
         + '<span><span class="e-name">' + esc(e.label || KINDS[e.kind].label) + '</span>'
-        + '<span class="e-kind">' + esc(KINDS[e.kind].label) + ' · ' + esc(FREQ_WORDS[e.frequency]) + (e.receivedOn ? ' · ' + esc(e.receivedOn) + (e.dateKind === 'estimated' ? ' (about then)' : e.dateKind === 'potential' ? ' (potential — not counted)' : '') : '') + ' · ' + esc(METHOD_WORDS[e.taxable === false ? 'none' : e.taxMethod]) + '</span></span>'
+        + '<span class="e-kind">' + (Schema.personTag(h, e.personId) ? esc(Schema.personTag(h, e.personId)) + ' · ' : '') + esc(KINDS[e.kind].label) + ' · ' + esc(FREQ_WORDS[e.frequency]) + (e.receivedOn ? ' · ' + esc(e.receivedOn) + (e.dateKind === 'estimated' ? ' (about then)' : e.dateKind === 'potential' ? ' (potential — not counted)' : '') : '') + (e.endsOn ? ' · until ' + esc(e.endsOn) : '') + ' · ' + esc(METHOD_WORDS[e.taxable === false ? 'none' : e.taxMethod]) + (Money.isEntered(e.withheldCents) ? ' · ' + esc(Money.formatCents(e.withheldCents)) + ' off the stub' : '') + '</span></span>'
         + '<span class="e-amt">' + (Money.isEntered(e.amountCents) ? esc(Money.formatCents(e.amountCents)) : '—')
         + '<span class="e-net">' + costsLine + (Money.isOk(net) ? 'nets ' + esc(Money.formatCents(net.value)) + (net.owedCents > 0 ? ' · ' + esc(Money.formatCents(net.owedCents)) + ' owed at tax time' : '') : esc(net.reason || '')) + '</span></span>'
         + '<span class="e-acts">'
@@ -407,6 +479,87 @@
     else Spine.set('ledger.dismissed', ((Spine.getProfile().ledger || {}).dismissed || []).concat([id]), 'Kept ' + id);
     render();
   });
+
+  /* ---- The picture (D-194) ------------------------------------------------
+     Three charts off Ledger.month, one call per month of a twelve-month
+     window: colour follows the kind of money everywhere, so a bar in the
+     year chart and a bar in the source chart mean the same thing. */
+  var Charts = SLAF.Charts;
+  var KIND_COLOR = (function () {
+    var m = {};
+    Schema.INCOME_KINDS.forEach(function (k, i) { m[k] = k === 'other' ? Charts.COLORS.muted : Charts.COLORS.series[i % Charts.COLORS.series.length]; });
+    return m;
+  })();
+  var MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function shiftMonth(ym, n) {
+    var p = ym.split('-'); var d = new Date(+p[0], +p[1] - 1 + n, 1);
+    return d.getFullYear() + '-' + (d.getMonth() + 1 < 10 ? '0' : '') + (d.getMonth() + 1);
+  }
+  function shortMonth(ym, withYear) { var p = ym.split('-'); return MONTHS_SHORT[+p[1] - 1] + (withYear || p[1] === '01' ? ' ’' + p[0].slice(2) : ''); }
+  function renderPicture(h) {
+    var active = Ledger.activeEntries(h).filter(function (e) { return !e.hidden; });
+    el('picture').hidden = !active.length;
+    if (!active.length) return;
+    var now = Ledger.thisMonth();
+    var months = [];
+    for (var i = -6; i <= 5; i++) months.push(shiftMonth(now, i));
+    var perEntry = {}, perPerson = {};
+    var rows = months.map(function (m, idx) {
+      var r = Ledger.month(h, TABLES, m);
+      var byKind = {};
+      r.rows.forEach(function (x) {
+        byKind[x.entry.kind] = (byKind[x.entry.kind] || 0) + x.grossCents;
+        perEntry[x.entry.id] = (perEntry[x.entry.id] || 0) + x.grossCents;
+        var pid = x.entry.personId || 'joint';
+        perPerson[pid] = (perPerson[pid] || 0) + x.grossCents;
+      });
+      return {
+        label: shortMonth(m, idx === 0),
+        note: m === now ? 'this month' : (r.potentialCents ? Money.formatCents(r.potentialCents) + ' more could come' : ''),
+        parts: Schema.INCOME_KINDS.filter(function (k) { return byKind[k]; }).map(function (k) { return { label: KINDS[k].label, value: byKind[k], color: KIND_COLOR[k] }; })
+      };
+    });
+    el('pic-months').innerHTML = Charts.stacked({ rows: rows, empty: 'Nothing lands in these twelve months. Add a date to an entry and it appears here.' });
+
+    /* Where this month's gross goes. Per landing, times the landings;
+       costs once, as the engine counts them. */
+    var t = Ledger.month(h, TABLES, now);
+    var withheld = 0, owed = 0, kept = 0, costs = 0, gross = 0;
+    t.rows.forEach(function (x) {
+      if (!x.net) return;
+      var n = x.occurrences.length;
+      withheld += x.net.withheldCents * n; owed += x.net.owedCents * n; costs += x.net.allCostsCents; gross += x.grossCents;
+    });
+    kept = gross - withheld - owed - costs;
+    el('pic-goes').innerHTML = Charts.donut({
+      title: 'Where this month’s gross goes',
+      slices: [
+        { label: 'Yours to keep', value: kept, color: Charts.COLORS.target },
+        { label: 'Tax taken before it arrived', value: withheld, color: Charts.COLORS.spend },
+        { label: 'Tax owed later', value: owed, color: Charts.COLORS.debt, note: owed > 0 ? 'set it aside' : '' },
+        { label: 'The costs of earning it', value: costs, color: Charts.COLORS.series[4] }
+      ],
+      center: { big: Money.formatCents(gross), small: 'gross' },
+      empty: t.count ? (t.incomplete.length ? t.incomplete[0].reason : 'Nothing to draw yet.') : 'Nothing lands this month. A dated entry lands on its date; a recurring one on its days.'
+    });
+
+    /* Source by source: every active entry, its gross over the window. */
+    var srcRows = active.slice().sort(function (a, b) { return (perEntry[b.id] || 0) - (perEntry[a.id] || 0); }).map(function (e) {
+      var whose = Schema.personTag(h, e.personId);
+      return { label: e.label || KINDS[e.kind].label, value: perEntry[e.id] ? perEntry[e.id] : null, empty: 'nothing in these months', color: KIND_COLOR[e.kind],
+        note: KINDS[e.kind].label + (whose ? ' · ' + whose : '') + (e.endsOn ? ' · until ' + e.endsOn : '') + (e.dateKind === 'potential' ? ' · potential, not counted' : '') };
+    });
+    el('pic-sources').innerHTML = Charts.bars({ rows: srcRows });
+
+    /* Yours and theirs: only for a household of two. */
+    var two = Schema.householdOfTwo(h);
+    el('pic-people-wrap').hidden = !two;
+    if (two) {
+      var pRows = Schema.adults(h).map(function (p, i) { return { label: Schema.personTag(h, p) || Schema.personName(p, 'You'), value: perPerson[p.id] || 0, color: Charts.COLORS.series[i % Charts.COLORS.series.length] }; });
+      if (perPerson.joint) pRows.push({ label: 'No one named', value: perPerson.joint, color: Charts.COLORS.muted, note: 'set whose under More' });
+      el('pic-people').innerHTML = Charts.bars({ rows: pRows });
+    }
+  }
 
   /* ---- This month ---------------------------------------------------------- */
   function renderMonth(h) {
@@ -495,6 +648,7 @@
     if (!TABLES) return;
     var h = Spine.getProfile();
     renderMonth(h);
+    renderPicture(h);
     renderList(h);
     renderManage(h);
     renderCosts(h);

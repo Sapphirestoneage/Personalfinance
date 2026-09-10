@@ -979,10 +979,11 @@ const CASES = [
     room: '/rooms/income.html',
     container: '#add-form',
     seed: 'demo',
-    prepare: async (page) => { await page.tap('#add-fold > summary'); },
+    prepare: async (page) => { await page.tap('#add-fold > summary'); await page.tap('#form-more > summary'); },
     fields: [
       { sel: '#f-amount', type: '2400' },
-      { sel: '#f-label', type: 'Day job' }
+      { sel: '#f-label', type: 'Day job' },
+      { sel: '#f-withheld', type: '480' }
     ],
     expect: async (page) => {
       const wasOpen = await page.evaluate(() => document.getElementById('add-fold').open);
@@ -992,6 +993,7 @@ const CASES = [
       const e = await page.evaluate(() => ((JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).ledger || {}).income[0]);
       const r = await page.evaluate(() => ({
         listed: document.querySelectorAll('#entries li').length,
+        picture: !document.getElementById('picture').hidden && document.querySelectorAll('#pic-sources .row').length,
         open: document.getElementById('add-fold').open,
         say: document.getElementById('form-say').textContent.slice(0, 6) }));
       return [
@@ -999,8 +1001,10 @@ const CASES = [
         ['the entry was saved', e && e.label, 'Day job'],
         ['with its amount', e && e.amountCents, 240000],
         ['every two weeks', e && e.frequency, 'fortnightly'],
+        ['and what the stub took off (D-194)', e && e.withheldCents, 48000],
         ['and is listed at once', r.listed, 1],
         ['Save folded the form back', r.open, false],
+        ['and the picture drew the one source (D-194)', r.picture, 1],
         ['and said so under the fold', r.say, 'Added.']
       ];
     }

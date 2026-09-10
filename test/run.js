@@ -8534,6 +8534,51 @@ section('The ledger (D-128): income entries, the expense log, closed months');
   S2.reset();
 })();
 
+section('D-194: an entry knows when it ends and what the stub took off');
+(function () {
+  const Ledger = require(path.join(ROOT, 'engines/ledger.js'));
+  const T = { effectiveTaxRates: TABLES.effectiveTaxRates, seTax: TABLES.seTax };
+  const h = Schema.createHousehold();
+  h.filingStatus = 'single';
+  const p = Schema.createPerson({ id: 'P', role: 'adult' });
+  p.incomeSources = [Schema.createIncomeSource({ id: 'src', personId: 'P', grossAnnualIncomeCents: 7200000, type: 'w2' })];
+  h.people = [p];
+  /* The shape. */
+  const job = Schema.createIncomeEntry({ kind: 'w2', amountCents: 300000, frequency: 'monthly', receivedOn: '2026-03-15', endsOn: '2026-09-15', withheldCents: 48000 });
+  check('a recurring entry keeps its last date', job.endsOn, '2026-09-15');
+  check('and the tax the stub took off', job.withheldCents, 48000);
+  check('a one-time entry never has a last date', Schema.createIncomeEntry({ kind: 'w2', amountCents: 1, frequency: 'once', endsOn: '2026-09-15' }).endsOn, null);
+  check('a method that withholds nothing carries no withheld figure', Schema.createIncomeEntry({ kind: 'se', amountCents: 1, withheldCents: 100 }).withheldCents, null);
+  check('a gift carries none either', Schema.createIncomeEntry({ kind: 'gift', amountCents: 1, withheldCents: 100 }).withheldCents, null);
+  check('empty means empty, not zero', Schema.createIncomeEntry({ kind: 'w2', amountCents: 1 }).withheldCents, null);
+  check('and zero typed stays zero', Schema.createIncomeEntry({ kind: 'w2', amountCents: 1, withheldCents: 0 }).withheldCents, 0);
+  /* Landings stop at the last date. */
+  check('it lands in the month it ends in', Ledger.occurrences(job, '2026-09').length, 1);
+  check('and never after', Ledger.occurrences(job, '2026-10').length, 0);
+  check('the day after the last date drops the landing', Ledger.occurrences(Object.assign({}, job, { endsOn: '2026-09-14' }), '2026-09').length, 0);
+  const weekly = Schema.createIncomeEntry({ kind: 'w2', amountCents: 50000, frequency: 'weekly', receivedOn: '2026-09-04', endsOn: '2026-09-18' });
+  check('a weekly entry keeps only the landings up to its last day', Ledger.occurrences(weekly, '2026-09').map(o => o.date).join(','), '2026-09-04,2026-09-11,2026-09-18');
+  check('with no last date it runs on', Ledger.occurrences(Object.assign({}, weekly, { endsOn: null }), '2026-10').length, 5);
+  /* The stub beats the table on W-2 pay. */
+  const est = Ledger.netOf(Schema.createIncomeEntry({ kind: 'w2', amountCents: 300000 }), h, T);
+  const typed = Ledger.netOf(job, h, T);
+  checkTrue('the blended rate stands in when nothing is typed', Money.isOk(est) && est.taxCents > 0 && !est.pieces.typedWithholding);
+  check('typed, the tax is what the stub says', typed.taxCents, 48000);
+  check('all of it withheld, nothing owed', typed.withheldCents + '/' + typed.owedCents, '48000/0');
+  check('and the net follows', typed.value, 252000);
+  checkTrue('marked as off the stub', typed.pieces.typedWithholding === true);
+  /* Unemployment: the tax stays the estimate; what was held back reduces what is owed. */
+  const ue = Ledger.netOf(Schema.createIncomeEntry({ kind: 'unemployment', amountCents: 60000, withheldCents: 3000 }), h, T);
+  const ue0 = Ledger.netOf(Schema.createIncomeEntry({ kind: 'unemployment', amountCents: 60000 }), h, T);
+  check('unemployment keeps the estimated tax', ue.taxCents, ue0.taxCents);
+  check('what was held back comes off what is owed', ue.owedCents, Math.max(0, ue0.taxCents - 3000));
+  check('and the cash that landed is the gross less it', ue.cashReceivedCents, 57000);
+  /* The month reads through. */
+  h.ledger = Schema.createLedger({ income: [job] });
+  check('the month after the end nets nothing from it', Ledger.month(h, T, '2026-10').count, 0);
+  check('the month it ends in nets it off the stub', Ledger.month(h, T, '2026-09').netCents, 252000);
+})();
+
 section('Two decision sequences that cannot collide');
 
 (function () {
