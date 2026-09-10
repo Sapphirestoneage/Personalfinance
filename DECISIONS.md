@@ -11902,6 +11902,54 @@ missing instead of two; the Dashboard with the example numbers: 2279 to
 2009 pixels, no walk pitch, the foot reading "Next: Worth Learning";
 the FIRE room's foot: the previous and next room and one folded line.
 
+## D-187 — Debt Payoff, redone as one line per debt, the number first, the rest behind carets
+
+**Why.** The owner: the debt screen is way too complicated, too long, too
+many fields; make it like the other rooms, with the extras collapsible,
+and let ten debts be ten lines. On a phone with the two example debts the
+room was 2,946 pixels tall and 440 words, with each debt a card of eight
+controls (name, balance, minimum, type, a three-way interest chooser, the
+rate, and two drawers) and three long output cards below.
+
+**What changed.**
+
+- **The number first**, as every template room (D-093): "Debt-free in"
+  with its three lines (interest, total, per month) and the one chart,
+  before anything is asked.
+- **One line per debt.** Name, owed, rate, minimum a month, and one caret
+  called "More". On a wide screen that is one line; on a phone the name
+  takes its own line and the three facts stay on one, so ten debts are
+  ten short rows and a column head says what each box is instead of a
+  label on every box. The formatted value carries its own $ or %, so the
+  affixes are gone from the line.
+- **Everything else behind the one caret:** the kind, how it feels, how
+  interest behaves (the D-133 three-way chooser and its promo fields; the
+  rate stays on the line, built once, D-133's rule kept), why you keep it
+  (D-132's chips and the hold-back, still their own drawer), the two
+  dates and the credit limit (D-124, still their own drawer), and Set
+  aside and Remove. The caret's summary says the kind and whatever is
+  set, so a closed row is never a black box.
+- **The three output cards fold.** "Which order" (its summary line names
+  the order in use and its interest), "The order they fall" and, on cards
+  only, "Rewards vs. carrying a balance" are closed `details` cards; a
+  deep link into one opens it. The extra-a-month box moved under the
+  list, where the plan it changes is.
+- **Result on the same two debts:** 1,620 pixels and 144 words, from
+  2,946 and 440.
+
+**What did not change.** The engine, every stored field, the guarded
+live list (D-034), the warning painted under a row, the archive drawer,
+the demo and clear buttons, the scope chips.
+
+**Compatibility note.** No stored shape changes. The debt-fold room test
+pins the new line (balance, rate, minimum, then the type behind the
+caret) and the phone layout (the name on its own line); everything else
+it pinned still holds.
+
+Gate for this commit: unit 26966; the three debt room tests; render
+on the room empty and with the demo; the phone forms gate (a debt typed
+in, four fields kept); a phone walk with the example debts.
+
 ---
 
 # The Dungeons & Dividends entries

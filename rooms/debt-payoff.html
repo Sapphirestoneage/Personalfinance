@@ -14,7 +14,8 @@
   1. READS   household.debts[] (balance, rate, minPayment, type,
              emotionalTag, ownerIds; interestFree, archived, borrowedOn,
              dueOn — D-124).
-  2. WRITES  household.debts[] — raw inputs only, itemised. This is the room
+  2. WRITES  household.debts[] — raw inputs only, itemised, one line each
+             with everything past the four facts behind one caret (D-187). This is the room
              that turns the Financial Snapshot's single lump-sum debt record
              into real per-debt entries, which is what the Debt Calculator
              needs (SPEC.md §9 item 2).
@@ -38,11 +39,41 @@
   .rewards { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-top: var(--space-3); font-size: var(--text-sm); }
   .rewards.is-bad { border-left-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
-  .debt { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-3); }
-  .debt-top { display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-3); }
-  .debt-name { flex: 1; min-width: 0; background: transparent; border: none; border-bottom: 1px solid var(--color-border-strong); color: var(--color-text); font-family: var(--font-body); font-size: var(--text-base); padding: 2px 0; outline: none; }
+  /* One line per debt (D-187): name, owed, rate, minimum, and a caret for
+     the rest. Ten debts are ten lines on a wide screen and twenty on a
+     phone, where the name takes a line of its own. */
+  .debt { border-top: 1px solid var(--color-border); padding: var(--space-2) 0 var(--space-1); }
+  .debt:first-child { border-top: none; }
+  .debt-cols { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr 0.8fr 1fr 1.6em; gap: var(--space-2); font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); padding: 0 0 var(--space-1); }
+  .debt-line { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr 0.8fr 1fr 1.6em; gap: var(--space-2); align-items: center; }
+  .debt-line > * { min-width: 0; }
+  .debt-line .slaf-input-shell { min-height: 36px; }
+  .debt-line input { font-size: var(--text-sm); width: 100%; min-width: 0; }
+  .debt-line .slaf-affix { font-size: var(--text-xs); }
+  .debt-name { min-width: 0; width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--color-border-strong); color: var(--color-text); font-family: var(--font-body); font-size: var(--text-sm); padding: 6px 0; }
   .debt-name:focus { border-bottom-color: var(--color-border-active); }
+  .debt-more { background: none; border: none; color: var(--color-text-faint); cursor: pointer; font-size: 12px; padding: 0; text-align: center; }
+  .debt-more[aria-expanded="true"] { color: var(--color-accent); }
   .debt-remove { background: none; border: none; color: var(--color-accent); cursor: pointer; font-size: var(--text-md); padding: 0 var(--space-1); }
+  .debt-acts { display: flex; gap: var(--space-3); align-items: center; margin-top: var(--space-3); }
+  .debt-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-2); align-items: end; }
+  .debt-grid--2 { grid-template-columns: 1fr 1fr; }
+  .debt-grid--3 { display: contents; }
+  @media (max-width: 560px) {
+    .debt-cols { display: none; }
+    .debt-line { grid-template-columns: 1fr 0.8fr 1fr; }
+    .debt-line .debt-name-cell { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--space-2); }
+    .debt-line .debt-more { margin-left: auto; }
+    .debt-line .slaf-input-shell::before { content: attr(data-col); font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-faint); position: absolute; top: -12px; left: 0; }
+    .debt-line .slaf-input-shell { position: relative; margin-top: 12px; }
+  }
+  @media (min-width: 561px) { .debt-line .debt-more { grid-column: 5; } }
+  .extra-field { margin-top: var(--space-4); }
+  .fold-card > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+  .fold-card > summary::-webkit-details-marker { display: none; }
+  .fold-card > summary::after { content: '▸'; color: var(--color-text-faint); font-size: 12px; transition: transform .12s ease; }
+  .fold-card[open] > summary::after { transform: rotate(90deg); }
+  .fold-card-sum { font-size: var(--text-xs); color: var(--color-text-faint); margin-left: auto; margin-right: var(--space-2); }
   /* This room is an editor, not prose: one debt is a row of facts, and at
      480px they stack into a column a screen tall. Wider here only, so the
      shared measure stays what it is for every reading room. D-134. */
@@ -54,7 +85,9 @@
   }
 
   /* The folded parts of a row. */
-  .fold { border-top: 1px solid var(--color-border); margin-top: var(--space-3); }
+  .fold { border-top: 1px solid var(--color-border); margin-top: var(--space-2); }
+  .fold.is-more { border-top: none; margin-top: var(--space-1); }
+  .fold.is-more > .fold-body { padding: var(--space-2) var(--space-3) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); margin: var(--space-2) 0 var(--space-2); }
   .fold > summary { display: flex; align-items: baseline; gap: var(--space-2); cursor: pointer; list-style: none; padding: var(--space-2) 0; font-size: var(--text-sm); color: var(--color-text-muted); }
   .fold > summary::-webkit-details-marker { display: none; }
   .fold > summary::before { content: '▸'; color: var(--color-text-faint); font-size: 11px; line-height: 1.4; transition: transform .12s ease; }
@@ -64,13 +97,6 @@
   .fold-sum { color: var(--color-text-faint); font-size: var(--text-xs); margin-left: auto; text-align: right; min-width: 0; }
   .fold-body { padding-bottom: var(--space-2); }
 
-  .debt-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-2); align-items: end; }
-  .debt-grid--2 { grid-template-columns: 1fr 1fr; }
-  .debt-grid--3 { grid-template-columns: 1fr 1fr 1fr; }
-  @media (max-width: 560px) {
-    .debt-grid--3 { grid-template-columns: 1fr 1fr; }
-    .debt-grid--3 > *:nth-child(3) { grid-column: 1 / -1; }
-  }
   .debt-grid > * { min-width: 0; }
   .debt-meta { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); align-items: stretch; margin-top: var(--space-2); }
   .debt-warn { font-size: var(--text-xs); color: var(--color-caution); margin: var(--space-2) 0 0; }
@@ -190,38 +216,6 @@
 <main class="slaf-wrap">
   <div class="notice" id="load-notice" hidden></div>
 
-  <section class="slaf-card" id="debts">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3)">
-      <span class="slaf-eyebrow">What you owe</span>
-      <div class="scope" id="scope" role="group" aria-label="Which debts to plan">
-        <button type="button" data-scope="all" aria-pressed="true">All debts</button>
-        <button type="button" data-scope="cards" aria-pressed="false">Cards only</button>
-      </div>
-    </div>
-    <h2 style="margin:var(--space-2) 0 var(--space-3)">One line per debt</h2>
-    <div id="debt-list"></div>
-    <button type="button" class="slaf-btn" id="btn-add" style="width:100%">+ Add a debt</button>
-    <details class="archived" id="archived" hidden>
-      <summary>Set aside <small id="archived-count"></small></summary>
-      <p class="debt-hint" style="margin:var(--space-2) 0">Paid off, or on hold. Nothing here is counted or planned; restore one to bring it back.</p>
-      <div id="archived-list"></div>
-    </details>
-    <div class="actions">
-      <button type="button" class="slaf-btn" id="btn-demo">Try with example numbers</button>
-      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Clear</button>
-    </div>
-  </section>
-
-  <section class="slaf-card" id="extra">
-    <span class="slaf-eyebrow">Beyond the minimums</span>
-    <label class="slaf-field" style="margin-top:var(--space-3)">
-      <span class="slaf-label">Extra you can put at debt each month</span>
-      <span class="slaf-input-shell"><span class="slaf-affix">$</span>
-        <input type="text" inputmode="decimal" id="f-extra" placeholder="e.g. 200"/></span>
-      <span class="slaf-hint">Leave it blank to see what the minimums alone do.</span>
-    </label>
-  </section>
-
   <section class="slaf-card" id="out-plan">
     <span class="slaf-eyebrow">Debt-free in</span>
     <div class="slaf-figure" data-figure>—</div>
@@ -230,17 +224,52 @@
     <div id="plan-chart"></div>
   </section>
 
-  <section class="slaf-card" id="out-strategies">
-    <span class="slaf-eyebrow">Which order</span>
+  <section class="slaf-card" id="debts">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3)">
+      <span class="slaf-eyebrow">What you owe</span>
+      <div class="scope" id="scope" role="group" aria-label="Which debts to plan">
+        <button type="button" data-scope="all" aria-pressed="true">All debts</button>
+        <button type="button" data-scope="cards" aria-pressed="false">Cards only</button>
+      </div>
+    </div>
+    <div class="debt-cols" id="debt-cols" hidden><span>Debt</span><span>Owed</span><span>Rate</span><span>Min a month</span></div>
+    <div id="debt-list"></div>
+    <button type="button" class="slaf-btn" id="btn-add" style="width:100%">+ Add a debt</button>
+    <label class="slaf-field extra-field" id="extra">
+      <span class="slaf-label">Extra you can put at debt each month</span>
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+        <input type="text" inputmode="decimal" id="f-extra" placeholder="e.g. 200"/></span>
+      <span class="slaf-hint">Blank shows what the minimums alone do.</span>
+    </label>
+    <details class="archived" id="archived" hidden>
+      <summary>Set aside <small id="archived-count"></small></summary>
+      <p class="debt-hint" style="margin:var(--space-2) 0">Paid off, or on hold. Nothing here is counted or planned; restore one to bring it back.</p>
+      <div id="archived-list"></div>
+    </details>
+    <div class="actions">
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-demo">Try with example numbers</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Clear</button>
+    </div>
+  </section>
+
+  <details class="slaf-card fold-card" id="out-strategies">
+    <summary><span class="slaf-eyebrow">Which order</span><span class="fold-card-sum" id="strategy-sum"></span></summary>
     <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
       Same money every month — only the order changes. Total interest shown.
     </p>
     <div class="strategies" id="strategy-list"></div>
     <div id="strategy-chart"></div>
-  </section>
+  </details>
 
-  <section class="slaf-card" id="out-rewards" hidden>
-    <span class="slaf-eyebrow">Rewards vs. carrying a balance</span>
+  <details class="slaf-card fold-card" id="out-timeline">
+    <summary><span class="slaf-eyebrow">The order they fall</span></summary>
+    <div id="timeline-chart"></div>
+    <ol class="timeline" id="timeline"></ol>
+    <p class="slaf-reason" id="timeline-reason"></p>
+  </details>
+
+  <details class="slaf-card fold-card" id="out-rewards" hidden>
+    <summary><span class="slaf-eyebrow">Rewards vs. carrying a balance</span></summary>
     <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
       Cashback only counts if the balance is cleared. Here's the arithmetic.
     </p>
@@ -251,14 +280,7 @@
         <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="r-rate" placeholder="e.g. 2" aria-label="Rewards rate"/><span class="slaf-affix">%</span></span></label>
     </div>
     <div id="rewards-body"></div>
-  </section>
-
-  <section class="slaf-card" id="out-timeline">
-    <span class="slaf-eyebrow">The order they fall</span>
-    <div id="timeline-chart"></div>
-    <ol class="timeline" id="timeline"></ol>
-    <p class="slaf-reason" id="timeline-reason"></p>
-  </section>
+  </details>
 
   <p class="disclaimer">
     Educational tool, not financial advice. Interest accrues monthly at the
@@ -348,36 +370,42 @@
 
     var debts = debtsOf(h);
     if (!debts.length) {
+      el('debt-cols').hidden = true;
       list.innerHTML = '<p class="slaf-reason">No debts yet. Add one, or load the example.</p>';
       return;
     }
 
     var tags = (RULES.emotionalPriority.tags || []);
+    el('debt-cols').hidden = false;
     list.innerHTML = debts.map(function (d) {
+      /* The line: name, the three facts a plan needs, and one caret. The
+         rate is built here, once, and the interest block below only says
+         how it behaves (D-133's rule kept: one input per field). */
       return '<div class="debt" data-row="' + d.id + '">'
-        + '<div class="debt-top">'
-        + '<input class="debt-name" data-debt="' + d.id + '" data-field="label" '
-        + 'value="' + (d.label || '').replace(/"/g, '&quot;') + '" placeholder="Name this debt" aria-label="Debt name"/>'
-        + '<button type="button" class="debt-archive" data-archive="' + d.id + '" title="Paid off or on hold — keep it, stop counting it">Set aside</button>'
-        + '<button type="button" class="debt-remove" data-remove="' + d.id + '" aria-label="Remove">✕</button>'
-        + '</div>'
+        + '<div class="debt-line">'
+        + '<span class="debt-name-cell"><input class="debt-name" data-debt="' + d.id + '" data-field="label" '
+        + 'value="' + (d.label || '').replace(/"/g, '&quot;') + '" placeholder="Name this debt" aria-label="Debt name"/></span>'
         + '<div class="debt-grid debt-grid--3">'
-        + field(d, 'balanceCents', 'Balance', '$', null, 'e.g. 3200')
-        + field(d, 'minPaymentCents', 'Min /mo', '$', null, d.type === 'family' ? 'or a due date' : 'e.g. 95')
-        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Type</span>'
-        + '<span class="slaf-input-shell"><select data-debt="' + d.id + '" data-field="type">'
-        + DEBT_TYPES.map(function (t) {
-            return '<option value="' + t[0] + '"' + (d.type === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
-          }).join('')
-        + '</select></span></label>'
+        + field(d, 'balanceCents', 'Owed', '$', null, 'e.g. 3200', false, true)
+        + '<span class="ifield" data-ipart="rate" data-for="' + d.id + '">'
+        + field(d, 'rate', 'Rate', null, '%', 'e.g. 22.9', false, true)
+        + '</span>'
+        + field(d, 'minPaymentCents', 'Min a month', '$', null, d.type === 'family' ? 'or a due date' : 'e.g. 95', false, true)
         + '</div>'
-        + interestBlock(d)
-        /* Everything past this point is set once and then rarely touched,
-           so it folds away. A whole screen per debt made a three-debt
-           household unreadable on a phone (D-134). The summaries carry a
-           live count, so a closed drawer is never a black box. */
-        + drawer(d, 'why', 'Why you’re keeping it', whySummary(d),
-            '<div class="debt-meta">'
+        + '</div>'
+        /* Everything else is set once and then rarely touched, so it all
+           sits behind one caret: the kind, how interest behaves, why you
+           keep it, the dates, and the way out. A whole screen per debt
+           made a three-debt household unreadable on a phone (D-134); ten
+           debts are ten lines now (D-187). The summary says what is set. */
+        + drawer(d, 'more', 'More', moreSummary(d),
+            '<div class="debt-grid debt-grid--2">'
+            + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Type</span>'
+            + '<span class="slaf-input-shell"><select data-debt="' + d.id + '" data-field="type">'
+            + DEBT_TYPES.map(function (t) {
+                return '<option value="' + t[0] + '"' + (d.type === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
+              }).join('')
+            + '</select></span></label>'
             + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Feels like</span>'
             + '<span class="slaf-input-shell"><select data-debt="' + d.id + '" data-field="emotionalTag">'
             + '<option value="">Neutral</option>'
@@ -386,26 +414,25 @@
               }).join('')
             + '</select></span></label>'
             + '</div>'
-            + keepBlock(d))
-        /* Two dates on every debt: when it started, and when it is due
-           back in full. On a family loan the due date is what the minimum
-           comes from when no monthly amount was agreed. D-124. The limit
-           only means something on revolving debt — a mortgage has no limit
-           for the balance to be a share of — so it is built for every row
-           and hidden by type, never rebuilt on a change of type. D-045. */
-        + drawer(d, 'extras', 'Dates & limit', extrasSummary(d),
-            '<div class="debt-dates">'
-            + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Borrowed on</span>'
-            + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id + '" data-field="borrowedOn" value="' + (d.borrowedOn || '') + '" aria-label="Date borrowed"/></span></label>'
-            + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Due back by</span>'
-            + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id + '" data-field="dueOn" value="' + (d.dueOn || '') + '" aria-label="Date due back in full"/></span></label>'
-            + '</div>'
-            + '<p class="debt-hint" data-family-hint="' + d.id + '"' + (d.type === 'family' ? '' : ' hidden') + '>With a due date and no monthly amount, the minimum is the balance spread over the months left.</p>'
-            + '<div class="debt-limit" data-cardonly="' + d.id + '"' + (d.type === 'credit_card' ? '' : ' hidden') + '>'
-            + field(d, 'creditLimitCents', 'Credit limit', '$', null, 'e.g. 10000')
-            + '<p class="debt-hint">Optional, and only used for credit utilisation — '
-            + 'balance against limit, where 30% is the usual ceiling. Blank means the '
-            + 'ratio stays unavailable rather than guessed.</p></div>')
+            + interestBlock(d)
+            + drawer(d, 'why', 'Why you’re keeping it', whySummary(d), keepBlock(d))
+            + drawer(d, 'extras', 'Dates & limit', extrasSummary(d),
+                '<div class="debt-dates">'
+                + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Borrowed on</span>'
+                + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id + '" data-field="borrowedOn" value="' + (d.borrowedOn || '') + '" aria-label="Date borrowed"/></span></label>'
+                + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Due back by</span>'
+                + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id + '" data-field="dueOn" value="' + (d.dueOn || '') + '" aria-label="Date due back in full"/></span></label>'
+                + '</div>'
+                + '<p class="debt-hint" data-family-hint="' + d.id + '"' + (d.type === 'family' ? '' : ' hidden') + '>With a due date and no monthly amount, the minimum is the balance spread over the months left.</p>'
+                + '<div class="debt-limit" data-cardonly="' + d.id + '"' + (d.type === 'credit_card' ? '' : ' hidden') + '>'
+                + field(d, 'creditLimitCents', 'Credit limit', '$', null, 'e.g. 10000')
+                + '<p class="debt-hint">Optional, and only used for credit utilisation — '
+                + 'balance against limit, where 30% is the usual ceiling. Blank means the '
+                + 'ratio stays unavailable rather than guessed.</p></div>')
+            + '<div class="debt-acts">'
+            + '<button type="button" class="debt-archive" data-archive="' + d.id + '" title="Paid off or on hold — keep it, stop counting it">Set aside</button>'
+            + '<button type="button" class="debt-remove" data-remove="' + d.id + '" aria-label="Remove">✕ Remove</button>'
+            + '</div>')
         + '<p class="debt-warn" data-warn="' + d.id + '"></p>'
         + '</div>';
     }).join('');
@@ -496,6 +523,8 @@
   }
 
   function paintFoldSummary(d) {
+    var more = document.querySelector('[data-fold-sum="' + drawerKey(d.id, 'more') + '"]');
+    if (more) more.innerHTML = moreSummary(d);
     var why = document.querySelector('[data-fold-sum="' + drawerKey(d.id, 'why') + '"]');
     if (why) why.innerHTML = whySummary(d);
     var ex = document.querySelector('[data-fold-sum="' + drawerKey(d.id, 'extras') + '"]');
@@ -513,16 +542,19 @@
       var b = scope.querySelector('[data-imode][data-mode="' + m[0] + '"]');
       if (b) b.setAttribute('aria-pressed', String(mode === m[0]));
     });
-    var show = { rate: mode !== 'never', promo: mode === 'promo', post: mode === 'promo' };
+    var show = { promo: mode === 'promo', post: mode === 'promo' };
     Object.keys(show).forEach(function (part) {
       var n = scope.querySelector('[data-ipart="' + part + '"]');
       if (n) n.hidden = !show[part];
     });
     var grid = scope.querySelector('[data-igrid]');
     if (grid) grid.classList.toggle('is-promo', mode === 'promo');
-    var lab = scope.querySelector('[data-ipart="rate"] .slaf-label');
-    if (lab) lab.textContent = mode === 'promo' ? 'Rate right now' : 'Rate';
-    var rate = scope.querySelector('input[data-field="rate"]');
+    /* The rate sits on the debt's own line (D-187): never hidden, only
+       renamed and, for no-interest, disabled at 0% by paintLive(). */
+    var row = document.querySelector('[data-row="' + d.id + '"]');
+    var shell = row ? row.querySelector('[data-ipart="rate"] .slaf-input-shell') : null;
+    if (shell) shell.setAttribute('data-col', mode === 'promo' ? 'Rate now' : 'Rate');
+    var rate = row ? row.querySelector('input[data-field="rate"]') : null;
     if (rate && rate !== document.activeElement) {
       rate.placeholder = mode === 'promo' ? '0' : 'e.g. 22.9';
     }
@@ -626,7 +658,7 @@
     });
   }
 
-  function field(debt, key, label, prefix, suffix, placeholder, disabled) {
+  function field(debt, key, label, prefix, suffix, placeholder, disabled, compact) {
     var raw = debt[key];
     var shown = '';
     if (Money.isEntered(raw)) {
@@ -635,13 +667,13 @@
         : Money.formatCents(raw);
     }
     if (key === 'rate' && disabled) shown = '0%';
-    return '<label class="slaf-field" style="margin:0"><span class="slaf-label">' + label + '</span>'
-      + '<span class="slaf-input-shell">'
-      + (prefix ? '<span class="slaf-affix">' + prefix + '</span>' : '')
+    return '<label class="slaf-field" style="margin:0">' + (compact ? '' : '<span class="slaf-label">' + label + '</span>')
+      + '<span class="slaf-input-shell"' + (compact ? ' data-col="' + label + '"' : '') + '>'
+      + (prefix && !compact ? '<span class="slaf-affix">' + prefix + '</span>' : '')
       + '<input type="text" inputmode="decimal" data-debt="' + debt.id + '" data-field="' + key + '" '
       + (disabled ? 'disabled ' : '')
       + 'value="' + shown + '" placeholder="' + placeholder + '" aria-label="' + label + '"/>'
-      + (suffix ? '<span class="slaf-affix">' + suffix + '</span>' : '')
+      + (suffix && !compact ? '<span class="slaf-affix">' + suffix + '</span>' : '')
       + '</span></label>';
   }
 
@@ -761,12 +793,23 @@
 
   function drawer(d, name, title, summary, body) {
     var open = openDrawers[drawerKey(d.id, name)] === true;
-    return '<details class="fold" data-fold="' + name + '" data-for="' + d.id + '"' + (open ? ' open' : '') + '>'
+    return '<details class="fold' + (name === 'more' ? ' is-more' : '') + '" data-fold="' + name + '" data-for="' + d.id + '"' + (open ? ' open' : '') + '>'
       + '<summary><span class="fold-title">' + title + '</span>'
       + '<span class="fold-sum" data-fold-sum="' + drawerKey(d.id, name) + '">' + summary + '</span></summary>'
       + '<div class="fold-body">' + body + '</div></details>';
   }
 
+  /** The one caret's summary: the kind, how interest behaves, and anything set below. */
+  function moreSummary(d) {
+    var t = DEBT_TYPES.filter(function (x) { return x[0] === d.type; })[0];
+    var bits = [t ? t[1].replace(/ or a friend$/, '') : 'Debt'];
+    var mode = interestMode(d);
+    if (mode === 'never') bits.push('no interest'); else if (mode === 'promo') bits.push('promo rate');
+    bits = bits.map(function (b, i) { return i === 0 ? esc(b) : b; });
+    var w = whySummary(d); if (w !== 'nothing set') bits.push(w);
+    var x = extrasSummary(d); if (x !== 'nothing set') bits.push(x);
+    return bits.join(' · ');
+  }
   /** What a closed drawer says about itself, so nothing hides silently. */
   function whySummary(d) {
     var bits = [];
@@ -846,9 +889,6 @@
       + '<legend class="interest-cap">How interest works</legend>'
       + '<div class="imodes" role="group" aria-label="How interest is charged on this debt">' + seg + '</div>'
       + '<div class="igrid" data-igrid="' + d.id + '">'
-      + '<span class="ifield" data-ipart="rate" data-for="' + d.id + '"' + (mode === 'never' ? ' hidden' : '') + '>'
-      + field(d, 'rate', mode === 'promo' ? 'Rate right now' : 'Rate', null, '%', mode === 'promo' ? '0' : 'e.g. 22.9')
-      + '</span>'
       + '<span class="ifield" data-ipart="promo" data-for="' + d.id + '"' + (mode === 'promo' ? '' : ' hidden') + '>'
       + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Until</span>'
       + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id
@@ -1137,6 +1177,13 @@
       .filter(function (r) { return r && Money.isOk(r); })
       .map(function (r) { return r.totalInterestCents; });
     var allTie = totals.length > 1 && totals.every(function (t) { return t === totals[0]; });
+    /* The folded card's one line: the order in use and what it costs. */
+    var sum = el('strategy-sum');
+    if (sum) {
+      var cur = cmp.results ? cmp.results[strategyId] : null;
+      var curS = RULES.strategies.filter(function (x) { return x.id === strategyId; })[0];
+      sum.textContent = cur && Money.isOk(cur) && curS ? curS.label + ' · ' + Money.formatCents(cur.totalInterestCents) + ' interest' : '';
+    }
 
     wrap.innerHTML = RULES.strategies.map(function (s) {
       var r = cmp.results ? cmp.results[s.id] : null;
@@ -1419,6 +1466,7 @@
   function jumpToHash() {
     if (!location.hash) return;
     var target = document.getElementById(location.hash.slice(1));
+    if (target && target.tagName === 'DETAILS') target.open = true;
     if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   window.addEventListener('hashchange', jumpToHash);
