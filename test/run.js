@@ -733,6 +733,8 @@ const RULES = TABLES.debtRules;
   check('no threshold given: no high-interest line at all', Debt.milestones(planNC, noCards, RULES, {}).highInterest, null);
   check('an incomplete plan gives nothing', Debt.milestones(Debt.simulate(Schema.createHousehold(), RULES, {}), hh, RULES, {}), null);
   const page = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
+  checkTrue('a stale engine cannot take the room down: the finish lines are guarded', /typeof Debt\.milestones === 'function'/.test(page) && /Part of this room could not draw/.test(page));
+  checkTrue('nothing free reads as the minimums alone, never as $0 extra', /leaves nothing free after spending and the minimums/.test(page));
   checkTrue('the room works the extra out from pay, spending and the minimums when the box is blank', /function computedExtraCents\(h\)/.test(page) && /take\.value - spend\.value - mins\.value/.test(page) && /effectiveExtraCents/.test(page));
   checkTrue('the room shows the three lines above the figures, from the FOO table', /Debt\.milestones\(plan, h, RULES, \{ highInterestRate: FOO && FOO\.thresholds/.test(page) && /Credit cards gone/.test(page) && /Everything gone/.test(page) && /load\(\['debtRules', 'fooRules', 'effectiveTaxRates'\]\)/.test(page));
 })();

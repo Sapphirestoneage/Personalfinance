@@ -95,7 +95,7 @@
   .fold[open] > summary::before { transform: rotate(90deg); }
   .fold > summary:hover { color: var(--color-text); }
   .fold-title { font-weight: 600; }
-  .fold-sum { color: var(--color-text-faint); font-size: var(--text-xs); margin-left: auto; text-align: right; min-width: 0; }
+  .fold-sum { color: var(--color-text-faint); font-size: var(--text-xs); margin-left: auto; text-align: right; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .fold-body { padding-bottom: var(--space-2); }
 
   .debt-grid > * { min-width: 0; }
@@ -1138,14 +1138,19 @@
   function paintExtraHint(h) {
     var hint = el('extra-hint'); if (!hint) return;
     var c = computedExtraCents(h);
+    var box = el('f-extra');
     if (Money.isEntered(extraCents)) {
-      hint.textContent = c === null ? 'Your figure. Clear it to see the minimums alone.'
+      hint.textContent = c === null || c === 0 ? 'Your figure. Clear it to see the minimums alone.'
         : 'Your figure. Clear it to use what your pay leaves free, ' + Money.formatCents(c) + ' a month.';
-    } else if (c !== null) {
+    } else if (c !== null && c > 0) {
       hint.textContent = 'Blank, so the plan uses what your pay leaves after spending and the minimums: ' + Money.formatCents(c) + ' a month. Type a figure to override.';
-      el('f-extra').placeholder = Money.formatCents(c);
+      box.placeholder = String(Math.round(c / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    } else if (c === 0) {
+      hint.textContent = 'Your pay leaves nothing free after spending and the minimums, so this is the minimums alone. Type a figure to try one.';
+      box.placeholder = 'e.g. 200';
     } else {
       hint.textContent = 'Blank shows what the minimums alone do. Add your pay and spending in Start Here and this fills itself in.';
+      box.placeholder = 'e.g. 200';
     }
   }
 
@@ -1174,7 +1179,12 @@
       var baseline = Debt.simulate(h, RULES, { strategyId: strategyId, extraMonthlyCents: 0 });
       /* Three finish lines before the figures (D-188): the cards, the
          high-interest debt, everything. Each is read off this plan. */
-      detail += finishLines(Debt.milestones(plan, h, RULES, { highInterestRate: FOO && FOO.thresholds ? FOO.thresholds.highInterestDebtRate : null }));
+      /* Guarded: a browser can hold an older engines/debt.js for a few
+         minutes after a deploy, and a missing helper must not take the
+         whole room down with it. */
+      if (typeof Debt.milestones === 'function') {
+        detail += finishLines(Debt.milestones(plan, h, RULES, { highInterestRate: FOO && FOO.thresholds ? FOO.thresholds.highInterestDebtRate : null }));
+      }
       var rows = [
         ['Interest you’ll pay', Money.formatCents(plan.totalInterestCents),
          'The cost of borrowing, on top of what you actually owe.'],
@@ -1544,8 +1554,14 @@
     TABLES = tables;
     RULES = tables.debtRules;
     FOO = tables.fooRules || null;
-    renderNow();
-    jumpToHash();
+    /* A failure here is the room's own, not the table's: say so, and
+       leave what did paint on screen. */
+    try { renderNow(); jumpToHash(); }
+    catch (e) {
+      var n = el('load-notice');
+      n.hidden = false; n.className = 'notice is-error';
+      n.textContent = 'Part of this room could not draw (' + e.message + '). Reload the page; if it stays, the site is mid-update and clears in a few minutes.';
+    }
   }).catch(function (err) {
     var notice = el('load-notice');
     notice.hidden = false;
