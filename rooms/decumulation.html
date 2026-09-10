@@ -173,6 +173,13 @@
       else { value = Math.round(p.yearsUntilEmpty) + ' years'; tail = ' <a href="' + Ownership.linkTo('start', 'q-about') + '">Add your birth date for the age →</a>'; }
       if (!p.never) sub += '. ' + (Math.round(p.yearsUntilEmpty * 10) / 10) + ' years at a ' + Money.formatRate(p.returnReal, { decimals: 0 }) + ' real return';
       else sub += '. At a ' + Money.formatRate(p.returnReal, { decimals: 0 }) + ' real return the draw never empties the investments';
+      /* 15.9: the phases the draw crosses, one sentence; only the ages
+         that change what a draw can do, in plain words. D-181. */
+      var PHASE_WORDS = { penaltyFree: 'the penalty ends at 59 and a half', ssEarly: 'Social Security can start at 62', medicare: 'Medicare at 65', fullRetirementAge: 'full Social Security', rmd: 'required withdrawals begin' };
+      var crossed = (p.phases || []).slice(1).filter(function (ph) { return PHASE_WORDS[p.phases[p.phases.indexOf(ph) - 1].endsAt]; });
+      if (crossed.length) {
+        tail += ' On the way: ' + crossed.map(function (ph) { var id = p.phases[p.phases.indexOf(ph) - 1].endsAt; return PHASE_WORDS[id] + (id === 'fullRetirementAge' || id === 'rmd' ? ' at ' + ph.fromAge : '') + ' (year ' + ph.fromYear + ')'; }).join(', ') + '.';
+      }
       return { label: label, value: value, sub: sub + tail, zone: p.zone === 'none' ? null : p.zone, result: p };
     },
 
@@ -187,7 +194,9 @@
         points: p.vpwPath.map(function (r) { return [x0 + r.year, SLAF.Horizon.display(h, r.balanceCents, r.year)]; }) });
       var dots = [];
       if (!p.never && p.yearsUntilEmpty <= p.horizonYears) dots.push({ x: x0 + p.yearsUntilEmpty, y: 0, color: Charts.COLORS.debt });
-      var vLines = [];
+      /* 15.9: the age milestones as faint marks; the plan's phase
+         boundaries are the same ages (Decumulation.plan meta.phases). */
+      var vLines = Schema.milestoneMarks(h, T.milestones, { axis: byAge ? 'age' : 'years', from: x0, to: x0 + p.horizonYears });
       if (byAge && p.socialSecurityInYears !== null && p.socialSecurityAt <= x0 + p.horizonYears) vLines.push({ x: p.socialSecurityAt, label: 'Social Security' });
       return Charts.area({
         title: 'Investments, year by year, drawing as planned and as the VPW table allows',

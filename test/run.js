@@ -11078,6 +11078,97 @@ section('15.8: every asset in one of five piles; one runway draws them in order 
 })();
 
 /* ==========================================================================
+   15.9 — age and the inflection dates (D-181)
+   ========================================================================== */
+section('15.9: the ages where a rule changes, dated per person and drawn on every timeline (D-181)');
+(function () {
+  const MT = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/milestones.json'), 'utf8'));
+  const Features = require(path.join(ROOT, 'shared/features.js'));
+  const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const Charts = require(path.join(ROOT, 'shared/charts.js'));
+  Features.use(JSON.parse(fs.readFileSync(path.join(ROOT, 'data/features.json'), 'utf8')));
+  Prefs.reset();
+  checkTrue('the table is sourced, and every row carries a rule with a source and a citation', MT.confidence === 'sourced' && MT.milestones.every(r => r.rule && r.rule.value && r.rule.source && r.rule.citation && r.rule.asOf));
+  check('ten rows', MT.milestones.length, 10);
+  checkTrue('registered as a reference table', Reference.TABLE_FILES.milestones === 'milestones.json');
+
+  /* Born 1990: full retirement age 67, RMDs at 75. */
+  const p = Schema.createPerson({ dob: '1990-03-15' });
+  const ms = Schema.milestones(p, MT, { asOf: '2026-09-10' });
+  check('the list in age order', ms.map(m => m.id).join(','), 'catchup50,hsaCatchup55,ruleOf55,penaltyFree,catchup60to63,ssEarly,medicare,fullRetirementAge,ssDelayed,rmd');
+  check('59 and a half is 59.5', ms.filter(m => m.id === 'penaltyFree')[0].age, 59.5);
+  check('...dated six months after the 59th birthday', ms.filter(m => m.id === 'penaltyFree')[0].date, '2049-09-15');
+  check('full retirement age for 1990 is 67', ms.filter(m => m.id === 'fullRetirementAge')[0].age, 67);
+  check('RMDs for 1990 start at 75', ms.filter(m => m.id === 'rmd')[0].age, 75);
+  check('years from now, at 36: catch-up in 14', ms.filter(m => m.id === 'catchup50')[0].yearsFromNow, 14);
+  checkTrue('nothing was assumed with a birth year', ms.every(m => m.assumed === false));
+  checkTrue('every row carries its rule and source', ms.every(m => m.rule && m.source && m.citation));
+
+  /* Born 1957: full retirement age 66 and 6 months, RMDs at 73. */
+  const older = Schema.milestones(Schema.createPerson({ dob: '1957-06-01' }), MT, { asOf: '2026-09-10' });
+  check('1957: full retirement age 66 and 6 months', older.filter(m => m.id === 'fullRetirementAge')[0].age, 66.5);
+  check('...ageMonths 6', older.filter(m => m.id === 'fullRetirementAge')[0].ageMonths, 6);
+  check('...dated 2023-12-01', older.filter(m => m.id === 'fullRetirementAge')[0].date, '2023-12-01');
+  check('1957: RMDs at 73', older.filter(m => m.id === 'rmd')[0].age, 73);
+  check('1950: RMDs at 72', Schema.milestones({ dob: '1950-01-01' }, MT).filter(m => m.id === 'rmd')[0].age, 72);
+  check('1955: full retirement age 66 and 2 months', Schema.milestones({ dob: '1955-01-01' }, MT).filter(m => m.id === 'fullRetirementAge')[0].age, Math.round((66 + 2 / 12) * 100) / 100);
+
+  /* No birth year: the latest rule stands in and says so. */
+  const noDob = Schema.milestones(Schema.createPerson({}), MT);
+  checkTrue('no date of birth: ages still listed, dates and years-from-now null', noDob.length === 10 && noDob.every(m => m.date === null && m.yearsFromNow === null));
+  checkTrue('...and the two birth-year rows are flagged assumed', noDob.filter(m => m.byBirthYear).every(m => m.assumed === true) && noDob.filter(m => !m.byBirthYear).every(m => m.assumed === false));
+  check('...at the 1960-and-later rule', noDob.filter(m => m.id === 'rmd')[0].age, 75);
+  check('no table, no list', Schema.milestones(p, null).length, 0);
+
+  /* Marks for a chart, per axis, clipped, merged, switched. */
+  const h = Schema.createHousehold({}); h.people = [p];
+  const byAge = Schema.milestoneMarks(h, MT, { axis: 'age', from: 36, to: 66, asOf: '2026-09-10' });
+  check('by age, 36 to 66: catch-up, 55 (two rules, one mark), 59.5, 60, 62, 65', byAge.map(k => k.x).join(','), '50,55,59.5,60,62,65');
+  checkTrue('the two rules at 55 share a mark and both names', /HSA catch-up/.test(byAge[1].label) && /rule of 55/.test(byAge[1].label));
+  checkTrue('every mark is faint and carries the rule on hover', byAge.every(k => k.faint === true && /:/.test(k.title)));
+  const byYears = Schema.milestoneMarks(h, MT, { axis: 'years', from: 0, to: 5, asOf: '2026-09-10' });
+  check('years from now, inside five years at 36: none', byYears.length, 0);
+  check('...inside thirty: seven ages', Schema.milestoneMarks(h, MT, { axis: 'years', from: 0, to: 30, asOf: '2026-09-10' }).length, 6);
+  check('months from now: 59.5 is 282 months away', Schema.milestoneMarks(h, MT, { axis: 'months', asOf: '2026-09-10' }).filter(k => /59/.test(k.label))[0].x, 282);
+  const noAge = Schema.createHousehold({}); noAge.people = [Schema.createPerson({})];
+  check('no age: nothing on a years axis', Schema.milestoneMarks(noAge, MT, { axis: 'years' }).length, 0);
+  check('...but the ages themselves still draw on an age axis', Schema.milestoneMarks(noAge, MT, { axis: 'age' }).length > 0, true);
+  Features.set('showMilestones', false);
+  check('the switch off: no marks', Schema.milestoneMarks(h, MT, { axis: 'age' }).length, 0);
+  Features.set('showMilestones', null);
+  checkTrue('the switch is on by default, in the Horizon group', Features.get('showMilestones')['default'] === 'on' && Features.get('showMilestones').group === 'horizon');
+  Prefs.reset();
+
+  /* The chart draws a faint mark with the title. */
+  const svg = Charts.area({ series: [{ label: 'x', points: [[0, 1], [10, 2]] }], vLines: [{ x: 5, label: '59½', title: 'the rule', faint: true }, { x: 7, label: 'event' }] });
+  checkTrue('a faint mark is drawn as such, with the rule as its title', /class="milestone"><title>the rule<\/title><line class="mark is-faint"/.test(svg));
+  checkTrue('...and an event mark is unchanged', /<line class="mark" /.test(svg) && /mark-label" /.test(svg));
+  checkTrue('the theme styles the faint mark', /\.mark\.is-faint/.test(fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8')));
+
+  /* Drawing It Down: the phases are the milestones inside the horizon. */
+  const Decum = require(path.join(ROOT, 'engines/decumulation.js'));
+  const d = Demo.build(); d.people[0].dob = '1970-03-15'; d.people[0].employmentStatus = 'retired';
+  d.assets = d.assets.map(a => a.category === 'investment' ? Object.assign({}, a, { valueCents: 80000000 }) : a);
+  const dt = Object.assign({}, TABLES, { milestones: MT, ratioBenchmarks: require(path.join(ROOT, 'data/ratio_benchmarks.json')), vpwTable: require(path.join(ROOT, 'data/vpw_table.json')) });
+  const plan = Decum.plan(d, dt, { asOf: '2026-09-10' });
+  checkTrue('the plan is ok on the fixture', Money.isOk(plan), plan.reason);
+  checkTrue('at 56 the phases run now, 59.5, 60, 62, 65, 67, 70, 75', Money.isOk(plan) && plan.phases.map(ph => ph.fromAge).join(',') === '56,59.5,60,62,65,67,70,75');
+  checkTrue('...the first phase ends at 59.5, year 3.5', Money.isOk(plan) && plan.phases[0].toAge === 59.5 && plan.phases[0].toYear === 3.5 && plan.phases[0].endsAt === 'penaltyFree');
+  checkTrue('...and the last runs to the horizon', Money.isOk(plan) && plan.phases[plan.phases.length - 1].toAge === 56 + plan.horizonYears);
+  check('no table: no phases, nothing else changes', Decum.plan(d, Object.assign({}, dt, { milestones: null }), { asOf: '2026-09-10' }).phases.length, 0);
+
+  /* Every timeline draws them. */
+  [['rooms/adventure.html', /milestoneMarks\(h\(\), TABLES\.milestones, \{ axis: 'years'/],
+   ['rooms/decumulation.html', /milestoneMarks\(h, T\.milestones/],
+   ['rooms/fire.html', /milestoneMarks\(h, TABLES\.milestones, \{ axis: 'age'/],
+   ['rooms/timeline.html', /milestoneMarks\(h, MILESTONES, \{ axis: 'months'/]].forEach(([f, re]) => {
+    checkTrue(f + ' draws the milestones', re.test(fs.readFileSync(path.join(ROOT, f), 'utf8')));
+  });
+  checkTrue('the Drawing It Down room says which phases the draw crosses', /p\.phases/.test(fs.readFileSync(path.join(ROOT, 'rooms/decumulation.html'), 'utf8')));
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 

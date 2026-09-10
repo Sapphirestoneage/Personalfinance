@@ -1,0 +1,223 @@
+{
+  "id": "milestones",
+  "version": "1.0",
+  "asOf": "2026-09-10",
+  "source": "The ages at which US retirement rules change, each with its rule text and primary source. Lane 2, section 3 (L-3).",
+  "confidence": "sourced",
+  "confidenceNote": "Statute and agency pages, not opinions. The one thing that moves is the Social Security full retirement age table by birth year and the RMD age by birth year, both transcribed here.",
+  "note": "Not the savings-multiple milestones (those are data/retirement_milestones.json). Read by Schema.milestones(person, table) and drawn on every timeline by Schema.milestoneMarks (15.9, D-181); the Drawing It Down engine uses them as phase boundaries. Ages are exact years unless `months` says otherwise; 59.5 is stored as years 59, months 6. Two rows depend on the birth year (full retirement age, RMD age); with no birth year the 1960-and-later row stands in and the result says so.",
+  "refresh": {
+    "month": "January",
+    "against": "SECURE 2.0 follow-on legislation (RMD age), the SSA full retirement age page, Medicare enrollment page; the catch-up amounts live in contribution_limits.json, not here."
+  },
+  "milestones": [
+    {
+      "id": "catchup50",
+      "age": {
+        "years": 50,
+        "months": 0
+      },
+      "label": "Catch-up contributions",
+      "rule": {
+        "value": "From the year you turn 50 you may contribute the catch-up amount above the elective deferral limit (401(k), 403(b), most 457(b)) and above the IRA limit. The dollar amounts are in contribution_limits.json.",
+        "asOf": "2026-01-01",
+        "source": "https://www.law.cornell.edu/uscode/text/26/414",
+        "confidence": "sourced",
+        "citation": "IRC 414(v); IRC 219(b)(5)(B)"
+      }
+    },
+    {
+      "id": "hsaCatchup55",
+      "age": {
+        "years": 55,
+        "months": 0
+      },
+      "label": "HSA catch-up",
+      "rule": {
+        "value": "From the year you turn 55 you may add $1,000 a year to an HSA above the self-only or family limit (not indexed).",
+        "asOf": "2026-01-01",
+        "source": "https://www.irs.gov/publications/p969",
+        "confidence": "sourced",
+        "citation": "IRC 223(b)(3); IRS Publication 969"
+      }
+    },
+    {
+      "id": "ruleOf55",
+      "age": {
+        "years": 55,
+        "months": 0
+      },
+      "label": "Rule of 55",
+      "rule": {
+        "value": "Leave the employer in or after the year you turn 55 (50 for qualified public safety employees) and distributions from THAT employer plan (401(k), 403(b)) escape the 10% early withdrawal penalty; IRAs and earlier employers plans do not qualify.",
+        "asOf": "2026-01-01",
+        "source": "https://www.law.cornell.edu/uscode/text/26/72",
+        "confidence": "sourced",
+        "citation": "IRC 72(t)(2)(A)(v); 72(t)(10) for public safety"
+      }
+    },
+    {
+      "id": "catchup60to63",
+      "age": {
+        "years": 60,
+        "months": 0
+      },
+      "label": "Higher catch-up at 60 to 63",
+      "rule": {
+        "value": "For the years you are 60, 61, 62 or 63 the workplace-plan catch-up is the greater of $10,000 (indexed) or 150% of the regular catch-up; at 64 it drops back to the regular amount. Amount in contribution_limits.json.",
+        "asOf": "2026-01-01",
+        "source": "https://www.congress.gov/bill/117th-congress/house-bill/2617",
+        "confidence": "sourced",
+        "citation": "SECURE 2.0 Act section 109 (Pub. L. 117-328, Division T)"
+      }
+    },
+    {
+      "id": "penaltyFree",
+      "age": {
+        "years": 59,
+        "months": 6
+      },
+      "label": "59 and a half",
+      "rule": {
+        "value": "Distributions from IRAs and workplace plans after 59 and a half are not subject to the 10% additional tax on early distributions. Ordinary income tax still applies to pre-tax money.",
+        "asOf": "2026-01-01",
+        "source": "https://www.law.cornell.edu/uscode/text/26/72",
+        "confidence": "sourced",
+        "citation": "IRC 72(t)(2)(A)(i)"
+      }
+    },
+    {
+      "id": "ssEarly",
+      "age": {
+        "years": 62,
+        "months": 0
+      },
+      "label": "Earliest Social Security retirement benefit",
+      "rule": {
+        "value": "Retirement benefits can start at 62, permanently reduced by five ninths of one percent a month for the first 36 months before full retirement age and five twelfths of one percent for each month beyond that (30% at 62 with a full retirement age of 67).",
+        "asOf": "2026-01-01",
+        "source": "https://www.ssa.gov/benefits/retirement/planner/agereduction.html",
+        "confidence": "sourced",
+        "citation": "Social Security Act section 202(q); SSA retirement planner"
+      }
+    },
+    {
+      "id": "medicare",
+      "age": {
+        "years": 65,
+        "months": 0
+      },
+      "label": "Medicare",
+      "rule": {
+        "value": "Medicare eligibility begins at 65; the initial enrollment period runs from three months before the birthday month to three months after. HSA contributions must stop once Part A begins (retroactive up to six months at enrollment).",
+        "asOf": "2026-01-01",
+        "source": "https://www.medicare.gov/basics/get-started-with-medicare/sign-up/when-does-medicare-coverage-start",
+        "confidence": "sourced",
+        "citation": "Social Security Act section 226; medicare.gov"
+      }
+    },
+    {
+      "id": "fullRetirementAge",
+      "age": null,
+      "label": "Social Security full retirement age",
+      "byBirthYear": [
+        {
+          "bornFrom": 1943,
+          "bornTo": 1954,
+          "years": 66,
+          "months": 0
+        },
+        {
+          "bornFrom": 1955,
+          "bornTo": 1955,
+          "years": 66,
+          "months": 2
+        },
+        {
+          "bornFrom": 1956,
+          "bornTo": 1956,
+          "years": 66,
+          "months": 4
+        },
+        {
+          "bornFrom": 1957,
+          "bornTo": 1957,
+          "years": 66,
+          "months": 6
+        },
+        {
+          "bornFrom": 1958,
+          "bornTo": 1958,
+          "years": 66,
+          "months": 8
+        },
+        {
+          "bornFrom": 1959,
+          "bornTo": 1959,
+          "years": 66,
+          "months": 10
+        },
+        {
+          "bornFrom": 1960,
+          "bornTo": null,
+          "years": 67,
+          "months": 0
+        }
+      ],
+      "rule": {
+        "value": "The age at which the full (unreduced) retirement benefit is payable: 66 for those born 1943 to 1954, rising two months a birth year to 67 for anyone born in 1960 or later.",
+        "asOf": "2026-01-01",
+        "source": "https://www.ssa.gov/benefits/retirement/planner/agereduction.html",
+        "confidence": "sourced",
+        "citation": "Social Security Act section 216(l)"
+      }
+    },
+    {
+      "id": "ssDelayed",
+      "age": {
+        "years": 70,
+        "months": 0
+      },
+      "label": "Delayed retirement credits stop",
+      "rule": {
+        "value": "Each month a retirement benefit is delayed past full retirement age adds two thirds of one percent (8% a year) until 70; there is no gain from waiting past 70.",
+        "asOf": "2026-01-01",
+        "source": "https://www.ssa.gov/benefits/retirement/planner/delayret.html",
+        "confidence": "sourced",
+        "citation": "Social Security Act section 202(w)"
+      }
+    },
+    {
+      "id": "rmd",
+      "age": null,
+      "label": "Required minimum distributions",
+      "byBirthYear": [
+        {
+          "bornFrom": null,
+          "bornTo": 1950,
+          "age": 72,
+          "note": "Born before 1951: RMDs began at 70 and a half (before 2020) or 72 (2020 to 2022)."
+        },
+        {
+          "bornFrom": 1951,
+          "bornTo": 1959,
+          "age": 73,
+          "note": "SECURE 2.0 section 107: age 73 for anyone reaching 72 after 2022."
+        },
+        {
+          "bornFrom": 1960,
+          "bornTo": null,
+          "age": 75,
+          "note": "SECURE 2.0 section 107: age 75 for anyone born in 1960 or later (from 2033)."
+        }
+      ],
+      "rule": {
+        "value": "Pre-tax IRAs and workplace plans must begin required minimum distributions by April 1 of the year after the year you reach the RMD age (73 for those born 1951 to 1959, 75 for 1960 and later). Roth IRAs and, from 2024, Roth workplace accounts have no lifetime RMD.",
+        "asOf": "2026-01-01",
+        "source": "https://www.irs.gov/retirement-plans/retirement-plan-and-ira-required-minimum-distributions-faqs",
+        "confidence": "sourced",
+        "citation": "IRC 401(a)(9)(C) as amended by SECURE 2.0 section 107"
+      }
+    }
+  ]
+}

@@ -165,6 +165,7 @@
 <script src="../shared/gate.js"></script>
 <script src="../shared/guide.js"></script>
 <script src="../shared/prefs.js"></script>
+<script src="../shared/features.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/liveform.js"></script>
@@ -233,6 +234,8 @@
         format: function (v) { return String(Math.round(v / 12)); }
       },
       y: { min: 0, format: function (v) { return Charts.shortMoney ? Charts.shortMoney(v) : money(v); } },
+      /* 15.9: the age milestones inside the 30 years, faint. D-181. */
+      vLines: Schema.milestoneMarks(h, MILESTONES, { axis: 'months', from: 0, to: 30 * 12 }),
       empty: 'Nothing placed yet.'
     }));
 
@@ -484,6 +487,13 @@
   Progress.mount('timeline');
   renderList(Spine.getProfile());
   render();
+  /* 15.9: the milestone table and the switch arrive, then the chart
+     repaints with the marks. */
+  var MILESTONES = null;
+  Promise.all([SLAF.Reference.load(['milestones']), SLAF.Features && SLAF.Features.ready ? SLAF.Features.ready() : Promise.resolve()]).then(function (r) {
+    MILESTONES = r[0] && r[0].milestones ? r[0].milestones : null;
+    render();
+  }).catch(function () {});
 })();
 </script>
 </body>

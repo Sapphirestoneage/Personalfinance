@@ -91,7 +91,7 @@
    *                 dash: bool, width }]  — the first filled series is the
    *                 one the chart is about.
    * opts.x: { label, format }   opts.y: { format, min, max }
-   * opts.hLines: [{ y, label, color }]   opts.vLines: [{ x, label }]
+   * opts.hLines: [{ y, label, color }]   opts.vLines: [{ x, label, faint?, title? }]
    * opts.bands: [{ points: [[x, low, high], …], color }] — a shaded range
    *              drawn BEHIND the lines (the Triple D band, D-176).
    * opts.width/height: the viewBox (default 360 × 220).
@@ -147,6 +147,14 @@
     });
     (o.vLines || []).forEach(function (l) {
       var px = sx(l.x).toFixed(1);
+      /* 15.9: a faint mark (an age milestone) sits behind the event marks,
+         its label at the foot and the rule on hover. D-181. */
+      if (l.faint) {
+        parts.push('<g class="milestone">' + (l.title ? '<title>' + esc(l.title) + '</title>' : '')
+          + '<line class="mark is-faint" x1="' + px + '" y1="' + PT + '" x2="' + px + '" y2="' + (H - PB) + '"/>'
+          + (l.label ? '<text class="tick mark-label is-faint" x="' + (+px + 2) + '" y="' + (H - PB - 3) + '">' + esc(l.label) + '</text>' : '') + '</g>');
+        return;
+      }
       parts.push('<line class="mark" x1="' + px + '" y1="' + PT + '" x2="' + px + '" y2="' + (H - PB) + '"/>');
       if (l.label) parts.push('<text class="tick mark-label" x="' + (+px + 3) + '" y="' + (PT + 9) + '">' + esc(l.label) + '</text>');
     });

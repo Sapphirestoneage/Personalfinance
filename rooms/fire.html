@@ -386,7 +386,8 @@
         { label: 'What you put in', color: Charts.COLORS.contributed, points: pts('contributedCents'), fill: false }
       ],
       hLines: [{ y: target.value, label: target.variant.label + ' ' + Charts.shortMoney(target.value), color: Charts.COLORS.target }],
-      vLines: stopAge !== null ? [{ x: stopAge, label: 'stop at ' + stopAge }] : [],
+      /* 15.9: the age milestones on the way, faint. D-181. */
+      vLines: Schema.milestoneMarks(h, TABLES.milestones, { axis: 'age', from: age, to: age + path.years.length }).concat(stopAge !== null ? [{ x: stopAge, label: 'stop at ' + stopAge }] : []),
       dots: crossed !== null ? [{ x: crossed, y: target.value }] : [],
       x: { label: 'age', format: function (v) { return String(Math.round(v)); } },
       y: { min: Math.min(0, path.value) }

@@ -155,8 +155,25 @@
       }
     }
 
+    /* 15.9: the phases of the draw are the age milestones inside the
+       horizon (D-181): from now to the first one, then one phase per
+       milestone crossed. Nothing arithmetical changes at a boundary here;
+       the phases name where the rules change so the room can say so. */
+    var phases = [];
+    if (Money.isEntered(age) && T.milestones) {
+      var you = Schema.primaryPerson(h);
+      var ahead = Schema.milestones(you, T.milestones, o).filter(function (m) { return m.age > age && m.age <= age + horizon; });
+      var fromAge = age, fromYear = 0, label = 'Now';
+      ahead.forEach(function (m) {
+        phases.push({ label: label, fromAge: fromAge, fromYear: fromYear, toAge: m.age, toYear: Math.round((m.age - age) * 10) / 10, endsAt: m.id });
+        fromAge = m.age; fromYear = Math.round((m.age - age) * 10) / 10; label = m.label;
+      });
+      phases.push({ label: label, fromAge: fromAge, fromYear: fromYear, toAge: age + horizon, toYear: horizon, endsAt: null });
+    }
+
     return Money.ok(never ? Projection.DEFAULT_MAX_YEARS : years.value, {
       never: never,
+      phases: phases,
       yearsUntilEmpty: never ? null : years.value,
       lastsToAge: lastsToAge,
       age: Money.isEntered(age) ? age : null,

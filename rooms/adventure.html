@@ -185,7 +185,7 @@
 <script>
 (function () {
   'use strict';
-  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference,
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Schema = SLAF.Schema,
       Ownership = SLAF.Ownership, Adventure = SLAF.Adventure, Scenarios = SLAF.Scenarios,
       Bands = SLAF.Bands, Charts = SLAF.Charts;
 
@@ -389,9 +389,11 @@
       var c = Adventure.contingencies(TABLES).filter(function (x) { return x.id === id; })[0];
       if (c && Money.isEntered(c.shockYear)) marks.push({ x: c.shockYear, label: c.label });
     });
+    /* 15.9: the age milestones inside the five years, faint. D-181. */
+    var milestones = Schema.milestoneMarks(h(), TABLES.milestones, { axis: 'years', from: 0, to: 5 });
     el('chart').innerHTML = Charts.area({
       title: 'Every way through five years, the chosen one bold',
-      series: series, bands: bands, vLines: marks,
+      series: series, bands: bands, vLines: milestones.concat(marks),
       hLines: [{ y: chosen.value.targetCents, label: 'the target' }],
       x: { label: 'year', format: function (v) { return String(Math.round(v)); } },
       width: 360, height: 230
@@ -604,7 +606,7 @@
     if (state.pathId) paintWay(); else paintAssumptions();
   }
 
-  Reference.load(['adventurePaths', 'returnBands', 'effectiveTaxRates', 'levers', 'fooRules', 'irsLimits', 'matchDefaults', 'lenses']).then(function (tables) {
+  Reference.load(['adventurePaths', 'returnBands', 'effectiveTaxRates', 'levers', 'fooRules', 'irsLimits', 'matchDefaults', 'lenses', 'milestones']).then(function (tables) {
     if (!tables || !tables.adventurePaths || !tables.levers) throw new Error('no adventurePaths or levers table');
     TABLES = tables;
     SLAF.Levers.use(tables.levers);

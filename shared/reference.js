@@ -28,6 +28,7 @@
   var TABLE_FILES = {
     effectiveTaxRates: 'effective_tax_rates_2026.json',
     retirementMilestones: 'retirement_milestones.json',
+    milestones: 'milestones.json',
     netWorthPercentiles: 'net_worth_percentiles_scf_2022.json',
     irsLimits: 'irs_limits_2026.json',
     savingsPresets: 'savings_presets.json',

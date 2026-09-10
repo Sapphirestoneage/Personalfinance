@@ -11113,6 +11113,63 @@ behind the cushion in Runway, the same line in Between Jobs as someone
 between jobs, the ladder's four rungs and the pile selects on the
 Statement, with no console errors.
 
+### 15.9 Age and the inflection dates (this commit)
+
+- **One table, ten rows, every row sourced.** `data/milestones.json`
+  (lane 2's table, L-3, now read): 50 (catch-up), 55 (the rule of 55; the
+  HSA catch-up), 59 and a half (the penalty ends), 60 to 63 (the higher
+  catch-up), 62 (Social Security, early), 65 (Medicare), the full
+  retirement age and the RMD age (both by birth year, transcribed from
+  the SSA table and SECURE 2.0), 70 (delayed credits stop). Each row
+  carries the rule in words, its statute or agency page, a citation, an
+  as-of and `sourced`. Nothing in code knows an age by heart: the
+  59-and-a-half the runway function uses for the penalty gate is the
+  access_rules table's, and the milestones are this one's.
+- **`Schema.milestones(person, table)`** dates the list for one person:
+  the age (59.5 for 59 and 6 months), the date from their date of birth,
+  the years from now, the rule and source. The two birth-year rows
+  resolve from `Schema.birthYearOf`; with no birth year the
+  1960-and-later row stands in and the row says `assumed`. `birthYear`
+  is already asked by Start Here (15.7), so nothing new is asked.
+- **Every timeline draws them.** `Schema.milestoneMarks(household,
+  table, { axis, from, to })` turns the list into chart marks on an age,
+  years-from-now or months-from-now axis, clipped to the chart's range,
+  two rules at one age sharing one mark; `Charts.area` draws a mark
+  flagged `faint` as a dotted line behind the event marks, its short
+  label at the foot and the rule as the hover title. The Long Way Round
+  (five years), Drawing It Down (to the plan age), the FIRE chart (by
+  age) and What Comes Next (thirty years of months) all concatenate the
+  marks into their existing `vLines`; the planner strip and the tree map
+  the brief also names do not exist yet (sections 11 and 12, Phase D) and
+  will read the same function when they do. Behind the `showMilestones`
+  switch (Horizon group, default on, declared in 15.2's table); off, the
+  function returns nothing and the rooms draw as before.
+- **Drawing It Down's phases are the milestones.** `Decumulation.plan`
+  gains `meta.phases`: from now to the first milestone inside the
+  horizon, then one phase per milestone crossed, each with its ages and
+  years. Nothing arithmetical changes at a boundary here (the draw is
+  the draw); the phases name where the rules change, and the room says
+  so in one sentence limited to the ages that matter to a draw ("the
+  penalty ends at 59 and a half (year 3.5), Social Security can start at
+  62 (year 6), Medicare at 65 (year 9)…"), not the catch-ups.
+- **Compatibility note.** No stored key changes. `Reference.TABLE_FILES`
+  gains `milestones`; What Comes Next now loads `shared/features.js` and
+  the milestones table after its first paint and repaints once. The
+  Long Way Round's chart marks and Drawing It Down's chart marks are
+  additive; `Decumulation.plan` gains `phases` (empty with no table).
+
+Gate for this commit: unit 25950 (a new section of 48 checks: the table,
+the list for someone born 1990, 1957, 1955 and 1950 against the SSA and
+SECURE 2.0 tables, no date of birth, the marks per axis and their
+clipping, merging and switch, the faint mark in the chart, the phases
+on a retiree at 56, and the four rooms' wiring); dnd 5614; export 25;
+render on adventure, decumulation, fire and timeline; the adventure gate;
+a phone walk at 32 and at 56 that reads the marks on all four charts
+(the FIRE chart's nine, the Long Way Round's two inside five years, the
+thirty-year timeline's five, Drawing It Down's seven with its phase
+sentence) and sees them vanish with the switch off, with no console
+errors but the favicon the site has never had.
+
 ---
 
 # The Dungeons & Dividends entries

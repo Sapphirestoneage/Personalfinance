@@ -2618,6 +2618,115 @@
     return a.length ? a[0] : null;
   }
 
+  /* ---- 15.9: age and the inflection dates (D-181) ------------------------
+     The ages at which a rule changes: 50 (catch-up), 55 (rule of 55), 59
+     and a half (the penalty ends), 62 (Social Security, early), 65
+     (Medicare), the full retirement age and the RMD age (both by birth
+     year), 70 (delayed credits stop). Rows and sources live in
+     data/milestones.json; nothing here knows an age by heart. Every
+     timeline draws them as faint markers (milestoneMarks), behind the
+     `showMilestones` switch (default on; a missing switch table reads as
+     on). */
+  var MILESTONES_FEATURE = 'showMilestones';
+  function milestoneAgeOf(row, birthYear) {
+    if (row.age) return { years: row.age.years, months: row.age.months || 0, assumed: false };
+    var rows = row.byBirthYear || [];
+    if (!rows.length) return null;
+    var hit = null;
+    if (Money.isEntered(birthYear)) {
+      hit = rows.filter(function (r) {
+        return (r.bornFrom === null || r.bornFrom === undefined || birthYear >= r.bornFrom)
+          && (r.bornTo === null || r.bornTo === undefined || birthYear <= r.bornTo);
+      })[0] || null;
+    }
+    var assumed = !hit;
+    if (!hit) hit = rows[rows.length - 1];   /* the open-ended latest row */
+    var years = Money.isEntered(hit.years) ? hit.years : hit.age;
+    return { years: years, months: hit.months || 0, assumed: assumed };
+  }
+  function addMonthsIso(iso, months) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+    if (!m) return null;
+    var d = new Date(Date.UTC(+m[1], +m[2] - 1 + months, +m[3]));
+    if (isNaN(d.getTime())) return null;
+    return d.toISOString().slice(0, 10);
+  }
+  /**
+   * milestones(person, table, opts) → [{ id, label, age, ageYears,
+   *   ageMonths, date, yearsFromNow, rule, source, citation, confidence,
+   *   asOf, byBirthYear, assumed }], sorted by age. `date` needs a date of
+   *   birth; `yearsFromNow` needs the age today (opts.asOf for tests).
+   *   No table, no rows: the list is never invented.
+   */
+  function milestones(person, table, opts) {
+    var p = person || {}, o = opts || {};
+    var rows = table && table.milestones ? table.milestones : [];
+    var birthYear = birthYearOf(p);
+    var ageNow = ageFromDob(p.dob, o.asOf);
+    var out = [];
+    rows.forEach(function (row) {
+      var a = milestoneAgeOf(row, birthYear);
+      if (!a || !Money.isEntered(a.years)) return;
+      var months = a.years * 12 + a.months;
+      var age = Math.round(months / 12 * 100) / 100;
+      out.push({
+        id: row.id,
+        label: row.label,
+        age: age,
+        ageYears: a.years,
+        ageMonths: a.months,
+        date: p.dob ? addMonthsIso(p.dob, months) : null,
+        yearsFromNow: Money.isEntered(ageNow) ? Math.round((age - ageNow) * 10) / 10 : null,
+        rule: row.rule ? row.rule.value : null,
+        source: row.rule ? row.rule.source : null,
+        citation: row.rule ? row.rule.citation : null,
+        confidence: row.rule ? row.rule.confidence : null,
+        asOf: row.rule ? row.rule.asOf : null,
+        byBirthYear: !!row.byBirthYear,
+        assumed: !!a.assumed
+      });
+    });
+    out.sort(function (x, y) { return x.age - y.age || (x.id < y.id ? -1 : 1); });
+    return out;
+  }
+  function milestonesOn(household) {
+    var F = featuresModule();
+    if (!F || typeof F.get !== 'function' || !F.get(MILESTONES_FEATURE)) return true;
+    return !!F.on(MILESTONES_FEATURE, household);
+  }
+  /**
+   * milestoneMarks(household, table, opts) → [{ x, label, title, faint }]
+   *   for the primary adult, on a chart whose x axis is opts.axis:
+   *   'age' (x = the age), 'years' (years from now; needs the age today)
+   *   or 'months' (months from now). opts.from / opts.to clip the range.
+   *   Empty when the switch is off, so a room concatenates without asking.
+   */
+  function milestoneMarks(household, table, opts) {
+    var o = opts || {};
+    if (!milestonesOn(household)) return [];
+    var person = primaryPerson(household || {});
+    if (!person) return [];
+    var axis = o.axis || 'age';
+    var ageNow = ageFromDob(person.dob, o.asOf);
+    if (axis !== 'age' && !Money.isEntered(ageNow)) return [];
+    var short = { penaltyFree: '59½', fullRetirementAge: 'full SS', ssEarly: 'SS at 62', ssDelayed: 'SS max', rmd: 'RMDs', medicare: 'Medicare', catchup50: 'catch-up', ruleOf55: 'rule of 55', hsaCatchup55: 'HSA catch-up', catchup60to63: 'bigger catch-up' };
+    var marks = milestones(person, table, o).map(function (m) {
+      var x = axis === 'age' ? m.age : axis === 'months' ? Math.round((m.age - ageNow) * 12) : Math.round((m.age - ageNow) * 10) / 10;
+      return { x: x, label: short[m.id] || m.label, title: m.label + ' at ' + (m.ageMonths ? m.ageYears + ' and ' + m.ageMonths + ' months' : m.ageYears) + (m.assumed ? ' (birth year not known, so the latest rule)' : '') + ': ' + (m.rule || ''), faint: true, milestone: m.id, age: m.age };
+    }).filter(function (k) {
+      return (!Money.isEntered(o.from) || k.x >= o.from) && (!Money.isEntered(o.to) || k.x <= o.to);
+    });
+    /* Two rules at one age (55: the rule of 55 and the HSA catch-up) share
+       one mark, so the labels never sit on top of each other. */
+    var merged = [];
+    marks.forEach(function (k) {
+      var prev = merged[merged.length - 1];
+      if (prev && prev.x === k.x) { prev.label += ' · ' + k.label; prev.title += ' | ' + k.title; prev.milestone += ',' + k.milestone; return; }
+      merged.push(k);
+    });
+    return merged;
+  }
+
   /* ==== 15.1 / 15.10: every number is as-of a date, from a source, at a
      confidence (DECISIONS.md D-181). Storage did not move (D-171): the
      leaf stays a bare cent figure the engines read, and the three facts
@@ -2816,6 +2925,10 @@
     drawOf: drawOf,
     tierDraws: tierDraws,
     runwayMonths: runwayMonths,
+    MILESTONES_FEATURE: MILESTONES_FEATURE,
+    milestones: milestones,
+    milestonesOn: milestonesOn,
+    milestoneMarks: milestoneMarks,
     resolveAssumptions: resolveAssumptions,
     withMonthlyExpensesDeltaCents: withMonthlyExpensesDeltaCents,
     personById: personById,
