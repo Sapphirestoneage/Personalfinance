@@ -1163,18 +1163,37 @@
     /* Every balance on one scale. Drawn only once the plan is complete, so
        a debt that still needs a rate is named in the reason, not pictured
        as if it were planned. */
-    el('plan-chart').innerHTML = !Money.isOk(plan) ? '' : Charts.bars({
-      title: 'What you owe, by balance',
-      rows: debtsOf(h).filter(function (d) { return Money.isEntered(d.balanceCents) && d.balanceCents > 0; }).map(function (d) {
-        var rate = Debt.effectiveRate(d);
-        var kept = Debt.keepReasonLabels(d, RULES).map(function (t) { return t.label.toLowerCase(); });
-        var note = Money.isEntered(rate) ? (rate === 0 && d.interestFree ? 'no interest' : rateLabel(rate)) : 'no rate';
-        /* Why this one is being kept, next to it — not on another screen. */
-        if (Debt.isExcluded(d)) note += ' · held back on purpose';
-        if (kept.length) note += ' · ' + kept.join(', ');
-        return { label: d.label || 'Debt', value: d.balanceCents, color: Charts.COLORS.debt, note: note };
-      })
+    /* Where the interest goes, a month (D-189): each live debt's balance
+       times the rate it carries this month, over twelve. This is the
+       picture that says which debt to kill first when the order is a
+       feeling as much as a sum: a card costing $60 a month beside a
+       student loan costing $84 on six times the balance. Cards in the
+       debt colour; the rest in the series. Drawn only once the plan is
+       complete, so a debt that still needs a rate is named in the reason,
+       not pictured as costing nothing. */
+    var live = debtsOf(h).filter(function (d) { return Money.isEntered(d.balanceCents) && d.balanceCents > 0; });
+    var slices = live.map(function (d, i) {
+      var rate = Debt.rateInMonth(d, 1);
+      if (!Money.isEntered(rate)) rate = Debt.effectiveRate(d);
+      var monthly = Money.isEntered(rate) ? Math.round(d.balanceCents * rate / 12) : 0;
+      var kept = Debt.keepReasonLabels(d, RULES).map(function (t) { return t.label.toLowerCase(); });
+      var note = (Money.isEntered(rate) ? rateLabel(rate) : 'no rate') + ' on ' + Money.formatCents(d.balanceCents);
+      if (Debt.isExcluded(d)) note += ' · held back';
+      if (kept.length) note += ' · ' + kept.join(', ');
+      return { label: d.label || 'Debt', value: monthly, note: note, cents: monthly,
+        color: d.type === 'credit_card' ? Charts.COLORS.debt : Charts.COLORS.series[(i + 1) % Charts.COLORS.series.length] };
     });
+    var totalMonthly = slices.reduce(function (t, x) { return t + x.value; }, 0);
+    var cardsMonthly = live.reduce(function (t, d, i) { return t + (d.type === 'credit_card' ? slices[i].value : 0); }, 0);
+    el('plan-chart').innerHTML = !Money.isOk(plan) ? '' : Charts.donut({
+      title: 'Interest a month, by debt',
+      slices: slices,
+      center: { big: Money.formatCents(totalMonthly), small: 'a month in interest' },
+      empty: 'Add a rate to each debt to see where the interest goes.'
+    }) + (Money.isOk(plan) && totalMonthly > 0 && cardsMonthly > 0
+      ? '<p class="slaf-hint" style="margin-top:var(--space-2)">The cards are ' + Money.formatCents(cardsMonthly) + ' of that, '
+        + Math.round(cardsMonthly / totalMonthly * 100) + '%. Clear them and the rest costs ' + Money.formatCents(totalMonthly - cardsMonthly) + ' a month.</p>'
+      : '');
     if (Money.isOk(plan)) {
       var baseline = Debt.simulate(h, RULES, { strategyId: strategyId, extraMonthlyCents: 0 });
       /* Three finish lines before the figures (D-188): the cards, the

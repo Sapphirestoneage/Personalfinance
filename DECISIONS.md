@@ -12001,6 +12001,33 @@ three-debt household and on one with no cards, the room's wiring); the
 three debt room tests; lane 2's debt properties; render and the phone
 forms gate on the room; a phone walk with the example debts.
 
+## D-189 — Debt Payoff: where the interest goes, a month
+
+**Why.** The owner: "a pie chart to see which debt generates the most
+interest; I don't mind paying student loan interest but I want to be
+done with credit card debt asap." The plan card's chart was balances by
+bar, which answers "how much do I owe" and not "which one is bleeding
+me."
+
+**Decision.** The plan card's one chart is now a donut of interest a
+month by debt: each live debt's balance times the rate it carries this
+month (`Debt.rateInMonth`, so a promo at 0% shows as 0% now), over
+twelve; the centre is the total a month; the legend line carries the
+rate on the balance, a hold-back and any keep reasons. Cards are drawn
+in the debt colour, everything else in the series colours, and one line
+under the ring says what the cards are of the total and what the rest
+costs once they are gone. Balances are on every debt's own line, so the
+bars are not missed. Drawn only once the plan is complete, so a debt
+without a rate is named in the reason rather than pictured as costing
+nothing. Hand-checked on the example: $18,400 at 5.5% is $84 a month,
+$3,200 at 22.9% is $61, $145 together, the cards 42%.
+
+**Compatibility note.** Nothing stored changes; the room draws with
+`Charts.donut`, which every other ring uses.
+
+Gate for this commit: unit 27038; render on the room; a phone walk with
+the example debts reading the two slices and the line under them.
+
 ---
 
 # The Dungeons & Dividends entries
