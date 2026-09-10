@@ -12542,6 +12542,35 @@ Gate for this commit: unit suite; render, forms and features on the
 room; a phone screenshot of the empty page and of the example with a
 subscription, and a deep link into a folded comparison landing open.
 
+## D-200 — Sharing between devices: the share sheet, a smaller link, a pasted link
+
+**Why.** The owner tried to send the share link to themself through a
+chat app and hit its limit: the link was over nine thousand characters.
+"You need to make it way easier to share." A phone cannot reach a
+computer through a link that no chat app will carry.
+
+**Decision.** Three things, no server still. **Send to another device**
+is a new first button in Your Data and on the front door, shown only
+where the browser has a share sheet, which is every phone: it hands the
+export to the sheet as a small file (`Spine.sendToDevice`), so mail,
+messages, a drive or a nearby device carry it with no length limit,
+and falls back to sharing the link where files cannot be shared. **A
+pasted link loads**: Your Data takes a share link pasted into a box and
+reads it like a chosen file, with the same Replace or Add choice, for
+the case where a link arrived as text. **Copying a long link says so**:
+over 1,900 characters, the note says chat apps cut it off and points at
+Send. The link itself is not made smaller: it is already deflated, the
+constructors do not refill nested blanks so leaving them out is not
+lossless, and even a link half the size stays far over a chat app's
+limit. The file is the answer; the link stays for a note or an email.
+
+**Compatibility note.** Nothing stored changes and the share code is
+byte for byte what it was. `Spine.sendToDevice` and `Spine.siteRoot`
+are new.
+
+Gate for this commit: the export suite; unit pins on both pages; render
+and features on Your Data and the front door.
+
 ---
 
 # The Dungeons & Dividends entries

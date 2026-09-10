@@ -93,6 +93,10 @@ function loadDemo() {
   ok('and is null when absent', Spine.codeFromFragment('#out-weather') === null);
   const back = await Spine.fromShareCode(code);
   eq('the share code round-trips the export', back, exp);
+  /* D-200: the share sheet, where there is one. */
+  ok('the share sheet helper exists and refuses politely where there is no sheet', typeof Spine.sendToDevice === 'function');
+  let noSheet = null; try { await Spine.sendToDevice(); } catch (e) { noSheet = e.message; }
+  ok('...saying to use the file or the link', /Download the file or copy the link/.test(noSheet || ''));
   const sizeBytes = Buffer.byteLength(frag);
   ok('a full household with a snapshot fits well under 8 KB (' + sizeBytes + ' bytes)', sizeBytes < 8192);
 

@@ -1632,6 +1632,38 @@
     });
   }
 
+  /** The site root this page lives under, for a link that opens the front door. */
+  function siteRoot() {
+    if (typeof location === 'undefined') return '';
+    return location.origin + location.pathname.replace(/rooms\/[^/]*$/, '').replace(/[^/]*$/, '');
+  }
+
+  /**
+   * sendToDevice() — the phone's own share sheet (D-200): the export as a
+   * file where the browser can share files (mail, messages, a drive, a
+   * nearby device), else the link. Promise<{ how: 'file' | 'link' }>;
+   * rejects with name 'AbortError' when the person closes the sheet, and
+   * with a plain message where there is no sheet at all.
+   */
+  function sendToDevice() {
+    if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
+      return Promise.reject(new Error('This browser has no share sheet. Download the file or copy the link instead.'));
+    }
+    var title = 'SPARKS: my numbers';
+    var text = 'My SPARKS household. On the other device, open Your Data and load this file.';
+    try {
+      if (typeof File === 'function' && typeof navigator.canShare === 'function') {
+        var file = new File([exportJSON()], exportFilename(), { type: 'application/json' });
+        if (navigator.canShare({ files: [file] })) {
+          return navigator.share({ files: [file], title: title, text: text }).then(function () { return { how: 'file' }; });
+        }
+      }
+    } catch (e) { /* no file sharing here: the link below */ }
+    return shareFragment().then(function (frag) {
+      return navigator.share({ title: title, url: siteRoot() + frag }).then(function () { return { how: 'link' }; });
+    });
+  }
+
   /** The fragment for a URL: '#h=' + code. */
   function shareFragment(obj) {
     return toShareCode(obj).then(function (code) { return '#h=' + code; });
@@ -1745,6 +1777,8 @@
     toShareCode: toShareCode,
     fromShareCode: fromShareCode,
     shareFragment: shareFragment,
+    sendToDevice: sendToDevice,
+    siteRoot: siteRoot,
     codeFromFragment: codeFromFragment,
     reset: reset,
     tagWrite: tagWrite, setFieldMeta: setFieldMeta, migrateFieldMeta: function () { var h = load(); var n = migrateFieldMeta(h, new Date().toISOString()); if (n) save({ record: false }); return n; },

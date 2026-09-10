@@ -73,8 +73,9 @@
   <section class="slaf-card" id="out">
     <span class="slaf-eyebrow">Take it with you</span>
     <h2 style="margin:var(--space-2) 0 0">A file, or a link</h2>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">There is no account and no server. A share link keeps everything after the <code>#</code>, which a browser never sends to any site.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">There is no account and no server. On a phone, <strong>Send</strong> opens the share sheet with your numbers as a small file: mail it to yourself, message it, drop it in a drive, then load it on the other device. A share link works too, though it is long, and most chat apps cut it off.</p>
     <div class="data-actions">
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-send" hidden>Send to another device…</button>
       <button type="button" class="slaf-btn" id="btn-export">Download a file</button>
       <button type="button" class="slaf-btn" id="btn-share">Copy a share link</button>
     </div>
@@ -89,6 +90,11 @@
     <div class="data-actions">
       <label class="slaf-btn" for="file-import" style="cursor:pointer">Choose a file…</label>
       <input type="file" id="file-import" accept="application/json,.json" hidden/>
+    </div>
+    <div class="form-grid" style="margin-top:var(--space-3)">
+      <label class="slaf-field wide"><span class="slaf-label">Or paste a share link</span>
+        <span class="slaf-input-shell"><input type="text" id="link-in" placeholder="https://…/#h=…" aria-label="A share link to load" autocomplete="off"/></span></label>
+      <div class="slaf-field wide"><button type="button" class="slaf-btn" id="btn-link">Read the link</button></div>
     </div>
     <div class="file-say" id="file-say" hidden></div>
     <div class="data-actions" id="file-actions" hidden>
@@ -172,17 +178,47 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
     note('out-note', 'Downloaded ' + Spine.exportFilename() + '. Keep it somewhere you would keep a bank statement.', 'is-good');
   });
+  /* The share sheet (D-200): only where the browser has one, which is
+     every phone; a desktop gets the file and the link. */
+  if (typeof navigator.share === 'function') el('btn-send').hidden = false;
+  el('btn-send').addEventListener('click', function () {
+    Spine.sendToDevice().then(function (r) {
+      note('out-note', r.how === 'file' ? 'Sent as a file. On the other device, open Your Data and choose it under Load a file.' : 'Sent as a link. Open it on the other device and choose Load.', 'is-good');
+    }).catch(function (err) {
+      if (err && err.name === 'AbortError') return;
+      note('out-note', err.message, 'is-error');
+    });
+  });
   el('btn-share').addEventListener('click', function () {
     Spine.shareFragment().then(function (frag) {
-      var link = location.origin + location.pathname.replace(/rooms\/[^/]*$/, '') + frag;
+      var link = Spine.siteRoot() + frag;
       var out = el('share-out');
       out.hidden = false; out.value = link;
       var copied = navigator.clipboard && navigator.clipboard.writeText
         ? navigator.clipboard.writeText(link).then(function () { return true; }, function () { return false; })
         : Promise.resolve(false);
-      copied.then(function (yes) { note('out-note', (yes ? 'Copied. ' : '') + 'Everything after the # stays on the device that opens it — ' + link.length + ' characters, nothing sent anywhere.', 'is-good'); });
+      copied.then(function (yes) {
+        var long = link.length > 1900 ? ' That is too long for most chat apps; an email or a note carries it, or use Send for the file.' : '';
+        note('out-note', (yes ? 'Copied. ' : '') + 'Everything after the # stays on the device that opens it: ' + link.length + ' characters, nothing sent anywhere.' + long, long ? '' : 'is-good');
+      });
     }).catch(function (err) { note('out-note', err.message, 'is-error'); });
   });
+  /* A pasted link reads like a chosen file, then the same two buttons. */
+  el('btn-link').addEventListener('click', function () {
+    var code = Spine.codeFromFragment(el('link-in').value.trim());
+    if (!code) { note('file-note', 'That is not a share link from this app: it should carry #h= followed by the code.', 'is-error'); return; }
+    Spine.fromShareCode(code).then(function (obj) {
+      var text = JSON.stringify(obj);
+      var check = Spine.inspectImport(text);
+      if (!check.ok) { note('file-note', check.reason, 'is-error'); return; }
+      pendingFile = { name: 'the link', text: text, check: check };
+      el('file-say').hidden = false;
+      el('file-say').innerHTML = describeFile(check) + '<span class="slaf-hint">From the link. Which way?</span>';
+      el('file-actions').hidden = false;
+      note('file-note', '');
+    }).catch(function (err) { note('file-note', err.message, 'is-error'); });
+  });
+  el('link-in').addEventListener('keydown', function (evt) { if (evt.key === 'Enter') { evt.preventDefault(); el('btn-link').click(); } });
 
   /* ---- A file: replace, or add ------------------------------------------ */
   function describeFile(check) {

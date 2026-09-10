@@ -446,6 +446,7 @@
       <code>#</code>, which a browser never sends to any site.
     </p>
     <div class="data-actions">
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-send" hidden>Send to another device…</button>
       <button type="button" class="slaf-btn" id="btn-export">Download a file</button>
       <button type="button" class="slaf-btn" id="btn-share">Copy a share link</button>
       <label class="slaf-btn slaf-btn--quiet" for="file-import" style="cursor:pointer">Load a file…</label>
@@ -1113,17 +1114,24 @@
     note('Downloaded ' + Spine.exportFilename() + '. Keep it somewhere you would keep a bank statement.');
   });
 
+  if (typeof navigator.share === 'function') el('btn-send').hidden = false;
+  el('btn-send').addEventListener('click', function () {
+    Spine.sendToDevice().then(function (r) {
+      note(r.how === 'file' ? 'Sent as a file. On the other device, open Your Data and choose it under Load a file.' : 'Sent as a link. Open it on the other device and choose Load.');
+    }).catch(function (err) { if (!err || err.name !== 'AbortError') note(err.message, true); });
+  });
   el('btn-share').addEventListener('click', function () {
     Spine.shareFragment().then(function (frag) {
-      var link = location.origin + location.pathname.replace(/[^/]*$/, '') + frag;
+      var link = Spine.siteRoot() + frag;
       var out = el('share-out');
       out.hidden = false; out.value = link;
       var copied = navigator.clipboard && navigator.clipboard.writeText
         ? navigator.clipboard.writeText(link).then(function () { return true; }, function () { return false; })
         : Promise.resolve(false);
       copied.then(function (yes) {
-        note((yes ? 'Copied. ' : '') + 'Everything after the # stays on the device that opens it — '
-          + (link.length) + ' characters, nothing sent anywhere.');
+        note((yes ? 'Copied. ' : '') + 'Everything after the # stays on the device that opens it: '
+          + (link.length) + ' characters, nothing sent anywhere.'
+          + (link.length > 1900 ? ' That is too long for most chat apps; an email or a note carries it, or use Send for the file.' : ''));
       });
     }).catch(function (err) { note(err.message, true); });
   });
