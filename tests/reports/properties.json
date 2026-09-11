@@ -1,8 +1,8 @@
 {
   "seed": 20260910,
   "numRuns": 100,
-  "engines": 64,
-  "files": 66,
+  "engines": 72,
+  "files": 74,
   "missingFiles": [],
   "extraFiles": [
     "blocks",
@@ -121,6 +121,42 @@
         },
         {
           "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
+      "engine": "advicerules",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (2 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "every rule is judged with one of the four statuses and says why",
           "ok": true,
           "numRuns": 100,
           "seed": 20260910
@@ -389,6 +425,48 @@
         },
         {
           "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
+      "engine": "coast",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (1 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "growing for no months is the identity, and more months never shrink a pot at a non-negative rate",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "with every input handed in, the walk answers: a whole-cent pot at the coast date, or a named reason",
           "ok": true,
           "numRuns": 100,
           "seed": 20260910
@@ -1163,6 +1241,78 @@
       ]
     },
     {
+      "engine": "next100",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (1 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "every line is guaranteed or expected, and an expected range holds its rate",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
+      "engine": "notknowing",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (1 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "every swing names its row and what it feeds, and the list is largest first",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
       "engine": "partner",
       "notes": [],
       "properties": [
@@ -1368,6 +1518,24 @@
       ]
     },
     {
+      "engine": "rankguess",
+      "notes": [],
+      "properties": [
+        {
+          "name": "every percentile from 0 to 100 falls in exactly one band, and the bands rise with it",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "a comparison never throws, is the same twice, and is either incomplete with a reason or names both bands",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
       "engine": "ratios",
       "notes": [
         "context(), all() and scored() read Date.now() when opts.now is absent and echo it as `now`; two calls a millisecond apart differ. The suite passes a fixed `now`, so the clock read is treated as an input rather than hidden state. Rooms that call without `now` get a wall-clock stamp in the result."
@@ -1427,6 +1595,42 @@
             "contributionPercent": 0
           },
           "reason": "all.rows.0.result.monthlyGrossIncomeCents = 2513008.3333333335"
+        }
+      ]
+    },
+    {
+      "engine": "reachable",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (1 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "reachable money never exceeds what is held outside the home, and pulling it never costs less than nothing",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
         }
       ]
     },
@@ -1585,6 +1789,24 @@
         },
         {
           "name": "sideHustle on random inputs: no throw, no NaN, whole cents, the same answer twice",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
+      "engine": "sincelast",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no snapshot, no comparison",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "against an empty snapshot every change is learned, never earned, and the strip is a sentence or nothing",
           "ok": true,
           "numRuns": 100,
           "seed": 20260910
@@ -2285,8 +2507,32 @@
           "seed": 20260910
         }
       ]
+    },
+    {
+      "engine": "wrapped",
+      "notes": [],
+      "properties": [
+        {
+          "name": "inYear keeps only that year, oldest first",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "a snapshot rebuilds into a household with the same people, and no snapshot rebuilds into nothing",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "a year with no snapshots is not ok, says what is missing, and never puts cents on the card",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
     }
   ],
-  "totalProperties": 282,
+  "totalProperties": 315,
   "failedProperties": 7
 }
