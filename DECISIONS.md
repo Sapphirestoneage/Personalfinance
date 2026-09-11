@@ -13103,6 +13103,44 @@ the phone walk: no policy violation in the console on eight pages, a thrown
 error shows the panel and a scrubbed log line, the spreadsheet zip
 downloads and opens with seven entries.
 
+## D-211 — H1, H3, H2: tap any number, your next $100 ranked, earned vs learned
+
+**Why.** A number nobody can check is a number nobody trusts; the next
+hundred dollars is the question everyone actually has; and a net worth
+that rose because a basis was typed in is not the same as one that rose
+because a card was paid down. The brief's H1, H3 and H2, in that order.
+
+**Decision.** Every computed row in `data/ledger-rows.json` carries a
+`formula`: the one engine function (`fn`, resolved by the build, which
+fails when it is missing), the formula in words, its terms and its
+reference tables. `shared/showmath.js` turns that into one sheet a page
+(the words, the values plugged in, each input linked to its row, the
+`data/` file and year, what would change this most, rough marked here);
+the Ledger's computed rows and door headlines and Express's computed
+boxes open it. `engines/next100.js` ranks every place the next $100 can
+go on one scale, the return: a debt at its rate and the match at its
+cents on the dollar are guaranteed, investing is expected with the band
+from `data/return_bands.json`; never blended; the order of operations is
+a note on each line, not a re-sort; `rooms/next-hundred.html` reads it.
+`engines/sincelast.js` splits every change since the last snapshot into
+money that moved (a moving row updated) and knowledge added (a first
+entry, a confidence upgrade, a fixed fact corrected); the net worth strip
+on the doors home says both, and they always add up to the whole.
+
+**Replaces or removes.** Nothing: three readings of rows that exist.
+
+**Stored shape.** Snapshots gain `fieldMeta` (`{ id: { confidence, source,
+asOf } }`), taken by the spine on every snapshot; older snapshots read
+with it absent, so a confidence upgrade before the first new snapshot is
+not counted. `slaf.household.v2` unchanged. The new room is in every
+arrangement in `data/layouts.json` beside the FOO Ladder.
+
+**Verified.** `node test/run.js`; `node test/render.js` and
+`node test/features.js` on next-hundred and the Ledger; the phone walk:
+the Assets headline opens the sheet with the plugged-in sum, the ranked
+list puts the match (50 cents on the dollar) above the 22.9% card above
+investing, and the strip reads $700 earned after a cash change.
+
 ---
 
 # The Dungeons & Dividends entries

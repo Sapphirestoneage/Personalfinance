@@ -10246,7 +10246,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
   check('...sixteen of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 16);
   checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses)\b/.test(w))));
-  check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,savings-rate,ratios,health,foo-ladder,fire,fire-lab,statements');
+  check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,savings-rate,ratios,health,foo-ladder,fire,fire-lab,statements,next-hundred');
   checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
   check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
   check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree,stacker,exercises');
@@ -12825,6 +12825,102 @@ section('G3: hostile files, the policy, attribution, January 1, the error log, t
   check('CRC-32 of a known string', Csv.crc32(new TextEncoder().encode('123456789')).toString(16), 'cbf43926');
   const dataHtml = fs.readFileSync(path.join(ROOT, 'rooms/data.html'), 'utf8');
   checkTrue('Your Data offers the spreadsheet zip and the whole app, with the honest note about a local server', /btn-sheet/.test(dataHtml) && /archive\/refs\/heads\/main\.zip/.test(dataHtml) && /python3 -m http\.server/.test(dataHtml) && /Your numbers are not in the zip/.test(dataHtml));
+})();
+
+/* ==========================================================================
+   H1, H3, H2: see the math, the next $100, earned vs learned (D-211)
+   ========================================================================== */
+section('H1, H3, H2: tap any number, your next $100 ranked, earned vs learned (D-211)');
+(function () {
+  const ShowMath = require(path.join(ROOT, 'shared/showmath.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Next100 = require(path.join(ROOT, 'engines/next100.js'));
+  const SinceLast = require(path.join(ROOT, 'engines/sincelast.js'));
+  const Own = require(path.join(ROOT, 'shared/ownership.js'));
+  const rowsTable = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8'));
+  const T = { ledgerRows: rowsTable, staleness: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/staleness.json'), 'utf8')), fooRules: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/foo_rules.json'), 'utf8')), returnBands: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/return_bands.json'), 'utf8')), confidenceWeights: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/confidence_weights.json'), 'utf8')) };
+  LR.use(rowsTable);
+
+  /* -- H1: every computed row names its formula function; the build fails otherwise */
+  const computed = rowsTable.rows.filter(r => r.kind === 'computed');
+  const noFn = computed.filter(r => !r.formula || typeof r.formula.fn !== 'string' || !r.formula.fn);
+  checkTrue('every computed row names its formula function (' + computed.length + ' rows)', noFn.length === 0, noFn.map(r => r.id).join(','));
+  const unresolved = computed.filter(r => r.formula && !ShowMath.resolve(r.formula.fn));
+  checkTrue('and every named function exists in the shared engine', unresolved.length === 0, unresolved.map(r => r.id + '=' + r.formula.fn).join(','));
+  checkTrue('every computed row has the formula in words and its terms', computed.every(r => typeof r.formula.words === 'string' && r.formula.words.length > 10 && Array.isArray(r.formula.terms) && Array.isArray(r.formula.references)));
+  const hd = Demo.build();
+  const nw = ShowMath.of('netWorth', hd, T);
+  check('net worth: the formula in words', nw.words, 'cash plus investments plus other assets, less everything owed');
+  check('with the actual values plugged in', nw.plugged, '$35,900 = $9,500 + $48,000 + (property and other things owned: blank) − $21,600');
+  checkTrue('each input links to its row', nw.inputs.every(i => typeof i.href === 'string' && i.href.length > 0) && nw.inputs.map(i => i.id).join(',') === 'cashSavings,investments,otherAssets,totalDebt');
+  check('what would change this most: the biggest input first', nw.most[0].id + ' ' + nw.most[0].effect, 'investments 480000');
+  checkTrue('rough inputs mark the result rough right here', nw.rough === true && /Rough: /.test(nw.roughLine));
+  const cw = ShowMath.of('confidenceWeightedNetWorth', hd, T);
+  checkTrue('a reference number names its data/ file', cw.references.length === 1 && cw.references[0].file === 'data/confidence_weights.json');
+  check('a row that is not a sum names its one lever', ShowMath.of('age', hd, T).most[0].line, 'The only lever: month and year you were born.');
+  check('a non-computed row is not explained', ShowMath.of('cashSavings', hd, T), null);
+  const hs = Schema.createHousehold();
+  checkTrue('an empty household explains without a number, never a zero', /^not yet/.test(ShowMath.of('netWorth', hs, T).display) && ShowMath.of('netWorth', hs, T).missing.length >= 1);
+  const ledgerHtml = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8'), xHtml = fs.readFileSync(path.join(ROOT, 'rooms/express.html'), 'utf8');
+  checkTrue('every computed number in the Ledger and Express opens the sheet', /data-math="' \+ esc\(row\.id\) \+ '"/.test(ledgerHtml) && /data-math="' \+ esc\(row\.id\) \+ '"/.test(xHtml) && /ShowMath\.mount\(/.test(ledgerHtml) && /ShowMath\.mount\(/.test(xHtml));
+  checkTrue('the sheet is built once and never holds an input', /LIVE-FORM: built once/.test(fs.readFileSync(path.join(ROOT, 'shared/showmath.js'), 'utf8')) && !/<input/.test(fs.readFileSync(path.join(ROOT, 'shared/showmath.js'), 'utf8')));
+  const sheet = ShowMath.sheetHtml(nw);
+  checkTrue('the sheet names the function, the file and the inputs', /Worked out by Ownership\.FIELDS\.netWorth\.read/.test(sheet) && /What would change this most/.test(sheet) && /Each input/.test(sheet));
+
+  /* -- H3: one scale, guaranteed and expected never blended ------------------ */
+  const h3 = Schema.createHousehold();
+  h3.people = [Schema.createPerson({ role: 'adult', employmentStatus: 'employed' })];
+  h3.debts = [Schema.createDebt({ label: 'Amex ••1003', type: 'credit_card', balanceCents: 320000, rate: 0.25, minPaymentCents: 6400 }),
+              Schema.createDebt({ label: 'Car loan', type: 'auto', balanceCents: 1200000, rate: 0.03, minPaymentCents: 25000 })];
+  const r3 = Next100.rank(h3, T, {});
+  const card = r3.rows.filter(r => /Amex/.test(r.label))[0], loan = r3.rows.filter(r => /Car loan/.test(r.label))[0];
+  checkTrue('a 25% card ranks above a 3% loan', r3.rows.indexOf(card) < r3.rows.indexOf(loan));
+  check('and both show as guaranteed', card.kind + ',' + loan.kind, 'guaranteed,guaranteed');
+  check('the card saves its rate, exactly', card.rate, 0.25);
+  const inv = r3.rows.filter(r => r.id === 'invest')[0];
+  checkTrue('investing is expected, with its range from the bands', inv && inv.kind === 'expected' && inv.rate === 0.05 && inv.low === 0.02 && inv.high === 0.08);
+  checkTrue('the 3% loan ranks above the 5% expected? no: the scale is the return, so investing (5% expected) sits above the 3% loan', r3.rows.indexOf(inv) < r3.rows.indexOf(loan));
+  checkTrue('never blended: no row carries both kinds and the say line names the kind', r3.rows.every(r => r.kind === 'guaranteed' || r.kind === 'expected') && /guaranteed|expected/.test(r3.say));
+  checkTrue('the order of operations is a note on each line, not a re-sort', r3.rows.every(r => r.note === null || /Step \d of the order of operations/.test(r.note)) && card.fooStep === 3);
+  checkTrue('wording is what the numbers say, never an instruction', /^The numbers say/.test(r3.say) && !/you should|you must/i.test(r3.say + r3.rows.map(r => r.why).join(' ')));
+  const rm = Next100.rank(hd, T, {});
+  checkTrue('the demo: the match not yet captured is the top line, at its cents on the dollar', rm.rows[0].id === 'match' && rm.rows[0].kind === 'guaranteed' && rm.rows[0].rate === 0.5);
+  const h3b = Schema.createHousehold(); h3b.people = [Schema.createPerson({ role: 'adult', employmentStatus: 'employed' })];
+  h3b.debts = [Schema.createDebt({ label: 'No rate yet', type: 'personal', balanceCents: 50000 })];
+  const rb = Next100.rank(h3b, T, {});
+  checkTrue('a debt without a rate is named as missing, never ranked at an assumed rate', rb.rows.every(r => r.id !== 'debt:' + h3b.debts[0].id) && rb.missing.some(m => /No rate yet/.test(m)));
+  check('with no framework names the notes are off', Next100.rank(h3, T, { frameworkNames: false }).rows.every(r => r.note === null), true);
+  checkTrue('the room is registered, reads only, and in rooms.json', (function () { const r = Registry.byId('next-hundred'); const rj = JSON.parse(fs.readFileSync(path.join(ROOT, 'rooms.json'), 'utf8')).rooms.some(x => x.id === 'next-hundred'); return r && r.kind === 'read' && r.daite.writes.length === 0 && rj; })());
+
+  /* -- H2: earned vs learned, never mixed without the split ------------------- */
+  const store = {};
+  const fakeLS = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; }, key: i => Object.keys(store)[i] || null, get length() { return Object.keys(store).length; } };
+  Object.defineProperty(global, 'localStorage', { value: fakeLS, configurable: true, writable: true });
+  const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
+  Spine.updateProfile(Schema.createHousehold()); Spine.ensurePrimaryPerson('You');
+  Own.write('employmentStatus', 'employed'); Own.write('cashSavings', 950000); Own.write('investments', 4000000); Own.write('hasDebt', false);
+  const snap = Spine.appendSnapshot({});
+  checkTrue('a snapshot now carries the confidence and source of every field', snap.fieldMeta && snap.fieldMeta.cashSavings && snap.fieldMeta.cashSavings.confidence === 'sure');
+  Own.write('cashSavings', 1020000);                                          /* money moved */
+  Own.addItem('asset', { category: 'property', label: 'The flat', valueCents: 1400000 });   /* knowledge added */
+  Spine.tagWrite({ source: 'memory', confidence: 'roughly' }); Own.write('foodMonthly', 60000); Spine.confirm('foodMonthly');
+  const r2 = SinceLast.compute(Spine.getProfile(), snap, T);
+  check('net worth moved by the whole', r2.netWorth.delta, 1470000);
+  check('$700 of it earned (cash moved)', r2.netWorth.earned, 70000);
+  check('$14,000 of it learned (a first entry)', r2.netWorth.learned, 1400000);
+  checkTrue('earned plus learned is the whole, always', r2.netWorth.earned + r2.netWorth.learned === r2.netWorth.delta);
+  checkTrue('the cash move is earned, the food entry learned', r2.changes.some(c => c.id === 'cashSavings' && c.kind === 'earned') && r2.changes.some(c => c.id === 'foodMonthly' && c.kind === 'learned'));
+  const stripText = SinceLast.strip(Spine.getProfile(), snap, T);
+  check('the strip', stripText, 'Net worth +$14,700 since ' + String(snap.timestamp).slice(0, 10) + ': $700 earned, $14,000 learned (a first entry among what you own or owe). Also learned: you entered food, a month.');
+  const snap2 = Spine.appendSnapshot({});
+  Spine.tagWrite({ source: 'suggested', confidence: 'roughly' }); Own.write('wantsMonthly', 40000);
+  const s3 = Spine.appendSnapshot({});
+  Spine.confirm('wantsMonthly');
+  const r4 = SinceLast.compute(Spine.getProfile(), s3, T);
+  checkTrue('a confidence upgrade from suggested to confirmed is learned, with no money moving', r4.changes.length === 1 && r4.changes[0].id === 'wantsMonthly' && r4.changes[0].kind === 'learned' && /confirmed/.test(r4.changes[0].note));
+  check('nothing changed reads as nothing changed', SinceLast.strip(Spine.getProfile(), Spine.appendSnapshot({}), T), 'Nothing changed since ' + Schema.localDay() + '.');
+  checkTrue('the Ledger shows the strip on the doors home', /SinceLast\.strip\(h, last, TABLES\)/.test(ledgerHtml) && /id="since"/.test(ledgerHtml));
+  void snap2;
 })();
 
 /* ==========================================================================

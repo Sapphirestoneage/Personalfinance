@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-11 20:04Z"/>
+<meta name="slaf-build" content="2026-09-11 20:17Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Express · SPARKS</title>
@@ -141,6 +141,7 @@
 <script src="../shared/suggest.js"></script>
 <script src="../shared/ask.js"></script>
 <script src="../shared/doors.js"></script>
+<script src="../shared/showmath.js"></script>
 <script>
 (function () {
   'use strict';
@@ -197,7 +198,7 @@
   }
   function control(row, key) {
     var u = row.unit;
-    if (row.kind === 'computed') return '<span class="computed" data-x-computed></span>';
+    if (row.kind === 'computed') return '<button type="button" class="computed ex-btn" data-x-computed data-math="' + esc(row.id) + '" title="See the math"></button>';
     if (u === 'bool') return '<div class="choices" data-x-choices><button type="button" class="choice" data-x-val="true" aria-pressed="false">Yes</button><button type="button" class="choice" data-x-val="false" aria-pressed="false">No</button></div>';
     if (u === 'enum') {
       var vals = enumValues(row);
@@ -503,6 +504,7 @@
   Reference.load(Suggest.TABLES.concat(['states', 'staleness', 'confidenceWeights', 'accessRules', 'effectiveTaxRates'])).then(function (t) {
     TABLES = t;
     LedgerRows.use(t.ledgerRows);
+    SLAF.ShowMath.mount(t);
     build();
     /* A change anywhere (another tab, undo, a chip) repaints values and
        what applies, never rebuilding a control, never under a finger. */

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-11 20:17Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Your Next $100 · SPARKS</title>
+<meta name="description" content="Every place the next hundred dollars could go, ranked on one scale: the return it earns or saves. Guaranteed and expected, never blended."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. H3 (D-211).
+
+  1. READS   Every debt with its rate (Debt Payoff), the employer match and
+             workplace contribution (Start Here / Accounts), the return
+             bands (data/return_bands.json) and the order of operations
+             (data/foo_rules.json).
+  2. WRITES  Nothing. A ranking, read from the household.
+  3. CALLS   engines/next100.js (the one list), engines/foo.js (the ladder
+             placement). No formula lives here.
+  4. EMPTY   With no debt rate, no match and no bands there is no list; the
+             page names what would make one. A debt without a rate is named
+             as missing, never ranked at an assumed rate.
+  5. CONFIG  data/return_bands.json (the expected band), data/foo_rules.json
+             (the steps and the high-interest line). The preference
+             showFrameworkNames (shared/prefs.js) decides whether the step
+             names appear.
+
+  LIVE-FORM: built once. No input on this page.
+-->
+<style>
+  .say { font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-2) 0 var(--space-3); }
+  ol.ranked { list-style: none; margin: 0; padding: 0; }
+  ol.ranked li { display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  ol.ranked li:first-child { border-top: none; }
+  ol.ranked .rate { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; min-width: 4.5em; }
+  ol.ranked .rate small { display: block; font-family: var(--font-body); font-size: var(--text-xs); color: var(--color-text-faint); }
+  ol.ranked .kind { display: inline-block; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .04em; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--color-border-strong); margin-left: var(--space-2); vertical-align: middle; }
+  ol.ranked .kind.is-guaranteed { border-color: var(--color-positive); color: var(--color-positive); }
+  ol.ranked .kind.is-expected { border-color: var(--color-text-faint); color: var(--color-text-muted); }
+  ol.ranked .lab { font-weight: 600; }
+  ol.ranked .why, ol.ranked .note { font-size: var(--text-sm); color: var(--color-text-muted); margin: 2px 0 0; }
+  ol.ranked .note { color: var(--color-text-faint); }
+  ol.ranked li.is-done { opacity: .6; }
+  .missing { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Your Next $100</h1>
+  <p class="room-lede">Every place the next hundred dollars could go, on one scale: the return it earns or saves. Guaranteed is guaranteed; expected is a range. They are never added together.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="ranked">
+    <span class="slaf-eyebrow">What the numbers say</span>
+    <p class="say" id="say"></p>
+    <ol class="ranked" id="list"></ol>
+    <p class="missing" id="missing" hidden></p>
+  </section>
+
+  <section class="slaf-card" id="how" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">How the scale works</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Paying down a debt saves its rate, for certain. Capturing a match brings the employer's cents on the dollar at once. Investing earns whatever the decade brings: the middle of the historical range is shown with its low and high, from <code>data/return_bands.json</code>. The order of operations is a note on each line, never a re-sort: the scale is the return, the ladder is the framework.</p>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Everything stays in this browser;
+    nothing is sent anywhere.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/next100.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Next100 = SLAF.Next100, Prefs = SLAF.Prefs;
+  var ROOM_ID = 'next-hundred';
+  var TABLES = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function pct(r) { return (Math.round(r * 1000) / 10) + '%'; }
+  var LABELS = { debtRate: 'the rate on a debt', employerMatch: 'the employer match', returnBands: 'the return bands' };
+  function render() {
+    if (!TABLES) return;
+    var names = Prefs ? Prefs.get('showFrameworkNames', true) !== false : true;
+    var r = Next100.rank(Spine.getProfile(), TABLES, { frameworkNames: names });
+    el('say').textContent = r.say;
+    el('list').innerHTML = r.rows.map(function (x) {
+      return '<li class="' + (x.done ? 'is-done' : '') + '"><span class="rate">' + esc(pct(x.rate)) + '<small>' + (x.kind === 'expected' ? esc(pct(x.low) + ' to ' + pct(x.high)) : 'a year, for sure') + '</small></span>'
+        + '<span><span class="lab">' + esc(x.label) + '</span><span class="kind is-' + esc(x.kind) + '">' + esc(x.kind) + '</span>'
+        + '<p class="why">' + esc(x.why) + (x.href ? ' <a href="' + esc(x.href) + '">Open →</a>' : '') + '</p>'
+        + (x.note ? '<p class="note">' + esc(x.note) + '</p>' : '') + '</span></li>';
+    }).join('');
+    var miss = r.missing.map(function (m) { var k = m.split(':')[0]; return LABELS[k] ? LABELS[k] + (m.indexOf(':') > 0 ? ' (' + m.split(':').slice(1).join(':') + ')' : '') : m; });
+    el('missing').hidden = !miss.length;
+    el('missing').textContent = miss.length ? 'Not ranked yet, because it is blank: ' + miss.join(', ') + '. A guess would put it at an assumed rate, so it waits.' : '';
+  }
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+  Reference.load(['fooRules', 'returnBands']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

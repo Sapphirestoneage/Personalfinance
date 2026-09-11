@@ -3,7 +3,7 @@ paths:
   - "rooms/express.html"
 ---
 # Express (`express`)
-File: rooms/express.html · 515 lines · utility room
+File: rooms/express.html · 517 lines · utility room
 Engines: tax, projection, tier0, statement, debt, hourly
 Reference data: debt_rules.json, effective_tax_rates_2026.json, ledger-rows.json
 Owns: nothing

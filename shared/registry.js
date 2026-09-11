@@ -1680,6 +1680,27 @@
     ]
   });
 
+  /* Your Next $100 (H3, D-211): every place the next hundred could go on
+     one scale, the return it earns or saves; guaranteed and expected kept
+     apart; the order of operations a note on each line. Reads only. */
+  ROOMS.push({
+    id: 'next-hundred',
+    group: 'scorecard', aliases: ['next 100', 'next hundred', 'next dollar', 'where to put it', 'ranked'],
+    kind: 'read',
+    needs: ['grossAnnualIncome'],
+    order: 23.5,
+    title: 'Your Next $100',
+    blurb: 'Every place the next hundred dollars could go, ranked on one scale: the return it earns or saves. Guaranteed and expected, never blended.',
+    href: 'rooms/next-hundred.html',
+    tier: 0,
+    tags: ['debt', 'cashflow'],
+    daite: { reads: ['debt.items', 'income.grossAnnualCents', 'income.sources[].employerMatch', 'assets.contributions.pretax'], writes: [] },
+    subsections: [
+      { id: 'ranked', label: 'The list' },
+      { id: 'how',    label: 'How the scale works' }
+    ]
+  });
+
   /* `needs` lists the shared fields a room reads before it can show its main
      output — the ids in shared/ownership.js, which know who owns each one and
      which question to land on. shared/progress.js turns that into "what is

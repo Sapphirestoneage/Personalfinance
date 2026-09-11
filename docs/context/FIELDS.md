@@ -54,10 +54,10 @@ Fields: 112. Traced: 103. No other room mentions it: **58**.
 
 ## debt-payoff (5)
 
-- `totalDebt` — Total debt · read by start, financial-snapshot, statements, statement, ratios, dashboard, credit, what-if-life, student-loans, history
+- `totalDebt` — Total debt · read by start, financial-snapshot, statements, statement, ratios, dashboard, credit, what-if-life, student-loans, history, ledger
 - `monthlyDebtPayments` — Monthly debt payments · read by start, expenses, cash-flow, financial-snapshot, statements, ratios, rerank, cant-pay, student-loans, calendar
 - `debtBalance` — Balance · read by express, start
-- `debtRate` — Interest rate · read by express, start
+- `debtRate` — Interest rate · read by express, start, next-hundred
 - `debtMinPayment` — Minimum payment, a month · read by express
 
 ## decumulation (3)
@@ -174,10 +174,10 @@ Fields: 112. Traced: 103. No other room mentions it: **58**.
 - `grossAnnualIncome` — Gross annual income · read by first-round, express, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, savings-rate, real-hourly-wage, hassle, quick-math, self-employed, side-hustle, ratios, dashboard, credential, accounts, stacker, skill-tree, exercises, foo-ladder, worth, car, cant-pay, rollover, health, what-if-life, between-jobs, protection, decumulation, tax, giving, career-move, partner, housing, big-purchase, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by first-round
-- `cashSavings` — Cash & savings · read by first-round, budget, financial-snapshot, statements, statement, sleep-at-night, quick-math, ratios, dashboard, exercises, runway, cant-pay, what-if-life, between-jobs, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, refresh
+- `cashSavings` — Cash & savings · read by first-round, budget, financial-snapshot, statements, statement, sleep-at-night, quick-math, ratios, dashboard, exercises, runway, cant-pay, what-if-life, between-jobs, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, ledger, refresh
 - `investments` — Investments + retirement · too generic to trace
 - `employmentStatus` — Working situation · read by first-round, between-jobs, tax, student-loans
-- `employerMatch` — Employer match · read by financial-snapshot, statements, savings-rate, foo-ladder, unlearning
+- `employerMatch` — Employer match · read by financial-snapshot, statements, savings-rate, foo-ladder, next-hundred, unlearning
 - `capturingFullMatch` — Capturing the full match · read by expenses, financial-snapshot, dashboard, stacker
 - `hasDebt` — Any debt · read by dashboard, unlearning, student-loans
 - `contributionPercent` — Workplace contribution · read by express, statements, accounts, what-if-life, tax, refresh
@@ -186,7 +186,7 @@ Fields: 112. Traced: 103. No other room mentions it: **58**.
 
 ## statement (7)
 
-- `otherAssets` — Property & other assets · read by statements, estate
+- `otherAssets` — Property & other assets · read by statements, estate, ledger
 - `confidenceWeightedNetWorth` — Confidence-weighted net worth · **no other room mentions it**
 - `netWorth` — Net worth · read by financial-snapshot, statements, dashboard, what-if-life, history, ledger
 - `assetValue` — What each account or thing is worth · read by express, refresh

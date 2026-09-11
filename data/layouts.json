@@ -56,6 +56,7 @@
             "values",
             "goals",
             "foo-ladder",
+            "next-hundred",
             "worth",
             "windfall",
             "runway",
@@ -146,6 +147,7 @@
             "values",
             "goals",
             "foo-ladder",
+            "next-hundred",
             "worth",
             "windfall",
             "runway",
@@ -253,6 +255,7 @@
           "name": "What do I do next?",
           "rooms": [
             "foo-ladder",
+            "next-hundred",
             "walk",
             "goals",
             "debt-payoff",
@@ -408,6 +411,7 @@
             "fire",
             "fire-lab",
             "foo-ladder",
+            "next-hundred",
             "rollover",
             "what-if-life",
             "adventure",
@@ -591,6 +595,7 @@
             "hassle",
             "real-hourly-wage",
             "foo-ladder",
+            "next-hundred",
             "doors"
           ],
           "note": "The bay that catches everything that is not time-bound — nearly a quarter of the app.",
@@ -668,7 +673,8 @@
           "name": "6 · Max retirement",
           "rooms": [
             "fire",
-            "foo-ladder"
+            "foo-ladder",
+            "next-hundred"
           ]
         },
         {
@@ -797,6 +803,7 @@
             "what-if-life",
             "adventure",
             "foo-ladder",
+            "next-hundred",
             "big-purchase",
             "car",
             "housing",
@@ -907,6 +914,7 @@
             "fire-lab",
             "fire",
             "foo-ladder",
+            "next-hundred",
             "get-help",
             "giving",
             "goals",
@@ -1027,7 +1035,8 @@
             "health",
             "fire",
             "fire-lab",
-            "foo-ladder"
+            "foo-ladder",
+            "next-hundred"
           ]
         },
         {
@@ -1168,6 +1177,7 @@
             "rerank",
             "fire",
             "foo-ladder",
+            "next-hundred",
             "dashboard",
             "walk",
             "doors"
@@ -1284,6 +1294,7 @@
           "name": "A plan you can follow",
           "rooms": [
             "foo-ladder",
+            "next-hundred",
             "goals",
             "debt-payoff",
             "walk",
@@ -1438,6 +1449,7 @@
             "tax",
             "statement",
             "foo-ladder",
+            "next-hundred",
             "goals",
             "what-if-life",
             "adventure",
@@ -1568,6 +1580,7 @@
             "windfall",
             "goals",
             "foo-ladder",
+            "next-hundred",
             "ratios",
             "health"
           ]
@@ -1698,7 +1711,8 @@
         {
           "name": "Layer 3",
           "rooms": [
-            "foo-ladder"
+            "foo-ladder",
+            "next-hundred"
           ],
           "note": "The deepest room in the whole app is three hops from the door."
         },
@@ -1809,6 +1823,7 @@
             "fire",
             "fire-lab",
             "foo-ladder",
+            "next-hundred",
             "goals",
             "what-if-life",
             "adventure",
@@ -1934,6 +1949,7 @@
             "decumulation",
             "giving",
             "foo-ladder",
+            "next-hundred",
             "walk",
             "doors"
           ],
@@ -2055,6 +2071,7 @@
           "name": "Only this app says it like this",
           "rooms": [
             "foo-ladder",
+            "next-hundred",
             "rerank",
             "dreamline",
             "decumulation",
@@ -2160,6 +2177,7 @@
             "fire",
             "fire-lab",
             "foo-ladder",
+            "next-hundred",
             "goals",
             "what-if-life",
             "adventure",
@@ -2232,6 +2250,7 @@
             "fire",
             "fire-lab",
             "foo-ladder",
+            "next-hundred",
             "goals",
             "timeline",
             "what-if-life",
@@ -2402,6 +2421,7 @@
             "fire",
             "fire-lab",
             "foo-ladder",
+            "next-hundred",
             "goals",
             "what-if-life",
             "adventure",

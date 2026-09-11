@@ -2,13 +2,14 @@
 paths:
   - "rooms/ledger.html"
   - "engines/variance.js"
+  - "engines/sincelast.js"
 ---
 # The Ledger (`ledger`)
-File: rooms/ledger.html · 474 lines · utility room
-Engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly
+File: rooms/ledger.html · 485 lines · utility room
+Engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, sincelast
 Reference data: access_rules.json, confidence_weights.json, debt_rules.json, effective_tax_rates_2026.json, ledger-rows.json, liquidity_benchmarks.json, +2 more
 Owns: nothing
-Reads from other owners: netWorth (statement)
+Reads from other owners: cashSavings (start), totalDebt (debt-payoff), otherAssets (statement), netWorth (statement)
 Latest decisions:
   - D-207 — Phases C, C2, D, E: the doors, the four levels, the inline ask, the line
   - D-186 — The simplification pass, first cut: fewer doors, one next, quieter rooms
