@@ -10260,7 +10260,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...no Career Move, no Between Jobs', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move' || r.id === 'between-jobs'));
   checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
   checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
-  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 23);
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 24);
   checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
 
   /* The one shared sidebar. */
@@ -13166,6 +13166,82 @@ section('I2, J2, J3, J6: the cost of not knowing, the Comeback, the real pay cyc
   checkTrue('the FI card carries the date with its range from the bands', fi.ok && typeof fi.fields.w === 'number' && typeof fi.fields.z === 'number' && fi.fields.w <= fi.fields.y && fi.fields.y <= fi.fields.z && /\(\d{4} to \d{4}\)/.test(fi.title), fi.title);
   checkTrue('and the range survives the link', /\(\d{4} to \d{4}\)/.test(ShareCard.render(ShareCard.decode(ShareCard.link(fi).split('#')[1])).title));
   checkTrue('the coast date shows its range, a good decade to a poor one', /Range: /.test(fs.readFileSync(path.join(ROOT, 'rooms/coast-date.html'), 'utf8')) && /data-range/.test(fs.readFileSync(path.join(ROOT, 'rooms/coast-date.html'), 'utf8')));
+})();
+
+/* ==========================================================================
+   J4, J5: bank CSV import on-device, the subscription finder (D-215)
+   ========================================================================== */
+section('J4, J5: bank CSV import on-device, the subscription finder (D-215)');
+(function () {
+  const BankCsv = require(path.join(ROOT, 'engines/bankcsv.js'));
+  const Subs = require(path.join(ROOT, 'engines/subscriptions.js'));
+  const Wrapped = require(path.join(ROOT, 'engines/wrapped.js'));
+  const Doors = require(path.join(ROOT, 'shared/doors.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+  LR.use(T.ledgerRows);
+  const files = ['a', 'b', 'c'].map(x => fs.readFileSync(path.join(ROOT, 'test/fixtures/bank-' + x + '.csv'), 'utf8'));
+  /* -- J4: three layouts, one result ------------------------------------------------ */
+  const parsed = files.map(f => BankCsv.parse(f));
+  check('three layouts: comma, comma with debit and credit, semicolon quoted', parsed.map(p => p.delimiter).join(''), ',,;');
+  const maps = parsed.map(p => BankCsv.guessMap(p.headers));
+  check('the columns are guessed from the headings: date, description, amount', JSON.stringify(maps[0]), '{"date":0,"description":1,"amount":2,"debit":-1,"credit":-1}');
+  check('and debit and credit where the bank splits them', JSON.stringify(maps[1]), '{"date":0,"description":1,"amount":-1,"debit":2,"credit":3}');
+  check('a quoted payee with a comma survives', parsed[2].rows[1][1], 'TRADER JOES, #512');
+  const H = Schema.createHousehold();
+  const lines = parsed.map((p, i) => BankCsv.entries(p, maps[i], H, T));
+  checkTrue('every layout yields the same nine spending lines, dated from the file', lines.every(l => l.filter(x => x.kind === 'expense').length === 9) && lines.every(l => l.filter(x => x.kind === 'expense').map(x => x.date + ':' + x.cents).join('|') === lines[0].filter(x => x.kind === 'expense').map(x => x.date + ':' + x.cents).join('|')));
+  check('US dates read month first', BankCsv.parseDate('06/03/2026'), '2026-06-03');
+  check('a deposit is shown and left out, never logged as spending', lines[0].filter(x => x.kind === 'deposit').length + ':' + lines[0].filter(x => x.kind === 'deposit')[0].why, '1:money in; the log holds spending');
+  check('a thousands comma and a bracketed negative parse', BankCsv.cents('2,450.00') + ':' + BankCsv.cents('(15.49)'), '245000:-1549');
+  checkTrue('a streaming charge files under subscriptions when the keywords know it', lines[0].some(x => /SPOTIFY/.test(x.description) && x.categoryId === 'subscriptions'));
+  checkTrue('the signature remembers a bank by its headings', BankCsv.signature(parsed[1].headers) === 'transaction date|details|debit|credit' && BankCsv.signature(parsed[0].headers) !== BankCsv.signature(parsed[1].headers));
+  /* dedupe: apply twice changes nothing */
+  const store = {};
+  const fakeLS = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; }, key: i => Object.keys(store)[i] || null, get length() { return Object.keys(store).length; } };
+  Object.defineProperty(global, 'localStorage', { value: fakeLS, configurable: true, writable: true });
+  const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
+  Spine.updateProfile(Schema.createHousehold()); Spine.ensurePrimaryPerson('You');
+  const n1 = BankCsv.apply(lines[0], Spine);
+  check('nine lines land in the log', n1 + ':' + Spine.getProfile().expenses.entries.length, '9:9');
+  const e0 = Spine.getProfile().expenses.entries[0];
+  checkTrue('each dated from the file, exact, sourced as the log, categorised by the bank import', e0.date === '2026-06-03' && e0.dateKind === 'exact' && e0.source === 'log' && e0.categorizedBy === 'bank-csv' && e0.period === 'once' && e0.amountCents === 1549 && e0.descriptor === 'NETFLIX.COM');
+  const again = BankCsv.entries(parsed[1], maps[1], Spine.getProfile(), T);
+  check('the same statement in another layout: every spending line is already in the log', again.filter(x => x.duplicate).length, 9);
+  const n2 = BankCsv.apply(again, Spine);
+  check('and importing it changes nothing', n2 + ':' + Spine.getProfile().expenses.entries.length, '0:9');
+  const before = JSON.stringify(Spine.getProfile().expenses.entries);
+  BankCsv.apply(BankCsv.entries(parsed[2], maps[2], Spine.getProfile(), T), Spine);
+  check('nor does the third', JSON.stringify(Spine.getProfile().expenses.entries) === before, true);
+  const dataHtml = fs.readFileSync(path.join(ROOT, 'rooms/data.html'), 'utf8');
+  checkTrue('Your Data previews before anything saves and remembers the map per bank', /bankPreview\(\)/.test(dataHtml) && /bankcsv\.maps/.test(dataHtml) && /Import the new lines/.test(dataHtml));
+  checkTrue('nothing is sent: the import never fetches or posts', !/fetch\(|XMLHttpRequest|sendBeacon/.test(fs.readFileSync(path.join(ROOT, 'engines/bankcsv.js'), 'utf8')));
+
+  /* -- J5: the finder ----------------------------------------------------------------- */
+  /* The finder on the demo persona (a real wage), with the imported log. */
+  const demoBase = Demo.build();
+  Spine.updateProfile(Object.assign(demoBase, { expenses: Object.assign({}, demoBase.expenses, { entries: Spine.getProfile().expenses.entries }) }));
+  const hs = Spine.getProfile();
+  const found = Subs.find(hs, T);
+  check('two charges repeat monthly at a similar amount: Netflix and Spotify', found.map(f => f.label).sort().join(','), 'NETFLIX.COM,SPOTIFY USA');
+  const nf = found.filter(f => /NETFLIX/.test(f.label))[0];
+  check('a monthly rhythm, three times', nf.rhythm + ':' + nf.count, 'monthly:3');
+  check('its yearly cost is twelve times the typical charge', nf.yearlyCents, 1549 * 12);
+  checkTrue('and its cost in hours of work at the real wage', typeof nf.hours === 'number' && nf.hours > 0);
+  checkTrue('a one-off (the gym, the gas) is not called repeating', !found.some(f => /GYM|SHELL|TRADER/.test(f.label)));
+  const dec = Subs.decide(hs.subscriptions, nf.key, 'cancel', nf.label, nf.yearlyCents);
+  Spine.set('subscriptions', dec);
+  const again2 = Subs.find(Spine.getProfile(), T).filter(f => /NETFLIX/.test(f.label))[0];
+  check('cancel this is a stored reminder, and the charge stays found', again2.status, 'cancel');
+  checkTrue('the household carries the decision in its own list, normalised by the constructor', Schema.createHousehold(Spine.getProfile()).subscriptions[0].status === 'cancel' && Schema.createHousehold({ subscriptions: [{ key: 'x', status: 'nonsense' }] }).subscriptions[0].status === 'confirmed');
+  Spine.set('subscriptions', Subs.decide(Spine.getProfile().subscriptions, nf.key, 'dismissed', nf.label, nf.yearlyCents));
+  const leak = Subs.leak(Spine.getProfile(), T);
+  check('a dismissed charge leaves the leak line', leak.count + ':' + leak.yearlyCents, '1:' + (1199 * 12));
+  checkTrue('the Expenses door’s level 4 reads the leak line', /Subscriptions\.leak\(h, T\)/.test(fs.readFileSync(path.join(ROOT, 'shared/doors.js'), 'utf8')) && (function () { const ins = Doors.levelInsight(Spine.getProfile(), T, 'E', 4, []); return ins && /repeating charge/.test(ins.headline); })());
+  checkTrue('Money Wrapped gains the leak line only when something was found', Wrapped.year(Spine.getProfile(), [], T, {}).lines.some(l => l.id === 'leak') && !Wrapped.year(Demo.build(), [], T, {}).lines.some(l => l.id === 'leak'));
+  checkTrue('the room never cancels anything: it writes a decision and says so', /a reminder, never an action|a note to\n?\s*yourself/.test(fs.readFileSync(path.join(ROOT, 'rooms/subscriptions.html'), 'utf8')) && !/cancelSubscription|fetch\(/.test(fs.readFileSync(path.join(ROOT, 'rooms/subscriptions.html'), 'utf8')));
 })();
 
 /* ==========================================================================

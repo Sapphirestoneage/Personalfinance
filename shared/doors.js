@@ -28,15 +28,16 @@
   var deps;
   if (typeof module === 'object' && module.exports) {
     deps = { Money: require('./money.js'), Schema: require('./schema.js'), Ownership: require('./ownership.js'), LedgerRows: require('./ledger-rows.js'), Daite: require('./daite.js'),
-      Suggest: (function () { try { return require('./suggest.js'); } catch (e) { return null; } })() };
+      Suggest: (function () { try { return require('./suggest.js'); } catch (e) { return null; } })(),
+      Subscriptions: (function () { try { return require('../engines/subscriptions.js'); } catch (e) { return null; } })() };
   } else {
     var S = root.SLAF || {};
-    deps = { Money: S.Money, Schema: S.Schema, Ownership: S.Ownership, LedgerRows: S.LedgerRows, Daite: S.Daite, Suggest: S.Suggest };
+    deps = { Money: S.Money, Schema: S.Schema, Ownership: S.Ownership, LedgerRows: S.LedgerRows, Daite: S.Daite, Suggest: S.Suggest, Subscriptions: S.Subscriptions };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Ownership, deps.LedgerRows, deps.Daite, deps.Suggest);
+  var api = factory(deps.Money, deps.Schema, deps.Ownership, deps.LedgerRows, deps.Daite, deps.Suggest, deps.Subscriptions);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Doors = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Ownership, LedgerRows, Daite, Suggest) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Ownership, LedgerRows, Daite, Suggest, Subscriptions) {
   'use strict';
   var MONTHS = 12;
 
@@ -315,6 +316,10 @@
         return sg ? { headline: 'About ' + fmt(sg.value) + ' a month, suggested', line: 'A starting guess from your pay; the buckets replace it.', rough: true, missing: ['a month’s spending'] } : null;
       }
       if (level === 4) {
+        /* The leak line: the finder's repeating charges (J5, D-215) first,
+           else the lines filed as subscriptions and fees. */
+        var found = Subscriptions && Subscriptions.leak ? Subscriptions.leak(h, T) : null;
+        if (found && found.count) return { headline: fmt(found.yearlyCents) + ' a year in ' + found.count + ' repeating charge' + (found.count === 1 ? '' : 's'), line: 'Found on their rhythm in the log' + (found.hours !== null ? ', about ' + found.hours + ' hours of work a year' : '') + (found.cancel ? '; ' + found.cancel + ' marked to cancel' : '') + ': the leak line.', rough: false, missing: [] };
         var entries = ((h.expenses || {}).entries || []).filter(function (e) { return e && e.active !== false && ['subscriptions', 'platform_fees', 'contractor_fees'].indexOf(e.categoryId) !== -1; });
         if (!entries.length) return null;
         var monthly = entries.reduce(function (s, e) { var c = Money.isEntered(e.everyCents) && e.every ? Schema.monthlyFromEvery(e.everyCents, e.every) : (Money.isEntered(e.amountCents) ? e.amountCents : 0); return s + (Money.isEntered(c) ? c : 0); }, 0);

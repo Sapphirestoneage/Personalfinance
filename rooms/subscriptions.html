@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-11 20:55Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Subscription Finder · SPARKS</title>
+<meta name="description" content="Charges that repeat on a regular rhythm at a similar amount, from your logged or imported transactions, each with its yearly cost and its cost in hours of work."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. J5 (D-215).
+
+  1. READS   The dated entries in the expense log (Cash Flow; a bank CSV
+             import in Your Data), the real hourly wage.
+  2. WRITES  household.subscriptions: the decision on each found charge
+             (confirmed, dismissed, cancel this). "Cancel this" is a
+             reminder shown here, never an action taken anywhere.
+  3. CALLS   engines/subscriptions.js. No formula lives here.
+  4. EMPTY   No dated entries: it says where they come from. Fewer than
+             two of a charge: nothing is called repeating.
+  5. CONFIG  The rhythms and the similarity band in engines/subscriptions.js.
+
+  LIVE-FORM: built once. Buttons only, no input.
+-->
+<style>
+  ul.subs { list-style: none; margin: 0; padding: 0; }
+  ul.subs li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  ul.subs li:first-child { border-top: none; }
+  ul.subs .lab { font-weight: 600; }
+  ul.subs .amt { font-variant-numeric: tabular-nums; text-align: right; }
+  ul.subs .amt small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  ul.subs .meta { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-muted); }
+  ul.subs .acts { grid-column: 1 / -1; display: flex; gap: var(--space-2); flex-wrap: wrap; }
+  ul.subs li.is-dismissed { opacity: .55; }
+  ul.subs li.is-cancel .lab::after { content: ' · reminder: cancel this'; color: var(--color-warning, #d97706); font-weight: 400; font-size: var(--text-xs); }
+  .empty { font-size: var(--text-sm); color: var(--color-text-faint); }
+  .leak { font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-2) 0 0; }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Subscription Finder</h1>
+  <p class="room-lede">Charges that come back on a rhythm at about the same amount. Each with what it costs a year, and in hours of your work.</p>
+</header>
+
+<main class="slaf-wrap">
+  <section class="slaf-card" id="leak">
+    <span class="slaf-eyebrow">The leak line</span>
+    <p class="leak" id="leak-line"></p>
+    <p class="slaf-hint" id="leak-note" style="margin:var(--space-2) 0 0"></p>
+  </section>
+  <section class="slaf-card" id="found" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Found</span>
+    <ul class="subs" id="list"></ul>
+    <p class="empty" id="empty" hidden>Nothing repeating yet. Dated spending lines come from a bank CSV in <a href="data.html#bank">Your Data</a> or the log in <a href="cash-flow.html">Cash Flow</a>; a charge needs two dated lines before it counts.</p>
+  </section>
+  <p class="disclaimer">
+    Educational tool, not financial advice. "Cancel this" is a note to
+    yourself; nothing here cancels anything. Everything stays in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../engines/subscriptions.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Subs = SLAF.Subscriptions;
+  var ROOM_ID = 'subscriptions';
+  var TABLES = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    var found = Subs.find(h, TABLES);
+    var leak = Subs.leak(h, TABLES);
+    el('leak-line').textContent = found.length ? Money.formatCents(leak.yearlyCents) + ' a year in ' + leak.count + ' repeating charge' + (leak.count === 1 ? '' : 's') + (leak.hours !== null ? ', about ' + leak.hours + ' hours of work' : '') + '.' : 'No repeating charges found yet.';
+    el('leak-note').textContent = leak.cancel ? leak.cancel + ' marked to cancel: a reminder here, not an action.' : (found.length ? 'Dismissed ones are left out of the line.' : '');
+    el('empty').hidden = found.length > 0;
+    el('list').innerHTML = found.map(function (s) {
+      return '<li class="' + (s.status ? 'is-' + esc(s.status) : '') + '" data-key="' + esc(s.key) + '"><span class="lab">' + esc(s.label) + '</span>'
+        + '<span class="amt">' + esc(Money.formatCents(s.yearlyCents)) + ' a year<small>' + esc(Money.formatCents(s.typicalCents)) + ' ' + esc(s.rhythmLabel) + (s.hours !== null ? ' · ' + s.hours + ' hours of work a year' : '') + '</small></span>'
+        + '<span class="meta">' + s.count + ' times, ' + esc(s.firstDate) + ' to ' + esc(s.lastDate) + (s.status ? ' · ' + esc(s.status === 'cancel' ? 'marked to cancel' : s.status) : '') + '</span>'
+        + '<span class="acts"><button type="button" class="slaf-btn slaf-btn--small" data-decide="confirmed">Yes, it is one</button><button type="button" class="slaf-btn slaf-btn--small slaf-btn--quiet" data-decide="dismissed">Not a subscription</button><button type="button" class="slaf-btn slaf-btn--small" data-decide="cancel">Cancel this (a reminder)</button></span></li>';
+    }).join('');
+  }
+  el('list').addEventListener('click', function (ev) {
+    var b = ev.target.closest ? ev.target.closest('[data-decide]') : null; if (!b) return;
+    var li = b.closest('[data-key]'); var k = li.getAttribute('data-key');
+    var h = Spine.getProfile();
+    var found = Subs.find(h, TABLES).filter(function (s) { return s.key === k; })[0];
+    Spine.set('subscriptions', Subs.decide(h.subscriptions, k, b.getAttribute('data-decide'), found ? found.label : k, found ? found.yearlyCents : null), 'Subscription: ' + b.getAttribute('data-decide'));
+  });
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+  Reference.load(['effectiveTaxRates', 'federalBrackets', 'seTax']).then(function (t) { TABLES = t; render(); }).catch(function () { TABLES = {}; render(); });
+})();
+</script>
+</body>
+</html>

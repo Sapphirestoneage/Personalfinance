@@ -44,12 +44,13 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **rank-guess** — Where Do You Think You Rank? · 115 lines · engines: projection, tier0, rankguess · D-213
 - **health** — The Score · 375 lines · engines: projection, tier0, cashflow, foo, fire, statement, benchmarks, ratios, health · D-143, D-081
 
-## Decisions (23)
+## Decisions (24)
 
 - **hassle** — Worth the Hassle · 499 lines · engines: projection, tier0, hourly, hassle · D-066, D-032
 - **quick-math** — Quick Math · 447 lines · engines: projection, quickmath, tier0, hourly · D-062, D-022
 - **self-employed** — Going Self-Employed · 381 lines · engines: selfemployed · D-062
 - **reachable** — Reachable Money · 151 lines · engines: selfemployed, tax, reachable · D-212
+- **subscriptions** — Subscription Finder · 126 lines · engines: projection, tier0, selfemployed, tax, hourly, subscriptions · D-215
 - **side-hustle** — Side Hustle · 507 lines · engines: projection, tier0, selfemployed, hourly, sidehustle · D-062, D-033
 - **credential** — Worth Learning · 486 lines · engines: projection, tier0, hourly, credential · D-062
 - **worth** — Worth It · 607 lines · engines: projection, tier0, hourly, worth
@@ -97,8 +98,8 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **wrapped** — Money Wrapped · 130 lines · engines: projection, tier0, selfemployed, tax, hourly, debt, sincelast, wrapped · D-213
 - **doors** — Front Doors (utility) · 410 lines · engines: layouts · D-153
 - **walk** — The Walk-Through (utility) · 280 lines · no engines · D-169, D-149
-- **data** — Your Data (utility) · 493 lines · engines: tax · D-125
-- **ledger** — The Ledger (utility) · 495 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, sincelast, selfemployed, reachable, notknowing · D-207, D-186, D-185
+- **data** — Your Data (utility) · 572 lines · engines: tax, bankcsv · D-125
+- **ledger** — The Ledger (utility) · 496 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing · D-207, D-186, D-185
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 - **progress-card** — Progress Card (utility) · 140 lines · engines: projection, tier0, tax, debt · D-212
 - **comeback** — Welcome Back (utility) · 195 lines · engines: tax, projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, skills, sincelast · D-214
