@@ -11730,7 +11730,7 @@ section('18.4 and 18.5: the Ledger room, the target and one line per row (D-185)
   checkTrue('...reading every DAITE money and situation path and writing nothing yet', room.daite.reads.length > 30 && room.daite.writes.length === 0);
   checkTrue('...and needing nothing, so it opens on an empty household', Array.isArray(room.needs) && room.needs.length === 0);
   const body = html.split('<body')[1];
-  checkTrue('the room reads the two tables through their modules, never the files', /Reference\.load\(\['ledgerRows', 'spheres', 'staleness'\]\.concat\(Suggest\.TABLES\)\)/.test(body) && !/ledger-rows\.json|spheres\.json/.test(body));
+  checkTrue('the room reads the two tables through their modules, never the files', /Reference\.load\(\['ledgerRows', 'spheres', 'staleness', 'confidenceWeights', 'accessRules', 'effectiveTaxRates'\]\.concat\(Suggest\.TABLES\)\)/.test(body) && !/ledger-rows\.json|spheres\.json/.test(body));
   checkTrue('the target is five wedges by nine rings', /Spheres\.cells\(/.test(html) && /viewBox="0 0 100 100"/.test(html));
   checkTrue('one line under it: sphere N of 9, the virtue, rows left, minutes', /Sphere ' \+ s\.order \+ ' of 9, /.test(html) && /' row' \+ [^;]* \+ ' left, about '/.test(html) && /minutesWord/.test(html));
   checkTrue('rows group by sphere then letter, numbered inside the sphere', /LETTER_WORD/.test(html) && /' of ' \+ of/.test(html));
@@ -12363,6 +12363,133 @@ section('Phase A: suggestions, derived and never stored (D-205)');
   }
   const led = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
   checkTrue('the Ledger shows a suggested row apart, with use it and the how line', /is-suggested/.test(led) && /use it/.test(led) && /How I guessed this/.test(led) && /Suggest\.confirm\(s\)/.test(led));
+})();
+
+/* ==========================================================================
+   Phases C, C2, D, E: the doors, the levels, the inline asks, the line (D-207)
+   ========================================================================== */
+
+section('The doors, the levels, the inline asks, the understanding line (D-207)');
+
+(function () {
+  const spinePath = path.join(ROOT, 'shared/spine-v2.js');
+  const mods = ['shared/spine-v2.js', 'shared/ownership.js', 'shared/suggest.js', 'shared/ledger-rows.js', 'shared/doors.js', 'shared/ask.js'].map(f => path.join(ROOT, f));
+  const table = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8'));
+  const T = { ledgerRows: table };
+  ['zipPrefixes:zip_prefixes.json', 'uiBenefits:ui_benefits.json', 'savingsPresets:savings_presets.json', 'federalBrackets:federal_brackets_2026.json', 'stateBrackets:state_brackets_2026.json', 'protectionConventions:protection_conventions.json', 'debtRules:debt_rules.json', 'onepagerDefaults:onepager_defaults.json', 'retirementMilestones:retirement_milestones.json', 'cobraAca:cobra_aca_2024.json', 'confidenceWeights:confidence_weights.json', 'accessRules:access_rules.json', 'effectiveTaxRates:effective_tax_rates_2026.json', 'staleness:staleness.json']
+    .forEach(kv => { const [k, f] = kv.split(':'); T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', f), 'utf8')); });
+  function fresh() {
+    const store = {};
+    global.localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; } };
+    mods.forEach(p => delete require.cache[require.resolve(p)]);
+    const Spine = require(spinePath), Own = require(mods[1]), Sug = require(mods[2]), LR = require(mods[3]), Doors = require(mods[4]), Ask = require(mods[5]);
+    LR.use(table);
+    return { Spine, Own, Sug, LR, Doors, Ask };
+  }
+  function done() { mods.forEach(p => delete require.cache[require.resolve(p)]); delete global.localStorage; }
+
+  /* ---- The doors ------------------------------------------------------- */
+  {
+    const { Doors } = fresh();
+    check('six doors: D A I T E You', Doors.DOORS.map(d => d.id).join(','), 'D,A,I,T,E,you');
+    checkTrue('each carries the DAITE say line', Doors.DOORS.slice(0, 5).every(d => /what/.test(d.say)));
+    check('four levels, the same names in every door', Doors.LEVELS.map(l => l.label).join(' | '), 'How much | Where it sits | What it is made of | What it costs and where it came from');
+    checkTrue('every ledger row maps to a door and a level', table.rows.every(r => Doors.byId(r.door) && r.level >= 1 && r.level <= 4));
+    done();
+  }
+  /* ---- Empty ≠ zero on the headlines ----------------------------------- */
+  {
+    const { Spine, Doors } = fresh();
+    const h = Spine.getProfile();
+    const heads = Doors.DOORS.map(d => Doors.headline(h, T, d.id).display);
+    checkTrue('an empty household: every headline says not entered yet, never $0', heads.every(x => x === 'not entered yet'), heads.join(' | '));
+    check('understanding of nothing is 0%', Doors.understanding(h, T, [], T.confidenceWeights).percent, 0);
+    done();
+  }
+  /* ---- The persona at the doors ------------------------------------------ */
+  {
+    const { Spine, Own, Sug, Doors } = fresh();
+    const d = new Date(); d.setFullYear(d.getFullYear() - 27); d.setDate(1);
+    Own.write('dob', Schema.localDay(d)); Own.write('zip', '12203'); Own.write('employmentStatus', 'unemployed');
+    const p = Spine.getProfile().people[0];
+    Spine.upsertPerson({ id: p.id, unemployment: Object.assign({}, Schema.unemploymentOf(Spine.getProfile()), { lastGrossAnnualCents: 9500000 }) });
+    Own.write('cashSavings', 300000);
+    Spine.upsertDebt(Schema.createDebt({ id: 'visa', label: 'Visa', type: 'credit_card', balanceCents: 320000, rate: 0.24 }));
+    Spine.set('meta.hasDebt', true);
+    let h = Spine.getProfile();
+    let sug = Sug.suggestions(h, T);
+    const rec = Doors.recommend(h, T, sug);
+    check('recommended door: Debt, for the card without a minimum', rec.door, 'D');
+    checkTrue('with the reason in one sentence naming the card', /Visa’s minimum/.test(rec.reason), rec.reason);
+    check('Debt headline: total owed', Doors.headline(h, T, 'D').display, '$3,200');
+    check('Debt door level: 3 (the minimum is still blank, per item)', Doors.levelOf(Doors.rows(h, T, 'D'), h), 3);
+    const dv = Doors.doorView(h, T, 'D', sug);
+    checkTrue('Confirm these holds the card’s suggested minimum', dv.confirm.length === 1 && dv.confirm[0].rowId === 'debtMinPayment' && dv.confirm[0].value === 6400);
+    checkTrue('Add these is at most three rows', dv.add.length <= 3);
+    checkTrue('the level-3 insight: interest a month and the payoff order', dv.insight && /in interest/.test(dv.insight.headline) && /Visa/.test(dv.insight.line), dv.insight && dv.insight.headline);
+    const u = Doors.understanding(h, T, sug, T.confidenceWeights);
+    checkTrue('the understanding line is a percent between 1 and 99 for a half-filled household (' + u.percent + '%)', u.percent > 0 && u.percent < 100);
+    /* Weighted: a confirmed suggestion moves it up, by the weights file. */
+    const before = u.byDoor.T.sum;
+    Sug.confirm(sug.find(s => s.rowId === 'state'));
+    h = Spine.getProfile(); sug = Sug.suggestions(h, T);
+    const after = Doors.understanding(h, T, sug, T.confidenceWeights).byDoor.T.sum;
+    checkTrue('confirming a suggestion raises the Taxes door’s weight (suggested 0.5 → roughly 0.85)', Math.abs((after - before) - 0.35) < 0.001, before + ' → ' + after);
+    checkTrue('a suggestion counts more than a blank and less than confirmed', T.confidenceWeights.rowStates.missing < T.confidenceWeights.rowStates.suggested && T.confidenceWeights.rowStates.suggested < T.confidenceWeights.rowStates.sure);
+    /* You door headline: situation, never a number. */
+    check('You headline: the situation', Doors.headline(h, T, 'you').display, 'Unemployed');
+    done();
+  }
+  /* ---- The Roth test (C2) ------------------------------------------------- */
+  {
+    const { Spine, Doors } = fresh();
+    Spine.ensurePrimaryPerson('You');
+    Spine.upsertAsset(Schema.createAsset({ id: 'r1', label: 'Roth IRA', category: 'retirement', taxCharacter: 'roth', valueCents: 1800000 }));
+    let ins = Doors.levelInsight(Spine.getProfile(), T, 'A', 4, []);
+    checkTrue('a Roth with contributions blank: the level-4 insight says rough and names the missing number', ins && ins.rough && /not known yet/.test(ins.headline) && /contributions to Roth IRA/.test(ins.missing.join(',')), ins && ins.headline);
+    checkTrue('and never assumes zero', !/\$0/.test(ins.headline));
+    Spine.upsertAsset({ id: 'r1', costBasisCents: 1500000 });
+    ins = Doors.levelInsight(Spine.getProfile(), T, 'A', 4, []);
+    checkTrue('with contributions known: the insight uses the basis', ins && !ins.rough && ins.headline === '$15,000 of Roth money reachable now', ins && ins.headline);
+    Spine.upsertAsset({ id: 'r1', costBasisCents: 2000000 });
+    ins = Doors.levelInsight(Spine.getProfile(), T, 'A', 4, []);
+    check('basis above value: capped at the value', ins.headline, '$18,000 of Roth money reachable now');
+    const dv = Doors.doorView(Spine.getProfile(), T, 'A', []);
+    checkTrue('the door shows the deeper insight even while on an earlier level', dv.insights.some(i => i.level === 4));
+    done();
+  }
+  /* ---- The inline ask (D) ------------------------------------------------- */
+  {
+    const { Spine, Sug, Ask } = fresh();
+    Spine.ensurePrimaryPerson('You');
+    check('a room with nothing to ask gets nothing', Ask.pick(Spine.getProfile(), 'quick-math', T, []), null);
+    Spine.upsertDebt(Schema.createDebt({ id: 'visa', label: 'Visa', type: 'credit_card', balanceCents: 320000, rate: 0.24 }));
+    Spine.upsertDebt(Schema.createDebt({ id: 'car', label: 'Car', type: 'auto', balanceCents: 900000, rate: 0.06, minPaymentCents: 30000 }));
+    Spine.set('meta.hasDebt', true);
+    const h = Spine.getProfile();
+    const sug = Sug.suggestions(h, T);
+    const p = Ask.pick(h, 'debt-payoff', T, sug);
+    checkTrue('Debt Payoff asks the card’s real minimum, and only that card', p && p.row.id === 'debtMinPayment' && p.item.id === 'visa', p && p.row.id + ':' + (p.item && p.item.id));
+    checkTrue('with the suggestion beside it', p.suggestion && p.suggestion.value === 6400);
+    checkTrue('the estate room asks a will, POA or beneficiaries', ['willExists', 'poaExists', 'beneficiariesSet'].indexOf(Ask.pick(h, 'estate', T, sug).row.id) !== -1);
+    checkTrue('the FI room asks allocation', /^allocation/.test(Ask.pick(h, 'fire', T, sug).row.id));
+    check('parses money', Ask.parse({ unit: 'cents' }, '1,200'), 120000);
+    check('parses a rate typed as a percent', Ask.parse({ unit: 'rate' }, '24.99'), 0.2499);
+    check('and a rate typed as a fraction', Ask.parse({ unit: 'rate' }, '0.06'), 0.06);
+    check('a blank is null, never zero', Ask.parse({ unit: 'cents' }, ''), null);
+    done();
+  }
+  const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  checkTrue('the ask mounts from Progress.mount, so no room needs wiring, never on the Ledger or the First Round', /Ask\.mount\(roomId, host\)/.test(prog) && /\['ledger', 'first-round', 'start', 'express'\]/.test(prog));
+  const askSrc = fs.readFileSync(path.join(ROOT, 'shared/ask.js'), 'utf8');
+  checkTrue('the ask writes through the owner and declares LIVE-FORM', /Ownership\.write\(p\.row\.id, value, ctx\)/.test(askSrc) && /LIVE-FORM: built once/.test(askSrc) && !/Spine\.(set|upsert)/.test(askSrc));
+  checkTrue('at most one ask per visit', /doc\.getElementById\('slaf-ask'\)\) return null/.test(askSrc));
+  const led = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('the Ledger home asks which door, shows six, one recommended with its reason', /Which one do you want to go into now\?/.test(led) && /id="door-you"/.test(led) && /is-recommended/.test(led) && /rec\.reason/.test(led));
+  checkTrue('a door shows the level, the next level’s unlocks, Confirm these, Add these, N more unlock', /Confirm these/.test(led) && /Add these/.test(led) && /more unlock as you use the app/.test(led) && /Level ' \+ v\.level \+ ' of 4/.test(led));
+  checkTrue('the understanding line reads the weights file', /Doors\.understanding\(h, TABLES, SUGLIST, TABLES\.confidenceWeights\)/.test(led) && /You understand <b>/.test(led));
+  checkTrue('the spheres are kept, under a fold, not deleted', /id="spheres-fold"/.test(led) && /Spheres\.state\(/.test(led) && fs.existsSync(path.join(ROOT, 'data/spheres.json')));
+  checkTrue('search still finds any row', /LedgerRows\.rows\(Spine\.getProfile\(\), TABLES, \{ filter: 'all', query: query \}\)/.test(led));
 })();
 
 /* ==========================================================================

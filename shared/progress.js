@@ -961,7 +961,7 @@
          hidden branch - is not part of the room yet, so it neither folds
          nor writes itself to the URL. */
       return n.tagName === 'SECTION' && n.id && !n.hidden
-        && n.id !== 'slaf-progress' && n.id !== 'slaf-notapply'
+        && n.id !== 'slaf-progress' && n.id !== 'slaf-notapply' && n.id !== 'slaf-ask'
         && (typeof getComputedStyle !== 'function' || getComputedStyle(n).display !== 'none');
     });
     if (lifted) host.classList.add('slaf-folded');
@@ -1140,6 +1140,20 @@
       if (g.SLAF.RoomExport) g.SLAF.RoomExport.mount(roomId, box);
     }
     paint();
+    /* The one inline question a room needs (D-207, Phase D): loaded and
+       mounted from here so no room needs wiring. ask.js pulls in what the
+       room does not carry. Never on the Ledger or the First Round, which
+       ask their own way, and never twice. */
+    if (['ledger', 'first-round', 'start', 'express'].indexOf(roomId) === -1 && !document.getElementById('slaf-ask')) {
+      var askSrc = (typeof location !== 'undefined' && location.pathname.indexOf('/rooms/') !== -1 ? '../' : '') + 'shared/ask.js';
+      if (g.SLAF.Ask) g.SLAF.Ask.mount(roomId, host);
+      else {
+        var sc = document.createElement('script');
+        sc.src = askSrc;
+        sc.onload = function () { if (g.SLAF.Ask) g.SLAF.Ask.mount(roomId, host); };
+        document.head.appendChild(sc);
+      }
+    }
 
     /* A write during a tap (blur → save → change) used to repaint this
        strip synchronously. When an item drops off the list the document

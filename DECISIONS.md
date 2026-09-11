@@ -12916,6 +12916,86 @@ in, rough, with Debt as the door.
 `person.unemployment.lastGrossAnnualCents`, which Start Here already
 wrote. No stored shape changed.
 
+## D-207 — Phases C, C2, D, E: the doors, the four levels, the inline ask, the line
+
+**Why.** The brief: the Ledger should feel like "which DAITE do you want
+to go into now?", not a long list; every door should go deeper in the
+same four steps; a room that needs a blank row should ask it right there;
+and one line should say how much of the picture is understood.
+
+**The home is six doors.** `rooms/ledger.html` opens with "Which one do
+you want to go into now?" and six cards from `shared/doors.js`: the
+letter, the label, the DAITE say line, one headline number (Debt: total
+owed; Assets: net worth; Income: money in a month, take-home where the
+tax facts allow it, gross before that; Taxes: marginal rate; Expenses:
+money out a month; You: situation), and a small ring, "k of n known". A
+blank headline reads "not entered yet", never $0; "none" when the person
+said there is no debt. One door is recommended with its reason from
+`recommend()` (D-206). Search still finds any row at any time.
+
+**Inside a door, three groups only.** Confirm these (the door's
+suggestions at or below the level, one tap each), Add these (the next
+three blank rows, each a tap target into its owner room, with what it
+unlocks), and "N more unlock as you use the app" as a line. Plus the
+level: 1 how much, 2 where it sits, 3 what it is made of, 4 what it costs
+and where it came from, the same names in every door. A door is on the
+lowest level with a blank row (a one-line-per-item row is blank while any
+item lacks the value, so a card without a minimum holds Debt at level 3);
+under it, one line says what the next level unlocks, read off its rows'
+`unlocks`.
+
+**Every level that has an engine behind it shows the insight it unlocks**
+(`levelInsight`): Debt 1 total owed and the minimums; Debt 3 interest a
+month and the payoff order, rough while a rate is missing and naming
+which; Assets 1 net worth; Assets 2 reachable money in an emergency from
+the liquidity ladder, rough while an account's tax type is unknown;
+Assets 4 the Roth's free contributions from its basis, rough and naming
+the account while the basis is blank, never assuming zero; Income 1
+take-home a month; Income 4 the real hourly wage; Taxes 1 what the year
+costs and the marginal rate; Expenses 1 spending a month; Expenses 4 the
+leak line, subscriptions and fees a year from the repeating lines; You 1
+age, situation, state. A level without an engine shows what its rows
+unlock in words. A door shows its own level's insight and any deeper one
+that already computes, two at most.
+
+**Not built, on purpose.** Holdings inside an account, expense ratios per
+holding, annual fees per card, promo end dates: the brief says holdings
+are a new stored shape and to stop and ask before adding it. So the fee
+drag insight (Assets 4) and card fees (Debt 4) wait on that answer; the
+door still names them in the level line.
+
+**The spheres.** The nine spheres are kept, not deleted, under a fold at
+the bottom of the Ledger, with the target and the code that draws them.
+Proposal, for a decision: retire the spheres as the depth order (the
+four levels do that job now, the same in every door) and keep
+`data/spheres.json` as an overall progress layer only, its virtue line
+feeding the "already good" sentence on the doors home. Until then the
+fold stays.
+
+**Ask at the moment of need (Phase D).** `shared/ask.js`: when a room
+opens and a row whose `askIn` is that room is blank, the room asks it at
+the top, inline, one question, with a "Suggested … use it" chip beside
+the box when the engine has a guess. At most one ask per visit. The
+answer writes through the owner (`Ownership.write`); the ownership map is
+unchanged. Debt Payoff asks each card's real minimum, the FI room asks
+allocation, Estate asks the will, the power of attorney, the
+beneficiaries. It mounts from `Progress.mount`, so no room needs wiring,
+and loads what a room does not carry (the registry reader, the
+suggestion engine) itself. Never on the Ledger, the First Round, Start
+Here or Express, which ask their own way.
+
+**The line (Phase E).** "You understand X% of your financial picture",
+on the doors home: over every applicable enterable row, a confirmed
+number counts 1, a rough one 0.85, a stale one 0.7, a suggestion the
+person has not confirmed 0.5, a blank 0, from a new `rowStates` block in
+`data/confidence_weights.json`. Each unlock is functionality, never a
+badge.
+
+**Compatibility.** No stored shape changed. A per-item write (a card's
+minimum) stamps no per-item provenance yet: the field ids are per row,
+not per item, so `meta.fields.debtMinPayment` describes the row; per-item
+provenance is a G2 concern.
+
 ---
 
 # The Dungeons & Dividends entries

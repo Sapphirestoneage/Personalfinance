@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-11 19:06Z"/>
+<meta name="slaf-build" content="2026-09-11 19:21Z"/>
 <title>The Ledger · SPARKS</title>
 <meta name="description" content="Every number the app can hold, one row each, in nine spheres. What is entered, what is rough, what is still to look up, and where each number is read."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -23,6 +23,14 @@
              each numbered inside its sphere, later spheres under a fold.
   3. WRITES  nothing yet. A row's tap target is its owner room's box until
              18.1 moves entry here; the search box is the only control.
+
+  THE DOORS (D-207): the home is six doors, D A I T E You, each with its
+  headline, a "k of n known" ring and the say line; one is recommended with
+  its reason. A door opens to its level (1 how much, 2 where it sits, 3 what
+  it is made of, 4 what it costs and where it came from), the insight that
+  level unlocks, then three groups only: Confirm these, Add these (the next
+  three), and "N more unlock as you use the app". The nine spheres stay,
+  under a fold, until their fate is decided (D-207 proposes it).
 
   LIVE-FORM: built once. The search box is in the HTML and only its value
   is read; every list below it holds no inputs and is rewritten freely.
@@ -70,6 +78,44 @@
   .row .val.is-na { color: var(--color-text-faint); font-style: italic; }
   .row .how details summary { cursor: pointer; color: var(--color-text-faint); }
   .row .how .src { color: var(--color-text-faint); }
+  .target-wrap { position: static; border-bottom: 0; }
+  .understand { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0 0 var(--space-3); }
+  .understand b { color: var(--color-text); font-family: var(--font-display); font-weight: 500; }
+  .doors { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-3); }
+  .door { display: block; text-decoration: none; color: inherit; border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); min-height: 150px; position: relative; }
+  .door:hover { border-color: var(--color-border-active); }
+  .door.is-recommended { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent) inset; }
+  .door .letter { font-family: var(--font-display); font-size: var(--text-xl); color: var(--color-accent-hover); }
+  .door .label { font-family: var(--font-display); font-size: var(--text-md); margin-top: 2px; }
+  .door .say { font-size: var(--text-xs); color: var(--color-text-faint); }
+  .door .num { font-family: var(--font-display); font-size: var(--text-lg); margin-top: var(--space-2); font-variant-numeric: tabular-nums; }
+  .door .num.is-blank { color: var(--color-text-faint); font-size: var(--text-sm); font-style: italic; }
+  .door .numlab { font-size: var(--text-xs); color: var(--color-text-faint); }
+  .door .ring { position: absolute; top: var(--space-3); right: var(--space-3); width: 36px; height: 36px; }
+  .door .ring text { font-size: 9px; fill: var(--color-text-muted); font-family: var(--font-display); }
+  .door .ringlab { position: absolute; right: var(--space-3); top: 52px; font-size: 9px; color: var(--color-text-faint); text-align: center; width: 36px; }
+  .door .why { font-size: var(--text-xs); color: var(--color-accent-hover); margin-top: var(--space-2); line-height: 1.4; }
+  .door-open { margin-top: var(--space-3); }
+  .door-open .head { display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; }
+  .door-open .head h2 { font-family: var(--font-display); font-size: var(--text-xl); margin: 0; }
+  .door-open .head .letter { font-family: var(--font-display); color: var(--color-accent-hover); font-size: var(--text-xl); }
+  .door-open .head .back { margin-left: auto; font-size: var(--text-sm); }
+  .door-open .headline { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
+  .door-open .headline.is-blank { color: var(--color-text-faint); font-size: var(--text-md); font-style: italic; }
+  .door-open .lvl { margin-top: var(--space-3); padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+  .door-open .lvl .now { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
+  .door-open .lvl .name { font-family: var(--font-display); font-size: var(--text-md); }
+  .door-open .lvl .next { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-2); line-height: 1.5; }
+  .door-open .insight { margin-top: var(--space-3); }
+  .door-open .insight .big { font-family: var(--font-display); font-size: var(--text-xl); }
+  .door-open .insight .line { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .door-open .insight .rough { font-size: var(--text-xs); color: var(--color-warning, #d97706); }
+  .door-open .group { margin-top: var(--space-4); }
+  .door-open .group h3 { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); margin: 0 0 var(--space-1); font-weight: 500; }
+  .door-open .more { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-4); }
+  .door-open .na { font-size: var(--text-xs); color: var(--color-text-faint); font-style: italic; }
+  #spheres-fold { margin-top: var(--space-5); }
+  #spheres-fold > summary { font-size: var(--text-sm); }
 </style>
 </head>
 <body class="slaf">
@@ -78,22 +124,38 @@
   <header class="slaf-room-head">
     <span class="slaf-eyebrow">Home</span>
     <h1>The Ledger</h1>
-    <p class="slaf-lede">Every number the app can hold, one line each, in the order they matter. Enter, confirm, sharpen. Nothing here is locked; a later sphere is only sharper.</p>
+    <p class="slaf-lede" id="lede-home">Which one do you want to go into now?</p>
   </header>
 
-  <section class="target-wrap" id="target-wrap" aria-label="How far along the numbers are">
-    <div class="target">
-      <svg id="target" viewBox="0 0 100 100" role="img" aria-label="Five wedges by nine rings: how much of each family is entered and confirmed"></svg>
-      <div class="line" id="target-line">Loading the rows…</div>
-    </div>
+  <p class="understand" id="understand" aria-live="polite"></p>
+
+  <section id="doors-home" aria-label="The six doors">
+    <div class="doors" id="doors"></div>
   </section>
+
+  <section class="door-open" id="door-D" hidden aria-label="Debt"></section>
+  <section class="door-open" id="door-A" hidden aria-label="Assets"></section>
+  <section class="door-open" id="door-I" hidden aria-label="Income"></section>
+  <section class="door-open" id="door-T" hidden aria-label="Taxes"></section>
+  <section class="door-open" id="door-E" hidden aria-label="Expenses"></section>
+  <section class="door-open" id="door-you" hidden aria-label="You"></section>
 
   <div class="search slaf-field">
     <span class="slaf-label">Find a row</span>
     <span class="slaf-input-shell"><input type="search" id="q" placeholder="rent, 401(k), state…" aria-label="Find a row by its label"/></span>
   </div>
+  <div id="found" hidden></div>
 
-  <div id="spheres"></div>
+  <details class="fold" id="spheres-fold">
+    <summary>The nine spheres, the older order (kept while the doors settle)</summary>
+    <section class="target-wrap" id="target-wrap" aria-label="How far along the numbers are">
+      <div class="target">
+        <svg id="target" viewBox="0 0 100 100" role="img" aria-label="Five wedges by nine rings: how much of each family is entered and confirmed"></svg>
+        <div class="line" id="target-line">Loading the rows…</div>
+      </div>
+    </section>
+    <div id="spheres"></div>
+  </details>
 
   <p class="empyrean" id="empyrean">Beyond the nine: What Matters. No numbers there.</p>
 
@@ -127,12 +189,19 @@
 <script src="../shared/backup.js"></script>
 <script src="../engines/tax.js"></script>
 <script src="../shared/suggest.js"></script>
+<script src="../engines/statement.js"></script>
+<script src="../engines/debt.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../shared/doors.js"></script>
 <script>
 (function () {
   var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Registry = SLAF.Registry, Progress = SLAF.Progress,
       LedgerRows = SLAF.LedgerRows, Spheres = SLAF.Spheres, Reference = SLAF.Reference, Suggest = SLAF.Suggest;
+  var Doors = SLAF.Doors;
   var TABLES = {};
   var SUGGESTED = {};   /* key → suggestion, refreshed on every render (D-205) */
+  var SUGLIST = [];
+  var OPEN = null;      /* the door open now, or null for the home (D-207) */
   function el(id) { return document.getElementById(id); }
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   var GLYPH = { sure: '●', roughly: '◐', missing: '○', computed: '=', stale: '◌', suggested: '◔' };
@@ -276,34 +345,121 @@
   }
   function refreshSuggestions(h) {
     SUGGESTED = {};
-    Suggest.suggestions(h, TABLES).forEach(function (s) { if (!s.itemId) SUGGESTED[s.rowId] = s; SUGGESTED[s.key] = s; });
+    SUGLIST = Suggest.suggestions(h, TABLES);
+    SUGLIST.forEach(function (s) { if (!s.itemId) SUGGESTED[s.rowId] = s; SUGGESTED[s.key] = s; });
   }
+
+  /* ---- The doors (D-207) --------------------------------------------------- */
+  function ring(known, total) {
+    var r = 15, c = 2 * Math.PI * r, share = total ? known / total : 0;
+    return '<svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="' + r + '" fill="none" stroke="var(--color-border)" stroke-width="3"/>'
+      + '<circle cx="18" cy="18" r="' + r + '" fill="none" stroke="var(--color-accent)" stroke-width="3" stroke-dasharray="' + (c * share).toFixed(1) + ' ' + c.toFixed(1) + '" transform="rotate(-90 18 18)"/>'
+      + '<text x="18" y="21" text-anchor="middle">' + known + '</text></svg>';
+  }
+  function paintHome(h) {
+    var rec = Doors.recommend(h, TABLES, SUGLIST);
+    el('doors').innerHTML = Doors.DOORS.map(function (d) {
+      var c = Doors.counts(h, TABLES, d.id, SUGLIST);
+      var hl = Doors.headline(h, TABLES, d.id);
+      var isRec = rec.door === d.id;
+      return '<a class="door' + (isRec ? ' is-recommended' : '') + '" href="#door-' + esc(d.id) + '" data-door="' + esc(d.id) + '">'
+        + ring(c.known, c.total) + '<span class="ringlab">' + c.known + ' of ' + c.total + '</span>'
+        + '<span class="letter">' + esc(d.letter) + '</span><span class="label">' + esc(d.label) + '</span><span class="say">' + esc(d.say) + '</span>'
+        + '<span class="num' + (hl.display === 'not entered yet' ? ' is-blank' : '') + '">' + esc(hl.display) + '</span><span class="numlab">' + esc(hl.label) + '</span>'
+        + (isRec ? '<span class="why">' + esc(rec.reason) + '</span>' : '')
+        + '</a>';
+    }).join('');
+    var u = Doors.understanding(h, TABLES, SUGLIST, TABLES.confidenceWeights);
+    el('understand').innerHTML = 'You understand <b>' + u.percent + '%</b> of your financial picture.';
+  }
+  function levelWord(n) { return ['', 'How much', 'Where it sits', 'What it is made of', 'What it costs and where it came from'][n]; }
+  function paintDoor(h, id) {
+    var v = Doors.doorView(h, TABLES, id, SUGLIST);
+    var d = v.door, hl = Doors.headline(h, TABLES, id);
+    var out = '<div class="head"><span class="letter">' + esc(d.letter) + '</span><h2>' + esc(d.label) + '</h2><span class="say">' + esc(d.say) + '</span><a class="back" href="#doors-home">← Every door</a></div>'
+      + '<p class="headline' + (hl.display === 'not entered yet' ? ' is-blank' : '') + '">' + esc(hl.display) + '</p><p class="slaf-hint">' + esc(hl.label) + ' · ' + v.counts.known + ' of ' + v.counts.total + ' known</p>'
+      + '<div class="lvl"><span class="now">Level ' + v.level + ' of 4</span><div class="name">' + esc(levelWord(v.level)) + '</div>'
+      + (v.next ? '<div class="next">Level ' + v.next.level + ', ' + esc(v.next.info.label.toLowerCase()) + ', unlocks ' + esc(v.next.unlocks.slice(0, 2).join('; ') || v.next.info.gloss) + '.</div>' : '<div class="next">The deepest level. Sharpen what is rough when you have a minute.</div>')
+      + '</div>';
+    v.insights.forEach(function (ins) {
+      out += '<div class="insight" data-level="' + ins.level + '">' + (ins.level !== v.level ? '<div class="slaf-hint">From level ' + ins.level + ', ' + esc(levelWord(ins.level).toLowerCase()) + '</div>' : '') + '<div class="big">' + esc(ins.headline) + '</div><div class="line">' + esc(ins.line) + '</div>'
+        + (ins.rough ? '<div class="rough">Rough' + (ins.missing.length ? ': still needs ' + esc(ins.missing.slice(0, 3).join(', ')) : '') + '.</div>' : '') + '</div>';
+    });
+    if (v.confirm.length) {
+      out += '<div class="group"><h3>Confirm these</h3><ul class="rows">' + v.confirm.map(function (s) {
+        return '<li class="row is-suggested" data-row="' + esc(s.rowId) + '" data-status="suggested"><span class="g" title="suggested, not yet yours">' + GLYPH.suggested + '</span><span class="lab">' + esc(s.label) + '</span>'
+          + '<span class="val is-suggested"><button type="button" class="slaf-btn slaf-btn--quiet use-it" data-use="' + esc(s.key) + '">' + esc(s.display) + ' · use it</button></span>'
+          + '<span class="small how"><details><summary>How I guessed this</summary>' + esc(s.how) + ' <span class="src">' + esc(s.sources.join(', ')) + '</span></details></span></li>';
+      }).join('') + '</ul></div>';
+    }
+    if (v.add.length) {
+      out += '<div class="group"><h3>Add these</h3><ul class="rows">' + v.add.map(function (r) {
+        var href = target(r);
+        return '<li class="row is-missing" data-row="' + esc(r.id) + '" data-status="missing"><span class="g" title="not entered">' + GLYPH.missing + '</span><span class="lab">' + esc(r.label) + '</span>'
+          + '<span class="val">' + (href ? '<a href="' + esc(href) + '">' + (r.kind === 'lookup' ? 'Look it up' : 'Enter it') + '</a>' : '') + '</span>'
+          + (r.kind === 'lookup' && r.where ? '<span class="where">' + esc(r.where) + '</span>' : '')
+          + '<span class="small">Unlocks ' + esc(r.unlocks) + '.</span></li>';
+      }).join('') + '</ul></div>';
+    }
+    if (v.na.length) out += '<p class="na">' + v.na.map(function (s) { return esc(s.label) + ': ' + esc(s.how); }).join(' ') + '</p>';
+    if (v.more) out += '<p class="more">' + v.more + ' more unlock as you use the app.</p>';
+    else if (!v.add.length && !v.confirm.length) out += '<p class="more">Every row behind this door is in.</p>';
+    el('door-' + id).innerHTML = out;
+  }
+  function showDoor(id) {
+    OPEN = id;
+    Doors.DOORS.forEach(function (d) { el('door-' + d.id).hidden = d.id !== id; });
+    el('doors-home').hidden = !!id;
+    el('lede-home').textContent = id ? 'One door at a time. Confirm what is suggested, add the next three, and the rest unlocks as you go.' : 'Which one do you want to go into now?';
+    if (id) paintDoor(Spine.getProfile(), id);
+  }
+  function routeHash() {
+    var m = /^#door-(D|A|I|T|E|you)$/.exec(location.hash || '');
+    showDoor(m ? m[1] : null);
+    if (!m && location.hash === '#doors-home') { try { history.replaceState(null, '', location.pathname); } catch (e) { /* fine */ } }
+  }
+
+  /* ---- Search: any row, any time ---------------------------------------- */
+  function paintFound() {
+    var query = (el('q').value || '').trim().toLowerCase();
+    var box = el('found');
+    if (!query) { box.hidden = true; box.innerHTML = ''; return; }
+    var rows = LedgerRows.rows(Spine.getProfile(), TABLES, { filter: 'all', query: query });
+    box.hidden = false;
+    box.innerHTML = rows.length ? '<ul class="rows">' + rows.map(function (r, i) { return rowHtml(r, i + 1, rows.length); }).join('') + '</ul>' : '<p class="slaf-reason">No row matches that.</p>';
+  }
+
   function render() {
     var h = Spine.getProfile();
     refreshSuggestions(h);
+    paintHome(h);
+    if (OPEN) paintDoor(h, OPEN);
+    paintFound();
     var st = Spheres.state(h, TABLES);
     paintTarget(h);
     paintLine(st);
     paintSpheres(st);
   }
 
-  el('q').addEventListener('input', function () { paintSpheres(Spheres.state(Spine.getProfile(), TABLES)); });
+  el('q').addEventListener('input', function () { paintFound(); paintSpheres(Spheres.state(Spine.getProfile(), TABLES)); });
   /* One tap turns a suggestion into an entered value, through its owner. */
-  el('spheres').addEventListener('click', function (ev) {
+  document.querySelector('main').addEventListener('click', function (ev) {
     var b = ev.target.closest ? ev.target.closest('[data-use]') : null;
     if (!b) return;
     var s = SUGGESTED[b.getAttribute('data-use')];
     if (s) Suggest.confirm(s);
   });
+  window.addEventListener('hashchange', routeHash);
   Spine.registerRoom('ledger');
   Spine.onChange(render);
   Progress.mountHeader('ledger');
   Progress.mount('ledger');
   SLAF.Backup.mount('#backup');
-  Reference.load(['ledgerRows', 'spheres', 'staleness'].concat(Suggest.TABLES)).then(function (t) {
+  Reference.load(['ledgerRows', 'spheres', 'staleness', 'confidenceWeights', 'accessRules', 'effectiveTaxRates'].concat(Suggest.TABLES)).then(function (t) {
     TABLES = t || {};
     LedgerRows.use(TABLES.ledgerRows);
     Spheres.use(TABLES.spheres);
+    routeHash();
     if (SLAF.Staleness && TABLES.staleness) SLAF.Staleness.use(TABLES.staleness);
     render();
   }).catch(function (err) {

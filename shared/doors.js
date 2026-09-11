@@ -168,5 +168,198 @@
       usedSuggestions: ov.used, door: recommend(h, tables, sug), cashCents: cash.value, spendCents: spend.value, benefitMonthlyCents: benefitMonthly };
   }
 
-  return { DOORS: DOORS, LEVELS: LEVELS, byId: byId, rows: rows, counts: counts, headline: headline, recommend: recommend, firstInsight: firstInsight };
+  /* ---- How much of the picture is understood (Phase E, D-207) --------------
+     Over every applicable, enterable row: a confirmed number counts in
+     full, a rough one most of the way, a stale one less, a suggestion the
+     person has not confirmed half, a blank nothing. The weights live in
+     data/confidence_weights.json (rowStates); nothing here is a badge, the
+     line only says how much of the picture the numbers cover. */
+  function understanding(household, tables, sug, weights) {
+    var w = (weights && weights.rowStates) || { sure: 1, roughly: 0.85, stale: 0.7, suggested: 0.5, missing: 0 };
+    var sm = suggestedKeys(sug);
+    var all = LedgerRows.rows(household, tables, { filter: 'all' }).filter(function (r) { return r.kind !== 'computed' && !/^prefs\./.test(r.path); });
+    var sum = 0, byDoor = {};
+    all.forEach(function (r) {
+      var k = r.status === 'sure' ? 'sure' : r.status === 'roughly' ? 'roughly' : r.status === 'stale' ? 'stale' : (sm[r.id] && !sm[r.id].na ? 'suggested' : 'missing');
+      var v = w[k] || 0;
+      sum += v;
+      var d = byDoor[r.door] || (byDoor[r.door] = { sum: 0, n: 0 });
+      d.sum += v; d.n++;
+    });
+    var percent = all.length ? Math.round(sum / all.length * 100) : 0;
+    Object.keys(byDoor).forEach(function (k) { byDoor[k].percent = byDoor[k].n ? Math.round(byDoor[k].sum / byDoor[k].n * 100) : 0; });
+    return { percent: percent, counted: all.length, byDoor: byDoor };
+  }
+
+  /* ---- The level a door is on ----------------------------------------------
+     The lowest level with an enterable row still blank; 4 when none is.
+     The next level's unlocks are read off its rows, so the line under the
+     level is always what finishing it changes. */
+  /* A one-line-per-item row is blank while any item lacks the value. */
+  var ITEM_MISSING = {
+    debtMinPayment: function (d) { return !Money.isEntered(d.minPaymentCents); },
+    debtRate: function (d) { return !Money.isEntered(d.rate); },
+    debtBalance: function (d) { return !Money.isEntered(d.balanceCents); },
+    assetValue: function (a) { return !Money.isEntered(a.valueCents); },
+    assetCharacter: function (a) { return !a.taxCharacter; },
+    assetTier: function (a) { return !a.tier; },
+    assetCostBasis: function (a) { return !Money.isEntered(a.costBasisCents); },
+    incomeType: function (s) { return !s.type; },
+    paySurvives: function (s) { return s.survivesJobLoss === null || s.survivesJobLoss === undefined; }
+  };
+  function itemsMissing(household, row) {
+    if (!row.repeat || !ITEM_MISSING[row.id]) return [];
+    return (LedgerRows.items(household, row) || []).filter(ITEM_MISSING[row.id]);
+  }
+  function isBlank(household, row) {
+    if (row.kind === 'computed') return false;
+    if (row.repeat && ITEM_MISSING[row.id]) return itemsMissing(household, row).length > 0;
+    return row.status === 'missing';
+  }
+  function levelOf(list, household) {
+    for (var L = 1; L <= 4; L++) {
+      if (list.some(function (r) { return r.level === L && isBlank(household, r); })) return L;
+    }
+    return 4;
+  }
+  function unlocksOf(list, L) {
+    var seen = {}, out = [];
+    list.filter(function (r) { return r.level === L && r.unlocks; }).forEach(function (r) { if (!seen[r.unlocks]) { seen[r.unlocks] = true; out.push(r.unlocks); } });
+    return out;
+  }
+
+  /* ---- The insight a level unlocks (Phase C2) --------------------------------
+     Only where an engine backs it; otherwise null and the door shows what the
+     level's rows unlock in words. Every one is a Result-shaped object:
+     { headline, line, rough, missing } — rough when an input is a guess or
+     absent, and `missing` names it. Never a number from an assumed zero. */
+  function engine(name) {
+    if (typeof module === 'object' && module.exports) { try { return require('../engines/' + name + '.js'); } catch (e) { return null; } }
+    var g = typeof self !== 'undefined' ? self : null;
+    var S = g && g.SLAF ? g.SLAF : {};
+    return S[{ statement: 'Statement', debt: 'Debt', hourly: 'Hourly' }[name]] || null;
+  }
+  function fmt(c) { return Money.formatCents(c); }
+  function levelInsight(household, tables, door, level, sug) {
+    var h = household || {}, T = tables || {};
+    var sm = suggestedKeys(sug);
+    if (door === 'D') {
+      var debts = (h.debts || []).filter(function (d) { return Money.isEntered(d.balanceCents) && d.balanceCents > 0; });
+      if (level === 1) {
+        var tot = Schema.totalDebtCents(h);
+        if (!Money.isOk(tot)) return null;
+        var mins = Schema.monthlyDebtPaymentsCents(h);
+        return { headline: fmt(tot.value) + ' owed', line: Money.isOk(mins) ? fmt(mins.value) + ' a month goes to minimums before anything else.' : 'The minimums are not all in yet, so the month’s debt line is open.', rough: !Money.isOk(mins), missing: Money.isOk(mins) ? [] : ['minimum payments'] };
+      }
+      if (level === 3 && debts.length) {
+        var Debt = engine('debt');
+        var noRate = debts.filter(function (d) { return !Money.isEntered(d.rate); });
+        var interest = debts.reduce(function (s, d) { return s + (Money.isEntered(d.rate) ? Math.round(d.balanceCents * d.rate / MONTHS) : 0); }, 0);
+        var order = null;
+        if (Debt && T.debtRules) {
+          var strat = (T.debtRules.strategies || []).filter(function (x) { return x.id === 'avalanche'; })[0];
+          if (strat) order = Debt.orderDebts(debts, strat, T.debtRules, 1, Schema.localDay()).map(function (d) { return d.label || d.type; });
+        }
+        return { headline: (noRate.length ? 'At least ' : 'About ') + fmt(interest) + ' a month in interest', line: order ? 'Highest rate first: ' + order.join(', then ') + '.' : 'The payoff order follows the rates.', rough: noRate.length > 0, missing: noRate.map(function (d) { return 'the rate on ' + (d.label || 'a debt'); }) };
+      }
+      return null;
+    }
+    if (door === 'A') {
+      var St = engine('statement');
+      if (level === 1) {
+        var nw = Ownership.FIELDS.netWorth.read(h);
+        return Money.isOk(nw) ? { headline: fmt(nw.value) + ' net worth', line: 'What you own less what you owe.', rough: false, missing: [] } : null;
+      }
+      if (level === 2 && St && T.accessRules) {
+        var lad = St.liquidityLadder(h, T.accessRules);
+        if (!Money.isOk(lad)) return null;
+        var unknown = lad.rows.filter(function (r) { return r.asset.taxCharacter === 'unknown' || !r.asset.taxCharacter; });
+        return { headline: fmt(lad.cumulative.thisYear) + ' reachable in an emergency', line: fmt(lad.bands.today) + ' today, ' + fmt(lad.cumulative.thisMonth) + ' within the month, ' + fmt(lad.gatedCents) + ' locked until retirement age.', rough: unknown.length > 0, missing: unknown.map(function (r) { return 'how ' + (r.asset.label || 'an account') + ' is taxed'; }) };
+      }
+      if (level === 4) {
+        var roth = (h.assets || []).filter(function (a) { return a.taxCharacter === 'roth' && Money.isEntered(a.valueCents); });
+        if (!roth.length) return null;
+        var known = roth.filter(function (a) { return Money.isEntered(a.costBasisCents); });
+        var blank = roth.filter(function (a) { return !Money.isEntered(a.costBasisCents); });
+        var free = known.reduce(function (s, a) { return s + Math.min(a.costBasisCents, a.valueCents); }, 0);
+        if (!known.length) return { headline: 'Roth contributions: not known yet', line: 'Roth contributions come out tax and penalty free, so a Roth that is mostly contributions is mostly reachable. That needs the contributions figure.', rough: true, missing: blank.map(function (a) { return 'contributions to ' + (a.label || 'the Roth'); }) };
+        return { headline: fmt(free) + ' of Roth money reachable now', line: 'Contributions come out tax and penalty free; only the growth waits.' + (blank.length ? ' Rough: one Roth has no contributions figure yet.' : ''), rough: blank.length > 0, missing: blank.map(function (a) { return 'contributions to ' + (a.label || 'the Roth'); }) };
+      }
+      return null;
+    }
+    if (door === 'I') {
+      if (level === 1) {
+        var th = takeHomeMonthly(h, T);
+        return Money.isOk(th) ? { headline: fmt(th.value) + ' a month' + (th.basis === 'gross' ? ', before tax' : ' take-home'), line: th.basis === 'gross' ? 'Filing status and state turn this into take-home.' : 'After the tax estimate.', rough: th.basis === 'gross', missing: th.basis === 'gross' ? ['filing status', 'state'] : [] } : null;
+      }
+      if (level === 4) {
+        var Hr = engine('hourly');
+        if (!Hr) return null;
+        var rh = Hr.realHourlyWage(h, T);
+        return Money.isOk(rh) ? { headline: fmt(rh.value) + ' an hour, really', line: 'Every hour the job takes and everything it costs, against what it pays after tax.', rough: !!(rh.assumed && rh.assumed.length), missing: rh.assumed || [] } : null;
+      }
+      return null;
+    }
+    if (door === 'T' && level === 1) {
+      var tax = Schema.estimatedAnnualTaxCents ? Schema.estimatedAnnualTaxCents(h, T) : null;
+      var mr = Ownership.FIELDS.marginalRate.read(h);
+      if (!tax || !Money.isOk(tax)) return null;
+      return { headline: fmt(tax.value) + ' a year to tax', line: Money.isOk(mr) ? 'The next dollar is taxed at ' + Math.round(mr.value * 1000) / 10 + '%.' : 'The marginal rate is suggested from the brackets; confirm it below.', rough: !Money.isOk(mr), missing: Money.isOk(mr) ? [] : ['marginal rate'] };
+    }
+    if (door === 'E') {
+      if (level === 1) {
+        var sp = Schema.monthlyExpensesCents(h);
+        if (Money.isOk(sp)) return { headline: fmt(sp.value) + ' a month out', line: sp.source === 'closed' ? 'From the months you closed.' : 'From the four buckets.', rough: false, missing: [] };
+        var sg = sm.wantsMonthly;
+        return sg ? { headline: 'About ' + fmt(sg.value) + ' a month, suggested', line: 'A starting guess from your pay; the buckets replace it.', rough: true, missing: ['a month’s spending'] } : null;
+      }
+      if (level === 4) {
+        var entries = ((h.expenses || {}).entries || []).filter(function (e) { return e && e.active !== false && ['subscriptions', 'platform_fees', 'contractor_fees'].indexOf(e.categoryId) !== -1; });
+        if (!entries.length) return null;
+        var monthly = entries.reduce(function (s, e) { var c = Money.isEntered(e.everyCents) && e.every ? Schema.monthlyFromEvery(e.everyCents, e.every) : (Money.isEntered(e.amountCents) ? e.amountCents : 0); return s + (Money.isEntered(c) ? c : 0); }, 0);
+        return { headline: fmt(monthly * MONTHS) + ' a year in subscriptions and fees', line: entries.length + (entries.length === 1 ? ' line' : ' lines') + ' that repeat: the leak line.', rough: false, missing: [] };
+      }
+      return null;
+    }
+    if (door === 'you' && level === 1) {
+      var age = Schema.primaryAge(h), p = Schema.primaryPerson(h);
+      if (!p) return null;
+      var bits = [];
+      if (Money.isEntered(age)) bits.push(age + ' years old');
+      if (p.employmentStatus) bits.push({ employed: 'working', unemployed: 'between jobs', selfEmployed: 'self-employed', both: 'a job and your own work', student: 'a student', retired: 'retired' }[p.employmentStatus] || p.employmentStatus);
+      if (h.state) bits.push('in ' + h.state);
+      return bits.length ? { headline: bits.join(', '), line: 'What every other door reads first.', rough: false, missing: [] } : null;
+    }
+    return null;
+  }
+
+  /* ---- One door, opened --------------------------------------------------- */
+  function doorView(household, tables, door, sug) {
+    var list = rows(household, tables, door);
+    var sm = suggestedKeys(sug);
+    var level = levelOf(list, household);
+    var suggestedRow = function (r) { return (sug || []).some(function (s) { return s.rowId === r.id && !s.na; }); };
+    var confirm = (sug || []).filter(function (s) { return s.door === door && !s.na && s.level <= level; });
+    var add = list.filter(function (r) { return r.level === level && isBlank(household, r) && !suggestedRow(r); }).slice(0, 3);
+    var deeper = list.filter(function (r) { return r.level > level && isBlank(household, r); }).length;
+    var na = (sug || []).filter(function (s) { return s.door === door && s.na; });
+    /* The level's own insight first; then any deeper one that already
+       computes from what is entered (a Roth's basis is worth seeing at
+       level 3). Two at most. */
+    var insights = [];
+    for (var L = 1; L <= 4; L++) {
+      var ins = levelInsight(household, tables, door, L, sug);
+      if (ins) insights.push(Object.assign({ level: L }, ins));
+    }
+    var current = insights.filter(function (i) { return i.level === level; })[0] || null;
+    var others = insights.filter(function (i) { return i.level !== level; }).sort(function (a, b) { return b.level - a.level; });
+    return {
+      door: byId(door), level: level, levelInfo: LEVELS[level - 1], next: level < 4 ? { level: level + 1, info: LEVELS[level], unlocks: unlocksOf(list, level + 1) } : null,
+      insight: current, insights: (current ? [current] : []).concat(others).slice(0, 2), confirm: confirm, add: add, more: deeper, na: na,
+      counts: counts(household, tables, door, sug), rows: list
+    };
+  }
+
+  return { DOORS: DOORS, LEVELS: LEVELS, byId: byId, rows: rows, counts: counts, headline: headline, recommend: recommend, firstInsight: firstInsight,
+    understanding: understanding, levelOf: levelOf, levelInsight: levelInsight, doorView: doorView, itemsMissing: itemsMissing, isBlank: isBlank };
 });
