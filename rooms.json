@@ -330,6 +330,18 @@
       "order": 12
     },
     {
+      "id": "reachable",
+      "title": "Reachable Money",
+      "file": "rooms/reachable.html",
+      "reads": [
+        "cashSavings"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 12.5
+    },
+    {
       "id": "side-hustle",
       "title": "Side Hustle",
       "file": "rooms/side-hustle.html",
@@ -521,6 +533,18 @@
       "order": 23
     },
     {
+      "id": "next-hundred",
+      "title": "Your Next $100",
+      "file": "rooms/next-hundred.html",
+      "reads": [
+        "grossAnnualIncome"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 23.5
+    },
+    {
       "id": "worth",
       "title": "Worth It",
       "file": "rooms/worth.html",
@@ -541,6 +565,32 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 25
+    },
+    {
+      "id": "coast-date",
+      "title": "Your Coast Date",
+      "file": "rooms/coast-date.html",
+      "reads": [
+        "dob",
+        "investments",
+        "monthlyExpenses"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 25.5
+    },
+    {
+      "id": "rank-guess",
+      "title": "Where Do You Think You Rank?",
+      "file": "rooms/rank-guess.html",
+      "reads": [
+        "dob"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 25.7
     },
     {
       "id": "runway",
@@ -1033,6 +1083,19 @@
       "order": 51
     },
     {
+      "id": "wrapped",
+      "title": "Money Wrapped",
+      "file": "rooms/wrapped.html",
+      "reads": [
+        "investments",
+        "monthlyExpenses"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 51.5
+    },
+    {
       "id": "doors",
       "title": "Front Doors",
       "file": "rooms/doors.html",
@@ -1081,6 +1144,30 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 98.5
+    },
+    {
+      "id": "progress-card",
+      "title": "Progress Card",
+      "file": "rooms/progress-card.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 98.7
+    },
+    {
+      "id": "comeback",
+      "title": "Welcome Back",
+      "file": "rooms/comeback.html",
+      "reads": [
+        "cashSavings",
+        "investments",
+        "totalDebt"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 98.9
     },
     {
       "id": "refresh",

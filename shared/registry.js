@@ -1505,6 +1505,8 @@
         { id: 'number',      label: 'Rules that no longer apply' },
         { id: 'chart',       label: 'Applies, past it, not yet' },
         { id: 'inputs',      label: 'Let go' },
+        { id: 'rules',       label: 'Does it apply to you now?' },
+        { id: 'quiz',        label: 'The Unlearning Quiz' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
         { id: 'reading',     label: 'What this reads' }
@@ -1677,6 +1679,138 @@
       { id: 'x-T',   label: 'Taxes' },
       { id: 'x-E',   label: 'Expenses' },
       { id: 'x-you', label: 'You' }
+    ]
+  });
+
+  /* Your Next $100 (H3, D-211): every place the next hundred could go on
+     one scale, the return it earns or saves; guaranteed and expected kept
+     apart; the order of operations a note on each line. Reads only. */
+  ROOMS.push({
+    id: 'next-hundred',
+    group: 'scorecard', aliases: ['next 100', 'next hundred', 'next dollar', 'where to put it', 'ranked'],
+    kind: 'read',
+    needs: ['grossAnnualIncome'],
+    order: 23.5,
+    title: 'Your Next $100',
+    blurb: 'Every place the next hundred dollars could go, ranked on one scale: the return it earns or saves. Guaranteed and expected, never blended.',
+    href: 'rooms/next-hundred.html',
+    tier: 0,
+    tags: ['debt', 'cashflow'],
+    daite: { reads: ['debt.items', 'income.grossAnnualCents', 'income.sources[].employerMatch', 'assets.contributions.pretax'], writes: [] },
+    subsections: [
+      { id: 'ranked', label: 'The list' },
+      { id: 'how',    label: 'How the scale works' }
+    ]
+  });
+
+  /* Reachable Money (H4, D-212): an amount and a by-when; the order to pull
+     it and what each dollar costs on the way out. Reads only. */
+  ROOMS.push({
+    id: 'reachable',
+    group: 'decisions', subgroup: 'moves', aliases: ['reachable', 'waterfall', 'emergency money', 'pull money', 'liquid'],
+    kind: 'explore',
+    needs: ['cashSavings'],
+    order: 12.5,
+    title: 'Reachable Money',
+    blurb: 'If you needed money, where would it come from and what would each dollar cost on the way out? Cash and Roth contributions free, taxable on the gains, pre-tax with the penalty. Home equity shown, never counted.',
+    href: 'rooms/reachable.html',
+    tier: 1,
+    tags: ['cashflow'],
+    daite: { reads: ['assets.cashCents', 'assets.items', 'debt.items', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: [] },
+    subsections: [
+      { id: 'headline', label: 'In an emergency' },
+      { id: 'pull',     label: 'A specific amount' }
+    ]
+  });
+
+  /* The progress card (H8, D-212): a share that carries ratios, percentages
+     and time only, never a balance. Reached from the doors home. */
+  ROOMS.push({
+    id: 'progress-card',
+    group: 'upkeep', aliases: ['share', 'card', 'progress card', 'brag'],
+    kind: 'core',
+    utility: true,
+    needs: [],
+    order: 98.7,
+    title: 'Progress Card',
+    blurb: 'A card to share: how far the FI date moved, the savings rate, the debt-free month. Ratios, percentages and time only, never a dollar amount.',
+    href: 'rooms/progress-card.html',
+    tier: 0,
+    tags: ['cashflow'],
+    daite: { reads: [], writes: [] },
+    subsections: [
+      { id: 'card',  label: 'The card' },
+      { id: 'make',  label: 'Make one' }
+    ]
+  });
+
+  /* Money Wrapped (I1, D-213): the year in four lines from the year's
+     snapshots, days, hours, a percent and a count. Every December and
+     on demand. Reads only. */
+  ROOMS.push({
+    id: 'wrapped',
+    group: 'upkeep', aliases: ['wrapped', 'year in review', 'money wrapped', 'december'],
+    kind: 'read',
+    needs: ['investments', 'monthlyExpenses'],
+    order: 51.5,
+    title: 'Money Wrapped',
+    blurb: 'Your year in four lines: days of freedom bought, the priciest recurring cost in hours of work, the biggest earned change, and how many numbers you learned. No amounts, so it is safe to share.',
+    href: 'rooms/wrapped.html',
+    tier: 1,
+    tags: ['cashflow'],
+    daite: { reads: ['assets.invested', 'expenses', 'income.grossAnnualCents'], writes: [] },
+    subsections: [{ id: 'card', label: 'The year' }]
+  });
+  /* Your Coast Date (I4, D-213): its own formula, not a FIRE variant. */
+  ROOMS.push({
+    id: 'coast-date',
+    group: 'scorecard', aliases: ['coast', 'coast date', 'stop saving', 'coast fire date'],
+    kind: 'read',
+    needs: ['dob', 'investments', 'monthlyExpenses'],
+    order: 25.5,
+    title: 'Your Coast Date',
+    blurb: 'The earliest date you could stop saving for retirement and still reach the FI number by your target age, in today’s dollars; and what today’s money grows to with nothing more added.',
+    href: 'rooms/coast-date.html',
+    tier: 1,
+    tags: ['cashflow'],
+    daite: { reads: ['assets.invested', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: [] },
+    subsections: [{ id: 'date', label: 'Coast date' }, { id: 'reverse', label: 'The reverse view' }]
+  });
+  /* Where Do You Think You Rank? (I3, D-213): the guess before the survey. */
+  ROOMS.push({
+    id: 'rank-guess',
+    group: 'scorecard', aliases: ['rank', 'guess', 'percentile', 'dysmorphia', 'where do I rank'],
+    kind: 'explore',
+    needs: ['dob'],
+    order: 25.7,
+    title: 'Where Do You Think You Rank?',
+    blurb: 'Guess where your net worth sits for your age on a slider, then see the guess beside the survey band. Bands, never ranks; no shame words.',
+    href: 'rooms/rank-guess.html',
+    tier: 1,
+    tags: ['cashflow'],
+    daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'you.dob'], writes: [] },
+    subsections: [{ id: 'guess', label: 'Your guess' }, { id: 'reveal', label: 'Guess beside survey' }]
+  });
+
+  /* The Comeback (J2, D-214): the first screen after 21 days away. Only the
+     moving rows, oldest first, then the earned-vs-learned strip. Not on the
+     map's groups on its own account: the front door sends people here. */
+  ROOMS.push({
+    id: 'comeback',
+    group: 'upkeep', aliases: ['comeback', 'welcome back', 'been a while'],
+    kind: 'core',
+    utility: true,
+    needs: ['cashSavings', 'investments', 'totalDebt'],
+    order: 98.9,
+    title: 'Welcome Back',
+    blurb: 'Back after a while? Here is what changed. About 2 minutes: only the numbers that move, oldest first, then what moved and what you learned.',
+    href: 'rooms/comeback.html',
+    tier: 0,
+    tags: ['cashflow', 'debt'],
+    daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses'], writes: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses'] },
+    subsections: [
+      { id: 'rows-card', label: 'The numbers that move' },
+      { id: 'since',     label: 'Since last time' }
     ]
   });
 

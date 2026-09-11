@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-11 20:47Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Progress Card · SPARKS</title>
+<meta name="description" content="A card to share: how far the FI date moved, the savings rate, the debt-free month. Ratios, percentages and time only, never a dollar amount."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. H8 (D-212).
+
+  1. READS   With a card in the URL (#c=…): only the card's own fields,
+             which are ratios, percentages, months and years by
+             construction (shared/sharecard.js ALLOWED). With none: the
+             household, to make cards from.
+  2. WRITES  Nothing. Nothing is stored anywhere; the card lives in the link.
+  3. CALLS   shared/sharecard.js. No formula lives here.
+  4. EMPTY   No card in the link and nothing in the household: the page
+             says what a card needs. A card with a field it does not know
+             is refused.
+  5. CONFIG  None.
+
+  LIVE-FORM: built once. No input on this page.
+-->
+<style>
+  .card { border: 2px solid var(--color-accent); border-radius: var(--radius-lg, 16px); padding: var(--space-5) var(--space-4); text-align: center; background: var(--color-surface-raised); }
+  .card .title { font-family: var(--font-display); font-size: var(--text-2xl); margin: 0; }
+  .card .line { font-size: var(--text-md); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .card .stamp { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-3) 0 0; }
+  ul.cards { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ul.cards li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: center; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  ul.cards li:first-child { border-top: none; }
+  ul.cards .t { font-weight: 600; display: block; }
+  ul.cards .l { color: var(--color-text-muted); }
+  .copied { font-size: var(--text-xs); color: var(--color-positive); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Progress Card</h1>
+  <p class="room-lede">Share the shape, never the size. A card carries ratios, percentages and time; no balance can be on it.</p>
+</header>
+
+<main class="slaf-wrap">
+  <section class="slaf-card" id="card">
+    <span class="slaf-eyebrow">The card</span>
+    <div class="card" id="the-card"><p class="title" id="c-title">No card in this link yet.</p><p class="line" id="c-line">Make one below and copy its link.</p><p class="stamp" id="c-stamp"></p></div>
+  </section>
+
+  <section class="slaf-card" id="make" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Make one</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Every card this household can make right now. Copy a link and send it; the link is the whole card. Nothing is stored anywhere.</p>
+    <ul class="cards" id="cards"></ul>
+    <p class="slaf-hint" id="none" hidden>Nothing to make a card from yet: a savings rate, a debt, some cash, or the doors.</p>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Everything stays in this browser;
+    the card in a link is the only thing that leaves, and it holds no amount.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../shared/levers.js"></script>
+<script src="../shared/daite.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../engines/debt.js"></script>
+<script src="../shared/staleness.js"></script>
+<script src="../shared/ledger-rows.js"></script>
+<script src="../shared/suggest.js"></script>
+<script src="../shared/doors.js"></script>
+<script src="../shared/sharecard.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Spine = SLAF.Spine, Reference = SLAF.Reference, ShareCard = SLAF.ShareCard, LedgerRows = SLAF.LedgerRows;
+  var ROOM_ID = 'progress-card';
+  var TABLES = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function showCard() {
+    var f = ShareCard.decode(location.hash);
+    if (!f) return false;
+    var r = ShareCard.render(f);
+    el('c-title').textContent = r.title;
+    el('c-line').textContent = r.line;
+    el('c-stamp').textContent = 'Made with Money Rooms' + (f.at ? ', ' + f.at : '') + '. No amounts on this card.';
+    return true;
+  }
+  function paintMake() {
+    if (!TABLES) return;
+    var cards = ShareCard.all(Spine.getProfile(), TABLES, {});
+    el('none').hidden = cards.length > 0;
+    var base = location.pathname.replace(/[^\/]*$/, '') + 'progress-card.html';
+    el('cards').innerHTML = cards.map(function (c) {
+      var href = location.origin + base + '#c=' + ShareCard.encode(c);
+      return '<li><span><span class="t">' + esc(c.title) + '</span><span class="l">' + esc(c.line) + '</span></span>'
+        + '<span><a class="slaf-btn slaf-btn--small" href="' + esc(href) + '">Open</a> <button type="button" class="slaf-btn slaf-btn--small" data-copy="' + esc(href) + '">Copy link</button> <span class="copied" hidden>Copied</span></span></li>';
+    }).join('');
+  }
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest ? ev.target.closest('[data-copy]') : null;
+    if (!b) return;
+    var text = b.getAttribute('data-copy'), done = function () { var s = b.parentNode.querySelector('.copied'); s.hidden = false; setTimeout(function () { s.hidden = true; }, 1500); };
+    try { navigator.clipboard.writeText(text).then(done, done); } catch (e) { done(); }
+  });
+  window.addEventListener('hashchange', showCard);
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(paintMake);
+  showCard();
+  Reference.load(['debtRules', 'ledgerRows', 'confidenceWeights', 'staleness', 'effectiveTaxRates', 'federalBrackets'].concat(SLAF.Suggest ? SLAF.Suggest.TABLES : [])).then(function (t) {
+    TABLES = t; LedgerRows.use(t.ledgerRows); paintMake();
+  }).catch(function () { paintMake(); });
+})();
+</script>
+</body>
+</html>

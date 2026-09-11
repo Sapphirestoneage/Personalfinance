@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-11 19:50Z"/>
+<meta name="slaf-build" content="2026-09-11 20:47Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
 <title>Unlearning · SPARKS</title>
 <meta name="description" content="The advice everyone hears, sorted by whether it still applies to you — and the rules you have let go of."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -50,6 +52,16 @@
   shared/theme.css.
 -->
 <style>
+  ul.rulelist { list-style: none; margin: 0; padding: 0; }
+  ul.rulelist .rule { display: grid; gap: 2px; padding: var(--space-3) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  ul.rulelist .rule:first-child { border-top: none; }
+  ul.rulelist .st { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-faint); }
+  ul.rulelist .is-now .st { color: var(--color-positive); }
+  ul.rulelist .is-past .st { color: var(--color-text-muted); }
+  ul.rulelist .is-unknown .st { color: var(--color-warning, #d97706); }
+  ul.rulelist .said { color: var(--color-text-muted); font-style: italic; }
+  ul.rulelist .why { color: var(--color-text); }
+  ul.rulelist .src { font-size: var(--text-xs); color: var(--color-text-faint); }
   section[id] { scroll-margin-top: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
   .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
@@ -100,6 +112,25 @@
   <p class="room-why" id="room-why" hidden></p>
   <p class="room-scope" id="room-scope"></p>
 
+  <section class="slaf-card" id="rules" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The popular rules, on your numbers</span>
+    <h2 style="margin:var(--space-2) 0 0">Does it apply to you now?</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Each rule as people say it, who said it, and whether your rows put it in play now, not yet, or behind you. A rule that needs a blank number says so and names it. From <code>data/advice.json</code>.</p>
+    <ul class="rulelist" id="rulelist"></ul>
+  </section>
+
+  <section class="slaf-card" id="quiz" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The Unlearning Quiz</span>
+    <h2 style="margin:var(--space-2) 0 0">Five questions, then the three most worth letting go</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)" id="quiz-hint">Each question is skipped when the Ledger already has the answer. Your answers stay on this page and are not saved.</p>
+    <div id="quiz-qs"></div>
+    <div class="acts" style="margin-top:var(--space-3);display:flex;gap:var(--space-2);flex-wrap:wrap;align-items:center">
+      <button type="button" class="slaf-btn slaf-btn--primary" id="quiz-go">Show the three</button>
+      <button type="button" class="slaf-btn" id="quiz-copy" hidden>Copy the card link</button><span class="slaf-hint" id="quiz-copied" hidden>Copied</span>
+    </div>
+    <ol id="quiz-out" class="rulelist" style="margin-top:var(--space-3)"></ol>
+  </section>
+
   <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">What this is reading</span>
     <div id="reading-list" style="margin-top:var(--space-3)"></div>
@@ -137,6 +168,8 @@
 <script src="../engines/debt.js"></script>
 <script src="../engines/advice.js"></script>
 <script src="../engines/unlearning.js"></script>
+<script src="../engines/advicerules.js"></script>
+<script src="../shared/sharecard.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
 <script src="../shared/room.js"></script>
@@ -154,6 +187,67 @@
   function short(text) { var t = String(text || ''); return t.length > ADVICE_CHARS ? t.slice(0, ADVICE_CHARS - 1).replace(/\s+\S*$/, '') + '…' : t; }
   function quote(text) { return '‘' + text + '’'; }
   function rules() { return TABLES && TABLES.unlearning ? TABLES.unlearning.rules : []; }
+  /* H5 (D-212): the popular rules judged on the rows, with their sources. */
+  var STATUS_CLASS = { appliesNow: 'is-now', notYet: 'is-notyet', outgrown: 'is-past', cantTell: 'is-unknown' };
+  /* I5 (D-213): five questions, each skipped when the Ledger has the
+     answer (the reading is not null); the answers overlay the readings
+     for this page only, and the three rules most worth unlearning are the
+     outgrown ones first, then the ones not yet in play. */
+  var QUIZ = [
+    { id: 'highInterestDebtCents', ask: 'Any card or loan above 7.5%? Roughly how much is on it, in dollars (0 for none)?', unit: 'cents' },
+    { id: 'emergencyMonths', ask: 'How many months of spending do you hold in cash?', unit: 'number' },
+    { id: 'savingsRate', ask: 'What share of take-home pay do you save, as a percent?', unit: 'percent' },
+    { id: 'fiProgress', ask: 'How far toward your FI number are you, as a percent (0 if you have not started)?', unit: 'percent' },
+    { id: 'yearsToFire', ask: 'About how many years until you could stop working, at the current pace?', unit: 'number' }
+  ];
+  var quizBuilt = false;
+  function buildQuiz(h) {
+    if (quizBuilt || !TABLES || !SLAF.AdviceRules) return;
+    quizBuilt = true;                                            /* LIVE-FORM: built once */
+    var R = SLAF.AdviceRules.readings(h, TABLES);
+    var asked = QUIZ.filter(function (q) { return R[q.id] === null || R[q.id] === undefined; });
+    document.getElementById('quiz-hint').textContent = asked.length ? (QUIZ.length - asked.length) + ' of 5 answered from the Ledger already; ' + asked.length + ' to ask. Answers stay on this page.' : 'Every answer is in the Ledger already; nothing to ask.';
+    document.getElementById('quiz-qs').innerHTML = asked.map(function (q) {
+      return '<div class="qz" style="margin-top:var(--space-2)"><label class="slaf-hint" style="display:block;margin:0 0 4px">' + esc(q.ask) + '</label><span class="slaf-input-shell">' + (q.unit === 'cents' ? '<span class="slaf-affix">$</span>' : '') + '<input type="text" inputmode="decimal" data-quiz="' + esc(q.id) + '" data-unit="' + esc(q.unit) + '" aria-label="' + esc(q.ask) + '"/>' + (q.unit === 'percent' ? '<span class="slaf-affix">%</span>' : '') + '</span></div>';
+    }).join('');
+  }
+  var quizPicks = [];
+  function runQuiz() {
+    var h = Spine.getProfile();
+    var R = SLAF.AdviceRules.readings(h, TABLES);
+    Array.prototype.forEach.call(document.querySelectorAll('[data-quiz]'), function (inp) {
+      var raw = String(inp.value || '').trim(); if (raw === '') return;
+      var n = Number(raw.replace(/[^0-9.\-]/g, '')); if (isNaN(n)) return;
+      var u = inp.getAttribute('data-unit');
+      R[inp.getAttribute('data-quiz')] = u === 'cents' ? Math.round(n * 100) : u === 'percent' ? n / 100 : n;
+    });
+    var rules = (TABLES.advice && TABLES.advice.rules) || [];
+    var judged = rules.map(function (r) { var j = SLAF.AdviceRules.judge(r, R); return { id: r.id, name: r.name, status: j.status, why: j.why }; });
+    var order = { outgrown: 0, notYet: 1, cantTell: 2, appliesNow: 3 };
+    judged.sort(function (a, b) { return order[a.status] - order[b.status]; });
+    var three = judged.filter(function (j) { return j.status === 'outgrown' || j.status === 'notYet'; }).slice(0, 3);
+    quizPicks = three.map(function (j) { return j.id; });
+    document.getElementById('quiz-out').innerHTML = three.length ? three.map(function (j) { return '<li class="rule ' + STATUS_CLASS[j.status] + '"><span class="st">' + esc(SLAF.AdviceRules.LABELS[j.status]) + '</span><b>' + esc(j.name) + '</b><span class="why">' + esc(j.why) + '</span></li>'; }).join('') : '<li class="rule"><span class="why">Nothing to unlearn from these answers: every rule still applies or cannot be told yet.</span></li>';
+    document.getElementById('quiz-copy').hidden = !three.length;
+  }
+  document.getElementById('quiz-go').addEventListener('click', runQuiz);
+  document.getElementById('quiz-copy').addEventListener('click', function () {
+    var card = SLAF.ShareCard.make('unlearn', Spine.getProfile(), TABLES, { unlearn: quizPicks });
+    if (!card.ok) return;
+    var href = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'progress-card.html#c=' + SLAF.ShareCard.encode(card);
+    var done = function () { var c = document.getElementById('quiz-copied'); c.hidden = false; setTimeout(function () { c.hidden = true; }, 1500); };
+    try { navigator.clipboard.writeText(href).then(done, done); } catch (e) { done(); }
+  });
+  function paintRules(h) {
+    buildQuiz(h);
+    var host = document.getElementById('rulelist');
+    if (!host || !TABLES || !SLAF.AdviceRules) return;
+    var list = SLAF.AdviceRules.list(h, TABLES);
+    host.innerHTML = list.map(function (r) {
+      return '<li class="rule ' + STATUS_CLASS[r.status] + '"><span class="st">' + esc(r.label) + '</span><b>' + esc(r.name) + '</b> <span class="said">' + esc(r.said) + '</span>'
+        + '<span class="why">' + esc(r.why) + '</span><span class="src">' + esc(r.source) + '</span></li>';
+    }).join('');
+  }
   function classified(h) { return Unlearning.classify(h, TABLES, {}); }
 
   /* The rule showing: the page's pick if it is a real id, else the first
@@ -184,7 +278,7 @@
     id: 'unlearning',
     tables: null,   /* all of them: the ratios and the advice line read across the set */
     reads: ['monthlyExpenses', 'cashSavings', 'grossAnnualIncome'],
-    ready: function (t) { TABLES = t; },
+    ready: function (t) { TABLES = t; paintRules(Spine.getProfile()); Spine.onChange(function () { paintRules(Spine.getProfile()); }); },
 
     number: function (h, T) {
       var c = Unlearning.classify(h, T, {});

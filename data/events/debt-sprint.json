@@ -4,6 +4,7 @@
   "blurb": "A few months with The Rerank's cut lines at zero and every freed dollar on the dearest debt — and the month it is gone.",
   "version": "1.0",
   "asOf": "2026-01-01",
+  "source": "An invented what-if template (D-086): its questions and defaults are conventions chosen for this app, not measurements; every reference figure it draws on names its own data/ file and source.",
   "confidence": "convention",
   "drawsOn": [
     "rerank",

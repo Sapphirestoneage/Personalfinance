@@ -4,7 +4,7 @@ paths:
   - "engines/goals.js"
 ---
 # Goals (`goals`)
-File: rooms/goals.html · 492 lines
+File: rooms/goals.html · 494 lines
 Engines: projection, tier0, cashflow, goals
 Reference data: expense_categories.json, goal_templates.json
 Owns: nothing

@@ -282,7 +282,7 @@
    * when the contribution is zero or negative, and it is the same shape the
    * Debt Calculator's amortisation loop will need (SPEC.md §10).
    */
-  function yearsToFire(household, tables, localOverrides) {
+  function yearsToFire(household, tables, localOverrides, opts) {
     var target = fireNumber(household, localOverrides);
     var investments = Schema.investmentsCents(household);
     if (!Money.isOk(target) || !Money.isOk(investments)) {
@@ -308,7 +308,10 @@
       startCents: investments.value,
       targetCents: target.value,
       annualRate: assumptions.expectedReturnRate,
-      annualContributionCents: basis.annualSavingsCents
+      annualContributionCents: basis.annualSavingsCents,
+      /* Whole years by default; a caller that prices the move in days
+         (Money Wrapped, D-213) asks for the fraction within the year. */
+      fractional: !!(opts && opts.fractional)
     });
     if (!Money.isOk(projected)) return projected;
     return Money.ok(projected.value, {

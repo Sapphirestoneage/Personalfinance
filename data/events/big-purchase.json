@@ -4,6 +4,7 @@
   "blurb": "What it costs in hours of your life, what each use costs, and a thirty-day wait built in. Writes nothing.",
   "version": "1.0",
   "asOf": "2026-01-01",
+  "source": "An invented what-if template (D-086): its questions and defaults are conventions chosen for this app, not measurements; every reference figure it draws on names its own data/ file and source.",
   "confidence": "convention",
   "drawsOn": [
     "grossAnnualIncome",

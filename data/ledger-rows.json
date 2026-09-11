@@ -5,12 +5,21 @@
   "source": "Every number the app can hold, one row each: the ownership field map (shared/ownership.js), its DAITE path (shared/daite.js), and lane 2's where sentences (data/lane2/ledger-rows.where.json, L-4) for the rows a person has to look up. Master build section 18.2.",
   "confidence": "convention",
   "confidenceNote": "A registry, not a measurement. kind says how a row is entered (know: from your head; lookup: fetched, with the where sentence; computed: never typed, read from an engine with its inputs named). pass is the walk-through's order (data/walk_stages.json): 1 what is true right now, 2 make it hard to go backwards, 3 the rest. minutes is a rough cost to enter. appliesWhen uses the same fixed phrases as data/levers.json (shared/levers.js, appliesWhen), and a failing row is absent, not greyed.",
-  "note": "id is the ownership field id, so the row reads and writes through the one map every room already uses; aliases names a second ownership id that reads the same path. repeat says a row is one line per item (debts, assets, incomeSources, futureIncome, annualLines). family is the DAITE family, or you for the situation rows, which carry no letter and sit first. Plans, preferences and progress paths are not rows: they are what a decision room asks for its own what-if, not facts about the household (D-183). door (D, A, I, T, E, you) and level (1 how much, 2 where it sits, 3 what it is made of, 4 what it costs and where it came from) are the doors' depth order; round 1 marks the five first-round rows; suggestFrom names a shared/suggest.js rule that can guess the row; askIn names the room that asks it in context; moves says whether a monthly refresh should re-ask it; unlocks names the insight the row feeds, and a row without one fails the build. D-205.",
+  "note": "id is the ownership field id, so the row reads and writes through the one map every room already uses; aliases names a second ownership id that reads the same path. repeat says a row is one line per item (debts, assets, incomeSources, futureIncome, annualLines). family is the DAITE family, or you for the situation rows, which carry no letter and sit first. Plans, preferences and progress paths are not rows: they are what a decision room asks for its own what-if, not facts about the household (D-183). door (D, A, I, T, E, you) and level (1 how much, 2 where it sits, 3 what it is made of, 4 what it costs and where it came from) are the doors' depth order; round 1 marks the five first-round rows; suggestFrom names a shared/suggest.js rule that can guess the row; askIn names the room that asks it in context; moves says whether a monthly refresh should re-ask it; unlocks names the insight the row feeds, and a row without one fails the build. D-205. formula names the one engine function behind a computed row (fn, resolved by the build), the formula in words, its terms (coef 1 or -1 for a sum, null where the row is not a sum) and the reference tables it reads (H1, D-211).",
   "reopen": {
     "note": "G2.6 (D-209): when the field named here changes, the rows listed change meaning and get one short sheet (shared/reopen.js), together with any row that newly applies under the new answer. Nothing is cleared; each row shows what it holds and the person confirms or types over it.",
     "employmentStatus": {
       "why": "Pay, the match, the workplace contribution and health cover all mean something different once the job changes.",
-      "rows": ["grossAnnualIncome", "employerMatch", "contributionPercent", "healthCover", "healthMonthly", "lastPay", "unemployment", "paySurvives"]
+      "rows": [
+        "grossAnnualIncome",
+        "employerMatch",
+        "contributionPercent",
+        "healthCover",
+        "healthMonthly",
+        "lastPay",
+        "unemployment",
+        "paySurvives"
+      ]
     }
   },
   "kinds": [
@@ -217,7 +226,18 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": false,
-      "unlocks": "the buffer target and the milestones (worked out from the birth date)"
+      "unlocks": "the buffer target and the milestones (worked out from the birth date)",
+      "formula": {
+        "fn": "Schema.primaryAge",
+        "words": "today’s date less the date of birth, in whole years",
+        "terms": [
+          {
+            "id": "dob",
+            "coef": null
+          }
+        ],
+        "references": []
+      }
     },
     {
       "id": "grossAnnualIncome",
@@ -354,7 +374,22 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": false,
-      "unlocks": "whether the match is actually being collected"
+      "unlocks": "whether the match is actually being collected",
+      "formula": {
+        "fn": "Schema.capturingFullMatchDerived",
+        "words": "yes when the workplace contribution is at least the match cap",
+        "terms": [
+          {
+            "id": "contributionPercent",
+            "coef": null
+          },
+          {
+            "id": "employerMatch",
+            "coef": null
+          }
+        ],
+        "references": []
+      }
     },
     {
       "id": "unemployment",
@@ -536,7 +571,18 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": true,
-      "unlocks": "income actually logged against the estimate"
+      "unlocks": "income actually logged against the estimate",
+      "formula": {
+        "fn": "Ownership.FIELDS.ledgerIncome.read",
+        "words": "every recurring income line in the log, each turned into a month, added up",
+        "terms": [
+          {
+            "id": "grossAnnualIncome",
+            "coef": null
+          }
+        ],
+        "references": []
+      }
     },
     {
       "id": "cashSavings",
@@ -707,7 +753,18 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": true,
-      "unlocks": "net worth with property counted (and shown, never counted, as reachable)"
+      "unlocks": "net worth with property counted (and shown, never counted, as reachable)",
+      "formula": {
+        "fn": "Schema.otherAssetsCents",
+        "words": "the value of every account or thing owned that is not cash and not invested, added up",
+        "terms": [
+          {
+            "id": "assetValue",
+            "coef": 1
+          }
+        ],
+        "references": []
+      }
     },
     {
       "id": "contributionPercent",
@@ -912,7 +969,30 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": true,
-      "unlocks": "the headline: what you own less what you owe"
+      "unlocks": "the headline: what you own less what you owe",
+      "formula": {
+        "fn": "Ownership.FIELDS.netWorth.read",
+        "words": "cash plus investments plus other assets, less everything owed",
+        "terms": [
+          {
+            "id": "cashSavings",
+            "coef": 1
+          },
+          {
+            "id": "investments",
+            "coef": 1
+          },
+          {
+            "id": "otherAssets",
+            "coef": 1
+          },
+          {
+            "id": "totalDebt",
+            "coef": -1
+          }
+        ],
+        "references": []
+      }
     },
     {
       "id": "confidenceWeightedNetWorth",
@@ -936,7 +1016,24 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": true,
-      "unlocks": "net worth discounted by how sure each asset is"
+      "unlocks": "net worth discounted by how sure each asset is",
+      "formula": {
+        "fn": "Statement.confidenceWeightedNetWorth",
+        "words": "each asset times how sure you are it is worth that (1 counts in full, 4 counts nothing), added up, less everything owed",
+        "terms": [
+          {
+            "id": "assetValue",
+            "coef": 1
+          },
+          {
+            "id": "totalDebt",
+            "coef": -1
+          }
+        ],
+        "references": [
+          "confidenceWeights"
+        ]
+      }
     },
     {
       "id": "hasDebt",
@@ -1047,7 +1144,18 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": true,
-      "unlocks": "the Debt door’s headline"
+      "unlocks": "the Debt door’s headline",
+      "formula": {
+        "fn": "Schema.totalDebtCents",
+        "words": "every debt balance, added up",
+        "terms": [
+          {
+            "id": "debtBalance",
+            "coef": 1
+          }
+        ],
+        "references": []
+      }
     },
     {
       "id": "monthlyDebtPayments",
@@ -1070,7 +1178,18 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": true,
-      "unlocks": "what goes to debt every month before anything else"
+      "unlocks": "what goes to debt every month before anything else",
+      "formula": {
+        "fn": "Schema.monthlyDebtPaymentsCents",
+        "words": "every minimum payment, added up",
+        "terms": [
+          {
+            "id": "debtMinPayment",
+            "coef": 1
+          }
+        ],
+        "references": []
+      }
     },
     {
       "id": "loanPlan",
@@ -1356,7 +1475,34 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": true,
-      "unlocks": "the Expenses door’s headline and the FI number"
+      "unlocks": "the Expenses door’s headline and the FI number",
+      "formula": {
+        "fn": "Schema.monthlyExpensesCents",
+        "words": "food plus rent or mortgage plus getting around plus everything else (plus therapy where entered), a month",
+        "terms": [
+          {
+            "id": "foodMonthly",
+            "coef": 1
+          },
+          {
+            "id": "accommodationMonthly",
+            "coef": 1
+          },
+          {
+            "id": "transportationMonthly",
+            "coef": 1
+          },
+          {
+            "id": "wantsMonthly",
+            "coef": 1
+          },
+          {
+            "id": "therapyMonthly",
+            "coef": 1
+          }
+        ],
+        "references": []
+      }
     },
     {
       "id": "floorMonthly",
@@ -1619,7 +1765,18 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": true,
-      "unlocks": "the calendar’s dated bills"
+      "unlocks": "the calendar’s dated bills",
+      "formula": {
+        "fn": "Ownership.FIELDS.billsMonthly.read",
+        "words": "every bill on the calendar, added up",
+        "terms": [
+          {
+            "id": "annualLine",
+            "coef": null
+          }
+        ],
+        "references": []
+      }
     },
     {
       "id": "payLaterDue",
@@ -1640,7 +1797,13 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": true,
-      "unlocks": "the pay-later due this month on the calendar"
+      "unlocks": "the pay-later due this month on the calendar",
+      "formula": {
+        "fn": "Ownership.FIELDS.payLaterDue.read",
+        "words": "every pay-later instalment on the calendar, added up",
+        "terms": [],
+        "references": []
+      }
     },
     {
       "id": "monthsClosed",
@@ -1661,7 +1824,13 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": true,
-      "unlocks": "the trailing average that replaces the estimate"
+      "unlocks": "the trailing average that replaces the estimate",
+      "formula": {
+        "fn": "Ownership.FIELDS.monthsClosed.read",
+        "words": "how many months have been closed in the log",
+        "terms": [],
+        "references": []
+      }
     },
     {
       "id": "beneficiariesSet",

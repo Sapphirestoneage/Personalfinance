@@ -796,15 +796,15 @@ details.room-drawer summary small { display: block; font-family: var(--font-body
 /* ---- The ⓘ on a ratio (shared/explain.js) --------------------------------- */
 .slaf-info { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-muted); font: italic 700 12px/1 var(--font-display); cursor: pointer; margin-left: var(--space-2); vertical-align: middle; flex: 0 0 auto; padding: 0; }
 .slaf-info:hover, .slaf-info.is-open { border-color: var(--color-accent); color: var(--color-accent-hover); }
-.slaf-explain { margin: var(--space-2) 0 0; padding: var(--space-3); border: 1px solid var(--color-border); border-left: 3px solid var(--color-accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: rgba(46,111,232,.06); font-size: var(--text-sm); color: var(--color-text); text-align: left; }
-.slaf-explain-row { display: grid; grid-template-columns: 92px 1fr; gap: var(--space-2) var(--space-3); padding: var(--space-1) 0; align-items: baseline; }
-.slaf-explain-k { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
-.slaf-explain-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.slaf-explain-chip { display: inline-block; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 2px var(--space-2); font-size: var(--text-xs); color: var(--color-text); text-decoration: none; }
-a.slaf-explain-chip:hover { border-color: var(--color-accent); }
-.slaf-explain-chip.is-empty { color: var(--color-text-faint); border-style: dashed; }
-.slaf-explain-chip small { color: var(--color-accent-hover); }
-@media (max-width: 420px) { .slaf-explain-row { grid-template-columns: 1fr; gap: 2px; } }
+.slaf-math { margin: var(--space-2) 0 0; padding: var(--space-3); border: 1px solid var(--color-border); border-left: 3px solid var(--color-accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: rgba(46,111,232,.06); font-size: var(--text-sm); color: var(--color-text); text-align: left; }
+.slaf-math-row { display: grid; grid-template-columns: 92px 1fr; gap: var(--space-2) var(--space-3); padding: var(--space-1) 0; align-items: baseline; }
+.slaf-math-k { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
+.slaf-math-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.slaf-math-chip { display: inline-block; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 2px var(--space-2); font-size: var(--text-xs); color: var(--color-text); text-decoration: none; }
+a.slaf-math-chip:hover { border-color: var(--color-accent); }
+.slaf-math-chip.is-empty { color: var(--color-text-faint); border-style: dashed; }
+.slaf-math-chip small { color: var(--color-accent-hover); }
+@media (max-width: 420px) { .slaf-math-row { grid-template-columns: 1fr; gap: 2px; } }
 
 /* ---- Manage sources: hide, set aside, restore (shared/manage.js) ---------- */
 .slaf-manage-toggle { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 3px var(--space-2); cursor: pointer; }
@@ -1294,3 +1294,26 @@ a:hover { color: var(--sapphire-100); }
 .slaf-approx a { color: inherit; text-decoration: underline dotted; }
 .slaf-owned-conf { font-size: var(--text-xs); color: var(--color-text-muted); white-space: nowrap; }
 .slaf-owned--unknown .slaf-owned-value, .slaf-owned--unsure .slaf-owned-value { font-style: italic; }
+
+/* The error panel (G3.16, D-210): shown by shared/errlog.js instead of a
+   blank screen. Plain words, three buttons, nothing else. */
+.slaf-error { margin: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-critical, #e5484d); border-radius: var(--radius-md, 10px); background: var(--color-surface-raised); color: var(--color-text); font-size: var(--text-sm); }
+.slaf-error .slaf-error-what { margin: var(--space-2) 0; color: var(--color-text-muted); word-break: break-word; }
+.slaf-error .slaf-error-acts { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+
+/* Tap any number, see the math (H1, D-211): the sheet and the tappable
+   computed number. One sheet a page, filled on open. */
+.ex-btn { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted var(--color-text-faint); text-underline-offset: 3px; }
+.ex-btn:hover, .ex-btn:focus { text-decoration-color: var(--color-accent); }
+.ex-btn--big { font-family: inherit; font-size: inherit; }
+.slaf-math { position: fixed; left: 0; right: 0; bottom: 0; max-height: 80vh; overflow: auto; z-index: 60; padding: var(--space-4) max(var(--space-4), env(safe-area-inset-left)) max(var(--space-4), env(safe-area-inset-bottom)); background: var(--color-surface-raised); color: var(--color-text); border-top: 1px solid var(--color-border-strong); border-radius: var(--radius-lg, 16px) var(--radius-lg, 16px) 0 0; box-shadow: 0 -8px 32px rgba(0,0,0,.18); font-size: var(--text-sm); }
+.slaf-math .ex-close { float: right; }
+.slaf-math .ex-title { font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-1) 0 var(--space-2); }
+.slaf-math h3 { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-faint); margin: var(--space-3) 0 var(--space-1); }
+.slaf-math .ex-words { color: var(--color-text-muted); margin: 0 0 var(--space-1); }
+.slaf-math .ex-plugged { font-variant-numeric: tabular-nums; margin: 0; }
+.slaf-math .ex-rough { color: var(--color-warning, #d97706); margin: 0 0 var(--space-2); }
+.slaf-math ul { margin: 0; padding-left: 1.1em; }
+.slaf-math li { margin: 2px 0; }
+.slaf-math .ex-fn { margin-top: var(--space-3); }
+@media (min-width: 720px) { .slaf-math { left: auto; right: var(--space-4); bottom: var(--space-4); width: 30rem; border-radius: var(--radius-lg, 16px); border: 1px solid var(--color-border-strong); } }

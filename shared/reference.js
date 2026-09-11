@@ -27,6 +27,8 @@
 
   var TABLE_FILES = {
     effectiveTaxRates: 'effective_tax_rates_2026.json',
+    advice: 'advice.json',
+    plausibleRanges: 'plausible_ranges.json',
     retirementMilestones: 'retirement_milestones.json',
     milestones: 'milestones.json',
     ledgerRows: 'ledger-rows.json',
@@ -433,6 +435,31 @@
     return Money.incomplete('Income is outside the bracket table.', ['grossAnnualIncome']);
   }
 
+  /* ---- Year-based tables past their year (G3.15, D-210) --------------------
+     A table for one tax year carries taxYear (or an asOf in that year). On
+     January 1 the app has no new table, so every number that reads one must
+     say "using 2026 limits" rather than crash or use them silently. */
+  /* A table opts in with taxYear; a survey year or a cost convention's
+     asOf is not a limit that expires on January 1. */
+  function yearOf(table) {
+    return table && typeof table.taxYear === 'number' ? table.taxYear : null;
+  }
+  function yearNote(table, now) {
+    var y = yearOf(table);
+    if (y === null) return null;
+    var d = now === undefined ? new Date() : (now instanceof Date ? now : new Date(now));
+    var current = d.getFullYear();
+    return current > y ? 'using ' + y + ' limits' + (current - y === 1 ? '' : ' (' + (current - y) + ' years old)') : null;
+  }
+  /** Every note among the tables handed in, once each: [] when all current. */
+  function yearNotes(tables, now) {
+    var seen = {}, out = [];
+    Object.keys(tables || {}).forEach(function (k) {
+      var n = yearNote(tables[k], now);
+      if (n && !seen[n]) { seen[n] = true; out.push(n); }
+    });
+    return out;
+  }
   function versionsOf(tables) {
     var out = {};
     Object.keys(tables || {}).forEach(function (k) {
@@ -456,7 +483,7 @@
     CONFIDENCE_LABELS: CONFIDENCE_LABELS,
     provenanceOf: provenanceOf,
     provenance: provenance,
-    versionsOf: versionsOf,
+    versionsOf: versionsOf, yearOf: yearOf, yearNote: yearNote, yearNotes: yearNotes,
     _cache: cache,
     loadEvents: loadEvents
   };

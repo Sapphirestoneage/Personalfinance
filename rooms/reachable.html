@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-11 20:47Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Reachable Money · SPARKS</title>
+<meta name="description" content="An amount and a by-when: the order to pull it and what each dollar costs on the way out. Cash and Roth contributions free, taxable on the gains, pre-tax with the penalty."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. H4 (D-212).
+
+  1. READS   Every account with its value, tax character and cost basis
+             (The Statement), the mortgage (Debt Payoff), the date of birth
+             (Start Here), income and filing status for the rates (Tax).
+  2. WRITES  Nothing. The amount and the by-when are this page's question,
+             not facts about the household.
+  3. CALLS   engines/reachable.js (the waterfall), engines/tax.js (the
+             rates). No formula lives here.
+  4. EMPTY   No accounts: no waterfall, and the page says so. A Roth with
+             no contributions figure counts only what is known and says
+             rough. No date of birth: the penalty is assumed and said.
+  5. CONFIG  data/access_rules.json (the access ages); the tax tables.
+
+  LIVE-FORM: built once. The two boxes are in the HTML; only their .value
+  is ever read. Nothing is rebuilt while a finger is in one.
+-->
+<style>
+  .ask { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+  @media (max-width: 420px) { .ask { grid-template-columns: 1fr; } }
+  .ask label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-1); }
+  .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
+  .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  ol.tiers { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ol.tiers li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  ol.tiers li:first-child { border-top: none; }
+  ol.tiers .lab { font-weight: 600; }
+  ol.tiers .amt { font-variant-numeric: tabular-nums; text-align: right; }
+  ol.tiers .cost { font-size: var(--text-xs); color: var(--color-text-faint); text-align: right; }
+  ol.tiers .note { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-muted); }
+  ol.tiers .note.is-rough { color: var(--color-warning, #d97706); }
+  ol.tiers li.is-free .cost { color: var(--color-positive); }
+  .pulls { margin-top: var(--space-3); font-size: var(--text-sm); }
+  .home { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-3); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Reachable Money</h1>
+  <p class="room-lede">If you needed money, where would it come from and what would each dollar cost on the way out? The cheapest dollars first.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="headline">
+    <span class="slaf-eyebrow">In an emergency</span>
+    <p class="head-num" id="reach"></p>
+    <p class="head-sub" id="reach-sub"></p>
+    <ol class="tiers" id="tiers"></ol>
+    <p class="home" id="home" hidden></p>
+    <p class="slaf-hint" id="rough" hidden></p>
+  </section>
+
+  <section class="slaf-card" id="pull" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">A specific amount</span>
+    <div class="ask">
+      <div><label for="in-amount">How much</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-amount" placeholder="e.g. 8,000" aria-label="Amount"/></span></div>
+      <div><label for="in-when">By when</label>
+        <span class="slaf-input-shell"><input type="text" inputmode="numeric" id="in-when" placeholder="e.g. 3" aria-label="Months"/><span class="slaf-affix">months</span></span></div>
+    </div>
+    <div class="pulls" id="pulls"></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Everything stays in this browser;
+    nothing is sent anywhere.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../engines/reachable.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Reachable = SLAF.Reachable;
+  var ROOM_ID = 'reachable';
+  var TABLES = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function pct(r) { return r === null ? 'unknown' : (Math.round(r * 1000) / 10) + '%'; }
+  function render() {
+    if (!TABLES) return;
+    var amount = Money.parseMoney(el('in-amount').value || '');
+    var r = Reachable.waterfall(Spine.getProfile(), TABLES, { amountCents: Money.isEntered(amount) ? amount : null });
+    if (r.status !== 'ok') {
+      el('reach').textContent = 'Nothing to reach yet.';
+      el('reach-sub').textContent = 'Add an account or two in The Statement and the waterfall appears.';
+      el('tiers').innerHTML = ''; el('pulls').innerHTML = ''; return;
+    }
+    el('reach').textContent = Money.formatCents(r.reachableCents) + ' reachable';
+    el('reach-sub').textContent = r.costCents === null ? 'The true cost of pulling all of it needs the tax rates (income and filing status).' : 'Pulling all of it would cost ' + Money.formatCents(r.costCents) + ' in tax and penalties, leaving ' + Money.formatCents(r.netCents) + '.';
+    el('tiers').innerHTML = r.tiers.map(function (t) {
+      return '<li class="' + (t.free ? 'is-free' : '') + '"><span class="lab">' + esc(t.label) + '</span><span class="amt">' + esc(Money.formatCents(t.availableCents)) + '</span>'
+        + '<span class="note' + (t.rough ? ' is-rough' : '') + '">' + esc(t.note) + '</span><span class="cost">' + (t.costCents === null ? 'cost unknown' : t.costCents === 0 ? 'free' : 'costs ' + esc(Money.formatCents(t.costCents)) + ' (' + esc(pct(t.costRate)) + ')') + '</span></li>';
+    }).join('');
+    el('home').hidden = !r.homeShown;
+    el('home').textContent = r.homeShown ? 'Home equity, shown and not counted: ' + Money.formatCents(r.homeEquityCents) + '. A house is not a bank account; selling or borrowing against it is its own decision.' : '';
+    var roughBits = r.assumed.slice();
+    el('rough').hidden = !(r.rough && (roughBits.length || r.missing.length));
+    el('rough').textContent = r.rough ? 'Rough: ' + roughBits.concat(r.missing.map(function (m) { return 'missing ' + m.replace(':', ' for '); })).join('; ') + '.' : '';
+    if (!Money.isEntered(amount)) { el('pulls').innerHTML = '<p class="slaf-hint">Type an amount and the order to pull it appears.</p>'; return; }
+    var when = Number(String(el('in-when').value || '').replace(/\D/g, ''));
+    el('pulls').innerHTML = (r.pulls.length ? '<ol class="tiers">' + r.pulls.map(function (p) {
+      return '<li class="' + (p.costCents === 0 ? 'is-free' : '') + '"><span class="lab">' + esc(p.label) + '</span><span class="amt">' + esc(Money.formatCents(p.cents)) + '</span><span class="cost">' + (p.costCents === null ? 'cost unknown' : p.costCents === 0 ? 'free' : 'costs ' + esc(Money.formatCents(p.costCents))) + '</span></li>';
+    }).join('') + '</ol>' : '')
+      + '<p>' + (r.shortfallCents > 0 ? esc(Money.formatCents(r.shortfallCents)) + ' short of ' + esc(Money.formatCents(amount)) + ' even after every account.' : esc(Money.formatCents(amount)) + (when ? ' within ' + when + ' month' + (when === 1 ? '' : 's') : '') + ' would cost ' + (r.pullCostCents === null ? 'an amount the rates do not yet say' : esc(Money.formatCents(r.pullCostCents))) + ' on the way out.') + '</p>';
+  }
+  ['in-amount', 'in-when'].forEach(function (id) { el(id).addEventListener('input', render); });
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+  Reference.load(['accessRules', 'federalBrackets', 'seTax', 'stateBrackets', 'aca']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

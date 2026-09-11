@@ -4,7 +4,7 @@ paths:
   - "engines/purchase.js"
 ---
 # Big Purchase (`big-purchase`)
-File: rooms/big-purchase.html · 262 lines
+File: rooms/big-purchase.html · 264 lines
 Engines: projection, tier0, hourly, quickmath, purchase
 Reference data: car_costs.json, liquidity_benchmarks.json
 Owns: purchasePrice, purchaseMonths, purchaseRate

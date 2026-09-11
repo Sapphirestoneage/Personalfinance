@@ -2,6 +2,7 @@
   "id": "aca",
   "version": "2026.0",
   "asOf": "2026-01-01",
+  "taxYear": 2026,
   "source": "Affordable Care Act marketplace subsidy mechanics: the federal poverty level (HHS 2025 guidelines, which govern 2026 coverage), the applicable-percentage table, and the 400%-of-FPL eligibility ceiling that returns for 2026 with the expiry of the 2021\u20132025 enhanced subsidies unless Congress extends them.",
   "confidence": "unverified",
   "confidenceNote": "The FPL figures and the applicable percentages are transcribed from memory and NOT checked against the HHS notice or the IRS revenue procedure; whether the 400% cliff applies in 2026 depends on legislation that may have moved. Shown as a warning, never as a dollar figure of subsidy.",

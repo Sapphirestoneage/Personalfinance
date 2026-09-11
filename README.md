@@ -163,6 +163,10 @@ test/run.js         Re-derives every formula outside the browser
 test/alignment.js   Browser layout check — side-by-side cells must line up
 test/forms.js       Mobile browser check — typing must survive, keyboard must stay
 test/export.js      Export → import round trip, share-link round trip, size ceiling
+test/onefact.js     Browser check — a row with a value is never asked again (D-209)
+test/xss.js         Browser check — a booby-trapped string never runs (D-210)
+test/jan1.js        The clock at 2027-01-01: year tables say which year (D-210)
+RELEASE.md          The four walks on two real phones before a release
 SPEC.md             The full Tier 0–2 build spec. The authority.
 ROADMAP.md          The master idea index, tiers 0–24, + what's actually built
 DECISIONS.md        Running log of what was decided and why.

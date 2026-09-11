@@ -4,7 +4,7 @@ paths:
   - "engines/variance.js"
 ---
 # Estimated vs Actual (`variance`)
-File: rooms/variance.html · 231 lines
+File: rooms/variance.html · 233 lines
 Engines: income, selfemployed, ledger, projection, tier0, cashflow, budget, variance
 Reference data: effective_tax_rates_2026.json, expense_categories.json, se_tax_2026.json
 Owns: nothing

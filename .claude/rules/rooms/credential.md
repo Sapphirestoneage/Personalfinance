@@ -4,7 +4,7 @@ paths:
   - "engines/credential.js"
 ---
 # Worth Learning (`credential`)
-File: rooms/credential.html · 484 lines
+File: rooms/credential.html · 486 lines
 Engines: projection, tier0, hourly, credential
 Reference data: federal_brackets_2026.json
 Owns: nothing

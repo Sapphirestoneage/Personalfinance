@@ -3,7 +3,7 @@ paths:
   - "rooms/first-round.html"
 ---
 # The First Round (`first-round`)
-File: rooms/first-round.html · 302 lines · utility room
+File: rooms/first-round.html · 304 lines · utility room
 Engines: tax
 Reference data: effective_tax_rates_2026.json
 Owns: nothing

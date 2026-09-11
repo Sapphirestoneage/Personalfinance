@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-11 20:47Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Welcome Back · SPARKS</title>
+<meta name="description" content="Welcome back. Here is what changed. About 2 minutes: only the numbers that move, oldest first, then what moved and what you learned."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. J2 (D-214).
+
+  1. READS   The moving rows with a value (data/ledger-rows.json, moves),
+             oldest as-of first; the last snapshot for the strip.
+  2. WRITES  Those same records through Ownership.write() with the item id,
+             exactly as the Refresh does (D-209); a figure left as it
+             stands is re-confirmed. Then one snapshot.
+  3. CALLS   shared/ledger-rows.js (moving), shared/staleness.js (ages),
+             engines/sincelast.js (earned vs learned), shared/instruments.js.
+  4. EMPTY   Nothing moving with a value: the page says the doors hold the
+             first questions. No word on this page names a lapse; a month
+             not visited is not a failure, a gap or a broken streak, and
+             test/comeback.js holds the copy to that.
+  5. CONFIG  data/staleness.json. The 21-day rule lives in shared/progress.js.
+
+  LIVE-FORM: built once. Every row is built once at load; only .value is
+  written after that.
+-->
+<style>
+  .row { display: grid; gap: var(--space-1); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  .row:first-child { border-top: none; padding-top: 0; }
+  .row .top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+  .row .nm { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .row .age { font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+  .row .ctl { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+  .row .ctl .slaf-input-shell { flex: 1 1 12em; }
+  .row.is-confirmed .age { color: var(--color-positive); }
+  .still { min-height: 44px; white-space: nowrap; }
+  .strip { font-size: var(--text-md); margin: var(--space-2) 0 0; }
+  .empty { font-size: var(--text-sm); color: var(--color-text-faint); }
+  .actions { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); margin-top: var(--space-4); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../index.html">← Home</a>
+  <h1>Welcome back.</h1>
+  <p class="room-lede">Here is what changed. About 2 minutes: only the numbers that move, the oldest first. Tap Still true, or type the new one.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+  <section class="slaf-card" id="rows-card">
+    <span class="slaf-eyebrow">The numbers that move</span>
+    <div id="rows" style="margin-top:var(--space-2)"></div>
+    <p class="empty" id="rows-empty" hidden>Nothing that moves has a value yet. <a href="ledger.html">The doors</a> hold the first questions.</p>
+  </section>
+  <section class="slaf-card" id="since" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Since last time</span>
+    <p class="strip" id="strip">Finish the rows and this line says what moved and what you learned.</p>
+    <div class="actions"><span class="slaf-hint" id="done-note" style="margin:0"></span><button type="button" class="slaf-btn slaf-btn--primary" id="btn-done">Done, take a snapshot →</button></div>
+  </section>
+  <p class="disclaimer">
+    Educational tool, not financial advice. Everything stays in this browser;
+    nothing is sent anywhere.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/staleness.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/levers.js"></script>
+<script src="../shared/daite.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../shared/ledger-rows.js"></script>
+<script src="../shared/ask.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../engines/statement.js"></script>
+<script src="../engines/benchmarks.js"></script>
+<script src="../engines/ratios.js"></script>
+<script src="../engines/skills.js"></script>
+<script src="../engines/sincelast.js"></script>
+<script src="../shared/instruments.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Ownership = SLAF.Ownership, Staleness = SLAF.Staleness,
+      LedgerRows = SLAF.LedgerRows, Ask = SLAF.Ask, Instruments = SLAF.Instruments, SinceLast = SLAF.SinceLast, Prefs = SLAF.Prefs;
+  var ROOM_ID = 'comeback';
+  var TABLES = null, ROWS = [];
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function itemName(m) { return m.item ? (m.item.label || m.item.source || m.item.type || 'one line') : ''; }
+  function display(row, v) {
+    if (!Money.isEntered(v)) return '';
+    if (row.unit === 'cents') return Money.formatCents(v, { exact: true }).replace(/^\$/, '');
+    if (row.unit === 'rate' || (row.unit === 'percent' && row.id !== 'contributionPercent')) return String(Math.round(v * 10000) / 100);
+    return String(v);
+  }
+  function currentOf(r) {
+    var h = Spine.getProfile();
+    if (r.item) { var it = (LedgerRows.items(h, r.row) || []).filter(function (x) { return x.id === r.item.id; })[0]; return it ? LedgerRows.itemValue(r.row, it) : null; }
+    var f = Ownership.FIELDS[r.row.id]; var res = f ? f.read(h) : null;
+    return res && Money.isOk(res) ? res.value : null;
+  }
+  function build() {
+    var h = Spine.getProfile();
+    var ms = LedgerRows.moving(h, TABLES).map(function (m) { return Object.assign({}, m, { days: Staleness.describe(h, m.row.id).days }); });
+    /* Oldest first: the number looked at longest ago comes up first. */
+    ms.sort(function (a, b) { return (b.days === null ? 1e9 : b.days) - (a.days === null ? 1e9 : a.days); });
+    var host = el('rows');
+    el('rows-empty').hidden = ms.length > 0;
+    ROWS = ms.map(function (m, i) {
+      var row = document.createElement('div'); row.className = 'row'; row.id = 'row-' + i;
+      var affix = m.row.unit === 'cents' ? '$' : '', suffix = (m.row.unit === 'rate' || m.row.unit === 'percent') ? '%' : '';
+      row.innerHTML = '<div class="top"><span class="nm">' + esc(m.row.label) + (m.item ? ' · ' + esc(itemName(m)) : '') + '</span><span class="age" data-age></span></div>'
+        + '<div class="ctl"><span class="slaf-input-shell">' + (affix ? '<span class="slaf-affix">' + affix + '</span>' : '') + '<input type="text" inputmode="decimal" data-field="' + esc(m.row.id) + '"' + (m.item ? ' data-item="' + esc(m.item.id) + '"' : '') + ' aria-label="' + esc(m.row.label) + '"/>' + (suffix ? '<span class="slaf-affix">' + suffix + '</span>' : '') + '</span>'
+        + (LedgerRows.unitLabel(m.row) ? '<span class="slaf-unit">' + esc(LedgerRows.unitLabel(m.row)) + '</span>' : '') + '<button type="button" class="slaf-btn slaf-btn--small still" data-still>Still true</button></div>';
+      host.appendChild(row);
+      return { key: m.key, row: m.row, item: m.item, el: row, input: row.querySelector('input') };
+    });
+    paint();
+  }
+  function paint() {
+    var h = Spine.getProfile();
+    ROWS.forEach(function (r) {
+      var v = currentOf(r);
+      if (r.input !== document.activeElement) r.input.value = display(r.row, v);
+      var a = Staleness.describe(h, r.row.id);
+      r.el.querySelector('[data-age]').textContent = a.label;
+    });
+    var last = Spine.latestSnapshot ? Spine.latestSnapshot() : null;
+    var strip = last && SinceLast ? SinceLast.strip(h, last, TABLES) : null;
+    if (strip) el('strip').textContent = strip;
+  }
+  function commit(r) {
+    var raw = String(r.input.value || '').trim(); if (raw === '') return;
+    var v = Ask.parse(r.row, raw); if (v === null) return;
+    if (v !== currentOf(r)) Ownership.write(r.row.id, v, r.item ? { itemId: r.item.id } : null); else Spine.confirm(r.row.id);
+    r.el.classList.add('is-confirmed'); r.input.value = display(r.row, v);
+  }
+  function rowOf(node) { var box = node && node.closest ? node.closest('.row') : null; return box ? ROWS.filter(function (r) { return r.el === box; })[0] : null; }
+  document.addEventListener('focusout', function (evt) { var r = rowOf(evt.target); if (r && evt.target === r.input) { commit(r); paint(); } });
+  document.addEventListener('click', function (evt) {
+    var b = evt.target && evt.target.closest ? evt.target.closest('[data-still]') : null; if (!b) return;
+    var r = rowOf(b); if (!r) return;
+    var v = currentOf(r); if (!Money.isEntered(v)) return;
+    Spine.confirm(r.row.id); r.el.classList.add('is-confirmed'); paint();
+  });
+  document.addEventListener('keydown', function (evt) {
+    if (evt.key !== 'Enter') return;
+    var r = rowOf(evt.target); if (!r || evt.target !== r.input) return;
+    evt.preventDefault(); commit(r); paint();
+    var i = ROWS.indexOf(r); if (i >= 0 && i < ROWS.length - 1) ROWS[i + 1].input.focus(); else el('btn-done').focus();
+  });
+  el('btn-done').addEventListener('click', function () {
+    ROWS.forEach(commit);
+    if (!TABLES) { el('done-note').textContent = 'One moment, the tables are still loading.'; return; }
+    var rows = {}; ROWS.forEach(function (r) { rows[r.key] = currentOf(r); });
+    Instruments.snapshot(Spine.getProfile(), TABLES, { rows: rows, reason: 'comeback' });
+    try { Prefs.set('comeback.due', null); } catch (e) { /* fine */ }
+    el('done-note').textContent = 'Saved. Snapshot taken.';
+    window.location.href = '../index.html';
+  });
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(function () { if (ROWS.length) paint(); });
+  Reference.load().then(function (t) { TABLES = t; Staleness.use(t.staleness); LedgerRows.use(t.ledgerRows); build(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-11 19:50Z"/>
+<meta name="slaf-build" content="2026-09-11 20:47Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
 <title>The Ledger · SPARKS</title>
 <meta name="description" content="Every number the app can hold, one row each, in nine spheres. What is entered, what is rough, what is still to look up, and where each number is read."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -102,6 +104,7 @@
   .door-open .head .back { margin-left: auto; font-size: var(--text-sm); }
   .door-open .headline { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
   .door-open .headline.is-blank { color: var(--color-text-faint); font-size: var(--text-md); font-style: italic; }
+  .since { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0 0 var(--space-3); }
   .door-open .lvl { margin-top: var(--space-3); padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
   .door-open .lvl .now { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
   .door-open .lvl .name { font-family: var(--font-display); font-size: var(--text-md); }
@@ -128,6 +131,8 @@
   </header>
 
   <p class="understand" id="understand" aria-live="polite"></p>
+  <p class="since" id="since" hidden></p>
+  <p class="since"><a href="progress-card.html">Share progress, not balances →</a></p>
 
   <section id="doors-home" aria-label="The six doors">
     <div class="doors" id="doors"></div>
@@ -193,6 +198,11 @@
 <script src="../engines/debt.js"></script>
 <script src="../engines/hourly.js"></script>
 <script src="../shared/doors.js"></script>
+<script src="../shared/showmath.js"></script>
+<script src="../engines/sincelast.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/reachable.js"></script>
+<script src="../engines/notknowing.js"></script>
 <script>
 (function () {
   var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Registry = SLAF.Registry, Progress = SLAF.Progress,
@@ -276,8 +286,9 @@
   function rowHtml(row, n, of) {
     var st = row.status, val = valueOf(row), href = target(row);
     var lab = '<span class="lab">' + esc(row.label) + '<span class="num">' + n + ' of ' + of + '</span></span>';
+    /* A computed number opens the math (H1, D-211). */
     var valCell = st === 'computed'
-      ? '<span class="val">' + esc(val) + '</span>'
+      ? '<span class="val"><button type="button" class="slaf-btn slaf-btn--quiet ex-btn" data-math="' + esc(row.id) + '" title="See the math">' + esc(val) + '</button></span>'
       : href
         ? '<span class="val"><a href="' + esc(href) + '">' + (val ? esc(val) : (row.kind === 'lookup' ? 'Look it up' : 'Enter it')) + '</a></span>'
         : '<span class="val">' + esc(val) + '</span>';
@@ -371,13 +382,18 @@
     }).join('');
     var u = Doors.understanding(h, TABLES, SUGLIST, TABLES.confidenceWeights);
     el('understand').innerHTML = 'You understand <b>' + u.percent + '%</b> of your financial picture.';
+    /* Since last time, split: money that moved, knowledge added (H2, D-211). */
+    var last = Spine.latestSnapshot ? Spine.latestSnapshot() : null;
+    var strip = last && SLAF.SinceLast ? SLAF.SinceLast.strip(h, last, TABLES) : null;
+    el('since').hidden = !strip;
+    el('since').textContent = strip || '';
   }
   function levelWord(n) { return ['', 'How much', 'Where it sits', 'What it is made of', 'What it costs and where it came from'][n]; }
   function paintDoor(h, id) {
     var v = Doors.doorView(h, TABLES, id, SUGLIST);
     var d = v.door, hl = Doors.headline(h, TABLES, id);
     var out = '<div class="head"><span class="letter">' + esc(d.letter) + '</span><h2>' + esc(d.label) + '</h2><span class="say">' + esc(d.say) + '</span><a class="back" href="#doors-home">← Every door</a></div>'
-      + '<p class="headline' + (hl.display === 'not entered yet' ? ' is-blank' : '') + '">' + esc(hl.display) + '</p><p class="slaf-hint">' + esc(hl.label) + ' · ' + v.counts.known + ' of ' + v.counts.total + ' known</p>'
+      + '<p class="headline' + (hl.display === 'not entered yet' ? ' is-blank' : '') + '">' + (LedgerRows.byId(d.headlineRow) && LedgerRows.byId(d.headlineRow).kind === 'computed' && hl.display !== 'not entered yet' ? '<button type="button" class="ex-btn ex-btn--big" data-math="' + esc(d.headlineRow) + '" title="See the math">' + esc(hl.display) + '</button>' : esc(hl.display)) + '</p><p class="slaf-hint">' + esc(hl.label) + ' · ' + v.counts.known + ' of ' + v.counts.total + ' known</p>'
       + '<div class="lvl"><span class="now">Level ' + v.level + ' of 4</span><div class="name">' + esc(levelWord(v.level)) + '</div>'
       + (v.next ? '<div class="next">Level ' + v.next.level + ', ' + esc(v.next.info.label.toLowerCase()) + ', unlocks ' + esc(v.next.unlocks.slice(0, 2).join('; ') || v.next.info.gloss) + '.</div>' : '<div class="next">The deepest level. Sharpen what is rough when you have a minute.</div>')
       + '</div>';
@@ -393,12 +409,18 @@
       }).join('') + '</ul></div>';
     }
     if (v.add.length) {
-      out += '<div class="group"><h3>Add these</h3><ul class="rows">' + v.add.map(function (r) {
+      /* The most valuable unknown first (I2, D-214): each blank sized by
+         how far it could swing the insight it feeds. */
+      var swings = {};
+      try { SLAF.NotKnowing.all(h, TABLES).forEach(function (s) { if (!s.itemId && !swings[s.rowId]) swings[s.rowId] = s; }); } catch (e) { /* no ranges loaded */ }
+      var adds = v.add.slice().sort(function (a, b) { return ((swings[b.id] || {}).swing || 0) - ((swings[a.id] || {}).swing || 0); });
+      out += '<div class="group"><h3>Add these</h3><ul class="rows">' + adds.map(function (r) {
         var href = target(r);
         return '<li class="row is-missing" data-row="' + esc(r.id) + '" data-status="missing"><span class="g" title="not entered">' + GLYPH.missing + '</span><span class="lab">' + esc(r.label) + '</span>'
           + '<span class="val">' + (href ? '<a href="' + esc(href) + '">' + (r.kind === 'lookup' ? 'Look it up' : 'Enter it') + '</a>' : '') + '</span>'
           + (r.kind === 'lookup' && r.where ? '<span class="where">' + esc(r.where) + '</span>' : '')
-          + '<span class="small">Unlocks ' + esc(r.unlocks) + '.</span></li>';
+          + '<span class="small">Unlocks ' + esc(r.unlocks) + '.</span>'
+          + (swings[r.id] ? '<span class="small swing">' + esc(swings[r.id].line) + '</span>' : '') + '</li>';
       }).join('') + '</ul></div>';
     }
     if (v.na.length) out += '<p class="na">' + v.na.map(function (s) { return esc(s.label) + ': ' + esc(s.how); }).join(' ') + '</p>';
@@ -455,12 +477,13 @@
   Progress.mountHeader('ledger');
   Progress.mount('ledger');
   SLAF.Backup.mount('#backup');
-  Reference.load(['ledgerRows', 'spheres', 'staleness', 'confidenceWeights', 'accessRules', 'effectiveTaxRates'].concat(Suggest.TABLES)).then(function (t) {
+  Reference.load(['ledgerRows', 'spheres', 'staleness', 'confidenceWeights', 'accessRules', 'effectiveTaxRates', 'plausibleRanges', 'seTax'].concat(Suggest.TABLES)).then(function (t) {
     TABLES = t || {};
     LedgerRows.use(TABLES.ledgerRows);
     Spheres.use(TABLES.spheres);
     routeHash();
     if (SLAF.Staleness && TABLES.staleness) SLAF.Staleness.use(TABLES.staleness);
+    SLAF.ShowMath.mount(TABLES);
     render();
   }).catch(function (err) {
     el('target-line').textContent = 'The rows could not be loaded. (' + err + ')';

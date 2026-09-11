@@ -98,7 +98,8 @@
     if (Money.isEntered(r.cents)) return { cents: r.cents, source: r.source, reason: null };
     var gross = Schema.grossAnnualIncomeCents(h);
     if (Money.isOk(gross) && gross.value > 0) return { cents: Math.round(gross.value / MONTHS * RENT_SHARE_OF_GROSS), source: 'guess', reason: 'assumed 30% of gross because accommodation is not filled in' };
-    return { cents: null, source: 'none', reason: 'No rent from Housing Decision and no income to guess it from.' };
+    return {
+    cents: null, source: 'none', reason: 'No rent from Housing Decision and no income to guess it from.' };
   }
 
   /* The semimonthly partner of day N: fifteen days off it, inside 1–30. */
@@ -132,6 +133,17 @@
   }
 
   /* ---- the month ---------------------------------------------------------------- */
+  var COUNT_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six'];
+  function paycheckMonthLabel(cadence, count) {
+    if (!cadence || cadence === 'monthly' || cadence === 'semimonthly') return null;
+    var usual = cadence === 'weekly' ? 4 : cadence === 'fortnightly' ? 2 : null;
+    if (usual === null) return null;
+    /* A 31-day window that catches fewer paydays than usual is the window
+       falling between paydays, not a month to name. */
+    if (count < usual) return null;
+    var word = COUNT_WORDS[count] || String(count);
+    return { count: count, usual: usual, extra: count > usual, label: 'a ' + word + '-paycheck month' + (count > usual ? ': one more payday than most months' : '') };
+  }
   function month(household, tables, opts) {
     var h = household || {};
     var o = opts || {};
@@ -301,6 +313,9 @@
       slackCents: Math.max(0, lowCents), shortfallCents: Math.max(0, -lowCents),
       weekCents: weekCents, tightWeekDays: tightDays, zone: zone, tight: tight,
       days: days, paydays: paydays, perPaydayCents: perPayday, paydaysPerMonth: paydaysPerMonth,
+      /* A month with more paydays than usual is named, never averaged away
+         (J3, D-214): weekly pay has five-payday months, fortnightly three. */
+      paycheckMonth: paycheckMonthLabel(cadence, paydays.length),
       cadence: cadence, cadenceLabel: cadence ? conv.cadences[cadence].label : null, nextPaydayDay: nextDay,
       paydaySource: ledgerDrives ? 'ledger' : 'cadence',
       incomeHits: incomeHits, logHits: logHits, logMonthlyCents: logMonthlyCents,
@@ -360,6 +375,7 @@
   }
 
   return {
+    paycheckMonthLabel: paycheckMonthLabel,
     month: month,
     balancePoints: balancePoints,
     weeks: weeks,

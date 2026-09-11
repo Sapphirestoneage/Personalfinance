@@ -1474,7 +1474,11 @@
       /* The moving rows as the Refresh saw them, by row key (fieldId or
          fieldId:itemId), so the next refresh can say what changed since
          last time, line by line (G2.5, D-209). null on every other snapshot. */
-      rows: (entry && entry.rows) || null
+      rows: (entry && entry.rows) || null,
+      /* The confidence and source of every field at this moment, so a later
+         "since last time" can tell money that moved from knowledge added
+         (H2, D-211): { id: { confidence, source, asOf } }. */
+      fieldMeta: (entry && entry.fieldMeta) || (function () { load(); var out = {}; var f = (cache.meta && cache.meta.fields) || {}; Object.keys(f).forEach(function (id) { out[id] = { confidence: f[id].confidence, source: f[id].source, asOf: f[id].asOf }; }); return out; })()
     };
     all.push(record);
     writeRaw(SNAPSHOT_KEY, JSON.stringify(all));

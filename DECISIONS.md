@@ -13063,6 +13063,179 @@ saving, from memory and not sure yet show as words, the slip asks 24% or
 0.24%, the Refresh lists five moving lines and says what changed, the
 sheet after between jobs → working lists six rows and clears nothing.
 
+## D-210 — G3 with J1: hostile files, the policy, attribution, January 1, the error log, the release walk, the spreadsheet
+
+**Why.** Before anyone else sees the app, a pasted file must not be able
+to run code, "nothing leaves your browser" must be enforced, a new year
+must not silently use old tables, an error must not be a blank screen,
+and the numbers must be readable without the app. The brief's G3 and J1.
+
+**Decision.** `test/xss.js` types `<img src=x onerror=…>` into every text
+box of every room and loads a backup whose every string is the trap;
+`test/run.js` ratchets `innerHTML` concatenations without `esc()` against
+`test/xss-baseline.json` (58 spots today; a file may only go down).
+`tools/stamp-build.js` puts a Content Security Policy and
+`shared/errlog.js` (first script) on every page: only this origin,
+`form-action 'none'`, nothing embedded; `connect-src 'self'` instead of
+the brief's `'none'` because `shared/reference.js` fetches `data/*.json`
+from the same origin. Every file under `data/` names a `source` and an
+`asOf`. Year tables opt in with `taxYear`; `Reference.yearNote` says
+"using 2026 limits" past that year, on `Tax.estimate`, the IRA and 401(k)
+presets, and the footer; `test/jan1.js` runs with the clock at 2027-01-01.
+The error log keeps the last 50 entries with every number of three or
+more digits blanked, shows "Something went wrong. Your data is safe." with
+Copy bug report, and rides in the backup like any `slaf.` key. `RELEASE.md`
+names the four walks on a real Android phone and a real iPhone.
+`shared/csvexport.js` writes one CSV per door with a readme in a
+store-only zip, from Your Data, beside a link to the GitHub zip of the app.
+
+**Replaces or removes.** Nothing: hardening adds gates and one export.
+
+**Stored shape.** New key `slaf.errlog.v1` (an array of `{ at, kind, room,
+message, where, build }`, no values). `taxYear: 2026` added to
+`aca_2026.json` and `ss_bend_points_2026.json`; `source` added to the ten
+event templates. No change to `slaf.household.v2`. A LICENSE is still the
+owner's choice (stop-and-ask, G3.14).
+
+**Verified.** `node test/run.js`, `node test/jan1.js` (14), `node test/xss.js`
+(93, the trap never ran), `node test/onefact.js`, `node test/forms.js`;
+the phone walk: no policy violation in the console on eight pages, a thrown
+error shows the panel and a scrubbed log line, the spreadsheet zip
+downloads and opens with seven entries.
+
+## D-211 — H1, H3, H2: tap any number, your next $100 ranked, earned vs learned
+
+**Why.** A number nobody can check is a number nobody trusts; the next
+hundred dollars is the question everyone actually has; and a net worth
+that rose because a basis was typed in is not the same as one that rose
+because a card was paid down. The brief's H1, H3 and H2, in that order.
+
+**Decision.** Every computed row in `data/ledger-rows.json` carries a
+`formula`: the one engine function (`fn`, resolved by the build, which
+fails when it is missing), the formula in words, its terms and its
+reference tables. `shared/showmath.js` turns that into one sheet a page
+(the words, the values plugged in, each input linked to its row, the
+`data/` file and year, what would change this most, rough marked here);
+the Ledger's computed rows and door headlines and Express's computed
+boxes open it. `engines/next100.js` ranks every place the next $100 can
+go on one scale, the return: a debt at its rate and the match at its
+cents on the dollar are guaranteed, investing is expected with the band
+from `data/return_bands.json`; never blended; the order of operations is
+a note on each line, not a re-sort; `rooms/next-hundred.html` reads it.
+`engines/sincelast.js` splits every change since the last snapshot into
+money that moved (a moving row updated) and knowledge added (a first
+entry, a confidence upgrade, a fixed fact corrected); the net worth strip
+on the doors home says both, and they always add up to the whole.
+
+**Replaces or removes.** Nothing: three readings of rows that exist.
+
+**Stored shape.** Snapshots gain `fieldMeta` (`{ id: { confidence, source,
+asOf } }`), taken by the spine on every snapshot; older snapshots read
+with it absent, so a confidence upgrade before the first new snapshot is
+not counted. `slaf.household.v2` unchanged. The new room is in every
+arrangement in `data/layouts.json` beside the FOO Ladder.
+
+**Verified.** `node test/run.js`; `node test/render.js` and
+`node test/features.js` on next-hundred and the Ledger; the phone walk:
+the Assets headline opens the sheet with the plugged-in sum, the ranked
+list puts the match (50 cents on the dollar) above the 22.9% card above
+investing, and the strip reads $700 earned after a cash change.
+
+## D-212 — H4, H5, H7, H8: reachable money, the popular rules, privacy proved, share the shape
+
+**Why.** The brief's H4 to H8, less H6. H6 (the real-history stress test)
+needs sourced annual returns and inflation from 1871 in `data/`, and this
+session's network egress refused the source pages; a rule that needs
+reference data not yet in `data/` is a stop-and-ask, so H6 and the
+pre-mortem that reads it (I7) wait for that file.
+
+**Decision.** `engines/reachable.js` and `rooms/reachable.html`: an
+amount and a by-when, the order to pull it and what each dollar costs;
+cash and Roth contributions free, taxable on the gains at the rate on the
+first dollar of gains above this year's taxable income, pre-tax at the
+marginal federal plus state plus the 10% penalty under 59½, Roth earnings
+the same until 59½; home equity shown, never counted; a missing basis or
+date of birth is rough and named. `data/advice.json` and
+`engines/advicerules.js`: nine popular rules with who said them, each
+read as conditions over rows into applies now, not yet, outgrown, or
+can't tell yet naming the deciding row, shown in the Unlearning room.
+`Progress.privacyReceipt`: the footer counts requests to any other origin
+from the browser's own resource timing and prints the bytes, or lists the
+hosts. `shared/sharecard.js` and `rooms/progress-card.html`: five card
+types carrying only ratios, percentages and time in the link, from a
+fixed field list so a balance cannot be encoded; the doors home links it.
+
+**Replaces or removes.** Nothing.
+
+**Stored shape.** No change; a card lives in its link and nowhere else.
+`advice` joins `Reference.TABLE_FILES`. Two rooms join every arrangement.
+
+**Verified.** `node test/run.js` (the waterfall by hand on fixed rates,
+every card leak-scanned), render and features gates on the three rooms,
+the phone walk: the footer reads 0 bytes, the card opens from its link
+with no amount on it.
+
+## D-213 — I1, I3, I4, I5: Money Wrapped, the rank guess, the coast date, the Unlearning Quiz
+
+**Why.** The brief's Phase I, the shareable ideas; I1 has a real
+deadline, December 1, 2026. I2 (the cost of not knowing) follows on its
+own; I6 waits for Eli's taxonomy, I7 for the H6 data, and I8 for the
+roots-to-branches spine, which is not built yet (§11, task open).
+
+**Decision.** `engines/wrapped.js` and `rooms/wrapped.html`: the year's
+first snapshot re-run through the FI engine against now gives days of
+freedom; the priciest recurring cost is priced in hours at the real
+hourly wage; the biggest earned change is a percent of where it started
+and the numbers learned a count, both from `engines/sincelast.js`; every
+December and on demand, shareable as a card with days, hours, a percent
+and a count only. `engines/coast.js` and `rooms/coast-date.html`: a
+month-by-month walk, its own formula, real return from the assumptions,
+today's dollars, "not reachable at this pace" said plainly, plus the
+reverse view. `engines/rankguess.js` and `rooms/rank-guess.html`: a
+slider guess before the survey band, bands never ranks, below the median
+the copy names what the next band takes; the guess is a preference.
+The Unlearning room gains the five-question quiz, each question skipped
+when the Ledger has the reading, answers page-local, three rules most
+worth letting go, shareable as names only. Two card types join
+`shared/sharecard.js` with hours, counts and rule ids on the field list.
+
+**Replaces or removes.** Nothing.
+
+**Stored shape.** No change to the household. Prefs gain `rank.guess`.
+
+**Verified.** `node test/run.js` (the coast date by hand: 60 months at no
+growth, coast now when the pot doubles on its own, never at 2%; the
+persona year gives four lines with no cents value), render and features
+gates on the three rooms and Unlearning, the phone walk.
+
+## D-214 — I2, J2, J3, J6: the cost of not knowing, the Comeback, the real pay cycle, no bare point
+
+**Why.** The brief's I2 and the cheap J items. J4, J5, J7 and J8 follow on
+their own; J7's gift privacy is a stop-and-ask.
+
+**Decision.** `data/plausible_ranges.json` (confidence recalled, verify
+true) gives a low and a high per commonly blank row and the insight it
+feeds; `engines/notknowing.js` sets the row to each bound on a copy of
+the household, never the spine, and reads the insight at both; the swing
+is phrased as a swing, never as money lost, and the doors' "Add these"
+sorts blanks by it. `rooms/comeback.html`: after 21 days away
+(`Progress.COMEBACK_DAYS`, the last visit a preference) the front door
+opens once on Welcome Back, which asks only the moving rows, oldest
+first, and ends on the earned-vs-learned strip; `test/comeback.js` sets
+the clock 45 days ahead and holds a banned-words list. The lens gains
+"a payday" (weekly, every two weeks, twice a month, monthly from
+`data/calendar_conventions.json`; irregular reads one low month), and
+the calendar names a three- or five-paycheck month. The coast date and
+the FI card carry their range from the return bands beside the point.
+
+**Replaces or removes.** Nothing.
+
+**Stored shape.** No change to the household. Prefs gain `visit.last` and
+`comeback.due`. `plausibleRanges` joins `Reference.TABLE_FILES`.
+
+**Verified.** `node test/run.js`, `node test/comeback.js` (9), render and
+features gates on comeback and the Ledger; the phone walk.
+
 ---
 
 # The Dungeons & Dividends entries
