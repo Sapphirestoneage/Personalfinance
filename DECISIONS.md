@@ -12781,6 +12781,89 @@ new storage status, `stale-page`. Rooms that call `storageState()` see two
 new fields, `pageBuild` and `coreBuild`, and `persisted`.
 `shared/roomexport.js` now takes the schema as a dependency.
 
+## D-205 — Phase A: suggestions, derived and never stored
+
+**Why.** The Ledger rework brief: every answer should fill more than one
+row, as suggestions, never as silent values. A user between jobs answered
+six things and could have filled forty rows by hand; the app asked for
+all seventy instead.
+
+**Decision: a suggestion is derived, never stored.** `shared/suggest.js`
+gains a rules half beside its painting half (D-060). `suggestions(h,
+tables)` runs every rule a ledger row names in its new `suggestFrom`
+(data/ledger-rows.json) and returns what it could guess: the row, the
+value, one line saying how, and the data/ file(s) behind it. A row the
+person has entered is never suggested; a row with no rule stays blank; a
+rule with nothing to read returns nothing; an empty household gets no
+suggestions at all. Because nothing is stored, SPEC.md §4 and §5 stand
+unchanged: the household never holds a guess, so Empty ≠ zero holds by
+construction rather than by a flag. A rule may read an earlier suggestion
+in the same run (the state feeds the benefit cap, filing and state feed
+the marginal rate) and then says so in `dependsOn`; `overlay(h, tables)`
+hands a formula a COPY with the suggestions applied plus the list of what
+it used, so any output built on one is labelled rough by its caller.
+
+**Confirming.** One tap: `confirm(s)` tags the write `source:
+'suggested', confidence: 'roughly'` (a new entry in `Schema.SOURCES`) and
+writes through `Ownership.write`, so the owner room's own path runs.
+That needed write paths that did not exist: only cash and investments had
+one (D-057). Every enterable row now has one, in a table beside the
+ownership map, each the same spine call its owner room makes; the ten
+one-line-per-item rows (a debt's balance, rate and minimum; an asset's
+value, tax type, tier and basis; a source's type and whether it survives
+the job; a yearly line) gained ownership entries, DAITE paths and registry
+writer lines so the registry still agrees with every owner. The Express
+page and the in-room asks will write through the same paths, so one owner
+per number survives all three doors. An N/A suggestion ("no employer, so
+no match") is information, not a value; confirming it writes nothing.
+
+**The starter rules,** each one function, every number from data/:
+ZIP → state (a new `data/zip_prefixes.json`, USPS three-digit prefixes,
+recalled and marked verify); age → buffer months (Rule of 5, added to
+`data/savings_presets.json`); between jobs + last pay + state → weekly
+benefit (high quarter ÷ 26, capped; the method and New York's 2026 cap of
+$869 added to `data/ui_benefits.json`); between jobs → match and
+contribution N/A; between jobs → term life and disability $0 ("employer
+coverage usually ends with the job", added to
+`data/protection_conventions.json`); one adult → filing single (head of
+household with dependents), dependents none; pay + state + filing →
+marginal rate from the federal and state bracket files through
+engines/tax.js; under 26 → "On a parent’s plan?" as one tap (the ACA age
+added to protection_conventions); a card with a balance and no minimum →
+2% or $25 from `data/debt_rules.json`. Plus five stand-ins the intake
+already guessed (D-094), now suggestions too: spending from pay, a
+typical deductible, the age milestone for investments, the floor and a
+marketplace premium between jobs.
+
+**The registry rows** carry seven new fields: `round` (1 for the five
+first-round rows: birth date, ZIP, situation, pay, cash), `suggestFrom`,
+`askIn` (the room that asks the row in context, Phase D), `door` (D, A,
+I, T, E, you) and `level` (1 how much, 2 where it sits, 3 what it is made
+of, 4 what it costs and where it came from; Phase C2), `moves` (whether a
+monthly refresh re-asks it; G2.5) and `unlocks` (the insight the row
+feeds; G2.10, and the build fails on a row without one). The buffer
+target now applies to anyone, not only variable income, since the Rule
+of 5 suggests it for everyone.
+
+**On the Ledger,** a missing row with a suggestion shows it apart: a
+quarter glyph, the value as a dashed "use it" button, and "How I guessed
+this" folded under it with the data/ file named. Tapping writes it.
+
+**Tests.** The persona (27, ZIP 12203, between jobs, last pay $95,000,
+$3,000 cash): NY, $869 a week, match N/A, single, 5.4 months, fifteen
+suggestions, and the stored household byte-identical before and after.
+Tom: every suggestion names an existing data/ file. Empty ≠ zero: a row
+without a rule is never suggested, an entered row is never suggested, an
+empty household gets nothing. Confirm stamps suggested / roughly and the
+benefit stops leaning on the state once the state is real.
+
+**Compatibility.** No stored household field changed. `Schema.SOURCES`
+gains `'suggested'`. The `unemployment` ownership reader now also returns
+a weekly amount when the status is unset (a confirmed suggestion lands
+there); rooms that read it as a status string should check `kind ===
+'weekly'` on the result. `Ownership.write(fieldId, value, ctx)` takes a
+third argument naming the item for a repeat row.
+
 ---
 
 # The Dungeons & Dividends entries

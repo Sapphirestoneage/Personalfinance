@@ -80,6 +80,7 @@ rooms/              One HTML file per room
 vendor/fonts/       Self-hosted typefaces (no CDN, no other vendored code)
 shared/             The spine everything depends on
   qr.js               a QR code of the share link, drawn from the standard's tables, no library (D-201)
+  suggest.js          a value the app proposes, shown but not taken (D-060), and since D-205 the rules that propose it: every answer fills more rows as suggestions, derived from data/ and never stored; one tap confirms through the owner
   backup.js           everything this browser holds as one file: every slaf. and dnd. key, save, load with a confirm and an undo, and the drift guard that warns on a dev host when a room writes outside those prefixes (D-202). On the Ledger and in Settings
   theme.css           navy-sapphire design tokens (colour + type)
   fonts.css           Fraunces + Space Grotesk

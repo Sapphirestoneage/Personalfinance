@@ -172,10 +172,13 @@
       label: 'Between jobs', owner: 'start', anchor: 'q-unemployed',
       read: function (h) {
         var u = Schema.unemploymentOf(h);
-        return u.benefitStatus ? Money.ok(u.benefitStatus, { unemployment: u })
-          : Money.incomplete('Say whether unemployment is coming.', ['unemployment']);
+        if (u.benefitStatus) return Money.ok(u.benefitStatus, { unemployment: u });
+        /* A weekly amount with no status yet (a confirmed suggestion, D-205) is an answer too. */
+        if (Money.isEntered(u.benefitWeeklyCents)) return Money.ok(u.benefitWeeklyCents, { unemployment: u, kind: 'weekly' });
+        return Money.incomplete('Say whether unemployment is coming.', ['unemployment']);
       },
       format: function (v) {
+        if (typeof v === 'number') return money(v) + '/wk';
         return { receiving: 'getting unemployment', applied: 'applied, waiting', notApplied: 'not applied', ineligible: 'not eligible' }[v] || v;
       },
       applies: function (h) { return Schema.isUnemployed(h); },
@@ -846,6 +849,141 @@
     }
   };
 
+  /* ---- The shared write paths (D-205) -------------------------------------
+     A suggestion confirmed on a door, an inline ask in a room, or a field
+     on the Express page all write THROUGH the owner: the same spine call
+     the owner room itself makes, so there is still one owner per number
+     and no second copy. write(value, ctx): ctx.itemId names the item for a
+     repeat row (a debt, an account, a source, a yearly line). A row with
+     no path here is written only in its owner room, as before.           */
+  function primary() { return Spine.ensurePrimaryPerson('You'); }
+  function setAt(path, label) { return function (v) { return Spine.set(path, v === undefined ? null : v, label); }; }
+  function centsAt(path, label) { return function (v) { return Spine.set(path, Money.isEntered(v) ? Math.round(v) : null, label); }; }
+  function boolAt(path, label) { return function (v) { return Spine.set(path, v === null || v === undefined ? null : !!v, label); }; }
+  function personPatch(patch) { var p = primary(); return Spine.upsertPerson(Object.assign({ id: p.id }, patch)); }
+  function unemploymentPatch(patch) {
+    var u = Schema.unemploymentOf(Spine.getProfile());
+    return personPatch({ unemployment: Object.assign({}, u, patch) });
+  }
+  function primarySource(ctx) {
+    var p = primary();
+    var list = p.incomeSources || [];
+    if (ctx && ctx.itemId) return list.filter(function (s) { return s.id === ctx.itemId; })[0] || { id: ctx.itemId };
+    return list[0] || null;
+  }
+  function sourcePatch(ctx, patch, fallbackFields) {
+    var p = primary();
+    var s = primarySource(ctx);
+    var record = s ? Object.assign({ id: s.id }, patch) : Schema.createIncomeSource(Object.assign({ personId: p.id, source: 'Primary job', type: 'w2' }, fallbackFields || {}, patch));
+    return Spine.upsertIncomeSource(p.id, record);
+  }
+  function itemPatch(upsert, ctx, patch) {
+    if (!ctx || !ctx.itemId) throw new Error('This row is one line per item: say which item (ctx.itemId).');
+    return upsert(Object.assign({ id: ctx.itemId }, patch));
+  }
+  function secondAdult() {
+    var h = Spine.getProfile();
+    var a = Schema.adults(h);
+    if (a[1]) return a[1];
+    return Spine.upsertPerson(Schema.createPerson({ label: 'The other of you', role: 'adult' }));
+  }
+  /* The one-line-per-item rows (D-205): the field is the list; the value
+     read here is a count, and the line lives on the item. The Ledger and the
+     doors read the items themselves (LedgerRows.items); a write names the
+     item (ctx.itemId) and goes through the list's owner. */
+  function countOf(list, label) { return list.length ? Money.ok(list.length, { items: list }) : Money.incomplete('Nothing listed yet.', [label]); }
+  var ITEM_FIELDS = {
+    debtBalance: { label: 'Balance', owner: 'debt-payoff', anchor: 'debts', read: function (h) { return countOf(h.debts || [], 'debts'); }, format: function (v) { return v + ' listed'; } },
+    debtRate: { label: 'Interest rate', owner: 'debt-payoff', anchor: 'debts', read: function (h) { return countOf(h.debts || [], 'debts'); }, format: function (v) { return v + ' listed'; } },
+    debtMinPayment: { label: 'Minimum payment, a month', owner: 'debt-payoff', anchor: 'debts', read: function (h) { return countOf(h.debts || [], 'debts'); }, format: function (v) { return v + ' listed'; } },
+    assetValue: { label: 'What each account or thing is worth', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
+    assetCharacter: { label: 'How it is taxed on the way out', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
+    assetTier: { label: 'Which pile it sits in', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
+    assetCostBasis: { label: 'Cost basis', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
+    incomeType: { label: 'What kind of pay', owner: 'income', anchor: 'sources', read: function (h) { var p = Schema.primaryPerson(h); return countOf(p ? (p.incomeSources || []) : [], 'incomeSources'); }, format: function (v) { return v + ' listed'; } },
+    paySurvives: { label: 'Keeps paying if the job goes', owner: 'income', anchor: 'sources', read: function (h) { var p = Schema.primaryPerson(h); return countOf(p ? (p.incomeSources || []) : [], 'incomeSources'); }, format: function (v) { return v + ' listed'; } },
+    annualLine: { label: 'Once-a-year costs', owner: 'expenses', anchor: 'more', read: function (h) { return countOf(((h.expenses || {}).annual || []), 'annualLines'); }, format: function (v) { return v + ' listed'; } }
+  };
+  Object.keys(ITEM_FIELDS).forEach(function (id) { if (!FIELDS[id]) FIELDS[id] = ITEM_FIELDS[id]; });
+  var WRITES = {
+    dob: function (v) { return personPatch({ dob: v || null }); },
+    state: setAt('state', 'State'),
+    zip: function (v) { var z = String(v || '').replace(/\D/g, '').slice(0, 5); return Spine.set('zip', z.length === 5 ? z : null, 'ZIP'); },
+    filingStatus: setAt('filingStatus', 'Filing status'),
+    dependents: function (v) {
+      var list = Array.isArray(v) ? Schema.createDependents(v)
+        : Money.isEntered(v) ? Schema.createDependents(v === 0 ? false : new Array(Math.round(v)).fill(null).map(function () { return {}; }))
+        : null;
+      return Spine.set('dependents', list, list && list.length ? list.length + ' depend on you' : 'Nobody depends on you');
+    },
+    employmentStatus: function (v) { return personPatch({ employmentStatus: v || null }); },
+    partnerName: function (v) { var p = secondAdult(); return Spine.upsertPerson({ id: p.id, label: v || 'The other of you' }); },
+    partnerDob: function (v) { var p = secondAdult(); var s = String(v || ''); return Spine.upsertPerson({ id: p.id, dob: /^\d{4}$/.test(s) ? s + '-01-01' : (s || null) }); },
+    grossAnnualIncome: function (v, ctx) { return sourcePatch(ctx, { grossAnnualIncomeCents: Money.isEntered(v) ? Math.round(v) : null }); },
+    incomeType: function (v, ctx) { return sourcePatch(ctx, { type: v || null }); },
+    paySurvives: function (v, ctx) { return sourcePatch(ctx, { survivesJobLoss: v === null || v === undefined ? null : !!v }); },
+    employerMatch: function (v, ctx) { return sourcePatch(ctx, { employerMatch: v && typeof v === 'object' ? v : null }); },
+    unemployment: function (v) {
+      if (typeof v === 'string') return unemploymentPatch({ benefitStatus: v || null });
+      return unemploymentPatch({ benefitWeeklyCents: Money.isEntered(v) ? Math.round(v) : null });
+    },
+    expectedSearchMonths: function (v) { return unemploymentPatch({ expectedSearchMonths: Money.isEntered(v) ? v : null }); },
+    floorMonthly: function (v) { return unemploymentPatch({ floorMonthlyCents: Money.isEntered(v) ? Math.round(v) : null }); },
+    payCadence: setAt('calendar.cadence', 'Paid'),
+    nextPayday: setAt('calendar.nextPaydayDay', 'Next payday'),
+    incomeLow: function (v, ctx) { var s = variableSource(Spine.getProfile()); return sourcePatch(ctx && ctx.itemId ? ctx : { itemId: s ? s.id : null }, { variableLowCents: Money.isEntered(v) ? Math.round(v) : null }, { frequency: 'variable' }); },
+    incomeHigh: function (v, ctx) { var s = variableSource(Spine.getProfile()); return sourcePatch(ctx && ctx.itemId ? ctx : { itemId: s ? s.id : null }, { variableHighCents: Money.isEntered(v) ? Math.round(v) : null }, { frequency: 'variable' }); },
+    bufferMonths: setAt('variableIncome.bufferMonths', 'Buffer, months'),
+    variableWindow: setAt('variableIncome.windowMonths', 'Rolling window'),
+    assetValue: function (v, ctx) { return itemPatch(Spine.upsertAsset, ctx, { valueCents: Money.isEntered(v) ? Math.round(v) : null }); },
+    assetCharacter: function (v, ctx) { return itemPatch(Spine.upsertAsset, ctx, { taxCharacter: v || null }); },
+    assetTier: function (v, ctx) { return itemPatch(Spine.upsertAsset, ctx, { tier: v || null }); },
+    assetCostBasis: function (v, ctx) { return itemPatch(Spine.upsertAsset, ctx, { costBasisCents: Money.isEntered(v) ? Math.round(v) : null }); },
+    contributionPercent: setAt('retirement.contributionPercent', 'Contribution'),
+    rothContributed: centsAt('retirement.rothContributedCents', 'Roth so far'),
+    hsaContributed: centsAt('retirement.hsaContributedCents', 'HSA so far'),
+    tuitionSaved: centsAt('kids.tuitionSavedCents', 'Saved for tuition'),
+    allocationStocks: setAt('allocation.stocks', 'Target: stocks'),
+    allocationBonds: setAt('allocation.bonds', 'Target: bonds'),
+    allocationCash: setAt('allocation.cash', 'Target: cash'),
+    rebalanceBand: setAt('allocation.rebalanceBand', 'Rebalance band'),
+    stockShare: setAt('decumulation.stockShare', 'Share in stocks'),
+    hasDebt: function (v) { return Spine.set('meta.hasDebt', v === null || v === undefined ? null : !!v, v ? 'Has debt' : 'No debt'); },
+    debtBalance: function (v, ctx) { return itemPatch(Spine.upsertDebt, ctx, { balanceCents: Money.isEntered(v) ? Math.round(v) : null }); },
+    debtRate: function (v, ctx) { return itemPatch(Spine.upsertDebt, ctx, { rate: Money.isEntered(v) ? v : null }); },
+    debtMinPayment: function (v, ctx) { return itemPatch(Spine.upsertDebt, ctx, { minPaymentCents: Money.isEntered(v) ? Math.round(v) : null }); },
+    loanPlan: setAt('studentLoans.plan', 'Student loan plan'),
+    loanExtra: centsAt('studentLoans.extraMonthlyCents', 'Extra to the loans'),
+    idrShare: setAt('studentLoans.idrShare', 'Income-driven share'),
+    forgivenessYears: setAt('studentLoans.forgivenessYears', 'Forgiveness after'),
+    marginalRate: function (v) { return Spine.setAssumptionOverride('marginalRate', Money.isEntered(v) ? v : null); },
+    otherPreTax: centsAt('tax.otherPreTaxAnnualCents', 'Other pre-tax'),
+    withheld: centsAt('tax.withheldAnnualCents', 'Withheld so far'),
+    foodMonthly: function (v) { return Spine.setFat({ food: Money.isEntered(v) ? Math.round(v) : null }); },
+    accommodationMonthly: function (v) { return Spine.setFat({ accommodation: Money.isEntered(v) ? Math.round(v) : null }); },
+    transportationMonthly: function (v) { return Spine.setFat({ transportation: Money.isEntered(v) ? Math.round(v) : null }); },
+    wantsMonthly: function (v) { return Spine.setFat({ wants: Money.isEntered(v) ? Math.round(v) : null }); },
+    therapyMonthly: function (v) { return Spine.setFat({ therapy: Money.isEntered(v) ? Math.round(v) : null }); },
+    annualLine: function (v, ctx) { return itemPatch(Spine.upsertAnnualLine, ctx, { amountCents: Money.isEntered(v) ? Math.round(v) : null }); },
+    healthCover: setAt('insurance.health.type', 'Health cover'),
+    healthMonthly: centsAt('insurance.health.monthlyCents', 'Health cover, a month'),
+    highestDeductible: centsAt('insurance.highestDeductibleCents', 'Highest deductible'),
+    oopMax: centsAt('insurance.oopMaxCents', 'Out-of-pocket maximum'),
+    termLife: centsAt('insurance.termLifeCents', 'Term life'),
+    disabilityMonthly: centsAt('insurance.disabilityMonthlyCents', 'Disability benefit'),
+    umbrella: boolAt('insurance.umbrella', 'Umbrella policy'),
+    givingPct: setAt('giving.pctOfIncome', 'Giving, share of income'),
+    givingTarget: centsAt('giving.annualTargetCents', 'Giving, a year'),
+    splitMode: setAt('partner.splitMode', 'How shared costs are split'),
+    sharedMonthly: centsAt('partner.sharedMonthlyCents', 'Shared costs'),
+    beneficiariesSet: boolAt('estate.beneficiariesSet', 'Beneficiaries named'),
+    willExists: boolAt('estate.willExists', 'A will'),
+    poaExists: boolAt('estate.poaExists', 'A power of attorney'),
+    retireAge: setAt('targets.retireAge', 'Stop working at'),
+    coastAge: setAt('targets.coastAge', 'Coast: arrive by')
+  };
+  Object.keys(WRITES).forEach(function (id) { if (FIELDS[id] && !FIELDS[id].write) FIELDS[id].write = WRITES[id]; });
+
   function field(fieldId) { return FIELDS[fieldId] || null; }
 
   /* ---- Links -------------------------------------------------------------
@@ -984,7 +1122,7 @@
     return { owner: f.owner, path: pathOf(fieldId), declared: writers, agrees: writers.length === 0 ? null : writers.indexOf(f.owner) !== -1 };
   }
 
-  function write(fieldId, value) {
+  function write(fieldId, value, ctx) {
     var f = field(fieldId);
     if (!f || typeof f.write !== 'function') {
       throw new Error('No shared write path for ' + fieldId + ' — write it in its owner room');
@@ -993,7 +1131,7 @@
     if (o && o.agrees === false) {
       throw new Error('The registry does not list ' + f.owner + ' as a writer of ' + o.path + ' — fix shared/registry.js before writing ' + fieldId);
     }
-    return f.write(value);
+    return f.write(value, ctx || null);
   }
 
   function writable() {

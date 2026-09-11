@@ -115,6 +115,7 @@
     accessRules: 'access_rules.json',
     confidenceWeights: 'confidence_weights.json',
     uiBenefits: 'ui_benefits.json',
+    zipPrefixes: 'zip_prefixes.json',
     aca: 'aca_2026.json',
     stateBrackets: 'state_brackets_2026.json'
   };

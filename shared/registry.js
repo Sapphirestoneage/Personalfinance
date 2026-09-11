@@ -90,7 +90,7 @@
       href: 'rooms/income.html',
       tier: 1,
       tags: ['income'],
-      daite: { reads: [], writes: ['income.costs', 'income.ledger'] },
+      daite: { reads: [], writes: ['income.costs', 'income.ledger', 'income.sources[].type', 'income.sources[].survivesJobLoss'] },
       subsections: [
         { id: 'month', label: 'This month' },
         { id: 'log',   label: 'Every entry' },
@@ -240,7 +240,7 @@
       href: 'rooms/expenses.html',
       tier: 1,
       tags: ['cashflow'],
-      daite: { reads: ['expenses'], writes: ['expenses', 'expenses.needs.accommodation', 'expenses.needs.food', 'expenses.needs.transportation', 'expenses.wants', 'expenses.wants.therapy'] },
+      daite: { reads: ['expenses'], writes: ['expenses', 'expenses.needs.accommodation', 'expenses.needs.food', 'expenses.needs.transportation', 'expenses.wants', 'expenses.wants.therapy', 'expenses.annual[]'] },
       subsections: [
         { id: 'picture',         label: 'At a glance' },
         { id: 'spending',        label: '1 · The essentials' },
@@ -284,7 +284,7 @@
       href: 'rooms/debt-payoff.html',
       tier: 1,
       tags: ['debt'],
-      daite: { reads: ['debt.items', 'debt.items[].minimumCents'], writes: ['debt.items', 'debt.items[].minimumCents'] },
+      daite: { reads: ['debt.items', 'debt.items[].minimumCents'], writes: ['debt.items', 'debt.items[].minimumCents', 'debt.items[].balanceCents', 'debt.items[].rate'] },
       subsections: [
         { id: 'debts',           label: 'What you owe' },
         { id: 'extra',           label: 'Beyond the minimums' },
@@ -306,7 +306,7 @@
       href: 'rooms/statement.html',
       tier: 1,
       tags: ['debt'],
-      daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['assets', 'assets.property'] },
+      daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['assets', 'assets.property', 'assets.items[].valueCents', 'assets.items[].taxCharacter', 'assets.items[].tier', 'assets.items[].costBasisCents'] },
       /* Replaces Net Worth (D-069); rooms/net-worth.html redirects here. */
       subsections: [
         { id: 'portfolios', label: 'Three portfolios' },

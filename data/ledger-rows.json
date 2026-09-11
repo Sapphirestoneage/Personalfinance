@@ -1,11 +1,11 @@
 {
   "id": "ledger_rows",
-  "version": "1.0",
-  "asOf": "2026-09-10",
+  "version": "1.1",
+  "asOf": "2026-09-11",
   "source": "Every number the app can hold, one row each: the ownership field map (shared/ownership.js), its DAITE path (shared/daite.js), and lane 2's where sentences (data/lane2/ledger-rows.where.json, L-4) for the rows a person has to look up. Master build section 18.2.",
   "confidence": "convention",
   "confidenceNote": "A registry, not a measurement. kind says how a row is entered (know: from your head; lookup: fetched, with the where sentence; computed: never typed, read from an engine with its inputs named). pass is the walk-through's order (data/walk_stages.json): 1 what is true right now, 2 make it hard to go backwards, 3 the rest. minutes is a rough cost to enter. appliesWhen uses the same fixed phrases as data/levers.json (shared/levers.js, appliesWhen), and a failing row is absent, not greyed.",
-  "note": "id is the ownership field id, so the row reads and writes through the one map every room already uses; aliases names a second ownership id that reads the same path. repeat says a row is one line per item (debts, assets, incomeSources, futureIncome, annualLines). family is the DAITE family, or you for the situation rows, which carry no letter and sit first. Plans, preferences and progress paths are not rows: they are what a decision room asks for its own what-if, not facts about the household (D-183).",
+  "note": "id is the ownership field id, so the row reads and writes through the one map every room already uses; aliases names a second ownership id that reads the same path. repeat says a row is one line per item (debts, assets, incomeSources, futureIncome, annualLines). family is the DAITE family, or you for the situation rows, which carry no letter and sit first. Plans, preferences and progress paths are not rows: they are what a decision room asks for its own what-if, not facts about the household (D-183). door (D, A, I, T, E, you) and level (1 how much, 2 where it sits, 3 what it is made of, 4 what it costs and where it came from) are the doors' depth order; round 1 marks the five first-round rows; suggestFrom names a shared/suggest.js rule that can guess the row; askIn names the room that asks it in context; moves says whether a monthly refresh should re-ask it; unlocks names the insight the row feeds, and a row without one fails the build. D-205.",
   "kinds": [
     "know",
     "lookup",
@@ -27,7 +27,14 @@
         "beginner",
         "fi"
       ],
-      "note": "Sets the sort mode and the switch defaults (18.7). A preference, not a fact about the household."
+      "note": "Sets the sort mode and the switch defaults (18.7). A preference, not a fact about the household.",
+      "door": "you",
+      "level": 1,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": null,
+      "moves": false,
+      "unlocks": "which order the doors open in and which switches start on"
     },
     {
       "id": "dob",
@@ -40,7 +47,14 @@
       "appliesWhen": "always",
       "minutes": 0.5,
       "family": "you",
-      "staleField": "dob"
+      "staleField": "dob",
+      "door": "you",
+      "level": 1,
+      "round": 1,
+      "suggestFrom": null,
+      "askIn": null,
+      "moves": false,
+      "unlocks": "every age-based figure: the buffer target, the retirement milestones, the FI date"
     },
     {
       "id": "state",
@@ -52,7 +66,14 @@
       "pass": 1,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "taxes"
+      "family": "taxes",
+      "door": "T",
+      "level": 1,
+      "round": null,
+      "suggestFrom": "zipToState",
+      "askIn": null,
+      "moves": false,
+      "unlocks": "state tax, the unemployment benefit cap and the state cost columns"
     },
     {
       "id": "dependents",
@@ -64,7 +85,14 @@
       "pass": 1,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "you"
+      "family": "you",
+      "door": "you",
+      "level": 2,
+      "round": null,
+      "suggestFrom": "dependentsFromHousehold",
+      "askIn": null,
+      "moves": false,
+      "unlocks": "whether life cover and tuition are questions at all"
     },
     {
       "id": "employmentStatus",
@@ -76,7 +104,14 @@
       "pass": 1,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "you"
+      "family": "you",
+      "door": "you",
+      "level": 1,
+      "round": 1,
+      "suggestFrom": null,
+      "askIn": null,
+      "moves": false,
+      "unlocks": "which rows apply: match, unemployment, own-work tax"
     },
     {
       "id": "filingStatus",
@@ -88,7 +123,14 @@
       "pass": 1,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "taxes"
+      "family": "taxes",
+      "door": "T",
+      "level": 2,
+      "round": null,
+      "suggestFrom": "filingFromHousehold",
+      "askIn": null,
+      "moves": false,
+      "unlocks": "the federal brackets, so the marginal rate and take-home pay"
     },
     {
       "id": "zip",
@@ -100,7 +142,14 @@
       "pass": 3,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "taxes"
+      "family": "taxes",
+      "door": "T",
+      "level": 1,
+      "round": 1,
+      "suggestFrom": null,
+      "askIn": null,
+      "moves": false,
+      "unlocks": "the state, suggested from the first three digits"
     },
     {
       "id": "partnerName",
@@ -112,7 +161,14 @@
       "pass": 2,
       "appliesWhen": "household.two",
       "minutes": 0.5,
-      "family": "you"
+      "family": "you",
+      "door": "you",
+      "level": 2,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "partner",
+      "moves": false,
+      "unlocks": "the household of two: shared costs and both incomes"
     },
     {
       "id": "partnerDob",
@@ -124,7 +180,14 @@
       "pass": 2,
       "appliesWhen": "household.two",
       "minutes": 0.5,
-      "family": "you"
+      "family": "you",
+      "door": "you",
+      "level": 2,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "partner",
+      "moves": false,
+      "unlocks": "the second person’s ages in every milestone"
     },
     {
       "id": "age",
@@ -140,7 +203,14 @@
       "engine": "Schema.primaryAge",
       "inputs": [
         "dob"
-      ]
+      ],
+      "door": "you",
+      "level": 1,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": null,
+      "moves": false,
+      "unlocks": "the buffer target and the milestones (worked out from the birth date)"
     },
     {
       "id": "grossAnnualIncome",
@@ -156,7 +226,14 @@
       "itemLabel": "pay source",
       "where": "Your offer letter or latest pay stub, the yearly gross; for hourly pay, the rate times the hours you actually work times 52.",
       "roughly": "What you think you make before tax, to the nearest thousand.",
-      "family": "income"
+      "family": "income",
+      "door": "I",
+      "level": 1,
+      "round": 1,
+      "suggestFrom": null,
+      "askIn": null,
+      "moves": true,
+      "unlocks": "take-home pay, the savings rate, the true hourly wage"
     },
     {
       "id": "incomeType",
@@ -178,7 +255,14 @@
         "socialSecurity",
         "equity"
       ],
-      "family": "income"
+      "family": "income",
+      "door": "I",
+      "level": 2,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "income",
+      "moves": false,
+      "unlocks": "how each source is taxed: W-2 withholding, self-employment tax, or none"
     },
     {
       "id": "paySurvives",
@@ -191,7 +275,14 @@
       "appliesWhen": "always",
       "minutes": 0.5,
       "repeat": "incomeSources",
-      "family": "income"
+      "family": "income",
+      "door": "I",
+      "level": 2,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "income",
+      "moves": false,
+      "unlocks": "the worst plausible year: what keeps paying if the job goes"
     },
     {
       "id": "employerMatch",
@@ -205,7 +296,14 @@
       "minutes": 2,
       "where": "The plan website, the contributions or plan details page, a sentence like 100% of the first 3% and 50% of the next 2%.",
       "roughly": "Type 50% up to 6% of pay, the most common formula.",
-      "family": "income"
+      "family": "income",
+      "door": "I",
+      "level": 4,
+      "round": null,
+      "suggestFrom": "matchNotApplicable",
+      "askIn": "accounts",
+      "moves": false,
+      "unlocks": "the free money on the table and the first rung of the order of operations"
     },
     {
       "id": "capturingFullMatch",
@@ -222,7 +320,14 @@
         "employerMatch",
         "contributionPercent"
       ],
-      "family": "income"
+      "family": "income",
+      "door": "I",
+      "level": 4,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": null,
+      "moves": false,
+      "unlocks": "whether the match is actually being collected"
     },
     {
       "id": "unemployment",
@@ -236,7 +341,14 @@
       "minutes": 2,
       "where": "The determination letter from the state after you file, the line called weekly benefit amount; the state site shows it under your claim.",
       "roughly": "Half your old weekly gross pay, capped at your state's maximum.",
-      "family": "income"
+      "family": "income",
+      "door": "I",
+      "level": 1,
+      "round": null,
+      "suggestFrom": "unemploymentWeekly",
+      "askIn": "between-jobs",
+      "moves": true,
+      "unlocks": "the runway between jobs"
     },
     {
       "id": "futureIncome",
@@ -252,7 +364,14 @@
       "itemLabel": "period",
       "where": "The yearly statement the plan mails or posts online, the line called accrued monthly benefit.",
       "roughly": "Leave blank and mark roughly; the room will keep asking.",
-      "family": "income"
+      "family": "income",
+      "door": "I",
+      "level": 2,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "timeline",
+      "moves": true,
+      "unlocks": "the timeline: what stacks and where the gaps are"
     },
     {
       "id": "payCadence",
@@ -264,7 +383,14 @@
       "pass": 2,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "income"
+      "family": "income",
+      "door": "I",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "calendar",
+      "moves": false,
+      "unlocks": "the calendar on your real pay rhythm, two- and three-paycheck months labelled"
     },
     {
       "id": "nextPayday",
@@ -276,7 +402,14 @@
       "pass": 2,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "income"
+      "family": "income",
+      "door": "I",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "calendar",
+      "moves": false,
+      "unlocks": "the days until money arrives, on the calendar"
     },
     {
       "id": "incomeLow",
@@ -288,7 +421,14 @@
       "pass": 2,
       "appliesWhen": "income.variable",
       "minutes": 0.5,
-      "family": "income"
+      "family": "income",
+      "door": "I",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "variable-income",
+      "moves": true,
+      "unlocks": "the planning base for variable income: the low month"
     },
     {
       "id": "incomeHigh",
@@ -300,7 +440,14 @@
       "pass": 2,
       "appliesWhen": "income.variable",
       "minutes": 0.5,
-      "family": "income"
+      "family": "income",
+      "door": "I",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "variable-income",
+      "moves": true,
+      "unlocks": "how much a high month can send to the next step"
     },
     {
       "id": "bufferMonths",
@@ -310,9 +457,17 @@
       "kind": "know",
       "unit": "months",
       "pass": 2,
-      "appliesWhen": "income.variable",
+      "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "income"
+      "family": "income",
+      "door": "I",
+      "level": 3,
+      "round": null,
+      "suggestFrom": "bufferFromAge",
+      "askIn": "variable-income",
+      "moves": false,
+      "unlocks": "the buffer target, and how far the cash is from it",
+      "note": "A buffer target applies to anyone; Variable Income reads it, the Rule of 5 suggests it (D-205)."
     },
     {
       "id": "variableWindow",
@@ -324,7 +479,14 @@
       "pass": 3,
       "appliesWhen": "income.variable",
       "minutes": 0.5,
-      "family": "income"
+      "family": "income",
+      "door": "I",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "variable-income",
+      "moves": false,
+      "unlocks": "the rolling average the variable-income view reads"
     },
     {
       "id": "ledgerIncome",
@@ -340,7 +502,14 @@
       "inputs": [
         "grossAnnualIncome"
       ],
-      "family": "income"
+      "family": "income",
+      "door": "I",
+      "level": 1,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": null,
+      "moves": true,
+      "unlocks": "income actually logged against the estimate"
     },
     {
       "id": "cashSavings",
@@ -354,7 +523,14 @@
       "minutes": 2,
       "where": "Your bank app: checking plus savings, the balances under each account name on the first screen.",
       "roughly": "What you think is in there today, to the nearest hundred.",
-      "family": "assets"
+      "family": "assets",
+      "door": "A",
+      "level": 1,
+      "round": 1,
+      "suggestFrom": null,
+      "askIn": null,
+      "moves": true,
+      "unlocks": "the runway, emergency-fund coverage, reachable money"
     },
     {
       "id": "investments",
@@ -368,7 +544,14 @@
       "minutes": 2,
       "where": "Each account app or the latest statement, the total account value; the Statement splits it by kind.",
       "roughly": "The last number you remember, to the nearest thousand.",
-      "family": "assets"
+      "family": "assets",
+      "door": "A",
+      "level": 1,
+      "round": null,
+      "suggestFrom": "investmentsFromAge",
+      "askIn": "statement",
+      "moves": true,
+      "unlocks": "net worth, the FI number gap, the retirement multiple"
     },
     {
       "id": "assetValue",
@@ -384,7 +567,14 @@
       "itemLabel": "asset",
       "where": "The app or the latest statement for that account; for a home, a Zillow or assessor figure; for a car, Kelley Blue Book.",
       "roughly": "Your last statement figure, to the nearest thousand.",
-      "family": "assets"
+      "family": "assets",
+      "door": "A",
+      "level": 2,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "statement",
+      "moves": true,
+      "unlocks": "net worth account by account, and reachable money by account"
     },
     {
       "id": "assetCharacter",
@@ -411,7 +601,14 @@
         "unknown"
       ],
       "family": "assets",
-      "note": "The orientation 15.3 and the pile 15.8 read; asked by the Statement today."
+      "note": "The orientation 15.3 and the pile 15.8 read; asked by the Statement today.",
+      "door": "A",
+      "level": 2,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "statement",
+      "moves": false,
+      "unlocks": "reachable money: what you could get to in an emergency, by tax type"
     },
     {
       "id": "assetTier",
@@ -431,7 +628,14 @@
         "property",
         "other"
       ],
-      "family": "assets"
+      "family": "assets",
+      "door": "A",
+      "level": 2,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "statement",
+      "moves": false,
+      "unlocks": "the liquidity ladder: cash, taxable, retirement, property"
     },
     {
       "id": "assetCostBasis",
@@ -446,7 +650,14 @@
       "repeat": "assets",
       "where": "The brokerage app, positions, the column called cost basis; the total row is the account's.",
       "roughly": "Type 70% of the current value.",
-      "family": "assets"
+      "family": "assets",
+      "door": "A",
+      "level": 4,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "statement",
+      "moves": false,
+      "unlocks": "the tax on pulling money from a taxable account, and a Roth’s free contributions"
     },
     {
       "id": "otherAssets",
@@ -462,7 +673,14 @@
       "inputs": [
         "assetValue"
       ],
-      "family": "assets"
+      "family": "assets",
+      "door": "A",
+      "level": 1,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": null,
+      "moves": true,
+      "unlocks": "net worth with property counted (and shown, never counted, as reachable)"
     },
     {
       "id": "contributionPercent",
@@ -476,7 +694,14 @@
       "minutes": 2,
       "where": "The plan website, the contributions page, the percent of pay going in; also the 401(k) deduction line on your pay stub.",
       "roughly": "Type 6% if you have never changed it.",
-      "family": "assets"
+      "family": "assets",
+      "door": "A",
+      "level": 4,
+      "round": null,
+      "suggestFrom": "contributionNotApplicable",
+      "askIn": "accounts",
+      "moves": false,
+      "unlocks": "the savings rate as contributed, and whether the match is captured"
     },
     {
       "id": "rothContributed",
@@ -490,7 +715,14 @@
       "minutes": 2,
       "where": "The IRA app or site, contributions this year, on the account page.",
       "roughly": "What you think you have put in since January.",
-      "family": "assets"
+      "family": "assets",
+      "door": "A",
+      "level": 4,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "accounts",
+      "moves": true,
+      "unlocks": "room left this year under the Roth limit"
     },
     {
       "id": "hsaContributed",
@@ -504,7 +736,14 @@
       "minutes": 2,
       "where": "The HSA provider, contributions this year; your pay stub shows the per-paycheque amount.",
       "roughly": "To the nearest hundred.",
-      "family": "assets"
+      "family": "assets",
+      "door": "A",
+      "level": 4,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "accounts",
+      "moves": true,
+      "unlocks": "room left this year under the HSA limit"
     },
     {
       "id": "tuitionSaved",
@@ -518,7 +757,14 @@
       "minutes": 2,
       "where": "The state plan website after login, the account balance on the first screen.",
       "roughly": "To the nearest thousand.",
-      "family": "assets"
+      "family": "assets",
+      "door": "A",
+      "level": 2,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "kids",
+      "moves": true,
+      "unlocks": "the tuition gap and the monthly to close it"
     },
     {
       "id": "allocationStocks",
@@ -530,7 +776,14 @@
       "pass": 3,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "assets"
+      "family": "assets",
+      "door": "A",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "fire",
+      "moves": false,
+      "unlocks": "the stock, bond, cash split and the rebalance drift"
     },
     {
       "id": "allocationBonds",
@@ -542,7 +795,14 @@
       "pass": 3,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "assets"
+      "family": "assets",
+      "door": "A",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "fire",
+      "moves": false,
+      "unlocks": "the stock, bond, cash split and the rebalance drift"
     },
     {
       "id": "allocationCash",
@@ -554,7 +814,14 @@
       "pass": 3,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "assets"
+      "family": "assets",
+      "door": "A",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "fire",
+      "moves": false,
+      "unlocks": "the stock, bond, cash split and the rebalance drift"
     },
     {
       "id": "rebalanceBand",
@@ -566,7 +833,14 @@
       "pass": 3,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "assets"
+      "family": "assets",
+      "door": "A",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "fire",
+      "moves": false,
+      "unlocks": "when the drift is far enough to act on"
     },
     {
       "id": "stockShare",
@@ -578,7 +852,14 @@
       "pass": 3,
       "appliesWhen": "situation == retired",
       "minutes": 0.5,
-      "family": "assets"
+      "family": "assets",
+      "door": "A",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "decumulation",
+      "moves": false,
+      "unlocks": "the decumulation path’s risk"
     },
     {
       "id": "netWorth",
@@ -597,7 +878,14 @@
         "otherAssets",
         "totalDebt"
       ],
-      "family": "assets"
+      "family": "assets",
+      "door": "A",
+      "level": 1,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": null,
+      "moves": true,
+      "unlocks": "the headline: what you own less what you owe"
     },
     {
       "id": "confidenceWeightedNetWorth",
@@ -614,7 +902,14 @@
         "assetValue",
         "totalDebt"
       ],
-      "family": "assets"
+      "family": "assets",
+      "door": "A",
+      "level": 4,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": null,
+      "moves": true,
+      "unlocks": "net worth discounted by how sure each asset is"
     },
     {
       "id": "hasDebt",
@@ -628,7 +923,14 @@
       "minutes": 0.5,
       "family": "debt",
       "impliedBy": "debts",
-      "note": "Answered by implication once a debt is listed: a listed debt is a yes."
+      "note": "Answered by implication once a debt is listed: a listed debt is a yes.",
+      "door": "D",
+      "level": 1,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "debt-payoff",
+      "moves": false,
+      "unlocks": "whether the Debt door has anything behind it"
     },
     {
       "id": "debtBalance",
@@ -644,7 +946,14 @@
       "itemLabel": "debt",
       "where": "The current balance on the lender's app home screen, or the statement balance on the latest statement.",
       "roughly": "The last statement figure you remember.",
-      "family": "debt"
+      "family": "debt",
+      "door": "D",
+      "level": 2,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "debt-payoff",
+      "moves": true,
+      "unlocks": "total owed and the payoff timeline"
     },
     {
       "id": "debtRate",
@@ -659,7 +968,14 @@
       "repeat": "debts",
       "where": "The statement or the lender app, the line called APR or interest rate; the Debt room names the page for each kind.",
       "roughly": "Type 24% if you have no idea; most cards sit between 20% and 30%.",
-      "family": "debt"
+      "family": "debt",
+      "door": "D",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "debt-payoff",
+      "moves": true,
+      "unlocks": "the payoff order and interest cost a month"
     },
     {
       "id": "debtMinPayment",
@@ -674,7 +990,14 @@
       "repeat": "debts",
       "where": "The latest statement, the line called minimum payment due, near the top.",
       "roughly": "For a card, 2% of the balance; for a loan, the fixed monthly payment.",
-      "family": "debt"
+      "family": "debt",
+      "door": "D",
+      "level": 3,
+      "round": null,
+      "suggestFrom": "minimumFromBalance",
+      "askIn": "debt-payoff",
+      "moves": true,
+      "unlocks": "the minimums total, the extra on top of them, the payoff date"
     },
     {
       "id": "totalDebt",
@@ -690,7 +1013,14 @@
       "inputs": [
         "debtBalance"
       ],
-      "family": "debt"
+      "family": "debt",
+      "door": "D",
+      "level": 1,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": null,
+      "moves": true,
+      "unlocks": "the Debt door’s headline"
     },
     {
       "id": "monthlyDebtPayments",
@@ -706,7 +1036,14 @@
       "inputs": [
         "debtMinPayment"
       ],
-      "family": "debt"
+      "family": "debt",
+      "door": "D",
+      "level": 2,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": null,
+      "moves": true,
+      "unlocks": "what goes to debt every month before anything else"
     },
     {
       "id": "loanPlan",
@@ -720,7 +1057,14 @@
       "minutes": 2,
       "where": "Log in to studentaid.gov; the dashboard names your servicer, and the servicer's site shows your repayment plan on the loan details page.",
       "roughly": "Pick standard if you have never chosen a plan.",
-      "family": "debt"
+      "family": "debt",
+      "door": "D",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "student-loans",
+      "moves": false,
+      "unlocks": "the student loan trajectory under the plan chosen"
     },
     {
       "id": "loanExtra",
@@ -732,7 +1076,14 @@
       "pass": 2,
       "appliesWhen": "debt.studentLoan",
       "minutes": 0.5,
-      "family": "debt"
+      "family": "debt",
+      "door": "D",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "student-loans",
+      "moves": true,
+      "unlocks": "how much sooner the loans end"
     },
     {
       "id": "idrShare",
@@ -744,7 +1095,14 @@
       "pass": 3,
       "appliesWhen": "debt.studentLoan",
       "minutes": 0.5,
-      "family": "debt"
+      "family": "debt",
+      "door": "D",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "student-loans",
+      "moves": false,
+      "unlocks": "the income-driven payment"
     },
     {
       "id": "forgivenessYears",
@@ -756,7 +1114,14 @@
       "pass": 3,
       "appliesWhen": "debt.studentLoan",
       "minutes": 0.5,
-      "family": "debt"
+      "family": "debt",
+      "door": "D",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "student-loans",
+      "moves": false,
+      "unlocks": "the forgiveness horizon on the student loan path"
     },
     {
       "id": "marginalRate",
@@ -770,7 +1135,14 @@
       "minutes": 2,
       "where": "Last year's return, the bracket your last dollar landed in; the Tax room proposes it from your pay.",
       "roughly": "22% for most working households.",
-      "family": "taxes"
+      "family": "taxes",
+      "door": "T",
+      "level": 1,
+      "round": null,
+      "suggestFrom": "marginalRateFromBrackets",
+      "askIn": "accounts",
+      "moves": false,
+      "unlocks": "the value of every pre-tax dollar: the Roth versus traditional answer"
     },
     {
       "id": "otherPreTax",
@@ -784,7 +1156,14 @@
       "minutes": 2,
       "where": "Your pay stub, the pre-tax lines that are not the 401(k): health premiums, HSA, commuter, times paycheques a year.",
       "roughly": "Type 0 if you are not sure.",
-      "family": "taxes"
+      "family": "taxes",
+      "door": "T",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "tax",
+      "moves": true,
+      "unlocks": "taxable income after the deductions the paycheck already takes"
     },
     {
       "id": "withheld",
@@ -798,7 +1177,14 @@
       "minutes": 2,
       "where": "The latest pay stub, the year-to-date column, the federal income tax line.",
       "roughly": "About 12% of gross pay so far this year.",
-      "family": "taxes"
+      "family": "taxes",
+      "door": "T",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "tax",
+      "moves": true,
+      "unlocks": "whether withholding is on track for the year"
     },
     {
       "id": "foodMonthly",
@@ -810,7 +1196,14 @@
       "pass": 1,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "expenses"
+      "family": "expenses",
+      "door": "E",
+      "level": 2,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "expenses",
+      "moves": true,
+      "unlocks": "the FAT floor: the minimum viable month"
     },
     {
       "id": "accommodationMonthly",
@@ -825,7 +1218,14 @@
       "aliases": [
         "rentMonthly"
       ],
-      "family": "expenses"
+      "family": "expenses",
+      "door": "E",
+      "level": 2,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "expenses",
+      "moves": true,
+      "unlocks": "the FAT floor, and the housing share of spending"
     },
     {
       "id": "transportationMonthly",
@@ -837,7 +1237,14 @@
       "pass": 1,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "expenses"
+      "family": "expenses",
+      "door": "E",
+      "level": 2,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "expenses",
+      "moves": true,
+      "unlocks": "the FAT floor, and the car rules"
     },
     {
       "id": "wantsMonthly",
@@ -849,7 +1256,14 @@
       "pass": 1,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "expenses"
+      "family": "expenses",
+      "door": "E",
+      "level": 2,
+      "round": null,
+      "suggestFrom": "spendingFromPay",
+      "askIn": "expenses",
+      "moves": true,
+      "unlocks": "spending a month, so the savings rate and the FI number"
     },
     {
       "id": "therapyMonthly",
@@ -861,7 +1275,14 @@
       "pass": 2,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "expenses"
+      "family": "expenses",
+      "door": "E",
+      "level": 2,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "expenses",
+      "moves": true,
+      "unlocks": "a health line kept apart from wants"
     },
     {
       "id": "annualLine",
@@ -875,7 +1296,14 @@
       "minutes": 0.5,
       "repeat": "annualLines",
       "itemLabel": "yearly cost",
-      "family": "expenses"
+      "family": "expenses",
+      "door": "E",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "expenses",
+      "moves": true,
+      "unlocks": "the once-a-year costs a monthly budget forgets"
     },
     {
       "id": "monthlyExpenses",
@@ -894,7 +1322,14 @@
         "transportationMonthly",
         "wantsMonthly"
       ],
-      "family": "expenses"
+      "family": "expenses",
+      "door": "E",
+      "level": 1,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": null,
+      "moves": true,
+      "unlocks": "the Expenses door’s headline and the FI number"
     },
     {
       "id": "floorMonthly",
@@ -906,7 +1341,14 @@
       "pass": 2,
       "appliesWhen": "situation == betweenJobs",
       "minutes": 0.5,
-      "family": "expenses"
+      "family": "expenses",
+      "door": "E",
+      "level": 3,
+      "round": null,
+      "suggestFrom": "floorFromConvention",
+      "askIn": "between-jobs",
+      "moves": true,
+      "unlocks": "the runway at the floor"
     },
     {
       "id": "healthCover",
@@ -918,7 +1360,14 @@
       "pass": 2,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "you"
+      "family": "you",
+      "door": "you",
+      "level": 2,
+      "round": null,
+      "suggestFrom": "healthCoverUnder26",
+      "askIn": "protection",
+      "moves": false,
+      "unlocks": "the cost of cover after a job ends, and the HSA question"
     },
     {
       "id": "healthMonthly",
@@ -932,7 +1381,14 @@
       "minutes": 2,
       "where": "Your pay stub, the deduction line for medical or health; multiply by paycheques a month.",
       "roughly": "Type 150 a month for job coverage, 450 for a marketplace plan.",
-      "family": "expenses"
+      "family": "expenses",
+      "door": "E",
+      "level": 3,
+      "round": null,
+      "suggestFrom": "healthMonthlyBetweenJobs",
+      "askIn": "protection",
+      "moves": true,
+      "unlocks": "a month of spending with cover counted"
     },
     {
       "id": "highestDeductible",
@@ -946,7 +1402,14 @@
       "minutes": 2,
       "family": "you",
       "where": "The health plan's summary of benefits, first page, the line called deductible for the whole family.",
-      "roughly": "Type 2,000 for job coverage, 5,000 for a marketplace plan."
+      "roughly": "Type 2,000 for job coverage, 5,000 for a marketplace plan.",
+      "door": "you",
+      "level": 3,
+      "round": null,
+      "suggestFrom": "deductibleTypical",
+      "askIn": "sleep-at-night",
+      "moves": false,
+      "unlocks": "the first thing a cash cushion has to cover"
     },
     {
       "id": "oopMax",
@@ -960,7 +1423,14 @@
       "minutes": 2,
       "family": "you",
       "where": "The same summary of benefits, the line called out-of-pocket limit, the family figure.",
-      "roughly": "Type 8,000."
+      "roughly": "Type 8,000.",
+      "door": "you",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "sleep-at-night",
+      "moves": false,
+      "unlocks": "the worst plausible year’s medical line"
     },
     {
       "id": "termLife",
@@ -974,7 +1444,14 @@
       "minutes": 2,
       "family": "you",
       "where": "The policy document or the insurer's app, the face amount (what it pays) and the premium; job coverage is on the benefits page as a multiple of salary.",
-      "roughly": "Type the multiple of salary your job gives, usually one or two times."
+      "roughly": "Type the multiple of salary your job gives, usually one or two times.",
+      "door": "you",
+      "level": 3,
+      "round": null,
+      "suggestFrom": "termLifeBetweenJobs",
+      "askIn": "sleep-at-night",
+      "moves": false,
+      "unlocks": "the life-cover gap against ten times income"
     },
     {
       "id": "disabilityMonthly",
@@ -988,7 +1465,14 @@
       "minutes": 2,
       "family": "you",
       "where": "The benefits page at work, long-term disability, which says what share of pay it replaces and after how many weeks.",
-      "roughly": "Type 60% of gross pay as the monthly benefit if you have job coverage."
+      "roughly": "Type 60% of gross pay as the monthly benefit if you have job coverage.",
+      "door": "you",
+      "level": 3,
+      "round": null,
+      "suggestFrom": "disabilityBetweenJobs",
+      "askIn": "sleep-at-night",
+      "moves": false,
+      "unlocks": "the disability-cover gap against 60% of pay"
     },
     {
       "id": "umbrella",
@@ -1002,7 +1486,14 @@
       "minutes": 2,
       "family": "you",
       "where": "The insurer app or the declarations page; the policy is listed beside home or auto.",
-      "roughly": "Type 0 if you have never bought one."
+      "roughly": "Type 0 if you have never bought one.",
+      "door": "you",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "sleep-at-night",
+      "moves": false,
+      "unlocks": "the liability gap"
     },
     {
       "id": "givingPct",
@@ -1014,7 +1505,14 @@
       "pass": 3,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "expenses"
+      "family": "expenses",
+      "door": "E",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "giving",
+      "moves": false,
+      "unlocks": "the giving rate beside the savings rate"
     },
     {
       "id": "givingTarget",
@@ -1026,7 +1524,14 @@
       "pass": 3,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "expenses"
+      "family": "expenses",
+      "door": "E",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "giving",
+      "moves": true,
+      "unlocks": "the giving line a year"
     },
     {
       "id": "splitMode",
@@ -1038,7 +1543,14 @@
       "pass": 2,
       "appliesWhen": "household.two",
       "minutes": 0.5,
-      "family": "expenses"
+      "family": "expenses",
+      "door": "E",
+      "level": 2,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "partner",
+      "moves": false,
+      "unlocks": "each partner’s share of the shared month"
     },
     {
       "id": "sharedMonthly",
@@ -1050,7 +1562,14 @@
       "pass": 2,
       "appliesWhen": "household.two",
       "minutes": 0.5,
-      "family": "expenses"
+      "family": "expenses",
+      "door": "E",
+      "level": 2,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "partner",
+      "moves": true,
+      "unlocks": "the shared month, split"
     },
     {
       "id": "billsMonthly",
@@ -1066,7 +1585,14 @@
       "inputs": [
         "annualLine"
       ],
-      "family": "expenses"
+      "family": "expenses",
+      "door": "E",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": null,
+      "moves": true,
+      "unlocks": "the calendar’s dated bills"
     },
     {
       "id": "payLaterDue",
@@ -1080,7 +1606,14 @@
       "minutes": 0,
       "engine": "Calendar.month",
       "inputs": [],
-      "family": "expenses"
+      "family": "expenses",
+      "door": "E",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": null,
+      "moves": true,
+      "unlocks": "the pay-later due this month on the calendar"
     },
     {
       "id": "monthsClosed",
@@ -1094,7 +1627,14 @@
       "minutes": 0,
       "engine": "Budget.closedMonths",
       "inputs": [],
-      "family": "expenses"
+      "family": "expenses",
+      "door": "E",
+      "level": 3,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": null,
+      "moves": true,
+      "unlocks": "the trailing average that replaces the estimate"
     },
     {
       "id": "beneficiariesSet",
@@ -1106,7 +1646,14 @@
       "pass": 3,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "you"
+      "family": "you",
+      "door": "you",
+      "level": 4,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "estate",
+      "moves": false,
+      "unlocks": "the estate checklist: who gets the accounts"
     },
     {
       "id": "willExists",
@@ -1118,7 +1665,14 @@
       "pass": 3,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "you"
+      "family": "you",
+      "door": "you",
+      "level": 4,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "estate",
+      "moves": false,
+      "unlocks": "the estate checklist: whether there is a will"
     },
     {
       "id": "poaExists",
@@ -1130,7 +1684,14 @@
       "pass": 3,
       "appliesWhen": "always",
       "minutes": 0.5,
-      "family": "you"
+      "family": "you",
+      "door": "you",
+      "level": 4,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": "estate",
+      "moves": false,
+      "unlocks": "the estate checklist: who acts if you cannot"
     }
   ]
 }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-11 18:36Z"/>
+<meta name="slaf-build" content="2026-09-11 18:59Z"/>
 <title>The Ledger · SPARKS</title>
 <meta name="description" content="Every number the app can hold, one row each, in nine spheres. What is entered, what is rough, what is still to look up, and where each number is read."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -65,6 +65,11 @@
   .row .reads a { margin-right: var(--space-2); }
   details.fold > summary { cursor: pointer; font-family: var(--font-display); font-size: var(--text-md); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
   .empyrean { margin-top: var(--space-4); color: var(--color-text-muted); font-size: var(--text-sm); }
+  .row.is-suggested .g { color: var(--color-accent-hover); }
+  .row .val.is-suggested .use-it { font-family: var(--font-display); font-size: var(--text-sm); border-bottom: 1px dashed var(--color-accent-hover); padding: 0; }
+  .row .val.is-na { color: var(--color-text-faint); font-style: italic; }
+  .row .how details summary { cursor: pointer; color: var(--color-text-faint); }
+  .row .how .src { color: var(--color-text-faint); }
 </style>
 </head>
 <body class="slaf">
@@ -120,15 +125,18 @@
 <script src="../shared/ledger-rows.js"></script>
 <script src="../shared/spheres.js"></script>
 <script src="../shared/backup.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../shared/suggest.js"></script>
 <script>
 (function () {
   var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Registry = SLAF.Registry, Progress = SLAF.Progress,
-      LedgerRows = SLAF.LedgerRows, Spheres = SLAF.Spheres, Reference = SLAF.Reference;
+      LedgerRows = SLAF.LedgerRows, Spheres = SLAF.Spheres, Reference = SLAF.Reference, Suggest = SLAF.Suggest;
   var TABLES = {};
+  var SUGGESTED = {};   /* key → suggestion, refreshed on every render (D-205) */
   function el(id) { return document.getElementById(id); }
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  var GLYPH = { sure: '●', roughly: '◐', missing: '○', computed: '=', stale: '◌' };
-  var WORD = { sure: 'sure', roughly: 'roughly', missing: 'not entered', computed: 'worked out', stale: 'needs a look' };
+  var GLYPH = { sure: '●', roughly: '◐', missing: '○', computed: '=', stale: '◌', suggested: '◔' };
+  var WORD = { sure: 'sure', roughly: 'roughly', missing: 'not entered', computed: 'worked out', stale: 'needs a look', suggested: 'suggested, not yet yours' };
 
   /* ---- The target: five wedges by nine rings ------------------------------ */
   function polar(r, a) { var t = (a - 90) * Math.PI / 180; return [50 + r * Math.cos(t), 50 + r * Math.sin(t)]; }
@@ -204,8 +212,19 @@
       : href
         ? '<span class="val"><a href="' + esc(href) + '">' + (val ? esc(val) : (row.kind === 'lookup' ? 'Look it up' : 'Enter it')) + '</a></span>'
         : '<span class="val">' + esc(val) + '</span>';
+    var sug = st === 'missing' && !row.repeat ? SUGGESTED[row.id] : null;
+    if (sug && !sug.na) {
+      st = 'suggested';
+      valCell = '<span class="val is-suggested"><button type="button" class="slaf-btn slaf-btn--quiet use-it" data-use="' + esc(sug.key) + '">' + esc(sug.display) + ' · use it</button></span>';
+    } else if (sug && sug.na) {
+      st = 'suggested';
+      valCell = '<span class="val is-na">' + esc(sug.display) + '</span>';
+    }
     var out = '<li class="row is-' + st + '" data-row="' + esc(row.id) + '" data-status="' + st + '">'
       + '<span class="g" title="' + esc(WORD[st]) + '">' + GLYPH[st] + '</span>' + lab + valCell;
+    if (sug) {
+      out += '<span class="small how"><details><summary>How I guessed this</summary>' + esc(sug.how) + ' <span class="src">' + esc(sug.sources.join(', ')) + '</span></details></span>';
+    }
     if (st === 'computed') {
       var inputs = LedgerRows.inputsOf(row, Spine.getProfile(), TABLES);
       out += '<span class="small">' + esc(row.engine.split('.')[1] === 'netWorth' ? 'What you own less what you owe' : 'Worked out from ') + (row.engine.split('.')[1] === 'netWorth' ? ': ' : '')
@@ -255,8 +274,13 @@
     }
     el('spheres').innerHTML = html || '<p class="slaf-reason">No row matches that.</p>';
   }
+  function refreshSuggestions(h) {
+    SUGGESTED = {};
+    Suggest.suggestions(h, TABLES).forEach(function (s) { if (!s.itemId) SUGGESTED[s.rowId] = s; SUGGESTED[s.key] = s; });
+  }
   function render() {
     var h = Spine.getProfile();
+    refreshSuggestions(h);
     var st = Spheres.state(h, TABLES);
     paintTarget(h);
     paintLine(st);
@@ -264,12 +288,19 @@
   }
 
   el('q').addEventListener('input', function () { paintSpheres(Spheres.state(Spine.getProfile(), TABLES)); });
+  /* One tap turns a suggestion into an entered value, through its owner. */
+  el('spheres').addEventListener('click', function (ev) {
+    var b = ev.target.closest ? ev.target.closest('[data-use]') : null;
+    if (!b) return;
+    var s = SUGGESTED[b.getAttribute('data-use')];
+    if (s) Suggest.confirm(s);
+  });
   Spine.registerRoom('ledger');
   Spine.onChange(render);
   Progress.mountHeader('ledger');
   Progress.mount('ledger');
   SLAF.Backup.mount('#backup');
-  Reference.load(['ledgerRows', 'spheres', 'staleness']).then(function (t) {
+  Reference.load(['ledgerRows', 'spheres', 'staleness'].concat(Suggest.TABLES)).then(function (t) {
     TABLES = t || {};
     LedgerRows.use(TABLES.ledgerRows);
     Spheres.use(TABLES.spheres);

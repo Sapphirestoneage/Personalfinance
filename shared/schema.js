@@ -43,7 +43,7 @@
      beside the version in every footer and in every backup, so a phone
      showing an old page can be told apart from a bug. version.json carries
      the same string; `node tools/stamp-build.js` sets both to today. D-202. */
-  var BUILD = '2026-09-11 18:36Z';
+  var BUILD = '2026-09-11 18:59Z';
 
   /* ======================================================================
      System assumption defaults — SPEC.md §12.2 (RESOLVED: 7% return, 4% SWR)
@@ -2824,7 +2824,9 @@
      and Schema.meta are the one pair of accessors; the field map (id ->
      read, path -> ids) is registered by shared/ownership.js, which loads
      after this file. */
-  var SOURCES = ['typed', 'pasted', 'imported', 'screenshot', 'migrated', 'block-default', 'quote'];
+  /* 'suggested': a value the app guessed (shared/suggest.js) and the person
+     confirmed with one tap; it is entered, at confidence roughly. D-205. */
+  var SOURCES = ['typed', 'pasted', 'imported', 'screenshot', 'migrated', 'block-default', 'quote', 'suggested'];
   var CONFIDENCES = ['sure', 'roughly', 'unsure', 'unknown'];
   /* Rounding unit in cents for a figure built on inputs at this confidence:
      to the cent when sure, to the hundred when roughly or unsure, to the

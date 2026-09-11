@@ -4994,8 +4994,11 @@ section('Age, and the three that move');
   /* -- One write path for the figures that move ---------------------------- */
   {
     Spine.reset();
-    check('cash and investments declare a shared write path',
-      Ownership.writable().sort().join(','), 'cashSavings,investments');
+    /* D-057 gave cash and investments a shared write path; D-205 gave one
+       to every enterable row, so a confirmed suggestion, an inline ask or
+       the Express page can write through the owner. */
+    checkTrue('cash and investments declare a shared write path, and so does every enterable row now (D-205)',
+      Ownership.writable().indexOf('cashSavings') !== -1 && Ownership.writable().indexOf('investments') !== -1 && Ownership.writable().length >= 60);
     Ownership.write('cashSavings', 980000);
     check('writing cash creates the Tier 0 cash record', Schema.cashCents(Spine.getProfile()).value, 980000);
     Ownership.write('cashSavings', 990000);
@@ -5003,8 +5006,8 @@ section('Age, and the three that move');
     check('and there is exactly one cash asset', Spine.getProfile().assets.filter(a => a.category === 'cash').length, 1);
     checkTrue('it is liquid', Spine.getProfile().assets[0].liquid === true);
     let threw = false;
-    try { Ownership.write('dob', '1990-01-01'); } catch (e) { threw = true; }
-    checkTrue('a field with no shared path refuses rather than guessing', threw);
+    try { Ownership.write('netWorth', 1); } catch (e) { threw = true; }
+    checkTrue('a computed field with no shared path refuses rather than guessing', threw);
     const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
     checkTrue('Start Here writes cash through the same path', start.indexOf("Ownership.write('cashSavings'") !== -1);
     checkTrue('and no longer has its own asset writer', start.indexOf('function writeAsset') === -1);
@@ -5106,9 +5109,14 @@ section('Suggested, not stored');
   const Suggest = require(path.join(ROOT, 'shared/suggest.js'));
   ['show', 'clear', 'isSuggested', 'entered', 'all'].forEach(fn =>
     checkTrue(`Suggest exposes ${fn}()`, typeof Suggest[fn] === 'function'));
-  /* The whole guarantee: this file cannot write to the household. */
-  checkTrue('suggest.js never touches the spine', !/Spine\.|localStorage|updateProfile|upsert/.test(src));
-  checkTrue('and never requires it', !/require\(/.test(src));
+  /* The whole guarantee: the painting half cannot write to the household.
+     D-205 added the rules half below it; its ONE write is confirm(), which
+     goes through Ownership.write after tagging the write as suggested. */
+  const paintHalf = src.split('The rules (D-205)')[0];
+  checkTrue('the painting half of suggest.js never touches the spine', !/Spine\.|localStorage|updateProfile|upsert/.test(paintHalf));
+  checkTrue('and never requires it', !/require\(/.test(paintHalf));
+  const rulesHalf = src.split('The rules (D-205)')[1] || '';
+  checkTrue('the rules half writes in exactly one place, confirm(), through the owner', (rulesHalf.match(/Ownership\.write\(/g) || []).length === 1 && !/Spine\.(set|upsert|batch|updateProfile)/.test(rulesHalf) && /tagWrite\(\{ source: 'suggested', confidence: 'roughly' \}\)/.test(rulesHalf));
   checkTrue('focus clears the shown value so a blur reads empty', /addEventListener\('focus'[\s\S]{0,400}node\.value = ''/.test(src));
   checkTrue('show() refuses to paint over an entered value', /if \(!isSuggested\(node\) && String\(node\.value/.test(src));
   const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
@@ -10704,7 +10712,7 @@ section('15.1 / 15.10: as-of, source and confidence on every owned number (D-181
   check('...typed, from its room', Schema.meta(imported, 'cashSavings').source + '/' + Schema.meta(imported, 'cashSavings').room, 'typed/start');
   checkTrue('the migration is stamped once', !!imported.meta.fieldsMigratedAt);
   /* The vocabulary is fixed. */
-  check('seven sources', Schema.SOURCES.join(','), 'typed,pasted,imported,screenshot,migrated,block-default,quote');
+  check('eight sources, suggested last (D-205)', Schema.SOURCES.join(','), 'typed,pasted,imported,screenshot,migrated,block-default,quote,suggested');
   check('four confidences', Schema.CONFIDENCES.join(','), 'sure,roughly,unsure,unknown');
   checkTrue('meta.fields is catalogued', !!Schema.FIELDS['meta.fields']);
   checkTrue('the undo log skips the facts', fs.readFileSync(path.join(ROOT, 'shared/spine-v2.js'), 'utf8').indexOf("'meta.fields': true") > -1);
@@ -11722,7 +11730,7 @@ section('18.4 and 18.5: the Ledger room, the target and one line per row (D-185)
   checkTrue('...reading every DAITE money and situation path and writing nothing yet', room.daite.reads.length > 30 && room.daite.writes.length === 0);
   checkTrue('...and needing nothing, so it opens on an empty household', Array.isArray(room.needs) && room.needs.length === 0);
   const body = html.split('<body')[1];
-  checkTrue('the room reads the two tables through their modules, never the files', /Reference\.load\(\['ledgerRows', 'spheres', 'staleness'\]\)/.test(body) && !/ledger-rows\.json|spheres\.json/.test(body));
+  checkTrue('the room reads the two tables through their modules, never the files', /Reference\.load\(\['ledgerRows', 'spheres', 'staleness'\]\.concat\(Suggest\.TABLES\)\)/.test(body) && !/ledger-rows\.json|spheres\.json/.test(body));
   checkTrue('the target is five wedges by nine rings', /Spheres\.cells\(/.test(html) && /viewBox="0 0 100 100"/.test(html));
   checkTrue('one line under it: sphere N of 9, the virtue, rows left, minutes', /Sphere ' \+ s\.order \+ ' of 9, /.test(html) && /' row' \+ [^;]* \+ ' left, about '/.test(html) && /minutesWord/.test(html));
   checkTrue('rows group by sphere then letter, numbered inside the sphere', /LETTER_WORD/.test(html) && /' of ' \+ of/.test(html));
@@ -12224,6 +12232,137 @@ section('G1: local days, the build gate, persistence, automatic snapshots (D-204
         done();
       }
   }
+})();
+
+/* ==========================================================================
+   Phase A: the suggestion engine (D-205)
+   ========================================================================== */
+
+section('Phase A: suggestions, derived and never stored (D-205)');
+
+(function () {
+  const spinePath = path.join(ROOT, 'shared/spine-v2.js');
+  const ownPath = path.join(ROOT, 'shared/ownership.js');
+  const sugPath = path.join(ROOT, 'shared/suggest.js');
+  const lrPath = path.join(ROOT, 'shared/ledger-rows.js');
+  const Registry = require(path.join(ROOT, 'shared/registry.js'));
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const table = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8'));
+  const T = {};
+  const FILES = { ledgerRows: 'ledger-rows.json', zipPrefixes: 'zip_prefixes.json', uiBenefits: 'ui_benefits.json', savingsPresets: 'savings_presets.json', federalBrackets: 'federal_brackets_2026.json', stateBrackets: 'state_brackets_2026.json', protectionConventions: 'protection_conventions.json', debtRules: 'debt_rules.json', onepagerDefaults: 'onepager_defaults.json', retirementMilestones: 'retirement_milestones.json', cobraAca: 'cobra_aca_2024.json' };
+  Object.keys(FILES).forEach(k => { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', FILES[k]), 'utf8')); });
+
+  /* ---- The registry rows carry the new fields ------------------------- */
+  const rows = table.rows;
+  const SugSrc = require(sugPath);
+  check('exactly five first-round rows', rows.filter(r => r.round === 1).map(r => r.id).sort().join(','), 'cashSavings,dob,employmentStatus,grossAnnualIncome,zip');
+  checkTrue('every row has a door in D A I T E you', rows.every(r => ['D', 'A', 'I', 'T', 'E', 'you'].indexOf(r.door) !== -1));
+  checkTrue('every row has a level 1 to 4', rows.every(r => [1, 2, 3, 4].indexOf(r.level) !== -1));
+  checkTrue('every row says whether it moves', rows.every(r => typeof r.moves === 'boolean'));
+  const noUnlock = rows.filter(r => !r.unlocks || String(r.unlocks).trim().length < 8).map(r => r.id);
+  checkTrue('field budget: every row names the insight it unlocks (G2.10)', noUnlock.length === 0, noUnlock.join(', '));
+  const badRule = rows.filter(r => r.suggestFrom && !SugSrc.RULES[r.suggestFrom]).map(r => r.id + ':' + r.suggestFrom);
+  checkTrue('every suggestFrom names a rule that exists', badRule.length === 0, badRule.join(', '));
+  const badAsk = rows.filter(r => r.askIn && !Registry.byId(r.askIn)).map(r => r.id + ':' + r.askIn);
+  checkTrue('every askIn names a room in the registry', badAsk.length === 0, badAsk.join(', '));
+  checkTrue('the ZIP table is registered and sourced', Reference.TABLE_FILES.zipPrefixes === 'zip_prefixes.json' && T.zipPrefixes.verify === true && /USPS/.test(T.zipPrefixes.source));
+  checkTrue('every rule reads its numbers from data/, none inline', !/\b(869|0\.02|1500|2200|477)\b/.test(fs.readFileSync(sugPath, 'utf8').split('var RULES')[1].split('/* Rows a rule may read')[0]));
+
+  /* ---- The persona: 27, 12203, between jobs, last pay $95,000, $3,000 cash */
+  function fresh() {
+    const store = {};
+    global.localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; } };
+    [spinePath, ownPath, sugPath, lrPath].forEach(p => delete require.cache[require.resolve(p)]);
+    const Spine = require(spinePath), Own = require(ownPath), Sug = require(sugPath), LR = require(lrPath);
+    LR.use(table);
+    return { Spine, Own, Sug, LR, store };
+  }
+  function done() { [spinePath, ownPath, sugPath, lrPath].forEach(p => delete require.cache[require.resolve(p)]); delete global.localStorage; }
+  {
+    const { Spine, Own, Sug } = fresh();
+    const d = new Date(); d.setFullYear(d.getFullYear() - 27); d.setDate(1);
+    Own.write('dob', Schema.localDay(d));
+    Own.write('zip', '12203');
+    Own.write('employmentStatus', 'unemployed');
+    const p = Spine.getProfile().people[0];
+    Spine.upsertPerson({ id: p.id, unemployment: Object.assign({}, Schema.unemploymentOf(Spine.getProfile()), { lastGrossAnnualCents: 9500000 }) });
+    Own.write('cashSavings', 300000);
+    const h = Spine.getProfile();
+    const before = JSON.stringify(h);
+    const out = Sug.suggestions(h, T);
+    const by = {}; out.forEach(s => { by[s.rowId] = s; });
+    check('persona: state suggested NY', by.state && by.state.value, 'NY');
+    check('persona: unemployment suggested $869 a week', by.unemployment && by.unemployment.value, 86900);
+    checkTrue('persona: employer match and contribution marked N/A', by.employerMatch && by.employerMatch.na && by.contributionPercent && by.contributionPercent.na);
+    check('persona: filing status Single', by.filingStatus && by.filingStatus.value, 'single');
+    check('persona: buffer target 5.4 months', by.bufferMonths && by.bufferMonths.value, 5.4);
+    checkTrue('persona: at least 15 rows carrying suggestions (' + out.length + ')', out.length >= 15);
+    check('persona: nothing written as entered that the persona did not type', JSON.stringify(Spine.getProfile()), before);
+    checkTrue('the benefit leaned on the suggested state and says so', by.unemployment.dependsOn.indexOf('state') !== -1);
+    checkTrue('the marginal rate leaned on filing and state', by.marginalRate && by.marginalRate.dependsOn.indexOf('filingStatus') !== -1 && by.marginalRate.dependsOn.indexOf('state') !== -1);
+    /* Tom: every suggestion names its data/ file, and the file exists. */
+    const bad = out.filter(s => !s.how || !s.sources.length || !s.sources.every(f => /^data\/[a-z0-9_.-]+\.json$/.test(f) && fs.existsSync(path.join(ROOT, f))));
+    checkTrue('Tom: every suggested value has a how line naming an existing data/ file', bad.length === 0, bad.map(s => s.rowId).join(', '));
+    checkTrue('every suggestion is marked suggested, never sure', out.every(s => s.confidence === 'suggested'));
+    /* Empty ≠ zero: a row with no rule and no entry stays out of the list. */
+    checkTrue('a row with no rule is never suggested', !out.some(s => !rows.find(r => r.id === s.rowId).suggestFrom));
+    checkTrue('a row that is entered is never suggested (zip, cash)', !by.zip && !by.cashSavings);
+    /* Confirm: one tap, through the owner, tagged suggested / roughly. */
+    Sug.confirm(by.state);
+    check('confirm wrote the state through the owner', Spine.getProfile().state, 'NY');
+    const m = Schema.meta(Spine.getProfile(), 'state');
+    checkTrue('and stamped it source suggested, confidence roughly', m.source === 'suggested' && m.confidence === 'roughly');
+    const after = Sug.suggestions(Spine.getProfile(), T);
+    checkTrue('once confirmed, the state is no longer suggested and the benefit no longer leans on it', !after.some(s => s.rowId === 'state') && after.find(s => s.rowId === 'unemployment').dependsOn.length === 0);
+    check('confirming an N/A writes nothing', Sug.confirm(by.employerMatch), null);
+    Sug.confirm(by.unemployment);
+    check('confirming the weekly benefit lands on the person', Schema.unemploymentOf(Spine.getProfile()).benefitWeeklyCents, 86900);
+    /* Overlay: a formula may read the suggestions, and knows it did. */
+    const ov = Sug.overlay(Spine.getProfile(), T);
+    checkTrue('overlay applies the rest and lists what it used', ov.used.length >= 8 && ov.household.filingStatus === 'single' && ov.household.variableIncome.bufferMonths === 5.4);
+    check('overlay leaves the stored household alone', Spine.getProfile().filingStatus, null);
+    done();
+  }
+  {
+    const { Spine, Sug } = fresh();
+    check('an empty household gets no suggestions at all', Sug.suggestions(Spine.getProfile(), T).length, 0);
+    done();
+  }
+  /* A card with a balance and no minimum gets a rough minimum, per card. */
+  {
+    const { Spine, Own, Sug } = fresh();
+    Spine.ensurePrimaryPerson('You');
+    Spine.upsertDebt(Schema.createDebt({ id: 'd1', label: 'Visa', type: 'credit_card', balanceCents: 320000, rate: 0.24 }));
+    Spine.upsertDebt(Schema.createDebt({ id: 'd2', label: 'Car', type: 'auto', balanceCents: 900000, rate: 0.06 }));
+    Spine.upsertDebt(Schema.createDebt({ id: 'd3', label: 'Amex', type: 'credit_card', balanceCents: 50000, rate: 0.2, minPaymentCents: 2500 }));
+    const mins = Sug.suggestions(Spine.getProfile(), T).filter(s => s.rowId === 'debtMinPayment');
+    check('one suggestion, for the card without a minimum', mins.map(s => s.itemId).join(','), 'd1');
+    check('2% of $3,200 is $64, above the $25 floor', mins[0].value, 6400);
+    Sug.confirm(mins[0]);
+    check('confirming writes that card’s minimum', Spine.getProfile().debts.find(d => d.id === 'd1').minPaymentCents, 6400);
+    done();
+  }
+  /* Under 26: health cover offered as one tap. */
+  {
+    const { Spine, Own, Sug } = fresh();
+    const d = new Date(); d.setFullYear(d.getFullYear() - 22);
+    Own.write('dob', Schema.localDay(d));
+    const hc = Sug.forRow(Spine.getProfile(), T, 'healthCover');
+    checkTrue('under 26: a parent’s plan is offered as a one-tap question', hc && hc.value === 'parent' && /parent/.test(hc.ask));
+    done();
+  }
+  /* The writers: every non-computed row that the doors or Express may set has a shared write path. */
+  {
+    const { Own } = fresh();
+    const need = rows.filter(r => r.kind !== 'computed' && !/^prefs\./.test(r.path) && r.id !== 'futureIncome' && r.id !== 'age');
+    const missing = need.filter(r => !Own.FIELDS[r.id] || typeof Own.FIELDS[r.id].write !== 'function').map(r => r.id);
+    checkTrue('every enterable row writes through its owner', missing.length === 0, missing.join(', '));
+    const disagree = Own.writable().filter(id => { const o = Own.ownerOf(id); return o && o.agrees === false; });
+    checkTrue('and the registry lists every owner as a writer', disagree.length === 0, disagree.join(', '));
+    done();
+  }
+  const led = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('the Ledger shows a suggested row apart, with use it and the how line', /is-suggested/.test(led) && /use it/.test(led) && /How I guessed this/.test(led) && /Suggest\.confirm\(s\)/.test(led));
 })();
 
 /* ==========================================================================

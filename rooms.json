@@ -54,7 +54,10 @@
       ],
       "writes": [
         "totalDebt",
-        "monthlyDebtPayments"
+        "monthlyDebtPayments",
+        "debtBalance",
+        "debtRate",
+        "debtMinPayment"
       ],
       "requires": [],
       "dashboardNumber": "debtToIncome",
@@ -74,7 +77,8 @@
         "accommodationMonthly",
         "transportationMonthly",
         "wantsMonthly",
-        "therapyMonthly"
+        "therapyMonthly",
+        "annualLine"
       ],
       "requires": [],
       "dashboardNumber": null,
@@ -96,7 +100,9 @@
       "file": "rooms/income.html",
       "reads": [],
       "writes": [
-        "ledgerIncome"
+        "ledgerIncome",
+        "incomeType",
+        "paySurvives"
       ],
       "requires": [],
       "dashboardNumber": null,
@@ -172,7 +178,11 @@
       "writes": [
         "otherAssets",
         "confidenceWeightedNetWorth",
-        "netWorth"
+        "netWorth",
+        "assetValue",
+        "assetCharacter",
+        "assetTier",
+        "assetCostBasis"
       ],
       "requires": [],
       "dashboardNumber": "netWorth",
