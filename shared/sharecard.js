@@ -33,10 +33,10 @@
 })(typeof self !== 'undefined' ? self : null, function (D) {
   'use strict';
   var Money = D.Money, Schema = D.Schema, Tier0 = D.Tier0;
-  var TYPES = ['fiDate', 'savingsRate', 'debtFree', 'runway', 'understanding'];
+  var TYPES = ['fiDate', 'savingsRate', 'debtFree', 'runway', 'understanding', 'wrapped', 'unlearn'];
   /* The only fields a card may carry. Everything is a ratio, a percent, a
      count of months or years, or a year; never cents. */
-  var ALLOWED = { t: 'string', y: 'number', m: 'number', p: 'number', d: 'string', at: 'string' };
+  var ALLOWED = { t: 'string', y: 'number', m: 'number', p: 'number', d: 'string', at: 'string', h: 'number', n: 'number', r: 'string' };
   function monthWord(ym) { var m = Number(String(ym).slice(5, 7)); return ['January','February','March','April','May','June','July','August','September','October','November','December'][m - 1] + ' ' + String(ym).slice(0, 4); }
   function addMonths(ym, n) { var y = Number(ym.slice(0, 4)), m = Number(ym.slice(5, 7)) - 1 + n; return (y + Math.floor(m / 12)) + '-' + ('0' + ((m % 12) + 1)).slice(-2); }
   function make(type, household, tables, opts) {
@@ -94,9 +94,30 @@
       card.line = 'I understand ' + u.percent + '% of my financial picture.';
       card.ok = true; return card;
     }
+    if (type === 'wrapped') {
+      /* I1: the four lines, from the year's snapshots; days, hours, a
+         percent and a count. Needs opts.wrapped from engines/wrapped.js. */
+      var W = o.wrapped;
+      if (!W || !W.ok) return Object.assign(card, { reason: 'The year needs a snapshot from earlier in it.' });
+      var byId = {}; W.lines.forEach(function (l) { byId[l.id] = l; });
+      card.fields.y = W.year; card.fields.d = String(byId.freedom.value); card.fields.h = byId.priciest.value; card.fields.p = byId.earned.value; card.fields.n = byId.learned.value;
+      card.title = 'Money Wrapped ' + W.year;
+      card.line = W.lines.map(function (l) { return l.text; }).join(' ');
+      card.ok = true; return card;
+    }
+    if (type === 'unlearn') {
+      /* I5: the three rules most worth unlearning, by id; names only. */
+      var ids = (o.unlearn || []).slice(0, 3);
+      if (!ids.length) return Object.assign(card, { reason: 'Nothing to unlearn yet.' });
+      card.fields.r = ids.join(',');
+      card.title = 'Three rules I let go of';
+      card.line = ids.map(function (id) { return RULE_NAMES[id] || id; }).join(' · ');
+      card.ok = true; return card;
+    }
     return Object.assign(card, { reason: 'No such card.' });
   }
-  function all(household, tables, opts) { return TYPES.map(function (t) { return make(t, household, tables, opts); }).filter(function (c) { return c.ok; }); }
+  var RULE_NAMES = { four_percent: 'The 4% rule', fifty_thirty_twenty: '50/30/20', die_with_zero: 'Die With Zero', max_401k_first: 'Max your 401(k) first', six_months: 'Six months of expenses', pay_off_mortgage: 'Pay off the mortgage early', never_touch_ef: 'Never touch the emergency fund', save_ten_percent: 'Save 10%', hundred_minus_age: '100 minus your age in stocks' };
+  function all(household, tables, opts) { return TYPES.filter(function (t) { return t !== 'wrapped' && t !== 'unlearn'; }).map(function (t) { return make(t, household, tables, opts); }).filter(function (c) { return c.ok; }); }
   function clean(fields) {
     var out = {};
     Object.keys(fields || {}).forEach(function (k) { if (ALLOWED[k] && typeof fields[k] === ALLOWED[k]) out[k] = fields[k]; });
@@ -116,6 +137,12 @@
     if (f.t === 'debtFree') return { title: 'Debt-free: ' + (f.d ? monthWord(f.d) : 'soon'), line: typeof f.m === 'number' ? f.m + ' month' + (f.m === 1 ? '' : 's') + ' at the current pace.' : '' };
     if (f.t === 'runway') return { title: 'Runway: ' + f.m + ' months', line: 'Cash covers ' + f.m + ' month' + (f.m === 1 ? '' : 's') + ' of spending.' };
     if (f.t === 'understanding') return { title: f.p + '% of the picture', line: 'I understand ' + f.p + '% of my financial picture.' };
+    if (f.t === 'wrapped') {
+      var days = Number(f.d);
+      return { title: 'Money Wrapped ' + (f.y || ''), line: (isNaN(days) ? '' : (days >= 0 ? days + ' days of freedom bought. ' : Math.abs(days) + ' days of freedom given back. '))
+        + (typeof f.h === 'number' ? 'The priciest recurring cost took ' + f.h + ' hours of work. ' : '') + (typeof f.p === 'number' ? 'Biggest earned change: ' + (f.p >= 0 ? 'up ' : 'down ') + Math.abs(f.p) + '%. ' : '') + (typeof f.n === 'number' ? f.n + ' number' + (f.n === 1 ? '' : 's') + ' learned.' : '') };
+    }
+    if (f.t === 'unlearn') return { title: 'Three rules I let go of', line: String(f.r || '').split(',').filter(Boolean).map(function (id) { return RULE_NAMES[id] || id; }).join(' · ') };
     return { title: 'A progress card', line: '' };
   }
   function link(card, base) { return (base || 'rooms/progress-card.html') + '#c=' + encode(card); }
@@ -138,5 +165,5 @@
     });
     return found;
   }
-  return { TYPES: TYPES, ALLOWED: ALLOWED, make: make, all: all, encode: encode, decode: decode, render: render, link: link, leaks: leaks, clean: clean };
+  return { TYPES: TYPES, ALLOWED: ALLOWED, RULE_NAMES: RULE_NAMES, make: make, all: all, encode: encode, decode: decode, render: render, link: link, leaks: leaks, clean: clean };
 });

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-11 20:37Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Money Wrapped · SPARKS</title>
+<meta name="description" content="Your year in four lines: days of freedom bought, the priciest recurring cost in hours of work, the biggest earned change, and how many numbers you learned. No amounts."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. I1 (D-213).
+
+  1. READS   The year's snapshots (their frozen raw inputs), the household
+             now, the real hourly wage, the tax tables.
+  2. WRITES  Nothing. A card, on demand and every December.
+  3. CALLS   engines/wrapped.js, which runs engines/tier0.js on the year's
+             first snapshot, engines/hourly.js, engines/sincelast.js.
+  4. EMPTY   No earlier snapshot this year: each line says what it needs.
+             Nothing is invented for a year with one snapshot.
+  5. CONFIG  None; the year can be picked.
+
+  LIVE-FORM: built once. One select, built in the HTML.
+-->
+<style>
+  .wrap-card { border: 2px solid var(--color-accent); border-radius: var(--radius-lg, 16px); padding: var(--space-5) var(--space-4); background: var(--color-surface-raised); }
+  .wrap-card h2 { font-family: var(--font-display); font-size: var(--text-2xl); margin: 0 0 var(--space-3); text-align: center; }
+  .wrap-card ol { list-style: none; margin: 0; padding: 0; }
+  .wrap-card li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); font-size: var(--text-md); }
+  .wrap-card li:first-child { border-top: none; }
+  .wrap-card li .big { font-family: var(--font-display); font-size: var(--text-xl); display: block; }
+  .wrap-card li.is-missing { color: var(--color-text-muted); font-size: var(--text-sm); }
+  .acts { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; margin-top: var(--space-3); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Money Wrapped</h1>
+  <p class="room-lede">Your year in four lines. Days, hours, a percent and a count; never an amount, so the card is safe to share.</p>
+</header>
+
+<main class="slaf-wrap">
+  <section class="slaf-card" id="card">
+    <div class="acts"><label for="in-year" class="slaf-hint" style="margin:0">Year</label><select id="in-year" aria-label="Year"></select></div>
+    <div class="wrap-card" style="margin-top:var(--space-3)"><h2 id="w-title"></h2><ol id="w-lines"></ol></div>
+    <div class="acts"><button type="button" class="slaf-btn" id="btn-copy" hidden>Copy the card link</button><span class="slaf-hint" id="copied" hidden>Copied</span><span class="slaf-hint" id="w-note"></span></div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Everything stays in this browser;
+    the card link holds days, hours, a percent and a count, and nothing else.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../shared/levers.js"></script>
+<script src="../shared/daite.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../engines/debt.js"></script>
+<script src="../shared/staleness.js"></script>
+<script src="../shared/ledger-rows.js"></script>
+<script src="../engines/sincelast.js"></script>
+<script src="../engines/wrapped.js"></script>
+<script src="../shared/sharecard.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Wrapped = SLAF.Wrapped, ShareCard = SLAF.ShareCard, LedgerRows = SLAF.LedgerRows;
+  var ROOM_ID = 'wrapped';
+  var TABLES = null, LAST = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  (function years() {
+    var now = Number(Schema.localDay().slice(0, 4));
+    var seen = {};
+    Spine.listSnapshots().forEach(function (s) { if (s && s.timestamp) seen[s.timestamp.slice(0, 4)] = true; });
+    seen[String(now)] = true;
+    el('in-year').innerHTML = Object.keys(seen).sort().reverse().map(function (y) { return '<option value="' + esc(y) + '">' + esc(y) + '</option>'; }).join('');
+    el('in-year').value = String(now);
+  })();
+  function render() {
+    if (!TABLES) return;
+    var y = Number(el('in-year').value);
+    LAST = Wrapped.year(Spine.getProfile(), Spine.listSnapshots(), TABLES, { year: y });
+    el('w-title').textContent = 'Money Wrapped ' + y;
+    el('w-lines').innerHTML = LAST.lines.map(function (l) {
+      var big = l.value === null ? '' : (l.unit === 'days' ? Math.abs(l.value) + ' days' : l.unit === 'hours' ? l.value + ' hours' : l.unit === 'percent' ? Math.abs(l.value) + '%' : l.value + (l.value === 1 ? ' number' : ' numbers'));
+      return '<li class="' + (l.value === null ? 'is-missing' : '') + '">' + (big ? '<span class="big">' + esc(big) + '</span>' : '') + esc(l.text) + '</li>';
+    }).join('');
+    el('btn-copy').hidden = !LAST.ok;
+    el('w-note').textContent = LAST.ok ? '' : (LAST.snapshots ? 'This year has ' + LAST.snapshots + ' snapshot' + (LAST.snapshots === 1 ? '' : 's') + '; the lines that need an earlier one say so.' : 'No snapshot this year yet. Freeze one on the dashboard or finish a Refresh, and come back.');
+  }
+  el('btn-copy').addEventListener('click', function () {
+    var card = ShareCard.make('wrapped', Spine.getProfile(), TABLES, { wrapped: LAST });
+    if (!card.ok) return;
+    var href = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'progress-card.html#c=' + ShareCard.encode(card);
+    var done = function () { el('copied').hidden = false; setTimeout(function () { el('copied').hidden = true; }, 1500); };
+    try { navigator.clipboard.writeText(href).then(done, done); } catch (e) { done(); }
+  });
+  el('in-year').addEventListener('change', render);
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+  Reference.load().then(function (t) { TABLES = t; LedgerRows.use(t.ledgerRows); render(); }).catch(function () { el('w-note').textContent = 'The reference tables could not be loaded.'; });
+})();
+</script>
+</body>
+</html>

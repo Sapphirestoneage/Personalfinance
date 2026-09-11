@@ -13175,6 +13175,39 @@ every card leak-scanned), render and features gates on the three rooms,
 the phone walk: the footer reads 0 bytes, the card opens from its link
 with no amount on it.
 
+## D-213 — I1, I3, I4, I5: Money Wrapped, the rank guess, the coast date, the Unlearning Quiz
+
+**Why.** The brief's Phase I, the shareable ideas; I1 has a real
+deadline, December 1, 2026. I2 (the cost of not knowing) follows on its
+own; I6 waits for Eli's taxonomy, I7 for the H6 data, and I8 for the
+roots-to-branches spine, which is not built yet (§11, task open).
+
+**Decision.** `engines/wrapped.js` and `rooms/wrapped.html`: the year's
+first snapshot re-run through the FI engine against now gives days of
+freedom; the priciest recurring cost is priced in hours at the real
+hourly wage; the biggest earned change is a percent of where it started
+and the numbers learned a count, both from `engines/sincelast.js`; every
+December and on demand, shareable as a card with days, hours, a percent
+and a count only. `engines/coast.js` and `rooms/coast-date.html`: a
+month-by-month walk, its own formula, real return from the assumptions,
+today's dollars, "not reachable at this pace" said plainly, plus the
+reverse view. `engines/rankguess.js` and `rooms/rank-guess.html`: a
+slider guess before the survey band, bands never ranks, below the median
+the copy names what the next band takes; the guess is a preference.
+The Unlearning room gains the five-question quiz, each question skipped
+when the Ledger has the reading, answers page-local, three rules most
+worth letting go, shareable as names only. Two card types join
+`shared/sharecard.js` with hours, counts and rule ids on the field list.
+
+**Replaces or removes.** Nothing.
+
+**Stored shape.** No change to the household. Prefs gain `rank.guess`.
+
+**Verified.** `node test/run.js` (the coast date by hand: 60 months at no
+growth, coast now when the pot doubles on its own, never at 2%; the
+persona year gives four lines with no cents value), render and features
+gates on the three rooms and Unlearning, the phone walk.
+
 ---
 
 # The Dungeons & Dividends entries

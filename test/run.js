@@ -10246,11 +10246,11 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
   check('...sixteen of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 16);
   checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses)\b/.test(w))));
-  check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,savings-rate,ratios,health,foo-ladder,fire,fire-lab,statements,next-hundred');
+  check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,savings-rate,ratios,health,foo-ladder,fire,fire-lab,statements,next-hundred,coast-date,rank-guess');
   checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
   check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
   check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree,stacker,exercises');
-  check('Upkeep, with Front Doors and the Walk-Through kept apart (not merged this pass)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,refresh,history,settings,get-help,doors,walk,ledger,progress-card');
+  check('Upkeep, with Front Doors and the Walk-Through kept apart (not merged this pass)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,refresh,history,settings,get-help,doors,walk,wrapped,ledger,progress-card');
   checkTrue('every room has aliases to search by', Registry.all().every(r => Array.isArray(r.aliases) && r.aliases.length >= 2));
   checkTrue('"car" finds What A Car Costs', Registry.matches(Registry.byId('car'), 'car') && Registry.matches(Registry.byId('car'), 'VEHICLE'));
   checkTrue('...and not FIRE', !Registry.matches(Registry.byId('fire'), 'car'));
@@ -13005,11 +13005,12 @@ section('H4, H5, H7, H8: the waterfall, does the rule apply, the receipt, share 
   /* -- H8: share progress, not balances ----------------------------------------- */
   const hd = Demo.build();
   const cards = ShareCard.all(hd, T, { previousYears: 20, previousRate: 0.18 });
-  check('every share type can be made from the persona', cards.map(c => c.type).join(','), ShareCard.TYPES.join(','));
+  check('every household share type can be made from the persona', cards.map(c => c.type).join(','), 'fiDate,savingsRate,debtFree,runway,understanding');
   let leaked = [];
   cards.forEach(c => { const l = ShareCard.leaks(c.title + ' ' + c.line + ' ' + ShareCard.link(c) + ' ' + JSON.stringify(c.fields), hd); if (l.length) leaked.push(c.type + ':' + l.join('|')); });
   checkTrue('no cents value from the household appears in any link or card', leaked.length === 0, leaked.join('; '));
-  checkTrue('the payload can only carry ratios, percents, months and years: no cents key exists', Object.keys(ShareCard.ALLOWED).every(k => ['t', 'y', 'm', 'p', 'd', 'at'].indexOf(k) >= 0));
+  checkTrue('the payload can only carry ratios, percents, months, years, hours, counts and rule ids: no cents key exists', Object.keys(ShareCard.ALLOWED).every(k => ['t', 'y', 'm', 'p', 'd', 'at', 'h', 'n', 'r'].indexOf(k) >= 0));
+  check('the five household cards, from the persona', cards.length, 5);
   const hacked = ShareCard.encode({ fields: { t: 'runway', m: 3, cents: 950000, balance: 'lots' } });
   check('a field not on the list is dropped before it can be encoded', JSON.stringify(ShareCard.decode('#c=' + hacked)), '{"t":"runway","m":3}');
   check('an unknown card type is refused', ShareCard.decode('#c=' + ShareCard.encode({ fields: { t: 'balances', p: 1 } })), null);
@@ -13019,6 +13020,79 @@ section('H4, H5, H7, H8: the waterfall, does the rule apply, the receipt, share 
   checkTrue('a card round-trips through its link', ShareCard.render(ShareCard.decode(ShareCard.link(fi).split('#')[1])).line === fi.line);
   checkTrue('the leak scanner itself catches a balance', ShareCard.leaks('you have $9,500 in cash', hd).length >= 1);
   checkTrue('the doors home links to the card, which stores nothing', /progress-card\.html/.test(fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8')) && !/localStorage|Spine\.(set|upsert|updateProfile)/.test(fs.readFileSync(path.join(ROOT, 'rooms/progress-card.html'), 'utf8').split('<script>')[1] || ''));
+})();
+
+/* ==========================================================================
+   I1, I3, I4, I5: Money Wrapped, the rank guess, the coast date, the quiz (D-213)
+   ========================================================================== */
+section('I1, I3, I4, I5: Money Wrapped, where do you think you rank, your coast date, the Unlearning Quiz (D-213)');
+(function () {
+  const Wrapped = require(path.join(ROOT, 'engines/wrapped.js'));
+  const Coast = require(path.join(ROOT, 'engines/coast.js'));
+  const RankGuess = require(path.join(ROOT, 'engines/rankguess.js'));
+  const ShareCard = require(path.join(ROOT, 'shared/sharecard.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+  LR.use(T.ledgerRows);
+
+  /* -- I1: a persona year produces all four lines with no cents value anywhere */
+  const y = Number(Schema.localDay().slice(0, 4));
+  const early = Demo.build();
+  early.assets = early.assets.map(a => Object.assign({}, a, { valueCents: a.category === 'investment' ? 4000000 : a.valueCents }));
+  const raw = { people: early.people, assets: early.assets, debts: early.debts, expenses: early.expenses, filingStatus: early.filingStatus, state: early.state, retirement: early.retirement };
+  const snaps = [{ id: 's1', timestamp: y + '-01-15T12:00:00.000Z', rawInputs: raw, fields: { cashSavings: 950000, investments: 4000000, netWorth: 2790000, totalDebt: 2160000 }, fieldMeta: {} },
+                 { id: 's0', timestamp: (y - 1) + '-12-20T12:00:00.000Z', rawInputs: raw, fields: {}, fieldMeta: {} }];
+  const now = Demo.build();
+  now.people[0].workProfile = Object.assign({}, now.people[0].workProfile || {}, { hoursPerWeek: 40, commuteMinutesPerDay: 30 });
+  const W = Wrapped.year(now, snaps, T, { year: y });
+  check('the year is picked and only its snapshots count', W.year + ':' + W.snapshots, y + ':1');
+  check('four lines', W.lines.map(l => l.id).join(','), 'freedom,priciest,earned,learned');
+  checkTrue('every line has a value: days, hours, a percent, a count', W.ok, JSON.stringify(W.lines.map(l => l.id + '=' + l.value)));
+  checkTrue('days of freedom: investments grew from 40k to 48k since January, so the FI date moved closer', W.lines[0].value > 0 && /days of freedom bought/.test(W.lines[0].text));
+  checkTrue('the priciest recurring cost is rent, in hours of work', /rent or mortgage/.test(W.lines[1].text) && W.lines[1].value > 100);
+  checkTrue('the biggest earned change is a percent, not an amount', /up \d+%|down \d+%/.test(W.lines[2].text));
+  const wText = W.lines.map(l => l.text).join(' ');
+  checkTrue('no cents value from the household appears on the card', ShareCard.leaks(wText, now).length === 0, ShareCard.leaks(wText, now).join(','));
+  const wc = ShareCard.make('wrapped', now, T, { wrapped: W });
+  checkTrue('the wrapped card encodes days, hours, a percent and a count only', wc.ok && ['t', 'at', 'y', 'd', 'h', 'p', 'n'].every(k => k in wc.fields) && ShareCard.leaks(ShareCard.link(wc), now).length === 0);
+  checkTrue('and renders from its link', /days of freedom bought/.test(ShareCard.render(ShareCard.decode(ShareCard.link(wc).split('#')[1])).line));
+  const W0 = Wrapped.year(now, [], T, { year: y });
+  checkTrue('a year with no earlier snapshot says what each line needs, never invents', !W0.ok && W0.lines.every(l => l.value === null || l.id === 'priciest') && W0.missing.length >= 1);
+  checkTrue('the room exists, reads only, and is shelved everywhere', Registry.byId('wrapped') && Registry.byId('wrapped').daite.writes.length === 0 && JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts.every(l => l.groups.some(g => g.rooms.indexOf('wrapped') >= 0)));
+
+  /* -- I4: the coast date, by hand ------------------------------------------------- */
+  const hc = Schema.createHousehold(); hc.people = [Schema.createPerson({ role: 'adult', dob: '1996-06-01' })];
+  check('no growth: $100k plus $12k a year reaches $160k in exactly 60 months', Coast.date(hc, T, { targetAge: 60, returnReal: 0, fiNumberCents: 16000000, investmentsCents: 10000000, annualContributionCents: 1200000, age: 30 }).months, 60);
+  checkTrue('a pot that doubles by the target age on its own: coast now', Coast.date(hc, T, { targetAge: 40, returnReal: Math.pow(2, 1 / 10) - 1, fiNumberCents: 20000000, investmentsCents: 10000000, annualContributionCents: 0, age: 30 }).reachedNow === true);
+  const never = Coast.date(hc, T, { targetAge: 40, returnReal: 0.02, fiNumberCents: 20000000, investmentsCents: 10000000, annualContributionCents: 0, age: 30 });
+  checkTrue('not reachable at this pace says so, never a far-off date', never.neverAtThisPace === true && never.months === null);
+  check('the reverse view: $100k at 2% real for 10 years', never.noMoreContributions.atTargetAgeCents, Math.round(10000000 * Math.pow(1.02, 10)));
+  const c2 = Coast.date(hc, T, { targetAge: 60, returnReal: 0.05, fiNumberCents: 100000000, investmentsCents: 10000000, annualContributionCents: 1200000, age: 30 });
+  checkTrue('with growth the coast date comes before the target and the pot at coast, left alone, reaches the number', c2.months > 0 && c2.months < 360 && Coast.grow(c2.potAtCoastCents, 0.05, 360 - c2.months) >= 100000000 - 1);
+  checkTrue('no date of birth: incomplete, named', !Money.isOk(Coast.date(Schema.createHousehold(), T, {})) && Coast.date(Schema.createHousehold(), T, {}).missing.indexOf('dob') >= 0);
+  checkTrue('the target age defaults to the coast default in data/fire_variants.json', Coast.date(hc, T, { fiNumberCents: 100000000, investmentsCents: 10000000, annualContributionCents: 1200000, age: 30 }).targetAge === T.fireVariants.defaults.coastTargetAge);
+  checkTrue('its own formula: engines/coast.js never calls the FIRE engine', !/Fire\./.test(fs.readFileSync(path.join(ROOT, 'engines/coast.js'), 'utf8')));
+
+  /* -- I3: the guess beside the band ------------------------------------------------ */
+  const hd = Demo.build();
+  const rg = RankGuess.compare(80, hd, T);
+  check('bands, never ranks: the guess band', rg.guess.label, 'the top quarter');
+  check('the survey band for the persona (under 35, about the 48th percentile)', rg.real.label, 'below the middle');
+  check('the direction of the miss', rg.direction, 'guessedHigher');
+  checkTrue('below the median the copy says what the next band takes, never how far behind', /The next band, above the middle, takes about \$[\d,]+ more\./.test(rg.line) && !/behind|only|just/.test(rg.line));
+  checkTrue('a right guess says so', RankGuess.compare(40, hd, T).same === true);
+  checkTrue('no date of birth: the reveal says what it needs', RankGuess.compare(50, Schema.createHousehold(), T).status === 'incomplete');
+  checkTrue('the guess is a preference, never a household field', /Prefs\.set\('rank\.guess'/.test(fs.readFileSync(path.join(ROOT, 'rooms/rank-guess.html'), 'utf8')) && !/Ownership\.write|Spine\.(set|upsert)/.test(fs.readFileSync(path.join(ROOT, 'rooms/rank-guess.html'), 'utf8')));
+
+  /* -- I5: the quiz ------------------------------------------------------------------ */
+  const uh = fs.readFileSync(path.join(ROOT, 'rooms/unlearning.html'), 'utf8');
+  checkTrue('five questions, each skipped when the Ledger has the answer', (uh.match(/\{ id: '[a-zA-Z]+', ask: /g) || []).length === 5 && /R\[q\.id\] === null \|\| R\[q\.id\] === undefined/.test(uh));
+  checkTrue('answers stay on the page: no write', /Answers stay on this page/.test(uh) && !/Spine\.set\('quiz|Ownership\.write\(/.test(uh.split('function runQuiz')[1].split('function paintRules')[0]));
+  const uc = ShareCard.make('unlearn', hd, T, { unlearn: ['save_ten_percent', 'hundred_minus_age', 'six_months'] });
+  check('the unlearn card lists three rules by name, no numbers', uc.line, 'Save 10% · 100 minus your age in stocks · Six months of expenses');
+  checkTrue('and its link carries ids only', /^[a-z_,]+$/.test(ShareCard.decode(ShareCard.link(uc).split('#')[1]).r));
 })();
 
 /* ==========================================================================

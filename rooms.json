@@ -567,6 +567,32 @@
       "order": 25
     },
     {
+      "id": "coast-date",
+      "title": "Your Coast Date",
+      "file": "rooms/coast-date.html",
+      "reads": [
+        "dob",
+        "investments",
+        "monthlyExpenses"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 25.5
+    },
+    {
+      "id": "rank-guess",
+      "title": "Where Do You Think You Rank?",
+      "file": "rooms/rank-guess.html",
+      "reads": [
+        "dob"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 25.7
+    },
+    {
       "id": "runway",
       "title": "The Runway",
       "file": "rooms/runway.html",
@@ -1055,6 +1081,19 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 51
+    },
+    {
+      "id": "wrapped",
+      "title": "Money Wrapped",
+      "file": "rooms/wrapped.html",
+      "reads": [
+        "investments",
+        "monthlyExpenses"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 51.5
     },
     {
       "id": "doors",

@@ -30,7 +30,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **student-loans** — Student Loan Decision · 268 lines · engines: projection, tier0, debt, studentloans, hourly · owns: loanPlan, loanExtra, idrShare, forgivenessYears · D-120
 - **calendar** — Money Calendar & Pay-Later · 269 lines · engines: projection, tier0, hourly, income, selfemployed, ledger, cashflow, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-130, D-121
 
-## Scorecard (9)
+## Scorecard (11)
 
 - **financial-snapshot** — Financial Snapshot · 863 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath · D-056, D-036, D-008
 - **statements** — Your Statements · 385 lines · engines: projection, tier0, cashflow, statements · D-156
@@ -40,6 +40,8 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **ratios** — Every Ratio · 410 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios · D-143, D-139, D-136
 - **foo-ladder** — FOO Ladder · 77 lines · engines: projection, tier0 · D-058, D-054, D-007
 - **next-hundred** — Your Next $100 · 132 lines · engines: projection, tier0, foo, next100 · D-211
+- **coast-date** — Your Coast Date · 113 lines · engines: projection, tier0, coast · D-213
+- **rank-guess** — Where Do You Think You Rank? · 115 lines · engines: projection, tier0, rankguess · D-213
 - **health** — The Score · 375 lines · engines: projection, tier0, cashflow, foo, fire, statement, benchmarks, ratios, health · D-143, D-081
 
 ## Decisions (23)
@@ -80,7 +82,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **buckets** — Time Buckets · 264 lines · engines: projection, tier0, cashflow, ratios, hourly, buckets · owns: bucketsPlanned · D-116
 - **dreamline** — Price the Dream · 239 lines · engines: projection, tier0, hourly, dreamline · owns: dreamsMonthly · D-101
 - **reversibility** — Can It Be Undone · 329 lines · engines: projection, tier0, cashflow, hourly, events, reversibility · owns: reversibilityDecision · D-101
-- **unlearning** — Unlearning · 317 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules · owns: unlearningDropped · D-212, D-119, D-101
+- **unlearning** — Unlearning · 380 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules · owns: unlearningDropped · D-213, D-212, D-119
 
 ## Level Up (3)
 
@@ -88,10 +90,11 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **skill-tree** — The Skill Tree · 610 lines · engines: projection, tier0, foo, skilltree · owns: skillsDone · D-141, D-140, D-139
 - **exercises** — Exercises · 211 lines · engines: projection, tier0, foo, skilltree, income, selfemployed, tax, fire, statement, vpw, decumulation, cashflow, events, exercises · owns: exercisesDone · D-141, D-139, D-136
 
-## Upkeep (9)
+## Upkeep (10)
 
 - **get-help** — Get Help (utility) · 121 lines · no engines · D-097
 - **history** — History · 231 lines · engines: projection, tier0, hourly, foo, cashflow, fire, statement, benchmarks, ratios, events, skills, history · owns: historyCompareTo · D-122, D-101
+- **wrapped** — Money Wrapped · 130 lines · engines: projection, tier0, selfemployed, tax, hourly, debt, sincelast, wrapped · D-213
 - **doors** — Front Doors (utility) · 410 lines · engines: layouts · D-153
 - **walk** — The Walk-Through (utility) · 280 lines · no engines · D-169, D-149
 - **data** — Your Data (utility) · 493 lines · engines: tax · D-125

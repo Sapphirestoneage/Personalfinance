@@ -1506,6 +1506,7 @@
         { id: 'chart',       label: 'Applies, past it, not yet' },
         { id: 'inputs',      label: 'Let go' },
         { id: 'rules',       label: 'Does it apply to you now?' },
+        { id: 'quiz',        label: 'The Unlearning Quiz' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
         { id: 'reading',     label: 'What this reads' }
@@ -1741,6 +1742,54 @@
       { id: 'card',  label: 'The card' },
       { id: 'make',  label: 'Make one' }
     ]
+  });
+
+  /* Money Wrapped (I1, D-213): the year in four lines from the year's
+     snapshots, days, hours, a percent and a count. Every December and
+     on demand. Reads only. */
+  ROOMS.push({
+    id: 'wrapped',
+    group: 'upkeep', aliases: ['wrapped', 'year in review', 'money wrapped', 'december'],
+    kind: 'read',
+    needs: ['investments', 'monthlyExpenses'],
+    order: 51.5,
+    title: 'Money Wrapped',
+    blurb: 'Your year in four lines: days of freedom bought, the priciest recurring cost in hours of work, the biggest earned change, and how many numbers you learned. No amounts, so it is safe to share.',
+    href: 'rooms/wrapped.html',
+    tier: 1,
+    tags: ['cashflow'],
+    daite: { reads: ['assets.invested', 'expenses', 'income.grossAnnualCents'], writes: [] },
+    subsections: [{ id: 'card', label: 'The year' }]
+  });
+  /* Your Coast Date (I4, D-213): its own formula, not a FIRE variant. */
+  ROOMS.push({
+    id: 'coast-date',
+    group: 'scorecard', aliases: ['coast', 'coast date', 'stop saving', 'coast fire date'],
+    kind: 'read',
+    needs: ['dob', 'investments', 'monthlyExpenses'],
+    order: 25.5,
+    title: 'Your Coast Date',
+    blurb: 'The earliest date you could stop saving for retirement and still reach the FI number by your target age, in today’s dollars; and what today’s money grows to with nothing more added.',
+    href: 'rooms/coast-date.html',
+    tier: 1,
+    tags: ['cashflow'],
+    daite: { reads: ['assets.invested', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: [] },
+    subsections: [{ id: 'date', label: 'Coast date' }, { id: 'reverse', label: 'The reverse view' }]
+  });
+  /* Where Do You Think You Rank? (I3, D-213): the guess before the survey. */
+  ROOMS.push({
+    id: 'rank-guess',
+    group: 'scorecard', aliases: ['rank', 'guess', 'percentile', 'dysmorphia', 'where do I rank'],
+    kind: 'explore',
+    needs: ['dob'],
+    order: 25.7,
+    title: 'Where Do You Think You Rank?',
+    blurb: 'Guess where your net worth sits for your age on a slider, then see the guess beside the survey band. Bands, never ranks; no shame words.',
+    href: 'rooms/rank-guess.html',
+    tier: 1,
+    tags: ['cashflow'],
+    daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'you.dob'], writes: [] },
+    subsections: [{ id: 'guess', label: 'Your guess' }, { id: 'reveal', label: 'Guess beside survey' }]
   });
 
   /* `needs` lists the shared fields a room reads before it can show its main

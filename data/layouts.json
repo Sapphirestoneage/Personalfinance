@@ -33,12 +33,14 @@
             "budget",
             "variance",
             "financial-snapshot",
+            "rank-guess",
             "statements",
             "statement",
             "reachable",
             "savings-rate",
             "sleep-at-night",
             "fire",
+            "coast-date",
             "fire-lab",
             "real-hourly-wage",
             "hassle",
@@ -89,7 +91,8 @@
             "unlearning",
             "student-loans",
             "calendar",
-            "history"
+            "history",
+            "wrapped"
           ],
           "note": "Registry order 1–51 — the sequence a person is meant to walk."
         },
@@ -134,6 +137,7 @@
             "budget",
             "variance",
             "financial-snapshot",
+            "rank-guess",
             "statements",
             "statement",
             "reachable",
@@ -173,7 +177,8 @@
             "reversibility",
             "unlearning",
             "calendar",
-            "history"
+            "history",
+            "wrapped"
           ],
           "note": "The same 43 rooms show up whichever answer you give."
         },
@@ -182,6 +187,7 @@
           "rooms": [
             "savings-rate",
             "fire",
+            "coast-date",
             "real-hourly-wage",
             "hassle",
             "self-employed",
@@ -232,6 +238,7 @@
           "rooms": [
             "dashboard",
             "financial-snapshot",
+            "rank-guess",
             "statements",
             "health",
             "ratios",
@@ -329,6 +336,7 @@
           "name": "The long run",
           "rooms": [
             "fire",
+            "coast-date",
             "decumulation",
             "estate",
             "protection",
@@ -343,6 +351,7 @@
             "data",
             "progress-card",
             "history",
+            "wrapped",
             "stacker",
             "skill-tree",
             "exercises"
@@ -416,6 +425,7 @@
           "name": "Grow",
           "rooms": [
             "fire",
+            "coast-date",
             "fire-lab",
             "foo-ladder",
             "next-hundred",
@@ -481,8 +491,10 @@
             "data",
             "progress-card",
             "history",
+            "wrapped",
             "get-help",
             "financial-snapshot",
+            "rank-guess",
             "statements",
             "doors"
           ],
@@ -527,6 +539,7 @@
             "refresh",
             "settings",
             "financial-snapshot",
+            "rank-guess",
             "statements"
           ]
         },
@@ -553,6 +566,7 @@
           "name": "This decade",
           "rooms": [
             "fire",
+            "coast-date",
             "fire-lab",
             "statement",
             "reachable",
@@ -599,6 +613,7 @@
             "data",
             "progress-card",
             "history",
+            "wrapped",
             "stacker",
             "skill-tree",
             "exercises",
@@ -639,6 +654,7 @@
             "variance",
             "calendar",
             "financial-snapshot",
+            "rank-guess",
             "statements",
             "dashboard"
           ],
@@ -683,6 +699,7 @@
           "name": "6 · Max retirement",
           "rooms": [
             "fire",
+            "coast-date",
             "foo-ladder",
             "next-hundred"
           ]
@@ -746,6 +763,7 @@
             "data",
             "progress-card",
             "history",
+            "wrapped",
             "refresh",
             "settings",
             "doors"
@@ -772,6 +790,7 @@
           "rooms": [
             "dashboard",
             "financial-snapshot",
+            "rank-guess",
             "statements",
             "walk",
             "refresh",
@@ -810,6 +829,7 @@
           "name": "Plan",
           "rooms": [
             "fire",
+            "coast-date",
             "fire-lab",
             "timeline",
             "goals",
@@ -866,6 +886,7 @@
             "data",
             "progress-card",
             "history",
+            "wrapped",
             "get-help"
           ]
         }
@@ -924,9 +945,11 @@
             "ratios",
             "exercises",
             "financial-snapshot",
+            "rank-guess",
             "statements",
             "fire-lab",
             "fire",
+            "coast-date",
             "foo-ladder",
             "next-hundred",
             "get-help",
@@ -934,6 +957,7 @@
             "goals",
             "self-employed",
             "history",
+            "wrapped",
             "housing",
             "income",
             "kids",
@@ -1009,6 +1033,7 @@
             "dashboard",
             "walk",
             "financial-snapshot",
+            "rank-guess",
             "statements",
             "doors"
           ],
@@ -1051,6 +1076,7 @@
             "ratios",
             "health",
             "fire",
+            "coast-date",
             "fire-lab",
             "foo-ladder",
             "next-hundred"
@@ -1113,7 +1139,8 @@
           "rooms": [
             "estate",
             "decumulation",
-            "history"
+            "history",
+            "wrapped"
           ]
         },
         {
@@ -1170,6 +1197,7 @@
             "settings",
             "debt-payoff",
             "financial-snapshot",
+            "rank-guess",
             "statements"
           ]
         },
@@ -1195,6 +1223,7 @@
             "goals",
             "rerank",
             "fire",
+            "coast-date",
             "foo-ladder",
             "next-hundred",
             "dashboard",
@@ -1259,7 +1288,8 @@
             "skill-tree",
             "data",
             "progress-card",
-            "history"
+            "history",
+            "wrapped"
           ]
         }
       ]
@@ -1282,6 +1312,7 @@
             "real-hourly-wage",
             "savings-rate",
             "fire",
+            "coast-date",
             "runway",
             "credit",
             "health",
@@ -1289,6 +1320,7 @@
             "statement",
             "reachable",
             "financial-snapshot",
+            "rank-guess",
             "statements",
             "variance",
             "quick-math"
@@ -1383,7 +1415,8 @@
             "ledger",
             "data",
             "progress-card",
-            "history"
+            "history",
+            "wrapped"
           ]
         }
       ]
@@ -1465,6 +1498,7 @@
           "name": "Arriving at 65 short",
           "rooms": [
             "fire",
+            "coast-date",
             "fire-lab",
             "savings-rate",
             "accounts",
@@ -1478,6 +1512,7 @@
             "adventure",
             "housing",
             "financial-snapshot",
+            "rank-guess",
             "statements",
             "ratios",
             "health"
@@ -1499,6 +1534,7 @@
             "data",
             "progress-card",
             "history",
+            "wrapped",
             "get-help",
             "quick-math",
             "real-hourly-wage",
@@ -1589,7 +1625,8 @@
             "tax",
             "protection",
             "decumulation",
-            "fire"
+            "fire",
+            "coast-date"
           ]
         },
         {
@@ -1624,6 +1661,7 @@
             "variance",
             "calendar",
             "financial-snapshot",
+            "rank-guess",
             "statements",
             "sleep-at-night",
             "refresh",
@@ -1632,6 +1670,7 @@
             "data",
             "progress-card",
             "history",
+            "wrapped",
             "get-help",
             "doors"
           ]
@@ -1692,12 +1731,14 @@
           "name": "Layer 2",
           "rooms": [
             "financial-snapshot",
+            "rank-guess",
             "statements",
             "statement",
             "reachable",
             "savings-rate",
             "sleep-at-night",
             "fire",
+            "coast-date",
             "fire-lab",
             "real-hourly-wage",
             "hassle",
@@ -1730,7 +1771,8 @@
             "reversibility",
             "student-loans",
             "calendar",
-            "history"
+            "history",
+            "wrapped"
           ],
           "note": "37 rooms sit at exactly the same depth. There is no sequence among them — the numbered path invents one.",
           "warn": true
@@ -1850,6 +1892,7 @@
           "name": "7 · “So where does that land you?”",
           "rooms": [
             "fire",
+            "coast-date",
             "fire-lab",
             "foo-ladder",
             "next-hundred",
@@ -1860,6 +1903,7 @@
             "ratios",
             "health",
             "financial-snapshot",
+            "rank-guess",
             "statements",
             "dashboard"
           ]
@@ -1877,6 +1921,7 @@
             "data",
             "progress-card",
             "history",
+            "wrapped",
             "quick-math",
             "stacker",
             "skill-tree",
@@ -1905,6 +1950,7 @@
             "refresh",
             "settings",
             "financial-snapshot",
+            "rank-guess",
             "statements",
             "dashboard",
             "health",
@@ -1950,6 +1996,7 @@
             "tax",
             "protection",
             "fire",
+            "coast-date",
             "timeline",
             "big-purchase",
             "housing",
@@ -1997,6 +2044,7 @@
             "exercises",
             "credential",
             "history",
+            "wrapped",
             "data",
             "progress-card"
           ]
@@ -2034,6 +2082,7 @@
             "credit",
             "calendar",
             "history",
+            "wrapped",
             "exercises",
             "refresh",
             "settings",
@@ -2054,6 +2103,7 @@
             "statement",
             "reachable",
             "financial-snapshot",
+            "rank-guess",
             "statements",
             "variable-income",
             "variance",
@@ -2070,6 +2120,7 @@
           "name": "One word to learn",
           "rooms": [
             "fire",
+            "coast-date",
             "fire-lab",
             "runway",
             "rollover",
@@ -2206,10 +2257,12 @@
           "rooms": [
             "dashboard",
             "financial-snapshot",
+            "rank-guess",
             "statements",
             "ratios",
             "health",
             "fire",
+            "coast-date",
             "fire-lab",
             "foo-ladder",
             "next-hundred",
@@ -2218,6 +2271,7 @@
             "adventure",
             "walk",
             "history",
+            "wrapped",
             "data",
             "progress-card",
             "get-help",
@@ -2274,6 +2328,7 @@
             "calendar",
             "savings-rate",
             "financial-snapshot",
+            "rank-guess",
             "statements",
             "credit",
             "runway",
@@ -2285,6 +2340,7 @@
           "name": "Yours, plus one stated assumption",
           "rooms": [
             "fire",
+            "coast-date",
             "fire-lab",
             "foo-ladder",
             "next-hundred",
@@ -2365,6 +2421,7 @@
             "data",
             "progress-card",
             "history",
+            "wrapped",
             "stacker",
             "skill-tree",
             "exercises",
@@ -2429,6 +2486,7 @@
             "settings",
             "dashboard",
             "financial-snapshot",
+            "rank-guess",
             "statements"
           ]
         },
@@ -2458,6 +2516,7 @@
           "name": "Bigger picture › Where it ends up",
           "rooms": [
             "fire",
+            "coast-date",
             "fire-lab",
             "foo-ladder",
             "next-hundred",
@@ -2507,6 +2566,7 @@
             "data",
             "progress-card",
             "history",
+            "wrapped",
             "doors"
           ],
           "note": "Reachable from every screen without being one of the three."
