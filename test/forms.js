@@ -1436,6 +1436,28 @@ async function seed(page, kind) {
   }
 }
 
+/* After a choice or a Next, the page keeps moving for a moment: the room
+   repaints what applies, and the progress strip holds its height for 400 ms
+   and lets it go at a second (shared/progress.js, the D-034/D-046 family).
+   A tap that lands mid-motion focuses the box it was aimed at but leaves
+   the caret in the label beside it, so every keystroke after it inserts
+   nothing — which is what made the Express walk fail about one run in two
+   on CI. A person waits for the page to stop; so does this: still for
+   650 ms (past both timers when they fire), or two seconds at most. */
+async function settled(page) {
+  await page.evaluate(() => new Promise((resolve) => {
+    const t0 = performance.now();
+    let last = '', since = t0;
+    const tick = () => {
+      const now = document.documentElement.scrollHeight + ':' + Math.round(window.scrollY) + ':' + Math.round(document.body.getBoundingClientRect().height);
+      if (now !== last) { last = now; since = performance.now(); }
+      if (performance.now() - since >= 650 || performance.now() - t0 >= 2000) resolve();
+      else setTimeout(tick, 50);
+    };
+    tick();
+  }));
+}
+
 /* Give every control in the container a tag we can look for afterwards. */
 async function tagFields(page, container) {
   return page.evaluate((sel) => {
@@ -1501,8 +1523,9 @@ async function tagFields(page, container) {
     await tagFields(page, c.container);
 
     for (const f of c.fields) {
-      /* A tap-only step (a Next button, a choice): tap and move on. */
-      if (f.tap) { await page.tap(f.sel); await page.waitForTimeout(300); continue; }
+      /* A tap-only step (a Next button, a choice): tap, then let the page
+         stop moving before the next finger lands. */
+      if (f.tap) { await page.tap(f.sel); await settled(page); continue; }
       /* A box that a tap just created (a new list block) is tagged now; the
          guard then holds for the typing that follows, which is the point. */
       if (f.fresh) await tagFields(page, c.container);
