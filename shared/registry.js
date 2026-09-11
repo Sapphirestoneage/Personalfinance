@@ -1505,6 +1505,7 @@
         { id: 'number',      label: 'Rules that no longer apply' },
         { id: 'chart',       label: 'Applies, past it, not yet' },
         { id: 'inputs',      label: 'Let go' },
+        { id: 'rules',       label: 'Does it apply to you now?' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
         { id: 'reading',     label: 'What this reads' }
@@ -1698,6 +1699,47 @@
     subsections: [
       { id: 'ranked', label: 'The list' },
       { id: 'how',    label: 'How the scale works' }
+    ]
+  });
+
+  /* Reachable Money (H4, D-212): an amount and a by-when; the order to pull
+     it and what each dollar costs on the way out. Reads only. */
+  ROOMS.push({
+    id: 'reachable',
+    group: 'decisions', subgroup: 'moves', aliases: ['reachable', 'waterfall', 'emergency money', 'pull money', 'liquid'],
+    kind: 'explore',
+    needs: ['cashSavings'],
+    order: 12.5,
+    title: 'Reachable Money',
+    blurb: 'If you needed money, where would it come from and what would each dollar cost on the way out? Cash and Roth contributions free, taxable on the gains, pre-tax with the penalty. Home equity shown, never counted.',
+    href: 'rooms/reachable.html',
+    tier: 1,
+    tags: ['cashflow'],
+    daite: { reads: ['assets.cashCents', 'assets.items', 'debt.items', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: [] },
+    subsections: [
+      { id: 'headline', label: 'In an emergency' },
+      { id: 'pull',     label: 'A specific amount' }
+    ]
+  });
+
+  /* The progress card (H8, D-212): a share that carries ratios, percentages
+     and time only, never a balance. Reached from the doors home. */
+  ROOMS.push({
+    id: 'progress-card',
+    group: 'upkeep', aliases: ['share', 'card', 'progress card', 'brag'],
+    kind: 'core',
+    utility: true,
+    needs: [],
+    order: 98.7,
+    title: 'Progress Card',
+    blurb: 'A card to share: how far the FI date moved, the savings rate, the debt-free month. Ratios, percentages and time only, never a dollar amount.',
+    href: 'rooms/progress-card.html',
+    tier: 0,
+    tags: ['cashflow'],
+    daite: { reads: [], writes: [] },
+    subsections: [
+      { id: 'card',  label: 'The card' },
+      { id: 'make',  label: 'Make one' }
     ]
   });
 

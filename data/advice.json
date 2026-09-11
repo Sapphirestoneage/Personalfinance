@@ -1,0 +1,155 @@
+{
+  "id": "advice",
+  "version": "1.0",
+  "asOf": "2026-09-11",
+  "source": "Popular money rules as they are usually stated, each with who said it and where: the 4% rule (William Bengen, Journal of Financial Planning, 1994; the Trinity study, 1998), 50/30/20 (Elizabeth Warren and Amelia Warren Tyagi, All Your Worth, 2005), Die With Zero (Bill Perkins, 2020), max the 401(k) first (common brokerage advice), six months of expenses (a convention every planner repeats), pay off the mortgage early (Dave Ramsey, The Total Money Makeover, 2003), never touch the emergency fund (Ramsey, same), save 10% (George Clason, The Richest Man in Babylon, 1926), 100 minus your age in stocks (a decades-old rule of thumb, no single author).",
+  "confidence": "convention",
+  "confidenceNote": "The rules are quoted as people hear them. The conditions under which each applies now, is not yet relevant, or has been outgrown are this app's reading of each rule against the household's own rows: a judgement written down so it can be argued with line by line, never a finding.",
+  "note": "Each rule reads rows by id (an ownership field, or one of the derived readings engines/advicerules.js knows: age, savingsRate, fiProgress, yearsToFire, emergencyMonths, withdrawalRate, debtToIncome, highInterestDebtCents, investmentsCents, wantsShare, mortgageRate). A condition is [row, op, value]; every condition in a status list must hold. outgrown is tested first, then appliesNow, then notYet. A rule whose reads are blank says can't tell yet and names the row that would decide it (decidedBy). H5, D-212.",
+  "rules": [
+    {
+      "id": "four_percent",
+      "name": "The 4% rule",
+      "said": "Draw 4% of the portfolio in year one, raise it with inflation, and it lasts 30 years.",
+      "source": "William Bengen, Journal of Financial Planning, 1994; Cooley, Hubbard and Walz, the Trinity study, 1998",
+      "reads": ["withdrawalRate", "fiProgress"],
+      "decidedBy": "investments",
+      "outgrown": [["withdrawalRate", "<=", 0.03]],
+      "appliesNow": [["withdrawalRate", ">", 0]],
+      "notYet": [["fiProgress", "<", 1]],
+      "why": {
+        "outgrown": "You draw 3% or less already; the rule is about the ceiling and you sit under it.",
+        "appliesNow": "You are drawing on the portfolio, so the ceiling it sets is the ceiling that matters.",
+        "notYet": "You are still adding to the portfolio; the rule is about drawing it down, which is not yet the question."
+      }
+    },
+    {
+      "id": "fifty_thirty_twenty",
+      "name": "50/30/20",
+      "said": "Half of take-home to needs, 30% to wants, 20% to saving.",
+      "source": "Elizabeth Warren and Amelia Warren Tyagi, All Your Worth, 2005",
+      "reads": ["savingsRate", "wantsShare"],
+      "decidedBy": "wantsMonthly",
+      "outgrown": [["savingsRate", ">=", 0.35]],
+      "appliesNow": [["savingsRate", "<", 0.35], ["wantsShare", ">", 0.3]],
+      "notYet": [["savingsRate", "<", 0.35]],
+      "why": {
+        "outgrown": "You save well past the 20% the split was written for; the split is a floor you cleared.",
+        "appliesNow": "Wants run above 30% of take-home, which is the one line the split was written to catch.",
+        "notYet": "Wants sit under 30% already; the split has nothing to add until the savings share is the question."
+      }
+    },
+    {
+      "id": "die_with_zero",
+      "name": "Die With Zero",
+      "said": "Spend it while it buys experiences; leaving a pile behind is a life not lived.",
+      "source": "Bill Perkins, Die With Zero, 2020",
+      "reads": ["fiProgress", "age"],
+      "decidedBy": "investments",
+      "outgrown": [],
+      "appliesNow": [["fiProgress", ">=", 1]],
+      "notYet": [["fiProgress", "<", 1]],
+      "why": {
+        "outgrown": "",
+        "appliesNow": "The number is reached; from here the argument is about spending it, which is the book's point.",
+        "notYet": "The number is not reached; the book assumes it is. Until then it argues against a saving rate you still need."
+      }
+    },
+    {
+      "id": "max_401k_first",
+      "name": "Max your 401(k) first",
+      "said": "Fill the workplace plan to the limit before anything else.",
+      "source": "Common brokerage and HR advice; The Money Guy Show puts the match first and the rest at step 7",
+      "reads": ["highInterestDebtCents", "emergencyMonths"],
+      "decidedBy": "debtRate",
+      "outgrown": [],
+      "appliesNow": [["highInterestDebtCents", "==", 0], ["emergencyMonths", ">=", 3]],
+      "notYet": [],
+      "why": {
+        "outgrown": "",
+        "appliesNow": "No high-interest debt and a cushion in place: filling the plan is the next rung.",
+        "notYet": "A card above the high-interest line or a cushion under three months comes first; only the match is worth taking before those."
+      }
+    },
+    {
+      "id": "six_months",
+      "name": "Six months of expenses",
+      "said": "Keep six months of spending in cash before you invest.",
+      "source": "A planning convention; The Money Guy Show says three to six at step 4",
+      "reads": ["emergencyMonths", "highInterestDebtCents"],
+      "decidedBy": "cashSavings",
+      "outgrown": [["emergencyMonths", ">=", 6]],
+      "appliesNow": [["emergencyMonths", "<", 6], ["highInterestDebtCents", "==", 0]],
+      "notYet": [["highInterestDebtCents", ">", 0]],
+      "why": {
+        "outgrown": "Six months is in the bank; more cash is a choice, not a rule.",
+        "appliesNow": "Under six months and no expensive debt: the cushion is the next thing to build.",
+        "notYet": "A card above the high-interest line costs more than the cushion earns; a starter fund, then the card, then the six months."
+      }
+    },
+    {
+      "id": "pay_off_mortgage",
+      "name": "Pay off the mortgage early",
+      "said": "A paid-off house is the goal; put every spare dollar on the mortgage.",
+      "source": "Dave Ramsey, The Total Money Makeover, 2003 (baby step 6)",
+      "reads": ["mortgageRate", "highInterestDebtCents"],
+      "decidedBy": "debtRate",
+      "outgrown": [],
+      "appliesNow": [["mortgageRate", ">=", 0.06], ["highInterestDebtCents", "==", 0]],
+      "notYet": [["highInterestDebtCents", ">", 0]],
+      "why": {
+        "outgrown": "",
+        "appliesNow": "At 6% or more the mortgage saves as much as the market is expected to earn, guaranteed.",
+        "notYet": "The card or the low rate comes first: a mortgage under 6% is the cheapest money you will ever hold."
+      }
+    },
+    {
+      "id": "never_touch_ef",
+      "name": "Never touch the emergency fund",
+      "said": "The cushion is sacred; it is not for spending.",
+      "source": "Dave Ramsey, The Total Money Makeover, 2003",
+      "reads": ["situation"],
+      "decidedBy": "employmentStatus",
+      "outgrown": [["situation", "==", "unemployed"]],
+      "appliesNow": [["situation", "!=", "unemployed"]],
+      "notYet": [],
+      "why": {
+        "outgrown": "Between jobs is the emergency. Drawing on it now is the fund working, not failing.",
+        "appliesNow": "While the pay comes in, the fund waits for the day it does not.",
+        "notYet": ""
+      }
+    },
+    {
+      "id": "save_ten_percent",
+      "name": "Save 10%",
+      "said": "A tenth of what you earn is yours to keep.",
+      "source": "George S. Clason, The Richest Man in Babylon, 1926",
+      "reads": ["savingsRate"],
+      "decidedBy": "grossAnnualIncome",
+      "outgrown": [["savingsRate", ">=", 0.15]],
+      "appliesNow": [["savingsRate", "<", 0.1]],
+      "notYet": [["savingsRate", ">=", 0.1]],
+      "why": {
+        "outgrown": "You are past 15%, where the modern benchmarks start; a tenth is behind you.",
+        "appliesNow": "Under a tenth: the oldest rule still says the first thing.",
+        "notYet": "Between 10% and 15%: the tenth is met and the next benchmark is 15%."
+      }
+    },
+    {
+      "id": "hundred_minus_age",
+      "name": "100 minus your age in stocks",
+      "said": "Hold your age in bonds and the rest in stocks.",
+      "source": "A rule of thumb of no single author, in circulation since the 1980s",
+      "reads": ["age", "yearsToFire"],
+      "decidedBy": "dob",
+      "outgrown": [["yearsToFire", ">=", 20]],
+      "appliesNow": [["yearsToFire", "<", 10]],
+      "notYet": [["yearsToFire", ">=", 10]],
+      "why": {
+        "outgrown": "Two decades or more from needing the money, a bond share set by age alone is sitting out the growth.",
+        "appliesNow": "Within ten years of drawing on it, the mix starts to matter and the rule is a first pass.",
+        "notYet": "Ten to twenty years out: the allocation question is coming, not here."
+      }
+    }
+  ]
+}

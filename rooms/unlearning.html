@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-11 20:17Z"/>
+<meta name="slaf-build" content="2026-09-11 20:28Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Unlearning · SPARKS</title>
@@ -52,6 +52,16 @@
   shared/theme.css.
 -->
 <style>
+  ul.rulelist { list-style: none; margin: 0; padding: 0; }
+  ul.rulelist .rule { display: grid; gap: 2px; padding: var(--space-3) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  ul.rulelist .rule:first-child { border-top: none; }
+  ul.rulelist .st { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-faint); }
+  ul.rulelist .is-now .st { color: var(--color-positive); }
+  ul.rulelist .is-past .st { color: var(--color-text-muted); }
+  ul.rulelist .is-unknown .st { color: var(--color-warning, #d97706); }
+  ul.rulelist .said { color: var(--color-text-muted); font-style: italic; }
+  ul.rulelist .why { color: var(--color-text); }
+  ul.rulelist .src { font-size: var(--text-xs); color: var(--color-text-faint); }
   section[id] { scroll-margin-top: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
   .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
@@ -102,6 +112,13 @@
   <p class="room-why" id="room-why" hidden></p>
   <p class="room-scope" id="room-scope"></p>
 
+  <section class="slaf-card" id="rules" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The popular rules, on your numbers</span>
+    <h2 style="margin:var(--space-2) 0 0">Does it apply to you now?</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Each rule as people say it, who said it, and whether your rows put it in play now, not yet, or behind you. A rule that needs a blank number says so and names it. From <code>data/advice.json</code>.</p>
+    <ul class="rulelist" id="rulelist"></ul>
+  </section>
+
   <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">What this is reading</span>
     <div id="reading-list" style="margin-top:var(--space-3)"></div>
@@ -139,6 +156,7 @@
 <script src="../engines/debt.js"></script>
 <script src="../engines/advice.js"></script>
 <script src="../engines/unlearning.js"></script>
+<script src="../engines/advicerules.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
 <script src="../shared/room.js"></script>
@@ -156,6 +174,17 @@
   function short(text) { var t = String(text || ''); return t.length > ADVICE_CHARS ? t.slice(0, ADVICE_CHARS - 1).replace(/\s+\S*$/, '') + '…' : t; }
   function quote(text) { return '‘' + text + '’'; }
   function rules() { return TABLES && TABLES.unlearning ? TABLES.unlearning.rules : []; }
+  /* H5 (D-212): the popular rules judged on the rows, with their sources. */
+  var STATUS_CLASS = { appliesNow: 'is-now', notYet: 'is-notyet', outgrown: 'is-past', cantTell: 'is-unknown' };
+  function paintRules(h) {
+    var host = document.getElementById('rulelist');
+    if (!host || !TABLES || !SLAF.AdviceRules) return;
+    var list = SLAF.AdviceRules.list(h, TABLES);
+    host.innerHTML = list.map(function (r) {
+      return '<li class="rule ' + STATUS_CLASS[r.status] + '"><span class="st">' + esc(r.label) + '</span><b>' + esc(r.name) + '</b> <span class="said">' + esc(r.said) + '</span>'
+        + '<span class="why">' + esc(r.why) + '</span><span class="src">' + esc(r.source) + '</span></li>';
+    }).join('');
+  }
   function classified(h) { return Unlearning.classify(h, TABLES, {}); }
 
   /* The rule showing: the page's pick if it is a real id, else the first
@@ -186,7 +215,7 @@
     id: 'unlearning',
     tables: null,   /* all of them: the ratios and the advice line read across the set */
     reads: ['monthlyExpenses', 'cashSavings', 'grossAnnualIncome'],
-    ready: function (t) { TABLES = t; },
+    ready: function (t) { TABLES = t; paintRules(Spine.getProfile()); Spine.onChange(function () { paintRules(Spine.getProfile()); }); },
 
     number: function (h, T) {
       var c = Unlearning.classify(h, T, {});

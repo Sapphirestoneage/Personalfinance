@@ -35,6 +35,7 @@
             "financial-snapshot",
             "statements",
             "statement",
+            "reachable",
             "savings-rate",
             "sleep-at-night",
             "fire",
@@ -98,6 +99,7 @@
             "get-help",
             "walk",
             "data",
+            "progress-card",
             "refresh",
             "settings",
             "doors"
@@ -134,6 +136,7 @@
             "financial-snapshot",
             "statements",
             "statement",
+            "reachable",
             "sleep-at-night",
             "fire-lab",
             "quick-math",
@@ -203,6 +206,7 @@
             "get-help",
             "walk",
             "data",
+            "progress-card",
             "refresh",
             "settings",
             "doors"
@@ -234,6 +238,7 @@
             "runway",
             "savings-rate",
             "statement",
+            "reachable",
             "credit"
           ]
         },
@@ -336,6 +341,7 @@
           "name": "Keeping it going",
           "rooms": [
             "data",
+            "progress-card",
             "history",
             "stacker",
             "skill-tree",
@@ -402,6 +408,7 @@
             "savings-rate",
             "accounts",
             "statement",
+            "reachable",
             "windfall"
           ]
         },
@@ -472,6 +479,7 @@
             "refresh",
             "settings",
             "data",
+            "progress-card",
             "history",
             "get-help",
             "financial-snapshot",
@@ -547,6 +555,7 @@
             "fire",
             "fire-lab",
             "statement",
+            "reachable",
             "housing",
             "kids",
             "partner",
@@ -588,6 +597,7 @@
             "health",
             "quick-math",
             "data",
+            "progress-card",
             "history",
             "stacker",
             "skill-tree",
@@ -681,6 +691,7 @@
           "name": "7 · Hyper-accumulation",
           "rooms": [
             "statement",
+            "reachable",
             "fire-lab",
             "ratios",
             "health"
@@ -733,6 +744,7 @@
             "get-help",
             "walk",
             "data",
+            "progress-card",
             "history",
             "refresh",
             "settings",
@@ -783,6 +795,7 @@
             "calendar",
             "debt-payoff",
             "statement",
+            "reachable",
             "accounts",
             "savings-rate",
             "credit",
@@ -851,6 +864,7 @@
             "giving",
             "sleep-at-night",
             "data",
+            "progress-card",
             "history",
             "get-help"
           ]
@@ -948,6 +962,7 @@
             "stacker",
             "skill-tree",
             "statement",
+            "reachable",
             "walk",
             "windfall",
             "buckets",
@@ -965,6 +980,7 @@
             "hassle",
             "credit",
             "data",
+            "progress-card",
             "doors"
           ],
           "note": "One flat alphabetical list. No hierarchy to learn and none to get wrong."
@@ -1028,6 +1044,7 @@
           "name": "The study",
           "rooms": [
             "statement",
+            "reachable",
             "savings-rate",
             "accounts",
             "tax",
@@ -1115,6 +1132,7 @@
           "name": "The cupboard under the stairs",
           "rooms": [
             "data",
+            "progress-card",
             "get-help"
           ]
         }
@@ -1159,6 +1177,7 @@
           "name": "Each quarter",
           "rooms": [
             "statement",
+            "reachable",
             "savings-rate",
             "runway",
             "credit",
@@ -1239,6 +1258,7 @@
             "ledger",
             "skill-tree",
             "data",
+            "progress-card",
             "history"
           ]
         }
@@ -1267,6 +1287,7 @@
             "health",
             "ratios",
             "statement",
+            "reachable",
             "financial-snapshot",
             "statements",
             "variance",
@@ -1361,6 +1382,7 @@
             "start",
             "ledger",
             "data",
+            "progress-card",
             "history"
           ]
         }
@@ -1448,6 +1470,7 @@
             "accounts",
             "tax",
             "statement",
+            "reachable",
             "foo-ladder",
             "next-hundred",
             "goals",
@@ -1474,6 +1497,7 @@
             "variance",
             "income",
             "data",
+            "progress-card",
             "history",
             "get-help",
             "quick-math",
@@ -1572,6 +1596,7 @@
           "name": "The market",
           "rooms": [
             "statement",
+            "reachable",
             "fire-lab",
             "savings-rate",
             "runway",
@@ -1605,6 +1630,7 @@
             "settings",
             "walk",
             "data",
+            "progress-card",
             "history",
             "get-help",
             "doors"
@@ -1668,6 +1694,7 @@
             "financial-snapshot",
             "statements",
             "statement",
+            "reachable",
             "savings-rate",
             "sleep-at-night",
             "fire",
@@ -1722,6 +1749,7 @@
             "get-help",
             "walk",
             "data",
+            "progress-card",
             "refresh",
             "settings",
             "doors"
@@ -1783,6 +1811,7 @@
           "name": "4 · “What do you hold?”",
           "rooms": [
             "statement",
+            "reachable",
             "accounts",
             "savings-rate",
             "credit",
@@ -1846,6 +1875,7 @@
             "refresh",
             "settings",
             "data",
+            "progress-card",
             "history",
             "quick-math",
             "stacker",
@@ -1913,6 +1943,7 @@
             "income",
             "budget",
             "statement",
+            "reachable",
             "debt-payoff",
             "accounts",
             "goals",
@@ -1966,7 +1997,8 @@
             "exercises",
             "credential",
             "history",
-            "data"
+            "data",
+            "progress-card"
           ]
         }
       ]
@@ -2006,6 +2038,7 @@
             "refresh",
             "settings",
             "data",
+            "progress-card",
             "get-help",
             "housing",
             "car",
@@ -2019,6 +2052,7 @@
             "debt-payoff",
             "savings-rate",
             "statement",
+            "reachable",
             "financial-snapshot",
             "statements",
             "variable-income",
@@ -2138,6 +2172,7 @@
           "name": "Hub · The Statement",
           "rooms": [
             "statement",
+            "reachable",
             "accounts",
             "savings-rate",
             "runway",
@@ -2184,6 +2219,7 @@
             "walk",
             "history",
             "data",
+            "progress-card",
             "get-help",
             "doors"
           ],
@@ -2233,6 +2269,7 @@
             "budget",
             "variance",
             "statement",
+            "reachable",
             "debt-payoff",
             "calendar",
             "savings-rate",
@@ -2326,6 +2363,7 @@
             "refresh",
             "settings",
             "data",
+            "progress-card",
             "history",
             "stacker",
             "skill-tree",
@@ -2398,6 +2436,7 @@
           "name": "Regular › What I hold",
           "rooms": [
             "statement",
+            "reachable",
             "accounts",
             "savings-rate",
             "tax",
@@ -2466,6 +2505,7 @@
             "ledger",
             "walk",
             "data",
+            "progress-card",
             "history",
             "doors"
           ],

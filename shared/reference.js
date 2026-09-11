@@ -27,6 +27,7 @@
 
   var TABLE_FILES = {
     effectiveTaxRates: 'effective_tax_rates_2026.json',
+    advice: 'advice.json',
     retirementMilestones: 'retirement_milestones.json',
     milestones: 'milestones.json',
     ledgerRows: 'ledger-rows.json',

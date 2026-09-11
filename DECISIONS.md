@@ -13141,6 +13141,40 @@ the Assets headline opens the sheet with the plugged-in sum, the ranked
 list puts the match (50 cents on the dollar) above the 22.9% card above
 investing, and the strip reads $700 earned after a cash change.
 
+## D-212 — H4, H5, H7, H8: reachable money, the popular rules, privacy proved, share the shape
+
+**Why.** The brief's H4 to H8, less H6. H6 (the real-history stress test)
+needs sourced annual returns and inflation from 1871 in `data/`, and this
+session's network egress refused the source pages; a rule that needs
+reference data not yet in `data/` is a stop-and-ask, so H6 and the
+pre-mortem that reads it (I7) wait for that file.
+
+**Decision.** `engines/reachable.js` and `rooms/reachable.html`: an
+amount and a by-when, the order to pull it and what each dollar costs;
+cash and Roth contributions free, taxable on the gains at the rate on the
+first dollar of gains above this year's taxable income, pre-tax at the
+marginal federal plus state plus the 10% penalty under 59½, Roth earnings
+the same until 59½; home equity shown, never counted; a missing basis or
+date of birth is rough and named. `data/advice.json` and
+`engines/advicerules.js`: nine popular rules with who said them, each
+read as conditions over rows into applies now, not yet, outgrown, or
+can't tell yet naming the deciding row, shown in the Unlearning room.
+`Progress.privacyReceipt`: the footer counts requests to any other origin
+from the browser's own resource timing and prints the bytes, or lists the
+hosts. `shared/sharecard.js` and `rooms/progress-card.html`: five card
+types carrying only ratios, percentages and time in the link, from a
+fixed field list so a balance cannot be encoded; the doors home links it.
+
+**Replaces or removes.** Nothing.
+
+**Stored shape.** No change; a card lives in its link and nowhere else.
+`advice` joins `Reference.TABLE_FILES`. Two rooms join every arrangement.
+
+**Verified.** `node test/run.js` (the waterfall by hand on fixed rates,
+every card leak-scanned), render and features gates on the three rooms,
+the phone walk: the footer reads 0 bytes, the card opens from its link
+with no amount on it.
+
 ---
 
 # The Dungeons & Dividends entries

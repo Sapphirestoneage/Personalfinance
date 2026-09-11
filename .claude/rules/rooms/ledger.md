@@ -5,7 +5,7 @@ paths:
   - "engines/sincelast.js"
 ---
 # The Ledger (`ledger`)
-File: rooms/ledger.html · 485 lines · utility room
+File: rooms/ledger.html · 486 lines · utility room
 Engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, sincelast
 Reference data: access_rules.json, confidence_weights.json, debt_rules.json, effective_tax_rates_2026.json, ledger-rows.json, liquidity_benchmarks.json, +2 more
 Owns: nothing

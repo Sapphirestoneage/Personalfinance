@@ -5,14 +5,14 @@ A field is editable in its owner only (`shared/ownership.js`). "Read by" is a
 word-boundary match of the id (or id + Cents) in another room's HTML or in an
 engine loaded by two or fewer rooms; shared engines are left out so a field
 does not look used everywhere. Ids that are ordinary words are not traced.
-Fields: 112. Traced: 103. No other room mentions it: **58**.
+Fields: 112. Traced: 103. No other room mentions it: **57**.
 
 
 ## accounts (7)
 
 - `rothContributed` — Roth so far this year · **no other room mentions it**
 - `hsaContributed` — HSA so far this year · **no other room mentions it**
-- `marginalRate` — Marginal tax rate · read by statement, side-hustle, credential, rollover
+- `marginalRate` — Marginal tax rate · read by statement, reachable, side-hustle, credential, rollover
 - `allocationStocks` — Target: stocks · **no other room mentions it**
 - `allocationBonds` — Target: bonds · **no other room mentions it**
 - `allocationCash` — Target: cash · **no other room mentions it**
@@ -114,7 +114,7 @@ Fields: 112. Traced: 103. No other room mentions it: **58**.
 - `rentAlternative` — A place you would rent instead, a month · **no other room mentions it**
 - `homePrice` — The place, its price · **no other room mentions it**
 - `downPct` — Down payment, share of price · read by financial-snapshot
-- `mortgageRate` — Mortgage rate · **no other room mentions it**
+- `mortgageRate` — Mortgage rate · read by unlearning
 
 ## income (3)
 
@@ -170,13 +170,13 @@ Fields: 112. Traced: 103. No other room mentions it: **58**.
 - `age` — Age · too generic to trace
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
-- `filingStatus` — Filing status · read by expenses, cash-flow, income, financial-snapshot, statement, savings-rate, fire, fire-lab, real-hourly-wage, self-employed, side-hustle, dashboard, credential, accounts, cant-pay, rollover, tax, career-move, partner
-- `grossAnnualIncome` — Gross annual income · read by first-round, express, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, savings-rate, real-hourly-wage, hassle, quick-math, self-employed, side-hustle, ratios, dashboard, credential, accounts, stacker, skill-tree, exercises, foo-ladder, worth, car, cant-pay, rollover, health, what-if-life, between-jobs, protection, decumulation, tax, giving, career-move, partner, housing, big-purchase, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar
+- `filingStatus` — Filing status · read by expenses, cash-flow, income, financial-snapshot, statement, savings-rate, fire, fire-lab, real-hourly-wage, self-employed, reachable, side-hustle, dashboard, credential, accounts, cant-pay, rollover, tax, career-move, partner
+- `grossAnnualIncome` — Gross annual income · read by first-round, express, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, savings-rate, real-hourly-wage, hassle, quick-math, self-employed, reachable, side-hustle, ratios, dashboard, credential, accounts, stacker, skill-tree, exercises, foo-ladder, worth, car, cant-pay, rollover, health, what-if-life, between-jobs, protection, decumulation, tax, giving, career-move, partner, housing, big-purchase, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by first-round
 - `cashSavings` — Cash & savings · read by first-round, budget, financial-snapshot, statements, statement, sleep-at-night, quick-math, ratios, dashboard, exercises, runway, cant-pay, what-if-life, between-jobs, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, ledger, refresh
 - `investments` — Investments + retirement · too generic to trace
-- `employmentStatus` — Working situation · read by first-round, between-jobs, tax, student-loans
+- `employmentStatus` — Working situation · read by first-round, between-jobs, tax, unlearning, student-loans
 - `employerMatch` — Employer match · read by financial-snapshot, statements, savings-rate, foo-ladder, next-hundred, unlearning
 - `capturingFullMatch` — Capturing the full match · read by expenses, financial-snapshot, dashboard, stacker
 - `hasDebt` — Any debt · read by dashboard, unlearning, student-loans
@@ -192,7 +192,7 @@ Fields: 112. Traced: 103. No other room mentions it: **58**.
 - `assetValue` — What each account or thing is worth · read by express, refresh
 - `assetCharacter` — How it is taxed on the way out · read by express
 - `assetTier` — Which pile it sits in · read by express
-- `assetCostBasis` — Cost basis · read by express
+- `assetCostBasis` — Cost basis · read by express, reachable
 
 ## student-loans (4)
 

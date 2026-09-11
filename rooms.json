@@ -330,6 +330,18 @@
       "order": 12
     },
     {
+      "id": "reachable",
+      "title": "Reachable Money",
+      "file": "rooms/reachable.html",
+      "reads": [
+        "cashSavings"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 12.5
+    },
+    {
       "id": "side-hustle",
       "title": "Side Hustle",
       "file": "rooms/side-hustle.html",
@@ -1093,6 +1105,16 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 98.5
+    },
+    {
+      "id": "progress-card",
+      "title": "Progress Card",
+      "file": "rooms/progress-card.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 98.7
     },
     {
       "id": "refresh",

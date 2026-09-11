@@ -10250,7 +10250,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
   check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
   check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree,stacker,exercises');
-  check('Upkeep, with Front Doors and the Walk-Through kept apart (not merged this pass)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,refresh,history,settings,get-help,doors,walk,ledger');
+  check('Upkeep, with Front Doors and the Walk-Through kept apart (not merged this pass)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,refresh,history,settings,get-help,doors,walk,ledger,progress-card');
   checkTrue('every room has aliases to search by', Registry.all().every(r => Array.isArray(r.aliases) && r.aliases.length >= 2));
   checkTrue('"car" finds What A Car Costs', Registry.matches(Registry.byId('car'), 'car') && Registry.matches(Registry.byId('car'), 'VEHICLE'));
   checkTrue('...and not FIRE', !Registry.matches(Registry.byId('fire'), 'car'));
@@ -10260,7 +10260,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...no Career Move, no Between Jobs', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move' || r.id === 'between-jobs'));
   checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
   checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
-  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 22);
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 23);
   checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
 
   /* The one shared sidebar. */
@@ -12921,6 +12921,104 @@ section('H1, H3, H2: tap any number, your next $100 ranked, earned vs learned (D
   check('nothing changed reads as nothing changed', SinceLast.strip(Spine.getProfile(), Spine.appendSnapshot({}), T), 'Nothing changed since ' + Schema.localDay() + '.');
   checkTrue('the Ledger shows the strip on the doors home', /SinceLast\.strip\(h, last, TABLES\)/.test(ledgerHtml) && /id="since"/.test(ledgerHtml));
   void snap2;
+})();
+
+/* ==========================================================================
+   H4, H5, H7, H8: reachable money, the popular rules, privacy proved, shares (D-212)
+   ========================================================================== */
+section('H4, H5, H7, H8: the waterfall, does the rule apply, the receipt, share the shape (D-212)');
+(function () {
+  const Reachable = require(path.join(ROOT, 'engines/reachable.js'));
+  const AdviceRules = require(path.join(ROOT, 'engines/advicerules.js'));
+  const ShareCard = require(path.join(ROOT, 'shared/sharecard.js'));
+  const Progress = require(path.join(ROOT, 'shared/progress.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const T = {};
+  ['federalBrackets:federal_brackets_2026.json', 'seTax:se_tax_2026.json', 'accessRules:access_rules.json', 'advice:advice.json', 'fooRules:foo_rules.json', 'effectiveTaxRates:effective_tax_rates_2026.json', 'ratioBenchmarks:ratio_benchmarks.json', 'debtRules:debt_rules.json', 'ledgerRows:ledger-rows.json', 'confidenceWeights:confidence_weights.json', 'staleness:staleness.json', 'stateBrackets:state_brackets_2026.json']
+    .forEach(kv => { const [k, f] = kv.split(':'); T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', f), 'utf8')); });
+  LR.use(T.ledgerRows);
+
+  /* -- H4: the waterfall, checked by hand on fixed rates ---------------------- */
+  const h = Schema.createHousehold(); h.filingStatus = 'single';
+  h.people = [Schema.createPerson({ role: 'adult', dob: '1992-01-01', employmentStatus: 'employed' })];
+  h.assets = [Schema.createAsset({ category: 'cash', valueCents: 500000 }),
+    Schema.createAsset({ category: 'retirement', taxCharacter: 'roth', valueCents: 2000000, costBasisCents: 1200000, label: 'Roth' }),
+    Schema.createAsset({ category: 'investment', taxCharacter: 'taxable', valueCents: 3000000, costBasisCents: 2000000 }),
+    Schema.createAsset({ category: 'retirement', taxCharacter: 'pretax', valueCents: 4000000 }),
+    Schema.createAsset({ category: 'property', valueCents: 30000000 })];
+  h.debts = [Schema.createDebt({ type: 'mortgage', balanceCents: 20000000 })];
+  const rates = { marginalRate: 0.22, stateRate: 0.05, capitalGainsRate: 0.15 };
+  const w = Reachable.waterfall(h, T, { amountCents: 2500000, rates: rates });
+  check('the order: cash, Roth basis, taxable, pre-tax, Roth earnings (cheapest dollar first)', w.tiers.map(t => t.id).join(','), 'cash,rothBasis,taxable,pretax,rothEarnings');
+  check('cash is free', w.tiers[0].costCents, 0);
+  check('Roth contributions are free and only the basis counts', w.tiers[1].availableCents + ':' + w.tiers[1].costCents, '1200000:0');
+  check('taxable: tax on the gains only, $10,000 at 15%', w.tiers[2].costCents, 150000);
+  check('pre-tax: 22% federal + 5% state + 10% penalty on $40,000', w.tiers[3].costCents, 1480000);
+  check('Roth earnings under 59½: the same 37% on $8,000', w.tiers[4].costCents, 296000);
+  check('reachable in an emergency: everything but the house', w.reachableCents, 9500000);
+  check('and the true cost of pulling it all', w.costCents, 1926000);
+  check('home equity shown, never counted: $300,000 less the $200,000 mortgage', w.homeEquityCents + ':' + w.homeShown, '10000000:true');
+  check('$25,000 by the cheapest route: cash, then Roth basis, then $8,000 of taxable', w.pulls.map(p => p.tier + '=' + p.cents).join(','), 'cash=500000,rothBasis=1200000,taxable=800000');
+  check('the pull costs only the taxable slice’s share', w.pullCostCents, 40000);
+  const older = JSON.parse(JSON.stringify(h)); older.people[0].dob = '1960-01-01';
+  const w2 = Reachable.waterfall(older, T, { rates: rates });
+  check('from 59½ the penalty drops: 27% on the pre-tax', w2.tiers.filter(t => t.id === 'pretax')[0].costCents, 1080000);
+  check('and Roth earnings are free', w2.tiers.filter(t => t.id === 'rothEarnings')[0].costCents, 0);
+  const noBasis = JSON.parse(JSON.stringify(h)); delete noBasis.assets[1].costBasisCents;
+  const w3 = Reachable.waterfall(noBasis, T, { rates: rates });
+  checkTrue('a Roth without its basis is rough, counts nothing as free and names the row', w3.rough && w3.tiers.filter(t => t.id === 'rothBasis')[0].availableCents === 0 && w3.missing.some(m => /assetCostBasis/.test(m)));
+  const noDob = JSON.parse(JSON.stringify(h)); noDob.people[0].dob = null;
+  checkTrue('no date of birth: the penalty is assumed and said, never silently dropped', Reachable.waterfall(noDob, T, { rates: rates }).assumed.some(a => /under 59/.test(a)));
+  const wd = Reachable.waterfall(Demo.build(), T, {});
+  checkTrue('on the demo the rates come from the tax tables: a marginal rate and a gains rate above zero', wd.rates.source === 'tax tables' && wd.rates.marginalRate > 0 && wd.rates.capitalGainsRate > 0, JSON.stringify(wd.rates));
+  checkTrue('the room reads only and is in every arrangement', Registry.byId('reachable').daite.writes.length === 0 && JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts.every(l => l.groups.some(g => g.rooms.indexOf('reachable') >= 0)));
+
+  /* -- H5: does the rule apply to you now? ------------------------------------- */
+  const rules = T.advice.rules;
+  checkTrue('every rule names its source and the three readings', rules.every(r => typeof r.source === 'string' && r.source.length > 10 && r.why && Array.isArray(r.appliesNow) && Array.isArray(r.notYet) && Array.isArray(r.outgrown) && r.decidedBy));
+  checkTrue('the four the brief named are in: 4%, 50/30/20, Die With Zero, max the 401(k) first', ['four_percent', 'fifty_thirty_twenty', 'die_with_zero', 'max_401k_first'].every(id => rules.some(r => r.id === id)));
+  const known = Object.keys(AdviceRules.readings(Demo.build(), T));
+  checkTrue('every condition reads a row the engine knows', rules.every(r => ['appliesNow', 'notYet', 'outgrown'].every(k => r[k].every(c => known.indexOf(c[0]) >= 0))));
+  const L = AdviceRules.list(Demo.build(), T);
+  const by = {}; L.forEach(r => { by[r.id] = r; });
+  check('the demo is still adding to the portfolio: the 4% rule is not yet', by.four_percent.status, 'notYet');
+  check('a card above the high-interest line: max the 401(k) is not yet', by.max_401k_first.status, 'notYet');
+  check('saving 32%: save 10% is outgrown', by.save_ten_percent.status, 'outgrown');
+  check('working: never touch the emergency fund applies now', by.never_touch_ef.status, 'appliesNow');
+  checkTrue('every status has a one-line reason', L.every(r => typeof r.why === 'string' && r.why.length > 10));
+  const blank = Schema.createHousehold(); blank.people = [Schema.createPerson({ role: 'adult', employmentStatus: 'employed' })];
+  const Lb = AdviceRules.list(blank, T);
+  const ct = Lb.filter(r => r.status === 'cantTell');
+  checkTrue('with the rows blank most rules say can’t tell yet and name the number that would decide it', ct.length >= 6 && ct.every(r => /Can’t tell yet: it needs /.test(r.why) && r.decidedBy));
+  const uh = Schema.createHousehold(); uh.people = [Schema.createPerson({ role: 'adult', employmentStatus: 'unemployed' })];
+  check('between jobs: never touch the emergency fund is outgrown, because this is the emergency', AdviceRules.list(uh, T).filter(r => r.id === 'never_touch_ef')[0].status, 'outgrown');
+  checkTrue('the Unlearning room shows the section', /id="rulelist"/.test(fs.readFileSync(path.join(ROOT, 'rooms/unlearning.html'), 'utf8')) && /AdviceRules\.list\(h, TABLES\)/.test(fs.readFileSync(path.join(ROOT, 'rooms/unlearning.html'), 'utf8')));
+
+  /* -- H7: privacy you can prove ------------------------------------------------ */
+  const r0 = Progress.privacyReceipt([{ name: 'https://x.test/shared/money.js', transferSize: 1200 }, { name: 'https://x.test/data/a.json', transferSize: 300 }], 'https://x.test');
+  check('only this origin: zero', r0.count + ':' + r0.bytes, '0:0');
+  check('and the line says so', r0.line, 'Sent anywhere this session: 0 bytes. No request left this origin.');
+  const r1 = Progress.privacyReceipt([{ name: 'https://x.test/a.js', transferSize: 10 }, { name: 'https://cdn.other.com/lib.js', transferSize: 5000 }, { name: 'https://cdn.other.com/x.png', transferSize: 700 }], 'https://x.test');
+  check('a request to another origin is counted, in bytes, and the host listed', r1.line, 'Sent anywhere this session: 5700 bytes in 2 requests to https://cdn.other.com.');
+  checkTrue('the receipt is in every footer', /id="slaf-privacy"/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
+
+  /* -- H8: share progress, not balances ----------------------------------------- */
+  const hd = Demo.build();
+  const cards = ShareCard.all(hd, T, { previousYears: 20, previousRate: 0.18 });
+  check('every share type can be made from the persona', cards.map(c => c.type).join(','), ShareCard.TYPES.join(','));
+  let leaked = [];
+  cards.forEach(c => { const l = ShareCard.leaks(c.title + ' ' + c.line + ' ' + ShareCard.link(c) + ' ' + JSON.stringify(c.fields), hd); if (l.length) leaked.push(c.type + ':' + l.join('|')); });
+  checkTrue('no cents value from the household appears in any link or card', leaked.length === 0, leaked.join('; '));
+  checkTrue('the payload can only carry ratios, percents, months and years: no cents key exists', Object.keys(ShareCard.ALLOWED).every(k => ['t', 'y', 'm', 'p', 'd', 'at'].indexOf(k) >= 0));
+  const hacked = ShareCard.encode({ fields: { t: 'runway', m: 3, cents: 950000, balance: 'lots' } });
+  check('a field not on the list is dropped before it can be encoded', JSON.stringify(ShareCard.decode('#c=' + hacked)), '{"t":"runway","m":3}');
+  check('an unknown card type is refused', ShareCard.decode('#c=' + ShareCard.encode({ fields: { t: 'balances', p: 1 } })), null);
+  const fi = cards.filter(c => c.type === 'fiDate')[0];
+  check('the FI card says how far the date moved, in months', fi.line, 'FI date moved 24 months further out.');
+  check('the savings card says the rate and where it was', cards.filter(c => c.type === 'savingsRate')[0].line, 'Savings rate up to 32% from 18%.');
+  checkTrue('a card round-trips through its link', ShareCard.render(ShareCard.decode(ShareCard.link(fi).split('#')[1])).line === fi.line);
+  checkTrue('the leak scanner itself catches a balance', ShareCard.leaks('you have $9,500 in cash', hd).length >= 1);
+  checkTrue('the doors home links to the card, which stores nothing', /progress-card\.html/.test(fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8')) && !/localStorage|Spine\.(set|upsert|updateProfile)/.test(fs.readFileSync(path.join(ROOT, 'rooms/progress-card.html'), 'utf8').split('<script>')[1] || ''));
 })();
 
 /* ==========================================================================

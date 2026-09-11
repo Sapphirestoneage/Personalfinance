@@ -1066,6 +1066,22 @@
      2. iPhone Safari drops a site's storage after seven days away unless
         the site is on the Home Screen. One quiet line, once, dismissable,
         never a popup; installed web apps never see it. */
+  /** The receipt (H7): every resource entry whose origin is not ours, with
+      the bytes moved; the line says 0 or lists the hosts. Pure, for tests. */
+  function privacyReceipt(entries, origin) {
+    var hosts = {}, count = 0, bytes = 0;
+    (entries || []).forEach(function (e) {
+      var name = String(e && e.name || '');
+      var m = /^(https?:\/\/[^\/]+)/.exec(name);
+      if (!m || m[1] === origin) return;
+      count++;
+      bytes += Number(e.transferSize || e.encodedBodySize || 0) || 0;
+      hosts[m[1]] = (hosts[m[1]] || 0) + 1;
+    });
+    var list = Object.keys(hosts);
+    return { count: count, bytes: bytes, hosts: list,
+      line: count === 0 ? 'Sent anywhere this session: 0 bytes. No request left this origin.' : 'Sent anywhere this session: ' + bytes + ' bytes in ' + count + ' request' + (count === 1 ? '' : 's') + ' to ' + list.join(', ') + '.' };
+  }
   function mountGuards(g, Spine) {
     var Prefs = g.SLAF && g.SLAF.Prefs;
     var state = Spine.storageState ? Spine.storageState() : null;
@@ -1131,13 +1147,20 @@
     var version = g.SLAF.Schema && g.SLAF.Schema.APP_VERSION
       ? '<p class="slaf-version">Money Rooms v' + g.SLAF.Schema.APP_VERSION + (g.SLAF.Schema.BUILD ? ' · build ' + g.SLAF.Schema.BUILD : '') + '</p>'
       : '';
+    /* Privacy you can prove (H7, D-212): requests to any other origin this
+       session, counted from the browser's own resource timing. Zero is
+       the promise kept; anything else is listed, never hidden. */
+    function privacyLine() {
+      var r = privacyReceipt(typeof performance !== 'undefined' && performance.getEntriesByType ? performance.getEntriesByType('resource') : [], typeof location !== 'undefined' ? location.origin : '');
+      return '<p class="slaf-version" id="slaf-privacy">' + escapeHtml(r.line) + '</p>';
+    }
     function yearLine() {
       var R = g.SLAF.Reference;
       var notes = R && R.yearNotes ? R.yearNotes(R._cache || {}) : [];
       return notes.length ? '<p class="slaf-version">Tax and limit figures: ' + notes.map(escapeHtml).join(', ') + '. Newer tables are not in this build yet.</p>' : '';
     }
     function paint() {
-      box.innerHTML = stripHtml(roomId, Spine.getProfile()) + version + yearLine();
+      box.innerHTML = stripHtml(roomId, Spine.getProfile()) + version + yearLine() + privacyLine();
       /* Every room gets its own export, from the one mount point every room
          already reaches — the same lever the walk strip and the situation
          notice use (D-142, D-149). No per-room wiring, so no room can be
@@ -1212,7 +1235,7 @@
 
   return {
     mount: mount,
-    mountHeader: mountHeader,
+    mountHeader: mountHeader, privacyReceipt: privacyReceipt,
     mountFold: mountFold,
     mountSectionSync: mountSectionSync,
     roomIdFromLocation: roomIdFromLocation,
