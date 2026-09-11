@@ -1,8 +1,8 @@
 {
   "seed": 20260910,
   "numRuns": 100,
-  "engines": 72,
-  "files": 74,
+  "engines": 74,
+  "files": 76,
   "missingFiles": [],
   "extraFiles": [
     "blocks",
@@ -157,6 +157,30 @@
         },
         {
           "name": "every rule is judged with one of the four statuses and says why",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
+      "engine": "bankcsv",
+      "notes": [],
+      "properties": [
+        {
+          "name": "a file of dated rows parses to the same number of rows under its three headers, and the map finds all three columns",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the signature depends on the headers only, and an amount parses to whole cents with its sign",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "previewing a file never touches the household, gives one line per row, the same twice, in whole cents",
           "ok": true,
           "numRuns": 100,
           "seed": 20260910
@@ -2042,6 +2066,75 @@
       ]
     },
     {
+      "engine": "subscriptions",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (2 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "an empty log finds nothing and leaks nothing",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same charge every month for N months is one subscription with N charges, a rhythm the engine names, whole cents a year",
+          "ok": false,
+          "numRuns": 1,
+          "seed": 20260910,
+          "counterexample": {
+            "spec": {
+              "people": [
+                {
+                  "year": 1950,
+                  "status": "employed",
+                  "income": []
+                }
+              ],
+              "filingStatus": "single",
+              "state": "CA",
+              "assets": [],
+              "debts": [],
+              "fat": {
+                "food": 0,
+                "accommodation": 0,
+                "transportation": null,
+                "wants": 0
+              },
+              "hasDebt": null,
+              "contributionPercent": null
+            },
+            "n": 3,
+            "cents": 100,
+            "day": 1
+          },
+          "reason": "rhythm monthly"
+        }
+      ]
+    },
+    {
       "engine": "swan",
       "notes": [],
       "properties": [
@@ -2533,6 +2626,6 @@
       ]
     }
   ],
-  "totalProperties": 315,
-  "failedProperties": 7
+  "totalProperties": 324,
+  "failedProperties": 8
 }
