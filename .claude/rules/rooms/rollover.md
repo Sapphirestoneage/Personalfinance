@@ -3,7 +3,7 @@ paths:
   - "rooms/rollover.html"
 ---
 # The Account You Left Behind (`rollover`)
-File: rooms/rollover.html · 755 lines
+File: rooms/rollover.html · 757 lines
 Engines: projection, tier0, selfemployed, income, ledger, tax, taxroom
 Reference data: access_rules.json, effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, rollover_options.json, se_tax_2026.json, +1 more
 Owns: nothing

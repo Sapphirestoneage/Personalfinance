@@ -4,6 +4,7 @@
   "blurb": "Stop at the age you chose: the portfolio then, what a variable withdrawal pays, Social Security from the claim age, health cover to 65, and whether it holds to 95 — under all three D's.",
   "version": "1.0",
   "asOf": "2026-01-01",
+  "source": "An invented what-if template (D-086): its questions and defaults are conventions chosen for this app, not measurements; every reference figure it draws on names its own data/ file and source.",
   "confidence": "unverified",
   "drawsOn": [
     "targets",

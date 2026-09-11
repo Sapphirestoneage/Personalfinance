@@ -4,7 +4,7 @@ paths:
   - "engines/estate.js"
 ---
 # Estate Basics (`estate`)
-File: rooms/estate.html · 216 lines
+File: rooms/estate.html · 218 lines
 Engines: projection, tier0, hourly, estate
 Reference data: estate_basics.json
 Owns: beneficiariesSet, willExists, poaExists

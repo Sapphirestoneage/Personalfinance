@@ -4,7 +4,7 @@ paths:
   - "engines/ss.js"
 ---
 # The Skill Stacker (`stacker`)
-File: rooms/stacker.html · 602 lines
+File: rooms/stacker.html · 604 lines
 Engines: projection, tier0, foo, cashflow, statement, swan, benchmarks, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events, skills
 Reference data: car_costs.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, foo_rules.json, liquidity_benchmarks.json, +3 more
 Owns: practiceLedger

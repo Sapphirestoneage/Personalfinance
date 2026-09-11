@@ -3,7 +3,7 @@ paths:
   - "rooms/fire-lab.html"
 ---
 # FIRE Lab (`fire-lab`)
-File: rooms/fire-lab.html · 461 lines
+File: rooms/fire-lab.html · 463 lines
 Engines: projection, tier0, cashflow, fire, hourly
 Reference data: assumptions.json, expense_categories.json, fire_variants.json
 Owns: nothing

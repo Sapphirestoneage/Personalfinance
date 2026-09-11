@@ -4,7 +4,7 @@ paths:
   - "engines/protection.js"
 ---
 # Protection (`protection`)
-File: rooms/protection.html · 266 lines
+File: rooms/protection.html · 268 lines
 Engines: projection, tier0, protection
 Reference data: protection_conventions.json
 Owns: healthCover, healthMonthly

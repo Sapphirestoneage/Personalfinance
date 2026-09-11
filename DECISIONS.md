@@ -13063,6 +13063,46 @@ saving, from memory and not sure yet show as words, the slip asks 24% or
 0.24%, the Refresh lists five moving lines and says what changed, the
 sheet after between jobs → working lists six rows and clears nothing.
 
+## D-210 — G3 with J1: hostile files, the policy, attribution, January 1, the error log, the release walk, the spreadsheet
+
+**Why.** Before anyone else sees the app, a pasted file must not be able
+to run code, "nothing leaves your browser" must be enforced, a new year
+must not silently use old tables, an error must not be a blank screen,
+and the numbers must be readable without the app. The brief's G3 and J1.
+
+**Decision.** `test/xss.js` types `<img src=x onerror=…>` into every text
+box of every room and loads a backup whose every string is the trap;
+`test/run.js` ratchets `innerHTML` concatenations without `esc()` against
+`test/xss-baseline.json` (58 spots today; a file may only go down).
+`tools/stamp-build.js` puts a Content Security Policy and
+`shared/errlog.js` (first script) on every page: only this origin,
+`form-action 'none'`, nothing embedded; `connect-src 'self'` instead of
+the brief's `'none'` because `shared/reference.js` fetches `data/*.json`
+from the same origin. Every file under `data/` names a `source` and an
+`asOf`. Year tables opt in with `taxYear`; `Reference.yearNote` says
+"using 2026 limits" past that year, on `Tax.estimate`, the IRA and 401(k)
+presets, and the footer; `test/jan1.js` runs with the clock at 2027-01-01.
+The error log keeps the last 50 entries with every number of three or
+more digits blanked, shows "Something went wrong. Your data is safe." with
+Copy bug report, and rides in the backup like any `slaf.` key. `RELEASE.md`
+names the four walks on a real Android phone and a real iPhone.
+`shared/csvexport.js` writes one CSV per door with a readme in a
+store-only zip, from Your Data, beside a link to the GitHub zip of the app.
+
+**Replaces or removes.** Nothing: hardening adds gates and one export.
+
+**Stored shape.** New key `slaf.errlog.v1` (an array of `{ at, kind, room,
+message, where, build }`, no values). `taxYear: 2026` added to
+`aca_2026.json` and `ss_bend_points_2026.json`; `source` added to the ten
+event templates. No change to `slaf.household.v2`. A LICENSE is still the
+owner's choice (stop-and-ask, G3.14).
+
+**Verified.** `node test/run.js`, `node test/jan1.js` (14), `node test/xss.js`
+(93, the trap never ran), `node test/onefact.js`, `node test/forms.js`;
+the phone walk: no policy violation in the console on eight pages, a thrown
+error shows the panel and a scrubbed log line, the spreadsheet zip
+downloads and opens with seven entries.
+
 ---
 
 # The Dungeons & Dividends entries

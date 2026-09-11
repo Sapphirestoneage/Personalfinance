@@ -4,7 +4,7 @@ paths:
   - "engines/hassle.js"
 ---
 # Worth the Hassle (`hassle`)
-File: rooms/hassle.html · 497 lines
+File: rooms/hassle.html · 499 lines
 Engines: projection, tier0, hourly, hassle
 Reference data: hassle_defaults.json
 Owns: nothing

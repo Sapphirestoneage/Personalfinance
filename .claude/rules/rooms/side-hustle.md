@@ -4,7 +4,7 @@ paths:
   - "engines/sidehustle.js"
 ---
 # Side Hustle (`side-hustle`)
-File: rooms/side-hustle.html · 505 lines
+File: rooms/side-hustle.html · 507 lines
 Engines: projection, tier0, selfemployed, hourly, sidehustle
 Reference data: federal_brackets_2026.json, se_tax_2026.json
 Owns: nothing

@@ -52,6 +52,11 @@
   };
 
   function limitsOf(T) { return T && T.irsLimits && T.irsLimits.limits; }
+  /* Past the limits table's year: "using 2026 limits" on the number (G3.15, D-210). */
+  function yearNoteOf(T) {
+    var R = typeof module === 'object' && module.exports ? require('../shared/reference.js') : (typeof self !== 'undefined' && self.SLAF ? self.SLAF.Reference : null);
+    return R && R.yearNote ? R.yearNote(T.irsLimits) : null;
+  }
   function dollars(d) { return Math.round(d * 100); }
 
   /* ---- Each preset, as a Result ------------------------------------------- */
@@ -99,7 +104,7 @@
     var c = catchUp(h, now);
     var annual = dollars(L.ira + (c.applies ? L.iraCatchup50Plus : 0));
     return Money.ok(Math.round(annual / MONTHS), { annualCents: annual, limitCents: dollars(L.ira), catchUpCents: c.applies ? dollars(L.iraCatchup50Plus) : 0, age: c.age, catchUp: c.applies, ageUnknown: c.unknown,
-      referenceVersion: T.irsLimits.version,
+      referenceVersion: T.irsLimits.version, yearNote: yearNoteOf(T),
       why: Money.formatCents(annual) + ' a year' + (c.applies ? ' with the catch-up from ' + CATCH_UP_AGE : c.unknown ? '; add a date of birth in Start Here and the catch-up from ' + CATCH_UP_AGE + ' applies when it should' : '') + ', a twelfth each month.' });
   }
   function max401k(h, T, now) {
@@ -110,7 +115,7 @@
     var c = catchUp(h, now);
     var annual = dollars(L.elective401k + (c.applies ? L.elective401kCatchup50Plus : 0));
     return Money.ok(Math.round(annual / MONTHS), { annualCents: annual, limitCents: dollars(L.elective401k), catchUpCents: c.applies ? dollars(L.elective401kCatchup50Plus) : 0, age: c.age, catchUp: c.applies, ageUnknown: c.unknown,
-      referenceVersion: T.irsLimits.version,
+      referenceVersion: T.irsLimits.version, yearNote: yearNoteOf(T),
       why: Money.formatCents(annual) + ' a year of your own deferral' + (c.applies ? ' with the catch-up from ' + CATCH_UP_AGE : '') + ', a twelfth each month; the employer match is on top.' });
   }
   var COMPUTE = { ruleOfFive: ruleOfFive, emergencyFund: emergencyFund, maxIra: maxIra, max401k: max401k };

@@ -4,7 +4,7 @@ paths:
   - "engines/fulfillment.js"
 ---
 # The Joy Curve (`fulfillment`)
-File: rooms/fulfillment.html · 376 lines
+File: rooms/fulfillment.html · 378 lines
 Engines: projection, tier0, cashflow, fulfillment
 Reference data: expense_categories.json
 Owns: nothing

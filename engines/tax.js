@@ -33,19 +33,21 @@
     deps = {
       Money: require('../shared/money.js'),
       Schema: require('../shared/schema.js'),
-      SelfEmployed: require('./selfemployed.js')
+      SelfEmployed: require('./selfemployed.js'),
+      Reference: require('../shared/reference.js')
     };
   } else {
     deps = {
       Money: root.SLAF && root.SLAF.Money,
       Schema: root.SLAF && root.SLAF.Schema,
-      SelfEmployed: root.SLAF && root.SLAF.SelfEmployed
+      SelfEmployed: root.SLAF && root.SLAF.SelfEmployed,
+      Reference: root.SLAF && root.SLAF.Reference
     };
   }
-  var api = factory(deps.Money, deps.Schema, deps.SelfEmployed);
+  var api = factory(deps.Money, deps.Schema, deps.SelfEmployed, deps.Reference);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Tax = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, SelfEmployed) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, SelfEmployed, Reference) {
   'use strict';
 
   function dollars(cents) { return cents / 100; }
@@ -247,7 +249,10 @@
     var federal = ord.value + cg.value;
     var total = federal + payroll.value + seTax.value + stateCents;
     var totalGross = ordinaryGross + gains;
+    /* Past the table's year, say so on the number (G3.15, D-210). */
+    var yearNote = Reference && Reference.yearNotes ? Reference.yearNotes({ federalBrackets: t.federalBrackets, seTax: t.seTax, stateBrackets: t.stateBrackets }) : [];
     return Money.ok(total, {
+      yearNote: yearNote.length ? yearNote[0] : null,
       federalOrdinaryCents: ord.value,
       federalCapitalGainsCents: cg.value,
       federalIncomeTaxCents: federal,

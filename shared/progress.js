@@ -1131,8 +1131,13 @@
     var version = g.SLAF.Schema && g.SLAF.Schema.APP_VERSION
       ? '<p class="slaf-version">Money Rooms v' + g.SLAF.Schema.APP_VERSION + (g.SLAF.Schema.BUILD ? ' · build ' + g.SLAF.Schema.BUILD : '') + '</p>'
       : '';
+    function yearLine() {
+      var R = g.SLAF.Reference;
+      var notes = R && R.yearNotes ? R.yearNotes(R._cache || {}) : [];
+      return notes.length ? '<p class="slaf-version">Tax and limit figures: ' + notes.map(escapeHtml).join(', ') + '. Newer tables are not in this build yet.</p>' : '';
+    }
     function paint() {
-      box.innerHTML = stripHtml(roomId, Spine.getProfile()) + version;
+      box.innerHTML = stripHtml(roomId, Spine.getProfile()) + version + yearLine();
       /* Every room gets its own export, from the one mount point every room
          already reaches — the same lever the walk strip and the situation
          notice use (D-142, D-149). No per-room wiring, so no room can be

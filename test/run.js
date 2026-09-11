@@ -8769,7 +8769,7 @@ section('The D&D folder\'s vendored copies');
 
   /* Byte-identical, deliberately — including the SLAF namespace they register
      under, so this comparison stays exact. */
-  ['shared/money.js', 'shared/schema.js', 'engines/projection.js', 'engines/tier0.js', 'engines/foo.js',
+  ['shared/money.js', 'shared/schema.js', 'shared/errlog.js', 'engines/projection.js', 'engines/tier0.js', 'engines/foo.js',
    'shared/theme.css', 'shared/fonts.css', 'favicon.svg']
     .forEach(function (rel) {
       const here = fs.readFileSync(path.join(ROOT, rel));
@@ -11869,7 +11869,7 @@ section('Backup: one file for every key (D-202)');
     checkTrue('every stored key starts with a backed-up prefix (the static drift guard)', stray.length === 0, stray.join('; '));
     /* The audit's list, pinned: a key that appears here for the first time
        is a key the backup now carries, and this says so out loud. */
-    const known = ['slaf.household.v2', 'slaf.snapshots.v1', 'slaf.household.unreadable', 'slaf.prefs.v1', 'slaf.scenarios.v1', 'slaf.skilltree.seen', 'slaf.backup.undo.v1', 'dnd.character.v1', 'dnd.skin.v1'];
+    const known = ['slaf.household.v2', 'slaf.snapshots.v1', 'slaf.household.unreadable', 'slaf.prefs.v1', 'slaf.scenarios.v1', 'slaf.skilltree.seen', 'slaf.backup.undo.v1', 'slaf.errlog.v1', 'dnd.character.v1', 'dnd.skin.v1'];
     const seen = new Set();
     files.forEach(p => {
       const text = fs.readFileSync(p, 'utf8');
@@ -12678,6 +12678,153 @@ section('G2: moving rows, the life-change sheet, not sure yet and from memory, u
 
   /* -- 10. field budget: already the build gate (D-205) -------------------- */
   checkTrue('every row names what it unlocks', rowsTable.rows.every(r => typeof r.unlocks === 'string' && r.unlocks.length > 0));
+})();
+
+/* ==========================================================================
+   G3 with J1: hardening before anyone else sees it (D-210)
+   ========================================================================== */
+section('G3: hostile files, the policy, attribution, January 1, the error log, the release walk, the spreadsheet (D-210)');
+(function () {
+  const { execFileSync } = require('child_process');
+  function walkFiles(dir, out) {
+    fs.readdirSync(dir).forEach(f => {
+      const p = path.join(dir, f);
+      if (f === 'node_modules' || f === 'vendor' || f === '.git') return;
+      if (fs.statSync(p).isDirectory()) walkFiles(p, out); else out.push(p);
+    });
+    return out;
+  }
+  /* -- 12. every innerHTML that concatenates a variable goes through esc(): the ratchet */
+  const ESC = /\b(esc|escapeHtml|escapeHTML|escape|escAttr|safe|html)\(/;
+  const baseline = JSON.parse(fs.readFileSync(path.join(ROOT, 'test/xss-baseline.json'), 'utf8')).counts;
+  const codeFiles = ['index.html', 'map.html'].map(f => path.join(ROOT, f)).concat(walkFiles(path.join(ROOT, 'rooms'), []), walkFiles(path.join(ROOT, 'shared'), []), walkFiles(path.join(ROOT, 'engines'), []), walkFiles(path.join(ROOT, 'dnd'), [])).filter(p => /\.(js|html)$/.test(p));
+  const worse = [], counts = {};
+  let unescaped = 0;
+  codeFiles.forEach(p => {
+    const t = fs.readFileSync(p, 'utf8');
+    const rel = path.relative(ROOT, p);
+    const re = /\.innerHTML\s*(?:\+)?=\s*/g;
+    let m, n = 0;
+    while ((m = re.exec(t))) {
+      let i = m.index + m[0].length, depth = 0, j = i;
+      for (; j < t.length; j++) { const c = t[j]; if (c === '(' || c === '[' || c === '{') depth++; else if (c === ')' || c === ']' || c === '}') { if (depth === 0) break; depth--; } else if (c === ';' && depth === 0) break; }
+      const rhs = t.slice(i, j);
+      const hasVar = /\+\s*[A-Za-z_$][\w$.]*\s*(\+|;|$|\))/.test(rhs) || /\$\{/.test(rhs);
+      const quoted = /^\s*['"][^'"]*['"]\s*$/.test(rhs);
+      if (hasVar && !quoted && !ESC.test(rhs)) n++;
+    }
+    if (n) counts[rel] = n;
+    unescaped += n;
+    if (n > (baseline[rel] || 0)) worse.push(rel + ' ' + (baseline[rel] || 0) + ' → ' + n);
+  });
+  checkTrue('no file gained an innerHTML that concatenates a variable without esc() (the ratchet, test/xss-baseline.json)', worse.length === 0, worse.join('; '));
+  const gone = Object.keys(baseline).filter(rel => !counts[rel] && baseline[rel] > 0);
+  checkTrue('the count only goes down: ' + unescaped + ' spots left across ' + Object.keys(counts).length + ' files', unescaped <= Object.keys(baseline).reduce((n, k) => n + baseline[k], 0));
+  checkTrue('test/xss.js types the trap into every room and loads a trapped backup', (function () { const x = fs.readFileSync(path.join(ROOT, 'test/xss.js'), 'utf8'); return /onerror=window\.__xss=1/.test(x) && /SLAF\.Backup\.apply/.test(x) && /rooms\.json/.test(x); })());
+  /* -- 13. the policy on every page, and the error log first ---------------- */
+  const pages = ['index.html', 'map.html'].concat(fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => f.endsWith('.html')).map(f => 'rooms/' + f), fs.readdirSync(path.join(ROOT, 'dnd')).filter(f => f.endsWith('.html')).map(f => 'dnd/' + f));
+  const noCsp = [], badCsp = [], noLog = [], logLate = [];
+  pages.forEach(f => {
+    const t = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    const m = /<meta http-equiv="Content-Security-Policy" content="([^"]*)"\/>/.exec(t);
+    if (!m) { noCsp.push(f); return; }
+    const c = m[1];
+    if (!/default-src 'self'/.test(c) || !/connect-src 'self'/.test(c) || !/form-action 'none'/.test(c) || !/object-src 'none'/.test(c) || !/frame-src 'none'/.test(c) || /https?:/.test(c) || /\*/.test(c)) badCsp.push(f);
+    const first = /<script[^>]*src="([^"]+)"/.exec(t);
+    if (!/shared\/errlog\.js/.test(t)) noLog.push(f);
+    else if (!first || !/shared\/errlog\.js$/.test(first[1])) logLate.push(f);
+  });
+  checkTrue('every page carries the Content Security Policy (' + pages.length + ' pages)', noCsp.length === 0, noCsp.join(','));
+  checkTrue('it allows only this origin: no other host, no wildcard, no form target, nothing embedded', badCsp.length === 0, badCsp.join(','));
+  checkTrue('connect-src is self, not none, because the tables are fetched from data/ (documented in the stamp tool)', /connect-src is\s+'self' rather than the brief's 'none'/.test(fs.readFileSync(path.join(ROOT, 'tools/stamp-build.js'), 'utf8')));
+  checkTrue('every page loads shared/errlog.js', noLog.length === 0, noLog.join(','));
+  checkTrue('and loads it first, before any other script', logLate.length === 0, logLate.join(','));
+  checkTrue('no page pulls a script, style, font or image from another origin', pages.every(f => !/(src|href)="https?:\/\/[^"]*\.(js|css|woff2?|png|svg|jpg)/.test(fs.readFileSync(path.join(ROOT, f), 'utf8'))));
+  /* -- 14. source and effective date on every file in data/ ---------------- */
+  const dataFiles = walkFiles(path.join(ROOT, 'data'), []).filter(p => p.endsWith('.json'));
+  const unattributed = dataFiles.filter(p => { const j = JSON.parse(fs.readFileSync(p, 'utf8')); return !(typeof j.source === 'string' && j.source.trim().length > 20 && /^\d{4}-\d{2}-\d{2}$/.test(j.asOf || '')); }).map(p => path.relative(ROOT, p));
+  checkTrue('every file in data/ names its source and an effective date (' + dataFiles.length + ' files)', unattributed.length === 0, unattributed.join(','));
+  checkTrue('no LICENSE file was added without the owner choosing one (stop-and-ask, G3.14)', !fs.existsSync(path.join(ROOT, 'LICENSE')) || fs.readFileSync(path.join(ROOT, 'LICENSE'), 'utf8').length > 0);
+  /* -- 15. January 1: a child process with the clock at 2027-01-01 ---------- */
+  const jan = JSON.parse(execFileSync(process.execPath, ['-e', "const o = require(" + JSON.stringify(path.join(ROOT, 'test/jan1.js')) + "); console.log(JSON.stringify({ passed: o.passed, failures: o.failures }));"], { encoding: 'utf8' }).trim());
+  checkTrue('with the clock at 2027-01-01 every year-based number says "using 2026 limits" and nothing crashes (' + jan.passed + ' checks)', jan.failures.length === 0, jan.failures.join('; '));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  check('in the table’s own year there is no note', Ref.yearNote({ taxYear: 2026 }, new Date(2026, 8, 1)), null);
+  check('a year on, the note', Ref.yearNote({ taxYear: 2026 }, new Date(2027, 0, 1)), 'using 2026 limits');
+  checkTrue('the footer prints the note beside the version', /Tax and limit figures: /.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
+  /* -- 16. the local error log ---------------------------------------------- */
+  {
+    const store = {};
+    const fakeLS = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; }, key: i => Object.keys(store)[i] || null, get length() { return Object.keys(store).length; } };
+    Object.defineProperty(global, 'localStorage', { value: fakeLS, configurable: true, writable: true });
+    const g = { addEventListener: () => {}, document: null, location: { pathname: '/rooms/tax.html' }, navigator: { userAgent: 'test' }, localStorage: fakeLS };
+    const src = fs.readFileSync(path.join(ROOT, 'shared/errlog.js'), 'utf8');
+    new Function('self', src)(g);
+    const E = g.SLAF.ErrLog;
+    check('the log key is under the backed-up prefix', E.KEY, 'slaf.errlog.v1');
+    const e1 = E.record('error', 'Could not save 1,234.56 to the card 4111 ending 1003 at 3 months', 'ledger.html:412');
+    check('no financial values: numbers of three or more digits are blanked', e1.message, 'Could not save # to the card # ending # at 3 months');
+    check('the room is read off the page', e1.room, 'tax');
+    for (let i = 0; i < 60; i++) E.record('error', 'e' + i, '');
+    check('the log keeps the last 50', E.read().length, 50);
+    check('oldest first, newest last', E.read()[49].message, 'e59');
+    const rep = E.report();
+    checkTrue('the bug report names the version, build, room and device and the last errors', /Money Rooms bug report/.test(rep) && /room: tax/.test(rep) && /device: test/.test(rep) && /e59/.test(rep) && /No amounts are in this report/.test(rep));
+    E.clear();
+    check('clear empties it', E.read().length, 0);
+    checkTrue('the panel is built from textContent, never markup', !/innerHTML/.test(src) && /textContent = 'Something went wrong\. Your data is safe\.'/.test(src));
+    checkTrue('uncaught errors and rejected promises both land in it', /addEventListener\('error'/.test(src) && /addEventListener\('unhandledrejection'/.test(src));
+    checkTrue('the backup carries the log like every other slaf. key', require(path.join(ROOT, 'shared/backup.js')).PREFIXES.indexOf('slaf.') === 0);
+  }
+  /* -- 17. the release walk ------------------------------------------------- */
+  const rel = fs.readFileSync(path.join(ROOT, 'RELEASE.md'), 'utf8');
+  checkTrue('RELEASE.md names the four walks on a real Android phone and a real iPhone', /real\s+Android\s+phone/.test(rel) && /real\s+iPhone/.test(rel) && /First Round/.test(rel) && /One door/.test(rel) && /Express/.test(rel) && /import/.test(rel) && /jsdom/.test(rel));
+  /* -- J1. the spreadsheet: every number to the cent, blanks blank, not sure yet as words */
+  const Csv = require(path.join(ROOT, 'shared/csvexport.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const T = { ledgerRows: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8')), staleness: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/staleness.json'), 'utf8')), confidenceWeights: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/confidence_weights.json'), 'utf8')) };
+  LR.use(T.ledgerRows);
+  const Own = require(path.join(ROOT, 'shared/ownership.js'));
+  const h = Demo.build();
+  h.meta.notSure = { healthMonthly: { at: '2026-09-01T00:00:00Z', expectedBy: '2027-01' } };
+  h.meta.fields = h.meta.fields || {};
+  h.meta.fields.cashSavings = { asOf: '2026-09-02T10:00:00Z', source: 'typed', confidence: 'sure', room: 'start' };
+  const files = Csv.files(h, T);
+  check('one CSV a door plus the readme', Object.keys(files).sort().join(','), 'A.csv,D.csv,E.csv,I.csv,README.txt,T.csv,you.csv');
+  const all = [].concat.apply([], ['D', 'A', 'I', 'T', 'E', 'you'].map(d => Csv.parse(files[d + '.csv'])));
+  checkTrue('every column is named and documented in the readme', Csv.COLUMNS.every(c => new RegExp('^  ' + c.padEnd(7), 'm').test(files['README.txt'])));
+  checkTrue('every unit is documented in the readme', Object.keys(Csv.UNIT_WORDS).every(u => files['README.txt'].indexOf(u + ' = ') >= 0));
+  let mismatch = [];
+  all.filter(l => l.unit === 'cents' && l.value !== '' && !l.item && l.state !== 'worked out').forEach(l => {
+    const f = Own.FIELDS[l.row]; const r = f ? f.read(h) : null;
+    if (!r || !Money.isOk(r)) { mismatch.push(l.row + ' unreadable'); return; }
+    if (Csv.dollars(r.value) !== l.value) mismatch.push(l.row + ' ' + l.value + ' vs ' + r.value);
+  });
+  checkTrue('every money value matches the app to the cent (' + all.filter(l => l.unit === 'cents' && l.value !== '').length + ' values)', mismatch.length === 0, mismatch.join('; '));
+  const cashLine = all.filter(l => l.row === 'cashSavings')[0];
+  check('cash reads 9500.00 from 950000 cents', cashLine.value, '9500.00');
+  check('with its as-of day and source', cashLine.as_of + ' ' + cashLine.source + ' ' + cashLine.state, '2026-09-02 typed confirmed');
+  const hm = all.filter(l => l.row === 'healthMonthly')[0];
+  check('not sure yet shows as words with the month', hm.state, 'not sure yet (by 2027-01)');
+  check('and its value is blank, never 0', hm.value, '');
+  const blanks = all.filter(l => l.state === 'blank');
+  checkTrue('every blank row stays blank', blanks.length > 0 && blanks.every(l => l.value === '' && l.as_of === '' && l.source === ''));
+  checkTrue('no blank ever reads 0.00', all.every(l => !(l.state === 'blank' && /^0(\.00)?$/.test(l.value))));
+  const debtLines = all.filter(l => l.row === 'debtBalance');
+  check('one line per debt, named', debtLines.map(l => l.item).join('|'), 'Student loan|Credit card');
+  check('the debt balances to the cent', debtLines.map(l => l.value).join('|'), '18400.00|3200.00');
+  check('a rate is a percent number', all.filter(l => l.row === 'debtRate' && l.item === 'Credit card')[0].value, '22.9');
+  check('cents to dollars never goes through a float', Csv.dollars(1234567), '12345.67');
+  check('a negative amount', Csv.dollars(-5), '-0.05');
+  check('a cell starting with = is not a formula to a spreadsheet', Csv.csv([{ door: 'E', level: 1, row: 'x', label: '=SUM(A1)', item: '', value: '', unit: '', state: '', as_of: '', source: '' }]).split('\r\n')[1].split(',')[3], "'=SUM(A1)");
+  check('a comma in a label is quoted and parses back', Csv.parse(Csv.csv([{ door: 'E', level: 2, row: 'foodMonthly', label: 'Food, a month', item: '', value: '710.00', unit: 'cents', state: 'roughly', as_of: '', source: '' }]))[0].label, 'Food, a month');
+  const zip = Csv.zip(files, new Date(2026, 8, 11, 12, 0, 0));
+  check('the zip starts with the local file signature', zip[0] + ',' + zip[1] + ',' + zip[2] + ',' + zip[3], '80,75,3,4');
+  check('and ends with the end-of-central-directory record', zip[zip.length - 22] + ',' + zip[zip.length - 21] + ',' + zip[zip.length - 20] + ',' + zip[zip.length - 19], '80,75,5,6');
+  check('seven entries in the central directory', zip[zip.length - 12] + zip[zip.length - 11] * 256, 7);
+  check('CRC-32 of a known string', Csv.crc32(new TextEncoder().encode('123456789')).toString(16), 'cbf43926');
+  const dataHtml = fs.readFileSync(path.join(ROOT, 'rooms/data.html'), 'utf8');
+  checkTrue('Your Data offers the spreadsheet zip and the whole app, with the honest note about a local server', /btn-sheet/.test(dataHtml) && /archive\/refs\/heads\/main\.zip/.test(dataHtml) && /python3 -m http\.server/.test(dataHtml) && /Your numbers are not in the zip/.test(dataHtml));
 })();
 
 /* ==========================================================================
