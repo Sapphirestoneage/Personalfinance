@@ -9,7 +9,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **first-round** — The First Round (utility) · 304 lines · engines: tax · D-206
 - **express** — Express (utility) · 517 lines · engines: tax, projection, tier0, statement, debt, hourly · D-208
 - **start** — Start Here · 1001 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-166, D-159, D-146
-- **dashboard** — The Dashboard · 1559 lines · no engines · DD-028, DD-026, DD-025
+- **dashboard** — The Dashboard · 1567 lines · no engines · DD-028, DD-026, DD-025
 
 ## Your Numbers (16)
 
@@ -40,7 +40,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **ratios** — Every Ratio · 410 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios · D-143, D-139, D-136
 - **foo-ladder** — FOO Ladder · 77 lines · engines: projection, tier0 · D-058, D-054, D-007
 - **next-hundred** — Your Next $100 · 132 lines · engines: projection, tier0, foo, next100 · D-211
-- **coast-date** — Your Coast Date · 113 lines · engines: projection, tier0, coast · D-213
+- **coast-date** — Your Coast Date · 123 lines · engines: projection, tier0, coast · D-213
 - **rank-guess** — Where Do You Think You Rank? · 115 lines · engines: projection, tier0, rankguess · D-213
 - **health** — The Score · 375 lines · engines: projection, tier0, cashflow, foo, fire, statement, benchmarks, ratios, health · D-143, D-081
 
@@ -90,7 +90,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **skill-tree** — The Skill Tree · 610 lines · engines: projection, tier0, foo, skilltree · owns: skillsDone · D-141, D-140, D-139
 - **exercises** — Exercises · 211 lines · engines: projection, tier0, foo, skilltree, income, selfemployed, tax, fire, statement, vpw, decumulation, cashflow, events, exercises · owns: exercisesDone · D-141, D-139, D-136
 
-## Upkeep (10)
+## Upkeep (11)
 
 - **get-help** — Get Help (utility) · 121 lines · no engines · D-097
 - **history** — History · 231 lines · engines: projection, tier0, hourly, foo, cashflow, fire, statement, benchmarks, ratios, events, skills, history · owns: historyCompareTo · D-122, D-101
@@ -98,9 +98,10 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **doors** — Front Doors (utility) · 410 lines · engines: layouts · D-153
 - **walk** — The Walk-Through (utility) · 280 lines · no engines · D-169, D-149
 - **data** — Your Data (utility) · 493 lines · engines: tax · D-125
-- **ledger** — The Ledger (utility) · 486 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, sincelast · D-207, D-186, D-185
+- **ledger** — The Ledger (utility) · 495 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, sincelast, selfemployed, reachable, notknowing · D-207, D-186, D-185
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 - **progress-card** — Progress Card (utility) · 140 lines · engines: projection, tier0, tax, debt · D-212
+- **comeback** — Welcome Back (utility) · 195 lines · engines: tax, projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, skills, sincelast · D-214
 - **refresh** — Refresh (utility) · 340 lines · engines: tax, projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, skills · D-209, D-181, D-081
 
 ## Files in rooms/ not in the registry (2)

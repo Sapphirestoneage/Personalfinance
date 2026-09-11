@@ -1156,6 +1156,20 @@
       "order": 98.7
     },
     {
+      "id": "comeback",
+      "title": "Welcome Back",
+      "file": "rooms/comeback.html",
+      "reads": [
+        "cashSavings",
+        "investments",
+        "totalDebt"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 98.9
+    },
+    {
       "id": "refresh",
       "title": "Refresh",
       "file": "rooms/refresh.html",

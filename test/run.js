@@ -8109,7 +8109,7 @@ section('Core (D-094): the lens, by hand');
   const demo = Demo.build();
   const T = TABLES;
 
-  check('four modes', Lens.MODES.map(m => m.id).join(','), '$,hours,bought,pushed');
+  check('five modes', Lens.MODES.map(m => m.id).join(','), '$,hours,bought,pushed,paycheck');
   check('the demo has all four', Lens.available(demo, T).length, 4);
   const retired = Schema.createHousehold({ people: [Schema.createPerson({ role: 'adult', employmentStatus: 'retired' })] });
   check('a retiree has no hours lens', Lens.available(retired, T).map(m => m.id).join(','), '$,bought,pushed');
@@ -10250,7 +10250,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
   check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
   check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree,stacker,exercises');
-  check('Upkeep, with Front Doors and the Walk-Through kept apart (not merged this pass)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,refresh,history,settings,get-help,doors,walk,wrapped,ledger,progress-card');
+  check('Upkeep, with Front Doors and the Walk-Through kept apart (not merged this pass)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,refresh,history,settings,get-help,doors,walk,wrapped,ledger,progress-card,comeback');
   checkTrue('every room has aliases to search by', Registry.all().every(r => Array.isArray(r.aliases) && r.aliases.length >= 2));
   checkTrue('"car" finds What A Car Costs', Registry.matches(Registry.byId('car'), 'car') && Registry.matches(Registry.byId('car'), 'VEHICLE'));
   checkTrue('...and not FIRE', !Registry.matches(Registry.byId('fire'), 'car'));
@@ -11730,7 +11730,7 @@ section('18.4 and 18.5: the Ledger room, the target and one line per row (D-185)
   checkTrue('...reading every DAITE money and situation path and writing nothing yet', room.daite.reads.length > 30 && room.daite.writes.length === 0);
   checkTrue('...and needing nothing, so it opens on an empty household', Array.isArray(room.needs) && room.needs.length === 0);
   const body = html.split('<body')[1];
-  checkTrue('the room reads the two tables through their modules, never the files', /Reference\.load\(\['ledgerRows', 'spheres', 'staleness', 'confidenceWeights', 'accessRules', 'effectiveTaxRates'\]\.concat\(Suggest\.TABLES\)\)/.test(body) && !/ledger-rows\.json|spheres\.json/.test(body));
+  checkTrue('the room reads the two tables through their modules, never the files', /Reference\.load\(\['ledgerRows', 'spheres', 'staleness', 'confidenceWeights', 'accessRules', 'effectiveTaxRates', 'plausibleRanges', 'seTax'\]\.concat\(Suggest\.TABLES\)\)/.test(body) && !/ledger-rows\.json|spheres\.json/.test(body));
   checkTrue('the target is five wedges by nine rings', /Spheres\.cells\(/.test(html) && /viewBox="0 0 100 100"/.test(html));
   checkTrue('one line under it: sphere N of 9, the virtue, rows left, minutes', /Sphere ' \+ s\.order \+ ' of 9, /.test(html) && /' row' \+ [^;]* \+ ' left, about '/.test(html) && /minutesWord/.test(html));
   checkTrue('rows group by sphere then letter, numbered inside the sphere', /LETTER_WORD/.test(html) && /' of ' \+ of/.test(html));
@@ -13009,7 +13009,7 @@ section('H4, H5, H7, H8: the waterfall, does the rule apply, the receipt, share 
   let leaked = [];
   cards.forEach(c => { const l = ShareCard.leaks(c.title + ' ' + c.line + ' ' + ShareCard.link(c) + ' ' + JSON.stringify(c.fields), hd); if (l.length) leaked.push(c.type + ':' + l.join('|')); });
   checkTrue('no cents value from the household appears in any link or card', leaked.length === 0, leaked.join('; '));
-  checkTrue('the payload can only carry ratios, percents, months, years, hours, counts and rule ids: no cents key exists', Object.keys(ShareCard.ALLOWED).every(k => ['t', 'y', 'm', 'p', 'd', 'at', 'h', 'n', 'r'].indexOf(k) >= 0));
+  checkTrue('the payload can only carry ratios, percents, months, years, hours, counts, rule ids and a year range: no cents key exists', Object.keys(ShareCard.ALLOWED).every(k => ['t', 'y', 'm', 'p', 'd', 'at', 'h', 'n', 'r', 'z', 'w'].indexOf(k) >= 0));
   check('the five household cards, from the persona', cards.length, 5);
   const hacked = ShareCard.encode({ fields: { t: 'runway', m: 3, cents: 950000, balance: 'lots' } });
   check('a field not on the list is dropped before it can be encoded', JSON.stringify(ShareCard.decode('#c=' + hacked)), '{"t":"runway","m":3}');
@@ -13093,6 +13093,79 @@ section('I1, I3, I4, I5: Money Wrapped, where do you think you rank, your coast 
   const uc = ShareCard.make('unlearn', hd, T, { unlearn: ['save_ten_percent', 'hundred_minus_age', 'six_months'] });
   check('the unlearn card lists three rules by name, no numbers', uc.line, 'Save 10% · 100 minus your age in stocks · Six months of expenses');
   checkTrue('and its link carries ids only', /^[a-z_,]+$/.test(ShareCard.decode(ShareCard.link(uc).split('#')[1]).r));
+})();
+
+/* ==========================================================================
+   I2, J2, J3, J6: the cost of not knowing, the Comeback, the pay rhythm, ranges (D-214)
+   ========================================================================== */
+section('I2, J2, J3, J6: the cost of not knowing, the Comeback, the real pay cycle, no bare point (D-214)');
+(function () {
+  const NotKnowing = require(path.join(ROOT, 'engines/notknowing.js'));
+  const Lens = require(path.join(ROOT, 'shared/lens.js'));
+  const Calendar = require(path.join(ROOT, 'engines/calendar.js'));
+  const ShareCard = require(path.join(ROOT, 'shared/sharecard.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+  LR.use(T.ledgerRows);
+
+  /* -- I2: every range row has a bound, a feed and a setter ------------------------ */
+  const PR = T.plausibleRanges;
+  checkTrue('the ranges file says it is unverified, typed from memory, and must be checked', PR.confidence === 'unverified' && PR.verify === true && /BLS|Survey of Consumer Finances/.test(PR.source) && /typed from memory/.test(PR.confidenceNote));
+  const rowsWithRange = Object.keys(PR.rows);
+  checkTrue('every range names a row the registry has, a feed the engine reads and a setter it owns', rowsWithRange.every(id => LR.byId(id) && NotKnowing.FEEDS.indexOf(PR.rows[id].feeds) >= 0 && NotKnowing.SET.indexOf(id) >= 0), rowsWithRange.filter(id => !(LR.byId(id) && NotKnowing.FEEDS.indexOf(PR.rows[id].feeds) >= 0 && NotKnowing.SET.indexOf(id) >= 0)).join(','));
+  checkTrue('every range row names what it unlocks', rowsWithRange.every(id => LR.byId(id).unlocks));
+  const h = Schema.createHousehold(); h.filingStatus = 'single';
+  h.people = [Schema.createPerson({ role: 'adult', dob: '1999-01-01', employmentStatus: 'employed' })];
+  h.people[0].incomeSources = [Schema.createIncomeSource({ personId: h.people[0].id, grossAnnualIncomeCents: 9500000, type: 'w2' })];
+  h.assets = [Schema.createAsset({ category: 'cash', valueCents: 300000 }), Schema.createAsset({ category: 'investment', valueCents: 2000000 })];
+  h.expenses = Schema.createExpenses({ needs: { food: { monthlyCents: 60000 }, accommodation: { monthlyCents: 150000 }, transportation: { monthlyCents: 20000 } } });
+  h.debts = [Schema.createDebt({ label: 'Amex', type: 'credit_card', balanceCents: 320000 })];
+  const all = NotKnowing.all(h, T);
+  checkTrue('blank rows are sized by swing, largest first', all.length >= 3 && all.every((s, i) => i === 0 || all[i - 1].swing >= s.swing));
+  const wants = all.filter(s => s.rowId === 'wantsMonthly')[0];
+  checkTrue('the blank wants line could move the FI date, phrased as a swing', wants && wants.feeds === 'fiMonths' && /This blank could move your FI date by up to \d+ months\./.test(wants.line), wants && wants.line);
+  checkTrue('never phrased as money lost', all.every(s => !/lost|losing|cost you/.test(s.line)));
+  const rate = all.filter(s => s.rowId === 'debtRate')[0];
+  checkTrue('a blank card rate: the swing is interest a month, per item', rate && rate.itemId === h.debts[0].id && rate.feeds === 'interestMonthlyCents' && rate.swing === Math.round(320000 * 0.29 / 12) - Math.round(320000 * 0.03 / 12), rate && rate.swing);
+  checkTrue('the household itself is never written: the swing runs on a copy', h.expenses.wants.totalCents === null && !Money.isEntered(h.debts[0].rate));
+  check('a row with no range has no swing', NotKnowing.swing('zip', h, T), null);
+  checkTrue('the doors sort blanks by swing and show the line', /NotKnowing\.all\(h, TABLES\)/.test(fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8')) && /swings\[r\.id\]\.line/.test(fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8')));
+
+  /* -- J2: the Comeback ----------------------------------------------------------- */
+  const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  check('21 days', require(path.join(ROOT, 'shared/progress.js')).COMEBACK_DAYS, 21);
+  checkTrue('the last visit is a preference and the due mark is set on the way in, never on the Comeback itself', /Prefs\.set\('visit\.last', now\)/.test(prog) && /roomId !== 'comeback'/.test(prog));
+  checkTrue('the front door sends people there once, only with numbers to look at', /comebackDue\(window\)/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')) && /panelReady\(h\) && !\/comeback=seen\//.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')));
+  const cb = fs.readFileSync(path.join(ROOT, 'rooms/comeback.html'), 'utf8');
+  checkTrue('the Comeback asks only the moving rows, oldest first, writes through the owner, ends on the strip', /LedgerRows\.moving\(h, TABLES\)/.test(cb) && /Oldest first/.test(cb) && /Ownership\.write\(r\.row\.id, v, r\.item \? \{ itemId: r\.item\.id \} : null\)/.test(cb) && /SinceLast\.strip\(h, last, TABLES\)/.test(cb) && /LIVE-FORM: built once/.test(cb));
+  const BANNED = ['haven\'t', 'missed', 'failed', 'streak', 'gap', 'behind', 'should have', 'forgot', 'lapsed', 'overdue'];
+  const copy = cb.split('<script src')[0].toLowerCase();
+  checkTrue('no banned word in the Comeback copy', BANNED.every(w => copy.indexOf(w) === -1), BANNED.filter(w => copy.indexOf(w) !== -1).join(','));
+  checkTrue('test/comeback.js sets the clock 45 days ahead and holds the banned list', /45 \* 86400000/.test(fs.readFileSync(path.join(ROOT, 'test/comeback.js'), 'utf8')) && /BANNED/.test(fs.readFileSync(path.join(ROOT, 'test/comeback.js'), 'utf8')));
+
+  /* -- J3: the real pay cycle --------------------------------------------------------- */
+  const hp = Demo.build(); hp.calendar = Object.assign({}, hp.calendar || {}, { cadence: 'fortnightly' });
+  checkTrue('the paycheck lens appears only when the cadence is known', Lens.available(hp, T).some(m => m.id === 'paycheck') && !Lens.available(Demo.build(), T).some(m => m.id === 'paycheck'));
+  check('a month read every two weeks: 26 over 12', Lens.apply(216667, 'paycheck', hp, T).value, 100000);
+  check('and says so', Lens.apply(216667, 'paycheck', hp, T).display, '$1,000 a payday');
+  hp.calendar.cadence = 'weekly';
+  check('weekly: 52 over 12', Lens.apply(433333, 'paycheck', hp, T).value, 100000);
+  hp.calendar.cadence = 'irregular';
+  checkTrue('irregular income reads a month as one low month, the planning base', Lens.apply(100000, 'paycheck', hp, T).display === '$1,000 a low month');
+  check('a two-paycheck month is the usual for fortnightly pay', Calendar.paycheckMonthLabel('fortnightly', 2).extra + ':' + Calendar.paycheckMonthLabel('fortnightly', 2).label, 'false:a two-paycheck month');
+  check('a window that catches fewer paydays than usual is not a month to name', Calendar.paycheckMonthLabel('fortnightly', 1), null);
+  check('a three-paycheck month is named, not averaged away', Calendar.paycheckMonthLabel('fortnightly', 3).label, 'a three-paycheck month: one more payday than most months');
+  check('five paydays on weekly pay', Calendar.paycheckMonthLabel('weekly', 5).label, 'a five-paycheck month: one more payday than most months');
+  check('monthly pay has no such month', Calendar.paycheckMonthLabel('monthly', 1), null);
+  checkTrue('the calendar room says it', /r\.paycheckMonth\.label/.test(fs.readFileSync(path.join(ROOT, 'rooms/calendar.html'), 'utf8')));
+
+  /* -- J6: no projected date without its range ------------------------------------------ */
+  const fi = ShareCard.make('fiDate', Demo.build(), T, {});
+  checkTrue('the FI card carries the date with its range from the bands', fi.ok && typeof fi.fields.w === 'number' && typeof fi.fields.z === 'number' && fi.fields.w <= fi.fields.y && fi.fields.y <= fi.fields.z && /\(\d{4} to \d{4}\)/.test(fi.title), fi.title);
+  checkTrue('and the range survives the link', /\(\d{4} to \d{4}\)/.test(ShareCard.render(ShareCard.decode(ShareCard.link(fi).split('#')[1])).title));
+  checkTrue('the coast date shows its range, a good decade to a poor one', /Range: /.test(fs.readFileSync(path.join(ROOT, 'rooms/coast-date.html'), 'utf8')) && /data-range/.test(fs.readFileSync(path.join(ROOT, 'rooms/coast-date.html'), 'utf8')));
 })();
 
 /* ==========================================================================

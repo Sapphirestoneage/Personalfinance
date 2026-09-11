@@ -1082,6 +1082,25 @@
     return { count: count, bytes: bytes, hosts: list,
       line: count === 0 ? 'Sent anywhere this session: 0 bytes. No request left this origin.' : 'Sent anywhere this session: ' + bytes + ' bytes in ' + count + ' request' + (count === 1 ? '' : 's') + ' to ' + list.join(', ') + '.' };
   }
+  /* The Comeback (J2, D-214): after 21 days away the first screen is
+     "Welcome back", once per return. The last visit is a preference; the
+     due mark is cleared by the Comeback's Done, or by a visit to it. */
+  var COMEBACK_DAYS = 21;
+  function noteVisit(g, roomId) {
+    var Prefs = g.SLAF && g.SLAF.Prefs;
+    if (!Prefs || !Prefs.get) return;
+    try {
+      var now = Date.now();
+      var last = Prefs.get('visit.last', null);
+      if (typeof last === 'number' && now - last >= COMEBACK_DAYS * 86400000 && roomId !== 'comeback') Prefs.set('comeback.due', last);
+      Prefs.set('visit.last', now);
+    } catch (e) { /* storage refused: no comeback, no harm */ }
+  }
+  function comebackDue(g) {
+    var Prefs = g && g.SLAF && g.SLAF.Prefs;
+    var due = Prefs && Prefs.get ? Prefs.get('comeback.due', null) : null;
+    return typeof due === 'number' ? due : null;
+  }
   function mountGuards(g, Spine) {
     var Prefs = g.SLAF && g.SLAF.Prefs;
     var state = Spine.storageState ? Spine.storageState() : null;
@@ -1127,6 +1146,7 @@
     var Spine = g && g.SLAF && g.SLAF.Spine;
     if (!Spine) return null;
     mountGuards(g, Spine);
+    noteVisit(g, roomId);
 
     /* Rooms use <main>; the FOO ladder builds into #root > .wrap. Try the
        shapes this app actually has rather than assuming one. */
@@ -1235,7 +1255,7 @@
 
   return {
     mount: mount,
-    mountHeader: mountHeader, privacyReceipt: privacyReceipt,
+    mountHeader: mountHeader, privacyReceipt: privacyReceipt, comebackDue: comebackDue, COMEBACK_DAYS: COMEBACK_DAYS,
     mountFold: mountFold,
     mountSectionSync: mountSectionSync,
     roomIdFromLocation: roomIdFromLocation,

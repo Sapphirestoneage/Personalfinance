@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-11 20:37Z"/>
+<meta name="slaf-build" content="2026-09-11 20:47Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Your Coast Date · SPARKS</title>
@@ -96,6 +96,16 @@
     if (r.neverAtThisPace) { el('c-num').textContent = 'Not reachable at this pace by ' + r.targetAge + '.'; el('c-sub').textContent = 'Saving ' + Money.formatCents(r.annualContributionCents) + ' a year does not get the pot to ' + Money.formatCents(r.fiNumberCents) + ' in time; a later target age or a larger saving would.'; }
     else if (r.reachedNow) { el('c-num').textContent = 'You could coast now.'; el('c-sub').textContent = 'What is invested today grows to the FI number by ' + r.targetAge + ' with nothing more added.'; }
     else { var when = addMonths(Schema.localMonth(), r.months); el('c-num').textContent = monthWord(when) + ', at ' + r.coastAge + '.'; el('c-sub').textContent = 'Keep saving ' + Money.formatCents(r.annualContributionCents) + ' a year until then; from that month the pot, about ' + Money.formatCents(r.potAtCoastCents) + ', reaches ' + Money.formatCents(r.fiNumberCents) + ' by ' + r.targetAge + ' on its own.'; }
+    /* J6 (D-214): never a single point without its range. The same walk at
+       the low and high band from data/return_bands.json. */
+    var bands = TABLES.returnBands && TABLES.returnBands.percentiles;
+    if (bands) {
+      var lo = Coast.date(Spine.getProfile(), TABLES, { targetAge: typed >= 18 && typed <= 100 ? typed : null, returnReal: bands.p25 });
+      var hi = Coast.date(Spine.getProfile(), TABLES, { targetAge: typed >= 18 && typed <= 100 ? typed : null, returnReal: bands.p75 });
+      function word(x) { return !Money.isOk(x) ? 'not yet' : x.neverAtThisPace ? 'not at this pace' : x.reachedNow ? 'now' : monthWord(addMonths(Schema.localMonth(), x.months)); }
+      el('c-sub').textContent += ' Range: ' + word(hi) + ' in a good decade (' + (Math.round(bands.p75 * 1000) / 10) + '%) to ' + word(lo) + ' in a poor one (' + (Math.round(bands.p25 * 1000) / 10) + '%).';
+      el('c-sub').setAttribute('data-range', word(hi) + '|' + word(lo));
+    }
     el('c-rev').textContent = 'With no more contributions, today’s retirement money grows to about ' + Money.formatCents(r.noMoreContributions.atTargetAgeCents) + ' by ' + r.targetAge + ', in today’s dollars.';
     el('c-assume').textContent = 'At ' + (Math.round(r.returnReal * 1000) / 10) + '% a year real (after inflation), from data/return_bands.json. Its own formula, not a FIRE variant.';
   }

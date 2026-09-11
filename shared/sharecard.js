@@ -36,7 +36,7 @@
   var TYPES = ['fiDate', 'savingsRate', 'debtFree', 'runway', 'understanding', 'wrapped', 'unlearn'];
   /* The only fields a card may carry. Everything is a ratio, a percent, a
      count of months or years, or a year; never cents. */
-  var ALLOWED = { t: 'string', y: 'number', m: 'number', p: 'number', d: 'string', at: 'string', h: 'number', n: 'number', r: 'string' };
+  var ALLOWED = { t: 'string', y: 'number', m: 'number', p: 'number', d: 'string', at: 'string', h: 'number', n: 'number', r: 'string', z: 'number', w: 'number' };
   function monthWord(ym) { var m = Number(String(ym).slice(5, 7)); return ['January','February','March','April','May','June','July','August','September','October','November','December'][m - 1] + ' ' + String(ym).slice(0, 4); }
   function addMonths(ym, n) { var y = Number(ym.slice(0, 4)), m = Number(ym.slice(5, 7)) - 1 + n; return (y + Math.floor(m / 12)) + '-' + ('0' + ((m % 12) + 1)).slice(-2); }
   function make(type, household, tables, opts) {
@@ -48,9 +48,17 @@
       if (!Money.isOk(y)) return Object.assign(card, { reason: y.reason });
       var year = Number(today.slice(0, 4)) + Math.ceil(y.value);
       card.fields.y = year; card.fields.m = Math.round(y.value * 12);
+      /* J6: the date with its range, from the return bands (a good decade,
+         a poor one), never a single point. */
+      var bands = T.returnBands && T.returnBands.percentiles;
+      if (bands) {
+        var best = Tier0.yearsToFire(h, T, { expectedReturnRate: bands.p75 }), worst = Tier0.yearsToFire(h, T, { expectedReturnRate: bands.p25 });
+        if (Money.isOk(best)) card.fields.w = Number(today.slice(0, 4)) + Math.ceil(best.value);
+        if (Money.isOk(worst)) card.fields.z = Number(today.slice(0, 4)) + Math.ceil(worst.value);
+      }
       var moved = o.previousYears !== undefined && o.previousYears !== null ? Math.round((o.previousYears - y.value) * 12) : null;
       if (moved !== null) card.fields.p = moved;
-      card.title = y.alreadyThere ? 'Financially independent' : 'FI date: about ' + year;
+      card.title = y.alreadyThere ? 'Financially independent' : 'FI date: about ' + year + (card.fields.w && card.fields.z ? ' (' + card.fields.w + ' to ' + card.fields.z + ')' : '');
       card.line = moved !== null && moved !== 0 ? 'FI date moved ' + Math.abs(moved) + ' month' + (Math.abs(moved) === 1 ? '' : 's') + (moved > 0 ? ' closer' : ' further out') + '.' : 'About ' + Math.round(y.value) + ' years at the current pace.';
       card.ok = true; return card;
     }
@@ -132,7 +140,7 @@
   /** The card as words, from the payload alone (what the receiver sees). */
   function render(fields) {
     var f = fields || {};
-    if (f.t === 'fiDate') return { title: f.y ? 'FI date: about ' + f.y : 'Financial independence', line: typeof f.p === 'number' && f.p !== 0 ? 'FI date moved ' + Math.abs(f.p) + ' month' + (Math.abs(f.p) === 1 ? '' : 's') + (f.p > 0 ? ' closer' : ' further out') + '.' : (typeof f.m === 'number' ? 'About ' + Math.round(f.m / 12) + ' years at the current pace.' : '') };
+    if (f.t === 'fiDate') return { title: f.y ? 'FI date: about ' + f.y + (f.w && f.z ? ' (' + f.w + ' to ' + f.z + ')' : '') : 'Financial independence', line: typeof f.p === 'number' && f.p !== 0 ? 'FI date moved ' + Math.abs(f.p) + ' month' + (Math.abs(f.p) === 1 ? '' : 's') + (f.p > 0 ? ' closer' : ' further out') + '.' : (typeof f.m === 'number' ? 'About ' + Math.round(f.m / 12) + ' years at the current pace.' : '') };
     if (f.t === 'savingsRate') return { title: 'Savings rate: ' + f.p + '%', line: typeof f.m === 'number' ? 'Savings rate ' + (f.p >= f.m ? 'up' : 'down') + ' to ' + f.p + '% from ' + f.m + '%.' : f.p + '% of take-home pay saved.' };
     if (f.t === 'debtFree') return { title: 'Debt-free: ' + (f.d ? monthWord(f.d) : 'soon'), line: typeof f.m === 'number' ? f.m + ' month' + (f.m === 1 ? '' : 's') + ' at the current pace.' : '' };
     if (f.t === 'runway') return { title: 'Runway: ' + f.m + ' months', line: 'Cash covers ' + f.m + ' month' + (f.m === 1 ? '' : 's') + ' of spending.' };

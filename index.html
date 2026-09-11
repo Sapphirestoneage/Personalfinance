@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-11 20:37Z"/>
+<meta name="slaf-build" content="2026-09-11 20:47Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="shared/errlog.js"></script>
 <title>SPARKS · Money rooms</title>
@@ -1073,6 +1073,14 @@
   }
 
   function route(h) {
+    /* J2 (D-214): back after 21 days or more, with numbers to look at:
+       the Comeback is the first screen, once. */
+    var due = SLAF.Progress.comebackDue ? SLAF.Progress.comebackDue(window) : null;
+    if (due !== null && panelReady(h) && !/comeback=seen/.test(location.search)) {
+      try { SLAF.Prefs.set('comeback.due', null); } catch (e) { /* fine */ }
+      window.location.replace('rooms/comeback.html');
+      return false;
+    }
     var ready = panelReady(h);
     el('landing').hidden = ready;
     Array.prototype.forEach.call(document.querySelectorAll('.dash'), function (n) { n.hidden = !ready; });

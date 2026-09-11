@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-11 20:37Z"/>
+<meta name="slaf-build" content="2026-09-11 20:47Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>The Ledger · SPARKS</title>
@@ -200,6 +200,9 @@
 <script src="../shared/doors.js"></script>
 <script src="../shared/showmath.js"></script>
 <script src="../engines/sincelast.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/reachable.js"></script>
+<script src="../engines/notknowing.js"></script>
 <script>
 (function () {
   var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Registry = SLAF.Registry, Progress = SLAF.Progress,
@@ -406,12 +409,18 @@
       }).join('') + '</ul></div>';
     }
     if (v.add.length) {
-      out += '<div class="group"><h3>Add these</h3><ul class="rows">' + v.add.map(function (r) {
+      /* The most valuable unknown first (I2, D-214): each blank sized by
+         how far it could swing the insight it feeds. */
+      var swings = {};
+      try { SLAF.NotKnowing.all(h, TABLES).forEach(function (s) { if (!s.itemId && !swings[s.rowId]) swings[s.rowId] = s; }); } catch (e) { /* no ranges loaded */ }
+      var adds = v.add.slice().sort(function (a, b) { return ((swings[b.id] || {}).swing || 0) - ((swings[a.id] || {}).swing || 0); });
+      out += '<div class="group"><h3>Add these</h3><ul class="rows">' + adds.map(function (r) {
         var href = target(r);
         return '<li class="row is-missing" data-row="' + esc(r.id) + '" data-status="missing"><span class="g" title="not entered">' + GLYPH.missing + '</span><span class="lab">' + esc(r.label) + '</span>'
           + '<span class="val">' + (href ? '<a href="' + esc(href) + '">' + (r.kind === 'lookup' ? 'Look it up' : 'Enter it') + '</a>' : '') + '</span>'
           + (r.kind === 'lookup' && r.where ? '<span class="where">' + esc(r.where) + '</span>' : '')
-          + '<span class="small">Unlocks ' + esc(r.unlocks) + '.</span></li>';
+          + '<span class="small">Unlocks ' + esc(r.unlocks) + '.</span>'
+          + (swings[r.id] ? '<span class="small swing">' + esc(swings[r.id].line) + '</span>' : '') + '</li>';
       }).join('') + '</ul></div>';
     }
     if (v.na.length) out += '<p class="na">' + v.na.map(function (s) { return esc(s.label) + ': ' + esc(s.how); }).join(' ') + '</p>';
@@ -468,7 +477,7 @@
   Progress.mountHeader('ledger');
   Progress.mount('ledger');
   SLAF.Backup.mount('#backup');
-  Reference.load(['ledgerRows', 'spheres', 'staleness', 'confidenceWeights', 'accessRules', 'effectiveTaxRates'].concat(Suggest.TABLES)).then(function (t) {
+  Reference.load(['ledgerRows', 'spheres', 'staleness', 'confidenceWeights', 'accessRules', 'effectiveTaxRates', 'plausibleRanges', 'seTax'].concat(Suggest.TABLES)).then(function (t) {
     TABLES = t || {};
     LedgerRows.use(TABLES.ledgerRows);
     Spheres.use(TABLES.spheres);

@@ -4,7 +4,7 @@ paths:
   - "engines/coast.js"
 ---
 # Your Coast Date (`coast-date`)
-File: rooms/coast-date.html · 113 lines
+File: rooms/coast-date.html · 123 lines
 Engines: projection, tier0, coast
 Reference data: effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, return_bands.json
 Owns: nothing

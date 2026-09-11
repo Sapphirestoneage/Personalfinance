@@ -1792,6 +1792,28 @@
     subsections: [{ id: 'guess', label: 'Your guess' }, { id: 'reveal', label: 'Guess beside survey' }]
   });
 
+  /* The Comeback (J2, D-214): the first screen after 21 days away. Only the
+     moving rows, oldest first, then the earned-vs-learned strip. Not on the
+     map's groups on its own account: the front door sends people here. */
+  ROOMS.push({
+    id: 'comeback',
+    group: 'upkeep', aliases: ['comeback', 'welcome back', 'been a while'],
+    kind: 'core',
+    utility: true,
+    needs: ['cashSavings', 'investments', 'totalDebt'],
+    order: 98.9,
+    title: 'Welcome Back',
+    blurb: 'Back after a while? Here is what changed. About 2 minutes: only the numbers that move, oldest first, then what moved and what you learned.',
+    href: 'rooms/comeback.html',
+    tier: 0,
+    tags: ['cashflow', 'debt'],
+    daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses'], writes: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses'] },
+    subsections: [
+      { id: 'rows-card', label: 'The numbers that move' },
+      { id: 'since',     label: 'Since last time' }
+    ]
+  });
+
   /* `needs` lists the shared fields a room reads before it can show its main
      output — the ids in shared/ownership.js, which know who owns each one and
      which question to land on. shared/progress.js turns that into "what is

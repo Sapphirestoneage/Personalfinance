@@ -13208,6 +13208,34 @@ growth, coast now when the pot doubles on its own, never at 2%; the
 persona year gives four lines with no cents value), render and features
 gates on the three rooms and Unlearning, the phone walk.
 
+## D-214 — I2, J2, J3, J6: the cost of not knowing, the Comeback, the real pay cycle, no bare point
+
+**Why.** The brief's I2 and the cheap J items. J4, J5, J7 and J8 follow on
+their own; J7's gift privacy is a stop-and-ask.
+
+**Decision.** `data/plausible_ranges.json` (confidence recalled, verify
+true) gives a low and a high per commonly blank row and the insight it
+feeds; `engines/notknowing.js` sets the row to each bound on a copy of
+the household, never the spine, and reads the insight at both; the swing
+is phrased as a swing, never as money lost, and the doors' "Add these"
+sorts blanks by it. `rooms/comeback.html`: after 21 days away
+(`Progress.COMEBACK_DAYS`, the last visit a preference) the front door
+opens once on Welcome Back, which asks only the moving rows, oldest
+first, and ends on the earned-vs-learned strip; `test/comeback.js` sets
+the clock 45 days ahead and holds a banned-words list. The lens gains
+"a payday" (weekly, every two weeks, twice a month, monthly from
+`data/calendar_conventions.json`; irregular reads one low month), and
+the calendar names a three- or five-paycheck month. The coast date and
+the FI card carry their range from the return bands beside the point.
+
+**Replaces or removes.** Nothing.
+
+**Stored shape.** No change to the household. Prefs gain `visit.last` and
+`comeback.due`. `plausibleRanges` joins `Reference.TABLE_FILES`.
+
+**Verified.** `node test/run.js`, `node test/comeback.js` (9), render and
+features gates on comeback and the Ledger; the phone walk.
+
 ---
 
 # The Dungeons & Dividends entries

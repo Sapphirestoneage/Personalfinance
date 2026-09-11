@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-11 20:37Z"/>
+<meta name="slaf-build" content="2026-09-11 20:47Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Money Calendar & Pay-Later · SPARKS</title>
@@ -177,7 +177,7 @@
       var logged = (r.logHits || []).filter(function (x) { return !x.potential; });
       var sub = (r.paydaySource === 'ledger'
           ? counted.length + (counted.length === 1 ? ' landing' : ' landings') + ' from Income, ' + Money.formatCents(counted.reduce(function (t, x) { return t + x.cents; }, 0)) + ' in all'
-          : 'Paid ' + r.cadenceLabel.toLowerCase() + ', ' + Money.formatCents(r.perPaydayCents) + ' a payday' + (r.paydays.length ? ' on the ' + r.paydays.map(function (p) { return ordinal(p.dom); }).join(' and the ') : ''))
+          : 'Paid ' + r.cadenceLabel.toLowerCase() + ', ' + Money.formatCents(r.perPaydayCents) + ' a payday' + (r.paydays.length ? ' on the ' + r.paydays.map(function (p) { return ordinal(p.dom); }).join(' and the ') : '') + (r.paycheckMonth ? '. This is ' + r.paycheckMonth.label : ''))
         + (logged.length ? ' · ' + logged.length + ' logged ' + (logged.length === 1 ? 'bill' : 'bills') + ' from Cash Flow, ' + Money.formatCents(logged.reduce(function (t, x) { return t + x.cents; }, 0)) : '')
         + r.bills.map(function (b) { return ' · ' + b.label + ' ' + Money.formatCents(b.cents) + ' on the ' + ordinal(b.day); }).join('')
         + ((r.annualHits || []).length ? ' · ' + r.annualHits.length + (r.annualHits.length === 1 ? ' yearly cost lands' : ' yearly costs land') + ' in this window, drawn on the 1st of their month, not spread' : '')
