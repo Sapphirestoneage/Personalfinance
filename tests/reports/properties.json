@@ -1,9 +1,21 @@
 {
   "seed": 20260910,
   "numRuns": 100,
-  "engines": 64,
+  "engines": 75,
   "files": 66,
-  "missingFiles": [],
+  "missingFiles": [
+    "advicerules",
+    "bankcsv",
+    "coast",
+    "next100",
+    "notknowing",
+    "rankguess",
+    "reachable",
+    "rothaca",
+    "sincelast",
+    "subscriptions",
+    "wrapped"
+  ],
   "extraFiles": [
     "blocks",
     "levers"
@@ -1167,7 +1179,7 @@
       "notes": [],
       "properties": [
         {
-          "name": "no throw, no NaN or Infinity, on any valid household (1 functions)",
+          "name": "no throw, no NaN or Infinity, on any valid household (2 functions)",
           "ok": true,
           "numRuns": 100,
           "seed": 20260910

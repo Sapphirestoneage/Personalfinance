@@ -38,5 +38,9 @@
       "upToFplMultiple": 4.0,
       "percent": 0.0866
     }
-  ]
+  ],
+  "ifNoCliff": {
+    "capPercent": 0.085,
+    "note": "If the enhanced subsidies are extended, there is no ceiling: above cliffMultiple the expected contribution is capped at this share of MAGI (the 2021 to 2025 rule under ARPA and the IRA). engines/rothaca.js prices both rules and shows the range. D-216."
+  }
 }

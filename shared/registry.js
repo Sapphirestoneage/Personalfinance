@@ -1137,6 +1137,32 @@
       ]
   });
 
+  /* Roth Conversions Before 65 (J8, D-216): conversions are reported
+     income and reported income sets the marketplace premium; the two priced
+     together to Medicare, as a range across the cliff-on and cliff-off
+     rules. Behind the preMedicare switch. */
+  ROOMS.push({
+    id: 'roth-aca',
+    features: ['preMedicare'],
+    group: 'decisions', subgroup: 'moves', aliases: ['roth conversion', 'aca', 'marketplace', 'obamacare', 'subsidy cliff', 'premium tax credit', 'before 65'],
+    appliesWhen: 'situation != student',
+    kind: 'explore',
+    needs: ['dob', 'filingStatus'],
+    order: 33.5,
+    title: 'Roth Conversions Before 65',
+    blurb: 'Converting pre-tax money to Roth is reported income, and reported income sets what the marketplace charges for health cover until Medicare. Year by year to 65, tax and premiums together, as a range.',
+    href: 'rooms/roth-aca.html',
+    tier: 2,
+    tags: ['income'],
+    daite: { reads: ['assets.invested', 'taxes.filingStatus', 'you.dob'], writes: [] },
+    subsections: [
+      { id: 'number',      label: 'Tax and premiums, together, to 65' },
+      { id: 'inputs',      label: 'The what-if' },
+      { id: 'years',       label: 'Year by year' },
+      { id: 'assumptions', label: 'Assumptions' }
+    ]
+  });
+
   /* Tax — the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'tax',
@@ -1246,10 +1272,13 @@
     tags: ['income', 'cashflow'],
     daite: { reads: ['expenses', 'income.grossAnnualCents', 'you.partner'], writes: ['expenses.shared', 'you.partner'] },
       subsections: [
+        { id: 'view',        label: 'Which view' },
+        { id: 'track',       label: 'Are we on track?' },
         { id: 'number',      label: 'Each share of the shared month' },
         { id: 'chart',       label: 'The shared month, split' },
         { id: 'inputs',      label: 'How you split' },
         { id: 'amounts',     label: 'Through the lens' },
+        { id: 'tags',        label: 'Yours, mine, ours' },
         { id: 'assumptions', label: 'Assumptions' },
         { id: 'reading',     label: 'What this reads' }
       ]

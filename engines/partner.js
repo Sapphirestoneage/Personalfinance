@@ -189,5 +189,63 @@
     });
   }
 
-  return { MODES: MODES, DEFAULT_MODE: DEFAULT_MODE, HEAVY_SHARE: HEAVY_SHARE, modeLabel: modeLabel, convention: convention, split: split };
+
+  /* ---- J7 (D-216): the one-sentence view, and whose each thing is -------- */
+
+  /** onTrack(household, tables) → Result. value: 'yes' | 'close' | 'no' |
+      'cantTell'; sentence: the one line the short view shows. Read off
+      split(), never a second calculation: 'no' is the shared month past
+      what comes in, 'close' is a share past the watch line, 'yes' is
+      neither with both take-homes known, 'cantTell' says what is missing. */
+  function onTrack(household, tables) {
+    var s = split(household, tables);
+    if (!Money.isOk(s)) return s;
+    var you = s.people[0], them = s.people[1];
+    var name = function (p) { return p.label === 'You' ? 'you' : p.label; };
+    var status, sentence;
+    if (s.mode === 'pooled') {
+      if (s.poolLeftCents === null) { status = 'cantTell'; sentence = 'Can’t tell yet: what comes into the pool is not estimated. ' + (you.takeHomeReason || them.takeHomeReason || ''); }
+      else if (s.poolLeftCents < 0) { status = 'no'; sentence = 'Not on track: the shared month is ' + Money.formatCents(-s.poolLeftCents) + ' more than the pool brings in, and that comes out of savings.'; }
+      else if (s.sharedCents / s.poolInCents > HEAVY_SHARE) { status = 'close'; sentence = 'Close: the shared month takes ' + Money.formatRate(s.sharedCents / s.poolInCents, { decimals: 0 }) + ' of what the pool brings in, leaving ' + Money.formatCents(s.poolLeftCents) + ' a month between you.'; }
+      else { status = 'yes'; sentence = 'On track: the shared month takes ' + Money.formatRate(s.sharedCents / s.poolInCents, { decimals: 0 }) + ' of what the pool brings in, leaving ' + Money.formatCents(s.poolLeftCents) + ' a month between you.'; }
+    } else if (s.outOfPocketCents !== null) {
+      status = 'no'; sentence = 'Not on track: the shared month is ' + Money.formatCents(s.outOfPocketCents) + ' more than the two take-homes together, and the rest comes out of savings.';
+    } else if (s.heavy.length) {
+      var who = s.heavy.length === 2 ? 'both of you' : s.heavy[0] === 'You' ? 'you' : s.heavy[0];
+      var p = s.heavy[0] === you.label ? you : them;
+      status = 'close'; sentence = 'Close: more than half of what ' + who + ' bring' + (s.heavy.length === 2 || who === 'you' ? '' : 's') + ' home goes to the shared month' + (s.heavy.length === 2 ? '' : ' (' + Money.formatRate(p.burden, { decimals: 0 }) + ')') + '.';
+    } else if (you.keepsCents !== null && them.keepsCents !== null) {
+      status = 'yes'; sentence = 'On track: after the shared month ' + name(you) + ' keep' + (you.label === 'You' ? '' : 's') + ' ' + Money.formatCents(you.keepsCents) + ' and ' + name(them) + ' keeps ' + Money.formatCents(them.keepsCents) + ' a month.';
+    } else {
+      status = 'cantTell'; sentence = 'Can’t tell yet: ' + (you.takeHomeReason || them.takeHomeReason || 'a take-home is not estimated.') + ' Add the pay in Start Here.';
+    }
+    return Money.ok(status, { sentence: sentence, split: s });
+  }
+
+  var TAG_WORDS = { mine: 'mine', yours: 'yours', ours: 'ours', theirs: 'theirs' };
+
+  /** tags(household, viewerId) → { viewer, other, assets, debts, counts }.
+      Whose each account and debt is, from the viewer's side: mine (owned by
+      the viewer alone), yours (by the other adult alone), ours (joint, or
+      no owner listed), theirs (a child's). Read off ownerIds through
+      Schema.ownerOf, never stored. The viewer is the first adult unless
+      the id of the second is passed. */
+  function tags(household, viewerId) {
+    var h = household || {};
+    var adults = Schema.adults(h);
+    if (adults.length < 2) return null;
+    var viewer = adults[1].id === viewerId ? adults[1] : adults[0];
+    var other = viewer === adults[0] ? adults[1] : adults[0];
+    function tag(item) {
+      var o = Schema.ownerOf(item);
+      return o === 'joint' ? 'ours' : o === viewer.id ? 'mine' : o === other.id ? 'yours' : 'theirs';
+    }
+    var counts = { mine: 0, yours: 0, ours: 0, theirs: 0 };
+    function row(item, cents) { var t = tag(item); counts[t]++; return { id: item.id, label: item.label || null, cents: Money.isEntered(cents) ? cents : null, tag: t, word: TAG_WORDS[t] }; }
+    var assets = (h.assets || []).map(function (a) { return row(a, a.valueCents); });
+    var debts = (h.debts || []).map(function (d) { return row(d, d.balanceCents); });
+    return { viewer: viewer, other: other, assets: assets, debts: debts, counts: counts };
+  }
+
+  return { MODES: MODES, DEFAULT_MODE: DEFAULT_MODE, HEAVY_SHARE: HEAVY_SHARE, TAG_WORDS: TAG_WORDS, modeLabel: modeLabel, convention: convention, split: split, onTrack: onTrack, tags: tags };
 });

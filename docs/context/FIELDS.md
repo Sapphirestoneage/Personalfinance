@@ -12,7 +12,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 - `rothContributed` — Roth so far this year · **no other room mentions it**
 - `hsaContributed` — HSA so far this year · **no other room mentions it**
-- `marginalRate` — Marginal tax rate · read by statement, reachable, side-hustle, credential, rollover, ledger
+- `marginalRate` — Marginal tax rate · read by statement, reachable, side-hustle, credential, rollover, roth-aca, ledger
 - `allocationStocks` — Target: stocks · **no other room mentions it**
 - `allocationBonds` — Target: bonds · **no other room mentions it**
 - `allocationCash` — Target: cash · **no other room mentions it**
@@ -170,8 +170,8 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `age` — Age · too generic to trace
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
-- `filingStatus` — Filing status · read by expenses, cash-flow, income, financial-snapshot, statement, savings-rate, fire, fire-lab, real-hourly-wage, self-employed, reachable, side-hustle, dashboard, credential, accounts, cant-pay, rollover, tax, career-move, partner, wrapped, ledger
-- `grossAnnualIncome` — Gross annual income · read by first-round, express, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, savings-rate, real-hourly-wage, hassle, quick-math, self-employed, reachable, side-hustle, ratios, dashboard, credential, accounts, stacker, skill-tree, exercises, foo-ladder, worth, car, cant-pay, rollover, health, what-if-life, between-jobs, protection, decumulation, tax, giving, career-move, partner, housing, big-purchase, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar, ledger
+- `filingStatus` — Filing status · read by expenses, cash-flow, income, financial-snapshot, statement, savings-rate, fire, fire-lab, real-hourly-wage, self-employed, reachable, side-hustle, dashboard, credential, accounts, cant-pay, rollover, roth-aca, tax, career-move, partner, wrapped, ledger
+- `grossAnnualIncome` — Gross annual income · read by first-round, express, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, savings-rate, real-hourly-wage, hassle, quick-math, self-employed, reachable, side-hustle, ratios, dashboard, credential, accounts, stacker, skill-tree, exercises, foo-ladder, worth, car, cant-pay, rollover, health, what-if-life, between-jobs, protection, decumulation, roth-aca, tax, giving, career-move, partner, housing, big-purchase, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar, ledger
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by first-round
 - `cashSavings` — Cash & savings · read by first-round, budget, financial-snapshot, statements, statement, sleep-at-night, quick-math, ratios, dashboard, exercises, runway, cant-pay, what-if-life, between-jobs, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, ledger, refresh

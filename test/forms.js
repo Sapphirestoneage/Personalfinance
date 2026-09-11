@@ -1231,6 +1231,26 @@ const CASES = [
         ['the form is long', s.rows > 60, true]
       ];
     }
+  },
+  {
+    /* ROTH CONVERSIONS BEFORE 65 (J8, D-216): four what-if boxes in the
+       HTML, re-rendered on every keystroke into siblings, never rebuilt. */
+    room: '/rooms/roth-aca.html',
+    container: '#inputs',
+    seed: 'demo',
+    fields: [
+      { sel: '#in-premium', type: '800' },
+      { sel: '#in-pretax', type: '500000' },
+      { sel: '#in-conv', type: '40000' }
+    ],
+    expect: async (page) => {
+      const num = await page.evaluate(() => document.getElementById('r-num').textContent);
+      const rows = await page.evaluate(() => document.querySelectorAll('#r-rows li').length);
+      return [
+        ['a lifetime figure is shown', /^\$[\d,]+/.test(num), true],
+        ['a row a year to 65', rows > 0, true]
+      ];
+    }
   }
 ];
 

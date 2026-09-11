@@ -13270,6 +13270,44 @@ statement twice changes nothing; the finder names the two monthly charges
 and prices them), render and features gates on the two rooms, the phone
 walk with the fixture file.
 
+## D-216 — J7, J8: two views of Partner, Roth conversions before 65
+
+**Why.** A couple wants one sentence, not a room, most days; and the
+two of them want to know whose each account is without a second store.
+Between leaving work and Medicare, a Roth conversion is reported income
+and reported income sets the marketplace premium: nothing in the app
+priced the two together.
+
+**Decision.** `rooms/partner.html` gains two views of the same rows: the
+full room, and "Are we on track?", one sentence from
+`Partner.onTrack()` in `engines/partner.js`, read off `split()` (out of
+pocket is "no", a share past the watch line "close", both take-homes
+known "yes", else "can't tell"). Each adult keeps their own default view
+as a preference (`partner.view.<personId>`, `partner.viewer`), never on
+the household. `Partner.tags()` labels every account and debt mine /
+yours / ours / theirs from the viewer's side, read off `ownerIds` through
+`Schema.ownerOf`. Gift privacy is not built: it waits on the owner.
+`engines/rothaca.js` walks each year to 65: federal ordinary tax on
+other income plus the conversion (`Tax.ordinaryTax`), the premium after
+the credit (`Tax.acaCliff`, the benchmark typed by the person, never
+guessed), under two rules, the cliff in force and the no-cliff cap
+(`aca.ifNoCliff.capPercent`), shown as a range. `rooms/roth-aca.html`
+sits behind the `preMedicare` switch and writes nothing.
+
+**Replaces or removes.** Nothing: the brief adds views and one what-if
+room, and the freeze does not cover them.
+
+**Stored shape.** No change to `slaf.household.v2`. Prefs gain
+`partner.view.<personId>` and `partner.viewer`. `data/aca_2026.json`
+gains `ifNoCliff`.
+
+**Verified.** `node test/run.js` (the sentence for each state, the tags
+from either side, the household byte-identical after both; year one
+tax and premium by hand under and over the cliff, the range, the
+baseline, the capped conversion, every empty state), the render,
+features and forms gates on both rooms, the phone walk (both views,
+the viewer switch remembered across a reload, the switch off).
+
 ---
 
 # The Dungeons & Dividends entries

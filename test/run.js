@@ -10260,7 +10260,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...no Career Move, no Between Jobs', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move' || r.id === 'between-jobs'));
   checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
   checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
-  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 24);
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 25);
   checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
 
   /* The one shared sidebar. */
@@ -13242,6 +13242,115 @@ section('J4, J5: bank CSV import on-device, the subscription finder (D-215)');
   checkTrue('the Expenses door’s level 4 reads the leak line', /Subscriptions\.leak\(h, T\)/.test(fs.readFileSync(path.join(ROOT, 'shared/doors.js'), 'utf8')) && (function () { const ins = Doors.levelInsight(Spine.getProfile(), T, 'E', 4, []); return ins && /repeating charge/.test(ins.headline); })());
   checkTrue('Money Wrapped gains the leak line only when something was found', Wrapped.year(Spine.getProfile(), [], T, {}).lines.some(l => l.id === 'leak') && !Wrapped.year(Demo.build(), [], T, {}).lines.some(l => l.id === 'leak'));
   checkTrue('the room never cancels anything: it writes a decision and says so', /a reminder, never an action|a note to\n?\s*yourself/.test(fs.readFileSync(path.join(ROOT, 'rooms/subscriptions.html'), 'utf8')) && !/cancelSubscription|fetch\(/.test(fs.readFileSync(path.join(ROOT, 'rooms/subscriptions.html'), 'utf8')));
+})();
+
+/* ==========================================================================
+   J7, J8: two views of Partner, Roth conversions before 65 (D-216)
+   ========================================================================== */
+section('J7, J8: two views of Partner, Roth conversions before 65 (D-216)');
+(function () {
+  const Partner = require(path.join(ROOT, 'engines/partner.js'));
+  const RothAca = require(path.join(ROOT, 'engines/rothaca.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+
+  /* -- J7: the one-sentence view, read off the split ------------------------------- */
+  const you = Schema.createPerson({ id: 'p', role: 'adult', label: 'You', incomeSources: [Schema.createIncomeSource({ personId: 'p', grossAnnualIncomeCents: 9000000 })] });
+  const sam = Schema.createPerson({ id: 'q', role: 'adult', label: 'Sam', incomeSources: [Schema.createIncomeSource({ personId: 'q', grossAnnualIncomeCents: 4000000 })] });
+  const two = Schema.createHousehold({
+    people: [you, sam], filingStatus: 'married_joint', partner: { splitMode: 'proportional', sharedMonthlyCents: 400000 },
+    assets: [Schema.createAsset({ id: 'a1', label: 'Joint savings', category: 'cash', valueCents: 1000000 }), Schema.createAsset({ id: 'a2', label: 'My 401k', category: 'retirement', valueCents: 5000000, ownerIds: ['p'] })],
+    debts: [Schema.createDebt({ id: 'd1', label: 'Sam car', balanceCents: 800000, ownerIds: ['q'] })]
+  });
+  const before = JSON.stringify(two);
+  const split = Partner.split(two, T);
+  const yes = Partner.onTrack(two, T);
+  check('on track: neither share past the watch line, both take-homes known', yes.value, 'yes');
+  checkTrue('...one sentence naming what each keeps, and nothing recalculated: the figures are the split\'s own', yes.sentence === 'On track: after the shared month you keep ' + Money.formatCents(split.people[0].keepsCents) + ' and Sam keeps ' + Money.formatCents(split.people[1].keepsCents) + ' a month.');
+  const close = Partner.onTrack(Object.assign({}, two, { partner: { splitMode: 'equal', sharedMonthlyCents: 600000 } }), T);
+  check('close: half of $6,000 is more than half of Sam\'s take-home', close.value, 'close');
+  checkTrue('...and says whose', /^Close: more than half of what Sam brings home/.test(close.sentence));
+  const no = Partner.onTrack(Object.assign({}, two, { partner: { splitMode: 'equal', sharedMonthlyCents: 1200000 } }), T);
+  check('not on track: $12,000 a month is more than the two take-homes together', no.value, 'no');
+  checkTrue('...and says by how much, from the split\'s outOfPocketCents', no.sentence.indexOf(Money.formatCents(Partner.split(Object.assign({}, two, { partner: { splitMode: 'equal', sharedMonthlyCents: 1200000 } }), T).outOfPocketCents)) > -1);
+  const pooled = Partner.onTrack(Object.assign({}, two, { partner: { splitMode: 'pooled', sharedMonthlyCents: 400000 } }), T);
+  check('one pool: on track, with what is left between you', pooled.value, 'yes');
+  const noPay = Partner.onTrack(Schema.createHousehold(Object.assign({}, two, { people: [you, Schema.createPerson({ id: 'q', role: 'adult', label: 'Sam' })] })), T);
+  check('their pay missing: can\'t tell, never a guess', noPay.value, 'cantTell');
+  checkTrue('one adult: incomplete, the same reason as the split', !Money.isOk(Partner.onTrack(Demo.build(), T)) && Partner.onTrack(Demo.build(), T).justYou === true);
+  checkTrue('no sentence carries an em-dash', [yes, close, no, pooled, noPay].every(r => r.sentence.indexOf('—') === -1));
+  /* -- J7: yours, mine, ours, from either side --------------------------------------- */
+  const mine = Partner.tags(two);
+  check('from your side: the joint account is ours, the 401k mine, the car loan yours', mine.assets.map(a => a.tag).concat(mine.debts.map(d => d.tag)).join(','), 'ours,mine,yours');
+  const theirs = Partner.tags(two, 'q');
+  check('from Sam\'s side the same rows flip', theirs.assets.map(a => a.tag).concat(theirs.debts.map(d => d.tag)).join(','), 'ours,yours,mine');
+  check('the counts add up', JSON.stringify(mine.counts), '{"mine":1,"yours":1,"ours":1,"theirs":0}');
+  check('an unknown viewer id falls back to the first adult', Partner.tags(two, 'nobody').viewer.id, 'p');
+  check('one adult: no tags', Partner.tags(Demo.build()), null);
+  check('nothing was written: the household is byte-identical after both', JSON.stringify(two) === before, true);
+  const partnerRoom = fs.readFileSync(path.join(ROOT, 'rooms/partner.html'), 'utf8');
+  checkTrue('the Partner room has the two views and a viewer switch', /data-view="track"/.test(partnerRoom) && /data-view="full"/.test(partnerRoom) && /data-viewer=/.test(partnerRoom));
+  checkTrue('...the default view is a preference per person, never on the household', /Prefs\.set\('partner\.view\.' \+ viewerId\(h\)/.test(partnerRoom) && /Prefs\.set\('partner\.viewer'/.test(partnerRoom) && partnerRoom.indexOf("Spine.set('partner.view") === -1);
+  checkTrue('...the sentence and the tags come from the engine', /Partner\.onTrack\(h, T\)/.test(partnerRoom) && /Partner\.tags\(h, viewer\)/.test(partnerRoom));
+  checkTrue('...gift privacy is not built: it waits on the owner', /Gift privacy is not\s+built/.test(partnerRoom) && !/gift/i.test(fs.readFileSync(path.join(ROOT, 'engines/partner.js'), 'utf8')));
+  const pr = Registry.byId('partner');
+  check('the registry lists the three new subsections', pr.subsections.filter(x => ['view', 'track', 'tags'].indexOf(x.id) > -1).length, 3);
+
+  /* -- J8: the engine, by hand ---------------------------------------------------------
+     Single, 56, other income $20,000, pre-tax $500,000 typed, benchmark $800 a month.
+     Year one at $40,000 converted: MAGI 60,000; taxable 60,000 - 16,100 = 43,900;
+     tax 12,400 x 10% + 31,500 x 12% = 1,240 + 3,780 = 5,020. FPL 15,650, so
+     60,000 is 3.83x, under the cliff at 62,600; the 8.66% row: 5,196 a year.
+     At $60,000 converted: MAGI 80,000 is over the cliff. Taxable 63,900:
+     1,240 + 4,560 + 13,500 x 22% = 8,770. Cliff on: the whole 9,600; off: 8.5%
+     of 80,000 = 6,800. */
+  const one = Schema.createHousehold({ people: [Schema.createPerson({ id: 'p', role: 'adult', dob: '1970-07-01' })], filingStatus: 'single' });
+  const under = RothAca.plan(one, T, { age: 56, benchmarkPremiumMonthlyCents: 80000, conversionAnnualCents: 4000000, otherIncomeAnnualCents: 2000000, pretaxCents: 50000000 });
+  check('nine years from 56 to 65', under.years, 9);
+  check('year one tax: $5,020', under.rows[0].taxCents, 502000);
+  check('year one premium under the cliff: 8.66% of $60,000', under.rows[0].premiumOnCents, 519600);
+  check('...the same with the cliff off, because it is under it', under.rows[0].premiumOffCents, 519600);
+  check('so the range collapses to one figure', under.lowCents === under.highCents, true);
+  check('the cliff for one person: 4 x $15,650', under.cliffCents, 6260000);
+  check('room in year one before it: $62,600 less $20,000 of other income', under.fillToCliffCents, 4260000);
+  check('never over the cliff', under.yearsOverCliff, 0);
+  check('nine conversions of $40,000 land in the Roth', under.convertedCents, 36000000);
+  check('the pre-tax balance is what is left after each year grows at p50', under.rows[1].pretaxStartCents, Math.round((50000000 - 4000000) * 1.05));
+  const over = RothAca.plan(one, T, { age: 56, benchmarkPremiumMonthlyCents: 80000, conversionAnnualCents: 6000000, otherIncomeAnnualCents: 2000000, pretaxCents: 50000000 });
+  check('at $60,000 a year: year one tax $8,770', over.rows[0].taxCents, 877000);
+  check('over the cliff, the whole benchmark: $9,600', over.rows[0].premiumOnCents, 960000);
+  check('without the cliff, 8.5% of $80,000', over.rows[0].premiumOffCents, 680000);
+  check('every year over', over.yearsOverCliff, 9);
+  check('so the range is real: low is the no-cliff rule, high the cliff', over.lowCents === over.cliffOff.totalCents && over.highCents === over.cliffOn.totalCents && over.lowCents < over.highCents, true);
+  check('the lifetime figure is the sum of the years', over.cliffOn.totalCents, over.rows.reduce((t, r) => t + r.taxCents + r.premiumOnCents, 0));
+  check('converting nothing is the baseline the extra is read against', over.extraOnCents, over.cliffOn.totalCents - over.baseline.cliffOn.totalCents);
+  checkTrue('...and the baseline prices $20,000 of income alone: 1.28x the poverty level, so 2.07% of it, and $390 of tax on the $3,900 above the standard deduction', over.baseline.cliffOn.premiumCents === 9 * 41400 && over.baseline.cliffOn.taxCents === 9 * 39000);
+  const capped = RothAca.plan(one, T, { age: 63, benchmarkPremiumMonthlyCents: 80000, conversionAnnualCents: 10000000, otherIncomeAnnualCents: 0, pretaxCents: 3000000 });
+  check('a conversion never exceeds what is left: $30,000 then nothing', capped.rows.map(r => r.conversionCents).join(','), '3000000,0');
+  /* empty is empty */
+  checkTrue('no premium typed: incomplete, asking for it', !Money.isOk(RothAca.plan(one, T, { age: 56, pretaxCents: 100 })) && RothAca.plan(one, T, { age: 56, pretaxCents: 100 }).missing[0] === 'benchmarkPremium');
+  checkTrue('no pre-tax balance anywhere: incomplete', RothAca.plan(one, T, { age: 56, benchmarkPremiumMonthlyCents: 80000 }).missing[0] === 'pretaxBalance');
+  checkTrue('at 65: the question ends', !Money.isOk(RothAca.plan(one, T, { age: 65, benchmarkPremiumMonthlyCents: 80000, pretaxCents: 100 })));
+  checkTrue('no date of birth and no age: incomplete', RothAca.plan(Schema.createHousehold({ people: [Schema.createPerson({ id: 'p', role: 'adult' })], filingStatus: 'single' }), T, { benchmarkPremiumMonthlyCents: 80000, pretaxCents: 100 }).missing[0] === 'dob');
+  const held = Schema.createHousehold({ people: [Schema.createPerson({ id: 'p', role: 'adult', dob: '1970-07-01' })], assets: [Schema.createAsset({ category: 'retirement', valueCents: 20000000 }), Schema.createAsset({ category: 'investment', taxCharacter: 'taxable', valueCents: 5000000 })] });
+  const fromStatement = RothAca.plan(held, T, { age: 56, benchmarkPremiumMonthlyCents: 80000 });
+  check('the pre-tax balance is read off the Statement when not typed: only the pre-tax pile', fromStatement.pretaxCents + ':' + fromStatement.pretaxSource, '20000000:household');
+  checkTrue('...a retirement account with no character is assumed pre-tax, and said so; no filing status is assumed single, and said so', fromStatement.assumed.indexOf('pretaxOrientation') > -1 && fromStatement.assumed.indexOf('filingStatus') > -1 && fromStatement.filingStatus === 'single');
+  checkTrue('the no-cliff cap lives in the table, not the engine', T.aca.ifNoCliff.capPercent === 0.085 && !/0\.085/.test(fs.readFileSync(path.join(ROOT, 'engines/rothaca.js'), 'utf8')));
+  /* the room */
+  const rothRoom = fs.readFileSync(path.join(ROOT, 'rooms/roth-aca.html'), 'utf8');
+  checkTrue('the room sits behind the preMedicare switch, through Features.on', /Features\.on\('preMedicare', h\)/.test(rothRoom) && /switch-notice/.test(rothRoom));
+  checkTrue('...writes nothing to the household', rothRoom.indexOf('Spine.set(') === -1 && rothRoom.indexOf('Spine.updateProfile(') === -1);
+  checkTrue('...never a point without its range', /data-range/.test(rothRoom) && / to /.test(rothRoom));
+  checkTrue('...the premium is typed, never guessed: no premium table in data/', !fs.readdirSync(path.join(ROOT, 'data')).some(f => /premium/i.test(f)) && /only the marketplace can tell you/.test(rothRoom));
+  checkTrue('...no em-dash on screen', rothRoom.replace(/<!--[\s\S]*?-->/g, '').indexOf('—') === -1);
+  const rr = Registry.byId('roth-aca');
+  checkTrue('the registry lists it under moves with the switch, and the layouts shelve it beside Drawing It Down', rr && rr.subgroup === 'moves' && rr.features.indexOf('preMedicare') > -1 && rr.order === 33.5);
+  const layouts = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8'));
+  const shelves = [];
+  (function walk(x) { if (Array.isArray(x)) { if (x.indexOf('decumulation') > -1) shelves.push(x); x.forEach(walk); } else if (x && typeof x === 'object') Object.keys(x).forEach(k => walk(x[k])); })(layouts);
+  checkTrue('...in every arrangement, right after it', shelves.length === 20 && shelves.every(a => a[a.indexOf('decumulation') + 1] === 'roth-aca'));
 })();
 
 /* ==========================================================================
