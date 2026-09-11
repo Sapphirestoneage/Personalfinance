@@ -65,7 +65,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **protection** — Protection · 268 lines · engines: projection, tier0, protection · owns: healthCover, healthMonthly · D-103, D-098, D-094
 - **decumulation** — Drawing It Down · 274 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-104, D-098, D-094
 - **roth-aca** — Roth Conversions Before 65 · 207 lines · engines: selfemployed, tax, rothaca · D-216
-- **middle-class-trap** — The Middle Class Trap Test · 199 lines · engines: selfemployed, tax, projection, tier0, trap · D-218
+- **middle-class-trap** — The Middle Class Trap Test · 202 lines · engines: selfemployed, tax, projection, tier0, trap · D-218
 - **estate** — Estate Basics · 218 lines · engines: projection, tier0, hourly, estate · owns: beneficiariesSet, willExists, poaExists · D-106, D-098, D-094
 - **giving** — Giving · 261 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, giving · owns: givingPct, givingTarget · D-107, D-098, D-094
 - **career-move** — Career Move · 292 lines · engines: projection, tier0, hourly, careermove · owns: offerGross, offerHours, offerCommute, offerCosts, offerSignOn · D-108
@@ -90,7 +90,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **dreamline** — Price the Dream · 239 lines · engines: projection, tier0, hourly, dreamline · owns: dreamsMonthly · D-101
 - **reversibility** — Can It Be Undone · 329 lines · engines: projection, tier0, cashflow, hourly, events, reversibility · owns: reversibilityDecision · D-101
 - **unlearning** — Unlearning · 380 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules · owns: unlearningDropped · D-213, D-212, D-119
-- **debates** — The Referee · 149 lines · engines: selfemployed, tax, projection, tier0, trap, debates · D-218
+- **debates** — The Referee · 152 lines · engines: selfemployed, tax, projection, tier0, trap, debates · D-218
 
 ## Level Up (3)
 

@@ -4,7 +4,7 @@ paths:
   - "engines/trap.js"
 ---
 # The Middle Class Trap Test (`middle-class-trap`)
-File: rooms/middle-class-trap.html · 199 lines
+File: rooms/middle-class-trap.html · 202 lines
 Engines: selfemployed, tax, projection, tier0, trap
 Reference data: debates.json, early_access_rules_2026.json, effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, return_bands.json, +1 more
 Owns: nothing
